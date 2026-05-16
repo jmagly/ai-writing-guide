@@ -27,6 +27,7 @@ import { checkPathAllowed } from './allowlist.js';
 import { generateAiwgMd } from './aiwg-md.js';
 import { injectSpilloverBlock } from './overflow.js';
 import { buildParallelismSection } from './parallelism-section.js';
+import { buildContextFinalizationBlock, writeNormalizedAiwgMd } from './finalization.js';
 
 const SECTION_TITLES: Record<IndexedArtifactType, string> = {
   agents: 'Agents',
@@ -149,6 +150,8 @@ export async function buildAgentsMd(opts: ContextPipelineOptions): Promise<{
   parts.push('skills, agents, rules, and commands across the installation.');
   parts.push('');
 
+  parts.push(await buildContextFinalizationBlock(opts.projectPath));
+
   if (opts.projectContext && opts.projectContext.trim().length > 0) {
     const desc = sanitizeDescription(opts.projectContext.slice(0, 1000));
     if (desc.ok) {
@@ -222,6 +225,7 @@ export async function isOverwriteSafe(filePath: string): Promise<boolean> {
 async function atomicWrite(filePath: string, content: string): Promise<void> {
   const dir = path.dirname(filePath);
   const tmp = path.join(dir, `.${path.basename(filePath)}.tmp.${process.pid}`);
+  await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(tmp, content, 'utf8');
   try {
     await fs.rename(tmp, filePath);
@@ -242,6 +246,7 @@ async function atomicWrite(filePath: string, content: string): Promise<void> {
  * (#1242).
  */
 const TWIN_FILES_BY_PROVIDER: Record<string, ReadonlyArray<string>> = {
+  copilot: ['.github/copilot-instructions.md'],
   hermes: ['.hermes.md'],
   warp: ['WARP.md'],
 };
@@ -375,12 +380,16 @@ async function writeSpilloverBlock(
 export async function generate(opts: ContextPipelineOptions): Promise<ContextPipelineResult> {
   const result: ContextPipelineResult = {
     aiwgMdPath: '',
+    normalizedAiwgMdPath: '',
     agentsMdPath: '',
     twinPaths: [],
     backupPaths: [],
     agentsMdBytes: 0,
     warnings: [],
   };
+
+  const normalizedAiwgPath = await writeNormalizedAiwgMd(opts.projectPath);
+  result.normalizedAiwgMdPath = normalizedAiwgPath;
 
   if (!opts.skip?.agentsMd) {
     const agentsMdPath = path.join(opts.projectPath, 'AGENTS.md');

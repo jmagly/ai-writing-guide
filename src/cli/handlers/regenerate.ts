@@ -106,7 +106,7 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   console.log(`  Target:   ${target}`);
 
   if (!shouldEmitContextFiles(provider as Platform)) {
-    console.log(`  Skip:     context files are not emitted for provider '${provider}' (claude uses CLAUDE.md natively; copilot uses .github/copilot-instructions.md; openclaw is home-dir-only).`);
+    console.log(`  Skip:     context files are not emitted for provider '${provider}' (claude uses CLAUDE.md natively; openclaw is home-dir-only).`);
     return;
   }
 
@@ -115,8 +115,10 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
     const agentsMd = path.join(target, 'AGENTS.md');
     console.log('');
     console.log(`  Would regenerate:`);
+    console.log(`    - ${path.join(target, '.aiwg', 'AIWG.md')}`);
     if (!skipAiwgMd) console.log(`    - ${aiwgMd}`);
     if (!skipAgentsMd) console.log(`    - ${agentsMd}`);
+    if (provider === 'copilot' && !skipAgentsMd) console.log(`    - ${path.join(target, '.github', 'copilot-instructions.md')}`);
     if (force) console.log(`    (with --force: any operator-modified files are backed up first)`);
     console.log('');
     console.log(`  Dry run complete — no changes made`);
@@ -145,6 +147,9 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   }
   if (result.aiwgMdPath) {
     console.log(`  OK Wrote AIWG.md`);
+  }
+  if (result.normalizedAiwgMdPath) {
+    console.log(`  OK Wrote .aiwg/AIWG.md`);
   }
   for (const w of result.warnings) {
     console.log(`  context-pipeline: ${w}`);

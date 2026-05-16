@@ -209,8 +209,8 @@ describe('twin-file emission per ADR-1 §4', () => {
     expect(hermes).toContain('aiwg discover');
     expect(hermes).toContain('delegate_task');
 
-    // Total stays comfortably inside Hermes's <1,000-char turn-budget target.
-    expect(Buffer.byteLength(hermes, 'utf8')).toBeLessThan(1024);
+    // Finalized context is still compact enough for provider startup context.
+    expect(Buffer.byteLength(hermes, 'utf8')).toBeLessThan(4 * 1024);
   });
 
   it('writes WARP.md alongside AGENTS.md for warp provider', async () => {
@@ -223,6 +223,24 @@ describe('twin-file emission per ADR-1 §4', () => {
     const warp = await fs.readFile(path.join(tmpDir, 'WARP.md'), 'utf8');
     const agents = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf8');
     expect(warp).toBe(agents);
+    expect(warp).toContain('## Context Finalization');
+    expect(warp).toContain('aiwg discover');
+    expect(warp).toContain('aiwg show');
+  });
+
+  it('writes .github/copilot-instructions.md alongside AGENTS.md for copilot provider', async () => {
+    const result = await generate({
+      provider: 'copilot',
+      projectPath: tmpDir,
+      sections: [{ type: 'agents', entries: [makeEntry('foo')] }],
+    });
+    const twinPath = path.join(tmpDir, '.github', 'copilot-instructions.md');
+    expect(result.twinPaths).toContain(twinPath);
+    const copilot = await fs.readFile(twinPath, 'utf8');
+    const agents = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf8');
+    expect(copilot).toBe(agents);
+    expect(copilot).toContain('## Context Finalization');
+    expect(copilot).toContain('decline-without-search');
   });
 
   it('does not write twin files for codex', async () => {

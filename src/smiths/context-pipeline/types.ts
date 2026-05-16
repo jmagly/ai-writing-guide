@@ -101,6 +101,9 @@ export interface ContextPipelineResult {
   /** Path of AIWG.md emission (empty if skipped) */
   aiwgMdPath: string;
 
+  /** Path of normalized .aiwg/AIWG.md emission */
+  normalizedAiwgMdPath: string;
+
   /** Path of AGENTS.md emission (empty if skipped) */
   agentsMdPath: string;
 

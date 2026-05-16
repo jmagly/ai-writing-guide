@@ -26,6 +26,7 @@ import {
 } from '../../config/aiwg-config.js';
 import * as ui from '../ui.js';
 import { askString as sharedAskString, askYesNo as sharedAskYesNo } from '../prompt-utils.js';
+import { writeNormalizedAiwgMd } from '../../smiths/context-pipeline/finalization.js';
 
 const PROVIDER_LABELS: Record<string, string> = {
   claude:    'Claude Code       .claude/',
@@ -116,6 +117,7 @@ export const initHandler: CommandHandler = {
     const existing = await readAiwgConfig(projectDir);
     if (existing && !force) {
       ui.info(`Config already exists: ${getConfigPath(projectDir)}`);
+      await writeNormalizedAiwgMd(projectDir);
       console.log(`  Providers: ${existing.providers.join(', ')}`);
       const scriptCount = Object.keys(existing.scripts).length;
       if (scriptCount > 0) {
@@ -182,9 +184,11 @@ export const initHandler: CommandHandler = {
 
     // Write
     await writeAiwgConfig(projectDir, config);
+    await writeNormalizedAiwgMd(projectDir);
 
     ui.blank();
     ui.success(`Created ${getConfigPath(projectDir)}`);
+    ui.success('Created .aiwg/AIWG.md');
     ui.success(`Providers: ${providers.join(', ')}`);
     if (Object.keys(scripts).length > 0) {
       ui.success(`Scripts: ${Object.keys(scripts).join(', ')}`);

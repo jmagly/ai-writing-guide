@@ -21,11 +21,15 @@ The hook file architecture solves all of these by separating concerns: your cont
 
 ## How It Works
 
-For Claude Code, the structure looks like this:
+Current AIWG context generation has three layers:
 
 ```
-CLAUDE.md          ← Your project notes + @AIWG.md directive
-AIWG.md            ← Generated AIWG context (do not edit manually)
+.aiwg/AIWG.md      ← Normalized project-local AIWG context and stable skill/rule reference
+CLAUDE.md          ← Provider-owned or operator-owned project notes
+AIWG.md            ← Generated cross-provider companion, finalized from workspace state
+AGENTS.md          ← Thin bridge for AGENTS.md providers, points to AIWG.md
+WARP.md/.hermes.md/.github/copilot-instructions.md
+                   ← Provider-facing twins when that provider needs a distinct context file
 ```
 
 `CLAUDE.md` contains a single line that loads AIWG context:
@@ -38,7 +42,7 @@ AIWG.md            ← Generated AIWG context (do not edit manually)
 @AIWG.md
 ```
 
-`AIWG.md` is generated from the manifests of your installed frameworks and regenerated whenever you install, remove, or upgrade a framework. It is safe to delete — `aiwg hook-regenerate` recreates it.
+`.aiwg/AIWG.md` is created by `aiwg init` and refreshed by `aiwg use` / `aiwg regenerate`. Root `AIWG.md` is generated from provider context plus a context-finalization pass that reads `.aiwg/aiwg.config`, records installed frameworks/addons and provider deployments, and inlines the discover-first protocol (`aiwg discover` then `aiwg show`). It is safe to delete generated bridge files; regeneration recreates them.
 
 ## Hook File Map
 

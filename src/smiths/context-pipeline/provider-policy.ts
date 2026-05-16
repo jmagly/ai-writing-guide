@@ -1,7 +1,7 @@
 /**
  * Provider policy for AIWG.md and AGENTS.md emission.
  *
- * Per ADR-1 §3: AIWG.md + AGENTS.md emit by default for the seven providers
+ * Per ADR-1 §3: AIWG.md + AGENTS.md emit by default for providers
  * whose loaders consume an AGENTS.md (or close variant: Hermes `.hermes.md`,
  * Warp `WARP.md` twin). Claude Code is excluded because CLAUDE.md is its
  * native context file and continues unchanged. OpenClaw deploys to home
@@ -20,6 +20,7 @@ import type { Platform } from '../../agents/types.js';
  */
 export const AGENTS_MD_PROVIDERS: ReadonlySet<Platform> = new Set([
   'codex',
+  'copilot',
   'cursor',
   'windsurf',
   'hermes',
@@ -28,7 +29,7 @@ export const AGENTS_MD_PROVIDERS: ReadonlySet<Platform> = new Set([
   'opencode',
 ]);
 
-export type AgentsMdProvider = Platform & ('codex' | 'cursor' | 'windsurf' | 'hermes' | 'warp' | 'factory' | 'opencode');
+export type AgentsMdProvider = Platform & ('codex' | 'copilot' | 'cursor' | 'windsurf' | 'hermes' | 'warp' | 'factory' | 'opencode');
 
 /**
  * Whether the context-pipeline should emit AIWG.md + AGENTS.md for a given

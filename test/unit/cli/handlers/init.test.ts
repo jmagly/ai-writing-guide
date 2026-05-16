@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mkdirSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import type { HandlerContext } from '../../../../src/cli/handlers/types.js';
@@ -84,6 +84,12 @@ describe('initHandler', () => {
       expect(cfg!.scripts['deploy']).toBe('aiwg use all');
       expect(cfg!.scripts['doctor']).toBe('aiwg doctor');
       expect(cfg!.scripts['sync']).toBe('aiwg sync');
+
+      const normalizedPath = join(tmpDir, '.aiwg', 'AIWG.md');
+      expect(existsSync(normalizedPath)).toBe(true);
+      const normalized = readFileSync(normalizedPath, 'utf8');
+      expect(normalized).toContain('## Context Finalization');
+      expect(normalized).toContain('aiwg discover');
     });
 
     it('--yes is an alias for --non-interactive', async () => {
@@ -115,6 +121,20 @@ describe('initHandler', () => {
       const { readAiwgConfig } = await import('../../../../src/config/aiwg-config.js');
       const cfg = await readAiwgConfig(tmpDir);
       expect(cfg!.providers).toEqual(['claude']);
+    });
+
+    it('repairs missing .aiwg/AIWG.md when config already exists', async () => {
+      const { initHandler } = await import('../../../../src/cli/handlers/init.js');
+
+      await initHandler.execute(makeCtx(tmpDir, ['--non-interactive']));
+      rmSync(join(tmpDir, '.aiwg', 'AIWG.md'), { force: true });
+
+      const result = await initHandler.execute(makeCtx(tmpDir, ['--non-interactive']));
+      expect(result.exitCode).toBe(0);
+
+      const normalizedPath = join(tmpDir, '.aiwg', 'AIWG.md');
+      expect(existsSync(normalizedPath)).toBe(true);
+      expect(readFileSync(normalizedPath, 'utf8')).toContain('## Context Finalization');
     });
 
     it('--force overwrites existing config', async () => {

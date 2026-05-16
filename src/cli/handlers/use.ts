@@ -1931,7 +1931,7 @@ export class UseHandler implements CommandHandler {
 
     // Context-pipeline emission (ADR-1 §0 + §0.5 + §7).
     //
-    // For the seven AGENTS.md providers (codex/cursor/windsurf/hermes/warp/factory/
+    // For AGENTS.md providers (codex/copilot/cursor/windsurf/hermes/warp/factory/
     // opencode), emit AIWG.md + AGENTS.md at project root as the last filesystem
     // step before activity-log close. The generator-runs-after-deploy invariant
     // (ADR-1 §7) means the link index can only cite files we observe on disk:
@@ -1967,6 +1967,9 @@ export class UseHandler implements CommandHandler {
         }
         if (verbose && ctxResult.aiwgMdPath) {
           ui.dim(`  Wrote AIWG.md`);
+        }
+        if (verbose && ctxResult.normalizedAiwgMdPath) {
+          ui.dim(`  Wrote .aiwg/AIWG.md`);
         }
         for (const w of ctxResult.warnings) {
           ui.dim(`  context-pipeline: ${w}`);

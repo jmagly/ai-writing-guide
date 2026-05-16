@@ -166,15 +166,16 @@ describe('discoverDeployedArtifacts', () => {
 });
 
 describe('provider policy', () => {
-  it('emits AIWG.md/AGENTS.md for the seven AGENTS.md providers', () => {
+  it('emits AIWG.md/AGENTS.md for providers that need generated context bridges', () => {
     expect(shouldEmitContextFiles('codex')).toBe(true);
+    expect(shouldEmitContextFiles('copilot')).toBe(true);
     expect(shouldEmitContextFiles('cursor')).toBe(true);
     expect(shouldEmitContextFiles('windsurf')).toBe(true);
     expect(shouldEmitContextFiles('hermes')).toBe(true);
     expect(shouldEmitContextFiles('warp')).toBe(true);
     expect(shouldEmitContextFiles('factory')).toBe(true);
     expect(shouldEmitContextFiles('opencode')).toBe(true);
-    expect(AGENTS_MD_PROVIDERS.size).toBe(7);
+    expect(AGENTS_MD_PROVIDERS.size).toBe(8);
   });
 
   it('does NOT emit for Claude (CLAUDE.md is native)', () => {
@@ -183,10 +184,6 @@ describe('provider policy', () => {
 
   it('does NOT emit for OpenClaw (home-dir-only deployment)', () => {
     expect(shouldEmitContextFiles('openclaw')).toBe(false);
-  });
-
-  it('does NOT emit for Copilot (uses .github/copilot-instructions.md)', () => {
-    expect(shouldEmitContextFiles('copilot')).toBe(false);
   });
 
   it('does NOT emit for generic', () => {

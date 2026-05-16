@@ -7,13 +7,17 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { homedir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   sanitizeDescription,
   sanitizeTag,
   sanitizeTags,
   checkPathAllowed,
   buildAgentsMd,
+  generate,
+  buildNormalizedAiwgMd,
   renderEntry,
 } from '../../../src/smiths/context-pipeline/index.js';
 import type { ContextPipelineOptions } from '../../../src/smiths/context-pipeline/index.js';
@@ -281,6 +285,8 @@ describe('buildAgentsMd', () => {
     const { content } = await buildAgentsMd(baseOpts);
     expect(content).toContain('aiwg discover');
     expect(content).toContain('aiwg show');
+    expect(content).toContain('## Context Finalization');
+    expect(content).toContain('decline-without-search');
   });
 
   it('stays well under the 30KB soft threshold', async () => {
@@ -347,5 +353,75 @@ describe('buildAgentsMd', () => {
     };
     const { warnings } = await buildAgentsMd(opts);
     expect(warnings).toEqual([]);
+  });
+});
+
+describe('context finalization emission', () => {
+  function makeTmpDir(): string {
+    const dir = join(tmpdir(), `aiwg-context-pipeline-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`);
+    mkdirSync(dir, { recursive: true });
+    return dir;
+  }
+
+  it('builds normalized .aiwg/AIWG.md without erasing operator-authored content', async () => {
+    const content = await buildNormalizedAiwgMd('/tmp/test-project', '# Local AIWG Notes\n\nOperator note.\n');
+
+    expect(content).toContain('Operator note.');
+    expect(content).toContain('<!-- aiwg-managed -->');
+    expect(content).toContain('## Context Finalization');
+    expect(content).toContain('`.aiwg/AIWG.md` is the normalized project-local context entry point.');
+  });
+
+  it('refreshes the managed finalization block idempotently', async () => {
+    const first = await buildNormalizedAiwgMd('/tmp/test-project', '# Local AIWG Notes\n\nOperator note.\n');
+    const second = await buildNormalizedAiwgMd('/tmp/test-project', first);
+
+    expect(second).toContain('Operator note.');
+    expect(second.match(/aiwg-context-finalization:START/g)).toHaveLength(1);
+    expect(second.match(/aiwg-context-finalization:END/g)).toHaveLength(1);
+    expect(second.match(/## Context Finalization/g)).toHaveLength(1);
+  });
+
+  it('emits root, normalized, and provider twin context files with discover-first guidance', async () => {
+    const dir = makeTmpDir();
+    try {
+      mkdirSync(join(dir, '.aiwg'), { recursive: true });
+      writeFileSync(join(dir, '.aiwg', 'aiwg.config'), JSON.stringify({
+        version: '1',
+        providers: ['copilot'],
+        installed: {
+          sdlc: {
+            version: '2026.5.7',
+            source: 'bundled',
+            installedAt: '2026-05-15T00:00:00.000Z',
+            deployedTo: {
+              copilot: { agents: 1, commands: 0, skills: 1, rules: 1 },
+            },
+          },
+        },
+        scripts: {},
+      }, null, 2));
+
+      const result = await generate({
+        provider: 'copilot',
+        projectPath: dir,
+        sections: [],
+        detectExistingFiles: true,
+      });
+
+      expect(result.aiwgMdPath).toBe(join(dir, 'AIWG.md'));
+      expect(result.agentsMdPath).toBe(join(dir, 'AGENTS.md'));
+      expect(result.normalizedAiwgMdPath).toBe(join(dir, '.aiwg', 'AIWG.md'));
+      expect(result.twinPaths).toContain(join(dir, '.github', 'copilot-instructions.md'));
+
+      for (const file of [result.aiwgMdPath, result.agentsMdPath, result.normalizedAiwgMdPath, ...result.twinPaths]) {
+        const content = readFileSync(file, 'utf8');
+        expect(content).toContain('aiwg discover');
+        expect(content).toContain('aiwg show');
+        expect(content).toContain('decline-without-search');
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

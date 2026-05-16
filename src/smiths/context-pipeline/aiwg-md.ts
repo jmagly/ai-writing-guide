@@ -18,6 +18,7 @@
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { buildParallelismSection, replaceOrAppendParallelismBlock } from './parallelism-section.js';
+import { buildContextFinalizationBlock, replaceOrAppendFinalizationBlock } from './finalization.js';
 
 const AIWG_SIGNATURE_COMMENT = '<!-- aiwg-managed -->';
 
@@ -47,6 +48,7 @@ export async function buildAiwgMdContent(projectPath: string): Promise<string> {
   // #1362: parallelism cap section, injected after generation so it surfaces
   // in regenerated context files regardless of CLAUDE.md content.
   const parallelismSection = await buildParallelismSection(projectPath);
+  const finalizationBlock = await buildContextFinalizationBlock(projectPath);
 
   if (claudeMdContent) {
     // Insert the AIWG signature comment as the second line.
@@ -74,7 +76,8 @@ export async function buildAiwgMdContent(projectPath: string): Promise<string> {
           ...rest,
         ].join('\n');
 
-    return replaceOrAppendParallelismBlock(baseContent, parallelismSection);
+    const withParallelism = replaceOrAppendParallelismBlock(baseContent, parallelismSection);
+    return replaceOrAppendFinalizationBlock(withParallelism, finalizationBlock);
   }
 
   // Fallback stub.
@@ -87,7 +90,8 @@ export async function buildAiwgMdContent(projectPath: string): Promise<string> {
     'See [.aiwg/AIWG.md](./.aiwg/AIWG.md) for the project framework context.',
     '',
   ].join('\n');
-  return replaceOrAppendParallelismBlock(stub, parallelismSection);
+  const withParallelism = replaceOrAppendParallelismBlock(stub, parallelismSection);
+  return replaceOrAppendFinalizationBlock(withParallelism, finalizationBlock);
 }
 
 /**

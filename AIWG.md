@@ -676,3 +676,39 @@ Before pushing a version tag:
 - PATCH resets each month
 - Tag format: `vYYYY.M.PATCH` (e.g., `v2026.1.5`)
 - See `@docs/contributing/versioning.md` for full details
+
+<!-- AIWG-PARALLELISM-CAP:START -->
+## Parallelism Cap
+
+This project caps parallel agent fan-out (#1359):
+
+- **max_parallel_subagents**: 4 (provider default for claude)
+- **max_parallel_ralph_loops**: 2 (provider default for claude)
+- **max_parallel_mc_missions**: 4 (provider default for claude)
+
+When spawning parallel subagents, take the MIN of: this cap, `AIWG_CONTEXT_WINDOW` budget, the RLM 7-agent hard cap (RLM dispatches only), and the natural task decomposition. Bump via `aiwg config set --project parallelism.max_parallel_subagents N`.
+
+<!-- AIWG-PARALLELISM-CAP:END -->
+
+<!-- aiwg-context-finalization:START -->
+## Context Finalization
+
+This section is synthesized after template emission from the current workspace state. Preserve operator-authored content outside AIWG-managed blocks; rerun `aiwg regenerate` to refresh this section after provider, framework, or MCP wiring changes.
+
+### Workspace Snapshot
+
+- Configured providers: claude, codex
+- Installed frameworks/addons: sdlc, media-marketing, all, security-engineering
+- Recorded deployments: claude, codex, copilot, cursor, factory, openclaw, opencode, warp, windsurf
+- Normalized project context: `.aiwg/AIWG.md`
+
+### Discover-First Protocol
+
+Before declining an AIWG request as out of scope or inventing a workflow from memory, run `aiwg discover "<the user need>"`. The CLI ranks AIWG capabilities across the installed corpus. Fetch the selected item with `aiwg show <type> <name>`. This prevents decline-without-search failures and hallucinated skill or agent names. Full rule: `agentic/code/addons/aiwg-utils/rules/skill-discovery.md`.
+
+### Source Model
+
+- `.aiwg/AIWG.md` is the normalized project-local context entry point.
+- Root `AIWG.md` is the generated cross-provider companion loaded through `AGENTS.md` and provider twins.
+- `AGENTS.md`, `WARP.md`, `.hermes.md`, and `.github/copilot-instructions.md` are provider-facing bridges, not replacements for `.aiwg/AIWG.md`.
+<!-- aiwg-context-finalization:END -->

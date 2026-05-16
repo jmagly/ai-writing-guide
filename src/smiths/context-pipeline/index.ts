@@ -37,6 +37,14 @@ export {
 } from './provider-policy.js';
 export { generateAiwgMd } from './aiwg-md.js';
 export {
+  FINALIZATION_START,
+  FINALIZATION_END,
+  buildContextFinalizationBlock,
+  buildNormalizedAiwgMd,
+  replaceOrAppendFinalizationBlock,
+  writeNormalizedAiwgMd,
+} from './finalization.js';
+export {
   SOFT_WARN_BYTES,
   HARD_ERROR_BYTES,
   SPILLOVER_START,
