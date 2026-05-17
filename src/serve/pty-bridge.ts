@@ -370,7 +370,12 @@ async function spawnSandboxWsPty(
   try {
     wsMod = await (new Function('m', 'return import(m)'))('ws');
   } catch {
-    throw new Error('ws package required for sandbox PTY bridge. Run: npm install ws');
+    try {
+      // @ts-expect-error Optional runtime dependency; this workspace does not ship @types/ws.
+      wsMod = await import('ws');
+    } catch {
+      throw new Error('ws package required for sandbox PTY bridge. Run: npm install ws');
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

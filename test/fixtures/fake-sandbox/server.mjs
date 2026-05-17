@@ -50,6 +50,8 @@ import { randomUUID } from 'node:crypto';
  * @property {(ws: any) => void} [onPartition]
  *   Called once per new connection; allow scenario to wrap ws.send to drop
  *   sockets mid-stream.
+ * @property {(msg: object, ctx: { ws: any, path: string, state: object, send: (event: object) => void }) => void | Promise<void>} [onWsMessage]
+ *   Called for each JSON WS message received by the fake sandbox.
  */
 
 /**
@@ -328,6 +330,28 @@ export async function startFakeSandbox(opts = {}) {
           conns.delete(ws);
           log('fake-sandbox:ws-close', { path });
         });
+        ws.on('message', async (raw) => {
+          if (!scenario.onWsMessage) return;
+          let msg;
+          try {
+            msg = JSON.parse(typeof raw === 'string' ? raw : raw.toString());
+          } catch {
+            return;
+          }
+          const send = (event) => {
+            if (ws.readyState === 1 /* OPEN */) ws.send(JSON.stringify(event));
+          };
+          try {
+            await scenario.onWsMessage(msg, {
+              ws,
+              path,
+              state: { tasks, instances, activeWS },
+              send,
+            });
+          } catch (err) {
+            log('fake-sandbox:ws-message-error', { error: String(err), path });
+          }
+        });
         // Allow scenarios to wrap ws.send (e.g., for partition simulation)
         scenario.onPartition?.(ws);
         // Drive a per-connection event stream so events are not lost when
@@ -370,14 +394,25 @@ export async function startFakeSandbox(opts = {}) {
     for (const [, conns] of activeWS) {
       for (const ws of conns) {
         try { ws.close(1000, 'shutdown'); } catch {}
+        try { ws.terminate?.(); } catch {}
       }
+    }
+    for (const ws of wss.clients) {
+      try { ws.terminate?.(); } catch {}
     }
     activeWS.clear();
     try { wss.close(); } catch {}
+    try { httpServer.closeAllConnections?.(); } catch {}
+    try { httpServer.closeIdleConnections?.(); } catch {}
     await new Promise(r => {
+      const timeout = setTimeout(() => r(), 250);
       try {
-        httpServer.close(() => r());
+        httpServer.close(() => {
+          clearTimeout(timeout);
+          r();
+        });
       } catch {
+        clearTimeout(timeout);
         r();
       }
     });
