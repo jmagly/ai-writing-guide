@@ -201,6 +201,27 @@ Quickbooksbot receives a complex accounting question that may affect tax prep. I
 
 ---
 
+## quiet-mode
+
+**Priority**: HIGH
+**Full rule**: `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/quiet-mode.md`
+
+### What It Enforces
+
+In group chats, bots respond only when mentioned, replied to, or invoked by a direct command. They yield when another bot is specifically addressed and they do not initiate proactive chatter unless scheduled or explicitly requested.
+
+Business bots stay in domain. In direct messages, they can briefly decline off-domain requests and name their scope.
+
+### When It Applies
+
+Telegram/group-chat bots, multi-bot rooms, direct-message business bots, scheduled chat agents, ambient room listeners, and platforms without native behavior support.
+
+### Examples
+
+Quickbooksbot answers `@quickbooksbot show unpaid invoices over 30 days`, but stays silent on unrelated group chatter. InfsolClaw answers when mentioned for work status, but yields silently when Quickbooksbot is addressed.
+
+---
+
 ## context-budget
 
 **Priority**: MEDIUM  
@@ -294,6 +315,7 @@ Creating agent definitions, deploying to multiple providers, selecting tools for
 | `research-before-decision` | Technical decisions | Research → Reason → Act → Verify |
 | `escalation-discipline` | Model spend gates | Summarize; confirm premium tiers |
 | `tool-quota` | Tool-heavy sessions | Track calls; stop repeated failures |
+| `quiet-mode` | Chat bots | Mention-only groups; domain-bound business bots |
 | `native-ux-tools` | Interactive questions | Use platform-native tools; 1 question/turn |
 | `context-budget` | Parallel spawning (opt-in) | Respect `AIWG_CONTEXT_WINDOW` |
 | `diagram-generation` | Major docs | Required diagrams per artifact type |

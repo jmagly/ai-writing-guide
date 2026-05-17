@@ -1,6 +1,6 @@
 # aiwg-utils Overview
 
-aiwg-utils is the core utility addon bundled with every AIWG installation. It provides core enforcement rules that govern how agents behave — how they scope subagents, follow instructions, research before acting, gate model escalation, avoid tool loops, handle interactive questions, manage context budgets, generate diagrams, and deploy across platforms. These rules are not optional; they are the behavioral foundation on which all other AIWG components operate.
+aiwg-utils is the core utility addon bundled with every AIWG installation. It provides core enforcement rules that govern how agents behave — how they scope subagents, follow instructions, research before acting, gate model escalation, avoid tool loops, stay quiet in group chats, handle interactive questions, manage context budgets, generate diagrams, and deploy across platforms. These rules are not optional; they are the behavioral foundation on which all other AIWG components operate.
 
 ## What's Included
 
@@ -50,6 +50,12 @@ Track per-session tool calls, honor `tool_quota` and `loop_detection` declaratio
 
 Apply when: unattended bots, tool-heavy sessions, shell retry loops, external fetch loops, agent definitions with `tool_quota`.
 
+#### quiet-mode
+
+Group-chat bots respond only when mentioned, replied to, or invoked by direct command. Multi-bot rooms require yielding to the addressed bot. Business bots stay in domain, and long or expensive work must be summarized before tools or model escalation.
+
+Apply when: Telegram/group-chat bots, multi-bot rooms, direct-message business bots, ambient room listeners.
+
 #### native-ux-tools
 
 Use platform-native interaction tools (e.g., Claude Code's AskUserQuestion) for interactive questions rather than plain text. One question per interaction turn. Includes a platform capability matrix for all 8 supported providers; falls back to formatted markdown if native tools are unavailable.
@@ -91,6 +97,7 @@ Full rule files:
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/escalation-discipline.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/tool-quota.md
+@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/quiet-mode.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/native-ux-tools.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/diagram-generation.md

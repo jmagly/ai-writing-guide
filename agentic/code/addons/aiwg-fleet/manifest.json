@@ -1,0 +1,42 @@
+{
+  "id": "aiwg-fleet",
+  "type": "addon",
+  "name": "AIWG Fleet Policies",
+  "version": "2026.5.0",
+  "description": "Cross-platform fleet behavior policies for quiet bots, mention-only group chat participation, and small-plan cost discipline",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "fleet",
+    "quiet-bot",
+    "mention-only",
+    "openclaw",
+    "telegram",
+    "budget"
+  ],
+  "entry": {
+    "behaviors": "behaviors/",
+    "docs": "docs/"
+  },
+  "behaviors": [
+    "quiet-bot",
+    "quiet-business-bot"
+  ],
+  "dependencies": {
+    "required": ["aiwg-utils"]
+  },
+  "providers": {
+    "openclaw": { "supported": true, "native_behaviors": true },
+    "claude-code": { "supported": "fallback-rule" },
+    "warp": { "supported": "fallback-rule" },
+    "copilot": { "supported": "fallback-rule" },
+    "cursor": { "supported": "fallback-rule" },
+    "windsurf": { "supported": "fallback-rule" },
+    "opencode": { "supported": "fallback-rule" },
+    "factory": { "supported": "fallback-rule" },
+    "codex": { "supported": "fallback-rule" }
+  }
+}

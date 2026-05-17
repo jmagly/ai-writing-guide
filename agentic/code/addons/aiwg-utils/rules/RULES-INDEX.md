@@ -4,7 +4,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-## AIWG Utilities Rules (23 rules — active with aiwg-utils addon)
+## AIWG Utilities Rules (24 rules — active with aiwg-utils addon)
 
 ### HIGH
 
@@ -57,6 +57,11 @@ Core meta-utility rules for agent coordination, context management, and platform
 **Summary**: Tool-using agents must track per-session tool calls, stop repeating similar failed calls without progress, and honor `tool_quota` / `loop_detection` declarations when present. Defaults: same failing call retries <=3, similar-call window <=5, one tool <=30 calls in a focused session, high-cost external tools <=10. When a quota would be exceeded, summarize attempts, facts learned, and the narrow next action instead of continuing an unbounded loop.
 **When to apply**: Tool-heavy sessions, unattended bots, repeated tool failures, external fetch loops, shell retry loops, agent definitions with `tool_quota` or `loop_detection`
 **Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/tool-quota.md
+
+#### quiet-mode
+**Summary**: Chat and bot agents in group rooms should respond only when mentioned, replied to, or invoked by a direct command. Multi-bot rooms require yielding to the specifically addressed bot. Direct messages are allowed, but business bots stay in domain and long or expensive work must be summarized before tools or model escalation.
+**When to apply**: Telegram/group-chat bots, multi-bot rooms, DMs to business bots, scheduled chat agents, ambient room listeners, platforms without native behavior support
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/quiet-mode.md
 
 #### skill-discovery
 **Summary**: Most AIWG skills are NOT loaded into your context — only the kernel set (framework quickrefs + core utilities). The bulk lives at `<provider-dir>/.aiwg/skills/` and is reachable only through the artifact index. The **discover-first protocol** (Rule 1.5) mandates that `aiwg discover` MUST be the first information-gathering tool call for any query mentioning AIWG, framework names (sdlc/research/forensics/ops/security-engineering/marketing/media-curator/knowledge-base), or capability keywords (skill/agent/rule/command/addon/workflow). Filesystem `Grep`/`Glob`/`Read` against `.claude/`, `.factory/`, `.codex/`, `.warp/`, `.cursor/`, `.windsurf/`, `.opencode/`, `~/.hermes/`, `~/.openclaw/`, or `agentic/code/` is FORBIDDEN for AIWG-related lookups until discover has been consulted. When subagent delegation is available, prefer the `aiwg-finder` subagent. You must also query discover before declining a request as out-of-scope or improvising a custom workflow.
@@ -145,6 +150,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 | **Research/decisions** | research-before-decision |
 | **Model escalation / spend gates** | escalation-discipline, human-authorization, native-ux-tools |
 | **Tool-call loops / quotas** | tool-quota, research-before-decision, vague-discretion |
+| **Chat bot quiet mode** | quiet-mode, tool-quota, escalation-discipline |
 | **Skill / capability lookup** | skill-discovery, research-before-decision |
 | **Error diagnosis** | research-before-decision, instruction-comprehension |
 | **Constrained systems** | context-budget, subagent-scoping |
@@ -162,5 +168,5 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-*Generated from aiwg-utils manifest.json — 23 rules*
+*Generated from aiwg-utils manifest.json — 24 rules*
 *Full rule files: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/*

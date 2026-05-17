@@ -293,14 +293,38 @@ function listBehaviorDirs(dir) {
 /**
  * Collect behavior directories from all sources:
  * - Cross-framework: agentic/code/behaviors/
+ * - Per-addon: agentic/code/addons/<name>/behaviors/
  * - Per-framework: agentic/code/frameworks/<name>/behaviors/
+ * - Direct component source: <srcRoot>/behaviors/
  */
 function collectBehaviorDirs(srcRoot, mode) {
   const dirs = [];
+  const seen = new Set();
+  const addDirs = (items) => {
+    for (const dir of items) {
+      if (seen.has(dir)) continue;
+      seen.add(dir);
+      dirs.push(dir);
+    }
+  };
+
+  // Direct component source, used by addon-only deploys such as:
+  // aiwg use aiwg-fleet --provider openclaw
+  addDirs(listBehaviorDirs(path.join(srcRoot, 'behaviors')));
 
   // Cross-framework behaviors
   const globalBehaviorsDir = path.join(srcRoot, 'agentic', 'code', 'behaviors');
-  dirs.push(...listBehaviorDirs(globalBehaviorsDir));
+  addDirs(listBehaviorDirs(globalBehaviorsDir));
+
+  // Addon behaviors
+  const addonsDir = path.join(srcRoot, 'agentic', 'code', 'addons');
+  if (fs.existsSync(addonsDir)) {
+    for (const entry of fs.readdirSync(addonsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const addonBehaviorsDir = path.join(addonsDir, entry.name, 'behaviors');
+      addDirs(listBehaviorDirs(addonBehaviorsDir));
+    }
+  }
 
   // Per-framework behaviors
   const frameworksDir = path.join(srcRoot, 'agentic', 'code', 'frameworks');
@@ -308,7 +332,7 @@ function collectBehaviorDirs(srcRoot, mode) {
     for (const entry of fs.readdirSync(frameworksDir, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
       const fwBehaviorsDir = path.join(frameworksDir, entry.name, 'behaviors');
-      dirs.push(...listBehaviorDirs(fwBehaviorsDir));
+      addDirs(listBehaviorDirs(fwBehaviorsDir));
     }
   }
 
