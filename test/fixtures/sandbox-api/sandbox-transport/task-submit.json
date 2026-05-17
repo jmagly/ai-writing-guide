@@ -1,0 +1,23 @@
+{
+  "name": "task-submit",
+  "endpoint": "POST /api/v1/tasks",
+  "request": {
+    "method": "POST",
+    "path": "/api/v1/tasks",
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "manifest_yaml": "version: \"1\"\nkind: Task\nmetadata:\n  name: \"pty-contract-agent-<timestamp>\"\n  labels:\n    aiwg_transport: pty\nclaude:\n  prompt: \"echo aiwg-contract\"\n  headless: true\n  skip_permissions: true\nvm:\n  profile: agentic-dev"
+    }
+  },
+  "response": {
+    "status": 202,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "task_id": "task-contract-1"
+    }
+  }
+}

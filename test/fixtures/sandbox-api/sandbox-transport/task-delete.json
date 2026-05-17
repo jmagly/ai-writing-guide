@@ -1,0 +1,17 @@
+{
+  "name": "task-delete",
+  "endpoint": "DELETE /api/v1/tasks/:taskId",
+  "request": {
+    "method": "DELETE",
+    "path": "/api/v1/tasks/task-contract-1"
+  },
+  "response": {
+    "status": 202,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "cancelled": true
+    }
+  }
+}

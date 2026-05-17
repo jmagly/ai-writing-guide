@@ -1,0 +1,19 @@
+{
+  "name": "agent-sessions-event",
+  "event": {
+    "type": "agent.sessions",
+    "sandboxId": "<sandbox_id>",
+    "agentId": "contract-agent",
+    "sessions": [
+      {
+        "session_id": "session-contract-1",
+        "session_name": "contract-shell",
+        "session_type": "interactive",
+        "command": "bash",
+        "created_at_secs": 1760000000,
+        "has_screen": true
+      }
+    ],
+    "timestamp": "2026-01-01T00:00:00.000Z"
+  }
+}

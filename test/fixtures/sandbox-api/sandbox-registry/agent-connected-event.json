@@ -1,0 +1,21 @@
+{
+  "name": "agent-connected-event",
+  "event": {
+    "type": "agent.connected",
+    "sandboxId": "<sandbox_id>",
+    "agentId": "contract-agent",
+    "agentInstanceId": "agent-instance-1",
+    "agentLogicalName": "contract-agent",
+    "loadout": "contract-loadout",
+    "aiwgFrameworks": [
+      {
+        "name": "agent-ops",
+        "providers": [
+          "codex"
+        ],
+        "version": "contract-fixture"
+      }
+    ],
+    "timestamp": "2026-01-01T00:00:00.000Z"
+  }
+}

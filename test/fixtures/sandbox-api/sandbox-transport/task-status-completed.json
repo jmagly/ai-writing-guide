@@ -1,0 +1,21 @@
+{
+  "name": "task-status-completed",
+  "endpoint": "GET /api/v1/tasks/:taskId",
+  "request": {
+    "method": "GET",
+    "path": "/api/v1/tasks/task-contract-1"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "id": "task-contract-1",
+      "name": "pty-contract-agent",
+      "state": "completed",
+      "agent_id": "contract-agent",
+      "exit_code": 0
+    }
+  }
+}

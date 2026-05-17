@@ -1,0 +1,24 @@
+{
+  "name": "task-list-running",
+  "endpoint": "GET /api/v1/tasks?state=running",
+  "request": {
+    "method": "GET",
+    "path": "/api/v1/tasks?state=running"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "tasks": [
+        {
+          "id": "task-contract-1",
+          "name": "pty-contract-agent",
+          "state": "running",
+          "agent_id": "contract-agent"
+        }
+      ]
+    }
+  }
+}

@@ -50,6 +50,7 @@
     "lint:tarball": "node tools/lint/tarball-audit.mjs",
     "lint:audit-signatures": "node tools/lint/audit-signatures.mjs",
     "test:conformance": "vitest run --config config/vitest.conformance.config.js test/conformance/executor-v1/",
+    "test:contract": "vitest run --config config/vitest.contract.config.js test/contract/",
     "test:integration:serve": "vitest run --config config/vitest.integration.config.js",
     "uat:serve-live": "vitest run --config config/vitest.uat-serve-live.config.js",
     "test:integration:serve:flake-gate": "node tools/scripts/integration-flake-gate.mjs"

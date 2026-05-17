@@ -1,0 +1,23 @@
+{
+  "name": "task-stdin",
+  "endpoint": "PATCH /api/v1/tasks/:taskId",
+  "request": {
+    "method": "PATCH",
+    "path": "/api/v1/tasks/task-contract-1",
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "stdin": "input line\n"
+    }
+  },
+  "response": {
+    "status": 202,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "accepted": true
+    }
+  }
+}

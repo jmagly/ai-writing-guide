@@ -1,0 +1,15 @@
+{
+  "name": "task-logs",
+  "endpoint": "GET /api/v1/tasks/:taskId/logs?offset=:offset",
+  "request": {
+    "method": "GET",
+    "path": "/api/v1/tasks/task-contract-1/logs?offset=0"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/plain"
+    },
+    "bodyText": "hello from sandbox\n"
+  }
+}

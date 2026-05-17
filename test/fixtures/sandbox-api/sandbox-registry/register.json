@@ -1,0 +1,24 @@
+{
+  "name": "sandbox-register",
+  "request": {
+    "body": {
+      "name": "contract-sandbox",
+      "instance_id": "sandbox-instance-1",
+      "grpc_endpoint": "http://127.0.0.1:50051",
+      "ws_endpoint": "ws://127.0.0.1:8121",
+      "http_endpoint": "http://127.0.0.1:8122",
+      "capabilities": [
+        "tasks",
+        "pty",
+        "events"
+      ],
+      "version": "contract-fixture"
+    }
+  },
+  "response": {
+    "body": {
+      "sandbox_id": "<sandbox_id>",
+      "token": "<bearer>"
+    }
+  }
+}
