@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'node:events';
 import http from 'node:http';
-import { WebServer } from '../../tools/daemon/web-server.mjs';
+import { WebServer } from '../../../tools/daemon/web-server.mjs';
 
 // --- Stub DaemonSupervisor ---
 
@@ -154,6 +154,45 @@ describe('WebServer', () => {
       const res = await jsonRequest(`${baseUrl}/api/nonexistent`);
       expect(res.status).toBe(404);
     });
+
+    it('returns 404 for unsupported methods on known paths', async () => {
+      const res = await jsonRequest(`${baseUrl}/api/status`, { method: 'POST' });
+      expect(res.status).toBe(404);
+      expect(res.json.error).toBe('Not found');
+    });
+
+    it('returns 503 for submit and cancel when supervisor is not initialized', async () => {
+      const bare = new WebServer({ port: 0, host: '127.0.0.1' });
+      await bare.start();
+      try {
+        const submit = await jsonRequest(`${bare.url}/api/submit`, {
+          method: 'POST',
+          body: JSON.stringify({ prompt: 'work' }),
+        });
+        const cancel = await jsonRequest(`${bare.url}/api/cancel/loop-1`, { method: 'POST' });
+        expect(submit.status).toBe(503);
+        expect(cancel.status).toBe(503);
+      } finally {
+        await bare.stop();
+      }
+    });
+
+    it('returns 422 when supervisor rejects a submitted loop', async () => {
+      supervisor.submit = () => { throw new Error('queue full'); };
+      const res = await jsonRequest(`${baseUrl}/api/submit`, {
+        method: 'POST',
+        body: JSON.stringify({ prompt: 'work' }),
+      });
+      expect(res.status).toBe(422);
+      expect(res.json.error).toBe('queue full');
+    });
+
+    it('handles CORS preflight before route dispatch', async () => {
+      const res = await request(`${baseUrl}/api/status`, { method: 'OPTIONS' });
+      expect(res.status).toBe(204);
+      expect(res.headers['access-control-allow-origin']).toBe('http://127.0.0.1');
+      expect(res.headers['access-control-allow-methods']).toContain('OPTIONS');
+    });
   });
 
   describe('authentication', () => {
@@ -239,6 +278,30 @@ describe('WebServer', () => {
 
       const eventData = events.join('');
       expect(eventData).toContain('loop:started');
+    });
+
+    it('GET /sse/output/:loopId should register and receive pushed output', async () => {
+      const chunks = [];
+      await new Promise((resolve, reject) => {
+        const req = http.get(`${baseUrl}/sse/output/loop-1`, (res) => {
+          res.on('data', (chunk) => {
+            chunks.push(chunk.toString());
+            if (chunks.join('').includes('hello')) {
+              req.destroy();
+              resolve();
+            }
+          });
+          setTimeout(() => {
+            server.pushOutput('loop-1', 'hello');
+          }, 50);
+        });
+        req.on('error', (err) => {
+          if (err.code !== 'ECONNRESET') reject(err);
+        });
+        setTimeout(() => { req.destroy(); resolve(); }, 3000);
+      });
+
+      expect(chunks.join('')).toContain('"chunk":"hello"');
     });
   });
 

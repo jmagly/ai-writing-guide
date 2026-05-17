@@ -92,6 +92,31 @@ describe('matchAgent', () => {
     );
     expect(reason).not.toBeNull();
   });
+
+  it('matches by agent_name only against logicalName', () => {
+    expect(matchAgent(makeAgent({ logicalName: 'build-runner' }), { agent_name: 'build-runner' })).toBeNull();
+    expect(matchAgent(makeAgent({ agentId: 'build-runner', logicalName: 'different' }), { agent_name: 'build-runner' }))
+      .toContain("logicalName 'different'");
+  });
+
+  it('requires all requested inventory agents and skills when filters are combined', () => {
+    const agent = makeAgent({
+      inventory: {
+        agents: [{ name: 'test-engineer' }, { name: 'security-auditor' }],
+        skills: [{ name: 'address-issues' }, { name: 'issue-audit' }],
+      },
+    });
+
+    expect(matchAgent(agent, {
+      agents: ['test-engineer', 'security-auditor'],
+      skills: ['address-issues'],
+    })).toBeNull();
+
+    expect(matchAgent(agent, {
+      agents: ['test-engineer'],
+      skills: ['missing-skill'],
+    })).toContain('missing skills');
+  });
 });
 
 describe('routeTask', () => {
@@ -131,6 +156,60 @@ describe('routeTask', () => {
     const lowLoad  = makeAgent({ agentId: 'low',  latestMetrics: { cpu_percent: 10, memory_used_bytes: 100, memory_total_bytes: 1000, uptime_seconds: 10, ts: Date.now() } });
     const result = routeTask([highLoad, lowLoad], {});
     expect(result.selected?.agent.agentId).toBe('low');
+  });
+
+  it('uses stable ordering as the final tie-breaker for equal scores', () => {
+    const first = makeAgent({ agentId: 'first' });
+    const second = makeAgent({ agentId: 'second' });
+    const result = routeTask([first, second], {});
+    expect(result.selected?.agent.agentId).toBe('first');
+    expect(result.candidates.map((c) => c.agent.agentId)).toEqual(['first', 'second']);
+  });
+
+  it('applies all filters together before scoring candidates', () => {
+    const wrongPlatform = makeAgent({
+      agentId: 'wrong-platform',
+      aiwgFrameworks: [{ name: 'sdlc-complete', providers: ['codex'] }],
+      inventory: { agents: [{ name: 'test-engineer' }], skills: [{ name: 'address-issues' }] },
+      latestMetrics: { cpu_percent: 1, memory_used_bytes: 1, memory_total_bytes: 1000, uptime_seconds: 10, ts: Date.now() },
+    });
+    const matching = makeAgent({
+      agentId: 'matching',
+      aiwgFrameworks: [{ name: 'sdlc-complete', providers: ['claude'] }],
+      inventory: { agents: [{ name: 'test-engineer' }], skills: [{ name: 'address-issues' }] },
+      latestMetrics: { cpu_percent: 40, memory_used_bytes: 1, memory_total_bytes: 1000, uptime_seconds: 10, ts: Date.now() },
+    });
+
+    const result = routeTask([wrongPlatform, matching], {
+      platform: 'claude',
+      frameworks: ['sdlc-complete'],
+      agents: ['test-engineer'],
+      skills: ['address-issues'],
+    });
+
+    expect(result.selected?.agent.agentId).toBe('matching');
+  });
+
+  it('relaxes inventory and load filters but preserves frameworks for any_with_framework fallback', () => {
+    const frameworkAgent = makeAgent({
+      agentId: 'framework-agent',
+      aiwgFrameworks: [{ name: 'sdlc-complete', providers: [] }],
+      inventory: { agents: [], skills: [] },
+      latestMetrics: { cpu_percent: 95, memory_used_bytes: 900, memory_total_bytes: 1000, uptime_seconds: 10, ts: Date.now() },
+    });
+    const unrelatedAgent = makeAgent({
+      agentId: 'unrelated',
+      aiwgFrameworks: [{ name: 'research-complete', providers: [] }],
+    });
+
+    const result = routeTask([unrelatedAgent, frameworkAgent], {
+      frameworks: ['sdlc-complete'],
+      agents: ['missing-agent'],
+      max_cpu_percent: 10,
+      fallback: { strategy: 'any_with_framework' },
+    });
+
+    expect(result.selected?.agent.agentId).toBe('framework-agent');
   });
 });
 

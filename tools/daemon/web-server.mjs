@@ -136,6 +136,13 @@ export class WebServer extends EventEmitter {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const pathname = url.pathname;
 
+    this._applyCorsHeaders(res);
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
     // Auth check for all paths except root and static (optional)
     if (this.token && (pathname.startsWith('/api/') || pathname.startsWith('/sse/'))) {
       if (!this._checkAuth(req, url)) {
@@ -367,6 +374,12 @@ export class WebServer extends EventEmitter {
     if (res.headersSent) return;
     res.writeHead(statusCode, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(data));
+  }
+
+  _applyCorsHeaders(res) {
+    res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   }
 
   _readBody(req) {

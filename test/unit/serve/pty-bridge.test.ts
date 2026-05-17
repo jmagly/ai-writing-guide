@@ -9,6 +9,7 @@ import {
   PtySessionRegistry,
   handlePtyConnection,
   createPtyWsHandler,
+  registry,
   type WebSocketLike,
   type WsMessage,
 } from '../../../src/serve/pty-bridge.js';
@@ -140,6 +141,68 @@ describe('handlePtyConnection', () => {
     }
 
     expect(ws.messages[0]).toEqual({ type: 'data', payload: 'buffered output' });
+  });
+});
+
+describe('handlePtyConnection message routing', () => {
+  afterEach(() => {
+    registry.delete('message-routing');
+    registry.delete('replay-trim');
+    registry.delete('already-exited');
+  });
+
+  it('routes browser data, resize, and close frames to an existing PTY', async () => {
+    const session = registry.create('message-routing');
+    const pty = {
+      write: vi.fn(),
+      resize: vi.fn(),
+      kill: vi.fn(),
+      onData: vi.fn(),
+      onExit: vi.fn(),
+    };
+    session.pty = pty;
+
+    const ws = makeMockWs() as ReturnType<typeof makeMockWs> & {
+      _onMessage?: (data: string) => void;
+      _onClose?: () => void;
+    };
+
+    await handlePtyConnection('message-routing', ws);
+
+    ws._onMessage?.(JSON.stringify({ type: 'data', payload: 'pwd\n' }));
+    ws._onMessage?.(JSON.stringify({ type: 'resize', cols: 100, rows: 40 }));
+    ws._onMessage?.(JSON.stringify({ type: 'close' }));
+    ws._onMessage?.('{bad json');
+
+    expect(pty.write).toHaveBeenCalledWith('pwd\n');
+    expect(pty.resize).toHaveBeenCalledWith(100, 40);
+    expect(pty.kill).toHaveBeenCalledOnce();
+
+    ws._onClose?.();
+    expect(session.clients.size).toBe(0);
+  });
+
+  it('replays from the last full-screen erase when reconnecting', async () => {
+    const session = registry.create('replay-trim');
+    session.outputBuffer = 'old bytes\x1b[2Jcurrent screen';
+    session.pty = { write: vi.fn(), resize: vi.fn(), kill: vi.fn(), onData: vi.fn(), onExit: vi.fn() };
+
+    const ws = makeMockWs();
+    await handlePtyConnection('replay-trim', ws);
+
+    expect(ws.messages).toHaveLength(1);
+    expect(ws.messages[0]).toEqual({ type: 'data', payload: '\x1b[2Jcurrent screen' });
+  });
+
+  it('returns an exit frame and closes when the session already exited', async () => {
+    const session = registry.create('already-exited');
+    session.exited = true;
+
+    const ws = makeMockWs();
+    await handlePtyConnection('already-exited', ws);
+
+    expect(ws.messages).toEqual([{ type: 'exit', code: 0 }]);
+    expect(ws.closed).toBe(true);
   });
 });
 

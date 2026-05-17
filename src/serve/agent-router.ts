@@ -186,6 +186,16 @@ export function matchAgent(
     return `agent status is '${agent.status}'`;
   }
 
+  // Platform requirements are declared per installed AIWG framework. A match
+  // on any framework provider means the agent can receive work for that
+  // provider.
+  if (filter.platform) {
+    const providers = new Set(agent.aiwgFrameworks?.flatMap((f) => f.providers) ?? []);
+    if (!providers.has(filter.platform)) {
+      return `platform providers do not include '${filter.platform}'`;
+    }
+  }
+
   // Framework requirements
   if (filter.frameworks && filter.frameworks.length > 0) {
     const installed = new Set(agent.aiwgFrameworks?.map((f) => f.name) ?? []);
