@@ -66,7 +66,12 @@ import path from 'path';
 import os from 'os';
 import readline from 'readline';
 import { fileURLToPath } from 'url';
-import { loadModelConfig, migrateCommandsDirectory } from './providers/base.mjs';
+import {
+  collectBehaviorDirs,
+  deployEmulatedBehaviors,
+  loadModelConfig,
+  migrateCommandsDirectory,
+} from './providers/base.mjs';
 
 /**
  * Read version from package.json at the source root.
@@ -614,6 +619,14 @@ async function promptCommandsMigration(cfg, provider, targetDir) {
   // Delegate to provider
   try {
     await provider.deploy(opts);
+
+    if (!opts.commandsOnly && !opts.skillsOnly && !opts.rulesOnly) {
+      const behaviorDirs = collectBehaviorDirs(srcRoot);
+      const behaviorCount = deployEmulatedBehaviors(behaviorDirs, provider.name, cfg.target, opts);
+      if (behaviorCount > 0 && !cfg.quiet) {
+        console.log(`  Deployed: ${behaviorCount} behavior emulation${behaviorCount === 1 ? '' : 's'}`);
+      }
+    }
 
     // Save model configuration if requested
     if ((cfg.save || cfg.saveUser) && !cfg.dryRun) {

@@ -158,7 +158,7 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
     aiwg steward find --capability <name>         Routing advice for your current provider
 
   Providers:
-    claude-code, codex, copilot, cursor, factory, opencode, warp, windsurf, openclaw
+    claude-code, codex, copilot, cursor, factory, opencode, warp, windsurf, hermes, openclaw
 
   Features:
     cron, agent_teams, tasks, mcp, behaviors, mission_control, daemon

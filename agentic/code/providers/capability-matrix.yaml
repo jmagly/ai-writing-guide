@@ -23,7 +23,7 @@ providers:
       commands: .claude/commands/
       skills: .claude/skills/
       rules: .claude/rules/
-      behaviors: null
+      behaviors: .claude/rules/behaviors/
     native_features:
       cron: true
       agent_teams: true
@@ -47,6 +47,27 @@ providers:
       context_file: CLAUDE.md
     deploy_target: project
     aggregated_output: false
+    agent_capabilities:
+      default:
+        context_window: 200000
+        max_output_tokens: 12000
+        max_tool_calls: 40
+        max_concurrent_subagents: 4
+        supports_streaming: true
+        million_context_requires_extra_usage: true
+        quota_available: false
+        recovery:
+          context_overflow: retry_with_prefiltered_context
+          quota_exhausted: retry_with_standard_context
+          timeout: retry_with_smaller_scope
+      architecture-designer:
+        context_window: 200000
+      api-designer:
+        context_window: 200000
+        notes: Avoid 1M-context model unless extra usage is enabled.
+      requirements-analyst:
+        context_window: 200000
+        notes: Avoid 1M-context model unless extra usage is enabled.
 
   codex:
     display_name: OpenAI Codex
@@ -61,7 +82,7 @@ providers:
       skills: "~/.codex/skills/"
       skills_cross_agent: .agents/skills/
       rules: .codex/rules/
-      behaviors: null
+      behaviors: .codex/rules/behaviors/
     native_features:
       cron: false
       agent_teams: false
@@ -85,6 +106,19 @@ providers:
       context_file: CODEX.md
     deploy_target: mixed
     aggregated_output: true
+    agent_capabilities:
+      default:
+        context_window: 200000
+        max_output_tokens: 12000
+        max_tool_calls: 40
+        max_concurrent_subagents: 4
+        supports_streaming: true
+        million_context_requires_extra_usage: false
+        quota_available: true
+        recovery:
+          context_overflow: retry_with_prefiltered_context
+          quota_exhausted: retry_with_different_model
+          timeout: retry_with_smaller_scope
 
   copilot:
     display_name: GitHub Copilot
@@ -96,7 +130,7 @@ providers:
       commands: .github/agents/
       skills: .github/skills/
       rules: .github/copilot-rules/
-      behaviors: null
+      behaviors: .github/instructions/aiwg-behaviors/
     native_features:
       cron: false
       agent_teams: false
@@ -132,7 +166,7 @@ providers:
       commands: .factory/commands/
       skills: .factory/skills/
       rules: .factory/rules/
-      behaviors: null
+      behaviors: .factory/rules/behaviors/
     native_features:
       cron: false
       agent_teams: true       # Missions (multi-agent orchestration)
@@ -168,7 +202,7 @@ providers:
       commands: .cursor/commands/
       skills: .cursor/skills/
       rules: .cursor/rules/
-      behaviors: null
+      behaviors: .cursor/rules/behaviors/
     native_features:
       cron: false
       agent_teams: false
@@ -203,7 +237,7 @@ providers:
       commands: .opencode/command/
       skills: .opencode/skill/
       rules: .opencode/rule/
-      behaviors: null
+      behaviors: .opencode/rule/behaviors/
     native_features:
       cron: false
       agent_teams: false
@@ -239,7 +273,7 @@ providers:
       skills: .warp/skills/
       skills_cross_agent: .agents/skills/
       rules: .warp/rules/
-      behaviors: null
+      behaviors: .warp/rules/behaviors/
     native_features:
       cron: false
       agent_teams: false
@@ -276,7 +310,7 @@ providers:
       skills: .windsurf/skills/
       skills_cross_agent: .agents/skills/
       rules: .windsurf/rules/
-      behaviors: null
+      behaviors: .windsurf/rules/behaviors/
     native_features:
       cron: false
       agent_teams: false
@@ -299,6 +333,42 @@ providers:
       fallback: full-inject
       context_file: AGENTS.md
     deploy_target: project
+    aggregated_output: true
+
+  hermes:
+    display_name: Hermes
+    status: experimental
+    daemon_tier: native
+    daemon_pty_adapter: false
+    artifact_paths:
+      agents: AGENTS.md
+      commands: "MCP: command-run"
+      skills: "~/.hermes/skills/"
+      skills_cross_agent: "~/.hermes/skills/.aiwg/"
+      rules: "MCP: rule-list/rule-show"
+      behaviors: .hermes/behaviors/
+    native_features:
+      cron: false
+      agent_teams: false
+      tasks: false
+      mcp: true
+      behaviors: false
+      mission_control: false
+      daemon: true
+    emulation:
+      cron: aiwg-schedule
+      agent_teams: aiwg-mc
+      tasks: aiwg-mc
+      mcp: native
+      behaviors: aiwg-mc
+      mission_control: aiwg-mc
+      daemon: native
+    hook_wiring:
+      at_link_support: false
+      hook_file: .hermes.md
+      fallback: full-inject
+      context_file: AGENTS.md
+    deploy_target: mixed
     aggregated_output: true
 
   openclaw:

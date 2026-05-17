@@ -46,6 +46,7 @@ export type EmulationStrategy =
   | 'hooks'
   | 'aiwg-mc'
   | 'aiwg-schedule'
+  | 'aiwg-daemon'
   | null;
 
 export type DeployTarget = 'project' | 'home' | 'mixed';
@@ -81,6 +82,48 @@ export interface ProviderCapabilities {
   hook_wiring: HookWiring;
   deploy_target: DeployTarget;
   aggregated_output: boolean;
+  agent_capabilities?: Record<string, AgentCapabilities>;
+}
+
+export interface AgentCapabilities {
+  context_window?: number;
+  max_output_tokens?: number;
+  max_tool_calls?: number;
+  max_concurrent_subagents?: number;
+  supports_streaming?: boolean;
+  million_context_requires_extra_usage?: boolean;
+  quota_available?: boolean;
+  notes?: string;
+  recovery?: Record<string, string>;
+}
+
+export type DispatchPreflightStatus =
+  | 'ok'
+  | 'would_overflow'
+  | 'quota_unavailable'
+  | 'tool_budget_exceeded'
+  | 'unknown_provider';
+
+export interface DispatchPreflightInput {
+  provider: string;
+  agentType?: string;
+  promptTokens?: number;
+  contextTokens?: number;
+  outputTokens?: number;
+  toolCalls?: number;
+  requiresMillionContext?: boolean;
+}
+
+export interface DispatchPreflightResult {
+  status: DispatchPreflightStatus;
+  provider: string;
+  agentType: string;
+  estimatedTokens: number;
+  contextWindow: number | null;
+  maxOutputTokens: number | null;
+  maxToolCalls: number | null;
+  recoveryHint: string | null;
+  message: string;
 }
 
 export interface FeatureDefinition {
@@ -172,6 +215,108 @@ export function getProviderCapabilities(
   }
 
   return undefined;
+}
+
+export function getAgentCapabilities(
+  providerKey: string,
+  agentType = 'default',
+): AgentCapabilities | undefined {
+  const caps = getProviderCapabilities(providerKey);
+  if (!caps?.agent_capabilities) return undefined;
+  const defaults = caps.agent_capabilities.default || {};
+  const override = caps.agent_capabilities[agentType] || {};
+  return {
+    ...defaults,
+    ...override,
+    recovery: {
+      ...(defaults.recovery || {}),
+      ...(override.recovery || {}),
+    },
+  };
+}
+
+/**
+ * Pre-flight a provider subagent dispatch before spawning work. The helper is
+ * intentionally deterministic: callers pass token/tool estimates and receive a
+ * structured routing signal instead of pattern-matching provider error strings.
+ */
+export function preflightSubagentDispatch(input: DispatchPreflightInput): DispatchPreflightResult {
+  const agentType = input.agentType || 'default';
+  const provider = input.provider;
+  const caps = getProviderCapabilities(provider);
+  const agentCaps = getAgentCapabilities(provider, agentType);
+  const estimatedTokens =
+    (input.promptTokens || 0) +
+    (input.contextTokens || 0) +
+    (input.outputTokens || 0);
+  const contextWindow = agentCaps?.context_window ?? null;
+  const maxOutputTokens = agentCaps?.max_output_tokens ?? null;
+  const maxToolCalls = agentCaps?.max_tool_calls ?? null;
+
+  const base = {
+    provider,
+    agentType,
+    estimatedTokens,
+    contextWindow,
+    maxOutputTokens,
+    maxToolCalls,
+  };
+
+  if (!caps) {
+    return {
+      ...base,
+      status: 'unknown_provider',
+      recoveryHint: 'escalate_to_human',
+      message: `Unknown provider: ${provider}`,
+    };
+  }
+
+  if (
+    input.requiresMillionContext === true &&
+    agentCaps?.million_context_requires_extra_usage === true &&
+    agentCaps?.quota_available !== true
+  ) {
+    return {
+      ...base,
+      status: 'quota_unavailable',
+      recoveryHint: agentCaps?.recovery?.quota_exhausted || 'retry_with_standard_context',
+      message: `${provider}/${agentType} requires 1M-context extra usage, but quota is not marked available.`,
+    };
+  }
+
+  if (contextWindow !== null && estimatedTokens > contextWindow) {
+    return {
+      ...base,
+      status: 'would_overflow',
+      recoveryHint: agentCaps?.recovery?.context_overflow || 'retry_with_prefiltered_context',
+      message: `Estimated dispatch size ${estimatedTokens} tokens exceeds ${provider}/${agentType} context window ${contextWindow}.`,
+    };
+  }
+
+  if (maxOutputTokens !== null && (input.outputTokens || 0) > maxOutputTokens) {
+    return {
+      ...base,
+      status: 'would_overflow',
+      recoveryHint: 'reduce_expected_output',
+      message: `Requested output budget ${input.outputTokens || 0} exceeds ${provider}/${agentType} max output ${maxOutputTokens}.`,
+    };
+  }
+
+  if (maxToolCalls !== null && (input.toolCalls || 0) > maxToolCalls) {
+    return {
+      ...base,
+      status: 'tool_budget_exceeded',
+      recoveryHint: 'split_task_or_prefilter_context',
+      message: `Estimated tool calls ${input.toolCalls || 0} exceeds ${provider}/${agentType} max tool calls ${maxToolCalls}.`,
+    };
+  }
+
+  return {
+    ...base,
+    status: 'ok',
+    recoveryHint: null,
+    message: `${provider}/${agentType} dispatch fits declared provider budget.`,
+  };
 }
 
 /**
