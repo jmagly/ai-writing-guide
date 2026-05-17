@@ -79,6 +79,26 @@ describe('statusHandler', () => {
     );
   });
 
+  it('passes fleet export flags through to script', async () => {
+    const args = ['--export', 'json', '--fleet-id', 'eride'];
+    await statusHandler.execute(makeCtx(args));
+    expect(mockRun).toHaveBeenCalledWith(
+      'tools/cli/workspace-status.mjs',
+      args,
+      expect.any(Object)
+    );
+  });
+
+  it('passes fleet serve flags through to script', async () => {
+    const args = ['--serve', '--port', '7387'];
+    await statusHandler.execute(makeCtx(args));
+    expect(mockRun).toHaveBeenCalledWith(
+      'tools/cli/workspace-status.mjs',
+      args,
+      expect.any(Object)
+    );
+  });
+
   it('forwards exit code from script', async () => {
     mockRun.mockResolvedValue({ exitCode: 1 });
     const result = await statusHandler.execute(makeCtx());

@@ -20,6 +20,8 @@
  */
 
 import fs from 'fs/promises';
+import http from 'http';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -46,6 +48,12 @@ USAGE
 OPTIONS
   --verbose, -v   Show detailed information
   --json          Output as JSON
+  --export <fmt>  Export fleet status payload: json | ndjson
+  --serve         Serve fleet status JSON over loopback HTTP
+  --bind <addr>   Bind address for --serve (default: 127.0.0.1)
+  --port <port>   Port for --serve (default: 7387)
+  --fleet-id <id> Machine identifier for fleet exports
+  --activity-hours <n> Activity-log lookback window (default: 24)
   --help, -h      Show this help message
 
 ARGUMENTS
@@ -60,6 +68,13 @@ EXAMPLES
 
   # Output as JSON for scripting
   aiwg -status --json
+
+  # Export fleet status for cockpit ingestion
+  aiwg status --export json --fleet-id eride
+  aiwg status --export ndjson
+
+  # Serve fleet status on loopback for polling
+  aiwg status --serve --port 7387 --fleet-id eride
 `);
 }
 
@@ -70,6 +85,12 @@ function parseArgs(args) {
   const options = {
     verbose: false,
     json: false,
+    exportFormat: null,
+    serve: false,
+    bind: '127.0.0.1',
+    port: 7387,
+    fleetId: null,
+    activityHours: 24,
     projectRoot: process.cwd(),
     help: false
   };
@@ -81,6 +102,20 @@ function parseArgs(args) {
       options.verbose = true;
     } else if (arg === '--json') {
       options.json = true;
+    } else if (arg === '--export' && args[i + 1]) {
+      options.exportFormat = args[++i];
+    } else if (arg === '--serve') {
+      options.serve = true;
+    } else if (arg === '--bind' && args[i + 1]) {
+      options.bind = args[++i];
+    } else if (arg === '--port' && args[i + 1]) {
+      const port = Number(args[++i]);
+      if (Number.isInteger(port) && port >= 0 && port < 65536) options.port = port;
+    } else if (arg === '--fleet-id' && args[i + 1]) {
+      options.fleetId = args[++i];
+    } else if (arg === '--activity-hours' && args[i + 1]) {
+      const hours = Number(args[++i]);
+      if (Number.isFinite(hours) && hours >= 0) options.activityHours = hours;
     } else if (arg === '--help' || arg === '-h') {
       options.help = true;
     } else if (!arg.startsWith('--') && !arg.startsWith('-')) {
@@ -89,6 +124,14 @@ function parseArgs(args) {
   }
 
   return options;
+}
+
+async function readJsonFile(filePath) {
+  try {
+    return JSON.parse(await fs.readFile(filePath, 'utf8'));
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -172,10 +215,12 @@ async function collectProviderDeployments(projectRoot) {
       const count = await countDirEntries(path.join(providerPath, dir));
       if (count > 0) counts[dir] = count;
     }
+    const manifest = await readJsonFile(path.join(providerPath, '.aiwg-manifest.json'));
     deployments.push({
       name: provider.name,
       path: provider.path,
-      counts
+      counts,
+      lastRefresh: manifest?.generatedAt || manifest?.deployedAt || manifest?.timestamp || null
     });
   }
   return deployments;
@@ -205,6 +250,271 @@ async function collectProjectLocalBundles(aiwgPath, installedFrameworkIds = new 
   return bundles;
 }
 
+function parseActivityLogLine(line) {
+  const match = /^##\s+\[(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})\]\s+([a-z]+)\s+\|\s+(.+?)\s*$/.exec(line);
+  if (!match) return null;
+  const [, rawTimestamp, operation, summary] = match;
+  const isoTimestamp = `${rawTimestamp.replace(' ', 'T')}:00.000Z`;
+  const date = new Date(isoTimestamp);
+  if (Number.isNaN(date.getTime())) return null;
+  return { timestamp: isoTimestamp, rawTimestamp, operation, summary };
+}
+
+async function collectActivityLog(projectRoot, hours) {
+  const candidates = [
+    path.join(projectRoot, '.aiwg', 'activity.log'),
+    path.join(projectRoot, '.aiwg', 'activity-log', 'activity.log')
+  ];
+  let content = null;
+  let source = null;
+  for (const candidate of candidates) {
+    try {
+      content = await fs.readFile(candidate, 'utf8');
+      source = path.relative(projectRoot, candidate);
+      break;
+    } catch {
+      // Try next historical location.
+    }
+  }
+  if (!content) return { source: null, entries: [] };
+
+  const cutoff = hours > 0 ? Date.now() - hours * 60 * 60 * 1000 : 0;
+  const entries = content
+    .split('\n')
+    .map(parseActivityLogLine)
+    .filter(Boolean)
+    .filter(entry => cutoff === 0 || new Date(entry.timestamp).getTime() >= cutoff)
+    .slice(-100);
+
+  return { source, entries };
+}
+
+async function collectActiveOperations(projectRoot) {
+  const checks = [
+    { name: 'mission-control', path: path.join(projectRoot, '.aiwg', 'mc') },
+    { name: 'ralph', path: path.join(projectRoot, '.aiwg', 'ralph') },
+    { name: 'daemon', path: path.join(projectRoot, '.aiwg', 'daemon') }
+  ];
+  const operations = [];
+  for (const check of checks) {
+    try {
+      const entries = await fs.readdir(check.path, { withFileTypes: true });
+      const count = entries.filter(entry => !entry.name.startsWith('.')).length;
+      if (count > 0) {
+        operations.push({
+          subsystem: check.name,
+          path: path.relative(projectRoot, check.path),
+          count
+        });
+      }
+    } catch {
+      // No active state for this subsystem.
+    }
+  }
+  return operations;
+}
+
+async function buildWorkspaceStatus(projectRoot) {
+  const aiwgPath = path.join(projectRoot, '.aiwg');
+  const result = {
+    workspace: {
+      path: aiwgPath,
+      exists: false,
+      isLegacy: false,
+      isFrameworkScoped: false
+    },
+    frameworks: [],
+    providerDeployments: [],
+    projectLocalBundles: [],
+    health: {
+      overall: 'unknown',
+      issues: []
+    },
+    migration: {
+      status: 'unknown',
+      backupsAvailable: 0
+    }
+  };
+
+  try {
+    await fs.access(aiwgPath);
+    result.workspace.exists = true;
+  } catch {
+    result.workspace.exists = false;
+  }
+
+  if (!result.workspace.exists) return result;
+
+  const frameworksDir = path.join(aiwgPath, 'frameworks');
+  const legacyDirs = ['intake', 'requirements', 'architecture', 'planning', 'testing'];
+
+  try {
+    await fs.access(frameworksDir);
+    result.workspace.isFrameworkScoped = true;
+  } catch {
+    result.workspace.isFrameworkScoped = false;
+  }
+
+  for (const dir of legacyDirs) {
+    try {
+      await fs.access(path.join(aiwgPath, dir));
+      result.workspace.isLegacy = true;
+      break;
+    } catch {
+      // Directory doesn't exist.
+    }
+  }
+
+  if (result.workspace.isFrameworkScoped && !result.workspace.isLegacy) {
+    result.migration.status = 'completed';
+  } else if (result.workspace.isLegacy && !result.workspace.isFrameworkScoped) {
+    result.migration.status = 'pending';
+  } else if (result.workspace.isLegacy && result.workspace.isFrameworkScoped) {
+    result.migration.status = 'partial';
+  } else {
+    result.migration.status = 'none';
+  }
+
+  const parentDir = path.dirname(aiwgPath);
+  try {
+    const entries = await fs.readdir(parentDir);
+    result.migration.backupsAvailable = entries.filter(
+      name => name.startsWith('.aiwg.backup.')
+    ).length;
+  } catch {
+    result.migration.backupsAvailable = 0;
+  }
+
+  const registryPath = path.join(frameworksDir, 'registry.json');
+  try {
+    const registryContent = await fs.readFile(registryPath, 'utf8');
+    const registry = JSON.parse(registryContent);
+    result.frameworks = normalizeRegistryFrameworks(registry);
+  } catch {
+    // Registry not found or invalid.
+  }
+
+  result.providerDeployments = await collectProviderDeployments(projectRoot);
+  result.projectLocalBundles = await collectProjectLocalBundles(
+    aiwgPath,
+    new Set(result.frameworks.map(framework => framework.id))
+  );
+
+  if (result.frameworks.length === 0) {
+    result.health.overall = 'unknown';
+  } else {
+    const hasErrors = result.frameworks.some(f => f.health === 'error');
+    const hasWarnings = result.frameworks.some(f => f.health === 'warning');
+
+    if (hasErrors) {
+      result.health.overall = 'error';
+    } else if (hasWarnings) {
+      result.health.overall = 'warning';
+    } else {
+      result.health.overall = 'healthy';
+    }
+  }
+
+  if (result.workspace.isLegacy && !result.workspace.isFrameworkScoped) {
+    result.health.issues.push({
+      severity: 'warning',
+      message: 'Legacy workspace structure detected. Consider migrating.',
+      action: 'aiwg -migrate-workspace'
+    });
+  }
+
+  return result;
+}
+
+async function readAiwgVersion() {
+  const candidates = [
+    path.join(__dirname, '..', '..', 'package.json'),
+    path.join(process.cwd(), 'package.json')
+  ];
+  for (const candidate of candidates) {
+    const pkg = await readJsonFile(candidate);
+    if (pkg?.version) return pkg.version;
+  }
+  return 'unknown';
+}
+
+async function buildFleetStatusExport(projectRoot, options = {}) {
+  const workspace = await buildWorkspaceStatus(projectRoot);
+  const activityLog = await collectActivityLog(projectRoot, options.activityHours ?? 24);
+  const activeOperations = await collectActiveOperations(projectRoot);
+
+  return {
+    schema: 'aiwg.fleet.status.v1',
+    generated_at: new Date().toISOString(),
+    machine: {
+      fleet_id: options.fleetId || process.env.AIWG_FLEET_ID || os.hostname(),
+      hostname: os.hostname(),
+      platform: process.platform,
+      arch: process.arch
+    },
+    aiwg: {
+      version: await readAiwgVersion(),
+      workspace_path: workspace.workspace.path
+    },
+    workspace,
+    frameworks: workspace.frameworks,
+    provider_deployments: workspace.providerDeployments,
+    activity_log: activityLog,
+    active_operations: activeOperations,
+    health: {
+      overall: workspace.health.overall,
+      flags: workspace.health.issues.map(issue => ({
+        severity: issue.severity,
+        message: issue.message,
+        action: issue.action || null
+      }))
+    },
+    security: {
+      bind_default: '127.0.0.1',
+      contains_secrets: false,
+      transport: 'pull'
+    }
+  };
+}
+
+function writeExportPayload(payload, format) {
+  if (format === 'json') {
+    console.log(JSON.stringify(payload, null, 2));
+  } else if (format === 'ndjson') {
+    console.log(JSON.stringify(payload));
+  } else {
+    throw new Error(`Unsupported export format: ${format}. Expected json or ndjson.`);
+  }
+}
+
+async function startStatusServer(options) {
+  const server = http.createServer(async (req, res) => {
+    if (req.method !== 'GET' || !['/', '/status', '/status.json'].includes(req.url || '/')) {
+      res.writeHead(404, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ error: 'not_found' }));
+      return;
+    }
+
+    try {
+      const payload = await buildFleetStatusExport(options.projectRoot, options);
+      res.writeHead(200, {
+        'content-type': 'application/json',
+        'cache-control': 'no-store'
+      });
+      res.end(JSON.stringify(payload, null, 2));
+    } catch (error) {
+      res.writeHead(500, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message || String(error) }));
+    }
+  });
+
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(options.port, options.bind, resolve);
+  });
+  return server;
+}
+
 // ===========================
 // Main Status Flow
 // ===========================
@@ -222,34 +532,25 @@ async function workspaceStatus(args) {
       return;
     }
 
-    const aiwgPath = path.join(options.projectRoot, '.aiwg');
-    const result = {
-      workspace: {
-        path: aiwgPath,
-        exists: false,
-        isLegacy: false,
-        isFrameworkScoped: false
-      },
-      frameworks: [],
-      providerDeployments: [],
-      projectLocalBundles: [],
-      health: {
-        overall: 'unknown',
-        issues: []
-      },
-      migration: {
-        status: 'unknown',
-        backupsAvailable: 0
-      }
-    };
-
-    // Check if .aiwg/ exists
-    try {
-      await fs.access(aiwgPath);
-      result.workspace.exists = true;
-    } catch {
-      result.workspace.exists = false;
+    if (options.exportFormat && !['json', 'ndjson'].includes(options.exportFormat)) {
+      throw new Error(`Unsupported export format: ${options.exportFormat}. Expected json or ndjson.`);
     }
+
+    if (options.serve) {
+      const server = await startStatusServer(options);
+      const address = server.address();
+      const port = typeof address === 'object' && address ? address.port : options.port;
+      console.log(`AIWG fleet status server listening on http://${options.bind}:${port}/status`);
+      return server;
+    }
+
+    if (options.exportFormat) {
+      const payload = await buildFleetStatusExport(options.projectRoot, options);
+      writeExportPayload(payload, options.exportFormat);
+      return;
+    }
+
+    const result = await buildWorkspaceStatus(options.projectRoot);
 
     if (!result.workspace.exists) {
       if (options.json) {
@@ -266,92 +567,6 @@ async function workspaceStatus(args) {
         console.log('  aiwg use all         # Install all frameworks');
       }
       return;
-    }
-
-    // Check workspace structure
-    const frameworksDir = path.join(aiwgPath, 'frameworks');
-    const legacyDirs = ['intake', 'requirements', 'architecture', 'planning', 'testing'];
-
-    // Check for framework-scoped structure
-    try {
-      await fs.access(frameworksDir);
-      result.workspace.isFrameworkScoped = true;
-    } catch {
-      result.workspace.isFrameworkScoped = false;
-    }
-
-    // Check for legacy structure
-    for (const dir of legacyDirs) {
-      try {
-        await fs.access(path.join(aiwgPath, dir));
-        result.workspace.isLegacy = true;
-        break;
-      } catch {
-        // Directory doesn't exist
-      }
-    }
-
-    // Determine migration status
-    if (result.workspace.isFrameworkScoped && !result.workspace.isLegacy) {
-      result.migration.status = 'completed';
-    } else if (result.workspace.isLegacy && !result.workspace.isFrameworkScoped) {
-      result.migration.status = 'pending';
-    } else if (result.workspace.isLegacy && result.workspace.isFrameworkScoped) {
-      result.migration.status = 'partial';
-    } else {
-      result.migration.status = 'none';
-    }
-
-    // Count backups
-    const parentDir = path.dirname(aiwgPath);
-    try {
-      const entries = await fs.readdir(parentDir);
-      result.migration.backupsAvailable = entries.filter(
-        name => name.startsWith('.aiwg.backup.')
-      ).length;
-    } catch {
-      result.migration.backupsAvailable = 0;
-    }
-
-    // Try to load registry for framework info
-    const registryPath = path.join(frameworksDir, 'registry.json');
-    try {
-      const registryContent = await fs.readFile(registryPath, 'utf8');
-      const registry = JSON.parse(registryContent);
-      result.frameworks = normalizeRegistryFrameworks(registry);
-    } catch {
-      // Registry not found or invalid
-    }
-
-    result.providerDeployments = await collectProviderDeployments(options.projectRoot);
-    result.projectLocalBundles = await collectProjectLocalBundles(
-      aiwgPath,
-      new Set(result.frameworks.map(framework => framework.id))
-    );
-
-    // Determine overall health
-    if (result.frameworks.length === 0) {
-      result.health.overall = 'unknown';
-    } else {
-      const hasErrors = result.frameworks.some(f => f.health === 'error');
-      const hasWarnings = result.frameworks.some(f => f.health === 'warning');
-
-      if (hasErrors) {
-        result.health.overall = 'error';
-      } else if (hasWarnings) {
-        result.health.overall = 'warning';
-      } else {
-        result.health.overall = 'healthy';
-      }
-    }
-
-    // Check for common issues
-    if (result.workspace.isLegacy && !result.workspace.isFrameworkScoped) {
-      result.health.issues.push({
-        severity: 'warning',
-        message: 'Legacy workspace structure detected. Consider migrating.',
-        action: 'aiwg -migrate-workspace'
-      });
     }
 
     // Output results
@@ -473,3 +688,4 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 }
 
 export { workspaceStatus };
+export { buildFleetStatusExport, buildWorkspaceStatus, startStatusServer };

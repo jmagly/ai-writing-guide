@@ -5,6 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs/promises';
+import http from 'node:http';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -147,7 +148,8 @@ describe('Workspace CLI Commands', () => {
           {
             name: 'codex',
             path: '.codex',
-            counts: { agents: 1 }
+            counts: { agents: 1 },
+            lastRefresh: null
           }
         ]);
         expect(output.projectLocalBundles).toEqual(
@@ -157,6 +159,116 @@ describe('Workspace CLI Commands', () => {
         );
       } finally {
         console.log = originalLog;
+      }
+    });
+
+    it('exports stable fleet status JSON with fleet id and activity slice', async () => {
+      await fs.mkdir(path.join(aiwgDir, 'frameworks'), { recursive: true });
+      await fs.mkdir(path.join(testDir, '.codex', 'agents'), { recursive: true });
+      await fs.writeFile(path.join(testDir, '.codex', 'agents', 'ops-agent.md'), '# Ops agent');
+      await fs.writeFile(
+        path.join(aiwgDir, 'activity.log'),
+        '## [2026-05-17 12:00] deploy | deployed codex provider\n'
+      );
+      await fs.writeFile(
+        path.join(aiwgDir, 'frameworks', 'registry.json'),
+        JSON.stringify({
+          frameworks: {
+            'sdlc-complete': {
+              id: 'sdlc-complete',
+              version: '1.0.0',
+              health: 'healthy'
+            }
+          }
+        })
+      );
+
+      const { workspaceStatus } = await import('../../../tools/cli/workspace-status.mjs');
+
+      const logs: string[] = [];
+      const originalLog = console.log;
+      console.log = (...args) => logs.push(args.join(' '));
+
+      try {
+        await workspaceStatus(['--export', 'json', '--fleet-id', 'eride', '--activity-hours', '0', testDir]);
+        const output = JSON.parse(logs.join('\n'));
+        expect(output.schema).toBe('aiwg.fleet.status.v1');
+        expect(output.machine.fleet_id).toBe('eride');
+        expect(output.frameworks[0].id).toBe('sdlc-complete');
+        expect(output.provider_deployments).toEqual([
+          expect.objectContaining({
+            name: 'codex',
+            path: '.codex',
+            counts: { agents: 1 }
+          })
+        ]);
+        expect(output.activity_log.entries).toEqual([
+          expect.objectContaining({
+            operation: 'deploy',
+            summary: 'deployed codex provider'
+          })
+        ]);
+        expect(output.security).toMatchObject({
+          bind_default: '127.0.0.1',
+          contains_secrets: false,
+          transport: 'pull'
+        });
+      } finally {
+        console.log = originalLog;
+      }
+    });
+
+    it('exports fleet status as a single NDJSON record', async () => {
+      await fs.mkdir(aiwgDir, { recursive: true });
+      const { workspaceStatus } = await import('../../../tools/cli/workspace-status.mjs');
+
+      const logs: string[] = [];
+      const originalLog = console.log;
+      console.log = (...args) => logs.push(args.join(' '));
+
+      try {
+        await workspaceStatus(['--export', 'ndjson', '--fleet-id', 'oci', testDir]);
+        expect(logs).toHaveLength(1);
+        const output = JSON.parse(logs[0]);
+        expect(output.schema).toBe('aiwg.fleet.status.v1');
+        expect(output.machine.fleet_id).toBe('oci');
+      } finally {
+        console.log = originalLog;
+      }
+    });
+
+    it('serves fleet status JSON over loopback HTTP', async () => {
+      await fs.mkdir(aiwgDir, { recursive: true });
+      const { workspaceStatus } = await import('../../../tools/cli/workspace-status.mjs');
+
+      const logs: string[] = [];
+      const originalLog = console.log;
+      console.log = (...args) => logs.push(args.join(' '));
+
+      let server: http.Server | undefined;
+      try {
+        server = await workspaceStatus(['--serve', '--port', '0', '--fleet-id', 'eclipse', testDir]);
+        const address = server.address();
+        expect(typeof address).toBe('object');
+        const port = typeof address === 'object' && address ? address.port : 0;
+        const body = await new Promise<string>((resolve, reject) => {
+          http.get(`http://127.0.0.1:${port}/status`, (res) => {
+            let data = '';
+            res.setEncoding('utf8');
+            res.on('data', chunk => { data += chunk; });
+            res.on('end', () => resolve(data));
+          }).on('error', reject);
+        });
+        const output = JSON.parse(body);
+        expect(output.schema).toBe('aiwg.fleet.status.v1');
+        expect(output.machine.fleet_id).toBe('eclipse');
+        expect(logs[0]).toContain('127.0.0.1');
+      } finally {
+        console.log = originalLog;
+        await new Promise<void>((resolve) => {
+          if (!server) return resolve();
+          server.close(() => resolve());
+        });
       }
     });
   });
