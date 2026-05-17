@@ -8,9 +8,9 @@
  * @issue #685
  */
 
-// Import from dist/ (see tools/cli/doctor.mjs for the rationale — npm
-// package ships dist/, not src/).
-import { getVersionInfo } from '../../dist/src/channel/manager.mjs';
+import { importImpl } from '../_resolve-impl.mjs';
+
+const { getVersionInfo } = await importImpl(import.meta.url, 'channel/manager.mjs');
 
 const args = process.argv.slice(2);
 const json = args.includes('--json');

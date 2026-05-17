@@ -4,8 +4,12 @@
 //
 // Per A2A §8, agents publish their card at
 //   /agents/{instanceId}/.well-known/agent-card.json
-// and sign it with Ed25519 over the JCS-canonicalized form. The card declares
-// required + optional extensions, supported transports, and skills.
+// Sandbox v2 also exposes the authenticated extended card at
+//   /agents/{instanceId}/v1/extendedAgentCard
+// with a legacy fallback at
+//   /agents/{instanceId}/v1/card.
+// The card declares required + optional extensions, supported transports,
+// and skills.
 
 import { loadJwkSet, verifyAgentCardSignature, type JwkSet } from './jws.js';
 import type { AgentCard } from './types.js';
@@ -89,17 +93,31 @@ export async function fetchAgentCard(
   opts: FetchAgentCardOptions = {}
 ): Promise<VerifiedAgentCard> {
   const fetchImpl = opts.fetch ?? fetch;
-  const url =
-    host.replace(/\/+$/, '') +
-    `/agents/${encodeURIComponent(instanceId)}/.well-known/agent-card.json`;
+  const base = host.replace(/\/+$/, '');
+  const encoded = encodeURIComponent(instanceId);
+  const urls = [
+    `${base}/agents/${encoded}/.well-known/agent-card.json`,
+    `${base}/agents/${encoded}/v1/extendedAgentCard`,
+    `${base}/agents/${encoded}/v1/card`,
+  ];
   const headers: Record<string, string> = { accept: 'application/json' };
   if (opts.bearer) headers.authorization = `Bearer ${opts.bearer}`;
 
   const init: RequestInit = { method: 'GET', headers };
   if (opts.signal) init.signal = opts.signal;
-  const resp = await fetchImpl(url, init);
-  if (resp.status !== 200) {
-    throw new Error(`fetchAgentCard: ${url} returned ${resp.status}`);
+  let url = urls[0];
+  let resp: Response | undefined;
+  for (const candidate of urls) {
+    const candidateResp = await fetchImpl(candidate, init);
+    if (candidateResp.status === 404 && candidate !== urls[urls.length - 1]) {
+      continue;
+    }
+    url = candidate;
+    resp = candidateResp;
+    break;
+  }
+  if (!resp || resp.status !== 200) {
+    throw new Error(`fetchAgentCard: ${url} returned ${resp?.status ?? 'no response'}`);
   }
   const raw = await resp.text();
   let card: AgentCard;

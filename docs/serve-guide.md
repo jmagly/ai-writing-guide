@@ -303,7 +303,7 @@ agentic-sandbox connects to `aiwg serve` through **two parallel paths**: the ori
    - `POST /api/sandboxes/register` (existing sandbox path)
    - `POST /api/v1/executors/register` (executor contract — sandbox `effdb43` / [#193](https://git.integrolabs.net/roctinam/agentic-sandbox/issues/193))
 
-4. The sandbox appears in the dashboard's **Sandbox** tab. The executor registration is visible via `GET /api/v1/executors`.
+4. The sandbox appears in the dashboard's **Sandbox** tab. The executor registration is visible via `GET /api/v1/executors`. A2A dispatch readiness is separate: use the v2 admin inventory to find a routable `instance_id`, then verify its AgentCard route before sending work.
 
 ### Running the sandbox as an executor
 
@@ -325,23 +325,21 @@ The executor contract gives `aiwg serve` a way to **dispatch missions** to the s
 **Dispatch path:**
 
 ```
-aiwg mc dispatch <session> "<task>"
-        │
-        ▼
-.aiwg/ralph-external/mc/sessions/*/session.json (mission queued)
-        │
-        ▼
-aiwg mc bridge  (queue tailer; #1182)
-        │
-        ▼
-POST /api/v1/sessions/:id/dispatch  ──(bearer)──▶  agentic-sandbox
-        │                                                    │
-        │                                                    ▼
-        └─◀────── /ws/executors/{id} stream ─── mission.assigned
-                  mission.started, .progress, .hitl_required,
-                  .suspended, .reconnected, .resumed, .completed,
-                  .failed, .aborted   +   executor.resync on (re)connect
+GET  /api/v2/admin/instances
+GET  /agents/{instance_id}/.well-known/agent-card.json
+GET  /agents/{instance_id}/v1/extendedAgentCard
+POST /agents/{instance_id}/v1/messages:send
+GET  /agents/{instance_id}/v1/tasks/{task_id}
+GET  /agents/{instance_id}/v1/tasks/{task_id}/subscribe
 ```
+
+`executor_id` identifies the management executor registration. `instance_id`
+identifies the routable A2A sandbox instance. They may be different; dispatch
+payloads may pass `a2a_instance_id` when a concrete sandbox instance is known.
+`aiwg serve` reports the selected `a2a_instance_id` in dispatch responses.
+
+The removed `aiwg mc bridge` queue tailer no longer sits between Mission
+Control queue files and sandbox execution.
 
 **Mission state machine:**
 
@@ -356,6 +354,8 @@ Assigned ──┬─→ Running ──┬─→ HitlRequired ─→ Running
 ```
 
 Terminal states are excluded from `executor.resync.owned_mission_ids`.
+They are also excluded from `GET /api/v1/executors` `active_mission_count`;
+that field counts only non-terminal missions currently owned by the executor.
 
 ### Verifying the integration
 

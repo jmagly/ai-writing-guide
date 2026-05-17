@@ -209,6 +209,80 @@ describe('A2AClient.getAgentCard', () => {
     expect(calls[0]!.url).toBe('https://exec.test/agents/inst-1/.well-known/agent-card.json');
     expect(got.name).toBe('agent');
   });
+
+  it('falls back to extendedAgentCard when the well-known card is absent', async () => {
+    const card = {
+      protocolVersion: '0.3.0',
+      name: 'agent',
+      url: 'https://exec.test',
+      version: '1.0.0',
+    };
+    const { client, calls } = mkClient((call) => {
+      if (call.url.endsWith('/.well-known/agent-card.json')) {
+        return new Response(JSON.stringify({ title: 'Not found' }), {
+          status: 404,
+          headers: { 'content-type': 'application/problem+json' },
+        });
+      }
+      return new Response(JSON.stringify(card), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    const got = await client.getAgentCard();
+    expect(got.name).toBe('agent');
+    expect(calls.map((c) => c.url)).toEqual([
+      'https://exec.test/agents/inst-1/.well-known/agent-card.json',
+      'https://exec.test/agents/inst-1/v1/extendedAgentCard',
+    ]);
+  });
+});
+
+describe('A2AClient.getExtendedAgentCard', () => {
+  it('GETs the current extendedAgentCard path', async () => {
+    const card = {
+      protocolVersion: '0.3.0',
+      name: 'extended',
+      url: 'https://exec.test',
+      version: '1.0.0',
+    };
+    const { client, calls } = mkClient(() =>
+      new Response(JSON.stringify(card), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
+    const got = await client.getExtendedAgentCard();
+    expect(calls[0]!.url).toBe('https://exec.test/agents/inst-1/v1/extendedAgentCard');
+    expect(got.name).toBe('extended');
+  });
+
+  it('falls back to the legacy /v1/card path', async () => {
+    const card = {
+      protocolVersion: '0.3.0',
+      name: 'legacy',
+      url: 'https://exec.test',
+      version: '1.0.0',
+    };
+    const { client, calls } = mkClient((call) => {
+      if (call.url.endsWith('/v1/extendedAgentCard')) {
+        return new Response(JSON.stringify({ title: 'Not found' }), {
+          status: 404,
+          headers: { 'content-type': 'application/problem+json' },
+        });
+      }
+      return new Response(JSON.stringify(card), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    const got = await client.getExtendedAgentCard();
+    expect(got.name).toBe('legacy');
+    expect(calls.map((c) => c.url)).toEqual([
+      'https://exec.test/agents/inst-1/v1/extendedAgentCard',
+      'https://exec.test/agents/inst-1/v1/card',
+    ]);
+  });
 });
 
 describe('SSE parseEventStream', () => {

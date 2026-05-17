@@ -439,6 +439,9 @@ function findArtifactFiles(dir: string, extensions: string[] = ['.md', '.yaml', 
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
+    if (entry.isSymbolicLink() && !fs.existsSync(fullPath)) {
+      continue;
+    }
     if (entry.isDirectory()) {
       // Skip hidden dirs and .index
       if (entry.name.startsWith('.')) continue;

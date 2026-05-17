@@ -231,44 +231,31 @@ MC treats this as a standard mission, but the executor is `OrchestratorPTY` inst
        └─ Last: type "npm run test"
 ```
 
-### MC ↔ aiwg serve queue-tail bridge (#1182)
+### MC ↔ aiwg serve dispatch
 
-`aiwg mc dispatch` enqueues missions to `.aiwg/ralph-external/mc/sessions/*/session.json`. To actually run those missions on a registered executor, run the **bridge** alongside `aiwg serve`:
+`aiwg mc dispatch` enqueues missions to `.aiwg/ralph-external/mc/sessions/*/session.json`.
+The old `aiwg mc bridge` queue tailer has been removed. For agentic-sandbox
+work, use routable A2A instances and verify them through
+`GET /api/v2/admin/instances`,
+`GET /agents/{instance_id}/.well-known/agent-card.json` or
+`GET /agents/{instance_id}/v1/extendedAgentCard`, and
+`POST /agents/{instance_id}/v1/messages:send`.
 
-```bash
-# Foreground bridge — picks up queued missions, dispatches to aiwg serve,
-# subscribes to executor WS, writes lifecycle status back to session.json.
-aiwg mc bridge --aiwg-serve http://127.0.0.1:7337
-```
+Executor registration and A2A readiness are intentionally separate. The
+executor `executor_id` is the management identity; the A2A `instance_id` is the
+routable sandbox target. When they differ, dispatch with `a2a_instance_id` and
+confirm it appears in the dispatch response.
 
-There are four operating modes depending on what's running:
+There are two operating modes depending on what's running:
 
 | Mode | Running | Outcome |
 |------|---------|---------|
-| **MC alone** | `aiwg mc dispatch` only | Missions queue to `session.json`; nothing executes. Operator drives manually. |
-| **MC + serve** | + `aiwg serve` | Same — bridge is the missing piece. |
-| **MC + bridge + serve** | + `aiwg mc bridge` | Bridge tails the queue, posts dispatches, but with no executor registered → 503 → missions marked `failed`. |
-| **MC + bridge + serve + executor** | + a registered executor (local-executor, agentic-sandbox) | Full end-to-end: `queued → assigned → running → done`. |
+| **MC alone** | `aiwg mc dispatch` only | Missions queue to `session.json`; operator drives manually. |
+| **A2A sandbox route** | Routable agentic-sandbox instance | Dispatch directly through A2A: `messages:send`, task status, and SSE subscribe. |
 
-Lifecycle transitions written back to `session.json` for every mission:
-
-| Event | Mission status |
-|-------|---------------|
-| `mission.assigned` (echo) | already `assigned` from POST 202 |
-| `mission.started` | → `running` |
-| `mission.hitl_required` | → `hitl_required` |
-| `mission.hitl_responded` | → `running` |
-| `mission.suspended` | → `suspended` |
-| `mission.resumed` | → `running` |
-| `mission.completed` | → `done` |
-| `mission.failed` | → `failed` |
-| `mission.aborted` | → `aborted` |
-
-Bridge survives `aiwg serve` restart (reconnects WS with exponential backoff up to 30 s) and executor disconnect (`mission.suspended` propagates for resumable executors).
-
-Clean shutdown: SIGINT/SIGTERM waits up to 5 s for in-flight dispatches to drain, then closes all WS connections. Queued missions remain queued; they pick up on the next bridge start.
-
-See `tools/mc-bridge/README.md` for the design doc, retry/backoff semantics, and the per-cycle pass plan.
+The A2A task lifecycle now lives on the sandbox route itself: submit with
+`messages:send`, poll `tasks/{task_id}`, or subscribe to
+`tasks/{task_id}/subscribe`.
 
 ---
 

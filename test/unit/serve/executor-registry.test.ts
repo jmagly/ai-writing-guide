@@ -91,6 +91,17 @@ describe('ExecutorRegistry', () => {
       expect(registry.size).toBe(1);
     });
 
+    it('stores and reports a routable A2A instance id distinct from executor_id', () => {
+      const result = registry.register({
+        ...VALID_REGISTER_REQUEST,
+        a2a_instance_id: 'sandbox-inst-1',
+      });
+      expect('status' in result && result.status === 400).toBe(false);
+      const summary = registry.get(VALID_EXECUTOR_ID);
+      expect(summary?.executor_id).toBe(VALID_EXECUTOR_ID);
+      expect(summary?.a2a_instance_id).toBe('sandbox-inst-1');
+    });
+
     it('issues unique tokens for different executor_ids', () => {
       const r1 = registry.register(VALID_REGISTER_REQUEST) as { token: string };
       const r2 = registry.register({ ...VALID_REGISTER_REQUEST, executor_id: VALID_EXECUTOR_ID_2 }) as { token: string };
@@ -301,6 +312,17 @@ describe('ExecutorRegistry', () => {
       expect(registry.getMission('m-fail2')?.state).toBe('failed');
       expect(registry.getMission('m-fail2')?.error).toBe('executor unreachable');
     });
+
+    it('failMission removes the mission from the active executor count', () => {
+      registry.register(VALID_REGISTER_REQUEST);
+      registry.assignMission('m-fail-count', VALID_EXECUTOR_ID);
+      expect(registry.get(VALID_EXECUTOR_ID)?.active_mission_count).toBe(1);
+
+      registry.failMission('m-fail-count', 'executor unreachable');
+
+      expect(registry.getMission('m-fail-count')?.state).toBe('failed');
+      expect(registry.get(VALID_EXECUTOR_ID)?.active_mission_count).toBe(0);
+    });
   });
 
   describe('pickByFilter', () => {
@@ -407,6 +429,18 @@ describe('ExecutorRegistry', () => {
       expect(registry.getMission('m-trans')?.state).toBe('paused');
     });
 
+    it('removes operator-aborted missions from the active executor count', () => {
+      registry.register(VALID_REGISTER_REQUEST);
+      registry.assignMission('m-abort', VALID_EXECUTOR_ID);
+      expect(registry.get(VALID_EXECUTOR_ID)?.active_mission_count).toBe(1);
+
+      expect(registry.transitionMission('m-abort', 'aborted')).toBe(true);
+
+      expect(registry.getMission('m-abort')?.state).toBe('aborted');
+      expect(registry.getMission('m-abort')?.completedAt).toBeTruthy();
+      expect(registry.get(VALID_EXECUTOR_ID)?.active_mission_count).toBe(0);
+    });
+
     it('refuses transition for terminal mission', () => {
       registry.register(VALID_REGISTER_REQUEST);
       registry.assignMission('m-terminal', VALID_EXECUTOR_ID);
@@ -438,6 +472,14 @@ describe('validateRegisterPayload', () => {
     expect(typeof valid).toBe('boolean');
   });
 
+  it('accepts optional a2a_instance_id on register payloads', () => {
+    const { valid } = validateRegisterPayload({
+      ...VALID_REGISTER_REQUEST,
+      a2a_instance_id: 'sandbox-inst-1',
+    });
+    expect(valid).toBe(true);
+  });
+
   it('rejects a payload missing required fields', () => {
     const { valid } = validateRegisterPayload({ name: 'test' });
     // If ajv loads successfully, this should be invalid
@@ -455,6 +497,18 @@ describe('validateDispatchPayload', () => {
   it('accepts a valid dispatch payload', () => {
     const { valid } = validateDispatchPayload(VALID_DISPATCH_PAYLOAD);
     expect(typeof valid).toBe('boolean');
+  });
+
+  it('accepts a routable A2A instance id override', () => {
+    const { valid } = validateDispatchPayload({
+      ...VALID_DISPATCH_PAYLOAD,
+      a2a_instance_id: 'sandbox-inst-1',
+      executor_filter: {
+        ...VALID_DISPATCH_PAYLOAD.executor_filter,
+        instance_id: 'sandbox-inst-1',
+      },
+    });
+    expect(valid).toBe(true);
   });
 });
 

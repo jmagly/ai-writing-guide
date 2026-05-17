@@ -307,6 +307,12 @@ aiwg steward find --capability <name>
 - `--all` - Print the full matrix (all providers x all features)
 - `--capability <name>` - (with `find`) feature to look up routing for
 
+Provider detection precedence when `--provider` is omitted:
+environment variables from the active harness first, then the current
+workspace's `.aiwg/aiwg.config` `providers[0]`. Config value `claude`
+normalizes to the capability-matrix id `claude-code`; `openai` normalizes to
+`codex`.
+
 **Capabilities:** cli, maintenance, capability-matrix, provider-routing, diagnostics
 **Tools:** Bash, Read
 

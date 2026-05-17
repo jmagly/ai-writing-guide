@@ -8,6 +8,7 @@
 //   - subscribe_task    — GET  /agents/{id}/v1/tasks/{tid}/subscribe (SSE)
 //   - push_delivery.rs  — *   /agents/{id}/v1/tasks/{tid}/pushNotificationConfigs/*
 //   - agent_card.rs     — GET  /agents/{id}/.well-known/agent-card.json
+//                          GET  /agents/{id}/v1/extendedAgentCard
 //
 // Types are intentionally permissive (extra fields allowed). We track only
 // what the AIWG orchestrator inspects; the rest is forwarded opaquely.

@@ -22,14 +22,7 @@
 import { readFile, readdir, stat, writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join, resolve, extname, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Import the validation engine from dist (compiled) or src via tsx
-const distPath = resolve(__dirname, '../../dist/writing/validation-engine.js');
-const srcPath = resolve(__dirname, '../../src/writing/validation-engine.ts');
+import { importImpl } from '../_resolve-impl.mjs';
 
 /**
  * Convert 0-100 score to Likert scale (1-5)
@@ -293,20 +286,12 @@ async function main() {
   // Dynamically import the validation engine (try dist first, fallback to src via tsx)
   let WritingValidationEngine;
   try {
-    // Try compiled dist first
-    const module = await import(distPath);
+    const module = await importImpl(import.meta.url, 'writing/validation-engine.js');
     WritingValidationEngine = module.WritingValidationEngine;
-  } catch (distError) {
-    try {
-      // Fallback to src via tsx
-      const module = await import(srcPath);
-      WritingValidationEngine = module.WritingValidationEngine;
-    } catch (srcError) {
-      console.error('Failed to load validation engine from dist:', distError.message);
-      console.error('Failed to load validation engine from src:', srcError.message);
-      console.error('Make sure to run `npm run build` or have tsx installed.');
-      process.exit(1);
-    }
+  } catch (error) {
+    console.error('Failed to load validation engine:', error.message);
+    console.error('Make sure to run `npm run build` or have tsx installed.');
+    process.exit(1);
   }
 
   const engine = new WritingValidationEngine();

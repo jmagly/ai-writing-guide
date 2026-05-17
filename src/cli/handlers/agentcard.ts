@@ -2,8 +2,9 @@
  * AgentCard CLI handler — `aiwg agentcard <verb> ...`.
  *
  * Verbs:
- *   verify  Fetch an agentic-sandbox AgentCard from /agents/{id}/.well-known/agent-card.json
- *           and verify its Ed25519 JWS signature against a supplied JWKS.
+ *   verify  Fetch an agentic-sandbox AgentCard from the well-known route,
+ *           /v1/extendedAgentCard, or legacy /v1/card, then verify its
+ *           Ed25519 JWS signature against a supplied JWKS.
  *
  * @implements @src/a2a/agent-card.ts
  * @issue #1253

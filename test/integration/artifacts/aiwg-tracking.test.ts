@@ -133,7 +133,7 @@ describe('.aiwg/ Tracking and Distribution (integration)', () => {
         /-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----/,
       ];
       // Directories that legitimately contain code examples/docs with mock credentials
-      const excludeDirs = new Set(['ralph', 'patterns', 'working', 'reports']);
+      const excludeDirs = new Set(['ralph', 'ralph-external', 'patterns', 'working', 'reports']);
 
       function checkFile(filePath: string): string[] {
         const content = fs.readFileSync(filePath, 'utf-8');

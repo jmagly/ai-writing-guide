@@ -14,14 +14,14 @@
  */
 
 import { execSync } from 'child_process';
-// Import from dist/ (see tools/cli/doctor.mjs for the rationale — npm
-// package ships dist/, not src/).
-import {
+import { importImpl } from '../_resolve-impl.mjs';
+
+const {
   loadConfig,
   switchToNext,
   switchToNightly,
   switchToStable,
-} from '../../dist/src/channel/manager.mjs';
+} = await importImpl(import.meta.url, 'channel/manager.mjs');
 
 // Parse --channel <value> from argv
 function parseChannel(args) {

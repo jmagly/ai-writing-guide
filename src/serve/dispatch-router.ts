@@ -4,7 +4,7 @@
  * AIWG exposes `POST /api/v1/sessions/:id/dispatch` as its public mission
  * intake. The original implementation forwarded to the executor's v1
  * `/dispatch` endpoint (`${rest}/dispatch`). Per #1252, AIWG should now
- * try the A2A path first (`POST /agents/{executorId}/v1/messages:send`)
+ * try the A2A path first (`POST /agents/{a2aInstanceId}/v1/messages:send`)
  * and fall back to v1 on 404 with a structured deprecation warning.
  *
  * Wire-shape mapping (v1 dispatch payload → A2A Message):
@@ -46,6 +46,8 @@ export interface DispatchRouterOptions {
   requiredExtensions?: readonly string[];
   /** Optional A2A extensions to additionally advertise (e.g. hitl-prompt). */
   optionalExtensions?: readonly string[];
+  /** Explicit A2A sandbox instance id. Overrides payload/register defaults. */
+  a2aInstanceId?: string;
 }
 
 /** Wire shape of the v1 dispatch payload AIWG accepts on
@@ -55,6 +57,7 @@ export interface V1DispatchPayload {
   objective: string;
   completion?: string;
   long_running?: boolean;
+  a2a_instance_id?: string;
   executor_filter?: Record<string, JsonValue>;
   /** Anything else flows through to A2A `Message.metadata`. */
   [key: string]: JsonValue | boolean | undefined;
@@ -64,6 +67,7 @@ export interface V1DispatchPayload {
 export interface DispatchResult {
   missionId: string;
   executorId: string;
+  a2aInstanceId?: string;
   /** Which path served the dispatch. */
   dispatchPath: 'v2' | 'v1-fallback';
   /** A2A Task (when v2). */
@@ -117,10 +121,11 @@ async function dispatchV2(
   payload: V1DispatchPayload,
   opts: DispatchRouterOptions
 ): Promise<DispatchResult> {
+  const a2aInstanceId = resolveA2AInstanceId(executor, payload, opts);
   const clientOpts: ConstructorParameters<typeof A2AClient>[0] = {
     baseUrl: executor.transportEndpoints.rest,
     bearer: executor.token,
-    instanceId: executor.executorId,
+    instanceId: a2aInstanceId,
     requiredExtensions: opts.requiredExtensions ?? [A2A_RUNTIME_V1, A2A_IDEMPOTENCY_V1],
   };
   if (opts.fetch) clientOpts.fetch = opts.fetch;
@@ -133,10 +138,25 @@ async function dispatchV2(
   return {
     missionId: payload.mission_id,
     executorId: executor.executorId,
+    a2aInstanceId,
     dispatchPath: 'v2',
     task: result.task,
     idempotentReplayed: result.idempotentReplayed,
   };
+}
+
+function resolveA2AInstanceId(
+  executor: ExecutorRegistration,
+  payload: V1DispatchPayload,
+  opts: DispatchRouterOptions
+): string {
+  const filter = payload.executor_filter ?? {};
+  const filterInstance = filter['a2a_instance_id'] ?? filter['instance_id'];
+  return opts.a2aInstanceId
+    ?? payload.a2a_instance_id
+    ?? (typeof filterInstance === 'string' ? filterInstance : undefined)
+    ?? executor.a2aInstanceId
+    ?? executor.executorId;
 }
 
 /** v1 path — fall back to the legacy `/dispatch` endpoint. */

@@ -137,6 +137,11 @@
       "additionalProperties": false,
       "properties": {
         "executor_id": { "$ref": "#/$defs/executor_id" },
+        "a2a_instance_id": {
+          "type": "string",
+          "description": "Optional routable A2A sandbox instance id. Distinct from executor_id when a management executor provisions one or more sandbox instances.",
+          "minLength": 1
+        },
         "name": {
           "type": "string",
           "description": "Human-readable executor name. Must be non-empty.",
@@ -192,6 +197,11 @@
       "additionalProperties": false,
       "properties": {
         "executor_id": { "$ref": "#/$defs/executor_id" },
+        "a2a_instance_id": {
+          "type": "string",
+          "description": "Routable A2A sandbox instance id, when known. This may differ from executor_id.",
+          "minLength": 1
+        },
         "name": { "type": "string" },
         "version": { "type": "string" },
         "spec_version": { "$ref": "#/$defs/spec_version" },
@@ -247,6 +257,20 @@
           ],
           "description": "Pin to a specific executor. null means any executor."
         },
+        "a2a_instance_id": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "null" }
+          ],
+          "description": "Pin A2A dispatch to a specific routable sandbox instance. null means use the selected executor default."
+        },
+        "instance_id": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "null" }
+          ],
+          "description": "Alias for a2a_instance_id accepted for agentic-sandbox inventory compatibility."
+        },
         "capabilities": {
           "type": "array",
           "description": "Executor must advertise ALL listed capabilities.",
@@ -279,6 +303,11 @@
           "default": false
         },
         "executor_filter": { "$ref": "#/$defs/executor_filter" },
+        "a2a_instance_id": {
+          "type": "string",
+          "description": "Optional routable A2A sandbox instance id override for this dispatch.",
+          "minLength": 1
+        },
         "metadata": {
           "type": "object",
           "description": "Arbitrary operator-supplied metadata (issue numbers, session IDs, labels). Passed through to the executor unchanged.",
@@ -295,6 +324,11 @@
       "properties": {
         "mission_id": { "$ref": "#/$defs/mission_id" },
         "executor_id": { "$ref": "#/$defs/executor_id" },
+        "a2a_instance_id": {
+          "type": "string",
+          "description": "Routable A2A sandbox instance id used for the dispatch, when dispatched via A2A.",
+          "minLength": 1
+        },
         "status": {
           "type": "string",
           "const": "assigned",

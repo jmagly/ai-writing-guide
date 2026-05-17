@@ -174,6 +174,8 @@ export interface EventEnvelope {
 export interface ExecutorRegistration {
   /** Stable executor UUID — declared by the executor at registration time. */
   executorId: string;
+  /** Optional default A2A sandbox instance id. May differ from executorId. */
+  a2aInstanceId?: string;
   name: string;
   version: string;
   specVersion: string;
@@ -201,6 +203,7 @@ export interface WebSocketConn {
 /** Serializable executor summary (used in API responses). */
 export interface ExecutorSummary {
   executor_id: string;
+  a2a_instance_id?: string;
   name: string;
   version: string;
   spec_version: string;
@@ -216,6 +219,7 @@ export interface ExecutorSummary {
 /** Request body for POST /api/v1/executors/register (wire shape). */
 export interface ExecutorRegisterRequest {
   executor_id: string;
+  a2a_instance_id?: string;
   name: string;
   version: string;
   spec_version: string;
@@ -368,6 +372,7 @@ export class ExecutorRegistry extends EventEmitter {
     if (existing) {
       // Upsert — preserve token and registeredAt
       existing.name = req.name;
+      existing.a2aInstanceId = req.a2a_instance_id;
       existing.version = req.version;
       existing.specVersion = req.spec_version;
       existing.transportEndpoints = req.transport_endpoints;
@@ -376,6 +381,7 @@ export class ExecutorRegistry extends EventEmitter {
     } else {
       const registration: ExecutorRegistration = {
         executorId,
+        a2aInstanceId: req.a2a_instance_id,
         name: req.name,
         version: req.version,
         specVersion: req.spec_version,
@@ -727,6 +733,11 @@ export class ExecutorRegistry extends EventEmitter {
     const prevState = mission.state;
     mission.state = targetState;
     mission.updatedAt = new Date().toISOString();
+    if (TERMINAL_STATES.has(targetState)) {
+      mission.completedAt = mission.updatedAt;
+      const executor = this.executors.get(mission.executorId);
+      if (executor) executor.currentMissions.delete(missionId);
+    }
     this.emit('mission:state_change', { missionId, executorId: mission.executorId, state: targetState, prevState });
     return true;
   }
@@ -841,7 +852,7 @@ export class ExecutorRegistry extends EventEmitter {
 // ============================================================
 
 function toSummary(e: ExecutorRegistration): ExecutorSummary {
-  return {
+  const summary: ExecutorSummary = {
     executor_id: e.executorId,
     name: e.name,
     version: e.version,
@@ -854,6 +865,8 @@ function toSummary(e: ExecutorRegistration): ExecutorSummary {
     registered_at: e.registeredAt,
     disconnected_at: e.disconnectedAt,
   };
+  if (e.a2aInstanceId) summary.a2a_instance_id = e.a2aInstanceId;
+  return summary;
 }
 
 // Singleton instance

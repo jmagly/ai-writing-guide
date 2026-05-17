@@ -5,7 +5,7 @@
  * @parent #684
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { HandlerContext } from '../../../../src/cli/handlers/types.js';
 
 // ── Mock fs and js-yaml ───────────────────────────────────────
@@ -65,9 +65,49 @@ vi.mock('js-yaml', () => ({
   load: vi.fn(() => sampleMatrix),
 }));
 
+vi.mock('../../../../src/config/aiwg-config.js', () => ({
+  getProjectDir: vi.fn((ctx: { cwd?: string }) => ctx.cwd || process.cwd()),
+  readAiwgConfig: vi.fn().mockResolvedValue(null),
+}));
+
 import { stewardHandler } from '../../../../src/cli/handlers/steward.js';
+import { readAiwgConfig } from '../../../../src/config/aiwg-config.js';
 
 // ── Helpers ───────────────────────────────────────────────────
+
+const providerEnvKeys = [
+  'CLAUDE_CODE_VERSION',
+  'ANTHROPIC_API_KEY',
+  'OPENAI_API_KEY',
+  'CURSOR_TRACE_ID',
+  'CURSOR_VERSION',
+  'WINDSURF_VERSION',
+  'WARP_TERMINAL',
+  'OPENCLAW_VERSION',
+  'FACTORY_AGENT_ID',
+  'OPENCODE_VERSION',
+];
+
+const savedProviderEnv = new Map<string, string | undefined>();
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(readAiwgConfig).mockResolvedValue(null);
+  for (const key of providerEnvKeys) {
+    savedProviderEnv.set(key, process.env[key]);
+    delete process.env[key];
+  }
+});
+
+afterEach(() => {
+  for (const key of providerEnvKeys) {
+    const value = savedProviderEnv.get(key);
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+  savedProviderEnv.clear();
+  vi.restoreAllMocks();
+});
 
 function makeCtx(args: string[] = []): HandlerContext {
   return {
@@ -89,8 +129,6 @@ describe('stewardHandler metadata', () => {
 });
 
 describe('steward (no subcommand / help)', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
-
   it('exits 0 and prints help', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const result = await stewardHandler.execute(makeCtx([]));
@@ -102,8 +140,6 @@ describe('steward (no subcommand / help)', () => {
 });
 
 describe('steward capabilities --provider', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
-
   it('exits 0 for known provider', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const result = await stewardHandler.execute(makeCtx(['capabilities', '--provider', 'claude-code']));
@@ -126,9 +162,43 @@ describe('steward capabilities --provider', () => {
   });
 });
 
-describe('steward capabilities --feature', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+describe('steward capabilities provider detection', () => {
+  it('uses .aiwg/aiwg.config providers[0] when no provider flag or env signal is present', async () => {
+    vi.mocked(readAiwgConfig).mockResolvedValue({
+      version: '1',
+      providers: ['codex'],
+      installed: {},
+      scripts: {},
+    });
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
+    const result = await stewardHandler.execute(makeCtx(['capabilities']));
+
+    expect(result.exitCode).toBe(0);
+    const output = consoleSpy.mock.calls.map(([s]) => String(s)).join('\n');
+    expect(output).toContain('(Detected provider: codex)');
+    consoleSpy.mockRestore();
+  });
+
+  it('normalizes claude workspace provider to the capability matrix claude-code id', async () => {
+    vi.mocked(readAiwgConfig).mockResolvedValue({
+      version: '1',
+      providers: ['claude'],
+      installed: {},
+      scripts: {},
+    });
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const result = await stewardHandler.execute(makeCtx(['capabilities']));
+
+    expect(result.exitCode).toBe(0);
+    const output = consoleSpy.mock.calls.map(([s]) => String(s)).join('\n');
+    expect(output).toContain('(Detected provider: claude-code)');
+    consoleSpy.mockRestore();
+  });
+});
+
+describe('steward capabilities --feature', () => {
   it('exits 0 for known feature', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const result = await stewardHandler.execute(makeCtx(['capabilities', '--feature', 'scheduler']));
@@ -145,8 +215,6 @@ describe('steward capabilities --feature', () => {
 });
 
 describe('steward capabilities --all', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
-
   it('exits 0 and prints matrix', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const result = await stewardHandler.execute(makeCtx(['capabilities', '--all']));
@@ -156,8 +224,6 @@ describe('steward capabilities --all', () => {
 });
 
 describe('steward find --capability', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
-
   it('exits 0 for known capability', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const result = await stewardHandler.execute(makeCtx(['find', '--capability', 'scheduler']));

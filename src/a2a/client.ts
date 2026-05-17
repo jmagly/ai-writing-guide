@@ -12,7 +12,8 @@
 //   GET    /agents/{id}/v1/tasks/{tid}/pushNotificationConfigs/{cid}
 //   DELETE /agents/{id}/v1/tasks/{tid}/pushNotificationConfigs/{cid}
 //   GET    /agents/{id}/.well-known/agent-card.json
-//   GET    /agents/{id}/v1/card                         (extended card)
+//   GET    /agents/{id}/v1/extendedAgentCard            (extended card)
+//   GET    /agents/{id}/v1/card                         (legacy extended card)
 
 import { A2AError, A2AHttpClient, type A2AHttpClientOptions, type A2AResponse } from './http.js';
 import type {
@@ -85,30 +86,65 @@ export class A2AClient {
    * use `src/a2a/agent-card.ts` instead, which wraps this with JWS verification.
    */
   async getAgentCard(): Promise<AgentCard> {
-    const path = `/agents/${encodeURIComponent(this.instanceId)}/.well-known/agent-card.json`;
-    const resp = await this.http.request<AgentCard>(path, { method: 'GET' });
-    if (!resp.body) {
-      throw new A2AError(resp.status, path, {
-        type: 'about:blank',
-        title: 'Empty AgentCard response',
-        code: 'aiwg.empty_agent_card',
-      });
+    const paths = [
+      `/agents/${encodeURIComponent(this.instanceId)}/.well-known/agent-card.json`,
+      `${this.agentPath()}/extendedAgentCard`,
+    ];
+    let last404: A2AError | undefined;
+    for (const path of paths) {
+      try {
+        const resp = await this.http.request<AgentCard>(path, { method: 'GET' });
+        if (!resp.body) {
+          throw new A2AError(resp.status, path, {
+            type: 'about:blank',
+            title: 'Empty AgentCard response',
+            code: 'aiwg.empty_agent_card',
+          });
+        }
+        return resp.body;
+      } catch (err) {
+        if (err instanceof A2AError && err.status === 404) {
+          last404 = err;
+          continue;
+        }
+        throw err;
+      }
     }
-    return resp.body;
+    throw last404 ?? new A2AError(404, paths[0], {
+      type: 'about:blank',
+      title: 'AgentCard not found',
+      code: 'aiwg.agent_card_not_found',
+    });
   }
 
   /** Fetch the extended AgentCard (authenticated view). */
   async getExtendedAgentCard(): Promise<AgentCard> {
-    const path = `${this.agentPath()}/card`;
-    const resp = await this.http.request<AgentCard>(path, { method: 'GET' });
-    if (!resp.body) {
-      throw new A2AError(resp.status, path, {
-        type: 'about:blank',
-        title: 'Empty extended AgentCard response',
-        code: 'aiwg.empty_agent_card',
-      });
+    const paths = [`${this.agentPath()}/extendedAgentCard`, `${this.agentPath()}/card`];
+    let last404: A2AError | undefined;
+    for (const path of paths) {
+      try {
+        const resp = await this.http.request<AgentCard>(path, { method: 'GET' });
+        if (!resp.body) {
+          throw new A2AError(resp.status, path, {
+            type: 'about:blank',
+            title: 'Empty extended AgentCard response',
+            code: 'aiwg.empty_agent_card',
+          });
+        }
+        return resp.body;
+      } catch (err) {
+        if (err instanceof A2AError && err.status === 404) {
+          last404 = err;
+          continue;
+        }
+        throw err;
+      }
     }
-    return resp.body;
+    throw last404 ?? new A2AError(404, paths[0], {
+      type: 'about:blank',
+      title: 'Extended AgentCard not found',
+      code: 'aiwg.extended_agent_card_not_found',
+    });
   }
 
   // ---------- Messages ----------

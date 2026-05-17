@@ -79,9 +79,9 @@ See the [Behaviors Guide](../behaviors-guide.md) for the full format spec.
 
 ## Skills
 
-AIWG deploys 90+ skills to `~/.openclaw/skills/` in directory format (each skill has a `SKILL.md`). OpenClaw's native skill loader discovers these automatically.
+AIWG deploys a small kernel set to `~/.openclaw/skills/aiwg/` in directory format (each skill has a `SKILL.md`). The broader on-demand skill index lives under `~/.openclaw/.aiwg/skills/` and is reached through AIWG discovery commands.
 
-Skill precedence: `workspace/skills/` > `~/.openclaw/skills/` > bundled > `extraDirs`. AIWG deploys to user-global; workspace skills take precedence if names collide.
+Skill precedence: `workspace/skills/` > `~/.openclaw/skills/` > bundled > `extraDirs`. AIWG deploys kernel skills to the `aiwg/` namespace in user-global scope; workspace skills take precedence if names collide.
 
 ---
 
@@ -132,7 +132,8 @@ See [ClawHub docs](https://docs.openclaw.ai/tools/clawhub) for registry details.
 **Skills not showing up?**
 ```bash
 # Verify deployment
-ls ~/.openclaw/skills/
+find ~/.openclaw/skills/aiwg -mindepth 1 -maxdepth 1 -type d
+find ~/.openclaw/.aiwg/skills -mindepth 1 -maxdepth 1 -type d
 
 # Re-deploy
 aiwg use sdlc --provider openclaw --force

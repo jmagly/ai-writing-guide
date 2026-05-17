@@ -17,27 +17,11 @@
  * @module tools/plugin/plugin-status-cli
  */
 
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { existsSync } from 'fs';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { importImpl } from '../_resolve-impl.mjs';
 
 async function loadPluginStatus() {
-  const distPath = resolve(__dirname, '../../dist/plugin/plugin-status.js');
-  const srcPath = resolve(__dirname, '../../src/plugin/plugin-status.ts');
-
   try {
-    if (existsSync(distPath)) {
-      return await import(distPath);
-    }
-  } catch (e) {
-    // Fall through to src
-  }
-
-  try {
-    return await import(srcPath);
+    return await importImpl(import.meta.url, 'plugin/plugin-status.js');
   } catch (e) {
     console.error('Failed to load plugin-status module');
     console.error('Run `npm run build` to compile TypeScript files');

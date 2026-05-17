@@ -129,6 +129,36 @@ describe('fetchAgentCard', () => {
     expect(verified.kid).toBeUndefined();
   });
 
+  it('falls back to extendedAgentCard when the well-known card is absent', async () => {
+    const card: AgentCard = {
+      protocolVersion: '0.3.0',
+      name: 'extended',
+      url: 'https://exec.test',
+      version: '1.0.0',
+    };
+    const calls: string[] = [];
+    const stub: typeof fetch = async (input) => {
+      const url = typeof input === 'string' ? input : (input as Request).url;
+      calls.push(url);
+      if (url.endsWith('/.well-known/agent-card.json')) {
+        return new Response('not found', { status: 404 });
+      }
+      return new Response(JSON.stringify(card), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    };
+    const verified = await fetchAgentCard('https://exec.test', 'inst-1', {
+      skipVerify: true,
+      fetch: stub,
+    });
+    expect(verified.card.name).toBe('extended');
+    expect(calls).toEqual([
+      'https://exec.test/agents/inst-1/.well-known/agent-card.json',
+      'https://exec.test/agents/inst-1/v1/extendedAgentCard',
+    ]);
+  });
+
   it('throws on non-200 responses', async () => {
     const stub: typeof fetch = async () => new Response('not found', { status: 404 });
     await expect(

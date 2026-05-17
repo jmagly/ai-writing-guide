@@ -16,6 +16,16 @@ Build research graph indices from corpus state. Reads graph definitions from `.a
 
 > **Scope: research corpora, not SDLC artifacts.** This skill renders the human-readable markdown indices declared under `.aiwg/config.yaml` `graphs:` (output paths like `indices/by-topic.md`) from corpus frontmatter. The CLI command `aiwg index build` is a separate feature operated by the `index` skill in `aiwg-utils` — it builds the SDLC artifact graph at `.aiwg/.index/*` (JSON nodes/edges/checksums) and does **not** render the markdown indices listed in `index.graphs.indices.manifest`. If `aiwg index build` did not produce your `indices/*.md`, that is expected — invoke `corpus-index-build` instead.
 
+## Primary Execution Path
+
+Use the co-located reference implementation before writing any ad hoc parser:
+
+```bash
+python "$AIWG_ROOT/agentic/code/frameworks/research-complete/skills/corpus-index-build/build.py" --corpus-root . [--graph <name>|--all] [--force] [--format full|summary|json]
+```
+
+If `$AIWG_ROOT` is not set, use the absolute path returned by `aiwg show skill corpus-index-build`. The script reads the target corpus's `.aiwg/config.yaml` `index.graphs.indices.manifest`, parses mixed-format `documentation/references/REF-*.md` files and `documentation/citations/REF-*-citations.md` sidecars, writes configured `indices/*.md`, and reports built/skipped graphs.
+
 ## Triggers
 
 - "build the research indices"
@@ -98,12 +108,13 @@ graphs:
 
 ### Phase 1: Load Configuration
 
-1. Read `.aiwg/config.yaml` graph definitions
-2. Determine which graphs to build:
+1. Run `build.py` from the skill directory with `--corpus-root` pointing at the research corpus
+2. Read `.aiwg/config.yaml` graph definitions
+3. Determine which graphs to build:
    - No flags: build all `defaultBuild: true` graphs
    - `--graph <name>`: build only the named graph
    - `--all`: build every defined graph
-3. Check for staleness (skip up-to-date graphs unless `--force`)
+4. Check for staleness (skip up-to-date graphs unless `--force`)
 
 ### Phase 2: Collect Source Data
 

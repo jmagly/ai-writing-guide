@@ -44,13 +44,9 @@ function parseSkillsFromDirectory(): SkillResult[] {
   if (!fs.existsSync(skillsDir)) return results;
 
   try {
-    const entries = fs.readdirSync(skillsDir, { withFileTypes: true });
-
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
-
-      const skillMdPath = path.join(skillsDir, entry.name, 'SKILL.md');
-      if (!fs.existsSync(skillMdPath)) continue;
+    for (const skillMdPath of findSkillMarkdownFiles(skillsDir)) {
+      const skillDir = path.dirname(skillMdPath);
+      const name = path.basename(skillDir);
 
       const content = fs.readFileSync(skillMdPath, 'utf-8');
 
@@ -58,7 +54,7 @@ function parseSkillsFromDirectory(): SkillResult[] {
       const descMatch = content.match(/^# .+\n\n(.+)/m);
       const description = descMatch
         ? descMatch[1].slice(0, 120)
-        : `Skill: ${entry.name}`;
+        : `Skill: ${name}`;
 
       // Extract platforms from frontmatter
       const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
@@ -78,7 +74,7 @@ function parseSkillsFromDirectory(): SkillResult[] {
       }
 
       results.push({
-        name: entry.name,
+        name,
         description,
         source: 'openclaw',
         platforms,
@@ -90,6 +86,49 @@ function parseSkillsFromDirectory(): SkillResult[] {
   }
 
   return results;
+}
+
+function findSkillMarkdownFiles(skillsDir: string): string[] {
+  const found: string[] = [];
+  if (!fs.existsSync(skillsDir)) return found;
+
+  for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const direct = path.join(skillsDir, entry.name, 'SKILL.md');
+    if (fs.existsSync(direct)) {
+      found.push(direct);
+      continue;
+    }
+
+    // OpenClaw supports one namespace level under ~/.openclaw/skills/
+    // (for example ~/.openclaw/skills/aiwg/<skill>/SKILL.md).
+    const namespaceDir = path.join(skillsDir, entry.name);
+    for (const child of fs.readdirSync(namespaceDir, { withFileTypes: true })) {
+      if (!child.isDirectory()) continue;
+      const nested = path.join(namespaceDir, child.name, 'SKILL.md');
+      if (fs.existsSync(nested)) found.push(nested);
+    }
+  }
+
+  return found;
+}
+
+function findSkillDir(name: string): string | null {
+  const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+  const skillsDir = path.join(homeDir, '.openclaw', 'skills');
+  const direct = path.join(skillsDir, name);
+  if (fs.existsSync(path.join(direct, 'SKILL.md'))) return direct;
+
+  const namespaced = path.join(skillsDir, 'aiwg', name);
+  if (fs.existsSync(path.join(namespaced, 'SKILL.md'))) return namespaced;
+
+  if (fs.existsSync(skillsDir)) {
+    for (const skillMd of findSkillMarkdownFiles(skillsDir)) {
+      if (path.basename(path.dirname(skillMd)) === name) return path.dirname(skillMd);
+    }
+  }
+
+  return null;
 }
 
 export class OpenClawAdapter implements RegistryAdapter {
@@ -172,10 +211,10 @@ export class OpenClawAdapter implements RegistryAdapter {
   }
 
   async info(name: string): Promise<SkillDetails | undefined> {
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-    const skillMdPath = path.join(homeDir, '.openclaw', 'skills', name, 'SKILL.md');
+    const skillDir = findSkillDir(name);
+    const skillMdPath = skillDir ? path.join(skillDir, 'SKILL.md') : '';
 
-    if (!fs.existsSync(skillMdPath)) {
+    if (!skillMdPath || !fs.existsSync(skillMdPath)) {
       // Try CLI
       const cliOutput = runOpenClaw(`skills info "${name}" --json 2>/dev/null`);
       if (cliOutput) {
@@ -257,16 +296,15 @@ export class OpenClawAdapter implements RegistryAdapter {
     }
 
     // If CLI not available but skill exists in ~/.openclaw/skills/, copy it
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-    const sourceDir = path.join(homeDir, '.openclaw', 'skills', name);
-    if (fs.existsSync(sourceDir)) {
+    const sourceDir = findSkillDir(name);
+    if (sourceDir && fs.existsSync(sourceDir)) {
       await this.copyToTarget(name, sourceDir, options);
       return;
     }
 
     throw new Error(
       `Skill '${name}' not found in OpenClaw. ` +
-      `Ensure it's installed via 'openclaw skills install ${name}' or available at ~/.openclaw/skills/${name}/`
+      `Ensure it's installed via 'openclaw skills install ${name}' or available at ~/.openclaw/skills/${name}/ or ~/.openclaw/skills/aiwg/${name}/`
     );
   }
 

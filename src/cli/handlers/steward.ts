@@ -25,6 +25,7 @@ import {
   type ProviderCapabilities,
   type FeatureKey,
 } from '../../providers/capability-matrix.js';
+import { getProjectDir, readAiwgConfig } from '../../config/aiwg-config.js';
 
 const BASELINE_PROVIDER = 'claude-code';
 
@@ -40,7 +41,16 @@ function normalizeFeatureKey(input: string): string {
 
 // ── Detect current provider ────────────────────────────────────────────────────
 
-function detectProvider(): string | null {
+function normalizeProviderId(provider: string | undefined): string | null {
+  if (!provider) return null;
+  const normalized = provider.trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === 'claude') return 'claude-code';
+  if (normalized === 'openai') return 'codex';
+  return normalized;
+}
+
+async function detectProvider(ctx?: HandlerContext): Promise<string | null> {
   if (process.env.CLAUDE_CODE_VERSION || process.env.ANTHROPIC_API_KEY) return 'claude-code';
   if (process.env.OPENAI_API_KEY && !process.env.CURSOR_TRACE_ID) return 'codex';
   if (process.env.CURSOR_TRACE_ID || process.env.CURSOR_VERSION) return 'cursor';
@@ -50,6 +60,16 @@ function detectProvider(): string | null {
   if (process.env.OPENCLAW_VERSION) return 'openclaw';
   if (process.env.FACTORY_AGENT_ID) return 'factory';
   if (process.env.OPENCODE_VERSION) return 'opencode';
+
+  if (ctx) {
+    try {
+      const cfg = await readAiwgConfig(getProjectDir(ctx, ctx.args));
+      const configured = normalizeProviderId(cfg?.providers?.[0]);
+      if (configured) return configured;
+    } catch {
+      // Environment detection should stay best-effort.
+    }
+  }
   return null;
 }
 
@@ -124,7 +144,7 @@ function printFullMatrix(matrix: CapabilityMatrix): void {
 
 // ── Main execution ─────────────────────────────────────────────────────────────
 
-async function handleSteward(args: string[]): Promise<void> {
+async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void> {
   const subcommand = args[0];
 
   if (!subcommand || subcommand === '--help' || subcommand === 'help') {
@@ -160,7 +180,7 @@ async function handleSteward(args: string[]): Promise<void> {
     }
 
     if (providerFlag >= 0) {
-      const providerId = args[providerFlag + 1];
+      const providerId = normalizeProviderId(args[providerFlag + 1]) ?? '';
       if (!providerId) throw new AiwgError({
         code: 'ERR_USAGE_MISSING_VALUE',
         message: '--provider requires a provider name',
@@ -219,9 +239,10 @@ async function handleSteward(args: string[]): Promise<void> {
     }
 
     // No flag — show current provider
-    const detected = detectProvider();
+    const detected = await detectProvider(ctx);
     if (!detected) {
       console.log(`  Could not detect active provider. Specify with --provider <name>.`);
+      console.log(`  Detection checks environment variables first, then .aiwg/aiwg.config providers[0].`);
       console.log(`  Run 'aiwg runtime-info' to verify provider detection.`);
       return;
     }
@@ -264,7 +285,7 @@ async function handleSteward(args: string[]): Promise<void> {
       });
     }
 
-    const detected = detectProvider() ?? BASELINE_PROVIDER;
+    const detected = await detectProvider(ctx) ?? BASELINE_PROVIDER;
     const provider = matrix.providers[detected];
 
     console.log(`\n  Routing advice for: ${capabilityId}`);
@@ -317,7 +338,7 @@ export const stewardHandler: CommandHandler = {
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
     try {
-      await handleSteward(ctx.args);
+      await handleSteward(ctx.args, ctx);
       return { exitCode: 0 };
     } catch (error) {
       // Preserve AiwgError.exitCode (USAGE=2, etc.) through the catch.

@@ -57,7 +57,7 @@ const samplePayload: V1DispatchPayload = {
 };
 
 describe('routeDispatch — v2 happy path', () => {
-  it('POSTs to /agents/{executorId}/v1/messages:send', async () => {
+  it('POSTs to the registered A2A instance when it differs from executorId', async () => {
     const { fetch: stub, calls } = makeStub(() =>
       new Response(
         JSON.stringify({ id: 'task-a', status: { state: 'submitted' } }),
@@ -65,11 +65,13 @@ describe('routeDispatch — v2 happy path', () => {
       )
     );
     const opts: DispatchRouterOptions = { fetch: stub };
-    const result = await routeDispatch(mkExecutor(), samplePayload, opts);
+    const result = await routeDispatch(mkExecutor({ a2aInstanceId: 'inst-1' }), samplePayload, opts);
     expect(result.dispatchPath).toBe('v2');
     expect(result.missionId).toBe('m-1');
+    expect(result.executorId).toBe('exec-1');
+    expect(result.a2aInstanceId).toBe('inst-1');
     expect(result.task?.id).toBe('task-a');
-    expect(calls[0]!.url).toBe('https://exec.test/agents/exec-1/v1/messages:send');
+    expect(calls[0]!.url).toBe('https://exec.test/agents/inst-1/v1/messages:send');
     const body = JSON.parse((calls[0]!.init.body as string) ?? '{}') as {
       message: { messageId: string; parts: { text?: string }[]; metadata: Record<string, unknown> };
     };
@@ -77,6 +79,34 @@ describe('routeDispatch — v2 happy path', () => {
     expect(body.message.parts[0]?.text).toBe('Run the suite');
     expect(body.message.metadata['completion']).toBe('tests pass');
     expect(body.message.metadata['long_running']).toBe(false);
+  });
+
+  it('falls back to executorId when no A2A instance id is known', async () => {
+    const { fetch: stub, calls } = makeStub(() =>
+      new Response(
+        JSON.stringify({ id: 'task-a', status: { state: 'submitted' } }),
+        { status: 202, headers: { 'content-type': 'application/json' } }
+      )
+    );
+    const result = await routeDispatch(mkExecutor(), samplePayload, { fetch: stub });
+    expect(result.a2aInstanceId).toBe('exec-1');
+    expect(calls[0]!.url).toBe('https://exec.test/agents/exec-1/v1/messages:send');
+  });
+
+  it('lets a dispatch payload override the registered A2A instance id', async () => {
+    const { fetch: stub, calls } = makeStub(() =>
+      new Response(
+        JSON.stringify({ id: 'task-a', status: { state: 'submitted' } }),
+        { status: 202, headers: { 'content-type': 'application/json' } }
+      )
+    );
+    const result = await routeDispatch(
+      mkExecutor({ a2aInstanceId: 'registered-inst' }),
+      { ...samplePayload, a2a_instance_id: 'payload-inst' },
+      { fetch: stub }
+    );
+    expect(result.a2aInstanceId).toBe('payload-inst');
+    expect(calls[0]!.url).toBe('https://exec.test/agents/payload-inst/v1/messages:send');
   });
 
   it('injects required A2A extensions on the v2 call', async () => {

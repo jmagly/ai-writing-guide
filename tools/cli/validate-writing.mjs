@@ -7,27 +7,13 @@
  */
 
 import { readdir, stat } from 'fs/promises';
-import { join, extname, resolve } from 'path';
 import { existsSync } from 'fs';
-
-// Resolve the validation engine path, preferring dist/ (always present in
-// the npm package) and falling back to src/ for dev environments without a
-// compiled build. The previous NODE_ENV gate broke npm-installed users
-// because NODE_ENV is not set to "production" by `npm install -g aiwg`.
-// Same class of bug as `tools/cli/doctor.mjs` (#1250). For a fully
-// general resolver, see _resolve-impl.mjs (future work — config-var
-// approach tracked separately).
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const distEnginePath = resolve(__dirname, '../../dist/writing/validation-engine.js');
-const srcEnginePath = resolve(__dirname, '../../src/writing/validation-engine.js');
-const enginePath = existsSync(distEnginePath) ? distEnginePath : srcEnginePath;
+import { join, extname, resolve } from 'path';
+import { importImpl } from '../_resolve-impl.mjs';
 
 let WritingValidationEngine;
 try {
-  const module = await import(enginePath);
+  const module = await importImpl(import.meta.url, 'writing/validation-engine.js');
   WritingValidationEngine = module.WritingValidationEngine;
 } catch (error) {
   console.error('Error: Could not load validation engine. Run `npm run build` first.');

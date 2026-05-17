@@ -47,11 +47,12 @@ aiwg use sdlc --provider openclaw
 # Deploy all frameworks
 aiwg use all --provider openclaw
 
-# Verify
+# Verify AIWG kernel skills
+find ~/.openclaw/skills/aiwg -mindepth 1 -maxdepth 1 -type d
 openclaw skills list | grep aiwg
 ```
 
-Skills land in `~/.openclaw/skills/<skill-name>/SKILL.md` and are auto-discovered by OpenClaw.
+AIWG kernel skills land in `~/.openclaw/skills/aiwg/<skill-name>/SKILL.md` to avoid collisions with non-AIWG ClawHub installs. The larger on-demand skill index remains under `~/.openclaw/.aiwg/skills/`.
 
 ### Option B: MCP Sidecar (full power)
 
@@ -138,7 +139,8 @@ When both modes are active, route requests based on complexity:
 
 | Artifact Type | Target Directory | Count |
 |---|---|---|
-| Skills | `~/.openclaw/skills/` | 90+ |
+| Kernel skills | `~/.openclaw/skills/aiwg/` | 15-30 |
+| On-demand skill index | `~/.openclaw/.aiwg/skills/` | 90+ |
 | Agents | `~/.openclaw/agents/` | 90+ |
 | Commands | `~/.openclaw/commands/` | 50+ |
 | Rules | `~/.openclaw/rules/` | 33 |
@@ -233,7 +235,8 @@ After setup, verify the integration:
 
 ```bash
 # Verify deployment
-ls ~/.openclaw/skills/
+find ~/.openclaw/skills/aiwg -mindepth 1 -maxdepth 1 -type d
+find ~/.openclaw/.aiwg/skills -mindepth 1 -maxdepth 1 -type d
 
 # Check OpenClaw skill discovery
 openclaw skills list --verbose
@@ -258,7 +261,7 @@ openclaw tools list
 
 ### Skills conflict with existing skills
 
-OpenClaw skill precedence: `workspace/skills/` > `~/.openclaw/skills/` > bundled > `extraDirs`. AIWG deploys to `~/.openclaw/skills/` (user-global). Workspace skills take precedence if names collide.
+OpenClaw skill precedence: `workspace/skills/` > `~/.openclaw/skills/` > bundled > `extraDirs`. AIWG deploys kernel skills to `~/.openclaw/skills/aiwg/` (user-global) and on-demand skills to `~/.openclaw/.aiwg/skills/`. Workspace skills take precedence if names collide.
 
 ### Performance
 

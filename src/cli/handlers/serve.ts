@@ -805,6 +805,7 @@ export async function startServer(opts: {
     // 3. Forward dispatch via the dispatch router (#1252): try A2A v2 first,
     //    fall back to v1 /dispatch on 404 with a structured warning.
     let estimatedStart: string | undefined;
+    let a2aInstanceId: string | undefined;
     let dispatchPath: 'v2' | 'v1-fallback' = 'v2';
     try {
       const result = await routeDispatch(executor, payload as V1DispatchPayload, {
@@ -834,6 +835,7 @@ export async function startServer(opts: {
         },
       });
       dispatchPath = result.dispatchPath;
+      a2aInstanceId = result.a2aInstanceId;
       if (result.estimatedStart) estimatedStart = result.estimatedStart;
     } catch (err) {
       const msg = (err as Error).message ?? String(err);
@@ -874,6 +876,7 @@ export async function startServer(opts: {
       status: 'assigned',
       dispatch_path: dispatchPath,
     };
+    if (a2aInstanceId) dispatchResp.a2a_instance_id = a2aInstanceId;
     if (estimatedStart) dispatchResp.estimated_start = estimatedStart;
     return c.json(dispatchResp, 202);
   });

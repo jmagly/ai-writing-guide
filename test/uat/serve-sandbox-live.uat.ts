@@ -16,6 +16,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore — .mjs without bundled types
 import { spawnAiwgServe, waitForHttp } from '../integration/_serve-harness.mjs';
+import { A2A_IDEMPOTENCY_V1, A2A_RUNTIME_V1 } from '../../src/a2a/client.js';
 
 const SANDBOX_ENDPOINT = process.env.AIWG_SANDBOX_ENDPOINT || 'http://127.0.0.1:8122';
 
@@ -77,6 +78,33 @@ describe('aiwg serve — live UAT vs real agentic-sandbox', () => {
       },
       timeout,
     );
+  }
+
+  function asRecord(value: unknown): Record<string, unknown> | undefined {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : undefined;
+  }
+
+  function instanceRecords(body: unknown): Record<string, unknown>[] {
+    if (Array.isArray(body)) return body.map(asRecord).filter((v): v is Record<string, unknown> => !!v);
+    const record = asRecord(body);
+    const candidates = [
+      record?.instances,
+      record?.data,
+      record?.items,
+    ];
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate)) {
+        return candidate.map(asRecord).filter((v): v is Record<string, unknown> => !!v);
+      }
+    }
+    return [];
+  }
+
+  function routableInstanceId(record: Record<string, unknown>): string | undefined {
+    const value = record.instance_id ?? record.instanceId ?? record.agent_instance_id ?? record.id;
+    return typeof value === 'string' && value.length > 0 ? value : undefined;
   }
 
   liveIt('sandbox /api/v1/aiwg/status reports configured + endpoint', () => {
@@ -204,6 +232,65 @@ describe('aiwg serve — live UAT vs real agentic-sandbox', () => {
     // 502 is acceptable if the running sandbox doesn't expose the legacy
     // /api/v1/vms route (some builds gate it behind a libvirt connection).
   }, 30_000);
+
+  liveIt('sandbox v2 A2A smoke covers admin instances, AgentCard, message dispatch, and task status', async () => {
+    const inventory = await fetch(`${SANDBOX_ENDPOINT}/api/v2/admin/instances`);
+    if (inventory.status === 404) {
+      // eslint-disable-next-line no-console
+      console.log('  ⏭  sandbox v2 A2A smoke — skipped (/api/v2/admin/instances unavailable)');
+      return;
+    }
+    expect(inventory.status).toBe(200);
+    const instances = instanceRecords(await inventory.json());
+    const instanceId = instances.map(routableInstanceId).find((id): id is string => !!id);
+    if (!instanceId) {
+      // eslint-disable-next-line no-console
+      console.log('  ⏭  sandbox v2 A2A smoke — skipped (no routable instance_id in inventory)');
+      return;
+    }
+
+    let card = await fetch(`${SANDBOX_ENDPOINT}/agents/${encodeURIComponent(instanceId)}/.well-known/agent-card.json`);
+    if (card.status === 404) {
+      card = await fetch(`${SANDBOX_ENDPOINT}/agents/${encodeURIComponent(instanceId)}/v1/extendedAgentCard`);
+    }
+    expect(card.status).toBe(200);
+    const cardBody = asRecord(await card.json());
+    expect(typeof cardBody?.name).toBe('string');
+
+    if (process.env.AIWG_A2A_LIVE_DISPATCH !== '1') {
+      // eslint-disable-next-line no-console
+      console.log('  ⏭  sandbox v2 A2A dispatch smoke — set AIWG_A2A_LIVE_DISPATCH=1 to send a live message');
+      return;
+    }
+
+    const messageId = `uat-a2a-${Date.now()}`;
+    const send = await fetch(`${SANDBOX_ENDPOINT}/agents/${encodeURIComponent(instanceId)}/v1/messages:send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'A2A-Extensions': `${A2A_RUNTIME_V1}, ${A2A_IDEMPOTENCY_V1}`,
+      },
+      body: JSON.stringify({
+        message: {
+          messageId,
+          role: 'user',
+          parts: [{ kind: 'text', text: 'AIWG live A2A smoke test. Report readiness only.' }],
+          metadata: { source: 'aiwg-uat', issue: 1372 },
+        },
+      }),
+    });
+    expect([200, 202]).toContain(send.status);
+    const task = asRecord(await send.json());
+    const taskId = task?.id ?? task?.taskId;
+    expect(typeof taskId).toBe('string');
+
+    const status = await fetch(
+      `${SANDBOX_ENDPOINT}/agents/${encodeURIComponent(instanceId)}/v1/tasks/${encodeURIComponent(String(taskId))}`,
+    );
+    expect(status.status).toBe(200);
+    const statusBody = asRecord(await status.json());
+    expect(statusBody?.status).toBeDefined();
+  }, 45_000);
 
   // ── Deferred to cycle 3 ─────────────────────────────────────────
   // - End-to-end mission lifecycle (register executor → dispatch → execute → terminate)

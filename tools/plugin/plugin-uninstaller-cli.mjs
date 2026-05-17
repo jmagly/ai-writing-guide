@@ -16,27 +16,11 @@
  * @module tools/plugin/plugin-uninstaller-cli
  */
 
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { existsSync } from 'fs';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { importImpl } from '../_resolve-impl.mjs';
 
 async function loadPluginUninstaller() {
-  const distPath = resolve(__dirname, '../../dist/plugin/plugin-uninstaller.js');
-  const srcPath = resolve(__dirname, '../../src/plugin/plugin-uninstaller.ts');
-
   try {
-    if (existsSync(distPath)) {
-      return await import(distPath);
-    }
-  } catch (e) {
-    // Fall through to src
-  }
-
-  try {
-    return await import(srcPath);
+    return await importImpl(import.meta.url, 'plugin/plugin-uninstaller.js');
   } catch (e) {
     console.error('Failed to load plugin-uninstaller module');
     console.error('Run `npm run build` to compile TypeScript files');

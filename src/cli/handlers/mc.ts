@@ -602,88 +602,6 @@ async function mcAgents(ctx: HandlerContext): Promise<HandlerResult> {
 
 // ── Subcommand router ────────────────────────────────────────
 
-async function mcBridge(ctx: HandlerContext): Promise<HandlerResult> {
-  const aiwgServeUrl = parseFlag(ctx.args, '--aiwg-serve') || 'http://127.0.0.1:7337';
-  const watchDir = parseFlag(ctx.args, '--watch') || MC_ROOT;
-  const detach = hasFlag(ctx.args, '--detach');
-  const subscribeExecutorsArg = parseFlag(ctx.args, '--subscribe-executors');
-  const subscribeExecutors = subscribeExecutorsArg
-    ? subscribeExecutorsArg.split(',').map(s => s.trim()).filter(Boolean)
-    : [];
-  const verbose = hasFlag(ctx.args, '--verbose');
-
-  if (detach) {
-    ui.error('--detach is not yet implemented. Run in the foreground for now (#1182 follow-up).');
-    return { exitCode: 1 };
-  }
-
-  ui.blank();
-  ui.info(`${ui.brandMark()} ${ui.bold('Mission Control Bridge')}`);
-  ui.info(`  aiwg serve: ${aiwgServeUrl}`);
-  ui.info(`  watching:   ${watchDir}`);
-  if (subscribeExecutors.length > 0) {
-    ui.info(`  subscribed: ${subscribeExecutors.join(', ')}`);
-  }
-  ui.blank();
-
-  // Import the bridge implementation lazily so the CLI startup cost stays low
-  // and the bridge's optional ws dep is only loaded when actually used.
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore — .mjs module has no TS declarations
-  const { startQueueTailer } = await import('../../../tools/mc-bridge/queue-tailer.mjs');
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore — ws lacks bundled types; we use the runtime constructor only
-  const wsMod = await import('ws');
-  const WSCtor =
-    (wsMod as { WebSocket?: unknown }).WebSocket ||
-    (wsMod as { default?: { WebSocket?: unknown } }).default?.WebSocket;
-  if (!WSCtor) {
-    ui.error('Could not resolve a WebSocket implementation from the `ws` package.');
-    return { exitCode: 1 };
-  }
-
-  const ac = new AbortController();
-  const handle = await startQueueTailer({
-    aiwgServeUrl,
-    watchDir,
-    subscribeExecutors,
-    WebSocketImpl: WSCtor,
-    signal: ac.signal,
-    logger: verbose
-      ? (msg: string, meta?: Record<string, unknown>) => {
-          // eslint-disable-next-line no-console
-          console.log(`[mc-bridge] ${msg}`, meta ? JSON.stringify(meta) : '');
-        }
-      : (msg: string, meta?: Record<string, unknown>) => {
-          // Print only the headline events at normal verbosity
-          const interesting = new Set([
-            'queue-tailer:dispatched',
-            'queue-tailer:dispatch-failed',
-            'queue-tailer:event-applied',
-            'queue-tailer:ws-state',
-          ]);
-          if (interesting.has(msg)) {
-            // eslint-disable-next-line no-console
-            console.log(`[mc-bridge] ${msg}`, meta ? JSON.stringify(meta) : '');
-          }
-        },
-  });
-
-  ui.success('Bridge running. Ctrl-C to stop.');
-
-  return new Promise<HandlerResult>((resolve) => {
-    const onSignal = async () => {
-      ui.blank();
-      ui.info('Stopping bridge…');
-      ac.abort();
-      try { await handle.stop(); } catch {}
-      resolve({ exitCode: 0 });
-    };
-    process.once('SIGINT', onSignal);
-    process.once('SIGTERM', onSignal);
-  });
-}
-
 const subcommands: Record<string, (ctx: HandlerContext) => Promise<HandlerResult>> = {
   start: mcStart,
   dispatch: mcDispatch,
@@ -695,7 +613,6 @@ const subcommands: Record<string, (ctx: HandlerContext) => Promise<HandlerResult
   stop: mcStop,
   list: mcList,
   agents: mcAgents,
-  bridge: mcBridge,
 };
 
 function showMcHelp(): void {
@@ -717,10 +634,6 @@ function showMcHelp(): void {
     stop [<id>] [--drain]         Shut down session
     list [--json]                 List all sessions
     agents [--filter] [--json]    Query routable agents from aiwg serve (#916)
-    bridge [--aiwg-serve URL]     Tail the MC queue and dispatch to aiwg serve (#1182)
-                                  [--watch DIR] [--subscribe-executors id,id]
-                                  [--verbose]
-
   ${ui.bold('Examples:')}
     aiwg mc start --name "Sprint 4"
     aiwg mc dispatch mc-abc123 "Fix auth" --completion "tests pass"
@@ -728,7 +641,12 @@ function showMcHelp(): void {
     aiwg mc status mc-abc123
     aiwg mc stop mc-abc123 --drain
     aiwg mc agents --framework sdlc-complete --max-cpu 80
-    aiwg mc bridge --aiwg-serve http://127.0.0.1:7337
+
+  ${ui.bold('A2A route for new sandbox work:')}
+    GET  /api/v2/admin/instances
+    GET  /agents/{instance_id}/.well-known/agent-card.json
+    GET  /agents/{instance_id}/v1/extendedAgentCard
+    POST /agents/{instance_id}/v1/messages:send
 `);
 }
 
