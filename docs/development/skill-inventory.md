@@ -84,6 +84,7 @@ Complete catalog of skills across all AIWG packages.
 | `grade-on-ingest` | Auto-trigger GRADE quality assessment on new research sources |
 | `incident-triage` | Triage production incidents |
 | `issue-auto-sync` | Automatic issue tracking synchronization from commits |
+| `issue-audit` | Audit issue backlogs for stale items, overlaps, epic hygiene, and next priorities |
 | `issue-driven-al` | Issue-thread-driven Al loops with human feedback |
 | `regression-api-contract` | Detect breaking API contract changes |
 | `regression-auto-baseline` | Automatic regression baseline lifecycle management |

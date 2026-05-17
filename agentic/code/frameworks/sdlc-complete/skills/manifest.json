@@ -125,6 +125,11 @@
       "triggers": ["address the open issues", "work through the bugs", "fix open issues", "tackle issue"]
     },
     {
+      "name": "issue-audit",
+      "description": "Audits issue backlogs for stale items, duplicate/overlapping issues, epic hygiene, and next action priorities",
+      "triggers": ["issue-audit", "audit open issues", "triage the issue backlog", "review stale issues", "find duplicate issues"]
+    },
+    {
       "name": "regression-api-contract",
       "description": "Detect breaking changes in API contracts across REST, GraphQL, and gRPC interfaces",
       "triggers": ["API breaking change", "contract regression", "schema compatibility"]

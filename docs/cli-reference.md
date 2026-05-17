@@ -3204,6 +3204,42 @@ aiwg best-practices-audit ".aiwg/architecture/" --validate
 
 ## Planning Skills
 
+### issue-audit
+
+Audit and triage issue backlogs without starting implementation work. Use this when you want cleanup recommendations, duplicate/overlap detection, stale issue review, epic child-state refresh, or next-issue prioritization before running `address-issues`.
+
+```bash
+/issue-audit [options]
+```
+
+**Options:**
+
+- `--all-open` — Audit all open issues. This is the default when no filter is supplied.
+- `--filter "query"` — Reuse issue-list/address-issues style filters, such as `status:open label:bug`.
+- `--interactive` — Ask one focused triage decision at a time.
+- `--guidance "text"` — Steer the audit lens without interactive prompts.
+- `--provider gitea|github|local` — Override configured issue provider.
+- `--dry-run` — Never mutate tracker state; emit recommendations only. This is the default behavior.
+- `--apply` — Apply explicitly approved cleanup actions such as comments, closures, relationship links, or epic refreshes.
+
+**Common workflows:**
+
+| Workflow | Example |
+|---|---|
+| Open backlog audit | `/issue-audit --all-open` |
+| Stale deferred cleanup | `/issue-audit --filter "status:open label:deferred" --guidance "add check dates or close mistakes"` |
+| Epic child-state refresh | `/issue-audit --filter "status:open label:epic" --guidance "find stale child tables"` |
+| Duplicate/overlap audit | `/issue-audit --guidance "find duplicate or overlapping feature tracks"` |
+| Priority/blocker audit | `/issue-audit --guidance "rank next issues for address-issues"` |
+
+**Output:** a structured report with counts, grouped findings, recommended actions, and a short list of next moves. The command is read-only unless `--apply` is explicitly supplied.
+
+**Related:** `issue-list`, `issue-comment`, `issue-close`, `issue-sync`, `address-issues`.
+
+**Skill location:** `agentic/code/frameworks/sdlc-complete/skills/issue-audit/SKILL.md`
+
+---
+
 ### issue-planner
 
 Transform a high-level objective into a fully researched, SDLC-gated issue backlog — ready for `address-issues` — without manually researching, writing docs, or deciding priority order.

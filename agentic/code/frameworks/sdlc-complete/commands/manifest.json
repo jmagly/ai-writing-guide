@@ -55,6 +55,7 @@
     "retrospective-analyzer.md",
     "security-audit.md",
     "security-gate.md",
+    "issue-audit.md",
     "issue-create.md",
     "issue-list.md",
     "issue-update.md",
