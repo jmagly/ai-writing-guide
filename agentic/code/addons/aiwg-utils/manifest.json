@@ -112,6 +112,7 @@
     "instruction-comprehension",
     "parallel-then-synthesize",
     "research-before-decision",
+    "tool-quota",
     "subagent-scoping",
     "diagram-generation",
     "native-ux-tools",

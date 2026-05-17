@@ -1,12 +1,12 @@
 # aiwg-utils Rules Reference
 
-Seven enforcement rules deployed with every AIWG installation. These rules apply automatically based on context — you do not invoke them explicitly.
+Core enforcement rules deployed with every AIWG installation. These rules apply automatically based on context — you do not invoke them explicitly.
 
 ---
 
 ## subagent-scoping
 
-**Priority**: HIGH  
+**Priority**: HIGH
 **Full rule**: `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md`
 
 ### What It Enforces
@@ -43,7 +43,7 @@ Task(technical-writer, "Update auth module documentation")
 
 ## instruction-comprehension
 
-**Priority**: HIGH  
+**Priority**: HIGH
 **Full rule**: `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/instruction-comprehension.md`
 
 ### What It Enforces
@@ -119,6 +119,44 @@ Interactive commands (any command with `--interactive` flag), decision gates, us
 ### Platform Support
 
 The rule includes a capability matrix defining which tool to use on each of the 8 supported platforms. Always check tool availability before invoking.
+
+---
+
+## tool-quota
+
+**Priority**: HIGH
+**Full rule**: `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/tool-quota.md`
+
+### What It Enforces
+
+Agents track tool calls per session, stop repeated failing calls, and honor declared quotas:
+
+```yaml
+tool_quota:
+  Bash: 10
+  WebFetch: 5
+  defaults: 20
+loop_detection:
+  same_call_window: 5
+  max_retries: 3
+```
+
+Default behavior when no agent-specific quota exists:
+
+- Same failing call retries: 3
+- Similar calls in a rolling window: 5
+- Total calls to one tool in a focused session: 30
+- High-cost external tool calls: 10
+
+When a quota would be exceeded, the agent stops and reports what was tried, what was learned, why more calls are needed, and the narrow next action.
+
+### When It Applies
+
+Tool-heavy sessions, unattended bots, shell retry loops, external fetch loops, and any agent definition with `tool_quota` or `loop_detection`.
+
+### Example: Quickbooksbot
+
+Quickbooksbot receives a vague "why are March numbers wrong?" request. It may inspect known accounting files and integration status, but after three equivalent missing-token or permission failures it must stop, summarize the blocker, and ask for the missing export or credential instead of continuing tool retries.
 
 ---
 
@@ -213,6 +251,7 @@ Creating agent definitions, deploying to multiple providers, selecting tools for
 | `subagent-scoping` | Delegating tasks | One task per subagent; depth ≤ 2 |
 | `instruction-comprehension` | Every request | Prohibitions before requirements; no drift |
 | `research-before-decision` | Technical decisions | Research → Reason → Act → Verify |
+| `tool-quota` | Tool-heavy sessions | Track calls; stop repeated failures |
 | `native-ux-tools` | Interactive questions | Use platform-native tools; 1 question/turn |
 | `context-budget` | Parallel spawning (opt-in) | Respect `AIWG_CONTEXT_WINDOW` |
 | `diagram-generation` | Major docs | Required diagrams per artifact type |
