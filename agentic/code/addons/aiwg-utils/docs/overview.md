@@ -1,6 +1,6 @@
 # aiwg-utils Overview
 
-aiwg-utils is the core utility addon bundled with every AIWG installation. It provides core enforcement rules that govern how agents behave — how they scope subagents, follow instructions, research before acting, avoid tool loops, handle interactive questions, manage context budgets, generate diagrams, and deploy across platforms. These rules are not optional; they are the behavioral foundation on which all other AIWG components operate.
+aiwg-utils is the core utility addon bundled with every AIWG installation. It provides core enforcement rules that govern how agents behave — how they scope subagents, follow instructions, research before acting, gate model escalation, avoid tool loops, handle interactive questions, manage context budgets, generate diagrams, and deploy across platforms. These rules are not optional; they are the behavioral foundation on which all other AIWG components operate.
 
 ## What's Included
 
@@ -37,6 +37,12 @@ Apply when: every user request, multi-part tasks, specification compliance.
 Research the codebase, docs, and existing patterns before making technical decisions. The pattern is: IDENTIFY → SEARCH → EXTRACT → REASON → ACT → VERIFY. When an action fails, diagnose the root cause instead of retrying with variations (the rule calls this "whack-a-mole detection").
 
 Apply when: API usage, configuration changes, dependency selection, error diagnosis, import resolution.
+
+#### escalation-discipline
+
+Summarize before moving above the declared default model tier, confirm Tier 3 explicitly, and never auto-escalate unattended bots to premium tiers. Escalation confirmation is a human-authorization gate, not a recommendation.
+
+Apply when: model-tier routing, budget-sensitive agents, unattended bots, requests for deep/debug/thorough work, high-impact work.
 
 #### tool-quota
 
@@ -83,6 +89,7 @@ Full rule files:
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/instruction-comprehension.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md
+@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/escalation-discipline.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/tool-quota.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/native-ux-tools.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md

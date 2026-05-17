@@ -4,7 +4,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-## AIWG Utilities Rules (22 rules — active with aiwg-utils addon)
+## AIWG Utilities Rules (23 rules — active with aiwg-utils addon)
 
 ### HIGH
 
@@ -47,6 +47,11 @@ Core meta-utility rules for agent coordination, context management, and platform
 **Summary**: Research codebase, docs, and sources before making technical decisions. Prevents guessing APIs, blind retries, and missing context. Pattern: IDENTIFY > SEARCH > EXTRACT > REASON > ACT > VERIFY. When an action fails, research the root cause instead of retrying with variations (whack-a-mole detection). Read error messages completely — they frequently contain the answer. Check existing project patterns before creating new ones.
 **When to apply**: Technical decision-making, API usage, configuration changes, dependency selection, error diagnosis, import resolution
 **Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md
+
+#### escalation-discipline
+**Summary**: Agents must summarize before moving above their declared default model tier, confirm Tier 3 explicitly, and never auto-escalate unattended bots to premium tiers. Escalation confirmation is a human-authorization gate: state the need, target tier, and bounded next task before spending higher-tier tokens or routing to a stronger agent.
+**When to apply**: Model-tier routing, budget-sensitive agents, unattended bots, requests for deep/debug/thorough work, high-impact legal/financial/medical/security work, any recommendation to use a stronger or premium model
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/escalation-discipline.md
 
 #### tool-quota
 **Summary**: Tool-using agents must track per-session tool calls, stop repeating similar failed calls without progress, and honor `tool_quota` / `loop_detection` declarations when present. Defaults: same failing call retries <=3, similar-call window <=5, one tool <=30 calls in a focused session, high-cost external tools <=10. When a quota would be exceeded, summarize attempts, facts learned, and the narrow next action instead of continuing an unbounded loop.
@@ -138,6 +143,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 | **Agent definition scope** | god-session, subagent-scoping |
 | **Documentation** | diagram-generation |
 | **Research/decisions** | research-before-decision |
+| **Model escalation / spend gates** | escalation-discipline, human-authorization, native-ux-tools |
 | **Tool-call loops / quotas** | tool-quota, research-before-decision, vague-discretion |
 | **Skill / capability lookup** | skill-discovery, research-before-decision |
 | **Error diagnosis** | research-before-decision, instruction-comprehension |
@@ -156,5 +162,5 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-*Generated from aiwg-utils manifest.json — 22 rules*
+*Generated from aiwg-utils manifest.json — 23 rules*
 *Full rule files: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/*

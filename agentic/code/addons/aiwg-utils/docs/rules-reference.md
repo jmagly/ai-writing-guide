@@ -160,6 +160,47 @@ Quickbooksbot receives a vague "why are March numbers wrong?" request. It may in
 
 ---
 
+## escalation-discipline
+
+**Priority**: HIGH
+**Full rule**: `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/escalation-discipline.md`
+
+### What It Enforces
+
+Agents summarize before using a model above their declared default tier:
+
+```
+Need: what is hard or uncertain
+Escalation: target tier and why the default tier is insufficient
+Next: the bounded task the higher tier will handle
+```
+
+Tier 3 requires explicit human confirmation. Unattended bots may not auto-escalate to Tier 3; they must ask, stop with a summary, or queue the request for a supervised agent.
+
+Agent definitions may override defaults:
+
+```yaml
+escalation:
+  unattended: true
+  max_auto_tier: 1
+  summary_required: true
+  premium_requires_confirmation: true
+```
+
+### When It Applies
+
+Model-tier routing, budget-sensitive agents, unattended bots, high-impact legal/financial/medical/security work, and user requests for deep, debug, or thorough work.
+
+### Interaction with Human Authorization
+
+Escalation confirmation is a human-authorization gate. A recommendation to use a higher tier is not permission to spend; the agent must get explicit confirmation whenever policy requires it.
+
+### Example: Quickbooksbot
+
+Quickbooksbot receives a complex accounting question that may affect tax prep. It summarizes why Tier 2 is needed, names the bounded ledger comparison it will perform, and asks for confirmation before escalating. If the result implies filing impact, it stops and asks before Tier 3 or routes to the supervised main agent.
+
+---
+
 ## context-budget
 
 **Priority**: MEDIUM  
@@ -251,6 +292,7 @@ Creating agent definitions, deploying to multiple providers, selecting tools for
 | `subagent-scoping` | Delegating tasks | One task per subagent; depth ≤ 2 |
 | `instruction-comprehension` | Every request | Prohibitions before requirements; no drift |
 | `research-before-decision` | Technical decisions | Research → Reason → Act → Verify |
+| `escalation-discipline` | Model spend gates | Summarize; confirm premium tiers |
 | `tool-quota` | Tool-heavy sessions | Track calls; stop repeated failures |
 | `native-ux-tools` | Interactive questions | Use platform-native tools; 1 question/turn |
 | `context-budget` | Parallel spawning (opt-in) | Respect `AIWG_CONTEXT_WINDOW` |
