@@ -22,6 +22,7 @@ import {
 } from '../../serve/sandbox-registry.js';
 import { routeTask, type AgentFilter } from '../../serve/agent-router.js';
 import { routeDispatch, type V1DispatchPayload } from '../../serve/dispatch-router.js';
+import { observeA2ATerminalState } from '../../serve/a2a-terminal-observer.js';
 import {
   executorRegistry,
   validateRegisterPayload,
@@ -807,6 +808,7 @@ export async function startServer(opts: {
     let estimatedStart: string | undefined;
     let a2aInstanceId: string | undefined;
     let dispatchPath: 'v2' | 'v1-fallback' = 'v2';
+    let a2aTask = undefined as Awaited<ReturnType<typeof routeDispatch>>['task'] | undefined;
     try {
       const result = await routeDispatch(executor, payload as V1DispatchPayload, {
         onV1Fallback: (info) => {
@@ -836,6 +838,7 @@ export async function startServer(opts: {
       });
       dispatchPath = result.dispatchPath;
       a2aInstanceId = result.a2aInstanceId;
+      a2aTask = result.task;
       if (result.estimatedStart) estimatedStart = result.estimatedStart;
     } catch (err) {
       const msg = (err as Error).message ?? String(err);
@@ -862,6 +865,23 @@ export async function startServer(opts: {
 
     // 4. Record the mission and emit telemetry
     executorRegistry.assignMission(missionId, executor.executorId);
+    if (dispatchPath === 'v2' && a2aTask && a2aInstanceId) {
+      void observeA2ATerminalState(
+        executorRegistry,
+        executor,
+        missionId,
+        a2aInstanceId,
+        a2aTask,
+        {
+          onError: (err) => {
+            logServeWarn(
+              'dispatch',
+              `A2A terminal observer failed for mission ${missionId}: ${(err as Error).message ?? String(err)}`
+            );
+          },
+        }
+      );
+    }
     telemetryStore.ingest(createEvent('mission.dispatch', sessionId, {
       missionId,
       executorId: executor.executorId,

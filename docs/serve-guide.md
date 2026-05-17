@@ -337,6 +337,11 @@ GET  /agents/{instance_id}/v1/tasks/{task_id}/subscribe
 identifies the routable A2A sandbox instance. They may be different; dispatch
 payloads may pass `a2a_instance_id` when a concrete sandbox instance is known.
 `aiwg serve` reports the selected `a2a_instance_id` in dispatch responses.
+For v2 A2A dispatch, the returned sandbox task is not fire-and-forget:
+`aiwg serve` follows the task through `GET /agents/{instance_id}/v1/tasks/{task_id}`
+until it reaches a terminal A2A state, then projects that state into the AIWG
+mission record. Completed A2A tasks become `mission.completed`; failed or
+rejected tasks become `mission.failed`; canceled tasks become `mission.aborted`.
 
 The removed `aiwg mc bridge` queue tailer no longer sits between Mission
 Control queue files and sandbox execution.
