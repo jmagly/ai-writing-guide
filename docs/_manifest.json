@@ -29,6 +29,7 @@
   "order": [
     "welcome",
     "getting-started",
+    "getting-started/language-map",
     "overview/what-is-aiwg",
     "overview/executive-brief",
     "getting-started/prerequisites",

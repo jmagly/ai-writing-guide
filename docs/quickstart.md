@@ -6,6 +6,8 @@
 
 These cover the common situations in plain terms: new project, existing code, just trying it out, team setup, writing, auditing, automation.
 
+If you can describe the goal but do not know the AIWG term for it, use the [Beginner Language Map](getting-started/language-map.md). Start by asking: "How best can we use AIWG for our situation?"
+
 ---
 
 ## Claude Code

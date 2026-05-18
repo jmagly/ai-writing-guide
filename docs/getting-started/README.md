@@ -11,6 +11,7 @@ Find the scenario that matches where you are right now.
 | Start a brand new project from scratch | [New Project](new-project.md) |
 | Bring AI up to speed on code I already have | [Existing Project](existing-project.md) |
 | Just try it and see what happens | [Quick Start — No Setup](just-try-it.md) |
+| Describe my goal in plain language and find the right AIWG path | [Beginner Language Map](language-map.md) |
 | Write better, more consistent documentation | [Content and Writing](writing-and-content.md) |
 | Run a security or code quality audit | [Audit Existing Code](audit-existing-code.md) |
 | Set up my whole team, not just myself | [Team Setup](team-setup.md) |
@@ -50,6 +51,8 @@ Read the one-paragraph version of each below, then click the one that sounds rig
 **Existing Project** — You already have a codebase. Maybe you wrote it yourself, maybe you inherited it. You want an AI assistant that actually understands what the code does, follows your conventions, and picks up where things left off.
 
 **Just Try It** — You want to skip setup and see something happen. Run one command, ask the AI a question about your code, get a useful answer. No intake forms, no configuration. Figure out the rest later.
+
+**Beginner Language Map** — You know what you want, but not the AIWG vocabulary. Ask in ordinary language, translate that into a few `aiwg discover` searches, and pick one focused next action.
 
 **Content and Writing** — You're writing docs, blog posts, proposals, or any other text. You want consistent voice and quality. AIWG's voice framework profiles train the AI to write the way you write.
 

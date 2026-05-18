@@ -6,6 +6,8 @@ These same documents serve your human team too: stakeholder alignment, onboardin
 
 Just describe what you're building and let the system handle the rest.
 
+If you are not sure whether intake is the right first step, use the [Beginner Language Map](getting-started/language-map.md) to translate your goal into a few AIWG discovery searches before choosing a path.
+
 ---
 
 ## New Project
