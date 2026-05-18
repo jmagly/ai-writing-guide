@@ -8,6 +8,8 @@
     "extension-creation-guide",
     "framework-creation-guide",
     "walkthrough-create-addon",
-    "file-placement-guide"
+    "file-placement-guide",
+    "skill-inventory",
+    "companion-cli-skill-inventory"
   ]
 }

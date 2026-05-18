@@ -25,7 +25,7 @@ You rebuild and redeploy AIWG from the user's local clone so their recent edits 
 |---------|---------|--------|
 | Apply changes | "apply my changes" | `aiwg use all` (fast path) |
 | Full rebuild | "rebuild everything" | `npm run build` + `aiwg use all` |
-| Redeploy only | "just redeploy" | `aiwg use all` only |
+| Redeploy workflow | "redeploy the current customizations" | Verify dev mode and build need, then use `aiwg use all` as the deployment step |
 
 ## Behavior
 
@@ -39,7 +39,7 @@ When triggered:
 
 2. **Determine whether a TypeScript build is needed**:
    - Check if any `.ts` files changed since last build: `git -C <edgePath> diff --name-only HEAD -- src/ '*.ts'`
-   - If only files in `agentic/code/` changed (agents, skills, rules, prompts) — **skip `npm run build`**, just run `aiwg use all`
+   - If only files in `agentic/code/` changed (agents, skills, rules, prompts) — **skip `npm run build`** and use `aiwg use all` as the deployment step
    - If `src/`, `apps/web/`, or `package.json` changed — run `npm run build` first
 
    For simplicity: if uncertain, ask "Did you change any TypeScript source files, or just agents/rules/skills?" and act accordingly. Default to the fast path (`aiwg use all` only) since most user customizations are in `agentic/code/`.

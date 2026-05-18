@@ -21,8 +21,8 @@ If you create a schema file but no agent references it, it does nothing. If you 
 
 | Requirement | Version | Notes |
 |-------------|---------|-------|
-| **Node.js** | ≥ 18 (20 recommended) | Matches CI. Use [nvm](https://github.com/nvm-sh/nvm) to manage versions. |
-| **npm** | ≥ 8 | Bundled with Node 18+. |
+| **Node.js** | >= 20 | Matches the package engine requirement. Use [nvm](https://github.com/nvm-sh/nvm) to manage versions. |
+| **npm** | >= 10 | Bundled with current Node 20+ releases. |
 | **Git** | any | Standard source control. |
 | **C++ build tools** | — | Required by native modules. See [CONTRIBUTING.md](https://github.com/jmagly/aiwg/blob/main/CONTRIBUTING.md#prerequisites) for OS-specific install instructions. |
 
@@ -576,6 +576,19 @@ The `RULES-INDEX.md` pattern is the canonical example of layered linking done ri
 - `RULES-INDEX.md` contains summaries + @-links to 35 individual rule files (~9,300 lines total)
 - Agents load individual rules on-demand when the topic is relevant
 
+## Companion CLI Commands in Skills
+
+Skills may call companion `aiwg ...` commands for structured evidence, automation, validation, deployment, or status snapshots. Those commands support the skill workflow; they do not replace the agent's responsibility to inspect relevant context, interpret command output, reconcile local state, and report a reasoned result.
+
+When adding or editing a skill with a companion CLI command:
+
+1. State what the command provides, such as inventory, validation, deployment, or metadata extraction.
+2. State what the agent must still assess after the command runs.
+3. Avoid blanket wording such as "only run", "just run", or "use this instead of the skill" unless the skill is explicitly a thin command wrapper.
+4. Run `aiwg skill-lint` before merging. The companion-CLI inventory must report `0 need review`.
+
+The current full inventory is tracked in @docs/development/companion-cli-skill-inventory.md.
+
 ## Platform Deployment
 
 Components flow from source to platform-specific folders via `aiwg use`:
@@ -631,10 +644,11 @@ All development documentation, organized by topic.
 
 | Document | Description |
 |----------|-------------|
-| @docs/cli-reference.md | All 40 CLI commands with usage |
+| @docs/cli-reference.md | 67+ CLI commands with usage |
 | @docs/commands/DEVELOPMENT_GUIDE.md | Advanced command development, testing, optimization |
 | @docs/commands/subagents-and-commands-guide.md | Subagent patterns for command implementations |
 | @docs/development/skill-inventory.md | Catalog of available skills |
+| @docs/development/companion-cli-skill-inventory.md | Full inventory of skills that reference companion `aiwg ...` commands |
 
 ### Contributing & Integration
 
@@ -663,4 +677,5 @@ All development documentation, organized by topic.
 - @docs/development/file-placement-guide.md - Source vs deployment locations
 - @docs/smithing/README.md - On-demand asset creation
 - @docs/cli-reference.md - Complete CLI command reference
+- @docs/development/companion-cli-skill-inventory.md - Companion CLI skill inventory
 - @src/extensions/types.ts - Core type definitions
