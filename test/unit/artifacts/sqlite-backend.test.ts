@@ -6,19 +6,31 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
 import type { GraphBackend } from '../../../src/artifacts/graph-backend.js';
 import type { DependencyGraph } from '../../../src/artifacts/types.js';
 import { SqliteGraphBackend } from '../../../src/artifacts/backends/sqlite-backend.js';
 
-describe('SqliteGraphBackend', () => {
-  let g: GraphBackend & { close(): void };
+const require = createRequire(import.meta.url);
+const sqliteAvailable = (() => {
+  try {
+    require.resolve('better-sqlite3');
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
+describe.skipIf(!sqliteAvailable)('SqliteGraphBackend', () => {
+  let g: (GraphBackend & { close(): void }) | undefined;
 
   beforeEach(() => {
     g = new SqliteGraphBackend(':memory:');
   });
 
   afterEach(() => {
-    g.close();
+    g?.close();
+    g = undefined;
   });
 
   describe('addNode / hasNode', () => {
