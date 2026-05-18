@@ -48,6 +48,23 @@ describe('tools/cli/doctor.mjs — file', () => {
     expect(content).not.toContain("'~/.local/share/ai-writing-guide'");
     expect(content).not.toContain('"~/.local/share/ai-writing-guide"');
   });
+
+  it('imports dynamic provider/modules through file URLs for Windows paths', async () => {
+    const { readFileSync } = await import('fs');
+    const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+
+    expect(content).toContain('pathToFileURL');
+    expect(content).toContain('await import(pathToFileURL(providerPath).href)');
+    expect(content).toContain('await import(pathToFileURL(statusPath).href)');
+  });
+
+  it('runs aiwg discovery probes through the Windows npm shim path and reports spawn errors', async () => {
+    const { readFileSync } = await import('fs');
+    const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+
+    expect(content).toContain("shell: process.platform === 'win32'");
+    expect(content).toContain('spawn failed: ${r.error.code || r.error.message}');
+  });
 });
 
 // ── Installation check logic ──────────────────────────────────

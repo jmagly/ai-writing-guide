@@ -20,8 +20,8 @@ import type { ExtensionRegistry } from './registry.js';
 export interface RegistrationOptions {
   /** Path to deployed agents directory */
   agentsPath?: string;
-  /** Path to deployed skills directory */
-  skillsPath?: string;
+  /** Path, or paths, to deployed skills directories */
+  skillsPath?: string | string[];
   /** Path to deployed commands directory */
   commandsPath?: string;
   /** Path to deployed rules directory */
@@ -367,6 +367,38 @@ export async function scanDeployedSkills(
   return skills;
 }
 
+function inferKernelSkillsPath(skillsPath: string): string | null {
+  const parsed = path.parse(skillsPath);
+  const rel = parsed.root ? path.relative(parsed.root, skillsPath) : skillsPath;
+  const segments = rel.split(/[\\/]+/).filter(Boolean);
+  const aiwgIdx = segments.lastIndexOf('.aiwg');
+
+  if (aiwgIdx < 0) return null;
+  const next = segments[aiwgIdx + 1];
+  if (next !== 'skills' && next !== 'skill') return null;
+
+  const kernelSegments = [...segments.slice(0, aiwgIdx), ...segments.slice(aiwgIdx + 1)];
+  const kernelPath = parsed.root
+    ? path.join(parsed.root, ...kernelSegments)
+    : path.join(...kernelSegments);
+
+  return kernelPath && kernelPath !== skillsPath ? kernelPath : null;
+}
+
+function uniqueSkillPaths(skillsPath: string | string[]): string[] {
+  const inputs = Array.isArray(skillsPath) ? skillsPath : [skillsPath];
+  const paths: string[] = [];
+
+  for (const p of inputs) {
+    if (!p) continue;
+    paths.push(p);
+    const kernelPath = inferKernelSkillsPath(p);
+    if (kernelPath) paths.push(kernelPath);
+  }
+
+  return [...new Set(paths)];
+}
+
 /**
  * Scan deployed behaviors directory
  *
@@ -493,11 +525,17 @@ export async function registerDeployedExtensions(
 
   // Scan and register skills
   if (skillsPath) {
-    const skills = await scanDeployedSkills(skillsPath, provider, cwd);
-    for (const skill of skills) {
-      registry.register(skill);
+    let total = 0;
+    const perPath: string[] = [];
+    for (const pathToScan of uniqueSkillPaths(skillsPath)) {
+      const skills = await scanDeployedSkills(pathToScan, provider, cwd);
+      for (const skill of skills) {
+        registry.register(skill);
+      }
+      total += skills.length;
+      perPath.push(`${skills.length} from ${pathToScan}`);
     }
-    console.log(`Registered ${skills.length} skills from ${skillsPath}`);
+    console.log(`Registered ${total} skills (${perPath.join(', ')})`);
   }
 
   // Scan and register behaviors (#609)

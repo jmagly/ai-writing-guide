@@ -11,7 +11,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRegistry } from '../../../src/extensions/registry.js';
 import { registerDeployedExtensions, scanDeployedAgents, scanDeployedSkills } from '../../../src/extensions/deployment-registration.js';
-import type { Extension } from '../../../src/extensions/types.js';
+import { mkdtemp, mkdir, writeFile, rm } from 'fs/promises';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 const AGENTS_SOURCE_PATH = 'agentic/code/frameworks/sdlc-complete/agents';
 const SKILLS_SOURCE_PATH = 'agentic/code/frameworks/sdlc-complete/skills';
@@ -130,6 +132,49 @@ describe('Deployment Registration', () => {
       // No ID should appear more than once (no duplicates from re-registration)
       const uniqueIds = new Set(agentIds);
       expect(uniqueIds.size).toBe(agentIds.length);
+    });
+
+    it('registers kernel and standard skill tiers from a kernel-pivot provider path', async () => {
+      const tempDir = await mkdtemp(join(tmpdir(), 'aiwg-reg-'));
+      try {
+        const standardSkillDir = join(tempDir, '.claude', '.aiwg', 'skills', 'standard-one');
+        const kernelSkillDir = join(tempDir, '.claude', 'skills', 'kernel-one');
+        await mkdir(standardSkillDir, { recursive: true });
+        await mkdir(kernelSkillDir, { recursive: true });
+        await writeFile(
+          join(standardSkillDir, 'SKILL.md'),
+          [
+            '---',
+            'name: standard-one',
+            'description: Standard skill',
+            '---',
+            '',
+            'Standard skill body.',
+          ].join('\n'),
+        );
+        await writeFile(
+          join(kernelSkillDir, 'SKILL.md'),
+          [
+            '---',
+            'name: kernel-one',
+            'description: Kernel skill',
+            '---',
+            '',
+            'Kernel skill body.',
+          ].join('\n'),
+        );
+
+        await registerDeployedExtensions(registry, {
+          skillsPath: '.claude/.aiwg/skills',
+          provider: 'claude',
+          cwd: tempDir,
+        });
+
+        const skillIds = registry.getByType('skill').map(s => s.id).sort();
+        expect(skillIds).toEqual(['kernel-one', 'standard-one']);
+      } finally {
+        await rm(tempDir, { recursive: true, force: true });
+      }
     });
   });
 

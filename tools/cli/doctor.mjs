@@ -7,6 +7,7 @@
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import { execSync } from 'child_process';
 import chalk from 'chalk';
 import { importImpl } from '../_resolve-impl.mjs';
@@ -328,9 +329,13 @@ async function checkSkillBudgetForProvider(provName, label, skillsPathRel) {
 
 async function loadProvider(name) {
   try {
-    const mod = await import(path.join(AIWG_ROOT, 'tools/agents/providers', `${name}.mjs`));
+    const providerPath = path.join(AIWG_ROOT, 'tools/agents/providers', `${name}.mjs`);
+    const mod = await import(pathToFileURL(providerPath).href);
     return mod.default || mod;
-  } catch {
+  } catch (err) {
+    if (process.env.AIWG_DEBUG) {
+      console.error(`loadProvider(${name}) failed: ${err?.message ?? err}`);
+    }
     return null;
   }
 }
@@ -555,7 +560,8 @@ async function runDoctor() {
   // 6b. Check Optional Features (#1219) — runtime-optional packages
   // tracked in the features catalog and installed only when needed.
   try {
-    const { getAllFeatureStatuses } = await import(path.join(AIWG_ROOT, 'dist', 'src', 'features', 'status.js'));
+    const statusPath = path.join(AIWG_ROOT, 'dist', 'src', 'features', 'status.js');
+    const { getAllFeatureStatuses } = await import(pathToFileURL(statusPath).href);
     const statuses = await getAllFeatureStatuses();
     for (const s of statuses) {
       const label = `Optional: ${s.feature.name}`;
@@ -670,10 +676,16 @@ async function runDoctor() {
   const aiwgBin = process.env.AIWG_BIN || 'aiwg';
   const probeCommand = (name, args, expectStdout = null) => {
     try {
-      const r = spawnSync(aiwgBin, args, { encoding: 'utf-8', timeout: 10_000 });
+      const r = spawnSync(aiwgBin, args, {
+        encoding: 'utf-8',
+        timeout: 10_000,
+        shell: process.platform === 'win32',
+      });
       if (r.error || r.status !== 0) {
-        const stderr = (r.stderr || '').trim().split('\n')[0] || 'no stderr';
-        return { ok: false, detail: `exit=${r.status ?? '?'} ${stderr}` };
+        const detail = r.error
+          ? `spawn failed: ${r.error.code || r.error.message}`
+          : `exit=${r.status ?? '?'} ${(r.stderr || '').trim().split('\n')[0] || 'no stderr'}`;
+        return { ok: false, detail };
       }
       if (expectStdout && !(r.stdout || '').includes(expectStdout)) {
         return { ok: false, detail: `stdout missing expected marker '${expectStdout}'` };
