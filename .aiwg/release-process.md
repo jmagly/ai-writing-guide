@@ -2,12 +2,18 @@
 
 This is maintainer memory for cutting AIWG releases from this host.
 
-## Signing Key
+## Signing Keys
 
-Use the host GPG home when signing or verifying release tags. The Codex runtime may set
+Use the host GPG home when signing or verifying release tags and commits. The Codex runtime may set
 `HOME` to a role-specific directory that does not contain the maintainer keys.
 
-Expected release signing key:
+Expected commit signing key:
+
+- Fingerprint: `62297562B1C7053088F405DB0117DAAA677A5BF2`
+- Short key ID: `0117DAAA677A5BF2`
+- UID: `roctinam (grissom) <1159087+jmagly@users.noreply.github.com>`
+
+Expected release tag signing key:
 
 - Fingerprint: `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`
 - Short key ID: `719AB63879E84CE8`
@@ -18,6 +24,10 @@ Expected release signing key:
 Use:
 
 ```bash
+GNUPGHOME=/home/roctinam/.gnupg \
+  git -c user.signingkey=62297562B1C7053088F405DB0117DAAA677A5BF2 \
+  commit -S
+
 GNUPGHOME=/home/roctinam/.gnupg \
   git -c user.signingkey=FE9272F0BC5781E1DE77FAAA719AB63879E84CE8 \
   tag -s vYYYY.M.P -m "release: vYYYY.M.P"
@@ -56,3 +66,6 @@ git push github vYYYY.M.P
 
 `v2026.5.9` was signed successfully only after explicitly setting
 `GNUPGHOME=/home/roctinam/.gnupg`. The default runtime GPG home had no private keys.
+
+Post-release docs commits must use the commit signing key, not the release tag
+signing key. Release tags use the release key.
