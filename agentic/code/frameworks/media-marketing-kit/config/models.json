@@ -8,16 +8,16 @@
 
   "claude": {
     "reasoning": {
-      "model": "claude-opus-4-6",
-      "description": "Claude Opus 4.5 - Best for complex reasoning, strategic planning, brand architecture"
+      "model": "opus",
+      "description": "Claude Code opus alias - Best for complex reasoning, strategic planning, brand architecture"
     },
     "coding": {
-      "model": "claude-sonnet-4-6",
-      "description": "Claude Sonnet 4.5 - Best for content creation, copywriting, campaign development"
+      "model": "sonnet",
+      "description": "Claude Code sonnet alias - Best for content creation, copywriting, campaign development. Defaults to the non-1M Sonnet path; opt into sonnet[1m] only when extra long-context usage is available."
     },
     "efficiency": {
-      "model": "claude-haiku-3-5",
-      "description": "Claude Haiku 3.5 - Best for quick tasks, production coordination, reporting"
+      "model": "haiku",
+      "description": "Claude Code haiku alias - Best for quick tasks, production coordination, reporting"
     }
   },
 
@@ -55,6 +55,17 @@
     "opus": "claude-opus-4-6",
     "sonnet": "claude-sonnet-4-6",
     "haiku": "claude-haiku-3-5",
+    "inherit": "inherit"
+  },
+
+  "claude_shorthand": {
+    "opus": "opus",
+    "opus-1m": "opus[1m]",
+    "opus[1m]": "opus[1m]",
+    "sonnet": "sonnet",
+    "sonnet-1m": "sonnet[1m]",
+    "sonnet[1m]": "sonnet[1m]",
+    "haiku": "haiku",
     "inherit": "inherit"
   },
 
@@ -104,6 +115,7 @@
     "location": "Place custom models.json in project root to override defaults",
     "precedence": "Project models.json > User ~/.config/aiwg/models.json > AIWG MMK defaults",
     "documentation": "See docs/configuration/model-configuration.md for details",
-    "frameworkSpecific": "MMK framework uses 'coding' tier for content creation roles (vs SDLC's code generation focus)"
+    "frameworkSpecific": "MMK framework uses 'coding' tier for content creation roles (vs SDLC's code generation focus)",
+    "claudeLongContext": "Claude Code documents sonnet and sonnet[1m] as separate selectors. AIWG defaults to sonnet because Sonnet 1M context requires extra usage; opt in with --coding-model sonnet[1m] or sonnet-1m."
   }
 }

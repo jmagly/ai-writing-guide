@@ -54,21 +54,21 @@
     "claude": {
       "models": {
         "reasoning": {
-          "default": "claude-opus-4-6",
+          "default": "opus",
           "aliases": ["opus", "opus-4.5", "claude-opus"],
           "capabilities": ["long-context", "reasoning", "code-generation", "vision", "tool-use"],
           "contextWindow": 200000,
           "costPer1kTokens": { "input": 0.015, "output": 0.075 }
         },
         "coding": {
-          "default": "claude-sonnet-4-6",
+          "default": "sonnet",
           "aliases": ["sonnet", "sonnet-4.5", "claude-sonnet"],
           "capabilities": ["code-generation", "reasoning", "vision", "tool-use"],
           "contextWindow": 200000,
           "costPer1kTokens": { "input": 0.003, "output": 0.015 }
         },
         "efficiency": {
-          "default": "claude-haiku-3-5",
+          "default": "haiku",
           "aliases": ["haiku", "haiku-3.5", "claude-haiku"],
           "capabilities": ["code-generation", "fast-response", "tool-use"],
           "contextWindow": 200000,
@@ -77,9 +77,9 @@
       },
       "tierOverrides": {
         "max-quality": {
-          "reasoning": "claude-opus-4-6",
-          "coding": "claude-opus-4-6",
-          "efficiency": "claude-sonnet-4-6"
+          "reasoning": "opus",
+          "coding": "opus",
+          "efficiency": "sonnet"
         }
       }
     },
@@ -290,6 +290,8 @@
     "opus": "claude-opus-4-6",
     "opus-4.1": "claude-opus-4-6",
     "sonnet": "claude-sonnet-4-6",
+    "sonnet-1m": "sonnet[1m]",
+    "sonnet[1m]": "sonnet[1m]",
     "haiku": "claude-haiku-3-5",
     "gpt5": "gpt-5",
     "gpt5.2": "gpt-5.2",
@@ -304,6 +306,7 @@
     "minimumTier": "Agents with minimumTier set will not downgrade below that tier unless --ignore-minimums is used",
     "providerInheritance": "Providers can inherit from others to reduce duplication",
     "customTiers": "Users can define custom tiers in their personal or project config files",
-    "costEstimates": "costPer1kTokens are approximate and may change; used for estimation only"
+    "costEstimates": "costPer1kTokens are approximate and may change; used for estimation only",
+    "claudeCodeLongContext": "Claude Code model selectors distinguish sonnet from sonnet[1m]. Default Claude provider entries use the normal aliases; 1M context must be selected explicitly."
   }
 }

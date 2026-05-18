@@ -173,6 +173,15 @@ describe('loadModelConfig', () => {
     expect(config.factory.efficiency).toBeDefined();
   });
 
+  it('should keep Claude Code sonnet on the non-1M alias by default', () => {
+    const repoRoot = process.cwd();
+    const config = loadModelConfig(repoRoot);
+    expect(config.claude.coding.model).toBe('sonnet');
+    expect(config.claude_shorthand.sonnet).toBe('sonnet');
+    expect(config.claude_shorthand['sonnet-1m']).toBe('sonnet[1m]');
+    expect(config.shorthand.sonnet).toBe(FACTORY_DEPLOY_MODELS.coding);
+  });
+
   it('should tag config with _source', () => {
     const repoRoot = process.cwd();
     const config = loadModelConfig(repoRoot);

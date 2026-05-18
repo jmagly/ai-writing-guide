@@ -251,6 +251,11 @@ export function loadModelConfig(srcRoot) {
 
   // Fallback to hardcoded defaults if no config found
   return {
+    claude: {
+      reasoning: { model: 'opus' },
+      coding: { model: 'sonnet' },
+      efficiency: { model: 'haiku' }
+    },
     factory: {
       reasoning: { model: 'claude-opus-4-6' },
       coding: { model: 'claude-sonnet-4-6' },
@@ -260,6 +265,16 @@ export function loadModelConfig(srcRoot) {
       'opus': 'claude-opus-4-6',
       'sonnet': 'claude-sonnet-4-6',
       'haiku': 'claude-haiku-4-5-20251001',
+      'inherit': 'inherit'
+    },
+    claude_shorthand: {
+      'opus': 'opus',
+      'opus-1m': 'opus[1m]',
+      'opus[1m]': 'opus[1m]',
+      'sonnet': 'sonnet',
+      'sonnet-1m': 'sonnet[1m]',
+      'sonnet[1m]': 'sonnet[1m]',
+      'haiku': 'haiku',
       'inherit': 'inherit'
     }
   };
