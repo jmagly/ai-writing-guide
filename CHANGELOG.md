@@ -7,7 +7,50 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
-_Nothing yet for the next release line._
+- Documented the project signing-key split in `AGENTS.override.md` and `.aiwg/release-process.md`: regular commits use the host commit key, while annotated release tags use the AIWG release key.
+
+## [2026.5.9] - 2026-05-18 — "Workspace deploy + command surface parity"
+
+This patch release fixes the workspace-aware `aiwg use all` deployment flow and restores operator workflow discoverability across providers after the skills-first pivot.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **`aiwg use all` deploys the workspace-aware plan once** | The auto-selected framework/addon plan no longer re-enters the full post-deploy flow for every selected framework. Users avoid repeated capability-index builds, repeated reload messages, and duplicate hook backup lines. |
+| **Operator skills are mirrored as provider commands** | Workflows such as `aiwg-setup-project`, `aiwg-update-claude`, and `aiwg-update-agents-md` are copied to each provider's command surface where possible, so slash/command workflows remain locatable even when the canonical artifact is a skill. |
+| **Provider command paths were normalized** | OpenCode and Warp now have explicit command directories in the provider deployment map, and fallback command mirroring places command assets in the closest reasonable provider location. |
+| **Doctor guidance points at workspace-aware deploy** | `aiwg doctor` and listing guidance steer high-skill-count workspaces toward workspace-aware deployment when provider listing budgets are likely to be exceeded. |
+
+### Changed
+
+- `aiwg use all` now computes the workspace-aware framework/addon/extension plan once and deploys selected source directories directly.
+- `aiwg use --workspace-signals --dry-run` reports the same workspace-aware subset that `aiwg use all` uses by default.
+- Provider deployment now mirrors command-like operator skills into provider command surfaces across supported providers.
+- OpenCode and Warp provider definitions now declare command output directories for mirrored operator workflows.
+- The legacy full deployment path remains available with `aiwg use all --no-workspace-signals`.
+
+### Fixed
+
+- Fixed issue #1380: `aiwg use all` appeared to run repeatedly because each selected framework triggered the full framework post-deploy flow.
+- Fixed user-reported discoverability gap for `aiwg-setup-project`: the skill is still discoverable via `aiwg discover` / `aiwg show skill`, and the workflow is also mirrored onto command surfaces for command-capable providers.
+- Added integration coverage that verifies command mirroring for Codex, OpenCode, Copilot, Warp, and Windsurf provider deployments.
+
+### Tests
+
+- `npm run typecheck`
+- `npm run build:cli`
+- `npx vitest run --config config/vitest.config.js test/integration/deployment-completeness.test.ts`
+- `npx vitest run --config config/vitest.config.js test/integration/use-all-deployment.test.ts`
+- `npm test`
+
+### Migration notes
+
+No breaking changes. Existing skills remain the canonical source, and command copies are compatibility mirrors for providers and users that still expect command/slash-command workflows. Use `--no-workspace-signals` to force the pre-existing full deployment behavior.
+
+### Links
+
+- Release announcement: [docs/releases/v2026.5.9-announcement.md](docs/releases/v2026.5.9-announcement.md)
 
 ## [2026.5.8] - 2026-05-18 — "Fleet discipline + release hygiene"
 
