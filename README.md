@@ -2,9 +2,9 @@
 
 # AIWG
 
-**Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 4 more platforms**
+**Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 6 more platforms**
 
-200+ agents, 67+ CLI commands, 130+ skills, 8 core frameworks + training marketplace plugin, 27 addons. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
+200+ agents, 67+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks + training marketplace plugin, 27 addons. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
 
 ```bash
 npm i -g aiwg        # install globally
@@ -15,11 +15,11 @@ aiwg use sdlc        # deploy SDLC framework
 [![npm downloads](https://img.shields.io/npm/dm/aiwg?color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/jmagly/aiwg?style=flat-square)](https://github.com/jmagly/aiwg/stargazers)
-[![Node Version](https://img.shields.io/badge/node-%E2%89%A518.0.0-brightgreen?style=flat-square&logo=node.js)](https://nodejs.org)
+[![Node Version](https://img.shields.io/badge/node-%E2%89%A520.0.0-brightgreen?style=flat-square&logo=node.js)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![8 Platforms](https://img.shields.io/badge/Platforms-8-purple?style=flat-square)](#-platform-support)
+[![10 Platforms](https://img.shields.io/badge/Platforms-10-purple?style=flat-square)](#-platform-support)
 
-[**Get Started**](#quick-start) · [**Features**](#what-you-get) · [**Agents**](#agents-162) · [**CLI Reference**](#cli-reference-47-commands) · [**Documentation**](#documentation) · [**Community**](#community--support)
+[**Get Started**](#quick-start) · [**Features**](#what-you-get) · [**Agents**](#agents) · [**CLI Reference**](docs/cli-reference.md) · [**Documentation**](#documentation) · [**Community**](#community--support)
 
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=flat-square)](https://discord.gg/BuAusFMxdA)
 [![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram&logoColor=white&style=flat-square)](https://t.me/+oJg9w2lE6A5lOGFh)
@@ -1712,7 +1712,7 @@ Full research background, citations, and methodology: [docs/research/](docs/rese
 
 - **[Quick Start Guide](docs/quickstart.md)** — Install and deploy in minutes
 - **[Prerequisites](docs/getting-started/prerequisites.md)** — Node.js, AI platforms, OS support
-- **[CLI Reference](docs/cli-reference.md)** — All 47 commands with examples
+- **[CLI Reference](docs/cli-reference.md)** — 67+ commands with examples
 
 ### Customize
 

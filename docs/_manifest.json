@@ -117,7 +117,18 @@
     "references/REF-003-agentic-development-antipatterns",
     "references/REF-066-mcp-specification-2025",
     "releases",
+    "releases/v2026.5.8-announcement",
+    "releases/v2026.5.7-announcement",
+    "releases/v2026.5.6-announcement",
+    "releases/v2026.5.5-announcement",
+    "releases/v2026.5.4-announcement",
+    "releases/v2026.5.3-announcement",
+    "releases/v2026.5.2-announcement",
+    "releases/v2026.5.0-announcement",
+    "releases/v2026.4.1-announcement",
     "releases/v2026.4.0-announcement",
+    "releases/v2026.3.4-announcement",
+    "releases/v2026.3.3-announcement",
     "releases/v2026.3.2-announcement",
     "releases/v2026.3.1-announcement",
     "releases/v2026.2.15-announcement",
@@ -867,10 +878,87 @@
       "collapsed": true
     },
     {
+      "id": "releases/v2026.5.8-announcement",
+      "title": "v2026.5.8 — Fleet Discipline + Release Hygiene",
+      "summary": "Fleet behavior policies, status export, repo-access preflight, model-tier routing, serve reliability, and install hygiene.",
+      "file": "releases/v2026.5.8-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2026.5.7-announcement",
+      "title": "v2026.5.7 — RLM Search Reliability + Internal Loop Routing",
+      "summary": "RLM search reliability, single-chunk prep coverage, and internal agent-loop routing.",
+      "file": "releases/v2026.5.7-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2026.5.6-announcement",
+      "title": "v2026.5.6 — Agent-loop Completion Inference + Auto-Compact Discipline",
+      "summary": "Agent-loop completion inference, auto-compact discipline, and publish workflow ordering fixes.",
+      "file": "releases/v2026.5.6-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2026.5.5-announcement",
+      "title": "v2026.5.5 — Cross-provider Discover-first Parity",
+      "summary": "Discover-first deployment parity, project-isolation warning, and novice-user adoption study artifacts.",
+      "file": "releases/v2026.5.5-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2026.5.4-announcement",
+      "title": "v2026.5.4",
+      "summary": "Previous release",
+      "file": "releases/v2026.5.4-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2026.5.3-announcement",
+      "title": "v2026.5.3",
+      "summary": "Previous release",
+      "file": "releases/v2026.5.3-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2026.5.2-announcement",
+      "title": "v2026.5.2",
+      "summary": "Previous release",
+      "file": "releases/v2026.5.2-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2026.5.0-announcement",
+      "title": "v2026.5.0",
+      "summary": "Previous release",
+      "file": "releases/v2026.5.0-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2026.4.1-announcement",
+      "title": "v2026.4.1",
+      "summary": "Previous release",
+      "file": "releases/v2026.4.1-announcement.md",
+      "parent": "releases"
+    },
+    {
       "id": "releases/v2026.4.0-announcement",
       "title": "v2026.4.0 \u2014 Autonomous Systems",
       "summary": "Major release: corpus architecture, daemon, Mission Control, behaviors, SOUL.md, OpenClaw, Hermes, ops-complete, and more.",
       "file": "releases/v2026.4.0-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2026.3.4-announcement",
+      "title": "v2026.3.4",
+      "summary": "Previous release",
+      "file": "releases/v2026.3.4-announcement.md",
+      "parent": "releases"
+    },
+    {
+      "id": "releases/v2026.3.3-announcement",
+      "title": "v2026.3.3",
+      "summary": "Previous release",
+      "file": "releases/v2026.3.3-announcement.md",
       "parent": "releases"
     },
     {

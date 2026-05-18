@@ -103,9 +103,9 @@ Shows:
 **Example output:**
 
 ```
-AIWG v2026.1.5 (stable)
-Installed: ~/.nvm/versions/node/v20.10.0/lib/node_modules/aiwg
-Node.js: v20.10.0
+AIWG v2026.5.8 (stable)
+Installed: ~/.nvm/versions/node/v24.12.0/lib/node_modules/aiwg
+Node.js: v24.12.0
 ```
 
 ---
@@ -146,8 +146,8 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 **Example output:**
 
 ```
-✓ AIWG installed: v2026.1.5
-✓ Node.js version: v20.10.0 (meets requirement ≥20.0.0)
+✓ AIWG installed: v2026.5.8
+✓ Node.js version: v24.12.0 (meets requirement ≥20.0.0)
 ✓ Project directory: /home/user/my-project
 ✓ Framework registry: 2 frameworks installed
 ✓ Agents deployed: 15

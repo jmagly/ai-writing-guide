@@ -9,6 +9,71 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 _Nothing yet for the next release line._
 
+## [2026.5.8] - 2026-05-18 — "Fleet discipline + release hygiene"
+
+This release collects the post-2026.5.7 operational hardening work: fleet behavior policies, provider-aware deployment of behavior artifacts, model-tier routing primitives, repo-access preflight, execution-mode ergonomics, status export, daemon/serve reliability coverage, and install-hygiene fixes that keep optional native dependencies out of the default install tree.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **Fleet discipline rules and behaviors** | `aiwg-fleet` adds quiet-bot and quiet-business-bot behavior bundles; `aiwg-utils` adds escalation discipline, tool quota, quiet mode, and repo-access rules for small-budget unattended bots. |
+| **Fleet status export** | `aiwg status --export json|ndjson` and the documented schema give cockpit tools a stable, pull-based machine/workspace health payload. |
+| **Repo-access preflight** | `aiwg repo-access` and the `respect-repo-access-manifest` rule make repository read-scope assumptions explicit before agents rely on paths they may not be able to inspect. |
+| **Model-tier routing primitive** | New provider-neutral model routing types/helpers support Tier 0-3 decisions, escalation rationale, and premium confirmation requirements. |
+| **Context parallelism caps** | `.aiwg/aiwg.config` can declare provider-scoped max parallel subagent limits; generated `AIWG.md` / `AGENTS.md` surfaces those caps and the RLM CLI respects them. |
+| **Serve/daemon reliability** | A2A terminal task observation, PTY bridge resilience coverage, sandbox transport fixtures, and daemon tier-1 tests harden the execution stack without requiring a live sandbox in default CI. |
+| **Install hygiene** | `better-sqlite3` and `@xenova/transformers` are optional peers instead of default install dependencies; SQLite implementation tests now skip cleanly when the optional peer is absent. |
+| **Docsite release checks** | Notify/deploy workflows now fail on silent release-doc issues and verify the generated SPA section artifact rather than grepping the shell HTML. |
+
+### Added
+
+- `agentic/code/addons/aiwg-fleet/` — new addon with `quiet-bot` and `quiet-business-bot` behavior bundles plus provider activation docs.
+- `agentic/code/addons/aiwg-utils/rules/escalation-discipline.md`, `tool-quota.md`, `quiet-mode.md`, and `respect-repo-access-manifest.md`.
+- `docs/fleet/status-export-schema.md` for the versioned fleet status export payload.
+- `docs/security/repo-access-manifest.md` for explicit repository read-access declarations.
+- `docs/providers/behavior-artifacts.md` for provider behavior-artifact support and emulation.
+- `src/models/router.ts` and model route decision types for tiered model-routing policy.
+- `src/cli/handlers/repo-access.ts` and `src/policy/repo-access.ts`.
+- `src/cli/handlers/execution-mode.ts` for execution-mode inspection.
+- `src/providers/capability-matrix.ts` and `agentic/code/providers/capability-matrix.yaml`.
+- `src/serve/a2a-terminal-observer.ts` and broad serve/daemon contract, unit, and integration fixtures.
+- `agentic/code/frameworks/sdlc-complete/skills/issue-audit/` and the `issue-audit` command.
+- `agentic/code/frameworks/research-complete/skills/corpus-index-build/build.py`.
+
+### Changed
+
+- Provider deployment now handles behavior artifacts across supported providers, with OpenClaw native support and documented fallback behavior where native lifecycle hooks are unavailable.
+- `aiwg status` now supports fleet export modes and expanded status details for installed frameworks, deployments, recent activity, and health flags.
+- `aiwg refresh`, `regenerate`, `steward`, plugin commands, writing validation, doctor, and workspace-status paths were tightened for project-local behavior and managed-marker drift.
+- `AIWG.md` / `AGENTS.md` generation now surfaces configured parallelism caps and finalization behavior more explicitly.
+- `rlm` honors the configured parallelism default, and `rlm-batch` / `rlm-context-management` docs describe the cap-aware behavior.
+- Claude model config now defaults standard Sonnet usage to the standard context variant rather than an extended-context default.
+- Package install metadata now treats install-heavy native features as opt-in optional peers.
+
+### Fixed
+
+- `discover` indexes canonical framework skills accurately and has regression coverage for framework skill coverage.
+- `doctor` tolerates managed-marker hash drift without false-failing normal refresh paths.
+- Serve mission accounting and tool resolution were corrected, including A2A terminal task-state observation.
+- Context hook finalization now emits the expected provider files.
+- `ci.yml` failure after the install-hygiene change is fixed by skipping only the SQLite backend implementation suite when `better-sqlite3` is absent.
+- Docsite deploy verification now checks the generated release section file, and notify-site/docsite workflows fail loudly on missing or failed release-doc outputs.
+
+### Tests
+
+- Full local CI-shaped test after the SQLite optional-peer fix: `npm run test:ci` — passed.
+- Latest Gitea CI on `main` after the fix: run `2333` — Test and Build passed.
+- New/expanded coverage includes model routing, repo access, provider behavior emulation, capability preflight, status/workspace commands, serve/A2A observer paths, PTY bridge resilience, sandbox transport contract fixtures, RLM parallelism resolution, skill-lint companion CLI rules, package metadata install hygiene, and marketplace/package-lock version lockstep.
+
+### Migration notes
+
+No breaking changes for the base CLI. Install-heavy features that depend on `better-sqlite3` or `@xenova/transformers` now require explicit opt-in installation when used directly; graph-backend factory/error-path tests and docs continue to explain that optional setup path.
+
+### Links
+
+- Release announcement: [docs/releases/v2026.5.8-announcement.md](docs/releases/v2026.5.8-announcement.md)
+
 ## [2026.5.7] - 2026-05-15 — "RLM search reliability + internal loop routing"
 
 This release tightens two recently updated automation paths: RLM search now preserves the user's query and covers small source files, while `agent-loop` routes to the in-session loop by default unless the user explicitly asks for the external daemon.
