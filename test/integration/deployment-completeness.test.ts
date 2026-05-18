@@ -207,6 +207,9 @@ interface ProviderExpectation {
   agentDir: string;
   /** Where skills land */
   skillDir: string;
+  /** Where command/prompt wrappers land */
+  commandDir: string;
+  commandFileExt?: string;
   /** Where rules land */
   ruleDir: string;
   /** Whether agents are aggregated into a single file instead of directory */
@@ -231,6 +234,7 @@ const PROVIDER_EXPECTATIONS: Record<string, ProviderExpectation> = {
     rootFiles: [],
     agentDir: '.claude/agents',
     skillDir: '.claude/.aiwg/skills',
+    commandDir: '.claude/commands',
     ruleDir: '.claude/rules',
     aggregatedAgents: false,
     usesHomePaths: false,
@@ -243,6 +247,7 @@ const PROVIDER_EXPECTATIONS: Record<string, ProviderExpectation> = {
     rootFiles: [],
     agentDir: '.cursor/agents',
     skillDir: '.cursor/.aiwg/skills',
+    commandDir: '.cursor/commands',
     ruleDir: '.cursor/rules',
     aggregatedAgents: false,
     usesHomePaths: false,
@@ -255,6 +260,7 @@ const PROVIDER_EXPECTATIONS: Record<string, ProviderExpectation> = {
     rootFiles: [],
     agentDir: '.factory/droids',
     skillDir: '.factory/.aiwg/skills',
+    commandDir: '.factory/commands',
     ruleDir: '.factory/rules',
     aggregatedAgents: false,
     usesHomePaths: false,
@@ -263,10 +269,11 @@ const PROVIDER_EXPECTATIONS: Record<string, ProviderExpectation> = {
   },
   codex: {
     name: 'codex',
-    requiredDirs: ['.codex/agents', '.codex/rules'],
+    requiredDirs: ['.codex/agents', '.codex/commands', '.codex/rules'],
     rootFiles: [],
     agentDir: '.codex/agents',
     skillDir: '.codex/.aiwg/skills',  // Project-local mirror; actual skills also at ~/.codex/skills/ and .agents/skills/
+    commandDir: '.codex/commands',
     ruleDir: '.codex/rules',
     aggregatedAgents: false,
     usesHomePaths: true,
@@ -276,10 +283,11 @@ const PROVIDER_EXPECTATIONS: Record<string, ProviderExpectation> = {
   },
   opencode: {
     name: 'opencode',
-    requiredDirs: ['.opencode/.aiwg/skill', '.opencode/rule'],
+    requiredDirs: ['.opencode/.aiwg/skill', '.opencode/command', '.opencode/rule'],
     rootFiles: [],
     agentDir: '.opencode/agent',  // May be empty (config-only)
     skillDir: '.opencode/.aiwg/skill',
+    commandDir: '.opencode/command',
     ruleDir: '.opencode/rule',
     aggregatedAgents: false,
     usesHomePaths: false,
@@ -288,10 +296,12 @@ const PROVIDER_EXPECTATIONS: Record<string, ProviderExpectation> = {
   },
   copilot: {
     name: 'copilot',
-    requiredDirs: ['.github/agents', '.github/.aiwg/skills', '.github/instructions'],
+    requiredDirs: ['.github/agents', '.github/prompts', '.github/.aiwg/skills', '.github/instructions'],
     rootFiles: [],
     agentDir: '.github/agents',
     skillDir: '.github/.aiwg/skills',
+    commandDir: '.github/prompts',
+    commandFileExt: '.prompt.md',
     ruleDir: '.github/instructions',
     aggregatedAgents: false,
     usesHomePaths: false,
@@ -300,10 +310,11 @@ const PROVIDER_EXPECTATIONS: Record<string, ProviderExpectation> = {
   },
   warp: {
     name: 'warp',
-    requiredDirs: ['.warp/.aiwg/skills'],
+    requiredDirs: ['.warp/.aiwg/skills', '.warp/commands'],
     rootFiles: ['WARP.md'],
     agentDir: '.warp/agents',
     skillDir: '.warp/.aiwg/skills',
+    commandDir: '.warp/commands',
     ruleDir: '.warp/rules',
     aggregatedAgents: true,
     aggregatedAgentFile: 'WARP.md',
@@ -314,10 +325,11 @@ const PROVIDER_EXPECTATIONS: Record<string, ProviderExpectation> = {
   },
   windsurf: {
     name: 'windsurf',
-    requiredDirs: ['.windsurf/.aiwg/skills', '.windsurf/rules'],
+    requiredDirs: ['.windsurf/.aiwg/skills', '.windsurf/workflows', '.windsurf/rules'],
     rootFiles: ['AGENTS.md'],
     agentDir: '.windsurf/agents',
     skillDir: '.windsurf/.aiwg/skills',
+    commandDir: '.windsurf/workflows',
     ruleDir: '.windsurf/rules',
     aggregatedAgents: true,
     aggregatedAgentFile: 'AGENTS.md',
@@ -410,6 +422,21 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Deployment Completeness', () => {
         return;
       }
       expect(totalSkillFiles, `${providerName}: should deploy skills`).toBeGreaterThan(0);
+    });
+
+    it('mirrors operator skills to the provider command surface', async () => {
+      runDeploy(prov.name, projectDir, homeDir);
+      const commandExt = prov.commandFileExt ?? '.md';
+      const commandsPath = path.join(projectDir, prov.commandDir);
+      const expected = [
+        `aiwg-setup-project${commandExt}`,
+        `aiwg-update-claude${commandExt}`,
+        `aiwg-update-agents-md${commandExt}`,
+      ];
+
+      for (const file of expected) {
+        expect(await pathExists(path.join(commandsPath, file)), `${providerName}: missing mirrored command ${file}`).toBe(true);
+      }
     });
 
     if (PROVIDER_EXPECTATIONS[providerName].crossAgentSkillsDir) {

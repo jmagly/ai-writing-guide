@@ -53,21 +53,22 @@ export const name = 'warp';
 export const aliases = [];
 
 export const paths = {
+  agents: '.warp/agents/',
+  commands: '.warp/commands/',
   // Skills sequestered under .warp/.aiwg/skills/ — index-driven discovery (#1212).
   skills: '.warp/.aiwg/skills/',
   crossAgentSkills: '.agents/skills/',  // Cross-agent compatibility path (#771)
-  // agents, commands, rules: delivered via aggregated WARP.md only
-  // Warp does not discover .warp/agents/, .warp/commands/, or .warp/rules/
+  rules: '.warp/rules/',
 };
 
 // Kernel skills (always-loaded) deploy to the platform-native dir.
 export const kernelSkillsPath = '.warp/skills/';
 
 export const support = {
-  agents: 'aggregated',      // WARP.md only — no discrete .warp/agents/
-  commands: 'aggregated',    // WARP.md only — no discrete .warp/commands/
+  agents: 'aggregated',      // WARP.md primary; files mirrored for portability
+  commands: 'conventional',  // .warp/commands/ mirror for slash-command parity
   skills: 'native',          // .warp/skills/ — natively discovered by Warp
-  rules: 'aggregated'        // WARP.md only — no discrete .warp/rules/
+  rules: 'aggregated'        // WARP.md primary; rule files mirrored for portability
 };
 
 export const capabilities = {

@@ -68,9 +68,13 @@ import readline from 'readline';
 import { fileURLToPath } from 'url';
 import {
   collectBehaviorDirs,
+  collectFrameworkArtifacts,
   deployEmulatedBehaviors,
+  getAddonSkillDirs,
+  listSkillDirs,
   loadModelConfig,
   migrateCommandsDirectory,
+  parseFrontmatter,
 } from './providers/base.mjs';
 
 /**
@@ -95,6 +99,136 @@ const PROVIDER_ALIASES = {
 };
 
 const AVAILABLE_PROVIDERS = ['claude', 'factory', 'codex', 'opencode', 'copilot', 'cursor', 'warp', 'windsurf', 'hermes', 'openclaw'];
+
+const MIRRORED_STANDARD_COMMAND_SKILLS = new Set([
+  'aiwg-setup-project',
+  'aiwg-update-claude',
+  'aiwg-update-agents-md',
+  'sdlc-accelerate',
+  'project-status',
+  'intake-wizard',
+  'intake-from-codebase',
+  'intake-start',
+]);
+
+const MIRRORED_KERNEL_COMMAND_SKILLS = new Set([
+  'aiwg-refresh',
+  'aiwg-doctor',
+  'aiwg-status',
+  'aiwg-help',
+  'aiwg-regenerate',
+  'aiwg-regenerate-claude',
+  'aiwg-regenerate-codex',
+  'aiwg-regenerate-opencode',
+  'aiwg-regenerate-agents',
+  'aiwg-issue',
+  'aiwg-pr',
+  'use',
+  'steward',
+]);
+
+function shouldMirrorCommandSkill(skillName) {
+  return (
+    skillName.startsWith('flow-') ||
+    MIRRORED_STANDARD_COMMAND_SKILLS.has(skillName) ||
+    MIRRORED_KERNEL_COMMAND_SKILLS.has(skillName)
+  );
+}
+
+function uniquePaths(paths) {
+  return [...new Set(paths.filter(Boolean))];
+}
+
+function collectMirrorSkillDirs(srcRoot, mode) {
+  const dirs = [];
+
+  const directSkillsDir = path.join(srcRoot, 'skills');
+  dirs.push(...listSkillDirs(directSkillsDir));
+
+  // If --source itself is a skills directory, support that shape too.
+  dirs.push(...listSkillDirs(srcRoot));
+
+  const repoFrameworksRoot = path.join(srcRoot, 'agentic', 'code', 'frameworks');
+  if (fs.existsSync(repoFrameworksRoot)) {
+    const artifacts = collectFrameworkArtifacts(srcRoot, mode, {
+      includeAgents: false,
+      includeCommands: false,
+      includeSkills: true,
+      includeRules: false,
+    });
+    dirs.push(...artifacts.skills);
+
+    if (mode === 'all') {
+      dirs.push(...getAddonSkillDirs(srcRoot));
+    }
+  }
+
+  return uniquePaths(dirs);
+}
+
+function resolveCommandMirrorDir(provider, target) {
+  const commandsPath = provider.paths?.commands;
+  if (commandsPath) {
+    return path.isAbsolute(commandsPath) ? commandsPath : path.join(target, commandsPath);
+  }
+
+  // Closest conventional location for providers whose primary command
+  // surface is MCP/aggregation rather than a documented command directory.
+  if (provider.name === 'hermes') {
+    return path.join(os.homedir(), '.hermes', 'commands');
+  }
+
+  return null;
+}
+
+function commandFileExtensionForProvider(provider) {
+  if (provider.name === 'copilot') return '.prompt.md';
+  return '.md';
+}
+
+function skillToCommandContent(skillDir) {
+  const skillName = path.basename(skillDir);
+  const skillPath = path.join(skillDir, 'SKILL.md');
+  const raw = fs.readFileSync(skillPath, 'utf8');
+  const { metadata, body } = parseFrontmatter(raw);
+  const description = metadata.description || `Run AIWG skill ${skillName}`;
+
+  return `---\nname: ${skillName}\ndescription: ${description}\n---\n\n${body.trim()}\n`;
+}
+
+function mirrorSkillsAsCommands(provider, target, srcRoot, opts) {
+  if (!opts.deployCommands && !opts.commandsOnly) return 0;
+
+  const targetDir = resolveCommandMirrorDir(provider, target);
+  if (!targetDir) return 0;
+
+  const skillDirs = collectMirrorSkillDirs(srcRoot, opts.mode)
+    .filter((dir) => shouldMirrorCommandSkill(path.basename(dir)));
+
+  if (skillDirs.length === 0) return 0;
+  if (!opts.dryRun) fs.mkdirSync(targetDir, { recursive: true });
+
+  const ext = commandFileExtensionForProvider(provider);
+  let count = 0;
+
+  for (const skillDir of skillDirs) {
+    const skillName = path.basename(skillDir);
+    let content = skillToCommandContent(skillDir);
+    if (typeof provider.transformCommand === 'function') {
+      content = provider.transformCommand(path.join(skillDir, `${skillName}.md`), content, opts);
+    }
+
+    const dest = path.join(targetDir, `${skillName}${ext}`);
+    if (opts.dryRun) {
+      if (opts.verbose) console.log(`[dry-run] mirror skill command ${skillName} -> ${dest}`);
+    } else {
+      fs.writeFileSync(dest, content, 'utf8');
+    }
+    count++;
+  }
+
+  return count;
+}
 
 // ============================================================================
 // Argument Parsing
@@ -619,6 +753,11 @@ async function promptCommandsMigration(cfg, provider, targetDir) {
   // Delegate to provider
   try {
     await provider.deploy(opts);
+
+    const mirroredCommandCount = mirrorSkillsAsCommands(provider, cfg.target, srcRoot, opts);
+    if (mirroredCommandCount > 0 && !cfg.quiet) {
+      console.log(`  Mirrored: ${mirroredCommandCount} skill command wrapper${mirroredCommandCount === 1 ? '' : 's'}`);
+    }
 
     if (!opts.commandsOnly && !opts.skillsOnly && !opts.rulesOnly) {
       const behaviorDirs = collectBehaviorDirs(srcRoot);

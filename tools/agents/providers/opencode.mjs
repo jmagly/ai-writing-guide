@@ -56,7 +56,7 @@ export const aliases = [];
 
 export const paths = {
   agents: '.opencode/agent/',   // Discovered via {agent,agents}/**/*.md glob (#773)
-  commands: '',                 // Not deployed — commands derive from skills automatically
+  commands: '.opencode/command/',
   // Skills sequestered under .opencode/.aiwg/skill/ — index-driven discovery (#1212).
   skills: '.opencode/.aiwg/skill/',
   rules: '.opencode/rule/',

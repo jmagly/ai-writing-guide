@@ -313,6 +313,57 @@ const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands:
   },
 };
 
+const PROVIDER_KERNEL_SKILL_PATHS: Record<string, string> = {
+  claude: '.claude/skills',
+  factory: '.factory/skills',
+  codex: path.join(os.homedir(), '.codex', 'skills'),
+  opencode: '.opencode/skill',
+  copilot: '.github/skills',
+  cursor: '.cursor/skills',
+  warp: '.warp/skills',
+  windsurf: '.windsurf/skills',
+  openclaw: path.join(os.homedir(), '.openclaw', 'skills', 'aiwg'),
+};
+
+const MIRRORED_STANDARD_COMMAND_SKILLS = new Set([
+  'aiwg-setup-project',
+  'aiwg-update-claude',
+  'aiwg-update-agents-md',
+  'sdlc-accelerate',
+  'project-status',
+  'intake-wizard',
+  'intake-from-codebase',
+  'intake-start',
+]);
+
+const MIRRORED_KERNEL_COMMAND_SKILLS = new Set([
+  'aiwg-refresh',
+  'aiwg-doctor',
+  'aiwg-status',
+  'aiwg-help',
+  'aiwg-regenerate',
+  'aiwg-regenerate-claude',
+  'aiwg-regenerate-codex',
+  'aiwg-regenerate-opencode',
+  'aiwg-regenerate-agents',
+  'aiwg-issue',
+  'aiwg-pr',
+  'use',
+  'steward',
+]);
+
+function shouldMirrorStandardCommandSkill(skillName: string): boolean {
+  return skillName.startsWith('flow-') || MIRRORED_STANDARD_COMMAND_SKILLS.has(skillName);
+}
+
+function shouldMirrorKernelCommandSkill(skillName: string): boolean {
+  return MIRRORED_KERNEL_COMMAND_SKILLS.has(skillName);
+}
+
+function resolveProviderPath(target: string, providerPath: string): string {
+  return path.isAbsolute(providerPath) ? providerPath : path.join(target, providerPath);
+}
+
 /**
  * List skill folder names from a source skills directory.
  * Returns empty array if the directory doesn't exist.
@@ -1795,16 +1846,15 @@ export class UseHandler implements CommandHandler {
       }
     }
 
-    // Translate deployed skills to commands for providers that require legacy command format
-    // (#550) Skills are now canonical; commands are generated from SKILL.md frontmatter.
-    if (providerNeedsCommands(provider)) {
-      const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
-      const targetSkillsDir = path.isAbsolute(paths.skills)
-        ? paths.skills
-        : path.join(target, paths.skills);
-      const targetCommandsDir = path.isAbsolute(paths.commands)
-        ? paths.commands
-        : path.join(target, paths.commands);
+    const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
+    const targetSkillsDir = resolveProviderPath(target, paths.skills);
+    const targetCommandsDir = paths.commands ? resolveProviderPath(target, paths.commands) : '';
+    const kernelSkillsPath = PROVIDER_KERNEL_SKILL_PATHS[provider];
+    const targetKernelSkillsDir = kernelSkillsPath ? resolveProviderPath(target, kernelSkillsPath) : '';
+
+    // Translate deployed skills to commands for providers that require legacy command format.
+    // (#550) Skills are canonical; commands are generated deployment artifacts.
+    if (providerNeedsCommands(provider) && targetCommandsDir) {
       try {
         const translationResult = await translateSkillsToCommands(targetSkillsDir, {
           provider,
@@ -1821,74 +1871,40 @@ export class UseHandler implements CommandHandler {
       }
     }
 
-    // PUW-015 (#1116): Claude Code SDLC flow commands.
-    // Claude is `skills-native` so it doesn't go through the translator above,
-    // but operators expect `/flow-*` slash-command tab completion. Emit
-    // command stubs for flow-prefixed skills into .claude/commands/. Skill
-    // sources now live at .claude/.aiwg/skills/ (#1212); commands continue
-    // to deploy to the platform-native .claude/commands/ path.
-    //
-    // #1263: Also emit command stubs for kernel skills that wrap deterministic
-    // CLI subcommands (aiwg-refresh, aiwg-doctor, aiwg-status, aiwg-help,
-    // aiwg-regenerate, use, steward). Kernel skills live at .claude/skills/
-    // (not .claude/.aiwg/skills/), so a second translation pass is needed.
-    if (provider === 'claude' && !dryRun) {
+    // Mirror deterministic operator workflows to each provider's native
+    // command/prompt surface when one exists. This applies even when a
+    // provider loads skills natively: users still expect setup, update,
+    // status, intake, and flow workflows to show up in the provider's `/`
+    // command picker where supported.
+    if (targetCommandsDir) {
       try {
-        const claudeStandardSkillsDir = path.join(target, '.claude/.aiwg/skills');
-        const claudeKernelSkillsDir = path.join(target, '.claude/skills');
-        const claudeCommandsDir = path.join(target, '.claude/commands');
-
-        const flowFilter = (skillName: string) =>
-          skillName.startsWith('flow-') ||
-          skillName === 'aiwg-setup-project' ||
-          skillName === 'aiwg-update-claude' ||
-          skillName === 'aiwg-update-agents-md' ||
-          skillName === 'sdlc-accelerate' ||
-          skillName === 'project-status' ||
-          skillName === 'intake-wizard' ||
-          skillName === 'intake-from-codebase' ||
-          skillName === 'intake-start';
-
-        const kernelFilter = (skillName: string) =>
-          skillName === 'aiwg-refresh' ||
-          skillName === 'aiwg-doctor' ||
-          skillName === 'aiwg-status' ||
-          skillName === 'aiwg-help' ||
-          skillName === 'aiwg-regenerate' ||
-          skillName === 'aiwg-regenerate-claude' ||
-          skillName === 'aiwg-regenerate-codex' ||
-          skillName === 'aiwg-regenerate-opencode' ||
-          skillName === 'aiwg-regenerate-agents' ||
-          skillName === 'aiwg-issue' ||           // #1269 — issue filing guide (kernel)
-          skillName === 'aiwg-pr' ||              // #1269 — PR filing guide (kernel)
-          skillName === 'use' ||
-          skillName === 'steward';
-
-        const standard = await translateSkillsToCommands(claudeStandardSkillsDir, {
-          provider: 'claude',
-          targetDir: claudeCommandsDir,
+        const standard = await translateSkillsToCommands(targetSkillsDir, {
+          provider,
+          targetDir: targetCommandsDir,
           projectPath: target,
           dryRun,
           verbose,
-          nameFilter: flowFilter,
+          nameFilter: shouldMirrorStandardCommandSkill,
         });
         if (verbose && standard.translated.length > 0) {
-          ui.success(`Translated ${standard.translated.length} SDLC flows → Claude slash commands`);
+          ui.success(`Mirrored ${standard.translated.length} operator skills → commands (${provider})`);
         }
 
-        const kernel = await translateSkillsToCommands(claudeKernelSkillsDir, {
-          provider: 'claude',
-          targetDir: claudeCommandsDir,
-          projectPath: target,
-          dryRun,
-          verbose,
-          nameFilter: kernelFilter,
-        });
-        if (verbose && kernel.translated.length > 0) {
-          ui.success(`Translated ${kernel.translated.length} kernel skills → Claude slash commands`);
+        if (targetKernelSkillsDir) {
+          const kernel = await translateSkillsToCommands(targetKernelSkillsDir, {
+            provider,
+            targetDir: targetCommandsDir,
+            projectPath: target,
+            dryRun,
+            verbose,
+            nameFilter: shouldMirrorKernelCommandSkill,
+          });
+          if (verbose && kernel.translated.length > 0) {
+            ui.success(`Mirrored ${kernel.translated.length} kernel skills → commands (${provider})`);
+          }
         }
       } catch (error) {
-        ui.warn(`Claude flow → command translation failed: ${error instanceof Error ? error.message : String(error)}`);
+        ui.warn(`Skill→command mirror failed: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
 
