@@ -1920,6 +1920,45 @@ export const stewardCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const repoAccessCommand: Extension = {
+  id: 'repo-access',
+  type: 'skill',
+  name: 'Repo Access',
+  description: 'Validate repo access manifest authorization before reading, writing, committing, pushing, or commenting across repos',
+  version: '1.0.0',
+  capabilities: ['cli', 'policy', 'repo-access', 'authorization', 'preflight'],
+  keywords: ['repo', 'access', 'manifest', 'authorization', 'permissions', 'preflight', 'handoff'],
+  category: 'utility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: [
+      'repo access check',
+      'repo access manifest',
+      'can I edit this repo',
+      'check repo permissions',
+      'preflight repo access',
+    ],
+    commandHint: {
+      template: 'utility',
+      allowedTools: ['Bash', 'Read'],
+      argumentHint: 'list | explain --path <repo> | check --path <repo> --action <action>',
+      executionSteps: [
+        'Load .aiwg/ops/security/repo-access.manifest.yaml',
+        'Resolve the requested repo/path against manifest entries',
+        'Return ALLOW/DENY with the matching repo entry and reason',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Agent Team Commands
 
 export const teamCommand: Extension = {
@@ -3028,11 +3067,12 @@ export const commandDefinitions: Extension[] = [
   runtimeInfoCommand,
   agentcardCommand,
 
-  // Utility (4)
+  // Utility (5)
   prefillCardsCommand,
   contributeStartCommand,
   validateMetadataCommand,
   skillLintCommand,
+  repoAccessCommand,
 
   // Plugin (5)
   installPluginCommand,

@@ -115,6 +115,7 @@
     "escalation-discipline",
     "tool-quota",
     "quiet-mode",
+    "respect-repo-access-manifest",
     "subagent-scoping",
     "diagram-generation",
     "native-ux-tools",

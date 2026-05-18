@@ -4,7 +4,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-## AIWG Utilities Rules (24 rules — active with aiwg-utils addon)
+## AIWG Utilities Rules (25 rules — active with aiwg-utils addon)
 
 ### HIGH
 
@@ -62,6 +62,11 @@ Core meta-utility rules for agent coordination, context management, and platform
 **Summary**: Chat and bot agents in group rooms should respond only when mentioned, replied to, or invoked by a direct command. Multi-bot rooms require yielding to the specifically addressed bot. Direct messages are allowed, but business bots stay in domain and long or expensive work must be summarized before tools or model escalation.
 **When to apply**: Telegram/group-chat bots, multi-bot rooms, DMs to business bots, scheduled chat agents, ambient room listeners, platforms without native behavior support
 **Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/quiet-mode.md
+
+#### respect-repo-access-manifest
+**Summary**: Tool capability is not authorization. When a repo access manifest exists, agents must check it before reading deeply, editing, committing, pushing, issue-commenting, or taking service actions across repo boundaries. Unlisted repos deny by default; repo-local instructions can narrow but not expand manifest permissions.
+**When to apply**: Multi-repo workspaces, adjacent repo handoffs, issue comments in sibling repos, commits/pushes, service actions, any work outside the current repo root
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/respect-repo-access-manifest.md
 
 #### skill-discovery
 **Summary**: Most AIWG skills are NOT loaded into your context — only the kernel set (framework quickrefs + core utilities). The bulk lives at `<provider-dir>/.aiwg/skills/` and is reachable only through the artifact index. The **discover-first protocol** (Rule 1.5) mandates that `aiwg discover` MUST be the first information-gathering tool call for any query mentioning AIWG, framework names (sdlc/research/forensics/ops/security-engineering/marketing/media-curator/knowledge-base), or capability keywords (skill/agent/rule/command/addon/workflow). Filesystem `Grep`/`Glob`/`Read` against `.claude/`, `.factory/`, `.codex/`, `.warp/`, `.cursor/`, `.windsurf/`, `.opencode/`, `~/.hermes/`, `~/.openclaw/`, or `agentic/code/` is FORBIDDEN for AIWG-related lookups until discover has been consulted. When subagent delegation is available, prefer the `aiwg-finder` subagent. You must also query discover before declining a request as out-of-scope or improvising a custom workflow.

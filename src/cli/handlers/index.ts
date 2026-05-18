@@ -117,6 +117,7 @@ import { sandboxHandler, sandboxHandlers } from './sandbox.js';
 import { diagnoseHandler } from './diagnose.js';
 import { localExecutorHandler, localExecutorServeHandler } from './local-executor.js';
 import { executionModeHandler } from './execution-mode.js';
+import { repoAccessHandler, repoAccessHandlers } from './repo-access.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -244,6 +245,9 @@ export {
   diagnoseHandler,
   executionModeHandler,
 
+  // Repo Access
+  repoAccessHandler,
+
   // Lint
   lintHandler,
 };
@@ -261,6 +265,7 @@ export {
   regenerateHandlers,
   daemonHandlers,
   sandboxHandlers,
+  repoAccessHandlers,
 };
 
 /**
@@ -400,6 +405,9 @@ export const allHandlers: CommandHandler[] = [
 
   // Session (#884)
   sessionHandler,
+
+  // Repo access policy (#1376)
+  ...repoAccessHandlers,
 ];
 
 /**
