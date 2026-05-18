@@ -148,12 +148,13 @@ jobs:
           # below tracks the actual per-release deliverable.
           # See aiwg#1348-followup (2026-05-15).
           SECTION_FILE="sections/releases--${EXPECTED_TAG}-announcement.js"
-          echo "Verifying ${SECTION_FILE} is present at ${DEPLOY_PATH}"
+          DEPLOY_ROOT="${DEPLOY_PATH%/}/"
+          echo "Verifying ${SECTION_FILE} is present at ${DEPLOY_ROOT}"
           ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "test -f '${DEPLOY_PATH}index.html' || { echo '::error::Deploy failed: ${DEPLOY_PATH}index.html missing'; exit 1; }
+            "test -f '${DEPLOY_ROOT}index.html' || { echo '::error::Deploy failed: ${DEPLOY_ROOT}index.html missing'; exit 1; }
              echo 'index.html present.'
-             if [ -f '${DEPLOY_PATH}${SECTION_FILE}' ]; then
+             if [ -f '${DEPLOY_ROOT}${SECTION_FILE}' ]; then
                echo 'Deploy verified: ${SECTION_FILE} is on disk for ${EXPECTED_TAG}'
              else
                # If the release-announcement source for this tag did not
@@ -165,7 +166,7 @@ jobs:
                echo '  Either:'
                echo '  - docs/releases/${EXPECTED_TAG}-announcement.md did not exist when this tag was built'
                echo '  - dbbuilder did not generate the section (check build logs upstream)'
-               echo '  - rsync target differs from served path (check webserver doc root vs DEPLOY_PATH)'
+               echo '  - rsync target differs from served path (check webserver doc root vs DEPLOY_ROOT)'
              fi"
 
       - name: Cleanup SSH key
