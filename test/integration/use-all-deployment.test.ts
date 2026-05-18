@@ -174,6 +174,16 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
     expect(agents.length).toBeGreaterThan(0);
     expect(agents.some(a => a.endsWith('.md'))).toBe(true);
   });
+
+  it('mirrors Claude setup skills as slash commands', async () => {
+    const result = runAiwg(fullUseAllArgs(projectDir), projectDir);
+    expect(result.exitCode).toBe(0);
+
+    const commandsDir = path.join(projectDir, '.claude', 'commands');
+    expect(existsSync(path.join(commandsDir, 'aiwg-setup-project.md'))).toBe(true);
+    expect(existsSync(path.join(commandsDir, 'aiwg-update-claude.md'))).toBe(true);
+    expect(existsSync(path.join(commandsDir, 'aiwg-update-agents-md.md'))).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------

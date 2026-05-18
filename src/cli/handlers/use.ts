@@ -1840,6 +1840,9 @@ export class UseHandler implements CommandHandler {
 
         const flowFilter = (skillName: string) =>
           skillName.startsWith('flow-') ||
+          skillName === 'aiwg-setup-project' ||
+          skillName === 'aiwg-update-claude' ||
+          skillName === 'aiwg-update-agents-md' ||
           skillName === 'sdlc-accelerate' ||
           skillName === 'project-status' ||
           skillName === 'intake-wizard' ||

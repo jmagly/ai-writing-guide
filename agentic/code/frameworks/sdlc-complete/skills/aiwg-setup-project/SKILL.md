@@ -13,14 +13,14 @@ commandHint:
 <!-- AIWG-SKILL-CALLOUT -->
 > **Skill access pattern (post-kernel-pivot, 2026.5+)**
 >
-> Skill names referenced in this document are AIWG skills, **not slash commands**. Most are not kernel-listed and cannot be invoked as `/skill-name` by the platform. Reach them via:
+> Skill names referenced in this document are AIWG skills first. Most are not kernel-listed and cannot be invoked as `/skill-name` by every platform. Reach them portably via:
 >
 > ```bash
 > aiwg discover "<capability>"
 > aiwg show skill <name>
 > ```
 >
-> Only kernel-listed skills (`aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`, `steward`) are directly invokable as slash commands. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
+> Claude Code deployments also mirror selected operator workflows into `.claude/commands/`; this skill is available there as `/aiwg-setup-project`. See [skill-discovery rule](../../../addons/aiwg-utils/rules/skill-discovery.md).
 
 
 # AIWG Setup Project
@@ -507,4 +507,3 @@ When merging AIWG section, ensure these are included:
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Detect AIWG installation and project structure before making changes
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/aiwg-update-claude/SKILL.md — Companion skill for updating an already-configured project
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/aiwg-update-agents-md/SKILL.md — Companion skill invoked when Factory AI is also detected
-
