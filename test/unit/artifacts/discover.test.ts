@@ -414,4 +414,42 @@ describe('discoverCapability — JSON output', () => {
       else process.env.AIWG_ROOT = prevAiwgRoot;
     }
   });
+
+  it('matches one-edit canonical skill-name typos', async () => {
+    const prevAiwgRoot = process.env.AIWG_ROOT;
+    process.env.AIWG_ROOT = cwd;
+    try {
+      writeSkill(
+        'sdlc-accelerate',
+        'sdlc-complete',
+        `---\nname: sdlc-accelerate\ndescription: Accelerate SDLC delivery with recommended workflows\n---\n\n# SDLC Accelerate\n`,
+      );
+
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+      consoleSpy.mockRestore();
+      consoleErrSpy.mockRestore();
+
+      const captured: string[] = [];
+      const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
+        captured.push(args.join(' ')),
+      );
+      await discoverCapability(cwd, {
+        phrase: 'sdlc-acclerate',
+        graph: 'framework',
+        json: true,
+        limit: 3,
+      });
+      logSpy.mockRestore();
+
+      const parsed = JSON.parse(captured.join('\n'));
+      expect(parsed.results.length).toBeGreaterThan(0);
+      expect(parsed.results[0].path).toMatch(/sdlc-accelerate\/SKILL\.md$/);
+      expect(parsed.results[0].score).toBeGreaterThanOrEqual(0.95);
+    } finally {
+      if (prevAiwgRoot === undefined) delete process.env.AIWG_ROOT;
+      else process.env.AIWG_ROOT = prevAiwgRoot;
+    }
+  });
 });

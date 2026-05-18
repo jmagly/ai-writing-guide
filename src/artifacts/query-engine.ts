@@ -83,6 +83,57 @@ function normalizeName(s: string): string {
   return s.toLowerCase().replace(/[-_\s]+/g, ' ').trim();
 }
 
+function damerauLevenshteinAtMostOne(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+
+  if (a.length === b.length) {
+    let firstDiff = -1;
+    let diffCount = 0;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) {
+        if (firstDiff < 0) firstDiff = i;
+        diffCount++;
+      }
+    }
+    if (diffCount === 1) return true;
+    return diffCount === 2
+      && firstDiff + 1 < a.length
+      && a[firstDiff] === b[firstDiff + 1]
+      && a[firstDiff + 1] === b[firstDiff];
+  }
+
+  const shorter = a.length < b.length ? a : b;
+  const longer = a.length < b.length ? b : a;
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < shorter.length && j < longer.length) {
+    if (shorter[i] === longer[j]) {
+      i++;
+      j++;
+    } else {
+      edits++;
+      if (edits > 1) return false;
+      j++;
+    }
+  }
+  return true;
+}
+
+function nearNameMatch(query: string, name: string): boolean {
+  const queryParts = normalizeName(query).split(/\s+/).filter(Boolean);
+  const nameParts = normalizeName(name).split(/\s+/).filter(Boolean);
+  if (queryParts.length !== nameParts.length) return false;
+
+  return queryParts.every((part, i) => {
+    const target = nameParts[i];
+    if (part === target) return true;
+    if (part.length < 5 || target.length < 5) return false;
+    return damerauLevenshteinAtMostOne(part, target);
+  });
+}
+
 function scoreEntry(entry: MetadataEntry, text: string): number {
   const lower = text.toLowerCase();
   const tokens = tokenize(text);
@@ -104,6 +155,9 @@ function scoreEntry(entry: MetadataEntry, text: string): number {
     const nameNorm = normalizeName(entry.name);
     if (queryNorm === nameNorm) {
       return 1.001;
+    }
+    if (nearNameMatch(text, entry.name)) {
+      return 0.951;
     }
   }
 

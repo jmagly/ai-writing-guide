@@ -156,10 +156,17 @@ function inferType(data: Record<string, unknown>, filePath: string): string {
         case 'skills': {
           // Skills come in two layouts:
           //   slug-style: skills/<slug>/SKILL.md  → file is SKILL.md
-          //   flat-style: skills/<name>.md        → file is the artifact
-          // Both classify as 'skill'. Slug-style is canonical for frameworks
-          // and addons; flat is used by extensions.
-          return 'skill';
+          //   flat-style: skills/<name>.md        → file is directly under skills/
+          //
+          // Do not classify nested reference/support markdown under
+          // skills/<slug>/... as standalone skills; those files should remain
+          // ordinary artifacts so discovery does not advertise them as
+          // invokable capabilities.
+          const afterSkills = segments.length - i - 1;
+          const isSlugSkill = basename === 'skill' && afterSkills === 2;
+          const isFlatSkill = afterSkills === 1;
+          if (isSlugSkill || isFlatSkill) return 'skill';
+          break;
         }
         case 'agents':
           return 'agent';
