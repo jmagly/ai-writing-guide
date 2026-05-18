@@ -127,12 +127,23 @@ const MIRRORED_KERNEL_COMMAND_SKILLS = new Set([
   'steward',
 ]);
 
-function shouldMirrorCommandSkill(skillName) {
+function providerUsesSkillsNatively(providerName) {
+  return ['claude', 'cursor', 'hermes'].includes(providerName);
+}
+
+function shouldMirrorStandardCommandSkill(skillName) {
   return (
     skillName.startsWith('flow-') ||
-    MIRRORED_STANDARD_COMMAND_SKILLS.has(skillName) ||
-    MIRRORED_KERNEL_COMMAND_SKILLS.has(skillName)
+    MIRRORED_STANDARD_COMMAND_SKILLS.has(skillName)
   );
+}
+
+function shouldMirrorCommandSkill(providerName, skillName) {
+  if (MIRRORED_KERNEL_COMMAND_SKILLS.has(skillName)) {
+    return !providerUsesSkillsNatively(providerName);
+  }
+
+  return shouldMirrorStandardCommandSkill(skillName);
 }
 
 function uniquePaths(paths) {
@@ -203,7 +214,7 @@ function mirrorSkillsAsCommands(provider, target, srcRoot, opts) {
   if (!targetDir) return 0;
 
   const skillDirs = collectMirrorSkillDirs(srcRoot, opts.mode)
-    .filter((dir) => shouldMirrorCommandSkill(path.basename(dir)));
+    .filter((dir) => shouldMirrorCommandSkill(provider.name, path.basename(dir)));
 
   if (skillDirs.length === 0) return 0;
   if (!opts.dryRun) fs.mkdirSync(targetDir, { recursive: true });

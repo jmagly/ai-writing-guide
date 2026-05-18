@@ -377,6 +377,40 @@ async function listSourceSkillNames(skillsDir: string): Promise<string[]> {
   }
 }
 
+async function mirrorStandardCommandSkills(opts: {
+  provider: string;
+  target: string;
+  targetCommandsDir: string;
+  targetSkillsDir: string;
+  frameworkRoot: string;
+  dryRun: boolean;
+  verbose: boolean;
+}): Promise<number> {
+  const sourceDirs = [
+    opts.targetSkillsDir,
+    path.join(opts.frameworkRoot, 'agentic/code/frameworks/sdlc-complete/skills'),
+  ];
+  const seen = new Set<string>();
+  let count = 0;
+
+  for (const sourceDir of sourceDirs) {
+    if (!sourceDir || seen.has(sourceDir)) continue;
+    seen.add(sourceDir);
+
+    const result = await translateSkillsToCommands(sourceDir, {
+      provider: opts.provider,
+      targetDir: opts.targetCommandsDir,
+      projectPath: opts.target,
+      dryRun: opts.dryRun,
+      verbose: opts.verbose,
+      nameFilter: shouldMirrorStandardCommandSkill,
+    });
+    count += result.translated.length;
+  }
+
+  return count;
+}
+
 /**
  * Run pre-deployment collision check for a framework or addon.
  * Emits warnings/errors to stderr. Returns false if deployment should be blocked.
@@ -1878,19 +1912,23 @@ export class UseHandler implements CommandHandler {
     // command picker where supported.
     if (targetCommandsDir) {
       try {
-        const standard = await translateSkillsToCommands(targetSkillsDir, {
+        const standardMirrored = await mirrorStandardCommandSkills({
           provider,
-          targetDir: targetCommandsDir,
-          projectPath: target,
+          target,
+          targetCommandsDir,
+          targetSkillsDir,
+          frameworkRoot,
           dryRun,
           verbose,
-          nameFilter: shouldMirrorStandardCommandSkill,
         });
-        if (verbose && standard.translated.length > 0) {
-          ui.success(`Mirrored ${standard.translated.length} operator skills → commands (${provider})`);
+        if (verbose && standardMirrored > 0) {
+          ui.success(`Mirrored ${standardMirrored} operator skills → commands (${provider})`);
         }
 
-        if (targetKernelSkillsDir) {
+        // Claude/Cursor/Hermes load kernel skills natively. Mirroring those
+        // same names into a command directory creates duplicate `/` entries
+        // in skills-native providers such as Claude Code (#1382).
+        if (targetKernelSkillsDir && providerNeedsCommands(provider)) {
           const kernel = await translateSkillsToCommands(targetKernelSkillsDir, {
             provider,
             targetDir: targetCommandsDir,

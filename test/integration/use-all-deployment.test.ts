@@ -184,6 +184,27 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
     expect(existsSync(path.join(commandsDir, 'aiwg-update-claude.md'))).toBe(true);
     expect(existsSync(path.join(commandsDir, 'aiwg-update-agents-md.md'))).toBe(true);
   });
+
+  it('does not mirror Claude kernel skills as duplicate slash commands', async () => {
+    const result = runAiwg(fullUseAllArgs(projectDir), projectDir);
+    expect(result.exitCode).toBe(0);
+
+    const commandsDir = path.join(projectDir, '.claude', 'commands');
+    const kernelCommandDuplicates = [
+      'aiwg-doctor.md',
+      'aiwg-refresh.md',
+      'aiwg-status.md',
+      'aiwg-help.md',
+      'aiwg-issue.md',
+      'aiwg-pr.md',
+      'use.md',
+      'steward.md',
+    ];
+
+    for (const file of kernelCommandDuplicates) {
+      expect(existsSync(path.join(commandsDir, file)), `${file} should stay native-skill-only on Claude`).toBe(false);
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
