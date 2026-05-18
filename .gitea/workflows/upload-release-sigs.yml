@@ -22,8 +22,8 @@
 #   secrets. Wave 4 (#1283, #1286) deliberately reduced the Gitea token
 #   surface and the npmjs.org token surface; adding a new Gitea write
 #   token in GitHub would push the wrong direction.
-# - Releases on github.com/jmagly/aiwg are public, so `gh release
-#   download` works without GitHub authentication.
+# - Releases on github.com/jmagly/aiwg are public, so the deterministic
+#   release asset URLs can be downloaded without GitHub authentication.
 # - The Gitea side reuses the existing NPM_TOKEN (gta_…) which already
 #   has write:repository scope per the A10 secret-rotation runbook —
 #   no new token required.
@@ -70,23 +70,13 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install gh CLI + jq + curl
-        # node:20-bookworm ships curl but not gh or jq. Pull from apt; the
+      - name: Install jq + curl
+        # node:20-bookworm ships curl but not jq. Pull from apt; the
         # base image is debian-bookworm so apt is available.
         run: |
           set -euo pipefail
           apt-get update
           apt-get install -y --no-install-recommends ca-certificates curl jq gnupg
-          # Install gh from the official deb repo.
-          mkdir -p /etc/apt/keyrings
-          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-            | gpg --dearmor -o /etc/apt/keyrings/githubcli-archive-keyring.gpg
-          chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-            > /etc/apt/sources.list.d/github-cli.list
-          apt-get update
-          apt-get install -y --no-install-recommends gh
-          gh --version
 
       - name: Validate tag input
         id: tag
@@ -110,10 +100,8 @@ jobs:
           echo "sbom_sig=aiwg-${VERSION}.cdx.json.sigstore" >> "$GITHUB_OUTPUT"
 
       - name: Download signed assets from GitHub release
-        # github.com/jmagly/aiwg releases are public — no GH auth needed.
-        # `gh release download` will exit non-zero if any of the six
-        # files is missing from the release, which is what we want: a
-        # missing sig is a hard fail, not a silent skip.
+        # github.com/jmagly/aiwg releases are public; use the deterministic
+        # release asset URLs so this workflow does not need a GitHub token.
         run: |
           set -euo pipefail
           TAG='${{ steps.tag.outputs.tag }}'
@@ -124,19 +112,19 @@ jobs:
           SBOM='${{ steps.tag.outputs.sbom }}'
           SBOM_SIG='${{ steps.tag.outputs.sbom_sig }}'
 
-          # `gh release download` against a public repo without GH_TOKEN
-          # works but emits a warning; silence it by passing an empty
-          # token explicitly. The --repo flag bypasses any local repo
-          # detection.
-          GH_TOKEN="" gh release download "$TAG" \
-            --repo jmagly/aiwg \
-            --pattern "$TARBALL" \
-            --pattern "$TARBALL_SIG" \
-            --pattern "$MANIFEST" \
-            --pattern "$MANIFEST_SIG" \
-            --pattern "$SBOM" \
-            --pattern "$SBOM_SIG" \
-            --skip-existing
+          download_asset() {
+            local name="$1"
+            local url="https://github.com/jmagly/aiwg/releases/download/${TAG}/${name}"
+            echo "  ↓ $name"
+            curl -fsSL --retry 3 --retry-delay 2 -o "$name" "$url"
+          }
+
+          download_asset "$TARBALL"
+          download_asset "$TARBALL_SIG"
+          download_asset "$MANIFEST"
+          download_asset "$MANIFEST_SIG"
+          download_asset "$SBOM"
+          download_asset "$SBOM_SIG"
 
           # Hard-check that all six are present.
           MISSING=0
