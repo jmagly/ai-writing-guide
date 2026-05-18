@@ -7,13 +7,13 @@ This is maintainer memory for cutting AIWG releases from this host.
 Use the host GPG home when signing or verifying release tags and commits. The Codex runtime may set
 `HOME` to a role-specific directory that does not contain the maintainer keys.
 
-Expected commit signing key:
+Expected commit signing key, used for regular commits:
 
 - Fingerprint: `62297562B1C7053088F405DB0117DAAA677A5BF2`
 - Short key ID: `0117DAAA677A5BF2`
 - UID: `roctinam (grissom) <1159087+jmagly@users.noreply.github.com>`
 
-Expected release tag signing key:
+Expected release tag signing key, used only for annotated release tags:
 
 - Fingerprint: `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`
 - Short key ID: `719AB63879E84CE8`
@@ -21,13 +21,17 @@ Expected release tag signing key:
   - `jmagly <1159087+jmagly@users.noreply.github.com>`
   - `AIWG Release Signing <release@aiwg.io>`
 
-Use:
+Use the commit key for regular commits:
 
 ```bash
 GNUPGHOME=/home/roctinam/.gnupg \
   git -c user.signingkey=62297562B1C7053088F405DB0117DAAA677A5BF2 \
   commit -S
+```
 
+Use the release key only for release tags:
+
+```bash
 GNUPGHOME=/home/roctinam/.gnupg \
   git -c user.signingkey=FE9272F0BC5781E1DE77FAAA719AB63879E84CE8 \
   tag -s vYYYY.M.P -m "release: vYYYY.M.P"

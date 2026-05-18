@@ -3,6 +3,22 @@
 <!-- Operator-authored additions go here. The block below is AIWG-managed spillover; -->
 <!-- do not edit between the spillover markers. Content outside is preserved across runs. -->
 
+## Signing Keys
+
+Use the host GPG home for all signing operations:
+
+```bash
+GNUPGHOME=/home/roctinam/.gnupg
+```
+
+Commit signing and release tag signing use different keys:
+
+- Commits: `62297562B1C7053088F405DB0117DAAA677A5BF2` (`roctinam (grissom)`)
+- Release tags: `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8` (`AIWG Release Signing`)
+
+Do not sign regular commits with the release tag key. Use the release key only for
+annotated release tags such as `v2026.5.9`.
+
 <!-- spillover-from-AGENTS.md:START -->
 <!-- AIWG-managed spillover. Operator content lives outside this block. -->
 
