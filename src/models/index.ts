@@ -16,6 +16,7 @@
 // Export all types
 export type {
   ModelTier,
+  RuntimeModelTier,
   ModelRole,
   Provider,
   ModelCapabilities,
@@ -38,6 +39,8 @@ export type {
   MergedModelConfig,
   TierInfo,
   ValidationResult,
+  ModelRouteRequest,
+  ModelRouteDecision,
 } from './types.js';
 
 // Export ConfigLoader
@@ -46,3 +49,6 @@ export type { ConfigLocations } from './config-loader.js';
 
 // Export ModelResolver
 export { ModelResolver } from './resolver.js';
+
+// Export provider-neutral runtime tier routing primitive
+export { routeModelTier } from './router.js';

@@ -23,14 +23,53 @@
 
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
+import os from 'os';
 import { randomUUID } from 'crypto';
-import { scheduleBackgroundCheck, maybePrintNotice } from '../dist/src/update/notifier.mjs';
-import { loadConfig } from '../dist/src/channel/manager.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const packageRoot = path.resolve(__dirname, '..');
+
+function readPackageVersion() {
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
+    return typeof pkg.version === 'string' ? pkg.version : '(unknown)';
+  } catch {
+    return '(unknown)';
+  }
+}
+
+function detectVersionChannel(version) {
+  if (version.includes('-rc.')) return 'rc';
+  if (version.includes('-beta.')) return 'beta';
+  if (version.includes('-alpha.')) return 'alpha';
+  if (version.includes('-nightly.')) return 'nightly';
+  try {
+    const raw = readFileSync(path.join(os.homedir(), '.aiwg', 'channel.json'), 'utf8');
+    const cfg = JSON.parse(raw);
+    if (cfg?.devMode) return 'dev';
+    if (typeof cfg?.channel === 'string') return cfg.channel;
+  } catch {
+    // Default below.
+  }
+  return 'stable';
+}
+
+function maybeHandleFastVersion(args) {
+  if (args.length !== 1) return false;
+  if (args[0] !== '--version' && args[0] !== '-version') return false;
+
+  const version = readPackageVersion();
+  const channel = detectVersionChannel(version);
+  console.log(`  aiwg  ${version}  [${channel}]`);
+  console.log(`    path: ${packageRoot}`);
+  return true;
+}
+
+if (maybeHandleFastVersion(process.argv.slice(2))) {
+  process.exit(0);
+}
 
 // Mint or inherit an invocation ID before anything else loads. Child processes
 // spawned by handlers (detached update-notifier, aiwg exec, etc.) inherit the
@@ -72,6 +111,7 @@ trace('bin:entry');
  * emit a clear error and exit rather than falling back to a tsx fork.
  */
 async function resolveRouterPath() {
+  const { loadConfig } = await import('../dist/src/channel/manager.mjs');
   const config = await loadConfig();
   if (config.devMode && config.edgePath && config.edgePath !== packageRoot) {
     const devRouter = path.join(config.edgePath, 'dist', 'src', 'cli', 'router.js');
@@ -170,6 +210,7 @@ async function main() {
   // background check, then schedule the next background check. Both are
   // non-blocking — the current command never waits on the network.
   // Honors NO_UPDATE_NOTIFIER, CI=*, and non-TTY stderr.
+  const { scheduleBackgroundCheck, maybePrintNotice } = await import('../dist/src/update/notifier.mjs');
   maybePrintNotice();
   scheduleBackgroundCheck(packageRoot);
 

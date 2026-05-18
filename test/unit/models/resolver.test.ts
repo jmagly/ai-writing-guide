@@ -10,6 +10,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { writeFile, mkdir, rm } from 'fs/promises';
 import { resolve } from 'path';
 import { ModelResolver } from '../../../src/models/resolver.js';
+import { routeModelTier } from '../../../src/models/router.js';
 import type { UserProjectConfig } from '../../../src/models/types.js';
 import {
   CLAUDE_MODELS,
@@ -426,5 +427,41 @@ describe('ModelResolver', () => {
       const result = await resolver.resolve('test-agent');
       expect(result).toBeDefined();
     });
+  });
+});
+
+describe('routeModelTier', () => {
+  it('routes deterministic work to Tier 0', () => {
+    expect(routeModelTier({ deterministic: true })).toMatchObject({
+      tier: 0,
+      modelTier: null,
+      requiresConfirmation: false,
+      source: 'deterministic',
+    });
+  });
+
+  it('routes complex work to Tier 2 with an escalation summary requirement', () => {
+    expect(routeModelTier({ defaultTier: 1, complex: true })).toMatchObject({
+      tier: 2,
+      modelTier: 'premium',
+      summaryRequired: true,
+      requiresConfirmation: false,
+      source: 'complexity',
+    });
+  });
+
+  it('requires confirmation for high-impact or premium routing', () => {
+    const decision = routeModelTier({ defaultTier: 1, highImpact: true });
+    expect(decision.tier).toBe(3);
+    expect(decision.requiresConfirmation).toBe(true);
+    expect(decision.summaryRequired).toBe(true);
+    expect(decision.rationale.join(' ')).toMatch(/explicit human confirmation/i);
+  });
+
+  it('keeps unattended bots within max auto tier', () => {
+    const decision = routeModelTier({ unattended: true, complex: true });
+    expect(decision.tier).toBe(2);
+    expect(decision.requiresConfirmation).toBe(true);
+    expect(decision.source).toBe('policy');
   });
 });

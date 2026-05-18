@@ -1,8 +1,8 @@
 /**
  * Optional Features Catalog
  *
- * AIWG ships several runtime-optional features whose dependencies live
- * in `optionalDependencies`. This catalog is the canonical mapping
+ * AIWG ships several runtime-optional features whose dependencies may
+ * be installed separately. This catalog is the canonical mapping
  * between **feature names** (operator vocabulary) and the **npm
  * packages** that enable them.
  *

@@ -168,6 +168,38 @@ slash commands.
 - \`/issue-list\` - List tickets
 `;
 
+const COMPANION_CLI = `---
+name: companion-cli
+namespace: aiwg
+description: Use when verifying companion CLI inventory keeps commands attached to workflow judgment.
+platforms: [all]
+user-invocable: true
+triggers:
+  - "companion cli"
+---
+
+# Companion CLI
+
+This skill uses a supporting command and then interprets the output as part of
+the workflow. Run \`aiwg index query "authentication" --json\`, review the
+results, summarize the relevant artifacts, and report any gaps to the user.
+`;
+
+const CLI_REPLACEMENT_RISK = `---
+name: cli-replacement-risk
+namespace: aiwg
+description: Use when verifying companion CLI inventory catches replacement wording.
+platforms: [all]
+user-invocable: true
+triggers:
+  - "replacement risk"
+---
+
+# Replacement Risk
+
+Just run \`aiwg issue-list --json\`.
+`;
+
 beforeAll(async () => {
   tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-skill-lint-'));
   await fs.mkdir(path.join(tmpDir, 'perfect'), { recursive: true });
@@ -177,6 +209,8 @@ beforeAll(async () => {
   await fs.mkdir(path.join(tmpDir, 'broken'), { recursive: true });
   await fs.mkdir(path.join(tmpDir, 'slash-offender'), { recursive: true });
   await fs.mkdir(path.join(tmpDir, 'slash-template'), { recursive: true });
+  await fs.mkdir(path.join(tmpDir, 'companion-cli'), { recursive: true });
+  await fs.mkdir(path.join(tmpDir, 'cli-replacement-risk'), { recursive: true });
   await fs.writeFile(path.join(tmpDir, 'perfect/SKILL.md'), PERFECT_SKILL);
   await fs.writeFile(path.join(tmpDir, 'stub/SKILL.md'), STUB_SKILL);
   await fs.writeFile(path.join(tmpDir, 'needs-triggers/SKILL.md'), NO_TRIGGERS_USER_INVOCABLE);
@@ -184,6 +218,8 @@ beforeAll(async () => {
   await fs.writeFile(path.join(tmpDir, 'broken/SKILL.md'), BROKEN_YAML);
   await fs.writeFile(path.join(tmpDir, 'slash-offender/SKILL.md'), SLASH_OFFENDER);
   await fs.writeFile(path.join(tmpDir, 'slash-template/SKILL.md'), SLASH_TEMPLATE_BLOCK);
+  await fs.writeFile(path.join(tmpDir, 'companion-cli/SKILL.md'), COMPANION_CLI);
+  await fs.writeFile(path.join(tmpDir, 'cli-replacement-risk/SKILL.md'), CLI_REPLACEMENT_RISK);
 });
 
 afterAll(async () => {
@@ -236,10 +272,25 @@ describe('skill-lint rubric', () => {
 
   it('aggregates a directory into a report with average and failed count', async () => {
     const report = await lintSkills(tmpDir, 'standard');
-    expect(report.files.length).toBe(7);
+    expect(report.files.length).toBe(9);
     expect(report.failedCount).toBeGreaterThan(0);
     expect(report.averageScore).toBeGreaterThan(0);
     expect(report.averageScore).toBeLessThan(100);
+  });
+
+  it('inventories companion CLI commands without treating them as skill replacements', async () => {
+    const report = await lintSkills(tmpDir, 'standard');
+    const ok = report.companionCli.items.find(i => i.file.endsWith('companion-cli/SKILL.md'));
+    const risky = report.companionCli.items.find(i => i.file.endsWith('cli-replacement-risk/SKILL.md'));
+
+    expect(ok).toBeDefined();
+    expect(ok?.risk).toBe('ok');
+    expect(ok?.commands).toContain('aiwg index query "authentication" --json');
+
+    expect(risky).toBeDefined();
+    expect(risky?.risk).toBe('review');
+    expect(risky?.notes.join(' ')).toMatch(/replacing|surrounding skill\/workflow/i);
+    expect(report.companionCli.reviewCount).toBeGreaterThanOrEqual(1);
   });
 
   // Regression check for issue #1260 — slash-prefix references to

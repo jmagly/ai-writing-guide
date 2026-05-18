@@ -50,6 +50,14 @@ interface SkillScore {
   passes: boolean;
 }
 
+interface CompanionCliInventoryItem {
+  file: string;
+  commands: string[];
+  workflowLanguage: boolean;
+  risk: 'ok' | 'review';
+  notes: string[];
+}
+
 interface LintReport {
   rubric: RubricMode;
   threshold: number;
@@ -58,6 +66,11 @@ interface LintReport {
   averageScore: number;
   /** Files that did not meet the threshold. */
   failedCount: number;
+  companionCli: {
+    total: number;
+    reviewCount: number;
+    items: CompanionCliInventoryItem[];
+  };
 }
 
 const DIMENSION_WEIGHTS = {
@@ -219,6 +232,34 @@ function combineScore(dims: SkillScore['dimensions']): number {
   );
 }
 
+const AIWG_COMMAND_RE = /`(aiwg\s+[^`\n]+)`/g;
+const WORKFLOW_SUPPORT_RE = /\b(skill|workflow|orchestrat|review|interpret|summari[sz]e|validate|report|decide|triage|guide)\b/i;
+const REPLACEMENT_RISK_RE = /\b(?:just|only|simply)\s+run\s+`?aiwg\b|\b(?:replaces?|instead of)\s+(?:the\s+)?skill\b|\bdo not use this skill\b/i;
+
+function inventoryCompanionCli(filePath: string, body: string): CompanionCliInventoryItem | null {
+  const commands = [...body.matchAll(AIWG_COMMAND_RE)]
+    .map((m) => m[1]!.replace(/\s+/g, ' ').trim());
+  const uniqueCommands = [...new Set(commands)];
+  if (uniqueCommands.length === 0) return null;
+
+  const workflowLanguage = WORKFLOW_SUPPORT_RE.test(body);
+  const notes: string[] = [];
+  if (!workflowLanguage) {
+    notes.push('mentions aiwg CLI commands but does not describe the surrounding skill/workflow judgment');
+  }
+  if (REPLACEMENT_RISK_RE.test(body)) {
+    notes.push('wording may position the CLI command as replacing the skill workflow');
+  }
+
+  return {
+    file: filePath,
+    commands: uniqueCommands.slice(0, 12),
+    workflowLanguage,
+    risk: notes.length > 0 ? 'review' : 'ok',
+    notes,
+  };
+}
+
 /**
  * Lint a single SKILL.md file end-to-end.
  *
@@ -321,12 +362,24 @@ export async function lintSkills(
     }
   }
   const total = files.reduce((sum, f) => sum + f.score, 0);
+  const companionItems: CompanionCliInventoryItem[] = [];
+  for (const file of seen) {
+    const content = await fs.readFile(file, 'utf-8');
+    const body = content.match(/^---\n[\s\S]*?\n---\n?([\s\S]*)$/)?.[1] ?? content;
+    const item = inventoryCompanionCli(file, body);
+    if (item) companionItems.push(item);
+  }
   return {
     rubric,
     threshold: THRESHOLDS[rubric],
     files,
     averageScore: files.length > 0 ? Math.round(total / files.length) : 0,
     failedCount: files.filter((f) => !f.passes).length,
+    companionCli: {
+      total: companionItems.length,
+      reviewCount: companionItems.filter((i) => i.risk === 'review').length,
+      items: companionItems,
+    },
   };
 }
 
@@ -373,6 +426,10 @@ function renderTextReport(report: LintReport): void {
   console.log(`  ${files.length} file(s) scanned`);
   console.log(`  ${failedCount} below threshold`);
   console.log(`  average score: ${averageScore}/100`);
+  console.log(`  companion CLI workflows: ${report.companionCli.total} inventoried, ${report.companionCli.reviewCount} need review`);
+  for (const item of report.companionCli.items.filter((i) => i.risk === 'review').slice(0, 10)) {
+    console.log(`    review ${item.file}: ${item.notes.join('; ')}`);
+  }
 }
 
 export const skillLintHandler: CommandHandler = {

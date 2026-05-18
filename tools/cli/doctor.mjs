@@ -501,7 +501,7 @@ async function runDoctor() {
   }
 
   // 6b. Check Optional Features (#1219) — runtime-optional packages
-  // tracked in optionalDependencies + the features catalog.
+  // tracked in the features catalog and installed only when needed.
   try {
     const { getAllFeatureStatuses } = await import(path.join(AIWG_ROOT, 'dist', 'src', 'features', 'status.js'));
     const statuses = await getAllFeatureStatuses();

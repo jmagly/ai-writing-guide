@@ -11,6 +11,44 @@
 export type ModelTier = 'economy' | 'standard' | 'premium' | 'max-quality';
 
 /**
+ * Provider-neutral runtime routing tier for escalation policy.
+ *
+ * 0 = no model call, 1 = default/cheap, 2 = capable work model,
+ * 3 = premium/supervised.
+ */
+export type RuntimeModelTier = 0 | 1 | 2 | 3;
+
+export interface ModelRouteRequest {
+  /** Agent or workflow name, used for diagnostics only. */
+  agentName?: string;
+  /** Current/default runtime tier for the session. Defaults to 1. */
+  defaultTier?: RuntimeModelTier;
+  /** Existing answer, deterministic tool, or cache is sufficient. */
+  deterministic?: boolean;
+  /** Routine summary/classification/formatting. */
+  routine?: boolean;
+  /** Multi-step debugging, code changes, architecture, or nuanced analysis. */
+  complex?: boolean;
+  /** Legal, medical, financial, security, destructive, shared infra, or release-impacting work. */
+  highImpact?: boolean;
+  /** User or policy explicitly requested a stronger/premium model. */
+  requestedPremium?: boolean;
+  /** Unattended bot/session policy. */
+  unattended?: boolean;
+  /** Highest tier allowed without confirmation. Defaults to 2 for supervised, 1 for unattended. */
+  maxAutoTier?: RuntimeModelTier;
+}
+
+export interface ModelRouteDecision {
+  tier: RuntimeModelTier;
+  modelTier: ModelTier | null;
+  requiresConfirmation: boolean;
+  summaryRequired: boolean;
+  source: 'deterministic' | 'default' | 'complexity' | 'impact' | 'request' | 'policy';
+  rationale: string[];
+}
+
+/**
  * Task role for model categorization
  */
 export type ModelRole = 'reasoning' | 'coding' | 'efficiency';

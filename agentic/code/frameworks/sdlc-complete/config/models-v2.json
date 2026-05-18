@@ -54,21 +54,21 @@
     "claude": {
       "models": {
         "reasoning": {
-          "default": "opus",
+          "default": "claude-opus-4-6",
           "aliases": ["opus", "opus-4.5", "claude-opus"],
           "capabilities": ["long-context", "reasoning", "code-generation", "vision", "tool-use"],
           "contextWindow": 200000,
           "costPer1kTokens": { "input": 0.015, "output": 0.075 }
         },
         "coding": {
-          "default": "sonnet",
+          "default": "claude-sonnet-4-6",
           "aliases": ["sonnet", "sonnet-4.5", "claude-sonnet"],
           "capabilities": ["code-generation", "reasoning", "vision", "tool-use"],
           "contextWindow": 200000,
           "costPer1kTokens": { "input": 0.003, "output": 0.015 }
         },
         "efficiency": {
-          "default": "haiku",
+          "default": "claude-haiku-3-5",
           "aliases": ["haiku", "haiku-3.5", "claude-haiku"],
           "capabilities": ["code-generation", "fast-response", "tool-use"],
           "contextWindow": 200000,
@@ -77,9 +77,9 @@
       },
       "tierOverrides": {
         "max-quality": {
-          "reasoning": "opus",
-          "coding": "opus",
-          "efficiency": "sonnet"
+          "reasoning": "claude-opus-4-6",
+          "coding": "claude-opus-4-6",
+          "efficiency": "claude-sonnet-4-6"
         }
       }
     },

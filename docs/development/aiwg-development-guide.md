@@ -46,7 +46,10 @@ Several devDependencies compile C++ native addons via node-gyp. These require Py
 | `hnswlib-node` | Semantic ANN search | none (build tools only) |
 | `@xenova/transformers` | Text embeddings; pulls in `sharp` | `sharp` downloads a prebuilt binary from GitHub; on restricted networks add `libvips-dev` so it can compile from source |
 
-**Optional runtime deps** (in `optionalDependencies`) install only when explicitly needed:
+**Optional runtime deps** are feature-gated. Pure JS / small runtime helpers may
+live in `optionalDependencies`; native install-heavy packages such as
+`better-sqlite3` and `@xenova/transformers` are optional peers so a default
+`npm install` stays quiet. Install a feature explicitly when needed.
 
 | Package | Used for |
 |---------|----------|

@@ -245,12 +245,22 @@
   },
   "optionalDependencies": {
     "@hono/node-server": "^1.19.14",
-    "@xenova/transformers": "^2.17.2",
-    "better-sqlite3": "^12.8.0",
     "hnswlib-node": "^3.0.0",
     "hono": "^4.12.18",
     "node-pty": "^1.0.0",
     "ws": "^8.20.0"
+  },
+  "peerDependencies": {
+    "@xenova/transformers": "^2.17.2",
+    "better-sqlite3": "^12.8.0"
+  },
+  "peerDependenciesMeta": {
+    "@xenova/transformers": {
+      "optional": true
+    },
+    "better-sqlite3": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
