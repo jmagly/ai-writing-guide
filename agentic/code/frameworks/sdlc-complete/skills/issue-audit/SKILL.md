@@ -2,7 +2,7 @@
 namespace: aiwg
 name: issue-audit
 platforms: [all]
-description: Audit and triage issue backlogs with read-only defaults, interactive cleanup decisions, and guidance steering
+description: Audit and triage general issue backlogs with read-only defaults, interactive cleanup decisions, and guidance steering; use this for "audit open issues" instead of aiwg-issue
 requires:
   - tracker: issue tracker accessible (gitea | github | local) — auto-detected from project config unless --provider is supplied
 ensures:
@@ -46,6 +46,7 @@ Use `address-issues` when the operator wants issues fixed. Use `issue-audit` whe
 Users may say:
 
 - "issue-audit"
+- "audit-issues"
 - "audit open issues"
 - "triage the issue backlog"
 - "review stale issues"

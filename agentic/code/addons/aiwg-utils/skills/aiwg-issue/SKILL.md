@@ -3,23 +3,42 @@ namespace: aiwg
 name: aiwg-issue
 platforms: [all]
 kernel: true
-description: Guide for filing high-quality issues — template selection, environment capture, duplicate detection, and import flow for cross-tracker reports
+description: AIWG project issue filing only — templates, environment capture, duplicate detection, and import flow for AIWG tracker reports; not for general issue audits or address-issues processing
 ---
 
 # Filing AIWG Issues
 
 You are helping a user (or yourself, as an autonomous agent) file a high-quality issue. The bar is set by the recent tester-report import sweep (Gitea #1264–#1269): environment captured, exact commands, error text in code blocks, suggested fix paths.
 
+This is an **AIWG-specific kernel capability**. Use it for filing, importing, or triaging the quality of issue reports about AIWG itself.
+
+Do **not** use this skill for general backlog processing:
+
+- Use `issue-audit` / `audit-issues` when the user asks to audit open issues, triage a backlog, find duplicates, review stale issues, or rank work.
+- Use `address-issues` when the user asks to fix, process, or work through issues.
+- Treat `aiwg-*` skill names as AIWG product/workspace capabilities, not as the generic issue-processing surface.
+
 ## When this fires
 
 Natural-language triggers:
 
+- "file an AIWG issue"
+- "report an AIWG bug"
+- "import this AIWG issue from GitHub"
 - "I want to file an issue"
 - "How do I report a bug?"
 - "Help me write up a bug report"
 - "What template should I use?"
 - "Should I file a new issue or comment on an existing one?"
 - "Import this report from GitHub" / "from Discord" / "from email"
+
+Non-triggers:
+
+- "audit open issues"
+- "triage the issue backlog"
+- "review stale issues"
+- "address issues"
+- "process open issues"
 
 ## Template selection
 

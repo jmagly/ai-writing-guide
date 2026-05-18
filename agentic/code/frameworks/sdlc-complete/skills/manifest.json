@@ -127,7 +127,7 @@
     {
       "name": "issue-audit",
       "description": "Audits issue backlogs for stale items, duplicate/overlapping issues, epic hygiene, and next action priorities",
-      "triggers": ["issue-audit", "audit open issues", "triage the issue backlog", "review stale issues", "find duplicate issues"]
+      "triggers": ["issue-audit", "audit-issues", "audit open issues", "triage the issue backlog", "review stale issues", "find duplicate issues"]
     },
     {
       "name": "regression-api-contract",

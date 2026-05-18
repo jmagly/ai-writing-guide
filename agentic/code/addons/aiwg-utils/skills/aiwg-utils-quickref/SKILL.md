@@ -83,7 +83,7 @@ These ops **skills** are kernel-resident — already in your context regardless 
 | `aiwg-regenerate` | Regenerate AIWG.md + AGENTS.md preserving team directives | `aiwg regenerate` |
 | `aiwg-status` | Workspace status dashboard | `aiwg status` |
 | `aiwg-help` | List CLI commands, args, examples | `aiwg help` |
-| `aiwg-issue` | Filing high-quality issues (template, env, duplicate detection) | (no single CLI) |
+| `aiwg-issue` | Filing AIWG project issues (template, env, duplicate detection) | (no single CLI) |
 | `aiwg-pr` | Opening high-quality PRs (delivery-policy, no-attribution, CI gate) | (no single CLI) |
 | `use` | Deploy a framework or addon with validation gates | `aiwg use <name>` |
 
@@ -104,6 +104,8 @@ Route these phrases carefully:
 Do not answer `project-status` by running only `aiwg status`; that command reports workspace install/deployment inventory, not project progress.
 
 When a user wants to **file an issue or open a PR**, route them through `aiwg-issue` / `aiwg-pr` first. Both are kernel skills (in context) and reference `steward-prep-delivery` (which provides a runnable duplicate-detection helper).
+
+`aiwg-*` skills are AIWG-specific product/workspace capabilities. Do not route general tracker processing through `aiwg-issue`: use `issue-audit` / `audit-issues` for backlog audits and `address-issues` for implementation loops.
 
 ## Capability domains
 

@@ -1,6 +1,6 @@
 # Filing Issues
 
-> **Related**: [filing pull requests](./filing-pull-requests.md), [the import flow](#import-flow-cross-tracker-reports), kernel skill `aiwg-issue` (run `aiwg show skill aiwg-issue`)
+> **Related**: [filing pull requests](./filing-pull-requests.md), [the import flow](#import-flow-cross-tracker-reports), AIWG-specific kernel skill `aiwg-issue` (run `aiwg show skill aiwg-issue`)
 
 A high-quality issue is scoped, reproducible, and captures environment. The bar is set by the May-2026 tester-report sweep — five issues filed by `sebuh-infsol` on the GitHub mirror that mirrored cleanly into Gitea (#1264–#1268) and resolved in days because each one had exact commands, exact error text, and a hypothesis.
 
@@ -164,7 +164,9 @@ mcp__git-gitea__issue_write method=create owner=roctinam repo=aiwg title='<title
 
 ## Related
 
-- **In-context kernel skill**: `aiwg-issue` (always loaded; same content as this doc, accessible to agents without reading docs/)
+- **In-context kernel skill**: `aiwg-issue` (always loaded for AIWG issue filing/import hygiene; same content as this doc, accessible to agents without reading docs/)
+
+For general issue backlog processing, use `issue-audit` / `audit-issues` for read-only audit and triage, or `address-issues` for implementation loops. `aiwg-*` capabilities are AIWG product/workspace capabilities, not the generic issue-processing surface.
 - **PR companion**: [filing pull requests](./filing-pull-requests.md)
 - **Templates**: [`.gitea/ISSUE_TEMPLATE/`](../../.gitea/ISSUE_TEMPLATE/), [`.github/ISSUE_TEMPLATE/`](../../.github/ISSUE_TEMPLATE/)
 - **Rules**: [`delivery-policy`](../../agentic/code/addons/aiwg-utils/rules/delivery-policy.md), [`no-attribution`](../../agentic/code/frameworks/sdlc-complete/rules/no-attribution.md), [`ops-issue-tracking`](../../agentic/code/frameworks/ops-complete/rules/ops-issue-tracking.md)
