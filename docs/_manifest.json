@@ -878,6 +878,13 @@
       "collapsed": true
     },
     {
+      "id": "releases/v2026.5.9-announcement",
+      "title": "v2026.5.9 — Workspace-Aware Deploy Fix",
+      "summary": "Fix workspace-aware aiwg use all to deploy selected sources directly without repeating full framework post-deploy flow.",
+      "file": "releases/v2026.5.9-announcement.md",
+      "parent": "releases"
+    },
+    {
       "id": "releases/v2026.5.8-announcement",
       "title": "v2026.5.8 — Fleet Discipline + Release Hygiene",
       "summary": "Fleet behavior policies, status export, repo-access preflight, model-tier routing, serve reliability, and install hygiene.",

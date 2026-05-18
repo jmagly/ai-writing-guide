@@ -93,6 +93,74 @@ When the AGENTS.md size limit is hit, **Codex stops adding files silently** ([op
 
 Independent of platform settings, you can reduce how many skills AIWG deploys.
 
+### Workspace-aware deployment
+
+Use the default workspace-aware path:
+
+```bash
+aiwg use all
+```
+
+AIWG inspects the current project and deploys only matching bundles. It always
+keeps core lifecycle support (`sdlc`) and AIWG utility skills (`aiwg-utils`).
+
+To preview the decision without writing files:
+
+```bash
+aiwg use --workspace-signals
+```
+
+To force a known profile:
+
+```bash
+aiwg use --profile forensics
+aiwg use all --profile research
+aiwg use all --profile marketing
+```
+
+To force the legacy full install:
+
+```bash
+aiwg use all --no-workspace-signals
+```
+
+Current signals:
+
+AIWG currently uses these signals:
+
+| Signal | Included bundle |
+| --- | --- |
+| `.aiwg/forensics/` | `forensics` |
+| `.aiwg/research/` | `research` |
+| `.aiwg/marketing/` | `marketing` |
+| `.aiwg/media-curator/` | `media-curator` |
+| `.aiwg/ops/` | `ops` |
+| `.aiwg/knowledge-base/` | `knowledge-base` |
+| `.aiwg/security-engineering/` | `security-engineering` plus `sdlc` |
+| `package.json` plus `src/` | `sdlc` |
+| `Dockerfile` or Compose file | `forensics` |
+| `.aiwg/intake/solution-profile.md` text hints | matching profile |
+
+Optional config hints may be placed in `.aiwg/aiwg.config`:
+
+```json
+{
+  "skillLoading": {
+    "profile": "research",
+    "include": ["ops"]
+  }
+}
+```
+
+After a workspace-aware deployment, inspect what was included and filtered out:
+
+```bash
+aiwg list --deployed
+```
+
+The report is recorded at `.aiwg/workspace-skill-plan.json` so the decision is
+reviewable after deployment.
+
 ### List installed frameworks
 
 ```bash
@@ -134,6 +202,8 @@ aiwg doctor
 ```
 
 `aiwg doctor` runs a per-provider **Skill Budget** check (#1150) for every deployed skills directory it finds. The check sums each `SKILL.md`'s `name + description` from frontmatter, converts via the standard ~4 chars/token heuristic, and compares against the platform's default budget.
+
+Doctor also warns when the total deployed skill inventory exceeds a platform default, even if some skills are hidden from a platform's native startup scanner. If doctor warns, prefer `aiwg use all` or `aiwg use --profile <name>` to reduce the deployed set before raising a platform budget.
 
 | Platform | Budget |
 |----------|--------|

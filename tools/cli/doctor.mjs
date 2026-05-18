@@ -198,6 +198,57 @@ async function measureSkillsListing(skillsDir) {
   };
 }
 
+function mergeSkillMeasurements(measurements) {
+  const present = measurements.filter(Boolean);
+  if (present.length === 0) return null;
+  const count = present.reduce((sum, item) => sum + item.count, 0);
+  const totalChars = present.reduce((sum, item) => sum + item.totalChars, 0);
+  return {
+    count,
+    totalChars,
+    totalTokens: Math.ceil(totalChars / CHARS_PER_TOKEN),
+    avgDescChars: Math.round(
+      present.reduce((sum, item) => sum + (item.avgDescChars * item.count), 0) / count,
+    ),
+  };
+}
+
+async function checkTotalDeployedSkillBudgetForProvider(provName, label, provider) {
+  const paths = new Set();
+  if (provider?.kernelSkillsPath) paths.add(provider.kernelSkillsPath);
+  if (provider?.paths?.skills) paths.add(provider.paths.skills);
+  if (paths.size === 0) return;
+
+  const measurements = [];
+  for (const relPath of paths) {
+    const skillsDir = resolveProviderPath(relPath);
+    if (!skillsDir || !(await fileExists(skillsDir))) continue;
+    measurements.push(await measureSkillsListing(skillsDir));
+  }
+
+  const stats = mergeSkillMeasurements(measurements);
+  if (!stats) return;
+
+  if (provName === 'claude') {
+    const defaultBudgetTokens = Math.floor(
+      (CLAUDE_DEFAULT_CONTEXT_WINDOW * CLAUDE_DEFAULT_BUDGET_FRACTION) / CHARS_PER_TOKEN,
+    );
+    if (stats.totalTokens > defaultBudgetTokens) {
+      check(
+        `${label} Deployed Skill Count`,
+        'warn',
+        `${stats.count} deployed skills estimate ${stats.totalTokens.toLocaleString()} tokens, above Claude Code's default listing budget (${defaultBudgetTokens.toLocaleString()} tokens). Run \`aiwg use all\` for workspace-aware filtering or \`aiwg list --deployed\` to inspect include/exclude reasons.`,
+      );
+    }
+  } else if (provName === 'codex' && stats.totalChars > CODEX_LISTING_CHAR_CAP) {
+    check(
+      `${label} Deployed Skill Count`,
+      'warn',
+      `${stats.count} deployed skills estimate ${stats.totalChars.toLocaleString()} chars, above Codex's default listing cap (${CODEX_LISTING_CHAR_CAP.toLocaleString()} chars). Run \`aiwg use all\` for workspace-aware filtering or \`aiwg list --deployed\` to inspect include/exclude reasons.`,
+    );
+  }
+}
+
 async function checkSkillBudgetForProvider(provName, label, skillsPathRel) {
   if (!skillsPathRel || skillsPathRel === 'native' || skillsPathRel === true) {
     // Not a deployable skill path on this provider.
@@ -486,6 +537,7 @@ async function runDoctor() {
     if (!noBudgetCheck) {
       const budgetPath = provider.kernelSkillsPath || provider.paths.skills;
       await checkSkillBudgetForProvider(provName, label, budgetPath);
+      await checkTotalDeployedSkillBudgetForProvider(provName, label, provider);
     }
   }
 

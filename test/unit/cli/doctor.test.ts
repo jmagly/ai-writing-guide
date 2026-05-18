@@ -167,6 +167,17 @@ describe('doctor: Claude Code agents check', () => {
   });
 });
 
+describe('doctor: deployed skill budget warning', () => {
+  it('checks total deployed skill count against platform defaults', async () => {
+    const { readFileSync } = await import('fs');
+    const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+
+    expect(content).toContain('checkTotalDeployedSkillBudgetForProvider');
+    expect(content).toContain('Deployed Skill Count');
+    expect(content).toContain('aiwg list --deployed');
+  });
+});
+
 // ── Node.js version check logic ────────────────────────────────
 
 describe('doctor: Node.js version check', () => {

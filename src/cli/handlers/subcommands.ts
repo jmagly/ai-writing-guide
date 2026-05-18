@@ -22,6 +22,8 @@ import { resolveShadows } from "../../extensions/shadow-resolver.js";
 import { sessionHandler } from "./session.js";
 import { feedbackHandler } from "./feedback.js";
 import { handlerResultFromError } from "../errors.js";
+import { getProjectDir } from "../../config/aiwg-config.js";
+import { formatDeployedWorkspaceSignalPlan, readWorkspaceSignalPlan } from "../workspace-signals.js";
 
 /**
  * MCP server command handler
@@ -98,6 +100,7 @@ export const listHandler: CommandHandler = {
     // Filter args: positional type filter, plus --project-local flag (#1034)
     const projectLocalOnly = ctx.args.includes('--project-local');
     const shadowsOnly = ctx.args.includes('--shadows');
+    const deployedOnly = ctx.args.includes('--deployed');
     const filterType = ctx.args.find((a) => !a.startsWith('--')); // 'agents'|'skills'|'commands'|'all'|undefined
 
     // #1156 Phase 1 — --scope user / --user surfaces the per-user registry
@@ -260,6 +263,17 @@ export const listHandler: CommandHandler = {
       // `aiwg discover` (#1228). Surface this so 0 commands doesn't look like
       // a deploy failure.
       output += '\nNote: 0 commands is expected on Claude Code — capabilities are reached via natural language or `aiwg discover "<phrase>"`.\n';
+    }
+
+    if (deployedOnly) {
+      const projectDir = getProjectDir(ctx, ctx.args);
+      const plan = await readWorkspaceSignalPlan(projectDir);
+      if (plan) {
+        output += formatDeployedWorkspaceSignalPlan(plan);
+      } else {
+        output += '\nWorkspace skill filter: no recorded plan found.\n';
+        output += 'Run `aiwg use all` or `aiwg use --profile <name>` to record workspace-aware include/exclude reasons.\n';
+      }
     }
 
     return {

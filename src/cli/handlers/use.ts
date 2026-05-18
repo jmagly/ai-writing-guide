@@ -46,6 +46,12 @@ import { hashBundleArtifacts } from '../../extensions/project-local-remove.js';
 import { installAiwgHooks } from '../../extensions/claude-hooks-installer.js';
 import { detectScope, mirrorToUserScope, rejectOpenClawProjectScope } from '../scope-resolver.js';
 import { maybeWarnProjectIsolation } from '../project-isolation/index.js';
+import {
+  formatWorkspaceSignalPlan,
+  includedBundleIds,
+  resolveWorkspaceSignalPlan,
+  writeWorkspaceSignalPlan,
+} from '../workspace-signals.js';
 
 // Module-level guard so the iteration loops further down (which re-enter
 // execute() per framework/provider) don't re-emit the warning each pass.
@@ -1003,6 +1009,77 @@ async function deployProjectLocalBundles(opts: {
   return { deployed, failed, bundles: targetBundles };
 }
 
+const USE_FLAGS_WITH_VALUES = new Set([
+  '--profile',
+  '--provider',
+  '--platform',
+  '--providers',
+  '--prefix',
+  '--scope',
+  '--target',
+]);
+
+function firstUsePositional(args: string[]): string | undefined {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (USE_FLAGS_WITH_VALUES.has(arg)) {
+      i++;
+      continue;
+    }
+    if (!arg.startsWith('-')) return arg;
+  }
+  return undefined;
+}
+
+function removeFirstPositional(args: string[]): string[] {
+  let skipped = false;
+  const result: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (USE_FLAGS_WITH_VALUES.has(arg)) {
+      result.push(arg);
+      if (i + 1 < args.length) result.push(args[++i]);
+      continue;
+    }
+    if (!skipped && !arg.startsWith('-')) {
+      skipped = true;
+      continue;
+    }
+    result.push(arg);
+  }
+  return result;
+}
+
+async function deploySourceDirectory(opts: {
+  ctx: HandlerContext;
+  frameworkRoot: string;
+  source: string;
+  provider: string;
+  target: string;
+  dryRun: boolean;
+  verbose: boolean;
+  force: boolean;
+  copyAll: boolean;
+  quiet: boolean;
+}): Promise<HandlerResult> {
+  const args = [
+    '--source', opts.source,
+    '--deploy-commands',
+    '--deploy-skills',
+    '--deploy-rules',
+    '--provider', opts.provider,
+    '--target', opts.target,
+  ];
+  if (opts.dryRun) args.push('--dry-run');
+  if (opts.verbose) args.push('--verbose');
+  if (opts.force) args.push('--force');
+  if (opts.copyAll) args.push('--copy-all');
+  if (opts.quiet) args.unshift('--quiet');
+
+  const runner = createScriptRunner(opts.frameworkRoot);
+  return runner.run('tools/agents/deploy-agents.mjs', args, opts.quiet ? { capture: true } : {});
+}
+
 /**
  * Use command handler
  *
@@ -1017,8 +1094,30 @@ export class UseHandler implements CommandHandler {
   aliases: string[] = [];
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
-    const framework = ctx.args[0];
-    const remainingArgs = ctx.args.slice(1);
+    if (ctx.args.includes('--workspace-signals')) {
+      const signalArgs = ctx.args.filter((a) => a !== '--workspace-signals');
+      const profileIdx = signalArgs.findIndex((a) => a === '--profile');
+      const profile = profileIdx >= 0 && signalArgs[profileIdx + 1]
+        ? signalArgs[profileIdx + 1]
+        : undefined;
+      const requestedTarget = firstUsePositional(signalArgs);
+      const remainingSignalArgs = requestedTarget
+        ? removeFirstPositional(signalArgs)
+        : signalArgs;
+      const projectDir = getProjectDir(ctx, remainingSignalArgs);
+      const plan = await resolveWorkspaceSignalPlan(projectDir, { profile, requestedTarget });
+      return {
+        exitCode: 0,
+        message: formatWorkspaceSignalPlan(plan),
+      };
+    }
+
+    let framework = ctx.args[0];
+    let remainingArgs = ctx.args.slice(1);
+    if (framework === '--profile') {
+      framework = 'all';
+      remainingArgs = ctx.args;
+    }
 
     // Structured logger for this invocation. Records go to both stderr (if
     // verbose level) and ~/.aiwg/logs/aiwg-YYYY-MM-DD.jsonl with full
@@ -1068,6 +1167,7 @@ export class UseHandler implements CommandHandler {
     const _hasExplicitProvider = _providerFlagIdx >= 0 && !!remainingArgs[_providerFlagIdx + 1];
     const _providersFlagIdx = remainingArgs.findIndex(a => a === '--providers');
     const _providersValue = _providersFlagIdx >= 0 ? remainingArgs[_providersFlagIdx + 1] : null;
+    const _isDryRun = remainingArgs.includes('--dry-run');
 
     // Bulk/automation intent: `aiwg use all` and `aiwg use --yes` skip the
     // init wizard and use sensible defaults so CLI calls never hang waiting
@@ -1084,15 +1184,15 @@ export class UseHandler implements CommandHandler {
           ? ['claude']
           : _providersValue.split(',').map(s => s.trim()).filter(Boolean);
         config = emptyConfig(pList.length > 0 ? pList : ['claude']);
-        await writeAiwgConfig(projectDir, config);
+        if (!_isDryRun) await writeAiwgConfig(projectDir, config);
       } else if (_isBulkIntent || targetDir || _hasExplicitProvider || !process.stdin.isTTY) {
         // Non-interactive: auto-create minimal config with explicit provider or default (#734)
         // When --prefix/--target is set, or `use all`, or --yes is passed, we're in
         // automated mode — no wizard, no prompts, no way to hang on stdin.
         const autoProvider = _hasExplicitProvider ? remainingArgs[_providerFlagIdx + 1] : 'claude';
         config = emptyConfig([autoProvider]);
-        await writeAiwgConfig(projectDir, config);
-        if (_isBulkIntent && framework === 'all') {
+        if (!_isDryRun) await writeAiwgConfig(projectDir, config);
+        if (!_isDryRun && _isBulkIntent && framework === 'all') {
           ui.dim(`  No .aiwg/aiwg.config found — auto-created with provider '${autoProvider}'. Run 'aiwg init' to customize.`);
         }
       } else if (process.stdin.isTTY) {
@@ -1128,6 +1228,154 @@ export class UseHandler implements CommandHandler {
     }
 
     const frameworkRoot = await getFrameworkRoot();
+
+    if (framework === 'all' && !remainingArgs.includes('--no-workspace-signals')) {
+      const profileIdx = remainingArgs.findIndex((a) => a === '--profile');
+      const profile = profileIdx >= 0 && remainingArgs[profileIdx + 1]
+        ? remainingArgs[profileIdx + 1]
+        : undefined;
+      const plan = await resolveWorkspaceSignalPlan(projectDir, { profile, requestedTarget: framework });
+      const selectedFrameworks = includedBundleIds(plan, 'framework');
+      const selectedAddons = includedBundleIds(plan, 'addon');
+      const selectedExtensions = includedBundleIds(plan, 'extension');
+
+      const providerIdx = remainingArgs.findIndex(a => a === '--provider' || a === '--platform');
+      const explicitProvider = providerIdx >= 0 && remainingArgs[providerIdx + 1] ? remainingArgs[providerIdx + 1] : null;
+      let providersForFiltered: string[];
+      if (explicitProvider) {
+        providersForFiltered = [explicitProvider];
+      } else if (_providersValue) {
+        providersForFiltered = _providersValue === 'default'
+          ? ['claude']
+          : _providersValue.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (config && config.providers.length > 0) {
+        providersForFiltered = config.providers;
+      } else {
+        providersForFiltered = ['claude'];
+      }
+
+      const targetIdx = remainingArgs.findIndex(a => a === '--target');
+      const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
+      const dryRun = remainingArgs.includes('--dry-run');
+      const verbose = remainingArgs.includes('--verbose') || remainingArgs.includes('-v');
+      const force = remainingArgs.includes('--force');
+      const copyAll = remainingArgs.includes('--copy-all') || remainingArgs.includes('--copy-standard-skills');
+      const quiet = !verbose && !dryRun;
+
+      ui.blank();
+      ui.header(`  Workspace-aware deployment (${plan.profile})`);
+      ui.dim(`  Included frameworks: ${selectedFrameworks.join(', ') || '(none)'}`);
+      ui.dim(`  Included addons: ${selectedAddons.join(', ') || '(none)'}`);
+      if (selectedExtensions.length > 0) {
+        ui.dim(`  Included extensions: ${selectedExtensions.join(', ')}`);
+      }
+      ui.dim('  Use --no-workspace-signals to force the legacy full deployment.');
+
+      for (const providerName of providersForFiltered) {
+        for (const selected of selectedFrameworks) {
+          const frameworkDir = resolveFrameworkDir(selected);
+          if (!frameworkDir) continue;
+          const result = await deploySourceDirectory({
+            ctx,
+            frameworkRoot,
+            source: path.join(frameworkRoot, 'agentic/code/frameworks', frameworkDir),
+            provider: providerName,
+            target,
+            dryRun,
+            verbose,
+            force,
+            copyAll,
+            quiet,
+          });
+          if (result.exitCode !== 0) return result;
+        }
+
+        for (const selected of selectedAddons) {
+          const result = await deploySourceDirectory({
+            ctx,
+            frameworkRoot,
+            source: addonPath(frameworkRoot, selected),
+            provider: providerName,
+            target,
+            dryRun,
+            verbose,
+            force,
+            copyAll,
+            quiet,
+          });
+          if (result.exitCode !== 0) return result;
+        }
+
+        for (const selected of selectedExtensions) {
+          const result = await deploySourceDirectory({
+            ctx,
+            frameworkRoot,
+            source: extensionPath(frameworkRoot, selected),
+            provider: providerName,
+            target,
+            dryRun,
+            verbose,
+            force,
+            copyAll,
+            quiet,
+          });
+          if (result.exitCode !== 0) return result;
+        }
+
+        if (!remainingArgs.includes('--no-project-local')) {
+          const plResult = await deployProjectLocalBundles({
+            ctx,
+            frameworkRoot,
+            projectDir,
+            provider: providerName,
+            target,
+            dryRun,
+            verbose,
+            quiet: !verbose && !dryRun,
+          });
+          if (plResult.failed > 0) {
+            ui.warn(`${plResult.failed} project-local bundle(s) failed to deploy`);
+          }
+        }
+
+        if (!dryRun) {
+          try {
+            const registry = getRegistry();
+            const paths = PROVIDER_PATHS[providerName] || PROVIDER_PATHS.claude;
+            await registerDeployedExtensions(registry, {
+              agentsPath: paths.agents,
+              skillsPath: paths.skills,
+              commandsPath: paths.commands,
+              rulesPath: paths.rules,
+              behaviorsPath: paths.behaviors,
+              provider: providerName,
+              cwd: target,
+            });
+
+            const counts = await countDeployedArtifacts(target, paths);
+            if (quiet) {
+              ui.blank();
+              if (counts.agents > 0) ui.deployCount('Agents', counts.agents);
+              if (counts.commands > 0) ui.deployCount('Commands', counts.commands);
+              if (counts.skills > 0) ui.deployCount('Skills', counts.skills);
+              if (counts.rules > 0) ui.deployCount('Rules', counts.rules);
+              if (counts.behaviors > 0) ui.deployCount('Behaviors', counts.behaviors);
+              ui.blank();
+              printSessionReloadNotice(providerName);
+            }
+          } catch (error) {
+            ui.warn(`Filtered deployment registration failed: ${error instanceof Error ? error.message : String(error)}`);
+          }
+        }
+      }
+
+      if (!remainingArgs.includes('--dry-run')) {
+        await writeWorkspaceSignalPlan(projectDir, plan);
+      }
+
+      return { exitCode: 0 };
+    }
+
     const isFramework = VALID_FRAMEWORKS.includes(framework as Framework);
     const isAddon = !isFramework && await isValidAddon(frameworkRoot, framework);
     // Extensions live in `agentic/code/extensions/<name>/` and are addon-shaped

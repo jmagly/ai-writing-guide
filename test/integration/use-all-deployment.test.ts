@@ -99,6 +99,7 @@ describe('aiwg use — disallow list', () => {
 
 describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
   let projectDir: string;
+  const fullUseAllArgs = (target: string) => ['use', 'all', '--no-workspace-signals', '--target', target];
 
   beforeEach(async () => {
     projectDir = await makeProject();
@@ -109,14 +110,14 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
   });
 
   it('deploys to .claude/.aiwg/skills/ without errors', () => {
-    const result = runAiwg(['use', 'all', '--target', projectDir], projectDir);
+    const result = runAiwg(fullUseAllArgs(projectDir), projectDir);
     expect(result.exitCode, `aiwg use all failed (exit ${result.exitCode}):\nstdout: ${result.stdout}\nstderr: ${result.stderr}`).toBe(0);
     const skillsDir = path.join(projectDir, '.claude', '.aiwg', 'skills');
     expect(existsSync(skillsDir)).toBe(true);
   });
 
   it('deploys more skills than the old hardcoded 4-addon set would produce', async () => {
-    const result = runAiwg(['use', 'all', '--target', projectDir], projectDir);
+    const result = runAiwg(fullUseAllArgs(projectDir), projectDir);
     expect(result.exitCode).toBe(0);
 
     const skillsDir = path.join(projectDir, '.claude', '.aiwg', 'skills');
@@ -129,7 +130,7 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
   });
 
   it('does not deploy aiwg-dev skills', async () => {
-    runAiwg(['use', 'all', '--target', projectDir], projectDir);
+    runAiwg(fullUseAllArgs(projectDir), projectDir);
     const skillsDir = path.join(projectDir, '.claude', '.aiwg', 'skills');
     if (!existsSync(skillsDir)) return;
 
@@ -142,7 +143,7 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
   });
 
   it('deploys addons that were previously missing from the hardcoded list', async () => {
-    const result = runAiwg(['use', 'all', '--target', projectDir], projectDir);
+    const result = runAiwg(fullUseAllArgs(projectDir), projectDir);
     expect(result.exitCode).toBe(0);
 
     const skillsDir = path.join(projectDir, '.claude', '.aiwg', 'skills');
@@ -151,7 +152,7 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
     const deployed = await fs.readdir(skillsDir);
 
     // These addons have skills and were NOT in the old VALID_ADDONS list
-    // They should now appear after `aiwg use all`
+    // They should now appear after legacy full `aiwg use all`
     const previouslyMissing = [
       'voice-apply',      // voice-framework
       'curate',           // media-curator
@@ -165,7 +166,7 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
   });
 
   it('deploys agents alongside skills', async () => {
-    runAiwg(['use', 'all', '--target', projectDir], projectDir);
+    runAiwg(fullUseAllArgs(projectDir), projectDir);
     const agentsDir = path.join(projectDir, '.claude', 'agents');
     if (!existsSync(agentsDir)) return;
 
