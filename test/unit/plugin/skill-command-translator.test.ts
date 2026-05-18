@@ -442,8 +442,7 @@ Does simple things.`,
   });
 
   it('should work for all command-needing providers', async () => {
-    // opencode removed: commands derive from skills automatically
-    for (const provider of ['factory', 'warp', 'windsurf', 'copilot', 'codex', 'openclaw']) {
+    for (const provider of ['factory', 'opencode', 'warp', 'windsurf', 'copilot', 'codex', 'openclaw']) {
       const providerTarget = path.join(tmpDir, `commands-${provider}`);
       const result = await translateSkillsToCommands(skillsDir, {
         provider,

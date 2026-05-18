@@ -1,12 +1,12 @@
 # Skills and Commands Unification Guide
 
-**Issue:** #288
-**Version:** 2026.2.0
+**Issues:** #288, #1381, #1382
+**Version:** 2026.5.9
 **Status:** Active
 
 ## Overview
 
-Claude Code v2.1.3 unified slash commands and skills into a single concept. Both `.claude/commands/` and `.claude/skills/` directories work identically. Additionally, v2.1.19 introduced indexed argument syntax for positional parameters. This guide documents the implications for AIWG distribution.
+Claude Code v2.1.3 unified slash commands and skills into a single concept. Both `.claude/commands/` and `.claude/skills/` directories are visible in the slash-command surface. Additionally, v2.1.19 introduced indexed argument syntax for positional parameters. This guide documents the implications for AIWG distribution across providers.
 
 ## What Changed
 
@@ -34,15 +34,18 @@ AIWG deploys skills/commands to platform-specific directories. With unification:
 
 ```
 .claude/
-├── commands/          # Legacy location - still works
-│   ├── commit-and-push.md
-│   └── pr-review.md
-└── skills/            # Also works - identical behavior
-    ├── ralph.md
-    └── intake-wizard.md
+├── commands/          # Mirrored operator workflows only
+│   ├── aiwg-setup-project.md
+│   └── flow-concept-to-inception.md
+├── skills/            # Kernel skills Claude loads natively
+│   ├── aiwg-doctor/SKILL.md
+│   └── use/SKILL.md
+└── .aiwg/skills/      # Standard skills; index-driven, not flat-listed
+    ├── intake-wizard/SKILL.md
+    └── sdlc-accelerate/SKILL.md
 ```
 
-**Current standard**: AIWG deploys all slash commands and skills to `.claude/skills/`. The `.claude/commands/` directory is a legacy location — still functional, but `aiwg use` now migrates away from it automatically (see [Automatic Migration](#automatic-migration) below).
+**Current standard**: skills are canonical. AIWG deploys a small kernel to the provider's native skill surface, hides the large standard tier behind `aiwg discover` / `aiwg show`, and mirrors only selected operator workflows into command/prompt surfaces where users expect `/` menu access. Kernel skills that are already visible natively must not also be mirrored as commands on skills-native providers; that causes duplicate slash entries (#1382).
 
 ### Argument Migration
 
@@ -88,28 +91,43 @@ Use $ARGUMENTS[1] as the verbosity level (default: normal).
 
 ## AIWG Command Catalog Impact
 
-All AIWG commands listed in `@docs/cli-reference.md` work from either directory. The `aiwg use` deployment command places files in `.claude/commands/` by default.
+AIWG command and skill exposure is provider-specific. Do not assume one provider's command behavior generalizes to another.
 
 ### Cross-Platform Mapping
 
-| Platform | Command Location | Invocation |
-|----------|-----------------|------------|
-| Claude Code | `.claude/commands/` | `/command-name` or Skill tool |
-| GitHub Copilot | `.github/agents/` | `@agent-name` |
-| Cursor | `.cursor/rules/` | Rule-based |
-| Warp | `WARP.md` commands section | Natural language |
+| Platform | Native skill surface | Native command / prompt surface | AIWG mirroring policy |
+|----------|----------------------|---------------------------------|----------------------|
+| Claude Code | `.claude/skills/<name>/SKILL.md` for kernel skills | `.claude/commands/*.md` | Mirror standard operator workflows only. Do not mirror kernel skills already loaded from `.claude/skills/`. |
+| OpenCode | `.opencode/skill/<name>/SKILL.md` for kernel skills; `.opencode/.aiwg/skill/` for indexed standard tier | `.opencode/command/*.md` | Generate command wrappers for selected operator workflows so command picker behavior stays deterministic. |
+| Factory AI | `.factory/skills/<name>/SKILL.md` | `.factory/commands/*.md` plus skill slash invocation | Mirror selected operator workflows; keep skills canonical. |
+| GitHub Copilot | `.github/skills/<name>/SKILL.md` | `.github/prompts/*.prompt.md` | Dual-write prompt wrappers for selected operator workflows because Copilot exposes prompt files through its command/prompt picker. |
+| Codex | `~/.codex/skills/` and `.agents/skills/` compatibility paths | `~/.codex/prompts/` for user-visible prompts | Generate prompt wrappers for operator visibility; skill execution still routes through the indexed corpus. |
+
+### Mirrored-Command Policy
+
+Mirror only workflows that benefit from deterministic user invocation:
+
+- Setup/update/status workflows such as `aiwg-setup-project`, `aiwg-update-claude`, and `aiwg-update-agents-md`
+- Phase-flow and intake workflows that users intentionally choose from a command picker
+- Provider-specific prompt wrappers where the provider lacks a native skill picker
+
+Do not mirror:
+
+- Kernel skills on skills-native providers, because the native skill surface already exposes them
+- Background-only skills (`userInvocable: false`)
+- Large standard-tier skill sets whose expected access path is `aiwg discover` / `aiwg show`
 
 ## Automatic Migration
 
-`aiwg use` automatically removes the legacy `.claude/commands/` directory before deploying skills. Without this cleanup, stale command files and newly deployed skills create duplicate entries in the Claude Code command palette.
+`aiwg use` automatically removes the legacy `.claude/commands/` directory before deploying skills and then regenerates the current mirrored operator command set. Without this cleanup, stale command files and newly deployed skills can create duplicate entries in the Claude Code command palette.
 
 **Default behavior (interactive TTY):**
 
 ```
 ⚠  Commands → Skills Migration
    .claude/commands contains 47 legacy command file(s).
-   AIWG now serves these as skills (.claude/skills/).
-   Keeping both causes duplicate entries in the Claude Code command palette.
+   AIWG now serves kernel workflows as skills (.claude/skills/).
+   Keeping stale overlapping commands causes duplicate entries in the Claude Code command palette.
 
    Remove commands directory and migrate? [Y/n]
 ```
@@ -136,8 +154,8 @@ Warning: commands migration skipped for .claude/commands
 
 For existing AIWG installations:
 
-- [ ] Commands in `.claude/commands/` continue to work (no change needed)
-- [ ] Skills in `.claude/skills/` continue to work (no change needed)
+- [ ] Mirrored operator commands in `.claude/commands/` continue to work
+- [ ] Kernel skills in `.claude/skills/` continue to work and are not duplicated as command files
 - [ ] Update any docs referencing "commands vs skills" distinction
 - [ ] Adopt `$ARGUMENTS[0]` syntax for multi-param commands
 - [ ] Test indexed arguments with `aiwg doctor`

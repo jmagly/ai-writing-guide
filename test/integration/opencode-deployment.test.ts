@@ -91,8 +91,9 @@ describe('OpenCode Deployment', () => {
       expect(fs.existsSync(agentDir)).toBe(true);
     });
 
-    it('should NOT deploy commands to .opencode/commands/ (commands derive from skills in OpenCode)', () => {
-      // OpenCode commands come from skills automatically — no .opencode/commands/ dir is scanned.
+    it('should NOT deploy commands to legacy .opencode/commands/', () => {
+      // OpenCode's generated command surface is .opencode/command/ (singular);
+      // .opencode/commands/ is not scanned.
       execSync(`node ${deployScript} --target ${testDir} --provider opencode --mode sdlc --deploy-commands`, {
         encoding: 'utf-8'
       });

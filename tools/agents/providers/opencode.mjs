@@ -6,7 +6,7 @@
  *
  * Deployment paths:
  *   - Agents: .opencode/agent/  (discovered via agent glob pattern)
- *   - Commands: NOT DEPLOYED — Commands derive from skills automatically
+ *   - Commands: .opencode/command/ (generated wrappers for operator workflows)
  *   - Skills: .opencode/skill/  (discovered via skill glob: SKILL.md)
  *   - Rules: .opencode/rule/    (loaded via `instructions` array in opencode.json)
  *
@@ -93,7 +93,7 @@ const SDLC_PRIMARY_ROLES = [
 
 export const support = {
   agents: 'native',       // Discovered via {agent,agents}/**/*.md glob
-  commands: 'none',       // Commands derived from skills automatically
+  commands: 'native',     // Generated wrappers live in .opencode/command/
   skills: 'native',       // Discovered via {skill,skills}/**/SKILL.md
   rules: 'conventional',  // Requires instructions[] entry in opencode.json
 };
@@ -316,14 +316,15 @@ export function deployAgents(agentFiles, targetDir, opts) {
 }
 
 /**
- * Deploy commands — no-op for OpenCode.
+ * Deploy commands — no-op here for OpenCode.
  *
- * OpenCode commands derive from skills automatically (SKILL.md discovery).
- * No .opencode/command/ or .opencode/commands/ directory is scanned.
+ * The top-level deploy orchestrator mirrors selected skill workflows into
+ * `.opencode/command/` after provider deployment, using the same
+ * skill→command translation path shared by other command-surface providers.
  * See: packages/opencode/src/command/index.ts
  */
 export function deployCommands(_commandFiles, _targetDir, _opts) {
-  // No-op: OpenCode does not discover commands from a directory
+  // No-op here: deploy-agents.mjs mirrors selected skills to .opencode/command/.
 }
 
 /**
