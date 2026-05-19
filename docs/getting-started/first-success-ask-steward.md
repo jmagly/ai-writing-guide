@@ -38,6 +38,12 @@ If the result is an agent instead of a skill:
 aiwg show agent <name>
 ```
 
+For abstract goals, ask for two to four discovery phrases and make the agent compare the top results before recommending one:
+
+```text
+Translate my goal into two to four AIWG discover phrases. Run aiwg discover for each phrase, inspect the best result with aiwg show, then recommend one first action and one fallback.
+```
+
 ## You Should See
 
 You have one recommended AIWG path, one reason it fits your goal, and one fallback if the first path does not fit.
@@ -72,3 +78,4 @@ Follow the recommended path until you get one useful output. If the path is stil
 - [Start Here](start-here.md)
 - [Beginner Language Map](language-map.md)
 - [Verify AIWG Is Working](verify-aiwg-is-working.md)
+- [Provider Handoff](provider-handoff.md)

@@ -809,7 +809,7 @@ export const wizardCommand: Extension = {
     triggerPhrases: ['wizard', 'onboarding wizard', 'first run', 'guided setup'],
     commandHint: {
       template: 'utility',
-      argumentHint: '[--goal <text>] [--provider <name>] [--framework <name>] [--dry-run] [--json]',
+      argumentHint: '[--goal <text>] [--profile <preset>] [--provider <name>] [--framework <name>] [--non-interactive] [--dry-run] [--json]',
       allowedTools: ['Read', 'Bash'],
     },
   } satisfies SkillMetadata,

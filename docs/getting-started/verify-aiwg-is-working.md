@@ -72,6 +72,14 @@ ls -a
 
 If the probe reports `not-configured` or `partial`, follow the wizard's deploy action, then run `aiwg status --probe --json` again before treating setup as complete.
 
+If the probe reports `needs-repair`, run:
+
+```bash
+aiwg doctor --project-local
+```
+
+Then repair the malformed `.aiwg/` config or registry before deploying more frameworks.
+
 ## Next
 
 After verification succeeds, choose one focused recipe: [Find One Capability](first-success-find-capability.md) or [Start A Project Intake](first-success-start-intake.md).
@@ -80,3 +88,5 @@ After verification succeeds, choose one focused recipe: [Find One Capability](fi
 
 - [Start Here](start-here.md)
 - [Beginner Language Map](language-map.md)
+- [Provider Handoff](provider-handoff.md)
+- [Scope And Recovery](scope-and-recovery.md)

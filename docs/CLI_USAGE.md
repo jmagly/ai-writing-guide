@@ -14,9 +14,15 @@ npm install -g aiwg
 # Check installation health
 aiwg doctor
 
+# Preview the guided first-run path without writing files
+aiwg wizard --dry-run --goal "help me start a project"
+
 # Deploy SDLC framework to your project
 cd your-project
 aiwg use sdlc
+
+# Verify AIWG is engaged in this project
+aiwg status --probe --json
 ```
 
 ## Core Commands
@@ -61,6 +67,30 @@ aiwg use all
 - `--no-utils`: Skip aiwg-utils addon
 - `--force`: Overwrite existing deployments
 
+### wizard
+
+Guide first-run provider, project, framework, deploy, and verification choices.
+
+```bash
+# Interactive terminal path
+aiwg wizard
+
+# No-write preview
+aiwg wizard --dry-run --goal "help me start a project"
+
+# Scripted path
+aiwg wizard --non-interactive --profile beginner --provider codex
+```
+
+**Options:**
+- `--goal <text>`: Plain-language goal used to recommend a framework
+- `--profile <preset>`: Preset for a common path (`beginner`, `sdlc`, `research`, `marketing`, `forensics`, `ops`, `security`, `knowledge-base`, `writing`)
+- `--provider <name>`: Target provider
+- `--framework <name>`: Framework to deploy first
+- `--non-interactive`: Use selected or inferred defaults without prompting
+- `--dry-run`: Print the plan without writing files
+- `--json`: Print the plan as JSON
+
 ### -new
 
 Create a new project with full SDLC scaffolding.
@@ -76,6 +106,7 @@ Show workspace health and installed frameworks.
 
 ```bash
 aiwg -status
+aiwg status --probe --json
 ```
 
 ### list

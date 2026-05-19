@@ -142,6 +142,23 @@ async function readJsonFile(filePath) {
   }
 }
 
+async function readJsonFileDetailed(filePath) {
+  try {
+    const content = await fs.readFile(filePath, 'utf8');
+    return { exists: true, valid: true, data: JSON.parse(content), error: null };
+  } catch (error) {
+    if (error && error.code === 'ENOENT') {
+      return { exists: false, valid: false, data: null, error: null };
+    }
+    return {
+      exists: true,
+      valid: false,
+      data: null,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 /**
  * Format bytes as human-readable string
  */
@@ -394,12 +411,24 @@ async function buildWorkspaceStatus(projectRoot) {
   }
 
   const registryPath = path.join(frameworksDir, 'registry.json');
-  try {
-    const registryContent = await fs.readFile(registryPath, 'utf8');
-    const registry = JSON.parse(registryContent);
-    result.frameworks = normalizeRegistryFrameworks(registry);
-  } catch {
-    // Registry not found or invalid.
+  const registryRead = await readJsonFileDetailed(registryPath);
+  if (registryRead.valid) {
+    result.frameworks = normalizeRegistryFrameworks(registryRead.data);
+  } else if (registryRead.exists) {
+    result.health.issues.push({
+      severity: 'warning',
+      message: 'Framework registry exists but could not be parsed.',
+      action: 'Re-run aiwg use for the intended framework.',
+    });
+  }
+
+  const configRead = await readJsonFileDetailed(path.join(aiwgPath, 'aiwg.config'));
+  if (configRead.exists && !configRead.valid) {
+    result.health.issues.push({
+      severity: 'warning',
+      message: 'AIWG project config exists but could not be parsed.',
+      action: 'Review .aiwg/aiwg.config or re-run aiwg init.',
+    });
   }
 
   result.providerDeployments = await collectProviderDeployments(projectRoot);
@@ -423,6 +452,10 @@ async function buildWorkspaceStatus(projectRoot) {
     }
   }
 
+  if (result.health.issues.some((issue) => issue.severity === 'warning') && result.health.overall !== 'error') {
+    result.health.overall = 'warning';
+  }
+
   if (result.workspace.isLegacy && !result.workspace.isFrameworkScoped) {
     result.health.issues.push({
       severity: 'warning',
@@ -438,28 +471,38 @@ async function buildVerificationProbe(projectRoot) {
   const workspace = await buildWorkspaceStatus(projectRoot);
   const frameworkCount = workspace.frameworks.length;
   const providerCount = workspace.providerDeployments.length;
+  const malformedConfig = workspace.health.issues.some((issue) => /could not be parsed/.test(issue.message));
   const ready = workspace.workspace.exists && frameworkCount > 0 && providerCount > 0;
-  const partial = workspace.workspace.exists && (frameworkCount > 0 || providerCount > 0);
+  const partial = workspace.workspace.exists && (frameworkCount > 0 || providerCount > 0 || malformedConfig);
 
   return {
     schema: 'aiwg.status.probe.v1',
     generated_at: new Date().toISOString(),
     project_root: path.resolve(projectRoot),
     engaged: ready,
-    status: ready ? 'ready' : partial ? 'partial' : 'not-configured',
+    status: malformedConfig ? 'needs-repair' : ready ? 'ready' : partial ? 'partial' : 'not-configured',
     checks: {
       workspace_exists: workspace.workspace.exists,
       framework_count: frameworkCount,
       provider_deployment_count: providerCount,
       health: workspace.health.overall,
+      malformed_config: malformedConfig,
     },
     verification: {
       required: true,
       action: ready
         ? 'AIWG workspace and provider deployment are detected.'
+        : malformedConfig
+          ? 'Repair the malformed AIWG config or registry, then run this probe again.'
         : 'Run the guided path, deploy one framework, then run this probe again.',
       command: 'aiwg status --probe --json',
-      next_command: ready ? null : 'aiwg wizard --dry-run',
+      next_command: ready ? null : malformedConfig ? 'aiwg doctor --project-local' : 'aiwg wizard --dry-run',
+    },
+    agent_response_guidance: {
+      when_asked_if_aiwg_is_engaged:
+        'Run or read `aiwg status --probe --json`, report engaged/status/project_root/provider_deployments plainly, and do not add AIWG attribution to generated user files, commits, comments, or headers.',
+      no_attribution_default: true,
+      passive_footer_default: false,
     },
     workspace,
   };

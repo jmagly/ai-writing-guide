@@ -9,7 +9,10 @@ Find the scenario that matches where you are right now.
 | I want to... | Guide |
 |---|---|
 | Get one useful AIWG result before learning the whole system | [Start Here](start-here.md) |
+| Walk through provider, project, framework, deployment, and verification choices | [Start Here: guided wizard](start-here.md#minimal-command-path) |
 | Ask AIWG which path to use first | [Ask The Steward To Route You](first-success-ask-steward.md) |
+| Choose the right AI tool/provider handoff | [Provider Handoff](provider-handoff.md) |
+| Recover after running AIWG in the wrong folder | [Scope And Recovery](scope-and-recovery.md) |
 | Start a brand new project from scratch | [New Project](new-project.md) |
 | Bring AI up to speed on code I already have | [Existing Project](existing-project.md) |
 | Just try it and see what happens | [Quick Start — No Setup](just-try-it.md) |
@@ -41,6 +44,9 @@ Find the scenario that matches where you are right now.
 | How intake, flows, gates, and sdlc-accelerate work together | [Flow and Gate Process](flow-and-gate-process.md) |
 | Al, RLM, Voice, and other power features | [Key Addons](key-addons.md) |
 | Carrying project-specific agents and skills across platforms | [Project-Local Customization](../project-local/overview.md) |
+| Validating the beginner path | [Onboarding Validation](onboarding-validation.md) |
+| Checking the 2024-2026 onboarding evidence refresh | [Onboarding Research Refresh](onboarding-research-refresh.md) |
+| Sharing the beginner path with others | [Share AIWG](share-aiwg.md) |
 
 ---
 
@@ -48,9 +54,13 @@ Find the scenario that matches where you are right now.
 
 Read the one-paragraph version of each below, then click the one that sounds right.
 
-**Start Here** — You are new to AIWG and want one useful result. Tell the agent what you are trying to do, preview `aiwg wizard --dry-run`, verify with `aiwg status --probe --json`, and follow one recommended path.
+**Start Here** — You are new to AIWG and want one useful result. Tell the agent what you are trying to do, preview `aiwg wizard --dry-run`, run `aiwg wizard` when ready for guided deployment, verify with `aiwg status --probe --json`, and follow one recommended path.
 
 **Ask The Steward To Route You** — You want AIWG to choose a path for your goal. Ask the steward for one recommendation, verify it with `aiwg discover`, and inspect the result before using it.
+
+**Provider Handoff** — You know whether you are using Claude Code, Codex, Cursor, Copilot, Factory, OpenCode, Warp, Windsurf, Hermes, or OpenClaw, and need the short handoff from local deployment to that tool.
+
+**Scope And Recovery** — You may have run AIWG from the wrong folder, or you need to understand project-scoped setup versus global/user-scoped setup.
 
 **New Project** — You have an idea and want to kick off a real project with proper requirements, architecture, and a development plan. AIWG runs an intake conversation, generates the foundation docs, and assigns AI agents to each phase of the work.
 
@@ -87,3 +97,9 @@ Read the one-paragraph version of each below, then click the one that sounds rig
 **Key Addons** — Al (iterative loops), RLM (large codebase handling), Voice Framework (consistent writing style), and other capabilities that extend any framework.
 
 **Project-Local Customization** — How to add project-specific agents, skills, and scripts under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/` so they deploy automatically with `aiwg use` and survive platform-directory resets. Keeps platform dirs (`.claude/`, `.codex/`, etc.) fully expendable.
+
+**Onboarding Validation** — A lightweight checklist for maintainers to confirm that a new user can move from docs to install, wizard, verification, and one useful AIWG workflow.
+
+**Onboarding Research Refresh** — A short 2024-2026 source refresh tying current agentic mental-model and trust-calibration evidence to the beginner path.
+
+**Share AIWG** — Repo-owned demo, screenshot, and handoff copy for pointing users to one beginner path without moving social execution into this repo.

@@ -8,8 +8,9 @@ The primary pattern is simple:
 2. Ask how AIWG can help.
 3. Let the agent translate your goal into one recommended path.
 4. Preview the guided setup path.
-5. Follow that path until you get one useful output.
-6. Verify that AIWG is installed and active before you build on it.
+5. Choose the AI tool/provider you are using.
+6. Follow that path until you get one useful output.
+7. Verify that AIWG is installed and active before you build on it.
 
 Good starter prompts:
 
@@ -49,6 +50,20 @@ aiwg wizard --dry-run --goal "help me start a project"
 
 The wizard shows provider, project, framework, deploy, and verify steps. Dry-run mode does not write files.
 
+When you are ready for the guided path to make changes, run the wizard without `--dry-run` from the project folder:
+
+```bash
+aiwg wizard
+```
+
+In a terminal, the wizard asks what you are working on, which provider to target when more than one is detected, which AIWG path to deploy first, and whether to deploy now. In automation or scripts, use explicit flags:
+
+```bash
+aiwg wizard --non-interactive --profile beginner --provider codex
+```
+
+If you are not sure what `--provider` means, use [Provider Handoff](provider-handoff.md). Pick the AI tool you are using now, such as Claude Code, Codex, Cursor, Copilot, Factory, OpenCode, Warp, Windsurf, Hermes, or OpenClaw.
+
 If this is a brand new project, scaffold the local AIWG structure:
 
 ```bash
@@ -81,6 +96,8 @@ Then run the deterministic verification probe:
 ```bash
 aiwg status --probe --json
 ```
+
+That probe is the source of truth for whether AIWG appears engaged in this project. If you ask an agent "is AIWG active here?", it should run or read this probe and report the engaged state, project root, provider files, deployed frameworks, and next action without adding AIWG attribution to your files or commits.
 
 Use `sdlc` for software lifecycle work. Use the [Beginner Language Map](language-map.md) when your goal is clear but the AIWG term is not.
 
@@ -119,6 +136,8 @@ Recovery prompt:
 I may be in the wrong folder. Check the current project scope, tell me what evidence you see, and tell me which folder I should run AIWG from.
 ```
 
+For the longer recovery path, see [Scope And Recovery](scope-and-recovery.md).
+
 ## Verify AIWG Is Working
 
 Use only currently shipped capabilities:
@@ -141,6 +160,8 @@ If discovery fails, do not keep layering on frameworks. Fix installation, PATH, 
 - [Ask the steward to route you](first-success-ask-steward.md)
 - [Start a project intake](first-success-start-intake.md)
 - [Verify your setup](verify-aiwg-is-working.md)
+- [Provider handoff](provider-handoff.md)
+- [Scope and recovery](scope-and-recovery.md)
 
 ## Help And Contributions
 
