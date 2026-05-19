@@ -9,6 +9,52 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 - Documented the project signing-key split in `AGENTS.override.md` and `.aiwg/release-process.md`: regular commits use the host commit key, while annotated release tags use the AIWG release key.
 
+## [2026.5.10] - 2026-05-19 — "Beginner onboarding wizard + docs"
+
+This patch release adds a guided first-run path for new users and restores the literal meaning of `aiwg use all`.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **`aiwg wizard` walks first-time setup** | Provider choice, profile selection, execution mode, and verification in a single guided flow. JSON output stays plan-only for automation; unattended execution requires `--non-interactive`. |
+| **`aiwg use all` deploys the full surface again** | The literal meaning is restored. Workspace-aware filtering moves to `aiwg use --workspace-signals` (preview) and `aiwg use --profile <name>` (deploy filtered). |
+| **`aiwg status --probe --json` reports engagement deterministically** | Distinguishes configured, partially configured, and repair-needed workspaces. Malformed local config returns repair guidance instead of raw parse failures. |
+| **Full deploy summary separates native vs discoverable skills** | The capability index build prints a discoverable-skill count alongside the platform-native count so the budget story is legible. |
+| **Beginner docs refreshed** | Provider handoff, scope and recovery, onboarding validation, share/demo workflows, and current onboarding research. |
+
+### Added
+
+- `aiwg wizard` interactive onboarding flow with provider/profile/mode/verification steps.
+- Beginner documentation: `docs/beginner-first-success.md`, `docs/beginner-provider-handoff.md`, `docs/beginner-scope-and-recovery.md`, `docs/beginner-onboarding-validation.md`, `docs/beginner-share-demo-assets.md`, `docs/beginner-research-refresh-2026.md`, and `docs/beginner-aiwg-language-map.md`.
+- AIWG.md context finalization includes engagement verification guidance without adding generated attribution footers.
+
+### Changed
+
+- `aiwg use all` deploys every framework, addon, and deployable extension by default.
+- `aiwg use --workspace-signals` previews a workspace-aware plan; `aiwg use --profile <name>` deploys a filtered profile.
+- Skills/commands unification guide describes provider-specific command mirroring without exposing internal tracker references.
+- Release navigation manifest includes the current and immediately previous patch release.
+- security-auditor agent discipline tightened; rolling `audit.md` rollup added.
+
+### Fixed
+
+- Windows doctor and skill registration hardened against path-handling edge cases.
+- Claude provider command-mirror deduplication so wrapper commands don't double-deploy.
+- Docsite release deploy verification covers the v2026.5.10 announcement file.
+
+### Tests
+
+- `npm run typecheck`
+- `npm run build:cli`
+- `npx vitest run --config config/vitest.config.js test/unit/cli/wizard.test.ts`
+- `npx vitest run --config config/vitest.config.js test/unit/cli/handlers/use-workspace-filter.test.ts`
+- `npm test`
+
+### Migration notes
+
+If you depended on `aiwg use all` deploying only the workspace-aware subset, switch to `aiwg use --profile <name>` or `aiwg use --workspace-signals` followed by an explicit `aiwg use` invocation for the previewed set.
+
 ## [2026.5.9] - 2026-05-18 — "Workspace deploy + command surface parity"
 
 This patch release fixes the workspace-aware `aiwg use all` deployment flow and restores operator workflow discoverability across providers after the skills-first pivot.
