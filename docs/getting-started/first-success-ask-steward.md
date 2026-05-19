@@ -2,71 +2,62 @@
 
 Use this recipe when you want AIWG to choose where to start instead of reading the catalog yourself.
 
-The steward is the guide. It helps translate your goal into one AIWG path. Discover is search. It helps find the shipped skill, agent, or framework that matches the steward's recommendation.
+The steward is a guide agent that lives inside your AI session. You stay in the chat; the steward handles the AIWG-specific lookups for you. You do not need to type `aiwg` commands yourself — the agent runs them under the hood and reports back.
+
+## How AIWG Is Meant To Be Used
+
+AIWG's main user surface is the agent conversation, not the terminal. Most of the CLI exists so agents can call it on your behalf. The only AIWG commands a user typically runs by hand are the install/deploy/onboarding ones — `aiwg use`, `aiwg wizard`, `aiwg doctor`, `aiwg status`. Everything else (discovery, lookup, indexing, loops, orchestration) is invoked by the agent during a chat.
+
+That is what this recipe assumes.
 
 ## Do This
 
-Go to the project folder:
-
-```bash
-cd /path/to/your/project
-```
+Open your AI tool in the project folder.
 
 Ask the agent:
 
 ```text
-Act as the AIWG steward for this project. My goal is: <describe your goal>. Recommend one AIWG path, one reason, and one fallback.
+Act as the AIWG steward for this project. My goal is: <describe your goal>.
+Recommend one AIWG path, one reason, and one fallback. Use AIWG's discovery
+tools to verify the recommendation before answering.
 ```
 
-If the agent can run commands, ask it to verify the recommendation:
+That is the whole interaction on your side. The agent will run AIWG's capability search, inspect the top match, and reply with a short recommendation. You stay in the conversation.
+
+If the agent answers without using AIWG's tools and you suspect it guessed:
 
 ```text
-Use aiwg discover to check the recommended path, then inspect the best match with aiwg show before telling me what to do next.
+You did not verify against AIWG's capability index. Please run AIWG's
+discover and show against my goal before answering.
 ```
 
-If you need to run the commands yourself:
+## What The Agent Does Behind The Scenes
 
-```bash
-aiwg discover "aiwg steward"
-aiwg discover "<recommended phrase>"
-aiwg show skill <name>
-```
+You do not run these yourself. They are what the agent should be doing for you:
 
-If the result is an agent instead of a skill:
+- `aiwg discover "<phrase>"` to search the installed capability index.
+- `aiwg show skill <name>` (or `aiwg show agent <name>`) to fetch the matched artifact's body.
+- A short synthesis: one recommended path, one reason, one fallback.
 
-```bash
-aiwg show agent <name>
-```
-
-For abstract goals, ask for two to four discovery phrases and make the agent compare the top results before recommending one:
-
-```text
-Translate my goal into two to four AIWG discover phrases. Run aiwg discover for each phrase, inspect the best result with aiwg show, then recommend one first action and one fallback.
-```
+If the agent surfaces these commands as instructions for *you* to run, that is a sign the integration is incomplete. Ask it to run them itself.
 
 ## You Should See
 
-You have one recommended AIWG path, one reason it fits your goal, and one fallback if the first path does not fit.
+A short answer with one recommended AIWG path, one reason it fits your goal, and one fallback. Not a catalog. Not a wall of commands.
 
 ## If That Did Not Work
 
-If the answer becomes a long catalog, interrupt and ask:
+If the answer becomes a long list, interrupt:
 
 ```text
 Do not list every option. Choose one path for my current goal and explain the first action.
 ```
 
-If the recommendation seems unrelated to the project, check the folder:
-
-```bash
-pwd
-ls -a
-```
-
-Then ask:
+If the recommendation seems unrelated to the project, ask the agent to re-check the current folder:
 
 ```text
-Re-check the current project folder and route me based only on the files and goal in this project.
+Re-check the current project folder and route me based only on the files and
+goal in this project.
 ```
 
 ## Next

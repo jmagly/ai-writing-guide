@@ -2,42 +2,45 @@
 
 Use this recipe when you can describe the work but do not know the AIWG name for it.
 
+You stay in the chat. The agent does the AIWG lookups for you — you do not need to learn `aiwg discover` or `aiwg show` to use this. They are tools the agent invokes on your behalf.
+
+## How AIWG Is Meant To Be Used
+
+The everyday AIWG user surface is the conversation with your AI tool. AIWG's CLI exists mostly so agents can call it; only a small set of commands (`aiwg use`, `aiwg wizard`, `aiwg doctor`, `aiwg status`, `aiwg refresh`) are meant for users to type directly. Discovery and lookup belong inside the agent's workflow.
+
 ## Do This
 
-Ask the agent:
+Open your AI tool in the project folder, then ask the agent in plain words:
 
 ```text
-I do not know what AIWG has. Help me find one thing to try first for this goal: <describe your goal>.
+I do not know what AIWG has. Help me find one thing to try first for this goal:
+<describe your goal>.
+
+Use AIWG's discovery tools to check the recommendation before answering. Give me
+one path, one reason, and one fallback — not a catalog.
 ```
 
-Ask it to translate the goal:
+That is the request on your side. The agent searches AIWG's capability index, inspects the top match, and replies with a short recommendation.
+
+If you want the agent to consider a couple of angles:
 
 ```text
-Give me two or three AIWG discovery phrases, then recommend one path.
+Translate my goal into two or three AIWG search phrases, compare the top
+candidates, then recommend one first action and one fallback.
 ```
 
-Run the discovery commands from the project folder:
+## What The Agent Does Behind The Scenes
 
-```bash
-aiwg discover "<phrase>"
-aiwg discover "<fallback phrase>"
-```
+You do not type these. They are the agent's job:
 
-Inspect the best result before using it:
+- `aiwg discover "<phrase>"` — search the installed capability index for skills, agents, commands, and rules that match the goal.
+- `aiwg show skill <name>` or `aiwg show agent <name>` — fetch the body of the top match so the agent can read its capabilities before recommending it.
 
-```bash
-aiwg show skill <name>
-```
-
-If the result is an agent instead of a skill:
-
-```bash
-aiwg show agent <name>
-```
+If the agent prints these commands and tells *you* to run them, ask it to run them itself.
 
 ## You Should See
 
-You can say:
+A short answer that names the capability, why it fits your goal, and what to do next:
 
 ```text
 I am starting with <capability> because <reason>. If that does not fit, I will try <fallback>.
@@ -45,23 +48,36 @@ I am starting with <capability> because <reason>. If that does not fit, I will t
 
 ## If That Did Not Work
 
-If discovery returns too many choices, ask the agent to narrow the answer:
+If the agent returns too many choices:
 
 ```text
 Recommend one path, one reason, and one fallback.
 ```
 
-If discovery returns nothing useful, try broader ordinary-language phrases:
+If discovery returns nothing useful, broaden the language:
+
+```text
+My phrasing did not match. Try broader ordinary-language queries like
+"project intake", "security review", "project status" and see if any of those
+get closer.
+```
+
+The agent runs those queries itself and reports back.
+
+## Fallback: Provider Cannot Run CLI Commands
+
+When the AI tool cannot execute shell commands in-session, the agent will hand you the exact commands:
 
 ```bash
-aiwg discover "project intake"
-aiwg discover "security review"
-aiwg discover "project status"
+aiwg discover "<phrase>"
+aiwg show skill <name>
 ```
+
+Run them from the project folder and paste the relevant output back into the chat. This is the exception path — most AIWG-supported providers can run the CLI without leaving the conversation.
 
 ## Next
 
-Use the capability only after you have inspected it with `aiwg show`. If it is an intake path, continue with [Start A Project Intake](first-success-start-intake.md).
+Use the capability only after the agent has inspected it. If it is an intake path, continue with [Start A Project Intake](first-success-start-intake.md).
 
 ## Related
 
