@@ -449,16 +449,34 @@ jobs:
           # only checked that *something* was returned, which let the
           # 2026.5.0 → 2026.3.3 latest-tag drift slip through. We derive
           # EXPECTED from the tag ref (not package.json) so this job does
-          # not need to checkout the repo.
+          # not need to checkout the repo. npmjs.org dist-tag propagation
+          # can lag the successful publish by more than the initial 15s
+          # sleep above, so poll the public registry with cache-busting
+          # flags before declaring the promotion failed.
           EXPECTED="${GITHUB_REF#refs/tags/v}"
-          LATEST=$(npm view aiwg@latest version 2>/dev/null || echo "unknown")
-          echo "Latest version on npmjs.org: $LATEST (expected $EXPECTED)"
-          if [ "$LATEST" = "unknown" ]; then
-            echo "✗ Could not query npmjs.org dist-tags"
-            exit 1
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            LATEST=$(npm view aiwg@latest version --prefer-online --no-update-notifier 2>/dev/null || echo "unknown")
+            echo "Attempt ${attempt}/12: aiwg@latest = ${LATEST} (expected ${EXPECTED})"
+            if [ "$LATEST" = "$EXPECTED" ]; then
+              echo "✓ Package aiwg@latest = $EXPECTED on npmjs.org"
+              exit 0
+            fi
+            if [ "$attempt" = "12" ]; then
+              break
+            fi
+            if [ "$LATEST" = "unknown" ]; then
+              echo "npmjs.org dist-tag query failed; retrying in 15s..."
+            else
+              echo "npmjs.org dist-tag has not propagated yet; retrying in 15s..."
+            fi
+            sleep 15
+          done
+          FINAL=$(npm view "aiwg@${EXPECTED}" version --prefer-online --no-update-notifier 2>/dev/null || echo "unknown")
+          if [ "$FINAL" = "$EXPECTED" ]; then
+            echo "✗ aiwg@${EXPECTED} exists on npmjs.org, but aiwg@latest did not resolve to it before timeout"
+          else
+            echo "✗ aiwg@${EXPECTED} is not visible on npmjs.org after verification timeout"
           fi
-          if [ "$LATEST" != "$EXPECTED" ]; then
-            echo "✗ aiwg@latest = $LATEST, expected $EXPECTED — latest promotion did not stick"
-            exit 1
-          fi
-          echo "✓ Package aiwg@latest = $EXPECTED on npmjs.org"
+          echo "  Last aiwg@latest observed: ${LATEST}"
+          echo "  Expected aiwg@latest: ${EXPECTED}"
+          exit 1
