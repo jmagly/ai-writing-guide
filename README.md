@@ -86,19 +86,22 @@ The leverage is not in any one file. It is that hundreds of small files — each
 
 This is also where the research background lives. AIWG implements patterns from cognitive science (Miller 1956, Sweller 1988), multi-agent systems (Jacobs et al. 1991, MetaGPT, AutoGen), and software engineering (Cooper's stage-gate, FAIR Principles, W3C PROV) — applied as file conventions and deployment rules, not as a runtime you depend on.
 
-## What's Optional
+## How You Actually Use AIWG
 
-These are CLI tools and services on top of the text-file substrate. The substrate works without them:
+The user surface is the conversation with your AI tool. You install AIWG, deploy a framework, and then talk to the agent normally — "help me start a project", "run a security review", "find me a deploy workflow." The agent does the AIWG-specific work for you.
 
-- `aiwg ralph` — autonomous iterate-until-done loops
-- `aiwg mc` — background mission-control for parallel tasks
-- `aiwg daemon` — persistent session manager
-- `aiwg discover` — capability search across AIWG's 400+ skills/agents/commands/rules
-- `aiwg show` — fetch the full body of a specific skill / agent / command / rule
-- `aiwg index` — searchable artifact index (project + codebase + framework graphs)
-- `aiwg mcp` — MCP server for runtime tool access
+The CLI exists mostly for the agent to call under the hood. The commands a user typically runs by hand are a short list:
 
-Turn any of these on when you want persistence, parallelism, or automation. Turn them off and your deployed agents, skills, and rules still work — they are still text files the platform reads natively.
+- `aiwg use <framework>` — deploy AIWG to your project (one-time per framework, per project)
+- `aiwg wizard` — guided first-run setup
+- `aiwg new <project>` — scaffold a new project
+- `aiwg status` — what's deployed and engaged in this workspace
+- `aiwg doctor` — health check
+- `aiwg refresh` — keep the install current
+
+Everything else is agent territory. Discovery (`aiwg discover`), artifact lookup (`aiwg show`), the index, agent loops, mission control, MCP — those are tools the agent invokes during a chat when you ask for something AIWG-shaped. You stay in the conversation; the agent handles the lookups, runs the loops, and reports back.
+
+Turn the agent-side tooling on (it's on by default once you `aiwg use`) when you want persistence, parallelism, or automation. Turn it off and the deployed agents, skills, and rules still work — they are still text files the platform reads natively.
 
 ## What AIWG Is Not
 
