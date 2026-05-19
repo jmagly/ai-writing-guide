@@ -102,7 +102,7 @@ export function keyValue(pairs: Record<string, string>): void {
  * Deployment summary line — "✓ Agents      101 deployed"
  */
 export function deployCount(label: string, count: number): void {
-  const padded = label.padEnd(12);
+  const padded = label.length >= 12 ? `${label} ` : label.padEnd(12);
   if (isTTY) {
     console.log(chalk.hex(SUCCESS_HEX)('  ✓ ') + chalk.bold(padded) + chalk.dim(`${count} deployed`));
   } else {

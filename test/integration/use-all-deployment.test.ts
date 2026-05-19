@@ -116,6 +116,15 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
     expect(existsSync(skillsDir)).toBe(true);
   });
 
+  it('reports native and discoverable skill counts separately', () => {
+    const result = runAiwg(fullUseAllArgs(projectDir), projectDir);
+    expect(result.exitCode, `aiwg use all failed (exit ${result.exitCode}):\nstdout: ${result.stdout}\nstderr: ${result.stderr}`).toBe(0);
+
+    expect(result.stdout).toMatch(/Installing complete AIWG surface/);
+    expect(result.stdout).toMatch(/Skills\s+\d+ deployed/);
+    expect(result.stdout).toMatch(/Discoverable skills\s+\d+ deployed/);
+  });
+
   it('deploys more skills than the old hardcoded 4-addon set would produce', async () => {
     const result = runAiwg(fullUseAllArgs(projectDir), projectDir);
     expect(result.exitCode).toBe(0);

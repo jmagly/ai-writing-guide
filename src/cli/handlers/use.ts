@@ -757,6 +757,21 @@ async function countDeployedArtifacts(
   };
 }
 
+async function countDiscoverableSkills(aiwgRoot: string): Promise<number | null> {
+  try {
+    const { loadGraphIndexFile } = await import('../../artifacts/index-reader.js');
+    const index = loadGraphIndexFile<{ entries?: Record<string, { type?: string }> }>(
+      aiwgRoot,
+      'metadata.json',
+      'framework',
+    );
+    if (!index?.entries) return null;
+    return Object.values(index.entries).filter(entry => entry.type === 'skill').length;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Detect forge targets from .git/config remote URLs.
  * Returns a list of forge types found: 'github' | 'gitea'
@@ -1798,8 +1813,11 @@ export class UseHandler implements CommandHandler {
     const quiet = !verbose && !dryRun;
     const captureOpts = quiet ? { capture: true } : {};
     if (quiet) {
+      const installLabel = framework === 'all'
+        ? 'Installing complete AIWG surface'
+        : `Installing ${framework} framework`;
       ui.blank();
-      console.log(`  ${ui.brandMark()} ${ui.bold(`Installing ${framework} framework`)}  ${ui.dimText(`for ${provider === 'claude' ? 'Claude Code' : provider}`)}`);
+      console.log(`  ${ui.brandMark()} ${ui.bold(installLabel)}  ${ui.dimText(`for ${provider === 'claude' ? 'Claude Code' : provider}`)}`);
       ui.blank();
     }
     const runner = createScriptRunner(ctx.frameworkRoot);
@@ -1984,6 +2002,7 @@ export class UseHandler implements CommandHandler {
     // (e.g., test fixtures, deploy from npm install rather than the
     // source repo). buildIndex() calls `process.exit(1)` on missing
     // scan dirs which would short-circuit our catch.
+    let discoverableSkillCount: number | null = null;
     if (!dryRun) {
       // Build the framework graph against $AIWG_ROOT, not the project's
       // target dir (#1217). The framework source is user-global at
@@ -2015,6 +2034,7 @@ export class UseHandler implements CommandHandler {
           // regardless of build cwd.
           await buildIndex(aiwgRootForIndex, { graph: 'framework', explicit: false });
           console.log = origLog;
+          discoverableSkillCount = await countDiscoverableSkills(aiwgRootForIndex);
           const indexElapsedSec = ((Date.now() - indexStart) / 1000).toFixed(1);
           ui.success(`Capability index ready (${indexElapsedSec}s) — try \`aiwg discover "<phrase>"\``);
         } catch (error) {
@@ -2038,6 +2058,7 @@ export class UseHandler implements CommandHandler {
       if (counts.agents > 0) ui.deployCount('Agents', counts.agents);
       if (counts.commands > 0) ui.deployCount('Commands', counts.commands);
       if (counts.skills > 0) ui.deployCount('Skills', counts.skills);
+      if (discoverableSkillCount !== null) ui.deployCount('Discoverable skills', discoverableSkillCount);
       if (counts.rules > 0) ui.deployCount('Rules', counts.rules);
       if (counts.behaviors > 0) ui.deployCount('Behaviors', counts.behaviors);
       ui.blank();
