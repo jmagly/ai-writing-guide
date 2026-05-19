@@ -47,7 +47,7 @@ You can also invoke AIWG without adjusting `PATH` by using `npx aiwg <command>`.
 
 AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the specific paths each AI platform looks in — `.claude/agents/`, `~/.codex/skills/`, `.cursor/rules/`, `.github/prompts/`, and six more — so one source of truth works across 10 platforms.
 
-Around that core, AIWG ships utilities for things the base platforms do not handle on their own: persistent artifact memory (`.aiwg/`), background orchestration (`aiwg mc`), autonomous loops (`aiwg ralph`), artifact indexing (`aiwg index`), cost telemetry, health diagnostics, and more. Most are opt-in. The deployment layer works standalone as plain text files the platform reads natively.
+Around that core, AIWG ships agent-facing utilities for things the base platforms do not handle on their own: persistent artifact memory (`.aiwg/`), background orchestration, autonomous loops, artifact indexing, cost telemetry, health diagnostics, and more. These are tools the agent calls when you ask for something AIWG-shaped — you stay in chat. Most are opt-in. The deployment layer works standalone as plain text files the platform reads natively.
 
 ### Project scope (recommended) vs user scope (global)
 

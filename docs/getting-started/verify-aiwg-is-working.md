@@ -2,87 +2,84 @@
 
 Use this recipe before depending on AIWG for project work.
 
+You stay in the chat. The agent checks the deployment state, runs the status probe, and reports back. You do not need to type the probe commands yourself — they are the agent's tool, not yours.
+
 ## Do This
 
-Check the CLI:
+Open your AI tool in the project folder and ask the agent:
 
-```bash
-aiwg -version
-aiwg -help
+```text
+Is AIWG active in this workspace? Read aiwg status --probe and report the
+engaged state, project root, deployed frameworks, and next action. If
+discovery is reachable, also confirm AIWG can search the installed
+capability set.
 ```
 
-Move to the project folder you want to work in:
+The agent runs the probe, reads any deployed providers (`.claude/`, `.codex/`, `.cursor/`, etc.), and gives you a short answer with the engagement state plus one next action.
 
-```bash
-cd /path/to/your/project
-pwd
-```
+If you want a deeper sweep, ask:
 
-Preview the guided onboarding path:
-
-```bash
-aiwg wizard --dry-run --goal "help me start a project"
-```
-
-Run the deterministic verification probe:
-
-```bash
-aiwg status --probe --json
-```
-
-Run one discovery query:
-
-```bash
-aiwg discover "aiwg steward"
-```
-
-If you already know the area you need, use that phrase instead:
-
-```bash
-aiwg discover "security review"
-aiwg discover "research workflow"
-aiwg discover "project intake"
+```text
+Run a workspace health check. Cover installation, PATH, deployed frameworks,
+provider files, and one discovery query so I know AIWG can find its own
+capabilities.
 ```
 
 ## You Should See
 
-You see a version, help text, a wizard plan that says no files were written, a JSON probe with `schema: "aiwg.status.probe.v1"`, and a discovery response. The discovery response does not need to be the final answer; it only proves AIWG can search the installed capability set.
+A short answer that says one of:
 
-## If That Did Not Work
+- **Engaged** — AIWG is deployed, the probe reports a configured state, and the agent can search the capability index. Build on this.
+- **Partial** — AIWG is installed but the current project is not configured. The agent will name the wizard or `aiwg use` action that finishes setup.
+- **Needs repair** — Something is broken. The agent will run diagnostics and propose the fix.
 
-If `aiwg` is not found, install it or check your PATH:
+You do not need to interpret raw probe JSON yourself. The agent does that.
+
+## What You Actually Type
+
+If AIWG is not installed at all, install it once:
 
 ```bash
 npm install -g aiwg
-aiwg -version
 ```
 
-If discovery returns nothing useful, ask the agent to translate your words:
+After that, the user-side commands you might run by hand are limited to:
+
+- `aiwg wizard` — guided setup when starting from scratch
+- `aiwg use <framework>` — deploy a specific framework
+- `aiwg doctor` — when a human wants a direct health readout outside the chat
+- `aiwg refresh` — keep the install current
+
+Everything else — the probe, discovery, capability inspection, the index — is what the agent calls during the conversation when you ask it to verify or look something up.
+
+## If That Did Not Work
+
+If the agent reports the wrong project, ask:
 
 ```text
-Translate my goal into two or three AIWG discovery phrases and explain which one to try first.
+I may be in the wrong folder. Tell me what evidence you see for the current
+project scope and what folder I should run AIWG from.
 ```
 
-If the answer seems scoped to the wrong files, check the current folder before continuing:
+If the agent says AIWG is not installed or not on PATH, install or fix PATH:
 
 ```bash
-pwd
-ls -a
+npm install -g aiwg
 ```
 
-If the probe reports `not-configured` or `partial`, follow the wizard's deploy action, then run `aiwg status --probe --json` again before treating setup as complete.
+Or, if `aiwg` is installed but unreachable, see the [Installation Troubleshooting](../../README.md#installation-troubleshooting) section in the README.
 
-If the probe reports `needs-repair`, run:
+If the probe reports `not-configured` or `partial`, ask the agent for the one action that will finish setup. Usually that is `aiwg wizard` or a focused `aiwg use <framework>`.
 
-```bash
-aiwg doctor --project-local
+If the probe reports `needs-repair`, ask:
+
+```text
+Run aiwg doctor and tell me which check failed. Propose the smallest fix.
 ```
-
-Then repair the malformed `.aiwg/` config or registry before deploying more frameworks.
 
 ## Next
 
-After verification succeeds, choose one focused recipe: [Find One Capability](first-success-find-capability.md) or [Start A Project Intake](first-success-start-intake.md).
+Once verification succeeds, pick one focused recipe: [Find One Capability](first-success-find-capability.md) or [Start A Project Intake](first-success-start-intake.md).
 
 ## Related
 

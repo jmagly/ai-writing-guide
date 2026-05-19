@@ -28,12 +28,15 @@ For an existing codebase, use:
 /intake-from-codebase .
 ```
 
-If your provider cannot run slash commands, ask for the closest available AIWG command or capability:
+If you do not know which intake variant fits, describe the situation in plain words and ask the agent to choose:
 
-```bash
-aiwg discover "intake wizard"
-aiwg discover "intake from codebase"
+```text
+I'm not sure which intake path fits. Pick between intake-wizard and
+intake-from-codebase based on what's already in this folder, and start
+the one you recommend.
 ```
+
+The agent inspects the project files and selects the right intake.
 
 ## You Should See
 

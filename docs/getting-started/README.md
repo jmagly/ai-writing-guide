@@ -54,9 +54,9 @@ Find the scenario that matches where you are right now.
 
 Read the one-paragraph version of each below, then click the one that sounds right.
 
-**Start Here** — You are new to AIWG and want one useful result. Tell the agent what you are trying to do, preview `aiwg wizard --dry-run`, run `aiwg wizard` when ready for guided deployment, verify with `aiwg status --probe --json`, and follow one recommended path.
+**Start Here** — You are new to AIWG and want one useful result. Tell the agent what you are trying to do, run `aiwg wizard` when you're ready for guided deployment, then ask the agent to verify the workspace is engaged.
 
-**Ask The Steward To Route You** — You want AIWG to choose a path for your goal. Ask the steward for one recommendation, verify it with `aiwg discover`, and inspect the result before using it.
+**Ask The Steward To Route You** — You want AIWG to choose a path for your goal. Ask the steward in chat for one recommendation; the agent verifies it against AIWG's capability index before answering.
 
 **Provider Handoff** — You know whether you are using Claude Code, Codex, Cursor, Copilot, Factory, OpenCode, Warp, Windsurf, Hermes, or OpenClaw, and need the short handoff from local deployment to that tool.
 
@@ -68,7 +68,7 @@ Read the one-paragraph version of each below, then click the one that sounds rig
 
 **Just Try It** — You want to skip setup and see something happen. Run one command, ask the AI a question about your code, get a useful answer. No intake forms, no configuration. Figure out the rest later.
 
-**Beginner Language Map** — You know what you want, but not the AIWG vocabulary. Ask in ordinary language, translate that into a few `aiwg discover` searches, and pick one focused next action.
+**Beginner Language Map** — You know what you want, but not the AIWG vocabulary. Describe the goal in ordinary language; the agent translates it into AIWG-native capabilities and recommends one focused next action.
 
 **Content and Writing** — You're writing docs, blog posts, proposals, or any other text. You want consistent voice and quality. AIWG's voice framework profiles train the AI to write the way you write.
 

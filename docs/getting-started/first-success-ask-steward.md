@@ -18,17 +18,17 @@ Ask the agent:
 
 ```text
 Act as the AIWG steward for this project. My goal is: <describe your goal>.
-Recommend one AIWG path, one reason, and one fallback. Use AIWG's discovery
-tools to verify the recommendation before answering.
+Recommend one AIWG path, one reason, and one fallback. Verify the
+recommendation against AIWG's capability index before answering.
 ```
 
-That is the whole interaction on your side. The agent will run AIWG's capability search, inspect the top match, and reply with a short recommendation. You stay in the conversation.
+That is the whole interaction on your side. The agent searches AIWG's capabilities, inspects the top match, and replies with a short recommendation. You stay in the conversation.
 
-If the agent answers without using AIWG's tools and you suspect it guessed:
+If the agent answers without checking AIWG and you suspect it guessed:
 
 ```text
-You did not verify against AIWG's capability index. Please run AIWG's
-discover and show against my goal before answering.
+You did not verify against AIWG's capability index. Please look up the
+recommendation against the installed capabilities before answering.
 ```
 
 ## What The Agent Does Behind The Scenes

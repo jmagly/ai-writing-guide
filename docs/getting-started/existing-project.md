@@ -150,8 +150,10 @@ Which parts of this code look like technical debt?
 
 Once the project is loaded, AIWG is most useful in your normal workflow:
 
-- Run `/project-status` at the start of each session to see where things are
-- Use `aiwg ralph "Fix all failing tests" --completion "npm test passes"` for iterative tasks
-- Run `/flow-security-review-cycle` periodically as a quality gate
+- Ask the agent for project status at the start of each session ("where are we?", "what's next?")
+- For iterative tasks, ask the agent to keep working until a measurable check passes ("fix all failing tests; keep iterating until `npm test` passes")
+- Ask for a security review periodically as a quality gate ("run a security review on this branch")
+
+The agent invokes the underlying AIWG workflows — `/project-status`, agent loops, `/flow-security-review-cycle` — from inside the conversation. You stay in chat.
 
 See [New Project](new-project.md) for a full description of the SDLC workflow once you're oriented.
