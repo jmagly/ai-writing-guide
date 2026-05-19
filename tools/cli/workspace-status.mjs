@@ -48,6 +48,7 @@ USAGE
 OPTIONS
   --verbose, -v   Show detailed information
   --json          Output as JSON
+  --probe         Output deterministic first-run verification probe
   --export <fmt>  Export fleet status payload: json | ndjson
   --serve         Serve fleet status JSON over loopback HTTP
   --bind <addr>   Bind address for --serve (default: 127.0.0.1)
@@ -69,6 +70,9 @@ EXAMPLES
   # Output as JSON for scripting
   aiwg -status --json
 
+  # Output deterministic first-run verification probe
+  aiwg status --probe --json
+
   # Export fleet status for cockpit ingestion
   aiwg status --export json --fleet-id eride
   aiwg status --export ndjson
@@ -85,6 +89,7 @@ function parseArgs(args) {
   const options = {
     verbose: false,
     json: false,
+    probe: false,
     exportFormat: null,
     serve: false,
     bind: '127.0.0.1',
@@ -101,6 +106,9 @@ function parseArgs(args) {
     if (arg === '--verbose' || arg === '-v') {
       options.verbose = true;
     } else if (arg === '--json') {
+      options.json = true;
+    } else if (arg === '--probe') {
+      options.probe = true;
       options.json = true;
     } else if (arg === '--export' && args[i + 1]) {
       options.exportFormat = args[++i];
@@ -426,6 +434,37 @@ async function buildWorkspaceStatus(projectRoot) {
   return result;
 }
 
+async function buildVerificationProbe(projectRoot) {
+  const workspace = await buildWorkspaceStatus(projectRoot);
+  const frameworkCount = workspace.frameworks.length;
+  const providerCount = workspace.providerDeployments.length;
+  const ready = workspace.workspace.exists && frameworkCount > 0 && providerCount > 0;
+  const partial = workspace.workspace.exists && (frameworkCount > 0 || providerCount > 0);
+
+  return {
+    schema: 'aiwg.status.probe.v1',
+    generated_at: new Date().toISOString(),
+    project_root: path.resolve(projectRoot),
+    engaged: ready,
+    status: ready ? 'ready' : partial ? 'partial' : 'not-configured',
+    checks: {
+      workspace_exists: workspace.workspace.exists,
+      framework_count: frameworkCount,
+      provider_deployment_count: providerCount,
+      health: workspace.health.overall,
+    },
+    verification: {
+      required: true,
+      action: ready
+        ? 'AIWG workspace and provider deployment are detected.'
+        : 'Run the guided path, deploy one framework, then run this probe again.',
+      command: 'aiwg status --probe --json',
+      next_command: ready ? null : 'aiwg wizard --dry-run',
+    },
+    workspace,
+  };
+}
+
 async function readAiwgVersion() {
   const candidates = [
     path.join(__dirname, '..', '..', 'package.json'),
@@ -547,6 +586,12 @@ async function workspaceStatus(args) {
     if (options.exportFormat) {
       const payload = await buildFleetStatusExport(options.projectRoot, options);
       writeExportPayload(payload, options.exportFormat);
+      return;
+    }
+
+    if (options.probe) {
+      const probe = await buildVerificationProbe(options.projectRoot);
+      console.log(JSON.stringify(probe, null, 2));
       return;
     }
 
@@ -688,4 +733,4 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 }
 
 export { workspaceStatus };
-export { buildFleetStatusExport, buildWorkspaceStatus, startStatusServer };
+export { buildFleetStatusExport, buildVerificationProbe, buildWorkspaceStatus, startStatusServer };

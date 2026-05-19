@@ -106,6 +106,7 @@ describe('deployFiles cross-framework collision guard (#1169)', () => {
     const actions = deployFiles([fileA, fileB], destDir, {
       provider: 'claude',
       deployVersion: 'test',
+      reportCollisions: true,
     });
 
     warnSpy.mockRestore();
@@ -187,6 +188,7 @@ describe('deployFiles cross-framework collision guard (#1169)', () => {
     const actions = deployFiles([fileB], destDir, {
       provider: 'claude',
       deployVersion: 'test',
+      reportCollisions: true,
     });
 
     warnSpy.mockRestore();

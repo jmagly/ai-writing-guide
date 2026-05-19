@@ -551,6 +551,15 @@ export function filterCommandsAgainstSkills(commandFiles, skillDirs) {
   return filtered;
 }
 
+function shouldReportDeployCollisions(opts = {}) {
+  if (opts.reportCollisions === true) return true;
+  if (opts.reportCollisions === false) return false;
+  if (process.env.AIWG_REPORT_DEPLOY_COLLISIONS === '1') return true;
+  if (process.env.VITEST) return false;
+  if (process.env.NODE_ENV === 'test') return false;
+  return true;
+}
+
 // ============================================================================
 // File Deployment
 // ============================================================================
@@ -724,7 +733,7 @@ export function deployFiles(files, destDir, opts, transformFn) {
   // Surface cross-framework collisions to the operator (#1169). Always
   // visible (not gated on verbose) because silent loss is the failure
   // mode this guard exists to prevent.
-  if (collisions.length > 0) {
+  if (collisions.length > 0 && shouldReportDeployCollisions(opts)) {
     const tag = force ? 'override' : 'skip';
     console.warn(
       `\n⚠ Cross-framework deploy collision${collisions.length > 1 ? 's' : ''} detected (${collisions.length}):`,

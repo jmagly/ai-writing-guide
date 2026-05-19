@@ -18,6 +18,7 @@ import { versionHandler } from './version.js';
 import { useHandler } from './use.js';
 import {
   statusHandler,
+  wizardHandler,
   migrateWorkspaceHandler,
   rollbackWorkspaceHandler,
   workspaceHandlers,
@@ -148,6 +149,7 @@ export {
 
   // Workspace
   statusHandler,
+  wizardHandler,
   migrateWorkspaceHandler,
   rollbackWorkspaceHandler,
 

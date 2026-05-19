@@ -787,6 +787,34 @@ export const statusCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const wizardCommand: Extension = {
+  id: 'wizard',
+  type: 'skill',
+  name: 'Onboarding Wizard',
+  description: 'Guide first-run provider, project, framework, deploy, and verification steps',
+  version: '1.0.0',
+  capabilities: ['cli', 'workspace', 'onboarding', 'wizard', 'verification'],
+  keywords: ['wizard', 'onboarding', 'first-run', 'setup', 'verify'],
+  category: 'workspace',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['wizard', 'onboarding wizard', 'first run', 'guided setup'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '[--goal <text>] [--provider <name>] [--framework <name>] [--dry-run] [--json]',
+      allowedTools: ['Read', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 export const migrateWorkspaceCommand: Extension = {
   id: 'migrate-workspace',
   type: 'skill',
@@ -2998,13 +3026,13 @@ export const rlmCacheCommand: Extension = {
 // ============================================
 
 /**
- * All command definitions (60 total)
+ * All command definitions
  *
  * Organized by category:
  * - Maintenance (5): help, version, doctor, update, sync
  * - Framework (3): use, list, remove
  * - Project (4): new, init, run, serve
- * - Workspace (3): status, migrate-workspace, rollback-workspace
+ * - Workspace (4): status, wizard, migrate-workspace, rollback-workspace
  * - MCP (1): mcp
  * - Catalog (1): catalog
  * - Toolsmith (1): runtime-info
@@ -3051,8 +3079,9 @@ export const commandDefinitions: Extension[] = [
   localExecutorCommand,
   localExecutorServeCommand,
 
-  // Workspace (3)
+  // Workspace (4)
   statusCommand,
+  wizardCommand,
   migrateWorkspaceCommand,
   rollbackWorkspaceCommand,
 

@@ -42,6 +42,29 @@ export const statusHandler: CommandHandler = {
 };
 
 /**
+ * Handler for the guided onboarding wizard.
+ *
+ * The MVP wizard is a deterministic, no-write planner that walks the user
+ * through provider, project, framework, deploy, and verification steps.
+ */
+export const wizardHandler: CommandHandler = {
+  id: 'wizard',
+  name: 'Onboarding Wizard',
+  description: 'Guide first-run provider, project, framework, deploy, and verify steps',
+  category: 'workspace',
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    const frameworkRoot = await getFrameworkRoot();
+    const runner = createScriptRunner(frameworkRoot);
+
+    return runner.run('tools/cli/wizard.mjs', ctx.args, {
+      cwd: ctx.cwd,
+    });
+  },
+};
+
+/**
  * Handler for workspace migration command
  *
  * Migrates legacy .aiwg/ workspace structure to framework-scoped structure.
@@ -105,6 +128,7 @@ export const rollbackWorkspaceHandler: CommandHandler = {
  */
 export const workspaceHandlers: CommandHandler[] = [
   statusHandler,
+  wizardHandler,
   migrateWorkspaceHandler,
   rollbackWorkspaceHandler,
 ];

@@ -1,0 +1,31 @@
+{
+  "source": "/home/roctinam/dev/aiwg/docs/cli-reference.md",
+  "totalLines": 4634,
+  "chunkSize": 2000,
+  "overlap": 100,
+  "chunkDir": "/home/roctinam/dev/aiwg/.rlm-prep/cli-reference.md.chunks",
+  "chunks": [
+    {
+      "index": 0,
+      "start": 0,
+      "end": 1999,
+      "file": "/home/roctinam/dev/aiwg/.rlm-prep/cli-reference.md.chunks/chunk-0000.txt",
+      "lines": 2000
+    },
+    {
+      "index": 1,
+      "start": 1900,
+      "end": 3899,
+      "file": "/home/roctinam/dev/aiwg/.rlm-prep/cli-reference.md.chunks/chunk-0001.txt",
+      "lines": 2000
+    },
+    {
+      "index": 2,
+      "start": 3800,
+      "end": 4633,
+      "file": "/home/roctinam/dev/aiwg/.rlm-prep/cli-reference.md.chunks/chunk-0002.txt",
+      "lines": 834
+    }
+  ],
+  "createdAt": "2026-05-15T03:55:42.046Z"
+}

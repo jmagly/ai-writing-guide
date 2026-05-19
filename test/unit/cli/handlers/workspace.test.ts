@@ -23,6 +23,7 @@ vi.mock('../../../../src/channel/manager.mjs', () => ({
 
 import {
   statusHandler,
+  wizardHandler,
   migrateWorkspaceHandler,
   rollbackWorkspaceHandler,
   workspaceHandlers,
@@ -108,6 +109,28 @@ describe('statusHandler', () => {
   it('exits 0 on success', async () => {
     const result = await statusHandler.execute(makeCtx());
     expect(result.exitCode).toBe(0);
+  });
+});
+
+// ── wizardHandler ─────────────────────────────────────────────
+
+describe('wizardHandler', () => {
+  beforeEach(() => { vi.clearAllMocks(); mockRun.mockResolvedValue({ exitCode: 0 }); });
+
+  it('has correct metadata', () => {
+    expect(wizardHandler.id).toBe('wizard');
+    expect(wizardHandler.category).toBe('workspace');
+    expect(typeof wizardHandler.execute).toBe('function');
+  });
+
+  it('delegates to wizard.mjs', async () => {
+    const args = ['--dry-run', '--provider', 'codex', '--framework', 'sdlc'];
+    await wizardHandler.execute(makeCtx(args));
+    expect(mockRun).toHaveBeenCalledWith(
+      'tools/cli/wizard.mjs',
+      args,
+      expect.objectContaining({ cwd: '/mock/cwd' })
+    );
   });
 });
 
@@ -224,10 +247,11 @@ describe('rollbackWorkspaceHandler', () => {
 // ── workspaceHandlers array ───────────────────────────────────
 
 describe('workspaceHandlers', () => {
-  it('exports all 3 handlers', () => {
-    expect(workspaceHandlers).toHaveLength(3);
+  it('exports all 4 handlers', () => {
+    expect(workspaceHandlers).toHaveLength(4);
     const ids = workspaceHandlers.map(h => h.id);
     expect(ids).toContain('status');
+    expect(ids).toContain('wizard');
     expect(ids).toContain('migrate-workspace');
     expect(ids).toContain('rollback-workspace');
   });
