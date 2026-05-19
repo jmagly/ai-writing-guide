@@ -8,6 +8,8 @@ Find the scenario that matches where you are right now.
 
 | I want to... | Guide |
 |---|---|
+| Get one useful AIWG result before learning the whole system | [Start Here](start-here.md) |
+| Ask AIWG which path to use first | [Ask The Steward To Route You](first-success-ask-steward.md) |
 | Start a brand new project from scratch | [New Project](new-project.md) |
 | Bring AI up to speed on code I already have | [Existing Project](existing-project.md) |
 | Just try it and see what happens | [Quick Start — No Setup](just-try-it.md) |
@@ -45,6 +47,10 @@ Find the scenario that matches where you are right now.
 ## Not sure which one?
 
 Read the one-paragraph version of each below, then click the one that sounds right.
+
+**Start Here** — You are new to AIWG and want one useful result. Tell the agent what you are trying to do, preview `aiwg wizard --dry-run`, verify with `aiwg status --probe --json`, and follow one recommended path.
+
+**Ask The Steward To Route You** — You want AIWG to choose a path for your goal. Ask the steward for one recommendation, verify it with `aiwg discover`, and inspect the result before using it.
 
 **New Project** — You have an idea and want to kick off a real project with proper requirements, architecture, and a development plan. AIWG runs an intake conversation, generates the foundation docs, and assigns AI agents to each phase of the work.
 

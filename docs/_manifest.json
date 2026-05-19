@@ -29,7 +29,12 @@
   "order": [
     "welcome",
     "getting-started",
+    "getting-started/start-here",
     "getting-started/language-map",
+    "getting-started/first-success-ask-steward",
+    "getting-started/first-success-find-capability",
+    "getting-started/first-success-start-intake",
+    "getting-started/verify-aiwg-is-working",
     "overview/what-is-aiwg",
     "overview/executive-brief",
     "getting-started/prerequisites",
@@ -270,6 +275,48 @@
       "id": "getting-started",
       "title": "Getting Started",
       "summary": "Install and use AIWG"
+    },
+    {
+      "id": "getting-started/start-here",
+      "title": "Start Here",
+      "summary": "Beginner path from plain-language goal to first useful AIWG result",
+      "file": "getting-started/start-here.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "getting-started/language-map",
+      "title": "Beginner Language Map",
+      "summary": "Translate plain-language goals into AIWG discovery paths",
+      "file": "getting-started/language-map.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "getting-started/first-success-ask-steward",
+      "title": "Ask The Steward To Route You",
+      "summary": "First-success recipe for getting one AIWG recommendation from the steward",
+      "file": "getting-started/first-success-ask-steward.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "getting-started/first-success-find-capability",
+      "title": "Find One Capability",
+      "summary": "First-success recipe for finding one AIWG capability",
+      "file": "getting-started/first-success-find-capability.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "getting-started/first-success-start-intake",
+      "title": "Start A Project Intake",
+      "summary": "First-success recipe for starting an AIWG intake",
+      "file": "getting-started/first-success-start-intake.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "getting-started/verify-aiwg-is-working",
+      "title": "Verify AIWG Is Working",
+      "summary": "First-success recipe for verifying installation and discovery",
+      "file": "getting-started/verify-aiwg-is-working.md",
+      "parent": "getting-started"
     },
     {
       "id": "overview/what-is-aiwg",

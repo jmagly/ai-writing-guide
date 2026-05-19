@@ -2,11 +2,26 @@
 
 ## Not sure where to start?
 
+**[→ Start Here if AIWG is new to you](getting-started/start-here.md)**
+
 **[→ Find your scenario in the Getting Started guides](getting-started/README.md)**
 
 These cover the common situations in plain terms: new project, existing code, just trying it out, team setup, writing, auditing, automation.
 
+For a guided first run, use:
+
+```bash
+aiwg wizard --dry-run --goal "help me start a project"
+aiwg status --probe --json
+```
+
 If you can describe the goal but do not know the AIWG term for it, use the [Beginner Language Map](getting-started/language-map.md). Start by asking: "How best can we use AIWG for our situation?"
+
+First-success recipes:
+
+- [Ask the steward to route you](getting-started/first-success-ask-steward.md)
+- [Find one AIWG capability](getting-started/first-success-find-capability.md)
+- [Verify AIWG is working](getting-started/verify-aiwg-is-working.md)
 
 ---
 
