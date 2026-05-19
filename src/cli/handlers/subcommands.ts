@@ -272,7 +272,7 @@ export const listHandler: CommandHandler = {
         output += formatDeployedWorkspaceSignalPlan(plan);
       } else {
         output += '\nWorkspace skill filter: no recorded plan found.\n';
-        output += 'Run `aiwg use all` or `aiwg use --profile <name>` to record workspace-aware include/exclude reasons.\n';
+        output += 'Run `aiwg use --profile <name>` to record workspace-aware include/exclude reasons.\n';
       }
     }
 

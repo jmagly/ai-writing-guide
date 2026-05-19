@@ -99,7 +99,7 @@ describe('aiwg use — disallow list', () => {
 
 describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
   let projectDir: string;
-  const fullUseAllArgs = (target: string) => ['use', 'all', '--no-workspace-signals', '--target', target];
+  const fullUseAllArgs = (target: string) => ['use', 'all', '--target', target];
 
   beforeEach(async () => {
     projectDir = await makeProject();

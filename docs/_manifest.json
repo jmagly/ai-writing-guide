@@ -123,6 +123,8 @@
     "references/REF-003-agentic-development-antipatterns",
     "references/REF-066-mcp-specification-2025",
     "releases",
+    "releases/v2026.5.10-announcement",
+    "releases/v2026.5.9-announcement",
     "releases/v2026.5.8-announcement",
     "releases/v2026.5.7-announcement",
     "releases/v2026.5.6-announcement",
@@ -924,6 +926,13 @@
       "title": "Releases",
       "summary": "Release notes and changelog",
       "collapsed": true
+    },
+    {
+      "id": "releases/v2026.5.10-announcement",
+      "title": "v2026.5.10 — Beginner Onboarding Wizard + Docs",
+      "summary": "Guided onboarding wizard, deterministic workspace engagement status, and beginner docs for first-run success.",
+      "file": "releases/v2026.5.10-announcement.md",
+      "parent": "releases"
     },
     {
       "id": "releases/v2026.5.9-announcement",

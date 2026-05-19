@@ -1179,6 +1179,8 @@ export class UseHandler implements CommandHandler {
   aliases: string[] = [];
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    const explicitTarget = firstUsePositional(ctx.args);
+
     if (ctx.args.includes('--workspace-signals')) {
       const signalArgs = ctx.args.filter((a) => a !== '--workspace-signals');
       const profileIdx = signalArgs.findIndex((a) => a === '--profile');
@@ -1314,7 +1316,7 @@ export class UseHandler implements CommandHandler {
 
     const frameworkRoot = await getFrameworkRoot();
 
-    if (framework === 'all' && !remainingArgs.includes('--no-workspace-signals')) {
+    if (framework === 'all' && explicitTarget !== 'all' && !remainingArgs.includes('--no-workspace-signals')) {
       const profileIdx = remainingArgs.findIndex((a) => a === '--profile');
       const profile = profileIdx >= 0 && remainingArgs[profileIdx + 1]
         ? remainingArgs[profileIdx + 1]
@@ -1354,7 +1356,7 @@ export class UseHandler implements CommandHandler {
       if (selectedExtensions.length > 0) {
         ui.dim(`  Included extensions: ${selectedExtensions.join(', ')}`);
       }
-      ui.dim('  Use --no-workspace-signals to force the legacy full deployment.');
+      ui.dim('  Use `aiwg use all` for the full deployment.');
 
       for (const providerName of providersForFiltered) {
         for (const selected of selectedFrameworks) {

@@ -95,33 +95,33 @@ Independent of platform settings, you can reduce how many skills AIWG deploys.
 
 ### Workspace-aware deployment
 
-Use the default workspace-aware path:
-
-```bash
-aiwg use all
-```
-
-AIWG inspects the current project and deploys only matching bundles. It always
-keeps core lifecycle support (`sdlc`) and AIWG utility skills (`aiwg-utils`).
-
-To preview the decision without writing files:
+Preview the workspace-aware plan without writing files:
 
 ```bash
 aiwg use --workspace-signals
 ```
 
-To force a known profile:
+AIWG inspects the current project and deploys only matching bundles. It always
+keeps core lifecycle support (`sdlc`) and AIWG utility skills (`aiwg-utils`).
+
+To deploy a workspace-aware subset, choose a profile explicitly:
 
 ```bash
 aiwg use --profile forensics
-aiwg use all --profile research
-aiwg use all --profile marketing
+aiwg use --profile research
+aiwg use --profile marketing
 ```
 
-To force the legacy full install:
+To install everything:
 
 ```bash
-aiwg use all --no-workspace-signals
+aiwg use all
+```
+
+To skip utility addons during a full install:
+
+```bash
+aiwg use all --no-utils
 ```
 
 Current signals:

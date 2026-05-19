@@ -341,7 +341,7 @@ export function formatWorkspaceSignalPlan(plan: WorkspaceSignalPlan): string {
     for (const note of plan.notes) lines.push(`  - ${note}`);
   }
   lines.push('');
-  lines.push('No files were changed. Run `aiwg use all` to deploy this workspace-aware subset, or `aiwg use all --no-workspace-signals` for the legacy full deployment.');
+  lines.push('No files were changed. Run `aiwg use --profile <name>` to deploy a workspace-aware subset, or `aiwg use all` for the full deployment.');
   return lines.join('\n');
 }
 

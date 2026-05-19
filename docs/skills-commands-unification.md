@@ -1,7 +1,6 @@
 # Skills and Commands Unification Guide
 
-**Issues:** #288, #1381, #1382
-**Version:** 2026.5.9
+**Version:** 2026.5.10
 **Status:** Active
 
 ## Overview
@@ -45,7 +44,7 @@ AIWG deploys skills/commands to platform-specific directories. With unification:
     └── sdlc-accelerate/SKILL.md
 ```
 
-**Current standard**: skills are canonical. AIWG deploys a small kernel to the provider's native skill surface, hides the large standard tier behind `aiwg discover` / `aiwg show`, and mirrors only selected operator workflows into command/prompt surfaces where users expect `/` menu access. Kernel skills that are already visible natively must not also be mirrored as commands on skills-native providers; that causes duplicate slash entries (#1382).
+**Current standard**: skills are canonical. AIWG deploys a small kernel to the provider's native skill surface, hides the large standard tier behind `aiwg discover` / `aiwg show`, and mirrors only selected operator workflows into command/prompt surfaces where users expect `/` menu access. Kernel skills that are already visible natively must not also be mirrored as commands on skills-native providers; that causes duplicate slash entries.
 
 ### Argument Migration
 
@@ -162,7 +161,7 @@ For existing AIWG installations:
 
 ### Trigger Redesign (when migrating commands to skills)
 
-When converting `.claude/commands/` to `.claude/skills/` (see #548), the `## Triggers` section must follow the alternate-expression strategy (#555):
+When converting `.claude/commands/` to `.claude/skills/`, the `## Triggers` section must follow the alternate-expression strategy:
 
 1. **Write a strong `description:`** — this is the primary NL signal Claude uses for matching
 2. **Do NOT list primary phrases** — Claude matches these automatically from the description
