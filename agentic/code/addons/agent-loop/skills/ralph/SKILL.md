@@ -5,6 +5,11 @@ aliases: [ralph, agent-loop]
 deprecated_names: [ralph]
 platforms: [all]
 description: Execute iterative task loop until completion criteria are met - iteration beats perfection
+triggers:
+  - "help the AI not quit early"
+  - "use an iterative loop with a clear completion check"
+  - "define the task and completion criterion"
+  - "ralph loop"
 commandHint:
   argumentHint: '"<task>" [--completion "<criteria>"] [--max-iterations N] [--timeout M] [--interactive --guidance "text"] [--auto-criteria | --no-infer-completion]'
   allowedTools: "Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit"

@@ -3,6 +3,11 @@ namespace: aiwg
 name: orchestrate-project
 platforms: [all]
 description: Plan iterations, delegate to SDLC agents, and compile iteration status
+triggers:
+  - "help make this less chaotic"
+  - "help me impose a simple operating rhythm on this work"
+  - "pick one planning or status workflow"
+  - "orchestrate project"
 commandHint:
   argumentHint: <docs/sdlc/artifacts/project> [--interactive] [--guidance "text"]
   allowedTools: Read, Write, Grep, Glob
@@ -40,4 +45,3 @@ Coordinate lifecycle work for the current phase/iteration:
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md — Escalate blockers to human; do not autonomously resolve gate failures
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/sdlc-orchestration.md — Phase orchestration patterns this skill implements
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/skills/project-status/SKILL.md — Use for phase detection before dispatching agents
-

@@ -3,6 +3,11 @@ namespace: aiwg
 name: project-status
 platforms: [all]
 description: Cross-framework project status aggregator — discovers contributors from installed frameworks, runs declarative detection, produces a unified status report.
+triggers:
+  - "help me know what is next"
+  - "tell me where this project stands and what to do next"
+  - "generate or refresh project status"
+  - "project status"
 commandHint:
   argumentHint: "[project-directory=.] [--json] [--guidance \"text\"]"
   allowedTools: Read, Glob, Grep, Bash

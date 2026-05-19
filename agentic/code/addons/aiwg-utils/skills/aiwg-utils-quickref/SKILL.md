@@ -4,6 +4,11 @@ namespace: aiwg
 platforms: [all]
 kernel: true
 description: AUTO-INVOKE for ANY AIWG capability question, framework/addon/extension query, steward routing, MCP profile, or when unsure where to start. ALWAYS consult before filesystem search on .claude/.factory/.codex/.warp/etc. AIWG core utilities quick reference — always-on framing, steward, index, meta operations.
+triggers:
+  - "i do not know what AIWG has"
+  - "translate my goal into AIWG search terms"
+  - "run two or three aiwg discover searches"
+  - "capability discovery"
 ---
 
 # AIWG Core Utilities — Quick Reference

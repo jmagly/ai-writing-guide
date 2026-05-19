@@ -4,6 +4,11 @@ name: steward
 platforms: [all]
 kernel: true
 description: Provide provider capability awareness and route commands by answering what the current provider supports natively vs must emulate
+triggers:
+  - "help me choose what to use"
+  - "help me choose the right AIWG framework or skill"
+  - "ask for one recommended path and one fallback"
+  - "aiwg steward"
 ---
 
 # steward

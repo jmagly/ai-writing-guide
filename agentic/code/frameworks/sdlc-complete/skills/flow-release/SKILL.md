@@ -3,6 +3,11 @@ namespace: aiwg
 name: flow-release
 platforms: [all]
 description: Config-driven release orchestration — reads .aiwg/release.config and walks the project's declared gates (local build, CI green, doc-sync, changelog/announcement, README, release entry, post-release housekeeping)
+triggers:
+  - "help with CI builds or deployment"
+  - "help me make the build or deployment path safer"
+  - "start with pipeline safety or release readiness"
+  - "pipeline safety ci"
 commandHint:
   argumentHint: '<version> [--channel <stable|rc|beta|alpha|nightly>] [--dry-run] [--skip-uat] [--no-mirror] [--config <path>] [--guidance "text"]'
   allowedTools: 'Task, Read, Write, Edit, Bash, Glob, Grep, mcp__git-gitea__*'

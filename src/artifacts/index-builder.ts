@@ -212,7 +212,20 @@ function inferType(data: Record<string, unknown>, filePath: string): string {
  *
  * @implements #1214
  */
-export function extractTriggers(body: string): string[] {
+export function extractTriggers(body: string, frontmatter?: Record<string, unknown>): string[] {
+  const phrases: string[] = [];
+
+  const declaredTriggers = Array.isArray(frontmatter?.triggers)
+    ? frontmatter.triggers
+    : [];
+  for (const trigger of declaredTriggers) {
+    if (typeof trigger !== 'string') continue;
+    const phrase = trigger.trim().toLowerCase();
+    if (phrase.length === 0) continue;
+    if (phrase.length > 200) continue;
+    phrases.push(phrase);
+  }
+
   // Find a triggers heading (case-insensitive). Accepted variants:
   //   ## Triggers
   //   ## Natural Language Triggers   (used by orchestration skills)
@@ -224,10 +237,9 @@ export function extractTriggers(body: string): string[] {
   const sectionMatch = body.match(
     /(?:^|\n)##\s+(?:(?:Natural\s+Language\s+)?Triggers|Activation\s+Phrases|When\s+to\s+invoke)\b[^\n]*\n([\s\S]*?)(?=\n##\s|$)/i,
   );
-  if (!sectionMatch) return [];
+  if (!sectionMatch) return [...new Set(phrases)];
 
   const section = sectionMatch[1];
-  const phrases: string[] = [];
 
   for (const rawLine of section.split('\n')) {
     const line = rawLine.trim();
@@ -248,7 +260,7 @@ export function extractTriggers(body: string): string[] {
     phrases.push(phrase.toLowerCase());
   }
 
-  return phrases;
+  return [...new Set(phrases)];
 }
 
 /**
@@ -628,7 +640,7 @@ export async function buildIndex(
       // kinds. Kept undefined on other types so the index file stays
       // small for the common case.
       const isDiscoverable = type === 'skill' || type === 'agent' || type === 'command' || type === 'rule';
-      const triggers = isDiscoverable ? extractTriggers(body) : undefined;
+      const triggers = isDiscoverable ? extractTriggers(body, data) : undefined;
       const capability = isDiscoverable ? extractCapability(data, body) : undefined;
       const kernel =
         data.kernel === true || data.kernel === 'true' ? true : undefined;

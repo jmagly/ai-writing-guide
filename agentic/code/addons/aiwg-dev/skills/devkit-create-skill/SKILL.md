@@ -3,6 +3,11 @@ namespace: aiwg
 name: devkit-create-skill
 platforms: [all]
 description: Enable interactive design mode
+triggers:
+  - "help me build a custom workflow"
+  - "help me turn this repeated process into an AIWG workflow"
+  - "decide whether this is a skill agent addon or docs recipe"
+  - "skill architect"
 ---
 
 # Create AIWG Skill

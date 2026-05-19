@@ -3,6 +3,11 @@ namespace: aiwg
 name: test-coverage
 platforms: [all]
 description: Analyze test coverage reports, identify gaps by priority, and recommend test improvements with trend tracking
+triggers:
+  - "help check quality"
+  - "find the highest-risk quality gap first"
+  - "run a focused quality or test coverage check"
+  - "test coverage"
 
 ---
 

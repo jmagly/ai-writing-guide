@@ -3,6 +3,11 @@ namespace: aiwg
 name: intake-wizard
 platforms: [all]
 description: Generate or complete intake forms (project-intake, solution-profile, option-matrix) with interactive questioning and optional guidance
+triggers:
+  - "help me start a project"
+  - "help me turn this idea into a project plan"
+  - "start an intake for the project idea"
+  - "intake wizard"
 commandHint:
   argumentHint: <project-description|--complete> [--interactive] [--guidance "context"] [intake-directory=.aiwg/intake]
   allowedTools: Read, Write, Glob, TodoWrite

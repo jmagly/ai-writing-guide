@@ -4,6 +4,11 @@ namespace: aiwg
 platforms: [all]
 kernel: true
 description: AUTO-INVOKE when user mentions ops, runbook, inventory, audit trail, ops repo, sysops, devops, itops, infrastructure operations, fleet management. Ops framework quick reference — capability domains, extension model, and discovery phrases for runbooks, inventory, audit trail, verification.
+triggers:
+  - "help with infra or servers"
+  - "help me document and operate this infrastructure"
+  - "pick a runbook inventory or audit path"
+  - "ops runbook"
 ---
 
 # Ops Framework — Quick Reference

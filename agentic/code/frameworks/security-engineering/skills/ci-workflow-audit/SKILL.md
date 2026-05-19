@@ -3,6 +3,11 @@ namespace: aiwg
 name: ci-workflow-audit
 platforms: [all]
 description: Audit CI workflow files for supply-chain risk — unpinned actions, unpinned container images, pull_request-triggered jobs with secret access, curl-pipe-shell installers, and bare :latest tags. Produces a structured markdown report with file:line refs.
+triggers:
+  - "help with CI builds or deployment"
+  - "help me make the build or deployment path safer"
+  - "start with pipeline safety or release readiness"
+  - "pipeline safety ci"
 ---
 
 # ci-workflow-audit

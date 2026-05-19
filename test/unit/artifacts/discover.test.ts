@@ -77,6 +77,23 @@ Should be ignored.
     expect(extractTriggers('# Just a heading\n\nNo triggers here.')).toEqual([]);
   });
 
+  it('includes frontmatter trigger metadata without requiring a body section', () => {
+    expect(extractTriggers('# Skill\n\nNo trigger section here.', {
+      triggers: ['Help me start a project.', 'intake wizard'],
+    })).toEqual(['help me start a project.', 'intake wizard']);
+  });
+
+  it('deduplicates frontmatter and body trigger phrases', () => {
+    const body = `## Triggers
+
+- "intake wizard"
+- "start an intake"
+`;
+    expect(extractTriggers(body, {
+      triggers: ['Intake Wizard', 'Help me start a project.'],
+    })).toEqual(['intake wizard', 'help me start a project.', 'start an intake']);
+  });
+
   it('handles arrow-style explanation separators', () => {
     const body = `## Triggers
 

@@ -4,6 +4,11 @@ name: voice-apply
 description: Apply a voice profile to transform content. Use when the user asks to write in a specific voice, match a tone, or sound like a particular voice profile.
 version: 1.0.0
 platforms: [all]
+triggers:
+  - "help write better content"
+  - "help me make this writing clearer and consistent"
+  - "choose voice writing validation or marketing flow"
+  - "apply voice profile"
 
 ---
 

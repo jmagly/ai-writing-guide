@@ -3,6 +3,11 @@ namespace: aiwg
 name: security-assessment
 platforms: [all]
 description: Execute STRIDE threat modeling, vulnerability scanning, and security control validation with risk scoring
+triggers:
+  - "help with security"
+  - "help me find the right security review path"
+  - "start with a scoped security assessment"
+  - "security assessment"
 
 ---
 

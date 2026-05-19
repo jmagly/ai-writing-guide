@@ -3,6 +3,11 @@ namespace: aiwg
 name: research-workflow
 platforms: [all]
 description: Execute multi-stage research workflows
+triggers:
+  - "help with research papers"
+  - "help me build a cited research corpus"
+  - "start a research workflow or citation plan"
+  - "research workflow"
 commandHint:
   argumentHint: "[workflow-name] [--input parameters] [--stage n]"
   category: research-workflows

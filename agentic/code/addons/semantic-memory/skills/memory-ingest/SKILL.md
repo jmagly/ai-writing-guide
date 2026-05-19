@@ -4,6 +4,11 @@ description: Ingest a source into any consumer's semantic memory by reading the 
 namespace: aiwg
 category: kernel
 platforms: [claude, copilot, cursor, factory, windsurf, warp, codex, opencode, openclaw, hermes]
+triggers:
+  - "help my AI remember what we decided"
+  - "help me preserve project decisions between sessions"
+  - "choose memory KB or project artifact flow"
+  - "memory ingest"
 ---
 
 # memory-ingest
