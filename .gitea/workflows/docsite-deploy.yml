@@ -1,18 +1,37 @@
 # Doc Site Deploy
 #
-# Builds and deploys the documentation site on new release tags.
-# Runs independently from npm-publish and gitea-release workflows.
+# Builds and deploys the documentation site to docs.aiwg.io.
 #
-# Required secrets: GT_ACCESS_TOKEN, SSH_DEPLOY_KEY, DEPLOY_HOST, DEPLOY_PORT, DEPLOY_USER, DEPLOY_PATH
+# Triggers:
+#   1. Release tags (v*) — full release-aligned deploy with per-tag verify
+#   2. Pushes to main that change docs/ or this workflow — docs-only deploys
+#      between releases (no new version, no announcement, no tag)
+#   3. workflow_dispatch — manual operator-initiated deploy
+#
+# Required secrets: GT_ACCESS_TOKEN, DEPLOY_SSH_KEY, DEPLOY_HOST, DEPLOY_PORT, DEPLOY_USER, DEPLOY_PATH
 
 name: Docsite Deploy
 
 on:
   push:
     tags: ['v*']
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'package.json'                       # version footer substitution
+      - '.gitea/workflows/docsite-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why are you triggering this deploy? (logged to job output)'
+        required: false
+        type: string
+        default: 'Manual docs deploy'
 
 concurrency:
-  group: release
+  # Single group across tag releases and docs-only deploys so they
+  # serialize and never race against each other on the same target.
+  group: docsite-deploy
   cancel-in-progress: false
 
 jobs:
@@ -133,40 +152,62 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          EXPECTED_TAG: ${{ gitea.ref_name }}
+          GITEA_REF: ${{ gitea.ref }}
+          GITEA_REF_NAME: ${{ gitea.ref_name }}
+          GITEA_EVENT_NAME: ${{ gitea.event_name }}
         run: |
           set -euo pipefail
-          # Verify the release announcement section file for the
-          # current tag exists at the served path. The docs site is
-          # an SPA (dbbuilder output) — release content lives in
-          # `sections/releases--<tag>-announcement.js`, NOT in the
-          # static HTML files. An earlier draft of this verify greped
-          # index.html for the tag, which would have spuriously failed
-          # on every tag (the only v2026.* string in index.html is a
-          # hardcoded footer string in the dbbuilder template,
-          # currently pinned to v2026.5.0). The section-file check
-          # below tracks the actual per-release deliverable.
-          # See aiwg#1348-followup (2026-05-15).
-          SECTION_FILE="sections/releases--${EXPECTED_TAG}-announcement.js"
           DEPLOY_ROOT="${DEPLOY_PATH%/}/"
-          echo "Verifying ${SECTION_FILE} is present at ${DEPLOY_ROOT}"
-          ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
-            "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "if [ -f '${DEPLOY_ROOT}${SECTION_FILE}' ]; then
-               echo 'Deploy verified: ${SECTION_FILE} is on disk for ${EXPECTED_TAG}'
-             else
-               echo '::error::No section file for ${EXPECTED_TAG} at ${DEPLOY_ROOT}${SECTION_FILE}'
-               echo '  Either:'
-               echo '  - docs/releases/${EXPECTED_TAG}-announcement.md did not exist when this tag was built'
-               echo '  - dbbuilder did not generate the section (check build logs upstream)'
-               echo '  - rsync target differs from served path (check webserver doc root vs DEPLOY_ROOT)'
-               exit 1
-             fi
-             if [ -f '${DEPLOY_ROOT}index.html' ]; then
-               echo 'index.html present.'
-             else
-               echo '::warning::${DEPLOY_ROOT}index.html missing; release section deployed, but SPA shell appears to be managed outside DEPLOY_ROOT or by the edge/frontend layer.'
-             fi"
+
+          # Two verify modes:
+          #   - Tag mode (refs/tags/v*): existing per-release section-file
+          #     check — confirms docs/releases/<tag>-announcement.md was
+          #     built into sections/releases--<tag>-announcement.js and
+          #     landed on the served path.
+          #   - Branch / dispatch mode: docs-only deploy between releases.
+          #     No new section file is expected. Confirm the SPA shell
+          #     (index.html) and the sections/ directory are present.
+          if [[ "$GITEA_REF" == refs/tags/* ]]; then
+            MODE=tag
+            SECTION_FILE="sections/releases--${GITEA_REF_NAME}-announcement.js"
+            echo "Verify mode: tag — checking ${SECTION_FILE}"
+            ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
+              "${DEPLOY_USER}@${DEPLOY_HOST}" \
+              "if [ -f '${DEPLOY_ROOT}${SECTION_FILE}' ]; then
+                 echo 'Deploy verified: ${SECTION_FILE} is on disk for ${GITEA_REF_NAME}'
+               else
+                 echo '::error::No section file for ${GITEA_REF_NAME} at ${DEPLOY_ROOT}${SECTION_FILE}'
+                 echo '  Either:'
+                 echo '  - docs/releases/${GITEA_REF_NAME}-announcement.md did not exist when this tag was built'
+                 echo '  - dbbuilder did not generate the section (check build logs upstream)'
+                 echo '  - rsync target differs from served path (check webserver doc root vs DEPLOY_ROOT)'
+                 exit 1
+               fi
+               if [ -f '${DEPLOY_ROOT}index.html' ]; then
+                 echo 'index.html present.'
+               else
+                 echo '::warning::${DEPLOY_ROOT}index.html missing; release section deployed, but SPA shell appears to be managed outside DEPLOY_ROOT or by the edge/frontend layer.'
+               fi"
+          else
+            MODE=docs-only
+            echo "Verify mode: docs-only (ref=${GITEA_REF}, event=${GITEA_EVENT_NAME})"
+            ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
+              "${DEPLOY_USER}@${DEPLOY_HOST}" \
+              "set -e
+               if [ ! -f '${DEPLOY_ROOT}index.html' ]; then
+                 echo '::error::No index.html at ${DEPLOY_ROOT} — SPA shell missing after docs-only deploy'
+                 exit 1
+               fi
+               if [ ! -d '${DEPLOY_ROOT}sections' ]; then
+                 echo '::error::No sections/ directory at ${DEPLOY_ROOT} — dbbuilder output not deployed'
+                 exit 1
+               fi
+               SECTION_COUNT=\$(ls '${DEPLOY_ROOT}sections' | wc -l)
+               echo \"Docs-only deploy verified: index.html present, sections/ has \${SECTION_COUNT} entries.\"
+               echo 'Sample section files:'
+               ls '${DEPLOY_ROOT}sections' | head -5"
+          fi
+          echo "Verify completed (mode: ${MODE})"
 
       - name: Cleanup SSH key
         if: always()
@@ -174,7 +215,14 @@ jobs:
 
       - name: Log deployment result
         if: success()
+        env:
+          DISPATCH_REASON: ${{ inputs.reason }}
+          GITEA_EVENT_NAME: ${{ gitea.event_name }}
         run: |
           echo "Deployed docs.aiwg.io"
-          echo "Tag: ${{ gitea.ref }}"
+          echo "Ref: ${{ gitea.ref }}"
           echo "Commit: ${{ gitea.sha }}"
+          echo "Event: ${GITEA_EVENT_NAME}"
+          if [ "${GITEA_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${DISPATCH_REASON}" ]; then
+            echo "Reason: ${DISPATCH_REASON}"
+          fi
