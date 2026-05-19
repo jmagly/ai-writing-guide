@@ -64,17 +64,6 @@ get closer.
 
 The agent runs those queries itself and reports back.
 
-## Fallback: Provider Cannot Run CLI Commands
-
-When the AI tool cannot execute shell commands in-session, the agent will hand you the exact commands:
-
-```bash
-aiwg discover "<phrase>"
-aiwg show skill <name>
-```
-
-Run them from the project folder and paste the relevant output back into the chat. This is the exception path — most AIWG-supported providers can run the CLI without leaving the conversation.
-
 ## Next
 
 Use the capability only after the agent has inspected it. If it is an intake path, continue with [Start A Project Intake](first-success-start-intake.md).
