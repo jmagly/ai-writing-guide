@@ -54,7 +54,7 @@ The warning text MUST be readable by a user with no prior AIWG exposure and iden
 
 ### NFR-USE-02 — Wizard friction ceiling
 
-The wizard design (Workstream C) MUST have at most 2 friction points per step, as measured by Cognitive Walkthrough method (REF-158).
+The wizard design (Workstream C) MUST have at most 2 friction points per step, as measured by Cognitive Walkthrough method (REF-949).
 
 - **Verification:** Walkthrough record published with friction-point count per step
 
@@ -95,7 +95,7 @@ The list of project-signal files MUST be defined in a single location (not dupli
 
 ### NFR-MAINT-02 — Design docs reference research corpus
 
-All Workstream design docs (C, D, F) MUST cite at least one research-papers REF (the inductions filed in #607–#614) where applicable. Anti-pattern: design decisions without grounding.
+All Workstream design docs (C, D, F) MUST cite at least one research-papers REF (the inductions filed in REF-943-REF-950) where applicable. Anti-pattern: design decisions without grounding.
 
 - **Verification:** Design doc review checks citation presence
 
@@ -133,16 +133,16 @@ If Workstream G implements opt-in telemetry, the user MUST explicitly enable it 
 
 ### NFR-ACCESS-01 — Warning text WCAG cognitive compliance
 
-The warning text MUST comply with W3C Cognitive Accessibility guidance (REF-155):
+The warning text MUST comply with W3C Cognitive Accessibility guidance (REF-946):
 - Clear-step instructions (one action per sentence)
 - Predictable behavior (delay is announced)
 - Error recovery without cognitive penalty (Ctrl-C is a known cancellation)
 
-- **Verification:** Cognitive Walkthrough check against REF-155 patterns
+- **Verification:** Cognitive Walkthrough check against REF-946 patterns
 
 ## References
 
 - All UCs and user stories
 - Saved memory: `feedback_aiwg_branding_restraint`, `feedback_no_skill_copying`
-- Research: research-papers #610 (W3C Cognitive), #613 (Cognitive Walkthrough)
+- Research: REF-946 (W3C Cognitive), REF-949 (Cognitive Walkthrough)
 - Existing rules: `.claude/rules/no-attribution.md`, `.claude/rules/token-security.md`, `.claude/rules/activity-log.md`

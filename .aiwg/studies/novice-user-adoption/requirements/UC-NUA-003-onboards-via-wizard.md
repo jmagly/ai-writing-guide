@@ -66,7 +66,7 @@ Complete AIWG installation correctly without needing to read the CLI reference, 
 
 - [ ] Wizard is opt-in (default `aiwg use` behavior unchanged)
 - [ ] Wizard supports all 10 providers (degrades gracefully for any provider where detection fails)
-- [ ] Cognitive Walkthrough (REF-158) records ≤2 friction points per step in the final design
+- [ ] Cognitive Walkthrough (REF-949) records ≤2 friction points per step in the final design
 - [ ] Test prompt step confirms AIWG behavior is engaged before declaring success
 - [ ] Design doc is approved before implementation begins (implementation is a separate epic)
 
@@ -74,4 +74,4 @@ Complete AIWG installation correctly without needing to read the CLI reference, 
 
 - Workstream C
 - Parent: UC-NUA-001
-- Research: research-papers #608 (Nielsen heuristics), #611 (Zamfirescu-Pereira), #613 (Wharton et al. — Cognitive Walkthrough)
+- Research: REF-944 (Nielsen heuristics), REF-947 (Zamfirescu-Pereira), REF-949 (Wharton et al. — Cognitive Walkthrough)

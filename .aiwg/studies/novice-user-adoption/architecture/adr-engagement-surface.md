@@ -13,13 +13,13 @@ voice: technical-authority
 
 ## Status
 
-**PROPOSED** — pending Cognitive Walkthrough validation against `research-papers #613` / pending REF-158 and core-maintainer review.
+**PROPOSED** — pending Cognitive Walkthrough validation against `REF-949` and core-maintainer review.
 
 ## Context
 
 UC-NUA-006 captures a real user pain: when AIWG is engaged, the agent's behavior is distinctly different (better citations, scoped artifacts, framework-aware reasoning), but users often cannot articulate why or even confirm that AIWG is the cause. The result is miscalibrated trust — users either over-rely (assume AIWG output is always correct) or disregard (don't know AIWG is helping and ignore the quality differential).
 
-Lee & See (2004) — "Trust in Automation: Designing for Appropriate Reliance" (`research-papers #614` / pending REF-159) — frames this as a calibration problem. The design challenge is surfacing AIWG engagement enough that users develop appropriate reliance, without crossing into branding pollution.
+Lee & See (2004) — "Trust in Automation: Designing for Appropriate Reliance" (`REF-950`) — frames this as a calibration problem. The design challenge is surfacing AIWG engagement enough that users develop appropriate reliance, without crossing into branding pollution.
 
 The branding-pollution risk is concrete (risk R-002, priority 15). The existing `.claude/rules/no-attribution.md` rule already forbids AIWG attribution in user commits, code comments, file headers, and generated content. The engagement-surface design must operate strictly above this floor.
 
@@ -29,7 +29,7 @@ Three default surface options have been weighed:
 2. **Opt-in passive footer** — once-per-session footer or status line, off by default, configurable on
 3. **No surface** — invisible by default; quality differential is the only signal
 
-Co-Audit (Gordon et al. 2024; `research-papers #612` / pending REF-157) catalogs verification-UX patterns from Microsoft's production AI tools and supports the user-initiated-probe pattern as the strongest trust-calibration mechanism.
+Co-Audit (Gordon et al. 2024; `REF-948`) catalogs verification-UX patterns from Microsoft's production AI tools and supports the user-initiated-probe pattern as the strongest trust-calibration mechanism.
 
 ## Decision
 
@@ -99,7 +99,7 @@ Workstream F's design doc must include this checklist as a review gate.
 
 ## Cognitive Walkthrough Requirement
 
-Before Workstream F's design doc baselines, a Cognitive Walkthrough record (per `research-papers #613` / pending REF-158) must be produced covering:
+Before Workstream F's design doc baselines, a Cognitive Walkthrough record (per `REF-949`) must be produced covering:
 
 - The default invisible state (will users notice AIWG is engaged at all?)
 - The probe invocation flow (will users find and try the probe?)
@@ -115,8 +115,8 @@ Each walkthrough step records the four CW questions (will the user try the right
 - SAD §2.2 (Tension 1: Discoverability vs. Pollution), §6.1 (Trust calibration), §6.2 (Anti-pollution invariant)
 - Risk R-002: Branding pollution — mitigated by this ADR + Workstream F design doc enforcement
 - Research:
-  - `research-papers #614` / pending REF-159 (Lee & See, Trust in Automation)
-  - `research-papers #612` / pending REF-157 (Gordon et al., Co-Audit)
-  - `research-papers #613` / pending REF-158 (Wharton et al., Cognitive Walkthrough Method)
+  - `REF-950` (Lee & See, Trust in Automation)
+  - `REF-948` (Gordon et al., Co-Audit)
+  - `REF-949` (Wharton et al., Cognitive Walkthrough Method)
 - Existing rule: `.claude/rules/no-attribution.md` (architectural invariant)
 - Saved memory: `feedback_aiwg_branding_restraint`

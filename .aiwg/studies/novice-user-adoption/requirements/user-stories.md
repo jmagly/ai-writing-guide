@@ -102,7 +102,7 @@ User stories are scoped to the study's deliverables: the tactical implementation
 **So that** trust calibration is enabled without branding pollution
 
 **Acceptance criteria:**
-- [ ] Design doc references research-papers #612 (Co-Audit) and #614 (Lee & See)
+- [ ] Design doc references REF-948 (Co-Audit) and REF-950 (Lee & See)
 - [ ] Design doc explicitly forbids AIWG attribution in user content (commits, code comments, generated artifacts)
 - [ ] Design doc proposes on-demand probe as default, opt-in footer as alternative, no-surface as opt-out
 - [ ] Cognitive Walkthrough confirms users distinguish "engaged" from "intrusive"

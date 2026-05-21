@@ -95,6 +95,6 @@ If the walkthrough finds Question 1 fails (users don't think to run `aiwg wizard
 - Commissioning epic: `roctinam/aiwg#1334`
 - UC-NUA-003 (onboards via wizard)
 - SAD §10 (open architectural questions), §4.1.1 (Workstream C rationale)
-- Research: `research-papers #613` / pending REF-158 (Cognitive Walkthrough Method)
+- Research: `REF-949` (Cognitive Walkthrough Method)
 - Related ADRs: ADR-NUA-001 (global install), ADR-NUA-002 (engagement surface)
 - Existing commands: `aiwg discover`, `aiwg show`, `aiwg doctor`, `aiwg status` (naming-pattern precedent)

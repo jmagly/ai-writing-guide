@@ -83,7 +83,7 @@ graph TB
         Intake[Intake form]
         Risks[Risk screening]
         Profile[Solution profile]
-        Research[Research corpus<br/>#607-#614, REF-720]
+        Research[Research corpus<br/>REF-943-REF-950, REF-720]
     end
 
     subgraph Pre-Deploy
@@ -314,7 +314,7 @@ Acceptable outcomes include "no improvement warranted" (per R-004 mitigation). T
 
 ### 6.1 Trust-Calibration Framing
 
-Workstream F builds explicitly on **Lee & See (2004) — "Trust in Automation: Designing for Appropriate Reliance"** (filed as research-papers #614, pending REF-159). The framework defines three trust-calibration outcomes:
+Workstream F builds explicitly on **Lee & See (2004) — "Trust in Automation: Designing for Appropriate Reliance"** (REF-950). The framework defines three trust-calibration outcomes:
 
 - **Appropriate reliance** — user trusts the system when warranted and ignores it when not
 - **Over-trust / over-reliance** — user accepts incorrect output uncritically
@@ -322,7 +322,7 @@ Workstream F builds explicitly on **Lee & See (2004) — "Trust in Automation: D
 
 The engagement-surface design must support appropriate reliance: users who can recognize when AIWG is engaged develop calibrated expectations. The design must not push users toward over-reliance (the branding-pollution risk: "AIWG must be right, it's always announcing itself") or disuse (the invisibility risk: "I never know if it's helping, so I ignore it").
 
-Pair this with **Co-Audit (research-papers #612 / pending REF-158)** for the on-demand probe pattern: explicit user inquiry is the recommended primary surface; passive footers are an opt-in alternative; pushy attribution is the anti-pattern.
+Pair this with **Co-Audit (REF-948)** for the on-demand probe pattern: explicit user inquiry is the recommended primary surface; passive footers are an opt-in alternative; pushy attribution is the anti-pattern.
 
 ### 6.2 Anti-Pollution Invariant
 
@@ -341,7 +341,7 @@ All baselined study deliverables use the `technical-authority` voice profile per
 
 ### 6.4 Citation Discipline
 
-Eight research papers used for grounding are filed as induction issues (`research-papers #607–#614`) and have not yet finalized as REF-NNN entries. Workstream deliverables cite both forms: induction issue number + provisional REF reference. When inductions finalize, a citation-validate sweep across study artifacts updates REF-NNN references. No artifact baselines without this dual-citation pattern (R-010 mitigation).
+Eight research papers used for grounding have finalized as REF-943-REF-950. This citation-validate sweep updated the study artifacts to finalized REF-NNN references and removed the old induction-issue/provisional-REF dual-citation pattern. No artifact baselines with unresolved induction issue citations (R-010 mitigation).
 
 Existing REF citations (REF-720, REF-877, REF-878, REF-879) follow the standard citation-policy rule unchanged.
 
@@ -402,7 +402,7 @@ The three non-critical risks with priority ≥6 are also addressed:
 - **R-004** (null finding) — §5.2.4 explicitly permits "no improvement warranted" outcome
 - **R-005** (ADR conflict with field) — §7.3 plus Workstream D's continued-support guarantee for one CalVer cycle
 - **R-006** (static-audit recurrence) — §5.2.2 evidence-type taxonomy forbids static-only conclusions
-- **R-010** (citation drift) — §6.4 dual-citation pattern
+- **R-010** (citation drift) — §6.4 finalized-REF citation discipline
 
 ## 10. Open Architectural Questions (Deferred to ADRs)
 
@@ -434,7 +434,7 @@ Construction-level work that the study does not perform but enables for downstre
 - Intake form, solution profile, risk screening, LOM gate report (this study)
 - All UCs (UC-NUA-001 through UC-NUA-007) and user stories
 - NFR register
-- Research corpus: REF-720 (Lost in Multi-Turn Conversation, MSR/Salesforce 2025); REF-877/878/879 (tool-routing precision); induction issues `research-papers #607–#614` covering Krug, Norman, Nielsen heuristics, W3C cognitive accessibility, Zamfirescu-Pereira et al., Co-Audit, Cognitive Walkthrough, Lee & See
+- Research corpus: REF-720 (Lost in Multi-Turn Conversation, MSR/Salesforce 2025); REF-877/878/879 (tool-routing precision); REF-943-REF-950 covering Krug, Norman, Nielsen heuristics, W3C cognitive accessibility, Zamfirescu-Pereira et al., Co-Audit, Cognitive Walkthrough, Lee & See
 - Existing AIWG rules: `.claude/rules/no-attribution.md`, `.claude/rules/voice-framework.md`, `.claude/rules/activity-log.md`, `.claude/rules/citation-policy.md`
 - Saved memory rules: `feedback_no_platform_generalization`, `feedback_aiwg_branding_restraint`, `feedback_no_skill_copying`, `feedback_discovery_multi_hook`
 - Commissioning epic: `roctinam/aiwg#1334`

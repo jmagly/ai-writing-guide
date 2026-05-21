@@ -103,12 +103,12 @@ The SAD does not introduce out-of-scope elements. Specifically verified:
 
 **Verdict:** APPROVED-WITH-SUGGESTIONS
 
-The SAD uses dual-citation pattern (issue number + provisional REF) in most places, e.g., `research-papers #614 / pending REF-159`. Two inconsistencies:
+The SAD previously used a dual-citation pattern (issue number + provisional REF) in most places. Two inconsistencies were identified before synthesis:
 
-- §6.1 references "Co-Audit (research-papers #612 / pending REF-158)" — but REF-158 is the Cognitive Walkthrough Method, not Co-Audit. Co-Audit is induction #612 / pending REF-157. Cognitive Walkthrough is #613 / pending REF-158. Swap.
-- §12 references list is not exhaustive — REF-156 (Zamfirescu-Pereira / #611), REF-152–155 (Krug, Nielsen, Norman, W3C) are aggregated as "research corpus" without individual citation. Acceptable, but the synthesizer should make sure the body text matches §12.
+- §6.1 references "Co-Audit (REF-948)" — but REF-949 is the Cognitive Walkthrough Method, not Co-Audit. Co-Audit is REF-948. Cognitive Walkthrough is REF-949. Swap.
+- §12 references list is not exhaustive — REF-947 (Zamfirescu-Pereira) and REF-943-REF-946 (Krug, Nielsen, Norman, W3C) are aggregated as "research corpus" without individual citation. Acceptable, but the synthesizer should make sure the body text matches §12.
 
-**Suggestion:** Synthesizer must fix the §6.1 REF-157/158 swap during merge.
+**Suggestion:** Synthesizer must fix the §6.1 REF-948/REF-949 swap during merge.
 
 ## Traceability Gaps Table
 
@@ -118,7 +118,7 @@ The SAD uses dual-citation pattern (issue number + provisional REF) in most plac
 | Discord/Telegram comms not in §4.3 sequencing | Low | Add Week 4 step |
 | `activity-log` rule not in §12 references | Low | Add to references list |
 | Citation-validate sweep not in §11 ABM gate criteria | Low | Add as required item |
-| §6.1 REF-157 / REF-158 swap | Low | Fix during synthesis |
+| §6.1 REF-948 / REF-949 swap | Low | Fix during synthesis |
 
 ## Required Changes
 
@@ -131,10 +131,10 @@ None at CONDITIONAL or REJECTED level. All gaps resolvable in synthesis.
 3. §4.3 sequencing: add Week 4 Discord/Telegram comms execution for Workstream D
 4. §12 references: add `activity-log` rule
 5. §11 ABM gate criteria: add citation-validate sweep requirement
-6. §6.1: fix REF-157 (Co-Audit) / REF-158 (Cognitive Walkthrough) swap
+6. §6.1: fix REF-948 (Co-Audit) / REF-949 (Cognitive Walkthrough) swap
 
 ## References
 
 - SAD draft: `.aiwg/studies/novice-user-adoption/working/sad-draft.md`
 - All UCs, user stories, NFR register
-- Research-papers induction issues #607–#614
+- Research corpus REF-943-REF-950

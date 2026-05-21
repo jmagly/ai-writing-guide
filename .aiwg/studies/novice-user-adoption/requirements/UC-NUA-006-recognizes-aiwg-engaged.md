@@ -13,7 +13,7 @@ voice: technical-authority
 
 ## Reasoning
 
-1. **Problem analysis** — Users notice AIWG-engaged behavior is distinctly better but often cannot articulate why. Recognition matters for trust calibration (Lee & See, REF-159): users who can identify when AIWG is helping develop appropriate reliance, neither over-trusting nor disregarding.
+1. **Problem analysis** — Users notice AIWG-engaged behavior is distinctly better but often cannot articulate why. Recognition matters for trust calibration (Lee & See, REF-950): users who can identify when AIWG is helping develop appropriate reliance, neither over-trusting nor disregarding.
 2. **Constraint identification** — Surfacing AIWG identity too aggressively becomes pollution (project owner-flagged risk). Must distinguish "user can tell" from "AIWG is branded everywhere."
 3. **Alternative consideration** — Options: (a) explicit "AIWG engaged" status line per response — pollution risk; (b) once-per-session footer — acceptable; (c) on-demand status command (`aiwg status` or in-session probe) — explicit user-initiated; (d) no surface — relies on quality differential alone. Chose to defer between (b), (c), (d) in the design doc; lean toward (c) as default with (b) as opt-in.
 4. **Decision rationale** — User-initiated surfacing matches the trust-calibration framework: information available when sought, not pushed. Quality differential remains the primary signal.
@@ -56,7 +56,7 @@ Recognize, with appropriate confidence, when AIWG is engaged in the current sess
 
 ## Acceptance Criteria
 
-- [ ] Design doc baselined for Workstream F, citing research-papers #612 (Co-Audit), #614 (Lee & See)
+- [ ] Design doc baselined for Workstream F, citing REF-948 (Co-Audit), REF-950 (Lee & See)
 - [ ] Design doc includes explicit anti-pattern list (commits, code comments, generated content)
 - [ ] On-demand probe (`aiwg status` or equivalent) is the default surface
 - [ ] Opt-in footer is configurable per project and per user
@@ -68,5 +68,5 @@ Recognize, with appropriate confidence, when AIWG is engaged in the current sess
 - Workstream F
 - Parent: UC-NUA-001
 - Saved memory: `feedback_aiwg_branding_restraint`
-- Research: research-papers #612 (Co-Audit), #614 (Lee & See trust calibration)
+- Research: REF-948 (Co-Audit), REF-950 (Lee & See trust calibration)
 - Existing AIWG rule: `.claude/rules/no-attribution.md`

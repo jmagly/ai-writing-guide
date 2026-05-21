@@ -86,7 +86,7 @@ graph TB
         Intake[Intake form]
         Risks[Risk screening]
         Profile[Solution profile]
-        Research[Research corpus<br/>#607-#614, REF-720]
+        Research[Research corpus<br/>REF-943-REF-950, REF-720]
     end
 
     subgraph Pre-Deploy
@@ -148,9 +148,9 @@ graph TB
 
 These three workstreams produce design / ADR deliverables rather than implementation. Their architectural anchors:
 
-- **Workstream C — Wizard design.** Minimum content: invocation pattern (one of `aiwg wizard` / `aiwg use --wizard` / `aiwg new --interactive` with rationale); step-by-step flow with provider detection, project-root detection or creation, framework selection, deploy invocation, post-deploy verification probe; Cognitive Walkthrough record for each step (REF-158 / `research-papers #613`); explicit power-user opt-out path. NFR-USE-02 ceiling: ≤2 friction points per step.
+- **Workstream C — Wizard design.** Minimum content: invocation pattern (one of `aiwg wizard` / `aiwg use --wizard` / `aiwg new --interactive` with rationale); step-by-step flow with provider detection, project-root detection or creation, framework selection, deploy invocation, post-deploy verification probe; Cognitive Walkthrough record for each step (REF-949); explicit power-user opt-out path. NFR-USE-02 ceiling: ≤2 friction points per step.
 - **Workstream D — Global install ADR.** Minimum content: status decision (first-class vs. escape-hatch); rationale referencing REF-720 cross-context-bleed evidence; user-facing wording for the chosen status; continued-support guarantee for the non-chosen path through at least one CalVer cycle; Discord/Telegram comms plan to execute before merge.
-- **Workstream F — Engagement-surface design.** Minimum content: probe pattern (default: user-initiated `aiwg status` or equivalent); opt-in passive surface (footer); opt-out path; explicit anti-pattern list keyed to `no-attribution` invariant; trust-calibration analysis using Lee & See (`research-papers #614`) and Co-Audit (`research-papers #612`); Cognitive Walkthrough validation.
+- **Workstream F — Engagement-surface design.** Minimum content: probe pattern (default: user-initiated `aiwg status` or equivalent); opt-in passive surface (footer); opt-out path; explicit anti-pattern list keyed to `no-attribution` invariant; trust-calibration analysis using Lee & See (`REF-950`) and Co-Audit (`REF-948`); Cognitive Walkthrough validation.
 
 ### 4.2 Dependencies
 
@@ -328,7 +328,7 @@ The Workstream E audit (whose column is integrated into the matrix as "Read acce
 
 ### 6.1 Trust-Calibration Framing
 
-Workstream F builds explicitly on **Lee & See (2004) — "Trust in Automation: Designing for Appropriate Reliance"** (`research-papers #614`, pending REF-159). Three calibration outcomes:
+Workstream F builds explicitly on **Lee & See (2004) — "Trust in Automation: Designing for Appropriate Reliance"** (REF-950). Three calibration outcomes:
 
 - **Appropriate reliance** — user trusts the system when warranted and ignores it when not
 - **Over-trust / over-reliance** — user accepts incorrect output uncritically
@@ -336,9 +336,9 @@ Workstream F builds explicitly on **Lee & See (2004) — "Trust in Automation: D
 
 The engagement-surface design must support appropriate reliance: users who can recognize when AIWG is engaged develop calibrated expectations. The design must not push users toward over-reliance (the branding-pollution risk) or disuse (the invisibility risk).
 
-Pair this with **Co-Audit (Gordon et al. 2024; `research-papers #612`, pending REF-157)** for the on-demand probe pattern: explicit user inquiry is the recommended primary surface; passive footers are an opt-in alternative; pushy attribution is the anti-pattern.
+Pair this with **Co-Audit (Gordon et al. 2024; REF-948)** for the on-demand probe pattern: explicit user inquiry is the recommended primary surface; passive footers are an opt-in alternative; pushy attribution is the anti-pattern.
 
-**Cognitive Walkthrough method** (Wharton et al. 1994; `research-papers #613`, pending REF-158) is the pre-deployment evaluation method for any walk-up flow including the wizard (Workstream C) and engagement surface (Workstream F). The walkthrough record is the pre-deployment test artifact; downstream user-test records are a separate artifact class, deferred to the implementation epic.
+**Cognitive Walkthrough method** (Wharton et al. 1994; REF-949) is the pre-deployment evaluation method for any walk-up flow including the wizard (Workstream C) and engagement surface (Workstream F). The walkthrough record is the pre-deployment test artifact; downstream user-test records are a separate artifact class, deferred to the implementation epic.
 
 ### 6.2 Anti-Pollution Invariant
 
@@ -357,7 +357,7 @@ All baselined study deliverables use the `technical-authority` voice profile per
 
 ### 6.4 Citation Discipline
 
-Eight research papers used for grounding are filed as induction issues (`research-papers #607–#614`) and have not yet finalized as REF-NNN entries. Workstream deliverables cite both forms: induction issue number + provisional REF reference. When inductions finalize, a citation-validate sweep across study artifacts updates REF-NNN references. No artifact baselines without this dual-citation pattern (R-010 mitigation).
+Eight research papers used for grounding have finalized as REF-943-REF-950. This citation-validate sweep updated the study artifacts to finalized REF-NNN references and removed the old induction-issue/provisional-REF dual-citation pattern. No artifact baselines with unresolved induction issue citations (R-010 mitigation).
 
 Existing REF citations (REF-720, REF-877, REF-878, REF-879) follow the standard citation-policy rule unchanged.
 
@@ -435,7 +435,7 @@ The mandatory ADRs are D and F. The three optional records use the `ADR-equivale
 
 ## 11. ABM Gate Criteria
 
-This SAD plus its three reviewer-cycle outputs (security, test, requirements analyst) plus the mandatory ADRs (D, F) plus the master test strategy constitute the artifact set for the **Architecture Baseline Milestone (ABM)** gate. Additional gate requirement: **citation-validate sweep** — when research-papers inductions #607–#614 finalize as REF-NNN, run a sweep across study artifacts updating REF references and removing the dual-citation pattern. Sweep must complete before any downstream construction epic baselines its own artifacts that reference the study.
+This SAD plus its three reviewer-cycle outputs (security, test, requirements analyst) plus the mandatory ADRs (D, F) plus the master test strategy constitute the artifact set for the **Architecture Baseline Milestone (ABM)** gate. Additional gate requirement: **citation-validate sweep** — after research-papers inductions finalize as REF-NNN, run a sweep across study artifacts updating REF references and removing the dual-citation pattern. The sweep is complete for REF-943-REF-950.
 
 The commissioning epic requires hard-stopping at ABM; no construction-prep work follows.
 
@@ -454,14 +454,14 @@ Construction-level work the study enables but does not perform:
 - Research corpus:
   - REF-720 (Lost in Multi-Turn Conversation, MSR/Salesforce 2025)
   - REF-877/878/879 (tool-routing precision)
-  - `research-papers #607` / pending REF-152 (Krug)
-  - `research-papers #608` / pending REF-153 (Nielsen heuristics)
-  - `research-papers #609` / pending REF-154 (Norman)
-  - `research-papers #610` / pending REF-155 (W3C cognitive accessibility)
-  - `research-papers #611` / pending REF-156 (Zamfirescu-Pereira)
-  - `research-papers #612` / pending REF-157 (Co-Audit)
-  - `research-papers #613` / pending REF-158 (Cognitive Walkthrough)
-  - `research-papers #614` / pending REF-159 (Lee & See)
+  - `REF-943` (Krug)
+  - `REF-944` (Nielsen heuristics)
+  - `REF-945` (Norman)
+  - `REF-946` (W3C cognitive accessibility)
+  - `REF-947` (Zamfirescu-Pereira)
+  - `REF-948` (Co-Audit)
+  - `REF-949` (Cognitive Walkthrough)
+  - `REF-950` (Lee & See)
 - Existing AIWG rules:
   - `.claude/rules/no-attribution.md`
   - `.claude/rules/voice-framework.md`

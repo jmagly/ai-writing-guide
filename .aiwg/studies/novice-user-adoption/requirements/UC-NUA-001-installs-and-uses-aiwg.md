@@ -69,4 +69,4 @@ Get AIWG operating correctly in the user's project so that AI sessions in that p
 
 - Parent journey: epic roctinam/aiwg#1334
 - Child UCs: UC-NUA-002 through UC-NUA-007
-- Research: research-papers #607 (Krug, self-evidence), #611 (Zamfirescu-Pereira, novice failure modes)
+- Research: REF-943 (Krug, self-evidence), REF-947 (Zamfirescu-Pereira, novice failure modes)

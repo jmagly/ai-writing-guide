@@ -73,4 +73,4 @@ Receive clear feedback when running `aiwg use` outside a project directory, so t
 
 - Workstream B
 - Parent: UC-NUA-001
-- Research: research-papers #607 (Krug, error prevention), #608 (Nielsen heuristic #5)
+- Research: REF-943 (Krug, error prevention), REF-944 (Nielsen heuristic #5)

@@ -28,13 +28,13 @@ Measurable outcomes that define study success:
 
 2. **Project-isolation warning shipped.** A non-blocking warning in `aiwg use` when `cwd` lacks project signals (no `.git/`, no `package.json`/`pyproject.toml`/`Cargo.toml`/etc., or `cwd` is `$HOME` or `/`). Pass: warning lands in main, does not block, is configurable to silence.
 
-3. **Wizard flow design doc.** A written design document for a `aiwg wizard` (or equivalent) onboarding flow. Pass: design doc reviewed against Cognitive Walkthrough method (REF-158) with at least one walkthrough recorded.
+3. **Wizard flow design doc.** A written design document for a `aiwg wizard` (or equivalent) onboarding flow. Pass: design doc reviewed against Cognitive Walkthrough method (REF-949) with at least one walkthrough recorded.
 
 4. **Global install decision.** A documented architecture decision (ADR) on whether global-install (`aiwg use --scope user`) is a first-class supported flow or a discouraged escape hatch. Pass: ADR baselined; rough edges either fixed or explicit guidance directing users to project-scoped install.
 
 5. **Discovery-agent bolster.** Identifiable improvement to the `aiwg-finder` subagent-dispatch path — the discovery hook the project owner flagged as "might need more bolstering." Pass: measurable improvement in recall or invocation rate, OR documented finding that no improvement is warranted.
 
-6. **AIWG-engagement surface decision.** A documented design decision on how to surface "AIWG is engaged" to users without crossing into branding pollution. Pass: design doc referencing Co-Audit (REF-157) and Lee & See (REF-159) trust-calibration framework.
+6. **AIWG-engagement surface decision.** A documented design decision on how to surface "AIWG is engaged" to users without crossing into branding pollution. Pass: design doc referencing Co-Audit (REF-948) and Lee & See (REF-950) trust-calibration framework.
 
 ## Stakeholders
 
@@ -84,5 +84,5 @@ Discovery reaches agents through four parallel hooks: (1) rule files, (2) primar
 ## References
 
 - Commissioning epic: roctinam/aiwg#1334
-- Research support: research-papers #607–#613 (UX foundations), #614 (Lee & See trust calibration); existing corpus REF-720, REF-006/158, REF-877/878/879
+- Research support: REF-943-REF-950 (UX foundations and Lee & See trust calibration); existing corpus REF-720, REF-877, REF-878, REF-879
 - Field state: Claude Code and Codex confirmed working; other platforms get good user feedback but per-platform validation needed

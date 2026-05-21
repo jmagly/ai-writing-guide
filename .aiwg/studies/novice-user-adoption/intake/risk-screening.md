@@ -34,7 +34,7 @@ Risks are scored on a 1–5 scale for likelihood (L) and impact (I); priority = 
 | Impact | 5 |
 | Priority | 15 (CRITICAL) |
 | Description | The engagement-surface design (Workstream F) may inadvertently push "AIWG" identification into user code, commits, or generated content. This violates the existing `no-attribution` rule and erodes user trust by making AIWG feel intrusive. |
-| Mitigation | Workstream F deliverable must include explicit anti-pattern guardrails. ADR required. Cognitive Walkthrough of any engagement surface must include a "does this leak AIWG identity into user output" check question. Reference research-papers #614 Lee & See for calibrated-trust framing. |
+| Mitigation | Workstream F deliverable must include explicit anti-pattern guardrails. ADR required. Cognitive Walkthrough of any engagement surface must include a "does this leak AIWG identity into user output" check question. Reference REF-950 Lee & See for calibrated-trust framing. |
 | Owner | Workstream F lead |
 
 ### R-003: Wizard adds friction that degrades power-user UX
@@ -129,8 +129,8 @@ Risks are scored on a 1–5 scale for likelihood (L) and impact (I); priority = 
 | Likelihood | 2 |
 | Impact | 3 |
 | Priority | 6 (HIGH) |
-| Description | The study leans heavily on research-papers REF-152 through REF-159 (some not yet finalized — currently filed as induction issues #607–#614). If any induction is rejected or the REF number changes during finalization, study deliverables will contain broken citations. |
-| Mitigation | Cite both the induction issue number AND the proposed REF-NNN. When inductions finalize, run a citation-validate sweep across study artifacts and update REF-NNN references. Quality gate: no study artifact baselines until the citation-validation step completes. |
+| Description | The study leans heavily on research-papers REF-943 through REF-950. If any reference is renamed or removed, study deliverables will contain broken citations. |
+| Mitigation | Citation-validate sweep completed after induction finalization. Quality gate: no study artifact baselines with unresolved or broken REF references. |
 | Owner | Study lead |
 
 ## Critical Risks Summary (Priority ≥12)

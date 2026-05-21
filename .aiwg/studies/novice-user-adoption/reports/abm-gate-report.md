@@ -99,7 +99,7 @@ Total: 15 suggestions, all incorporated into the baselined SAD. No CONDITIONAL o
 | R-007 Empirical ambiguity | P=6 (high) | P=6 | Accepted; informal-but-directional data acceptable per Workstream G design |
 | R-008 Scope creep into framework redesign | P=6 (high) | P=3 | Mitigated; out-of-scope discipline in SAD §11 |
 | R-009 Voice/authenticity drift | P=4 (medium) | P=2 | Mitigated; `/writing-validator` baseline gate per SAD §6.3 |
-| R-010 Citation drift | P=6 (high) | P=2 | Mitigated; dual-citation pattern per SAD §6.4 + ABM citation-validate sweep gate |
+| R-010 Citation drift | P=6 (high) | P=2 | Mitigated; finalized-REF citation discipline per SAD §6.4 + completed ABM citation-validate sweep gate |
 
 No risk remains critical (P≥12). No risk is unmitigable.
 
@@ -125,7 +125,7 @@ The study's outputs feed at least the following downstream epics, to be filed se
 4. **Per-platform hookup remediation epic** — address each "no hook fires" finding from Workstream A's matrix
 5. **Global-install hardening epic** — address Workstream D's rough-edge inventory per ADR-NUA-001
 6. **Provider read-access remediation epic** — fix each `FAILURE` or `ALLOWED` finding from Workstream E
-7. **Research-corpus finalization** — promote `research-papers #607–#614` from induction to REF-NNN; run citation-validate sweep across study artifacts (this is also an ABM gate item per the test strategy)
+7. **Research-corpus finalization** — REF-943-REF-950 have finalized; citation-validate sweep across study artifacts is complete (this is also an ABM gate item per the test strategy)
 
 Each of these is a downstream construction effort, separately commissioned, with its own intake → SDLC cycle as appropriate.
 
@@ -147,4 +147,4 @@ Per the explicit user instruction: "stop when the elaboration to construction fl
 - Reviews: `working/sad-review-{security,testability,traceability}.md`
 - Risk baseline: `intake/risk-screening.md`
 - Commissioning: `roctinam/aiwg#1334`
-- Research-papers inductions: #607–#614
+- Research-papers inductions: REF-943-REF-950

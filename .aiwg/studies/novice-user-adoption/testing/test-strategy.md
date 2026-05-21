@@ -100,7 +100,7 @@ For each design doc deliverable from Workstreams C (wizard) and F (engagement su
 
 ### 5.1 Walkthrough Protocol
 
-Per Wharton et al. (1994) — `research-papers #613` / pending REF-158:
+Per Wharton et al. (1994) — `REF-949`:
 
 For each step in the user flow, answer four questions:
 
@@ -162,7 +162,7 @@ A NULL outcome (data inconclusive) is acceptable — must be documented with the
 For every baselined study artifact:
 
 - **Voice check** — run `/writing-validator` against artifact; fix any flagged AI-pattern markers before baselining (R-009)
-- **Citation check** — verify dual-citation pattern (issue number + provisional REF) for any `research-papers #6XX` reference; fix any mismatch (R-010)
+- **Citation check** — verify study references resolve to finalized REF identifiers; fix any mismatch (R-010)
 
 This is a baseline-gate, not a separate test artifact, but the gate decision must be recorded in the artifact's frontmatter or commit message.
 
@@ -193,5 +193,5 @@ This strategy provides all six items. The Workstream-level test execution is dow
 - SAD §5.1.5 (Workstream B test strategy), §5.2.2 (evidence-type taxonomy), §6.3 (voice control)
 - All UCs, user stories, NFR register
 - ADRs: ADR-NUA-001, ADR-NUA-002
-- Research: `research-papers #613` / pending REF-158 (Cognitive Walkthrough Method)
+- Research: `REF-949` (Cognitive Walkthrough Method)
 - Existing rules: `.claude/rules/voice-framework.md`, `.claude/rules/citation-policy.md`, `.claude/rules/activity-log.md`

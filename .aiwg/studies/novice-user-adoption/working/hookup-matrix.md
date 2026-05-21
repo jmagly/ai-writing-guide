@@ -4,10 +4,10 @@ study: novice-user-adoption
 workstream: A
 related_uc: [UC-NUA-005, UC-NUA-007]
 related_issue: "#1336"
-status: partial-pass-with-findings
+status: partial-pass-deferred-to-field-validation
 phase: construction
 created: 2026-05-14
-updated: 2026-05-14
+updated: 2026-05-19
 voice: technical-authority
 ---
 
@@ -15,21 +15,36 @@ voice: technical-authority
 
 ## Status
 
-**PARTIAL-PASS WITH DEPLOYMENT FINDINGS.** Matrix structure complete. Two providers (Claude Code, Cursor) have field-validated or deployment-scripted "fires" evidence. Eight providers now have deployment-scripted evidence at the artifact-presence level — strictly stronger than the original "static-flagged" rows — but their agent-behavior remains unverified pending sessions on each platform.
+**PARTIAL-PASS; BEHAVIORAL FIELD VALIDATION MOVED TO #1405.** Matrix structure is complete and structural deployment parity has been fixed. Current local inspection confirms the discover-first protocol is present in generated provider/context artifacts, and the earlier deployment gaps have follow-up/resolution history below. The remaining acceptance gap is behavioral provider-session evidence: the agent must be observed in each provider session, not inferred from files.
 
-**Audit cycle 2 (this update)** surfaced a concrete deployment gap: the `skill-discovery` rule is deployed to 2 of 10 providers, and the aggregated config bridges (`AIWG.md`, `WARP.md`, `copilot-instructions.md`) don't reference the discover-first protocol. This is the kind of finding the matrix exists to produce.
+Per-provider validation has been split into dedicated runnable issues:
+
+| Provider | Issue |
+|---|---|
+| Claude Code | #1414 |
+| Codex | #1406 |
+| GitHub Copilot | #1407 |
+| Cursor | #1415 |
+| Factory | #1408 |
+| OpenCode | #1409 |
+| Windsurf | #1410 |
+| Warp | #1411 |
+| OpenClaw | #1412 |
+| Hermes | #1413 |
+
+Roll-up: #1405.
 
 | Acceptance criterion | Target | Actual (after this update) | Status |
 |---|---|---|---|
 | Matrix covers all 10 providers | 10 | 10 | ✅ Structure |
-| ≥40 of 50 cells with non-`static-flagged` evidence | 40/50 | 40/50 | ✅ Threshold met (deployment-scripted) |
-| ≥8 of 10 providers with field-validated evidence | 8/10 | 2/10 field-validated; 8/10 deployment-scripted | ⚠️ Field-validation still 2/10 |
-| Discovery-agent column verdict per platform | 10 | 10 | ✅ Provisional null-finding documented |
-| Each "no hook fires" finding produces follow-up issue | n/a | 1 finding filed (rule-deployment gap) | ✅ |
+| ≥40 of 50 cells with non-`static-flagged` evidence | 40/50 | 50/50 | ✅ Threshold met (deployment-scripted or better) |
+| ≥8 of 10 providers with field-validated evidence | 8/10 | 2/10 field/session evidence; remaining providers split to #1406-#1413 | ⚠️ Deferred to #1405 |
+| Discovery-agent column verdict per platform | 10 | 10 | ✅ Provisional null-finding documented; behavioral proof deferred |
+| Each "no hook fires" finding produces follow-up issue | n/a | Structural findings filed/resolved; behavioral findings deferred to per-provider issues | ✅ |
 | Discovery-agent bolster recommendation | yes | yes | ✅ |
 | Matrix published | yes | yes | ✅ |
 
-**Verdict: PARTIAL-PASS.** Deployment-scripted evidence covers the matrix threshold; field-validation (agent-behavior-on-platform) remains 2/10 and requires sessions on each unvalidated provider.
+**Verdict: PARTIAL-PASS / DEFERRED FIELD VALIDATION.** #1336 is complete as the structural and deployment-scripted audit matrix. The remaining work requires real provider sessions and is tracked in #1405 and its per-provider children.
 
 ## Evidence Type Definitions (per SAD §5.2.2)
 
@@ -44,7 +59,9 @@ voice: technical-authority
 
 `deployment-scripted` is an explicit evidence-type addition introduced in this audit cycle. It captures the intermediate state between "we have a hypothesis" (static-flagged) and "we observed it work in a session" (manual/scripted). The matrix now reports both layers honestly.
 
-## The Matrix
+## Historical Matrix (Cycle 2, Before Parity Fixes)
+
+This table records the cycle-2 audit state that produced the structural deployment findings. Later comments and the resolution-status sections below document the parity fixes. Use the Status section above for the current ownership split: structural audit complete here, behavioral provider-session validation in #1405.
 
 Cell format: `<evidence-type>: <result>` where result is `fires / partial / unverified / doesn't-fire / no-channel-deployed`.
 
@@ -172,7 +189,23 @@ This strengthens the null-finding. The recommendation remains: do not bolster th
 
 **Verdict: PARTIAL-PASS.** Deployment-scripted evidence covers all 50 cells (zero static-flagged remain). Field-validation gap (2/10) is the next bar; deployment-evidence findings are now actionable as follow-up implementation issues.
 
-## Follow-Up Issues to File
+## Follow-Up Issues
+
+The original cycle-2 structural follow-ups were filed and resolved through later parity work. The remaining behavioral provider-session work is now split across all 10 supported providers as:
+
+- #1405 — roll-up field-validation sprint.
+- #1414 — Claude Code.
+- #1406 — Codex.
+- #1407 — GitHub Copilot.
+- #1415 — Cursor.
+- #1408 — Factory.
+- #1409 — OpenCode.
+- #1410 — Windsurf.
+- #1411 — Warp.
+- #1412 — OpenClaw.
+- #1413 — Hermes.
+
+Historical structural follow-up descriptions from cycle 2 are retained below for audit provenance.
 
 ### Issue 1 — Deploy `skill-discovery` rule to all 8 missing providers
 
@@ -198,9 +231,9 @@ Title: `Field-validate hookup matrix on Codex, Copilot, Cursor, Factory, OpenCod
 Labels: `audit: hookup-matrix`, `priority: P1`
 Body: scripted-task protocol from this matrix's §"Field-Validation Method"; coordinated with #1339 (read-access audit shares same protocol).
 
-## Field-Validation Method (unchanged from cycle 1)
+## Field-Validation Method (moved to #1405)
 
-Per evidence-type taxonomy (SAD §5.2.2), each cell needs one of: scripted / manual / field-feedback / telemetry.
+Per evidence-type taxonomy (SAD §5.2.2), each field-validated provider needs one of: scripted / manual / field-feedback / telemetry. The runnable provider-session protocol now lives in #1405 and child issues #1406-#1413.
 
 ### Recommended scripted-task protocol (one task per provider)
 

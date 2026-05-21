@@ -63,7 +63,7 @@ The study must navigate three tensions, each warranting an ADR:
 
 ### Tension 1: Discoverability vs. Pollution
 
-Surfacing AIWG engagement helps user trust calibration (Workstream F per Lee & See, REF-159). Too much surfacing becomes branding pollution of user content. Resolution: minimal status surface with explicit anti-pattern guardrails (no commit attribution, no code-comment injection).
+Surfacing AIWG engagement helps user trust calibration (Workstream F per Lee & See, REF-950). Too much surfacing becomes branding pollution of user content. Resolution: minimal status surface with explicit anti-pattern guardrails (no commit attribution, no code-comment injection).
 
 ### Tension 2: Wizard vs. Default-Path Friction
 

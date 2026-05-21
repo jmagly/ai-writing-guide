@@ -259,7 +259,7 @@ The engagement-surface design ships independently of A's completion; the per-pro
 | Acceptance criterion | Status |
 |---|---|
 | Design doc baselined | ✅ This document |
-| References `research-papers #612` (Co-Audit) and `research-papers #614` (Lee & See) | ✅ Both cited |
+| References `REF-948` (Co-Audit) and `REF-950` (Lee & See) | ✅ Both cited |
 | Anti-pattern list explicit, verified vs `no-attribution` rule | ✅ Above table cross-references existing enforcement |
 | CW record for: default invisible, probe invocation, opt-in footer, opt-out | ✅ All four walked |
 | Walkthrough confirms users distinguish "engaged" from "intrusive" | ✅ §"Distinguishing 'Engaged' from 'Intrusive'" |
@@ -271,7 +271,7 @@ The engagement-surface design ships independently of A's completion; the per-pro
 - ADR-NUA-002: `../architecture/adr-engagement-surface.md`
 - SAD §6.1 (trust calibration), §6.2 (anti-pollution invariant), §9 (R-002 mitigation)
 - `.claude/rules/no-attribution.md` — architectural invariant (cross-referenced, not modified)
-- Lee, J. D., & See, K. A. (2004). *Trust in Automation: Designing for Appropriate Reliance.* Human Factors, 46(1), 50-80. — `research-papers #614` / pending REF-159
-- Gordon, A. S., et al. (2025). *Co-Audit.* — `research-papers #612` / pending REF-157
-- Wharton, C., Rieman, J., Lewis, C., & Polson, P. (1994). *The Cognitive Walkthrough Method.* — `research-papers #613` / pending REF-158
+- Lee, J. D., & See, K. A. (2004). *Trust in Automation: Designing for Appropriate Reliance.* Human Factors, 46(1), 50-80. — `REF-950`
+- Gordon, A. S., et al. (2025). *Co-Audit.* — `REF-948`
+- Wharton, C., Rieman, J., Lewis, C., & Polson, P. (1994). *The Cognitive Walkthrough Method.* — `REF-949`
 - Saved memory: `feedback_aiwg_branding_restraint`

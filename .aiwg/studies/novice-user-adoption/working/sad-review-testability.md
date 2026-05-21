@@ -42,7 +42,7 @@ The test strategy at §5.1.5 enumerates the right tests. No gap.
 
 **Verdict:** APPROVED-WITH-SUGGESTIONS
 
-Cognitive Walkthrough (REF-158) is appropriate as a pre-deployment design test. It is **not** a substitute for user testing — it predicts where users will struggle, not whether they actually struggle.
+Cognitive Walkthrough (REF-949) is appropriate as a pre-deployment design test. It is **not** a substitute for user testing — it predicts where users will struggle, not whether they actually struggle.
 
 **Suggestion:** The SAD should distinguish:
 - **Cognitive Walkthrough records** — pre-deployment test artifact (4 questions × N steps)
@@ -102,4 +102,4 @@ None. All concerns resolved at APPROVED or APPROVED-WITH-SUGGESTIONS level.
 
 - SAD draft: `.aiwg/studies/novice-user-adoption/working/sad-draft.md`
 - UCs, user stories, NFR register
-- Research: research-papers #613 (Cognitive Walkthrough method)
+- Research: REF-949 (Cognitive Walkthrough method)
