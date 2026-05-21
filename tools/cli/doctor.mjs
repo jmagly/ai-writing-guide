@@ -546,6 +546,75 @@ async function runDoctor() {
     }
   }
 
+  // 5b. CLAUDE.md @AIWG.md hook check (#1437).
+  // When claude is in the providers-to-check list AND the workspace has an
+  // AIWG.md at the project root, verify CLAUDE.md exists AND contains the
+  // AIWG-managed marker block. If not, point the operator at `aiwg regenerate`.
+  if (providersToCheck.includes('claude')) {
+    const projectRoot = process.cwd();
+    const aiwgMd = path.join(projectRoot, 'AIWG.md');
+    const claudeMd = path.join(projectRoot, 'CLAUDE.md');
+    const hasAiwgMd = await fileExists(aiwgMd);
+
+    if (hasAiwgMd) {
+      const hasClaudeMd = await fileExists(claudeMd);
+      if (!hasClaudeMd) {
+        check(
+          'Claude CLAUDE.md hook',
+          'warn',
+          'AIWG.md exists at project root but CLAUDE.md is missing. Run `aiwg regenerate` to create it with the @AIWG.md include.',
+        );
+      } else {
+        try {
+          const claudeContent = await fs.readFile(claudeMd, 'utf-8');
+          const hasStart = claudeContent.includes('<!-- AIWG:claude-md-hook:start -->');
+          const hasEnd = claudeContent.includes('<!-- AIWG:claude-md-hook:end -->');
+          const hasInclude = /^@AIWG\.md\s*$/m.test(claudeContent);
+
+          if (hasStart && hasEnd) {
+            // Marker block present — verify @AIWG.md include is inside it.
+            const startIdx = claudeContent.indexOf('<!-- AIWG:claude-md-hook:start -->');
+            const endIdx = claudeContent.indexOf('<!-- AIWG:claude-md-hook:end -->');
+            const blockContent = claudeContent.substring(startIdx, endIdx);
+            if (blockContent.includes('@AIWG.md')) {
+              check('Claude CLAUDE.md hook', 'ok', 'AIWG-managed @AIWG.md hook block present in CLAUDE.md');
+            } else {
+              check(
+                'Claude CLAUDE.md hook',
+                'warn',
+                'CLAUDE.md has AIWG marker block but the @AIWG.md include is missing inside it. Run `aiwg regenerate --force` to repair.',
+              );
+            }
+          } else if (hasStart || hasEnd) {
+            check(
+              'Claude CLAUDE.md hook',
+              'warn',
+              'CLAUDE.md has a malformed AIWG hook block (one marker missing). Run `aiwg regenerate --force` to repair.',
+            );
+          } else if (hasInclude) {
+            // Operator hand-added @AIWG.md without the marker block — works but
+            // future regenerates can't manage it. Recommend the managed block.
+            check(
+              'Claude CLAUDE.md hook',
+              'info',
+              'CLAUDE.md includes @AIWG.md but not under the AIWG-managed marker block. Run `aiwg regenerate` to convert to managed block (future regenerates can update it cleanly).',
+            );
+          } else {
+            check(
+              'Claude CLAUDE.md hook',
+              'warn',
+              'AIWG.md exists but CLAUDE.md has no @AIWG.md link — Claude is not loading project AIWG context. Run `aiwg regenerate` to insert the hook.',
+            );
+          }
+        } catch {
+          check('Claude CLAUDE.md hook', 'warn', 'Could not read CLAUDE.md');
+        }
+      }
+    }
+    // If no AIWG.md exists, the regenerate-related check is silent — this is
+    // an empty/non-AIWG project, not a hook problem. Other checks handle that.
+  }
+
   // 6. Check Skill Seekers (optional)
   const skillSeekersPath = path.join(AIWG_ROOT, 'skill-seekers');
   const hasSkillSeekers = await fileExists(skillSeekersPath);
