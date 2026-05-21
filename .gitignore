@@ -31,6 +31,11 @@ build/
 *.tmp
 *.temp
 *.bak
+*.backup
+*.orig
+*.rej
+*.swo
+.#*
 scratch*
 test-*.tmp
 test-*.temp
