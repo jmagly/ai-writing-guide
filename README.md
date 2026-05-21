@@ -499,6 +499,16 @@ aiwg use sdlc --provider openai        # OpenAI/Codex
 aiwg use sdlc --provider windsurf      # Windsurf
 ```
 
+### First-Party Integrators
+
+Some partners ship AIWG bundled in their runtime — no `aiwg use` step required. Install the partner tool and AIWG is already wired up.
+
+| Partner | Install | What you get |
+|---------|---------|--------------|
+| **[Omnius](https://www.npmjs.com/package/omnius)** | `npm i -g omnius` | AIWG framework set, skills, agents, and rules embedded in the Omnius autonomous coding agent. Discoverable through `aiwg discover` from inside Omnius sessions, surfaceable through Omnius's MCP and REST bridges. |
+
+If you ship a product that bundles AIWG and want to be listed here, open an issue at https://github.com/jmagly/aiwg/issues.
+
 ---
 
 ## What You Get
