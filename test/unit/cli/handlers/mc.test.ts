@@ -77,6 +77,15 @@ vi.mock('../../../../src/cli/ui.js', () => ({
   error: vi.fn(),
 }));
 
+// #1439: mock launchExternalRalph so `mc run` tests don't spawn real subprocesses
+vi.mock('../../../../src/cli/handlers/ralph-launcher.js', () => ({
+  launchExternalRalph: vi.fn(async (_frameworkRoot: string, _projectRoot: string, options: { objective: string }) => ({
+    loopId: `ralph-mock-${options.objective.replace(/\s+/g, '-').slice(0, 20)}`,
+    pid: 99999,
+    message: 'mock-launched',
+  })),
+}));
+
 import { mcHandler } from '../../../../src/cli/handlers/mc.js';
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -347,6 +356,99 @@ describe('mc watch', () => {
     const sessionId = startResult.message!;
     const watchResult = await mcHandler.execute(makeCtx(['watch', sessionId]));
     expect(watchResult.exitCode).toBe(0);
+    consoleSpy.mockRestore();
+  });
+});
+
+// ── mc run (#1439) ───────────────────────────────────────────
+
+describe('mc run (#1439)', () => {
+  it('exits 1 when session not found', async () => {
+    const result = await mcHandler.execute(makeCtx(['run', 'mc-nonexistent']));
+    expect(result.exitCode).toBe(1);
+  });
+
+  it('exits 0 with friendly message when no queued missions exist', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const startResult = await mcHandler.execute(makeCtx(['start']));
+    const sessionId = startResult.message!;
+    const runResult = await mcHandler.execute(makeCtx(['run', sessionId]));
+    expect(runResult.exitCode).toBe(0);
+    consoleSpy.mockRestore();
+  });
+
+  it('drains queued missions and flips them to running with ralph metadata', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const startResult = await mcHandler.execute(makeCtx(['start']));
+    const sessionId = startResult.message!;
+
+    // Dispatch a mission with --completion (required by mc run)
+    await mcHandler.execute(makeCtx(['dispatch', sessionId, 'Fix the bug', '--completion', 'tests pass']));
+
+    // Run drains the queue
+    const runResult = await mcHandler.execute(makeCtx(['run', sessionId]));
+    expect(runResult.exitCode).toBe(0);
+
+    // Verify mission status now `running` with ralphLoopId + ralphPid persisted
+    const jsonCalls: string[] = [];
+    consoleSpy.mockImplementation((arg) => { jsonCalls.push(String(arg)); });
+    await mcHandler.execute(makeCtx(['status', sessionId, '--json']));
+    const jsonOutput = jsonCalls.find(s => { try { JSON.parse(s); return true; } catch { return false; } });
+    expect(jsonOutput).toBeDefined();
+    const session = JSON.parse(jsonOutput!);
+    expect(session.missions).toHaveLength(1);
+    const mission = session.missions[0];
+    expect(mission.status).toBe('running');
+    expect(mission.ralphLoopId).toMatch(/^ralph-mock-/);
+    expect(mission.ralphPid).toBe(99999);
+    expect(mission.startedAt).toBeDefined();
+    consoleSpy.mockRestore();
+  });
+
+  it('skips missions without --completion criteria (ralph requires one)', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const startResult = await mcHandler.execute(makeCtx(['start']));
+    const sessionId = startResult.message!;
+
+    // Dispatch WITHOUT --completion
+    await mcHandler.execute(makeCtx(['dispatch', sessionId, 'No-completion mission']));
+
+    const runResult = await mcHandler.execute(makeCtx(['run', sessionId]));
+    // Mission was skipped, no launch failure, so exit 0
+    expect(runResult.exitCode).toBe(0);
+
+    // Verify mission still queued (NOT marked running)
+    const jsonCalls: string[] = [];
+    consoleSpy.mockImplementation((arg) => { jsonCalls.push(String(arg)); });
+    await mcHandler.execute(makeCtx(['status', sessionId, '--json']));
+    const jsonOutput = jsonCalls.find(s => { try { JSON.parse(s); return true; } catch { return false; } });
+    const session = JSON.parse(jsonOutput!);
+    expect(session.missions[0].status).toBe('queued');
+    expect(session.missions[0].ralphLoopId).toBeUndefined();
+    consoleSpy.mockRestore();
+  });
+
+  it('skips pty-orchestrator missions (separate execution path)', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const startResult = await mcHandler.execute(makeCtx(['start']));
+    const sessionId = startResult.message!;
+
+    await mcHandler.execute(makeCtx([
+      'dispatch', sessionId, 'PTY mission',
+      '--mode', 'pty-orchestrator',
+      '--target-agent', 'agent-01',
+      '--completion', 'done',
+    ]));
+
+    const runResult = await mcHandler.execute(makeCtx(['run', sessionId]));
+    expect(runResult.exitCode).toBe(0);
+
+    const jsonCalls: string[] = [];
+    consoleSpy.mockImplementation((arg) => { jsonCalls.push(String(arg)); });
+    await mcHandler.execute(makeCtx(['status', sessionId, '--json']));
+    const jsonOutput = jsonCalls.find(s => { try { JSON.parse(s); return true; } catch { return false; } });
+    const session = JSON.parse(jsonOutput!);
+    expect(session.missions[0].status).toBe('queued'); // skipped, still queued
     consoleSpy.mockRestore();
   });
 });

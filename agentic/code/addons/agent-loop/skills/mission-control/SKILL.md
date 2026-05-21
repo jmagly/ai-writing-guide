@@ -37,18 +37,24 @@ When triggered:
    - Checking on existing work → `aiwg mc status`
    - Stopping work → `aiwg mc stop`
 
-2. **For new background orchestration**:
+2. **For new background orchestration** — Mission Control has a four-step lifecycle: start → dispatch → **run** → status. Missions stay `queued` until `mc run` launches them as ralph loops; status syncs back to mc.session.json automatically when `mc status` or `mc watch` is called.
 
    ```bash
-   # Start a named session
+   # 1. Start a named session (creates the state file)
    aiwg mc start --name "Sprint 4 Construction"
 
-   # Dispatch missions (one per task)
+   # 2. Dispatch missions (queues them — does NOT execute)
+   #    --completion is REQUIRED; `mc run` will skip missions without one.
    aiwg mc dispatch <session-id> "Fix auth service" --completion "npm test passes" --priority high
    aiwg mc dispatch <session-id> "Add pagination" --completion "all list endpoints paginated"
    aiwg mc dispatch <session-id> "Write integration tests" --completion "coverage > 80%"
 
-   # Monitor
+   # 3. RUN — drains the queue by launching each mission as a detached ralph
+   #    loop. Without this step missions sit in QUEUED forever (#1439).
+   aiwg mc run <session-id>
+
+   # 4. Monitor — `mc status` polls each ralph loop's session-state.json and
+   #    syncs progress back to mc (queued → running → done|failed|aborted).
    aiwg mc status <session-id>
    aiwg mc watch <session-id>
    ```

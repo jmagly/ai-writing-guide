@@ -42,6 +42,10 @@ interface Mission {
   startedAt?: string;
   completedAt?: string;
   error?: string;
+  /** Ralph loop ID once the mission is launched (#1439) */
+  ralphLoopId?: string;
+  /** Ralph process PID once the mission is launched (#1439) */
+  ralphPid?: number;
 }
 
 interface Session {
@@ -161,6 +165,10 @@ async function mcStart(ctx: HandlerContext): Promise<HandlerResult> {
   ui.rule();
   ui.success(`Session started: ${session.id}`);
   ui.info(`Max missions: ${maxMissions}`);
+  // #1439: the lifecycle is start → dispatch → run → status. State this
+  // up-front so users don't get stuck wondering why missions never execute.
+  ui.info(`Next: \`aiwg mc dispatch ${session.id} "<objective>" --completion "<criteria>"\``);
+  ui.info(`Then: \`aiwg mc run ${session.id}\` to drain the queue (missions stay 'queued' until you do).`);
   ui.blank();
 
   return { exitCode: 0, message: session.id };
@@ -239,7 +247,188 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
   const modeLabel = mode === 'pty-orchestrator' ? ` | Mode: PTY orchestrator → ${targetAgent}` : '';
   ui.info(`Priority: ${priority} | Max iterations: ${maxIterations}${modeLabel}`);
 
+  // #1439: dispatch alone does NOT execute the mission. Surface the next step
+  // so the user knows the queue won't drain on its own.
+  ui.info(`Next: run \`aiwg mc run ${session.id}\` to launch queued missions as ralph loops.`);
+
   return { exitCode: 0, message: mission.id };
+}
+
+/**
+ * Drain queued missions in a session by launching each as a ralph loop (#1439).
+ *
+ * Before this command existed, missions sat in `queued` status forever because
+ * no supervisor process drained the queue. `mc run` is the explicit supervisor
+ * step: for every queued direct-mode mission, spawn a detached ralph process
+ * via launchExternalRalph(), record the resulting loopId + pid on the mission,
+ * and flip the mission to `running`.
+ *
+ * Status sync back from ralph to mc happens lazily via syncMissionsFromRalph()
+ * called from `mc status` and `mc watch` — no separate daemon needed.
+ *
+ * Limitations of cycle 1:
+ * - pty-orchestrator missions are skipped with a warning (separate codepath)
+ * - missions launch sequentially (each call to launchExternalRalph spawns a
+ *   detached process, so they DO run in parallel after launch — the loop here
+ *   is just for orderly dispatch, not for parallel scheduling)
+ */
+async function mcRun(ctx: HandlerContext): Promise<HandlerResult> {
+  const positional = getPositionalArgs(ctx.args);
+  const sessionId = positional[0];
+
+  const session = await findActiveSession(sessionId);
+  if (!session) {
+    ui.error(sessionId ? `Session not found: ${sessionId}` : 'No active session. Run `aiwg mc start` first.');
+    return { exitCode: 1 };
+  }
+
+  const queued = session.missions.filter((m) => m.status === 'queued');
+  if (queued.length === 0) {
+    ui.info(`No queued missions in session ${session.id}. Run \`aiwg mc dispatch ${session.id} "<objective>"\` to add one.`);
+    return { exitCode: 0 };
+  }
+
+  ui.blank();
+  console.log(`  ${ui.brandMark()} ${ui.bold('Mission Control')} — running ${queued.length} queued mission(s) in ${ui.accent(session.id)}`);
+  ui.rule();
+
+  // Lazy import — ralph-launcher pulls in node:child_process and other heavy
+  // deps we don't want to pay for on every mc subcommand.
+  const { launchExternalRalph } = await import('./ralph-launcher.js');
+
+  let launched = 0;
+  let skipped = 0;
+  let failed = 0;
+  const projectRoot = ctx.cwd || process.cwd();
+  const frameworkRoot = ctx.frameworkRoot;
+
+  for (const mission of queued) {
+    if (mission.mode === 'pty-orchestrator') {
+      ui.warn(`Mission ${mission.id} mode=pty-orchestrator is not yet wired to mc run; skipping. Use 'aiwg ralph' directly for PTY-orchestrator workflows.`);
+      skipped += 1;
+      continue;
+    }
+
+    if (!mission.completion) {
+      ui.warn(`Mission ${mission.id} has no --completion criteria; ralph requires one. Skipping. Re-dispatch with --completion "<criteria>" to include this mission.`);
+      skipped += 1;
+      continue;
+    }
+
+    try {
+      const result = await launchExternalRalph(frameworkRoot, projectRoot, {
+        objective: mission.objective,
+        completionCriteria: mission.completion,
+        maxIterations: mission.maxIterations,
+        // Defaults for cycle 1; advanced options can be added per-mission later.
+        verbose: false,
+      });
+
+      mission.status = 'running';
+      mission.startedAt = new Date().toISOString();
+      mission.ralphLoopId = result.loopId;
+      mission.ralphPid = result.pid;
+      await writeSession(session);
+      await appendLog(session.id, {
+        event: 'mission_started',
+        missionId: mission.id,
+        loopId: result.loopId,
+        pid: result.pid,
+      });
+
+      ui.success(`Started ${mission.id} → ralph loop ${result.loopId} (PID ${result.pid})`);
+      launched += 1;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      mission.status = 'failed';
+      mission.error = msg;
+      mission.completedAt = new Date().toISOString();
+      await writeSession(session);
+      await appendLog(session.id, {
+        event: 'mission_launch_failed',
+        missionId: mission.id,
+        error: msg,
+      });
+      ui.error(`Failed to start ${mission.id}: ${msg}`);
+      failed += 1;
+    }
+  }
+
+  ui.blank();
+  ui.info(`Launched: ${launched} | Skipped: ${skipped} | Failed: ${failed}`);
+  if (launched > 0) {
+    ui.info(`Monitor: \`aiwg mc status ${session.id}\` or \`aiwg mc watch ${session.id}\``);
+  }
+
+  return { exitCode: failed > 0 && launched === 0 ? 1 : 0 };
+}
+
+/**
+ * Sync mission statuses from their backing ralph loop state files (#1439).
+ *
+ * Each mission launched by `mc run` carries a `ralphLoopId`. The ralph loop
+ * writes its own session-state.json with a `status` field
+ * (running|completed|failed|paused|aborted). This helper polls those files
+ * and reflects the truth back into the mc session.json so `mc status` and
+ * `mc watch` show actual progress without manual intervention.
+ *
+ * Sync is best-effort — a missing or unreadable ralph state file leaves the
+ * mission status unchanged (typically 'running' until the ralph process
+ * actually writes state).
+ */
+async function syncMissionsFromRalph(session: Session, projectRoot: string): Promise<boolean> {
+  let mutated = false;
+  for (const mission of session.missions) {
+    if (mission.status !== 'running') continue;
+    if (!mission.ralphLoopId) continue;
+    const ralphStatePath = join(
+      projectRoot,
+      '.aiwg',
+      'ralph-external',
+      'loops',
+      mission.ralphLoopId,
+      'session-state.json',
+    );
+    try {
+      const raw = await fs.readFile(ralphStatePath, 'utf-8');
+      const state = JSON.parse(raw);
+      const ralphStatus = String(state.status || '').toLowerCase();
+      // Map ralph status → mc mission status
+      let nextStatus: MissionStatus | null = null;
+      if (ralphStatus === 'completed') nextStatus = 'done';
+      else if (ralphStatus === 'failed' || ralphStatus === 'crashed') nextStatus = 'failed';
+      else if (ralphStatus === 'aborted') nextStatus = 'aborted';
+      else if (ralphStatus === 'paused') nextStatus = 'paused';
+      // 'running' stays running
+
+      // Reflect iteration count if available
+      const iter = typeof state.iteration === 'number' ? state.iteration : (typeof state.currentIteration === 'number' ? state.currentIteration : null);
+      if (iter !== null && iter !== mission.loop) {
+        mission.loop = iter;
+        mutated = true;
+      }
+
+      // mission.status is narrowed to 'running' by the early-continue above,
+      // and nextStatus is one of {done, failed, aborted, paused}. So the
+      // transition is always real when nextStatus is set — no equality
+      // check needed.
+      if (nextStatus) {
+        mission.status = nextStatus;
+        mission.completedAt = new Date().toISOString();
+        if (nextStatus === 'failed' && typeof state.error === 'string') {
+          mission.error = state.error;
+        }
+        mutated = true;
+      }
+    } catch {
+      // State file missing/unreadable — leave mission status unchanged.
+    }
+  }
+  if (mutated) {
+    session.updatedAt = new Date().toISOString();
+    await writeSession(session);
+  }
+  return mutated;
 }
 
 async function mcStatus(ctx: HandlerContext): Promise<HandlerResult> {
@@ -256,6 +445,12 @@ async function mcStatus(ctx: HandlerContext): Promise<HandlerResult> {
     }
     return { exitCode: 1 };
   }
+
+  // #1439: Sync mission statuses from ralph loop state files BEFORE display
+  // so 'mc status' reflects the true state of any in-flight ralph processes
+  // (otherwise missions launched by 'mc run' stay 'running' in mc.session.json
+  // even after the ralph loop has completed).
+  await syncMissionsFromRalph(session, ctx.cwd || process.cwd());
 
   if (json) {
     console.log(JSON.stringify(session, null, 2));
@@ -605,6 +800,7 @@ async function mcAgents(ctx: HandlerContext): Promise<HandlerResult> {
 const subcommands: Record<string, (ctx: HandlerContext) => Promise<HandlerResult>> = {
   start: mcStart,
   dispatch: mcDispatch,
+  run: mcRun, // #1439
   status: mcStatus,
   watch: mcWatch,
   abort: mcAbort,
@@ -622,10 +818,19 @@ function showMcHelp(): void {
   console.log(`
   ${ui.bold('Usage:')} aiwg mc <subcommand> [options]
 
+  ${ui.bold('Lifecycle:')}
+    1. start    — create a session (state-tracking only)
+    2. dispatch — queue one or more missions onto a session
+    3. run      — drain the queue by launching each mission as a ralph loop
+    4. status   — view progress (auto-syncs from ralph loop state)
+    5. watch    — live tail of progress
+    6. stop     — shut down the session
+
   ${ui.bold('Subcommands:')}
     start                         Start a new Mission Control session
-    dispatch <id> "<objective>"   Add a background mission to session
+    dispatch <id> "<objective>"   Queue a mission on the session (does NOT execute)
                                   [--mode pty-orchestrator] [--target-agent <id>]
+    run <id>                      Launch queued missions as ralph loops (#1439)
     status [<id>] [--json]        View mission status dashboard
     watch [<id>]                  Live monitor (streaming)
     abort <session> <mission>     Abort a specific mission
@@ -637,8 +842,10 @@ function showMcHelp(): void {
   ${ui.bold('Examples:')}
     aiwg mc start --name "Sprint 4"
     aiwg mc dispatch mc-abc123 "Fix auth" --completion "tests pass"
+    aiwg mc dispatch mc-abc123 "Refactor users" --completion "npm test passes"
+    aiwg mc run mc-abc123                     # launches queued missions
+    aiwg mc status mc-abc123                  # syncs progress from ralph loops
     aiwg mc dispatch mc-abc123 "Supervise agent-01" --mode pty-orchestrator --target-agent agent-01 --completion "migration complete"
-    aiwg mc status mc-abc123
     aiwg mc stop mc-abc123 --drain
     aiwg mc agents --framework sdlc-complete --max-cpu 80
 
