@@ -1,0 +1,64 @@
+# Starter banlist for Python — copy into .aiwg/security/banned-apis.yaml and customize.
+# Targets the most common code-execution and deserialization footguns.
+version: 1
+languages:
+  python:
+    - pattern: 're:\beval\s*\('
+      reason: "Arbitrary code execution if input is attacker-influenced — no sandboxing"
+      replacement: "ast.literal_eval for literals; dedicated parser otherwise"
+      cwe: "CWE-95"
+    - pattern: 're:\bexec\s*\('
+      reason: "Arbitrary code execution — even with restricted globals, defeated by tricks"
+      replacement: "Explicit dispatch table or sandboxed runtime (RestrictedPython, etc.)"
+      cwe: "CWE-95"
+    - pattern: 're:pickle\.loads?\b'
+      reason: "Arbitrary code execution on untrusted input via __reduce__"
+      replacement: "json (untrusted) or signed pickle with HMAC integrity check"
+      cwe: "CWE-502"
+    - pattern: 're:cPickle\.loads?\b'
+      reason: "Same RCE class as pickle.loads"
+      replacement: "json or signed serialization"
+      cwe: "CWE-502"
+    - pattern: 're:marshal\.loads?\b'
+      reason: "Untrusted-input RCE via bytecode interpretation"
+      replacement: "json or msgpack"
+      cwe: "CWE-502"
+    - pattern: 're:yaml\.load\s*\((?![^)]*Loader=yaml\.(Safe|CSafe)Loader)'
+      reason: "yaml.load without SafeLoader executes arbitrary Python via tags"
+      replacement: "yaml.safe_load or yaml.load(..., Loader=yaml.SafeLoader)"
+      cwe: "CWE-502"
+    - pattern: 're:subprocess\.(?:call|run|Popen|check_output|check_call)\s*\([^)]*shell=True'
+      reason: "Shell injection when args are concatenated from user input"
+      replacement: "shell=False with argv list (the default); pre-validate any shell strings"
+      cwe: "CWE-78"
+    - pattern: 're:os\.system\s*\('
+      reason: "Shell injection by construction — no argv form"
+      replacement: "subprocess.run([...], shell=False, check=True)"
+      cwe: "CWE-78"
+    - pattern: 're:os\.popen\s*\('
+      reason: "Shell-string execution; deprecated"
+      replacement: "subprocess.run with argv list"
+      cwe: "CWE-78"
+    - pattern: 're:input\s*\('
+      reason: "In Python 2 only — eval'd input. In Python 3 it's fine; flagged for projects still on 2."
+      replacement: "raw_input (Py2) — or drop Py2 support"
+      cwe: "CWE-95"
+      languages: [python2]
+    - pattern: 're:tempfile\.mktemp\b'
+      reason: "Race condition between filename creation and open — TOCTOU"
+      replacement: "tempfile.mkstemp or NamedTemporaryFile"
+      cwe: "CWE-377"
+    - pattern: 're:hashlib\.(md5|sha1)\s*\('
+      reason: "Cryptographically broken; acceptable only for non-security checksums"
+      replacement: "hashlib.sha256+; for non-security use document the rationale"
+      cwe: "CWE-327"
+      severity: MEDIUM
+exclusions:
+  paths:
+    - "test/**"
+    - "tests/**"
+    - "**/test_*.py"
+    - "**/*_test.py"
+    - "conftest.py"
+    - "venv/**"
+    - ".venv/**"

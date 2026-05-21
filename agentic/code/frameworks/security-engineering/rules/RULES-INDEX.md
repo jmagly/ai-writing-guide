@@ -4,7 +4,7 @@ Applied-security enforcement rules for cryptographic primitive choices, chain-of
 
 ---
 
-## Tier 1 Rules (6 rules — applied cryptography + supply chain)
+## Tier 1 Rules (7 rules — applied cryptography, supply chain, language policy)
 
 ### HIGH
 
@@ -44,6 +44,12 @@ Applied-security enforcement rules for cryptographic primitive choices, chain-of
 **Maps to issue**: #1297 (Mini Shai-Hulud follow-up)
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/dependency-source-policy.md
 
+#### banned-apis
+**Summary**: Project banlists at `.aiwg/security/banned-apis.yaml` declare APIs that MUST NOT appear in source files (per language, per path scope, with inline `AIWG-allow:` annotations for documented exceptions). Generalizes the applied-cryptography pattern into a configurable "list of forbidden functions" enforcer (curl's Practice 2). Bundled starter banlists cover C/C++ (`strcpy`, `sprintf`, `gets`, `strtok`, `atoi`), Python (`eval`, `exec`, `pickle.loads`, `shell=True`), and Node (`eval`, `new Function`, `child_process.exec`). The crypto rules remain CRITICAL specializations.
+**When to apply**: Any source code in a language declared in the project banlist; enforced via the `banned-api-audit` skill at CI gate
+**Maps to issue**: #1418 (curl checklist Practice 2)
+**Full rule**: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/banned-apis.md
+
 ---
 
 ## Quick Reference by Context
@@ -59,6 +65,7 @@ Applied-security enforcement rules for cryptographic primitive choices, chain-of
 | **Container image references** | ci-action-pinning |
 | **package.json / lockfile review** | dependency-source-policy |
 | **Reviewing cryptographic decisions** | All four crypto rules in sequence |
+| **Per-language forbidden APIs** | banned-apis (+ language-specific banlists) |
 
 ---
 
@@ -68,5 +75,5 @@ Future Tier 2 rules will cover authentication-factor architecture, degraded-mode
 
 ---
 
-*Generated from security-engineering framework — 6 rules in Tier 1*
+*Generated from security-engineering framework — 7 rules in Tier 1*
 *Full rule files: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/*

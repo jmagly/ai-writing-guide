@@ -37,8 +37,8 @@ Hedging follows AIWG's citation-policy GRADE convention: "demonstrates" only whe
 | Coverage | Count | Practices |
 |---|---|---|
 | Full | 10 | 3, 4, 5, 7, 9, 10, 12, 18, 19, 24 |
-| Partial | 7 | 1, 15, 17, 20, 22, 23, 28 |
-| Missing | 11 | 2, 6, 8, 11, 13, 14, 16, 21, 25, 26, 27 |
+| Partial | 11 | 1, 2, 14, 15, 16, 17, 20, 22, 23, 27, 28 |
+| Missing | 7 | 6, 8, 11, 13, 21, 25, 26 |
 | Adjacent | 0 | — |
 | N/A | 0 | — |
 | **Total** | **28** | |
@@ -58,7 +58,7 @@ These are the highest-value targets for follow-up issues; see [Recommended Follo
 | # | Practice | Coverage | Provided By | Notes |
 |---|---|---|---|---|
 | 1 | Code style | Partial | `agentic/code/frameworks/sdlc-complete/extensions/javascript/skills/eslint-checker/SKILL.md`; `agentic/code/frameworks/sdlc-complete/rules/agent-friendly-code.md` | ESLint covers JS/TS; `agent-friendly-code` defines structural thresholds language-agnostically. No multi-language style orchestrator for C/C++/Python/Rust/Go. |
-| 2 | Banned functions | **Missing** | — | No "banned API" enforcer exists. The closest pattern is the applied-cryptography rules (`no-unauthenticated-encryption`, `no-adhoc-kdf`) which ban specific crypto-primitive misuses, but no generalized banlist enforcer. |
+| 2 | Banned functions | **Partial** | `agentic/code/frameworks/security-engineering/rules/banned-apis.md` + `skills/banned-api-audit/SKILL.md` (cycle-1 scaffold per #1418); starter banlists for C, Python, Node | Rule + skill scaffold landed with starter banlists. Cycle 2 wires the ripgrep-based audit implementation, banlist YAML schema validator, and SARIF output. Crypto rules remain CRITICAL specializations. |
 | 3 | Complexity checks | **Full** | `agentic/code/frameworks/sdlc-complete/skills/complexity-gate/SKILL.md`; `agentic/code/frameworks/sdlc-complete/rules/agent-friendly-code.md` | `complexity-gate` is a CI-friendly pass/fail gate; `agent-friendly-code` sets cyclomatic ≤10 warning / ≤15 error, nesting depth, function length thresholds. |
 | 4 | Human reviews | **Full** | `agentic/code/frameworks/sdlc-complete/rules/hitl-gates.md`; `agentic/code/addons/aiwg-utils/rules/human-authorization.md`; `agentic/code/frameworks/sdlc-complete/rules/human-gate-display.md` | HITL gates mandatory at SDLC phase transitions. `human-authorization` requires explicit human approval for high-stakes/irreversible actions. Default `delivery.mode: pr-required` enforces review at the PR boundary. |
 | 5 | Review bots | **Full** | `agentic/code/frameworks/sdlc-complete/extensions/github/skills/pr-reviewer/SKILL.md`; `agentic/code/frameworks/sdlc-complete/agents/code-reviewer.md` | Dedicated PR reviewer skill (GitHub) and `code-reviewer` agent provide automated review for quality, security, and best practices. Gitea/GitLab parallels would be additive. |
@@ -75,14 +75,14 @@ These are the highest-value targets for follow-up issues; see [Recommended Follo
 | 11 | Torture tests | **Missing** | — | No stress, chaos, endurance, or torture testing skill. `flow-test-strategy-execution` covers unit/integration/regression — adversarial endurance testing is absent. |
 | 12 | CI like crazy | **Full** | `agentic/code/extensions/dev/rules/dev-pipeline-safety.md`; `agentic/code/extensions/dev/rules/dev-ci-self-contained.md`; `agentic/code/frameworks/sdlc-complete/skills/regression-cicd-hooks/SKILL.md` | `dev-pipeline-safety` (CRITICAL) forbids suppressing CI signals; `dev-ci-self-contained` requires reproducible builders; regression hooks integrate into CI. |
 | 13 | All picky compiler options and `-Werror` | **Missing** | — | No rule mandates strict compiler/toolchain options. `dev-pipeline-safety` enforces "don't suppress signals" but doesn't define the floor for strict-toolchain settings. Reframed for AIWG's domain: a generic "strict toolchain CI floor" rule is missing. |
-| 14 | Valgrind and sanitizers | **Missing** | — | No skill addresses ASan/UBSan/MSan/TSan/Valgrind integration. The `memory-analyst` agent is forensics-only (Volatility 3, post-incident). Sanitizer integration into CI is a clean gap. |
+| 14 | Valgrind and sanitizers | **Partial** | `agentic/code/frameworks/security-engineering/skills/sanitizer-in-ci/SKILL.md` (cycle-1 scaffold per #1420); shared `lib/toolchain-detect.sh` | Skill scaffold with starter CI recipes for C/C++ (ASan/UBSan/MSan/TSan), Rust (cargo + miri), Go (race detector), Python (faulthandler + dev mode). Cycle 2 generates actual recipe files via implementation; operator guide and suppressions template included. |
 
 ### Row 3 — Analysis & Build Integrity
 
 | # | Practice | Coverage | Provided By | Notes |
 |---|---|---|---|---|
 | 15 | AI + static code analyzers | Partial | `agentic/code/frameworks/sdlc-complete/extensions/javascript/skills/eslint-checker/SKILL.md`; `agentic/code/frameworks/sdlc-complete/agents/code-reviewer.md` | AI-driven review via `code-reviewer` is strong. Tool-driven SAST is JS/TS-only; no Semgrep/CodeQL/SonarQube orchestration. |
-| 16 | Fuzzing, in CI and non-stop | **Missing** | — | No fuzzing skill or rule. No OSS-Fuzz/libFuzzer/AFL/property-based-testing integration. |
+| 16 | Fuzzing, in CI and non-stop | **Partial** | `agentic/code/frameworks/security-engineering/skills/fuzzing-in-ci/SKILL.md` (cycle-1 scaffold per #1420) | Skill scaffold with starter harnesses for C (libFuzzer), Rust (cargo-fuzz), Python (atheris + Hypothesis), Node (jazzer.js + fast-check). OSS-Fuzz integration guide included. PR-gating recipes bounded to 2 min/target. Cycle 2 wires AFL++ recipes, coverage reporting, corpus minimization. |
 | 17 | Read-only CI jobs | Partial | `agentic/code/extensions/dev/rules/dev-secret-hygiene.md` | `dev-secret-hygiene` restricts secret exposure in CI; underlying principle is present but no explicit `permissions: read-all` workflow-level enforcement rule. |
 | 18 | zizmor the CI jobs | **Full** | `agentic/code/frameworks/security-engineering/skills/ci-workflow-audit/SKILL.md`; `agentic/code/frameworks/security-engineering/rules/ci-action-pinning.md` | `ci-workflow-audit` audits unpinned actions, secret exposure in PR jobs, curl-pipe-shell installers, bare `:latest` tags — directly equivalent to zizmor's scope. `ci-action-pinning` (HIGH) mandates SHA-pinned actions. Strong. |
 | 19 | Reproducible releases | **Full** | `agentic/code/frameworks/security-engineering/skills/supply-chain-trust/SKILL.md`; `agentic/code/extensions/dev/rules/dev-idempotent-builds.md`; `agentic/code/frameworks/sdlc-complete/rules/reproducibility.md` | `supply-chain-trust` addresses reproducible builds; `dev-idempotent-builds` mandates idempotent build steps; SDLC `reproducibility` rule (MEDIUM) enforces reproducibility for critical workflows. |
@@ -98,7 +98,7 @@ These are the highest-value targets for follow-up issues; see [Recommended Follo
 | 24 | Code audits | **Full** | `agentic/code/frameworks/sdlc-complete/agents/security-auditor.soul.md`; `agentic/code/frameworks/sdlc-complete/skills/security-assessment/SKILL.md`; `agentic/code/frameworks/research-complete/skills/best-practices-audit/SKILL.md` | Dedicated security-auditor agent (with persona/soul), security-assessment skill (STRIDE/OWASP/SAST/DAST framing), and research-grounded best-practices audit. Multiple complementary paths. |
 | 25 | (Strong) 2FA for all committers | **Missing** | — | No rule addresses committer 2FA/MFA enforcement. The security-engineering framework's `auth-factor-design` skill covers application auth, not source-control governance. Practice is enforced at the platform layer (Gitea/GitHub admin settings) but no AIWG rule documents the requirement or audits compliance. |
 | 26 | API and ABI stability | **Missing** | — | No skill or rule addresses API/ABI stability, deprecation policy, or backwards-compatibility guarantees. `flow-change-control` handles change requests but doesn't enforce stability contracts. Important for any library/SDK AIWG helps build. |
-| 27 | Private security reporting | **Missing** | — | No skill, template, or rule for `SECURITY.md`, private vulnerability-disclosure workflow, or coordinated-disclosure timelines. Adjacent to `aiwg-issue` skill (general issue filing) but security-specific intake is missing. |
+| 27 | Private security reporting | **Partial** | `agentic/code/frameworks/security-engineering/templates/SECURITY.md` + `skills/security-report/SKILL.md` (cycle-1 scaffold per #1419) | Template with operator-fillable placeholders (contact, PGP, scope, SLA, disclosure timeline, hall of fame, CVE assignment). Private-intake skill with hard refusals against public channels and chain-of-custody record. Cycle 2 wires `aiwg doctor` SECURITY.md presence check, `aiwg new` scaffolding emit, and closure-loop tracking skill. |
 
 ### Foundation
 

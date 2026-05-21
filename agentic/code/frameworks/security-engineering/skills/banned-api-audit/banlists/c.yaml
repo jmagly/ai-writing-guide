@@ -1,0 +1,61 @@
+# Starter banlist for C — copy into .aiwg/security/banned-apis.yaml and customize.
+# Patterns prefixed `re:` are full regex; bare patterns are word-boundary literals.
+# Source basis: CERT C secure coding guidelines + curl banned-functions practice.
+version: 1
+languages:
+  c:
+    - pattern: strcpy
+      reason: "Unbounded copy — buffer overflow vector"
+      replacement: "strncpy_s (C11 annex K), strlcpy (BSD/libbsd), or snprintf with explicit size"
+      cwe: "CWE-120, CWE-242"
+    - pattern: strcat
+      reason: "Unbounded concatenation — same overflow class as strcpy"
+      replacement: "strlcat or snprintf-based building"
+      cwe: "CWE-120"
+    - pattern: sprintf
+      reason: "Unbounded format expansion — overflow + format-string risk"
+      replacement: "snprintf(buf, sizeof(buf), fmt, ...) — always pass buffer size"
+      cwe: "CWE-120, CWE-134"
+    - pattern: vsprintf
+      reason: "Same overflow risk as sprintf, va_list variant"
+      replacement: "vsnprintf with explicit size"
+      cwe: "CWE-120"
+    - pattern: gets
+      reason: "Reads unbounded input from stdin — removed from C11 for cause"
+      replacement: "fgets(buf, sizeof(buf), stdin) — always check return"
+      cwe: "CWE-242"
+    - pattern: strtok
+      reason: "Non-reentrant, modifies input — thread-unsafe and side-effecting"
+      replacement: "strtok_r (POSIX) or strtok_s (C11 annex K)"
+      cwe: "CWE-676"
+    - pattern: 're:\batoi\s*\('
+      reason: "No error reporting — silent failure on malformed input"
+      replacement: "strtol with errno + endptr check, validate range"
+      cwe: "CWE-190, CWE-704"
+    - pattern: 're:\batol\s*\('
+      reason: "Same silent-failure class as atoi"
+      replacement: "strtol with full error handling"
+      cwe: "CWE-190"
+    - pattern: 're:\batof\s*\('
+      reason: "Silent failure + locale dependence"
+      replacement: "strtod with errno + endptr check"
+      cwe: "CWE-190, CWE-704"
+    - pattern: scanf
+      reason: "Format-string risk + unbounded %s reads"
+      replacement: "fgets + sscanf with size-limited specifiers (%99s) — and always check return"
+      cwe: "CWE-120, CWE-134"
+    - pattern: 're:\b(memcpy|memmove)\s*\([^,]+,\s*[^,]+,\s*strlen'
+      reason: "memcpy/memmove with strlen as size — off-by-one (missing NUL)"
+      replacement: "Compute size as strlen(src) + 1 explicitly, or use snprintf"
+      cwe: "CWE-193"
+    - pattern: alloca
+      reason: "Stack overflow risk if size is attacker-influenced; portability issues"
+      replacement: "malloc + free, or VLA with explicit bounds check"
+      cwe: "CWE-770"
+exclusions:
+  paths:
+    - "test/**"
+    - "tests/**"
+    - "**/*_test.c"
+    - "vendor/**"
+    - "third_party/**"
