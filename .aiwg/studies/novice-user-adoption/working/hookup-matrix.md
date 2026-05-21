@@ -7,7 +7,7 @@ related_issue: "#1336"
 status: partial-pass-deferred-to-field-validation
 phase: construction
 created: 2026-05-14
-updated: 2026-05-19
+updated: 2026-05-21
 voice: technical-authority
 ---
 
@@ -38,7 +38,7 @@ Roll-up: #1405.
 |---|---|---|---|
 | Matrix covers all 10 providers | 10 | 10 | ✅ Structure |
 | ≥40 of 50 cells with non-`static-flagged` evidence | 40/50 | 50/50 | ✅ Threshold met (deployment-scripted or better) |
-| ≥8 of 10 providers with field-validated evidence | 8/10 | 2/10 field/session evidence; remaining providers split to #1406-#1413 | ⚠️ Deferred to #1405 |
+| ≥8 of 10 providers with field-validated evidence | 8/10 | 3/10 field/session evidence (Claude Code 2026-05-21 via #1414; prior Claude Code + Cursor); remaining 7 providers in #1406, #1407, #1408, #1409, #1410, #1411, #1412, #1413, #1415 | ⚠️ In progress under #1405 |
 | Discovery-agent column verdict per platform | 10 | 10 | ✅ Provisional null-finding documented; behavioral proof deferred |
 | Each "no hook fires" finding produces follow-up issue | n/a | Structural findings filed/resolved; behavioral findings deferred to per-provider issues | ✅ |
 | Discovery-agent bolster recommendation | yes | yes | ✅ |
@@ -252,12 +252,32 @@ Per evidence-type taxonomy (SAD §5.2.2), each field-validated provider needs on
 6. Record session transcript with provider name + study-runner identity + date
 ```
 
+## Field Validation Evidence (Cycle 4, ongoing)
+
+Behavioral session evidence is appended below as each per-provider issue (#1406–#1415) is run. Each row records: session date, runner, hook verdicts, read-access verdict, transcript pointer, source issue.
+
+| Provider | Date | Runner | Rule | Config | Quickref | Discovery-agent | Read access | Issue |
+|---|---|---|---|---|---|---|---|---|
+| Claude Code | 2026-05-21 | session in this repo (Claude Code, Opus 4.7 1M) | fires (skill-discovery rule injected via system-reminder; observed in this session's context) | fires (CLAUDE.md / AIWG.md loaded at session start; visible in initial context) | fires (`aiwg-utils-quickref` kernel-loaded; listed in available skills) | fires (`aiwg-finder` agent present in agent list; Task tool available) | fires (`aiwg show skill aiwg-utils-quickref` returned SKILL.md body) | #1414 |
+
+**Claude Code transcript excerpt (2026-05-21)**
+
+Prompt 1: "Find an AIWG skill that handles intake forms"
+
+Behavior: agent first action was `aiwg discover "intake forms" --limit 5`. Output ranked `intake-wizard` (score 0.93) as top match with path `agentic/code/frameworks/sdlc-complete/skills/intake-wizard/SKILL.md`. No filesystem browsing. Discover-first protocol observed.
+
+Prompt 2: "Read the AIWG quickref for AIWG utility discovery and summarize the fallback when a skill is not loaded."
+
+Behavior: agent ran `aiwg show skill aiwg-utils-quickref`. Content streamed. Summary produced: when the platform Skill tool errors on a non-kernel skill, primary fallback is `aiwg show <type> <name>`; secondary is `aiwg show ... --json` for forwarding; last-resort is reading `$AIWG_ROOT/agentic/code/...` directly. `find`/`ls`/`Glob`/`Read` against `<provider>/skills/` directories is forbidden.
+
+All four hooks fired. Read-access works. No `doesn't-fire` finding. Acceptance criteria for #1414 met.
+
 ## Regression-Check (per SAD §5.2)
 
 Status:
-- Claude Code: scripted-fires confirmed in this session (cycle 1)
+- Claude Code: scripted-fires confirmed in cycle 1 + field-session confirmed cycle 4 (2026-05-21, #1414)
 - Cursor: deployment-scripted-fires confirmed in this audit cycle 2 via on-disk verification
-- All others: deployment-scripted-evidence available; behavioral regression check pending sessions
+- All others: deployment-scripted-evidence available; behavioral regression check pending sessions (#1406–#1413, #1415)
 
 ## Cross-References
 
