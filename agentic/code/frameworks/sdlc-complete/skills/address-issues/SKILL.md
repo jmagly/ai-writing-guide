@@ -123,7 +123,7 @@ Before starting the loop, read `.aiwg/aiwg.config` `delivery` via `resolveDelive
 | `mode: feature-branch` | One branch per issue, but don't open a PR — push the branch and stop. |
 | `mode: pr-required` (default) | Branch-per-issue is implicit. Open a PR via the resolved primary remote (#994) for each resolved issue. |
 | `branch_naming.prefix_by_type` | Use the `fix/{issue}-{slug}` template when creating the branch. `{issue}` is the issue number, `{slug}` derives from the title. |
-| `auto_close_issues: true` (default) | Include `Closes #N` in the PR body so the merge auto-closes the issue. |
+| `auto_close_issues: true` (default) | Include a closing keyword in the PR body so the merge auto-closes the issue. **Same-repo**: `Closes #N`. **Cross-repo** (e.g., AIWG cycle fixing an issue in another repo via the resolved primary remote): the keyword MUST be fully qualified per the `ops-cross-repo` rule — `Closes: <owner>/<repo>#<N>` — otherwise Gitea/GitHub will not auto-close. Acceptable verbs: `Closes:`, `Fixes:`, `Resolves:`. The keyword belongs in the PR body, not the commit message, per `no-attribution`. |
 | `issue_comment_on_cycle: true` (default) | Post AL CYCLE status comments to the issue thread (today's behavior). When `false`, suppress cycle comments — useful for noisy automation. |
 | `require_ci_green: true` (default) | Wait for CI green on the PR before declaring resolved. |
 
@@ -134,10 +134,16 @@ When the project has no `delivery` block, defaults match what this skill does to
 ### Phase 1: Fetch and Prioritize Issues
 
 1. **Parse arguments** — determine which issues to address
-2. **Fetch issue details** from the configured tracker (Gitea MCP tools or `gh` CLI)
-3. **Read each issue** — title, body, labels, comments, assignees
-4. **Prioritize** — bugs before features, higher-priority labels first
-5. **Report plan** to user:
+2. **Audit for stale triage-pending-close issues** (#1416 closure-loop fix) — before fetching new work, query the tracker for issues carrying the `triage-recommended-close-pending-window` label (or equivalent objection-window marker). For each:
+   - Read the most recent cycle comment to extract the stated objection-window deadline.
+   - If the deadline has passed AND no human objection comment landed during the window, route the issue through **Phase 3.5** below (verify and close).
+   - If the deadline has not passed, leave the label in place and skip the issue for this run.
+
+   This catches issues that stalled mid-triage when prior sessions ended — they don't sit "open" forever waiting for a human to re-run the close step.
+3. **Fetch issue details** from the configured tracker (Gitea MCP tools or `gh` CLI)
+4. **Read each issue** — title, body, labels, comments, assignees
+5. **Prioritize** — bugs before features, higher-priority labels first
+6. **Report plan** to user:
 
 ```
 Issues to address (3):
@@ -212,9 +218,33 @@ An issue is considered resolved when ALL of:
 
 On resolution:
 1. Post a **completion summary** comment to the issue
-2. Optionally close the issue (ask in `--interactive` mode)
+2. Determine the closure path based on `delivery.mode`:
+   - **`mode: direct`** — commit landed on `default_branch`. Proceed to **Phase 3.5** immediately to verify and close.
+   - **`mode: feature-branch`** — branch pushed but no PR. Post a comment naming the branch and either close (if no review gate) or mark `triage-recommended-close-pending-window` with a stated deadline so a future cycle can finish the close.
+   - **`mode: pr-required`** — PR opened with the appropriate closing keyword (same-repo `Closes #N` or cross-repo `Closes: <owner>/<repo>#<N>` per the table above). After CI green and merge, the tracker auto-closes the issue. The cycle is not done until merge is confirmed — proceed to **Phase 3.5** to verify.
 3. Link related commits via `issue-sync` if available
 4. Move to the next issue
+
+### Phase 3.5: Verify Merged Fix and Close (#1416 closure-loop fix)
+
+A recurring failure mode: cycle 3 recommends closure with a 24-hour objection window, then the session ends and the issue stays open forever. This phase fixes that by making the close step part of the loop, not a deferred human action.
+
+**Trigger conditions** (any one fires Phase 3.5 for an issue):
+- `delivery.mode: direct` and Phase 3 just shipped the fix to `default_branch`.
+- `delivery.mode: pr-required` and the linked fix PR has merged to `default_branch`.
+- `triage-recommended-close-pending-window` label is present AND the stated objection window has expired AND no human objection comment landed during the window (these are surfaced by the Phase 1 audit).
+
+**Steps**:
+
+1. **Confirm merge state** — for `pr-required` projects, query the PR's `merged_at` timestamp via the resolved primary remote. If the PR is open, post a Cycle status comment naming the open PR and exit Phase 3.5; the next cycle picks it up.
+2. **Re-run verification** — execute the verification commands the earlier cycles relied on (grep for the regression pattern, run the fix's tests, check that the changed file is on disk in `default_branch`). Use the same commands recorded in earlier cycle comments so the evidence chain is reproducible.
+3. **Branch on the result**:
+   - **Verification passes** — delegate to the `issue-close` skill (`aiwg show skill issue-close`) which already implements `verify_before_close: true` semantics, posts a comprehensive closing comment with on-disk evidence, links the resolving commit/PR, and closes the issue.
+   - **Verification fails** — re-open the diagnostic as a fresh cycle (treat it like a Cycle N+1 reopening). Post a "verification disagreed with expectations" comment with the failing command output, do NOT close, and leave the issue in the active set for the next loop iteration.
+4. **Honor the objection window** — if a human comment landed during the stated window, never auto-close. Treat the comment as human feedback per Phase 2 Step 3 and resume cycles.
+5. **Remove the `triage-recommended-close-pending-window` label** on successful close, so the Phase 1 audit doesn't re-process it on the next run.
+
+**Why this lives in `address-issues` and not in the loop runtime**: the close decision is data-dependent on the issue thread state and the fix verification. Pushing it into the runtime would hide it from human review. Keeping it as a documented loop phase means the close behavior is auditable in the same place as the rest of the workflow.
 
 ### Phase 4: Aggregate Report
 
