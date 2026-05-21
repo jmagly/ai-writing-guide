@@ -106,19 +106,24 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   console.log(`  Target:   ${target}`);
 
   if (!shouldEmitContextFiles(provider as Platform)) {
-    console.log(`  Skip:     context files are not emitted for provider '${provider}' (claude uses CLAUDE.md natively; openclaw is home-dir-only).`);
+    console.log(`  Skip:     context files are not emitted for provider '${provider}' (openclaw is home-dir-only).`);
     return;
   }
 
   if (dryRun) {
     const aiwgMd = path.join(target, 'AIWG.md');
     const agentsMd = path.join(target, 'AGENTS.md');
+    const claudeMd = path.join(target, 'CLAUDE.md');
     console.log('');
     console.log(`  Would regenerate:`);
     console.log(`    - ${path.join(target, '.aiwg', 'AIWG.md')}`);
     if (!skipAiwgMd) console.log(`    - ${aiwgMd}`);
-    if (!skipAgentsMd) console.log(`    - ${agentsMd}`);
-    if (provider === 'copilot' && !skipAgentsMd) console.log(`    - ${path.join(target, '.github', 'copilot-instructions.md')}`);
+    if (provider === 'claude') {
+      console.log(`    - ${claudeMd} (AIWG-managed @AIWG.md hook block; operator content preserved)`);
+    } else {
+      if (!skipAgentsMd) console.log(`    - ${agentsMd}`);
+      if (provider === 'copilot' && !skipAgentsMd) console.log(`    - ${path.join(target, '.github', 'copilot-instructions.md')}`);
+    }
     if (force) console.log(`    (with --force: any operator-modified files are backed up first)`);
     console.log('');
     console.log(`  Dry run complete — no changes made`);
@@ -151,13 +156,22 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   if (result.normalizedAiwgMdPath) {
     console.log(`  OK Wrote .aiwg/AIWG.md`);
   }
+  if (result.claudeMdHookPath && result.claudeMdHookAction && result.claudeMdHookAction !== 'unchanged' && result.claudeMdHookAction !== 'skipped') {
+    const verb =
+      result.claudeMdHookAction === 'created' ? 'Created' :
+      result.claudeMdHookAction === 'inserted' ? 'Inserted hook into' :
+      'Updated hook in';
+    console.log(`  OK ${verb} CLAUDE.md (@AIWG.md block managed by AIWG)`);
+  } else if (result.claudeMdHookPath && result.claudeMdHookAction === 'unchanged') {
+    console.log(`  OK CLAUDE.md hook already up to date`);
+  }
   for (const w of result.warnings) {
     console.log(`  context-pipeline: ${w}`);
   }
   for (const b of result.backupPaths) {
     console.log(`  Backup created: ${b}`);
   }
-  if (!result.agentsMdPath && !result.aiwgMdPath) {
+  if (!result.agentsMdPath && !result.aiwgMdPath && !result.claudeMdHookPath) {
     console.log(`  No files regenerated (all skipped or refused without --force).`);
   } else {
     console.log(`  Regenerate complete`);

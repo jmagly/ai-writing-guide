@@ -33,9 +33,20 @@ export {
 export {
   AGENTS_MD_PROVIDERS,
   shouldEmitContextFiles,
+  shouldEmitAiwgMd,
+  shouldEmitAgentsMd,
+  shouldEmitClaudeMdHook,
   type AgentsMdProvider,
 } from './provider-policy.js';
 export { generateAiwgMd } from './aiwg-md.js';
+export {
+  CLAUDE_HOOK_START,
+  CLAUDE_HOOK_END,
+  buildClaudeHookBlock,
+  ensureClaudeMdHook,
+  type ClaudeHookOptions,
+  type ClaudeHookResult,
+} from './claude-hook.js';
 export {
   FINALIZATION_START,
   FINALIZATION_END,

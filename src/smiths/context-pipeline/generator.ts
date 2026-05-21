@@ -28,6 +28,8 @@ import { generateAiwgMd } from './aiwg-md.js';
 import { injectSpilloverBlock } from './overflow.js';
 import { buildParallelismSection } from './parallelism-section.js';
 import { buildContextFinalizationBlock, writeNormalizedAiwgMd } from './finalization.js';
+import { shouldEmitAgentsMd, shouldEmitAiwgMd, shouldEmitClaudeMdHook } from './provider-policy.js';
+import { ensureClaudeMdHook } from './claude-hook.js';
 
 const SECTION_TITLES: Record<IndexedArtifactType, string> = {
   agents: 'Agents',
@@ -391,7 +393,11 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
   const normalizedAiwgPath = await writeNormalizedAiwgMd(opts.projectPath);
   result.normalizedAiwgMdPath = normalizedAiwgPath;
 
-  if (!opts.skip?.agentsMd) {
+  // AGENTS.md emission is gated on the provider's link-mechanism: codex/copilot/
+  // cursor/windsurf/hermes/warp/factory/opencode use AGENTS.md as their bridge
+  // to AIWG.md. Claude uses CLAUDE.md hook instead (#1437); openclaw is
+  // home-dir-only and 'generic' has no provider-local footprint.
+  if (!opts.skip?.agentsMd && shouldEmitAgentsMd(opts.provider)) {
     const agentsMdPath = path.join(opts.projectPath, 'AGENTS.md');
     let canWrite = true;
 
@@ -432,7 +438,7 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
     }
   }
 
-  if (!opts.skip?.aiwgMd) {
+  if (!opts.skip?.aiwgMd && shouldEmitAiwgMd(opts.provider)) {
     const aiwgMdPath = path.join(opts.projectPath, 'AIWG.md');
 
     let canWrite = true;
@@ -464,6 +470,23 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
       await atomicWrite(aiwgMdPath, content);
       result.aiwgMdPath = aiwgMdPath;
     }
+  }
+
+  // CLAUDE.md hook emission for the claude provider (#1437). Mirrors how
+  // AGENTS.md is the bridge for other providers — CLAUDE.md gets a managed
+  // marker block with an `@AIWG.md` include. Operator content outside the
+  // block is preserved.
+  if (shouldEmitClaudeMdHook(opts.provider)) {
+    const hookResult = await ensureClaudeMdHook(opts.projectPath, {
+      force: opts.force,
+      detectExistingFiles: opts.detectExistingFiles,
+    });
+    result.claudeMdHookPath = hookResult.claudeMdPath;
+    result.claudeMdHookAction = hookResult.action;
+    if (hookResult.backupPath) {
+      result.backupPaths.push(hookResult.backupPath);
+    }
+    result.warnings.push(...hookResult.warnings);
   }
 
   return result;

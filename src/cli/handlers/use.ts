@@ -2299,6 +2299,15 @@ export class UseHandler implements CommandHandler {
         if (verbose && ctxResult.normalizedAiwgMdPath) {
           ui.dim(`  Wrote .aiwg/AIWG.md`);
         }
+        if (verbose && ctxResult.claudeMdHookPath && ctxResult.claudeMdHookAction && ctxResult.claudeMdHookAction !== 'unchanged') {
+          // #1437: CLAUDE.md hook for claude provider; mirrors AGENTS.md for other providers.
+          const verb =
+            ctxResult.claudeMdHookAction === 'created' ? 'Created' :
+            ctxResult.claudeMdHookAction === 'inserted' ? 'Inserted hook into' :
+            ctxResult.claudeMdHookAction === 'updated' ? 'Updated hook in' :
+            'Touched';
+          ui.dim(`  ${verb} CLAUDE.md (@AIWG.md block)`);
+        }
         for (const w of ctxResult.warnings) {
           ui.dim(`  context-pipeline: ${w}`);
         }

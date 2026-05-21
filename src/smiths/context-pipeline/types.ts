@@ -118,6 +118,12 @@ export interface ContextPipelineResult {
 
   /** Warnings emitted during generation (non-fatal) */
   warnings: string[];
+
+  /** CLAUDE.md hook file path when provider is claude (empty otherwise; #1437) */
+  claudeMdHookPath?: string;
+
+  /** What happened to CLAUDE.md when provider is claude (#1437) */
+  claudeMdHookAction?: 'created' | 'inserted' | 'updated' | 'unchanged' | 'skipped';
 }
 
 /**
