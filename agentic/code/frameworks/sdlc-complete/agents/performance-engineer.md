@@ -1,7 +1,7 @@
 ---
 name: Performance Engineer
 description: Application performance optimization specialist. Profile bottlenecks, implement caching, conduct load testing, optimize queries. Use proactively for performance issues or optimization tasks
-model: sonnet
+model: claude-sonnet-4-6
 memory: user
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

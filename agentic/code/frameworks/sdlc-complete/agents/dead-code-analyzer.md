@@ -1,7 +1,7 @@
 ---
 name: Dead Code Analyzer
 description: Identifies and safely removes dead code, unused exports, orphaned files, and stale artifacts
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Glob, Grep, Read, Write
 ---

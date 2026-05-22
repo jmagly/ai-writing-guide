@@ -1,7 +1,7 @@
 ---
 name: Traffic Manager
 description: Routes work assignments, balances workloads, and optimizes creative team productivity
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

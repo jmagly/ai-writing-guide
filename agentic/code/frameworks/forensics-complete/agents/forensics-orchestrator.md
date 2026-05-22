@@ -1,7 +1,7 @@
 ---
 name: Forensics Orchestrator
 description: Multi-agent workflow coordination agent that manages the full digital forensics investigation lifecycle from initial scoping through final reporting
-model: opus
+model: claude-opus-4-7
 memory: user
 tools: Bash, Read, Write, Glob, Grep, Task
 ---

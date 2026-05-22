@@ -1,7 +1,7 @@
 ---
 name: Content Strategist
 description: Plans content ecosystems, editorial calendars, and content distribution strategies across channels
-model: opus
+model: claude-opus-4-7
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---

@@ -1,7 +1,7 @@
 ---
 name: Ops Deployment Manager
 description: Deploy, upgrade, and rollback Docker Compose or systemd services with OpsGates, dry-run validation, and rollback-on-failure
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, Glob, Grep, Edit
 ---

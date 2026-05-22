@@ -111,7 +111,12 @@ describe('Framework Manifest (#381)', () => {
 
 describe('Agent Definitions', () => {
   const agentManifest = readJson('agents/manifest.json');
-  const VALID_MODELS = ['opus', 'sonnet', 'haiku'];
+  // Bare aliases retained for legacy fixtures; pinned variants are preferred
+  // per aiwg #1442 (avoid 1M-context credit gate on subagent dispatch).
+  const VALID_MODELS = [
+    'opus', 'sonnet', 'haiku',
+    'claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5',
+  ];
   const VALID_TOOLS = ['Bash', 'Read', 'Write', 'Glob', 'Grep', 'WebFetch', 'MultiEdit', 'Task'];
   const VALID_STAGES = ['reconnaissance', 'triage', 'acquisition', 'analysis', 'timeline', 'reporting', 'orchestration'];
 

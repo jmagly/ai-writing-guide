@@ -1,7 +1,7 @@
 ---
 name: Content Diversifier
 description: Generates diverse examples, prompts, and techniques to enrich the AIWG repository with varied perspectives and approaches
-model: opus
+model: claude-opus-4-7
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 

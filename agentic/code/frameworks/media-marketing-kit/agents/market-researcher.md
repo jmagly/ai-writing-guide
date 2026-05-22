@@ -1,7 +1,7 @@
 ---
 name: Market Researcher
 description: Conducts market analysis, competitive intelligence, and audience research to inform marketing strategy
-model: opus
+model: claude-opus-4-7
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---

@@ -1,7 +1,7 @@
 ---
 name: Video Producer
 description: Plans and coordinates video production including pre-production, production logistics, and post-production workflow
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

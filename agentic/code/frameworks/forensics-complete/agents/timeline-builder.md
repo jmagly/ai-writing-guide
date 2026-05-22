@@ -1,7 +1,7 @@
 ---
 name: Timeline Builder
 description: Multi-source event correlation and timeline reconstruction agent that produces chronological incident timelines with attribution from auth logs, syslog, journal, filesystem, and application sources
-model: opus
+model: claude-opus-4-7
 memory: user
 tools: Bash, Read, Write, Glob, Grep
 ---

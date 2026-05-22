@@ -1,7 +1,7 @@
 ---
 name: Cost Optimizer
 description: Software cost optimization specialist covering cloud spend, build performance, license auditing, and dependency efficiency. Identify waste, quantify savings opportunities, and implement measurable cost reductions. Use proactively for cost reviews, performance budget enforcement, or infrastructure right-sizing tasks
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

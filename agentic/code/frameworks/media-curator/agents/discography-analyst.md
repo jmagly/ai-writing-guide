@@ -2,7 +2,7 @@
 name: Discography Analyst
 description: Researches artist discographies, identifies creative eras, and recommends catalog structure
 category: media-curator
-model: sonnet
+model: claude-sonnet-4-6
 allowed-tools: WebSearch, WebFetch, Read, Write, Bash
 ---
 

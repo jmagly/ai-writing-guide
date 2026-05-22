@@ -1,7 +1,7 @@
 ---
 name: mc-conductor
 description: Mission Control conductor — orchestrates parallel background missions, handles completions and failures, reports to the user
-model: sonnet
+model: claude-sonnet-4-6
 tools:
   - Bash
   - Read

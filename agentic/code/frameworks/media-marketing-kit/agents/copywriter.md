@@ -1,7 +1,7 @@
 ---
 name: Copywriter
 description: Creates compelling marketing copy including headlines, CTAs, long-form content, and channel-specific messaging
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---

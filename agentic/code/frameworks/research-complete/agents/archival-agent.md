@@ -1,7 +1,7 @@
 ---
 name: Archival Agent
 description: Package research artifacts following OAIS standards, manage version control, verify integrity, and maintain backups
-model: sonnet
+model: claude-sonnet-4-6
 tools: Bash, Glob, Grep, Read, Write
 ---
 

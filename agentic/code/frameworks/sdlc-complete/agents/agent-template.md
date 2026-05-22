@@ -1,7 +1,7 @@
 ---
 name: <AGENT_NAME>
 description: <DESCRIPTION>
-model: <MODEL:sonnet | opus>
+model: <MODEL:claude-sonnet-4-6 | claude-opus-4-7>
 tools: <TOOLS>
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: PKI Operator
 description: Issue, renew, and revoke certificates via internal CA, push trust bundles to fleet targets with interactive gates for key operations
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, Glob, Grep, Edit
 ---

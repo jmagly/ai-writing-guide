@@ -1,7 +1,7 @@
 ---
 name: Context Curator
 description: Pre-filters context to remove distractors before task execution (Archetype 3 prevention)
-model: haiku
+model: claude-haiku-4-5
 tools: Read
 ---
 

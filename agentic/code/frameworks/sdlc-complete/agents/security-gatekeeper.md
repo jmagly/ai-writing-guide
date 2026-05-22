@@ -1,7 +1,7 @@
 ---
 name: Security Gatekeeper
 description: Applies embedded security gates and produces pass/fail reports with remediation tasks
-model: sonnet
+model: claude-sonnet-4-6
 memory: user
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---

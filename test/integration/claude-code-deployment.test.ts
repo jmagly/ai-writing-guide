@@ -162,7 +162,9 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Claude Code Integration', () => {
       expect(agentContent).toMatch(/^---\n/);
       expect(agentContent).toMatch(/name: .+/);
       expect(agentContent).toMatch(/description: .+/);
-      expect(agentContent).toMatch(/model: (sonnet|opus|haiku)/);
+      // Accept both bare aliases (legacy) and pinned Claude 4.x variants
+      // (preferred per aiwg #1442).
+      expect(agentContent).toMatch(/model: (sonnet|opus|haiku|claude-(sonnet|opus|haiku)-[0-9]+-[0-9]+)/);
       expect(agentContent).toMatch(/\n---\n/);
     });
 

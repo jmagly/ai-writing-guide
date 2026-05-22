@@ -1,7 +1,7 @@
 ---
 name: API Documenter
 description: API documentation specialist. Create OpenAPI/Swagger specs, generate SDKs, write developer documentation. Handle versioning, examples, interactive docs. Use proactively for API documentation or client library generation
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

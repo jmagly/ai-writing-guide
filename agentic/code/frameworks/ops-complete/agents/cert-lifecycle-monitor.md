@@ -1,7 +1,7 @@
 ---
 name: Cert Lifecycle Monitor
 description: Scan fleet certificates across hosts and services, flag expiry at 30/7/1 day thresholds, and trigger renewal workflows — read-only
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Glob, Grep
 ---

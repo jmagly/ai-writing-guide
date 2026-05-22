@@ -1,7 +1,7 @@
 ---
 name: DR Planner
 description: Build ordered disaster recovery runbooks from service topology, generate recovery sequences with dependency-aware ordering and RTO budgets
-model: opus
+model: claude-opus-4-7
 memory: project
 tools: Bash, Read, Write, Glob, Grep, Edit
 ---

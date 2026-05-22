@@ -3,7 +3,7 @@ id: cost-analyst
 name: Cost Analyst
 role: analyst
 tier: fast
-model: sonnet
+model: claude-sonnet-4-6
 description: TCO analysis, model selection recommendations, caching strategy, and parallelization opportunities for LLM inference pipelines
 allowed-tools: Read, WebFetch
 category: nlp-prod

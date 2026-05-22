@@ -1084,6 +1084,66 @@ async function runDoctor() {
     // Non-fatal — skip silently
   }
 
+  // 10b. Check deployed agent/skill frontmatter for unpinned model aliases (#1442).
+  // Bare aliases (`sonnet`, `opus`, `haiku`) inherit the parent session's
+  // variant. Under a 1M-context parent (`claude-opus-4-7[1m]`), subagent
+  // dispatch hits the usage-credit gate and fails. Pin specific variants.
+  try {
+    const PINNED_MAP = {
+      sonnet: 'claude-sonnet-4-6',
+      opus:   'claude-opus-4-7',
+      haiku:  'claude-haiku-4-5',
+    };
+    const scanDirs = [
+      '.claude/agents',
+      '.claude/skills',
+      '.claude/commands',
+    ];
+    const unpinned = [];
+    for (const rel of scanDirs) {
+      const dir = path.join(process.cwd(), rel);
+      let entries;
+      try {
+        entries = await fs.readdir(dir, { withFileTypes: true });
+      } catch {
+        continue;
+      }
+      for (const ent of entries) {
+        const target = ent.isDirectory()
+          ? path.join(dir, ent.name, 'SKILL.md')
+          : path.join(dir, ent.name);
+        if (!target.endsWith('.md')) continue;
+        let content;
+        try {
+          content = await fs.readFile(target, 'utf-8');
+        } catch {
+          continue;
+        }
+        const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+        if (!fmMatch) continue;
+        const modelMatch = fmMatch[1].match(/^model:\s*(\S+)\s*$/m);
+        if (!modelMatch) continue;
+        const value = modelMatch[1].trim();
+        if (PINNED_MAP[value]) {
+          unpinned.push({ file: path.relative(process.cwd(), target), alias: value, pinned: PINNED_MAP[value] });
+        }
+      }
+    }
+    if (unpinned.length === 0) {
+      check('Model Pinning', 'ok', 'all deployed agents/skills pin specific model variants');
+    } else {
+      const sample = unpinned.slice(0, 3).map(u => `${u.file} (${u.alias}→${u.pinned})`).join('; ');
+      const more = unpinned.length > 3 ? ` …and ${unpinned.length - 3} more` : '';
+      check(
+        'Model Pinning',
+        'warn',
+        `${unpinned.length} file(s) use bare model alias — subagent dispatch from 1M-context parents may fail. Run "aiwg refresh" to redeploy pinned variants. Examples: ${sample}${more}. See aiwg #1442.`,
+      );
+    }
+  } catch {
+    // Non-fatal — skip silently
+  }
+
   // 11. Check .gitignore for AIWG runtime patterns (warning if missing)
   const AIWG_RUNTIME_PATTERNS = ['.aiwg/working/', '.aiwg/ralph/', '.aiwg/ralph-external/'];
   const gitignorePath = path.join(process.cwd(), '.gitignore');

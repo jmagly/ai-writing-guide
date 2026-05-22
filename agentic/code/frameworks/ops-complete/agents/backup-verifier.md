@@ -1,7 +1,7 @@
 ---
 name: Backup Verifier
 description: Test backup restore path, verify hash integrity, and confirm RPO/RTO targets are met for documented backup jobs
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, Glob, Grep
 ---

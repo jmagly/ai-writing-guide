@@ -1,7 +1,7 @@
 ---
 name: Memory Analyst
 description: Volatility 3 memory forensics specialist for process analysis, rootkit detection, injected code identification, and credential extraction from memory dumps
-model: opus
+model: claude-opus-4-7
 memory: user
 tools: Bash, Read, Write, Glob, Grep
 ---

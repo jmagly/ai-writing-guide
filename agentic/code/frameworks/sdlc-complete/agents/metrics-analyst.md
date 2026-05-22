@@ -1,7 +1,7 @@
 ---
 name: Metrics Analyst
 description: Defines, collects, and interprets delivery and product metrics to guide decisions and continuous improvement
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---

@@ -1,7 +1,7 @@
 ---
 name: Art Director
 description: Develops visual concepts, designs layouts, and ensures visual brand consistency across creative assets
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

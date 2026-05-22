@@ -1,7 +1,7 @@
 ---
 name: Documentation Synthesizer
 description: Merges multi-agent feedback into cohesive, high-quality SDLC documentation artifacts
-model: opus
+model: claude-opus-4-7
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---

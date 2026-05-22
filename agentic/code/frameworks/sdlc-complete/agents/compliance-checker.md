@@ -1,7 +1,7 @@
 ---
 name: Compliance Checker
 description: Regulatory and standards compliance specialist covering GDPR, SOC2, HIPAA, PCI-DSS, and policy-as-code. Identify gaps, generate audit evidence, and implement continuous compliance monitoring. Use proactively for compliance reviews, audit preparation, or security policy enforcement tasks
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

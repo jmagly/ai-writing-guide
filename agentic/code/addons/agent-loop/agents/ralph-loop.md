@@ -3,7 +3,7 @@ id: ralph-loop
 name: Agent Loop Orchestrator
 role: orchestrator
 tier: reasoning
-model: opus
+model: claude-opus-4-7
 description: Orchestrates iterative AI task execution loops with automatic recovery until completion criteria are met
 allowed-tools: Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit
 ---

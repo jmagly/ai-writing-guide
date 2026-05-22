@@ -1,7 +1,7 @@
 ---
 name: Frontend Specialist
 description: UI architecture, component design, performance optimization, and accessibility specialist. Review component architecture, optimize web vitals, ensure WCAG compliance, implement responsive design. Use proactively for frontend architecture or performance issues
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

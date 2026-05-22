@@ -3,7 +3,7 @@ id: content-diversifier
 name: Content Diversifier
 role: creative
 tier: generation
-model: sonnet
+model: claude-sonnet-4-6
 description: Generates diverse alternatives using Verbalized Sampling techniques to combat RLHF mode collapse
 allowed-tools: Read, Write, Bash
 platforms: [all]

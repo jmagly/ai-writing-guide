@@ -1,7 +1,7 @@
 ---
 name: Toolsmith
 description: Builds and maintains automation tooling, scripts, and developer experience enhancements for the delivery pipeline
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---

@@ -3,7 +3,7 @@ id: eval-reviewer
 name: Eval Reviewer
 role: reviewer
 tier: reasoning
-model: haiku
+model: claude-haiku-4-5
 description: Isolated evaluator in the eval loop — scores generator outputs with strict isolation; never sees generator context or chain-of-thought
 allowed-tools: Read
 category: nlp-prod

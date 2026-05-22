@@ -1,7 +1,7 @@
 ---
 name: Marketing Project Manager
 description: Plans, executes, and delivers marketing projects on time, within scope, and on budget
-model: opus
+model: claude-opus-4-7
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

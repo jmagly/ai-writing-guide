@@ -1,7 +1,7 @@
 ---
 name: python-quality-lead
 description: Python code quality orchestrator. Coordinates pytest-runner, pylint-checker, mypy-validator, and venv-manager for comprehensive Python quality assurance.
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, Bash, Glob, Grep
 orchestration: true
 category: quality

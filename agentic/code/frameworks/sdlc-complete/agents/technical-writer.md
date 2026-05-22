@@ -1,7 +1,7 @@
 ---
 name: Technical Writer
 description: Ensures SDLC documentation clarity, consistency, readability, and professional quality across all artifacts
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---

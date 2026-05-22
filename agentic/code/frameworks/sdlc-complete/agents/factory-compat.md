@@ -12,7 +12,7 @@ The agent Markdown format in this repository is fully compatible with Factory AI
 ---
 name: architecture-designer
 description: Designs scalable, maintainable system architectures
-model: opus
+model: claude-opus-4-7
 ---
 
 [System prompt...]
@@ -143,7 +143,7 @@ Factory uses Anthropic's tool naming conventions. AIWG maps Claude Code tools to
 ---
 name: Architecture Designer
 description: Designs scalable, maintainable system architectures
-model: opus
+model: claude-opus-4-7
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---
 ```

@@ -3,7 +3,7 @@ description: Generate structured summaries, extract claims, and create markdown 
 category: research-management
 argument-hint: [--paper-id <id>] [--all] [--template <type>]
 allowed-tools: Read, Write, Grep, Glob
-model: sonnet
+model: claude-sonnet-4-6
 ---
 
 # Research Documentation Command

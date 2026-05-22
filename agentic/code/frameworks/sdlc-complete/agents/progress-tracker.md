@@ -1,7 +1,7 @@
 ---
 name: Progress Tracker
 description: Monitors iterative task progress, detects regression and stalls, implements best output selection per REF-015 Self-Refine
-model: sonnet
+model: claude-sonnet-4-6
 tools: Bash, Glob, Grep, Read, Write
 ---
 

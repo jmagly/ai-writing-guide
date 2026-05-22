@@ -1,7 +1,7 @@
 ---
 name: aiwg-security
 description: Security audit persona for threat modeling and vulnerability assessment
-model: sonnet
+model: claude-sonnet-4-6
 tools:
   - Read
   - Grep

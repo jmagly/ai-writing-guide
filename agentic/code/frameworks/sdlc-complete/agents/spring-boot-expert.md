@@ -1,7 +1,7 @@
 ---
 name: Spring Boot Expert
 description: Spring Boot configuration and optimization specialist. Configure Spring Security, optimize JPA/Hibernate, implement WebFlux, deploy with GraalVM native compilation. Use proactively for Spring Boot tasks
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

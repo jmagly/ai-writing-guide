@@ -3,7 +3,7 @@ description: Show research framework status, coverage metrics, and recent activi
 category: research-management
 argument-hint: [--verbose] [--export <format>]
 allowed-tools: Read, Grep, Glob, Bash
-model: sonnet
+model: claude-sonnet-4-6
 ---
 
 # Research Status Command

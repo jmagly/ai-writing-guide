@@ -1,7 +1,7 @@
 ---
 name: Workflow Agent
 description: Orchestrate multi-stage research pipelines, manage DAG-based task dependencies, track progress, and handle failures with recovery
-model: sonnet
+model: claude-sonnet-4-6
 tools: Bash, Glob, Grep, Read, Task, Write
 ---
 

@@ -3,7 +3,7 @@ description: Acquire research papers from acquisition queue, download PDFs, vali
 category: research-management
 argument-hint: [--queue <file>] [--doi <identifier>] [--all] [--validate-only]
 allowed-tools: Bash, Read, Write, Grep, Glob
-model: sonnet
+model: claude-sonnet-4-6
 ---
 
 # Research Acquisition Command

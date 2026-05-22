@@ -1,7 +1,7 @@
 ---
 name: React Expert
 description: React ecosystem specialist. Optimize React 19+ applications, implement Server Components, design state management, build design systems. Use proactively for React architecture or performance tasks
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

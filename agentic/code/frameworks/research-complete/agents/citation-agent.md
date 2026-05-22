@@ -1,7 +1,7 @@
 ---
 name: Citation Agent
 description: Format citations in 9,000+ styles, build citation networks, back claims with references, and manage bibliographies
-model: sonnet
+model: claude-sonnet-4-6
 tools: Bash, Glob, Grep, Read, WebFetch, Write
 ---
 

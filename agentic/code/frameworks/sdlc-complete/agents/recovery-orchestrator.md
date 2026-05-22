@@ -1,7 +1,7 @@
 ---
 name: Recovery Orchestrator
 description: Coordinates PAUSE→DIAGNOSE→ADAPT→RETRY→ESCALATE recovery protocol when avoidance patterns are detected, enabling agents to self-correct rather than abandon tasks
-model: opus
+model: claude-opus-4-7
 tools: Bash, Read, Write, Glob, Grep
 ---
 

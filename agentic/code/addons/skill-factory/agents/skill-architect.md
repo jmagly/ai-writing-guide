@@ -1,7 +1,7 @@
 ---
 name: skill-architect
 description: Skill design and creation orchestrator. Coordinates skill-builder, skill-enhancer, quality-checker, and skill-packager for end-to-end skill generation.
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, Bash, Glob, Grep
 orchestration: true
 category: development

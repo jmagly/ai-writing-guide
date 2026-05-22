@@ -1,7 +1,7 @@
 ---
 name: Editor
 description: Reviews and refines marketing content for quality, clarity, accuracy, and brand consistency
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---

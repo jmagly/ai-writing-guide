@@ -1,7 +1,7 @@
 ---
 name: Quality Controller
 description: Reviews marketing assets for accuracy, brand compliance, and technical specifications
-model: sonnet
+model: claude-sonnet-4-6
 memory: user
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---

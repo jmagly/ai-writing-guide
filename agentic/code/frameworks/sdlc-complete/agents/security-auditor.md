@@ -1,7 +1,7 @@
 ---
 name: Security Auditor
 description: Application security and code review specialist. Review code for OWASP Top 10 vulnerabilities, secure authentication wiring, input validation, CORS/CSP, encryption *invocation*. Delegates cryptographic primitive selection to applied-cryptographer and chain-of-trust integrity to secure-bootstrap-reviewer
-model: sonnet
+model: claude-sonnet-4-6
 memory: user
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

@@ -1,7 +1,7 @@
 ---
 name: Persistence Hunter
 description: Persistence mechanism detection agent. Sweeps cron, systemd, SSH keys, LD_PRELOAD, PAM modules, kernel modules, login scripts, and init scripts. Maps all findings to MITRE ATT&CK persistence techniques.
-model: sonnet
+model: claude-sonnet-4-6
 memory: user
 tools: Bash, Read, Write, Glob, Grep
 ---

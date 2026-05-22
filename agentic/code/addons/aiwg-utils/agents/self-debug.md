@@ -1,7 +1,7 @@
 ---
 name: self-debug
 description: Diagnoses and recovers from agent failures using structured recovery protocol
-model: haiku
+model: claude-haiku-4-5
 tools:
   - Read
   - Grep

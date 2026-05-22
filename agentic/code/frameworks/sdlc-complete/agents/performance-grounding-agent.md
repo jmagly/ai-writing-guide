@@ -3,7 +3,7 @@ id: performance-grounding-agent
 name: Performance Grounding Agent
 role: grounding
 tier: validation
-model: sonnet
+model: claude-sonnet-4-6
 description: Verifies performance claims and injects benchmarking knowledge to ground optimization decisions in data
 allowed-tools: Read, Grep, Glob
 platforms: [all]

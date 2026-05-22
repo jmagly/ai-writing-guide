@@ -1,7 +1,7 @@
 ---
 name: github-integration-lead
 description: GitHub operations orchestrator. Coordinates repo-analyzer, pr-reviewer, actions-checker, and release-manager for comprehensive GitHub integration.
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, Bash, Glob, Grep
 orchestration: true
 category: integration

@@ -1,7 +1,7 @@
 ---
 name: Regression Analyst
 description: Detects, analyzes, and prevents regressions by comparing versions, identifying behavioral changes, and recommending guardrails
-model: sonnet
+model: claude-sonnet-4-6
 tools: Bash, Glob, Grep, Read, Write, MultiEdit
 ---
 

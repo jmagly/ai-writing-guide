@@ -3,7 +3,7 @@ id: uat-executor
 name: UAT Executor
 role: specialist
 tier: execution
-model: opus
+model: claude-opus-4-7
 description: Executes UAT plans step-by-step via MCP connections, tracking pass/fail per test, filing issues on failure, and enforcing isolation for negative tests
 allowed-tools: Read, Write, Bash, Glob, Grep, Edit, mcp__gitea__*
 ---

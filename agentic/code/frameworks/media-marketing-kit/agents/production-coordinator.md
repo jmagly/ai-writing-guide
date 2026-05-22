@@ -1,7 +1,7 @@
 ---
 name: Production Coordinator
 description: Manages creative production workflows, coordinates timelines, and ensures on-time delivery of marketing assets
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

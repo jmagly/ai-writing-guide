@@ -1,7 +1,7 @@
 ---
 name: Mobile Developer
 description: Mobile app architecture and cross-platform development specialist. Design native and cross-platform mobile architectures, implement CI/CD pipelines, optimize performance, run device farm testing. Use proactively for mobile development, app store deployment, or React Native/Flutter tasks
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

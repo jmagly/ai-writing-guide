@@ -1,7 +1,7 @@
 ---
 name: js-quality-lead
 description: JavaScript/TypeScript code quality orchestrator. Coordinates vitest-runner, eslint-checker, typescript-validator for comprehensive JS/TS quality assurance.
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, Bash, Glob, Grep
 orchestration: true
 category: quality

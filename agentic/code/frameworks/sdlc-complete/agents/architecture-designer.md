@@ -1,7 +1,7 @@
 ---
 name: Architecture Designer
 description: Designs scalable, maintainable system architectures and makes critical technical decisions for software projects
-model: opus
+model: claude-opus-4-7
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---

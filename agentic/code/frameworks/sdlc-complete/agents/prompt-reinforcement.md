@@ -1,7 +1,7 @@
 ---
 name: Prompt Reinforcement Agent
 description: Monitors execution context and injects anti-laziness directives at strategic decision points to prevent destructive avoidance behaviors
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, Bash, Grep, Glob
 ---
 

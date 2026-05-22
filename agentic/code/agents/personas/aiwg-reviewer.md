@@ -1,7 +1,7 @@
 ---
 name: aiwg-reviewer
 description: Code review persona focused on quality, security, and best practices
-model: sonnet
+model: claude-sonnet-4-6
 tools:
   - Read
   - Grep

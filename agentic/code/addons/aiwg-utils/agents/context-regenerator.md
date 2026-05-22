@@ -1,7 +1,7 @@
 ---
 name: Context Regenerator
 description: Regenerates platform context files (CLAUDE.md, WARP.md, AGENTS.md) with intelligent preservation of team directives
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, Glob, Grep, Bash
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: Container Analyst
 description: Docker, containerd, and Kubernetes forensics agent. Analyzes container configurations, images, volumes, and network settings to detect privilege escalation vectors, container escapes, image tampering, and unauthorized containers. Covers eBPF runtime monitoring (Falco, Tetragon, Tracee), image layer analysis (dive), crictl for containerd/CRI-O environments, etcd security audit, and K8s API server audit log analysis.
-model: sonnet
+model: claude-sonnet-4-6
 memory: user
 tools: Bash, Read, Write, Glob, Grep
 ---

@@ -1,7 +1,7 @@
 ---
 name: Secure Bootstrap Reviewer
 description: Narrow-scope reviewer for chain-of-trust integrity. Traces the boot/bootstrap chain from first byte executed to first secret derived, identifies trust anchors, flags circular trust, and validates signing key custody.
-model: opus
+model: claude-opus-4-7
 memory: user
 tools: Bash, Glob, Grep, Read, WebFetch, Write
 category: security-engineering

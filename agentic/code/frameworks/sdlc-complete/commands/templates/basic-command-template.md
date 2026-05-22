@@ -10,7 +10,7 @@ description: Brief description of what this command does (keep under 80 characte
 category: category-name
 argument-hint: <expected-arguments>
 allowed-tools: Read, Write, Bash, Grep, Glob
-model: sonnet
+model: claude-sonnet-4-6
 ---
 
 # [Command Name]
@@ -123,10 +123,13 @@ This command succeeds when:
 ### 2. Configure Frontmatter
 
 ```yaml
-# Model selection based on complexity
-model: haiku    # For simple, fast operations
-model: sonnet   # For balanced tasks (recommended default)
-model: opus     # For complex reasoning tasks
+# Model selection based on complexity — pin specific variants, not aliases.
+# Bare aliases (`sonnet`, `opus`, `haiku`) inherit the parent session's
+# variant, which under a 1M-context parent triggers the usage-credit gate
+# and blocks subagent dispatch. See aiwg #1442.
+model: claude-haiku-4-5      # For simple, fast operations
+model: claude-sonnet-4-6     # For balanced tasks (recommended default)
+model: claude-opus-4-7       # For complex reasoning tasks
 
 # Tool selection based on needs
 allowed-tools: Read                    # Read-only commands

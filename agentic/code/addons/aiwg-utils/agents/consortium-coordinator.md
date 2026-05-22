@@ -1,7 +1,7 @@
 ---
 name: consortium-coordinator
 description: Coordinates multi-agent consensus decisions for complex technical choices
-model: opus
+model: claude-opus-4-7
 tools:
   - Task
   - Read

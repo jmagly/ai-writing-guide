@@ -1,7 +1,7 @@
 ---
 name: Migration Planner
 description: Technology migration planning and execution specialist. Plan framework upgrades, language transitions, and infrastructure moves with rollback strategies. Use proactively for migration planning tasks
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch, Glob, Grep
 ---

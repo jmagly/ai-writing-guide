@@ -2,7 +2,7 @@
 name: Metadata Curator
 description: Applies metadata tags, embeds artwork, enforces naming conventions, and organizes media files
 category: media-curator
-model: sonnet
+model: claude-sonnet-4-6
 allowed-tools: Bash, Read, Write, Glob, Grep
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: Scriptwriter
 description: Creates video scripts, podcast outlines, webinar content, and audio/visual storytelling
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

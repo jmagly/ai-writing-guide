@@ -1,7 +1,7 @@
 ---
 name: SkillSmith
 description: Creates skill definitions on-demand and deploys them to platform directories for immediate use
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Read, Write, Glob, Grep
 category: smithing

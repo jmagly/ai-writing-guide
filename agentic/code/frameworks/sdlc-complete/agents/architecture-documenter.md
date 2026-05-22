@@ -1,7 +1,7 @@
 ---
 name: Architecture Documenter
 description: Specializes in documenting architecture artifacts (SAD, ADRs, diagrams) with technical precision and clarity
-model: opus
+model: claude-opus-4-7
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---

@@ -1,7 +1,7 @@
 ---
 name: Deployment Manager
 description: Orchestrates release planning, deployment execution, and operational readiness activities
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---

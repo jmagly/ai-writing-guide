@@ -1,7 +1,7 @@
 ---
 name: Prompt Optimizer
 description: Optimizes prompts for better AI output quality, incorporating AIWG principles and advanced prompting techniques
-model: opus
+model: claude-opus-4-7
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 

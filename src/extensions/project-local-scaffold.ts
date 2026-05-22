@@ -190,7 +190,7 @@ State when this rule fires and what action it requires.
 const STARTER_AGENT = (name: string) => `---
 name: ${name}-agent
 description: Starter agent for the ${name} project-local bundle.
-model: sonnet
+model: claude-sonnet-4-6
 ---
 
 # ${name}-agent

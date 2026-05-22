@@ -1,7 +1,7 @@
 ---
 name: Support Lead
 description: Prepares and coordinates customer support readiness, incident response, and knowledge management for releases
-model: sonnet
+model: claude-sonnet-4-6
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---
 

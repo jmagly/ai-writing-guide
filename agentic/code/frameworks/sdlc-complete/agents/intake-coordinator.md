@@ -1,7 +1,7 @@
 ---
 name: Intake Coordinator
 description: Transforms the intake form and solution profile into a validated inception plan with agent assignments
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---

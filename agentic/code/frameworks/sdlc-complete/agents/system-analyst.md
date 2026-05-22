@@ -1,7 +1,7 @@
 ---
 name: System Analyst
 description: Bridges business intent and technical delivery by refining requirements and defining system scope
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---

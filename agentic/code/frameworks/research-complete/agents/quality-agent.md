@@ -1,7 +1,7 @@
 ---
 name: Quality Agent
 description: Assess source quality using GRADE framework, validate FAIR compliance, generate quality reports, and enforce quality gates
-model: sonnet
+model: claude-sonnet-4-6
 tools: Bash, Glob, Grep, Read, WebFetch, Write
 ---
 

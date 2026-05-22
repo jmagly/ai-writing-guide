@@ -1,7 +1,7 @@
 ---
 name: Product Designer
 description: Crafts user experience flows, interface designs, and interaction specs that align with product objectives
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---

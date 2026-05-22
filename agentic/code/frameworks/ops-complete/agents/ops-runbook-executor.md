@@ -1,7 +1,7 @@
 ---
 name: Ops Runbook Executor
 description: Executes operational runbooks step-by-step with verification at each step, safety gates for destructive operations, and audit trail generation
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, Glob, Grep, Edit
 ---

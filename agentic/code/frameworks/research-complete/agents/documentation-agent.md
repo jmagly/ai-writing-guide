@@ -1,7 +1,7 @@
 ---
 name: Documentation Agent
 description: Summarize papers using LLM with RAG pattern, extract structured data, grade source quality, and create Zettelkasten-style literature notes
-model: opus
+model: claude-opus-4-7
 tools: Bash, Read, Write, Grep, Glob
 ---
 

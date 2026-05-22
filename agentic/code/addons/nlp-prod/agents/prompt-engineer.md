@@ -3,7 +3,7 @@ id: prompt-engineer
 name: Prompt Engineer
 role: specialist
 tier: reasoning
-model: sonnet
+model: claude-sonnet-4-6
 description: Creates and iteratively refines production-quality prompts with built-in eval loop integration
 allowed-tools: Read, Write, Bash
 category: nlp-prod

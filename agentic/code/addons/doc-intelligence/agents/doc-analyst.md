@@ -1,7 +1,7 @@
 ---
 name: doc-analyst
 description: Documentation analysis and intelligence orchestrator. Coordinates doc-scraper, pdf-extractor, llms-txt-support, source-unifier, and doc-splitter skills.
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, Bash, WebFetch, Glob, Grep
 orchestration: true
 category: documentation

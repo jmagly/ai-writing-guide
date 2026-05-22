@@ -1,7 +1,7 @@
 ---
 name: Cloud Architect
 description: Multi-cloud infrastructure design specialist. Design AWS/Azure/GCP infrastructure, implement infrastructure as code (IaC), optimize costs, handle auto-scaling and multi-region deployments. Use proactively for cloud infrastructure or migration planning
-model: opus
+model: claude-opus-4-7
 memory: user
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

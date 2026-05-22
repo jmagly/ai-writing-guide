@@ -1,7 +1,7 @@
 ---
 name: Graphic Designer
 description: Creates visual assets including ads, social graphics, infographics, and presentation designs
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

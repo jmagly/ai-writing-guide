@@ -108,7 +108,20 @@ export class AgentValidator {
 
     // Validate model if present
     if (metadata.model) {
-      const validModels = ['sonnet', 'opus', 'haiku', 'gpt-4', 'gpt-3.5-turbo'];
+      // Bare aliases retained for backwards compatibility, but pinned
+      // variants are preferred — see #1442. A bare alias inherits the
+      // parent session's variant; under a 1M-context parent
+      // (`claude-opus-4-7[1m]`) this triggers the usage-credit gate on
+      // subagent dispatch. Pinned 4.x Claude variants and legacy GPT IDs
+      // are both accepted.
+      const validModels = [
+        // Bare aliases (legacy; emit a separate warning eventually)
+        'sonnet', 'opus', 'haiku',
+        // Pinned Claude 4.x variants (preferred)
+        'claude-sonnet-4-6', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-haiku-4-5',
+        // Legacy GPT
+        'gpt-4', 'gpt-3.5-turbo',
+      ];
       if (!validModels.includes(metadata.model)) {
         issues.push({
           type: 'warning',

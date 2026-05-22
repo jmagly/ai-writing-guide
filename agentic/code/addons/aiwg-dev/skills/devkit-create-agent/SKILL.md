@@ -113,7 +113,7 @@ When `--interactive` is specified, I will ask:
 ---
 name: agent-name
 description: Agent description
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, MultiEdit, Bash, WebFetch
 ---
 

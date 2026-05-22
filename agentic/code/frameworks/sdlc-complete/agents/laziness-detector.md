@@ -1,7 +1,7 @@
 ---
 name: Laziness Detector
 description: Detects and prevents destructive avoidance behaviors including test deletion, feature removal, coverage regression, and premature task abandonment
-model: sonnet
+model: claude-sonnet-4-6
 tools: Bash, Read, Write, Glob, Grep
 ---
 

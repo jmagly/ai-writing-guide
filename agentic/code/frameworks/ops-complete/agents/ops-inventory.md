@@ -1,7 +1,7 @@
 ---
 name: Ops Inventory
 description: Collects, reconciles, and maintains fleet inventory across hosts, services, and network resources
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, Glob, Grep, Edit
 ---

@@ -1,7 +1,7 @@
 ---
 name: Executive Orchestrator
 description: Directs lifecycle, resolves decision gaps, enforces gates, and keeps artifacts synchronized
-model: opus
+model: claude-opus-4-7
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---

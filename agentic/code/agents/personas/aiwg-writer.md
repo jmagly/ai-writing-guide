@@ -1,7 +1,7 @@
 ---
 name: aiwg-writer
 description: Documentation persona for technical writing and content creation
-model: sonnet
+model: claude-sonnet-4-6
 tools:
   - Read
   - Write

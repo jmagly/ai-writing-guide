@@ -1,7 +1,7 @@
 ---
 name: Reporting Agent
 description: Forensic report generation agent that compiles investigation findings into structured professional forensic reports with executive summary, technical findings, timeline, and remediation plan
-model: sonnet
+model: claude-sonnet-4-6
 memory: user
 tools: Read, Write, Glob, Grep
 ---

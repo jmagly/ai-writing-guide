@@ -1,7 +1,7 @@
 ---
 name: Technical Marketing Writer
 description: Creates technical content including documentation, API guides, developer tutorials, and product technical content
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

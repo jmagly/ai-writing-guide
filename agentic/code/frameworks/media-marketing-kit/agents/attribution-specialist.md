@@ -1,7 +1,7 @@
 ---
 name: Attribution Specialist
 description: Develops and implements marketing attribution models to measure channel effectiveness and optimize marketing spend
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

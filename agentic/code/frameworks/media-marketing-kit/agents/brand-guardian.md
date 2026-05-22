@@ -1,7 +1,7 @@
 ---
 name: Brand Guardian
 description: Ensures all marketing materials adhere to brand guidelines, protecting brand integrity and consistency
-model: opus
+model: claude-opus-4-7
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---

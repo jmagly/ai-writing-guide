@@ -1,7 +1,7 @@
 ---
 name: Mutation Analyst
 description: Analyzes mutation testing results to identify weak tests and recommend specific improvements
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

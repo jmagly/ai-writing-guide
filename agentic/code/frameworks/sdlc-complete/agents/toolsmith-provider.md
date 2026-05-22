@@ -1,7 +1,7 @@
 ---
 name: toolsmith-provider
 description: Provides platform-aware tool specifications for agent operations in subagent scenarios
-model: haiku
+model: claude-haiku-4-5
 tools: Read, Bash, Glob, Grep
 orchestration: false
 category: infrastructure

@@ -2,7 +2,7 @@
 name: Completeness Tracker
 description: Tracks collection completeness against canonical discography, identifies gaps, and prioritizes acquisitions
 category: media-curator
-model: sonnet
+model: claude-sonnet-4-6
 allowed-tools: Bash, Read, Write, Glob, Grep, WebSearch, WebFetch
 ---
 

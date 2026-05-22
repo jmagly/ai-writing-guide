@@ -2,7 +2,7 @@
 name: Media Quality Assessor
 description: Scores media quality across audio, video, and uniqueness dimensions with configurable accept/reject thresholds
 category: media-curator
-model: sonnet
+model: claude-sonnet-4-6
 allowed-tools: Bash, Read, Write
 ---
 

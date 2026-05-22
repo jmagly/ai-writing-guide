@@ -1,7 +1,7 @@
 ---
 name: Secret Operator
 description: Manage OpenBao/Vault operations — unseal, backup, key rotation, and audit log review — with interactive gates for all sensitive operations
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, Glob, Grep
 ---

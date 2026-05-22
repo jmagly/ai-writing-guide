@@ -1,7 +1,7 @@
 ---
 name: aiwg-orchestrator
 description: Full SDLC orchestration persona for end-to-end project management
-model: opus
+model: claude-opus-4-7
 tools:
   - Task
   - Read

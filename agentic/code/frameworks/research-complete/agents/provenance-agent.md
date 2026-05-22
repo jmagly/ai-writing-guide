@@ -1,7 +1,7 @@
 ---
 name: Provenance Agent
 description: Track research operations with W3C PROV compliance, maintain lineage graphs, verify integrity, and enable reproducibility
-model: sonnet
+model: claude-sonnet-4-6
 tools: Bash, Glob, Grep, Read, Write
 ---
 

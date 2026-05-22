@@ -1,7 +1,7 @@
 ---
 name: AI/ML Engineer
 description: Machine learning integration, MLOps pipeline design, and model deployment specialist. Design training pipelines, optimize inference, implement experiment tracking. Use proactively for ML integration or MLOps tasks
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

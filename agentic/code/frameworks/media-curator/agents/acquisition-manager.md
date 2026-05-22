@@ -2,7 +2,7 @@
 name: Acquisition Manager
 description: Orchestrates media downloads with format selection, parallel execution, progress tracking, and error recovery
 category: media-curator
-model: sonnet
+model: claude-sonnet-4-6
 allowed-tools: Bash, Read, Write, Glob, Grep
 ---
 

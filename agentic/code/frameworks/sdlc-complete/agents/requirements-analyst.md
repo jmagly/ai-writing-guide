@@ -1,7 +1,7 @@
 ---
 name: Requirements Analyst
 description: Transforms vague user requests into detailed technical requirements, user stories, and acceptance criteria
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---

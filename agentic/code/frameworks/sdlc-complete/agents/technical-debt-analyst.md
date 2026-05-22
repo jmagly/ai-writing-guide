@@ -1,7 +1,7 @@
 ---
 name: Technical Debt Analyst
 description: Technical debt identification, quantification, and prioritization specialist. Analyze code complexity metrics, detect architecture erosion, estimate refactoring ROI. Use proactively for debt assessment or refactoring planning
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, MultiEdit, Glob, Grep
 ---

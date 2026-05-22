@@ -1,7 +1,7 @@
 ---
 name: IOC Analyst
 description: IOC extraction, enrichment, and STIX 2.1 formatting agent that identifies indicators of compromise from investigation artifacts and produces an actionable IOC register
-model: sonnet
+model: claude-sonnet-4-6
 memory: user
 tools: Bash, Read, Write, Glob, Grep, WebFetch
 ---

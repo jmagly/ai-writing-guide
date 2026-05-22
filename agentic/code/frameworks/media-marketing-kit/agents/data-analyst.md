@@ -1,7 +1,7 @@
 ---
 name: Data Analyst
 description: Collects, processes, and analyzes marketing data to support decision-making and campaign optimization
-model: sonnet
+model: claude-sonnet-4-6
 memory: user
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---

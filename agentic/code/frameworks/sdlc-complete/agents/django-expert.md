@@ -1,7 +1,7 @@
 ---
 name: Django Expert
 description: Django framework optimization specialist. Optimize ORM queries, design DRF APIs, implement middleware patterns, configure Celery integration. Use proactively for Django development tasks
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

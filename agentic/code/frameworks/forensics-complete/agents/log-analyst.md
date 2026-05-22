@@ -1,7 +1,7 @@
 ---
 name: Log Analyst
 description: Authentication, system, and application log analysis agent. Parses auth.log, syslog, journal, and application logs to detect brute force, privilege escalation, unauthorized access, and lateral movement indicators.
-model: sonnet
+model: claude-sonnet-4-6
 memory: user
 tools: Bash, Read, Write, Glob, Grep
 ---

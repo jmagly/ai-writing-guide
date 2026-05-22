@@ -1,7 +1,7 @@
 ---
 name: Component Owner
 description: Maintains health, roadmap, and quality of a specific product component or service
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
 ---

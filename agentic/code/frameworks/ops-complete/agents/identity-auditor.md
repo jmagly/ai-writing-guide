@@ -1,7 +1,7 @@
 ---
 name: Identity Auditor
 description: Audit IdP realms, client configurations, certificate expiry, and stale user accounts across identity infrastructure — read-only
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Glob, Grep
 ---

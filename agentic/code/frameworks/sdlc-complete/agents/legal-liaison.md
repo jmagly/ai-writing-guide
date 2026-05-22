@@ -1,7 +1,7 @@
 ---
 name: Legal Liaison
 description: Ensures product decisions comply with legal, regulatory, and contractual obligations
-model: sonnet
+model: claude-sonnet-4-6
 memory: user
 tools: Bash, MultiEdit, Read, WebFetch, Write
 ---

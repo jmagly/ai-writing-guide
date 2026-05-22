@@ -1,7 +1,7 @@
 ---
 name: Workflow Coordinator
 description: Designs and optimizes marketing workflows, processes, and operations for team efficiency
-model: sonnet
+model: claude-sonnet-4-6
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
 ---
 

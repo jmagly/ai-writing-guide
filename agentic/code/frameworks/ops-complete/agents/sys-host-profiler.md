@@ -1,7 +1,7 @@
 ---
 name: Sys Host Profiler
 description: SSH to target host, collect hardware/OS/package state, and diff against the documented host-profile.yaml — strictly read-only
-model: sonnet
+model: claude-sonnet-4-6
 memory: project
 tools: Bash, Read, Glob, Grep
 ---

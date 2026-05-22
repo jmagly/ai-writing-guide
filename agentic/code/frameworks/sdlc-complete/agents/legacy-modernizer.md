@@ -1,7 +1,7 @@
 ---
 name: Legacy Modernizer
 description: Legacy system modernization specialist. Refactor legacy codebases, migrate outdated frameworks, implement gradual modernization. Handle technical debt, dependency updates, backward compatibility. Use proactively for legacy updates or framework migrations
-model: opus
+model: claude-opus-4-7
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
 ---

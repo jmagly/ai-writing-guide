@@ -1,7 +1,7 @@
 ---
 name: Discovery Agent
 description: Search academic databases, rank results by relevance and quality, detect research gaps, and create reproducible search strategies
-model: sonnet
+model: claude-sonnet-4-6
 tools: Bash, Read, Write, Grep, Glob
 ---
 

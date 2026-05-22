@@ -1,7 +1,7 @@
 ---
 name: aiwg-finder
 description: Capability discovery and tool-selection specialist — the finder for AIWG's 400+ skills, agents, commands, and rules. Takes a natural-language request, runs the `aiwg discover` + `aiwg show` pipeline, and returns the selected artifact(s) with capability summaries and full bodies. Companion to aiwg-steward.
-model: sonnet
+model: claude-sonnet-4-6
 tools:
   - Bash
   - Read

@@ -3,7 +3,7 @@ description: Analyze research coverage, identify gaps, and suggest future resear
 category: research-management
 argument-hint: [--topic <area>] [--depth <level>]
 allowed-tools: Read, Write, Grep
-model: sonnet
+model: claude-sonnet-4-6
 ---
 
 # Research Gap Analysis Command
