@@ -1,5 +1,7 @@
 # Dependencies
 node_modules/
+**/node_modules/
+.playwright-mcp/
 *.pyc
 __pycache__/
 .env

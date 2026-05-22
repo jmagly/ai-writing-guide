@@ -13,6 +13,7 @@ import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { getVersionInfo } from '../../channel/manager.mjs';
 import { getLoggerInfo } from '../log.js';
 import * as ui from '../ui.js';
+import { maybePrintCommunityFooter } from '../../community/footer.js';
 import { existsSync, statSync, readdirSync } from 'fs';
 import path from 'path';
 
@@ -131,6 +132,7 @@ async function displayVersion(opts: { verbose: boolean; json: boolean }): Promis
     } else {
       ui.dim(`    path: ${fp.packageRoot}`);
     }
+    maybePrintCommunityFooter();
     ui.blank();
     return;
   }
@@ -155,5 +157,6 @@ async function displayVersion(opts: { verbose: boolean; json: boolean }): Promis
   ui.dim(`    log:       ${logDesc}`);
   ui.dim(`    level:     ${fp.logger.level}`);
   ui.dim(`    invocation:${fp.invocation_id}`);
+  maybePrintCommunityFooter();
   ui.blank();
 }

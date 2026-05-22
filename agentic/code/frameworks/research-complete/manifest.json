@@ -23,15 +23,42 @@
   },
   "memory": {
     "creates": [
-      { "path": ".aiwg/research/",            "description": "Research root directory" },
-      { "path": ".aiwg/research/workflows/",   "description": "Active research workflow state" },
-      { "path": ".aiwg/research/reports/",     "description": "Generated research reports" },
-      { "path": ".aiwg/research/findings/",    "description": "Research finding notes (REF-NNN.md)" },
-      { "path": ".aiwg/research/sources/",     "description": "Source documents and PDFs" },
-      { "path": ".aiwg/research/archives/",    "description": "Archival artifacts" },
-      { "path": ".aiwg/research/synthesis/",   "description": "Synthesis and gap analysis" },
-      { "path": ".aiwg/research/provenance/",  "description": "W3C PROV provenance records" },
-      { "path": ".aiwg/research/knowledge/",   "description": "Knowledge base and lit notes" }
+      {
+        "path": ".aiwg/research/",
+        "description": "Research root directory"
+      },
+      {
+        "path": ".aiwg/research/workflows/",
+        "description": "Active research workflow state"
+      },
+      {
+        "path": ".aiwg/research/reports/",
+        "description": "Generated research reports"
+      },
+      {
+        "path": ".aiwg/research/findings/",
+        "description": "Research finding notes (REF-NNN.md)"
+      },
+      {
+        "path": ".aiwg/research/sources/",
+        "description": "Source documents and PDFs"
+      },
+      {
+        "path": ".aiwg/research/archives/",
+        "description": "Archival artifacts"
+      },
+      {
+        "path": ".aiwg/research/synthesis/",
+        "description": "Synthesis and gap analysis"
+      },
+      {
+        "path": ".aiwg/research/provenance/",
+        "description": "W3C PROV provenance records"
+      },
+      {
+        "path": ".aiwg/research/knowledge/",
+        "description": "Knowledge base and lit notes"
+      }
     ],
     "topology": {
       "namespace": ".aiwg/research",
@@ -46,8 +73,26 @@
       "log": ".aiwg/research/.log.jsonl",
       "crossRefStyle": "at-mention",
       "pageTemplate": "templates/research-page.md",
-      "ingestRequires": ["provenance", "grade-quality"],
-      "lintRules": ["citation-guard", "link-check", "mention-lint"]
+      "ingestRequires": [
+        "provenance",
+        "grade-quality"
+      ],
+      "lintRules": [
+        "citation-guard",
+        "link-check",
+        "mention-lint"
+      ]
+    }
+  },
+  "extensions": {
+    "corpus-templates": {
+      "path": "agentic/code/extensions/corpus-templates",
+      "type": "extension",
+      "requires": [
+        "research-complete"
+      ],
+      "description": "Multi-tier reference-doc templates (canonical 15-section + expanded 21-section) for the REF-XXX corpus convention",
+      "scope": "corpus-convention"
     }
   }
 }

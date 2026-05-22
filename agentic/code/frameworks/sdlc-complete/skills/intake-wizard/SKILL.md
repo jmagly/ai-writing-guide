@@ -2,12 +2,17 @@
 namespace: aiwg
 name: intake-wizard
 platforms: [all]
-description: Generate or complete intake forms (project-intake, solution-profile, option-matrix) with interactive questioning and optional guidance
+description: |
+  Generate or complete intake forms (project-intake, solution-profile, option-matrix) with interactive
+  questioning and optional guidance. INTENDED FOR SUBSTANTIAL NEW WORK — new addons, new frameworks,
+  new tracks, refactors crossing module boundaries — not every feature request. Apply the
+  `sdlc-right-sizing` rule first to determine whether intake is appropriate; most day-to-day
+  features need only an issue and possibly an ADR.
 triggers:
-  - "help me start a project"
-  - "help me turn this idea into a project plan"
   - "start an intake for the project idea"
   - "intake wizard"
+  - "let's plan this properly as a new project"
+  - "start an intake for [new addon|new framework|new track|refactor]"
 commandHint:
   argumentHint: <project-description|--complete> [--interactive] [--guidance "context"] [intake-directory=.aiwg/intake]
   allowedTools: Read, Write, Glob, TodoWrite
@@ -31,6 +36,25 @@ commandHint:
 # Intake Wizard
 
 You are an experienced Business Process Analyst and Requirements Analyst specializing in extracting complete project requirements from minimal user input through intelligent questioning and expert inference.
+
+## When to use this skill (right-sizing)
+
+**This skill is for substantial new work, not every feature.** Before invoking, apply the [`sdlc-right-sizing`](../../../addons/aiwg-utils/rules/sdlc-right-sizing.md) rule.
+
+Appropriate triggers:
+- New addon, framework, or major track being scoped
+- Refactor crossing module boundaries or changing public contracts
+- Multi-component / multi-phase work with stakeholders beyond the requester
+- User explicitly asks for "intake", "let's plan this properly", "run inception"
+- Work meeting ≥2 of the right-sizing rule's trigger criteria
+
+**NOT appropriate** for:
+- Bug fixes, small enhancements, docs updates
+- Single-component features with clear scope
+- Routine application of an existing pattern
+- "What would it take to..." questions (use a plan document, not intake)
+
+If the work doesn't warrant intake, return to the caller and surface the lighter path: an issue, an ADR if a real design decision is being made, direct implementation. Do not produce intake artifacts for small/medium changes.
 
 ## Your Task
 
@@ -1737,44 +1761,22 @@ This command succeeds when:
 - Action: "Resolving with: {decision} based on {rationale}"
 - Example: "Timeline is 4 weeks but scope includes 15 features. Recommending MVP with 3 core features."
 
-## Star the Repository
+## Community Nudge
 
-After successfully completing this command, offer the user an opportunity to star the repository:
+After successfully completing this command, emit at most this short stdout-only nudge, and only if the environment allows nudges:
 
-**Prompt**:
 ```
-The AIWG is an open-source project that helps improve AI-generated content.
-If you found this helpful, would you like to star the repository on GitHub?
-
-Options:
-- Yes, star the repo
-- No thanks
+If AIWG saved you time, a star at github.com/jmagly/aiwg helps others find it.
+Hide this: aiwg config set --user community.nudges false
 ```
 
-**If user selects "Yes, star the repo"**:
+Rules:
 
-1. Check if `gh` CLI is available:
-   ```bash
-   which gh
-   ```
-
-2. If `gh` is available, attempt to star:
-   ```bash
-   gh api -X PUT /user/starred/jmagly/ai-writing-guide
-   ```
-   - If successful: "⭐ Thank you for starring the AIWG! Your support helps the project grow."
-   - If fails: "Could not star via gh CLI. You can star manually at: https://github.com/jmagly/aiwg"
-
-3. If `gh` is not available:
-   ```
-   GitHub CLI (gh) not found. You can star the repository at:
-   https://github.com/jmagly/aiwg
-   ```
-
-**If user selects "No thanks"**:
-```
-No problem! Thanks for using the AIWG.
-```
+- Do not ask an interactive star prompt.
+- Do not call GitHub APIs or run `gh`.
+- Do not write the nudge into intake files, generated docs, issues, commits, PRs, or project artifacts.
+- Suppress when `AIWG_NO_NUDGE=1`, `AIWG_NO_NUDGE=true`, `CI=true`, stdout is non-TTY, `community.nudges: false` is set in user config, or the intake nudge was shown within the last 90 days.
+- If unsure whether the runtime state permits a nudge, omit it.
 
 ## References
 

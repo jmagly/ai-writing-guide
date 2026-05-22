@@ -917,9 +917,22 @@ export const newProjectHandler: CommandHandler = {
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);
 
-    return runner.run("tools/install/new-project.mjs", ctx.args, {
+    const result = await runner.run("tools/install/new-project.mjs", ctx.args, {
       cwd: ctx.cwd,
     });
+    if (result.exitCode === 0) {
+      const { formatStarNudge } = await import("../../community/links.js");
+      const { markNudgeShown, shouldShowNudge } = await import("../../community/nudge-policy.js");
+      if (shouldShowNudge('intake')) {
+        const nudge = formatStarNudge();
+        if (nudge) {
+          console.log('');
+          console.log(nudge);
+          markNudgeShown('intake');
+        }
+      }
+    }
+    return result;
   },
 };
 

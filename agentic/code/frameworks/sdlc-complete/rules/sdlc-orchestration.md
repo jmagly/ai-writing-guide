@@ -18,6 +18,18 @@ These rules apply when working with AIWG SDLC artifacts and workflow commands.
 
 When users request SDLC workflows (natural language or commands):
 
+#### 0. Right-size before launching anything
+
+**REQUIRED**: Before invoking any intake, flow, or phase-transition command, apply the right-sizing heuristic from the `sdlc-right-sizing` rule:
+
+- Most changes do NOT need intake, Inception, or phase-gate flows
+- Issues + (optional) ADR is the right answer for small / medium features
+- Reserve intake and full SDLC flows for: new addons/frameworks/tracks, refactors crossing module boundaries, work meeting ≥2 of the trigger criteria
+
+If the user did NOT explicitly request intake/Inception ("start an intake", "run inception", "let's plan this properly"), default to the lightest sufficient artifact set. When unsure, ask ONE specific question — do not present a multi-option menu of "intake, plan, ADR, full pipeline."
+
+See `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/sdlc-right-sizing.md` for the full heuristic, trigger criteria, and signal-interpretation table.
+
 #### 1. Interpret Natural Language
 
 Map user requests to flow templates:

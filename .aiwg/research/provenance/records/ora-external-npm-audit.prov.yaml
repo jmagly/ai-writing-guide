@@ -1,0 +1,35 @@
+entity:
+  id: "urn:aiwg:artifact:.aiwg/security/supply-chain/external-npm/ora.md"
+  type: "document"
+  created_at: "2026-05-22T00:27:28.956Z"
+  sha256: "dde61d333fe64bc6062b2558bcf2b72fd003fd5be1597469c7104978efd2ea96"
+
+activity:
+  id: "urn:aiwg:activity:generation:ora:001"
+  type: "generation"
+  started_at: "2026-05-22T00:27:28.956Z"
+  ended_at: "2026-05-22T00:27:28.956Z"
+
+agent:
+  id: "urn:aiwg:agent:codex"
+  type: "ai_assistant"
+  version: "gpt-5"
+
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/security/supply-chain/external-npm/ora.md"
+    activity: "urn:aiwg:activity:generation:ora:001"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:ora:001"
+    agent: "urn:aiwg:agent:codex"
+  wasDerivedFrom:
+    - source: "urn:aiwg:artifact:.aiwg/working/npm-distributed-package-inventory.md"
+      derivation_type: "derives_from"
+    - source: "urn:aiwg:artifact:.aiwg/working/npm-external-audit/metadata"
+      derivation_type: "derives_from"
+    - source: "urn:aiwg:artifact:.aiwg/working/npm-external-audit/source-scan.json"
+      derivation_type: "derives_from"
+    - source: "urn:aiwg:artifact:agentic/code/frameworks/security-engineering/skills/npm-supply-chain-audit/SKILL.md"
+      derivation_type: "follows_pattern"
+    - source: "urn:aiwg:artifact:agentic/code/frameworks/security-engineering/skills/supply-chain-trust/SKILL.md"
+      derivation_type: "follows_pattern"

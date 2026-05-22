@@ -1,0 +1,46 @@
+{
+  "id": "corpus-templates",
+  "type": "addon",
+  "name": "Corpus Templates Extension",
+  "version": "1.0.0",
+  "description": "Multi-tier reference-doc templates for research-paper corpora: canonical 15-section + expanded 21-section, paired with a 6-column citation sidecar template. Encodes the REF-XXX corpus convention (PDF + analysis + citation + radar quartet, YAML frontmatter with pdf_hash integrity, BibTeX consolidation).",
+  "core": false,
+  "autoInstall": false,
+  "requires": ["research-complete"],
+  "entry": {
+    "templates": "templates/"
+  },
+  "provides": {
+    "templates": [
+      "TEMPLATE-reference-canonical",
+      "TEMPLATE-reference-expanded",
+      "TEMPLATE-citations",
+      "TEMPLATES-README"
+    ]
+  },
+  "scope": "corpus-convention",
+  "ecosystem": "research-corpus",
+  "deployment": {
+    "targets": {
+      "TEMPLATE-reference-canonical.md": "documentation/references/TEMPLATE-reference-canonical.md",
+      "TEMPLATE-reference-expanded.md": "documentation/references/TEMPLATE-reference-expanded.md",
+      "TEMPLATES-README.md": "documentation/references/TEMPLATES-README.md",
+      "TEMPLATE-citations.md": "documentation/citations/TEMPLATE-citations.md"
+    },
+    "overwriteExisting": false,
+    "notes": "Templates deploy into the project's documentation/ subdirectories. Existing TEMPLATE-* files are preserved unless --force is passed."
+  },
+  "compatibleWith": {
+    "researchFramework": "research-complete >= 1.0.0",
+    "corpusTopology": "custom-references-citations-radar"
+  },
+  "activationConditions": {
+    "triggers": [
+      "starting a new research-paper corpus with REF-XXX convention",
+      "needing tier-1 (15-section) vs tier-2 (21-section) ref-doc templates",
+      "configuring a corpus that uses documentation/references/ + documentation/citations/ + documentation/radar/ triplet",
+      "research-papers-style corpus convention"
+    ],
+    "manualOnly": false
+  }
+}

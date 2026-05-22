@@ -16,6 +16,14 @@ const { getFrameworkRoot, getVersionInfo } = await importImpl(
   import.meta.url,
   'channel/manager.mjs'
 );
+const { communityDataPath, loadCommunityLinks, validateCommunityLinks } = await importImpl(
+  import.meta.url,
+  'community/links.js'
+);
+const { maybePrintCommunityFooter } = await importImpl(
+  import.meta.url,
+  'community/footer.js'
+);
 
 // AIWG_ROOT: env override > channel-manager resolved path > legacy edge path
 // getFrameworkRoot() resolves correctly for npm global installs, edge, and dev channels.
@@ -445,6 +453,19 @@ async function runDoctor() {
       const sourcePath = versionInfo.edgePath.replace(os.homedir(), '~');
       check('Customize Mode', 'ok', `Active — source: ${sourcePath}`);
     }
+  }
+
+  try {
+    const warnings = [];
+    const links = loadCommunityLinks({ warn: (message) => warnings.push(message) });
+    const issues = validateCommunityLinks(links);
+    if (warnings.length > 0 || issues.length > 0 || links.channels.length === 0) {
+      check('Community Links', 'warn', [...warnings, ...issues].join('; ') || 'No community channels configured');
+    } else {
+      check('Community Links', 'ok', communityDataPath());
+    }
+  } catch (err) {
+    check('Community Links', 'warn', err instanceof Error ? err.message : String(err));
   }
 
   // 3. Check .aiwg directory in current project
@@ -1207,6 +1228,7 @@ async function runDoctor() {
     console.log(isTTY ? chalk.green(`  ✓ All ${pass} checks passed`) : `  OK All ${pass} checks passed`);
   }
 
+  maybePrintCommunityFooter();
   console.log('');
 }
 

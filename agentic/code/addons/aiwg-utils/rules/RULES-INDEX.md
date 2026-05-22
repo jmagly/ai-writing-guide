@@ -4,7 +4,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-## AIWG Utilities Rules (25 rules — active with aiwg-utils addon)
+## AIWG Utilities Rules (26 rules — active with aiwg-utils addon)
 
 ### HIGH
 
@@ -87,6 +87,11 @@ Core meta-utility rules for agent coordination, context management, and platform
 **Summary**: AIWG projects declare their git workflow in `.aiwg/aiwg.config` `delivery` block (`mode`: direct / feature-branch / pr-required, `default_branch`, `require_ci_green`, `force_push_policy`, `auto_close_issues`). Agents MUST read this before recommending or executing branch/PR/commit actions. `direct` = commit straight to main with `Closes #N`; `feature-branch` = branch only; `pr-required` = branch + PR + review. Use configured `remotes.{primary,issue_tracker,ci}` rather than guessing. Don't ask the user to pick a workflow when the config already answers it.
 **When to apply**: Any branch creation, PR opening, push to default_branch, force-push, issue closure via commit message, interactive question about git workflow
 **Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/delivery-policy.md
+
+#### sdlc-right-sizing
+**Summary**: Match SDLC artifacts to the actual scope of change. Most work doesn't need intake or full Inception — bugfixes and small/medium features warrant only an issue and maybe an ADR. Reserve intake/Inception/phase-gate flows for substantial new work meeting ≥2 trigger criteria (new deployable artifact, multi-component, stakeholders beyond requester, contract change, multi-phase span, refactor >20% of a component, or explicit user request). When unsure, ask ONE specific question — don't present multi-option menus of "intake/plan/ADR/full pipeline." ADRs are cheap and encouraged independent of intake. Issues are the default unit of work. The `sdlc-orchestration` rule layers right-sizing in as Step 0 before any flow launch.
+**When to apply**: Before invoking intake-wizard, intake-start, or any SDLC flow command; whenever an agent is tempted to escalate a small change into formal SDLC pipeline work; when interpreting user requests for "features" / "planning" / "what would it take to..."
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/sdlc-right-sizing.md
 
 ### MEDIUM
 

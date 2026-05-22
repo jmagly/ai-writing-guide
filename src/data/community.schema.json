@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/community.schema.json",
+  "title": "AIWG Community Links",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["website", "repository", "channels", "star_cta"],
+  "properties": {
+    "website": { "type": "string", "format": "uri" },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["github"],
+      "properties": {
+        "github": { "type": "string", "format": "uri" },
+        "gitea": { "type": "string", "format": "uri" }
+      }
+    },
+    "channels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "url", "cta"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "name": { "type": "string", "minLength": 1 },
+          "url": { "type": "string", "format": "uri" },
+          "cta": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "star_cta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["short", "long"],
+      "properties": {
+        "short": { "type": "string", "minLength": 1 },
+        "long": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

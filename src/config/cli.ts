@@ -101,7 +101,7 @@ export async function main(args: string[]): Promise<void> {
 
 async function handleGet(config: UserConfig, args: string[]): Promise<void> {
   const isProject = args.includes('--project');
-  const positional = args.filter(a => a !== '--project');
+  const positional = args.filter(a => a !== '--project' && a !== '--user');
   const key = positional[0];
   if (!key) {
     throw new AiwgError({
@@ -129,7 +129,7 @@ async function handleGet(config: UserConfig, args: string[]): Promise<void> {
 
 async function handleSet(config: UserConfig, args: string[]): Promise<void> {
   const isProject = args.includes('--project');
-  const positional = args.filter(a => a !== '--project');
+  const positional = args.filter(a => a !== '--project' && a !== '--user');
   const key = positional[0];
   const value = positional[1];
 

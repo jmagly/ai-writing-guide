@@ -20,6 +20,7 @@ import type { HookContext } from './hooks/index.js';
 import { activityLogPostCommandHook } from './hooks/builtin/activity-log-hook.js';
 import { tryExecuteCliExtension } from './cli-extension-loader.js';
 import * as ui from './ui.js';
+import { maybeCelebrateMilestone } from '../community/milestones.js';
 
 // Cached loaded registry
 let cachedRegistry: LoadedRegistry | null = null;
@@ -114,6 +115,13 @@ export async function run(
       if (extResult.exitCode !== 0) {
         process.exit(extResult.exitCode);
       }
+      if (rawCommand === 'flow-release') {
+        maybeCelebrateMilestone(cwd, 'first_release');
+      } else if (rawCommand === 'flow-deploy-to-production') {
+        maybeCelebrateMilestone(cwd, 'first_production_deploy');
+      } else if (/^flow-[a-z0-9-]+-to-[a-z0-9-]+$/.test(rawCommand)) {
+        maybeCelebrateMilestone(cwd, 'first_phase_transition');
+      }
       return;
     }
 
@@ -168,6 +176,12 @@ export async function run(
 
     // Execute handler
     const result = await handler.execute(ctx);
+
+    if (commandId === 'use' && result.exitCode === 0 && !ctx.dryRun) {
+      const targetIdx = commandArgs.findIndex((arg) => arg === '--target');
+      const projectDir = targetIdx >= 0 && commandArgs[targetIdx + 1] ? commandArgs[targetIdx + 1] : ctx.cwd;
+      maybeCelebrateMilestone(projectDir, 'first_deploy');
+    }
 
     // Execute post-command hooks
     const postHookCtx: HookContext = {

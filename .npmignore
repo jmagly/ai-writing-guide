@@ -51,6 +51,9 @@ Thumbs.db
 
 # Node modules (never publish)
 node_modules/
+**/node_modules/
+tools/**/node_modules/
+.playwright-mcp/
 
 # TypeScript source (publish compiled JS only if applicable)
 # Note: We're publishing ESM .mjs files directly

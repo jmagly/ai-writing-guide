@@ -39,6 +39,9 @@ export interface UserConfigData {
     channel?: 'stable' | 'next' | 'nightly';
     checkOnStartup?: boolean;
   };
+  community?: {
+    nudges?: boolean;
+  };
 }
 
 /**
@@ -77,6 +80,9 @@ export const DEFAULT_USER_CONFIG: UserConfigData = {
   updates: {
     channel: 'stable',
     checkOnStartup: true,
+  },
+  community: {
+    nudges: true,
   },
 };
 
@@ -322,6 +328,7 @@ export class UserConfig {
         defaults: { ...DEFAULT_USER_CONFIG.defaults, ...parsed.defaults },
         telemetry: { ...DEFAULT_USER_CONFIG.telemetry, ...parsed.telemetry },
         updates: { ...DEFAULT_USER_CONFIG.updates, ...parsed.updates },
+        community: { ...DEFAULT_USER_CONFIG.community, ...parsed.community },
       };
       return this.configCache;
     } catch {
@@ -331,6 +338,7 @@ export class UserConfig {
         defaults: { ...DEFAULT_USER_CONFIG.defaults },
         telemetry: { ...DEFAULT_USER_CONFIG.telemetry },
         updates: { ...DEFAULT_USER_CONFIG.updates },
+        community: { ...DEFAULT_USER_CONFIG.community },
       };
       return this.configCache;
     }

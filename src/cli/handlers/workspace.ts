@@ -12,6 +12,7 @@
 import { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { createScriptRunner } from './script-runner.js';
 import { getFrameworkRoot } from '../../channel/manager.mjs';
+import { maybePrintCommunityFooter } from '../../community/footer.js';
 
 /**
  * Handler for workspace status command
@@ -35,9 +36,14 @@ export const statusHandler: CommandHandler = {
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);
 
-    return runner.run('tools/cli/workspace-status.mjs', ctx.args, {
+    const result = await runner.run('tools/cli/workspace-status.mjs', ctx.args, {
       cwd: ctx.cwd,
     });
+    const machineReadable = ctx.args.includes('--json') || ctx.args.includes('--probe') || ctx.args.includes('--serve') || ctx.args.includes('--export');
+    if (result.exitCode === 0 && !machineReadable) {
+      maybePrintCommunityFooter();
+    }
+    return result;
   },
 };
 

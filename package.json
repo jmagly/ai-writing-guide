@@ -19,7 +19,7 @@
     "package-plugins:clean": "node tools/plugin/package-plugins.mjs --all --clean",
     "build": "npm run build:cli && npm --prefix apps/web ci && npm --prefix apps/web run build",
     "build:cli": "npm run check:versions && tsc && npm run build:copy-mjs",
-    "build:copy-mjs": "node -e \"const{cpSync,mkdirSync,statSync,readdirSync}=require('fs');const{join,dirname}=require('path');function walk(d){for(const f of readdirSync(d,{withFileTypes:true})){const p=join(d,f.name);if(f.isDirectory())walk(p);else if(f.name.endsWith('.mjs')||f.name.endsWith('.json')){const o=p.replace(/^src\\//,'dist/src/');mkdirSync(dirname(o),{recursive:true});cpSync(p,o);}}}walk('src');console.log('Copied .mjs and .json files to dist/');\"",
+    "build:copy-mjs": "node -e \"const{cpSync,mkdirSync,readdirSync}=require('fs');const{join,dirname}=require('path');function walk(d){for(const f of readdirSync(d,{withFileTypes:true})){const p=join(d,f.name);if(f.isDirectory())walk(p);else if(f.name.endsWith('.mjs')||f.name.endsWith('.json')||f.name.endsWith('.yaml')||f.name.endsWith('.yml')){const o=p.replace(/^src\\//,'dist/src/');mkdirSync(dirname(o),{recursive:true});cpSync(p,o);}}}walk('src');console.log('Copied .mjs, .json, and YAML files to dist/');\"",
     "build:web": "npm --prefix apps/web ci && npm --prefix apps/web run build",
     "test": "vitest run --config config/vitest.config.js",
     "test:integration": "vitest run --config config/vitest.config.js test/integration/cli-startup.test.ts test/integration/cli-perf.test.ts",

@@ -446,6 +446,10 @@ CalVer format: `YYYY.M.PATCH`. Never use leading zeros (`2026.01.5` is wrong, `2
 
 Never fabricate citations, DOIs, URLs, or page numbers. Only cite sources that exist in the research corpus. Use quality-appropriate hedging per GRADE methodology.
 
+### SDLC Right-Sizing (HIGH)
+
+Match SDLC artifacts to the actual scope of change. Most work — bug fixes, small features, single-component enhancements — needs an issue and maybe an ADR, not intake + Inception. Reserve formal intake (`intake-wizard`, `intake-start`) and phase-gate flows for substantial new work meeting ≥2 trigger criteria (new deployable artifact, multi-component, cross-stakeholder, contract change, multi-phase, refactor >20% of component, or explicit user request). When unsure, ask ONE specific question — don't present multi-option menus of "intake/plan/ADR/full pipeline." See `agentic/code/addons/aiwg-utils/rules/sdlc-right-sizing.md`.
+
 ### Anti-Laziness (HIGH)
 
 Never delete tests to make them pass. Never skip tests. Never remove features instead of fixing them. Never weaken assertions. Escalate to human after 3 failed attempts.

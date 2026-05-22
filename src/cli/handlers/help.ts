@@ -10,6 +10,7 @@
 
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import * as ui from '../ui.js';
+import { maybePrintCommunityFooter } from '../../community/footer.js';
 
 /**
  * Help command handler
@@ -151,5 +152,6 @@ function displayHelp(): void {
   console.log(`    aiwg show skill intake-wizard   ${ui.dimText('Stream a skill body')}`);
   console.log(`    aiwg doctor                     ${ui.dimText('Check installation health')}`);
   console.log(`    aiwg refresh                    ${ui.dimText('Pull latest + redeploy frameworks')}`);
+  maybePrintCommunityFooter();
   ui.blank();
 }
