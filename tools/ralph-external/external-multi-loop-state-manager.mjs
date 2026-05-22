@@ -337,8 +337,11 @@ export class ExternalMultiLoopStateManager {
         filesModified: [],
         giteaIntegration: config.giteaIntegration || null,
         config: {
-          model: config.model || 'opus',
-          budgetPerIteration: config.budgetPerIteration || 2.0,
+          // #1450 P0: pin claude-sonnet-4-6 (500K); 'opus' bare alias under a
+          // 1M-context parent hits credit gate on most plans. Budget bumped to
+          // 5.0 to clear cache-creation cost (~$1.60 sonnet / ~$3.90 opus).
+          model: config.model || 'claude-sonnet-4-6',
+          budgetPerIteration: config.budgetPerIteration || 5.0,
           timeoutMinutes: config.timeoutMinutes || 60,
           mcpConfig: config.mcpConfig || null,
           workingDir: config.workingDir || this.projectRoot,

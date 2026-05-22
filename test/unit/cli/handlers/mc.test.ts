@@ -385,8 +385,9 @@ describe('mc run (#1439)', () => {
     // Dispatch a mission with --completion (required by mc run)
     await mcHandler.execute(makeCtx(['dispatch', sessionId, 'Fix the bug', '--completion', 'tests pass']));
 
-    // Run drains the queue
-    const runResult = await mcHandler.execute(makeCtx(['run', sessionId]));
+    // Run drains the queue. --accept-cost bypasses the #1450 cost gate which
+    // refuses to launch in non-TTY contexts above the estimate threshold.
+    const runResult = await mcHandler.execute(makeCtx(['run', sessionId, '--accept-cost']));
     expect(runResult.exitCode).toBe(0);
 
     // Verify mission status now `running` with ralphLoopId + ralphPid persisted

@@ -41,7 +41,7 @@ import { homedir } from 'os';
  * @typedef {Object} LaunchOptions
  * @property {string} prompt - The prompt to send
  * @property {string} sessionId - Session UUID for tracking
- * @property {string} [model='opus'] - Claude model to use
+ * @property {string} [model='claude-sonnet-4-6'] - Pinned model variant (see #1450)
  * @property {number} [budget] - Budget per iteration in USD
  * @property {number} [maxTurns] - Maximum number of turns (requires Claude CLI support)
  * @property {boolean} [verbose=false] - Enable verbose output

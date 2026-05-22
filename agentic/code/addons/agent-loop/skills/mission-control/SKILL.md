@@ -45,9 +45,10 @@ When triggered:
 
    # 2. Dispatch missions (queues them — does NOT execute)
    #    --completion is REQUIRED; `mc run` will skip missions without one.
-   aiwg mc dispatch <session-id> "Fix auth service" --completion "npm test passes" --priority high
+   #    --max-iterations N caps ralph iterations per mission (default: 10).
+   aiwg mc dispatch <session-id> "Fix auth service" --completion "npm test passes" --priority high --max-iterations 50
    aiwg mc dispatch <session-id> "Add pagination" --completion "all list endpoints paginated"
-   aiwg mc dispatch <session-id> "Write integration tests" --completion "coverage > 80%"
+   aiwg mc dispatch <session-id> "Write integration tests" --completion "coverage > 80%" --max-iterations 25
 
    # 3. RUN — drains the queue by launching each mission as a detached ralph
    #    loop. Without this step missions sit in QUEUED forever (#1439).

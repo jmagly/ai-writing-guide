@@ -128,6 +128,102 @@ function hasFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
 }
 
+function wantsHelp(args: string[]): boolean {
+  return args.includes('--help') || args.includes('-h');
+}
+
+/**
+ * Per-subcommand usage strings (#1440).
+ *
+ * `aiwg mc <subcommand> --help` MUST print this text and exit before any
+ * side-effecting logic. The previous behavior — running `aiwg mc start --help`
+ * actually created a session — violated the universal `--help` convention.
+ */
+const subcommandUsage: Record<string, string> = {
+  start: `Usage: aiwg mc start [--name "<label>"] [--max-missions N]
+
+Create a new Mission Control session for tracking background missions.
+
+  --name <label>       Human-readable session name (default: "Mission YYYY-MM-DD")
+  --max-missions N     Capacity limit for queued missions (default: 10)
+
+Note: 'start' only creates the session. Use 'dispatch' to queue missions and
+'run' to drain the queue.`,
+
+  dispatch: `Usage: aiwg mc dispatch <session-id> "<objective>" [options]
+
+Queue a mission onto a session. Does NOT execute — use 'aiwg mc run' to launch.
+
+  --completion "<criteria>"     Verifiable completion criteria (required for 'mc run')
+  --priority <level>            Priority hint (default: normal)
+  --max-iterations N            Ralph iteration cap when launched (default: 10)
+  --mode pty-orchestrator       PTY-orchestrator mode (requires --target-agent)
+  --target-agent <id>           Required for --mode pty-orchestrator`,
+
+  run: `Usage: aiwg mc run [<session-id>] [--accept-cost]
+
+Drain queued missions in a session by launching each as a ralph loop. Missions
+without --completion criteria are skipped with a warning.
+
+  --accept-cost   Skip the cost-warning gate (required for non-TTY contexts
+                  when estimated cumulative cost exceeds $5). See #1450.`,
+
+  status: `Usage: aiwg mc status [<session-id>] [--json]
+
+Show mission status for a session. Auto-syncs from ralph loop state files.
+
+  --json   Emit JSON instead of human-readable table`,
+
+  watch: `Usage: aiwg mc watch [<session-id>]
+
+Live-monitor mission progress (non-interactive context prints status once).`,
+
+  abort: `Usage: aiwg mc abort <session-id> <mission-id>
+
+Mark a specific mission as aborted.`,
+
+  pause: `Usage: aiwg mc pause [<session-id>]
+
+Pause an active session; running missions transition to 'paused' status.`,
+
+  resume: `Usage: aiwg mc resume [<session-id>]
+
+Resume a paused session; paused missions transition back to 'running'.`,
+
+  stop: `Usage: aiwg mc stop [<session-id>] [--drain]
+
+Shut down a session.
+
+  --drain   Cancel queued, let running finish (default: abort all non-completed)`,
+
+  list: `Usage: aiwg mc list [--json]
+
+List all Mission Control sessions.`,
+
+  agents: `Usage: aiwg mc agents [filters] [--json]
+
+Query routable agents from a local 'aiwg serve' instance.
+
+  --framework <name>       Require an AIWG framework (repeatable)
+  --sandbox <id>           Restrict to a sandbox
+  --agent <id>             Restrict to a specific agent ID
+  --name <n>               Match by logical name
+  --max-cpu <pct>          Reject agents above this CPU %
+  --min-memory <gb>        Reject agents below this memory threshold
+  --json                   Output raw JSON`,
+};
+
+function printSubcommandHelp(name: string): void {
+  const text = subcommandUsage[name];
+  ui.blank();
+  if (text) {
+    console.log(`  ${text}`);
+  } else {
+    console.log(`  No detailed help for 'aiwg mc ${name}'. Run 'aiwg mc --help' for the full reference.`);
+  }
+  ui.blank();
+}
+
 function getPositionalArgs(args: string[]): string[] {
   const positional: string[] = [];
   for (let i = 0; i < args.length; i++) {
@@ -186,7 +282,9 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
   const targetAgent = parseFlag(ctx.args, '--target-agent');
 
   if (!objective) {
-    ui.error('Usage: aiwg mc dispatch <session-id> "<objective>" [--completion "<criteria>"] [--mode pty-orchestrator] [--target-agent <agent-id>]');
+    // #1438: keep this in sync with subcommandUsage.dispatch above so 'mc
+    // dispatch' with bad args and 'mc dispatch --help' agree on flags.
+    ui.error('Usage: aiwg mc dispatch <session-id> "<objective>" [--completion "<criteria>"] [--max-iterations N] [--priority <level>] [--mode pty-orchestrator] [--target-agent <agent-id>]');
     return { exitCode: 1 };
   }
 
@@ -275,6 +373,7 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
 async function mcRun(ctx: HandlerContext): Promise<HandlerResult> {
   const positional = getPositionalArgs(ctx.args);
   const sessionId = positional[0];
+  const acceptCost = hasFlag(ctx.args, '--accept-cost');
 
   const session = await findActiveSession(sessionId);
   if (!session) {
@@ -286,6 +385,37 @@ async function mcRun(ctx: HandlerContext): Promise<HandlerResult> {
   if (queued.length === 0) {
     ui.info(`No queued missions in session ${session.id}. Run \`aiwg mc dispatch ${session.id} "<objective>"\` to add one.`);
     return { exitCode: 0 };
+  }
+
+  // #1450 P0: cost warning gate.
+  //
+  // Each headless claude session pays a ~$1.60 cache-creation cost on iteration
+  // 1 before any user-meaningful work (sonnet baseline; opus is ~$3.90). Across
+  // N missions × M iterations the floor compounds quickly. Warn before launch
+  // and refuse in non-TTY contexts unless --accept-cost is set.
+  //
+  // Estimate is intentionally conservative: cumulative iteration floor =
+  // missions × max_iterations × sonnet_cache_cost. Real spend may be lower if
+  // missions complete in fewer iterations.
+  const eligible = queued.filter(m => m.mode !== 'pty-orchestrator' && !!m.completion);
+  const SONNET_CACHE_USD = 1.60;
+  const iterFloor = eligible.reduce((sum, m) => sum + m.maxIterations, 0);
+  const estimateUsd = iterFloor * SONNET_CACHE_USD;
+  const COST_WARNING_THRESHOLD_USD = 5.0;
+
+  if (estimateUsd >= COST_WARNING_THRESHOLD_USD && !acceptCost) {
+    ui.blank();
+    ui.warn(`Cost estimate: ~$${estimateUsd.toFixed(2)} (${eligible.length} missions × iteration floors × ~$${SONNET_CACHE_USD.toFixed(2)} cache cost per claude headless iter).`);
+    ui.warn('Actual spend may be lower if missions complete early, higher if model is opus or context grows.');
+    if (!process.stdout.isTTY) {
+      ui.error('Refusing to launch in non-interactive context. Re-run with `--accept-cost` to proceed.');
+      return { exitCode: 1 };
+    }
+    // TTY path: surface the warning and continue. A future revision should
+    // prompt y/N here; for now the warning is informational and the operator
+    // can Ctrl+C before launches actually begin.
+    ui.info('Continuing (TTY). Use Ctrl+C to abort within the next 2 seconds.');
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
 
   ui.blank();
@@ -471,8 +601,11 @@ async function mcStatus(ctx: HandlerContext): Promise<HandlerResult> {
   ui.rule(60);
 
   // Header
+  // #1441: ui.dim() returns void (it prints) — wrapping in console.log emitted
+  // a literal "undefined" between the header and the separator. Use dimText()
+  // (returns a string) for inline styling.
   const header = `  ${'#'.padEnd(4)} ${'Mission'.padEnd(32)} ${'Mode'.padEnd(6)} ${'Status'.padEnd(12)} ${'Loop'.padEnd(8)} ${'Started'.padEnd(8)}`;
-  console.log(ui.dim(header));
+  console.log(ui.dimText(header));
   ui.rule(68);
 
   for (let i = 0; i < session.missions.length; i++) {
@@ -487,7 +620,7 @@ async function mcStatus(ctx: HandlerContext): Promise<HandlerResult> {
     console.log(`  ${num} ${obj} ${modeTag} ${status} ${loop} ${started}`);
     // Show last action for PTY-orchestrated missions
     if (m.mode === 'pty-orchestrator' && m.lastAction && m.status === 'running') {
-      console.log(ui.dim(`       └─ Last: ${m.lastAction}`));
+      console.log(ui.dimText(`       └─ Last: ${m.lastAction}`));
     }
   }
 
@@ -829,8 +962,10 @@ function showMcHelp(): void {
   ${ui.bold('Subcommands:')}
     start                         Start a new Mission Control session
     dispatch <id> "<objective>"   Queue a mission on the session (does NOT execute)
+                                  [--completion "<criteria>"] [--max-iterations N]
                                   [--mode pty-orchestrator] [--target-agent <id>]
-    run <id>                      Launch queued missions as ralph loops (#1439)
+    run <id> [--accept-cost]      Launch queued missions as ralph loops (#1439)
+                                  Cost gate warns/refuses above ~$5 estimate
     status [<id>] [--json]        View mission status dashboard
     watch [<id>]                  Live monitor (streaming)
     abort <session> <mission>     Abort a specific mission
@@ -880,10 +1015,19 @@ export const mcHandler: CommandHandler = {
       return { exitCode: 1 };
     }
 
+    // #1440: '--help' / '-h' on any subcommand prints usage and exits BEFORE
+    // any side-effecting logic. The previous behavior — e.g. 'mc start --help'
+    // actually creating a session — violated the universal --help convention.
+    const subArgs = ctx.args.slice(1);
+    if (wantsHelp(subArgs)) {
+      printSubcommandHelp(subcmd);
+      return { exitCode: 0 };
+    }
+
     // Pass remaining args to subcommand
     const subCtx: HandlerContext = {
       ...ctx,
-      args: ctx.args.slice(1),
+      args: subArgs,
     };
 
     return handler(subCtx);

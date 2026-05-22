@@ -37,8 +37,16 @@ function parseArgs(args) {
     objective: null,
     completionCriteria: null,
     maxIterations: 5,
-    model: 'opus',
-    budgetPerIteration: 2.0,
+    // #1450 P0: explicit 500K-context variant. Was 'opus' — under a 1M-context
+    // parent (claude-opus-4-7[1m]) the bare alias inherits 1M attributes, and
+    // most Claude accounts (Pro, Team standard) lack 1M access. claude-sonnet-4-6
+    // is broadly available and dramatically cheaper for headless dispatch.
+    // See also #1442 (skill frontmatter pinning) and agent-deployment rule.
+    model: 'claude-sonnet-4-6',
+    // #1450 P0: cache-creation cost alone for a fresh claude headless session
+    // is ~$1.60 sonnet / ~$3.90 opus. $2.0 per-iter was smaller than the cache
+    // creation itself, causing every mission to abort at iteration 1.
+    budgetPerIteration: 5.0,
     timeoutMinutes: 60,
     mcpConfig: null,
     giteaIssue: false,
@@ -177,8 +185,13 @@ ARGUMENTS:
 OPTIONS:
   -c, --completion <str>  Completion criteria (required for new loop)
   --max-iterations <n>    Maximum external iterations (default: 5)
-  --model <model>         Claude model (default: opus)
-  --budget <usd>          Budget per iteration in USD (default: 2.0)
+  --model <model>         Claude model variant (default: claude-sonnet-4-6, 500K)
+                          Bare aliases (sonnet/opus) inherit parent context;
+                          pinning a specific variant is required for headless.
+  --budget <usd>          Budget per iteration in USD (default: 5.0)
+                          Cache-creation cost alone is ~$1.60 sonnet, ~$3.90 opus
+                          per fresh headless session — set higher for non-trivial
+                          tasks or expect first-iteration budget aborts.
   --timeout <min>         Timeout per iteration in minutes (default: 60)
   --mcp-config <json>     MCP server configuration JSON
   --gitea-issue           Create/link Gitea issue for tracking
