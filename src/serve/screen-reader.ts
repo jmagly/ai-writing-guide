@@ -91,12 +91,19 @@ export class ScreenReader {
       cols: this._cols,
       allowProposedApi: true,
       scrollback: 1000,
+      logLevel: 'error',
     });
   }
 
   /** Feed raw PTY data into the parser */
   write(data: string): void {
     if (this.disposed) return;
+    const coreWriteSync = (this.terminal as unknown as { _core?: { writeSync?: (input: string) => void } })._core?.writeSync;
+    if (coreWriteSync) {
+      coreWriteSync.call((this.terminal as unknown as { _core: unknown })._core, data);
+      this.emitter.emit('change');
+      return;
+    }
     this.terminal.write(data, () => {
       // Fired after xterm has processed the write through its state machine
       this.emitter.emit('change');

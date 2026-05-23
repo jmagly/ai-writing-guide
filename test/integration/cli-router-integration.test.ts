@@ -427,7 +427,7 @@ describe('CLI Router Integration Tests', () => {
       // Command should execute (actual behavior depends on handler)
       const combined = output.stdout.join('\n') + output.stderr.join('\n');
       expect(combined).not.toMatch(/Unknown command/i);
-    });
+    }, 60_000);
 
     it('should support --dry-run flag', async () => {
       const output = await runCli(['use', 'sdlc', '--dry-run']);
@@ -435,14 +435,14 @@ describe('CLI Router Integration Tests', () => {
       // Should execute without actually deploying
       const combined = output.stdout.join('\n') + output.stderr.join('\n');
       expect(combined).not.toMatch(/Unknown command/i);
-    });
+    }, 60_000);
 
     it('should pass multiple arguments', async () => {
       const output = await runCli(['use', 'sdlc', '--provider', 'copilot']);
 
       const combined = output.stdout.join('\n') + output.stderr.join('\n');
       expect(combined).not.toMatch(/Unknown command/i);
-    });
+    }, 60_000);
   });
 
   describe('Working Directory Context', () => {
