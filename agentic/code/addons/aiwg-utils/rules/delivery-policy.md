@@ -99,6 +99,23 @@ Each mode has a specific workflow. Agents MUST follow it without substituting th
 - Wait for review and CI green before merging
 - Use `Closes #N` in PR body to link issues
 
+### Rule 2.5: Keep Backup Mirrors Current
+
+Projects may declare redundant mirrors under `remotes.secondary[]`:
+
+```json
+{
+  "remotes": {
+    "primary": "origin",
+    "secondary": [
+      { "name": "github", "purpose": "backup-mirror", "push_on_release": true }
+    ]
+  }
+}
+```
+
+When `push_on_release: true`, release workflows MUST push release commits and tags to that mirror before declaring the release complete. Use `git-mirror-audit` to detect drift; do not assume a mirror is current because the remote exists.
+
 ### Rule 3: Use Configured Remotes, Not Guesses
 
 Always resolve remote names through `aiwg.config.remotes`:

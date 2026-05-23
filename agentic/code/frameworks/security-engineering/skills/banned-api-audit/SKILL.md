@@ -17,7 +17,7 @@ invariants:
   - inline AIWG-allow annotations are honored and recorded in the report (never silently dropped)
   - test/**, tests/**, vendor/**, node_modules/**, .aiwg/** excluded by default
 commandHint:
-  argumentHint: "[--starter c|cpp|python|node] [--fail-on-violation] [--paths <glob>...] [--format text|json|both]"
+  argumentHint: "[--starter c|cpp|python|node|go|rust] [--fail-on-violation] [--paths <glob>...] [--format text|json|both|sarif] [--sarif]"
   allowedTools: Read, Write, Bash, Glob, Grep
   model: sonnet
   category: security
@@ -44,7 +44,7 @@ commandHint:
 
 ### `--starter <language>` (optional)
 
-Use a bundled starter banlist instead of (or in addition to) the project banlist. Useful for a first-time audit before the project has its own `banned-apis.yaml`. Valid: `c`, `cpp`, `python`, `node`.
+Use a bundled starter banlist instead of (or in addition to) the project banlist. Useful for a first-time audit before the project has its own `banned-apis.yaml`. Valid: `c`, `cpp`, `python`, `node`, `go`, `rust`.
 
 ### `--fail-on-violation` (optional)
 
@@ -54,9 +54,13 @@ Exit non-zero when ANY violation is found. Default: exit 0 always (report-only m
 
 Limit the scan to these paths. Overrides `paths:` declarations in the banlist. Useful for scoped PR audits.
 
-### `--format text|json|both` (default `both`)
+### `--format text|json|both|sarif` (default `both`)
 
 `text` to stdout, `json` to `.aiwg/security/banned-api-audit/`, or `both`.
+
+### `--sarif` (optional)
+
+Also emit SARIF 2.1.0 to `.aiwg/security/banned-api-audit/` for code-scanning ingest.
 
 ## Execution Flow
 
@@ -209,6 +213,8 @@ Bundled at `banlists/`:
 - `cpp.yaml` — C++ overlay (auto_ptr, gets, strcpy)
 - `python.yaml` — eval, exec, pickle.loads, subprocess shell=True
 - `node.yaml` — eval, new Function, child_process.exec
+- `go.yaml` — shell-string commands, weak hashes, HTML templating footguns
+- `rust.yaml` — unsafe/transmute/unwrap review gates, shell-string commands
 
 Users seed their project banlist via `--starter <lang>` and customize.
 
@@ -216,17 +222,15 @@ Users seed their project banlist via `--starter <lang>` and customize.
 
 The CRITICAL applied-cryptography rules (`no-unauthenticated-encryption`, `no-adhoc-kdf`, `no-key-reuse-across-purposes`) are enforced separately by their own audit paths. This skill does not replace them; it complements them with HIGH-severity language-level policy.
 
-## Limitations (cycle-1 scaffold)
+## Implementation
 
-The cycle-1 implementation is a scoping document. Subsequent cycles need:
+Cycle 2 adds:
 
-- Reference shell implementation invoking ripgrep with the patterns above
-- Banlist YAML schema validator
-- Bundled starter banlist YAML files (`c.yaml`, `python.yaml`, `node.yaml`)
-- SARIF output format for GitHub code-scanning integration
-- Performance tuning for large monorepos (parallel ripgrep, cache)
-
-These are tracked in the issue thread as cycle-2+ work.
+- `scripts/audit.sh` / `scripts/audit.mjs` reference implementation.
+- `schema.json` documenting the banlist YAML shape.
+- Starter banlists for C, C++, Python, Node, Go, and Rust.
+- Text, JSON, and SARIF report output.
+- Exit codes: `0` clean/report-only, `1` banlist/schema problem, `2` violations with `--fail-on-violation`, `3` tooling failure.
 
 ## References
 

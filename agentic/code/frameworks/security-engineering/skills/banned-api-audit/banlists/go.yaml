@@ -1,0 +1,30 @@
+# Starter banlist for Go — copy into .aiwg/security/banned-apis.yaml and customize.
+version: 1
+languages:
+  go:
+    - pattern: 're:exec\.Command\s*\(\s*"sh"\s*,\s*"-c"'
+      reason: "Shell string invocation is command-injection prone"
+      replacement: "exec.Command with program and argv elements, no shell"
+      cwe: "CWE-78"
+    - pattern: 're:exec\.Command\s*\(\s*"bash"\s*,\s*"-c"'
+      reason: "Shell string invocation is command-injection prone"
+      replacement: "exec.Command with program and argv elements, no shell"
+      cwe: "CWE-78"
+    - pattern: 're:\bcrypto/md5\b'
+      reason: "MD5 is collision-broken and unsuitable for security decisions"
+      replacement: "crypto/sha256, SHA-512/256, or HMAC as appropriate"
+      cwe: "CWE-327"
+    - pattern: 're:\bcrypto/sha1\b'
+      reason: "SHA-1 is collision-broken and unsuitable for security decisions"
+      replacement: "crypto/sha256 or SHA-512/256"
+      cwe: "CWE-327"
+    - pattern: 're:text/template'
+      reason: "text/template does not HTML-escape; unsafe for HTML rendering contexts"
+      replacement: "html/template for HTML output"
+      cwe: "CWE-79"
+exclusions:
+  paths:
+    - "**/*_test.go"
+    - "test/**"
+    - "tests/**"
+    - "vendor/**"

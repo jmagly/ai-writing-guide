@@ -4,7 +4,7 @@ Applied-security enforcement rules for cryptographic primitive choices, chain-of
 
 ---
 
-## Tier 1 Rules (7 rules — applied cryptography, supply chain, language policy)
+## Tier 1 Rules (12 rules — applied cryptography, supply chain, language policy)
 
 ### HIGH
 
@@ -52,6 +52,38 @@ Applied-security enforcement rules for cryptographic primitive choices, chain-of
 
 ---
 
+#### no-binary-blobs
+**Summary**: Source repositories SHOULD NOT contain committed binary blobs unless covered by documented fixture, asset, SBOM, or vendored-source exceptions.
+**When to apply**: Any repository file addition, release branch review, or source import.
+**Maps to issue**: #1424 (curl checklist Practice 6)
+**Full rule**: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/no-binary-blobs.md
+
+#### no-confusable-unicode
+**Summary**: Unicode bidirectional controls, zero-width characters, and mixed-script/confusable identifiers are prohibited unless explicitly allowlisted.
+**When to apply**: Source code, dependency names, commit metadata, PR titles, and release notes.
+**Maps to issue**: #1425 (curl checklist Practice 8)
+**Full rule**: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/no-confusable-unicode.md
+
+#### strict-toolchain
+**Summary**: Projects must define and run strict compiler/linter/typecheck floors in CI; sanitizers and fuzzing are additive, not substitutes.
+**When to apply**: Build, lint, typecheck, and CI configuration changes.
+**Maps to issue**: #1427 (curl checklist Practice 13)
+**Full rule**: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/strict-toolchain.md
+
+#### committer-2fa-required
+**Summary**: Every committer with write access must have strong platform-enforced 2FA; hardware keys preferred, TOTP minimum.
+**When to apply**: Source-control org setup, maintainer onboarding, release access review.
+**Maps to issue**: #1429 (curl checklist Practice 25)
+**Full rule**: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/committer-2fa-required.md
+
+#### api-abi-stability
+**Summary**: Library/SDK projects must preserve declared stable API/ABI contracts, use SemVer-compatible releases, and document deprecations before removals.
+**When to apply**: Public API changes, release planning, library/SDK change control.
+**Maps to issue**: #1430 (curl checklist Practice 26)
+**Full rule**: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/api-abi-stability.md
+
+---
+
 ## Quick Reference by Context
 
 | Task Type | Relevant Rules |
@@ -75,5 +107,5 @@ Future Tier 2 rules will cover authentication-factor architecture, degraded-mode
 
 ---
 
-*Generated from security-engineering framework — 7 rules in Tier 1*
+*Generated from security-engineering framework — 12 rules in Tier 1*
 *Full rule files: @$AIWG_ROOT/agentic/code/frameworks/security-engineering/rules/*

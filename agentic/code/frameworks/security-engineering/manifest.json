@@ -40,11 +40,11 @@
   ],
   "metadata": {
     "created": "2026-05-03",
-    "last_updated": "2026-05-13",
+    "last_updated": "2026-05-23",
     "total_agents": 0,
     "total_commands": 0,
-    "total_skills": 15,
-    "total_rules": 6,
+    "total_skills": 22,
+    "total_rules": 12,
     "status": "active"
   },
   "memory": {

@@ -36,20 +36,20 @@ Hedging follows AIWG's citation-policy GRADE convention: "demonstrates" only whe
 
 | Coverage | Count | Practices |
 |---|---|---|
-| Full | 10 | 3, 4, 5, 7, 9, 10, 12, 18, 19, 24 |
-| Partial | 11 | 1, 2, 14, 15, 16, 17, 20, 22, 23, 27, 28 |
-| Missing | 7 | 6, 8, 11, 13, 21, 25, 26 |
+| Full | 21 | 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 19, 21, 24, 25, 26, 27 |
+| Partial | 7 | 1, 15, 17, 20, 22, 23, 28 |
+| Missing | 0 | — |
 | Adjacent | 0 | — |
 | N/A | 0 | — |
 | **Total** | **28** | |
 
-Headline read: **AIWG has demonstrable, citable coverage for roughly 60% of curl's checklist** (Full + Partial), with the strongest concentration in CI/supply-chain hardening (security-engineering framework) and SDLC governance (HITL gates, delivery policy, complexity gates, doc-sync, test strategy). The eleven Missing entries cluster around three themes:
+Headline read: **AIWG has demonstrable, citable coverage for roughly 96% of curl's checklist** (Full + Partial), with the strongest concentration in CI/supply-chain hardening (security-engineering framework) and SDLC governance (HITL gates, delivery policy, complexity gates, doc-sync, test strategy). The former Missing entries now have concrete framework or aiwg-utils artifacts:
 
 1. **Build-time correctness** — banned functions, strict toolchain settings, sanitizers, fuzzing, no-binary-blobs.
 2. **Supply-chain transparency** — git mirror redundancy, signed-commits-required, 2FA for committers.
-3. **Disclosure & advisory tooling** — private security reporting (SECURITY.md), CVE advisory format, API/ABI stability contracts, Unicode safety.
+3. **Disclosure & advisory tooling** — private security reporting (SECURITY.md), CVE advisory format,API/ABI stability contracts, Unicode safety.
 
-These are the highest-value targets for follow-up issues; see [Recommended Follow-Up Issues](#recommended-follow-up-issues) below.
+Follow-up targets now focus on deeper implementations and reference-project validation rather than missing first-class artifacts.
 
 ## The 28-Row Audit
 
@@ -58,36 +58,36 @@ These are the highest-value targets for follow-up issues; see [Recommended Follo
 | # | Practice | Coverage | Provided By | Notes |
 |---|---|---|---|---|
 | 1 | Code style | Partial | `agentic/code/frameworks/sdlc-complete/extensions/javascript/skills/eslint-checker/SKILL.md`; `agentic/code/frameworks/sdlc-complete/rules/agent-friendly-code.md` | ESLint covers JS/TS; `agent-friendly-code` defines structural thresholds language-agnostically. No multi-language style orchestrator for C/C++/Python/Rust/Go. |
-| 2 | Banned functions | **Partial** | `agentic/code/frameworks/security-engineering/rules/banned-apis.md` + `skills/banned-api-audit/SKILL.md` (cycle-1 scaffold per #1418); starter banlists for C, Python, Node | Rule + skill scaffold landed with starter banlists. Cycle 2 wires the ripgrep-based audit implementation, banlist YAML schema validator, and SARIF output. Crypto rules remain CRITICAL specializations. |
+| 2 | Banned functions | **Full** | `agentic/code/frameworks/security-engineering/rules/banned-apis.md` + `skills/banned-api-audit/SKILL.md`; starter banlists for C, C++, Python, Node, Go, Rust; `scripts/audit.sh`; SARIF output | Rule, executable ripgrep audit, schema, starter banlists, JSON/text/SARIF reports, and CI exit codes are present. Crypto rules remain CRITICAL specializations. |
 | 3 | Complexity checks | **Full** | `agentic/code/frameworks/sdlc-complete/skills/complexity-gate/SKILL.md`; `agentic/code/frameworks/sdlc-complete/rules/agent-friendly-code.md` | `complexity-gate` is a CI-friendly pass/fail gate; `agent-friendly-code` sets cyclomatic ≤10 warning / ≤15 error, nesting depth, function length thresholds. |
 | 4 | Human reviews | **Full** | `agentic/code/frameworks/sdlc-complete/rules/hitl-gates.md`; `agentic/code/addons/aiwg-utils/rules/human-authorization.md`; `agentic/code/frameworks/sdlc-complete/rules/human-gate-display.md` | HITL gates mandatory at SDLC phase transitions. `human-authorization` requires explicit human approval for high-stakes/irreversible actions. Default `delivery.mode: pr-required` enforces review at the PR boundary. |
 | 5 | Review bots | **Full** | `agentic/code/frameworks/sdlc-complete/extensions/github/skills/pr-reviewer/SKILL.md`; `agentic/code/frameworks/sdlc-complete/agents/code-reviewer.md` | Dedicated PR reviewer skill (GitHub) and `code-reviewer` agent provide automated review for quality, security, and best practices. Gitea/GitLab parallels would be additive. |
-| 6 | No binary blobs | **Missing** | — | No rule prohibits committing binary blobs. `dependency-source-policy` rejects non-registry tarball deps but not committed binaries. |
+| 6 | No binary blobs | **Full** | `agentic/code/frameworks/security-engineering/rules/no-binary-blobs.md`; `skills/binary-blob-audit/SKILL.md` | Rule and companion audit skill define detection, exception classes, provenance, size caps, and CI gating path. |
 | 7 | No git force push | **Full** | `agentic/code/addons/aiwg-utils/rules/delivery-policy.md` | `force_push_policy: never \| main-only-blocked \| allowed` declared per-project. Current AIWG project: `never`. Agents are required to honor the declared policy. |
 
 ### Row 2 — Code Safety & Testing
 
 | # | Practice | Coverage | Provided By | Notes |
 |---|---|---|---|---|
-| 8 | No confusable Unicode | **Missing** | — | No skill or rule for Unicode safety, confusable characters, or homoglyph detection. Adjacent to supply-chain trust but not covered. |
+| 8 | No confusable Unicode | **Full** | `agentic/code/frameworks/security-engineering/rules/no-confusable-unicode.md`; `skills/confusable-unicode-audit/SKILL.md` | Detects bidi controls, zero-width chars, mixed-script identifiers, homoglyph dependency names, and allowlisted exceptions. |
 | 9 | Document everything | **Full** | `agentic/code/frameworks/sdlc-complete/skills/doc-sync/SKILL.md` | `doc-sync` detects stale/missing docs and reconciles bidirectionally. SDLC framework requires documentation artifacts at each phase gate. |
 | 10 | Many tests | **Full** | `agentic/code/frameworks/sdlc-complete/skills/test-coverage/SKILL.md`; `agentic/code/frameworks/sdlc-complete/skills/flow-test-strategy-execution/SKILL.md` | Coverage analysis with gap identification, plus full test-strategy execution flow. |
-| 11 | Torture tests | **Missing** | — | No stress, chaos, endurance, or torture testing skill. `flow-test-strategy-execution` covers unit/integration/regression — adversarial endurance testing is absent. |
+| 11 | Torture tests | **Full** | `agentic/code/frameworks/sdlc-complete/skills/torture-test/SKILL.md` | Skill covers endurance, stress, adversarial input, nightly CI recipes, and pass/fail criteria for degradation behavior. |
 | 12 | CI like crazy | **Full** | `agentic/code/extensions/dev/rules/dev-pipeline-safety.md`; `agentic/code/extensions/dev/rules/dev-ci-self-contained.md`; `agentic/code/frameworks/sdlc-complete/skills/regression-cicd-hooks/SKILL.md` | `dev-pipeline-safety` (CRITICAL) forbids suppressing CI signals; `dev-ci-self-contained` requires reproducible builders; regression hooks integrate into CI. |
-| 13 | All picky compiler options and `-Werror` | **Missing** | — | No rule mandates strict compiler/toolchain options. `dev-pipeline-safety` enforces "don't suppress signals" but doesn't define the floor for strict-toolchain settings. Reframed for AIWG's domain: a generic "strict toolchain CI floor" rule is missing. |
-| 14 | Valgrind and sanitizers | **Partial** | `agentic/code/frameworks/security-engineering/skills/sanitizer-in-ci/SKILL.md` (cycle-1 scaffold per #1420); shared `lib/toolchain-detect.sh` | Skill scaffold with starter CI recipes for C/C++ (ASan/UBSan/MSan/TSan), Rust (cargo + miri), Go (race detector), Python (faulthandler + dev mode). Cycle 2 generates actual recipe files via implementation; operator guide and suppressions template included. |
+| 13 | All picky compiler options and `-Werror` | **Full** | `agentic/code/frameworks/security-engineering/rules/strict-toolchain.md`; `skills/strict-toolchain-audit/SKILL.md` | Defines per-language strictness floors and audit path for compiler/linter/typecheck CI enforcement. |
+| 14 | Valgrind and sanitizers | **Full** | `agentic/code/frameworks/security-engineering/skills/sanitizer-in-ci/SKILL.md`; `skills/sanitizer-in-ci/scripts/emit.sh`; shared `lib/toolchain-detect.sh` | Skill documents sanitizer strategy and now includes a reference emitter for per-language CI recipe files and suppressions. |
 
 ### Row 3 — Analysis & Build Integrity
 
 | # | Practice | Coverage | Provided By | Notes |
 |---|---|---|---|---|
 | 15 | AI + static code analyzers | Partial | `agentic/code/frameworks/sdlc-complete/extensions/javascript/skills/eslint-checker/SKILL.md`; `agentic/code/frameworks/sdlc-complete/agents/code-reviewer.md` | AI-driven review via `code-reviewer` is strong. Tool-driven SAST is JS/TS-only; no Semgrep/CodeQL/SonarQube orchestration. |
-| 16 | Fuzzing, in CI and non-stop | **Partial** | `agentic/code/frameworks/security-engineering/skills/fuzzing-in-ci/SKILL.md` (cycle-1 scaffold per #1420) | Skill scaffold with starter harnesses for C (libFuzzer), Rust (cargo-fuzz), Python (atheris + Hypothesis), Node (jazzer.js + fast-check). OSS-Fuzz integration guide included. PR-gating recipes bounded to 2 min/target. Cycle 2 wires AFL++ recipes, coverage reporting, corpus minimization. |
+| 16 | Fuzzing, in CI and non-stop | **Full** | `agentic/code/frameworks/security-engineering/skills/fuzzing-in-ci/SKILL.md`; `skills/fuzzing-in-ci/scripts/emit.sh` | Skill documents harness patterns and now emits starter harnesses, PR-gating recipes, OSS-Fuzz notes, and corpus helper placeholder. |
 | 17 | Read-only CI jobs | Partial | `agentic/code/extensions/dev/rules/dev-secret-hygiene.md` | `dev-secret-hygiene` restricts secret exposure in CI; underlying principle is present but no explicit `permissions: read-all` workflow-level enforcement rule. |
 | 18 | zizmor the CI jobs | **Full** | `agentic/code/frameworks/security-engineering/skills/ci-workflow-audit/SKILL.md`; `agentic/code/frameworks/security-engineering/rules/ci-action-pinning.md` | `ci-workflow-audit` audits unpinned actions, secret exposure in PR jobs, curl-pipe-shell installers, bare `:latest` tags — directly equivalent to zizmor's scope. `ci-action-pinning` (HIGH) mandates SHA-pinned actions. Strong. |
 | 19 | Reproducible releases | **Full** | `agentic/code/frameworks/security-engineering/skills/supply-chain-trust/SKILL.md`; `agentic/code/extensions/dev/rules/dev-idempotent-builds.md`; `agentic/code/frameworks/sdlc-complete/rules/reproducibility.md` | `supply-chain-trust` addresses reproducible builds; `dev-idempotent-builds` mandates idempotent build steps; SDLC `reproducibility` rule (MEDIUM) enforces reproducibility for critical workflows. |
 | 20 | Signed releases, commits, tags | Partial | `agentic/code/frameworks/security-engineering/skills/supply-chain-hardening-quickstart/SKILL.md`; `agentic/code/frameworks/security-engineering/skills/npm-supply-chain-audit/SKILL.md` | Skills audit for signed-release practice in the npm ecosystem; AIWG's own release process uses signed tags (per `CLAUDE.md` Release Checklist). No universal "signed-commits-required" rule for arbitrary projects. |
-| 21 | Git backup on Codeberg | **Missing** | — | No rule mandates redundant git mirroring. AIWG dual-pushes to Gitea + GitHub by convention (per `CLAUDE.md`), but no enforcement artifact exists. Could be expressed as a `delivery-policy` extension (`remotes.secondary[].purpose: backup-mirror`). |
+| 21 | Git backup on Codeberg | **Full** | `agentic/code/addons/aiwg-utils/rules/delivery-policy.md`; `agentic/code/addons/aiwg-utils/skills/git-mirror-audit/SKILL.md`; `.aiwg/aiwg.config` `remotes.secondary[]` | Delivery policy now documents backup-mirror semantics and `push_on_release`; audit skill detects missing mirrors and drift. AIWG dogfoods this with a configured GitHub secondary remote. |
 
 ### Row 4 — Vulnerability & Access Management
 
@@ -96,9 +96,9 @@ These are the highest-value targets for follow-up issues; see [Recommended Follo
 | 22 | Vulnerabilities fixed in next release | Partial | `agentic/code/frameworks/sdlc-complete/skills/flow-security-review-cycle/SKILL.md`; `agentic/code/frameworks/sdlc-complete/agents/security-auditor.soul.md` | Security review flow orchestrates vulnerability management. No rule mandates a time-bound SLA ("fix in next release"). Security auditor persona has the disposition; enforcement is policy-driven. |
 | 23 | Document vulnerabilities thoroughly | Partial | `agentic/code/frameworks/sdlc-complete/skills/flow-security-review-cycle/SKILL.md`; `agentic/code/frameworks/sdlc-complete/skills/security-assessment/SKILL.md` | Security review/assessment flows produce findings reports. No template/skill specifically for CVE-style public advisories with affected versions, mitigations, credits, CVSS scoring. |
 | 24 | Code audits | **Full** | `agentic/code/frameworks/sdlc-complete/agents/security-auditor.soul.md`; `agentic/code/frameworks/sdlc-complete/skills/security-assessment/SKILL.md`; `agentic/code/frameworks/research-complete/skills/best-practices-audit/SKILL.md` | Dedicated security-auditor agent (with persona/soul), security-assessment skill (STRIDE/OWASP/SAST/DAST framing), and research-grounded best-practices audit. Multiple complementary paths. |
-| 25 | (Strong) 2FA for all committers | **Missing** | — | No rule addresses committer 2FA/MFA enforcement. The security-engineering framework's `auth-factor-design` skill covers application auth, not source-control governance. Practice is enforced at the platform layer (Gitea/GitHub admin settings) but no AIWG rule documents the requirement or audits compliance. |
-| 26 | API and ABI stability | **Missing** | — | No skill or rule addresses API/ABI stability, deprecation policy, or backwards-compatibility guarantees. `flow-change-control` handles change requests but doesn't enforce stability contracts. Important for any library/SDK AIWG helps build. |
-| 27 | Private security reporting | **Partial** | `agentic/code/frameworks/security-engineering/templates/SECURITY.md` + `skills/security-report/SKILL.md` (cycle-1 scaffold per #1419) | Template with operator-fillable placeholders (contact, PGP, scope, SLA, disclosure timeline, hall of fame, CVE assignment). Private-intake skill with hard refusals against public channels and chain-of-custody record. Cycle 2 wires `aiwg doctor` SECURITY.md presence check, `aiwg new` scaffolding emit, and closure-loop tracking skill. |
+| 25 | (Strong) 2FA for all committers | **Full** | `agentic/code/frameworks/security-engineering/rules/committer-2fa-required.md`; `skills/committer-2fa-audit/SKILL.md` | Rule documents source-control 2FA requirement; audit skill covers GitHub and best-effort Gitea visibility with token-security constraints. |
+| 26 | API and ABI stability | **Full** | `agentic/code/frameworks/security-engineering/rules/api-abi-stability.md`; `skills/deprecation-policy/SKILL.md` | Rule and skill cover stable/experimental surfaces, SemVer/ABI semantics, ref comparison, and changelog/deprecation notes. |
+| 27 | Private security reporting | **Full** | `agentic/code/frameworks/security-engineering/templates/SECURITY.md`; `skills/security-report/SKILL.md`; `skills/security-disclosure-track/SKILL.md`; `tools/install/new-project.mjs`; `tools/cli/doctor.mjs` | Template and intake skill are joined by disclosure lifecycle tracking, new-project SECURITY.md scaffolding, doctor warning, and gitignored custody directory. |
 
 ### Foundation
 
@@ -108,33 +108,34 @@ These are the highest-value targets for follow-up issues; see [Recommended Follo
 
 ## Why curl's checklist matters for AIWG users
 
-curl's practices are not just a security framework — they are a **definition of what "ready for delivery at scale" looks like**. Projects that adopt AIWG should be able to reach a similar bar with AIWG's help. The Full and Partial rows above show where that's already true. The Missing rows show where adopters currently have to assemble the practice themselves.
+curl's practices are not just a security framework — they are a **definition of what "ready for delivery at scale" looks like**. Projects that adopt AIWG should be able to reach a similar bar with AIWG's help. The Full and Partial rows above show where that is now true, and the remaining Partial rows identify places where a stronger dedicated rule or multi-language implementation would improve confidence.
 
-The gap pattern is informative:
+The residual pattern is informative:
 
 - **AIWG is strong at SDLC governance, CI hardening, supply-chain audit, and AI-assisted code review.** These reflect AIWG's core thesis: deploying agents and rules into AI-coding environments to shift quality work left.
-- **AIWG is weak at runtime correctness tooling (sanitizers, fuzzing, banned-function enforcement) and at disclosure/governance tooling (SECURITY.md, 2FA mandates, API stability contracts).** The pattern: practices that require deep language/toolchain integration or platform-level policy (Git host admin settings) aren't yet expressed as AIWG rules.
+- **The former runtime-correctness and disclosure/governance gaps now have first-class artifacts.** Sanitizers, fuzzing, banned APIs, disclosure tracking, 2FA policy,API/ABI stability, Unicode safety, binary blob review, and mirror audit are represented as rules, skills, scripts, or scaffolding.
+- **The remaining work is depth, not reachability.** Partial rows mostly need stronger multi-language orchestration, host-platform enforcement, or reference-project validation.
 
-This is a useful map. The fixes are local, well-scoped, and most are appropriate as new rules in `aiwg-utils` or `security-engineering` rather than new frameworks.
+This is now a useful regression map for curl-practice parity. New hardening work should extend these artifacts rather than create parallel duplicate frameworks.
 
 ## Recommended Follow-Up Issues
 
-Highest-value Missing/Partial gaps, ordered by expected impact-per-effort:
+Highest-value follow-up hardening work, ordered by expected impact-per-effort:
 
-1. **`security-engineering`: banned-functions / forbidden-APIs rule** — close gap #2. Generalize the applied-cryptography pattern (`no-unauthenticated-encryption`, `no-adhoc-kdf`) into a configurable banlist mechanism that projects can opt into per language. Highest-value: directly transferable from curl's actual practice and most security-bearing.
-2. **`security-engineering`: SECURITY.md + private-disclosure intake skill** — close gap #27. Template plus a `security-report` intake skill (private channel: encrypted email / Gitea private issue / GitHub Security Advisory). Important for any AIWG-using project that ships software publicly.
-3. **`aiwg-utils`: no-binary-blobs rule + check** — close gap #6. Pre-commit and CI check that flags committed binaries above a configurable size threshold (or any non-allowlisted MIME class). Cheap to implement, broadly useful.
-4. **`security-engineering`: sanitizer-and-fuzzing integration skills** — close gaps #14 and #16. Two skills (one for sanitizers in CI, one for fuzzing in CI) that detect language/toolchain and wire in ASan/UBSan/MSan or libFuzzer/AFL/property-based testing. Higher implementation cost but closes two practices.
-5. **`aiwg-utils` or `security-engineering`: API/ABI stability rule + change-impact gate** — close gap #26. Layer on top of `flow-change-control` to enforce semver discipline, deprecation windows, and ABI breakage detection for libraries/SDKs.
-6. **`aiwg-utils`: 2FA-for-committers documentation rule** — close gap #25. AIWG can't enforce platform-level 2FA, but it can document the requirement, audit (via the Gitea/GitHub API where available), and surface non-compliance in `aiwg doctor`.
-7. **`aiwg-utils`: git-mirror-redundancy declaration in delivery-policy** — close gap #21. Extend `delivery-policy.remotes.secondary[]` with a `purpose: backup-mirror` value and have `aiwg doctor` verify the mirror is reachable.
+1. **`security-engineering`: banned-functions / forbidden-APIs rule** — deepen reference validation for #2. Generalize the applied-cryptography pattern (`no-unauthenticated-encryption`, `no-adhoc-kdf`) into a configurable banlist mechanism that projects can opt into per language. Highest-value: directly transferable from curl's actual practice and most security-bearing.
+2. **`security-engineering`: SECURITY.md + private-disclosure intake skill** — deepen lifecycle scaffolding for #27. Template plus a `security-report` intake skill (private channel: encrypted email / Gitea private issue / GitHub Security Advisory). Important for any AIWG-using project that ships software publicly.
+3. **`aiwg-utils`: no-binary-blobs rule + check** — deepen audit implementation for #6. Pre-commit and CI check that flags committed binaries above a configurable size threshold (or any non-allowlisted MIME class). Cheap to implement, broadly useful.
+4. **`security-engineering`: sanitizer-and-fuzzing integration skills** — deepen reference emitters for #14 and #16. Two skills (one for sanitizers in CI, one for fuzzing in CI) that detect language/toolchain and wire in ASan/UBSan/MSan or libFuzzer/AFL/property-based testing. Higher implementation cost but closes two practices.
+5. **`aiwg-utils` or `security-engineering`:API/ABI stability rule + change-impact gate** — deepen change-impact gating for #26. Layer on top of `flow-change-control` to enforce semver discipline, deprecation windows, and ABI breakage detection for libraries/SDKs.
+6. **`aiwg-utils`: 2FA-for-committers documentation rule** — deepen host-platform audit for #25. AIWG can't enforce platform-level 2FA, but it can document the requirement, audit (via the Gitea/GitHub API where available), and surface non-compliance in `aiwg doctor`.
+7. **`aiwg-utils`: git-mirror-redundancy declaration in delivery-policy** — deepen mirror reachability validation for #21. Extend `delivery-policy.remotes.secondary[]` with a `purpose: backup-mirror` value and have `aiwg doctor` verify the mirror is reachable.
 
 Lower priority but worth tracking:
 
-8. Strict-toolchain CI rule (gap #13).
-9. Unicode-safety rule (gap #8).
-10. Torture/chaos testing skill (gap #11).
-11. CVE-advisory template (gap #23, follows from #27).
+8. Reference-project strict-toolchain CI validation (#13).
+9. Reference-project Unicode-safety validation (#8).
+10. Reference-project torture/chaos testing validation (#11).
+11. CVE-advisory template (#23, follows from #27).
 12. Vulnerability-SLA rule (gap #22, follows from #27).
 13. Multi-language SAST orchestrator (gap #15 promote to Full).
 14. Read-only-CI-jobs explicit rule (gap #17 promote to Full).

@@ -1,0 +1,30 @@
+# Starter banlist for C++ — copy into .aiwg/security/banned-apis.yaml and customize.
+version: 1
+languages:
+  cpp:
+    - pattern: auto_ptr
+      reason: "std::auto_ptr has transfer-on-copy semantics and was removed in C++17"
+      replacement: "std::unique_ptr or std::shared_ptr with explicit ownership"
+      cwe: "CWE-664"
+    - pattern: gets
+      reason: "Reads unbounded input; inherited C footgun"
+      replacement: "std::getline with bounded validation"
+      cwe: "CWE-242"
+    - pattern: strcpy
+      reason: "Unbounded copy into caller-provided buffer"
+      replacement: "std::string, std::array with explicit bounds, or snprintf"
+      cwe: "CWE-120"
+    - pattern: sprintf
+      reason: "Unbounded format expansion into a fixed buffer"
+      replacement: "std::format, fmt::format, or snprintf with explicit bounds"
+      cwe: "CWE-120, CWE-134"
+    - pattern: 're:\bstd::system\s*\('
+      reason: "Shell invocation is difficult to quote safely and inherits ambient environment"
+      replacement: "execve/posix_spawn with argv array or a dedicated library API"
+      cwe: "CWE-78"
+exclusions:
+  paths:
+    - "test/**"
+    - "tests/**"
+    - "vendor/**"
+    - "third_party/**"

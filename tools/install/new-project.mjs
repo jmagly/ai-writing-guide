@@ -249,6 +249,16 @@ function createOrUpdateSettings(aiwgPath, provider) {
     console.log(`created AIWG.md`);
   }
 
+  // Copy SECURITY.md template for private vulnerability disclosure.
+  const securityTemplate = path.join(aiwgPath, 'agentic', 'code', 'frameworks', 'security-engineering', 'templates', 'SECURITY.md');
+  const securityDest = path.resolve(process.cwd(), 'SECURITY.md');
+  if (fs.existsSync(securityTemplate) && !fs.existsSync(securityDest)) {
+    fs.copyFileSync(securityTemplate, securityDest);
+    console.log(`created SECURITY.md`);
+  } else if (fs.existsSync(securityDest)) {
+    console.log(`exists  SECURITY.md`);
+  }
+
   const readmePath = path.resolve(process.cwd(), 'README.md');
   if (!fs.existsSync(readmePath)) {
     const readme = `# ${name}\n\n` +
@@ -338,6 +348,7 @@ function createOrUpdateSettings(aiwgPath, provider) {
           '.aiwg/working/',
           '.aiwg/ralph/',
           '.aiwg/ralph-external/',
+          '.aiwg/security-engineering/reviews/disclosures/',
         ].join('\n') + '\n';
         fs.writeFileSync(gi, gitignore, 'utf8');
         console.log('created .gitignore');
@@ -345,7 +356,7 @@ function createOrUpdateSettings(aiwgPath, provider) {
         // Existing .gitignore: append missing AIWG runtime patterns
         const existing = fs.readFileSync(gi, 'utf8');
         const lines = existing.split('\n').map(l => l.trim());
-        const RUNTIME = ['.aiwg/working/', '.aiwg/ralph/', '.aiwg/ralph-external/'];
+        const RUNTIME = ['.aiwg/working/', '.aiwg/ralph/', '.aiwg/ralph-external/', '.aiwg/security-engineering/reviews/disclosures/'];
         const isCovered = (p) => lines.includes(p) || lines.includes(p.replace(/\/$/, ''));
         const missing = RUNTIME.filter(p => !isCovered(p));
         if (missing.length > 0) {

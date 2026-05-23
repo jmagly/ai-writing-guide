@@ -1165,8 +1165,35 @@ async function runDoctor() {
     // Non-fatal — skip silently
   }
 
+  // 10c. SECURITY.md presence for projects using security-engineering (#1422).
+  try {
+    const projectDir = process.cwd();
+    const cfgPath = path.join(projectDir, '.aiwg', 'aiwg.config');
+    let securityEngineeringInstalled = await fileExists(path.join(projectDir, '.aiwg', 'security-engineering'));
+    if (await fileExists(cfgPath)) {
+      try {
+        const cfg = JSON.parse(await fs.readFile(cfgPath, 'utf-8'));
+        securityEngineeringInstalled = securityEngineeringInstalled || Boolean(cfg?.installed?.['security-engineering']);
+      } catch {
+        // Parse failures are reported by the config checks above.
+      }
+    }
+    if (securityEngineeringInstalled) {
+      const hasSecurityMd =
+        await fileExists(path.join(projectDir, 'SECURITY.md')) ||
+        await fileExists(path.join(projectDir, 'docs', 'SECURITY.md'));
+      if (hasSecurityMd) {
+        check('SECURITY.md', 'ok', 'private vulnerability disclosure channel documented');
+      } else {
+        check('SECURITY.md', 'warn', 'security-engineering is installed but no SECURITY.md or docs/SECURITY.md exists; seed from agentic/code/frameworks/security-engineering/templates/SECURITY.md');
+      }
+    }
+  } catch {
+    // Non-fatal — skip silently.
+  }
+
   // 11. Check .gitignore for AIWG runtime patterns (warning if missing)
-  const AIWG_RUNTIME_PATTERNS = ['.aiwg/working/', '.aiwg/ralph/', '.aiwg/ralph-external/'];
+  const AIWG_RUNTIME_PATTERNS = ['.aiwg/working/', '.aiwg/ralph/', '.aiwg/ralph-external/', '.aiwg/security-engineering/reviews/disclosures/'];
   const gitignorePath = path.join(process.cwd(), '.gitignore');
   try {
     const gitignoreContent = await fs.readFile(gitignorePath, 'utf-8');

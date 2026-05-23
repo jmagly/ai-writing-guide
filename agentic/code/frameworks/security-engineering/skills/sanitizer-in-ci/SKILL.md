@@ -17,7 +17,7 @@ invariants:
   - never modifies existing CI files in place — always emits new files under .aiwg/ for operator review
   - emitted recipes do NOT replace test runs; they ADD a parallel sanitizer-enabled run
 commandHint:
-  argumentHint: "[--language c|cpp|rust|go|python|node|auto] [--ci gitea|github|gitlab|auto] [--sanitizers asan,ubsan,msan,tsan,race,faulthandler]"
+  argumentHint: "[--language c|cpp|rust|go|python|node|auto] [--ci gitea|github|gitlab|auto] [--sanitizers asan,ubsan,msan,tsan,race,faulthandler] [--coverage]"
   allowedTools: Read, Write, Bash, Glob, Grep
   model: sonnet
   category: security
@@ -83,6 +83,13 @@ If unclear, emit recipes for all three with a chooser comment.
 ### Phase 3: Emit per-language recipes
 
 For each detected language, write to `.aiwg/security-engineering/sanitizers/{ci-platform}/{language}.yaml`.
+
+Reference emitter:
+
+```bash
+agentic/code/frameworks/security-engineering/skills/sanitizer-in-ci/scripts/emit.sh \
+  --language auto --ci auto
+```
 
 ### Example: C/C++ on Gitea/GitHub Actions
 
@@ -273,12 +280,12 @@ Every suppression entry MUST cite a reason. Quarterly review removes obsolete on
 - `ci-action-pinning.md` rule — same
 - `fuzzing-in-ci` skill — complementary; fuzzing generates inputs that sanitizers then validate
 
-## Limitations (cycle-1 scaffold)
+## Implementation Status
 
-- Recipes are starter templates; project-specific tuning required (build system commands, suppression paths, deps)
-- MSan/TSan recipes are conditional (off by default) — enabling them requires project-specific instrumentation of all deps
-- OSS-Fuzz integration is in `fuzzing-in-ci`, not here
-- Toolchain detection helper exists as a sketch; cycle 2 wires the actual `lib/toolchain-detect.sh`
+- `scripts/emit.sh` emits recipe files under `.aiwg/security-engineering/sanitizers/{ci-platform}/`.
+- Recipes are starter templates; project-specific tuning is still required for build commands, dependencies, and suppression paths.
+- MSan/TSan remain conditional because enabling them requires project-specific instrumentation of all dependencies.
+- OSS-Fuzz integration lives in `fuzzing-in-ci`, not here.
 
 ## References
 

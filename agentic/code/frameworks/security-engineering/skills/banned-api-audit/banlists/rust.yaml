@@ -1,0 +1,28 @@
+# Starter banlist for Rust — copy into .aiwg/security/banned-apis.yaml and customize.
+version: 1
+languages:
+  rust:
+    - pattern: 're:\bunsafe\s*\{'
+      reason: "Unsafe blocks require explicit justification and review"
+      replacement: "Safe API, or document invariant with AIWG-allow annotation and reviewer sign-off"
+      severity: "MEDIUM"
+      cwe: "CWE-242"
+    - pattern: 're:std::mem::transmute\s*::?'
+      reason: "transmute bypasses type and layout guarantees"
+      replacement: "TryFrom, bytemuck with checked traits, or explicit parser"
+      cwe: "CWE-704"
+    - pattern: 're:\.unwrap\s*\('
+      reason: "unwrap in non-test code turns malformed input into panics/DoS"
+      replacement: "propagate Result with ? or map_err with context"
+      severity: "LOW"
+      cwe: "CWE-248"
+    - pattern: 're:Command::new\s*\(\s*\"(?:sh|bash)\"'
+      reason: "Shell string invocation is command-injection prone"
+      replacement: "Command::new(program).args([...]) without shell"
+      cwe: "CWE-78"
+exclusions:
+  paths:
+    - "test/**"
+    - "tests/**"
+    - "**/*_test.rs"
+    - "benches/**"
