@@ -1,4 +1,4 @@
-# zod External NPM Supply-Chain Audit
+# graphology-operators External NPM Supply-Chain Audit
 
 Generated: 2026-05-23
 
@@ -6,24 +6,24 @@ Generated: 2026-05-23
 
 | Field | Value |
 |---|---|
-| Package | `zod` |
-| Canonical upstream repository | https://github.com/colinhacks/zod.git |
-| Audited version/ref | `3.25.76` / `3.25.76` |
+| Package | `graphology-operators` |
+| Canonical upstream repository | https://github.com/graphology/graphology.git |
+| Audited version/ref | `1.6.1` / `0310654f7f0128bc55e192dfc5895c6806ca1691` |
 | npm registry signatures | 1 |
-| Dependency source summary | (none) |
+| Dependency source summary | `graphology-utils` |
 | Optional dependency summary | (none) |
-| Peer dependency summary | (none) |
-| Provenance record path | `.aiwg/security/supply-chain/external-npm/zod.md` |
+| Peer dependency summary | `graphology-types` |
+| Provenance record path | `.aiwg/security/supply-chain/external-npm/graphology-operators.md` |
 
 ## AIWG Usage Contexts
 
 | Manifest | Field | Spec | Lockfile Version | Integrity | Install Script | Optional Lock Entry | Tracking |
 |---|---|---:|---:|---|---|---|---|
-| `package.json` | `dependencies` | `^3.25.0` | `3.25.76` | yes | no | no | #1444 |
+| `package.json` | `devDependencies` | `^1.6.0` | `1.6.1` | yes | no | no | #1446 |
 
 ## Lockfile Tarballs
 
-- package.json: https://registry.npmjs.org/zod/-/zod-3.25.76.tgz
+- package.json: https://registry.npmjs.org/graphology-operators/-/graphology-operators-1.6.1.tgz
 
 ## Lifecycle And Native/Binary Review
 
@@ -33,8 +33,7 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 | Script | Command |
 |---|---|
-| `prepare` | `build` |
-| `prepublishOnly` | `check` |
+| `prepublishOnly` | `npm test` |
 
 ## Dependency Source Findings
 

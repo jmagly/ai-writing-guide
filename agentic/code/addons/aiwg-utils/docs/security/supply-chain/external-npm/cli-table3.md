@@ -1,4 +1,4 @@
-# zod External NPM Supply-Chain Audit
+# cli-table3 External NPM Supply-Chain Audit
 
 Generated: 2026-05-23
 
@@ -6,24 +6,24 @@ Generated: 2026-05-23
 
 | Field | Value |
 |---|---|
-| Package | `zod` |
-| Canonical upstream repository | https://github.com/colinhacks/zod.git |
-| Audited version/ref | `3.25.76` / `3.25.76` |
+| Package | `cli-table3` |
+| Canonical upstream repository | https://github.com/cli-table/cli-table3.git |
+| Audited version/ref | `0.6.5` / `9577efd51114e61fb035b7cc493adf0c0dc7921b` |
 | npm registry signatures | 1 |
-| Dependency source summary | (none) |
-| Optional dependency summary | (none) |
+| Dependency source summary | `string-width` |
+| Optional dependency summary | `@colors/colors` |
 | Peer dependency summary | (none) |
-| Provenance record path | `.aiwg/security/supply-chain/external-npm/zod.md` |
+| Provenance record path | `.aiwg/security/supply-chain/external-npm/cli-table3.md` |
 
 ## AIWG Usage Contexts
 
 | Manifest | Field | Spec | Lockfile Version | Integrity | Install Script | Optional Lock Entry | Tracking |
 |---|---|---:|---:|---|---|---|---|
-| `package.json` | `dependencies` | `^3.25.0` | `3.25.76` | yes | no | no | #1444 |
+| `package.json` | `devDependencies` | `^0.6.5` | `0.6.5` | yes | no | no | #1446 |
 
 ## Lockfile Tarballs
 
-- package.json: https://registry.npmjs.org/zod/-/zod-3.25.76.tgz
+- package.json: https://registry.npmjs.org/cli-table3/-/cli-table3-0.6.5.tgz
 
 ## Lifecycle And Native/Binary Review
 
@@ -33,8 +33,7 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 | Script | Command |
 |---|---|
-| `prepare` | `build` |
-| `prepublishOnly` | `check` |
+| (none) | (none) |
 
 ## Dependency Source Findings
 
@@ -50,7 +49,7 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 ## Findings
 
-- LOW: maintainer-side lifecycle scripts exist; verify release custody before relying on upstream release artifacts.
+- LOW: signed git tag verification was not established in this local audit; rely on npm registry signatures plus lockfile integrity until a deeper upstream tag audit is performed.
 
 ## Clean Checks
 

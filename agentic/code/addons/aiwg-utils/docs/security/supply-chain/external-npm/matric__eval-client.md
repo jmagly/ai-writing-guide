@@ -1,4 +1,4 @@
-# zod External NPM Supply-Chain Audit
+# @matric/eval-client External NPM Supply-Chain Audit
 
 Generated: 2026-05-23
 
@@ -6,24 +6,24 @@ Generated: 2026-05-23
 
 | Field | Value |
 |---|---|
-| Package | `zod` |
-| Canonical upstream repository | https://github.com/colinhacks/zod.git |
-| Audited version/ref | `3.25.76` / `3.25.76` |
-| npm registry signatures | 1 |
+| Package | `@matric/eval-client` |
+| Canonical upstream repository | private Gitea npm package metadata omits repository URL |
+| Audited version/ref | `0.1.0` / `0.1.0` |
+| npm registry signatures | 0 |
 | Dependency source summary | (none) |
 | Optional dependency summary | (none) |
-| Peer dependency summary | (none) |
-| Provenance record path | `.aiwg/security/supply-chain/external-npm/zod.md` |
+| Peer dependency summary | `typescript >=5.0.0` |
+| Provenance record path | `.aiwg/security/supply-chain/external-npm/matric__eval-client.md` |
 
 ## AIWG Usage Contexts
 
 | Manifest | Field | Spec | Lockfile Version | Integrity | Install Script | Optional Lock Entry | Tracking |
 |---|---|---:|---:|---|---|---|---|
-| `package.json` | `dependencies` | `^3.25.0` | `3.25.76` | yes | no | no | #1444 |
+| `tools/eval/package.json` | `dependencies` | `^0.1.0` | `0.1.0` | yes | no | no | #1447 |
 
 ## Lockfile Tarballs
 
-- package.json: https://registry.npmjs.org/zod/-/zod-3.25.76.tgz
+- tools/eval/package.json: https://git.integrolabs.net/api/packages/roctinam/npm/%40matric%2Feval-client/-/0.1.0/eval-client-0.1.0.tgz
 
 ## Lifecycle And Native/Binary Review
 
@@ -33,24 +33,24 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 | Script | Command |
 |---|---|
-| `prepare` | `build` |
-| `prepublishOnly` | `check` |
+| (none) | (none) |
 
 ## Dependency Source Findings
 
 - Package dependency specs reviewed from lockfile and npm metadata; no git, GitHub shorthand, file, link, or remote tarball dependency specs were identified for the direct package metadata summarized here.
 - Transitive dependencies remain governed by `npm run lint:dep-sources`, `npm run lint:affected-packages`, and `npm audit signatures`.
+- Private registry exception: `@matric/eval-client` resolves from the internal Gitea npm registry and must be trusted through AIWG organization package controls and lockfile integrity.
 
 ## Release And Provenance Evidence
 
-- Registry metadata reviewed on 2026-05-23; npm dist signature count: 1.
+- Resolved from https://git.integrolabs.net/api/packages/roctinam/npm/ private registry with lockfile integrity. Registry metadata does not expose signatures or gitHead.
 - Audited ref uses npm `gitHead` where exposed; otherwise this report records the exact lockfile version and repository metadata.
 - Trusted publishing/attestation evidence was not independently verified beyond npm registry signature metadata in this pass.
 - Signed git tag verification was not established locally for this batch; deeper upstream review should verify tags only where upstream documents signed release tags.
 
 ## Findings
 
-- LOW: maintainer-side lifecycle scripts exist; verify release custody before relying on upstream release artifacts.
+- LOW: registry signature/gitHead evidence was not exposed by npm metadata reviewed for this package.
 
 ## Clean Checks
 

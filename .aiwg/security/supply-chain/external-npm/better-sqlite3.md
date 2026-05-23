@@ -1,4 +1,4 @@
-# zod External NPM Supply-Chain Audit
+# better-sqlite3 External NPM Supply-Chain Audit
 
 Generated: 2026-05-23
 
@@ -6,35 +6,34 @@ Generated: 2026-05-23
 
 | Field | Value |
 |---|---|
-| Package | `zod` |
-| Canonical upstream repository | https://github.com/colinhacks/zod.git |
-| Audited version/ref | `3.25.76` / `3.25.76` |
+| Package | `better-sqlite3` |
+| Canonical upstream repository | https://github.com/WiseLibs/better-sqlite3.git |
+| Audited version/ref | `12.8.0` / `fe774f578dde9e40d160fe7d4fa9f4148da8ffc8` |
 | npm registry signatures | 1 |
-| Dependency source summary | (none) |
+| Dependency source summary | `bindings`, `prebuild-install` |
 | Optional dependency summary | (none) |
 | Peer dependency summary | (none) |
-| Provenance record path | `.aiwg/security/supply-chain/external-npm/zod.md` |
+| Provenance record path | `.aiwg/security/supply-chain/external-npm/better-sqlite3.md` |
 
 ## AIWG Usage Contexts
 
 | Manifest | Field | Spec | Lockfile Version | Integrity | Install Script | Optional Lock Entry | Tracking |
 |---|---|---:|---:|---|---|---|---|
-| `package.json` | `dependencies` | `^3.25.0` | `3.25.76` | yes | no | no | #1444 |
+| `package.json` | `peerDependencies` | `^12.8.0` | `(not locked)` | no | no | no | #1445 |
 
 ## Lockfile Tarballs
 
-- package.json: https://registry.npmjs.org/zod/-/zod-3.25.76.tgz
+- package.json: (not locked)
 
 ## Lifecycle And Native/Binary Review
 
-No lockfile install-script flag for the AIWG usage context reviewed.
+Optional peer; AIWG does not lock or install it by default. Consumer install downloads/uses prebuilds or compiles a SQLite native addon.
 
 Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postinstall`. Maintainer-side scripts such as `prepare`, `prepack`, and `prepublishOnly` are release-path risks rather than AIWG consumer install execution by default.
 
 | Script | Command |
 |---|---|
-| `prepare` | `build` |
-| `prepublishOnly` | `check` |
+| `install` | `prebuild-install \|\| node-gyp rebuild --release` |
 
 ## Dependency Source Findings
 
@@ -50,7 +49,7 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 ## Findings
 
-- LOW: maintainer-side lifecycle scripts exist; verify release custody before relying on upstream release artifacts.
+- MEDIUM: install-time lifecycle/native behavior requires controlled optional or maintainer install path.
 
 ## Clean Checks
 

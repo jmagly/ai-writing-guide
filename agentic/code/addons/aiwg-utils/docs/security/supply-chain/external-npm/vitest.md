@@ -1,4 +1,4 @@
-# zod External NPM Supply-Chain Audit
+# vitest External NPM Supply-Chain Audit
 
 Generated: 2026-05-23
 
@@ -6,24 +6,24 @@ Generated: 2026-05-23
 
 | Field | Value |
 |---|---|
-| Package | `zod` |
-| Canonical upstream repository | https://github.com/colinhacks/zod.git |
-| Audited version/ref | `3.25.76` / `3.25.76` |
+| Package | `vitest` |
+| Canonical upstream repository | https://github.com/vitest-dev/vitest.git (packages/vitest) |
+| Audited version/ref | `2.1.9` / `2.1.9` |
 | npm registry signatures | 1 |
-| Dependency source summary | (none) |
+| Dependency source summary | `@vitest/*`, `vite`, `vite-node`, `chai`, `tinyexec` |
 | Optional dependency summary | (none) |
-| Peer dependency summary | (none) |
-| Provenance record path | `.aiwg/security/supply-chain/external-npm/zod.md` |
+| Peer dependency summary | `@types/node`, `@vitest/ui`, `jsdom/happy-dom optional` |
+| Provenance record path | `.aiwg/security/supply-chain/external-npm/vitest.md` |
 
 ## AIWG Usage Contexts
 
 | Manifest | Field | Spec | Lockfile Version | Integrity | Install Script | Optional Lock Entry | Tracking |
 |---|---|---:|---:|---|---|---|---|
-| `package.json` | `dependencies` | `^3.25.0` | `3.25.76` | yes | no | no | #1444 |
+| `package.json` | `devDependencies` | `^2.1.0` | `2.1.9` | yes | no | no | #1446 |
 
 ## Lockfile Tarballs
 
-- package.json: https://registry.npmjs.org/zod/-/zod-3.25.76.tgz
+- package.json: https://registry.npmjs.org/vitest/-/vitest-2.1.9.tgz
 
 ## Lifecycle And Native/Binary Review
 
@@ -33,8 +33,7 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 | Script | Command |
 |---|---|
-| `prepare` | `build` |
-| `prepublishOnly` | `check` |
+| `build` | `rimraf dist && rollup -c` |
 
 ## Dependency Source Findings
 

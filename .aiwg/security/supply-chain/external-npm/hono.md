@@ -1,4 +1,4 @@
-# zod External NPM Supply-Chain Audit
+# hono External NPM Supply-Chain Audit
 
 Generated: 2026-05-23
 
@@ -6,24 +6,24 @@ Generated: 2026-05-23
 
 | Field | Value |
 |---|---|
-| Package | `zod` |
-| Canonical upstream repository | https://github.com/colinhacks/zod.git |
-| Audited version/ref | `3.25.76` / `3.25.76` |
+| Package | `hono` |
+| Canonical upstream repository | https://github.com/honojs/hono.git |
+| Audited version/ref | `4.12.18` / `f10dee89ced5956b73c1cdc416d6bc0fd54d63b7` |
 | npm registry signatures | 1 |
 | Dependency source summary | (none) |
 | Optional dependency summary | (none) |
 | Peer dependency summary | (none) |
-| Provenance record path | `.aiwg/security/supply-chain/external-npm/zod.md` |
+| Provenance record path | `.aiwg/security/supply-chain/external-npm/hono.md` |
 
 ## AIWG Usage Contexts
 
 | Manifest | Field | Spec | Lockfile Version | Integrity | Install Script | Optional Lock Entry | Tracking |
 |---|---|---:|---:|---|---|---|---|
-| `package.json` | `dependencies` | `^3.25.0` | `3.25.76` | yes | no | no | #1444 |
+| `package.json` | `optionalDependencies` | `^4.12.18` | `4.12.18` | yes | no | yes | #1445 |
 
 ## Lockfile Tarballs
 
-- package.json: https://registry.npmjs.org/zod/-/zod-3.25.76.tgz
+- package.json: https://registry.npmjs.org/hono/-/hono-4.12.18.tgz
 
 ## Lifecycle And Native/Binary Review
 
@@ -33,8 +33,7 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 | Script | Command |
 |---|---|
-| `prepare` | `build` |
-| `prepublishOnly` | `check` |
+| `prerelease` | `bun test:deno && bun run build` |
 
 ## Dependency Source Findings
 

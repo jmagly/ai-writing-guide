@@ -1,4 +1,4 @@
-# zod External NPM Supply-Chain Audit
+# @types/node External NPM Supply-Chain Audit
 
 Generated: 2026-05-23
 
@@ -6,24 +6,26 @@ Generated: 2026-05-23
 
 | Field | Value |
 |---|---|
-| Package | `zod` |
-| Canonical upstream repository | https://github.com/colinhacks/zod.git |
-| Audited version/ref | `3.25.76` / `3.25.76` |
+| Package | `@types/node` |
+| Canonical upstream repository | https://github.com/DefinitelyTyped/DefinitelyTyped.git (types/node) |
+| Audited version/ref | `22.19.2` / `22.19.2` |
 | npm registry signatures | 1 |
-| Dependency source summary | (none) |
+| Dependency source summary | `undici-types` |
 | Optional dependency summary | (none) |
 | Peer dependency summary | (none) |
-| Provenance record path | `.aiwg/security/supply-chain/external-npm/zod.md` |
+| Provenance record path | `.aiwg/security/supply-chain/external-npm/types__node.md` |
 
 ## AIWG Usage Contexts
 
 | Manifest | Field | Spec | Lockfile Version | Integrity | Install Script | Optional Lock Entry | Tracking |
 |---|---|---:|---:|---|---|---|---|
-| `package.json` | `dependencies` | `^3.25.0` | `3.25.76` | yes | no | no | #1444 |
+| `package.json` | `devDependencies` | `^22.8.0` | `22.19.2` | yes | no | no | #1446 |
+| `tools/eval/package.json` | `devDependencies` | `^20.0.0` | `20.19.37` | yes | no | no | #1447 |
 
 ## Lockfile Tarballs
 
-- package.json: https://registry.npmjs.org/zod/-/zod-3.25.76.tgz
+- package.json: https://registry.npmjs.org/@types/node/-/node-22.19.2.tgz
+- tools/eval/package.json: https://registry.npmjs.org/@types/node/-/node-20.19.37.tgz
 
 ## Lifecycle And Native/Binary Review
 
@@ -33,8 +35,7 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 | Script | Command |
 |---|---|
-| `prepare` | `build` |
-| `prepublishOnly` | `check` |
+| (none) | (none) |
 
 ## Dependency Source Findings
 
@@ -50,7 +51,7 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 ## Findings
 
-- LOW: maintainer-side lifecycle scripts exist; verify release custody before relying on upstream release artifacts.
+- LOW: signed git tag verification was not established in this local audit; rely on npm registry signatures plus lockfile integrity until a deeper upstream tag audit is performed.
 
 ## Clean Checks
 

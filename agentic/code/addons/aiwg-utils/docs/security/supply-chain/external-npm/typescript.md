@@ -1,4 +1,4 @@
-# zod External NPM Supply-Chain Audit
+# typescript External NPM Supply-Chain Audit
 
 Generated: 2026-05-23
 
@@ -6,24 +6,26 @@ Generated: 2026-05-23
 
 | Field | Value |
 |---|---|
-| Package | `zod` |
-| Canonical upstream repository | https://github.com/colinhacks/zod.git |
-| Audited version/ref | `3.25.76` / `3.25.76` |
+| Package | `typescript` |
+| Canonical upstream repository | https://github.com/microsoft/TypeScript.git |
+| Audited version/ref | `5.9.3` / `c63de15a992d37f0d6cec03ac7631872838602cb` |
 | npm registry signatures | 1 |
 | Dependency source summary | (none) |
 | Optional dependency summary | (none) |
 | Peer dependency summary | (none) |
-| Provenance record path | `.aiwg/security/supply-chain/external-npm/zod.md` |
+| Provenance record path | `.aiwg/security/supply-chain/external-npm/typescript.md` |
 
 ## AIWG Usage Contexts
 
 | Manifest | Field | Spec | Lockfile Version | Integrity | Install Script | Optional Lock Entry | Tracking |
 |---|---|---:|---:|---|---|---|---|
-| `package.json` | `dependencies` | `^3.25.0` | `3.25.76` | yes | no | no | #1444 |
+| `package.json` | `devDependencies` | `^5.9.3` | `5.9.3` | yes | no | no | #1446 |
+| `tools/eval/package.json` | `devDependencies` | `^5.3.0` | `5.9.3` | yes | no | no | #1447 |
 
 ## Lockfile Tarballs
 
-- package.json: https://registry.npmjs.org/zod/-/zod-3.25.76.tgz
+- package.json: https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz
+- tools/eval/package.json: https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz
 
 ## Lifecycle And Native/Binary Review
 
@@ -33,8 +35,7 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 | Script | Command |
 |---|---|
-| `prepare` | `build` |
-| `prepublishOnly` | `check` |
+| `build` | `npm run build:compiler && npm run build:tests` |
 
 ## Dependency Source Findings
 

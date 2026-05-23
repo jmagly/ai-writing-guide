@@ -1,4 +1,4 @@
-# zod External NPM Supply-Chain Audit
+# ws External NPM Supply-Chain Audit
 
 Generated: 2026-05-23
 
@@ -6,24 +6,24 @@ Generated: 2026-05-23
 
 | Field | Value |
 |---|---|
-| Package | `zod` |
-| Canonical upstream repository | https://github.com/colinhacks/zod.git |
-| Audited version/ref | `3.25.76` / `3.25.76` |
+| Package | `ws` |
+| Canonical upstream repository | https://github.com/websockets/ws.git |
+| Audited version/ref | `8.20.0` / `843925544e2f4cffe445e0179947f56d6c5b608f` |
 | npm registry signatures | 1 |
 | Dependency source summary | (none) |
 | Optional dependency summary | (none) |
-| Peer dependency summary | (none) |
-| Provenance record path | `.aiwg/security/supply-chain/external-npm/zod.md` |
+| Peer dependency summary | `bufferutil (optional)`, `utf-8-validate (optional)` |
+| Provenance record path | `.aiwg/security/supply-chain/external-npm/ws.md` |
 
 ## AIWG Usage Contexts
 
 | Manifest | Field | Spec | Lockfile Version | Integrity | Install Script | Optional Lock Entry | Tracking |
 |---|---|---:|---:|---|---|---|---|
-| `package.json` | `dependencies` | `^3.25.0` | `3.25.76` | yes | no | no | #1444 |
+| `package.json` | `optionalDependencies` | `^8.20.0` | `8.20.0` | yes | no | yes | #1445 |
 
 ## Lockfile Tarballs
 
-- package.json: https://registry.npmjs.org/zod/-/zod-3.25.76.tgz
+- package.json: https://registry.npmjs.org/ws/-/ws-8.20.0.tgz
 
 ## Lifecycle And Native/Binary Review
 
@@ -33,8 +33,7 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 | Script | Command |
 |---|---|
-| `prepare` | `build` |
-| `prepublishOnly` | `check` |
+| (none) | (none) |
 
 ## Dependency Source Findings
 
@@ -50,7 +49,7 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 ## Findings
 
-- LOW: maintainer-side lifecycle scripts exist; verify release custody before relying on upstream release artifacts.
+- LOW: signed git tag verification was not established in this local audit; rely on npm registry signatures plus lockfile integrity until a deeper upstream tag audit is performed.
 
 ## Clean Checks
 

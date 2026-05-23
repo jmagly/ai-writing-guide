@@ -13,6 +13,7 @@ Beyond the rules, aiwg-utils also provides:
 - **@-mention tooling**: `mention-wire`, `mention-validate`, `mention-report`, `mention-lint`
 - **Hook management**: `hook-enable`, `hook-disable`, `hook-status`, `hook-regenerate`
 - **Importable prompts**: Core orchestration patterns, multi-agent patterns, reliability prompts
+- **Supply-chain evidence**: External npm dependency audit reports under `docs/security/supply-chain/external-npm/`
 
 ## Core Rules
 
@@ -107,4 +108,5 @@ Full rule files:
 ## References
 
 - `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/docs/rules-reference.md` — Per-rule details and examples
+- `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/docs/security/supply-chain/external-npm/README.md` — External npm dependency audit index and report templates
 - `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/manifest.json` — Full component listing
