@@ -77,6 +77,7 @@ describe("Subcommand Handlers", () => {
   let mockContext: HandlerContext;
 
   beforeEach(() => {
+    mockRun.mockResolvedValue({ exitCode: 0 });
     mockContext = {
       args: [],
       rawArgs: [],

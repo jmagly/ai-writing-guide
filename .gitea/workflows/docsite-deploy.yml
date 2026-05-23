@@ -158,6 +158,10 @@ jobs:
         run: |
           set -euo pipefail
           DEPLOY_ROOT="${DEPLOY_PATH%/}/"
+          if [[ "${DEPLOY_ROOT}" == "~/"* ]]; then
+            REMOTE_HOME="$(ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
+            DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT#~/}"
+          fi
 
           # Two verify modes:
           #   - Tag mode (refs/tags/v*): existing per-release section-file
