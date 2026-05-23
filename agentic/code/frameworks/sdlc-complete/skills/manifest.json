@@ -125,6 +125,11 @@
       "triggers": ["address the open issues", "work through the bugs", "fix open issues", "tackle issue"]
     },
     {
+      "name": "address-issues-threat-assess",
+      "description": "Preflights issue bodies for prompt-injection and supply-chain risk before address-issues acts on them",
+      "triggers": ["address-issues threat assessment", "issue body prompt injection", "supply-chain issue preflight", "detect malicious issue body"]
+    },
+    {
       "name": "issue-audit",
       "description": "Audits issue backlogs for stale items, duplicate/overlapping issues, epic hygiene, and next action priorities",
       "triggers": ["issue-audit", "audit-issues", "audit open issues", "triage the issue backlog", "review stale issues", "find duplicate issues"]
