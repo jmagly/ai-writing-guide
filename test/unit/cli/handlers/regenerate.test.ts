@@ -68,6 +68,7 @@ describe('regenerateHandler', () => {
   afterEach(() => {
     rmSync(tmpDir, { recursive: true, force: true });
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it('regenerates root and normalized context hooks for codex', async () => {
@@ -84,6 +85,22 @@ describe('regenerateHandler', () => {
       expect(content).toContain('aiwg show');
       expect(content).toContain('sdlc');
     }
+  });
+
+  it('auto-detects Codex runtime before Claude env or files in mixed workspaces', async () => {
+    const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+    writeConfig(tmpDir, ['claude', 'codex']);
+    mkdirSync(join(tmpDir, '.codex', 'agents'), { recursive: true });
+    writeFileSync(join(tmpDir, 'CLAUDE.md'), '# Team Claude Notes\n\nPreserve this file.\n');
+    vi.stubEnv('CODEX_HOME', join(tmpDir, '.codex-home'));
+    vi.stubEnv('ANTHROPIC_API_KEY', 'test-anthropic-key');
+
+    const result = await regenerateHandler.execute(makeCtx(tmpDir));
+    expect(result.exitCode).toBe(0);
+
+    expect(existsSync(join(tmpDir, 'AGENTS.md'))).toBe(true);
+    expect(readFileSync(join(tmpDir, 'AGENTS.md'), 'utf8')).toContain('## Context Finalization');
+    expect(readFileSync(join(tmpDir, 'CLAUDE.md'), 'utf8')).toBe('# Team Claude Notes\n\nPreserve this file.\n');
   });
 
   it('regenerates Copilot instructions as a provider-facing twin', async () => {

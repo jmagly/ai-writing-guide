@@ -29,12 +29,36 @@ import {
   shouldEmitContextFiles,
 } from '../../smiths/context-pipeline/index.js';
 import type { Platform } from '../../agents/types.js';
+import { readAiwgConfig } from '../../config/aiwg-config.js';
 
-// Provider detection mirrors the one in steward.ts (#1262 fix). Kept inline
-// because they're invoked in different contexts; consolidation can come later.
-function detectProviderFromEnv(): string {
-  if (process.env.CLAUDE_CODE_VERSION || process.env.ANTHROPIC_API_KEY) return 'claude';
-  if (process.env.OPENAI_API_KEY && !process.env.CURSOR_TRACE_ID) return 'codex';
+function normalizeProviderId(provider: string | undefined): Platform | null {
+  const normalized = provider?.trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === 'claude-code') return 'claude';
+  if (normalized === 'openai') return 'codex';
+  if ([
+    'claude',
+    'codex',
+    'copilot',
+    'cursor',
+    'factory',
+    'hermes',
+    'opencode',
+    'openclaw',
+    'warp',
+    'windsurf',
+    'generic',
+  ].includes(normalized)) {
+    return normalized as Platform;
+  }
+  return null;
+}
+
+function detectProviderFromEnv(): Platform | null {
+  const explicitProvider = normalizeProviderId(process.env.AIWG_PROVIDER ?? process.env.CLAUDECODE_PROVIDER);
+  if (explicitProvider) return explicitProvider;
+
+  if (process.env.CODEX_SANDBOX || process.env.CODEX_HOME) return 'codex';
   if (process.env.CURSOR_TRACE_ID || process.env.CURSOR_VERSION) return 'cursor';
   if (process.env.WINDSURF_VERSION) return 'windsurf';
   if (process.env.WARP_SESSION_ID || process.env.WARP_TERMINAL) return 'warp';
@@ -42,7 +66,25 @@ function detectProviderFromEnv(): string {
   if (process.env.OPENCLAW_VERSION) return 'openclaw';
   if (process.env.FACTORY_AGENT_ID) return 'factory';
   if (process.env.OPENCODE_VERSION) return 'opencode';
-  return 'claude';
+  if (process.env.CLAUDE_CODE_VERSION) return 'claude';
+  if (process.env.OPENAI_API_KEY && !process.env.CURSOR_TRACE_ID) return 'codex';
+  if (process.env.ANTHROPIC_API_KEY) return 'claude';
+  return null;
+}
+
+async function detectProvider(cwd: string): Promise<Platform> {
+  const envProvider = detectProviderFromEnv();
+  if (envProvider) return envProvider;
+
+  try {
+    const config = await readAiwgConfig(cwd);
+    const configuredProvider = normalizeProviderId(config?.providers?.[0]);
+    if (configuredProvider) return configuredProvider;
+  } catch {
+    // Provider detection is best-effort; fall through to the neutral default.
+  }
+
+  return 'generic';
 }
 
 // Minimal provider paths — only what the generator needs to discover deployed
@@ -96,8 +138,8 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
 
   const providerFlag = args.indexOf('--provider');
   const provider = providerFlag >= 0 && args[providerFlag + 1]
-    ? args[providerFlag + 1]
-    : detectProviderFromEnv();
+    ? normalizeProviderId(args[providerFlag + 1]) ?? 'generic'
+    : await detectProvider(cwd);
 
   const target = cwd;
 
