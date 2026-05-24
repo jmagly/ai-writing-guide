@@ -223,6 +223,81 @@ function rgArgsFor(entry, scanPaths, exclusions) {
   return args;
 }
 
+function globToRegex(glob) {
+  let pattern = '^';
+  for (let i = 0; i < glob.length; i += 1) {
+    const char = glob[i];
+    const next = glob[i + 1];
+    if (char === '*' && next === '*') {
+      pattern += '.*';
+      i += 1;
+    } else if (char === '*') {
+      pattern += '[^/]*';
+    } else if (char === '?') {
+      pattern += '[^/]';
+    } else {
+      pattern += char.replace(/[|\\{}()[\]\^$+*?.]/g, '\\$&');
+    }
+  }
+  return new RegExp(`${pattern}$`);
+}
+
+function normalizePath(filePath) {
+  return filePath.split(path.sep).join('/');
+}
+
+function isExcluded(filePath, exclusions) {
+  return exclusions.some((glob) => globToRegex(glob).test(filePath));
+}
+
+function collectFiles(scanPaths, entry, exclusions) {
+  const extensions = new Set(typeMap[entry.language] || []);
+  const files = [];
+  const visit = (absolutePath) => {
+    const stat = fs.statSync(absolutePath);
+    if (stat.isDirectory()) {
+      for (const child of fs.readdirSync(absolutePath)) visit(path.join(absolutePath, child));
+      return;
+    }
+    if (!stat.isFile()) return;
+    const rel = normalizePath(path.relative(root, absolutePath));
+    if (!rel || isExcluded(rel, exclusions)) return;
+    if (extensions.size && !extensions.has(path.extname(rel).slice(1))) return;
+    files.push(rel);
+  };
+
+  for (const scanPath of scanPaths) {
+    const absolutePath = path.resolve(root, scanPath);
+    if (fs.existsSync(absolutePath)) visit(absolutePath);
+  }
+  return files;
+}
+
+function scanWithJs(entry, scanPaths, exclusions) {
+  const isRegex = entry.pattern.startsWith('re:');
+  const pattern = isRegex
+    ? new RegExp(entry.pattern.slice(3), 'g')
+    : new RegExp(`\\b${escapeRegex(entry.pattern)}\\b`, 'g');
+  const matches = [];
+  for (const filePath of collectFiles(scanPaths, entry, exclusions)) {
+    const lines = fs.readFileSync(path.join(root, filePath), 'utf8').split(/\r?\n/);
+    for (let index = 0; index < lines.length; index += 1) {
+      pattern.lastIndex = 0;
+      let match;
+      while ((match = pattern.exec(lines[index])) !== null) {
+        matches.push({
+          file: filePath,
+          line: index + 1,
+          column: match.index + 1,
+          match: lines[index],
+        });
+        if (match[0] === '') pattern.lastIndex += 1;
+      }
+    }
+  }
+  return matches;
+}
+
 function escapeRegex(s) {
   return s.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
 }
@@ -243,19 +318,29 @@ function hasAllowAnnotation(file, lineNo) {
 function scan(entries, scanPaths, exclusions) {
   const violations = [];
   const exceptions = [];
+  const useRg = rgAvailable();
   for (const entry of entries) {
     const entryPaths = Array.isArray(entry.paths) && entry.paths.length ? entry.paths : scanPaths;
-    const proc = spawnSync('rg', rgArgsFor(entry, entryPaths, exclusions), { cwd: root, encoding: 'utf8' });
-    if (proc.status !== 0 && proc.status !== 1) {
-      throw Object.assign(new Error(proc.stderr || `rg failed for ${entry.language}:${entry.pattern}`), { exitCode: 3 });
+    const matches = [];
+    if (useRg) {
+      const proc = spawnSync('rg', rgArgsFor(entry, entryPaths, exclusions), { cwd: root, encoding: 'utf8' });
+      if (proc.status !== 0 && proc.status !== 1) {
+        throw Object.assign(new Error(proc.stderr || `rg failed for ${entry.language}:${entry.pattern}`), { exitCode: 3 });
+      }
+      for (const line of proc.stdout.split(/\r?\n/).filter(Boolean)) {
+        const parts = line.split(':');
+        if (parts.length < 4) continue;
+        matches.push({
+          file: parts[0],
+          line: Number(parts[1]),
+          column: Number(parts[2]),
+          match: parts.slice(3).join(':'),
+        });
+      }
+    } else {
+      matches.push(...scanWithJs(entry, entryPaths, exclusions));
     }
-    for (const line of proc.stdout.split(/\r?\n/).filter(Boolean)) {
-      const parts = line.split(':');
-      if (parts.length < 4) continue;
-      const file = parts[0];
-      const lineNo = Number(parts[1]);
-      const column = Number(parts[2]);
-      const match = parts.slice(3).join(':');
+    for (const { file, line: lineNo, column, match } of matches) {
       const item = {
         file, line: lineNo, column, match,
         pattern: entry.pattern,
@@ -271,7 +356,6 @@ function scan(entries, scanPaths, exclusions) {
   }
   return { violations, exceptions };
 }
-
 function toSarif(report) {
   const rules = new Map();
   for (const v of report.violations) {
@@ -324,7 +408,6 @@ function printText(report) {
 
 try {
   const args = parseArgs(process.argv.slice(2));
-  if (!rgAvailable()) throw Object.assign(new Error('ripgrep (rg) is required for banned-api-audit'), { exitCode: 3 });
   const banlist = loadBanlists(args);
   const scanPaths = args.paths.length ? args.paths : (banlist.paths.length ? banlist.paths : ['.']);
   const findings = scan(banlist.entries, scanPaths, banlist.exclusions);

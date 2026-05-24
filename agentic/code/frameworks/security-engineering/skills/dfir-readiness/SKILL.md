@@ -2,7 +2,7 @@
 namespace: aiwg
 name: dfir-readiness
 platforms: [all]
-description: Use when a project needs DFIR readiness from the security-engineering side: prepare incident evidence handling, chain-of-custody expectations, IOC readiness, and handoff to forensics-complete without collecting evidence.
+description: "Use when a project needs DFIR readiness from the security-engineering side: prepare incident evidence handling, chain-of-custody expectations, IOC readiness, and handoff to forensics-complete without collecting evidence."
 triggers:
   - "DFIR readiness"
   - "incident response readiness"
