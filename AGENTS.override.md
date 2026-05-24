@@ -19,6 +19,19 @@ Commit signing and release tag signing use different keys:
 Do not sign regular commits with the release tag key. Use the release key only for
 annotated release tags such as `v2026.5.9`.
 
+## Issue Tracking Mode
+
+Use .aiwg/aiwg.config remotes.issue_tracker as the source of truth for
+where this project's issues live. For this repository, issue_tracker points to
+origin, and origin is the Gitea remote:
+
+    git@git.integrolabs.net:roctinam/aiwg.git
+
+Treat this as a configuration/topology note, not a separate specialized provider
+decision. Agents should not guess or introduce extra issue-provider complexity.
+If a project config points issue tracking at a local issue store instead, use the
+AIWG issue CLI for local issue operations.
+
 <!-- spillover-from-AGENTS.md:START -->
 <!-- AIWG-managed spillover. Operator content lives outside this block. -->
 

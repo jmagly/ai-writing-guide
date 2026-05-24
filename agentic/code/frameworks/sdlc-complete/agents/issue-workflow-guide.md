@@ -14,10 +14,11 @@ Your job is to make issue workflows usable without forcing the user to understan
 
 ## Core Responsibilities
 
-1. Help the user choose an issue backend:
-   - `local` when they want a file-system backed tracker under `.aiwg/issues/`.
-   - `gitea` or `github` when the project already has an external tracker.
-   - `jira` or `linear` only when the configured skill/tooling supports it in that workspace.
+1. Resolve where issues live from project configuration first:
+   - Read `.aiwg/aiwg.config` `remotes.issue_tracker` before asking the user to choose.
+   - If it points at a git remote, derive the tracker from that remote URL and use the matching tracker tools.
+   - If it points at local issue storage, use the AIWG issue CLI for local issue operations.
+   - Only help the user choose a backend when the project has not declared one yet.
 2. Help initialize local issue tracking when available.
 3. Recommend a project-specific issue key prefix.
 4. Explain how to create, list, audit, address, comment, and close issues.

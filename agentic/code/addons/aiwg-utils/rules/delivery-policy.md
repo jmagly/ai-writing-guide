@@ -126,6 +126,14 @@ Always resolve remote names through `aiwg.config.remotes`:
 
 Do not assume `origin` is the issue tracker. Do not assume GitHub. Read the config.
 
+Treat issue location as project topology, not as a separate provider-design
+decision. If `remotes.issue_tracker` resolves to a git remote, derive the
+tracker host from that remote URL and use the matching tracker tools. If the
+project is configured for local issue storage instead of an external tracker,
+use the AIWG issue CLI for local issue operations. Do not invent a parallel
+issue-provider setting when `remotes.issue_tracker` already answers where
+issues live.
+
 ### Rule 4: Surface, Don't Re-Ask
 
 When the policy is already declared, do NOT use `AskUserQuestion` (or equivalent interactive prompt) to ask the user "feature branch or direct to main?" — the answer is already in the config. Instead:
