@@ -6,8 +6,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { existsSync } from 'fs';
-import { resolve } from 'path';
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join, resolve } from 'path';
 import type { HandlerContext } from '../../../../src/cli/handlers/types.js';
 
 // ── Mocks ────────────────────────────────────────────────────
@@ -52,7 +53,7 @@ vi.mock('../../../../src/cli/ui.js', () => ({
   channelLabel: vi.fn((s: string) => `[${s}]`),
 }));
 
-import { refreshHandler } from '../../../../src/cli/handlers/refresh.js';
+import { refreshHandler, pruneStaleManagedAgentFiles } from '../../../../src/cli/handlers/refresh.js';
 // Backward-compat alias for existing test references
 const syncHandler = refreshHandler;
 
@@ -306,6 +307,66 @@ describe('syncHandler.execute — stale deployment detection', () => {
 
     const result = await syncHandler.execute(makeCtx());
     expect(result.exitCode).toBe(0);
+  });
+});
+
+describe('refreshHandler stale AIWG-managed agent cleanup (#1460)', () => {
+  it('removes bundled managed agent files that no longer exist in current sources', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'aiwg-refresh-orphan-'));
+    try {
+      const frameworkRoot = join(root, 'framework-root');
+      const projectRoot = join(root, 'project');
+      mkdirSync(join(frameworkRoot, 'agentic/code/frameworks/forensics-complete/agents'), { recursive: true });
+      mkdirSync(join(projectRoot, '.claude/agents'), { recursive: true });
+
+      writeFileSync(
+        join(frameworkRoot, 'agentic/code/frameworks/forensics-complete/agents/forensic-acquisition-agent.md'),
+        '---\nname: Forensic Acquisition Agent\nmodel: claude-sonnet-4-6\n---\n',
+      );
+      writeFileSync(
+        join(projectRoot, '.claude/agents/forensic-acquisition-agent.md'),
+        '---\n# aiwg:managed v2026.5.10 bundled\nname: Forensic Acquisition Agent\nmodel: claude-sonnet-4-6\n---\n',
+      );
+      writeFileSync(
+        join(projectRoot, '.claude/agents/acquisition-agent.md'),
+        '---\n# aiwg:managed v2026.5.0-rc.7 bundled\nname: Acquisition Agent\nmodel: sonnet\n---\n',
+      );
+      writeFileSync(
+        join(projectRoot, '.claude/agents/operator-agent.md'),
+        '---\nname: Operator Agent\nmodel: sonnet\n---\n',
+      );
+
+      const removed = await pruneStaleManagedAgentFiles({ projectRoot, frameworkRoot, provider: 'claude' });
+
+      expect(removed).toEqual(['.claude/agents/acquisition-agent.md']);
+      expect(existsSync(join(projectRoot, '.claude/agents/acquisition-agent.md'))).toBe(false);
+      expect(existsSync(join(projectRoot, '.claude/agents/forensic-acquisition-agent.md'))).toBe(true);
+      expect(existsSync(join(projectRoot, '.claude/agents/operator-agent.md'))).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('reports stale bundled agent files in dry-run without deleting them', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'aiwg-refresh-orphan-dry-'));
+    try {
+      const frameworkRoot = join(root, 'framework-root');
+      const projectRoot = join(root, 'project');
+      mkdirSync(join(frameworkRoot, 'agentic/code/frameworks/sdlc-complete/agents'), { recursive: true });
+      mkdirSync(join(projectRoot, '.claude/agents'), { recursive: true });
+      writeFileSync(join(frameworkRoot, 'agentic/code/frameworks/sdlc-complete/agents/current-agent.md'), '---\nname: Current\n---\n');
+      writeFileSync(
+        join(projectRoot, '.claude/agents/old-agent.md'),
+        '---\n# aiwg:managed v2026.5.0-rc.7 bundled\nname: Old\nmodel: sonnet\n---\n',
+      );
+
+      const removed = await pruneStaleManagedAgentFiles({ projectRoot, frameworkRoot, provider: 'claude', dryRun: true });
+
+      expect(removed).toEqual(['.claude/agents/old-agent.md']);
+      expect(existsSync(join(projectRoot, '.claude/agents/old-agent.md'))).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 

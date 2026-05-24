@@ -14,6 +14,8 @@
  */
 
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
+import { promises as fs } from 'fs';
+import path from 'path';
 import { createScriptRunner } from './script-runner.js';
 import { getFrameworkRoot } from '../../channel/manager.mjs';
 import { refreshAllPackages } from '../../packages/registry.js';
@@ -25,6 +27,95 @@ import {
 } from '../../config/aiwg-config.js';
 import { discoverProjectLocalBundles } from '../../extensions/project-local-discovery.js';
 import * as ui from '../ui.js';
+
+const PROVIDER_AGENT_DIRS: Record<string, string> = {
+  claude: '.claude/agents',
+  codex: '.codex/agents',
+  copilot: '.github/agents',
+  cursor: '.cursor/agents',
+  factory: '.factory/droids',
+  opencode: '.opencode/agent',
+  warp: '.warp/agents',
+  windsurf: '.windsurf/agents',
+};
+
+async function collectAgentBasenames(rootDir: string, names: Set<string>): Promise<void> {
+  let entries;
+  try {
+    entries = await fs.readdir(rootDir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+
+  if (path.basename(rootDir) === 'agents') {
+    for (const entry of entries) {
+      if (entry.isFile() && entry.name.endsWith('.md')) names.add(path.basename(entry.name, '.md'));
+    }
+  }
+
+  await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => collectAgentBasenames(path.join(rootDir, entry.name), names)),
+  );
+}
+
+export async function currentBundledAgentBasenames(frameworkRoot: string): Promise<Set<string>> {
+  const names = new Set<string>();
+  await Promise.all([
+    collectAgentBasenames(path.join(frameworkRoot, 'agentic', 'code', 'frameworks'), names),
+    collectAgentBasenames(path.join(frameworkRoot, 'agentic', 'code', 'addons'), names),
+  ]);
+  return names;
+}
+
+function isBundledManagedArtifact(content: string): boolean {
+  return /(?:^|\n)(?:#|<!--)\s*aiwg:managed\s+\S+\s+bundled(?:\s*-->)?/.test(content);
+}
+
+export async function pruneStaleManagedAgentFiles(options: {
+  projectRoot: string;
+  frameworkRoot: string;
+  provider?: string;
+  dryRun?: boolean;
+}): Promise<string[]> {
+  const desired = await currentBundledAgentBasenames(options.frameworkRoot);
+  const providerDirs = options.provider
+    ? [PROVIDER_AGENT_DIRS[options.provider]].filter((dir): dir is string => Boolean(dir))
+    : Object.values(PROVIDER_AGENT_DIRS);
+  const removed: string[] = [];
+
+  for (const relDir of providerDirs) {
+    const dir = path.join(options.projectRoot, relDir);
+    let entries;
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
+      const basename = path.basename(entry.name, '.md');
+      if (desired.has(basename)) continue;
+
+      const file = path.join(dir, entry.name);
+      let content;
+      try {
+        content = await fs.readFile(file, 'utf8');
+      } catch {
+        continue;
+      }
+      if (!isBundledManagedArtifact(content)) continue;
+
+      const relFile = path.relative(options.projectRoot, file);
+      if (!options.dryRun) await fs.rm(file, { force: true });
+      removed.push(relFile);
+    }
+  }
+
+  return removed;
+}
 
 /**
  * Parse --flag value pairs from args
@@ -177,9 +268,24 @@ export const refreshHandler: CommandHandler = {
       // Non-fatal — refresh continues
     }
 
-    // Step 4.5: Stale deployment check (#621)
+    // Step 4.5: Stale deployment check (#621, #1460)
     if (!quiet) ui.info('Checking for stale deployments...');
     if (!dryRun) {
+      try {
+        const removedAgents = await pruneStaleManagedAgentFiles({
+          projectRoot: process.cwd(),
+          frameworkRoot,
+          provider: detectedProvider,
+        });
+        if (removedAgents.length > 0 && !quiet) {
+          ui.success(`Removed ${removedAgents.length} stale AIWG-managed agent file${removedAgents.length === 1 ? '' : 's'}`);
+          for (const file of removedAgents.slice(0, 5)) ui.dim(`    ${file}`);
+          if (removedAgents.length > 5) ui.dim(`    ...and ${removedAgents.length - 5} more`);
+        }
+      } catch {
+        if (!quiet) ui.dim('  Agent orphan cleanup skipped (non-critical)');
+      }
+
       try {
         const { getFrameworkRoot } = await import('../../channel/manager.mjs');
         const { join } = await import('path');
