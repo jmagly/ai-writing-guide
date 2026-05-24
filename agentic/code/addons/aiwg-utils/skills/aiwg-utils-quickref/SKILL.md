@@ -114,6 +114,8 @@ For generic repository PR work, use ordinary repository PR tooling and templates
 
 `aiwg-*` skills are AIWG-specific product/workspace capabilities. Do not route general tracker processing through `aiwg-issue`: use `issue-audit` / `audit-issues` for backlog audits and `address-issues` for implementation loops.
 
+When a user wants to **start using issues for their own project**, especially local file-system backed issues, route them to the `issue-workflow-guide` agent or discover/show it if it is not already loaded. The guide helps choose local vs external tracker backends, suggests a project-specific issue key prefix, and explains how local issues feed `issue-audit` and `address-issues`. Keep the distinction sharp: `aiwg-issue` files issues against the AIWG product; `issue-workflow-guide` helps users operate project issues.
+
 ## Capability domains
 
 | Domain | Covers |
@@ -184,6 +186,8 @@ aiwg discover "auto provenance"                # → auto-provenance
 ```bash
 aiwg discover "aiwg steward"                   # → steward (agent + policy router)
 aiwg discover "delivery policy"                # → delivery-policy rule (and related skills)
+aiwg discover "start using local issues"       # → issue-workflow-guide
+aiwg discover "choose issue tracking backend"  # → issue-workflow-guide
 ```
 
 ### Project-local extensions (pilot → promote)

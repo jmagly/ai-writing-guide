@@ -33,7 +33,8 @@ The missing layer is a local issue provider with enough tracker semantics to sat
 Use a hybrid local provider:
 
 - Canonical issue records live as markdown files under `.aiwg/issues/items/`.
-- Each issue file has YAML frontmatter for structured fields and markdown sections for body and comments/events.
+- Each issue file has YAML frontmatter for structured fields and markdown content for the issue body.
+- Comments and body-heavy events use separate markdown body files referenced by append-only JSONL event metadata.
 - A rebuildable index lives under `.aiwg/issues/index/` as JSON for the first implementation, with a later SQLite option when query volume justifies it.
 - `address-issues` and `issue-audit` consume issues through a provider interface that returns slices, not raw backlog dumps.
 
@@ -46,11 +47,13 @@ This preserves local Git reviewability while giving agent loops efficient filter
 ├── config.json
 ├── next-id
 ├── items/
-│   ├── AIWG-0001.md
-│   └── AIWG-0002.md
+│   ├── PROJECT-0001.md
+│   └── PROJECT-0002.md
 ├── events/
-│   ├── AIWG-0001.jsonl
-│   └── AIWG-0002.jsonl
+│   ├── PROJECT-0001.jsonl
+│   ├── PROJECT-0002.jsonl
+│   └── bodies/
+│       └── evt-....md
 ├── index/
 │   ├── issues.sqlite
 │   └── issues.index.json
@@ -60,16 +63,32 @@ This preserves local Git reviewability while giving agent loops efficient filter
 Canonical content:
 
 - `items/*.md` is the reviewable issue body and current structured summary.
-- `events/*.jsonl` is the append-only event/comment stream.
-- `index/*` is cache only and must be rebuildable from `items/` plus `events/`.
+- `events/*.jsonl` is the append-only metadata/state stream.
+- `events/bodies/*.md` stores comment and body-heavy event content referenced by `body_path`; JSONL should not be the default home for full issue/comment content.
+- `index/*` is cache only and must be rebuildable from `items/` plus `events/` plus referenced body files.
 - `next-id` is updated under a lock and may be replaced by monotonic timestamp IDs if merge conflicts become common.
 
 ## Minimal Data Model
 
+Project issue key configuration in `.aiwg/issues/config.json`:
+
+```json
+{
+  "provider": "local",
+  "issue_key": {
+    "prefix": "PROJECT",
+    "padding": 4,
+    "next": 1
+  }
+}
+```
+
+The prefix is project-configured, not hardcoded. AIWG projects may use `AIWG`, documentation projects may use `DOCS`, and unclear projects should default to an explicit generic prefix such as `ISSUE` until the user chooses one. Existing issue IDs must not be rewritten automatically if the prefix changes.
+
 Issue frontmatter fields:
 
 ```yaml
-id: AIWG-0001
+id: PROJECT-0001
 status: open | closed | archived
 title: Short issue title
 type: bug | feature | research | task | epic
@@ -92,7 +111,7 @@ source:
 Event records, one JSON object per line:
 
 ```json
-{"event_id":"evt-...","issue_id":"AIWG-0001","type":"comment","author":"operator","created_at":"2026-05-24T00:00:00Z","body_path":"events/bodies/evt-....md"}
+{"event_id":"evt-...","issue_id":"PROJECT-0001","type":"comment","author":"operator","created_at":"2026-05-24T00:00:00Z","body_path":"events/bodies/evt-....md"}
 ```
 
 Required event types:
@@ -127,22 +146,23 @@ For loops, the default context slice should include:
 
 ## Thread And Comment Modeling
 
-Comments should be events, not rewritten sections inside the issue markdown. That gives three benefits:
+Comments should be event metadata with content in separate markdown body files, not rewritten sections inside the issue markdown and not full bodies embedded in JSONL by default. That gives three benefits:
 
-- Appends are naturally ordered and easy to lock.
+- JSONL appends stay small, naturally ordered, and easy to lock.
 - Agent loop status comments remain distinguishable from human feedback.
 - Sync to external trackers can map each local event to an external comment ID later.
+- Large human comments remain readable and editable as markdown files.
 
 Human-readable views can be generated when needed:
 
-- `aiwg issue show AIWG-0001` renders body plus selected events.
-- `aiwg issue export AIWG-0001 --format markdown` produces a single portable markdown file.
+- `aiwg issue show PROJECT-0001` renders body plus selected events.
+- `aiwg issue export PROJECT-0001 --format markdown` produces a single portable markdown file.
 
 ## Locking And Concurrency
 
 Required write rules:
 
-- Per-issue lock file: `.aiwg/issues/locks/AIWG-0001.lock`.
+- Per-issue lock file: `.aiwg/issues/locks/PROJECT-0001.lock`.
 - Global ID lock for `next-id` allocation.
 - Lock record includes PID, hostname, created_at, and operation.
 - Stale lock detection must be conservative and require explicit `--break-lock` or operator confirmation.
@@ -217,17 +237,17 @@ Local-to-external sync should be explicit and reversible:
 Minimum useful local commands:
 
 ```bash
-aiwg issue init --provider local
+aiwg issue init --provider local --prefix PROJECT
 aiwg issue new --title "..." --type bug --label provider/all
 aiwg issue list --provider local --filter "status:open label:bug" --limit 20
-aiwg issue show AIWG-0001 --comments last:10
-aiwg issue comment AIWG-0001 --body-file comment.md
-aiwg issue close AIWG-0001 --reason fixed
+aiwg issue show PROJECT-0001 --comments last:10
+aiwg issue comment PROJECT-0001 --body-file comment.md
+aiwg issue close PROJECT-0001 --reason fixed
 aiwg issue index rebuild
 aiwg issue sync export --to gitea
 ```
 
-`address-issues --provider local AIWG-0001` should use the same provider interface as `--provider gitea`.
+`address-issues --provider local PROJECT-0001` should use the same provider interface as `--provider gitea`.
 
 ## Candidate Architectures
 
@@ -257,7 +277,7 @@ Reasons:
 
 ## Follow-Up Implementation Slices
 
-1. Local issue provider core: data model, parser, lock manager, JSON index, CRUD/query API.
+1. Local issue provider core: configurable issue key prefix, data model, parser, lock manager, event body files, JSON index, CRUD/query API.
 2. CLI and workflow integration: `aiwg issue ...`, `issue-audit --provider local`, and `address-issues --provider local` consumption.
 3. Sync/export: import/export bridge for Gitea/GitHub with external ID mapping and conflict reports.
 

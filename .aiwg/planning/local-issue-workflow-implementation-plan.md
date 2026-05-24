@@ -11,16 +11,17 @@ Add a local file-system backed issue provider that can support `issue-audit` and
 
 ## Architecture Decision
 
-Use markdown issue files as canonical data and a rebuildable JSON index as the first implementation slice. Keep the provider interface compatible with a later SQLite index.
+Use markdown issue files as canonical data, JSONL files for event/state metadata, separate markdown body files for body-heavy events, and a rebuildable JSON index as the first implementation slice. Keep the provider interface compatible with a later SQLite index.
 
 ## Phases
 
 ### Phase 1: Local Provider Core
 
 - Define issue schema and event schema.
+- Define configurable project issue key prefix settings.
 - Create `.aiwg/issues/` layout initializer.
 - Implement parser/serializer for `items/*.md` frontmatter.
-- Implement append-only JSONL event store.
+- Implement append-only JSONL event store with markdown body files for body-heavy events.
 - Implement lock manager with stale lock reporting.
 - Implement JSON index rebuild and query.
 - Add unit tests for parsing, locking, CRUD, filtering, and rebuild.
@@ -42,7 +43,7 @@ Use markdown issue files as canonical data and a rebuildable JSON index as the f
 
 ## Verification Gates
 
-- Unit tests for local issue schema and parser.
+- Unit tests for local issue schema, project prefix configuration, and parser.
 - Unit tests for lock acquisition, stale lock detection, and atomic writes.
 - Integration test: create local issue, list/filter, show bounded comments, append comment, close issue.
 - Workflow test: `address-issues --provider local` consumes a fixture issue without reading unrelated backlog files.
@@ -50,6 +51,5 @@ Use markdown issue files as canonical data and a rebuildable JSON index as the f
 
 ## Open Questions For Implementation
 
-- Whether local IDs should be numeric (`#1`) or prefixed (`AIWG-0001`) at the CLI surface.
 - Whether `.aiwg/issues/index/issues.index.json` should be committed by default or regenerated in CI.
 - Whether SQLite should be optional in Phase 1 or deferred completely to a later issue.

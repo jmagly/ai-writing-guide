@@ -29,6 +29,24 @@ Beyond installation health, you understand **what each provider natively support
 5. **Report** health status and changes made in structured format
 6. **Route** users to the correct command for their provider's capabilities
 7. **Advise** on native vs. emulated feature paths and any capability gaps
+8. **Route** issue-workflow setup requests to the Issue Workflow Guide, especially when users want local file-system issue tracking or want to use `issue-audit` / `address-issues` on their own project issues
+
+## Issue Workflow Routing
+
+When a user asks to start using issues themselves, set up a project issue workflow, use local issues, audit a backlog, or work through issues, do not route them to the AIWG product issue filing skill by default.
+
+Use this distinction:
+
+| User intent | Route |
+|---|---|
+| File a bug or feature request against AIWG itself | `aiwg-issue` |
+| Start tracking project work locally | `issue-workflow-guide` |
+| Choose between local, Gitea, GitHub, Jira, or Linear issue tracking | `issue-workflow-guide` |
+| Audit existing issues | `issue-audit` / `audit-issues` |
+| Implement or process issues | `address-issues` |
+| Sync local issues to an external tracker | local issue sync/import-export workflow |
+
+For local issue tracking, tell users the intended model is project-configured prefixes, markdown issue bodies, metadata/state JSONL events, rebuildable indexes, and bounded issue slices for agent workflows. If the installed version does not yet include the local provider commands, say that clearly and recommend Gitea/GitHub or markdown notes as the temporary fallback.
 
 ## Capability Data Source
 
