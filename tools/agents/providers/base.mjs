@@ -1155,7 +1155,9 @@ export function initializeFrameworkWorkspace(target, mode, dryRun, srcRoot = nul
   const frameworkDirs = srcRoot
     ? getFrameworksForMode(srcRoot, mode).map(fw => ({
       id: fw.id,
-      subdirs: fw.workspaceSubdirs
+      path: fw.path,
+      subdirs: fw.workspaceSubdirs,
+      memoryCreates: Array.isArray(fw.manifest?.memory?.creates) ? fw.manifest.memory.creates : []
     }))
     : [];
 
@@ -1201,6 +1203,11 @@ export function initializeFrameworkWorkspace(target, mode, dryRun, srcRoot = nul
       for (const subdir of fw.subdirs) {
         console.log(`[dry-run]   ${path.join(frameworksDir, fw.id, subdir)}/`);
       }
+      for (const entry of fw.memoryCreates || []) {
+        if (entry && typeof entry.path === 'string') {
+          console.log(`[dry-run]   ${path.join(target, entry.path)}${entry.path.endsWith('/') ? '/' : ''}`);
+        }
+      }
     }
     return;
   }
@@ -1215,6 +1222,7 @@ export function initializeFrameworkWorkspace(target, mode, dryRun, srcRoot = nul
     for (const subdir of fw.subdirs) {
       ensureDir(path.join(fwBase, subdir));
     }
+    initializeMemoryCreates(target, fw.path, fw.memoryCreates);
   }
 
   // Initialize registry.json if it doesn't exist
@@ -1231,6 +1239,41 @@ export function initializeFrameworkWorkspace(target, mode, dryRun, srcRoot = nul
     };
     fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2), 'utf8');
     console.log('Created framework registry at .aiwg/frameworks/registry.json');
+  }
+}
+
+
+function initializeMemoryCreates(target, frameworkPath, creates) {
+  for (const entry of creates || []) {
+    if (!entry || typeof entry.path !== 'string') continue;
+    if (!entry.path.startsWith('.aiwg/')) continue;
+
+    const targetPath = path.join(target, entry.path);
+    const isDirectory = entry.path.endsWith('/') || path.extname(entry.path) === '';
+    if (isDirectory) {
+      ensureDir(targetPath);
+      continue;
+    }
+
+    ensureDir(path.dirname(targetPath));
+    if (fs.existsSync(targetPath)) continue;
+
+    let content = null;
+    if (typeof entry.template === 'string' && frameworkPath) {
+      const templatePath = path.join(frameworkPath, entry.template);
+      if (fs.existsSync(templatePath)) {
+        content = fs.readFileSync(templatePath, 'utf8');
+      }
+    }
+
+    if (content === null) {
+      const title = path.basename(entry.path, path.extname(entry.path))
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
+      content = '# ' + title + '\n\n';
+    }
+
+    fs.writeFileSync(targetPath, content.endsWith('\n') ? content : content + '\n', 'utf8');
   }
 }
 

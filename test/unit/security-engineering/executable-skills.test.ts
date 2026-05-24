@@ -12,6 +12,7 @@ const sanitizerEmit = join(repo, 'agentic/code/frameworks/security-engineering/s
 const fuzzingEmit = join(repo, 'agentic/code/frameworks/security-engineering/skills/fuzzing-in-ci/scripts/emit.mjs');
 const reportScript = join(repo, 'agentic/code/frameworks/security-engineering/skills/security-report/scripts/report.mjs');
 const trackScript = join(repo, 'agentic/code/frameworks/security-engineering/skills/security-disclosure-track/scripts/track.mjs');
+const dfirReadinessSkill = join(repo, 'agentic/code/frameworks/security-engineering/skills/dfir-readiness/SKILL.md');
 
 const temps: string[] = [];
 function tempProject(prefix: string): string {
@@ -22,6 +23,27 @@ function tempProject(prefix: string): string {
 
 afterEach(() => {
   for (const dir of temps.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
+describe('security-engineering DFIR readiness bridge', () => {
+  it('documents readiness triggers, boundaries, and forensics handoff', () => {
+    const body = readFileSync(dfirReadinessSkill, 'utf8');
+    for (const phrase of [
+      'DFIR readiness',
+      'incident response readiness',
+      'evidence preservation readiness',
+      'chain of custody readiness',
+      'IOC readiness',
+      'forensic report readiness',
+    ]) {
+      expect(body).toContain(phrase);
+    }
+    expect(body).toContain('security-engineering');
+    expect(body).toContain('sdlc-complete');
+    expect(body).toContain('forensics-complete');
+    expect(body).toContain('aiwg use forensics');
+    expect(body).toContain('.aiwg/security-engineering/incident-readiness/');
+  });
 });
 
 describe('security-engineering executable skills', () => {

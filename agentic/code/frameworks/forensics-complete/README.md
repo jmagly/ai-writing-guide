@@ -104,13 +104,17 @@ All artifacts are stored in `.aiwg/forensics/`:
 .aiwg/forensics/
 ├── profiles/           # Target system profiles
 ├── plans/              # Investigation plans (generated per-target)
+├── triage/             # RFC 3227 quick captures and triage summaries
 ├── evidence/           # Evidence manifests and custody logs
 ├── findings/           # Per-phase findings organized by target and date
 ├── timelines/          # Correlated event timelines
 ├── iocs/               # IOC registers
 ├── reports/            # Final forensic reports
-└── sigma/              # Custom Sigma rules generated during investigation
+├── sigma/              # Custom Sigma rules generated during investigation
+└── chain-of-custody.md # Master custody log
 ```
+
+For cross-framework routing between preventive security, production incident management, and evidence-bearing DFIR, see `docs/integrations/dfir-handoff.md`.
 
 ## Bundled Sigma Rules
 

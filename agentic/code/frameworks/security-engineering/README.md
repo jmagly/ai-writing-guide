@@ -2,7 +2,7 @@
 
 **Status**: Active framework (v0.1.0). Tier 1/Tier 2 applied-security skills are available, with npm supply-chain hardening skills added for the May 2026 Mini Shai-Hulud response.
 
-Applied-security framework for the design-time decisions that web-app threat modeling and CVE scanning don't catch: cryptographic primitive selection, chain-of-trust integrity, authentication-factor architecture, degraded-mode behavior, runtime secret hygiene, supply-chain trust, and physical-access threats.
+Applied-security framework for the design-time decisions that web-app threat modeling and CVE scanning don't catch: cryptographic primitive selection, chain-of-trust integrity, authentication-factor architecture, degraded-mode behavior, runtime secret hygiene, supply-chain trust, physical-access threats, and DFIR readiness handoff.
 
 ## Why this exists
 
@@ -21,6 +21,7 @@ This framework was scoped after a real-world gap analysis: a pre-production revi
 | Runtime secret handling (fd passing, scratch surface, error paths) | Vulnerability management plan |
 | Supply-chain trust beyond CVE scanning | SBOM generation |
 | Physical-access threat modeling | Networked-service threat scenarios |
+| DFIR readiness and handoff routing | Evidence collection, forensic analysis, IOC enrichment, forensic reporting |
 
 When the new agents land, the existing `security-architect` and `security-auditor` will be narrowed to delegate primitive-level review and chain-of-trust review to the applied agents (per the `god-session` rule).
 
@@ -58,6 +59,7 @@ Skills never hard-pick a vendor product (no Keycloak/OpenBao/specific HSM models
 - **Skill**: `npm-supply-chain-audit`
 - **Skill**: `npm-release-age-gate`
 - **Skill**: `physical-threat-modeling`
+- **Skill**: `dfir-readiness` — prepare incident evidence handling, chain-of-custody expectations, IOC readiness, and handoff to `forensics-complete`
 - **Agent**: `secure-bootstrap-reviewer`
 - **Template**: `factor-design-rationale.md`
 - **Template**: `degraded-mode-matrix.md`
@@ -83,6 +85,9 @@ aiwg use security-engineering
 
 # Harden an npm package after a supply-chain incident
 "npm supply-chain audit and release-age gate review"
+
+# Prepare a project for evidence-bearing incident response
+"DFIR readiness for this service"
 ```
 
 ## Standards referenced

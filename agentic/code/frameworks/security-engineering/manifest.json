@@ -3,7 +3,7 @@
   "type": "framework",
   "name": "Security Engineering",
   "version": "0.1.0",
-  "description": "Applied security framework for cryptographic primitive selection, chain-of-trust design, secret handling at runtime, supply-chain trust, npm supply-chain hardening, physical-access threat modeling, and authentication-factor architecture. Pattern-based, product-agnostic — composes with sdlc-complete's threat-modeling and audit agents rather than replacing them.",
+  "description": "Applied security framework for cryptographic primitive selection, chain-of-trust design, secret handling at runtime, supply-chain trust, npm supply-chain hardening, physical-access threat modeling, authentication-factor architecture, and DFIR readiness handoff. Pattern-based, product-agnostic — composes with sdlc-complete's threat-modeling and audit agents rather than replacing them.",
   "modeAliases": [
     "security-eng",
     "secure-dev",
@@ -23,6 +23,7 @@
       "degraded-modes",
       "physical-threats",
       "supply-chain",
+      "incident-readiness",
       "reviews"
     ]
   },
@@ -43,20 +44,48 @@
     "last_updated": "2026-05-23",
     "total_agents": 0,
     "total_commands": 0,
-    "total_skills": 22,
+    "total_skills": 23,
     "total_rules": 12,
     "status": "active"
   },
   "memory": {
     "creates": [
-      { "path": ".aiwg/security-engineering/",                "description": "Security engineering root directory" },
-      { "path": ".aiwg/security-engineering/decisions/",      "description": "Cryptographic and design decision records" },
-      { "path": ".aiwg/security-engineering/chain-of-trust/", "description": "Bootstrap and verification chain designs" },
-      { "path": ".aiwg/security-engineering/factors/",        "description": "Authentication factor design rationale" },
-      { "path": ".aiwg/security-engineering/degraded-modes/", "description": "Fail-closed/fail-open behavior matrices" },
-      { "path": ".aiwg/security-engineering/physical-threats/", "description": "Physical-access threat scenarios" },
-      { "path": ".aiwg/security-engineering/supply-chain/",   "description": "Supply-chain trust artifacts (pinning, repro builds)" },
-      { "path": ".aiwg/security-engineering/reviews/",        "description": "Applied-security review reports" }
+      {
+        "path": ".aiwg/security-engineering/",
+        "description": "Security engineering root directory"
+      },
+      {
+        "path": ".aiwg/security-engineering/decisions/",
+        "description": "Cryptographic and design decision records"
+      },
+      {
+        "path": ".aiwg/security-engineering/chain-of-trust/",
+        "description": "Bootstrap and verification chain designs"
+      },
+      {
+        "path": ".aiwg/security-engineering/factors/",
+        "description": "Authentication factor design rationale"
+      },
+      {
+        "path": ".aiwg/security-engineering/degraded-modes/",
+        "description": "Fail-closed/fail-open behavior matrices"
+      },
+      {
+        "path": ".aiwg/security-engineering/physical-threats/",
+        "description": "Physical-access threat scenarios"
+      },
+      {
+        "path": ".aiwg/security-engineering/supply-chain/",
+        "description": "Supply-chain trust artifacts (pinning, repro builds)"
+      },
+      {
+        "path": ".aiwg/security-engineering/incident-readiness/",
+        "description": "DFIR readiness and security-to-forensics handoff records"
+      },
+      {
+        "path": ".aiwg/security-engineering/reviews/",
+        "description": "Applied-security review reports"
+      }
     ],
     "topology": {
       "namespace": ".aiwg/security-engineering",
@@ -74,13 +103,14 @@
       "Runtime secret handling (fd passing, scratch surface, error paths)",
       "Supply-chain trust beyond CVE scanning",
       "npm supply-chain hardening patterns (release-age gates, dep-source policy, trusted-publishing review)",
-      "Physical-access threat modeling"
+      "Physical-access threat modeling",
+      "DFIR readiness and handoff routing"
     ],
     "delegatesTo": {
       "sdlc-complete/security-architect": "STRIDE threat modeling at system altitude",
       "sdlc-complete/security-auditor": "OWASP Top 10, CVE scanning, secrets-in-repo, SAST/DAST",
       "sdlc-complete/security-gatekeeper": "Phase-gate compliance and control coverage",
-      "forensics-complete": "Post-incident analysis and IOC enrichment"
+      "forensics-complete": "Evidence preservation, forensic triage/acquisition, post-incident analysis, timelines, IOC enrichment, and forensic reporting"
     }
   },
   "catalog_format": {

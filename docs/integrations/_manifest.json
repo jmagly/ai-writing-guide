@@ -13,7 +13,10 @@
     "opencode-quickstart",
     "warp-terminal-quickstart",
     "openclaw-quickstart",
+    "dfir-handoff",
     "cross-platform-config"
   ],
-  "exclude": ["warp-terminal"]
+  "exclude": [
+    "warp-terminal"
+  ]
 }

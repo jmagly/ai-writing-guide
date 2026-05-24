@@ -3,7 +3,7 @@ name: security-engineering-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: AUTO-INVOKE when user mentions cryptography, AEAD, KDF, chain of trust, signing key, auth factor, MFA, secret hygiene, supply chain trust, physical threat. Security-engineering quick reference — decision domains for crypto primitives, chain-of-trust, auth factors, degraded modes, supply-chain trust, physical-threat modeling.
+description: AUTO-INVOKE when user mentions cryptography, AEAD, KDF, chain of trust, signing key, auth factor, MFA, secret hygiene, supply chain trust, physical threat, DFIR readiness, or incident evidence handoff. Security-engineering quick reference — decision domains for crypto primitives, chain-of-trust, auth factors, degraded modes, supply-chain trust, physical-threat modeling, and DFIR readiness routing.
 ---
 
 # Security Engineering Framework — Quick Reference
@@ -46,6 +46,7 @@ This is **not** a vulnerability scanner or pen-test framework. It is a thinking-
 | **Supply chain trust** | Beyond CVE/SBOM — pinning depth, reproducible builds, vendor+hash locks |
 | **Runtime secret hygiene** | fd passing, scratch surface verification, error-path safety |
 | **Physical threats** | Threats STRIDE and OWASP Top 10 don't cover |
+| **DFIR readiness** | Preparing evidence handling, custody expectations, and handoff to forensics-complete |
 
 ## Curated discovery phrases
 
@@ -112,6 +113,14 @@ aiwg discover "evil-maid attack"               # → physical-threat-modeling
 aiwg discover "DMA attack"                     # → physical-threat-modeling
 ```
 
+### DFIR readiness
+
+```bash
+aiwg discover "DFIR readiness"                 # → dfir-readiness
+aiwg discover "incident response evidence"     # → dfir-readiness or forensics-quickref
+aiwg discover "chain of custody readiness"     # → dfir-readiness
+```
+
 ## Anti-patterns each skill rejects
 
 | Skill | Anti-patterns it identifies |
@@ -129,6 +138,7 @@ aiwg discover "DMA attack"                     # → physical-threat-modeling
 | `bun-release-age-gate` | missing `install.minimumReleaseAge`, Bun < v1.1.30 silently ignoring the gate, unit confusion (Bun uses seconds vs pnpm minutes vs npm days vs Yarn duration strings) |
 | `secret-handling-runtime` | SECRETS_ENV aggregation, missing scratch-surface verification, identifier reuse |
 | `physical-threat-modeling` | evil-maid, DMA, hostile peripheral, travel-host, coercion, cold-boot, supply-chain implant, side-channel |
+| `dfir-readiness` | collecting evidence from the security framework, destructive containment by default, missing custody handoff |
 
 ## When to use this framework vs the SDLC security flow
 
@@ -138,8 +148,11 @@ aiwg discover "DMA attack"                     # → physical-threat-modeling
 | Designing the boot chain | Threat-modeling the application boundary |
 | Picking an MFA scheme | Auditing existing auth code |
 | Defining degraded-mode behavior | Vulnerability scan + STRIDE on a feature |
+| Preparing evidence handling and DFIR handoff | Running production incident comms or collecting forensic evidence |
 
 The SDLC's `flow-security-review-cycle` is the broader periodic audit. The skills here are pinpoint decision aids — invoke them when the decision is being made, not after.
+
+For active evidence-bearing investigations, use `forensics-complete`. For production incident coordination, severity, communications, and post-incident review, use SDLC incident-response flows. The handoff guide is `docs/integrations/dfir-handoff.md`.
 
 ## Rules deployed
 

@@ -11,6 +11,8 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
+import { spawnSync } from 'child_process';
 import { parse as parseYaml } from 'yaml';
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
@@ -77,10 +79,31 @@ describe('Framework Manifest (#381)', () => {
   });
 
   it('declares workspace subdirectories', () => {
-    const expected = ['profiles', 'plans', 'evidence', 'findings', 'timelines', 'iocs', 'reports', 'sigma'];
+    const expected = ['profiles', 'plans', 'triage', 'evidence', 'findings', 'timelines', 'iocs', 'reports', 'sigma'];
     for (const dir of expected) {
       expect(manifest.workspace.subdirs).toContain(dir);
     }
+  });
+
+  it('declares memory scaffold for top-level DFIR workspace and custody log', () => {
+    const paths = manifest.memory.creates.map((entry: any) => entry.path);
+    for (const expected of [
+      '.aiwg/forensics/',
+      '.aiwg/forensics/profiles/',
+      '.aiwg/forensics/plans/',
+      '.aiwg/forensics/triage/',
+      '.aiwg/forensics/evidence/',
+      '.aiwg/forensics/findings/',
+      '.aiwg/forensics/timelines/',
+      '.aiwg/forensics/iocs/',
+      '.aiwg/forensics/reports/',
+      '.aiwg/forensics/sigma/',
+      '.aiwg/forensics/chain-of-custody.md',
+    ]) {
+      expect(paths).toContain(expected);
+    }
+    const custody = manifest.memory.creates.find((entry: any) => entry.path === '.aiwg/forensics/chain-of-custody.md');
+    expect(custody.template).toBe('templates/chain-of-custody.md');
   });
 
   it('references recognized standards', () => {
@@ -357,6 +380,57 @@ describe('Methodology and Documentation (#400)', () => {
 
 // ---------------------------------------------------------------------------
 // Skills Structure (#392-395, #399)
+// ---------------------------------------------------------------------------
+
+describe('Workspace Templates', () => {
+  const expectedTemplates = [
+    'investigation-plan.md',
+    'investigation-scope.md',
+    'investigation-status.md',
+    'triage-summary.md',
+    'evidence-package-readme.md',
+    'chain-of-custody.md',
+    'ioc-register.md',
+    'forensic-report.md',
+    'remediation-plan.md',
+  ];
+
+  it('includes starter templates for DFIR case scaffolding', () => {
+    for (const template of expectedTemplates) {
+      expect(fileExists(`templates/${template}`)).toBe(true);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Deployment Scaffold
+// ---------------------------------------------------------------------------
+
+describe('Deployment Scaffold', () => {
+  const BIN = path.join(REPO_ROOT, 'bin/aiwg.mjs');
+
+  it('aiwg use forensics creates the top-level DFIR workspace scaffold', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-dfir-use-'));
+    try {
+      const result = spawnSync(process.execPath, [BIN, 'use', 'forensics', '--target', dir, '--provider', 'claude', '--copy-all', '--no-project-local'], {
+        cwd: dir,
+        encoding: 'utf8',
+        timeout: 120_000,
+        env: { ...process.env, AIWG_ROOT: REPO_ROOT },
+      });
+      expect(result.status, result.stdout + result.stderr).toBe(0);
+      for (const rel of ['profiles', 'plans', 'triage', 'evidence', 'findings', 'timelines', 'iocs', 'reports', 'sigma']) {
+        expect(fs.existsSync(path.join(dir, '.aiwg/forensics', rel))).toBe(true);
+      }
+      expect(fs.readFileSync(path.join(dir, '.aiwg/forensics/chain-of-custody.md'), 'utf8')).toContain('Chain of Custody Log');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Skills Structure
 // ---------------------------------------------------------------------------
 
 describe('Skills Structure', () => {

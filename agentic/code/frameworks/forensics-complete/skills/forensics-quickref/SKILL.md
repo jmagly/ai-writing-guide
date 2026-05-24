@@ -52,6 +52,7 @@ Digital forensics & incident response. RFC 3227-aligned triage, multi-source tim
 aiwg discover "forensic triage"                # → forensics-triage
 aiwg discover "evidence acquisition"           # → forensics-acquire (score 0.55)
 aiwg discover "target system profile"          # → forensics-profile
+aiwg discover "start forensics case"           # → forensics-quickref / forensics-investigate
 ```
 
 ### Platform-specific analysis
@@ -107,13 +108,19 @@ Forensic artifacts go under `.aiwg/forensics/` when the framework is in use:
 
 ```
 .aiwg/forensics/
-├── triage/              # RFC 3227 quick captures
+├── profiles/            # Target profiles
+├── plans/               # Investigation plans
+├── triage/              # RFC 3227 quick captures and summaries
 ├── evidence/            # Chain-of-custody-preserved evidence
+├── findings/            # Analysis findings
 ├── timelines/           # Reconstructed event timelines
 ├── iocs/                # Extracted indicators of compromise
 ├── reports/             # Investigation reports
+├── sigma/               # Custom Sigma rules
 └── chain-of-custody.md  # Master CoC log
 ```
+
+For readiness and handoff from preventive security work, use `security-engineering/dfir-readiness`. For production incident coordination, use SDLC incident-response flows. See `docs/integrations/dfir-handoff.md`.
 
 ## When the curated phrases don't fit
 

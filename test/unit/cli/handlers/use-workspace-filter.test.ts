@@ -58,6 +58,24 @@ describe('UseHandler workspace-aware filtering (#1380)', () => {
     }
   });
 
+  it('accepts dfir as an alias for the forensics framework', async () => {
+    const { UseHandler } = await import('../../../../src/cli/handlers/use.js');
+    const handler = new UseHandler();
+
+    const result = await handler.execute({
+      args: ['dfir', '--target', tmpDir, '--dry-run', '--provider', 'claude', '--no-utils', '--no-project-local'],
+      rawArgs: [],
+      cwd: tmpDir,
+      frameworkRoot: '/mock/aiwg',
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(mockRun).toHaveBeenCalledTimes(1);
+    const args = mockRun.mock.calls[0][1] as string[];
+    expect(args).toContain('--mode');
+    expect(args[args.indexOf('--mode') + 1]).toBe('dfir');
+  });
+
   it('keeps explicit use all on the full deployment path', async () => {
     const { UseHandler } = await import('../../../../src/cli/handlers/use.js');
     const handler = new UseHandler();
