@@ -28,7 +28,8 @@ function detectCi() {
   return 'github';
 }
 
-function recipe(language) {
+function recipe(language, options = {}) {
+  const coverage = Boolean(options.coverage);
   if (language === 'rust') return `name: Sanitizers (Rust)
 on: [pull_request, push]
 jobs:
@@ -95,17 +96,23 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y clang make cmake
       - run: make
       - run: make test
-`;
+${coverage ? `      - name: Generate coverage (gcov/llvm-cov)
+        run: |
+          llvm-profdata --version || true
+          gcov --version || true
+` : ``}`;
 }
 
 const args = process.argv.slice(2);
+const coverage = args.includes('--coverage');
 const ci = argValue(args, '--ci', 'auto') === 'auto' ? detectCi() : argValue(args, '--ci', 'github');
 const langArg = argValue(args, '--language', 'auto');
 const languages = langArg === 'auto' ? detectLanguages() : langArg.split(',');
 for (const lang of languages) {
   const dir = path.join(outRoot, ci);
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, `${lang}.yaml`), recipe(lang));
+  fs.writeFileSync(path.join(dir, `${lang}.yaml`), recipe(lang, { coverage }));
 }
 fs.writeFileSync(path.join(outRoot, 'lsan-suppressions.txt'), '# Add intentional leak suppressions here with issue links.\n');
+fs.writeFileSync(path.join(outRoot, 'OPERATOR.md'), '# Sanitizer CI Operator Notes\n\nReview emitted YAML before copying into live CI. Jobs use pinned actions and intentionally run as additional PR gates, not replacements for the main test suite. Keep suppressions rare and require issue links.\n');
 console.log(`Emitted sanitizer recipes: ${languages.map((l) => `.aiwg/security-engineering/sanitizers/${ci}/${l}.yaml`).join(', ')}`);

@@ -17,8 +17,13 @@ errors:
   - public-channel-detected: user attempted to route to a public issue tracker — hard refuse
 invariants:
   - no PoC, secrets, or vulnerability details appear in any public artifact created by this skill
-  - all interactive prompts collect data in-memory only; no plaintext on disk except the encrypted chain-of-custody record
+  - all interactive prompts collect vulnerability details in-memory only; custody records are redacted and contain contact hashes rather than plaintext contact details
   - the routing decision is logged with sufficient detail for an auditor to verify the report reached the configured destination
+script:
+  entrypoint: scripts/report.mjs
+  runtime: node
+  cwd: project-root
+  argsHint: "[--config <path>] [--channel primary|fallback] [--interactive] [--json]"
 commandHint:
   argumentHint: "[--config <path>] [--channel primary|fallback] [--interactive]"
   allowedTools: Read, Write, Bash, WebFetch
@@ -197,7 +202,7 @@ Thank you for the responsible disclosure.
 
 ## Composition with Closure-Loop
 
-This skill handles intake only. A companion skill (`security-disclosure-track`, planned for cycle 2) will manage the full advisory lifecycle: triage → fix → CVE assignment → publication. Until then, maintainers manually update the chain-of-custody record.
+This skill handles intake only. The companion `security-disclosure-track` skill manages the full advisory lifecycle: triage → fix → CVE assignment → publication. Use the case ID emitted by this skill as the handoff key.
 
 ## Composition with `aiwg doctor`
 
@@ -211,12 +216,11 @@ The skill will hard-refuse in three cases:
 2. **PGP fingerprint mismatch** — the declared SECURITY.md fingerprint doesn't match the resolved keyring entry. Possible MITM or stale key; manual verification required.
 3. **No private channel configured** — the project has not declared a private channel. The skill refuses to collect vulnerability content until a policy exists.
 
-## Limitations (cycle-1 scaffold)
+## Implementation Notes
 
-- The intake flow is described; the interactive prompt loop and routing implementation are sketched but not yet wired to the actual MCP/CLI tools. Cycle 2: implement the routing helpers.
-- `aiwg doctor` integration is described; the doctor check itself is not yet wired. Cycle 2: add the SECURITY.md presence check.
-- `aiwg new` scaffolding emit is described; the scaffolding hook is not yet wired. Cycle 2: emit the SECURITY.md template at project init.
-- Closure-loop skill (`security-disclosure-track`) is named but not yet built. Cycle 2 or 3.
+- `aiwg run skill security-report -- --interactive` collects the intake fields, validates the private channel, writes a redacted custody record, and prints the private-routing instructions.
+- `aiwg doctor` emits a WARN-level finding when `security-engineering` is installed and no root or docs `SECURITY.md` exists.
+- `aiwg new` emits the security-engineering `SECURITY.md` template into new projects and adds the disclosure custody directory to `.gitignore`.
 
 ## References
 

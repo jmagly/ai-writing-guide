@@ -3,23 +3,34 @@ namespace: aiwg
 name: aiwg-pr
 platforms: [all]
 kernel: true
-description: Guide for opening high-quality pull requests — template, verification gates, delivery-policy compliance, no-attribution rule, and CI-green-before-done discipline
+description: AIWG-specific pull request delivery workflow for AIWG product/workspace changes; not the generic repository PR process
+triggers:
+  - "AIWG PR"
+  - "AIWG delivery PR"
+  - "AIWG release PR"
+  - "AIWG product PR"
+  - "open an AIWG pull request"
 ---
 
 # Opening AIWG Pull Requests
 
-You are helping a user (or yourself, as an autonomous agent) open a high-quality pull request. The bar is set by the project's `delivery-policy` and `no-attribution` rules.
+You are helping a user (or yourself, as an autonomous agent) open a high-quality AIWG product/workspace pull request. The bar is set by the project's `delivery-policy` and `no-attribution` rules.
+
+## Routing Boundary
+
+Use this skill only when the user is doing AIWG-specific delivery: AIWG repository work, an AIWG release/change PR, or any task that explicitly asks for AIWG delivery policy. Do not use `aiwg-pr` for ordinary repository pull request work. Generic requests like "open a PR for this repo", "create a pull request", or "review this PR" should use the host repository's normal git/Gitea/GitHub PR tools and templates unless the user names AIWG delivery.
+
+Compatibility: `aiwg-pr` remains the stable kernel skill name. `aiwg-delivery-pr` is the explicit alias for agents that need a less ambiguous discoverable capability name.
 
 ## When this fires
 
 Natural-language triggers:
 
-- "I want to open a PR"
-- "How do I submit a fix?"
-- "Help me write up a pull request"
-- "Should I commit directly or open a PR?"
-- "What goes in the PR description?"
-- "How do I close an issue with a PR?"
+- "Open an AIWG PR"
+- "Prepare the AIWG delivery PR"
+- "Should this AIWG change commit directly or open a PR?"
+- "What goes in the AIWG PR description?"
+- "How do I close an AIWG issue with a PR?"
 
 ## Critical pre-flight: delivery policy
 

@@ -16,6 +16,11 @@ errors:
 invariants:
   - inline AIWG-allow annotations are honored and recorded in the report (never silently dropped)
   - test/**, tests/**, vendor/**, node_modules/**, .aiwg/** excluded by default
+script:
+  entrypoint: scripts/audit.mjs
+  runtime: node
+  cwd: project-root
+  argsHint: "[--starter c|cpp|python|node|go|rust] [--fail-on-violation] [--paths <path>...] [--format text|json|both|sarif]"
 commandHint:
   argumentHint: "[--starter c|cpp|python|node|go|rust] [--fail-on-violation] [--paths <glob>...] [--format text|json|both|sarif] [--sarif]"
   allowedTools: Read, Write, Bash, Glob, Grep

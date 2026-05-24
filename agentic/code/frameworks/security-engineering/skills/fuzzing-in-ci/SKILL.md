@@ -16,8 +16,13 @@ errors:
 invariants:
   - PR-gating fuzz runs are bounded (default 2 minutes per target) — never blocks PR indefinitely
   - long-form fuzzing is documented separately and never runs inline in PR jobs
+script:
+  entrypoint: scripts/emit.mjs
+  runtime: node
+  cwd: project-root
+  argsHint: "[--language c|cpp|rust|go|python|node|auto] [--ci gitea|github|gitlab|auto] [--seconds-per-target N] [--coverage] [--oss-fuzz]"
 commandHint:
-  argumentHint: "[--language c|cpp|rust|python|node|auto] [--ci gitea|github|gitlab|auto] [--seconds-per-target N] [--oss-fuzz]"
+  argumentHint: "[--language c|cpp|rust|go|python|node|auto] [--ci gitea|github|gitlab|auto] [--seconds-per-target N] [--coverage] [--oss-fuzz]"
   allowedTools: Read, Write, Bash, Glob, Grep
   model: sonnet
   category: security

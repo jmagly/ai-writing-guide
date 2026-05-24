@@ -25,6 +25,7 @@
         }
       }
     },
+    "paths": { "type": "array", "items": { "type": "string" } },
     "exclusions": {
       "type": "object",
       "properties": {

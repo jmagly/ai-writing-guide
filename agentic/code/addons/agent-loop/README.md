@@ -78,6 +78,16 @@ Options:
   --branch <name>       Create feature branch
 ```
 
+## Provider Routing
+
+On Codex, in-session Al/agent-loop requests delegate to the native `/goal` primitive instead of running a parallel AIWG emulation loop. AIWG still owns completion inference, safety gates, and audit output, then maps the work to:
+
+```text
+/goal "<task>; completion: <criteria>"
+```
+
+External Al remains AIWG-native because it is detached and crash-resilient; `/goal` is an in-session primitive.
+
 ## How It Works
 
 ### 1. Define Task

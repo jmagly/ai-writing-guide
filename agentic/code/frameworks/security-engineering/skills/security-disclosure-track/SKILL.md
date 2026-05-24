@@ -14,6 +14,11 @@ errors:
 invariants:
   - embargoed details stay out of public issue threads and commits
   - chain-of-custody record is git-ignored by default
+script:
+  entrypoint: scripts/track.mjs
+  runtime: node
+  cwd: project-root
+  argsHint: "<case-id> [--stage triage|fix|cve|publish|close] [--evidence <text>] [--decision <text>] [--next-deadline <date>] [--embargo-days N]"
 commandHint:
   argumentHint: "<case-id> [--stage triage|fix|cve|publish|close] [--embargo-days N]"
   allowedTools: Read, Write, Bash

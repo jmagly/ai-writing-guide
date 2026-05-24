@@ -60,7 +60,12 @@ function readYamlBanlist(file) {
   let current = null;
   let inLanguages = false;
   let inExclusions = false;
+  let inTopLevelPaths = false;
+  let inEntryPaths = false;
   const exclusions = [];
+  const paths = [];
+  let version = null;
+  let sawLanguages = false;
 
   const flush = () => {
     if (current && current.pattern) entries.push(current);
@@ -71,15 +76,32 @@ function readYamlBanlist(file) {
     const line = raw.replace(/\t/g, '  ');
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('#')) continue;
-    if (/^languages:\s*$/.test(trimmed)) {
-      inLanguages = true;
-      inExclusions = false;
+    const versionMatch = /^version:\s*(.+?)\s*$/.exec(line);
+    if (versionMatch) {
+      version = unquote(versionMatch[1]);
       continue;
     }
-    if (/^exclusions:\s*$/.test(trimmed)) {
+    if (/^languages:\s*$/.test(line)) {
+      sawLanguages = true;
+      inLanguages = true;
+      inExclusions = false;
+      inTopLevelPaths = false;
+      inEntryPaths = false;
+      continue;
+    }
+    if (/^paths:\s*$/.test(line)) {
+      inLanguages = false;
+      inExclusions = false;
+      inTopLevelPaths = true;
+      inEntryPaths = false;
+      continue;
+    }
+    if (/^exclusions:\s*$/.test(line)) {
       flush();
       inLanguages = false;
       inExclusions = true;
+      inTopLevelPaths = false;
+      inEntryPaths = false;
       continue;
     }
     if (inLanguages) {
@@ -93,23 +115,63 @@ function readYamlBanlist(file) {
       if (item) {
         flush();
         current = { language: currentLang, pattern: unquote(item[1]), source: file };
+        inEntryPaths = false;
+        continue;
+      }
+      const entryPaths = /^ {6}paths:\s*$/.exec(line);
+      if (entryPaths && current) {
+        current.paths = current.paths || [];
+        inEntryPaths = true;
+        continue;
+      }
+      const entryPathItem = /^ {8}-\s+(.+?)\s*$/.exec(line);
+      if (entryPathItem && current && inEntryPaths) {
+        current.paths.push(unquote(entryPathItem[1]));
         continue;
       }
       const field = /^ {6}([A-Za-z0-9_-]+):\s*(.+?)\s*$/.exec(line);
-      if (field && current) current[field[1]] = unquote(field[2]);
+      if (field && current) {
+        current[field[1]] = unquote(field[2]);
+        inEntryPaths = false;
+      }
+    } else if (inTopLevelPaths) {
+      const item = /^ {2}-\s+(.+?)\s*$/.exec(line);
+      if (item) paths.push(unquote(item[1]));
     } else if (inExclusions) {
+      const pathsHeader = /^ {2}paths:\s*$/.exec(line);
+      if (pathsHeader) continue;
       const item = /^ {4}-\s+(.+?)\s*$/.exec(line);
       if (item) exclusions.push(unquote(item[1]));
     }
   }
   flush();
-  return { entries, exclusions };
+  return { entries, exclusions, paths, version, sawLanguages };
 }
 
 function unquote(value) {
   return String(value).trim().replace(/^['"]|['"]$/g, '');
 }
 
+function validateDocumentSchema(parsed, file) {
+  const errors = [];
+  const label = path.relative(root, file) || file;
+  if (parsed.version === null) errors.push(`${label}: missing required version`);
+  else if (String(parsed.version) !== '1') errors.push(`${label}: version must be 1`);
+  if (!parsed.sawLanguages) errors.push(`${label}: missing required languages map`);
+  if (!parsed.entries.length) errors.push(`${label}: languages must contain at least one banned API entry`);
+  for (const entry of parsed.entries) {
+    const prefix = `${label}: ${entry.language || '(unknown)'}.${entry.pattern || '(unknown)'}`;
+    if (entry.severity && !['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(entry.severity)) {
+      errors.push(`${prefix} severity must be LOW, MEDIUM, HIGH, or CRITICAL`);
+    }
+    if (entry.paths && (!Array.isArray(entry.paths) || entry.paths.some((p) => !p))) {
+      errors.push(`${prefix} paths must be non-empty strings`);
+    }
+  }
+  if (parsed.paths.some((p) => !p)) errors.push(`${label}: paths must be non-empty strings`);
+  if (parsed.exclusions.some((p) => !p)) errors.push(`${label}: exclusions.paths must be non-empty strings`);
+  return errors;
+}
 function validate(entries) {
   const errors = [];
   for (const entry of entries) {
@@ -134,17 +196,21 @@ function loadBanlists(args) {
 
   const merged = new Map();
   const exclusions = [...defaultExclusions];
+  const paths = [];
+  const schemaErrors = [];
   for (const file of files) {
     const parsed = readYamlBanlist(file);
+    schemaErrors.push(...validateDocumentSchema(parsed, file));
     for (const entry of parsed.entries) {
       merged.set(`${entry.language}:${entry.pattern}`, entry);
     }
     exclusions.push(...parsed.exclusions);
+    paths.push(...parsed.paths);
   }
   const entries = Array.from(merged.values());
-  const errors = validate(entries);
+  const errors = [...schemaErrors, ...validate(entries)];
   if (errors.length) throw Object.assign(new Error(`Banlist validation failed:\n- ${errors.join('\n- ')}`), { exitCode: 1 });
-  return { entries, files, exclusions: Array.from(new Set(exclusions)) };
+  return { entries, files, exclusions: Array.from(new Set(exclusions)), paths: Array.from(new Set(paths)) };
 }
 
 function rgArgsFor(entry, scanPaths, exclusions) {
@@ -178,7 +244,8 @@ function scan(entries, scanPaths, exclusions) {
   const violations = [];
   const exceptions = [];
   for (const entry of entries) {
-    const proc = spawnSync('rg', rgArgsFor(entry, scanPaths, exclusions), { cwd: root, encoding: 'utf8' });
+    const entryPaths = Array.isArray(entry.paths) && entry.paths.length ? entry.paths : scanPaths;
+    const proc = spawnSync('rg', rgArgsFor(entry, entryPaths, exclusions), { cwd: root, encoding: 'utf8' });
     if (proc.status !== 0 && proc.status !== 1) {
       throw Object.assign(new Error(proc.stderr || `rg failed for ${entry.language}:${entry.pattern}`), { exitCode: 3 });
     }
@@ -259,7 +326,7 @@ try {
   const args = parseArgs(process.argv.slice(2));
   if (!rgAvailable()) throw Object.assign(new Error('ripgrep (rg) is required for banned-api-audit'), { exitCode: 3 });
   const banlist = loadBanlists(args);
-  const scanPaths = args.paths.length ? args.paths : ['.'];
+  const scanPaths = args.paths.length ? args.paths : (banlist.paths.length ? banlist.paths : ['.']);
   const findings = scan(banlist.entries, scanPaths, banlist.exclusions);
   const report = {
     schemaVersion: '1',

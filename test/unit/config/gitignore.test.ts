@@ -19,11 +19,12 @@ import {
 } from '../../../src/config/gitignore.js';
 
 describe('gitignore patterns', () => {
-  it('should include exactly 3 AIWG runtime patterns', () => {
+  it('should include AIWG runtime and private disclosure custody patterns', () => {
     expect(AIWG_RUNTIME_PATTERNS).toEqual([
       '.aiwg/working/',
       '.aiwg/ralph/',
       '.aiwg/ralph-external/',
+      '.aiwg/security-engineering/reviews/disclosures/',
     ]);
   });
 

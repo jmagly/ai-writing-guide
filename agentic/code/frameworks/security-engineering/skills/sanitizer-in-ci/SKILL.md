@@ -16,6 +16,11 @@ errors:
 invariants:
   - never modifies existing CI files in place — always emits new files under .aiwg/ for operator review
   - emitted recipes do NOT replace test runs; they ADD a parallel sanitizer-enabled run
+script:
+  entrypoint: scripts/emit.mjs
+  runtime: node
+  cwd: project-root
+  argsHint: "[--language c|cpp|rust|go|python|node|auto] [--ci gitea|github|gitlab|auto] [--coverage]"
 commandHint:
   argumentHint: "[--language c|cpp|rust|go|python|node|auto] [--ci gitea|github|gitlab|auto] [--sanitizers asan,ubsan,msan,tsan,race,faulthandler] [--coverage]"
   allowedTools: Read, Write, Bash, Glob, Grep

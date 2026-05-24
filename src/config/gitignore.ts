@@ -25,6 +25,7 @@ export const AIWG_RUNTIME_PATTERNS = [
   '.aiwg/working/',
   '.aiwg/ralph/',
   '.aiwg/ralph-external/',
+  '.aiwg/security-engineering/reviews/disclosures/',
 ];
 
 /**

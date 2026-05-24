@@ -39,6 +39,26 @@ Generic loop requests route to the internal in-session loop. As new loop types a
 
 ## Routing Policy
 
+### Step 0: Provider Capability Check
+
+Before choosing the loop mechanism, detect the active provider via `aiwg runtime-info` or the steward capability surface. The provider branch is internal to this skill; users invoke the same `agent-loop` / `ralph` names everywhere.
+
+| Provider capability | Route | Notes |
+|---|---|---|
+| Codex with native `/goal` | Delegate the in-session loop to `/goal` | Convert the task plus completion criterion into a standing goal. If a programmatic goal tool is unavailable, print the exact `/goal "..."` command for the operator instead of emulating a duplicate loop. |
+| Other providers | AIWG internal loop discipline | Keep the existing visible act/verify/adapt cycle in the current session. |
+| Explicit external/background request | `agent-loop-ext` / `ralph-external` | External crash-resilient loops stay AIWG-native because `/goal` is in-session only. |
+
+Codex mapping:
+
+```text
+/goal "<task>; completion: <measurable criterion>"
+```
+
+When completion is omitted, run `infer-completion-criteria` first and include the inferred criterion in the goal text. AIWG remains responsible for any activity-log entries, issue comments, and human-authorization gates around the loop.
+
+Research and decision record: `.aiwg/research/codex-goal-integration.md`, `.aiwg/architecture/adr-codex-goal-routing.md`.
+
 ### Default: Internal/In-Session Loop
 
 Use the internal loop when the user says `agent-loop`, `al`, `ralph`, `loop`, `iterate`, `keep trying`, `fix until green`, `address issues`, `handle all listed issues`, or supplies an iteration bound such as `--iterations 200` without explicit external wording.
