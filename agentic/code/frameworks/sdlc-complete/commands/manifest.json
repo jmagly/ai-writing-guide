@@ -2,6 +2,7 @@
   "name": "commands",
   "path": "agentic/code/frameworks/sdlc-complete/commands",
   "files": [
+    "address-issues.md",
     "aiwg-setup-project.md",
     "aiwg-setup-warp.md",
     "aiwg-update-claude.md",
@@ -45,7 +46,9 @@
     "issue-close.md",
     "issue-comment.md",
     "issue-create.md",
+    "issue-index.md",
     "issue-list.md",
+    "issue-show.md",
     "issue-update.md",
     "issue.md",
     "orchestrate-project.md",
