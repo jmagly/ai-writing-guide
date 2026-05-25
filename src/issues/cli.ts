@@ -1,9 +1,9 @@
 /**
  * Local issue CLI — `aiwg issue <subcommand>`
  *
- * This command is intentionally local-only. External tracker issues are routed
- * through the configured `remotes.issue_tracker` topology and matching tracker
- * tools; local issue storage uses `.aiwg/issues/` plus this CLI.
+ * This command operates on local issue storage under `.aiwg/issues/`. It can
+ * also import/export snapshots and opt into live Gitea/GitHub API sync for
+ * local issue migration workflows.
  *
  * @issue #1462
  */
@@ -13,6 +13,7 @@ import {
   LocalIssueProviderCore,
   buildExternalIssueSnapshotFromLocal,
   buildLocalIssueConflictReport,
+  createLiveIssueClient,
   localIssueRoot,
   parseCommentIdMappings,
   parseExternalIssueSnapshot,
@@ -145,9 +146,12 @@ async function handleShow(issues: LocalIssueProviderCore, rest: string[], args: 
 }
 
 async function handleImport(issues: LocalIssueProviderCore, args: ParsedArgs): Promise<void> {
-  const snapshot = parseExternalIssueSnapshot(JSON.parse(await readRequiredFile(args, 'snapshot-file')));
-  const from = stringFlag(args, 'from');
-  if (from && from !== snapshot.provider) throw new Error(`snapshot provider ${snapshot.provider} does not match --from ${from}`);
+  const from = stringFlag(args, "from");
+  if (from !== "gitea" && from !== "github") throw new Error("Usage: aiwg issue import --from gitea|github (--snapshot-file path | --live --repo owner/name --external-id N)");
+  const snapshot = args.flags.has("live")
+    ? await createLiveIssueClient({ provider: from, repo: requiredStringFlag(args, "repo"), apiUrl: stringFlag(args, "api-url") }).importIssue(requiredStringFlag(args, "external-id"))
+    : parseExternalIssueSnapshot(JSON.parse(await readRequiredFile(args, "snapshot-file")));
+  if (from !== snapshot.provider) throw new Error(`snapshot provider ${snapshot.provider} does not match --from ${from}`);
   const issue = await issues.importIssue({
     provider: snapshot.provider,
     external_id: snapshot.external_id,
@@ -162,17 +166,38 @@ async function handleImport(issues: LocalIssueProviderCore, args: ParsedArgs): P
   });
   printJsonOrText(args, issue, `Imported ${snapshot.provider}#${snapshot.external_id} as ${issue.fields.id}`);
 }
-
 async function handleExport(issues: LocalIssueProviderCore, rest: string[], args: ParsedArgs): Promise<void> {
   const id = rest[0];
-  if (!id) throw new Error('Usage: aiwg issue export <id> --to gitea|github [--out path]');
-  const provider = stringFlag(args, 'to');
-  if (provider !== 'gitea' && provider !== 'github') throw new Error('Usage: aiwg issue export <id> --to gitea|github [--out path]');
-  const issue = await issues.getIssue(id, { body: true, comments: 'all' });
+  if (!id) throw new Error("Usage: aiwg issue export <id> --to gitea|github [--out path] [--live --repo owner/name]");
+  const provider = stringFlag(args, "to");
+  if (provider !== "gitea" && provider !== "github") throw new Error("Usage: aiwg issue export <id> --to gitea|github [--out path] [--live --repo owner/name]");
+  const issue = await issues.getIssue(id, { body: true, comments: "all" });
   const snapshot = buildExternalIssueSnapshotFromLocal(issue, provider);
-  await writeOptionalOutput(args, snapshot);
-}
+  if (!args.flags.has("live")) {
+    await writeOptionalOutput(args, snapshot);
+    return;
+  }
 
+  const client = createLiveIssueClient({ provider, repo: requiredStringFlag(args, "repo"), apiUrl: stringFlag(args, "api-url") });
+  if (snapshot.external_id && !args.flags.has("force")) {
+    const remote = await client.fetchIssue(snapshot.external_id);
+    const report = buildLocalIssueConflictReport(issue, remote);
+    if (report.conflicts.length > 0) {
+      throw new Error(`Refusing live export with ${report.conflicts.length} unresolved conflict(s); run sync conflicts or pass --force after review`);
+    }
+  }
+
+  const result = await client.exportIssue(snapshot);
+  await issues.updateIssueFields(id, {
+    source: { provider, external_id: result.snapshot.external_id, external_url: result.snapshot.external_url ?? null },
+    links: {
+      ...issue.fields.links,
+      external: result.snapshot.external_url ? [...new Set([...issue.fields.links.external, result.snapshot.external_url])] : issue.fields.links.external,
+    },
+  });
+  if (result.commentMappings.length > 0) await issues.applyCommentIdMappings(id, result.commentMappings);
+  await writeOptionalOutput(args, result);
+}
 async function handleSync(issues: LocalIssueProviderCore, rest: string[], args: ParsedArgs): Promise<void> {
   const action = rest[0];
   if (action === 'conflicts' || action === 'conflict-report') {
@@ -217,6 +242,11 @@ async function handleIndex(issues: LocalIssueProviderCore, rest: string[], args:
   printJsonOrText(args, index, `Rebuilt local issue index (${index.issues.length} issues)`);
 }
 
+function requiredStringFlag(args: ParsedArgs, flag: string): string {
+  const value = stringFlag(args, flag);
+  if (!value) throw new Error(`Missing required --${flag}`);
+  return value;
+}
 async function readRequiredFile(args: ParsedArgs, flag: string): Promise<string> {
   const file = stringFlag(args, flag);
   if (!file) throw new Error(`Missing required --${flag} path`);

@@ -258,6 +258,7 @@ Behavioral session evidence is appended below as each per-provider issue (#1406�
 
 | Provider | Date | Runner | Rule | Config | Quickref | Discovery-agent | Read access | Issue |
 |---|---|---|---|---|---|---|---|---|
+| Codex | 2026-05-25 | session in this repo (Codex, GPT-5) | fires (discover command returned intake-wizard as top match) | fires (AGENTS.md was active session context) | fires (aiwg-utils-quickref was loaded and consulted) | partial (delegation not needed for this prompt) | fires (aiwg show skill aiwg-utils-quickref returned SKILL.md body) | #1406 |
 | Claude Code | 2026-05-21 | session in this repo (Claude Code, Opus 4.7 1M) | fires (skill-discovery rule injected via system-reminder; observed in this session's context) | fires (CLAUDE.md / AIWG.md loaded at session start; visible in initial context) | fires (`aiwg-utils-quickref` kernel-loaded; listed in available skills) | fires (`aiwg-finder` agent present in agent list; Task tool available) | fires (`aiwg show skill aiwg-utils-quickref` returned SKILL.md body) | #1414 |
 
 **Claude Code transcript excerpt (2026-05-21)**
@@ -277,7 +278,8 @@ All four hooks fired. Read-access works. No `doesn't-fire` finding. Acceptance c
 Status:
 - Claude Code: scripted-fires confirmed in cycle 1 + field-session confirmed cycle 4 (2026-05-21, #1414)
 - Cursor: deployment-scripted-fires confirmed in this audit cycle 2 via on-disk verification
-- All others: deployment-scripted-evidence available; behavioral regression check pending sessions (#1406–#1413, #1415)
+- Codex: field-session confirmed cycle 4 (2026-05-25, #1406)
+- All others: deployment-scripted-evidence available; behavioral regression check pending sessions (#1407–#1413, #1415)
 
 ## Cross-References
 
@@ -295,3 +297,15 @@ Status:
 - Adjacent audits: `./provider-read-audit.md` (Workstream E)
 - Discover-first protocol: `.claude/rules/skill-discovery.md`
 - Aggregated config files: `AIWG.md`, `WARP.md`, `.github/copilot-instructions.md`, `AGENTS.md`
+
+**Codex transcript excerpt (2026-05-25)**
+
+Prompt 1: Find an AIWG skill that handles intake forms
+
+Behavior: agent consulted aiwg-utils-quickref from the loaded kernel skills, then ran ./bin/aiwg.mjs discover intake forms. Output ranked intake-wizard (score 1.00) as the top match with path agentic/code/frameworks/sdlc-complete/skills/intake-wizard/SKILL.md. No provider skills directory browsing was used. Discover-first protocol observed.
+
+Prompt 2: Read the AIWG quickref for AIWG utility discovery and summarize the fallback when a skill is not loaded.
+
+Behavior: agent ran ./bin/aiwg.mjs show skill aiwg-utils-quickref. Content streamed successfully. Fallback summary: use aiwg show type name first; use aiwg show --json when forwarding context; direct AIWG_ROOT/agentic/code reads are last resort only if the CLI is broken.
+
+Rule, config, quickref, and read-access hooks fired. Discovery-agent hook is partial because Codex did not need delegation for this prompt, though multi-agent tooling became available. No does-not-fire finding. Acceptance criteria for #1406 met.

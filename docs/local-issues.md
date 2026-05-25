@@ -46,6 +46,17 @@ aiwg issue export PROJECT-0001 --to gitea --out project-0001.gitea.json
 aiwg issue export PROJECT-0001 --to github --out project-0001.github.json
 ```
 
+Use `--live` when the CLI should read from or write to the provider API directly instead of a snapshot file:
+
+```bash
+AIWG_GITEA_TOKEN=... aiwg issue import --from gitea --live --repo org/repo --external-id 1463
+GITHUB_TOKEN=... aiwg issue import --from github --live --repo org/repo --external-id 42
+AIWG_GITEA_TOKEN=... aiwg issue export PROJECT-0001 --to gitea --live --repo org/repo
+GITHUB_TOKEN=... aiwg issue export PROJECT-0001 --to github --live --repo org/repo
+```
+
+Live export creates an external issue when the local issue has no matching `source.external_id`. If the local issue already points at the target provider, live export fetches the remote issue first and refuses to mutate when conflicts are present. Review conflicts with `aiwg issue sync conflicts` or pass `--force` only after choosing the local version as the winner. Posted comments are mapped back to local event metadata automatically.
+
 An imported snapshot preserves the external issue ID and URL in the issue frontmatter:
 
 ```yaml
@@ -101,7 +112,7 @@ For one-off backups outside Git, archive the canonical files and skip transient 
 zip -r aiwg-issues-backup.zip .aiwg/issues -x ".aiwg/issues/locks/*"
 ```
 
-Do not store external tracker API tokens in `.aiwg/issues/`, `.aiwg/aiwg.config`, or snapshot files. Keep credentials in environment variables, the OS credential store, or provider-specific CLI configuration.
+Do not store external tracker API tokens in `.aiwg/issues/`, `.aiwg/aiwg.config`, or snapshot files. Keep credentials in environment variables, the OS credential store, or provider-specific CLI configuration. Live sync reads `AIWG_GITEA_TOKEN` or `GITEA_TOKEN` for Gitea, and `AIWG_GITHUB_TOKEN` or `GITHUB_TOKEN` for GitHub. Use `--api-url` for non-default Gitea or GitHub Enterprise API endpoints.
 
 ## Git Conflict Guidance
 
