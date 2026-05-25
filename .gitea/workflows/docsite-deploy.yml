@@ -140,11 +140,35 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
 
       - name: Deploy to docs server
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
         run: |
+          set -euo pipefail
+          DEPLOY_ROOT="${DEPLOY_PATH%/}/"
+          if [[ "${DEPLOY_ROOT}" == "~/"* ]]; then
+            REMOTE_HOME="$(ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
+            DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT#~/}"
+          fi
+          echo "Deploying docsite to ${DEPLOY_ROOT}"
+          ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "mkdir -p '${DEPLOY_ROOT}'"
           rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT }} -o StrictHostKeyChecking=accept-new" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new" \
             /tmp/dbbuilder/apps/publisher/dist/aiwg-docs/ \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}
+            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_ROOT}"
+          ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "set -e
+             if [ ! -d '${DEPLOY_ROOT}sections' ]; then
+               echo '::error::Rsync completed but sections/ is missing at ${DEPLOY_ROOT}'
+               echo 'Nearby sections directories under deploy root:'
+               find '${DEPLOY_ROOT}' -maxdepth 3 -type d -name sections -print 2>/dev/null || true
+               exit 1
+             fi"
 
       - name: Verify deployment
         env:
@@ -162,6 +186,7 @@ jobs:
             REMOTE_HOME="$(ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
             DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT#~/}"
           fi
+          echo "Verifying docsite at ${DEPLOY_ROOT}"
 
           # Two verify modes:
           #   - Tag mode (refs/tags/v*): existing per-release section-file
