@@ -5,7 +5,7 @@
  * @parent #684
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
@@ -57,6 +57,8 @@ import { refreshHandler, pruneStaleManagedAgentFiles } from '../../../../src/cli
 // Backward-compat alias for existing test references
 const syncHandler = refreshHandler;
 
+const savedProcessProvider = process.env.AIWG_TEST_PROCESS_PROVIDER;
+
 // ── Helpers ───────────────────────────────────────────────────
 
 function makeCtx(args: string[] = []): HandlerContext {
@@ -69,6 +71,18 @@ function makeCtx(args: string[] = []): HandlerContext {
 }
 
 // ── Tests ─────────────────────────────────────────────────────
+
+beforeEach(() => {
+  process.env.AIWG_TEST_PROCESS_PROVIDER = 'codex';
+});
+
+afterEach(() => {
+  if (savedProcessProvider === undefined) {
+    delete process.env.AIWG_TEST_PROCESS_PROVIDER;
+  } else {
+    process.env.AIWG_TEST_PROCESS_PROVIDER = savedProcessProvider;
+  }
+});
 
 describe('refreshHandler metadata', () => {
   it('has correct id, category, and description', () => {
