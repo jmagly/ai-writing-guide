@@ -1,0 +1,123 @@
+# Local Issues
+
+AIWG can keep a project-local issue tracker under `.aiwg/issues/` for projects that do not use Gitea or GitHub as the working tracker. The local tracker is a Git-friendly store: issue bodies live in markdown files, event metadata lives in JSONL files, and indexes are rebuildable.
+
+## Layout
+
+```text
+.aiwg/issues/
+├── config.json
+├── next-id
+├── items/
+│   └── ISSUE-0001.md
+├── events/
+│   ├── ISSUE-0001.jsonl
+│   └── bodies/
+│       └── evt-....md
+├── index/
+│   └── issues.index.json
+└── locks/
+```
+
+The canonical files are `items/` and `events/`. The `index/` directory is a cache and can be rebuilt with `aiwg issue index rebuild`.
+
+## Basic Commands
+
+```bash
+aiwg issue init --prefix PROJECT
+aiwg issue new --title "Fix import flow" --body-file issue.md
+aiwg issue list --status open
+aiwg issue show PROJECT-0001 --comments last:10
+aiwg issue comment PROJECT-0001 --body "Started"
+aiwg issue close PROJECT-0001 --reason "Done"
+aiwg issue index rebuild
+```
+
+`issue-audit --provider local` and `address-issues --provider local` consume bounded slices from the same provider instead of reading the whole backlog.
+
+## Import And Export
+
+Use snapshots to move issue state between local issues and external trackers:
+
+```bash
+aiwg issue import --from gitea --snapshot-file gitea-1463.json
+aiwg issue import --from github --snapshot-file github-42.json
+aiwg issue export PROJECT-0001 --to gitea --out project-0001.gitea.json
+aiwg issue export PROJECT-0001 --to github --out project-0001.github.json
+```
+
+An imported snapshot preserves the external issue ID and URL in the issue frontmatter:
+
+```yaml
+source:
+  provider: gitea
+  external_id: "1463"
+  external_url: https://git.example.test/org/repo/issues/1463
+links:
+  external:
+    - https://git.example.test/org/repo/issues/1463
+```
+
+Imported comments keep their external comment IDs on local event metadata. Exported comments include local event IDs so a later posting step can map external comment IDs back to local events.
+
+```bash
+aiwg issue sync map-comments PROJECT-0001 --map-file comment-map.json
+```
+
+`comment-map.json` is an array:
+
+```json
+[
+  {
+    "local_event_id": "evt-local",
+    "external_comment_id": "51710"
+  }
+]
+```
+
+## Conflict Reports
+
+Before any two-way sync mutates either side, generate and inspect a conflict report:
+
+```bash
+aiwg issue sync conflicts PROJECT-0001 --snapshot-file gitea-1463.json --out conflicts.json
+```
+
+The report compares local and external title, body, status, labels, and mapped comment bodies. A non-empty `conflicts` array means an operator or higher-level sync policy must choose the winner before writing changes.
+
+## Backup Guidance
+
+For local-only issue work, commit or stash canonical issue files before bulk operations:
+
+```bash
+git status -- .aiwg/issues
+git add .aiwg/issues/items .aiwg/issues/events .aiwg/issues/config.json .aiwg/issues/next-id
+git commit -m "backup local issue state before sync"
+```
+
+For one-off backups outside Git, archive the canonical files and skip transient locks:
+
+```bash
+zip -r aiwg-issues-backup.zip .aiwg/issues -x ".aiwg/issues/locks/*"
+```
+
+Do not store external tracker API tokens in `.aiwg/issues/`, `.aiwg/aiwg.config`, or snapshot files. Keep credentials in environment variables, the OS credential store, or provider-specific CLI configuration.
+
+## Git Conflict Guidance
+
+Resolve conflicts by preserving canonical records first:
+
+- `items/ISSUE-0001.md`: keep valid YAML frontmatter, then merge the markdown body normally.
+- `events/ISSUE-0001.jsonl`: preserve every complete JSON line from both sides unless the same event ID appears twice.
+- `events/bodies/*.md`: keep body files referenced by surviving JSONL events.
+- `config.json` and `next-id`: keep the highest observed `next` value so IDs are not reused.
+- `index/*`: rebuild after resolving canonical files.
+
+After conflict resolution:
+
+```bash
+aiwg issue index rebuild
+aiwg issue list --status open
+```
+
+If an event line is damaged, recover the body file first, then recreate the event as a new comment rather than hand-editing an uncertain event ID.

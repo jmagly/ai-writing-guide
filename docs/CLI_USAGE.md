@@ -109,6 +109,19 @@ aiwg -status
 aiwg status --probe --json
 ```
 
+### issue
+
+Manage project-local issues under `.aiwg/issues/` and move snapshots to or from Gitea/GitHub. See [Local Issues](local-issues.md) for sync, backup, and Git conflict guidance.
+
+```bash
+aiwg issue init --prefix PROJECT
+aiwg issue new --title "Fix import flow" --body-file issue.md
+aiwg issue import --from gitea --snapshot-file gitea-1463.json
+aiwg issue export PROJECT-0001 --to github --out project-0001.github.json
+aiwg issue sync conflicts PROJECT-0001 --snapshot-file gitea-1463.json --out conflicts.json
+aiwg issue sync map-comments PROJECT-0001 --map-file comment-map.json
+```
+
 ### list
 
 List installed frameworks and addons.
