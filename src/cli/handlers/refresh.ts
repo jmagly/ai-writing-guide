@@ -19,6 +19,7 @@ import path from 'path';
 import { createScriptRunner } from './script-runner.js';
 import { getFrameworkRoot } from '../../channel/manager.mjs';
 import { refreshAllPackages } from '../../packages/registry.js';
+import { resolveActiveProvider } from '../provider-resolution.js';
 import {
   readAiwgConfig,
   writeAiwgConfig,
@@ -166,8 +167,13 @@ export const refreshHandler: CommandHandler = {
     // Step 1: Detect provider
     if (!quiet) ui.info('Detecting provider...');
     await runner.run('tools/cli/runtime-info.mjs', [], { capture: true });
-    const detectedProvider = provider || 'claude';
-    if (!quiet) ui.success(`Provider: ${detectedProvider}`);
+    const resolution = await resolveActiveProvider({ cwd: ctx.cwd, explicitProvider: provider, detectProcess: true });
+    if (!resolution.provider) {
+      if (!quiet) ui.warn('Provider detection ambiguous: ' + resolution.reason + '. Specify --provider <name>.');
+      return { exitCode: 2, message: 'Provider detection ambiguous: ' + resolution.reason };
+    }
+    const detectedProvider = resolution.provider;
+    if (!quiet) ui.success('Provider: ' + detectedProvider);
 
     // Step 2: Check current version
     if (!quiet) ui.info('Checking version...');
@@ -221,7 +227,7 @@ export const refreshHandler: CommandHandler = {
     if (!dryRun) {
       const deployTarget = frameworks || ['all'];
       for (const fw of deployTarget) {
-        const providerArgs = provider ? ['--provider', provider] : [];
+        const providerArgs = ['--provider', detectedProvider];
         const useResult = await runner.run(
           'tools/cli/deploy.mjs',
           [fw, ...providerArgs],

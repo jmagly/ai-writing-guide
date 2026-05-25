@@ -150,7 +150,7 @@ kbd {
   --z-modal: 50;
   --z-toast: 60;
 
-  /* dbbuilder compatibility variables */
+  /* pagenary compatibility variables */
   --ink: var(--color-text-primary);
   --muted: var(--color-text-muted);
   --surface: var(--color-bg-panel);
@@ -797,7 +797,7 @@ body.loaded .sidebar {
    Content Styling - Markdown rendered content
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Section wrapper (dbbuilder content) */
+/* Section wrapper (pagenary content) */
 .section {
   margin-bottom: var(--space-4);
   padding: var(--space-3);
@@ -1237,7 +1237,7 @@ body.loaded .sidebar {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Navigation (dbbuilder compatibility)
+   Navigation (pagenary compatibility)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .nav {
@@ -1372,7 +1372,7 @@ body.loaded .sidebar {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Mobile Menu Toggle (dbbuilder compat)
+   Mobile Menu Toggle (pagenary compat)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .mobile-menu-toggle {

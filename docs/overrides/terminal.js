@@ -3,7 +3,7 @@
  * Makes docs site work like aiwg.io with log entry pattern and console commands
  */
 
-// Import dbbuilder's search functionality
+// Import pagenary's search functionality
 import { MANIFEST } from './manifest.js';
 import { searchContent, filterSections } from './lib/search.js';
 
@@ -150,7 +150,7 @@ function wrapContentInLogEntry(container) {
   if (sectionId === lastSectionId) return;
   lastSectionId = sectionId;
 
-  // Find the section element (dbbuilder creates <section> or content directly)
+  // Find the section element (pagenary creates <section> or content directly)
   const section = container.querySelector('section') || container.querySelector('article');
   if (!section) return;
 
@@ -203,7 +203,7 @@ function initContentObserver() {
   contentObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        // Debounce to let dbbuilder finish rendering
+        // Debounce to let pagenary finish rendering
         setTimeout(() => wrapContentInLogEntry(app), 50);
         break;
       }
@@ -309,7 +309,7 @@ async function searchDocs(query) {
   currentSearchQuery = query.trim();
 
   try {
-    // Use dbbuilder's full-text search (searches content, not just titles)
+    // Use pagenary's full-text search (searches content, not just titles)
     const results = await searchContent(MANIFEST, query);
 
     displaySearchResults(results, query);
@@ -387,7 +387,7 @@ function displaySearchResults(results, query, isFallback = false) {
 
 // Navigate to search result with highlighting
 function navigateWithHighlight(sectionId, query) {
-  // Store query in localStorage for dbbuilder's highlight system
+  // Store query in localStorage for pagenary's highlight system
   if (query) {
     localStorage.setItem('docs-toolkit-command-query', query);
   }
@@ -793,7 +793,7 @@ Keyboard shortcuts:
 // ═══════════════════════════════════════════════════════════════════════════
 
 function init() {
-  // Let dbbuilder handle routing - it already defaults to DEFAULT_SECTION
+  // Let pagenary handle routing - it already defaults to DEFAULT_SECTION
   // Don't interfere with hash navigation here
 
   // Theme is already applied via inline script in <head>

@@ -32,7 +32,7 @@ jobs:
       - name: Checkout AIWG
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
-      # Fork-PR defense-in-depth: skip the dbbuilder clone for fork PRs.
+      # Fork-PR defense-in-depth: skip the pagenary clone for fork PRs.
       # The #1289 / A14 audit verified Gitea's fork-PR secret-exposure
       # semantics by reading the source (`models/secret/secret.go`
       # `GetSecretsOfTask` — user-defined secrets are NOT exposed to fork
@@ -45,7 +45,7 @@ jobs:
       # `.aiwg/architecture/adr-pr-trigger-hardening.md` for the audit
       # disposition matrix and `.gitea/workflows/README.md` "PR-trigger
       # workflow hardening" for the reusable guard snippet.
-      - name: Clone dbbuilder
+      - name: Clone pagenary
         if: ${{ gitea.event.pull_request.head.repo.fork != true }}
         env:
           GT_ACCESS_TOKEN: ${{ secrets.GT_ACCESS_TOKEN }}
@@ -61,15 +61,15 @@ jobs:
           trap 'rm -f "$GIT_CREDS"' EXIT
           printf 'https://token:%s@git.integrolabs.net\n' "${GT_ACCESS_TOKEN}" > "$GIT_CREDS"
           git -c "credential.helper=store --file=$GIT_CREDS" \
-            clone https://git.integrolabs.net/roctinam/dbbuilder.git /tmp/dbbuilder
+            clone https://git.integrolabs.net/roctinam/pagenary.git /tmp/pagenary
 
-      - name: Install dbbuilder dependencies
-        working-directory: /tmp/dbbuilder/apps/publisher
+      - name: Install pagenary dependencies
+        working-directory: /tmp/pagenary/apps/publisher
         run: npm ci
 
       - name: Configure tenant
         run: |
-          cat > /tmp/dbbuilder/apps/publisher/tenants.json <<'TENANTS'
+          cat > /tmp/pagenary/apps/publisher/tenants.json <<'TENANTS'
           {
             "$schema": "./tenants.schema.json",
             "tenants": [
@@ -87,10 +87,10 @@ jobs:
           TENANTS
 
       - name: Build doc site
-        working-directory: /tmp/dbbuilder/apps/publisher
+        working-directory: /tmp/pagenary/apps/publisher
         run: node scripts/build-tenants.js aiwg-docs
 
       - name: Verify build output
         run: |
-          ls -la /tmp/dbbuilder/apps/publisher/dist/aiwg-docs/
+          ls -la /tmp/pagenary/apps/publisher/dist/aiwg-docs/
           echo "Build successful"

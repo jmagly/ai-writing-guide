@@ -86,6 +86,7 @@ const providerEnvKeys = [
   'OPENCLAW_VERSION',
   'FACTORY_AGENT_ID',
   'OPENCODE_VERSION',
+  'AIWG_DISABLE_PROCESS_PROVIDER_DETECTION',
 ];
 
 const savedProviderEnv = new Map<string, string | undefined>();
@@ -97,6 +98,7 @@ beforeEach(() => {
     savedProviderEnv.set(key, process.env[key]);
     delete process.env[key];
   }
+  process.env.AIWG_DISABLE_PROCESS_PROVIDER_DETECTION = '1';
 });
 
 afterEach(() => {

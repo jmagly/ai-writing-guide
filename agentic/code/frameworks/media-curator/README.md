@@ -26,6 +26,9 @@ aiwg use media-curator
 # Verify archive integrity
 /verify-archive /path/to/collection
 
+# Create a research-grade transcript sidecar
+/transcribe-media /path/to/acquired-media.wav --source-url https://example.invalid/source
+
 # Export for a specific platform
 /export --profile plex /path/to/collection /path/to/output
 ```
@@ -43,6 +46,7 @@ aiwg use media-curator
 | Narrative and playlist assembly | (integrated) | `/assemble` |
 | Multi-platform format export | (integrated) | `/export` |
 | SHA-256 integrity verification | (integrated) | `/verify-archive` |
+| Timestamped transcript sidecars | (integrated) | `/transcribe-media` |
 
 ## Architecture
 
@@ -73,6 +77,7 @@ media-curator/
 │   ├── quality-filtering.md        # Accept/reject logic
 │   ├── cover-art-embedding.md      # Artwork embedding
 │   ├── integrity-verification.md   # SHA-256 manifests
+│   ├── transcribe-media.md         # Transcript sidecars for research handoff
 │   ├── gap-documentation.md        # GAP-NOTE.md pattern
 │   └── provenance-tracking.md      # W3C PROV-O for media
 ├── config/

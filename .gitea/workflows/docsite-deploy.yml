@@ -49,7 +49,7 @@ jobs:
       - name: Checkout AIWG
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
-      - name: Clone dbbuilder
+      - name: Clone pagenary
         env:
           GT_ACCESS_TOKEN: ${{ secrets.GT_ACCESS_TOKEN }}
         run: |
@@ -64,15 +64,15 @@ jobs:
           trap 'rm -f "$GIT_CREDS"' EXIT
           printf 'https://token:%s@git.integrolabs.net\n' "${GT_ACCESS_TOKEN}" > "$GIT_CREDS"
           git -c "credential.helper=store --file=$GIT_CREDS" \
-            clone https://git.integrolabs.net/roctinam/dbbuilder.git /tmp/dbbuilder
+            clone https://git.integrolabs.net/roctinam/pagenary.git /tmp/pagenary
 
-      - name: Install dbbuilder dependencies
-        working-directory: /tmp/dbbuilder/apps/publisher
+      - name: Install pagenary dependencies
+        working-directory: /tmp/pagenary/apps/publisher
         run: npm ci
 
       - name: Configure tenant
         run: |
-          cat > /tmp/dbbuilder/apps/publisher/tenants.json <<'TENANTS'
+          cat > /tmp/pagenary/apps/publisher/tenants.json <<'TENANTS'
           {
             "$schema": "./tenants.schema.json",
             "tenants": [
@@ -94,7 +94,7 @@ jobs:
           set -euo pipefail
           # The footer in docs/overrides/index.html references the current
           # AIWG version via the placeholder __AIWG_VERSION__. Substitute
-          # the actual version from package.json before dbbuilder reads
+          # the actual version from package.json before pagenary reads
           # the overrides directory. This keeps the source template free
           # of per-release manual edits — see aiwg#1348-followup (docs
           # footer hardcoded to v5.0 surfaced 2026-05-15).
@@ -120,15 +120,15 @@ jobs:
           echo "✓ Version substitution complete"
 
       - name: Build doc site
-        working-directory: /tmp/dbbuilder/apps/publisher
+        working-directory: /tmp/pagenary/apps/publisher
         run: node scripts/build-tenants.js aiwg-docs
 
       - name: Verify build output
         run: |
-          test -d /tmp/dbbuilder/apps/publisher/dist/aiwg-docs || { echo "Missing build output directory"; exit 1; }
-          test -f /tmp/dbbuilder/apps/publisher/dist/aiwg-docs/index.html || { echo "Missing index.html"; exit 1; }
+          test -d /tmp/pagenary/apps/publisher/dist/aiwg-docs || { echo "Missing build output directory"; exit 1; }
+          test -f /tmp/pagenary/apps/publisher/dist/aiwg-docs/index.html || { echo "Missing index.html"; exit 1; }
           echo "Build verification passed"
-          ls -lah /tmp/dbbuilder/apps/publisher/dist/aiwg-docs/
+          ls -lah /tmp/pagenary/apps/publisher/dist/aiwg-docs/
 
       - name: Install SSH tools
         run: apt-get update && apt-get install -y --no-install-recommends openssh-client rsync
@@ -158,7 +158,7 @@ jobs:
             "mkdir -p '${DEPLOY_ROOT}'"
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new" \
-            /tmp/dbbuilder/apps/publisher/dist/aiwg-docs/ \
+            /tmp/pagenary/apps/publisher/dist/aiwg-docs/ \
             "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_ROOT}"
           ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
@@ -208,7 +208,7 @@ jobs:
                  echo '::error::No section file for ${GITEA_REF_NAME} at ${DEPLOY_ROOT}${SECTION_FILE}'
                  echo '  Either:'
                  echo '  - docs/releases/${GITEA_REF_NAME}-announcement.md did not exist when this tag was built'
-                 echo '  - dbbuilder did not generate the section (check build logs upstream)'
+                 echo '  - pagenary did not generate the section (check build logs upstream)'
                  echo '  - rsync target differs from served path (check webserver doc root vs DEPLOY_ROOT)'
                  exit 1
                fi
@@ -229,7 +229,7 @@ jobs:
                  echo '::warning::${DEPLOY_ROOT}index.html missing; docs sections deployed, but SPA shell appears to be managed outside DEPLOY_ROOT or by the edge/frontend layer.'
                fi
                if [ ! -d '${DEPLOY_ROOT}sections' ]; then
-                 echo '::error::No sections/ directory at ${DEPLOY_ROOT} — dbbuilder output not deployed'
+                 echo '::error::No sections/ directory at ${DEPLOY_ROOT} — pagenary output not deployed'
                  exit 1
                fi
                SECTION_COUNT=\$(ls '${DEPLOY_ROOT}sections' | wc -l)
