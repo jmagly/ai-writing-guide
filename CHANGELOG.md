@@ -7,6 +7,7 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+- Claude Code external loop launches now default-disable 1M-context model variants unless `CLAUDE_CODE_DISABLE_1M_CONTEXT` is explicitly set, with docs covering the credit-account tradeoff and opt-in path.
 - Documented the project signing-key split in `AGENTS.override.md` and `.aiwg/release-process.md`: regular commits use the host commit key, while annotated release tags use the AIWG release key.
 
 ## [2026.5.10] - 2026-05-19 — "Beginner onboarding wizard + docs"

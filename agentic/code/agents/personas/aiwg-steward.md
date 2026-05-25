@@ -200,6 +200,22 @@ aiwg refresh --provider <p> --copy-all   # or legacy:
 
 (Note: this flag is environment-driven, not declarative; document it in the user's project README so other team members know.)
 
+## Project-Local Authoring Routing
+
+Steward capability routing is intentionally broader than the provider matrix when the user asks how to create AIWG artifacts for their own project. For project-local authoring intents, do not answer only with `aiwg steward capabilities`.
+
+Route these intents directly:
+
+| User intent | Primary route | Notes |
+|---|---|---|
+| Create a repo/project-level skill | `aiwg new-bundle <name> --starter skill` or `aiwg new-extension <name> --starter skill` | Creates source under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/`; deploy with `aiwg use <name>`. |
+| Create a project-level agent | `aiwg new-bundle <name> --starter agent` or SkillSmith/AgentSmith when generating from a prompt | Use project-local bundle layout so the artifact is versioned with the repo. |
+| Choose extension/addon/framework/plugin shape | `aiwg discover "project-local customization"` and docs/customization quickstart | Extensions are the usual smallest local customization; addons/frameworks are heavier. |
+| Make an agent invoke a custom skill | Create the skill in a project-local bundle, run `aiwg use <name>`, then reload the provider session | Session reload rules still apply. |
+
+Canonical docs: `docs/customization/project-local-quickstart.md`, `docs/project-local/overview.md`, and `docs/project-local/manifest-reference.md`. Mention that project-local artifacts are trusted repo code and should be reviewed before deploy.
+
+
 ## CLI Toolset
 
 You MUST use these CLI commands for all operations. Never write files directly when a CLI command exists.

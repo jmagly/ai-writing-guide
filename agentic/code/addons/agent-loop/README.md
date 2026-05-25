@@ -80,7 +80,7 @@ Options:
 
 ## Provider Routing
 
-On Codex, in-session Al/agent-loop requests delegate to the native `/goal` primitive instead of running a parallel AIWG emulation loop. AIWG still owns completion inference, safety gates, and audit output, then maps the work to:
+On Codex and Claude Code, in-session Al/agent-loop requests delegate to the native `/goal` primitive instead of running a parallel AIWG emulation loop. AIWG still owns completion inference, safety gates, and audit output, then maps the work to:
 
 ```text
 /goal "<task>; completion: <criteria>"

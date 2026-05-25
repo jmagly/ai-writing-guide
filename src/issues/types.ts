@@ -21,6 +21,7 @@ export interface LocalIssueLinks {
 export interface LocalIssueSource {
   provider: 'local' | 'gitea' | 'github';
   external_id: string | null;
+  external_url?: string | null;
 }
 
 export interface LocalIssueFields {

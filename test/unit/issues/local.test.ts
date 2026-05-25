@@ -71,7 +71,7 @@ describe('local issue provider core', () => {
         updated_at: '2026-05-24T00:00:00.000Z',
         closed_at: null,
         links: { external: [], parent: null, children: [], related: [] },
-        source: { provider: 'local', external_id: null },
+        source: { provider: 'local', external_id: null, external_url: null },
       },
       body: '# Body\n\nAcceptance criteria here.\n',
     };

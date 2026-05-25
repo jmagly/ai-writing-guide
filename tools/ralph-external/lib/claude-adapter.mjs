@@ -149,9 +149,13 @@ export class ClaudeAdapter extends ProviderAdapter {
    * @returns {Object<string, string>}
    */
   getEnvOverrides() {
-    return {
+    const overrides = {
       CI: 'true',
     };
+    if (process.env.CLAUDE_CODE_DISABLE_1M_CONTEXT === undefined) {
+      overrides.CLAUDE_CODE_DISABLE_1M_CONTEXT = '1';
+    }
+    return overrides;
   }
 
   /**

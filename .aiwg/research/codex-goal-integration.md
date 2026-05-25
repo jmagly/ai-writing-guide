@@ -1,7 +1,7 @@
 # Codex `/goal` Integration Research
 
 Date: 2026-05-24
-Issues: #1451
+Issues: #1451, #1469
 
 ## Finding
 
@@ -39,3 +39,18 @@ Codex `/goal` drives the iterative loop, but AIWG-owned skills remain responsibl
 - `agent-loop-ext` / `ralph-external` stays AIWG-native because it is detached, crash-resilient, and cross-session.
 - Multi-loop fan-out stays AIWG-native unless the provider exposes a native parallel goal primitive with equivalent isolation and status APIs.
 - Human-authorization gates apply before destructive work regardless of whether the active loop mechanism is `/goal` or AIWG internal iteration.
+
+
+## Claude Code `/goal` Dialect
+
+Issue #1469 confirmed Claude Code exposes the same operator-facing in-session primitive:
+
+```text
+/goal "<task>; completion: <measurable criterion>"
+```
+
+The portable AIWG mapping is therefore shared for Codex and Claude Code. The provider branch should be described as "provider with native `/goal`" unless a runtime later exposes a materially different dialect.
+
+Programmatic invocation remains host-dependent. If the active assistant cannot call a goal tool directly, AIWG skills must print the exact slash command for the operator rather than silently running a second emulated loop.
+
+AIWG bookkeeping stays outside the native goal primitive: activity-log writes, issue-thread AL CYCLE comments, threat preflight, and human-authorization gates remain the responsibility of the invoking AIWG skill before and around the native `/goal` loop.

@@ -10,13 +10,36 @@ function read(rel: string): string {
 }
 
 describe('routing documentation regressions', () => {
-  it('agent-loop documents Codex native /goal routing and external-loop boundary', () => {
+  it('agent-loop documents native /goal routing for Codex and Claude Code', () => {
     const skill = read('agentic/code/addons/agent-loop/skills/agent-loop/SKILL.md');
-    expect(skill).toContain('Codex with native `/goal`');
+    expect(skill).toContain('Provider with native `/goal` (Codex, Claude Code)');
     expect(skill).toContain('/goal "<task>; completion: <measurable criterion>"');
+    expect(skill).toContain('/goal "<task>; completion: <criterion>"');
     expect(skill).toContain('External crash-resilient loops stay AIWG-native');
+    const addressIssues = read('agentic/code/frameworks/sdlc-complete/skills/address-issues/SKILL.md');
+    expect(addressIssues).toContain('Codex and Claude Code');
     expect(existsSync(resolve(repo, '.aiwg/research/codex-goal-integration.md'))).toBe(true);
     expect(existsSync(resolve(repo, '.aiwg/architecture/adr-codex-goal-routing.md'))).toBe(true);
+  });
+
+  it('steward routes project-local authoring through AIWG creation commands and docs', () => {
+    const steward = read('agentic/code/addons/aiwg-utils/skills/steward/SKILL.md');
+    const persona = read('agentic/code/agents/personas/aiwg-steward.md');
+    for (const doc of [steward, persona]) {
+      expect(doc).toContain('Project-Local Authoring Routing');
+      expect(doc).toContain('aiwg new-bundle <name> --starter skill');
+      expect(doc).toContain('docs/customization/project-local-quickstart.md');
+    }
+    const quickref = read('agentic/code/addons/aiwg-utils/skills/aiwg-utils-quickref/SKILL.md');
+    expect(quickref).toContain('aiwg discover "project-local customization"');
+  });
+
+  it('Claude Code docs cover the managed 1M-context default and opt-in path', () => {
+    const quickstart = read('docs/integrations/claude-code-quickstart.md');
+    expect(quickstart).toContain('CLAUDE_CODE_DISABLE_1M_CONTEXT=1');
+    expect(quickstart).toContain('export CLAUDE_CODE_DISABLE_1M_CONTEXT=0');
+    const changelog = read('CHANGELOG.md');
+    expect(changelog).toContain('Claude Code external loop launches now default-disable 1M-context model variants');
   });
 
   it('aiwg-pr is explicitly AIWG-specific and has a discoverable delivery alias', () => {

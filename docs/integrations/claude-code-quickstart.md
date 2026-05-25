@@ -149,6 +149,22 @@ aiwg version
 
 ---
 
+## Context Window Defaults
+
+AIWG-launched Claude sessions default `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` when the variable is unset. This removes Claude Code's 1M-context model variants from `/model` for AIWG-launched sessions.
+
+Why: AIWG already manages context with scoped skills, RLM patterns, and compact handoffs. On credit-billed Claude accounts, accidentally selecting a 1M-context variant can spend credits much faster than a bounded 200k session. Subscription accounts can opt back in when large-context work is intentional.
+
+To opt in for an AIWG-launched session, set the variable explicitly before launching:
+
+```bash
+export CLAUDE_CODE_DISABLE_1M_CONTEXT=0
+```
+
+AIWG preserves any explicit value. Unset means AIWG injects the safe default; `0` means you chose to keep 1M variants available.
+
+---
+
 ## Agent Loop
 
 Agent loops support multi-provider execution via `--provider`:

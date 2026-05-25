@@ -188,6 +188,7 @@ aiwg discover "aiwg steward"                   # → steward (agent + policy rou
 aiwg discover "delivery policy"                # → delivery-policy rule (and related skills)
 aiwg discover "start using local issues"       # → issue-workflow-guide
 aiwg discover "choose issue tracking backend"  # → issue-workflow-guide
+aiwg discover "project-local customization"     # → project-local quickstart / customization docs
 ```
 
 ### Project-local extensions (pilot → promote)

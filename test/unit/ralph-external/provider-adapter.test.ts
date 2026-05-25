@@ -12,7 +12,7 @@
  * @source @tools/ralph-external/lib/factory-adapter.mjs
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   CODEX_ADAPTER_MODEL,
   OPENCODE_ADAPTER_MODEL,
@@ -255,7 +255,20 @@ describe('ClaudeAdapter', () => {
   });
 
   describe('environment overrides', () => {
-    it('sets CI=true', () => {
+    const originalDisable1m = process.env.CLAUDE_CODE_DISABLE_1M_CONTEXT;
+
+    afterEach(() => {
+      if (originalDisable1m === undefined) delete process.env.CLAUDE_CODE_DISABLE_1M_CONTEXT;
+      else process.env.CLAUDE_CODE_DISABLE_1M_CONTEXT = originalDisable1m;
+    });
+
+    it('sets CI=true and disables Claude 1M context by default', () => {
+      delete process.env.CLAUDE_CODE_DISABLE_1M_CONTEXT;
+      expect(adapter.getEnvOverrides()).toEqual({ CI: 'true', CLAUDE_CODE_DISABLE_1M_CONTEXT: '1' });
+    });
+
+    it('preserves an explicit Claude 1M context setting', () => {
+      process.env.CLAUDE_CODE_DISABLE_1M_CONTEXT = '0';
       expect(adapter.getEnvOverrides()).toEqual({ CI: 'true' });
     });
   });

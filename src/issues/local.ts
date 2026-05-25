@@ -151,7 +151,7 @@ export class LocalIssueProviderCore implements LocalIssueProvider {
       updated_at: now,
       closed_at: null,
       links: { external: [], parent: null, children: [], related: [] },
-      source: { provider: 'local', external_id: null },
+      source: { provider: 'local', external_id: null, external_url: null },
     };
     validateIssueFields(fields);
     const record = { fields, body: input.body ?? '' };

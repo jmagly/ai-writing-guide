@@ -168,7 +168,7 @@ Max cycles per issue: 6
 
 ### Phase 2: Issue-Driven Agent Loop (per issue)
 
-Before dispatching the cycle, detect the provider with `aiwg runtime-info` or the steward capability surface. On Codex, use native `/goal` for the in-session iteration mechanism and keep `address-issues` responsible for issue-thread comments, activity-log entries, threat gates, and final verification. If the Codex host cannot invoke `/goal` programmatically, pause and print the exact command for the operator:
+Before dispatching the cycle, detect the provider with `aiwg runtime-info` or the steward capability surface. On providers with native `/goal` (Codex and Claude Code), use `/goal` for the in-session iteration mechanism and keep `address-issues` responsible for issue-thread comments, activity-log entries, threat gates, and final verification. If the host cannot invoke `/goal` programmatically, pause and print the exact command for the operator:
 
 ```text
 /goal "Address issue #N: <title>; completion: implementation verified, tests pass, and AL CYCLE status is posted"
