@@ -481,6 +481,90 @@ export const initCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const issueCommand: Extension = {
+  id: 'issue',
+  type: 'skill',
+  name: 'Issue',
+  description: 'Manage local project issues under .aiwg/issues/',
+  version: '1.0.0',
+  capabilities: ['cli', 'project', 'issues', 'local-provider'],
+  keywords: ['issue', 'issues', 'local', 'tracker', 'tickets'],
+  category: 'project',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['local issues', 'issue init', 'issue list', 'issue create'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<init|new|list|show|comment|close|index> [--provider local]',
+      allowedTools: ['Read', 'Write', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
+export const issueAuditCommand: Extension = {
+  id: 'issue-audit',
+  type: 'skill',
+  name: 'Issue Audit',
+  description: 'Audit issue backlogs; local provider mode reads .aiwg/issues/',
+  version: '1.0.0',
+  capabilities: ['cli', 'project', 'issues', 'audit', 'local-provider'],
+  keywords: ['issue-audit', 'audit-issues', 'triage', 'backlog', 'local'],
+  category: 'project',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['issue-audit', 'audit open issues', 'triage issue backlog'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '[--provider local] [--filter "status:open label:bug"] [--limit N]',
+      allowedTools: ['Read', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
+export const addressIssuesCommand: Extension = {
+  id: 'address-issues',
+  type: 'skill',
+  name: 'Address Issues',
+  description: 'Address selected issues; local provider mode prepares bounded .aiwg/issues/ slices',
+  version: '1.0.0',
+  capabilities: ['cli', 'project', 'issues', 'agent-loop', 'local-provider'],
+  keywords: ['address-issues', 'fix issues', 'issue loop', 'local'],
+  category: 'project',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['address issues', 'fix open issues', 'work issue backlog'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<issue-id...> [--provider local] [--all-open] [--limit N]',
+      allowedTools: ['Read', 'Write', 'Edit', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 export const runCommand: Extension = {
   id: 'run',
   type: 'skill',
@@ -3071,9 +3155,12 @@ export const commandDefinitions: Extension[] = [
   packagesCommand,
   marketplaceCommand,
 
-  // Project (4)
+  // Project
   newCommand,
   initCommand,
+  issueCommand,
+  issueAuditCommand,
+  addressIssuesCommand,
   runCommand,
   serveCommand,
   localExecutorCommand,
