@@ -8,8 +8,15 @@
  * @issue #1462
  */
 
-import { readFile } from 'fs/promises';
-import { LocalIssueProviderCore, localIssueRoot } from './index.js';
+import { readFile, writeFile } from 'fs/promises';
+import {
+  LocalIssueProviderCore,
+  buildExternalIssueSnapshotFromLocal,
+  buildLocalIssueConflictReport,
+  localIssueRoot,
+  parseCommentIdMappings,
+  parseExternalIssueSnapshot,
+} from './index.js';
 
 interface ParsedArgs {
   positional: string[];
@@ -41,6 +48,15 @@ export async function main(args: string[], cwd = process.cwd()): Promise<void> {
       return;
     case 'show':
       await handleShow(issues, rest, parsed);
+      return;
+    case 'import':
+      await handleImport(issues, parsed);
+      return;
+    case 'export':
+      await handleExport(issues, rest, parsed);
+      return;
+    case 'sync':
+      await handleSync(issues, rest, parsed);
       return;
     case 'comment':
       await handleComment(issues, rest, parsed);
@@ -128,6 +144,57 @@ async function handleShow(issues: LocalIssueProviderCore, rest: string[], args: 
   }
 }
 
+async function handleImport(issues: LocalIssueProviderCore, args: ParsedArgs): Promise<void> {
+  const snapshot = parseExternalIssueSnapshot(JSON.parse(await readRequiredFile(args, 'snapshot-file')));
+  const from = stringFlag(args, 'from');
+  if (from && from !== snapshot.provider) throw new Error(`snapshot provider ${snapshot.provider} does not match --from ${from}`);
+  const issue = await issues.importIssue({
+    provider: snapshot.provider,
+    external_id: snapshot.external_id,
+    external_url: snapshot.external_url,
+    title: snapshot.title,
+    body: snapshot.body,
+    status: snapshot.status,
+    labels: snapshot.labels,
+    created_at: snapshot.created_at,
+    updated_at: snapshot.updated_at,
+    comments: snapshot.comments,
+  });
+  printJsonOrText(args, issue, `Imported ${snapshot.provider}#${snapshot.external_id} as ${issue.fields.id}`);
+}
+
+async function handleExport(issues: LocalIssueProviderCore, rest: string[], args: ParsedArgs): Promise<void> {
+  const id = rest[0];
+  if (!id) throw new Error('Usage: aiwg issue export <id> --to gitea|github [--out path]');
+  const provider = stringFlag(args, 'to');
+  if (provider !== 'gitea' && provider !== 'github') throw new Error('Usage: aiwg issue export <id> --to gitea|github [--out path]');
+  const issue = await issues.getIssue(id, { body: true, comments: 'all' });
+  const snapshot = buildExternalIssueSnapshotFromLocal(issue, provider);
+  await writeOptionalOutput(args, snapshot);
+}
+
+async function handleSync(issues: LocalIssueProviderCore, rest: string[], args: ParsedArgs): Promise<void> {
+  const action = rest[0];
+  if (action === 'conflicts' || action === 'conflict-report') {
+    const id = rest[1];
+    if (!id) throw new Error('Usage: aiwg issue sync conflicts <id> --snapshot-file path');
+    const issue = await issues.getIssue(id, { body: true, comments: 'all' });
+    const snapshot = parseExternalIssueSnapshot(JSON.parse(await readRequiredFile(args, 'snapshot-file')));
+    const report = buildLocalIssueConflictReport(issue, snapshot);
+    await writeOptionalOutput(args, report);
+    return;
+  }
+  if (action === 'map-comments') {
+    const id = rest[1];
+    if (!id) throw new Error('Usage: aiwg issue sync map-comments <id> --map-file path');
+    const mappings = parseCommentIdMappings(JSON.parse(await readRequiredFile(args, 'map-file')));
+    const events = await issues.applyCommentIdMappings(id, mappings);
+    printJsonOrText(args, events, `Mapped ${mappings.length} external comment id(s) for ${id}`);
+    return;
+  }
+  throw new Error('Usage: aiwg issue sync conflicts <id> --snapshot-file path | map-comments <id> --map-file path');
+}
+
 async function handleComment(issues: LocalIssueProviderCore, rest: string[], args: ParsedArgs): Promise<void> {
   const id = rest[0];
   if (!id) throw new Error('Usage: aiwg issue comment <id> --body <text>|--body-file <path>');
@@ -148,6 +215,23 @@ async function handleIndex(issues: LocalIssueProviderCore, rest: string[], args:
   if (rest[0] !== 'rebuild') throw new Error('Usage: aiwg issue index rebuild');
   const index = await issues.rebuildIssueIndex();
   printJsonOrText(args, index, `Rebuilt local issue index (${index.issues.length} issues)`);
+}
+
+async function readRequiredFile(args: ParsedArgs, flag: string): Promise<string> {
+  const file = stringFlag(args, flag);
+  if (!file) throw new Error(`Missing required --${flag} path`);
+  return readFile(file, 'utf-8');
+}
+
+async function writeOptionalOutput(args: ParsedArgs, value: unknown): Promise<void> {
+  const out = stringFlag(args, 'out');
+  const rendered = JSON.stringify(value, null, 2) + '\n';
+  if (out) {
+    await writeFile(out, rendered, 'utf-8');
+    if (!args.flags.has('json')) console.log(`Wrote ${out}`);
+    return;
+  }
+  console.log(rendered.trimEnd());
 }
 
 async function readBody(args: ParsedArgs): Promise<string> {
@@ -213,6 +297,10 @@ function printUsage(): void {
   aiwg issue new --title "..." [--body "..."] [--body-file path]
   aiwg issue list [--status open] [--label bug] [--limit 20] [--json]
   aiwg issue show <KEY> [--comments last:10|all]
+  aiwg issue import --from gitea|github --snapshot-file path [--json]
+  aiwg issue export <KEY> --to gitea|github [--out path]
+  aiwg issue sync conflicts <KEY> --snapshot-file path [--out path]
+  aiwg issue sync map-comments <KEY> --map-file path [--json]
   aiwg issue comment <KEY> --body "..." [--author name]
   aiwg issue close <KEY> [--reason "..."]
   aiwg issue index rebuild`);

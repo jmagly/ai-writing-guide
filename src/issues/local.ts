@@ -6,6 +6,8 @@ import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type {
   CreateLocalIssueInput,
   GetLocalIssueOptions,
+  ImportLocalIssueInput,
+  LocalIssueCommentIdMapping,
   ListLocalIssuesOptions,
   ListLocalIssuesResult,
   LocalIssueConfig,
@@ -166,6 +168,90 @@ export class LocalIssueProviderCore implements LocalIssueProvider {
     });
     await this.rebuildIssueIndex();
     return record;
+  }
+
+  async importIssue(input: ImportLocalIssueInput): Promise<LocalIssueRecord & { events: LocalIssueEventWithBody[] }> {
+    await this.init();
+    const id = await this.allocateIssueId();
+    const now = new Date().toISOString();
+    const createdAt = input.created_at ?? input.updated_at ?? now;
+    const updatedAt = input.updated_at ?? createdAt;
+    const status = input.status === 'closed' ? 'closed' : 'open';
+    const fields: LocalIssueFields = {
+      id,
+      status,
+      title: requireNonEmpty(input.title, 'title'),
+      type: 'task',
+      priority: 'P2',
+      labels: normalizeStringArray(input.labels ?? []),
+      assignees: normalizeStringArray(input.assignees ?? []),
+      created_at: createdAt,
+      updated_at: updatedAt,
+      closed_at: status === 'closed' ? updatedAt : null,
+      links: { external: input.external_url ? [input.external_url] : [], parent: null, children: [], related: [] },
+      source: { provider: input.provider, external_id: requireNonEmpty(input.external_id, 'external id'), external_url: input.external_url ?? null },
+    };
+    validateIssueFields(fields);
+    const record: LocalIssueRecord = { fields, body: input.body ?? '' };
+
+    await this.lockManager.withIssueLock(id, 'import external issue', async () => {
+      await atomicWrite(this.itemPath(id), serializeIssueMarkdown(record));
+      await this.appendEventUnlocked(id, {
+        type: 'created',
+        author: input.provider,
+        created_at: createdAt,
+        body: input.body,
+        data: { external_id: input.external_id, external_url: input.external_url ?? null, provider: input.provider },
+      });
+      for (const comment of input.comments ?? []) {
+        await this.appendEventUnlocked(id, {
+          type: 'comment',
+          author: comment.author,
+          created_at: comment.created_at,
+          body: comment.body,
+          data: {
+            ...(comment.external_id ? { external_comment_id: comment.external_id } : {}),
+            ...(comment.updated_at ? { external_updated_at: comment.updated_at } : {}),
+            provider: input.provider,
+          },
+        });
+      }
+    });
+    await this.rebuildIssueIndex();
+    return this.getIssue(id, { body: true, comments: 'all' });
+  }
+
+  async applyCommentIdMappings(id: string, mappings: LocalIssueCommentIdMapping[]): Promise<LocalIssueEventWithBody[]> {
+    const normalized = normalizeIssueId(id);
+    const byEventId = new Map(mappings.map((mapping) => [mapping.local_event_id, mapping.external_comment_id]));
+    await this.lockManager.withIssueLock(normalized, 'apply external comment id mappings', async () => {
+      await this.readIssue(normalized);
+      const raw = await readFile(this.eventPath(normalized), 'utf-8').catch((error: unknown) => {
+        if (isNodeError(error) && error.code === 'ENOENT') return '';
+        throw error;
+      });
+      const events = raw
+        .split(/\r?\n/)
+        .filter((line) => line.trim().length > 0)
+        .map((line) => JSON.parse(line) as LocalIssueEvent);
+      let changed = false;
+      const updated = events.map((event) => {
+        const externalCommentId = byEventId.get(event.event_id);
+        if (!externalCommentId) return event;
+        changed = true;
+        return {
+          ...event,
+          data: {
+            ...(event.data ?? {}),
+            external_comment_id: externalCommentId,
+          },
+        };
+      });
+      if (changed) {
+        await atomicWrite(this.eventPath(normalized), updated.map((event) => JSON.stringify(event)).join('\n') + '\n');
+      }
+    });
+    return this.readEvents(normalized, 'all');
   }
 
   async getIssue(

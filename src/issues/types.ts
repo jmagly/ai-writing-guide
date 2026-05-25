@@ -2,6 +2,8 @@ export type LocalIssueStatus = 'open' | 'closed' | 'archived';
 export type LocalIssueType = 'bug' | 'feature' | 'research' | 'task' | 'epic';
 export type LocalIssuePriority = 'P0' | 'P1' | 'P2' | 'P3';
 
+export type ExternalIssueProvider = 'gitea' | 'github';
+
 export interface LocalIssueConfig {
   provider: 'local';
   issue_key: {
@@ -19,7 +21,7 @@ export interface LocalIssueLinks {
 }
 
 export interface LocalIssueSource {
-  provider: 'local' | 'gitea' | 'github';
+  provider: 'local' | ExternalIssueProvider;
   external_id: string | null;
   external_url?: string | null;
 }
@@ -117,8 +119,33 @@ export interface CreateLocalIssueInput {
   author?: string;
 }
 
+export interface ImportLocalIssueInput {
+  provider: ExternalIssueProvider;
+  external_id: string;
+  external_url?: string | null;
+  title: string;
+  body: string;
+  status?: LocalIssueStatus | string;
+  labels?: string[];
+  assignees?: string[];
+  created_at?: string;
+  updated_at?: string;
+  comments?: Array<{
+    external_id?: string | null;
+    author: string;
+    body: string;
+    created_at: string;
+    updated_at?: string;
+  }>;
+}
+
+export interface LocalIssueCommentIdMapping {
+  local_event_id: string;
+  external_comment_id: string;
+}
+
 export type UpdateLocalIssueFieldsInput = Partial<
-  Pick<LocalIssueFields, 'title' | 'status' | 'type' | 'priority' | 'labels' | 'assignees' | 'links'>
+  Pick<LocalIssueFields, 'title' | 'status' | 'type' | 'priority' | 'labels' | 'assignees' | 'links' | 'source'>
 >;
 
 export interface GetLocalIssueOptions {
@@ -129,6 +156,8 @@ export interface GetLocalIssueOptions {
 export interface LocalIssueProvider {
   init(options?: { prefix?: string; padding?: number }): Promise<LocalIssueConfig>;
   createIssue(input: CreateLocalIssueInput): Promise<LocalIssueRecord>;
+  importIssue(input: ImportLocalIssueInput): Promise<LocalIssueRecord & { events: LocalIssueEventWithBody[] }>;
+  applyCommentIdMappings(id: string, mappings: LocalIssueCommentIdMapping[]): Promise<LocalIssueEventWithBody[]>;
   getIssue(id: string, options?: GetLocalIssueOptions): Promise<LocalIssueRecord & { events: LocalIssueEventWithBody[] }>;
   listIssues(options?: ListLocalIssuesOptions): Promise<ListLocalIssuesResult>;
   updateIssueFields(id: string, patch: UpdateLocalIssueFieldsInput): Promise<LocalIssueRecord>;
