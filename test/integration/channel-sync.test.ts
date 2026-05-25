@@ -15,13 +15,26 @@
  * @parent #684
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dir = fileURLToPath(new URL('.', import.meta.url));
 const REPO_ROOT = resolve(__dir, '../../');
+const savedProcessProvider = process.env.AIWG_TEST_PROCESS_PROVIDER;
+
+beforeEach(() => {
+  process.env.AIWG_TEST_PROCESS_PROVIDER = 'codex';
+});
+
+afterEach(() => {
+  if (savedProcessProvider === undefined) {
+    delete process.env.AIWG_TEST_PROCESS_PROVIDER;
+  } else {
+    process.env.AIWG_TEST_PROCESS_PROVIDER = savedProcessProvider;
+  }
+});
 
 // ── Script path existence (regression: silent exit 254) ────────
 
