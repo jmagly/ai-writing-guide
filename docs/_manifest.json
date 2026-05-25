@@ -124,6 +124,7 @@
     "references/REF-003-agentic-development-antipatterns",
     "references/REF-066-mcp-specification-2025",
     "releases",
+    "releases/v2026.5.11-announcement",
     "releases/v2026.5.10-announcement",
     "releases/v2026.5.9-announcement",
     "releases/v2026.5.8-announcement",
@@ -457,7 +458,7 @@
     {
       "id": "openclaw-guide",
       "title": "OpenClaw Guide",
-      "summary": "Deploy to OpenClaw \u2014 10th platform, first with native behaviors support. ClawHub publication and ~/.openclaw/ structure.",
+      "summary": "Deploy to OpenClaw — 10th platform, first with native behaviors support. ClawHub publication and ~/.openclaw/ structure.",
       "file": "openclaw-guide.md",
       "parent": "integrations"
     },
@@ -634,7 +635,7 @@
     },
     {
       "id": "soul-md-guide",
-      "title": "SOUL.md \u2014 Agent Identity",
+      "title": "SOUL.md — Agent Identity",
       "summary": "Give agents persistent character: worldview, opinions, reasoning traits. soul-create, soul-enable, soul-blend.",
       "file": "soul-md-guide.md",
       "parent": "reference"
@@ -649,7 +650,7 @@
     {
       "id": "behaviors-guide",
       "title": "Behaviors",
-      "summary": "Behavior bundles \u2014 directives and toolsets for daemon-governed agents",
+      "summary": "Behavior bundles — directives and toolsets for daemon-governed agents",
       "file": "behaviors-guide.md",
       "parent": "reference"
     },
@@ -929,6 +930,13 @@
       "collapsed": true
     },
     {
+      "id": "releases/v2026.5.11-announcement",
+      "title": "v2026.5.11 — Provider Detection + Local Issue Sync",
+      "summary": "Codex-aware provider detection, local issue sync documentation, media transcript sidecars, and release doc-sync hygiene.",
+      "file": "releases/v2026.5.11-announcement.md",
+      "parent": "releases"
+    },
+    {
       "id": "releases/v2026.5.10-announcement",
       "title": "v2026.5.10 — Beginner Onboarding Wizard + Docs",
       "summary": "Guided onboarding wizard, deterministic workspace engagement status, and beginner docs for first-run success.",
@@ -1007,7 +1015,7 @@
     },
     {
       "id": "releases/v2026.4.0-announcement",
-      "title": "v2026.4.0 \u2014 Autonomous Systems",
+      "title": "v2026.4.0 — Autonomous Systems",
       "summary": "Major release: corpus architecture, daemon, Mission Control, behaviors, SOUL.md, OpenClaw, Hermes, ops-complete, and more.",
       "file": "releases/v2026.4.0-announcement.md",
       "parent": "releases"
@@ -1291,7 +1299,7 @@
     {
       "id": "frameworks/sdlc-complete",
       "title": "SDLC Complete",
-      "summary": "Full lifecycle framework \u2014 internal docs and deep guides",
+      "summary": "Full lifecycle framework — internal docs and deep guides",
       "collapsed": true,
       "parent": "frameworks"
     },
@@ -1389,7 +1397,7 @@
     {
       "id": "addons/ralph",
       "title": "Ralph Addon",
-      "summary": "Iterative loop execution \u2014 quickstart, best practices, troubleshooting",
+      "summary": "Iterative loop execution — quickstart, best practices, troubleshooting",
       "collapsed": true,
       "parent": "addons"
     },
@@ -1438,7 +1446,7 @@
     {
       "id": "addons/rlm",
       "title": "RLM Addon",
-      "summary": "Recursive Language Model \u2014 deployment, multi-provider, integration guides",
+      "summary": "Recursive Language Model — deployment, multi-provider, integration guides",
       "collapsed": true,
       "parent": "addons"
     },
@@ -1487,7 +1495,7 @@
     {
       "id": "tools/ralph-external",
       "title": "External Ralph",
-      "summary": "Crash-resilient external loop \u2014 snapshot manager and provider API",
+      "summary": "Crash-resilient external loop — snapshot manager and provider API",
       "collapsed": true,
       "parent": "tools"
     },
@@ -1529,7 +1537,7 @@
     {
       "id": "frameworks/ops-complete",
       "title": "Ops Complete",
-      "summary": "Operational infrastructure framework \u2014 YAML-native with sys, it, dev, stream extensions",
+      "summary": "Operational infrastructure framework — YAML-native with sys, it, dev, stream extensions",
       "collapsed": true,
       "parent": "frameworks"
     },
@@ -1543,7 +1551,7 @@
     {
       "id": "frameworks/ops-complete/overview",
       "title": "Overview",
-      "summary": "ops-complete is the operational infrastructure layer for AIWG \u2014 a framework for AI agents working in",
+      "summary": "ops-complete is the operational infrastructure layer for AIWG — a framework for AI agents working in",
       "file": "frameworks/ops-complete/overview.md",
       "parent": "frameworks/ops-complete"
     },
@@ -1578,14 +1586,14 @@
     {
       "id": "addons/aiwg-dev",
       "title": "AIWG Dev",
-      "summary": "Developer toolkit \u2014 validate-component, dev-doctor, link-check, devkit scaffolding",
+      "summary": "Developer toolkit — validate-component, dev-doctor, link-check, devkit scaffolding",
       "collapsed": true,
       "parent": "addons"
     },
     {
       "id": "addons/aiwg-dev/overview",
       "title": "Overview",
-      "summary": "aiwg-dev is the developer toolkit for contributors building AIWG itself \u2014 adding new addons, framewo",
+      "summary": "aiwg-dev is the developer toolkit for contributors building AIWG itself — adding new addons, framewo",
       "file": "addons/aiwg-dev/overview.md",
       "parent": "addons/aiwg-dev"
     },
@@ -1599,7 +1607,7 @@
     {
       "id": "addons/aiwg-utils",
       "title": "AIWG Utils",
-      "summary": "Core utility rules \u2014 subagent scoping, context budget, instruction comprehension",
+      "summary": "Core utility rules — subagent scoping, context budget, instruction comprehension",
       "collapsed": true,
       "parent": "addons"
     },
@@ -1620,7 +1628,7 @@
     {
       "id": "addons/auto-memory",
       "title": "Auto Memory",
-      "summary": "Automatic memory management \u2014 seed templates, memory evolution, cross-session persistence",
+      "summary": "Automatic memory management — seed templates, memory evolution, cross-session persistence",
       "collapsed": true,
       "parent": "addons"
     },
@@ -1634,7 +1642,7 @@
     {
       "id": "addons/daemon",
       "title": "Daemon Addon",
-      "summary": "Persistent background agent \u2014 web UI, YAML profiles, scheduled tasks, Telegram",
+      "summary": "Persistent background agent — web UI, YAML profiles, scheduled tasks, Telegram",
       "collapsed": true,
       "parent": "addons"
     },
@@ -1676,14 +1684,14 @@
     {
       "id": "addons/prose-integration",
       "title": "Prose Integration",
-      "summary": "OpenProse contract-driven execution \u2014 five skills, obligation semantics",
+      "summary": "OpenProse contract-driven execution — five skills, obligation semantics",
       "collapsed": true,
       "parent": "addons"
     },
     {
       "id": "addons/prose-integration/overview",
       "title": "Overview",
-      "summary": "The prose-integration addon provides AIWG tools for working with OpenProse programs \u2014 Markdown files",
+      "summary": "The prose-integration addon provides AIWG tools for working with OpenProse programs — Markdown files",
       "file": "addons/prose-integration/overview.md",
       "parent": "addons/prose-integration"
     },
@@ -1753,7 +1761,7 @@
     {
       "id": "addons/voice-framework",
       "title": "Voice Framework",
-      "summary": "Voice profile documentation \u2014 four built-in voices, custom profiles, blending",
+      "summary": "Voice profile documentation — four built-in voices, custom profiles, blending",
       "collapsed": true,
       "parent": "addons"
     },

@@ -7,8 +7,66 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.5.11] - 2026-05-25 — "Provider detection, local issue sync, and media transcript prep"
+
+This patch release hardens AIWG's cross-provider workflow plumbing, adds local issue-tracker synchronization paths, and documents the current code-to-docs audit before the next stable tag. It also ships the first concrete time-based media primitive while keeping the larger research handoff work explicit as follow-up scope.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **Codex-aware provider detection** | Mixed Claude/Codex workspaces now prefer the active Codex runtime where appropriate, so refresh and regenerate flows target the right provider files. |
+| **Local issue sync workflows** | Projects can import/export local issue stores, run live tracker sync, and document conflict handling without guessing which issue backend is active. |
+| **Media transcript sidecars** | Media-curator can now surface a transcript sidecar workflow for acquired audio/video, including source metadata, hashes, timestamps, and degraded plans when local STT tooling is missing. |
+| **Security and supply-chain scaffolding** | Security-engineering gained CI emitters, banned-API scaffolds, DFIR readiness routing, and supply-chain audit documentation. |
+| **Release and docs hygiene** | Release config now records the broad doc-sync scope for all agentic/code sources plus repository Markdown, and release tags are routed through the dedicated signing wrapper. |
+
+### Added
+
+- Local issue import/export and live sync workflows, plus documentation for migration, conflicts, backups, and credentials.
+- `transcribe-media` media-curator skill with a sample transcript sidecar and discovery coverage.
+- Security-engineering cycle-1 scaffolds for banned APIs, sanitizer/fuzzing CI emitters, disclosure tracking, DFIR readiness, and external npm supply-chain audit provenance.
+- Community, browser-control, and Omnius integrator documentation surfaces.
+
+### Changed
+
+- Codex provider detection now uses runtime/process markers and mixed-workspace regression coverage for `regenerate`, `refresh`, `steward`, and related provider-selection paths.
+- Media-curator docs now describe transcript sidecars and research handoff preparation alongside archive curation.
+- Release configuration doc-sync guidance now includes all of `agentic/code/` and all repository Markdown files, reflecting where AIWG capabilities actually live.
+- Release tagging is configured to use `tools/release/cut-tag.sh` instead of a raw `git tag` command so the release signing key remains separate from the regular commit key.
+- The system-wide `cli-secondary` rule now states that raw CLI commands augment skill workflows; skills remain responsible for orchestration, final formatting, presentation, synthesis, gates, and recovery.
 - Claude Code external loop launches now default-disable 1M-context model variants unless `CLAUDE_CODE_DISABLE_1M_CONTEXT` is explicitly set, with docs covering the credit-account tradeoff and opt-in path.
-- Documented the project signing-key split in `AGENTS.override.md` and `.aiwg/release-process.md`: regular commits use the host commit key, while annotated release tags use the AIWG release key.
+- Project signing-key split is documented in `AGENTS.override.md` and `.aiwg/release-process.md`: regular commits use the host commit key, while annotated release tags use the AIWG release key.
+
+### Fixed
+
+- Channel sync and refresh provider-detection tests were stabilized.
+- Docsite deployment now normalizes the deploy root and verifies release artifacts more directly.
+- Address-issues and agent-loop paths were hardened, including malicious issue-body handling and stale-window closure auditing.
+- Media transcript discovery now routes `transcribe media` to the media-curator skill.
+
+### Known follow-up
+
+- The time-based media research epic remains open for REF templates, timestamp citation policy, citation sidecars, `induct-media`, and quickref/generated-guidance discoverability.
+- Cargo/Rust crate supply-chain discovery still routes to npm-specific audit guidance first and remains tracked as follow-up work.
+- Provider field-validation claims remain limited to sessions already evidenced in the issue tracker; remaining providers still need real session validation.
+- A repo-wide audit is open as #1480 to align docs, quickrefs, skill bodies, and generated guidance with the skill-first CLI augmentation rule.
+
+### Tests
+
+Release-prep verification for this line:
+
+```bash
+npm run check:versions
+npm run typecheck
+npm run build:cli
+npm test
+npm run uat
+```
+
+### Migration notes
+
+No breaking changes. Projects using local issue stores should review `docs/local-issues.md` before enabling live sync so tracker direction, conflict handling, and credential sourcing are explicit.
 
 ## [2026.5.10] - 2026-05-19 — "Beginner onboarding wizard + docs"
 

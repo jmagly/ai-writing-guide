@@ -513,15 +513,16 @@ If you ship a product that bundles AIWG and want to be listed here, open an issu
 
 ## What You Get
 
-### Frameworks (6)
+### Frameworks (8)
 
 | Framework | Agents | Templates | What It Does |
 |-----------|--------|-----------|--------------|
 | **[SDLC Complete](agentic/code/frameworks/sdlc-complete/)** | 98 | 200+ | Full software development lifecycle — Inception through Production with multi-agent orchestration, quality gates, and DORA metrics |
 | **[Forensics Complete](agentic/code/frameworks/forensics-complete/)** | 13 | 8 | Digital forensics and incident response — evidence acquisition, timeline reconstruction, IOC extraction, Sigma rule hunting. NIST SP 800-86, MITRE ATT&CK, STIX 2.1 |
 | **[Media/Marketing Kit](agentic/code/frameworks/media-marketing-kit/)** | 37 | 87+ | End-to-end marketing operations — strategy, content creation, campaign management, brand compliance, analytics, and reporting |
-| **[Media Curator](agentic/code/frameworks/media-curator/)** | 6 | — | Intelligent media archive management — discography analysis, source discovery, quality filtering, metadata curation, multi-platform export (Plex, Jellyfin, MPD) |
+| **[Media Curator](agentic/code/frameworks/media-curator/)** | 6 | — | Intelligent media archive management — discography analysis, source discovery, quality filtering, transcript sidecars, research handoff preparation, multi-platform export (Plex, Jellyfin, MPD) |
 | **[Research Complete](agentic/code/frameworks/research-complete/)** | 8 | 6 | Academic research automation — paper discovery, citation management, RAG-based summarization, GRADE quality scoring, FAIR compliance, W3C PROV provenance |
+| **[Knowledge Base](agentic/code/frameworks/knowledge-base/)** | — | 5 | General-purpose LLM-assisted wiki — source ingest, entity/concept pages, source summaries, comparisons, syntheses, health checks, and emergent taxonomy |
 | **[Ops Complete](agentic/code/frameworks/ops-complete/)** | 12 | 3 | Operational infrastructure — incident management, runbooks, troubleshooting workflows |
 | **[Security Engineering](agentic/code/frameworks/security-engineering/)** | 2 | 5 | Applied security beyond STRIDE/OWASP — cryptographic primitive selection, chain-of-trust integrity, authentication-factor architecture, degraded-mode design, runtime secret hygiene, supply-chain trust, physical-access threats. Pattern-based, product-agnostic |
 
@@ -851,6 +852,7 @@ Full DFIR investigation workflow following NIST SP 800-86, with MITRE ATT&CK map
 /analyze-artist "Pink Floyd"           # Identify eras, catalog structure
 /find-sources "Pink Floyd" "DSOTM"     # Discover across YouTube, Archive.org, Bandcamp
 /acquire                               # Download with format selection
+/transcribe-media /path/to/media.wav     # Create timestamped transcript sidecars
 /tag-collection                        # Apply metadata, embed artwork, rename
 /check-completeness                    # Gap analysis against canonical discography
 /assemble "Pink Floyd live 1973"       # Build thematic compilations
@@ -858,7 +860,7 @@ Full DFIR investigation workflow following NIST SP 800-86, with MITRE ATT&CK map
 /verify-archive                        # SHA-256 integrity verification
 ```
 
-Quality tiers: Tier 1 (Official/Lossless) → Tier 2 (High Quality) → Tier 3 (Acceptable) → Tier 4 (Avoid). Standards: ID3v2.4, Vorbis Comments, MusicBrainz, PREMIS 3.0, W3C PROV-O.
+Quality tiers: Tier 1 (Official/Lossless) → Tier 2 (High Quality) → Tier 3 (Acceptable) → Tier 4 (Avoid). Transcript sidecars preserve source hashes, transcript hashes, timestamps, and optional speaker labels for review and future research handoff. Standards: ID3v2.4, Vorbis Comments, MusicBrainz, PREMIS 3.0, W3C PROV-O.
 
 ### Research Complete — Academic Research Pipeline
 
@@ -1299,7 +1301,7 @@ AIWG uses a unified extension system with 10 extension types, all deployable acr
 | **Skills** | 128 | Natural language workflow triggers activated by conversation patterns |
 | **Rules** | 35 | Enforcement patterns deployed as consolidated index with on-demand full-rule loading |
 | **Templates** | 334 | Progressive disclosure document templates for all SDLC phases |
-| **Frameworks** | 6 | Complete workflow systems (SDLC, Forensics, Marketing, Research, Media Curator, Ops) |
+| **Frameworks** | 8 | Complete workflow systems (SDLC, Forensics, Marketing, Research, Media Curator, Ops, Knowledge Base, Security Engineering) |
 | **Addons** | 21 | Feature bundles extending frameworks (RLM, Voice, Testing Quality, UAT, Ring) |
 | **Hooks** | varies | Lifecycle event handlers (pre-session, post-write, workflow tracing) |
 | **Tools** | varies | External utility integrations (git, jq, npm) |

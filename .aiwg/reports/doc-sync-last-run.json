@@ -1,54 +1,65 @@
 {
-  "timestamp": "2026-05-05T00:30:00Z",
+  "timestamp": "2026-05-25T19:00:00Z",
   "direction": "code-to-docs",
-  "scope": "full repo (src/ + agentic/code/)",
-  "guidance": "agentic/code/ files treated as authoritative source",
+  "scope": "agentic/code/** plus all repository Markdown files",
+  "guidance": "include all of agentic/code and all Markdown files; AIWG capability lives in skills, agents, commands, templates, behaviors, rules, manifests, and generated guidance",
   "phases": [
     {
       "phase": "audit",
-      "auditors_run": ["cli", "extensions", "frameworks", "agents-skills", "schemas", "crossref"],
-      "findings_total": 59,
-      "findings_high": 39,
-      "findings_medium": 16,
-      "findings_low": 4
+      "auditors_run": [
+        "release-config",
+        "release-docs",
+        "media-curator-docs",
+        "readme-framework-counts",
+        "issue-follow-up-discovery",
+        "skill-cli-rule"
+      ],
+      "findings_total": 9,
+      "findings_high": 2,
+      "findings_medium": 6,
+      "findings_low": 1
     },
     {
-      "phase": "auto-fix-pass-1",
-      "fixes_applied": 14,
-      "files_modified": ["CLAUDE.md", "AIWG.md", "README.md"]
-    },
-    {
-      "phase": "errata-correction-pass-2",
-      "fixes_applied": 28,
+      "phase": "auto-fix",
+      "fixes_applied": 9,
       "files_modified": [
-        "AIWG.md",
-        "CLAUDE.md",
+        ".aiwg/release.config",
+        "CHANGELOG.md",
         "README.md",
-        "docs/cli-reference.md",
-        "docs/extensions/extension-types.md",
-        "docs/extensions/overview.md",
-        "docs/extensions/creating-extensions.md",
-        "docs/releases/v2026.4.0-announcement.md",
-        "agentic/code/addons/aiwg-utils/manifest.json",
+        "docs/_manifest.json",
+        "docs/frameworks/media-curator/overview.md",
+        "docs/releases/_manifest.json",
+        ".aiwg/reports/doc-sync-last-run.json",
         "agentic/code/addons/aiwg-utils/rules/RULES-INDEX.md",
-        "src/extensions/commands/definitions.ts"
+        "agentic/code/addons/aiwg-utils/rules/cli-secondary.md"
       ],
       "files_created": [
-        "docs/configuration/aiwg-config.md",
-        "docs/configuration/setup-manifest.md",
-        ".aiwg/reports/doc-sync-20260505T035506Z.md"
+        ".aiwg/reports/doc-sync-20260525T190000Z.md",
+        "docs/releases/v2026.5.11-announcement.md"
       ]
     }
   ],
   "totals": {
-    "fixes_applied": 42,
+    "fixes_applied": 9,
     "fixes_remaining": 0,
-    "files_modified": 11,
-    "files_created": 3
+    "files_modified": 9,
+    "files_created": 2
   },
   "validation": {
-    "tsc_noEmit": "clean",
-    "markdownlint_authored_files": "clean (RULES-INDEX.md has pre-existing pattern violations matching existing entries; CLAUDE.md/AIWG.md/docs/configuration/*.md clean)"
+    "pending": [
+      "npm run check:versions",
+      "npm run typecheck",
+      "npm run build:cli",
+      "npm test",
+      "npm run uat"
+    ]
   },
-  "report": ".aiwg/reports/doc-sync-20260505T035506Z.md"
+  "report": ".aiwg/reports/doc-sync-20260525T190000Z.md",
+  "open_follow_up": [
+    "#1234",
+    "#1405",
+    "#1478",
+    "#1479",
+    "#1480"
+  ]
 }

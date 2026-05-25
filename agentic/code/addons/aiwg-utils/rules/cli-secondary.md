@@ -3,11 +3,11 @@
 **Enforcement Level**: HIGH
 **Scope**: All agents on AIWG-managed projects
 **Addon**: aiwg-utils (core, universal)
-**Issue**: #1272
+**Issue**: #1272; #1480
 
 ## Overview
 
-AIWG is **agentic-first**. The agent self-guides via skills and agents that carry the full priming context — rules, gates, preservation logic, recovery patterns. The CLI sits *underneath* that priming. It is the imperative tool the skill calls; it is not the agent's primary surface.
+AIWG is **agentic-first**. The agent self-guides via skills and agents that carry the full priming context — rules, gates, preservation logic, recovery patterns. The CLI sits *underneath* that priming. It is the imperative tool the skill calls; it is not the agent's primary surface. Raw CLI commands augment skill workflows; they do not replace skills. The skill remains the driver/orchestrator and owns final formatting, presentation, synthesis, gates, and recovery behavior.
 
 ## The Hierarchy
 
@@ -129,7 +129,30 @@ The following CLI commands have paired skills/agents. When the user's intent map
 | `aiwg ops <action>` (init, adopt, push) | ops framework skills | Workspace context, multi-repo discipline |
 | `aiwg storage migrate` | storage skills | Per-subsystem migration logic, backend validation |
 
-### Rule 5: Skill Documentation Must Say So
+### Rule 5: CLI Augments; Skill Drives
+
+For paired action surfaces, raw CLI examples are implementation affordances only. They show what the skill may call, or what an explicit human operator may type, but they MUST NOT be documented as replacing the skill workflow.
+
+The skill is responsible for:
+
+- interpreting user intent and selecting the correct workflow path
+- running pre-flight checks, dry runs, preservation logic, and authorization gates
+- calling raw CLI commands as bounded execution steps when useful
+- synthesizing results from commands, files, agents, and validation output
+- producing final formatting, presentation, and user-facing conclusions
+- recording state, reports, and recovery guidance
+
+The CLI is responsible for narrow imperative execution. It should return structured facts, perform bounded mutations, or expose status that the skill can use. It should not be treated as the presentation layer for agent work.
+
+Documentation MAY keep CLI examples, but paired action examples must be framed as one of:
+
+1. a step the skill calls internally,
+2. an explicit operator command typed by the user, or
+3. a diagnostic/status command from the discovery surface.
+
+If docs imply `aiwg <action>` is the agent's preferred path while a paired skill exists, file/fix drift under #1480.
+
+### Rule 6: Skill Documentation Must Say So
 
 Every skill that has a paired CLI command MUST include a one-line note near the top:
 
@@ -139,7 +162,7 @@ And every CLI command reference doc (e.g. `docs/cli-reference.md`) MUST, for pai
 
 > Agents: invoke via the `[skill-name]` skill rather than calling this CLI directly. See `aiwg show skill <name>`.
 
-### Rule 6: When Raw CLI Is Acceptable
+### Rule 7: When Raw CLI Is Acceptable
 
 The agent may invoke the CLI directly without going through a paired skill ONLY when:
 
@@ -210,4 +233,4 @@ If priority 1 or 2 has a match and I'm still reaching for the CLI — stop and r
 ---
 
 **Rule Status**: ACTIVE
-**Last Updated**: 2026-05-11
+**Last Updated**: 2026-05-25
