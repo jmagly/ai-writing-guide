@@ -7,6 +7,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Changed
+
+- **Doc-site CI builds via the `@pagenary/publisher` npm package instead of git-cloning the publisher.** `docsite-build.yml` and `docsite-deploy.yml` now install the publisher as a devDependency (bin: `pagenary`) and run `npx pagenary build:tenants aiwg-docs`, replacing the `git clone roctinam/pagenary.git → /tmp/pagenary` step. This removes the `GT_ACCESS_TOKEN` clone (and the fork-PR guard that protected it from `docsite-build.yml`); `GT_ACCESS_TOKEN` is no longer referenced by any workflow and can be revoked after the npm-based deploy is verified. Follows the repo rename in #1473. (#1484)
+- **Added `@pagenary/publisher` (`2026.5.1`, exact) and `terser` (`^5.47.1`) as devDependencies.** `@pagenary/publisher` is first-party (we own `roctinam/pagenary`); the `.npmrc` `min-release-age=7` gate is satisfied at install time by the committed lockfile pin (`npm ci` and a bare `npm install` are not gated — only an explicit add/update is). `terser` restores doc-site minification that the zero-dependency publisher otherwise skips (interim until `roctinam/pagenary#14` declares terser itself).
+
+### Fixed / known follow-ups
+
+- `docsite-build.yml` runs with `strictLinks: false` pending cleanup of 53 pre-existing broken internal doc links; the broken-link build gate (now functional after `roctinam/pagenary#12`) is re-enabled in #1486.
+
 ## [2026.5.11] - 2026-05-25 — "Provider detection, local issue sync, and media transcript prep"
 
 This patch release hardens AIWG's cross-provider workflow plumbing, adds local issue-tracker synchronization paths, and documents the current code-to-docs audit before the next stable tag. It also ships the first concrete time-based media primitive while keeping the larger research handoff work explicit as follow-up scope.

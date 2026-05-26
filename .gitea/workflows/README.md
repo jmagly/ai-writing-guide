@@ -37,7 +37,7 @@ That default behavior means a fork PR cannot directly exfiltrate `NPM_TOKEN`, `N
 Place on any step that touches a user-defined secret. Step-level (not job-level) preserves non-secret validation steps for fork PRs — fork PR validation has value, and skipping the whole job throws it away.
 
 ```yaml
-# Variant A — fork-PR guard (simpler; used by docsite-build.yml).
+# Variant A — fork-PR guard (simpler; reusable default for any secret-bearing PR-triggered step).
 # Skips on any fork PR; runs on internal-branch PRs and push events.
 - name: Step that touches a user-defined secret
   if: ${{ gitea.event.pull_request.head.repo.fork != true }}
@@ -56,7 +56,7 @@ Place on any step that touches a user-defined secret. Step-level (not job-level)
     # ...
 ```
 
-**Which to use:** Variant A is the documented default and is what `docsite-build.yml` ships. Variant B is stricter and is the canonical GitHub Actions form; on Gitea the two are functionally equivalent because both `gitea.*` and `github.*` expression contexts resolve to the same payload. Pick A for new workflows unless there's a specific reason to require full-name comparison.
+**Which to use:** Variant A is the documented default. (`docsite-build.yml` previously carried this guard around its publisher clone; as of #1484 it sources `@pagenary/publisher` from npm and touches no secret, so it no longer needs the guard — the pattern remains here for other secret-bearing PR-triggered steps.) Variant B is stricter and is the canonical GitHub Actions form; on Gitea the two are functionally equivalent because both `gitea.*` and `github.*` expression contexts resolve to the same payload. Pick A for new workflows unless there's a specific reason to require full-name comparison.
 
 **Job-level vs step-level:** Putting the guard at the job level (`jobs.<id>.if: …`) skips the entire job on fork PRs, which discards the validation value of running tests against fork code. Step-level guards on the specific secret-touching steps preserve the rest of the job.
 
@@ -82,7 +82,7 @@ Used by the npmjs.org publish leg of `npm-publish.yml`. **Being phased out** in 
 
 ### `GT_ACCESS_TOKEN`
 
-Used by the docsite workflows (`docsite-build.yml`, `docsite-deploy.yml`) for repo cloning. Cleaned up in #1284 / A6 to use the credential-helper pattern instead of token-in-URL. Not used by release-bearing workflows.
+**No longer used by any workflow.** Formerly used by the docsite workflows to clone the publisher repo; as of #1484 the docsite workflows consume `@pagenary/publisher` from npm and neither clone nor reference this secret. Recommend revoking it on the Gitea repo once the npm-based docsite deploy is verified. (History: introduced for the clone, then hardened from token-in-URL to the credential-helper pattern in #1284 / A6.)
 
 ### The Gitea Actions `environment:`-keyword gap
 

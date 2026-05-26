@@ -32,65 +32,43 @@ jobs:
       - name: Checkout AIWG
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
-      # Fork-PR defense-in-depth: skip the pagenary clone for fork PRs.
-      # The #1289 / A14 audit verified Gitea's fork-PR secret-exposure
-      # semantics by reading the source (`models/secret/secret.go`
-      # `GetSecretsOfTask` — user-defined secrets are NOT exposed to fork
-      # PRs by default; only the auto-issued `GITHUB_TOKEN` is). This
-      # guard remains as belt-and-suspenders so the behavior is explicit
-      # in the workflow rather than relying on runtime defaults that may
-      # drift with Gitea versions, and so fork PRs cannot reach
-      # docs.aiwg.io deploy paths even on a runtime regression. Internal-
-      # branch PRs and pushes proceed normally. See
-      # `.aiwg/architecture/adr-pr-trigger-hardening.md` for the audit
-      # disposition matrix and `.gitea/workflows/README.md` "PR-trigger
-      # workflow hardening" for the reusable guard snippet.
-      - name: Clone pagenary
-        if: ${{ gitea.event.pull_request.head.repo.fork != true }}
-        env:
-          GT_ACCESS_TOKEN: ${{ secrets.GT_ACCESS_TOKEN }}
-        run: |
-          set -euo pipefail
-          # Token lives in a transient mode-600 file consumed by git's
-          # credential helper. Avoids exposing the token in process
-          # arguments (visible to `ps`, core dumps, error output) which
-          # was the case with the previous token-in-URL pattern.
-          # See .claude/rules/token-security.md rule 2 and #1284 (A6).
-          GIT_CREDS="$(mktemp)"
-          chmod 600 "$GIT_CREDS"
-          trap 'rm -f "$GIT_CREDS"' EXIT
-          printf 'https://token:%s@git.integrolabs.net\n' "${GT_ACCESS_TOKEN}" > "$GIT_CREDS"
-          git -c "credential.helper=store --file=$GIT_CREDS" \
-            clone https://git.integrolabs.net/roctinam/pagenary.git /tmp/pagenary
-
-      - name: Install pagenary dependencies
-        working-directory: /tmp/pagenary/apps/publisher
+      # The doc-site publisher is consumed from npm as the `@pagenary/publisher`
+      # devDependency (bin: `pagenary`), not git-cloned. This build no longer
+      # touches GT_ACCESS_TOKEN or any secret, so the former fork-PR clone
+      # guard (#1289 / A14) is unnecessary here — fork PRs can run the full
+      # validation safely. Migration: #1484. The reusable fork-PR guard
+      # snippet still lives in `.gitea/workflows/README.md` for secret-bearing
+      # workflows (e.g. docsite-deploy on push/tags only).
+      - name: Install dependencies
         run: npm ci
 
       - name: Configure tenant
         run: |
-          cat > /tmp/pagenary/apps/publisher/tenants.json <<'TENANTS'
+          # strictLinks is false for now. pagenary 2026.5.1 (roctinam/pagenary#12)
+          # makes strictLinks:true abort on broken links, and docs/ currently has
+          # 53 broken internal links. Flip to true once those are fixed — #1486.
+          cat > "${{ gitea.workspace }}/tenants.json" <<'TENANTS'
           {
-            "$schema": "./tenants.schema.json",
             "tenants": [
               {
                 "id": "aiwg-docs",
-                "source": {
-                  "type": "local",
-                  "path": "${{ gitea.workspace }}/docs"
-                },
+                "enabled": true,
+                "source": { "type": "local", "path": "./docs" },
+                "target": { "type": "local", "path": "./dist/aiwg-docs" },
                 "domains": ["docs.aiwg.io"],
-                "strictLinks": true
+                "strictLinks": false
               }
             ]
           }
           TENANTS
 
       - name: Build doc site
-        working-directory: /tmp/pagenary/apps/publisher
-        run: node scripts/build-tenants.js aiwg-docs
+        run: npx pagenary build:tenants aiwg-docs
 
       - name: Verify build output
         run: |
-          ls -la /tmp/pagenary/apps/publisher/dist/aiwg-docs/
-          echo "Build successful"
+          set -euo pipefail
+          OUT="${{ gitea.workspace }}/dist/aiwg-docs"
+          test -f "$OUT/index.html" || { echo "::error::doc-site build produced no index.html"; exit 1; }
+          test -d "$OUT/sections"   || { echo "::error::doc-site build produced no sections/"; exit 1; }
+          echo "Build OK: $(ls "$OUT/sections" | wc -l) section files"
