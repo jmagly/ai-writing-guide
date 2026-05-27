@@ -1081,7 +1081,7 @@ export const corpusCommand: Extension = {
   description: 'Research-corpus tools (radar-init, radar-status, radar-report)',
   version: '1.0.0',
   capabilities: ['cli', 'research', 'corpus', 'radar', 'freshness', 'profiles'],
-  keywords: ['corpus', 'radar', 'freshness', 'staleness', 'radar-init', 'radar-status', 'radar-report', 'profile-status', 'stale profiles', 'refresh cadence', 'GRADE trajectory'],
+  keywords: ['corpus', 'radar', 'freshness', 'staleness', 'radar-init', 'radar-status', 'radar-report', 'profile-status', 'profile-generate', 'stale profiles', 'hub authors', 'refresh cadence', 'GRADE trajectory'],
   category: 'index',
   platforms: {
     claude: 'full',
