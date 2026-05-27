@@ -25,6 +25,9 @@ import { generateTier1Profiles } from './profile-generate.js';
 import { generateFmProfiles } from './profile-generate-fm.js';
 import { curatorRows, curatorOrphans, renderCuratorStatus, scaffoldCurator } from './curator.js';
 import { logDiscovery } from './discovery-log.js';
+import { computeMetrics, renderMetrics } from './profile-metrics.js';
+import { computeTrajectory, renderTrajectory } from './profile-temporal.js';
+import { detectCommunities, renderCommunities } from './profile-communities.js';
 
 function flagValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -48,6 +51,9 @@ Usage:
   aiwg corpus curator-status [--out PATH]
   aiwg corpus curator-init --handle @h [--platform x] [--name "N"] [--cadence weekly] [--write]
   aiwg corpus discovery-log --ref REF-XXX --surface SURFACE [--via "..."] [--curator PROF-S-x] [--date D] [--batch B] [--by A] [--write]
+  aiwg corpus profile-metrics [--papers] [--out PATH]
+  aiwg corpus profile-temporal --entity PROF-P-x [--out PATH]
+  aiwg corpus profile-communities [--out PATH]
 
 radar-init scaffolds radar sidecars (dry-run unless --write; skips existing).
 radar-status reports overdue radars (most-overdue-first).
@@ -58,6 +64,9 @@ profile-generate --fm scaffolds FM-author PROF-P + group PROF-G profiles from do
 curator-status reports PROF-S curators by yield (return-to score) + discovery orphans.
 curator-init scaffolds a PROF-S source/curator profile from a handle.
 discovery-log records the discovery block on a citation sidecar.
+profile-metrics computes h-index / CD-index / PageRank / centrality per profile (--papers for paper-level).
+profile-temporal computes publication trajectory + hot-streak for one profile.
+profile-communities detects co-author communities + modularity + bridge authors.
 `;
 
 function radarInit(root: string, args: string[]): void {
@@ -151,6 +160,12 @@ function discoveryLog(root: string, args: string[]): void {
   }
 }
 
+function profileTemporal(root: string, args: string[]): void {
+  const entity = flagValue(args, '--entity');
+  if (!entity) throw new Error('profile-temporal requires --entity <PROF-P-x>');
+  emit(renderTrajectory(computeTrajectory(root, entity)), flagValue(args, '--out'), root);
+}
+
 /** Write to --out (resolved against the corpus root) or print to stdout. */
 function emit(content: string, out: string | undefined, root: string): void {
   if (!out) {
@@ -189,6 +204,12 @@ export async function corpusMain(args: string[], cwd: string = process.cwd()): P
       return curatorInit(root, rest);
     case 'discovery-log':
       return discoveryLog(root, rest);
+    case 'profile-metrics':
+      return emit(renderMetrics(computeMetrics(root), hasFlag(rest, '--papers') ? 'papers' : 'people'), flagValue(rest, '--out'), root);
+    case 'profile-temporal':
+      return profileTemporal(root, rest);
+    case 'profile-communities':
+      return emit(renderCommunities(detectCommunities(root)), flagValue(rest, '--out'), root);
     default:
       process.stderr.write(`Unknown corpus subcommand: ${sub}\n\n${HELP}`);
       throw new Error(`unknown corpus subcommand: ${sub}`);
