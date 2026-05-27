@@ -22,7 +22,30 @@ aiwg corpus profile-generate                 # dry-run: list the PROF-P profiles
 aiwg corpus profile-generate --write         # write them (skips existing)
 aiwg corpus profile-generate --limit 10 --write
 aiwg corpus profile-generate --scan 100 --limit 40 --write
+aiwg corpus profile-generate --fm --write    # FM-author PROF-P + group PROF-G from fm-config.yaml
 ```
+
+### `--fm` — foundation-model author/group profiles
+
+`--fm` runs the FM pass (port of `build_fm_profiles.py`): it reads a corpus-local
+`documentation/profiles/fm-config.yaml` and scaffolds PROF-P profiles for the
+top-N authors of each listed FM paper plus PROF-G group profiles for team-authored
+releases. The FM-paper list and group specs are **corpus data**, not built-in:
+
+```yaml
+# documentation/profiles/fm-config.yaml
+fm-papers:
+  REF-052: { model: "GPT-3", top-authors: 5 }
+  REF-835: { model: "Llama 3", group: PROF-G-llama-team }
+groups:
+  PROF-G-llama-team:
+    name: "Llama Team — AI @ Meta"
+    parent-org: "Meta AI Research"
+    parent-slug: PROF-O-meta-fair
+    refs: [REF-835]
+```
+
+Absent file → no-op. Institutional/team author names are skipped from PROF-P.
 
 - **Dry-run by default.** `--write` creates files; existing profiles are skipped.
 - Ranks REFs by **corpus in-degree** (citations within the corpus, derived from

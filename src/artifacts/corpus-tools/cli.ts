@@ -22,6 +22,7 @@ import { radarStatusRows, renderRadarStatus, type RadarStatusFormat } from './ra
 import { renderRadarReport } from './radar-report.js';
 import { profileStatusRows, renderProfileStatus, type ProfileStatusFormat } from './profile-status.js';
 import { generateTier1Profiles } from './profile-generate.js';
+import { generateFmProfiles } from './profile-generate-fm.js';
 
 function flagValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -41,12 +42,14 @@ Usage:
   aiwg corpus radar-report [--cluster TAG] [--out PATH]
   aiwg corpus profile-status [--stale-only] [--format table|csv|list] [--out PATH]
   aiwg corpus profile-generate [--limit N] [--scan N] [--write]
+  aiwg corpus profile-generate --fm [--write]
 
 radar-init scaffolds radar sidecars (dry-run unless --write; skips existing).
 radar-status reports overdue radars (most-overdue-first).
 radar-report aggregates corpus/cluster freshness.
 profile-status reports entity profiles past their refresh cadence.
 profile-generate scaffolds PROF-P profiles for unprofiled hub authors (dry-run unless --write).
+profile-generate --fm scaffolds FM-author PROF-P + group PROF-G profiles from documentation/profiles/fm-config.yaml.
 `;
 
 function radarInit(root: string, args: string[]): void {
@@ -90,10 +93,17 @@ function profileStatus(root: string, args: string[]): void {
 }
 
 function profileGenerate(root: string, args: string[]): void {
+  const write = hasFlag(args, '--write');
+  if (hasFlag(args, '--fm')) {
+    const results = generateFmProfiles(root, { write });
+    console.log(`FM profiles (from fm-config.yaml): ${results.length}`);
+    for (const r of results) console.log('  ' + r.message);
+    return;
+  }
   const limit = flagValue(args, '--limit');
   const scan = flagValue(args, '--scan');
   const results = generateTier1Profiles(root, {
-    write: hasFlag(args, '--write'),
+    write,
     limit: limit ? parseInt(limit, 10) : undefined,
     scan: scan ? parseInt(scan, 10) : undefined,
   });

@@ -74,8 +74,30 @@ function inDegrees(records: RefRecord[], byId: Map<string, RefRecord>): Map<stri
   return inDeg;
 }
 
+/** Shared corpus-generation context (reused by tier-1 and FM profile generators). */
+export interface GenContext {
+  records: RefRecord[];
+  byId: Map<string, RefRecord>;
+  inDeg: Map<string, number>;
+  /** author display-name → set of REF ids they appear on. */
+  authorRefs: Map<string, Set<string>>;
+  /** existing PROF-P slugs (so generation is idempotent). */
+  existing: Set<string>;
+}
+
+/** Build the generation context once from the corpus (loadCorpus + in-degree + author index). */
+export function loadGenContext(corpusRoot: string): GenContext {
+  const { records } = loadCorpus(corpusRoot);
+  const byId = new Map(records.map((r) => [r.refId, r]));
+  const inDeg = inDegrees(records, byId);
+  const existing = loadProfileSlugs(corpusRoot);
+  const authorRefs = new Map<string, Set<string>>();
+  for (const r of records) for (const a of r.authors) (authorRefs.get(a) ?? authorRefs.set(a, new Set()).get(a)!).add(r.refId);
+  return { records, byId, inDeg, authorRefs, existing };
+}
+
 /** Build the compact 5-section PROF-P markdown body. Mirrors generate_profile(). */
-function buildBody(name: string, slug: string, refs: string[], byId: Map<string, RefRecord>, inDeg: Map<string, number>, today: string): string {
+export function buildProfileBody(name: string, slug: string, refs: string[], byId: Map<string, RefRecord>, inDeg: Map<string, number>, today: string): string {
   const refsData = refs
     .map((r) => ({ ref: r, title: shortTitle(byId.get(r)?.title), year: byId.get(r)?.year != null ? String(byId.get(r)!.year) : '—', deg: inDeg.get(r) ?? 0 }))
     .sort((a, b) => b.deg - a.deg);
@@ -184,30 +206,22 @@ export function generateTier1Profiles(corpusRoot: string, opts: ProfileGenOption
   const limit = opts.limit ?? 25;
   const scan = opts.scan ?? 60;
 
-  const { records } = loadCorpus(corpusRoot);
-  const byId = new Map(records.map((r) => [r.refId, r]));
-  const inDeg = inDegrees(records, byId);
-  const existing = loadProfileSlugs(corpusRoot);
-
-  const authorRefs = new Map<string, Set<string>>();
-  for (const r of records) for (const a of r.authors) (authorRefs.get(a) ?? authorRefs.set(a, new Set()).get(a)!).add(r.refId);
-
-  const ranked = [...inDeg.entries()].sort((a, b) => b[1] - a[1]).slice(0, scan);
+  const ctx = loadGenContext(corpusRoot);
+  const ranked = [...ctx.inDeg.entries()].sort((a, b) => b[1] - a[1]).slice(0, scan);
   const results: ProfileGenResult[] = [];
   const seen = new Set<string>();
   for (const [refId] of ranked) {
     if (results.length >= limit) break;
-    const r = byId.get(refId);
-    const primary = r?.authors[0];
+    const primary = ctx.byId.get(refId)?.authors[0];
     if (!primary) continue;
     if (INST_KEYWORDS.some((kw) => primary.toLowerCase().includes(kw))) continue;
     const slug = slugifyAuthor(primary);
-    if (existing.has(slug) || seen.has(slug)) continue;
+    if (ctx.existing.has(slug) || seen.has(slug)) continue;
     seen.add(slug);
 
-    const refs = [...(authorRefs.get(primary) ?? [])].sort();
+    const refs = [...(ctx.authorRefs.get(primary) ?? [])].sort();
     const outRel = path.join('documentation', 'profiles', 'people', `PROF-P-${slug}.md`);
-    const content = buildBody(primary, slug, refs, byId, inDeg, today);
+    const content = buildProfileBody(primary, slug, refs, ctx.byId, ctx.inDeg, today);
     const outAbs = path.join(corpusRoot, outRel);
 
     if (!opts.write) {
