@@ -9,7 +9,7 @@ description: Build, query, inspect dependencies, and report statistics for the s
 
 You manage the AIWG artifact index — building or rebuilding the searchable index of all SDLC artifacts in `.aiwg/`, querying it by text, inspecting dependency graphs, and reporting index statistics.
 
-> **Scope: SDLC artifacts, not research corpora.** This skill (and `aiwg index ...`) operates on the SDLC artifact graph stored under `.aiwg/.index/*` (JSON: nodes, edges, checksums). It does **not** generate the human-readable markdown indices declared in `.aiwg/config.yaml` under `index.graphs.indices.manifest` for research-papers-style corpora. For those rendered indices (`indices/by-topic.md`, `indices/by-year.md`, `indices/authors.md`, etc.), use the `corpus-index-build` skill from `research-complete`.
+> **Scope: the JSON artifact graph AND research-corpus markdown views.** This skill manages the JSON artifact graph under `.aiwg/.index/*` (nodes, edges, checksums). As of #1490, `aiwg index build` **also** renders research-corpus markdown views (`indices/by-topic.md`, `indices/by-year.md`, `indices/authors.md`, `citation-network`, …) natively, in the same process — one command produces both from one config (`.aiwg/aiwg.config` `index.graphs`, #1491). The former standalone `corpus-index-build` `build.py` is retired; that skill now points back to `aiwg index build`. Markdown views render only when the project has a `documentation/references/` corpus, so this is a no-op in ordinary SDLC projects.
 
 ## Triggers
 

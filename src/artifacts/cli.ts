@@ -19,9 +19,7 @@
 
 import type { GraphType } from './types.js';
 import { GRAPH_CONFIGS, loadUserGraphConfigs } from './types.js';
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { load as loadYaml } from 'js-yaml';
+import { SUPPORTED_VIEWS } from './corpus-views/renderers.js';
 
 /** Parse --graph flag from args, returns undefined for "all graphs" */
 function parseGraphFlag(args: string[]): GraphType | undefined {
@@ -31,7 +29,9 @@ function parseGraphFlag(args: string[]): GraphType | undefined {
   // Load user-defined graphs so validation is complete
   loadUserGraphConfigs(process.cwd());
   if (val in GRAPH_CONFIGS) return val;
-  const validNames = Object.keys(GRAPH_CONFIGS).join(', ');
+  // Corpus markdown views (#1490) are valid --graph targets for `index build`.
+  if ((SUPPORTED_VIEWS as readonly string[]).includes(val)) return val;
+  const validNames = [...Object.keys(GRAPH_CONFIGS), ...SUPPORTED_VIEWS].join(', ');
   console.error(`Error: Invalid graph type '${val}'. Valid: ${validNames}`);
   process.exit(1);
 }
@@ -297,14 +297,20 @@ async function handleBuild(args: string[]): Promise<void> {
   // Load user-defined graphs
   loadUserGraphConfigs(cwd);
 
+  let jsonBuilt = false;
   if (graph) {
-    // Build a specific graph — explicitly requested via --graph
-    await buildIndex(cwd, { force, verbose, scope, graph, explicit: true });
+    // --graph X: build the JSON graph if X is one; otherwise X may be a
+    // research-corpus markdown view, rendered below.
+    if (graph in GRAPH_CONFIGS) {
+      await buildIndex(cwd, { force, verbose, scope, graph, explicit: true });
+      jsonBuilt = true;
+    }
   } else if (all) {
     // Build all known graphs — user asked for everything, but don't hard-error on missing dirs
     for (const name of Object.keys(GRAPH_CONFIGS)) {
       await buildIndex(cwd, { force, verbose, graph: name, explicit: false });
     }
+    jsonBuilt = true;
   } else {
     // Default: build graphs with defaultBuild=true; skip gracefully if their dirs don't exist
     for (const [name, config] of Object.entries(GRAPH_CONFIGS)) {
@@ -312,36 +318,36 @@ async function handleBuild(args: string[]): Promise<void> {
         await buildIndex(cwd, { force, verbose, scope: name === Object.keys(GRAPH_CONFIGS)[0] ? scope : undefined, graph: name, explicit: false });
       }
     }
+    jsonBuilt = true;
   }
 
-  maybePrintMarkdownIndicesHint(cwd);
-}
-
-function hasMarkdownIndicesManifest(cwd: string): boolean {
-  const readManifest = (obj: Record<string, unknown> | null | undefined): boolean => {
-    const index = obj?.index as Record<string, unknown> | undefined;
-    const graphs = index?.graphs as Record<string, unknown> | undefined;
-    const indices = graphs?.indices as Record<string, unknown> | undefined;
-    return Array.isArray(indices?.manifest) && (indices!.manifest as unknown[]).length > 0;
-  };
-
-  // Canonical home: .aiwg/aiwg.config (JSON, #1491).
-  const aiwgConfigPath = join(cwd, '.aiwg', 'aiwg.config');
-  if (existsSync(aiwgConfigPath)) {
-    try {
-      if (readManifest(JSON.parse(readFileSync(aiwgConfigPath, 'utf8')))) return true;
-    } catch {
-      // fall through to legacy
+  // Render research-corpus markdown views in the same process (#1490, Full A —
+  // the native replacement for the retired corpus-index-build/build.py).
+  // No-op when the project has no documentation/references/ corpus.
+  const { buildCorpusViews } = await import('./corpus-views/build.js');
+  const viewResults = await buildCorpusViews(cwd, { force, only: graph });
+  if (viewResults.length > 0) {
+    const built = viewResults.filter((r) => r.status === 'built').length;
+    const skipped = viewResults.filter((r) => r.status === 'skipped').length;
+    const unsupported = viewResults.filter((r) => r.status === 'unsupported').length;
+    console.log('');
+    console.log(`Markdown views: ${built} built, ${skipped} up to date${unsupported ? `, ${unsupported} unsupported` : ''} → indices/`);
+    if (verbose || unsupported) {
+      for (const r of viewResults) {
+        const extra = r.status === 'unsupported' ? ` (${r.error})` : '';
+        console.log(`  ${r.graph}: ${r.status} → ${r.output}${extra}`);
+      }
     }
   }
 
-  // Legacy fallback: .aiwg/config.yaml.
-  const configPath = join(cwd, '.aiwg', 'config.yaml');
-  if (!existsSync(configPath)) return false;
-  try {
-    return readManifest(loadYaml(readFileSync(configPath, 'utf8')) as Record<string, unknown> | null);
-  } catch {
-    return false;
+  // A --graph that matched neither a JSON graph nor a rendered view is unknown.
+  if (graph && !jsonBuilt && viewResults.length === 0) {
+    console.error(`Unknown graph: ${graph}`);
+    process.exit(1);
+  }
+  // Mirror build.py: an unsupported view name in the manifest fails the build.
+  if (viewResults.some((r) => r.status === 'unsupported')) {
+    process.exit(1);
   }
 }
 
@@ -361,15 +367,6 @@ async function validateIndexConfigOrExit(cwd: string): Promise<void> {
     console.error('Fix the errors above in .aiwg/aiwg.config (or legacy .aiwg/config.yaml) and re-run.');
     process.exit(1);
   }
-}
-
-function maybePrintMarkdownIndicesHint(cwd: string): void {
-  if (!hasMarkdownIndicesManifest(cwd)) return;
-  console.log('');
-  console.log('Note: markdown indices declared in index.graphs.indices.manifest are not rendered by `aiwg index build`.');
-  console.log('      To render them, use the corpus-index-build skill:');
-  console.log('        aiwg discover "build research indices"');
-  console.log('        aiwg show skill corpus-index-build');
 }
 
 /**
