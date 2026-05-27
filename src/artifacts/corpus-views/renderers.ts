@@ -12,6 +12,7 @@
 import * as path from 'path';
 import { PIPELINE_STAGES, SIZE_TIERS } from './taxonomies.js';
 import { type RefRecord, compareRefId, refSortKey, normalizeAuthor, loadProfileSlugs } from './ref-parser.js';
+import { computeStaleness } from './corpus-config.js';
 
 export interface RenderContext {
   records: RefRecord[];
@@ -244,11 +245,7 @@ function renderPipeline(ctx: RenderContext): string {
 }
 
 // ── Radar / discovery / funder views (#1492) ──────────────────────────────
-
-/** Radar refresh-cadence enum → window in days. `on-demand` (null) is never overdue. */
-const RADAR_CADENCE_DAYS: Record<string, number | null> = {
-  monthly: 30, quarterly: 90, biannual: 180, biennial: 180, annual: 365, 'on-demand': null,
-};
+// Cadence → window math lives in corpus-config.ts (the one staleness helper, #1498/#1502).
 
 /** GRADE display order; unknown grades fall after, 'Ungraded' last. */
 const GRADE_ORDER = ['A', 'A-', 'B', 'B-', 'C', 'C-', 'D'];
@@ -283,12 +280,9 @@ function renderStaleQueue(ctx: RenderContext): string {
   for (const r of ctx.records) {
     const rad = r.radar;
     if (!rad || !rad.refreshCadence || !rad.lastRefreshed) continue;
-    const cadenceDays = RADAR_CADENCE_DAYS[rad.refreshCadence.toLowerCase()];
-    if (cadenceDays === null || cadenceDays === undefined) continue; // on-demand / unknown cadence → not queued
-    const last = new Date(`${rad.lastRefreshed}T00:00:00Z`);
-    if (Number.isNaN(last.getTime())) continue;
-    const daysSince = Math.floor((today.getTime() - last.getTime()) / 86_400_000);
-    rows.push({ r, cadence: rad.refreshCadence, last: rad.lastRefreshed, overdue: daysSince - cadenceDays });
+    const { overdueDays } = computeStaleness(rad.refreshCadence, rad.lastRefreshed, today);
+    if (overdueDays === null) continue; // on-demand / unknown cadence / unparseable date → not queued
+    rows.push({ r, cadence: rad.refreshCadence, last: rad.lastRefreshed, overdue: overdueDays });
   }
   const sorted = sortByKeys(rows, (row) => [-row.overdue, ...refSortKey(row.r.refId)]);
   const staleCount = sorted.filter((x) => x.overdue > 0).length;
