@@ -79,7 +79,7 @@ export interface BuildViewsOptions {
  * in `.aiwg/aiwg.config` > the project root (cwd). Relative values resolve
  * against cwd.
  */
-async function resolveCorpusRoot(cwd: string): Promise<string> {
+export async function resolveCorpusRoot(cwd: string): Promise<string> {
   const env = process.env.AIWG_CORPUS_ROOT;
   if (env && env.trim()) return path.isAbsolute(env) ? env : path.join(cwd, env);
   try {

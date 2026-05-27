@@ -1,0 +1,108 @@
+/**
+ * `aiwg corpus` subcommand router — radar/freshness tools (#1498).
+ *
+ * Mirrors src/artifacts/cli.ts (the `aiwg index` router): a thin arg parser that
+ * resolves the corpus root (env > research.corpusRoot > cwd, via build.ts's
+ * resolveCorpusRoot) and dispatches to the corpus-tools functions. The
+ * research-complete radar-* skills wrap these subcommands.
+ *
+ * Subcommands:
+ *   radar-init   --ref REF-XXX | --all-missing [--cadence C] [--cluster T] [--write]
+ *   radar-status [--stale-only] [--format table|csv|list] [--out PATH]
+ *   radar-report [--cluster T] [--out PATH]
+ *
+ * @source historical: corpus/radar_init.py, radar_staleness.py, radar_report.py
+ */
+
+import * as fs from 'fs';
+import * as path from 'path';
+import { resolveCorpusRoot } from '../corpus-views/build.js';
+import { scaffoldRadar, radarInitMissing } from './radar-init.js';
+import { radarStatusRows, renderRadarStatus, type RadarStatusFormat } from './radar-status.js';
+import { renderRadarReport } from './radar-report.js';
+
+function flagValue(args: string[], name: string): string | undefined {
+  const i = args.indexOf(name);
+  return i !== -1 && i + 1 < args.length ? args[i + 1] : undefined;
+}
+
+function hasFlag(args: string[], name: string): boolean {
+  return args.includes(name);
+}
+
+const HELP = `aiwg corpus — research-corpus tools
+
+Usage:
+  aiwg corpus radar-init --ref REF-XXX [--cadence C] [--cluster T] [--write]
+  aiwg corpus radar-init --all-missing [--write]
+  aiwg corpus radar-status [--stale-only] [--format table|csv|list] [--out PATH]
+  aiwg corpus radar-report [--cluster TAG] [--out PATH]
+
+radar-init scaffolds radar sidecars (dry-run unless --write; skips existing).
+radar-status reports overdue radars (most-overdue-first).
+radar-report aggregates corpus/cluster freshness.
+`;
+
+function radarInit(root: string, args: string[]): void {
+  const write = hasFlag(args, '--write');
+  const cadence = flagValue(args, '--cadence');
+  const cluster = flagValue(args, '--cluster');
+  if (hasFlag(args, '--all-missing')) {
+    const results = radarInitMissing(root, { cadence, cluster, write });
+    console.log(`Refs missing radars: ${results.length}`);
+    for (const r of results) console.log('  ' + r.message);
+    return;
+  }
+  const ref = flagValue(args, '--ref');
+  if (!ref) throw new Error('radar-init requires --ref <REF-XXX> or --all-missing');
+  console.log(scaffoldRadar(root, ref, { cadence, cluster, write }).message);
+}
+
+function radarStatus(root: string, args: string[]): void {
+  const staleOnly = hasFlag(args, '--stale-only');
+  const format = (flagValue(args, '--format') ?? 'table') as RadarStatusFormat;
+  if (!['table', 'csv', 'list'].includes(format)) {
+    throw new Error(`radar-status: invalid --format '${format}' (table|csv|list)`);
+  }
+  const content = renderRadarStatus(radarStatusRows(root, { staleOnly }), format);
+  emit(content, flagValue(args, '--out'), root);
+}
+
+function radarReport(root: string, args: string[]): void {
+  const content = renderRadarReport(root, { cluster: flagValue(args, '--cluster') });
+  emit(content, flagValue(args, '--out'), root);
+}
+
+/** Write to --out (resolved against the corpus root) or print to stdout. */
+function emit(content: string, out: string | undefined, root: string): void {
+  if (!out) {
+    process.stdout.write(content);
+    return;
+  }
+  const outPath = path.isAbsolute(out) ? out : path.join(root, out);
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  fs.writeFileSync(outPath, content, 'utf-8');
+  console.log(`Wrote ${path.relative(root, outPath)}`);
+}
+
+/** Route `aiwg corpus <subcommand> [...args]`. Throws on error (handler maps to exit code). */
+export async function corpusMain(args: string[], cwd: string = process.cwd()): Promise<void> {
+  const sub = args[0];
+  const rest = args.slice(1);
+  if (!sub || sub === 'help' || sub === '--help' || sub === '-h') {
+    process.stdout.write(HELP);
+    return;
+  }
+  const root = await resolveCorpusRoot(cwd);
+  switch (sub) {
+    case 'radar-init':
+      return radarInit(root, rest);
+    case 'radar-status':
+      return radarStatus(root, rest);
+    case 'radar-report':
+      return radarReport(root, rest);
+    default:
+      process.stderr.write(`Unknown corpus subcommand: ${sub}\n\n${HELP}`);
+      throw new Error(`unknown corpus subcommand: ${sub}`);
+  }
+}

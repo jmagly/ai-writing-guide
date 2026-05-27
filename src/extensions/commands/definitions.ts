@@ -1073,6 +1073,35 @@ export const indexCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Research-corpus tools — radar/freshness subsystem (#1498)
+export const corpusCommand: Extension = {
+  id: 'corpus',
+  type: 'skill',
+  name: 'Research Corpus Tools',
+  description: 'Research-corpus tools (radar-init, radar-status, radar-report)',
+  version: '1.0.0',
+  capabilities: ['cli', 'research', 'corpus', 'radar', 'freshness'],
+  keywords: ['corpus', 'radar', 'freshness', 'staleness', 'radar-init', 'radar-status', 'radar-report', 'refresh cadence', 'GRADE trajectory'],
+  category: 'index',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['radar', 'radar status', 'radar report', 'scaffold radar', 'stale radars', 'corpus freshness'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<radar-init|radar-status|radar-report> [options]',
+      allowedTools: ['Read', 'Glob', 'Grep', 'Write'],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Discovery — first-class top-level verb (#1212)
 //
 // Discovery is the operator surface for finding AIWG skills, agents, commands,
@@ -3249,6 +3278,7 @@ export const commandDefinitions: Extension[] = [
 
   // Index + Discovery (3)
   indexCommand,
+  corpusCommand,
   discoverCommand,
   showCommand,
 

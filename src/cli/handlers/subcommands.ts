@@ -1077,6 +1077,29 @@ export const indexHandler: CommandHandler = {
 };
 
 /**
+ * `aiwg corpus` — research-corpus tools (radar/freshness subsystem, #1498).
+ * Delegates to the corpus-tools router, mirroring indexHandler.
+ */
+export const corpusHandler: CommandHandler = {
+  id: "corpus",
+  name: "Research Corpus Tools",
+  description: "Research-corpus tools (radar-init, radar-status, radar-report)",
+  category: "index",
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    try {
+      const { corpusMain } = await import("../../artifacts/corpus-tools/cli.js");
+      await corpusMain(ctx.args, ctx.cwd);
+      return { exitCode: 0 };
+    } catch (error) {
+      const result = handlerResultFromError(error);
+      return { ...result, message: `Corpus command failed: ${result.message}` };
+    }
+  },
+};
+
+/**
  * Discovery command handler — first-class top-level verb (#1212).
  *
  * Forwards to the same implementation as `aiwg index discover` but

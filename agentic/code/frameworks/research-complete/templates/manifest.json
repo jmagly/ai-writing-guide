@@ -1,8 +1,8 @@
 {
   "framework": "research-complete",
   "version": "1.0.0",
-  "template_count": 8,
-  "last_updated": "2026-02-03",
+  "template_count": 9,
+  "last_updated": "2026-05-27",
   "templates": [
     {
       "template_id": "literature-note",
@@ -91,12 +91,24 @@
       "primary_agent": "Acquisition Agent",
       "progressive_disclosure": true,
       "reasoning_required": true
+    },
+    {
+      "template_id": "radar-sidecar",
+      "filename": "radar-sidecar.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "Radar/freshness sidecar: GRADE re-assessment, refresh cadence, and signal-gathering history for a corpus REF",
+      "use_case": "Track per-paper freshness; scaffolded by `aiwg corpus radar-init`, consumed by radar-status/radar-report and the radar views (#1498)",
+      "primary_agent": "Quality Agent",
+      "progressive_disclosure": false,
+      "reasoning_required": false
     }
   ],
   "categories": {
     "note-taking": ["literature-note", "summary"],
     "analysis": ["extraction", "gap-report", "citation-network", "quality-assessment"],
-    "metadata": ["provenance-record", "acquisition-report"]
+    "metadata": ["provenance-record", "acquisition-report"],
+    "radar": ["radar-sidecar"]
   },
   "usage_sequence": [
     {
