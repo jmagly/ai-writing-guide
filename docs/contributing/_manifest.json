@@ -5,6 +5,7 @@
   "order": [
     "contributor-quickstart",
     "maintainer-review-guide",
-    "testing-requirements"
+    "testing-requirements",
+    "publishing-blog-posts"
   ]
 }

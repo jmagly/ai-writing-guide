@@ -1,0 +1,8 @@
+{
+  "title": "Blog",
+  "summary": "AIWG engineering blog — how the framework works and how to use it",
+  "collapsed": true,
+  "order": [
+    "2026-5-how-aiwg-builds-your-system-prompt"
+  ]
+}

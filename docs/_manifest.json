@@ -113,6 +113,9 @@
     "contributing/contributor-quickstart",
     "contributing/maintainer-review-guide",
     "contributing/testing-requirements",
+    "contributing/publishing-blog-posts",
+    "blog",
+    "blog/2026-5-how-aiwg-builds-your-system-prompt",
     "troubleshooting",
     "troubleshooting/setup-issues",
     "troubleshooting/deployment-issues",
@@ -854,6 +857,26 @@
       "summary": "Test standards for contributions",
       "file": "contributing/testing-requirements.md",
       "parent": "contributing"
+    },
+    {
+      "id": "contributing/publishing-blog-posts",
+      "title": "Publishing Blog Posts",
+      "summary": "Blog source-of-truth model, frontmatter spec, and publish flow",
+      "file": "contributing/publishing-blog-posts.md",
+      "parent": "contributing"
+    },
+    {
+      "id": "blog",
+      "title": "Blog",
+      "summary": "AIWG engineering blog",
+      "collapsed": true
+    },
+    {
+      "id": "blog/2026-5-how-aiwg-builds-your-system-prompt",
+      "title": "How AIWG builds your customized system prompt",
+      "summary": "AIWG assembles a per-session prompt and command set from your workspace state across ten AI tools.",
+      "file": "blog/2026-5-how-aiwg-builds-your-system-prompt.md",
+      "parent": "blog"
     },
     {
       "id": "troubleshooting",
