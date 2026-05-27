@@ -50,7 +50,7 @@ Output format: `full` (default), `summary`, or `json`.
 
 ## Configuration
 
-When generating or editing a research corpus `.aiwg/config.yaml`, keep the two index paths distinct:
+When generating or editing a research corpus index config — canonically `.aiwg/aiwg.config` (JSON) as of #1491 — keep the two index paths distinct:
 
 ```yaml
 # Build JSON node graphs (citation network, profiles, etc.):
@@ -64,28 +64,45 @@ When generating or editing a research corpus `.aiwg/config.yaml`, keep the two i
 #     aiwg show skill corpus-index-build
 ```
 
-Markdown graphs are defined under `index.graphs.indices.manifest` in `.aiwg/config.yaml`. This is the schema `build.py` actually parses (`configured_graphs()`): it reads each manifest entry's **`name`** (which selects the renderer) and optional **`output`** (defaults to `indices/<name>.md`). All other keys on an entry — `description`, `source`, notes, etc. — are human-facing metadata that `build.py` ignores.
+Markdown graphs are defined under `index.graphs.indices.manifest`. As of #1491 the canonical home is **`.aiwg/aiwg.config`** (JSON, validated against `aiwg.config.v1.json`); the legacy **`.aiwg/config.yaml`** (YAML) still works as a deprecated fallback. `build.py` reads `aiwg.config` first and falls back to `config.yaml`. Either way `configured_graphs()` reads each manifest entry's **`name`** (which selects the renderer) and optional **`output`** (defaults to `indices/<name>.md`); other keys (`description`, `source`, …) are human-facing metadata it ignores.
 
-The following config round-trips through `build.py` unmodified:
+The following `.aiwg/aiwg.config` block round-trips through `build.py` unmodified:
+
+```json
+{
+  "index": {
+    "graphs": {
+      "indices": {
+        "manifest": [
+          { "name": "by-topic",         "output": "indices/by-topic.md", "description": "Papers grouped by detected topic" },
+          { "name": "by-year",          "output": "indices/by-year.md" },
+          { "name": "authors",          "output": "indices/authors.md" },
+          { "name": "citation-network", "output": "indices/citation-network.md" }
+        ]
+      }
+    }
+  }
+}
+```
+
+<details><summary>Legacy <code>.aiwg/config.yaml</code> equivalent (deprecated — migrate the index block into aiwg.config)</summary>
 
 ```yaml
 index:
   graphs:
     indices:
-      # build.py consumes only `name` (renderer selector) and `output` (path).
-      # Sibling keys like scanDirs/extensions/defaultBuild are read by the
-      # separate `aiwg index build` command, not by this skill's build.py.
       manifest:
         - name: by-topic
           output: indices/by-topic.md
-          description: "Papers grouped by detected topic"     # metadata only
         - name: by-year
           output: indices/by-year.md
         - name: authors
           output: indices/authors.md
-        - name: citation-network                              # needs citation sidecars
+        - name: citation-network
           output: indices/citation-network.md
 ```
+
+</details>
 
 > **The entry `name` selects the renderer — there is no `type` key.** A manifest
 > entry `name: by-topic` invokes the topic renderer; `name: by-year` the timeline

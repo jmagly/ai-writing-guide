@@ -33,7 +33,7 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | Statistics | "how many artifacts are indexed?" | Run `aiwg index stats` |
 | JSON output | "get index stats as JSON" | Run `aiwg index stats --json` |
 
-> **`.aiwg/.index/` is a regenerable build artifact, not committed.** It is gitignored by default (`aiwg use` / `aiwg regenerate` / scaffolding add it to `.gitignore`), so a fresh clone has no index — `aiwg index build --all` is the standard bootstrap. `aiwg doctor` flags a missing index (`info`, when `.aiwg/config.yaml` declares an `index:` block) or a stale one (`warn`, when recorded source files changed) and points back to `aiwg index build`.
+> **`.aiwg/.index/` is a regenerable build artifact, not committed.** It is gitignored by default (`aiwg use` / `aiwg regenerate` / scaffolding add it to `.gitignore`), so a fresh clone has no index — `aiwg index build --all` is the standard bootstrap. `aiwg doctor` flags a missing index (`info`, when an `index` block is declared in `.aiwg/aiwg.config` — the canonical home as of #1491 — or legacy `.aiwg/config.yaml`) or a stale one (`warn`, when recorded source files changed) and points back to `aiwg index build`.
 
 ## Behavior
 

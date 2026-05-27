@@ -280,6 +280,9 @@ async function handleBuild(args: string[]): Promise<void> {
   const { buildIndex } = await import('./index-builder.js');
   const cwd = process.cwd();
 
+  // Validate the index config at build time (#1491) — fail fast on malformed graph defs.
+  await validateIndexConfigOrExit(cwd);
+
   const force = args.includes('--force');
   const verbose = args.includes('--verbose');
   const all = args.includes('--all');
@@ -315,17 +318,48 @@ async function handleBuild(args: string[]): Promise<void> {
 }
 
 function hasMarkdownIndicesManifest(cwd: string): boolean {
-  const configPath = join(cwd, '.aiwg', 'config.yaml');
-  if (!existsSync(configPath)) return false;
-
-  try {
-    const config = loadYaml(readFileSync(configPath, 'utf8')) as Record<string, unknown> | null;
-    const index = config?.index as Record<string, unknown> | undefined;
+  const readManifest = (obj: Record<string, unknown> | null | undefined): boolean => {
+    const index = obj?.index as Record<string, unknown> | undefined;
     const graphs = index?.graphs as Record<string, unknown> | undefined;
     const indices = graphs?.indices as Record<string, unknown> | undefined;
-    return Array.isArray(indices?.manifest) && indices.manifest.length > 0;
+    return Array.isArray(indices?.manifest) && (indices!.manifest as unknown[]).length > 0;
+  };
+
+  // Canonical home: .aiwg/aiwg.config (JSON, #1491).
+  const aiwgConfigPath = join(cwd, '.aiwg', 'aiwg.config');
+  if (existsSync(aiwgConfigPath)) {
+    try {
+      if (readManifest(JSON.parse(readFileSync(aiwgConfigPath, 'utf8')))) return true;
+    } catch {
+      // fall through to legacy
+    }
+  }
+
+  // Legacy fallback: .aiwg/config.yaml.
+  const configPath = join(cwd, '.aiwg', 'config.yaml');
+  if (!existsSync(configPath)) return false;
+  try {
+    return readManifest(loadYaml(readFileSync(configPath, 'utf8')) as Record<string, unknown> | null);
   } catch {
     return false;
+  }
+}
+
+/**
+ * Validate the project's index config (#1491) before building. Reads the
+ * canonical `.aiwg/aiwg.config` index block (config.yaml fallback) and rejects
+ * malformed graph defs at validate time with actionable messages.
+ */
+async function validateIndexConfigOrExit(cwd: string): Promise<void> {
+  const { readIndexConfig, validateIndexConfig } = await import('../config/aiwg-config.js');
+  const { index } = await readIndexConfig(cwd);
+  if (!index) return;
+  const errors = validateIndexConfig(index);
+  if (errors.length > 0) {
+    console.error('✗ Invalid index config (#1491):');
+    for (const e of errors) console.error(`  - ${e}`);
+    console.error('Fix the errors above in .aiwg/aiwg.config (or legacy .aiwg/config.yaml) and re-run.');
+    process.exit(1);
   }
 }
 

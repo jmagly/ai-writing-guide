@@ -3475,7 +3475,7 @@ The index uses a **multi-graph architecture** with three built-in graph types pl
 | `project` | `.aiwg/` artifacts | `.aiwg/.index/project/` | Yes |
 | `codebase` | `src/`, `test/`, `tools/` | `.aiwg/.index/codebase/` | Yes (skipped if dirs absent) |
 | `framework` | `agentic/code/`, `docs/` | `.aiwg/.index/framework/` | No (use `--graph framework`) |
-| *(user-defined)* | configured in `.aiwg/config.yaml` | `.aiwg/.index/<name>/` | Configurable |
+| *(user-defined)* | configured in `.aiwg/aiwg.config` (#1491) | `.aiwg/.index/<name>/` | Configurable |
 
 **`defaultBuild` behavior**: When you run `aiwg index build` with no `--graph` flag, every graph with `defaultBuild: true` is built. If a defaultBuild graph's scan directories do not exist (e.g. `codebase` in a docs-only repo), it is skipped with a warning rather than erroring. To require a graph's directories to exist, request it explicitly: `aiwg index build --graph codebase`.
 
@@ -3537,21 +3537,26 @@ aiwg index build [options]
 aiwg index build --all     # standard post-clone bootstrap — builds every known graph
 ```
 
-`aiwg doctor` reports the index as `info` when it is absent (and the project's `.aiwg/config.yaml` declares an `index:` block) and `warn` when it is present but stale (recorded source files have changed since the last build). Both point you back to `aiwg index build`. If you prefer to commit the index as a zero-rebuild cache for teammates, you can un-ignore `.aiwg/.index/` in your `.gitignore` — but the default is ignore-and-rebuild.
+`aiwg doctor` reports the index as `info` when it is absent (and the project declares an `index` block in `.aiwg/aiwg.config`, or legacy `.aiwg/config.yaml`) and `warn` when it is present but stale (recorded source files have changed since the last build). Both point you back to `aiwg index build`. If you prefer to commit the index as a zero-rebuild cache for teammates, you can un-ignore `.aiwg/.index/` in your `.gitignore` — but the default is ignore-and-rebuild.
 
-**User-defined graphs**: Define custom index graphs in `.aiwg/config.yaml` under `index.graphs`. Each graph gets its own named index under `.aiwg/.index/<name>/`.
+**User-defined graphs**: Define custom index graphs under `index.graphs` in **`.aiwg/aiwg.config`** (JSON) — the canonical, schema-validated home as of #1491. Each graph gets its own named index under `.aiwg/.index/<name>/`.
 
-```yaml
-# .aiwg/config.yaml
-index:
-  graphs:
-    references:
-      scanDirs:
-        - documentation/references
-      extensions:
-        - .md
-      defaultBuild: false   # only built when explicitly requested via --graph references
+```json
+// .aiwg/aiwg.config (excerpt)
+{
+  "index": {
+    "graphs": {
+      "references": {
+        "scanDirs": ["documentation/references"],
+        "extensions": [".md"],
+        "defaultBuild": false
+      }
+    }
+  }
+}
 ```
+
+> **Config home & migration (#1491).** Index config was consolidated from the legacy `.aiwg/config.yaml` (YAML, unvalidated) into `.aiwg/aiwg.config` (JSON, validated against `aiwg.config.v1.json`). `aiwg index build` and `aiwg doctor` now validate `index.graphs` and reject malformed defs at validate time (unknown graph type, missing `scanDirs`, bad regex, typo'd keys, malformed manifest). **To migrate:** move the `index:` block out of `.aiwg/config.yaml` into `.aiwg/aiwg.config` as JSON under the top-level `"index"` key, then delete it from `config.yaml`. The legacy `config.yaml` `index:` block still works as a deprecated fallback — `aiwg doctor` warns when it's in use — so migration is non-blocking. The YAML snippets below are illustrative; place them in `aiwg.config` as JSON.
 
 Fields:
 

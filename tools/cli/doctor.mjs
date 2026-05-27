@@ -24,6 +24,10 @@ const { maybePrintCommunityFooter } = await importImpl(
   import.meta.url,
   'community/footer.js'
 );
+const { readIndexConfig, validateIndexConfig } = await importImpl(
+  import.meta.url,
+  'config/aiwg-config.js'
+);
 
 // AIWG_ROOT: env override > channel-manager resolved path > legacy edge path
 // getFrameworkRoot() resolves correctly for npm global installs, edge, and dev channels.
@@ -1232,11 +1236,21 @@ async function runDoctor() {
 
     if (!indexExists) {
       let declaresIndex = false;
+      // Canonical home: .aiwg/aiwg.config `index` block (#1491).
       try {
-        const cfg = await fs.readFile(path.join(process.cwd(), '.aiwg', 'config.yaml'), 'utf-8');
-        declaresIndex = /^\s*index\s*:/m.test(cfg);
+        const ac = JSON.parse(await fs.readFile(path.join(process.cwd(), '.aiwg', 'aiwg.config'), 'utf-8'));
+        if (ac && typeof ac.index === 'object' && ac.index !== null) declaresIndex = true;
       } catch {
-        // No config — the project doesn't use the artifact index; stay silent.
+        // no aiwg.config / unparseable
+      }
+      // Legacy fallback: .aiwg/config.yaml `index:` block.
+      if (!declaresIndex) {
+        try {
+          const cfg = await fs.readFile(path.join(process.cwd(), '.aiwg', 'config.yaml'), 'utf-8');
+          declaresIndex = /^\s*index\s*:/m.test(cfg);
+        } catch {
+          // No config — the project doesn't use the artifact index; stay silent.
+        }
       }
       if (declaresIndex) {
         check('artifact-index', 'info', '.aiwg/.index/ not built — run "aiwg index build --all" to enable discovery queries');
@@ -1294,6 +1308,25 @@ async function runDoctor() {
         } else {
           check('artifact-index', 'warn', `.aiwg/.index/ is stale — ${drift} of ${checked} indexed file(s) changed or removed; run "aiwg index build" to refresh`);
         }
+      }
+    }
+  } catch {
+    // Non-fatal — skip silently.
+  }
+
+  // 13. Index config (#1491) — validate index.graphs + flag the deprecated config.yaml home.
+  try {
+    const { index, source } = await readIndexConfig(process.cwd());
+    if (source === 'config.yaml') {
+      check('index-config', 'warn', 'index config still in .aiwg/config.yaml — migrate the index block into .aiwg/aiwg.config (#1491; see docs/cli-reference.md)');
+    }
+    if (index) {
+      const errs = validateIndexConfig(index);
+      if (errs.length > 0) {
+        const more = errs.length > 1 ? ` (+${errs.length - 1} more)` : '';
+        check('index-config', 'error', `${errs.length} index.graphs error(s): ${errs[0]}${more} — run "aiwg index build" for the full list`);
+      } else if (source === 'aiwg.config') {
+        check('index-config', 'ok', 'index.graphs valid (.aiwg/aiwg.config)');
       }
     }
   } catch {

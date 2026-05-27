@@ -625,48 +625,71 @@ export function loadModuleGraphConfigs(cwd: string): string[] {
 export function loadUserGraphConfigs(cwd: string): string[] {
   // Load module-declared graphs first (frameworks/addons)
   const moduleLoaded = loadModuleGraphConfigs(cwd);
-
-  const configPath = `${cwd}/.aiwg/config.yaml`;
   const loaded: string[] = [...moduleLoaded];
 
+  // Resolve the operator's index.graphs source. Canonical home is
+  // .aiwg/aiwg.config (JSON, #1491); the legacy .aiwg/config.yaml is a
+  // deprecated fallback so un-migrated corpora keep working.
+  let graphs: Record<string, unknown> | undefined;
+  let fromDeprecatedYaml = false;
+
+  // (a) Canonical: .aiwg/aiwg.config (JSON).
   try {
-    if (!fs.existsSync(configPath)) return loaded;
-
-    const content = fs.readFileSync(configPath, 'utf-8');
-    const config = loadYaml(content) as Record<string, unknown> | null;
-    if (!config || typeof config !== 'object') return loaded;
-
-    const indexConfig = config.index as Record<string, unknown> | undefined;
-    if (!indexConfig || typeof indexConfig !== 'object') return loaded;
-
-    const graphs = indexConfig.graphs as Record<string, unknown> | undefined;
-    if (!graphs || typeof graphs !== 'object') return loaded;
-
-    for (const [name, def] of Object.entries(graphs)) {
-      if (name in BUILTIN_GRAPH_CONFIGS) {
-        // Cannot override built-in graph names
-        continue;
-      }
-
-      const graphConfig = parseGraphDef(name, def as Record<string, unknown>);
-      if (!graphConfig) continue;
-
-      // Operator config overrides module-declared graphs (emit warning if overriding)
-      if (moduleLoaded.includes(name)) {
-        // Operator override of a module-declared graph
-        GRAPH_CONFIGS[name] = graphConfig;
-        // Already in loaded list from module phase
-      } else {
-        GRAPH_CONFIGS[name] = graphConfig;
-        loaded.push(name);
-      }
+    const aiwgConfigPath = `${cwd}/.aiwg/aiwg.config`;
+    if (fs.existsSync(aiwgConfigPath)) {
+      const parsed = JSON.parse(fs.readFileSync(aiwgConfigPath, 'utf-8')) as Record<string, unknown>;
+      const idx = parsed.index as Record<string, unknown> | undefined;
+      const g = idx?.graphs as Record<string, unknown> | undefined;
+      if (g && typeof g === 'object') graphs = g;
     }
   } catch {
-    // Config loading is best-effort
+    // best-effort
+  }
+
+  // (b) Fallback: legacy .aiwg/config.yaml.
+  if (!graphs) {
+    try {
+      const configPath = `${cwd}/.aiwg/config.yaml`;
+      if (fs.existsSync(configPath)) {
+        const config = loadYaml(fs.readFileSync(configPath, 'utf-8')) as Record<string, unknown> | null;
+        const idx = config?.index as Record<string, unknown> | undefined;
+        const g = idx?.graphs as Record<string, unknown> | undefined;
+        if (g && typeof g === 'object') {
+          graphs = g;
+          fromDeprecatedYaml = true;
+        }
+      }
+    } catch {
+      // best-effort
+    }
+  }
+
+  if (!graphs) return loaded;
+
+  if (fromDeprecatedYaml && !yamlIndexDeprecationWarned) {
+    yamlIndexDeprecationWarned = true;
+    process.stderr.write(
+      '[aiwg index] note: index.graphs in .aiwg/config.yaml is deprecated — move the index block into .aiwg/aiwg.config (see docs/cli-reference.md, #1491).\n',
+    );
+  }
+
+  for (const [name, def] of Object.entries(graphs)) {
+    if (name in BUILTIN_GRAPH_CONFIGS) {
+      // Cannot override built-in graph names
+      continue;
+    }
+    const graphConfig = parseGraphDef(name, def as Record<string, unknown>);
+    if (!graphConfig) continue;
+    // Operator config overrides module-declared graphs; built-ins are protected above.
+    GRAPH_CONFIGS[name] = graphConfig;
+    if (!moduleLoaded.includes(name)) loaded.push(name);
   }
 
   return loaded;
 }
+
+/** Module-scoped guard so the config.yaml deprecation note prints at most once per process. */
+let yamlIndexDeprecationWarned = false;
 
 /**
  * Get the index output directory for a given graph type

@@ -171,9 +171,114 @@
           "description": "Free-form note explaining why this cap was chosen (e.g., 'Claude Team plan API quota')."
         }
       }
+    },
+    "index": {
+      "type": "object",
+      "description": "Artifact-index configuration — graph definitions (#1491). Consolidated here from the legacy .aiwg/config.yaml per ADR adr-index-config-consolidation.",
+      "additionalProperties": false,
+      "properties": {
+        "graphs": {
+          "type": "object",
+          "description": "Index graph definitions. Each key (except 'indices') is a JSON node/edge graph (IndexGraphDef); 'indices' holds the markdown-view manifest (IndexMarkdownIndices) rendered by corpus-index-build.",
+          "properties": {
+            "indices": { "$ref": "#/definitions/IndexMarkdownIndices" }
+          },
+          "additionalProperties": { "$ref": "#/definitions/IndexGraphDef" }
+        }
+      }
     }
   },
   "definitions": {
+    "IndexGraphDef": {
+      "type": "object",
+      "description": "A JSON node/edge index graph (mirrors GraphConfig in src/artifacts/types.ts).",
+      "additionalProperties": false,
+      "required": ["scanDirs"],
+      "properties": {
+        "type": { "type": "string", "description": "Graph type identifier (defaults to the graph's key name)." },
+        "scanDirs": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Directories to scan, relative to project root (required)." },
+        "extensions": { "type": "array", "items": { "type": "string" }, "description": "File extensions to index. Default: ['.md', '.yaml', '.json']." },
+        "shared": { "type": "boolean", "description": "Whether the graph is shared across projects. Default false." },
+        "defaultBuild": { "type": "boolean", "description": "Include in `aiwg index build` with no --graph. Default true." },
+        "nodeStrategy": { "type": "string", "enum": ["default", "filename-metadata"], "description": "Node creation strategy." },
+        "filenamePattern": { "type": "string", "description": "Named-capture regex for the filename-metadata strategy." },
+        "graphBackend": { "type": "string", "enum": ["json", "graphology", "sqlite"], "description": "Graph storage backend. Default 'json'." },
+        "description": { "type": "string", "description": "Human-facing note (metadata; not consumed by the builder)." },
+        "edgeExtraction": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["parser", "edges"],
+          "properties": {
+            "parser": { "type": "string", "enum": ["citation-sidecar"], "description": "Edge-extraction parser." },
+            "edges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["type", "source", "target"],
+                "properties": {
+                  "type": { "type": "string" },
+                  "source": { "type": "string" },
+                  "target": { "type": "string" },
+                  "skipEmpty": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "metadataSupplements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["scanDir", "matchOn", "nodeKey", "mergeFields"],
+            "properties": {
+              "scanDir": { "type": "string" },
+              "matchOn": { "type": "string" },
+              "nodeKey": { "type": "string" },
+              "mergeFields": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "embedding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "model": { "type": "string" },
+            "topK": { "type": "integer", "minimum": 1 },
+            "rebuildOn": { "type": "string", "enum": ["content-change", "always", "never"] }
+          }
+        }
+      }
+    },
+    "IndexMarkdownIndices": {
+      "type": "object",
+      "description": "Markdown-view manifest rendered by the corpus-index-build skill (build.py). The builder consumes each manifest entry's `name` (renderer selector) and optional `output`.",
+      "additionalProperties": false,
+      "required": ["manifest"],
+      "properties": {
+        "scanDirs": { "type": "array", "items": { "type": "string" } },
+        "extensions": { "type": "array", "items": { "type": "string" } },
+        "defaultBuild": { "type": "boolean" },
+        "manifest": {
+          "type": "array",
+          "description": "Ordered list of markdown views to render.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string", "description": "Renderer selector (by-topic, by-year, authors, by-venue, by-method, by-model-size, training-pipeline, citation-network, by-author, by-org, by-bridge, unprofiled-hubs)." },
+              "output": { "type": "string", "description": "Output path. Default indices/<name>.md." },
+              "description": { "type": "string", "description": "Human-facing note (metadata)." },
+              "source": { "type": "string", "description": "Human-facing note (metadata)." }
+            }
+          }
+        }
+      }
+    },
     "SecondaryRemote": {
       "type": "object",
       "description": "A non-primary git remote (mirror, upstream, publishing target)",

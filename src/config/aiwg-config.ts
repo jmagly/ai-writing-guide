@@ -169,6 +169,14 @@ export interface AiwgConfig {
    * @implements #1359
    */
   parallelism?: ParallelismConfig;
+
+  /**
+   * Artifact-index configuration — graph definitions consolidated here from
+   * the legacy `.aiwg/config.yaml` (#1491). Optional — absent for projects
+   * that don't define custom index graphs.
+   * @implements #1491
+   */
+  index?: IndexConfig;
 }
 
 /**
@@ -379,6 +387,198 @@ export function resolveParallelism(
   };
   if (parallelism?.rationale !== undefined) resolved.rationale = parallelism.rationale;
   return resolved;
+}
+
+/**
+ * Artifact-index configuration (#1491). Consolidated into `.aiwg/aiwg.config`
+ * from the legacy `.aiwg/config.yaml` per ADR adr-index-config-consolidation.
+ *
+ * `graphs` maps a graph name to its definition. The reserved key `indices`
+ * holds the markdown-view manifest consumed by the corpus-index-build skill;
+ * every other key is a JSON node/edge graph def (mirrors GraphConfig in
+ * src/artifacts/types.ts).
+ */
+export interface IndexConfig {
+  graphs?: Record<string, IndexGraphDef | IndexMarkdownIndices>;
+}
+
+/** A JSON node/edge index graph def. Mirrors GraphConfig (src/artifacts/types.ts). */
+export interface IndexGraphDef {
+  type?: string;
+  scanDirs: string[];
+  extensions?: string[];
+  shared?: boolean;
+  defaultBuild?: boolean;
+  nodeStrategy?: 'default' | 'filename-metadata';
+  filenamePattern?: string;
+  graphBackend?: 'json' | 'graphology' | 'sqlite';
+  description?: string;
+  edgeExtraction?: {
+    parser: 'citation-sidecar';
+    edges: Array<{ type: string; source: string; target: string; skipEmpty?: boolean }>;
+  };
+  metadataSupplements?: Array<{ scanDir: string; matchOn: string; nodeKey: string; mergeFields: string[] }>;
+  embedding?: { enabled: boolean; model?: string; topK?: number; rebuildOn?: 'content-change' | 'always' | 'never' };
+}
+
+/** The reserved `indices` graph: markdown-view manifest rendered by corpus-index-build. */
+export interface IndexMarkdownIndices {
+  scanDirs?: string[];
+  extensions?: string[];
+  defaultBuild?: boolean;
+  manifest: Array<{ name: string; output?: string; description?: string; source?: string }>;
+}
+
+const GRAPH_BACKENDS = ['json', 'graphology', 'sqlite'];
+const NODE_STRATEGIES = ['default', 'filename-metadata'];
+
+/**
+ * Validate an `index` config block, returning a list of human-readable error
+ * messages (empty = valid). Hand-rolled rather than ajv because aiwg.config has
+ * no runtime schema-validation pipeline and the codebase deliberately avoids
+ * pulling a validator dependency for config parsing (#1491).
+ *
+ * Catches the failure modes #1491 calls out: unknown graph type, missing
+ * scanDirs, bad regex, typo'd keys, malformed manifest. `aiwg index build` and
+ * `aiwg doctor` surface these at validate time instead of at runtime.
+ *
+ * @param index The value of `aiwg.config.index` (untrusted shape).
+ * @returns Array of error strings; empty when the block is valid or absent.
+ */
+export function validateIndexConfig(index: unknown): string[] {
+  const errors: string[] = [];
+  if (index === undefined || index === null) return errors;
+  if (typeof index !== 'object' || Array.isArray(index)) {
+    return ['index: must be an object'];
+  }
+
+  const graphs = (index as Record<string, unknown>).graphs;
+  if (graphs === undefined) return errors; // index with no graphs is permissible
+  if (typeof graphs !== 'object' || graphs === null || Array.isArray(graphs)) {
+    return ['index.graphs: must be an object mapping graph names to definitions'];
+  }
+
+  const isStringArray = (v: unknown): boolean => Array.isArray(v) && v.every((x) => typeof x === 'string');
+
+  for (const [name, rawDef] of Object.entries(graphs as Record<string, unknown>)) {
+    const where = `index.graphs.${name}`;
+    if (typeof rawDef !== 'object' || rawDef === null || Array.isArray(rawDef)) {
+      errors.push(`${where}: must be an object`);
+      continue;
+    }
+    const def = rawDef as Record<string, unknown>;
+
+    if (name === 'indices') {
+      // Markdown-view manifest (build.py).
+      const manifest = def.manifest;
+      if (!Array.isArray(manifest)) {
+        errors.push(`${where}.manifest: must be an array`);
+        continue;
+      }
+      manifest.forEach((entry, i) => {
+        if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+          errors.push(`${where}.manifest[${i}]: must be an object`);
+          return;
+        }
+        const e = entry as Record<string, unknown>;
+        if (typeof e.name !== 'string' || e.name.trim() === '') {
+          errors.push(`${where}.manifest[${i}]: 'name' is required and must be a non-empty string (it selects the renderer)`);
+        }
+        if (e.output !== undefined && typeof e.output !== 'string') {
+          errors.push(`${where}.manifest[${i}].output: must be a string`);
+        }
+      });
+      continue;
+    }
+
+    // JSON node/edge graph def.
+    if (!isStringArray(def.scanDirs) || (def.scanDirs as string[]).length === 0) {
+      errors.push(`${where}.scanDirs: required, must be a non-empty array of strings`);
+    }
+    if (def.extensions !== undefined && !isStringArray(def.extensions)) {
+      errors.push(`${where}.extensions: must be an array of strings`);
+    }
+    if (def.nodeStrategy !== undefined && !NODE_STRATEGIES.includes(def.nodeStrategy as string)) {
+      errors.push(`${where}.nodeStrategy: must be one of ${NODE_STRATEGIES.join(' | ')}`);
+    }
+    if (def.graphBackend !== undefined && !GRAPH_BACKENDS.includes(def.graphBackend as string)) {
+      errors.push(`${where}.graphBackend: must be one of ${GRAPH_BACKENDS.join(' | ')}`);
+    }
+    if (def.nodeStrategy === 'filename-metadata') {
+      if (typeof def.filenamePattern !== 'string' || def.filenamePattern.trim() === '') {
+        errors.push(`${where}.filenamePattern: required when nodeStrategy is 'filename-metadata'`);
+      }
+    }
+    if (def.filenamePattern !== undefined && typeof def.filenamePattern === 'string') {
+      try {
+        // eslint-disable-next-line no-new
+        new RegExp(def.filenamePattern);
+      } catch (err) {
+        errors.push(`${where}.filenamePattern: not a valid regular expression (${(err as Error).message})`);
+      }
+    }
+    if (def.edgeExtraction !== undefined) {
+      const ee = def.edgeExtraction;
+      if (typeof ee !== 'object' || ee === null || Array.isArray(ee)) {
+        errors.push(`${where}.edgeExtraction: must be an object`);
+      } else {
+        const eo = ee as Record<string, unknown>;
+        if (eo.parser !== 'citation-sidecar') {
+          errors.push(`${where}.edgeExtraction.parser: must be 'citation-sidecar'`);
+        }
+        if (!Array.isArray(eo.edges)) {
+          errors.push(`${where}.edgeExtraction.edges: must be an array`);
+        } else {
+          eo.edges.forEach((edge, i) => {
+            if (typeof edge !== 'object' || edge === null) {
+              errors.push(`${where}.edgeExtraction.edges[${i}]: must be an object`);
+              return;
+            }
+            const ed = edge as Record<string, unknown>;
+            for (const k of ['type', 'source', 'target']) {
+              if (typeof ed[k] !== 'string' || (ed[k] as string).trim() === '') {
+                errors.push(`${where}.edgeExtraction.edges[${i}].${k}: required, must be a non-empty string`);
+              }
+            }
+          });
+        }
+      }
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Read the `index` block, preferring `.aiwg/aiwg.config` (the consolidated
+ * home, #1491) and falling back to the legacy `.aiwg/config.yaml` `index:`
+ * block. Returns `{ index, source }` where source is 'aiwg.config',
+ * 'config.yaml' (deprecated), or 'none'.
+ *
+ * The fallback keeps un-migrated corpora working; callers should surface a
+ * deprecation notice when `source === 'config.yaml'`.
+ */
+export async function readIndexConfig(
+  projectDir: string,
+): Promise<{ index: IndexConfig | undefined; source: 'aiwg.config' | 'config.yaml' | 'none' }> {
+  const cfg = await readAiwgConfig(projectDir);
+  if (cfg?.index && typeof cfg.index === 'object') {
+    return { index: cfg.index, source: 'aiwg.config' };
+  }
+  // Fallback: legacy .aiwg/config.yaml (deprecated).
+  const yamlPath = resolve(projectDir, AIWG_DIR, 'config.yaml');
+  try {
+    await access(yamlPath);
+    const { load: loadYaml } = await import('js-yaml');
+    const raw = loadYaml(await readFile(yamlPath, 'utf-8')) as Record<string, unknown> | null;
+    const idx = raw?.index;
+    if (idx && typeof idx === 'object') {
+      return { index: idx as IndexConfig, source: 'config.yaml' };
+    }
+  } catch {
+    /* no config.yaml or unreadable */
+  }
+  return { index: undefined, source: 'none' };
 }
 
 /**

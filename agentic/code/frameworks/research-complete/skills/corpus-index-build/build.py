@@ -200,14 +200,35 @@ def parse_frontmatter(text: str) -> dict[str, Any]:
 
 
 def load_config(root: Path) -> dict[str, Any]:
+    # Canonical home is .aiwg/aiwg.config (JSON) per #1491. JSON needs no YAML
+    # parser, so this path works even when PyYAML is unavailable. Fall back to
+    # the legacy .aiwg/config.yaml (deprecated) for un-migrated corpora.
+    aiwg_config = root / ".aiwg" / "aiwg.config"
+    if aiwg_config.exists():
+        try:
+            data = json.loads(aiwg_config.read_text(encoding="utf-8", errors="replace"))
+            if isinstance(data, dict) and isinstance(data.get("index"), dict):
+                return data
+        except Exception:
+            pass
+        # aiwg.config present but carries no index block → fall through to config.yaml.
+
     path = root / ".aiwg" / "config.yaml"
     if not path.exists():
         return {}
     text = path.read_text(encoding="utf-8", errors="replace")
     if yaml:
         loaded = yaml.safe_load(text)
-        return loaded if isinstance(loaded, dict) else {}
-    return parse_simple_yaml(text)
+    else:
+        loaded = parse_simple_yaml(text)
+    loaded = loaded if isinstance(loaded, dict) else {}
+    if isinstance(loaded.get("index"), dict):
+        print(
+            "note: index config in .aiwg/config.yaml is deprecated — move the index block "
+            "into .aiwg/aiwg.config (#1491)",
+            file=sys.stderr,
+        )
+    return loaded
 
 
 def ref_sort_key(ref_id: str) -> tuple[int, str]:
