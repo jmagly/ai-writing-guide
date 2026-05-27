@@ -28,6 +28,7 @@ import { logDiscovery } from './discovery-log.js';
 import { computeMetrics, renderMetrics } from './profile-metrics.js';
 import { computeTrajectory, renderTrajectory } from './profile-temporal.js';
 import { detectCommunities, renderCommunities } from './profile-communities.js';
+import { funderRows, cofundingClusters, renderFunderNetwork } from './funder-network.js';
 
 function flagValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -54,6 +55,7 @@ Usage:
   aiwg corpus profile-metrics [--papers] [--out PATH]
   aiwg corpus profile-temporal --entity PROF-P-x [--out PATH]
   aiwg corpus profile-communities [--out PATH]
+  aiwg corpus funder-network [--scan-acks] [--out PATH]
 
 radar-init scaffolds radar sidecars (dry-run unless --write; skips existing).
 radar-status reports overdue radars (most-overdue-first).
@@ -67,6 +69,7 @@ discovery-log records the discovery block on a citation sidecar.
 profile-metrics computes h-index / CD-index / PageRank / centrality per profile (--papers for paper-level).
 profile-temporal computes publication trajectory + hot-streak for one profile.
 profile-communities detects co-author communities + modularity + bridge authors.
+funder-network reports per-funder yield (A-grade, mean CD, novelty bias) + co-funding clusters.
 `;
 
 function radarInit(root: string, args: string[]): void {
@@ -210,6 +213,8 @@ export async function corpusMain(args: string[], cwd: string = process.cwd()): P
       return profileTemporal(root, rest);
     case 'profile-communities':
       return emit(renderCommunities(detectCommunities(root)), flagValue(rest, '--out'), root);
+    case 'funder-network':
+      return emit(renderFunderNetwork(funderRows(root, { scanAcks: hasFlag(rest, '--scan-acks') }), cofundingClusters(root)), flagValue(rest, '--out'), root);
     default:
       process.stderr.write(`Unknown corpus subcommand: ${sub}\n\n${HELP}`);
       throw new Error(`unknown corpus subcommand: ${sub}`);
