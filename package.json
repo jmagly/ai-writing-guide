@@ -263,7 +263,7 @@
     }
   },
   "devDependencies": {
-    "@pagenary/publisher": "2026.5.1",
+    "@pagenary/publisher": "^2026.5.3",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.8.0",
     "@types/semver": "^7.7.1",

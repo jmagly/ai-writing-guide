@@ -3,19 +3,19 @@ title: "How AIWG builds your customized system prompt (and command set)"
 slug: "2026-5-how-aiwg-builds-your-system-prompt"
 date: "2026-05-26"
 summary: "AIWG doesn't ship one static system prompt. It assembles a per-session prompt and command set from your workspace state across ten AI tools, then regenerates it cleanly as your setup changes. Here's the mechanism — and how to hook your own agent in."
-hero: "./images/system-prompt.png"
-reading_time: 5
+hero: "https://docs.aiwg.io/assets/blog/system-prompt.png"
+reading_time: 9
 status: "published"
 canonical: "https://aiwg.io/blog/2026-5-how-aiwg-builds-your-system-prompt"
 pillar: "2 how/why"
 audience: "developers customizing AI coding assistants across more than one tool"
 aiwg_refs: ["aiwg use", "aiwg regenerate", "aiwg refresh", "hook-file architecture", "AIWG.md / AGENTS.md", "path-scoped rules", "aiwg discover", "aiwg show", "AgentSmith/CommandSmith/SkillSmith"]
-hashtags: ["AICoding", "DeveloperTools", "OpenSource", "DevEx", "PromptEngineering"]
+tags: ["ai-coding", "developer-tools", "open-source", "devex", "prompt-engineering"]
 ---
 
 # How AIWG builds your customized system prompt (and command set)
 
-![Diagram: one source of truth deployed across ten AI coding tools, with a per-session prompt assembled from workspace state](./images/system-prompt.png)
+![Diagram: one source of truth deployed across ten AI coding tools, with a per-session prompt assembled from workspace state](/assets/blog/system-prompt.png)
 
 A system prompt in a real project is a moving target. It should reflect exactly which AI tool you are in, which part of the repo you are currently editing, and which team conventions apply right now. A static text file can't keep up with an active codebase.
 

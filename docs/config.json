@@ -51,5 +51,16 @@
     "logoPath": "favicon.svg",
     "showTagline": true,
     "showDate": true
-  }
+  },
+  "collections": [
+    {
+      "path": "blog",
+      "route": "/blog",
+      "title": "AIWG Blog",
+      "manifest": true,
+      "feed": true,
+      "sortBy": "date",
+      "order": "desc"
+    }
+  ]
 }
