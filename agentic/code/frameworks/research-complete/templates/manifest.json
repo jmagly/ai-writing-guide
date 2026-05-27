@@ -1,7 +1,7 @@
 {
   "framework": "research-complete",
   "version": "1.0.0",
-  "template_count": 9,
+  "template_count": 10,
   "last_updated": "2026-05-27",
   "templates": [
     {
@@ -102,13 +102,25 @@
       "primary_agent": "Quality Agent",
       "progressive_disclosure": false,
       "reasoning_required": false
+    },
+    {
+      "template_id": "entity-profile",
+      "filename": "entity-profile.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "Entity profile (PROF-P/O/G/F): identity, corpus presence, influence radar, collaboration network, trajectory",
+      "use_case": "Profile a person/org/group/funder in the corpus; scaffolded by `aiwg corpus profile-generate`, maintained via profile-status (#1502)",
+      "primary_agent": "Quality Agent",
+      "progressive_disclosure": false,
+      "reasoning_required": false
     }
   ],
   "categories": {
     "note-taking": ["literature-note", "summary"],
     "analysis": ["extraction", "gap-report", "citation-network", "quality-assessment"],
     "metadata": ["provenance-record", "acquisition-report"],
-    "radar": ["radar-sidecar"]
+    "radar": ["radar-sidecar"],
+    "profiles": ["entity-profile"]
   },
   "usage_sequence": [
     {
