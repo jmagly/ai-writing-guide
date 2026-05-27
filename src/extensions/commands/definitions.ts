@@ -1080,8 +1080,8 @@ export const corpusCommand: Extension = {
   name: 'Research Corpus Tools',
   description: 'Research-corpus tools (radar-init, radar-status, radar-report)',
   version: '1.0.0',
-  capabilities: ['cli', 'research', 'corpus', 'radar', 'freshness'],
-  keywords: ['corpus', 'radar', 'freshness', 'staleness', 'radar-init', 'radar-status', 'radar-report', 'refresh cadence', 'GRADE trajectory'],
+  capabilities: ['cli', 'research', 'corpus', 'radar', 'freshness', 'profiles'],
+  keywords: ['corpus', 'radar', 'freshness', 'staleness', 'radar-init', 'radar-status', 'radar-report', 'profile-status', 'stale profiles', 'refresh cadence', 'GRADE trajectory'],
   category: 'index',
   platforms: {
     claude: 'full',
@@ -1093,10 +1093,10 @@ export const corpusCommand: Extension = {
   },
   metadata: {
     type: 'skill',
-    triggerPhrases: ['radar', 'radar status', 'radar report', 'scaffold radar', 'stale radars', 'corpus freshness'],
+    triggerPhrases: ['radar', 'radar status', 'radar report', 'scaffold radar', 'stale radars', 'corpus freshness', 'stale profiles', 'profile status'],
     commandHint: {
       template: 'utility',
-      argumentHint: '<radar-init|radar-status|radar-report> [options]',
+      argumentHint: '<radar-init|radar-status|radar-report|profile-status> [options]',
       allowedTools: ['Read', 'Glob', 'Grep', 'Write'],
     },
   } satisfies SkillMetadata,

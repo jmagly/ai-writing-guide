@@ -28,6 +28,7 @@ export const CADENCE_DAYS: Record<string, number | null> = {
   quarterly: 90,
   biannual: 180,
   biennial: 180,
+  'semi-annual': 180, // profile sidecars (#1502) spell the 180-day cadence this way
   annual: 365,
   'on-demand': null,
 };

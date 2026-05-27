@@ -20,6 +20,7 @@ import { resolveCorpusRoot } from '../corpus-views/build.js';
 import { scaffoldRadar, radarInitMissing } from './radar-init.js';
 import { radarStatusRows, renderRadarStatus, type RadarStatusFormat } from './radar-status.js';
 import { renderRadarReport } from './radar-report.js';
+import { profileStatusRows, renderProfileStatus, type ProfileStatusFormat } from './profile-status.js';
 
 function flagValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -37,10 +38,12 @@ Usage:
   aiwg corpus radar-init --all-missing [--write]
   aiwg corpus radar-status [--stale-only] [--format table|csv|list] [--out PATH]
   aiwg corpus radar-report [--cluster TAG] [--out PATH]
+  aiwg corpus profile-status [--stale-only] [--format table|csv|list] [--out PATH]
 
 radar-init scaffolds radar sidecars (dry-run unless --write; skips existing).
 radar-status reports overdue radars (most-overdue-first).
 radar-report aggregates corpus/cluster freshness.
+profile-status reports entity profiles past their refresh cadence.
 `;
 
 function radarInit(root: string, args: string[]): void {
@@ -73,6 +76,16 @@ function radarReport(root: string, args: string[]): void {
   emit(content, flagValue(args, '--out'), root);
 }
 
+function profileStatus(root: string, args: string[]): void {
+  const staleOnly = hasFlag(args, '--stale-only');
+  const format = (flagValue(args, '--format') ?? 'table') as ProfileStatusFormat;
+  if (!['table', 'csv', 'list'].includes(format)) {
+    throw new Error(`profile-status: invalid --format '${format}' (table|csv|list)`);
+  }
+  const content = renderProfileStatus(profileStatusRows(root, { staleOnly }), format);
+  emit(content, flagValue(args, '--out'), root);
+}
+
 /** Write to --out (resolved against the corpus root) or print to stdout. */
 function emit(content: string, out: string | undefined, root: string): void {
   if (!out) {
@@ -101,6 +114,8 @@ export async function corpusMain(args: string[], cwd: string = process.cwd()): P
       return radarStatus(root, rest);
     case 'radar-report':
       return radarReport(root, rest);
+    case 'profile-status':
+      return profileStatus(root, rest);
     default:
       process.stderr.write(`Unknown corpus subcommand: ${sub}\n\n${HELP}`);
       throw new Error(`unknown corpus subcommand: ${sub}`);

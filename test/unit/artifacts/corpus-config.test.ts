@@ -29,8 +29,9 @@ describe('cadence maps', () => {
     expect(CADENCE_DAYS['on-demand']).toBeNull();
   });
 
-  it('accepts biennial as a 180-day synonym for biannual', () => {
+  it('accepts biennial and semi-annual as 180-day synonyms for biannual', () => {
     expect(CADENCE_DAYS.biennial).toBe(CADENCE_DAYS.biannual);
+    expect(CADENCE_DAYS['semi-annual']).toBe(180); // profile cadence vocab (#1502)
   });
 
   it('defaults cadence by GRADE letter', () => {
