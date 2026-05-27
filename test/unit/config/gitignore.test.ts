@@ -22,6 +22,7 @@ describe('gitignore patterns', () => {
   it('should include AIWG runtime and private disclosure custody patterns', () => {
     expect(AIWG_RUNTIME_PATTERNS).toEqual([
       '.aiwg/working/',
+      '.aiwg/.index/',
       '.aiwg/ralph/',
       '.aiwg/ralph-external/',
       '.aiwg/security-engineering/reviews/disclosures/',

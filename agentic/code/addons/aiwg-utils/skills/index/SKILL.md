@@ -26,11 +26,14 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | Pattern | Example | Action |
 |---------|---------|--------|
 | Build index | "build the artifact index" | Run `aiwg index build` |
+| Post-clone bootstrap | "I just cloned this, queries return nothing" / "the index is missing" | Run `aiwg index build --all` (the index is gitignored, not committed — see note below) |
 | Force rebuild | "rebuild the index from scratch" | Run `aiwg index build --force --verbose` |
 | Text search | "search artifacts for authentication" | Run `aiwg index query "authentication"` |
 | Dependency graph | "show dependencies for the SAD" | Run `aiwg index deps .aiwg/architecture/software-architecture-doc.md` |
 | Statistics | "how many artifacts are indexed?" | Run `aiwg index stats` |
 | JSON output | "get index stats as JSON" | Run `aiwg index stats --json` |
+
+> **`.aiwg/.index/` is a regenerable build artifact, not committed.** It is gitignored by default (`aiwg use` / `aiwg regenerate` / scaffolding add it to `.gitignore`), so a fresh clone has no index — `aiwg index build --all` is the standard bootstrap. `aiwg doctor` flags a missing index (`info`, when `.aiwg/config.yaml` declares an `index:` block) or a stale one (`warn`, when recorded source files changed) and points back to `aiwg index build`.
 
 ## Behavior
 

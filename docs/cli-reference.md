@@ -3531,6 +3531,14 @@ aiwg index build [options]
 
 **Incremental mode** (default): Only re-indexes files whose checksum has changed. Use `--force` for a full rebuild.
 
+**Post-clone bootstrap.** The index output (`.aiwg/.index/`) is a regenerable build artifact and is **gitignored by default** (added to `.gitignore` by `aiwg use`, `aiwg regenerate`, and project scaffolding). It is not committed, so a fresh clone has no index. Rebuild it with:
+
+```bash
+aiwg index build --all     # standard post-clone bootstrap — builds every known graph
+```
+
+`aiwg doctor` reports the index as `info` when it is absent (and the project's `.aiwg/config.yaml` declares an `index:` block) and `warn` when it is present but stale (recorded source files have changed since the last build). Both point you back to `aiwg index build`. If you prefer to commit the index as a zero-rebuild cache for teammates, you can un-ignore `.aiwg/.index/` in your `.gitignore` — but the default is ignore-and-rebuild.
+
 **User-defined graphs**: Define custom index graphs in `.aiwg/config.yaml` under `index.graphs`. Each graph gets its own named index under `.aiwg/.index/<name>/`.
 
 ```yaml

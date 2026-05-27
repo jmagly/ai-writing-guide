@@ -23,6 +23,10 @@ import * as path from 'path';
  */
 export const AIWG_RUNTIME_PATTERNS = [
   '.aiwg/working/',
+  // .aiwg/.index/ is the artifact graph index (JSON nodes/edges + checksum
+  // manifest). It is a pure build artifact, fully regenerable from corpus
+  // content via `aiwg index build --all`, so it is ignored rather than committed.
+  '.aiwg/.index/',
   '.aiwg/ralph/',
   '.aiwg/ralph-external/',
   '.aiwg/security-engineering/reviews/disclosures/',

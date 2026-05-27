@@ -25,6 +25,7 @@ const _scriptDir = path.dirname(fileURLToPath(import.meta.url));
 
 const AIWG_RUNTIME_PATTERNS = [
   '.aiwg/working/',
+  '.aiwg/.index/',
   '.aiwg/ralph/',
   '.aiwg/ralph-external/',
 ];

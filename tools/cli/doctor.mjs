@@ -1193,7 +1193,7 @@ async function runDoctor() {
   }
 
   // 11. Check .gitignore for AIWG runtime patterns (warning if missing)
-  const AIWG_RUNTIME_PATTERNS = ['.aiwg/working/', '.aiwg/ralph/', '.aiwg/ralph-external/', '.aiwg/security-engineering/reviews/disclosures/'];
+  const AIWG_RUNTIME_PATTERNS = ['.aiwg/working/', '.aiwg/.index/', '.aiwg/ralph/', '.aiwg/ralph-external/', '.aiwg/security-engineering/reviews/disclosures/'];
   const gitignorePath = path.join(process.cwd(), '.gitignore');
   try {
     const gitignoreContent = await fs.readFile(gitignorePath, 'utf-8');
@@ -1216,6 +1216,88 @@ async function runDoctor() {
     }
   } catch {
     // No .gitignore or unreadable — skip silently
+  }
+
+  // 12. Artifact index (.aiwg/.index/) — presence + staleness (#1488)
+  //
+  // The artifact graph index is a regenerable build artifact (gitignored per
+  // check #11). A fresh clone legitimately has none, so:
+  //   - skip silently when no index exists AND nothing signals the project uses one
+  //   - info  when no index exists but .aiwg/config.yaml declares an `index:` block
+  //   - warn  when the index exists but recorded source files have changed (stale)
+  //   - ok    when the index exists and every recorded file still matches on disk
+  try {
+    const indexDir = path.join(process.cwd(), '.aiwg', '.index');
+    const indexExists = await fileExists(indexDir);
+
+    if (!indexExists) {
+      let declaresIndex = false;
+      try {
+        const cfg = await fs.readFile(path.join(process.cwd(), '.aiwg', 'config.yaml'), 'utf-8');
+        declaresIndex = /^\s*index\s*:/m.test(cfg);
+      } catch {
+        // No config — the project doesn't use the artifact index; stay silent.
+      }
+      if (declaresIndex) {
+        check('artifact-index', 'info', '.aiwg/.index/ not built — run "aiwg index build --all" to enable discovery queries');
+      }
+    } else {
+      // Collect checksum-manifest.json files (top level + one subdir level —
+      // graphs may write flat or under .aiwg/.index/<graph>/).
+      const manifestPaths = [];
+      const topManifest = path.join(indexDir, 'checksum-manifest.json');
+      if (await fileExists(topManifest)) manifestPaths.push(topManifest);
+      try {
+        const entries = await fs.readdir(indexDir, { withFileTypes: true });
+        for (const e of entries) {
+          if (e.isDirectory()) {
+            const sub = path.join(indexDir, e.name, 'checksum-manifest.json');
+            if (await fileExists(sub)) manifestPaths.push(sub);
+          }
+        }
+      } catch {
+        // ignore readdir errors
+      }
+
+      if (manifestPaths.length === 0) {
+        check('artifact-index', 'warn', '.aiwg/.index/ present but no checksum-manifest.json — run "aiwg index build --force" to rebuild');
+      } else {
+        // Phase-1 stat comparison (mtime + size) against recorded entries.
+        // Bounded so doctor stays fast on large research corpora.
+        const MAX_CHECK = 2000;
+        let checked = 0, stale = 0, missing = 0;
+        for (const mp of manifestPaths) {
+          if (checked >= MAX_CHECK) break;
+          let manifest;
+          try {
+            manifest = JSON.parse(await fs.readFile(mp, 'utf-8'));
+          } catch {
+            continue;
+          }
+          const recorded = (manifest && manifest.entries) || {};
+          for (const [rel, entry] of Object.entries(recorded)) {
+            if (checked >= MAX_CHECK) break;
+            checked++;
+            try {
+              const st = await fs.stat(path.join(process.cwd(), rel));
+              if (st.mtime.toISOString() !== entry.mtime || st.size !== entry.size) stale++;
+            } catch {
+              missing++; // recorded source no longer on disk
+            }
+          }
+        }
+        const drift = stale + missing;
+        if (checked === 0) {
+          check('artifact-index', 'ok', '.aiwg/.index/ present (empty manifest)');
+        } else if (drift === 0) {
+          check('artifact-index', 'ok', `.aiwg/.index/ up to date (${checked} file(s) verified)`);
+        } else {
+          check('artifact-index', 'warn', `.aiwg/.index/ is stale — ${drift} of ${checked} indexed file(s) changed or removed; run "aiwg index build" to refresh`);
+        }
+      }
+    }
+  } catch {
+    // Non-fatal — skip silently.
   }
 
   // Print results
