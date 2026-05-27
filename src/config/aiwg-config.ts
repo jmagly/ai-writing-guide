@@ -177,6 +177,19 @@ export interface AiwgConfig {
    * @implements #1491
    */
   index?: IndexConfig;
+
+  /**
+   * Research-complete framework settings — corpus root for the research
+   * corpus (references/citations/radar/profiles under `<corpusRoot>/documentation/`).
+   * @implements #1497
+   */
+  research?: ResearchConfig;
+}
+
+/** Research-complete framework settings (#1497). */
+export interface ResearchConfig {
+  /** Corpus root (relative to project root or absolute). Default: project root. */
+  corpusRoot?: string;
 }
 
 /**

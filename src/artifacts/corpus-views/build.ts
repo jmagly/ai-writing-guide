@@ -11,7 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { readIndexConfig } from '../../config/aiwg-config.js';
+import { readIndexConfig, readAiwgConfig } from '../../config/aiwg-config.js';
 import { loadCorpus } from './ref-parser.js';
 import { renderView, outputForView, type RenderContext } from './renderers.js';
 
@@ -75,14 +75,38 @@ export interface BuildViewsOptions {
 }
 
 /**
+ * Resolve the corpus root (#1497): `AIWG_CORPUS_ROOT` env > `research.corpusRoot`
+ * in `.aiwg/aiwg.config` > the project root (cwd). Relative values resolve
+ * against cwd.
+ */
+async function resolveCorpusRoot(cwd: string): Promise<string> {
+  const env = process.env.AIWG_CORPUS_ROOT;
+  if (env && env.trim()) return path.isAbsolute(env) ? env : path.join(cwd, env);
+  try {
+    const cfg = await readAiwgConfig(cwd);
+    const cr = cfg?.research?.corpusRoot;
+    if (cr && cr.trim()) return path.isAbsolute(cr) ? cr : path.join(cwd, cr);
+  } catch {
+    /* no config / unreadable — fall through to cwd */
+  }
+  return cwd;
+}
+
+/**
  * Render the configured research-corpus markdown views. Returns one result per
- * selected view. Returns `[]` (renders nothing) when the project has no
+ * selected view. Returns `[]` (renders nothing) when the corpus root has no
  * `documentation/references/` corpus — so this is a safe no-op in ordinary
  * SDLC projects.
  */
 export async function buildCorpusViews(cwd: string, opts: BuildViewsOptions = {}): Promise<ViewResult[]> {
+  // Corpus root may differ from the project root (#1497): env override >
+  // research.corpusRoot in .aiwg/aiwg.config > project root. The index config
+  // is always read from the project's .aiwg/aiwg.config (cwd); corpus content
+  // and rendered views live under the corpus root.
+  const root = await resolveCorpusRoot(cwd);
+
   // No research corpus → nothing to render.
-  if (!fs.existsSync(path.join(cwd, 'documentation', 'references'))) return [];
+  if (!fs.existsSync(path.join(root, 'documentation', 'references'))) return [];
 
   const { index } = await readIndexConfig(cwd);
   const views = configuredViews(index as Record<string, unknown> | undefined);
@@ -97,14 +121,14 @@ export async function buildCorpusViews(cwd: string, opts: BuildViewsOptions = {}
     selected = [...views.keys()];
   }
 
-  const { records, corpusRoot, checksum } = loadCorpus(cwd);
+  const { records, corpusRoot, checksum } = loadCorpus(root);
   const generated = utcTimestamp();
   const ctx: RenderContext = { records, corpusRoot, generated, checksum };
   const results: ViewResult[] = [];
 
   for (const name of selected) {
     const outRel = outputForView(name, views.get(name)?.output);
-    const outPath = path.join(cwd, outRel);
+    const outPath = path.join(root, outRel);
     if (!opts.force && existingChecksum(outPath) === checksum) {
       results.push({ graph: name, status: 'skipped', output: outRel, papers: records.length });
       continue;

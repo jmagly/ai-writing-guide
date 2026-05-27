@@ -186,6 +186,17 @@
           "additionalProperties": { "$ref": "#/definitions/IndexGraphDef" }
         }
       }
+    },
+    "research": {
+      "type": "object",
+      "description": "Research-complete framework settings (#1497).",
+      "additionalProperties": false,
+      "properties": {
+        "corpusRoot": {
+          "type": "string",
+          "description": "Corpus root directory (relative to project root or absolute). Default: project root. The corpus lives under <corpusRoot>/documentation/{references,citations,radar,profiles}."
+        }
+      }
     }
   },
   "definitions": {
