@@ -1,7 +1,13 @@
-# npm Package Publishing to Gitea and Public npm Registries
+# npm Package Publishing — Gitea registry only (npmjs.org publishes from GitHub)
 #
-# Publishes the package to both Gitea's npm registry and public npmjs.org
-# when a version tag is pushed. Uses CalVer versioning: vYYYY.M.PATCH
+# Publishes the package to Gitea's bundled npm registry when a version tag is
+# pushed. Uses CalVer versioning: vYYYY.M.PATCH
+#
+# npmjs.org is NOT published from here. The public-registry legs moved to
+# .github/workflows/npm-publish.yml (OIDC trusted publishing + provenance) on
+# 2026-05-12 (#1283 / A5) and remain below as `if: false` for reversibility.
+# GitHub Actions is the authority for npmjs.org; this Gitea workflow owns the
+# Gitea-registry mirror only.
 #
 # REQUIRED SECRETS:
 #   NPM_TOKEN    - **Gitea API token** (gta_...) with package:write scope on
@@ -9,9 +15,11 @@
 #                  same token can also drive gitea-release.yml. Despite the
 #                  name, this is NOT an npmjs.org token — the legacy name is
 #                  preserved by operator preference.
-#   NPMJS_TOKEN  - npmjs.org granular access token (npm_...). Bypasses 2FA
-#                  for CI. Must have read+write scope on the `aiwg` package
-#                  under the npmjs.org account that owns it.
+#   NPMJS_TOKEN  - npmjs.org granular access token (npm_...). Referenced ONLY by
+#                  the `if: false` npmjs.org legs below (disabled #1283 / A5);
+#                  the live npmjs.org publish runs from .github/workflows via
+#                  OIDC and needs no token. Safe to revoke from Gitea secrets
+#                  once the OIDC path is proven (see the DISABLED note below).
 #
 # To publish a new version:
 #   1. Update version in package.json
@@ -415,7 +423,7 @@ jobs:
         if: ${{ github.event.inputs.dry_run == 'true' }}
         run: |
           echo "DRY RUN - Would publish version ${{ steps.version.outputs.version }}"
-          echo "Registries: Gitea + npmjs.org"
+          echo "Registry: Gitea (npmjs.org publishes from GitHub Actions OIDC)"
           npm pack
           ls -la *.tgz
 
