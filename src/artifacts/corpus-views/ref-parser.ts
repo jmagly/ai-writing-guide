@@ -110,7 +110,7 @@ export function normalizeAuthor(name: string): string {
   return parts.length === 1 ? n : `${parts[parts.length - 1]}, ${parts.slice(0, -1).join(' ')}`;
 }
 
-function parseFrontmatter(text: string): Record<string, unknown> {
+export function parseFrontmatter(text: string): Record<string, unknown> {
   const m = text.match(/^---\n([\s\S]*?)\n---\n/);
   if (!m) return {};
   try {
