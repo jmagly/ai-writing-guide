@@ -52,9 +52,9 @@ function bySortedRefs(records: RefRecord[]): RefRecord[] {
   return [...records].sort((a, b) => compareRefId(a.refId, b.refId));
 }
 
-function renderGrouped(title: string, ctx: RenderContext, groups: Map<string, RefRecord[]>): string {
+function renderGrouped(title: string, ctx: RenderContext, groups: Map<string, RefRecord[]>, trailingLabel = 'Uncategorized'): string {
   const lines = header(title, ctx, ctx.records.length);
-  const names = sortByKeys([...groups.keys()], (n) => [n === 'Uncategorized', -groups.get(n)!.length, n.toLowerCase()]);
+  const names = sortByKeys([...groups.keys()], (n) => [n === trailingLabel, -groups.get(n)!.length, n.toLowerCase()]);
   for (const name of names) {
     const items = bySortedRefs(groups.get(name)!);
     lines.push(`## ${name} (${items.length} papers)`, '');
@@ -243,10 +243,74 @@ function renderPipeline(ctx: RenderContext): string {
   return lines.join('\n').replace(/\s+$/, '') + '\n';
 }
 
+// ── Radar / discovery / funder views (#1492) ──────────────────────────────
+
+/** Radar refresh-cadence enum → window in days. `on-demand` (null) is never overdue. */
+const RADAR_CADENCE_DAYS: Record<string, number | null> = {
+  monthly: 30, quarterly: 90, biannual: 180, biennial: 180, annual: 365, 'on-demand': null,
+};
+
+/** GRADE display order; unknown grades fall after, 'Ungraded' last. */
+const GRADE_ORDER = ['A', 'A-', 'B', 'B-', 'C', 'C-', 'D'];
+
+/** Papers grouped by current GRADE (radar `grade-current`); no-radar → Ungraded. (#1492) */
+function renderByGrade(ctx: RenderContext): string {
+  const groups = groupBy(ctx.records, (r) => [r.radar?.gradeCurrent || 'Ungraded']);
+  const lines = header('Index: Papers by GRADE', ctx, ctx.records.length);
+  const names = [...groups.keys()].sort((a, b) => {
+    if (a === 'Ungraded') return 1;
+    if (b === 'Ungraded') return -1;
+    const ia = GRADE_ORDER.indexOf(a);
+    const ib = GRADE_ORDER.indexOf(b);
+    const ra = ia === -1 ? GRADE_ORDER.length : ia;
+    const rb = ib === -1 ? GRADE_ORDER.length : ib;
+    return ra !== rb ? ra - rb : a < b ? -1 : a > b ? 1 : 0;
+  });
+  for (const name of names) {
+    const items = bySortedRefs(groups.get(name)!);
+    lines.push(`## ${name} (${items.length} papers)`, '');
+    for (const r of items) lines.push(`- ${refLink(r)}`);
+    lines.push('');
+  }
+  return lines.join('\n').replace(/\s+$/, '') + '\n';
+}
+
+/** Radar-tracked papers ranked by overdue-ness (cadence window vs last-refreshed). (#1492) */
+function renderStaleQueue(ctx: RenderContext): string {
+  const today = new Date(`${ctx.generated.slice(0, 10)}T00:00:00Z`);
+  interface Row { r: RefRecord; cadence: string; last: string; overdue: number; }
+  const rows: Row[] = [];
+  for (const r of ctx.records) {
+    const rad = r.radar;
+    if (!rad || !rad.refreshCadence || !rad.lastRefreshed) continue;
+    const cadenceDays = RADAR_CADENCE_DAYS[rad.refreshCadence.toLowerCase()];
+    if (cadenceDays === null || cadenceDays === undefined) continue; // on-demand / unknown cadence → not queued
+    const last = new Date(`${rad.lastRefreshed}T00:00:00Z`);
+    if (Number.isNaN(last.getTime())) continue;
+    const daysSince = Math.floor((today.getTime() - last.getTime()) / 86_400_000);
+    rows.push({ r, cadence: rad.refreshCadence, last: rad.lastRefreshed, overdue: daysSince - cadenceDays });
+  }
+  const sorted = sortByKeys(rows, (row) => [-row.overdue, ...refSortKey(row.r.refId)]);
+  const staleCount = sorted.filter((x) => x.overdue > 0).length;
+  const lines = header('Index: Radar Stale-Refresh Queue', ctx, ctx.records.length);
+  lines.push(
+    `Overdue = days since last refresh minus the cadence window. ${staleCount} of ${rows.length} radar-tracked papers are overdue.`,
+    '',
+    '| REF | Title | GRADE | Cadence | Last Refreshed | Overdue (days) | Stale |',
+    '|---|---|---|---|---|---:|---|',
+  );
+  for (const { r, cadence, last, overdue } of sorted) {
+    lines.push(`| ${r.refId} | ${r.title.slice(0, 70)} | ${r.radar!.gradeCurrent ?? '—'} | ${cadence} | ${last} | ${overdue} | ${overdue > 0 ? 'yes' : 'no'} |`);
+  }
+  return lines.join('\n') + '\n';
+}
+
 /** Supported renderer names — `name` in the index.graphs.indices.manifest selects one of these. */
 export const SUPPORTED_VIEWS = [
   'by-year', 'by-topic', 'authors', 'by-venue', 'by-method', 'by-model-size',
   'training-pipeline', 'citation-network', 'by-author', 'by-org', 'by-bridge', 'unprofiled-hubs',
+  // radar / discovery / funder views (#1492)
+  'by-grade', 'radar-stale-queue', 'by-trajectory', 'by-source', 'by-curator', 'by-funder',
 ] as const;
 
 export type ViewName = (typeof SUPPORTED_VIEWS)[number];
@@ -266,6 +330,13 @@ export function renderView(name: string, ctx: RenderContext): string {
     case 'by-org': return renderOrgs(ctx);
     case 'by-bridge': return renderBridges(ctx);
     case 'unprofiled-hubs': return renderUnprofiledHubs(ctx);
+    // Radar / discovery / funder views (#1492)
+    case 'by-grade': return renderByGrade(ctx);
+    case 'radar-stale-queue': return renderStaleQueue(ctx);
+    case 'by-trajectory': return renderGrouped('Index: Papers by GRADE Trajectory', ctx, groupBy(ctx.records, (r) => [r.radar?.gradeTrajectory || 'unknown']), 'unknown');
+    case 'by-source': return renderGrouped('Index: Papers by Discovery Surface', ctx, groupBy(ctx.records, (r) => [r.discovery?.surface || 'unknown-surface']), 'unknown-surface');
+    case 'by-curator': return renderGrouped('Index: Papers by Curator', ctx, groupBy(ctx.records, (r) => [r.discovery?.curatorId || 'no-curator']), 'no-curator');
+    case 'by-funder': return renderGrouped('Index: Papers by Funder', ctx, groupBy(ctx.records, (r) => (r.funders.length ? r.funders.map((f) => f.id) : ['unfunded'])), 'unfunded');
     default: throw new Error(`unsupported graph: ${name}`);
   }
 }

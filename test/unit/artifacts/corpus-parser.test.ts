@@ -10,6 +10,7 @@ import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { loadCorpus, loadProfiles } from '../../../src/artifacts/corpus-views/ref-parser.js';
+import { renderView, type RenderContext } from '../../../src/artifacts/corpus-views/renderers.js';
 
 function writeCorpus(root: string): void {
   const ref = join(root, 'documentation', 'references');
@@ -93,5 +94,61 @@ describe('corpus parser extension (#1497)', () => {
     // list-of-dicts {ref, role} shape (PROF-S) → normalized to ['REF-010']
     expect(profiles.find((p) => p.profId === 'PROF-S-curator')!.corpusRefs).toEqual(['REF-010']);
     expect(profiles.find((p) => p.profId === 'PROF-S-curator')!.type).toBe('source');
+  });
+});
+
+describe('radar/discovery/funder views (#1492)', () => {
+  let root: string;
+  let ctx: RenderContext;
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'aiwg-radar-views-'));
+    writeCorpus(root);
+    const { records, corpusRoot, checksum } = loadCorpus(root);
+    ctx = { records, corpusRoot, generated: '2026-05-26T00:00:00Z', checksum };
+  });
+  afterEach(() => { rmSync(root, { recursive: true, force: true }); });
+
+  it('by-grade groups by radar grade-current in GRADE order', () => {
+    const out = renderView('by-grade', ctx);
+    expect(out).toContain('## A (1 papers)');
+    expect(out).toContain('## B (1 papers)');
+    expect(out.indexOf('## A (')).toBeLessThan(out.indexOf('## B ('));
+    expect(out).toContain('**REF-010**');
+  });
+
+  it('radar-stale-queue ranks overdue papers first and flags stale', () => {
+    const out = renderView('radar-stale-queue', ctx);
+    expect(out).toContain('1 of 2 radar-tracked papers are overdue');
+    // REF-010 (quarterly, 2024) is overdue → ranked before REF-011 (annual, 2026, not due)
+    expect(out.indexOf('REF-010')).toBeLessThan(out.indexOf('REF-011'));
+    expect(out.split('\n').find((l) => l.includes('| REF-010 |'))!).toContain('| yes |');
+    expect(out.split('\n').find((l) => l.includes('| REF-011 |'))!).toContain('| no |');
+  });
+
+  it('by-trajectory groups by radar grade-trajectory', () => {
+    const out = renderView('by-trajectory', ctx);
+    expect(out).toContain('## rising (1 papers)');
+    expect(out).toContain('## stable (1 papers)');
+  });
+
+  it('by-source groups by discovery surface (no-discovery → unknown-surface, last)', () => {
+    const out = renderView('by-source', ctx);
+    expect(out).toContain('## x-search (1 papers)');
+    expect(out).toContain('## unknown-surface (1 papers)');
+    expect(out.indexOf('## x-search')).toBeLessThan(out.indexOf('## unknown-surface'));
+  });
+
+  it('by-curator groups by discovery curator-id (yield = paper count)', () => {
+    const out = renderView('by-curator', ctx);
+    expect(out).toContain('## PROF-S-curator (1 papers)');
+    expect(out).toContain('## no-curator (1 papers)');
+  });
+
+  it('by-funder lists a paper under each funder; unfunded sorted last', () => {
+    const out = renderView('by-funder', ctx);
+    expect(out).toContain('## PROF-F-nsf (1 papers)');
+    expect(out).toContain('## DARPA (1 papers)'); // REF-010 appears under both its funders
+    expect(out).toContain('## unfunded (1 papers)'); // REF-011
+    expect(out.indexOf('## unfunded')).toBeGreaterThan(out.indexOf('## PROF-F-nsf'));
   });
 });

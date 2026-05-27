@@ -70,13 +70,17 @@ selects the renderer and optional `output` sets the path:
 }
 ```
 
-Supported renderer `name`s: `by-topic`, `by-year`, `authors`, `by-venue`,
-`by-method`, `by-model-size`, `training-pipeline`, `citation-network`,
-`by-author`, `by-org`, `by-bridge`, `unprofiled-hubs`. An unrecognized name
-fails the build (non-zero exit). If the manifest is absent, a default set
-renders (`by-topic`, `by-year`, `authors`, `by-venue`, `by-method`,
-`training-pipeline`, `by-model-size`); `citation-network` is added when it is
-present as an `index.graphs` key.
+Supported renderer `name`s — **paper views**: `by-topic`, `by-year`, `authors`,
+`by-venue`, `by-method`, `by-model-size`, `training-pipeline`, `citation-network`,
+`by-author`, `by-org`, `by-bridge`, `unprofiled-hubs`; **radar/discovery/funder
+views (#1492)**: `by-grade`, `radar-stale-queue`, `by-trajectory`, `by-source`,
+`by-curator`, `by-funder`. An unrecognized name fails the build (non-zero exit).
+If the manifest is absent, a default set renders (`by-topic`, `by-year`,
+`authors`, `by-venue`, `by-method`, `training-pipeline`, `by-model-size`);
+`citation-network` is added when it is present as an `index.graphs` key. The
+radar/discovery/funder views are opt-in (declare them in the manifest) — they
+read radar sidecars, the citation `discovery` block, and `funders[]`
+respectively (see the [corpus data model](../../docs/corpus-data-model.md)).
 
 ## What the views contain
 
@@ -91,6 +95,12 @@ present as an `index.graphs` key.
 - **citation-network** — node/edge/density summary, top hubs, isolated nodes.
 - **training-pipeline** — fixed reading-order stages with in-corpus markers.
 - **unprofiled-hubs** — high in-degree REFs whose primary author lacks a profile.
+- **by-grade** — papers grouped by current GRADE (radar `grade-current`, A→D order; no-radar → Ungraded).
+- **radar-stale-queue** — radar-tracked papers ranked by overdue-ness (cadence window vs `last-refreshed`), with a stale flag. `on-demand` cadence is never queued.
+- **by-trajectory** — grouped by radar `grade-trajectory` (rising / stable / declining / …).
+- **by-source** — grouped by `discovery.surface` (x-search / rss / web / …; no-discovery → unknown-surface).
+- **by-curator** — grouped by `discovery.curator-id` (group size = curator yield).
+- **by-funder** — grouped by `funders[].id`; a paper appears under each of its funders (no funders → unfunded).
 
 Each view records a `Source-Checksum:` header; incremental builds skip a view
 when its corpus checksum is unchanged (override with `--force`).
