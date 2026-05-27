@@ -1080,8 +1080,8 @@ export const corpusCommand: Extension = {
   name: 'Research Corpus Tools',
   description: 'Research-corpus tools (radar-init, radar-status, radar-report)',
   version: '1.0.0',
-  capabilities: ['cli', 'research', 'corpus', 'radar', 'freshness', 'profiles'],
-  keywords: ['corpus', 'radar', 'freshness', 'staleness', 'radar-init', 'radar-status', 'radar-report', 'profile-status', 'profile-generate', 'stale profiles', 'hub authors', 'refresh cadence', 'GRADE trajectory'],
+  capabilities: ['cli', 'research', 'corpus', 'radar', 'freshness', 'profiles', 'discovery'],
+  keywords: ['corpus', 'radar', 'freshness', 'staleness', 'radar-init', 'radar-status', 'radar-report', 'profile-status', 'profile-generate', 'curator-status', 'curator-init', 'discovery-log', 'PROF-S', 'source tracking', 'discovery provenance', 'stale profiles', 'hub authors', 'refresh cadence', 'GRADE trajectory'],
   category: 'index',
   platforms: {
     claude: 'full',
@@ -1093,10 +1093,10 @@ export const corpusCommand: Extension = {
   },
   metadata: {
     type: 'skill',
-    triggerPhrases: ['radar', 'radar status', 'radar report', 'scaffold radar', 'stale radars', 'corpus freshness', 'stale profiles', 'profile status'],
+    triggerPhrases: ['radar', 'radar status', 'radar report', 'scaffold radar', 'stale radars', 'corpus freshness', 'stale profiles', 'profile status', 'curator yield', 'discovery source', 'log discovery'],
     commandHint: {
       template: 'utility',
-      argumentHint: '<radar-init|radar-status|radar-report|profile-status> [options]',
+      argumentHint: '<radar-*|profile-status|profile-generate|curator-status|curator-init|discovery-log> [options]',
       allowedTools: ['Read', 'Glob', 'Grep', 'Write'],
     },
   } satisfies SkillMetadata,

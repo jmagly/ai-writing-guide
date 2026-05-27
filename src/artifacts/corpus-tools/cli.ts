@@ -23,6 +23,8 @@ import { renderRadarReport } from './radar-report.js';
 import { profileStatusRows, renderProfileStatus, type ProfileStatusFormat } from './profile-status.js';
 import { generateTier1Profiles } from './profile-generate.js';
 import { generateFmProfiles } from './profile-generate-fm.js';
+import { curatorRows, curatorOrphans, renderCuratorStatus, scaffoldCurator } from './curator.js';
+import { logDiscovery } from './discovery-log.js';
 
 function flagValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -43,6 +45,9 @@ Usage:
   aiwg corpus profile-status [--stale-only] [--format table|csv|list] [--out PATH]
   aiwg corpus profile-generate [--limit N] [--scan N] [--write]
   aiwg corpus profile-generate --fm [--write]
+  aiwg corpus curator-status [--out PATH]
+  aiwg corpus curator-init --handle @h [--platform x] [--name "N"] [--cadence weekly] [--write]
+  aiwg corpus discovery-log --ref REF-XXX --surface SURFACE [--via "..."] [--curator PROF-S-x] [--date D] [--batch B] [--by A] [--write]
 
 radar-init scaffolds radar sidecars (dry-run unless --write; skips existing).
 radar-status reports overdue radars (most-overdue-first).
@@ -50,6 +55,9 @@ radar-report aggregates corpus/cluster freshness.
 profile-status reports entity profiles past their refresh cadence.
 profile-generate scaffolds PROF-P profiles for unprofiled hub authors (dry-run unless --write).
 profile-generate --fm scaffolds FM-author PROF-P + group PROF-G profiles from documentation/profiles/fm-config.yaml.
+curator-status reports PROF-S curators by yield (return-to score) + discovery orphans.
+curator-init scaffolds a PROF-S source/curator profile from a handle.
+discovery-log records the discovery block on a citation sidecar.
 `;
 
 function radarInit(root: string, args: string[]): void {
@@ -111,6 +119,38 @@ function profileGenerate(root: string, args: string[]): void {
   for (const r of results) console.log('  ' + r.message);
 }
 
+function curatorInit(root: string, args: string[]): void {
+  const handle = flagValue(args, '--handle');
+  if (!handle) throw new Error('curator-init requires --handle <@account>');
+  const res = scaffoldCurator(root, handle, {
+    platform: flagValue(args, '--platform'),
+    name: flagValue(args, '--name'),
+    cadence: flagValue(args, '--cadence'),
+    write: hasFlag(args, '--write'),
+  });
+  console.log(res.message);
+}
+
+function discoveryLog(root: string, args: string[]): void {
+  const ref = flagValue(args, '--ref');
+  const surface = flagValue(args, '--surface');
+  if (!ref || !surface) throw new Error('discovery-log requires --ref <REF-XXX> and --surface <surface>');
+  const res = logDiscovery(root, ref, {
+    surface,
+    via: flagValue(args, '--via'),
+    curatorId: flagValue(args, '--curator'),
+    date: flagValue(args, '--date'),
+    harvestBatch: flagValue(args, '--batch'),
+    harvestedBy: flagValue(args, '--by'),
+    write: hasFlag(args, '--write'),
+  });
+  console.log(res.message);
+  if (res.status === 'dry-run') {
+    console.log('--- discovery block ---');
+    console.log(res.block);
+  }
+}
+
 /** Write to --out (resolved against the corpus root) or print to stdout. */
 function emit(content: string, out: string | undefined, root: string): void {
   if (!out) {
@@ -143,6 +183,12 @@ export async function corpusMain(args: string[], cwd: string = process.cwd()): P
       return profileStatus(root, rest);
     case 'profile-generate':
       return profileGenerate(root, rest);
+    case 'curator-status':
+      return emit(renderCuratorStatus(curatorRows(root), curatorOrphans(root)), flagValue(rest, '--out'), root);
+    case 'curator-init':
+      return curatorInit(root, rest);
+    case 'discovery-log':
+      return discoveryLog(root, rest);
     default:
       process.stderr.write(`Unknown corpus subcommand: ${sub}\n\n${HELP}`);
       throw new Error(`unknown corpus subcommand: ${sub}`);

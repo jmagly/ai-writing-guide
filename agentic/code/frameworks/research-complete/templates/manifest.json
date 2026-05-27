@@ -1,7 +1,7 @@
 {
   "framework": "research-complete",
   "version": "1.0.0",
-  "template_count": 13,
+  "template_count": 14,
   "last_updated": "2026-05-27",
   "templates": [
     {
@@ -146,6 +146,17 @@
       "primary_agent": "Citation Agent",
       "progressive_disclosure": false,
       "reasoning_required": false
+    },
+    {
+      "template_id": "source-profile",
+      "filename": "source-profile.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "PROF-S source/curator profile — discovery-surface tracking, yield, signal quality, revisit cadence",
+      "use_case": "Track a discovery curator (account/feed); scaffolded by `aiwg corpus curator-init`, reported by curator-status (#1499)",
+      "primary_agent": "Discovery Agent",
+      "progressive_disclosure": false,
+      "reasoning_required": false
     }
   ],
   "categories": {
@@ -154,7 +165,8 @@
     "metadata": ["provenance-record", "acquisition-report"],
     "radar": ["radar-sidecar"],
     "profiles": ["entity-profile"],
-    "induction": ["reference-canonical", "reference-expanded", "citation-sidecar"]
+    "induction": ["reference-canonical", "reference-expanded", "citation-sidecar"],
+    "discovery": ["source-profile"]
   },
   "usage_sequence": [
     {

@@ -24,6 +24,10 @@
  * `null` here.
  */
 export const CADENCE_DAYS: Record<string, number | null> = {
+  // PROF-S curator revisit-cadence vocab (#1499): daily/weekly/biweekly.
+  daily: 1,
+  weekly: 7,
+  biweekly: 14,
   monthly: 30,
   quarterly: 90,
   biannual: 180,
