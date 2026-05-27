@@ -37,10 +37,10 @@ If `$AIWG_ROOT` is not set, use the absolute path returned by `aiwg show skill c
 ## Parameters
 
 ### `--graph <name>` (optional)
-Build a single named graph. Must match a key in `config.yaml` `graphs` section.
+Build a single named graph. The name must match a manifest entry `name` under `index.graphs.indices.manifest` in `.aiwg/config.yaml` (or one of the built-in renderer names listed under [Configuration](#configuration)).
 
 ### `--all` (optional)
-Build all graphs defined in config, including those not in `defaultBuild`. Default behavior builds only `defaultBuild` graphs.
+Build every configured graph. This is also the default when no `--graph` is given — `build.py` renders all configured manifest graphs. (`--all` is accepted for symmetry with `aiwg index build`; `build.py` itself does not filter by a `defaultBuild` flag — that flag is advisory metadata consumed by the separate `aiwg index build` command.)
 
 ### `--force` (optional)
 Rebuild from scratch, ignoring cached state. Default: incremental (only rebuild if source data changed).
@@ -64,45 +64,47 @@ When generating or editing a research corpus `.aiwg/config.yaml`, keep the two i
 #     aiwg show skill corpus-index-build
 ```
 
-Graphs are defined in `.aiwg/config.yaml`:
+Markdown graphs are defined under `index.graphs.indices.manifest` in `.aiwg/config.yaml`. This is the schema `build.py` actually parses (`configured_graphs()`): it reads each manifest entry's **`name`** (which selects the renderer) and optional **`output`** (defaults to `indices/<name>.md`). All other keys on an entry — `description`, `source`, notes, etc. — are human-facing metadata that `build.py` ignores.
+
+The following config round-trips through `build.py` unmodified:
 
 ```yaml
-graphs:
-  by-topic:
-    type: cluster
-    source: findings
-    groupBy: tags
-    output: indices/by-topic.md
-    defaultBuild: true
-
-  by-year:
-    type: timeline
-    source: findings
-    groupBy: year
-    output: indices/by-year.md
-    defaultBuild: true
-
-  authors:
-    type: entity
-    source: findings
-    groupBy: authors
-    output: indices/authors.md
-    defaultBuild: true
-
-  citation-network:
-    type: graph
-    source: citations
-    edges: [outgoing, incoming]
-    output: indices/citation-network.md
-    defaultBuild: false  # expensive, build on demand
-
-  by-methodology:
-    type: cluster
-    source: findings
-    groupBy: methodology
-    output: indices/by-methodology.md
-    defaultBuild: false
+index:
+  graphs:
+    indices:
+      # build.py consumes only `name` (renderer selector) and `output` (path).
+      # Sibling keys like scanDirs/extensions/defaultBuild are read by the
+      # separate `aiwg index build` command, not by this skill's build.py.
+      manifest:
+        - name: by-topic
+          output: indices/by-topic.md
+          description: "Papers grouped by detected topic"     # metadata only
+        - name: by-year
+          output: indices/by-year.md
+        - name: authors
+          output: indices/authors.md
+        - name: citation-network                              # needs citation sidecars
+          output: indices/citation-network.md
 ```
+
+> **The entry `name` selects the renderer — there is no `type` key.** A manifest
+> entry `name: by-topic` invokes the topic renderer; `name: by-year` the timeline
+> renderer, and so on. Supported renderer names: `by-topic`, `by-year`, `authors`,
+> `by-venue`, `by-method`, `by-model-size`, `training-pipeline`, `citation-network`,
+> `by-author`, `by-org`, `by-bridge`, `unprofiled-hubs`. An unrecognized `name`
+> is reported as `unsupported` (non-zero exit), not silently skipped.
+
+**Fallback behavior** (`configured_graphs()`):
+- If `index.graphs.indices.manifest` is absent or empty, `build.py` builds a default
+  set: `by-topic`, `by-year`, `authors`, `by-venue`, `by-method`, `training-pipeline`,
+  `by-model-size`.
+- If `index.graphs.citation-network` is present as a key, `citation-network` is added
+  to the build set automatically.
+
+The canonical schema is the `configured_graphs()` reader in this skill's `build.py`.
+A formally validated `index.graphs` schema (and consolidation of the two index config
+shapes) is tracked in [#1491](https://git.integrolabs.net/roctinam/aiwg/issues/1491);
+the reconciliation of `build.py` with the `aiwg index build` builder is [#1490](https://git.integrolabs.net/roctinam/aiwg/issues/1490).
 
 ## Execution Flow
 
