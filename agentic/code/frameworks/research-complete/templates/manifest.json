@@ -1,7 +1,7 @@
 {
   "framework": "research-complete",
   "version": "1.0.0",
-  "template_count": 10,
+  "template_count": 13,
   "last_updated": "2026-05-27",
   "templates": [
     {
@@ -113,6 +113,39 @@
       "primary_agent": "Quality Agent",
       "progressive_disclosure": false,
       "reasoning_required": false
+    },
+    {
+      "template_id": "reference-canonical",
+      "filename": "reference-canonical.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "Canonical 15-section reference/analysis doc — the default for most papers",
+      "use_case": "Induct a paper: citation, summary, findings, method, GRADE classification",
+      "primary_agent": "Documentation Agent",
+      "progressive_disclosure": false,
+      "reasoning_required": true
+    },
+    {
+      "template_id": "reference-expanded",
+      "filename": "reference-expanded.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "Expanded 21-section reference/analysis doc — foundational/peer-reviewed papers (benchmarks, ablations, comparison, limitations)",
+      "use_case": "Deep induction of foundational or peer-reviewed papers warranting full analysis",
+      "primary_agent": "Documentation Agent",
+      "progressive_disclosure": false,
+      "reasoning_required": true
+    },
+    {
+      "template_id": "citation-sidecar",
+      "filename": "citation-sidecar.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "Citation-network sidecar — Outgoing/Incoming edge tables, authors, affiliation, funders, optional discovery block",
+      "use_case": "Record a paper's citation edges + provenance metadata alongside its analysis doc",
+      "primary_agent": "Citation Agent",
+      "progressive_disclosure": false,
+      "reasoning_required": false
     }
   ],
   "categories": {
@@ -120,7 +153,8 @@
     "analysis": ["extraction", "gap-report", "citation-network", "quality-assessment"],
     "metadata": ["provenance-record", "acquisition-report"],
     "radar": ["radar-sidecar"],
-    "profiles": ["entity-profile"]
+    "profiles": ["entity-profile"],
+    "induction": ["reference-canonical", "reference-expanded", "citation-sidecar"]
   },
   "usage_sequence": [
     {
