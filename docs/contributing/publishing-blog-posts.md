@@ -93,7 +93,7 @@ aiwg_refs: ["aiwg use", "aiwg regenerate", "path-scoped rules"]
 
 **Do not add an `authoring:` field or any AI-tool credit.** The repo-wide `no-attribution` rule applies to blog posts.
 
-> **Known pagenary limitation (`@pagenary/publisher` 2026.5.3, tracked in pagenary#19):** the *page renderer* still does not strip frontmatter, so the rendered docs.aiwg.io page shows the YAML as visible text above the title (the collection generator parses it correctly for the manifest; the renderer doesn't). This also affects existing frontmatter docs pages (e.g. `docs/project-local/overview.md`). Always repeat the title as a leading `# Title`. Clean rendering arrives when pagenary#19 lands. The **manifest** (what aiwg.io consumes) is unaffected.
+Always repeat the title as a leading `# Title` in the body — pagenary strips the YAML frontmatter and renders only the body, so without a leading heading the page has no `<h1>`. (`@pagenary/publisher` ≥ 2026.5.4 wires the frontmatter parser into the page renderer too, closing pagenary#19.)
 
 ## Images
 
@@ -181,5 +181,5 @@ Each follows the [Adding a post](#adding-a-post) steps; the manifest regenerates
 
 - `roctinam/aiwg.io#60` — website sources the blog from docs.aiwg.io (consumes `index.json`).
 - `roctinam/pagenary#18` — collection manifest + feed support (**shipped** in 2026.5.3; this is what generates the manifest).
-- `roctinam/pagenary#19` — page renderer should strip frontmatter (the rendered-page leak above).
+- `roctinam/pagenary#19` — page renderer strips frontmatter (closed; adopted in `@pagenary/publisher` 2026.5.4).
 - `roctinam/social-orchestration` — upstream article drafting and validation (`aiwg/articles/`).

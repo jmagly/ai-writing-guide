@@ -7,6 +7,10 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Changed
+
+- **`@pagenary/publisher` bumped `^2026.5.3` → `^2026.5.4`.** Picks up the page-renderer frontmatter strip (pagenary#19) — collection blog posts no longer render their YAML frontmatter as visible text above the title on docs.aiwg.io. The collection manifest is unchanged. Adopted via the documented `npm install --min-release-age=0` first-party override per `docs/contributing/versioning.md`. `docs/contributing/publishing-blog-posts.md` updated to drop the now-stale frontmatter-leak caveat.
+
 ## [2026.5.12] - 2026-05-27 — "Research corpus tooling, engineering blog launch, and release-workflow discipline"
 
 This release lands the bulk of the section9/research-papers tooling merge into the native `research-complete` framework — radar/freshness, profile generation, funder analytics, discovery logging, and a configurable corpus root with a shared parser foundation — and launches the AIWG engineering blog as a single-source-of-truth markdown collection rendered by pagenary 2026.5.3. It also cleans up the Gitea release workflows so the live topology (npmjs.org from GitHub Actions; Gitea owns its own registry mirror only) is reflected in the code.
