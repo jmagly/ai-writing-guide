@@ -7,14 +7,76 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.5.12] - 2026-05-27 — "Research corpus tooling, engineering blog launch, and release-workflow discipline"
+
+This release lands the bulk of the section9/research-papers tooling merge into the native `research-complete` framework — radar/freshness, profile generation, funder analytics, discovery logging, and a configurable corpus root with a shared parser foundation — and launches the AIWG engineering blog as a single-source-of-truth markdown collection rendered by pagenary 2026.5.3. It also cleans up the Gitea release workflows so the live topology (npmjs.org from GitHub Actions; Gitea owns its own registry mirror only) is reflected in the code.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **Research corpus tooling merged from section9/research-papers** | A radar/freshness subsystem (radar-init/status/report), profile generation (profile-generate, profile-status, `--fm` variant), entity-profile graph analytics (centrality, communities, temporal), funder-network analytics, and discovery-logging + PROF-S curator tooling — all native under `aiwg corpus` / `aiwg index` instead of 26 path-hardcoded scripts. One configurable corpus root + shared parser library. |
+| **`aiwg index build` renders corpus markdown views natively** | by-year/topic/venue/authors/method/model-size/training-pipeline/citation-network plus radar/discovery/funder views are derived from the index in-process — no separate `regenerate_indices.py` step. |
+| **Index config consolidated into `aiwg.config`** | `index.graphs` is now a validated schema field under `.aiwg/aiwg.config`. `.aiwg/.index/` is gitignored by default and `aiwg doctor` checks its freshness. |
+| **Engineering blog source-of-truth at `docs/blog/`** | One markdown file per post; pagenary 2026.5.3 collection support auto-generates `docs.aiwg.io/blog/index.json` (envelope schema `{title, route, count, generated, posts[]}`) plus `feed.xml` from frontmatter. First post: "How AIWG builds your customized system prompt." Publishing process documented at `docs/contributing/publishing-blog-posts.md`. |
+| **Doc-site CI builds via npm, not a git clone** | `docsite-build.yml` / `docsite-deploy.yml` now install `@pagenary/publisher` as a devDependency and run `npx pagenary build:tenants aiwg-docs`; the `GT_ACCESS_TOKEN` clone path is retired and revokable after one clean deploy. |
+| **Release-workflow topology clarified** | `npm-publish.yml` header + dry-run text now state Gitea-only registry; npmjs.org publishes from GitHub Actions via OIDC. `NPM_TOKEN` documented as a Gitea API token in both Gitea workflows. Operator-rotated the underlying token; first-class fix for #1481. |
+
+### Added
+
+- **Research-corpus subsystem (epic #1496):**
+  - Configurable corpus root + shared parser foundation for radar/discovery/funder parsing (#1497).
+  - Radar subsystem: `radar-init` scaffold, `radar-status`, `radar-report`, CLI + skills/template (closes #1498); shared cadence/staleness config extracted.
+  - Profile generation: `profile-status` (`find_stale_profiles` port), `profile-generate` (`build_tier1_profiles` port), `profile-generate --fm` (`build_fm_profiles` port), entity-profile template — profile subsystem complete (closes #1502).
+  - Corpus authoring templates (reference + citation) (refs #1496).
+  - Discovery-logging + PROF-S curator tooling (closes #1499).
+  - Entity-profile graph analytics — centrality, communities, temporal (refs #1501; partial).
+  - Funder-network analytics (`build_funder_network` port) (closes #1500).
+- **Index renderers:** `aiwg index build` renders corpus markdown views natively (#1490 Full A); radar/discovery/funder views (#1492).
+- **Engineering blog:** `docs/blog/` collection with frontmatter conventions + first post "How AIWG builds your customized system prompt" (closes #1510); auto-generated manifest + RSS feed via pagenary 2026.5.3 collection support.
+- **Publishing process doc:** `docs/contributing/publishing-blog-posts.md` documents the source-of-truth model, frontmatter spec, image placement (`docs/.public/blog/` → `/assets/blog/`), the manifest envelope schema, the publish flow, and the A10–A13 companion roadmap.
+- **Doc-site devDependencies:** `@pagenary/publisher` (`^2026.5.3`) and `terser` (`^5.47.1`).
+
 ### Changed
 
-- **Doc-site CI builds via the `@pagenary/publisher` npm package instead of git-cloning the publisher.** `docsite-build.yml` and `docsite-deploy.yml` now install the publisher as a devDependency (bin: `pagenary`) and run `npx pagenary build:tenants aiwg-docs`, replacing the `git clone roctinam/pagenary.git → /tmp/pagenary` step. This removes the `GT_ACCESS_TOKEN` clone (and the fork-PR guard that protected it from `docsite-build.yml`); `GT_ACCESS_TOKEN` is no longer referenced by any workflow and can be revoked after the npm-based deploy is verified. Follows the repo rename in #1473. (#1484)
-- **Added `@pagenary/publisher` (`2026.5.1`, exact) and `terser` (`^5.47.1`) as devDependencies.** `@pagenary/publisher` is first-party (we own `roctinam/pagenary`); the `.npmrc` `min-release-age=7` gate is satisfied at install time by the committed lockfile pin (`npm ci` and a bare `npm install` are not gated — only an explicit add/update is). `terser` restores doc-site minification that the zero-dependency publisher otherwise skips (interim until `roctinam/pagenary#14` declares terser itself).
+- **Index config schema:** `index.graphs` consolidated into `aiwg.config` under a validated schema; `corpus-index-build` config example aligned with `build.py` schema (#1487, #1490, #1491).
+- **Doc-site CI** now installs `@pagenary/publisher` from npm and runs `npx pagenary build:tenants aiwg-docs` instead of git-cloning the publisher to `/tmp`; `GT_ACCESS_TOKEN` no longer referenced (#1484, follows the repo rename in #1473).
+- **Pagenary devDep advanced** from `2026.5.1` (exact) → `^2026.5.3` (caret) to pick up collection support; first-party adoption via the documented `--min-release-age=0` override per `docs/contributing/versioning.md` (operator-authorized).
+- **Blog manifest** is auto-generated by pagenary (envelope object), not hand-maintained; `docs/blog/index.json` removed from source and now lives only as a build artifact at `dist/aiwg-docs/blog/index.json`.
+- **`npm-publish.yml`** header + dry-run echo now say Gitea-registry-only; clarifies `NPMJS_TOKEN` is referenced only by the `if: false` legs and is revokable. Closes the docs/text half of #1481.
 
-### Fixed / known follow-ups
+### Fixed
 
-- `docsite-build.yml` runs with `strictLinks: false` pending cleanup of 53 pre-existing broken internal doc links; the broken-link build gate (now functional after `roctinam/pagenary#12`) is re-enabled in #1486.
+- **`dist/` build hygiene (#1512):** rebuilt the CLI's `dist/` on a checkout where it had been cleaned/absent; documented the root cause (`.mjs`/JSON/YAML files are *copied* into `dist/src/` by `build:copy-mjs`, separate from `tsc`). Filed #1513 for a `doctor` guard so a missing build fails loud + actionable next time.
+- **`.aiwg/.index/`** is now gitignored by default and excluded from accidental commits; doctor surfaces freshness.
+
+### Known follow-up
+
+- **pagenary#19** — page renderer still shows YAML frontmatter as visible text on docs.aiwg.io (the auto-generated manifest is unaffected). Clean rendering arrives when pagenary lands the render-side strip and ages past `min-release-age`.
+- **#1486** — fix 53 pre-existing broken internal doc links and re-enable `strictLinks: true` on `docsite-build`.
+- **Epic #1496 remaining clusters** — sidecar lint & metadata repair (#1503), induction quality (#1504), citation-graph densification (#1505), integrity / submission-risk scan (#1506); `needs-infrastructure` items: scanned-page vision extraction (#1507) and Fortemi import (#1508, deferred). Entity-profile graph analytics (#1501) is partial.
+- **#1513** — `aiwg doctor` should detect a missing/incomplete `dist/` and emit an actionable error.
+- **Provider field-validation cluster** (#1405 / #1407–1415) remains correctly `blocked:field-validation` pending per-provider field reports.
+
+### Tests
+
+Release-prep verification for this line:
+
+```bash
+npm run check:versions
+npm run typecheck
+npm run build:cli
+npm test
+npm run uat
+```
+
+### Migration notes
+
+No breaking changes.
+
+- If you forked AIWG and kept a hand-maintained `docs/blog/index.json`, remove it before building — pagenary 2026.5.3 generates the file into the build output now, and a committed source copy is redundant/stale.
+- Co-located post images (`docs/blog/images/*.png`) are *not* served by pagenary; place blog images under `docs/.public/blog/<file>.png` and reference them via the absolute `/assets/blog/<file>.png` URL. The publishing-process doc covers this.
+- Pagenary advanced from `2026.5.1` to `^2026.5.3`. The `min-release-age=7` supply-chain gate was bypassed for the bump per the documented `--min-release-age=0` override since pagenary is first-party (`roctinam/pagenary`).
 
 ## [2026.5.11] - 2026-05-25 — "Provider detection, local issue sync, and media transcript prep"
 
