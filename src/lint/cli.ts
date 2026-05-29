@@ -13,11 +13,41 @@
  * @issue #810
  */
 
+import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { discoverRulesets } from './loader.js';
 import { autoDetectRulesets, runLint } from './runner.js';
 import { formatResult, formatRulesetList, formatRuleList } from './reporters.js';
 import type { LintOptions, LintOutputFormat, LintSeverity } from './types.js';
+
+/**
+ * Resolve the AIWG install root — the directory containing `agentic/code/frameworks/`.
+ * Walks up from the running script's location so it works at any compiled depth
+ * (dev source vs `dist/src/lint/` vs an npm install path) without per-location math.
+ * Honors `AIWG_ROOT` env override first. Fixes #1515 (lint couldn't find rulesets
+ * when run outside the AIWG repo).
+ *
+ * Both markers (`agentic/code/frameworks/` AND `package.json`) must be present at
+ * the same level — that excludes stale `dist/agentic/` partials from prior builds
+ * (which exist without a sibling `package.json`).
+ */
+function findAiwgRoot(): string {
+  if (process.env.AIWG_ROOT) return process.env.AIWG_ROOT;
+  let dir = path.dirname(fileURLToPath(import.meta.url));
+  while (dir !== path.dirname(dir)) {
+    if (
+      fs.existsSync(path.join(dir, 'agentic', 'code', 'frameworks')) &&
+      fs.existsSync(path.join(dir, 'package.json'))
+    ) {
+      return dir;
+    }
+    dir = path.dirname(dir);
+  }
+  return process.cwd(); // last-resort fallback
+}
+
+const AIWG_ROOT = findAiwgRoot();
 
 /**
  * Parse CLI arguments into LintOptions
@@ -72,11 +102,12 @@ export async function main(args: string[]): Promise<void> {
   const options = parseArgs(args);
   const cwd = process.cwd();
 
-  // Determine framework root — try common locations
-  const frameworkRoot = cwd; // In development, cwd IS the framework root
-
-  // Discover available rulesets
-  const allRulesets = await discoverRulesets(cwd, frameworkRoot);
+  // Discover available rulesets. `cwd` is where the user runs the lint (used
+  // to find deployed `.aiwg/frameworks/*/lint/` overlays); `AIWG_ROOT` is the
+  // AIWG install (used to find shipped `agentic/code/frameworks/*/lint/`).
+  // Prior to #1515 this hardcoded both to `cwd`, which only worked inside the
+  // AIWG repo itself — user projects got an empty "Available:" list.
+  const allRulesets = await discoverRulesets(cwd, AIWG_ROOT);
 
   // Handle --list-rulesets
   if (options.listRulesets) {

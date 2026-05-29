@@ -14,6 +14,7 @@ import { createHash, randomBytes } from 'crypto';
 import { resolve, join, isAbsolute } from 'path';
 import { homedir } from 'os';
 import type { ProjectLocalType } from '../extensions/manifest.js';
+import { normalizeNamedCaptures } from '../artifacts/index-builder.js';
 
 const CONFIG_FILENAME = 'aiwg.config';
 const AIWG_DIR = '.aiwg';
@@ -524,8 +525,14 @@ export function validateIndexConfig(index: unknown): string[] {
     }
     if (def.filenamePattern !== undefined && typeof def.filenamePattern === 'string') {
       try {
+        // Apply the same Python→JS named-capture normalization the builder uses
+        // (index-builder.ts buildFilenameMetadataEntry) so the validator doesn't
+        // reject patterns the builder would happily compile. Fixes #1514 —
+        // `aiwg` workspace refresh emits Python-style `(?P<name>)` patterns
+        // (port residue from the Python build.py); the builder is lenient, the
+        // validator wasn't, so legit configs failed up front.
         // eslint-disable-next-line no-new
-        new RegExp(def.filenamePattern);
+        new RegExp(normalizeNamedCaptures(def.filenamePattern));
       } catch (err) {
         errors.push(`${where}.filenamePattern: not a valid regular expression (${(err as Error).message})`);
       }
