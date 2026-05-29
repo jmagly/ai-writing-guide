@@ -266,7 +266,7 @@ Verify both releases have the four sig assets attached:
 | GitHub | <https://github.com/jmagly/aiwg/releases/tag/vYYYY.M.PATCH> |
 | Gitea  | <https://git.integrolabs.net/roctinam/aiwg/releases/tag/vYYYY.M.PATCH> |
 
-Consumer verification commands (cosign-based, registry-independent) are documented in [`docs/releases/verifying.md`](../releases/verifying.md). See [`#1287`](https://git.integrolabs.net/roctinam/aiwg/issues/1287) and [the A8 ADR](../../.aiwg/architecture/adr-tarball-cosign-signing.md) for the full rationale.
+Consumer verification commands (cosign-based, registry-independent) are documented in [`docs/releases/verifying.md`](../releases/verifying.md). See [`#1287`](https://git.integrolabs.net/roctinam/aiwg/issues/1287) and [the A8 ADR](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-tarball-cosign-signing.md) for the full rationale.
 
 ## Release Gates
 

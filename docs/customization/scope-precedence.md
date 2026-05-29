@@ -79,7 +79,7 @@ Project-scope artifacts can shadow upstream cleanly. AIWG enforces a
 denylist on safety-critical artifacts (security rules, license
 checks): shadowing them requires an explicit `overrides:` declaration
 in the project-local manifest. `--force` does not bypass the
-denylist. See [adr-override-shadow-policy.md](../../.aiwg/architecture/adr-override-shadow-policy.md).
+denylist. See [adr-override-shadow-policy.md](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-override-shadow-policy.md).
 
 This denylist applies the same way regardless of scope — a
 project-scope deploy can't silently shadow a safety-critical

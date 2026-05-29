@@ -910,7 +910,7 @@ aiwg local-executor serve --max-concurrency 4 --executor-id <uuid>
 **Platforms:** All
 **Tools:** Bash
 
-**See also:** [Executor Contract ADR](.aiwg/architecture/adr-executor-contract.md), [executor.aiwg.io/v1 spec](.aiwg/architecture/executor.aiwg.io-v1.md).
+**See also:** [Executor Contract ADR](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-executor-contract.md), [executor.aiwg.io/v1 spec](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/executor.aiwg.io-v1.md).
 
 ---
 

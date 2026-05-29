@@ -52,7 +52,7 @@ The cosign `.sigstore` bundles embed a full Sigstore verification record: the ke
 - That the tag was created in CI versus on a maintainer workstation. The key signs the tag, not the environment.
 - That the maintainer key itself is uncompromised. If the key leaks, every tag signed before rotation is implicated.
 
-**Anchored in**: The published maintainer-key fingerprint in [`SECURITY.md`](../../SECURITY.md) and the public key at [`.gitea/keys/maintainers.asc`](../../.gitea/keys/maintainers.asc). Trust root: whatever transport you used to fetch the fingerprint (TLS to git.integrolabs.net, the published key in the maintainer's social-media bio, the value embedded in a previous AIWG release you already trusted, etc.).
+**Anchored in**: The published maintainer-key fingerprint in [`SECURITY.md`](https://github.com/jmagly/aiwg/blob/main/SECURITY.md) and the public key at [`.gitea/keys/maintainers.asc`](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/.gitea/keys/maintainers.asc). Trust root: whatever transport you used to fetch the fingerprint (TLS to git.integrolabs.net, the published key in the maintainer's social-media bio, the value embedded in a previous AIWG release you already trusted, etc.).
 
 **Active key as of v2026.5.3**: ed25519, fingerprint `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`, expires 2031-05-11.
 
@@ -161,9 +161,9 @@ Full walkthrough including expected-output samples and failure-mode diagnostics:
 
 - [`docs/releases/verifying.md`](../releases/verifying.md) — step-by-step verification per release
 - [`docs/security/adopting-this-pattern.md`](adopting-this-pattern.md) — apply this pattern to your own package
-- [`SECURITY.md`](../../SECURITY.md) — maintainer key, disclosure channel
-- [`.aiwg/architecture/adr-publish-time-evidence.md`](../../.aiwg/architecture/adr-publish-time-evidence.md) — design rationale
-- [`.aiwg/architecture/adr-tarball-cosign-signing.md`](../../.aiwg/architecture/adr-tarball-cosign-signing.md) — cosign integration
-- [`.aiwg/architecture/adr-npmjs-org-via-github-actions.md`](../../.aiwg/architecture/adr-npmjs-org-via-github-actions.md) — npm OIDC publish
-- [`.aiwg/architecture/adr-signed-tag-verify.md`](../../.aiwg/architecture/adr-signed-tag-verify.md) — signed-tag gate
+- [`SECURITY.md`](https://github.com/jmagly/aiwg/blob/main/SECURITY.md) — maintainer key, disclosure channel
+- [`.aiwg/architecture/adr-publish-time-evidence.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-publish-time-evidence.md) — design rationale
+- [`.aiwg/architecture/adr-tarball-cosign-signing.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-tarball-cosign-signing.md) — cosign integration
+- [`.aiwg/architecture/adr-npmjs-org-via-github-actions.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-npmjs-org-via-github-actions.md) — npm OIDC publish
+- [`.aiwg/architecture/adr-signed-tag-verify.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-signed-tag-verify.md) — signed-tag gate
 - [#1278](https://git.integrolabs.net/roctinam/aiwg/issues/1278) — Mini Shai-Hulud hardening epic

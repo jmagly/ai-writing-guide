@@ -10,14 +10,14 @@ This guide makes that the default, not the exception.
 
 ## Pick the right template
 
-Templates live in [`.gitea/ISSUE_TEMPLATE/`](../../.gitea/ISSUE_TEMPLATE/) and are mirrored to [`.github/ISSUE_TEMPLATE/`](../../.github/ISSUE_TEMPLATE/). Same content, different tracker.
+Templates live in [`.gitea/ISSUE_TEMPLATE/`](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/.gitea/ISSUE_TEMPLATE/) and are mirrored to [`.github/ISSUE_TEMPLATE/`](https://github.com/jmagly/aiwg/blob/main/.github/ISSUE_TEMPLATE/). Same content, different tracker.
 
 | Template | When to use |
 |---|---|
-| [`bug-report.md`](../../.gitea/ISSUE_TEMPLATE/bug-report.md) | One concrete defect with a reproduction |
-| [`feature-request.md`](../../.gitea/ISSUE_TEMPLATE/feature-request.md) | A new capability or enhancement proposal |
-| [`tester-report.md`](../../.gitea/ISSUE_TEMPLATE/tester-report.md) | A single session that surfaced multiple findings — split during triage |
-| [`imported-report.md`](../../.gitea/ISSUE_TEMPLATE/imported-report.md) | Mirroring an issue filed in a different tracker |
+| [`bug-report.md`](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/.gitea/ISSUE_TEMPLATE/bug-report.md) | One concrete defect with a reproduction |
+| [`feature-request.md`](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/.gitea/ISSUE_TEMPLATE/feature-request.md) | A new capability or enhancement proposal |
+| [`tester-report.md`](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/.gitea/ISSUE_TEMPLATE/tester-report.md) | A single session that surfaced multiple findings — split during triage |
+| [`imported-report.md`](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/.gitea/ISSUE_TEMPLATE/imported-report.md) | Mirroring an issue filed in a different tracker |
 
 **One bug per issue.** If you found three things, file three issues (or one tester-report and split). Don't bundle.
 
@@ -168,6 +168,6 @@ mcp__git-gitea__issue_write method=create owner=roctinam repo=aiwg title='<title
 
 For general issue backlog processing, use `issue-audit` / `audit-issues` for read-only audit and triage, or `address-issues` for implementation loops. `aiwg-*` capabilities are AIWG product/workspace capabilities, not the generic issue-processing surface.
 - **PR companion**: [filing pull requests](./filing-pull-requests.md)
-- **Templates**: [`.gitea/ISSUE_TEMPLATE/`](../../.gitea/ISSUE_TEMPLATE/), [`.github/ISSUE_TEMPLATE/`](../../.github/ISSUE_TEMPLATE/)
-- **Rules**: [`delivery-policy`](../../agentic/code/addons/aiwg-utils/rules/delivery-policy.md), [`no-attribution`](../../agentic/code/frameworks/sdlc-complete/rules/no-attribution.md), [`ops-issue-tracking`](../../agentic/code/frameworks/ops-complete/rules/ops-issue-tracking.md)
+- **Templates**: [`.gitea/ISSUE_TEMPLATE/`](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/.gitea/ISSUE_TEMPLATE/), [`.github/ISSUE_TEMPLATE/`](https://github.com/jmagly/aiwg/blob/main/.github/ISSUE_TEMPLATE/)
+- **Rules**: [`delivery-policy`](https://github.com/jmagly/aiwg/blob/main/agentic/code/addons/aiwg-utils/rules/delivery-policy.md), [`no-attribution`](https://github.com/jmagly/aiwg/blob/main/agentic/code/frameworks/sdlc-complete/rules/no-attribution.md), [`ops-issue-tracking`](https://github.com/jmagly/aiwg/blob/main/agentic/code/frameworks/ops-complete/rules/ops-issue-tracking.md)
 - **Origin**: #1269 (templates infrastructure), #1264–#1268 (tester report sweep that codified this pattern)

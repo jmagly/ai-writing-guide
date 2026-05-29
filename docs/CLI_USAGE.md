@@ -111,7 +111,7 @@ aiwg status --probe --json
 
 ### issue
 
-Manage project-local issues under `.aiwg/issues/` and move snapshots to or from Gitea/GitHub. See [Local Issues](local-issues.md) for sync, backup, and Git conflict guidance.
+Manage project-local issues under `.aiwg/issues/` and move snapshots to or from Gitea/GitHub. See [Local Issues](./local-issues.md) for sync, backup, and Git conflict guidance.
 
 ```bash
 aiwg issue init --prefix PROJECT

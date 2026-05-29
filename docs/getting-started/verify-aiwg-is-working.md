@@ -67,7 +67,7 @@ If the agent says AIWG is not installed or not on PATH, install or fix PATH:
 npm install -g aiwg
 ```
 
-Or, if `aiwg` is installed but unreachable, see the [Installation Troubleshooting](../../README.md#installation-troubleshooting) section in the README.
+Or, if `aiwg` is installed but unreachable, see the [Installation Troubleshooting](https://github.com/jmagly/aiwg/blob/main/README.md#installation-troubleshooting) section in the README.
 
 If the probe reports `not-configured` or `partial`, ask the agent for the one action that will finish setup. Usually that is `aiwg wizard` or a focused `aiwg use <framework>`.
 

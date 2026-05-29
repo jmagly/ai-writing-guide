@@ -1454,7 +1454,7 @@ Yes. Messaging integration is optional. The daemon provides file watching, sched
 
 ## Test coverage
 
-The daemon + serve + sandbox seam is covered by a four-tier strategy in [`.aiwg/testing/test-strategy-daemon-serve-sandbox.md`](../.aiwg/testing/test-strategy-daemon-serve-sandbox.md):
+The daemon + serve + sandbox seam is covered by a four-tier strategy in [`.aiwg/testing/test-strategy-daemon-serve-sandbox.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/testing/test-strategy-daemon-serve-sandbox.md):
 
 - **Tier 1 (unit)** — `npm test` runs the mocked-transport unit suites under `test/unit/serve/` and `test/unit/mc-bridge/`.
 - **Tier 2 (contract)** — `npm run test:conformance` replays the executor-contract v1 fixtures (#1183).
