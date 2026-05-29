@@ -204,27 +204,53 @@ describe('FrameworkDetector', () => {
       }
     });
 
-    it('should return false for framework-scoped, mixed, or empty workspaces', async () => {
-      // Framework-scoped workspace
-      await sandbox.createDirectory('.aiwg/claude');
+    it('should return false for framework-scoped or empty workspaces', async () => {
+      // Per issue #1516, the framework-scoped marker is `.aiwg/frameworks/`
+      // (the registry directory), not the provider deployment dirs
+      // (.aiwg/claude/, .aiwg/codex/, etc). SDLC canonical top-level dirs
+      // alongside `.aiwg/frameworks/` are the intended state for SDLC
+      // deployments and must not register as legacy.
+
+      // Framework-scoped workspace with `.aiwg/frameworks/` marker
+      await sandbox.createDirectory('.aiwg/frameworks');
+      await sandbox.createDirectory('.aiwg/frameworks/sdlc-complete');
       await sandbox.createDirectory('.aiwg/shared');
-      await sandbox.writeFile('.aiwg/claude/settings.json', '{}');
 
       let detector = new FrameworkDetector(projectRoot);
       let isLegacy = await detector.isLegacyWorkspace();
       expect(isLegacy).toBe(false);
 
-      // Mixed structure (legacy + framework)
+      // SDLC canonical top-level dirs + `.aiwg/frameworks/` = intended SDLC
+      // layout, not legacy.
       await sandbox.cleanup();
       sandbox = new FilesystemSandbox();
       await sandbox.initialize();
       projectRoot = sandbox.getPath();
 
       await sandbox.createDirectory('.aiwg/intake');
-      await sandbox.createDirectory('.aiwg/claude');
+      await sandbox.createDirectory('.aiwg/requirements');
+      await sandbox.createDirectory('.aiwg/frameworks');
       detector = new FrameworkDetector(projectRoot);
       isLegacy = await detector.isLegacyWorkspace();
       expect(isLegacy).toBe(false);
+    });
+
+    it('should detect orphan non-SDLC top-level dirs as legacy (pre-#1516 deploy bug)', async () => {
+      // The pre-#1516 deploy scaffolded non-SDLC frameworks into BOTH the
+      // scoped location and a legacy top-level dir (.aiwg/forensics/,
+      // .aiwg/kb/, etc.). Detect the residue so migration is offered.
+      for (const orphan of ['forensics', 'kb', 'media', 'marketing', 'security-engineering']) {
+        await sandbox.cleanup();
+        sandbox = new FilesystemSandbox();
+        await sandbox.initialize();
+        projectRoot = sandbox.getPath();
+
+        await sandbox.createDirectory('.aiwg/frameworks');
+        await sandbox.createDirectory(`.aiwg/${orphan}`);
+        const detector = new FrameworkDetector(projectRoot);
+        const isLegacy = await detector.isLegacyWorkspace();
+        expect(isLegacy, `orphan: ${orphan}`).toBe(true);
+      }
     });
 
     it('should handle missing or empty .aiwg/ directory', async () => {

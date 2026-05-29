@@ -371,7 +371,15 @@ async function buildWorkspaceStatus(projectRoot) {
   if (!result.workspace.exists) return result;
 
   const frameworksDir = path.join(aiwgPath, 'frameworks');
-  const legacyDirs = ['intake', 'requirements', 'architecture', 'planning', 'testing'];
+  // SDLC-canonical artifact dirs. These coexist with `.aiwg/frameworks/` by
+  // design when sdlc-complete is deployed (documented in CLAUDE.md). They only
+  // indicate a genuinely-legacy (pre-#54) workspace when `.aiwg/frameworks/`
+  // is absent. See issue #1516.
+  const sdlcCanonicalDirs = ['intake', 'requirements', 'architecture', 'planning', 'testing'];
+  // Non-SDLC top-level dirs that the pre-#1516 deploy scaffolded by mistake.
+  // If any of these exist, the workspace pre-dates the manifest fix and a
+  // migration is needed to move them under `.aiwg/frameworks/<id>/`.
+  const orphanLegacyDirs = ['forensics', 'kb', 'media', 'media-curator', 'marketing', 'security-engineering'];
 
   try {
     await fs.access(frameworksDir);
@@ -380,14 +388,35 @@ async function buildWorkspaceStatus(projectRoot) {
     result.workspace.isFrameworkScoped = false;
   }
 
-  for (const dir of legacyDirs) {
+  let hasSdlcDirs = false;
+  for (const dir of sdlcCanonicalDirs) {
     try {
       await fs.access(path.join(aiwgPath, dir));
-      result.workspace.isLegacy = true;
+      hasSdlcDirs = true;
       break;
     } catch {
       // Directory doesn't exist.
     }
+  }
+
+  let hasOrphanLegacy = false;
+  for (const dir of orphanLegacyDirs) {
+    try {
+      await fs.access(path.join(aiwgPath, dir));
+      hasOrphanLegacy = true;
+      break;
+    } catch {
+      // Directory doesn't exist.
+    }
+  }
+
+  // isLegacy now only fires when the workspace shape genuinely warrants a
+  // migration: either pre-#54 SDLC-only top-level layout, or orphan non-SDLC
+  // top-level dirs left over from a pre-#1516 deploy.
+  if (hasSdlcDirs && !result.workspace.isFrameworkScoped) {
+    result.workspace.isLegacy = true;
+  } else if (hasOrphanLegacy) {
+    result.workspace.isLegacy = true;
   }
 
   if (result.workspace.isFrameworkScoped && !result.workspace.isLegacy) {

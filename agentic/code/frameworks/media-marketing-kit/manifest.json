@@ -18,13 +18,34 @@
   ],
   "memory": {
     "creates": [
-      { "path": ".aiwg/marketing/", "description": "All marketing artifacts root directory" },
-      { "path": ".aiwg/marketing/intake/", "description": "Campaign intake forms and briefs" },
-      { "path": ".aiwg/marketing/campaigns/", "description": "Active campaign artifacts" },
-      { "path": ".aiwg/marketing/strategy/", "description": "Campaign strategy documents" },
-      { "path": ".aiwg/marketing/creation/", "description": "Content creation artifacts" },
-      { "path": ".aiwg/marketing/working/", "description": "Temporary working files (safe to delete)" },
-      { "path": ".aiwg/marketing/reports/", "description": "Generated marketing reports" }
+      {
+        "path": ".aiwg/frameworks/media-marketing-kit/",
+        "description": "All marketing artifacts root directory"
+      },
+      {
+        "path": ".aiwg/frameworks/media-marketing-kit/intake/",
+        "description": "Campaign intake forms and briefs"
+      },
+      {
+        "path": ".aiwg/frameworks/media-marketing-kit/campaigns/",
+        "description": "Active campaign artifacts"
+      },
+      {
+        "path": ".aiwg/frameworks/media-marketing-kit/strategy/",
+        "description": "Campaign strategy documents"
+      },
+      {
+        "path": ".aiwg/frameworks/media-marketing-kit/creation/",
+        "description": "Content creation artifacts"
+      },
+      {
+        "path": ".aiwg/frameworks/media-marketing-kit/working/",
+        "description": "Temporary working files (safe to delete)"
+      },
+      {
+        "path": ".aiwg/frameworks/media-marketing-kit/reports/",
+        "description": "Generated marketing reports"
+      }
     ]
   }
 }

@@ -18,47 +18,47 @@
   "memory": {
     "creates": [
       {
-        "path": ".aiwg/media/",
+        "path": ".aiwg/frameworks/media-curator/",
         "description": "All media curation artifacts root directory"
       },
       {
-        "path": ".aiwg/media/analysis/",
+        "path": ".aiwg/frameworks/media-curator/analysis/",
         "description": "Artist analysis and era breakdowns"
       },
       {
-        "path": ".aiwg/media/discography/",
+        "path": ".aiwg/frameworks/media-curator/discography/",
         "description": "Canonical album lists with MusicBrainz IDs"
       },
       {
-        "path": ".aiwg/media/sources/",
+        "path": ".aiwg/frameworks/media-curator/sources/",
         "description": "Ranked source lists per album"
       },
       {
-        "path": ".aiwg/media/downloads/",
+        "path": ".aiwg/frameworks/media-curator/downloads/",
         "description": "Download logs"
       },
       {
-        "path": ".aiwg/media/tagging/",
+        "path": ".aiwg/frameworks/media-curator/tagging/",
         "description": "Metadata tagging logs"
       },
       {
-        "path": ".aiwg/media/verification/",
+        "path": ".aiwg/frameworks/media-curator/verification/",
         "description": "Verification and integrity logs"
       },
       {
-        "path": ".aiwg/media/reports/",
+        "path": ".aiwg/frameworks/media-curator/reports/",
         "description": "Completeness and gap reports"
       },
       {
-        "path": ".aiwg/media/sessions/",
+        "path": ".aiwg/frameworks/media-curator/sessions/",
         "description": "Resumable curation session state"
       },
       {
-        "path": ".aiwg/media-curator/profiles/",
+        "path": ".aiwg/frameworks/media-curator/profiles/",
         "description": "Artist profiles saved as YAML"
       },
       {
-        "path": ".aiwg/media/transcripts/",
+        "path": ".aiwg/frameworks/media-curator/transcripts/",
         "description": "Transcript sidecars with source/transcript hashes and segment timestamps"
       }
     ],

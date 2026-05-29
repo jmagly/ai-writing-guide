@@ -47,47 +47,47 @@
   "memory": {
     "creates": [
       {
-        "path": ".aiwg/forensics/",
+        "path": ".aiwg/frameworks/forensics-complete/",
         "description": "Forensics root directory"
       },
       {
-        "path": ".aiwg/forensics/profiles/",
+        "path": ".aiwg/frameworks/forensics-complete/profiles/",
         "description": "Target profiles"
       },
       {
-        "path": ".aiwg/forensics/plans/",
+        "path": ".aiwg/frameworks/forensics-complete/plans/",
         "description": "Investigation plans"
       },
       {
-        "path": ".aiwg/forensics/triage/",
+        "path": ".aiwg/frameworks/forensics-complete/triage/",
         "description": "RFC 3227 triage captures and summaries"
       },
       {
-        "path": ".aiwg/forensics/evidence/",
+        "path": ".aiwg/frameworks/forensics-complete/evidence/",
         "description": "Acquired evidence and images"
       },
       {
-        "path": ".aiwg/forensics/findings/",
+        "path": ".aiwg/frameworks/forensics-complete/findings/",
         "description": "Analysis findings"
       },
       {
-        "path": ".aiwg/forensics/timelines/",
+        "path": ".aiwg/frameworks/forensics-complete/timelines/",
         "description": "Event timelines"
       },
       {
-        "path": ".aiwg/forensics/iocs/",
+        "path": ".aiwg/frameworks/forensics-complete/iocs/",
         "description": "Indicators of compromise"
       },
       {
-        "path": ".aiwg/forensics/reports/",
+        "path": ".aiwg/frameworks/forensics-complete/reports/",
         "description": "Forensic reports"
       },
       {
-        "path": ".aiwg/forensics/sigma/",
+        "path": ".aiwg/frameworks/forensics-complete/sigma/",
         "description": "Sigma detection rules"
       },
       {
-        "path": ".aiwg/forensics/chain-of-custody.md",
+        "path": ".aiwg/frameworks/forensics-complete/chain-of-custody.md",
         "description": "Master chain-of-custody log",
         "template": "templates/chain-of-custody.md"
       }

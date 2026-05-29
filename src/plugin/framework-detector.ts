@@ -35,14 +35,29 @@ export interface FrameworkInfo {
 export class FrameworkDetector {
   private projectRoot: string;
 
+  // Provider directories (used by detectFrameworks() to enumerate which
+  // platforms the workspace is deployed to). These are NOT the same as
+  // "framework-scoped workspace" (`.aiwg/frameworks/`). See issue #1516.
   private readonly FRAMEWORK_DIRS = ['claude', 'codex', 'cursor'];
-  private readonly LEGACY_DIRS = [
-    // SDLC shared directories
+
+  // Marker for framework-scoped workspace layout per PR #54.
+  private readonly FRAMEWORKS_DIR = 'frameworks';
+
+  // SDLC-canonical artifact dirs. Their presence ALONE is not "legacy" —
+  // they coexist with `.aiwg/frameworks/` by design when sdlc-complete is
+  // deployed (documented in CLAUDE.md / AIWG.md). Treat as legacy only when
+  // `.aiwg/frameworks/` is absent.
+  private readonly SDLC_CANONICAL_DIRS = [
     'intake', 'requirements', 'architecture', 'planning',
     'risks', 'testing', 'security', 'quality', 'deployment',
     'reports', 'working', 'handoffs', 'gates', 'decisions', 'team', 'management',
-    // Framework-specific directories (legacy when directly under .aiwg)
     'agents', 'commands', 'memory', 'context'
+  ];
+
+  // Orphan non-SDLC top-level dirs left over from the pre-#1516 deploy bug.
+  // Their presence is always a migration signal regardless of frameworks/.
+  private readonly ORPHAN_LEGACY_DIRS = [
+    'forensics', 'kb', 'media', 'media-curator', 'marketing', 'security-engineering'
   ];
 
   constructor(projectRoot: string) {
@@ -97,29 +112,37 @@ export class FrameworkDetector {
       return false; // No .aiwg directory
     }
 
-    // Check for legacy SDLC directories
-    let legacyDirCount = 0;
-    let frameworkDirCount = 0;
+    let sdlcCanonicalCount = 0;
+    let orphanLegacyCount = 0;
+    let hasFrameworksDir = false;
 
     try {
       const entries = await fs.readdir(aiwgPath, { withFileTypes: true });
 
       for (const entry of entries) {
-        if (entry.isDirectory()) {
-          if (this.LEGACY_DIRS.includes(entry.name)) {
-            legacyDirCount++;
-          }
-          if (this.FRAMEWORK_DIRS.includes(entry.name)) {
-            frameworkDirCount++;
-          }
+        if (!entry.isDirectory()) continue;
+        if (entry.name === this.FRAMEWORKS_DIR) {
+          hasFrameworksDir = true;
+          continue;
+        }
+        if (this.SDLC_CANONICAL_DIRS.includes(entry.name)) {
+          sdlcCanonicalCount++;
+        }
+        if (this.ORPHAN_LEGACY_DIRS.includes(entry.name)) {
+          orphanLegacyCount++;
         }
       }
     } catch {
       return false;
     }
 
-    // Legacy workspace if has legacy dirs but no framework dirs
-    return legacyDirCount > 0 && frameworkDirCount === 0;
+    // Orphan non-SDLC top-level dirs always indicate a migration is needed
+    // (residue from the pre-#1516 deploy bug).
+    if (orphanLegacyCount > 0) return true;
+
+    // SDLC top-level dirs are only "legacy" when .aiwg/frameworks/ is absent;
+    // otherwise they're the documented canonical SDLC artifact layout.
+    return sdlcCanonicalCount > 0 && !hasFrameworksDir;
   }
 
   /**

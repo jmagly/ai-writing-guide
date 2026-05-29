@@ -24,39 +24,39 @@
   "memory": {
     "creates": [
       {
-        "path": ".aiwg/research/",
+        "path": ".aiwg/frameworks/research-complete/",
         "description": "Research root directory"
       },
       {
-        "path": ".aiwg/research/workflows/",
+        "path": ".aiwg/frameworks/research-complete/workflows/",
         "description": "Active research workflow state"
       },
       {
-        "path": ".aiwg/research/reports/",
+        "path": ".aiwg/frameworks/research-complete/reports/",
         "description": "Generated research reports"
       },
       {
-        "path": ".aiwg/research/findings/",
+        "path": ".aiwg/frameworks/research-complete/findings/",
         "description": "Research finding notes (REF-NNN.md)"
       },
       {
-        "path": ".aiwg/research/sources/",
+        "path": ".aiwg/frameworks/research-complete/sources/",
         "description": "Source documents and PDFs"
       },
       {
-        "path": ".aiwg/research/archives/",
+        "path": ".aiwg/frameworks/research-complete/archives/",
         "description": "Archival artifacts"
       },
       {
-        "path": ".aiwg/research/synthesis/",
+        "path": ".aiwg/frameworks/research-complete/synthesis/",
         "description": "Synthesis and gap analysis"
       },
       {
-        "path": ".aiwg/research/provenance/",
+        "path": ".aiwg/frameworks/research-complete/provenance/",
         "description": "W3C PROV provenance records"
       },
       {
-        "path": ".aiwg/research/knowledge/",
+        "path": ".aiwg/frameworks/research-complete/knowledge/",
         "description": "Knowledge base and lit notes"
       }
     ],

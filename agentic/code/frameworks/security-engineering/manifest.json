@@ -51,39 +51,39 @@
   "memory": {
     "creates": [
       {
-        "path": ".aiwg/security-engineering/",
+        "path": ".aiwg/frameworks/security-engineering/",
         "description": "Security engineering root directory"
       },
       {
-        "path": ".aiwg/security-engineering/decisions/",
+        "path": ".aiwg/frameworks/security-engineering/decisions/",
         "description": "Cryptographic and design decision records"
       },
       {
-        "path": ".aiwg/security-engineering/chain-of-trust/",
+        "path": ".aiwg/frameworks/security-engineering/chain-of-trust/",
         "description": "Bootstrap and verification chain designs"
       },
       {
-        "path": ".aiwg/security-engineering/factors/",
+        "path": ".aiwg/frameworks/security-engineering/factors/",
         "description": "Authentication factor design rationale"
       },
       {
-        "path": ".aiwg/security-engineering/degraded-modes/",
+        "path": ".aiwg/frameworks/security-engineering/degraded-modes/",
         "description": "Fail-closed/fail-open behavior matrices"
       },
       {
-        "path": ".aiwg/security-engineering/physical-threats/",
+        "path": ".aiwg/frameworks/security-engineering/physical-threats/",
         "description": "Physical-access threat scenarios"
       },
       {
-        "path": ".aiwg/security-engineering/supply-chain/",
+        "path": ".aiwg/frameworks/security-engineering/supply-chain/",
         "description": "Supply-chain trust artifacts (pinning, repro builds)"
       },
       {
-        "path": ".aiwg/security-engineering/incident-readiness/",
+        "path": ".aiwg/frameworks/security-engineering/incident-readiness/",
         "description": "DFIR readiness and security-to-forensics handoff records"
       },
       {
-        "path": ".aiwg/security-engineering/reviews/",
+        "path": ".aiwg/frameworks/security-engineering/reviews/",
         "description": "Applied-security review reports"
       }
     ],

@@ -85,24 +85,28 @@ describe('Framework Manifest (#381)', () => {
     }
   });
 
-  it('declares memory scaffold for top-level DFIR workspace and custody log', () => {
+  it('declares memory scaffold for framework-scoped DFIR workspace and custody log', () => {
+    // Per issue #1516, memory.creates paths must be framework-scoped
+    // (`.aiwg/frameworks/forensics-complete/...`) so a fresh deploy does
+    // not produce a duplicated top-level layout that trips the workspace
+    // legacy detector.
     const paths = manifest.memory.creates.map((entry: any) => entry.path);
     for (const expected of [
-      '.aiwg/forensics/',
-      '.aiwg/forensics/profiles/',
-      '.aiwg/forensics/plans/',
-      '.aiwg/forensics/triage/',
-      '.aiwg/forensics/evidence/',
-      '.aiwg/forensics/findings/',
-      '.aiwg/forensics/timelines/',
-      '.aiwg/forensics/iocs/',
-      '.aiwg/forensics/reports/',
-      '.aiwg/forensics/sigma/',
-      '.aiwg/forensics/chain-of-custody.md',
+      '.aiwg/frameworks/forensics-complete/',
+      '.aiwg/frameworks/forensics-complete/profiles/',
+      '.aiwg/frameworks/forensics-complete/plans/',
+      '.aiwg/frameworks/forensics-complete/triage/',
+      '.aiwg/frameworks/forensics-complete/evidence/',
+      '.aiwg/frameworks/forensics-complete/findings/',
+      '.aiwg/frameworks/forensics-complete/timelines/',
+      '.aiwg/frameworks/forensics-complete/iocs/',
+      '.aiwg/frameworks/forensics-complete/reports/',
+      '.aiwg/frameworks/forensics-complete/sigma/',
+      '.aiwg/frameworks/forensics-complete/chain-of-custody.md',
     ]) {
       expect(paths).toContain(expected);
     }
-    const custody = manifest.memory.creates.find((entry: any) => entry.path === '.aiwg/forensics/chain-of-custody.md');
+    const custody = manifest.memory.creates.find((entry: any) => entry.path === '.aiwg/frameworks/forensics-complete/chain-of-custody.md');
     expect(custody.template).toBe('templates/chain-of-custody.md');
   });
 
@@ -409,7 +413,9 @@ describe('Workspace Templates', () => {
 describe('Deployment Scaffold', () => {
   const BIN = path.join(REPO_ROOT, 'bin/aiwg.mjs');
 
-  it('aiwg use forensics creates the top-level DFIR workspace scaffold', () => {
+  it('aiwg use forensics creates the framework-scoped DFIR workspace scaffold', () => {
+    // Per issue #1516, scaffold lives under .aiwg/frameworks/forensics-complete/
+    // not the legacy top-level .aiwg/forensics/.
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-dfir-use-'));
     try {
       const result = spawnSync(process.execPath, [BIN, 'use', 'forensics', '--target', dir, '--provider', 'claude', '--copy-all', '--no-project-local'], {
@@ -419,10 +425,13 @@ describe('Deployment Scaffold', () => {
         env: { ...process.env, AIWG_ROOT: REPO_ROOT },
       });
       expect(result.status, result.stdout + result.stderr).toBe(0);
+      const scopedBase = path.join(dir, '.aiwg/frameworks/forensics-complete');
       for (const rel of ['profiles', 'plans', 'triage', 'evidence', 'findings', 'timelines', 'iocs', 'reports', 'sigma']) {
-        expect(fs.existsSync(path.join(dir, '.aiwg/forensics', rel))).toBe(true);
+        expect(fs.existsSync(path.join(scopedBase, rel))).toBe(true);
       }
-      expect(fs.readFileSync(path.join(dir, '.aiwg/forensics/chain-of-custody.md'), 'utf8')).toContain('Chain of Custody Log');
+      expect(fs.readFileSync(path.join(scopedBase, 'chain-of-custody.md'), 'utf8')).toContain('Chain of Custody Log');
+      // Regression guard: legacy top-level dirs must NOT be created.
+      expect(fs.existsSync(path.join(dir, '.aiwg/forensics'))).toBe(false);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
