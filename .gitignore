@@ -97,3 +97,7 @@ test/**/.tmp-*/
 # AIWG — ignore only high-churn runtime subdirs, NOT .aiwg/ itself
 .aiwg/ralph/
 .aiwg/ralph-external/
+
+# RLM working dir — `aiwg rlm-prep` writes per-host chunks/manifests with
+# absolute paths; reproducible from re-running the command.
+.rlm-prep/
