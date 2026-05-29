@@ -71,6 +71,36 @@ if (maybeHandleFastVersion(process.argv.slice(2))) {
   process.exit(0);
 }
 
+// Preflight: verify dist/ is built before any of the dynamic imports below
+// try to resolve files that don't exist. Without this, a missing/incomplete
+// dist/ surfaces as a raw `Cannot find module '.../dist/src/.../*.mjs'` from
+// whichever import lands first, with no remediation hint. Fixes #1513
+// (#1512 follow-up — the research agent hit MODULE_NOT_FOUND when dist/ was
+// absent in their checkout; the answer was always `npm run build:cli`,
+// which is what this preflight tells them).
+//
+// `--version` is handled above without dist, so this runs after that.
+function maybeWarnUnbuiltDist() {
+  const required = [
+    'dist/src/cli/router.js',
+    'dist/src/update/notifier.mjs',
+    'dist/src/channel/manager.mjs',
+  ];
+  const missing = required.filter(rel => !existsSync(path.join(packageRoot, rel)));
+  if (missing.length === 0) return;
+  const isDevCheckout =
+    existsSync(path.join(packageRoot, 'src')) &&
+    existsSync(path.join(packageRoot, '.git'));
+  const remediation = isDevCheckout
+    ? 'Run `npm run build:cli` in the AIWG checkout to build dist/.'
+    : 'Reinstall AIWG: `npm install -g aiwg` (the published package ships dist/).';
+  process.stderr.write(`aiwg: dist/ is missing or incomplete — required files absent:\n`);
+  for (const rel of missing) process.stderr.write(`  - ${rel}\n`);
+  process.stderr.write(`  ${remediation}\n`);
+  process.exit(1);
+}
+maybeWarnUnbuiltDist();
+
 // Mint or inherit an invocation ID before anything else loads. Child processes
 // spawned by handlers (detached update-notifier, aiwg exec, etc.) inherit the
 // parent's ID via `AIWG_INVOCATION_ID` so their JSONL log records correlate

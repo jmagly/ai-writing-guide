@@ -405,6 +405,32 @@ async function runDoctor() {
     check('AIWG Installation', 'error', `AIWG not found at ${AIWG_ROOT}. Run: npm install -g aiwg`);
   }
 
+  // 1b. Build state — surface a missing/incomplete dist/ as a clear error with
+  // remediation instead of letting consumers hit cryptic MODULE_NOT_FOUND at
+  // CLI runtime. The `.mjs`/JSON/YAML files (incl. dist/src/update/notifier.mjs)
+  // are copied by `npm run build:cli`'s build:copy-mjs step, separate from
+  // tsc, so a partial build is plausible. Fixes #1513 (#1512 follow-up: the
+  // research agent hit MODULE_NOT_FOUND in a checkout where dist/ was clean).
+  if (aiwgInstalled) {
+    const distDir = path.join(AIWG_ROOT, 'dist');
+    const notifierEntry = path.join(distDir, 'src', 'update', 'notifier.mjs');
+    const cliRouter = path.join(distDir, 'src', 'cli', 'router.js');
+    const distExists = await fileExists(distDir);
+    const notifierOk = await fileExists(notifierEntry);
+    const routerOk = await fileExists(cliRouter);
+    if (distExists && notifierOk && routerOk) {
+      check('AIWG Build', 'ok', `dist/ built (router + notifier present)`);
+    } else if (!distExists) {
+      check('AIWG Build', 'error', `dist/ is missing at ${AIWG_ROOT}. Run: npm run build:cli (dev checkout) or reinstall via npm install -g aiwg`);
+    } else {
+      const missing = [
+        !routerOk ? 'dist/src/cli/router.js' : null,
+        !notifierOk ? 'dist/src/update/notifier.mjs' : null,
+      ].filter(Boolean).join(', ');
+      check('AIWG Build', 'error', `dist/ is incomplete (missing: ${missing}). Run: npm run build:cli to rebuild, or reinstall via npm install -g aiwg`);
+    }
+  }
+
   // 2. Check version — include channel label (stable / next / nightly / edge)
   let versionInfo = null;
   try {
