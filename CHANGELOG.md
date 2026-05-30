@@ -7,9 +7,31 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.5.13] - 2026-05-29 — "Deploy-scope fix and stale hook-path heal"
+
+Two deploy-path regressions surfaced after the 2026.5.x stable line: every `aiwg use` was scaffolding a duplicated workspace layout that immediately tripped the legacy detector, and every upgrade from a pre-`be3ee551` install left stale `.js` hook command paths in `.claude/settings.json` that crashed Claude Code's SessionStart hook with `MODULE_NOT_FOUND`. Both are fixed here, along with the `@pagenary/publisher 2026.5.4` adoption that was queued in Unreleased.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **Fresh `aiwg use` no longer reports `migration: partial`** | The six non-SDLC framework manifests (`forensics-complete`, `knowledge-base`, `media-curator`, `media-marketing-kit`, `research-complete`, `security-engineering`) now declare their `memory.creates` scaffolding under the scoped `.aiwg/frameworks/<id>/...` location instead of a parallel top-level `.aiwg/<name>/...` tree. SDLC's documented top-level artifact dirs (`.aiwg/requirements/`, `.aiwg/architecture/`, …) are unchanged. The two divergent `isLegacy` detectors converge on one definition: SDLC top-level + `.aiwg/frameworks/` = intended SDLC layout (not partial); orphan non-SDLC top-level dirs left over from pre-#1516 installs still register so the migration prompt fires once. (Closes #1516.) |
+| **`aiwg refresh` heals stale `.js` hook paths in `.claude/settings.json`** | The Claude hooks installer's idempotency check matched by `_aiwg_id` only, so once `aiwg-{session,trace,permissions}.js` was registered in `settings.json` (pre-`be3ee551`, May 10), later refreshes skipped the upgrade and left Claude Code invoking `node .claude/hooks/aiwg-session.js` against a file that no longer exists. The installer now rewrites the `command`, `type`, and `_aiwg_managed` fields on existing AIWG-managed entries when they're out of date and surfaces the rewrite in `result.warnings` so refresh CLI users see what changed. Eliminates the `SessionStart:startup hook error → MODULE_NOT_FOUND at node:internal/modules/cjs/loader:1459` reported on Claude Code 2.1.157. |
+| **`@pagenary/publisher` bumped `^2026.5.3` → `^2026.5.4`** | Picks up the page-renderer frontmatter strip (pagenary#19) — collection blog posts no longer render their YAML frontmatter as visible text above the title on docs.aiwg.io. The collection manifest is unchanged. Adopted via the documented `npm install --min-release-age=0` first-party override per `docs/contributing/versioning.md`. `docs/contributing/publishing-blog-posts.md` updated to drop the now-stale frontmatter-leak caveat. |
+
+### Fixed
+
+- **`aiwg use` no longer scaffolds duplicated legacy + scoped workspace layouts (Closes #1516).** Each fresh deploy was creating `.aiwg/forensics/`, `.aiwg/kb/`, `.aiwg/media/`, `.aiwg/marketing/`, `.aiwg/research/`, `.aiwg/security-engineering/` AND the scoped `.aiwg/frameworks/<id>/...` equivalents, then `aiwg status --probe` surfaced `migration.status: "partial"` because the SDLC legacy-dir detector also fired on the canonical SDLC layout that the same deploy emits. Memory.creates paths in the six non-SDLC manifests are now framework-scoped; the workspace-status and framework-detector legacy detectors no longer treat the SDLC canonical layout as "legacy" when `.aiwg/frameworks/` is present; orphan top-level non-SDLC dirs (residue from pre-#1516 installs) continue to be flagged as a migration signal so the prompt fires once and stops.
+- **Stale `.js` hook command paths refreshed on `aiwg refresh` (regression on Claude Code 2.1.157).** Pre-`be3ee551` installs (when the package declared `"type": "module"` and hook scripts were `.js`, since renamed to `.cjs`) left settings.json pointing at files that no longer exist after refresh. Claude Code surfaced this on every session start as `SessionStart:startup hook error → Failed with non-blocking status code: node:internal/modules/cjs/loader:1459`. The installer's matched-but-out-of-date branch now rewrites the entry instead of skipping it. Regression test added.
+
 ### Changed
 
-- **`@pagenary/publisher` bumped `^2026.5.3` → `^2026.5.4`.** Picks up the page-renderer frontmatter strip (pagenary#19) — collection blog posts no longer render their YAML frontmatter as visible text above the title on docs.aiwg.io. The collection manifest is unchanged. Adopted via the documented `npm install --min-release-age=0` first-party override per `docs/contributing/versioning.md`. `docs/contributing/publishing-blog-posts.md` updated to drop the now-stale frontmatter-leak caveat.
+- **`@pagenary/publisher` bumped `^2026.5.3` → `^2026.5.4`** (carried from Unreleased — see *Why this matters to users* above).
+
+### Upgrade notes
+
+- Affected projects with stale `.js` paths in `.claude/settings.json` heal automatically on the next `aiwg refresh` / `aiwg use`. No manual edit required.
+- Projects with the duplicated workspace layout from the pre-#1516 deploy bug (any of `.aiwg/{forensics,kb,media,marketing,research,security-engineering}/` present alongside `.aiwg/frameworks/`) will continue to show as flagged by `aiwg status` until the orphan top-level dirs are moved or pruned. The existing template stubs (`forensics/chain-of-custody.md`, `kb/index.md`) carry the only content and can be relocated under `.aiwg/frameworks/<id>/`.
 
 ## [2026.5.12] - 2026-05-27 — "Research corpus tooling, engineering blog launch, and release-workflow discipline"
 
