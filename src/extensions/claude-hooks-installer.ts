@@ -254,12 +254,28 @@ export async function installAiwgHooks(opts: InstallOptions): Promise<InstallRes
       if (!hooksObj[event]) hooksObj[event] = [];
       const groups = hooksObj[event];
 
-      // Skip if AIWG entry for this hookId is already present anywhere
-      // in this event's groups.
-      const alreadyPresent = groups.some(
-        (g) => Array.isArray(g.hooks) && g.hooks.some((h) => h._aiwg_id === hookId),
-      );
-      if (alreadyPresent) continue;
+      // Find any existing AIWG-managed entry for this hookId and refresh
+      // its `command` to the current script path/extension. Required for
+      // users upgrading from pre-`.cjs` installs where the registered
+      // command still references `aiwg-{session,trace,permissions}.js` —
+      // those files no longer exist on disk after refresh, causing
+      // `MODULE_NOT_FOUND` at `node:internal/modules/cjs/loader` on every
+      // hook invocation. (Fixes regression report on Claude Code 2.1.157.)
+      let updated = false;
+      for (const group of groups) {
+        if (!Array.isArray(group.hooks)) continue;
+        for (const h of group.hooks) {
+          if (h._aiwg_id !== hookId) continue;
+          if (h.command !== command || h.type !== 'command' || h._aiwg_managed !== true) {
+            h.type = 'command';
+            h.command = command;
+            h._aiwg_managed = true;
+            result.warnings.push(`Refreshed stale ${event} → ${hookId} command path`);
+          }
+          updated = true;
+        }
+      }
+      if (updated) continue;
 
       groups.push({
         hooks: [

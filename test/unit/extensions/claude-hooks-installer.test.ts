@@ -196,6 +196,68 @@ describe('installAiwgHooks', () => {
     expect(aiwgHandlers).toHaveLength(1);
   });
 
+  it('refreshes stale pre-.cjs hook command paths (regression: SessionStart MODULE_NOT_FOUND)', async () => {
+    // User installed AIWG before be3ee551 renamed hook scripts from .js to
+    // .cjs. After a later refresh, only .cjs files exist on disk, but
+    // settings.json still references the .js paths — every hook
+    // invocation crashes at `node:internal/modules/cjs/loader` with
+    // MODULE_NOT_FOUND. The installer must update stale AIWG-managed
+    // commands rather than skip them via the idempotency check.
+    const claudeDir = path.join(projectPath, '.claude');
+    await fs.mkdir(claudeDir, { recursive: true });
+    await fs.writeFile(
+      path.join(claudeDir, 'settings.json'),
+      JSON.stringify({
+        hooks: {
+          SessionStart: [
+            {
+              hooks: [
+                {
+                  type: 'command',
+                  command: 'node .claude/hooks/aiwg-session.js',
+                  _aiwg_managed: true,
+                  _aiwg_id: 'aiwg-session',
+                },
+              ],
+            },
+          ],
+          PermissionRequest: [
+            {
+              hooks: [
+                {
+                  type: 'command',
+                  command: 'node .claude/hooks/aiwg-permissions.js',
+                  _aiwg_managed: true,
+                  _aiwg_id: 'aiwg-permissions',
+                },
+              ],
+            },
+          ],
+        },
+      }, null, 2),
+      'utf8',
+    );
+
+    const result = await installAiwgHooks({ projectPath, frameworkRoot });
+    const settings = await readSettings();
+    const sessionHooks = (settings.hooks?.SessionStart ?? []).flatMap((g) => g.hooks);
+    const sessionEntry = sessionHooks.find((h) => h._aiwg_id === 'aiwg-session');
+    expect(sessionEntry?.command).toContain('aiwg-session.cjs');
+    expect(sessionEntry?.command).not.toContain('aiwg-session.js"');
+
+    const permHooks = (settings.hooks?.PermissionRequest ?? []).flatMap((g) => g.hooks);
+    const permEntry = permHooks.find((h) => h._aiwg_id === 'aiwg-permissions');
+    expect(permEntry?.command).toContain('aiwg-permissions.cjs');
+
+    // Should not duplicate — exactly one entry per event.
+    expect(sessionHooks.filter((h) => h._aiwg_id === 'aiwg-session')).toHaveLength(1);
+    expect(permHooks.filter((h) => h._aiwg_id === 'aiwg-permissions')).toHaveLength(1);
+
+    // And it should surface the refresh in warnings so refresh CLI users
+    // see what changed.
+    expect(result?.warnings.some((w) => w.includes('Refreshed stale'))).toBe(true);
+  });
+
   it('dry-run does not write files', async () => {
     const r = await installAiwgHooks({ projectPath, frameworkRoot, dryRun: true });
     expect(r).not.toBeNull();
