@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/workflow/v1/workflow-inventory.schema.json",
+  "title": "WorkflowInventory",
+  "description": "Fleet topology with groups, hosts, and cascading variables.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "workflow.aiwg.io/v1",
+      "description": "API version for the AIWG workflow metalanguage (aiwg-utils)."
+    },
+    "kind": {
+      "const": "WorkflowInventory",
+      "description": "Resource kind."
+    },
+    "metadata": {
+      "$ref": "#/definitions/metadata"
+    },
+    "spec": {
+      "type": "object",
+      "description": "Inventory specification containing groups and hosts.",
+      "required": ["groups", "hosts"],
+      "additionalProperties": false,
+      "properties": {
+        "groups": {
+          "type": "object",
+          "description": "Named groups of hosts with optional cascading variables.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["members"],
+            "additionalProperties": false,
+            "properties": {
+              "members": {
+                "type": "array",
+                "description": "Host names belonging to this group.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "vars": {
+                "type": "object",
+                "description": "Variables cascaded to all members of this group.",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "hosts": {
+          "type": "object",
+          "description": "Individual host definitions keyed by hostname.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["address"],
+            "additionalProperties": false,
+            "properties": {
+              "address": {
+                "type": "string",
+                "description": "Network address (IP or FQDN) of the host."
+              },
+              "groups": {
+                "type": "array",
+                "description": "Groups this host belongs to.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "vars": {
+                "type": "object",
+                "description": "Host-level variables (override group vars).",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "metadata": {
+      "type": "object",
+      "description": "Standard resource metadata.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique name for this resource."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Optional namespace for organizational scoping."
+        },
+        "labels": {
+          "type": "object",
+          "description": "Key-value labels for filtering and selection.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Key-value annotations for non-identifying metadata.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

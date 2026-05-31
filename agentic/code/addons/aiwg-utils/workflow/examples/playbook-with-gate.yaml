@@ -1,0 +1,61 @@
+# Minimal WorkflowPlaybook showing the four core composition primitives:
+#   - inventory + target selection
+#   - capability invocation with bound inputs
+#   - depends_on edges (the DAG)
+#   - inline human gate (kind: gate)
+#
+# Domain extensions author playbooks with the same shape under their
+# own apiVersion namespace.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata:
+  name: rotate-edge-tls
+spec:
+  inventory: production-web-tier
+  targets:
+    groups: [edge]
+  vars:
+    warn_threshold_days: 30
+  steps:
+    - id: pre-check
+      capability: check-tls-expiry
+      inputs:
+        - name: hostname
+          value: "{{ target.fqdn }}"
+
+    - id: approve-rotation
+      kind: gate
+      description: |
+        About to rotate TLS cert for {{ target.fqdn }}.
+        Current cert expires in {{ pre-check.days_remaining }} days.
+        Confirm to proceed.
+      depends_on: [pre-check]
+
+    - id: issue-new-cert
+      capability: issue-tls-cert
+      depends_on: [approve-rotation]
+      inputs:
+        - name: hostname
+          value: "{{ target.fqdn }}"
+      outputs:
+        - name: cert_path
+      retry:
+        limit: 2
+        backoff: exponential
+        on: failure
+
+    - id: deploy-cert
+      capability: deploy-tls-cert
+      depends_on: [issue-new-cert]
+      inputs:
+        - name: hostname
+          value: "{{ target.fqdn }}"
+        - name: cert_path
+          from: issue-new-cert.cert_path
+
+    - id: post-check
+      capability: check-tls-expiry
+      depends_on: [deploy-cert]
+      inputs:
+        - name: hostname
+          value: "{{ target.fqdn }}"

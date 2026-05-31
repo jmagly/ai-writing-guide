@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/workflow/v1/workflow-target.schema.json",
+  "title": "WorkflowTarget",
+  "description": "Single host, VM, container, or named resource target.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "workflow.aiwg.io/v1",
+      "description": "API version for the AIWG workflow metalanguage (aiwg-utils)."
+    },
+    "kind": {
+      "const": "WorkflowTarget",
+      "description": "Resource kind."
+    },
+    "metadata": {
+      "$ref": "#/definitions/metadata"
+    },
+    "spec": {
+      "type": "object",
+      "description": "Target specification defining address, type, and capabilities.",
+      "additionalProperties": false,
+      "properties": {
+        "address": {
+          "type": "string",
+          "description": "Network address (IP, FQDN, or resource URI) of the target."
+        },
+        "type": {
+          "type": "string",
+          "description": "Target resource type.",
+          "enum": ["host", "vm", "container", "service"]
+        },
+        "groups": {
+          "type": "array",
+          "description": "Inventory groups this target belongs to.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "vars": {
+          "type": "object",
+          "description": "Target-level variables.",
+          "additionalProperties": true
+        },
+        "capabilities": {
+          "type": "array",
+          "description": "Capabilities available on this target.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "metadata": {
+      "type": "object",
+      "description": "Standard resource metadata.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique name for this resource."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Optional namespace for organizational scoping."
+        },
+        "labels": {
+          "type": "object",
+          "description": "Key-value labels for filtering and selection.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

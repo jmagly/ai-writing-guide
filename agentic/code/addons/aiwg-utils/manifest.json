@@ -31,7 +31,30 @@
     "rules": "rules/",
     "skills": "skills/",
     "templates": "templates/",
-    "prompts": "prompts/"
+    "prompts": "prompts/",
+    "workflow": "workflow/"
+  },
+  "workflow": {
+    "description": "Core AIWG workflow metalanguage (apiVersion: workflow.aiwg.io/v1) — declarative spec for capabilities, playbooks, inventories, targets, gates, roles, and extensions. Lifted from ops-complete to a core primitive so any framework can author workflows.",
+    "schemas": "workflow/schemas/",
+    "docs": "workflow/docs/",
+    "examples": "workflow/examples/",
+    "kinds": [
+      "WorkflowCapability",
+      "WorkflowPlaybook",
+      "WorkflowInventory",
+      "WorkflowTarget",
+      "WorkflowGate",
+      "WorkflowRole",
+      "WorkflowExtension"
+    ],
+    "legacy_apiversion_aliases": {
+      "ops.aiwg.io/v1": "workflow.aiwg.io/v1",
+      "sys.ops.aiwg.io/v1": "sys.workflow.aiwg.io/v1",
+      "it.ops.aiwg.io/v1": "it.workflow.aiwg.io/v1",
+      "dev.ops.aiwg.io/v1": "dev.workflow.aiwg.io/v1",
+      "stream.ops.aiwg.io/v1": "stream.workflow.aiwg.io/v1"
+    }
   },
   "consolidation": {
     "strategy": "index-with-links",

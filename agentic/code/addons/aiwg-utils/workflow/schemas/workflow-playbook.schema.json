@@ -1,0 +1,225 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/workflow/v1/workflow-playbook.schema.json",
+  "title": "WorkflowPlaybook",
+  "description": "DAG of capability invocations against inventory targets.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "workflow.aiwg.io/v1",
+      "description": "API version for the AIWG workflow metalanguage (aiwg-utils)."
+    },
+    "kind": {
+      "const": "WorkflowPlaybook",
+      "description": "Resource kind."
+    },
+    "metadata": {
+      "$ref": "#/definitions/metadata"
+    },
+    "spec": {
+      "type": "object",
+      "description": "Playbook specification defining inventory, targets, and execution steps.",
+      "required": ["inventory", "targets", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "inventory": {
+          "type": "string",
+          "description": "Reference to an OpsInventory resource name."
+        },
+        "targets": {
+          "type": "object",
+          "description": "Target selection from inventory.",
+          "additionalProperties": false,
+          "properties": {
+            "groups": {
+              "type": "array",
+              "description": "Inventory groups to target.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "hosts": {
+              "type": "array",
+              "description": "Specific hosts to target.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "vars": {
+          "type": "object",
+          "description": "Playbook-level variables available to all steps.",
+          "additionalProperties": true
+        },
+        "steps": {
+          "type": "array",
+          "description": "Ordered list of steps forming the execution DAG.",
+          "items": {
+            "$ref": "#/definitions/step"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "description": "Runtime status (populated by the executor, not authored).",
+      "additionalProperties": false,
+      "properties": {
+        "lastApplied": {
+          "type": "string",
+          "description": "ISO 8601 timestamp of the last execution.",
+          "format": "date-time"
+        },
+        "conditions": {
+          "type": "array",
+          "description": "Status conditions from the last execution.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "lastTransitionTime": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "metadata": {
+      "type": "object",
+      "description": "Standard resource metadata.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique name for this resource."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Optional namespace for organizational scoping."
+        },
+        "labels": {
+          "type": "object",
+          "description": "Key-value labels for filtering and selection.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Key-value annotations for non-identifying metadata.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "description": "A single step in the playbook DAG.",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique step identifier within this playbook."
+        },
+        "capability": {
+          "type": "string",
+          "description": "Reference to an OpsCapability resource name."
+        },
+        "kind": {
+          "type": "string",
+          "description": "Inline step kind (e.g., gate, extension) when not referencing a capability."
+        },
+        "depends_on": {
+          "type": "array",
+          "description": "Step IDs that must complete before this step runs.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "inputs": {
+          "type": "array",
+          "description": "Input bindings for this step.",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Input parameter name."
+              },
+              "value": {
+                "description": "Literal value for this input."
+              },
+              "from": {
+                "type": "string",
+                "description": "Reference to a previous step output (e.g., 'step-id.output-name')."
+              }
+            }
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "description": "Outputs captured from this step for downstream use.",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Output name to capture."
+              }
+            }
+          }
+        },
+        "retry": {
+          "type": "object",
+          "description": "Retry policy for this step.",
+          "additionalProperties": false,
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of retry attempts.",
+              "minimum": 0
+            },
+            "backoff": {
+              "type": "string",
+              "description": "Backoff strategy (e.g., 'linear', 'exponential')."
+            },
+            "on": {
+              "type": "string",
+              "description": "Condition that triggers a retry (e.g., 'failure', 'timeout')."
+            }
+          }
+        },
+        "spec": {
+          "type": "object",
+          "description": "Inline spec when using kind instead of capability reference.",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

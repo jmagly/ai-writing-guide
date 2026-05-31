@@ -1,0 +1,176 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/workflow/v1/workflow-capability.schema.json",
+  "title": "WorkflowCapability",
+  "description": "Reusable automation unit with explicit input/output contract.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "workflow.aiwg.io/v1",
+      "description": "API version for the AIWG workflow metalanguage (aiwg-utils)."
+    },
+    "kind": {
+      "const": "WorkflowCapability",
+      "description": "Resource kind."
+    },
+    "metadata": {
+      "$ref": "#/definitions/metadata"
+    },
+    "spec": {
+      "type": "object",
+      "description": "Capability specification defining inputs, outputs, and execution contract.",
+      "required": ["description", "version", "inputs", "outputs"],
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what this capability does."
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version of this capability."
+        },
+        "inputs": {
+          "type": "array",
+          "description": "Declared input parameters.",
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Parameter name."
+              },
+              "type": {
+                "type": "string",
+                "description": "Parameter type (e.g., string, number, boolean, object)."
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether this input is required.",
+                "default": false
+              },
+              "default": {
+                "description": "Default value if not provided."
+              }
+            }
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "description": "Declared output values.",
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Output name."
+              },
+              "type": {
+                "type": "string",
+                "description": "Output type."
+              }
+            }
+          }
+        },
+        "target_requirements": {
+          "type": "object",
+          "description": "Requirements a target must meet to run this capability.",
+          "additionalProperties": false,
+          "properties": {
+            "os": {
+              "type": "array",
+              "description": "Supported operating systems.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "capabilities": {
+              "type": "array",
+              "description": "Required capabilities on the target.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "agent": {
+          "type": "string",
+          "description": "Agent responsible for executing this capability."
+        },
+        "idempotent": {
+          "type": "boolean",
+          "description": "Whether this capability is safe to run multiple times.",
+          "default": false
+        },
+        "verification": {
+          "type": "object",
+          "description": "Post-execution verification check.",
+          "required": ["command", "expect"],
+          "additionalProperties": false,
+          "properties": {
+            "command": {
+              "type": "string",
+              "description": "Command to run for verification."
+            },
+            "expect": {
+              "type": "string",
+              "description": "Expected result pattern or value."
+            }
+          }
+        },
+        "rollback_capability": {
+          "type": "string",
+          "description": "Name of the capability to invoke for rollback."
+        }
+      }
+    }
+  },
+  "definitions": {
+    "metadata": {
+      "type": "object",
+      "description": "Standard resource metadata.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique name for this resource."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Optional namespace for organizational scoping."
+        },
+        "labels": {
+          "type": "object",
+          "description": "Key-value labels for filtering and selection.",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "Capability category for organization."
+            },
+            "idempotent": {
+              "type": "string",
+              "description": "Label indicating idempotency (e.g., 'true' or 'false')."
+            }
+          }
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Key-value annotations for non-identifying metadata.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

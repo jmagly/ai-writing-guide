@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/workflow/v1/workflow-extension.schema.json",
+  "title": "WorkflowExtension",
+  "description": "Framework-dependent extension manifest (ADDON.yaml) for ops-complete.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "workflow.aiwg.io/v1",
+      "description": "API version for the AIWG workflow metalanguage (aiwg-utils)."
+    },
+    "kind": {
+      "const": "WorkflowExtension",
+      "description": "Resource kind."
+    },
+    "metadata": {
+      "$ref": "#/definitions/metadata"
+    },
+    "spec": {
+      "type": "object",
+      "description": "Extension specification defining what this addon provides.",
+      "required": ["extends", "description", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "extends": {
+          "type": "string",
+          "description": "Parent framework this extension depends on.",
+          "const": "ops-complete"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the extension."
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of this extension."
+        },
+        "capabilities": {
+          "description": "Capabilities provided by this extension. Use 'auto-discover' to scan the addon directory.",
+          "oneOf": [
+            {
+              "const": "auto-discover"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "kinds": {
+          "type": "array",
+          "description": "Custom resource kinds introduced by this extension.",
+          "items": {
+            "type": "object",
+            "required": ["name", "schema"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Custom kind name."
+              },
+              "schema": {
+                "type": "string",
+                "description": "Path or URI to the JSON Schema for this kind."
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "metadata": {
+      "type": "object",
+      "description": "Standard resource metadata.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique name for this resource."
+        },
+        "labels": {
+          "type": "object",
+          "description": "Key-value labels for filtering and selection.",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {
+            "domain": {
+              "type": "string",
+              "description": "Domain this extension operates in."
+            }
+          }
+        }
+      }
+    }
+  }
+}

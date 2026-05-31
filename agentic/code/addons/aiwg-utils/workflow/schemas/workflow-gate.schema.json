@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/workflow/v1/workflow-gate.schema.json",
+  "title": "WorkflowGate",
+  "description": "Human approval or quality checkpoint within an operational workflow.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "workflow.aiwg.io/v1",
+      "description": "API version for the AIWG workflow metalanguage (aiwg-utils)."
+    },
+    "kind": {
+      "const": "WorkflowGate",
+      "description": "Resource kind."
+    },
+    "metadata": {
+      "$ref": "#/definitions/metadata"
+    },
+    "spec": {
+      "type": "object",
+      "description": "Gate specification defining type, message, and approval requirements.",
+      "required": ["type", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Gate type determining evaluation behavior.",
+          "enum": ["approval", "quality", "automated"]
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable message displayed at the gate."
+        },
+        "timeout": {
+          "type": "number",
+          "description": "Maximum wait time in seconds before the gate times out.",
+          "minimum": 0
+        },
+        "blast_radius": {
+          "type": "string",
+          "description": "Impact classification if this gate is bypassed or fails.",
+          "enum": ["critical", "high", "medium", "low"]
+        },
+        "dry_run_first": {
+          "type": "boolean",
+          "description": "Whether to execute a dry run before requesting approval.",
+          "default": false
+        },
+        "approvers": {
+          "type": "array",
+          "description": "List of users or roles authorized to approve this gate.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "metadata": {
+      "type": "object",
+      "description": "Standard resource metadata.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique name for this resource."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Optional namespace for organizational scoping."
+        },
+        "labels": {
+          "type": "object",
+          "description": "Key-value labels for filtering and selection.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

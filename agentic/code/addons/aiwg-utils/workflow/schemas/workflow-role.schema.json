@@ -1,0 +1,135 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/workflow/v1/workflow-role.schema.json",
+  "title": "WorkflowRole",
+  "description": "Permission profile that scopes an agent's tool access, blast radius ceiling, audit requirements, and access restrictions within an operational workflow.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "workflow.aiwg.io/v1",
+      "description": "API version for the AIWG workflow metalanguage (aiwg-utils)."
+    },
+    "kind": {
+      "const": "WorkflowRole",
+      "description": "Resource kind."
+    },
+    "metadata": {
+      "$ref": "#/definitions/metadata"
+    },
+    "spec": {
+      "type": "object",
+      "description": "Role specification defining tool permissions, blast radius ceiling, gate requirements, audit level, and optional access restrictions.",
+      "required": ["description", "tools", "blast_radius_ceiling", "gates", "audit"],
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the role's purpose and intended use."
+        },
+        "tools": {
+          "type": "object",
+          "description": "Tool permission lists for agents operating under this role.",
+          "additionalProperties": false,
+          "properties": {
+            "allow": {
+              "type": "array",
+              "description": "Tools that agents in this role are permitted to use.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "deny": {
+              "type": "array",
+              "description": "Tools that agents in this role are explicitly prohibited from using.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "blast_radius_ceiling": {
+          "type": "string",
+          "description": "Maximum blast radius classification of actions this role may perform. Agents cannot execute steps whose blast_radius exceeds this ceiling.",
+          "enum": ["critical", "high", "medium", "low"]
+        },
+        "gates": {
+          "type": "object",
+          "description": "Gate approval requirements for this role.",
+          "additionalProperties": false,
+          "properties": {
+            "required_for": {
+              "type": "array",
+              "description": "Blast radius values at which this role requires an OpsGate approval before proceeding.",
+              "items": {
+                "type": "string",
+                "enum": ["critical", "high", "medium", "low"]
+              }
+            }
+          }
+        },
+        "audit": {
+          "type": "object",
+          "description": "Audit trail configuration for agents operating under this role.",
+          "required": ["level"],
+          "additionalProperties": false,
+          "properties": {
+            "level": {
+              "type": "string",
+              "description": "Detail level of audit trail entries emitted by this role. verbose: all tool calls and outputs; standard: state-changing actions; minimal: gate decisions and terminal outcomes only.",
+              "enum": ["verbose", "standard", "minimal"]
+            }
+          }
+        },
+        "restrictions": {
+          "type": "object",
+          "description": "Additional access restrictions layered on top of tool permissions.",
+          "additionalProperties": false,
+          "properties": {
+            "read_only": {
+              "type": "boolean",
+              "description": "When true, the agent may not write or modify any file, even if Write or Edit appear in tools.allow."
+            },
+            "no_mutations": {
+              "type": "boolean",
+              "description": "When true, the agent may not perform any state-mutating operation (file writes, service restarts, API calls with side effects)."
+            },
+            "allowed_paths": {
+              "type": "array",
+              "description": "Filesystem path prefixes the agent is permitted to read. Access outside these paths is denied.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "metadata": {
+      "type": "object",
+      "description": "Standard resource metadata.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique name for this resource."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Optional namespace for organizational scoping."
+        },
+        "labels": {
+          "type": "object",
+          "description": "Key-value labels for filtering and selection.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

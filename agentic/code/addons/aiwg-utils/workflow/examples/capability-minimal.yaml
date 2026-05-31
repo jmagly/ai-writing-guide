@@ -1,0 +1,35 @@
+# Minimal WorkflowCapability — verify a TLS certificate's expiry date.
+# This is the smallest meaningful capability: one input, one verification
+# command, one expected pattern match.
+#
+# Authored against the core workflow apiVersion. Domain extensions
+# (ops, validation, etc.) author against their own apiVersion namespace
+# but the shape is identical.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: check-tls-expiry
+  labels:
+    category: pki
+spec:
+  description: Check a TLS certificate's expiry date for a given host
+  version: "1.0.0"
+  inputs:
+    - name: hostname
+      type: string
+      required: true
+    - name: port
+      type: integer
+      required: false
+      default: 443
+  outputs:
+    - name: expiry_date
+      type: datetime
+  target_requirements:
+    os: [linux, darwin]
+    capabilities: [openssl]
+  agent: workflow-executor
+  idempotent: true
+  verification:
+    command: "openssl s_client -connect {{ hostname }}:{{ port }} -servername {{ hostname }} </dev/null 2>/dev/null | openssl x509 -noout -enddate"
+    expect: "notAfter="
