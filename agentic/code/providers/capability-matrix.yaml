@@ -353,7 +353,7 @@ providers:
       commands: "AGENTS.md bridge + aiwg discover/show (MCP command-run optional)"
       skills: "~/.hermes/skills/"
       skills_cross_agent: "~/.hermes/skills/.aiwg/"
-      rules: "AGENTS.md + aiwg show rule (MCP rule-list/rule-show optional; AGENTS.md inlining pending #1532)"
+      rules: "AGENTS.md ### Rule sections + aiwg show rule (MCP rule-list/rule-show optional)"
       behaviors: .hermes/behaviors/
     native_features:
       cron: false

@@ -394,12 +394,35 @@ async function showInfo() {
 AIWG MCP Server v1.0.0
 Protocol Version: 2025-11-25
 
-TOOLS:
-  workflow-run      Execute AIWG workflow (phase transitions, reviews)
-  artifact-read     Read artifact from .aiwg/ directory
-  artifact-write    Write artifact to .aiwg/ directory
-  template-render   Render AIWG template with variables
-  agent-list        List available AIWG agents
+POSITIONING:
+  MCP is optional and provider-agnostic. Baseline AIWG reachability is file
+  deployment plus CLI discovery: aiwg discover / aiwg show <type> <name>.
+
+CORE TOOLS (16, always registered):
+  discover                         Cross-type ranked catalog search
+  skill-list / skill-show           Skill catalog and SKILL.md body fetch
+  command-list / command-show       CLI command catalog and command spec fetch
+  rule-list / rule-show             Rule catalog and rule body fetch
+  agent-list / agent-show           Agent catalog and agent definition fetch
+  template-list / template-show      Template catalog and raw template fetch
+  template-render                   Render AIWG template with variables
+  command-run                       Allow-listed CLI dispatch; confirmation-gated when needed
+  artifact-read / artifact-write    Project .aiwg/ artifact IO
+  workflow-run                      DEPRECATED compatibility stub; use command-run
+
+OPT-IN TOOLSETS (45 additional tools):
+  memory         memory-* and reflections-* storage operations
+  kb             kb-* storage operations
+  research       provenance-* and research-store-* storage operations
+  activity-log   show / append / stats
+  index          build / query / deps / stats
+  ralph          start / status / abort / attach
+  mc             start / dispatch / status / stop / list
+  ops            status / list / use / push
+
+Enable opt-in tools:
+  AIWG_MCP_TOOLSETS=memory,kb,ralph aiwg mcp serve
+  aiwg mcp serve --toolsets=all
 
 RESOURCES:
   aiwg://prompts/catalog              List of prompt templates
@@ -412,17 +435,18 @@ RESOURCES:
 PROMPTS:
   decompose-task       Break complex task into subtasks
   parallel-execution   Identify parallelizable work
-  recovery-protocol    PAUSE→DIAGNOSE→ADAPT→RETRY→ESCALATE
+  recovery-protocol    PAUSE->DIAGNOSE->ADAPT->RETRY->ESCALATE
 
 TRANSPORTS:
   stdio    Standard input/output (default, for local use)
   http     Streamable HTTP (for remote/containerized use)
 
 ENVIRONMENT:
-  AIWG_ROOT    Path to AIWG installation (default: ~/.local/share/ai-writing-guide)
+  AIWG_ROOT          Path to AIWG installation (default: ~/.local/share/ai-writing-guide)
+  AIWG_MCP_TOOLSETS  Comma-separated opt-in toolsets; use all for every toolset
 
-For more information:
-  https://github.com/jmagly/aiwg
+Docs:
+  docs/integrations/mcp-capability-audit.md
 `);
 }
 

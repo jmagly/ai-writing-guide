@@ -20,16 +20,16 @@ When you are on a provider that emulates a feature, the AIWG command is the righ
 
 The baseline provider is Claude Code; all gap reporting in `aiwg doctor` is relative to it.
 
-| Feature | Claude Code | Codex | Copilot | Cursor | Factory AI | OpenCode | Warp | Windsurf | OpenClaw |
-|---------|-------------|-------|---------|--------|------------|----------|------|----------|----------|
-| **Scheduler** | Native | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated |
-| **Agent Teams** | Native | Emulated | Emulated | Native | Native | Emulated | Emulated | Emulated | Emulated |
-| **Mission Control** | Native | Emulated | Emulated | Emulated | Native | Emulated | Emulated | Emulated | Emulated |
-| **Behaviors** | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | **Native** |
-| **MCP** | Native | — | — | Native | Partial | Native | — | Native | — |
-| **Daemon** | **T1** + T2 | **T1** + T2 | — | — | — | **T1** | **T1** | — | **T1** |
+| Feature | Claude Code | Codex | Copilot | Cursor | Factory AI | OpenCode | Warp | Windsurf | Hermes | OpenClaw |
+|---------|-------------|-------|---------|--------|------------|----------|------|----------|--------|----------|
+| **Scheduler** | Native | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated |
+| **Agent Teams** | Native | Emulated | Emulated | Native | Native | Emulated | Emulated | Emulated | Emulated | Emulated |
+| **Mission Control** | Native | Emulated | Emulated | Emulated | Native | Emulated | Emulated | Emulated | Emulated | Emulated |
+| **Behaviors** | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | Emulated | **Native** |
+| **MCP** | Native | Optional | Optional | Native | Native | Native | Optional | Native | Optional | Native |
+| **Daemon** | **T1** + T2 | **T1** + T2 | — | — | — | **T1** | **T1** | — | **T1** | **T1** |
 
-**Legend:** Native = first-class platform support. Emulated = AIWG emulation via daemon/mc. — = not supported.
+**Legend:** Native = first-class platform support. Emulated = AIWG emulation via daemon/mc. Optional = provider can use AIWG MCP as a provider-agnostic enrichment hook, but baseline delivery uses files + CLI. — = not supported.
 **Daemon tiers:** T1 = native headless daemon (`aiwg daemon start`). T2 = PTY adapter (requires `node-pty`). — = requires display server/IDE host, not supported.
 
 ---
@@ -152,11 +152,12 @@ Extend the provider with external tool servers via the Model Context Protocol.
 | OpenCode | Native | MCP protocol (built-in) | `aiwg mcp install opencode` |
 | Warp Terminal | Not supported | — | — |
 | Windsurf | Native | MCP protocol (built-in) | `aiwg mcp install windsurf` |
-| OpenClaw | Not supported | — | — |
+| Hermes | Optional | Hermes MCP config (sidecar) | `hermes mcp add aiwg --command aiwg --args mcp serve` |
+| OpenClaw | Native | MCP protocol (built-in) | `aiwg mcp install openclaw` |
 
 **Factory AI:** Native MCP support with both `stdio` (local process) and `http` (remote endpoint) transports. Configuration in `.factory/mcp.json` (project) and `~/.factory/mcp.json` (user). Built-in registry of 40+ pre-configured servers.
 
-**Codex, Copilot, Warp, OpenClaw:** MCP tools must be accessed through the AIWG CLI layer (`aiwg mcp serve`) rather than native platform integration.
+**Provider-agnostic rule:** AIWG baseline delivery does not require MCP. Use files plus `aiwg discover` / `aiwg show` first; add `aiwg mcp serve` only when the host should call structured tools directly. See `docs/integrations/mcp-capability-audit.md`.
 
 ---
 

@@ -2,7 +2,7 @@
 
 Integrate AIWG with [Hermes Agent](https://github.com/NousResearch/hermes-agent) — file-based deployment plus an **optional** MCP sidecar.
 
-> **Hermes integrates like any other provider; the MCP sidecar is optional.** As of v2026.5.13 (validated in #1527), `aiwg use sdlc --provider hermes` deploys artifacts and Hermes reaches AIWG through the discover-first CLI (`aiwg discover` / `aiwg show`) and the AGENTS.md / `.hermes.md` bridge — the same model as Claude Code and Codex, **no MCP required**. The `Hermes → MCP → AIWG` sidecar described below is an *optional* enrichment: any provider or system can connect to AIWG's MCP server, but none require it. (Caveat: rule delivery without MCP is still being completed — #1532. Broader MCP modernization — #1533.) The rest of this guide covers the optional MCP setup.
+> **Hermes integrates like any other provider; the MCP sidecar is optional.** As of v2026.5.13 (validated in #1527), `aiwg use sdlc --provider hermes` deploys artifacts and Hermes reaches AIWG through the discover-first CLI (`aiwg discover` / `aiwg show`) and the AGENTS.md / `.hermes.md` bridge — the same model as Claude Code and Codex, **no MCP required**. The `Hermes → MCP → AIWG` sidecar described below is an *optional* enrichment: any provider or system can connect to AIWG's MCP server, but none require it. Rules are delivered through generated `AGENTS.md` `### Rule:` sections and the CLI `aiwg show rule <name>` fallback; MCP remains a richer optional path. The broader MCP modernization audit is tracked in #1533. The rest of this guide covers the optional MCP setup.
 
 ---
 
@@ -152,12 +152,12 @@ mcp_servers:
 
 After saving, run `/reload-mcp` in your active Hermes chat to apply.
 
-**Why this is lean by default:** AIWG's MCP server exposes ~12 core tools
+**Why this is lean by default:** AIWG's MCP server exposes 16 core tools
 on default startup — discovery (`discover`, `*-list`/`*-show` pairs for
 skill/command/rule/agent/template), the allow-listed `command-run`, plus
 the artifact read/write surface. Schema footprint stays under 2.5K tokens.
 
-Beyond the core, ~45 additional tools are available as **opt-in
+Beyond the core, 45 additional tools are available as **opt-in
 toolsets** controlled by the `AIWG_MCP_TOOLSETS` env var or the
 `--toolsets` flag:
 
@@ -168,7 +168,7 @@ AIWG_MCP_TOOLSETS=memory,kb,ralph aiwg mcp serve
 # Or via CLI flag
 aiwg mcp serve --toolsets=memory,kb,ralph
 
-# Or everything (~57 tools total)
+# Or everything (61 tools total, including deprecated compatibility tools)
 aiwg mcp serve --toolsets=all
 ```
 
@@ -192,8 +192,8 @@ AIWG tool names stay ≤30 chars locally to leave headroom for the prefix.
 hermes chat "What AIWG tools are available?"
 ```
 
-The default core toolset registers ~12 tools; with all toolsets enabled
-Hermes sees ~57. If your output shows only the legacy 5 (workflow-run,
+The default core toolset registers 16 tools; with all toolsets enabled
+Hermes sees 61, including deprecated compatibility tools. If your output shows only the legacy 5 (workflow-run,
 artifact-read, artifact-write, template-render, agent-list), the
 AIWG installation is stale — run `aiwg refresh` and `/reload-mcp` in
 your active chat.
@@ -242,7 +242,7 @@ flowchart TB
 
 ![Polished version (placeholder — generate from #1248 prompts)](../architecture-overview/images/06-hermes-resolver.png)
 
-> **Each context source is capped at 20,000 chars** (`CONTEXT_FILE_MAX_CHARS` in v0.13.0 `agent/prompt_builder.py:824`). Above that, head/tail truncation kicks in with a `[...truncated]` marker. The thin `.hermes.md` AIWG emits (~450 chars) is well under the cap, and the deployed `AGENTS.md` (which inlines top-6 CRITICAL rule priming per #1318) is currently ~4,000 chars.
+> **Each context source is capped at 20,000 chars** (`CONTEXT_FILE_MAX_CHARS` in v0.13.0 `agent/prompt_builder.py:824`). Above that, head/tail truncation kicks in with a `[...truncated]` marker. The thin `.hermes.md` AIWG emits (~450 chars) is well under the cap, and the deployed `AGENTS.md` (which inlines top-7 CRITICAL rule priming as `### Rule:` sections) is currently well below the hard cap.
 
 > **Token budget reminder:** even within the 20K cap, Hermes loads context in full on every turn. Keep routing guidance compact — AIWG's default `.hermes.md` is ~230 tokens.
 
@@ -251,9 +251,11 @@ flowchart TB
 ```markdown
 # AIWG Integration
 
-AIWG connected via MCP (`aiwg mcp serve`). Core tools: discover, skill-list/show,
-command-list/show/run, rule-list/show, agent-list/show, template-list/render/show,
-artifact-read/write. Opt-in via AIWG_MCP_TOOLSETS=memory,kb,ralph,mc,ops,...
+AIWG connected through file-based deployment. Use `aiwg discover` and
+`aiwg show <type> <name>` for the on-demand catalog. Optional MCP tools are
+available via `aiwg mcp serve`: discover, skill-list/show, command-list/show/run,
+rule-list/show, agent-list/show, template-list/render/show, artifact-read/write.
+Opt-in via AIWG_MCP_TOOLSETS=memory,kb,ralph,mc,ops,...
 
 ## Route to AIWG When
 

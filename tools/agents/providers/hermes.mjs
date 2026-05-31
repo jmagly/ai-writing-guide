@@ -1,16 +1,16 @@
 /**
  * Hermes Agent Provider
  *
- * Hermes Agent uses an MCP-based integration model, not traditional file-based
- * provider deployment. AIWG functions as an MCP sidecar that Hermes calls.
+ * Hermes Agent uses file-based deployment for context and skills. AIWG's MCP
+ * server is an optional enrichment hook that Hermes can call when configured.
  *
  * What this provider DOES deploy:
  *   - Skills: ~/.hermes/skills/ (user-global, for agentic skills callable by Hermes)
  *   - AGENTS.md: project root (lean routing guide that Hermes loads on every turn)
  *
  * What this provider SKIPS:
- *   - Commands: MCP tool surface replaces slash commands
- *   - Rules: Hermes uses AGENTS.md + its own memory system
+ *   - Commands: Hermes has no AIWG slash-command file surface
+ *   - Rules: compressed directives are in AGENTS.md; full bodies via `aiwg show rule`
  *
  * See: docs/integrations/hermes-quickstart.md
  */
@@ -46,12 +46,12 @@ export const aliases = [];
 
 export const paths = {
   agents: 'AGENTS.md',                           // Aggregated routing guide at project root
-  commands: '',                                   // Not applicable — MCP replaces commands
+  commands: '',                                   // Not applicable — no AIWG slash-command file surface
   // Standard skills under ~/.hermes/skills/.aiwg/ — child of Hermes's scanned root,
   // recursively discovered (verified `agent/skill_utils.py:478-489`, os.walk follows
   // subdirs except .git/.github/.hub/.archive). Kernel skills land in the parent.
   skills: path.join(os.homedir(), '.hermes', 'skills', '.aiwg'),
-  rules: '',                                      // Not applicable — Hermes uses AGENTS.md
+  rules: '',                                      // Inlined into AGENTS.md + reachable via `aiwg show rule`
 };
 
 // Kernel skills (always-loaded) deploy to the platform-native dir.
@@ -62,9 +62,9 @@ export const kernelSkillsPath = path.join(os.homedir(), '.hermes', 'skills');
 
 export const support = {
   agents: 'aggregated',      // Agents aggregated into lean AGENTS.md
-  commands: 'none',          // MCP handles this
+  commands: 'none',          // Hermes has no AIWG slash-command file surface
   skills: 'native',          // ~/.hermes/skills/ is native Hermes skill location
-  rules: 'none',             // Not applicable
+  rules: 'agents-md+cli',    // compressed in AGENTS.md; full bodies via CLI/MCP
 };
 
 export const capabilities = {
@@ -103,10 +103,11 @@ const HERMES_AGENTS_MD_SOFT_WARN = 15_000;
  * Top-7 CRITICAL rule directives, inlined into AGENTS.md for guaranteed
  * priming on every Hermes turn (#1318 / S7; skill-discovery added #1347).
  *
- * The full rule bodies (29 total) are reachable via the MCP `rule-list`
- * and `rule-show` tools (#1320). The bodies exceed Hermes's 20K context
- * cap if inlined verbatim (anti-laziness alone is 32K chars), so we
- * inline compressed directives only and point to MCP for the full text.
+ * The full rule bodies are reachable without MCP via `aiwg discover` and
+ * `aiwg show rule <name>`; MCP exposes the same path through `rule-list` and
+ * `rule-show` when configured (#1320). The bodies exceed Hermes's 20K context
+ * cap if inlined verbatim (anti-laziness alone is 32K chars), so we inline
+ * compressed directives only and point to CLI/MCP for the full text.
  *
  * Selection criteria: rules tagged CRITICAL/HIGH enforcement level whose
  * violations are silent or destructive (cost of remembering to query
@@ -116,55 +117,56 @@ const HERMES_AGENTS_MD_SOFT_WARN = 15_000;
  */
 const CRITICAL_RULE_DIRECTIVES = `## CRITICAL Rules (always apply)
 
-These are the highest-enforcement AIWG rules. Full bodies via \`mcp_aiwg_rule_show\`.
-Other 22 rules: \`mcp_aiwg_rule_list\`.
+These are the highest-enforcement AIWG rules. Full bodies are reachable without
+MCP:
+- Find rules: \`aiwg discover "rule <topic>" --type rule\`
+- Fetch a rule: \`aiwg show rule <name>\`
 
-### skill-discovery (discover-first protocol)
+If the optional MCP sidecar is configured, the same surface is available through
+\`mcp_aiwg_rule_list\` and \`mcp_aiwg_rule_show\`.
+
+### Rule: skill-discovery (discover-first protocol)
 Before declining a user request as "outside AIWG's scope" or improvising a
-workflow from training data, you MUST run \`mcp_aiwg_discover\` against
-the user's need. Most AIWG skills (~385 of ~400) are not in your context —
-they reach you only via \`mcp_aiwg_discover\` + \`mcp_aiwg_skill_show\`. Run
-discover whenever the user mentions AIWG, a framework name (sdlc, research,
-forensics, ops, marketing, security-engineering, media-curator,
-knowledge-base), or capability keywords (skill, agent, command, rule,
-workflow). Filesystem search via \`Read\` / \`Glob\` / \`Grep\` against AIWG
-storage paths is FORBIDDEN as a first move — the MCP discover index covers
-10x the surface area with ranked results. After discover returns a match,
-fetch its body with \`mcp_aiwg_skill_show\` (or the type-specific show
-tool), never read the path directly.
+workflow from training data, you MUST run \`aiwg discover "<user need>"\`
+against the user's need. Most AIWG skills are not in your context; they reach
+you through \`aiwg discover\` + \`aiwg show <type> <name>\`. If MCP is available,
+\`mcp_aiwg_discover\` and type-specific show tools are equivalent. Run discover
+whenever the user mentions AIWG, a framework name (sdlc, research, forensics,
+ops, marketing, security-engineering, media-curator, knowledge-base), or
+capability keywords (skill, agent, command, rule, workflow).
 
-### no-attribution
+### Rule: no-attribution
 Never add AI-tool attribution to commits, PRs, code, or docs. No \`Co-Authored-By:\`,
 no "Generated with", no "Written by [AI tool]". The AI is a tool; tools don't sign
 their output. Applies to ALL platforms (Claude, Codex, Copilot, Cursor, etc.).
 
-### anti-laziness
+### Rule: anti-laziness
 Never delete tests to make them pass. Never skip/disable tests. Never remove
 features instead of fixing them. Never weaken assertions to be meaningless.
 Never suppress CI/pipeline signals (\`continue-on-error\`, \`|| true\`, \`set +e\`).
 If stuck after 3 honest attempts: escalate with full context, don't shortcut.
 Within scope: leave nothing half-done — code + tests + docs + verification.
 
-### citation-policy
+### Rule: citation-policy
 Never fabricate citations, DOIs, URLs, or page numbers. Only cite sources that
 exist in the research corpus (.aiwg/research/sources/). Match claim strength
 to evidence quality (GRADE): HIGH = "demonstrates"; MODERATE = "suggests";
 LOW = "limited evidence"; VERY LOW = "anecdotal". Document research gaps in
 .aiwg/research/TODO.md when no source supports a claim.
 
-### token-security
+### Rule: token-security
 Never hard-code tokens, API keys, or secrets in source files or commit messages.
 Never pass tokens as CLI arguments (visible in process list). Never echo or log
 token values. Load from secure files (mode 600) or environment variables. Use
 heredoc scope for multi-step operations so tokens don't persist beyond use.
 Token files must NEVER be tracked in git (.gitignore enforced).
 
-### versioning
+### Rule: versioning
 CalVer format: \`YYYY.M.PATCH\` (e.g., \`2026.5.3\`). NEVER use leading zeros
 (\`2026.01.5\` is broken — npm semver rejects it). Tags use \`v\` prefix.
 CHANGELOG must use same format. PATCH resets each month.
 
-### ops-safety
+### Rule: ops-safety
 Detect interactive commands and flag for human execution (passwords, LUKS
 passphrases, MFA — agents cannot type these). Gate destructive operations
 (\`rm -rf\`, \`fdisk\`, \`mkfs\`, partition table changes) behind explicit
@@ -172,7 +174,11 @@ human confirmation. Assess blast radius before execution (CRITICAL = multi-host
 / data loss; HIGH = single-host outage). Dry-run first when the tool supports it.
 Never cross host boundaries without confirmation.`;
 
-const HERMES_AGENTS_MD_FOOTER = `## MCP Server Surface (\`aiwg mcp serve\`)
+const HERMES_AGENTS_MD_FOOTER = `## Optional MCP Server Surface (\`aiwg mcp serve\`)
+
+MCP is optional. The baseline path is file deploy + \`aiwg discover\` /
+\`aiwg show\` from the CLI. MCP exposes the same AIWG catalog and execution
+surface as provider-agnostic tools when configured.
 
 **Discovery** (read-only, no project required):
 - \`mcp_aiwg_discover\` — semantic search across skills/agents/commands/rules
@@ -194,8 +200,10 @@ export function generateAgentsMd(agentCount, skillCount, targetDir, opts) {
 
   const header = `# AIWG Integration
 
-AIWG connected via MCP (\`aiwg mcp serve\`). Native Hermes skills also available
-at \`~/.hermes/skills/\` (kernel) and \`~/.hermes/skills/.aiwg/\` (standard, ~385 skills).
+AIWG connected through file-based deployment. Native Hermes skills are available
+at \`~/.hermes/skills/\` (kernel) and \`~/.hermes/skills/.aiwg/\` (standard).
+Use \`aiwg discover\` and \`aiwg show <type> <name>\` for the on-demand catalog.
+The MCP sidecar (\`aiwg mcp serve\`) is optional.
 
 ## Route to AIWG When
 
@@ -381,7 +389,7 @@ export async function deploy(opts) {
   }
 
   // ── AGENTS.md + .hermes.md ─────────────────────────────────────────────────
-  // Generate AGENTS.md (with inlined CRITICAL rule priming, #1318)
+  // Generate AGENTS.md (with inlined CRITICAL rule priming, #1318/#1532)
   // AND .hermes.md thin pointer (resolves #1319 doc-debt, was claimed in
   // CHANGELOG but not previously implemented).
   if (!skillsOnly && !opts.commandsOnly && !opts.rulesOnly) {
@@ -410,9 +418,9 @@ export async function deploy(opts) {
   // ── Post-deployment hint ───────────────────────────────────────────────────
   if (!opts.quiet) {
     console.log('');
-    console.log('Commands and rules are served via MCP (not deployed as files).');
-    console.log('Next: configure ~/.hermes/config.yaml to connect AIWG MCP server.');
-    console.log('See: docs/integrations/hermes-quickstart.md (Part 2)');
+    console.log('Rules are in AGENTS.md as compressed directives; full bodies via `aiwg show rule <name>`.');
+    console.log('Optional: configure ~/.hermes/config.yaml to connect AIWG MCP server.');
+    console.log('See: docs/integrations/hermes-quickstart.md (optional MCP setup)');
   }
 }
 

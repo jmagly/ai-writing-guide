@@ -17,7 +17,7 @@
  * | warp       | .warp/agents/            | WARP.md              | ✅ Full       |
  * | windsurf   | .windsurf/agents/        | .windsurfrules       | 🧪 Experimental |
  * | copilot    | .github/agents/          | copilot-instructions | ✅ Full       |
- * | hermes     | ~/.hermes/skills/        | AGENTS.md            | ✅ MCP sidecar |
+ * | hermes     | ~/.hermes/skills/        | AGENTS.md            | optional MCP sidecar |
  * | openclaw   | ~/.openclaw/agents/      | AGENTS.md            | ✅ Full       |
  * | generic    | agents/                  | varies               | ✅ Full       |
  *

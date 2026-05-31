@@ -475,6 +475,47 @@ function findArtifactFiles(dir: string, extensions: string[] = ['.md', '.yaml', 
 /**
  * Build the artifact index
  */
+/**
+ * Detect an AIWG workflow "Flow" document — the declarative YAML metalanguage
+ * (`apiVersion: workflow.aiwg.io/v1`, the legacy `ops.aiwg.io/v1` alias, and
+ * domain-extension namespaces like `<domain>.workflow.aiwg.io/v1`). Pure-YAML
+ * Flow docs carry no markdown frontmatter, so the standard frontmatter path
+ * leaves them unclassified and invisible to discovery. This surfaces them as
+ * `type: 'flow'` with discovery metadata drawn from `metadata.name`,
+ * `spec.description`, and `metadata.labels` (#1540). Returns null for any file
+ * that isn't a recognizable Flow document.
+ */
+export function parseFlowDoc(
+  content: string,
+  filePath: string
+): { name?: string; description?: string; tags: string[] } | null {
+  if (!/\.ya?ml$/i.test(filePath)) return null;
+  let doc: unknown;
+  try {
+    doc = loadYaml(content);
+  } catch {
+    return null;
+  }
+  if (!doc || typeof doc !== 'object') return null;
+  const d = doc as Record<string, unknown>;
+  const api = typeof d.apiVersion === 'string' ? d.apiVersion : '';
+  // core (workflow.aiwg.io/v1), legacy alias (ops.aiwg.io/v1), and any
+  // domain-extension namespace ending in one of those.
+  const isFlow = /(^|\.)(workflow|ops)\.aiwg\.io\/v1$/.test(api);
+  if (!isFlow) return null;
+  const meta = (d.metadata && typeof d.metadata === 'object' ? d.metadata : {}) as Record<string, unknown>;
+  const spec = (d.spec && typeof d.spec === 'object' ? d.spec : {}) as Record<string, unknown>;
+  const labels =
+    meta.labels && typeof meta.labels === 'object'
+      ? Object.values(meta.labels as Record<string, unknown>).map(String)
+      : [];
+  return {
+    name: typeof meta.name === 'string' ? meta.name : undefined,
+    description: typeof spec.description === 'string' ? spec.description : undefined,
+    tags: labels,
+  };
+}
+
 export async function buildIndex(
   cwd: string,
   options: BuildOptions = {}
@@ -629,19 +670,25 @@ export async function buildIndex(
       manifestStats.reindexed++;
       nextManifestEntries[relativePath] = makeEntry(checksum, stat);
       const { data, body } = parseFrontmatter(content);
-      const title = extractTitle(data, body);
+      // YAML Flow documents (workflow.aiwg.io/v1) are pure YAML, not
+      // markdown+frontmatter — detect them up front so they classify and
+      // become discoverable (#1540).
+      const flow = parseFlowDoc(content, relativePath);
+      const title = flow?.name ?? extractTitle(data, body);
       const phase = typeof data.phase === 'string' ? data.phase : inferPhase(relativePath);
-      const type = inferType(data, relativePath);
-      const tags = Array.isArray(data.tags) ? data.tags.map(String) : [];
-      const summary = extractSummary(data, body);
+      const type = flow ? 'flow' : inferType(data, relativePath);
+      const tags = flow ? flow.tags : (Array.isArray(data.tags) ? data.tags.map(String) : []);
+      const summary = flow?.description ?? extractSummary(data, body);
       const dependencies = extractMentions(content);
 
-      // Discovery metadata (#1214) — only meaningful for AIWG artifact
-      // kinds. Kept undefined on other types so the index file stays
-      // small for the common case.
-      const isDiscoverable = type === 'skill' || type === 'agent' || type === 'command' || type === 'rule';
-      const triggers = isDiscoverable ? extractTriggers(body, data) : undefined;
-      const capability = isDiscoverable ? extractCapability(data, body) : undefined;
+      // Discovery metadata (#1214, #1540) — meaningful for AIWG artifact
+      // kinds + Flow documents. Kept undefined on other types so the index
+      // file stays small for the common case.
+      const isDiscoverable =
+        type === 'skill' || type === 'agent' || type === 'command' || type === 'rule' || type === 'flow';
+      // Flows have no trigger phrases — they rely on the capability description.
+      const triggers = isDiscoverable && !flow ? extractTriggers(body, data) : undefined;
+      const capability = flow ? flow.description : (isDiscoverable ? extractCapability(data, body) : undefined);
       const kernel =
         data.kernel === true || data.kernel === 'true' ? true : undefined;
       // Script entrypoint metadata is meaningful for skills only (#1227).
@@ -649,7 +696,7 @@ export async function buildIndex(
       // Canonical short name (#1233) — used by the scorer to floor exact-name
       // queries to 1.0 so hyphenated kernel-skill names like `aiwg-doctor`
       // remain searchable even when the rendered title strips the hyphen.
-      const name = isDiscoverable ? extractCanonicalName(data, relativePath) : undefined;
+      const name = flow ? flow.name : (isDiscoverable ? extractCanonicalName(data, relativePath) : undefined);
 
       entry = {
         path: relativePath,

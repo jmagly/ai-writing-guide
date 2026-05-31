@@ -1163,7 +1163,7 @@ Start the AIWG MCP server.
 ```bash
 aiwg mcp serve
 aiwg mcp serve --toolsets=memory,kb,ralph    # opt-in toolsets
-aiwg mcp serve --toolsets=all                # everything (~57 tools)
+aiwg mcp serve --toolsets=all                # everything (61 tools, including deprecated compatibility tools)
 ```
 
 **Options:**
@@ -1173,17 +1173,18 @@ aiwg mcp serve --toolsets=all                # everything (~57 tools)
 **Actions:**
 
 - Starts stdio-based MCP server
-- Exposes ~12 core tools by default (discover, *-list/*-show pairs, command-run, artifact-read/write)
-- Additional ~45 tools available via opt-in toolsets
+- Exposes 16 core tools by default (discover, *-list/*-show pairs, command-run, artifact-read/write, and deprecated workflow-run compatibility)
+- Additional 45 tools available via opt-in toolsets
 - Supports Claude Desktop, Cursor, Factory, Hermes (as MCP sidecar)
 
-**Default surface (~2.5K tokens schema)**:
+**Default surface (16 tools; schema cost should be re-measured after tool changes)**:
 - `discover` — semantic search across skills/agents/commands/rules
 - `skill-list` / `skill-show`, `command-list` / `command-show`, `rule-list` / `rule-show`, `agent-list` / `agent-show`, `template-list` / `template-render` / `template-show`
 - `command-run` — allow-listed CLI dispatch
 - `artifact-read` / `artifact-write`
+- `workflow-run` — deprecated compatibility stub; use `command-run`
 
-**Opt-in toolsets**: see [Tool reference](./integrations/hermes-quickstart.md#tool-name-mangling) for details.
+**Opt-in toolsets**: see [MCP capability audit](./integrations/mcp-capability-audit.md) and [Tool reference](./integrations/hermes-quickstart.md#tool-name-mangling) for details.
 
 #### mcp install
 

@@ -84,8 +84,8 @@ AIWG deploys to `AGENTS.md` for Hermes.
 |----------|---------------|---------------|
 | Agents | Via `AGENTS.md` | Aggregated into `AGENTS.md` |
 | Skills | `~/.hermes/skills/` native | Deployed to home dir |
-| Commands | Not confirmed | Not deployed |
-| Rules | Not confirmed | Not deployed |
+| Commands | No slash-command file surface | AGENTS.md bridge + `aiwg discover` / `aiwg show`; optional MCP `command-run` |
+| Rules | AGENTS.md context + CLI | Compressed `### Rule:` sections in AGENTS.md; full bodies via `aiwg show rule <name>`; optional MCP `rule-list`/`rule-show` |
 
 ---
 
@@ -95,8 +95,8 @@ AIWG deploys to `AGENTS.md` for Hermes.
 |---------------|--------------|--------|
 | Agents | `AGENTS.md` | ✓ aggregated |
 | Skills | `~/.hermes/skills/` | ✓ correct path |
-| Commands | — | Not supported |
-| Rules | — | Not supported |
+| Commands | AGENTS.md bridge + CLI | No Hermes command files; optional MCP command-run |
+| Rules | AGENTS.md + CLI | `### Rule:` sections + `aiwg show rule <name>` |
 
 ---
 
@@ -117,7 +117,7 @@ This command deploys the full AIWG framework to the correct Hermes paths:
 - Agents → `AGENTS.md` (aggregated project context, auto-loaded)
 - Skills → `~/.hermes/skills/` (native user-global discovery via `rglob("SKILL.md")`)
 
-This provides equivalent capability to a marketplace install — agent personas and skills reach Hermes through platform-native paths. Commands and rules are not supported by Hermes at this time. This is by design, not a missing feature. Hermes's Python-based architecture uses file discovery as the primary extension mechanism.
+This provides equivalent capability to a marketplace install — agent personas and skills reach Hermes through platform-native paths. Commands and full rule bodies are reached through the provider-agnostic CLI bridge (`aiwg discover` / `aiwg show`) and, when configured, the optional MCP sidecar. Hermes's Python-based architecture uses file discovery as the primary extension mechanism.
 
 ---
 
