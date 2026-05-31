@@ -1,14 +1,14 @@
 # Hermes Agent Quick Start
 
-Integrate AIWG with [Hermes Agent](https://github.com/NousResearch/hermes-agent) as an MCP sidecar.
+Integrate AIWG with [Hermes Agent](https://github.com/NousResearch/hermes-agent) — file-based deployment plus an **optional** MCP sidecar.
 
-> **This is not a traditional provider deployment.** Unlike other AIWG integrations where `aiwg use sdlc --provider X` deploys artifacts into the provider's directory structure, Hermes has its own memory management model. AIWG runs as an external MCP server that Hermes calls — the architecture is `Hermes → MCP → AIWG`.
+> **Hermes integrates like any other provider; the MCP sidecar is optional.** As of v2026.5.13 (validated in #1527), `aiwg use sdlc --provider hermes` deploys artifacts and Hermes reaches AIWG through the discover-first CLI (`aiwg discover` / `aiwg show`) and the AGENTS.md / `.hermes.md` bridge — the same model as Claude Code and Codex, **no MCP required**. The `Hermes → MCP → AIWG` sidecar described below is an *optional* enrichment: any provider or system can connect to AIWG's MCP server, but none require it. (Caveat: rule delivery without MCP is still being completed — #1532. Broader MCP modernization — #1533.) The rest of this guide covers the optional MCP setup.
 
 ---
 
 ## Architecture
 
-The AIWG–Hermes seam is a single MCP connection. Hermes can sit upstream of any messaging platform or editor that Hermes itself supports — AIWG doesn't need to know about those upstream surfaces.
+When the optional MCP sidecar is enabled, the AIWG–Hermes seam is a single MCP connection. Hermes can sit upstream of any messaging platform or editor that Hermes itself supports — AIWG doesn't need to know about those upstream surfaces.
 
 ```
 [Terminal / Telegram / Discord / Signal / Slack / Mattermost / Matrix / Zed (via ACP)]
@@ -29,7 +29,7 @@ The AIWG–Hermes seam is a single MCP connection. Hermes can sit upstream of an
 
 **AIWG owns**: workflow execution, artifact output in `.aiwg/`, template rendering, agent definitions, persistent SDLC artifacts.
 
-**MCP is the seam.** Coexistence with clear boundaries — not system unification. AIWG does not need to know which platform a Hermes turn originated from; Hermes does not need to know how AIWG produces an artifact.
+**When enabled, MCP is the seam.** Coexistence with clear boundaries — not system unification. AIWG does not need to know which platform a Hermes turn originated from; Hermes does not need to know how AIWG produces an artifact.
 
 ### Recommended Model Strategy
 

@@ -87,7 +87,7 @@ All 10 providers receive all 4 artifact types (agents, commands, skills, rules).
 | Warp Terminal | `.warp/agents/` + WARP.md | `.warp/commands/` | `.warp/skills/` + `.agents/skills/` | `.warp/rules/` | `aiwg use sdlc --provider warp` |
 | Windsurf | AGENTS.md | `.windsurf/workflows/` | `.windsurf/skills/` + `.agents/skills/` | `.windsurf/rules/` | `aiwg use sdlc --provider windsurf` |
 | OpenClaw | `~/.openclaw/agents/` | `~/.openclaw/commands/` | `~/.openclaw/skills/` + `.agents/skills/` | `~/.openclaw/rules/` | `aiwg use sdlc --provider openclaw` |
-| Hermes | AGENTS.md + .hermes.md | via MCP `command-run` | `~/.hermes/skills/` (kernel) + `~/.hermes/skills/.aiwg/` (standard) | inlined in AGENTS.md + MCP `rule-list`/`rule-show` | `aiwg use sdlc --provider hermes` |
+| Hermes | AGENTS.md + .hermes.md | AGENTS.md bridge + `aiwg discover`/`show` (MCP `command-run` optional) | `~/.hermes/skills/` (kernel) + `~/.hermes/skills/.aiwg/` (standard) | AGENTS.md + `aiwg show rule` (MCP `rule-list`/`rule-show` optional; AGENTS.md inlining pending — #1532) | `aiwg use sdlc --provider hermes` |
 | Omnius (bundled, first-party integrator) | bundled in Omnius runtime | bundled in Omnius runtime | bundled in Omnius runtime | bundled in Omnius runtime | `npm i -g omnius` |
 
 **Special cases:**
@@ -96,7 +96,7 @@ All 10 providers receive all 4 artifact types (agents, commands, skills, rules).
 - **Warp**: Agents and commands are also aggregated into `WARP.md` for single-file context loading
 - **Windsurf**: Agents are aggregated into `AGENTS.md` at project root
 - **OpenClaw**: All artifacts deploy to home directory (`~/.openclaw/`). First provider to support behaviors (`~/.openclaw/behaviors/`)
-- **Hermes**: MCP sidecar architecture (`Hermes → MCP → AIWG`). Commands reach AIWG via `mcp_aiwg_command_run` (allow-listed). Standard skills (~385) live under `~/.hermes/skills/.aiwg/` and are recursively discovered; kernel skills (~9) live at the top level and are protected from the Curator (v0.12.0+) via the `.bundled_manifest`. The MCP server has ~12 core tools by default; ~45 additional via `AIWG_MCP_TOOLSETS=<csv>`. See `docs/integrations/hermes-quickstart.md`.
+- **Hermes**: Integrates like Claude Code and Codex — file-based deploy + `aiwg discover`/`aiwg show` CLI + AGENTS.md/.hermes.md bridge (Discover-First Protocol). **MCP is optional**: AIWG's MCP server is a global hook any provider may use, but Hermes does not require it (validated v2026.5.13, #1527). When MCP is enabled, commands reach AIWG via `mcp_aiwg_command_run` (allow-listed) and the server exposes ~12 core tools by default (~45 via `AIWG_MCP_TOOLSETS=<csv>`). Standard skills (~385) live under `~/.hermes/skills/.aiwg/` (recursively discovered) and are also reachable through the capability index without file deploy; kernel skills (~9) live at the top level, protected from the Curator (v0.12.0+) via the `.bundled_manifest`. Rules are not yet inlined into AGENTS.md, so without MCP rule delivery is currently incomplete (#1532). Broader MCP modernization is tracked in #1533. See `docs/integrations/hermes-quickstart.md`.
 - **Omnius** (first-party integrator): Ships AIWG embedded inside the Omnius autonomous coding agent runtime — no separate `aiwg use` step required. `npm i -g omnius` installs both. AIWG skills, agents, and rules are reachable through `aiwg discover` from inside Omnius sessions and through Omnius's REST (`/v1/aiwg/*`) and MCP bridges. Treat Omnius like any AIWG-aware host: the `skill-discovery`, `delivery-policy`, `human-authorization`, and `anti-laziness` rules all apply unchanged. See https://www.npmjs.com/package/omnius.
 
 ## Writing Principles
@@ -681,3 +681,18 @@ Before pushing a version tag:
 - PATCH resets each month
 - Tag format: `vYYYY.M.PATCH` (e.g., `v2026.1.5`)
 - See `@docs/contributing/versioning.md` for full details
+
+<!-- AIWG:claude-md-hook:start -->
+
+# AIWG
+
+@AIWG.md
+
+<!--
+  This block is managed by `aiwg regenerate` and `aiwg use`.
+  Operator content above and below this block is preserved on regenerate.
+  To change AIWG.md content, edit .aiwg/AIWG.md (the normalized source)
+  then run `aiwg regenerate`.
+-->
+
+<!-- AIWG:claude-md-hook:end -->

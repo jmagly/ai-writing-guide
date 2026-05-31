@@ -345,11 +345,15 @@ providers:
     daemon_tier: native
     daemon_pty_adapter: false
     artifact_paths:
+      # MCP is OPTIONAL for Hermes (validated v2026.5.13, #1527): it integrates
+      # like Claude Code / Codex via file deploy + aiwg discover/show + AGENTS.md
+      # bridge. The "MCP:" entries below are the optional enrichment path, not a
+      # requirement. Broader MCP modernization: #1533.
       agents: AGENTS.md
-      commands: "MCP: command-run"
+      commands: "AGENTS.md bridge + aiwg discover/show (MCP command-run optional)"
       skills: "~/.hermes/skills/"
       skills_cross_agent: "~/.hermes/skills/.aiwg/"
-      rules: "MCP: rule-list/rule-show"
+      rules: "AGENTS.md + aiwg show rule (MCP rule-list/rule-show optional; AGENTS.md inlining pending #1532)"
       behaviors: .hermes/behaviors/
     native_features:
       cron: false

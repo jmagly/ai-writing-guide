@@ -294,7 +294,7 @@ flowchart LR
   CLI --> WS[".windsurf/agents/<br/>.windsurf/skills/<br/>+ AGENTS.md"]
   CLI --> FA[".factory/droids/<br/>.factory/skills/<br/>.factory/rules/"]
   CLI --> OC[".opencode/agent/<br/>.opencode/skill/<br/>.opencode/rule/"]
-  CLI --> HE[".hermes.md +<br/>~/.hermes/skills/<br/>via MCP sidecar"]
+  CLI --> HE[".hermes.md + AGENTS.md<br/>~/.hermes/skills/<br/>MCP optional"]
   CLI --> OW["~/.openclaw/agents/<br/>~/.openclaw/skills/<br/>~/.openclaw/behaviors/"]
 
   classDef claude fill:#e8f4ff
@@ -307,7 +307,7 @@ flowchart LR
 
 ![Polished version (placeholder — generate from #1248 prompts)](./architecture-overview/images/07-multi-target.png)
 
-Switching platforms doesn't require redoing your team's agent/skill/rule investment — same source, different output convention. Hermes is special-cased because it uses an MCP-sidecar model rather than direct file deployment.
+Switching platforms doesn't require redoing your team's agent/skill/rule investment — same source, different output convention. Hermes deploys files like the others (AGENTS.md + `.hermes.md` + `~/.hermes/skills/`) and is reached through the discover-first CLI; MCP is an optional global hook, not a requirement (validated v2026.5.13, #1527; modernization tracked in #1533).
 
 ---
 
