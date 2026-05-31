@@ -20,13 +20,13 @@
     },
     "spec": {
       "type": "object",
-      "description": "Playbook specification defining inventory, targets, and execution steps.",
-      "required": ["inventory", "targets", "steps"],
+      "description": "Playbook specification defining execution steps, optionally over inventory targets.",
+      "required": ["steps"],
       "additionalProperties": false,
       "properties": {
         "inventory": {
           "type": "string",
-          "description": "Reference to an OpsInventory resource name."
+          "description": "Reference to an OpsInventory resource name. Optional (#1539): host-ops Flows iterate an inventory; SDLC/project Flows act on a single project context and omit this."
         },
         "targets": {
           "type": "object",

@@ -163,3 +163,18 @@ describe('forward Flows aliases validate (#1536)', () => {
     expect(validate(doc), JSON.stringify(validate.errors, null, 2)).toBe(true);
   });
 });
+
+describe('non-iterating Flows omit inventory/targets (#1539)', () => {
+  it('a playbook with only spec.steps (no inventory/targets) validates', () => {
+    const ajv = makeAjv();
+    const validate = ajv.compile(loadSchema('workflow-playbook.schema.json'));
+    const doc = {
+      apiVersion: 'flow.aiwg.io/v1',
+      kind: 'FlowPlaybook',
+      metadata: { name: 'project-flow' },
+      // SDLC/project Flow: single project context, no host inventory to fan over.
+      spec: { steps: [{ id: 'gate', kind: 'gate', description: 'human gate' }] },
+    };
+    expect(validate(doc), JSON.stringify(validate.errors, null, 2)).toBe(true);
+  });
+});

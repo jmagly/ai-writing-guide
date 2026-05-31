@@ -5,10 +5,10 @@
 # `.aiwg/release.config` (which flow-release already reads) — this playbook
 # encodes the gate SEQUENCE, dependencies, hard-stops, and the human gate.
 #
-# Schema-fit note (#1539): the playbook schema mandates `inventory`/`targets`
-# (host-ops heritage). SDLC flows act on a single project context rather than
-# iterating a host set, so a nominal single-target inventory is declared. A
-# follow-up should make inventory/targets optional for non-iterating Flows.
+# Schema-fit note (#1539): `inventory`/`targets` are now optional for
+# non-iterating Flows. SDLC flows act on a single project context rather than
+# iterating a host set, so this Flow omits them entirely (the host-ops heritage
+# fields are reserved for Flows that fan over an inventory).
 apiVersion: workflow.aiwg.io/v1
 kind: WorkflowPlaybook
 metadata:
@@ -17,9 +17,6 @@ metadata:
     category: sdlc-orchestration
     domain: release
 spec:
-  inventory: release-context
-  targets:
-    groups: [project]
   vars:
     config_path: .aiwg/release.config
   steps:
