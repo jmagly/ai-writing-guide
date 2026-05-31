@@ -15,11 +15,20 @@ describe('routing documentation regressions', () => {
     expect(skill).toContain('Provider with native `/goal` (Codex, Claude Code)');
     expect(skill).toContain('/goal "<task>; completion: <measurable criterion>"');
     expect(skill).toContain('/goal "<task>; completion: <criterion>"');
-    expect(skill).toContain('External crash-resilient loops stay AIWG-native');
+    expect(skill).toContain('stays AIWG-native');
     const addressIssues = read('agentic/code/frameworks/sdlc-complete/skills/address-issues/SKILL.md');
     expect(addressIssues).toContain('Codex and Claude Code');
     expect(existsSync(resolve(repo, '.aiwg/research/codex-goal-integration.md'))).toBe(true);
     expect(existsSync(resolve(repo, '.aiwg/architecture/adr-codex-goal-routing.md'))).toBe(true);
+  });
+
+  it('agent-loop documents external-route /workflow handling (verified against codex 0.135.0)', () => {
+    const skill = read('agentic/code/addons/agent-loop/skills/agent-loop/SKILL.md');
+    expect(skill).toContain('native dynamic orchestration (Claude Code Workflow tool)');
+    expect(skill).toContain('Codex has no core `/workflow`');
+    expect(skill).toContain('detached/resume-after-session work stays AIWG-native');
+    expect(existsSync(resolve(repo, '.aiwg/architecture/adr-workflow-routing.md'))).toBe(true);
+    expect(existsSync(resolve(repo, '.aiwg/research/provider-workflow-integration.md'))).toBe(true);
   });
 
   it('steward routes project-local authoring through AIWG creation commands and docs', () => {
