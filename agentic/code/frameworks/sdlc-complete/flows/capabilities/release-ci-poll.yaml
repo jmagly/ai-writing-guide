@@ -1,0 +1,17 @@
+# Pilot capability (#1539) — poll CI until required workflows complete green.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: release-ci-poll
+  labels: { domain: release }
+spec:
+  description: Poll the CI tracker for the release commit until required workflows reach conclusion success (flow-release Shape 3 "tracker").
+  version: "1.0.0"
+  inputs:
+    - { name: required_workflows, type: array, required: true }
+    - { name: timeout_seconds, type: integer, required: false, default: 600 }
+    - { name: hard_stop, type: boolean, required: false, default: true }
+  outputs:
+    - { name: conclusions, type: array }
+  agent: workflow-executor
+  idempotent: true

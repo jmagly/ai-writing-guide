@@ -1,0 +1,16 @@
+# Pilot capability (#1539) — cut the signed release tag via the wrapper script.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: release-cut-tag
+  labels: { domain: release }
+spec:
+  description: Cut the signed release tag via tools/release/cut-tag.sh (never raw git tag) — runs the pre-tag gate checks and signs with the release key.
+  version: "1.0.0"
+  inputs:
+    - { name: wrapper, type: string, required: false, default: tools/release/cut-tag.sh }
+    - { name: hard_stop, type: boolean, required: false, default: true }
+  outputs:
+    - { name: tag, type: string }
+  agent: workflow-executor
+  idempotent: false

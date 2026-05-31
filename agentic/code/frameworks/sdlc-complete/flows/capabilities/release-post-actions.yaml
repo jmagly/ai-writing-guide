@@ -1,0 +1,16 @@
+# Pilot capability (#1539) — post-release housekeeping actions.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: release-post-actions
+  labels: { domain: release }
+spec:
+  description: Run declarative post-release housekeeping — close imported issues with thanks, update release entries on trackers (flow-release Shape 6 "actions").
+  version: "1.0.0"
+  inputs:
+    - { name: actions, type: array, required: true }
+    - { name: hard_stop, type: boolean, required: false, default: false }
+  outputs:
+    - { name: completed, type: array }
+  agent: workflow-executor
+  idempotent: false

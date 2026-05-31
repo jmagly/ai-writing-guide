@@ -1,0 +1,17 @@
+# Pilot capability (#1539) — run sequential shell build/test steps as a release gate.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: release-build-gate
+  labels: { domain: release }
+spec:
+  description: Run sequential local build/test shell steps and fail the gate on a non-zero exit (flow-release Shape 1 "steps").
+  version: "1.0.0"
+  inputs:
+    - { name: gate, type: string, required: false }
+    - { name: hard_stop, type: boolean, required: false, default: true }
+    - { name: steps, type: array, required: true }
+  outputs:
+    - { name: results, type: array }
+  agent: workflow-executor
+  idempotent: true

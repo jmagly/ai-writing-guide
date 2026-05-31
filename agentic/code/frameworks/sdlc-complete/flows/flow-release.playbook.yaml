@@ -1,0 +1,102 @@
+# Pilot conversion (#1539): the agentic `flow-release` skill expressed as a
+# declarative YAML Flow (WorkflowPlaybook). The flow-release SKILL.md is now a
+# thin wrapper that points here; this playbook is the source of truth for the
+# release gate sequence. Detailed per-gate config still lives in the project's
+# `.aiwg/release.config` (which flow-release already reads) — this playbook
+# encodes the gate SEQUENCE, dependencies, hard-stops, and the human gate.
+#
+# Schema-fit note (#1539): the playbook schema mandates `inventory`/`targets`
+# (host-ops heritage). SDLC flows act on a single project context rather than
+# iterating a host set, so a nominal single-target inventory is declared. A
+# follow-up should make inventory/targets optional for non-iterating Flows.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata:
+  name: flow-release
+  labels:
+    category: sdlc-orchestration
+    domain: release
+spec:
+  inventory: release-context
+  targets:
+    groups: [project]
+  vars:
+    config_path: .aiwg/release.config
+  steps:
+    - id: local-build-test
+      capability: release-build-gate
+      inputs:
+        - name: gate
+          value: local-build-test
+        - name: hard_stop
+          value: true
+        - name: steps
+          value:
+            - { id: typecheck, run: "npx tsc --noEmit" }
+            - { id: unit-tests, run: "npm test" }
+
+    - id: ci-green
+      capability: release-ci-poll
+      depends_on: [local-build-test]
+      inputs:
+        - name: hard_stop
+          value: true
+        - name: required_workflows
+          value: [ci.yml, validate.yml]
+        - name: timeout_seconds
+          value: 600
+
+    - id: doc-sync
+      capability: release-doc-sync
+      depends_on: [ci-green]
+      inputs:
+        - name: hard_stop
+          value: true
+        - name: direction
+          value: code-to-docs
+        - name: dry_run_first
+          value: true
+
+    - id: changelog-and-announcement
+      capability: release-assert-artifacts
+      depends_on: [doc-sync]
+      inputs:
+        - name: hard_stop
+          value: true
+        - name: required_for_channels
+          value: [stable]
+        - name: artifacts
+          value:
+            - { path: CHANGELOG.md, section_pattern: "## [{version}]" }
+            - { path: "docs/releases/v{version}-announcement.md", must_exist: true }
+
+    - id: readme-freshness
+      kind: gate
+      description: |
+        Human gate (review_diff): run `git diff <latest-stable>..HEAD -- README.md`
+        and confirm the README reflects what ships in this release. hard_stop is
+        false in flow-release — a "no" logs a warning and continues.
+      depends_on: [changelog-and-announcement]
+
+    - id: tag-and-release
+      capability: release-cut-tag
+      depends_on: [readme-freshness]
+      inputs:
+        - name: hard_stop
+          value: true
+        - name: wrapper
+          value: tools/release/cut-tag.sh
+      outputs:
+        - name: tag
+
+    - id: post-release
+      capability: release-post-actions
+      depends_on: [tag-and-release]
+      inputs:
+        - name: hard_stop
+          value: false
+        - name: actions
+          value:
+            - { close_imported_issues_with_thanks: true }
+            - { update_release_entry: gitea }
+            - { update_release_entry: github, skip_when_flag: "--no-mirror" }

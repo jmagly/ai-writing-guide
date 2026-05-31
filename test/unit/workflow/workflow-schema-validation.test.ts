@@ -87,6 +87,31 @@ describe('workflow metalanguage example documents conform to their schemas', () 
   });
 });
 
+describe('pilot Flow conversion validates against the schema (#1539)', () => {
+  const FLOWS_DIR = path.join(REPO_ROOT, 'agentic/code/frameworks/sdlc-complete/flows');
+
+  it('flow-release.playbook.yaml validates against WorkflowPlaybook', () => {
+    const ajv = makeAjv();
+    const validate = ajv.compile(loadSchema('workflow-playbook.schema.json'));
+    const doc = yaml.load(fs.readFileSync(path.join(FLOWS_DIR, 'flow-release.playbook.yaml'), 'utf8'));
+    const ok = validate(doc);
+    expect(ok, JSON.stringify(validate.errors, null, 2)).toBe(true);
+  });
+
+  it('every pilot release capability validates against WorkflowCapability', () => {
+    const ajv = makeAjv();
+    const validate = ajv.compile(loadSchema('workflow-capability.schema.json'));
+    const capDir = path.join(FLOWS_DIR, 'capabilities');
+    const caps = fs.readdirSync(capDir).filter((f) => f.endsWith('.yaml'));
+    expect(caps.length, 'pilot capabilities present').toBeGreaterThan(0);
+    for (const f of caps) {
+      const doc = yaml.load(fs.readFileSync(path.join(capDir, f), 'utf8'));
+      const ok = validate(doc);
+      expect(ok, `${f}: ${JSON.stringify(validate.errors, null, 2)}`).toBe(true);
+    }
+  });
+});
+
 describe('workflow schema rejects malformed documents (negative guard)', () => {
   it('rejects a playbook missing required spec.steps', () => {
     const ajv = makeAjv();

@@ -18,6 +18,15 @@ commandHint:
 
 # Release Orchestration Flow (config-driven)
 
+> **Declarative Flow source of truth (#1539):** the release gate sequence is
+> defined as a YAML Flow at
+> [`agentic/code/frameworks/sdlc-complete/flows/flow-release.playbook.yaml`](../../flows/flow-release.playbook.yaml)
+> (with release capabilities under `flows/capabilities/`). This skill is the
+> human-readable **wrapper** over that Flow — it stays for discoverability and
+> operator guidance, and is a candidate for retirement once discovery surfaces
+> YAML Flows directly (#1540). Per-gate config still lives in
+> `.aiwg/release.config`; the Flow encodes the gate sequence and dependencies.
+
 **You are the Core Orchestrator** for the project's release sequence.
 
 ## Your role

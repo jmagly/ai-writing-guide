@@ -1,0 +1,17 @@
+# Pilot capability (#1539) — assert release-time files exist and contain sections.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: release-assert-artifacts
+  labels: { domain: release }
+spec:
+  description: Assert release artifacts exist and optionally contain a version section, e.g. CHANGELOG entry + announcement file (flow-release Shape 4 "artifacts").
+  version: "1.0.0"
+  inputs:
+    - { name: artifacts, type: array, required: true }
+    - { name: required_for_channels, type: array, required: false }
+    - { name: hard_stop, type: boolean, required: false, default: true }
+  outputs:
+    - { name: missing, type: array }
+  agent: workflow-executor
+  idempotent: true

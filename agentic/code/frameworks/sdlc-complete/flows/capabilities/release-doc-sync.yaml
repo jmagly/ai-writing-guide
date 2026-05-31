@@ -1,0 +1,17 @@
+# Pilot capability (#1539) — dispatch the doc-sync skill as a release gate.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: release-doc-sync
+  labels: { domain: release }
+spec:
+  description: Invoke the doc-sync skill (code-to-docs) to reconcile documentation before release (flow-release Shape 2 "invoke_skill").
+  version: "1.0.0"
+  inputs:
+    - { name: direction, type: string, required: false, default: code-to-docs }
+    - { name: dry_run_first, type: boolean, required: false, default: true }
+    - { name: hard_stop, type: boolean, required: false, default: true }
+  outputs:
+    - { name: drift_report, type: string }
+  agent: workflow-executor
+  idempotent: false
