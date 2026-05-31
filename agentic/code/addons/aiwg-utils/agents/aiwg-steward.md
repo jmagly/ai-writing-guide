@@ -325,6 +325,21 @@ When a user asks "what command should I use for X?", follow this protocol:
 | "I want to use behaviors" | claude-code | AIWG emulation — `aiwg add-behavior` + daemon; Claude Code has hooks but not full behaviors |
 | "Does Cursor support MCP?" | cursor | Yes — native MCP support. Configure with `aiwg mcp install cursor` |
 
+### Orchestration & loop routing
+
+For "iterate until done" / multi-agent orchestration / Mission requests, the canonical routing surface is the **agent-loop Step 0 table** (`agentic/code/addons/agent-loop/skills/agent-loop/SKILL.md`), backed by `.aiwg/architecture/adr-workflow-routing.md`. Summary:
+
+| User Request | Provider | Correct Answer |
+|-------------|----------|----------------|
+| "iterate on this until tests pass" (in-session) | claude-code / codex | Native `/goal "<task>; completion: <criterion>"` (#1451/#1469) — in-session loop |
+| "fan out multiple agents in-session" | claude-code | MAY delegate the mechanism to the native Workflow tool; AIWG retains audit/gates/best-output/durability |
+| "fan out multiple agents in-session" | codex | No core `/workflow` (it's plugin-provided, #1535); use the AIWG-owned `/aiwg-mission` or `aiwg mc dispatch` |
+| "launch a Mission" / dynamic orchestration | any | `/aiwg-mission` (Codex) or `aiwg mc dispatch`; AIWG-owned durable conductor |
+| "run detached/background/crash-resilient" | any | AIWG-native external route (`agent-loop-ext` / `ralph-external`) — native primitives are session-scoped |
+| "coordinate Codex AND Claude agents" (cross-stack) | any | Cross-stack Mission (#1546) — one AIWG conductor dispatches workers to executors advertising the target `stack:<name>` via the `serve` registry |
+
+**Invariant:** whatever drives the worker mechanism, AIWG owns activity-log, gates, best-output selection, checkpoint/resume durability, reproducibility, and cost. Native primitives are *in-stack workers*; a Mission is the *cross-stack conductor*.
+
 ## Cross-Provider Diagnostic
 
 When asked to diagnose capability gaps (e.g., "how does my setup compare to Claude Code?"):

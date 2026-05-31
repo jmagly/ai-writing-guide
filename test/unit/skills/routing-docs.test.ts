@@ -31,6 +31,25 @@ describe('routing documentation regressions', () => {
     expect(existsSync(resolve(repo, '.aiwg/research/provider-workflow-integration.md'))).toBe(true);
   });
 
+  it('steward persona surfaces orchestration/loop routing incl. cross-stack Missions (#1538/#1546)', () => {
+    const addon = read('agentic/code/addons/aiwg-utils/agents/aiwg-steward.md');
+    const persona = read('agentic/code/agents/personas/aiwg-steward.md');
+    for (const doc of [addon, persona]) {
+      expect(doc).toContain('Orchestration & loop routing');
+      // External/background stays AIWG-native (native primitives are session-scoped)
+      expect(doc).toContain('AIWG-native external route');
+      // AIWG-owned Codex Mission entry, not the plugin /workflow
+      expect(doc).toContain('/aiwg-mission');
+      expect(doc).toMatch(/plugin-provided|plugin/i);
+      // Cross-stack Mission conductor (#1546) routed via serve stack:<name>
+      expect(doc).toContain('Cross-stack Mission');
+      expect(doc).toContain('stack:<name>');
+      // Retained-ownership invariant
+      expect(doc.toLowerCase()).toContain('activity-log');
+      expect(doc.toLowerCase()).toContain('best-output');
+    }
+  });
+
   it('steward routes project-local authoring through AIWG creation commands and docs', () => {
     const steward = read('agentic/code/addons/aiwg-utils/skills/steward/SKILL.md');
     const persona = read('agentic/code/agents/personas/aiwg-steward.md');
