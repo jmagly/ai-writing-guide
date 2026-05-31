@@ -1,0 +1,13 @@
+# Heavy-flow proof capability (#1547) — flow-architecture-evolution.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: arch-migration-analysis
+  labels: { domain: architecture }
+spec:
+  description: Analyze breaking changes and produce a phased migration plan with go/no-go gates (flow Step 4).
+  version: "1.0.0"
+  inputs: []
+  outputs: []
+  agent: architecture-designer
+  idempotent: false

@@ -1,0 +1,13 @@
+# Heavy-flow proof capability (#1547) — flow-architecture-evolution.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: arch-options-analysis
+  labels: { domain: architecture }
+spec:
+  description: Analyze architecture options with trade-offs for the triggered change (flow Step 2).
+  version: "1.0.0"
+  inputs: []
+  outputs: []
+  agent: architecture-designer
+  idempotent: false

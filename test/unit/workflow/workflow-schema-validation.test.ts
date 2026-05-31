@@ -110,6 +110,22 @@ describe('pilot Flow conversion validates against the schema (#1539)', () => {
       expect(ok, `${f}: ${JSON.stringify(validate.errors, null, 2)}`).toBe(true);
     }
   });
+
+  it('heavy-flow proof: flow-architecture-evolution playbook (with a fanout step) validates (#1547)', () => {
+    const ajv = makeAjv();
+    const validate = ajv.compile(loadSchema('workflow-playbook.schema.json'));
+    const doc = yaml.load(
+      fs.readFileSync(path.join(FLOWS_DIR, 'flow-architecture-evolution.playbook.yaml'), 'utf8'),
+    ) as { spec: { steps: Array<Record<string, unknown>> } };
+    expect(validate(doc), JSON.stringify(validate.errors, null, 2)).toBe(true);
+    // It genuinely exercises the agentic-step extension: the review panel is a fanout step.
+    const reviewStep = doc.spec.steps.find((s) => s.id === 'architecture-review') as
+      | { fanout?: { agents: string[]; synthesize: string } }
+      | undefined;
+    expect(reviewStep?.fanout, 'review step is a fanout panel').toBeTruthy();
+    expect(reviewStep!.fanout!.agents.length, 'four parallel reviewers').toBe(4);
+    expect(reviewStep!.fanout!.synthesize).toBe('incorporate-review');
+  });
 });
 
 describe('workflow schema rejects malformed documents (negative guard)', () => {

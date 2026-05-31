@@ -26,6 +26,16 @@ commandHint:
 
 # Architecture Evolution Flow
 
+> **Declarative Flow source of truth (#1547):** the orchestration structure of
+> this flow — the step DAG, the **four-reviewer parallel panel + synthesis**, and
+> the approval gate — is encoded declaratively in
+> [`../../flows/flow-architecture-evolution.playbook.yaml`](../../flows/flow-architecture-evolution.playbook.yaml)
+> (a `FlowPlaybook` whose review step is a `fanout` panel; capabilities under
+> `../../flows/capabilities/`). This is the heavy-flow proof for the agentic
+> fan-out extension (`adr-flow-agentic-steps.md`). The prose below remains the
+> detailed orchestration guide and the discoverable trigger surface; the YAML is
+> authoritative for the step sequence, the panel composition, and the gate.
+
 **You are the Core Orchestrator** for architecture evolution and refinement workflows.
 
 ## Your Role

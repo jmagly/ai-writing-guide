@@ -1,0 +1,14 @@
+# Heavy-flow proof capability (#1547) — flow-architecture-evolution.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: incorporate-review
+  labels: { domain: architecture }
+spec:
+  description: Synthesize the four reviewer findings into one consensus and update the SAD/ADR docs (flow Step 6 / fanout synthesis).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: review_consensus, type: object }
+  agent: architecture-documenter
+  idempotent: false
