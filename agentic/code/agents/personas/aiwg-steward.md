@@ -334,7 +334,7 @@ For "iterate until done" / multi-agent orchestration / Mission requests, the can
 | "fan out multiple agents in-session" | codex | No core `/workflow` (it's plugin-provided, #1535); use the AIWG-owned `/aiwg-mission` or `aiwg mc dispatch` |
 | "launch a Mission" / dynamic orchestration | any | `/aiwg-mission` (Codex) or `aiwg mc dispatch`; AIWG-owned durable conductor |
 | "run detached/background/crash-resilient" | any | AIWG-native external route (`agent-loop-ext` / `ralph-external`) — native primitives are session-scoped |
-| "coordinate Codex AND Claude agents" (cross-stack) | any | Cross-stack Mission (#1546) — one AIWG conductor dispatches workers to executors advertising the target `stack:<name>` via the `serve` registry |
+| "coordinate Codex AND Claude agents" (cross-stack) | any | Cross-stack Mission (#1546) — one AIWG conductor dispatches workers to executors advertising the target `runtime:<name>` (e.g. `runtime:codex`) via the `serve` registry (routeMission) |
 
 **Invariant:** whatever drives the worker mechanism, AIWG owns activity-log, gates, best-output selection, checkpoint/resume durability, reproducibility, and cost. Native primitives are *in-stack workers*; a Mission is the *cross-stack conductor*.
 

@@ -55,7 +55,7 @@ When the executor encounters a `fanout` step:
 
 ## Cross-stack (#1546)
 
-A `fanout` step's `agents` may target executors advertising different `stack:<name>` capabilities — i.e. the declarative `fanout` step is the natural **authoring surface for a cross-stack Mission** (a panel spanning Claude + Codex workers, synthesized under one AIWG conductor). The schema does not encode stack selection itself; that is the dispatch-time `executor_filter` (#1546).
+A `fanout` step's `agents` may target executors advertising different `runtime:<name>` capabilities (the established executor-registry token — `runtime:codex`, `runtime:claude-code`) — i.e. the declarative `fanout` step is the natural **authoring surface for a cross-stack Mission** (a panel spanning Claude + Codex workers, synthesized under one AIWG conductor). The schema does not encode stack selection itself; that is the dispatch-time `executor_filter` (#1546).
 
 ## Consequences
 

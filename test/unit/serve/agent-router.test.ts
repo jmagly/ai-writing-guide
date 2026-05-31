@@ -321,3 +321,48 @@ describe('routeMission', () => {
     expect(rejectedIds).toContain(disconnected.executorId);
   });
 });
+
+// ── cross-stack Mission dispatch (#1546) ─────────────────────────────────────
+// One Mission conductor fans workers across HETEROGENEOUS agentic stacks by
+// filtering on the existing `runtime:<name>` capability — no new transport or
+// `stack:<name>` token needed. This proves a Claude-conductor Mission can route
+// a worker cycle to a Codex executor (and vice versa) on today's machinery.
+describe('cross-stack Mission dispatch (#1546)', () => {
+  const codexExec = makeExecutor({
+    executorId: 'codex-000-0000-0000-0000-000000000001',
+    name: 'codex-executor',
+    capabilities: ['isolation:container', 'runtime:codex', 'platform:linux/x64'],
+  });
+  const claudeExec = makeExecutor({
+    executorId: 'claude-00-0000-0000-0000-000000000002',
+    name: 'claude-executor',
+    capabilities: ['isolation:vm', 'runtime:claude-code', 'platform:linux/x64', 'resumable'],
+  });
+  const fleet = [codexExec, claudeExec];
+
+  it('routes a worker to the Codex executor when filtered to runtime:codex', () => {
+    const result = routeMission(fleet, { capabilities: ['runtime:codex'] });
+    expect(result.selected?.executor.executorId).toBe(codexExec.executorId);
+  });
+
+  it('routes a worker to the Claude executor when filtered to runtime:claude-code', () => {
+    const result = routeMission(fleet, { capabilities: ['runtime:claude-code'] });
+    expect(result.selected?.executor.executorId).toBe(claudeExec.executorId);
+  });
+
+  it('a Mission can dispatch a mixed panel — each worker filter selects its stack', () => {
+    // Simulate a cross-stack fan-out: two worker cycles, one per stack.
+    const codexWorker = routeMission(fleet, { capabilities: ['runtime:codex'] });
+    const claudeWorker = routeMission(fleet, { capabilities: ['runtime:claude-code'] });
+    expect(codexWorker.selected?.executor.name).toBe('codex-executor');
+    expect(claudeWorker.selected?.executor.name).toBe('claude-executor');
+    // Distinct stacks under one conductor.
+    expect(codexWorker.selected!.executor.executorId)
+      .not.toBe(claudeWorker.selected!.executor.executorId);
+  });
+
+  it('returns no selection for a stack with no registered executor', () => {
+    const result = routeMission(fleet, { capabilities: ['runtime:gemini-cli'] });
+    expect(result.selected).toBeUndefined();
+  });
+});

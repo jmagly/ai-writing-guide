@@ -74,6 +74,16 @@ The contract:
 
 The executor MUST NOT mutate the playbook or its capabilities. It MUST honor `idempotent: true` (re-runs against the same target produce the same outcome). It MUST refuse to execute capabilities whose `target_requirements` are unmet (missing OS, missing binary, missing access).
 
+## Cross-stack Missions (#1546)
+
+A **Mission** (dynamic orchestration) can fan worker cycles across *heterogeneous agentic stacks* — e.g. a Claude-conductor Mission dispatching a worker (or a `fanout` panel agent) to a **Codex** executor, or a single Mission spanning multiple stacks under one durable conductor. This needs **no new transport**: the `serve` executor registry already routes by capability.
+
+- **Convention:** an executor advertises its stack via the established `runtime:<name>` capability — `runtime:codex`, `runtime:claude-code` (already in the `serve` fixtures). Do **not** invent a parallel `stack:<name>` token.
+- **Dispatch:** the conductor selects a worker's stack with an `executor_filter` on that capability; `src/serve/agent-router.ts` `routeMission()` / `ExecutorRegistry.pickByFilter()` pick a connected executor advertising **all** filtered capabilities. A `fanout` step's panel agents may each target a different `runtime:<name>` — the YAML `fanout` is the cross-stack authoring surface.
+- **Invariant (across stacks):** the conductor retains activity-log, human-authorization/threat gates, best-output selection, checkpoint/resume durability, reproducibility, and cost — regardless of which stack each worker ran on. The per-stack executor drives the *worker mechanism* only.
+
+See `.aiwg/architecture/adr-workflow-routing.md` (cross-stack amendment).
+
 ## Apiversion aliasing
 
 For backward compatibility, the executor accepts the following apiVersion equivalences:

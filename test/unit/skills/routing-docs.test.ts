@@ -41,9 +41,9 @@ describe('routing documentation regressions', () => {
       // AIWG-owned Codex Mission entry, not the plugin /workflow
       expect(doc).toContain('/aiwg-mission');
       expect(doc).toMatch(/plugin-provided|plugin/i);
-      // Cross-stack Mission conductor (#1546) routed via serve stack:<name>
+      // Cross-stack Mission conductor (#1546) routed via serve runtime:<name>
       expect(doc).toContain('Cross-stack Mission');
-      expect(doc).toContain('stack:<name>');
+      expect(doc).toContain('runtime:<name>');
       // Retained-ownership invariant
       expect(doc.toLowerCase()).toContain('activity-log');
       expect(doc.toLowerCase()).toContain('best-output');

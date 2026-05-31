@@ -42,7 +42,7 @@ This is the durable value-add that no in-stack primitive provides. In-stack `/wo
 
 `src/serve/` already carries the dispatch substrate: `executor-registry.ts` (executors register with a `capabilities: string[]` advertisement) + `dispatch-router.ts` (routes a dispatch by `executor_filter`, v2-then-v1, with A2A instance IDs). Cross-stack therefore does **not** need a new transport — it needs:
 
-1. **A stack-capability convention** — executors advertise their stack (e.g. capability `stack:codex` / `stack:claude`), so a Mission can `executor_filter` workers onto a chosen stack.
+1. **A runtime-capability convention** — executors already advertise their stack via the established `runtime:<name>` capability (`runtime:codex`, `runtime:claude-code` are in the `serve` fixtures today), so a Mission can `executor_filter` workers onto a chosen stack with no new token.
 2. **A Mission conductor** that fans out worker cycles across executors of differing stacks while AIWG retains the non-delegatable bookkeeping below.
 3. **Per-stack executor adapters** — a registered executor that processes dispatched worker cycles using *its* stack's native primitive (Codex `/goal`, Claude Workflow tool, …).
 
@@ -61,6 +61,6 @@ This amendment broadens the epic's center of gravity from "delegate-to-native-/w
 
 ## Follow-ups
 
-- **Cross-stack Mission orchestration** (the amendment above) — research + design issue filed under #1534. Covers the `stack:<name>` capability convention, the Mission conductor, and per-stack executor adapters on the `serve` substrate.
+- **Cross-stack Mission orchestration** (the amendment above) — research + design issue filed under #1534. Confirms the `runtime:<name>` capability convention (already present — `routeMission`/`pickByFilter` route by it), the Mission conductor, and per-stack executor adapters on the `serve` substrate.
 - If the operator confirms a Codex plugin-provided `/workflow`, scope a separate optional-delegation note (not a core contract).
 - Naming: this ADR uses "orchestration"; the user-facing rename to **Missions** (dynamic) / **Flows** (pre-established) is tracked in #1536.
