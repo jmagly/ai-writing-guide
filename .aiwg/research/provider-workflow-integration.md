@@ -34,17 +34,18 @@ This contradicts the working premise that "Codex and Claude both ship `/workflow
 
 ## Reconciliation with operator field report
 
-The operator reported testing `/workflow` in "the latest installed release." The installed Codex 0.135.0 binary has no core `/workflow`. Most likely explanations (to confirm with operator):
+**RESOLVED.** The operator confirmed `/workflow` runs in their Codex TUI and the `/` command exists (verified directly). The core binary has no such command. Both are true because **`/workflow` is plugin-provided**, not a core Codex feature:
 
-1. The `/workflow` observed was **Claude Code's** Workflow capability (which exists), and Codex was assumed to match.
-2. `/workflow` in the operator's Codex is **plugin- or skill-provided** (Codex has `/plugins` + skills), not a core slash command — so it wouldn't appear in the binary's command table and would be environment-specific.
-3. A newer Codex release than 0.135.0 added it after this capture.
+- Core `codex-cli 0.135.0` binary: no `/workflow` (two independent `strings` scans — every "workflow" substring is system-prompt prose, skill-authoring guidance, image-gen text, or the `WORKFLOW.md` fallback; no command registration). OSS `slash_command.rs` `SlashCommand` enum: no `Workflow` variant.
+- `~/.codex/prompts/`: no `workflow` prompt (only `aiwg-issue*`).
+- `~/.codex/.tmp/plugins/plugins/`: a large installed plugin set. `temporal/.codex-plugin/plugin.json` and `superpowers/.codex-plugin/plugin.json` both list `"workflow"`; `vercel/skills/workflow/SKILL.md` ships a `workflow` skill. Codex renders plugin commands (and `~/.codex/prompts/` files) as `/` commands in the TUI.
 
-**Action:** confirm which of the above with the operator before designing Codex-side `/workflow` routing. Until confirmed, treat Codex's external-route primitive as `/goal` (already routed, #1451) — there is no verified core `/workflow` to delegate to.
+**Conclusion: Codex's `/workflow` is environment-specific (plugin/skill-provided), NOT a universal core primitive.** AIWG cannot assume an arbitrary Codex user has it.
 
 ## Implications for the epic (#1534)
 
-- **#1537 (routing ADR) / #1538 (impl):** the "route external loop to provider-native `/workflow`" scope is **Claude-Code-real, Codex-unconfirmed**. The ADR should treat Claude Code's Workflow tool as the concrete delegation target and hold Codex pending operator clarification (likely `/goal` already covers Codex's long-running loop).
+- **Codex design fork (operator decision):** (1) **stay AIWG-native** — Codex's universal long-running primitive is `/goal` (already routed, #1451), external route stays `ralph-external`; don't depend on a non-universal plugin. (2) **AIWG ships its own command** — deploy a `/workflow` (or `/flow` / `/mission`) prompt to `~/.codex/prompts/` that drives AIWG's external loop (mirrors how AIWG already ships `aiwg-issue*` prompts there). Recommendation: (1) by default + (2) as opt-in; never "delegate to Codex native /workflow" (it isn't native).
+- **#1537 (routing ADR) / #1538 (impl):** Claude Code's Workflow tool is the only verified native orchestration primitive. Codex routing = `/goal` (done) + optional AIWG-provided command.
 - **#1539 (flows → YAML) and #1536 (rename):** unaffected by this finding — they proceed regardless of provider `/workflow` existence.
 
 ## Open questions
