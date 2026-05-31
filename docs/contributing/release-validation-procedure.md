@@ -143,25 +143,128 @@ Type **exactly this**:
 
 ---
 
-## 7. Provider-specific regression spot check
+## 7. Provider-specific normalization verification
 
-| Provider | Spot check |
-|---|---|
-| Claude Code | Confirm SessionStart hook did not crash (no "Failed with non-blocking status code" banner). |
-| Codex | Confirm `~/.codex/skills/` and `~/.codex/prompts/` contain the deployed files. |
-| Copilot | Confirm `.github/agents/`, `.github/prompts/`, `.github/instructions/` populated. |
-| Cursor | Confirm `.cursor/agents/`, `.cursor/commands/`, `.cursor/skills/`, `.cursor/rules/` populated. |
-| Warp | Confirm `WARP.md` regenerated; spot-check it lists deployed AIWG content. |
-| Factory | Confirm `.factory/droids/`, `.factory/commands/`, `.factory/skills/` populated. |
-| OpenCode | Confirm `.opencode/agent/`, `.opencode/command/`, `.opencode/skill/` populated. |
-| Windsurf | Confirm `AGENTS.md` regenerated; confirm `.windsurf/rules/` populated. |
-| OpenClaw | Confirm `~/.openclaw/{agents,commands,skills,rules,behaviors}/` populated. |
-| Hermes | Confirm `AGENTS.md` regenerated; MCP server reachable; `mcp_aiwg_command_run` tool listed. |
-| Omnius | Confirm `aiwg discover` is reachable inside an Omnius session and returns ranked results. |
+Each provider has gaps in what it natively offers; AIWG fills those gaps so behavior across the 11 stacks is comparable. Step 7 verifies that AIWG's normalization is actually doing its job for the provider under test. Skip the rows tagged `n/a` for providers you're not validating.
 
-Run the appropriate `ls` / inspection commands. Paste the directory listing.
+Each row has a **gap** (what the vendor doesn't do natively), an **AIWG normalization** (what AIWG ships to cover it), and a **verification** (what you check to prove the normalization landed). Pass = all rows green. Fail any row → record + continue.
 
-**Pass**: deployed paths populated as expected. **Fail**: empty or missing paths.
+### Universal pre-check (all providers)
+
+Before opening the per-provider matrix, confirm the universal artifact-presence baseline:
+
+```bash
+# Verify AIWG knows where it deployed and what
+aiwg list                                              # framework presence
+aiwg discover "intake wizard" --limit 3 --json         # discovery surface live
+aiwg show skill aiwg-utils-quickref | head -10         # quickref reachable
+```
+
+---
+
+### 7-A. Claude Code
+
+| Gap (vendor side) | AIWG normalization | Verification |
+|---|---|---|
+| No declarative agent definitions — they live in markdown files only | Ships `.claude/agents/*.md` with frontmatter Claude Code parses | `ls .claude/agents/ \| wc -l` ≥ 1; open one in the IDE, confirm it shows in the agent picker |
+| No project-level rule auto-load contract — only system prompt | Ships `.claude/rules/*.md` referenced by `CLAUDE.md` via `@` mentions | `grep -c "^@\.claude/rules/" CLAUDE.md` returns ≥ 1; rules load on session start (verify by asking the agent which rules it's following) |
+| Hook scripts must be `.cjs` because `"type": "module"` makes `.js` load as ESM and `require()` fails | Hooks installer (#1308) deploys `aiwg-{session,permissions,trace}.cjs` and re-writes stale `.js` paths in `settings.json` (v2026.5.13 fix) | `jq '.hooks.SessionStart' .claude/settings.json` shows a command ending in `.cjs`. Open a session — no `SessionStart:startup hook error` / `cjs/loader:1459` banner. |
+| ~395 of ~400 skills exceed the listed-skills budget (25% of context window) | Kernel skill set (~19) is always-loaded; remainder reached via `aiwg discover` / `aiwg show` per the `skill-discovery` rule | Ask the session "How many AIWG skills are available?" — agent should answer "~400 reachable via aiwg discover, ~19 in the kernel set" or invoke discover instead of enumerating |
+| No marketplace plugin install workflow without a marketplace.json | Ships `.claude-plugin/marketplace.json` with 13 plugins published | `/plugin marketplace list` in Claude Code shows AIWG; `/plugin install sdlc@aiwg` succeeds |
+
+### 7-B. OpenAI Codex
+
+| Gap (vendor side) | AIWG normalization | Verification |
+|---|---|---|
+| Commands are a static built-in enum in `codex-rs` — file-based commands are NOT scanned by the loader | `.codex/commands/` is deployed for operator visibility but the discovery bridge is `AGENTS.md` (linked aggressively per the 32KB cap) | Open `AGENTS.md` at repo root — it links to `.aiwg/AIWG.md`, frameworks, and rules. Size is well under 32KB (`wc -c AGENTS.md`). Inside session: agent uses AGENTS.md context, not the `.codex/commands/` files |
+| `~/.codex/` is home-scope (cross-project) by Codex design — project artifacts not discovered automatically | Deploys to BOTH `~/.codex/{prompts,skills}/` (home) AND `.codex/` (project mirror); AGENTS.md is the project-scope bridge | `ls ~/.codex/skills/ \| wc -l` ≥ 1; `ls ~/.codex/prompts/ \| wc -l` ≥ 1 |
+| No native Skill tool dispatch — agent has no way to invoke a skill body | Agents must use `aiwg show skill <name>` via shell tool — discovery returns paths the agent fetches via Bash | Step 5 already proves this; in this session verify the agent uses `aiwg show` (not a direct path read) and the CLI returns content |
+| OIDC trusted publishing not native to Codex workflow tooling | Documented in `docs/contributing/versioning.md`, automated via GitHub Actions OIDC step in `.github/workflows/npm-publish.yml` | N/A for in-session validation — release-pipeline concern |
+| 32KB AGENTS.md cap (per Codex doc) means inlining everything overflows | `aiwg use` and `aiwg regenerate` emit a link-heavy AGENTS.md, not a content dump | `wc -c AGENTS.md` < 32000 |
+
+### 7-C. GitHub Copilot
+
+| Gap (vendor side) | AIWG normalization | Verification |
+|---|---|---|
+| Agents must use Copilot's `.agent.md` format (markdown + YAML frontmatter) with specific keys | Agents installer writes `.github/agents/*.agent.md` with correct frontmatter | `head -10 .github/agents/$(ls .github/agents/ \| head -1)` shows `---` frontmatter with `name`, `description`, `tools` |
+| Rules are not free-form — they deploy as path-scoped `.github/instructions/*.md` with `applyTo:` frontmatter glob | Rules installer rewrites AIWG rules into instruction files with the right `applyTo` matchers | `head -10 .github/instructions/$(ls .github/instructions/ \| head -1)` shows `applyTo: "**/*.md"` or similar; activating on a matching file fires the rule |
+| Commands deploy as `.github/prompts/*.prompt.md`, not loose markdown | Prompt files generated with `.prompt.md` extension | `ls .github/prompts/*.prompt.md \| wc -l` ≥ 1; invokable in Copilot UI |
+| No discrete skills concept — only prompt files | Skills deploy to `.github/skills/` AND `.agents/skills/` (cross-agent mirror) | Both directories populated; agent in session reaches them via either path |
+
+### 7-D. Cursor
+
+| Gap (vendor side) | AIWG normalization | Verification |
+|---|---|---|
+| Rules auto-activate via glob frontmatter in `.cursor/rules/*.mdc` — not free-form `.md` | Rules installer generates `.mdc` files with correct `globs:` frontmatter | `head -8 .cursor/rules/$(ls .cursor/rules/*.mdc \| head -1)` shows `globs:` field; rule fires when matching file is open |
+| Agents directory naming differs from Claude Code (`.cursor/agents/` vs `.claude/agents/`) | Provider adapter deploys to `.cursor/agents/` | `ls .cursor/agents/ \| wc -l` ≥ 1 |
+| No Skill tool — skills are just files | `aiwg show` is the dispatch path; `.cursor/skills/` deployed for visibility | Step 5 already proves the agent uses `aiwg show` |
+| Cursor context window varies by tier; agent should defer-to-discover, not eagerly load | Discovery-first rule deployed; quickref kernel set kept small | Ask session "list all AIWG skills" — agent should run discover, not attempt to load all |
+
+### 7-E. Warp Terminal
+
+| Gap (vendor side) | AIWG normalization | Verification |
+|---|---|---|
+| Warp's primary context-loading is single-file `WARP.md`, not a directory of rules | `aiwg use --provider warp` regenerates `WARP.md` aggregating all AIWG rules + agent index | `wc -l WARP.md` shows substantial content; `grep -c "^### " WARP.md` ≥ 10 (rules listed); the new content from v2026.5.13 (sdlc-right-sizing, etc.) is present |
+| Agents are also aggregated into `WARP.md` — there's no separate agents directory on Warp's side | Agent index inlined into WARP.md alongside discrete `.warp/agents/` for operator browsing | Both exist; agent in session references WARP.md content correctly |
+| Commands deploy to `.warp/commands/` (discrete) AND aggregated section in WARP.md | Both surfaces populated | `ls .warp/commands/ \| wc -l` ≥ 1; WARP.md has a "Commands" section |
+| Behaviors not natively supported — aggregated into rules | `.warp/rules/behaviors/` directory contains behavior rules | `ls .warp/rules/behaviors/ \| wc -l` ≥ 1 |
+
+### 7-F. Factory AI
+
+| Gap (vendor side) | AIWG normalization | Verification |
+|---|---|---|
+| Agents live in `.factory/droids/` — different naming convention (droid, not agent) | Provider adapter renames on deploy and applies Factory's droid frontmatter | `ls .factory/droids/ \| wc -l` ≥ 1; droid frontmatter present |
+| Commands and skills use `.factory/{commands,skills}/` | Standard deployment | Both populated |
+| MCP-via-Factory binding is provider-specific | Configured via `.factory/` MCP config when relevant | If MCP servers configured: `aiwg mcp list` shows Factory-bound entries |
+
+### 7-G. OpenCode
+
+| Gap (vendor side) | AIWG normalization | Verification |
+|---|---|---|
+| Directory names are **singular** (`agent/`, `command/`, `skill/`, `rule/`) — not plural | Provider adapter writes to the singular path names | `ls .opencode/agent/ .opencode/command/ .opencode/skill/ .opencode/rule/` all exist and populated |
+| Skills also need a cross-agent mirror at `.agents/skills/` | Both locations populated by deploy | `ls .agents/skills/ \| wc -l` ≥ 1 |
+| OpenCode does not enforce frontmatter strictly; AIWG ships it anyway for portability | Files retain frontmatter even when not required | `head -5 .opencode/agent/$(ls .opencode/agent/ \| head -1)` shows `---` frontmatter |
+
+### 7-H. Windsurf
+
+| Gap (vendor side) | AIWG normalization | Verification |
+|---|---|---|
+| Windsurf has no agents directory — agents must be inlined in `AGENTS.md` | `aiwg use --provider windsurf` aggregates agent index into `AGENTS.md` | `grep -c "^## Agent: " AGENTS.md` ≥ 1; or whatever the current aggregation header pattern is |
+| Commands deploy to `.windsurf/workflows/` (not `commands/`) | Provider adapter uses correct path name | `ls .windsurf/workflows/ \| wc -l` ≥ 1 |
+| Rules use `.windsurf/rules/*.md` with Windsurf-specific frontmatter | Generated with correct frontmatter | `head -8 .windsurf/rules/$(ls .windsurf/rules/ \| head -1)` shows expected frontmatter |
+| Skills get `.windsurf/skills/` AND `.agents/skills/` mirror | Both populated | Both directories present |
+
+### 7-I. OpenClaw
+
+| Gap (vendor side) | AIWG normalization | Verification |
+|---|---|---|
+| All artifacts deploy to `~/.openclaw/` (home-scope) — not the project | Provider adapter writes to home; `aiwg use sdlc --provider openclaw` populates home | `ls ~/.openclaw/{agents,commands,skills,rules}/ \| wc -l` ≥ 4 |
+| First provider with **native behavior** support — all other providers receive generated behavior rules | Behaviors deploy natively to `~/.openclaw/behaviors/`; rules-derived behaviors deploy elsewhere | `ls ~/.openclaw/behaviors/ \| wc -l` ≥ 1; the files are real behavior bundles, not rule-generated stubs |
+| OpenClaw's skill-listing budget is hard cap 150 | Same kernel-skill strategy as Claude Code | Inside session, "list all skills" — agent uses discover, not enumeration |
+| Cross-project context lives in home; project-scope context loaded on session-start | Documented in OpenClaw deploy notes | Open OpenClaw on a fresh project — AIWG content from `~/.openclaw/` is reachable without re-deploying per-project |
+
+### 7-J. Hermes
+
+| Gap (vendor side) | AIWG normalization | Verification |
+|---|---|---|
+| Hermes is MCP-sidecar architecture (Hermes → MCP → AIWG) — no native file-scan model | AIWG ships an MCP server; commands reach AIWG via `mcp_aiwg_command_run` (allow-listed) | `aiwg mcp list` shows the AIWG MCP server registered for Hermes; tool `mcp_aiwg_command_run` is listed in session capabilities |
+| 12 core MCP tools by default; 45 more via `AIWG_MCP_TOOLSETS=<csv>` | Default tools available; opt-in extras via env var | Inside session, list MCP tools — count is ~12 (or ~57 if `AIWG_MCP_TOOLSETS=all`) |
+| Standard skills (~385) recursively discovered under `~/.hermes/skills/.aiwg/`; kernel (~9) at top level | Curator (v0.12.0+) protects kernel via `.bundled_manifest` | `ls ~/.hermes/skills/ \| grep -v "^\.aiwg$" \| wc -l` ≥ 9 (kernel); `find ~/.hermes/skills/.aiwg/ -name SKILL.md \| wc -l` ≥ 300 (standard) |
+| `AGENTS.md` + `.hermes.md` are the discovery bridges (no provider-native context file) | Both files generated by `aiwg use --provider hermes` | Both files present at project root |
+| Rules inlined in AGENTS.md + reachable via MCP `rule-list`/`rule-show` | Both surfaces populated | `grep -c "^### Rule:" AGENTS.md` ≥ 10; MCP `rule-list` returns rule names |
+
+### 7-K. Omnius
+
+| Gap (vendor side) | AIWG normalization | Verification |
+|---|---|---|
+| Omnius is a **first-party AIWG integrator** — no separate `aiwg use` step; AIWG ships embedded in the Omnius runtime | `npm i -g omnius` installs both; `aiwg discover` reachable inside Omnius sessions without project setup | Inside Omnius session: `aiwg discover "intake wizard"` returns ranked results without prior `aiwg use` |
+| Omnius exposes AIWG via REST (`/v1/aiwg/*`) and MCP bridges | Bridges live in Omnius runtime, not in this repo | Inside session, agent can fetch a skill body via REST or MCP — paste agent's invocation verbatim |
+| All AIWG-aware rules apply (`skill-discovery`, `delivery-policy`, `human-authorization`, `anti-laziness`) even though no provider-specific deploy ran | Embedded distribution carries the rules | Ask session "Which AIWG rules are active?" — agent should name at minimum the four above |
+| Bundled runtime versioning may lag — Omnius releases on its own cadence | AIWG release ↔ Omnius bundled version is tracked separately | Check the Omnius release notes for the AIWG version it ships (compare to current `aiwg version` host install) |
+
+---
+
+Run the verification column commands. Paste any unexpected output. **Pass**: all rows green for the provider under test. **Fail**: at least one row shows the normalization didn't land — record which one in the issue.
 
 ---
 
