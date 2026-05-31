@@ -137,6 +137,10 @@
       "description": "A single step in the playbook DAG.",
       "required": ["id"],
       "additionalProperties": false,
+      "not": {
+        "description": "A step must not set both `capability` and `fanout` (#1547).",
+        "required": ["capability", "fanout"]
+      },
       "properties": {
         "id": {
           "type": "string",
@@ -145,6 +149,29 @@
         "capability": {
           "type": "string",
           "description": "Reference to an OpsCapability resource name."
+        },
+        "fanout": {
+          "type": "object",
+          "description": "Agentic step (#1547): dispatch a panel of executor capabilities, then synthesize one result. The declarative spelling of the multi-agent documentation pattern (Primary → Parallel Reviewers → Synthesizer). Mutually exclusive with `capability`. Maps onto the Workflow-tool parallel()/pipeline() + aggregation (adr-workflow-routing.md); agents may target different stack:<name> executors for a cross-stack Mission (#1546).",
+          "required": ["agents", "synthesize"],
+          "additionalProperties": false,
+          "properties": {
+            "strategy": {
+              "enum": ["parallel", "pipeline"],
+              "default": "parallel",
+              "description": "How the panel runs: `parallel` (independent panel, default) or `pipeline` (chained, each agent sees the prior output)."
+            },
+            "agents": {
+              "type": "array",
+              "minItems": 1,
+              "description": "Capability references forming the panel — each dispatched to its executor agent.",
+              "items": { "type": "string" }
+            },
+            "synthesize": {
+              "type": "string",
+              "description": "Capability reference that draws one conclusion from the panel outputs; its result is the step's output for downstream depends_on consumers."
+            }
+          }
         },
         "kind": {
           "type": "string",

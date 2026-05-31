@@ -178,3 +178,63 @@ describe('non-iterating Flows omit inventory/targets (#1539)', () => {
     expect(validate(doc), JSON.stringify(validate.errors, null, 2)).toBe(true);
   });
 });
+
+describe('agentic fan-out steps (#1547)', () => {
+  const base = (step: Record<string, unknown>) => ({
+    apiVersion: 'flow.aiwg.io/v1',
+    kind: 'FlowPlaybook',
+    metadata: { name: 'panel-flow' },
+    spec: {
+      steps: [
+        { id: 'draft', capability: 'primary-author' },
+        step,
+        { id: 'archive', capability: 'archive-artifact', depends_on: ['review'] },
+      ],
+    },
+  });
+
+  it('a fan-out step (panel + synthesize) validates', () => {
+    const ajv = makeAjv();
+    const validate = ajv.compile(loadSchema('workflow-playbook.schema.json'));
+    const doc = base({
+      id: 'review',
+      fanout: {
+        strategy: 'parallel',
+        agents: ['security-review', 'test-review', 'architecture-review'],
+        synthesize: 'review-synthesizer',
+      },
+      depends_on: ['draft'],
+    });
+    expect(validate(doc), JSON.stringify(validate.errors, null, 2)).toBe(true);
+  });
+
+  it('rejects a fan-out missing synthesize', () => {
+    const ajv = makeAjv();
+    const validate = ajv.compile(loadSchema('workflow-playbook.schema.json'));
+    const doc = base({ id: 'review', fanout: { agents: ['a', 'b'] }, depends_on: ['draft'] });
+    expect(validate(doc)).toBe(false);
+  });
+
+  it('rejects a fan-out with an empty agents panel', () => {
+    const ajv = makeAjv();
+    const validate = ajv.compile(loadSchema('workflow-playbook.schema.json'));
+    const doc = base({
+      id: 'review',
+      fanout: { agents: [], synthesize: 's' },
+      depends_on: ['draft'],
+    });
+    expect(validate(doc)).toBe(false);
+  });
+
+  it('rejects a step that sets both capability and fanout', () => {
+    const ajv = makeAjv();
+    const validate = ajv.compile(loadSchema('workflow-playbook.schema.json'));
+    const doc = base({
+      id: 'review',
+      capability: 'one-agent',
+      fanout: { agents: ['a'], synthesize: 's' },
+      depends_on: ['draft'],
+    });
+    expect(validate(doc)).toBe(false);
+  });
+});
