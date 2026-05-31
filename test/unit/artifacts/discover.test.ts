@@ -470,3 +470,50 @@ describe('discoverCapability — JSON output', () => {
     }
   });
 });
+
+describe('discoverCapability — exclusive capability surface (#1545)', () => {
+  it('default (NO --graph) sources the framework capability graph', async () => {
+    writeSkill(
+      'skill-deploy-prod',
+      'fx',
+      `---\nname: skill-deploy-prod\ndescription: Deploy the app to production with rollback\n---\n\n## Triggers\n\n- "deploy to production"\n`,
+    );
+    // Build the framework (capability) graph, then discover with NO --graph:
+    // the default path must source `framework` (the #1545 fix). The transparent
+    // auto-build-when-missing variant is verified end-to-end at the CLI level.
+    const buildSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const buildErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    buildSpy.mockRestore();
+    buildErrSpy.mockRestore();
+
+    const captured: string[] = [];
+    const logSpy = vi.spyOn(console, 'log').mockImplementation((...a) => captured.push(a.join(' ')));
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await discoverCapability(cwd, { phrase: 'deploy to production', json: true, limit: 3 });
+    logSpy.mockRestore();
+    errSpy.mockRestore();
+
+    const parsed = JSON.parse(captured.join('\n'));
+    expect(parsed.results.length, 'discover should find the capability without --graph').toBeGreaterThan(0);
+    expect(parsed.results.some((r: { path: string }) => r.path.endsWith('skill-deploy-prod/SKILL.md'))).toBe(true);
+  });
+
+  it('does not surface codebase (source-code) entries in capability results', async () => {
+    writeSkill('skill-x', 'fx', `---\nname: skill-x\ndescription: deploy helper capability\n---\n`);
+    // A codebase-graph file — discover must NOT source the codebase graph.
+    const srcDir = path.join(cwd, 'src');
+    fs.mkdirSync(srcDir, { recursive: true });
+    fs.writeFileSync(path.join(srcDir, 'deploy.ts'), 'export function deployToProduction() {}\n');
+
+    const captured: string[] = [];
+    const logSpy = vi.spyOn(console, 'log').mockImplementation((...a) => captured.push(a.join(' ')));
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await discoverCapability(cwd, { phrase: 'deploy', json: true, limit: 10 });
+    logSpy.mockRestore();
+    errSpy.mockRestore();
+
+    const parsed = JSON.parse(captured.join('\n'));
+    expect(parsed.results.every((r: { path: string }) => !r.path.endsWith('.ts'))).toBe(true);
+  });
+});

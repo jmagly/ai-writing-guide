@@ -15,23 +15,6 @@ import * as path from 'node:path';
 import type { QueryParams, QueryResult, MetadataEntry, GraphType, ArtifactIndex } from './types.js';
 import { loadMetadataIndex, loadGraphIndexFile } from './index-reader.js';
 
-/**
- * Detect whether the workspace has project-local content (#1235). When any
- * of the four bundle dirs exist with at least one bundle inside, hints
- * pivot to the project graph instead of the framework graph.
- */
-function detectProjectLocal(cwd: string): boolean {
-  for (const dir of ['extensions', 'addons', 'frameworks', 'plugins']) {
-    const p = path.join(cwd, '.aiwg', dir);
-    try {
-      const entries = fs.readdirSync(p, { withFileTypes: true });
-      if (entries.some(e => e.isDirectory())) return true;
-    } catch {
-      // ENOENT or other — keep looking
-    }
-  }
-  return false;
-}
 
 export interface QueryOptions {
   json?: boolean;
@@ -461,11 +444,29 @@ export async function discoverCapability(
     const idx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', params.graph);
     if (idx) entries = Object.values(idx.entries);
   } else {
-    // Default: framework first, then any per-project graph.
-    for (const g of ['framework', 'project', 'codebase'] as GraphType[]) {
-      const idx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', g);
-      if (idx) entries.push(...Object.values(idx.entries));
+    // discover is EXCLUSIVELY the agentic-capability surface (#1545): source
+    // the `framework` graph (deployed AIWG capabilities) + project-local
+    // capability artifacts. NEVER `codebase` — source code is not a capability
+    // surface. discover leverages indexing transparently: if the framework
+    // index is missing but its source is present, build it once (incremental
+    // thereafter) so discover Just Works without the operator picking a graph.
+    let fwIdx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', 'framework');
+    if (!fwIdx && fs.existsSync(path.join(cwd, 'agentic', 'code'))) {
+      const { buildIndex } = await import('./index-builder.js');
+      if (!params.json) console.error('Building capability index (first run)…');
+      try {
+        await buildIndex(cwd, { graph: 'framework', explicit: false });
+      } catch {
+        /* non-fatal — fall through to whatever index is available */
+      }
+      fwIdx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', 'framework');
     }
+    if (fwIdx) entries.push(...Object.values(fwIdx.entries));
+    // Project-local capability artifacts (skills/agents/commands/rules authored
+    // in this project). The DEFAULT_DISCOVER_TYPES filter keeps non-capability
+    // project artifacts (requirements, ADRs, …) out of results.
+    const projIdx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', 'project');
+    if (projIdx) entries.push(...Object.values(projIdx.entries));
     if (entries.length === 0) {
       const legacy = loadMetadataIndex(cwd);
       if (legacy) entries.push(...Object.values(legacy.entries));
@@ -528,11 +529,11 @@ export async function discoverCapability(
   // this is the second silent-failure mode #1221 calls out. When the workspace
   // has project-local content (.aiwg/{extensions,addons,frameworks,plugins}/)
   // surface a project-graph rebuild hint (#1235).
-  const hasProjectLocal = detectProjectLocal(cwd);
+  // discover-appropriate hint (#1545): never push index/graph mechanics. If
+  // nothing scored, the phrase didn't match an indexed capability — suggest a
+  // broader phrase / type filter, and a capability refresh via `aiwg use`.
   const emptyResultHint = scored.length === 0
-    ? hasProjectLocal
-      ? `No matches in the indexed corpus. ${entries.length} entries indexed, none scored against "${params.phrase}". This workspace has project-local content under .aiwg/ — try \`aiwg index build --graph project && aiwg discover "${params.phrase}"\`, or check \`aiwg index stats --graph project\`.`
-      : `No matches in the indexed corpus. The framework index has ${entries.length} entries but none scored against "${params.phrase}". Try a broader phrase, check \`aiwg index stats --graph framework\`, or rebuild with \`aiwg index build --graph framework --force\`.`
+    ? `No capability matched "${params.phrase}" among ${entries.length} indexed capabilities. Try a broader phrase or a \`--type\` filter. If you just installed or authored capabilities, refresh discovery with \`aiwg use <framework>\` (or \`aiwg index build\`).`
     : null;
 
   if (params.json) {
@@ -565,12 +566,7 @@ export async function discoverCapability(
 
   if (scored.length === 0) {
     console.log(`No discovery matches for "${params.phrase}" in types: ${types.join(',')}.`);
-    if (hasProjectLocal) {
-      console.log('This workspace has project-local content under .aiwg/ —');
-      console.log(`try \`aiwg index build --graph project && aiwg discover "${params.phrase}"\`.`);
-    } else {
-      console.log('Try a broader phrase, or check `aiwg index stats --graph framework` to confirm the index is built.');
-    }
+    console.log('Try a broader phrase or a `--type` filter. If capabilities were just added, refresh with `aiwg use <framework>` (or `aiwg index build`).');
     return;
   }
 
