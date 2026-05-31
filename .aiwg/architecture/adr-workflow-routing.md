@@ -27,13 +27,40 @@ Contract verification (#1535, against installed binaries — `.aiwg/research/pro
 
 Identical audit trail regardless of mechanism (the #1451/#1469 invariant): activity-log entries, issue-thread comments, human-authorization/threat gates, best-output selection (`tools/ralph-external/best-output-tracker.mjs`), crash-resilient checkpoint/resume (`checkpoint-manager.mjs`), reproducibility, cost tracking. The native primitive drives *mechanism*; AIWG owns *bookkeeping, gates, durability, output selection*.
 
+## Amendment (2026-05-31): cross-stack orchestration is the Mission, not a fallback
+
+The decisions above framed the external route as "stays AIWG-native" in the sense of *who owns the conductor* — and an early reading mistakenly treated external-loop delegation as "largely moot" once in-stack `/workflow`/`/goal` exist. **That reading is wrong and is corrected here.**
+
+In-stack primitives (Claude's Workflow tool, Codex `/goal`) orchestrate **within a single stack's process/turn**. AIWG's external/orchestration route — a **Mission** (#1536 naming) — is the **cross-stack conductor**: it can fan worker cycles out across *heterogeneous* agentic stacks. Operator examples that motivate this:
+
+- A Claude-driven Mission spawning **Codex** subagents (or a Codex Mission spawning Claude workers).
+- A single Mission fanning agents across **different agentic stacks** simultaneously, aggregating their results under one durable, audited conductor.
+
+This is the durable value-add that no in-stack primitive provides. In-stack `/workflow`/`/goal` are **in-stack workers** a Mission may dispatch *to*; they are not substitutes for the cross-stack conductor.
+
+### Substrate (already present)
+
+`src/serve/` already carries the dispatch substrate: `executor-registry.ts` (executors register with a `capabilities: string[]` advertisement) + `dispatch-router.ts` (routes a dispatch by `executor_filter`, v2-then-v1, with A2A instance IDs). Cross-stack therefore does **not** need a new transport — it needs:
+
+1. **A stack-capability convention** — executors advertise their stack (e.g. capability `stack:codex` / `stack:claude`), so a Mission can `executor_filter` workers onto a chosen stack.
+2. **A Mission conductor** that fans out worker cycles across executors of differing stacks while AIWG retains the non-delegatable bookkeeping below.
+3. **Per-stack executor adapters** — a registered executor that processes dispatched worker cycles using *its* stack's native primitive (Codex `/goal`, Claude Workflow tool, …).
+
+### What stays true
+
+The retained-ownership invariant is unchanged and is exactly what makes cross-stack safe: the Mission conductor owns activity-log, issue comments, human-authorization/threat gates, best-output selection, crash-resilient checkpoint/resume, reproducibility, cost tracking — **regardless of which stack each worker ran on**. The native primitive (whatever stack) drives only the *worker mechanism*.
+
+This amendment broadens the epic's center of gravity from "delegate-to-native-/workflow" to "**Missions = cross-stack orchestration; native primitives = in-stack workers.**" Tracked design/impl: see the cross-stack Mission issue under #1534.
+
 ## Consequences
 
 - Claude Code in-session orchestration can use the native Workflow tool; AIWG still owns the durable/detached path and all bookkeeping.
-- Codex and other providers' external route is unchanged (AIWG-native), correctly reflecting verified capability.
-- The `agent-loop` Step 0 table gains one external-orchestration row (Claude Code); no provider clone skills.
+- Codex and other providers' *single-stack* external route is unchanged (AIWG-native), correctly reflecting verified capability.
+- The genuinely new capability is **cross-stack** worker dispatch (heterogeneous executors under one Mission), built on the existing `serve` executor-registry — tracked as its own issue, not subsumed by in-stack `/workflow`.
+- The `agent-loop` Step 0 table gains an external/Mission-orchestration row; no provider clone skills.
 
 ## Follow-ups
 
+- **Cross-stack Mission orchestration** (the amendment above) — research + design issue filed under #1534. Covers the `stack:<name>` capability convention, the Mission conductor, and per-stack executor adapters on the `serve` substrate.
 - If the operator confirms a Codex plugin-provided `/workflow`, scope a separate optional-delegation note (not a core contract).
 - Naming: this ADR uses "orchestration"; the user-facing rename to **Missions** (dynamic) / **Flows** (pre-established) is tracked in #1536.
