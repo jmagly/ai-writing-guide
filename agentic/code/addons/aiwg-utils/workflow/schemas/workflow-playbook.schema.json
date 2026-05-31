@@ -150,6 +150,10 @@
           "type": "string",
           "description": "Inline step kind (e.g., gate, extension) when not referencing a capability."
         },
+        "description": {
+          "type": "string",
+          "description": "Human-readable step description. Required in practice for inline gate steps (kind: gate) — the executor surfaces this text to the human at the pause point (see executor contract step 5)."
+        },
         "depends_on": {
           "type": "array",
           "description": "Step IDs that must complete before this step runs.",
