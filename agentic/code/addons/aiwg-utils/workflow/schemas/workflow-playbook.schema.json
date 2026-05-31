@@ -8,12 +8,12 @@
   "additionalProperties": false,
   "properties": {
     "apiVersion": {
-      "const": "workflow.aiwg.io/v1",
-      "description": "API version for the AIWG workflow metalanguage (aiwg-utils)."
+      "enum": ["workflow.aiwg.io/v1", "flow.aiwg.io/v1"],
+      "description": "API version for the AIWG Flows metalanguage (aiwg-utils). `flow.aiwg.io/v1` is the forward Flows spelling (#1536); `workflow.aiwg.io/v1` remains accepted for back-compat."
     },
     "kind": {
-      "const": "WorkflowPlaybook",
-      "description": "Resource kind."
+      "enum": ["WorkflowPlaybook", "FlowPlaybook"],
+      "description": "Resource kind. `FlowPlaybook` is the forward Flows name (#1536); `WorkflowPlaybook` remains accepted for back-compat."
     },
     "metadata": {
       "$ref": "#/definitions/metadata"

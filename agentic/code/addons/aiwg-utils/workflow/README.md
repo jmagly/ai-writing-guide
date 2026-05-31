@@ -1,6 +1,16 @@
-# AIWG Workflow Metalanguage (core primitive)
+# AIWG Flows Metalanguage (core primitive)
 
-`apiVersion: workflow.aiwg.io/v1`
+`apiVersion: flow.aiwg.io/v1` (forward) — `workflow.aiwg.io/v1` accepted for back-compat
+
+> **Naming (#1536):** this declarative spec defines **Flows** (pre-established,
+> authored sequences). The complementary **dynamic** orchestration concept is a
+> **Mission** (`mc` mission-control). "Workflow" was the original name and
+> collides with provider `/workflow` commands, so AIWG uses **Flows + Missions**.
+> Wire identifiers are dual-recognized — `flow.aiwg.io/v1` + `Flow*` kinds are
+> the forward spelling; `workflow.aiwg.io/v1` + `Workflow*` remain valid (mirrors
+> the existing `ops.aiwg.io/v1` alias). No authored document breaks; the
+> `workflow.*` spelling is deprecated for removal no earlier than the release
+> after this alias ships. See `.aiwg/architecture/adr-workflow-naming.md`.
 
 A declarative YAML spec for composing automation work. Any AIWG framework, addon, or extension can author workflows in this language and route them through the shared executor. The metalanguage is a **core utility primitive** — it ships in `aiwg-utils` so every install has access to it, regardless of which frameworks are deployed.
 

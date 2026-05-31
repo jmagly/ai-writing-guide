@@ -137,3 +137,29 @@ describe('workflow schema rejects malformed documents (negative guard)', () => {
     expect(validate(broken)).toBe(false);
   });
 });
+
+describe('forward Flows aliases validate (#1536)', () => {
+  it('accepts apiVersion flow.aiwg.io/v1 + kind FlowPlaybook', () => {
+    const ajv = makeAjv();
+    const validate = ajv.compile(loadSchema('workflow-playbook.schema.json'));
+    const doc = {
+      apiVersion: 'flow.aiwg.io/v1',
+      kind: 'FlowPlaybook',
+      metadata: { name: 'f' },
+      spec: { inventory: 'x', targets: { groups: ['g'] }, steps: [{ id: 's', capability: 'c' }] },
+    };
+    expect(validate(doc), JSON.stringify(validate.errors, null, 2)).toBe(true);
+  });
+
+  it('accepts apiVersion flow.aiwg.io/v1 + kind FlowCapability', () => {
+    const ajv = makeAjv();
+    const validate = ajv.compile(loadSchema('workflow-capability.schema.json'));
+    const doc = {
+      apiVersion: 'flow.aiwg.io/v1',
+      kind: 'FlowCapability',
+      metadata: { name: 'c' },
+      spec: { description: 'd', version: '1.0.0', inputs: [], outputs: [], agent: 'workflow-executor' },
+    };
+    expect(validate(doc), JSON.stringify(validate.errors, null, 2)).toBe(true);
+  });
+});

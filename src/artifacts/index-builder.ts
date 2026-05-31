@@ -499,9 +499,10 @@ export function parseFlowDoc(
   if (!doc || typeof doc !== 'object') return null;
   const d = doc as Record<string, unknown>;
   const api = typeof d.apiVersion === 'string' ? d.apiVersion : '';
-  // core (workflow.aiwg.io/v1), legacy alias (ops.aiwg.io/v1), and any
-  // domain-extension namespace ending in one of those.
-  const isFlow = /(^|\.)(workflow|ops)\.aiwg\.io\/v1$/.test(api);
+  // core (workflow.aiwg.io/v1), the forward Flows alias (flow.aiwg.io/v1,
+  // #1536), the legacy alias (ops.aiwg.io/v1), and any domain-extension
+  // namespace ending in one of those.
+  const isFlow = /(^|\.)(workflow|flow|ops)\.aiwg\.io\/v1$/.test(api);
   if (!isFlow) return null;
   const meta = (d.metadata && typeof d.metadata === 'object' ? d.metadata : {}) as Record<string, unknown>;
   const spec = (d.spec && typeof d.spec === 'object' ? d.spec : {}) as Record<string, unknown>;

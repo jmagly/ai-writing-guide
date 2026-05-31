@@ -42,6 +42,11 @@ describe('parseFlowDoc', () => {
     expect(parseFlowDoc(doc, 'x.yaml')).not.toBeNull();
   });
 
+  it('accepts the forward Flows alias flow.aiwg.io/v1 (#1536)', () => {
+    const doc = CAPABILITY_YAML.replace('workflow.aiwg.io/v1', 'flow.aiwg.io/v1');
+    expect(parseFlowDoc(doc, 'x.yaml')).not.toBeNull();
+  });
+
   it('accepts a domain-extension namespace (sys.workflow.aiwg.io/v1)', () => {
     const doc = CAPABILITY_YAML.replace('workflow.aiwg.io/v1', 'sys.workflow.aiwg.io/v1');
     expect(parseFlowDoc(doc, 'x.yaml')).not.toBeNull();
