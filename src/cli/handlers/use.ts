@@ -355,6 +355,7 @@ const MIRRORED_KERNEL_COMMAND_SKILLS = new Set([
   'aiwg-issue',
   'aiwg-pr',
   'aiwg-delivery-pr',
+  'aiwg-mission',
   'use',
   'steward',
 ]);

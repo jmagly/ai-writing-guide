@@ -292,6 +292,14 @@ Interactive picker for cloud tasks. List, filter, and browse cloud task results.
 codex cloud --json
 ```
 
+### AIWG Orchestration — `/aiwg-mission`
+
+AIWG deploys its own orchestration command to `~/.codex/prompts/aiwg-mission.md`, so it renders as **`/aiwg-mission`** in the Codex TUI. It launches an **AIWG Mission** — durable, audited dynamic agent orchestration toward a measurable completion criterion, with AIWG owning the bookkeeping (activity-log, gates, best-output selection, crash-resilient checkpoint/resume, cost) while the worker mechanism runs on whatever stack fits. Missions are cross-stack capable (a Codex Mission can coordinate workers on other stacks via the AIWG `serve` executor registry).
+
+`/aiwg-mission` is **AIWG-owned** and always present once AIWG is deployed. Do not confuse it with a `/workflow` command you may see from an installed Codex **plugin** (e.g. `temporal`, `superpowers`) — that is plugin-provided and environment-specific, **not a core Codex primitive**, so AIWG never assumes it. For in-session "iterate until a condition" on Codex alone, use the native `/goal`.
+
+For a *pre-established* repeatable sequence (rather than dynamic orchestration), discover a **Flow** instead: `aiwg discover "<goal>"`.
+
 ### Plugins
 
 Plugins are installable bundles that package skills, app integrations, and MCP server configurations into a single distributable unit. They are the recommended way to share reusable Codex workflows across teams and projects.
