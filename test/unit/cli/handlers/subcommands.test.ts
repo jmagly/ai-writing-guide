@@ -8,7 +8,7 @@
  * @issue #33
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { HandlerContext } from "../../../../src/cli/handlers/types.js";
 
 // Mock script runner
@@ -186,6 +186,65 @@ describe("Subcommand Handlers", () => {
       // listHandler now uses the extension registry first
       const result = await listHandler.execute(mockContext);
       expect(result.exitCode).toBe(0);
+    });
+
+    describe("multi-provider detection (#1530)", () => {
+      // These tests cover the regression where `aiwg list` hard-coded
+      // .claude/ paths and reported zero extensions in non-Claude workspaces.
+      // They run against real filesystem tmp dirs because the handler's
+      // provider detection uses sync fs calls on absolute paths.
+      const fs = require("node:fs");
+      const path = require("node:path");
+      const os = require("node:os");
+
+      let tmpDir: string;
+      let restoreRegistry: () => void;
+
+      beforeEach(async () => {
+        tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "aiwg-list-1530-"));
+        // Reset the singleton registry between scenarios so detection runs
+        // fresh against each tmp workspace.
+        const { getRegistry } = await import("../../../../src/extensions/registry.js");
+        const reg = getRegistry();
+        const before = reg.size;
+        reg.clear?.();
+        restoreRegistry = () => {
+          // best-effort: re-assertion would require fixture reload; OK to no-op
+          void before;
+        };
+      });
+
+      afterEach(() => {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+        restoreRegistry?.();
+      });
+
+      it("returns the empty-workspace message when no provider artifact dirs exist", async () => {
+        const result = await listHandler.execute({
+          ...mockContext,
+          cwd: tmpDir,
+        });
+        expect(result.exitCode).toBe(0);
+        expect(result.message).toMatch(/No agents, skills, or commands deployed/);
+        expect(result.message).toMatch(/aiwg use sdlc/);
+      });
+
+      it("errors when --provider names a provider that is not deployed", async () => {
+        // Seed only .codex/ so --provider claude returns the not-deployed error
+        fs.mkdirSync(path.join(tmpDir, ".codex", "agents"), { recursive: true });
+        fs.writeFileSync(
+          path.join(tmpDir, ".codex", "agents", "stub.md"),
+          "---\nname: stub\ndescription: stub\n---\n",
+        );
+
+        const result = await listHandler.execute({
+          ...mockContext,
+          cwd: tmpDir,
+          args: ["--provider", "claude"],
+        });
+        expect(result.exitCode).toBe(1);
+        expect(result.message).toMatch(/'claude' is not deployed/);
+      });
     });
   });
 

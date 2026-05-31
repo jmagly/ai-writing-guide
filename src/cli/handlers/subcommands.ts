@@ -24,6 +24,58 @@ import { feedbackHandler } from "./feedback.js";
 import { handlerResultFromError } from "../errors.js";
 import { getProjectDir } from "../../config/aiwg-config.js";
 import { formatDeployedWorkspaceSignalPlan, readWorkspaceSignalPlan } from "../workspace-signals.js";
+import * as path from "node:path";
+import * as fsSync from "node:fs";
+
+/**
+ * Provider artifact-path map for `aiwg list` provider detection (#1530).
+ *
+ * Mirrors the `collectProviderDeployments` provider list in
+ * `tools/cli/workspace-status.mjs` so `aiwg list` and `aiwg status` agree on
+ * what counts as a deployed provider. Keep the two lists in sync. The
+ * `agents`/`commands`/`skills` paths feed `registerDeployedExtensions`;
+ * each provider that has at least one populated artifact dir is registered.
+ *
+ * Some providers use singular dir names (`opencode` → `.opencode/agent/`)
+ * and some have non-uniform paths (`copilot` → `.github/agents/` for agents,
+ * `.github/prompts/` for commands). The map encodes both.
+ */
+type ProviderDeployTargets = {
+  name: string;
+  root: string;
+  agentsPath: string;
+  skillsPath: string;
+  commandsPath: string;
+};
+
+const LIST_PROVIDER_TARGETS: ReadonlyArray<ProviderDeployTargets> = [
+  { name: 'claude', root: '.claude', agentsPath: '.claude/agents', skillsPath: '.claude/skills', commandsPath: '.claude/commands' },
+  { name: 'codex', root: '.codex', agentsPath: '.codex/agents', skillsPath: '.codex/skills', commandsPath: '.codex/commands' },
+  { name: 'copilot', root: '.github', agentsPath: '.github/agents', skillsPath: '.github/skills', commandsPath: '.github/prompts' },
+  { name: 'cursor', root: '.cursor', agentsPath: '.cursor/agents', skillsPath: '.cursor/skills', commandsPath: '.cursor/commands' },
+  { name: 'opencode', root: '.opencode', agentsPath: '.opencode/agent', skillsPath: '.opencode/skill', commandsPath: '.opencode/command' },
+  { name: 'warp', root: '.warp', agentsPath: '.warp/agents', skillsPath: '.warp/skills', commandsPath: '.warp/commands' },
+  { name: 'factory', root: '.factory', agentsPath: '.factory/droids', skillsPath: '.factory/skills', commandsPath: '.factory/commands' },
+  { name: 'windsurf', root: '.windsurf', agentsPath: '.windsurf/agents', skillsPath: '.windsurf/skills', commandsPath: '.windsurf/workflows' },
+  { name: 'universal', root: '.agents', agentsPath: '.agents/agents', skillsPath: '.agents/skills', commandsPath: '.agents/commands' },
+];
+
+function hasAnyPopulated(cwd: string, p: ProviderDeployTargets): boolean {
+  const candidates = [p.agentsPath, p.skillsPath, p.commandsPath];
+  for (const rel of candidates) {
+    const abs = path.join(cwd, rel);
+    try {
+      if (fsSync.statSync(abs).isDirectory() && fsSync.readdirSync(abs).length > 0) return true;
+    } catch {
+      // dir doesn't exist or unreadable — skip
+    }
+  }
+  return false;
+}
+
+function detectDeployedProviders(cwd: string): ProviderDeployTargets[] {
+  return LIST_PROVIDER_TARGETS.filter(p => hasAnyPopulated(cwd, p));
+}
 
 /**
  * MCP server command handler
@@ -128,16 +180,55 @@ export const listHandler: CommandHandler = {
     // Ensure registry is populated with deployed extensions
     const registry = getRegistry();
 
-    // If registry is empty, try to populate it
+    // If registry is empty, try to populate it from EVERY deployed provider
+    // in the workspace (not just claude). Fixes #1530: in a Codex-only
+    // workspace the legacy hard-coded `.claude/...` lookup reported zero
+    // extensions even though `.codex/` was populated. Detection mirrors
+    // `tools/cli/workspace-status.mjs` so `aiwg list` and `aiwg status`
+    // agree on what counts as deployed.
+    //
+    // `--provider <name>` narrows registration to one provider; otherwise
+    // we register the union of everything detected so a multi-provider
+    // workspace shows everything in a single inventory.
     if (registry.size === 0) {
       try {
-        await registerDeployedExtensions(registry, {
-          agentsPath: '.claude/agents',
-          skillsPath: '.claude/skills',
-          commandsPath: '.claude/commands',
-          provider: 'claude',
-          cwd: ctx.cwd,
-        });
+        const provIdx = ctx.args.findIndex((a) => a === '--provider' || a === '--platform');
+        const requestedProvider = provIdx >= 0 ? ctx.args[provIdx + 1] : undefined;
+
+        let targets = detectDeployedProviders(ctx.cwd);
+        if (requestedProvider) {
+          targets = targets.filter((p) => p.name === requestedProvider);
+          if (targets.length === 0) {
+            return {
+              exitCode: 1,
+              message: `Error: provider '${requestedProvider}' is not deployed in this workspace.\n\nRun 'aiwg status' to see deployed providers.`,
+            };
+          }
+        }
+
+        if (targets.length === 0) {
+          // No deployed providers detected → return a clean empty-inventory
+          // message rather than dispatching to the legacy script (which
+          // requires a path argument it doesn't get here). Matches the
+          // legacy script's helpful guidance from #1530.
+          return {
+            exitCode: 0,
+            message:
+              'No agents, skills, or commands deployed in this workspace.\n\n' +
+              'Tip: Deploy a framework with "aiwg use sdlc" (or another framework) to get started.\n' +
+              'Run "aiwg status" for workspace health detail.\n',
+          };
+        }
+
+        for (const target of targets) {
+          await registerDeployedExtensions(registry, {
+            agentsPath: target.agentsPath,
+            skillsPath: target.skillsPath,
+            commandsPath: target.commandsPath,
+            provider: target.name,
+            cwd: ctx.cwd,
+          });
+        }
       } catch (error) {
         // If registry population fails, fall back to legacy script
         const frameworkRoot = await getFrameworkRoot();
