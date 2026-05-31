@@ -7,14 +7,23 @@
  * Deployment paths:
  *   - Agents: <project>/.codex/agents/ (project-local)
  *   - Commands: ~/.codex/prompts/ (home directory, NOT project)
- *   - Skills: ~/.codex/skills/ (home directory, NOT project)
+ *   - Skills: <project>/.agents/skills/ (project-local, cross-provider canonical)
  *   - Rules: <project>/.codex/rules/ (project-local, conventional)
+ *
+ * Skill path note (#766 regression fix):
+ *   Codex (codex-rs/core-skills/src/loader.rs) scans the project-local
+ *   `.agents/skills/` directory — the industry-standard, cross-provider path
+ *   shared with OpenClaw, Warp, Copilot, and OpenCode. The legacy home-dir
+ *   path `~/.codex/skills/` is deprecated. Earlier versions wrote BOTH, and
+ *   because codex-rs scans both, every kernel skill appeared twice in the
+ *   slash-command list (e.g. `/aiwg-regenerate` listed twice). We now write
+ *   `.agents/skills/` only and prune the stale legacy home dir on deploy.
  *
  * Special features:
  *   - Model replacement (opus/sonnet/haiku -> gpt-5.4/gpt-5.3-codex/gpt-5.1-codex-mini)
  *   - --as-agents-md aggregation option
  *   - Delegates commands to deploy-prompts-codex.mjs (deploys to ~/.codex/prompts/)
- *   - Delegates skills to deploy-skills-codex.mjs (deploys to ~/.codex/skills/)
+ *   - Delegates skills to deploy-skills-codex.mjs (deploys to .agents/skills/)
  */
 
 import realFs from 'fs';
@@ -64,11 +73,19 @@ export const paths = {
   rules: '.codex/rules/'
 };
 
-// Kernel skills (always-loaded) deploy to ~/.codex/skills/ — the path Codex
-// natively scans. The standard tier (when `--copy-all` is passed) lands
-// at the same dir alongside kernel skills; the deploy-skills-codex.mjs
-// script filters non-kernel skills out by default (#1217).
-export const kernelSkillsPath = path.join(os.homedir(), '.codex', 'skills');
+// Kernel skills (always-loaded) deploy to the project-local `.agents/skills/`
+// directory — the cross-provider canonical path codex-rs natively scans. This
+// is project-relative (joined with the deploy target), matching the other
+// providers' kernel paths. The legacy home-dir path `~/.codex/skills/` is
+// deprecated and pruned on deploy (#766 regression fix). The standard tier
+// (when `--copy-all` is passed) lands alongside kernel skills; the
+// deploy-skills-codex.mjs script filters non-kernel skills out by default (#1217).
+export const kernelSkillsPath = '.agents/skills/';
+
+// Legacy home-dir skills location written by AIWG versions prior to the #766
+// regression fix. Pruned on every codex skill deploy so codex-rs stops listing
+// each AIWG skill twice. Never touches non-AIWG (unmarked) skills.
+const legacyHomeSkillsDir = path.join(os.homedir(), '.codex', 'skills');
 
 export const support = {
   agents: 'native',
@@ -238,9 +255,16 @@ export async function deploySkills(targetDir, srcRoot, opts) {
 
   console.log('Delegating skill deployment to deploy-skills-codex.mjs...');
 
-  // Deploy to ~/.codex/skills/ (home dir — legacy Codex path)
+  // Deploy to the project-local .agents/skills/ — the SINGLE codex-scanned
+  // target (industry-standard cross-provider path). Writing only here avoids
+  // the duplicate slash-command bug that occurred when skills were ALSO
+  // written to the legacy ~/.codex/skills/ home dir: codex-rs scans both, so
+  // every kernel skill was listed twice (e.g. `/aiwg-regenerate`). See #766.
+  const crossAgentSkillsDir = path.join(targetDir, '.agents', 'skills');
+  console.log(`Deploying skills to ${crossAgentSkillsDir} (.agents/skills — codex-scanned path)...`);
+
   await new Promise((resolve, reject) => {
-    const args = ['--source', srcRoot];
+    const args = ['--source', srcRoot, '--target', crossAgentSkillsDir];
     if (opts.dryRun) args.push('--dry-run');
     if (opts.force) args.push('--force');
     if (opts.mode) args.push('--mode', opts.mode);
@@ -259,29 +283,51 @@ export async function deploySkills(targetDir, srcRoot, opts) {
     child.on('error', reject);
   });
 
-  // Also deploy to .agents/skills/ (cross-agent universal path — #766)
-  const crossAgentSkillsDir = path.join(targetDir, '.agents', 'skills');
-  console.log(`Deploying skills to ${crossAgentSkillsDir} (cross-agent path)...`);
+  // Self-heal: prune AIWG-managed skill dirs left behind in the legacy
+  // ~/.codex/skills/ home location by pre-fix versions, so codex-rs stops
+  // listing each skill twice.
+  pruneLegacyCodexSkills(opts);
+}
 
-  await new Promise((resolve, reject) => {
-    const args = ['--source', srcRoot, '--target', crossAgentSkillsDir];
-    if (opts.dryRun) args.push('--dry-run');
-    if (opts.force) args.push('--force');
-    if (opts.mode) args.push('--mode', opts.mode);
-    if (opts.copyStandardSkills === true) args.push('--copy-all');
+/**
+ * Remove AIWG-managed skill directories from the legacy ~/.codex/skills/ home
+ * location. Earlier AIWG versions deployed kernel skills there in addition to
+ * .agents/skills/; since codex-rs scans both, this produced duplicate
+ * slash-command entries (#766 half-fix regression). Only directories carrying
+ * the `.aiwg-managed` marker are removed — user-authored skills are never
+ * touched. The now-empty legacy dir is removed if AIWG owned everything in it.
+ */
+export function pruneLegacyCodexSkills(opts = {}, legacyDir = legacyHomeSkillsDir) {
+  let entries;
+  try {
+    entries = fs.readdirSync(legacyDir, { withFileTypes: true });
+  } catch {
+    return 0; // legacy dir absent — nothing to prune
+  }
 
-    const child = spawn('node', [scriptPath, ...args], {
-      stdio: 'inherit',
-      cwd: srcRoot
-    });
+  let pruned = 0;
+  for (const ent of entries) {
+    if (!ent.isDirectory()) continue;
+    const skillDir = path.join(legacyDir, ent.name);
+    if (!fs.existsSync(path.join(skillDir, '.aiwg-managed'))) continue; // leave user skills alone
+    if (opts.dryRun) {
+      console.log(`[dry-run] would prune legacy AIWG skill ${skillDir}`);
+    } else {
+      fs.rmSync(skillDir, { recursive: true, force: true });
+    }
+    pruned++;
+  }
 
-    child.on('close', (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`deploy-skills-codex.mjs (cross-agent) exited with code ${code}`));
-    });
-
-    child.on('error', reject);
-  });
+  if (pruned > 0) {
+    console.log(`Pruned ${pruned} AIWG-managed skill${pruned === 1 ? '' : 's'} from legacy ~/.codex/skills/ (now deployed to .agents/skills/).`);
+    if (!opts.dryRun) {
+      // Remove the legacy dir only if AIWG owned everything in it.
+      try {
+        if (fs.readdirSync(legacyDir).length === 0) fs.rmdirSync(legacyDir);
+      } catch { /* non-empty (user skills remain) — keep it */ }
+    }
+  }
+  return pruned;
 }
 
 /**
@@ -524,7 +570,7 @@ export async function deploy(opts) {
   }
 
   if (shouldDeploySkills || skillsOnly) {
-    console.log(`\nDeploying skills to ~/.codex/skills/...`);
+    console.log(`\nDeploying skills to .agents/skills/...`);
     await deploySkills(target, srcRoot, opts);
   }
 

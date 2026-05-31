@@ -272,7 +272,7 @@ const PROVIDER_EXPECTATIONS: Record<string, ProviderExpectation> = {
     requiredDirs: ['.codex/agents', '.codex/commands', '.codex/rules'],
     rootFiles: [],
     agentDir: '.codex/agents',
-    skillDir: '.codex/.aiwg/skills',  // Project-local mirror; actual skills also at ~/.codex/skills/ and .agents/skills/
+    skillDir: '.codex/.aiwg/skills',  // Project-local sequestered mirror; deployed skills live at .agents/skills/ (legacy ~/.codex/skills/ pruned on deploy — #766)
     commandDir: '.codex/commands',
     ruleDir: '.codex/rules',
     aggregatedAgents: false,
@@ -414,9 +414,10 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Deployment Completeness', () => {
         totalSkillFiles += files.filter(f => f.endsWith('.md')).length;
       }
 
-      // Codex deploys skills to ~/.codex/skills/ via a separate script (deploy-skills-codex.mjs),
-      // not via deploy-agents.mjs. When running deploy-agents.mjs directly, the project .codex/skills/
-      // may be empty. This is expected behavior, not a bug.
+      // Codex deploys skills to .agents/skills/ via a separate script (deploy-skills-codex.mjs),
+      // not via deploy-agents.mjs (the legacy ~/.codex/skills/ home dir is pruned — #766).
+      // When running deploy-agents.mjs directly, the project skill dirs may be empty.
+      // This is expected behavior, not a bug.
       if (providerName === 'codex' && totalSkillFiles === 0) {
         console.warn('codex: skills not deployed via deploy-agents.mjs — use deploy-skills-codex.mjs separately');
         return;
@@ -772,7 +773,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Deployment Completeness', () => {
   // -------------------------------------------------------------------------
   // Codex home-dir skills (known #766 — skills deploy to ~/.codex/skills/)
   // -------------------------------------------------------------------------
-  describe('codex: home-dir skill deployment', () => {
+  describe('codex: skill deployment path (#766 — single scanned location)', () => {
     let projectDir: string;
     let homeDir: string;
 
@@ -781,17 +782,21 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Deployment Completeness', () => {
     });
     afterEach(async () => { await cleanupTestEnv(projectDir, homeDir); });
 
-    it('deploys skills to ~/.codex/skills/ (home directory)', async () => {
+    it('deploys skills to project .agents/skills/ and NOT the legacy ~/.codex/skills/ home dir', async () => {
       runDeploy('codex', projectDir, homeDir);
-      const homeSkillsDir = path.join(homeDir, '.codex', 'skills');
-      const exists = await pathExists(homeSkillsDir);
-      // Note: if this fails, it may indicate #766 is not yet fixed
-      if (exists) {
-        const entries = await fs.readdir(homeSkillsDir, { withFileTypes: true });
-        const skillDirs = entries.filter(e => e.isDirectory());
-        expect(skillDirs.length, 'codex: should deploy skills to home dir').toBeGreaterThan(10);
-      }
-      // If not exists, the test passes but logs that home-dir deploy may be broken
+
+      // Skills must land in the cross-provider .agents/skills/ — the path
+      // codex-rs scans. runDeploy forces --copy-all, so the full set deploys.
+      const agentsSkillsDir = path.join(projectDir, '.agents', 'skills');
+      expect(await pathExists(agentsSkillsDir), 'codex: should deploy skills to .agents/skills/').toBe(true);
+      const entries = await fs.readdir(agentsSkillsDir, { withFileTypes: true });
+      const skillDirs = entries.filter(e => e.isDirectory());
+      expect(skillDirs.length, 'codex: .agents/skills/ should hold the deployed skills').toBeGreaterThan(10);
+
+      // The legacy home-dir location must NOT be written — writing both made
+      // codex-rs list every kernel skill twice (the reported duplicate bug).
+      const legacyHomeSkillsDir = path.join(homeDir, '.codex', 'skills');
+      expect(await pathExists(legacyHomeSkillsDir), 'codex: legacy ~/.codex/skills/ must not be created').toBe(false);
     });
 
     it('deploys prompts/commands to ~/.codex/prompts/ (home directory)', async () => {

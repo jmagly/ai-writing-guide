@@ -318,7 +318,11 @@ const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands:
 const PROVIDER_KERNEL_SKILL_PATHS: Record<string, string> = {
   claude: '.claude/skills',
   factory: '.factory/skills',
-  codex: path.join(os.homedir(), '.codex', 'skills'),
+  // Project-local .agents/skills/ — the cross-provider canonical path codex-rs
+  // scans (codex-rs/core-skills/src/loader.rs). The legacy ~/.codex/skills/
+  // home dir is deprecated and pruned on deploy; writing both made codex list
+  // every kernel skill twice (#766 regression fix).
+  codex: '.agents/skills',
   opencode: '.opencode/skill',
   copilot: '.github/skills',
   cursor: '.cursor/skills',

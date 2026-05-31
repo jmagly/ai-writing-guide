@@ -80,7 +80,7 @@ All 10 providers receive all 4 artifact types (agents, commands, skills, rules).
 | Platform | Agents | Commands | Skills | Rules | Command |
 |----------|--------|----------|--------|-------|---------|
 | Claude Code | `.claude/agents/` | `.claude/commands/` | `.claude/skills/` | `.claude/rules/` | `aiwg use sdlc` |
-| OpenAI/Codex | `.codex/agents/` | `~/.codex/prompts/` (scanned) + `.codex/commands/` (deployed for visibility; not scanned — Codex commands are a static enum) | `~/.codex/skills/` + `.agents/skills/` | `.codex/rules/` | `aiwg use sdlc --provider codex` |
+| OpenAI/Codex | `.codex/agents/` | `~/.codex/prompts/` (scanned) + `.codex/commands/` (deployed for visibility; not scanned — Codex commands are a static enum) | `.agents/skills/` (project) + `~/.agents/skills/` (user) | `.codex/rules/` | `aiwg use sdlc --provider codex` |
 | GitHub Copilot | `.github/agents/` | `.github/prompts/` | `.github/skills/` + `.agents/skills/` | `.github/instructions/` | `aiwg use sdlc --provider copilot` |
 | Factory AI | `.factory/droids/` | `.factory/commands/` | `.factory/skills/` | `.factory/rules/` | `aiwg use sdlc --provider factory` |
 | Cursor | `.cursor/agents/` | `.cursor/commands/` | `.cursor/skills/` | `.cursor/rules/` | `aiwg use sdlc --provider cursor` |
@@ -92,7 +92,7 @@ All 10 providers receive all 4 artifact types (agents, commands, skills, rules).
 | Omnius (bundled, first-party integrator) | bundled in Omnius runtime | bundled in Omnius runtime | bundled in Omnius runtime | bundled in Omnius runtime | `npm i -g omnius` |
 
 **Special cases:**
-- **Codex**: Commands and skills deploy to home directory (`~/.codex/prompts/`, `~/.codex/skills/`) for user-level availability across all projects. `.codex/commands/` also deploys at project scope for operator visibility, but Codex commands are a static built-in enum in codex-rs and these files are not auto-scanned by the loader; AGENTS.md is the discovery bridge per ADR-1. Reference: `src/smiths/platform-paths.ts:23`.
+- **Codex**: Commands deploy to the home directory (`~/.codex/prompts/`) for user-level availability across all projects. Skills deploy to the cross-provider `.agents/skills/` (project scope) or `~/.agents/skills/` (user scope) — the paths codex-rs natively scans (`codex-rs/core-skills/src/loader.rs`). The legacy `~/.codex/skills/` home dir is deprecated and pruned on deploy: writing both it and `.agents/skills/` made codex list every kernel skill twice (`/aiwg-regenerate` etc.), since codex-rs scans both. `.codex/commands/` also deploys at project scope for operator visibility, but Codex commands are a static built-in enum in codex-rs and these files are not auto-scanned by the loader; AGENTS.md is the discovery bridge per ADR-1. Reference: `src/smiths/platform-paths.ts:23`.
 - **Copilot**: Agents use `.agent.md` format (Markdown + YAML frontmatter). Commands deploy as prompt files (`.github/prompts/`). Rules deploy as path-scoped instructions (`.github/instructions/`)
 - **Warp**: Agents and commands are also aggregated into `WARP.md` for single-file context loading
 - **Windsurf**: Agents are aggregated into `AGENTS.md` at project root

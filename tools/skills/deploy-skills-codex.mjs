@@ -2,10 +2,19 @@
 /**
  * Deploy Skills to Codex
  *
- * Transforms AIWG skills to Codex format and deploys to ~/.codex/skills/
+ * Transforms AIWG skills to Codex format. The codex provider
+ * (tools/agents/providers/codex.mjs) always invokes this with an explicit
+ * `--target <project>/.agents/skills` — the cross-provider canonical path
+ * codex-rs scans (codex-rs/core-skills/src/loader.rs).
+ *
+ * The `~/.codex/skills/` default below is the LEGACY home-dir path, deprecated
+ * after the #766 regression fix: writing both .agents/skills and
+ * ~/.codex/skills made codex list every kernel skill twice. It is retained
+ * only as a standalone-invocation fallback; normal `aiwg use` deploys pass
+ * --target and never write the legacy location.
  *
  * Codex Skill Format:
- * - Location: ~/.codex/skills/<skill-name>/SKILL.md
+ * - Location: <target>/<skill-name>/SKILL.md
  * - YAML frontmatter: name (≤100 chars), description (≤500 chars)
  * - Body: Instructions (kept on disk, not injected into context)
  *
@@ -14,7 +23,8 @@
  *
  * Options:
  *   --source <path>    Source directory (defaults to repo root)
- *   --target <path>    Target directory (defaults to ~/.codex/skills)
+ *   --target <path>    Target directory (defaults to ~/.codex/skills — LEGACY;
+ *                      orchestrator passes <project>/.agents/skills)
  *   --mode <type>      Deployment mode: addons, sdlc, marketing, media-curator, research, or all (default)
  *   --dry-run          Show what would be deployed without writing
  *   --force            Overwrite existing files
@@ -337,7 +347,7 @@ function getSkillDirectories(srcRoot, mode) {
   const repoRoot = path.resolve(scriptDir, '..', '..');
   const srcRoot = source || repoRoot;
 
-  console.log(`Deploying skills to Codex (~/.codex/skills/)`);
+  console.log(`Deploying skills to Codex`);
   console.log(`  Source: ${srcRoot}`);
   console.log(`  Target: ${target}`);
   console.log(`  Mode: ${mode}`);

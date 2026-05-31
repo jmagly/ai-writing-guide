@@ -9,7 +9,7 @@
  *
  * Expected locations by provider (universal deployment - all 4 artifact types):
  * - Claude:   .claude/agents/, .claude/commands/, .claude/.aiwg/skills/, .claude/rules/
- * - Codex:    .codex/agents/, .codex/rules/ (project) + ~/.codex/prompts/, ~/.codex/skills/ (home)
+ * - Codex:    .codex/agents/, .codex/rules/, .agents/skills/ (project) + ~/.codex/prompts/ (home); legacy ~/.codex/skills/ pruned (#766)
  * - Factory:  .factory/droids/, .factory/commands/, .factory/skills/, .factory/rules/
  * - Copilot:  .github/agents/ (.agent.md), .github/prompts/ (.prompt.md), .github/skills/, .github/instructions/ (.instructions.md)
  * - Cursor:   .cursor/agents/, .cursor/commands/, .cursor/skills/, .cursor/rules/
@@ -76,8 +76,10 @@ const PROVIDERS: Record<string, ProviderConfig> = {
   },
   codex: {
     name: 'codex',
-    projectPaths: ['.codex/agents', '.codex/rules'],  // Commands → ~/.codex/prompts/, Skills → ~/.codex/skills/ (home dir)
-    homePaths: ['~/.codex/prompts', '~/.codex/skills'],
+    // Skills → project .agents/skills/ (cross-provider canonical, codex-scanned).
+    // Legacy ~/.codex/skills/ is no longer written and is pruned on deploy (#766).
+    projectPaths: ['.codex/agents', '.codex/rules', '.agents/skills'],  // Commands → ~/.codex/prompts/ (home)
+    homePaths: ['~/.codex/prompts'],
     forbiddenPaths: ['.claude'],  // Should NOT create Claude dirs
     fileExtension: '.md',
     minArtifacts: 5,

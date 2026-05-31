@@ -40,11 +40,18 @@ Deploying to `.agents/skills/` is the most portable option if you need a single 
 |-------|------|--------|--------|
 | Project | `.agents/skills/` | `codex-rs/core-skills/src/loader.rs` | **Primary (use this)** |
 | User-global | `~/.agents/skills/` | `codex-rs/core-skills/src/loader.rs` | **Primary (use this)** |
-| User-global | `~/.codex/skills/` | Legacy | **Deprecated — do not use** |
+| User-global | `~/.codex/skills/` | Legacy | **Deprecated — pruned on deploy** |
 
 - Source repo: https://github.com/openai/codex (full Rust)
-- Current AIWG deployment target `~/.codex/skills/` is incorrect — tracked in #766
-- Deploy target should be `.agents/skills/` (project) or `~/.agents/skills/` (user-global)
+- AIWG deploys project-scope kernel skills to `.agents/skills/` and user-scope
+  skills to `~/.agents/skills/`. The legacy `~/.codex/skills/` home dir is no
+  longer written; AIWG-managed dirs left there by pre-fix versions are pruned
+  on every codex skill deploy.
+- **Duplicate-listing regression (fixed):** #766's first fix *added* the
+  `.agents/skills/` write but never *removed* the legacy `~/.codex/skills/`
+  write. codex-rs scans both, so every kernel skill appeared twice in the
+  slash-command list (e.g. `/aiwg-regenerate` listed twice). `.agents/skills/`
+  is now the single project-scope target.
 
 ---
 
@@ -170,7 +177,7 @@ Not all providers have a native plugin marketplace. The table below distinguishe
 | Provider | Matrix `skills:` | Ground-truth primary | Correct? |
 |----------|-----------------|----------------------|----------|
 | claude-code | `.claude/skills/` | `.claude/skills/` | Yes |
-| codex | `~/.codex/skills/` | `.agents/skills/` | **No — #766** |
+| codex | `.agents/skills/` | `.agents/skills/` | Yes (#766; legacy `~/.codex/skills/` pruned) |
 | copilot | `.github/skills/` | `.github/skills/` (also `.claude/skills/`) | Partial |
 | factory | `.factory/skills/` | `.factory/skills/` | Unverified |
 | cursor | `.cursor/skills/` | `.cursor/skills/` | Unverified |

@@ -275,7 +275,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Codex Integration', () => {
   });
 
   describe('Skills Deployment (formerly Prompts)', () => {
-    it('deploys skills to ~/.codex/skills/ via main deploy script', async () => {
+    it('deploys skills to project .agents/skills/ via main deploy script (not legacy ~/.codex/skills/ — #766)', async () => {
       runScript('tools/agents/deploy-agents.mjs', [
         '--provider', 'codex',
         '--mode', 'sdlc',
@@ -283,11 +283,16 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Codex Integration', () => {
         '--target', TEST_PROJECT_DIR
       ]);
 
-      // Check skills were deployed to home directory
-      const skillsDir = path.join(TEST_CODEX_DIR, 'skills');
+      // Skills deploy to the cross-provider .agents/skills/ — the path codex-rs
+      // scans. The legacy ~/.codex/skills/ home dir is no longer written
+      // (writing both made codex list every kernel skill twice).
+      const skillsDir = path.join(TEST_PROJECT_DIR, '.agents', 'skills');
       const skills = await fs.readdir(skillsDir);
-
       expect(skills.length).toBeGreaterThan(0);
+
+      const legacyHomeSkillsDir = path.join(TEST_CODEX_DIR, 'skills');
+      const legacyExists = await fs.access(legacyHomeSkillsDir).then(() => true).catch(() => false);
+      expect(legacyExists, 'legacy ~/.codex/skills/ must not be written by the provider deploy').toBe(false);
     });
 
     it('each deployed skill directory contains SKILL.md', async () => {
@@ -298,7 +303,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Codex Integration', () => {
         '--target', TEST_PROJECT_DIR
       ]);
 
-      const skillsDir = path.join(TEST_CODEX_DIR, 'skills');
+      const skillsDir = path.join(TEST_PROJECT_DIR, '.agents', 'skills');
       const skills = await fs.readdir(skillsDir);
 
       for (const skill of skills) {
