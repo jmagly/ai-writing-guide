@@ -517,3 +517,54 @@ describe('discoverCapability — exclusive capability surface (#1545)', () => {
     expect(parsed.results.every((r: { path: string }) => !r.path.endsWith('.ts'))).toBe(true);
   });
 });
+
+describe('discoverCapability — Flow documents surface in default discover (#1540)', () => {
+  it('a YAML Flow ranks alongside skills in a bare discover (no --type)', async () => {
+    // A declarative Flow doc under the framework tree — parseFlowDoc must
+    // classify it `type: flow`, and `flow` must be in DEFAULT_DISCOVER_TYPES
+    // so it surfaces without an explicit `--type flow` filter (#1540).
+    const flowDir = path.join(cwd, 'agentic', 'code', 'frameworks', 'fx', 'flows');
+    fs.mkdirSync(flowDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(flowDir, 'flow-ship-it.playbook.yaml'),
+      [
+        'apiVersion: flow.aiwg.io/v1',
+        'kind: FlowPlaybook',
+        'metadata:',
+        '  name: flow-ship-it',
+        '  labels: { domain: release }',
+        'spec:',
+        '  description: Ship the release through the gate sequence to production',
+        '  inventory: ctx',
+        '  targets: { groups: [project] }',
+        '  steps:',
+        '    - id: gate',
+        '      capability: ship-gate',
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+
+    const buildSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const buildErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    buildSpy.mockRestore();
+    buildErrSpy.mockRestore();
+
+    const captured: string[] = [];
+    const logSpy = vi.spyOn(console, 'log').mockImplementation((...a) => captured.push(a.join(' ')));
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // No typeFilter → exercises DEFAULT_DISCOVER_TYPES (which now includes `flow`).
+    await discoverCapability(cwd, { phrase: 'ship release to production', json: true, limit: 5 });
+    logSpy.mockRestore();
+    errSpy.mockRestore();
+
+    const parsed = JSON.parse(captured.join('\n'));
+    expect(parsed.results.length, 'discover should surface the Flow without --type').toBeGreaterThan(0);
+    const flowHit = parsed.results.find((r: { path: string; type: string }) =>
+      r.path.endsWith('flow-ship-it.playbook.yaml'),
+    );
+    expect(flowHit, 'Flow doc should appear in default discover results').toBeTruthy();
+    expect(flowHit.type).toBe('flow');
+  });
+});

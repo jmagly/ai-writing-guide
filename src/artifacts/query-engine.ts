@@ -364,7 +364,7 @@ export async function queryIndex(
 export interface DiscoverParams {
   /** Search phrase (the user's capability description) */
   phrase: string;
-  /** Restrict to specific types — defaults to skill/agent/command/rule */
+  /** Restrict to specific types — defaults to skill/agent/command/rule/flow */
   typeFilter?: string[];
   /** Max results (default 10) */
   limit?: number;
@@ -374,7 +374,12 @@ export interface DiscoverParams {
   graph?: GraphType;
 }
 
-const DEFAULT_DISCOVER_TYPES = ['skill', 'agent', 'command', 'rule'];
+// `flow` is included so discoverable YAML Flow documents (flow.aiwg.io/v1 /
+// workflow.aiwg.io/v1, classified by parseFlowDoc) rank alongside the
+// capability artifacts in a bare `aiwg discover` (#1540). Flows ARE agentic
+// capabilities — a "deploy to production" Flow should surface next to the
+// flow-deploy-to-production skill.
+const DEFAULT_DISCOVER_TYPES = ['skill', 'agent', 'command', 'rule', 'flow'];
 
 /**
  * Resolve the AIWG installation root for path-anchoring discover output.
@@ -598,7 +603,7 @@ export async function discoverCapability(
 export interface ShowParams {
   /** Skill name (e.g. `intake-wizard`), title, or artifact path */
   name: string;
-  /** Restrict to specific types — defaults to skill/agent/command/rule */
+  /** Restrict to specific types — defaults to skill/agent/command/rule/flow */
   typeFilter?: string[];
   /** Emit a JSON envelope (path + content) instead of raw file text */
   json?: boolean;
