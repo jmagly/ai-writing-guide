@@ -61,3 +61,30 @@ describe('aiwg-mission kernel skill (#1544)', () => {
     expect(body.toLowerCase()).toContain('cross-stack');
   });
 });
+
+describe('issue-workflow commands mirror as commands (#1549)', () => {
+  function readStandardSet(file: string): string {
+    const src = fs.readFileSync(path.join(REPO_ROOT, file), 'utf8');
+    const m = src.match(/MIRRORED_STANDARD_COMMAND_SKILLS\s*=\s*new Set\(\[([\s\S]*?)\]\)/);
+    expect(m, `${file} should declare MIRRORED_STANDARD_COMMAND_SKILLS`).toBeTruthy();
+    return m![1];
+  }
+
+  it('address-issues + issue-audit are in the standard mirror set in BOTH deploy paths', () => {
+    // These skills are NOT kernel and NOT flow-*, so without an explicit entry
+    // they never mirror to .opencode/command/ / .claude/commands/ (#1549).
+    const tsSet = readStandardSet('src/cli/handlers/use.ts');
+    const jsSet = readStandardSet('tools/agents/deploy-agents.mjs');
+    for (const set of [tsSet, jsSet]) {
+      expect(set).toContain("'address-issues'");
+      expect(set).toContain("'issue-audit'");
+    }
+  });
+
+  it('the two mirror sets stay in sync (parity guard for the duplicated declaration)', () => {
+    const norm = (s: string) =>
+      [...s.matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1]).sort();
+    expect(norm(readStandardSet('src/cli/handlers/use.ts')))
+      .toEqual(norm(readStandardSet('tools/agents/deploy-agents.mjs')));
+  });
+});

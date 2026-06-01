@@ -109,6 +109,10 @@ const MIRRORED_STANDARD_COMMAND_SKILLS = new Set([
   'intake-wizard',
   'intake-from-codebase',
   'intake-start',
+  // Issue-workflow entry commands — invoked directly by users; mirror as
+  // commands so they reach .opencode/command/, .claude/commands/, etc. (#1549).
+  'address-issues',
+  'issue-audit',
 ]);
 
 const MIRRORED_KERNEL_COMMAND_SKILLS = new Set([
