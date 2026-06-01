@@ -97,7 +97,7 @@ that dependency tree.
 The annotated tag `v<version>` was created by a holder of the AIWG
 maintainer release-signing key. Independent of npmjs.org, GitHub, and
 Gitea — the chain of trust roots in the published maintainer key
-fingerprint in [`SECURITY.md`](../../SECURITY.md).
+fingerprint in [`SECURITY.md`](https://github.com/jmagly/aiwg/blob/main/SECURITY.md).
 
 ### How to verify
 
@@ -407,12 +407,12 @@ at `$(npm root -g)/aiwg/` or wherever your global npm prefix points).
 - [#1286](https://git.integrolabs.net/roctinam/aiwg/issues/1286) — Gitea compensating controls (A10)
 - [#1287](https://git.integrolabs.net/roctinam/aiwg/issues/1287) — tarball Sigstore signing (A8, Wave 5)
 - [#1288](https://git.integrolabs.net/roctinam/aiwg/issues/1288) — publish-time evidence: tarball audit + audit signatures + SBOM (A11/A12/A13, Wave 6)
-- [`SECURITY.md`](../../SECURITY.md) — maintainer key fingerprint(s), private reporting channel
-- [`.aiwg/architecture/adr-npmjs-org-via-github-actions.md`](../../.aiwg/architecture/adr-npmjs-org-via-github-actions.md) — A5 ADR
-- [`.aiwg/architecture/adr-signed-tag-verify.md`](../../.aiwg/architecture/adr-signed-tag-verify.md) — A9 ADR
-- [`.aiwg/architecture/adr-gitea-release-compensating-controls.md`](../../.aiwg/architecture/adr-gitea-release-compensating-controls.md) — A10 ADR
-- [`.aiwg/architecture/adr-tarball-cosign-signing.md`](../../.aiwg/architecture/adr-tarball-cosign-signing.md) — A8 ADR
-- [`.aiwg/architecture/adr-publish-time-evidence.md`](../../.aiwg/architecture/adr-publish-time-evidence.md) — A11+A12+A13 ADR
+- [`SECURITY.md`](https://github.com/jmagly/aiwg/blob/main/SECURITY.md) — maintainer key fingerprint(s), private reporting channel
+- [`.aiwg/architecture/adr-npmjs-org-via-github-actions.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-npmjs-org-via-github-actions.md) — A5 ADR
+- [`.aiwg/architecture/adr-signed-tag-verify.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-signed-tag-verify.md) — A9 ADR
+- [`.aiwg/architecture/adr-gitea-release-compensating-controls.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-gitea-release-compensating-controls.md) — A10 ADR
+- [`.aiwg/architecture/adr-tarball-cosign-signing.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-tarball-cosign-signing.md) — A8 ADR
+- [`.aiwg/architecture/adr-publish-time-evidence.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-publish-time-evidence.md) — A11+A12+A13 ADR
 - [CycloneDX specification](https://cyclonedx.org/specification/overview/)
 - [syft](https://github.com/anchore/syft)
 - [npm Trusted Publishers documentation](https://docs.npmjs.com/trusted-publishers)

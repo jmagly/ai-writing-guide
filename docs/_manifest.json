@@ -567,6 +567,13 @@
       "parent": "reference"
     },
     {
+      "id": "local-issues",
+      "title": "Local Issues",
+      "summary": "Project-local issue tracker under .aiwg/issues/",
+      "file": "local-issues.md",
+      "parent": "reference"
+    },
+    {
       "id": "cli-reference",
       "title": "All Commands",
       "summary": "Every aiwg command with examples",

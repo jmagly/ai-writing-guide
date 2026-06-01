@@ -497,13 +497,13 @@ cd apps/web && pnpm build
 
 ## Test tiers
 
-The serve seam is covered by a four-tier test strategy documented in [`.aiwg/testing/test-strategy-daemon-serve-sandbox.md`](../.aiwg/testing/test-strategy-daemon-serve-sandbox.md). Running locally:
+The serve seam is covered by a four-tier test strategy documented in [`.aiwg/testing/test-strategy-daemon-serve-sandbox.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/testing/test-strategy-daemon-serve-sandbox.md). Running locally:
 
 | Tier | Command | What it tests |
 |------|---------|---------------|
 | 1 — Unit | `npm test` | Module-level logic (mocked transports, no I/O) |
 | 2 — Contract | `npm run test:conformance` | Executor-contract v1 fixture replay (#1183) |
-| 3 — Integration | `npm run test:integration:serve` | Spawns real `aiwg serve` against the in-process [fake-sandbox harness](../test/fixtures/fake-sandbox/README.md) (#1174). Drives HTTP API + WS proxy paths end-to-end without a live VM host. |
+| 3 — Integration | `npm run test:integration:serve` | Spawns real `aiwg serve` against the in-process [fake-sandbox harness](https://github.com/jmagly/aiwg/blob/main/test/fixtures/fake-sandbox/README.md) (#1174). Drives HTTP API + WS proxy paths end-to-end without a live VM host. |
 | 4 — Live UAT | `npm run uat:serve-live` | Runs against a real agentic-sandbox at `AIWG_SANDBOX_ENDPOINT` (default `http://127.0.0.1:8122`). Skips cleanly when unreachable, so this is safe to run in any environment (#1176). |
 
 Tiers 1–3 run in CI on every push. Tier 4 is operator-driven — see CLAUDE.md release checklist for when to invoke it before a release.

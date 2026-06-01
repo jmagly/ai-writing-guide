@@ -44,9 +44,10 @@ jobs:
 
       - name: Configure tenant
         run: |
-          # strictLinks is false for now. pagenary 2026.5.1 (roctinam/pagenary#12)
-          # makes strictLinks:true abort on broken links, and docs/ currently has
-          # 53 broken internal links. Flip to true once those are fixed — #1486.
+          # strictLinks is true (#1486): pagenary 2026.5.1 (roctinam/pagenary#12)
+          # aborts the build on broken internal links. All 53 broken links are
+          # fixed, so the gate is now enforced — broken internal links fail the
+          # docs build.
           cat > "${{ gitea.workspace }}/tenants.json" <<'TENANTS'
           {
             "tenants": [
@@ -56,7 +57,7 @@ jobs:
                 "source": { "type": "local", "path": "./docs" },
                 "target": { "type": "local", "path": "./dist/aiwg-docs" },
                 "domains": ["docs.aiwg.io"],
-                "strictLinks": false
+                "strictLinks": true
               }
             ]
           }
