@@ -59,7 +59,7 @@ Or create `.opencode/opencode.json` manually:
 }
 ```
 
-The `instructions` array is how OpenCode loads rules — the `.opencode/rule/*.md` entry is required for AIWG rules to take effect.
+The `instructions` array is how OpenCode loads rules — the `.opencode/rule/*.md` entry is required for AIWG rules to take effect. **As of #1548, `aiwg use --provider opencode` wires this automatically:** when it deploys rules it adds `.opencode/rule/*.md` and `AGENTS.md` to `instructions[]`, creating `opencode.json` if absent and merging non-destructively (your existing keys and instruction entries are preserved and de-duplicated). The block above is shown for reference / manual setups; you no longer need to add the rule glob by hand.
 
 **5. You're ready.** Run `opencode` in your project directory.
 

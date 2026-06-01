@@ -376,6 +376,59 @@ export function deployRules(ruleFiles, targetDir, opts) {
   return deployFiles(ruleFiles, destDir, opts, transformAgent);
 }
 
+/**
+ * Wire deployed rules into opencode.json `instructions[]` (#1548).
+ *
+ * OpenCode loads rule/instruction content via the `instructions` array in
+ * `opencode.json` — files under `.opencode/rule/` are written to disk but never
+ * loaded into the agent's system prompt unless referenced there. This merges a
+ * glob for the rule directory plus `AGENTS.md` into `instructions[]` WITHOUT
+ * clobbering operator-authored config: existing keys and existing instructions
+ * entries are preserved and de-duplicated.
+ *
+ * Non-destructive: a malformed existing opencode.json is left untouched (warn,
+ * skip) rather than overwritten.
+ *
+ * @returns {boolean} true if the config was changed (or would be, in dry-run)
+ */
+export function mergeOpenCodeInstructions(targetDir, opts = {}) {
+  const RULE_GLOB = `${paths.rules}*.md`; // .opencode/rule/*.md — opencode supports globs in instructions
+  const AGENTS = 'AGENTS.md';
+  const wanted = [RULE_GLOB, AGENTS];
+  const configPath = path.join(targetDir, 'opencode.json');
+
+  let config = {};
+  if (fs.existsSync(configPath)) {
+    try {
+      config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      if (config === null || typeof config !== 'object' || Array.isArray(config)) {
+        console.warn(`Warning: ${configPath} is not a JSON object — leaving it untouched (rules not wired).`);
+        return false;
+      }
+    } catch (err) {
+      console.warn(`Warning: ${configPath} is not valid JSON (${err && err.message ? err.message : err}) — leaving it untouched (rules not wired).`);
+      return false;
+    }
+  }
+
+  const existing = Array.isArray(config.instructions) ? config.instructions : [];
+  const missing = wanted.filter((w) => !existing.includes(w));
+  if (missing.length === 0) return false; // already wired — nothing to do
+
+  if (opts.dryRun) {
+    console.log(`[dry-run] Would add to opencode.json instructions[]: ${missing.join(', ')}`);
+    return true;
+  }
+
+  // Preserve operator-authored entries; append only what's missing, deduped.
+  config.instructions = [...existing, ...missing];
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+  if (opts.verbose) {
+    console.log(`Wired ${missing.length} entr${missing.length === 1 ? 'y' : 'ies'} into opencode.json instructions[]: ${missing.join(', ')}`);
+  }
+  return true;
+}
+
 // ============================================================================
 // AGENTS.md
 // ============================================================================
@@ -558,6 +611,13 @@ export async function deploy(opts) {
   if (shouldDeployRules || rulesOnly) {
     console.log(`\nDeploying ${ruleFiles.length} rules...`);
     deployRules(ruleFiles, target, opts);
+    // #1548: rules on disk are inert unless referenced from opencode.json
+    // instructions[]. Wire them so opencode actually loads them.
+    try {
+      mergeOpenCodeInstructions(target, opts);
+    } catch (err) {
+      console.warn(`Warning: could not wire opencode.json instructions[]: ${err && err.message ? err.message : err}`);
+    }
   }
 
   await postDeploy(target, { ...opts, createAgentsMd: shouldCreateAgentsMd });
@@ -584,6 +644,7 @@ export default {
   deployCommands,
   deploySkills,
   deployRules,
+  mergeOpenCodeInstructions,
   createAgentsMd,
   postDeploy,
   getFileExtension,
