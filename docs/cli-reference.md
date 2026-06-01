@@ -2,6 +2,25 @@
 
 Complete reference for all `aiwg` CLI commands.
 
+> **How to read this reference (skill-first).** AIWG is agentic-first: raw `aiwg`
+> commands **augment** AIWG skills — they do not replace them. Agents should
+> reach a capability through its **skill** (which carries the priming: gates,
+> preservation logic, recovery), and the skill calls the CLI as an imperative
+> step. Two categories:
+>
+> - **Discovery / status / info commands** (`discover`, `show`, `list`, `status`,
+>   `version`, `runtime-info`, `doctor` read-only, `catalog`, `index query`, …)
+>   are **direct-callable** — they are the bridge *into* the skill surface.
+> - **Paired action commands** (`use`, `refresh`, `regenerate`, `doctor` repair,
+>   `doc-sync`, `ralph`, `sdlc-accelerate`, `mc`, `init`, `promote`, scaffolding,
+>   storage `migrate`, ops actions, …) have a **paired skill** — route through it
+>   first (e.g. invoke the `aiwg-refresh` skill, not raw `aiwg refresh`). The CLI
+>   examples below for those commands are **implementation affordances**: what the
+>   skill calls, or what an operator may type explicitly — not the agent's primary
+>   surface.
+>
+> Full rule: `agentic/code/addons/aiwg-utils/rules/cli-secondary.md` (#1272).
+
 **Prerequisites:** Node.js ≥20.0.0 and `npm install -g aiwg`
 
 **References:**

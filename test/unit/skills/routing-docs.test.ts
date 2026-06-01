@@ -80,4 +80,34 @@ describe('routing documentation regressions', () => {
     expect(quickref).toContain('"open a PR for this repo"');
     expect(quickref).toContain('`aiwg-pr`');
   });
+
+  // #1480: skill-first CLI augmentation audit. The cli-secondary rule must state
+  // the augment/orchestration invariants and distinguish discovery from paired
+  // commands; cli-reference.md must carry that framing; and the named paired
+  // surfaces must be covered. This is the documented audit procedure (criterion 6).
+  it('cli-secondary rule states the augment-not-replace + skill-orchestration invariants (#1480)', () => {
+    const rule = read('agentic/code/addons/aiwg-utils/rules/cli-secondary.md');
+    expect(rule).toMatch(/augment[\s\S]*do not replace/i);
+    // skill owns orchestration/formatting/presentation/synthesis/gates/recovery
+    expect(rule.toLowerCase()).toContain('orchestrat');
+    expect(rule.toLowerCase()).toContain('synthesis');
+    expect(rule.toLowerCase()).toContain('recovery');
+    // discovery surface stays direct-callable, distinct from paired action commands
+    expect(rule.toLowerCase()).toContain('discovery surface');
+    expect(rule.toLowerCase()).toContain('paired');
+    // the named paired action surfaces are covered by the rule's pairing table
+    for (const cmd of ['use', 'refresh', 'regenerate', 'doctor', 'doc-sync', 'ralph', 'sdlc-accelerate', 'mc']) {
+      expect(rule).toContain(`aiwg ${cmd}`);
+    }
+  });
+
+  it('cli-reference.md carries the skill-first reading guide (#1480)', () => {
+    const ref = read('docs/cli-reference.md');
+    expect(ref).toContain('skill-first');
+    expect(ref).toContain('augment');
+    // distinguishes the two categories and routes paired commands through the skill
+    expect(ref.toLowerCase()).toContain('direct-callable');
+    expect(ref).toContain('paired skill');
+    expect(ref).toContain('cli-secondary.md');
+  });
 });
