@@ -37,7 +37,7 @@ describe('mergeOpenCodeInstructions (#1548)', () => {
     const changed = mergeOpenCodeInstructions(dir, {});
     expect(changed).toBe(true);
     const cfg = readConfig();
-    expect(cfg.instructions).toEqual([RULE_GLOB, 'AGENTS.md']);
+    expect(cfg.instructions).toEqual([RULE_GLOB, 'AGENTS.md', 'AIWG.md']);
   });
 
   it('merges into an existing opencode.json, preserving operator keys + entries', () => {
@@ -52,18 +52,18 @@ describe('mergeOpenCodeInstructions (#1548)', () => {
     // Operator key survives
     expect(cfg.theme).toBe('dark');
     // Existing entry preserved, AIWG entries appended
-    expect(cfg.instructions).toEqual(['CONTRIBUTING.md', RULE_GLOB, 'AGENTS.md']);
+    expect(cfg.instructions).toEqual(['CONTRIBUTING.md', RULE_GLOB, 'AGENTS.md', 'AIWG.md']);
   });
 
   it('is a no-op (no duplication) when already wired', () => {
     fs.writeFileSync(
       path.join(dir, 'opencode.json'),
-      JSON.stringify({ instructions: [RULE_GLOB, 'AGENTS.md'] }, null, 2),
+      JSON.stringify({ instructions: [RULE_GLOB, 'AGENTS.md', 'AIWG.md'] }, null, 2),
       'utf8',
     );
     const changed = mergeOpenCodeInstructions(dir, {});
     expect(changed).toBe(false);
-    expect(readConfig().instructions).toEqual([RULE_GLOB, 'AGENTS.md']);
+    expect(readConfig().instructions).toEqual([RULE_GLOB, 'AGENTS.md', 'AIWG.md']);
   });
 
   it('adds only the missing entry when one is already present', () => {
@@ -73,7 +73,7 @@ describe('mergeOpenCodeInstructions (#1548)', () => {
       'utf8',
     );
     mergeOpenCodeInstructions(dir, {});
-    expect(readConfig().instructions).toEqual(['AGENTS.md', RULE_GLOB]);
+    expect(readConfig().instructions).toEqual(['AGENTS.md', RULE_GLOB, 'AIWG.md']);
   });
 
   it('leaves a malformed opencode.json untouched (warn, skip — never clobber)', () => {

@@ -392,9 +392,15 @@ export function deployRules(ruleFiles, targetDir, opts) {
  * @returns {boolean} true if the config was changed (or would be, in dry-run)
  */
 export function mergeOpenCodeInstructions(targetDir, opts = {}) {
-  const RULE_GLOB = `${paths.rules}*.md`; // .opencode/rule/*.md — opencode supports globs in instructions
+  const RULE_GLOB = `${paths.rules}*.md`; // .opencode/rule/*.md — opencode supports globs in instructions (verified in sst/opencode session/instruction.ts)
+  // opencode auto-loads AGENTS.md/CLAUDE.md/CONTEXT.md but NOT AIWG.md, and the
+  // generated AGENTS.md is a thin link-index that points to AIWG.md. The
+  // strengthened discover-first / directive-classification guidance lives in
+  // AIWG.md, so reference it explicitly here so opencode loads it directly
+  // rather than relying on the agent to follow AGENTS.md's link (#1542).
   const AGENTS = 'AGENTS.md';
-  const wanted = [RULE_GLOB, AGENTS];
+  const AIWG = 'AIWG.md';
+  const wanted = [RULE_GLOB, AGENTS, AIWG];
   const configPath = path.join(targetDir, 'opencode.json');
 
   let config = {};
