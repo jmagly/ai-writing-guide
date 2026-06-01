@@ -330,6 +330,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Provider File Locations', () => {
         'WARP.md',    // Warp aggregated file
         'AIWG.md',    // AIWG hook file
         '.windsurfrules', // Windsurf rules file
+        'opencode.json', // opencode: rules wired into instructions[] (#1548)
       ];
 
       const reallyUnexpected = unexpected.filter(item =>
