@@ -86,7 +86,7 @@ The expanded template positions its extra sections at canonical insertion points
 
 About 930 corpus docs (mostly pre-REF-1000) use legacy heading conventions without YAML frontmatter:
 
-- **~825 docs** use canonical or canonical-unnumbered structure → can be backfilled with frontmatter additively (no structural change). Tracked in [issue #651](https://git.integrolabs.net/roctinam/research-papers/issues/651).
+- **~825 docs** use canonical or canonical-unnumbered structure → can be backfilled with frontmatter additively (no structural change). Tracked in the corpus frontmatter-backfill audit.
 - **~125 docs** use the legacy "expanded" convention with unnumbered sections (Conceptual Framework, Benchmark Results, Ablation Studies, etc.). These already have the depth of the expanded template — they just need YAML frontmatter and optional number-normalization. Tracked as a follow-up item on #651.
 
 When backfilling, do **not** restructure heading content silently. Preserve the existing sections; promote them to the expanded template numbering only if it improves discoverability without losing content.

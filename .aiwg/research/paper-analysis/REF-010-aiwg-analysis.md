@@ -1,7 +1,6 @@
 # REF-010 AIWG Analysis: Stage-Gate Systems
 
 > **Source Paper**: [Stage-Gate Systems: A New Tool for Managing New Products](../../../docs/references/REF-010-stage-gate-systems.md)
-> **Research Corpus**: [Full Documentation](https://git.integrolabs.net/roctinam/research-papers)
 > **Author**: Cooper, R. G. (1990)
 > **Venue**: Business Horizons, 33(3), 44-54
 

@@ -34,10 +34,10 @@ This convention treats the corpus as a stable, queryable research library — di
 
 ## Origin
 
-These templates were extracted from the `roctinam/research-papers` corpus (1,061 inducted REFs as of 2026-05-22) after a corpus audit identified the implicit conventions in use. The extraction is documented in:
+These templates were extracted from the shared research corpus (1,061 inducted REFs as of 2026-05-22) after a corpus audit identified the implicit conventions in use. The extraction is documented in:
 
-- 2026-05-22 corpus snapshot (in research-papers repo)
-- Issue `roctinam/research-papers#651` (legacy frontmatter retro-backfill — context for why templates were captured)
+- 2026-05-22 corpus snapshot (shared research corpus)
+- Legacy frontmatter retro-backfill audit (context for why templates were captured)
 - `documentation/references/TEMPLATES-README.md` (the decision guide, included here as the canonical reference)
 
 ## Installation
@@ -120,7 +120,7 @@ MIT. See parent framework license file.
 ## References
 
 - Parent framework: `agentic/code/frameworks/research-complete/`
-- Origin corpus: `roctinam/research-papers`
+- Origin corpus: the shared research corpus
 - Decision guide (included here as canonical): `templates/TEMPLATES-README.md`
 - Related templates outside this extension:
   - `agentic/code/frameworks/research-complete/elaboration/templates/REF-XXX-template.md` (FAIR-default variant)

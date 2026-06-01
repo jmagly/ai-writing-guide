@@ -4,7 +4,7 @@
 **Paper**: Anthropic Applied AI Team. (2025, Nov). *Effective Harnesses for Long-Running Agents*. Anthropic Engineering Blog.
 **URL**: https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents
 **Companion code**: https://github.com/anthropics/cwc-long-running-agents
-**Induction**: roctinam/research-papers#615
+**Induction**: corpus induction #615
 **AIWG Commissioning**: roctinam/aiwg#1348 (auto-compact-continue rule, v2026.5.6)
 **AIWG Relevance**: **HIGH** — Authoritative source for the `auto-compact-continue` HIGH rule and the progress-file pattern.
 **GRADE**: **LOW** — Vendor engineering post; no released eval suite; reflects production practice.

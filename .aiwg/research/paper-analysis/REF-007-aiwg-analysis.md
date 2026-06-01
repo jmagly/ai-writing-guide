@@ -1,7 +1,6 @@
 # REF-007 AIWG Analysis: Mixture of Experts
 
 > **Source Paper**: [Adaptive Mixtures of Local Experts](../../../docs/references/REF-007-mixture-of-experts.md)
-> **Research Corpus**: [Full Documentation](https://git.integrolabs.net/roctinam/research-papers)
 > **Authors**: Jacobs, R. A., Jordan, M. I., Nowlan, S. J., & Hinton, G. E. (1991)
 > **Venue**: Neural Computation, 3(1), 79-87
 

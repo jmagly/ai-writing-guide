@@ -3,7 +3,7 @@
 **Source**: @~/dev/research-papers/documentation/references/REF-910-anthropic-2026-claude-compaction.md
 **Paper**: Anthropic. (2026). *Compaction*. Claude API Documentation, Build with Claude.
 **URL**: https://platform.claude.com/docs/en/build-with-claude/compaction
-**Induction**: roctinam/research-papers#616
+**Induction**: corpus induction #616
 **AIWG Commissioning**: roctinam/aiwg#1348 (auto-compact-continue rule, v2026.5.6)
 **AIWG Relevance**: **HIGH** — Defines the platform mechanism that makes auto-compact-continue's "trust the harness" stance safe.
 **GRADE**: **LOW** — Vendor product documentation; authoritative for Claude-specific behavior; subject to silent change.

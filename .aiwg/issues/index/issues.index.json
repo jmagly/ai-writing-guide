@@ -1,0 +1,42 @@
+{
+  "provider": "local",
+  "rebuilt_at": "2026-05-31T21:29:30.917Z",
+  "issues": [
+    {
+      "id": "AIWG-0003",
+      "title": "aiwg discover fails to find address-issues command despite deployment",
+      "status": "open",
+      "type": "bug",
+      "priority": "P2",
+      "labels": [],
+      "assignees": [],
+      "updated_at": "2026-05-31T21:29:20.329Z",
+      "closed_at": null,
+      "path": "items/AIWG-0003.md"
+    },
+    {
+      "id": "AIWG-0004",
+      "title": "opencode bootstrap context fails to induce skill-discovery behavior on new directives",
+      "status": "open",
+      "type": "bug",
+      "priority": "P2",
+      "labels": [],
+      "assignees": [],
+      "updated_at": "2026-05-31T21:29:30.824Z",
+      "closed_at": null,
+      "path": "items/AIWG-0004.md"
+    },
+    {
+      "id": "AIWG-0005",
+      "title": "opencode bootstrap context fails to induce skill-discovery behavior on new directives",
+      "status": "open",
+      "type": "bug",
+      "priority": "P2",
+      "labels": [],
+      "assignees": [],
+      "updated_at": "2026-05-31T21:29:30.872Z",
+      "closed_at": null,
+      "path": "items/AIWG-0005.md"
+    }
+  ]
+}

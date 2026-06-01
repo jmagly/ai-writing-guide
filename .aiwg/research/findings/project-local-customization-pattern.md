@@ -1,7 +1,7 @@
 # Research Finding: `.aiwg/.project/` — Project-Local Customization Pattern
 
 **Date**: 2026-04-06  
-**Status**: Validated via reference implementation (research-papers repo)  
+**Status**: Validated via reference implementation (the shared research corpus)  
 **Related Issues**: #750 (feature), #726 (module graph declarations), ADR 2026-04-04 (namespace strategy)
 
 ---

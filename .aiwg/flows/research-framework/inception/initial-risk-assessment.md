@@ -551,7 +551,7 @@ This risk assessment identifies, evaluates, and prioritizes potential threats to
 ---
 
 #### S-02: Data Privacy in Shared Corpus
-**Description**: research-papers repo may inadvertently include proprietary or confidential research data.
+**Description**: shared research corpus may inadvertently include proprietary or confidential research data.
 
 **Root Cause**:
 - User error (commit private data)

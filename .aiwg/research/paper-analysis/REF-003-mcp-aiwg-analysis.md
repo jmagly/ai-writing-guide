@@ -1,7 +1,6 @@
 # REF-003 AIWG Analysis: Model Context Protocol Specification
 
 > **Source Paper**: [MCP Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25)
-> **Research Corpus**: [Full Documentation](https://git.integrolabs.net/roctinam/research-papers)
 > **Analysis Date**: 2026-01-24
 
 ## Overview

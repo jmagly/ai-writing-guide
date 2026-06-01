@@ -19,7 +19,7 @@ The Research Framework generates and manages numerous artifacts across the resea
 3. **Scale to 1,000+ Papers**: Per NFR-RF-S-001
 4. **Integrate with AIWG**: Follow `.aiwg/` directory conventions
 5. **Support Git Versioning**: Work well with Git for provenance
-6. **Enable Cross-Project Sharing**: research-papers repo pattern
+6. **Enable Cross-Project Sharing**: shared-corpus pattern
 
 ### Decision Drivers
 
@@ -377,7 +377,7 @@ Recommended `.gitignore` for large corpora:
 
 ### Migration Path
 
-For existing research-papers repos:
+For existing shared research corpora:
 
 1. Create `.aiwg/research/` structure
 2. Move PDFs to `sources/pdfs/`

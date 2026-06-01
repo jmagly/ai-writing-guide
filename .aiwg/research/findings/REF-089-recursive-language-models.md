@@ -1,6 +1,6 @@
 # REF-089 AIWG Analysis: Recursive Language Models
 
-**Source**: @docs/references/REF-089-recursive-language-models.md (research-papers repo)
+**Source**: @docs/references/REF-089-recursive-language-models.md
 **Paper**: Zhang, A. L., Kraska, T., & Khattab, O. (2026). Recursive Language Models. arXiv:2512.24601v2.
 **AIWG Relevance**: **HIGH** — Directly applicable to context management, agent delegation, and Ralph loop architecture.
 **Issue**: #321 (AIWG RLM Addon Epic)

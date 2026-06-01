@@ -38,7 +38,7 @@ Research management in AIWG is currently ad-hoc, lacking:
 ### Solution Scope
 - 8 specialized agents (Discovery, Acquisition, Documentation, Citation, Archival, Quality, Provenance, Workflow)
 - 5-stage lifecycle (Discovery → Acquisition → Documentation → Integration → Archival)
-- Integration points: Semantic Scholar, Zotero, Obsidian, research-papers repo
+- Integration points: Semantic Scholar, Zotero, Obsidian, the shared research corpus
 
 ### Critical Risks Identified
 1. **T-01**: LLM Hallucination (Score 20) - Mitigated by RAG patterns

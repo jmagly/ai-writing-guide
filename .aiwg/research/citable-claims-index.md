@@ -15,7 +15,7 @@ This index catalogs 55 citable claims extracted from AIWG's research corpus. Eac
 
 ## Research Corpus
 
-Full paper documentation: **[roctinam/research-papers](https://git.integrolabs.net/roctinam/research-papers)**
+Full paper documentation lives in the shared research corpus.
 
 Analysis files: `.aiwg/research/paper-analysis/REF-XXX-aiwg-analysis.md`
 
@@ -1164,7 +1164,7 @@ All claims trace to analysis files in `.aiwg/research/paper-analysis/`:
 - REF-061: OAIS (planned)
 - REF-062: W3C PROV (planned)
 
-Full research corpus: [roctinam/research-papers](https://git.integrolabs.net/roctinam/research-papers)
+Full research corpus: the shared research corpus.
 
 ---
 

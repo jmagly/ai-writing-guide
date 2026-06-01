@@ -1,7 +1,6 @@
 # REF-006 AIWG Analysis: Cognitive Load Theory
 
 > **Source Paper**: [Cognitive Load During Problem Solving: Effects on Learning](../../../docs/references/REF-006-cognitive-load-theory.md)
-> **Research Corpus**: [Full Documentation](https://git.integrolabs.net/roctinam/research-papers)
 > **Author**: Sweller, J. (1988)
 > **Venue**: Cognitive Science, 12(2), 257-285
 

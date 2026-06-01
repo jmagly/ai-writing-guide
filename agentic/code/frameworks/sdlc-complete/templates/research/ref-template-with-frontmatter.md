@@ -79,7 +79,6 @@ last_verified: "2026-01-25"
 # REF-XXX: {{short_title}}
 
 > **Source Paper**: [{{title}}]({{identifiers.url}})
-> **Research Corpus**: [Full Documentation](https://git.integrolabs.net/roctinam/research-papers)
 > **Analysis Date**: {{analysis_date}}
 
 ## Overview

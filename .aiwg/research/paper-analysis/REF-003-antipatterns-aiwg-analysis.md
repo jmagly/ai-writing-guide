@@ -1,7 +1,6 @@
 # REF-003 AIWG Analysis: Agentic Development Anti-Patterns
 
-> **Source Paper**: [Agentic Development Anti-Patterns](https://git.integrolabs.net/roctinam/research-papers/blob/main/documentation/references/REF-003-agentic-development-antipatterns.md)
-> **Research Corpus**: [Full Documentation](https://git.integrolabs.net/roctinam/research-papers)
+> **Source Paper**: Agentic Development Anti-Patterns
 > **Analysis Date**: 2026-01-24
 
 ## Overview

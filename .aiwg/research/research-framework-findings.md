@@ -290,7 +290,7 @@ Documentation professionalization requires:
 - Claims need citations (citable-claims-index.md)
 
 Pattern established:
-- Shared corpus in research-papers repo
+- Shared corpus in the shared research corpus
 - Project-specific analysis in local repo
 - Cross-references between them
 
@@ -893,7 +893,7 @@ Discovery → Acquisition → Documentation → Integration → Archival
 | Semantic Scholar API | Discovery | Paper search, citation data |
 | Zotero | Acquisition | PDF management, metadata |
 | Obsidian | Documentation | PKM sync, note templates |
-| research-papers repo | Storage | Shared corpus management |
+| shared research corpus | Storage | Shared corpus management |
 | Knowledge Graph DB | Analysis | Concept relationships |
 | CI/CD | Workflows | Automated pipelines |
 
@@ -973,7 +973,7 @@ The framework should track and display:
 
 ### Internal Sources
 
-- research-papers repo structure and INDEX.md
+- shared research corpus structure and INDEX.md
 - matric-memory issues #154, #155
 - token-lifecycle/RNESS implementation
 - ai-writing-guide research patterns

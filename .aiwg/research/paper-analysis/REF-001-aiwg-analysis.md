@@ -1,7 +1,6 @@
 # REF-001 AIWG Analysis
 
 > **Source Paper**: [Production-Grade Agentic AI Workflows](https://arxiv.org/abs/2512.08769)
-> **Research Corpus**: [Full Documentation](https://git.integrolabs.net/roctinam/research-papers)
 > **Analysis Date**: 2026-01-24
 
 ## Overview

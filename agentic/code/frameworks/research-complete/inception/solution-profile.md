@@ -596,7 +596,7 @@ A complete framework (`agentic/code/frameworks/research-complete/`) providing:
 - [ ] **MVP Implementation**: Phase 1 scope (discovery + acquisition)
 - [ ] **API Integration**: Semantic Scholar API client
 - [ ] **Artifact Schema**: JSON schemas for metadata, quality scores
-- [ ] **Testing Strategy**: Validate on research-papers corpus
+- [ ] **Testing Strategy**: Validate on shared research corpus
 - [ ] **Documentation**: User guides, quick-start, examples
 
 ### 10.3 Medium-Term (Construction Phase)

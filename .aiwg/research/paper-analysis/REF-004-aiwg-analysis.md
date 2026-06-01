@@ -1,7 +1,6 @@
 # REF-004 AIWG Analysis: MAGIS Multi-Agent GitHub Issue Resolution
 
 > **Source Paper**: [MAGIS: LLM-Based Multi-Agent Framework for GitHub Issue ReSolution](https://arxiv.org/abs/2403.17927)
-> **Research Corpus**: [Full Documentation](https://git.integrolabs.net/roctinam/research-papers)
 > **Analysis Date**: 2026-01-24
 
 ## Overview

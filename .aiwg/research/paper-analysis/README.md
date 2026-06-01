@@ -1,6 +1,6 @@
 # Research Paper Analysis for AIWG
 
-This directory contains AIWG-specific analysis of foundational research papers from the [research-papers corpus](https://git.integrolabs.net/roctinam/research-papers).
+This directory contains AIWG-specific analysis of foundational research papers from the the shared research corpus.
 
 ## Overview
 
@@ -158,7 +158,7 @@ AIWG's multi-agent architecture is grounded in Mixture of Experts research
 
 When adding new research papers:
 
-1. Read full paper from [research-papers corpus](https://git.integrolabs.net/roctinam/research-papers)
+1. Read full paper from the shared research corpus
 2. Extract AIWG-specific sections
 3. Create `REF-XXX-aiwg-analysis.md` using template:
    - Implementation Mapping
@@ -170,7 +170,7 @@ When adding new research papers:
 
 ## Related Documentation
 
-- **Research Papers Corpus**: [git.integrolabs.net/roctinam/research-papers](https://git.integrolabs.net/roctinam/research-papers)
+- **Research Papers Corpus**: the shared research corpus
 - **AIWG Bibliography**: `docs/bibliography.md`
 - **AIWG Glossary**: `docs/glossary.md`
 - **SDLC Framework Docs**: `agentic/code/frameworks/sdlc-complete/docs/`
@@ -179,4 +179,4 @@ When adding new research papers:
 
 **Last Updated**: 2026-01-24
 **Papers Analyzed**: 5 (REF-006, REF-007, REF-008, REF-009, REF-010)
-**Source Corpus**: [research-papers](https://git.integrolabs.net/roctinam/research-papers)
+**Source Corpus**: the shared research corpus

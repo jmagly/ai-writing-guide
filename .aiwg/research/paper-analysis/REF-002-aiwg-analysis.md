@@ -1,7 +1,6 @@
 # REF-002 AIWG Analysis
 
 > **Source Paper**: [How Do LLMs Fail In Agentic Scenarios?](https://arxiv.org/pdf/2512.07497)
-> **Research Corpus**: [Full Documentation](https://git.integrolabs.net/roctinam/research-papers)
 > **Analysis Date**: 2026-01-24
 
 ## Overview

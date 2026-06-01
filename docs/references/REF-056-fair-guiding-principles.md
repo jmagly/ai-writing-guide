@@ -124,7 +124,7 @@ This directly applies to AIWG: managing research artifacts isn't bureaucratic ov
 
 ### 2. Two-Repository Architecture
 
-**Decision**: Canonical references in `research-papers` repo; project-specific analysis in each project's `docs/references/`.
+**Decision**: Canonical references in the shared research corpus; project-specific analysis in each project's `docs/references/`.
 
 **FAIR Justification**:
 - A1 (retrievable): Single source of truth for each paper

@@ -1,7 +1,6 @@
 # REF-005 AIWG Analysis: Miller's Law (Cognitive Limits)
 
 > **Source Paper**: [The Magical Number Seven, Plus or Minus Two](https://doi.org/10.1037/h0043158)
-> **Research Corpus**: [Full Documentation](https://git.integrolabs.net/roctinam/research-papers)
 > **Analysis Date**: 2026-01-24
 
 ## Overview

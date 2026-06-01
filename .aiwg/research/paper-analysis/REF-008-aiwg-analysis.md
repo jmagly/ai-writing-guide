@@ -1,7 +1,6 @@
 # REF-008 AIWG Analysis: Retrieval-Augmented Generation
 
 > **Source Paper**: [Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](../../../docs/references/REF-008-retrieval-augmented-generation.md)
-> **Research Corpus**: [Full Documentation](https://git.integrolabs.net/roctinam/research-papers)
 > **Authors**: Lewis, P., et al. (2020)
 > **Venue**: NeurIPS 2020
 

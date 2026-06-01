@@ -1,6 +1,6 @@
 # AIWG Research Paper Analysis Index
 
-This directory contains AIWG-specific analysis and implementation guidance extracted from research papers in the research-papers repository.
+This directory contains AIWG-specific analysis and implementation guidance extracted from research papers in the shared research corpus.
 
 ## Overview
 

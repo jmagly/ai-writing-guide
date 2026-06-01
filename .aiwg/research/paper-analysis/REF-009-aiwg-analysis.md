@@ -1,7 +1,6 @@
 # REF-009 AIWG Analysis: Neural Turing Machines
 
 > **Source Paper**: [Neural Turing Machines](../../../docs/references/REF-009-neural-turing-machines.md)
-> **Research Corpus**: [Full Documentation](https://git.integrolabs.net/roctinam/research-papers)
 > **Authors**: Graves, A., Wayne, G., & Danihelka, I. (2014)
 > **Venue**: arXiv:1410.5401 (presented at ICLR 2015)
 
