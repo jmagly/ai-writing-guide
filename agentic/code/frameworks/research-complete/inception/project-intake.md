@@ -10,7 +10,7 @@
 - **Project Name**: AIWG Research Framework
 - **Framework Location**: `agentic/code/frameworks/research-complete/`
 - **Repository**: https://github.com/jmagly/ai-writing-guide.git
-- **Related Systems**: research-papers repo (shared corpus), matric-memory (professionalization use case), matric-eval (benchmarking use case)
+- **Related Systems**: the shared research corpus, matric-memory (professionalization use case), matric-eval (benchmarking use case)
 - **Project Sponsor**: Joseph Magly (AIWG maintainer)
 - **Stakeholders**:
   - **Primary**: Solo researchers, academic teams using AI for literature review
@@ -54,7 +54,7 @@ Build `agentic/code/frameworks/research-complete/` as a comprehensive framework 
 5. **Assesses Quality**: GRADE-inspired evidence grading, FAIR compliance scoring, reproducibility assessment
 6. **Builds Networks**: Citation network analysis, knowledge graph construction, author/concept relationship mapping
 7. **Ensures Reproducibility**: R-LAM-inspired deterministic workflows, PRISMA-style search strategies, preregistration support
-8. **Enables Collaboration**: Shared corpus management (research-papers repo pattern), team synchronization
+8. **Enables Collaboration**: Shared corpus management (shared-corpus pattern), team synchronization
 9. **Archives Research**: OAIS-inspired preservation with SIP/AIP/DIP lifecycle management
 
 ### Target Users
@@ -100,7 +100,7 @@ Build `agentic/code/frameworks/research-complete/` as a comprehensive framework 
 - Semantic Scholar API (discovery)
 - Zotero (reference management)
 - Obsidian (PKM compatibility)
-- research-papers repo (shared corpus)
+- the shared research corpus
 - Knowledge Graph DB (concept relationships)
 - CI/CD (automated pipelines)
 
@@ -432,7 +432,7 @@ Build `agentic/code/frameworks/research-complete/` as a comprehensive framework 
 
 **Concurrent Work**:
 - AIWG core framework development (ongoing)
-- research-papers repo population (ongoing)
+- shared research corpus population (ongoing)
 - matric-memory documentation professionalization (blocked on this framework)
 
 **Successor Work**:
@@ -484,7 +484,7 @@ Build `agentic/code/frameworks/research-complete/` as a comprehensive framework 
 
 - matric-memory issues #154, #155 (professionalization needs)
 - matric-eval (benchmarking research needs)
-- research-papers repo (shared corpus pattern)
+- the shared-corpus pattern
 - token-lifecycle/RNESS (simulation-based validation pattern)
 
 ### Standards & Specifications

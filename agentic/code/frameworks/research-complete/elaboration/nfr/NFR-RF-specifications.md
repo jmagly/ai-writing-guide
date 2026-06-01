@@ -479,11 +479,11 @@ API keys (Semantic Scholar, LLM services) SHALL be stored in environment variabl
 **Priority**: Should Have
 
 **Requirement Statement**:
-The system SHALL provide warnings when committing to shared repositories (research-papers repo) and document guidelines for identifying sensitive data (proprietary research, confidential sources).
+The system SHALL provide warnings when committing to shared repositories (shared research corpus) and document guidelines for identifying sensitive data (proprietary research, confidential sources).
 
 **Rationale**:
 - Risk mitigation: Data privacy in shared corpus (Risk S-02)
-- Shared corpus use case: research-papers repo across projects
+- Shared corpus use case: shared research corpus across projects
 - Legal liability: Prevent accidental exposure of confidential data
 - User awareness: Many users unfamiliar with data privacy risks
 
@@ -997,7 +997,7 @@ Every research source SHALL be assigned a globally unique, persistent identifier
 **Rationale**:
 - FAIR F1: Data assigned globally unique and persistent identifier
 - Citation accuracy: Stable IDs prevent broken references
-- Cross-project reuse: research-papers repo shared across projects
+- Cross-project reuse: shared research corpus shared across projects
 - Interoperability: DOIs standard in academic publishing
 
 **Acceptance Criteria**:

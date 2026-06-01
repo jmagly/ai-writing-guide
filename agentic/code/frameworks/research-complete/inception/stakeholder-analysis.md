@@ -310,7 +310,7 @@ Documentation professionalization effort requiring research acquisition, citatio
 - Back all claims with authoritative citations
 - Map informal terminology to professional terms
 - Support multi-audience documentation levels
-- Maintain shared corpus in research-papers repo
+- Maintain shared corpus in shared research corpus
 
 **Pain Points (Current State)**:
 - Manual research acquisition is slow
@@ -324,7 +324,7 @@ Documentation professionalization effort requiring research acquisition, citatio
 - Citation integration workflow defined
 - Terminology mapping agent available
 - Claims index auto-generated and maintained
-- research-papers repo integration seamless
+- shared research corpus integration seamless
 
 **Influence Level**: Low
 **Interest Level**: High
@@ -440,7 +440,7 @@ Agent Devs   │ Maintainers
 | Quadrant | Stakeholders | Engagement Strategy |
 |----------|--------------|---------------------|
 | **Manage Closely** | AIWG Users, Maintainers, Agent Devs | Co-design sessions, frequent updates, direct involvement in decisions |
-| **Keep Satisfied** | research-papers repo, Semantic Scholar | Regular status updates, involve in key decisions, respect constraints |
+| **Keep Satisfied** | shared research corpus, Semantic Scholar | Regular status updates, involve in key decisions, respect constraints |
 | **Keep Informed** | AI Researchers, Docs Writers, Contributors | Progress reports, feedback channels, documentation updates |
 | **Monitor** | Solo Practitioners, token-lifecycle | General communications, low-touch support, self-service resources |
 
@@ -686,7 +686,7 @@ Agent Devs   │ Maintainers
 - [ ] Successfully professionalize all documentation using framework
 - [ ] 100% claims backed with citations
 - [ ] Terminology mapping reduces by 80% manual effort
-- [ ] Integration with research-papers repo seamless
+- [ ] Integration with shared research corpus seamless
 
 **token-lifecycle Project**:
 - [ ] All simulation parameters backed by literature

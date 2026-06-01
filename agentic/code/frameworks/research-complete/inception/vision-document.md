@@ -398,7 +398,7 @@ From stakeholder analysis and project intake, users experience:
 - Export packages for repositories
 
 **Collaboration Features**:
-- research-papers repo synchronization
+- shared research corpus synchronization
 - Shared corpus deduplication
 - Cross-project discovery
 - Team workflow templates
@@ -557,7 +557,7 @@ From stakeholder analysis and project intake, users experience:
    - Targets 100 sources to back 200 claims (some sources back multiple claims)
 
 3. **Acquisition**: Writer acquires research corpus
-   - Acquisition Agent downloads papers to research-papers repo (shared across projects)
+   - Acquisition Agent downloads papers to shared research corpus (shared across projects)
    - Metadata extraction populates REF-XXX files
    - FAIR validation ensures all sources meet standards
    - Quality scores guide which sources to prioritize
@@ -575,7 +575,7 @@ From stakeholder analysis and project intake, users experience:
    - Professional terminology adopted across documentation
 
 6. **Publication**: matric-memory documentation ready for academic venues
-   - Research corpus shared in research-papers repo for reuse
+   - Research corpus shared in shared research corpus for reuse
    - Cross-project references enable knowledge sharing
    - Framework process documented for other projects
 
@@ -826,7 +826,7 @@ From stakeholder analysis and project intake, users experience:
 **Process Dependencies**:
 - Research findings document complete (DONE: @.aiwg/research/research-framework-findings.md)
 - matric-memory professionalization needs identified (DONE: Issues #154, #155)
-- research-papers repo established (DONE: /tmp/research-papers)
+- shared research corpus established (DONE: /tmp/research-papers)
 
 **Mitigation**:
 - All prerequisite artifacts complete before development
@@ -1032,7 +1032,7 @@ From stakeholder analysis and project intake, users experience:
 - **Timeline**: Weeks 3-5
 - **Responsible**: Technical Lead
 
-**Tertiary Stakeholders** (matric-memory, token-lifecycle, research-papers repo):
+**Tertiary Stakeholders** (matric-memory, token-lifecycle, shared research corpus):
 - **Status**: VALIDATION PENDING
 - **Method**: Use case validation interviews (Elaboration phase)
 - **Timeline**: Weeks 4-6

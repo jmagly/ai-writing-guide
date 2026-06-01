@@ -1,7 +1,7 @@
 # Research Corpus Data Model
 
 Authoritative reference for the research-corpus artifacts the `research-complete`
-framework reads and writes. Confirmed against the `section9/research-papers`
+framework reads and writes. Confirmed against the shared research corpus
 warehouse (the reference implementation) and consumed by the shared parser at
 `src/artifacts/corpus-views/ref-parser.ts` (#1497).
 

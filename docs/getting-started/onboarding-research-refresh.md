@@ -39,7 +39,7 @@ The onboarding implication is concrete:
 
 ## Induction Follow-Up
 
-These sources should be considered for formal induction in the research-papers repo if this evidence becomes release-critical. The strongest candidates are the IBM/IUI 2025 agentic mental-model paper, the FAccT 2025 trust/distrust validation paper, plus the IJHCS 2025 trust/reliance survey.
+These sources should be considered for formal induction in the shared research corpus if this evidence becomes release-critical. The strongest candidates are the IBM/IUI 2025 agentic mental-model paper, the FAccT 2025 trust/distrust validation paper, plus the IJHCS 2025 trust/reliance survey.
 
 Use the same 80% evidence discipline from the provider matrix when turning this note into release claims: a source can support a design decision, but it does not prove provider behavior.
 

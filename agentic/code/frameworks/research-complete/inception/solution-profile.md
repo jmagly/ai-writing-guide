@@ -319,7 +319,7 @@ A complete framework (`agentic/code/frameworks/research-complete/`) providing:
 | Semantic Scholar | REST API | Paper search, citation data | JSON responses, rate limiting |
 | Zotero | File import/export | PDF management, metadata | BibTeX/RIS interchange |
 | Obsidian | Markdown sync | PKM integration, note templates | Bidirectional linking, graph view |
-| research-papers repo | Git submodule/reference | Shared corpus management | Cross-project references |
+| shared research corpus | Git submodule/reference | Shared corpus management | Cross-project references |
 | Knowledge Graph DB | JSON export | Concept relationships | Neo4j/RDF export optional |
 | CI/CD | GitHub Actions | Automated pipelines | Workflow definitions |
 | BibTeX/RIS | File export | Reference manager export | Standard formats |

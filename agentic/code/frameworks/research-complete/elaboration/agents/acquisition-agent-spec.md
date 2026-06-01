@@ -14,7 +14,7 @@
 
 ### Description
 
-The Acquisition Agent transforms discovery results into a structured research corpus. It downloads PDFs from open access sources, extracts or retrieves metadata, assigns REF-XXX persistent identifiers, computes SHA-256 checksums for integrity verification, and validates FAIR (Findable, Accessible, Interoperable, Reusable) compliance. The agent handles paywalled papers through manual upload workflows and integrates with shared research-papers repositories to avoid duplicate downloads.
+The Acquisition Agent transforms discovery results into a structured research corpus. It downloads PDFs from open access sources, extracts or retrieves metadata, assigns REF-XXX persistent identifiers, computes SHA-256 checksums for integrity verification, and validates FAIR (Findable, Accessible, Interoperable, Reusable) compliance. The agent handles paywalled papers through manual upload workflows and integrates with shared research corpora to avoid duplicate downloads.
 
 ## 2. Capabilities
 

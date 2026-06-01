@@ -21,8 +21,6 @@ This glossary documents AIWG's dual-terminology approach: accessible informal te
 **Professional Terms** - Used in research contexts, academic writing, and enterprise positioning
 **Citations/Standards** - Research papers, industry standards, or specifications backing the professional terminology
 
-> **Full Paper Documentation**: [roctinam/research-papers](https://github.com/jmagly/research-papers)
-
 ## Terminology by Domain
 
 ### Core Architecture Terms
@@ -431,4 +429,4 @@ This glossary is maintained alongside AIWG's research corpus. When new research 
 - @docs/research/research-background.md - Research foundations
 - @.aiwg/planning/documentation-professionalization-plan.md - Professional terminology strategy
 - @.aiwg/research/paper-analysis/INDEX.md - Complete research corpus
-- [roctinam/research-papers](https://github.com/jmagly/research-papers) - Full paper repository
+- `docs/references/` - AIWG reference summaries (REF-NNN)

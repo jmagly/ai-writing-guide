@@ -1,8 +1,6 @@
 # Research References
 
-> **Full Research Corpus**: [roctinam/research-papers](https://github.com/jmagly/research-papers)
->
-> This directory contains AIWG-specific reference summaries. The comprehensive paper documentation, PDFs, and supporting indices are maintained in the shared research-papers repository.
+> This directory contains AIWG-specific reference summaries (REF-NNN entries) — the citations that ground AIWG's design decisions.
 
 ## Purpose
 
@@ -172,11 +170,6 @@ When adding a new reference:
 - **Claims Index**: `.aiwg/research/citable-claims-index.md` - Tracks which AIWG claims need citations
 - **Gap Analysis**: `.aiwg/research/research-gap-analysis.md` - Identifies AIWG priority research areas
 - **Terminology Glossary**: `docs/research/glossary.md` - Maps informal terms to professional equivalents
-
-**Shared Research Corpus** ([research-papers](https://github.com/jmagly/research-papers)):
-- **Full Paper Documentation**: `documentation/references/REF-XXX-*.md`
-- **PDFs**: `pdfs/full/` and `pdfs/chunks/`
-- **Master Index**: `INDEX.md` - Topic and relevance lookups
 
 ---
 
