@@ -1,8 +1,0 @@
-{
-  "provider": "local",
-  "issue_key": {
-    "prefix": "AIWG",
-    "padding": 4,
-    "next": 6
-  }
-}
