@@ -568,3 +568,77 @@ describe('discoverCapability — Flow documents surface in default discover (#15
     expect(flowHit.type).toBe('flow');
   });
 });
+
+describe('discoverCapability — deployed commands are discoverable (#1541)', () => {
+  // #1541: `aiwg discover "address-issues"` returned nothing in a user opencode
+  // project even though the command source exists in the framework graph. Two
+  // root causes: (a) discover must source the framework graph (#1545), and
+  // (b) when the framework index is absent, discover must auto-build it from the
+  // AIWG install root ($AIWG_ROOT) — a user project's cwd has no agentic/code,
+  // so the cwd-only auto-build never fired.
+
+  function writeFrameworkCommand(root: string, slug: string, desc: string): void {
+    const dir = path.join(root, 'agentic', 'code', 'frameworks', 'fx', 'commands');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, `${slug}.md`), `---\ndescription: ${desc}\n---\n\n# ${slug}\n`, 'utf8');
+  }
+
+  it('a command in the framework graph is found by name + via --type command', () => {
+    const prevXdg = process.env.XDG_DATA_HOME;
+    const prevRoot = process.env.AIWG_ROOT;
+    process.env.XDG_DATA_HOME = path.join(tmpRoot, 'xdg-a'); // sandbox the shared framework index
+    process.env.AIWG_ROOT = cwd;
+    try {
+      writeFrameworkCommand(cwd, 'addr-issues', 'Address selected issues in bounded slices');
+      const b = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const be = vi.spyOn(console, 'error').mockImplementation(() => {});
+      // Build directly here (force) so the assertion is deterministic.
+      // The auto-build path is exercised by the next test.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      return import('../../../src/artifacts/index-builder.js').then(async ({ buildIndex }) => {
+        await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+        b.mockRestore(); be.mockRestore();
+        const captured: string[] = [];
+        const logSpy = vi.spyOn(console, 'log').mockImplementation((...a) => captured.push(a.join(' ')));
+        const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        await discoverCapability(cwd, { phrase: 'addr-issues', typeFilter: ['command'], json: true, limit: 5 });
+        logSpy.mockRestore(); errSpy.mockRestore();
+        const parsed = JSON.parse(captured.join('\n'));
+        const hit = parsed.results.find((r: { path: string; type: string }) => r.path.endsWith('commands/addr-issues.md'));
+        expect(hit, 'command should be discoverable by name').toBeTruthy();
+        expect(hit.type).toBe('command');
+      });
+    } finally {
+      if (prevXdg === undefined) delete process.env.XDG_DATA_HOME; else process.env.XDG_DATA_HOME = prevXdg;
+      if (prevRoot === undefined) delete process.env.AIWG_ROOT; else process.env.AIWG_ROOT = prevRoot;
+    }
+  });
+
+  it('auto-builds the framework index from $AIWG_ROOT when cwd has no agentic/code (user-project case)', async () => {
+    const prevXdg = process.env.XDG_DATA_HOME;
+    const prevRoot = process.env.AIWG_ROOT;
+    // Fresh XDG so NO framework index exists yet — forces the auto-build path.
+    process.env.XDG_DATA_HOME = path.join(tmpRoot, 'xdg-b');
+    // AIWG install root (has agentic/code) is SEPARATE from the user project cwd.
+    const installRoot = path.join(tmpRoot, 'aiwg-install');
+    fs.mkdirSync(installRoot, { recursive: true });
+    writeFrameworkCommand(installRoot, 'addr-issues', 'Address selected issues in bounded slices');
+    process.env.AIWG_ROOT = installRoot;
+    // User project: a cwd with NO agentic/code (so the cwd-only auto-build can't fire).
+    const userProject = path.join(tmpRoot, 'user-project');
+    fs.mkdirSync(userProject, { recursive: true });
+    try {
+      const captured: string[] = [];
+      const logSpy = vi.spyOn(console, 'log').mockImplementation((...a) => captured.push(a.join(' ')));
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      await discoverCapability(userProject, { phrase: 'addr-issues', typeFilter: ['command'], json: true, limit: 5 });
+      logSpy.mockRestore(); errSpy.mockRestore();
+      const parsed = JSON.parse(captured.join('\n'));
+      const hit = parsed.results?.find((r: { path: string }) => r.path.endsWith('commands/addr-issues.md'));
+      expect(hit, 'discover should auto-build the framework index from $AIWG_ROOT and find the command').toBeTruthy();
+    } finally {
+      if (prevXdg === undefined) delete process.env.XDG_DATA_HOME; else process.env.XDG_DATA_HOME = prevXdg;
+      if (prevRoot === undefined) delete process.env.AIWG_ROOT; else process.env.AIWG_ROOT = prevRoot;
+    }
+  });
+});

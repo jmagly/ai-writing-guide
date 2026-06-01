@@ -456,15 +456,38 @@ export async function discoverCapability(
     // index is missing but its source is present, build it once (incremental
     // thereafter) so discover Just Works without the operator picking a graph.
     let fwIdx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', 'framework');
-    if (!fwIdx && fs.existsSync(path.join(cwd, 'agentic', 'code'))) {
-      const { buildIndex } = await import('./index-builder.js');
-      if (!params.json) console.error('Building capability index (first run)…');
-      try {
-        await buildIndex(cwd, { graph: 'framework', explicit: false });
-      } catch {
-        /* non-fatal — fall through to whatever index is available */
+    if (!fwIdx) {
+      // The framework graph is shared (XDG) and `defaultBuild: false`, so a bare
+      // `aiwg index build` never (re)builds it — only `aiwg use` or an explicit
+      // `--graph framework` does. When it's absent, build it from wherever the
+      // AIWG source lives: `cwd/agentic/code` when inside the AIWG repo, else
+      // `$AIWG_ROOT/agentic/code` for a USER project (#1541 — opencode users sit
+      // in their own project, not the AIWG repo, so a cwd-only check left
+      // discover unable to find deployed commands like address-issues). buildIndex
+      // scans <root>/agentic/code and writes to the cwd-independent XDG dir, so
+      // reading back via cwd still resolves the freshly-built shared index.
+      const buildRoot = fs.existsSync(path.join(cwd, 'agentic', 'code'))
+        ? cwd
+        : aiwgRoot && fs.existsSync(path.join(aiwgRoot, 'agentic', 'code'))
+          ? aiwgRoot
+          : null;
+      if (buildRoot) {
+        const { buildIndex } = await import('./index-builder.js');
+        if (!params.json) console.error('Building capability index (first run)…');
+        // buildIndex writes progress to stdout. In --json mode that would corrupt
+        // the JSON envelope the caller parses, so silence stdout for the duration
+        // of the auto-build (the build is incidental to the query).
+        const origLog = console.log;
+        if (params.json) console.log = () => {};
+        try {
+          await buildIndex(buildRoot, { graph: 'framework', explicit: false });
+        } catch {
+          /* non-fatal — fall through to whatever index is available */
+        } finally {
+          console.log = origLog;
+        }
+        fwIdx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', 'framework');
       }
-      fwIdx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', 'framework');
     }
     if (fwIdx) entries.push(...Object.values(fwIdx.entries));
     // Project-local capability artifacts (skills/agents/commands/rules authored
