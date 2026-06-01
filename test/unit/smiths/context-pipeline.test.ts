@@ -419,6 +419,10 @@ describe('context finalization emission', () => {
         expect(content).toContain('aiwg discover');
         expect(content).toContain('aiwg show');
         expect(content).toContain('decline-without-search');
+        // #1542: directive classification + act-don't-ask + command discovery hint
+        expect(content).toContain('new directive');
+        expect(content).toContain('address-issues');
+        expect(content).toContain('show command');
       }
     } finally {
       rmSync(dir, { recursive: true, force: true });

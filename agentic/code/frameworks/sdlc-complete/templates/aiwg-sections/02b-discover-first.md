@@ -1,6 +1,19 @@
 ## Discover-First Protocol (CRITICAL)
 
-Before declining a user request as "outside AIWG's scope" or improvising a workflow from training data, you MUST consult AIWG's artifact index.
+### Classify each turn FIRST: new directive vs continuation
+
+Before responding to any user message, classify it:
+
+- **New directive** — a fresh task, often pasted as data: an `address-issues` tracker table, an issue list, a command name, a flow name, "now do X". This is the common first-turn case.
+- **Continuation** — extends work already in flight.
+
+When a message **names or references an AIWG command/capability** — even if it looks like informational content (a tracker table, an issue list, a flow name) — treat it as a **new directive** and ACT: run `aiwg discover`, fetch with `aiwg show`, and invoke the capability. Do **NOT** ask "what would you like me to do with these?" when the action is implied by the content. A pasted `address-issues #1234 #1235` table means *run the address-issues workflow on those issues* — discover it and do it, don't ask.
+
+Ask a clarifying question only when the directive is genuinely ambiguous (could be two different tasks) — never as a reflex to avoid acting.
+
+### Before declining or improvising
+
+Beyond the new-directive case, you MUST also consult AIWG's artifact index before declining a request as "outside AIWG's scope" or improvising a workflow from training data.
 
 AIWG ships ~400 skills, ~190 agents, ~70 commands, and ~60 rules across its installed frameworks. Most are NOT loaded into your context — they live at the install location and reach you via two CLI commands:
 
@@ -13,10 +26,13 @@ aiwg show <type> <name>          # e.g. aiwg show skill flow-deploy-to-productio
 
 You MUST run `aiwg discover` when any of the following is true:
 
+- A new directive **names or references an AIWG command/capability** (e.g. an `address-issues` tracker, an `issue-audit` request, a `flow-*` name) — discover it and act, even when it arrives as a pasted table or list
 - You are about to tell the user "AIWG doesn't have a way to do that"
 - You are about to write a custom workflow / script / procedure from scratch
 - The user's request mentions AIWG, a framework name (sdlc, research, forensics, ops, security-engineering, marketing, media-curator, knowledge-base), or capability keywords (skill, agent, command, rule, workflow, flow, template, addon)
 - You are uncertain whether a curated AIWG artifact already addresses the request
+
+**Deployed commands are discoverable.** Commands AIWG deploys to your provider's command directory (`.opencode/command/*.md`, `.claude/commands/*.md`, `~/.codex/prompts/*.md`, …) are indexed: `aiwg discover "<name>"` returns them and `aiwg show command <name>` fetches the body. If a deployed command isn't surfacing, the framework capability index may be unbuilt — `aiwg discover` rebuilds it from `$AIWG_ROOT` automatically (a stale "no matches" is a bug, not a signal that the command is absent).
 
 You MAY skip discover only when:
 
