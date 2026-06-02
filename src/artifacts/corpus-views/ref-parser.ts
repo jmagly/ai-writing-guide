@@ -28,6 +28,8 @@ export interface RefRecord {
   refId: string;
   /** Canonical source type (#1509): paper/preprint/blog/repo/… (or meta/other). */
   sourceType: string;
+  /** Downstream consuming projects from the "## Referenced By" table (#1495). */
+  referencedByProjects: string[];
   title: string;
   path: string;
   year: number | null;
@@ -302,6 +304,46 @@ export function extractFunders(citation: Record<string, unknown>): FunderRef[] {
 }
 
 /** Scan a research corpus and parse all REF records. Mirrors build.py load_refs + checksum_sources. */
+/**
+ * Extract consuming-project names from a ref doc's "## Referenced By" table
+ * (#1495). The Project column holds `[name](url)` links or plain text; we keep
+ * the link text / plain value. Returns a de-duplicated list.
+ */
+export function extractReferencedByProjects(text: string): string[] {
+  const lines = text.split('\n');
+  let inSection = false;
+  const projects = new Set<string>();
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('## ')) {
+      inSection = /^##\s+referenced by/i.test(trimmed);
+      continue;
+    }
+    if (!inSection) continue;
+    if (!trimmed.startsWith('|')) continue;
+    const cells = trimmed.replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+    const first = cells[0] ?? '';
+    // Skip header + separator rows.
+    if (!first || /^-+$/.test(first) || first.toLowerCase() === 'project') continue;
+    // Extract markdown-link text `[name](url)` → name; else the raw cell.
+    const m = first.match(/^\[([^\]]+)\]/);
+    let name = (m ? m[1] : first).trim();
+    // Drop a trailing issue suffix + parentheticals so per-issue rows roll up to
+    // the consuming repo (e.g. `fortemi/fortemi#436` → `fortemi/fortemi`).
+    name = name.replace(/#\d+.*$/, '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+    // Reject obvious non-projects: empty/dash, HTML comments, placeholder tokens,
+    // REF cross-references, and descriptive cluster/literature phrases.
+    if (!name || name === '—' || name === '-') continue;
+    if (/^<!--/.test(name)) continue;
+    if (/^_?\(?\s*(none|tbd|induction)\b/i.test(name)) continue;
+    if (/^REF-\d/i.test(name)) continue;
+    if (/\b(cluster|literature|sub-cluster)\b/i.test(name)) continue;
+    if (name.length > 40) continue;
+    projects.add(name);
+  }
+  return [...projects];
+}
+
 export function loadCorpus(root: string): CorpusParse {
   const refsDir = path.join(root, 'documentation', 'references');
   const citesDir = path.join(root, 'documentation', 'citations');
@@ -341,6 +383,7 @@ export function loadCorpus(root: string): CorpusParse {
         { type: asStr(fm.type), sourceType: asStr(fm.source_type), venue },
         srcTypeReg,
       ),
+      referencedByProjects: extractReferencedByProjects(text),
       title: extractTitle(text, fm),
       path: filePath,
       year: extractYear(text, fm, citation),

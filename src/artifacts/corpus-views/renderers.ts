@@ -300,6 +300,24 @@ function renderStaleQueue(ctx: RenderContext): string {
 }
 
 /** Supported renderer names — `name` in the index.graphs.indices.manifest selects one of these. */
+/**
+ * Cross-project impact (#1495): refs ranked by how many downstream projects
+ * cite them (from the "Referenced By" table). Surfaces what's load-bearing
+ * across the org.
+ */
+function renderProjectImpact(ctx: RenderContext): string {
+  const ranked = ctx.records
+    .filter((r) => r.referencedByProjects.length > 0)
+    .sort((a, b) => b.referencedByProjects.length - a.referencedByProjects.length || compareRefId(a.refId, b.refId));
+  const lines = header('Index: Cross-Project Impact', ctx, ranked.length);
+  lines.push('Refs ranked by number of consuming projects (downstream "Referenced By").', '');
+  lines.push('| Rank | REF | Projects | Consuming projects |', '|---|---|---:|---|');
+  ranked.forEach((r, i) => {
+    lines.push(`| ${i + 1} | ${refLink(r)} | ${r.referencedByProjects.length} | ${r.referencedByProjects.join(', ')} |`);
+  });
+  return lines.join('\n').replace(/\s+$/, '') + '\n';
+}
+
 export const SUPPORTED_VIEWS = [
   'by-year', 'by-topic', 'authors', 'by-venue', 'by-method', 'by-model-size',
   'training-pipeline', 'citation-network', 'by-author', 'by-org', 'by-bridge', 'unprofiled-hubs',
@@ -307,6 +325,8 @@ export const SUPPORTED_VIEWS = [
   'by-grade', 'radar-stale-queue', 'by-trajectory', 'by-source', 'by-curator', 'by-funder',
   // source-type view (#1509)
   'by-source-type',
+  // cross-project views (#1495)
+  'by-project', 'project-impact',
 ] as const;
 
 export type ViewName = (typeof SUPPORTED_VIEWS)[number];
@@ -335,6 +355,9 @@ export function renderView(name: string, ctx: RenderContext): string {
     case 'by-funder': return renderGrouped('Index: Papers by Funder', ctx, groupBy(ctx.records, (r) => (r.funders.length ? r.funders.map((f) => f.id) : ['unfunded'])), 'unfunded');
     // Source-type view (#1509) — groups refs by the canonical source type the registry normalizes to.
     case 'by-source-type': return renderGrouped('Index: Sources by Type', ctx, groupBy(ctx.records, (r) => [r.sourceType || 'other']), 'other');
+    // Cross-project views (#1495) — consuming-project grouping + impact ranking.
+    case 'by-project': return renderGrouped('Index: Refs by Consuming Project', ctx, groupBy(ctx.records, (r) => (r.referencedByProjects.length ? r.referencedByProjects : ['(no consuming project)'])), '(no consuming project)');
+    case 'project-impact': return renderProjectImpact(ctx);
     default: throw new Error(`unsupported graph: ${name}`);
   }
 }
