@@ -198,7 +198,9 @@ export async function semanticQuery(
   const result = await embed(query, { pooling: 'mean', normalize: true });
 
   const index = new HierarchicalNSW('cosine', manifest.dims);
-  index.readIndex(path.join(indexDir, 'embeddings', 'vectors.hnsw'));
+  // readIndexSync, not the async readIndex — the async form returns a promise
+  // that, if not awaited, leaves the index empty (getCurrentCount() === 0).
+  index.readIndexSync(path.join(indexDir, 'embeddings', 'vectors.hnsw'));
   // setEfSearch controls recall quality — higher = better but slower
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const idx = index as any;
@@ -279,4 +281,62 @@ export function detectEmbeddingChanges(
   }
 
   return { changed, added, removed };
+}
+
+/** A near-duplicate pair surfaced by the embedding index. */
+export interface DedupPair {
+  /** First node id (lexicographically smaller). */
+  a: string;
+  /** Second node id. */
+  b: string;
+  /** Cosine similarity (0-1). */
+  score: number;
+}
+
+/**
+ * Near-duplicate report (#1493). Reads the prebuilt embedding index and, using
+ * each stored vector (no re-embedding), finds node pairs whose cosine
+ * similarity is at or above `threshold`. Pairs are de-duplicated (unordered)
+ * and returned most-similar-first.
+ *
+ * Requires a built embedding index (`aiwg index embed`). Throws if absent.
+ */
+export async function dedupReport(
+  indexDir: string,
+  threshold = 0.92,
+  topK = 5
+): Promise<DedupPair[]> {
+  const manifest = loadEmbeddingManifest(indexDir);
+  if (!manifest) {
+    throw new Error(`No embedding index found at ${indexDir}/embeddings/`);
+  }
+
+  const hnswlib: any = await (new Function('m', 'return import(m)'))('hnswlib-node');
+  const HierarchicalNSW = hnswlib.HierarchicalNSW ?? hnswlib.default?.HierarchicalNSW;
+  if (!HierarchicalNSW) {
+    throw new Error('hnswlib-node: HierarchicalNSW not found in module exports');
+  }
+
+  const index = new HierarchicalNSW('cosine', manifest.dims);
+  index.readIndexSync(path.join(indexDir, 'embeddings', 'vectors.hnsw'));
+  const idx = index as any;
+  const k = Math.min(topK + 1, manifest.nodeIds.length);
+  if (typeof idx.setEf === 'function') idx.setEf(Math.max(k * 2, 50));
+
+  const seen = new Map<string, DedupPair>();
+  for (let i = 0; i < manifest.nodeIds.length; i++) {
+    const vec = idx.getPoint(i);
+    const { neighbors, distances } = index.searchKnn(vec, k);
+    for (let n = 0; n < neighbors.length; n++) {
+      const j = neighbors[n];
+      if (j === i) continue;
+      const score = 1 - (distances[n] ?? 0);
+      if (score < threshold) continue;
+      const [a, b] = [manifest.nodeIds[i], manifest.nodeIds[j]].sort();
+      const key = `${a}|${b}`;
+      const prev = seen.get(key);
+      if (!prev || score > prev.score) seen.set(key, { a, b, score });
+    }
+  }
+  return [...seen.values()].sort((x, y) => y.score - x.score);
 }

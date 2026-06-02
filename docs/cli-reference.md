@@ -3819,6 +3819,40 @@ aiwg index neighbors --node .aiwg/requirements/UC-001.md --edge-type implements
 
 ---
 
+### index embed
+
+Build the semantic embedding index for a graph (so `--semantic`, `index similar`, and `index dedup-report` work). Requires the optional deps `@xenova/transformers` + `hnswlib-node` (`npm install @xenova/transformers hnswlib-node`) — semantic search is opt-in; without the deps the command prints install guidance and exits.
+
+```bash
+aiwg index embed --graph papers              # embed the papers graph's metadata (title + summary)
+aiwg index embed --graph papers --model Xenova/all-MiniLM-L6-v2   # explicit model
+```
+
+Embeddings are written to `<graph index dir>/embeddings/` (regenerable; gitignored with the rest of `.aiwg/.index/`). Re-run after `aiwg index build` to refresh.
+
+### index similar
+
+Find semantic neighbors of a node (conceptually nearest artifacts).
+
+```bash
+aiwg index similar --node REF-394 --graph papers --top 10
+aiwg index similar --node REF-394 --graph papers --json
+```
+
+### index dedup-report
+
+Surface near-duplicate node pairs above a cosine-similarity threshold — high-value corpus maintenance (catches the same paper inducted twice).
+
+```bash
+aiwg index dedup-report --graph papers                    # threshold 0.92
+aiwg index dedup-report --graph papers --threshold 0.85   # looser; more candidate pairs
+aiwg index dedup-report --graph papers --json
+```
+
+Each pair lists both node ids + their titles, most-similar-first. Embeddings are over title + summary, so this catches title/abstract-level duplicates; lower the threshold to surface looser matches.
+
+---
+
 ### index deps
 
 Show artifact dependency graph based on @-mention references.

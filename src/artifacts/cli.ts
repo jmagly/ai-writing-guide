@@ -84,6 +84,18 @@ export async function main(args: string[]): Promise<void> {
       await handleSetQuery(subcommandArgs);
       break;
 
+    case 'embed':
+      await handleEmbed(subcommandArgs);
+      break;
+
+    case 'similar':
+      await handleSimilar(subcommandArgs);
+      break;
+
+    case 'dedup-report':
+      await handleDedup(subcommandArgs);
+      break;
+
     case 'watch':
       await handleWatch(subcommandArgs);
       break;
@@ -115,7 +127,7 @@ export async function main(args: string[]): Promise<void> {
 
     default:
       console.error(`Error: Unknown index subcommand '${subcommand}'`);
-      console.log('Available: build, query, discover, deps, stats, neighbors, set, watch');
+      console.log('Available: build, query, discover, deps, stats, neighbors, set, embed, similar, dedup-report, watch');
       process.exit(1);
   }
 }
@@ -132,6 +144,9 @@ function printIndexUsage(): void {
   console.log('  stats      Show index statistics');
   console.log('  neighbors  Get neighbors of a node in a graph');
   console.log('  set        Set operations (intersection, union, difference) on neighbor sets');
+  console.log('  embed      Build the semantic embedding index for a graph (opt-in deps)');
+  console.log('  similar    Semantic neighbors of a node (requires embed)');
+  console.log('  dedup-report  Near-duplicate node pairs above a similarity threshold');
   console.log('  watch      Start a filesystem watcher for automatic incremental index updates');
   console.log('');
   console.log('Options:');
@@ -418,6 +433,16 @@ async function handleQuery(args: string[]): Promise<void> {
 
   const graph = parseGraphFlag(flags);
 
+  // --semantic (#1493): conceptual similarity via the embedding index.
+  if (flags.includes('--semantic')) {
+    if (!text) {
+      console.error('Error: --semantic requires a query string.');
+      process.exit(1);
+    }
+    await runSemanticQuery(cwd, text, graph, limit ?? 10, json);
+    return;
+  }
+
   await queryIndex(cwd, {
     text,
     type,
@@ -428,6 +453,134 @@ async function handleQuery(args: string[]): Promise<void> {
     path: pathPattern,
     fulltext,
   }, { json, graph });
+}
+
+/** Resolve the embedding index dir for a graph, or null if deps/index absent (with guidance printed). */
+async function requireEmbeddingIndex(cwd: string, graph: GraphType | undefined): Promise<string | null> {
+  const { checkEmbeddingDeps, loadEmbeddingManifest } = await import('./embedding-index.js');
+  const { resolveIndexDir } = await import('./index-reader.js');
+  const deps = await checkEmbeddingDeps();
+  if (!deps.available) {
+    console.error(`Error: semantic search needs optional dependencies: ${deps.missing.join(', ')}`);
+    console.error('Install them to enable semantic features:');
+    console.error('  npm install @xenova/transformers hnswlib-node');
+    return null;
+  }
+  const dir = resolveIndexDir(cwd, graph);
+  if (!loadEmbeddingManifest(dir)) {
+    console.error(`Error: no embedding index for graph '${graph ?? 'default'}'.`);
+    console.error(`Build one first:  aiwg index embed${graph ? ` --graph ${graph}` : ''}`);
+    return null;
+  }
+  return dir;
+}
+
+/** `aiwg index query "..." --semantic` — ranked semantic results, mapped back to index metadata. */
+async function runSemanticQuery(
+  cwd: string,
+  text: string,
+  graph: GraphType | undefined,
+  topK: number,
+  json: boolean,
+): Promise<void> {
+  const dir = await requireEmbeddingIndex(cwd, graph);
+  if (!dir) process.exit(1);
+  const { semanticQuery } = await import('./embedding-index.js');
+  const { loadGraphIndexFile } = await import('./index-reader.js');
+  const index = loadGraphIndexFile<{ entries: Record<string, { type: string; phase: string; title: string; summary: string }> }>(cwd, 'metadata.json', graph);
+  const results = await semanticQuery(text, dir!, topK);
+  if (json) {
+    console.log(JSON.stringify({
+      query: { text }, mode: 'semantic', graph: graph ?? null,
+      results: results.map((r) => ({ path: r.nodeId, score: Math.round(r.score * 100) / 100, title: index?.entries[r.nodeId]?.title, summary: index?.entries[r.nodeId]?.summary })),
+      total: results.length,
+    }, null, 2));
+    return;
+  }
+  console.log(`Semantic results for "${text}" (${results.length}):`);
+  console.log('');
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    const title = index?.entries[r.nodeId]?.title ?? '';
+    console.log(`  ${String(i + 1).padStart(3)}  ${r.score.toFixed(3)}  ${r.nodeId}${title ? `  ${title}` : ''}`);
+  }
+}
+
+/** `aiwg index embed [--graph X] [--model M]` — build the embedding index for a graph's metadata. */
+async function handleEmbed(args: string[]): Promise<void> {
+  const cwd = process.cwd();
+  const graph = parseGraphFlag(args);
+  const model = args.indexOf('--model') !== -1 ? args[args.indexOf('--model') + 1] : undefined;
+  const { checkEmbeddingDeps, buildEmbeddingIndex, DEFAULT_EMBEDDING_MODEL } = await import('./embedding-index.js');
+  const { resolveIndexDir, loadGraphIndexFile } = await import('./index-reader.js');
+  const deps = await checkEmbeddingDeps();
+  if (!deps.available) {
+    console.error(`Error: embedding needs optional dependencies: ${deps.missing.join(', ')}`);
+    console.error('  npm install @xenova/transformers hnswlib-node');
+    process.exit(1);
+  }
+  const index = loadGraphIndexFile<{ entries: Record<string, unknown> }>(cwd, 'metadata.json', graph);
+  if (!index || Object.keys(index.entries).length === 0) {
+    console.error(`Error: no metadata index for graph '${graph ?? 'default'}'. Run 'aiwg index build${graph ? ` --graph ${graph}` : ''}' first.`);
+    process.exit(1);
+  }
+  const dir = resolveIndexDir(cwd, graph);
+  console.log(`Embedding ${Object.keys(index.entries).length} nodes (model: ${model ?? DEFAULT_EMBEDDING_MODEL})…`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const n = await buildEmbeddingIndex(index.entries as any, dir, model);
+  console.log(`Embedded ${n} nodes → ${dir}/embeddings/`);
+}
+
+/** `aiwg index similar --node X [--graph X] [--top K]` — semantic neighbors of a node. */
+async function handleSimilar(args: string[]): Promise<void> {
+  const cwd = process.cwd();
+  const graph = parseGraphFlag(args);
+  const node = args.indexOf('--node') !== -1 ? args[args.indexOf('--node') + 1] : undefined;
+  const top = args.indexOf('--top') !== -1 ? parseInt(args[args.indexOf('--top') + 1], 10) : 10;
+  const json = args.includes('--json');
+  if (!node) {
+    console.error('Error: similar requires --node <id>.');
+    process.exit(1);
+  }
+  const dir = await requireEmbeddingIndex(cwd, graph);
+  if (!dir) process.exit(1);
+  const { semanticNeighbors } = await import('./embedding-index.js');
+  const { loadGraphIndexFile } = await import('./index-reader.js');
+  const index = loadGraphIndexFile<{ entries: Record<string, { title: string }> }>(cwd, 'metadata.json', graph);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const results = await semanticNeighbors(node!, (index?.entries ?? {}) as any, dir!, top);
+  if (json) {
+    console.log(JSON.stringify({ node, graph: graph ?? null, results: results.map((r) => ({ path: r.nodeId, score: Math.round(r.score * 100) / 100, title: index?.entries[r.nodeId]?.title })) }, null, 2));
+    return;
+  }
+  console.log(`Similar to ${node} (${results.length}):`);
+  for (const r of results) console.log(`  ${r.score.toFixed(3)}  ${r.nodeId}${index?.entries[r.nodeId]?.title ? `  ${index.entries[r.nodeId].title}` : ''}`);
+}
+
+/** `aiwg index dedup-report [--graph X] [--threshold T]` — near-duplicate node pairs. */
+async function handleDedup(args: string[]): Promise<void> {
+  const cwd = process.cwd();
+  const graph = parseGraphFlag(args);
+  const threshold = args.indexOf('--threshold') !== -1 ? parseFloat(args[args.indexOf('--threshold') + 1]) : 0.92;
+  const json = args.includes('--json');
+  const dir = await requireEmbeddingIndex(cwd, graph);
+  if (!dir) process.exit(1);
+  const { dedupReport } = await import('./embedding-index.js');
+  const { loadGraphIndexFile } = await import('./index-reader.js');
+  const index = loadGraphIndexFile<{ entries: Record<string, { title: string }> }>(cwd, 'metadata.json', graph);
+  const pairs = await dedupReport(dir!, threshold);
+  if (json) {
+    console.log(JSON.stringify({ graph: graph ?? null, threshold, pairs: pairs.map((p) => ({ ...p, score: Math.round(p.score * 1000) / 1000 })) }, null, 2));
+    return;
+  }
+  console.log(`Near-duplicate pairs (cosine ≥ ${threshold}): ${pairs.length}`);
+  console.log('');
+  for (const p of pairs) {
+    const ta = index?.entries[p.a]?.title ?? '';
+    const tb = index?.entries[p.b]?.title ?? '';
+    console.log(`  ${p.score.toFixed(3)}  ${p.a} ↔ ${p.b}`);
+    if (ta || tb) console.log(`         ${ta}  |  ${tb}`);
+  }
 }
 
 /**
