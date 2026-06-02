@@ -32,6 +32,7 @@ import { funderRows, cofundingClusters, renderFunderNetwork } from './funder-net
 import { lintSidecars, renderLint, findOrphans, renderOrphans } from './sidecar-lint.js';
 import { repairAuthors, normalizeAffiliations, renderRepair } from './sidecar-repair.js';
 import { extractCrossrefs, renderCrossrefs, backfillCitations, renderBackfill } from './citation-densify.js';
+import { scanCorpus, renderScan, writeQuarantineReports, failsThreshold } from './integrity-scan.js';
 
 function flagValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -63,6 +64,7 @@ Usage:
   aiwg corpus sidecar-repair [--authors-only | --affiliations-only] [--write] [--out PATH]
   aiwg corpus extract-crossrefs [--refs REF-a,REF-b] [--write] [--out PATH]
   aiwg corpus citation-backfill [--write] [--out PATH]
+  aiwg corpus integrity-scan [--ref REF-XXX] [--quarantine] [--fail-on review|quarantine] [--out PATH]
 
 radar-init scaffolds radar sidecars (dry-run unless --write; skips existing).
 radar-status reports overdue radars (most-overdue-first).
@@ -81,6 +83,7 @@ sidecar-lint reports citation-sidecar structural issues (missing sections/frontm
 sidecar-repair backfills (see REF doc) authors from the analysis citation block + normalizes affiliation-primary to PROF-O slugs (dry-run unless --write).
 extract-crossrefs injects analysis-doc Cross-References REFs (that have a sidecar) as missing outgoing edges (dry-run unless --write).
 citation-backfill computes the inverse citation map + injects missing incoming edges; reports dangling cited-but-no-sidecar targets (dry-run unless --write).
+integrity-scan flags LLM residue / placeholders / submission risks per REF (pass/review/quarantine); --quarantine writes per-REF reports; --fail-on exits non-zero at threshold.
 `;
 
 function radarInit(root: string, args: string[]): void {
@@ -257,6 +260,22 @@ export async function corpusMain(args: string[], cwd: string = process.cwd()): P
     case 'citation-backfill': {
       const write = hasFlag(rest, '--write');
       return emit(renderBackfill(backfillCitations(root, { write }), write), flagValue(rest, '--out'), root);
+    }
+    case 'integrity-scan': {
+      const result = scanCorpus(root, { ref: flagValue(rest, '--ref') });
+      emit(renderScan(result), flagValue(rest, '--out'), root);
+      if (hasFlag(rest, '--quarantine')) {
+        const written = writeQuarantineReports(root, result);
+        if (written.length) {
+          console.log('\nQuarantine reports written:');
+          for (const w of written) console.log(`  ${w}`);
+        }
+      }
+      const failOn = flagValue(rest, '--fail-on');
+      if (failOn === 'review' || failOn === 'quarantine') {
+        if (failsThreshold(result, failOn)) throw new Error(`integrity-scan: REFs reached '${failOn}' threshold`);
+      }
+      return;
     }
     default:
       process.stderr.write(`Unknown corpus subcommand: ${sub}\n\n${HELP}`);
