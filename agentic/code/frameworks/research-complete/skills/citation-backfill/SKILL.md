@@ -155,9 +155,36 @@ post-issue-resolution:
 /citation-backfill --format json
 ```
 
+## Deterministic implementation (`aiwg corpus`)
+
+For corpora laid out as `documentation/citations/REF-*-citations.md`, a TS-native
+implementation runs the inverse-map backfill deterministically — prefer it over
+hand-walking the tables:
+
+```bash
+aiwg corpus citation-backfill            # dry-run: missing incoming edges + dangling targets
+aiwg corpus citation-backfill --write    # inject the missing incoming rows
+```
+
+It is paired with **`extract-crossrefs`**, which densifies the *outgoing* side —
+analysis docs often list peer REFs in a "Cross-References" / "Related Work" /
+"Referenced By" section that never made it into the formal Outgoing table:
+
+```bash
+aiwg corpus extract-crossrefs            # dry-run: cross-ref REFs (with sidecars) missing from Outgoing
+aiwg corpus extract-crossrefs --write    # inject them as outgoing edges
+aiwg corpus extract-crossrefs --refs REF-056,REF-061   # restrict to specific sources
+```
+
+Run `extract-crossrefs` first (it adds outgoing edges), then `citation-backfill`
+(it mirrors them to incoming). Both default to dry-run. This skill orchestrates;
+the CLI executes. See the `sidecar-lint` skill for sidecar structural hygiene.
+
 ## References
 
 - @$AIWG_ROOT/agentic/code/frameworks/research-complete/skills/induct-research/SKILL.md — Triggers backfill post-induction
 - @$AIWG_ROOT/agentic/code/frameworks/research-complete/skills/research-lint/SKILL.md — Validates bidirectional edges
+- @$AIWG_ROOT/agentic/code/frameworks/research-complete/skills/sidecar-lint/SKILL.md — Sidecar structural lint + repair
 - @$AIWG_ROOT/agentic/code/frameworks/research-complete/lint/cross-ref-bidirectional.yaml — Lint rule for edge validation
 - @$AIWG_ROOT/agentic/code/frameworks/research-complete/skills/research-status/SKILL.md — Health scoring includes citation completeness
+- @$AIWG_ROOT/src/artifacts/corpus-tools/citation-densify.ts — extract-crossrefs + citation-backfill (deterministic)

@@ -162,7 +162,7 @@ export interface Orphan {
  * docs that open with a `---` frontmatter block still yield a real title (the
  * section9 original read the literal first line and rendered `---`).
  */
-function refTitle(root: string, ref: string): string {
+export function refTitle(root: string, ref: string): string {
   const refsDir = path.join(root, ...REFS_DIR);
   if (!fs.existsSync(refsDir)) return '?';
   const match = fs

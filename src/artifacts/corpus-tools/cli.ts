@@ -31,6 +31,7 @@ import { detectCommunities, renderCommunities } from './profile-communities.js';
 import { funderRows, cofundingClusters, renderFunderNetwork } from './funder-network.js';
 import { lintSidecars, renderLint, findOrphans, renderOrphans } from './sidecar-lint.js';
 import { repairAuthors, normalizeAffiliations, renderRepair } from './sidecar-repair.js';
+import { extractCrossrefs, renderCrossrefs, backfillCitations, renderBackfill } from './citation-densify.js';
 
 function flagValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -60,6 +61,8 @@ Usage:
   aiwg corpus funder-network [--scan-acks] [--out PATH]
   aiwg corpus sidecar-lint [--orphans] [--out PATH]
   aiwg corpus sidecar-repair [--authors-only | --affiliations-only] [--write] [--out PATH]
+  aiwg corpus extract-crossrefs [--refs REF-a,REF-b] [--write] [--out PATH]
+  aiwg corpus citation-backfill [--write] [--out PATH]
 
 radar-init scaffolds radar sidecars (dry-run unless --write; skips existing).
 radar-status reports overdue radars (most-overdue-first).
@@ -76,6 +79,8 @@ profile-communities detects co-author communities + modularity + bridge authors.
 funder-network reports per-funder yield (A-grade, mean CD, novelty bias) + co-funding clusters.
 sidecar-lint reports citation-sidecar structural issues (missing sections/frontmatter, duplicate table headers); --orphans lists zero-edge sidecars.
 sidecar-repair backfills (see REF doc) authors from the analysis citation block + normalizes affiliation-primary to PROF-O slugs (dry-run unless --write).
+extract-crossrefs injects analysis-doc Cross-References REFs (that have a sidecar) as missing outgoing edges (dry-run unless --write).
+citation-backfill computes the inverse citation map + injects missing incoming edges; reports dangling cited-but-no-sidecar targets (dry-run unless --write).
 `;
 
 function radarInit(root: string, args: string[]): void {
@@ -244,6 +249,15 @@ export async function corpusMain(args: string[], cwd: string = process.cwd()): P
       return sidecarLint(root, rest);
     case 'sidecar-repair':
       return sidecarRepair(root, rest);
+    case 'extract-crossrefs': {
+      const refs = flagValue(rest, '--refs')?.split(',').map((s) => s.trim()).filter(Boolean);
+      const write = hasFlag(rest, '--write');
+      return emit(renderCrossrefs(extractCrossrefs(root, { refs, write }), write), flagValue(rest, '--out'), root);
+    }
+    case 'citation-backfill': {
+      const write = hasFlag(rest, '--write');
+      return emit(renderBackfill(backfillCitations(root, { write }), write), flagValue(rest, '--out'), root);
+    }
     default:
       process.stderr.write(`Unknown corpus subcommand: ${sub}\n\n${HELP}`);
       throw new Error(`unknown corpus subcommand: ${sub}`);
