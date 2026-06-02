@@ -150,6 +150,7 @@ function printIndexUsage(): void {
   console.log('  aiwg index show agent aiwg-steward');
   console.log('  aiwg index query "authentication" --type use-case');
   console.log('  aiwg index query "security rules" --graph framework --json');
+  console.log('  aiwg index query "mixture of experts" --fulltext --graph papers   # body text, BM25');
   console.log('  aiwg index deps .aiwg/requirements/UC-001.md');
   console.log('  aiwg index stats --json');
   console.log('  aiwg index stats --graph project');
@@ -396,6 +397,7 @@ async function handleQuery(args: string[]): Promise<void> {
 
   const text = textParts.join(' ') || undefined;
   const json = flags.includes('--json');
+  const fulltext = flags.includes('--fulltext');
 
   // Parse filter flags
   let type: string | undefined;
@@ -424,6 +426,7 @@ async function handleQuery(args: string[]): Promise<void> {
     updatedAfter,
     limit,
     path: pathPattern,
+    fulltext,
   }, { json, graph });
 }
 

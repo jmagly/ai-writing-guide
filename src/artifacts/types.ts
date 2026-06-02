@@ -257,6 +257,13 @@ export interface QueryParams {
 
   /** Maximum results */
   limit?: number;
+
+  /**
+   * Lexical full-text search over artifact bodies (BM25), instead of the
+   * default metadata/summary-scoped scoring. Reads candidate node bodies at
+   * query time. Distinct from `--semantic` (conceptual). See #1494.
+   */
+  fulltext?: boolean;
 }
 
 /**

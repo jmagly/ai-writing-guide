@@ -14,6 +14,32 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { QueryParams, QueryResult, MetadataEntry, GraphType, ArtifactIndex } from './types.js';
 import { loadMetadataIndex, loadGraphIndexFile } from './index-reader.js';
+import { bm25Rank, type FullTextDoc } from './fulltext.js';
+import { parseFrontmatter } from './index-builder.js';
+
+/**
+ * Resolve an index entry's source file path and read its body (frontmatter
+ * stripped). Entry paths are normally relative to the project; framework-graph
+ * entries may be absolute or anchored to $AIWG_ROOT. Returns null when the
+ * file can't be read (stale index entry) so full-text ranking skips it.
+ */
+function readEntryBody(cwd: string, entryPath: string): string | null {
+  const candidates: string[] = [];
+  if (path.isAbsolute(entryPath)) candidates.push(entryPath);
+  else {
+    candidates.push(path.resolve(cwd, entryPath));
+    if (process.env.AIWG_ROOT) candidates.push(path.resolve(process.env.AIWG_ROOT, entryPath));
+  }
+  for (const p of candidates) {
+    try {
+      const raw = fs.readFileSync(p, 'utf8');
+      return parseFrontmatter(raw).body;
+    } catch {
+      /* try next candidate */
+    }
+  }
+  return null;
+}
 
 
 export interface QueryOptions {
@@ -297,7 +323,27 @@ export async function queryIndex(
 
   // Score and rank
   let results: QueryResult[];
-  if (params.text) {
+  const matchedById = new Map<string, string[]>();
+  if (params.text && params.fulltext) {
+    // Lexical full-text (#1494): read candidate bodies and BM25-rank. The
+    // index is the candidate set; ranking is over actual body content, not
+    // the metadata/summary the default path scores.
+    const byPath = new Map<string, MetadataEntry>();
+    const docs: FullTextDoc[] = [];
+    for (const entry of candidates) {
+      const body = readEntryBody(cwd, entry.path);
+      if (body === null) continue;
+      byPath.set(entry.path, entry);
+      docs.push({ id: entry.path, text: body });
+    }
+    const hits = bm25Rank(docs, params.text);
+    results = hits
+      .map(h => {
+        matchedById.set(h.id, h.matchedTerms);
+        return { entry: byPath.get(h.id)!, score: h.score };
+      })
+      .filter(r => r.entry);
+  } else if (params.text) {
     results = candidates
       .map(entry => ({ entry, score: scoreEntry(entry, params.text!) }))
       .filter(r => r.score > 0)
@@ -317,6 +363,7 @@ export async function queryIndex(
   if (options.json) {
     console.log(JSON.stringify({
       query: { text: params.text, filters: { type: params.type, phase: params.phase, tags: params.tags, path: params.path } },
+      mode: params.fulltext ? 'fulltext' : 'metadata',
       results: results.map(r => ({
         path: r.entry.path,
         type: r.entry.type,
@@ -324,6 +371,7 @@ export async function queryIndex(
         title: r.entry.title,
         score: Math.round(r.score * 100) / 100,
         summary: r.entry.summary,
+        ...(params.fulltext ? { matched: matchedById.get(r.entry.path) ?? [] } : {}),
       })),
       total: results.length,
       query_time_ms: queryTimeMs,

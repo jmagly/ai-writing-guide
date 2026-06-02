@@ -3722,16 +3722,27 @@ aiwg index query [search-text] [options]
 - `--updated-after <date>` - Filter by last-modified date
 - `--limit <n>` - Maximum number of results (default: 20)
 - `--graph <type>` - Search a specific graph only
+- `--fulltext` - Lexical full-text search over artifact **bodies** (BM25), instead of the default metadata scoring. Distinct from `--semantic` (conceptual).
 - `--semantic` - Use semantic similarity search (requires embedding index)
 - `--set-query <expr>` - Set-theoretic query, e.g. `"cited_by(REF-008) AND cited_by(REF-016)"` (SQLite backend recommended)
 - `--json` - Output as JSON (recommended for agents)
 
 **Default behavior** (no `--graph`): Searches across `project` + `codebase` graphs combined.
 
+**What `query` searches (per-graph scope):**
+
+| Mode | Scope | Ranking |
+|------|-------|---------|
+| Default (any graph) | **Metadata only** — title (3x), tags (2x), capability/triggers, the 500-char summary (1x), path (0.5x). The index stores a truncated summary, **not** the full body. | Weighted field-match |
+| `--fulltext` (any graph) | **Full artifact body** — reads each candidate node's source file and matches body text (frontmatter stripped). Catches content that never reaches the summary. | BM25 (top hit normalized to 1.0; JSON adds `matched` terms + `mode: "fulltext"`) |
+| `--semantic` | Conceptual similarity via the embedding index (requires the optional embedding backend). | Cosine over embeddings |
+
+Use the default for "find the artifact named/about X"; `--fulltext` for "find the document whose **body** discusses X"; `--semantic` for "find documents conceptually near X." The candidate set (which nodes are considered) is the same in all three modes — the graph + filter flags select candidates, the mode decides ranking.
+
 **Examples:**
 
 ```bash
-# Search all project-local graphs
+# Search all project-local graphs (metadata-scoped)
 aiwg index query "authentication"
 
 # Search framework source only
@@ -3742,6 +3753,9 @@ aiwg index query --type use-case
 
 # Combined filters
 aiwg index query "login" --type use-case --phase requirements
+
+# Full-text over REF/sidecar bodies (lexical, BM25) — content not in the summary
+aiwg index query "mixture of experts routing" --fulltext --graph papers
 
 # Semantic similarity search (embedding index required)
 aiwg index query "dense retrieval for question answering" --semantic --graph citation-network
