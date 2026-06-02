@@ -29,6 +29,8 @@ import { computeMetrics, renderMetrics } from './profile-metrics.js';
 import { computeTrajectory, renderTrajectory } from './profile-temporal.js';
 import { detectCommunities, renderCommunities } from './profile-communities.js';
 import { funderRows, cofundingClusters, renderFunderNetwork } from './funder-network.js';
+import { lintSidecars, renderLint, findOrphans, renderOrphans } from './sidecar-lint.js';
+import { repairAuthors, normalizeAffiliations, renderRepair } from './sidecar-repair.js';
 
 function flagValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -56,6 +58,8 @@ Usage:
   aiwg corpus profile-temporal --entity PROF-P-x [--out PATH]
   aiwg corpus profile-communities [--out PATH]
   aiwg corpus funder-network [--scan-acks] [--out PATH]
+  aiwg corpus sidecar-lint [--orphans] [--out PATH]
+  aiwg corpus sidecar-repair [--authors-only | --affiliations-only] [--write] [--out PATH]
 
 radar-init scaffolds radar sidecars (dry-run unless --write; skips existing).
 radar-status reports overdue radars (most-overdue-first).
@@ -70,6 +74,8 @@ profile-metrics computes h-index / CD-index / PageRank / centrality per profile 
 profile-temporal computes publication trajectory + hot-streak for one profile.
 profile-communities detects co-author communities + modularity + bridge authors.
 funder-network reports per-funder yield (A-grade, mean CD, novelty bias) + co-funding clusters.
+sidecar-lint reports citation-sidecar structural issues (missing sections/frontmatter, duplicate table headers); --orphans lists zero-edge sidecars.
+sidecar-repair backfills (see REF doc) authors from the analysis citation block + normalizes affiliation-primary to PROF-O slugs (dry-run unless --write).
 `;
 
 function radarInit(root: string, args: string[]): void {
@@ -169,6 +175,25 @@ function profileTemporal(root: string, args: string[]): void {
   emit(renderTrajectory(computeTrajectory(root, entity)), flagValue(args, '--out'), root);
 }
 
+function sidecarLint(root: string, args: string[]): void {
+  if (hasFlag(args, '--orphans')) {
+    emit(renderOrphans(findOrphans(root)), flagValue(args, '--out'), root);
+    return;
+  }
+  emit(renderLint(lintSidecars(root)), flagValue(args, '--out'), root);
+}
+
+function sidecarRepair(root: string, args: string[]): void {
+  const write = hasFlag(args, '--write');
+  const authorsOnly = hasFlag(args, '--authors-only');
+  const affilOnly = hasFlag(args, '--affiliations-only');
+  const authors = affilOnly ? [] : repairAuthors(root, { write });
+  const affil = authorsOnly
+    ? { normalized: 0, alreadyCanonical: 0, ambiguous: [], errors: [], changes: [] }
+    : normalizeAffiliations(root, { write });
+  emit(renderRepair(authors, affil, write), flagValue(args, '--out'), root);
+}
+
 /** Write to --out (resolved against the corpus root) or print to stdout. */
 function emit(content: string, out: string | undefined, root: string): void {
   if (!out) {
@@ -215,6 +240,10 @@ export async function corpusMain(args: string[], cwd: string = process.cwd()): P
       return emit(renderCommunities(detectCommunities(root)), flagValue(rest, '--out'), root);
     case 'funder-network':
       return emit(renderFunderNetwork(funderRows(root, { scanAcks: hasFlag(rest, '--scan-acks') }), cofundingClusters(root)), flagValue(rest, '--out'), root);
+    case 'sidecar-lint':
+      return sidecarLint(root, rest);
+    case 'sidecar-repair':
+      return sidecarRepair(root, rest);
     default:
       process.stderr.write(`Unknown corpus subcommand: ${sub}\n\n${HELP}`);
       throw new Error(`unknown corpus subcommand: ${sub}`);

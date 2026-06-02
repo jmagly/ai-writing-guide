@@ -117,8 +117,19 @@ Write corrections in place and re-run lint to verify fixes.
 /research-lint --format json
 ```
 
+## Sidecar-level integrity (use `sidecar-lint`)
+
+This skill runs the note/corpus-wide ruleset. It does **not** inspect citation
+**sidecar** internals (Outgoing/Incoming sections, edge tables, doubled-append
+duplicate headers, `(see REF doc)` authors, `affiliation-primary`
+canonicalization, zero-edge sidecar orphans). For those, use the companion
+`sidecar-lint` skill (`aiwg corpus sidecar-lint` / `sidecar-repair`). The two
+compose — `research-lint` for note-level referential integrity, `sidecar-lint`
+for citation-sidecar structure — neither duplicates the other.
+
 ## References
 
 - @$AIWG_ROOT/agentic/code/frameworks/research-complete/lint/ruleset.yaml
 - @$AIWG_ROOT/src/lint/cli.ts
 - @$AIWG_ROOT/src/lint/runner.ts
+- @$AIWG_ROOT/agentic/code/frameworks/research-complete/skills/sidecar-lint/SKILL.md — sidecar-structural lint + repair

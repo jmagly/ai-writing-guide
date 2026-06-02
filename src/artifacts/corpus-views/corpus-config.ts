@@ -65,6 +65,44 @@ export function cadenceForGrade(grade: string | null | undefined): string {
   return CADENCE_BY_GRADE[letter] ?? 'biannual';
 }
 
+/**
+ * Default affiliation canonicalization map (#1503): canonical `PROF-O-{slug}`
+ * → variant org-name strings that should resolve to it. Ports
+ * `corpus/normalize_affiliation.py` CANONICAL_MAP. Per epic #1496 principle #3
+ * (externalize hardcoded data), this default is overridable per-corpus via a
+ * `documentation/profiles/orgs/affiliation-map.yaml` data file (loaded by the
+ * sidecar-repair tool); this module keeps only the pure default + reverse-map
+ * builder so it stays dependency-free.
+ */
+export const DEFAULT_AFFILIATION_MAP: Record<string, string[]> = {
+  'PROF-O-anthropic': ['anthropic'],
+  'PROF-O-openai': ['openai'],
+  'PROF-O-google-deepmind': ['google deepmind', 'deepmind', 'google brain (now part of google deepmind)'],
+  'PROF-O-meta-fair': ['meta fair', 'facebook ai research', 'meta ai', 'meta ai research'],
+  'PROF-O-microsoft-research': ['microsoft research'],
+  'PROF-O-mit-csail': ['mit csail', 'massachusetts institute of technology — csail'],
+  'PROF-O-nvidia': ['nvidia', 'nvidia research'],
+  'PROF-O-sakana-ai': ['sakana ai'],
+  'PROF-O-stanford-hai': ['stanford hai', 'stanford institute for human-centered artificial intelligence'],
+  'PROF-O-together-ai': ['together ai', 'together.ai'],
+  'PROF-O-uc-berkeley': ['uc berkeley', 'university of california, berkeley'],
+  'PROF-O-cohere': ['cohere'],
+  'PROF-O-apollo-research': ['apollo research'],
+};
+
+/**
+ * Reverse a canonical map (slug → variants) into variant-name → slug, plus
+ * self-mapping each slug. All keys lowercased/trimmed for direct lookup.
+ */
+export function buildAffiliationReverse(map: Record<string, string[]>): Map<string, string> {
+  const rev = new Map<string, string>();
+  for (const [slug, names] of Object.entries(map)) {
+    for (const n of names) rev.set(n.toLowerCase().trim(), slug);
+    rev.set(slug.toLowerCase(), slug);
+  }
+  return rev;
+}
+
 export interface Staleness {
   /** Whole days between `lastRefreshed` and `today` (UTC), or null when undatable. */
   daysSince: number | null;
