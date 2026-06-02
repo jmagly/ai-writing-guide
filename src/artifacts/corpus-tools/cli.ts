@@ -33,6 +33,7 @@ import { lintSidecars, renderLint, findOrphans, renderOrphans } from './sidecar-
 import { repairAuthors, normalizeAffiliations, renderRepair } from './sidecar-repair.js';
 import { extractCrossrefs, renderCrossrefs, backfillCitations, renderBackfill } from './citation-densify.js';
 import { scanCorpus, renderScan, writeQuarantineReports, failsThreshold } from './integrity-scan.js';
+import { loadSourceTypeRegistry, renderSourceTypes } from './source-types.js';
 
 function flagValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -65,6 +66,7 @@ Usage:
   aiwg corpus extract-crossrefs [--refs REF-a,REF-b] [--write] [--out PATH]
   aiwg corpus citation-backfill [--write] [--out PATH]
   aiwg corpus integrity-scan [--ref REF-XXX] [--quarantine] [--fail-on review|quarantine] [--out PATH]
+  aiwg corpus source-types [--json] [--out PATH]
 
 radar-init scaffolds radar sidecars (dry-run unless --write; skips existing).
 radar-status reports overdue radars (most-overdue-first).
@@ -84,6 +86,7 @@ sidecar-repair backfills (see REF doc) authors from the analysis citation block 
 extract-crossrefs injects analysis-doc Cross-References REFs (that have a sidecar) as missing outgoing edges (dry-run unless --write).
 citation-backfill computes the inverse citation map + injects missing incoming edges; reports dangling cited-but-no-sidecar targets (dry-run unless --write).
 integrity-scan flags LLM residue / placeholders / submission risks per REF (pass/review/quarantine); --quarantine writes per-REF reports; --fail-on exits non-zero at threshold.
+source-types lists the canonical source-type registry (paper/preprint/blog/repo/…) that normalizes the type/source_type/Source-Type vocabularies; override per-corpus at documentation/source-types.yaml.
 `;
 
 function radarInit(root: string, args: string[]): void {
@@ -274,6 +277,15 @@ export async function corpusMain(args: string[], cwd: string = process.cwd()): P
       const failOn = flagValue(rest, '--fail-on');
       if (failOn === 'review' || failOn === 'quarantine') {
         if (failsThreshold(result, failOn)) throw new Error(`integrity-scan: REFs reached '${failOn}' threshold`);
+      }
+      return;
+    }
+    case 'source-types': {
+      const reg = loadSourceTypeRegistry(root);
+      if (hasFlag(rest, '--json')) {
+        emit(JSON.stringify(reg, null, 2) + '\n', flagValue(rest, '--out'), root);
+      } else {
+        emit(renderSourceTypes(reg), flagValue(rest, '--out'), root);
       }
       return;
     }

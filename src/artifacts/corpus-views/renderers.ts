@@ -305,6 +305,8 @@ export const SUPPORTED_VIEWS = [
   'training-pipeline', 'citation-network', 'by-author', 'by-org', 'by-bridge', 'unprofiled-hubs',
   // radar / discovery / funder views (#1492)
   'by-grade', 'radar-stale-queue', 'by-trajectory', 'by-source', 'by-curator', 'by-funder',
+  // source-type view (#1509)
+  'by-source-type',
 ] as const;
 
 export type ViewName = (typeof SUPPORTED_VIEWS)[number];
@@ -331,6 +333,8 @@ export function renderView(name: string, ctx: RenderContext): string {
     case 'by-source': return renderGrouped('Index: Papers by Discovery Surface', ctx, groupBy(ctx.records, (r) => [r.discovery?.surface || 'unknown-surface']), 'unknown-surface');
     case 'by-curator': return renderGrouped('Index: Papers by Curator', ctx, groupBy(ctx.records, (r) => [r.discovery?.curatorId || 'no-curator']), 'no-curator');
     case 'by-funder': return renderGrouped('Index: Papers by Funder', ctx, groupBy(ctx.records, (r) => (r.funders.length ? r.funders.map((f) => f.id) : ['unfunded'])), 'unfunded');
+    // Source-type view (#1509) — groups refs by the canonical source type the registry normalizes to.
+    case 'by-source-type': return renderGrouped('Index: Sources by Type', ctx, groupBy(ctx.records, (r) => [r.sourceType || 'other']), 'other');
     default: throw new Error(`unsupported graph: ${name}`);
   }
 }

@@ -18,6 +18,7 @@ import {
   TOPIC_PATTERNS, METHOD_PATTERNS, VENUE_PATTERNS, SIZE_PATTERNS, SIZE_TIERS,
   classifyFirst, classifyMany,
 } from './taxonomies.js';
+import { normalizeSourceType, loadSourceTypeRegistry } from '../corpus-tools/source-types.js';
 
 const REF_FILE_RE = /^REF-(\d{3,4}[a-z]?)-/;
 const REF_ID_RE = /REF-\d{3,4}[a-z]?/g;
@@ -25,6 +26,8 @@ const YEAR_RE = /\b(?:19|20)(\d{2})\b/;
 
 export interface RefRecord {
   refId: string;
+  /** Canonical source type (#1509): paper/preprint/blog/repo/… (or meta/other). */
+  sourceType: string;
   title: string;
   path: string;
   year: number | null;
@@ -303,6 +306,7 @@ export function loadCorpus(root: string): CorpusParse {
   const refsDir = path.join(root, 'documentation', 'references');
   const citesDir = path.join(root, 'documentation', 'citations');
   const records: RefRecord[] = [];
+  const srcTypeReg = loadSourceTypeRegistry(root); // #1509 source-type registry (corpus override → default)
 
   const refFiles = listRefMarkdown(refsDir);
   for (const filePath of refFiles) {
@@ -333,6 +337,10 @@ export function loadCorpus(root: string): CorpusParse {
 
     records.push({
       refId,
+      sourceType: normalizeSourceType(
+        { type: asStr(fm.type), sourceType: asStr(fm.source_type), venue },
+        srcTypeReg,
+      ),
       title: extractTitle(text, fm),
       path: filePath,
       year: extractYear(text, fm, citation),

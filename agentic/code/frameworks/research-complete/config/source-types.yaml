@@ -1,0 +1,212 @@
+# Canonical, extensible source-type registry (#1509).
+#
+# Replaces the three drifting type vocabularies a research corpus accumulates:
+#   - frontmatter `type:`        (mixes source type with doc role)
+#   - frontmatter `source_type:` (hyphen-vs-underscore drift)
+#   - body "Source Type" field
+#
+# Each canonical type declares how the framework should treat it: which
+# reference template, required sections, citation format, acquisition method,
+# storage location, quality rules, and default radar cadence. Adding a new
+# source type (podcast, dataset, talk, …) is a registry entry here — NOT a code
+# change. Consumed by the normalizer (src/artifacts/corpus-tools/source-types.ts),
+# the `by-source-type` index view, per-type induction audit (#1504), and
+# acquisition dispatch (#1507).
+#
+# A corpus may override this file at documentation/source-types.yaml to add or
+# adjust types; a present override REPLACES this default registry.
+#
+# `aliases` are matched case-insensitively after lowercasing + trimming. Values
+# that are *doc roles* rather than source types (redirect, stub, gap-note) map
+# to the `meta` pseudo-type so they're excluded from source-type analytics.
+
+version: 1
+
+# When frontmatter type/source_type is absent or generic, fall back to
+# classifying the venue/body via VENUE_PATTERNS; map those venue labels here.
+# Keys MUST match the labels in src/artifacts/corpus-views/taxonomies.ts
+# VENUE_PATTERNS. Academic venues → paper; arXiv → preprint; lab/vendor posts →
+# blog; GitHub/Docs → repo; RFC → standard; Wikipedia → encyclopedia.
+venue_fallback:
+  NeurIPS: paper
+  ICML: paper
+  ICLR: paper
+  ACL: paper
+  EMNLP: paper
+  NAACL: paper
+  CVPR: paper
+  ICCV: paper
+  ECCV: paper
+  AAAI: paper
+  IJCAI: paper
+  KDD: paper
+  SIGIR: paper
+  WWW: paper
+  RSS: paper
+  CoRL: paper
+  ICRA: paper
+  IROS: paper
+  OSDI: paper
+  SOSP: paper
+  NSDI: paper
+  "USENIX ATC": paper
+  "USENIX Security": paper
+  "IEEE S&P / Oakland": paper
+  CCS: paper
+  CHI: paper
+  UIST: paper
+  VLDB: paper
+  SIGMOD: paper
+  FAccT: paper
+  TMLR: paper
+  JMLR: paper
+  Nature: paper
+  Science: paper
+  PNAS: paper
+  arXiv: preprint
+  "RFC (IETF)": standard
+  "Anthropic Research": blog
+  "OpenAI Research": blog
+  "DeepMind / Google Research": blog
+  "Meta AI / FAIR": blog
+  "Microsoft Research": blog
+  "GitHub / Documentation": repo
+  "Blog / Web Article": blog
+  Wikipedia: encyclopedia
+
+types:
+  paper:
+    description: Peer-reviewed conference or journal paper.
+    aliases: [paper, conference-paper, conference_paper, conference paper, journal_article, journal-article, journal article, reference, peer-reviewed]
+    template: reference-academic
+    required_sections: ["Citation", "Summary", "Key Contributions", "Benchmark Results", "Comparison with Related Work"]
+    citation_format: doi-bibtex
+    acquisition: pdf-download
+    storage: sources/pdfs/full
+    quality_rules: peer-review-grade
+    default_radar_cadence: quarterly
+
+  preprint:
+    description: arXiv / preprint server; not yet peer reviewed.
+    aliases: [preprint, arxiv, arxiv-preprint, eprint]
+    template: reference-academic
+    required_sections: ["Citation", "Summary", "Key Contributions", "Benchmark Results"]
+    citation_format: arxiv-id
+    acquisition: pdf-download
+    storage: sources/pdfs/full
+    quality_rules: preprint-hedged-grade
+    default_radar_cadence: quarterly
+
+  blog:
+    description: Blog post, lab announcement, or vendor research post.
+    aliases: [blog, blog-post, blog post, announcement, lab-announcement, lab announcement, vendor-research, post]
+    template: reference-web
+    required_sections: ["Citation", "Executive Summary", "Key Claim", "Practical Relevance"]
+    citation_format: url-venue-retrieved
+    acquisition: web-snapshot
+    storage: sources/web
+    quality_rules: non-peer-reviewed-hedging
+    default_radar_cadence: biannual
+
+  repo:
+    description: Code repository or benchmark repository.
+    aliases: [repo, codebase, code, repository, benchmark-repository, benchmark-repo, benchmark repository, github]
+    template: reference-repo
+    required_sections: ["Citation", "Summary", "Architecture", "Maintenance Signals"]
+    citation_format: repo-url-commit
+    acquisition: git-clone
+    storage: sources/repos
+    quality_rules: maintenance-activity-signals
+    default_radar_cadence: on-demand
+
+  book:
+    description: Book.
+    aliases: [book, monograph]
+    template: reference-academic
+    required_sections: ["Citation", "Summary", "Key Contributions"]
+    citation_format: isbn
+    acquisition: manual
+    storage: sources/pdfs/full
+    quality_rules: editorial-grade
+    default_radar_cadence: on-demand
+
+  chapter:
+    description: Book chapter.
+    aliases: [chapter, book_chapter, book-chapter, book chapter]
+    template: reference-academic
+    required_sections: ["Citation", "Summary", "Key Contributions"]
+    citation_format: isbn-chapter
+    acquisition: manual
+    storage: sources/pdfs/full
+    quality_rules: editorial-grade
+    default_radar_cadence: on-demand
+
+  standard:
+    description: RFC, IETF/ISO/W3C standard, or formal specification.
+    aliases: [standard, rfc, spec, specification, ietf, iso, w3c]
+    template: reference-web
+    required_sections: ["Citation", "Summary", "Scope", "Key Requirements"]
+    citation_format: standard-id
+    acquisition: web-snapshot
+    storage: sources/web
+    quality_rules: normative-spec
+    default_radar_cadence: annual
+
+  doc:
+    description: Maintainer/vendor documentation, technical report, or report.
+    aliases: [doc, documentation, maintainer-doc, vendor-doc, technical-report, technical report, report, manual]
+    template: reference-web
+    required_sections: ["Citation", "Summary", "Practical Relevance"]
+    citation_format: url-venue-retrieved
+    acquisition: web-snapshot
+    storage: sources/web
+    quality_rules: non-peer-reviewed-hedging
+    default_radar_cadence: biannual
+
+  discussion:
+    description: Issue, forum thread, or discussion.
+    aliases: [discussion, issue, thread, forum]
+    template: reference-web
+    required_sections: ["Citation", "Summary", "Key Points"]
+    citation_format: url-venue-retrieved
+    acquisition: web-snapshot
+    storage: sources/web
+    quality_rules: anecdotal-hedging
+    default_radar_cadence: on-demand
+
+  encyclopedia:
+    description: Encyclopedia / reference-work entry (e.g. Wikipedia).
+    aliases: [encyclopedia, wikipedia, wiki]
+    template: reference-web
+    required_sections: ["Citation", "Summary"]
+    citation_format: url-venue-retrieved
+    acquisition: web-snapshot
+    storage: sources/web
+    quality_rules: tertiary-source-hedging
+    default_radar_cadence: annual
+
+  expert-material:
+    description: Expert commentary, talk, or interview material.
+    aliases: [expert-material, expert material, talk, interview, keynote]
+    template: reference-web
+    required_sections: ["Citation", "Summary", "Key Claim"]
+    citation_format: url-venue-retrieved
+    acquisition: manual
+    storage: sources/web
+    quality_rules: expert-opinion-hedging
+    default_radar_cadence: on-demand
+
+  internal-review:
+    description: Internal research note or architecture review (not an external source).
+    aliases: [internal-review, internal-research, internal-architecture-review, audit]
+    template: reference-internal
+    required_sections: ["Summary", "Findings"]
+    citation_format: internal-ref
+    acquisition: internal
+    storage: documentation/synthesis
+    quality_rules: internal-note
+    default_radar_cadence: on-demand
+
+# Doc-role values that are NOT source types. The normalizer maps these to the
+# `meta` pseudo-type so they're excluded from source-type analytics.
+meta_roles: [redirect, stub, gap-note, merged, index]
