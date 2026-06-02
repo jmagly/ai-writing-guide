@@ -88,6 +88,8 @@ aiwg discover "supply chain trust"             # → supply-chain-trust (score 0
 aiwg discover "reproducible build"             # → supply-chain-trust
 aiwg discover "dependency pinning"             # → supply-chain-trust
 aiwg discover "npm supply-chain audit"         # → npm-supply-chain-audit
+aiwg discover "cargo crate supply chain audit" # → cargo-supply-chain-audit (Rust/crates.io)
+aiwg discover "rust dependency audit"          # → cargo-supply-chain-audit
 aiwg discover "ci workflow audit"              # → ci-workflow-audit
 aiwg discover "workflow pinning audit"         # → ci-workflow-audit
 aiwg discover "npm release-age gate"           # → npm-release-age-gate
