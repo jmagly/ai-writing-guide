@@ -11,6 +11,9 @@ npm i -g aiwg        # install globally
 aiwg use sdlc        # deploy SDLC framework
 ```
 
+macOS users: if npm fails with `EACCES` under `/usr/local/lib/node_modules`,
+use the [macOS Install Guide](docs/getting-started/macos-install.md).
+
 [![npm version](https://img.shields.io/npm/v/aiwg/latest?label=npm&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
 [![npm downloads](https://img.shields.io/npm/dm/aiwg?color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
@@ -29,6 +32,34 @@ aiwg use sdlc        # deploy SDLC framework
 ---
 
 ## Installation Troubleshooting
+
+### macOS npm `EACCES`
+
+If `npm install -g aiwg` fails with `EACCES` while writing to
+`/usr/local/lib/node_modules/aiwg`, npm is using a system-owned global install
+directory. The recommended Mac path is Node 24 through `nvm`, then:
+
+```bash
+npm install -g aiwg
+aiwg --version
+```
+
+If Node is already installed and you need a quick recovery, use npm's current
+user-owned prefix guidance:
+
+```bash
+npm config set prefix ~/.local
+echo 'PATH="$HOME/.local/bin:$PATH"' >> ~/.profile
+echo 'source ~/.profile' >> ~/.zprofile
+source ~/.profile
+npm install -g aiwg
+```
+
+See [macOS Install Guide](docs/getting-started/macos-install.md) for the full
+walkthrough. Avoid `sudo npm install -g aiwg` as the default fix; it can create
+root-owned npm files that break later upgrades.
+
+### `aiwg` command not found
 
 If `aiwg` is not found after `npm i -g aiwg`, the npm global `bin` directory is not on your `PATH`. Confirm and fix:
 

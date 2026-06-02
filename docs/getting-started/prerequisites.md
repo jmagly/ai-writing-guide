@@ -26,11 +26,16 @@ Contributor and release workflows have stricter npm requirements:
 
 | Platform | Command |
 |----------|---------|
+| **macOS (recommended)** | `nvm install 24 && nvm use 24` |
 | **macOS (Homebrew)** | `brew install node@24` |
 | **Ubuntu/Debian** | `curl -fsSL https://deb.nodesource.com/setup_24.x \| sudo -E bash - && sudo apt-get install -y nodejs` |
 | **Fedora/RHEL** | `curl -fsSL https://rpm.nodesource.com/setup_24.x \| sudo bash - && sudo dnf install -y nodejs` |
 | **NVM (All platforms)** | `nvm install 24 && nvm use 24` |
 | **Windows** | Use WSL2, then follow Ubuntu instructions |
+
+macOS users should start with the [macOS Install Guide](macos-install.md).
+npm's own documentation recommends a Node version manager on macOS to avoid
+global-package permission errors such as `EACCES` under `/usr/local/lib/node_modules`.
 
 ### AI Platform (Choose One or More)
 

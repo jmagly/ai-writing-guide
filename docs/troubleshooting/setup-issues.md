@@ -58,19 +58,37 @@ npm install -g aiwg
 
 ## Permission Denied
 
-**Symptoms**: "Permission denied" during install or commands.
+**Symptoms**: `Permission denied`, `EACCES`, or an npm error like:
 
-**Cause**: Insufficient permissions on install directory.
+```text
+npm ERR! syscall mkdir
+npm ERR! path /usr/local/lib/node_modules/aiwg
+```
+
+**Cause**: npm is trying to install global packages into a system-owned
+directory. This is common on macOS when Node.js was installed with an installer
+or an older global npm setup.
 
 **Solution**:
 
-```bash
-# Fix permissions on install directory
-chmod -R u+rwX ~/.local/share/ai-writing-guide/
+Preferred macOS fix: use `nvm` and reinstall AIWG under a user-owned Node.js
+install. See [macOS Install Guide](../getting-started/macos-install.md).
 
-# If installed system-wide (not recommended)
-sudo chown -R $USER:$USER /usr/local/share/ai-writing-guide/
+If Node is already installed and you want the shortest recovery path, use npm's
+current user-owned global prefix:
+
+```bash
+npm config set prefix ~/.local
+echo 'PATH="$HOME/.local/bin:$PATH"' >> ~/.profile
+echo 'source ~/.profile' >> ~/.zprofile
+source ~/.profile
+
+npm install -g aiwg
+aiwg --version
 ```
+
+Do not use `sudo npm install -g aiwg` as the default fix. It can leave
+root-owned npm files that break later upgrades.
 
 ## Shell Alias Not Working
 

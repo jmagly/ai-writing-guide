@@ -9,6 +9,7 @@ Find the scenario that matches where you are right now.
 | I want to... | Guide |
 |---|---|
 | Get one useful AIWG result before learning the whole system | [Start Here](start-here.md) |
+| Install AIWG on macOS or fix npm `EACCES` | [macOS Install Guide](macos-install.md) |
 | Walk through provider, project, framework, deployment, and verification choices | [Start Here: guided wizard](start-here.md#minimal-command-path) |
 | Ask AIWG which path to use first | [Ask The Steward To Route You](first-success-ask-steward.md) |
 | Choose the right AI tool/provider handoff | [Provider Handoff](provider-handoff.md) |

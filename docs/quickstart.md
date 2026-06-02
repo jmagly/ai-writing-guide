@@ -48,6 +48,10 @@ For CLI tools and deploying to other platforms:
 npm install -g aiwg
 ```
 
+On macOS, read [macOS Install Guide](getting-started/macos-install.md) first if
+global npm installs fail with `EACCES` or if `aiwg` is not found after install.
+The recommended Mac path is Node 24 through `nvm`, then `npm install -g aiwg`.
+
 Deploy to your project:
 
 ```bash
