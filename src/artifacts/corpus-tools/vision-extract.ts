@@ -154,7 +154,7 @@ export function pdftoppmAvailable(): boolean {
  */
 export function rasterizePdf(pdfPath: string, outDir: string, dpi = 200): number {
   if (!pdftoppmAvailable()) {
-    throw new Error('PDF rasterization needs poppler `pdftoppm` on PATH (e.g. apt install poppler-utils).');
+    throw new Error('PDF rasterization needs poppler `pdftoppm` on PATH (macOS: `brew install poppler`; Debian/Ubuntu: `apt install poppler-utils`).');
   }
   if (!fs.existsSync(pdfPath)) throw new Error(`PDF not found: ${pdfPath}`);
   fs.mkdirSync(outDir, { recursive: true });

@@ -96,6 +96,32 @@ If Homebrew Node still sends npm global installs to `/usr/local/lib/node_modules
 and fails with `EACCES`, use the `~/.local` npm prefix recovery above or switch
 to `nvm`.
 
+## Optional native features (Xcode Command Line Tools)
+
+AIWG's **base install never needs build tools** — its native dependencies
+(`better-sqlite3`, `node-pty`, `hnswlib-node`) are `optionalDependencies` that
+ship prebuilt macOS binaries and are skipped silently if they can't install. The
+CLI, `aiwg use`, and all the text-based tooling work without them.
+
+A few **opt-in** features use native modules: the SQLite graph backend
+(`better-sqlite3`), semantic search / embeddings (`@xenova/transformers` +
+`onnxruntime-node`, installed on demand), and PDF page rasterization for
+vision extraction (poppler `pdftoppm`). These normally use prebuilt binaries on
+Mac. If one ever fails to build (an unusual Node version, or a module without a
+matching prebuilt), install Apple's Command Line Tools and retry:
+
+```bash
+xcode-select --install        # one-time; provides the C/C++ toolchain
+npm rebuild better-sqlite3     # or re-run the opt-in install that failed
+```
+
+For PDF rasterization specifically (`aiwg corpus vision-extract --rasterize`),
+install poppler via Homebrew:
+
+```bash
+brew install poppler
+```
+
 ## After AIWG Installs
 
 Deploy AIWG from the project root:

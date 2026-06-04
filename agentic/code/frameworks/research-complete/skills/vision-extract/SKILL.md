@@ -57,8 +57,9 @@ Both require a vision-capable model to be reachable; `needs-infrastructure`.
 ## PDF → page images
 
 `--rasterize <pdf>` renders the PDF to `page-NNN.png` via poppler `pdftoppm`
-(`apt install poppler-utils`) at `--dpi` (default 200), into the slug's images
-dir. Omit it when page PNGs already exist (the script's original input contract).
+(macOS: `brew install poppler`; Debian/Ubuntu: `apt install poppler-utils`) at
+`--dpi` (default 200), into the slug's images dir. Omit it when page PNGs already
+exist (the script's original input contract).
 
 ## Triggers
 
