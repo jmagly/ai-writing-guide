@@ -36,6 +36,7 @@ import { scanCorpus, renderScan, writeQuarantineReports, failsThreshold } from '
 import { loadSourceTypeRegistry, renderSourceTypes } from './source-types.js';
 import { auditInductions, renderAudit, backfillFrontmatter, renderBackfill as renderBackfillFm } from './induction-audit.js';
 import { buildProfileEdges, renderProfileEdges } from './profile-edges.js';
+import { extractPages, renderExtract, resolveAdapter, rasterizePdf } from './vision-extract.js';
 
 function flagValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -73,6 +74,7 @@ Usage:
   aiwg corpus frontmatter-backfill [--write] [--out PATH]
   aiwg corpus profile-edges [--out PATH]
   aiwg corpus profile-similar --entity PROF-P-x [--top K] | --predict-collabs [--threshold T] [--out PATH]
+  aiwg corpus vision-extract --slug SLUG [--images DIR] [--out DIR] [--start N] [--end N] [--provider codex|command] [--command TMPL] [--model M] [--retries N] [--title T] [--force] [--rasterize PDF] [--dpi N]
 
 radar-init scaffolds radar sidecars (dry-run unless --write; skips existing).
 radar-status reports overdue radars (most-overdue-first).
@@ -97,6 +99,7 @@ induction-audit checks induction depth-bands + structural integrity + per-source
 frontmatter-backfill adds minimal ref_id/title/year/pdf_hash frontmatter to legacy analysis docs lacking it (dry-run unless --write; additive, skips docs that already have frontmatter).
 profile-edges builds the profile→REF edge graph (first-class adjacency; reconciled against the citation graph so only edges to existing REFs are kept).
 profile-similar embeds person profiles (text-embedding; opt-in @xenova/transformers) → nearest researchers (--entity) or collaboration link-prediction (--predict-collabs).
+vision-extract transcribes scanned page PNGs → per-page + combined Markdown via a provider-neutral vision adapter (codex | command template), resumable with retry/validation; --rasterize PDF first renders pages via pdftoppm.
 `;
 
 function radarInit(root: string, args: string[]): void {
@@ -316,6 +319,33 @@ export async function corpusMain(args: string[], cwd: string = process.cwd()): P
     }
     case 'profile-edges':
       return emit(renderProfileEdges(buildProfileEdges(root)), flagValue(rest, '--out'), root);
+    case 'vision-extract': {
+      const slug = flagValue(rest, '--slug');
+      if (!slug) throw new Error('vision-extract requires --slug <slug>');
+      const imageDir = flagValue(rest, '--images') ?? path.join(root, '.aiwg', 'research', 'sources', 'images', slug, 'pages');
+      const outDir = flagValue(rest, '--out') ?? path.join(root, '.aiwg', 'research', 'sources', 'text', `${slug}-vision`);
+      const pdf = flagValue(rest, '--rasterize');
+      if (pdf) {
+        const dpi = flagValue(rest, '--dpi') ? parseInt(flagValue(rest, '--dpi')!, 10) : 200;
+        const n = rasterizePdf(path.isAbsolute(pdf) ? pdf : path.join(root, pdf), imageDir, dpi);
+        console.log(`Rasterized ${n} pages → ${imageDir}`);
+      }
+      const adapter = resolveAdapter({ provider: flagValue(rest, '--provider'), command: flagValue(rest, '--command') });
+      const result = await extractPages({
+        imageDir,
+        outDir,
+        adapter,
+        title: flagValue(rest, '--title'),
+        start: flagValue(rest, '--start') ? parseInt(flagValue(rest, '--start')!, 10) : undefined,
+        end: flagValue(rest, '--end') ? parseInt(flagValue(rest, '--end')!, 10) : undefined,
+        retries: flagValue(rest, '--retries') ? parseInt(flagValue(rest, '--retries')!, 10) : undefined,
+        model: flagValue(rest, '--model'),
+        force: hasFlag(rest, '--force'),
+      });
+      console.log(renderExtract(result));
+      console.log(`  per-page + combined → ${outDir}`);
+      return;
+    }
     case 'profile-similar': {
       const { buildProfileEmbeddings, profileSimilar, collaborationPredictions, renderSimilar, renderCollabPredictions } = await import('./profile-embed.js');
       const emb = await buildProfileEmbeddings(root);
