@@ -30,7 +30,7 @@ import {
 
 const SUPPORTED_TARGETS = [
   'claude', 'copilot', 'factory', 'cursor', 'codex', 'opencode',
-  'warp', 'windsurf', 'openclaw', 'hermes', 'generic',
+  'warp', 'windsurf', 'openclaw', 'openhuman', 'hermes', 'generic',
 ];
 
 /**

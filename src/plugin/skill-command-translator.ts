@@ -123,6 +123,7 @@ const SKILLS_ONLY_PROVIDERS = new Set([
   'claude',
   'cursor',
   'hermes',
+  'openhuman',
 ]);
 
 /**

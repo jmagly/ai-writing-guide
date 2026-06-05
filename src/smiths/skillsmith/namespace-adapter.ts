@@ -133,6 +133,14 @@ export const NAMESPACE_ADAPTERS: Record<Platform | 'generic', NamespaceAdapter> 
     subdirLayout: true,
   },
 
+  openhuman: {
+    platform: 'openhuman',
+    deploymentGroup: 'deep-recursion',
+    pathType: 'project',
+    skillsBaseDir: '.openhuman/skills',
+    subdirLayout: true,
+  },
+
   opencode: {
     platform: 'opencode',
     deploymentGroup: 'deep-recursion',

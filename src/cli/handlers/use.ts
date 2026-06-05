@@ -313,6 +313,13 @@ const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands:
     rules: path.join(os.homedir(), '.openclaw', 'rules'),
     behaviors: path.join(os.homedir(), '.openclaw', 'behaviors'), // Native behavior support
   },
+  openhuman: {
+    agents: '.agents/agents',          // Markdown personas (Tier-1); reaches external coding hosts OpenHuman drives. Harness TOML is Tier-2 (#1559)
+    skills: '.openhuman/.aiwg/skills', // Non-kernel skills sequestered for index-driven discovery; kernel set → PROVIDER_KERNEL_SKILL_PATHS
+    commands: '',                      // Aggregated into AGENTS.md (no native command dir)
+    rules: '',                         // Aggregated into AGENTS.md (### Rule: inline)
+    behaviors: '',                     // Not supported
+  },
 };
 
 const PROVIDER_KERNEL_SKILL_PATHS: Record<string, string> = {
@@ -329,6 +336,7 @@ const PROVIDER_KERNEL_SKILL_PATHS: Record<string, string> = {
   warp: '.warp/skills',
   windsurf: '.windsurf/skills',
   openclaw: path.join(os.homedir(), '.openclaw', 'skills', 'aiwg'),
+  openhuman: '.openhuman/skills', // Project-scope native scan root (ops_discover.rs); trust-marker gated (#1553)
 };
 
 const MIRRORED_STANDARD_COMMAND_SKILLS = new Set([

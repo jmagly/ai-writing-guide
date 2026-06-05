@@ -27,6 +27,7 @@ export function getCommandsDirectory(platform: Platform, projectPath: string): s
     'openclaw': join(homedir(), '.openclaw', 'commands'),
     'warp': '.warp/commands', // Not natively discovered — content delivered via WARP.md
     'windsurf': '.windsurf/workflows',
+    'openhuman': '', // Aggregated into AGENTS.md (no native command dir)
     'generic': 'commands',
   };
   const dir = dirs[platform];
@@ -55,6 +56,7 @@ export function getAgentsDirectory(platform: Platform, projectPath: string): str
     'openclaw': join(homedir(), '.openclaw', 'agents'),
     'warp': '.warp/agents', // Not natively discovered — content delivered via WARP.md
     'windsurf': '.windsurf/agents',
+    'openhuman': '.agents/agents', // Markdown personas (cross-provider .agents/ convention); harness TOML is Tier-2 (#1559)
     'generic': 'agents',
   };
   const dir = dirs[platform];
@@ -84,6 +86,7 @@ export function getSkillsDirectory(platform: Platform, projectPath: string): str
     'openclaw': join(homedir(), '.openclaw', 'skills'),
     'warp': '.warp/skills',
     'windsurf': '.windsurf/skills',
+    'openhuman': '.openhuman/skills', // OpenHuman project-scope native scan root (trust-marker gated; see #1553)
     'generic': 'skills',
   };
   const dir = dirs[platform];
@@ -122,6 +125,7 @@ export function getRulesDirectory(platform: Platform, projectPath: string): stri
     'openclaw': join(homedir(), '.openclaw', 'rules'),
     'warp': '.warp/rules', // Not natively discovered — content delivered via WARP.md
     'windsurf': '.windsurf/rules',
+    'openhuman': '', // Aggregated into AGENTS.md (### Rule: inline)
     'generic': 'rules',
   };
   const dir = dirs[platform];
@@ -158,6 +162,7 @@ export function getConfigFileName(platform: Platform): string {
     'openclaw': 'AGENTS.md',
     'warp': 'WARP.md',
     'windsurf': '.windsurfrules',
+    'openhuman': 'AGENTS.md',
     'generic': 'README.md',
   };
   return configs[platform];

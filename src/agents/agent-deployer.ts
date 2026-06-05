@@ -403,6 +403,7 @@ export class AgentDeployer {
       windsurf: '.windsurf/agents',
       hermes: '',
       openclaw: '.openclaw/agents',
+      openhuman: '.agents/agents',
     };
 
     return path.resolve(target.projectPath, platformDirs[target.platform]);

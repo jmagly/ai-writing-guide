@@ -522,6 +522,7 @@ export class AgentGenerator {
       windsurf: '.windsurf/agents',
       hermes: '',
       openclaw: '.openclaw/agents',
+      openhuman: '.agents/agents',
     };
 
     const ext = this.packager.getFileExtension(platform);

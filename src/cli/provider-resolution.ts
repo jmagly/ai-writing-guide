@@ -28,6 +28,7 @@ const PROVIDERS: Platform[] = [
   'hermes',
   'opencode',
   'openclaw',
+  'openhuman',
   'warp',
   'windsurf',
   'generic',
@@ -65,6 +66,7 @@ function detectProviderFromRuntimeEnv(env: NodeJS.ProcessEnv): Platform | null {
   if (env.WARP_SESSION_ID || env.WARP_TERMINAL) return 'warp';
   if (env.COPILOT_AGENT || env.GITHUB_COPILOT_TOKEN) return 'copilot';
   if (env.OPENCLAW_VERSION) return 'openclaw';
+  if (env.OPENHUMAN_HOME || env.OPENHUMAN_CORE_TOKEN) return 'openhuman';
   if (env.FACTORY_AGENT_ID) return 'factory';
   if (env.OPENCODE_VERSION) return 'opencode';
   if (env.CLAUDE_CODE_VERSION || env.ANTHROPIC_API_KEY) return 'claude';

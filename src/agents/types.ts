@@ -19,11 +19,12 @@
  * | copilot    | .github/agents/          | copilot-instructions | ✅ Full       |
  * | hermes     | ~/.hermes/skills/        | AGENTS.md            | optional MCP sidecar |
  * | openclaw   | ~/.openclaw/agents/      | AGENTS.md            | ✅ Full       |
+ * | openhuman  | .agents/agents/          | AGENTS.md            | ✅ Full       |
  * | generic    | agents/                  | varies               | ✅ Full       |
  *
  * CLI usage: --provider <platform> or --platform <platform>
  */
-export type Platform = 'claude' | 'codex' | 'copilot' | 'cursor' | 'factory' | 'hermes' | 'opencode' | 'openclaw' | 'warp' | 'windsurf' | 'generic';
+export type Platform = 'claude' | 'codex' | 'copilot' | 'cursor' | 'factory' | 'hermes' | 'opencode' | 'openclaw' | 'openhuman' | 'warp' | 'windsurf' | 'generic';
 export type AgentCategory = 'writing-quality' | 'sdlc' | 'security' | 'testing' | 'architecture' | 'documentation' | 'general';
 export type ArtifactType = 'agent' | 'command' | 'skill' | 'rule';
 export type SupportLevel = 'native' | 'conventional' | 'aggregated';

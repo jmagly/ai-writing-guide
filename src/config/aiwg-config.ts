@@ -662,7 +662,7 @@ export function resolveRemotes(remotes: RemotesConfig | undefined): ResolvedRemo
  */
 export const VALID_PROVIDERS = [
   'claude', 'factory', 'codex', 'opencode', 'copilot',
-  'cursor', 'warp', 'windsurf', 'hermes', 'openclaw',
+  'cursor', 'warp', 'windsurf', 'hermes', 'openclaw', 'openhuman',
 ] as const;
 export type Provider = typeof VALID_PROVIDERS[number];
 
