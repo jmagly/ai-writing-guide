@@ -53,6 +53,7 @@
     "integrations/warp-terminal-quickstart",
     "integrations/windsurf-quickstart",
     "integrations/hermes-quickstart",
+    "integrations/openhuman-quickstart",
     "integrations/cross-platform-config",
     "openclaw-guide",
     "quickstart-sdlc",

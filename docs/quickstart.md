@@ -90,6 +90,7 @@ Then run `/aiwg-regenerate` to enable natural language commands. See the [Regene
 | GitHub Copilot | [Setup Guide](#integrations/copilot-quickstart) |
 | OpenCode | [Setup Guide](#integrations/opencode-quickstart) |
 | Codex | [Setup Guide](#integrations/codex-quickstart) |
+| OpenHuman | [Setup Guide](#integrations/openhuman-quickstart) |
 
 ---
 
