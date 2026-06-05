@@ -98,7 +98,7 @@ const PROVIDER_ALIASES = {
   'openai': 'codex'
 };
 
-const AVAILABLE_PROVIDERS = ['claude', 'factory', 'codex', 'opencode', 'copilot', 'cursor', 'warp', 'windsurf', 'hermes', 'openclaw'];
+const AVAILABLE_PROVIDERS = ['claude', 'factory', 'codex', 'opencode', 'copilot', 'cursor', 'warp', 'windsurf', 'hermes', 'openclaw', 'openhuman'];
 
 const MIRRORED_STANDARD_COMMAND_SKILLS = new Set([
   'aiwg-setup-project',
@@ -133,7 +133,7 @@ const MIRRORED_KERNEL_COMMAND_SKILLS = new Set([
 ]);
 
 function providerUsesSkillsNatively(providerName) {
-  return ['claude', 'cursor', 'hermes'].includes(providerName);
+  return ['claude', 'cursor', 'hermes', 'openhuman'].includes(providerName);
 }
 
 function shouldMirrorStandardCommandSkill(skillName) {
