@@ -152,12 +152,12 @@ export function deployRules(ruleFiles, targetDir, opts) {
 // ============================================================================
 
 /**
- * Create/update the AGENTS.md bridge. v1 reuses the codex AGENTS.md template —
- * both are AGENTS.md-bridged providers sharing the Discover-First protocol.
- * An OpenHuman-specific template is a #1557 follow-up.
+ * Create/update the AGENTS.md bridge from the OpenHuman-specific template
+ * (Discover-First protocol + .openhuman/skills paths). Preserves operator
+ * content outside the AIWG-managed section.
  */
 export function createAgentsMd(target, srcRoot, dryRun) {
-  createAgentsMdFromTemplate(target, srcRoot, 'codex/AGENTS.md.aiwg-template', dryRun);
+  createAgentsMdFromTemplate(target, srcRoot, 'openhuman/AGENTS.md.aiwg-template', dryRun);
 }
 
 export async function postDeploy(targetDir, opts) {

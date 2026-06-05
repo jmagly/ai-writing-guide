@@ -44,6 +44,7 @@ const PROVIDER_PATHS_MIN: Record<string, { agents: string; skills: string; rules
   opencode:  { agents: '.opencode/agent',   skills: '.opencode/.aiwg/skill',   rules: '.opencode/rule',   behaviors: '' },
   warp:      { agents: '.warp/agents',      skills: '.warp/.aiwg/skills',      rules: '.warp/rules',      behaviors: '' },
   windsurf:  { agents: '.windsurf/agents',  skills: '.windsurf/.aiwg/skills',  rules: '.windsurf/rules',  behaviors: '' },
+  openhuman: { agents: '.agents/agents',    skills: '.openhuman/.aiwg/skills', rules: '.openhuman/.aiwg/rules', behaviors: '' },
 };
 
 async function handleRegenerate(args: string[], cwd: string): Promise<void> {

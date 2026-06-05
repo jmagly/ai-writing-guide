@@ -1,0 +1,89 @@
+# Project Name
+
+> Project description here
+
+## Build & Test
+
+```bash
+# Add your build/test/run commands here
+npm test
+npm run build
+npm run lint
+```
+
+## Architecture
+
+<!-- Brief architecture overview -->
+
+---
+
+<!-- AIWG SDLC Framework Integration -->
+
+{{REMOTES_TOPOLOGY}}
+## AIWG SDLC Framework
+
+This project uses [AIWG](https://aiwg.io) for SDLC orchestration. OpenHuman is
+AIWG-convention-aware: agent personas live in `.agents/agents/`, skills in
+`.openhuman/skills/`, and this file is the Discover-First bridge.
+
+### Discover-First Protocol
+
+Most AIWG skills are not loaded into context — reach them on demand:
+
+```bash
+aiwg discover "create a security review"   # rank matching skills/agents/commands/rules
+aiwg show skill flow-security-review        # fetch the body
+```
+
+Run `aiwg discover` before concluding AIWG lacks a capability, or before
+improvising a workflow from training data. It indexes the full installed
+corpus, not just the kernel set surfaced here.
+
+### Skills
+
+Kernel skills deploy to `.openhuman/skills/` (OpenHuman's project-scope native
+scan root); standard skills are sequestered under `.openhuman/.aiwg/skills/`
+for index-driven discovery. Redeploy or refresh with:
+
+```bash
+aiwg use sdlc --provider openhuman
+aiwg refresh --provider openhuman
+```
+
+Project-scope skill discovery requires the workspace trust marker under
+`.openhuman/` — see the quickstart.
+
+### Commands & Rules
+
+OpenHuman has no native command surface; AIWG commands surface through this
+`AGENTS.md` bridge and the deployed command-skills. Rule full bodies are on
+disk under `.openhuman/.aiwg/rules/` and reachable via `aiwg show rule <name>`.
+
+### Artifacts
+
+SDLC artifacts are stored in `.aiwg/` (project-local; never deployed):
+
+```text
+.aiwg/
+├── intake/        # Project intake forms
+├── requirements/  # User stories, use cases
+├── architecture/  # SAD, ADRs
+├── testing/       # Test strategy, plans
+├── security/      # Threat models
+└── deployment/    # Deployment plans
+```
+
+### Natural Language Workflows
+
+- "Review this code for security issues"
+- "Generate tests for this module"
+- "Create architecture decision record"
+- "What's the project status?"
+- "Run security review"
+
+### Resources
+
+- Website: https://aiwg.io
+- Repository: https://github.com/jmagly/aiwg
+- Quick Start: `docs/integrations/openhuman-quickstart.md`
+- Redeploy: `aiwg use sdlc --provider openhuman`
