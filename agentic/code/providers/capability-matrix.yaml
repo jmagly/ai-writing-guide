@@ -412,6 +412,44 @@ providers:
     deploy_target: home
     aggregated_output: false
 
+  openhuman:
+    display_name: OpenHuman
+    status: experimental
+    # tinyhumansai/openhuman — OSS personal-AI runtime (Rust core + Tauri shell).
+    # AIWG-convention-aware out of the box (.agents/, AGENTS.md, .claude/, .codex/).
+    # Bidirectional: OpenHuman can also DRIVE claude_code/factory as inference
+    # backends. Induction epic #1552; agent decision adr-openhuman-agent-target.
+    daemon_tier: unsupported
+    daemon_pty_adapter: false
+    artifact_paths:
+      agents: ".agents/agents/"                          # markdown personas; harness TOML is Tier-2 (#1559)
+      commands: "AGENTS.md bridge (no native command surface)"
+      skills: ".openhuman/skills/"                       # project-scope native scan; trust-marker gated (#1553)
+      skills_cross_agent: ".openhuman/.aiwg/skills/"
+      rules: "AGENTS.md ### Rule sections + aiwg show rule"
+      behaviors: "(not supported)"
+    native_features:
+      cron: false
+      agent_teams: false
+      tasks: false
+      mcp: false
+      behaviors: false
+      mission_control: false
+      daemon: false
+    emulation:
+      cron: aiwg-schedule
+      agent_teams: aiwg-mc
+      tasks: aiwg-mc
+      mcp: null
+      behaviors: aiwg-mc
+      mission_control: aiwg-mc
+      daemon: null
+    hook_wiring:
+      at_link_support: false
+      context_file: AGENTS.md
+    deploy_target: mixed
+    aggregated_output: true
+
 # Feature definitions — documents what each feature key means and
 # what emulation strategies are available when native support is absent.
 features:
