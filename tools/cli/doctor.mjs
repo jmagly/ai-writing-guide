@@ -831,6 +831,11 @@ async function runDoctor() {
       label: 'Discovery: aiwg index',
       args: ['index', 'stats', '--json'],
       hint: 'aiwg index pipeline unavailable — project-local artifact index may be missing',
+      // Global/home-dir runtimes (OpenClaw etc.) run with no project-local
+      // index. That's expected, not a failure — `aiwg discover` still works via
+      // the framework index auto-built from the install root (#1541). Don't warn
+      // when the only problem is an absent project-local index AND discover works.
+      globalTolerant: true,
     },
     {
       label: 'Discovery: aiwg runtime-info',
@@ -839,10 +844,18 @@ async function runDoctor() {
     },
   ];
 
+  let discoverOk = false;
   for (const probe of discoveryProbes) {
     const r = probeCommand(probe.label, probe.args);
+    if (probe.args[0] === 'discover') discoverOk = r.ok;
     if (r.ok) {
       check(probe.label, 'ok', `\`aiwg ${probe.args.join(' ')}\` succeeded`);
+    } else if (probe.globalTolerant && discoverOk && /No artifact index found/i.test(r.detail || '')) {
+      // No project-local index in a global/home-dir context (OpenClaw etc.).
+      // Discovery still works via the framework index from the install root —
+      // proven by the `aiwg discover` probe above — so this is expected, not a
+      // warning. Inside a project, run `aiwg index build` to add a project index.
+      check(probe.label, 'ok', 'no project-local index (global context) — discovery uses the framework index from the install root; run `aiwg index build` inside a project for project-scoped queries');
     } else {
       // Warn (not error) — discovery is degraded but doctor itself still works.
       check(probe.label, 'warn', `${probe.hint} — ${r.detail}`);
