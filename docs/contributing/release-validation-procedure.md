@@ -37,19 +37,39 @@ Record outcomes in the issue under **§ 0 Pre-flight**.
 ```bash
 # 1.1 — Deploy a small framework. Use sdlc-complete unless the provider's quickref calls for something else.
 aiwg use sdlc --provider <provider-slug>
+# OpenClaw is user-scope-only — it deploys to ~/.openclaw/ regardless of cwd;
+# omit --scope (it now defaults to user) or pass --scope user.
 
-# 1.2 — Verify deploy completed without "migration: partial" (regression from #1516, fixed in v2026.5.13)
+# 1.2 — Probe the workspace state.
 # Note: migration lives at .workspace.migration and the scoped flag at .workspace.workspace.isFrameworkScoped
 # (top-level .migration is null — see #1523/#1524 validation).
 aiwg status --probe --json | jq '{migration: .workspace.migration, isFrameworkScoped: .workspace.workspace.isFrameworkScoped}'
 ```
 
-**Pass criteria**:
+**Pass criteria — provider-dependent.** The migration/scoped probe is a *project-local* signal; it does not apply uniformly across providers.
+
+*Project-local providers* (claude-code, codex, copilot, cursor, factory, opencode, warp, windsurf) deploy into the project and migrate a framework-scoped `.aiwg/` workspace:
 - `aiwg use` exits 0.
-- `migration.status` is `"completed"` (not `"partial"`) on a fresh workspace.
+- `migration.status` is `"completed"` (not `"partial"`) on a fresh workspace (regression check for #1516).
 - `isFrameworkScoped` is `true`.
 
-**Evidence to paste**: the output of step 1.2 verbatim.
+*Home-dir / user-scope providers* (**openclaw**, **openhuman**) deploy to the home dir and **do not create a project-local framework-scoped workspace** — so `migration.status` is `"none"` and `isFrameworkScoped` is `false` **by design. That is a PASS, not a #1516 regression.** The probe above is N/A for these providers; verify the home-dir deploy instead:
+
+```bash
+# OpenClaw — deploys to ~/.openclaw/ (home-dir, user-scope)
+aiwg use sdlc --provider openclaw                              # exit 0
+ls ~/.openclaw/agents ~/.openclaw/rules ~/.openclaw/behaviors  # populated
+grep -c "AIWG SDLC Framework" ~/.openclaw/workspace/AGENTS.md  # >= 1 — Discover-First bridge (#1562)
+
+# OpenHuman — deploys to .agents/ + .openhuman/ + AGENTS.md bridge
+ls .agents/agents .openhuman/skills                            # populated
+grep -c "AIWG SDLC Framework" AGENTS.md                        # >= 1
+```
+- `aiwg use` exits 0.
+- The provider's deploy directories are populated.
+- The context bridge is present (workspace `AGENTS.md` for openclaw; project `AGENTS.md` for openhuman).
+
+**Evidence to paste**: the step 1.2 output, plus — for home-dir providers — the deploy-directory listing and bridge grep.
 
 ---
 
