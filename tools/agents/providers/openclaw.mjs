@@ -47,6 +47,7 @@ import {
   filterAgentFiles,
   filterCommandsAgainstSkills,
   createAgentsMdFromTemplate,
+  createManagedMdFromTemplate,
 } from './base.mjs';
 
 // ============================================================================
@@ -534,9 +535,16 @@ export async function deploy(opts) {
       const workspace = resolveOpenClawWorkspace();
       ensureDir(workspace, dryRun);
       if (verbose || !opts.quiet) {
-        console.log(`\nBridging AIWG context into ${path.join(workspace, 'AGENTS.md')} (#1562)...`);
+        console.log(`\nBridging AIWG context into ${path.join(workspace, 'AGENTS.md')} + SOUL.md (#1562/#1572)...`);
       }
+      // AGENTS.md = methodology/rules; SOUL.md = the AIWG Steward identity (the
+      // discover-first reflex baked in as *who the agent is*, which a weak model
+      // adopts far more reliably than a rules appendix). Both update in place.
       createAgentsMdFromTemplate(workspace, srcRoot, 'openclaw/AGENTS.md.aiwg-template', dryRun);
+      createManagedMdFromTemplate(workspace, 'SOUL.md', srcRoot, 'openclaw/SOUL.md.aiwg-template', dryRun, {
+        sectionMarker: '<!-- AIWG Steward Identity -->',
+        legacyHeading: '## AIWG Steward',
+      });
     }
   }
 

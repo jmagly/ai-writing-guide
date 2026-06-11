@@ -1378,12 +1378,27 @@ export function interpolateContextTokens(content, opts) {
 const AIWG_MD_BEGIN = '<!-- BEGIN AIWG-managed (auto-generated; edits between these markers are overwritten on redeploy) -->';
 const AIWG_MD_END = '<!-- END AIWG-managed -->';
 
-export function createAgentsMdFromTemplate(target, srcRoot, templateSubpath, dryRun) {
+/**
+ * Inject/update an AIWG-managed section in a workspace markdown file (AGENTS.md,
+ * SOUL.md, …) from a template. Wraps the section in BEGIN/END markers and updates
+ * in place on redeploy (no-op if unchanged), preserving operator content outside
+ * the markers and migrating legacy unmarked sections. (#1571 / #1572)
+ *
+ * @param {string} target - directory containing the dest file
+ * @param {string} destFilename - e.g. 'AGENTS.md' or 'SOUL.md'
+ * @param {string} srcRoot
+ * @param {string} templateSubpath - relative to sdlc-complete/templates
+ * @param {boolean} dryRun
+ * @param {{sectionMarker?: string, legacyHeading?: string}} [opts]
+ */
+export function createManagedMdFromTemplate(target, destFilename, srcRoot, templateSubpath, dryRun, opts = {}) {
+  const sectionMarker = opts.sectionMarker || '<!-- AIWG SDLC Framework Integration -->';
+  const legacyHeading = opts.legacyHeading || '## AIWG SDLC Framework';
   const templatePath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', templateSubpath);
-  const destPath = path.join(target, 'AGENTS.md');
+  const destPath = path.join(target, destFilename);
 
   if (!fs.existsSync(templatePath)) {
-    console.warn(`AGENTS.md template not found at ${templatePath}`);
+    console.warn(`${destFilename} template not found at ${templatePath}`);
     return;
   }
 
@@ -1396,17 +1411,17 @@ export function createAgentsMdFromTemplate(target, srcRoot, templateSubpath, dry
 
   // Extract the AIWG section from the template (everything from its section
   // marker onward) and wrap it in managed markers so redeploys can update it.
-  const tmplMarker = template.indexOf('<!-- AIWG SDLC Framework Integration -->');
+  const tmplMarker = template.indexOf(sectionMarker);
   const aiwgSection = (tmplMarker !== -1 ? template.slice(tmplMarker) : template).trim();
   const templatePrefix = tmplMarker !== -1 ? template.slice(0, tmplMarker).trim() : '';
   const managedBlock = `${AIWG_MD_BEGIN}\n${aiwgSection}\n${AIWG_MD_END}`;
 
   const write = (content, verb) => {
     if (dryRun) {
-      console.log(`[dry-run] Would ${verb} AGENTS.md AIWG-managed section`);
+      console.log(`[dry-run] Would ${verb} ${destFilename} AIWG-managed section`);
     } else {
       fs.writeFileSync(destPath, content, 'utf8');
-      console.log(`${verb[0].toUpperCase()}${verb.slice(1)} AGENTS.md AIWG-managed section`);
+      console.log(`${verb[0].toUpperCase()}${verb.slice(1)} ${destFilename} AIWG-managed section`);
     }
   };
 
@@ -1429,12 +1444,10 @@ export function createAgentsMdFromTemplate(target, srcRoot, templateSubpath, dry
     return;
   }
 
-  // 3. Legacy unmarked AIWG section (what every pre-#1571 deployment has) —
-  //    migrate to the managed block. The section is always EOF-appended, so the
-  //    operator prefix is everything before the legacy marker.
-  const legacyMarker = existing.indexOf('<!-- AIWG SDLC Framework Integration -->');
-  const legacyHeading = legacyMarker === -1 ? existing.indexOf('## AIWG SDLC Framework') : legacyMarker;
-  const legacyIdx = legacyMarker !== -1 ? legacyMarker : legacyHeading;
+  // 3. Legacy unmarked AIWG section — migrate to the managed block. The section
+  //    is always EOF-appended, so the operator prefix is everything before it.
+  const legacyMarkerIdx = existing.indexOf(sectionMarker);
+  const legacyIdx = legacyMarkerIdx !== -1 ? legacyMarkerIdx : existing.indexOf(legacyHeading);
   if (legacyIdx !== -1) {
     const prefix = existing.slice(0, legacyIdx).replace(/\n+---\s*$/, '').trimEnd();
     write(prefix + '\n\n---\n\n' + managedBlock + '\n', 'migrate');
@@ -1443,6 +1456,14 @@ export function createAgentsMdFromTemplate(target, srcRoot, templateSubpath, dry
 
   // 4. No AIWG section at all — append the managed block.
   write(existing.trimEnd() + '\n\n---\n\n' + managedBlock + '\n', 'append');
+}
+
+/** AGENTS.md bridge — thin wrapper over createManagedMdFromTemplate (#1571). */
+export function createAgentsMdFromTemplate(target, srcRoot, templateSubpath, dryRun) {
+  createManagedMdFromTemplate(target, 'AGENTS.md', srcRoot, templateSubpath, dryRun, {
+    sectionMarker: '<!-- AIWG SDLC Framework Integration -->',
+    legacyHeading: '## AIWG SDLC Framework',
+  });
 }
 
 // ============================================================================
