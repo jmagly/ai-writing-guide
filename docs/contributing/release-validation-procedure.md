@@ -39,13 +39,15 @@ Record outcomes in the issue under **§ 0 Pre-flight**.
 aiwg use sdlc --provider <provider-slug>
 
 # 1.2 — Verify deploy completed without "migration: partial" (regression from #1516, fixed in v2026.5.13)
-aiwg status --probe --json | jq '{workspace: .workspace, migration: .migration}'
+# Note: migration lives at .workspace.migration and the scoped flag at .workspace.workspace.isFrameworkScoped
+# (top-level .migration is null — see #1523/#1524 validation).
+aiwg status --probe --json | jq '{migration: .workspace.migration, isFrameworkScoped: .workspace.workspace.isFrameworkScoped}'
 ```
 
 **Pass criteria**:
 - `aiwg use` exits 0.
 - `migration.status` is `"completed"` (not `"partial"`) on a fresh workspace.
-- `workspace.isFrameworkScoped` is `true`.
+- `isFrameworkScoped` is `true`.
 
 **Evidence to paste**: the output of step 1.2 verbatim.
 
