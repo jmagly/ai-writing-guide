@@ -2293,22 +2293,22 @@ export function cleanupOldRuleFiles(rulesDir, opts = {}) {
   if (!cleanRules) return removed;
   if (Array.isArray(incomingFiles) && incomingFiles.length === 0) return removed;
 
-  // Match by stem (extension-agnostic) so a `.md` source still matches a
-  // deployed `.mdc` (Cursor native rules) and vice versa.
-  const stem = (n) => n.replace(/\.(md|mdc)$/i, '');
-  const incomingStems = new Set(
+  // Only `.md` rules are eligible for generic cleanup — `.mdc` (native Cursor
+  // rules) and non-rule files (config.json, …) are preserved. AIWG's own legacy
+  // `.md`→`.mdc` migration is handled explicitly by the Cursor provider's
+  // deployRulesInline (marker-gated), not here, so operator `.mdc` stay safe.
+  const incomingBasenames = new Set(
     Array.isArray(incomingFiles)
-      ? incomingFiles.map((f) => stem(path.basename(f)))
+      ? incomingFiles.map((f) => path.basename(f))
       : []
   );
 
   const entries = fs.readdirSync(rulesDir, { withFileTypes: true });
   for (const entry of entries) {
     if (!entry.isFile()) continue;
-    const lower = entry.name.toLowerCase();
-    if (!lower.endsWith('.md') && !lower.endsWith('.mdc')) continue;
+    if (!entry.name.toLowerCase().endsWith('.md')) continue;
     if (entry.name === 'RULES-INDEX.md') continue;
-    if (incomingStems.has(stem(entry.name))) continue;
+    if (incomingBasenames.has(entry.name)) continue;
 
     const filePath = path.join(rulesDir, entry.name);
     removed.push(filePath);
