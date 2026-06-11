@@ -307,6 +307,44 @@ describe('discoverCapability — JSON output', () => {
     }
   });
 
+  // #1561 — verbose full-sentence queries diluted the token hit ratio below
+  // the strict ceil(n/2) overlap gate and dead-ended to zero results, training
+  // agents to conclude "no skill exists". The relaxed-overlap fallback re-scores
+  // on a single meaningful hit so wordy queries still surface ranked candidates.
+  it('falls back to relaxed overlap for verbose queries instead of dead-ending (#1561)', async () => {
+    writeSkill(
+      'intake-wizard',
+      'fx',
+      `---\nname: intake-wizard\ndescription: Generate or complete intake forms interactively\n---\n\n## Triggers\n\n- "intake wizard"\n- "create intake"\n`,
+    );
+
+    const setupSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const setupErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    setupSpy.mockRestore();
+    setupErrSpy.mockRestore();
+
+    const captured: string[] = [];
+    const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
+      captured.push(args.join(' ')),
+    );
+    // 5 tokens (skill, that, handles, intake, forms); only intake/forms carry
+    // signal — 2 hits, below the strict ceil(5/2)=3 gate. Without the fallback
+    // this returns zero results.
+    await discoverCapability(cwd, {
+      phrase: 'skill that handles intake forms',
+      graph: 'framework',
+      json: true,
+      limit: 3,
+    });
+    logSpy.mockRestore();
+
+    const parsed = JSON.parse(captured.join('\n'));
+    expect(parsed.results.length).toBeGreaterThan(0);
+    expect(parsed.relaxed_overlap).toBe(true);
+    expect(parsed.results[0].path).toContain('intake-wizard');
+  });
+
   // #1230 — kernel-marked skills used to short-circuit path anchoring,
   // emitting the stored relative path (`agentic/code/.../SKILL.md`).
   // `aiwg show` then resolved against cwd → ENOENT from any non-AIWG

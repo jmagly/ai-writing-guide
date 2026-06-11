@@ -143,7 +143,7 @@ function nearNameMatch(query: string, name: string): boolean {
   });
 }
 
-function scoreEntry(entry: MetadataEntry, text: string): number {
+function scoreEntry(entry: MetadataEntry, text: string, opts: { relaxOverlap?: boolean } = {}): number {
   const lower = text.toLowerCase();
   const tokens = tokenize(text);
   let score = 0;
@@ -184,7 +184,14 @@ function scoreEntry(entry: MetadataEntry, text: string): number {
   // `xyzzy_zzqwkjhg_42` after splitting on `_`) from surfacing
   // incidental single-token hits.
   const useMultiToken = tokens.length > 1;
-  const minHits = useMultiToken ? Math.ceil(tokens.length / 2) : 1;
+  // #1561 — verbose natural-language queries (e.g. "skill that handles intake
+  // forms") dilute the token hit ratio below the ceil(n/2) overlap gate and
+  // dead-end to zero results. When the strict pass finds nothing, callers
+  // re-score with `relaxOverlap` so a single meaningful token hit (intake /
+  // forms) still surfaces ranked candidates instead of an empty set.
+  const minHits = useMultiToken
+    ? (opts.relaxOverlap ? 1 : Math.ceil(tokens.length / 2))
+    : 1;
   const overlapOK = (hits: number): boolean => useMultiToken && hits >= minHits;
 
   // Trigger phrase match — highest weight (4x). Exact match on the full
@@ -572,12 +579,38 @@ export async function discoverCapability(
   // Filter by type
   const candidates = entries.filter(e => types.includes(e.type));
 
-  // Score
-  const scored = candidates
+  // Score (strict overlap gate)
+  let scored = candidates
     .map(entry => ({ entry, score: scoreEntry(entry, params.phrase) }))
     .filter(r => r.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
+
+  // #1561 — verbose-query fallback. A wordy full-sentence query
+  // ("find me a skill that handles intake forms") dilutes the token hit ratio
+  // below the strict ceil(n/2) overlap gate and returns nothing, training
+  // agents to conclude "no skill exists" — the exact decline-without-search
+  // failure the skill-discovery rule guards against. When the strict pass
+  // dead-ends, re-score with a relaxed (single-hit) overlap so the meaningful
+  // tokens still surface ranked candidates rather than an empty set.
+  let relaxed = false;
+  if (scored.length === 0) {
+    // Floor the relaxed pass so a single incidental path/summary token hit
+    // (~0.006–0.008) doesn't surface as noise. Capability/title/trigger field
+    // hits land ~0.04+, so this keeps meaningful matches while dropping junk —
+    // if nothing clears the floor, we fall through to the no-match hint, which
+    // is more honest than surfacing a 0.01 path match.
+    const RELAXED_MIN_SCORE = 0.02;
+    const relaxedScored = candidates
+      .map(entry => ({ entry, score: scoreEntry(entry, params.phrase, { relaxOverlap: true }) }))
+      .filter(r => r.score >= RELAXED_MIN_SCORE)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+    if (relaxedScored.length > 0) {
+      scored = relaxedScored;
+      relaxed = true;
+    }
+  }
 
   const queryTimeMs = Date.now() - startTime;
 
@@ -635,6 +668,7 @@ export async function discoverCapability(
       })),
       total: scored.length,
       query_time_ms: queryTimeMs,
+      ...(relaxed ? { relaxed_overlap: true } : {}),
       ...(emptyResultHint ? { hint: emptyResultHint } : {}),
     }, null, 2));
     return;
@@ -646,7 +680,8 @@ export async function discoverCapability(
     return;
   }
 
-  console.log(`Discovery results for "${params.phrase}" (${scored.length} matches, ${queryTimeMs}ms):`);
+  const relaxedNote = relaxed ? ' — relaxed match (verbose query)' : '';
+  console.log(`Discovery results for "${params.phrase}" (${scored.length} matches, ${queryTimeMs}ms)${relaxedNote}:`);
   console.log('');
   for (const r of scored) {
     const score = r.score.toFixed(2).padStart(4);
