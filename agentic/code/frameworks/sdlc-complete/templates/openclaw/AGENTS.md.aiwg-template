@@ -52,6 +52,13 @@ aiwg show skill flow-security-review        # fetch the body
 - **Rules**: full bodies live under `~/.openclaw/rules/` and are fetchable with
   `aiwg show rule <name>`. The Discover-First and skill-discovery directives
   above are the load-bearing ones for routing.
+- **Commands**: AIWG commands are **not** OpenClaw `/` slash commands (OpenClaw's
+  slash commands are built-in + plugin/skill-registered). Invoke an AIWG command
+  by discovering it, not by typing `/`:
+  ```bash
+  aiwg discover --type command "<intent>"   # e.g. "address open issues"
+  aiwg show command <name>                   # read its spec, then follow the steps
+  ```
 
 ### Engagement Verification
 

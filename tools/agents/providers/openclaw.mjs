@@ -105,7 +105,12 @@ export function resolveOpenClawWorkspace() {
 
 export const support = {
   agents: 'native',
-  commands: 'native',
+  // OpenClaw slash commands are built-in + plugin/skill-registered (e.g. `/prose`);
+  // there is NO user `~/.openclaw/commands/*.md` slash-command scan (field-validated:
+  // AIWG-deployed command files never appear in `/commands`). AIWG commands surface
+  // via the AGENTS.md bridge + `aiwg discover --type command` / `aiwg show command`,
+  // exactly like Codex (static enum, ADR-1) and OpenHuman.
+  commands: 'aggregated',
   skills: 'native',
   rules: 'native',
   behaviors: 'native',
