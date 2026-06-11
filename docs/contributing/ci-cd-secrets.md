@@ -1,7 +1,7 @@
 # CI/CD Secrets Configuration
 
-**Version:** 1.0
-**Last Updated:** 2026-01-14
+**Version:** 1.1
+**Last Updated:** 2026-06-11
 **Target Audience:** Repository maintainers and administrators
 
 ## Overview
@@ -105,6 +105,57 @@ If the workflow isn't picking up the secret:
 1. Verify secret name is exactly `NPM_TOKEN` (case-sensitive)
 2. Check workflow file references `${{ secrets.NPM_TOKEN }}`
 3. Ensure workflow has appropriate permissions in `permissions:` block
+
+## Docsite Deployment Secrets
+
+The `Docsite Deploy` workflow publishes the AIWG documentation tenant to
+`docs.aiwg.io` over SSH. It consumes these repository-level Gitea Actions
+secrets:
+
+| Secret | Purpose |
+|---|---|
+| `DEPLOY_SSH_KEY` | Private SSH key for the docs host. |
+| `DEPLOY_HOST` | Docs host name. |
+| `DEPLOY_PORT` | SSH port. |
+| `DEPLOY_USER` | SSH user. |
+| `DEPLOY_PATH` | Root web path for the AIWG tenant on `docs.aiwg.io`. |
+
+`GT_ACCESS_TOKEN` is not used by AIWG's current docsite workflows. The publisher
+is installed from npm as `@pagenary/publisher`; do not add a clone token back to
+the docsite workflows unless the publisher source model changes again.
+
+### Shared `docs.aiwg.io` tenants
+
+`docs.aiwg.io` is shared with sibling documentation tenants. AIWG owns the root
+tenant at `DEPLOY_PATH`; `roctinam/agentic-sandbox` owns the
+`agentic-sandbox/` subtree and should deploy to:
+
+```text
+${DEPLOY_PATH%/}/agentic-sandbox/
+```
+
+AIWG's root deploy keeps `rsync --delete` enabled, but `docsite-deploy.yml`
+protects registered sibling tenants with rsync receiver-protect filters and a
+dry-run deletion check. Keep the protected-subpath list in
+`.gitea/workflows/docsite-deploy.yml` aligned with the tenant table in
+`.gitea/workflows/README.md`.
+
+### Current secret visibility snapshot
+
+As of 2026-06-11, Gitea Actions metadata shows:
+
+| Repository | Visible docsite deploy secrets |
+|---|---|
+| `roctinam/aiwg` | `DEPLOY_HOST`, `DEPLOY_PATH`, `DEPLOY_PORT`, `DEPLOY_SSH_KEY`, `DEPLOY_USER`, plus legacy `GT_ACCESS_TOKEN` |
+| `roctinam/agentic-sandbox` | none of the docsite deploy secrets; only registry secrets are visible |
+
+No organization-level `roctinam` Actions secret scope is visible through the
+Gitea API used by the automation agent. Because Gitea does not expose secret
+values after creation, automation can confirm names and scopes but cannot copy
+existing AIWG secret values into another repository. An authorized secret holder
+must either add the docsite secret set to `roctinam/agentic-sandbox` or move the
+shared deploy secrets into an organization/team scope that includes both
+repositories.
 
 ## Security Best Practices
 

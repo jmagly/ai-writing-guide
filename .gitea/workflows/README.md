@@ -84,6 +84,34 @@ Used by the npmjs.org publish leg of `npm-publish.yml`. **Being phased out** in 
 
 **No longer used by any workflow.** Formerly used by the docsite workflows to clone the publisher repo; as of #1484 the docsite workflows consume `@pagenary/publisher` from npm and neither clone nor reference this secret. Recommend revoking it on the Gitea repo once the npm-based docsite deploy is verified. (History: introduced for the clone, then hardened from token-in-URL to the credential-helper pattern in #1284 / A6.)
 
+## Shared `docs.aiwg.io` tenants
+
+`docs.aiwg.io` is a shared static host. The AIWG repository owns the root tenant
+served from `DEPLOY_PATH`; sibling repositories may publish isolated subtrees
+under that same host. The first registered sibling tenant is:
+
+| Tenant | Owning repo | Public route | Deploy target |
+|---|---|---|---|
+| `agentic-sandbox` | `roctinam/agentic-sandbox` | `https://docs.aiwg.io/agentic-sandbox/` | `${DEPLOY_PATH%/}/agentic-sandbox/` |
+
+AIWG's `docsite-deploy.yml` still runs `rsync --delete` for the root tenant, so
+it must explicitly protect sibling tenant subtrees. The workflow defines
+`PROTECTED_DOCS_SUBPATHS=agentic-sandbox`, converts each entry into an rsync
+receiver-protect filter (`P /<subpath>/***`), runs a dry-run sync first, and
+fails before mutation if the plan would delete a protected subtree.
+
+When adding another shared docs tenant:
+
+1. Add the route/subpath to the table above.
+2. Add the subpath to `PROTECTED_DOCS_SUBPATHS` in `docsite-deploy.yml`.
+3. Configure the sibling repository to deploy inside its own subtree, never to
+   the root `DEPLOY_PATH`.
+4. Verify both the root AIWG docs and the sibling route after the next deploy.
+
+Do not solve tenant isolation by weakening `--delete`; stale root docs should
+still be removed from the AIWG tenant. Protect only explicitly registered
+subtrees.
+
 ### The Gitea Actions `environment:`-keyword gap
 
 GitHub Actions provides an `environment:` keyword that gates workflow runs on a per-environment approval and exposes secrets only to runs that satisfy the gate. Gitea Actions currently ignores the keyword (see [docs.gitea.com/usage/actions/comparison](https://docs.gitea.com/usage/actions/comparison)). The implication for AIWG: there is no native deployment-protection-rule surface on the Gitea publish workflows. The audit (#1278 finding F6) flagged this as a residual risk.

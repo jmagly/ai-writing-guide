@@ -45,6 +45,10 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      # docs.aiwg.io is now a shared static host. AIWG deploys still own the
+      # root tenant, but must not delete tenant subtrees managed by sibling repos.
+      PROTECTED_DOCS_SUBPATHS: agentic-sandbox
 
     steps:
       - name: Checkout AIWG
@@ -143,10 +147,40 @@ jobs:
             DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT#~/}"
           fi
           echo "Deploying docsite to ${DEPLOY_ROOT}"
+          RSYNC_PROTECT_ARGS=()
+          for subpath in ${PROTECTED_DOCS_SUBPATHS}; do
+            clean="${subpath#/}"
+            clean="${clean%/}"
+            if [[ -z "${clean}" || "${clean}" == *".."* || "${clean}" == *"*"* ]]; then
+              echo "::error::Invalid protected docs subpath: ${subpath}"
+              exit 1
+            fi
+            echo "Protecting shared docs tenant /${clean}/ from rsync deletion"
+            RSYNC_PROTECT_ARGS+=(--filter "P /${clean}/***")
+          done
           ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
             "mkdir -p '${DEPLOY_ROOT}'"
+
+          # Dry-run first so the job fails before mutation if a protected
+          # tenant subtree would be deleted. The receiver-protect filters are
+          # kept on the real sync below.
+          rsync -avzn --delete \
+            "${RSYNC_PROTECT_ARGS[@]}" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new" \
+            "${{ gitea.workspace }}/dist/aiwg-docs/" \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_ROOT}" | tee /tmp/docsite-rsync-plan.txt
+          for subpath in ${PROTECTED_DOCS_SUBPATHS}; do
+            clean="${subpath#/}"
+            clean="${clean%/}"
+            if grep -E "^\\*deleting +${clean}(/|$)" /tmp/docsite-rsync-plan.txt; then
+              echo "::error::Rsync dry-run would delete protected docs tenant /${clean}/"
+              exit 1
+            fi
+          done
+
           rsync -avz --delete \
+            "${RSYNC_PROTECT_ARGS[@]}" \
             -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new" \
             "${{ gitea.workspace }}/dist/aiwg-docs/" \
             "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_ROOT}"
