@@ -57,8 +57,9 @@ test-results/
 # not affect tracked images elsewhere in the tree.
 /*.png
 
-# CLAUDE.md backups
+# Context-file backups (regenerate/use --force writes these)
 CLAUDE.md.backup-*
+*.md.backup-*
 
 # Local notes
 local-notes/
@@ -82,6 +83,7 @@ opencode.json
 .windsurf/
 .hermes/
 .hermes.md
+.devin/
 
 # AIWG project artifacts — tracked in git (except ephemeral content)
 # .aiwg/ is NOT gitignored — it contains SDLC artifacts (ADRs, use cases, etc.)
