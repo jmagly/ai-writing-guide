@@ -1790,7 +1790,16 @@ export class UseHandler implements CommandHandler {
     const targetIdx = remainingArgs.findIndex(a => a === '--target');
     const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
 
-    // #1156 Phase 1 — OpenClaw is exclusively user-scope; reject --scope project.
+    // #1526 — OpenClaw is user-scope-only. An unflagged deploy defaults to
+    // 'project' (ADR-4 default); coerce it to 'user' rather than erroring, so
+    // `aiwg use <framework> --provider openclaw` works as the rejection message
+    // itself promises ("omit the flag"). Only an explicit `--scope project` is
+    // rejected below.
+    if (provider === 'openclaw' && scope === 'project' && !remainingArgs.includes('--scope')) {
+      scope = 'user';
+    }
+
+    // #1156 Phase 1 — OpenClaw is exclusively user-scope; reject explicit --scope project.
     try {
       rejectOpenClawProjectScope(provider, scope);
     } catch (err) {

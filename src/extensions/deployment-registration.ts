@@ -296,21 +296,38 @@ export async function scanDeployedSkills(
   const skills: Extension[] = [];
   const entries = fs.readdirSync(absolutePath, { withFileTypes: true });
 
+  // Collect skill directories, descending one namespace level when a top-level
+  // entry has no direct SKILL.md but holds child skill dirs — e.g. OpenClaw
+  // kernel skills at ~/.openclaw/skills/aiwg/<name>/SKILL.md (PUW-025).
+  // OpenClaw's own loader recurses under skill roots, so the registrar must too;
+  // otherwise it reports "Registered 0 skills" for skills that actually load (#1563).
+  const hasSkillFile = (dir: string): boolean =>
+    fs.existsSync(path.join(dir, 'SKILL.md')) || fs.existsSync(path.join(dir, 'skill.md'));
+  const skillDirs: string[] = [];
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
+    const dir = path.join(absolutePath, entry.name);
+    if (hasSkillFile(dir)) {
+      skillDirs.push(dir);
+      continue;
+    }
+    for (const child of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (!child.isDirectory()) continue;
+      const childDir = path.join(dir, child.name);
+      if (hasSkillFile(childDir)) skillDirs.push(childDir);
+    }
+  }
 
-    const skillDir = path.join(absolutePath, entry.name);
+  for (const skillDir of skillDirs) {
     const skillFile = path.join(skillDir, 'SKILL.md');
     const skillFileLower = path.join(skillDir, 'skill.md');
     const actualSkillFile = fs.existsSync(skillFile) ? skillFile : skillFileLower;
-
-    if (!fs.existsSync(actualSkillFile)) continue;
 
     const content = fs.readFileSync(actualSkillFile, 'utf8');
     const { frontmatter, content: bodyContent } = parseFrontmatter(content);
 
     // Extract ID from directory name
-    const id = entry.name;
+    const id = path.basename(skillDir);
 
     // Extract name
     const name = String(frontmatter.name ||

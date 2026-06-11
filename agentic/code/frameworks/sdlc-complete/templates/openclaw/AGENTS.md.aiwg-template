@@ -1,0 +1,89 @@
+# Agent Workspace
+
+> This is the agent's home workspace. Operating instructions below.
+
+## Architecture
+
+<!-- Brief overview of what this agent works on -->
+
+---
+
+<!-- AIWG SDLC Framework Integration -->
+
+{{REMOTES_TOPOLOGY}}
+## AIWG SDLC Framework
+
+This OpenClaw agent uses [AIWG](https://aiwg.io) for SDLC orchestration. AIWG
+deploys agents, skills, rules, and behaviors to `~/.openclaw/`; this workspace
+`AGENTS.md` is the bridge that teaches the agent how to reach them. OpenClaw
+loads this file into every session — without this block, the deployed AIWG
+capabilities are present on disk but the agent has no protocol for using them.
+
+### Discover-First Protocol
+
+Classify every user turn FIRST: is it a **new directive** or a continuation?
+When a message names or references an AIWG command/capability — even pasted
+content like an `address-issues` tracker table, an issue list, or a `flow-*`
+name — treat it as a new directive and ACT: run `aiwg discover "<the need>"`,
+fetch with `aiwg show <type> <name>`, and invoke it. Do NOT ask "what would you
+like me to do with these?" when the action is implied — a pasted
+`address-issues #1234` means run the address-issues workflow on those issues.
+
+Also run `aiwg discover` before declining an AIWG request as out of scope or
+inventing a workflow from memory. It ranks AIWG capabilities across the
+installed corpus and rebuilds the index from `$AIWG_ROOT` automatically, so a
+"no matches" for a command you know is deployed is a bug — not a signal it is
+absent. Full rule: `aiwg show rule skill-discovery`.
+
+```bash
+aiwg discover "create a security review"   # rank matching skills/agents/commands/rules
+aiwg show skill flow-security-review        # fetch the body
+```
+
+### Skills, Agents, Rules
+
+- **Kernel skills** load natively from `~/.openclaw/skills/aiwg/<name>/SKILL.md`
+  (OpenClaw recurses skill roots). The larger on-demand index stays at
+  `$AIWG_ROOT` — reach it with `aiwg discover` + `aiwg show`, never by guessing
+  skill names from memory.
+- **Agents** deploy to `~/.openclaw/agents/`. Restart OpenClaw after a deploy so
+  the home-dir registry reloads; until then the Agent/Task tool reports
+  "Agent type not found" for newly deployed agents.
+- **Rules**: full bodies live under `~/.openclaw/rules/` and are fetchable with
+  `aiwg show rule <name>`. The Discover-First and skill-discovery directives
+  above are the load-bearing ones for routing.
+
+### Engagement Verification
+
+When asked whether AIWG is active, run `aiwg status --probe --json` and report
+the result plainly. Do not add AIWG attribution, signatures, or generated-by
+footers to user files, commits, PRs, or comments.
+
+### Artifacts
+
+SDLC artifacts live in `.aiwg/` (project-local; never deployed):
+
+```text
+.aiwg/
+├── intake/        # Project intake forms
+├── requirements/  # User stories, use cases
+├── architecture/  # SAD, ADRs
+├── testing/       # Test strategy, plans
+├── security/      # Threat models
+└── deployment/    # Deployment plans
+```
+
+### Natural Language Workflows
+
+- "Review this code for security issues"
+- "Generate tests for this module"
+- "Create an architecture decision record"
+- "What's the project status?"
+- "address-issues #N" — run the address-issues workflow on those issues
+
+### Resources
+
+- Website: https://aiwg.io
+- Repository: https://github.com/jmagly/aiwg
+- Redeploy: `aiwg use sdlc --provider openclaw`
+- Guide: `docs/openclaw-guide.md`

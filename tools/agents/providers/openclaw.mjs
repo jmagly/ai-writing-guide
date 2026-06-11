@@ -46,6 +46,7 @@ import {
   cleanupOldRuleFiles,
   filterAgentFiles,
   filterCommandsAgainstSkills,
+  createAgentsMdFromTemplate,
 } from './base.mjs';
 
 // ============================================================================
@@ -73,6 +74,34 @@ export const paths = {
 // Critical for OpenClaw: DEFAULT_MAX_SKILLS_IN_PROMPT = 150, so the
 // kernel set must come in under that floor (~9 today, well under cap).
 export const kernelSkillsPath = path.join(openclawHome, 'skills');
+
+/**
+ * Resolve OpenClaw's active agent workspace directory — the dir whose `AGENTS.md`
+ * OpenClaw injects into every session's system prompt (docs/concepts/context.md,
+ * agent-workspace.md). Honors `agents.defaults.workspace` in
+ * `~/.openclaw/openclaw.json` and the `OPENCLAW_PROFILE` env var; defaults to
+ * `~/.openclaw/workspace`. The deployed agents/skills/rules under `~/.openclaw/`
+ * are inert until the Discover-First bridge lands in this workspace AGENTS.md. (#1562)
+ */
+export function resolveOpenClawWorkspace() {
+  const profile = process.env.OPENCLAW_PROFILE;
+  let workspace = profile && profile !== 'default'
+    ? path.join(openclawHome, `workspace-${profile}`)
+    : path.join(openclawHome, 'workspace');
+  try {
+    const cfgPath = path.join(openclawHome, 'openclaw.json');
+    if (fs.existsSync(cfgPath)) {
+      const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+      const ws = cfg?.agents?.defaults?.workspace;
+      if (typeof ws === 'string' && ws.trim()) {
+        workspace = ws.startsWith('~')
+          ? path.join(os.homedir(), ws.slice(1).replace(/^[/\\]/, ''))
+          : ws;
+      }
+    }
+  } catch { /* malformed config — fall back to the default workspace */ }
+  return workspace;
+}
 
 export const support = {
   agents: 'native',
@@ -478,6 +507,32 @@ export async function deploy(opts) {
   if (!commandsOnly && !skillsOnly && !rulesOnly && behaviorDirs.length > 0) {
     if (verbose) console.log(`\nDeploying ${behaviorDirs.length} behaviors to ${paths.behaviors}...`);
     counts.behaviors = deployBehaviors(behaviorDirs, opts);
+  }
+
+  // ── Context bridge (#1562) ──────────────────────────────────────────────
+  // Inject the AIWG Discover-First bridge into OpenClaw's session-loaded
+  // workspace AGENTS.md. OpenClaw loads <workspace>/AGENTS.md into every
+  // session's system prompt; without this, the deployed agents/skills/rules
+  // sit inert on disk (no discover-first, no rule routing — the agent treats
+  // `address-issues` as a generic query). Preserves operator content outside
+  // the AIWG-managed section.
+  // Run once, only from the batch whose srcRoot actually contains the framework
+  // template (the repo/framework root). `aiwg use` invokes deploy() once per
+  // framework AND per addon with different srcRoots; addon batches would warn
+  // "template not found". The idempotent skip in createAgentsMdFromTemplate also
+  // guards against double-injection across batches.
+  if (!commandsOnly && !skillsOnly && !rulesOnly) {
+    const templatePath = path.join(
+      srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', 'openclaw', 'AGENTS.md.aiwg-template',
+    );
+    if (fs.existsSync(templatePath)) {
+      const workspace = resolveOpenClawWorkspace();
+      ensureDir(workspace, dryRun);
+      if (verbose || !opts.quiet) {
+        console.log(`\nBridging AIWG context into ${path.join(workspace, 'AGENTS.md')} (#1562)...`);
+      }
+      createAgentsMdFromTemplate(workspace, srcRoot, 'openclaw/AGENTS.md.aiwg-template', dryRun);
+    }
   }
 
   // ── Summary ───────────────────────────────────────────────────────────────

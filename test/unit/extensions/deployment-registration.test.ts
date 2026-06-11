@@ -85,6 +85,24 @@ describe('Deployment Registration', () => {
       const skills = await scanDeployedSkills('/nonexistent/path', 'claude');
       expect(skills).toEqual([]);
     });
+
+    it('descends one namespace level for grouped kernel skills (#1563)', async () => {
+      // OpenClaw kernel skills land at ~/.openclaw/skills/aiwg/<name>/SKILL.md;
+      // the registrar must descend the aiwg/ namespace the way OpenClaw's own
+      // recursive loader does — a flat scan reports "0 skills" for skills that
+      // actually load.
+      const dir = await mkdtemp(join(tmpdir(), 'aiwg-skills-ns-'));
+      const nested = join(dir, 'aiwg', 'aiwg-status');
+      await mkdir(nested, { recursive: true });
+      await writeFile(
+        join(nested, 'SKILL.md'),
+        '---\nname: aiwg-status\ndescription: Show AIWG workspace status\n---\n\n# AIWG Status\n',
+        'utf8',
+      );
+      const skills = await scanDeployedSkills(dir, 'openclaw');
+      await rm(dir, { recursive: true, force: true });
+      expect(skills.map(s => s.id)).toContain('aiwg-status');
+    });
   });
 
   describe('registerDeployedExtensions', () => {
