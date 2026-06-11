@@ -1372,6 +1372,12 @@ export function interpolateContextTokens(content, opts) {
  * Create or update AGENTS.md from template
  * Common logic used by multiple providers
  */
+// Managed-block markers (#1571). The AIWG SDLC section is wrapped in these so
+// every later `aiwg use`/`aiwg refresh` can UPDATE it in place — append-once-and-
+// skip meant existing AGENTS.md bridges never received content updates.
+const AIWG_MD_BEGIN = '<!-- BEGIN AIWG-managed (auto-generated; edits between these markers are overwritten on redeploy) -->';
+const AIWG_MD_END = '<!-- END AIWG-managed -->';
+
 export function createAgentsMdFromTemplate(target, srcRoot, templateSubpath, dryRun) {
   const templatePath = path.join(srcRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'templates', templateSubpath);
   const destPath = path.join(target, 'AGENTS.md');
@@ -1388,33 +1394,55 @@ export function createAgentsMdFromTemplate(target, srcRoot, templateSubpath, dry
     topology: buildRemotesTopologyBlock(target),
   });
 
-  if (fs.existsSync(destPath)) {
-    const existing = fs.readFileSync(destPath, 'utf8');
+  // Extract the AIWG section from the template (everything from its section
+  // marker onward) and wrap it in managed markers so redeploys can update it.
+  const tmplMarker = template.indexOf('<!-- AIWG SDLC Framework Integration -->');
+  const aiwgSection = (tmplMarker !== -1 ? template.slice(tmplMarker) : template).trim();
+  const templatePrefix = tmplMarker !== -1 ? template.slice(0, tmplMarker).trim() : '';
+  const managedBlock = `${AIWG_MD_BEGIN}\n${aiwgSection}\n${AIWG_MD_END}`;
 
-    if (existing.includes('<!-- AIWG SDLC Framework Integration -->') ||
-        existing.includes('## AIWG SDLC Framework')) {
-      console.log('AGENTS.md already contains AIWG section, skipping');
-      return;
-    }
-
-    const markerIndex = template.indexOf('<!-- AIWG SDLC Framework Integration -->');
-    const aiwgSection = markerIndex !== -1 ? template.slice(markerIndex) : template;
-    const combined = existing.trimEnd() + '\n\n---\n\n' + aiwgSection.trim() + '\n';
-
+  const write = (content, verb) => {
     if (dryRun) {
-      console.log(`[dry-run] Would update existing AGENTS.md with AIWG section`);
+      console.log(`[dry-run] Would ${verb} AGENTS.md AIWG-managed section`);
     } else {
-      fs.writeFileSync(destPath, combined, 'utf8');
-      console.log('Updated AGENTS.md with AIWG SDLC framework section');
+      fs.writeFileSync(destPath, content, 'utf8');
+      console.log(`${verb[0].toUpperCase()}${verb.slice(1)} AGENTS.md AIWG-managed section`);
     }
-  } else {
-    if (dryRun) {
-      console.log(`[dry-run] Would create AGENTS.md from template`);
-    } else {
-      fs.writeFileSync(destPath, template, 'utf8');
-      console.log('Created AGENTS.md from template');
-    }
+  };
+
+  // 1. Fresh file — write prefix (if any) + managed block.
+  if (!fs.existsSync(destPath)) {
+    const out = (templatePrefix ? templatePrefix + '\n\n---\n\n' : '') + managedBlock + '\n';
+    write(out, 'create');
+    return;
   }
+
+  const existing = fs.readFileSync(destPath, 'utf8');
+  const begIdx = existing.indexOf(AIWG_MD_BEGIN);
+  const endIdx = existing.indexOf(AIWG_MD_END);
+
+  // 2. Markers present — replace the managed block in place, preserve everything outside.
+  if (begIdx !== -1 && endIdx !== -1 && endIdx > begIdx) {
+    const updated = existing.slice(0, begIdx) + managedBlock + existing.slice(endIdx + AIWG_MD_END.length);
+    if (updated === existing) return; // already current — no-op
+    write(updated, 'update');
+    return;
+  }
+
+  // 3. Legacy unmarked AIWG section (what every pre-#1571 deployment has) —
+  //    migrate to the managed block. The section is always EOF-appended, so the
+  //    operator prefix is everything before the legacy marker.
+  const legacyMarker = existing.indexOf('<!-- AIWG SDLC Framework Integration -->');
+  const legacyHeading = legacyMarker === -1 ? existing.indexOf('## AIWG SDLC Framework') : legacyMarker;
+  const legacyIdx = legacyMarker !== -1 ? legacyMarker : legacyHeading;
+  if (legacyIdx !== -1) {
+    const prefix = existing.slice(0, legacyIdx).replace(/\n+---\s*$/, '').trimEnd();
+    write(prefix + '\n\n---\n\n' + managedBlock + '\n', 'migrate');
+    return;
+  }
+
+  // 4. No AIWG section at all — append the managed block.
+  write(existing.trimEnd() + '\n\n---\n\n' + managedBlock + '\n', 'append');
 }
 
 // ============================================================================
