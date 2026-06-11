@@ -286,13 +286,19 @@ describe('ExtensionRegistry', () => {
         registry.register(createTestExtension(`ext-${i}`));
       }
 
-      // Lookup should be fast (O(1) via Map)
+      // Lookup is O(1) via Map. Average over many calls across the full key
+      // range so a single GC/JIT spike on a loaded CI runner can't flake an
+      // absolute sub-millisecond bound (a single timed get hit 2ms on CI).
+      const ITERATIONS = 1000;
       const start = performance.now();
-      const result = registry.get('ext-500');
-      const duration = performance.now() - start;
+      let result: ReturnType<typeof registry.get> | undefined;
+      for (let i = 0; i < ITERATIONS; i++) {
+        result = registry.get(`ext-${i}`);
+      }
+      const avgDuration = (performance.now() - start) / ITERATIONS;
 
       expect(result).toBeDefined();
-      expect(duration).toBeLessThan(1); // Should be nearly instant
+      expect(avgDuration).toBeLessThan(1); // ~constant per-op; averaging removes spikes
     });
 
     it('should provide O(1) command resolution', () => {
