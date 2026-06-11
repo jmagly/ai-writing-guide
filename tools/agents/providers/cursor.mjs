@@ -260,11 +260,28 @@ export async function deployRulesViaScript(targetDir, srcRoot, opts) {
 export function deployRulesInline(ruleFiles, targetDir, opts) {
   const destDir = path.join(targetDir, paths.rules);
   ensureDir(destDir, opts.dryRun);
+  // Migrate legacy AIWG `.md` rules → `.mdc`. Cursor's rules engine only loads
+  // `.mdc` files, so AIWG-managed `.md` rules from an older deploy are inert and
+  // would linger (cleanup matches by stem, keeping them). Remove the marker-
+  // bearing `.md` leftovers so the `.mdc` we emit below is the live copy.
+  if (!opts.dryRun && fs.existsSync(destDir)) {
+    for (const name of fs.readdirSync(destDir)) {
+      if (!name.endsWith('.md') || name === 'RULES-INDEX.md') continue;
+      const p = path.join(destDir, name);
+      try {
+        if (fs.readFileSync(p, 'utf8').includes('aiwg:managed')) {
+          fs.unlinkSync(p);
+          console.log(`  migrated legacy rule to .mdc (removed ${name})`);
+        }
+      } catch { /* ignore unreadable file */ }
+    }
+  }
   // #1143: skip cleanup when this deploy has 0 rules.
   cleanupOldRuleFiles(destDir, { ...opts, incomingFiles: ruleFiles });
-  // Use transformRule (PUW-011 #1112) so deployed rules carry MDC
-  // alwaysApply: true frontmatter — the safe default per ADR-2 §2.
-  return deployFiles(ruleFiles, destDir, opts, transformRule);
+  // transformRule injects native MDC frontmatter (globs → alwaysApply:false when
+  // the source declares them; else alwaysApply:true). Emit with the `.mdc`
+  // extension Cursor actually loads — getFileExtension('rule') === '.mdc'.
+  return deployFiles(ruleFiles, destDir, { ...opts, fileExtension: '.mdc' }, transformRule);
 }
 
 /**

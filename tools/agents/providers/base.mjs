@@ -608,8 +608,8 @@ export function deployFiles(files, destDir, opts, transformFn) {
       transformedContent = injectPlatformInContent(transformedContent, platformName);
     }
 
-    // Add managed marker for .md files (#749)
-    if (base.endsWith('.md')) {
+    // Add managed marker for .md / .mdc files (#749; .mdc for Cursor native rules)
+    if (base.endsWith('.md') || base.endsWith('.mdc')) {
       transformedContent = addManagedMarker(transformedContent, deployVersion, deploySource);
     }
 
@@ -2293,18 +2293,22 @@ export function cleanupOldRuleFiles(rulesDir, opts = {}) {
   if (!cleanRules) return removed;
   if (Array.isArray(incomingFiles) && incomingFiles.length === 0) return removed;
 
-  const incomingBasenames = new Set(
+  // Match by stem (extension-agnostic) so a `.md` source still matches a
+  // deployed `.mdc` (Cursor native rules) and vice versa.
+  const stem = (n) => n.replace(/\.(md|mdc)$/i, '');
+  const incomingStems = new Set(
     Array.isArray(incomingFiles)
-      ? incomingFiles.map((f) => path.basename(f))
+      ? incomingFiles.map((f) => stem(path.basename(f)))
       : []
   );
 
   const entries = fs.readdirSync(rulesDir, { withFileTypes: true });
   for (const entry of entries) {
     if (!entry.isFile()) continue;
-    if (!entry.name.toLowerCase().endsWith('.md')) continue;
+    const lower = entry.name.toLowerCase();
+    if (!lower.endsWith('.md') && !lower.endsWith('.mdc')) continue;
     if (entry.name === 'RULES-INDEX.md') continue;
-    if (incomingBasenames.has(entry.name)) continue;
+    if (incomingStems.has(stem(entry.name))) continue;
 
     const filePath = path.join(rulesDir, entry.name);
     removed.push(filePath);
