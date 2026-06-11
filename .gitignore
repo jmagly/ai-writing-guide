@@ -52,6 +52,11 @@ test-results/
 # PDF files (research papers, etc. - too large for repo)
 *.pdf
 
+# Stray staging images at repo root (social/marketing scratch; canonical
+# copies live under .aiwg/marketing/.../assets/). Root-anchored so it does
+# not affect tracked images elsewhere in the tree.
+/*.png
+
 # CLAUDE.md backups
 CLAUDE.md.backup-*
 
@@ -72,8 +77,11 @@ TODO.local.md
 !.github/ISSUE_TEMPLATE/
 !.github/pull_request_template.md
 .opencode/
+opencode.json
 .warp/
 .windsurf/
+.hermes/
+.hermes.md
 
 # AIWG project artifacts — tracked in git (except ephemeral content)
 # .aiwg/ is NOT gitignored — it contains SDLC artifacts (ADRs, use cases, etc.)
@@ -85,6 +93,13 @@ TODO.local.md
 .aiwg/security-engineering/reviews/disclosures/
 .aiwg/ralph/archive/
 .aiwg/ralph-external/loops/
+.aiwg/.milestones.json
+.aiwg/browser-allowlist.yaml
+.aiwg/marketing/
+.aiwg/issues/
+.aiwg/forensics/
+.aiwg/research/synthesis/
+.aiwg/frameworks/*/
 
 # Agent temporary files
 _agent-temp/
