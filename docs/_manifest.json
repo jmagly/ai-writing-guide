@@ -882,7 +882,7 @@
     {
       "id": "blog/2026-5-how-aiwg-builds-your-system-prompt",
       "title": "How AIWG builds your customized system prompt",
-      "summary": "AIWG assembles a per-session prompt and command set from your workspace state across ten AI tools.",
+      "summary": "AIWG assembles a per-session prompt and command set from your workspace state across eleven AI tools.",
       "file": "blog/2026-5-how-aiwg-builds-your-system-prompt.md",
       "parent": "blog"
     },

@@ -8,7 +8,7 @@ Beyond the 7 rules, aiwg-utils also provides:
 
 - **5 agents**: `context-regenerator`, `aiwg-developer`, `consortium-coordinator`, `self-debug`, `aiwg-steward`
 - **9 skills**: `project-awareness`, `schedule`, `soul-create`, `soul-validate`, `soul-enhance`, `soul-apply`, `soul-blend`, `aiwg-sync`, `aiwg-guide`
-- **Platform regeneration commands**: `aiwg-regenerate-claude`, `aiwg-regenerate-warp`, `aiwg-regenerate-factory`, and equivalents for all 9 providers
+- **Platform regeneration commands**: `aiwg-regenerate-claude`, `aiwg-regenerate-warp`, `aiwg-regenerate-factory`, and equivalents for all 11 providers
 - **Workspace commands**: `workspace-realign`, `workspace-prune-working`, `workspace-reset`
 - **@-mention tooling**: `mention-wire`, `mention-validate`, `mention-report`, `mention-lint`
 - **Hook management**: `hook-enable`, `hook-disable`, `hook-status`, `hook-regenerate`

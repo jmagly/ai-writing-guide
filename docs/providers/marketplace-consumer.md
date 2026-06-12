@@ -17,7 +17,7 @@ aiwg install <source>:<package>      # fetch from marketplace
 aiwg use <package> --provider <p>    # deploy across configured providers
 ```
 
-**Key property**: AIWG already deploys to 10 providers. If it can also ingest from multiple marketplace sources, any compatible plugin from any supported marketplace becomes deployable everywhere — install once, deploy everywhere.
+**Key property**: AIWG already deploys to 11 providers. If it can also ingest from multiple marketplace sources, any compatible plugin from any supported marketplace becomes deployable everywhere — install once, deploy everywhere.
 
 ---
 
@@ -229,7 +229,7 @@ aiwg use aiwg-sdlc --provider claude
   └── Deploy + collision check + manifest update
 ```
 
-This means marketplace plugins automatically benefit from AIWG's multi-provider deployment — install once from any marketplace, get deployment to all 10 providers.
+This means marketplace plugins automatically benefit from AIWG's multi-provider deployment — install once from any marketplace, get deployment to all 11 providers.
 
 ---
 

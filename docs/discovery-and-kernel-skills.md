@@ -226,7 +226,7 @@ Two-step pattern by design. **Discover** ranks candidates and returns metadata. 
 
 ## Per-provider deployment paths
 
-The kernel + standard split applies uniformly. All 10 providers honor the `--copy-all` flag for the standard tier.
+The kernel + standard split applies uniformly. All 11 providers honor the `--copy-all` flag for the standard tier.
 
 | Provider | Kernel skills | Standard skills (when opt-in) | Cross-agent dump |
 |---|---|---|---|
