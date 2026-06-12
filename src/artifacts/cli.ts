@@ -68,6 +68,10 @@ export async function main(args: string[]): Promise<void> {
       await handleShow(subcommandArgs);
       break;
 
+    case 'export':
+      await handleExport(subcommandArgs);
+      break;
+
     case 'deps':
       await handleDeps(subcommandArgs);
       break;
@@ -127,7 +131,7 @@ export async function main(args: string[]): Promise<void> {
 
     default:
       console.error(`Error: Unknown index subcommand '${subcommand}'`);
-      console.log('Available: build, query, discover, deps, stats, neighbors, set, embed, similar, dedup-report, watch');
+      console.log('Available: build, query, discover, show, export, deps, stats, neighbors, set, embed, similar, dedup-report, watch');
       process.exit(1);
   }
 }
@@ -140,6 +144,7 @@ function printIndexUsage(): void {
   console.log('  query      Search artifacts by keyword, type, phase, tags');
   console.log('  discover   Capability search across skills/agents/commands/rules (#1214)');
   console.log('  show       Print the full text of a specific skill/agent/command/rule');
+  console.log('  export     Export a browser-consumable index contract');
   console.log('  deps       Show artifact dependency graph');
   console.log('  stats      Show index statistics');
   console.log('  neighbors  Get neighbors of a node in a graph');
@@ -163,6 +168,7 @@ function printIndexUsage(): void {
   console.log('  aiwg index show skill intake-wizard');
   console.log('  aiwg index show skill flow-deploy-to-production --json');
   console.log('  aiwg index show agent aiwg-steward');
+  console.log('  aiwg index export --format fortemi --graph project --out aiwg-fortemi-index.json');
   console.log('  aiwg index query "authentication" --type use-case');
   console.log('  aiwg index query "security rules" --graph framework --json');
   console.log('  aiwg index query "mixture of experts" --fulltext --graph papers   # body text, BM25');
@@ -580,6 +586,63 @@ async function handleDedup(args: string[]): Promise<void> {
     const tb = index?.entries[p.b]?.title ?? '';
     console.log(`  ${p.score.toFixed(3)}  ${p.a} ↔ ${p.b}`);
     if (ta || tb) console.log(`         ${ta}  |  ${tb}`);
+  }
+}
+
+/**
+ * Handle 'index export' command
+ */
+async function handleExport(args: string[]): Promise<void> {
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log('Usage: aiwg index export --format fortemi [options]');
+    console.log('');
+    console.log('Options:');
+    console.log('  --format fortemi       Export the AIWG/Fortemi browser contract (required)');
+    console.log('  --graph <name>         Graph to export (default: project)');
+    console.log('  --out <path>           Write JSON to a file instead of stdout');
+    console.log('  --repo <name>          Source repository label (default: cwd basename)');
+    console.log('  --privacy <level>      private, sanitized, or public (default: private)');
+    console.log('  --generated-at <iso>   Override generated timestamp for deterministic fixtures');
+    console.log('');
+    console.log('Examples:');
+    console.log('  aiwg index export --format fortemi --graph project --out aiwg-fortemi-index.json');
+    console.log('  aiwg index export --format fortemi --privacy sanitized --generated-at 2026-01-01T00:00:00.000Z');
+    return;
+  }
+
+  const formatIdx = args.indexOf('--format');
+  const format = formatIdx !== -1 && formatIdx + 1 < args.length ? args[formatIdx + 1] : undefined;
+  if (format !== 'fortemi') {
+    console.error('Error: index export requires --format fortemi');
+    process.exit(1);
+  }
+
+  const graph = parseGraphFlag(args);
+  const outIdx = args.indexOf('--out');
+  const out = outIdx !== -1 && outIdx + 1 < args.length ? args[outIdx + 1] : undefined;
+  const repoIdx = args.indexOf('--repo');
+  const repo = repoIdx !== -1 && repoIdx + 1 < args.length ? args[repoIdx + 1] : undefined;
+  const privacyIdx = args.indexOf('--privacy');
+  const privacy = privacyIdx !== -1 && privacyIdx + 1 < args.length ? args[privacyIdx + 1] : undefined;
+  if (privacy && !['private', 'sanitized', 'public'].includes(privacy)) {
+    console.error('Error: --privacy must be private, sanitized, or public');
+    process.exit(1);
+  }
+  const generatedAtIdx = args.indexOf('--generated-at');
+  const generatedAt = generatedAtIdx !== -1 && generatedAtIdx + 1 < args.length ? args[generatedAtIdx + 1] : undefined;
+
+  const { buildAiwgFortemiIndexExport, writeAiwgFortemiIndexExport } = await import('./browser-export.js');
+  try {
+    const exported = buildAiwgFortemiIndexExport(process.cwd(), {
+      graph,
+      repo,
+      privacy: privacy as 'private' | 'sanitized' | 'public' | undefined,
+      generatedAt,
+    });
+    writeAiwgFortemiIndexExport(exported, out);
+  } catch (err) {
+    console.error('Error: ' + (err instanceof Error ? err.message : String(err)));
+    process.exit(1);
   }
 }
 
