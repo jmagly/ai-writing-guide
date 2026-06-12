@@ -7,6 +7,56 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.0] - 2026-06-12 — "OpenHuman provider #11, declarative Flows & cross-stack Missions, research-corpus intelligence"
+
+The June line opens with the biggest surface-area expansion in a while: AIWG inducts **OpenHuman (tinyhumansai)** as deployment provider #11, lands a **declarative YAML Flow** layer with **cross-stack Missions**, and turns the research framework into a genuine corpus-intelligence toolkit (semantic search, citation-graph densification, integrity scanning, vision extraction). Alongside the headline work is a broad round of cross-provider hardening (Cursor, OpenClaw, Warp, Codex, OpenCode) and a discovery layer that now reliably matches full natural-language questions.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **OpenHuman is a first-class provider** | `aiwg use <framework> --provider openhuman` deploys AIWG to [tinyhumansai/openhuman](https://github.com/tinyhumansai/openhuman) — an OSS personal-AI runtime. Kernel skills install **globally** to `~/.openhuman/skills/` (ungated user scope, the same root OpenHuman's own installer writes to), personas to the workspace `.agents/agents/` for the coding hosts OpenHuman drives, and commands/rules aggregate into an `AGENTS.md` bridge. Verified live: OpenHuman's agent harness scans the deployed `SKILL.md` bundles and event-bus-wires the triggered ones. |
+| **Releases and CLI run on declarative Flows** | `flow-release` (and `flow-architecture-evolution`) are now YAML Flows (`flow.aiwg.io/v1`) with an executor fan-out contract — discoverable directly via `aiwg discover`, runnable as orchestration with intra-step multi-agent panels + synthesis. The release gate sequence lives in `.aiwg/release.config`, so the skill body is portable across CalVer/SemVer projects. |
+| **Cross-stack Missions** | One Mission conductor fans heterogeneous workers across stacks (e.g. a Claude session dispatching Codex subagents) over the `runtime:<name>` executor convention. `/aiwg-mission` ships AIWG-owned on Codex with no plugin dependency. |
+| **Research corpus became searchable + auditable** | `aiwg index query --semantic` / `--fulltext` (BM25), `aiwg corpus integrity-scan` / `sidecar-lint` / `citation-backfill` / `extract-crossrefs`, provider-neutral scanned-page vision extraction, profile-graph edges + embedding similarity, and a by-source-type registry. |
+| **Discovery matches how you actually ask** | Full natural-language questions ("help me choose the right AIWG framework") now normalize to keyword phrases and match; single-content-token queries no longer dead-end; `discover` is the exclusive agentic-capability surface and induces discover-first on new directives, not just on decline. |
+| **Public-facing output points at the public repo** | The `aiwg use` version stamp, `aiwg diagnose` bug link, and the entrypoint packaging-bug message now read `github.com/jmagly/aiwg`, sourced from `package.json` (single source of truth) rather than the internal build origin. |
+
+### Added
+
+- **OpenHuman provider induction (#11) — epic #1552.** Platform-enum wiring + `platform-paths.ts` + `PROVIDER_PATHS` (#1555); capability-matrix block + multi-platform doc tables (#1556); legacy deploy provider module (`tools/agents/providers/openhuman.mjs`) completing Tier-1 end-to-end; `aiwg regenerate` + `AGENTS.md` discover-first template (#1557); integration quickstart (#1558). Tier-2 native-harness TOML emission is tracked as opt-in future work (#1559).
+- **Declarative YAML Flows.** `flow-release` converted to a `flow.aiwg.io/v1` Flow + wrapper skill (#1539); `workflow.aiwg.io/v1` docs classified as discoverable type `flow` and surfaced in default `aiwg discover` (#1540); wire-compatible Flow aliases (#1536); agentic fan-out step schema + ADR for intra-step multi-agent panel + synthesis (#1547); executor fan-out contract proven on `flow-architecture-evolution` (#1547); inventory/targets made optional for non-iterating Flows.
+- **Cross-stack Missions.** Cross-stack dispatch proven on the `runtime:<name>` convention (#1546); AIWG-owned `/aiwg-mission` orchestration command shipped on Codex with no plugin dependency (#1544); steward orchestration/loop routing surface (#1538); external/orchestration loop routing aligned with provider `/workflow` (#1537, #1538).
+- **Research corpus intelligence.** Semantic search — embed / `query --semantic` / `similar` / `dedup-report` (#1493); `--fulltext` BM25 lexical body search (#1494); cross-project by-project + project-impact index views (#1495); provider-neutral scanned-page vision extraction (#1507); profile graph edges + embedding similarity (#1501); per-type induction depth audit + frontmatter backfill (#1504); extensible source-type registry + by-source-type view (#1509); corpus integrity / submission-risk scan (#1506); citation-graph densification — `extract-crossrefs` + `citation-backfill` (#1505); sidecar lint & metadata repair (#1503).
+- **Fortemi index export.** `aiwg index export --format fortemi --graph project --out <file>` emits a browser-consumable, schema-validated project index for Fortemi React integrations. See `docs/integrations/fortemi-index-export.md`.
+- **Security-engineering.** `cargo-supply-chain-audit` skill + discovery routing (#1479).
+- **OpenClaw.** AIWG Steward identity injected into `SOUL.md`.
+
+### Changed
+
+- **User-facing CLI URLs are config-driven from `package.json`.** `getVersionInfo()` now exposes `repoUrl` / `homepage` / `issuesUrl`; the version stamp, diagnose bug link, and entrypoint message read from it — at release the version bump is the only edit, and the internal build origin never leaks into user output.
+- **`discover` is the exclusive agentic-capability surface (Closes #1545)** and auto-builds the framework index from `$AIWG_ROOT` so deployed commands are findable from user projects (#1541); default discover types include Flows (#1540).
+- **`address-issues` is skill-only** — the local-only CLI was removed; the command doc routes to the skill.
+- **OpenCode** loads `AIWG.md` directive classification via `instructions[]` and wires deployed rules into `opencode.json` (#1542, #1548); deploys `address-issues` + `issue-audit` as commands (#1549).
+- **Codex** ships AIWG-owned `/aiwg-mission` and loads `AIWG.md` via `instructions[]` (#1542, #1544).
+- **`@pagenary/publisher`** docsite deploy modernized; agentic-sandbox publishes as a docs tenant at `docs.aiwg.io/agentic-sandbox`, cross-linked from the serve/daemon guides.
+
+### Fixed
+
+- **OpenHuman skills install globally** to `~/.openhuman/skills/` like OpenClaw (was project-scope/trust-gated, leaving the Skills library empty) — `6d64b7ac`, #1553; emit the `AGENTS.md` bridge (#1560); capability-matrix reconciled + process-tree detection parity for `openhuman`.
+- **Discovery natural-language matching (#1581):** normalize full-sentence queries to keyword phrases, match single-content-token queries, and a relaxed-overlap fallback for verbose questions.
+- **Cursor:** emit rules as native `.mdc` (not `.md`); `cleanupOldRuleFiles` stays `.md`-only to preserve operator `.mdc`.
+- **OpenClaw:** commands are aggregated (not native slash commands); discover-first bridge + scope default + skills count delivered.
+- **Warp:** `WARP.md` regenerated as a lean discover-first managed bridge (was a 17.5k-line aggregate).
+- **AGENTS.md** bridge updates in place via managed markers.
+- **`aiwg doctor`** discovery check is global-context-aware (no false index warning); `aiwg list` detects deployed providers instead of hardcoding `.claude/` (#1530); Codex skills deploy to `.agents/skills/` only, ending duplicate slash commands (#1531).
+- **CLI output** points at the public `github.com/jmagly/aiwg` (was the internal Gitea origin).
+
+### Upgrade notes
+
+- **OpenHuman operators:** `aiwg use sdlc --provider openhuman` now installs kernel skills to `~/.openhuman/skills/` (global). They're loaded by OpenHuman's agent harness immediately. Note: the BETA "Skills Explorer → Installed" tab reads `~/.openhuman/workflows/`, not `skills/`, so skills won't render there yet — an upstream OpenHuman limitation, not an AIWG deploy issue (tracked in #1560).
+- **No action required** for existing providers — all changes are additive or self-healing on the next `aiwg refresh` / `aiwg use`.
+
 ## [2026.5.13] - 2026-05-29 — "Deploy-scope fix and stale hook-path heal"
 
 Two deploy-path regressions surfaced after the 2026.5.x stable line: every `aiwg use` was scaffolding a duplicated workspace layout that immediately tripped the legacy detector, and every upgrade from a pre-`be3ee551` install left stale `.js` hook command paths in `.claude/settings.json` that crashed Claude Code's SessionStart hook with `MODULE_NOT_FOUND`. Both are fixed here, along with the `@pagenary/publisher 2026.5.4` adoption that was queued in Unreleased.
