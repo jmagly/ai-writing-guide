@@ -142,10 +142,24 @@ jobs:
         run: |
           set -euo pipefail
           DEPLOY_ROOT="${DEPLOY_PATH%/}/"
-          if [[ "${DEPLOY_ROOT}" == "~/"* ]]; then
-            REMOTE_HOME="$(ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
-            DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT#~/}"
-          fi
+          # rsync/ssh do NOT reliably expand `~` — a single-quoted `~/...` reaches
+          # the remote `mkdir`/rsync literally and creates a directory named `~`
+          # under $HOME (this is what silently froze docs.aiwg.io at v2026.5.10:
+          # deploys landed in ~/<literal-~>/production-deploy/... while Caddy served
+          # the real ~/production-deploy/...). Resolve any non-absolute or `~` path
+          # against the remote $HOME explicitly. POSIX `case` — `[[ ]]` misbehaves
+          # under dash and was not firing here.
+          case "$DEPLOY_ROOT" in
+            /*) : ;;  # already absolute — use as-is
+            *)
+              REMOTE_HOME="$(ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
+              case "$DEPLOY_ROOT" in
+                "~/"*) DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT#~/}" ;;
+                "~/")  DEPLOY_ROOT="${REMOTE_HOME}/" ;;
+                *)     DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT}" ;;  # relative path
+              esac
+              ;;
+          esac
           echo "Deploying docsite to ${DEPLOY_ROOT}"
           RSYNC_PROTECT_ARGS=()
           for subpath in ${PROTECTED_DOCS_SUBPATHS}; do
@@ -206,10 +220,24 @@ jobs:
         run: |
           set -euo pipefail
           DEPLOY_ROOT="${DEPLOY_PATH%/}/"
-          if [[ "${DEPLOY_ROOT}" == "~/"* ]]; then
-            REMOTE_HOME="$(ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
-            DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT#~/}"
-          fi
+          # rsync/ssh do NOT reliably expand `~` — a single-quoted `~/...` reaches
+          # the remote `mkdir`/rsync literally and creates a directory named `~`
+          # under $HOME (this is what silently froze docs.aiwg.io at v2026.5.10:
+          # deploys landed in ~/<literal-~>/production-deploy/... while Caddy served
+          # the real ~/production-deploy/...). Resolve any non-absolute or `~` path
+          # against the remote $HOME explicitly. POSIX `case` — `[[ ]]` misbehaves
+          # under dash and was not firing here.
+          case "$DEPLOY_ROOT" in
+            /*) : ;;  # already absolute — use as-is
+            *)
+              REMOTE_HOME="$(ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
+              case "$DEPLOY_ROOT" in
+                "~/"*) DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT#~/}" ;;
+                "~/")  DEPLOY_ROOT="${REMOTE_HOME}/" ;;
+                *)     DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT}" ;;  # relative path
+              esac
+              ;;
+          esac
           echo "Verifying docsite at ${DEPLOY_ROOT}"
 
           # Two verify modes:
