@@ -13,7 +13,7 @@
  * invariant — the caller knows what landed).
  */
 
-import { promises as fs } from 'node:fs';
+import { existsSync, promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import type {
   ContextPipelineOptions,
@@ -487,6 +487,26 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
       result.backupPaths.push(hookResult.backupPath);
     }
     result.warnings.push(...hookResult.warnings);
+  }
+
+  // OpenHuman trust marker (#1553). OpenHuman's loader (ops_discover.rs,
+  // is_workspace_trusted) silently skips ALL project-scope skills unless
+  // `<workspace>/.openhuman/trust` exists. AIWG deploys kernel skills to
+  // `.openhuman/skills/`, so without this marker the deploy is invisible to
+  // OpenHuman. `aiwg use --provider openhuman` is an explicit deploy = consent;
+  // write the (empty, presence-only) marker unless `--no-trust` opted out.
+  if (opts.provider === 'openhuman' && opts.openhumanTrust !== false) {
+    try {
+      const trustDir = path.join(opts.projectPath, '.openhuman');
+      await fs.mkdir(trustDir, { recursive: true });
+      const trustPath = path.join(trustDir, 'trust');
+      if (!existsSync(trustPath)) {
+        await fs.writeFile(trustPath, '', 'utf8');
+      }
+      result.openhumanTrustPath = trustPath;
+    } catch (err) {
+      result.warnings.push(`Failed to write OpenHuman trust marker: ${(err as Error).message}`);
+    }
   }
 
   return result;

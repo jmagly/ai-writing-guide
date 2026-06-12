@@ -336,7 +336,7 @@ const PROVIDER_KERNEL_SKILL_PATHS: Record<string, string> = {
   warp: '.warp/skills',
   windsurf: '.windsurf/skills',
   openclaw: path.join(os.homedir(), '.openclaw', 'skills', 'aiwg'),
-  openhuman: '.openhuman/skills', // Project-scope native scan root (ops_discover.rs); trust-marker gated (#1553)
+  openhuman: '.openhuman/skills', // Project-scope native scan root (ops_discover.rs); deploy auto-writes .openhuman/trust (#1553)
 };
 
 const MIRRORED_STANDARD_COMMAND_SKILLS = new Set([
@@ -2300,6 +2300,9 @@ export class UseHandler implements CommandHandler {
       const skipAiwgMd = skipContext || remainingArgs.includes('--no-aiwg-md');
       const skipAgentsMd = skipContext || remainingArgs.includes('--no-agents-md');
       const forceContext = remainingArgs.includes('--force-context-files');
+      // OpenHuman only: --no-trust skips writing the `.openhuman/trust` marker
+      // (OpenHuman silently ignores deployed project-scope skills without it; #1553).
+      const noTrust = remainingArgs.includes('--no-trust');
 
       try {
         const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
@@ -2317,7 +2320,12 @@ export class UseHandler implements CommandHandler {
           detectExistingFiles: true,
           force: forceContext,
           skip: { aiwgMd: skipAiwgMd, agentsMd: skipAgentsMd },
+          openhumanTrust: !noTrust,
         });
+
+        if (ctxResult.openhumanTrustPath) {
+          ui.dim('  Marked workspace trusted for OpenHuman (.openhuman/trust) so deployed skills load — pass --no-trust to skip');
+        }
 
         if (verbose && ctxResult.agentsMdPath) {
           ui.dim(`  Wrote AGENTS.md (${ctxResult.agentsMdBytes} bytes)`);

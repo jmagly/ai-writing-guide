@@ -8,7 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { homedir, tmpdir } from 'node:os';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   sanitizeDescription,
@@ -380,6 +380,38 @@ describe('context finalization emission', () => {
     expect(second.match(/aiwg-context-finalization:START/g)).toHaveLength(1);
     expect(second.match(/aiwg-context-finalization:END/g)).toHaveLength(1);
     expect(second.match(/## Context Finalization/g)).toHaveLength(1);
+  });
+
+  // #1553 — OpenHuman's loader (ops_discover.rs) silently skips deployed
+  // project-scope skills unless `<workspace>/.openhuman/trust` exists. The
+  // deploy writes it (an explicit `aiwg use --provider openhuman` is consent).
+  it('writes the .openhuman/trust marker for openhuman so deployed skills load (#1553)', async () => {
+    const dir = makeTmpDir();
+    try {
+      const result = await generate({
+        provider: 'openhuman', projectPath: dir, sections: [], detectExistingFiles: true,
+      });
+      expect(result.openhumanTrustPath).toBe(join(dir, '.openhuman', 'trust'));
+      expect(existsSync(join(dir, '.openhuman', 'trust'))).toBe(true);
+      // the AGENTS.md discover-first bridge is still emitted (#1560)
+      expect(result.agentsMdPath).toBe(join(dir, 'AGENTS.md'));
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('skips the openhuman trust marker when openhumanTrust is false (--no-trust) (#1553)', async () => {
+    const dir = makeTmpDir();
+    try {
+      const result = await generate({
+        provider: 'openhuman', projectPath: dir, sections: [], detectExistingFiles: true,
+        openhumanTrust: false,
+      });
+      expect(result.openhumanTrustPath).toBeUndefined();
+      expect(existsSync(join(dir, '.openhuman', 'trust'))).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('emits root, normalized, and provider twin context files with discover-first guidance', async () => {

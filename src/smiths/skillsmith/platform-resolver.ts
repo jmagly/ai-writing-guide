@@ -74,7 +74,7 @@ const PLATFORM_CONFIGS: Record<Platform, PlatformSkillConfig> = {
     supportsSubdirectory: true,
   },
   openhuman: {
-    baseDir: '.openhuman/skills', // Project-scope native scan root (ops_discover.rs); trust-marker gated, see #1553
+    baseDir: '.openhuman/skills', // Project-scope native scan root (ops_discover.rs); deploy auto-writes .openhuman/trust, see #1553
     extension: '.md',
     supportsSkills: true,
     supportsSubdirectory: true,
