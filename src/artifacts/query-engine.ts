@@ -51,9 +51,38 @@ export interface QueryOptions {
  * Stop-words to drop when tokenizing a discovery phrase. Keep short —
  * we want the user's verbs and nouns to dominate scoring.
  */
+// Stopwords stripped from a discover QUERY before scoring (#1581). Two classes:
+//   1. Grammatical filler (articles, prepositions, pronouns, question words,
+//      asking verbs) — a natural-language intent like "Find an AIWG skill that
+//      handles intake forms" carries the same meaning as "intake forms", but the
+//      filler tokens inflate the token count: the strict overlap gate is
+//      ceil(n/2), so a verbose query raises the bar above what the genuinely
+//      relevant short-match artifact can clear, and the (hits/n) term dilutes
+//      every score. Dropping filler collapses the query to its content tokens.
+//   2. AIWG meta-type nouns ('aiwg', 'skill', 'agent', 'command', 'rule',
+//      'flow', 'workflow') — in a discover query these carry zero discriminating
+//      signal (every result IS an aiwg skill/agent/…; the TYPE is filtered via
+//      --type). The content word after them is what matters
+//      ("…skill that handles >intake forms<"). Keeping them surfaces incidental
+//      junk matches (any artifact mentioning "skill"/"aiwg") above the real one.
+// Only the query is tokenized here — entry fields are substring-matched — so this
+// never changes what text an artifact exposes, only how the query is reduced.
 const SCORE_STOPWORDS = new Set([
+  // articles / conjunctions / prepositions / copula
   'the', 'a', 'an', 'and', 'or', 'of', 'for', 'to', 'in', 'on',
   'with', 'into', 'from', 'is', 'are', 'be', 'i', 'we', 'my',
+  // pronouns / determiners / fillers
+  'it', 'you', 'me', 'us', 'your', 'our', 'this', 'that', 'these', 'those',
+  'there', 'here', 'some', 'any', 'all', 'also', 'please', 'about',
+  // question words
+  'how', 'what', 'which', 'where', 'when', 'who', 'why',
+  // asking / request verbs ("find a skill that handles …")
+  'find', 'give', 'show', 'need', 'want', 'looking', 'look', 'help',
+  'do', 'does', 'did', 'can', 'could', 'should', 'would', 'will',
+  'handle', 'handles', 'handling',
+  // AIWG meta-type nouns — zero discriminating signal in a discover query
+  'aiwg', 'skill', 'skills', 'agent', 'agents', 'command', 'commands',
+  'rule', 'rules', 'flow', 'flows', 'workflow', 'workflows',
 ]);
 
 /**

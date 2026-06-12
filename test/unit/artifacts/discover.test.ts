@@ -328,11 +328,11 @@ describe('discoverCapability — JSON output', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
       captured.push(args.join(' ')),
     );
-    // 5 tokens (skill, that, handles, intake, forms); only intake/forms carry
-    // signal — 2 hits, below the strict ceil(5/2)=3 gate. Without the fallback
-    // this returns zero results.
+    // 4 content tokens after #1581 stopword stripping (intake, paperwork,
+    // submission, registration); only `intake` carries signal — 1 hit, below
+    // the strict ceil(4/2)=2 gate. Without the relaxed fallback this dead-ends.
     await discoverCapability(cwd, {
-      phrase: 'skill that handles intake forms',
+      phrase: 'intake paperwork submission registration',
       graph: 'framework',
       json: true,
       limit: 3,
@@ -343,6 +343,47 @@ describe('discoverCapability — JSON output', () => {
     expect(parsed.results.length).toBeGreaterThan(0);
     expect(parsed.relaxed_overlap).toBe(true);
     expect(parsed.results[0].path).toContain('intake-wizard');
+  });
+
+  // #1581 — natural-language / full-sentence queries used to score near-zero:
+  // grammatical filler + AIWG meta-nouns ('find', 'a', 'skill', 'that',
+  // 'handles') inflate the token count so the strict ceil(n/2) overlap gate
+  // exceeds what the relevant short-match artifact can clear, and an unrelated
+  // artifact with an incidental generic-word hit surfaces instead. Expanding
+  // SCORE_STOPWORDS collapses the query to its content tokens so the full
+  // sentence matches as strongly as the keyword phrase — in the strict pass,
+  // with no relaxed fallback.
+  it('matches a full-sentence query as strongly as its keyword phrase (#1581)', async () => {
+    writeSkill(
+      'intake-wizard',
+      'fx',
+      `---\nname: intake-wizard\ndescription: Generate or complete intake forms interactively\n---\n\n## Triggers\n\n- "intake wizard"\n- "create intake"\n`,
+    );
+
+    const setupSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const setupErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    setupSpy.mockRestore();
+    setupErrSpy.mockRestore();
+
+    const run = async (phrase: string) => {
+      const captured: string[] = [];
+      const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
+        captured.push(args.join(' ')),
+      );
+      await discoverCapability(cwd, { phrase, graph: 'framework', json: true, limit: 3 });
+      logSpy.mockRestore();
+      return JSON.parse(captured.join('\n'));
+    };
+
+    const sentence = await run('Find an AIWG skill that handles intake forms');
+    const keyword = await run('intake forms');
+
+    // Full sentence surfaces the same top artifact as the keyword phrase…
+    expect(sentence.results[0].path).toContain('intake-wizard');
+    expect(keyword.results[0].path).toContain('intake-wizard');
+    // …via the strict pass — no relaxed-overlap fallback needed.
+    expect(sentence.relaxed_overlap).toBeFalsy();
   });
 
   // #1230 — kernel-marked skills used to short-circuit path anchoring,
