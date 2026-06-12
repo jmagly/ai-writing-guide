@@ -33,10 +33,10 @@ part of the default deploy.
 | Artifact | Where it lands | Notes |
 |----------|----------------|-------|
 | Agents | `.agents/agents/*.md` | Markdown personas, deployed verbatim (frontmatter intact) |
-| Skills (kernel) | `.openhuman/skills/` | Project-scope native scan root (`ops_discover.rs`); trust-marker gated |
-| Skills (standard) | `.openhuman/.aiwg/skills/` | Sequestered for index-driven discovery (`aiwg discover`) |
+| Skills (kernel) | `~/.openhuman/skills/` | **Global/home-dir like OpenClaw** — ungated user-scope native scan root (`ops_discover.rs`, one-level); exactly what the app's Skills library surfaces |
+| Skills (standard) | `~/.openhuman/.aiwg/skills/` | Sequestered for index-driven discovery (`aiwg discover`) |
 | Commands | `AGENTS.md` (aggregated) | OpenHuman has no native command surface; command-skills also deploy as skills |
-| Rules | `.openhuman/.aiwg/rules/` + `AGENTS.md` | Full bodies on disk for `aiwg show rule`; critical directives inline in `AGENTS.md` |
+| Rules | `~/.openhuman/.aiwg/rules/` + `AGENTS.md` | Full bodies on disk for `aiwg show rule`; critical directives inline in `AGENTS.md` |
 | Config bridge | `AGENTS.md` | Discover-First orientation |
 
 OpenHuman is "codex-shaped" (AGENTS.md bridge, cross-provider `.agents/`) but
@@ -56,33 +56,37 @@ From your project root:
 aiwg use sdlc --provider openhuman
 ```
 
-This deploys (Tier 1):
+This deploys:
 
-- Agent personas to `.agents/agents/`
-- Kernel skills to `.openhuman/skills/`, standard skills to `.openhuman/.aiwg/skills/`
+- Kernel skills **globally** to `~/.openhuman/skills/`, standard skills to `~/.openhuman/.aiwg/skills/`
+- Agent personas to the workspace `.agents/agents/` (Tier 1)
 - An `AGENTS.md` bridge at the project root
 
 Verify:
 
 ```bash
-ls .agents/agents/        # markdown personas
-ls .openhuman/skills/     # kernel skills (always-loaded set)
+ls ~/.openhuman/skills/   # kernel skills (global, always-loaded set — appear in the Skills library)
+ls .agents/agents/        # markdown personas (workspace-scoped)
 cat AGENTS.md             # Discover-First bridge
 ```
 
 Nothing is written to `<ws>/agents/` or `<ws>/agent/prompts/` — those belong to
 the opt-in Tier-2 harness surface ([#1559](https://git.integrolabs.net/roctinam/aiwg/issues/1559)).
 
-## Project-scope skill discovery: the trust marker
+## Why skills install globally (no trust marker needed)
 
-OpenHuman's skill scanner (`src/openhuman/skills/ops_discover.rs`) scans
-project-scope skill roots (`<ws>/.openhuman/skills/`) only when the workspace
-has opted in via a trust marker under `<ws>/.openhuman/`. User-scope skills
-(`~/.agents/skills/`, `~/.openhuman/skills/`) are scanned unconditionally.
+OpenHuman's skill scanner (`src/openhuman/workflows/ops_discover.rs`) scans
+**user-scope** roots (`~/.openhuman/skills/`, `~/.agents/skills/`)
+**unconditionally** — and its Skills library surfaces exactly that user-scope
+set ("place Hermes-style folders under `~/.openhuman/skills`"). AIWG therefore
+installs the kernel set there, like OpenClaw's home-dir model. No trust marker
+is involved.
 
-If your deployed kernel skills do not appear in OpenHuman, confirm the
-workspace trust marker is present. (The exact marker semantics are tracked in
-[#1553](https://git.integrolabs.net/roctinam/aiwg/issues/1553).)
+The trust marker only governs **project-scope** roots (`<ws>/.openhuman/skills/`),
+which AIWG no longer deploys to. Personas and the `AGENTS.md` bridge stay
+workspace-scoped because the external coding hosts OpenHuman drives
+(`claude_code`/`factory`) read them from the workspace.
+(Resolution tracked in [#1553](https://git.integrolabs.net/roctinam/aiwg/issues/1553).)
 
 ## Caveat: skill execution is being rebuilt
 
@@ -117,7 +121,7 @@ full installed corpus, not just the kernel set surfaced in `AGENTS.md`.
 
 - `.aiwg/` holds project-local SDLC artifacts (requirements, architecture,
   reports). It is never deployed to other systems.
-- `.agents/agents/`, `.openhuman/skills/`, and `AGENTS.md` are AIWG-managed
+- `~/.openhuman/skills/` (global), workspace `.agents/agents/`, and `AGENTS.md` are AIWG-managed
   deploy outputs — safe to regenerate with `aiwg refresh --provider openhuman`.
 
 ## See also

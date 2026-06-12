@@ -21,7 +21,7 @@ This section is synthesized after template emission from the current workspace s
 
 - Configured providers: claude, codex
 - Installed frameworks/addons: sdlc, media-marketing, all, security-engineering
-- Recorded deployments: claude, codex, copilot, cursor, factory, hermes, openclaw, opencode, warp, windsurf
+- Recorded deployments: claude, codex, copilot, cursor, factory, hermes, openclaw, opencode, openhuman, warp, windsurf
 - Normalized project context: `.aiwg/AIWG.md`
 
 ### Discover-First Protocol

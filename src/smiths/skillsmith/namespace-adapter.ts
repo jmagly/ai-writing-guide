@@ -136,7 +136,7 @@ export const NAMESPACE_ADAPTERS: Record<Platform | 'generic', NamespaceAdapter> 
   openhuman: {
     platform: 'openhuman',
     deploymentGroup: 'deep-recursion',
-    pathType: 'project',
+    pathType: 'home-dir', // Global/home-dir like OpenClaw (#1553) — resolves to ~/.openhuman/skills (ungated, surfaced by the Skills library)
     skillsBaseDir: '.openhuman/skills',
     subdirLayout: true,
   },
@@ -227,7 +227,7 @@ export const NAMESPACE_ADAPTERS: Record<Platform | 'generic', NamespaceAdapter> 
 
 /**
  * Resolve absolute skills root for a platform + project combination.
- * Home-dir platforms (Codex, OpenClaw, Hermes) use os.homedir().
+ * Home-dir platforms (Codex, OpenClaw, OpenHuman, Hermes) use os.homedir().
  */
 export function resolveSkillsRoot(adapter: NamespaceAdapter, projectPath: string): string {
   if (adapter.pathType === 'home-dir') {

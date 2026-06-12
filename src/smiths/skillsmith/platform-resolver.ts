@@ -74,7 +74,7 @@ const PLATFORM_CONFIGS: Record<Platform, PlatformSkillConfig> = {
     supportsSubdirectory: true,
   },
   openhuman: {
-    baseDir: '.openhuman/skills', // Project-scope native scan root (ops_discover.rs); deploy auto-writes .openhuman/trust, see #1553
+    baseDir: '~/.openhuman/skills', // Global/home-dir like OpenClaw (#1553); ungated user-scope scan root surfaced by the Skills library. ~/ resolved via os.homedir() at call site
     extension: '.md',
     supportsSkills: true,
     supportsSubdirectory: true,

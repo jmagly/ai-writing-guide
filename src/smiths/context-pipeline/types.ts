@@ -82,6 +82,10 @@ export interface ContextPipelineOptions {
   /** Skip emission of either file (corresponds to --no-aiwg-md / --no-agents-md / --no-context-files) */
   skip?: { aiwgMd?: boolean; agentsMd?: boolean };
 
+  // NOTE: OpenHuman trust-marker option removed (#1553 follow-up). Kernel skills
+  // now deploy to user scope (~/.openhuman/skills/), which is ungated — the
+  // trust marker only ever governed project-scope (<ws>/.openhuman/skills/).
+
   /**
    * Operator-declared overflow priority map per ADR-1 §6 / PUW-029.
    *
@@ -93,15 +97,6 @@ export interface ContextPipelineOptions {
    */
   overflowPriorityMap?: Record<string, 1 | 2 | 3>;
 
-  /**
-   * OpenHuman only: write the `.openhuman/trust` marker so OpenHuman's loader
-   * (`ops_discover.rs`, `is_workspace_trusted`) actually loads the deployed
-   * project-scope skills. Without it, OpenHuman silently skips every deployed
-   * skill. `aiwg use --provider openhuman` is an explicit deploy = consent;
-   * `--no-trust` sets this false to preserve the manual security opt-in (#1553).
-   * Defaults to true (write the marker).
-   */
-  openhumanTrust?: boolean;
 }
 
 /**
@@ -134,9 +129,6 @@ export interface ContextPipelineResult {
 
   /** What happened to CLAUDE.md when provider is claude (#1437) */
   claudeMdHookAction?: 'created' | 'inserted' | 'updated' | 'unchanged' | 'skipped';
-
-  /** Path of the `.openhuman/trust` marker written for openhuman (empty/undefined otherwise; #1553) */
-  openhumanTrustPath?: string;
 }
 
 /**

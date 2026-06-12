@@ -22,6 +22,7 @@
  */
 
 import path from 'path';
+import os from 'os';
 import {
   ensureDir,
   deployFiles,
@@ -47,23 +48,30 @@ export const name = 'openhuman';
 export const aliases = [];
 
 export const paths = {
+  // Personas stay WORKSPACE-scoped — the external coding hosts OpenHuman drives
+  // (claude_code/factory) read <ws>/.agents/agents/. Not part of the global install.
   agents: '.agents/agents/',
   // OpenHuman has no native command surface — commands aggregate into AGENTS.md
   // and the command-skills (/aiwg-doctor etc.) deploy as skills. Empty path =>
   // no discrete command files (matches src PROVIDER_PATHS; avoids the
   // commands→skills migration path). Same shape as hermes.
   commands: '',
-  // Standard (non-kernel) skills sequestered; kernel set → kernelSkillsPath.
-  skills: '.openhuman/.aiwg/skills/',
+  // Standard (non-kernel) skills sequestered under the HOME install for
+  // index-driven discovery; kernel set → kernelSkillsPath. Home/global like
+  // OpenClaw (#1553 follow-up) — OpenHuman is a persistent app whose Skills
+  // library scans the user-scope ~/.openhuman tree, not a per-workspace dir.
+  skills: path.join(os.homedir(), '.openhuman', '.aiwg', 'skills'),
   // Full rule bodies for `aiwg show rule`; critical directives inline in AGENTS.md.
-  rules: '.openhuman/.aiwg/rules/',
+  rules: path.join(os.homedir(), '.openhuman', '.aiwg', 'rules'),
 };
 
-// Kernel skills (always-loaded) → project-scope native scan root. OpenHuman's
-// ops_discover.rs scans <ws>/.openhuman/skills/ (and legacy <ws>/skills/),
-// gated by a workspace trust-marker (#1553). Project-relative — joined with
-// the deploy target.
-export const kernelSkillsPath = '.openhuman/skills/';
+// Kernel skills (always-loaded) → user-scope native scan root. OpenHuman's
+// ops_discover.rs scans ~/.openhuman/skills/ at USER scope WITHOUT a trust gate
+// (the trust marker only governs <ws>/.openhuman/skills/ project scope). A
+// global install is therefore ungated and is exactly what the app's Skills
+// library surfaces ("place Hermes-style folders under ~/.openhuman/skills").
+// Absolute — deploy uses it directly, not joined with the workspace target.
+export const kernelSkillsPath = path.join(os.homedir(), '.openhuman', 'skills');
 
 export const support = {
   agents: 'conventional',   // .agents/agents/ — consumed by coding hosts OpenHuman drives
@@ -135,13 +143,21 @@ export function deployCommands(commandFiles, targetDir, opts) {
  *   - standard → .openhuman/.aiwg/skills/  (index-discoverable)
  */
 export function deploySkills(skillDirs, targetDir, opts) {
-  const standardDestDir = path.join(targetDir, paths.skills);
-  const kernelDestDir = path.join(targetDir, kernelSkillsPath);
+  // Skills are HOME-rooted (absolute) for the global install; use them
+  // directly rather than joining under the workspace target.
+  const standardDestDir = path.isAbsolute(paths.skills)
+    ? paths.skills
+    : path.join(targetDir, paths.skills);
+  const kernelDestDir = path.isAbsolute(kernelSkillsPath)
+    ? kernelSkillsPath
+    : path.join(targetDir, kernelSkillsPath);
   deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
 }
 
 export function deployRules(ruleFiles, targetDir, opts) {
-  const destDir = path.join(targetDir, paths.rules);
+  const destDir = path.isAbsolute(paths.rules)
+    ? paths.rules
+    : path.join(targetDir, paths.rules);
   ensureDir(destDir, opts.dryRun);
   cleanupOldRuleFiles(destDir, opts);
   return deployFiles(ruleFiles, destDir, opts, transformAgent);

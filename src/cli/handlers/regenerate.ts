@@ -20,6 +20,7 @@
  */
 
 import * as path from 'path';
+import os from 'os';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { AiwgError, EXIT_CODES, handlerResultFromError } from '../errors.js';
 import * as ui from '../ui.js';
@@ -44,7 +45,8 @@ const PROVIDER_PATHS_MIN: Record<string, { agents: string; skills: string; rules
   opencode:  { agents: '.opencode/agent',   skills: '.opencode/.aiwg/skill',   rules: '.opencode/rule',   behaviors: '' },
   warp:      { agents: '.warp/agents',      skills: '.warp/.aiwg/skills',      rules: '.warp/rules',      behaviors: '' },
   windsurf:  { agents: '.windsurf/agents',  skills: '.windsurf/.aiwg/skills',  rules: '.windsurf/rules',  behaviors: '' },
-  openhuman: { agents: '.agents/agents',    skills: '.openhuman/.aiwg/skills', rules: '.openhuman/.aiwg/rules', behaviors: '' },
+  // Global/home-dir like OpenClaw (#1553): skills/rules live under ~/.openhuman; personas stay workspace for the coding hosts.
+  openhuman: { agents: '.agents/agents',    skills: path.join(os.homedir(), '.openhuman', '.aiwg', 'skills'), rules: path.join(os.homedir(), '.openhuman', '.aiwg', 'rules'), behaviors: '' },
 };
 
 async function handleRegenerate(args: string[], cwd: string): Promise<void> {

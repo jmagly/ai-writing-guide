@@ -86,7 +86,7 @@ export function getSkillsDirectory(platform: Platform, projectPath: string): str
     'openclaw': join(homedir(), '.openclaw', 'skills'),
     'warp': '.warp/skills',
     'windsurf': '.windsurf/skills',
-    'openhuman': '.openhuman/skills', // OpenHuman project-scope native scan root (trust-marker gated; see #1553)
+    'openhuman': join(homedir(), '.openhuman', 'skills'), // Global/home-dir like OpenClaw — ungated user-scope native scan root the Skills library surfaces (#1553)
     'generic': 'skills',
   };
   const dir = dirs[platform];

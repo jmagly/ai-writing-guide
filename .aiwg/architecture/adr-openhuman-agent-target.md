@@ -99,3 +99,33 @@ Register **curated, explicitly-selected** AIWG agents as OpenHuman harness speci
 - `src/openhuman/agent/harness/definition.rs:61-243` (AgentDefinition), `:431-447` (PromptSource), `:453-484` (ModelSpec), `:489-501` (ToolScope), `:267-283` (AgentTier)
 - `src/openhuman/agent/harness/subagent_runner/tool_prep.rs:171-238` (prompt resolution)
 - `openhuman-skills/docs/SKILL_SPEC.md` (skills contract — see #1553)
+
+---
+
+## Addendum (2026-06-12, #1553 follow-up): skills install globally, not project-scoped
+
+**Field finding.** OpenHuman is a persistent compose app whose **Skills library
+scans the user-scope tree** (`~/.openhuman/skills/`, `~/.agents/skills/`) —
+`ops_discover.rs` scans those roots **unconditionally**, while project-scope
+roots (`<ws>/.openhuman/skills/`) are gated by a workspace trust marker. The
+original "Decision" deployed kernel skills project-scoped (`<ws>/.openhuman/skills/`),
+so a fresh `aiwg use --provider openhuman` left the app's Skills library empty
+("No skills found — place Hermes-style folders under `~/.openhuman/skills`").
+
+**Revised decision.** Skills install **globally/home-dir, mirroring OpenClaw**:
+
+- Kernel skills → `~/.openhuman/skills/<name>/SKILL.md` (ungated user scope, one-level — exactly what the Skills library surfaces).
+- Standard skills → `~/.openhuman/.aiwg/skills/` (sequestered, `aiwg discover`).
+- Rules → `~/.openhuman/.aiwg/rules/` (full bodies for `aiwg show rule`).
+- **Personas + `AGENTS.md` remain workspace-scoped** (`.agents/agents/`, `<ws>/AGENTS.md`) — the external coding hosts OpenHuman drives read them from the workspace. This is the one place the original Decision still holds.
+
+The project-scope **trust marker is no longer written** — user scope is ungated,
+so it was always moot for the global install. `aiwg use --provider openhuman`
+emits a guidance line pointing operators at `~/.openhuman/skills/`.
+
+Implementation: `tools/agents/providers/openhuman.mjs` (the deploy writer),
+`src/cli/handlers/use.ts`, `src/smiths/platform-paths.ts`,
+`src/smiths/skillsmith/{platform-resolver,namespace-adapter}.ts`,
+`src/cli/handlers/regenerate.ts`. Absolute home paths flow through the existing
+`isAbsolute ? abs : join(target, …)` handling (deploy-agents.mjs, discovery.ts,
+platform-paths.ts). Trust-marker code from the first #1553 pass reverted.

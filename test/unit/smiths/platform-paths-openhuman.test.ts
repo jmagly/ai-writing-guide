@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { join } from 'path';
+import { homedir } from 'os';
 import {
   getAgentsDirectory,
   getSkillsDirectory,
@@ -18,8 +19,8 @@ describe('OpenHuman provider path resolution (#1555)', () => {
     expect(getAgentsDirectory('openhuman', proj)).toBe(join(proj, '.agents/agents'));
   });
 
-  it('resolves skills to project-scope .openhuman/skills', () => {
-    expect(getSkillsDirectory('openhuman', proj)).toBe(join(proj, '.openhuman/skills'));
+  it('resolves skills to global/home-dir ~/.openhuman/skills (ungated, surfaced by the Skills library; #1553)', () => {
+    expect(getSkillsDirectory('openhuman', proj)).toBe(join(homedir(), '.openhuman', 'skills'));
   });
 
   it('aggregates commands via AGENTS.md (no native command dir)', () => {

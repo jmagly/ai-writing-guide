@@ -314,8 +314,12 @@ const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands:
     behaviors: path.join(os.homedir(), '.openclaw', 'behaviors'), // Native behavior support
   },
   openhuman: {
-    agents: '.agents/agents',          // Markdown personas (Tier-1); reaches external coding hosts OpenHuman drives. Harness TOML is Tier-2 (#1559)
-    skills: '.openhuman/.aiwg/skills', // Non-kernel skills sequestered for index-driven discovery; kernel set → PROVIDER_KERNEL_SKILL_PATHS
+    agents: '.agents/agents',          // Markdown personas (Tier-1); workspace-scoped — reaches the external coding hosts OpenHuman drives. Harness TOML is Tier-2 (#1559)
+    // Global/home-dir install like OpenClaw (#1553 follow-up): OpenHuman's
+    // Skills library scans ~/.openhuman/skills/ (user scope, ungated). Standard
+    // skills sequestered under ~/.openhuman/.aiwg/skills/ for index-driven
+    // discovery; kernel set → PROVIDER_KERNEL_SKILL_PATHS (~/.openhuman/skills/).
+    skills: path.join(os.homedir(), '.openhuman', '.aiwg', 'skills'),
     commands: '',                      // Aggregated into AGENTS.md (no native command dir)
     rules: '',                         // Aggregated into AGENTS.md (### Rule: inline)
     behaviors: '',                     // Not supported
@@ -336,7 +340,9 @@ const PROVIDER_KERNEL_SKILL_PATHS: Record<string, string> = {
   warp: '.warp/skills',
   windsurf: '.windsurf/skills',
   openclaw: path.join(os.homedir(), '.openclaw', 'skills', 'aiwg'),
-  openhuman: '.openhuman/skills', // Project-scope native scan root (ops_discover.rs); deploy auto-writes .openhuman/trust (#1553)
+  // Global/home-dir native scan root (ops_discover.rs, one-level: ~/.openhuman/skills/<name>/SKILL.md).
+  // User-scope is ungated — no trust marker needed — and is what OpenHuman's Skills library surfaces (#1553).
+  openhuman: path.join(os.homedir(), '.openhuman', 'skills'),
 };
 
 const MIRRORED_STANDARD_COMMAND_SKILLS = new Set([
@@ -2300,9 +2306,6 @@ export class UseHandler implements CommandHandler {
       const skipAiwgMd = skipContext || remainingArgs.includes('--no-aiwg-md');
       const skipAgentsMd = skipContext || remainingArgs.includes('--no-agents-md');
       const forceContext = remainingArgs.includes('--force-context-files');
-      // OpenHuman only: --no-trust skips writing the `.openhuman/trust` marker
-      // (OpenHuman silently ignores deployed project-scope skills without it; #1553).
-      const noTrust = remainingArgs.includes('--no-trust');
 
       try {
         const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
@@ -2320,11 +2323,15 @@ export class UseHandler implements CommandHandler {
           detectExistingFiles: true,
           force: forceContext,
           skip: { aiwgMd: skipAiwgMd, agentsMd: skipAgentsMd },
-          openhumanTrust: !noTrust,
         });
 
-        if (ctxResult.openhumanTrustPath) {
-          ui.dim('  Marked workspace trusted for OpenHuman (.openhuman/trust) so deployed skills load — pass --no-trust to skip');
+        // OpenHuman is a global/home-dir install like OpenClaw (#1553): kernel
+        // skills land in ~/.openhuman/skills/ (ungated, surfaced by the Skills
+        // library); personas + AGENTS.md stay in this workspace for the coding
+        // hosts OpenHuman drives. Tell the operator where things went.
+        if (provider === 'openhuman') {
+          ui.dim('  Skills installed globally → ~/.openhuman/skills/ (open OpenHuman → Skills to see them)');
+          ui.dim('  The full skill set is discover-reachable: aiwg discover "<what you want to do>"');
         }
 
         if (verbose && ctxResult.agentsMdPath) {

@@ -382,32 +382,18 @@ describe('context finalization emission', () => {
     expect(second.match(/## Context Finalization/g)).toHaveLength(1);
   });
 
-  // #1553 — OpenHuman's loader (ops_discover.rs) silently skips deployed
-  // project-scope skills unless `<workspace>/.openhuman/trust` exists. The
-  // deploy writes it (an explicit `aiwg use --provider openhuman` is consent).
-  it('writes the .openhuman/trust marker for openhuman so deployed skills load (#1553)', async () => {
+  // #1553 follow-up — OpenHuman is a global/home-dir install like OpenClaw:
+  // kernel skills deploy to ~/.openhuman/skills/ (USER scope, ungated). The
+  // workspace `.openhuman/trust` marker only ever governed PROJECT-scope skills,
+  // which AIWG no longer deploys — so the marker is moot and must NOT be written.
+  // The AGENTS.md discover-first bridge is still emitted in the workspace (#1560).
+  it('emits the AGENTS.md bridge for openhuman without writing a project-scope trust marker (#1553)', async () => {
     const dir = makeTmpDir();
     try {
       const result = await generate({
         provider: 'openhuman', projectPath: dir, sections: [], detectExistingFiles: true,
       });
-      expect(result.openhumanTrustPath).toBe(join(dir, '.openhuman', 'trust'));
-      expect(existsSync(join(dir, '.openhuman', 'trust'))).toBe(true);
-      // the AGENTS.md discover-first bridge is still emitted (#1560)
       expect(result.agentsMdPath).toBe(join(dir, 'AGENTS.md'));
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
-
-  it('skips the openhuman trust marker when openhumanTrust is false (--no-trust) (#1553)', async () => {
-    const dir = makeTmpDir();
-    try {
-      const result = await generate({
-        provider: 'openhuman', projectPath: dir, sections: [], detectExistingFiles: true,
-        openhumanTrust: false,
-      });
-      expect(result.openhumanTrustPath).toBeUndefined();
       expect(existsSync(join(dir, '.openhuman', 'trust'))).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
