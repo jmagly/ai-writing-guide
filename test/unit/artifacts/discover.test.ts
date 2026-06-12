@@ -386,6 +386,37 @@ describe('discoverCapability — JSON output', () => {
     expect(sentence.relaxed_overlap).toBeFalsy();
   });
 
+  // #1581 follow-up — a query that reduces to exactly ONE content token after
+  // stopword stripping ("intake skill" / "find an intake skill" → ["intake"])
+  // must still match. The field substring match uses the stripped content
+  // phrase, not the raw multi-word text (which contains stopwords and matches
+  // nothing) — otherwise useMultiToken=false dead-ends single-content-token
+  // queries.
+  it('matches a query that reduces to a single content token (#1581)', async () => {
+    writeSkill(
+      'intake-wizard',
+      'fx',
+      `---\nname: intake-wizard\ndescription: Generate or complete intake forms interactively\n---\n\n## Triggers\n\n- "intake wizard"\n`,
+    );
+    const setupSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const setupErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    setupSpy.mockRestore();
+    setupErrSpy.mockRestore();
+
+    for (const phrase of ['intake skill', 'find an intake skill']) {
+      const captured: string[] = [];
+      const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
+        captured.push(args.join(' ')),
+      );
+      await discoverCapability(cwd, { phrase, graph: 'framework', json: true, limit: 3 });
+      logSpy.mockRestore();
+      const parsed = JSON.parse(captured.join('\n'));
+      expect(parsed.results.length, `"${phrase}" should not dead-end`).toBeGreaterThan(0);
+      expect(parsed.results[0].path).toContain('intake-wizard');
+    }
+  });
+
   // #1230 — kernel-marked skills used to short-circuit path anchoring,
   // emitting the stored relative path (`agentic/code/.../SKILL.md`).
   // `aiwg show` then resolved against cwd → ENOENT from any non-AIWG

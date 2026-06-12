@@ -173,8 +173,17 @@ function nearNameMatch(query: string, name: string): boolean {
 }
 
 function scoreEntry(entry: MetadataEntry, text: string, opts: { relaxOverlap?: boolean } = {}): number {
-  const lower = text.toLowerCase();
   const tokens = tokenize(text);
+  // Field substring matching uses the stopword-stripped CONTENT phrase, not the
+  // raw query (#1581). Without this, a query that reduces to a single content
+  // token — e.g. "intake skill" or "find an intake skill" → ["intake"] — sets
+  // useMultiToken=false (1 token) and then fails the full-string `.includes()`
+  // checks because the raw phrase ("intake skill") isn't a substring of any
+  // field, while the one meaningful token is never matched. Joining the content
+  // tokens restores the invariant that a single content token IS the phrase, and
+  // for multi-token queries gives a tighter (content-only) phrase to match.
+  // Pure-stopword queries fall back to the raw text.
+  const lower = tokens.length > 0 ? tokens.join(' ') : text.toLowerCase().trim();
   let score = 0;
 
   // Exact-name floor (#1233) — if the query (normalized) exactly matches
