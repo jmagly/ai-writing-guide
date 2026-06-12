@@ -140,22 +140,41 @@ dry-run deletion check. Keep the protected-subpath list in
 `.gitea/workflows/docsite-deploy.yml` aligned with the tenant table in
 `.gitea/workflows/README.md`.
 
+`roctinam/agentic-sandbox` deploys its own subtree from its own
+`docsite-deploy.yml`, which (as of 2026-06-12) consumes the publisher from npm
+via `npx @pagenary/publisher` — matching AIWG's #1484 migration. It therefore
+needs **only the shared `DEPLOY_*` set**, not `GT_ACCESS_TOKEN`.
+
+### Required secret set for a sibling tenant
+
+A sibling docs tenant (e.g. `agentic-sandbox`) needs exactly these five,
+identical in value to AIWG's (same docs host):
+
+| Secret | Notes |
+|---|---|
+| `DEPLOY_SSH_KEY` | Private SSH key for the docs host. |
+| `DEPLOY_HOST` | Docs host name. |
+| `DEPLOY_PORT` | SSH port. |
+| `DEPLOY_USER` | SSH user. |
+| `DEPLOY_PATH` | Root web path; the tenant rsyncs into `${DEPLOY_PATH}<subpath>/`. |
+
 ### Current secret visibility snapshot
 
-As of 2026-06-11, Gitea Actions metadata shows:
+As of 2026-06-12, Gitea Actions metadata shows:
 
 | Repository | Visible docsite deploy secrets |
 |---|---|
 | `roctinam/aiwg` | `DEPLOY_HOST`, `DEPLOY_PATH`, `DEPLOY_PORT`, `DEPLOY_SSH_KEY`, `DEPLOY_USER`, plus legacy `GT_ACCESS_TOKEN` |
-| `roctinam/agentic-sandbox` | none of the docsite deploy secrets; only registry secrets are visible |
+| `roctinam/agentic-sandbox` | none of the docsite deploy secrets (only `GH_MIRROR_TOKEN`, `REGISTRY_TOKEN`, `REGISTRY_USER`) |
 
 No organization-level `roctinam` Actions secret scope is visible through the
 Gitea API used by the automation agent. Because Gitea does not expose secret
 values after creation, automation can confirm names and scopes but cannot copy
 existing AIWG secret values into another repository. An authorized secret holder
-must either add the docsite secret set to `roctinam/agentic-sandbox` or move the
-shared deploy secrets into an organization/team scope that includes both
-repositories.
+must either add the five `DEPLOY_*` secrets above to `roctinam/agentic-sandbox`
+or move the shared deploy secrets into an organization/team scope that includes
+both repositories. Until then, `agentic-sandbox`'s `docsite-deploy.yml` skips
+gracefully (warns, exits 0) — it never fails a release tag.
 
 ## Security Best Practices
 
