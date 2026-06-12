@@ -75,7 +75,7 @@ Use this routing table:
 | "Create/list/show/comment/close local issues" | `aiwg issue ... --provider local` once available |
 | "Audit open issues" | `issue-audit` / `audit-issues` |
 | "Work through these issues" | `address-issues` |
-| "Use local issues with address-issues" | `address-issues --provider local` once available |
+| "Use local issues with address-issues" | `address-issues` skill (auto-detects the local tracker from config) |
 | "File an AIWG bug/enhancement" | `aiwg-issue` |
 | "Sync local issues to GitHub/Gitea" | local issue sync/import-export workflow |
 

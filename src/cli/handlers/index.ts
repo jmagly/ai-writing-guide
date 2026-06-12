@@ -120,7 +120,7 @@ import { diagnoseHandler } from './diagnose.js';
 import { localExecutorHandler, localExecutorServeHandler } from './local-executor.js';
 import { executionModeHandler } from './execution-mode.js';
 import { repoAccessHandler, repoAccessHandlers } from './repo-access.js';
-import { issueHandler, issueAuditHandler, addressIssuesHandler } from './issues.js';
+import { issueHandler, issueAuditHandler } from './issues.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -145,7 +145,6 @@ export {
   initHandler,
   issueHandler,
   issueAuditHandler,
-  addressIssuesHandler,
   runHandler,
 
   // Project
@@ -305,7 +304,6 @@ export const allHandlers: CommandHandler[] = [
   initHandler,
   issueHandler,
   issueAuditHandler,
-  addressIssuesHandler,
   runHandler,
 
   // Workspace management

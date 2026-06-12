@@ -48,22 +48,3 @@ export const issueAuditHandler: CommandHandler = {
   },
 };
 
-export const addressIssuesHandler: CommandHandler = {
-  id: 'address-issues',
-  name: 'Address Issues',
-  description: 'Prepare local issue slices for address-issues loops when --provider local is supplied',
-  category: 'project',
-  aliases: ['address-issue'],
-
-  async execute(ctx: HandlerContext): Promise<HandlerResult> {
-    try {
-      const { addressLocalIssuesCli } = await import('../../issues/workflows.js');
-      await addressLocalIssuesCli(ctx.args, ctx.cwd);
-      return { exitCode: 0 };
-    } catch (error) {
-      const result = handlerResultFromError(error);
-      return { ...result, message: `Address issues failed: ${result.message}` };
-    }
-  },
-};
-

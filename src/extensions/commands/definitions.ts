@@ -541,10 +541,10 @@ export const addressIssuesCommand: Extension = {
   id: 'address-issues',
   type: 'skill',
   name: 'Address Issues',
-  description: 'Address selected issues; local provider mode prepares bounded .aiwg/issues/ slices',
-  version: '1.0.0',
-  capabilities: ['cli', 'project', 'issues', 'agent-loop', 'local-provider'],
-  keywords: ['address-issues', 'fix issues', 'issue loop', 'local'],
+  description: 'Address selected issues via the address-issues skill (auto-detects the project tracker)',
+  version: '1.1.0',
+  capabilities: ['project', 'issues', 'agent-loop'],
+  keywords: ['address-issues', 'fix issues', 'issue loop'],
   category: 'project',
   platforms: {
     claude: 'full',
@@ -559,8 +559,9 @@ export const addressIssuesCommand: Extension = {
     triggerPhrases: ['address issues', 'fix open issues', 'work issue backlog'],
     commandHint: {
       template: 'utility',
-      argumentHint: '<issue-id...> [--provider local] [--all-open] [--limit N]',
+      argumentHint: '<issue-id...> [--all-open] [--limit N] [--guidance "..."]',
       allowedTools: ['Read', 'Write', 'Edit', 'Bash'],
+      cliDisabled: true,
     },
   } satisfies SkillMetadata,
 };
