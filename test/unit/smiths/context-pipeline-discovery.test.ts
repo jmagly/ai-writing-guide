@@ -181,7 +181,8 @@ describe('provider policy', () => {
     expect(shouldEmitContextFiles('warp')).toBe(true);
     expect(shouldEmitContextFiles('factory')).toBe(true);
     expect(shouldEmitContextFiles('opencode')).toBe(true);
-    expect(AGENTS_MD_PROVIDERS.size).toBe(8);
+    expect(shouldEmitContextFiles('openhuman')).toBe(true);
+    expect(AGENTS_MD_PROVIDERS.size).toBe(9);
   });
 
   // #1437: claude is no longer skipped — it gets AIWG.md emission + CLAUDE.md hook
@@ -207,7 +208,7 @@ describe('provider policy', () => {
   });
 
   it('granular gates: AGENTS_MD providers get AIWG.md AND AGENTS.md but NOT claude hook', () => {
-    for (const p of ['codex', 'copilot', 'cursor', 'windsurf', 'hermes', 'warp', 'factory', 'opencode'] as const) {
+    for (const p of ['codex', 'copilot', 'cursor', 'windsurf', 'hermes', 'warp', 'factory', 'opencode', 'openhuman'] as const) {
       expect(shouldEmitAiwgMd(p)).toBe(true);
       expect(shouldEmitAgentsMd(p)).toBe(true);
       expect(shouldEmitClaudeMdHook(p)).toBe(false);

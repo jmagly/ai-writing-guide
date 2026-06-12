@@ -35,9 +35,15 @@ export const AGENTS_MD_PROVIDERS: ReadonlySet<Platform> = new Set([
   'warp',
   'factory',
   'opencode',
+  // OpenHuman (#1552) ships `.agents/` + `AGENTS.md` natively; its bridge IS
+  // AGENTS.md (commands/rules aggregate there, discover-first is induced
+  // through it — see adr-openhuman-agent-target.md). The induction wired the
+  // path layer (getConfigFileName('openhuman') === 'AGENTS.md') but missed this
+  // policy gate, so AGENTS.md was never emitted (#1560 validation finding).
+  'openhuman',
 ]);
 
-export type AgentsMdProvider = Platform & ('codex' | 'copilot' | 'cursor' | 'windsurf' | 'hermes' | 'warp' | 'factory' | 'opencode');
+export type AgentsMdProvider = Platform & ('codex' | 'copilot' | 'cursor' | 'windsurf' | 'hermes' | 'warp' | 'factory' | 'opencode' | 'openhuman');
 
 /**
  * Whether the context-pipeline has ANY work to do for this provider.
