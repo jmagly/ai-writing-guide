@@ -153,11 +153,14 @@ jobs:
             /*) : ;;  # already absolute — use as-is
             *)
               REMOTE_HOME="$(ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
-              case "$DEPLOY_ROOT" in
-                "~/"*) DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT#~/}" ;;
-                "~/")  DEPLOY_ROOT="${REMOTE_HOME}/" ;;
-                *)     DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT}" ;;  # relative path
-              esac
+              # Strip a single leading literal ~ (escaped \~ so the strip pattern is
+              # not itself tilde-expanded), then a single leading /, then anchor to
+              # the remote $HOME. Handles ~/path, bare ~, and relative path. A quoted
+              # "~/"* case pattern does NOT match here, which is the bug that let the
+              # literal ~ through — strip-based resolution is the reliable form.
+              rest="${DEPLOY_ROOT#\~}"
+              rest="${rest#/}"
+              DEPLOY_ROOT="${REMOTE_HOME}/${rest}"
               ;;
           esac
           echo "Deploying docsite to ${DEPLOY_ROOT}"
@@ -231,11 +234,14 @@ jobs:
             /*) : ;;  # already absolute — use as-is
             *)
               REMOTE_HOME="$(ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
-              case "$DEPLOY_ROOT" in
-                "~/"*) DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT#~/}" ;;
-                "~/")  DEPLOY_ROOT="${REMOTE_HOME}/" ;;
-                *)     DEPLOY_ROOT="${REMOTE_HOME}/${DEPLOY_ROOT}" ;;  # relative path
-              esac
+              # Strip a single leading literal ~ (escaped \~ so the strip pattern is
+              # not itself tilde-expanded), then a single leading /, then anchor to
+              # the remote $HOME. Handles ~/path, bare ~, and relative path. A quoted
+              # "~/"* case pattern does NOT match here, which is the bug that let the
+              # literal ~ through — strip-based resolution is the reliable form.
+              rest="${DEPLOY_ROOT#\~}"
+              rest="${rest#/}"
+              DEPLOY_ROOT="${REMOTE_HOME}/${rest}"
               ;;
           esac
           echo "Verifying docsite at ${DEPLOY_ROOT}"
