@@ -104,6 +104,19 @@ Place post images under `docs/.public/blog/` and reference them by their **serve
 
 `docs/.public/` is pagenary's static-asset directory; its contents are copied under `/assets/` in the built site (`docs/.public/blog/x.png` → `docs.aiwg.io/assets/blog/x.png`). **Co-located `docs/blog/images/` files are NOT copied** by the build — use `.public/blog/`. Keep heroes 16:9 with descriptive alt text.
 
+## Tools & transparency disclosure (required)
+
+Every post **must end** with a `## Tools & transparency` section that discloses how the content was produced — the tools used and an approximate split of **generative assistance vs. original input**. AIWG publishes how its own content is made; readers should never have to guess.
+
+State, briefly:
+
+- **Facts and claims** — confirm these are original / human-verified (nothing model-invented). For AIWG posts this should always be 100%.
+- **Prose** — rough % original drafting + editorial vs. generative styling, naming the tool(s) used for styling (e.g. Google Gemini).
+- **Imagery** — which images, if any, were AI-generated and with what tool (e.g. ChatGPT / DALL·E); confirm no text/logos are AI-rendered.
+- **Assembly, fact-checking, final edit** — human/AIWG-directed.
+
+This is a disclosure of *content provenance*, distinct from the `no-attribution` rule (which forbids stamping AI-tool credit on commits/code). Marketing prose and imagery get an honest provenance note; commits do not get tool attribution.
+
 ## Manifest (generated — do not hand-edit)
 
 pagenary writes `docs.aiwg.io/blog/index.json` on every build as an **envelope object**:
