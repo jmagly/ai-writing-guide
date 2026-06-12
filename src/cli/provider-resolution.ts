@@ -73,7 +73,7 @@ function detectProviderFromRuntimeEnv(env: NodeJS.ProcessEnv): Platform | null {
   return null;
 }
 
-function commandLooksLikeProvider(command: string): Platform | null {
+export function commandLooksLikeProvider(command: string): Platform | null {
   const lower = command.toLowerCase();
   if (lower.includes('@openai/codex') || /(?:^|[/\s])codex(?:$|[\s/])/.test(lower)) return 'codex';
   if (lower.includes('claude-code') || /(?:^|[/\s])claude(?:$|[\s/])/.test(lower)) return 'claude';
@@ -83,6 +83,7 @@ function commandLooksLikeProvider(command: string): Platform | null {
   if (lower.includes('warp')) return 'warp';
   if (lower.includes('factory')) return 'factory';
   if (lower.includes('openclaw')) return 'openclaw';
+  if (lower.includes('openhuman')) return 'openhuman';
   return null;
 }
 
