@@ -155,9 +155,18 @@ async function resolveRouterPath() {
   }
   const installedRouter = path.join(packageRoot, 'dist', 'src', 'cli', 'router.js');
   if (!existsSync(installedRouter)) {
+    // Config-driven from package.json (single source of truth). Falls back to
+    // the homepage if `bugs.url` is absent — never hardcode the build origin.
+    let issuesUrl = 'https://aiwg.io';
+    try {
+      const pkg = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
+      issuesUrl = pkg.bugs?.url || pkg.homepage || issuesUrl;
+    } catch {
+      // package.json unreadable in this broken install — keep the homepage fallback.
+    }
     console.error(`Compiled router not found at ${installedRouter}`);
     console.error(`  This is a packaging bug. Please report it at:`);
-    console.error(`    https://github.com/jmagly/aiwg/issues`);
+    console.error(`    ${issuesUrl}`);
     process.exit(1);
   }
   return installedRouter;

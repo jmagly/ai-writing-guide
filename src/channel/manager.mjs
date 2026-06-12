@@ -394,6 +394,24 @@ export async function switchToStable() {
  * Get version information based on current channel
  * @returns {Promise<object>} Version info
  */
+/**
+ * Normalize a package.json `repository` field (string or `{ url }`) into a clean
+ * `host/owner/repo` display form for version stamps — stripping the `git+`
+ * prefix, URL scheme, and `.git` suffix. Returns '' if none is declared.
+ *
+ * @param {string | { url?: string } | undefined} repository
+ * @returns {string}
+ */
+function normalizeRepoUrl(repository) {
+  const raw = typeof repository === 'string' ? repository : repository?.url || '';
+  return raw
+    .replace(/^git\+/, '')
+    .replace(/^git@([^:]+):/, '$1/')
+    .replace(/^[a-z]+:\/\//i, '')
+    .replace(/\.git$/, '')
+    .replace(/\/$/, '');
+}
+
 export async function getVersionInfo() {
   const config = await loadConfig();
   const packageRoot = getPackageRoot();
@@ -424,6 +442,13 @@ export async function getVersionInfo() {
     channel,
     packageRoot,
     devMode: config.devMode || false,
+    // Public-facing URLs — single source of truth is package.json, so user-visible
+    // stamps/links never hardcode the internal build origin. The published package
+    // declares the public repository/homepage/bugs; read them here rather than
+    // duplicating literals across the CLI.
+    repoUrl: normalizeRepoUrl(packageJson.repository),       // e.g. github.com/jmagly/aiwg
+    homepage: packageJson.homepage || '',                    // e.g. https://aiwg.io
+    issuesUrl: packageJson.bugs?.url || '',                  // e.g. https://github.com/jmagly/aiwg/issues
   };
 
   if (config.channel === 'edge') {

@@ -51,6 +51,9 @@ export const diagnoseHandler: CommandHandler = {
     const log = getLogger('cli:diagnose');
     const span = log.span('diagnose', { stdoutMode, includeSecrets });
     const bundle = await collectBundle({ cwd, includeSecrets });
+    // Config-driven from package.json (single source of truth) — never hardcode
+    // the build origin in user-facing output.
+    const { issuesUrl, homepage } = await getVersionInfo();
     span.end('bundle-collected', {
       logs: bundle.logs.length,
       has_config: bundle.config !== null,
@@ -100,7 +103,7 @@ export const diagnoseHandler: CommandHandler = {
       ui.success(`Diagnose bundle written to: ${outPath}`);
       const size = statSync(outPath).size;
       ui.dim(`  Size: ${(size / 1024).toFixed(1)} KB`);
-      ui.dim(`  Attach to bug reports at https://github.com/jmagly/aiwg/issues`);
+      ui.dim(`  Attach to bug reports at ${issuesUrl || homepage}`);
       if (!includeSecrets) {
         ui.dim(`  Sanitized: env vars matching SECRET/TOKEN/PASS/KEY stripped, config secrets redacted`);
         ui.dim(`  (pass --include-secrets to skip sanitization, but please inspect the bundle first)`);

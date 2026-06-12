@@ -2110,7 +2110,8 @@ export class UseHandler implements CommandHandler {
       try {
         const versionInfo = await getVersionInfo();
         ui.blank();
-        ui.dim(`  AIWG v${versionInfo.version} — github.com/jmagly/aiwg`);
+        const repoStamp = versionInfo.repoUrl || 'aiwg.io';
+        ui.dim(`  AIWG v${versionInfo.version} — ${repoStamp}`);
       } catch {
         // Graceful fallback: omit version line if versionInfo unavailable
       }
