@@ -139,7 +139,7 @@ Replay activates against today's sandboxes without waiting for `agentic-sandbox#
 
 ## Sandbox Registration API
 
-External systems (such as [agentic-sandbox](https://github.com/jmagly/agentic-sandbox)) register with `aiwg serve` to appear in the dashboard and relay events.
+External systems (such as [agentic-sandbox](https://github.com/jmagly/agentic-sandbox) — docs at [docs.aiwg.io/agentic-sandbox](https://docs.aiwg.io/agentic-sandbox)) register with `aiwg serve` to appear in the dashboard and relay events.
 
 ### Register a Sandbox
 
@@ -285,6 +285,8 @@ Operators can also dismiss requests via `POST /api/hitl/:id/dismiss`.
 
 ## Integration with agentic-sandbox
 
+> **agentic-sandbox docs:** the full agentic-sandbox documentation is published at **[docs.aiwg.io/agentic-sandbox](https://docs.aiwg.io/agentic-sandbox)** (a tenant of the AIWG doc site). Refer there for sandbox setup, the executor contract reference, and runtime details.
+
 agentic-sandbox connects to `aiwg serve` through **two parallel paths**: the original sandbox registry (sandbox-level events, dashboard correlation) and the **executor contract v1** (mission-level lifecycle, dispatch acceptance). Both stay operational; the executor path is the canonical integration for new work.
 
 ### Quick start
@@ -401,7 +403,7 @@ Expected sequence on a successful dispatch: `mission.assigned` → `mission.star
 
 - Wire-shape fixtures: `test/fixtures/sandbox-api/executor-v1/` (canonical JSON shapes for every event, request, and response in the contract)
 - Test strategy: `.aiwg/testing/test-strategy-daemon-serve-sandbox.md` §3.2 (contract tier) and §5.1 (fixture inventory)
-- Sandbox-side spec: `~/dev/agentic-sandbox/docs/aiwg-executor.md` (`spec_version: 1.0.0`)
+- Sandbox-side spec: `~/dev/agentic-sandbox/docs/aiwg-executor.md` (`spec_version: 1.0.0`) — published at [docs.aiwg.io/agentic-sandbox](https://docs.aiwg.io/agentic-sandbox)
 - v1 → v2 sunset awareness (deprecation telemetry): [#1259](https://git.integrolabs.net/roctinam/aiwg/issues/1259)
 
 ## Security
