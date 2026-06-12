@@ -100,7 +100,7 @@ export const diagnoseHandler: CommandHandler = {
       ui.success(`Diagnose bundle written to: ${outPath}`);
       const size = statSync(outPath).size;
       ui.dim(`  Size: ${(size / 1024).toFixed(1)} KB`);
-      ui.dim(`  Attach to bug reports at https://git.integrolabs.net/roctinam/aiwg/issues`);
+      ui.dim(`  Attach to bug reports at https://github.com/jmagly/aiwg/issues`);
       if (!includeSecrets) {
         ui.dim(`  Sanitized: env vars matching SECRET/TOKEN/PASS/KEY stripped, config secrets redacted`);
         ui.dim(`  (pass --include-secrets to skip sanitization, but please inspect the bundle first)`);

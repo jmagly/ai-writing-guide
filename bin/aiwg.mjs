@@ -157,7 +157,7 @@ async function resolveRouterPath() {
   if (!existsSync(installedRouter)) {
     console.error(`Compiled router not found at ${installedRouter}`);
     console.error(`  This is a packaging bug. Please report it at:`);
-    console.error(`    https://git.integrolabs.net/roctinam/aiwg/issues`);
+    console.error(`    https://github.com/jmagly/aiwg/issues`);
     process.exit(1);
   }
   return installedRouter;
