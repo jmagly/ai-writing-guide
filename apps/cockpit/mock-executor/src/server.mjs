@@ -7,6 +7,7 @@
 import http from 'node:http';
 import { buildAgentCard } from './agent-card.mjs';
 import { listInstances, getInstance, DEFAULT_INSTANCE } from './store.mjs';
+import { handleSend, handleGetTask, handleListTasks, handleCancel, handleSubscribe, runningTasks } from './a2a.mjs';
 
 function json(res, status, body, extraHeaders = {}) {
   res.writeHead(status, { 'content-type': 'application/json', 'access-control-allow-origin': '*', ...extraHeaders });
@@ -37,14 +38,27 @@ export function createExecutor() {
       return inst ? json(res, 200, inst) : json(res, 404, { error: 'instance_not_found', instance_id: decodeURIComponent(am[1]) });
     }
 
-    // --- Per-instance A2A surface: AgentCard discovery ---
-    const dm = path.match(/^\/agents\/([^/]+)\/\.well-known\/agent-card\.json$/);
-    if (dm && req.method === 'GET') {
-      const instanceId = decodeURIComponent(dm[1]);
+    // --- Admin: running tasks across instances (for the Cockpit running view) ---
+    if (path === '/admin/running' && req.method === 'GET') return json(res, 200, { running: runningTasks() });
+
+    // --- Per-instance A2A surface ---
+    const pm = path.match(/^\/agents\/([^/]+)\/(.+)$/);
+    if (pm) {
+      const instanceId = decodeURIComponent(pm[1]);
+      const rest = pm[2];
       const inst = getInstance(instanceId);
-      if (!inst) return json(res, 404, { jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Instance not found', data: { instance_id: instanceId } } });
-      const baseUrl = `${url.protocol}//${req.headers.host}/agents/${encodeURIComponent(instanceId)}`;
-      return json(res, 200, buildAgentCard(instanceId, { baseUrl, runtime: inst.runtime, loadout: inst.loadout }), echoExtensions(req));
+      if (!inst) return json(res, 404, { error: 'instance_not_found', instance_id: instanceId }, { 'content-type': 'application/problem+json' });
+
+      if (rest === '.well-known/agent-card.json' && req.method === 'GET') {
+        const baseUrl = `${url.protocol}//${req.headers.host}/agents/${encodeURIComponent(instanceId)}`;
+        return json(res, 200, buildAgentCard(instanceId, { baseUrl, runtime: inst.runtime, loadout: inst.loadout }), echoExtensions(req));
+      }
+      if (rest === 'messages:send' && req.method === 'POST') return handleSend(req, res, instanceId, inst);
+      if (rest === 'tasks' && req.method === 'GET') return handleListTasks(req, res, instanceId);
+      let tm;
+      if ((tm = rest.match(/^tasks\/(.+):cancel$/)) && req.method === 'POST') return handleCancel(req, res, instanceId, decodeURIComponent(tm[1]));
+      if ((tm = rest.match(/^tasks\/([^/]+)\/subscribe$/)) && req.method === 'GET') return handleSubscribe(req, res, instanceId, decodeURIComponent(tm[1]));
+      if ((tm = rest.match(/^tasks\/([^/:]+)$/)) && req.method === 'GET') return handleGetTask(req, res, instanceId, decodeURIComponent(tm[1]));
     }
 
     return notFound(res, path);
