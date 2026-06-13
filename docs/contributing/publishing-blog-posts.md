@@ -106,16 +106,27 @@ Place post images under `docs/.public/blog/` and reference them by their **serve
 
 ## Tools & transparency disclosure (required)
 
-Every post **must end** with a `## Tools & transparency` section that discloses how the content was produced — the tools used and an approximate split of **generative assistance vs. original input**. AIWG publishes how its own content is made; readers should never have to guess.
+Every post **must end** with a `## Tools & transparency` section that honestly discloses how the content was produced. AIWG publishes how its own content is made; readers should never have to guess. Be truthful, not flattering — most AIWG posts are **mostly AI-generated and then human-fact-checked**, and the disclosure should say exactly that rather than overstate human authorship.
 
-State, briefly:
+Use this consistent shape (adapt the imagery + facts lines per post):
 
-- **Facts and claims** — confirm these are original / human-verified (nothing model-invented). For AIWG posts this should always be 100%.
-- **Prose** — rough % original drafting + editorial vs. generative styling, naming the tool(s) used for styling (e.g. Google Gemini).
-- **Imagery** — which images, if any, were AI-generated and with what tool (e.g. ChatGPT / DALL·E); confirm no text/logos are AI-rendered.
-- **Assembly, fact-checking, final edit** — human/AIWG-directed.
+```markdown
+## Tools & transparency
 
-This is a disclosure of *content provenance*, distinct from the `no-attribution` rule (which forbids stamping AI-tool credit on commits/code). Marketing prose and imagery get an honest provenance note; commits do not get tool attribution.
+AIWG is open about how its content is made.
+
+- **Words:** mostly AI-generated, then fact-checked and edited by a human.
+- **Facts and claims:** checked against the actual work/release — nothing model-invented ships unverified.
+- **Imagery:** which images, if any, were AI-generated and with what tool (e.g. ChatGPT / DALL·E); confirm no text/logos are AI-rendered. ("none" if there are no images.)
+- **Final pass:** human.
+
+Net: AI-drafted, human-fact-checked.
+```
+
+Guidance:
+- **Don't over-claim originality.** If the prose was drafted by a model (the common case), say "mostly AI-generated." Reserve "original human writing" for posts a person actually wrote start to finish.
+- **The human contribution is fact-checking and editing** — that's the honest, valuable part, and it's what the disclosure should foreground.
+- This is a disclosure of *content provenance*, distinct from the `no-attribution` rule (which forbids stamping AI-tool credit on commits/code). Marketing prose and imagery get an honest provenance note; commits do not get tool attribution.
 
 ## Manifest (generated — do not hand-edit)
 

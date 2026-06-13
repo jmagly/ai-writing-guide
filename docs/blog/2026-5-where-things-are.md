@@ -67,7 +67,11 @@ That's where things stand. Thanks to everyone who's been in the rooms keeping th
 
 ## Tools & transparency
 
-- **Facts and claims:** 100% original. This is a first-person retrospective; every detail reflects the actual 2026.5.x work.
-- **Prose:** 100% original human writing by Joe Magly — no generative styling. Ported verbatim from the original aiwg.io post into the docs base as the single source of truth.
+AIWG is open about how its content is made.
+
+- **Words:** mostly AI-generated, then fact-checked and edited by a human.
+- **Facts and claims:** every detail reflects the actual 2026.5.x work — human-verified, nothing model-invented left unchecked.
 - **Imagery:** none.
-- **Assembly and edit:** human-authored.
+- **Final pass:** human.
+
+Net: AI-drafted, human-fact-checked.

@@ -238,3 +238,16 @@ Your prompt should track your project, not lag behind it. Deploy once, link inst
 **Get started:** `npm install -g aiwg` · [aiwg.io](https://aiwg.io) ·
 [Start here](https://docs.aiwg.io/getting-started/start-here.html) ·
 [GitHub](https://github.com/jmagly/aiwg)
+
+---
+
+## Tools & transparency
+
+AIWG is open about how its content is made.
+
+- **Words:** mostly AI-generated, then fact-checked and edited by a human.
+- **Facts and claims:** checked against how AIWG actually assembles and deploys context — nothing model-invented ships unverified.
+- **Imagery:** an illustrative hero plus an in-post diagram; no text or logos are AI-rendered.
+- **Final pass:** human.
+
+Net: AI-drafted, human-fact-checked.
