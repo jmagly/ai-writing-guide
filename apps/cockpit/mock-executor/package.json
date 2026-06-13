@@ -1,0 +1,17 @@
+{
+  "name": "@aiwg/cockpit-mock-executor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Wire-faithful mock of the agentic-sandbox A2A v2 three-surface executor, for building AIWG Cockpit in parallel with agentic-sandbox#460/#461. Validated against agentic-sandbox-conformance.",
+  "bin": {
+    "cockpit-mock-executor": "src/server.mjs"
+  },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "smoke": "node src/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
