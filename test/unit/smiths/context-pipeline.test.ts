@@ -446,4 +446,36 @@ describe('context finalization emission', () => {
       rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  it('emits a loud, prefixed warning naming consequence + remediation when a non-managed twin is left untouched (#1579)', async () => {
+    const dir = makeTmpDir();
+    try {
+      mkdirSync(join(dir, '.aiwg'), { recursive: true });
+      // Pre-existing operator/stale WARP.md with NO aiwg-managed marker.
+      const staleWarp = '# My hand-rolled WARP context\n\nNothing AIWG here.\n';
+      writeFileSync(join(dir, 'WARP.md'), staleWarp);
+
+      const result = await generate({
+        provider: 'warp',
+        projectPath: dir,
+        sections: [],
+        detectExistingFiles: true,
+      });
+
+      // The stale twin must be left untouched (not overwritten without --force).
+      expect(readFileSync(join(dir, 'WARP.md'), 'utf8')).toBe(staleWarp);
+
+      const twinWarn = result.warnings.find(
+        (w) => w.startsWith('WARNING:') && w.includes('WARP.md'),
+      );
+      expect(twinWarn).toBeDefined();
+      // Names the consequence (agents fabricate commands) ...
+      expect(twinWarn).toContain('Discover-First Protocol');
+      expect(twinWarn).toContain('fabricate');
+      // ... and the exact provider-aware remediation.
+      expect(twinWarn).toContain('aiwg use --provider warp --force');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });

@@ -166,7 +166,14 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
     console.log(`  OK CLAUDE.md hook already up to date`);
   }
   for (const w of result.warnings) {
-    console.log(`  context-pipeline: ${w}`);
+    // #1579: loud warnings (non-managed twin/bridge left untouched) are prefixed
+    // `WARNING:` and rendered prominently so the consequence + remediation isn't
+    // buried among the routine OK lines.
+    if (w.startsWith('WARNING:')) {
+      console.log(`  ⚠ context-pipeline: ${w.slice('WARNING:'.length).trim()}`);
+    } else {
+      console.log(`  context-pipeline: ${w}`);
+    }
   }
   for (const b of result.backupPaths) {
     console.log(`  Backup created: ${b}`);

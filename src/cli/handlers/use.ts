@@ -2354,7 +2354,14 @@ export class UseHandler implements CommandHandler {
           ui.dim(`  ${verb} CLAUDE.md (@AIWG.md block)`);
         }
         for (const w of ctxResult.warnings) {
-          ui.dim(`  context-pipeline: ${w}`);
+          // #1579: loud warnings (non-managed twin/bridge left untouched) are
+          // prefixed `WARNING:` and must render prominently, not dimmed, so the
+          // consequence + remediation isn't buried in deploy output.
+          if (w.startsWith('WARNING:')) {
+            ui.warn(`context-pipeline: ${w.slice('WARNING:'.length).trim()}`);
+          } else {
+            ui.dim(`  context-pipeline: ${w}`);
+          }
         }
         for (const b of ctxResult.backupPaths) {
           ui.dim(`  Backup created: ${b}`);

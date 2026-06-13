@@ -41,6 +41,26 @@ const SECTION_TITLES: Record<IndexedArtifactType, string> = {
 const AIWG_SIGNATURE_COMMENT = '<!-- aiwg-managed -->';
 
 /**
+ * Build the loud warning emitted when a pre-existing, non-AIWG-managed twin or
+ * bridge file is left untouched (#1579). The terse legacy notice ("exists and
+ * is not AIWG-managed; not overwritten") buried the real consequence: the stale
+ * file keeps loading and its Discover-First Protocol never reaches the agent,
+ * so the agent fabricates CLI commands (the #1522 / #1411 failure mode).
+ *
+ * This message names that consequence and the exact remediation, and is
+ * prefixed `WARNING:` so the CLI consumers (`aiwg use`, `aiwg regenerate`)
+ * render it prominently rather than dimmed.
+ */
+function nonManagedTwinWarning(fileName: string, remediation: string): string {
+  return (
+    `WARNING: ${fileName} exists and is not AIWG-managed — left untouched. ` +
+    `The stale file keeps loading instead of the lean managed bridge, so the ` +
+    `Discover-First Protocol never reaches the agent and it may fabricate CLI ` +
+    `commands. Run \`${remediation}\` to back up and replace it.`
+  );
+}
+
+/**
  * Render a single link-index entry as markdown.
  *
  * Returns null if the entry is rejected by sanitizer or allowlist; the caller can
@@ -316,7 +336,7 @@ async function writeTwinFiles(
       const safe = await isOverwriteSafe(twinPath);
       if (!safe) {
         result.warnings.push(
-          `${twinName} exists and is not AIWG-managed; not overwritten. Pass --force to back up and replace.`,
+          nonManagedTwinWarning(twinName, `aiwg use --provider ${provider} --force`),
         );
         continue;
       }
@@ -405,7 +425,7 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
       canWrite = await isOverwriteSafe(agentsMdPath);
       if (!canWrite) {
         result.warnings.push(
-          `AGENTS.md exists and is not AIWG-managed; not overwritten. Pass --force to back up and replace.`,
+          nonManagedTwinWarning('AGENTS.md', 'aiwg regenerate --force'),
         );
       }
     } else if (opts.force) {
@@ -446,7 +466,7 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
       canWrite = await isOverwriteSafe(aiwgMdPath);
       if (!canWrite) {
         result.warnings.push(
-          'AIWG.md exists and is not AIWG-managed; not overwritten. Pass --force to back up and replace.',
+          nonManagedTwinWarning('AIWG.md', 'aiwg regenerate --force'),
         );
       }
     } else if (opts.force) {
