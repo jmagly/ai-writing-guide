@@ -84,6 +84,15 @@ A **Mission** (dynamic orchestration) can fan worker cycles across *heterogeneou
 
 See `.aiwg/architecture/adr-workflow-routing.md` (cross-stack amendment).
 
+### Conductor + per-stack adapters (landed)
+
+The conductor and adapter layer are implemented on the substrate above:
+
+- **`src/serve/mission-conductor.ts`** — `MissionConductor.conduct(plan, pool[, resumeFrom])` decomposes a `MissionPlan` (goal + completion criterion + `WorkerCycle[]`, each with a `runtime`) and dispatches each cycle to an executor of the chosen stack via `routeMission`. It returns a `MissionLedger` that holds the **retained-ownership bookkeeping** — `activityLog`, `totalCost` (aggregated across stacks), `bestOutput` (REF-015 selection, scorer-injectable), `checkpoint` (`completed`/`pending`/`failed` for crash-resilient resume), and `runtimesUsed`. Every field is populated identically regardless of which stack ran each worker; unroutable/unassigned/errored cycles are **recorded, never silently dropped**.
+- **`src/serve/stack-adapters.ts`** — `StackAdapter` maps a worker cycle onto a stack's native primitive and owns its `runtime:<name>` token. Built-ins: `codexAdapter` (drives `/goal` / `/aiwg-mission` #1544) and `claudeCodeAdapter` (drives the Workflow tool / subagents). `StackAdapterRegistry` is open-ended — operators register additional stacks (e.g. `runtime:opencode`) without new transport.
+- **Worker-execution seam:** `MissionConductor`'s `runWorker` option is where the live `aiwg serve` dispatch-router + WS event stream plugs in; the default is plan-only (routes + books without executing), so the conductor is honest about what is wired vs. pending live transport.
+- **Tests:** `test/unit/serve/mission-conductor.test.ts` proves cross-stack dispatch under one conductor, the identical-bookkeeping invariant across stacks, best-output selection, no-silent-drop, and checkpoint resume.
+
 ## Apiversion aliasing
 
 For backward compatibility, the executor accepts the following apiVersion equivalences:
