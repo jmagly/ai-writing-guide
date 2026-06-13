@@ -3,6 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script>
+      (function() {
+        if (window.location.pathname === '/agetnic-sandbox' ||
+            window.location.pathname === '/agetnic-sandbox/' ||
+            window.location.pathname === '/agentic-sandbox') {
+          window.location.replace('/agentic-sandbox/' + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
     <title>AIWG Documentation</title>
     <meta name="description" content="AI-powered workflow guide for SDLC, marketing, and content teams" />
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
