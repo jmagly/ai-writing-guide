@@ -16,6 +16,29 @@
 
 Per the vision's UX-First/CLI-Always posture and `adr-cockpit-distribution-packaging`: **install *is* onboarding.** The default platform-native installer (generated from the Cockpit `setup.aiwg.io/v1` SetupManifest) lands the user in the Cockpit on the **Newcomer Guided Start** (UC-COCKPIT-003), not at a terminal — the ≤5-min ramp (NFR-09 / UC-COCKPIT-013). The installer shows the equivalent CLI commands it ran, so the terminal path is *taught*, never hidden. Every screen makes the CLI discoverable (a "copy the CLI command" affordance) without requiring it — CLI-always, easy-first.
 
+## Research foundations (cited — not invented)
+
+This UX is grounded in established HMI / human-AI-interaction research, inducted into the corpus (section9/research-papers #68, #69, #70). The mapping below is the *defensible basis* for every design choice; design decisions trace back to these.
+
+| Design choice | Citable foundation | Induct |
+|---|---|---|
+| "Working alongside the agents" — presence, awareness, shared workspace | Dourish & Bellotti, *Awareness and Coordination in Shared Workspaces* (CSCW 1992) | #70 |
+| Agent-collaboration UX (what it can do / why it did it / invoke·correct·dismiss) | Amershi et al., *Guidelines for Human-AI Interaction* (CHI 2019) | #68 |
+| Observe → drive → hand-back | Horvitz, *Mixed-Initiative User Interfaces* (CHI 1999) | #68 |
+| Trust calibration (provenance, verify-path, appropriate reliance) | Lee & See, *Trust in Automation* (Human Factors 2004) | #68 |
+| The cockpit/control-plane frame (one operator, many semi-autonomous processes) | Sheridan, *Human Supervisory Control* (1992) | #69 |
+| Layout reflects the work domain (earned cockpit metaphor) | Vicente & Rasmussen, *Ecological Interface Design* (IEEE SMC 1992) | #69 |
+| Drive-vs-observe / how-much-autonomy tiers | Parasuraman, Sheridan & Wickens, *Levels of Automation* (IEEE SMC-A 2000) | #69 |
+| Overview → zoom/filter → details-on-demand (macro navigation) | Shneiderman, *The Eyes Have It* (IEEE VL 1996) | #70 |
+| Periphery/center for many concurrent agents | Weiser & Brown, *Calm Technology* (1996) | #70 |
+| Visibility of system status; error prevention/recovery | Nielsen (& Molich), *Usability Heuristics* (CHI 1990/1994) | #70 |
+| Driving a session = direct manipulation | Shneiderman, *Direct Manipulation* (IEEE Computer 1983) | #70 |
+| Conceptual model, affordances, signifiers, feedback | Norman, *The Design of Everyday Things* (1988/2013) | #70 |
+| Micro-laws (Fitts/Hick/Tesler/Miller/Gestalt) | Yablonski, *Laws of UX* (O'Reilly 2020) | #70 |
+| Friendly-default, explainability, graceful failure | Google PAIR, *People + AI Guidebook* (2019) | #68 |
+
+Full induction (analysis docs, GRADE, citation sidecars) is pending in those issues; this section is the citable map the planning phase builds on.
+
 ## Design principles
 
 1. **Friendly default, power on demand** — the first screen is calm and guided; advanced surfaces (coordination, lifecycle, raw logs) are one click deeper, never on the landing view. The CLI equivalent of a UI action is always one affordance away (never forced).
