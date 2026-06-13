@@ -60,7 +60,9 @@
       "manifest": true,
       "feed": true,
       "sortBy": "date",
-      "order": "desc"
+      "order": "desc",
+      "showDate": true,
+      "showSummary": true
     }
   ]
 }

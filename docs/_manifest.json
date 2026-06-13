@@ -116,7 +116,9 @@
     "contributing/testing-requirements",
     "contributing/publishing-blog-posts",
     "blog",
+    "blog/2026-6-aiwg-2026-6-0",
     "blog/2026-5-how-aiwg-builds-your-system-prompt",
+    "blog/2026-5-where-things-are",
     "troubleshooting",
     "troubleshooting/setup-issues",
     "troubleshooting/deployment-issues",
@@ -880,10 +882,24 @@
       "collapsed": true
     },
     {
+      "id": "blog/2026-6-aiwg-2026-6-0",
+      "title": "What's new in 2026.6.0",
+      "summary": "AIWG now works with 11 AI coding tools, makes multi-agent teamwork easier, and turns research papers into something searchable.",
+      "file": "blog/2026-6-aiwg-2026-6-0.md",
+      "parent": "blog"
+    },
+    {
       "id": "blog/2026-5-how-aiwg-builds-your-system-prompt",
       "title": "How AIWG builds your customized system prompt",
       "summary": "AIWG assembles a per-session prompt and command set from your workspace state across eleven AI tools.",
       "file": "blog/2026-5-how-aiwg-builds-your-system-prompt.md",
+      "parent": "blog"
+    },
+    {
+      "id": "blog/2026-5-where-things-are",
+      "title": "What's been happening since 2026.3.x",
+      "summary": "A plain-language retrospective on the 2026.5.x line and the work behind the quiet stretch.",
+      "file": "blog/2026-5-where-things-are.md",
       "parent": "blog"
     },
     {
