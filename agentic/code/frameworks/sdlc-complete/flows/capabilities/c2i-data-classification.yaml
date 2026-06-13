@@ -1,0 +1,16 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 4 (data classification).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-data-classification
+  labels: { domain: inception }
+spec:
+  description: Classify all data types (Public/Internal/Confidential/Restricted) from the vision and use cases, documenting security requirements, encryption needs, and access controls per class. Emits .aiwg/security/data-classification.md.
+  version: "1.0.0"
+  inputs:
+    - { name: vision_document, type: string, required: true }
+    - { name: use_case_briefs, type: array, required: false }
+  outputs:
+    - { name: data_classification, type: string }
+  agent: security-architect
+  idempotent: true

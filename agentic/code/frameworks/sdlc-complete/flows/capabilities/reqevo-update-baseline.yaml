@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 5: update and version the requirements baseline.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-update-baseline
+  labels: { domain: requirements }
+spec:
+  description: Apply approved change requests to the requirements baseline — update requirements artifacts (vision, use cases, NFRs, acceptance criteria), synchronize related artifacts (ADRs, component/interface specs), update the change log, and version the baseline (major/minor/patch). Output .aiwg/requirements/baseline-update-v{version}.md.
+  version: "1.0.0"
+  inputs:
+    - { name: ccb_decision_record, type: string, required: false }
+  outputs:
+    - { name: baseline_version, type: string }
+  agent: requirements-analyst
+  idempotent: false

@@ -1,0 +1,19 @@
+# Conversion capability (#1539) — flow-guided-implementation Phase 4.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: guided-integration
+  labels: { domain: implementation }
+spec:
+  description: >-
+    Verify all tasks complete, run the full test suite, stage changes
+    (git add), and generate a commit message from the completed task list.
+    Stops short of committing — the commit decision is a human gate. Phase 4 of
+    flow-guided-implementation.
+  version: "1.0.0"
+  inputs:
+    - { name: dry_run, type: boolean, required: false, default: false }
+  outputs:
+    - { name: commit_message, type: string }
+  agent: workflow-executor
+  idempotent: false

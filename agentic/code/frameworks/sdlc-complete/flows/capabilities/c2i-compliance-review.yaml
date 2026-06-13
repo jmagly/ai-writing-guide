@@ -1,0 +1,16 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 4 (compliance requirements).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-compliance-review
+  labels: { domain: inception }
+spec:
+  description: Document all compliance obligations (regulatory, industry standards, legal constraints, audit requirements) from the privacy assessment and data classification, flagging any Show Stopper compliance issues. Emits .aiwg/security/compliance-requirements.md.
+  version: "1.0.0"
+  inputs:
+    - { name: privacy_assessment, type: string, required: true }
+    - { name: data_classification, type: string, required: true }
+  outputs:
+    - { name: compliance_requirements, type: string }
+  agent: legal-liaison
+  idempotent: true

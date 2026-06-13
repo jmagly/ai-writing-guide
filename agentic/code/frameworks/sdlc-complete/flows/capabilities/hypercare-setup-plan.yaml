@@ -1,0 +1,17 @@
+# #1539 conversion of flow-hypercare-monitoring Step 1 (synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: hypercare-setup-plan
+  labels: { domain: hypercare }
+spec:
+  description: Synthesize the hypercare setup plan from the three planning panel outputs — validate roster/rotation/monitoring/escalation completeness and stand up the dedicated communication channel.
+  version: "1.0.0"
+  inputs:
+    - { name: roster_path, type: string, required: false }
+    - { name: dashboard_path, type: string, required: false }
+    - { name: matrix_path, type: string, required: false }
+  outputs:
+    - { name: setup_ready, type: boolean }
+  agent: workflow-executor
+  idempotent: true

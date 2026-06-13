@@ -1,0 +1,19 @@
+# Conversion (#1539) fanout-synthesis capability for flow-elaboration-to-construction Step 2.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: e2c-iteration-0-report
+  labels: { domain: phase-transition }
+spec:
+  description: Synthesize the four Iteration 0 infrastructure panel outputs (CI/CD, build, monitoring, dev environment) into a single Iteration 0 Completion Report with a completed-item checklist, outstanding items, team access instructions, and an overall COMPLETE/INCOMPLETE status.
+  version: "1.0.0"
+  inputs:
+    - { name: cicd_setup, type: object, required: false }
+    - { name: build_config, type: object, required: false }
+    - { name: monitoring_setup, type: object, required: false }
+    - { name: dev_environment_guide, type: object, required: false }
+  outputs:
+    - { name: iteration_0_status, type: string }
+    - { name: report_path, type: string }
+  agent: devops-engineer
+  idempotent: true

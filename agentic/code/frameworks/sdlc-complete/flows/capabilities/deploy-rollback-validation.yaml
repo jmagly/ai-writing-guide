@@ -1,0 +1,19 @@
+# Conversion (#1539) — Step 2 reviewer: rollback-plan readiness (fanout panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-rollback-validation
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Validate rollback readiness — plan documented, tested in staging within 7
+    days, automation configured, rollback SLO defined, comms plan, and (when a
+    DB migration is included) migration-rollback + backup-restore tested. Emit a
+    READY | NOT_READY report with rollback strategy and SLO.
+    Writes .aiwg/working/deployment/rollback-validation-report.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: rollback_readiness, type: string }
+  agent: reliability-engineer
+  idempotent: true

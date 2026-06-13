@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 1.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-ocm-validation
+  labels: { domain: transition }
+spec:
+  description: Validate Construction exit criteria (Operational Capability Milestone) — features implemented, tests passing, coverage met, zero P0/P1 defects, performance/security passing, CI/CD operational, deployment plan approved, ORR passed. Emit OCM validation report with GO/NO-GO decision.
+  version: "1.0.0"
+  inputs:
+    - { name: guidance, type: string, required: false }
+  outputs:
+    - { name: ocm_status, type: string }
+  agent: project-manager
+  idempotent: true

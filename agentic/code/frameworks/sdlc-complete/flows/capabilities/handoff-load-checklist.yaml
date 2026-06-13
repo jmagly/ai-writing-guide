@@ -1,0 +1,16 @@
+# #1539 capability — identify the handoff type and load its checklist criteria.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: handoff-load-checklist
+  labels: { domain: handoff }
+spec:
+  description: Parse the from/to phases, classify the handoff (phase transition, track handoff, or special), load the applicable checklist criteria, and initialize the .aiwg/working/handoff/ validation workspace.
+  version: "1.0.0"
+  inputs:
+    - { name: from_phase, type: string, required: true }
+    - { name: to_phase, type: string, required: true }
+  outputs:
+    - { name: handoff_type, type: string }
+  agent: project-manager
+  idempotent: true

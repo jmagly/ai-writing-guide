@@ -11,6 +11,11 @@ commandHint:
   orchestration: true
 ---
 
+> **Declarative Flow (#1539):** This flow's orchestration is now also expressed as a
+> declarative YAML Flow at `flows/flow-security-review-cycle.playbook.yaml` (source of truth
+> for the step sequence + gates). This SKILL.md remains the discoverable trigger surface and prose
+> reference. See epic #1534.
+
 # Security Review Cycle Flow
 
 You are a Security Review Coordinator orchestrating continuous security validation, threat modeling, vulnerability scanning, security testing, security control verification, and security gate enforcement throughout the software development lifecycle.

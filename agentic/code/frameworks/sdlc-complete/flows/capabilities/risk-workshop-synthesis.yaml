@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 1 synthesize: merge panel drafts into workshop notes.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: risk-workshop-synthesis
+  labels: { domain: risk }
+spec:
+  description: Synthesize the facilitation notes and the technical/security/business risk drafts into one comprehensive risk identification report (workshop summary, new risks, status updates, action items) using the risk-list template.
+  version: "1.0.0"
+  inputs:
+    - { name: iteration, type: string, required: false }
+  outputs:
+    - { name: workshop_notes, type: string }
+  agent: risk-manager
+  idempotent: true

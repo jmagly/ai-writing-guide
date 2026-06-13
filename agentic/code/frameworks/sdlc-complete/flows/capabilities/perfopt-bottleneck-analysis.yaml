@@ -1,0 +1,17 @@
+# Conversion (#1539) — Step 2 synthesis: prioritized bottleneck analysis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-bottleneck-analysis
+  labels: { domain: performance }
+spec:
+  description: Synthesize profiling, database, and code analyses into a prioritized bottleneck analysis ordered by ROI (impact/effort), capturing root cause, performance impact, affected journeys, optimization approach, estimated improvement, and effort per bottleneck.
+  version: "1.0.0"
+  inputs:
+    - { name: profiling_results, type: object, required: true }
+    - { name: database_analysis, type: object, required: true }
+    - { name: code_analysis, type: object, required: true }
+  outputs:
+    - { name: bottleneck_analysis, type: object }
+  agent: performance-engineer
+  idempotent: true

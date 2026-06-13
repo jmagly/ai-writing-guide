@@ -1,0 +1,16 @@
+# Conversion (#1539) capability for flow-elaboration-to-construction Step 1.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: e2c-abm-validation
+  labels: { domain: phase-transition }
+spec:
+  description: Validate the Architecture Baseline Milestone (ABM) — confirm Elaboration exit criteria (baselined SAD, retired P0/P1 risks, behavioral/pseudo-code spec coverage, approved master test plan) and emit a PASS/FAIL ABM Validation Report with a GO/NO-GO decision.
+  version: "1.0.0"
+  inputs:
+    - { name: project_directory, type: string, required: false, default: "." }
+  outputs:
+    - { name: abm_status, type: string }
+    - { name: report_path, type: string }
+  agent: project-manager
+  idempotent: true

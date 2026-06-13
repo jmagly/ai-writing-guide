@@ -1,0 +1,17 @@
+# Conversion (#1539) — flow-test-strategy-execution Step 1: test execution planning.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: teststrat-execution-planning
+  labels: { domain: testing }
+spec:
+  description: Define test scope, execution order, coverage targets, pass/fail criteria, and resource requirements; produces the test execution plan.
+  version: "1.0.0"
+  inputs:
+    - { name: test_level, type: string, required: false }
+    - { name: target_component, type: string, required: false }
+    - { name: guidance, type: string, required: false }
+  outputs:
+    - { name: test_execution_plan, type: string }
+  agent: test-architect
+  idempotent: true

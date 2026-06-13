@@ -1,0 +1,14 @@
+# Conversion (#1539) capability for flow-compliance-validation Step 5 (panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: compliance-test-design
+  labels: { domain: compliance }
+spec:
+  description: Design control-effectiveness tests for each control (objective, approach, sample size, pass/fail criteria, evidence to collect) across inquiry, observation, inspection, and re-performance test types.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: control_test_plan, type: object }
+  agent: test-architect
+  idempotent: true

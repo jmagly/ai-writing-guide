@@ -1,0 +1,15 @@
+# Conversion (#1539) capability for flow-elaboration-to-construction Step 7.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: e2c-readiness-report
+  labels: { domain: phase-transition }
+spec:
+  description: Generate the Construction Phase Readiness Report by reading all transition artifacts (ABM, Iteration 0, process guide, iteration plans, onboarding, stability) — validate the six gate criteria, assess team/infrastructure/backlog readiness, and render the final READY/NOT-READY go/no-go decision with next steps.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: construction_readiness, type: string }
+    - { name: report_path, type: string }
+  agent: project-manager
+  idempotent: true

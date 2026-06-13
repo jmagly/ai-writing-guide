@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 6b (doc panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-runbook-updates
+  labels: { domain: delivery }
+spec:
+  description: Review the iteration for operational changes (config, deployment, monitoring, migrations, API changes) and update operational runbooks accordingly (flow Step 6 doc panel).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: runbook_updates_path, type: string }
+  agent: operations-manager
+  idempotent: false

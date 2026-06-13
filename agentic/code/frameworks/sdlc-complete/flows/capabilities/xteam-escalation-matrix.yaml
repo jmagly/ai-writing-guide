@@ -1,0 +1,14 @@
+# #1539 conversion — flow-cross-team-sync Step 3 reviewer (escalation matrix).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: xteam-escalation-matrix
+  labels: { domain: team }
+spec:
+  description: Define the escalation matrix — escalation triggers (age/severity/impact), levels (tech leads → managers → directors → execs), per-level actions and decision authority, and response SLAs.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: escalation_matrix, type: string }
+  agent: agile-coach
+  idempotent: true

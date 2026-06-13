@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 5 (quality-gate panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-gate-quality
+  labels: { domain: delivery }
+spec:
+  description: Run the code-quality gate — static analysis, coverage, complexity, technical debt, and documentation completeness against project standards; return PASS | FAIL | WARNING (flow Step 5 panel).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: quality_status, type: string }
+  agent: code-reviewer
+  idempotent: true

@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 4: execute spikes/POCs for high-priority risks.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: risk-spike-execution
+  labels: { domain: risk }
+spec:
+  description: Run time-boxed (1-3 day) spikes/POCs for P0/P1 risks (technical, security, or feasibility), document findings and go/no-go decisions, then synthesize a spike execution summary with retirement impact, lessons learned, and metrics.
+  version: "1.0.0"
+  inputs:
+    - { name: risk_list, type: string, required: false }
+  outputs:
+    - { name: spike_summary, type: string }
+  agent: risk-manager
+  idempotent: true

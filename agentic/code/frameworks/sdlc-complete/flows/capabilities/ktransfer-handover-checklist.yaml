@@ -1,0 +1,18 @@
+# Conversion (#1539) — flow-knowledge-transfer Step 6a.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: ktransfer-handover-checklist
+  labels: { domain: knowledge-transfer }
+spec:
+  description: Generate the comprehensive handover checklist — documentation, practical skills, knowledge validation, access/permissions, operational handoff, follow-up plan, and residual gaps (.aiwg/knowledge/handover-checklist-{domain}.md).
+  version: "1.0.0"
+  inputs:
+    - { name: validation_results, type: string, required: true }
+    - { name: from_member, type: string, required: true }
+    - { name: to_member, type: string, required: true }
+    - { name: domain, type: string, required: false, default: "all responsibilities" }
+  outputs:
+    - { name: checklist_path, type: string }
+  agent: project-manager
+  idempotent: true

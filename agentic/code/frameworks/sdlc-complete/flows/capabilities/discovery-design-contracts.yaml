@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-discovery-track Step 3.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: discovery-design-contracts
+  labels: { domain: discovery }
+spec:
+  description: Inventory data/interface needs from the use-case briefs, then author data contract cards (api-designer) and interface specification cards (architecture-designer) with backward-compatibility validation (flow Step 3).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: data_contracts, type: array }
+    - { name: interface_specs, type: array }
+  agent: api-designer
+  idempotent: false

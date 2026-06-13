@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-change-control Step 2 impact panel (schedule/cost).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: chg-impact-schedule-cost
+  labels: { domain: change-control }
+spec:
+  description: Assess schedule and cost impact of the change — additional time, critical-path and milestone effects, labor/infrastructure/license cost, contingency-budget fit, and a Low/Medium/High combined rating.
+  version: "1.0.0"
+  inputs:
+    - { name: change_request_path, type: string, required: true }
+  outputs:
+    - { name: schedule_cost_impact_path, type: string }
+  agent: project-manager
+  idempotent: true

@@ -1,0 +1,14 @@
+# #1539 conversion of flow-iteration-dual-track Step 4 (Midpoint checkpoint panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-midpoint-delivery
+  labels: { domain: iteration }
+spec:
+  description: Assess Delivery track progress at midpoint — work items completed vs planned, velocity tracking, quality gates passed, blockers; determine status (GREEN/YELLOW/RED), adjustments, and items to defer or drop.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: midpoint_assessment, type: string }
+  agent: project-manager
+  idempotent: true

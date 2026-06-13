@@ -1,0 +1,81 @@
+# Conversion (#1539): the agentic `flow-risk-management-cycle` skill expressed as
+# a declarative YAML Flow. Step 1 (Risk Identification Workshop) dispatches FOUR
+# risk-identification agents in parallel (project-manager facilitation,
+# architecture-designer technical, security-architect security, business-analyst
+# business) then synthesizes them via the risk-manager into the workshop notes —
+# encoded as a single `fanout` step. Steps 2-7 are sequential risk-manager /
+# project-manager capabilities. The SKILL.md remains the discoverable trigger
+# surface and prose reference; this playbook is the step-sequence source of truth.
+#
+# Schema-fit note (#1539): `inventory`/`targets` are omitted — this SDLC flow acts
+# on a single project context rather than iterating a host set.
+#
+# Faithful to the prose flow:
+#   Step 1 risk identification workshop (×4 + synth) → workshop  (FANOUT panel + risk-manager synthesis)
+#   Step 2 assess and score risks                    → risk-assess        (risk-manager)
+#   Step 3 update risk list and tracking             → risk-list-update   (risk-manager)
+#   Step 4 execute spikes/POCs                        → spike-execution    (risk-manager)
+#   Step 5 validate risk retirement                   → retirement-validate(risk-manager)
+#   Step 6 escalate Show Stopper risks                → escalation         (project-manager)
+#   Step 7 generate stakeholder risk status report    → status-report      (project-manager)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-risk-management-cycle
+  labels:
+    category: sdlc-orchestration
+    domain: risk
+spec:
+  vars:
+    iteration: ""
+  # Step 1: the risk identification workshop. Four risk-identification agents run
+  # in parallel; the risk-manager synthesizes their drafts into the workshop notes.
+  # depends_on consumers (assessment onward) see the synthesized workshop result.
+  steps:
+    - id: workshop
+      fanout:
+        strategy: parallel
+        agents:
+          - risk-workshop-facilitate    # project-manager
+          - risk-technical-identify     # architecture-designer
+          - risk-security-identify      # security-architect
+          - risk-business-identify      # business-analyst
+        synthesize: risk-workshop-synthesis   # risk-manager
+      outputs:
+        - name: workshop_notes
+
+    - id: assess
+      capability: risk-assess
+      depends_on: [workshop]
+      outputs:
+        - name: assessment_report
+
+    - id: list-update
+      capability: risk-list-update
+      depends_on: [assess]
+      outputs:
+        - name: risk_list
+
+    - id: spike-execution
+      capability: risk-spike-execution
+      depends_on: [list-update]
+      outputs:
+        - name: spike_summary
+
+    - id: retirement-validate
+      capability: risk-retirement-validate
+      depends_on: [spike-execution]
+      outputs:
+        - name: retirement_report
+
+    - id: escalation
+      capability: risk-escalation
+      depends_on: [retirement-validate]
+      outputs:
+        - name: escalation_log
+
+    - id: status-report
+      capability: risk-status-report
+      depends_on: [escalation]
+      outputs:
+        - name: status_report

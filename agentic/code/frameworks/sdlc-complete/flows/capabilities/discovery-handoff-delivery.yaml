@@ -1,0 +1,16 @@
+# Conversion capability (#1539) — flow-discovery-track Step 6.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: discovery-handoff-delivery
+  labels: { domain: discovery }
+spec:
+  description: Validate Definition of Ready for each backlog item (requirements-reviewer), package validated artifacts into final locations with a handoff summary (project-manager), and generate the Discovery iteration report (documentation-synthesizer) (flow Step 6).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: dor_validation, type: object }
+    - { name: handoff_package, type: string }
+    - { name: discovery_report, type: string }
+  agent: requirements-reviewer
+  idempotent: false

@@ -1,0 +1,126 @@
+# Conversion (#1539): the agentic `flow-compliance-validation` skill expressed as
+# a declarative YAML Flow. This flow validates a project against a regulatory
+# framework (GDPR/HIPAA/SOC2/PCI-DSS/ISO27001/...) through requirements mapping,
+# evidence collection, gap analysis, remediation, control-effectiveness testing,
+# and attestation. Three of its six prose steps are multi-agent panels (the prose
+# dispatches several Task() agents in parallel then a compliance-auditor
+# synthesizes), encoded here as `fanout` steps. The critical-gap stop condition
+# from the prose error-handling ("cannot proceed with attestation while critical
+# gaps remain") is encoded as a `kind: gate` human checkpoint before attestation.
+# The SKILL.md remains the discoverable trigger surface; this playbook is the
+# orchestration source of truth for the step sequence + gates. See epic #1534.
+#
+# Faithful to the prose flow:
+#   Step 1 map requirements (×framework-agents + synth) → requirements-mapping  (FANOUT panel → compliance-auditor synthesis)
+#   Step 2 collect audit evidence (×3 domains + validate)→ evidence-collection  (FANOUT panel → compliance-auditor synthesis)
+#   Step 3 conduct gap analysis (×3 agents + matrix)     → gap-analysis         (FANOUT panel → project-manager synthesis)
+#   Step 4 implement remediation plans                   → remediation          (security-architect)
+#   (critical-gaps stop condition / risk-acceptance gate)→ critical-gap-gate    (kind: gate)
+#   Step 5 validate control effectiveness (×test + synth)→ control-validation   (FANOUT panel → compliance-auditor synthesis)
+#   Step 6 report + attestation + evidence package       → report-attestation   (compliance-auditor)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-compliance-validation
+  labels:
+    category: sdlc-orchestration
+    domain: compliance
+spec:
+  vars:
+    framework: ""
+  steps:
+    # Step 1: map framework requirements to controls. The prose dispatches a
+    # framework-specific mapping agent (privacy-officer for GDPR,
+    # security-architect for HIPAA/SOC2/PCI-DSS/ISO27001) plus, for richer
+    # frameworks, parallel domain maps; the compliance-auditor then synthesizes
+    # a unified requirements matrix. Encoded as a panel + synthesis.
+    - id: requirements-mapping
+      fanout:
+        strategy: parallel
+        agents:
+          - compliance-map-privacy        # privacy-officer (GDPR / privacy controls)
+          - compliance-map-security       # security-architect (HIPAA/SOC2/PCI-DSS/ISO27001 controls)
+        synthesize: compliance-unify-requirements   # compliance-auditor — unified requirements matrix
+      inputs:
+        - { name: framework, from: "vars.framework" }
+      outputs:
+        - name: requirements_matrix
+
+    # Step 2: collect audit evidence across control domains. The prose dispatches
+    # three parallel collection agents (technical / administrative / operational)
+    # then a compliance-auditor validates completeness and quality.
+    - id: evidence-collection
+      fanout:
+        strategy: parallel
+        agents:
+          - compliance-evidence-technical        # security-architect
+          - compliance-evidence-administrative   # privacy-officer
+          - compliance-evidence-operational      # devops-engineer
+        synthesize: compliance-validate-evidence   # compliance-auditor — evidence-quality report
+      depends_on: [requirements-mapping]
+      outputs:
+        - name: evidence_quality_report
+
+    # Step 3: conduct gap analysis. The prose runs the compliance-auditor gap
+    # identification and security-architect technical-impact assessment in
+    # parallel, then a project-manager builds the prioritized remediation matrix.
+    - id: gap-analysis
+      fanout:
+        strategy: parallel
+        agents:
+          - compliance-gap-identify        # compliance-auditor
+          - compliance-gap-technical       # security-architect
+        synthesize: compliance-remediation-matrix   # project-manager — prioritized remediation matrix
+      depends_on: [evidence-collection]
+      outputs:
+        - name: remediation_matrix
+
+    # Step 4: implement remediation plans (detailed plans, quick fixes, and
+    # risk-acceptance documentation for gaps that cannot be remediated).
+    - id: remediation
+      capability: compliance-remediation
+      depends_on: [gap-analysis]
+      outputs:
+        - name: remediation_status
+
+    # Critical-gap human gate. Per the prose error-handling, attestation cannot
+    # proceed while critical gaps remain unremediated; the human reviews the
+    # remediation status and decides remediate / compensating-control /
+    # executive risk-acceptance / defer before the flow continues to testing
+    # and attestation.
+    - id: critical-gap-gate
+      kind: gate
+      description: |
+        Human gate (review_status): review the remediation status and any
+        residual critical/high gaps. Per the prose "Critical Gaps Not
+        Remediated" stop condition, attestation cannot proceed while critical
+        gaps remain. Decide: remediate, document compensating controls, obtain
+        executive risk-acceptance, or defer attestation. Approving releases the
+        flow to control-effectiveness testing and attestation.
+      depends_on: [remediation]
+
+    # Step 5: validate control effectiveness. The prose designs a control test
+    # plan (test-architect), executes technical and administrative control tests
+    # in parallel (security-tester / compliance-auditor), then a compliance-auditor
+    # consolidates the effectiveness summary.
+    - id: control-validation
+      fanout:
+        strategy: parallel
+        agents:
+          - compliance-test-design           # test-architect — control test plan
+          - compliance-test-technical        # security-tester — technical control tests
+          - compliance-test-administrative   # compliance-auditor — administrative control tests
+        synthesize: compliance-effectiveness-summary   # compliance-auditor — effectiveness summary
+      depends_on: [critical-gap-gate]
+      outputs:
+        - name: control_effectiveness_summary
+
+    # Step 6: generate the executive compliance report, prepare the attestation
+    # statement, and package the audit evidence for the auditor.
+    - id: report-attestation
+      capability: compliance-report-attestation
+      depends_on: [control-validation]
+      outputs:
+        - name: compliance_report
+        - name: attestation
+        - name: audit_package

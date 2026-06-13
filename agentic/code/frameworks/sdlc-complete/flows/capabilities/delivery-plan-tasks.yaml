@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 2 (planning panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-plan-tasks
+  labels: { domain: delivery }
+spec:
+  description: Break backlog items into 1-2 hour implementable tasks with technical approach, test requirements, dependencies, and estimates (flow Step 2 planning panel).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: task_breakdown, type: object }
+  agent: software-implementer
+  idempotent: false

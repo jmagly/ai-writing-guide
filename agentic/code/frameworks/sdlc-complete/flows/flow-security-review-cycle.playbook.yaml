@@ -1,0 +1,105 @@
+# Conversion (#1539): the agentic `flow-security-review-cycle` skill expressed as
+# a declarative YAML Flow. Part of epic #1534. The SKILL.md remains the thin
+# wrapper / discoverable trigger surface; this playbook is the orchestration
+# source of truth for the security review step sequence + gates.
+#
+# Schema-fit note (#1539): SDLC flows act on a single project context rather than
+# iterating a host set, so `inventory`/`targets` are omitted.
+#
+# Faithful to the prose flow's structure (7 steps + privacy consideration):
+#   Step 1 threat modeling (STRIDE)   → threat-modeling      (security-architect)
+#   Step 2 security testing (×2)      → security-testing     (FANOUT: SAST/DAST + pentest, synthesized)
+#   Step 3 triage vulnerabilities     → vuln-triage          (security-auditor)
+#   Step 4 validate security controls → controls-validation  (security-architect)
+#   Step 5 enforce security gate      → gate-enforce         (security-gatekeeper)
+#   Step 6 gatekeeper signoff         → signoff-gate (human) + signoff-record (security-gatekeeper)
+#   Step 7 security posture report    → posture-report       (security-gatekeeper)
+#   Privacy consideration (optional)  → privacy-assessment   (privacy-officer)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-security-review-cycle
+  labels:
+    category: sdlc-orchestration
+    domain: security
+spec:
+  vars:
+    iteration: ""
+  steps:
+    # Step 1: STRIDE threat modeling session.
+    - id: threat-modeling
+      capability: secreview-threat-modeling
+      inputs:
+        - { name: iteration, from: "vars.iteration" }
+      outputs:
+        - name: threat_model
+
+    # Step 2: security testing. The prose dispatches /security-auditor (SAST,
+    # DAST, dependency, container, secrets) AND /penetration-tester in parallel,
+    # then the triage step synthesizes. Encoded as a fanout panel + synthesis.
+    - id: security-testing
+      fanout:
+        strategy: parallel
+        agents:
+          - secreview-automated-scan     # security-auditor (SAST/DAST/deps/containers/secrets)
+          - secreview-penetration-test   # penetration-tester (manual)
+        synthesize: secreview-testing-synthesis   # security-auditor
+      depends_on: [threat-modeling]
+      outputs:
+        - name: testing_findings
+
+    # Step 3: CVSS triage and remediation prioritization.
+    - id: vuln-triage
+      capability: secreview-vuln-triage
+      depends_on: [security-testing]
+      outputs:
+        - name: triage_report
+
+    # Step 4: validate implemented security controls.
+    - id: controls-validation
+      capability: secreview-controls-validation
+      depends_on: [vuln-triage]
+      outputs:
+        - name: controls_report
+
+    # Optional: data privacy compliance assessment (GDPR/PII). Runs alongside
+    # controls validation when privacy requirements apply.
+    - id: privacy-assessment
+      capability: secreview-privacy-assessment
+      depends_on: [vuln-triage]
+      outputs:
+        - name: privacy_report
+
+    # Step 5: enforce gate criteria → PASS/CONDITIONAL/FAIL decision.
+    - id: gate-enforce
+      capability: secreview-gate-enforce
+      depends_on: [controls-validation, privacy-assessment]
+      outputs:
+        - name: gate_decision
+
+    # Step 6: formal Security Gatekeeper signoff. The prose calls for formal
+    # approval/rejection for deployment readiness — a human approval gate.
+    - id: signoff-gate
+      kind: gate
+      description: |
+        Human gate (Security Gatekeeper signoff): review all security artifacts
+        (threat model, testing findings, triage report, controls validation,
+        gate decision) and provide formal deployment approval or rejection.
+        A FAIL gate decision, unresolved Critical/High vulnerabilities, or
+        detected hardcoded secrets block signoff. Surface the gate decision and
+        residual-risk assessment at this pause point.
+      depends_on: [gate-enforce]
+
+    # Step 6 (record): persist the formal signoff document.
+    - id: signoff-record
+      capability: secreview-signoff-record
+      depends_on: [signoff-gate]
+      outputs:
+        - name: signoff_doc
+
+    # Step 7: synthesize the comprehensive security posture report.
+    - id: posture-report
+      capability: secreview-posture-report
+      depends_on: [signoff-record]
+      outputs:
+        - name: posture_report

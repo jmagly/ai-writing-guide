@@ -1,0 +1,14 @@
+# Conversion (#1539) — flow-inception-to-elaboration Step 2 planning panel.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: i2e-plan-risk-validation
+  labels: { domain: phase-transition }
+spec:
+  description: Define the risk-validation approach for the top 3 architectural risks — spike vs POC vs performance test, acceptance criteria, recommended scope, and effort estimate (flow Step 2 planning agent).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: risk_validation_draft, type: string }
+  agent: system-analyst
+  idempotent: false

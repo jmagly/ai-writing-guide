@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 1 (process review).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-vision-review-process
+  labels: { domain: inception }
+spec:
+  description: Review the vision draft for business-process context — current-state problems, desired future state, process improvements, and stakeholder impacts; return APPROVED | CONDITIONAL | NEEDS_WORK.
+  version: "1.0.0"
+  inputs:
+    - { name: vision_draft, type: string, required: true }
+  outputs:
+    - { name: review, type: object }
+  agent: business-process-analyst
+  idempotent: true

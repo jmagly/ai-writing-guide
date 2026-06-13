@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 5 (synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-gate-consolidate
+  labels: { domain: delivery }
+spec:
+  description: Consolidate the security, performance, and code-quality gate results into one verdict — PASS (all gates pass) or BLOCKED (any gate fails) with required fixes and remediation timeline (flow Step 5 synthesis).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: quality_report, type: object }
+  agent: project-manager
+  idempotent: false

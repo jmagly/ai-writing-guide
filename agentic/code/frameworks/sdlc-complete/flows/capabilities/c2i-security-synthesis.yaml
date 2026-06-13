@@ -1,0 +1,17 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 4 (synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-security-synthesis
+  labels: { domain: inception }
+spec:
+  description: Consolidate the data classification, privacy impact assessment, and compliance requirements into a single security baseline, confirming no Show Stopper security/compliance concerns before the milestone.
+  version: "1.0.0"
+  inputs:
+    - { name: data_classification, type: string, required: false }
+    - { name: privacy_assessment, type: string, required: false }
+    - { name: compliance_requirements, type: string, required: false }
+  outputs:
+    - { name: security_baseline, type: string }
+  agent: security-architect
+  idempotent: true

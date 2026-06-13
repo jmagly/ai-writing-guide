@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 2 panel: code-level optimization analysis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-code-analysis
+  labels: { domain: performance }
+spec:
+  description: Review code for performance issues — algorithm efficiency (time complexity, redundant computation), API usage (sync-vs-async, batching, parallelism), resource management, and frontend performance — with specific locations and improvements.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: code_analysis, type: object }
+  agent: software-implementer
+  idempotent: true

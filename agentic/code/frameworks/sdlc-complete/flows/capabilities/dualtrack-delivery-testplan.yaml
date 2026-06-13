@@ -1,0 +1,14 @@
+# #1539 conversion of flow-iteration-dual-track Step 2 (Delivery kickoff panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-delivery-testplan
+  labels: { domain: iteration }
+spec:
+  description: Create the iteration test plan from backlog items and acceptance criteria — test scenarios per story, test data requirements, automation opportunities, regression suite updates.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: test_plan, type: string }
+  agent: test-engineer
+  idempotent: true

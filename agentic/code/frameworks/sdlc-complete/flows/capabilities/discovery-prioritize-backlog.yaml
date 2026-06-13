@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-discovery-track Step 1 fanout synthesis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: discovery-prioritize-backlog
+  labels: { domain: discovery }
+spec:
+  description: Synthesize the gathered requests and alignment assessment into a MoSCoW-prioritized backlog selecting 1.5x-2x iteration capacity (Step 1 fanout synthesis).
+  version: "1.0.0"
+  inputs:
+    - { name: iteration, type: string, required: true }
+  outputs:
+    - { name: prioritized_backlog, type: object }
+  agent: project-manager
+  idempotent: false

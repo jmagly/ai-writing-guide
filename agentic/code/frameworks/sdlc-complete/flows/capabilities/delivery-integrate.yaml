@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 6a.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-integrate
+  labels: { domain: delivery }
+spec:
+  description: Merge iteration feature branches to main, run the CI/CD pipeline, deploy to the dev environment, and run smoke tests once all gates pass (flow Step 6 integration).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: integration_status, type: string }
+  agent: devops-engineer
+  idempotent: false

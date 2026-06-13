@@ -1,0 +1,139 @@
+# Conversion (#1539): the agentic `flow-knowledge-transfer` skill expressed as a
+# declarative YAML Flow. This is a heavy multi-agent flow — Steps 1, 2, and 5
+# each dispatch a panel of agents in parallel then synthesize, encoded as
+# `fanout` steps (agentic-step extension, #1547). The formal multi-party
+# Knowledge Transfer Signoff is a human `kind: gate` step. The SKILL.md remains
+# the thin wrapper / discoverable trigger surface; this playbook is the
+# orchestration source of truth for the step sequence + gate. See epic #1534.
+#
+# Faithful to the prose flow:
+#   Step 1 knowledge assessment + scope (km + tc parallel, pm validates)
+#                                      → knowledge-assessment (FANOUT panel + synthesis)
+#   Step 2 documentation review (×3 parallel: archivist, sme, technical-writer)
+#                                      → documentation-review (FANOUT panel + synthesis)
+#   Step 3 shadowing phase (sessions + synthesis)
+#                                      → shadowing            (knowledge-manager)
+#   Step 4 reverse shadowing (sessions + readiness)
+#                                      → reverse-shadowing    (training-coordinator)
+#   Step 5a validation scenario design → design-validation    (test-architect)
+#   Step 5b validation (learner executes + sme evaluates)
+#                                      → validation           (FANOUT panel + synthesis)
+#   Step 6a handover checklist          → handover-checklist  (project-manager)
+#   Step 6b multi-party signoff (milestone: Knowledge Transfer Signoff)
+#                                      → signoff-gate         (human gate)
+#   Step 6c completion report           → transfer-report     (knowledge-manager)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-knowledge-transfer
+  labels:
+    category: sdlc-orchestration
+    domain: knowledge-transfer
+spec:
+  vars:
+    from_member: ""
+    to_member: ""
+    domain: "all responsibilities"
+  steps:
+    # Step 1: assess the knowledge domain and define transfer scope. The
+    # knowledge-manager and training-coordinator run in parallel (knowledge map
+    # + transfer plan); the project-manager validates scope and emits the
+    # GO/ADJUST/ESCALATE gate decision as the synthesis.
+    - id: knowledge-assessment
+      fanout:
+        strategy: parallel
+        agents:
+          - ktransfer-knowledge-map       # knowledge-manager
+          - ktransfer-transfer-plan       # training-coordinator
+        synthesize: ktransfer-scope-validate   # project-manager
+      inputs:
+        - { name: from_member, from: "vars.from_member" }
+        - { name: to_member, from: "vars.to_member" }
+        - { name: domain, from: "vars.domain" }
+      outputs:
+        - name: scope_decision
+
+    # Step 2: compile and enhance documentation. Three doc agents run in
+    # parallel (inventory, author-missing, enhance-clarity); the package is
+    # consolidated into the final reading sequence by the synthesis.
+    - id: documentation-review
+      fanout:
+        strategy: parallel
+        agents:
+          - ktransfer-doc-inventory       # documentation-archivist
+          - ktransfer-doc-author          # subject-matter-expert
+          - ktransfer-doc-enhance         # technical-writer
+        synthesize: ktransfer-doc-package    # documentation-archivist
+      depends_on: [knowledge-assessment]
+      outputs:
+        - name: doc_package
+
+    # Step 3: shadowing phase — receiver observes holder across 4-8 sessions,
+    # then the knowledge-manager synthesizes learnings and confidence trend.
+    - id: shadowing
+      capability: ktransfer-shadowing
+      depends_on: [documentation-review]
+      outputs:
+        - name: shadowing_synthesis
+
+    # Step 4: reverse shadowing — receiver leads while holder observes, then a
+    # readiness assessment is produced.
+    - id: reverse-shadowing
+      capability: ktransfer-reverse-shadowing
+      depends_on: [shadowing]
+      outputs:
+        - name: readiness_assessment
+
+    # Step 5a: design the four validation scenarios (routine, troubleshooting,
+    # teach-back, novel) the receiver must pass.
+    - id: design-validation
+      capability: ktransfer-design-validation
+      depends_on: [reverse-shadowing]
+      outputs:
+        - name: validation_scenarios
+
+    # Step 5b: validation — the learner executes each scenario while the
+    # subject-matter-expert evaluates in parallel; the synthesis is the
+    # consolidated pass/fail + readiness determination.
+    - id: validation
+      fanout:
+        strategy: parallel
+        agents:
+          - ktransfer-validation-execute  # learner
+          - ktransfer-validation-evaluate # subject-matter-expert
+        synthesize: ktransfer-validation-synthesis   # knowledge-manager
+      depends_on: [design-validation]
+      outputs:
+        - name: validation_results
+
+    # Step 6a: generate the comprehensive handover checklist.
+    - id: handover-checklist
+      capability: ktransfer-handover-checklist
+      depends_on: [validation]
+      outputs:
+        - name: checklist_path
+
+    # Step 6b: the formal Knowledge Transfer Signoff (key milestone). Human
+    # gate: receiver, holder, and project manager each sign off (confidence
+    # >=3/5, >=75% validation pass). A CONDITIONAL/NOT_APPROVED outcome returns
+    # to additional practice rather than emitting the final report.
+    - id: signoff-gate
+      kind: gate
+      description: |
+        Human gate (multi-party signoff — milestone "Knowledge Transfer
+        Signoff"): present the handover checklist and validation results.
+        Collect three signoffs — knowledge receiver ("confident to operate
+        independently", confidence 1-5), knowledge holder ("confident the
+        receiver can succeed", confidence 1-5), and project manager
+        (APPROVED / CONDITIONAL / NOT_APPROVED). Approve only when validation
+        pass rate >=75% and both confidence ratings >=3/5. CONDITIONAL records
+        the requirements and re-validation plan; NOT_APPROVED returns to
+        additional shadowing/practice.
+      depends_on: [handover-checklist]
+
+    # Step 6c: generate the knowledge transfer completion report.
+    - id: transfer-report
+      capability: ktransfer-transfer-report
+      depends_on: [signoff-gate]
+      outputs:
+        - name: report_path

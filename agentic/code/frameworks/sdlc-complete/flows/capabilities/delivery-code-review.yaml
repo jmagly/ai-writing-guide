@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 3 (TDD synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-code-review
+  labels: { domain: delivery }
+spec:
+  description: Review the implementation for acceptance criteria, test coverage, code quality, security, and performance; return APPROVED | NEEDS_CHANGES gating task completion (flow Step 3 synthesis).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: review_status, type: string }
+  agent: code-reviewer
+  idempotent: false

@@ -1,0 +1,121 @@
+# Conversion (#1539 / epic #1534): the agentic `flow-performance-optimization`
+# skill expressed as a declarative YAML Flow. This is a heavy multi-agent flow —
+# three of its six prose steps dispatch parallel analysis/implementation panels
+# then synthesize, so they convert to `fanout` steps (agentic-step extension,
+# #1547). The SKILL.md remains the discoverable trigger surface + prose
+# reference; this playbook is the source of truth for the step sequence + gate.
+#
+# Schema-fit note (#1539): `inventory`/`targets` are omitted — SDLC flows act on
+# a single project context rather than iterating a host set.
+#
+# Faithful to the prose flow's structure:
+#   Step 1 establish baseline (×2 parallel)   → establish-baseline  (FANOUT: reliability-engineer + performance-engineer → performance-engineer synthesis)
+#   Step 2 identify bottlenecks (×3 parallel)  → identify-bottlenecks (FANOUT: performance-engineer + database-optimizer + software-implementer → performance-engineer synthesis)
+#   Step 3 plan & prioritize optimizations     → plan-optimizations  (performance-engineer)
+#   Step 4 implement optimizations (×3 parallel)→ implement-optimizations (FANOUT: database-optimizer + software-implementer + reliability-engineer → performance-engineer consolidation)
+#   Step 5 validate with load testing          → load-testing        (PIPELINE FANOUT: plan-load-test → execute-load-test, both reliability-engineer)
+#   Step 6 validate SLO compliance + report     → validate-slo (reliability-engineer) + optimization-report (performance-engineer)
+#   (quality gate before complete)             → quality-gate
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-performance-optimization
+  labels:
+    category: sdlc-orchestration
+    domain: performance
+spec:
+  vars:
+    trigger: ""
+    component: ""
+  steps:
+    # Step 1: Establish performance baseline. Reliability-engineer defines
+    # SLIs/SLOs and current metrics; performance-engineer identifies critical
+    # paths; performance-engineer synthesizes the unified baseline report.
+    - id: establish-baseline
+      fanout:
+        strategy: parallel
+        agents:
+          - perfopt-baseline-metrics        # reliability-engineer
+          - perfopt-critical-paths          # performance-engineer
+        synthesize: perfopt-baseline-report # performance-engineer
+      inputs:
+        - { name: trigger, from: "vars.trigger" }
+        - { name: component, from: "vars.component" }
+      outputs:
+        - name: baseline_report
+
+    # Step 2: Identify bottlenecks. Three parallel analyses (profiling, DB,
+    # code) synthesized into a prioritized bottleneck analysis.
+    - id: identify-bottlenecks
+      fanout:
+        strategy: parallel
+        agents:
+          - perfopt-profiling            # performance-engineer
+          - perfopt-database-analysis    # database-optimizer
+          - perfopt-code-analysis        # software-implementer
+        synthesize: perfopt-bottleneck-analysis  # performance-engineer
+      depends_on: [establish-baseline]
+      outputs:
+        - name: bottleneck_analysis
+
+    # Step 3: Plan & prioritize optimizations (single agent, ROI ordering).
+    - id: plan-optimizations
+      capability: perfopt-plan-optimizations
+      depends_on: [identify-bottlenecks]
+      outputs:
+        - name: optimization_plan
+
+    # Step 4: Implement optimizations. Three parallel implementation tracks
+    # (DB, code, infrastructure) consolidated into an implementation summary.
+    - id: implement-optimizations
+      fanout:
+        strategy: parallel
+        agents:
+          - perfopt-database-optimizations         # database-optimizer
+          - perfopt-code-optimizations             # software-implementer
+          - perfopt-infrastructure-optimizations   # reliability-engineer
+        synthesize: perfopt-implementation-summary # performance-engineer
+      depends_on: [plan-optimizations]
+      outputs:
+        - name: implementation_summary
+
+    # Step 5: Validate with load testing. The prose chains plan → execute with
+    # the same agent, so this is a pipeline fanout (execute sees the plan).
+    - id: load-testing
+      fanout:
+        strategy: pipeline
+        agents:
+          - perfopt-load-test-plan       # reliability-engineer
+        synthesize: perfopt-load-test-execute  # reliability-engineer
+      depends_on: [implement-optimizations]
+      outputs:
+        - name: load_test_results
+
+    # Step 6a: Validate SLO compliance against targets and the load-test results.
+    - id: validate-slo
+      capability: perfopt-validate-slo
+      depends_on: [load-testing]
+      outputs:
+        - name: slo_status
+
+    # Step 6b: Generate the final optimization report (ROI, before/after).
+    - id: optimization-report
+      capability: perfopt-optimization-report
+      depends_on: [validate-slo]
+      outputs:
+        - name: optimization_summary
+
+    # Quality gate: the prose's "Quality Gates" checklist before marking the
+    # workflow complete (baseline, bottlenecks, implementation w/ measurements,
+    # load tests, SLO compliance, ROI). Human confirms before close-out.
+    - id: quality-gate
+      kind: gate
+      description: |
+        Human review (quality checkpoint): confirm the six completion criteria
+        before close-out — performance baseline established with SLOs,
+        bottlenecks identified and prioritized, optimizations implemented with
+        before/after measurements, load tests validate improvements, SLO
+        compliance validated (PASS/PARTIAL/FAIL), and ROI analysis completed.
+        On a critical SLO breach or failed optimization, return to the relevant
+        step rather than closing.
+      depends_on: [optimization-report]

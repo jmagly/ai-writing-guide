@@ -1,0 +1,14 @@
+# #1539 conversion of flow-hypercare-monitoring Step 4.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: hypercare-post-incident-review
+  labels: { domain: hypercare }
+spec:
+  description: Conduct the post-incident review (PIR) for each P0/P1 incident within 48h of resolution — timeline, root cause, contributing factors, corrective actions, lessons learned (.aiwg/deployment/incidents/pir-*.md).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: pir_paths, type: array }
+  agent: reliability-engineer
+  idempotent: true

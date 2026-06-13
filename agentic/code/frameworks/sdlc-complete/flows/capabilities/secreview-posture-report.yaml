@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 7 of flow-security-review-cycle.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: secreview-posture-report
+  labels: { domain: security }
+spec:
+  description: Aggregate outputs from all security activities into a comprehensive security-posture report for stakeholders — executive summary, vulnerability statistics/trends, testing coverage metrics, controls validation status, threat-landscape overview, compliance gaps, security-gate results, and action items.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: posture_report, type: string }
+  agent: security-gatekeeper
+  idempotent: true

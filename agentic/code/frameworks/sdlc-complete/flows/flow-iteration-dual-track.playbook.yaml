@@ -1,0 +1,121 @@
+# #1539 conversion: the agentic `flow-iteration-dual-track` skill expressed as a
+# declarative YAML Flow. The SKILL.md remains the discoverable trigger surface and
+# prose reference; this playbook is the source of truth for the step sequence +
+# gates. Part of epic #1534. Several prose steps dispatch a panel of parallel
+# agents then synthesize (the multi-agent documentation pattern), encoded here as
+# `fanout` steps (#1547 agentic-step extension). SDLC flows act on a single
+# project context, so `inventory`/`targets` are omitted (optional per #1539).
+#
+# Faithful to the prose flow:
+#   Step 1 Initialize Iteration            → initialize          (project-manager)
+#   Step 2 Kickoff Delivery Track (×3 + syn)→ delivery-kickoff    (FANOUT: req-analyst, implementer, test-engineer → scrum-master)
+#   Step 3 Start Discovery Track (×3 + syn) → discovery-start     (FANOUT: product-designer, req-analyst, arch-designer → iteration-coordinator)
+#   Step 4 Midpoint Checkpoint (×4 + syn)   → midpoint-checkpoint (FANOUT: pm-assess, dor-validate, security-gate, test-gate → pm-checkpoint)
+#   Step 5 Discovery→Delivery Handoff (×3)  → handoff             (FANOUT pipeline: dor-validate→package→handoff-meeting → handoff-package)
+#   Step 6 Complete Iteration + Retro (×3+s)→ iteration-complete  (FANOUT: final-test, metrics, retrospective → final-report)
+#   (Quality Gates checklist before done)   → completion-gate     (human gate)
+#   Step 7 Present Results                  → present-results     (workflow-executor)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-iteration-dual-track
+  labels:
+    category: sdlc-orchestration
+    domain: iteration
+spec:
+  vars:
+    iteration_number: ""
+  steps:
+    - id: initialize
+      capability: dualtrack-initialize
+      inputs:
+        - { name: iteration_number, from: "vars.iteration_number" }
+      outputs:
+        - name: iteration_plan
+
+    # Step 2: Delivery track kickoff for iteration N. Three planners run in
+    # parallel; the scrum-master synthesizes the kickoff summary.
+    - id: delivery-kickoff
+      fanout:
+        strategy: parallel
+        agents:
+          - dualtrack-delivery-backlog       # requirements-analyst
+          - dualtrack-delivery-implementation # software-implementer
+          - dualtrack-delivery-testplan      # test-engineer
+        synthesize: dualtrack-delivery-synthesis  # scrum-master
+      depends_on: [initialize]
+      outputs:
+        - name: delivery_kickoff
+
+    # Step 3: Discovery track planning for iteration N+1. Three planners run in
+    # parallel; the iteration-coordinator synthesizes the discovery plan.
+    - id: discovery-start
+      fanout:
+        strategy: parallel
+        agents:
+          - dualtrack-discovery-design       # product-designer
+          - dualtrack-discovery-refinement   # requirements-analyst
+          - dualtrack-discovery-architecture # architecture-designer
+        synthesize: dualtrack-discovery-synthesis  # iteration-coordinator
+      depends_on: [initialize]
+      outputs:
+        - name: discovery_plan
+
+    # Step 4: Midpoint checkpoint. Delivery-progress, discovery-validation, and
+    # two quality gates run in parallel; the project-manager synthesizes status.
+    - id: midpoint-checkpoint
+      fanout:
+        strategy: parallel
+        agents:
+          - dualtrack-midpoint-delivery   # project-manager
+          - dualtrack-midpoint-discovery  # requirements-analyst
+          - dualtrack-midpoint-security   # security-gatekeeper
+          - dualtrack-midpoint-coverage   # test-engineer
+        synthesize: dualtrack-midpoint-synthesis  # project-manager
+      depends_on: [delivery-kickoff, discovery-start]
+      outputs:
+        - name: checkpoint_status
+
+    # Step 5: Discovery→Delivery handoff. The prose chains three agents — DoR
+    # validation feeds the handoff package, which feeds the handoff meeting — so
+    # this is a pipeline fanout; the iteration-coordinator finalizes the package.
+    - id: handoff
+      fanout:
+        strategy: pipeline
+        agents:
+          - dualtrack-handoff-dor         # requirements-analyst
+          - dualtrack-handoff-package     # iteration-coordinator
+          - dualtrack-handoff-meeting     # scrum-master
+        synthesize: dualtrack-handoff-finalize  # iteration-coordinator
+      depends_on: [midpoint-checkpoint]
+      outputs:
+        - name: ready_backlog
+
+    # Step 6: Complete iteration and retrospective. Final test, metrics, and
+    # retrospective run in parallel; the project-manager synthesizes the report.
+    - id: iteration-complete
+      fanout:
+        strategy: parallel
+        agents:
+          - dualtrack-complete-finaltest    # test-engineer
+          - dualtrack-complete-metrics      # project-manager
+          - dualtrack-complete-retrospective # retrospective-analyzer
+        synthesize: dualtrack-complete-report  # project-manager
+      depends_on: [handoff]
+      outputs:
+        - name: iteration_report
+
+    - id: completion-gate
+      kind: gate
+      description: |
+        Human review (Quality Gates checklist): confirm Delivery work meets
+        Definition of Done, Discovery items meet Definition of Ready, all quality
+        gates passed (or risks accepted), metrics are within healthy ranges, the
+        retrospective produced action items, and the next-iteration ready backlog
+        is sufficient (1.5x-2x capacity). Approve to present results, or return to
+        revise. The synthesized iteration report and metrics are surfaced here.
+      depends_on: [iteration-complete]
+
+    - id: present-results
+      capability: dualtrack-present-results
+      depends_on: [completion-gate]

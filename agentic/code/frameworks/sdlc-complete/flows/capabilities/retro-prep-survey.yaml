@@ -1,0 +1,16 @@
+# #1539 capability — Step 1 panel: design the pre-retrospective survey and recommend a format.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: retro-prep-survey
+  labels: { domain: retrospective }
+spec:
+  description: Create the anonymous pre-retro feedback survey and recommend a retrospective format (Start/Stop/Continue, 4Ls, Mad/Sad/Glad, Timeline, Sailboat) from the context.
+  version: "1.0.0"
+  inputs:
+    - { name: retrospective_type, type: string, required: false }
+  outputs:
+    - { name: survey_template, type: string }
+    - { name: recommended_format, type: string }
+  agent: agile-coach
+  idempotent: true

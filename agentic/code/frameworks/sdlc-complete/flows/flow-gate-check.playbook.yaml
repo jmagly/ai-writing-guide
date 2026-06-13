@@ -1,0 +1,78 @@
+# #1539 conversion: the agentic `flow-gate-check` skill expressed as a
+# declarative YAML Flow. Like flow-architecture-evolution (#1547), gate-check is a
+# multi-agent flow — its core (prose Step 2/3) dispatches a primary validator plus
+# parallel specialist reviewers, then synthesizes (prose Step 4) into one gate
+# report and surfaces a GO/NO-GO decision to a human (prose Step 5). That panel is
+# encoded as a single `fanout` step. The SKILL.md remains the thin wrapper / source
+# of discoverable triggers; this playbook is the orchestration source of truth.
+#
+# Schema-fit note (#1539): SDLC flows act on a single project context, so
+# `inventory`/`targets` are omitted (host-ops heritage fields).
+#
+# Faithful to the prose flow:
+#   Step 1 determine gate context      → determine-context        (gatechk-determine-context, project-manager)
+#   Step 2/3 validation panel (×N)     → validation-panel         (FANOUT: primary validator + specialist reviewers)
+#     - primary validator              → gatechk-validate-primary    (project-manager)
+#     - business readiness reviewer    → gatechk-review-business     (business-analyst)
+#     - security readiness reviewer    → gatechk-review-security     (security-architect / security-gatekeeper)
+#     - architecture readiness reviewer→ gatechk-review-architecture (architecture-designer)
+#     - behavioral-spec reviewer       → gatechk-review-behavioral   (requirements-analyst)
+#     - test readiness reviewer        → gatechk-review-test         (test-architect / test-engineer)
+#     - reliability reviewer           → gatechk-review-reliability  (reliability-engineer)
+#     - operations readiness reviewer  → gatechk-review-operations   (devops-engineer)
+#     - support readiness reviewer     → gatechk-review-support      (support-engineer)
+#   Step 4 synthesize gate report      → fanout.synthesize        (gatechk-synthesize, project-manager)
+#   Step 5 present GO/NO-GO to user    → decision-gate            (human gate, kind: gate)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-gate-check
+  labels:
+    category: sdlc-orchestration
+    domain: quality-gate
+spec:
+  vars:
+    gate: ""
+  steps:
+    - id: determine-context
+      capability: gatechk-determine-context
+      inputs:
+        - { name: gate, from: "vars.gate" }
+      outputs:
+        - name: gate_type
+        - name: detected_phase
+
+    # Step 2/3 + Step 4: the validation panel. The relevant specialist reviewers
+    # for the resolved gate run in parallel alongside the primary validator; the
+    # project-manager synthesizes their findings into one comprehensive gate
+    # report. depends_on consumers (the decision gate) see the synthesized result.
+    - id: validation-panel
+      fanout:
+        strategy: parallel
+        agents:
+          - gatechk-validate-primary    # project-manager
+          - gatechk-review-business     # business-analyst
+          - gatechk-review-security     # security-architect / security-gatekeeper
+          - gatechk-review-architecture # architecture-designer
+          - gatechk-review-behavioral   # requirements-analyst
+          - gatechk-review-test         # test-architect / test-engineer
+          - gatechk-review-reliability  # reliability-engineer
+          - gatechk-review-operations   # devops-engineer
+          - gatechk-review-support      # support-engineer
+        synthesize: gatechk-synthesize  # project-manager
+      depends_on: [determine-context]
+      outputs:
+        - name: gate_report
+        - name: overall_status
+
+    - id: decision-gate
+      kind: gate
+      description: |
+        Human gate (GO/NO-GO): present the synthesized gate validation report —
+        overall status (PASS | FAIL | CONDITIONAL), per-criterion results, failed
+        criteria, signoff status, and the remediation plan. The human makes the
+        GO / NO-GO / CONDITIONAL GO decision and the next-step routing (proceed to
+        next phase, remediate and re-validate, or accept conditions). The primary
+        validator's report plus every specialist reviewer's READY/GAPS/BLOCKED
+        finding are surfaced at this pause point (prose Step 5).
+      depends_on: [validation-panel]

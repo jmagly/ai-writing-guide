@@ -1,0 +1,14 @@
+# Conversion (#1539) — flow-inception-to-elaboration Step 4.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: i2e-create-adrs
+  labels: { domain: architecture }
+spec:
+  description: Author 3-5 Architecture Decision Records for the major decisions identified in the baselined SAD — status, context, decision, consequences, alternatives considered — with trade-off depth (flow Step 4).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: adr_paths, type: array }
+  agent: architecture-designer
+  idempotent: false

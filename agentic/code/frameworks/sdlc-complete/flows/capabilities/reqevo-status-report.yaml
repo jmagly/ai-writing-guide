@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 7: generate the requirements status report.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-status-report
+  labels: { domain: requirements }
+spec:
+  description: Calculate requirements metrics (count, status breakdown, priority distribution, change rate, baseline stability, churn) and generate the comprehensive Requirements Status Report — executive summary, progress, change management, baseline stability, traceability health, risks/issues, and gate readiness. Output .aiwg/reports/requirements-status-{date}.md.
+  version: "1.0.0"
+  inputs:
+    - { name: traceability_completeness, type: number, required: false }
+  outputs:
+    - { name: status_report, type: string }
+  agent: requirements-analyst
+  idempotent: true

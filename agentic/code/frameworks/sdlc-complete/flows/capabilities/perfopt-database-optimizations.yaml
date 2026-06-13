@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 4 panel: implement database optimizations.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-database-optimizations
+  labels: { domain: performance }
+spec:
+  description: Implement database optimizations from the plan — query rewrites and indexes, schema/denormalization/partitioning, connection-pool tuning, and result caching — measuring before/after performance for each change.
+  version: "1.0.0"
+  inputs:
+    - { name: optimization_plan, type: object, required: true }
+  outputs:
+    - { name: database_optimizations, type: object }
+  agent: database-optimizer
+  idempotent: false

@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 2 fanout panel member of flow-security-review-cycle.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: secreview-automated-scan
+  labels: { domain: security }
+spec:
+  description: Execute the automated security testing suite — SAST source analysis, dependency vulnerability scanning, hardcoded-secrets scanning, and container image scanning. Outputs .aiwg/security/security-testing-report-{date}.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: scan_report, type: string }
+  agent: security-auditor
+  idempotent: true

@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 1 (business-value review).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-vision-review-value
+  labels: { domain: inception }
+spec:
+  description: Review the vision draft for business value, market alignment, achievable success metrics, and ROI justification; return APPROVED | CONDITIONAL | NEEDS_WORK with inline comments.
+  version: "1.0.0"
+  inputs:
+    - { name: vision_draft, type: string, required: true }
+  outputs:
+    - { name: review, type: object }
+  agent: product-strategist
+  idempotent: true

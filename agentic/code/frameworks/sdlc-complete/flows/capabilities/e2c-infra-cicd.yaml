@@ -1,0 +1,14 @@
+# Conversion (#1539) fanout-panel capability for flow-elaboration-to-construction Step 2.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: e2c-infra-cicd
+  labels: { domain: phase-transition }
+spec:
+  description: Iteration 0 panel member — set up the CI/CD pipeline (build/test/deploy automation, quality gates) and dev/test/staging environments; document the setup for the Iteration 0 Completion Report.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: cicd_setup, type: object }
+  agent: devops-engineer
+  idempotent: true

@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-discovery-track Step 1 panel reviewer.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: discovery-align-vision
+  labels: { domain: discovery }
+spec:
+  description: Validate gathered requests against product vision and business case, scoring strategic value and flagging conflicts (Step 1 panel — alignment assessment).
+  version: "1.0.0"
+  inputs:
+    - { name: iteration, type: string, required: true }
+  outputs:
+    - { name: alignment_assessment, type: object }
+  agent: product-strategist
+  idempotent: true

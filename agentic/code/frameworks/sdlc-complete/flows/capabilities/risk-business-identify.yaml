@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 1 fanout panel member: business/organizational risks.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: risk-business-identify
+  labels: { domain: risk }
+spec:
+  description: Identify business and organizational risks (scope creep, stakeholder availability, funding uncertainty, competitive pressure, team attrition) with probability/impact estimates and suggested mitigations.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: business_risks_draft, type: string }
+  agent: business-analyst
+  idempotent: true

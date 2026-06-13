@@ -1,0 +1,14 @@
+# #1539 conversion of flow-iteration-dual-track Step 3 (Discovery start panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-discovery-refinement
+  labels: { domain: iteration }
+spec:
+  description: Plan requirements refinement for iteration N+1 — select 1.5x-2x next-iteration capacity for user stories to elaborate, acceptance criteria to define, dependencies to investigate, and stakeholder validation needed.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: refinement_plan, type: string }
+  agent: requirements-analyst
+  idempotent: true

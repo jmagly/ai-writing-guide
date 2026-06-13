@@ -1,0 +1,100 @@
+# #1539 conversion: the agentic `flow-cross-team-sync` skill expressed as a
+# declarative YAML Flow (epic #1534). The SKILL.md remains the discoverable
+# trigger surface and prose reference; this playbook is the orchestration source
+# of truth for the step sequence, dependencies, the two multi-agent fanout
+# panels, and the human sign-off gate.
+#
+# Two prose steps dispatch parallel sub-agents then synthesize, so they convert
+# to `fanout` steps (multi-agent documentation pattern, #1547):
+#   - Step 1 dependency mapping: system-analyst + integration-engineer in
+#     parallel, synthesized by documentation-synthesizer.
+#   - Step 3 blocker management: project-manager (tracker) + agile-coach
+#     (escalation matrix) in parallel, synthesized by scrum-master (resolution
+#     process doc that combines both).
+#
+# Schema-fit note (#1539): `inventory`/`targets` are omitted — this SDLC flow
+# acts on a single project context rather than iterating a host set.
+#
+# Faithful to the prose flow's structure (6 prose steps → 7 playbook steps,
+# the extra step being the human sign-off gate the prose calls for in its
+# Quality Gates + Immediate Actions: "review and sign off on API contracts"):
+#   Step 1 dependency mapping + integration points (×2 → synth) → dependency-mapping (FANOUT)
+#   Step 2 sync cadence + meeting template                      → sync-cadence       (project-manager)
+#   Step 3 blocker tracker + escalation (×2 → resolution synth) → blocker-management (FANOUT)
+#   Step 4 integration contracts + change protocol             → integration-planning (api-designer)
+#   Step 5 knowledge sharing framework + first demo            → knowledge-sharing  (technical-lead)
+#   (Quality Gate: teams sign off on contracts/dependency map) → setup-approval-gate
+#   Step 6 cross-team sync status report                       → sync-report        (project-manager)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-cross-team-sync
+  labels:
+    category: sdlc-orchestration
+    domain: team
+spec:
+  vars:
+    team_a: ""
+    team_b: ""
+    sync_frequency: weekly
+  steps:
+    # Step 1: dependency mapping. system-analyst maps component ownership +
+    # dependencies; integration-engineer defines integration points/contracts;
+    # documentation-synthesizer merges both into the unified dependency map.
+    - id: dependency-mapping
+      fanout:
+        strategy: parallel
+        agents:
+          - xteam-component-analysis      # system-analyst
+          - xteam-integration-points      # integration-engineer
+        synthesize: xteam-dependency-map  # documentation-synthesizer
+      inputs:
+        - { name: team_a, from: "vars.team_a" }
+        - { name: team_b, from: "vars.team_b" }
+      outputs:
+        - name: dependency_map
+
+    - id: sync-cadence
+      capability: xteam-sync-cadence
+      depends_on: [dependency-mapping]
+      inputs:
+        - { name: sync_frequency, from: "vars.sync_frequency" }
+
+    # Step 3: blocker management. project-manager builds the blocker tracker +
+    # SLAs; agile-coach defines the escalation matrix; scrum-master synthesizes
+    # the end-to-end blocker resolution process from both.
+    - id: blocker-management
+      fanout:
+        strategy: parallel
+        agents:
+          - xteam-blocker-tracker            # project-manager
+          - xteam-escalation-matrix          # agile-coach
+        synthesize: xteam-blocker-resolution # scrum-master
+      depends_on: [sync-cadence]
+
+    - id: integration-planning
+      capability: xteam-integration-planning
+      depends_on: [blocker-management]
+
+    - id: knowledge-sharing
+      capability: xteam-knowledge-sharing
+      depends_on: [integration-planning]
+
+    # Human checkpoint before the status report is emitted and the setup is
+    # shared with both teams (prose Quality Gates + Immediate Actions).
+    - id: setup-approval-gate
+      kind: gate
+      description: |
+        Human gate (review): present the dependency map, sync cadence, blocker
+        tracking system, escalation matrix, and API contracts. Confirm both
+        teams have reviewed and signed off on the integration contracts and the
+        dependency map before the cross-team sync status report is emitted and
+        the setup is shared with the teams. Return to revise if contracts are
+        unsigned or the dependency map is contested.
+      depends_on: [knowledge-sharing]
+
+    - id: sync-report
+      capability: xteam-sync-report
+      depends_on: [setup-approval-gate]
+      outputs:
+        - name: report_path

@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 2: assess and score risks.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: risk-assess
+  labels: { domain: risk }
+spec:
+  description: Apply the probability×impact assessment matrix to score each risk (1-25), assign priority (P0 Show Stopper / P1 High / P2 Medium / P3 Low), and produce the risk assessment report with summary, top-5, trends, and required escalations.
+  version: "1.0.0"
+  inputs:
+    - { name: workshop_notes, type: string, required: false }
+  outputs:
+    - { name: assessment_report, type: string }
+  agent: risk-manager
+  idempotent: true

@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 4 panel: implement infrastructure optimizations.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-infrastructure-optimizations
+  labels: { domain: performance }
+spec:
+  description: Implement infrastructure optimizations from the plan — caching layer (Redis/Memcached, warming, TTLs), CDN/edge configuration, load-balancing tuning, and auto-scaling rules — documenting configuration changes and impact.
+  version: "1.0.0"
+  inputs:
+    - { name: optimization_plan, type: object, required: true }
+  outputs:
+    - { name: infrastructure_optimizations, type: object }
+  agent: reliability-engineer
+  idempotent: false

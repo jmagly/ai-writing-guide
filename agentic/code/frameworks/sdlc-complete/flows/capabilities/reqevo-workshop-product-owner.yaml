@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 1 workshop participant: Product Owner perspective.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-workshop-product-owner
+  labels: { domain: requirements }
+spec:
+  description: Provide the Product Owner perspective in the requirements refinement workshop — business value priorities, acceptance criteria validation, trade-off decisions, and stakeholder feedback integration.
+  version: "1.0.0"
+  inputs:
+    - { name: iteration, type: string, required: false }
+  outputs:
+    - { name: business_priorities, type: object }
+  agent: product-owner
+  idempotent: true

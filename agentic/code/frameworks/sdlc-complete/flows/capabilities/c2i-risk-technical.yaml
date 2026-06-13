@@ -1,0 +1,16 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 3 (technical/architectural risks).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-risk-technical
+  labels: { domain: inception }
+spec:
+  description: Identify technical and architectural risks (scalability, integration, technology uncertainty, performance) from the vision and use cases, captured as risk cards.
+  version: "1.0.0"
+  inputs:
+    - { name: vision_document, type: string, required: true }
+    - { name: use_case_briefs, type: array, required: false }
+  outputs:
+    - { name: technical_risks, type: string }
+  agent: architecture-designer
+  idempotent: true

@@ -1,0 +1,16 @@
+# #1539 conversion — flow-cross-team-sync Step 1 reviewer (integration points).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: xteam-integration-points
+  labels: { domain: team }
+spec:
+  description: Define each cross-team integration point (id, type, owner/consumer, criticality, status), its contract (endpoints, schemas, error handling, SLAs, auth), and the breaking-vs-non-breaking change protocol.
+  version: "1.0.0"
+  inputs:
+    - { name: team_a, type: string, required: true }
+    - { name: team_b, type: string, required: true }
+  outputs:
+    - { name: integration_points_draft, type: string }
+  agent: integration-engineer
+  idempotent: true

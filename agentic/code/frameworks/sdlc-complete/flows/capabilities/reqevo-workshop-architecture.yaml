@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 1 workshop participant: Architecture feasibility.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-workshop-architecture
+  labels: { domain: requirements }
+spec:
+  description: Provide the architecture perspective in the requirements refinement workshop — technical feasibility, architecture constraints, component impacts, and integration challenges; flag requirements needing architecture changes.
+  version: "1.0.0"
+  inputs:
+    - { name: iteration, type: string, required: false }
+  outputs:
+    - { name: feasibility_assessment, type: object }
+  agent: software-architect
+  idempotent: true

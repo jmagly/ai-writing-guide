@@ -1,0 +1,108 @@
+# Conversion (#1539): the agentic `flow-requirements-evolution` skill expressed as
+# a declarative YAML Flow. Part of epic #1534. The SKILL.md remains the discoverable
+# trigger surface and prose reference; this playbook is the source of truth for the
+# step sequence, the multi-agent review panels, and the human CCB approval gate.
+#
+# Schema-fit note (#1539): SDLC flows act on a single project context rather than
+# iterating a host set, so `inventory`/`targets` are omitted entirely.
+#
+# Faithful to the prose flow's structure (7 prose steps → 8 playbook steps):
+#   Step 1 refinement workshop      → reqevo-refinement-workshop (FANOUT: facilitator + 3 participants)
+#   Step 2 triage change requests   → reqevo-triage-change-requests (requirements-analyst)
+#   Step 3 impact analysis (×4+1)   → reqevo-impact-analysis (FANOUT: 4 analysts + system-analyst synthesis)
+#   Step 4 CCB deliberation (×3+1)  → reqevo-ccb-review (FANOUT: 3 CCB members + project-manager decision record)
+#   (human CCB approval gate)       → ccb-approval-gate
+#   Step 5 update baseline          → reqevo-update-baseline (requirements-analyst)
+#   Step 6 maintain traceability    → reqevo-maintain-traceability (traceability-manager)
+#   Step 7 status report            → reqevo-status-report (requirements-analyst)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-requirements-evolution
+  labels:
+    category: sdlc-orchestration
+    domain: requirements
+spec:
+  vars:
+    iteration: ""
+  steps:
+    # Step 1: refinement workshop. The requirements-analyst facilitates while the
+    # product-owner, software-architect, and test-architect participate in parallel;
+    # the facilitator synthesizes the session into a refinement summary.
+    - id: refinement-workshop
+      fanout:
+        strategy: parallel
+        agents:
+          - reqevo-workshop-product-owner       # product-owner
+          - reqevo-workshop-architecture         # software-architect
+          - reqevo-workshop-testability          # test-architect
+        synthesize: reqevo-refinement-workshop   # requirements-analyst (facilitator)
+      inputs:
+        - { name: iteration, from: "vars.iteration" }
+      outputs:
+        - name: refinement_summary
+
+    - id: triage-change-requests
+      capability: reqevo-triage-change-requests
+      depends_on: [refinement-workshop]
+      outputs:
+        - name: triage_decisions
+
+    # Step 3: impact analysis for CCB-review changes. Four analysts assess scope,
+    # architecture, test, and schedule/cost impact in parallel; the system-analyst
+    # synthesizes the comprehensive Change Impact Analysis Report.
+    - id: impact-analysis
+      fanout:
+        strategy: parallel
+        agents:
+          - reqevo-impact-requirements   # requirements-analyst
+          - reqevo-impact-architecture   # software-architect
+          - reqevo-impact-testing        # test-architect
+          - reqevo-impact-schedule-cost  # project-manager
+        synthesize: reqevo-impact-analysis   # system-analyst
+      depends_on: [triage-change-requests]
+      outputs:
+        - name: impact_report
+
+    # Step 4: CCB deliberation. The CCB chair (project-manager), product-owner, and
+    # software-architect review in parallel; the project-manager records the decision.
+    - id: ccb-review
+      fanout:
+        strategy: parallel
+        agents:
+          - reqevo-ccb-chair          # project-manager (chair)
+          - reqevo-ccb-business        # product-owner
+          - reqevo-ccb-technical       # software-architect
+        synthesize: reqevo-ccb-decision   # project-manager (decision record)
+      depends_on: [impact-analysis]
+      outputs:
+        - name: ccb_decision_record
+
+    - id: ccb-approval-gate
+      kind: gate
+      description: |
+        Human gate (CCB approval): present the synthesized CCB decision record and
+        the impact analysis report. Formal Change Control Board approval is required
+        before approved changes update the requirements baseline. Scope changes
+        additionally require Executive Sponsor approval. Approve to proceed to the
+        baseline update, or return to revise/defer. The three CCB member perspectives
+        and the project-manager decision record are surfaced at this pause point.
+      depends_on: [ccb-review]
+
+    - id: update-baseline
+      capability: reqevo-update-baseline
+      depends_on: [ccb-approval-gate]
+      outputs:
+        - name: baseline_version
+
+    - id: maintain-traceability
+      capability: reqevo-maintain-traceability
+      depends_on: [update-baseline]
+      outputs:
+        - name: traceability_completeness
+
+    - id: status-report
+      capability: reqevo-status-report
+      depends_on: [maintain-traceability]
+      outputs:
+        - name: status_report

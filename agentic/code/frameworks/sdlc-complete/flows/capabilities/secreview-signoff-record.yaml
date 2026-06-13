@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 6 (record) of flow-security-review-cycle.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: secreview-signoff-record
+  labels: { domain: security }
+spec:
+  description: Persist the formal Security Gatekeeper deployment signoff after the human gate — confirm gate criteria met, record residual-risk level and any conditions, and capture the formal approval or rejection. Outputs .aiwg/security/security-signoff-{date}.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: signoff_doc, type: string }
+  agent: security-gatekeeper
+  idempotent: true

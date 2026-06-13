@@ -1,0 +1,17 @@
+# #1539 conversion of flow-iteration-dual-track Step 3 (Discovery start synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-discovery-synthesis
+  labels: { domain: iteration }
+spec:
+  description: Synthesize the Discovery plan for iteration N+1 from the design, refinement, and architecture plans — priority items to refine, spikes to execute, stakeholder sessions, target ready-backlog size, and handoff date to Delivery.
+  version: "1.0.0"
+  inputs:
+    - { name: design_plan, type: string, required: false }
+    - { name: refinement_plan, type: string, required: false }
+    - { name: architecture_plan, type: string, required: false }
+  outputs:
+    - { name: discovery_plan, type: string }
+  agent: iteration-coordinator
+  idempotent: true

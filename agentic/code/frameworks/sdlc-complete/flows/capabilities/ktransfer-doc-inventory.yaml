@@ -1,0 +1,15 @@
+# Conversion (#1539) — flow-knowledge-transfer Step 2 panel member.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: ktransfer-doc-inventory
+  labels: { domain: knowledge-transfer }
+spec:
+  description: Inventory and assess existing documentation (currency, completeness, clarity, relevance) and classify into core/reference/archive/missing in a logical learning sequence (.aiwg/knowledge/docs/documentation-inventory.md).
+  version: "1.0.0"
+  inputs:
+    - { name: domain, type: string, required: false, default: "all responsibilities" }
+  outputs:
+    - { name: doc_inventory, type: string }
+  agent: documentation-archivist
+  idempotent: true

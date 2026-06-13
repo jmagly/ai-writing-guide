@@ -1,0 +1,17 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 3 (synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-risk-synthesis
+  labels: { domain: inception }
+spec:
+  description: Consolidate business, technical, and security risk inputs into a single baselined risk list — dedup, prioritize by severity, ensure top 3 have mitigation plans, and allow no Show Stopper without mitigation. Emits .aiwg/risks/risk-list.md.
+  version: "1.0.0"
+  inputs:
+    - { name: risk_draft, type: string, required: false }
+    - { name: technical_risks, type: string, required: false }
+    - { name: security_risks, type: string, required: false }
+  outputs:
+    - { name: risk_list, type: string }
+  agent: documentation-synthesizer
+  idempotent: true

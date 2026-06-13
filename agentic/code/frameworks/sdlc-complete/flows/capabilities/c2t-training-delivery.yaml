@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 4 (training pipeline).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-training-delivery
+  labels: { domain: transition }
+spec:
+  description: Plan and track user training delivery — schedule instructor-led sessions, set up hands-on practice environments, deploy self-paced e-learning, and run Q&A office hours; track participation, completion, and feedback scores.
+  version: "1.0.0"
+  inputs:
+    - { name: training_materials_status, type: object, required: false }
+  outputs:
+    - { name: training_delivery_status, type: object }
+  agent: training-lead
+  idempotent: true

@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 1 of flow-security-review-cycle.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: secreview-threat-modeling
+  labels: { domain: security }
+spec:
+  description: Conduct a STRIDE threat-modeling session over the architecture — analyze data flows and trust boundaries, enumerate threats per component, rate by likelihood/impact, and design security controls. Outputs .aiwg/security/threat-model-{iteration}.md.
+  version: "1.0.0"
+  inputs:
+    - { name: iteration, type: string, required: false }
+  outputs:
+    - { name: threat_model, type: string }
+  agent: security-architect
+  idempotent: true

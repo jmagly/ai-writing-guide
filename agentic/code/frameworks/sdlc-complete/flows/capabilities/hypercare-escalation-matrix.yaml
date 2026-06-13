@@ -1,0 +1,15 @@
+# #1539 conversion of flow-hypercare-monitoring Step 1 (panel agent).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: hypercare-escalation-matrix
+  labels: { domain: hypercare }
+spec:
+  description: Define the alert escalation matrix (P0/P1/P2/P3 severity definitions, response SLAs) and the six-phase incident response workflow from the incident response runbook (.aiwg/deployment/alert-escalation-matrix.md).
+  version: "1.0.0"
+  inputs:
+    - { name: guidance, type: string, required: false }
+  outputs:
+    - { name: matrix_path, type: string }
+  agent: support-lead
+  idempotent: true

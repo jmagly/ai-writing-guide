@@ -1,0 +1,17 @@
+# #1539 capability — Step 1 synthesis: build the retrospective agenda from the panel outputs.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: retro-prep-agenda
+  labels: { domain: retrospective }
+spec:
+  description: Synthesize the metrics summary, survey template, and pattern analysis into a structured 90-minute retrospective agenda (set the stage, gather data, generate insights, decide actions, close).
+  version: "1.0.0"
+  inputs:
+    - { name: metrics_summary, type: string, required: false }
+    - { name: survey_template, type: string, required: false }
+    - { name: pattern_analysis, type: string, required: false }
+  outputs:
+    - { name: agenda, type: string }
+  agent: scrum-master
+  idempotent: true

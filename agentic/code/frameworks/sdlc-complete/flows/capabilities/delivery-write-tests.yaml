@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 3 (TDD pipeline).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-write-tests
+  labels: { domain: delivery }
+spec:
+  description: Write comprehensive failing tests before implementation — unit, integration, edge cases, and performance benchmarks per task (flow Step 3 TDD, tests-first).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: tests, type: object }
+  agent: test-engineer
+  idempotent: false

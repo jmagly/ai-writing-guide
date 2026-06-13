@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 6: validate and maintain the traceability matrix.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-maintain-traceability
+  labels: { domain: requirements }
+spec:
+  description: Maintain the traceability matrix — validate forward and backward traceability, identify orphaned requirements/code/tests, add/update/remove links, and generate a traceability health report targeting ≥90% completeness. Outputs .aiwg/management/traceability-matrix.md and .aiwg/reports/traceability-health-{date}.md.
+  version: "1.0.0"
+  inputs:
+    - { name: baseline_version, type: string, required: false }
+  outputs:
+    - { name: traceability_completeness, type: number }
+  agent: traceability-manager
+  idempotent: true

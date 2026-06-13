@@ -1,0 +1,18 @@
+# Conversion capability (#1539) — flow-change-control Step 2 synthesis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: chg-impact-synthesis
+  labels: { domain: change-control }
+spec:
+  description: Synthesize the four impact analyses (scope, schedule/cost, technical/quality, risk) into one comprehensive Impact Assessment with an overall rating and an APPROVE/REJECT/DEFER recommendation.
+  version: "1.0.0"
+  inputs:
+    - { name: scope_impact_path, type: string, required: true }
+    - { name: schedule_cost_impact_path, type: string, required: true }
+    - { name: technical_quality_impact_path, type: string, required: true }
+    - { name: risk_impact_path, type: string, required: true }
+  outputs:
+    - { name: impact_assessment_path, type: string }
+  agent: change-analyst
+  idempotent: true

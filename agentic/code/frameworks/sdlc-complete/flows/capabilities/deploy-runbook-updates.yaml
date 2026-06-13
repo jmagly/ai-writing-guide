@@ -1,0 +1,19 @@
+# Conversion (#1539) — Step 7b: capture lessons-learned runbook updates.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-runbook-updates
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Capture lessons-learned improvements to the deployment runbooks — process
+    improvements, new smoke tests, SLO/regression-threshold tuning, monitoring
+    improvements, rollback-procedure refinements — for the human to review and
+    apply to operational documentation.
+    Writes .aiwg/deployment/deployment-runbook-updates-{version}.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: runbook_updates_path, type: string }
+  agent: deployment-manager
+  idempotent: true

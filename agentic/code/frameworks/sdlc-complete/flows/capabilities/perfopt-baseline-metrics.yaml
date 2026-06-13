@@ -1,0 +1,16 @@
+# Conversion (#1539) — Step 1 panel: define SLIs/SLOs and establish baseline metrics.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-baseline-metrics
+  labels: { domain: performance }
+spec:
+  description: Define Service Level Indicators (latency p50/p95/p99, throughput, error rate, availability) and Service Level Objectives, and collect current baseline metrics over a representative period.
+  version: "1.0.0"
+  inputs:
+    - { name: trigger, type: string, required: false }
+    - { name: component, type: string, required: false }
+  outputs:
+    - { name: baseline_metrics, type: object }
+  agent: reliability-engineer
+  idempotent: true

@@ -1,0 +1,90 @@
+# Conversion (#1539): the agentic `flow-elaboration-to-construction` skill
+# expressed as a declarative YAML Flow. This is part of epic #1534. The SKILL.md
+# remains the discoverable trigger surface and prose reference; this playbook is
+# the source of truth for the step sequence + gates.
+#
+# Step 2 (Iteration 0 infrastructure) is the multi-agent panel: four
+# infrastructure agents run in parallel, then the devops-engineer synthesizes an
+# Iteration 0 Completion Report — encoded as a single `fanout` step (#1547).
+#
+# Schema-fit note (#1539): SDLC flows act on a single project context rather than
+# iterating a host set, so this Flow omits `inventory`/`targets`.
+#
+# Faithful to the prose flow (7 steps → 8 playbook steps, incl. inline gate):
+#   Step 1 Validate ABM milestone          → abm-validation         (project-manager)
+#   Step 2 Iteration 0 infrastructure (×4)  → iteration-0-setup      (FANOUT panel + synthesis)
+#   Step 3 Tailor process + onboarding      → process-and-onboarding (project-manager)
+#   Step 4 Plan first two iterations        → iteration-planning     (project-manager)
+#   Step 5 Setup dual-track workflow        → dual-track-setup       (project-manager)
+#   Step 6 Monitor architecture stability   → architecture-stability (architecture-designer)
+#   (human go/no-go gate before report)     → construction-go-gate
+#   Step 7 Construction readiness report    → readiness-report       (project-manager)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-elaboration-to-construction
+  labels:
+    category: sdlc-orchestration
+    domain: phase-transition
+spec:
+  vars:
+    project_directory: "."
+    guidance: ""
+  steps:
+    - id: abm-validation
+      capability: e2c-abm-validation
+      inputs:
+        - { name: project_directory, from: "vars.project_directory" }
+      outputs:
+        - name: abm_status
+
+    # Step 2: Iteration 0 infrastructure. Four infrastructure agents run in
+    # parallel (devops, build, reliability, environment); the devops-engineer
+    # synthesizes the Iteration 0 Completion Report. Downstream consumers see
+    # the synthesized report.
+    - id: iteration-0-setup
+      fanout:
+        strategy: parallel
+        agents:
+          - e2c-infra-cicd          # devops-engineer
+          - e2c-infra-build         # build-engineer
+          - e2c-infra-monitoring    # reliability-engineer
+          - e2c-infra-environment   # environment-engineer
+        synthesize: e2c-iteration-0-report   # devops-engineer
+      depends_on: [abm-validation]
+      outputs:
+        - name: iteration_0_status
+
+    - id: process-and-onboarding
+      capability: e2c-process-and-onboarding
+      depends_on: [iteration-0-setup]
+
+    - id: iteration-planning
+      capability: e2c-iteration-planning
+      depends_on: [process-and-onboarding]
+
+    - id: dual-track-setup
+      capability: e2c-dual-track-setup
+      depends_on: [iteration-planning]
+
+    - id: architecture-stability
+      capability: e2c-architecture-stability
+      depends_on: [dual-track-setup]
+      outputs:
+        - name: stability_status
+
+    - id: construction-go-gate
+      kind: gate
+      description: |
+        Human go/no-go gate: present the gate-criteria status (ABM, Iteration 0,
+        process, iteration plans, dual-track, architecture stability) and the
+        consolidated readiness picture. Approve to emit the Construction
+        Readiness Report and kick off Iteration 1; or DEFER and return to close
+        gaps. This is the executive decision point for entering Construction.
+      depends_on: [architecture-stability]
+
+    - id: readiness-report
+      capability: e2c-readiness-report
+      depends_on: [construction-go-gate]
+      outputs:
+        - name: construction_readiness

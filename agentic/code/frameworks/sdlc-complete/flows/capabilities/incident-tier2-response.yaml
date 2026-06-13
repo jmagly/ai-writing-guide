@@ -1,0 +1,15 @@
+# Capability (#1539) — Step 3 pipeline: Tier 2 advanced troubleshooting.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-tier2-response
+  labels: { domain: incident }
+spec:
+  description: Tier 2 response — take handoff from Tier 1, perform deep log analysis and recent-change code review, attempt reproduction, analyze dependencies and performance profiles, formulate a root-cause hypothesis with a test plan, and make the Tier 2→3 escalation decision.
+  version: "1.0.0"
+  inputs:
+    - { name: tier1_data, type: string, required: true }
+  outputs:
+    - { name: tier2_analysis, type: string }
+  agent: component-owner
+  idempotent: true

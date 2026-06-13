@@ -1,0 +1,23 @@
+# #1539 capability — prose Step 4: synthesize all validation results.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: gatechk-synthesize
+  labels: { domain: quality-gate }
+spec:
+  description: >-
+    Read every validation report from the panel (primary validator + specialist
+    reviewers) and produce one comprehensive Gate Validation Report — overall
+    status (PASS | FAIL | CONDITIONAL), pass rate, required-artifact status,
+    quality-gate results, failed criteria, signoff status, remediation plan,
+    recommendations, and a justified GO | NO-GO | CONDITIONAL GO decision
+    (flow-gate-check Step 4 synthesis). This is the fanout's synthesize step.
+  version: "1.0.0"
+  inputs:
+    - { name: gate_type, type: string, required: true }
+    - { name: reviews, type: array, required: false }
+  outputs:
+    - { name: gate_report, type: string }
+    - { name: overall_status, type: string }
+  agent: project-manager
+  idempotent: true

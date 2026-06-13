@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 9.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-completion-report
+  labels: { domain: inception }
+spec:
+  description: Generate the Concept→Inception phase completion report — milestone achievement (artifact + gate status), risk summary, financial summary (ROM + funding), Go/No-Go decision with rationale, and Elaboration handoff. Emits .aiwg/reports/inception-completion-report.md.
+  version: "1.0.0"
+  inputs:
+    - { name: lom_report, type: string, required: false }
+  outputs:
+    - { name: completion_report, type: string }
+  agent: project-manager
+  idempotent: true

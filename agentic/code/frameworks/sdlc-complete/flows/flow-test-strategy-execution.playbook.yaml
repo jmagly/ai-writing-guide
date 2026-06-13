@@ -1,0 +1,110 @@
+# Conversion (#1539): the agentic `flow-test-strategy-execution` skill expressed
+# as a declarative YAML Flow. Part of epic #1534. The SKILL.md remains the thin
+# wrapper / discoverable trigger surface; this playbook is the source of truth
+# for the test orchestration step sequence + the final go/no-go human gate.
+#
+# Two prose steps dispatch multiple agents in parallel, so they convert to
+# `fanout` steps (multi-agent documentation pattern, #1547): Step 4 (E2E + UAT
+# panel) and Step 5 (defect triage panel). Step 6 chains report-generating
+# agents as a pipeline fanout. Step 7 is the human go/no-go decision (kind: gate).
+#
+# Schema-fit note (#1539): `inventory`/`targets` omitted — SDLC flows act on a
+# single project context rather than iterating a host set.
+#
+# Faithful to the prose flow (7 prose steps → 7 playbook steps):
+#   Step 1 test execution planning   → execution-planning  (test-architect)
+#   Step 2 unit suite + coverage      → unit-tests          (test-engineer)
+#   Step 3 integration suite          → integration-tests   (test-engineer)
+#   Step 4 e2e + UAT (×2 parallel)    → e2e-acceptance      (FANOUT panel + synthesis)
+#   Step 5 defect triage + RCA (×2)   → defect-triage       (FANOUT panel + synthesis)
+#   Step 6 regression + reports (×3)  → regression-reporting(FANOUT pipeline + synthesis)
+#   Step 7 present go/no-go           → present-results     (kind: gate, human decision)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-test-strategy-execution
+  labels:
+    category: sdlc-orchestration
+    domain: testing
+spec:
+  vars:
+    test_level: ""
+    target_component: ""
+    guidance: ""
+  steps:
+    - id: execution-planning
+      capability: teststrat-execution-planning
+      inputs:
+        - { name: test_level, from: "vars.test_level" }
+        - { name: target_component, from: "vars.target_component" }
+        - { name: guidance, from: "vars.guidance" }
+      outputs:
+        - name: test_execution_plan
+
+    - id: unit-tests
+      capability: teststrat-unit-tests
+      depends_on: [execution-planning]
+      outputs:
+        - name: unit_results
+        - name: coverage_analysis
+
+    - id: integration-tests
+      capability: teststrat-integration-tests
+      depends_on: [unit-tests]
+      outputs:
+        - name: integration_results
+
+    # Step 4: E2E execution (qa-engineer) and UAT validation (product-owner)
+    # run as an independent panel; results are synthesized into a combined
+    # e2e/acceptance result for downstream triage.
+    - id: e2e-acceptance
+      fanout:
+        strategy: parallel
+        agents:
+          - teststrat-e2e-execution      # qa-engineer
+          - teststrat-uat-validation     # product-owner
+        synthesize: teststrat-e2e-synthesis   # qa-engineer
+      depends_on: [integration-tests]
+      outputs:
+        - name: e2e_results
+
+    # Step 5: defect triage panel — qa-lead triages all failures, component-owner
+    # performs root-cause analysis on P0/P1 defects; synthesized into a triaged
+    # defect set.
+    - id: defect-triage
+      fanout:
+        strategy: parallel
+        agents:
+          - teststrat-defect-triage-panel    # qa-lead
+          - teststrat-root-cause-analysis    # component-owner
+        synthesize: teststrat-triage-synthesis   # qa-lead
+      depends_on: [e2e-acceptance]
+      outputs:
+        - name: triaged_defects
+
+    # Step 6: regression analysis → comprehensive test report → quality-gate
+    # validation chain. Pipeline fanout: each agent consumes the prior output;
+    # the project-manager's quality-gate report is the synthesized result.
+    - id: regression-reporting
+      fanout:
+        strategy: pipeline
+        agents:
+          - teststrat-regression-analysis    # test-architect
+          - teststrat-test-report            # test-manager
+        synthesize: teststrat-quality-gate   # project-manager
+      depends_on: [defect-triage]
+      outputs:
+        - name: quality_gate_report
+
+    # Step 7: present results + go/no-go. Human reviews the synthesized quality
+    # gate decision (PASS | FAIL | CONDITIONAL) and the full test/defect summary.
+    - id: present-results
+      kind: gate
+      description: |
+        Human go/no-go gate: present the Test Execution Summary — pass rates by
+        level, coverage vs target, defect counts by severity (P0–P3), regression
+        status, and the synthesized quality-gate decision (PASS | FAIL |
+        CONDITIONAL). The human approves the go/no-go recommendation or returns
+        for fixes. The reviewer sees the test-execution-report, coverage-report,
+        defect list, regression-report, and test-quality-gate at this pause point.
+      depends_on: [regression-reporting]

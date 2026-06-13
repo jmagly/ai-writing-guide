@@ -1,0 +1,15 @@
+# Conversion (#1539) — flow-test-strategy-execution Step 4 panel agent: E2E execution.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: teststrat-e2e-execution
+  labels: { domain: testing }
+spec:
+  description: Execute end-to-end test suites for critical user journeys and cross-browser scenarios; capture journey completion rates, step-level pass/fail, performance metrics, and UI/UX issues.
+  version: "1.0.0"
+  inputs:
+    - { name: target_component, type: string, required: false }
+  outputs:
+    - { name: e2e_test_results, type: object }
+  agent: qa-engineer
+  idempotent: true

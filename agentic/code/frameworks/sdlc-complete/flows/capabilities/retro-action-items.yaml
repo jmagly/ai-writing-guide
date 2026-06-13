@@ -1,0 +1,15 @@
+# #1539 capability — Step 3: prioritize improvements and create SMART action items.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: retro-action-items
+  labels: { domain: retrospective }
+spec:
+  description: Prioritize improvements (impact/effort/control matrix), convert the top 2-3 into SMART action items with owners and due dates, and link them to work-package cards in the backlog.
+  version: "1.0.0"
+  inputs:
+    - { name: insights, type: string, required: false }
+  outputs:
+    - { name: action_items, type: string }
+  agent: project-manager
+  idempotent: false

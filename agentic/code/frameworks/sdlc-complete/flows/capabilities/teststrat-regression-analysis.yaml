@@ -1,0 +1,16 @@
+# Conversion (#1539) — flow-test-strategy-execution Step 6 pipeline agent: regression analysis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: teststrat-regression-analysis
+  labels: { domain: testing }
+spec:
+  description: Compare current test results to the baseline — identify new failures and fixed tests, compute test-health metrics (flaky rate, execution-time and coverage trends), and quality trends.
+  version: "1.0.0"
+  inputs:
+    - { name: current_results, type: object, required: false }
+    - { name: baseline_results, type: object, required: false }
+  outputs:
+    - { name: regression_analysis, type: object }
+  agent: test-architect
+  idempotent: true

@@ -1,0 +1,14 @@
+# #1539 conversion of flow-hypercare-monitoring Step 2.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: hypercare-monitor-stability
+  labels: { domain: hypercare }
+spec:
+  description: Monitor production stability and SLOs daily — generate the SLO compliance report (availability/performance/error/throughput, error-budget burn rate), the user-adoption dashboard, and document any detected P0/P1/P2/P3 incidents (.aiwg/deployment/slo-report-*.md, user-adoption-*.md, incidents/*.md).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: slo_status, type: string }
+  agent: reliability-engineer
+  idempotent: true

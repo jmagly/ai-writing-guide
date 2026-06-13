@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 2: triage pending change requests.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-triage-change-requests
+  labels: { domain: requirements }
+spec:
+  description: Collect and triage pending change requests — categorize type (Enhancement, Clarification, Bug Fix, Scope Change), perform quick impact assessment, identify affected artifacts, and route each to APPROVED / DEFERRED / REJECTED / CCB REVIEW. Output .aiwg/requirements/change-request-triage-{date}.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: triage_decisions, type: object }
+  agent: requirements-analyst
+  idempotent: true

@@ -1,0 +1,19 @@
+# Conversion (#1539) — Step 4 monitor: infrastructure health (fanout panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-infra-health
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Monitor infrastructure health for 15-30 minutes post-deployment — pod
+    restarts (>3 in 5 min -> ALERT), OOM kills (any -> ROLLBACK), node health,
+    network error rates — reporting every 5 minutes as HEALTHY | DEGRADED |
+    UNHEALTHY. UNHEALTHY signals the orchestrator to trigger rollback.
+    Writes .aiwg/working/deployment/infrastructure-health-report.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: infra_status, type: string }
+  agent: devops-engineer
+  idempotent: true

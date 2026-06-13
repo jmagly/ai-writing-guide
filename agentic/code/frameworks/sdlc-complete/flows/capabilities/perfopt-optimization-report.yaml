@@ -1,0 +1,20 @@
+# Conversion (#1539) — Step 6b: final optimization summary report.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-optimization-report
+  labels: { domain: performance }
+spec:
+  description: Generate the comprehensive optimization summary report — executive summary, before/after metrics table, optimizations implemented with impact, ROI analysis (effort, cost change, UX/business impact), lessons learned, and next steps.
+  version: "1.0.0"
+  inputs:
+    - { name: baseline_report, type: object, required: true }
+    - { name: bottleneck_analysis, type: object, required: true }
+    - { name: optimization_plan, type: object, required: true }
+    - { name: implementation_summary, type: object, required: true }
+    - { name: load_test_results, type: object, required: true }
+    - { name: slo_status, type: string, required: true }
+  outputs:
+    - { name: optimization_summary, type: object }
+  agent: performance-engineer
+  idempotent: true

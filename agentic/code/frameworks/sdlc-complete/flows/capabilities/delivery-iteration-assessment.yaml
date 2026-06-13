@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 7.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-iteration-assessment
+  labels: { domain: delivery }
+spec:
+  description: Calculate iteration velocity metrics (points, tasks, defects, coverage, gate pass-rate) and generate the assessment report — goals achievement, trends, risks, and lessons learned (flow Step 7).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: assessment_path, type: string }
+  agent: project-manager
+  idempotent: false

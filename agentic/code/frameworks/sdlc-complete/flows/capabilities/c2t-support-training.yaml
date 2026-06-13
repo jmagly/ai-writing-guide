@@ -1,0 +1,14 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 5 (handover panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-support-training
+  labels: { domain: transition }
+spec:
+  description: Train and validate support-team readiness — architecture overview, common user issues and resolutions, runbook procedures, incident escalation paths, and support tooling; validate via ≥3 resolved practice incidents, tested runbooks, and a populated knowledge base.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: support_training_status, type: object }
+  agent: support-lead
+  idempotent: true

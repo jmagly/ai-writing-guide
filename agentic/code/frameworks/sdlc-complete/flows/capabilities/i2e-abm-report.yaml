@@ -1,0 +1,14 @@
+# Conversion (#1539) — flow-inception-to-elaboration Step 7 report.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: i2e-abm-report
+  labels: { domain: phase-transition }
+spec:
+  description: Generate the Architecture Baseline Milestone report — overall status, GO/CONDITIONAL GO/NO-GO/PIVOT recommendation, per-criterion breakdown, six-signature signoff checklist, decision rationale, and next steps (flow Step 7).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: abm_report, type: string }
+  agent: project-manager
+  idempotent: true

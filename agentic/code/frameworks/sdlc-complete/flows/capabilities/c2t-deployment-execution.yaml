@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 3 (deployment pipeline).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-deployment-execution
+  labels: { domain: transition }
+spec:
+  description: Execute the production deployment following the selected strategy — run deployment automation, apply database migrations, update configuration (env vars, feature flags), deploy application artifacts, and validate health checks; log progress and any issues.
+  version: "1.0.0"
+  inputs:
+    - { name: pre_deployment_checklist, type: object, required: false }
+  outputs:
+    - { name: deployment_execution_log, type: object }
+  agent: devops-engineer
+  idempotent: false

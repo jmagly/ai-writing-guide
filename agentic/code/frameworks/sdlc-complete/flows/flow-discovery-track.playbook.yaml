@@ -1,0 +1,88 @@
+# Conversion (#1539): the agentic `flow-discovery-track` skill expressed as a
+# declarative YAML Flow (FlowPlaybook), part of epic #1534. The SKILL.md remains
+# the discoverable trigger surface and prose reference; this playbook is the
+# source of truth for the step sequence + the Definition-of-Ready handoff gate.
+#
+# Step 1 of the prose dispatches a stakeholder-gathering panel (requirements
+# gather + vision alignment) in parallel, then synthesizes a prioritized
+# backlog — encoded here as a single `fanout` step (#1547). The remaining steps
+# are sequential single-capability stages. The final handoff carries a human
+# Definition-of-Ready gate before the iteration is marked READY FOR DELIVERY.
+#
+# Schema-fit note (#1539): SDLC flows act on a single project context rather
+# than iterating a host set, so `inventory`/`targets` are omitted.
+#
+# Faithful to the prose flow:
+#   Step 1 gather stakeholder requests (panel + prioritize) → gather-requests (FANOUT) + align-vision → synthesize prioritize-backlog
+#   Step 2 author use-case briefs + acceptance cards         → discovery-author-use-cases   (requirements-analyst / system-analyst)
+#   Step 3 draft data contracts + interface cards            → discovery-design-contracts    (api-designer / architecture-designer)
+#   Step 4 spike/POC for high-risk assumptions               → discovery-validate-spikes     (technical-researcher / software-implementer / project-manager)
+#   Step 5 update architecture decision records              → discovery-update-adrs         (architecture-designer)
+#   Step 6 handoff to delivery (DoR + package + report)      → discovery-handoff-delivery     (requirements-reviewer / project-manager / documentation-synthesizer)
+#   Quality Gates + handoff approval                         → dor-handoff-gate              (human gate)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-discovery-track
+  labels:
+    category: sdlc-orchestration
+    domain: discovery
+spec:
+  vars:
+    iteration: ""
+  steps:
+    # Step 1: gather stakeholder requests. The requirements-analyst (gather) and
+    # product-strategist (vision alignment) run as a parallel panel; the
+    # project-manager synthesizes a prioritized backlog (1.5x-2x capacity).
+    - id: gather-stakeholder-requests
+      fanout:
+        strategy: parallel
+        agents:
+          - discovery-gather-requests   # requirements-analyst
+          - discovery-align-vision      # product-strategist
+        synthesize: discovery-prioritize-backlog   # project-manager
+      inputs:
+        - { name: iteration, from: "vars.iteration" }
+      outputs:
+        - name: prioritized_backlog
+
+    - id: author-use-cases
+      capability: discovery-author-use-cases
+      depends_on: [gather-stakeholder-requests]
+      outputs:
+        - name: use_case_briefs
+
+    - id: design-contracts
+      capability: discovery-design-contracts
+      depends_on: [author-use-cases]
+      outputs:
+        - name: design_artifacts
+
+    - id: validate-spikes
+      capability: discovery-validate-spikes
+      depends_on: [design-contracts]
+      outputs:
+        - name: spike_results
+
+    - id: update-adrs
+      capability: discovery-update-adrs
+      depends_on: [validate-spikes]
+      outputs:
+        - name: adrs
+
+    - id: handoff-delivery
+      capability: discovery-handoff-delivery
+      depends_on: [update-adrs]
+      outputs:
+        - name: handoff_package
+
+    - id: dor-handoff-gate
+      kind: gate
+      description: |
+        Human gate (Definition of Ready): review the DoR validation report and
+        handoff package. Confirm ≥90% of backlog items meet DoR, traceability is
+        established (request → use-case → acceptance → design), high-risk
+        assumptions are validated, and 1.5x-2x iteration capacity is prepared.
+        Approve to mark the iteration READY FOR DELIVERY, or return items marked
+        NOT_READY to the appropriate step for rework.
+      depends_on: [handoff-delivery]

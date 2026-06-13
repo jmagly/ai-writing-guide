@@ -1,0 +1,25 @@
+# Conversion (#1539) — Step 4 synthesis: production regression-gate decision.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-regression-gate-synthesis
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Aggregate the four production-monitoring panel outputs (SLO, smoke tests,
+    infrastructure health, production regression check) into a single
+    production regression-gate decision. If any reports BREACH / FAIL /
+    UNHEALTHY, or regression_rate > threshold, the deployment is failing and the
+    rollback branch is signaled (when --rollback-on-regression is enabled);
+    otherwise the deployment is declared successful.
+  version: "1.0.0"
+  inputs:
+    - { name: threshold, type: number, required: false, default: 0 }
+    - { name: slo_status, type: string, required: false }
+    - { name: smoke_status, type: string, required: false }
+    - { name: infra_status, type: string, required: false }
+    - { name: production_regression_rate, type: number, required: false }
+  outputs:
+    - { name: production_regression_decision, type: string }
+  agent: regression-analyst
+  idempotent: true

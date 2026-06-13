@@ -1,0 +1,15 @@
+# #1539 conversion of flow-iteration-dual-track Step 5 (Handoff pipeline).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-handoff-package
+  labels: { domain: iteration }
+spec:
+  description: Package DoR-validated Discovery items for handoff to iteration N+1 — ready user stories, acceptance criteria, design mockups/specs, technical decisions (ADRs), test scenarios, and dependency map, organized by priority and component.
+  version: "1.0.0"
+  inputs:
+    - { name: dor_validation, type: string, required: false }
+  outputs:
+    - { name: handoff_package, type: string }
+  agent: iteration-coordinator
+  idempotent: true

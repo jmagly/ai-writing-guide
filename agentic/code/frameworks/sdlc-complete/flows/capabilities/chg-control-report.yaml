@@ -1,0 +1,20 @@
+# Conversion capability (#1539) — flow-change-control Step 7 (change control report).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: chg-control-report
+  labels: { domain: change-control }
+spec:
+  description: Synthesize all change-control artifacts (change request, impact assessment, CCB decision, baseline update, communications, implementation tracking) into one comprehensive change control report with executive summary, full audit trail, and lessons learned.
+  version: "1.0.0"
+  inputs:
+    - { name: change_request_path, type: string, required: true }
+    - { name: impact_assessment_path, type: string, required: true }
+    - { name: ccb_decision_path, type: string, required: true }
+    - { name: baseline_update_path, type: string, required: false }
+    - { name: communication_log_path, type: string, required: false }
+    - { name: implementation_tracking_path, type: string, required: false }
+  outputs:
+    - { name: report_path, type: string }
+  agent: change-analyst
+  idempotent: true

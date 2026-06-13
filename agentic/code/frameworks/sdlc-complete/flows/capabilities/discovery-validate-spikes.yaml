@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-discovery-track Step 4.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: discovery-validate-spikes
+  labels: { domain: discovery }
+spec:
+  description: Identify high-risk assumptions (technical-researcher), run time-boxed spikes/POCs to validate them with GO/NO-GO/PIVOT recommendations (software-implementer), and update the risk register (project-manager) (flow Step 4).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: spike_results, type: array }
+    - { name: risk_updates, type: object }
+  agent: technical-researcher
+  idempotent: false

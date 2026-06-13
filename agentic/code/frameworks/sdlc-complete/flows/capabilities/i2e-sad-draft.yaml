@@ -1,0 +1,14 @@
+# Conversion (#1539) — flow-inception-to-elaboration Step 3.2.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: i2e-sad-draft
+  labels: { domain: architecture }
+spec:
+  description: Author the Software Architecture Document primary draft (v0.1) covering architectural drivers, component decomposition, deployment, technology stack, integration, security, data architecture, and key ADR references (flow Step 3.2 primary author).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: sad_draft, type: string }
+  agent: architecture-designer
+  idempotent: false

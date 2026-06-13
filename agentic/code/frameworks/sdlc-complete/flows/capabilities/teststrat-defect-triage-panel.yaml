@@ -1,0 +1,15 @@
+# Conversion (#1539) — flow-test-strategy-execution Step 5 panel agent: defect triage.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: teststrat-defect-triage-panel
+  labels: { domain: testing }
+spec:
+  description: Triage all test failures — assign severity (P0–P3), categorize (functional, performance, security, usability, test issue), assign owner, set resolution target, and create defect cards.
+  version: "1.0.0"
+  inputs:
+    - { name: test_failures, type: array, required: false }
+  outputs:
+    - { name: defect_cards, type: array }
+  agent: qa-lead
+  idempotent: true

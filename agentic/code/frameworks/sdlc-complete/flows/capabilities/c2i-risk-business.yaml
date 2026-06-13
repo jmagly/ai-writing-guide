@@ -1,0 +1,16 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 3 (business/resource/schedule risks).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-risk-business
+  labels: { domain: inception }
+spec:
+  description: Identify 5-10 business, resource, and schedule risks from the vision and use cases, each with likelihood, impact, and a mitigation strategy (detailed mitigation for the top 3).
+  version: "1.0.0"
+  inputs:
+    - { name: vision_document, type: string, required: true }
+    - { name: use_case_briefs, type: array, required: false }
+  outputs:
+    - { name: risk_draft, type: string }
+  agent: project-manager
+  idempotent: true

@@ -1,0 +1,14 @@
+# Conversion (#1539) capability for flow-compliance-validation Step 2 (panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: compliance-evidence-operational
+  labels: { domain: compliance }
+spec:
+  description: Collect or document operational control evidence (change management, monitoring/logging samples, backup and recovery, vulnerability management) into the evidence repository and update collection status.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: operational_evidence, type: array }
+  agent: devops-engineer
+  idempotent: true

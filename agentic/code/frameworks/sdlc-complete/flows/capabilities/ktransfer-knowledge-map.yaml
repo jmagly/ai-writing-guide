@@ -1,0 +1,17 @@
+# Conversion (#1539) — flow-knowledge-transfer Step 1 panel member.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: ktransfer-knowledge-map
+  labels: { domain: knowledge-transfer }
+spec:
+  description: Assess the knowledge domain and produce a Knowledge Map — areas, criticality, holder/receiver expertise, gaps, and transfer priority (.aiwg/knowledge/knowledge-map-{domain}.md).
+  version: "1.0.0"
+  inputs:
+    - { name: from_member, type: string, required: true }
+    - { name: to_member, type: string, required: true }
+    - { name: domain, type: string, required: false, default: "all responsibilities" }
+  outputs:
+    - { name: knowledge_map, type: string }
+  agent: knowledge-manager
+  idempotent: true

@@ -1,0 +1,16 @@
+# Capability (#1539) — Step 1: incident detection and initial logging.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-detect-log
+  labels: { domain: incident }
+spec:
+  description: Capture incident details immediately — create the incident record (detection time, reporter, initial classification), seed the timeline, and draft the initial communication/alert template.
+  version: "1.0.0"
+  inputs:
+    - { name: incident_id, type: string, required: true }
+    - { name: severity, type: string, required: false }
+  outputs:
+    - { name: incident_record, type: string }
+  agent: incident-responder
+  idempotent: true

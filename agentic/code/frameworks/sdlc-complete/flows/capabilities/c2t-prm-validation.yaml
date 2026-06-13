@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 7 (PRM validation).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-prm-validation
+  labels: { domain: transition }
+spec:
+  description: Validate all Product Release Milestone (PRM) criteria — production deployment and hypercare completed, production stability (uptime SLA, zero P0/P1, performance within targets), user adoption (≥80% trained, UAT passed, satisfaction ≥4/5), support and operations handover signoffs, and business-value tracking; report PASS | CONDITIONAL PASS | FAIL.
+  version: "1.0.0"
+  inputs:
+    - { name: hypercare_decision, type: string, required: false }
+  outputs:
+    - { name: prm_status, type: string }
+  agent: project-manager
+  idempotent: true

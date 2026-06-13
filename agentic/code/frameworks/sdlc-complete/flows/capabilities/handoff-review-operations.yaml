@@ -1,0 +1,14 @@
+# #1539 capability — checklist panel reviewer: operational readiness (ORR).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: handoff-review-operations
+  labels: { domain: handoff }
+spec:
+  description: Validate operational-readiness criteria (deployment to staging, feature flags, monitoring/alerting/logging configured, backup and rollback tested, support plan and team training in place) with PASS/FAIL status per item.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: validation, type: string }
+  agent: operations-manager
+  idempotent: true

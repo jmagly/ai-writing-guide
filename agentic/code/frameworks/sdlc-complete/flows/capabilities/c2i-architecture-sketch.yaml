@@ -1,0 +1,17 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 5.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-architecture-sketch
+  labels: { domain: inception }
+spec:
+  description: Create the initial architecture sketch (component boundaries, integration points, technology stack, deployment model, key decisions) from the vision/use cases/risks, then run a security-architect review (APPROVED | CONDITIONAL | NEEDS_WORK). Emits .aiwg/architecture/architecture-sketch.md.
+  version: "1.0.0"
+  inputs:
+    - { name: vision_document, type: string, required: true }
+    - { name: risk_list, type: string, required: false }
+  outputs:
+    - { name: architecture_sketch, type: string }
+    - { name: security_review, type: object }
+  agent: architecture-designer
+  idempotent: true

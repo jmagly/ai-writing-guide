@@ -1,0 +1,104 @@
+# Conversion (#1539): the agentic `flow-guided-implementation` skill expressed
+# as a declarative YAML Flow. This flow drives autonomous issue-to-code
+# implementation with bounded iteration. The SKILL.md remains the discoverable
+# trigger surface and prose reference; this playbook is the source of truth for
+# the phase sequence, the bounded-retry loop, and the human gates (escalation +
+# commit decision). Part of epic #1534.
+#
+# Schema-fit note (#1539): SDLC flows act on a single project context rather
+# than iterating a host set, so this Flow omits `inventory`/`targets`.
+#
+# Faithful to the prose flow:
+#   Phase 1 Analysis                  → analysis            (workflow-executor)
+#   Phase 2 Task Decomposition        → task-decomposition  (workflow-executor)
+#   Phase 3 Iterative Coding (loop:   → iterative-coding    (software-implementer)
+#     Locate→Generate→Validate→Decide,    with retry policy modeling the bounded
+#     bounded by --max-retries)           Locate/Generate/Validate/Decide loop
+#   (escalation when max retries hit) → escalation-gate     (kind: gate)
+#   Phase 4 Integration               → integration         (workflow-executor)
+#   (commit-or-prompt decision)       → commit-gate         (kind: gate)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-guided-implementation
+  labels:
+    category: sdlc-orchestration
+    domain: implementation
+spec:
+  vars:
+    issue_description: ""
+    issue_url: ""
+    max_retries: 3
+    skip_review: false
+    dry_run: false
+  steps:
+    # Phase 1: Analysis — parse the issue, extract intent, search the codebase,
+    # read top candidates, rank by relevance.
+    - id: analysis
+      capability: guided-analysis
+      inputs:
+        - { name: issue_description, from: "vars.issue_description" }
+        - { name: issue_url, from: "vars.issue_url" }
+      outputs:
+        - name: ranked_files
+
+    # Phase 2: Task Decomposition — one task per file, dependency-ordered,
+    # complexity-estimated (TodoWrite).
+    - id: task-decomposition
+      capability: guided-decompose
+      depends_on: [analysis]
+      outputs:
+        - name: task_graph
+
+    # Phase 3: Iterative Coding — for each task, run the Locate → Generate →
+    # Validate → Decide loop, bounded by max_retries. Complex changes dispatch
+    # software-implementer; test failures dispatch debugger; passing changes
+    # (unless skip_review) dispatch code-reviewer. The bounded retry is encoded
+    # as the step retry policy.
+    - id: iterative-coding
+      capability: guided-iterative-coding
+      depends_on: [task-decomposition]
+      inputs:
+        - { name: max_retries, from: "vars.max_retries" }
+        - { name: skip_review, from: "vars.skip_review" }
+        - { name: dry_run, from: "vars.dry_run" }
+      retry:
+        limit: 3
+        backoff: linear
+        on: failure
+      outputs:
+        - name: completed_tasks
+
+    # Escalation gate — reached only when a task exhausts max_retries without
+    # passing. The executor surfaces the iteration history and the open question
+    # (e.g. competing data formats) to the human for a decision.
+    - id: escalation-gate
+      kind: gate
+      description: |
+        Human escalation (max iterations reached): a task failed after
+        --max-retries attempts. Present the per-iteration failure history and
+        the specific blocking question (e.g. string vs number userId) and ask
+        the user how to proceed (update the test vs update the implementation).
+        Skipped when all tasks completed within budget.
+      depends_on: [iterative-coding]
+
+    # Phase 4: Integration — verify all tasks complete, run the full suite,
+    # stage changes, and generate a commit message from the task list.
+    - id: integration
+      capability: guided-integration
+      depends_on: [escalation-gate]
+      inputs:
+        - { name: dry_run, from: "vars.dry_run" }
+      outputs:
+        - name: commit_message
+
+    # Commit decision gate — the prose ends with "Commit (or prompt user for
+    # /commit-and-push)". Surface the generated commit message + staged diff and
+    # let the human commit now or defer to /commit-and-push.
+    - id: commit-gate
+      kind: gate
+      description: |
+        Human decision (commit-or-defer): present the generated commit message
+        and the staged diff. Approve to commit, or defer to /commit-and-push for
+        the standard delivery workflow. No commit is made without this approval.
+      depends_on: [integration]

@@ -1,0 +1,16 @@
+# #1539 capability — flow-team-onboarding Step 3.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: onboard-buddy-assignment
+  labels: { domain: team }
+spec:
+  description: Select and assign a buddy (expertise match, availability, mentoring experience), document responsibilities and pairing schedule, then notify the buddy and adjust their sprint capacity (Step 3).
+  version: "1.0.0"
+  inputs:
+    - { name: member_name, type: string, required: true }
+    - { name: role, type: string, required: false }
+  outputs:
+    - { name: buddy, type: object }
+  agent: team-lead
+  idempotent: false

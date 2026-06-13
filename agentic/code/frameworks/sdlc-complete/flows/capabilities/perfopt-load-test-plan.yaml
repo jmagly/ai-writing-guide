@@ -1,0 +1,16 @@
+# Conversion (#1539) — Step 5 pipeline head: create the load test plan.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-load-test-plan
+  labels: { domain: performance }
+spec:
+  description: Create a load test plan covering test scenarios (baseline, stress, spike, soak), traffic patterns (journey distribution, request rates, concurrency, geography), and success criteria (SLO compliance, no regressions, error/resource thresholds).
+  version: "1.0.0"
+  inputs:
+    - { name: baseline_report, type: object, required: true }
+    - { name: critical_paths, type: object, required: false }
+  outputs:
+    - { name: load_test_plan, type: object }
+  agent: reliability-engineer
+  idempotent: true

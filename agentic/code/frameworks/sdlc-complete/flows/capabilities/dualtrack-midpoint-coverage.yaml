@@ -1,0 +1,14 @@
+# #1539 conversion of flow-iteration-dual-track Step 4 (Midpoint quality gate).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-midpoint-coverage
+  labels: { domain: iteration }
+spec:
+  description: Run the test-coverage gate over Delivery work — unit test coverage %, integration test status, acceptance test automation, regression suite health; emit PASS/FAIL/WARNING.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: test_gate, type: string }
+  agent: test-engineer
+  idempotent: true

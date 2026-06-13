@@ -1,0 +1,15 @@
+# #1539 capability — flow-team-onboarding Step 4.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: onboard-progress-tracking
+  labels: { domain: team }
+spec:
+  description: Monitor Week 1 daily checklist and ongoing weekly progress (task completion, training attendance, buddy sessions, integration); document blockers and escalate access issues (Step 4).
+  version: "1.0.0"
+  inputs:
+    - { name: member_name, type: string, required: true }
+  outputs:
+    - { name: weekly_status_paths, type: array }
+  agent: project-manager
+  idempotent: false

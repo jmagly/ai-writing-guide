@@ -1,0 +1,15 @@
+# Capability (#1539) — Step 2 panel: urgency assessment (time sensitivity).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-urgency-assess
+  labels: { domain: incident }
+spec:
+  description: Assess incident urgency — time sensitivity, worsening trend, and SLA-breach risk (current availability vs target, error budget remaining, time to breach) (HIGH/MEDIUM/LOW).
+  version: "1.0.0"
+  inputs:
+    - { name: incident_record, type: string, required: true }
+  outputs:
+    - { name: urgency_level, type: string }
+  agent: reliability-engineer
+  idempotent: true

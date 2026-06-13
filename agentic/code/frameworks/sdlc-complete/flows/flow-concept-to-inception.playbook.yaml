@@ -1,0 +1,108 @@
+# Conversion (#1539): the agentic `flow-concept-to-inception` skill expressed as a
+# declarative YAML Flow. This flow drives the Concept→Inception phase transition
+# toward the Lifecycle Objective Milestone (LOM). It mixes single-author steps with
+# multi-agent documentation panels (Primary → Parallel Reviewers → Synthesizer),
+# which are encoded as `fanout` steps (#1547). The SKILL.md remains the thin
+# wrapper / discoverable trigger surface; this playbook is the orchestration
+# source of truth for the step sequence + the human LOM gate.
+#
+# Schema-fit note (#1539): SDLC flows act on a single project context rather than
+# iterating a host set, so `inventory`/`targets` are omitted.
+#
+# Faithful to the prose flow:
+#   Step 1 validate intake + vision (multi-agent) → vision-development  (FANOUT panel + synthesis)
+#   Step 2 use cases + value + interviews         → business-alignment  (requirements-analyst)
+#   Step 3 risk identification (multi-agent)       → risk-assessment     (FANOUT panel + synthesis)
+#   Step 4 security & privacy assessment (×3)      → security-assessment (FANOUT panel + synthesis)
+#   Step 5 architecture sketch + security review   → architecture-sketch (architecture-designer)
+#   Step 6 architecture decision records           → create-adrs         (architecture-designer)
+#   Step 7 business case + option matrix + scope   → business-case       (product-strategist)
+#   Step 8 LOM validation (go/no-go)               → lom-gate            (kind: gate)
+#   Step 9 phase completion report                 → completion-report   (project-manager)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-concept-to-inception
+  labels:
+    category: sdlc-orchestration
+    domain: inception
+spec:
+  vars:
+    guidance: ""
+  steps:
+    # Step 1: vision development — vision-owner + business-process-analyst draft,
+    # product-strategist/business-process-analyst/technical-writer review,
+    # requirements-documenter synthesizes the baselined vision document.
+    - id: vision-development
+      fanout:
+        strategy: parallel
+        agents:
+          - c2i-vision-draft          # vision-owner
+          - c2i-vision-review-value   # product-strategist
+          - c2i-vision-review-process # business-process-analyst
+          - c2i-vision-review-clarity # technical-writer
+        synthesize: c2i-vision-synthesis  # requirements-documenter
+      outputs:
+        - name: vision_document
+
+    - id: business-alignment
+      capability: c2i-business-alignment
+      depends_on: [vision-development]
+
+    # Step 3: risk identification — project-manager + architecture-designer +
+    # security-architect identify risks in parallel; documentation-synthesizer
+    # consolidates into the baselined risk list.
+    - id: risk-assessment
+      fanout:
+        strategy: parallel
+        agents:
+          - c2i-risk-business     # project-manager
+          - c2i-risk-technical    # architecture-designer
+          - c2i-risk-security     # security-architect
+        synthesize: c2i-risk-synthesis  # documentation-synthesizer
+      depends_on: [business-alignment]
+      outputs:
+        - name: risk_list
+
+    # Step 4: security & privacy — data classification (security-architect),
+    # privacy impact assessment (privacy-officer), compliance requirements
+    # (legal-liaison) produced in parallel and synthesized into the security baseline.
+    - id: security-assessment
+      fanout:
+        strategy: parallel
+        agents:
+          - c2i-data-classification  # security-architect
+          - c2i-privacy-assessment   # privacy-officer
+          - c2i-compliance-review    # legal-liaison
+        synthesize: c2i-security-synthesis  # security-architect
+      depends_on: [risk-assessment]
+
+    - id: architecture-sketch
+      capability: c2i-architecture-sketch
+      depends_on: [security-assessment]
+
+    - id: create-adrs
+      capability: c2i-create-adrs
+      depends_on: [architecture-sketch]
+
+    - id: business-case
+      capability: c2i-business-case
+      depends_on: [create-adrs]
+
+    # Step 8: Lifecycle Objective Milestone — the human go/no-go gate.
+    - id: lom-gate
+      kind: gate
+      description: |
+        Human gate (Lifecycle Objective Milestone): the project-manager validates
+        Inception exit criteria — vision approved, business case funded, risk list
+        baselined (top 3 mitigated, no Show Stopper without mitigation), data
+        classification complete, architecture sketch + 3+ ADRs documented, use-case
+        briefs and option matrix present, stakeholder approval >=75%, executive
+        sponsor signoff. The LOM report (PASS/FAIL + Go/No-Go recommendation) is
+        surfaced at this pause point. Approve to GO to Elaboration; FAIL returns for
+        remediation and escalates to the executive sponsor.
+      depends_on: [business-case]
+
+    - id: completion-report
+      capability: c2i-completion-report
+      depends_on: [lom-gate]

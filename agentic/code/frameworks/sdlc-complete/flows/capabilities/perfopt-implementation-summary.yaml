@@ -1,0 +1,17 @@
+# Conversion (#1539) — Step 4 synthesis: consolidate optimization implementations.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-implementation-summary
+  labels: { domain: performance }
+spec:
+  description: Consolidate the database, code, and infrastructure optimization results into an implementation summary — optimizations completed, measured before/after improvements, failed attempts, and pending optimizations.
+  version: "1.0.0"
+  inputs:
+    - { name: database_optimizations, type: object, required: true }
+    - { name: code_optimizations, type: object, required: true }
+    - { name: infrastructure_optimizations, type: object, required: true }
+  outputs:
+    - { name: implementation_summary, type: object }
+  agent: performance-engineer
+  idempotent: true

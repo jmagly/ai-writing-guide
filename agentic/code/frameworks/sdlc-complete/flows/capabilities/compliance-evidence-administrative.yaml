@@ -1,0 +1,14 @@
+# Conversion (#1539) capability for flow-compliance-validation Step 2 (panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: compliance-evidence-administrative
+  labels: { domain: compliance }
+spec:
+  description: Collect or document administrative control evidence (policies and procedures, training and awareness records, third-party/vendor management, risk management artifacts) into the evidence repository and update collection status.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: administrative_evidence, type: array }
+  agent: privacy-officer
+  idempotent: true

@@ -1,0 +1,16 @@
+# Conversion capability (#1539) — flow-change-control Step 4 (update baseline + docs).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: chg-update-baseline
+  labels: { domain: change-control }
+spec:
+  description: For an approved change, identify affected baselines (functional/product/project), update the affected artifacts with version bumps and change annotations, and record the baseline update log with version-control details.
+  version: "1.0.0"
+  inputs:
+    - { name: change_request_path, type: string, required: true }
+    - { name: ccb_decision_path, type: string, required: true }
+  outputs:
+    - { name: baseline_update_path, type: string }
+    - { name: new_version, type: string }
+  agent: configuration-manager

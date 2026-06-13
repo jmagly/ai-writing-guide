@@ -1,0 +1,205 @@
+# Conversion (#1539): the agentic `flow-deploy-to-production` skill expressed as a
+# declarative YAML Flow. This is the largest SDLC flow and uses the multi-agent
+# documentation pattern in two places — Step 2 (3 parallel validation agents →
+# readiness synthesis) and Step 4 (4 parallel monitoring agents → production
+# regression-gate synthesis). Both are encoded as `fanout` steps (agentic-step
+# extension, #1547 / adr-flow-agentic-steps.md). The SKILL.md remains the thin
+# wrapper / discoverable trigger surface; this playbook is the orchestration
+# source of truth for the step sequence, the regression gates, and the
+# strategy-specific deployment path.
+#
+# Schema-fit note (#1539): `inventory`/`targets` are omitted — this flow acts on
+# a single project/deployment context rather than iterating an inventory.
+#
+# Faithful to the prose flow's structure:
+#   Step 1 strategy selection         → strategy-selection      (deployment-manager)
+#   (strategy confirmation gate)      → strategy-confirmation    (kind: gate)
+#   Step 2 pre-deploy validation (×3) → predeploy-validation    (FANOUT panel + readiness synthesis)
+#   (GO / CONDITIONAL_GO / NO-GO)     → readiness-gate           (kind: gate)
+#   Step 2.5 deploy to staging        → staging-deploy           (devops-engineer)
+#   Step 2.5 staging regression check → staging-regression-check (regression-analyst)
+#   (staging regression decision)     → staging-regression-gate  (kind: gate)
+#   Step 3 execute deployment         → execute-deployment       (devops-engineer; strategy-specific)
+#   Step 3 smoke tests on candidate   → smoke-tests-candidate     (qa-engineer)
+#   Step 4 capture production baseline→ capture-baseline          (reliability-engineer)
+#   Step 4 monitoring panel (×4)      → production-monitoring     (FANOUT panel + regression-gate synthesis)
+#   (production regression decision)  → production-regression-gate (kind: gate)
+#   Step 5 rollback (conditional)     → rollback-execute          (devops-engineer; strategy-specific)
+#   Step 6 deployment report + archive→ deployment-report         (deployment-manager)
+#   Step 7 stakeholder notification   → stakeholder-notification  (support-lead)
+#   Step 7 runbook updates            → runbook-updates           (deployment-manager)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-deploy-to-production
+  labels:
+    category: sdlc-orchestration
+    domain: deployment
+spec:
+  vars:
+    regression_threshold: 0
+    rollback_on_regression: true
+    strategy: ""   # blue-green | canary | rolling (set by strategy-selection / guidance)
+  steps:
+    # Step 1: recommend a deployment strategy from project context + guidance.
+    - id: strategy-selection
+      capability: deploy-strategy-selection
+      inputs:
+        - { name: regression_threshold, from: "vars.regression_threshold" }
+      outputs:
+        - name: recommended_strategy
+
+    # Human gate: present the recommended strategy + trade-offs and confirm.
+    - id: strategy-confirmation
+      kind: gate
+      description: |
+        Human gate (confirm strategy): present the deployment-manager's strategy
+        recommendation — Blue-Green | Canary | Rolling — with rationale,
+        trade-offs (pros/cons), infrastructure requirements, expected duration,
+        and monitoring period. Proceed only on explicit "yes". A "no" returns to
+        strategy-selection to re-recommend.
+      depends_on: [strategy-selection]
+
+    # Step 2: pre-deployment validation. Three reviewers run in parallel
+    # (quality gates, environment health, rollback readiness); the
+    # deployment-manager synthesizes the Deployment Readiness Report.
+    - id: predeploy-validation
+      fanout:
+        strategy: parallel
+        agents:
+          - deploy-gate-validation       # project-manager
+          - deploy-env-health            # devops-engineer
+          - deploy-rollback-validation   # reliability-engineer
+        synthesize: deploy-readiness-synthesis   # deployment-manager
+      depends_on: [strategy-confirmation]
+      outputs:
+        - name: readiness_decision
+
+    # Human gate: GO | CONDITIONAL_GO | NO-GO on the synthesized readiness report.
+    - id: readiness-gate
+      kind: gate
+      description: |
+        Human gate (GO / CONDITIONAL_GO / NO-GO): review the Deployment Readiness
+        Report synthesized from the three validation reviewers. GO proceeds to
+        the staging regression gate; CONDITIONAL_GO surfaces the conditions that
+        must be addressed before proceeding; NO-GO stops the deployment and
+        reports the gaps + remediation.
+      depends_on: [predeploy-validation]
+
+    # Step 2.5a: deploy the new version to staging.
+    - id: staging-deploy
+      capability: deploy-staging-deploy
+      depends_on: [readiness-gate]
+      outputs:
+        - name: staging_status
+
+    # Step 2.5b: staging regression check (staging vs production baseline, full scope).
+    - id: staging-regression-check
+      capability: deploy-staging-regression-check
+      depends_on: [staging-deploy]
+      inputs:
+        - { name: threshold, from: "vars.regression_threshold" }
+        - { name: scope, value: full }
+      outputs:
+        - name: staging_regression_rate
+
+    # Staging regression decision gate. On FAIL, the regression-analyst impact
+    # assessment is surfaced here and the deployment is BLOCKED (hard stop).
+    - id: staging-regression-gate
+      kind: gate
+      description: |
+        Staging regression gate (hard stop): if staging regression_rate >
+        threshold, BLOCK promotion to production — surface the
+        regression-analyst impact assessment (categorized regressions, root
+        cause, severity, remediation) and STOP. If regression_rate <= threshold,
+        proceed to deployment execution.
+      depends_on: [staging-regression-check]
+
+    # Step 3a: execute the deployment using the confirmed strategy. The capability
+    # carries the Blue-Green (deploy green → cutover) / Canary (1-5% → 25% → 50%
+    # → 100% progressive) / Rolling (node-by-node) variants from the prose.
+    - id: execute-deployment
+      capability: deploy-execute-deployment
+      depends_on: [staging-regression-gate]
+      inputs:
+        - { name: strategy, from: "vars.strategy" }
+      outputs:
+        - name: deployment_status
+
+    # Step 3b: smoke tests on the candidate (green env / canary / rolled node)
+    # before/while cutting over real traffic.
+    - id: smoke-tests-candidate
+      capability: deploy-smoke-tests-candidate
+      depends_on: [execute-deployment]
+      outputs:
+        - name: smoke_status
+
+    # Step 4a: capture the pre-deployment production baseline for regression compare.
+    - id: capture-baseline
+      capability: deploy-capture-baseline
+      depends_on: [smoke-tests-candidate]
+      outputs:
+        - name: baseline_snapshot
+
+    # Step 4b: production monitoring panel. Four agents run in parallel (SLO
+    # monitoring, production smoke tests, infrastructure health, production
+    # regression check); the regression-analyst synthesizes the production
+    # regression-gate decision. Any BREACH / FAIL / UNHEALTHY routes to rollback.
+    - id: production-monitoring
+      fanout:
+        strategy: parallel
+        agents:
+          - deploy-slo-monitor          # reliability-engineer
+          - deploy-prod-smoke-tests     # qa-engineer
+          - deploy-infra-health         # devops-engineer
+          - deploy-prod-regression-check # regression-analyst
+        synthesize: deploy-regression-gate-synthesis   # regression-analyst
+      depends_on: [capture-baseline]
+      inputs:
+        - { name: threshold, from: "vars.regression_threshold" }
+      outputs:
+        - name: production_regression_decision
+
+    # Production regression decision gate. On FAIL with rollback_on_regression
+    # enabled, the rollback step runs; otherwise the human chooses
+    # rollback | accept | investigate.
+    - id: production-regression-gate
+      kind: gate
+      description: |
+        Production regression gate: if any monitoring agent reports BREACH /
+        FAIL / UNHEALTHY, or production regression_rate > threshold, then —
+        when --rollback-on-regression is enabled (default) — trigger the
+        automated rollback step. When disabled, the human decides: rollback |
+        accept risk | investigate. If all checks pass for the monitoring
+        duration, the deployment is successful and proceeds to reporting.
+      depends_on: [production-monitoring]
+
+    # Step 5: strategy-specific rollback (conditional). Executes only when the
+    # regression gate routes here; verifies rollback, re-checks regression, and
+    # declares the incident + RCA. Not a hard dependency on success of the gate —
+    # the executor invokes it on the failure branch.
+    - id: rollback-execute
+      capability: deploy-rollback-execute
+      depends_on: [production-regression-gate]
+      inputs:
+        - { name: strategy, from: "vars.strategy" }
+      outputs:
+        - name: rollback_status
+
+    # Step 6: synthesize the Deployment Summary Report from all artifacts and
+    # archive the working deployment directory + audit trail.
+    - id: deployment-report
+      capability: deploy-deployment-report
+      depends_on: [production-regression-gate]
+      outputs:
+        - name: report_path
+
+    # Step 7a: draft the stakeholder notification (support-lead). Human sends it.
+    - id: stakeholder-notification
+      capability: deploy-stakeholder-notification
+      depends_on: [deployment-report]
+
+    # Step 7b: capture lessons-learned runbook updates (deployment-manager).
+    - id: runbook-updates
+      capability: deploy-runbook-updates
+      depends_on: [deployment-report]

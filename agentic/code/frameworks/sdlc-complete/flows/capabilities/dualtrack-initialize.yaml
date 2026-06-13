@@ -1,0 +1,15 @@
+# #1539 conversion of flow-iteration-dual-track Step 1: Initialize Iteration.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-initialize
+  labels: { domain: iteration }
+spec:
+  description: Create the iteration workspace, read current state (prior plans, ready backlog, reports, velocity), and produce the dual-track iteration plan (Delivery N goals, Discovery N+1 goals, success criteria, schedule).
+  version: "1.0.0"
+  inputs:
+    - { name: iteration_number, type: string, required: true }
+  outputs:
+    - { name: iteration_plan, type: string }
+  agent: project-manager
+  idempotent: true

@@ -1,0 +1,16 @@
+# Capability (#1539) — Step 1.5: regression triage (7 prose sub-steps).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-regression-triage
+  labels: { domain: incident }
+spec:
+  description: Determine whether the incident is a regression — identify recent deployments, correlate symptoms, render a verdict, bisect to the introducing commit, assess rollback feasibility + blast radius, recommend an immediate action via the decision matrix, and record the entry in the regression register.
+  version: "1.0.0"
+  inputs:
+    - { name: incident_record, type: string, required: true }
+  outputs:
+    - { name: regression_verdict, type: string }
+    - { name: recommended_action, type: string }
+  agent: regression-analyst
+  idempotent: true

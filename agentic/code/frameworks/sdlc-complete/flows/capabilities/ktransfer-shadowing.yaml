@@ -1,0 +1,17 @@
+# Conversion (#1539) — flow-knowledge-transfer Step 3.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: ktransfer-shadowing
+  labels: { domain: knowledge-transfer }
+spec:
+  description: Run the shadowing phase — 4-8 sessions where the holder demonstrates tasks and the receiver observes — then synthesize learnings, confidence progression, and areas needing practice (.aiwg/knowledge/shadowing/).
+  version: "1.0.0"
+  inputs:
+    - { name: doc_package, type: string, required: true }
+    - { name: from_member, type: string, required: true }
+    - { name: to_member, type: string, required: true }
+  outputs:
+    - { name: shadowing_synthesis, type: string }
+  agent: knowledge-manager
+  idempotent: false

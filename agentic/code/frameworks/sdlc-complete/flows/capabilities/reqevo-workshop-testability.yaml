@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 1 workshop participant: Testability review.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-workshop-testability
+  labels: { domain: requirements }
+spec:
+  description: Provide the test perspective in the requirements refinement workshop — testability of each requirement, acceptance test approach, test data needs, and test environment impacts; ensure all requirements have clear acceptance criteria.
+  version: "1.0.0"
+  inputs:
+    - { name: iteration, type: string, required: false }
+  outputs:
+    - { name: testability_assessment, type: object }
+  agent: test-architect
+  idempotent: true

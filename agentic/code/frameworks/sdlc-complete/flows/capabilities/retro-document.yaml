@@ -1,0 +1,15 @@
+# #1539 capability — Step 4: document the retrospective summary and update the action tracker.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: retro-document
+  labels: { domain: retrospective }
+spec:
+  description: Generate the comprehensive retrospective report, update the master action-item tracker (new + prior actions, completion metrics), and archive the working files.
+  version: "1.0.0"
+  inputs:
+    - { name: action_items, type: string, required: false }
+  outputs:
+    - { name: report_path, type: string }
+  agent: scrum-master
+  idempotent: false

@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 4 of flow-security-review-cycle.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: secreview-controls-validation
+  labels: { domain: security }
+spec:
+  description: Validate implementation of security controls — authentication flows and session management, authorization at all access points, encryption in transit and at rest, input sanitization/output encoding, security logging completeness, and security headers. Outputs .aiwg/security/controls-validation-{date}.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: controls_report, type: string }
+  agent: security-architect
+  idempotent: true

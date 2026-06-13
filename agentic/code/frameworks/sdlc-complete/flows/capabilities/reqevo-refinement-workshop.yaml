@@ -1,0 +1,17 @@
+# Conversion (#1539) — Step 1 synthesize: facilitate the refinement workshop and
+# synthesize participant input into the refinement summary.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-refinement-workshop
+  labels: { domain: requirements }
+spec:
+  description: Facilitate the requirements refinement workshop (review previous iteration, refine next-iteration requirements, clarify open questions, update artifacts, review change requests) and synthesize participant perspectives into the refinement summary at .aiwg/requirements/refinement-summary-{date}.md.
+  version: "1.0.0"
+  inputs:
+    - { name: iteration, type: string, required: false }
+    - { name: participant_input, type: array, required: false }
+  outputs:
+    - { name: refinement_summary, type: string }
+  agent: requirements-analyst
+  idempotent: true

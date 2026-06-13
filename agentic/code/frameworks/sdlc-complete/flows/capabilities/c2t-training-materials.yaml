@@ -1,0 +1,14 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 4 (training pipeline).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-training-materials
+  labels: { domain: transition }
+spec:
+  description: Create and validate user training materials — role-based user guides, quick reference cards, video tutorials, online help, and FAQs — ensuring coverage of all user roles and accuracy against the deployed system.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: training_materials_status, type: object }
+  agent: training-lead
+  idempotent: true

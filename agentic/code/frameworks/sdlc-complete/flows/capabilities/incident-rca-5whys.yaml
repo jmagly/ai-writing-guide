@@ -1,0 +1,15 @@
+# Capability (#1539) — Step 5 panel: 5 Whys root cause analysis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-rca-5whys
+  labels: { domain: incident }
+spec:
+  description: Conduct a 5 Whys analysis over the Tier 1/2/3 diagnostics — drill from the problem statement to the root cause and propose a validation test to confirm it.
+  version: "1.0.0"
+  inputs:
+    - { name: diagnostic_consensus, type: string, required: true }
+  outputs:
+    - { name: five_whys, type: string }
+  agent: incident-responder
+  idempotent: true

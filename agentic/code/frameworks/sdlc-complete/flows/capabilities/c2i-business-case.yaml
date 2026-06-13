@@ -1,0 +1,19 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 7.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-business-case
+  labels: { domain: inception }
+spec:
+  description: Develop the business case (problem/need, ROM cost estimate ±50%, expected benefits/ROI, Elaboration funding request, success metrics), the option matrix (3+ alternatives compared on cost/time/risk/benefits), and explicit scope boundaries (in/out of scope, future, dependencies). Emits .aiwg/management/business-case.md, .aiwg/planning/option-matrix.md, .aiwg/planning/scope-boundaries.md.
+  version: "1.0.0"
+  inputs:
+    - { name: vision_document, type: string, required: true }
+    - { name: use_case_briefs, type: array, required: false }
+    - { name: risk_list, type: string, required: false }
+  outputs:
+    - { name: business_case, type: string }
+    - { name: option_matrix, type: string }
+    - { name: scope_boundaries, type: string }
+  agent: product-strategist
+  idempotent: true

@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 5 (quality-gate panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-gate-security
+  labels: { domain: delivery }
+spec:
+  description: Run the security gate — SAST scan, vulnerable-dependency check, secure-coding and authz review against no-Critical/no-High criteria; return PASS | FAIL | CONDITIONAL (flow Step 5 panel).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: security_status, type: string }
+  agent: security-gatekeeper
+  idempotent: true

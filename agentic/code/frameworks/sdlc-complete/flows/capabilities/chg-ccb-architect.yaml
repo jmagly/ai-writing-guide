@@ -1,0 +1,16 @@
+# Conversion capability (#1539) — flow-change-control Step 3 CCB panel (software architect).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: chg-ccb-architect
+  labels: { domain: change-control }
+spec:
+  description: CCB review from the architecture perspective — technical feasibility, architecture integrity, technical-debt implications, integration complexity; returns a vote (APPROVE | REJECT | DEFER | ABSTAIN) with rationale.
+  version: "1.0.0"
+  inputs:
+    - { name: change_request_path, type: string, required: true }
+    - { name: impact_assessment_path, type: string, required: true }
+  outputs:
+    - { name: ccb_review_path, type: string }
+  agent: architecture-designer
+  idempotent: true

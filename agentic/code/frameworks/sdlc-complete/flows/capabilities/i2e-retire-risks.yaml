@@ -1,0 +1,14 @@
+# Conversion (#1539) — flow-inception-to-elaboration Step 5.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: i2e-retire-risks
+  labels: { domain: phase-transition }
+spec:
+  description: Retire high-priority (P0/P1) architectural risks via POC, spike, or architecture analysis, then update the risk list with validation evidence and compute retirement metrics (ABM target ≥70% retired/mitigated, P0/P1 100%) (flow Step 5).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: risk_retirement, type: object }
+  agent: project-manager
+  idempotent: false

@@ -1,0 +1,14 @@
+# Conversion (#1539) capability for flow-compliance-validation Step 3 (fanout synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: compliance-remediation-matrix
+  labels: { domain: compliance }
+spec:
+  description: Synthesize the gap analysis and technical gap assessment into a prioritized remediation matrix (gap, severity, risk, effort, priority, owner, timeline) with remediation approach, success criteria, and dependencies per gap.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: remediation_matrix, type: object }
+  agent: project-manager
+  idempotent: true

@@ -1,0 +1,14 @@
+# #1539 capability — build the handoff package (approved) or conditional action plan.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: handoff-package
+  labels: { domain: handoff }
+spec:
+  description: For an APPROVED handoff, tag artifacts in version control and assemble the handoff package (artifacts, context-transfer doc, report, README) and schedule the handoff meeting; for a CONDITIONAL handoff, produce the action plan with conditions, owners, re-validation date, and escalation path.
+  version: "1.0.0"
+  inputs:
+    - { name: decision, type: string, required: false }
+  outputs:
+    - { name: package_path, type: string }
+  agent: documentation-archivist

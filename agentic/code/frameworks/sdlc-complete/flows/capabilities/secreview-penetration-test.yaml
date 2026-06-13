@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 2 fanout panel member of flow-security-review-cycle.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: secreview-penetration-test
+  labels: { domain: security }
+spec:
+  description: Conduct manual penetration testing — authentication bypass scenarios, authorization control validation, injection vulnerabilities, business-logic flaws, and privilege escalation. Outputs .aiwg/security/penetration-test-report-{date}.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: pentest_report, type: string }
+  agent: penetration-tester
+  idempotent: true

@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 4 panel: implement code optimizations.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-code-optimizations
+  labels: { domain: performance }
+spec:
+  description: Implement code optimizations from the plan — algorithm improvements and memoization, sync-to-async/parallel/background processing, and API request batching/compression/payload reduction — with performance tests and before/after metrics.
+  version: "1.0.0"
+  inputs:
+    - { name: optimization_plan, type: object, required: true }
+  outputs:
+    - { name: code_optimizations, type: object }
+  agent: software-implementer
+  idempotent: false

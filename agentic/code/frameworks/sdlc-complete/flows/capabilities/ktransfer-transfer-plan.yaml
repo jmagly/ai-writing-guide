@@ -1,0 +1,18 @@
+# Conversion (#1539) — flow-knowledge-transfer Step 1 panel member.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: ktransfer-transfer-plan
+  labels: { domain: knowledge-transfer }
+spec:
+  description: Build the structured transfer plan (documentation, shadowing, reverse-shadowing, validation, handover phases) with a timeline tailored to scope and guidance (.aiwg/knowledge/transfer-plan-{from}-to-{to}.md).
+  version: "1.0.0"
+  inputs:
+    - { name: from_member, type: string, required: true }
+    - { name: to_member, type: string, required: true }
+    - { name: domain, type: string, required: false, default: "all responsibilities" }
+    - { name: guidance, type: string, required: false }
+  outputs:
+    - { name: transfer_plan, type: string }
+  agent: training-coordinator
+  idempotent: true

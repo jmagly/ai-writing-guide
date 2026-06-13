@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 4 synthesize: record the CCB decision.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-ccb-decision
+  labels: { domain: requirements }
+spec:
+  description: Synthesize the CCB members' perspectives into the CCB Decision Record — for each CR reviewed, capture decision (APPROVED/DEFERRED/REJECTED), rationale, conditions, implementation plan, and action items. Output .aiwg/management/ccb-decision-record-{date}.md.
+  version: "1.0.0"
+  inputs:
+    - { name: ccb_assessments, type: array, required: false }
+  outputs:
+    - { name: ccb_decision_record, type: string }
+  agent: project-manager
+  idempotent: true

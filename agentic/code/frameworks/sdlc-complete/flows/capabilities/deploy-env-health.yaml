@@ -1,0 +1,18 @@
+# Conversion (#1539) — Step 2 reviewer: environment + artifact health (fanout panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-env-health
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Validate production environment readiness (node/pod/db/integration/monitoring
+    health, no active P0/P1) and deployment-artifact readiness (images tagged,
+    checksums, signatures, migrations) and emit a GO | NO-GO health report.
+    Writes .aiwg/working/deployment/environment-health-report.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: health_decision, type: string }
+  agent: devops-engineer
+  idempotent: true

@@ -1,0 +1,14 @@
+# #1539 conversion of flow-iteration-dual-track Step 6 (Complete iteration panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-complete-retrospective
+  labels: { domain: iteration }
+spec:
+  description: Facilitate the iteration N retrospective — what went well (Delivery, Discovery, synchronization), what could improve (process bottlenecks, communication gaps, quality issues), and action items with owners and timeline.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: retrospective, type: string }
+  agent: retrospective-analyzer
+  idempotent: true

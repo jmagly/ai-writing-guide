@@ -1,0 +1,14 @@
+# #1539 conversion — flow-cross-team-sync Step 3 reviewer (blocker tracking system).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: xteam-blocker-tracker
+  labels: { domain: team }
+spec:
+  description: Design the blocker tracking system — P0-P3 severity levels, SLAs per severity, tracking fields, status values, and an initial tracker with example entries.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: blocker_tracker, type: string }
+  agent: project-manager
+  idempotent: true

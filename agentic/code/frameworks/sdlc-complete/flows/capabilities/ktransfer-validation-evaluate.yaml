@@ -1,0 +1,16 @@
+# Conversion (#1539) — flow-knowledge-transfer Step 5b panel member.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: ktransfer-validation-evaluate
+  labels: { domain: knowledge-transfer }
+spec:
+  description: As the holder, evaluate the receiver's scenario performance on accuracy, approach, efficiency, independence, and documentation — rating EXCELLENT / PASS / CONDITIONAL / FAIL with specific feedback (.aiwg/knowledge/validation/evaluation-results.md).
+  version: "1.0.0"
+  inputs:
+    - { name: validation_scenarios, type: string, required: true }
+    - { name: from_member, type: string, required: true }
+  outputs:
+    - { name: evaluation_results, type: string }
+  agent: subject-matter-expert
+  idempotent: true

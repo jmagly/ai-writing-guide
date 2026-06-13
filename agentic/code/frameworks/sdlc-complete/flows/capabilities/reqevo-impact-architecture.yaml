@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 3 impact panel: architecture impact.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-impact-architecture
+  labels: { domain: requirements }
+spec:
+  description: Analyze architecture impact of a CCB-review change request — components modified, new components needed, interfaces changed (API, data contracts), ADRs requiring update, and technical risk assessment. Output .aiwg/working/impact-analysis/{CR-ID}-architecture.md.
+  version: "1.0.0"
+  inputs:
+    - { name: cr_id, type: string, required: true }
+  outputs:
+    - { name: architecture_impact, type: string }
+  agent: software-architect
+  idempotent: true

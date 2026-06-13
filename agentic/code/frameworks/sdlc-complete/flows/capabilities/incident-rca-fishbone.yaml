@@ -1,0 +1,15 @@
+# Capability (#1539) — Step 5 panel: contributing factors (Ishikawa/fishbone).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-rca-fishbone
+  labels: { domain: incident }
+spec:
+  description: Identify contributing factors via an Ishikawa (fishbone) diagram across People, Process, Technology, and Environment categories, complementing the 5 Whys primary root cause.
+  version: "1.0.0"
+  inputs:
+    - { name: diagnostic_consensus, type: string, required: true }
+  outputs:
+    - { name: contributing_factors, type: string }
+  agent: reliability-engineer
+  idempotent: true

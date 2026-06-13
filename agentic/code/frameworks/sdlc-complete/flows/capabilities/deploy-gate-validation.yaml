@@ -1,0 +1,17 @@
+# Conversion (#1539) — Step 2 reviewer: quality-gate validation (fanout panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-gate-validation
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Validate Transition-phase quality gates (security, reliability/SLO, test,
+    approval) and emit a GO | NO-GO gate-validation report with the checklist and
+    any gaps. Writes .aiwg/working/deployment/gate-validation-report.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: gate_decision, type: string }
+  agent: project-manager
+  idempotent: true

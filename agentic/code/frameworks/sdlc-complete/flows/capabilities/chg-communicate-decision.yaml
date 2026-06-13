@@ -1,0 +1,16 @@
+# Conversion capability (#1539) — flow-change-control Step 5 (communicate decision).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: chg-communicate-decision
+  labels: { domain: change-control }
+spec:
+  description: Identify the stakeholder groups for the change (direct/indirect/informational), draft audience-appropriate notifications of the decision, and track communication delivery in a communication log.
+  version: "1.0.0"
+  inputs:
+    - { name: change_request_path, type: string, required: true }
+    - { name: ccb_decision_path, type: string, required: true }
+    - { name: impact_assessment_path, type: string, required: false }
+  outputs:
+    - { name: communication_log_path, type: string }
+  agent: technical-writer

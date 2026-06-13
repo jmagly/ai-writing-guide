@@ -1,0 +1,16 @@
+# #1539 conversion — flow-cross-team-sync Step 3 synthesizer (resolution process).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: xteam-blocker-resolution
+  labels: { domain: team }
+spec:
+  description: Synthesize the blocker tracker and escalation matrix into the end-to-end blocker resolution process — identification, assignment, resolution (standups/status/workarounds), and closure (verification/retrospective/improvements), with example scenarios.
+  version: "1.0.0"
+  inputs:
+    - { name: blocker_tracker, type: string, required: true }
+    - { name: escalation_matrix, type: string, required: true }
+  outputs:
+    - { name: blocker_resolution_process, type: string }
+  agent: scrum-master
+  idempotent: true

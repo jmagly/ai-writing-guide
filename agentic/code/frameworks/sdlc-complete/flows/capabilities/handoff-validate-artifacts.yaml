@@ -1,0 +1,15 @@
+# #1539 capability — validate presence and completeness of required handoff artifacts.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: handoff-validate-artifacts
+  labels: { domain: handoff }
+spec:
+  description: Check the required artifacts for the identified handoff type (DoR, ORR, or phase-transition artifact sets) for existence, completeness, approval status, and currency; emit an artifact validation report.
+  version: "1.0.0"
+  inputs:
+    - { name: handoff_type, type: string, required: false }
+  outputs:
+    - { name: artifact_report, type: string }
+  agent: project-manager
+  idempotent: true

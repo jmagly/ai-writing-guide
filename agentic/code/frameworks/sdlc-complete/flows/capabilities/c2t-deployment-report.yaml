@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 3 (deployment synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-deployment-report
+  labels: { domain: transition }
+spec:
+  description: Synthesize the deployment strategy, pre-deployment checklist, execution log, and post-deployment validation into a Production Deployment Report covering timeline, validation results, issues/resolutions, and the deployment outcome (SUCCESS | PARTIAL SUCCESS | FAILED | ROLLED BACK).
+  version: "1.0.0"
+  inputs:
+    - { name: post_deployment_validation, type: object, required: false }
+  outputs:
+    - { name: deployment_outcome, type: string }
+  agent: deployment-manager
+  idempotent: true

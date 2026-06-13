@@ -1,0 +1,15 @@
+# #1539 conversion capability — flow-delivery-track Step 1.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-validate-readiness
+  labels: { domain: delivery }
+spec:
+  description: Validate iteration backlog readiness against Definition of Ready (acceptance criteria, designs, dependencies, estimates) and report READY | BLOCKED | PARTIAL (flow Step 1).
+  version: "1.0.0"
+  inputs:
+    - { name: iteration, type: string, required: true }
+  outputs:
+    - { name: readiness_status, type: string }
+  agent: project-manager
+  idempotent: true

@@ -1,0 +1,14 @@
+# Conversion (#1539) capability for flow-elaboration-to-construction Step 5.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: e2c-dual-track-setup
+  labels: { domain: phase-transition }
+spec:
+  description: Establish the parallel Discovery (N+1) and Delivery (N) tracks — configure the workflow, synchronization/DoR handoff, and shared resources; launch Discovery for Iteration 3 and confirm Delivery readiness for Iteration 1.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: dual_track_status, type: string }
+  agent: project-manager
+  idempotent: true

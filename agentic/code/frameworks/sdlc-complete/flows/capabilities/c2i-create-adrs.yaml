@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 6.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-create-adrs
+  labels: { domain: inception }
+spec:
+  description: Create 3+ Architecture Decision Records for critical early decisions (e.g. database selection, API architecture, authentication mechanism) — each with context, decision, consequences, and alternatives. Emits .aiwg/architecture/adr/ADR-*.md.
+  version: "1.0.0"
+  inputs:
+    - { name: architecture_sketch, type: string, required: true }
+  outputs:
+    - { name: adrs, type: array }
+  agent: architecture-designer
+  idempotent: true

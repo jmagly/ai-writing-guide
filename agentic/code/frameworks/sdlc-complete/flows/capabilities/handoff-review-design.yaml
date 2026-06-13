@@ -1,0 +1,14 @@
+# #1539 capability — checklist panel reviewer: design completeness (DoR).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: handoff-review-design
+  labels: { domain: handoff }
+spec:
+  description: Validate Definition-of-Ready design criteria (data contracts, interface specifications, integration points, backward compatibility) with PASS/FAIL status and evidence per item.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: validation, type: string }
+  agent: architecture-designer
+  idempotent: true

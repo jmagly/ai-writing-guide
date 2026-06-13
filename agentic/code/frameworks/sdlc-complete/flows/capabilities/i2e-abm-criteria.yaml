@@ -1,0 +1,14 @@
+# Conversion (#1539) — flow-inception-to-elaboration Step 7 criteria validation.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: i2e-abm-criteria
+  labels: { domain: phase-transition }
+spec:
+  description: Validate the Architecture Baseline Milestone (ABM) gate criteria — architecture documentation (SAD + ADRs), risk retirement (≥70%, P0/P1 100%), requirements baseline (≥10 use cases + NFRs + traceability), and test strategy — emitting PASS/CONDITIONAL PASS/FAIL (flow Step 7).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: abm_criteria_status, type: string }
+  agent: project-manager
+  idempotent: true

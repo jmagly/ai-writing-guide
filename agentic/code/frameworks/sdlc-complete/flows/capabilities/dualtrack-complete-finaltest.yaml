@@ -1,0 +1,14 @@
+# #1539 conversion of flow-iteration-dual-track Step 6 (Complete iteration panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-complete-finaltest
+  labels: { domain: iteration }
+spec:
+  description: Run final testing for iteration N — acceptance tests for completed stories, regression suite, integration tests, performance validation; document results, defects found/fixed, coverage metrics, and quality assessment.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: final_test_report, type: string }
+  agent: test-engineer
+  idempotent: true

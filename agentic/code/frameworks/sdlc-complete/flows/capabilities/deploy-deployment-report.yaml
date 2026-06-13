@@ -1,0 +1,22 @@
+# Conversion (#1539) — Step 6: synthesize the Deployment Summary Report + archive.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-deployment-report
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Read all deployment artifacts (readiness, staging/production regression
+    gates, execution logs, SLO monitoring, smoke tests, infra health) and
+    synthesize the Deployment Summary Report — overview, timeline, validation
+    results, regression-gate results, strategy-specific execution details, SLO
+    metrics, smoke-test results, infra health, issues/resolutions, lessons
+    learned, sign-offs. Then archive .aiwg/working/deployment/ to
+    .aiwg/archive/{date}/deployment-{version}/ with an audit trail.
+    Writes .aiwg/reports/deployment-report-{version}.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: report_path, type: string }
+  agent: deployment-manager
+  idempotent: true

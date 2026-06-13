@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 4 (test panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-test-e2e
+  labels: { domain: delivery }
+spec:
+  description: Run end-to-end acceptance tests over critical user journeys and cross-component interactions, validating user acceptance criteria (flow Step 4 test panel).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: e2e_results, type: object }
+  agent: test-engineer
+  idempotent: true

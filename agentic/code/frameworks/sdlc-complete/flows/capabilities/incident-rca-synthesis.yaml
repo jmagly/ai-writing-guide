@@ -1,0 +1,16 @@
+# Capability (#1539) — Step 5 synthesis: confirmed root cause.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-rca-synthesis
+  labels: { domain: incident }
+spec:
+  description: Synthesize the 5 Whys chain and the fishbone contributing factors into one confirmed primary root cause with its key contributing factors, written to the root-cause-analysis artifact.
+  version: "1.0.0"
+  inputs:
+    - { name: five_whys, type: string, required: true }
+    - { name: contributing_factors, type: string, required: true }
+  outputs:
+    - { name: root_cause, type: string }
+  agent: incident-responder
+  idempotent: true

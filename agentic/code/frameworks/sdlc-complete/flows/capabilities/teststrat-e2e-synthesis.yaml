@@ -1,0 +1,16 @@
+# Conversion (#1539) — flow-test-strategy-execution Step 4 synthesizer: combine E2E + UAT.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: teststrat-e2e-synthesis
+  labels: { domain: testing }
+spec:
+  description: Synthesize the E2E execution results and UAT validation into a combined end-to-end / acceptance result for downstream defect triage.
+  version: "1.0.0"
+  inputs:
+    - { name: e2e_test_results, type: object, required: false }
+    - { name: uat_validation, type: object, required: false }
+  outputs:
+    - { name: e2e_results, type: object }
+  agent: qa-engineer
+  idempotent: true

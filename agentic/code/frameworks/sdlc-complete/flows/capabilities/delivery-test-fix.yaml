@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 4 (synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-test-fix
+  labels: { domain: delivery }
+spec:
+  description: Triage and fix any test failures across the unit, integration, and e2e suites — root-cause each failure and re-run until all suites pass (flow Step 4 synthesis).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: fix_report, type: object }
+  agent: software-implementer
+  idempotent: false

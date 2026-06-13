@@ -1,0 +1,14 @@
+# #1539 capability — checklist panel reviewer: code completeness (ORR).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: handoff-review-code
+  labels: { domain: handoff }
+spec:
+  description: Validate operational-readiness code criteria (features implemented, peer-reviewed and merged, no compiler/linter errors, technical debt documented) against PR history, review comments, build logs, and static analysis.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: validation, type: string }
+  agent: software-implementer
+  idempotent: true

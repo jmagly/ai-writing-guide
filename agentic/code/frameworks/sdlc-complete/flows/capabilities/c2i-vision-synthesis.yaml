@@ -1,0 +1,16 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 1 (synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-vision-synthesis
+  labels: { domain: inception }
+spec:
+  description: Merge the vision draft, process context, and reviewer feedback into the baselined vision document, resolving conflicts and ensuring clarity. Emits .aiwg/requirements/vision-document.md.
+  version: "1.0.0"
+  inputs:
+    - { name: vision_draft, type: string, required: true }
+    - { name: reviews, type: array, required: false }
+  outputs:
+    - { name: vision_document, type: string }
+  agent: requirements-documenter
+  idempotent: true

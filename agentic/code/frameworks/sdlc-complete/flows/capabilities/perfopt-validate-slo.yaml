@@ -1,0 +1,17 @@
+# Conversion (#1539) — Step 6a: validate SLO compliance.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-validate-slo
+  labels: { domain: performance }
+spec:
+  description: Validate SLO compliance by comparing measured latency/throughput/error-rate/availability against SLO targets, calculating error-budget impact, and identifying any remaining breaches with root cause and next steps; emit a PASS/PARTIAL/FAIL status.
+  version: "1.0.0"
+  inputs:
+    - { name: baseline_report, type: object, required: true }
+    - { name: load_test_results, type: object, required: true }
+    - { name: implementation_summary, type: object, required: true }
+  outputs:
+    - { name: slo_status, type: string }
+  agent: reliability-engineer
+  idempotent: true

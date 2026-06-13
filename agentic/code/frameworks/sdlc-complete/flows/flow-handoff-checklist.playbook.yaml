@@ -1,0 +1,86 @@
+# #1539 conversion of flow-handoff-checklist: the agentic SKILL.md expressed as a
+# declarative YAML Flow. This flow validates SDLC handoffs (phase transitions and
+# track handoffs) by checking artifacts, running a multi-agent checklist panel,
+# tracking signoffs, rendering a decision, and (on approval) building the handoff
+# package. The SKILL.md remains the thin wrapper / discoverable trigger surface;
+# this playbook is the orchestration source of truth.
+#
+# Schema-fit note (#1539): SDLC flows act on a single project context rather than
+# iterating a host set, so `inventory`/`targets` are omitted.
+#
+# Faithful to the prose flow's structure:
+#   Step 1 identify/load checklist        → load-checklist        (project-manager)
+#   Step 2 validate required artifacts     → validate-artifacts    (project-manager)
+#   Step 3 checklist validation (parallel) → checklist-validation  (FANOUT panel + synthesis)
+#   Step 5 synthesize handoff report       → fanout.synthesize     (documentation-synthesizer)
+#   Step 4 obtain signoffs                 → obtain-signoffs       (project-manager)
+#   (human handoff-decision gate)          → handoff-decision-gate
+#   Step 6 execute handoff package         → handoff-package       (documentation-archivist)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-handoff-checklist
+  labels:
+    category: sdlc-orchestration
+    domain: handoff
+spec:
+  vars:
+    from_phase: ""
+    to_phase: ""
+  steps:
+    - id: load-checklist
+      capability: handoff-load-checklist
+      inputs:
+        - { name: from_phase, from: "vars.from_phase" }
+        - { name: to_phase, from: "vars.to_phase" }
+      outputs:
+        - name: handoff_type
+
+    - id: validate-artifacts
+      capability: handoff-validate-artifacts
+      depends_on: [load-checklist]
+      outputs:
+        - name: artifact_report
+
+    # Step 3+5: the checklist validation panel. The specialized validators run in
+    # parallel (the prose launches them as parallel Task calls; the panel varies by
+    # handoff type — requirements/design/risk for DoR, code/test/quality-gates/
+    # operations for ORR). The documentation-synthesizer then merges every
+    # validation result into the handoff report. depends_on consumers (signoffs,
+    # gate, package) see the synthesized report.
+    - id: checklist-validation
+      fanout:
+        strategy: parallel
+        agents:
+          - handoff-review-requirements   # requirements-analyst
+          - handoff-review-design         # architecture-designer
+          - handoff-review-risk           # project-manager
+          - handoff-review-code           # software-implementer
+          - handoff-review-test           # test-engineer
+          - handoff-review-gates          # security-gatekeeper
+          - handoff-review-operations     # operations-manager
+        synthesize: handoff-report   # documentation-synthesizer
+      depends_on: [validate-artifacts]
+      outputs:
+        - name: handoff_report
+
+    - id: obtain-signoffs
+      capability: handoff-obtain-signoffs
+      depends_on: [checklist-validation]
+      outputs:
+        - name: signoff_status
+
+    - id: handoff-decision-gate
+      kind: gate
+      description: |
+        Human handoff decision: present the synthesized handoff report
+        (artifact validation, checklist compliance %, signoff status) and render
+        the decision — APPROVED, CONDITIONAL, or REJECTED. APPROVED proceeds to
+        package creation; CONDITIONAL records conditions and a re-validation date;
+        REJECTED lists blockers and stops. The multi-agent validation findings and
+        signoff tracking are surfaced at this pause point.
+      depends_on: [obtain-signoffs]
+
+    - id: handoff-package
+      capability: handoff-package
+      depends_on: [handoff-decision-gate]

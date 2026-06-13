@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 1 fanout panel member: security/compliance risks.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: risk-security-identify
+  labels: { domain: risk }
+spec:
+  description: Identify security and compliance risks (compliance unclear, vulnerability exposure, complex auth, data breach potential, audit-logging gaps) with probability/impact estimates and suggested mitigations.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: security_risks_draft, type: string }
+  agent: security-architect
+  idempotent: true

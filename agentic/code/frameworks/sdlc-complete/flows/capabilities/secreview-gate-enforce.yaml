@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 5 of flow-security-review-cycle.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: secreview-gate-enforce
+  labels: { domain: security }
+spec:
+  description: Enforce security gate criteria — review vulnerability status from triage, validate controls implementation, check security-policy compliance, assess overall posture, and render a PASS/CONDITIONAL/FAIL decision with documented blockers. No Critical/High vulnerabilities and no hardcoded secrets are hard-stop criteria. Outputs .aiwg/gates/security-gate-{date}.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: gate_decision, type: string }
+  agent: security-gatekeeper
+  idempotent: true

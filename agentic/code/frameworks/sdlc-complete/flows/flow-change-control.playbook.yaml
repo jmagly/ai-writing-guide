@@ -1,0 +1,102 @@
+# Conversion (#1539): the agentic `flow-change-control` skill expressed as a
+# declarative YAML Flow. Two of its steps use the multi-agent documentation
+# pattern (Primary → Parallel Reviewers → Synthesizer): Step 2 dispatches FOUR
+# impact-assessment agents in parallel then synthesizes a comprehensive impact
+# assessment; Step 3 dispatches the CCB reviewer panel in parallel then
+# synthesizes the CCB decision record. Both are encoded as `fanout` steps
+# (agentic-step extension, #1547). The SKILL.md remains the thin wrapper /
+# source of discoverable triggers; this playbook is the orchestration source of
+# truth for the step sequence + the CCB approval gate.
+#
+# Schema-fit note (#1539): SDLC flows act on a single project context rather
+# than iterating a host set, so this Flow omits `inventory`/`targets`.
+#
+# Faithful to the prose flow's structure:
+#   Step 1 document change request    → document-request   (chg-document-request, requirements-analyst)
+#   Step 2 impact assessment (×4)     → impact-assessment  (FANOUT panel + synthesis)
+#   Step 3 CCB review (×3+)           → ccb-review         (FANOUT panel + synthesis = decision record)
+#   (human CCB approval gate)         → ccb-approval-gate
+#   Step 4 update baseline + docs     → update-baseline    (chg-update-baseline, configuration-manager)
+#   Step 5 communicate decision       → communicate-decision (chg-communicate-decision, technical-writer)
+#   Step 6 track implementation       → track-implementation (chg-track-implementation, project-manager)
+#   Step 7 change control report      → control-report     (chg-control-report, change-analyst)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-change-control
+  labels:
+    category: sdlc-orchestration
+    domain: change-control
+spec:
+  vars:
+    change_type: ""
+    change_id: ""
+  steps:
+    - id: document-request
+      capability: chg-document-request
+      inputs:
+        - { name: change_type, from: "vars.change_type" }
+        - { name: change_id, from: "vars.change_id" }
+      outputs:
+        - name: change_request_path
+
+    # Step 2: impact assessment panel. Four impact analyses run in parallel
+    # (scope, schedule/cost, technical/quality, risk); the change-analyst
+    # synthesizes them into one comprehensive impact assessment.
+    - id: impact-assessment
+      fanout:
+        strategy: parallel
+        agents:
+          - chg-impact-scope          # requirements-analyst
+          - chg-impact-schedule-cost  # project-manager
+          - chg-impact-technical      # architecture-designer
+          - chg-impact-risk           # risk-manager
+        synthesize: chg-impact-synthesis   # change-analyst
+      depends_on: [document-request]
+      outputs:
+        - name: impact_assessment_path
+
+    # Step 3: CCB review panel. Core CCB members review in parallel
+    # (executive sponsor, product owner, architect; extended reviewers added
+    # conditionally per guidance/impact); the ccb-coordinator tallies the votes
+    # and synthesizes the CCB decision record.
+    - id: ccb-review
+      fanout:
+        strategy: parallel
+        agents:
+          - chg-ccb-executive   # executive-sponsor
+          - chg-ccb-product     # product-owner
+          - chg-ccb-architect   # architecture-designer
+        synthesize: chg-ccb-decision   # ccb-coordinator
+      depends_on: [impact-assessment]
+      outputs:
+        - name: ccb_decision_path
+
+    - id: ccb-approval-gate
+      kind: gate
+      description: |
+        Human gate: surface the synthesized CCB decision record (vote tally,
+        decision APPROVED | REJECTED | DEFERRED, rationale, and any conditions)
+        alongside the comprehensive impact assessment. Approve to proceed to
+        baseline update + communication, or return for re-scoping / more
+        information (DEFERRED) / closure with notification (REJECTED). If quorum
+        was not met, the gate is the pause point to reschedule the CCB.
+      depends_on: [ccb-review]
+
+    - id: update-baseline
+      capability: chg-update-baseline
+      depends_on: [ccb-approval-gate]
+      outputs:
+        - name: baseline_update_path
+
+    - id: communicate-decision
+      capability: chg-communicate-decision
+      depends_on: [update-baseline]
+
+    - id: track-implementation
+      capability: chg-track-implementation
+      depends_on: [update-baseline]
+
+    - id: control-report
+      capability: chg-control-report
+      depends_on: [communicate-decision, track-implementation]

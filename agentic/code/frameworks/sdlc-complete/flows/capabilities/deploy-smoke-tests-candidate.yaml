@@ -1,0 +1,19 @@
+# Conversion (#1539) — Step 3: smoke tests on the candidate before/while cutover.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-smoke-tests-candidate
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Execute critical-path smoke tests against the deployment candidate (green
+    env / canary / rolled node) — API health, auth flow, top 5-10 business
+    journeys, DB connectivity, external integrations, monitoring/logging. Emit
+    passed/total and PASS | FAIL. On FAIL, stop and do NOT cut over traffic.
+    Writes .aiwg/working/deployment/smoke-test-results-green.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: smoke_status, type: string }
+  agent: qa-engineer
+  idempotent: true

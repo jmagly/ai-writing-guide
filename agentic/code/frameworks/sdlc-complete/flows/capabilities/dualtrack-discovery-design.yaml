@@ -1,0 +1,14 @@
+# #1539 conversion of flow-iteration-dual-track Step 3 (Discovery start panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-discovery-design
+  labels: { domain: iteration }
+spec:
+  description: Identify design needs for iteration N+1 from the product backlog and stakeholder requests — UI/UX designs, workflow definitions, information architecture, interaction patterns; schedule design sessions.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: design_plan, type: string }
+  agent: product-designer
+  idempotent: true

@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 6b (doc panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-release-notes
+  labels: { domain: delivery }
+spec:
+  description: Generate user-facing release notes for the iteration — new features, improvements, bug fixes, and known issues in user-friendly language (flow Step 6 doc panel).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: release_notes_path, type: string }
+  agent: technical-writer
+  idempotent: false

@@ -1,0 +1,16 @@
+# #1539 capability — flow-team-onboarding Step 1 panel reviewer.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: onboard-preboard-access-requests
+  labels: { domain: team }
+spec:
+  description: Submit system-access requests, order equipment, and prepare the secure credentials document for the new team member; track status and escalate blockers.
+  version: "1.0.0"
+  inputs:
+    - { name: member_name, type: string, required: true }
+    - { name: role, type: string, required: false }
+  outputs:
+    - { name: access_requests_path, type: string }
+  agent: operations-liaison
+  idempotent: false

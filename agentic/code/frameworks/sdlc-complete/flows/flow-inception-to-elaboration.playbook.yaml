@@ -1,0 +1,149 @@
+# Conversion (#1539): the agentic `flow-inception-to-elaboration` skill expressed
+# as a declarative YAML Flow. This Inception→Elaboration transition is a heavy,
+# multi-agent flow: it builds the architecture baseline (SAD) via the multi-agent
+# documentation pattern (Primary Author → Parallel Reviewers → Synthesizer),
+# plans the baseline with three parallel planning agents, baselines requirements
+# with parallel authoring, and ends at a formal Architecture Baseline Milestone
+# (ABM) GO/NO-GO human gate. Multi-agent panels are encoded as `fanout` steps
+# (#1547). The SKILL.md remains the thin wrapper / source of discoverable
+# triggers; this playbook is the orchestration source of truth for the step
+# sequence + gates. Per #1539, `inventory`/`targets` are omitted — SDLC flows act
+# on a single project context, not an iterated host set.
+#
+# Faithful to the prose flow (7 prose steps → 10 playbook steps):
+#   Step 1 validate LOM exit criteria      → lom-validation        (project-manager)
+#   Step 2 plan architecture baseline (×3)  → architecture-planning (FANOUT: arch-designer + requirements-analyst + system-analyst → documentation-synthesizer)
+#   Step 3.2 SAD primary draft              → sad-primary-draft     (architecture-designer)
+#   Step 3.3+3.4 SAD review (×4) + synthesis→ sad-review            (FANOUT: security/test/req/tech-writer reviewers → architecture-documenter)
+#   Step 4 create ADRs                      → create-adrs           (architecture-designer)
+#   Step 5 retire architectural risks       → retire-risks          (project-manager, coordinating poc/spike/analysis)
+#   Step 6 baseline requirements+tests (×3) → baseline-requirements (FANOUT: use-cases + NFRs + master-test-plan → documentation-synthesizer)
+#   Step 7 ABM criteria validation          → abm-criteria          (project-manager)
+#   Step 7 ABM report                       → abm-report            (project-manager)
+#   Step 7 ABM GO/NO-GO signoff             → abm-gate              (human gate, 6 signatures)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-inception-to-elaboration
+  labels:
+    category: sdlc-orchestration
+    domain: phase-transition
+spec:
+  vars:
+    guidance: ""
+  steps:
+    # Step 1: Validate Lifecycle Objective Milestone (LOM) exit criteria before
+    # starting Elaboration. A FAIL here blocks the flow (recommend
+    # flow-concept-to-inception).
+    - id: lom-validation
+      capability: i2e-lom-validation
+      inputs:
+        - { name: guidance, from: "vars.guidance" }
+      outputs:
+        - name: lom_status
+
+    # Step 2: Plan the architecture baseline. Three planning agents run in
+    # parallel (objectives, steel-thread use cases, risk-validation strategy),
+    # then documentation-synthesizer merges them into the Architecture Baseline
+    # Plan. depends_on consumers see the synthesized plan.
+    - id: architecture-planning
+      fanout:
+        strategy: parallel
+        agents:
+          - i2e-plan-arch-objectives    # architecture-designer
+          - i2e-plan-steel-threads      # requirements-analyst
+          - i2e-plan-risk-validation    # system-analyst
+        synthesize: i2e-plan-baseline   # documentation-synthesizer
+      depends_on: [lom-validation]
+      outputs:
+        - name: baseline_plan
+
+    # Step 3.2: Architecture Designer authors the SAD primary draft (v0.1).
+    - id: sad-primary-draft
+      capability: i2e-sad-draft
+      depends_on: [architecture-planning]
+      outputs:
+        - name: sad_draft
+
+    # Step 3.3 + 3.4: Multi-agent SAD review panel. Four reviewers run in
+    # parallel against the draft; architecture-documenter synthesizes their
+    # feedback into the BASELINED SAD. This is the multi-agent documentation
+    # pattern's Parallel Reviewers → Synthesizer stage.
+    - id: sad-review
+      fanout:
+        strategy: parallel
+        agents:
+          - i2e-review-security       # security-architect
+          - i2e-review-testability    # test-architect
+          - i2e-review-traceability   # requirements-analyst
+          - i2e-review-clarity        # technical-writer
+        synthesize: i2e-sad-synthesis # architecture-documenter
+      depends_on: [sad-primary-draft]
+      outputs:
+        - name: sad_baselined
+
+    # Step 4: Create Architecture Decision Records (3-5 major decisions extracted
+    # from the baselined SAD).
+    - id: create-adrs
+      capability: i2e-create-adrs
+      depends_on: [sad-review]
+      outputs:
+        - name: adr_paths
+
+    # Step 5: Retire architectural risks via POC / spike / architecture analysis,
+    # then update the risk list. project-manager coordinates and tallies the
+    # retirement metrics (ABM target ≥70%, P0/P1 100%).
+    - id: retire-risks
+      capability: i2e-retire-risks
+      depends_on: [create-adrs]
+      outputs:
+        - name: risk_retirement
+
+    # Step 6: Baseline requirements and test strategy. Three authoring agents run
+    # in parallel (use-case specs, supplemental spec / NFRs, master test plan),
+    # synthesized into the requirements baseline.
+    - id: baseline-requirements
+      fanout:
+        strategy: parallel
+        agents:
+          - i2e-author-use-cases      # requirements-analyst
+          - i2e-author-nfrs           # requirements-analyst
+          - i2e-author-test-plan      # test-architect
+        synthesize: i2e-requirements-baseline   # documentation-synthesizer
+      depends_on: [retire-risks]
+      outputs:
+        - name: requirements_baseline
+
+    # Step 7a: Validate ABM gate criteria (architecture docs, risk retirement,
+    # requirements baseline, test strategy).
+    - id: abm-criteria
+      capability: i2e-abm-criteria
+      depends_on: [baseline-requirements]
+      outputs:
+        - name: abm_criteria_status
+
+    # Step 7b: Generate the Architecture Baseline Milestone report (overall
+    # status + GO/CONDITIONAL GO/NO-GO recommendation + signoff checklist).
+    - id: abm-report
+      capability: i2e-abm-report
+      depends_on: [abm-criteria]
+      outputs:
+        - name: abm_report
+
+    # Step 7c: Formal ABM GO/NO-GO human gate. The orchestrator presents the ABM
+    # report and the full Elaboration artifact set; the human renders the
+    # transition decision and collects the six required signoffs (Executive
+    # Sponsor, Software Architect, Security Architect, Test Architect, Product
+    # Owner, Peer Reviewer). A NO-GO returns to extend Elaboration.
+    - id: abm-gate
+      kind: gate
+      description: |
+        Human gate (approval): present the ABM report and the baselined
+        Elaboration artifacts (SAD, ADRs, risk retirement metrics, requirements
+        baseline, Master Test Plan). The human renders the milestone decision —
+        GO / CONDITIONAL GO / NO-GO / PIVOT — and collects the six required
+        signoffs (Executive Sponsor, Software Architect, Security Architect,
+        Test Architect, Product Owner, Peer Reviewer). GO advances to
+        Construction (flow-elaboration-to-construction); NO-GO returns to extend
+        Elaboration.
+      depends_on: [abm-report]

@@ -1,0 +1,14 @@
+# Conversion (#1539) capability for flow-compliance-validation Step 2 (fanout synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: compliance-validate-evidence
+  labels: { domain: compliance }
+spec:
+  description: Validate collected evidence for completeness, currency, authenticity, relevance, and sufficiency, then produce an evidence-quality report flagging incomplete, outdated, or missing items as critical gaps.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: evidence_quality_report, type: object }
+  agent: compliance-auditor
+  idempotent: true

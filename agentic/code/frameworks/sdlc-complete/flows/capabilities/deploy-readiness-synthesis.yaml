@@ -1,0 +1,22 @@
+# Conversion (#1539) — Step 2 synthesis: Deployment Readiness Report.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-readiness-synthesis
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Synthesize the three pre-deployment validation reports (gate, environment,
+    rollback) into a Deployment Readiness Report with an overall GO |
+    CONDITIONAL_GO | NO-GO decision, pre-flight checklist, rationale, and (for
+    CONDITIONAL_GO) the conditions to address.
+    Writes .aiwg/deployment/deployment-readiness-report.md.
+  version: "1.0.0"
+  inputs:
+    - { name: gate_decision, type: string, required: false }
+    - { name: health_decision, type: string, required: false }
+    - { name: rollback_readiness, type: string, required: false }
+  outputs:
+    - { name: readiness_decision, type: string }
+  agent: deployment-manager
+  idempotent: true

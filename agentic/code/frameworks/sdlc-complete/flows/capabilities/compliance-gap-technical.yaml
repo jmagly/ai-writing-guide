@@ -1,0 +1,14 @@
+# Conversion (#1539) capability for flow-compliance-validation Step 3 (panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: compliance-gap-technical
+  labels: { domain: compliance }
+spec:
+  description: Assess the security impact and remediation effort of each technical gap, recommend a remediation approach or compensating controls, and prioritize gaps on a risk-by-effort matrix.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: technical_gap_assessment, type: object }
+  agent: security-architect
+  idempotent: true

@@ -1,0 +1,19 @@
+# Conversion (#1539) — Step 4 monitor: production smoke tests (fanout panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-prod-smoke-tests
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Run critical-path smoke tests against production (real traffic) post-
+    deployment — API health, auth/authz, top 5-10 business operations, DB
+    read/write, external integrations, monitoring/logging. Emit passed/total and
+    PASS | FAIL; FAIL signals the orchestrator to trigger rollback.
+    Writes .aiwg/working/deployment/smoke-test-results-production.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: smoke_status, type: string }
+  agent: qa-engineer
+  idempotent: true

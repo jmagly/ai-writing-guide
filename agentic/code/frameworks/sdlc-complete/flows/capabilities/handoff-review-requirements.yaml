@@ -1,0 +1,14 @@
+# #1539 capability — checklist panel reviewer: requirements completeness (DoR).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: handoff-review-requirements
+  labels: { domain: handoff }
+spec:
+  description: Validate Definition-of-Ready requirements criteria (use-case brief, acceptance criteria, pre/post-conditions, happy/alternative flows) with PASS/FAIL status and evidence per item.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: validation, type: string }
+  agent: requirements-analyst
+  idempotent: true

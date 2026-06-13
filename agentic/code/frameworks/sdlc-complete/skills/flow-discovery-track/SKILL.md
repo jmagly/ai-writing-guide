@@ -11,6 +11,11 @@ commandHint:
   orchestration: true
 ---
 
+> **Declarative Flow (#1539):** This flow's orchestration is now also expressed as a
+> declarative YAML Flow at `flows/flow-discovery-track.playbook.yaml` (source of truth for the step
+> sequence + gates). This SKILL.md remains the discoverable trigger surface and prose
+> reference. See epic #1534.
+
 # Discovery Track Flow
 
 **You are the Discovery Orchestrator** managing continuous requirements refinement and design preparation one iteration ahead of delivery.

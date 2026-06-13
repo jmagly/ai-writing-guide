@@ -1,0 +1,21 @@
+# #1539 capability — prose Step 2.4: operational readiness reviewer.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: gatechk-review-operations
+  labels: { domain: quality-gate }
+spec:
+  description: >-
+    Validate operational readiness for the Product Release gate — infrastructure
+    provisioned, monitoring/alerting/logging configured, backup/recovery and
+    rollback procedures tested, runbooks complete. Also drives the deployment-plan
+    12-factor review. Report READY | GAPS | BLOCKED (flow-gate-check Step 2.4 PR
+    operations review).
+  version: "1.0.0"
+  inputs:
+    - { name: gate_type, type: string, required: true }
+  outputs:
+    - { name: review, type: string }
+    - { name: readiness, type: string }
+  agent: devops-engineer
+  idempotent: true

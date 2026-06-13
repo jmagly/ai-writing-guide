@@ -1,0 +1,14 @@
+# #1539 conversion of flow-iteration-dual-track Step 3 (Discovery start panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-discovery-architecture
+  labels: { domain: iteration }
+spec:
+  description: Identify architectural work for iteration N+1 from upcoming features and the technical backlog — design decisions required, technical spikes needed, POCs to validate, and integration planning.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: architecture_plan, type: string }
+  agent: architecture-designer
+  idempotent: true

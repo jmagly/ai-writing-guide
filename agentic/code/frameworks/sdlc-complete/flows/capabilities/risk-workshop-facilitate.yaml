@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 1 fanout panel member: workshop facilitation.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: risk-workshop-facilitate
+  labels: { domain: risk }
+spec:
+  description: Facilitate the 90-minute risk identification workshop — review prior risks, identify new risks across categories, prioritize via probability×impact, plan mitigations, assign ownership; write workshop notes.
+  version: "1.0.0"
+  inputs:
+    - { name: iteration, type: string, required: false }
+  outputs:
+    - { name: workshop_draft, type: string }
+  agent: project-manager
+  idempotent: true

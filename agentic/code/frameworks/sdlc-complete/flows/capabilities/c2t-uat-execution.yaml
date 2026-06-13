@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 4 (training pipeline).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-uat-execution
+  labels: { domain: transition }
+spec:
+  description: Coordinate User Acceptance Testing — identify key users per role, define 10+ critical-workflow scenarios, track scenario execution, capture feedback, and document issues; calculate UAT metrics (pass rate target ≥90%, user satisfaction target ≥4/5, critical issues).
+  version: "1.0.0"
+  inputs:
+    - { name: training_delivery_status, type: object, required: false }
+  outputs:
+    - { name: uat_results, type: object }
+  agent: requirements-analyst
+  idempotent: true

@@ -1,0 +1,131 @@
+# Conversion (#1539): the agentic `flow-incident-response` skill expressed as a
+# declarative YAML Flow. At ~1932 lines this is the largest SDLC flow; it pairs a
+# sequential incident pipeline with three multi-agent panels (Impact×Urgency
+# triage, the Tier 1→2→3 functional escalation, and the RCA panel), each encoded
+# as a `fanout` step (agentic-step extension, #1547). A human approval gate
+# precedes mitigation execution (the Deployment Manager sign-off in the prose).
+# The SKILL.md remains the discoverable trigger surface; this playbook is the
+# orchestration source of truth for the step sequence + gates.
+#
+# Faithful to the prose flow's structure:
+#   Step 1   detection & initial logging   → incident-detect-log         (incident-responder)
+#   Step 1.5 regression triage (7 sub-steps)→ incident-regression-triage  (regression-analyst, reliability-engineer)
+#   Step 2   triage & severity (Impact×Urgency, ×2 + synth) → triage-panel  (FANOUT parallel + synthesis)
+#   Step 3   functional escalation (Tier 1→2→3) → escalation-tiers         (FANOUT pipeline + synthesis)
+#   Step 4   hierarchical escalation (mgmt/exec/status) → incident-hierarchical-escalation (project-manager)
+#   Step 5   root cause analysis (5 Whys + fishbone + synth) → rca-panel    (FANOUT parallel + synthesis)
+#   (human approval gate before mitigation) → mitigation-approval-gate
+#   Step 6   mitigation & resolution        → incident-mitigation          (incident-responder / devops-engineer / reliability-engineer)
+#   Step 7   post-incident review           → incident-pir                 (incident-responder / project-manager / regression-analyst)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-incident-response
+  labels:
+    category: sdlc-orchestration
+    domain: incident
+spec:
+  vars:
+    incident_id: ""
+    severity: ""
+  steps:
+    # Step 1: capture incident details immediately to enable rapid response.
+    - id: detection-logging
+      capability: incident-detect-log
+      inputs:
+        - { name: incident_id, from: "vars.incident_id" }
+        - { name: severity, from: "vars.severity" }
+      outputs:
+        - name: incident_record
+
+    # Step 1.5: determine if the incident is a regression from recent changes
+    # (7 prose sub-steps: identify deployments → correlate symptoms → verdict →
+    # bisect → rollback feasibility → blast radius → immediate-action recommendation
+    # → regression-register entry). Sequential, same regression-analyst lead with a
+    # reliability-engineer rollback assessment folded in.
+    - id: regression-triage
+      capability: incident-regression-triage
+      depends_on: [detection-logging]
+      outputs:
+        - name: regression_verdict
+        - name: recommended_action
+
+    # Step 2: rapid Impact × Urgency assessment. Two reviewers run in parallel
+    # (impact / urgency); incident-responder synthesizes the P0–P3 priority,
+    # SLA, escalation path, and Incident Commander assignment.
+    - id: triage-panel
+      fanout:
+        strategy: parallel
+        agents:
+          - incident-impact-assess     # incident-responder
+          - incident-urgency-assess    # reliability-engineer
+        synthesize: incident-priority-classify   # incident-responder
+      depends_on: [regression-triage]
+      outputs:
+        - name: priority
+
+    # Step 3: functional escalation. The Tier 1→2→3 handoff is a PIPELINE — each
+    # tier reads the prior tier's diagnostics before adding its own. The
+    # incident-responder synthesizes the consolidated diagnostic picture.
+    - id: escalation-tiers
+      fanout:
+        strategy: pipeline
+        agents:
+          - incident-tier1-response    # reliability-engineer
+          - incident-tier2-response    # component-owner
+          - incident-tier3-response    # architecture-designer
+        synthesize: incident-escalation-synthesis   # incident-responder
+      depends_on: [triage-panel]
+      outputs:
+        - name: diagnostic_consensus
+
+    # Step 4: hierarchical escalation — management notification, executive
+    # escalation, and status-page communication per the severity matrix.
+    - id: hierarchical-escalation
+      capability: incident-hierarchical-escalation
+      depends_on: [escalation-tiers]
+
+    # Step 5: root cause analysis. 5 Whys and contributing-factors (fishbone) run
+    # in parallel; incident-responder synthesizes the confirmed root cause.
+    - id: rca-panel
+      fanout:
+        strategy: parallel
+        agents:
+          - incident-rca-5whys         # incident-responder
+          - incident-rca-fishbone      # reliability-engineer
+        synthesize: incident-rca-synthesis   # incident-responder
+      depends_on: [hierarchical-escalation]
+      outputs:
+        - name: root_cause
+
+    # Human gate: in the prose, Deployment Manager approval is required before a
+    # production mitigation (hotfix/rollback) is executed. The synthesized root
+    # cause + selected mitigation strategy + rollback plan are surfaced here.
+    - id: mitigation-approval-gate
+      kind: gate
+      description: |
+        Human gate (Deployment Manager approval): present the confirmed root
+        cause, the selected mitigation strategy (rollback / hotfix / config
+        change / workaround / scaling), and the rollback plan. Approve to execute
+        the production change, or return to revise the strategy. Required before
+        any production mitigation per the prose flow's "Get Deployment Manager
+        approval before production deploy."
+      depends_on: [rca-panel]
+
+    # Step 6: mitigation & resolution — select strategy, execute (rollback /
+    # hotfix / config change), validate against baseline metrics, and send the
+    # user/internal resolution communication.
+    - id: mitigation
+      capability: incident-mitigation
+      depends_on: [mitigation-approval-gate]
+      outputs:
+        - name: resolution_status
+
+    # Step 7: blameless post-incident review — schedule PIR, generate the PIR
+    # document, track preventive actions, update runbooks/KB, and (if a
+    # regression) conduct the deep regression dive.
+    - id: post-incident-review
+      capability: incident-pir
+      depends_on: [mitigation]
+      outputs:
+        - name: pir_path

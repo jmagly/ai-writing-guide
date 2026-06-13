@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 3 (deployment pipeline).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-post-deployment-validation
+  labels: { domain: transition }
+spec:
+  description: Validate post-deployment health — smoke tests on critical paths, green monitoring dashboards, normal error rates (<0.1%), acceptable performance metrics, user login, and key features; decide SUCCESS | ISSUES DETECTED | ROLLBACK.
+  version: "1.0.0"
+  inputs:
+    - { name: deployment_execution_log, type: object, required: false }
+  outputs:
+    - { name: post_deployment_validation, type: object }
+  agent: reliability-engineer
+  idempotent: true

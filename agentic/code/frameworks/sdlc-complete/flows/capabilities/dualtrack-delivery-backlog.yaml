@@ -1,0 +1,14 @@
+# #1539 conversion of flow-iteration-dual-track Step 2 (Delivery kickoff panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-delivery-backlog
+  labels: { domain: iteration }
+spec:
+  description: Validate the ready backlog for Delivery (iteration N) — verify acceptance criteria, test cases, dependencies, and estimates; flag items not meeting Definition of Ready.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: backlog_validation, type: string }
+  agent: requirements-analyst
+  idempotent: true

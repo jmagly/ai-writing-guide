@@ -1,0 +1,16 @@
+# Capability (#1539) — Step 2 synthesis: priority classification from Impact × Urgency.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-priority-classify
+  labels: { domain: incident }
+spec:
+  description: Synthesize the impact and urgency findings into a P0–P3 priority via the Impact × Urgency matrix, set the response SLA and escalation path, assign the Incident Commander/Technical/Communications leads (P0/P1), and update the incident record + timeline.
+  version: "1.0.0"
+  inputs:
+    - { name: impact_level, type: string, required: true }
+    - { name: urgency_level, type: string, required: true }
+  outputs:
+    - { name: priority, type: string }
+  agent: incident-responder
+  idempotent: true

@@ -1,0 +1,14 @@
+# Conversion (#1539) — flow-inception-to-elaboration Step 3.3 review panel.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: i2e-review-clarity
+  labels: { domain: architecture }
+spec:
+  description: Review the SAD draft for documentation quality — clarity, terminology/formatting consistency, grammar, diagram references, section completeness (no TODOs) — and return APPROVED/CONDITIONAL/NEEDS_WORK findings (flow Step 3.3 panel reviewer).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: findings, type: array }
+  agent: technical-writer
+  idempotent: false

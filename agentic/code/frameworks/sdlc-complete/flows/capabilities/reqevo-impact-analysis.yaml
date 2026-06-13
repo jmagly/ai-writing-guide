@@ -1,0 +1,16 @@
+# Conversion (#1539) — Step 3 synthesize: comprehensive Change Impact Analysis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-impact-analysis
+  labels: { domain: requirements }
+spec:
+  description: Synthesize the four impact analyses (requirements, architecture, testing, schedule/cost) into a comprehensive Change Impact Analysis Report — change summary, impact analysis, options analysis (approve/defer/reject/partial), recommendation with rationale, and approvals required. Output .aiwg/requirements/impact-analysis-{CR-ID}.md.
+  version: "1.0.0"
+  inputs:
+    - { name: cr_id, type: string, required: true }
+    - { name: impact_inputs, type: array, required: false }
+  outputs:
+    - { name: impact_report, type: string }
+  agent: system-analyst
+  idempotent: true

@@ -1,0 +1,15 @@
+# #1539 conversion of flow-hypercare-monitoring Step 1 (panel agent).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: hypercare-dashboard-config
+  labels: { domain: hypercare }
+spec:
+  description: Configure the production health dashboard from the SLO/SLI definitions — availability, performance, error, business, and infrastructure metric categories with P0/P1/P2/P3 alert thresholds (.aiwg/deployment/production-dashboard-config.md).
+  version: "1.0.0"
+  inputs:
+    - { name: guidance, type: string, required: false }
+  outputs:
+    - { name: dashboard_path, type: string }
+  agent: reliability-engineer
+  idempotent: true

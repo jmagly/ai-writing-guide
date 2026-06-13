@@ -1,0 +1,15 @@
+# #1539 capability — flow-team-onboarding Step 5a.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: onboard-checkin-30
+  labels: { domain: team }
+spec:
+  description: Conduct the 30-day milestone review — goal review, feedback discussion, performance assessment, plan adjustments, and next-30-day expectations (Step 5a).
+  version: "1.0.0"
+  inputs:
+    - { name: member_name, type: string, required: true }
+  outputs:
+    - { name: checkin_30_path, type: string }
+  agent: project-manager
+  idempotent: false

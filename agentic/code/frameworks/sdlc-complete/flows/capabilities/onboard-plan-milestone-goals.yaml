@@ -1,0 +1,16 @@
+# #1539 capability — flow-team-onboarding Step 2 panel planner.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: onboard-plan-milestone-goals
+  labels: { domain: team }
+spec:
+  description: Define specific, measurable 30/60/90-day milestone goals appropriate to the role (Step 2 planning panel).
+  version: "1.0.0"
+  inputs:
+    - { name: member_name, type: string, required: false }
+    - { name: role, type: string, required: false }
+  outputs:
+    - { name: milestone_goals_path, type: string }
+  agent: team-lead
+  idempotent: false

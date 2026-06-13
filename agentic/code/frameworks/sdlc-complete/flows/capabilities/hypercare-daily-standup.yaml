@@ -1,0 +1,14 @@
+# #1539 conversion of flow-hypercare-monitoring Step 3.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: hypercare-daily-standup
+  labels: { domain: hypercare }
+spec:
+  description: Generate the daily hypercare standup report (production health, incident summary, user feedback, SLO/SLI status, action items) and a weekly summary when the hypercare period exceeds 7 days (.aiwg/deployment/hypercare-standup-*.md, .aiwg/reports/hypercare-week-*-summary.md).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: standup_path, type: string }
+  agent: operations-manager
+  idempotent: true

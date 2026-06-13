@@ -5,6 +5,11 @@ platforms: [all]
 description: Orchestrate autonomous issue-to-code implementation using existing tools and agents with bounded iteration
 ---
 
+> **Declarative Flow (#1539):** This flow's orchestration is now also expressed as a
+> declarative YAML Flow at `flows/flow-guided-implementation.playbook.yaml` (source of truth for the step
+> sequence + gates). This SKILL.md remains the discoverable trigger surface and prose
+> reference. See epic #1534.
+
 # /flow-guided-implementation
 
 Orchestrate autonomous issue-to-code implementation using existing tools and agents with bounded iteration.

@@ -1,0 +1,16 @@
+# Conversion (#1539) capability for flow-compliance-validation Step 6.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: compliance-report-attestation
+  labels: { domain: compliance }
+spec:
+  description: Generate the executive compliance report, prepare the formal attestation statement (compliant/substantially compliant/non-compliant with scope, exceptions, and compensating controls), and package the organized audit evidence for auditor review.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: compliance_report, type: object }
+    - { name: attestation, type: object }
+    - { name: audit_package, type: object }
+  agent: compliance-auditor
+  idempotent: false

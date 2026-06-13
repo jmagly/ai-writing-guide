@@ -1,0 +1,14 @@
+# #1539 capability — Step 1 panel: identify recurring patterns across previous retrospectives.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: retro-prep-patterns
+  labels: { domain: retrospective }
+spec:
+  description: Analyze previous retrospectives for recurring issues, chronic incomplete actions, and improvement trends; categorize them (process, technical, communication, tooling, team health).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: pattern_analysis, type: string }
+  agent: retrospective-analyzer
+  idempotent: true

@@ -1,0 +1,17 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 2.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-business-alignment
+  labels: { domain: inception }
+spec:
+  description: Define 3-5 use-case briefs from the vision, validate the business value proposition for each, and document stakeholder interview findings (concerns, success criteria, constraints).
+  version: "1.0.0"
+  inputs:
+    - { name: vision_document, type: string, required: true }
+  outputs:
+    - { name: use_case_briefs, type: array }
+    - { name: value_proposition, type: string }
+    - { name: stakeholder_interviews, type: string }
+  agent: requirements-analyst
+  idempotent: true

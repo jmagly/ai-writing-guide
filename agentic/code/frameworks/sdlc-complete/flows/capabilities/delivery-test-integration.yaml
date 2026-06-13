@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 4 (test panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-test-integration
+  labels: { domain: delivery }
+spec:
+  description: Run the integration test suite over API endpoints, service interactions, database operations, and external integrations; all must pass (flow Step 4 test panel).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: integration_results, type: object }
+  agent: test-engineer
+  idempotent: true

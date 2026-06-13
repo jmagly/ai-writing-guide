@@ -1,0 +1,14 @@
+# Conversion (#1539) capability for flow-compliance-validation Step 4.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: compliance-remediation
+  labels: { domain: compliance }
+spec:
+  description: Implement remediation for critical and high-priority gaps — author detailed remediation plans, apply quick fixes where possible, and document executive risk-acceptance for gaps that cannot be remediated before attestation.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: remediation_status, type: object }
+  agent: security-architect
+  idempotent: false

@@ -1,0 +1,15 @@
+# Conversion (#1539) capability for flow-compliance-validation Step 1 (panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: compliance-map-security
+  labels: { domain: compliance }
+spec:
+  description: Map security-oriented framework requirements (HIPAA safeguards, SOC2 Trust Services Criteria, PCI-DSS, ISO 27001 Annex A) to project controls, evidence requirements, and control owners.
+  version: "1.0.0"
+  inputs:
+    - { name: framework, type: string, required: true }
+  outputs:
+    - { name: requirements_matrix_security, type: object }
+  agent: security-architect
+  idempotent: true

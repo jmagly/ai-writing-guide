@@ -1,0 +1,16 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 5 (handover synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-handover
+  labels: { domain: transition }
+spec:
+  description: Coordinate the formal support and operations handover — run handover meetings, review known issues, confirm escalation procedures, and obtain Support Lead and Operations Lead signoffs; emit the support and operations handover reports with each team's status (ACCEPTED | CONDITIONAL | NOT ACCEPTED).
+  version: "1.0.0"
+  inputs:
+    - { name: support_training_status, type: object, required: false }
+    - { name: operations_training_status, type: object, required: false }
+  outputs:
+    - { name: handover_status, type: string }
+  agent: deployment-manager
+  idempotent: true

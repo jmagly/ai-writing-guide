@@ -1,0 +1,14 @@
+# Conversion (#1539) fanout-panel capability for flow-elaboration-to-construction Step 2.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: e2c-infra-build
+  labels: { domain: phase-transition }
+spec:
+  description: Iteration 0 panel member — configure build infrastructure (build scripts, dependency management, artifact repository, branching strategy, build optimization) for the Construction team.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: build_config, type: object }
+  agent: build-engineer
+  idempotent: true

@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 2 (synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-plan-consolidate
+  labels: { domain: delivery }
+spec:
+  description: Synthesize the task breakdown and test-first strategy into the iteration plan — task sequence, owner assignments, critical path, burndown forecast (flow Step 2 synthesis).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: iteration_plan, type: object }
+  agent: project-manager
+  idempotent: false

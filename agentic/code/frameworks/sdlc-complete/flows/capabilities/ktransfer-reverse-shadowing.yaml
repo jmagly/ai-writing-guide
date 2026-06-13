@@ -1,0 +1,17 @@
+# Conversion (#1539) — flow-knowledge-transfer Step 4.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: ktransfer-reverse-shadowing
+  labels: { domain: knowledge-transfer }
+spec:
+  description: Run the reverse-shadowing phase — 4-8 sessions where the receiver leads and the holder observes/corrects — then assess per-area readiness (READY / NEEDS_PRACTICE / NOT_READY) (.aiwg/knowledge/shadowing/reverse/).
+  version: "1.0.0"
+  inputs:
+    - { name: shadowing_synthesis, type: string, required: true }
+    - { name: from_member, type: string, required: true }
+    - { name: to_member, type: string, required: true }
+  outputs:
+    - { name: readiness_assessment, type: string }
+  agent: training-coordinator
+  idempotent: false

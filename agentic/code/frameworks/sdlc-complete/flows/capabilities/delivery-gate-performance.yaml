@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 5 (quality-gate panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-gate-performance
+  labels: { domain: delivery }
+spec:
+  description: Run the performance gate — execute the performance suite, compare against baseline/SLOs, and detect regressions; return PASS | FAIL | WARNING (flow Step 5 panel).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: performance_status, type: string }
+  agent: devops-engineer
+  idempotent: true

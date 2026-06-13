@@ -1,0 +1,16 @@
+# #1539 capability — synthesize the checklist panel into the handoff validation report.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: handoff-report
+  labels: { domain: handoff }
+spec:
+  description: Read all artifact, checklist, and signoff validation results and synthesize the Handoff Validation Report — overall readiness, checklist compliance %, signoff status, decision (APPROVED/CONDITIONAL/REJECTED), gaps, remediation, and next steps; the synthesize cap for the checklist-validation fanout panel.
+  version: "1.0.0"
+  inputs:
+    - { name: artifact_report, type: string, required: false }
+    - { name: validations, type: array, required: false }
+  outputs:
+    - { name: handoff_report, type: string }
+  agent: documentation-synthesizer
+  idempotent: true

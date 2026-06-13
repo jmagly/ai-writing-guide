@@ -1,0 +1,20 @@
+# Conversion capability (#1539) — flow-guided-implementation Phase 1.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: guided-analysis
+  labels: { domain: implementation }
+spec:
+  description: >-
+    Parse the issue/requirement, extract keywords and intent, search the
+    codebase (Grep for content, Glob for naming patterns), read top candidate
+    files for context, and rank files by relevance (keyword density + path
+    match). Phase 1 of flow-guided-implementation.
+  version: "1.0.0"
+  inputs:
+    - { name: issue_description, type: string, required: false }
+    - { name: issue_url, type: string, required: false }
+  outputs:
+    - { name: ranked_files, type: array }
+  agent: workflow-executor
+  idempotent: true

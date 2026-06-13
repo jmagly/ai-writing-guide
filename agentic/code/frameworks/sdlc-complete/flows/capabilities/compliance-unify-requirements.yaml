@@ -1,0 +1,14 @@
+# Conversion (#1539) capability for flow-compliance-validation Step 1 (fanout synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: compliance-unify-requirements
+  labels: { domain: compliance }
+spec:
+  description: Synthesize the framework-specific requirement maps into one unified compliance requirements matrix (requirement ID, applicability, control type, implementation status, owner, evidence, testing approach) prioritized by regulatory importance, risk, and complexity.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: requirements_matrix, type: object }
+  agent: compliance-auditor
+  idempotent: true

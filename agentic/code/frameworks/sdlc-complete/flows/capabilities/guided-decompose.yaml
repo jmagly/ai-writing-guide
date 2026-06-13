@@ -1,0 +1,19 @@
+# Conversion capability (#1539) — flow-guided-implementation Phase 2.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: guided-decompose
+  labels: { domain: implementation }
+spec:
+  description: >-
+    Decompose the work into one task per file to modify, capture inter-task
+    dependencies (e.g. types before implementation), order by the dependency
+    graph, and estimate complexity per task — tracked via TodoWrite. Phase 2 of
+    flow-guided-implementation.
+  version: "1.0.0"
+  inputs:
+    - { name: ranked_files, type: array, required: false }
+  outputs:
+    - { name: task_graph, type: array }
+  agent: workflow-executor
+  idempotent: true

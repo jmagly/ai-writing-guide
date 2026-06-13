@@ -1,0 +1,15 @@
+# Capability (#1539) — Step 7: post-incident review (blameless retrospective).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-pir
+  labels: { domain: incident }
+spec:
+  description: Conduct the blameless post-incident review — schedule the PIR meeting per severity, generate the comprehensive PIR document from all incident artifacts, track preventive actions (immediate/short-term/long-term), update runbooks + knowledge base, and (if a regression) perform the deep regression dive (test-gap, PR-review, deployment-process, pattern analysis).
+  version: "1.0.0"
+  inputs:
+    - { name: resolution_status, type: string, required: true }
+  outputs:
+    - { name: pir_path, type: string }
+  agent: incident-responder
+  idempotent: true

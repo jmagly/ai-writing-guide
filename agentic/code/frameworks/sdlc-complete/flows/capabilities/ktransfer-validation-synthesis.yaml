@@ -1,0 +1,16 @@
+# Conversion (#1539) — flow-knowledge-transfer Step 5b panel synthesis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: ktransfer-validation-synthesis
+  labels: { domain: knowledge-transfer }
+spec:
+  description: Consolidate scenario execution and holder evaluation into a single validation outcome — pass rate, per-scenario verdicts, and the readiness determination (READY / READY-WITH-SUPPORT / NOT-READY).
+  version: "1.0.0"
+  inputs:
+    - { name: scenario_results, type: array, required: true }
+    - { name: evaluation_results, type: string, required: true }
+  outputs:
+    - { name: validation_results, type: string }
+  agent: knowledge-manager
+  idempotent: true

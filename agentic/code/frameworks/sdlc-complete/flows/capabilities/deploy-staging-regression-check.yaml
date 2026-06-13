@@ -1,0 +1,24 @@
+# Conversion (#1539) — Step 2.5b: staging regression check (full scope).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-staging-regression-check
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Run /regression-check --baseline production --candidate staging --scope full
+    --threshold N: compares test, metric, and smoke-test regressions of staging
+    against the live production baseline. Emits regression rate, new failures,
+    metric degradations, and a PASS | FAIL decision. On FAIL it produces a
+    regression impact assessment (categorized regressions, root cause, severity,
+    remediation). Writes .aiwg/deployment/regression-gate-staging.md (and
+    .aiwg/deployment/regression-impact-assessment-staging.md on FAIL).
+  version: "1.0.0"
+  inputs:
+    - { name: threshold, type: number, required: false, default: 0 }
+    - { name: scope, type: string, required: false, default: full }
+  outputs:
+    - { name: staging_regression_rate, type: number }
+    - { name: decision, type: string }
+  agent: regression-analyst
+  idempotent: true

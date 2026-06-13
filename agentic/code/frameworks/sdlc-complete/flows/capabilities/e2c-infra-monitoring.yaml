@@ -1,0 +1,14 @@
+# Conversion (#1539) fanout-panel capability for flow-elaboration-to-construction Step 2.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: e2c-infra-monitoring
+  labels: { domain: phase-transition }
+spec:
+  description: Iteration 0 panel member — set up monitoring and observability (APM, infrastructure metrics, log aggregation, alerting, dashboards, SLO/SLI definitions) for Construction.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: monitoring_setup, type: object }
+  agent: reliability-engineer
+  idempotent: true

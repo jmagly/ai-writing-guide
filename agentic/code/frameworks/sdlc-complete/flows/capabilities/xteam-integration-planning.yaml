@@ -1,0 +1,16 @@
+# #1539 conversion — flow-cross-team-sync Step 4 (integration contracts + change protocol).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: xteam-integration-planning
+  labels: { domain: team }
+spec:
+  description: Document detailed API contracts per integration point (spec, performance SLA, security, versioning, change protocol) and the comprehensive change-management protocol (change categories, per-category process, communication, version-support, testing).
+  version: "1.0.0"
+  inputs:
+    - { name: dependency_map, type: string, required: false }
+  outputs:
+    - { name: integration_contracts, type: array }
+    - { name: change_protocol, type: string }
+  agent: api-designer
+  idempotent: true

@@ -1,0 +1,15 @@
+# #1539 capability — flow-team-onboarding Step 5b.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: onboard-checkin-60
+  labels: { domain: team }
+spec:
+  description: Conduct the 60-day milestone review — technical competence, velocity vs team average, collaboration, domain knowledge, and the full-workload / buddy-reduction decision point (Step 5b).
+  version: "1.0.0"
+  inputs:
+    - { name: member_name, type: string, required: true }
+  outputs:
+    - { name: checkin_60_path, type: string }
+  agent: project-manager
+  idempotent: false

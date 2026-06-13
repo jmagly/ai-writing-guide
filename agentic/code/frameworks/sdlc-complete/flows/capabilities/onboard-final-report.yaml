@@ -1,0 +1,15 @@
+# #1539 capability — flow-team-onboarding Step 6.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: onboard-final-report
+  labels: { domain: team }
+spec:
+  description: Generate the final onboarding report summarizing milestone achievement, metrics, buddy relationship, strengths, development areas, process improvements, and recommendations (Step 6).
+  version: "1.0.0"
+  inputs:
+    - { name: member_name, type: string, required: true }
+  outputs:
+    - { name: report_path, type: string }
+  agent: project-manager
+  idempotent: true

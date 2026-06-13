@@ -1,0 +1,16 @@
+# Capability (#1539) — Step 3 pipeline: Tier 1 functional response.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-tier1-response
+  labels: { domain: incident }
+spec:
+  description: Tier 1 response — acknowledge, confirm user impact, run the applicable runbook, gather diagnostic data (system health, recent deployments, logs, metrics, DB health), and make the Tier 1→2 escalation decision per the severity timers.
+  version: "1.0.0"
+  inputs:
+    - { name: incident_record, type: string, required: true }
+    - { name: priority, type: string, required: false }
+  outputs:
+    - { name: tier1_data, type: string }
+  agent: reliability-engineer
+  idempotent: true

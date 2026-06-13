@@ -1,0 +1,16 @@
+# Conversion (#1539) — Step 1 synthesis: unified performance baseline report.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-baseline-report
+  labels: { domain: performance }
+spec:
+  description: Synthesize baseline metrics and critical-path analysis into a comprehensive performance baseline report (current metrics, SLI definitions, SLO targets, critical journeys, error-budget status).
+  version: "1.0.0"
+  inputs:
+    - { name: baseline_metrics, type: object, required: true }
+    - { name: critical_paths, type: object, required: true }
+  outputs:
+    - { name: baseline_report, type: object }
+  agent: performance-engineer
+  idempotent: true

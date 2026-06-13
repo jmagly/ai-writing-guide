@@ -1,0 +1,19 @@
+# Conversion (#1539) — Step 4 monitor: SLO monitoring (fanout panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-slo-monitor
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Monitor production SLOs for 15-30 minutes post-deployment (error rate,
+    latency p99, throughput, availability) against the pre-deployment baseline,
+    reporting every 5 minutes. Automated breach detection (error rate >2% above
+    baseline, latency p99 >20% above, throughput drop >30%, infra alarms) signals
+    CONTINUE | ROLLBACK. Writes .aiwg/deployment/slo-monitoring-report.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: slo_status, type: string }
+  agent: reliability-engineer
+  idempotent: true

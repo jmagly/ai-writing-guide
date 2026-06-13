@@ -1,0 +1,16 @@
+# #1539 conversion — flow-cross-team-sync Step 2 (sync cadence + meeting template).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: xteam-sync-cadence
+  labels: { domain: team }
+spec:
+  description: Establish the cross-team sync structure — cadence/duration, mandatory/optional attendees, meeting roles, time-boxed standing agenda, async channels, and a reusable meeting-notes template.
+  version: "1.0.0"
+  inputs:
+    - { name: sync_frequency, type: string, required: false, default: weekly }
+  outputs:
+    - { name: sync_agenda, type: string }
+    - { name: meeting_template, type: string }
+  agent: project-manager
+  idempotent: true

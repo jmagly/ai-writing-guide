@@ -1,0 +1,16 @@
+# Conversion (#1539) — flow-knowledge-transfer Step 1 panel synthesis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: ktransfer-scope-validate
+  labels: { domain: knowledge-transfer }
+spec:
+  description: Validate the knowledge map and transfer plan for realism, coverage, and measurable success criteria, then emit the GO / ADJUST / ESCALATE scope gate decision.
+  version: "1.0.0"
+  inputs:
+    - { name: knowledge_map, type: string, required: true }
+    - { name: transfer_plan, type: string, required: true }
+  outputs:
+    - { name: scope_decision, type: string }
+  agent: project-manager
+  idempotent: true

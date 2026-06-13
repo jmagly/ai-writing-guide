@@ -1,0 +1,16 @@
+# Conversion (#1539) — flow-knowledge-transfer Step 5a.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: ktransfer-design-validation
+  labels: { domain: knowledge-transfer }
+spec:
+  description: Design four validation scenarios — routine operation, troubleshooting, teach-back, and novel situation — each with context, success criteria, evaluation rubric, and time expectations (.aiwg/knowledge/validation/validation-scenarios.md).
+  version: "1.0.0"
+  inputs:
+    - { name: domain, type: string, required: false, default: "all responsibilities" }
+    - { name: readiness_assessment, type: string, required: false }
+  outputs:
+    - { name: validation_scenarios, type: string }
+  agent: test-architect
+  idempotent: true

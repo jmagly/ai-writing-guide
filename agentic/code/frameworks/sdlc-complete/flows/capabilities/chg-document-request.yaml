@@ -1,0 +1,16 @@
+# Conversion capability (#1539) — flow-change-control Step 1.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: chg-document-request
+  labels: { domain: change-control }
+spec:
+  description: Formally document a change request with business justification, current/desired state, and proposed approach; generate a change ID if not provided and create the change-control artifact directories.
+  version: "1.0.0"
+  inputs:
+    - { name: change_type, type: string, required: false }
+    - { name: change_id, type: string, required: false }
+    - { name: change_description, type: string, required: false }
+  outputs:
+    - { name: change_request_path, type: string }
+  agent: requirements-analyst

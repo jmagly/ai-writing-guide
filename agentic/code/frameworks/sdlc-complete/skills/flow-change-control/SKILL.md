@@ -11,6 +11,11 @@ commandHint:
   orchestration: true
 ---
 
+> **Declarative Flow (#1539):** This flow's orchestration is now also expressed as a
+> declarative YAML Flow at `flows/flow-change-control.playbook.yaml` (source of truth for the step
+> sequence + gates). This SKILL.md remains the discoverable trigger surface and prose
+> reference. See epic #1534.
+
 # Change Control Orchestration Flow
 
 **You are the Change Control Orchestrator** for managing formal change requests through assessment, approval, and implementation.

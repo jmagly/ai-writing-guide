@@ -1,0 +1,15 @@
+# Conversion (#1539) capability for flow-elaboration-to-construction Step 6.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: e2c-architecture-stability
+  labels: { domain: phase-transition }
+spec:
+  description: Assess architecture stability since the ABM — measure architectural change rate, ADR frequency, component-boundary violations, and prototype divergence; emit an Architecture Stability Report with a STABLE/UNSTABLE status and recommendations.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: stability_status, type: string }
+    - { name: report_path, type: string }
+  agent: architecture-designer
+  idempotent: true

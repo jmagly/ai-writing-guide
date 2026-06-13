@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 3 impact panel: schedule/cost impact.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-impact-schedule-cost
+  labels: { domain: requirements }
+spec:
+  description: Analyze schedule and cost impact of a CCB-review change request — development effort, testing effort, total schedule impact, labor cost, infrastructure cost, and opportunity cost. Output .aiwg/working/impact-analysis/{CR-ID}-schedule-cost.md.
+  version: "1.0.0"
+  inputs:
+    - { name: cr_id, type: string, required: true }
+  outputs:
+    - { name: schedule_cost_impact, type: string }
+  agent: project-manager
+  idempotent: true

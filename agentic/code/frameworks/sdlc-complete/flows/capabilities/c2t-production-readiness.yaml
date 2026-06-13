@@ -1,0 +1,17 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 2 (env-readiness synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-production-readiness
+  labels: { domain: transition }
+spec:
+  description: Synthesize the infrastructure, security, and observability validations into a single Production Environment Readiness Report with an overall READY | NOT READY verdict.
+  version: "1.0.0"
+  inputs:
+    - { name: infrastructure_readiness, type: object, required: false }
+    - { name: security_validation, type: object, required: false }
+    - { name: observability_readiness, type: object, required: false }
+  outputs:
+    - { name: environment_readiness, type: string }
+  agent: deployment-manager
+  idempotent: true

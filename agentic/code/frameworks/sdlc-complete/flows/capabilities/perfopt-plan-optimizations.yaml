@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 3: prioritized optimization plan.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-plan-optimizations
+  labels: { domain: performance }
+spec:
+  description: Create an actionable optimization plan tiered into quick wins, strategic improvements, and major refactoring — each with implementation steps, success criteria, testing approach, and rollback plan.
+  version: "1.0.0"
+  inputs:
+    - { name: bottleneck_analysis, type: object, required: true }
+  outputs:
+    - { name: optimization_plan, type: object }
+  agent: performance-engineer
+  idempotent: true

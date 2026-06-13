@@ -1,0 +1,15 @@
+# #1539 conversion of flow-iteration-dual-track Step 5 (Handoff pipeline).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-handoff-meeting
+  labels: { domain: iteration }
+spec:
+  description: Document the Discovery-to-Delivery handoff meeting from the packaged items — clarify requirements, confirm estimates, identify risks, assign preliminary owners; record items accepted, items needing more work, stakeholder questions, and next-iteration capacity.
+  version: "1.0.0"
+  inputs:
+    - { name: handoff_package, type: string, required: false }
+  outputs:
+    - { name: handoff_meeting_notes, type: string }
+  agent: scrum-master
+  idempotent: true

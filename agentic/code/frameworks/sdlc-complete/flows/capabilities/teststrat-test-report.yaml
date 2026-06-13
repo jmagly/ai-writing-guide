@@ -1,0 +1,16 @@
+# Conversion (#1539) — flow-test-strategy-execution Step 6 pipeline agent: comprehensive test report.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: teststrat-test-report
+  labels: { domain: testing }
+spec:
+  description: Synthesize unit, integration, E2E, UAT, defect, and regression results into the comprehensive Test Execution Report with executive summary, per-level results, coverage, defect summary, and go/no-go recommendation.
+  version: "1.0.0"
+  inputs:
+    - { name: regression_analysis, type: object, required: false }
+    - { name: test_level, type: string, required: false }
+  outputs:
+    - { name: test_execution_report, type: string }
+  agent: test-manager
+  idempotent: true

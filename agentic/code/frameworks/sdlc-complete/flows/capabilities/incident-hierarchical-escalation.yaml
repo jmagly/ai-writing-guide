@@ -1,0 +1,15 @@
+# Capability (#1539) — Step 4: hierarchical (management/executive) escalation.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-hierarchical-escalation
+  labels: { domain: incident }
+spec:
+  description: Notify leadership per the severity matrix — management notification (P0/P1), executive escalation (P0 critical, security/data-loss, regulatory), and the public status-page update — recording each in the incident communications and timeline.
+  version: "1.0.0"
+  inputs:
+    - { name: incident_record, type: string, required: true }
+    - { name: diagnostic_consensus, type: string, required: false }
+  outputs: []
+  agent: project-manager
+  idempotent: true

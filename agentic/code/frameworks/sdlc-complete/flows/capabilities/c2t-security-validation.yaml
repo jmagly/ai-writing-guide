@@ -1,0 +1,14 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 2 (env-readiness panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-security-validation
+  labels: { domain: transition }
+spec:
+  description: Validate production security hardening — firewall least-privilege rules, valid SSL/TLS certificates, RBAC and audit logging, secrets management (vault/KMS), at-rest and in-transit encryption, and security scan results free of High/Critical vulnerabilities.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: security_validation, type: object }
+  agent: security-architect
+  idempotent: true

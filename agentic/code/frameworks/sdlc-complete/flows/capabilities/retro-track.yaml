@@ -1,0 +1,15 @@
+# #1539 capability — Step 5: track action-item progress and measure improvement effectiveness.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: retro-track
+  labels: { domain: retrospective }
+spec:
+  description: Establish progress tracking (check-ins, reminders, escalation path), define baseline/target effectiveness metrics per action item, and schedule follow-up tasks.
+  version: "1.0.0"
+  inputs:
+    - { name: report_path, type: string, required: false }
+  outputs:
+    - { name: effectiveness_metrics, type: string }
+  agent: retrospective-analyzer
+  idempotent: true

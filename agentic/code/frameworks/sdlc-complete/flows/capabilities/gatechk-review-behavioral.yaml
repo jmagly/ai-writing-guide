@@ -1,0 +1,22 @@
+# #1539 capability — prose Step 2.2/3: behavioral-spec & traceability reviewer.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: gatechk-review-behavioral
+  labels: { domain: quality-gate }
+spec:
+  description: >-
+    Validate Layer 3 behavioral specifications and bidirectional traceability —
+    use case realizations (DES-UCR-*), state machines, decision tables, method
+    contracts, activity diagrams; report per-UC coverage and flag gaps (target
+    >=80% of architecturally significant use cases). For the traceability gate,
+    validate requirements -> code -> tests -> requirements links. Report
+    READY | GAPS | BLOCKED (flow-gate-check Steps 2.2 and 3 traceability gate).
+  version: "1.0.0"
+  inputs:
+    - { name: gate_type, type: string, required: true }
+  outputs:
+    - { name: review, type: string }
+    - { name: readiness, type: string }
+  agent: requirements-analyst
+  idempotent: true

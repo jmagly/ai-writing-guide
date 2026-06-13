@@ -1,0 +1,128 @@
+# #1539 conversion: the agentic `flow-delivery-track` skill expressed as a
+# declarative YAML Flow. flow-delivery-track is a heavy multi-agent flow — it
+# dispatches parallel planning, a TDD test→implement→review pipeline, parallel
+# test suites, and a parallel quality-gate panel, then consolidates. Those panels
+# are encoded as `fanout` steps (agentic-step extension, #1547). The SKILL.md
+# remains the thin wrapper / discoverable trigger surface; this playbook is the
+# orchestration source of truth for the step sequence + the quality gate.
+#
+# Schema-fit note (#1539): SDLC flows act on a single project (iteration) context
+# rather than iterating a host set, so `inventory`/`targets` are omitted.
+#
+# Faithful to the prose flow:
+#   Step 1 validate iteration readiness   → validate-readiness (delivery-validate-readiness, project-manager)
+#   Step 2 plan task slices + assignments  → plan-iteration     (FANOUT: impl + test-eng planners → project-manager synthesis)
+#   Step 3 TDD implement (per-task)        → tdd-implement      (FANOUT pipeline: write-tests → implement → code-review)
+#   Step 4 comprehensive testing           → run-test-suites    (FANOUT: unit + integration + e2e → fix synthesis)
+#   Step 5 validate quality gates          → quality-gates      (FANOUT: security + performance + quality gates → PM consolidation)
+#   (DoD quality gate human checkpoint)    → quality-gate-checkpoint (kind: gate)
+#   Step 6a integration / merge to main    → integrate          (delivery-integrate, devops-engineer)
+#   Step 6b update documentation           → update-docs        (FANOUT: release-notes + runbook-updates → doc consolidation)
+#   Step 7 iteration assessment            → iteration-assessment (delivery-iteration-assessment, project-manager)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-delivery-track
+  labels:
+    category: sdlc-orchestration
+    domain: delivery
+spec:
+  vars:
+    iteration: ""
+  steps:
+    - id: validate-readiness
+      capability: delivery-validate-readiness
+      inputs:
+        - { name: iteration, from: "vars.iteration" }
+      outputs:
+        - name: readiness_status
+
+    # Step 2: three planning agents (impl + test-eng panel) feed the
+    # project-manager who synthesizes the iteration plan.
+    - id: plan-iteration
+      fanout:
+        strategy: parallel
+        agents:
+          - delivery-plan-tasks    # software-implementer
+          - delivery-plan-tests    # test-engineer
+        synthesize: delivery-plan-consolidate   # project-manager
+      depends_on: [validate-readiness]
+      outputs:
+        - name: iteration_plan
+
+    # Step 3: per-task TDD cycle — write tests, implement to pass, then review.
+    # Chained (pipeline): each agent sees the prior output. The code review is
+    # the synthesis that gates task completion.
+    - id: tdd-implement
+      fanout:
+        strategy: pipeline
+        agents:
+          - delivery-write-tests   # test-engineer (tests first)
+          - delivery-implement     # software-implementer (implement to pass)
+        synthesize: delivery-code-review   # code-reviewer (APPROVED | NEEDS_CHANGES)
+      depends_on: [plan-iteration]
+
+    # Step 4: full test execution — unit + integration + e2e suites run in
+    # parallel; the software-implementer fixes any failures (synthesis closes
+    # the loop so all suites pass).
+    - id: run-test-suites
+      fanout:
+        strategy: parallel
+        agents:
+          - delivery-test-unit          # test-engineer
+          - delivery-test-integration   # test-engineer
+          - delivery-test-e2e           # test-engineer
+        synthesize: delivery-test-fix   # software-implementer
+      depends_on: [tdd-implement]
+      outputs:
+        - name: test_results
+
+    # Step 5: security + performance + code-quality gates run in parallel;
+    # the project-manager consolidates into one PASS | BLOCKED verdict.
+    - id: quality-gates
+      fanout:
+        strategy: parallel
+        agents:
+          - delivery-gate-security      # security-gatekeeper
+          - delivery-gate-performance   # devops-engineer
+          - delivery-gate-quality       # code-reviewer
+        synthesize: delivery-gate-consolidate   # project-manager
+      depends_on: [run-test-suites]
+      outputs:
+        - name: quality_report
+
+    # DoD checkpoint: a BLOCKED gate cannot proceed. Human confirms the
+    # consolidated quality report (security/performance/quality) before merge.
+    - id: quality-gate-checkpoint
+      kind: gate
+      description: |
+        Human gate (Definition of Done): review the consolidated quality report
+        (security, performance, code-quality) and confirm all gates PASS before
+        integration. A BLOCKED gate stops the flow — remediation must run and the
+        gate re-validated before this checkpoint can be approved.
+      depends_on: [quality-gates]
+
+    # Step 6a: merge to main, run CI/CD, deploy to dev, smoke test.
+    - id: integrate
+      capability: delivery-integrate
+      depends_on: [quality-gate-checkpoint]
+      outputs:
+        - name: integration_status
+
+    # Step 6b: documentation panel — release notes + runbook updates in
+    # parallel, consolidated into the finalized doc set.
+    - id: update-docs
+      fanout:
+        strategy: parallel
+        agents:
+          - delivery-release-notes      # technical-writer
+          - delivery-runbook-updates    # operations-manager
+        synthesize: delivery-doc-consolidate   # technical-writer
+      depends_on: [integrate]
+
+    # Step 7: velocity metrics + lessons-learned assessment.
+    - id: iteration-assessment
+      capability: delivery-iteration-assessment
+      depends_on: [update-docs]
+      outputs:
+        - name: assessment_path

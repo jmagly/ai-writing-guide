@@ -1,0 +1,14 @@
+# #1539 capability — checklist panel reviewer: quality gates (ORR).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: handoff-review-gates
+  labels: { domain: handoff }
+spec:
+  description: Validate operational-readiness quality gates — security (SAST/DAST clean, no Critical/High), reliability (SLIs/SLOs met), documentation (release notes, runbooks), and traceability (requirements→code→tests) — with PASS/FAIL status per gate.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: validation, type: string }
+  agent: security-gatekeeper
+  idempotent: true

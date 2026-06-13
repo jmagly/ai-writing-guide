@@ -1,0 +1,14 @@
+# Conversion capability (#1539) — flow-discovery-track Step 5.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: discovery-update-adrs
+  labels: { domain: discovery }
+spec:
+  description: Document significant architectural decisions made during discovery (technology choices, API patterns, data-model and integration approaches) as ADRs linked to spike evidence (flow Step 5).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: adrs, type: array }
+  agent: architecture-designer
+  idempotent: false

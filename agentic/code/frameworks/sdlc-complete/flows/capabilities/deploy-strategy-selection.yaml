@@ -1,0 +1,20 @@
+# Conversion (#1539) — Step 1: recommend a deployment strategy.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-strategy-selection
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Analyze project context, architecture, and user guidance to recommend a
+    deployment strategy (Blue-Green | Canary | Rolling) with rationale, trade-offs,
+    infrastructure requirements, and monitoring period. Writes the recommendation
+    to .aiwg/working/deployment/strategy-recommendation.md.
+  version: "1.0.0"
+  inputs:
+    - { name: regression_threshold, type: number, required: false, default: 0 }
+    - { name: guidance, type: string, required: false }
+  outputs:
+    - { name: recommended_strategy, type: string }
+  agent: deployment-manager
+  idempotent: true

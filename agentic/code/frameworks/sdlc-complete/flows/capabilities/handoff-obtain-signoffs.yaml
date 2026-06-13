@@ -1,0 +1,15 @@
+# #1539 capability — identify required signoffs and generate signoff tracking.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: handoff-obtain-signoffs
+  labels: { domain: handoff }
+spec:
+  description: Determine the required stakeholder signoffs for the handoff type and generate signoff tracking (OBTAINED/PENDING/DECLINED per role, with request summaries for pending approvals).
+  version: "1.0.0"
+  inputs:
+    - { name: handoff_type, type: string, required: false }
+  outputs:
+    - { name: signoff_status, type: string }
+  agent: project-manager
+  idempotent: true

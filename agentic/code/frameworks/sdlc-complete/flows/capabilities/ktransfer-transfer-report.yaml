@@ -1,0 +1,17 @@
+# Conversion (#1539) — flow-knowledge-transfer Step 6c.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: ktransfer-transfer-report
+  labels: { domain: knowledge-transfer }
+spec:
+  description: Generate the knowledge transfer completion report — executive summary, transfer summary, acquisition metrics, documentation improvements, validation results, lessons learned, follow-up plan, and risk assessment (.aiwg/reports/knowledge-transfer-report-{domain}.md).
+  version: "1.0.0"
+  inputs:
+    - { name: checklist_path, type: string, required: true }
+    - { name: validation_results, type: string, required: true }
+    - { name: domain, type: string, required: false, default: "all responsibilities" }
+  outputs:
+    - { name: report_path, type: string }
+  agent: knowledge-manager
+  idempotent: true

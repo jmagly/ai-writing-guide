@@ -1,0 +1,14 @@
+# #1539 capability — checklist panel reviewer: test completeness (ORR).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: handoff-review-test
+  labels: { domain: handoff }
+spec:
+  description: Validate operational-readiness test criteria (unit coverage >=80%, integration/acceptance/regression/performance tests passing, security scans clean) against coverage reports, test results, benchmarks, and scan output.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: validation, type: string }
+  agent: test-engineer
+  idempotent: true

@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 5 pipeline synthesis: execute load tests and analyze results.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-load-test-execute
+  labels: { domain: performance }
+spec:
+  description: Execute the load test plan (baseline, stress, spike, soak), capturing p50/p95/p99 latency, throughput, error rates, breaking point, recovery time, and degradation; compare against the original baseline, SLO targets, and prior runs.
+  version: "1.0.0"
+  inputs:
+    - { name: load_test_plan, type: object, required: true }
+  outputs:
+    - { name: load_test_results, type: object }
+  agent: reliability-engineer
+  idempotent: true

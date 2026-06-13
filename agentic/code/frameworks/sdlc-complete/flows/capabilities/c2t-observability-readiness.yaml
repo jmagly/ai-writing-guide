@@ -1,0 +1,14 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 2 (env-readiness panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-observability-readiness
+  labels: { domain: transition }
+spec:
+  description: Validate monitoring and observability — application and infrastructure metrics, operational dashboards, tested alerting, log aggregation, defined SLIs/SLOs, automated backup procedures, and validated disaster recovery.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: observability_readiness, type: object }
+  agent: reliability-engineer
+  idempotent: true

@@ -1,0 +1,15 @@
+# Conversion (#1539) — flow-test-strategy-execution Step 5 panel agent: P0/P1 root-cause analysis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: teststrat-root-cause-analysis
+  labels: { domain: testing }
+spec:
+  description: Perform root-cause and impact analysis on high-severity (P0/P1) defects; identify defect class, affected components, user/data impact, and fix strategy.
+  version: "1.0.0"
+  inputs:
+    - { name: high_severity_defects, type: array, required: false }
+  outputs:
+    - { name: root_cause_analysis, type: object }
+  agent: component-owner
+  idempotent: true

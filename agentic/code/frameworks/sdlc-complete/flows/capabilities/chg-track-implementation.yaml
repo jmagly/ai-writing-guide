@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-change-control Step 6 (track implementation).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: chg-track-implementation
+  labels: { domain: change-control }
+spec:
+  description: For an approved change, break the work into discrete work items with assignments/priorities/dependencies/acceptance criteria, and set up implementation tracking with a plan, status board, validation plan, and rollback plan.
+  version: "1.0.0"
+  inputs:
+    - { name: change_request_path, type: string, required: true }
+    - { name: impact_assessment_path, type: string, required: false }
+  outputs:
+    - { name: implementation_tracking_path, type: string }
+  agent: project-manager

@@ -1,0 +1,17 @@
+# Conversion (#1539) — flow-knowledge-transfer Step 2 panel synthesis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: ktransfer-doc-package
+  labels: { domain: knowledge-transfer }
+spec:
+  description: Consolidate the inventoried, authored, and enhanced documentation into a single coherent transfer package with an ordered reading sequence (.aiwg/knowledge/docs/).
+  version: "1.0.0"
+  inputs:
+    - { name: doc_inventory, type: string, required: true }
+    - { name: authored_docs, type: array, required: true }
+    - { name: enhanced_docs, type: array, required: true }
+  outputs:
+    - { name: doc_package, type: string }
+  agent: documentation-archivist
+  idempotent: true

@@ -1,0 +1,14 @@
+# Conversion (#1539) — flow-inception-to-elaboration Step 2 synthesis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: i2e-plan-baseline
+  labels: { domain: phase-transition }
+spec:
+  description: Synthesize the objectives, steel-thread, and risk-validation drafts into the cohesive Architecture Baseline Plan (objectives, steel threads, risk strategy, team assignments, 4-8 week schedule) (flow Step 2 synthesis).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: baseline_plan, type: string }
+  agent: documentation-synthesizer
+  idempotent: false

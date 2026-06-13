@@ -1,0 +1,15 @@
+# Conversion (#1539) capability for flow-elaboration-to-construction Step 3.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: e2c-process-and-onboarding
+  labels: { domain: phase-transition }
+spec:
+  description: Tailor the Construction development process and prepare team scaling — produce the Development Process Guide (iteration config, RACI, DoR/DoD), technical guidelines (design/programming/test), the team onboarding guide, and the training schedule.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: process_guide_path, type: string }
+    - { name: onboarding_guide_path, type: string }
+  agent: project-manager
+  idempotent: true

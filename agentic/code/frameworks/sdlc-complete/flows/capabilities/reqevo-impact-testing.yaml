@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 3 impact panel: test impact.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-impact-testing
+  labels: { domain: requirements }
+spec:
+  description: Analyze test impact of a CCB-review change request — affected test cases, new test coverage needed, regression test impact, and test effort estimation. Output .aiwg/working/impact-analysis/{CR-ID}-testing.md.
+  version: "1.0.0"
+  inputs:
+    - { name: cr_id, type: string, required: true }
+  outputs:
+    - { name: test_impact, type: string }
+  agent: test-architect
+  idempotent: true

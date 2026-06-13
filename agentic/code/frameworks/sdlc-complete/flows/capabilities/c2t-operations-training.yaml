@@ -1,0 +1,14 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 5 (handover panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-operations-training
+  labels: { domain: transition }
+spec:
+  description: Train and validate operations-team readiness — deployment procedures, monitoring and alerting, incident response, backup and restore, and scaling procedures; validate via a successful independent deployment, tested alert response, and validated backup/restore.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: operations_training_status, type: object }
+  agent: operations-lead
+  idempotent: true

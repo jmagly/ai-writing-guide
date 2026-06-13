@@ -1,0 +1,18 @@
+# Conversion capability (#1539) — flow-change-control Step 3 synthesis (CCB decision record).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: chg-ccb-decision
+  labels: { domain: change-control }
+spec:
+  description: Tally the CCB member votes and synthesize the CCB decision record — meeting details, quorum, voting record with rationale, the final decision (APPROVED | REJECTED | DEFERRED), conditions, and action items.
+  version: "1.0.0"
+  inputs:
+    - { name: ccb_review_paths, type: array, required: true }
+    - { name: change_request_path, type: string, required: true }
+    - { name: impact_assessment_path, type: string, required: true }
+  outputs:
+    - { name: ccb_decision_path, type: string }
+    - { name: decision, type: string }
+  agent: ccb-coordinator
+  idempotent: true

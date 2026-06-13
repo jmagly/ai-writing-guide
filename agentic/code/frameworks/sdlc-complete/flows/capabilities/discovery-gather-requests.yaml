@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-discovery-track Step 1 panel reviewer.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: discovery-gather-requests
+  labels: { domain: discovery }
+spec:
+  description: Gather and document stakeholder requests as request cards with MoSCoW prioritization (Step 1 panel — requirements gathering).
+  version: "1.0.0"
+  inputs:
+    - { name: iteration, type: string, required: true }
+  outputs:
+    - { name: requests, type: array }
+  agent: requirements-analyst
+  idempotent: false

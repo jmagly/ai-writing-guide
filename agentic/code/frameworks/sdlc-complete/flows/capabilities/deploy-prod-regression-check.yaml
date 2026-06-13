@@ -1,0 +1,23 @@
+# Conversion (#1539) — Step 4 monitor: production regression check (fanout panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-prod-regression-check
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Run /regression-check --baseline production-pre-deploy --candidate
+    production-post-deploy --scope critical --threshold N: compares post-deploy
+    production against the captured baseline for smoke-test, SLO, and
+    user-journey regressions. Emits regression rate, new failures, metric
+    degradations, severity, and PASS | FAIL.
+    Writes .aiwg/deployment/regression-gate-production.md.
+  version: "1.0.0"
+  inputs:
+    - { name: threshold, type: number, required: false, default: 0 }
+    - { name: scope, type: string, required: false, default: critical }
+  outputs:
+    - { name: production_regression_rate, type: number }
+    - { name: decision, type: string }
+  agent: regression-analyst
+  idempotent: true

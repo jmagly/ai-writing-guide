@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 3 (deployment pipeline).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-deployment-strategy
+  labels: { domain: transition }
+spec:
+  description: Select and plan the production deployment strategy (big-bang, phased/canary, blue-green, or feature-toggle) from the deployment plan and user guidance, documenting the rationale and defining rollback criteria and procedures.
+  version: "1.0.0"
+  inputs:
+    - { name: guidance, type: string, required: false }
+  outputs:
+    - { name: deployment_strategy, type: object }
+  agent: deployment-manager
+  idempotent: true

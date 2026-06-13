@@ -1,0 +1,19 @@
+# #1539 capability — prose Step 1: determine gate context.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: gatechk-determine-context
+  labels: { domain: quality-gate }
+spec:
+  description: >-
+    Resolve the requested gate parameter to a gate type (phase milestone
+    LOM/ABM/IOC/PR, workflow gate, or special gate) and scan `.aiwg/` for phase
+    indicators to detect the current project phase (flow-gate-check Step 1).
+  version: "1.0.0"
+  inputs:
+    - { name: gate, type: string, required: true }
+  outputs:
+    - { name: gate_type, type: string }
+    - { name: detected_phase, type: string }
+  agent: project-manager
+  idempotent: true

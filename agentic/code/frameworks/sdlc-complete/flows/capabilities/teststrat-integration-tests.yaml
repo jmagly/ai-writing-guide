@@ -1,0 +1,15 @@
+# Conversion (#1539) — flow-test-strategy-execution Step 3: integration suite execution.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: teststrat-integration-tests
+  labels: { domain: testing }
+spec:
+  description: Execute integration tests across API endpoints, database, external service mocks, and message queues; validate data contracts and error handling; collect coverage, latency, and error-rate metrics.
+  version: "1.0.0"
+  inputs:
+    - { name: target_component, type: string, required: false }
+  outputs:
+    - { name: integration_results, type: object }
+  agent: test-engineer
+  idempotent: true

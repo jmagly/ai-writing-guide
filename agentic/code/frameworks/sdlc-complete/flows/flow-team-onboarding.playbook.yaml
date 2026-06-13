@@ -1,0 +1,99 @@
+# #1539 conversion: the agentic `flow-team-onboarding` skill expressed as a
+# declarative YAML Flow. The SKILL.md remains the discoverable trigger surface
+# and prose reference; this playbook is the orchestration source of truth for the
+# step sequence + gates. Two prose steps dispatch parallel agent panels then
+# synthesize (Step 1 pre-boarding, Step 2 planning) — each is encoded as a single
+# `fanout` step (agentic-step extension, #1547). The 90-day graduation decision is
+# a human `kind: gate`. SDLC flow acts on a single project context, so
+# `inventory`/`targets` are omitted (#1539).
+#
+# Faithful to the prose flow's structure:
+#   Step 1 pre-boarding prep (×2 + validate) → preboarding        (FANOUT: hr + ops → project-manager readiness)
+#   Step 2 onboarding plan (×3 + synthesize)  → onboarding-plan    (FANOUT: training + technical-lead + team-lead → project-manager)
+#   Step 3 buddy assignment + notify          → buddy-assignment   (team-lead, then human-resources-coordinator)
+#   Step 4 execute + progress tracking        → progress-tracking  (project-manager / team-lead, weekly)
+#   Step 5a 30-day check-in                    → checkin-30         (project-manager)
+#   Step 5b 60-day check-in                    → checkin-60         (project-manager)
+#   Step 5c 90-day check-in (assessment)       → checkin-90         (project-manager)
+#   (Quality Gates / graduation decision)      → graduation-gate    (human gate: GRADUATE | EXTEND 30 DAYS)
+#   Step 6 final onboarding report             → final-report       (project-manager)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-team-onboarding
+  labels:
+    category: sdlc-orchestration
+    domain: team
+spec:
+  vars:
+    member_name: ""
+    role: ""
+    start_date: ""
+  steps:
+    # Step 1: Pre-boarding preparation. HR Coordinator and Operations Liaison
+    # run in parallel; the project-manager validates readiness (synthesis).
+    - id: preboarding
+      fanout:
+        strategy: parallel
+        agents:
+          - onboard-preboard-hr-checklist    # human-resources-coordinator
+          - onboard-preboard-access-requests # operations-liaison
+        synthesize: onboard-preboard-readiness   # project-manager
+      inputs:
+        - { name: member_name, from: "vars.member_name" }
+        - { name: role, from: "vars.role" }
+        - { name: start_date, from: "vars.start_date" }
+      outputs:
+        - name: preboarding_status
+
+    # Step 2: Create personalized 90-day onboarding plan. Three planners run in
+    # parallel; the project-manager synthesizes them into the unified plan.
+    - id: onboarding-plan
+      fanout:
+        strategy: parallel
+        agents:
+          - onboard-plan-training-schedule  # training-coordinator
+          - onboard-plan-starter-tasks      # technical-lead
+          - onboard-plan-milestone-goals    # team-lead
+        synthesize: onboard-plan-synthesis  # project-manager
+      depends_on: [preboarding]
+      outputs:
+        - name: onboarding_plan
+
+    - id: buddy-assignment
+      capability: onboard-buddy-assignment
+      depends_on: [onboarding-plan]
+      outputs:
+        - name: buddy
+
+    - id: progress-tracking
+      capability: onboard-progress-tracking
+      depends_on: [buddy-assignment]
+
+    - id: checkin-30
+      capability: onboard-checkin-30
+      depends_on: [progress-tracking]
+
+    - id: checkin-60
+      capability: onboard-checkin-60
+      depends_on: [checkin-30]
+
+    - id: checkin-90
+      capability: onboard-checkin-90
+      depends_on: [checkin-60]
+      outputs:
+        - name: graduation_assessment
+
+    - id: graduation-gate
+      kind: gate
+      description: |
+        Human gate (graduation decision): present the 90-day check-in assessment
+        and the Quality Gates checklist (full capacity, independent feature
+        delivery, team contribution, on-call readiness). Decide ONBOARDING
+        COMPLETE (graduate) or EXTEND 30 DAYS. The final report is emitted only
+        after this decision is recorded.
+      depends_on: [checkin-90]
+
+    - id: final-report
+      capability: onboard-final-report
+      depends_on: [graduation-gate]

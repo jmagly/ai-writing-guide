@@ -1,0 +1,16 @@
+# #1539 conversion of flow-cross-team-sync — Step 1 panel reviewer.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: xteam-component-analysis
+  labels: { domain: team }
+spec:
+  description: Map component ownership and team-to-team dependencies (type, criticality, status) into a dependency matrix draft.
+  version: "1.0.0"
+  inputs:
+    - { name: team_a, type: string, required: true }
+    - { name: team_b, type: string, required: true }
+  outputs:
+    - { name: dependency_analysis_draft, type: string }
+  agent: system-analyst
+  idempotent: true

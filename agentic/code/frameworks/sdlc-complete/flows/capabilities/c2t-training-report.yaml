@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 4 (training synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-training-report
+  labels: { domain: transition }
+spec:
+  description: Synthesize training completion rates, knowledge-check results, UAT pass rates, user satisfaction scores, and adoption metrics into a User Training and Acceptance Report with the acceptance decision (ACCEPTED | CONDITIONAL | REJECTED).
+  version: "1.0.0"
+  inputs:
+    - { name: uat_results, type: object, required: false }
+  outputs:
+    - { name: acceptance_decision, type: string }
+  agent: product-owner
+  idempotent: true

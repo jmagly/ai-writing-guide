@@ -1,0 +1,14 @@
+# #1539 conversion of flow-iteration-dual-track Step 4 (Midpoint checkpoint panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-midpoint-discovery
+  labels: { domain: iteration }
+spec:
+  description: Validate Discovery track progress at midpoint — requirements refined vs planned, acceptance-criteria completeness, spike results, stakeholder feedback, Definition of Ready compliance; project ready-backlog size and flag items needing more work.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: midpoint_validation, type: string }
+  agent: requirements-analyst
+  idempotent: true

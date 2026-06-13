@@ -1,0 +1,15 @@
+# Conversion (#1539) capability for flow-elaboration-to-construction Step 4.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: e2c-iteration-planning
+  labels: { domain: phase-transition }
+spec:
+  description: Assess backlog readiness against Definition of Ready, then create detailed Iteration 1 (conservative ramp-up capacity) and Iteration 2 (baseline velocity) plans with work-item selection, owners, dependencies, and acceptance criteria.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: backlog_health, type: string }
+    - { name: iteration_plans, type: array }
+  agent: project-manager
+  idempotent: true

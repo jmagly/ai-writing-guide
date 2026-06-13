@@ -1,0 +1,14 @@
+# Conversion (#1539) capability for flow-compliance-validation Step 5 (panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: compliance-test-technical
+  labels: { domain: compliance }
+spec:
+  description: Execute technical control tests (access control, encryption in transit/at rest and key management, logging and monitoring, security configuration) and document pass/fail results with collected evidence and noted deficiencies.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: technical_test_results, type: object }
+  agent: security-tester
+  idempotent: true

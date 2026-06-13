@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 3 (security risks).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-risk-security
+  labels: { domain: inception }
+spec:
+  description: Identify security risks (data breach potential, compliance violations, auth/authz weaknesses, third-party vulnerabilities) from the vision and data-classification needs.
+  version: "1.0.0"
+  inputs:
+    - { name: vision_document, type: string, required: true }
+  outputs:
+    - { name: security_risks, type: string }
+  agent: security-architect
+  idempotent: true

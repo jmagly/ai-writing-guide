@@ -1,0 +1,16 @@
+# #1539 conversion of flow-hypercare-monitoring Step 1 (panel agent).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: hypercare-team-roster
+  labels: { domain: hypercare }
+spec:
+  description: Create the hypercare team roster and 24/7 on-call rotation from the ORR team assignments, and schedule daily standups (.aiwg/deployment/hypercare-team-roster.md).
+  version: "1.0.0"
+  inputs:
+    - { name: hypercare_duration_days, type: number, required: false, default: 7 }
+    - { name: guidance, type: string, required: false }
+  outputs:
+    - { name: roster_path, type: string }
+  agent: operations-manager
+  idempotent: true

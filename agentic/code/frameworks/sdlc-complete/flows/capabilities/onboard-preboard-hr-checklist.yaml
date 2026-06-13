@@ -1,0 +1,17 @@
+# #1539 capability — flow-team-onboarding Step 1 panel reviewer.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: onboard-preboard-hr-checklist
+  labels: { domain: team }
+spec:
+  description: Prepare the pre-boarding checklist and first-day paperwork (system access, equipment, documentation, logistics) for the new team member.
+  version: "1.0.0"
+  inputs:
+    - { name: member_name, type: string, required: true }
+    - { name: role, type: string, required: false }
+    - { name: start_date, type: string, required: false }
+  outputs:
+    - { name: checklist_path, type: string }
+  agent: human-resources-coordinator
+  idempotent: false

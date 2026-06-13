@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 7 (PRM report).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-prm-report
+  labels: { domain: transition }
+spec:
+  description: Generate the Product Release Milestone Report from all Transition artifacts — overall status and decision (PROJECT COMPLETE | EXTENDED HYPERCARE | ISSUES DETECTED), detailed criteria validation, signoff checklist, business-value validation, lessons learned, and next steps (project closure, transition to BAU).
+  version: "1.0.0"
+  inputs:
+    - { name: prm_status, type: string, required: false }
+  outputs:
+    - { name: prm_report_path, type: string }
+  agent: project-manager
+  idempotent: true

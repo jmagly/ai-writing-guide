@@ -1,0 +1,18 @@
+# #1539 conversion of flow-iteration-dual-track Step 4 (Midpoint checkpoint synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-midpoint-synthesis
+  labels: { domain: iteration }
+spec:
+  description: Synthesize the midpoint checkpoint status from the Delivery assessment, Discovery validation, and the security and test-coverage gates — overall track health and the adjustments identified for both tracks.
+  version: "1.0.0"
+  inputs:
+    - { name: midpoint_assessment, type: string, required: false }
+    - { name: midpoint_validation, type: string, required: false }
+    - { name: security_gate, type: string, required: false }
+    - { name: test_gate, type: string, required: false }
+  outputs:
+    - { name: checkpoint_status, type: string }
+  agent: project-manager
+  idempotent: true

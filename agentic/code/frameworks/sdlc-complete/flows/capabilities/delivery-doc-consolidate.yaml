@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 6b (synthesis).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-doc-consolidate
+  labels: { domain: delivery }
+spec:
+  description: Consolidate the release notes and runbook updates into the finalized iteration documentation set, confirming traceability is maintained (flow Step 6 doc synthesis).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: doc_set, type: object }
+  agent: technical-writer
+  idempotent: false

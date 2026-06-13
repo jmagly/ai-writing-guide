@@ -1,0 +1,14 @@
+# #1539 conversion of flow-hypercare-monitoring Step 5.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: hypercare-exit-report
+  labels: { domain: hypercare }
+spec:
+  description: Validate the hypercare exit criteria (production stability, user adoption, support readiness, documentation) and generate the comprehensive hypercare exit report with the END/EXTEND/ESCALATE recommendation and transition plan (.aiwg/reports/hypercare-exit-criteria.md, hypercare-exit-report.md).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: exit_criteria_status, type: string }
+  agent: operations-manager
+  idempotent: true

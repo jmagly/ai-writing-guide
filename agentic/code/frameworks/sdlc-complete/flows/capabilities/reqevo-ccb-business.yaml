@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 4 CCB panel: business perspective.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-ccb-business
+  labels: { domain: requirements }
+spec:
+  description: Provide the business-value perspective in the CCB review — evaluate change requests against stakeholder needs and market priorities.
+  version: "1.0.0"
+  inputs:
+    - { name: impact_report, type: string, required: false }
+  outputs:
+    - { name: business_assessment, type: object }
+  agent: product-owner
+  idempotent: true

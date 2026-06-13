@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 4 (privacy impact assessment).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-privacy-assessment
+  labels: { domain: inception }
+spec:
+  description: Conduct the privacy impact assessment from the data classification — PII handling, GDPR/CCPA applicability, data retention, and user-consent requirements. Emits .aiwg/security/privacy-impact-assessment.md.
+  version: "1.0.0"
+  inputs:
+    - { name: data_classification, type: string, required: true }
+  outputs:
+    - { name: privacy_assessment, type: string }
+  agent: privacy-officer
+  idempotent: true

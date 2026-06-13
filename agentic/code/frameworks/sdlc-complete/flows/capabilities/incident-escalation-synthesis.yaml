@@ -1,0 +1,17 @@
+# Capability (#1539) — Step 3 synthesis: consolidate Tier 1→2→3 diagnostics.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-escalation-synthesis
+  labels: { domain: incident }
+spec:
+  description: Synthesize the Tier 1, Tier 2, and Tier 3 diagnostic outputs into one consolidated picture — which tier resolved or escalated, the leading root-cause hypothesis, and the outstanding decisions feeding hierarchical escalation and RCA.
+  version: "1.0.0"
+  inputs:
+    - { name: tier1_data, type: string, required: false }
+    - { name: tier2_analysis, type: string, required: false }
+    - { name: tier3_assessment, type: string, required: false }
+  outputs:
+    - { name: diagnostic_consensus, type: string }
+  agent: incident-responder
+  idempotent: true

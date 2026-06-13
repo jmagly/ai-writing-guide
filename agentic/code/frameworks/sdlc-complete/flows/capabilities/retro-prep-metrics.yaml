@@ -1,0 +1,16 @@
+# #1539 capability — Step 1 panel: collect iteration metrics for the retrospective.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: retro-prep-metrics
+  labels: { domain: retrospective }
+spec:
+  description: Gather velocity, cycle-time, quality, and team-health metrics plus prior-action status into a metrics summary for retrospective preparation.
+  version: "1.0.0"
+  inputs:
+    - { name: retrospective_type, type: string, required: false }
+    - { name: iteration_number, type: string, required: false }
+  outputs:
+    - { name: metrics_summary, type: string }
+  agent: scrum-master
+  idempotent: true

@@ -1,0 +1,24 @@
+# Conversion capability (#1539) — flow-guided-implementation Phase 3 loop.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: guided-iterative-coding
+  labels: { domain: implementation }
+spec:
+  description: >-
+    For each task (respecting dependencies), run the bounded Locate → Generate →
+    Validate → Decide loop: Grep/Read to locate the modification site; apply a
+    direct Edit for simple changes or dispatch software-implementer for complex
+    ones; run tests (Bash), dispatch debugger on failure and code-reviewer on
+    pass (unless skip_review); then decide complete / retry-with-feedback /
+    escalate. Bounded by max_retries; honored via the step retry policy.
+    Phase 3 of flow-guided-implementation.
+  version: "1.0.0"
+  inputs:
+    - { name: max_retries, type: number, required: false, default: 3 }
+    - { name: skip_review, type: boolean, required: false, default: false }
+    - { name: dry_run, type: boolean, required: false, default: false }
+  outputs:
+    - { name: completed_tasks, type: array }
+  agent: software-implementer
+  idempotent: false

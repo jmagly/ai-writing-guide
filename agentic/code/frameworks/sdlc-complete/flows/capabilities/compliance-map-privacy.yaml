@@ -1,0 +1,15 @@
+# Conversion (#1539) capability for flow-compliance-validation Step 1 (panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: compliance-map-privacy
+  labels: { domain: compliance }
+spec:
+  description: Map privacy-oriented framework requirements (GDPR lawful basis, data-subject rights, privacy-by-design, transfers) to project controls, evidence requirements, and control owners.
+  version: "1.0.0"
+  inputs:
+    - { name: framework, type: string, required: true }
+  outputs:
+    - { name: requirements_matrix_privacy, type: object }
+  agent: privacy-officer
+  idempotent: true

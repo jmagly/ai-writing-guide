@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-discovery-track Step 2.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: discovery-author-use-cases
+  labels: { domain: discovery }
+spec:
+  description: Expand high-priority requests into use-case briefs (requirements-analyst) and matching testable acceptance test cards (system-analyst) for each top item (flow Step 2).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: use_case_briefs, type: array }
+    - { name: acceptance_cards, type: array }
+  agent: requirements-analyst
+  idempotent: false

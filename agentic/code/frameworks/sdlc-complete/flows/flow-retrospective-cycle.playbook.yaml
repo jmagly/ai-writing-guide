@@ -1,0 +1,79 @@
+# #1539 conversion: the agentic `flow-retrospective-cycle` skill expressed as a
+# declarative YAML Flow. Like flow-architecture-evolution (#1547), the prose
+# opens with a multi-agent fanout — Step 1 dispatches THREE pre-retro analysts
+# in parallel (metrics, survey, patterns) then synthesizes them into the
+# session agenda. That panel is encoded as a single `fanout` step. The
+# SKILL.md remains the thin wrapper / discoverable trigger surface; this
+# playbook is the orchestration source of truth for the step sequence + gate.
+#
+# Faithful to the prose flow's structure:
+#   Step 1 pre-retro prep (×3 + agenda) → retro-prep        (FANOUT panel + agenda synthesis)
+#   Step 2 facilitate session           → retro-facilitate  (scrum-master / agile-coach / analyzer)
+#   (human gate: review session + prior actions) → action-review-gate
+#   Step 3 create/prioritize actions     → retro-action-items (project-manager)
+#   Step 4 document summary + tracker     → retro-document     (scrum-master)
+#   Step 5 track effectiveness            → retro-track        (retrospective-analyzer)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-retrospective-cycle
+  labels:
+    category: sdlc-orchestration
+    domain: retrospective
+spec:
+  vars:
+    retrospective_type: iteration
+    iteration_number: ""
+  steps:
+    # Step 1: pre-retrospective preparation. Three analysts run in parallel —
+    # metrics (scrum-master), survey design (agile-coach), pattern analysis
+    # (retrospective-analyzer) — then the scrum-master synthesizes the agenda
+    # from their outputs. Encoded as a fanout panel.
+    - id: retro-prep
+      fanout:
+        strategy: parallel
+        agents:
+          - retro-prep-metrics    # scrum-master
+          - retro-prep-survey     # agile-coach
+          - retro-prep-patterns   # retrospective-analyzer
+        synthesize: retro-prep-agenda   # scrum-master
+      outputs:
+        - name: agenda
+
+    - id: retro-facilitate
+      capability: retro-facilitate
+      depends_on: [retro-prep]
+      inputs:
+        - { name: retrospective_type, from: "vars.retrospective_type" }
+      outputs:
+        - name: insights
+
+    # Human checkpoint: facilitator + team review the session output and the
+    # status of prior action items before committing to new ones. The retro is
+    # only as good as the human judgement applied at this pause point.
+    - id: action-review-gate
+      kind: gate
+      description: |
+        Human gate (review): present the facilitated session insights, root
+        causes, and the status of previous action items. The team confirms the
+        improvement opportunities are real and prior actions are correctly
+        marked (completed / in-progress / blocked) before new SMART action
+        items are created. Per the prose Success Criteria: previous action
+        items must be reviewed and updated here.
+      depends_on: [retro-facilitate]
+
+    - id: retro-action-items
+      capability: retro-action-items
+      depends_on: [action-review-gate]
+      outputs:
+        - name: action_items
+
+    - id: retro-document
+      capability: retro-document
+      depends_on: [retro-action-items]
+      outputs:
+        - name: report_path
+
+    - id: retro-track
+      capability: retro-track
+      depends_on: [retro-document]

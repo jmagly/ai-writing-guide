@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 4 CCB panel: technical perspective.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-ccb-technical
+  labels: { domain: requirements }
+spec:
+  description: Provide the technical perspective in the CCB review — assess change requests for technical feasibility, architectural integrity, technical debt, and long-term maintainability.
+  version: "1.0.0"
+  inputs:
+    - { name: impact_report, type: string, required: false }
+  outputs:
+    - { name: technical_assessment, type: object }
+  agent: software-architect
+  idempotent: true

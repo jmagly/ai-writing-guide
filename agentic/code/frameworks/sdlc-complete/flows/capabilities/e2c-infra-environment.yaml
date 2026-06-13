@@ -1,0 +1,14 @@
+# Conversion (#1539) fanout-panel capability for flow-elaboration-to-construction Step 2.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: e2c-infra-environment
+  labels: { domain: phase-transition }
+spec:
+  description: Iteration 0 panel member — configure the development environment and tooling (IDE configs, local dev setup, debugging, code-quality and security tools, collaboration tools) and produce a developer setup guide.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: dev_environment_guide, type: object }
+  agent: environment-engineer
+  idempotent: true

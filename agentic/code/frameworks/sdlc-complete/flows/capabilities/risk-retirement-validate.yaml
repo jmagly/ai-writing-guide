@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 5: validate risk retirement with evidence.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: risk-retirement-validate
+  labels: { domain: risk }
+spec:
+  description: Validate that retired risks have genuine evidence (spike/POC, ADR, owner confirmation), flag premature retirements, and produce the risk retirement report including ABM gate criteria status (≥70% retired, 100% of Show Stopper/High) when in Elaboration.
+  version: "1.0.0"
+  inputs:
+    - { name: spike_summary, type: string, required: false }
+  outputs:
+    - { name: retirement_report, type: string }
+  agent: risk-manager
+  idempotent: true

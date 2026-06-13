@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 1 panel: identify performance-critical user journeys.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-critical-paths
+  labels: { domain: performance }
+spec:
+  description: Identify critical user journeys, system boundaries (API endpoints, DB queries, external dependencies), and current monitoring coverage/gaps with specific paths and components.
+  version: "1.0.0"
+  inputs:
+    - { name: component, type: string, required: false }
+  outputs:
+    - { name: critical_paths, type: object }
+  agent: performance-engineer
+  idempotent: true

@@ -1,0 +1,18 @@
+# Conversion (#1539) — Step 2.5a: deploy the new version to staging.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-staging-deploy
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Deploy the new version to the staging environment, wait for all pods running
+    and healthy, and validate health checks. Emit SUCCESS | FAILED with pod
+    counts. On FAILED, stop before the regression check.
+    Writes .aiwg/working/deployment/staging-deployment-log.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: staging_status, type: string }
+  agent: devops-engineer
+  idempotent: false

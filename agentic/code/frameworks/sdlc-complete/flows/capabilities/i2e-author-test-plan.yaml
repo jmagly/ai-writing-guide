@@ -1,0 +1,14 @@
+# Conversion (#1539) — flow-inception-to-elaboration Step 6 authoring panel.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: i2e-author-test-plan
+  labels: { domain: testing }
+spec:
+  description: Develop the Master Test Plan — test strategy/levels, coverage targets, test environments, test-data strategy, automation tooling, and defect-management SLAs — from the SAD testability sections, NFRs, and use cases (flow Step 6 authoring agent).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: master_test_plan, type: string }
+  agent: test-architect
+  idempotent: false

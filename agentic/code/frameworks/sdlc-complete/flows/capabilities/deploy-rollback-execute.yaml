@@ -1,0 +1,23 @@
+# Conversion (#1539) — Step 5: strategy-specific rollback + verify + incident/RCA.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-rollback-execute
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Execute the strategy-specific automated rollback (Blue-Green: switch traffic
+    back to blue; Canary: abort rollout, scale canary to 0; Rolling: rollout undo
+    to previous version), verify rollback restored baseline SLOs and smoke tests,
+    re-run a post-rollback regression check to confirm the regression is
+    eliminated, then declare the incident (P0/P1) and initiate RCA. A FAILED or
+    PARTIAL rollback is a CRITICAL escalation to the incident commander. Writes
+    .aiwg/deployment/rollback-execution-log.md and .aiwg/deployment/rollback-report-{version}.md.
+  version: "1.0.0"
+  inputs:
+    - { name: strategy, type: string, required: true }
+    - { name: reason, type: string, required: false }
+  outputs:
+    - { name: rollback_status, type: string }
+  agent: devops-engineer
+  idempotent: false

@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 3 of flow-security-review-cycle.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: secreview-vuln-triage
+  labels: { domain: security }
+spec:
+  description: Triage discovered vulnerabilities — calculate CVSS scores, assess exploitability and attack vectors, assign remediation priority (P0-P3) with owners and due dates, and document accepted risks with justification. Outputs .aiwg/security/vulnerability-triage-{date}.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: triage_report, type: string }
+  agent: security-auditor
+  idempotent: true

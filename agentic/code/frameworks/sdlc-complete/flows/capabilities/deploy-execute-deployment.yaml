@@ -1,0 +1,22 @@
+# Conversion (#1539) — Step 3: strategy-specific deployment execution.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-execute-deployment
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Execute the confirmed deployment strategy with continuous health checks.
+    Blue-Green: deploy green env, validate, then cutover traffic (blue retained
+    for instant rollback). Canary: progressive 1-5% -> 25% -> 50% -> 100% with
+    SLO monitoring at each stage, aborting on breach. Rolling: node-by-node
+    update with per-node health checks and pause-on-failure. Logs all actions
+    with timestamps to .aiwg/working/deployment/execution-log-*.md and emits
+    SUCCESS | FAILED.
+  version: "1.0.0"
+  inputs:
+    - { name: strategy, type: string, required: true }
+  outputs:
+    - { name: deployment_status, type: string }
+  agent: devops-engineer
+  idempotent: false

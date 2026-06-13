@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 1 fanout panel member: technical/architectural risks.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: risk-technical-identify
+  labels: { domain: risk }
+spec:
+  description: Identify technical and architectural risks (unproven choices, performance unknowns, integration complexity, skill gaps, data migration) with initial probability/impact estimates and suggested mitigations.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: technical_risks_draft, type: string }
+  agent: architecture-designer
+  idempotent: true

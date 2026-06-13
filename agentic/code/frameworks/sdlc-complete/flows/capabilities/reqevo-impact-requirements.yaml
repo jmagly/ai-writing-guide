@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 3 impact panel: requirements scope impact.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: reqevo-impact-requirements
+  labels: { domain: requirements }
+spec:
+  description: Analyze requirements/scope impact of a CCB-review change request — requirements affected (new/modified/deleted), use cases impacted, NFRs affected, acceptance criteria changes, and ripple effects. Output .aiwg/working/impact-analysis/{CR-ID}-requirements.md.
+  version: "1.0.0"
+  inputs:
+    - { name: cr_id, type: string, required: true }
+  outputs:
+    - { name: requirements_impact, type: string }
+  agent: requirements-analyst
+  idempotent: true

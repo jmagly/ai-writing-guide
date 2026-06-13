@@ -1,0 +1,15 @@
+# Conversion (#1539) — flow-inception-to-elaboration Step 1.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: i2e-lom-validation
+  labels: { domain: phase-transition }
+spec:
+  description: Validate the Lifecycle Objective Milestone (LOM) exit criteria — vision approved, business case funded, risk list baselined, data classification complete, architecture scan documented, sponsor signoff — and emit a PASS/FAIL GO decision (flow Step 1).
+  version: "1.0.0"
+  inputs:
+    - { name: guidance, type: string, required: false }
+  outputs:
+    - { name: lom_status, type: string }
+  agent: project-manager
+  idempotent: true

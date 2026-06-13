@@ -1,0 +1,17 @@
+# #1539 conversion — flow-cross-team-sync Step 5 (knowledge sharing framework + first demo).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: xteam-knowledge-sharing
+  labels: { domain: team }
+spec:
+  description: Build the cross-team knowledge sharing framework — demo cadence/structure, knowledge topics, shared docs/patterns library, collaboration opportunities — and plan the first cross-team demo (date, topics, attendees, prep checklist).
+  version: "1.0.0"
+  inputs:
+    - { name: team_a, type: string, required: false }
+    - { name: team_b, type: string, required: false }
+  outputs:
+    - { name: knowledge_framework, type: string }
+    - { name: first_demo_plan, type: string }
+  agent: technical-lead
+  idempotent: true

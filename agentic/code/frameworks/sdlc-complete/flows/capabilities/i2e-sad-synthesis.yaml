@@ -1,0 +1,14 @@
+# Conversion (#1539) — flow-inception-to-elaboration Step 3.4 synthesis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: i2e-sad-synthesis
+  labels: { domain: architecture }
+spec:
+  description: Synthesize the four reviewer findings into the BASELINED Software Architecture Document (v1.0) — merge complementary feedback, resolve security/performance trade-offs, address CONDITIONAL must-fixes, emit a synthesis report (flow Step 3.4 synthesizer).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: sad_baselined, type: string }
+  agent: architecture-documenter
+  idempotent: false

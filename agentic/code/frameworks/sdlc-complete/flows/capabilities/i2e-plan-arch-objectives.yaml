@@ -1,0 +1,14 @@
+# Conversion (#1539) — flow-inception-to-elaboration Step 2 planning panel.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: i2e-plan-arch-objectives
+  labels: { domain: phase-transition }
+spec:
+  description: Define architecture objectives — drivers (quality attributes), constraints, component boundaries, technology candidates, integration approach — drafting the objectives section of the Architecture Baseline Plan (flow Step 2 planning agent).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: objectives_draft, type: string }
+  agent: architecture-designer
+  idempotent: false

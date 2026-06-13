@@ -11,6 +11,11 @@ commandHint:
   orchestration: true
 ---
 
+> **Declarative Flow (#1539):** This flow's orchestration is now also expressed as a
+> declarative YAML Flow at `flows/flow-elaboration-to-construction.playbook.yaml` (source of truth for the step
+> sequence + gates). This SKILL.md remains the discoverable trigger surface and prose
+> reference. See epic #1534.
+
 # Elaboration → Construction Phase Transition Flow
 
 **You are the Core Orchestrator** for the critical Elaboration→Construction phase transition.

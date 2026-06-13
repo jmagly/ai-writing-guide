@@ -1,0 +1,18 @@
+# Conversion (#1539) — flow-test-strategy-execution Step 2: unit suite execution + coverage analysis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: teststrat-unit-tests
+  labels: { domain: testing }
+spec:
+  description: Run the unit test suite with coverage enabled, collect pass/fail/skip results and line/branch/function/statement coverage, identify coverage gaps and document failures.
+  version: "1.0.0"
+  inputs:
+    - { name: target_component, type: string, required: false }
+    - { name: coverage_target_line, type: number, required: false, default: 80 }
+    - { name: coverage_target_branch, type: number, required: false, default: 75 }
+  outputs:
+    - { name: unit_results, type: object }
+    - { name: coverage_analysis, type: object }
+  agent: test-engineer
+  idempotent: true

@@ -1,0 +1,15 @@
+# Capability (#1539) — Step 2 panel: impact assessment (user effect).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-impact-assess
+  labels: { domain: incident }
+spec:
+  description: Assess incident impact — affected user count/percentage, severity of effect, business impact (revenue, compliance, reputation, safety), and the full list of affected systems (HIGH/MEDIUM/LOW).
+  version: "1.0.0"
+  inputs:
+    - { name: incident_record, type: string, required: true }
+  outputs:
+    - { name: impact_level, type: string }
+  agent: incident-responder
+  idempotent: true

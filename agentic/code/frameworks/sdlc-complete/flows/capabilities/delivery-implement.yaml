@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 3 (TDD pipeline).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-implement
+  labels: { domain: delivery }
+spec:
+  description: Implement code to make all written tests pass, following SAD patterns and coding standards, with continuous test runs (flow Step 3 TDD, implement-to-pass).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: implementation, type: object }
+  agent: software-implementer
+  idempotent: false

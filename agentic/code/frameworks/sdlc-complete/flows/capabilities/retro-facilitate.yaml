@@ -1,0 +1,16 @@
+# #1539 capability — Step 2: facilitate the retrospective session and generate insights.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: retro-facilitate
+  labels: { domain: retrospective }
+spec:
+  description: Set the stage (safety check, working agreements), run the selected format's activities, then perform 5-Whys root-cause analysis and pattern recognition to produce insights for the top issues.
+  version: "1.0.0"
+  inputs:
+    - { name: retrospective_type, type: string, required: false }
+    - { name: agenda, type: string, required: false }
+  outputs:
+    - { name: insights, type: string }
+  agent: agile-coach
+  idempotent: true

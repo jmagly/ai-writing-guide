@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 2 panel: database performance analysis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: perfopt-database-analysis
+  labels: { domain: performance }
+spec:
+  description: Analyze database performance — slow queries, missing indexes, N+1 problems, inefficient joins, schema optimization, connection management, and caching opportunities — with specific recommendations.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: database_analysis, type: object }
+  agent: database-optimizer
+  idempotent: true

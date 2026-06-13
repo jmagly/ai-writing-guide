@@ -1,0 +1,15 @@
+# Capability (#1539) — Step 3 pipeline: Tier 3 architectural analysis.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: incident-tier3-response
+  labels: { domain: incident }
+spec:
+  description: Tier 3 response — architectural analysis of fundamental/scalability/capacity issues, vendor engagement if a third-party dependency, and emergency decision authority (architecture changes, hotfix-outside-process approval, workaround vs full fix).
+  version: "1.0.0"
+  inputs:
+    - { name: tier2_analysis, type: string, required: true }
+  outputs:
+    - { name: tier3_assessment, type: string }
+  agent: architecture-designer
+  idempotent: true

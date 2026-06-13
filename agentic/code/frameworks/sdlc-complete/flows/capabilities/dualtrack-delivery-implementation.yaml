@@ -1,0 +1,14 @@
+# #1539 conversion of flow-iteration-dual-track Step 2 (Delivery kickoff panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-delivery-implementation
+  labels: { domain: iteration }
+spec:
+  description: Plan the implementation approach for validated Delivery backlog items — technical approach per story, component assignments, integration points, testing strategy, and technical risks/blockers.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: implementation_plan, type: string }
+  agent: software-implementer
+  idempotent: true

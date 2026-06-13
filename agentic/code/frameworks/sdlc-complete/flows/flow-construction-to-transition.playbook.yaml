@@ -1,0 +1,134 @@
+# Conversion (#1539): the agentic `flow-construction-to-transition` skill expressed
+# as a declarative YAML Flow. This Construction→Transition flow drives IOC/OCM
+# validation, production-environment readiness (parallel panel), deployment
+# (sequential pipeline), user training + UAT (sequential pipeline), support/ops
+# handover (parallel panel), the hypercare period, and the PRM milestone gate.
+# Parallel agent dispatches in the prose are encoded as `fanout` steps
+# (agentic-step extension, #1547 / adr-flow-agentic-steps.md); the PRM signoff is a
+# human `kind: gate`. The SKILL.md remains the thin wrapper / discoverable trigger
+# surface; this playbook is the orchestration source of truth. See epic #1534.
+#
+# Faithful to the prose flow:
+#   Step 1 validate OCM exit criteria      → ocm-validation        (project-manager)
+#   Step 2 prepare production environment  → env-readiness         (FANOUT parallel ×3 + synthesis)
+#         infra/security/observability         devops-engineer / security-architect / reliability-engineer
+#         synthesis: production-readiness       deployment-manager
+#   Step 3 execute production deployment   → deployment            (FANOUT pipeline ×4 + synthesis)
+#         strategy/pre-deploy/deploy/validate   deployment-manager / devops-engineer / reliability-engineer
+#         synthesis: deployment-report          deployment-manager
+#   Step 4 user training and UAT           → training-uat          (FANOUT pipeline ×3 + synthesis)
+#         materials/delivery/uat                training-lead / requirements-analyst
+#         synthesis: training-report            product-owner
+#   Step 5 support and operations handover → handover              (FANOUT parallel ×2 + synthesis)
+#         support-training/ops-training         support-lead / operations-lead
+#         synthesis: handover-report            deployment-manager
+#   Step 6 hypercare period                → hypercare             (reliability-engineer)
+#   Step 7 validate PRM criteria           → prm-validation        (project-manager)
+#         (human PRM signoff/decision)          prm-gate
+#         PRM report                            prm-report          (project-manager)
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-construction-to-transition
+  labels:
+    category: sdlc-orchestration
+    domain: transition
+spec:
+  vars:
+    guidance: ""
+  steps:
+    - id: ocm-validation
+      capability: c2t-ocm-validation
+      inputs:
+        - { name: guidance, from: "vars.guidance" }
+      outputs:
+        - name: ocm_status
+
+    # Step 2: production environment readiness. Three validations run in parallel
+    # (infrastructure, security, observability); the deployment-manager synthesizes
+    # them into the environment readiness report.
+    - id: env-readiness
+      fanout:
+        strategy: parallel
+        agents:
+          - c2t-infra-readiness        # devops-engineer
+          - c2t-security-validation    # security-architect
+          - c2t-observability-readiness # reliability-engineer
+        synthesize: c2t-production-readiness   # deployment-manager
+      depends_on: [ocm-validation]
+      outputs:
+        - name: environment_readiness
+
+    # Step 3: production deployment. The prose chains strategy → pre-deploy →
+    # deploy → post-deploy validation, each step seeing the prior output; the
+    # deployment-manager synthesizes the deployment report. Encoded as a pipeline
+    # fanout (chained, not independent).
+    - id: deployment
+      fanout:
+        strategy: pipeline
+        agents:
+          - c2t-deployment-strategy    # deployment-manager
+          - c2t-pre-deployment         # deployment-manager
+          - c2t-deployment-execution   # devops-engineer
+          - c2t-post-deployment-validation # reliability-engineer
+        synthesize: c2t-deployment-report   # deployment-manager
+      depends_on: [env-readiness]
+      outputs:
+        - name: deployment_outcome
+
+    # Step 4: user training and UAT. Materials → delivery → UAT chained; the
+    # product-owner synthesizes the training/acceptance report.
+    - id: training-uat
+      fanout:
+        strategy: pipeline
+        agents:
+          - c2t-training-materials     # training-lead
+          - c2t-training-delivery      # training-lead
+          - c2t-uat-execution          # requirements-analyst
+        synthesize: c2t-training-report   # product-owner
+      depends_on: [deployment]
+      outputs:
+        - name: acceptance_decision
+
+    # Step 5: support and operations handover. Support and operations teams are
+    # trained/validated in parallel; the deployment-manager runs the formal
+    # handover and produces the support + operations handover reports.
+    - id: handover
+      fanout:
+        strategy: parallel
+        agents:
+          - c2t-support-training       # support-lead
+          - c2t-operations-training    # operations-lead
+        synthesize: c2t-handover       # deployment-manager
+      depends_on: [training-uat]
+      outputs:
+        - name: handover_status
+
+    - id: hypercare
+      capability: c2t-hypercare
+      depends_on: [handover]
+      outputs:
+        - name: hypercare_decision
+
+    - id: prm-validation
+      capability: c2t-prm-validation
+      depends_on: [hypercare]
+      outputs:
+        - name: prm_status
+
+    - id: prm-gate
+      kind: gate
+      description: |
+        Human gate (PRM signoff): present the PRM criteria validation and the full
+        Transition artifact set (deployment report, training/acceptance report,
+        support + operations handover reports, hypercare reports). Obtain the PRM
+        signoffs (Executive Sponsor, Product Owner, Deployment Manager, Support
+        Lead, Operations Lead, Reliability Engineer) and the milestone decision:
+        PROJECT COMPLETE | EXTENDED HYPERCARE | ISSUES DETECTED.
+      depends_on: [prm-validation]
+
+    - id: prm-report
+      capability: c2t-prm-report
+      depends_on: [prm-gate]
+      outputs:
+        - name: prm_report_path

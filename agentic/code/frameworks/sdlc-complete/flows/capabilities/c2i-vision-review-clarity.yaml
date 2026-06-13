@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-concept-to-inception Step 1 (clarity review).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2i-vision-review-clarity
+  labels: { domain: inception }
+spec:
+  description: Review the vision draft for clarity, structure, and stakeholder communication quality; return APPROVED | CONDITIONAL | NEEDS_WORK with inline comments.
+  version: "1.0.0"
+  inputs:
+    - { name: vision_draft, type: string, required: true }
+  outputs:
+    - { name: review, type: object }
+  agent: technical-writer
+  idempotent: true

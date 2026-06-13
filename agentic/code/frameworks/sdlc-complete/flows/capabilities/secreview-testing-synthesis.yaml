@@ -1,0 +1,14 @@
+# Conversion (#1539) — Step 2 fanout synthesizer of flow-security-review-cycle.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: secreview-testing-synthesis
+  labels: { domain: security }
+spec:
+  description: Synthesize the automated-scan and penetration-test panel outputs into one consolidated security-testing findings set, deduplicating and correlating findings across SAST/DAST/dependency/secrets/container/manual sources for downstream triage.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: testing_findings, type: string }
+  agent: security-auditor
+  idempotent: true

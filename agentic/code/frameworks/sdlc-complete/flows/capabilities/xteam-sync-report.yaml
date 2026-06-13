@@ -1,0 +1,14 @@
+# #1539 conversion — flow-cross-team-sync Step 6 (cross-team sync status report).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: xteam-sync-report
+  labels: { domain: team }
+spec:
+  description: Read all generated artifacts and compile the cross-team sync status report — executive summary, dependency analysis, blocker status, sync-meeting health, integration health, knowledge sharing, risks/recommendations, and next steps.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: report_path, type: string }
+  agent: project-manager
+  idempotent: true

@@ -1,0 +1,15 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 6.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-hypercare
+  labels: { domain: transition }
+spec:
+  description: Run the 7-14 day hypercare period — initialize elevated monitoring and accelerated SLAs, produce daily reports (production stability, user adoption, support effectiveness), and conduct Day 7 / Day 14 reviews; decide CONCLUDE | EXTEND | ISSUES DETECTED.
+  version: "1.0.0"
+  inputs:
+    - { name: handover_status, type: string, required: false }
+  outputs:
+    - { name: hypercare_decision, type: string }
+  agent: reliability-engineer
+  idempotent: true

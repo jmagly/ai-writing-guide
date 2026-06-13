@@ -1,0 +1,15 @@
+# #1539 conversion of flow-iteration-dual-track Step 7: Present Results.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dualtrack-present-results
+  labels: { domain: iteration }
+spec:
+  description: Read the final iteration report and present the dual-track summary to the user — overall status, Delivery track results, Discovery track results, synchronization health, key achievements, next-iteration action items, generated artifacts, and next steps.
+  version: "1.0.0"
+  inputs:
+    - { name: iteration_report, type: string, required: false }
+  outputs:
+    - { name: summary, type: string }
+  agent: workflow-executor
+  idempotent: true

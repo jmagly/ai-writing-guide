@@ -1,0 +1,78 @@
+# #1539 conversion: the agentic `flow-hypercare-monitoring` skill expressed as a
+# declarative YAML Flow. The SKILL.md remains the discoverable trigger surface /
+# prose reference; this playbook is the orchestration source of truth for the
+# hypercare step sequence + the human signoff gate. Part of epic #1534.
+#
+# Schema-fit note (#1539): SDLC flows act on a single project context rather than
+# iterating a host set, so `inventory`/`targets` are omitted.
+#
+# Faithful to the prose flow:
+#   Step 1 establish team + monitoring (×3 agents) → hypercare-setup (FANOUT panel + synthesis)
+#       Agent: operations-manager  → hypercare-team-roster
+#       Agent: reliability-engineer → hypercare-dashboard-config
+#       Agent: support-lead        → hypercare-escalation-matrix
+#       synthesize (orchestrator)  → hypercare-setup-plan
+#   Step 2 monitor stability/SLOs (daily) → hypercare-monitor-stability (reliability-engineer)
+#   Step 3 daily standups                 → hypercare-daily-standup     (operations-manager)
+#   Step 4 post-incident reviews (P0/P1)   → hypercare-post-incident-review (reliability-engineer)
+#   Step 5 validate exit criteria + report → hypercare-exit-report       (operations-manager)
+#   (human signoff gate, 5 signatures)     → exit-signoff-gate
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-hypercare-monitoring
+  labels:
+    category: sdlc-orchestration
+    domain: hypercare
+spec:
+  vars:
+    hypercare_duration_days: 7
+    guidance: ""
+  steps:
+    # Step 1: establish the hypercare team and monitoring infrastructure. The
+    # prose dispatches three planning agents in parallel (roster, dashboard,
+    # escalation matrix), then the orchestrator synthesizes the setup plan and
+    # validates completeness. Encoded as a single fanout step.
+    - id: hypercare-setup
+      fanout:
+        strategy: parallel
+        agents:
+          - hypercare-team-roster        # operations-manager
+          - hypercare-dashboard-config   # reliability-engineer
+          - hypercare-escalation-matrix  # support-lead
+        synthesize: hypercare-setup-plan  # orchestrator completeness check
+      inputs:
+        - { name: hypercare_duration_days, from: "vars.hypercare_duration_days" }
+        - { name: guidance, from: "vars.guidance" }
+      outputs:
+        - name: setup_ready
+
+    - id: monitor-stability
+      capability: hypercare-monitor-stability
+      depends_on: [hypercare-setup]
+      outputs:
+        - name: slo_status
+
+    - id: daily-standup
+      capability: hypercare-daily-standup
+      depends_on: [monitor-stability]
+
+    - id: post-incident-review
+      capability: hypercare-post-incident-review
+      depends_on: [monitor-stability]
+
+    - id: exit-report
+      capability: hypercare-exit-report
+      depends_on: [daily-standup, post-incident-review]
+      outputs:
+        - name: exit_criteria_status
+
+    - id: exit-signoff-gate
+      kind: gate
+      description: |
+        Human signoff (review_diff): present the hypercare exit report and the
+        exit-criteria validation (PASS | CONDITIONAL | FAIL). Obtain the five
+        required signatures (Hypercare Lead, Reliability Engineer, Support Lead,
+        Product Owner, Project Manager). Approve to END HYPERCARE and transition
+        to standard support; a FAIL/CONDITIONAL returns to EXTEND or ESCALATE.
+      depends_on: [exit-report]

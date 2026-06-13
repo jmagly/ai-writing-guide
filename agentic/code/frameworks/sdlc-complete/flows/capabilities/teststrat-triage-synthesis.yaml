@@ -1,0 +1,16 @@
+# Conversion (#1539) — flow-test-strategy-execution Step 5 synthesizer: combine triage + RCA.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: teststrat-triage-synthesis
+  labels: { domain: testing }
+spec:
+  description: Synthesize the triaged defect cards and root-cause analyses into a single triaged defect set with severity counts and owners.
+  version: "1.0.0"
+  inputs:
+    - { name: defect_cards, type: array, required: false }
+    - { name: root_cause_analysis, type: object, required: false }
+  outputs:
+    - { name: triaged_defects, type: object }
+  agent: qa-lead
+  idempotent: true

@@ -1,0 +1,19 @@
+# Conversion (#1539) — Step 4a: capture the pre-deployment production baseline.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: deploy-capture-baseline
+  labels: { domain: deployment }
+spec:
+  description: >-
+    Capture a pre-deployment production baseline snapshot — error rate, latency
+    p50/p95/p99, throughput, availability, critical-journey completion rates,
+    and current smoke/integration/critical-path test pass rates — for
+    post-deployment regression comparison.
+    Writes .aiwg/working/deployment/production-baseline-snapshot.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: baseline_snapshot, type: string }
+  agent: reliability-engineer
+  idempotent: true

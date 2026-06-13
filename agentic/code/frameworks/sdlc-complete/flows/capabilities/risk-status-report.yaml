@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 7: generate stakeholder risk status report.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: risk-status-report
+  labels: { domain: risk }
+spec:
+  description: Generate the stakeholder risk status report (executive summary with overall posture, risk summary by priority, trends, action items, gate readiness, detailed appendix) by aggregating the risk list, assessment, retirement report, spike summary, and escalation log.
+  version: "1.0.0"
+  inputs:
+    - { name: escalation_log, type: string, required: false }
+  outputs:
+    - { name: status_report, type: string }
+  agent: project-manager
+  idempotent: true

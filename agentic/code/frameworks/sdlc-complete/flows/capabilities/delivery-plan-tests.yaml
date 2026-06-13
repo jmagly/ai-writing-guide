@@ -1,0 +1,14 @@
+# #1539 conversion capability — flow-delivery-track Step 2 (planning panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: delivery-plan-tests
+  labels: { domain: delivery }
+spec:
+  description: Define the test-first strategy per task — test cases to write before implementation, blocking tests, test data, and mock/stub needs (flow Step 2 planning panel).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: test_first_strategy, type: object }
+  agent: test-engineer
+  idempotent: false

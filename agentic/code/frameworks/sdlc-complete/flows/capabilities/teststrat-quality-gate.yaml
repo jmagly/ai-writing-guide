@@ -1,0 +1,15 @@
+# Conversion (#1539) — flow-test-strategy-execution Step 6 synthesizer: quality-gate validation.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: teststrat-quality-gate
+  labels: { domain: testing }
+spec:
+  description: Validate quality gates against the test execution report — test pass rate, coverage thresholds, critical-defect limits, and performance SLAs; render the overall gate decision (PASS | CONDITIONAL | FAIL).
+  version: "1.0.0"
+  inputs:
+    - { name: test_execution_report, type: string, required: false }
+  outputs:
+    - { name: quality_gate_report, type: string }
+  agent: project-manager
+  idempotent: true

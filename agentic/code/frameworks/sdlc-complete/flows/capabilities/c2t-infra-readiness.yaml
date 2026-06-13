@@ -1,0 +1,14 @@
+# Conversion capability (#1539) — flow-construction-to-transition Step 2 (env-readiness panel).
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: c2t-infra-readiness
+  labels: { domain: transition }
+spec:
+  description: Validate production infrastructure readiness — provisioning (compute/storage/network), capacity (expected load + 20% buffer), high availability and failover, autoscaling, and network configuration (load balancers, CDN, DNS).
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: infrastructure_readiness, type: object }
+  agent: devops-engineer
+  idempotent: true

@@ -1,0 +1,21 @@
+# #1539 capability — prose Step 2.2: architecture readiness reviewer.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: gatechk-review-architecture
+  labels: { domain: quality-gate }
+spec:
+  description: >-
+    Deep validation of architecture readiness — all views documented (logical,
+    physical, deployment), technology decisions justified, integration points
+    defined, security/performance architecture complete, architecture risks
+    retired via POCs. Report READY | GAPS | BLOCKED (flow-gate-check Step 2.2 ABM
+    architecture review; also drives the 12-factor process-architecture review).
+  version: "1.0.0"
+  inputs:
+    - { name: gate_type, type: string, required: true }
+  outputs:
+    - { name: review, type: string }
+    - { name: readiness, type: string }
+  agent: architecture-designer
+  idempotent: true

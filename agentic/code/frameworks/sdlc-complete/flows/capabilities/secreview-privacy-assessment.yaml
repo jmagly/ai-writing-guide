@@ -1,0 +1,14 @@
+# Conversion (#1539) — privacy consideration of flow-security-review-cycle.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: secreview-privacy-assessment
+  labels: { domain: security }
+spec:
+  description: Review data-privacy compliance when GDPR/PII requirements apply — validate data classification, PII handling and encryption, consent mechanisms, data retention policies, and cross-border transfers. Outputs .aiwg/security/privacy-assessment-{date}.md.
+  version: "1.0.0"
+  inputs: []
+  outputs:
+    - { name: privacy_report, type: string }
+  agent: privacy-officer
+  idempotent: true

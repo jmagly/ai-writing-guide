@@ -1,0 +1,20 @@
+# #1539 capability — prose Steps 2.3/3: performance & reliability reviewer.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: gatechk-review-reliability
+  labels: { domain: quality-gate }
+spec:
+  description: >-
+    Validate performance and reliability against SLOs — response time (p50/p95/p99),
+    throughput, error rates, resource utilization, scalability; compare against
+    supplemental-spec targets. Pass criteria: all SLOs met. Report PASS | FAIL with
+    metrics (flow-gate-check Step 2.3 IOC reliability and Step 3 reliability gate).
+  version: "1.0.0"
+  inputs:
+    - { name: gate_type, type: string, required: true }
+  outputs:
+    - { name: review, type: string }
+    - { name: readiness, type: string }
+  agent: reliability-engineer
+  idempotent: true

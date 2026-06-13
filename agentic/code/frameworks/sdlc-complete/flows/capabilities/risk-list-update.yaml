@@ -1,0 +1,15 @@
+# Conversion (#1539) — Step 3: update master risk list and tracking.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: risk-list-update
+  labels: { domain: risk }
+spec:
+  description: Update the comprehensive master risk list (active by priority, retired archive, metrics) with assessment results, add traceability links (Risk→Spike/ADR/UC), and track risk aging/stale escalation using the risk-list template.
+  version: "1.0.0"
+  inputs:
+    - { name: assessment_report, type: string, required: false }
+  outputs:
+    - { name: risk_list, type: string }
+  agent: risk-manager
+  idempotent: true
