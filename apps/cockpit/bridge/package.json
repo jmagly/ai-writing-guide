@@ -1,0 +1,13 @@
+{
+  "name": "@aiwg/cockpit-bridge",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AIWG Cockpit Bridge — local 127.0.0.1 client of AIWG surfaces + agentic-sandbox A2A; serves the registry-driven UI. Dev skeleton: reads instance inventory and serves a minimal screen.",
+  "bin": { "cockpit-bridge": "src/server.mjs" },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "smoke": "node src/smoke.mjs"
+  },
+  "engines": { "node": ">=18" }
+}

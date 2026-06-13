@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AIWG Cockpit — Inventory</title>
+  <style>
+    :root { color-scheme: light dark; --bg:#0f1115; --panel:#171a21; --fg:#e6e8ec; --muted:#9aa3b2; --line:#2a2f3a; --ok:#3fb950; --warn:#d29922; --idle:#6b7280; --accent:#818cf8; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+    header { padding:18px 22px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:14px; }
+    header h1 { font-size:18px; margin:0; font-weight:650; }
+    header .mark { color:var(--accent); font-size:20px; }
+    header .meta { margin-left:auto; color:var(--muted); font-size:13px; }
+    button { background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:7px; padding:6px 12px; cursor:pointer; font:inherit; }
+    button:hover { border-color:var(--accent); }
+    button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+    main { padding:22px; }
+    table { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+    caption { text-align:left; color:var(--muted); padding:10px 14px; font-size:13px; }
+    th, td { text-align:left; padding:11px 14px; border-bottom:1px solid var(--line); }
+    th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+    tr:last-child td { border-bottom:0; }
+    code { font:13px ui-monospace, monospace; color:var(--muted); }
+    .badge { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--line); font-size:12px; }
+    .state { display:inline-flex; align-items:center; gap:7px; }
+    .dot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
+    .state.running .dot { background:var(--ok); } .state.stopped .dot { background:var(--idle); } .state.provisioning .dot { background:var(--warn); }
+    .empty, .err { color:var(--muted); padding:22px; }
+    .err { color:#f85149; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="mark" aria-hidden="true">◆</span>
+    <h1>AIWG&nbsp;Cockpit <span style="color:var(--muted);font-weight:400">— Inventory</span></h1>
+    <span class="meta" id="meta" aria-live="polite"></span>
+    <button id="refresh" type="button">Refresh</button>
+  </header>
+  <main>
+    <div id="view" role="region" aria-label="Agent instance inventory">Loading…</div>
+  </main>
+  <script type="module">
+    const view = document.getElementById('view');
+    const meta = document.getElementById('meta');
+    const fmt = (id) => id.length > 12 ? id.slice(0, 8) + '…' : id;
+    async function load() {
+      view.textContent = 'Loading…';
+      try {
+        const r = await fetch('/api/inventory');
+        if (!r.ok) throw new Error('inventory ' + r.status);
+        const inv = await r.json();
+        meta.textContent = `${inv.count} instance(s) · ${new Date(inv.fetched_at).toLocaleTimeString()}`;
+        if (!inv.instances.length) { view.innerHTML = '<p class="empty">No instances.</p>'; return; }
+        const rows = inv.instances.map((i) => `
+          <tr>
+            <td><code title="${i.id}">${fmt(i.id)}</code></td>
+            <td><span class="badge">${i.runtime}</span></td>
+            <td>${i.loadout}</td>
+            <td><span class="state ${i.state}"><span class="dot" aria-hidden="true"></span>${i.state}</span></td>
+            <td>${i.tenant}</td>
+          </tr>`).join('');
+        view.innerHTML = `<table>
+          <caption>Agent instances (live from the executor)</caption>
+          <thead><tr><th scope="col">Instance</th><th scope="col">Runtime</th><th scope="col">Loadout</th><th scope="col">State</th><th scope="col">Tenant</th></tr></thead>
+          <tbody>${rows}</tbody></table>`;
+      } catch (e) {
+        view.innerHTML = `<p class="err">Could not load inventory: ${e.message}</p>`;
+        meta.textContent = '';
+      }
+    }
+    document.getElementById('refresh').addEventListener('click', load);
+    load();
+  </script>
+</body>
+</html>

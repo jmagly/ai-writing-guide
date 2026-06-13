@@ -52,7 +52,7 @@ export function buildAgentCard(instanceId, opts) {
         {
           uri: EXT.idempotency,
           description: 'Idempotent dispatch via replay key + JCS hash.',
-          required: false,
+          required: true,
           params: {},
         },
         {
