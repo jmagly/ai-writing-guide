@@ -1,0 +1,21 @@
+{
+  "name": "@aiwg/cockpit",
+  "version": "0.0.0",
+  "private": true,
+  "description": "AIWG Cockpit — UX-first control plane over AIWG + multi-stack agentic sessions. Opt-in, separately published; NOT shipped in the base aiwg npm package (guarded by test/smoke/cockpit-base-footprint.test.js).",
+  "type": "module",
+  "license": "MIT",
+  "workspaces": [
+    "mock-executor",
+    "bridge"
+  ],
+  "scripts": {
+    "start:mock": "node mock-executor/src/server.mjs",
+    "start:bridge": "node bridge/src/server.mjs",
+    "smoke": "node mock-executor/src/smoke.mjs && node bridge/src/smoke.mjs",
+    "test": "npm run smoke"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
