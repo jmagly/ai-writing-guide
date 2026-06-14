@@ -38,11 +38,50 @@ async function getInventory(mockUrl) {
   };
 }
 
+/** Running tasks across all instances (the running-agents board). */
+async function getRunning(mockUrl) {
+  const r = await fetch(`${mockUrl}/admin/running`);
+  if (!r.ok) throw new Error(`admin /running -> ${r.status}`);
+  const { running } = await r.json();
+  return {
+    source: mockUrl,
+    fetched_at: new Date().toISOString(),
+    count: running.length,
+    running: running.map((t) => ({ instance_id: t.instance_id, task_id: t.task_id, state: t.state, tenant: t.tenant })),
+  };
+}
+
+/**
+ * Sessions for one instance, each with a direct attach_url. Control plane (this
+ * list) goes through the Bridge; the data plane (the pty stream) connects direct
+ * to the executor — masking differs per WS direction, so the Bridge issues the
+ * URL rather than proxying frames.
+ */
+async function getSessions(mockUrl, instanceId) {
+  const r = await fetch(`${mockUrl}/agents/${encodeURIComponent(instanceId)}/sessions`);
+  if (!r.ok) throw new Error(`/sessions -> ${r.status}`);
+  const { sessions } = await r.json();
+  const wsBase = mockUrl.replace(/^http/i, 'ws');
+  return {
+    instance_id: instanceId,
+    sessions: sessions.map((s) => ({
+      ...s,
+      attach_url: `${wsBase}/agents/${encodeURIComponent(instanceId)}/sessions/${encodeURIComponent(s.id)}/attach`,
+    })),
+  };
+}
+
 export function createBridge({ mockUrl = MOCK_URL } = {}) {
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
     try {
       if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(mockUrl));
+      if (url.pathname === '/api/running') return json(res, 200, await getRunning(mockUrl));
+      if (url.pathname === '/api/sessions') {
+        const inst = url.searchParams.get('instance');
+        if (!inst) return json(res, 400, { error: 'instance_required' });
+        return json(res, 200, await getSessions(mockUrl, inst));
+      }
       if (url.pathname === '/api/health') return json(res, 200, { status: 'ok', mock: mockUrl });
       if (url.pathname === '/' || url.pathname === '/index.html') {
         const html = await readFile(join(__dir, 'public', 'index.html'), 'utf8');

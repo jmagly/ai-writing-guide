@@ -8,7 +8,7 @@
 //   pty.request_keyframe         -> op:"keyframe" (payload.frames includes outputs)
 //   ?replay_from=N               -> replays buffered frames seq>N + keyframe
 import { createHash, randomUUID } from 'node:crypto';
-import { getInstance } from './store.mjs';
+import { getInstance, DEFAULT_INSTANCE } from './store.mjs';
 import { createTaskFor, getTaskFor } from './a2a.mjs';
 
 const WS_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
@@ -49,10 +49,35 @@ function makeParser(onText, onClose) {
   };
 }
 
-const sessions = new Map(); // sessionId -> { seq, frames:[], members:[], hasController }
-function sessionOf(id) { if (!sessions.has(id)) sessions.set(id, { seq: 0, frames: [], members: [], hasController: false }); return sessions.get(id); }
+const sessions = new Map(); // sessionId -> { id, instanceId, seq, frames:[], members:[], hasController }
+function sessionOf(id, instanceId) {
+  if (!sessions.has(id)) sessions.set(id, { id, instanceId: instanceId ?? null, seq: 0, frames: [], members: [], hasController: false });
+  const s = sessions.get(id);
+  if (instanceId && !s.instanceId) s.instanceId = instanceId;
+  return s;
+}
 function buildKeyframe(s) {
   return { op: 'keyframe', seq: s.seq, payload: { frames: s.frames.slice(-200), snapshot: '', snapshot_format: 'vt100-screen-state-v1', anchor_sequence: s.seq } };
+}
+
+const b64 = (str) => Buffer.from(str, 'utf8').toString('base64');
+
+/** List sessions (optionally scoped to one instance) for the Cockpit session picker. */
+export function listSessions(instanceId) {
+  return [...sessions.values()]
+    .filter((s) => !instanceId || s.instanceId === instanceId)
+    .map((s) => ({ id: s.id, instance_id: s.instanceId, seq: s.seq, members: s.members.length, has_controller: s.hasController }));
+}
+
+/** Seed one demo pty session with a short transcript so observe/replay show content immediately. */
+export function seedDemoSessions() {
+  const s = sessionOf('demo-shell', DEFAULT_INSTANCE);
+  if (s.frames.length) return; // idempotent
+  for (const line of [
+    '$ aiwg discover "deploy production"\r\n',
+    'flow-deploy-to-production   score=0.51\r\n',
+    '$ # observe, or take the wheel — both work here\r\n',
+  ]) { const seq = ++s.seq; s.frames.push({ op: 'output', seq, payload: { stream: 'stdout', data: b64(line) } }); }
 }
 
 function handleOp(text, ctx) {
@@ -111,7 +136,7 @@ export function attachPtyWs(server) {
     socket.write(lines.join('\r\n') + '\r\n\r\n');
 
     const send = (obj) => { try { socket.write(encodeText(JSON.stringify(obj))); } catch { /* closed */ } };
-    const session = sessionOf(sessionId);
+    const session = sessionOf(sessionId, instanceId);
     const conn = { role: null, clientId: randomUUID(), send };
 
     // The harness's DialWS discards any bytes that arrive in the same segment as

@@ -3,19 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AIWG Cockpit — Inventory</title>
+  <title>AIWG Cockpit</title>
   <style>
-    :root { color-scheme: light dark; --bg:#0f1115; --panel:#171a21; --fg:#e6e8ec; --muted:#9aa3b2; --line:#2a2f3a; --ok:#3fb950; --warn:#d29922; --idle:#6b7280; --accent:#818cf8; }
+    :root { color-scheme: light dark; --bg:#0f1115; --panel:#171a21; --fg:#e6e8ec; --muted:#9aa3b2; --line:#2a2f3a; --ok:#3fb950; --warn:#d29922; --idle:#6b7280; --accent:#818cf8; --err:#f85149; }
     * { box-sizing: border-box; }
     body { margin:0; font:15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg); }
-    header { padding:18px 22px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:14px; }
+    header { padding:14px 22px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
     header h1 { font-size:18px; margin:0; font-weight:650; }
     header .mark { color:var(--accent); font-size:20px; }
     header .meta { margin-left:auto; color:var(--muted); font-size:13px; }
-    button { background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:7px; padding:6px 12px; cursor:pointer; font:inherit; }
-    button:hover { border-color:var(--accent); }
-    button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+    [role=tablist] { display:flex; gap:4px; padding:0 22px; border-bottom:1px solid var(--line); }
+    [role=tab] { background:none; border:0; border-bottom:2px solid transparent; color:var(--muted); padding:10px 14px; cursor:pointer; font:inherit; }
+    [role=tab][aria-selected=true] { color:var(--fg); border-bottom-color:var(--accent); }
+    [role=tab]:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
     main { padding:22px; }
+    button, select, input { background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:7px; padding:7px 12px; font:inherit; }
+    button { cursor:pointer; }
+    button:hover:not(:disabled) { border-color:var(--accent); }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    button:focus-visible, select:focus-visible, input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
     table { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
     caption { text-align:left; color:var(--muted); padding:10px 14px; font-size:13px; }
     th, td { text-align:left; padding:11px 14px; border-bottom:1px solid var(--line); }
@@ -23,54 +29,208 @@
     tr:last-child td { border-bottom:0; }
     code { font:13px ui-monospace, monospace; color:var(--muted); }
     .badge { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--line); font-size:12px; }
+    .badge.controller { border-color:var(--ok); color:var(--ok); }
+    .badge.observer { border-color:var(--accent); color:var(--accent); }
     .state { display:inline-flex; align-items:center; gap:7px; }
-    .dot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
-    .state.running .dot { background:var(--ok); } .state.stopped .dot { background:var(--idle); } .state.provisioning .dot { background:var(--warn); }
-    .empty, .err { color:var(--muted); padding:22px; }
-    .err { color:#f85149; }
+    .dot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; background:var(--idle); }
+    .state.running .dot, .state.working .dot { background:var(--ok); } .state.provisioning .dot { background:var(--warn); }
+    .empty { color:var(--muted); padding:22px; } .err { color:var(--err); padding:12px 0; }
+    .controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+    .controls label { color:var(--muted); font-size:13px; }
+    #terminal { background:#0a0c10; border:1px solid var(--line); border-radius:10px; padding:14px; min-height:240px; max-height:48vh; overflow:auto; white-space:pre-wrap; word-break:break-word; font:13px/1.55 ui-monospace, monospace; color:#cdd3de; }
+    .inputrow { display:flex; gap:8px; margin-top:12px; }
+    .inputrow input { flex:1; font-family:ui-monospace, monospace; }
+    .hint { color:var(--muted); font-size:13px; margin:6px 0 0; }
   </style>
 </head>
 <body>
   <header>
     <span class="mark" aria-hidden="true">◆</span>
-    <h1>AIWG&nbsp;Cockpit <span style="color:var(--muted);font-weight:400">— Inventory</span></h1>
+    <h1>AIWG&nbsp;Cockpit</h1>
     <span class="meta" id="meta" aria-live="polite"></span>
     <button id="refresh" type="button">Refresh</button>
   </header>
+
+  <div role="tablist" aria-label="Cockpit views">
+    <button role="tab" id="tab-inventory" aria-controls="panel-inventory" aria-selected="true">Inventory</button>
+    <button role="tab" id="tab-running" aria-controls="panel-running" aria-selected="false" tabindex="-1">Running</button>
+    <button role="tab" id="tab-sessions" aria-controls="panel-sessions" aria-selected="false" tabindex="-1">Sessions</button>
+  </div>
+
   <main>
-    <div id="view" role="region" aria-label="Agent instance inventory">Loading…</div>
+    <section id="panel-inventory" role="tabpanel" aria-labelledby="tab-inventory">
+      <div id="inventory-view" role="region" aria-label="Agent instance inventory">Loading…</div>
+    </section>
+
+    <section id="panel-running" role="tabpanel" aria-labelledby="tab-running" hidden>
+      <div id="running-view" role="region" aria-label="Running agents">Loading…</div>
+    </section>
+
+    <section id="panel-sessions" role="tabpanel" aria-labelledby="tab-sessions" hidden>
+      <div class="controls">
+        <label for="sel-instance">Instance</label>
+        <select id="sel-instance"></select>
+        <label for="sel-session">Session</label>
+        <select id="sel-session"></select>
+        <button id="attach-drive" type="button">Attach · drive</button>
+        <button id="attach-observe" type="button">Attach · observe</button>
+        <button id="btn-keyframe" type="button" disabled>Keyframe</button>
+        <button id="btn-replay" type="button" disabled>Reattach + replay</button>
+        <button id="btn-detach" type="button" disabled>Detach</button>
+        <span id="role-badge"></span>
+      </div>
+      <div id="terminal" role="log" aria-live="polite" aria-label="Session output"></div>
+      <div class="inputrow">
+        <input id="cmd" type="text" placeholder="Type to drive the session…" autocomplete="off" disabled aria-label="Session input" />
+        <button id="cmd-send" type="button" disabled>Send</button>
+      </div>
+      <p class="hint" id="session-hint">Pick a session, then attach. The first attach drives; later attaches observe. Output mirrors to every viewer — that's the awareness model.</p>
+    </section>
   </main>
+
   <script type="module">
-    const view = document.getElementById('view');
+    // --- view switching (ARIA tabs) ---
+    const tabs = [...document.querySelectorAll('[role=tab]')];
+    function show(tabId) {
+      for (const t of tabs) {
+        const sel = t.id === tabId;
+        t.setAttribute('aria-selected', String(sel));
+        t.tabIndex = sel ? 0 : -1;
+        document.getElementById(t.getAttribute('aria-controls')).hidden = !sel;
+      }
+      if (tabId === 'tab-running') loadRunning();
+      if (tabId === 'tab-sessions') loadInstances();
+    }
+    tabs.forEach((t) => t.addEventListener('click', () => show(t.id)));
+
     const meta = document.getElementById('meta');
-    const fmt = (id) => id.length > 12 ? id.slice(0, 8) + '…' : id;
-    async function load() {
+    const fmt = (id) => (id && id.length > 12) ? id.slice(0, 8) + '…' : id;
+    const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+    // --- Inventory ---
+    async function loadInventory() {
+      const view = document.getElementById('inventory-view');
       view.textContent = 'Loading…';
       try {
-        const r = await fetch('/api/inventory');
-        if (!r.ok) throw new Error('inventory ' + r.status);
-        const inv = await r.json();
+        const inv = await (await fetch('/api/inventory')).json();
         meta.textContent = `${inv.count} instance(s) · ${new Date(inv.fetched_at).toLocaleTimeString()}`;
         if (!inv.instances.length) { view.innerHTML = '<p class="empty">No instances.</p>'; return; }
-        const rows = inv.instances.map((i) => `
-          <tr>
-            <td><code title="${i.id}">${fmt(i.id)}</code></td>
-            <td><span class="badge">${i.runtime}</span></td>
-            <td>${i.loadout}</td>
-            <td><span class="state ${i.state}"><span class="dot" aria-hidden="true"></span>${i.state}</span></td>
-            <td>${i.tenant}</td>
-          </tr>`).join('');
-        view.innerHTML = `<table>
-          <caption>Agent instances (live from the executor)</caption>
+        view.innerHTML = `<table><caption>Agent instances (live from the executor)</caption>
           <thead><tr><th scope="col">Instance</th><th scope="col">Runtime</th><th scope="col">Loadout</th><th scope="col">State</th><th scope="col">Tenant</th></tr></thead>
-          <tbody>${rows}</tbody></table>`;
-      } catch (e) {
-        view.innerHTML = `<p class="err">Could not load inventory: ${e.message}</p>`;
-        meta.textContent = '';
-      }
+          <tbody>${inv.instances.map((i) => `<tr>
+            <td><code title="${esc(i.id)}">${esc(fmt(i.id))}</code></td>
+            <td><span class="badge">${esc(i.runtime)}</span></td><td>${esc(i.loadout)}</td>
+            <td><span class="state ${esc(i.state)}"><span class="dot" aria-hidden="true"></span>${esc(i.state)}</span></td>
+            <td>${esc(i.tenant)}</td></tr>`).join('')}</tbody></table>`;
+      } catch (e) { view.innerHTML = `<p class="err">Could not load inventory: ${esc(e.message)}</p>`; }
     }
-    document.getElementById('refresh').addEventListener('click', load);
-    load();
+
+    // --- Running board ---
+    async function loadRunning() {
+      const view = document.getElementById('running-view');
+      view.textContent = 'Loading…';
+      try {
+        const r = await (await fetch('/api/running')).json();
+        if (!r.running.length) { view.innerHTML = '<p class="empty">Nothing running.</p>'; return; }
+        view.innerHTML = `<table><caption>Running across all stacks — ${r.count} task(s)</caption>
+          <thead><tr><th scope="col">Instance</th><th scope="col">Task</th><th scope="col">State</th><th scope="col">Tenant</th></tr></thead>
+          <tbody>${r.running.map((t) => `<tr>
+            <td><code title="${esc(t.instance_id)}">${esc(fmt(t.instance_id))}</code></td>
+            <td><code title="${esc(t.task_id)}">${esc(fmt(t.task_id))}</code></td>
+            <td><span class="state ${esc(t.state)}"><span class="dot" aria-hidden="true"></span>${esc(t.state)}</span></td>
+            <td>${esc(t.tenant)}</td></tr>`).join('')}</tbody></table>`;
+      } catch (e) { view.innerHTML = `<p class="err">Could not load running: ${esc(e.message)}</p>`; }
+    }
+
+    // --- Session view (live pty-ws) ---
+    const selInstance = document.getElementById('sel-instance');
+    const selSession = document.getElementById('sel-session');
+    const terminal = document.getElementById('terminal');
+    const cmd = document.getElementById('cmd');
+    const roleBadge = document.getElementById('role-badge');
+    const btn = {
+      drive: document.getElementById('attach-drive'), observe: document.getElementById('attach-observe'),
+      keyframe: document.getElementById('btn-keyframe'), replay: document.getElementById('btn-replay'),
+      detach: document.getElementById('btn-detach'), send: document.getElementById('cmd-send'),
+    };
+    let ws = null, role = null, lastSeq = 0, attachUrl = null;
+    const decode = (b64) => { try { return atob(b64); } catch { return b64; } };
+    function write(text) { terminal.textContent += text; terminal.scrollTop = terminal.scrollHeight; }
+    function setRole(r) {
+      role = r;
+      roleBadge.innerHTML = r ? `<span class="badge ${r}">${r}</span>` : '';
+      const driving = r === 'controller';
+      cmd.disabled = !driving; btn.send.disabled = !driving;
+      cmd.placeholder = driving ? 'Type to drive the session…' : 'Observing — input is read-only';
+    }
+    function setAttached(on) {
+      btn.keyframe.disabled = !on; btn.replay.disabled = !on; btn.detach.disabled = !on;
+      btn.drive.disabled = on; btn.observe.disabled = on;
+    }
+
+    async function loadInstances() {
+      try {
+        const inv = await (await fetch('/api/inventory')).json();
+        selInstance.innerHTML = inv.instances.map((i) => `<option value="${esc(i.id)}">${esc(fmt(i.id))} · ${esc(i.loadout)}</option>`).join('');
+        await loadSessions();
+      } catch (e) { document.getElementById('session-hint').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+    }
+    async function loadSessions() {
+      const inst = selInstance.value; if (!inst) return;
+      try {
+        const r = await (await fetch('/api/sessions?instance=' + encodeURIComponent(inst))).json();
+        if (!r.sessions.length) { selSession.innerHTML = '<option value="">— no sessions —</option>'; return; }
+        selSession.innerHTML = r.sessions.map((s) => `<option value="${esc(s.attach_url)}">${esc(s.id)} · seq ${s.seq} · ${s.members} viewer(s)</option>`).join('');
+      } catch (e) { selSession.innerHTML = `<option value="">${esc(e.message)}</option>`; }
+    }
+    selInstance.addEventListener('change', loadSessions);
+
+    function attach(replay) {
+      attachUrl = selSession.value;
+      if (!attachUrl) return;
+      const url = replay ? attachUrl + '?replay_from=' + lastSeq : attachUrl;
+      if (replay) terminal.textContent = '';
+      ws = new WebSocket(url);
+      ws.addEventListener('open', () => setAttached(true));
+      ws.addEventListener('close', () => { setAttached(false); setRole(null); });
+      ws.addEventListener('error', () => write('\n[connection error]\n'));
+      ws.addEventListener('message', (ev) => {
+        let m; try { m = JSON.parse(ev.data); } catch { return; }
+        switch (m.op) {
+          case 'binding_hello': ws.send(JSON.stringify({ op: 'pty.join_session' })); break;
+          case 'role_assigned': setRole(m.payload.role); break;
+          case 'output': if (m.seq) lastSeq = Math.max(lastSeq, m.seq); write(decode(m.payload.data)); break;
+          case 'keyframe':
+            for (const f of (m.payload.frames || [])) { if (f.seq) lastSeq = Math.max(lastSeq, f.seq); write(decode(f.payload.data)); }
+            if (m.seq) lastSeq = Math.max(lastSeq, m.seq);
+            break;
+          case 'error': write(`\n[${m.payload.code}]\n`); break;
+        }
+      });
+    }
+    function detach() { if (ws) { ws.close(); ws = null; } }
+    function sendInput() {
+      const text = cmd.value; if (!text || !ws || role !== 'controller') return;
+      ws.send(JSON.stringify({ op: 'pty.session_input', payload: { data: btoa(text + '\r\n') } }));
+      cmd.value = '';
+    }
+
+    btn.drive.addEventListener('click', () => { terminal.textContent = ''; lastSeq = 0; attach(false); });
+    btn.observe.addEventListener('click', () => { terminal.textContent = ''; lastSeq = 0; attach(false); });
+    btn.keyframe.addEventListener('click', () => ws && ws.send(JSON.stringify({ op: 'pty.request_keyframe' })));
+    btn.replay.addEventListener('click', () => { detach(); setTimeout(() => attach(true), 50); });
+    btn.detach.addEventListener('click', detach);
+    btn.send.addEventListener('click', sendInput);
+    cmd.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendInput(); });
+
+    document.getElementById('refresh').addEventListener('click', () => {
+      const active = tabs.find((t) => t.getAttribute('aria-selected') === 'true').id;
+      if (active === 'tab-inventory') loadInventory();
+      else if (active === 'tab-running') loadRunning();
+      else loadSessions();
+    });
+
+    loadInventory();
   </script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 // (tenant_id charset validation + echo), idempotency/v1 (replay + 422).
 import { randomUUID, createHash } from 'node:crypto';
 import { EXT } from './agent-card.mjs';
+import { listInstances } from './store.mjs';
 
 const TENANT_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 
@@ -117,6 +118,16 @@ export function handleSubscribe(req, res, instanceId, taskId) {
   res.write(`event: status-update\ndata: ${JSON.stringify(task)}\n\n`);
   const hb = setInterval(() => { try { res.write(': hb\n\n'); } catch { /* closed */ } }, 15000);
   req.on('close', () => clearInterval(hb));
+}
+
+// Seed one working task per running instance so the Cockpit running board has content.
+export function seedRunningTasks() {
+  for (const inst of listInstances()) {
+    if (inst.state !== 'running') continue;
+    const have = [...tasksOf(inst.instance_id).values()].some((t) => t.status.state === 'working');
+    if (have) continue; // idempotent
+    createTaskFor(inst.instance_id, inst, { messageId: `seed-${inst.instance_id}`, parts: [{ kind: 'text', text: 'session active' }] });
+  }
 }
 
 // Test/UX helper: list working (running) tasks across instances.

@@ -7,8 +7,8 @@
 import http from 'node:http';
 import { buildAgentCard } from './agent-card.mjs';
 import { listInstances, getInstance, DEFAULT_INSTANCE } from './store.mjs';
-import { handleSend, handleGetTask, handleListTasks, handleCancel, handleSubscribe, runningTasks } from './a2a.mjs';
-import { attachPtyWs } from './pty-ws.mjs';
+import { handleSend, handleGetTask, handleListTasks, handleCancel, handleSubscribe, runningTasks, seedRunningTasks } from './a2a.mjs';
+import { attachPtyWs, listSessions, seedDemoSessions } from './pty-ws.mjs';
 
 function json(res, status, body, extraHeaders = {}) {
   res.writeHead(status, { 'content-type': 'application/json', 'access-control-allow-origin': '*', ...extraHeaders });
@@ -55,6 +55,7 @@ export function createExecutor() {
         return json(res, 200, buildAgentCard(instanceId, { baseUrl, runtime: inst.runtime, loadout: inst.loadout }), echoExtensions(req));
       }
       if (rest === 'messages:send' && req.method === 'POST') return handleSend(req, res, instanceId, inst);
+      if (rest === 'sessions' && req.method === 'GET') return json(res, 200, { sessions: listSessions(instanceId) });
       if (rest === 'tasks' && req.method === 'GET') return handleListTasks(req, res, instanceId);
       let tm;
       if ((tm = rest.match(/^tasks\/(.+):cancel$/)) && req.method === 'POST') return handleCancel(req, res, instanceId, decodeURIComponent(tm[1]));
@@ -64,6 +65,8 @@ export function createExecutor() {
 
     return notFound(res, path);
   });
+  seedRunningTasks();   // running board has content
+  seedDemoSessions();   // one demo pty session with a transcript
   return attachPtyWs(server);
 }
 
