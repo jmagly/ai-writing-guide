@@ -55,6 +55,7 @@
     <button role="tab" id="tab-inventory" aria-controls="panel-inventory" aria-selected="true">Inventory</button>
     <button role="tab" id="tab-running" aria-controls="panel-running" aria-selected="false" tabindex="-1">Running</button>
     <button role="tab" id="tab-sessions" aria-controls="panel-sessions" aria-selected="false" tabindex="-1">Sessions</button>
+    <button role="tab" id="tab-explore" aria-controls="panel-explore" aria-selected="false" tabindex="-1">Explore</button>
   </div>
 
   <main>
@@ -85,6 +86,24 @@
         <button id="cmd-send" type="button" disabled>Send</button>
       </div>
       <p class="hint" id="session-hint">Pick a session, then attach. The first attach drives; later attaches observe. Output mirrors to every viewer — that's the awareness model.</p>
+    </section>
+
+    <section id="panel-explore" role="tabpanel" aria-labelledby="tab-explore" hidden>
+      <form class="controls" id="explore-form">
+        <label for="ex-q">Capability</label>
+        <input id="ex-q" type="search" placeholder="e.g. deploy production, audit security…" autocomplete="off" style="min-width:280px" />
+        <label for="ex-type">Type</label>
+        <select id="ex-type">
+          <option value="all">all</option><option value="skill">skill</option><option value="agent">agent</option>
+          <option value="command">command</option><option value="rule">rule</option><option value="flow">flow</option>
+        </select>
+        <button type="submit">Discover</button>
+      </form>
+      <p class="hint">Live from the AIWG registry via <code>aiwg discover</code> — every query re-reads the index, no app restart. The UI is data-driven from the same capability graph the agents use.</p>
+      <div style="display:grid;grid-template-columns:minmax(260px,1fr) 1.4fr;gap:16px;align-items:start">
+        <div id="ex-results" role="region" aria-label="Discovery results"></div>
+        <div id="ex-body" role="region" aria-label="Capability detail"><p class="empty">Select a result to inspect its definition.</p></div>
+      </div>
     </section>
   </main>
 
@@ -223,11 +242,47 @@
     btn.send.addEventListener('click', sendInput);
     cmd.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendInput(); });
 
+    // --- Explore (registry-bound, live) ---
+    const exResults = document.getElementById('ex-results');
+    const exBody = document.getElementById('ex-body');
+    async function discover(ev) {
+      if (ev) ev.preventDefault();
+      const q = document.getElementById('ex-q').value.trim();
+      const type = document.getElementById('ex-type').value;
+      if (!q) return;
+      exResults.innerHTML = '<p class="empty">Searching…</p>';
+      try {
+        const u = `/api/capabilities?q=${encodeURIComponent(q)}&type=${encodeURIComponent(type)}&limit=10`;
+        const data = await (await fetch(u)).json();
+        const rs = data.results || [];
+        if (!rs.length) { exResults.innerHTML = '<p class="empty">No matches.</p>'; return; }
+        exResults.innerHTML = `<table><caption>${rs.length} capabilit${rs.length === 1 ? 'y' : 'ies'}</caption><tbody>${rs.map((r, i) => `
+          <tr><td>
+            <button type="button" class="ex-pick" data-i="${i}" style="width:100%;text-align:left">
+              <span class="badge">${esc(r.type)}</span> <strong>${esc(r.name)}</strong>
+              <span style="color:var(--muted);font-size:12px"> · ${(r.score ?? 0).toFixed(2)}</span><br>
+              <span style="color:var(--muted);font-size:13px">${esc((r.capability || r.title || '').slice(0, 90))}</span>
+            </button>
+          </td></tr>`).join('')}</tbody></table>`;
+        exResults.querySelectorAll('.ex-pick').forEach((b) => b.addEventListener('click', () => showCap(rs[+b.dataset.i])));
+      } catch (e) { exResults.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+    }
+    async function showCap(r) {
+      exBody.innerHTML = '<p class="empty">Loading…</p>';
+      try {
+        const d = await (await fetch(`/api/show?type=${encodeURIComponent(r.type)}&name=${encodeURIComponent(r.name)}`)).json();
+        exBody.innerHTML = `<div style="margin-bottom:8px"><span class="badge">${esc(r.type)}</span> <strong>${esc(r.name)}</strong></div>
+          <div id="terminal" style="max-height:52vh">${esc(d.body)}</div>`;
+      } catch (e) { exBody.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+    }
+    document.getElementById('explore-form').addEventListener('submit', discover);
+
     document.getElementById('refresh').addEventListener('click', () => {
       const active = tabs.find((t) => t.getAttribute('aria-selected') === 'true').id;
       if (active === 'tab-inventory') loadInventory();
       else if (active === 'tab-running') loadRunning();
-      else loadSessions();
+      else if (active === 'tab-sessions') loadSessions();
+      else discover();
     });
 
     loadInventory();

@@ -6,12 +6,37 @@
 // Real Bridge grows: registry/discover/index binding, per-instance A2A, pty I/O,
 // per-launch token + OS-keychain (roctinam/aiwg#1595).
 import http from 'node:http';
+import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, basename } from 'node:path';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const MOCK_URL = process.env.MOCK_URL ?? 'http://127.0.0.1:8122';
+// Repo-local aiwg bin: makes the registry binding work in dev + CI without a global install.
+const REPO_BIN = fileURLToPath(new URL('../../../../bin/aiwg.mjs', import.meta.url));
+
+// --- registry binding: the data-driven core shells out to the aiwg CLI (#1592) ---
+function spawnCollect(cmd, args) {
+  return new Promise((resolve, reject) => {
+    const p = spawn(cmd, args, { cwd: process.cwd() }); // argv (no shell): args are not interpolated
+    let out = '', err = '';
+    p.stdout.on('data', (d) => (out += d));
+    p.stderr.on('data', (d) => (err += d));
+    p.once('error', reject);
+    p.once('close', (code) => (code === 0 ? resolve(out) : reject(new Error(err.trim() || `aiwg exit ${code}`))));
+  });
+}
+async function runAiwg(args) {
+  try { return await spawnCollect('aiwg', args); }
+  catch (e) { if (e && e.code === 'ENOENT') return spawnCollect(process.execPath, [REPO_BIN, ...args]); throw e; }
+}
+/** The `aiwg show <type> <name>` slug for a discover result path. */
+function deriveName(path) {
+  const base = basename(path);
+  if (/^SKILL\.(md|markdown)$/i.test(base)) return basename(dirname(path));
+  return base.replace(/\.(md|markdown|ya?ml|json)$/i, '');
+}
 
 function json(res, status, body) {
   res.writeHead(status, { 'content-type': 'application/json' });
@@ -81,6 +106,22 @@ export function createBridge({ mockUrl = MOCK_URL } = {}) {
         const inst = url.searchParams.get('instance');
         if (!inst) return json(res, 400, { error: 'instance_required' });
         return json(res, 200, await getSessions(mockUrl, inst));
+      }
+      // registry-bound, data-driven core — live, no app restart (#1592)
+      if (url.pathname === '/api/capabilities') {
+        const q = (url.searchParams.get('q') || '').trim();
+        if (!q) return json(res, 400, { error: 'q_required' });
+        const args = ['discover', q, '--json', '--limit', String(Number(url.searchParams.get('limit')) || 8)];
+        const type = url.searchParams.get('type');
+        if (type && type !== 'all') args.push('--type', type);
+        const data = JSON.parse(await runAiwg(args));
+        data.results = (data.results || []).map((r) => ({ ...r, name: deriveName(r.path) }));
+        return json(res, 200, data);
+      }
+      if (url.pathname === '/api/show') {
+        const type = url.searchParams.get('type'), name = url.searchParams.get('name');
+        if (!type || !name) return json(res, 400, { error: 'type_and_name_required' });
+        return json(res, 200, { type, name, body: await runAiwg(['show', type, name]) });
       }
       if (url.pathname === '/api/health') return json(res, 200, { status: 'ok', mock: mockUrl });
       if (url.pathname === '/' || url.pathname === '/index.html') {

@@ -44,13 +44,23 @@ try {
   // missing instance param is a 400
   assert.equal((await fetch(`${base}/api/sessions`)).status, 400, 'sessions requires instance');
 
-  // the screen is served and references the three data paths
+  // registry binding: discover + show through the aiwg CLI (#1592)
+  const cap = await (await fetch(`${base}/api/capabilities?q=${encodeURIComponent('deploy production')}&limit=4`)).json();
+  assert.ok(Array.isArray(cap.results) && cap.results.length >= 1, 'discover returns results');
+  const hit = cap.results.find((r) => r.name === 'flow-deploy-to-production');
+  assert.ok(hit, 'flow-deploy-to-production discoverable');
+  assert.ok(hit.name && hit.type, 'result carries name+type for show');
+  const shown = await (await fetch(`${base}/api/show?type=skill&name=flow-deploy-to-production`)).json();
+  assert.match(shown.body, /name:\s*flow-deploy-to-production/, 'show returns the skill body');
+  assert.equal((await fetch(`${base}/api/capabilities`)).status, 400, 'capabilities requires q');
+
+  // the screen is served and references the data paths
   const html = await (await fetch(`${base}/`)).text();
   assert.match(html, /AIWG.?Cockpit/i, 'screen renders Cockpit title');
-  for (const p of ['/api/inventory', '/api/running', '/api/sessions']) assert.ok(html.includes(p), `screen wires ${p}`);
+  for (const p of ['/api/inventory', '/api/running', '/api/sessions', '/api/capabilities']) assert.ok(html.includes(p), `screen wires ${p}`);
   assert.match(html, /pty\.join_session/, 'screen drives the pty session protocol');
 
-  console.log('SMOKE OK — data paths: inventory(3) + running(' + run.count + ') + sessions(demo-shell, ws attach) -> screen');
+  console.log(`SMOKE OK — data paths: inventory(3) + running(${run.count}) + sessions(demo-shell) + registry(discover→${cap.results.length}, show) -> screen`);
 } finally {
   bridge.close();
   mock.close();
