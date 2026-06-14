@@ -1,0 +1,29 @@
+{
+  "name": "aiwg-cockpit",
+  "displayName": "AIWG Cockpit",
+  "description": "AIWG Cockpit shell for VS Code — observe, drive, and coordinate multi-stack agentic sessions over the registry-bound Bridge. Hosts the same UI as the desktop app; the CLI is never replaced.",
+  "version": "0.0.0",
+  "private": true,
+  "publisher": "aiwg",
+  "license": "MIT",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "main": "./extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      { "command": "aiwg-cockpit.open", "title": "AIWG Cockpit: Open" },
+      { "command": "aiwg-cockpit.auditIssues", "title": "AIWG Cockpit: Audit Issues" }
+    ],
+    "configuration": {
+      "title": "AIWG Cockpit",
+      "properties": {
+        "aiwg-cockpit.bridgeRuntimeFile": {
+          "type": "string",
+          "default": "",
+          "description": "Override the Bridge runtime file path (default ~/.aiwg/cockpit/runtime/bridge.json)."
+        }
+      }
+    }
+  }
+}

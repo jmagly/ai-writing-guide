@@ -1,0 +1,11 @@
+{
+  "name": "@aiwg/cockpit-desktop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "AIWG Cockpit desktop shell (Tauri v2). Build is toolchain-gated — see README.",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
+  }
+}
