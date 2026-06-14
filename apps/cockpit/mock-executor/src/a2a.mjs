@@ -66,9 +66,17 @@ export async function handleSend(req, res, instanceId, inst) {
     return problem(res, 422, 'idempotency.key_reused', 'messageId reused with a different body', { field: 'message.messageId' });
   }
 
+  const task = createTaskFor(instanceId, inst, { messageId, parts: message.parts ?? [], tenant });
+  const out = JSON.stringify(task);
+  if (messageId) idem.set(messageId, { bodyHash, body: out });
+  res.writeHead(200, { 'content-type': 'application/json', ...activatedExtensions(req) }).end(out);
+}
+
+// Core task creation/lookup, reused by the HTTP and pty-ws surfaces.
+export function createTaskFor(instanceId, inst, { messageId, parts = [], tenant = 'default' }) {
   const taskId = randomUUID();
   const now = new Date().toISOString();
-  const userMsg = { messageId: messageId || randomUUID(), role: 'user', parts: message.parts ?? [], kind: 'message', metadata: { tenant_id: tenant }, taskId, contextId: taskId };
+  const userMsg = { messageId: messageId || randomUUID(), role: 'user', parts, kind: 'message', metadata: { tenant_id: tenant }, taskId, contextId: taskId };
   const task = {
     id: taskId,
     contextId: taskId,
@@ -79,10 +87,9 @@ export async function handleSend(req, res, instanceId, inst) {
     kind: 'task',
   };
   tasksOf(instanceId).set(taskId, task);
-  const out = JSON.stringify(task);
-  if (messageId) idem.set(messageId, { bodyHash, body: out });
-  res.writeHead(200, { 'content-type': 'application/json', ...activatedExtensions(req) }).end(out);
+  return task;
 }
+export function getTaskFor(instanceId, taskId) { return tasksOf(instanceId).get(taskId) ?? null; }
 
 export function handleGetTask(req, res, instanceId, taskId) {
   const task = tasksOf(instanceId).get(taskId);

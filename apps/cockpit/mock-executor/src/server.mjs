@@ -8,6 +8,7 @@ import http from 'node:http';
 import { buildAgentCard } from './agent-card.mjs';
 import { listInstances, getInstance, DEFAULT_INSTANCE } from './store.mjs';
 import { handleSend, handleGetTask, handleListTasks, handleCancel, handleSubscribe, runningTasks } from './a2a.mjs';
+import { attachPtyWs } from './pty-ws.mjs';
 
 function json(res, status, body, extraHeaders = {}) {
   res.writeHead(status, { 'content-type': 'application/json', 'access-control-allow-origin': '*', ...extraHeaders });
@@ -22,7 +23,7 @@ function notFound(res, path) {
 }
 
 export function createExecutor() {
-  return http.createServer((req, res) => {
+  const server = http.createServer((req, res) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
     const path = url.pathname;
 
@@ -63,6 +64,7 @@ export function createExecutor() {
 
     return notFound(res, path);
   });
+  return attachPtyWs(server);
 }
 
 export { DEFAULT_INSTANCE };
