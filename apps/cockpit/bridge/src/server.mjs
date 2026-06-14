@@ -101,6 +101,13 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+/** Forward a control-plane call to the executor admin surface, relaying status + body. */
+async function proxy(res, method, target) {
+  const r = await fetch(target, { method });
+  const body = await r.json().catch(() => ({}));
+  return json(res, r.status, body);
+}
+
 /** Normalize the executor's admin inventory into the Bridge's UI shape. */
 async function getInventory(mockUrl) {
   const r = await fetch(`${mockUrl}/admin/instances`);
@@ -199,6 +206,23 @@ export function createBridge({ mockUrl = MOCK_URL, token } = {}) {
         // run.aiwg is a trusted, manifest-declared aiwg argv (only `aiwg` is ever spawned)
         return json(res, 200, { id, source: action.source, output: await runAiwg(action.run.aiwg) });
       }
+      // --- management surface (UC-012): lifecycle + task cancel ---
+      let m;
+      if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/(start|stop)$/)) && req.method === 'POST')
+        return proxy(res, 'POST', `${mockUrl}/admin/instances/${encodeURIComponent(m[1])}/${m[2]}`);
+      if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)$/)) && req.method === 'DELETE')
+        return proxy(res, 'DELETE', `${mockUrl}/admin/instances/${encodeURIComponent(m[1])}`);
+      if ((m = url.pathname.match(/^\/api\/tasks\/([^/]+)\/([^/]+)\/cancel$/)) && req.method === 'POST')
+        return proxy(res, 'POST', `${mockUrl}/agents/${encodeURIComponent(m[1])}/tasks/${encodeURIComponent(m[2])}:cancel`);
+
+      // --- approval inbox (UC-009) + cost (UC-010) ---
+      if (url.pathname === '/api/approvals' && req.method === 'GET')
+        return proxy(res, 'GET', `${mockUrl}/admin/approvals?status=${encodeURIComponent(url.searchParams.get('status') || 'pending')}`);
+      if ((m = url.pathname.match(/^\/api\/approvals\/([^/]+)$/)) && req.method === 'POST')
+        return proxy(res, 'POST', `${mockUrl}/admin/approvals/${encodeURIComponent(m[1])}?decision=${encodeURIComponent(url.searchParams.get('decision') || '')}`);
+      if (url.pathname === '/api/cost' && req.method === 'GET')
+        return proxy(res, 'GET', `${mockUrl}/admin/cost`);
+
       if (url.pathname === '/api/health') return json(res, 200, { status: 'ok', mock: mockUrl });
       if (url.pathname === '/' || url.pathname === '/index.html') {
         const raw = await readFile(join(__dir, 'public', 'index.html'), 'utf8');

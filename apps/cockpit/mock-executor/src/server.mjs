@@ -6,7 +6,7 @@
 // against roctinam/agentic-sandbox-conformance.
 import http from 'node:http';
 import { buildAgentCard } from './agent-card.mjs';
-import { listInstances, getInstance, DEFAULT_INSTANCE } from './store.mjs';
+import { listInstances, getInstance, DEFAULT_INSTANCE, setInstanceState, destroyInstance, listApprovals, resolveApproval, costReport } from './store.mjs';
 import { handleSend, handleGetTask, handleListTasks, handleCancel, handleSubscribe, runningTasks, seedRunningTasks } from './a2a.mjs';
 import { attachPtyWs, listSessions, seedDemoSessions } from './pty-ws.mjs';
 
@@ -33,7 +33,17 @@ export function createExecutor() {
     if (path === '/admin/instances' && req.method === 'GET') {
       return json(res, 200, { instances: listInstances() });
     }
+    // lifecycle: start / stop / destroy (Cockpit management, UC-012)
+    let lm;
+    if ((lm = path.match(/^\/admin\/instances\/([^/]+)\/(start|stop)$/)) && req.method === 'POST') {
+      const inst = setInstanceState(decodeURIComponent(lm[1]), lm[2] === 'start' ? 'running' : 'stopped');
+      return inst ? json(res, 200, inst) : json(res, 404, { error: 'instance_not_found', instance_id: decodeURIComponent(lm[1]) });
+    }
     const am = path.match(/^\/admin\/instances\/([^/]+)$/);
+    if (am && req.method === 'DELETE') {
+      const id = decodeURIComponent(am[1]);
+      return destroyInstance(id) ? json(res, 200, { destroyed: id }) : json(res, 404, { error: 'instance_not_found', instance_id: id });
+    }
     if (am && req.method === 'GET') {
       const inst = getInstance(decodeURIComponent(am[1]));
       return inst ? json(res, 200, inst) : json(res, 404, { error: 'instance_not_found', instance_id: decodeURIComponent(am[1]) });
@@ -41,6 +51,19 @@ export function createExecutor() {
 
     // --- Admin: running tasks across instances (for the Cockpit running view) ---
     if (path === '/admin/running' && req.method === 'GET') return json(res, 200, { running: runningTasks() });
+
+    // --- Admin: HITL approval queue (hitl-prompt/v1; UC-009) ---
+    if (path === '/admin/approvals' && req.method === 'GET') return json(res, 200, { approvals: listApprovals(url.searchParams.get('status') || undefined) });
+    let pm2;
+    if ((pm2 = path.match(/^\/admin\/approvals\/([^/]+)$/)) && req.method === 'POST') {
+      const decision = url.searchParams.get('decision');
+      if (decision !== 'approve' && decision !== 'deny') return json(res, 400, { error: 'decision must be approve|deny' });
+      const a = resolveApproval(decodeURIComponent(pm2[1]), decision);
+      return a ? json(res, 200, a) : json(res, 409, { error: 'no_pending_approval', id: decodeURIComponent(pm2[1]) });
+    }
+
+    // --- Admin: cost / quota rollup (UC-010) ---
+    if (path === '/admin/cost' && req.method === 'GET') return json(res, 200, costReport());
 
     // --- Per-instance A2A surface ---
     const pm = path.match(/^\/agents\/([^/]+)\/(.+)$/);

@@ -56,6 +56,7 @@
     <button role="tab" id="tab-running" aria-controls="panel-running" aria-selected="false" tabindex="-1">Running</button>
     <button role="tab" id="tab-sessions" aria-controls="panel-sessions" aria-selected="false" tabindex="-1">Sessions</button>
     <button role="tab" id="tab-explore" aria-controls="panel-explore" aria-selected="false" tabindex="-1">Explore</button>
+    <button role="tab" id="tab-approvals" aria-controls="panel-approvals" aria-selected="false" tabindex="-1">Approvals</button>
     <button role="tab" id="tab-actions" aria-controls="panel-actions" aria-selected="false" tabindex="-1">Actions</button>
   </div>
 
@@ -107,6 +108,11 @@
       </div>
     </section>
 
+    <section id="panel-approvals" role="tabpanel" aria-labelledby="tab-approvals" hidden>
+      <p class="hint">Unified approval inbox — <code>hitl-prompt/v1</code> requests from every stack, in one place. Decisions are operator authorization, not the agent's.</p>
+      <div id="approvals-view" role="region" aria-label="Pending approvals">Loading…</div>
+    </section>
+
     <section id="panel-actions" role="tabpanel" aria-labelledby="tab-actions" hidden>
       <p class="hint">Actions are <strong>contributed declaratively</strong> — first-party and (soon) any installed AIWG extension. Each resolves to an <code>aiwg</code> invocation; nothing else is ever run. This is how <code>audit-issue</code>, <code>address-issues</code> and friends become buttons.</p>
       <div class="controls" id="actions-bar" role="group" aria-label="Contributed actions"></div>
@@ -127,8 +133,15 @@
       if (tabId === 'tab-running') loadRunning();
       if (tabId === 'tab-sessions') loadInstances();
       if (tabId === 'tab-actions') loadActions();
+      if (tabId === 'tab-approvals') loadApprovals();
     }
     tabs.forEach((t) => t.addEventListener('click', () => show(t.id)));
+
+    // shared: POST/DELETE a control-plane call, then re-run a loader
+    async function control(path, method, reload) {
+      try { await api(path, { method }); } catch (e) { alert(e.message); }
+      if (reload) reload();
+    }
 
     const meta = document.getElementById('meta');
     const fmt = (id) => (id && id.length > 12) ? id.slice(0, 8) + '…' : id;
@@ -146,12 +159,24 @@
         meta.textContent = `${inv.count} instance(s) · ${new Date(inv.fetched_at).toLocaleTimeString()}`;
         if (!inv.instances.length) { view.innerHTML = '<p class="empty">No instances.</p>'; return; }
         view.innerHTML = `<table><caption>Agent instances (live from the executor)</caption>
-          <thead><tr><th scope="col">Instance</th><th scope="col">Runtime</th><th scope="col">Loadout</th><th scope="col">State</th><th scope="col">Tenant</th></tr></thead>
+          <thead><tr><th scope="col">Instance</th><th scope="col">Runtime</th><th scope="col">Loadout</th><th scope="col">State</th><th scope="col">Tenant</th><th scope="col">Manage</th></tr></thead>
           <tbody>${inv.instances.map((i) => `<tr>
             <td><code title="${esc(i.id)}">${esc(fmt(i.id))}</code></td>
             <td><span class="badge">${esc(i.runtime)}</span></td><td>${esc(i.loadout)}</td>
             <td><span class="state ${esc(i.state)}"><span class="dot" aria-hidden="true"></span>${esc(i.state)}</span></td>
-            <td>${esc(i.tenant)}</td></tr>`).join('')}</tbody></table>`;
+            <td>${esc(i.tenant)}</td>
+            <td style="white-space:nowrap">
+              ${i.state === 'running'
+                ? `<button class="mng" data-act="stop" data-id="${esc(i.id)}" aria-label="Stop ${esc(fmt(i.id))}">Stop</button>`
+                : `<button class="mng" data-act="start" data-id="${esc(i.id)}" aria-label="Start ${esc(fmt(i.id))}">Start</button>`}
+              <button class="mng" data-act="destroy" data-id="${esc(i.id)}" aria-label="Destroy ${esc(fmt(i.id))}">Destroy</button>
+            </td></tr>`).join('')}</tbody></table>`;
+        view.querySelectorAll('.mng').forEach((b) => b.addEventListener('click', () => {
+          const { act, id } = b.dataset;
+          if (act === 'destroy' && !confirm(`Destroy instance ${fmt(id)}? This cannot be undone.`)) return;
+          const path = act === 'destroy' ? `/api/instances/${encodeURIComponent(id)}` : `/api/instances/${encodeURIComponent(id)}/${act}`;
+          control(path, act === 'destroy' ? 'DELETE' : 'POST', loadInventory);
+        }));
       } catch (e) { view.innerHTML = `<p class="err">Could not load inventory: ${esc(e.message)}</p>`; }
     }
 
@@ -161,14 +186,23 @@
       view.textContent = 'Loading…';
       try {
         const r = await (await api('/api/running')).json();
-        if (!r.running.length) { view.innerHTML = '<p class="empty">Nothing running.</p>'; return; }
-        view.innerHTML = `<table><caption>Running across all stacks — ${r.count} task(s)</caption>
-          <thead><tr><th scope="col">Instance</th><th scope="col">Task</th><th scope="col">State</th><th scope="col">Tenant</th></tr></thead>
+        let costLine = '';
+        try {
+          const c = await (await api('/api/cost')).json();
+          costLine = `<p class="hint">Spend across stacks: <strong>$${c.total.usd.toFixed(2)}</strong> · ${(c.total.input_tokens + c.total.output_tokens).toLocaleString()} tokens</p>`;
+        } catch { /* cost optional */ }
+        if (!r.running.length) { view.innerHTML = costLine + '<p class="empty">Nothing running.</p>'; return; }
+        view.innerHTML = costLine + `<table><caption>Running across all stacks — ${r.count} task(s)</caption>
+          <thead><tr><th scope="col">Instance</th><th scope="col">Task</th><th scope="col">State</th><th scope="col">Tenant</th><th scope="col">Control</th></tr></thead>
           <tbody>${r.running.map((t) => `<tr>
             <td><code title="${esc(t.instance_id)}">${esc(fmt(t.instance_id))}</code></td>
             <td><code title="${esc(t.task_id)}">${esc(fmt(t.task_id))}</code></td>
             <td><span class="state ${esc(t.state)}"><span class="dot" aria-hidden="true"></span>${esc(t.state)}</span></td>
-            <td>${esc(t.tenant)}</td></tr>`).join('')}</tbody></table>`;
+            <td>${esc(t.tenant)}</td>
+            <td><button class="stop" data-i="${esc(t.instance_id)}" data-t="${esc(t.task_id)}" aria-label="Stop task ${esc(fmt(t.task_id))}">Stop</button></td>
+          </tr>`).join('')}</tbody></table>`;
+        view.querySelectorAll('.stop').forEach((b) => b.addEventListener('click', () =>
+          control(`/api/tasks/${encodeURIComponent(b.dataset.i)}/${encodeURIComponent(b.dataset.t)}/cancel`, 'POST', loadRunning)));
       } catch (e) { view.innerHTML = `<p class="err">Could not load running: ${esc(e.message)}</p>`; }
     }
 
@@ -288,6 +322,28 @@
     }
     document.getElementById('explore-form').addEventListener('submit', discover);
 
+    // --- Approvals (unified HITL inbox) ---
+    async function loadApprovals() {
+      const view = document.getElementById('approvals-view');
+      view.textContent = 'Loading…';
+      try {
+        const a = await (await api('/api/approvals?status=pending')).json();
+        if (!a.approvals.length) { view.innerHTML = '<p class="empty">No pending approvals.</p>'; return; }
+        view.innerHTML = `<table><caption>${a.approvals.length} awaiting your decision</caption>
+          <thead><tr><th scope="col">Request</th><th scope="col">Risk</th><th scope="col">Instance</th><th scope="col">Decision</th></tr></thead>
+          <tbody>${a.approvals.map((p) => `<tr>
+            <td>${esc(p.prompt)}</td>
+            <td><span class="badge ${p.risk === 'high' ? 'observer' : ''}">${esc(p.risk)}</span></td>
+            <td><code title="${esc(p.instance_id)}">${esc(fmt(p.instance_id))}</code></td>
+            <td style="white-space:nowrap">
+              <button class="apr" data-id="${esc(p.id)}" data-d="approve">Approve</button>
+              <button class="apr" data-id="${esc(p.id)}" data-d="deny">Deny</button>
+            </td></tr>`).join('')}</tbody></table>`;
+        view.querySelectorAll('.apr').forEach((b) => b.addEventListener('click', () =>
+          control(`/api/approvals/${encodeURIComponent(b.dataset.id)}?decision=${b.dataset.d}`, 'POST', loadApprovals)));
+      } catch (e) { view.innerHTML = `<p class="err">Could not load approvals: ${esc(e.message)}</p>`; }
+    }
+
     // --- Actions (declaratively contributed) ---
     const actionsBar = document.getElementById('actions-bar');
     const actionOut = document.getElementById('action-out');
@@ -314,6 +370,8 @@
       if (active === 'tab-inventory') loadInventory();
       else if (active === 'tab-running') loadRunning();
       else if (active === 'tab-sessions') loadSessions();
+      else if (active === 'tab-approvals') loadApprovals();
+      else if (active === 'tab-actions') loadActions();
       else discover();
     });
 

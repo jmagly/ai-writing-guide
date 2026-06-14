@@ -70,11 +70,38 @@ try {
   assert.match(ran.output, /issue-audit/, 'running audit-issues surfaces the issue-audit skill');
   assert.equal((await f("/api/actions/does-not-exist/run", { method: 'POST' })).status, 404, 'unknown action -> 404');
 
+  // management: lifecycle (UC-012)
+  const stoppedId = '9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b';
+  assert.equal((await (await f(`/api/instances/${stoppedId}/start`, { method: 'POST' })).json()).state, 'running', 'start -> running');
+  assert.equal((await (await f(`/api/instances/${stoppedId}/stop`, { method: 'POST' })).json()).state, 'stopped', 'stop -> stopped');
+
+  // management: cancel a running task
+  const before = await (await f('/api/running')).json();
+  const victim = before.running[0];
+  assert.equal((await f(`/api/tasks/${victim.instance_id}/${victim.task_id}/cancel`, { method: 'POST' })).status, 200, 'task cancel 200');
+  const after = await (await f('/api/running')).json();
+  assert.ok(after.count < before.count, 'cancel removed a running task');
+
+  // approval inbox (UC-009)
+  const pend = await (await f('/api/approvals?status=pending')).json();
+  assert.ok(pend.approvals.length >= 2, 'pending approvals seeded');
+  const apr = await (await f('/api/approvals/apr-001?decision=approve', { method: 'POST' })).json();
+  assert.equal(apr.status, 'approved', 'approval resolves to approved');
+  const pend2 = await (await f('/api/approvals?status=pending')).json();
+  assert.equal(pend2.approvals.length, pend.approvals.length - 1, 'approved item leaves the queue');
+
+  // cost rollup (UC-010)
+  const cost = await (await f('/api/cost')).json();
+  assert.ok(cost.total.usd > 0 && cost.per_instance.length >= 1, 'cost rollup present');
+
+  // destroy
+  assert.equal((await (await f(`/api/instances/${stoppedId}`, { method: 'DELETE' })).json()).destroyed, stoppedId, 'destroy returns id');
+
   // the screen is served and references the data paths
   const html = await (await fetch(base + "/")).text();
   assert.match(html, /AIWG.?Cockpit/i, 'screen renders Cockpit title');
   assert.ok(html.includes(`window.__COCKPIT_TOKEN__=${JSON.stringify(bridge.cockpitToken)}`), 'screen receives the per-launch token');
-  for (const p of ['/api/inventory', '/api/running', '/api/sessions', '/api/capabilities', '/api/contributions']) assert.ok(html.includes(p), `screen wires ${p}`);
+  for (const p of ['/api/inventory', '/api/running', '/api/sessions', '/api/capabilities', '/api/contributions', '/api/approvals', '/api/cost', '/api/instances/']) assert.ok(html.includes(p), `screen wires ${p}`);
   assert.match(html, /pty\.join_session/, 'screen drives the pty session protocol');
 
   console.log(`SMOKE OK — inventory(3) + running(${run.count}) + sessions(demo-shell) + registry(discover→${cap.results.length}, show) + contrib(${contrib.actions.length} actions) -> screen`);
