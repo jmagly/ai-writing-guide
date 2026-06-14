@@ -24,6 +24,8 @@ use the [macOS Install Guide](docs/getting-started/macos-install.md).
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
 [![10 Platforms](https://img.shields.io/badge/Platforms-10-purple?style=flat-square)](#-platform-support)
 
+[![Built With AIWG](https://aiwg.io/assets/badges/built-with-aiwg-dark.png)](https://aiwg.io/badges)
+
 [**Get Started**](#quick-start) · [**Features**](#what-you-get) · [**Agents**](#agents) · [**CLI Reference**](docs/cli-reference.md) · [**Documentation**](#documentation) · [**Community**](#community--support) · [**Badges**](https://aiwg.io/badges)
 
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=flat-square)](https://discord.gg/BuAusFMxdA)
