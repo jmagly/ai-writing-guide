@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/cockpit/contribution/v1",
+  "title": "AIWG Cockpit UI Contribution (#1591)",
+  "description": "Declarative extension of the Cockpit UI: screens, actions, and event-hooks. Loaded from apps/cockpit/contrib/ and (future) installed AIWG extensions. Every action resolves to an `aiwg` CLI invocation — the Bridge never spawns anything but `aiwg`, so contributions stay registry-bound and CLI-first.",
+  "type": "object",
+  "required": ["id", "version", "contributes"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+    "version": { "type": "string" },
+    "title": { "type": "string" },
+    "contributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "title", "run"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+              "title": { "type": "string" },
+              "icon": { "type": "string" },
+              "group": { "type": "string" },
+              "run": {
+                "type": "object",
+                "required": ["aiwg"],
+                "additionalProperties": false,
+                "properties": { "aiwg": { "type": "array", "items": { "type": "string" }, "description": "argv passed to the aiwg CLI" } }
+              }
+            }
+          }
+        },
+        "screens": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "title", "source"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+              "title": { "type": "string" },
+              "source": { "type": "string", "description": "url or path the screen iframe/region loads" }
+            }
+          }
+        },
+        "hooks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["on", "action"],
+            "properties": {
+              "on": { "type": "string", "description": "event name, e.g. session.output, instance.state-changed" },
+              "action": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$", "description": "id of a contributed action to run" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

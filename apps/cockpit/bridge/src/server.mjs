@@ -7,7 +7,7 @@
 // per-launch token + OS-keychain (roctinam/aiwg#1595).
 import http from 'node:http';
 import { spawn } from 'node:child_process';
-import { readFile, mkdir, writeFile, chmod } from 'node:fs/promises';
+import { readFile, mkdir, writeFile, chmod, readdir } from 'node:fs/promises';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -16,6 +16,8 @@ import { dirname, join, basename } from 'node:path';
 const __dir = dirname(fileURLToPath(import.meta.url));
 const MOCK_URL = process.env.MOCK_URL ?? 'http://127.0.0.1:8122';
 const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
+// First-party contribution manifests; AIWG-extension-sourced ones layer in via AIWG_COCKPIT_CONTRIB (#1591).
+const CONTRIB_DIRS = [fileURLToPath(new URL('../../contrib', import.meta.url)), ...(process.env.AIWG_COCKPIT_CONTRIB ? [process.env.AIWG_COCKPIT_CONTRIB] : [])];
 
 /** Constant-time bearer-token check (header or ?token=). */
 function authed(req, url, token) {
@@ -57,6 +59,41 @@ function deriveName(path) {
   const base = basename(path);
   if (/^SKILL\.(md|markdown)$/i.test(base)) return basename(dirname(path));
   return base.replace(/\.(md|markdown|ya?ml|json)$/i, '');
+}
+
+// --- UI contribution model (#1591): declarative screens/actions/event-hooks ---
+const ID_RE = /^[a-z0-9][a-z0-9._-]{0,63}$/i;
+/** Validate one contribution manifest. Throws with a precise message on bad shape. */
+function validateContribution(m, where) {
+  const fail = (msg) => { throw new Error(`${where}: ${msg}`); };
+  if (!m || typeof m !== 'object') fail('manifest must be an object');
+  if (!ID_RE.test(m.id || '')) fail('id must match [a-z0-9._-]{1,64}');
+  if (typeof m.version !== 'string') fail('version (string) required');
+  const c = m.contributes || {};
+  for (const a of c.actions || []) {
+    if (!ID_RE.test(a.id || '')) fail(`action.id invalid: ${a.id}`);
+    if (typeof a.title !== 'string') fail(`action ${a.id}: title required`);
+    if (!a.run || !Array.isArray(a.run.aiwg) || !a.run.aiwg.every((x) => typeof x === 'string')) fail(`action ${a.id}: run.aiwg must be a string[] (aiwg argv)`);
+  }
+  for (const s of c.screens || []) { if (!ID_RE.test(s.id || '') || typeof s.source !== 'string') fail(`screen invalid: ${s.id}`); }
+  for (const h of c.hooks || []) { if (typeof h.on !== 'string' || !ID_RE.test(h.action || '')) fail(`hook invalid: on=${h.on}`); }
+  return m;
+}
+/** Load + validate + merge all contribution manifests across the configured dirs. */
+async function loadContributions() {
+  const sources = [], actions = [], screens = [], hooks = [];
+  for (const dir of CONTRIB_DIRS) {
+    let entries = [];
+    try { entries = (await readdir(dir)).filter((f) => f.endsWith('.json') && f !== 'contribution.schema.json'); } catch { continue; }
+    for (const file of entries) {
+      const m = validateContribution(JSON.parse(await readFile(join(dir, file), 'utf8')), file);
+      sources.push({ id: m.id, version: m.version, title: m.title ?? m.id, file });
+      for (const a of m.contributes?.actions || []) actions.push({ ...a, source: m.id });
+      for (const s of m.contributes?.screens || []) screens.push({ ...s, source: m.id });
+      for (const h of m.contributes?.hooks || []) hooks.push({ ...h, source: m.id });
+    }
+  }
+  return { sources, actions, screens, hooks };
 }
 
 function json(res, status, body) {
@@ -150,6 +187,17 @@ export function createBridge({ mockUrl = MOCK_URL, token } = {}) {
         const type = url.searchParams.get('type'), name = url.searchParams.get('name');
         if (!type || !name) return json(res, 400, { error: 'type_and_name_required' });
         return json(res, 200, { type, name, body: await runAiwg(['show', type, name]) });
+      }
+      // contribution model — registry-bound, declarative UI extension (#1591)
+      if (url.pathname === '/api/contributions') return json(res, 200, await loadContributions());
+      const actRun = url.pathname.match(/^\/api\/actions\/([^/]+)\/run$/);
+      if (actRun && req.method === 'POST') {
+        const id = decodeURIComponent(actRun[1]);
+        const { actions } = await loadContributions();
+        const action = actions.find((a) => a.id === id);
+        if (!action) return json(res, 404, { error: 'action_not_found', id });
+        // run.aiwg is a trusted, manifest-declared aiwg argv (only `aiwg` is ever spawned)
+        return json(res, 200, { id, source: action.source, output: await runAiwg(action.run.aiwg) });
       }
       if (url.pathname === '/api/health') return json(res, 200, { status: 'ok', mock: mockUrl });
       if (url.pathname === '/' || url.pathname === '/index.html') {

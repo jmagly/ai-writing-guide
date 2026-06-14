@@ -1,0 +1,15 @@
+{
+  "$schema": "./contribution.schema.json",
+  "id": "aiwg-core",
+  "version": "1.0.0",
+  "title": "AIWG Core Actions",
+  "contributes": {
+    "actions": [
+      { "id": "audit-issues",   "title": "Audit Issues",   "icon": "🔍", "group": "issues", "run": { "aiwg": ["show", "skill", "issue-audit"] } },
+      { "id": "address-issues", "title": "Address Issues", "icon": "🛠️", "group": "issues", "run": { "aiwg": ["show", "command", "address-issues"] } },
+      { "id": "doctor",         "title": "Doctor",          "icon": "🩺", "group": "maintenance", "run": { "aiwg": ["show", "skill", "aiwg-doctor"] } }
+    ],
+    "screens": [],
+    "hooks": []
+  }
+}

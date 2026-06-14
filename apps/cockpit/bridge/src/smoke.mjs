@@ -61,14 +61,23 @@ try {
   assert.match(shown.body, /name:\s*flow-deploy-to-production/, 'show returns the skill body');
   assert.equal((await f("/api/capabilities")).status, 400, 'capabilities requires q');
 
+  // contribution model: first-party actions load + run through the aiwg CLI (#1591)
+  const contrib = await (await f("/api/contributions")).json();
+  assert.ok(contrib.sources.some((s) => s.id === 'aiwg-core'), 'aiwg-core contribution loaded');
+  const audit = contrib.actions.find((a) => a.id === 'audit-issues');
+  assert.ok(audit && Array.isArray(audit.run.aiwg), 'audit-issues action declared with aiwg argv');
+  const ran = await (await f("/api/actions/audit-issues/run", { method: 'POST' })).json();
+  assert.match(ran.output, /issue-audit/, 'running audit-issues surfaces the issue-audit skill');
+  assert.equal((await f("/api/actions/does-not-exist/run", { method: 'POST' })).status, 404, 'unknown action -> 404');
+
   // the screen is served and references the data paths
   const html = await (await fetch(base + "/")).text();
   assert.match(html, /AIWG.?Cockpit/i, 'screen renders Cockpit title');
   assert.ok(html.includes(`window.__COCKPIT_TOKEN__=${JSON.stringify(bridge.cockpitToken)}`), 'screen receives the per-launch token');
-  for (const p of ['/api/inventory', '/api/running', '/api/sessions', '/api/capabilities']) assert.ok(html.includes(p), `screen wires ${p}`);
+  for (const p of ['/api/inventory', '/api/running', '/api/sessions', '/api/capabilities', '/api/contributions']) assert.ok(html.includes(p), `screen wires ${p}`);
   assert.match(html, /pty\.join_session/, 'screen drives the pty session protocol');
 
-  console.log(`SMOKE OK — data paths: inventory(3) + running(${run.count}) + sessions(demo-shell) + registry(discover→${cap.results.length}, show) -> screen`);
+  console.log(`SMOKE OK — inventory(3) + running(${run.count}) + sessions(demo-shell) + registry(discover→${cap.results.length}, show) + contrib(${contrib.actions.length} actions) -> screen`);
 } finally {
   bridge.close();
   mock.close();

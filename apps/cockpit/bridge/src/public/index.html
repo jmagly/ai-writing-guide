@@ -56,6 +56,7 @@
     <button role="tab" id="tab-running" aria-controls="panel-running" aria-selected="false" tabindex="-1">Running</button>
     <button role="tab" id="tab-sessions" aria-controls="panel-sessions" aria-selected="false" tabindex="-1">Sessions</button>
     <button role="tab" id="tab-explore" aria-controls="panel-explore" aria-selected="false" tabindex="-1">Explore</button>
+    <button role="tab" id="tab-actions" aria-controls="panel-actions" aria-selected="false" tabindex="-1">Actions</button>
   </div>
 
   <main>
@@ -105,6 +106,12 @@
         <div id="ex-body" role="region" aria-label="Capability detail"><p class="empty">Select a result to inspect its definition.</p></div>
       </div>
     </section>
+
+    <section id="panel-actions" role="tabpanel" aria-labelledby="tab-actions" hidden>
+      <p class="hint">Actions are <strong>contributed declaratively</strong> — first-party and (soon) any installed AIWG extension. Each resolves to an <code>aiwg</code> invocation; nothing else is ever run. This is how <code>audit-issue</code>, <code>address-issues</code> and friends become buttons.</p>
+      <div class="controls" id="actions-bar" role="group" aria-label="Contributed actions"></div>
+      <div id="action-out" role="region" aria-label="Action output"><p class="empty">Run an action to see its output.</p></div>
+    </section>
   </main>
 
   <script type="module">
@@ -119,6 +126,7 @@
       }
       if (tabId === 'tab-running') loadRunning();
       if (tabId === 'tab-sessions') loadInstances();
+      if (tabId === 'tab-actions') loadActions();
     }
     tabs.forEach((t) => t.addEventListener('click', () => show(t.id)));
 
@@ -279,6 +287,27 @@
       } catch (e) { exBody.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
     }
     document.getElementById('explore-form').addEventListener('submit', discover);
+
+    // --- Actions (declaratively contributed) ---
+    const actionsBar = document.getElementById('actions-bar');
+    const actionOut = document.getElementById('action-out');
+    async function loadActions() {
+      try {
+        const c = await (await api('/api/contributions')).json();
+        if (!c.actions.length) { actionsBar.innerHTML = '<p class="empty">No contributed actions.</p>'; return; }
+        actionsBar.innerHTML = c.actions.map((a) =>
+          `<button type="button" class="act" data-id="${esc(a.id)}" title="${esc(a.source)}">${a.icon ? esc(a.icon) + ' ' : ''}${esc(a.title)}</button>`).join('');
+        actionsBar.querySelectorAll('.act').forEach((b) => b.addEventListener('click', () => runAction(b.dataset.id)));
+      } catch (e) { actionsBar.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+    }
+    async function runAction(id) {
+      actionOut.innerHTML = '<p class="empty">Running…</p>';
+      try {
+        const r = await (await api(`/api/actions/${encodeURIComponent(id)}/run`, { method: 'POST' })).json();
+        actionOut.innerHTML = `<div style="margin-bottom:8px"><span class="badge">${esc(r.source)}</span> <strong>${esc(id)}</strong></div>
+          <div id="terminal" style="max-height:52vh">${esc(r.output || '(no output)')}</div>`;
+      } catch (e) { actionOut.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+    }
 
     document.getElementById('refresh').addEventListener('click', () => {
       const active = tabs.find((t) => t.getAttribute('aria-selected') === 'true').id;
