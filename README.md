@@ -1,5 +1,7 @@
 <div align="center">
 
+<a href="https://aiwg.io"><img src="https://aiwg.io/assets/badges/aiwg-hero-dark.png" alt="AIWG — multi-agent AI framework · one source of truth · 10 platforms" width="680"></a>
+
 # AIWG
 
 **Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 6 more platforms**
@@ -22,7 +24,7 @@ use the [macOS Install Guide](docs/getting-started/macos-install.md).
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
 [![10 Platforms](https://img.shields.io/badge/Platforms-10-purple?style=flat-square)](#-platform-support)
 
-[**Get Started**](#quick-start) · [**Features**](#what-you-get) · [**Agents**](#agents) · [**CLI Reference**](docs/cli-reference.md) · [**Documentation**](#documentation) · [**Community**](#community--support)
+[**Get Started**](#quick-start) · [**Features**](#what-you-get) · [**Agents**](#agents) · [**CLI Reference**](docs/cli-reference.md) · [**Documentation**](#documentation) · [**Community**](#community--support) · [**Badges**](https://aiwg.io/badges)
 
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=flat-square)](https://discord.gg/BuAusFMxdA)
 [![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram&logoColor=white&style=flat-square)](https://t.me/+oJg9w2lE6A5lOGFh)
@@ -1844,6 +1846,20 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - **Issues:** [GitHub Issues](https://github.com/jmagly/aiwg/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/jmagly/aiwg/discussions)
 - **Security:** Report vulnerabilities per [SECURITY.md](SECURITY.md) — do not file public issues.
+
+---
+
+## Badges
+
+Building on AIWG? Show it. Grab a **Built With AIWG** / **Powered By AIWG** badge — light and dark, hosted and free to hot-link (no need to copy the image into your repo):
+
+[![Built With AIWG](https://aiwg.io/assets/badges/built-with-aiwg-dark.png)](https://aiwg.io)
+
+```md
+[![Built With AIWG](https://aiwg.io/assets/badges/built-with-aiwg-dark.png)](https://aiwg.io)
+```
+
+Full set with copy-paste snippets at **[aiwg.io/badges](https://aiwg.io/badges)**.
 
 ---
 
