@@ -15,7 +15,8 @@
     "start:mock": "node mock-executor/src/server.mjs",
     "start:bridge": "node bridge/src/server.mjs",
     "smoke": "node mock-executor/src/smoke.mjs && node bridge/src/smoke.mjs && node shell-core/smoke.mjs",
-    "test": "npm run smoke"
+    "poc": "node poc/kill-bridge-isolation.mjs && node poc/security-checks.mjs",
+    "test": "npm run smoke && npm run poc"
   },
   "engines": {
     "node": ">=18"
