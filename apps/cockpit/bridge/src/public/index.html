@@ -125,13 +125,16 @@
     const meta = document.getElementById('meta');
     const fmt = (id) => (id && id.length > 12) ? id.slice(0, 8) + '…' : id;
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    // per-launch token injected by the Bridge for the gated control surface
+    const TOKEN = window.__COCKPIT_TOKEN__ || '';
+    const api = (u, o = {}) => fetch(u, { ...o, headers: { ...(o.headers || {}), authorization: 'Bearer ' + TOKEN } });
 
     // --- Inventory ---
     async function loadInventory() {
       const view = document.getElementById('inventory-view');
       view.textContent = 'Loading…';
       try {
-        const inv = await (await fetch('/api/inventory')).json();
+        const inv = await (await api('/api/inventory')).json();
         meta.textContent = `${inv.count} instance(s) · ${new Date(inv.fetched_at).toLocaleTimeString()}`;
         if (!inv.instances.length) { view.innerHTML = '<p class="empty">No instances.</p>'; return; }
         view.innerHTML = `<table><caption>Agent instances (live from the executor)</caption>
@@ -149,7 +152,7 @@
       const view = document.getElementById('running-view');
       view.textContent = 'Loading…';
       try {
-        const r = await (await fetch('/api/running')).json();
+        const r = await (await api('/api/running')).json();
         if (!r.running.length) { view.innerHTML = '<p class="empty">Nothing running.</p>'; return; }
         view.innerHTML = `<table><caption>Running across all stacks — ${r.count} task(s)</caption>
           <thead><tr><th scope="col">Instance</th><th scope="col">Task</th><th scope="col">State</th><th scope="col">Tenant</th></tr></thead>
@@ -189,7 +192,7 @@
 
     async function loadInstances() {
       try {
-        const inv = await (await fetch('/api/inventory')).json();
+        const inv = await (await api('/api/inventory')).json();
         selInstance.innerHTML = inv.instances.map((i) => `<option value="${esc(i.id)}">${esc(fmt(i.id))} · ${esc(i.loadout)}</option>`).join('');
         await loadSessions();
       } catch (e) { document.getElementById('session-hint').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
@@ -197,7 +200,7 @@
     async function loadSessions() {
       const inst = selInstance.value; if (!inst) return;
       try {
-        const r = await (await fetch('/api/sessions?instance=' + encodeURIComponent(inst))).json();
+        const r = await (await api('/api/sessions?instance=' + encodeURIComponent(inst))).json();
         if (!r.sessions.length) { selSession.innerHTML = '<option value="">— no sessions —</option>'; return; }
         selSession.innerHTML = r.sessions.map((s) => `<option value="${esc(s.attach_url)}">${esc(s.id)} · seq ${s.seq} · ${s.members} viewer(s)</option>`).join('');
       } catch (e) { selSession.innerHTML = `<option value="">${esc(e.message)}</option>`; }
@@ -253,7 +256,7 @@
       exResults.innerHTML = '<p class="empty">Searching…</p>';
       try {
         const u = `/api/capabilities?q=${encodeURIComponent(q)}&type=${encodeURIComponent(type)}&limit=10`;
-        const data = await (await fetch(u)).json();
+        const data = await (await api(u)).json();
         const rs = data.results || [];
         if (!rs.length) { exResults.innerHTML = '<p class="empty">No matches.</p>'; return; }
         exResults.innerHTML = `<table><caption>${rs.length} capabilit${rs.length === 1 ? 'y' : 'ies'}</caption><tbody>${rs.map((r, i) => `
@@ -270,7 +273,7 @@
     async function showCap(r) {
       exBody.innerHTML = '<p class="empty">Loading…</p>';
       try {
-        const d = await (await fetch(`/api/show?type=${encodeURIComponent(r.type)}&name=${encodeURIComponent(r.name)}`)).json();
+        const d = await (await api(`/api/show?type=${encodeURIComponent(r.type)}&name=${encodeURIComponent(r.name)}`)).json();
         exBody.innerHTML = `<div style="margin-bottom:8px"><span class="badge">${esc(r.type)}</span> <strong>${esc(r.name)}</strong></div>
           <div id="terminal" style="max-height:52vh">${esc(d.body)}</div>`;
       } catch (e) { exBody.innerHTML = `<p class="err">${esc(e.message)}</p>`; }

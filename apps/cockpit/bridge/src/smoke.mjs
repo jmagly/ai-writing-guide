@@ -11,11 +11,18 @@ const mockUrl = `http://127.0.0.1:${mock.address().port}`;
 const bridge = createBridge({ mockUrl });
 await new Promise((r) => bridge.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${bridge.address().port}`;
+// authed fetch helper — every /api/ call carries the per-launch bearer token
+const f = (p, o = {}) => fetch(base + p, { ...o, headers: { ...(o.headers || {}), authorization: 'Bearer ' + bridge.cockpitToken } });
 
 try {
+  // auth gate: /api/ without the token is 401; /healthz is open
+  assert.equal((await fetch(`${base}/api/inventory`)).status, 401, 'gate: no token -> 401');
+  assert.equal((await fetch(`${base}/api/inventory?token=wrong`)).status, 401, 'gate: bad token -> 401');
+  assert.equal((await fetch(`${base}/healthz`)).status, 200, 'healthz open (no token)');
+
   // data path: Bridge reads the executor admin inventory
-  const r = await fetch(`${base}/api/inventory`);
-  assert.equal(r.status, 200, 'inventory 200');
+  const r = await f('/api/inventory');
+  assert.equal(r.status, 200, 'inventory 200 (authed)');
   const inv = await r.json();
   assert.equal(inv.count, 3, 'three demo instances');
   const ids = inv.instances.map((i) => i.id);
@@ -25,7 +32,7 @@ try {
   assert.ok(['vm', 'container'].includes(i0.runtime), 'runtime kind');
 
   // running board: seeded working tasks on the running instances
-  const rr = await fetch(`${base}/api/running`);
+  const rr = await f("/api/running");
   assert.equal(rr.status, 200, 'running 200');
   const run = await rr.json();
   assert.ok(run.count >= 2, 'at least two running tasks seeded');
@@ -33,7 +40,7 @@ try {
   assert.equal(run.running[0].state, 'working', 'running task is working');
 
   // sessions: the demo pty session is listed with a direct ws attach_url
-  const sr = await fetch(`${base}/api/sessions?instance=550e8400-e29b-41d4-a716-446655440000`);
+  const sr = await f("/api/sessions?instance=550e8400-e29b-41d4-a716-446655440000");
   assert.equal(sr.status, 200, 'sessions 200');
   const sess = await sr.json();
   const demo = sess.sessions.find((s) => s.id === 'demo-shell');
@@ -42,21 +49,22 @@ try {
   assert.ok(demo.seq >= 3, 'demo session has a seeded transcript');
 
   // missing instance param is a 400
-  assert.equal((await fetch(`${base}/api/sessions`)).status, 400, 'sessions requires instance');
+  assert.equal((await f("/api/sessions")).status, 400, 'sessions requires instance');
 
   // registry binding: discover + show through the aiwg CLI (#1592)
-  const cap = await (await fetch(`${base}/api/capabilities?q=${encodeURIComponent('deploy production')}&limit=4`)).json();
+  const cap = await (await f("/api/capabilities?q=" + encodeURIComponent("deploy production") + "&limit=4")).json();
   assert.ok(Array.isArray(cap.results) && cap.results.length >= 1, 'discover returns results');
   const hit = cap.results.find((r) => r.name === 'flow-deploy-to-production');
   assert.ok(hit, 'flow-deploy-to-production discoverable');
   assert.ok(hit.name && hit.type, 'result carries name+type for show');
-  const shown = await (await fetch(`${base}/api/show?type=skill&name=flow-deploy-to-production`)).json();
+  const shown = await (await f("/api/show?type=skill&name=flow-deploy-to-production")).json();
   assert.match(shown.body, /name:\s*flow-deploy-to-production/, 'show returns the skill body');
-  assert.equal((await fetch(`${base}/api/capabilities`)).status, 400, 'capabilities requires q');
+  assert.equal((await f("/api/capabilities")).status, 400, 'capabilities requires q');
 
   // the screen is served and references the data paths
-  const html = await (await fetch(`${base}/`)).text();
+  const html = await (await fetch(base + "/")).text();
   assert.match(html, /AIWG.?Cockpit/i, 'screen renders Cockpit title');
+  assert.ok(html.includes(`window.__COCKPIT_TOKEN__=${JSON.stringify(bridge.cockpitToken)}`), 'screen receives the per-launch token');
   for (const p of ['/api/inventory', '/api/running', '/api/sessions', '/api/capabilities']) assert.ok(html.includes(p), `screen wires ${p}`);
   assert.match(html, /pty\.join_session/, 'screen drives the pty session protocol');
 

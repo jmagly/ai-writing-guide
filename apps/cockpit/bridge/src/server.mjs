@@ -7,12 +7,33 @@
 // per-launch token + OS-keychain (roctinam/aiwg#1595).
 import http from 'node:http';
 import { spawn } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdir, writeFile, chmod } from 'node:fs/promises';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, basename } from 'node:path';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const MOCK_URL = process.env.MOCK_URL ?? 'http://127.0.0.1:8122';
+const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
+
+/** Constant-time bearer-token check (header or ?token=). */
+function authed(req, url, token) {
+  const hdr = String(req.headers['authorization'] ?? '');
+  const bearer = hdr.startsWith('Bearer ') ? hdr.slice(7) : '';
+  const presented = bearer || url.searchParams.get('token') || '';
+  if (presented.length !== token.length) return false;
+  try { return timingSafeEqual(Buffer.from(presented), Buffer.from(token)); } catch { return false; }
+}
+
+/** Persist the per-launch token for the desktop/VS Code shells to read (mode 600). */
+async function writeRuntimeToken({ token, port, pid }) {
+  await mkdir(RUNTIME_DIR, { recursive: true, mode: 0o700 });
+  const file = join(RUNTIME_DIR, 'bridge.json');
+  await writeFile(file, JSON.stringify({ token, port, pid, started_at: new Date().toISOString() }, null, 2), { mode: 0o600 });
+  await chmod(file, 0o600);
+  return file;
+}
 // Repo-local aiwg bin: makes the registry binding work in dev + CI without a global install.
 const REPO_BIN = fileURLToPath(new URL('../../../../bin/aiwg.mjs', import.meta.url));
 
@@ -96,10 +117,17 @@ async function getSessions(mockUrl, instanceId) {
   };
 }
 
-export function createBridge({ mockUrl = MOCK_URL } = {}) {
-  return http.createServer(async (req, res) => {
+export function createBridge({ mockUrl = MOCK_URL, token } = {}) {
+  const TOKEN = token ?? randomBytes(24).toString('hex');
+  const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
     try {
+      // unauthenticated liveness probe (no /api/ prefix) — for the shell to wait on
+      if (url.pathname === '/healthz') return json(res, 200, { status: 'ok' });
+      // gate the control surface: per-launch bearer token on every /api/ call
+      if (url.pathname.startsWith('/api/') && !authed(req, url, TOKEN)) {
+        return json(res, 401, { error: 'unauthorized', detail: 'missing or invalid cockpit token' });
+      }
       if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(mockUrl));
       if (url.pathname === '/api/running') return json(res, 200, await getRunning(mockUrl));
       if (url.pathname === '/api/sessions') {
@@ -125,7 +153,9 @@ export function createBridge({ mockUrl = MOCK_URL } = {}) {
       }
       if (url.pathname === '/api/health') return json(res, 200, { status: 'ok', mock: mockUrl });
       if (url.pathname === '/' || url.pathname === '/index.html') {
-        const html = await readFile(join(__dir, 'public', 'index.html'), 'utf8');
+        const raw = await readFile(join(__dir, 'public', 'index.html'), 'utf8');
+        // Inject the per-launch token so the same-origin screen can call the gated API.
+        const html = raw.replace('</head>', `<script>window.__COCKPIT_TOKEN__=${JSON.stringify(TOKEN)}</script>\n</head>`);
         res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
         return res.end(html);
       }
@@ -134,11 +164,16 @@ export function createBridge({ mockUrl = MOCK_URL } = {}) {
       json(res, 502, { error: 'bridge_upstream_error', message: String(err?.message ?? err) });
     }
   });
+  server.cockpitToken = TOKEN; // exposed for shells/tests
+  return server;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const port = Number(process.env.PORT ?? 8120);
-  createBridge().listen(port, '127.0.0.1', () => {
+  const server = createBridge();
+  server.listen(port, '127.0.0.1', async () => {
+    const file = await writeRuntimeToken({ token: server.cockpitToken, port, pid: process.pid });
     console.log(`[cockpit-bridge] http://127.0.0.1:${port}  (reading ${MOCK_URL})`);
+    console.log(`  token written ${file} (mode 600) — open the URL in a browser or attach a shell`);
   });
 }
