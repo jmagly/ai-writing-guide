@@ -98,6 +98,11 @@ try {
   // destroy
   assert.equal((await (await f(`/api/instances/${stoppedId}`, { method: 'DELETE' })).json()).destroyed, stoppedId, 'destroy returns id');
 
+  // start a session (onboarding primary verb): create + issue a ws attach_url
+  const started = await (await f('/api/instances/550e8400-e29b-41d4-a716-446655440000/sessions', { method: 'POST' })).json();
+  assert.match(started.id ?? '', /^sess-/, 'start-session returns a new session id');
+  assert.match(started.attach_url ?? '', /\/sessions\/sess-[^/]+\/attach$/, 'start-session issues a ws attach_url');
+
   // app shell served with the per-launch token injected (React build if present, else
   // the legacy fallback — both carry the title + token)
   const html = await (await fetch(base + "/")).text();

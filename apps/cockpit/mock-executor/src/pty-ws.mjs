@@ -69,6 +69,13 @@ export function listSessions(instanceId) {
     .map((s) => ({ id: s.id, instance_id: s.instanceId, seq: s.seq, members: s.members.length, has_controller: s.hasController }));
 }
 
+/** Create a fresh session on an instance (the "Start a session" primary verb). */
+export function createSession(instanceId) {
+  const id = `sess-${randomUUID().slice(0, 8)}`;
+  sessionOf(id, instanceId);
+  return { id, instance_id: instanceId };
+}
+
 /** Seed one demo pty session with a short transcript so observe/replay show content immediately. */
 export function seedDemoSessions() {
   const s = sessionOf('demo-shell', DEFAULT_INSTANCE);

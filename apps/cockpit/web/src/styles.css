@@ -48,3 +48,21 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .capcard-tags { margin-top:8px; display:flex; gap:5px; flex-wrap:wrap; }
 .tag { font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:1px 7px; }
 .picker { background:#0a0c10; border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:12px; }
+/* Welcome / onboarding */
+.welcome { max-width:760px; }
+.welcome h2 { font-size:24px; margin:4px 0 10px; }
+.welcome .lead { color:var(--muted); font-size:16px; line-height:1.6; margin:0 0 20px; }
+.welcome .lead strong { color:var(--fg); }
+.statgrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:18px; }
+.stat { display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left; padding:14px 16px; }
+.stat-n { font-size:26px; font-weight:680; color:var(--fg); }
+.stat-l { color:var(--muted); font-size:13px; }
+.cta-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px; }
+.cta { background:var(--accent); color:#0b0d12; border-color:var(--accent); font-weight:620; padding:9px 18px; }
+.cta:hover:not(:disabled) { filter:brightness(1.08); }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:16px; }
+.card h3 { margin:0 0 8px; font-size:15px; }
+.card ol { margin:0; padding-left:20px; color:var(--muted); line-height:1.7; }
+.card ol strong { color:var(--fg); }
+.warn-card { border-color:var(--warn); }
+.warn-card pre { margin:10px 0 0; }

@@ -29,7 +29,7 @@ export function Running() {
         <p className="hint">Spend across stacks: <strong>${cost.total.usd.toFixed(2)}</strong> · {(cost.total.input_tokens + cost.total.output_tokens).toLocaleString()} tokens</p>
       )}
       {!run.running.length
-        ? <p className="empty">Nothing running.</p>
+        ? <p className="empty">Nothing running yet — use “Start a session” (top right or Home) to put an agent to work.</p>
         : (
           <table>
             <caption>Running across all stacks — {run.count} task(s)</caption>

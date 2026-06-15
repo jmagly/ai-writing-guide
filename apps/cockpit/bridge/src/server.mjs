@@ -215,8 +215,17 @@ export function createBridge({ mockUrl = MOCK_URL, token } = {}) {
       // into an agentic session (client-side, over the pty WS); the Bridge does NOT run
       // them. See adr-cockpit-session-control-not-cli-runner.md.
       if (url.pathname === '/api/contributions') return json(res, 200, await loadContributions());
-      // --- management surface (UC-012): lifecycle + task cancel ---
+      // --- start a session (the onboarding primary verb): create + issue attach_url ---
       let m;
+      if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/sessions$/)) && req.method === 'POST') {
+        const id = decodeURIComponent(m[1]);
+        const r = await fetch(`${mockUrl}/agents/${encodeURIComponent(id)}/sessions`, { method: 'POST' });
+        const body = await r.json();
+        const wsBase = mockUrl.replace(/^http/i, 'ws');
+        return json(res, r.status, { ...body, attach_url: `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(body.id)}/attach` });
+      }
+
+      // --- management surface (UC-012): lifecycle + task cancel ---
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/(start|stop)$/)) && req.method === 'POST')
         return proxy(res, 'POST', `${mockUrl}/admin/instances/${encodeURIComponent(m[1])}/${m[2]}`);
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)$/)) && req.method === 'DELETE')
