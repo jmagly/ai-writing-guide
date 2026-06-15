@@ -18,8 +18,8 @@ When you run `aiwg use sdlc`, AIWG copies a set of files into your project. Thes
 flowchart LR
   subgraph Source["AIWG framework source"]
     direction TB
-    KERN[16 kernel skills<br/>~15-25k tokens]
-    STD[~385 standard skills<br/>read from $AIWG_ROOT]
+    KERN[20 kernel skills<br/>~15-25k tokens]
+    STD[~460 standard skills<br/>read from $AIWG_ROOT]
     AGENT[200+ agents]
     RULES[60+ rules]
     TPL[100+ templates]

@@ -1,0 +1,5 @@
+timestamp: 2026-06-15
+direction: code-to-docs
+scope: skills/agents as code
+files_changed: 12
+report: .aiwg/reports/doc-sync-audit-2026-06-15.md

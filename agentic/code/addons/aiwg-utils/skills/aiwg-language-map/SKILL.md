@@ -8,7 +8,7 @@ description: AIWG addons + extensions language map — categories, curated disco
 
 # AIWG Language Map — Addons + Extensions
 
-This is your always-loaded directory for the AIWG **addon and extension** surface. It's the orientation layer for the ~270 skills that live outside the 8 frameworks. Frameworks have their own per-framework quickrefs (`sdlc-quickref`, `forensics-quickref`, etc.); this map covers everything else: addons (utilities, loops, voice, testing, etc.) and ops extensions (sys/net/sec/dev/it/stream).
+This is your always-loaded directory for the AIWG **addon and extension** surface. It's the orientation layer for the ~214 skills that live outside the 8 frameworks. Frameworks have their own per-framework quickrefs (`sdlc-quickref`, `forensics-quickref`, etc.); this map covers everything else: addons (utilities, loops, voice, testing, etc.) and ops extensions (sys/net/sec/dev/it/stream).
 
 ## How to use this map
 

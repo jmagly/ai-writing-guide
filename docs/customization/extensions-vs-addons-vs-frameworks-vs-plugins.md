@@ -10,7 +10,7 @@ which one to author when. Project-local artifacts can be any of the four.
 |------|-----------|---------|
 | **Extension** | The smallest deployable unit — a single capability (skill, agent, command, hook, rule) wrapped in a bundle | A custom skill `my-team-naming-rules/` |
 | **Addon** | A focused feature pack — usually 2–10 related extensions delivered together | `aiwg-utils` (rules + skills + agents working as a coherent set) |
-| **Framework** | A complete workflow domain — many addons + curated agents + templates | `sdlc-complete` (190 agents, 386 skills, full SDLC) |
+| **Framework** | A complete workflow domain — many addons + curated agents + templates | `sdlc-complete` (93 agents, 116 skills, full SDLC) |
 | **Plugin** | A delivery mechanism — packages any of the above for marketplace distribution | A versioned `.zip` containing an addon for `/plugin install` |
 
 The first three are **content**. The fourth is **packaging**.

@@ -126,7 +126,7 @@ When the budget is exceeded, Codex degrades in three stages:
 
 #### Why this hits AIWG users
 
-`aiwg use sdlc --provider codex` deploys ~400 skill files to `~/.codex/skills/`. Adding `media-curator`, `forensics-complete`, `research-complete` (or `aiwg use all`) pushes the total well past what fits in 2% of a 200k-context model. Combined with Codex's built-in `.system/` skills and any installed plugins, the warning is expected at full deployment on smaller-context models.
+`aiwg use sdlc --provider codex` deploys ~480 skill files to `~/.codex/skills/`. Adding `media-curator`, `forensics-complete`, `research-complete` (or `aiwg use all`) pushes the total well past what fits in 2% of a 200k-context model. Combined with Codex's built-in `.system/` skills and any installed plugins, the warning is expected at full deployment on smaller-context models.
 
 #### What you can do
 

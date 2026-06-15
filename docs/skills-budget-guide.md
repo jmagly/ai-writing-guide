@@ -2,7 +2,7 @@
 
 **For users seeing**: `Skill listing will be truncated`, `N descriptions dropped`, or skills that exist on disk but don't appear when you ask for them.
 
-AIWG ships ~400 skills across the SDLC, forensics, research, marketing, and ops frameworks. When you install several frameworks together, the host platform (Claude Code, Codex, etc.) may run past its skill listing budget and silently drop the lowest-priority descriptions. This guide explains what's happening and how to fix it for your platform.
+AIWG ships ~480 skills across the SDLC, forensics, research, marketing, and ops frameworks. When you install several frameworks together, the host platform (Claude Code, Codex, etc.) may run past its skill listing budget and silently drop the lowest-priority descriptions. This guide explains what's happening and how to fix it for your platform.
 
 ---
 
@@ -179,15 +179,15 @@ Per-framework approximate skill counts:
 
 | Framework | Skills | When you need it |
 |-----------|--------|------------------|
-| `sdlc-complete` | ~117 | Most projects (requirements → deployment) |
+| `sdlc-complete` | ~116 | Most projects (requirements → deployment) |
 | `aiwg-utils` | ~111 | Always on (deploys with everything) |
-| `media-marketing` | ~32 | Marketing campaigns, content ops |
-| `research-complete` | ~20 | Research corpora, citation graphs |
-| `forensics-complete` | ~19 | Incident response, forensic investigation |
-| `media-curator` | ~18 | Personal media archive |
-| `security-engineering` | ~7 | Security/cryptography reviews |
+| `media-marketing` | ~33 | Marketing campaigns, content ops |
+| `research-complete` | ~39 | Research corpora, citation graphs |
+| `forensics-complete` | ~20 | Incident response, forensic investigation |
+| `media-curator` | ~20 | Personal media archive |
+| `security-engineering` | ~27 | Security/cryptography reviews |
 
-The big cost is when you stack everything: full install ≈ 400+ skills. A focused install (sdlc + utils) is ~228 skills and fits comfortably in default Claude Code budgets.
+The big cost is when you stack everything: full install ≈ 480+ skills. A focused install (sdlc + utils) is ~228 skills and fits comfortably in default Claude Code budgets.
 
 ### Workspace-per-purpose pattern
 

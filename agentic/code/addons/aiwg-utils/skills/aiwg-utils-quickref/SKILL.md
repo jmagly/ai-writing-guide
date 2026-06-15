@@ -27,7 +27,7 @@ Walk the action hierarchy in order. The agent always prefers a **skill** over a 
 
 ## The canonical pipeline: `discover → show`
 
-Most AIWG skills (~385 of 400) are **not in your context** and are not in `<provider>/skills/` either — they stay at `$AIWG_ROOT` (no per-project copy by default, #1217). Two commands close the loop:
+Most AIWG skills (~460 of 480) are **not in your context** and are not in `<provider>/skills/` either — they stay at `$AIWG_ROOT` (no per-project copy by default, #1217). Two commands close the loop:
 
 ```bash
 # 1. Find — returns ranked candidates with absolute paths
@@ -68,7 +68,7 @@ If a quickref isn't loaded, the framework isn't installed in this project. Use `
 
 ## Addons & extensions (separate kernel quickref)
 
-For everything **outside the framework set** — the ~270 skills across 28 addons (loops, voice, memory, color, testing, NLP, etc.) and 7 ops extensions (sys/net/sec/dev/it/stream/api-adapter) — load `aiwg-language-map`. It's also kernel-resident and acts as the orientation layer for the addon/extension surface, with curated discover phrases per capability domain.
+For everything **outside the framework set** — the ~214 skills across 29 addons (loops, voice, memory, color, testing, NLP, etc.) and 7 ops extensions (sys/net/sec/dev/it/stream/api-adapter) — load `aiwg-language-map`. It's also kernel-resident and acts as the orientation layer for the addon/extension surface, with curated discover phrases per capability domain.
 
 ```
 aiwg-language-map  → addon capability domains + extension domains + cheat sheet

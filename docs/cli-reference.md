@@ -434,7 +434,7 @@ aiwg use sdlc --ci-hooks-enabled --dry-run
 
 | Framework | ID | Description |
 |-----------|-----|------------|
-| **SDLC Complete** | `sdlc` | Full software development lifecycle with 90 agents |
+| **SDLC Complete** | `sdlc` | Full software development lifecycle with 93 agents |
 | **Marketing Kit** | `marketing` | Complete marketing campaign management |
 | **Writing Quality** | `writing` | Voice profiles and content validation |
 | **All** | `all` | Deploy all frameworks |
@@ -1084,7 +1084,7 @@ Workspace: /home/user/customer-portal
 Git: clean (main branch)
 
 Frameworks:
-  ✓ sdlc-complete v1.0.0 (90 agents, 42 commands)
+  ✓ sdlc-complete v1.0.0 (93 agents, 42 commands)
   ✓ aiwg-utils v1.0.0
 
 Artifacts:
@@ -1886,12 +1886,12 @@ The AIWG marketplace publishes **13 plugins** at `.claude-plugin/marketplace.jso
 
 | Plugin | Source | Description |
 |---|---|---|
-| `sdlc` | `frameworks/sdlc-complete` | Full SDLC framework with 220 specialized agents |
+| `sdlc` | `frameworks/sdlc-complete` | Full SDLC framework with 93 specialized agents |
 | `marketing` | `frameworks/media-marketing-kit` | Marketing operations framework |
-| `forensics` | `frameworks/forensics-complete` | Digital forensics & incident response (13 agents, 19 skills) |
+| `forensics` | `frameworks/forensics-complete` | Digital forensics & incident response (13 agents, 20 skills) |
 | `security-engineering` | `frameworks/security-engineering` | Applied security: crypto, chain-of-trust, factors, supply-chain |
-| `research` | `frameworks/research-complete` | Research workflow automation (8 agents, 20 skills) |
-| `media-curator` | `frameworks/media-curator` | Media archive management (6 agents, 18 skills) |
+| `research` | `frameworks/research-complete` | Research workflow automation (8 agents, 39 skills) |
+| `media-curator` | `frameworks/media-curator` | Media archive management (6 agents, 20 skills) |
 | `ops` | `frameworks/ops-complete` | Operational infrastructure: incident, runbooks, troubleshooting |
 | `knowledge-base` | `frameworks/knowledge-base` | Knowledge base / wiki framework |
 | `utils` | `addons/aiwg-utils` | Core AIWG utilities |
@@ -3448,7 +3448,7 @@ aiwg show rule no-attribution                       # rule body
 - Calling `aiwg show <name>` with the type omitted prints a "did you mean: aiwg show skill <name>?" hint and exits 1.
 - Ambiguous matches list all candidates and exit 2 unless `--first` is supplied.
 
-**Why a separate command:** the kernel pivot (#1212) intentionally hides ~385 skills from the platform's flat scan; the no-copy default (#1217) leaves them at `$AIWG_ROOT` rather than mirroring per-project. `aiwg show` makes them trivially reachable without the consumer needing to know the storage layout. Pair with `aiwg discover` for find → fetch.
+**Why a separate command:** the kernel pivot (#1212) intentionally hides ~460 skills from the platform's flat scan; the no-copy default (#1217) leaves them at `$AIWG_ROOT` rather than mirroring per-project. `aiwg show` makes them trivially reachable without the consumer needing to know the storage layout. Pair with `aiwg discover` for find → fetch.
 
 ### Best-practice usage guidance
 
@@ -3466,7 +3466,7 @@ Then surface the top match (or top-3 candidates) — this makes your reasoning a
 
 **Use `--json` from sub-agents.** The JSON schema (`path / type / title / score / triggers / capability / kernel`) is stable and compact enough to forward to a subagent without context-bloat.
 
-**Don't skip discovery before declining or improvising.** The `skill-discovery` HIGH framing rule mandates `aiwg discover` before saying "AIWG can't do that" or writing a custom workflow from scratch. Most AIWG skills (~385 of 400 today) are NOT in your loaded context — the kernel set is just the orientation layer + self-maintenance ops.
+**Don't skip discovery before declining or improvising.** The `skill-discovery` HIGH framing rule mandates `aiwg discover` before saying "AIWG can't do that" or writing a custom workflow from scratch. Most AIWG skills (~460 of 480 today) are NOT in your loaded context — the kernel set is just the orientation layer + self-maintenance ops.
 
 **Read skill bodies via `aiwg show`, not via filesystem paths.** When discovery returns a candidate and you need its full body, call `aiwg show skill <name>`. Don't construct paths or `cat` files directly — the CLI is the access point and works the same regardless of where AIWG is installed.
 

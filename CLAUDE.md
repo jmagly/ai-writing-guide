@@ -34,7 +34,7 @@ agentic/code/
 │   ├── knowledge-base/       # Knowledge base / wiki framework
 │   └── ops-complete/         # Operational infrastructure (incident, runbooks, troubleshooting)
 ├── addons/
-│   └── voice-framework/     # Voice profiles (one of 27 addons)
+│   └── voice-framework/     # Voice profiles (one of 29 addons)
 └── agents/                  # Writing quality agents
 
 src/                         # CLI and MCP server implementation
@@ -97,7 +97,7 @@ All 10 providers receive all 4 artifact types (agents, commands, skills, rules).
 - **Warp**: Agents and commands are also aggregated into `WARP.md` for single-file context loading
 - **Windsurf**: Agents are aggregated into `AGENTS.md` at project root
 - **OpenClaw**: All artifacts deploy to home directory (`~/.openclaw/`). First provider to support behaviors (`~/.openclaw/behaviors/`)
-- **Hermes**: Integrates like Claude Code and Codex — file-based deploy + `aiwg discover`/`aiwg show` CLI + AGENTS.md/.hermes.md bridge (Discover-First Protocol). **MCP is optional**: AIWG's MCP server is a global hook any provider may use, but Hermes does not require it (validated v2026.5.13, #1527). When MCP is enabled, commands reach AIWG via `mcp_aiwg_command_run` (allow-listed) and the server exposes 16 core tools by default (45 more via `AIWG_MCP_TOOLSETS=<csv>`). Standard skills (~385) live under `~/.hermes/skills/.aiwg/` (recursively discovered) and are also reachable through the capability index without file deploy; kernel skills (~9) live at the top level, protected from the Curator (v0.12.0+) via the `.bundled_manifest`. Rules are inlined into AGENTS.md as compressed `### Rule:` directives, with full bodies reachable through `aiwg show rule <name>` even when MCP is disabled. Broader MCP modernization is tracked in #1533. See `docs/integrations/hermes-quickstart.md`.
+- **Hermes**: Integrates like Claude Code and Codex — file-based deploy + `aiwg discover`/`aiwg show` CLI + AGENTS.md/.hermes.md bridge (Discover-First Protocol). **MCP is optional**: AIWG's MCP server is a global hook any provider may use, but Hermes does not require it (validated v2026.5.13, #1527). When MCP is enabled, commands reach AIWG via `mcp_aiwg_command_run` (allow-listed) and the server exposes 16 core tools by default (45 more via `AIWG_MCP_TOOLSETS=<csv>`). Standard skills (~460) live under `~/.hermes/skills/.aiwg/` (recursively discovered) and are also reachable through the capability index without file deploy; kernel skills (~9) live at the top level, protected from the Curator (v0.12.0+) via the `.bundled_manifest`. Rules are inlined into AGENTS.md as compressed `### Rule:` directives, with full bodies reachable through `aiwg show rule <name>` even when MCP is disabled. Broader MCP modernization is tracked in #1533. See `docs/integrations/hermes-quickstart.md`.
 - **OpenHuman** (tinyhumansai): OSS personal-AI runtime (Rust core + Tauri desktop), AIWG-convention-aware out of the box — ships `.agents/`, `AGENTS.md`, `.claude/`, `.codex/`. Kernel skills install **globally like OpenClaw** to `~/.openhuman/skills/` (ungated user-scope native scan via `ops_discover.rs`, one-level — exactly what the app's Skills library surfaces), standard skills sequestered under `~/.openhuman/.aiwg/skills/` for index-driven discovery. Markdown personas stay **workspace-scoped** at `.agents/agents/` (consumed by the coding hosts OpenHuman drives — `claude_code`/`factory`), and commands/rules aggregate into the workspace `AGENTS.md` bridge. The project-scope trust marker is no longer written — user-scope is ungated (#1553). The native agent harness (TOML specialists) is an opt-in Tier-2 surface (#1559). Induction epic #1552; see `docs/integrations/openhuman-quickstart.md` (#1558).
 - **Omnius** (first-party integrator): Ships AIWG embedded inside the Omnius autonomous coding agent runtime — no separate `aiwg use` step required. `npm i -g omnius` installs both. AIWG skills, agents, and rules are reachable through `aiwg discover` from inside Omnius sessions and through Omnius's REST (`/v1/aiwg/*`) and MCP bridges. Treat Omnius like any AIWG-aware host: the `skill-discovery`, `delivery-policy`, `human-authorization`, and `anti-laziness` rules all apply unchanged. See https://www.npmjs.com/package/omnius.
 
@@ -337,13 +337,13 @@ aiwg run skill <name> --cwd <path> -- <args...>   # explicit CWD override
 # `"executable": true` with a `run_hint`; `aiwg show` prepends a one-line
 # banner so agents know to use this command instead of running raw paths.
 
-# Most AIWG skills (~385 of 400) are NOT in your context — they stay at
+# Most AIWG skills (~460 of 480) are NOT in your context — they stay at
 # $AIWG_ROOT (no per-project copy by default, #1217) and are reached via
 # `aiwg discover` + `aiwg show`. The kernel set is what's always-loaded:
 # 8 framework quickrefs + aiwg-utils-quickref + aiwg-language-map (covers
-# addons + extensions) + 9 self-maintenance ops (steward, aiwg-doctor,
+# addons + extensions) + 10 self-maintenance ops (steward, aiwg-doctor,
 # aiwg-refresh, aiwg-regenerate, aiwg-status, aiwg-help, aiwg-issue,
-# aiwg-pr, use) = 19 skills total.
+# aiwg-pr, aiwg-mission, use) = 20 skills total.
 # The skill-discovery HIGH rule mandates `aiwg discover` before declining
 # a user request as out-of-scope.
 # To force per-project copies (sandboxed runtimes): pass --copy-all
