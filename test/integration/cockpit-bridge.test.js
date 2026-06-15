@@ -62,10 +62,14 @@ describe('cockpit web — app shell served', () => {
   it('declares a document language', () => expect(html).toMatch(/<html lang="en"/));
   it('renders the Cockpit title', () => expect(html).toMatch(/AIWG.?Cockpit/i));
   it('injects the per-launch token', () => expect(html).toContain(`window.__COCKPIT_TOKEN__=${JSON.stringify(token)}`));
-  it('serves the built bundle when a React build is present', async () => {
-    const m = html.match(/src="([^"]*assets\/[^"]+\.js)"/);
-    if (m) expect((await fetch(base + m[1].replace(/^\.\//, '/'))).status).toBe(200);
-    // a11y of the *rendered* UI is asserted by the React-render tests in T6 (jsdom);
-    // the ARIA lives in the components (role/aria-* in the JSX), not the static shell.
+  it('references + serves the built bundle outside comments when a React build is present', async () => {
+    // strip comments first: a module script trapped in a comment must not count.
+    const live = html.replace(/<!--[\s\S]*?-->/g, '');
+    if (/assets\//.test(html)) {
+      const m = live.match(/<script[^>]+type="module"[^>]+src="([^"]*assets\/[^"]+\.js)"/);
+      expect(m, 'module bundle must be referenced outside comments').toBeTruthy();
+      expect((await fetch(base + m[1].replace(/^\.\//, '/'))).status).toBe(200);
+    }
+    // a11y of the *rendered* UI is asserted by the React-render tests in T6 (jsdom).
   });
 });

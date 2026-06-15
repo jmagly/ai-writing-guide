@@ -103,10 +103,17 @@ try {
   const html = await (await fetch(base + "/")).text();
   assert.match(html, /AIWG.?Cockpit/i, 'app title rendered');
   assert.ok(html.includes(`window.__COCKPIT_TOKEN__=${JSON.stringify(bridge.cockpitToken)}`), 'token injected into the served app');
-  const asset = html.match(/src="([^"]*assets\/[^"]+\.js)"/);
-  if (asset) assert.equal((await fetch(base + asset[1].replace(/^\.\//, '/'))).status, 200, 'built React bundle served');
+  // strip HTML comments BEFORE matching — a module script trapped inside a comment
+  // (the Vite '</head>'-in-comment gotcha) must not count as "referenced".
+  const live = html.replace(/<!--[\s\S]*?-->/g, '');
+  const shell = /assets\//.test(html) ? 'react' : 'legacy';
+  if (shell === 'react') {
+    const asset = live.match(/<script[^>]+type="module"[^>]+src="([^"]*assets\/[^"]+\.js)"/);
+    assert.ok(asset, 'React build present → module bundle must be referenced outside comments');
+    assert.equal((await fetch(base + asset[1].replace(/^\.\//, '/'))).status, 200, 'built React bundle served');
+  }
 
-  console.log(`SMOKE OK — inventory(3) + running(${run.count}) + sessions(demo-shell) + registry(discover→${cap.results.length}) + contrib(${contrib.actions.length}) + shell(${asset ? 'react' : 'legacy'})`);
+  console.log(`SMOKE OK — inventory(3) + running(${run.count}) + sessions(demo-shell) + registry(discover→${cap.results.length}) + contrib(${contrib.actions.length}) + shell(${shell})`);
 } finally {
   bridge.close();
   mock.close();
