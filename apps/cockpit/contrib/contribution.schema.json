@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://aiwg.io/cockpit/contribution/v1",
   "title": "AIWG Cockpit UI Contribution (#1591)",
-  "description": "Declarative extension of the Cockpit UI: screens, actions, and event-hooks. Loaded from apps/cockpit/contrib/ and (future) installed AIWG extensions. Every action resolves to an `aiwg` CLI invocation — the Bridge never spawns anything but `aiwg`, so contributions stay registry-bound and CLI-first.",
+  "description": "Declarative extension of the Cockpit UI: screens, actions, and event-hooks. Loaded from apps/cockpit/contrib/ and (future) installed AIWG extensions. An action INJECTS a command into an agentic session (focused, else a new one) — the Cockpit never runs the CLI itself; the agent in the session does. See adr-cockpit-session-control-not-cli-runner.md.",
   "type": "object",
   "required": ["id", "version", "contributes"],
   "additionalProperties": false,
@@ -19,18 +19,23 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["id", "title", "run"],
+            "required": ["id", "title", "inject"],
             "additionalProperties": false,
             "properties": {
               "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
               "title": { "type": "string" },
               "icon": { "type": "string" },
               "group": { "type": "string" },
-              "run": {
+              "inject": {
                 "type": "object",
-                "required": ["aiwg"],
+                "required": ["command"],
                 "additionalProperties": false,
-                "properties": { "aiwg": { "type": "array", "items": { "type": "string" }, "description": "argv passed to the aiwg CLI" } }
+                "properties": {
+                  "command": { "type": "string", "description": "command/prompt injected into an agentic session" },
+                  "target": { "type": "string", "enum": ["focused", "new"], "default": "focused", "description": "focused = inject into the attached session, else offer a new one; new = always a fresh session" },
+                  "needs_args": { "type": "boolean", "description": "prompt for arguments before injecting" },
+                  "args_hint": { "type": "string" }
+                }
               }
             }
           }

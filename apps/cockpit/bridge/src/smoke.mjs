@@ -61,14 +61,15 @@ try {
   assert.match(shown.body, /name:\s*flow-deploy-to-production/, 'show returns the skill body');
   assert.equal((await f("/api/capabilities")).status, 400, 'capabilities requires q');
 
-  // contribution model: first-party actions load + run through the aiwg CLI (#1591)
+  // contribution model: actions INJECT a command into a session — the Cockpit never
+  // runs the CLI (adr-cockpit-session-control-not-cli-runner) (#1591)
   const contrib = await (await f("/api/contributions")).json();
   assert.ok(contrib.sources.some((s) => s.id === 'aiwg-core'), 'aiwg-core contribution loaded');
   const audit = contrib.actions.find((a) => a.id === 'audit-issues');
-  assert.ok(audit && Array.isArray(audit.run.aiwg), 'audit-issues action declared with aiwg argv');
-  const ran = await (await f("/api/actions/audit-issues/run", { method: 'POST' })).json();
-  assert.match(ran.output, /issue-audit/, 'running audit-issues surfaces the issue-audit skill');
-  assert.equal((await f("/api/actions/does-not-exist/run", { method: 'POST' })).status, 404, 'unknown action -> 404');
+  assert.ok(audit && typeof audit.inject.command === 'string', 'audit-issues declares an inject command');
+  assert.match(audit.inject.command, /issue-audit/, 'audit-issues injects the issue-audit command');
+  // the spawn-aiwg run endpoint is removed
+  assert.equal((await f("/api/actions/audit-issues/run", { method: 'POST' })).status, 404, 'action run endpoint gone (no Bridge CLI run for actions)');
 
   // management: lifecycle (UC-012)
   const stoppedId = '9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b';

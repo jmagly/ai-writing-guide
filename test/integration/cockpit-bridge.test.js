@@ -36,10 +36,13 @@ describe('cockpit Bridge — control surface', () => {
     expect(s.sessions.find((x) => x.id === 'demo-shell')?.attach_url).toMatch(/^ws:\/\/.*\/attach$/);
   });
 
-  it('loads declarative contributions (file-based, no shell)', async () => {
+  it('loads declarative contributions whose actions inject commands (no Bridge CLI run)', async () => {
     const c = await (await f('/api/contributions')).json();
     expect(c.sources.some((x) => x.id === 'aiwg-core')).toBe(true);
-    expect(c.actions.find((a) => a.id === 'audit-issues')).toBeTruthy();
+    const audit = c.actions.find((a) => a.id === 'audit-issues');
+    expect(audit?.inject?.command).toMatch(/issue-audit/);
+    // the spawn-aiwg action-run endpoint is gone
+    expect((await f('/api/actions/audit-issues/run', { method: 'POST' })).status).toBe(404);
   });
 
   it('drives lifecycle, approvals (no flip), and cost', async () => {

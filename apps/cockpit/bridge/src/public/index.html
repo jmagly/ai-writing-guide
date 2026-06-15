@@ -114,9 +114,9 @@
     </section>
 
     <section id="panel-actions" role="tabpanel" aria-labelledby="tab-actions" hidden>
-      <p class="hint">Actions are <strong>contributed declaratively</strong> — first-party and (soon) any installed AIWG extension. Each resolves to an <code>aiwg</code> invocation; nothing else is ever run. This is how <code>audit-issue</code>, <code>address-issues</code> and friends become buttons.</p>
+      <p class="hint">Actions are <strong>contributed declaratively</strong> — first-party and (soon) any installed AIWG extension. Clicking one <strong>injects a command into an agentic session</strong> (the focused one, else it offers a new one); the agent there runs it. The Cockpit never runs the CLI — agents do.</p>
       <div class="controls" id="actions-bar" role="group" aria-label="Contributed actions"></div>
-      <div id="action-out" role="region" aria-label="Action output"><p class="empty">Run an action to see its output.</p></div>
+      <div id="action-out" role="region" aria-label="About actions"><p class="empty">Output appears in the session terminal — actions drop a command into a session and the agent executes it.</p></div>
     </section>
   </main>
 
@@ -344,25 +344,39 @@
       } catch (e) { view.innerHTML = `<p class="err">Could not load approvals: ${esc(e.message)}</p>`; }
     }
 
-    // --- Actions (declaratively contributed) ---
+    // --- Actions (declaratively contributed) — inject a command INTO a session ---
+    // The Cockpit never runs the CLI. An action drops its command into an agentic
+    // session (the focused one, else offers a new one) and the agent runs it.
     const actionsBar = document.getElementById('actions-bar');
-    const actionOut = document.getElementById('action-out');
+    let contribActions = [];
     async function loadActions() {
       try {
         const c = await (await api('/api/contributions')).json();
-        if (!c.actions.length) { actionsBar.innerHTML = '<p class="empty">No contributed actions.</p>'; return; }
-        actionsBar.innerHTML = c.actions.map((a) =>
-          `<button type="button" class="act" data-id="${esc(a.id)}" title="${esc(a.source)}">${a.icon ? esc(a.icon) + ' ' : ''}${esc(a.title)}</button>`).join('');
-        actionsBar.querySelectorAll('.act').forEach((b) => b.addEventListener('click', () => runAction(b.dataset.id)));
+        contribActions = c.actions || [];
+        if (!contribActions.length) { actionsBar.innerHTML = '<p class="empty">No contributed actions.</p>'; return; }
+        actionsBar.innerHTML = contribActions.map((a) =>
+          `<button type="button" class="act" data-id="${esc(a.id)}" title="injects: ${esc(a.inject.command)}">${a.icon ? esc(a.icon) + ' ' : ''}${esc(a.title)}</button>`).join('');
+        actionsBar.querySelectorAll('.act').forEach((b) => b.addEventListener('click', () => injectAction(contribActions.find((a) => a.id === b.dataset.id))));
       } catch (e) { actionsBar.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
     }
-    async function runAction(id) {
-      actionOut.innerHTML = '<p class="empty">Running…</p>';
-      try {
-        const r = await (await api(`/api/actions/${encodeURIComponent(id)}/run`, { method: 'POST' })).json();
-        actionOut.innerHTML = `<div style="margin-bottom:8px"><span class="badge">${esc(r.source)}</span> <strong>${esc(id)}</strong></div>
-          <div id="terminal" style="max-height:52vh">${esc(r.output || '(no output)')}</div>`;
-      } catch (e) { actionOut.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+    function injectAction(action) {
+      if (!action) return;
+      let command = action.inject.command;
+      if (action.inject.needs_args) {
+        const extra = prompt(`Arguments for ${action.title}${action.inject.args_hint ? ' (' + action.inject.args_hint + ')' : ''}:`, '');
+        if (extra === null) return;               // cancelled
+        if (extra.trim()) command += ' ' + extra.trim();
+      }
+      show('tab-sessions');                        // actions target the sessions surface
+      cmd.value = command;
+      const hint = document.getElementById('session-hint');
+      if (ws && role === 'controller') {
+        sendInput();
+        hint.textContent = `Injected "${command}" into the attached session — the agent runs it (the Cockpit never runs the CLI).`;
+      } else {
+        cmd.focus();
+        hint.textContent = `Ready to inject "${command}". Attach to a session (drive), or start one, then Send — the agent runs it.`;
+      }
     }
 
     document.getElementById('refresh').addEventListener('click', () => {

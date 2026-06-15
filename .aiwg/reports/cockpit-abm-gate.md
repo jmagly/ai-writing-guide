@@ -52,7 +52,7 @@ in parallel; the real swap is two tracked sandbox items (#460/#461) plus the AIW
 | **T-SEC S1** surface auth | Is the control surface exposed? | **PASS** — `/api/*` gated by per-launch bearer token (constant-time), 401 on absent/wrong | `apps/cockpit/poc/security-checks.mjs` |
 | **T-SEC E1/S3** approval integrity | Can approvals be spoofed/flipped? | **PASS** — decision requires the token; a resolved approval cannot be re-decided (409) | same |
 | **T-SEC I1** no creds | Does the overlay hoard stack credentials? | **PASS** — runtime file holds only the overlay's own token (`{pid,port,started_at,token}`); tenant_id is routing, never auth | same |
-| **T-PAR-01** CLI parity | Does the UI fork from the CLI? | **PASS (structural)** — every contributed action is an `aiwg` argv; the Bridge spawns nothing but `aiwg`; the data-driven core reads `aiwg discover`/`show`. UI action ⊆ registry capability by construction | `apps/cockpit/contrib/` + `/api/capabilities` |
+| **T-PAR-01** CLI parity | Does the UI fork from the CLI? | **PASS (structural)** — the Cockpit never runs the CLI; a contributed action **injects a command into an agentic session** and the *agent* runs the CLI. Read-only catalog data (discover/show) is display, not work. Parity holds because the agent is CLI-first. See `adr-cockpit-session-control-not-cli-runner.md` | `apps/cockpit/contrib/` + the Sessions surface |
 
 Run them: `node apps/cockpit/poc/kill-bridge-isolation.mjs && node apps/cockpit/poc/security-checks.mjs`
 (or `npm --prefix apps/cockpit run poc`).

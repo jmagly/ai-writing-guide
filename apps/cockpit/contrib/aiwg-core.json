@@ -5,9 +5,9 @@
   "title": "AIWG Core Actions",
   "contributes": {
     "actions": [
-      { "id": "audit-issues",   "title": "Audit Issues",   "icon": "🔍", "group": "issues", "run": { "aiwg": ["show", "skill", "issue-audit"] } },
-      { "id": "address-issues", "title": "Address Issues", "icon": "🛠️", "group": "issues", "run": { "aiwg": ["show", "command", "address-issues"] } },
-      { "id": "doctor",         "title": "Doctor",          "icon": "🩺", "group": "maintenance", "run": { "aiwg": ["show", "skill", "aiwg-doctor"] } }
+      { "id": "audit-issues",   "title": "Audit Issues",   "icon": "🔍", "group": "issues",      "inject": { "command": "/issue-audit", "target": "focused" } },
+      { "id": "address-issues", "title": "Address Issues", "icon": "🛠️", "group": "issues",      "inject": { "command": "/address-issues", "target": "focused", "needs_args": true, "args_hint": "issue numbers, space-separated" } },
+      { "id": "doctor",         "title": "Doctor",          "icon": "🩺", "group": "maintenance", "inject": { "command": "/aiwg-doctor", "target": "focused" } }
     ],
     "screens": [],
     "hooks": []

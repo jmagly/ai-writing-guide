@@ -73,7 +73,9 @@ function validateContribution(m, where) {
   for (const a of c.actions || []) {
     if (!ID_RE.test(a.id || '')) fail(`action.id invalid: ${a.id}`);
     if (typeof a.title !== 'string') fail(`action ${a.id}: title required`);
-    if (!a.run || !Array.isArray(a.run.aiwg) || !a.run.aiwg.every((x) => typeof x === 'string')) fail(`action ${a.id}: run.aiwg must be a string[] (aiwg argv)`);
+    // An action INJECTS a command into an agentic session — it does NOT run the CLI.
+    if (!a.inject || typeof a.inject.command !== 'string') fail(`action ${a.id}: inject.command (string) required`);
+    if (a.inject.target && !['focused', 'new'].includes(a.inject.target)) fail(`action ${a.id}: inject.target must be focused|new`);
   }
   for (const s of c.screens || []) { if (!ID_RE.test(s.id || '') || typeof s.source !== 'string') fail(`screen invalid: ${s.id}`); }
   for (const h of c.hooks || []) { if (typeof h.on !== 'string' || !ID_RE.test(h.action || '')) fail(`hook invalid: on=${h.on}`); }
@@ -195,17 +197,10 @@ export function createBridge({ mockUrl = MOCK_URL, token } = {}) {
         if (!type || !name) return json(res, 400, { error: 'type_and_name_required' });
         return json(res, 200, { type, name, body: await runAiwg(['show', type, name]) });
       }
-      // contribution model — registry-bound, declarative UI extension (#1591)
+      // contribution model — declarative UI extension (#1591). Actions INJECT a command
+      // into an agentic session (client-side, over the pty WS); the Bridge does NOT run
+      // them. See adr-cockpit-session-control-not-cli-runner.md.
       if (url.pathname === '/api/contributions') return json(res, 200, await loadContributions());
-      const actRun = url.pathname.match(/^\/api\/actions\/([^/]+)\/run$/);
-      if (actRun && req.method === 'POST') {
-        const id = decodeURIComponent(actRun[1]);
-        const { actions } = await loadContributions();
-        const action = actions.find((a) => a.id === id);
-        if (!action) return json(res, 404, { error: 'action_not_found', id });
-        // run.aiwg is a trusted, manifest-declared aiwg argv (only `aiwg` is ever spawned)
-        return json(res, 200, { id, source: action.source, output: await runAiwg(action.run.aiwg) });
-      }
       // --- management surface (UC-012): lifecycle + task cancel ---
       let m;
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/(start|stop)$/)) && req.method === 'POST')
