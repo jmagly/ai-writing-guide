@@ -8,6 +8,7 @@ import { Running } from './components/Running';
 import { Sessions } from './components/Sessions';
 import { Approvals } from './components/Approvals';
 import { Explore } from './components/Explore';
+import { Library } from './components/Library';
 import { Actions } from './components/Actions';
 
 const TABS = [
@@ -17,6 +18,7 @@ const TABS = [
   { id: 'sessions', label: 'Sessions' },
   { id: 'approvals', label: 'Approvals' },
   { id: 'explore', label: 'Explore' },
+  { id: 'library', label: 'Library' },
   { id: 'actions', label: 'Actions' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
@@ -63,6 +65,9 @@ export function App() {
         </section>
         <Panel id="approvals" tab={tab}><Approvals /></Panel>
         <Panel id="explore" tab={tab}><Explore /></Panel>
+        <Panel id="library" tab={tab}>
+          <Library session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />
+        </Panel>
         <Panel id="actions" tab={tab}>
           <Actions session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />
         </Panel>

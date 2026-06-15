@@ -7,7 +7,7 @@
 // per-launch token + OS-keychain (roctinam/aiwg#1595).
 import http from 'node:http';
 import { spawn } from 'node:child_process';
-import { readFile, mkdir, writeFile, chmod, readdir } from 'node:fs/promises';
+import { readFile, mkdir, writeFile, chmod, readdir, cp, rm, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { homedir } from 'node:os';
@@ -26,7 +26,8 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
 async function serveDistFile(res, relPath) {
   const safe = join(WEB_DIST, relPath.replace(/^\/+/, ''));
   if (!safe.startsWith(WEB_DIST) || !existsSync(safe)) return false;
-  res.writeHead(200, { 'content-type': MIME[extname(safe)] ?? 'application/octet-stream' });
+  // content-hashed assets are safe to cache forever
+  res.writeHead(200, { 'content-type': MIME[extname(safe)] ?? 'application/octet-stream', 'cache-control': 'public, max-age=31536000, immutable' });
   res.end(await readFile(safe));
   return true;
 }
@@ -68,6 +69,50 @@ async function runAiwg(args) {
   try { return await spawnCollect('aiwg', args); }
   catch (e) { if (e && e.code === 'ENOENT') return spawnCollect(process.execPath, [REPO_BIN, ...args]); throw e; }
 }
+// --- user asset library (#1591/#1593): the operator's OWN copied/cloned/imported
+// assets, on disk under ~/.aiwg/cockpit/library. AIWG install files are NEVER written
+// (clone reads the catalog read-only, writes only into the library). ---
+const LIBRARY_DIR = join(homedir(), '.aiwg', 'cockpit', 'library');
+/** Resolve a name to a path INSIDE the library, or null if it would escape. */
+function inLibrary(name) {
+  const r = join(LIBRARY_DIR, String(name).replace(/^[/\\]+/, ''));
+  return r === LIBRARY_DIR || r.startsWith(LIBRARY_DIR + '/') ? r : null;
+}
+async function listLibrary() {
+  let entries;
+  try { entries = await readdir(LIBRARY_DIR, { withFileTypes: true }); } catch { return []; }
+  const out = [];
+  for (const e of entries) {
+    if (e.name.startsWith('.')) continue;
+    let meta = { name: e.name, kind: e.isDirectory() ? 'dir' : 'file', type: 'unknown', origin: 'imported' };
+    if (e.isDirectory()) {
+      try { meta = { ...meta, ...JSON.parse(await readFile(join(LIBRARY_DIR, e.name, '.cockpit-origin.json'), 'utf8')), name: e.name, kind: 'dir' }; } catch { /* no manifest */ }
+    }
+    out.push(meta);
+  }
+  return out;
+}
+/** Clone a catalog asset (skill dir or single file) into the library — never the reverse. */
+async function cloneToLibrary({ type, name, path }) {
+  if (!type || !name || !path) throw new Error('type, name, path required');
+  if (!existsSync(path)) throw new Error('source not found');
+  await mkdir(LIBRARY_DIR, { recursive: true, mode: 0o755 });
+  const destName = String(name).replace(/[^a-z0-9._-]/gi, '-');
+  const isDir = /SKILL\.(md|markdown)$/i.test(basename(path)) || (await stat(path)).isDirectory();
+  const src = /SKILL\.(md|markdown)$/i.test(basename(path)) ? dirname(path) : path;
+  if (isDir) {
+    const dest = inLibrary(destName);
+    if (!dest || existsSync(dest)) throw new Error(`already in library: ${destName}`);
+    await cp(src, dest, { recursive: true });
+    await writeFile(join(dest, '.cockpit-origin.json'), JSON.stringify({ name: destName, type, origin: 'aiwg-catalog', kind: 'dir', source_path: path, cloned_at: new Date().toISOString() }, null, 2), { mode: 0o644 });
+    return { name: destName, type, kind: 'dir' };
+  }
+  const dest = inLibrary(destName + (extname(path) || '.md'));
+  if (!dest || existsSync(dest)) throw new Error(`already in library: ${destName}`);
+  await cp(src, dest);
+  return { name: basename(dest), type, kind: 'file' };
+}
+
 /** The `aiwg show <type> <name>` slug for a discover result path. */
 function deriveName(path) {
   const base = basename(path);
@@ -211,6 +256,26 @@ export function createBridge({ mockUrl = MOCK_URL, token } = {}) {
         if (!type || !name) return json(res, 400, { error: 'type_and_name_required' });
         return json(res, 200, { type, name, body: await runAiwg(['show', type, name]) });
       }
+      // user asset library — browse / clone-from-catalog / delete. AIWG install files
+      // are never written; deletes are sandboxed to ~/.aiwg/cockpit/library.
+      if (url.pathname === '/api/library' && req.method === 'GET') return json(res, 200, { library: await listLibrary() });
+      if (url.pathname === '/api/library/clone' && req.method === 'POST') {
+        try {
+          return json(res, 201, await cloneToLibrary({
+            type: url.searchParams.get('type'), name: url.searchParams.get('name'), path: url.searchParams.get('path'),
+          }));
+        } catch (e) { return json(res, 400, { error: 'clone_failed', detail: String(e?.message ?? e) }); }
+      }
+      {
+        const lm = url.pathname.match(/^\/api\/library\/(.+)$/);
+        if (lm && req.method === 'DELETE') {
+          const target = inLibrary(decodeURIComponent(lm[1]));
+          if (!target || target === LIBRARY_DIR || !existsSync(target)) return json(res, 404, { error: 'not_in_library' });
+          await rm(target, { recursive: true, force: true });
+          return json(res, 200, { removed: decodeURIComponent(lm[1]) });
+        }
+      }
+
       // contribution model — declarative UI extension (#1591). Actions INJECT a command
       // into an agentic session (client-side, over the pty WS); the Bridge does NOT run
       // them. See adr-cockpit-session-control-not-cli-runner.md.
@@ -248,7 +313,8 @@ export function createBridge({ mockUrl = MOCK_URL, token } = {}) {
         const raw = await readFile(src, 'utf8');
         // Inject the per-launch token so the same-origin app can call the gated API.
         const html = raw.replace('</head>', `<script>window.__COCKPIT_TOKEN__=${JSON.stringify(TOKEN)}</script>\n</head>`);
-        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+        // never cache the shell — it must always reference the latest hashed bundle
+        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });
         return res.end(html);
       }
       // static assets from the built web app (e.g. /assets/*.js, *.css)

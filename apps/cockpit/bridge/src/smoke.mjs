@@ -98,6 +98,18 @@ try {
   // destroy
   assert.equal((await (await f(`/api/instances/${stoppedId}`, { method: 'DELETE' })).json()).destroyed, stoppedId, 'destroy returns id');
 
+  // user asset library: clone a catalog asset into the library, list it, delete it.
+  // (AIWG source is read-only — clone copies into ~/.aiwg/cockpit/library, never the reverse.)
+  const cloneRes = await f(`/api/library/clone?type=${encodeURIComponent(hit.type)}&name=${encodeURIComponent(hit.name)}&path=${encodeURIComponent(hit.path)}`, { method: 'POST' });
+  assert.ok([201, 400].includes(cloneRes.status), 'clone returns 201 (new) or 400 (already present)');
+  const lib1 = await (await f('/api/library')).json();
+  assert.ok(lib1.library.some((a) => a.name === hit.name), 'cloned asset appears in the user library');
+  assert.equal((await f(`/api/library/${encodeURIComponent(hit.name)}`, { method: 'DELETE' })).status, 200, 'library delete 200');
+  const lib2 = await (await f('/api/library')).json();
+  assert.ok(!lib2.library.some((a) => a.name === hit.name), 'deleted asset removed from library');
+  // a path that escapes the library is refused
+  assert.equal((await f('/api/library/..%2f..%2fevil', { method: 'DELETE' })).status, 404, 'escape attempt refused');
+
   // start a session (onboarding primary verb): create + issue a ws attach_url
   const started = await (await f('/api/instances/550e8400-e29b-41d4-a716-446655440000/sessions', { method: 'POST' })).json();
   assert.match(started.id ?? '', /^sess-/, 'start-session returns a new session id');

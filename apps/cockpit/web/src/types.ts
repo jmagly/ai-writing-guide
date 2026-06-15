@@ -6,3 +6,4 @@ export interface Cost { total: { input_tokens: number; output_tokens: number; us
 export interface CapabilityResult { path: string; type: string; title?: string; capability?: string; score?: number; name: string; triggers?: string[] }
 export interface ContribAction { id: string; title: string; icon?: string; group?: string; source: string; inject: { command: string; target?: string; needs_args?: boolean; args_hint?: string } }
 export type Role = 'controller' | 'observer' | null;
+export interface LibraryAsset { name: string; type: string; kind: 'dir' | 'file'; origin: string; source_path?: string }
