@@ -543,6 +543,40 @@ async function runDoctor() {
           const files = await fs.readdir(agentsPath);
           const agentCount = files.filter(f => f.endsWith('.md') || f.endsWith('.agent.md')).length;
           check(`${label} Agents`, 'ok', `${agentCount} agents deployed (${agentsPathRel})`);
+
+          // Agent-def size ceiling (#1587). A deployed agent definition is loaded
+          // verbatim as the subagent system prompt; stacked with a rule-heavy host
+          // context it can overflow the prompt budget and fail dispatch with
+          // "Prompt is too long" at 0 tokens. Flag any def over the 16 KB ceiling.
+          const AGENT_DEF_CEILING = 16 * 1024;
+          const agentFiles = files.filter(
+            f => f.endsWith('.md') || f.endsWith('.agent.md') || f.endsWith('.soul.md'),
+          );
+          const oversized = [];
+          for (const f of agentFiles) {
+            try {
+              const fstat = await fs.stat(path.join(agentsPath, f));
+              if (fstat.isFile() && fstat.size > AGENT_DEF_CEILING) {
+                oversized.push({ name: f, size: fstat.size });
+              }
+            } catch {
+              /* unreadable file — skip */
+            }
+          }
+          if (oversized.length > 0) {
+            oversized.sort((a, b) => b.size - a.size);
+            const worst = oversized
+              .slice(0, 3)
+              .map(o => `${o.name} (${(o.size / 1024).toFixed(1)} KB)`)
+              .join(', ');
+            check(
+              `${label} Agent def sizes`,
+              'warn',
+              `${oversized.length} agent def(s) over the 16 KB subagent-dispatch ceiling: ${worst}${oversized.length > 3 ? ', …' : ''}. Oversized defs can fail Task dispatch with "Prompt is too long". Externalize examples to the catalog (see few-shot-examples rule) and re-deploy.`,
+            );
+          } else if (agentFiles.length > 0) {
+            check(`${label} Agent def sizes`, 'ok', `All ${agentFiles.length} agent defs ≤ 16 KB`);
+          }
         } else {
           // Aggregated single-file (e.g. Hermes/Windsurf AGENTS.md)
           check(`${label} Agents`, 'ok', `Aggregated at ${agentsPathRel}`);

@@ -7,7 +7,7 @@
 
 ## Overview
 
-These rules require 2-3 concrete examples in every agent system prompt to improve output quality through few-shot learning.
+These rules require 2-3 concrete examples to be *reachable* for every agent — at most **one** compact example inline in the agent definition, with the rest in the discoverable example catalog. Few-shot coverage improves output quality; inline bloat breaks subagent dispatch (#1587). Both constraints are satisfied by externalizing examples.
 
 ## Research Foundation
 
@@ -17,12 +17,26 @@ From REF-019 Toolformer (Schick et al., 2023):
 - Examples should show both input and desired output
 - Diverse examples better than similar ones
 
+The examples must be *available* to the model — they do not all have to live inline in the system prompt. A compact inline anchor plus a referenced catalog delivers the same few-shot benefit without inflating the definition.
+
+## Agent Definition Size Ceiling (#1587)
+
+Agent definitions are loaded **verbatim as the subagent system prompt**. Stacked with a rule-heavy host context (`CLAUDE.md` + the full `.claude/rules/*` set in AIWG-managed repos), an oversized definition overflows the prompt budget and the dispatch fails with `Prompt is too long` at 0 tokens — before the agent does any work. This is not theoretical: it was observed blocking the Requirements Analyst (24 KB def) twice while the lean Security Architect (8.7 KB) dispatched cleanly.
+
+| Threshold | Bytes | Action |
+|-----------|-------|--------|
+| Target | ≤ 12 KB | Healthy lean definition |
+| Warning | 12–16 KB | Trim toward target |
+| **Ceiling** | **> 16 KB** | **Must externalize examples / reference rules; `aiwg doctor` flags it** |
+
+The single largest, safest cut is to move worked examples out of the definition into the catalog (this rule, Rule 1) and to **reference** the shared protocol rules (`thought-protocol`, `reasoning-sections`, `tao-loop`) rather than restating them inline.
+
 ## Mandatory Rules
 
-### Rule 1: Every Agent Has Examples
+### Rule 1: Examples Are Referenced, Not Inlined
 
 **REQUIRED**:
-Every agent definition MUST include 2-3 examples in its system prompt.
+Every agent's few-shot coverage MUST be reachable, with **at most one** compact example inline. The remaining 2-3 worked examples live in the discoverable example catalog at `@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/docs/agent-examples.md` (reachable via `aiwg discover` / `aiwg show`), or in a per-agent example file. The inline example is an anchor; the catalog carries the diversity.
 
 ```markdown
 # Agent: [Name]
@@ -30,41 +44,27 @@ Every agent definition MUST include 2-3 examples in its system prompt.
 ## Role
 [Agent role description]
 
-## Examples
-
-### Example 1: [Simple Scenario]
+## Example (anchor — one compact, complete example)
 
 **Input:**
 [User request]
 
 **Output:**
 ```[format]
-[Complete expected output]
+[Complete expected output — compact but not truncated]
 ```
 
-### Example 2: [Moderate Scenario]
-
-**Input:**
-[More complex request]
-
-**Output:**
-```[format]
-[Complete expected output]
-```
-
-### Example 3: [Complex Scenario]
-
-**Input:**
-[Edge case or integration scenario]
-
-**Output:**
-```[format]
-[Complete expected output]
-```
+> Additional worked examples (moderate + complex scenarios): see
+> `agent-examples.md` → "[Agent Name]" — or `aiwg show` the example catalog.
 
 ## Your Tasks
 [Standard agent instructions]
 ```
+
+**FORBIDDEN**:
+- More than one inline worked example in an agent definition.
+- An agent definition over the 16 KB ceiling because examples or restated rule boilerplate were inlined.
+- Dropping below the 2-3 few-shot floor: the examples must still *exist*, just in the catalog rather than inline.
 
 ### Rule 2: Example Diversity
 
@@ -357,12 +357,14 @@ Create a threat model for the user authentication API.
 
 Before finalizing an agent definition:
 
-- [ ] 2-3 examples included
-- [ ] Examples cover simple/moderate/complex scenarios
+- [ ] At most ONE compact example inline; the rest in the catalog
+- [ ] Definition is ≤ 16 KB (target ≤ 12 KB) — verified with `aiwg doctor`
+- [ ] 2-3 examples reachable total (inline anchor + catalog entry)
+- [ ] Examples cover simple/moderate/complex scenarios (across inline + catalog)
 - [ ] All outputs are complete (no truncation)
 - [ ] Examples use realistic domain scenarios
 - [ ] Output format matches agent deliverables
-- [ ] Quality annotations explain what makes examples good
+- [ ] Shared protocols (thought-protocol, reasoning-sections, tao-loop) referenced, not restated inline
 - [ ] No placeholders or TODOs in examples
 
 ## Example Quality Review
