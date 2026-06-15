@@ -666,6 +666,34 @@ async function runDoctor() {
     // an empty/non-AIWG project, not a hook problem. Other checks handle that.
   }
 
+  // 5b-ii. AGENTS.md @AIWG.md hook check (#1597). Codex and the other AGENTS.md-based
+  // providers need the @AIWG.md bridge inside AGENTS.md, mirroring the Claude check —
+  // an operator-owned AGENTS.md without the hook silently drops AIWG context.
+  {
+    const projectRoot = process.cwd();
+    const aiwgMd = path.join(projectRoot, 'AIWG.md');
+    const agentsMd = path.join(projectRoot, 'AGENTS.md');
+    if ((await fileExists(aiwgMd)) && (await fileExists(agentsMd))) {
+      try {
+        const content = await fs.readFile(agentsMd, 'utf-8');
+        const hasBlock = content.includes('<!-- AIWG:context-hook:start -->') && content.includes('<!-- AIWG:context-hook:end -->');
+        const hasInclude = /^[ \t]*@AIWG\.md[ \t]*$/m.test(content);
+        const isManaged = content.includes('<!-- aiwg-managed -->');
+        if (isManaged || hasBlock || hasInclude) {
+          check('Codex AGENTS.md hook', 'ok', 'AGENTS.md loads @AIWG.md (managed bridge or hook block present).');
+        } else {
+          check(
+            'Codex AGENTS.md hook',
+            'warn',
+            'AIWG.md exists but AGENTS.md has no @AIWG.md link — Codex/fallback is not loading project AIWG context. Run `aiwg regenerate` to insert the hook.',
+          );
+        }
+      } catch {
+        check('Codex AGENTS.md hook', 'warn', 'Could not read AGENTS.md');
+      }
+    }
+  }
+
   // 5c. Twin/bridge file drift check (#1579).
   // A pre-existing, non-AIWG-managed WARP.md / .hermes.md / AGENTS.md silently
   // keeps loading stale context across upgrades — burying the Discover-First

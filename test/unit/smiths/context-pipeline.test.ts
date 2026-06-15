@@ -447,33 +447,54 @@ describe('context finalization emission', () => {
     }
   });
 
-  it('emits a loud, prefixed warning naming consequence + remediation when a non-managed twin is left untouched (#1579)', async () => {
+  // #1597/#1579: an operator-owned provider twin must not be skipped — the @AIWG.md
+  // hook is installed ADDITIVELY (content preserved, no --force) so discover-first
+  // isn't buried. (Supersedes the old warn-and-skip behavior.)
+  it('additively installs the @AIWG.md hook into an operator-owned twin, preserving content (#1579/#1597)', async () => {
     const dir = makeTmpDir();
     try {
       mkdirSync(join(dir, '.aiwg'), { recursive: true });
-      // Pre-existing operator/stale WARP.md with NO aiwg-managed marker.
       const staleWarp = '# My hand-rolled WARP context\n\nNothing AIWG here.\n';
       writeFileSync(join(dir, 'WARP.md'), staleWarp);
 
-      const result = await generate({
-        provider: 'warp',
-        projectPath: dir,
-        sections: [],
-        detectExistingFiles: true,
-      });
+      const result = await generate({ provider: 'warp', projectPath: dir, sections: [], detectExistingFiles: true });
 
-      // The stale twin must be left untouched (not overwritten without --force).
-      expect(readFileSync(join(dir, 'WARP.md'), 'utf8')).toBe(staleWarp);
+      const after = readFileSync(join(dir, 'WARP.md'), 'utf8');
+      // operator content preserved byte-for-byte (original is a prefix) ...
+      expect(after.startsWith(staleWarp.replace(/\n+$/, '\n'))).toBe(true);
+      expect(after).toContain('# My hand-rolled WARP context');
+      expect(after).toContain('Nothing AIWG here.');
+      // ... and the additive @AIWG.md hook is now present.
+      expect(after).toContain('<!-- AIWG:context-hook:start -->');
+      expect(after).toContain('@AIWG.md');
+      expect(result.twinPaths).toContain(join(dir, 'WARP.md'));
+      const msg = result.warnings.find((w) => w.includes('WARP.md'));
+      expect(msg).toBeDefined();
+      expect(msg).toContain('@AIWG.md hook additively');
 
-      const twinWarn = result.warnings.find(
-        (w) => w.startsWith('WARNING:') && w.includes('WARP.md'),
-      );
-      expect(twinWarn).toBeDefined();
-      // Names the consequence (agents fabricate commands) ...
-      expect(twinWarn).toContain('Discover-First Protocol');
-      expect(twinWarn).toContain('fabricate');
-      // ... and the exact provider-aware remediation.
-      expect(twinWarn).toContain('aiwg use --provider warp --force');
+      // idempotent: a second regenerate leaves it byte-identical, message says so.
+      const result2 = await generate({ provider: 'warp', projectPath: dir, sections: [], detectExistingFiles: true });
+      expect(readFileSync(join(dir, 'WARP.md'), 'utf8')).toBe(after);
+      expect(result2.warnings.find((w) => w.includes('WARP.md') && w.includes('already loads'))).toBeDefined();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('additively installs the @AIWG.md hook into an operator-owned AGENTS.md without --force (#1597)', async () => {
+    const dir = makeTmpDir();
+    try {
+      mkdirSync(join(dir, '.aiwg'), { recursive: true });
+      const staleAgents = '# AGENTS.md\n\n## AIWG Framework\n\nOlder inline content, no hook.\n';
+      writeFileSync(join(dir, 'AGENTS.md'), staleAgents);
+
+      const result = await generate({ provider: 'codex', projectPath: dir, sections: [], detectExistingFiles: true });
+
+      const after = readFileSync(join(dir, 'AGENTS.md'), 'utf8');
+      expect(after).toContain('Older inline content, no hook.'); // preserved
+      expect(after).toContain('@AIWG.md');                         // hook installed
+      expect(after).toContain('<!-- AIWG:context-hook:start -->');
+      expect(result.agentsMdPath).toBe(join(dir, 'AGENTS.md'));
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

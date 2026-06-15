@@ -30,6 +30,7 @@ import { buildParallelismSection } from './parallelism-section.js';
 import { buildContextFinalizationBlock, writeNormalizedAiwgMd } from './finalization.js';
 import { shouldEmitAgentsMd, shouldEmitAiwgMd, shouldEmitClaudeMdHook } from './provider-policy.js';
 import { ensureClaudeMdHook } from './claude-hook.js';
+import { ensureManagedHook } from './managed-hook.js';
 
 const SECTION_TITLES: Record<IndexedArtifactType, string> = {
   agents: 'Agents',
@@ -335,9 +336,15 @@ async function writeTwinFiles(
     if (opts.detectExistingFiles && !opts.force) {
       const safe = await isOverwriteSafe(twinPath);
       if (!safe) {
+        // #1579: don't skip an operator-owned twin — additively install the
+        // @AIWG.md hook so discover-first isn't buried (preserve their content).
+        const hook = await ensureManagedHook(twinPath);
         result.warnings.push(
-          nonManagedTwinWarning(twinName, `aiwg use --provider ${provider} --force`),
+          hook.action === 'unchanged'
+            ? `${twinName} is operator-owned and already loads @AIWG.md — left as-is.`
+            : `${twinName} is operator-owned; ${hook.action} the @AIWG.md hook additively (existing content preserved). Pass --force to replace the whole file.`,
         );
+        result.twinPaths.push(twinPath);
         continue;
       }
     } else if (opts.force) {
@@ -423,11 +430,6 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
 
     if (opts.detectExistingFiles && !opts.force) {
       canWrite = await isOverwriteSafe(agentsMdPath);
-      if (!canWrite) {
-        result.warnings.push(
-          nonManagedTwinWarning('AGENTS.md', 'aiwg regenerate --force'),
-        );
-      }
     } else if (opts.force) {
       // Backup before overwrite per ADR-1 §5 R1 mitigation.
       try {
@@ -444,8 +446,10 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
       }
     }
 
+    // Build the managed AGENTS.md content in-memory regardless — used for the full
+    // write, and as the twin content downstream.
+    const built = await buildAgentsMd(opts);
     if (canWrite) {
-      const built = await buildAgentsMd(opts);
       await atomicWrite(agentsMdPath, built.content);
       result.agentsMdPath = agentsMdPath;
       result.agentsMdBytes = Buffer.byteLength(built.content, 'utf8');
@@ -453,9 +457,22 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
       if (built.splitOccurred) {
         await writeSpilloverBlock(opts.projectPath, built.spilloverContent, result);
       }
-      // Per-provider twin-file emission per ADR-1 §4 (Hermes .hermes.md, Warp WARP.md).
-      await writeTwinFiles(opts.provider, opts.projectPath, built.content, opts, result);
+    } else {
+      // #1597: AGENTS.md is operator-owned — don't skip it. Additively install the
+      // @AIWG.md hook (preserve operator content; no --force needed) so Codex/
+      // fallback consumers load the generated AIWG.md.
+      const hook = await ensureManagedHook(agentsMdPath);
+      result.agentsMdPath = agentsMdPath;
+      result.warnings.push(
+        hook.action === 'unchanged'
+          ? `AGENTS.md is operator-owned and already loads @AIWG.md — left as-is.`
+          : `AGENTS.md is operator-owned; ${hook.action} the @AIWG.md hook additively (existing content preserved). Pass --force to replace the whole file.`,
+      );
     }
+    // Per-provider twin emission per ADR-1 §4 (Hermes .hermes.md, Warp WARP.md);
+    // each twin is guarded individually (managed → full write, operator-owned →
+    // additive hook), so this runs whether or not AGENTS.md itself was rewritten.
+    await writeTwinFiles(opts.provider, opts.projectPath, built.content, opts, result);
   }
 
   if (!opts.skip?.aiwgMd && shouldEmitAiwgMd(opts.provider)) {

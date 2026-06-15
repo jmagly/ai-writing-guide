@@ -252,7 +252,7 @@ describe('twin-file emission per ADR-1 §4', () => {
     expect(result.twinPaths).toEqual([]);
   });
 
-  it('respects detectExistingFiles guard for twin files', async () => {
+  it('additively installs the @AIWG.md hook into an operator-owned twin, never full-overwriting (#1597/#1579)', async () => {
     // Pre-existing operator-claimed .hermes.md (no AIWG signature).
     await fs.writeFile(path.join(tmpDir, '.hermes.md'), '# Operator content\n', 'utf8');
     const result = await generate({
@@ -261,12 +261,14 @@ describe('twin-file emission per ADR-1 §4', () => {
       sections: [{ type: 'agents', entries: [makeEntry('foo')] }],
       detectExistingFiles: true,
     });
-    // Twin should not be in twinPaths (refused to overwrite).
-    expect(result.twinPaths).toEqual([]);
-    // Operator content preserved.
+    // The guard still refuses a full overwrite — but it no longer skips: it installs
+    // the hook additively, so the twin is processed and listed.
+    expect(result.twinPaths).toContain(path.join(tmpDir, '.hermes.md'));
     const hermes = await fs.readFile(path.join(tmpDir, '.hermes.md'), 'utf8');
-    expect(hermes).toBe('# Operator content\n');
-    expect(result.warnings.some((w) => w.includes('.hermes.md exists'))).toBe(true);
+    expect(hermes).toContain('# Operator content'); // preserved
+    expect(hermes).toContain('@AIWG.md');            // hook installed
+    expect(hermes).toContain('<!-- AIWG:context-hook:start -->');
+    expect(result.warnings.some((w) => w.includes('.hermes.md') && w.includes('additively'))).toBe(true);
   });
 });
 
