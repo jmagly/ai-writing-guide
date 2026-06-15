@@ -15,7 +15,7 @@ aiwg_refs: ["aiwg use", "cross-stack Missions", "serve executor-registry", "acti
 
 # Your agents, your desktop: the AIWG Cockpit (and what shipped in June)
 
-![Concept art: a dark "operator wall" — one desktop control plane showing several live agent-stack panels side by side, an operator's unified view over many concurrent sessions](/assets/blog/cockpit-control-plane.png)
+![Concept art of the AIWG Cockpit: a dark operator-wall dashboard showing several live agent-stack panels side by side, one unified view over many concurrent agent sessions](/assets/blog/cockpit-control-plane.png)
 
 AIWG already does one hard thing well: write an agent, skill, command, or rule **once**, and deploy it across eleven agentic stacks — Claude Code, Codex, Cursor, Factory, Warp, OpenCode, Windsurf, OpenClaw, Hermes, OpenHuman, and Omnius — from a single source of truth. June pushed that further. What comes next changes where you *operate* from.
 
