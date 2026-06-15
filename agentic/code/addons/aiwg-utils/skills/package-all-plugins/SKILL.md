@@ -2,21 +2,22 @@
 namespace: aiwg
 name: package-all-plugins
 platforms: [all]
-description: Batch package every plugin in the workspace in a single release-prep operation
+description: Batch package every AIWG/Codex plugin in the workspace into distributable plugin archives — runs package-plugin for all plugins at once
 ---
 
 # Package All Plugins
 
-You run `package-plugin` for every plugin in the workspace in a single batch operation. Used for release preparation to generate all plugin packages at once.
+You run `package-plugin` for every plugin in the workspace in a single batch operation. This is **plugin packaging** — it produces AIWG/Codex plugin archives. It is **not** native/language-toolchain release packaging (Rust crates, `.deb`/`.rpm`, container images, GHCR, or release-asset checksums). For native or full release-pipeline work use `flow-release` / `release-publication-verify`, not this skill.
 
 ## Triggers
 
-Alternate expressions and non-obvious activations (primary phrases are matched automatically from the skill description):
+Alternate expressions and non-obvious activations (primary phrases are matched automatically from the skill description). These intentionally all name **plugins** so the skill ranks for plugin packaging and not for native release-engineering queries:
 
-- "package everything for the release" → batch package all plugins
+- "package all the plugins" → batch package all plugins
 - "build all plugin archives" → batch package all plugins
-- "release prep — package the plugins" → batch package all plugins
-- "bundle all the plugins before tagging" → batch package all plugins
+- "bundle all plugins" → batch package all plugins
+- "batch package the plugins" → batch package all plugins
+- "publish all plugins" → batch package all plugins (with --publish)
 
 ## Trigger Patterns Reference
 

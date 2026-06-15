@@ -752,3 +752,89 @@ describe('discoverCapability — deployed commands are discoverable (#1541)', ()
     }
   });
 });
+
+// #1598 — native release-engineering queries (cargo / pkgid / deb / rpm / GHCR /
+// release artifacts) used to route to package-all-plugins because its
+// description framed it as a generic "release-prep operation" and its triggers
+// were release-themed. The skill is now plugin-scoped, so native-release queries
+// fall through to flow-release while plugin-packaging queries still find it.
+describe('discover — native-release vs plugin packaging routing (#1598)', () => {
+  // Mirrors the real (fixed) package-all-plugins frontmatter description: purely
+  // plugin-positive, no native/release/build/artifacts vocabulary (those tokens
+  // are scored, so putting them here — even as a negation — would backfire and
+  // re-match native-release queries).
+  const PACKAGE_ALL_PLUGINS_DESC =
+    'Batch package every AIWG/Codex plugin in the workspace into distributable plugin archives — runs package-plugin for all plugins at once';
+
+  const seed = async () => {
+    writeSkill(
+      'package-all-plugins',
+      'aiwg-utils',
+      `---\nname: package-all-plugins\ndescription: ${PACKAGE_ALL_PLUGINS_DESC}\n---\n\n## Triggers\n\n- "package all the plugins"\n- "build all plugin archives"\n- "bundle all plugins"\n- "batch package the plugins"\n- "publish all plugins"\n`,
+    );
+    writeSkill(
+      'flow-release',
+      'sdlc-complete',
+      `---\nname: flow-release\ndescription: Config-driven release orchestration — reads .aiwg/release.config and walks the project's declared gates (local build, CI green, doc-sync, changelog, README, release entry, post-release housekeeping)\n---\n\n## Triggers\n\n- "run the release"\n- "release prep"\n- "cut a release"\n`,
+    );
+    const s = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const e = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    s.mockRestore();
+    e.mockRestore();
+  };
+
+  const run = async (phrase: string) => {
+    const captured: string[] = [];
+    const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
+      captured.push(args.join(' ')),
+    );
+    await discoverCapability(cwd, { phrase, graph: 'framework', json: true, limit: 5 });
+    logSpy.mockRestore();
+    return JSON.parse(captured.join('\n'));
+  };
+
+  const rankOf = (parsed: { results: { path: string }[] }, slug: string) =>
+    parsed.results.findIndex(r => r.path.includes(`/${slug}/SKILL.md`));
+
+  it('does NOT rank package-all-plugins top for native release-package queries', async () => {
+    await seed();
+    const parsed = await run(
+      'release prep validation cargo pkgid build package artifacts version 2026.6.2',
+    );
+    // The top result must not be the plugin-packaging skill for a native query.
+    expect(parsed.results[0]?.path ?? '').not.toContain('package-all-plugins');
+    // flow-release should be present and rank above package-all-plugins (if the
+    // latter surfaces at all from the incidental "package"/"build" token hits).
+    const rel = rankOf(parsed, 'flow-release');
+    const pap = rankOf(parsed, 'package-all-plugins');
+    expect(rel, 'flow-release should surface for native release queries').toBeGreaterThanOrEqual(0);
+    if (pap >= 0) {
+      expect(rel, 'flow-release must outrank package-all-plugins').toBeLessThan(pap);
+    }
+  });
+
+  it('still ranks package-all-plugins top for plugin-packaging queries', async () => {
+    await seed();
+    const parsed = await run('package all the plugins for release');
+    expect(parsed.results.length).toBeGreaterThan(0);
+    expect(parsed.results[0].path).toContain('package-all-plugins');
+  });
+
+  it('the real package-all-plugins skill stays plugin-scoped (no generic release-prep framing)', () => {
+    const real = path.join(
+      process.cwd(),
+      'agentic/code/addons/aiwg-utils/skills/package-all-plugins/SKILL.md',
+    );
+    if (!fs.existsSync(real)) return; // tolerate alternate checkout layouts
+    const src = fs.readFileSync(real, 'utf8');
+    const fm = src.split('---')[1] ?? '';
+    const fmLower = fm.toLowerCase();
+    expect(fmLower, 'frontmatter should be plugin-scoped').toContain('plugin');
+    // The generic "release-prep" framing was the #1598 root cause — keep it out
+    // of the scored frontmatter (clarifying prose may stay in the body).
+    expect(fmLower, 'frontmatter must not carry generic release-prep framing').not.toContain(
+      'release-prep',
+    );
+  });
+});
