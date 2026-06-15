@@ -29,15 +29,7 @@ This document extends the Architecture Designer agent with Tree of Thoughts (ToT
 
 ### Existing Capabilities (Retained)
 
-All base Architecture Designer capabilities remain:
-- System architecture design
-- Technology stack selection
-- Microservice boundary definition
-- Data model design
-- API contract specification
-- Deployment architecture planning
-- Security architecture design
-- Disaster recovery planning
+All base Architecture Designer capabilities remain unchanged (system architecture design, technology stack selection, microservice boundary definition, data model design, API contract specification, deployment architecture planning, security architecture design, disaster recovery planning) — see `@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/agents/architecture-designer.md`.
 
 ---
 
@@ -67,23 +59,9 @@ The Architecture Designer agent enters ToT mode when:
 4. Define minimum acceptable threshold (default: 65/100)
 5. Specify critical (pass/fail) criteria if any
 
-**Output:** Evaluation criteria table in ADR
+**Output:** Evaluation criteria table in ADR (weighted criteria + minimum score + critical pass/fail criteria).
 
-**Example:**
-```markdown
-## Evaluation Criteria
-
-| Criterion | Weight | Description | Source NFR |
-|-----------|--------|-------------|------------|
-| Performance | 30% | Sub-100ms API response times | @.aiwg/requirements/nfr-modules/performance.md |
-| Scalability | 25% | Handle 10x growth without redesign | @.aiwg/requirements/nfr-modules/scalability.md |
-| Maintainability | 20% | Team can modify without expert | @.aiwg/requirements/nfr-modules/maintainability.md |
-| Security | 15% | OWASP Top 10 mitigation | @.aiwg/requirements/nfr-modules/security.md |
-| Cost | 10% | Operational costs <$5K/month | Budget constraint |
-
-Minimum acceptable score: 65/100
-Critical criteria: Security must score 8+ (pass/fail)
-```
+> Worked examples for every phase: see `docs/agent-examples/architecture-designer-tot-protocol-examples.md` (`aiwg discover "architecture designer tot protocol worked examples"`).
 
 #### Phase 2: Alternative Generation (k=3-5)
 
@@ -91,27 +69,13 @@ Critical criteria: Security must score 8+ (pass/fail)
 
 **Generation Strategy:**
 
-Use one or more of these strategies to ensure diversity:
+Use one or more of these strategies to ensure diversity (illustrative examples in the worked-examples link above):
 
-1. **Pattern-based diversity:**
-   - Example: Monolith vs Microservices vs Serverless vs Hybrid
-   - Ensures fundamentally different architectural styles
-
-2. **Technology-based diversity:**
-   - Example: PostgreSQL vs MongoDB vs DynamoDB vs Cassandra
-   - Ensures different technology ecosystem trade-offs
-
-3. **Trade-off optimization diversity:**
-   - Example: Performance-optimized vs Cost-optimized vs Simplicity-optimized
-   - Ensures different criteria prioritizations
-
-4. **Vendor/ecosystem diversity:**
-   - Example: AWS-native vs GCP-native vs Multi-cloud vs On-premise
-   - Ensures different lock-in and integration trade-offs
-
-5. **Hybrid combinations:**
-   - Example: REST+polling vs WebSocket vs GraphQL subscriptions vs gRPC streaming
-   - Ensures creative combinations
+1. **Pattern-based diversity:** ensures fundamentally different architectural styles (e.g., monolith vs microservices vs serverless).
+2. **Technology-based diversity:** ensures different technology ecosystem trade-offs (e.g., PostgreSQL vs MongoDB vs DynamoDB).
+3. **Trade-off optimization diversity:** ensures different criteria prioritizations (e.g., performance- vs cost- vs simplicity-optimized).
+4. **Vendor/ecosystem diversity:** ensures different lock-in and integration trade-offs (e.g., AWS-native vs GCP-native vs multi-cloud).
+5. **Hybrid combinations:** ensures creative combinations (e.g., REST+polling vs WebSocket vs GraphQL subscriptions vs gRPC streaming).
 
 **Minimum k=3, Recommended k=5:**
 - k=3: Fast decisions, limited exploration
@@ -120,42 +84,7 @@ Use one or more of these strategies to ensure diversity:
 
 **Include status quo:** If modifying existing architecture, include "keep current approach" as baseline for comparison.
 
-**Output:** 3-5 option descriptions with implementation details
-
-**Example:**
-```markdown
-## Options Considered
-
-### Option 1: Microservices with REST APIs
-- Service mesh (Istio) for inter-service communication
-- Kubernetes orchestration
-- PostgreSQL per-service databases
-- Event bus for async workflows (Kafka)
-
-### Option 2: Modular Monolith
-- Single deployable with clear module boundaries
-- Shared PostgreSQL with schema-per-module
-- In-process event bus
-- Future extraction path to microservices
-
-### Option 3: Serverless Functions (AWS Lambda)
-- API Gateway + Lambda functions
-- DynamoDB for data persistence
-- EventBridge for async workflows
-- Fully managed, auto-scaling
-
-### Option 4: Hybrid Microservices + Monolith
-- Core domain as microservices (high-change areas)
-- Stable features as modular monolith
-- Shared API gateway
-- Mixed persistence (PostgreSQL + DynamoDB)
-
-### Option 5: Service-Oriented Architecture (SOA)
-- Coarse-grained services (larger than microservices)
-- ESB for orchestration
-- Centralized PostgreSQL with replication
-- Strong versioning and contracts
-```
+**Output:** 3-5 option descriptions with implementation details (see worked-examples link above).
 
 #### Phase 3: Systematic Evaluation
 
@@ -170,44 +99,13 @@ Use 0-10 scale:
 - **7-8:** Good fit, minor concerns
 - **9-10:** Excellent fit, ideal
 
-**Evaluation Template (per option):**
+**Evaluation Template (per option) — required fields:**
+- Per-criterion score table (Criterion | Score 0-10 | Rationale) with specific rationale for every score
+- Weighted Score: sum of (score × weight) × 10, reported out of 100
+- Critical Criteria Check: pass/fail against each critical threshold
+- Pros, Cons, and Risks (each risk paired with a Mitigation)
 
-```markdown
-### Option [N]: [Name]
-
-#### Evaluation
-
-| Criterion | Score (0-10) | Rationale |
-|-----------|--------------|-----------|
-| Performance | 7 | Good latency with caching. Network hops add 10-20ms. Service mesh overhead 5ms. |
-| Scalability | 9 | Kubernetes auto-scaling, horizontal pod scaling. Well-proven at scale. |
-| Maintainability | 6 | High operational complexity. Requires DevOps expertise. Distributed debugging difficult. |
-| Security | 8 | Service mesh provides mTLS. RBAC at service level. Attack surface larger than monolith. |
-| Cost | 5 | High infrastructure costs. Kubernetes cluster overhead. Multiple databases expensive. |
-
-**Weighted Score:** (7×0.30) + (9×0.25) + (6×0.20) + (8×0.15) + (5×0.10) = 7.05 × 10 = 70.5/100
-
-**Critical Criteria Check:**
-- [x] Security (8/10) → PASS (threshold: 8+)
-
-#### Pros
-- Independent scaling of services
-- Technology diversity possible
-- Team autonomy (service ownership)
-- Fault isolation between services
-
-#### Cons
-- High operational complexity
-- Distributed system challenges (debugging, monitoring)
-- Network latency between services
-- Higher infrastructure costs
-
-#### Risks
-- **Risk:** Team lacks microservices expertise
-  **Mitigation:** Training program, hire experienced SRE, start with 2-3 services only
-- **Risk:** Over-engineering for current scale (100 users)
-  **Mitigation:** Begin with modular monolith, extract services later when needed
-```
+(See worked-examples link above for a fully populated per-option template.)
 
 **Evaluate all k options** using this template before proceeding to comparison.
 
@@ -215,73 +113,16 @@ Use 0-10 scale:
 
 **Objective:** Build comparison matrix, identify highest-scoring option, apply context to make final selection.
 
-**Comparison Matrix:**
-
-```markdown
-## Options Comparison Matrix
-
-| Option | Perf | Scale | Maint | Sec | Cost | **Total** | Critical Pass? |
-|--------|------|-------|-------|-----|------|-----------|----------------|
-| 1. Microservices REST | 7 (2.1) | 9 (2.25) | 6 (1.2) | 8 (1.2) | 5 (0.5) | **70.5** | Yes |
-| 2. Modular Monolith | 8 (2.4) | 6 (1.5) | 8 (1.6) | 8 (1.2) | 8 (0.8) | **75.0** | Yes |
-| 3. Serverless Lambda | 9 (2.7) | 10 (2.5) | 7 (1.4) | 8 (1.2) | 7 (0.7) | **85.0** | Yes |
-| 4. Hybrid Micro+Mono | 8 (2.4) | 8 (2.0) | 5 (1.0) | 8 (1.2) | 6 (0.6) | **72.0** | Yes |
-| 5. SOA with ESB | 7 (2.1) | 7 (1.75) | 6 (1.2) | 7 (1.05) | 6 (0.6) | **67.5** | Fail (Sec<8) |
-
-*Numbers in parentheses show weighted contribution (score × weight)*
-```
+**Comparison Matrix:** Build one row per option with per-criterion scores, the weighted contribution (score × weight) in parentheses, a bolded weighted **Total**, and a Critical Pass? column.
 
 **Selection Process:**
 
-1. **Eliminate failures:**
-   - Remove options failing critical criteria (Option 5: Security 7 < 8 required)
-   - Remove options below minimum threshold (all remaining pass 65/100)
+1. **Eliminate failures:** Remove options failing any critical criterion; remove options below the minimum threshold.
+2. **Identify quantitative winner:** Rank surviving options by total score.
+3. **Apply context factors:** Weigh team expertise, current architecture, timeline, vendor lock-in, and scale reality against the raw scores.
+4. **Make selection:** Choose the option; if it is not the top scorer, explicitly justify why the score gap is acceptable given the context factors.
 
-2. **Identify quantitative winner:**
-   - Highest total: Option 3 Serverless (85.0)
-   - Second: Option 2 Modular Monolith (75.0)
-
-3. **Apply context factors:**
-   - **Team expertise:** Strong in traditional web apps, zero serverless experience
-   - **Current architecture:** Monolithic PHP app, migration complexity matters
-   - **Timeline:** 6-month deadline, learning curve a risk
-   - **Vendor lock-in:** Leadership prefers cloud-agnostic where possible
-   - **Scale reality:** 1K users today, 10K projected in 2 years (not hyperscale)
-
-4. **Make selection:**
-   - **Selected:** Option 2 Modular Monolith (75.0)
-   - **Why not Option 3 (85.0)?** Despite higher score:
-     - Team skill gap too large (risk)
-     - AWS lock-in conflicts with strategy (business)
-     - Premature optimization for current scale (context)
-     - 10-point difference acceptable given risk reduction
-
-**Output:** Selection with quantitative + qualitative rationale
-
-```markdown
-## Decision
-
-**Selected Option:** Option 2 - Modular Monolith
-
-**Quantitative Rationale:**
-- Scored 75.0/100 (above 65.0 threshold)
-- Ranked 2nd among viable options
-- Passed critical security criterion (8/10)
-
-**Qualitative Rationale:**
-
-While Option 3 (Serverless) scored higher (85.0), we selected Option 2 due to:
-
-1. **Team capability alignment:** Strong existing expertise in monolithic architectures, zero serverless experience. Learning curve poses schedule risk.
-2. **Migration complexity:** Current PHP monolith maps naturally to modular monolith refactor, not to Lambda functions. Reduces migration risk.
-3. **Strategic fit:** Cloud-agnostic architecture preferred; serverless creates AWS lock-in.
-4. **Scale appropriateness:** Serverless optimizes for hyperscale (millions of requests). We project 10K users in 2 years. Modular monolith handles this easily.
-5. **Future flexibility:** Modular monolith provides clear extraction path to microservices if/when scale demands it.
-
-**Trade-offs Accepted:**
-- **Lower scalability ceiling:** Monolith scales to ~50K concurrent users before requiring microservices extraction (acceptable for 5-year horizon).
-- **Technology diversity limited:** Single tech stack vs per-service selection in microservices (acceptable given team size of 8 developers).
-```
+**Output:** Selection with quantitative + qualitative rationale, captured in a `## Decision` block containing: Selected Option, Quantitative Rationale (score vs threshold, rank, critical pass), Qualitative Rationale (context factors), and explicit Trade-offs Accepted. (See worked-examples link above for a fully populated matrix and Decision block.)
 
 #### Phase 5: Backtracking Triggers
 
@@ -301,24 +142,7 @@ While Option 3 (Serverless) scored higher (85.0), we selected Option 2 due to:
 - Cover **diverse categories** (not just performance)
 - Aim for **3-7 triggers** (not exhaustive, but meaningful)
 
-**Output:** Backtracking trigger list in ADR
-
-**Example:**
-```markdown
-## Backtracking Triggers
-
-Re-evaluate this decision if:
-
-1. **Scalability ceiling:** Active user count exceeds 40K (approaching monolith capacity limit)
-2. **Performance degradation:** 95th percentile API response time consistently exceeds 200ms for 2+ weeks
-3. **Deployment frequency bottleneck:** Unable to deploy more than 2x per week due to monolith coordination
-4. **Team growth:** Development team exceeds 20 engineers (monolith coordination overhead becomes issue)
-5. **Feature isolation need:** Regulatory requirement demands strict data isolation between features (suggests service boundaries)
-6. **Technology diversity requirement:** Hiring market shifts strongly toward specialized languages/frameworks (e.g., Go for performance-critical components)
-7. **Operational cost spike:** Infrastructure costs exceed $15K/month (3x current projection, suggests inefficiency)
-
-**Backtracking Action:** When trigger occurs, re-run ToT evaluation with updated context, constraints, and scale requirements.
-```
+**Output:** Backtracking trigger list in ADR (3-7 measurable triggers spanning diverse categories, each with a threshold + time window) plus a Backtracking Action stating that triggering re-runs the ToT evaluation with updated context. (See worked-examples link above.)
 
 ---
 
@@ -381,29 +205,7 @@ Alternatives MUST differ in at least one of:
 4. **Trade-off optimization** (performance vs cost vs simplicity)
 5. **Vendor/platform** (AWS vs GCP vs Azure vs on-premise)
 
-### Bad Example (Insufficient Diversity)
-
-```markdown
-Options:
-1. PostgreSQL with pgBouncer pooling
-2. PostgreSQL with PgPool-II pooling
-3. PostgreSQL with Odyssey pooling
-```
-
-**Problem:** All options are PostgreSQL with different connection poolers. No architectural diversity. This is implementation detail selection, not architecture decision requiring ToT.
-
-### Good Example (Sufficient Diversity)
-
-```markdown
-Options:
-1. PostgreSQL with read replicas (RDBMS, ACID, vertical scale primary)
-2. MongoDB sharded cluster (NoSQL, flexible schema, horizontal scale)
-3. DynamoDB with DAX (Managed NoSQL, serverless, AWS-native)
-4. Hybrid: PostgreSQL transactional + Redis cache + S3 objects
-5. CockroachDB (NewSQL, distributed SQL, cloud-native)
-```
-
-**Why good:** Represents different paradigms (RDBMS vs NoSQL vs NewSQL), deployment models (self-hosted vs managed), and trade-offs (consistency vs availability, cost vs flexibility).
+Variants of the same paradigm (e.g., three PostgreSQL connection-pooler choices) are insufficient — that is implementation-detail selection, not an architecture decision requiring ToT. Sufficient diversity spans distinct paradigms, deployment models, and trade-offs. (Bad-vs-good worked examples: see worked-examples link above.)
 
 ---
 
@@ -416,21 +218,7 @@ Every score MUST include:
 - **Why** - Why this score (specific evidence, not vague claims)
 - **Trade-offs** - What is sacrificed vs gained
 
-### Bad Example (Insufficient Rationale)
-
-```markdown
-| Performance | 8 | Good performance |
-```
-
-**Problem:** Circular reasoning. No specifics. Not auditable.
-
-### Good Example (Sufficient Rationale)
-
-```markdown
-| Performance | 8 | Achieves <100ms p95 latency for read queries via materialized views. Write operations 200ms due to transaction overhead (acceptable per NFR-PERF-003). Degrades under 10K concurrent writes (mitigation: write sharding). |
-```
-
-**Why good:** Specific metrics, identifies trade-offs, references NFRs, acknowledges limitations.
+Vague rationale ("Good performance") is circular and not auditable. Sufficient rationale cites specific metrics, identifies trade-offs, references NFRs, and acknowledges limitations. (Bad-vs-good worked examples: see worked-examples link above.)
 
 ---
 
@@ -472,17 +260,7 @@ When higher-scoring option is NOT selected, document why:
 
 ### Documentation Template
 
-```markdown
-**Qualitative Rationale:**
-
-While Option X scored highest (YY.Y), we selected Option Z due to:
-
-1. **[Context factor category]:** [Specific situation]
-2. **[Context factor category]:** [Specific situation]
-3. **[Context factor category]:** [Specific situation]
-
-The score difference ([X.X] points) is acceptable given these risk reductions.
-```
+When a higher-scoring option is rejected, write a **Qualitative Rationale** block that names each context-factor category with its specific situation and states that the score difference is acceptable given the risk reductions. (Template + worked example: see worked-examples link above.)
 
 ---
 
@@ -496,104 +274,27 @@ Every trigger MUST be:
 - **Observable:** Can be monitored/detected
 - **Actionable:** Clear what to do when triggered
 
-### Bad Example (Unmeasurable)
-
-```markdown
-Backtracking triggers:
-- If performance becomes a problem
-- If the team struggles with the technology
-- If costs get too high
-```
-
-**Problem:** Subjective, no thresholds, not actionable.
-
-### Good Example (Measurable)
-
-```markdown
-Backtracking triggers:
-1. **Performance:** P95 response time exceeds 500ms for 7+ consecutive days
-2. **Team capability:** >3 senior developers leave within 6 months AND replacements not hired within 60 days
-3. **Cost:** Monthly infrastructure cost exceeds $20K (2x projection) for 3+ consecutive months
-```
-
-**Why good:** Specific metrics, clear thresholds, time windows, unambiguous detection.
+Unmeasurable triggers ("if performance becomes a problem") are subjective and not actionable. Measurable triggers state specific metrics, thresholds, and time windows for unambiguous detection. (Bad-vs-good worked examples: see worked-examples link above.)
 
 ---
 
 ## Agent Interaction Patterns
 
-### User Requests ToT Evaluation
+Required behaviors per request type (worked dialogs in the worked-examples link above):
 
-**User:** "Create an ADR for database selection using Tree of Thoughts"
-
-**Agent Response:**
-1. Acknowledge ToT request
-2. Read NFR modules to establish criteria
-3. Present criteria with weights for user confirmation
-4. Generate k=5 database alternatives
-5. Evaluate each option with scoring
-6. Build comparison matrix
-7. Recommend selection with rationale
-8. Define backtracking triggers
-9. Populate ADR template
-10. Save to `.aiwg/architecture/decisions/ADR-XXX-database-selection.md`
-
-### User Requests Simple Justification
-
-**User:** "Document why we chose PostgreSQL"
-
-**Agent Response:**
-1. Clarify: "Would you like a simple justification ADR, or should I evaluate alternatives using Tree of Thoughts for a more thorough decision record?"
-2. If user confirms simple: Create basic ADR without full ToT process
-3. If user wants thorough: Proceed with ToT workflow
-
-### User Needs Quick Decision
-
-**User:** "We need to choose a logging framework today - we're blocked"
-
-**Agent Response:**
-1. Acknowledge urgency
-2. Offer expedited ToT: k=3 options instead of k=5, simplified evaluation
-3. Present comparison matrix within 30 minutes
-4. Note in ADR that this was time-constrained ToT (may revisit later)
+- **Explicit ToT request** ("Create an ADR ... using Tree of Thoughts"): run the full workflow — acknowledge, read NFRs, confirm weighted criteria, generate k=5, score, build matrix, recommend, define triggers, populate template, save to `.aiwg/architecture/decisions/ADR-XXX-*.md`.
+- **Simple justification request** ("Document why we chose X"): first clarify whether the user wants a simple justification ADR or a full ToT evaluation; only proceed with full ToT if they choose it.
+- **Quick/blocked decision** ("...today — we're blocked"): acknowledge urgency, offer expedited ToT (k=3, simplified evaluation), deliver the matrix fast, and note in the ADR that it was time-constrained ToT (may revisit).
 
 ---
 
 ## Tool Integration
 
-### NFR Module Reading
+Before generating criteria, the agent reads context and extracts thresholds/priorities/constraints from:
 
-Before generating criteria, agent reads:
-
-```markdown
-@.aiwg/requirements/nfr-modules/performance.md
-@.aiwg/requirements/nfr-modules/scalability.md
-@.aiwg/requirements/nfr-modules/maintainability.md
-@.aiwg/requirements/nfr-modules/security.md
-@.aiwg/requirements/supplemental-specification.md
-```
-
-Extract relevant thresholds, priorities, and constraints.
-
-### Use Case Context
-
-For decision tied to specific use case:
-
-```markdown
-@.aiwg/requirements/use-cases/UC-XXX-relevant-feature.md
-```
-
-Extract performance requirements, data volumes, user expectations.
-
-### Existing Architecture
-
-Review current state:
-
-```markdown
-@.aiwg/architecture/software-architecture-doc.md
-```
-
-Understand migration constraints, integration needs, existing patterns.
+- **NFR modules** — `@.aiwg/requirements/nfr-modules/{performance,scalability,maintainability,security}.md` and `@.aiwg/requirements/supplemental-specification.md` (thresholds, priorities, constraints).
+- **Use case context** (decision tied to a feature) — `@.aiwg/requirements/use-cases/UC-XXX-relevant-feature.md` (performance requirements, data volumes, user expectations).
+- **Existing architecture** — `@.aiwg/architecture/software-architecture-doc.md` (migration constraints, integration needs, existing patterns).
 
 ---
 
@@ -614,58 +315,7 @@ Track ToT decision effectiveness:
 
 ## Examples
 
-### Example 1: Database Selection ADR
-
-**Context:** Selecting primary database for new e-commerce platform
-
-**Criteria:**
-- Performance (30%): Sub-100ms query latency
-- Scalability (25%): Handle 50K concurrent users
-- Maintainability (20%): Team familiar with technology
-- Security (15%): ACID compliance, encryption at rest
-- Cost (10%): <$5K/month operational cost
-
-**Options Generated (k=5):**
-1. PostgreSQL with read replicas
-2. MongoDB sharded cluster
-3. Amazon DynamoDB with DAX
-4. MySQL with ProxySQL
-5. CockroachDB distributed SQL
-
-**Evaluation:** [Full scoring matrix with rationale]
-
-**Selection:** PostgreSQL (scored 78.0, ranked 2nd) chosen over DynamoDB (scored 82.0, ranked 1st) due to team expertise and cloud-agnostic strategy.
-
-**Backtracking Triggers:**
-- User count exceeds 40K
-- Query latency exceeds 200ms p95
-- Sharding becomes necessary (complexity threshold)
-
-### Example 2: API Design Pattern ADR
-
-**Context:** Choosing API style for mobile app backend
-
-**Criteria:**
-- Developer Experience (35%): Mobile team ease of use
-- Performance (25%): Minimize over-fetching
-- Flexibility (20%): Support evolving UI requirements
-- Maturity (15%): Ecosystem, tools, best practices
-- Learning Curve (5%): Time to team proficiency
-
-**Options Generated (k=4):**
-1. REST with JSON:API specification
-2. GraphQL with Apollo
-3. gRPC with Protocol Buffers
-4. REST with custom JSON + WebSocket for real-time
-
-**Evaluation:** [Full scoring matrix]
-
-**Selection:** GraphQL (scored 81.0, ranked 1st) aligns with criteria and team preferences.
-
-**Backtracking Triggers:**
-- Query complexity causes N+1 performance issues
-- Caching strategy proves inadequate
-- Mobile team rejects GraphQL after 3-month trial
+Two full ADR walk-throughs (Database Selection k=5, API Design Pattern k=4) — including criteria, generated options, selection, and backtracking triggers — live in the worked-examples file: see the worked-examples link above (`aiwg discover "architecture designer tot protocol worked examples"`).
 
 ---
 
@@ -682,50 +332,7 @@ Track ToT decision effectiveness:
 
 ## Appendix: ToT Quick Reference for Agents
 
-### Pre-Flight Checklist
-
-Before starting ToT evaluation:
-- [ ] Read relevant NFR modules
-- [ ] Identify 3-5 weighted criteria
-- [ ] Set minimum acceptable score threshold
-- [ ] Define any critical (pass/fail) criteria
-
-### Generation Phase
-
-- [ ] Create k=3-5 alternatives (prefer k=5)
-- [ ] Ensure architectural diversity (not superficial variants)
-- [ ] Include status quo if applicable
-- [ ] Describe implementation approach for each
-
-### Evaluation Phase
-
-- [ ] Score each option 0-10 per criterion
-- [ ] Document specific rationale (not generic)
-- [ ] Calculate weighted total score
-- [ ] Check critical criteria pass/fail
-
-### Selection Phase
-
-- [ ] Build comparison matrix
-- [ ] Identify quantitative winner
-- [ ] Apply context factors
-- [ ] Document selection rationale (quantitative + qualitative)
-- [ ] Acknowledge trade-offs explicitly
-
-### Backtracking Phase
-
-- [ ] Define 3-7 measurable triggers
-- [ ] Cover diverse categories (performance, cost, team, business)
-- [ ] Specify thresholds and time windows
-- [ ] Document re-evaluation process
-
-### Quality Check
-
-- [ ] All scores have documented rationale
-- [ ] Selection explains why higher-scoring options rejected (if applicable)
-- [ ] Backtracking triggers are measurable (not subjective)
-- [ ] ADR follows template structure
-- [ ] References link to NFRs, use cases, architecture docs
+The per-phase actionable checklists (Pre-Flight, Generation, Evaluation, Selection, Backtracking, Quality Check) are the checkbox restatement of the 5-Phase ToT Workflow above combined with the "Minimum Acceptable ADR" checklist under Decision Quality Standards. Work those two sections directly — no item is unique to this appendix.
 
 ---
 
