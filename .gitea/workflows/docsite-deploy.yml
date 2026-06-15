@@ -48,6 +48,12 @@ jobs:
     env:
       # docs.aiwg.io is now a shared static host. AIWG deploys still own the
       # root tenant, but must not delete tenant subtrees managed by sibling repos.
+      # The agentic-sandbox tenant is built+deployed by its own repo and served
+      # at the /agentic-sandbox/ subpath. pagenary 2026.6.3+ emits subpath-relative
+      # shell assets (./-relative + build-injected <base href>), so that sibling
+      # tenant resolves its own assets correctly under the subpath while AIWG owns
+      # the domain root — the rsync receiver-protect filter below preserves its
+      # subtree from this deploy's --delete.
       PROTECTED_DOCS_SUBPATHS: agentic-sandbox
 
     steps:
