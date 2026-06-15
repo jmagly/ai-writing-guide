@@ -98,14 +98,15 @@ try {
   // destroy
   assert.equal((await (await f(`/api/instances/${stoppedId}`, { method: 'DELETE' })).json()).destroyed, stoppedId, 'destroy returns id');
 
-  // the screen is served and references the data paths
+  // app shell served with the per-launch token injected (React build if present, else
+  // the legacy fallback — both carry the title + token)
   const html = await (await fetch(base + "/")).text();
-  assert.match(html, /AIWG.?Cockpit/i, 'screen renders Cockpit title');
-  assert.ok(html.includes(`window.__COCKPIT_TOKEN__=${JSON.stringify(bridge.cockpitToken)}`), 'screen receives the per-launch token');
-  for (const p of ['/api/inventory', '/api/running', '/api/sessions', '/api/capabilities', '/api/contributions', '/api/approvals', '/api/cost', '/api/instances/']) assert.ok(html.includes(p), `screen wires ${p}`);
-  assert.match(html, /pty\.join_session/, 'screen drives the pty session protocol');
+  assert.match(html, /AIWG.?Cockpit/i, 'app title rendered');
+  assert.ok(html.includes(`window.__COCKPIT_TOKEN__=${JSON.stringify(bridge.cockpitToken)}`), 'token injected into the served app');
+  const asset = html.match(/src="([^"]*assets\/[^"]+\.js)"/);
+  if (asset) assert.equal((await fetch(base + asset[1].replace(/^\.\//, '/'))).status, 200, 'built React bundle served');
 
-  console.log(`SMOKE OK — inventory(3) + running(${run.count}) + sessions(demo-shell) + registry(discover→${cap.results.length}, show) + contrib(${contrib.actions.length} actions) -> screen`);
+  console.log(`SMOKE OK — inventory(3) + running(${run.count}) + sessions(demo-shell) + registry(discover→${cap.results.length}) + contrib(${contrib.actions.length}) + shell(${asset ? 'react' : 'legacy'})`);
 } finally {
   bridge.close();
   mock.close();

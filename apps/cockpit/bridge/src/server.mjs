@@ -8,14 +8,28 @@
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { readFile, mkdir, writeFile, chmod, readdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, basename } from 'node:path';
+import { dirname, join, basename, extname } from 'node:path';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const MOCK_URL = process.env.MOCK_URL ?? 'http://127.0.0.1:8122';
 const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
+// The built React app (apps/cockpit/web/dist). Served when present; falls back to the
+// legacy vanilla page so the Bridge works even before a web build.
+const WEB_DIST = fileURLToPath(new URL('../../web/dist', import.meta.url));
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png', '.woff2': 'font/woff2', '.map': 'application/json' };
+
+/** Serve a static file from the built web app, sandboxed to WEB_DIST. Returns true if served. */
+async function serveDistFile(res, relPath) {
+  const safe = join(WEB_DIST, relPath.replace(/^\/+/, ''));
+  if (!safe.startsWith(WEB_DIST) || !existsSync(safe)) return false;
+  res.writeHead(200, { 'content-type': MIME[extname(safe)] ?? 'application/octet-stream' });
+  res.end(await readFile(safe));
+  return true;
+}
 // First-party contribution manifests; AIWG-extension-sourced ones layer in via AIWG_COCKPIT_CONTRIB (#1591).
 const CONTRIB_DIRS = [fileURLToPath(new URL('../../contrib', import.meta.url)), ...(process.env.AIWG_COCKPIT_CONTRIB ? [process.env.AIWG_COCKPIT_CONTRIB] : [])];
 
@@ -220,11 +234,17 @@ export function createBridge({ mockUrl = MOCK_URL, token } = {}) {
 
       if (url.pathname === '/api/health') return json(res, 200, { status: 'ok', mock: mockUrl });
       if (url.pathname === '/' || url.pathname === '/index.html') {
-        const raw = await readFile(join(__dir, 'public', 'index.html'), 'utf8');
-        // Inject the per-launch token so the same-origin screen can call the gated API.
+        const distIndex = join(WEB_DIST, 'index.html');
+        const src = existsSync(distIndex) ? distIndex : join(__dir, 'public', 'index.html');
+        const raw = await readFile(src, 'utf8');
+        // Inject the per-launch token so the same-origin app can call the gated API.
         const html = raw.replace('</head>', `<script>window.__COCKPIT_TOKEN__=${JSON.stringify(TOKEN)}</script>\n</head>`);
         res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
         return res.end(html);
+      }
+      // static assets from the built web app (e.g. /assets/*.js, *.css)
+      if (req.method === 'GET' && !url.pathname.startsWith('/api/') && url.pathname !== '/healthz') {
+        if (await serveDistFile(res, url.pathname)) return;
       }
       json(res, 404, { error: 'not_found', path: url.pathname });
     } catch (err) {

@@ -55,29 +55,17 @@ describe('cockpit Bridge — control surface', () => {
   });
 });
 
-describe('cockpit screen — accessibility (WCAG 2.1 AA structural)', () => {
+describe('cockpit web — app shell served', () => {
   let html;
   beforeAll(async () => { html = await (await fetch(base + '/')).text(); });
 
   it('declares a document language', () => expect(html).toMatch(/<html lang="en"/));
-  it('uses an ARIA tablist with controls/labelledby pairing', () => {
-    expect(html).toMatch(/role="tablist"/);
-    expect((html.match(/role="tab"/g) || []).length).toBeGreaterThanOrEqual(5);
-    expect(html).toMatch(/role="tabpanel"/);
-    expect(html).toMatch(/aria-controls="panel-/);
-    expect(html).toMatch(/aria-labelledby="tab-/);
-  });
-  it('does not rely on color alone for state (text label accompanies the colored dot)', () => {
-    // the colored dot is aria-hidden; the state word is rendered as text beside it
-    expect(html).toContain('class="dot" aria-hidden="true"');
-    expect(html).toContain('${esc(i.state)}'); // inventory renders the state word
-    expect(html).toContain('${esc(t.state)}'); // running renders the state word
-  });
-  it('gives interactive controls accessible names', () => {
-    expect(html).toMatch(/aria-label="Session input"/);
-    expect(html).toMatch(/aria-label="Stop /); // per-task/instance buttons carry aria-labels
-  });
-  it('exposes live regions for async status', () => {
-    expect(html).toMatch(/aria-live="polite"/);
+  it('renders the Cockpit title', () => expect(html).toMatch(/AIWG.?Cockpit/i));
+  it('injects the per-launch token', () => expect(html).toContain(`window.__COCKPIT_TOKEN__=${JSON.stringify(token)}`));
+  it('serves the built bundle when a React build is present', async () => {
+    const m = html.match(/src="([^"]*assets\/[^"]+\.js)"/);
+    if (m) expect((await fetch(base + m[1].replace(/^\.\//, '/'))).status).toBe(200);
+    // a11y of the *rendered* UI is asserted by the React-render tests in T6 (jsdom);
+    // the ARIA lives in the components (role/aria-* in the JSX), not the static shell.
   });
 });

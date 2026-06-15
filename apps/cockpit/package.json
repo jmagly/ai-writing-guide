@@ -9,11 +9,13 @@
     "mock-executor",
     "bridge",
     "vscode",
-    "desktop"
+    "desktop",
+    "web"
   ],
   "scripts": {
     "start:mock": "node mock-executor/src/server.mjs",
     "start:bridge": "node bridge/src/server.mjs",
+    "build:web": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build",
     "smoke": "node mock-executor/src/smoke.mjs && node bridge/src/smoke.mjs && node shell-core/smoke.mjs",
     "poc": "node poc/kill-bridge-isolation.mjs && node poc/security-checks.mjs",
     "test": "npm run smoke && npm run poc"
