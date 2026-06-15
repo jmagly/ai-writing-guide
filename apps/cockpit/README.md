@@ -1,13 +1,16 @@
 # AIWG Cockpit
 
 A **UX-first control plane** over your AIWG install and the multi-stack agentic
-sessions it runs — observe, drive, and coordinate agents from one interface. The
-Cockpit **fronts** the CLI and the registry; it never replaces them. Every UI action
-is a registry capability, and the CLI remains fully supported.
+sessions it runs — observe what agents are doing, take the wheel when you want, and
+coordinate from one place. It fronts the CLI and the registry; it never replaces them.
+
+> **The model (ADR):** the Cockpit is a *session-control surface, not a CLI runner*.
+> **Agents run the CLI — you direct the agents.** An action button injects a command
+> into an agentic session; the agent there runs it. The Cockpit only sources read-only
+> catalog data for display. See `.aiwg/architecture/adr-cockpit-session-control-not-cli-runner.md`.
 
 > **Opt-in, separately published.** Nothing here ships in the base `aiwg` npm package
-> (guarded by `test/smoke/cockpit-base-footprint.test.js`). Install the base CLI as
-> always; add the Cockpit when you want the UI.
+> (guarded by `test/smoke/cockpit-base-footprint.test.js`).
 
 ## Architecture
 
@@ -17,77 +20,81 @@ operator / CLI:  aiwg cockpit
        ▼
 ┌─────────────────────────────────────────────────────────────┐
 │ Bridge (127.0.0.1, token-gated /api)                         │
-│  · registry-bound core: aiwg discover / show / index (live)  │
-│  · control plane: inventory, running, lifecycle, approvals,  │
-│    cost, contributions                                       │
-│  · issues a direct ws attach_url for the pty data plane      │
+│  · control plane: inventory, lifecycle, running, approvals,  │
+│    cost, sessions (create + attach_url), contributions       │
+│  · read-only catalog: aiwg discover / show (display only)    │
+│  · user asset library: clone/import/delete (never writes AIWG)│
+│  · serves the built React app (token-injected)               │
 └─────────────────────────────────────────────────────────────┘
-       │ proxies                          ▲ loads /?token=…
-       ▼                                  │
-  executor (mock today;          ┌────────┴─────────┬──────────────┐
-  agentic-sandbox #460/#461)     browser        VS Code webview   Tauri window
-  · A2A v2: discovery, admin,    (apps/cockpit/{vscode,desktop} — one shared core)
-    A2A core+extensions, pty-ws
+       │ proxies / sources              ▲ loads /?token=…
+       ▼                                │
+  executor (mock today;          ┌──────┴──────┬───────────────┐
+  agentic-sandbox #460/#461)     browser     VS Code webview   Tauri window
+  · A2A v2 + pty-ws/v1           (apps/cockpit/{web,vscode,desktop})
 ```
 
-- **Control plane** (inventory, lifecycle, approvals, actions) goes through the gated Bridge.
+- **Control plane** (lifecycle, approvals, actions) goes through the gated Bridge.
 - **Data plane** (the pty session stream) connects browser→executor directly via the
-  `attach_url` the Bridge issues — WS masking differs per direction, so the Bridge issues
-  the URL rather than proxying frames.
+  `attach_url` the Bridge issues (WS masking differs per direction).
+
+## Surfaces (tabs)
+
+| Tab | What it does |
+|---|---|
+| **Home** | Guided first-run: what-is-this, live status, the **Start a session** primary verb, first-run tour. |
+| **Inventory** | Instances + lifecycle (Start/Stop/Destroy). |
+| **Running** | Running work across stacks + cross-stack spend + per-task Stop. |
+| **Sessions** | Live pty terminal — observe/drive, keyframe, non-destructive replay; inline **＋ capability picker**. |
+| **Approvals** | Unified HITL inbox (`hitl-prompt/v1`); decisions = operator authorization. |
+| **Explore** | Read-only AIWG catalog — Tenor-style capability search (fortemi-react-modeled). |
+| **Library** | Your own assets — clone from the catalog / import / remove. AIWG files never overwritten. |
+| **Actions** | Contributed buttons that **inject a command into a session** (the agent runs it). |
 
 ## Run (dev, against the mock)
 
 ```bash
-node apps/cockpit/mock-executor/src/server.mjs    # :8122  executor (3 surfaces, conformant)
-node apps/cockpit/bridge/src/server.mjs            # :8120  → open the printed URL (token injected)
+npm --prefix apps/cockpit run build:web                 # install + vite build → web/dist
+node apps/cockpit/mock-executor/src/server.mjs          # :8122  executor
+node apps/cockpit/bridge/src/server.mjs                 # :8120  → open the printed URL
 ```
 
-Or via the umbrella: `npm --prefix apps/cockpit run start:mock` / `start:bridge`.
-
-## Surfaces (UI tabs)
-
-| Tab | What it does | Backed by |
-|---|---|---|
-| **Inventory** | instances + lifecycle (Start/Stop/Destroy) | admin REST |
-| **Running** | running work across stacks + per-task Stop + spend line | `/admin/running`, `/admin/cost` |
-| **Sessions** | live pty terminal — observe/drive, keyframe, non-destructive replay | `pty-ws/v1` + `pty-extensions/v1` |
-| **Approvals** | unified HITL inbox (decisions = operator authorization) | `hitl-prompt/v1` |
-| **Explore** | live `aiwg discover` + `show` over the capability graph | registry binding |
-| **Actions** | contributed buttons (audit-issues, address-issues, …) | contribution model |
+`aiwg cockpit` (the operator command) will wrap this; the Bridge serves the built
+React app token-injected, falling back to a legacy page when no build is present.
 
 ## Components
 
 | Path | Role |
 |---|---|
+| `web/` | React 19 + Vite + TS UI (the surfaces above) |
 | `mock-executor/` | wire-faithful agentic-sandbox A2A v2 stand-in (conformance 33/0/17) |
-| `bridge/` | the registry-bound control-plane server + screen |
-| `shell-core/` | the cross-shell handshake (read runtime token, connect) |
-| `vscode/` | VS Code extension shell (no build) |
-| `desktop/` | Tauri v2 desktop shell (build toolchain-gated) |
-| `contrib/` | declarative UI contributions + schema |
+| `bridge/` | the registry-bound control-plane server + static serving |
+| `shell-core/` | the cross-shell handshake (runtime token → connect) |
+| `vscode/` · `desktop/` | VS Code extension + Tauri shells over the same Bridge |
+| `contrib/` | declarative UI contributions + schema (actions inject commands) |
 | `poc/` | Iteration-1 risk-gate PoCs (kill-bridge isolation, security) |
 
 ## Verify
 
 ```bash
-npm --prefix apps/cockpit test          # smokes + risk-gate PoCs
-npx vitest run test/integration/cockpit-bridge.test.js   # in-process + a11y (CI)
+npm --prefix apps/cockpit run check     # build web + typecheck + render/a11y tests + smokes + PoCs
+npx vitest run test/integration/cockpit-bridge.test.js   # Bridge contract (CI)
 npx vitest run test/smoke/cockpit-base-footprint.test.js # base-npm guard (CI)
-# conformance (needs the agentic-sandbox-conformance harness):
-#   asc --executor-url http://127.0.0.1:8122/agents/550e8400-e29b-41d4-a716-446655440000
 ```
+
+The React UI is also browser-verified per surface (see `.playwright-mcp/cockpit-*.png`).
+Conformance (`agentic-sandbox-conformance`) was 33 pass / 0 fail / 17 skip; the
+Bridge-only additions since (session-create, library) don't touch the conformant
+discovery/A2A/pty surfaces — re-run the harness after executor-surface changes.
 
 ## Status
 
-Built against the mock through the construction increments (A–I). The real
-agentic-sandbox swap (#460 host target, #461 sessions, #1589 normalize) is a
-contract-preserving substitution validated by the same conformance harness — see
-`.aiwg/reports/cockpit-abm-gate.md`.
+Built and browser-verified against the mock. The real agentic-sandbox swap (#460 host
+target, #461 sessions, #1589 normalize) is a contract-preserving substitution at the
+Bridge's `MOCK_URL` seam — see `.aiwg/reports/cockpit-abm-gate.md`.
 
 ## See also
 
-- `.aiwg/architecture/cockpit-sad.md` + `cockpit-instance-control-interface.md` — design + seam
-- `.aiwg/ux/cockpit-ux-design.md` — HMI foundations
-- `.aiwg/reports/cockpit-abm-gate.md` — risk-gate closure
-- `.aiwg/planning/cockpit-construction-plan.md` — iteration roadmap
+- `.aiwg/architecture/adr-cockpit-session-control-not-cli-runner.md` — the core model
+- `.aiwg/architecture/cockpit-sad.md` + `cockpit-instance-control-interface.md`
+- `.aiwg/ux/cockpit-ux-design.md` · `.aiwg/reports/cockpit-abm-gate.md`
 - Epic roctinam/aiwg#1588

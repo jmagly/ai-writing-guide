@@ -18,7 +18,9 @@
     "build:web": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build",
     "smoke": "node mock-executor/src/smoke.mjs && node bridge/src/smoke.mjs && node shell-core/smoke.mjs",
     "poc": "node poc/kill-bridge-isolation.mjs && node poc/security-checks.mjs",
-    "test": "npm run smoke && npm run poc"
+    "test:web": "npm --prefix web run typecheck && npm --prefix web run test",
+    "test": "npm run smoke && npm run poc",
+    "check": "npm run build:web && npm run test:web && npm run test"
   },
   "engines": {
     "node": ">=18"
