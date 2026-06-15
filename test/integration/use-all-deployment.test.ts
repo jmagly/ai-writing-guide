@@ -194,12 +194,17 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
     expect(existsSync(path.join(commandsDir, 'aiwg-update-agents-md.md'))).toBe(true);
   });
 
-  it('does not mirror Claude kernel skills as duplicate slash commands', async () => {
+  it('mirrors Claude kernel self-maintenance skills as bootstrap slash commands', async () => {
+    // Kernel bootstrap functions are copied in as `/`-commands for direct
+    // access (not discovery-only). Supersedes the #1382 gate that kept these
+    // native-skill-only on Claude; the direct entry point is worth the
+    // skill+command redundancy that the standard operator set already ships.
     const result = runAiwg(fullUseAllArgs(projectDir), projectDir);
     expect(result.exitCode).toBe(0);
 
     const commandsDir = path.join(projectDir, '.claude', 'commands');
-    const kernelCommandDuplicates = [
+    const kernelBootstrapCommands = [
+      'aiwg-regenerate.md',
       'aiwg-doctor.md',
       'aiwg-refresh.md',
       'aiwg-status.md',
@@ -210,8 +215,8 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
       'steward.md',
     ];
 
-    for (const file of kernelCommandDuplicates) {
-      expect(existsSync(path.join(commandsDir, file)), `${file} should stay native-skill-only on Claude`).toBe(false);
+    for (const file of kernelBootstrapCommands) {
+      expect(existsSync(path.join(commandsDir, file)), `${file} should be copied in as a Claude bootstrap command`).toBe(true);
     }
   });
 });

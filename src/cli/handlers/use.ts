@@ -1980,10 +1980,22 @@ export class UseHandler implements CommandHandler {
           ui.success(`Mirrored ${standardMirrored} operator skills → commands (${provider})`);
         }
 
-        // Claude/Cursor/Hermes load kernel skills natively. Mirroring those
-        // same names into a command directory creates duplicate `/` entries
-        // in skills-native providers such as Claude Code (#1382).
-        if (targetKernelSkillsDir && providerNeedsCommands(provider)) {
+        // Mirror the kernel self-maintenance set (aiwg-regenerate, -doctor,
+        // -refresh, -status, -help, -issue, -pr, -mission, use, steward) to
+        // the provider's command surface so these bootstrap entry points are
+        // *copied in* for direct `/`-access — not discovery-only. This matches
+        // the standard operator mirror above (which already deploys /intake-*
+        // and /flow-* on skills-native providers like Claude/Cursor), and makes
+        // the wrapper's own callout true ("…directly invokable as slash
+        // commands"). `aiwg discover` remains the backstop for the long tail.
+        //
+        // Supersedes the #1382 gate (`&& providerNeedsCommands(provider)`),
+        // which suppressed these on Claude/Cursor to avoid a skill+command
+        // duplicate `/` entry. The direct bootstrap entry point is worth that
+        // redundancy — the same skill+command coexistence already shipped for
+        // the standard operator set. Gated on `targetCommandsDir` only, so
+        // providers without a command dir (Hermes/OpenHuman) still no-op.
+        if (targetKernelSkillsDir) {
           const kernel = await translateSkillsToCommands(targetKernelSkillsDir, {
             provider,
             targetDir: targetCommandsDir,
