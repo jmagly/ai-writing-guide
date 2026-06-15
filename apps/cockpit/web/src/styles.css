@@ -37,3 +37,14 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .hint { color:var(--muted); font-size:13px; margin:6px 0 0; }
 .grid2 { display:grid; grid-template-columns:minmax(260px,1fr) 1.4fr; gap:16px; align-items:start; }
 .act { text-align:left; }
+/* Tenor-style capability grid (modeled on fortemi-react SearchResults) */
+.capgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:10px; }
+.capcard { display:block; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:11px 13px; cursor:pointer; }
+.capcard:hover { border-color:var(--accent); }
+.capcard-head { display:flex; align-items:center; gap:8px; }
+.capcard-head strong { font-size:14px; }
+.capcard-score { margin-left:auto; color:var(--muted); font-size:12px; }
+.capcard-cap { color:var(--muted); font-size:13px; margin-top:5px; line-height:1.4; }
+.capcard-tags { margin-top:8px; display:flex; gap:5px; flex-wrap:wrap; }
+.tag { font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:1px 7px; }
+.picker { background:#0a0c10; border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:12px; }

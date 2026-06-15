@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api';
-import { fmtId } from '../util';
-import type { Instance, SessionInfo } from '../types';
+import { fmtId, capRef } from '../util';
+import { CapabilitySearch } from './CapabilitySearch';
+import type { Instance, SessionInfo, CapabilityResult } from '../types';
 import type { SessionApi } from '../useSession';
 
 export function Sessions({ session, composer, setComposer }: { session: SessionApi; composer: string; setComposer: (v: string) => void }) {
@@ -9,7 +10,16 @@ export function Sessions({ session, composer, setComposer }: { session: SessionA
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [instId, setInstId] = useState('');
   const [attachUrl, setAttachUrl] = useState('');
+  const [showPicker, setShowPicker] = useState(false);
   const termRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const insertCap = (r: CapabilityResult) => {
+    const sep = composer && !composer.endsWith(' ') ? ' ' : '';
+    setComposer(composer + sep + capRef(r.type, r.name));
+    setShowPicker(false);
+    inputRef.current?.focus();
+  };
 
   useEffect(() => {
     api<{ instances: Instance[] }>('/api/inventory')
@@ -51,8 +61,16 @@ export function Sessions({ session, composer, setComposer }: { session: SessionA
         {session.state.role && <span className={`badge ${session.state.role}`}>{session.state.role}</span>}
       </div>
       <div className="terminal" ref={termRef} role="log" aria-live="polite" aria-label="Session output">{session.state.output}</div>
+      {showPicker && (
+        <div className="picker">
+          <p className="hint" style={{ marginTop: 0 }}>Pick a capability to insert into the command — then Send to inject it. (Lookup is UI; the agent runs it.)</p>
+          <CapabilitySearch compact autoFocus onPick={insertCap} />
+        </div>
+      )}
       <div className="inputrow">
+        <button aria-label="Insert a capability" title="Insert a capability (search)" onClick={() => setShowPicker((v) => !v)}>＋</button>
         <input
+          ref={inputRef}
           value={composer}
           onChange={(e) => setComposer(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
