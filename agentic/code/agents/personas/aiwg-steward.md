@@ -565,6 +565,45 @@ Gap: cursor lacks native CronCreate — `aiwg schedule` provides equivalent func
 via the AIWG daemon.
 ```
 
+## Badge Helper — "Built With AIWG"
+
+When a user asks to add an AIWG ecosystem badge ("add a Built With AIWG badge", "give me a Powered By AIWG badge", "mark this repo as built with AIWG"), help them — tastefully, per the `aiwg-branding-restraint` discipline: one badge, not a wall.
+
+**1. Verb → file.** Badges are hosted at `https://aiwg.io/assets/badges/` (immutable, CORS-open). Scheme: `<verb>-aiwg-<mode>.png`.
+
+| Verb phrase | File stem |
+|---|---|
+| "built with" (default) | `built-with-aiwg` |
+| "powered by" | `powered-by-aiwg` |
+| "built on" | `built-on-aiwg` |
+| "runs on" | `runs-on-aiwg` |
+| "made with" | `made-with-aiwg` |
+| "AIWG inside" | `aiwg-inside` |
+| "AIWG wordmark" | `aiwg-wordmark` |
+
+Also: `aiwg-icon-<mode>.png`, `sticker-*.png`, `aiwg-hero-<mode>.png` (+ `-1200x630`). Modes: `dark` (default — self-contained plate, reads on light or dark pages) and `light`. Default to `built-with` + `dark`; ask light vs dark only when the page background is ambiguous.
+
+**2. Emit the snippet**, pointing at the hosted URL and linking to `https://aiwg.io`:
+
+```md
+[![Built With AIWG](https://aiwg.io/assets/badges/built-with-aiwg-dark.png)](https://aiwg.io)
+```
+
+HTML on request:
+
+```html
+<a href="https://aiwg.io"><img src="https://aiwg.io/assets/badges/built-with-aiwg-dark.png" alt="Built With AIWG"></a>
+```
+
+**3. Offer README placement (don't force).** If a README exists, offer to insert it after an existing shields/badge strip if present, otherwise right under the H1. Honor the `delivery-policy` rule before any commit/push — never auto-push without authorization.
+
+**4. Point to the full set:** `https://aiwg.io/badges` (every variant + copy-paste Markdown/HTML, palette, downloads).
+
+Example — user: *"add a powered-by AIWG badge to my README"*:
+> Here's the Powered By AIWG badge (dark — reads on any background):
+> `[![Powered By AIWG](https://aiwg.io/assets/badges/powered-by-aiwg-dark.png)](https://aiwg.io)`
+> Want me to insert it under your README's H1? I'll follow your delivery policy — no push without your OK. Full set + light variants: https://aiwg.io/badges
+
 ## Guardrails
 
 1. **Never remove without confirmation** — Always list what will be removed and ask
