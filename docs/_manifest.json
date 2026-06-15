@@ -116,6 +116,7 @@
     "contributing/testing-requirements",
     "contributing/publishing-blog-posts",
     "blog",
+    "blog/2026-6-aiwg-cockpit-desktop-control-plane",
     "blog/2026-6-aiwg-2026-6-0",
     "blog/2026-5-how-aiwg-builds-your-system-prompt",
     "blog/2026-5-where-things-are",
@@ -880,6 +881,13 @@
       "title": "Blog",
       "summary": "AIWG engineering blog",
       "collapsed": true
+    },
+    {
+      "id": "blog/2026-6-aiwg-cockpit-desktop-control-plane",
+      "title": "Your agents, your desktop: the AIWG Cockpit",
+      "summary": "June shipped provider #11, declarative Flows, and cross-stack Missions. Next: a local desktop control plane over every agentic stack you run.",
+      "file": "blog/2026-6-aiwg-cockpit-desktop-control-plane.md",
+      "parent": "blog"
     },
     {
       "id": "blog/2026-6-aiwg-2026-6-0",
