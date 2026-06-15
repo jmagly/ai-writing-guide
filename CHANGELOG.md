@@ -7,6 +7,50 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.1] - 2026-06-15 — "AIWG Cockpit groundwork (beta), leaner agents & doc accuracy"
+
+A consolidation release on top of 2026.6.0. The headline is the **AIWG Cockpit** — a UX-first control plane over an AIWG install and multi-stack agentic sessions — landing as **beta groundwork**: the registry-bound core, instance-control bridge, Tauri + VS Code shells, local control-surface auth, and the UI contribution model are all in place, with the full operator UX arriving in a later release. Alongside it: the bulk **declarative-Flow migration** and the **cross-stack Mission conductor** are now complete, a fleet-wide **agent-definition debloat** brings every agent under the 16 KB dispatch ceiling, and a **documentation-accuracy pass** reconciles every skill/agent count against source.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **AIWG Cockpit — beta groundwork** | The foundation of a UX-first control plane is in place behind an opt-in `@aiwg/cockpit` package: a data-driven core bound to the extension/discover/index registry, instance control over the agentic-sandbox interface, parallel **Tauri desktop + VS Code** shells over one shared core, a declarative **UI contribution model** (screens/actions/workflows/hooks), local control-surface auth (`127.0.0.1` + per-launch token + OS-keychain), and live capability/index refresh without restart. The full operator UX is still in construction (epic #1588) — this release ships the substrate, not the finished surface. |
+| **Declarative Flows + cross-stack Missions are complete** | The bulk `flow-*` → `flow.aiwg.io/v1` migration (#1539) and the cross-stack **Mission conductor** with per-stack executor adapters (#1546) — previewed in 2026.6.0 — are now fully landed. One Mission conductor fans heterogeneous workers across stacks over the `runtime:<name>` convention. |
+| **Leaner agents — every definition under the dispatch ceiling** | A repo-wide debloat (#1587, #1600) externalizes worked examples and restated rule boilerplate out of agent definitions and adds a hard 16 KB size ceiling enforced by `aiwg doctor`. Oversized definitions were silently failing subagent dispatch with `Prompt is too long` at 0 tokens; every shipped agent is now under the ceiling. |
+| **Docs match the code** | A `doc-sync code-to-docs` pass reconciled every skill/agent count across the docs against on-disk source — kernel skills 16/19→**20**, addons 27/28→**29**, per-framework skill/agent counts corrected (research 20→39, security-engineering 7→27, sdlc agents 90/220→93), and three doc-to-doc contradictions resolved. |
+| **Safer context-file regeneration** | `aiwg regenerate` now additively installs the `@AIWG.md` hook into operator-owned provider files without clobbering them (#1597, #1579), and `aiwg doctor` flags drift on non-managed twin files. |
+
+### Added
+
+- **AIWG Cockpit (beta groundwork) — epic #1588.** Opt-in `@aiwg/cockpit` umbrella package with a base-footprint CI guard (#1593); registry/discover/index-bound data-driven core + Explore (#1592); instance control bound to the agentic-sandbox A2A interface; live session view + running-agents board; local control-surface auth — `127.0.0.1` + Origin + CSRF + per-launch token + OS-keychain handshake (#1595); declarative UI contribution model — screens/actions/workflows/event-hooks (#1591); multi-stack management + approval inbox; parallel **Tauri desktop + VS Code** shells over one registry-bound core (#1594); React + Vite web app; user asset library (clone/import to disk, AIWG sources never overwritten); guided first-run onboarding; rendered-DOM a11y suite + CI integration; Iteration-1 risk-gate PoCs closing the ABM gate (#1590). Full intake→elaboration SDLC track authored under `.aiwg/` (`cockpit-*` / `UC-COCKPIT-*` / `adr-cockpit-*`). Construction continues in a later release.
+- **Cross-stack Mission conductor** with per-stack executor adapters (#1546) — completes the Missions surface previewed in 2026.6.0.
+- **`release-publication-verify` skill (#1599)** — post-tag release-proof verifier that confirms a tag actually published (npm dist-tag, Gitea/GitHub release artifacts).
+- **`aiwg-steward` "Built With AIWG" badge (#1596)** — steward can add a discreet attribution badge to a project README on request.
+- **Agent-definition 16 KB size ceiling** enforced by `aiwg doctor` (#1587), with a locked regression test.
+
+### Changed
+
+- **Declarative-Flow migration completed.** The remaining `flow-*` skills are now `flow.aiwg.io/v1` Flows (#1539), discoverable via `aiwg discover` and runnable as orchestration.
+- **Fleet-wide agent debloat (#1587, #1600).** Worked examples and restated protocol boilerplate moved out of agent definitions into the discoverable example catalog; `aiwg-steward` reconciled across its dual sources; `rlm-agent` and several SDLC/forensics/marketing/media-curator agents trimmed under the ceiling. Few-shot coverage is preserved via the catalog (anchor-inline + referenced examples).
+- **Documentation accuracy.** Skill/agent counts reconciled to source across `cli-reference.md`, `discovery-and-kernel-skills.md`, `architecture-overview.md`, `skills-budget-guide.md`, `how-it-works.md`, the kernel quickrefs, and `CLAUDE.md`/`AIWG.md`. Hermes top-level kernel documented as the global 20-skill set (was a stale "~9"). Release announcements and dated blog posts left as immutable historical records.
+- **`package-all-plugins`** scoped to plugin packaging so native-release discovery routes correctly (#1598).
+- **Docs site.** Landing + overview reflect all 11 providers (#12997af0); README gains an AIWG hero masthead + badges section; 2026.6.0 blog roundup + "where things are" retrospective ported into the docbase with provenance disclosure.
+
+### Fixed
+
+- **`aiwg regenerate`** additively installs the `@AIWG.md` hook into operator-owned provider files instead of overwriting them (#1597, #1579); a loud warning + `aiwg doctor` drift check covers non-managed twin files (#1579).
+- **`aiwg use`** deploys kernel self-maintenance skills as bootstrap slash commands on Claude/Cursor (193547fc); `aiwg-steward` orchestration/loop routing restored inline (#1600).
+- **Cockpit:** actions inject into agentic sessions rather than running the Bridge CLI; the React bundle no longer gets trapped in an HTML comment (Vite `</head>` gotcha).
+- **Docsite deploy:** corrected the `~` home-path resolver against the remote `$HOME`.
+- **OpenCode:** `--help` assertion covers stdout + stderr (opencode 1.17.x routes help to stderr).
+- **Repo hygiene:** removed accidentally-committed `WARP.md` backup files.
+
+### Upgrade notes
+
+- **No action required.** All changes are additive or self-healing on the next `aiwg refresh` / `aiwg use`.
+- **AIWG Cockpit is beta groundwork** — the opt-in `@aiwg/cockpit` package is not installed by `npm i -g aiwg`; the base CLI footprint is unchanged. The control-plane UX is still in construction (#1588); install it only to follow along with the foundation.
+
 ## [2026.6.0] - 2026-06-12 — "OpenHuman provider #11, declarative Flows & cross-stack Missions, research-corpus intelligence"
 
 The June line opens with the biggest surface-area expansion in a while: AIWG inducts **OpenHuman (tinyhumansai)** as deployment provider #11, lands a **declarative YAML Flow** layer with **cross-stack Missions**, and turns the research framework into a genuine corpus-intelligence toolkit (semantic search, citation-graph densification, integrity scanning, vision extraction). Alongside the headline work is a broad round of cross-provider hardening (Cursor, OpenClaw, Warp, Codex, OpenCode) and a discovery layer that now reliably matches full natural-language questions.
