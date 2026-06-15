@@ -226,8 +226,8 @@ aiwg show skill aiwg-utils-quickref | head -10         # quickref reachable
 
 | Gap (vendor side) | AIWG normalization | Verification |
 |---|---|---|
-| Warp's primary context-loading is single-file `WARP.md`, not a directory of rules | `aiwg use --provider warp` regenerates `WARP.md` aggregating all AIWG rules + agent index | `wc -l WARP.md` shows substantial content; `grep -c "^### " WARP.md` ≥ 10 (rules listed); the new content from v2026.5.13 (sdlc-right-sizing, etc.) is present |
-| Agents are also aggregated into `WARP.md` — there's no separate agents directory on Warp's side | Agent index inlined into WARP.md alongside discrete `.warp/agents/` for operator browsing | Both exist; agent in session references WARP.md content correctly |
+| Warp reads single-file `WARP.md` natively (no rules-directory contract) | `aiwg use --provider warp` emits a **lean managed `WARP.md` bridge** — Discover-First Protocol + Context Finalization + Parallelism Cap near the top — not a full rules aggregate; discrete rules/commands/behaviors deploy under `.warp/` | `grep -c 'aiwg-managed' WARP.md` == 1 (lean managed bridge present) and `WARP.md` leads with the Discover-First Protocol. Do NOT expect a large `^### `-rule aggregate — that's the obsolete shape (`grep -c "^### " WARP.md` ≥ 10 no longer applies) |
+| Warp has no native agents picker/directory contract for AIWG agents | Agents reachable via `aiwg discover` / `aiwg show`; the lean `WARP.md` bridge points at discovery rather than inlining an agent index (any `.warp/agents/` is operator-browsing only, not required) | Agent in session reaches AIWG agents via `aiwg discover` / `aiwg show` (not an inlined WARP.md agent dump) |
 | Commands deploy to `.warp/commands/` (discrete) AND aggregated section in WARP.md | Both surfaces populated | `ls .warp/commands/ \| wc -l` ≥ 1; WARP.md has a "Commands" section |
 | Behaviors not natively supported — aggregated into rules | `.warp/rules/behaviors/` directory contains behavior rules | `ls .warp/rules/behaviors/ \| wc -l` ≥ 1 |
 
@@ -251,7 +251,7 @@ aiwg show skill aiwg-utils-quickref | head -10         # quickref reachable
 
 | Gap (vendor side) | AIWG normalization | Verification |
 |---|---|---|
-| Windsurf has no agents directory — agents must be inlined in `AGENTS.md` | `aiwg use --provider windsurf` aggregates agent index into `AGENTS.md` | `grep -c "^## Agent: " AGENTS.md` ≥ 1; or whatever the current aggregation header pattern is |
+| Windsurf reads `AGENTS.md` + `.windsurf/rules/` natively; there's no native agents picker, so agent reachability must be normalized | `aiwg use --provider windsurf` deploys agents to `.windsurf/agents/*.soul.md` (+ `.aiwg-manifest.json`) and emits a **lean discover-first `AGENTS.md` bridge** (not an inlined agent dump) | `ls .windsurf/agents/*.soul.md \| wc -l` ≥ 1 **AND** `grep -c 'aiwg-managed' AGENTS.md` == 1 (regenerated lean bridge present). Agents are reachable via `.windsurf/agents/` + the `.agents/skills/` mirror + `aiwg discover`/`aiwg show` — NOT via an obsolete inlined `^## Agent: ` block |
 | Commands deploy to `.windsurf/workflows/` (not `commands/`) | Provider adapter uses correct path name | `ls .windsurf/workflows/ \| wc -l` ≥ 1 |
 | Rules use `.windsurf/rules/*.md` with Windsurf-specific frontmatter | Generated with correct frontmatter | `head -8 .windsurf/rules/$(ls .windsurf/rules/ \| head -1)` shows expected frontmatter |
 | Skills get `.windsurf/skills/` AND `.agents/skills/` mirror | Both populated | Both directories present |
