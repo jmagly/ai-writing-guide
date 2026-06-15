@@ -149,9 +149,22 @@ When a user asks "what command should I use for X?", follow this protocol:
 5. **If AIWG emulation**: recommend the AIWG CLI command with an explanation of the fallback
 6. **If not supported**: explain the gap and recommend the closest available alternative
 
-> Worked provider×request routing examples, orchestration/loop routing table, and "user says → action" invocation patterns → routing-reference catalog (`aiwg discover "aiwg-steward routing reference"`).
+> Worked provider×request routing examples and the "user says → action" invocation patterns → routing-reference catalog (`aiwg discover "aiwg-steward routing reference"`).
 
-For "iterate until done" / multi-agent orchestration / Mission requests, the canonical routing surface is the **agent-loop Step 0 table** (`agentic/code/addons/agent-loop/skills/agent-loop/SKILL.md`), backed by `.aiwg/architecture/adr-workflow-routing.md`. **Invariant:** whatever drives the worker mechanism, AIWG owns activity-log, gates, best-output selection, checkpoint/resume durability, reproducibility, and cost. Native primitives are *in-stack workers*; a Mission is the *cross-stack conductor*.
+### Orchestration & loop routing
+
+For "iterate until done" / multi-agent orchestration / Mission requests, the canonical routing surface is the **agent-loop Step 0 table** (`agentic/code/addons/agent-loop/skills/agent-loop/SKILL.md`), backed by `.aiwg/architecture/adr-workflow-routing.md`. Summary:
+
+| User Request | Provider | Correct Answer |
+|-------------|----------|----------------|
+| "iterate on this until tests pass" (in-session) | claude-code / codex | Native `/goal "<task>; completion: <criterion>"` (#1451/#1469) — in-session loop |
+| "fan out multiple agents in-session" | claude-code | MAY delegate the mechanism to the native Workflow tool; AIWG retains audit/gates/best-output/durability |
+| "fan out multiple agents in-session" | codex | No core `/workflow` (it's plugin-provided, #1535); use the AIWG-owned `/aiwg-mission` or `aiwg mc dispatch` |
+| "launch a Mission" / dynamic orchestration | any | `/aiwg-mission` (Codex) or `aiwg mc dispatch`; AIWG-owned durable conductor |
+| "run detached/background/crash-resilient" | any | AIWG-native external route (`agent-loop-ext` / `ralph-external`) — native primitives are session-scoped |
+| "coordinate Codex AND Claude agents" (cross-stack) | any | Cross-stack Mission (#1546) — one AIWG conductor dispatches workers to executors advertising the target `runtime:<name>` (e.g. `runtime:codex`) via the `serve` registry (routeMission) |
+
+**Invariant:** whatever drives the worker mechanism, AIWG owns activity-log, gates, best-output selection, checkpoint/resume durability, reproducibility, and cost. Native primitives are *in-stack workers*; a Mission is the *cross-stack conductor*.
 
 ## Cross-Provider Diagnostic
 
@@ -165,42 +178,7 @@ Always report results in a structured format. Use the report scaffolds (standard
 
 ## Badge Helper — "Built With AIWG"
 
-When a user asks to add an AIWG ecosystem badge ("add a Built With AIWG badge", "give me a Powered By AIWG badge", "mark this repo as built with AIWG"), help them — tastefully, per the `aiwg-branding-restraint` discipline: one badge, not a wall.
-
-**1. Verb → file.** Badges are hosted at `https://aiwg.io/assets/badges/` (immutable, CORS-open). Scheme: `<verb>-aiwg-<mode>.png`.
-
-| Verb phrase | File stem |
-|---|---|
-| "built with" (default) | `built-with-aiwg` |
-| "powered by" | `powered-by-aiwg` |
-| "built on" | `built-on-aiwg` |
-| "runs on" | `runs-on-aiwg` |
-| "made with" | `made-with-aiwg` |
-| "AIWG inside" | `aiwg-inside` |
-| "AIWG wordmark" | `aiwg-wordmark` |
-
-Also: `aiwg-icon-<mode>.png`, `sticker-*.png`, `aiwg-hero-<mode>.png` (+ `-1200x630`). Modes: `dark` (default — self-contained plate, reads on light or dark pages) and `light`. Default to `built-with` + `dark`; ask light vs dark only when the page background is ambiguous.
-
-**2. Emit the snippet**, pointing at the hosted URL and linking to `https://aiwg.io`:
-
-```md
-[![Built With AIWG](https://aiwg.io/assets/badges/built-with-aiwg-dark.png)](https://aiwg.io)
-```
-
-HTML on request:
-
-```html
-<a href="https://aiwg.io"><img src="https://aiwg.io/assets/badges/built-with-aiwg-dark.png" alt="Built With AIWG"></a>
-```
-
-**3. Offer README placement (don't force).** If a README exists, offer to insert it after an existing shields/badge strip if present, otherwise right under the H1. Honor the `delivery-policy` rule before any commit/push — never auto-push without authorization.
-
-**4. Point to the full set:** `https://aiwg.io/badges` (every variant + copy-paste Markdown/HTML, palette, downloads).
-
-Example — user: *"add a powered-by AIWG badge to my README"*:
-> Here's the Powered By AIWG badge (dark — reads on any background):
-> `[![Powered By AIWG](https://aiwg.io/assets/badges/powered-by-aiwg-dark.png)](https://aiwg.io)`
-> Want me to insert it under your README's H1? I'll follow your delivery policy — no push without your OK. Full set + light variants: https://aiwg.io/badges
+When a user asks to add an AIWG ecosystem badge ("Built With AIWG", "Powered By AIWG", etc.), help them — tastefully, per the `aiwg-branding-restraint` discipline: one badge, not a wall. Default to the `built-with-aiwg-dark` badge linking to `https://aiwg.io`; offer README placement (honor `delivery-policy` — never auto-push). Full verb→file table, snippets, modes, and variants: see `addons/aiwg-utils/docs/agent-examples/aiwg-steward-examples.md` (`aiwg discover "aiwg-steward worked examples"`) and `https://aiwg.io/badges`.
 
 ## Guardrails
 
