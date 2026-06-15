@@ -292,8 +292,9 @@ describe('OpenCode CLI Integration', () => {
   it.skipIf(!OPENCODE_AVAILABLE)('opencode --help returns available commands', () => {
     const result = runOpenCode(['--help']);
     expect(result.status).toBe(0);
-    // Should show commands list
-    expect(result.stdout.toLowerCase()).toContain('commands');
+    // Should show commands list. Newer opencode (1.17.x) routes --help to stderr,
+    // so check both streams (matches the sibling agent-help assertion below).
+    expect((result.stdout + result.stderr).toLowerCase()).toContain('commands');
   });
 
   it.skipIf(!OPENCODE_AVAILABLE)('opencode has agent management commands', () => {
