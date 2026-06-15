@@ -364,3 +364,43 @@ describe('doctor: exit code logic', () => {
     expect(computeExitCode(checks)).toBe(0);
   });
 });
+
+// ── Agent-def size ceiling check (#1587) ─────────────────────
+// Oversized agent definitions overflow the subagent prompt budget and fail
+// Task dispatch with "Prompt is too long". doctor scans deployed agent dirs
+// and warns on any def over the 16 KB ceiling.
+describe('tools/cli/doctor.mjs — agent-def size ceiling (#1587)', () => {
+  let content: string;
+  beforeEach(async () => {
+    const { readFileSync } = await import('fs');
+    content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+  });
+
+  it('defines the 16 KB agent-def ceiling', () => {
+    expect(content).toContain('16 * 1024');
+  });
+
+  it('emits an "Agent def sizes" check', () => {
+    expect(content).toContain('Agent def sizes');
+  });
+
+  it('explains the dispatch-failure consequence in the warning', () => {
+    expect(content).toContain('Prompt is too long');
+  });
+
+  it('points the operator at externalizing examples', () => {
+    expect(content.toLowerCase()).toContain('externalize examples');
+  });
+
+  it('scans the deployed agent definition file types', () => {
+    // .md, .agent.md (Copilot), .soul.md (Windsurf)
+    expect(content).toContain('.soul.md');
+  });
+
+  it('is a warn-level check (does not hard-fail the exit code)', () => {
+    // The size check uses 'warn', mirroring the AGENTS.md size/hook checks.
+    // computeExitCode returns 0 on warn-only (asserted above), so an oversized
+    // def surfaces guidance without breaking CI.
+    expect(content).toMatch(/`\$\{label\} Agent def sizes`,\s*'warn'/);
+  });
+});
