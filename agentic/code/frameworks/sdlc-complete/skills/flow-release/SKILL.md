@@ -165,6 +165,16 @@ Each action is interpreted by the skill:
 - `close_imported_issues_with_thanks: true` — find issues with the `imported` label closed by commits in this release, post a thank-you comment on the source tracker, then close on both sides. Mirrors the May-2026 jmagly→roctinam sweep pattern.
 - `update_release_entry: <tracker>` — create or update the release entry (Gitea/GitHub) with the announcement body.
 
+> **Verify publication before closing release-completion issues.** After the
+> `release` gate pushes the tag and the release workflows run, invoke the
+> `release-publication-verify` skill with the tag *before* the `post-release`
+> close-outs. It turns the tag into concrete proof — Gitea/GitHub release assets,
+> `SHA256SUMS` + native package checksums, GHCR images, and installer dry-run —
+> and emits an issue-comment-ready evidence summary distinguishing MISSING from
+> FAILED proof. Do not close a release-completion issue on assumption; paste the
+> verifier's evidence into the close comment. Configure what "published" means
+> via the optional `publication_verify` block in `.aiwg/release.config`.
+
 ## Policy enforcement
 
 The config's `policy` block applies at every gate:
@@ -229,7 +239,7 @@ That config IS the AIWG release checklist — what was previously prose in CLAUD
 - Schema: `agentic/code/frameworks/sdlc-complete/schemas/flows/release-config.yaml`
 - Config: `.aiwg/release.config` (per project)
 - Rules: `versioning`, `no-attribution`, `ci-green-before-done`, `delivery-policy`, `anti-laziness`
-- Skills: `doc-sync` (called by gate 3), `aiwg-pr` (when delivery.mode is pr-required for release prep), `aiwg-issue` (filing release-blocker issues)
+- Skills: `doc-sync` (called by gate 3), `release-publication-verify` (post-tag proof before closing release issues), `aiwg-pr` (when delivery.mode is pr-required for release prep), `aiwg-issue` (filing release-blocker issues)
 - Doc: CLAUDE.md "Release Documentation Requirements" + "Release Checklist"
 
 ## Acceptance criteria

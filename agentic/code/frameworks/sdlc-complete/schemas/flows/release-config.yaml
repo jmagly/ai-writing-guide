@@ -205,4 +205,63 @@ properties:
         type: boolean
         default: true
 
+  publication_verify:
+    type: object
+    description: |
+      Optional. Declares what "published" means for this project so the
+      `release-publication-verify` skill can turn a tag into concrete proof
+      across release surfaces. Absent surfaces are reported MISSING/N/A, not
+      failed. `{version}` = tag without `v`; `{tag}` = full tag; `{owner}` /
+      `{mirror}` resolve from the configured repos.
+    properties:
+      release_assets:
+        type: array
+        items: { type: string }
+        description: Globs that MUST be attached to the release (e.g. "*.deb", "install.sh").
+      checksums:
+        type: object
+        properties:
+          manifest:
+            type: string
+            description: Checksum manifest asset name (e.g. "SHA256SUMS").
+          must_cover:
+            type: array
+            items: { type: string }
+            description: Globs the manifest must list and verify via `sha256sum -c`.
+      ghcr_images:
+        type: array
+        description: Container images that must exist and pass a documented smoke command.
+        items:
+          type: object
+          required: [image, tags]
+          properties:
+            image: { type: string, description: "e.g. ghcr.io/{owner}/aiwg" }
+            tags:
+              type: array
+              items: { type: string }
+              description: "Tags that must exist (e.g. {version}, latest)."
+            smoke:
+              type: string
+              description: Documented command that must exit 0 (e.g. "--version").
+      installer:
+        type: object
+        properties:
+          url:
+            type: string
+            description: Installer URL template against the real release (e.g. ".../{tag}/install.sh").
+          dry_run:
+            type: string
+            description: Dry-run command that must exit 0 (e.g. "sh install.sh --dry-run").
+      platform_jobs:
+        type: array
+        description: Platform-specific evidence (e.g. host-direct smoke on a specific arch).
+        items:
+          type: object
+          required: [name]
+          properties:
+            name: { type: string }
+            evidence:
+              type: string
+              description: CI run reference or log path proving the platform job ran green.
+
 additionalProperties: false

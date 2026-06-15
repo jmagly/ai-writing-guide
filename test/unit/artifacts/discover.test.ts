@@ -837,4 +837,42 @@ describe('discover — native-release vs plugin packaging routing (#1598)', () =
       'release-prep',
     );
   });
+
+  // #1599 — there was no focused capability for post-tag release publication
+  // proof; native-release verification queries dead-ended on broad skills. The
+  // new release-publication-verify skill must surface for them.
+  it('release-publication-verify is the top hit for post-tag release-proof queries (#1599)', async () => {
+    const VERIFY_DESC =
+      'Post-tag release publication verifier — given a tag, verify the published release surfaces (Gitea/GitHub release assets, SHA256SUMS and native package checksums, GHCR container images, installer dry-run from the real release URL) and emit issue-comment-ready evidence, distinguishing missing proof from failed proof, before closing release-completion issues';
+    writeSkill(
+      'release-publication-verify',
+      'sdlc-complete',
+      `---\nname: release-publication-verify\ndescription: ${VERIFY_DESC}\n---\n\n## Triggers\n\n- "verify the release publication"\n- "post-tag release asset verifier"\n- "check GHCR images and release assets for a tag"\n`,
+    );
+    writeSkill(
+      'package-all-plugins',
+      'aiwg-utils',
+      `---\nname: package-all-plugins\ndescription: Batch package every AIWG/Codex plugin in the workspace into distributable plugin archives — runs package-plugin for all plugins at once\n---\n\n## Triggers\n\n- "package all the plugins"\n`,
+    );
+    const s = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const e = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    s.mockRestore();
+    e.mockRestore();
+
+    const captured: string[] = [];
+    const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
+      captured.push(args.join(' ')),
+    );
+    await discoverCapability(cwd, {
+      phrase: 'post tag release asset verifier GHCR packages installer release assets',
+      graph: 'framework',
+      json: true,
+      limit: 5,
+    });
+    logSpy.mockRestore();
+    const parsed = JSON.parse(captured.join('\n'));
+    expect(parsed.results.length).toBeGreaterThan(0);
+    expect(parsed.results[0].path).toContain('release-publication-verify');
+  });
 });
