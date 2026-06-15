@@ -693,3 +693,171 @@ next_review: 2024-04-01
 - **CI integration**: Includes workflow configuration for automated enforcement
 - **Prioritized roadmap**: Orders actions by impact with clear ownership
 - **Measurable outcomes**: Sets specific targets for improvement
+
+## Reference Output Formats
+
+Externalized from the agent definition (#1600). These are the full templates the
+agent definition summarizes; reproduce them verbatim when emitting reports.
+
+### Regression Analysis Report
+
+```markdown
+## Regression Analysis Report
+
+**Project**: [project-name]
+**Analysis Date**: YYYY-MM-DD
+**Baseline Version**: v2.1.0
+**Current Version**: v2.2.0-rc1
+
+### Executive Summary
+
+- **Total Regressions Found**: 3
+- **Critical**: 1 (blocks release)
+- **High**: 1 (fix before release)
+- **Medium**: 1 (schedule fix)
+
+### Critical Regressions (Fix Immediately)
+
+#### REG-001: Payment calculation returns incorrect discount
+
+**Symptom**: Discount calculation fails for orders > $1000
+**Introduced In**: commit abc1234 (2024-01-15)
+**Author**: developer@example.com
+**Root Cause**: Integer overflow in discount percentage calculation
+
+**Git Bisect Results**:
+```
+abc1234 is the first bad commit
+commit abc1234
+Author: developer@example.com
+Date: Mon Jan 15 10:30:00 2024
+
+    Optimize discount calculation for performance
+```
+
+**Affected Code**:
+```diff
+- const discount = (price * discountPercent) / 100;
++ const discount = price * (discountPercent / 100);  // Integer division!
+```
+
+**Blast Radius**:
+- Direct: `src/billing/discount.ts`
+- Transitive: `src/checkout/cart.ts`, `src/orders/summary.ts`, `src/reports/revenue.ts`
+- Tests Affected: 12 unit tests, 3 integration tests
+
+**Recommended Fix**:
+```typescript
+const discount = (price * discountPercent) / 100.0;  // Force float division
+```
+
+**Regression Tests to Add**:
+```typescript
+describe('discount calculation', () => {
+  it('should handle large orders correctly', () => {
+    expect(calculateDiscount(10000, 15)).toBe(1500);
+  });
+
+  it('should maintain precision for percentage calculations', () => {
+    expect(calculateDiscount(33, 10)).toBeCloseTo(3.3, 2);
+  });
+});
+```
+
+### High Priority Regressions
+
+[... detailed analysis for each ...]
+
+### Regression Prevention Recommendations
+
+| Area | Risk Level | Current Coverage | Recommended Action |
+|------|------------|------------------|-------------------|
+| `src/billing/` | High | 65% | Add property-based tests for calculations |
+| `src/auth/` | Medium | 78% | Add contract tests for token validation |
+| `src/api/` | Medium | 72% | Add performance benchmarks |
+
+### Metrics
+
+| Metric | Baseline | Current | Delta |
+|--------|----------|---------|-------|
+| Test Pass Rate | 100% | 97.2% | -2.8% |
+| p50 Latency | 45ms | 52ms | +15.5% |
+| Error Rate | 0.1% | 0.3% | +200% |
+```
+
+### Regression Register Entry
+
+```yaml
+# .aiwg/testing/regression-register/REG-001.yaml
+id: REG-001
+title: "Payment calculation returns incorrect discount"
+status: open  # open, investigating, fixing, resolved, wont-fix
+severity: critical
+type: functional
+
+detection:
+  date: 2024-01-20
+  method: automated_test_failure
+  reporter: ci-pipeline
+  test_name: "billing.discount.should handle large orders"
+
+analysis:
+  root_cause: "Integer division in discount calculation"
+  introduced_in:
+    commit: abc1234
+    date: 2024-01-15
+    author: developer@example.com
+    pr: "#456"
+  blast_radius:
+    direct_files: 1
+    transitive_files: 3
+    affected_tests: 15
+
+resolution:
+  fix_commit: null
+  fix_pr: null
+  regression_test_added: false
+  resolved_date: null
+
+prevention:
+  guardrails_recommended:
+    - "Add property-based tests for all financial calculations"
+    - "Enable integer overflow detection in CI"
+  similar_risks:
+    - "src/billing/tax.ts uses same pattern"
+```
+
+### High-Risk Area Identification (reference implementation)
+
+```typescript
+interface HighRiskArea {
+  path: string;
+  riskFactors: string[];
+  regressionHistory: number;  // Past regression count
+  testCoverage: number;       // Percentage
+  complexityScore: number;    // Cyclomatic complexity
+  recommendation: string;
+}
+
+function identifyHighRiskAreas(
+  codebase: CodebaseAnalysis,
+  regressionHistory: RegressionRegister
+): HighRiskArea[] {
+  return codebase.modules
+    .map(module => ({
+      path: module.path,
+      riskFactors: [
+        module.testCoverage < 0.8 ? 'Low test coverage' : null,
+        module.complexityScore > 10 ? 'High complexity' : null,
+        module.changeFrequency > 5 ? 'Frequently modified' : null,
+        regressionHistory.countForPath(module.path) > 2 ? 'Prior regressions' : null
+      ].filter(Boolean),
+      regressionHistory: regressionHistory.countForPath(module.path),
+      testCoverage: module.testCoverage,
+      complexityScore: module.complexityScore,
+      recommendation: generateRecommendation(module)
+    }))
+    .filter(area => area.riskFactors.length > 0)
+    .sort((a, b) => b.riskFactors.length - a.riskFactors.length);
+}
+```

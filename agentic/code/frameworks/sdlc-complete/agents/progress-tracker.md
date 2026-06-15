@@ -76,81 +76,31 @@ recommendation: { action: rollback, target_iteration: 2, confidence: 0.95 }
 
 ### 1. Baseline Capture (Iteration 0)
 
-**REQUIRED before any iteration work**:
+**REQUIRED before any iteration work** (triggers: `ralph_loop_start`, `baseline_request`).
 
-```yaml
-baseline_capture:
-  triggers:
-    - ralph_loop_start
-    - baseline_request
+Capture these metrics:
+- **testing**: test_count, tests_passed, tests_failed, tests_skipped, pass_rate, coverage_percentage, coverage_lines_covered, coverage_lines_total.
+- **quality**: lint_errors, lint_warnings, type_errors, build_status.
+- **codebase**: file_count, loc_total, complexity_score.
 
-  metrics_to_capture:
-    testing:
-      - test_count
-      - tests_passed
-      - tests_failed
-      - tests_skipped
-      - pass_rate
-      - coverage_percentage
-      - coverage_lines_covered
-      - coverage_lines_total
+Store to `.aiwg/ralph/{loop_id}/progress/iteration-000-baseline.json` (format: yaml).
 
-    quality:
-      - lint_errors
-      - lint_warnings
-      - type_errors
-      - build_status
-
-    codebase:
-      - file_count
-      - loc_total
-      - complexity_score
-
-  storage:
-    path: ".aiwg/ralph/{loop_id}/progress/iteration-000-baseline.json"
-    format: yaml
-```
+> Full `baseline_capture` YAML: progress-tracker-examples.md → "Reference Templates and Formulas".
 
 ### 2. Iteration Monitoring
 
 **After each iteration N**:
 
-```yaml
-iteration_monitoring:
-  steps:
-    1_execute_tests:
-      - run: npm test
-      - capture: stdout/stderr
-      - parse: test framework output
+Six steps per iteration N:
 
-    2_capture_metrics:
-      - test_count: from test output
-      - pass_rate: calculated from results
-      - coverage: from coverage report
-      - error_count: from linter/compiler
-      - complexity: from complexity tools
+1. **Execute tests** — run `npm test`, capture stdout/stderr, parse framework output.
+2. **Capture metrics** — test_count, pass_rate, coverage, error_count (linter/compiler), complexity.
+3. **Calculate deltas** — from previous (N vs N-1) and from baseline (N vs 0).
+4. **Compute quality score** — weighted: validation 0.30, completeness 0.25, correctness 0.25, readability 0.10, efficiency 0.10.
+5. **Classify iteration** — forward (tests↑, coverage↑, errors↓), plateau (stable), regression (tests↓, coverage↓, errors↑), stalled (no change 3+ iterations).
+6. **Update best tracker** — if `quality_score > current_best`, set `current_best = iteration_N`.
 
-    3_calculate_deltas:
-      - from_previous: iteration N vs N-1
-      - from_baseline: iteration N vs iteration 0
-
-    4_compute_quality_score:
-      - validation: 0.30 weight
-      - completeness: 0.25 weight
-      - correctness: 0.25 weight
-      - readability: 0.10 weight
-      - efficiency: 0.10 weight
-
-    5_classify_iteration:
-      - forward: tests↑, coverage↑, errors↓
-      - plateau: metrics stable
-      - regression: tests↓, coverage↓, errors↑
-      - stalled: no change for 3+ iterations
-
-    6_update_best_tracker:
-      - if quality_score > current_best:
-          current_best = iteration_N
-```
+> Full `iteration_monitoring` YAML: progress-tracker-examples.md → "Reference Templates and Formulas".
 
 ### 3. Progress Classification
 
@@ -162,19 +112,16 @@ classification_rules:
       - pass_rate > previous OR pass_rate >= 90%
       - coverage_delta >= 0
       - error_count <= previous
-
   plateau:
     criteria:
       - all_deltas within [-2%, +2%]
       - acceptable if quality_score >= 0.70
-
   regression:
     criteria:
       - test_count < previous  # CRITICAL
       - pass_rate_delta < -5%  # HIGH
       - coverage_delta < -2%   # HIGH
       - error_count > previous # HIGH
-
   stalled:
     criteria:
       - last_3_iterations.all(classification == plateau)
@@ -183,269 +130,98 @@ classification_rules:
 
 ### 4. Anti-Regression Alerts
 
-```yaml
-alert_triggers:
-  CRITICAL:
-    - test_count_decreased:
-        condition: "test_count < previous_iteration.test_count"
-        message: "Test count decreased from {prev} to {curr}"
-        action: immediate_alert_and_rollback
+Alert triggers by severity (condition → action):
 
-    - working_tests_failing:
-        condition: "tests_passed < previous_iteration.tests_passed"
-        message: "Previously passing tests now failing"
-        action: immediate_alert_and_rollback
+| Severity | Trigger | Condition | Action |
+|----------|---------|-----------|--------|
+| CRITICAL | test_count_decreased | `test_count < previous.test_count` | immediate_alert_and_rollback |
+| CRITICAL | working_tests_failing | `tests_passed < previous.tests_passed` | immediate_alert_and_rollback |
+| HIGH | coverage_regression | `coverage_delta < -2.0` | alert_and_flag_iteration |
+| HIGH | error_increase | `error_count > previous + 5` | alert_regression |
+| MEDIUM | file_deletion | `file_count < previous.file_count` | alert_and_review |
+| MEDIUM | complexity_explosion | `complexity_delta > 0.5` | alert_complexity |
 
-  HIGH:
-    - coverage_regression:
-        condition: "coverage_delta < -2.0"
-        message: "Coverage dropped {delta}%"
-        action: alert_and_flag_iteration
-
-    - error_increase:
-        condition: "error_count > previous + 5"
-        message: "Error count increased by {delta}"
-        action: alert_regression
-
-  MEDIUM:
-    - file_deletion:
-        condition: "file_count < previous_iteration.file_count"
-        message: "File count decreased (potential code deletion)"
-        action: alert_and_review
-
-    - complexity_explosion:
-        condition: "complexity_delta > 0.5"
-        message: "Complexity increased >50%"
-        action: alert_complexity
-```
+> Full `alert_triggers` YAML (with message templates): progress-tracker-examples.md → "Anti-Regression Alerts (full trigger config)".
 
 ### 5. Best Iteration Tracking (REF-015)
 
-**CRITICAL: Track highest quality across ALL iterations**:
-
-```yaml
-best_iteration_tracking:
-  initialize:
-    current_best: null
-    best_quality_score: 0.0
-    best_artifacts_path: null
-
-  update_on_each_iteration:
-    if quality_score > best_quality_score:
-      current_best = iteration_N
-      best_quality_score = quality_score
-      best_artifacts_path = snapshot_path
-
-  preserve_artifacts:
-    snapshot_all_iterations: true
-    snapshot_path: ".aiwg/ralph/{loop_id}/iterations/iteration-{N:03d}/"
-    include:
-      - all_modified_files
-      - test_results
-      - coverage_report
-      - metrics.json
-
-  selection_algorithm:
-    # DO NOT use final iteration blindly
-    on_loop_completion:
-      - load_all_iterations
-      - find_max_quality_score
-      - select_that_iteration
-      - log_selection_decision
-      - apply_selected_artifacts
-```
+**CRITICAL: Track highest quality across ALL iterations.** Initialize
+`current_best=null`, `best_quality_score=0.0`, `best_artifacts_path=null`. On each
+iteration, if `quality_score > best_quality_score`, update all three. Preserve
+artifacts by snapshotting **all** iterations to
+`.aiwg/ralph/{loop_id}/iterations/iteration-{N:03d}/` (include all_modified_files,
+test_results, coverage_report, metrics.json). Selection algorithm on loop
+completion (**do NOT use the final iteration blindly**): load all iterations →
+find max quality score → select that iteration → log the decision → apply selected
+artifacts.
 
 ### 6. Infinite Loop Detection (REF-076)
 
-```yaml
-infinite_loop_detection:
-  metric_signature:
-    components:
-      - test_count
-      - pass_rate
-      - coverage_percentage
-      - error_count
-
-  detection:
-    window: 5  # Check last 5 iterations
-    trigger:
-      - current_signature matches previous_signature
-      - iteration_count > 10
-
-  action:
-    severity: CRITICAL
-    response: force_terminate
-    message: "Infinite loop detected: metrics cycling"
-    preserve_state: true
-```
+Compute a metric signature from {test_count, pass_rate, coverage_percentage,
+error_count}. Over a window of the last 5 iterations, trigger when the current
+signature matches a previous signature AND `iteration_count > 10`. Action:
+CRITICAL severity, `force_terminate`, preserve state, message "Infinite loop
+detected: metrics cycling".
 
 ### 7. Stall Detection
 
-```yaml
-stall_detection:
-  criteria:
-    - last_3_iterations.all(classification == plateau)
-    - quality_score_variance < 0.02
-    - no_metric_improvement
+Criteria: the last 3 iterations are all classified `plateau` AND
+`quality_score_variance < 0.02` AND no metric improvement. Recommendation:
+`suggest_termination` ("No meaningful progress for 3 iterations") with alternatives
+— consider a different approach, request human intervention, or try an alternative strategy.
 
-  recommendation:
-    action: suggest_termination
-    message: "No meaningful progress for 3 iterations"
-    alternatives:
-      - "Consider different approach"
-      - "Request human intervention"
-      - "Try alternative strategy"
-```
+> Full `best_iteration_tracking`, `infinite_loop_detection`, `stall_detection` YAML: progress-tracker-examples.md → "Reference Templates and Formulas".
 
 ## Quality Score Calculation
 
-```yaml
-quality_score_formula:
-  dimensions:
-    validation:
-      weight: 0.30
-      components:
-        - all_tests_pass: 100 if all pass, else (passed/total)*100
-        - build_success: 100 if success, else 0
-        - no_lint_errors: 100 if 0 errors, else max(0, 100 - errors*5)
+Compute a weighted, normalized (0-1) quality score from five dimensions; threshold
+for acceptance is 0.70. Dimensions and weights:
 
-    completeness:
-      weight: 0.25
-      components:
-        - coverage_percentage: coverage_percentage
-        - test_count_vs_baseline: (current/baseline)*100
+- **Validation (0.30)**: all-tests-pass ((passed/total)*100), build-success (100/0), no-lint-errors (`max(0, 100 - errors*5)`).
+- **Completeness (0.25)**: coverage percentage, test-count-vs-baseline ((current/baseline)*100).
+- **Correctness (0.25)**: pass rate, error-count-inverted (`max(0, 100 - error_count*2)`).
+- **Readability (0.10)**: lint-warnings-inverted (`max(0, 100 - warnings*3)`), complexity-reasonable (`max(0, 100 - complexity*5)`).
+- **Efficiency (0.10)**: loc-appropriate (100 if loc within 20% of baseline, else reduced), no-code-bloat (50 if loc_delta > 50%, else 100).
 
-    correctness:
-      weight: 0.25
-      components:
-        - pass_rate: pass_rate
-        - error_count_inverted: max(0, 100 - error_count*2)
+Calculation: compute each dimension score → `weighted_sum = sum(dimension_score * weight)` → normalize to 0-1.
 
-    readability:
-      weight: 0.10
-      components:
-        - lint_warnings_inverted: max(0, 100 - warnings*3)
-        - complexity_reasonable: max(0, 100 - complexity*5)
-
-    efficiency:
-      weight: 0.10
-      components:
-        - loc_appropriate: if loc within 20% of baseline: 100, else reduced
-        - no_code_bloat: if loc_delta > 50%: 50, else 100
-
-  calculation:
-    1_compute_each_dimension_score
-    2_weighted_sum = sum(dimension_score * weight)
-    3_normalize_to_0_1_scale
-    4_threshold_for_acceptance = 0.70
-```
+> Full `quality_score_formula` YAML: progress-tracker-examples.md → "Quality Score Calculation (full formula)".
 
 ## Progress Reporting
 
 ### Iteration Report Template
 
-```markdown
-## Iteration {N} Progress Report
+Emit a per-iteration Markdown report with: header (timestamp, classification,
+quality score); a **Metrics** table (test count / pass rate / coverage / errors —
+current/previous/delta/baseline/delta-from-baseline); a **Quality Score Breakdown**
+table (five dimensions: score/weight/contribution + weighted total); an **Alerts**
+list; a **Best Iteration Tracker** block (current best, this iteration,
+best-preserved flag); and a **Recommendation** (action/reason/confidence).
 
-**Timestamp**: {timestamp}
-**Classification**: {forward|plateau|regression|stalled}
-**Quality Score**: {quality_score}
-
-### Metrics
-
-| Metric | Current | Previous | Delta | Baseline | Delta from Baseline |
-|--------|---------|----------|-------|----------|---------------------|
-| Test Count | {curr} | {prev} | {delta} | {base} | {delta_base} |
-| Pass Rate | {curr}% | {prev}% | {delta}% | {base}% | {delta_base}% |
-| Coverage | {curr}% | {prev}% | {delta}% | {base}% | {delta_base}% |
-| Errors | {curr} | {prev} | {delta} | {base} | {delta_base} |
-
-### Quality Score Breakdown
-
-| Dimension | Score | Weight | Contribution |
-|-----------|-------|--------|--------------|
-| Validation | {score} | 0.30 | {contrib} |
-| Completeness | {score} | 0.25 | {contrib} |
-| Correctness | {score} | 0.25 | {contrib} |
-| Readability | {score} | 0.10 | {contrib} |
-| Efficiency | {score} | 0.10 | {contrib} |
-| **Total** | **{total}** | 1.00 | **{total}** |
-
-### Alerts
-
-{alert_list or "No alerts"}
-
-### Best Iteration Tracker
-
-- **Current Best**: Iteration {best_iteration} (quality: {best_quality})
-- **This Iteration**: Iteration {curr} (quality: {curr_quality})
-- **Best Preserved**: {yes|no}
-
-### Recommendation
-
-**Action**: {continue|stop|rollback|escalate}
-**Reason**: {detailed_rationale}
-**Confidence**: {confidence_score}
-```
+> Full template: `docs/agent-examples/progress-tracker-examples.md` → "Iteration Report Template".
 
 ## Loop Termination Recommendations
 
-```yaml
-termination_logic:
-  recommend_stop:
-    conditions:
-      - stalled: true
-      - infinite_loop_detected: true
-      - critical_regression: true
-    message: "Loop should terminate due to {reason}"
+Recommend one of four actions based on conditions:
 
-  recommend_continue:
-    conditions:
-      - forward_progress: true
-      - quality_score < target_threshold
-      - iteration_count < max_iterations
-    message: "Continue - forward progress detected"
+- **stop** — when stalled, infinite-loop detected, or critical regression.
+- **continue** — when forward progress AND `quality_score < target_threshold` AND `iteration_count < max_iterations`.
+- **rollback** — when regression detected AND `current_quality < best_quality - 0.1` (roll back to the best iteration).
+- **escalate** — when an infinite-loop pattern, metric cycling, or high uncertainty is detected.
 
-  recommend_rollback:
-    conditions:
-      - regression_detected: true
-      - current_quality < best_quality - 0.1
-    message: "Rollback to iteration {best} due to regression"
-
-  escalate:
-    conditions:
-      - infinite_loop_pattern: true
-      - metric_cycling: true
-      - uncertainty_high: true
-    message: "Escalate to human - {issue} detected"
-```
+> Full `termination_logic` YAML: progress-tracker-examples.md → "Loop Termination Recommendations (full logic)".
 
 ## Integration with Agent Loop
 
 ### Al Hook Points
 
-```yaml
-ralph_integration:
-  hooks:
-    pre_loop:
-      - progress_tracking.capture_baseline
+Hook into the agent loop at four points: **pre_loop** (capture baseline);
+**post_iteration** (capture metrics → assess progress → update best iteration →
+check alerts → generate iteration report); **loop_decision** (recommend
+termination, returning `{action: continue|stop|rollback|escalate, reason}`); and
+**post_loop** (select best output → generate final report → apply selected artifacts).
 
-    post_iteration:
-      - progress_tracking.capture_metrics
-      - progress_tracking.assess_progress
-      - progress_tracking.update_best_iteration
-      - progress_tracking.check_alerts
-      - progress_tracking.generate_iteration_report
-
-    loop_decision:
-      - progress_tracking.recommend_termination
-        # Returns: {action: continue|stop|rollback|escalate, reason: string}
-
-    post_loop:
-      - progress_tracking.select_best_output
-      - progress_tracking.generate_final_report
-      - progress_tracking.apply_selected_artifacts
-```
+> Full `ralph_integration` hook config: progress-tracker-examples.md → "Agent Loop Hook Points (full integration config)".
 
 ### Conversation Pattern
 

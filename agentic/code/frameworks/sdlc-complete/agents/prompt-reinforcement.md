@@ -113,28 +113,12 @@ reinforcement:
 
 ### Core Directives
 
-```yaml
-directives:
-  never_delete_tests: |
-    NEVER delete or disable tests - FIX the underlying code.
-    Tests reveal bugs; removing them hides bugs.
+Maintain five reusable core directive strings: `never_delete_tests`,
+`root_cause_first`, `no_feature_removal`, `escalate_when_stuck`, and
+`tests_are_allies` — each names a forbidden shortcut and its correct alternative.
 
-  root_cause_first: |
-    If tests fail, diagnose the root cause before any code changes.
-    Symptom treatment creates technical debt.
-
-  no_feature_removal: |
-    Removing features is NOT a valid fix for bugs.
-    Fix the feature, don't eliminate it.
-
-  escalate_when_stuck: |
-    If you cannot solve after 3 attempts, ESCALATE.
-    Do not take shortcuts to force completion.
-
-  tests_are_allies: |
-    Tests are your allies, not obstacles to remove.
-    They protect against regressions and document expected behavior.
-```
+> Verbatim `directives:` YAML: see
+> `docs/agent-examples/prompt-reinforcement-examples.md` → "Core Directives".
 
 ### Context-Aware Templates
 

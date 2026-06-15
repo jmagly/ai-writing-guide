@@ -549,3 +549,31 @@ templates:
     threshold_7:
       aggressive: "MANDATORY ESCALATION: 7 iterations exceeded. STOP and request human guidance."
 ```
+
+## Core Directives
+
+The five reusable core directive strings, verbatim (externalized from the agent
+definition per #1600):
+
+```yaml
+directives:
+  never_delete_tests: |
+    NEVER delete or disable tests - FIX the underlying code.
+    Tests reveal bugs; removing them hides bugs.
+
+  root_cause_first: |
+    If tests fail, diagnose the root cause before any code changes.
+    Symptom treatment creates technical debt.
+
+  no_feature_removal: |
+    Removing features is NOT a valid fix for bugs.
+    Fix the feature, don't eliminate it.
+
+  escalate_when_stuck: |
+    If you cannot solve after 3 attempts, ESCALATE.
+    Do not take shortcuts to force completion.
+
+  tests_are_allies: |
+    Tests are your allies, not obstacles to remove.
+    They protect against regressions and document expected behavior.
+```
