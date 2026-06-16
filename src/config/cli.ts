@@ -166,6 +166,9 @@ const ENUM_RULES: Record<string, readonly string[]> = {
   'delivery.mode': ['direct', 'feature-branch', 'pr-required'],
   'delivery.merge_style': ['rebase-merge', 'squash', 'merge', 'fast-forward-only'],
   'delivery.force_push_policy': ['never', 'own-branch-only', 'allowed'],
+  'delivery.signing.format': ['openpgp', 'ssh', 'x509'],
+  'delivery.signing.enforce': ['commits', 'tags', 'all'],
+  'remotes.tracker_actor.via': ['tea', 'gh', 'mcp', 'api'],
 };
 
 const BOOLEAN_FIELDS = new Set([
@@ -174,6 +177,10 @@ const BOOLEAN_FIELDS = new Set([
   'delivery.require_signed_commits',
   'delivery.auto_close_issues',
   'delivery.issue_comment_on_cycle',
+]);
+
+const STRING_ARRAY_FIELDS = new Set([
+  'remotes.tracker_actor.forbid_actors',
 ]);
 
 // Integer fields with valid range constraints. Validated at `aiwg config set`.
@@ -235,6 +242,13 @@ async function projectConfigSet(key: string, raw: string, args: string[]): Promi
         exitCode: EXIT_CODES.USAGE,
       });
     }
+  }
+
+  if (STRING_ARRAY_FIELDS.has(key)) {
+    value = raw
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
   }
 
   // Coerce + range-check integers for known integer fields (#1359).

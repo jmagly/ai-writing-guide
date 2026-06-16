@@ -88,6 +88,52 @@ describe('aiwg config get|set --project (#1006)', () => {
       const cfg = readConfig(tmp);
       expect((cfg as { remotes?: { primary?: string } }).remotes?.primary).toBe('gitea');
     });
+
+    it('round-trips delivery identity and signing keys', async () => {
+      await main(['set', '--project', 'delivery.committer.name', 'Joseph Magly', '--target', tmp]);
+      await main(['set', '--project', 'delivery.committer.email', '1159087+jmagly@users.noreply.github.com', '--target', tmp]);
+      await main(['set', '--project', 'delivery.signing.format', 'openpgp', '--target', tmp]);
+      await main(['set', '--project', 'delivery.signing.key', '0117DAAA677A5BF2', '--target', tmp]);
+      await main(['set', '--project', 'delivery.signing.enforce', 'commits', '--target', tmp]);
+
+      const cfg = readConfig(tmp) as {
+        delivery?: {
+          committer?: { name?: string; email?: string };
+          signing?: { format?: string; key?: string; enforce?: string };
+        };
+      };
+      expect(cfg.delivery?.committer).toEqual({
+        name: 'Joseph Magly',
+        email: '1159087+jmagly@users.noreply.github.com',
+      });
+      expect(cfg.delivery?.signing).toMatchObject({
+        format: 'openpgp',
+        key: '0117DAAA677A5BF2',
+        enforce: 'commits',
+      });
+    });
+
+    it('round-trips tracker actor identity and validates via', async () => {
+      await main(['set', '--project', 'remotes.tracker_actor.login', 'roctinam', '--target', tmp]);
+      await main(['set', '--project', 'remotes.tracker_actor.via', 'tea', '--target', tmp]);
+      await main(['set', '--project', 'remotes.tracker_actor.forbid_actors', 'roctibot,automation', '--target', tmp]);
+
+      const cfg = readConfig(tmp) as {
+        remotes?: { tracker_actor?: { login?: string; via?: string; forbid_actors?: string[] } };
+      };
+      expect(cfg.remotes?.tracker_actor).toEqual({
+        login: 'roctinam',
+        via: 'tea',
+        forbid_actors: ['roctibot', 'automation'],
+      });
+
+      await expect(
+        main(['set', '--project', 'remotes.tracker_actor.via', 'invalid-tool', '--target', tmp]),
+      ).rejects.toMatchObject({
+        code: 'ERR_INVALID_VALUE',
+        message: expect.stringContaining('remotes.tracker_actor.via'),
+      });
+    });
   });
 
   describe('get --project', () => {

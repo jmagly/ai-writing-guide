@@ -34,8 +34,20 @@ Located at `.aiwg/aiwg.config` (top level), the `delivery` block contains:
   "delivery": {
     "mode": "direct" | "feature-branch" | "pr-required",
     "default_branch": "main",
+    "committer": {
+      "name": "Joseph Magly",
+      "email": "1159087+jmagly@users.noreply.github.com"
+    },
+    "signing": {
+      "format": "openpgp" | "ssh" | "x509",
+      "key": "0117DAAA677A5BF2",
+      "key_file": "~/.config/.../signing.key",
+      "program": "gpg",
+      "enforce": "commits" | "tags" | "all"
+    },
     "require_ci_green": true,
     "force_push_policy": "never" | "main-only-blocked" | "allowed",
+    "require_signed_commits": true,
     "auto_close_issues": true,
     "issue_comment_on_cycle": true,
     "rationale": "Free-text explaining why this mode was chosen"
@@ -44,6 +56,11 @@ Located at `.aiwg/aiwg.config` (top level), the `delivery` block contains:
     "primary": "origin",
     "issue_tracker": "origin",
     "ci": "origin",
+    "tracker_actor": {
+      "login": "roctinam",
+      "via": "tea" | "gh" | "mcp" | "api",
+      "forbid_actors": ["roctibot"]
+    },
     "secondary": [ ... ]
   }
 }
@@ -134,6 +151,19 @@ use the AIWG issue CLI for local issue operations. Do not invent a parallel
 issue-provider setting when `remotes.issue_tracker` already answers where
 issues live.
 
+### Rule 3.5: Use Configured Delivery Identity For Mutations
+
+When delivery identity fields are present, they are authoritative for writes:
+
+- Commits → use `delivery.committer.name` / `delivery.committer.email` when set; otherwise inherit normal `git config`.
+- Commit and tag signing → if `delivery.require_signed_commits: true` or `delivery.signing.enforce` covers the artifact being written, use `delivery.signing.format`, `delivery.signing.key` or `delivery.signing.key_file`, and `delivery.signing.program` where applicable.
+- Issue comments, issue closures, PRs, labels, and milestone writes → use `remotes.tracker_actor.login` through `remotes.tracker_actor.via` when set.
+- Never author delivery mutations as any login listed in `remotes.tracker_actor.forbid_actors`.
+
+Read-only tracker operations may use any available credential, including an MCP token, because they do not create attribution. Delivery mutations must use the configured actor or stop and ask the operator to configure/authorize a route.
+
+`aiwg doctor` warns when signed commits are required but no signing key/key file is declared, and when an issue tracker remote is configured without a `tracker_actor` in a repo likely to perform tracker writes.
+
 ### Rule 4: Surface, Don't Re-Ask
 
 When the policy is already declared, do NOT use `AskUserQuestion` (or equivalent interactive prompt) to ask the user "feature branch or direct to main?" — the answer is already in the config. Instead:
@@ -178,5 +208,7 @@ This rule complements:
 
 - `aiwg config get --project delivery.mode` — CLI command to inspect current policy
 - `aiwg config set --project delivery.mode <mode>` — change project policy
+- `aiwg config set --project delivery.signing.key <key-id>` — declare the signing key used for commits/tags
+- `aiwg config set --project remotes.tracker_actor.login <login>` — declare the forge actor for issue/PR writes
 - `agentic/code/frameworks/sdlc-complete/skills/issue-create/SKILL.md` — example of a skill that reads `aiwg.config` properly
 - `agentic/code/frameworks/sdlc-complete/skills/flow-delivery-track/SKILL.md` — delivery workflow integration

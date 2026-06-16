@@ -74,6 +74,10 @@
           "type": "string",
           "description": "Where CI runs. Defaults to primary."
         },
+        "tracker_actor": {
+          "$ref": "#/definitions/TrackerActor",
+          "description": "Forge account/tool that must author delivery writes such as issue comments, PRs, labels, and closures (#1601)."
+        },
         "secondary": {
           "type": "array",
           "description": "Mirrors, fork bases, and publishing targets",
@@ -127,6 +131,14 @@
         "require_signed_commits": {
           "type": "boolean",
           "description": "Default false."
+        },
+        "committer": {
+          "$ref": "#/definitions/CommitterIdentity",
+          "description": "Committer identity agents should use for delivery commits. Defaults to git config when unset."
+        },
+        "signing": {
+          "$ref": "#/definitions/SigningConfig",
+          "description": "Signing metadata for delivery commits/tags (#1601)."
         },
         "force_push_policy": {
           "type": "string",
@@ -200,6 +212,68 @@
     }
   },
   "definitions": {
+    "TrackerActor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "login": {
+          "type": "string",
+          "description": "Forge login that should author delivery writes."
+        },
+        "via": {
+          "type": "string",
+          "enum": ["tea", "gh", "mcp", "api"],
+          "description": "Tooling route to use for tracker writes."
+        },
+        "forbid_actors": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Forge logins that must not author delivery mutations."
+        }
+      }
+    },
+    "CommitterIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Git committer name."
+        },
+        "email": {
+          "type": "string",
+          "description": "Git committer email."
+        }
+      }
+    },
+    "SigningConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["openpgp", "ssh", "x509"],
+          "description": "Signing key format."
+        },
+        "key": {
+          "type": "string",
+          "description": "Signing key id."
+        },
+        "key_file": {
+          "type": "string",
+          "description": "Path to signing key material when not in the default keyring."
+        },
+        "program": {
+          "type": "string",
+          "description": "Signing program, such as gpg, gpg2, ssh-keygen, or a custom path."
+        },
+        "enforce": {
+          "type": "string",
+          "enum": ["commits", "tags", "all"],
+          "description": "Which delivery artifacts require signing."
+        }
+      }
+    },
     "IndexGraphDef": {
       "type": "object",
       "description": "A JSON node/edge index graph (mirrors GraphConfig in src/artifacts/types.ts).",

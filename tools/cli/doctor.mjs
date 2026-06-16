@@ -8,7 +8,7 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'url';
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 import chalk from 'chalk';
 import { importImpl } from '../_resolve-impl.mjs';
 
@@ -391,6 +391,18 @@ async function detectDeployedProviders() {
 
 function check(name, status, message) {
   checks.push({ name, status, message });
+}
+
+function hasSigningMaterial(signing) {
+  return Boolean(signing && (signing.key || signing.key_file));
+}
+
+function hasTrackerRemote(remotes) {
+  return Boolean(remotes && (remotes.issue_tracker || remotes.primary));
+}
+
+function childProcessSucceeded(err) {
+  return Boolean(err && err.status === 0);
 }
 
 async function fileExists(filePath) {
@@ -1196,15 +1208,35 @@ async function runDoctor() {
           issues.push(`force_push_policy=${d.force_push_policy} (must be one of ${validForcePush.join(', ')})`);
         }
 
+        // signing identity validation (#1601)
+        if (d.signing) {
+          const validSigningFormats = ['openpgp', 'ssh', 'x509'];
+          if (d.signing.format && !validSigningFormats.includes(d.signing.format)) {
+            issues.push(`signing.format=${d.signing.format} (must be one of ${validSigningFormats.join(', ')})`);
+          }
+          const validSigningEnforce = ['commits', 'tags', 'all'];
+          if (d.signing.enforce && !validSigningEnforce.includes(d.signing.enforce)) {
+            issues.push(`signing.enforce=${d.signing.enforce} (must be one of ${validSigningEnforce.join(', ')})`);
+          }
+        }
+        if (d.require_signed_commits && !hasSigningMaterial(d.signing)) {
+          issues.push('require_signed_commits=true but delivery.signing.key/key_file is not configured');
+        }
+
         // default_branch existence — best effort, only when in a git repo
         const defaultBranch = d.default_branch || 'main';
         try {
-          execSync(`git -C ${JSON.stringify(projectDir)} rev-parse --verify --quiet ${JSON.stringify(defaultBranch)}`, {
+          execFileSync('git', ['-C', projectDir, 'rev-parse', '--verify', '--quiet', defaultBranch], {
             stdio: 'pipe',
           });
-        } catch {
+        } catch (err) {
+          if (childProcessSucceeded(err)) {
+            // Some sandboxes surface a spawn EPERM even when git returned
+            // status 0 and stdout. Treat that as success; keep real failures.
+          } else {
           // Branch may not exist locally on a fresh clone; downgrade to info, not error
-          issues.push(`default_branch '${defaultBranch}' not found locally (may be remote-only — this is informational)`);
+            issues.push(`default_branch '${defaultBranch}' not found locally (may be remote-only — this is informational)`);
+          }
         }
 
         if (issues.length === 0) {
@@ -1213,6 +1245,36 @@ async function runDoctor() {
           check('Delivery Policy', 'ok', `mode=${mode} merge=${merge} default_branch=${defaultBranch}`);
         } else {
           check('Delivery Policy', 'warn', issues.join('; '));
+        }
+      }
+
+      // 11d. Validate delivery identity / tracker actor block (#1601)
+      if (raw) {
+        const actor = raw.remotes?.tracker_actor;
+        if (actor) {
+          const issues = [];
+          const validVia = ['tea', 'gh', 'mcp', 'api'];
+          if (actor.via && !validVia.includes(actor.via)) {
+            issues.push(`tracker_actor.via=${actor.via} (must be one of ${validVia.join(', ')})`);
+          }
+          if (actor.login && Array.isArray(actor.forbid_actors) && actor.forbid_actors.includes(actor.login)) {
+            issues.push(`tracker_actor.login=${actor.login} is also listed in forbid_actors`);
+          }
+          if (issues.length === 0) {
+            const route = actor.via ? ` via ${actor.via}` : '';
+            const forbidden = Array.isArray(actor.forbid_actors) && actor.forbid_actors.length > 0
+              ? `; forbidden=${actor.forbid_actors.join(',')}`
+              : '';
+            check('Delivery Identity', 'ok', `tracker_actor=${actor.login || '(login unset)'}${route}${forbidden}`);
+          } else {
+            check('Delivery Identity', 'warn', issues.join('; '));
+          }
+        } else if (hasTrackerRemote(raw.remotes)) {
+          check(
+            'Delivery Identity',
+            'warn',
+            'remotes.issue_tracker is configured but remotes.tracker_actor is not set; tracker writes may use whichever credential is available. Set remotes.tracker_actor.login/via or document why reads-only credentials are acceptable. Refs #1601.',
+          );
         }
       }
 

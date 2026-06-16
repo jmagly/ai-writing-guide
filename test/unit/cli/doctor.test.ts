@@ -374,6 +374,28 @@ describe('doctor: exit code logic', () => {
   });
 });
 
+describe('doctor: delivery identity checks (#1601)', () => {
+  let content: string;
+  beforeEach(async () => {
+    const { readFileSync } = await import('fs');
+    content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+  });
+
+  it('warns when signed commits are required without signing material', () => {
+    expect(content).toContain('require_signed_commits=true but delivery.signing.key/key_file is not configured');
+  });
+
+  it('emits a Delivery Identity check for tracker actor drift', () => {
+    expect(content).toContain('Delivery Identity');
+    expect(content).toContain('remotes.tracker_actor is not set');
+  });
+
+  it('validates tracker actor via values and forbidden actors', () => {
+    expect(content).toContain("['tea', 'gh', 'mcp', 'api']");
+    expect(content).toContain('forbid_actors');
+  });
+});
+
 // ── Agent-def size ceiling check (#1587) ─────────────────────
 // Oversized agent definitions overflow the subagent prompt budget and fail
 // Task dispatch with "Prompt is too long". doctor scans deployed agent dirs

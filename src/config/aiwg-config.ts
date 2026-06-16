@@ -94,6 +94,16 @@ export interface SecondaryRemote {
   push_on_release?: boolean;
 }
 
+/** Which account/tool should perform tracker writes for deliveries. */
+export interface TrackerActorConfig {
+  /** Forge login that should author issue/PR/comment/label writes. */
+  login?: string;
+  /** Tooling route to use for writes. */
+  via?: 'tea' | 'gh' | 'mcp' | 'api';
+  /** Forge logins that must not author delivery mutations. */
+  forbid_actors?: string[];
+}
+
 /**
  * Repo origin topology — declares which remote is primary (CI / issues / PRs)
  * and which are secondary (mirrors, publishing targets).
@@ -107,6 +117,8 @@ export interface RemotesConfig {
   issue_tracker?: string;
   /** Where CI runs. Defaults to `primary`. */
   ci?: string;
+  /** Which forge account/tool performs delivery writes. */
+  tracker_actor?: TrackerActorConfig;
   /** Mirrors, fork bases, publishing targets. */
   secondary?: SecondaryRemote[];
 }
@@ -119,6 +131,7 @@ export interface ResolvedRemotes {
   primary: string;
   issue_tracker: string;
   ci: string;
+  tracker_actor?: TrackerActorConfig;
   secondary: SecondaryRemote[];
 }
 
@@ -221,6 +234,24 @@ export interface BranchNaming {
   prefix_by_type?: Partial<Record<'feat' | 'fix' | 'docs' | 'chore' | 'refactor' | 'test', string>>;
 }
 
+/** Commit author/committer identity agents should use for deliveries. */
+export interface CommitterIdentity {
+  name?: string;
+  email?: string;
+}
+
+export type SigningFormat = 'openpgp' | 'ssh' | 'x509';
+export type SigningEnforcement = 'commits' | 'tags' | 'all';
+
+/** Signing configuration for commits and/or release tags. */
+export interface SigningConfig {
+  format?: SigningFormat;
+  key?: string;
+  key_file?: string;
+  program?: string;
+  enforce?: SigningEnforcement;
+}
+
 /**
  * Repo control policy — see DeliveryMode for the high-level shape. Every field
  * is optional; sensible defaults applied via {@link resolveDelivery}.
@@ -236,6 +267,10 @@ export interface DeliveryConfig {
   /** When true, agents must wait for CI green before declaring done. */
   require_ci_green?: boolean;
   require_signed_commits?: boolean;
+  /** Git identity to use for delivery commits. Defaults to git config when unset. */
+  committer?: CommitterIdentity;
+  /** Signing key/material metadata for delivery commits/tags. */
+  signing?: SigningConfig;
   force_push_policy?: ForcePushPolicy;
   /** Include "Closes #N" / "Fixes #N" in PR body when an issue is referenced. */
   auto_close_issues?: boolean;
@@ -255,6 +290,8 @@ export interface ResolvedDelivery {
   delete_branch_on_merge: boolean;
   require_ci_green: boolean;
   require_signed_commits: boolean;
+  committer?: CommitterIdentity;
+  signing?: SigningConfig;
   force_push_policy: ForcePushPolicy;
   auto_close_issues: boolean;
   issue_comment_on_cycle: boolean;
@@ -293,6 +330,8 @@ export function resolveDelivery(delivery: DeliveryConfig | undefined): ResolvedD
     delete_branch_on_merge: delivery?.delete_branch_on_merge ?? true,
     require_ci_green: delivery?.require_ci_green ?? true,
     require_signed_commits: delivery?.require_signed_commits ?? false,
+    committer: delivery?.committer,
+    signing: delivery?.signing,
     force_push_policy: delivery?.force_push_policy ?? 'never',
     auto_close_issues: delivery?.auto_close_issues ?? true,
     issue_comment_on_cycle: delivery?.issue_comment_on_cycle ?? true,
@@ -653,6 +692,7 @@ export function resolveRemotes(remotes: RemotesConfig | undefined): ResolvedRemo
     primary,
     issue_tracker: remotes?.issue_tracker ?? primary,
     ci: remotes?.ci ?? primary,
+    tracker_actor: remotes?.tracker_actor,
     secondary: remotes?.secondary ?? [],
   };
 }
@@ -961,4 +1001,3 @@ export async function populateDeployedTo(
 
   return config;
 }
-
