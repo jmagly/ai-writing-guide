@@ -250,6 +250,7 @@ describe("Subcommand Handlers", () => {
 
   describe("removeHandler", () => {
     it("should have correct metadata and delegate to uninstaller", async () => {
+      mockContext.args = ["sdlc"];
       expect(removeHandler.id).toBe("remove");
       expect(removeHandler.category).toBe("framework");
       expect(removeHandler.aliases).toEqual([]);
@@ -262,6 +263,29 @@ describe("Subcommand Handlers", () => {
         mockContext.args,
         { cwd: mockContext.cwd },
       );
+    });
+
+    it("returns a usage error for --provider without a framework id", async () => {
+      const result = await removeHandler.execute({
+        ...mockContext,
+        args: ["--provider", "claude"],
+      });
+
+      expect(result.exitCode).toBe(1);
+      expect(result.message).toMatch(/framework or bundle id required/i);
+      expect(mockRun).not.toHaveBeenCalled();
+    });
+
+    it("rejects --provider before the fallback plugin uninstaller for non-project-local ids", async () => {
+      const result = await removeHandler.execute({
+        ...mockContext,
+        args: ["sdlc", "--provider", "claude"],
+      });
+
+      expect(result.exitCode).toBe(1);
+      expect(result.message).toMatch(/--provider is only supported/i);
+      expect(result.message).toContain("#1610");
+      expect(mockRun).not.toHaveBeenCalled();
     });
   });
 

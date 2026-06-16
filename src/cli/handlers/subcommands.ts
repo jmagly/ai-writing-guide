@@ -77,6 +77,35 @@ function detectDeployedProviders(cwd: string): ProviderDeployTargets[] {
   return LIST_PROVIDER_TARGETS.filter(p => hasAnyPopulated(cwd, p));
 }
 
+const REMOVE_FLAGS_WITH_VALUES = new Set([
+  '--provider',
+  '--platform',
+  '--scope',
+  '--target',
+]);
+
+function firstRemovePositional(args: ReadonlyArray<string>): string | undefined {
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (REMOVE_FLAGS_WITH_VALUES.has(arg)) {
+      i += 1;
+      continue;
+    }
+    if (!arg.startsWith('-')) return arg;
+  }
+  return undefined;
+}
+
+function parseRemoveProvider(args: ReadonlyArray<string>): { provider?: string; error?: string } {
+  const idx = args.findIndex(a => a === '--provider' || a === '--platform');
+  if (idx < 0) return {};
+  const provider = args[idx + 1];
+  if (!provider || provider.startsWith('-')) {
+    return { error: 'Error: --provider requires a provider name' };
+  }
+  return { provider };
+}
+
 /**
  * MCP server command handler
  *
@@ -533,7 +562,7 @@ async function formatUserScopeRegistry(): Promise<HandlerResult> {
  * provider deployments are reverted in one pass.
  */
 async function removeUserScopeDeploy(args: ReadonlyArray<string>): Promise<HandlerResult> {
-  const positional = args.find(a => !a.startsWith('-'));
+  const positional = firstRemovePositional(args);
   if (!positional) {
     return {
       exitCode: 1,
@@ -542,8 +571,14 @@ async function removeUserScopeDeploy(args: ReadonlyArray<string>): Promise<Handl
   }
 
   const dryRun = args.includes('--dry-run');
-  const provIdx = args.findIndex(a => a === '--provider' || a === '--platform');
-  const provider = provIdx >= 0 ? args[provIdx + 1] : undefined;
+  const providerParse = parseRemoveProvider(args);
+  if (providerParse.error) {
+    return {
+      exitCode: 1,
+      message: `${providerParse.error}\n\nUsage: aiwg remove <framework> --scope user [--provider <p>] [--dry-run]`,
+    };
+  }
+  const provider = providerParse.provider;
 
   const { readUserRegistry, removeUserDeploy } = await import('../../config/user-registry.js');
   const { USER_SCOPE_PATHS } = await import('../scope-resolver.js');
@@ -689,7 +724,20 @@ export const removeHandler: CommandHandler = {
     // #1037 — Project-local-aware remove. If the first positional arg matches
     // a project-local entry in `installed`, route to the new handler.
     // Otherwise fall through to the existing plugin-uninstaller flow.
-    const positionalArg = ctx.args.find(a => !a.startsWith('-'));
+    const positionalArg = firstRemovePositional(ctx.args);
+    const providerParse = parseRemoveProvider(ctx.args);
+    if (providerParse.error) {
+      return {
+        exitCode: 1,
+        message: `${providerParse.error}\n\nUsage: aiwg remove <id> [--force] [--dry-run] [--provider <p>] [--keep-registry]`,
+      };
+    }
+    if (!positionalArg) {
+      return {
+        exitCode: 1,
+        message: 'Error: framework or bundle id required\n\nUsage: aiwg remove <id> [--force] [--dry-run] [--provider <p>] [--keep-registry]',
+      };
+    }
     if (positionalArg) {
       try {
         const { readAiwgConfig, writeAiwgConfig, getProjectDir } = await import(
@@ -705,8 +753,7 @@ export const removeHandler: CommandHandler = {
           const force = ctx.args.includes('--force');
           const dryRun = ctx.args.includes('--dry-run');
           const keepRegistry = ctx.args.includes('--keep-registry');
-          const provIdx = ctx.args.findIndex(a => a === '--provider');
-          const provider = provIdx >= 0 ? ctx.args[provIdx + 1] : undefined;
+          const provider = providerParse.provider;
 
           const result = await removeProjectLocalBundle(
             config, projectDir, positionalArg, { force, dryRun, keepRegistry, provider },
@@ -745,6 +792,13 @@ export const removeHandler: CommandHandler = {
         const msg = err instanceof Error ? err.message : String(err);
         process.stderr.write(`project-local remove pre-check failed (falling through): ${msg}\n`);
       }
+    }
+
+    if (providerParse.provider) {
+      return {
+        exitCode: 1,
+        message: `Error: --provider is only supported for project-local or user-scope remove. '${positionalArg}' is not a project-local bundle.\n\nUse 'aiwg remove ${positionalArg}' without --provider, or 'aiwg remove ${positionalArg} --scope user --provider ${providerParse.provider}' for a user-scope mirror. Refs #1610.`,
+      };
     }
 
     const frameworkRoot = await getFrameworkRoot();
