@@ -2,7 +2,7 @@
 
 **Phase**: Elaboration
 **Status**: Draft
-**Related**: @.aiwg/management/cockpit-vision.md, @.aiwg/requirements/ (UC-COCKPIT-001..012), @.aiwg/requirements/nfr-modules/cockpit-nfrs.md (NFR-05 a11y), @.aiwg/architecture/adr-cockpit-ui-stack.md, @.aiwg/architecture/adr-cockpit-marketplace-ux-agent-sourcing.md
+**Related**: @.aiwg/management/cockpit-vision.md, @.aiwg/requirements/ (UC-COCKPIT-001..012), @.aiwg/requirements/nfr-modules/cockpit-nfrs.md (NFR-05 a11y), @.aiwg/architecture/adr-cockpit-ui-stack.md, @.aiwg/architecture/adr-cockpit-marketplace-ux-agent-sourcing.md, @.aiwg/ux/cockpit-operator-wall-a11y-reconciliation.md, @.aiwg/ux/cockpit-operator-wall-design-system.md
 **Design contributors**: AIWG UX team — Product Designer, UX Lead, Frontend Specialist, Accessibility Specialist, Art Director
 
 ## Reasoning
@@ -87,6 +87,7 @@ graph TD
 - Full keyboard operability; ARIA roles/labels on the live-stream and inbox; AA contrast tokens (see color-output-format conventions); status conveyed by text+icon, not color alone.
 - Automated AA scan in CI + a manual keyboard/screen-reader pass as ABM evidence.
 - The dense concept-art "operator wall" is reconciled in `cockpit-operator-wall-a11y-reconciliation.md`: Home remains the default, the Board is power-on-demand, stack identity uses color + shape/icon + text, multi-stream live regions are constrained, reduced motion is mandatory, and the dark token set carries AA contrast evidence.
+- The operator-wall component system is baselined in `cockpit-operator-wall-design-system.md`: design tokens, StackBoard/StackCard anatomy, telemetry strip data bindings, Approval Inbox placement, and nav/global chrome all trace to the Cockpit UCs and real AIWG data sources.
 
 ## Marketplace UX-agent sourcing (per adr-cockpit-marketplace-ux-agent-sourcing)
 - **Use AIWG's own UX team first** (already vetted, in-scope): Product Designer (flows/screens), UX Lead (IA, usability, progressive-disclosure), Frontend Specialist (component architecture, web-vitals), Accessibility Specialist (WCAG), Art Director (visual system).
@@ -95,6 +96,6 @@ graph TD
 - **First adoption is a tracked Elaboration deliverable** (risk X4): document the candidate, the gate result, and the sandbox config.
 
 ## Open items for ABM
-- Final visual system / component library (with Art Director + Frontend Specialist) — tied to the UI-stack spike; the operator-wall accessibility/progressive-disclosure baseline is captured in `cockpit-operator-wall-a11y-reconciliation.md`.
+- Implementation spike for the operator-wall component library (with Art Director + Frontend Specialist) using `cockpit-operator-wall-design-system.md` and `cockpit-operator-wall-a11y-reconciliation.md` as the design baseline.
 - First external UX-agent adoption-gate record (or decision to ship v1 with AIWG UX team only).
 - Usability check of the newcomer <3-min flow.
