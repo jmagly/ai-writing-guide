@@ -60,6 +60,12 @@ jobs:
         # See .aiwg/architecture/adr-publish-time-evidence.md.
         run: npm run lint:audit-signatures
 
+      - name: Lint deployed agent definition sizes (#1602)
+        # Hard gate for the 16 KiB subagent dispatch ceiling. The script scans
+        # deployed provider agent defs and allows only the documented
+        # security-auditor outlier from #1587.
+        run: npm run lint:agent-sizes
+
       - name: Run type check
         run: npm run typecheck
 

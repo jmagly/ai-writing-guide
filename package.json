@@ -49,6 +49,7 @@
     "lint:affected-packages": "node tools/lint/affected-packages.mjs",
     "lint:tarball": "node tools/lint/tarball-audit.mjs",
     "lint:audit-signatures": "node tools/lint/audit-signatures.mjs",
+    "lint:agent-sizes": "node tools/lint/agent-def-sizes.mjs",
     "test:conformance": "vitest run --config config/vitest.conformance.config.js test/conformance/executor-v1/",
     "test:contract": "vitest run --config config/vitest.contract.config.js test/contract/",
     "test:integration:serve": "vitest run --config config/vitest.integration.config.js",

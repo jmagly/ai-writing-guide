@@ -406,10 +406,12 @@ describe('tools/cli/doctor.mjs — agent-def size ceiling (#1587)', () => {
     expect(content).toContain('.soul.md');
   });
 
-  it('is a warn-level check (does not hard-fail the exit code)', () => {
-    // The size check uses 'warn', mirroring the AGENTS.md size/hook checks.
-    // computeExitCode returns 0 on warn-only (asserted above), so an oversized
-    // def surfaces guidance without breaking CI.
-    expect(content).toMatch(/`\$\{label\} Agent def sizes`,\s*'warn'/);
+  it('is backed by the hard CI lint gate (#1602)', async () => {
+    expect(content).toContain('Agent def sizes');
+    const { readFileSync } = await import('fs');
+    const pkg = JSON.parse(readFileSync(resolve(__dirname, '../../../package.json'), 'utf-8'));
+    const ci = readFileSync(resolve(__dirname, '../../../.gitea/workflows/ci.yml'), 'utf-8');
+    expect(pkg.scripts['lint:agent-sizes']).toBe('node tools/lint/agent-def-sizes.mjs');
+    expect(ci).toContain('npm run lint:agent-sizes');
   });
 });
