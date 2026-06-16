@@ -86,6 +86,7 @@ graph TD
 - WCAG 2.1 AA on the core flows (Home, Running, Session View, Approval Inbox).
 - Full keyboard operability; ARIA roles/labels on the live-stream and inbox; AA contrast tokens (see color-output-format conventions); status conveyed by text+icon, not color alone.
 - Automated AA scan in CI + a manual keyboard/screen-reader pass as ABM evidence.
+- The dense concept-art "operator wall" is reconciled in `cockpit-operator-wall-a11y-reconciliation.md`: Home remains the default, the Board is power-on-demand, stack identity uses color + shape/icon + text, multi-stream live regions are constrained, reduced motion is mandatory, and the dark token set carries AA contrast evidence.
 
 ## Marketplace UX-agent sourcing (per adr-cockpit-marketplace-ux-agent-sourcing)
 - **Use AIWG's own UX team first** (already vetted, in-scope): Product Designer (flows/screens), UX Lead (IA, usability, progressive-disclosure), Frontend Specialist (component architecture, web-vitals), Accessibility Specialist (WCAG), Art Director (visual system).
@@ -94,6 +95,6 @@ graph TD
 - **First adoption is a tracked Elaboration deliverable** (risk X4): document the candidate, the gate result, and the sandbox config.
 
 ## Open items for ABM
-- Final visual system / component library (with Art Director + Frontend Specialist) — tied to the UI-stack spike.
+- Final visual system / component library (with Art Director + Frontend Specialist) — tied to the UI-stack spike; the operator-wall accessibility/progressive-disclosure baseline is captured in `cockpit-operator-wall-a11y-reconciliation.md`.
 - First external UX-agent adoption-gate record (or decision to ship v1 with AIWG UX team only).
 - Usability check of the newcomer <3-min flow.
