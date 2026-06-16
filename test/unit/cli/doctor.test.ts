@@ -193,6 +193,15 @@ describe('doctor: deployed skill budget warning', () => {
     expect(content).toContain('Deployed Skill Count');
     expect(content).toContain('aiwg list --deployed');
   });
+
+  it('uses the same Claude override budget for deployed skill count warnings', async () => {
+    const { readFileSync } = await import('fs');
+    const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+
+    expect(content).toContain('resolveClaudeListingBudget');
+    expect(content).not.toContain("above Claude Code's default listing budget");
+    expect(content).toContain('Refs #1609');
+  });
 });
 
 // ── Node.js version check logic ────────────────────────────────

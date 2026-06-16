@@ -149,6 +149,20 @@ async function readContextWindowDirective() {
   return null;
 }
 
+async function resolveClaudeListingBudget() {
+  const ctxDirective = await readContextWindowDirective();
+  const ctx = ctxDirective?.value ?? CLAUDE_DEFAULT_CONTEXT_WINDOW;
+  const override = await readClaudeBudgetOverride();
+  const fraction = override?.value ?? CLAUDE_DEFAULT_BUDGET_FRACTION;
+  return {
+    budgetTokens: Math.floor((ctx * fraction) / CHARS_PER_TOKEN),
+    ctx,
+    ctxDirective,
+    fraction,
+    override,
+  };
+}
+
 // Strip a single ---\n...\n--- frontmatter block and pull `name:` and
 // `description:` keys. Cheaper than a full YAML parse and good enough — the
 // real listing render uses the same first-N-chars-from-frontmatter shape.
@@ -243,14 +257,19 @@ async function checkTotalDeployedSkillBudgetForProvider(provName, label, provide
   if (!stats) return;
 
   if (provName === 'claude') {
-    const defaultBudgetTokens = Math.floor(
-      (CLAUDE_DEFAULT_CONTEXT_WINDOW * CLAUDE_DEFAULT_BUDGET_FRACTION) / CHARS_PER_TOKEN,
-    );
-    if (stats.totalTokens > defaultBudgetTokens) {
+    const { budgetTokens, fraction, override } = await resolveClaudeListingBudget();
+    if (stats.totalTokens > budgetTokens) {
+      const budgetLabel = override ? 'configured listing budget' : 'default listing budget';
       check(
         `${label} Deployed Skill Count`,
         'warn',
-        `${stats.count} deployed skills estimate ${stats.totalTokens.toLocaleString()} tokens, above Claude Code's default listing budget (${defaultBudgetTokens.toLocaleString()} tokens). Run \`aiwg use all\` for workspace-aware filtering or \`aiwg list --deployed\` to inspect include/exclude reasons.`,
+        `${stats.count} deployed skills estimate ${stats.totalTokens.toLocaleString()} tokens, above Claude Code's ${budgetLabel} (${budgetTokens.toLocaleString()} tokens at ${(fraction * 100).toFixed(2)}%). Run \`aiwg use all\` for workspace-aware filtering or \`aiwg list --deployed\` to inspect include/exclude reasons. Refs #1609.`,
+      );
+    } else if (override) {
+      check(
+        `${label} Deployed Skill Count`,
+        'ok',
+        `${stats.count} deployed skills estimate ${stats.totalTokens.toLocaleString()} tokens, within Claude Code's configured listing budget (${budgetTokens.toLocaleString()} tokens at ${(fraction * 100).toFixed(2)}%).`,
       );
     }
   } else if (provName === 'codex' && stats.totalChars > CODEX_LISTING_CHAR_CAP) {
@@ -284,12 +303,10 @@ async function checkSkillBudgetForProvider(provName, label, skillsPathRel) {
   let usingOverride = false;
 
   if (provName === 'claude') {
-    const ctxDirective = await readContextWindowDirective();
-    const ctx = ctxDirective?.value ?? CLAUDE_DEFAULT_CONTEXT_WINDOW;
-    const override = await readClaudeBudgetOverride();
+    const budgetInfo = await resolveClaudeListingBudget();
+    const { ctx, ctxDirective, fraction, override } = budgetInfo;
     usingOverride = Boolean(override);
-    const fraction = override?.value ?? CLAUDE_DEFAULT_BUDGET_FRACTION;
-    budget = Math.floor((ctx * fraction) / CHARS_PER_TOKEN);
+    budget = budgetInfo.budgetTokens;
     budgetSource = override
       ? `${(fraction * 100).toFixed(2)}% × ${ctx.toLocaleString()} ctx (override in ${override.source.replace(os.homedir(), '~')})`
       : `${(fraction * 100).toFixed(2)}% × ${ctx.toLocaleString()} ctx (default)${ctxDirective ? ` — ctx from ${ctxDirective.source}` : ''}`;
