@@ -12,7 +12,7 @@ the Bridge UI with the token on the query string.
 operator/CLI: aiwg cockpit
       │  (spawns the Bridge; writes runtime/bridge.json mode 600)
       ▼
-Bridge (127.0.0.1:PORT, token-gated /api) ── proxies ──▶ executor (mock today; agentic-sandbox #460/#461)
+Bridge (127.0.0.1:PORT, token-gated /api) ── proxies ──▶ agentic-sandbox executor
       ▲
       │  loads http://127.0.0.1:PORT/?token=…
 desktop window  (this app)   ◀── same UI ──▶   VS Code webview  /  browser

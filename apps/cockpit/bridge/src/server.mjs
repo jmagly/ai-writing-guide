@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// AIWG Cockpit Bridge — dev skeleton.
-// Reads instance inventory from the agentic-sandbox (mock) admin surface and
+// AIWG Cockpit Bridge.
+// Reads instance inventory from an agentic-sandbox executor admin surface and
 // serves a minimal screen. This is the first end-to-end data path:
-//   mock executor (admin REST) -> Bridge (/api/inventory) -> screen.
+//   executor (admin REST) -> Bridge (/api/inventory) -> screen.
 // Real Bridge grows: registry/discover/index binding, per-instance A2A, pty I/O,
 // per-launch token + OS-keychain (roctinam/aiwg#1595).
 import http from 'node:http';
@@ -15,7 +15,14 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, basename, extname } from 'node:path';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-const MOCK_URL = process.env.MOCK_URL ?? 'http://127.0.0.1:8122';
+// Primary seam for roctinam/aiwg#1589: Cockpit talks to a real agentic-sandbox
+// executor via this URL. MOCK_URL remains as a compatibility alias for older
+// scripts/tests that predate agentic-sandbox#460/#461.
+const EXECUTOR_URL =
+  process.env.AIWG_COCKPIT_EXECUTOR_URL ??
+  process.env.EXECUTOR_URL ??
+  process.env.MOCK_URL ??
+  'http://127.0.0.1:8122';
 const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
 // The built React app (apps/cockpit/web/dist). Served when present; falls back to the
 // legacy vanilla page so the Bridge works even before a web build.
@@ -170,12 +177,12 @@ async function proxy(res, method, target) {
 }
 
 /** Normalize the executor's admin inventory into the Bridge's UI shape. */
-async function getInventory(mockUrl) {
-  const r = await fetch(`${mockUrl}/admin/instances`);
+async function getInventory(executorUrl) {
+  const r = await fetch(`${executorUrl}/admin/instances`);
   if (!r.ok) throw new Error(`admin /instances -> ${r.status}`);
   const { instances } = await r.json();
   return {
-    source: mockUrl,
+    source: executorUrl,
     fetched_at: new Date().toISOString(),
     count: instances.length,
     instances: instances.map((i) => ({
@@ -184,18 +191,18 @@ async function getInventory(mockUrl) {
       loadout: i.loadout,
       state: i.state,
       tenant: i.tenant_id,
-      card_url: `${mockUrl}/agents/${encodeURIComponent(i.instance_id)}/.well-known/agent-card.json`,
+      card_url: `${executorUrl}/agents/${encodeURIComponent(i.instance_id)}/.well-known/agent-card.json`,
     })),
   };
 }
 
 /** Running tasks across all instances (the running-agents board). */
-async function getRunning(mockUrl) {
-  const r = await fetch(`${mockUrl}/admin/running`);
+async function getRunning(executorUrl) {
+  const r = await fetch(`${executorUrl}/admin/running`);
   if (!r.ok) throw new Error(`admin /running -> ${r.status}`);
   const { running } = await r.json();
   return {
-    source: mockUrl,
+    source: executorUrl,
     fetched_at: new Date().toISOString(),
     count: running.length,
     running: running.map((t) => ({ instance_id: t.instance_id, task_id: t.task_id, state: t.state, tenant: t.tenant })),
@@ -208,11 +215,11 @@ async function getRunning(mockUrl) {
  * to the executor — masking differs per WS direction, so the Bridge issues the
  * URL rather than proxying frames.
  */
-async function getSessions(mockUrl, instanceId) {
-  const r = await fetch(`${mockUrl}/agents/${encodeURIComponent(instanceId)}/sessions`);
+async function getSessions(executorUrl, instanceId) {
+  const r = await fetch(`${executorUrl}/agents/${encodeURIComponent(instanceId)}/sessions`);
   if (!r.ok) throw new Error(`/sessions -> ${r.status}`);
   const { sessions } = await r.json();
-  const wsBase = mockUrl.replace(/^http/i, 'ws');
+  const wsBase = executorUrl.replace(/^http/i, 'ws');
   return {
     instance_id: instanceId,
     sessions: sessions.map((s) => ({
@@ -222,7 +229,8 @@ async function getSessions(mockUrl, instanceId) {
   };
 }
 
-export function createBridge({ mockUrl = MOCK_URL, token } = {}) {
+export function createBridge({ executorUrl = EXECUTOR_URL, mockUrl, token } = {}) {
+  const upstreamUrl = mockUrl ?? executorUrl;
   const TOKEN = token ?? randomBytes(24).toString('hex');
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
@@ -233,12 +241,12 @@ export function createBridge({ mockUrl = MOCK_URL, token } = {}) {
       if (url.pathname.startsWith('/api/') && !authed(req, url, TOKEN)) {
         return json(res, 401, { error: 'unauthorized', detail: 'missing or invalid cockpit token' });
       }
-      if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(mockUrl));
-      if (url.pathname === '/api/running') return json(res, 200, await getRunning(mockUrl));
+      if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(upstreamUrl));
+      if (url.pathname === '/api/running') return json(res, 200, await getRunning(upstreamUrl));
       if (url.pathname === '/api/sessions') {
         const inst = url.searchParams.get('instance');
         if (!inst) return json(res, 400, { error: 'instance_required' });
-        return json(res, 200, await getSessions(mockUrl, inst));
+        return json(res, 200, await getSessions(upstreamUrl, inst));
       }
       // registry-bound, data-driven core — live, no app restart (#1592)
       if (url.pathname === '/api/capabilities') {
@@ -284,29 +292,29 @@ export function createBridge({ mockUrl = MOCK_URL, token } = {}) {
       let m;
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/sessions$/)) && req.method === 'POST') {
         const id = decodeURIComponent(m[1]);
-        const r = await fetch(`${mockUrl}/agents/${encodeURIComponent(id)}/sessions`, { method: 'POST' });
+        const r = await fetch(`${upstreamUrl}/agents/${encodeURIComponent(id)}/sessions`, { method: 'POST' });
         const body = await r.json();
-        const wsBase = mockUrl.replace(/^http/i, 'ws');
+        const wsBase = upstreamUrl.replace(/^http/i, 'ws');
         return json(res, r.status, { ...body, attach_url: `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(body.id)}/attach` });
       }
 
       // --- management surface (UC-012): lifecycle + task cancel ---
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/(start|stop)$/)) && req.method === 'POST')
-        return proxy(res, 'POST', `${mockUrl}/admin/instances/${encodeURIComponent(m[1])}/${m[2]}`);
+        return proxy(res, 'POST', `${upstreamUrl}/admin/instances/${encodeURIComponent(m[1])}/${m[2]}`);
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)$/)) && req.method === 'DELETE')
-        return proxy(res, 'DELETE', `${mockUrl}/admin/instances/${encodeURIComponent(m[1])}`);
+        return proxy(res, 'DELETE', `${upstreamUrl}/admin/instances/${encodeURIComponent(m[1])}`);
       if ((m = url.pathname.match(/^\/api\/tasks\/([^/]+)\/([^/]+)\/cancel$/)) && req.method === 'POST')
-        return proxy(res, 'POST', `${mockUrl}/agents/${encodeURIComponent(m[1])}/tasks/${encodeURIComponent(m[2])}:cancel`);
+        return proxy(res, 'POST', `${upstreamUrl}/agents/${encodeURIComponent(m[1])}/tasks/${encodeURIComponent(m[2])}:cancel`);
 
       // --- approval inbox (UC-009) + cost (UC-010) ---
       if (url.pathname === '/api/approvals' && req.method === 'GET')
-        return proxy(res, 'GET', `${mockUrl}/admin/approvals?status=${encodeURIComponent(url.searchParams.get('status') || 'pending')}`);
+        return proxy(res, 'GET', `${upstreamUrl}/admin/approvals?status=${encodeURIComponent(url.searchParams.get('status') || 'pending')}`);
       if ((m = url.pathname.match(/^\/api\/approvals\/([^/]+)$/)) && req.method === 'POST')
-        return proxy(res, 'POST', `${mockUrl}/admin/approvals/${encodeURIComponent(m[1])}?decision=${encodeURIComponent(url.searchParams.get('decision') || '')}`);
+        return proxy(res, 'POST', `${upstreamUrl}/admin/approvals/${encodeURIComponent(m[1])}?decision=${encodeURIComponent(url.searchParams.get('decision') || '')}`);
       if (url.pathname === '/api/cost' && req.method === 'GET')
-        return proxy(res, 'GET', `${mockUrl}/admin/cost`);
+        return proxy(res, 'GET', `${upstreamUrl}/admin/cost`);
 
-      if (url.pathname === '/api/health') return json(res, 200, { status: 'ok', mock: mockUrl });
+      if (url.pathname === '/api/health') return json(res, 200, { status: 'ok', executor_url: upstreamUrl });
       if (url.pathname === '/' || url.pathname === '/index.html') {
         const distIndex = join(WEB_DIST, 'index.html');
         const src = existsSync(distIndex) ? distIndex : join(__dir, 'public', 'index.html');
@@ -335,7 +343,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const server = createBridge();
   server.listen(port, '127.0.0.1', async () => {
     const file = await writeRuntimeToken({ token: server.cockpitToken, port, pid: process.pid });
-    console.log(`[cockpit-bridge] http://127.0.0.1:${port}  (reading ${MOCK_URL})`);
+    console.log(`[cockpit-bridge] http://127.0.0.1:${port}  (executor ${EXECUTOR_URL})`);
     console.log(`  token written ${file} (mode 600) — open the URL in a browser or attach a shell`);
   });
 }

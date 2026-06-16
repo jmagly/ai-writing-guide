@@ -23,7 +23,11 @@ export async function connect({ timeoutMs = 5000, file = RUNTIME_FILE } = {}) {
   for (;;) {
     try {
       const rt = await readRuntime(file);
-      if ((await fetch(`${rt.url}/healthz`)).ok) return rt;
+      const live = await fetch(`${rt.url}/healthz`);
+      if (live.ok) {
+        const authed = await api(rt, '/api/health');
+        if (authed.ok) return rt;
+      }
     } catch { /* file missing or Bridge not up yet */ }
     if (Date.now() > deadline) throw new Error(`Bridge not reachable (runtime ${file})`);
     await new Promise((r) => setTimeout(r, 100));

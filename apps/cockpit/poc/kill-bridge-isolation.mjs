@@ -21,7 +21,7 @@ const reachable = async (url) => { try { return (await fetch(url)).ok; } catch {
 async function waitOk(url, ms = 6000) { const end = Date.now() + ms; while (Date.now() < end) { if (await reachable(url)) return; await sleep(100); } throw new Error('never came up: ' + url); }
 
 const mock = spawn(process.execPath, [MOCK], { env: { ...process.env, PORT: String(MOCK_PORT) }, stdio: 'ignore' });
-const bridge = spawn(process.execPath, [BRIDGE], { env: { ...process.env, PORT: String(BRIDGE_PORT), MOCK_URL: `http://127.0.0.1:${MOCK_PORT}` }, stdio: 'ignore' });
+const bridge = spawn(process.execPath, [BRIDGE], { env: { ...process.env, PORT: String(BRIDGE_PORT), AIWG_COCKPIT_EXECUTOR_URL: `http://127.0.0.1:${MOCK_PORT}` }, stdio: 'ignore' });
 
 try {
   await waitOk(`http://127.0.0.1:${MOCK_PORT}/health`);

@@ -17,9 +17,9 @@ stack's own interface and normalized onto the same matrix (#1589).
 
 | Stack / backend | Observe | Drive | Mechanism | Seam status |
 |---|---|---|---|---|
-| agentic-sandbox managed (vm/container) | ✅ | ✅ | `pty-ws/v1` + `pty-extensions/v1` controller/observer | **mock conformant** (33/0/17); real pending #460/#461 |
-| agentic-sandbox direct/host session | ✅ | ✅ | same, once #1589 host target lands | **proposed** (#1589) |
-| tmux / screen / zellij multiplexer | ✅ | ✅ | attach to the multiplexer pane; normalize to pty frames | **adapter required** (#1589) |
+| agentic-sandbox managed (vm/container) | ✅ | ✅ | `pty-ws/v1` + `pty-extensions/v1` controller/observer | mock conformant; real executor seam wired |
+| agentic-sandbox direct/host session | ✅ | ✅ | same interface over the host target | landed upstream in agentic-sandbox#460/#461 |
+| tmux / screen / zellij multiplexer | ✅ | ✅ | session-host backends normalize to pty frames | landed upstream in agentic-sandbox#461 |
 | Claude Code / Codex external loop (serve executor) | ✅ | ◐ | observe via task stream; drive = approval inbox + new dispatch | partial — drive is coarse-grained (per-turn), not keystroke |
 | Mission conductor (cross-stack) | ✅ | ◐ | observe per-worker; drive via dispatch/cancel, not raw input | by design — Missions coordinate, sessions drive |
 
@@ -35,14 +35,15 @@ No stack is observe-blind. This retires the "can we actually drive each stack" r
 | Capability | Contract | Mock | Real (agentic-sandbox) |
 |---|---|---|---|
 | Discovery (AgentCard, 5 extensions) | A2A v2 | ✅ conformant | exists |
-| Admin REST (inventory, lifecycle) | ADR-022 Surface 1 | ✅ | #460 (host target) extends |
+| Admin REST (inventory, lifecycle) | ADR-022 Surface 1 | ✅ | host target landed (#460) |
 | A2A core + extensions | A2A v1.0.0 | ✅ (idempotency req, multi-tenant, runtime) | exists |
-| pty-ws + pty-extensions | pty-ws/v1 | ✅ (controller/observer, replay, keyframe) | #461 (sessions) |
-| host/local execution target | runtime/v1 (vm\|container today) | declared | **#1589 adds host** |
+| pty-ws + pty-extensions | pty-ws/v1 | ✅ (controller/observer, replay, keyframe) | direct/managed sessions landed (#461) |
+| host/local execution target | runtime/v1 (`vm|container|host`) | declared | landed (#460) |
 
-**Maturity verdict**: the contract is stable enough to build the entire Cockpit against the mock
-in parallel; the real swap is two tracked sandbox items (#460/#461) plus the AIWG-side normalize
-(#1589). The seam is **mature for parallel construction**.
+**Maturity verdict**: the contract is stable enough to build the Cockpit against either the
+bundled mock fixture or a real agentic-sandbox executor. The upstream sandbox items
+(#460/#461) are landed; the AIWG-side normalize (#1589) is the Bridge configuration seam
+and verification path.
 
 ## 3. PoC evidence (runnable)
 
@@ -63,10 +64,10 @@ Run them: `node apps/cockpit/poc/kill-bridge-isolation.mjs && node apps/cockpit/
 runnable evidence: overlay isolation holds, the control surface is authenticated, approval
 integrity is enforced, no stack credentials are stored, and CLI-first parity is structural.
 
-**One open integration item** (not a gate blocker): swap mock → real agentic-sandbox once #460
-(host target) and #461 (sessions) land; the AIWG-side normalize is #1589. Cockpit construction
-proceeds on the mock; the swap is a contract-preserving substitution validated by the same
-`agentic-sandbox-conformance` harness the mock already passes (33/0/17).
+**Integration item status**: the mock remains the CI fixture, and the Bridge now accepts a real
+agentic-sandbox executor through `AIWG_COCKPIT_EXECUTOR_URL` / `EXECUTOR_URL`. The upstream
+host target and direct/managed session backends have landed; the substitution remains
+contract-preserving and is validated through the same Bridge tests and conformance harness.
 
 ## References
 - `.aiwg/planning/cockpit-construction-plan.md` — iteration roadmap

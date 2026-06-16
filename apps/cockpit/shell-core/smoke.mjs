@@ -9,7 +9,7 @@ import { connect, webviewUrl, api } from './runtime.mjs';
 const BRIDGE = fileURLToPath(new URL('../bridge/src/server.mjs', import.meta.url));
 const PORT = 8147;
 const child = spawn(process.execPath, [BRIDGE], {
-  env: { ...process.env, PORT: String(PORT), MOCK_URL: 'http://127.0.0.1:1' }, // no live mock needed for the handshake
+  env: { ...process.env, PORT: String(PORT), AIWG_COCKPIT_EXECUTOR_URL: 'http://127.0.0.1:1' }, // no live executor needed for the handshake
   stdio: 'ignore',
 });
 

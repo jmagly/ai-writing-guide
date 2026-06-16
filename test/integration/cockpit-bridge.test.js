@@ -13,7 +13,7 @@ const f = (p, o = {}) => fetch(base + p, { ...o, headers: { ...(o.headers || {})
 beforeAll(async () => {
   mock = createExecutor();
   await new Promise((r) => mock.listen(0, '127.0.0.1', r));
-  bridge = createBridge({ mockUrl: `http://127.0.0.1:${mock.address().port}` });
+  bridge = createBridge({ executorUrl: `http://127.0.0.1:${mock.address().port}` });
   await new Promise((r) => bridge.listen(0, '127.0.0.1', r));
   base = `http://127.0.0.1:${bridge.address().port}`;
   token = bridge.cockpitToken;
@@ -30,10 +30,18 @@ describe('cockpit Bridge — control surface', () => {
   it('serves inventory, running, and sessions with a ws attach_url', async () => {
     const inv = await (await f('/api/inventory')).json();
     expect(inv.count).toBe(3);
+    expect(inv.source).toMatch(/^http:\/\/127\.0\.0\.1:/);
     const run = await (await f('/api/running')).json();
     expect(run.count).toBeGreaterThanOrEqual(2);
     const s = await (await f('/api/sessions?instance=550e8400-e29b-41d4-a716-446655440000')).json();
     expect(s.sessions.find((x) => x.id === 'demo-shell')?.attach_url).toMatch(/^ws:\/\/.*\/attach$/);
+  });
+
+  it('reports the configured agentic-sandbox executor seam', async () => {
+    const h = await (await f('/api/health')).json();
+    expect(h).toMatchObject({ status: 'ok' });
+    expect(h.executor_url).toMatch(/^http:\/\/127\.0\.0\.1:/);
+    expect(h).not.toHaveProperty('mock');
   });
 
   it('loads declarative contributions whose actions inject commands (no Bridge CLI run)', async () => {

@@ -1,4 +1,4 @@
-// End-to-end data-path smoke: mock executor (admin) -> Bridge (/api/inventory) -> served screen.
+// End-to-end data-path smoke: executor fixture (admin) -> Bridge (/api/inventory) -> served screen.
 // Self-contained (own ports); no deps. Exits non-zero on failure.
 import assert from 'node:assert/strict';
 import { createExecutor } from '../../mock-executor/src/server.mjs';
@@ -6,9 +6,9 @@ import { createBridge } from './server.mjs';
 
 const mock = createExecutor();
 await new Promise((r) => mock.listen(0, '127.0.0.1', r));
-const mockUrl = `http://127.0.0.1:${mock.address().port}`;
+const executorUrl = `http://127.0.0.1:${mock.address().port}`;
 
-const bridge = createBridge({ mockUrl });
+const bridge = createBridge({ executorUrl });
 await new Promise((r) => bridge.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${bridge.address().port}`;
 // authed fetch helper — every /api/ call carries the per-launch bearer token

@@ -18,7 +18,7 @@ Cockpit's Bridge is a **client of all three**. It talks to agentic-sandbox **dir
 
 ## 2. Extension usage (per-instance A2A)
 
-- **`runtime/v1`** (required, data-only): every AgentCard declares `params{ runtime: vm|container, loadout, image_ref?, instance_id }`; every Task carries `metadata{ runtime.instance_id, runtime.kind, runtime.host? }`. Cockpit reads these for the inventory/running views + the isolation-tier badge. **Gap: no `host` kind yet** — tracked in agentic-sandbox#460 (enum decision: additive `1.1.0` vs `runtime/v2`); Cockpit treats unknown `runtime.kind` as opaque.
+- **`runtime/v1`** (required, data-only): every AgentCard declares `params{ runtime: vm|container|host, loadout, image_ref?, instance_id }`; every Task carries `metadata{ runtime.instance_id, runtime.kind, runtime.host? }`. Cockpit reads these for the inventory/running views + the isolation-tier badge. The upstream `host` target landed in agentic-sandbox#460; Cockpit still treats unknown future `runtime.kind` values as opaque.
 - **`hitl-prompt/v1`**: HITL gate envelope + response validation → the unified Approval Inbox (UC-COCKPIT-009; #1565). Cockpit relays the operator decision; **AIWG core re-validates** (threat-model E1/S3) — Cockpit never mints approvals.
 - **`idempotency/v1`**: replay header + 422-on-key-reuse + JCS hash → Cockpit attaches idempotency keys on every dispatch (threat-model T2 safe dispatch).
 - **`multi-tenant/v1`** (declared until sandbox v2.2): Cockpit **carries `tenant_id` on every `Message.metadata` from day one** (charset `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`), echoes it on correlation, and has backoff for the future `429+Retry-After`. Isolation arrives free on the sandbox's v2.2 upgrade. **`tenant_id` is a routing token, not a credential** — auth binds identity→tenant separately (sandbox ADR-015).
@@ -51,8 +51,8 @@ A typed TS client `@aiwg/cockpit` instance-control module exposing (thin over th
 
 ## 5. The mock (full three-surface, conformance-checked)
 
-`apps/cockpit/mock-executor/` (TS; excluded from base npm — only `apps/web/dist` publishes). Implements all three surfaces wire-faithfully so the Bridge + UI build in parallel before agentic-sandbox#460/#461 land:
-- **Admin REST**: provision/list/get/lifecycle + async `operations` poll; in-memory instances with `runtime` (vm/container, and `host` once the enum lands) + loadout.
+`apps/cockpit/mock-executor/` (TS; excluded from base npm — only `apps/web/dist` publishes). Implements all three surfaces wire-faithfully so the Bridge + UI can test the same contract as a real agentic-sandbox executor:
+- **Admin REST**: provision/list/get/lifecycle + async `operations` poll; in-memory instances with `runtime` (vm/container/host) + loadout.
 - **Per-instance A2A**: AgentCard (with `runtime/v1`+`hitl-prompt/v1`+`idempotency/v1`+`multi-tenant/v1` declared), SendMessage/Task lifecycle, GetTask/List/Subscribe/Cancel, the 4 extensions' wire behavior (incl. `EXTENSION_REQUIRED` 400, tenant_id echo, idempotency 422).
 - **pty-ws + pty-extensions**: a WebSocket PTY backed by a real shell (or a scripted fake) emitting Output/Keyframe/MembershipChanged, honoring roles + `replay_from`.
 - **Validated** against `roctinam/agentic-sandbox-conformance` (point `--executor-url` at the mock); stub-skippable tests (forced 5xx, restart durability, INPUT_REQUIRED HITL) skip per the harness's own rules.

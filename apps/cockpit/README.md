@@ -28,8 +28,8 @@ operator / CLI:  aiwg cockpit
 └─────────────────────────────────────────────────────────────┘
        │ proxies / sources              ▲ loads /?token=…
        ▼                                │
-  executor (mock today;          ┌──────┴──────┬───────────────┐
-  agentic-sandbox #460/#461)     browser     VS Code webview   Tauri window
+  agentic-sandbox executor       ┌──────┴──────┬───────────────┐
+                                 browser     VS Code webview   Tauri window
   · A2A v2 + pty-ws/v1           (apps/cockpit/{web,vscode,desktop})
 ```
 
@@ -50,13 +50,23 @@ operator / CLI:  aiwg cockpit
 | **Library** | Your own assets — clone from the catalog / import / remove. AIWG files never overwritten. |
 | **Actions** | Contributed buttons that **inject a command into a session** (the agent runs it). |
 
-## Run (dev, against the mock)
+## Run (dev, against the bundled mock)
 
 ```bash
 npm --prefix apps/cockpit run build:web                 # install + vite build → web/dist
 node apps/cockpit/mock-executor/src/server.mjs          # :8122  executor
 node apps/cockpit/bridge/src/server.mjs                 # :8120  → open the printed URL
 ```
+
+## Run (against a real agentic-sandbox executor)
+
+```bash
+AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:<executor-port> \
+  node apps/cockpit/bridge/src/server.mjs
+```
+
+`EXECUTOR_URL` is accepted as a short alias. `MOCK_URL` remains only for older
+local scripts; new code should use `AIWG_COCKPIT_EXECUTOR_URL`.
 
 `aiwg cockpit` (the operator command) will wrap this; the Bridge serves the built
 React app token-injected, falling back to a legacy page when no build is present.
@@ -88,9 +98,11 @@ discovery/A2A/pty surfaces — re-run the harness after executor-surface changes
 
 ## Status
 
-Built and browser-verified against the mock. The real agentic-sandbox swap (#460 host
-target, #461 sessions, #1589 normalize) is a contract-preserving substitution at the
-Bridge's `MOCK_URL` seam — see `.aiwg/reports/cockpit-abm-gate.md`.
+Built and browser-verified against the bundled mock and wired for a real
+agentic-sandbox executor through `AIWG_COCKPIT_EXECUTOR_URL`. The host target
+(agentic-sandbox#460) and direct/managed multiplexer sessions
+(agentic-sandbox#461) have landed upstream; the Bridge seam is now the
+AIWG-side integration point for #1589.
 
 ## See also
 
