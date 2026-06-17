@@ -121,6 +121,7 @@ import { localExecutorHandler, localExecutorServeHandler } from './local-executo
 import { executionModeHandler } from './execution-mode.js';
 import { repoAccessHandler, repoAccessHandlers } from './repo-access.js';
 import { issueHandler, issueAuditHandler } from './issues.js';
+import { cockpitHandler } from './cockpit.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -191,6 +192,7 @@ export {
   contributeStartHandler,
   validateMetadataHandler,
   skillLintHandler,
+  cockpitHandler,
 
   // Plugin
   installPluginHandler,
@@ -326,6 +328,7 @@ export const allHandlers: CommandHandler[] = [
   contributeStartHandler,
   validateMetadataHandler,
   skillLintHandler,
+  cockpitHandler,
 
   // Plugin packaging
   installPluginHandler,

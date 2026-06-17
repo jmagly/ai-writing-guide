@@ -1,10 +1,29 @@
 {
   "name": "@aiwg/cockpit",
-  "version": "0.0.0",
-  "private": true,
+  "version": "2026.6.1",
   "description": "AIWG Cockpit — UX-first control plane over AIWG + multi-stack agentic sessions. Opt-in, separately published; NOT shipped in the base aiwg npm package (guarded by test/smoke/cockpit-base-footprint.test.js).",
   "type": "module",
   "license": "MIT",
+  "bin": {
+    "aiwg-cockpit": "bridge/src/server.mjs"
+  },
+  "files": [
+    "README.md",
+    "bridge/",
+    "contrib/",
+    "runtime-docs/",
+    "shell-core/",
+    "web/dist/",
+    "web/index.html",
+    "web/src/",
+    "web/package.json",
+    "vscode/",
+    "desktop/README.md",
+    "desktop/src-tauri/"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "workspaces": [
     "mock-executor",
     "bridge",
@@ -16,6 +35,8 @@
     "start:mock": "node mock-executor/src/server.mjs",
     "start:bridge": "node bridge/src/server.mjs",
     "build:web": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build",
+    "pack:dry": "npm pack --dry-run",
+    "publish:dry": "npm publish --dry-run --access public",
     "smoke": "node mock-executor/src/smoke.mjs && node bridge/src/smoke.mjs && node shell-core/smoke.mjs",
     "poc": "node poc/kill-bridge-isolation.mjs && node poc/security-checks.mjs",
     "test:web": "npm --prefix web run typecheck && npm --prefix web run test",

@@ -138,6 +138,9 @@ jobs:
         # entries against ci/expected-tarball-top-level.txt.
         run: npm run lint:tarball
 
+      - name: Check Cockpit package contents
+        run: npm --prefix apps/cockpit pack --dry-run
+
       - name: Set pre-release version in package.json
         id: rcversion
         run: |
@@ -173,6 +176,23 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Publish Cockpit pre-release to Gitea npm registry
+        run: |
+          set -o pipefail
+          cat > .npmrc << 'NPMRC'
+          //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
+          NPMRC
+          npm --prefix apps/cockpit publish --registry=${{ env.GITEA_NPM_REGISTRY }} --tag ${{ steps.rcversion.outputs.npm_tag }} 2>&1 | tee cockpit-publish-output.txt || {
+            if grep -qE "package version already exists|EPUBLISHCONFLICT|409" cockpit-publish-output.txt; then
+              echo "✓ @aiwg/cockpit pre-release already published to Gitea"
+            else
+              echo "✗ @aiwg/cockpit Gitea pre-release publish failed"
+              cat cockpit-publish-output.txt; exit 1
+            fi
+          }
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Affirm dist-tag on Gitea (idempotent)
         # Always re-write the dist-tag, even when publish was skipped as
         # "already exists". This makes re-runs self-healing if the original
@@ -200,6 +220,21 @@ jobs:
           done
           echo "Gitea dist-tags after promotion:"
           npm dist-tag ls aiwg --registry=${{ env.GITEA_NPM_REGISTRY }}
+          for i in 1 2 3 4 5; do
+            if npm dist-tag add "@aiwg/cockpit@${VERSION}" "${TAG}" --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee cockpit-dist-tag-output.txt; then
+              break
+            fi
+            if grep -qiE "is not in the npm registry|not found|404" cockpit-dist-tag-output.txt; then
+              echo "Attempt $i: @aiwg/cockpit version not yet visible on Gitea, retrying in 10s..."
+              sleep 10
+            else
+              echo "✗ @aiwg/cockpit Gitea dist-tag promotion failed"; cat cockpit-dist-tag-output.txt; exit 1
+            fi
+            if [ "$i" = "5" ]; then
+              echo "✗ @aiwg/cockpit Gitea dist-tag promotion exhausted retries"; exit 1
+            fi
+          done
+          npm dist-tag ls @aiwg/cockpit --registry=${{ env.GITEA_NPM_REGISTRY }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -347,6 +382,9 @@ jobs:
         # entries against ci/expected-tarball-top-level.txt.
         run: npm run lint:tarball
 
+      - name: Check Cockpit package contents
+        run: npm --prefix apps/cockpit pack --dry-run
+
       - name: Publish to Gitea npm registry
         if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
@@ -367,6 +405,25 @@ jobs:
             else
               echo "✗ Gitea publish failed"
               cat publish-output.txt
+              exit 1
+            fi
+          }
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Cockpit to Gitea npm registry
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          set -o pipefail
+          cat > .npmrc << 'NPMRC'
+          //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
+          NPMRC
+          npm --prefix apps/cockpit publish --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee cockpit-publish-output.txt || {
+            if grep -qE "package version already exists|EPUBLISHCONFLICT|409" cockpit-publish-output.txt; then
+              echo "✓ @aiwg/cockpit version already published to Gitea - treating as success"
+            else
+              echo "✗ @aiwg/cockpit Gitea publish failed"
+              cat cockpit-publish-output.txt
               exit 1
             fi
           }
@@ -400,6 +457,21 @@ jobs:
           done
           echo "Gitea dist-tags after promotion:"
           npm dist-tag ls aiwg --registry=${{ env.GITEA_NPM_REGISTRY }}
+          for i in 1 2 3 4 5; do
+            if npm dist-tag add "@aiwg/cockpit@${VERSION}" latest --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee cockpit-dist-tag-output.txt; then
+              break
+            fi
+            if grep -qiE "is not in the npm registry|not found|404" cockpit-dist-tag-output.txt; then
+              echo "Attempt $i: @aiwg/cockpit version not yet visible on Gitea, retrying in 10s..."
+              sleep 10
+            else
+              echo "✗ @aiwg/cockpit Gitea latest promotion failed"; cat cockpit-dist-tag-output.txt; exit 1
+            fi
+            if [ "$i" = "5" ]; then
+              echo "✗ @aiwg/cockpit Gitea latest promotion exhausted retries"; exit 1
+            fi
+          done
+          npm dist-tag ls @aiwg/cockpit --registry=${{ env.GITEA_NPM_REGISTRY }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

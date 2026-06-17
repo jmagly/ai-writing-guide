@@ -102,7 +102,7 @@ FAIL: '$VERSION' does not match CalVer 'YYYY.M.PATCH'.
 EOF
   exit 1
 fi
-echo "  [1/10] CalVer shape OK: $VERSION"
+echo "  [1/11] CalVer shape OK: $VERSION"
 
 # ---------------------------------------------------------------------------
 # 2. package.json lockstep
@@ -116,7 +116,7 @@ FAIL: package.json version is '$PKG_VERSION', expected '$VERSION'.
 EOF
   exit 1
 fi
-echo "  [2/10] package.json lockstep OK"
+echo "  [2/11] package.json lockstep OK"
 
 # ---------------------------------------------------------------------------
 # 3. .claude-plugin/marketplace.json metadata.version lockstep (PUW-038 #1139)
@@ -130,10 +130,24 @@ FAIL: .claude-plugin/marketplace.json metadata.version is '$MP_VERSION',
 EOF
   exit 1
 fi
-echo "  [3/10] marketplace.json lockstep OK"
+echo "  [3/11] marketplace.json lockstep OK"
 
 # ---------------------------------------------------------------------------
-# 4. CHANGELOG.md entry exists
+# 4. @aiwg/cockpit package lockstep
+# ---------------------------------------------------------------------------
+COCKPIT_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('apps/cockpit/package.json','utf8')).version)")
+if [ "$COCKPIT_VERSION" != "$VERSION" ]; then
+  cat <<EOF >&2
+FAIL: apps/cockpit/package.json version is '$COCKPIT_VERSION',
+       expected '$VERSION' so @aiwg/cockpit stays compatible with aiwg.
+       Update the file and commit.
+EOF
+  exit 1
+fi
+echo "  [4/11] @aiwg/cockpit package lockstep OK"
+
+# ---------------------------------------------------------------------------
+# 5. CHANGELOG.md entry exists
 # ---------------------------------------------------------------------------
 if ! grep -q "^## \[${VERSION}\]" CHANGELOG.md; then
   cat <<EOF >&2
@@ -142,10 +156,10 @@ FAIL: CHANGELOG.md does not contain '## [${VERSION}]'.
 EOF
   exit 1
 fi
-echo "  [4/10] CHANGELOG.md entry OK"
+echo "  [5/11] CHANGELOG.md entry OK"
 
 # ---------------------------------------------------------------------------
-# 5. Release announcement file exists
+# 6. Release announcement file exists
 # ---------------------------------------------------------------------------
 ANNOUNCEMENT="docs/releases/v${VERSION}-announcement.md"
 if [ ! -f "$ANNOUNCEMENT" ]; then
@@ -156,10 +170,10 @@ FAIL: $ANNOUNCEMENT does not exist.
 EOF
   exit 1
 fi
-echo "  [5/10] Announcement file OK"
+echo "  [6/11] Announcement file OK"
 
 # ---------------------------------------------------------------------------
-# 6. Release-signing key available locally
+# 7. Release-signing key available locally
 # ---------------------------------------------------------------------------
 if ! gpg --list-secret-keys "$RELEASE_KEY_FINGERPRINT" >/dev/null 2>&1; then
   cat <<EOF >&2
@@ -175,10 +189,10 @@ FAIL: Release-signing key $RELEASE_KEY_FINGERPRINT not found in local
 EOF
   exit 1
 fi
-echo "  [6/10] Release-signing key present locally"
+echo "  [7/11] Release-signing key present locally"
 
 # ---------------------------------------------------------------------------
-# 7. Release-signing key published in maintainers.asc
+# 8. Release-signing key published in maintainers.asc
 # ---------------------------------------------------------------------------
 # Extract fingerprints from the committed keyring and check ours is among
 # them. We use `gpg --show-keys --with-colons` so the output is parseable
@@ -195,10 +209,10 @@ FAIL: Release-signing key $RELEASE_KEY_FINGERPRINT is NOT published in
 EOF
   exit 1
 fi
-echo "  [7/10] Release-signing key published in maintainers.asc"
+echo "  [8/11] Release-signing key published in maintainers.asc"
 
 # ---------------------------------------------------------------------------
-# 8. Create signed tag with explicit release key (-u override)
+# 9. Create signed tag with explicit release key (-u override)
 # ---------------------------------------------------------------------------
 if [ -z "$TAG_MESSAGE" ]; then
   TODAY=$(date -u '+%Y-%m-%d')
@@ -219,10 +233,10 @@ EOF
 fi
 
 git tag -s -u "$RELEASE_KEY_FINGERPRINT" "$TAG" -m "$TAG_MESSAGE"
-echo "  [8/10] Signed tag '$TAG' created with release key"
+echo "  [9/11] Signed tag '$TAG' created with release key"
 
 # ---------------------------------------------------------------------------
-# 9. Local verify (mirror of the CI gate logic)
+# 10. Local verify (mirror of the CI gate logic)
 # ---------------------------------------------------------------------------
 if ! git tag -v "$TAG" >/dev/null 2>&1; then
   cat <<EOF >&2
@@ -234,14 +248,14 @@ EOF
   git tag -d "$TAG" >/dev/null 2>&1 || true
   exit 1
 fi
-echo "  [9/10] Local 'git tag -v' verification passed"
+echo "  [10/11] Local 'git tag -v' verification passed"
 
 # ---------------------------------------------------------------------------
-# 10. Report next steps; do NOT auto-push
+# 11. Report next steps; do NOT auto-push
 # ---------------------------------------------------------------------------
 cat <<EOF
 
-  [10/10] Ready to push. The push step is left manual on purpose —
+  [11/11] Ready to push. The push step is left manual on purpose —
   inspect the tag once more with 'git tag -v $TAG' if you want, then:
 
     git push origin main --tags

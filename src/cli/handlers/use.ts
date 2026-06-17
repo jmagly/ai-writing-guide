@@ -23,6 +23,7 @@ import { translateSkillsToCommands, providerNeedsCommands } from '../../plugin/s
 import * as ui from '../ui.js';
 import { readAiwgConfig, writeAiwgConfig, updateInstalled, hashManifest, emptyConfig, getProjectDir } from '../../config/aiwg-config.js';
 import { getLogger } from '../log.js';
+import { installCockpit } from './cockpit.js';
 import { initHandler } from './init.js';
 import {
   checkCollisions,
@@ -1245,6 +1246,9 @@ export class UseHandler implements CommandHandler {
     if (framework === '--profile') {
       framework = 'all';
       remainingArgs = ctx.args;
+    }
+    if (framework === 'cockpit') {
+      return installCockpit(ctx, remainingArgs);
     }
 
     // Structured logger for this invocation. Records go to both stderr (if

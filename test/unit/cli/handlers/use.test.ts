@@ -8,11 +8,11 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdir, rm } from 'fs/promises';
+import { mkdir, rm, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import os from 'os';
-import { getAllAddons, isValidAddon, addonPath, USE_ALL_DISALLOW } from '../../../../src/cli/handlers/use.js';
+import { getAllAddons, isValidAddon, addonPath, USE_ALL_DISALLOW, useHandler } from '../../../../src/cli/handlers/use.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -192,5 +192,40 @@ describe('isValidAddon()', () => {
     expect(await isValidAddon(repoRoot, 'daemon')).toBe(true);
     // aiwg-dev is excluded from `use all` but can be installed explicitly
     expect(await isValidAddon(repoRoot, 'aiwg-dev')).toBe(true);
+  });
+});
+
+describe('use cockpit', () => {
+  let tmpDir: string;
+  let oldHome: string | undefined;
+
+  beforeEach(async () => {
+    tmpDir = path.join(os.tmpdir(), `aiwg-use-cockpit-test-${Date.now()}`);
+    oldHome = process.env.AIWG_COCKPIT_HOME;
+    process.env.AIWG_COCKPIT_HOME = path.join(tmpDir, 'cockpit-home');
+    await mkdir(tmpDir, { recursive: true });
+    await writeFile(
+      path.join(tmpDir, 'package.json'),
+      JSON.stringify({ name: 'aiwg', version: '2026.6.1' })
+    );
+  });
+
+  afterEach(async () => {
+    if (oldHome === undefined) delete process.env.AIWG_COCKPIT_HOME;
+    else process.env.AIWG_COCKPIT_HOME = oldHome;
+    if (existsSync(tmpDir)) await rm(tmpDir, { recursive: true, force: true });
+  });
+
+  it('routes to the opt-in cockpit acquisition path', async () => {
+    const result = await useHandler.execute({
+      args: ['cockpit', '--dry-run'],
+      rawArgs: ['use', 'cockpit', '--dry-run'],
+      cwd: tmpDir,
+      frameworkRoot: tmpDir,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.message).toContain('@aiwg/cockpit@2026.6.1');
+    expect(result.message).toContain('Run without --dry-run');
   });
 });

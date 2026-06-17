@@ -235,6 +235,12 @@ jobs:
           echo "=== Package contents ==="
           npm pack --dry-run 2>&1 | tee pack-output.txt
 
+      - name: Check Cockpit package contents
+        run: |
+          set -o pipefail
+          echo "=== Cockpit package contents ==="
+          npm --prefix apps/cockpit pack --dry-run 2>&1 | tee cockpit-pack-output.txt
+
       - name: Verify .aiwg/ excluded from package
         run: |
           if grep -q '\.aiwg/' pack-output.txt; then
@@ -330,6 +336,20 @@ jobs:
             fi
           }
 
+      - name: Publish Cockpit to npmjs.org (OIDC + provenance)
+        run: |
+          set -o pipefail
+          NPM_TAG='${{ steps.version.outputs.npm_tag }}'
+          npm --prefix apps/cockpit publish --provenance --access public --tag "$NPM_TAG" 2>&1 | tee cockpit-publish-output.txt || {
+            if grep -qE "cannot publish over|EPUBLISHCONFLICT|409" cockpit-publish-output.txt; then
+              echo "✓ @aiwg/cockpit version already published to npmjs.org — treating as success"
+            else
+              echo "✗ @aiwg/cockpit npmjs.org publish failed"
+              cat cockpit-publish-output.txt
+              exit 1
+            fi
+          }
+
       - name: Install jq (node:24 image does not ship it by default)
         # The verify-provenance step and the asset-upload steps below shell
         # out to jq. node:24-bookworm doesn't include it. rc.1 retag #6
@@ -366,6 +386,13 @@ jobs:
           echo "✓ Provenance attestation present for aiwg@${VERSION}"
           echo "$ATTESTATIONS" | jq '.' | head -40
 
+          COCKPIT_ATTESTATIONS=$(npm view "@aiwg/cockpit@${VERSION}" --json 2>/dev/null | jq -r '.dist.attestations // empty')
+          if [ -z "$COCKPIT_ATTESTATIONS" ]; then
+            echo "✗ No provenance attestation found for @aiwg/cockpit@${VERSION} on npmjs.org"
+            exit 1
+          fi
+          echo "✓ Provenance attestation present for @aiwg/cockpit@${VERSION}"
+
       - name: Verify dist-tag points at this version
         # Defense-in-depth against the dist-tag drift the Gitea workflow
         # was hardened against (#1247, #1280). Even on first OIDC publish
@@ -385,6 +412,19 @@ jobs:
             sleep 10
             if [ "$i" = "5" ]; then
               echo "✗ dist-tag verification exhausted retries (aiwg@${NPM_TAG} did not resolve to ${VERSION})"
+              exit 1
+            fi
+          done
+          for i in 1 2 3 4 5; do
+            CURRENT=$(npm view "@aiwg/cockpit@${NPM_TAG}" version 2>/dev/null || echo "")
+            if [ "$CURRENT" = "$VERSION" ]; then
+              echo "✓ @aiwg/cockpit@${NPM_TAG} = ${VERSION} on npmjs.org"
+              break
+            fi
+            echo "Attempt $i: @aiwg/cockpit@${NPM_TAG} = ${CURRENT:-<missing>}, expected ${VERSION}; retrying in 10s..."
+            sleep 10
+            if [ "$i" = "5" ]; then
+              echo "✗ dist-tag verification exhausted retries (@aiwg/cockpit@${NPM_TAG} did not resolve to ${VERSION})"
               exit 1
             fi
           done

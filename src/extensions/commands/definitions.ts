@@ -253,6 +253,41 @@ export const useCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const cockpitCommand: Extension = {
+  id: 'cockpit',
+  type: 'command',
+  name: 'Cockpit',
+  description: 'Launch the opt-in AIWG Cockpit control plane',
+  version: '1.0.0',
+  capabilities: ['cli', 'cockpit', 'control-plane'],
+  keywords: ['cockpit', 'control plane', 'operator wall', 'ui'],
+  category: 'utility',
+  platforms: {
+    claude: 'full',
+    copilot: 'full',
+    factory: 'full',
+    cursor: 'full',
+    windsurf: 'full',
+    openclaw: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '[--install|--status] [cockpit args...]',
+    allowedTools: ['Bash'],
+    executionSteps: [
+      'Check whether @aiwg/cockpit is installed in the user Cockpit home',
+      'Verify the opt-in package version matches the core aiwg package',
+      'Launch the Cockpit bridge entrypoint, or show the acquisition command if absent',
+    ],
+  } satisfies CommandMetadata,
+};
+
 export const listCommand: Extension = {
   id: 'list',
   type: 'skill',
@@ -3177,6 +3212,7 @@ export const commandDefinitions: Extension[] = [
 
   // Framework (6)
   useCommand,
+  cockpitCommand,
   listCommand,
   removeCommand,
   promoteCommand,

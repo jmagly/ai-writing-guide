@@ -53,6 +53,7 @@ function displayHelp(): void {
 
   helpGroup('FRAMEWORK', [
     ['use <framework>', 'Deploy framework (sdlc, marketing, media-curator, research, forensics, security-engineering, ops, knowledge-base, all)'],
+    ['use cockpit', 'Install the opt-in @aiwg/cockpit package outside the base aiwg footprint'],
     ['list', 'List installed frameworks and addons'],
     ['remove <id>', 'Remove a framework or addon'],
   ]);
@@ -98,6 +99,7 @@ function displayHelp(): void {
 
   helpGroup('FEATURES', [
     ['features', 'Show optional feature install status'],
+    ['cockpit [--status]', 'Launch the opt-in AIWG Cockpit control plane'],
   ]);
 
   helpGroup('VALIDATION', [
@@ -148,6 +150,8 @@ function displayHelp(): void {
   ui.blank();
   console.log(`  ${ui.dimText('Examples:')}`);
   console.log(`    aiwg use sdlc                   ${ui.dimText('Install SDLC framework')}`);
+  console.log(`    aiwg use cockpit                ${ui.dimText('Install opt-in Cockpit package')}`);
+  console.log(`    aiwg cockpit                    ${ui.dimText('Launch Cockpit after install')}`);
   console.log(`    aiwg discover "deploy"          ${ui.dimText('Find skills by capability')}`);
   console.log(`    aiwg show skill intake-wizard   ${ui.dimText('Stream a skill body')}`);
   console.log(`    aiwg doctor                     ${ui.dimText('Check installation health')}`);
