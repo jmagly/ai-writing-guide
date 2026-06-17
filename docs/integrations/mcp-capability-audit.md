@@ -1,6 +1,6 @@
 # AIWG MCP Capability Audit
 
-Status: v2026.5.13 audit pass for #1533
+Status: v2026.6.1 re-audit pass for #1584
 
 AIWG's MCP server is a provider-agnostic optional hook. The baseline integration path for every provider is file deployment plus the CLI bridge: `aiwg discover` to find a capability and `aiwg show <type> <name>` to fetch it. MCP adds structured, model-callable access to the same catalog and to selected project operations, but no provider should depend on MCP for basic AIWG reachability.
 
@@ -24,10 +24,12 @@ The default `aiwg mcp serve` surface currently registers 16 tools:
 
 ### Opt-in toolsets
 
-`AIWG_MCP_TOOLSETS` or `aiwg mcp serve --toolsets=<csv>` enables 45 additional tools:
+`AIWG_MCP_TOOLSETS` or `aiwg mcp serve --toolsets=<csv>` enables 51 additional tools:
 
 | Toolset | Tools | Count | Boundary decision |
 |---|---:|---:|---|
+| `flows` | `flow-list`, `flow-show`, `flow-run` | 3 | Declarative YAML Flows are headline orchestration primitives, but `flow-run` can lead to project mutation and shell execution, so this stays opt-in |
+| `missions` | `mission-guide`, `mission-dispatch`, `mission-status` | 3 | AIWG Mission is distinct from low-level `mc-*`; dispatch is long-running/cross-stack capable, so this stays opt-in |
 | `memory` | `memory-*`, `reflections-*` list/get/put/delete/path | 10 | Project state, off by default because it writes persistent memory |
 | `kb` | `kb-*` list/get/put/delete/path | 5 | Knowledge-base state, off by default because it can be large and writeable |
 | `research` | `provenance-*`, `research-store-*` list/get/put/delete/path | 10 | Research corpus/provenance state, opt-in by domain |
@@ -38,6 +40,21 @@ The default `aiwg mcp serve` surface currently registers 16 tools:
 | `ops` | status/list/use/push | 4 | Operational workspace actions; push is shared-state affecting |
 
 `core` is always implicit. `all` expands to all opt-in toolsets. Unknown toolset names warn and are skipped rather than aborting server startup.
+
+## CLI to MCP Coverage Matrix
+
+This re-audit keeps the default core lean and classifies the post-#1533 surfaces as follows:
+
+| Surface | MCP status | Decision |
+|---|---|---|
+| Declarative YAML Flows (`agentic/code/frameworks/*/flows/*.playbook.yaml`) | First-class through opt-in `flows` toolset | `flow-list` and `flow-show` expose the YAML source of truth; `flow-run` is confirmation-gated and returns the playbook plus wrapper skill for host execution until a standalone `aiwg flow` executor exists |
+| AIWG Mission (`aiwg-mission` kernel skill) | First-class through opt-in `missions` toolset | `mission-guide` fetches the primitive; `mission-dispatch` delegates durable execution to `aiwg mc dispatch`; `mission-status` reads through `aiwg mc status` |
+| Legacy Mission Control (`aiwg mc`) | First-class through opt-in `mc` toolset | Remains the low-level durable session substrate; not merged with `missions` because the abstractions are intentionally different |
+| `run skill` | Command-run only | Kept behind `command-run` because it executes script-bearing skills and already has argv/confirmation controls |
+| `status` / `doctor` | Command-run only | Read-heavy diagnostic commands; no extra first-class schema justified yet |
+| New/renamed CLI commands (`fanout`, `chunk`, `corpus`, `wizard`, `session`, `repo-access`, `features`, `feedback`, `address-issues`, `issue-audit`, `diagnose`, `doc-consolidate`, `best-practices-audit`, `skill-lint`, `agentcard`, `packages`, `local-executor`) | Command-run allow-listed | Unit coverage now compares `loadCommandAllowList()` with the TypeScript command registry so additions fail on drift |
+| agentskills.io import/validation (#1569) | Not a separate MCP source yet | Standard-conforming skills should surface through the existing `skill-list`, `skill-show`, `discover`, and `command-run` paths after they enter the AIWG artifact corpus |
+| Browser-consumable index export (#1578) | CLI/index toolset boundary | Existing `index-*` MCP tools cover build/query/deps/stats. Browser export remains CLI/API surface until a stable export command needs a schema wrapper |
 
 ## Provider-Agnostic Positioning
 
@@ -85,8 +102,8 @@ Decision: keep MCP optional and lean by default. Do not move baseline rule or sk
 
 ## Recommendations
 
-- Keep the 16-tool core for now, but treat `workflow-run` as deprecated compatibility debt and remove it only in a major compatibility window.
+- Keep the 16-tool core for now, but treat `workflow-run` as deprecated compatibility debt. With `flows` and `missions` now available as opt-in first-class toolsets, schedule removal of `workflow-run` for the next major compatibility window.
 - Keep `command-run` in core; it is the structured equivalent of the CLI bridge and preserves one canonical execution path.
-- Keep memory, research, activity-log, index, ralph, mc, and ops outside core because they expand schema size, touch project state, or trigger long-running/shared-state operations.
+- Keep flows, missions, memory, research, activity-log, index, ralph, mc, and ops outside core because they expand schema size, touch project state, or trigger long-running/shared-state operations.
 - Update provider docs that still say MCP is required or that only the legacy five-tool surface exists.
 - Re-measure schema token cost after each toolset change and publish the core/all count in release notes.

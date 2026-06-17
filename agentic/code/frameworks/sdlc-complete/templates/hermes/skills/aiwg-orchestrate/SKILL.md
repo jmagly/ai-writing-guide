@@ -24,7 +24,7 @@ Do NOT use for one-off questions, short tasks, or conversational replies.
 ## Procedure
 
 1. Confirm the task needs a persistent AIWG artifact
-2. Identify the workflow: `workflow-run` with the appropriate workflow name
+2. Identify the workflow through `discover` / `flow-list`; execute through `command-run` or the opt-in Flow tools
 3. Use `delegate_task` to isolate the AIWG interaction:
 
 ```

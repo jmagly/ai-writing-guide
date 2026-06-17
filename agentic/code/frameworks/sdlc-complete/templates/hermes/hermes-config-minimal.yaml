@@ -1,8 +1,9 @@
 # Hermes Agent + AIWG — Minimal MCP Configuration
 #
 # This config connects AIWG as an MCP sidecar.
-# AIWG exposes exactly 5 tools: workflow-run, artifact-read, artifact-write,
-# template-render, agent-list. Schema overhead: ~3,000 tokens.
+# AIWG exposes a 16-tool core by default, including discover, command-run,
+# artifact-read/write, template tools, and catalog list/show pairs. Enable
+# Flow/Mission tools explicitly with AIWG_MCP_TOOLSETS=flows,missions.
 #
 # Architecture: Hermes (host) → MCP → AIWG (sidecar)
 # Hermes owns: conversation, memory, sessions

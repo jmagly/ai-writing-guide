@@ -71,7 +71,8 @@ For optimal context usage, limit the exposed tools. Edit `.cursor/mcp.json`:
       "args": ["mcp", "serve"],
       "tools": {
         "include": [
-          "workflow-run",
+          "discover",
+          "command-run",
           "artifact-read",
           "artifact-write",
           "template-render",
@@ -85,7 +86,7 @@ For optimal context usage, limit the exposed tools. Edit `.cursor/mcp.json`:
 }
 ```
 
-**Why whitelist?** Each MCP tool adds schema overhead to the context window. The 5-tool whitelist keeps AIWG's footprint to ~3,000 tokens (vs. ~12,000+ with full surface).
+**Why whitelist?** Each MCP tool adds schema overhead to the context window. The lean whitelist keeps AIWG's footprint bounded while preserving discovery, CLI dispatch, artifact IO, templates, and agents.
 
 > **Cursor 2.4+**: Agents now discover and load MCPs only when needed, reducing token usage automatically. The whitelist is still recommended for explicit control.
 
@@ -98,7 +99,7 @@ A pre-configured template is available at `agentic/code/frameworks/sdlc-complete
 1. Restart Cursor (or reload the project)
 2. Open the AI panel
 3. Ask: "What AIWG tools are available?"
-4. Cursor should list the 5 whitelisted tools
+4. Cursor should list the lean whitelisted tools
 
 ---
 
@@ -112,7 +113,7 @@ Create an architecture decision record for choosing REST over GraphQL for our AP
 
 **What should happen:**
 
-1. Cursor calls `workflow-run` or `artifact-write` via MCP
+1. Cursor calls `command-run`, `template-render`, or `artifact-write` via MCP
 2. AIWG creates the artifact in `.aiwg/architecture/`
 3. Cursor receives the result
 
@@ -128,12 +129,12 @@ ls .aiwg/architecture/
 
 Understanding the token budget helps you configure the whitelist appropriately.
 
-### With 5-tool whitelist (recommended)
+### With lean whitelist (recommended)
 
 | Component | Tokens |
 |---|---|
 | Cursor system prompt | ~2,000 |
-| AIWG MCP schema (5 tools) | ~3,000 |
+| AIWG MCP schema (lean tools) | bounded |
 | **Total AIWG overhead** | **~3,000** |
 
 ### Without whitelist (full surface)
@@ -141,10 +142,10 @@ Understanding the token budget helps you configure the whitelist appropriately.
 | Component | Tokens |
 |---|---|
 | Cursor system prompt | ~2,000 |
-| AIWG MCP schema (20+ tools) | ~12,000 |
+| AIWG MCP schema (core + opt-in toolsets) | larger |
 | **Total AIWG overhead** | **~12,000** |
 
-The 5-tool whitelist is a 75% reduction in MCP context overhead, leaving significantly more room for code, conversation, and artifact content.
+The lean whitelist materially reduces MCP context overhead, leaving more room for code, conversation, and artifact content. Enable `AIWG_MCP_TOOLSETS=flows` when you need `flow-list`, `flow-show`, and `flow-run`.
 
 ---
 
@@ -160,7 +161,8 @@ After the basic integration is stable, enable AIWG workflow prompts for richer a
       "args": ["mcp", "serve"],
       "tools": {
         "include": [
-          "workflow-run",
+          "discover",
+          "command-run",
           "artifact-read",
           "artifact-write",
           "template-render",
@@ -184,7 +186,7 @@ Only enable prompts after Part 4 is working reliably.
 
 | Check | Action | Expected |
 |---|---|---|
-| Connectivity | Ask Cursor "list AIWG tools" | 5 tools listed |
+| Connectivity | Ask Cursor "list AIWG tools" | Lean tools listed |
 | Artifact write | Ask for a requirements doc | File appears in `.aiwg/` |
 | Artifact read | Ask to read an artifact | Uses `artifact-read` |
 | Failure mode | Stop `aiwg mcp serve`, try again | Graceful error message |

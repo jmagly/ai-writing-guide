@@ -1181,19 +1181,19 @@ Start the AIWG MCP server.
 
 ```bash
 aiwg mcp serve
-aiwg mcp serve --toolsets=memory,kb,ralph    # opt-in toolsets
-aiwg mcp serve --toolsets=all                # everything (61 tools, including deprecated compatibility tools)
+aiwg mcp serve --toolsets=flows,missions,ralph    # opt-in toolsets
+aiwg mcp serve --toolsets=all                      # everything (67 tools, including deprecated compatibility tools)
 ```
 
 **Options:**
 
-- `--toolsets <csv>` — Enable opt-in subsystem toolsets (overrides `AIWG_MCP_TOOLSETS` env var). Known: `memory`, `kb`, `research`, `activity-log`, `index`, `ralph`, `mc`, `ops`, `all`. The `core` set is always on.
+- `--toolsets <csv>` — Enable opt-in subsystem toolsets (overrides `AIWG_MCP_TOOLSETS` env var). Known: `flows`, `missions`, `memory`, `kb`, `research`, `activity-log`, `index`, `ralph`, `mc`, `ops`, `all`. The `core` set is always on.
 
 **Actions:**
 
 - Starts stdio-based MCP server
 - Exposes 16 core tools by default (discover, *-list/*-show pairs, command-run, artifact-read/write, and deprecated workflow-run compatibility)
-- Additional 45 tools available via opt-in toolsets
+- Additional 51 tools available via opt-in toolsets
 - Supports Claude Desktop, Cursor, Factory, Hermes (as MCP sidecar)
 
 **Default surface (16 tools; schema cost should be re-measured after tool changes)**:

@@ -145,11 +145,14 @@ When connected, Factory droids gain access to AIWG MCP tools:
 
 | Tool | Purpose |
 |---|---|
-| `workflow-run` | Execute AIWG workflows |
+| `discover` | Find AIWG capabilities |
+| `command-run` | Execute allow-listed AIWG CLI commands |
 | `artifact-read` | Read from `.aiwg/` artifact directory |
 | `artifact-write` | Write to `.aiwg/` artifact directory |
 | `template-render` | Render AIWG templates |
 | `agent-list` | List available agents |
+
+`workflow-run` remains registered only as a deprecated compatibility stub. Enable `AIWG_MCP_TOOLSETS=flows,missions` for first-class Flow and Mission tools.
 
 ---
 

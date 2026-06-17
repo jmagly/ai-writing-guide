@@ -157,25 +157,25 @@ on default startup — discovery (`discover`, `*-list`/`*-show` pairs for
 skill/command/rule/agent/template), the allow-listed `command-run`, plus
 the artifact read/write surface. Schema footprint stays under 2.5K tokens.
 
-Beyond the core, 45 additional tools are available as **opt-in
+Beyond the core, 51 additional tools are available as **opt-in
 toolsets** controlled by the `AIWG_MCP_TOOLSETS` env var or the
 `--toolsets` flag:
 
 ```bash
 # Enable specific toolsets at startup
-AIWG_MCP_TOOLSETS=memory,kb,ralph aiwg mcp serve
+AIWG_MCP_TOOLSETS=flows,missions,ralph aiwg mcp serve
 
 # Or via CLI flag
-aiwg mcp serve --toolsets=memory,kb,ralph
+aiwg mcp serve --toolsets=flows,missions,ralph
 
-# Or everything (61 tools total, including deprecated compatibility tools)
+# Or everything (67 tools total, including deprecated compatibility tools)
 aiwg mcp serve --toolsets=all
 ```
 
-Known toolsets: `memory`, `kb`, `research` (provenance + research-store),
-`activity-log`, `index`, `ralph`, `mc`, `ops`. The `core` set is always
-on; listing it explicitly is harmless. Unknown toolsets log a warning and
-are skipped (non-fatal).
+Known toolsets: `flows`, `missions`, `memory`, `kb`, `research`
+(provenance + research-store), `activity-log`, `index`, `ralph`, `mc`,
+`ops`. The `core` set is always on; listing it explicitly is harmless.
+Unknown toolsets log a warning and are skipped (non-fatal).
 
 ### Tool name mangling
 
@@ -193,8 +193,8 @@ hermes chat "What AIWG tools are available?"
 ```
 
 The default core toolset registers 16 tools; with all toolsets enabled
-Hermes sees 61, including deprecated compatibility tools. If your output shows only the legacy 5 (workflow-run,
-artifact-read, artifact-write, template-render, agent-list), the
+Hermes sees 67, including deprecated compatibility tools. If your output shows only the legacy 5 (`workflow-run`,
+`artifact-read`, `artifact-write`, `template-render`, `agent-list`), the
 AIWG installation is stale — run `aiwg refresh` and `/reload-mcp` in
 your active chat.
 
@@ -255,7 +255,7 @@ AIWG connected through file-based deployment. Use `aiwg discover` and
 `aiwg show <type> <name>` for the on-demand catalog. Optional MCP tools are
 available via `aiwg mcp serve`: discover, skill-list/show, command-list/show/run,
 rule-list/show, agent-list/show, template-list/render/show, artifact-read/write.
-Opt-in via AIWG_MCP_TOOLSETS=memory,kb,ralph,mc,ops,...
+Opt-in via AIWG_MCP_TOOLSETS=flows,missions,memory,kb,ralph,mc,ops,...
 
 ## Route to AIWG When
 
@@ -427,7 +427,7 @@ Understanding the token budget helps configure Hermes for local hardware.
 
 ### With lean AGENTS.md (recommended)
 
-AIWG's MCP server exposes exactly 5 tools — no more, no less. Two variables affect overhead: AGENTS.md size and the AIWG kernel-skill set installed at `~/.hermes/skills/`.
+AIWG's MCP server exposes a 16-tool core by default. Two variables affect overhead: AGENTS.md size and the AIWG kernel-skill set installed at `~/.hermes/skills/`. Enable extra MCP schemas only when needed through `AIWG_MCP_TOOLSETS`.
 
 | Component | Tokens |
 |---|---|
@@ -435,7 +435,7 @@ AIWG's MCP server exposes exactly 5 tools — no more, no less. Two variables af
 | AGENTS.md (≤1,000 chars; AIWG-default thin pointer is ~580 chars / ~145 tokens) | ~250 |
 | MEMORY.md | ~800 |
 | USER.md | ~500 |
-| AIWG MCP schema (5 tools) | ~3,000 |
+| AIWG MCP schema (16-tool core) | moderate |
 | AIWG kernel skills at `~/.hermes/skills/` (6 skills post-rc.14 pivot) | ~1,200 |
 | `aiwg-orchestrate` skill (auto-installed, #1242) | ~150 |
 | **Total overhead** | **~7,400** |
@@ -455,7 +455,7 @@ Hermes loads exactly **one** project-context file per turn (priority order docum
 | `.hermes.md` at the 20K-char cap (head/tail truncation point) | ~5,000 |
 | MEMORY.md | ~800 |
 | USER.md | ~500 |
-| AIWG MCP schema (5 tools) | ~3,000 |
+| AIWG MCP schema (16-tool core) | moderate |
 | AIWG kernel skills | ~1,200 |
 | `aiwg-orchestrate` skill | ~150 |
 | **Total overhead** | **~12,150** |
@@ -500,7 +500,7 @@ Run these checks to confirm the integration is working:
 
 | Check | Command / Action | Expected |
 |---|---|---|
-| Connectivity | Ask Hermes "list AIWG tools" | 5 tools listed |
+| Connectivity | Ask Hermes "list AIWG tools" | Core tools listed |
 | Routing | Ask a one-off question | Hermes answers directly (no AIWG call) |
 | Routing | Ask for a requirements document | Routes to AIWG via MCP |
 | Artifact write | Check `.aiwg/` after workflow | New artifact file exists |
@@ -520,7 +520,7 @@ Hermes ships a multi-profile collaboration board with task lifecycle: `todo → 
 
 **Source**: `hermes_cli/kanban.py`, `hermes_cli/kanban_db.py`, design spec `docs/hermes-kanban-v1-spec.pdf`.
 
-**AIWG composition note**: `/kanban` is in-session task tracking; AIWG is for **persistent SDLC artifacts**. Use `/kanban` to coordinate the agent's day-to-day work flow inside one session. Use AIWG (`workflow-run`, `artifact-write`) to file durable use cases, architecture decisions, test plans, etc. into `.aiwg/`. They compose well: a kanban task ("Draft auth use cases") can call `aiwg-orchestrate` to actually produce the artifact, then mark itself complete with the artifact path in the comment.
+**AIWG composition note**: `/kanban` is in-session task tracking; AIWG is for **persistent SDLC artifacts**. Use `/kanban` to coordinate the agent's day-to-day work flow inside one session. Use AIWG (`command-run`, `artifact-write`, or opt-in `flow-run`) to file durable use cases, architecture decisions, test plans, etc. into `.aiwg/`. They compose well: a kanban task ("Draft auth use cases") can call `aiwg-orchestrate` to actually produce the artifact, then mark itself complete with the artifact path in the comment.
 
 ### `/handoff <platform>` — cross-platform session transfer
 
@@ -618,7 +618,7 @@ Hermes hosts plugins at `plugins/` (kanban, memory, observability, disk-cleanup,
 
 **Context filling up too fast:**
 - Check AGENTS.md character count (`wc -c AGENTS.md`) — keep under 1,000
-- AIWG MCP server exposes only 5 tools (~3,000 tokens) — check other MCP servers for bloat
+- AIWG MCP server exposes a lean core by default; check opt-in toolsets and other MCP servers for schema bloat
 - Use `delegate_task` for AIWG workflows to isolate context cost
 - Lower compression threshold to 0.30
 

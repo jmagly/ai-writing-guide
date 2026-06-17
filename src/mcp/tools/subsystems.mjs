@@ -16,6 +16,7 @@
 
 import { z } from 'zod';
 import { runAiwgCli, mcpError, mcpJson } from '../helpers.mjs';
+import { registerFlowToolset, registerMissionToolset } from './orchestration.mjs';
 
 /**
  * Wrap an `aiwg <subsystem> <verb>` CLI call as an MCP tool.
@@ -539,6 +540,8 @@ function registerOpsToolset(server) {
  * is always registered by server.mjs (discovery + command-run).
  */
 const TOOLSET_REGISTRY = {
+  flows: registerFlowToolset,
+  missions: registerMissionToolset,
   memory: (server) => {
     registerStorageSubsystem(server, STORAGE_SUBSYSTEMS.find(s => s.name === 'memory'));
     registerStorageSubsystem(server, STORAGE_SUBSYSTEMS.find(s => s.name === 'reflections'));
@@ -564,7 +567,7 @@ const TOOLSET_REGISTRY = {
  * implicit. Unknown names produce a warning but don't abort startup.
  *
  * Examples:
- *   AIWG_MCP_TOOLSETS=memory,kb,ralph
+ *   AIWG_MCP_TOOLSETS=flows,missions,ralph
  *   AIWG_MCP_TOOLSETS=core,memory          (core is implicit; harmless)
  *   AIWG_MCP_TOOLSETS=all                  (all known toolsets)
  */

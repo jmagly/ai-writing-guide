@@ -91,7 +91,8 @@ enabled = true
 # startup_timeout_sec = 10.0
 # tool_timeout_sec = 60.0
 # enabled_tools = [
-#   "workflow-run",
+#   "discover",
+#   "command-run",
 #   "artifact-read",
 #   "artifact-write",
 #   "template-render",

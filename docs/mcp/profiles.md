@@ -57,6 +57,14 @@ Installed by `aiwg mcp profile init-presets`. Do not overwrite existing profiles
 
 The `git-gitea` entries in `dev`, `ops`, and `incident` are task-profile choices available to all MCP-capable providers. Provider-specific allow/deny rules may restrict dangerous write tools, but they do not make Git MCP provider-specific.
 
+Profiles scope **external MCP servers** from the registry. AIWG's own server
+toolsets are controlled separately by `AIWG_MCP_TOOLSETS` or
+`aiwg mcp serve --toolsets=<csv>`. For example, first-class Flow/Mission tools
+come from `AIWG_MCP_TOOLSETS=flows,missions`, not from the `minimal/dev/ops`
+profile presets. Keep the two boundaries separate: profiles decide which
+servers are visible; toolsets decide which optional AIWG tools that one server
+registers.
+
 ## Profile Management
 
 ### Create a profile

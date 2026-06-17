@@ -128,7 +128,7 @@ MCP is GA in VS Code. Configure servers in `.vscode/mcp.json`:
 }
 ```
 
-Once configured, Copilot agent mode can call AIWG MCP tools (`workflow-run`, `artifact-read`, etc.) directly.
+Once configured, Copilot agent mode can call AIWG MCP tools (`discover`, `command-run`, `artifact-read`, etc.) directly.
 
 ### Coding Agent
 

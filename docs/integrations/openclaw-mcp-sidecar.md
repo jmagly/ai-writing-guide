@@ -66,14 +66,15 @@ mcp_servers:
     args: ["mcp", "serve"]
     tools:
       include:
-        - workflow-run
+        - discover
+        - command-run
         - artifact-read
         - artifact-write
         - template-render
         - agent-list
 ```
 
-**Why whitelist?** Each MCP tool adds schema overhead to the context window. The 5-tool whitelist keeps AIWG's footprint to ~3,000 tokens (vs. ~12,000+ with full surface).
+**Why whitelist?** Each MCP tool adds schema overhead to the context window. The lean whitelist keeps discovery, CLI dispatch, artifact IO, templates, and agents available without enabling every opt-in subsystem.
 
 ---
 
@@ -100,7 +101,7 @@ Create an architecture decision record for choosing REST over GraphQL for our AP
 
 **What should happen:**
 
-1. OpenClaw calls `workflow-run` or `artifact-write` via MCP
+1. OpenClaw calls `command-run`, `template-render`, or `artifact-write` via MCP
 2. AIWG creates the artifact in `.aiwg/architecture/`
 3. OpenClaw receives the result
 
@@ -121,7 +122,7 @@ Understanding the token budget helps you configure the whitelist appropriately.
 | Component | Tokens |
 |---|---|
 | OpenClaw system prompt | ~2,000 |
-| AIWG MCP schema (5 tools) | ~3,000 |
+| AIWG MCP schema (lean tools) | bounded |
 | **Total AIWG overhead** | **~3,000** |
 
 ### Without whitelist (full surface)
@@ -154,7 +155,7 @@ When both modes are active, route requests based on complexity:
 
 | Check | Action | Expected |
 |---|---|---|
-| Connectivity | Ask OpenClaw "list AIWG tools" | 5 tools listed |
+| Connectivity | Ask OpenClaw "list AIWG tools" | Configured AIWG tools listed |
 | Artifact write | Ask for a requirements doc | File appears in `.aiwg/` |
 | Artifact read | Ask to read an artifact | Uses `artifact-read` |
 | Failure mode | Stop `aiwg mcp serve`, try again | Graceful error message |

@@ -5,7 +5,8 @@
       "args": ["mcp", "serve"],
       "tools": {
         "include": [
-          "workflow-run",
+          "discover",
+          "command-run",
           "artifact-read",
           "artifact-write",
           "template-render",

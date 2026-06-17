@@ -69,7 +69,8 @@ mcp_servers:
     args: ["mcp", "serve"]
     tools:
       include:
-        - workflow-run
+        - discover
+        - command-run
         - artifact-read
         - artifact-write
         - template-render
@@ -93,7 +94,7 @@ You should see the whitelisted tools available in your OpenClaw session.
 
 ```
 You: Run a workflow to create an architecture decision record
-OpenClaw: [calls aiwg workflow-run → creates .aiwg/architecture/adr-001.md]
+OpenClaw: [calls aiwg command-run/template-render/artifact-write → creates .aiwg/architecture/adr-001.md]
 ```
 
 ### Option C: Both (recommended)

@@ -5,7 +5,7 @@
 #
 # Prerequisites:
 #   1. hermes-config-minimal.yaml is working
-#   2. You have verified artifact-read/write and workflow-run
+#   2. You have verified discover, command-run, and artifact-read/write
 #   3. You understand the token cost implications
 
 mcp_servers:

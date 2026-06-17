@@ -162,7 +162,8 @@ args = ["mcp", "serve"]
 startup_timeout_sec = 10.0
 tool_timeout_sec = 60.0
 enabled_tools = [
-  "workflow-run",
+  "discover",
+  "command-run",
   "artifact-read",
   "artifact-write",
   "template-render",
@@ -410,7 +411,9 @@ CORE TOOLS (16, always registered):
   artifact-read / artifact-write    Project .aiwg/ artifact IO
   workflow-run                      DEPRECATED compatibility stub; use command-run
 
-OPT-IN TOOLSETS (45 additional tools):
+OPT-IN TOOLSETS (51 additional tools):
+  flows          flow-list / flow-show / flow-run
+  missions       mission-guide / mission-dispatch / mission-status
   memory         memory-* and reflections-* storage operations
   kb             kb-* storage operations
   research       provenance-* and research-store-* storage operations
@@ -421,7 +424,7 @@ OPT-IN TOOLSETS (45 additional tools):
   ops            status / list / use / push
 
 Enable opt-in tools:
-  AIWG_MCP_TOOLSETS=memory,kb,ralph aiwg mcp serve
+  AIWG_MCP_TOOLSETS=flows,missions,memory,kb,ralph aiwg mcp serve
   aiwg mcp serve --toolsets=all
 
 RESOURCES:

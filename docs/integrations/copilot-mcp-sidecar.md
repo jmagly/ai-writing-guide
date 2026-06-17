@@ -70,7 +70,7 @@ For servers requiring authentication, use input variables:
 ### What MCP Enables
 
 Once configured, Copilot agent mode can:
-- Call AIWG tools (`workflow-run`, `artifact-read`, `project-status`, etc.)
+- Call AIWG tools (`discover`, `command-run`, `artifact-read`, etc.)
 - Use MCP prompts (invokable as `/mcp.aiwg.promptname`)
 - Access MCP resources for context
 - Chain multiple MCP servers together
@@ -161,10 +161,10 @@ aiwg mcp info
 ### Exposed Tools
 
 The AIWG MCP server exposes tools for:
-- Workflow execution (`workflow-run`, `workflow-status`)
-- Artifact management (`artifact-read`, `artifact-write`, `artifact-list`)
-- Project status (`project-status`, `phase-info`)
-- Issue management (via configured provider)
+- Discovery and CLI dispatch (`discover`, `command-run`)
+- Artifact management (`artifact-read`, `artifact-write`)
+- Catalog lookup (`skill-*`, `command-*`, `rule-*`, `agent-*`, `template-*`)
+- Optional Flow and Mission tools when `AIWG_MCP_TOOLSETS=flows,missions`
 
 ---
 

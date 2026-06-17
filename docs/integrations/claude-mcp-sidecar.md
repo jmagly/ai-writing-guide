@@ -31,8 +31,8 @@ Claude Code (host)
   ├── --dangerously-skip-permissions (permission layer)
   └── MCP connection (tooling layer)
         └── AIWG MCP Server (sidecar)
+              ├── discover / command-run
               ├── artifact-read / artifact-write
-              ├── workflow-run
               ├── template-render
               └── agent-list
 ```
@@ -67,7 +67,7 @@ This creates or merges into `.claude/settings.local.json`:
 
 Restart Claude Code, then ask: "What AIWG MCP tools are available?"
 
-Claude Code should list the 5 whitelisted tools.
+Claude Code should list the AIWG core tools.
 
 ### Step 3: Use Both Layers Together
 
@@ -86,11 +86,14 @@ Without the sidecar, Claude Code can read and write files directly but has no st
 
 | Tool | Purpose |
 |---|---|
+| `discover` | Find AIWG skills, commands, rules, agents, and Flow wrapper skills |
+| `command-run` | Invoke allow-listed AIWG CLI commands programmatically |
 | `artifact-read` | Structured read from `.aiwg/` with schema validation |
 | `artifact-write` | Structured write to `.aiwg/` with schema validation |
-| `workflow-run` | Invoke AIWG flow commands programmatically |
 | `template-render` | Fill AIWG templates with project context |
 | `agent-list` | Discover and invoke specialized agents by role |
+
+`workflow-run` remains a deprecated compatibility stub. For first-class YAML Flow tools, start the server with `AIWG_MCP_TOOLSETS=flows` and allow `flow-list`, `flow-show`, and `flow-run`.
 
 ---
 
@@ -137,7 +140,7 @@ Claude Code calls `template-render` to generate the document and `artifact-write
 
 | Check | Action | Expected |
 |---|---|---|
-| MCP connection | Ask "list AIWG tools" | 5 tools listed |
+| MCP connection | Ask "list AIWG tools" | AIWG core tools listed |
 | Artifact write | Ask to create an ADR | File appears in `.aiwg/architecture/` |
 | Permission layer | Edit a file outside `.aiwg/` | No permission prompt (with `--dangerous`) |
 | Combined | Run a workflow that reads requirements and writes code | Both layers work together |

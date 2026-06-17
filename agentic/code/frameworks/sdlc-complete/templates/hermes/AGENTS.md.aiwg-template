@@ -1,6 +1,6 @@
 # AIWG Integration
 
-AIWG connected via MCP (`aiwg mcp serve`). Tools: workflow-run, artifact-read, artifact-write, template-render, agent-list.
+AIWG connected via MCP (`aiwg mcp serve`). Core tools include discover, command-run, artifact-read/write, template-render, and agent-list/show. Use `AIWG_MCP_TOOLSETS=flows,missions` for first-class Flow and Mission tools.
 
 {{REMOTES_TOPOLOGY}}
 ## Route to AIWG When

@@ -88,7 +88,8 @@ The default config connects to the full AIWG MCP surface. Restrict to the five c
       "args": ["mcp", "serve"],
       "tools": {
         "include": [
-          "workflow-run",
+          "discover",
+          "command-run",
           "artifact-read",
           "artifact-write",
           "template-render",
@@ -102,7 +103,7 @@ The default config connects to the full AIWG MCP surface. Restrict to the five c
 }
 ```
 
-**Why this whitelist:** Each MCP server exposes its tool schemas into the Cascade context window before any tool is called. The full AIWG surface adds roughly 12,000 tokens of schema overhead. A 5-tool whitelist reduces that to approximately 3,000 tokens — keeping most of the context window available for actual work. See the [Context Budget](#context-budget) section for the full breakdown.
+**Why this whitelist:** Each MCP server exposes its tool schemas into the Cascade context window before any tool is called. The lean whitelist keeps discovery, CLI dispatch, artifact IO, templates, and agents available without enabling every opt-in subsystem. See the [Context Budget](#context-budget) section for the full breakdown.
 
 A ready-to-use minimal config template is available at `agentic/code/frameworks/sdlc-complete/templates/windsurf/windsurf-mcp-minimal.json`.
 
@@ -116,7 +117,7 @@ After restarting Windsurf, ask Cascade to confirm the tools are available:
 What AIWG MCP tools are available?
 ```
 
-Cascade should list the five whitelisted tools: `workflow-run`, `artifact-read`, `artifact-write`, `template-render`, `agent-list`.
+Cascade should list the lean whitelisted tools, including `discover`, `command-run`, `artifact-read`, `artifact-write`, `template-render`, and `agent-list`.
 
 **Verify AIWG MCP server runs independently:**
 
@@ -141,7 +142,7 @@ for our user service. Save it as a persistent AIWG artifact.
 **What should happen:**
 
 1. Cascade recognizes this as a structured artifact request
-2. Cascade calls `workflow-run` or `artifact-write` via MCP
+2. Cascade calls `command-run`, `template-render`, or `artifact-write` via MCP
 3. AIWG creates the artifact in `.aiwg/architecture/`
 4. Cascade reports the result
 
@@ -159,13 +160,13 @@ You should see the new ADR file.
 
 Understanding the token footprint helps you configure the whitelist for your needs.
 
-### With 5-tool whitelist (recommended)
+### With lean whitelist (recommended)
 
 | Component | Tokens |
 |---|---|
 | Cascade system context | ~2,000 |
 | AGENTS.md (aggregated agents) | ~3,500 |
-| AIWG MCP schema (5 tools) | ~3,000 |
+| AIWG MCP schema (lean tools) | bounded |
 | **Total overhead** | **~8,500** |
 | **Available for work** (128K context) | **~119,500 (93%)** |
 
@@ -175,7 +176,7 @@ Understanding the token footprint helps you configure the whitelist for your nee
 |---|---|
 | Cascade system context | ~2,000 |
 | AGENTS.md (aggregated agents) | ~3,500 |
-| AIWG MCP schema (20+ tools) | ~12,000 |
+| AIWG MCP schema (core + opt-in toolsets) | larger |
 | **Total overhead** | **~17,500** |
 | **Available for work** (128K context) | **~110,500 (86%)** |
 
@@ -197,7 +198,8 @@ After the basic integration is stable, you can enable AIWG prompt exposure for r
       "args": ["mcp", "serve"],
       "tools": {
         "include": [
-          "workflow-run",
+          "discover",
+          "command-run",
           "artifact-read",
           "artifact-write",
           "template-render",
@@ -223,7 +225,7 @@ Run these checks to confirm the integration is working:
 
 | Check | Action | Expected |
 |---|---|---|
-| Connectivity | Ask "What AIWG tools are available?" | 5 tools listed |
+| Connectivity | Ask "What AIWG tools are available?" | Lean tools listed |
 | Routing (direct) | Ask a one-off question | Cascade answers directly (no MCP call) |
 | Routing (artifact) | Ask for a requirements document | Routes to AIWG via MCP |
 | Artifact write | Check `.aiwg/` after workflow | New artifact file exists |
@@ -250,7 +252,7 @@ Run these checks to confirm the integration is working:
 **Context growing too fast:**
 
 - Confirm `prompts: false` and `resources: false` in the MCP config
-- Keep the whitelist to 5 tools unless you have a specific reason to add more
+- Keep the whitelist lean unless you have a specific reason to add more tools or toolsets
 
 **Config location not found:**
 

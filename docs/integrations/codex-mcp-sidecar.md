@@ -33,8 +33,8 @@ Codex CLI (host)
   ├── --full-auto (permission layer)
   └── MCP connection (tooling layer)
         └── AIWG MCP Server (sidecar)
+              ├── discover / command-run
               ├── artifact-read / artifact-write
-              ├── workflow-run
               ├── template-render
               └── agent-list
 ```
@@ -58,7 +58,8 @@ args = ["mcp", "serve"]
 startup_timeout_sec = 10.0
 tool_timeout_sec = 60.0
 enabled_tools = [
-  "workflow-run",
+  "discover",
+  "command-run",
   "artifact-read",
   "artifact-write",
   "template-render",
@@ -114,7 +115,7 @@ approval_mode = "auto"                     # "auto" | "prompt" | "approve"
 
 Start a Codex session and ask: "What AIWG MCP tools are available?"
 
-Codex should list the 5 whitelisted tools.
+Codex should list the lean whitelisted tools.
 
 ### Step 3: Use Both Layers Together
 
@@ -133,11 +134,14 @@ Without the sidecar, Codex can read and write files directly but has no structur
 
 | Tool | Purpose |
 |---|---|
+| `discover` | Find AIWG skills, commands, rules, agents, and Flow wrapper skills |
+| `command-run` | Invoke allow-listed AIWG CLI commands programmatically |
 | `artifact-read` | Structured read from `.aiwg/` with schema validation |
 | `artifact-write` | Structured write to `.aiwg/` with schema validation |
-| `workflow-run` | Invoke AIWG flow commands programmatically |
 | `template-render` | Fill AIWG templates with project context |
 | `agent-list` | Discover and invoke specialized agents by role |
+
+`workflow-run` remains a deprecated compatibility stub. For first-class YAML Flow tools, start the server with `AIWG_MCP_TOOLSETS=flows` and allow `flow-list`, `flow-show`, and `flow-run`.
 
 ---
 
@@ -211,7 +215,7 @@ Key fields:
 
 | Check | Action | Expected |
 |---|---|---|
-| MCP connection | Ask "list AIWG tools" | 5 tools listed |
+| MCP connection | Ask "list AIWG tools" | Lean core tools listed |
 | Artifact write | Ask to create an ADR | File appears in `.aiwg/architecture/` |
 | Permission layer | Run a command without approval | No prompt (with `--full-auto`) |
 | Combined | Run a workflow that reads requirements and writes code | Both layers work together |

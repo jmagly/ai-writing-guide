@@ -11,6 +11,7 @@
 import { describe, it, expect } from "vitest";
 // @ts-expect-error — .mjs untyped
 import * as helpers from "../../../src/mcp/helpers.mjs";
+import { getCommandIds } from "../../../src/extensions/commands/definitions";
 
 const {
   resolveProjectRoot,
@@ -72,6 +73,34 @@ describe("MCP helpers — allow-list loader", () => {
     expect(set.has("use")).toBe(true);
     expect(set.has("doctor")).toBe(true);
     expect(set.has("definitely-not-a-real-command")).toBe(false);
+  });
+
+  it("stays in sync with the TypeScript command registry", async () => {
+    const set = await loadCommandAllowList();
+    const registryIds = getCommandIds();
+
+    expect([...set].sort()).toEqual([...registryIds].sort());
+    for (const recent of [
+      "issue-audit",
+      "address-issues",
+      "fanout",
+      "chunk",
+      "corpus",
+      "wizard",
+      "session",
+      "repo-access",
+      "features",
+      "feedback",
+      "diagnose",
+      "doc-consolidate",
+      "best-practices-audit",
+      "skill-lint",
+      "agentcard",
+      "packages",
+      "local-executor",
+    ]) {
+      expect(set.has(recent), `${recent} should be command-run allow-listed`).toBe(true);
+    }
   });
 });
 

@@ -106,7 +106,7 @@ If Warp AI cannot see the tools, confirm that `aiwg` is accessible from the PATH
 
 ## Configure Tool Permissions
 
-The default connection exposes the full AIWG MCP surface. Restricting to the five core tools keeps Warp AI's context budget manageable and reduces unintended tool calls.
+The default connection exposes the full AIWG MCP surface. Restricting to a lean tool set keeps Warp AI's context budget manageable and reduces unintended tool calls.
 
 Warp controls MCP tool access through Agent Profile permissions, not a configuration file.
 
@@ -115,7 +115,8 @@ Warp controls MCP tool access through Agent Profile permissions, not a configura
 1. Open **Settings > AI > Agents > Profiles**
 2. Select the profile you use for AIWG work (or create a new one)
 3. Under the `aiwg` MCP server entry, configure an **allow list**:
-   - `workflow-run`
+   - `discover`
+   - `command-run`
    - `artifact-read`
    - `artifact-write`
    - `template-render`
@@ -125,7 +126,7 @@ Warp controls MCP tool access through Agent Profile permissions, not a configura
 
 Permissions are set per MCP server within each Agent Profile, so you can have different allow lists for different working contexts.
 
-**Why this allow list:** Each MCP server exposes its tool schemas into the Warp AI context window before any tool is called. The full AIWG surface adds significant schema overhead. A 5-tool allow list reduces that overhead substantially — keeping most of the context window available for actual work. See the [Context Budget](#context-budget) section for detail.
+**Why this allow list:** Each MCP server exposes its tool schemas into the Warp AI context window before any tool is called. A lean allow list reduces that overhead substantially while preserving discovery, CLI dispatch, artifact IO, templates, and agents. Enable `AIWG_MCP_TOOLSETS=flows` only when you need first-class Flow tools.
 
 ---
 
@@ -141,7 +142,7 @@ for our user service. Save it as a persistent AIWG artifact.
 **What should happen:**
 
 1. Warp AI recognizes this as a structured artifact request
-2. Warp AI calls `workflow-run` or `artifact-write` via MCP
+2. Warp AI calls `command-run`, `template-render`, or `artifact-write` via MCP
 3. AIWG creates the artifact in `.aiwg/architecture/`
 4. Warp AI reports the result
 
@@ -161,13 +162,13 @@ Understanding the token footprint helps you configure tool permissions for your 
 
 > **Note:** The token estimates below are approximations. Warp does not publish its context window sizes, and the actual limit depends on the AI model you have selected in Warp settings. The general principle holds regardless of the exact numbers: fewer exposed tools means more context available for actual work.
 
-### With 5-tool allow list (recommended)
+### With lean allow list (recommended)
 
 | Component | Estimated tokens |
 |---|---|
 | Warp AI system context | ~1,500 |
 | WARP.md (aggregated agents + commands) | ~4,000 |
-| AIWG MCP schema (5 tools) | ~3,000 |
+| AIWG MCP schema (lean tools) | bounded |
 | **Total overhead** | **~8,500** |
 | **Remaining for work** | larger share of available context |
 
@@ -177,7 +178,7 @@ Understanding the token footprint helps you configure tool permissions for your 
 |---|---|
 | Warp AI system context | ~1,500 |
 | WARP.md (aggregated agents + commands) | ~4,000 |
-| AIWG MCP schema (20+ tools) | ~12,000 |
+| AIWG MCP schema (core + opt-in toolsets) | larger |
 | **Total overhead** | **~17,500** |
 | **Remaining for work** | smaller share of available context |
 
@@ -251,7 +252,7 @@ Run these checks to confirm the integration is working:
 
 **Context growing too fast:**
 
-- Keep the allow list to 5 tools unless you have a specific reason to add more
+- Keep the allow list lean unless you have a specific reason to add more tools or toolsets
 - Disable prompts and resources in the MCP server settings if enabled
 - Keep WARP.md lean — avoid adding large blocks of project context to the aggregated file
 
