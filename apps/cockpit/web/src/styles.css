@@ -79,9 +79,13 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .warn-card { border-color:var(--warn); }
 .warn-card pre { margin:10px 0 0; }
 .wall-hero { display:grid; grid-template-columns:minmax(280px,1fr) auto; gap:18px; align-items:end; margin:4px 0 18px; }
+.wall-hero-compact { margin:0 0 10px; align-items:center; }
+.wall-hero-compact h2 { font-size:clamp(24px, 2.4vw, 34px); margin-bottom:6px; }
+.wall-hero-compact .lead { font-size:14px; line-height:1.45; max-width:620px; }
+.wall-hero-compact .hero-actions { align-items:center; }
 .hero-actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
 .operator-wall { min-height:calc(100vh - 130px); }
-.radial-wall { display:grid; grid-template-columns:minmax(620px,1.45fr) minmax(280px,.55fr); gap:18px; align-items:stretch; margin:14px 0 18px; }
+.radial-wall { display:grid; grid-template-columns:minmax(620px,1.45fr) minmax(280px,.55fr); gap:18px; align-items:stretch; margin:10px 0 18px; }
 .radial-map { position:relative; min-height:560px; border:1px solid rgba(147,197,253,.25); border-radius:8px; overflow:hidden; background:
   radial-gradient(circle at 50% 48%, rgba(94,234,212,.16), transparent 18%),
   linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.72)); }

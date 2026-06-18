@@ -76,7 +76,7 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
 
   return (
     <div className="welcome operator-wall">
-      <section className="wall-hero" aria-labelledby="cockpit-wall-title">
+      <section className={`wall-hero ${st?.connected ? 'wall-hero-compact' : ''}`} aria-labelledby="cockpit-wall-title">
         <div>
           <p className="eyebrow">Operator wall</p>
           <h2 id="cockpit-wall-title">Work alongside your agents</h2>
