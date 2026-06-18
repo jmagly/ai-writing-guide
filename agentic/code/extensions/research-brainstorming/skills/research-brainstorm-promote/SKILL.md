@@ -1,5 +1,7 @@
 ---
 name: research-brainstorm-promote
+namespace: research
+platforms: [all]
 description: Promote selected brainstorm material into structured research questions, acquisition targets, REF candidates, gap reports, or synthesis plans.
 ---
 

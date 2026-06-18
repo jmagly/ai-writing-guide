@@ -1,5 +1,7 @@
 ---
 name: research-brainstorm-map
+namespace: research
+platforms: [all]
 description: Render idea, question, and hypothesis maps from KB graph neighbors and brainstorming notes.
 ---
 

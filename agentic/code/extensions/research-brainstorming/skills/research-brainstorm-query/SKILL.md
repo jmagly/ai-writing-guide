@@ -1,5 +1,7 @@
 ---
 name: research-brainstorm-query
+namespace: research
+platforms: [all]
 description: Retrieve adjacent wiki/research context and produce exploratory synthesis for a brainstorm topic.
 ---
 

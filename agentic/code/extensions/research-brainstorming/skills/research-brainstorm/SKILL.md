@@ -1,5 +1,7 @@
 ---
 name: research-brainstorm
+namespace: research
+platforms: [all]
 description: Capture and expand free-form research thoughts into wiki memory without requiring REF-* structure.
 ---
 
