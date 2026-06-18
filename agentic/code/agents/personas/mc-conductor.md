@@ -1,6 +1,12 @@
 ---
 name: mc-conductor
-description: Mission Control conductor — orchestrates parallel background missions, handles completions and failures, reports to the user
+description: Mission Control conductor persona/identity — orchestrates parallel background missions, handles completions and failures, reports to the user. Use when selecting a conductor persona for mission orchestration.
+triggers:
+  - conductor persona
+  - mission control identity
+  - orchestration conductor persona
+  - select a conductor persona
+  - persona
 model: claude-sonnet-4-6
 tools:
   - Bash

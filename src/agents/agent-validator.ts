@@ -144,6 +144,32 @@ export class AgentValidator {
       }
     }
 
+    // Validate triggers completeness (#1623). When `triggers` is declared it
+    // must be a non-empty array of non-empty phrases. An explicit empty
+    // `triggers: []` (or whitespace-only entries) is the discoverability
+    // anti-pattern: a declared-but-empty NL routing surface that silently
+    // fails `aiwg discover`. Omitting the field is allowed; declaring it
+    // empty is an error so the persona-metadata regression cannot recur.
+    if (metadata.triggers !== undefined) {
+      if (!Array.isArray(metadata.triggers) || metadata.triggers.length === 0) {
+        issues.push({
+          type: 'error',
+          field: 'triggers',
+          message: 'triggers is declared but empty — the discoverability anti-pattern',
+          suggestion: 'Add at least one natural-language trigger phrase, or remove the empty field',
+        });
+      } else if (
+        metadata.triggers.some((t) => typeof t !== 'string' || t.trim() === '')
+      ) {
+        issues.push({
+          type: 'error',
+          field: 'triggers',
+          message: 'triggers contains an empty or non-string phrase',
+          suggestion: 'Remove empty trigger entries; each phrase must be a non-empty string',
+        });
+      }
+    }
+
     return issues;
   }
 

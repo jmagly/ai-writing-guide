@@ -2,7 +2,14 @@
 namespace: aiwg
 name: scaffold-extension
 platforms: [all]
-description: Create a new extension package inside an existing framework's extensions/ directory
+description: Create a new extension package inside an existing framework's extensions/ directory. Use when authoring an expansion (extension) for AIWG.
+triggers:
+  - author an expansion
+  - build an extension
+  - create an extension package
+  - expansion authoring
+  - scaffold extension
+  - new expansion
 ---
 
 # Scaffold Extension

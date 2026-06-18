@@ -267,7 +267,19 @@ export const SkillFrontmatterSchema = z.object({
   ).optional(),
   namespace: z.string().optional(),
   platforms: z.union([z.array(z.string()), z.string()]).optional(),
-  triggers: z.array(z.string()).optional(),
+  // Triggers, when declared, must be a non-empty array of non-empty phrases.
+  // An explicit `triggers: []` (or whitespace-only entries) is the
+  // discoverability anti-pattern (#1623): a declared-but-empty NL routing
+  // surface that silently fails `aiwg discover`. Omitting the field entirely
+  // stays valid — this guards the regression, it does not mandate triggers.
+  triggers: z
+    .array(
+      z
+        .string()
+        .refine((s) => s.trim().length > 0, { message: 'trigger phrases must be non-empty' }),
+    )
+    .min(1, 'triggers is declared but empty — add at least one phrase or remove the field (empty-triggers anti-pattern, #1623)')
+    .optional(),
   aliases: z.array(z.string()).optional(),
   deprecated_names: z.array(z.string()).optional(),
   tools: z.union([z.array(z.string()), z.string()]).optional(),

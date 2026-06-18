@@ -2,8 +2,14 @@
 namespace: aiwg
 name: scaffold-addon
 platforms: [all]
-description: Create a complete addon package structure inside agentic/code/addons/
-
+description: Create a complete addon package structure inside agentic/code/addons/. Use when authoring an expansion (addon) for AIWG.
+triggers:
+  - author an addon
+  - create an addon
+  - build an expansion addon
+  - addon authoring
+  - scaffold addon
+  - new expansion
 ---
 
 # Scaffold Addon

@@ -1,6 +1,13 @@
 ---
 name: aiwg-reviewer
-description: Code review persona focused on quality, security, and best practices
+description: Code review persona/identity focused on quality, security, and best practices. Use when selecting a reviewer persona for code or artifact review.
+triggers:
+  - reviewer persona
+  - code review identity
+  - review voice
+  - select a review persona
+  - persona
+  - soul
 model: claude-sonnet-4-6
 tools:
   - Read

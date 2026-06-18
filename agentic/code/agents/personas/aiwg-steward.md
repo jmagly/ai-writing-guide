@@ -1,6 +1,13 @@
 ---
 name: aiwg-steward
-description: Self-maintenance agent that uses AIWG CLI to keep the installation healthy, current, and correctly configured. Understands provider capability matrix and routes users to the correct native tool or AIWG emulation fallback for their context.
+description: Self-maintenance steward persona/identity that uses the AIWG CLI to keep the installation healthy, current, and correctly configured. Understands the provider capability matrix and routes users to the correct native tool or AIWG emulation fallback for their context.
+triggers:
+  - steward persona
+  - maintenance persona
+  - routing identity
+  - self-maintenance persona
+  - select a steward persona
+  - persona
 model: claude-sonnet-4-6
 tools:
   - Bash

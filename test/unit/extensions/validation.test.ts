@@ -22,6 +22,7 @@ import {
   SkillMetadataSchema,
   PlatformCompatibilitySchema,
   DeploymentConfigSchema,
+  validateSkillFrontmatter,
 } from '../../../src/extensions/validation.js';
 import { CLAUDE_MODELS } from '../../fixtures/models.js';
 import type { Extension } from '../../../src/extensions/types.js';
@@ -629,5 +630,46 @@ describe('Edge Cases', () => {
       },
     };
     expect(validateExtension(emptyPathTemplate).success).toBe(false, 'empty pathTemplate');
+  });
+});
+
+describe('validateSkillFrontmatter — empty-triggers guard (#1623)', () => {
+  it('fails on a declared-but-empty triggers array', () => {
+    const result = validateSkillFrontmatter({
+      name: 'scaffold-extension',
+      description: 'Create a new extension package',
+      triggers: [],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const msg = result.errors.issues.map((i) => i.message).join(' ');
+      expect(msg).toMatch(/empty-triggers|declared but empty/i);
+    }
+  });
+
+  it('fails when triggers contains a whitespace-only phrase', () => {
+    const result = validateSkillFrontmatter({
+      name: 'scaffold-extension',
+      description: 'Create a new extension package',
+      triggers: ['author an expansion', '   '],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('passes with a non-empty triggers array', () => {
+    const result = validateSkillFrontmatter({
+      name: 'scaffold-extension',
+      description: 'Create a new extension package',
+      triggers: ['author an expansion', 'build an extension'],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('passes when triggers is omitted entirely (guard targets empty, not absent)', () => {
+    const result = validateSkillFrontmatter({
+      name: 'some-skill',
+      description: 'A skill that does not declare triggers',
+    });
+    expect(result.success).toBe(true);
   });
 });

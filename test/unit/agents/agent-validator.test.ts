@@ -31,6 +31,53 @@ describe('AgentValidator', () => {
       expect(errors).toHaveLength(0);
     });
 
+    it('should error on a declared-but-empty triggers array (#1623 empty-triggers guard)', () => {
+      const metadata = {
+        name: 'aiwg-writer',
+        description: 'Documentation persona for technical writing and content creation',
+        model: 'claude-sonnet-4-6',
+        triggers: [],
+      } as unknown as AgentMetadata;
+
+      const issues = validator.validateMetadata(metadata);
+      const errors = issues.filter((i) => i.type === 'error');
+
+      expect(errors.some((e) => e.field === 'triggers')).toBe(true);
+    });
+
+    it('should error when triggers contains an empty/whitespace phrase', () => {
+      const metadata = {
+        name: 'aiwg-writer',
+        description: 'Documentation persona for technical writing and content creation',
+        model: 'claude-sonnet-4-6',
+        triggers: ['writer persona', '   '],
+      } as unknown as AgentMetadata;
+
+      const issues = validator.validateMetadata(metadata);
+      expect(issues.some((i) => i.type === 'error' && i.field === 'triggers')).toBe(true);
+    });
+
+    it('should accept a non-empty triggers array and tolerate an omitted one', () => {
+      const withTriggers: AgentMetadata = {
+        name: 'aiwg-writer',
+        description: 'Documentation persona for technical writing and content creation',
+        model: 'claude-sonnet-4-6',
+        triggers: ['writer persona', 'documentation persona'],
+      };
+      const omitted: AgentMetadata = {
+        name: 'some-agent',
+        description: 'A perfectly valid agent that simply does not declare triggers',
+        model: 'claude-sonnet-4-6',
+      };
+
+      expect(
+        validator.validateMetadata(withTriggers).filter((i) => i.type === 'error' && i.field === 'triggers'),
+      ).toHaveLength(0);
+      expect(
+        validator.validateMetadata(omitted).filter((i) => i.type === 'error' && i.field === 'triggers'),
+      ).toHaveLength(0);
+    });
+
     it('should validate required fields and detect missing/invalid values', () => {
       // Test cases: [metadata, expectedErrorField]
       const testCases = [

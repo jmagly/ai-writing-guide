@@ -200,4 +200,53 @@ describe('Artifact Query Engine', () => {
     expect(output).toContain('# Project Status');
     expect(consoleErrorSpy).not.toHaveBeenCalledWith(expect.stringContaining('Ambiguous'));
   });
+
+  it('resolves a persona agent via the corpus fallback when not in any index (#1623 U5)', async () => {
+    // An index exists (so showArtifact does not early-exit) but does NOT
+    // contain the persona agent — the exact "un-indexed / stale framework
+    // index" scenario where the corpus fallback is the only resolution path.
+    const indexDir = path.join(tmpDir, '.aiwg', '.index', 'project');
+    fs.mkdirSync(indexDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(indexDir, 'metadata.json'),
+      JSON.stringify({
+        version: '1.0.0',
+        builtAt: '2026-06-18T00:00:00Z',
+        buildTimeMs: 1,
+        entries: {
+          '.aiwg/requirements/UC-001.md': createMockEntry(),
+        },
+      }),
+    );
+
+    // Build a minimal AIWG_ROOT corpus carrying a persona agent under the
+    // flat-under-category layout `agentic/code/agents/personas/<name>.md`.
+    const corpusRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-corpus-'));
+    const personaDir = path.join(corpusRoot, 'agentic', 'code', 'agents', 'personas');
+    fs.mkdirSync(personaDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(personaDir, 'aiwg-writer.md'),
+      '---\nname: aiwg-writer\ndescription: Documentation persona.\n---\n\n# AIWG Writer\n',
+    );
+
+    const prevRoot = process.env.AIWG_ROOT;
+    process.env.AIWG_ROOT = corpusRoot;
+    const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    let output = '';
+    try {
+      await showArtifact(tmpDir, { typeFilter: ['agent'], name: 'aiwg-writer', graph: 'project' });
+      output = stdoutSpy.mock.calls.map(c => String(c[0])).join('');
+    } finally {
+      stdoutSpy.mockRestore();
+      if (prevRoot === undefined) delete process.env.AIWG_ROOT;
+      else process.env.AIWG_ROOT = prevRoot;
+      fs.rmSync(corpusRoot, { recursive: true, force: true });
+    }
+
+    expect(output).toContain('# AIWG Writer');
+    expect(output).toContain('corpus-only');
+    expect(consoleErrorSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('no artifact found'),
+    );
+  });
 });

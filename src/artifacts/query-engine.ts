@@ -825,6 +825,64 @@ async function findCorpusArtifact(
       }
     }
   }
+
+  // Top-level agents live at `agentic/code/agents/<category>/<name>.md`
+  // (e.g. `personas/aiwg-writer.md`) — a flat-under-category layout the
+  // bundle groups above do not cover. Scan it directly so persona/agent
+  // `show` survives un-indexed (or stale-framework-index) workspaces, where
+  // the corpus fallback is the only resolution path. (#1623 U5)
+  if (typeFilter.length === 0 || typeFilter.includes('agent')) {
+    const agentMatch = await findAgentInCorpus(
+      path.join(aiwgRoot, 'agentic/code/agents'),
+      name,
+    );
+    if (agentMatch) {
+      return { path: agentMatch, type: 'agent', bundleKind: null, bundleId: null };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Recursively scan `agentic/code/agents` for a flat `<name>.md` agent file.
+ *
+ * Agents use an `agents/<category>/<name>.md` layout (e.g. `personas/`) that
+ * differs from the bundle `<dir>/<bundle>/<sub>/<name>.md` layout the generic
+ * corpus scan walks, so persona agents are otherwise missed. Bounded depth —
+ * the agents tree is shallow. Returns the first matching absolute path, or
+ * null. Direct files at each level take priority over subdirectories. (#1623)
+ */
+async function findAgentInCorpus(
+  agentsRoot: string,
+  name: string,
+  depth = 0,
+): Promise<string | null> {
+  if (depth > 3) return null;
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const fsp = fs.promises;
+
+  let entries: import('node:fs').Dirent[];
+  try {
+    entries = await fsp.readdir(agentsRoot, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+
+  // Prefer a direct `<name>.md` at this level before descending.
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name === `${name}.md`) {
+      return path.join(agentsRoot, entry.name);
+    }
+  }
+  // Descend into category subdirectories (e.g. personas/).
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      const found = await findAgentInCorpus(path.join(agentsRoot, entry.name), name, depth + 1);
+      if (found) return found;
+    }
+  }
   return null;
 }
 

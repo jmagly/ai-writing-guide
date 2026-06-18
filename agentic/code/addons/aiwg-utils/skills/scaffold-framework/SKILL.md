@@ -2,8 +2,14 @@
 namespace: aiwg
 name: scaffold-framework
 platforms: [all]
-description: Create a complete framework package structure inside agentic/code/frameworks/
-
+description: Create a complete framework package structure inside agentic/code/frameworks/. Use when authoring an expansion (framework) for AIWG.
+triggers:
+  - author a framework
+  - create a framework
+  - build a framework package
+  - framework authoring
+  - scaffold framework
+  - new expansion
 ---
 
 # Scaffold Framework

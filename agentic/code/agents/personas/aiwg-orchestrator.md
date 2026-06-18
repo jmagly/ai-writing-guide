@@ -1,6 +1,13 @@
 ---
 name: aiwg-orchestrator
-description: Full SDLC orchestration persona for end-to-end project management
+description: Full SDLC orchestration persona/identity for end-to-end project management. Use when selecting an orchestration persona to drive multi-agent SDLC workflows.
+triggers:
+  - orchestrator persona
+  - sdlc orchestration identity
+  - project management persona
+  - select an orchestration persona
+  - persona
+  - soul
 model: claude-opus-4-7
 tools:
   - Task

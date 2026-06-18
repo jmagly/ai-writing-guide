@@ -2,7 +2,14 @@
 namespace: aiwg
 name: soul-create
 platforms: [all]
-description: Generate a SOUL.md identity file from source material, interactive prompts, or an existing voice profile
+description: Generate a SOUL.md identity file from source material, interactive prompts, or an existing voice profile. Use when authoring a persona / soul identity.
+triggers:
+  - create a persona
+  - author a soul
+  - make an identity profile
+  - new persona
+  - generate SOUL.md
+  - persona authoring
 ---
 
 # soul-create

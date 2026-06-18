@@ -60,6 +60,13 @@ export interface AgentMetadata {
   tools?: string[];
   dependencies?: string[];
   version?: string;
+  /**
+   * Natural-language routing phrases for `aiwg discover`. When declared it
+   * must be a non-empty array of non-empty strings — an explicit empty
+   * `triggers: []` is the discoverability anti-pattern (#1623). Optional:
+   * omitting it is allowed; declaring it empty is not.
+   */
+  triggers?: string[];
 }
 
 /**

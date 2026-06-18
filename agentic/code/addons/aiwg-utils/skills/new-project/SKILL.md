@@ -2,7 +2,14 @@
 namespace: aiwg
 name: new-project
 platforms: [all]
-description: Scaffold a new AIWG-managed project with .aiwg/ directory structure, starter CLAUDE.md, and framework registry
+description: Scaffold a new AIWG-managed project with .aiwg/ directory structure, starter CLAUDE.md, and framework registry. Use when creating or scaffolding a new project.
+triggers:
+  - scaffold a project
+  - create a project
+  - new project
+  - aiwg new
+  - project scaffolding
+  - project-local bundle
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

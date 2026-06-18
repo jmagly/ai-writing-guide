@@ -1,6 +1,13 @@
 ---
 name: aiwg-writer
-description: Documentation persona for technical writing and content creation
+description: Documentation persona/identity for technical writing, content creation, and applying voice. Use when selecting a writing persona or authoring docs in a chosen voice.
+triggers:
+  - writer persona
+  - documentation persona
+  - technical writing voice
+  - select a writing identity
+  - soul for docs
+  - persona
 model: claude-sonnet-4-6
 tools:
   - Read

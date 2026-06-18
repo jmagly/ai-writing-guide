@@ -1,6 +1,13 @@
 ---
 name: aiwg-security
-description: Security audit persona for threat modeling and vulnerability assessment
+description: Security audit persona/identity for threat modeling and vulnerability assessment. Use when selecting a security persona for review or threat work.
+triggers:
+  - security persona
+  - security reviewer identity
+  - threat-model persona
+  - select a security persona
+  - persona
+  - soul
 model: claude-sonnet-4-6
 tools:
   - Read
