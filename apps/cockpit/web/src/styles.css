@@ -88,6 +88,9 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .wall-hero-compact .lead { font-size:14px; line-height:1.45; max-width:620px; }
 .wall-hero-compact .hero-actions { align-items:center; }
 .hero-actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+.segmented { display:inline-flex; gap:0; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.segmented button { border:0; border-radius:0; color:var(--muted); background:rgba(15,23,42,.72); }
+.segmented button[aria-pressed=true] { color:#0b0d12; background:var(--accent); font-weight:650; }
 .operator-wall { min-height:calc(100vh - 130px); }
 .radial-wall { display:grid; grid-template-columns:1fr; gap:18px; align-items:stretch; margin:10px calc(50% - 50vw) 18px; }
 .radial-map { position:relative; min-height:clamp(640px, calc(100vh - 260px), 780px); border-block:1px solid rgba(147,197,253,.25); overflow:hidden; background:
@@ -103,7 +106,10 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .link-attention { stroke:rgba(253,230,138,.78); }
 .link-blocked { stroke:rgba(253,164,175,.5); stroke-dasharray:1.4 1.2; }
 .handoff-arc { fill:none; stroke:rgba(196,181,253,.94); stroke-width:1.25; stroke-linecap:round; filter:drop-shadow(0 0 5px rgba(196,181,253,.72)); }
+.mode-handoff .link-line { stroke:rgba(147,197,253,.24); }
+.mode-handoff .handoff-arc { stroke-width:2.35; filter:drop-shadow(0 0 11px rgba(196,181,253,.9)); }
 .central-hub { position:absolute; left:50%; top:45%; transform:translate(-50%,-50%); width:214px; min-height:178px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; text-align:center; border-radius:8px; border-color:rgba(94,234,212,.9); background:linear-gradient(180deg, rgba(94,234,212,.34), rgba(15,23,42,.9)); box-shadow:0 0 64px rgba(94,234,212,.42), inset 0 0 38px rgba(147,197,253,.2); z-index:3; }
+.mode-handoff .central-hub { border-color:rgba(196,181,253,.9); box-shadow:0 0 72px rgba(196,181,253,.42), inset 0 0 38px rgba(94,234,212,.16); }
 .central-hub strong { font-size:24px; }
 .central-hub span:last-child { color:var(--muted); font-size:12px; }
 .hub-core { width:82px; height:52px; border:1px solid rgba(248,250,252,.78); border-radius:7px; transform:skew(-12deg); background:linear-gradient(135deg, rgba(248,250,252,.86), rgba(94,234,212,.46)); box-shadow:0 10px 32px rgba(94,234,212,.35); }
@@ -136,6 +142,13 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .glyph-library { border-radius:4px; box-shadow:inset 9px 0 0 rgba(255,255,255,.08), inset 18px 0 0 rgba(255,255,255,.05); }
 .glyph-action { border-radius:10px; transform:rotate(45deg) scale(.8); }
 .handoff-marker { position:absolute; right:-8px; top:50%; width:16px; height:16px; margin-top:-8px; border-radius:50%; background:var(--accent3); box-shadow:0 0 22px rgba(196,181,253,.82); }
+.mode-handoff .node-mission { border-color:rgba(196,181,253,.95); box-shadow:0 22px 48px rgba(124,58,237,.36), inset 0 -18px 26px rgba(196,181,253,.1); }
+.mode-handoff .handoff-marker { width:22px; height:22px; right:-12px; margin-top:-11px; }
+.handoff-callout { position:absolute; z-index:4; display:grid; gap:3px; padding:9px 11px; border:1px solid rgba(196,181,253,.54); border-radius:8px; background:rgba(15,23,42,.76); box-shadow:0 0 28px rgba(196,181,253,.18); }
+.handoff-callout span { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+.handoff-callout strong { font-size:13px; }
+.handoff-source { left:20%; top:60%; }
+.handoff-destination { right:14%; top:39%; }
 .radial-overlay { position:absolute; left:22px; right:22px; bottom:18px; border:1px solid rgba(203,213,225,.16); border-radius:8px; background:rgba(15,23,42,.66); backdrop-filter:blur(8px); padding:13px; display:grid; grid-template-columns:minmax(280px,.62fr) 1fr; gap:12px; z-index:4; }
 .radial-overlay-head { display:grid; grid-template-columns:minmax(160px,1fr) minmax(220px,.8fr); gap:12px; align-items:end; }
 .radial-overlay h3 { margin:0; font-size:18px; }
@@ -204,6 +217,7 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
   .central-hub { margin-bottom:4px; }
   .orbit-node:hover:not(:disabled) { transform:none; }
   .node-copy span { font-size:10px; }
+  .handoff-callout { position:static; }
   .radial-overlay { position:static; grid-template-columns:1fr; }
   .radial-overlay-head, .wall-readout { grid-template-columns:1fr; }
 }

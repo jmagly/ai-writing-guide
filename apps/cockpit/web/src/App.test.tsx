@@ -7,6 +7,7 @@ import { App } from './App';
 // mount, so fetch is stubbed.
 beforeEach(() => {
   (window as unknown as { __COCKPIT_TOKEN__: string }).__COCKPIT_TOKEN__ = 'test-token';
+  window.history.replaceState({}, '', '/');
   globalThis.fetch = vi.fn(() => new Promise<Response>(() => undefined)) as typeof fetch;
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
@@ -89,6 +90,13 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getByRole('button', { name: /docker codex/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /qemu codex/i })).toBeTruthy();
     expect(screen.getAllByText('3/3').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('group', { name: /wall review mode/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Topology' }).getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Handoff' }));
+    expect(screen.getByRole('button', { name: 'Handoff' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('heading', { name: /mission-handoff operator wall/i })).toBeTruthy();
+    expect(screen.getByText('Source')).toBeTruthy();
+    expect(screen.getByText('Destination')).toBeTruthy();
     expect(screen.getByRole('region', { name: /guided start and cost quota/i })).toBeTruthy();
     expect(screen.getByLabelText('Cost and quota')).toBeTruthy();
     expect(screen.getByText(/codex host \/ auto runtime \/ observe/i)).toBeTruthy();
@@ -122,6 +130,31 @@ describe('App shell (rendered DOM)', () => {
 
     expect(writeText).toHaveBeenCalledWith('aiwg doctor');
     await waitFor(() => expect(screen.getByText(/copied "aiwg doctor"/i)).toBeTruthy());
+  });
+
+  it('can open the mission-handoff review layout from a shareable URL', async () => {
+    window.history.replaceState({}, '', '/?wall=handoff');
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+      if (url.includes('/api/inventory')) return jsonResponse({
+        instances: [
+          instance('host-1', 'host', 'Codex host'),
+          instance('docker-1', 'container', 'Docker Codex'),
+        ],
+      });
+      if (url.includes('/api/running')) return jsonResponse({ count: 1, running: [{ instance_id: 'host-1', task_id: 'task-abc', state: 'working', tenant: 'local' }] });
+      if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
+      if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 0, output_tokens: 0, usd: 0 }, per_instance: [] });
+      return jsonResponse({});
+    }) as typeof fetch;
+
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { name: /mission-handoff operator wall/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Handoff' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByText('Source')).toBeTruthy();
+    expect(screen.getByText('Destination')).toBeTruthy();
   });
 
   it('each tab has a matching labelled tabpanel (controls/labelledby pairing)', () => {

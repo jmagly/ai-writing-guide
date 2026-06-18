@@ -24,6 +24,7 @@ interface OrbitNode {
 }
 
 type OrbitStyle = CSSProperties & { '--x': string; '--y': string };
+type WallReviewMode = 'topology' | 'handoff';
 
 const ORBIT_POSITIONS = [
   [50, 10], [72, 16], [88, 34], [84, 58], [68, 72], [50, 72],
@@ -36,6 +37,7 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
   const [selectedStackId, setSelectedStackId] = useState('');
   const [selectedRuntime, setSelectedRuntime] = useState('auto');
   const [selectedTask, setSelectedTask] = useState('observe');
+  const [wallMode, setWallMode] = useState<WallReviewMode>(() => initialWallMode());
 
   useEffect(() => { localStorage.setItem('cockpit.welcomed', '1'); }, []);
   useEffect(() => {
@@ -89,6 +91,12 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
           <button className="cta" onClick={onStartSession}>▸ Start a session</button>
           <button onClick={() => goTo('running')}>View board</button>
           <button onClick={copyStartCommand}>Copy CLI</button>
+          {st?.connected && (
+            <div className="segmented" role="group" aria-label="Wall review mode">
+              <button aria-pressed={wallMode === 'topology'} onClick={() => setWallMode('topology')}>Topology</button>
+              <button aria-pressed={wallMode === 'handoff'} onClick={() => setWallMode('handoff')}>Handoff</button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -102,7 +110,7 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
         ) : (
           <>
             <section className="radial-wall" aria-labelledby="operator-wall-map-title">
-              <div className="radial-map" aria-label="Operator wall topology">
+              <div className={`radial-map mode-${wallMode}`} aria-label="Operator wall topology">
                 <svg className="radial-links" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
                   <circle className="link-ring" cx="50" cy="50" r="37" />
                   <circle className="link-ring link-ring-inner" cx="50" cy="50" r="22" />
@@ -132,11 +140,23 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
                     {index === 3 && <span className="handoff-marker" aria-hidden="true" />}
                   </button>
                 ))}
+                {wallMode === 'handoff' && (
+                  <>
+                    <div className="handoff-callout handoff-source">
+                      <span>Source</span>
+                      <strong>{st.running[0] ? fmtId(st.running[0].instance_id) : 'ready'}</strong>
+                    </div>
+                    <div className="handoff-callout handoff-destination">
+                      <span>Destination</span>
+                      <strong>{runningInstances[1] ? fmtId(runningInstances[1].id) : 'next stack'}</strong>
+                    </div>
+                  </>
+                )}
                 <div className="radial-overlay" aria-labelledby="operator-wall-map-title">
                   <div className="radial-overlay-head">
                     <div>
-                      <p className="eyebrow">Live topology</p>
-                      <h3 id="operator-wall-map-title">Eleven-stack operator wall</h3>
+                      <p className="eyebrow">{wallMode === 'handoff' ? 'Mission route' : 'Live topology'}</p>
+                      <h3 id="operator-wall-map-title">{wallMode === 'handoff' ? 'Mission-handoff operator wall' : 'Eleven-stack operator wall'}</h3>
                     </div>
                     <div className="mission-route" aria-label="Mission handoff state">
                       <span>Mission</span>
@@ -296,6 +316,11 @@ function accentFor(value: string): number {
 
 function orbitStyle(node: OrbitNode): OrbitStyle {
   return { '--x': `${node.x}%`, '--y': `${node.y}%` };
+}
+
+function initialWallMode(): WallReviewMode {
+  const wall = new URLSearchParams(window.location.search).get('wall');
+  return wall === 'handoff' ? 'handoff' : 'topology';
 }
 
 function buildOrbitNodes(st: Status | null): OrbitNode[] {
