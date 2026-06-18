@@ -16,6 +16,10 @@ but the first viewport now carries the design-spec topology: central Cockpit hub
 eleven connected nodes, mission handoff arc, runtime/provider labels, coverage,
 approvals, cost, and control state. A follow-up pass added the missing guided
 start controls and first-class Cost & Quota surface called out in #1622.
+A later fidelity pass applied the layout review pack's Option B direction:
+the radial wall now spans the first viewport, uses larger glyph-first nodes,
+makes the central Cockpit hub stronger, strengthens the handoff arc, and moves
+the live topology readout into a bottom overlay strip inside the wall.
 
 ## Verification
 
@@ -32,6 +36,9 @@ google-chrome --headless=new --disable-gpu --no-first-run --no-default-browser-c
 google-chrome --headless=new --disable-gpu --no-first-run --no-default-browser-check --user-data-dir=/tmp/cockpit-chrome-profile-5 --window-size=390,1000 --virtual-time-budget=5000 --screenshot=/tmp/cockpit-operator-wall-planner-mobile-2026-06-18.png http://127.0.0.1:8120
 google-chrome --headless=new --disable-gpu --no-first-run --no-default-browser-check --user-data-dir=/tmp/cockpit-chrome-profile-6 --window-size=1440,1100 --virtual-time-budget=5000 --screenshot=/tmp/cockpit-operator-wall-compact-2026-06-18.png http://127.0.0.1:8120
 google-chrome --headless=new --disable-gpu --no-first-run --no-default-browser-check --user-data-dir=/tmp/cockpit-chrome-profile-7 --window-size=390,900 --virtual-time-budget=5000 --screenshot=/tmp/cockpit-operator-wall-compact-mobile-2026-06-18.png http://127.0.0.1:8120
+npm --prefix apps/cockpit run check
+google-chrome --headless=new --disable-gpu --window-size=1440,1000 --virtual-time-budget=5000 --screenshot=/tmp/cockpit-operator-wall-option-b-2026-06-18.png http://127.0.0.1:18124/
+google-chrome --headless=new --disable-gpu --window-size=390,900 --virtual-time-budget=5000 --screenshot=/tmp/cockpit-operator-wall-option-b-mobile-2026-06-18.png http://127.0.0.1:18124/
 ```
 
 Results:
@@ -55,6 +62,14 @@ Results:
 - A compact connected-state header pass reduced hero height so the radial
   operator wall is the dominant first-viewport surface on desktop while mobile
   still reaches the topology in the first viewport.
+- Option B/full-width pass rendered a single first-viewport radial surface:
+  larger central hub, glyph-first orbit nodes, a stronger mission handoff arc,
+  and the live topology readout as an in-wall overlay strip instead of a right
+  side rail.
+- Desktop Option B screenshot rendered nonblank with all eleven nodes visible
+  and no orbit node clipped by the overlay.
+- Mobile Option B screenshot rendered the accessible stacked topology with the
+  Cockpit hub and node list visible without overlap.
 
 Local screenshot artifacts:
 
@@ -64,6 +79,8 @@ Local screenshot artifacts:
 - `/tmp/cockpit-operator-wall-planner-mobile-2026-06-18.png`
 - `/tmp/cockpit-operator-wall-compact-2026-06-18.png`
 - `/tmp/cockpit-operator-wall-compact-mobile-2026-06-18.png`
+- `/tmp/cockpit-operator-wall-option-b-2026-06-18.png`
+- `/tmp/cockpit-operator-wall-option-b-mobile-2026-06-18.png`
 
 PNG screenshots are intentionally not committed under `.aiwg/testing` so the
 metadata-validation gate remains text-only.

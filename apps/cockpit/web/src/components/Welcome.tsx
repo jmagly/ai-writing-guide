@@ -26,8 +26,8 @@ interface OrbitNode {
 type OrbitStyle = CSSProperties & { '--x': string; '--y': string };
 
 const ORBIT_POSITIONS = [
-  [50, 8], [73, 15], [89, 34], [86, 60], [68, 78], [50, 88],
-  [31, 78], [14, 60], [11, 34], [27, 15], [50, 28],
+  [50, 10], [72, 16], [88, 34], [84, 58], [68, 72], [50, 72],
+  [32, 72], [16, 58], [12, 34], [28, 16], [50, 30],
 ] as const;
 
 export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; goTo: (t: string) => void }) {
@@ -105,10 +105,11 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
               <div className="radial-map" aria-label="Operator wall topology">
                 <svg className="radial-links" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
                   <circle className="link-ring" cx="50" cy="50" r="37" />
+                  <circle className="link-ring link-ring-inner" cx="50" cy="50" r="22" />
                   {orbitNodes.map((node) => (
                     <line key={node.key} className={`link-line link-${node.state}`} x1="50" y1="50" x2={node.x} y2={node.y} />
                   ))}
-                  <path className="handoff-arc" d="M 18 58 C 32 18, 70 16, 86 43" />
+                  <path className="handoff-arc" d="M 17 58 C 29 19, 70 13, 87 42" />
                 </svg>
                 <button className="central-hub" onClick={onStartSession} aria-label="Start from Cockpit command hub">
                   <span className="hub-core" aria-hidden="true" />
@@ -131,28 +132,29 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
                     {index === 3 && <span className="handoff-marker" aria-hidden="true" />}
                   </button>
                 ))}
+                <aside className="radial-detail" aria-labelledby="operator-wall-map-title">
+                  <div className="radial-detail-head">
+                    <div>
+                      <p className="eyebrow">Live topology</p>
+                      <h3 id="operator-wall-map-title">Eleven-stack operator wall</h3>
+                    </div>
+                    <div className="mission-route" aria-label="Mission handoff state">
+                      <span>Mission</span>
+                      <strong>{st.running[0] ? fmtId(st.running[0].task_id) : 'ready'}</strong>
+                      <span className={attentionCount > 0 ? 'route-attention' : 'route-ready'}>
+                        {attentionCount > 0 ? `${attentionCount} gate(s)` : 'clear'}
+                      </span>
+                    </div>
+                  </div>
+                  <dl className="wall-readout">
+                    <div><dt>Coverage</dt><dd>{[runtimeCoverage.host, runtimeCoverage.container, runtimeCoverage.vm].filter(Boolean).length}/3</dd></div>
+                    <div><dt>Executor</dt><dd>{st.executor || 'unknown'}</dd></div>
+                    <div><dt>Control</dt><dd>{runningInstances.some((i) => i.session_backends.some((b) => b.available && b.drive)) ? 'drive available' : 'observe first'}</dd></div>
+                    <div><dt>Quota</dt><dd>{st.cost ? `$${st.cost.total.usd.toFixed(2)}` : 'n/a'}</dd></div>
+                    <div><dt>Gates</dt><dd>{attentionCount > 0 ? `${attentionCount} attention` : 'clear'}</dd></div>
+                  </dl>
+                </aside>
               </div>
-              <aside className="radial-detail" aria-labelledby="operator-wall-map-title">
-                <p className="eyebrow">Live topology</p>
-                <h3 id="operator-wall-map-title">Eleven-stack operator wall</h3>
-                <div className="mission-route" aria-label="Mission handoff state">
-                  <span>Mission</span>
-                  <strong>{st.running[0] ? fmtId(st.running[0].task_id) : 'ready'}</strong>
-                  <span className={attentionCount > 0 ? 'route-attention' : 'route-ready'}>
-                    {attentionCount > 0 ? `${attentionCount} gate(s)` : 'clear'}
-                  </span>
-                </div>
-                <dl className="wall-readout">
-                  <div><dt>Coverage</dt><dd>{[runtimeCoverage.host, runtimeCoverage.container, runtimeCoverage.vm].filter(Boolean).length}/3</dd></div>
-                  <div><dt>Executor</dt><dd>{st.executor || 'unknown'}</dd></div>
-                  <div><dt>Control</dt><dd>{runningInstances.some((i) => i.session_backends.some((b) => b.available && b.drive)) ? 'drive available' : 'observe first'}</dd></div>
-                  <div><dt>Quota</dt><dd>{st.cost ? `$${st.cost.total.usd.toFixed(2)}` : 'n/a'}</dd></div>
-                </dl>
-                <div className="cta-row">
-                  <button className="cta" onClick={onStartSession}>▸ Start a session</button>
-                  <button onClick={() => goTo('running')}>View board</button>
-                </div>
-              </aside>
             </section>
 
             <section className="stack-board" aria-label="Running stack board">
