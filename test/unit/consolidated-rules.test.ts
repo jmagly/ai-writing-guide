@@ -434,6 +434,16 @@ describe('Consolidated Rules Functions', () => {
     // exercise the cleanup logic itself.
     const CLEAN_OPTS = { cleanRules: true } as const;
 
+    // #1627: cleanupOldRuleFiles only removes AIWG-managed rule files (those
+    // carrying the `aiwg:managed` marker AIWG stamps on every deployed rule).
+    // These fixtures stand in for previously-deployed AIWG rules, so they get
+    // the marker. `writeUserRule` writes an operator-authored rule (no marker).
+    const MANAGED_MARKER = '<!-- aiwg:managed v0.0.0 bundled -->\n';
+    const writeAiwgRule = (name: string, body = 'old rule') =>
+      fs.writeFileSync(path.join(rulesDir, name), MANAGED_MARKER + body);
+    const writeUserRule = (name: string, body = 'user rule') =>
+      fs.writeFileSync(path.join(rulesDir, name), body);
+
     let rulesDir: string;
 
     beforeEach(() => {
@@ -449,8 +459,8 @@ describe('Consolidated Rules Functions', () => {
     });
 
     it('removes old .md files but keeps RULES-INDEX.md', () => {
-      fs.writeFileSync(path.join(rulesDir, 'no-attribution.md'), 'old rule');
-      fs.writeFileSync(path.join(rulesDir, 'anti-laziness.md'), 'old rule');
+      writeAiwgRule('no-attribution.md');
+      writeAiwgRule('anti-laziness.md');
       fs.writeFileSync(path.join(rulesDir, 'RULES-INDEX.md'), 'index content');
 
       const removed = base.cleanupOldRuleFiles(rulesDir, CLEAN_OPTS);
@@ -464,7 +474,7 @@ describe('Consolidated Rules Functions', () => {
     it('does not remove non-.md files', () => {
       fs.writeFileSync(path.join(rulesDir, 'existing.mdc'), 'cursor rule');
       fs.writeFileSync(path.join(rulesDir, 'config.json'), '{}');
-      fs.writeFileSync(path.join(rulesDir, 'old-rule.md'), 'old');
+      writeAiwgRule('old-rule.md');
 
       const removed = base.cleanupOldRuleFiles(rulesDir, CLEAN_OPTS);
 
@@ -484,7 +494,7 @@ describe('Consolidated Rules Functions', () => {
     });
 
     it('dry-run mode does not delete files', () => {
-      fs.writeFileSync(path.join(rulesDir, 'old-rule.md'), 'old');
+      writeAiwgRule('old-rule.md');
 
       const removed = base.cleanupOldRuleFiles(rulesDir, { ...CLEAN_OPTS, dryRun: true });
 
@@ -504,7 +514,7 @@ describe('Consolidated Rules Functions', () => {
 
     it('handles case sensitivity for RULES-INDEX.md', () => {
       fs.writeFileSync(path.join(rulesDir, 'RULES-INDEX.md'), 'index');
-      fs.writeFileSync(path.join(rulesDir, 'rules-index.md'), 'lowercase variant');
+      writeAiwgRule('rules-index.md', 'lowercase variant');
 
       const removed = base.cleanupOldRuleFiles(rulesDir, CLEAN_OPTS);
 
@@ -514,8 +524,8 @@ describe('Consolidated Rules Functions', () => {
     });
 
     it('skips files in incomingFiles (per-deploy refresh)', () => {
-      fs.writeFileSync(path.join(rulesDir, 'keep-me.md'), 'keep');
-      fs.writeFileSync(path.join(rulesDir, 'remove-me.md'), 'remove');
+      writeAiwgRule('keep-me.md', 'keep');
+      writeAiwgRule('remove-me.md', 'remove');
 
       const removed = base.cleanupOldRuleFiles(rulesDir, {
         ...CLEAN_OPTS,
@@ -528,10 +538,26 @@ describe('Consolidated Rules Functions', () => {
     });
 
     it('treats empty incomingFiles array as no-op even with cleanRules:true', () => {
-      fs.writeFileSync(path.join(rulesDir, 'should-survive.md'), 'survive');
+      writeAiwgRule('should-survive.md', 'survive');
       const removed = base.cleanupOldRuleFiles(rulesDir, { ...CLEAN_OPTS, incomingFiles: [] });
       expect(removed).toHaveLength(0);
       expect(fs.existsSync(path.join(rulesDir, 'should-survive.md'))).toBe(true);
+    });
+
+    // #1627: user-authored rules (no aiwg:managed marker) must never be
+    // deleted by cleanupOldRuleFiles, even with cleanRules:true.
+    it('preserves operator-authored rules lacking the aiwg:managed marker', () => {
+      writeUserRule('my-custom-rule.md');          // no marker → user file
+      writeAiwgRule('stale-aiwg-rule.md');          // marker → AIWG file
+
+      const removed = base.cleanupOldRuleFiles(rulesDir, {
+        ...CLEAN_OPTS,
+        incomingFiles: ['/anywhere/something-else.md'],
+      });
+
+      expect(removed).toHaveLength(1);
+      expect(fs.existsSync(path.join(rulesDir, 'my-custom-rule.md'))).toBe(true);
+      expect(fs.existsSync(path.join(rulesDir, 'stale-aiwg-rule.md'))).toBe(false);
     });
   });
 });

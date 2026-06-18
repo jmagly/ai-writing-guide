@@ -1055,6 +1055,204 @@ export function pruneStaleAiwgSkills(kernelDestDir, desiredKernelNames, opts = {
   return pruned;
 }
 
+// ============================================================================
+// Flat-File Stale-Artifact Prune (agents / commands / rules) — #1627
+// ============================================================================
+
+/**
+ * Reduce a deployed artifact filename to a provider-extension-agnostic stem.
+ *
+ * Different providers emit the same source rule/agent/command under different
+ * extensions (`.md`, `.mdc`, `.agent.md`, `.prompt.md`, `.instructions.md`).
+ * Matching by stem lets the stale-prune compare a source basename
+ * (`foo.md` → `foo`) against any provider's on-disk form (`foo.agent.md` →
+ * `foo`) without hard-coding the per-provider extension map.
+ *
+ * Strips a trailing `.md`/`.mdc`, then a secondary copilot-style
+ * `.agent`/`.prompt`/`.instructions` qualifier.
+ *
+ * @param {string} name basename
+ * @returns {string} extension-agnostic stem
+ */
+export function artifactStem(name) {
+  return String(name)
+    .replace(/\.(md|mdc)$/i, '')
+    .replace(/\.(agent|prompt|instructions)$/i, '');
+}
+
+/**
+ * Compute the global set of source-basename stems AIWG ships for a flat
+ * artifact type, across ALL frameworks and addons (mode-independent).
+ *
+ * Used as the "desired" set by `pruneStaleAiwgFiles`. Mode independence is
+ * deliberate and mirrors `computeAllKernelNames` for skills: `aiwg use sdlc`
+ * must not prune a marketing agent that a prior `aiwg use all` deployed and
+ * that is still a valid AIWG artifact. Only artifacts whose source no longer
+ * exists ANYWHERE in the tree (renamed/removed) fall out of this set and
+ * become prune-eligible.
+ *
+ * Anchors to the AIWG root (resolved by walking up from `srcRoot` for the
+ * `agentic/code/frameworks` + `agentic/code/addons` pair, or `AIWG_ROOT`),
+ * NOT the raw `srcRoot`. This matters because `deploy-agents.mjs` can be
+ * invoked with `--source <project-local-bundle>`; computing the desired set
+ * against a bundle dir would be empty and make every AIWG artifact look stale.
+ * Returns `null` when no AIWG framework/addon tree is found — the caller MUST
+ * then skip pruning (a bundle-only deploy has no global desired set).
+ *
+ * @param {string} srcRoot AIWG repo / install root (or a subdir of it)
+ * @param {'agents'|'commands'|'rules'} type artifact type
+ * @returns {Set<string>|null} stems of every source file of that type, or null
+ *   if the AIWG framework/addon tree can't be located
+ */
+export function computeAllArtifactBasenames(srcRoot, type) {
+  const aiwgRoot = resolveAiwgRoot(srcRoot);
+  if (!aiwgRoot) return null;
+
+  const stems = new Set();
+  const add = (files) => {
+    for (const f of files) stems.add(artifactStem(path.basename(f)));
+  };
+
+  const frameworkArtifacts = collectFrameworkArtifacts(aiwgRoot, 'all', {
+    includeAgents: type === 'agents',
+    includeCommands: type === 'commands',
+    includeRules: type === 'rules',
+    includeSkills: false,
+    recursiveCommands: true,
+  });
+
+  if (type === 'agents') {
+    add(frameworkArtifacts.agents);
+    // Soul companions live alongside agents and are deployed with them —
+    // keep their stems in the desired set so the prune never removes them.
+    add(frameworkArtifacts.souls || []);
+    add(getAddonAgentFiles(aiwgRoot));
+  } else if (type === 'commands') {
+    add(frameworkArtifacts.commands);
+    add(getAddonCommandFiles(aiwgRoot));
+  } else if (type === 'rules') {
+    add(frameworkArtifacts.rules);
+    add(getAddonRuleFiles(aiwgRoot));
+  }
+
+  return stems;
+}
+
+/**
+ * Resolve the AIWG install/repo root from a possibly-nested srcRoot.
+ *
+ * Mirrors the walk-up logic in `computeAllKernelNames`: honor `AIWG_ROOT`,
+ * else climb up to 8 levels looking for the directory that holds BOTH
+ * `agentic/code/frameworks` and `agentic/code/addons`. Returns `null` when
+ * no such root is found (e.g. a standalone project-local bundle).
+ *
+ * @param {string} srcRoot
+ * @returns {string|null}
+ */
+export function resolveAiwgRoot(srcRoot) {
+  const hasTree = (dir) =>
+    fs.existsSync(path.join(dir, 'agentic', 'code', 'frameworks')) &&
+    fs.existsSync(path.join(dir, 'agentic', 'code', 'addons'));
+
+  if (process.env.AIWG_ROOT && hasTree(process.env.AIWG_ROOT)) {
+    return process.env.AIWG_ROOT;
+  }
+  let cur = path.resolve(srcRoot);
+  for (let i = 0; i < 8; i++) {
+    if (hasTree(cur)) return cur;
+    const parent = path.dirname(cur);
+    if (parent === cur) break;
+    cur = parent;
+  }
+  return null;
+}
+
+/**
+ * Holistic post-deploy prune of stale AIWG-managed flat artifacts
+ * (agents / commands / rules). The flat-file analogue of
+ * `pruneStaleAiwgSkills`.
+ *
+ * Removes a file from `destDir` only when ALL hold:
+ *   1. It is a deployed artifact file (`.md` / `.mdc`), not `RULES-INDEX.md`
+ *      and not the sidecar manifest.
+ *   2. Its stem is NOT in `desiredStems` (the source no longer ships it).
+ *   3. It carries an AIWG ownership signal — either a `.aiwg-manifest.json`
+ *      sidecar entry, or an in-file `aiwg:managed` marker.
+ *
+ * User-authored files (no ownership signal) and current AIWG artifacts (stem
+ * in the desired set) are never touched. Pruned files also have their sidecar
+ * entry dropped so the manifest stays accurate.
+ *
+ * Safe to call on every deploy invocation: `desiredStems` is the global
+ * (mode-independent) source set, so sibling-framework files are never
+ * collateral.
+ *
+ * @param {string} destDir absolute path to the provider artifact dir
+ * @param {Set<string>|string[]} desiredStems stems that should remain
+ * @param {object} opts `{ dryRun, verbose }`
+ * @returns {string[]} removed (or would-be-removed) file paths
+ */
+export function pruneStaleAiwgFiles(destDir, desiredStems, opts = {}) {
+  const { dryRun = false, verbose = false } = opts;
+  const removed = [];
+  if (!destDir || !fs.existsSync(destDir)) return removed;
+
+  const desired = desiredStems instanceof Set ? desiredStems : new Set(desiredStems);
+  const sidecar = readSidecarManifest(destDir) || { managed: {} };
+  const managed = sidecar.managed || {};
+  let sidecarDirty = false;
+
+  let entries;
+  try {
+    entries = fs.readdirSync(destDir, { withFileTypes: true });
+  } catch {
+    return removed;
+  }
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const name = entry.name;
+    if (name === MANIFEST_FILENAME) continue;
+    if (name === 'RULES-INDEX.md') continue;
+    const lower = name.toLowerCase();
+    if (!lower.endsWith('.md') && !lower.endsWith('.mdc')) continue;
+
+    if (desired.has(artifactStem(name))) continue;
+
+    // Ownership gate — never delete a file AIWG didn't deploy.
+    let owned = Object.prototype.hasOwnProperty.call(managed, name);
+    if (!owned) {
+      try {
+        owned = MANAGED_MARKER_RE.test(fs.readFileSync(path.join(destDir, name), 'utf8'));
+      } catch {
+        owned = false; // unreadable → leave it alone
+      }
+    }
+    if (!owned) continue;
+
+    const target = path.join(destDir, name);
+    removed.push(target);
+    if (dryRun) {
+      if (verbose) console.log(`[dry-run] would prune stale AIWG artifact: ${path.relative(process.cwd(), target)}`);
+      continue;
+    }
+    try {
+      fs.unlinkSync(target);
+      if (Object.prototype.hasOwnProperty.call(managed, name)) {
+        delete managed[name];
+        sidecarDirty = true;
+      }
+      if (verbose) console.log(`pruned stale AIWG artifact: ${path.relative(process.cwd(), target)}`);
+    } catch (err) {
+      removed.pop();
+      if (verbose) console.warn(`Warning: could not prune ${target}: ${err.message}`);
+    }
+  }
+
+  if (sidecarDirty) writeSidecarManifest(destDir, sidecar, dryRun);
+  return removed;
+}
+
 /**
  * Deploy a skill directory (copy recursively).
  *
@@ -2303,6 +2501,11 @@ export function cleanupOldRuleFiles(rulesDir, opts = {}) {
       : []
   );
 
+  // Ownership gate (#1627): only AIWG-managed rule files are eligible for
+  // removal. A rule the operator dropped into the dir (no sidecar entry, no
+  // `aiwg:managed` marker) is preserved even when cleanRules is on.
+  const sidecarManaged = readSidecarManifest(rulesDir)?.managed || {};
+
   const entries = fs.readdirSync(rulesDir, { withFileTypes: true });
   for (const entry of entries) {
     if (!entry.isFile()) continue;
@@ -2311,6 +2514,17 @@ export function cleanupOldRuleFiles(rulesDir, opts = {}) {
     if (incomingBasenames.has(entry.name)) continue;
 
     const filePath = path.join(rulesDir, entry.name);
+
+    let owned = Object.prototype.hasOwnProperty.call(sidecarManaged, entry.name);
+    if (!owned) {
+      try {
+        owned = MANAGED_MARKER_RE.test(fs.readFileSync(filePath, 'utf8'));
+      } catch {
+        owned = false; // unreadable → leave it alone
+      }
+    }
+    if (!owned) continue; // user-authored rule — preserve
+
     removed.push(filePath);
 
     if (dryRun) {
@@ -2329,49 +2543,99 @@ export function cleanupOldRuleFiles(rulesDir, opts = {}) {
 }
 
 /**
- * Migrate commands directory by removing it before skills deployment.
+ * Migrate commands directory by removing stale AIWG command files before
+ * skills deployment.
  *
- * AIWG migrated from commands to skills. If an existing commands directory is
- * left in place alongside newly deployed skills, the provider TUI (e.g. Claude
- * Code's command palette) will show duplicate entries — one from the stale
- * command file and one from the skill. Deleting the directory before deployment
- * eliminates the duplicates.
+ * AIWG migrated from commands to skills. If old AIWG command files are left
+ * in place alongside newly deployed skills, the provider TUI (e.g. Claude
+ * Code's command palette) shows duplicate entries — one from the stale
+ * command file and one from the skill. This removes those duplicates.
  *
- * Home-directory providers (codex, openclaw) are excluded: their commands paths
- * are shared across all projects and must not be deleted wholesale.
+ * Removal is bounded to AIWG-managed command files (#1627): a command the
+ * operator authored (no sidecar entry, no `aiwg:managed` marker) is preserved.
+ * Subdirectories and non-command files are left untouched. The directory is
+ * removed only if it ends up empty after pruning AIWG files.
+ *
+ * Home-directory providers (codex, openclaw) are excluded by the caller: their
+ * commands paths are shared across all projects and must not be touched.
  *
  * @param {string} commandsDir - Full path to the provider's commands directory
  * @param {object} opts
  * @param {boolean} opts.dryRun - Log but don't delete
  * @param {boolean} opts.skipCommandsMigration - User opted out; warn about duplicates instead
- * @returns {boolean} true if the directory was deleted (or would be in dry-run)
+ * @returns {boolean} true if any AIWG command file was removed (or would be in dry-run)
  */
 export function migrateCommandsDirectory(commandsDir, opts = {}) {
-  const { dryRun = false, skipCommandsMigration = false } = opts;
+  const { dryRun = false, skipCommandsMigration = false, verbose = false } = opts;
 
   if (!fs.existsSync(commandsDir)) return false;
 
-  const entries = fs.readdirSync(commandsDir);
+  const entries = fs.readdirSync(commandsDir, { withFileTypes: true });
   if (entries.length === 0) return false;
 
   if (skipCommandsMigration) {
     const rel = path.relative(process.cwd(), commandsDir);
     console.warn(`\nWarning: commands migration skipped for ${rel}`);
     console.warn('  Duplicate entries may appear in the command palette because old command');
-    console.warn('  files overlap with newly deployed skills. Remove the directory manually');
-    console.warn(`  to fix: rm -rf ${rel}`);
+    console.warn('  files overlap with newly deployed skills. Remove AIWG command files manually');
+    console.warn(`  to fix: rm ${rel}/<command>.md`);
     return false;
   }
 
+  // Bound removal to AIWG-managed command files; preserve operator files.
+  const sidecar = readSidecarManifest(commandsDir) || { managed: {} };
+  const managed = sidecar.managed || {};
+  let sidecarDirty = false;
+  const rel = path.relative(process.cwd(), commandsDir);
+
+  const managedNames = [];
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const lower = entry.name.toLowerCase();
+    if (!lower.endsWith('.md')) continue; // only command markdown files
+    const filePath = path.join(commandsDir, entry.name);
+    let owned = Object.prototype.hasOwnProperty.call(managed, entry.name);
+    if (!owned) {
+      try {
+        owned = MANAGED_MARKER_RE.test(fs.readFileSync(filePath, 'utf8'));
+      } catch {
+        owned = false;
+      }
+    }
+    if (owned) managedNames.push(entry.name);
+  }
+
+  if (managedNames.length === 0) return false;
+
   if (dryRun) {
-    const rel = path.relative(process.cwd(), commandsDir);
-    console.log(`[dry-run] would remove commands directory: ${rel} (${entries.length} file(s))`);
+    console.log(`[dry-run] would remove ${managedNames.length} AIWG command file(s) from ${rel}`);
     return true;
   }
 
-  fs.rmSync(commandsDir, { recursive: true, force: true });
-  const rel = path.relative(process.cwd(), commandsDir);
-  console.log(`  Removed ${rel} (${entries.length} old command file(s) — now served as skills)`);
+  for (const name of managedNames) {
+    try {
+      fs.unlinkSync(path.join(commandsDir, name));
+      if (Object.prototype.hasOwnProperty.call(managed, name)) {
+        delete managed[name];
+        sidecarDirty = true;
+      }
+      if (verbose) console.log(`  removed AIWG command file: ${name}`);
+    } catch (err) {
+      if (verbose) console.warn(`  Warning: could not remove ${name}: ${err.message}`);
+    }
+  }
+
+  if (sidecarDirty) writeSidecarManifest(commandsDir, sidecar, dryRun);
+  console.log(`  Removed ${managedNames.length} old AIWG command file(s) from ${rel} (now served as skills)`);
+
+  // Remove the directory only if AIWG files were the only contents.
+  try {
+    const remaining = fs.readdirSync(commandsDir).filter((n) => n !== MANIFEST_FILENAME);
+    if (remaining.length === 0) {
+      fs.rmSync(commandsDir, { recursive: true, force: true });
+    }
+  } catch { /* non-fatal */ }
+
   return true;
 }
 

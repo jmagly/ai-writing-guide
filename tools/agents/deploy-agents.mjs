@@ -69,12 +69,15 @@ import { fileURLToPath } from 'url';
 import {
   collectBehaviorDirs,
   collectFrameworkArtifacts,
+  computeAllArtifactBasenames,
   deployEmulatedBehaviors,
   getAddonSkillDirs,
   listSkillDirs,
   loadModelConfig,
   migrateCommandsDirectory,
   parseFrontmatter,
+  pruneStaleAiwgFiles,
+  resolveAiwgRoot,
 } from './providers/base.mjs';
 
 /**
@@ -244,6 +247,71 @@ function mirrorSkillsAsCommands(provider, target, srcRoot, opts) {
   }
 
   return count;
+}
+
+// ============================================================================
+// Stale-Artifact Prune (agents / commands / rules) — #1627
+// ============================================================================
+
+/**
+ * After a deploy, prune AIWG-managed flat artifacts (agents/commands/rules)
+ * whose source no longer ships them — mirroring the skills holistic prune.
+ *
+ * Safety boundaries:
+ *   - Runs ONLY for AIWG framework/addon deploys (default source = AIWG root,
+ *     or `--source` under `<aiwgRoot>/agentic/code`). Project-local bundle
+ *     deploys (`--source <bundle>`) are skipped so a bundle's just-deployed
+ *     artifacts are never mistaken for stale framework files.
+ *   - `pruneStaleAiwgFiles` itself only removes files carrying an AIWG
+ *     ownership signal (sidecar entry or `aiwg:managed` marker) AND whose
+ *     stem is absent from the global, mode-independent source set, so
+ *     user-authored files and sibling-framework artifacts always survive.
+ *   - Aggregate-file paths (e.g. `AGENTS.md`) and unset paths are skipped.
+ *
+ * @param {object} provider loaded provider module
+ * @param {string} target deploy target dir
+ * @param {string} srcRoot effective deploy source
+ * @param {object} opts deploy opts (dryRun/verbose/quiet + deploy flags)
+ * @param {string|null} explicitSource the raw `--source` value (null when unset)
+ */
+function pruneStaleAiwgArtifacts(provider, target, srcRoot, opts, explicitSource) {
+  if (opts.skillsOnly) return; // skills run their own prune in the provider
+
+  const aiwgRoot = resolveAiwgRoot(srcRoot);
+  if (!aiwgRoot) return; // no AIWG tree → bundle/standalone deploy; never prune
+
+  // Gate: only framework/addon deploys are eligible. A default deploy (no
+  // --source) sources from the AIWG root. An explicit --source is eligible
+  // only when it lives under <aiwgRoot>/agentic/code (bundled fw/addon).
+  if (explicitSource) {
+    const codeRoot = path.join(aiwgRoot, 'agentic', 'code');
+    const rel = path.relative(codeRoot, path.resolve(explicitSource));
+    const underCode = !!rel && !rel.startsWith('..') && !path.isAbsolute(rel);
+    if (!underCode) return; // project-local bundle / external source → skip
+  }
+
+  const typesThisRun = [];
+  if (!opts.commandsOnly && !opts.rulesOnly) typesThisRun.push('agents');
+  if (opts.deployCommands || opts.commandsOnly) typesThisRun.push('commands');
+  if (opts.deployRules || opts.rulesOnly) typesThisRun.push('rules');
+
+  for (const type of typesThisRun) {
+    const relPath = provider.paths?.[type];
+    if (!relPath) continue;                 // type not file-deployed by provider
+    if (relPath.endsWith('.md')) continue;  // aggregate file (e.g. AGENTS.md)
+
+    const desired = computeAllArtifactBasenames(srcRoot, type);
+    if (!desired) continue;                 // no global desired set → skip
+
+    const destDir = path.isAbsolute(relPath) ? relPath : path.join(target, relPath);
+    const removed = pruneStaleAiwgFiles(destDir, desired, {
+      dryRun: opts.dryRun,
+      verbose: opts.verbose,
+    });
+    if (removed.length > 0 && !opts.quiet) {
+      console.log(`  Pruned: ${removed.length} stale AIWG ${type} file${removed.length === 1 ? '' : 's'}`);
+    }
+  }
 }
 
 // ============================================================================
@@ -733,6 +801,7 @@ async function promptCommandsMigration(cfg, provider, targetDir) {
     save: cfg.save,
     saveUser: cfg.saveUser,
     verbose: cfg.verbose,
+    quiet: cfg.quiet,
     asPlugin: cfg.asPlugin,
     deployBehaviors: cfg.deployBehaviors,
     skipCommandsMigration: cfg.skipCommandsMigration,
@@ -774,6 +843,10 @@ async function promptCommandsMigration(cfg, provider, targetDir) {
     if (mirroredCommandCount > 0 && !cfg.quiet) {
       console.log(`  Mirrored: ${mirroredCommandCount} skill command wrapper${mirroredCommandCount === 1 ? '' : 's'}`);
     }
+
+    // Prune stale AIWG-managed agents/commands/rules whose source was renamed
+    // or removed (the flat-file analogue of the skills holistic prune). #1627.
+    pruneStaleAiwgArtifacts(provider, cfg.target, srcRoot, opts, cfg.source);
 
     if (!opts.commandsOnly && !opts.skillsOnly && !opts.rulesOnly) {
       const behaviorDirs = collectBehaviorDirs(srcRoot);
