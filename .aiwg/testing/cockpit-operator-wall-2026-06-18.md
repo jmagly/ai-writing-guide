@@ -5,10 +5,14 @@
 - Executor: mock-backed `http://127.0.0.1:8122`
 - Bridge: `http://127.0.0.1:8120`
 
-## Screenshots
+## Visual Capture
 
-- Desktop: `.aiwg/testing/cockpit-operator-wall-desktop-2026-06-18.png`
-- Mobile: `.aiwg/testing/cockpit-operator-wall-mobile-2026-06-18.png`
+Headless Chrome screenshots were captured during verification and inspected
+locally. The `.aiwg/` tree is intentionally text-only, so the PNG files are not
+committed.
+
+- Desktop capture path: `/tmp/cockpit-operator-wall-desktop-loaded.png`
+- Mobile capture path: `/tmp/cockpit-operator-wall-mobile-loaded.png`
 
 ## Evidence
 
