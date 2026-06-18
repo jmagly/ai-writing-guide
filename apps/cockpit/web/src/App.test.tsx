@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
 import { App } from './App';
 
 // Rendered-DOM coverage (the a11y assertions deferred from T2, and a guard against the
@@ -40,6 +40,27 @@ describe('App shell (rendered DOM)', () => {
     expect(panel?.hidden).toBe(false);
   });
 
+  it('surfaces persistent bridge and executor status in global chrome', async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [instance('host-1', 'host', 'Codex host')] });
+      if (url.includes('/api/running')) return jsonResponse({ count: 2, running: [] });
+      if (url.includes('/api/approvals')) return jsonResponse({ approvals: [{ id: 'approval-1', instance_id: 'host-1', prompt: 'Allow?', risk: 'medium', status: 'pending' }] });
+      if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 0, output_tokens: 0, usd: 0 }, per_instance: [] });
+      return jsonResponse({});
+    }) as typeof fetch;
+
+    render(<App />);
+
+    expect(await screen.findByText('Bridge live')).toBeTruthy();
+    expect(screen.getAllByText('http://127.0.0.1:8122').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('1 stacks')).toBeTruthy();
+    expect(screen.getByText('2 running')).toBeTruthy();
+    expect(screen.getByText('1 approvals')).toBeTruthy();
+    expect(screen.getByText(/host ✓ · docker - · vm -/)).toBeTruthy();
+  });
+
   it('renders the radial operator-wall topology from live status data', async () => {
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -72,6 +93,35 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getByLabelText('Cost and quota')).toBeTruthy();
     expect(screen.getByText(/codex host \/ auto runtime \/ observe/i)).toBeTruthy();
     expect(screen.getAllByText('$0.42').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('exposes copy-command affordances beside contributed actions', async () => {
+    const writeText = vi.fn();
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [instance('host-1', 'host', 'Codex host')] });
+      if (url.includes('/api/running')) return jsonResponse({ count: 0, running: [] });
+      if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
+      if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 0, output_tokens: 0, usd: 0 }, per_instance: [] });
+      if (url.includes('/api/contributions')) return jsonResponse({
+        actions: [{
+          id: 'doctor',
+          title: 'Run doctor',
+          source: 'test',
+          inject: { command: 'aiwg doctor' },
+        }],
+      });
+      return jsonResponse({});
+    }) as typeof fetch;
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Actions' }));
+    fireEvent.click(await screen.findByRole('button', { name: /copy CLI command for run doctor/i }));
+
+    expect(writeText).toHaveBeenCalledWith('aiwg doctor');
+    await waitFor(() => expect(screen.getByText(/copied "aiwg doctor"/i)).toBeTruthy());
   });
 
   it('each tab has a matching labelled tabpanel (controls/labelledby pairing)', () => {

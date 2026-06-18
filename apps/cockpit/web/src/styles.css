@@ -10,6 +10,7 @@ header .meta { margin-left:0; color:var(--muted); font-size:13px; }
 .top-status span { border:1px solid var(--line); border-radius:999px; padding:3px 8px; background:rgba(11,18,32,.72); }
 .health-pill.ok { color:var(--ok); border-color:rgba(134,239,172,.65); }
 .health-pill.warn { color:var(--warn); border-color:rgba(253,230,138,.65); }
+.executor-pill { max-width:34ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .matrix-mini { white-space:nowrap; }
 [role=tablist] { display:flex; gap:4px; padding:0 22px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
 [role=tab] { background:none; border:0; border-bottom:2px solid transparent; color:var(--muted); padding:10px 14px; cursor:pointer; font:inherit; }
@@ -48,6 +49,9 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .hint { color:var(--muted); font-size:13px; margin:6px 0 0; }
 .grid2 { display:grid; grid-template-columns:minmax(260px,1fr) 1.4fr; gap:16px; align-items:start; }
 .act { text-align:left; }
+.action-cluster { display:inline-flex; align-items:stretch; gap:4px; }
+.action-cluster .act { border-radius:7px 0 0 7px; }
+.copy-command { border-radius:0 7px 7px 0; color:var(--muted); font-size:12px; padding-inline:9px; }
 /* Tenor-style capability grid (modeled on fortemi-react SearchResults) */
 .capgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:10px; }
 .capcard { display:block; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:11px 13px; cursor:pointer; }

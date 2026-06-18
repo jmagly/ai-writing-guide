@@ -28,6 +28,10 @@ export function Actions({ session, setComposer, goSessions }: { session: Session
     }
     goSessions(); // actions target the sessions surface
   };
+  const copyCommand = async (a: ContribAction) => {
+    await navigator.clipboard?.writeText(a.inject.command);
+    setNote(`Copied "${a.inject.command}" to the clipboard.`);
+  };
 
   return (
     <>
@@ -39,9 +43,14 @@ export function Actions({ session, setComposer, goSessions }: { session: Session
       <div className="controls" role="group" aria-label="Contributed actions">
         {actions.length
           ? actions.map((a) => (
-            <button key={a.id} className="act" title={`injects: ${a.inject.command}`} onClick={() => inject(a)}>
-              {a.icon ? a.icon + ' ' : ''}{a.title}
-            </button>
+            <span className="action-cluster" key={a.id}>
+              <button className="act" title={`injects: ${a.inject.command}`} onClick={() => inject(a)}>
+                {a.icon ? a.icon + ' ' : ''}{a.title}
+              </button>
+              <button className="copy-command" aria-label={`Copy CLI command for ${a.title}`} title={a.inject.command} onClick={() => copyCommand(a)}>
+                Copy CLI
+              </button>
+            </span>
           ))
           : <p className="empty">No contributed actions.</p>}
       </div>

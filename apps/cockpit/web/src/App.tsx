@@ -79,6 +79,9 @@ export function App() {
       setTab('sessions');
     } catch (e) { alert((e as Error).message); }
   };
+  const copyLaunchCommand = async () => {
+    await navigator.clipboard?.writeText('aiwg cockpit');
+  };
 
   return (
     <>
@@ -91,6 +94,7 @@ export function App() {
           <span className={`health-pill ${chrome ? 'ok' : 'warn'}`}>{chrome ? 'Bridge live' : 'Bridge checking'}</span>
           {chrome && (
             <>
+              <span className="executor-pill" title={chrome.executor}>{chrome.executor}</span>
               <span>{chrome.instances} stacks</span>
               <span>{chrome.running} running</span>
               <span>{chrome.approvals} approvals</span>
@@ -99,6 +103,7 @@ export function App() {
           )}
         </div>
         <button className="meta" onClick={startSession}>▸ Start a session</button>
+        <button className="meta" onClick={copyLaunchCommand}>Copy CLI</button>
       </header>
       <div role="tablist" aria-label="Cockpit views">
         {TABS.map((t) => (
