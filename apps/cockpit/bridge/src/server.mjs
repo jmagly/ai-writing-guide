@@ -176,36 +176,194 @@ async function proxy(res, method, target) {
   return json(res, r.status, body);
 }
 
+async function fetchJsonFirst(candidates, { method = 'GET' } = {}) {
+  const failures = [];
+  for (const candidate of candidates) {
+    const target = typeof candidate === 'string' ? candidate : candidate.target;
+    const requestMethod = typeof candidate === 'string' ? method : candidate.method ?? method;
+    let r;
+    try {
+      r = await fetch(target, { method: requestMethod });
+    } catch (err) {
+      failures.push(`${target} -> ${String(err?.message ?? err)}`);
+      continue;
+    }
+    const body = await r.json().catch(() => ({}));
+    if (r.ok) return { target, status: r.status, body };
+    failures.push(`${target} -> ${r.status}`);
+    if (r.status !== 404 && r.status !== 405) return { target, status: r.status, body, failures };
+  }
+  throw new Error(failures.join('; ') || 'no upstream candidates');
+}
+
+async function proxyFirst(res, candidates, options) {
+  try {
+    const { status, body } = await fetchJsonFirst(candidates, options);
+    return json(res, status, body);
+  } catch (err) {
+    return json(res, 502, { error: 'bridge_upstream_error', message: String(err?.message ?? err) });
+  }
+}
+
+function asArrayFromEnvelope(body, keys) {
+  if (Array.isArray(body)) return body;
+  if (!body || typeof body !== 'object') return [];
+  for (const key of keys) {
+    if (Array.isArray(body[key])) return body[key];
+  }
+  if (body.data && typeof body.data === 'object') {
+    for (const key of keys) {
+      if (Array.isArray(body.data[key])) return body.data[key];
+    }
+  }
+  return [];
+}
+
+function normalizeRuntimePosture(kind) {
+  const runtime = String(kind || 'unknown').toLowerCase();
+  if (runtime === 'host') return {
+    kind: runtime,
+    isolation: 'least',
+    label: 'Host / full host access',
+    warning: 'Least isolated tier: this agent runs with direct host access.',
+  };
+  if (runtime === 'container' || runtime === 'docker') return {
+    kind: runtime,
+    isolation: 'shared-kernel',
+    label: 'Container / shared kernel',
+    warning: 'Container isolation shares the host kernel.',
+  };
+  if (runtime === 'vm') return { kind: runtime, isolation: 'strong', label: 'VM / hardware boundary' };
+  if (runtime === 'unknown') return { kind: runtime, isolation: 'unknown', label: 'Unknown runtime', warning: 'Runtime metadata was not reported by the sandbox.' };
+  return {
+    kind: runtime,
+    isolation: 'opaque',
+    label: `${runtime} / opaque runtime`,
+    warning: 'Future or unrecognized runtime kind; Cockpit is rendering it conservatively.',
+  };
+}
+
+function normalizeHostDaemon(status, runtime) {
+  const raw = status && typeof status === 'object' ? status : {};
+  const value = String(raw.status ?? (runtime === 'host' ? 'unknown' : 'unavailable')).toLowerCase();
+  const allowed = new Set(['detected', 'available', 'unavailable', 'permission_denied', 'degraded', 'stopped', 'unknown']);
+  return {
+    status: allowed.has(value) ? value : 'unknown',
+    detail: raw.detail ?? (runtime === 'host' ? 'Host daemon status was not reported.' : 'Not applicable for this runtime tier.'),
+    operator_command: raw.operator_command,
+  };
+}
+
+function normalizeTransport(posture) {
+  const raw = posture && typeof posture === 'object' ? posture : {};
+  const mode = String(raw.mode ?? 'unknown');
+  const trust = String(raw.trust ?? '').toLowerCase();
+  const normalizedTrust = ['secure', 'local', 'compatibility', 'degraded', 'unknown'].includes(trust) ? trust : (
+    /mtls|local-ca|client-cert/i.test(mode) ? 'secure' :
+    /shared-secret|tofu|legacy/i.test(mode) ? 'compatibility' :
+    /loopback|uds|vsock/i.test(mode) ? 'local' :
+    'unknown'
+  );
+  const labels = {
+    secure: 'Secure transport',
+    local: 'Local transport',
+    compatibility: 'Legacy compatibility',
+    degraded: 'Degraded transport',
+    unknown: 'Unknown transport',
+  };
+  return {
+    mode,
+    trust: normalizedTrust,
+    label: labels[normalizedTrust],
+    source: raw.source ?? 'agentic-sandbox metadata',
+    evidence: raw.evidence,
+    stale: Boolean(raw.stale),
+  };
+}
+
+function normalizeSessionBackends(backends) {
+  const list = Array.isArray(backends) ? backends : [];
+  if (!list.length) return [{ mode: 'direct', backend: 'native', observe: true, drive: false, replay: false, keyframe: false, available: false, reason: 'sandbox did not advertise session-host capabilities' }];
+  return list.map((b) => ({
+    mode: b.mode === 'managed' ? 'managed' : 'direct',
+    backend: String(b.backend || (b.mode === 'managed' ? 'tmux' : 'native')),
+    replay: Boolean(b.replay),
+    keyframe: Boolean(b.keyframe),
+    drive: Boolean(b.drive),
+    observe: b.observe !== false,
+    available: b.available !== false,
+    reason: b.reason,
+  }));
+}
+
+function normalizeInstance(executorUrl, i) {
+  const runtimeValue = i.runtime_kind ?? i.runtime?.kind ?? i.runtime ?? i.runtime_tier ?? i.isolation?.runtime ?? 'unknown';
+  const runtime = String(runtimeValue);
+  const runtimePosture = normalizeRuntimePosture(runtime);
+  const id = i.instance_id ?? i.instanceId ?? i.agent_instance_id ?? i.id;
+  return {
+    id,
+    runtime,
+    loadout: i.loadout ?? i.launch_context?.loadout ?? i.launchContext?.loadout ?? 'unknown',
+    state: i.state ?? i.status ?? 'unknown',
+    tenant: i.tenant_id ?? i.tenant ?? i.tenantId ?? 'default',
+    card_url: i.card_url ?? i.cardUrl ?? `${executorUrl}/agents/${encodeURIComponent(id)}/.well-known/agent-card.json`,
+    runtime_posture: runtimePosture,
+    host_daemon: normalizeHostDaemon(i.host_daemon ?? i.hostDaemon, runtimePosture.kind),
+    transport: normalizeTransport(i.transport ?? i.transport_posture ?? i.security_posture ?? i.security?.transport),
+    launch_context: {
+      cwd: i.launch_context?.cwd ?? i.launchContext?.cwd ?? i.cwd,
+      loadout: i.launch_context?.loadout ?? i.launchContext?.loadout ?? i.loadout,
+      runtime_kind: i.launch_context?.runtime_kind ?? i.launchContext?.runtimeKind ?? runtime,
+      host: i.launch_context?.host ?? i.launchContext?.host ?? i.host_metadata?.hostname ?? i.hostMetadata?.hostname,
+      selected_tier: i.launch_context?.selected_tier ?? i.launchContext?.selectedTier ?? i.operator_selected_tier ?? i.operatorSelectedTier ?? runtime,
+    },
+    session_backends: normalizeSessionBackends(i.session_backends ?? i.sessionBackends ?? i.session_host?.backends ?? i.sessionHost?.backends ?? i.capabilities?.session_backends ?? i.capabilities?.sessionBackends),
+  };
+}
+
 /** Normalize the executor's admin inventory into the Bridge's UI shape. */
 async function getInventory(executorUrl) {
-  const r = await fetch(`${executorUrl}/admin/instances`);
-  if (!r.ok) throw new Error(`admin /instances -> ${r.status}`);
-  const { instances } = await r.json();
+  const { target, body } = await fetchJsonFirst([
+    `${executorUrl}/admin/instances`,
+    `${executorUrl}/api/v2/admin/instances`,
+  ]);
+  const instances = asArrayFromEnvelope(body, ['instances', 'items', 'data']);
+  const normalized = instances.map((i) => normalizeInstance(executorUrl, i));
   return {
     source: executorUrl,
+    admin_path: new URL(target).pathname,
     fetched_at: new Date().toISOString(),
-    count: instances.length,
-    instances: instances.map((i) => ({
-      id: i.instance_id,
-      runtime: i.runtime,
-      loadout: i.loadout,
-      state: i.state,
-      tenant: i.tenant_id,
-      card_url: `${executorUrl}/agents/${encodeURIComponent(i.instance_id)}/.well-known/agent-card.json`,
-    })),
+    count: normalized.length,
+    instances: normalized,
   };
 }
 
 /** Running tasks across all instances (the running-agents board). */
 async function getRunning(executorUrl) {
-  const r = await fetch(`${executorUrl}/admin/running`);
-  if (!r.ok) throw new Error(`admin /running -> ${r.status}`);
-  const { running } = await r.json();
+  const { body } = await fetchJsonFirst([
+    `${executorUrl}/admin/running`,
+    `${executorUrl}/api/v2/admin/running`,
+  ]);
+  const running = asArrayFromEnvelope(body, ['running', 'tasks', 'items', 'data']);
+  const byId = new Map((await getInventory(executorUrl)).instances.map((i) => [i.id, i]));
   return {
     source: executorUrl,
     fetched_at: new Date().toISOString(),
     count: running.length,
-    running: running.map((t) => ({ instance_id: t.instance_id, task_id: t.task_id, state: t.state, tenant: t.tenant })),
+    running: running.map((t) => {
+      const instanceId = t.instance_id ?? t.instanceId ?? t.agent_instance_id ?? t.agentInstanceId;
+      const taskId = t.task_id ?? t.taskId ?? t.id;
+      const inst = byId.get(instanceId);
+      return {
+        instance_id: instanceId,
+        task_id: taskId,
+        state: t.state ?? t.status ?? 'unknown',
+        tenant: t.tenant ?? t.tenant_id ?? t.tenantId ?? 'default',
+        runtime_posture: inst?.runtime_posture,
+        transport: inst?.transport,
+      };
+    }),
   };
 }
 
@@ -216,15 +374,19 @@ async function getRunning(executorUrl) {
  * URL rather than proxying frames.
  */
 async function getSessions(executorUrl, instanceId) {
-  const r = await fetch(`${executorUrl}/agents/${encodeURIComponent(instanceId)}/sessions`);
-  if (!r.ok) throw new Error(`/sessions -> ${r.status}`);
-  const { sessions } = await r.json();
+  const { body } = await fetchJsonFirst([
+    `${executorUrl}/agents/${encodeURIComponent(instanceId)}/sessions`,
+    `${executorUrl}/agents/${encodeURIComponent(instanceId)}/v1/sessions`,
+  ]);
+  const sessions = asArrayFromEnvelope(body, ['sessions', 'items', 'data']);
   const wsBase = executorUrl.replace(/^http/i, 'ws');
   return {
     instance_id: instanceId,
     sessions: sessions.map((s) => ({
       ...s,
-      attach_url: `${wsBase}/agents/${encodeURIComponent(instanceId)}/sessions/${encodeURIComponent(s.id)}/attach`,
+      id: s.id ?? s.session_id ?? s.sessionId,
+      instance_id: s.instance_id ?? s.instanceId ?? instanceId,
+      attach_url: s.attach_url ?? s.attachUrl ?? `${wsBase}/agents/${encodeURIComponent(instanceId)}/sessions/${encodeURIComponent(s.id ?? s.session_id ?? s.sessionId)}/attach`,
     })),
   };
 }
@@ -292,17 +454,31 @@ export function createBridge({ executorUrl = EXECUTOR_URL, mockUrl, token } = {}
       let m;
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/sessions$/)) && req.method === 'POST') {
         const id = decodeURIComponent(m[1]);
-        const r = await fetch(`${upstreamUrl}/agents/${encodeURIComponent(id)}/sessions`, { method: 'POST' });
-        const body = await r.json();
+        const qs = new URLSearchParams();
+        const mode = url.searchParams.get('mode'), backend = url.searchParams.get('backend');
+        if (mode) qs.set('mode', mode);
+        if (backend) qs.set('backend', backend);
+        const { status, body } = await fetchJsonFirst([
+          `${upstreamUrl}/agents/${encodeURIComponent(id)}/sessions${qs.size ? `?${qs}` : ''}`,
+          `${upstreamUrl}/agents/${encodeURIComponent(id)}/v1/sessions${qs.size ? `?${qs}` : ''}`,
+        ], { method: 'POST' });
         const wsBase = upstreamUrl.replace(/^http/i, 'ws');
-        return json(res, r.status, { ...body, attach_url: `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(body.id)}/attach` });
+        const sessionId = body.id ?? body.session_id ?? body.sessionId;
+        return json(res, status, { ...body, id: sessionId, attach_url: body.attach_url ?? body.attachUrl ?? `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(sessionId)}/attach` });
       }
 
       // --- management surface (UC-012): lifecycle + task cancel ---
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/(start|stop)$/)) && req.method === 'POST')
-        return proxy(res, 'POST', `${upstreamUrl}/admin/instances/${encodeURIComponent(m[1])}/${m[2]}`);
+        return proxyFirst(res, [
+          `${upstreamUrl}/admin/instances/${encodeURIComponent(m[1])}/${m[2]}`,
+          `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(m[1])}/${m[2]}`,
+        ], { method: 'POST' });
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)$/)) && req.method === 'DELETE')
-        return proxy(res, 'DELETE', `${upstreamUrl}/admin/instances/${encodeURIComponent(m[1])}`);
+        return proxyFirst(res, [
+          { target: `${upstreamUrl}/admin/instances/${encodeURIComponent(m[1])}`, method: 'DELETE' },
+          { target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(m[1])}`, method: 'DELETE' },
+          { target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(m[1])}/destroy`, method: 'POST' },
+        ]);
       if ((m = url.pathname.match(/^\/api\/tasks\/([^/]+)\/([^/]+)\/cancel$/)) && req.method === 'POST')
         return proxy(res, 'POST', `${upstreamUrl}/agents/${encodeURIComponent(m[1])}/tasks/${encodeURIComponent(m[2])}:cancel`);
 

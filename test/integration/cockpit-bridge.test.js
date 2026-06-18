@@ -4,6 +4,7 @@
 // this stays fast and deterministic in CI. Imports cockpit source directly (apps/
 // cockpit is in the repo checkout though excluded from the published tarball).
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import http from 'node:http';
 import { createExecutor } from '../../apps/cockpit/mock-executor/src/server.mjs';
 import { createBridge } from '../../apps/cockpit/bridge/src/server.mjs';
 
@@ -29,12 +30,26 @@ describe('cockpit Bridge — control surface', () => {
 
   it('serves inventory, running, and sessions with a ws attach_url', async () => {
     const inv = await (await f('/api/inventory')).json();
-    expect(inv.count).toBe(3);
+    expect(inv.count).toBe(4);
     expect(inv.source).toMatch(/^http:\/\/127\.0\.0\.1:/);
+    expect(inv.instances.find((x) => x.runtime === 'host')?.runtime_posture).toMatchObject({ isolation: 'least' });
+    expect(inv.instances.find((x) => x.runtime === 'wasm-edge')?.runtime_posture).toMatchObject({ isolation: 'opaque' });
+    expect(inv.instances.find((x) => x.transport?.trust === 'compatibility')?.transport.evidence).not.toMatch(/secret-value|token/i);
     const run = await (await f('/api/running')).json();
     expect(run.count).toBeGreaterThanOrEqual(2);
+    expect(run.running[0]).toHaveProperty('runtime_posture');
+    expect(run.running[0]).toHaveProperty('transport');
     const s = await (await f('/api/sessions?instance=550e8400-e29b-41d4-a716-446655440000')).json();
     expect(s.sessions.find((x) => x.id === 'demo-shell')?.attach_url).toMatch(/^ws:\/\/.*\/attach$/);
+    expect(s.sessions.find((x) => x.id === 'demo-shell')).toMatchObject({ mode: 'direct', backend: 'native', role_policy: 'observe-default' });
+  });
+
+  it('creates sessions with sandbox-advertised direct or managed backend selection', async () => {
+    const id = '550e8400-e29b-41d4-a716-446655440000';
+    const created = await (await f(`/api/instances/${id}/sessions?mode=managed&backend=tmux`, { method: 'POST' })).json();
+    expect(created.attach_url).toMatch(/^ws:\/\/.*\/attach$/);
+    const s = await (await f(`/api/sessions?instance=${id}`)).json();
+    expect(s.sessions.find((x) => x.id === created.id)).toMatchObject({ mode: 'managed', backend: 'tmux' });
   });
 
   it('reports the configured agentic-sandbox executor seam', async () => {
@@ -60,6 +75,98 @@ describe('cockpit Bridge — control surface', () => {
     expect((await (await f('/api/approvals/apr-001?decision=approve', { method: 'POST' })).json()).status).toBe('approved');
     expect((await f('/api/approvals/apr-001?decision=deny', { method: 'POST' })).status).toBe(409);
     expect((await (await f('/api/cost')).json()).total.usd).toBeGreaterThan(0);
+  });
+});
+
+describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
+  let upstream, compatBridge, compatBase, compatToken;
+  beforeAll(async () => {
+    upstream = http.createServer((req, res) => {
+      const url = new URL(req.url, 'http://127.0.0.1');
+      const send = (status, body) => {
+        res.writeHead(status, { 'content-type': 'application/json' });
+        res.end(JSON.stringify(body));
+      };
+      if (url.pathname === '/admin/instances') return send(404, { error: 'legacy_admin_absent' });
+      if (url.pathname === '/api/v2/admin/instances') {
+        return send(200, {
+          data: {
+            instances: [{
+              instanceId: 'v2-host-1',
+              runtime: { kind: 'host' },
+              loadout: 'host-tools',
+              status: 'running',
+              tenantId: 'default',
+              launchContext: { cwd: '/work', selectedTier: 'host' },
+              hostDaemon: { status: 'degraded', detail: 'reachable with warnings' },
+              security: { transport: { mode: 'mtls-local-ca', source: 'v2 admin', evidence: 'peer cert fingerprint' } },
+              sessionHost: { backends: [{ mode: 'managed', backend: 'zellij', replay: true, keyframe: true, drive: true, observe: true }] },
+            }],
+          },
+        });
+      }
+      if (url.pathname === '/admin/running') return send(404, { error: 'legacy_running_absent' });
+      if (url.pathname === '/api/v2/admin/running') {
+        return send(200, { tasks: [{ instanceId: 'v2-host-1', taskId: 'task-1', status: 'working', tenantId: 'default' }] });
+      }
+      if (url.pathname === '/admin/instances/v2-host-1/start' || url.pathname === '/admin/instances/v2-host-1/stop') {
+        return send(404, { error: 'legacy_lifecycle_absent' });
+      }
+      if (url.pathname === '/api/v2/admin/instances/v2-host-1/start' && req.method === 'POST') {
+        return send(200, { instanceId: 'v2-host-1', status: 'running' });
+      }
+      if (url.pathname === '/api/v2/admin/instances/v2-host-1/stop' && req.method === 'POST') {
+        return send(200, { instanceId: 'v2-host-1', status: 'stopped' });
+      }
+      if (url.pathname === '/admin/instances/v2-host-1' && req.method === 'DELETE') {
+        return send(404, { error: 'legacy_delete_absent' });
+      }
+      if (url.pathname === '/api/v2/admin/instances/v2-host-1' && req.method === 'DELETE') {
+        return send(200, { destroyed: 'v2-host-1' });
+      }
+      if (url.pathname === '/agents/v2-host-1/sessions') return send(404, { error: 'legacy_sessions_absent' });
+      if (url.pathname === '/agents/v2-host-1/v1/sessions') {
+        return send(200, { items: [{ sessionId: 'sess-v2', seq: 2, members: 1, role_policy: 'observe-default' }] });
+      }
+      return send(404, { error: 'not_found', path: url.pathname });
+    });
+    await new Promise((r) => upstream.listen(0, '127.0.0.1', r));
+    compatBridge = createBridge({ executorUrl: `http://127.0.0.1:${upstream.address().port}` });
+    await new Promise((r) => compatBridge.listen(0, '127.0.0.1', r));
+    compatBase = `http://127.0.0.1:${compatBridge.address().port}`;
+    compatToken = compatBridge.cockpitToken;
+  });
+  afterAll(() => { compatBridge?.close(); upstream?.close(); });
+
+  const cf = (p, o = {}) => fetch(compatBase + p, { ...o, headers: { ...(o.headers || {}), authorization: `Bearer ${compatToken}` } });
+
+  it('falls back to /api/v2/admin/instances and normalizes v2-shaped fields', async () => {
+    const inv = await (await cf('/api/inventory')).json();
+    expect(inv.admin_path).toBe('/api/v2/admin/instances');
+    expect(inv.instances[0]).toMatchObject({
+      id: 'v2-host-1',
+      runtime: 'host',
+      state: 'running',
+      tenant: 'default',
+      runtime_posture: { isolation: 'least' },
+      transport: { trust: 'secure' },
+      host_daemon: { status: 'degraded' },
+    });
+    expect(inv.instances[0].session_backends[0]).toMatchObject({ mode: 'managed', backend: 'zellij' });
+
+    const running = await (await cf('/api/running')).json();
+    expect(running.running[0]).toMatchObject({ instance_id: 'v2-host-1', task_id: 'task-1', state: 'working' });
+    expect(running.running[0].runtime_posture).toMatchObject({ isolation: 'least' });
+
+    const sessions = await (await cf('/api/sessions?instance=v2-host-1')).json();
+    expect(sessions.sessions[0]).toMatchObject({ id: 'sess-v2', instance_id: 'v2-host-1' });
+    expect(sessions.sessions[0].attach_url).toMatch(/\/agents\/v2-host-1\/sessions\/sess-v2\/attach$/);
+  });
+
+  it('falls back to v2 lifecycle routes for start, stop, and destroy', async () => {
+    expect(await (await cf('/api/instances/v2-host-1/start', { method: 'POST' })).json()).toMatchObject({ status: 'running' });
+    expect(await (await cf('/api/instances/v2-host-1/stop', { method: 'POST' })).json()).toMatchObject({ status: 'stopped' });
+    expect(await (await cf('/api/instances/v2-host-1', { method: 'DELETE' })).json()).toMatchObject({ destroyed: 'v2-host-1' });
   });
 });
 

@@ -4,13 +4,64 @@
 
 export const DEFAULT_INSTANCE = process.env.MOCK_INSTANCE_ID ?? '550e8400-e29b-41d4-a716-446655440000';
 
-/** @typedef {{ instance_id: string, runtime: 'vm'|'container', loadout: string, state: 'running'|'stopped'|'provisioning', created_at: string, tenant_id: string }} Instance */
+/** @typedef {{ instance_id: string, runtime: string, loadout: string, state: 'running'|'stopped'|'provisioning', created_at: string, tenant_id: string, host_daemon?: object, transport?: object, launch_context?: object, session_backends?: object[] }} Instance */
 
 /** @type {Map<string, Instance>} */
 export const instances = new Map([
-  [DEFAULT_INSTANCE, { instance_id: DEFAULT_INSTANCE, runtime: 'container', loadout: 'agentic-dev', state: 'running', created_at: '2026-06-13T12:00:00Z', tenant_id: 'default' }],
-  ['7c1f0b2a-3d4e-4f5a-9b8c-1d2e3f4a5b6c', { instance_id: '7c1f0b2a-3d4e-4f5a-9b8c-1d2e3f4a5b6c', runtime: 'vm', loadout: 'security-audit', state: 'running', created_at: '2026-06-13T12:05:00Z', tenant_id: 'default' }],
-  ['9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b', { instance_id: '9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b', runtime: 'container', loadout: 'agentic-dev', state: 'stopped', created_at: '2026-06-12T18:30:00Z', tenant_id: 'default' }],
+  [DEFAULT_INSTANCE, {
+    instance_id: DEFAULT_INSTANCE,
+    runtime: 'container',
+    loadout: 'agentic-dev',
+    state: 'running',
+    created_at: '2026-06-13T12:00:00Z',
+    tenant_id: 'default',
+    transport: { mode: 'loopback-rest', trust: 'local', source: 'agentic-sandbox admin', evidence: '127.0.0.1 REST control plane' },
+    launch_context: { cwd: '/home/roctinam/dev/aiwg', loadout: 'agentic-dev', runtime_kind: 'container', selected_tier: 'container' },
+    session_backends: [
+      { mode: 'direct', backend: 'native', replay: true, keyframe: true, drive: true, observe: true, available: true },
+      { mode: 'managed', backend: 'tmux', replay: true, keyframe: true, drive: true, observe: true, available: true },
+    ],
+  }],
+  ['7c1f0b2a-3d4e-4f5a-9b8c-1d2e3f4a5b6c', {
+    instance_id: '7c1f0b2a-3d4e-4f5a-9b8c-1d2e3f4a5b6c',
+    runtime: 'vm',
+    loadout: 'security-audit',
+    state: 'running',
+    created_at: '2026-06-13T12:05:00Z',
+    tenant_id: 'default',
+    transport: { mode: 'mtls-local-ca', trust: 'secure', source: 'agentic-sandbox peer identity', evidence: 'local CA mTLS bootstrap' },
+    launch_context: { cwd: '/workspace/audit', loadout: 'security-audit', runtime_kind: 'vm', host: 'qemu:///system', selected_tier: 'vm' },
+    session_backends: [
+      { mode: 'direct', backend: 'native', replay: false, keyframe: false, drive: false, observe: true, available: false, reason: 'direct console disabled for this VM policy' },
+      { mode: 'managed', backend: 'zellij', replay: true, keyframe: true, drive: true, observe: true, available: true },
+    ],
+  }],
+  ['2f83b456-14aa-4fc3-ae70-02b2a6d74490', {
+    instance_id: '2f83b456-14aa-4fc3-ae70-02b2a6d74490',
+    runtime: 'host',
+    loadout: 'host-tools',
+    state: 'running',
+    created_at: '2026-06-16T09:20:00Z',
+    tenant_id: 'default',
+    host_daemon: { status: 'available', detail: 'first-party host runtime daemon reachable', operator_command: 'agentic-sandbox host-daemon start --listen 127.0.0.1:8122' },
+    transport: { mode: 'uds', trust: 'local', source: 'agentic-sandbox host daemon', evidence: 'local socket peer check' },
+    launch_context: { cwd: '/home/roctinam/dev/aiwg', loadout: 'host-tools', runtime_kind: 'host', host: 'grissom', selected_tier: 'host' },
+    session_backends: [
+      { mode: 'direct', backend: 'native', replay: true, keyframe: true, drive: true, observe: true, available: true },
+      { mode: 'managed', backend: 'screen', replay: true, keyframe: true, drive: true, observe: true, available: true },
+    ],
+  }],
+  ['9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b', {
+    instance_id: '9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b',
+    runtime: 'wasm-edge',
+    loadout: 'agentic-dev',
+    state: 'stopped',
+    created_at: '2026-06-12T18:30:00Z',
+    tenant_id: 'default',
+    transport: { mode: 'shared-secret', trust: 'compatibility', source: 'agentic-sandbox compatibility adapter', evidence: 'legacy shared secret accepted; secret value withheld' },
+    launch_context: { cwd: '/workspace', loadout: 'agentic-dev', runtime_kind: 'wasm-edge', selected_tier: 'wasm-edge' },
+    session_backends: [],
+  }],
 ]);
 
 export function listInstances() {

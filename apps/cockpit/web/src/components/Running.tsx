@@ -34,12 +34,14 @@ export function Running() {
           <table>
             <caption>Running across all stacks — {run.count} task(s)</caption>
             <thead>
-              <tr><th scope="col">Instance</th><th scope="col">Task</th><th scope="col">State</th><th scope="col">Tenant</th><th scope="col">Control</th></tr>
+              <tr><th scope="col">Instance</th><th scope="col">Runtime</th><th scope="col">Transport</th><th scope="col">Task</th><th scope="col">State</th><th scope="col">Tenant</th><th scope="col">Control</th></tr>
             </thead>
             <tbody>
               {run.running.map((t) => (
                 <tr key={t.task_id}>
                   <td><code title={t.instance_id}>{fmtId(t.instance_id)}</code></td>
+                  <td>{t.runtime_posture ? <span className={`badge isolation-${t.runtime_posture.isolation}`} title={t.runtime_posture.warning || t.runtime_posture.label}>{t.runtime_posture.label}</span> : <span className="badge">unknown</span>}</td>
+                  <td>{t.transport ? <span className={`badge trust-${t.transport.trust}`}>{t.transport.label}</span> : <span className="badge">unknown</span>}</td>
                   <td><code title={t.task_id}>{fmtId(t.task_id)}</code></td>
                   <td><span className={`state ${t.state}`}><span className="dot" aria-hidden="true" />{t.state}</span></td>
                   <td>{t.tenant}</td>

@@ -3,7 +3,7 @@
 // the conformance harness exercises at /agents/:id/sessions/:sid/attach.
 //   server -> binding_hello on connect
 //   message/send, tasks/get      -> op:"task"
-//   pty.join_session             -> op:"role_assigned" (1st=controller, rest=observer)
+//   pty.join_session             -> op:"role_assigned" (observer by default; controller only when requested)
 //   pty.session_input (base64)   -> op:"output" (top-level seq; PTY echoes input)
 //   pty.request_keyframe         -> op:"keyframe" (payload.frames includes outputs)
 //   ?replay_from=N               -> replays buffered frames seq>N + keyframe
@@ -49,7 +49,7 @@ function makeParser(onText, onClose) {
   };
 }
 
-const sessions = new Map(); // sessionId -> { id, instanceId, seq, frames:[], members:[], hasController }
+const sessions = new Map(); // sessionId -> { id, instanceId, seq, frames:[], members:[], hasController, mode, backend }
 function sessionOf(id, instanceId) {
   if (!sessions.has(id)) sessions.set(id, { id, instanceId: instanceId ?? null, seq: 0, frames: [], members: [], hasController: false });
   const s = sessions.get(id);
@@ -66,13 +66,30 @@ const b64 = (str) => Buffer.from(str, 'utf8').toString('base64');
 export function listSessions(instanceId) {
   return [...sessions.values()]
     .filter((s) => !instanceId || s.instanceId === instanceId)
-    .map((s) => ({ id: s.id, instance_id: s.instanceId, seq: s.seq, members: s.members.length, has_controller: s.hasController }));
+    .map((s) => ({
+      id: s.id,
+      instance_id: s.instanceId,
+      seq: s.seq,
+      members: s.members.length,
+      has_controller: s.hasController,
+      controllers: s.members.filter((m) => m.role === 'controller').length,
+      observers: s.members.filter((m) => m.role === 'observer').length,
+      mode: s.mode ?? 'direct',
+      backend: s.backend ?? 'native',
+      role_policy: 'observe-default',
+      replay: true,
+      keyframe: true,
+    }));
 }
 
 /** Create a fresh session on an instance (the "Start a session" primary verb). */
-export function createSession(instanceId) {
+export function createSession(instanceId, { mode = 'direct', backend = 'native' } = {}) {
   const id = `sess-${randomUUID().slice(0, 8)}`;
-  sessionOf(id, instanceId);
+  const session = sessionOf(id, instanceId);
+  session.mode = mode;
+  session.backend = backend;
+  const seq = ++session.seq;
+  session.frames.push({ op: 'output', seq, payload: { stream: 'stdout', data: b64(`$ cockpit session ${id} ready on ${mode}/${backend}\r\n`) } });
   return { id, instance_id: instanceId };
 }
 
@@ -80,6 +97,8 @@ export function createSession(instanceId) {
 export function seedDemoSessions() {
   const s = sessionOf('demo-shell', DEFAULT_INSTANCE);
   if (s.frames.length) return; // idempotent
+  s.mode = 'direct';
+  s.backend = 'native';
   for (const line of [
     '$ aiwg discover "deploy production"\r\n',
     'flow-deploy-to-production   score=0.51\r\n',
@@ -102,7 +121,11 @@ function handleOp(text, ctx) {
       return t ? send({ op: 'task', payload: t }) : send({ op: 'error', payload: { code: 'task.not_found' } });
     }
     case 'pty.join_session': {
-      const role = session.hasController ? 'observer' : 'controller';
+      const wantsControl = payload.role === 'controller';
+      if (wantsControl && session.hasController) {
+        return send({ op: 'error', payload: { code: 'PERMISSION_DENIED', detail: 'session already has a controller' } });
+      }
+      const role = wantsControl ? 'controller' : 'observer';
       if (role === 'controller') session.hasController = true;
       conn.role = role;
       session.members.push(conn);

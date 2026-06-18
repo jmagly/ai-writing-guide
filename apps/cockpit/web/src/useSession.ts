@@ -16,7 +16,7 @@ export function useSession() {
   const [state, setState] = useState<SessionState>({ attached: false, role: null, url: null, output: '' });
   const append = (text: string) => setState((s) => ({ ...s, output: (s.output ?? '') + text }));
 
-  const attach = useCallback((url: string, replay = false) => {
+  const attach = useCallback((url: string, replay = false, requestedRole: Exclude<Role, null> = 'observer') => {
     wsRef.current?.close();
     if (!replay) lastSeq.current = 0;
     setState({ attached: false, role: null, url, output: '' } as SessionState);
@@ -29,7 +29,7 @@ export function useSession() {
       let m: WsMsg;
       try { m = JSON.parse(ev.data as string); } catch { return; }
       switch (m.op) {
-        case 'binding_hello': ws.send(JSON.stringify({ op: 'pty.join_session' })); break;
+        case 'binding_hello': ws.send(JSON.stringify({ op: 'pty.join_session', payload: { role: requestedRole } })); break;
         case 'role_assigned': setState((s) => ({ ...s, role: m.payload?.role ?? null })); break;
         case 'output':
           if (m.seq) lastSeq.current = Math.max(lastSeq.current, m.seq);
@@ -43,7 +43,7 @@ export function useSession() {
   }, []);
 
   const detach = useCallback(() => { wsRef.current?.close(); wsRef.current = null; }, []);
-  const replay = useCallback((url: string) => { detach(); setTimeout(() => attach(url, true), 50); }, [attach, detach]);
+  const replay = useCallback((url: string) => { detach(); setTimeout(() => attach(url, true, 'observer'), 50); }, [attach, detach]);
   const requestKeyframe = useCallback(() => wsRef.current?.send(JSON.stringify({ op: 'pty.request_keyframe' })), []);
   const sendInput = useCallback((text: string): boolean => {
     const ws = wsRef.current;

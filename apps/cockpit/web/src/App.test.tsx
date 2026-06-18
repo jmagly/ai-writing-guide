@@ -7,14 +7,7 @@ import { App } from './App';
 // mount, so fetch is stubbed.
 beforeEach(() => {
   (window as unknown as { __COCKPIT_TOKEN__: string }).__COCKPIT_TOKEN__ = 'test-token';
-  const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
-  globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
-    const u = String(input);
-    if (u.includes('/api/inventory')) return ok({ count: 0, fetched_at: new Date(0).toISOString(), instances: [] });
-    if (u.includes('/api/running')) return ok({ count: 0, running: [] });
-    if (u.includes('/api/approvals')) return ok({ approvals: [] });
-    return ok({});
-  }) as typeof fetch;
+  globalThis.fetch = vi.fn(() => new Promise<Response>(() => undefined)) as typeof fetch;
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 

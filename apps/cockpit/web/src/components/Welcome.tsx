@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
-import type { Instance, Approval } from '../types';
+import { fmtId } from '../util';
+import type { Instance, Approval, Cost, RunningTask } from '../types';
 
-interface Status { instances: number; running: number; runningStacks: number; approvals: number; connected: boolean }
+interface Status {
+  instances: Instance[];
+  running: RunningTask[];
+  approvals: Approval[];
+  cost: Cost | null;
+  executor: string;
+  connected: boolean;
+}
 
 export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; goTo: (t: string) => void }) {
   const [st, setSt] = useState<Status | null>(null);
@@ -13,24 +21,44 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
     (async () => {
       try {
         const inv = await api<{ instances: Instance[] }>('/api/inventory');
-        const run = await api<{ count: number }>('/api/running');
+        const run = await api<{ count: number; running: RunningTask[] }>('/api/running');
         const apr = await api<{ approvals: Approval[] }>('/api/approvals?status=pending');
-        const runningStacks = inv.instances.filter((i) => i.state === 'running').length;
-        setSt({ instances: inv.instances.length, running: run.count, runningStacks, approvals: apr.approvals.length, connected: inv.instances.length > 0 });
+        const health = await api<{ executor_url: string }>('/api/health');
+        const cost = await api<Cost>('/api/cost').catch(() => null);
+        setSt({ instances: inv.instances, running: run.running, approvals: apr.approvals, cost, executor: health.executor_url, connected: inv.instances.length > 0 });
       } catch {
-        setSt({ instances: 0, running: 0, runningStacks: 0, approvals: 0, connected: false });
+        setSt({ instances: [], running: [], approvals: [], cost: null, executor: '', connected: false });
       }
     })();
   }, []);
 
+  const runningInstances = st?.instances.filter((i) => i.state === 'running') ?? [];
+  const runtimeCoverage = {
+    host: st?.instances.some((i) => i.runtime_posture.kind === 'host') ?? false,
+    container: st?.instances.some((i) => i.runtime_posture.kind === 'container' || i.runtime_posture.kind === 'docker') ?? false,
+    vm: st?.instances.some((i) => i.runtime_posture.kind === 'vm') ?? false,
+  };
+  const copyStartCommand = async () => {
+    await navigator.clipboard?.writeText('aiwg cockpit');
+  };
+
   return (
-    <div className="welcome">
-      <h2>Work alongside your agents</h2>
-      <p className="lead">
-        AIWG Cockpit is your control plane over the agentic sessions AIWG runs — observe what agents are doing,
-        take the wheel when you want, and coordinate multiple stacks from one place. It fronts the CLI and the
-        registry; it never replaces them. <strong>Agents run the CLI — you direct the agents.</strong>
-      </p>
+    <div className="welcome operator-wall">
+      <section className="wall-hero" aria-labelledby="cockpit-wall-title">
+        <div>
+          <p className="eyebrow">Operator wall</p>
+          <h2 id="cockpit-wall-title">Work alongside your agents</h2>
+          <p className="lead">
+            Observe live stacks, take control when a session allows it, and keep approvals, cost,
+            runtime posture, and handoff context visible in one control plane.
+          </p>
+        </div>
+        <div className="hero-actions" aria-label="Primary Cockpit actions">
+          <button className="cta" onClick={onStartSession}>▸ Start a session</button>
+          <button onClick={() => goTo('running')}>View board</button>
+          <button onClick={copyStartCommand}>Copy CLI</button>
+        </div>
+      </section>
 
       {!st ? <p className="empty">Checking your stacks…</p>
         : !st.connected ? (
@@ -41,22 +69,74 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
           </div>
         ) : (
           <>
-            <div className="statgrid">
-              <button className="stat" onClick={() => goTo('inventory')}>
-                <span className="stat-n">{st.instances}</span><span className="stat-l">instance(s) · {st.runningStacks} running</span>
+            <section className="stack-board" aria-label="Running stack board">
+              {runningInstances.slice(0, 6).map((i) => {
+                const task = st.running.find((r) => r.instance_id === i.id);
+                const cost = st.cost?.per_instance.find((c) => c.instance_id === i.id);
+                const drive = i.session_backends.some((b) => b.available && b.drive);
+                return (
+                  <article className={`stack-card accent-${accentFor(i.id)}`} key={i.id}>
+                    <div className="stack-head">
+                      <span className={`topology topology-${runtimeFamily(i)}`} aria-hidden="true" />
+                      <div>
+                        <h3>{i.loadout}</h3>
+                        <p>{fmtId(i.id)} · {i.runtime_posture.label}</p>
+                      </div>
+                      <span className={`badge isolation-${i.runtime_posture.isolation}`}>{i.state}</span>
+                    </div>
+                    <div className="stack-log" role="img" aria-label={`Recent activity for ${i.loadout}`}>
+                      <span>{task ? `task ${fmtId(task.task_id)} · ${task.state}` : 'idle · ready for session attach'}</span>
+                      <span>{i.transport.label} · {i.transport.mode}</span>
+                      <span>{drive ? 'Drive enabled' : 'Observe only'}</span>
+                    </div>
+                    <div className="segment-progress" aria-label="Session progress">
+                      <span style={{ width: task ? '68%' : '28%' }} />
+                    </div>
+                    <div className="transport-bar">
+                      <button onClick={() => goTo('sessions')}>Attach</button>
+                      <button onClick={() => goTo('running')}>Details</button>
+                      <span>{cost ? `$${cost.usd.toFixed(2)}` : 'cost n/a'}</span>
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
+
+            <section className="telemetry-strip" aria-label="Fleet telemetry">
+              <button onClick={() => goTo('inventory')}>
+                <strong>{st.instances.length}</strong>
+                <span>instances · {runningInstances.length} running</span>
               </button>
-              <button className="stat" onClick={() => goTo('running')}>
-                <span className="stat-n">{st.running}</span><span className="stat-l">running task(s)</span>
+              <button onClick={() => goTo('running')}>
+                <strong>{st.running.length}</strong>
+                <span>active tasks</span>
               </button>
-              <button className="stat" onClick={() => goTo('approvals')}>
-                <span className="stat-n">{st.approvals}</span><span className="stat-l">pending approval(s)</span>
+              <button onClick={() => goTo('approvals')}>
+                <strong>{st.approvals.length}</strong>
+                <span>pending approvals</span>
               </button>
-            </div>
-            <div className="cta-row">
-              <button className="cta" onClick={onStartSession}>▸ Start a session</button>
-              <button onClick={() => goTo('explore')}>Browse capabilities</button>
-              {st.approvals > 0 && <button onClick={() => goTo('approvals')}>Review {st.approvals} approval(s)</button>}
-            </div>
+              <button onClick={() => goTo('running')}>
+                <strong>{st.cost ? `$${st.cost.total.usd.toFixed(2)}` : '--'}</strong>
+                <span>cost · quota</span>
+              </button>
+              <button onClick={() => goTo('inventory')}>
+                <strong>{runtimeCoverage.host && runtimeCoverage.container && runtimeCoverage.vm ? '3/3' : `${[runtimeCoverage.host, runtimeCoverage.container, runtimeCoverage.vm].filter(Boolean).length}/3`}</strong>
+                <span>host · docker · vm</span>
+              </button>
+            </section>
+
+            <section className="guided-start" aria-label="Guided start">
+              <div>
+                <p className="eyebrow">Guided start</p>
+                <h3>Pick stack, attach observe-first, then drive when granted.</h3>
+                <p className="hint">Executor: {st.executor || 'unknown'} · UI actions inject commands into a session; the agent runs them.</p>
+              </div>
+              <div className="cta-row">
+                <button className="cta" onClick={onStartSession}>▸ Start a session</button>
+                <button onClick={() => goTo('explore')}>Browse capabilities</button>
+                {st.approvals.length > 0 && <button onClick={() => goTo('approvals')}>Review {st.approvals.length} approval(s)</button>}
+              </div>
+            </section>
           </>
         )}
 
@@ -72,4 +152,16 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
       )}
     </div>
   );
+}
+
+function runtimeFamily(instance: Instance): string {
+  if (instance.runtime_posture.kind === 'host') return 'terminal';
+  if (instance.runtime_posture.kind === 'vm' || instance.runtime_posture.kind === 'container' || instance.runtime_posture.kind === 'docker') return 'cube';
+  return 'window';
+}
+
+function accentFor(value: string): number {
+  let sum = 0;
+  for (const ch of value) sum += ch.charCodeAt(0);
+  return (sum % 4) + 1;
 }

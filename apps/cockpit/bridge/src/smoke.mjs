@@ -24,12 +24,15 @@ try {
   const r = await f('/api/inventory');
   assert.equal(r.status, 200, 'inventory 200 (authed)');
   const inv = await r.json();
-  assert.equal(inv.count, 3, 'three demo instances');
+  assert.equal(inv.count, 4, 'four demo instances');
   const ids = inv.instances.map((i) => i.id);
   assert.ok(ids.includes('550e8400-e29b-41d4-a716-446655440000'), 'default instance present');
+  assert.equal(inv.instances.find((i) => i.runtime === 'host')?.runtime_posture.isolation, 'least', 'host is least-isolated');
+  assert.equal(inv.instances.find((i) => i.runtime === 'wasm-edge')?.runtime_posture.isolation, 'opaque', 'future runtime is opaque');
+  assert.equal(inv.instances.find((i) => i.transport?.mode === 'shared-secret')?.transport.trust, 'compatibility', 'legacy secret transport is compatibility posture');
   const i0 = inv.instances[0];
-  for (const k of ['id', 'runtime', 'loadout', 'state', 'tenant', 'card_url']) assert.ok(k in i0, `field ${k}`);
-  assert.ok(['vm', 'container'].includes(i0.runtime), 'runtime kind');
+  for (const k of ['id', 'runtime', 'loadout', 'state', 'tenant', 'card_url', 'runtime_posture', 'host_daemon', 'transport', 'launch_context', 'session_backends']) assert.ok(k in i0, `field ${k}`);
+  assert.ok(['vm', 'container', 'host', 'wasm-edge'].includes(i0.runtime), 'runtime kind');
 
   // running board: seeded working tasks on the running instances
   const rr = await f("/api/running");
@@ -37,6 +40,7 @@ try {
   const run = await rr.json();
   assert.ok(run.count >= 2, 'at least two running tasks seeded');
   for (const k of ['instance_id', 'task_id', 'state', 'tenant']) assert.ok(k in run.running[0], `running field ${k}`);
+  for (const k of ['runtime_posture', 'transport']) assert.ok(k in run.running[0], `running posture field ${k}`);
   assert.equal(run.running[0].state, 'working', 'running task is working');
 
   // sessions: the demo pty session is listed with a direct ws attach_url
@@ -47,6 +51,9 @@ try {
   assert.ok(demo, 'demo-shell session present');
   assert.match(demo.attach_url, /^ws:\/\/.*\/agents\/.*\/sessions\/demo-shell\/attach$/, 'ws attach_url shape');
   assert.ok(demo.seq >= 3, 'demo session has a seeded transcript');
+  assert.equal(demo.mode, 'direct', 'demo session mode');
+  assert.equal(demo.backend, 'native', 'demo session backend');
+  assert.equal(demo.role_policy, 'observe-default', 'session role policy');
 
   // missing instance param is a 400
   assert.equal((await f("/api/sessions")).status, 400, 'sessions requires instance');
@@ -130,7 +137,7 @@ try {
     assert.equal((await fetch(base + asset[1].replace(/^\.\//, '/'))).status, 200, 'built React bundle served');
   }
 
-  console.log(`SMOKE OK — inventory(3) + running(${run.count}) + sessions(demo-shell) + registry(discover→${cap.results.length}) + contrib(${contrib.actions.length}) + shell(${shell})`);
+  console.log(`SMOKE OK — inventory(4) + running(${run.count}) + sessions(demo-shell) + registry(discover→${cap.results.length}) + contrib(${contrib.actions.length}) + shell(${shell})`);
 } finally {
   bridge.close();
   mock.close();

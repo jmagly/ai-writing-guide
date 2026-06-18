@@ -1,0 +1,43 @@
+{
+  "issue": 1617,
+  "executor_url": "http://127.0.0.1:8122",
+  "required": true,
+  "matrix_required": false,
+  "provider": null,
+  "result": "pass",
+  "started_at": "2026-06-18T01:32:36.424Z",
+  "finished_at": "2026-06-18T01:32:36.480Z",
+  "conformance_report": null,
+  "evidence": [
+    {
+      "name": "executor probe",
+      "status": "pass",
+      "detail": "reachable at http://127.0.0.1:8122"
+    },
+    {
+      "name": "Bridge health",
+      "status": "pass",
+      "detail": "Bridge reported executor http://127.0.0.1:8122"
+    },
+    {
+      "name": "inventory posture",
+      "status": "pass",
+      "detail": "4 instance(s) with normalized posture fields"
+    },
+    {
+      "name": "session metadata",
+      "status": "pass",
+      "detail": "1 session(s) reported attach metadata"
+    },
+    {
+      "name": "task projection",
+      "status": "pass",
+      "detail": "3 running task(s) reported"
+    },
+    {
+      "name": "target matrix",
+      "status": "skip",
+      "detail": "AIWG_COCKPIT_LIVE_MATRIX_REQUIRED not set"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useSession } from './useSession';
 import { api } from './api';
-import type { Instance } from './types';
+import type { Approval, Instance } from './types';
 import { Welcome } from './components/Welcome';
 import { Inventory } from './components/Inventory';
 import { Running } from './components/Running';
@@ -22,11 +22,51 @@ const TABS = [
   { id: 'actions', label: 'Actions' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
+interface ChromeStatus {
+  executor: string;
+  instances: number;
+  running: number;
+  approvals: number;
+  host: boolean;
+  container: boolean;
+  vm: boolean;
+}
 
 export function App() {
   const [tab, setTab] = useState<TabId>('welcome');
   const session = useSession();
   const [composer, setComposer] = useState('');
+  const [chrome, setChrome] = useState<ChromeStatus | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const [health, inv, run, apr] = await Promise.all([
+          api<{ executor_url: string }>('/api/health'),
+          api<{ instances: Instance[] }>('/api/inventory'),
+          api<{ count: number }>('/api/running'),
+          api<{ approvals: Approval[] }>('/api/approvals?status=pending'),
+        ]);
+        if (cancelled) return;
+        const kinds = inv.instances.map((i) => i.runtime_posture.kind);
+        setChrome({
+          executor: health.executor_url,
+          instances: inv.instances.length,
+          running: run.count,
+          approvals: apr.approvals.length,
+          host: kinds.includes('host'),
+          container: kinds.includes('container') || kinds.includes('docker'),
+          vm: kinds.includes('vm'),
+        });
+      } catch {
+        if (!cancelled) setChrome(null);
+      }
+    };
+    load();
+    const timer = window.setInterval(load, 15_000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, []);
 
   // The onboarding primary verb: create a session on a running instance and drop into it.
   const startSession = async () => {
@@ -43,9 +83,22 @@ export function App() {
   return (
     <>
       <header>
-        <span className="mark" aria-hidden="true">◆</span>
-        <h1>AIWG&nbsp;Cockpit</h1>
-        <button className="meta" onClick={startSession} style={{ marginLeft: 'auto' }}>▸ Start a session</button>
+        <div className="brand-lockup">
+          <span className="mark" aria-hidden="true">◆</span>
+          <h1>AIWG&nbsp;Cockpit</h1>
+        </div>
+        <div className="top-status" aria-label="Cockpit status">
+          <span className={`health-pill ${chrome ? 'ok' : 'warn'}`}>{chrome ? 'Bridge live' : 'Bridge checking'}</span>
+          {chrome && (
+            <>
+              <span>{chrome.instances} stacks</span>
+              <span>{chrome.running} running</span>
+              <span>{chrome.approvals} approvals</span>
+              <span className="matrix-mini" title="Runtime target coverage">host {chrome.host ? '✓' : '-'} · docker {chrome.container ? '✓' : '-'} · vm {chrome.vm ? '✓' : '-'}</span>
+            </>
+          )}
+        </div>
+        <button className="meta" onClick={startSession}>▸ Start a session</button>
       </header>
       <div role="tablist" aria-label="Cockpit views">
         {TABS.map((t) => (

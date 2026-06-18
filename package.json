@@ -44,6 +44,8 @@
     "uat:factory": "vitest run --config config/vitest.uat-live.config.js --reporter=verbose ralph-live-factory",
     "uat:daemon": "vitest run --config config/vitest.uat-daemon.config.js",
     "uat:daemon:claude": "vitest run --config config/vitest.uat-daemon.config.js --reporter=verbose daemon-live-claude",
+    "uat:cockpit-live": "vitest run --config config/vitest.uat-cockpit-live.config.js",
+    "uat:cockpit-live:matrix": "AIWG_COCKPIT_LIVE_REQUIRED=1 AIWG_COCKPIT_LIVE_MATRIX_REQUIRED=1 vitest run --config config/vitest.uat-cockpit-live.config.js",
     "lint:schemas": "node tools/scripts/lint-schemas.mjs",
     "lint:dep-sources": "node tools/lint/dep-source.mjs",
     "lint:affected-packages": "node tools/lint/affected-packages.mjs",

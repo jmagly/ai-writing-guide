@@ -27,15 +27,31 @@ export function Inventory() {
       <thead>
         <tr>
           <th scope="col">Instance</th><th scope="col">Runtime</th><th scope="col">Loadout</th>
-          <th scope="col">State</th><th scope="col">Tenant</th><th scope="col">Manage</th>
+          <th scope="col">Transport</th><th scope="col">Host daemon</th><th scope="col">State</th><th scope="col">Tenant</th><th scope="col">Manage</th>
         </tr>
       </thead>
       <tbody>
         {data.instances.map((i) => (
           <tr key={i.id}>
             <td><code title={i.id}>{fmtId(i.id)}</code></td>
-            <td><span className="badge">{i.runtime}</span></td>
+            <td>
+              <span className={`badge isolation-${i.runtime_posture.isolation}`} title={i.runtime_posture.warning || i.runtime_posture.label}>
+                {i.runtime_posture.label}
+              </span>
+              {i.runtime_posture.warning && <div className="cell-note">{i.runtime_posture.warning}</div>}
+            </td>
             <td>{i.loadout}</td>
+            <td>
+              <span className={`badge trust-${i.transport.trust}`} title={`${i.transport.source}${i.transport.evidence ? `: ${i.transport.evidence}` : ''}`}>
+                {i.transport.label}
+              </span>
+              <div className="cell-note">{i.transport.mode}{i.transport.stale ? ' · stale' : ''}</div>
+            </td>
+            <td>
+              <span className={`badge daemon-${i.host_daemon.status}`}>{i.host_daemon.status.replace('_', ' ')}</span>
+              {i.host_daemon.detail && <div className="cell-note">{i.host_daemon.detail}</div>}
+              {i.host_daemon.operator_command && <code title="Operator start command">{i.host_daemon.operator_command}</code>}
+            </td>
             <td><span className={`state ${i.state}`}><span className="dot" aria-hidden="true" />{i.state}</span></td>
             <td>{i.tenant}</td>
             <td style={{ whiteSpace: 'nowrap' }}>

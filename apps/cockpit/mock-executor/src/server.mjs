@@ -79,7 +79,12 @@ export function createExecutor() {
       }
       if (rest === 'messages:send' && req.method === 'POST') return handleSend(req, res, instanceId, inst);
       if (rest === 'sessions' && req.method === 'GET') return json(res, 200, { sessions: listSessions(instanceId) });
-      if (rest === 'sessions' && req.method === 'POST') return json(res, 201, createSession(instanceId));
+      if (rest === 'sessions' && req.method === 'POST') {
+        return json(res, 201, createSession(instanceId, {
+          mode: url.searchParams.get('mode') || undefined,
+          backend: url.searchParams.get('backend') || undefined,
+        }));
+      }
       if (rest === 'tasks' && req.method === 'GET') return handleListTasks(req, res, instanceId);
       let tm;
       if ((tm = rest.match(/^tasks\/(.+):cancel$/)) && req.method === 'POST') return handleCancel(req, res, instanceId, decodeURIComponent(tm[1]));
