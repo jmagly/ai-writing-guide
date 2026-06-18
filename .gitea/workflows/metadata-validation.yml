@@ -61,7 +61,7 @@ jobs:
       - name: Build TypeScript
         run: |
           echo "Building TypeScript..."
-          npm run build 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
+          npm run build:cli 2>&1 || { echo "Build failed with exit code $?"; exit 1; }
           echo "Build completed."
 
       - name: Check dist directory
@@ -195,7 +195,7 @@ jobs:
         run: npm ci --omit=optional
 
       - name: Build TypeScript
-        run: npm run build
+        run: npm run build:cli
 
       - name: Measure Validation Time
         run: |
