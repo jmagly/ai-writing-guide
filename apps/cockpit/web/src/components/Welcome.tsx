@@ -132,8 +132,8 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
                     {index === 3 && <span className="handoff-marker" aria-hidden="true" />}
                   </button>
                 ))}
-                <aside className="radial-detail" aria-labelledby="operator-wall-map-title">
-                  <div className="radial-detail-head">
+                <div className="radial-overlay" aria-labelledby="operator-wall-map-title">
+                  <div className="radial-overlay-head">
                     <div>
                       <p className="eyebrow">Live topology</p>
                       <h3 id="operator-wall-map-title">Eleven-stack operator wall</h3>
@@ -153,7 +153,7 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
                     <div><dt>Quota</dt><dd>{st.cost ? `$${st.cost.total.usd.toFixed(2)}` : 'n/a'}</dd></div>
                     <div><dt>Gates</dt><dd>{attentionCount > 0 ? `${attentionCount} attention` : 'clear'}</dd></div>
                   </dl>
-                </aside>
+                </div>
               </div>
             </section>
 
