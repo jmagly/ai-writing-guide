@@ -100,7 +100,6 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
               launchContext: { cwd: '/work', selectedTier: 'host' },
               hostDaemon: { status: 'degraded', detail: 'reachable with warnings' },
               security: { transport: { mode: 'mtls-local-ca', source: 'v2 admin', evidence: 'peer cert fingerprint' } },
-              sessionHost: { backends: [{ mode: 'managed', backend: 'zellij', replay: true, keyframe: true, drive: true, observe: true }] },
             }],
           },
         });
@@ -124,9 +123,23 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
       if (url.pathname === '/api/v2/admin/instances/v2-host-1' && req.method === 'DELETE') {
         return send(200, { destroyed: 'v2-host-1' });
       }
+      if (url.pathname === '/api/v1/agents') {
+        return send(200, { agents: [{ id: 'agent-v2-host-1', instance_id: 'v2-host-1', status: 'Ready' }] });
+      }
       if (url.pathname === '/agents/v2-host-1/sessions') return send(404, { error: 'legacy_sessions_absent' });
-      if (url.pathname === '/agents/v2-host-1/v1/sessions') {
-        return send(200, { items: [{ sessionId: 'sess-v2', seq: 2, members: 1, role_policy: 'observe-default' }] });
+      if (url.pathname === '/agents/v2-host-1/v1/sessions') return send(404, { error: 'preformal_sessions_absent' });
+      if (url.pathname === '/api/v1/agents/v2-host-1/sessions') return send(404, { error: 'instance_id_is_not_session_agent_id' });
+      if (url.pathname === '/api/v1/agents/agent-v2-host-1/sessions' && req.method === 'GET') {
+        return send(200, { items: [{ sessionId: 'sess-v2', seq: 2, members: 1, role_policy: 'observe-default', pty_ws_url: 'wss://{host}/agents/v2-host-1/sessions/sess-v2/attach' }] });
+      }
+      if (url.pathname === '/api/v1/agents/agent-v2-host-1/sessions' && req.method === 'POST') {
+        let raw = '';
+        req.on('data', (chunk) => { raw += chunk; });
+        req.on('end', () => {
+          const body = raw ? JSON.parse(raw) : {};
+          send(201, { session_id: 'sess-created-v1', requested: body, pty_ws_url: 'wss://{host}/agents/v2-host-1/sessions/sess-created-v1/attach' });
+        });
+        return;
       }
       return send(404, { error: 'not_found', path: url.pathname });
     });
@@ -152,7 +165,7 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
       transport: { trust: 'secure' },
       host_daemon: { status: 'degraded' },
     });
-    expect(inv.instances[0].session_backends[0]).toMatchObject({ mode: 'managed', backend: 'zellij' });
+    expect(inv.instances[0].session_backends[0]).toMatchObject({ mode: 'managed', backend: 'tmux', available: true, drive: true });
 
     const running = await (await cf('/api/running')).json();
     expect(running.running[0]).toMatchObject({ instance_id: 'v2-host-1', task_id: 'task-1', state: 'working' });
@@ -160,7 +173,16 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
 
     const sessions = await (await cf('/api/sessions?instance=v2-host-1')).json();
     expect(sessions.sessions[0]).toMatchObject({ id: 'sess-v2', instance_id: 'v2-host-1' });
-    expect(sessions.sessions[0].attach_url).toMatch(/\/agents\/v2-host-1\/sessions\/sess-v2\/attach$/);
+    expect(sessions.sessions[0].attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-v2\/attach$/);
+  });
+
+  it('creates sessions through the formal agentic-sandbox v1 session API', async () => {
+    const created = await (await cf('/api/instances/v2-host-1/sessions', { method: 'POST' })).json();
+    expect(created).toMatchObject({
+      id: 'sess-created-v1',
+      requested: { session_backend: 'tmux', session_class: 'managed', command: 'bash' },
+    });
+    expect(created.attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-created-v1\/attach$/);
   });
 
   it('falls back to v2 lifecycle routes for start, stop, and destroy', async () => {

@@ -159,7 +159,12 @@ async function websocketSessionProbe(attachUrl: string, role: 'observer' | 'cont
       }
       if (msg.op === 'output') {
         output += Buffer.from(String(msg.payload?.data ?? ''), 'base64').toString('utf8');
-        if (output.trim().length > 0) {
+        if (!workload && output.trim().length > 0) {
+          clearTimeout(timeout);
+          ws.close();
+          resolve({ roleAssigned, output });
+        }
+        if (workload && output.includes('AIWG_COCKPIT_LIVE_OK')) {
           clearTimeout(timeout);
           ws.close();
           resolve({ roleAssigned, output });

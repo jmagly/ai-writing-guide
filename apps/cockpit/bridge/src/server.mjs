@@ -176,22 +176,24 @@ async function proxy(res, method, target) {
   return json(res, r.status, body);
 }
 
-async function fetchJsonFirst(candidates, { method = 'GET' } = {}) {
+async function fetchJsonFirst(candidates, { method = 'GET', headers, body: requestBodyOption } = {}) {
   const failures = [];
   for (const candidate of candidates) {
     const target = typeof candidate === 'string' ? candidate : candidate.target;
     const requestMethod = typeof candidate === 'string' ? method : candidate.method ?? method;
+    const requestHeaders = typeof candidate === 'string' ? headers : candidate.headers ?? headers;
+    const requestBody = typeof candidate === 'string' ? requestBodyOption : candidate.body ?? requestBodyOption;
     let r;
     try {
-      r = await fetch(target, { method: requestMethod });
+      r = await fetch(target, { method: requestMethod, headers: requestHeaders, body: requestBody });
     } catch (err) {
       failures.push(`${target} -> ${String(err?.message ?? err)}`);
       continue;
     }
-    const body = await r.json().catch(() => ({}));
-    if (r.ok) return { target, status: r.status, body };
+    const responseBody = await r.json().catch(() => ({}));
+    if (r.ok) return { target, status: r.status, body: responseBody };
     failures.push(`${target} -> ${r.status}`);
-    if (r.status !== 404 && r.status !== 405) return { target, status: r.status, body, failures };
+    if (r.status !== 404 && r.status !== 405) return { target, status: r.status, body: responseBody, failures };
   }
   throw new Error(failures.join('; ') || 'no upstream candidates');
 }
@@ -217,6 +219,21 @@ function asArrayFromEnvelope(body, keys) {
     }
   }
   return [];
+}
+
+async function resolveSessionAgentId(executorUrl, instanceId) {
+  try {
+    const { body } = await fetchJsonFirst([`${executorUrl}/api/v1/agents`]);
+    const agents = asArrayFromEnvelope(body, ['agents', 'items', 'data']);
+    const agent = agents.find((a) => String(a.instance_id ?? a.instanceId ?? '') === String(instanceId));
+    return agent?.id ?? agent?.agent_id ?? agent?.agentId ?? instanceId;
+  } catch {
+    return instanceId;
+  }
+}
+
+function unique(values) {
+  return [...new Set(values.filter(Boolean))];
 }
 
 function normalizeRuntimePosture(kind) {
@@ -281,8 +298,11 @@ function normalizeTransport(posture) {
   };
 }
 
-function normalizeSessionBackends(backends) {
+function normalizeSessionBackends(backends, runtimeKind) {
   const list = Array.isArray(backends) ? backends : [];
+  if (!list.length && runtimeKind === 'host') {
+    return [{ mode: 'managed', backend: 'tmux', observe: true, drive: true, replay: false, keyframe: false, available: true, reason: 'agentic-sandbox v1 host session API default' }];
+  }
   if (!list.length) return [{ mode: 'direct', backend: 'native', observe: true, drive: false, replay: false, keyframe: false, available: false, reason: 'sandbox did not advertise session-host capabilities' }];
   return list.map((b) => ({
     mode: b.mode === 'managed' ? 'managed' : 'direct',
@@ -318,7 +338,7 @@ function normalizeInstance(executorUrl, i) {
       host: i.launch_context?.host ?? i.launchContext?.host ?? i.host_metadata?.hostname ?? i.hostMetadata?.hostname,
       selected_tier: i.launch_context?.selected_tier ?? i.launchContext?.selectedTier ?? i.operator_selected_tier ?? i.operatorSelectedTier ?? runtime,
     },
-    session_backends: normalizeSessionBackends(i.session_backends ?? i.sessionBackends ?? i.session_host?.backends ?? i.sessionHost?.backends ?? i.capabilities?.session_backends ?? i.capabilities?.sessionBackends),
+    session_backends: normalizeSessionBackends(i.session_backends ?? i.sessionBackends ?? i.session_host?.backends ?? i.sessionHost?.backends ?? i.capabilities?.session_backends ?? i.capabilities?.sessionBackends, runtimePosture.kind),
   };
 }
 
@@ -374,20 +394,41 @@ async function getRunning(executorUrl) {
  * URL rather than proxying frames.
  */
 async function getSessions(executorUrl, instanceId) {
-  const { body } = await fetchJsonFirst([
-    `${executorUrl}/agents/${encodeURIComponent(instanceId)}/sessions`,
-    `${executorUrl}/agents/${encodeURIComponent(instanceId)}/v1/sessions`,
-  ]);
+  const sessionAgentId = await resolveSessionAgentId(executorUrl, instanceId);
+  const agentIds = unique([instanceId, sessionAgentId]);
+  const { body } = await fetchJsonFirst(agentIds.flatMap((agentId) => [
+    `${executorUrl}/agents/${encodeURIComponent(agentId)}/sessions`,
+    `${executorUrl}/agents/${encodeURIComponent(agentId)}/v1/sessions`,
+    `${executorUrl}/api/v1/agents/${encodeURIComponent(agentId)}/sessions`,
+  ]));
   const sessions = asArrayFromEnvelope(body, ['sessions', 'items', 'data']);
   const wsBase = executorUrl.replace(/^http/i, 'ws');
+  const normalizeAttachUrl = (s, sessionId) => {
+    const explicit = s.attach_url ?? s.attachUrl;
+    if (explicit) return explicit;
+    const ptyUrl = s.pty_ws_url ?? s.ptyWsUrl;
+    if (ptyUrl) {
+      try {
+        const u = new URL(String(ptyUrl).replace('{host}', new URL(executorUrl).host));
+        u.protocol = new URL(executorUrl).protocol === 'https:' ? 'wss:' : 'ws:';
+        return u.toString();
+      } catch { /* fall through to legacy shape */ }
+    }
+    return `${wsBase}/agents/${encodeURIComponent(instanceId)}/sessions/${encodeURIComponent(sessionId)}/attach`;
+  };
   return {
     instance_id: instanceId,
-    sessions: sessions.map((s) => ({
-      ...s,
-      id: s.id ?? s.session_id ?? s.sessionId,
-      instance_id: s.instance_id ?? s.instanceId ?? instanceId,
-      attach_url: s.attach_url ?? s.attachUrl ?? `${wsBase}/agents/${encodeURIComponent(instanceId)}/sessions/${encodeURIComponent(s.id ?? s.session_id ?? s.sessionId)}/attach`,
-    })),
+    sessions: sessions.map((s) => {
+      const sessionId = s.id ?? s.session_id ?? s.sessionId;
+      return {
+        ...s,
+        id: sessionId,
+        instance_id: s.instance_id ?? s.instanceId ?? instanceId,
+        agent_id: s.agent_id ?? s.agentId ?? sessionAgentId,
+        role_policy: s.role_policy ?? s.rolePolicy ?? (s.default_role === 'observer' ? 'observe-default' : s.default_role) ?? 'observe-default',
+        attach_url: normalizeAttachUrl(s, sessionId),
+      };
+    }),
   };
 }
 
@@ -458,13 +499,33 @@ export function createBridge({ executorUrl = EXECUTOR_URL, mockUrl, token } = {}
         const mode = url.searchParams.get('mode'), backend = url.searchParams.get('backend');
         if (mode) qs.set('mode', mode);
         if (backend) qs.set('backend', backend);
-        const { status, body } = await fetchJsonFirst([
-          `${upstreamUrl}/agents/${encodeURIComponent(id)}/sessions${qs.size ? `?${qs}` : ''}`,
-          `${upstreamUrl}/agents/${encodeURIComponent(id)}/v1/sessions${qs.size ? `?${qs}` : ''}`,
-        ], { method: 'POST' });
+        const sessionAgentId = await resolveSessionAgentId(upstreamUrl, id);
+        const candidates = unique([id, sessionAgentId]).flatMap((agentId) => [
+          `${upstreamUrl}/agents/${encodeURIComponent(agentId)}/sessions${qs.size ? `?${qs}` : ''}`,
+          `${upstreamUrl}/agents/${encodeURIComponent(agentId)}/v1/sessions${qs.size ? `?${qs}` : ''}`,
+          {
+            target: `${upstreamUrl}/api/v1/agents/${encodeURIComponent(agentId)}/sessions`,
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              session_backend: backend || 'tmux',
+              session_class: mode || 'managed',
+              command: 'bash',
+            }),
+          },
+        ]);
+        const { status, body } = await fetchJsonFirst(candidates, { method: 'POST' });
         const wsBase = upstreamUrl.replace(/^http/i, 'ws');
         const sessionId = body.id ?? body.session_id ?? body.sessionId;
-        return json(res, status, { ...body, id: sessionId, attach_url: body.attach_url ?? body.attachUrl ?? `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(sessionId)}/attach` });
+        let attachUrl = body.attach_url ?? body.attachUrl;
+        if (!attachUrl && (body.pty_ws_url ?? body.ptyWsUrl)) {
+          try {
+            const u = new URL(String(body.pty_ws_url ?? body.ptyWsUrl).replace('{host}', new URL(upstreamUrl).host));
+            u.protocol = new URL(upstreamUrl).protocol === 'https:' ? 'wss:' : 'ws:';
+            attachUrl = u.toString();
+          } catch { /* fall through to legacy shape */ }
+        }
+        return json(res, status, { ...body, id: sessionId, attach_url: attachUrl ?? `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(sessionId)}/attach` });
       }
 
       // --- management surface (UC-012): lifecycle + task cancel ---
