@@ -1,6 +1,6 @@
 # ADR: Feature-Domain Discoverability via Facet-Enriched Index + Thin Steward Anchors
 
-**Status:** Proposed
+**Status:** Accepted — implemented across #1623 (facet enrichment + single-pass fused query) and #1626 (parallel multi-vector fan-out + RRF)
 **Date:** 2026-06-18
 **Issue:** #1623
 **Supersedes:** —
@@ -125,6 +125,25 @@ the mechanism is undiscoverable, `loadUserGraphConfigs` **silently swallows** ma
 rebuild-all" surface or doctor staleness gate. The fix is to **harden the existing layer**, not build
 a new one. Captured as **Workstream F** and recommended as a **companion issue**; #1623 registers its
 facets through the existing `index.graphs`/module-graph mechanism so they are tracked from day one.
+
+## Implementation status
+
+- **#1623 (single-pass fused):** `src/artifacts/discover-facets.ts` carries the
+  curated `DISCOVER_FACETS` table; `discoverCapability` fuses it into the
+  ranking. Facet-matched capabilities are lifted to an activation floor so they
+  out-rank generic domain-word matches.
+- **#1626 (parallel fan-out + RRF):** `applyFacetFusion` fans out across the
+  facet vectors in parallel (`Promise.all` over `rankFacetVector`) and fuses
+  them with the base lexical ranker via reciprocal-rank fusion. The fusion is a
+  superset of the single-pass behavior: RRF consensus orders entries *within* a
+  floor tier (multi-vector / more-relevant capabilities first) while the floor
+  lift preserves the emitted score scale, so no existing query regresses.
+- **Per-facet weighting (configurable):** `FacetWeights` (exported, with
+  `DEFAULT_FACET_WEIGHTS`) tunes the base-ranker and per-facet contributions to
+  the RRF sum. Defaults preserve the #1623 ranking; `provider-capability` is
+  weighted 0.75 so it informs ties without dominating feature/persona queries.
+  Operator-config wiring (reading weights from `.aiwg/aiwg.config`) is a
+  follow-up; the fusion API is parameterized today.
 
 ## Follow-ups (out of scope for #1623)
 

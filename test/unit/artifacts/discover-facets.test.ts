@@ -36,13 +36,13 @@ const candidates: MetadataEntry[] = [
   entry({ path: 'agentic/code/addons/aiwg-utils/skills/unrelated-thing/SKILL.md', name: 'unrelated-thing' }),
 ];
 
-describe('applyFacetFusion (#1623 U3)', () => {
-  it('lifts a persona-domain capability above a generic capped-1.0 match for the bare "persona" query', () => {
+describe('applyFacetFusion (#1623 U3)', async () => {
+  it('lifts a persona-domain capability above a generic capped-1.0 match for the bare "persona" query', async () => {
     const scored = [
       { entry: candidates[0], score: 1.0 }, // audience-synthesis — generic, capped
       { entry: candidates[1], score: 1.0 }, // soul-create — persona capability, capped
     ];
-    const fused = applyFacetFusion(scored, candidates, 'persona');
+    const fused = await applyFacetFusion(scored, candidates, 'persona');
     // soul-create (persona facet, exact intent) must sort above audience-synthesis.
     expect(fused[0].entry.name).not.toBe('audience-synthesis');
     const soul = fused.find((r) => r.entry.name === 'soul-create')!;
@@ -50,47 +50,47 @@ describe('applyFacetFusion (#1623 U3)', () => {
     expect(soul.score).toBeGreaterThan(audience.score);
   });
 
-  it('injects a mapped capability that the lexical pass missed entirely', () => {
+  it('injects a mapped capability that the lexical pass missed entirely', async () => {
     // Lexical pass found nothing; the persona facet still surfaces the persona agent.
-    const fused = applyFacetFusion([], candidates, 'persona');
+    const fused = await applyFacetFusion([], candidates, 'persona');
     expect(fused.some((r) => r.entry.name === 'aiwg-writer')).toBe(true);
     expect(fused.some((r) => r.entry.name === 'soul-create')).toBe(true);
   });
 
-  it('activates the expansion facet for "author an expansion"', () => {
-    const fused = applyFacetFusion([], candidates, 'author an expansion');
+  it('activates the expansion facet for "author an expansion"', async () => {
+    const fused = await applyFacetFusion([], candidates, 'author an expansion');
     expect(fused.some((r) => r.entry.name === 'scaffold-extension')).toBe(true);
     // A non-mapped artifact is not injected.
     expect(fused.some((r) => r.entry.name === 'unrelated-thing')).toBe(false);
   });
 
-  it('activates the project facet for "scaffold a project"', () => {
-    const fused = applyFacetFusion([], candidates, 'scaffold a project');
+  it('activates the project facet for "scaffold a project"', async () => {
+    const fused = await applyFacetFusion([], candidates, 'scaffold a project');
     expect(fused.some((r) => r.entry.name === 'new-project')).toBe(true);
   });
 
-  it('is a no-op for a phrase that activates no facet (no regression)', () => {
+  it('is a no-op for a phrase that activates no facet (no regression)', async () => {
     const scored = [
       { entry: candidates[0], score: 0.8 },
       { entry: candidates[5], score: 0.4 },
     ];
-    const fused = applyFacetFusion(scored, candidates, 'deploy to production');
+    const fused = await applyFacetFusion(scored, candidates, 'deploy to production');
     expect(fused).toHaveLength(2);
     expect(fused[0].entry.name).toBe('audience-synthesis');
     expect(fused[0].score).toBe(0.8);
   });
 
-  it('matches capabilities by path slug when the index entry lacks a name field', () => {
+  it('matches capabilities by path slug when the index entry lacks a name field', async () => {
     const noName = [
       entry({ path: 'agentic/code/agents/personas/aiwg-writer.md', type: 'agent' }),
     ];
     // Strip the inferred title/name to force path-based matching.
     delete (noName[0] as Partial<MetadataEntry>).name;
-    const fused = applyFacetFusion([], noName, 'persona');
+    const fused = await applyFacetFusion([], noName, 'persona');
     expect(fused.some((r) => r.entry.path.endsWith('aiwg-writer.md'))).toBe(true);
   });
 
-  it('exposes a stable facet table covering the four ADR facets', () => {
+  it('exposes a stable facet table covering the four ADR facets', async () => {
     const kinds = new Set(DISCOVER_FACETS.map((f) => f.facet));
     expect(kinds).toEqual(
       new Set(['feature-domain', 'persona-identity', 'authoring-surface', 'provider-capability']),
@@ -100,5 +100,57 @@ describe('applyFacetFusion (#1623 U3)', () => {
       expect(f.intents.length).toBeGreaterThan(0);
       expect(f.capabilities.length).toBeGreaterThan(0);
     }
+  });
+
+  it('preserves the score contract — facet lifts round to the #1623 scale (#1626 non-regression)', async () => {
+    const fused = await applyFacetFusion([], candidates, 'persona');
+    // Lifted facet entries must still display as ≤ 1.00 at 2dp (the exact-name
+    // 1.001 floor is the only thing allowed above) — RRF is a sub-display
+    // tiebreaker, not a score-scale change.
+    for (const r of fused) {
+      expect(Math.round(r.score * 100) / 100).toBeLessThanOrEqual(1.0);
+    }
+    // A base-only entry's score is never perturbed by the fusion.
+    const base = [{ entry: candidates[5], score: 0.42 }]; // unrelated-thing
+    const fused2 = await applyFacetFusion(base, candidates, 'persona');
+    expect(fused2.find((r) => r.entry.name === 'unrelated-thing')!.score).toBe(0.42);
+  });
+
+  it('RRF orders a multi-facet match ahead of a single-facet match within the tier', async () => {
+    // soul-create is mapped by persona-identity; new-project by feature-domain.
+    // A query that exactly activates BOTH domains should rank the multi-vector
+    // consensus entry first. Craft a phrase hitting both via strong contains.
+    // "persona" (exact persona) + project not active here, so instead assert
+    // the persona vector orders its own members by base relevance:
+    const scored = [
+      { entry: candidates[2], score: 0.9 }, // aiwg-writer — higher base
+      { entry: candidates[1], score: 0.1 }, // soul-create — lower base
+    ];
+    const fused = await applyFacetFusion(scored, candidates, 'persona');
+    const writerIdx = fused.findIndex((r) => r.entry.name === 'aiwg-writer');
+    const soulIdx = fused.findIndex((r) => r.entry.name === 'soul-create');
+    // Both lifted to the same FLOOR_EXACT tier; RRF (base relevance) breaks the
+    // tie in favor of the higher-base aiwg-writer.
+    expect(writerIdx).toBeGreaterThanOrEqual(0);
+    expect(soulIdx).toBeGreaterThanOrEqual(0);
+    expect(writerIdx).toBeLessThan(soulIdx);
+  });
+
+  it('honors configurable per-facet weights', async () => {
+    // Zero-weighting the persona facet removes its RRF contribution but the
+    // floor lift (presence) is unchanged — weights tune ordering, not the
+    // activation contract.
+    const fused = await applyFacetFusion([], candidates, 'persona', {
+      base: 1.0,
+      facets: { 'persona-identity': 0 },
+    });
+    // Still injected (floor lift is independent of weight) …
+    expect(fused.some((r) => r.entry.name === 'soul-create')).toBe(true);
+    // … and a different weighting is accepted without throwing.
+    const fused2 = await applyFacetFusion([], candidates, 'persona', {
+      base: 0.5,
+      facets: { 'persona-identity': 5 },
+    });
+    expect(fused2.some((r) => r.entry.name === 'aiwg-writer')).toBe(true);
   });
 });

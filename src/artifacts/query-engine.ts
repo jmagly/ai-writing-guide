@@ -632,7 +632,7 @@ export async function discoverCapability(
   // lexical ranking so canonical domain phrases rank their owning capability
   // top-K instead of being out-scored by artifacts that merely mention the
   // word. Facet activation can also rescue an otherwise-empty strict pass.
-  let scored = applyFacetFusion(strictScored, candidates, params.phrase).slice(0, limit);
+  let scored = (await applyFacetFusion(strictScored, candidates, params.phrase)).slice(0, limit);
 
   // #1561 — verbose-query fallback. A wordy full-sentence query
   // ("find me a skill that handles intake forms") dilutes the token hit ratio
@@ -653,7 +653,7 @@ export async function discoverCapability(
       .map(entry => ({ entry, score: scoreEntry(entry, params.phrase, { relaxOverlap: true }) }))
       .filter(r => r.score >= RELAXED_MIN_SCORE)
       .sort((a, b) => b.score - a.score);
-    const relaxedScored = applyFacetFusion(relaxedFull, candidates, params.phrase).slice(0, limit);
+    const relaxedScored = (await applyFacetFusion(relaxedFull, candidates, params.phrase)).slice(0, limit);
     if (relaxedScored.length > 0) {
       scored = relaxedScored;
       relaxed = true;

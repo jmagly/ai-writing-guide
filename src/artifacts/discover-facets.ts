@@ -204,42 +204,141 @@ function entryMatchesCapability(entry: MetadataEntry, capability: string): boole
 }
 
 /**
- * Fuse the curated facets into a scored result set (single pass, #1623).
- *
- * For every facet the query activates, each mapped capability present in the
- * candidate corpus is guaranteed a place in the results at no less than the
- * activation floor (injected if the lexical pass missed it, lifted if it
- * scored lower). Existing higher scores are preserved. The returned list is
- * re-sorted but NOT truncated — the caller applies its own `limit`.
- *
- * Pure and deterministic: no IO, no mutation of inputs.
+ * Per-facet (and base-ranker) weights for the RRF fusion (#1626). Tunable so
+ * operators can bias the fan-out — e.g. dial down provider-capability when a
+ * project never asks provider questions. Defaults preserve the #1623 ranking.
  */
-export function applyFacetFusion(
+export interface FacetWeights {
+  /** Weight of the base lexical ranker in the fusion. */
+  base: number;
+  /** Per-facet-kind weights (missing kinds default to 1.0). */
+  facets: Partial<Record<FacetKind, number>>;
+}
+
+export const DEFAULT_FACET_WEIGHTS: FacetWeights = {
+  base: 1.0,
+  facets: {
+    'feature-domain': 1.0,
+    'persona-identity': 1.0,
+    'authoring-surface': 1.0,
+    // Provider-capability is a narrower router target — weight it slightly
+    // lower so it informs ties without dominating feature/persona queries.
+    'provider-capability': 0.75,
+  },
+};
+
+/** Standard reciprocal-rank-fusion damping constant. */
+const RRF_K = 60;
+/**
+ * Scale that maps an RRF consensus value (~0..0.05) into a sub-display
+ * tiebreaker (~0..5e-7). It reorders entries WITHIN an activation-floor tier
+ * by cross-vector consensus without perturbing the 2-decimal `score` the CLI
+ * emits — so the #1623 score contract (and discover value-assertions) hold.
+ */
+const RRF_TIEBREAK_SCALE = 1e-5;
+
+interface FacetVector {
+  facet: FacetEntry;
+  floor: number;
+  /** Mapped capabilities present in the corpus, ranked best-first. */
+  ranked: MetadataEntry[];
+}
+
+const keyOf = (e: MetadataEntry): string => e.path || e.name || e.title;
+
+/**
+ * Rank one facet's mapped, present capabilities for `phrase` — a single
+ * "vector" in the multi-vector fan-out (#1626). Returns null when the facet
+ * does not activate. Async so the caller can fan out across vectors in
+ * parallel via Promise.all; the work itself is CPU-bound and deterministic.
+ */
+async function rankFacetVector(
+  facet: FacetEntry,
+  phrase: string,
+  candidates: MetadataEntry[],
+  baseScoreOf: (e: MetadataEntry) => number,
+): Promise<FacetVector | null> {
+  const floor = activationFloor(phrase, facet);
+  if (floor <= 0) return null;
+  const matched: MetadataEntry[] = [];
+  const seen = new Set<string>();
+  for (const cap of facet.capabilities) {
+    const m = candidates.find((c) => entryMatchesCapability(c, cap));
+    if (!m) continue;
+    const k = keyOf(m);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    matched.push(m);
+  }
+  // Within the vector, the most lexically-relevant owning capability leads —
+  // this is the per-vector ranking RRF consumes.
+  matched.sort((a, b) => baseScoreOf(b) - baseScoreOf(a));
+  return { facet, floor, ranked: matched };
+}
+
+/**
+ * Multi-vector facet fan-out + reciprocal-rank fusion (#1623 single-pass →
+ * #1626 parallel fan-out). Fans out across the curated facet vectors in
+ * parallel, fuses them with the base lexical ranker via RRF, and lifts each
+ * facet-matched capability to its activation floor so it out-ranks generic
+ * artifacts that merely mention the domain word.
+ *
+ * The fused result is a SUPERSET of the #1623 single-pass behavior (ADR
+ * contract): facet-matched entries are guaranteed a place at no less than the
+ * activation floor (injected if the lexical pass missed them), base-only
+ * entries keep their lexical score, and RRF consensus orders entries within a
+ * floor tier (so multi-facet / more-relevant capabilities sort first) without
+ * changing the emitted 2-decimal score. Per-facet weighting is configurable.
+ *
+ * The returned list is re-sorted but NOT truncated — the caller applies limit.
+ * Pure/deterministic: no IO, no mutation of inputs.
+ */
+export async function applyFacetFusion(
   scored: Array<{ entry: MetadataEntry; score: number }>,
   candidates: MetadataEntry[],
   phrase: string,
-): Array<{ entry: MetadataEntry; score: number }> {
-  // Map current results by a stable key for in-place lifting.
-  const keyOf = (e: MetadataEntry): string => e.path || e.name || e.title;
-  const byKey = new Map<string, { entry: MetadataEntry; score: number }>();
-  for (const r of scored) byKey.set(keyOf(r.entry), r);
+  weights: FacetWeights = DEFAULT_FACET_WEIGHTS,
+): Promise<Array<{ entry: MetadataEntry; score: number }>> {
+  const baseScore = new Map<string, number>();
+  for (const r of scored) baseScore.set(keyOf(r.entry), r.score);
+  const baseScoreOf = (e: MetadataEntry): number => baseScore.get(keyOf(e)) ?? 0;
 
-  for (const facet of DISCOVER_FACETS) {
-    const floor = activationFloor(phrase, facet);
-    if (floor <= 0) continue;
-    for (const capability of facet.capabilities) {
-      const match = candidates.find((c) => entryMatchesCapability(c, capability));
-      if (!match) continue; // capability not installed/indexed in this workspace
-      const key = keyOf(match);
-      const existing = byKey.get(key);
-      if (existing) {
-        if (floor > existing.score) existing.score = floor;
-      } else {
-        const injected = { entry: match, score: floor };
-        byKey.set(key, injected);
-      }
-    }
+  // Fan out across the facet vectors in parallel.
+  const vectors = (
+    await Promise.all(DISCOVER_FACETS.map((f) => rankFacetVector(f, phrase, candidates, baseScoreOf)))
+  ).filter((v): v is FacetVector => v !== null);
+
+  // RRF: combine the base ranker (the already-ordered `scored` list) with each
+  // facet vector by reciprocal rank. `rrf` drives intra-tier ordering; the
+  // floor lift preserves the #1623 contract.
+  const rrf = new Map<string, number>();
+  const bestFloor = new Map<string, number>();
+  const matchedEntry = new Map<string, MetadataEntry>();
+
+  scored.forEach((r, i) => {
+    const k = keyOf(r.entry);
+    rrf.set(k, (rrf.get(k) ?? 0) + weights.base / (RRF_K + i + 1));
+  });
+  for (const v of vectors) {
+    const w = weights.facets[v.facet.facet] ?? 1.0;
+    v.ranked.forEach((e, i) => {
+      const k = keyOf(e);
+      rrf.set(k, (rrf.get(k) ?? 0) + w / (RRF_K + i + 1));
+      bestFloor.set(k, Math.max(bestFloor.get(k) ?? 0, v.floor));
+      matchedEntry.set(k, e);
+    });
   }
 
-  return Array.from(byKey.values()).sort((a, b) => b.score - a.score);
+  const out = new Map<string, { entry: MetadataEntry; score: number }>();
+  for (const r of scored) out.set(keyOf(r.entry), { entry: r.entry, score: r.score });
+  for (const [k, floor] of bestFloor) {
+    const entry = matchedEntry.get(k)!;
+    const tiebreak = (rrf.get(k) ?? 0) * RRF_TIEBREAK_SCALE;
+    const lifted = Math.max(baseScoreOf(entry), floor) + tiebreak;
+    const existing = out.get(k);
+    if (existing) existing.score = Math.max(existing.score, lifted);
+    else out.set(k, { entry, score: lifted });
+  }
+
+  return Array.from(out.values()).sort((a, b) => b.score - a.score);
 }
