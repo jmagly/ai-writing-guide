@@ -347,41 +347,59 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
     expect(inv.status).toBe(200);
     const instances = inv.body.instances ?? [];
     const requiredTargets: Array<'host' | 'container' | 'vm'> = ['host', 'container', 'vm'];
+    const targetErrors: string[] = [];
     for (const target of requiredTargets) {
-      const instance = instances.find((i: any) => runtimeFamily(i) === target);
-      if (!instance) throw new Error(`missing required live target: ${target}`);
-      const backend = chooseBackend(instance);
-      if (!backend) throw new Error(`target ${target} has no session backend evidence`);
-      if (backend.available === false) throw new Error(`target ${target} selected backend unavailable: ${backend.reason ?? 'no reason'}`);
+      try {
+        const instance = instances.find((i: any) => runtimeFamily(i) === target);
+        if (!instance) throw new Error(`missing required live target: ${target}`);
+        const backend = chooseBackend(instance);
+        if (!backend) throw new Error(`target ${target} has no session backend evidence`);
+        const backendDetail = `${backend.mode ?? 'unknown'}/${backend.backend ?? 'unknown'}`;
+        const targetDetail = `target=${target}; instance=${instance.id}; runtime=${runtimeFamily(instance)}; backend=${backendDetail}; provider=${WORKLOAD_PROVIDER}`;
+        if (backend.available === false) {
+          throw new Error(`${targetDetail}; backend unavailable: ${backend.reason ?? 'no reason'}`);
+        }
 
-      const start = await bridgeJson(
-        base,
-        token,
-        `/api/instances/${encodeURIComponent(instance.id)}/sessions?mode=${encodeURIComponent(backend.mode ?? 'direct')}&backend=${encodeURIComponent(backend.backend ?? 'native')}`,
-        { method: 'POST' },
-      );
-      expect([200, 201]).toContain(start.status);
-      expect(start.body.attach_url).toBeTruthy();
+        const start = await bridgeJson(
+          base,
+          token,
+          `/api/instances/${encodeURIComponent(instance.id)}/sessions?mode=${encodeURIComponent(backend.mode ?? 'direct')}&backend=${encodeURIComponent(backend.backend ?? 'native')}`,
+          { method: 'POST' },
+        );
+        if (![200, 201].includes(start.status)) {
+          throw new Error(`${targetDetail}; session create returned ${start.status}`);
+        }
+        if (!start.body.attach_url) throw new Error(`${targetDetail}; session create returned no attach_url`);
 
-      const sessions = await bridgeJson(base, token, `/api/sessions?instance=${encodeURIComponent(instance.id)}`);
-      expect(sessions.status).toBe(200);
-      expect(sessions.body.sessions?.some((s: any) => s.id === start.body.id)).toBe(true);
+        const sessions = await bridgeJson(base, token, `/api/sessions?instance=${encodeURIComponent(instance.id)}`);
+        if (sessions.status !== 200) throw new Error(`${targetDetail}; sessions returned ${sessions.status}`);
+        if (!sessions.body.sessions?.some((s: any) => s.id === start.body.id)) {
+          throw new Error(`${targetDetail}; created session ${start.body.id ?? 'unknown'} not listed`);
+        }
 
-      const observed = await websocketSessionProbe(start.body.attach_url, 'observer');
-      if (!observed.roleAssigned) throw new Error(`target ${target} did not grant observe attach`);
+        const observed = await websocketSessionProbe(start.body.attach_url, 'observer');
+        if (!observed.roleAssigned) throw new Error(`${targetDetail}; observe attach not granted`);
 
-      if (backend.drive === false) {
-        record(`matrix ${target}`, 'skip', `observe-only target with capability evidence: ${backend.reason ?? 'drive=false'}`);
-        continue;
+        if (backend.drive === false) {
+          record(`matrix ${target}`, 'skip', `${targetDetail}; observe-only target with capability evidence: ${backend.reason ?? 'drive=false'}`);
+          continue;
+        }
+        const providerCommand = providerWorkloadCommand(WORKLOAD_PROVIDER, WORKLOAD_TEXT);
+        const driven = await websocketSessionProbe(start.body.attach_url, 'controller', providerCommand);
+        if (!driven.roleAssigned) throw new Error(`${targetDetail}; drive attach not granted`);
+        if (!driven.output.trim()) throw new Error(`${targetDetail}; no terminal output for provider workload`);
+        if (!driven.output.includes('AIWG_COCKPIT_LIVE_OK')) {
+          throw new Error(`${targetDetail}; provider workload did not emit AIWG_COCKPIT_LIVE_OK`);
+        }
+        record(`matrix ${target}`, 'pass', `${targetDetail}; provider CLI workload emitted AIWG_COCKPIT_LIVE_OK; output_bytes=${driven.output.length}`);
+      } catch (err) {
+        const detail = String((err as Error).message || err);
+        record(`matrix ${target}`, 'fail', detail);
+        targetErrors.push(detail);
       }
-      const providerCommand = providerWorkloadCommand(WORKLOAD_PROVIDER, WORKLOAD_TEXT);
-      const driven = await websocketSessionProbe(start.body.attach_url, 'controller', providerCommand);
-      if (!driven.roleAssigned) throw new Error(`target ${target} did not grant drive attach`);
-      if (!driven.output.trim()) throw new Error(`target ${target} produced no terminal output for provider workload`);
-      if (!driven.output.includes('AIWG_COCKPIT_LIVE_OK')) {
-        throw new Error(`target ${target} provider workload did not emit AIWG_COCKPIT_LIVE_OK`);
-      }
-      record(`matrix ${target}`, 'pass', `${WORKLOAD_PROVIDER} CLI workload via ${backend.mode}/${backend.backend}; ${driven.output.length} output byte(s)`);
+    }
+    if (targetErrors.length > 0) {
+      throw new Error(`required live matrix failed for ${targetErrors.length}/${requiredTargets.length} target(s): ${targetErrors.join(' | ')}`);
     }
   }, 240_000);
 });

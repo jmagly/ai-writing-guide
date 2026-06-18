@@ -169,7 +169,11 @@ session when control is advertised. The selected provider is invoked through the
 attached session (`codex exec --ask-for-approval never --sandbox read-only ...`
 or `claude --print --permission-mode dontAsk --output-format text ...`) and must
 emit `AIWG_COCKPIT_LIVE_OK`, so the report proves the pre-authenticated CLI path
-rather than only shell plumbing. Mock-only success does not satisfy this gate;
+rather than only shell plumbing. The matrix report records each target family
+independently (`matrix host`, `matrix container`, `matrix vm`) with the instance,
+runtime family, selected session backend, provider, and exact failure reason; the
+test aggregates those records and fails only after all three target families have
+been attempted. Mock-only success does not satisfy this gate;
 `AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX=1` exists only for harness development.
 
 ## Status
