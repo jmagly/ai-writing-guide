@@ -176,6 +176,43 @@ test aggregates those records and fails only after all three target families hav
 been attempted. Mock-only success does not satisfy this gate;
 `AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX=1` exists only for harness development.
 
+### Live matrix prerequisites (#1621)
+
+Before treating `uat:cockpit-live:matrix` as release evidence, provision all
+three runtime families in the same real agentic-sandbox executor:
+
+1. **Host** — a connected host agent must appear in `GET /api/v1/agents` with an
+   `instance_id` matching a `host` item from `GET /api/v2/admin/instances`.
+   Cockpit resolves this instance-to-agent mapping before session create/list.
+2. **Docker/container** — a `docker` or `container` instance must register an
+   agent and support managed session creation via
+   `POST /api/v1/agents/{agent_id}/sessions`.
+3. **VM** — a `vm` instance must register an agent and expose the same managed
+   session API.
+
+For each family, the executor must return enough metadata for Cockpit to prove
+runtime posture, transport posture, session backend capability, session
+create/list, observe attach, and the provider-backed controller workload. Set
+`AIWG_COCKPIT_EXECUTOR_VERSION=<tag-or-commit>` when the executor does not expose
+version metadata through `/health` or `/version`.
+
+Known state as of the 2026-06-18 host live run:
+
+- Host target passes against agentic-sandbox debug source `1a939ab` using the
+  pre-authenticated Codex CLI and a managed `tmux` session. The AIWG-side bridge
+  fix landed in roctinam/aiwg `7674f399`.
+- Docker/container target remains blocked upstream by secure transport material
+  provisioning for the post-`AGENT_SECRET` model. Tracked in
+  roctinam/agentic-sandbox#497.
+- VM target remains blocked upstream because provisioning did not yield a
+  registered agent/session target for the matrix. Tracked in
+  roctinam/agentic-sandbox#498.
+
+This gate extends #1617: #1617 proves Cockpit can talk to a reachable real
+executor; #1621 proves coverage across the intended base host, container, and VM
+runtime families. It also complements #1529 by exercising the operator-ready
+provider session path instead of only the mock or shell plumbing.
+
 ## Status
 
 Built and browser-verified against the bundled mock and wired for a real
