@@ -16,6 +16,7 @@ import type { QueryParams, QueryResult, MetadataEntry, GraphType, ArtifactIndex 
 import { loadMetadataIndex, loadGraphIndexFile } from './index-reader.js';
 import { bm25Rank, type FullTextDoc } from './fulltext.js';
 import { parseFrontmatter } from './index-builder.js';
+import { applyFacetFusion } from './discover-facets.js';
 
 /**
  * Resolve an index entry's source file path and read its body (frontmatter
@@ -617,12 +618,21 @@ export async function discoverCapability(
   // Filter by type
   const candidates = entries.filter(e => types.includes(e.type));
 
-  // Score (strict overlap gate)
-  let scored = candidates
+  // Score (strict overlap gate). Keep the full sorted list so the facet
+  // fusion below can inject/lift curated capabilities into the top-K before
+  // truncation — a capability that the lexical pass ranked outside `limit`
+  // (or missed entirely) still surfaces when the query activates its facet.
+  const strictScored = candidates
     .map(entry => ({ entry, score: scoreEntry(entry, params.phrase) }))
     .filter(r => r.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+    .sort((a, b) => b.score - a.score);
+
+  // Single-pass facet fusion (#1623 U3): fuse the curated feature→capability
+  // facets (expansion / persona / project / provider-capability) into the
+  // lexical ranking so canonical domain phrases rank their owning capability
+  // top-K instead of being out-scored by artifacts that merely mention the
+  // word. Facet activation can also rescue an otherwise-empty strict pass.
+  let scored = applyFacetFusion(strictScored, candidates, params.phrase).slice(0, limit);
 
   // #1561 — verbose-query fallback. A wordy full-sentence query
   // ("find me a skill that handles intake forms") dilutes the token hit ratio
@@ -639,11 +649,11 @@ export async function discoverCapability(
     // if nothing clears the floor, we fall through to the no-match hint, which
     // is more honest than surfacing a 0.01 path match.
     const RELAXED_MIN_SCORE = 0.02;
-    const relaxedScored = candidates
+    const relaxedFull = candidates
       .map(entry => ({ entry, score: scoreEntry(entry, params.phrase, { relaxOverlap: true }) }))
       .filter(r => r.score >= RELAXED_MIN_SCORE)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+      .sort((a, b) => b.score - a.score);
+    const relaxedScored = applyFacetFusion(relaxedFull, candidates, params.phrase).slice(0, limit);
     if (relaxedScored.length > 0) {
       scored = relaxedScored;
       relaxed = true;

@@ -191,6 +191,17 @@ aiwg discover "choose issue tracking backend"  # → issue-workflow-guide
 aiwg discover "project-local customization"     # → project-local quickstart / customization docs
 ```
 
+### Feature domains the steward owns (expansion / persona / project)
+
+Three cross-cutting domains that no framework quickref owns — consult the `steward-quickref` kernel skill, or discover directly:
+
+```bash
+aiwg discover "author an expansion"            # → scaffold-extension / -addon / -framework
+aiwg discover "create a persona"               # → soul-create (author a SOUL identity)
+aiwg discover "select a persona"               # → persona agents (agentic/code/agents/personas/*)
+aiwg discover "scaffold a project"             # → new-project (+ new-bundle for project-local)
+```
+
 ### Project-local extensions (pilot → promote)
 
 AIWG supports authoring rules/skills/agents per-project under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/` — pilot here, promote upstream when mature.

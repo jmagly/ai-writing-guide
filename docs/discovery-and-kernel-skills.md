@@ -10,7 +10,7 @@ AIWG ships **480+ skills** across its frameworks. Agentic platforms (Claude Code
 
 Starting in 2026.5.0, AIWG splits its skill surface into two tiers, with discovery + on-demand fetch closing the loop:
 
-- **Kernel skills** — always-loaded into the platform's flat skill listing. ~20 skills total: 9 quickrefs (one per installed framework + utils), the `aiwg-language-map` for addons + extensions, and 10 self-maintenance ops.
+- **Kernel skills** — always-loaded into the platform's flat skill listing. ~21 skills total: 9 quickrefs (one per installed framework + utils), the `aiwg-language-map` for addons + extensions, the `steward-quickref` feature-domain routing anchor (expansion/persona/project, #1623), and 10 self-maintenance ops.
 - **Standard skills** — the other ~460 skills. Stay at `$AIWG_ROOT` and are **not copied per-project** by default (#1217). Reachable via `aiwg discover` (find) and `aiwg show` (fetch).
 
 This document is the operator's guide to using the new model effectively, plus verification steps so you can confirm it's actually working.
@@ -58,7 +58,7 @@ You may skip the discover query only when: the user named a specific skill (`/fl
 
 ```mermaid
 flowchart TB
-  subgraph KERNEL["Kernel tier — 20 skills, always loaded"]
+  subgraph KERNEL["Kernel tier — 21 skills, always loaded"]
     direction LR
     K1[9 framework quickrefs<br/>sdlc / research / forensics /<br/>marketing / media-curator /<br/>security-eng / knowledge-base /<br/>ops / aiwg-utils-quickref]
     K2[10 self-maintenance ops<br/>steward / aiwg-doctor / aiwg-refresh /<br/>aiwg-status / aiwg-help / use /<br/>aiwg-regenerate / aiwg-issue /<br/>aiwg-pr / aiwg-mission]
@@ -112,7 +112,7 @@ Source of truth ($AIWG_ROOT/agentic/code/...)
 │  ┌────────────────────────────┐
 ├─►│ KERNEL skills              │  copied per-project to platform-native skills dir
 │  │ kernel: true in frontmatter│  always-loaded into agent context
-│  │ (~20 skills today)         │  budget-bound; keep tight
+│  │ (~21 skills today)         │  budget-bound; keep tight
 │  └────────────────────────────┘
 │
 └─►┌────────────────────────────┐
@@ -148,7 +148,7 @@ aiwg use all --copy-all           # works for `aiwg use all` too
 
 The `--copy-all` flag (alias `--copy-standard-skills`) restores the legacy copy behavior and writes all skills (kernel + standard) into the per-project tree at `<provider>/.aiwg/skills/` (and where applicable, `.agents/skills/`).
 
-## The kernel set today (20 skills, ~15-25k tokens total)
+## The kernel set today (21 skills, ~15-25k tokens total)
 
 ### Framework quickrefs (9)
 
@@ -270,7 +270,7 @@ aiwg-status          aiwg-utils-quickref  sdlc-quickref
 steward              use
 ```
 
-For `aiwg use all` (every framework), you'll see all 9 quickrefs + `aiwg-language-map` + 10 ops = 20 skills.
+For `aiwg use all` (every framework), you'll see all 9 quickrefs + `aiwg-language-map` + 10 ops + steward-quickref = 21 skills.
 
 ### 2. Confirm no per-project standard mirror by default
 

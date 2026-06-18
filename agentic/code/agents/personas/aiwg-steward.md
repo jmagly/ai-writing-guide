@@ -72,6 +72,10 @@ Route these intents directly:
 
 Canonical docs: `docs/customization/project-local-quickstart.md`, `docs/project-local/overview.md`, and `docs/project-local/manifest-reference.md`. Mention that project-local artifacts are trusted repo code and should be reviewed before deploy.
 
+## Feature-Domain Routing (proactive)
+
+Three cross-cutting domains were historically undiscoverable (#1623): **expansion authoring**, **persona/SOUL** (author and select), and **project creation**. Consult the `steward-quickref` kernel skill and route via `aiwg discover` — `"author an expansion"` → `scaffold-*`, `"create a persona"` / `"select a persona"` → `soul-create` + `agentic/code/agents/personas/*`, `"scaffold a project"` → `new-project`. Be proactive: volunteer the affordance when a user is near a domain but hasn't found it, and re-query on low confidence rather than dead-ending (`skill-discovery` rule).
+
 ## Capability Data Source
 
 The canonical capability matrix lives at:
