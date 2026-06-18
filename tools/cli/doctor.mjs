@@ -5,6 +5,7 @@
  */
 
 import fs from 'fs/promises';
+import { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'url';
@@ -27,6 +28,11 @@ const { maybePrintCommunityFooter } = await importImpl(
 const { readIndexConfig, validateIndexConfig } = await importImpl(
   import.meta.url,
   'config/aiwg-config.js'
+);
+
+const { collectIndexStatus } = await importImpl(
+  import.meta.url,
+  'artifacts/index-status.js'
 );
 
 // AIWG_ROOT: env override > channel-manager resolved path > legacy edge path
@@ -1559,6 +1565,45 @@ async function runDoctor() {
     }
   } catch {
     // Non-fatal — skip silently.
+  }
+
+  // 13b. Durable index-graph registry (#1624) — surface malformed graph defs
+  // that previously loaded silently, on-disk index dirs that match no graph
+  // (drift), and registered durable indices that were never built. Scoped to
+  // AIWG projects; built-ins being unbuilt in a fresh project is normal and is
+  // intentionally NOT flagged here (only operator/module-registered graphs).
+  try {
+    if (existsSync(path.join(process.cwd(), '.aiwg'))) {
+      const report = collectIndexStatus(process.cwd());
+      const registeredMissing = report.graphs.filter(
+        (g) => g.origin === 'registered' && g.missing,
+      );
+      if (report.warnings.length > 0) {
+        const first = report.warnings[0];
+        const more = report.warnings.length > 1 ? ` (+${report.warnings.length - 1} more)` : '';
+        check(
+          'durable-indices',
+          'warn',
+          `${report.warnings.length} graph-config problem(s) previously dropped silently: [${first.source}] ${first.graph}: ${first.reason}${more} — run "aiwg index status"`,
+        );
+      } else if (report.orphanIndexDirs.length > 0) {
+        check(
+          'durable-indices',
+          'warn',
+          `${report.orphanIndexDirs.length} on-disk index dir(s) match no registered graph (drift) — run "aiwg index status"`,
+        );
+      } else if (registeredMissing.length > 0) {
+        check(
+          'durable-indices',
+          'warn',
+          `${registeredMissing.length} registered durable index(es) not built (${registeredMissing.map((g) => g.name).join(', ')}) — run "aiwg index build --all"`,
+        );
+      } else if (report.graphs.some((g) => g.origin === 'registered')) {
+        check('durable-indices', 'ok', `${report.summary.built}/${report.summary.total} index graphs built, no drift`);
+      }
+    }
+  } catch {
+    // Non-fatal — never break doctor on the durable-index probe.
   }
 
   // Print results

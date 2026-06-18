@@ -3522,6 +3522,7 @@ aiwg index <subcommand> [options]
 - `show` - Print the full text of a specific skill/agent/command/rule (canonical form is the top-level [`aiwg show`](#show))
 - `deps` - Show artifact dependency graph
 - `stats` - Show index statistics
+- `status` - Enumerate the durable index-graph registry (built-in + module + operator graphs) with build state, freshness, and drift; flags registered-but-unbuilt indices, on-disk dirs matching no graph, and graph-config defs that previously failed to load silently (#1624). Alias: `list`. Add `--json` for a stable envelope.
 - `neighbors` - Get neighbors of a node in a graph
 - `set` - Set operations (intersection, union, difference) on neighbor sets
 - `watch` - Filesystem watcher for automatic incremental updates

@@ -80,6 +80,11 @@ export async function main(args: string[]): Promise<void> {
       await handleStats(subcommandArgs);
       break;
 
+    case 'status':
+    case 'list':
+      await handleStatus(subcommandArgs);
+      break;
+
     case 'neighbors':
       await handleNeighbors(subcommandArgs);
       break;
@@ -131,7 +136,7 @@ export async function main(args: string[]): Promise<void> {
 
     default:
       console.error(`Error: Unknown index subcommand '${subcommand}'`);
-      console.log('Available: build, query, discover, show, export, deps, stats, neighbors, set, embed, similar, dedup-report, watch');
+      console.log('Available: build, query, discover, show, export, deps, stats, status, list, neighbors, set, embed, similar, dedup-report, watch');
       process.exit(1);
   }
 }
@@ -147,6 +152,7 @@ function printIndexUsage(): void {
   console.log('  export     Export a browser-consumable index contract');
   console.log('  deps       Show artifact dependency graph');
   console.log('  stats      Show index statistics');
+  console.log('  status     Enumerate the index-graph registry (freshness + drift); alias: list');
   console.log('  neighbors  Get neighbors of a node in a graph');
   console.log('  set        Set operations (intersection, union, difference) on neighbor sets');
   console.log('  embed      Build the semantic embedding index for a graph (opt-in deps)');
@@ -705,6 +711,29 @@ async function handleStats(args: string[]): Promise<void> {
   const graph = parseGraphFlag(args);
 
   await showStats(cwd, { json, graph });
+}
+
+/**
+ * Handle 'index status' / 'index list' — enumerate the durable index-graph
+ * registry with build state, freshness, and drift (#1624).
+ */
+async function handleStatus(args: string[]): Promise<void> {
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log('Usage: aiwg index status [--json]');
+    console.log('       aiwg index list   [--json]   (alias)');
+    console.log('');
+    console.log('Enumerate every registered index graph (built-in + module + operator)');
+    console.log('with its build state, freshness, and drift. Surfaces durable indices that');
+    console.log('are registered but never built, on-disk index dirs that match no graph,');
+    console.log('and graph-config defs that previously failed to load silently (#1624).');
+    console.log('');
+    console.log('Examples:');
+    console.log('  aiwg index status');
+    console.log('  aiwg index status --json');
+    return;
+  }
+  const { showIndexStatus } = await import('./index-status.js');
+  await showIndexStatus(process.cwd(), { json: args.includes('--json') });
 }
 
 /**

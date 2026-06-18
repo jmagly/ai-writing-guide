@@ -346,6 +346,24 @@ export interface MetadataSupplementConfig {
 /**
  * Graph configuration — defines what each graph indexes
  */
+/**
+ * A non-fatal problem encountered while loading graph configs (#1624).
+ *
+ * Historically `loadModuleGraphConfigs` / `loadUserGraphConfigs` swallowed
+ * malformed graph definitions in best-effort `try/catch`, so a misconfigured
+ * durable index silently never loaded ("not found to be working properly").
+ * Callers that care (e.g. `aiwg index status`, `aiwg doctor`) pass a
+ * diagnostics array to surface these instead of dropping them.
+ */
+export interface GraphConfigWarning {
+  /** Graph name (or module id when the manifest itself is unparseable). */
+  graph: string;
+  /** Human-readable reason the definition was rejected. */
+  reason: string;
+  /** Where the bad definition came from. */
+  source: 'module' | 'operator-config';
+}
+
 export interface GraphConfig {
   /** Graph type identifier */
   type: string;
@@ -552,7 +570,7 @@ function parseGraphDef(name: string, graphDef: Record<string, unknown>): GraphCo
  *
  * @implements #726
  */
-export function loadModuleGraphConfigs(cwd: string): string[] {
+export function loadModuleGraphConfigs(cwd: string, diagnostics?: GraphConfigWarning[]): string[] {
   const registryPath = `${cwd}/.aiwg/frameworks/registry.json`;
   const loaded: string[] = [];
 
@@ -583,7 +601,13 @@ export function loadModuleGraphConfigs(cwd: string): string[] {
           try {
             manifestData = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
           } catch {
-            // Malformed manifest — skip
+            // Malformed manifest — skip, but surface it (#1624) instead of
+            // dropping silently.
+            diagnostics?.push({
+              graph: id,
+              reason: `manifest.json is not valid JSON (${manifestPath})`,
+              source: 'module',
+            });
           }
           break;
         }
@@ -607,6 +631,14 @@ export function loadModuleGraphConfigs(cwd: string): string[] {
         if (config) {
           GRAPH_CONFIGS[name] = config;
           loaded.push(name);
+        } else {
+          // #1624 — a declared-but-invalid graph (e.g. missing/non-array
+          // scanDirs) used to vanish silently. Report it.
+          diagnostics?.push({
+            graph: name,
+            reason: 'invalid graph definition — `scanDirs` is missing or not an array',
+            source: 'module',
+          });
         }
       }
     }
@@ -629,9 +661,9 @@ export function loadModuleGraphConfigs(cwd: string): string[] {
  *
  * @implements #426 #726
  */
-export function loadUserGraphConfigs(cwd: string): string[] {
+export function loadUserGraphConfigs(cwd: string, diagnostics?: GraphConfigWarning[]): string[] {
   // Load module-declared graphs first (frameworks/addons)
-  const moduleLoaded = loadModuleGraphConfigs(cwd);
+  const moduleLoaded = loadModuleGraphConfigs(cwd, diagnostics);
   const loaded: string[] = [...moduleLoaded];
 
   // Resolve the operator's index.graphs source. Canonical home is
@@ -650,7 +682,13 @@ export function loadUserGraphConfigs(cwd: string): string[] {
       if (g && typeof g === 'object') graphs = g;
     }
   } catch {
-    // best-effort
+    // #1624 — surface a malformed aiwg.config rather than dropping the whole
+    // index block silently.
+    diagnostics?.push({
+      graph: '.aiwg/aiwg.config',
+      reason: 'aiwg.config is not valid JSON — index.graphs not loaded',
+      source: 'operator-config',
+    });
   }
 
   // (b) Fallback: legacy .aiwg/config.yaml.
@@ -686,7 +724,16 @@ export function loadUserGraphConfigs(cwd: string): string[] {
       continue;
     }
     const graphConfig = parseGraphDef(name, def as Record<string, unknown>);
-    if (!graphConfig) continue;
+    if (!graphConfig) {
+      // #1624 — report the invalid operator-declared graph instead of the
+      // historical silent `continue`.
+      diagnostics?.push({
+        graph: name,
+        reason: 'invalid graph definition — `scanDirs` is missing or not an array',
+        source: 'operator-config',
+      });
+      continue;
+    }
     // Operator config overrides module-declared graphs; built-ins are protected above.
     GRAPH_CONFIGS[name] = graphConfig;
     if (!moduleLoaded.includes(name)) loaded.push(name);
