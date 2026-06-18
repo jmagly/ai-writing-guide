@@ -141,7 +141,7 @@ Without the sidecar, Codex can read and write files directly but has no structur
 | `template-render` | Fill AIWG templates with project context |
 | `agent-list` | Discover and invoke specialized agents by role |
 
-`workflow-run` remains a deprecated compatibility stub. For first-class YAML Flow tools, start the server with `AIWG_MCP_TOOLSETS=flows` and allow `flow-list`, `flow-show`, and `flow-run`.
+`workflow-run` has been removed. Use `command-run` for general AIWG CLI execution. For first-class YAML Flow tools, start the server with `AIWG_MCP_TOOLSETS=flows` and allow `flow-list`, `flow-show`, and `flow-run`. For Mission tools, use `AIWG_MCP_TOOLSETS=missions` and allow `mission-guide`, `mission-dispatch`, and `mission-status`.
 
 ---
 

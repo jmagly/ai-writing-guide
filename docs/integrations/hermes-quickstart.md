@@ -152,7 +152,7 @@ mcp_servers:
 
 After saving, run `/reload-mcp` in your active Hermes chat to apply.
 
-**Why this is lean by default:** AIWG's MCP server exposes 16 core tools
+**Why this is lean by default:** AIWG's MCP server exposes 15 core tools
 on default startup — discovery (`discover`, `*-list`/`*-show` pairs for
 skill/command/rule/agent/template), the allow-listed `command-run`, plus
 the artifact read/write surface. Schema footprint stays under 2.5K tokens.
@@ -168,7 +168,7 @@ AIWG_MCP_TOOLSETS=flows,missions,ralph aiwg mcp serve
 # Or via CLI flag
 aiwg mcp serve --toolsets=flows,missions,ralph
 
-# Or everything (67 tools total, including deprecated compatibility tools)
+# Or everything (66 tools total)
 aiwg mcp serve --toolsets=all
 ```
 
@@ -192,11 +192,15 @@ AIWG tool names stay ≤30 chars locally to leave headroom for the prefix.
 hermes chat "What AIWG tools are available?"
 ```
 
-The default core toolset registers 16 tools; with all toolsets enabled
-Hermes sees 67, including deprecated compatibility tools. If your output shows only the legacy 5 (`workflow-run`,
+The default core toolset registers 15 tools; with all toolsets enabled
+Hermes sees 66. If your output shows only the legacy 5 (`workflow-run`,
 `artifact-read`, `artifact-write`, `template-render`, `agent-list`), the
 AIWG installation is stale — run `aiwg refresh` and `/reload-mcp` in
 your active chat.
+
+`workflow-run` has been removed. Use `command-run` for general AIWG CLI
+execution, `AIWG_MCP_TOOLSETS=flows` for Flow tools, or
+`AIWG_MCP_TOOLSETS=missions` for Mission tools.
 
 ---
 

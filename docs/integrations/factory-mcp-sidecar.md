@@ -152,7 +152,7 @@ When connected, Factory droids gain access to AIWG MCP tools:
 | `template-render` | Render AIWG templates |
 | `agent-list` | List available agents |
 
-`workflow-run` remains registered only as a deprecated compatibility stub. Enable `AIWG_MCP_TOOLSETS=flows,missions` for first-class Flow and Mission tools.
+`workflow-run` has been removed. Use `command-run` for general AIWG CLI execution, or enable `AIWG_MCP_TOOLSETS=flows,missions` for first-class Flow and Mission tools.
 
 ---
 

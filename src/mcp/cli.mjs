@@ -399,7 +399,7 @@ POSITIONING:
   MCP is optional and provider-agnostic. Baseline AIWG reachability is file
   deployment plus CLI discovery: aiwg discover / aiwg show <type> <name>.
 
-CORE TOOLS (16, always registered):
+CORE TOOLS (15, always registered):
   discover                         Cross-type ranked catalog search
   skill-list / skill-show           Skill catalog and SKILL.md body fetch
   command-list / command-show       CLI command catalog and command spec fetch
@@ -409,7 +409,6 @@ CORE TOOLS (16, always registered):
   template-render                   Render AIWG template with variables
   command-run                       Allow-listed CLI dispatch; confirmation-gated when needed
   artifact-read / artifact-write    Project .aiwg/ artifact IO
-  workflow-run                      DEPRECATED compatibility stub; use command-run
 
 OPT-IN TOOLSETS (51 additional tools):
   flows          flow-list / flow-show / flow-run

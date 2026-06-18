@@ -54,7 +54,7 @@ artifact-read { "path": "requirements/UC-001-create-task.md", "project_dir": "te
 artifact-write { "path": "working/test-output.md", "content": "...", "project_dir": "test/fixtures/mcp-test-project" }
 
 # Run workflow (dry run)
-workflow-run { "prompt": "run security review", "project_dir": "test/fixtures/mcp-test-project", "dry_run": true }
+command-run { "command": "doctor", "args": ["--json"], "project_dir": "test/fixtures/mcp-test-project" }
 ```
 
 ## Traceability

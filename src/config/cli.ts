@@ -177,10 +177,12 @@ const BOOLEAN_FIELDS = new Set([
   'delivery.require_signed_commits',
   'delivery.auto_close_issues',
   'delivery.issue_comment_on_cycle',
+  'command_log.enabled',
 ]);
 
 const STRING_ARRAY_FIELDS = new Set([
   'remotes.tracker_actor.forbid_actors',
+  'command_log.scopes',
 ]);
 
 // Integer fields with valid range constraints. Validated at `aiwg config set`.
@@ -189,6 +191,7 @@ const INTEGER_FIELDS: Record<string, { min: number; max: number }> = {
   'parallelism.max_parallel_subagents': { min: 1, max: 50 },
   'parallelism.max_parallel_ralph_loops': { min: 1, max: 20 },
   'parallelism.max_parallel_mc_missions': { min: 1, max: 20 },
+  'command_log.max_bytes': { min: 1024, max: 104_857_600 },
 };
 
 async function projectConfigGet(key: string, args: string[]): Promise<void> {
@@ -249,6 +252,17 @@ async function projectConfigSet(key: string, raw: string, args: string[]): Promi
       .split(',')
       .map(item => item.trim())
       .filter(Boolean);
+    if (key === 'command_log.scopes') {
+      const invalid = (value as string[]).filter(item => item !== 'project' && item !== 'global');
+      if (invalid.length > 0) {
+        throw new AiwgError({
+          code: 'ERR_INVALID_VALUE',
+          message: `${key} supports only 'project' and 'global', got '${invalid.join(', ')}'`,
+          hint: `Try: aiwg config set --project ${key} project,global`,
+          exitCode: EXIT_CODES.USAGE,
+        });
+      }
+    }
   }
 
   // Coerce + range-check integers for known integer fields (#1359).

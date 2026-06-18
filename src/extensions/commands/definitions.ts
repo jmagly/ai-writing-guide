@@ -2935,6 +2935,39 @@ export const activityLogCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const commandLogCommand: Extension = {
+  id: 'command-log',
+  type: 'skill',
+  name: 'Command Log',
+  description: 'Report opt-in local CLI command invocation logs with project/global scope summaries and JSON output',
+  version: '1.0.0',
+  capabilities: ['cli', 'command-log', 'telemetry', 'analysis', 'self-maintenance'],
+  keywords: ['command', 'log', 'usage', 'telemetry', 'analysis', 'invocation'],
+  category: 'utility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['command log', 'show command usage', 'cli usage analysis', 'which aiwg commands are used'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '[--json] [--scope project|global|all] [--limit N]',
+      allowedTools: ['Bash', 'Read'],
+      executionSteps: [
+        'Read project and/or global command-log JSONL stores',
+        'Summarize command frequency, failures, and recent invocations',
+        'Print a human report or JSON for automation',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Storage Commands
 
 export const storageCommand: Extension = {
@@ -3343,6 +3376,7 @@ export const commandDefinitions: Extension[] = [
 
   // Activity Log (1)
   activityLogCommand,
+  commandLogCommand,
 
   // Knowledge Base (1)
   kbCommand,

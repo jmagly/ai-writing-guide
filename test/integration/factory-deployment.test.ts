@@ -680,7 +680,8 @@ describe('Factory CLI Integration', () => {
       if (result.stdout.includes('aiwg')) {
         expect(result.stdout).toContain('aiwg___agent-list');
         expect(result.stdout).toContain('aiwg___artifact-read');
-        expect(result.stdout).toContain('aiwg___workflow-run');
+        expect(result.stdout).toContain('aiwg___command-run');
+        expect(result.stdout).not.toContain('aiwg___workflow-run');
       }
     });
   });

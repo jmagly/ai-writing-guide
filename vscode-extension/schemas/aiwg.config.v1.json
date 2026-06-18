@@ -209,6 +209,32 @@
           "description": "Corpus root directory (relative to project root or absolute). Default: project root. The corpus lives under <corpusRoot>/documentation/{references,citations,radar,profiles}."
         }
       }
+    },
+    "command_log": {
+      "type": "object",
+      "description": "Optional local-first CLI command invocation log (#1614). Off by default.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable command invocation logging for this project. Default false."
+        },
+        "scopes": {
+          "type": "array",
+          "description": "Stores to write. project = .aiwg/telemetry/cli-commands.jsonl; global = XDG state.",
+          "items": {
+            "type": "string",
+            "enum": ["project", "global"]
+          },
+          "uniqueItems": true
+        },
+        "max_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 104857600,
+          "description": "Maximum bytes per JSONL store before rotation to .1. Default 1048576."
+        }
+      }
     }
   },
   "definitions": {

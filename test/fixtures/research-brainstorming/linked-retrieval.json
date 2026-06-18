@@ -1,0 +1,5 @@
+{
+  "retrieval_command": "aiwg index neighbors --graph kb --node local-first-telemetry",
+  "neighbor_types": ["concept", "entity", "source-summary", "brainstorm-note"],
+  "labels": ["user-idea", "model-suggestion", "citation-backed"]
+}

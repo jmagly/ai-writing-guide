@@ -122,6 +122,7 @@ import { executionModeHandler } from './execution-mode.js';
 import { repoAccessHandler, repoAccessHandlers } from './repo-access.js';
 import { issueHandler, issueAuditHandler } from './issues.js';
 import { cockpitHandler } from './cockpit.js';
+import { commandLogHandler } from './command-log.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -171,6 +172,7 @@ export {
   opsHandler,
   storageHandler,
   activityLogHandler,
+  commandLogHandler,
   kbHandler,
   memoryHandler,
   reflectionsHandler,
@@ -373,6 +375,9 @@ export const allHandlers: CommandHandler[] = [
 
   // Activity Log (#934, #964)
   activityLogHandler,
+
+  // Command invocation log (#1614)
+  commandLogHandler,
 
   // Knowledge Base (#934, #965)
   kbHandler,

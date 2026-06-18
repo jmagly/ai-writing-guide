@@ -343,7 +343,8 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Codex Integration', () => {
       );
 
       expect(config).toContain('[mcp_servers.aiwg]');
-      expect(config).toContain('workflow-run');
+      expect(config).toContain('command-run');
+      expect(config).not.toContain('workflow-run');
       expect(config).toContain('artifact-read');
       expect(config).toContain('artifact-write');
       expect(config).toContain('template-render');

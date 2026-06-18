@@ -198,12 +198,28 @@ export interface AiwgConfig {
    * @implements #1497
    */
   research?: ResearchConfig;
+
+  /**
+   * Optional local CLI command invocation log. Off by default.
+   * @implements #1614
+   */
+  command_log?: CommandLogConfig;
 }
 
 /** Research-complete framework settings (#1497). */
 export interface ResearchConfig {
   /** Corpus root (relative to project root or absolute). Default: project root. */
   corpusRoot?: string;
+}
+
+/** Local-first CLI command invocation logging settings (#1614). */
+export interface CommandLogConfig {
+  /** Enable command logging for this project. Defaults to false. */
+  enabled?: boolean;
+  /** Stores to write. Project store is `.aiwg/telemetry/cli-commands.jsonl`; global is XDG state. */
+  scopes?: Array<'project' | 'global'>;
+  /** Maximum bytes per JSONL store before rotation to `.1`. */
+  max_bytes?: number;
 }
 
 /**

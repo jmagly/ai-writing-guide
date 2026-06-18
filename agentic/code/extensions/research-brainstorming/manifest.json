@@ -1,0 +1,57 @@
+{
+  "id": "research-brainstorming",
+  "type": "extension",
+  "name": "Research Brainstorming",
+  "version": "1.0.0",
+  "description": "Free-form research brainstorming profile backed by wiki memory, semantic-memory logs, and KB index traversal.",
+  "requires": [
+    "research-complete",
+    "knowledge-base",
+    "semantic-memory"
+  ],
+  "optional": [
+    "llm-wiki"
+  ],
+  "scope": "research-ideation",
+  "entry": {
+    "skills": "skills",
+    "templates": "templates",
+    "fixtures": "fixtures"
+  },
+  "capabilities": [
+    "free-form-brainstorm-capture",
+    "wiki-memory-retrieval",
+    "idea-map-generation",
+    "speculation-vs-citation-labeling",
+    "research-artifact-promotion"
+  ],
+  "memory": {
+    "topology": {
+      "namespace": ".aiwg/kb",
+      "brainstorming": ".aiwg/kb/brainstorming",
+      "researchWorking": ".aiwg/research/working",
+      "externalCorpusRoot": "project root when the research repository uses a corpus-root layout",
+      "externalCorpusPaths": {
+        "references": "documentation/references",
+        "citations": "documentation/citations",
+        "radar": "documentation/radar",
+        "profiles": "documentation/profiles",
+        "indices": "indices",
+        "pdfs": "pdfs/full",
+        "webSources": "sources/web",
+        "bibliography": "bibliographies/master.bib"
+      },
+      "promotionTargets": [
+        ".aiwg/research/working/research-questions.md",
+        ".aiwg/research/working/acquisition-targets.md",
+        ".aiwg/research/reports/",
+        ".aiwg/research/findings/",
+        "documentation/references/REF-XXX-*.md",
+        "documentation/citations/REF-XXX-citations.md",
+        "documentation/radar/REF-XXX-radar.md"
+      ],
+      "indexGraph": "kb",
+      "crossRefStyle": "wikilink"
+    }
+  }
+}

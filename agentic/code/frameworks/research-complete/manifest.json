@@ -93,6 +93,20 @@
       ],
       "description": "Multi-tier reference-doc templates (canonical 15-section + expanded 21-section) for the REF-XXX corpus convention",
       "scope": "corpus-convention"
+    },
+    "research-brainstorming": {
+      "path": "agentic/code/extensions/research-brainstorming",
+      "type": "extension",
+      "requires": [
+        "research-complete",
+        "knowledge-base",
+        "semantic-memory"
+      ],
+      "optional": [
+        "llm-wiki"
+      ],
+      "description": "Free-form research brainstorming over wiki memory and KB graph traversal, with promotion into structured research artifacts",
+      "scope": "research-ideation"
     }
   }
 }

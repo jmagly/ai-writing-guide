@@ -21,6 +21,7 @@ import { activityLogPostCommandHook } from './hooks/builtin/activity-log-hook.js
 import { tryExecuteCliExtension } from './cli-extension-loader.js';
 import * as ui from './ui.js';
 import { maybeCelebrateMilestone } from '../community/milestones.js';
+import { maybeAppendCommandLog } from './command-log.js';
 
 // Cached loaded registry
 let cachedRegistry: LoadedRegistry | null = null;
@@ -83,6 +84,7 @@ export async function run(
   args: string[],
   options: { cwd?: string; signal?: AbortSignal } = {},
 ): Promise<void> {
+  const started = process.hrtime.bigint();
   const registry = await initRouter();
   const [rawCommand, ...commandArgs] = args;
 
@@ -112,15 +114,23 @@ export async function run(
           ui.info(extResult.message);
         }
       }
-      if (extResult.exitCode !== 0) {
-        process.exit(extResult.exitCode);
-      }
       if (rawCommand === 'flow-release') {
         maybeCelebrateMilestone(cwd, 'first_release');
       } else if (rawCommand === 'flow-deploy-to-production') {
         maybeCelebrateMilestone(cwd, 'first_production_deploy');
       } else if (/^flow-[a-z0-9-]+-to-[a-z0-9-]+$/.test(rawCommand)) {
         maybeCelebrateMilestone(cwd, 'first_phase_transition');
+      }
+      await logCommandInvocation({
+        command: rawCommand,
+        args: commandArgs,
+        cwd,
+        frameworkRoot,
+        started,
+        exitStatus: extResult.exitCode,
+      });
+      if (extResult.exitCode !== 0) {
+        process.exit(extResult.exitCode);
       }
       return;
     }
@@ -157,6 +167,14 @@ export async function run(
     // Check if execution was blocked
     if (preResult.blocked) {
       ui.error(preResult.message || `Command blocked by hook: ${preResult.blockingHook}`);
+      await logCommandInvocation({
+        command: commandId,
+        args: commandArgs,
+        cwd: ctx.cwd,
+        frameworkRoot: ctx.frameworkRoot,
+        started,
+        exitStatus: 1,
+      });
       process.exit(1);
     }
 
@@ -215,6 +233,15 @@ export async function run(
       }
     }
 
+    await logCommandInvocation({
+      command: commandId,
+      args: commandArgs,
+      cwd: ctx.cwd,
+      frameworkRoot: ctx.frameworkRoot,
+      started,
+      exitStatus: result.exitCode,
+    });
+
     if (result.exitCode !== 0) {
       process.exit(result.exitCode);
     }
@@ -230,9 +257,41 @@ export async function run(
     };
 
     await hookExecutor.execute('on-error', errorHookCtx);
+    await logCommandInvocation({
+      command: commandId,
+      args: commandArgs,
+      cwd: ctx.cwd,
+      frameworkRoot: ctx.frameworkRoot,
+      started,
+      exitStatus: 1,
+    });
 
     // Re-throw error
     throw error;
+  }
+}
+
+async function logCommandInvocation(input: {
+  command: string;
+  args: string[];
+  cwd: string;
+  frameworkRoot: string;
+  started: bigint;
+  exitStatus: number;
+}): Promise<void> {
+  try {
+    const durationMs = Number(process.hrtime.bigint() - input.started) / 1_000_000;
+    await maybeAppendCommandLog({
+      command: input.command,
+      args: input.args,
+      cwd: input.cwd,
+      frameworkRoot: input.frameworkRoot,
+      durationMs,
+      exitStatus: input.exitStatus,
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    ui.warn(`command-log append failed: ${msg}`);
   }
 }
 

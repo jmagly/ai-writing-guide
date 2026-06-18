@@ -1,0 +1,31 @@
+{
+  "session": "local-first-command-analytics",
+  "seed_node": "local-first-telemetry",
+  "retrieval_command": "aiwg index neighbors --graph kb --node local-first-telemetry",
+  "neighbors": [
+    {
+      "node": "AIWG CLI",
+      "type": "entity",
+      "label": "user-idea",
+      "use": "Identify command surfaces that produce local events."
+    },
+    {
+      "node": "privacy-preserving analytics",
+      "type": "concept",
+      "label": "model-suggestion",
+      "use": "Frame path hashing and argument redaction questions."
+    },
+    {
+      "node": "command-log-design",
+      "type": "brainstorm-note",
+      "label": "user-idea",
+      "use": "Reuse prior notes about scope-aware storage."
+    }
+  ],
+  "output_shape": [
+    "idea map",
+    "question tree",
+    "competing hypotheses",
+    "exploration plan"
+  ]
+}

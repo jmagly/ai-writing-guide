@@ -31,7 +31,6 @@ aiwg mcp info
 | `command-run` | Run allow-listed `aiwg` CLI commands |
 | `artifact-read` | Read artifacts from .aiwg/ directory |
 | `artifact-write` | Write artifacts to .aiwg/ directory |
-| `workflow-run` | Deprecated compatibility stub; use `command-run` or opt-in `flows` tools |
 
 Opt-in toolsets add Flow, Mission, memory, knowledge-base, research,
 activity-log, index, Ralph, Mission Control, and ops tools:
@@ -40,6 +39,10 @@ activity-log, index, Ralph, Mission Control, and ops tools:
 aiwg mcp serve --toolsets=flows,missions
 aiwg mcp serve --toolsets=all
 ```
+
+`workflow-run` has been removed from the core MCP surface. Use `command-run`
+for general CLI execution, the `flows` toolset for `flow-list` / `flow-show` /
+`flow-run`, or the `missions` toolset for Mission guide, dispatch, and status.
 
 ## Available Prompts
 

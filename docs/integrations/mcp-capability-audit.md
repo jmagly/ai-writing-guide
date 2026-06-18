@@ -1,6 +1,6 @@
 # AIWG MCP Capability Audit
 
-Status: v2026.6.1 re-audit pass for #1584
+Status: v2026.6.1 re-audit pass for #1584 and #1613
 
 AIWG's MCP server is a provider-agnostic optional hook. The baseline integration path for every provider is file deployment plus the CLI bridge: `aiwg discover` to find a capability and `aiwg show <type> <name>` to fetch it. MCP adds structured, model-callable access to the same catalog and to selected project operations, but no provider should depend on MCP for basic AIWG reachability.
 
@@ -8,7 +8,7 @@ AIWG's MCP server is a provider-agnostic optional hook. The baseline integration
 
 ### Core tools, always registered
 
-The default `aiwg mcp serve` surface currently registers 16 tools:
+The default `aiwg mcp serve` surface currently registers 15 tools:
 
 | Tool | Status | Boundary |
 |---|---|---|
@@ -20,7 +20,6 @@ The default `aiwg mcp serve` surface currently registers 16 tools:
 | `template-list` / `template-show` / `template-render` | active | Template catalog, raw body fetch, and simple rendering |
 | `command-run` | active | Allow-listed CLI dispatch; destructive commands require `confirmed: true` |
 | `artifact-read` / `artifact-write` | active | Project-required `.aiwg/` artifact IO |
-| `workflow-run` | deprecated | Compatibility stub only; use `command-run` for execution |
 
 ### Opt-in toolsets
 
@@ -102,7 +101,7 @@ Decision: keep MCP optional and lean by default. Do not move baseline rule or sk
 
 ## Recommendations
 
-- Keep the 16-tool core for now, but treat `workflow-run` as deprecated compatibility debt. With `flows` and `missions` now available as opt-in first-class toolsets, schedule removal of `workflow-run` for the next major compatibility window.
+- `workflow-run` has been removed from core. Migration path: use `command-run` for general CLI execution, `AIWG_MCP_TOOLSETS=flows` plus `flow-list` / `flow-show` / `flow-run` for declarative YAML Flow access, or `AIWG_MCP_TOOLSETS=missions` plus `mission-guide` / `mission-dispatch` / `mission-status` for Mission access.
 - Keep `command-run` in core; it is the structured equivalent of the CLI bridge and preserves one canonical execution path.
 - Keep flows, missions, memory, research, activity-log, index, ralph, mc, and ops outside core because they expand schema size, touch project state, or trigger long-running/shared-state operations.
 - Update provider docs that still say MCP is required or that only the legacy five-tool surface exists.

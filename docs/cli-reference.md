@@ -1182,7 +1182,7 @@ Start the AIWG MCP server.
 ```bash
 aiwg mcp serve
 aiwg mcp serve --toolsets=flows,missions,ralph    # opt-in toolsets
-aiwg mcp serve --toolsets=all                      # everything (67 tools, including deprecated compatibility tools)
+aiwg mcp serve --toolsets=all                      # everything (66 tools)
 ```
 
 **Options:**
@@ -1192,16 +1192,21 @@ aiwg mcp serve --toolsets=all                      # everything (67 tools, inclu
 **Actions:**
 
 - Starts stdio-based MCP server
-- Exposes 16 core tools by default (discover, *-list/*-show pairs, command-run, artifact-read/write, and deprecated workflow-run compatibility)
+- Exposes 15 core tools by default (discover, *-list/*-show pairs, command-run, and artifact-read/write)
 - Additional 51 tools available via opt-in toolsets
 - Supports Claude Desktop, Cursor, Factory, Hermes (as MCP sidecar)
 
-**Default surface (16 tools; schema cost should be re-measured after tool changes)**:
+**Default surface (15 tools; schema cost should be re-measured after tool changes)**:
 - `discover` — semantic search across skills/agents/commands/rules
 - `skill-list` / `skill-show`, `command-list` / `command-show`, `rule-list` / `rule-show`, `agent-list` / `agent-show`, `template-list` / `template-render` / `template-show`
 - `command-run` — allow-listed CLI dispatch
 - `artifact-read` / `artifact-write`
-- `workflow-run` — deprecated compatibility stub; use `command-run`
+
+`workflow-run` has been removed from the core MCP surface. Use `command-run`
+for general AIWG CLI execution, `AIWG_MCP_TOOLSETS=flows` with
+`flow-list` / `flow-show` / `flow-run` for declarative Flow access, or
+`AIWG_MCP_TOOLSETS=missions` with `mission-guide` / `mission-dispatch` /
+`mission-status` for Mission access.
 
 **Opt-in toolsets**: see [MCP capability audit](./integrations/mcp-capability-audit.md) and [Tool reference](./integrations/hermes-quickstart.md#tool-name-mangling) for details.
 
@@ -4042,6 +4047,62 @@ aiwg activity-log rotate --keep-last 90d
 ```
 
 **Auto-append hook (#978):** A post-command hook auto-logs qualifying CLI commands (`use`, `refresh`, `remove`, `add-{agent,command,skill,template,behavior}`, `validate-metadata`, `index`, `ops`). Honors `AIWG_SKIP_ACTIVITY_LOG=1`. Failures non-fatal.
+
+---
+
+### command-log
+
+Report the optional local CLI command invocation log. This is off by default and
+separate from `activity-log`: `activity-log` is an audit trail of AIWG artifact
+operations, while `command-log` is a privacy-preserving usage analysis stream
+for future heatmap/suggestion work (#1611).
+
+```bash
+aiwg command-log [--json] [--scope project|global|all] [--limit N]
+```
+
+**Enable logging:**
+
+```bash
+# Project-local store only
+aiwg config set --project command_log.enabled true
+aiwg config set --project command_log.scopes project
+
+# Project + operator-global stores
+aiwg config set --project command_log.scopes project,global
+
+# One invocation or shell session override
+AIWG_COMMAND_LOG=project aiwg doctor
+AIWG_COMMAND_LOG=global aiwg doctor
+AIWG_COMMAND_LOG=both aiwg doctor
+AIWG_COMMAND_LOG=off aiwg doctor
+```
+
+**Precedence:** `AIWG_COMMAND_LOG` overrides `.aiwg/aiwg.config`
+`command_log.*` for that process. With no env override, project config controls
+logging. With no project config, logging is disabled.
+
+**Stores:**
+
+- Project: `.aiwg/telemetry/cli-commands.jsonl`
+- Global: `$XDG_STATE_HOME/aiwg/cli-commands.jsonl` or `~/.local/state/aiwg/cli-commands.jsonl`
+
+**Privacy model:** events include command identity, timestamp, duration, exit
+status, AIWG version, scope, flag names, positional argument count, hashed cwd,
+and hashed project root plus project-relative cwd when available. Events do not
+store prompts, stdout/stderr, file contents, secrets, full raw argv, or absolute
+local paths by default.
+
+**Bounds:** stores rotate to `.1` when `command_log.max_bytes` or
+`AIWG_COMMAND_LOG_MAX_BYTES` is exceeded. The default bound is 1 MiB per store.
+
+**Examples:**
+
+```bash
+aiwg command-log
+aiwg command-log --json
+aiwg command-log --scope global --limit 50
+```
 
 ---
 
