@@ -225,6 +225,19 @@ in #1616, the live real-sandbox gate in #1617, and transport-trust visibility in
 #1618. Secure transport details map back to agentic-sandbox#409/#410/#412; local
 Browser/Tauri/VS Code-to-Bridge auth remains roctinam/aiwg#1595.
 
+### Operator-wall review modes (#1622)
+
+Connected Home exposes a `Wall review mode` control for the active design review:
+
+- `Topology` is the default A1-style eleven-stack operator wall.
+- `Handoff` emphasizes the A2-style mission route while keeping the same live
+  data-bound nodes.
+- Open `/?wall=handoff` to load the handoff review layout directly for browser
+  capture or operator comparison.
+
+The detailed review script and screenshot commands live in
+`.aiwg/ux/cockpit-operator-wall-layout-review.md`.
+
 ## See also
 
 - `.aiwg/architecture/adr-cockpit-session-control-not-cli-runner.md` — the core model

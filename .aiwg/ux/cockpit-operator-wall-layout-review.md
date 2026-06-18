@@ -127,27 +127,76 @@ Recommended next adjustment if Option C is selected:
 - Elevate handoff status into the central hub.
 - Make the side/bottom details describe route audit entries and pending gates.
 
+## Implemented Review State
+
+As of `dda555750db0d90ed44af6ad3b8271f0a4d3425e`, the running Cockpit Home
+includes an in-app `Wall review mode` segmented control:
+
+- `Topology` is the default A1-facing review path. It preserves the full-bleed,
+  glyph-first eleven-stack operator wall and live bottom readout.
+- `Handoff` is the A2-facing review path. It keeps the same data-bound nodes but
+  strengthens the mission arc, source/destination callouts, and handoff heading.
+- `?wall=handoff` opens the handoff view directly for screenshot capture or
+  operator review links.
+
+The review modes are not static mock art: node labels, runtime coverage,
+approvals, cost, control posture, and mission state remain bound to the live
+Cockpit Bridge data.
+
 ## Recommendation
 
-Use Option A as the shippable v1 baseline and schedule an operator review to choose between Option B and Option C for the next fidelity pass.
+Use `Topology` as the shippable v1 baseline unless operator review explicitly
+selects `Handoff` as the main first impression.
 
 Rationale:
 
-- Option A already satisfies the core research-backed requirements: overview first, visible agent state, intervention cues, data-bound topology, and accessible controls.
-- Option B is closest to the A1 image, but it is primarily a visual-fidelity pass and needs careful keyboard/mobile validation.
-- Option C is closest to the A2 image and likely the stronger long-term product story, but it should wait until mission-handoff data is reliable enough to avoid a decorative arc.
+- `Topology` satisfies the core research-backed requirements: overview first,
+  visible agent state, intervention cues, data-bound topology, and accessible
+  controls.
+- `Topology` is closest to the A1 design-spec image because the first viewport is
+  dominated by the centered hub, eleven glyph nodes, coordination paths, and dark
+  negative space.
+- `Handoff` is closest to the A2 image and is now reviewable in the app, but it
+  should become the default only if the operator wants mission routing to be the
+  primary product signal before the live host/container/VM matrix is fully green.
 
 ## Interactive Review Script
 
-Use this sequence in the mock-layout session:
+Use this sequence in the app-backed mock-layout session:
 
 1. Show A1 and A2 design-spec images side by side.
-2. Show the current running Home first viewport.
-3. Ask which first impression matters most: "fleet overview", "image fidelity", or "mission handoff".
-4. If "fleet overview", tune Option A.
-5. If "image fidelity", build Option B mock.
-6. If "mission handoff", build Option C mock.
-7. Confirm mobile behavior separately: stacked list is acceptable only if the first screen still communicates hub, eleven stacks, and route state.
+2. Launch Cockpit against the mock or a real executor and open Home.
+3. Review default `Topology` mode against A1.
+4. Open `/?wall=handoff` or click `Handoff`, then review against A2.
+5. Ask which first impression matters most: "fleet overview", "image fidelity",
+   or "mission handoff".
+6. If "fleet overview" or "image fidelity", keep `Topology` as default and tune
+   glyph scale/spacing only if needed.
+7. If "mission handoff", switch the default mode to `Handoff` and verify the
+   handoff labels are backed by real route state.
+8. Confirm mobile behavior separately: stacked list is acceptable only if the
+   first screen still communicates hub, eleven stacks, and route state.
+
+### Screenshot Commands
+
+With mock executor and Bridge running on the default ports:
+
+```bash
+google-chrome --headless=new --disable-gpu --no-sandbox \
+  --window-size=1440,1000 --virtual-time-budget=3000 \
+  --screenshot=/tmp/cockpit-operator-wall-topology-review-$(date +%F).png \
+  http://127.0.0.1:8120
+
+google-chrome --headless=new --disable-gpu --no-sandbox \
+  --window-size=1440,1000 --virtual-time-budget=3000 \
+  --screenshot=/tmp/cockpit-operator-wall-handoff-review-$(date +%F).png \
+  'http://127.0.0.1:8120/?wall=handoff'
+
+google-chrome --headless=new --disable-gpu --no-sandbox \
+  --window-size=390,900 --virtual-time-budget=3000 \
+  --screenshot=/tmp/cockpit-operator-wall-handoff-review-mobile-$(date +%F).png \
+  'http://127.0.0.1:8120/?wall=handoff'
+```
 
 ## Acceptance Checklist For #1622
 
@@ -157,4 +206,3 @@ Use this sequence in the mock-layout session:
 - Mission handoff is either visually secondary by decision or made primary with real state binding.
 - Desktop and mobile screenshots are captured to `/tmp` and referenced from evidence, not committed as repo binaries.
 - `npm --prefix apps/cockpit run check` passes after any implementation change.
-
