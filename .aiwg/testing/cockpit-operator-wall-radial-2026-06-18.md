@@ -14,7 +14,8 @@ surface with a radial topology aligned to the design references:
 The implementation keeps the existing stack cards and telemetry below the fold,
 but the first viewport now carries the design-spec topology: central Cockpit hub,
 eleven connected nodes, mission handoff arc, runtime/provider labels, coverage,
-approvals, cost, and control state.
+approvals, cost, and control state. A follow-up pass added the missing guided
+start controls and first-class Cost & Quota surface called out in #1622.
 
 ## Verification
 
@@ -23,27 +24,39 @@ Commands:
 ```text
 npm --prefix apps/cockpit run test:web
 AIWG_COCKPIT_LIVE_REPORT=/tmp/cockpit-live-uat-identity-check npm run uat:cockpit-live
+AIWG_COCKPIT_LIVE_REPORT=/tmp/cockpit-live-uat-provider-command npm run uat:cockpit-live
 npm --prefix apps/cockpit/web run build
 google-chrome --headless=new --disable-gpu --no-first-run --no-default-browser-check --user-data-dir=/tmp/cockpit-chrome-profile-2 --window-size=1440,1100 --virtual-time-budget=5000 --screenshot=/tmp/cockpit-operator-wall-radial-2026-06-18.png http://127.0.0.1:8120
 google-chrome --headless=new --disable-gpu --no-first-run --no-default-browser-check --user-data-dir=/tmp/cockpit-chrome-profile-3 --window-size=390,900 --virtual-time-budget=5000 --screenshot=/tmp/cockpit-operator-wall-radial-mobile-2026-06-18.png http://127.0.0.1:8120
+google-chrome --headless=new --disable-gpu --no-first-run --no-default-browser-check --user-data-dir=/tmp/cockpit-chrome-profile-4 --window-size=1440,1300 --virtual-time-budget=5000 --screenshot=/tmp/cockpit-operator-wall-planner-2026-06-18.png http://127.0.0.1:8120
+google-chrome --headless=new --disable-gpu --no-first-run --no-default-browser-check --user-data-dir=/tmp/cockpit-chrome-profile-5 --window-size=390,1000 --virtual-time-budget=5000 --screenshot=/tmp/cockpit-operator-wall-planner-mobile-2026-06-18.png http://127.0.0.1:8120
 ```
 
 Results:
 
 - Web typecheck passed.
 - React rendered-DOM tests passed, including a regression asserting 11 radial
-  topology controls from live status data.
+  topology controls from live status data, the guided start planner, and the
+  Cost & Quota surface.
 - Web production build passed.
 - Live UAT non-required mode still skips cleanly when no executor is reachable.
+- Live UAT non-required mode still passes after tightening matrix mode to invoke
+  real provider CLIs (`codex exec` or `claude --print`) when the matrix is
+  required.
 - Desktop headless Chrome screenshot rendered the radial map, central Cockpit
   hub, eleven nodes, mission handoff arc, details rail, and existing stack cards.
 - Mobile headless Chrome screenshot rendered the responsive stacked topology
   without text overlap in the captured viewport.
+- Desktop/mobile follow-up screenshots rendered the guided start planner and
+  cost/quota panel below the stack board without changing the top-level radial
+  topology.
 
 Local screenshot artifacts:
 
 - `/tmp/cockpit-operator-wall-radial-2026-06-18.png`
 - `/tmp/cockpit-operator-wall-radial-mobile-2026-06-18.png`
+- `/tmp/cockpit-operator-wall-planner-2026-06-18.png`
+- `/tmp/cockpit-operator-wall-planner-mobile-2026-06-18.png`
 
 PNG screenshots are intentionally not committed under `.aiwg/testing` so the
 metadata-validation gate remains text-only.

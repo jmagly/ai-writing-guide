@@ -113,6 +113,20 @@ function chooseBackend(instance: any) {
     backends[0];
 }
 
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+function providerWorkloadCommand(provider: string, prompt: string): string {
+  if (provider === 'codex') {
+    return `codex exec --ask-for-approval never --sandbox read-only ${shellQuote(prompt)}`;
+  }
+  if (provider === 'claude') {
+    return `claude --print --permission-mode dontAsk --output-format text ${shellQuote(prompt)}`;
+  }
+  throw new Error(`unsupported live workload provider: ${provider}`);
+}
+
 async function websocketSessionProbe(attachUrl: string, role: 'observer' | 'controller', workload?: string): Promise<{
   roleAssigned: boolean;
   output: string;
@@ -124,7 +138,7 @@ async function websocketSessionProbe(attachUrl: string, role: 'observer' | 'cont
     const timeout = setTimeout(() => {
       ws.close();
       resolve({ roleAssigned, output });
-    }, workload ? 12_000 : 6_000);
+    }, workload ? 60_000 : 6_000);
     ws.addEventListener('open', () => undefined);
     ws.addEventListener('error', () => {
       clearTimeout(timeout);
@@ -360,10 +374,14 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
         record(`matrix ${target}`, 'skip', `observe-only target with capability evidence: ${backend.reason ?? 'drive=false'}`);
         continue;
       }
-      const driven = await websocketSessionProbe(start.body.attach_url, 'controller', `[${WORKLOAD_PROVIDER}] ${WORKLOAD_TEXT}`);
+      const providerCommand = providerWorkloadCommand(WORKLOAD_PROVIDER, WORKLOAD_TEXT);
+      const driven = await websocketSessionProbe(start.body.attach_url, 'controller', providerCommand);
       if (!driven.roleAssigned) throw new Error(`target ${target} did not grant drive attach`);
       if (!driven.output.trim()) throw new Error(`target ${target} produced no terminal output for provider workload`);
-      record(`matrix ${target}`, 'pass', `${WORKLOAD_PROVIDER} workload via ${backend.mode}/${backend.backend}; ${driven.output.length} output byte(s)`);
+      if (!driven.output.includes('AIWG_COCKPIT_LIVE_OK')) {
+        throw new Error(`target ${target} provider workload did not emit AIWG_COCKPIT_LIVE_OK`);
+      }
+      record(`matrix ${target}`, 'pass', `${WORKLOAD_PROVIDER} CLI workload via ${backend.mode}/${backend.backend}; ${driven.output.length} output byte(s)`);
     }
-  }, 90_000);
+  }, 240_000);
 });

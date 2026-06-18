@@ -68,6 +68,10 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getByRole('button', { name: /docker codex/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /qemu codex/i })).toBeTruthy();
     expect(screen.getAllByText('3/3').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('region', { name: /guided start and cost quota/i })).toBeTruthy();
+    expect(screen.getByLabelText('Cost and quota')).toBeTruthy();
+    expect(screen.getByText(/codex host \/ auto runtime \/ observe/i)).toBeTruthy();
+    expect(screen.getAllByText('$0.42').length).toBeGreaterThanOrEqual(1);
   });
 
   it('each tab has a matching labelled tabpanel (controls/labelledby pairing)', () => {

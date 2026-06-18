@@ -165,9 +165,12 @@ Matrix mode requires real `host`, `docker`/`container`, and `vm` runtime
 families in inventory. For each target it verifies inventory normalization,
 runtime and transport posture, session backend evidence, session create/list,
 observe attach, and a minimal provider-backed workload through a controller
-session when control is advertised. Mock-only success does not satisfy this
-gate; `AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX=1` exists only for harness
-development.
+session when control is advertised. The selected provider is invoked through the
+attached session (`codex exec --ask-for-approval never --sandbox read-only ...`
+or `claude --print --permission-mode dontAsk --output-format text ...`) and must
+emit `AIWG_COCKPIT_LIVE_OK`, so the report proves the pre-authenticated CLI path
+rather than only shell plumbing. Mock-only success does not satisfy this gate;
+`AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX=1` exists only for harness development.
 
 ## Status
 

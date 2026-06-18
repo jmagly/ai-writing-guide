@@ -33,6 +33,9 @@ const ORBIT_POSITIONS = [
 export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; goTo: (t: string) => void }) {
   const [st, setSt] = useState<Status | null>(null);
   const [firstRun] = useState(() => !localStorage.getItem('cockpit.welcomed'));
+  const [selectedStackId, setSelectedStackId] = useState('');
+  const [selectedRuntime, setSelectedRuntime] = useState('auto');
+  const [selectedTask, setSelectedTask] = useState('observe');
 
   useEffect(() => { localStorage.setItem('cockpit.welcomed', '1'); }, []);
   useEffect(() => {
@@ -61,6 +64,15 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
   };
   const orbitNodes = buildOrbitNodes(st);
   const attentionCount = (st?.approvals.length ?? 0) + (runtimeCoverage.host && runtimeCoverage.container && runtimeCoverage.vm ? 0 : 1);
+  const selectedStack = runningInstances.find((i) => i.id === selectedStackId) ?? runningInstances[0] ?? st?.instances[0];
+  const selectedStackCost = selectedStack ? st?.cost?.per_instance.find((c) => c.instance_id === selectedStack.id) : undefined;
+  const totalCost = st?.cost?.total.usd ?? 0;
+  const quotaUsed = st?.cost ? Math.min(100, Math.max(6, totalCost * 12)) : 0;
+  const startPlan = [
+    selectedStack ? selectedStack.loadout : 'no stack',
+    selectedRuntime === 'auto' ? 'auto runtime' : selectedRuntime,
+    selectedTask,
+  ].join(' / ');
 
   return (
     <div className="welcome operator-wall">
@@ -199,17 +211,57 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
               </button>
             </section>
 
-            <section className="guided-start" aria-label="Guided start">
-              <div>
-                <p className="eyebrow">Guided start</p>
-                <h3>Pick stack, attach observe-first, then drive when granted.</h3>
-                <p className="hint">Executor: {st.executor || 'unknown'} · UI actions inject commands into a session; the agent runs them.</p>
+            <section className="control-planner" aria-label="Guided start and cost quota">
+              <div className="guided-start" aria-label="Guided start">
+                <div>
+                  <p className="eyebrow">Guided start</p>
+                  <h3>Pick stack, runtime, and task posture.</h3>
+                  <p className="hint">Plan: {startPlan}</p>
+                </div>
+                <div className="planner-grid">
+                  <label>
+                    <span>Stack</span>
+                    <select value={selectedStack?.id ?? ''} onChange={(event) => setSelectedStackId(event.target.value)}>
+                      {runningInstances.map((i) => <option key={i.id} value={i.id}>{i.loadout} · {i.runtime_posture.kind}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Runtime</span>
+                    <select value={selectedRuntime} onChange={(event) => setSelectedRuntime(event.target.value)}>
+                      <option value="auto">Auto from selected stack</option>
+                      <option value="host">Host</option>
+                      <option value="container">Docker/container</option>
+                      <option value="vm">VM</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Task</span>
+                    <select value={selectedTask} onChange={(event) => setSelectedTask(event.target.value)}>
+                      <option value="observe">Observe first</option>
+                      <option value="drive">Drive when granted</option>
+                      <option value="handoff">Mission handoff</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="cta-row">
+                  <button className="cta" onClick={onStartSession}>▸ Start planned session</button>
+                  <button onClick={() => goTo('explore')}>Browse capabilities</button>
+                  {st.approvals.length > 0 && <button onClick={() => goTo('approvals')}>Review {st.approvals.length} approval(s)</button>}
+                </div>
               </div>
-              <div className="cta-row">
-                <button className="cta" onClick={onStartSession}>▸ Start a session</button>
-                <button onClick={() => goTo('explore')}>Browse capabilities</button>
-                {st.approvals.length > 0 && <button onClick={() => goTo('approvals')}>Review {st.approvals.length} approval(s)</button>}
-              </div>
+
+              <aside className="quota-panel" aria-label="Cost and quota">
+                <p className="eyebrow">Cost & quota</p>
+                <div className="quota-donut" style={{ '--quota': `${quotaUsed}%` } as CSSProperties}>
+                  <strong>{st.cost ? `$${totalCost.toFixed(2)}` : '--'}</strong>
+                  <span>{st.cost ? `${st.cost.total.input_tokens + st.cost.total.output_tokens} tokens` : 'metrics unavailable'}</span>
+                </div>
+                <dl className="quota-readout">
+                  <div><dt>Selected stack</dt><dd>{selectedStackCost ? `$${selectedStackCost.usd.toFixed(2)}` : 'n/a'}</dd></div>
+                  <div><dt>Headroom</dt><dd>{st.cost ? (quotaUsed > 80 ? 'near limit' : 'clear') : 'unknown'}</dd></div>
+                  <div><dt>Approval load</dt><dd>{st.approvals.length} pending</dd></div>
+                </dl>
+              </aside>
             </section>
           </>
         )}
