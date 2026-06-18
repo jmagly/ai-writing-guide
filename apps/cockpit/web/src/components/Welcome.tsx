@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { api } from '../api';
 import { fmtId } from '../util';
 import type { Instance, Approval, Cost, RunningTask } from '../types';
@@ -11,6 +11,24 @@ interface Status {
   executor: string;
   connected: boolean;
 }
+
+interface OrbitNode {
+  key: string;
+  label: string;
+  meta: string;
+  family: 'host' | 'container' | 'vm' | 'mission' | 'approval' | 'cost' | 'capability' | 'library' | 'action' | 'session' | 'inventory';
+  tab: string;
+  state: 'running' | 'ready' | 'attention' | 'blocked' | 'idle';
+  x: number;
+  y: number;
+}
+
+type OrbitStyle = CSSProperties & { '--x': string; '--y': string };
+
+const ORBIT_POSITIONS = [
+  [50, 8], [73, 15], [89, 34], [86, 60], [68, 78], [50, 88],
+  [31, 78], [14, 60], [11, 34], [27, 15], [50, 28],
+] as const;
 
 export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; goTo: (t: string) => void }) {
   const [st, setSt] = useState<Status | null>(null);
@@ -41,6 +59,8 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
   const copyStartCommand = async () => {
     await navigator.clipboard?.writeText('aiwg cockpit');
   };
+  const orbitNodes = buildOrbitNodes(st);
+  const attentionCount = (st?.approvals.length ?? 0) + (runtimeCoverage.host && runtimeCoverage.container && runtimeCoverage.vm ? 0 : 1);
 
   return (
     <div className="welcome operator-wall">
@@ -69,6 +89,60 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
           </div>
         ) : (
           <>
+            <section className="radial-wall" aria-labelledby="operator-wall-map-title">
+              <div className="radial-map" aria-label="Operator wall topology">
+                <svg className="radial-links" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+                  <circle className="link-ring" cx="50" cy="50" r="37" />
+                  {orbitNodes.map((node) => (
+                    <line key={node.key} className={`link-line link-${node.state}`} x1="50" y1="50" x2={node.x} y2={node.y} />
+                  ))}
+                  <path className="handoff-arc" d="M 18 58 C 32 18, 70 16, 86 43" />
+                </svg>
+                <button className="central-hub" onClick={onStartSession} aria-label="Start from Cockpit command hub">
+                  <span className="hub-core" aria-hidden="true" />
+                  <strong>Cockpit</strong>
+                  <span>{runningInstances.length} running · {st.approvals.length} approvals</span>
+                </button>
+                {orbitNodes.map((node, index) => (
+                  <button
+                    key={node.key}
+                    className={`orbit-node node-${node.family} node-${node.state}`}
+                    style={orbitStyle(node)}
+                    onClick={() => goTo(node.tab)}
+                    aria-label={`${node.label}: ${node.meta}`}
+                  >
+                    <span className={`node-glyph glyph-${node.family}`} aria-hidden="true" />
+                    <span className="node-copy">
+                      <strong>{node.label}</strong>
+                      <span>{node.meta}</span>
+                    </span>
+                    {index === 3 && <span className="handoff-marker" aria-hidden="true" />}
+                  </button>
+                ))}
+              </div>
+              <aside className="radial-detail" aria-labelledby="operator-wall-map-title">
+                <p className="eyebrow">Live topology</p>
+                <h3 id="operator-wall-map-title">Eleven-stack operator wall</h3>
+                <div className="mission-route" aria-label="Mission handoff state">
+                  <span>Mission</span>
+                  <strong>{st.running[0] ? fmtId(st.running[0].task_id) : 'ready'}</strong>
+                  <span className={attentionCount > 0 ? 'route-attention' : 'route-ready'}>
+                    {attentionCount > 0 ? `${attentionCount} gate(s)` : 'clear'}
+                  </span>
+                </div>
+                <dl className="wall-readout">
+                  <div><dt>Coverage</dt><dd>{[runtimeCoverage.host, runtimeCoverage.container, runtimeCoverage.vm].filter(Boolean).length}/3</dd></div>
+                  <div><dt>Executor</dt><dd>{st.executor || 'unknown'}</dd></div>
+                  <div><dt>Control</dt><dd>{runningInstances.some((i) => i.session_backends.some((b) => b.available && b.drive)) ? 'drive available' : 'observe first'}</dd></div>
+                  <div><dt>Quota</dt><dd>{st.cost ? `$${st.cost.total.usd.toFixed(2)}` : 'n/a'}</dd></div>
+                </dl>
+                <div className="cta-row">
+                  <button className="cta" onClick={onStartSession}>▸ Start a session</button>
+                  <button onClick={() => goTo('running')}>View board</button>
+                </div>
+              </aside>
+            </section>
+
             <section className="stack-board" aria-label="Running stack board">
               {runningInstances.slice(0, 6).map((i) => {
                 const task = st.running.find((r) => r.instance_id === i.id);
@@ -164,4 +238,109 @@ function accentFor(value: string): number {
   let sum = 0;
   for (const ch of value) sum += ch.charCodeAt(0);
   return (sum % 4) + 1;
+}
+
+function orbitStyle(node: OrbitNode): OrbitStyle {
+  return { '--x': `${node.x}%`, '--y': `${node.y}%` };
+}
+
+function buildOrbitNodes(st: Status | null): OrbitNode[] {
+  const running = st?.instances.filter((i) => i.state === 'running') ?? [];
+  const host = st?.instances.find((i) => i.runtime_posture.kind === 'host');
+  const container = st?.instances.find((i) => i.runtime_posture.kind === 'container' || i.runtime_posture.kind === 'docker');
+  const vm = st?.instances.find((i) => i.runtime_posture.kind === 'vm');
+  const drive = st?.instances.some((i) => i.session_backends.some((b) => b.available && b.drive)) ?? false;
+  const approvals = st?.approvals.length ?? 0;
+  const cost = st?.cost?.total.usd;
+  const base: Omit<OrbitNode, 'x' | 'y'>[] = [
+    {
+      key: 'host',
+      label: host?.loadout || 'Host CLI',
+      meta: host ? `${fmtId(host.id)} · ${host.state}` : 'not connected',
+      family: 'host',
+      tab: 'inventory',
+      state: host ? 'running' : 'blocked',
+    },
+    {
+      key: 'vm',
+      label: vm?.loadout || 'VM sandbox',
+      meta: vm ? `${fmtId(vm.id)} · ${vm.state}` : 'not connected',
+      family: 'vm',
+      tab: 'inventory',
+      state: vm ? 'running' : 'blocked',
+    },
+    {
+      key: 'container',
+      label: container?.loadout || 'Docker runtime',
+      meta: container ? `${fmtId(container.id)} · ${container.state}` : 'not connected',
+      family: 'container',
+      tab: 'inventory',
+      state: container ? 'running' : 'blocked',
+    },
+    {
+      key: 'mission',
+      label: 'Mission handoff',
+      meta: st?.running[0] ? `${fmtId(st.running[0].task_id)} · ${st.running[0].state}` : 'ready',
+      family: 'mission',
+      tab: 'running',
+      state: st?.running.length ? 'running' : 'ready',
+    },
+    {
+      key: 'approvals',
+      label: 'Approvals',
+      meta: approvals ? `${approvals} pending` : 'clear',
+      family: 'approval',
+      tab: 'approvals',
+      state: approvals ? 'attention' : 'ready',
+    },
+    {
+      key: 'cost',
+      label: 'Cost & quota',
+      meta: cost === undefined ? 'metrics n/a' : `$${cost.toFixed(2)}`,
+      family: 'cost',
+      tab: 'running',
+      state: cost === undefined ? 'idle' : 'ready',
+    },
+    {
+      key: 'capabilities',
+      label: 'Capability search',
+      meta: 'catalog ready',
+      family: 'capability',
+      tab: 'explore',
+      state: 'ready',
+    },
+    {
+      key: 'library',
+      label: 'Library',
+      meta: 'workspace assets',
+      family: 'library',
+      tab: 'library',
+      state: 'ready',
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      meta: drive ? 'drive available' : 'observe first',
+      family: 'action',
+      tab: 'actions',
+      state: drive ? 'ready' : 'idle',
+    },
+    {
+      key: 'sessions',
+      label: 'Sessions',
+      meta: running.length ? `${running.length} attachable` : 'none active',
+      family: 'session',
+      tab: 'sessions',
+      state: running.length ? 'running' : 'idle',
+    },
+    {
+      key: 'inventory',
+      label: 'Inventory',
+      meta: `${st?.instances.length ?? 0} registered`,
+      family: 'inventory',
+      tab: 'inventory',
+      state: st?.instances.length ? 'ready' : 'idle',
+    },
+  ];
+  return base.map((node, index) => ({ ...node, x: ORBIT_POSITIONS[index][0], y: ORBIT_POSITIONS[index][1] }));
 }

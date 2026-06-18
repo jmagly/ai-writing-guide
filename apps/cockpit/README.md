@@ -142,9 +142,13 @@ must be green. The command writes `test-results/cockpit-live-uat.json` and
 should be kept as a project artifact. If the upstream
 `agentic-sandbox-conformance` harness is also run, set
 `AIWG_SANDBOX_CONFORMANCE_REPORT=<path>` so the Cockpit live report links the
-external conformance output. A manual run against agentic-sandbox `v2026.6.15`
-or newer should attach its markdown/JSON result to epic roctinam/aiwg#1588
-before the epic is considered done-done.
+external conformance output. The harness also probes common executor identity
+endpoints (`/health`, `/version`, `/api/version`, `/api/v2/version`) and records
+safe version/build fields in the report. When the executor build does not expose
+that metadata, set `AIWG_COCKPIT_EXECUTOR_VERSION=<tag-or-commit>` so release
+evidence still names the tested agentic-sandbox build. A manual run against
+agentic-sandbox `v2026.6.15` or newer should attach its markdown/JSON result to
+epic roctinam/aiwg#1588 before the epic is considered done-done.
 
 The stricter matrix gate for #1621 is intentionally separate from the mock lane:
 

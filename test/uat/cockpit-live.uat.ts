@@ -22,6 +22,7 @@ const ALLOW_MOCK_MATRIX = process.env.AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX === '1
 const WORKLOAD_PROVIDER = (process.env.AIWG_COCKPIT_LIVE_PROVIDER || '').toLowerCase();
 const WORKLOAD_TEXT = process.env.AIWG_COCKPIT_LIVE_WORKLOAD ||
   'AIWG Cockpit live matrix check: respond with AIWG_COCKPIT_LIVE_OK and no extra actions.';
+const EXECUTOR_VERSION_HINT = process.env.AIWG_COCKPIT_EXECUTOR_VERSION || '';
 const REPORT_BASE = resolve(process.env.AIWG_COCKPIT_LIVE_REPORT ?? 'test-results/cockpit-live-uat');
 const startedAt = new Date().toISOString();
 
@@ -32,6 +33,7 @@ interface Evidence {
 }
 
 const evidence: Evidence[] = [];
+let executorIdentity: Record<string, unknown> = {};
 
 function record(name: string, status: Evidence['status'], detail: string) {
   evidence.push({ name, status, detail });
@@ -57,6 +59,35 @@ async function bridgeJson(base: string, token: string, path: string, init: Reque
 async function executorJson(path: string) {
   const r = await fetch(`${EXECUTOR_URL}${path}`, { signal: AbortSignal.timeout(3_000) });
   return { status: r.status, body: await r.json().catch(() => ({})) };
+}
+
+function identityFields(body: unknown): Record<string, unknown> {
+  if (!body || typeof body !== 'object') return {};
+  const allowed = new Set([
+    'name', 'version', 'commit', 'git_sha', 'gitSha', 'revision', 'build', 'build_id',
+    'buildId', 'mock', 'surfaces', 'runtime', 'runtime_version',
+  ]);
+  return Object.fromEntries(
+    Object.entries(body as Record<string, unknown>)
+      .filter(([key]) => allowed.has(key))
+      .filter(([, value]) => value === null || ['string', 'number', 'boolean'].includes(typeof value) || Array.isArray(value)),
+  );
+}
+
+async function collectExecutorIdentity(): Promise<Record<string, unknown>> {
+  const identity: Record<string, unknown> = {};
+  if (EXECUTOR_VERSION_HINT) identity.version_hint = EXECUTOR_VERSION_HINT;
+  for (const path of ['/health', '/version', '/api/version', '/api/v2/version']) {
+    try {
+      const r = await fetch(`${EXECUTOR_URL}${path}`, { signal: AbortSignal.timeout(2_000) });
+      if (!r.ok) continue;
+      const body = identityFields(await r.json().catch(() => ({})));
+      if (Object.keys(body).length > 0) identity[path] = body;
+    } catch {
+      // Best-effort identity capture only; the live gate is about runtime/session evidence.
+    }
+  }
+  return identity;
 }
 
 function isMockExecutor(healthBody: unknown): boolean {
@@ -151,6 +182,7 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     finished_at: finishedAt,
     skip_reason: reachable ? undefined : reason,
     conformance_report: process.env.AIWG_SANDBOX_CONFORMANCE_REPORT || null,
+    executor_identity: executorIdentity,
     evidence,
   };
   await mkdir(dirname(REPORT_BASE), { recursive: true });
@@ -168,6 +200,7 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     `- Finished: ${finishedAt}`,
     reachable ? '' : `- Skip reason: ${reason}`,
     `- agentic-sandbox-conformance report: ${payload.conformance_report ?? 'not provided'}`,
+    `- Executor identity: ${Object.keys(executorIdentity).length ? JSON.stringify(executorIdentity) : 'not provided by executor'}`,
     '',
     '## Evidence',
     '',
@@ -198,6 +231,12 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
       return;
     }
     record('executor probe', 'pass', `reachable at ${EXECUTOR_URL}`);
+    executorIdentity = await collectExecutorIdentity();
+    record(
+      'executor identity',
+      Object.keys(executorIdentity).length ? 'pass' : 'skip',
+      Object.keys(executorIdentity).length ? JSON.stringify(executorIdentity) : 'no version/commit endpoint or hint available',
+    );
     bridge = createBridge({ executorUrl: EXECUTOR_URL });
     await new Promise((resolve) => bridge.listen(0, '127.0.0.1', resolve));
     base = `http://127.0.0.1:${bridge.address().port}`;
