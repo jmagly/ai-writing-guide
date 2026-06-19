@@ -17,8 +17,6 @@ aiwg list
 # aiwg-dev    installed
 ```
 
-`aiwg-dev` is excluded from `aiwg use all` because its `manifest.json` contains `"devOnly": true`. This flag causes `discoverAddons()` to skip it during bulk deployment. Explicit `aiwg use aiwg-dev` always works regardless of the flag.
-
 ## Validate the Repository
 
 Before making changes, get a baseline health report:

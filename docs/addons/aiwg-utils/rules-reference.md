@@ -1,12 +1,12 @@
 # aiwg-utils Rules Reference
 
-Seven enforcement rules deployed with every AIWG installation. These rules apply automatically based on context — you do not invoke them explicitly.
+Core enforcement rules deployed with every AIWG installation. These rules apply automatically based on context — you do not invoke them explicitly.
 
 ---
 
 ## subagent-scoping
 
-**Priority**: HIGH  
+**Priority**: HIGH
 **Full rule**: `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md`
 
 ### What It Enforces
@@ -43,7 +43,7 @@ Task(technical-writer, "Update auth module documentation")
 
 ## instruction-comprehension
 
-**Priority**: HIGH  
+**Priority**: HIGH
 **Full rule**: `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/instruction-comprehension.md`
 
 ### What It Enforces
@@ -119,6 +119,106 @@ Interactive commands (any command with `--interactive` flag), decision gates, us
 ### Platform Support
 
 The rule includes a capability matrix defining which tool to use on each of the 8 supported platforms. Always check tool availability before invoking.
+
+---
+
+## tool-quota
+
+**Priority**: HIGH
+**Full rule**: `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/tool-quota.md`
+
+### What It Enforces
+
+Agents track tool calls per session, stop repeated failing calls, and honor declared quotas:
+
+```yaml
+tool_quota:
+  Bash: 10
+  WebFetch: 5
+  defaults: 20
+loop_detection:
+  same_call_window: 5
+  max_retries: 3
+```
+
+Default behavior when no agent-specific quota exists:
+
+- Same failing call retries: 3
+- Similar calls in a rolling window: 5
+- Total calls to one tool in a focused session: 30
+- High-cost external tool calls: 10
+
+When a quota would be exceeded, the agent stops and reports what was tried, what was learned, why more calls are needed, and the narrow next action.
+
+### When It Applies
+
+Tool-heavy sessions, unattended bots, shell retry loops, external fetch loops, and any agent definition with `tool_quota` or `loop_detection`.
+
+### Example: Quickbooksbot
+
+Quickbooksbot receives a vague "why are March numbers wrong?" request. It may inspect known accounting files and integration status, but after three equivalent missing-token or permission failures it must stop, summarize the blocker, and ask for the missing export or credential instead of continuing tool retries.
+
+---
+
+## escalation-discipline
+
+**Priority**: HIGH
+**Full rule**: `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/escalation-discipline.md`
+
+### What It Enforces
+
+Agents summarize before using a model above their declared default tier:
+
+```
+Need: what is hard or uncertain
+Escalation: target tier and why the default tier is insufficient
+Next: the bounded task the higher tier will handle
+```
+
+Tier 3 requires explicit human confirmation. Unattended bots may not auto-escalate to Tier 3; they must ask, stop with a summary, or queue the request for a supervised agent.
+
+Agent definitions may override defaults:
+
+```yaml
+escalation:
+  unattended: true
+  max_auto_tier: 1
+  summary_required: true
+  premium_requires_confirmation: true
+```
+
+### When It Applies
+
+Model-tier routing, budget-sensitive agents, unattended bots, high-impact legal/financial/medical/security work, and user requests for deep, debug, or thorough work.
+
+### Interaction with Human Authorization
+
+Escalation confirmation is a human-authorization gate. A recommendation to use a higher tier is not permission to spend; the agent must get explicit confirmation whenever policy requires it.
+
+### Example: Quickbooksbot
+
+Quickbooksbot receives a complex accounting question that may affect tax prep. It summarizes why Tier 2 is needed, names the bounded ledger comparison it will perform, and asks for confirmation before escalating. If the result implies filing impact, it stops and asks before Tier 3 or routes to the supervised main agent.
+
+---
+
+## quiet-mode
+
+**Priority**: HIGH
+**Full rule**: `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/quiet-mode.md`
+
+### What It Enforces
+
+In group chats, bots respond only when mentioned, replied to, or invoked by a direct command. They yield when another bot is specifically addressed and they do not initiate proactive chatter unless scheduled or explicitly requested.
+
+Business bots stay in domain. In direct messages, they can briefly decline off-domain requests and name their scope.
+
+### When It Applies
+
+Telegram/group-chat bots, multi-bot rooms, direct-message business bots, scheduled chat agents, ambient room listeners, and platforms without native behavior support.
+
+### Examples
+
+Quickbooksbot answers `@quickbooksbot show unpaid invoices over 30 days`, but stays silent on unrelated group chatter. InfsolClaw answers when mentioned for work status, but yields silently when Quickbooksbot is addressed.
 
 ---
 
@@ -213,6 +313,9 @@ Creating agent definitions, deploying to multiple providers, selecting tools for
 | `subagent-scoping` | Delegating tasks | One task per subagent; depth ≤ 2 |
 | `instruction-comprehension` | Every request | Prohibitions before requirements; no drift |
 | `research-before-decision` | Technical decisions | Research → Reason → Act → Verify |
+| `escalation-discipline` | Model spend gates | Summarize; confirm premium tiers |
+| `tool-quota` | Tool-heavy sessions | Track calls; stop repeated failures |
+| `quiet-mode` | Chat bots | Mention-only groups; domain-bound business bots |
 | `native-ux-tools` | Interactive questions | Use platform-native tools; 1 question/turn |
 | `context-budget` | Parallel spawning (opt-in) | Respect `AIWG_CONTEXT_WINDOW` |
 | `diagram-generation` | Major docs | Required diagrams per artifact type |

@@ -166,7 +166,7 @@ description: [Brief description]
 category: sdlc-orchestration
 orchestration: true
 allowed-tools: Task, Read, Write, Glob, TodoWrite
-model: opus  # Orchestration requires reasoning
+model: claude-opus-4-7  # Pin variant (not bare `opus`) to avoid 1M-context credit gate. See #1442.
 ---
 
 # Flow Name

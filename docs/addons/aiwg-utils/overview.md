@@ -1,20 +1,21 @@
 # aiwg-utils Overview
 
-aiwg-utils is the core utility addon bundled with every AIWG installation. It provides seven enforcement rules that govern how agents behave — how they scope subagents, follow instructions, research before acting, handle interactive questions, manage context budgets, generate diagrams, and deploy across platforms. These rules are not optional; they are the behavioral foundation on which all other AIWG components operate.
+aiwg-utils is the core utility addon bundled with every AIWG installation. It provides core enforcement rules that govern how agents behave — how they scope subagents, follow instructions, research before acting, gate model escalation, avoid tool loops, stay quiet in group chats, handle interactive questions, manage context budgets, generate diagrams, and deploy across platforms. These rules are not optional; they are the behavioral foundation on which all other AIWG components operate.
 
 ## What's Included
 
-Beyond the 7 rules, aiwg-utils also provides:
+Beyond the rules, aiwg-utils also provides:
 
 - **5 agents**: `context-regenerator`, `aiwg-developer`, `consortium-coordinator`, `self-debug`, `aiwg-steward`
 - **9 skills**: `project-awareness`, `schedule`, `soul-create`, `soul-validate`, `soul-enhance`, `soul-apply`, `soul-blend`, `aiwg-sync`, `aiwg-guide`
-- **Platform regeneration commands**: `aiwg-regenerate-claude`, `aiwg-regenerate-warp`, `aiwg-regenerate-factory`, and equivalents for all 11 providers
+- **Platform regeneration commands**: `aiwg-regenerate-claude`, `aiwg-regenerate-warp`, `aiwg-regenerate-factory`, and equivalents for all 9 providers
 - **Workspace commands**: `workspace-realign`, `workspace-prune-working`, `workspace-reset`
 - **@-mention tooling**: `mention-wire`, `mention-validate`, `mention-report`, `mention-lint`
 - **Hook management**: `hook-enable`, `hook-disable`, `hook-status`, `hook-regenerate`
 - **Importable prompts**: Core orchestration patterns, multi-agent patterns, reliability prompts
+- **Supply-chain evidence**: External npm dependency audit reports under `docs/security/supply-chain/external-npm/`
 
-## The 7 Rules
+## Core Rules
 
 ### HIGH Priority
 
@@ -37,6 +38,24 @@ Apply when: every user request, multi-part tasks, specification compliance.
 Research the codebase, docs, and existing patterns before making technical decisions. The pattern is: IDENTIFY → SEARCH → EXTRACT → REASON → ACT → VERIFY. When an action fails, diagnose the root cause instead of retrying with variations (the rule calls this "whack-a-mole detection").
 
 Apply when: API usage, configuration changes, dependency selection, error diagnosis, import resolution.
+
+#### escalation-discipline
+
+Summarize before moving above the declared default model tier, confirm Tier 3 explicitly, and never auto-escalate unattended bots to premium tiers. Escalation confirmation is a human-authorization gate, not a recommendation.
+
+Apply when: model-tier routing, budget-sensitive agents, unattended bots, requests for deep/debug/thorough work, high-impact work.
+
+#### tool-quota
+
+Track per-session tool calls, honor `tool_quota` and `loop_detection` declarations, and stop repeating similar failed calls without measurable progress. Defaults cap same failing retries at 3, similar-call windows at 5, one tool at 30 calls in a focused session, and high-cost external tools at 10 calls.
+
+Apply when: unattended bots, tool-heavy sessions, shell retry loops, external fetch loops, agent definitions with `tool_quota`.
+
+#### quiet-mode
+
+Group-chat bots respond only when mentioned, replied to, or invoked by direct command. Multi-bot rooms require yielding to the addressed bot. Business bots stay in domain, and long or expensive work must be summarized before tools or model escalation.
+
+Apply when: Telegram/group-chat bots, multi-bot rooms, direct-message business bots, ambient room listeners.
 
 #### native-ux-tools
 
@@ -77,6 +96,9 @@ Full rule files:
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/instruction-comprehension.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md
+@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/escalation-discipline.md
+@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/tool-quota.md
+@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/quiet-mode.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/native-ux-tools.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md
 @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/diagram-generation.md
@@ -86,4 +108,5 @@ Full rule files:
 ## References
 
 - `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/docs/rules-reference.md` — Per-rule details and examples
+- `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/docs/security/supply-chain/external-npm/README.md` — External npm dependency audit index and report templates
 - `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/manifest.json` — Full component listing

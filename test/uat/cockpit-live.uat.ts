@@ -20,8 +20,14 @@ const REQUIRED = process.env.AIWG_COCKPIT_LIVE_REQUIRED === '1';
 const MATRIX_REQUIRED = process.env.AIWG_COCKPIT_LIVE_MATRIX_REQUIRED === '1';
 const ALLOW_MOCK_MATRIX = process.env.AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX === '1';
 const WORKLOAD_PROVIDER = (process.env.AIWG_COCKPIT_LIVE_PROVIDER || '').toLowerCase();
+const WORKLOAD_MARKER = 'AIWG_COCKPIT_LIVE_OK';
+const DISCOVERY_EXPECT = process.env.AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT || 'issue-audit';
 const WORKLOAD_TEXT = process.env.AIWG_COCKPIT_LIVE_WORKLOAD ||
-  'AIWG Cockpit live matrix check: respond with AIWG_COCKPIT_LIVE_OK and no extra actions.';
+  [
+    'AIWG Cockpit live matrix check: use AIWG skill discovery from this running agent session.',
+    `Find the best capability for auditing open issue state and release blockers, then final-answer with ${WORKLOAD_MARKER}`,
+    `and the discovered capability name ${DISCOVERY_EXPECT}. Do not just echo this prompt.`,
+  ].join(' ');
 const EXECUTOR_VERSION_HINT = process.env.AIWG_COCKPIT_EXECUTOR_VERSION || '';
 const REPORT_BASE = resolve(process.env.AIWG_COCKPIT_LIVE_REPORT ?? 'test-results/cockpit-live-uat');
 const startedAt = new Date().toISOString();
@@ -119,7 +125,7 @@ function shellQuote(value: string): string {
 
 function providerWorkloadCommand(provider: string, prompt: string): string {
   if (provider === 'codex') {
-    return `codex exec --ask-for-approval never --sandbox read-only ${shellQuote(prompt)}`;
+    return `codex exec -s read-only ${shellQuote(prompt)}`;
   }
   if (provider === 'claude') {
     return `claude --print --permission-mode dontAsk --output-format text ${shellQuote(prompt)}`;
@@ -164,7 +170,7 @@ async function websocketSessionProbe(attachUrl: string, role: 'observer' | 'cont
           ws.close();
           resolve({ roleAssigned, output });
         }
-        if (workload && output.includes('AIWG_COCKPIT_LIVE_OK')) {
+        if (workload && output.includes(WORKLOAD_MARKER) && output.includes(DISCOVERY_EXPECT)) {
           clearTimeout(timeout);
           ws.close();
           resolve({ roleAssigned, output });
@@ -196,6 +202,7 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     required: REQUIRED,
     matrix_required: MATRIX_REQUIRED,
     provider: WORKLOAD_PROVIDER || null,
+    discovery_expect: DISCOVERY_EXPECT,
     result,
     started_at: startedAt,
     finished_at: finishedAt,
@@ -214,6 +221,7 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     `- Required: ${REQUIRED ? 'yes' : 'no'}`,
     `- Matrix required: ${MATRIX_REQUIRED ? 'yes' : 'no'}`,
     `- Workload provider: ${WORKLOAD_PROVIDER || 'not specified'}`,
+    `- Discovery expectation: ${DISCOVERY_EXPECT}`,
     `- Result: ${result}`,
     `- Started: ${startedAt}`,
     `- Finished: ${finishedAt}`,
@@ -393,10 +401,13 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
         const driven = await websocketSessionProbe(start.body.attach_url, 'controller', providerCommand);
         if (!driven.roleAssigned) throw new Error(`${targetDetail}; drive attach not granted`);
         if (!driven.output.trim()) throw new Error(`${targetDetail}; no terminal output for provider workload`);
-        if (!driven.output.includes('AIWG_COCKPIT_LIVE_OK')) {
-          throw new Error(`${targetDetail}; provider workload did not emit AIWG_COCKPIT_LIVE_OK`);
+        if (!driven.output.includes(WORKLOAD_MARKER)) {
+          throw new Error(`${targetDetail}; provider workload did not emit ${WORKLOAD_MARKER}`);
         }
-        record(`matrix ${target}`, 'pass', `${targetDetail}; provider CLI workload emitted AIWG_COCKPIT_LIVE_OK; output_bytes=${driven.output.length}`);
+        if (!driven.output.includes(DISCOVERY_EXPECT)) {
+          throw new Error(`${targetDetail}; provider workload did not prove AIWG discovery result ${DISCOVERY_EXPECT}`);
+        }
+        record(`matrix ${target}`, 'pass', `${targetDetail}; provider CLI workload emitted ${WORKLOAD_MARKER} and discovery result ${DISCOVERY_EXPECT}; output_bytes=${driven.output.length}`);
       } catch (err) {
         const detail = String((err as Error).message || err);
         record(`matrix ${target}`, 'fail', detail);

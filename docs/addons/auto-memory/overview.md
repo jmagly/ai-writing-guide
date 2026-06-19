@@ -112,7 +112,47 @@ As the project evolves, memory files may need pruning:
 - Mark superseded decisions with "SUPERSEDED" and reference the replacement
 - Add new topic files as new concerns emerge (`deployment.md`, `security.md`)
 
-Memory quality degrades if it grows too large (aim to keep files under 500 lines) or contains outdated information. A periodic review (monthly or after major architectural changes) keeps it useful.
+### Confidence Annotation Convention
+
+Memory entries can be annotated with a confidence tier to distinguish well-established knowledge from emerging patterns or speculative decisions. This helps future sessions weigh entries appropriately and surfaces candidates for compaction.
+
+Three tiers (matching OpenProse user-memory):
+
+| Tier | Meaning | Example |
+|------|---------|---------|
+| `established` | Validated in production, confirmed by multiple sessions or ADR | `[confidence: established — see ADR-012]` |
+| `emerging` | Observed repeatedly but not yet codified | `[confidence: emerging — seen in 3 of last 5 sprints]` |
+| `speculative` | One-off observation or tentative decision | `[confidence: speculative — needs validation]` |
+
+**Format:** append inline at the end of the entry, in square brackets:
+
+```markdown
+Use JWT RS256 for all service tokens. [confidence: established — see ADR-012]
+
+Consider Redis session store for web-facing services. [confidence: emerging — evaluated in sprint 4]
+
+Try CQRS for the reporting module. [confidence: speculative]
+```
+
+Confidence annotations are optional but recommended for any architectural decision entry. Established entries should have a rationale reference (ADR, commit, date).
+
+### Self-Compaction Invariant
+
+**Trigger:** When any memory file exceeds 400 lines, the next session must compact it before adding new entries.
+
+**Compaction process:**
+1. Merge redundant entries that say the same thing in different words
+2. Mark superseded decisions with "SUPERSEDED by [replacement]" and archive at bottom
+3. Promote repeated speculative entries to `emerging` confidence
+4. Summarize clusters of related observations into a single general entry
+5. Target: reduce to ≤300 lines, retaining all `established` entries and high-value `emerging` ones
+
+The 400-line trigger (not 500) gives a 100-line buffer to add new content before the next compaction cycle. A file that regularly hits 500+ lines without compaction is accumulating noise, not knowledge.
+
+**Compaction marker:** Add a comment at the top of the file after compaction:
+```markdown
+<!-- Last compaction: 2026-04-03 — reduced from 487 to 298 lines -->
+```
 
 ## Relationship to Agent Loop Debug Memory
 

@@ -5,6 +5,16 @@
     "source": "agentic/code/frameworks/forensics-complete/docs",
     "dest": "docs/frameworks/forensics-complete",
     "files": [
+      "agent-examples.md",
+      "agent-examples/container-analyst-examples.md",
+      "agent-examples/container-analyst-playbook.md",
+      "agent-examples/log-analyst-examples.md",
+      "agent-examples/network-analyst-examples.md",
+      "agent-examples/network-analyst-playbook.md",
+      "agent-examples/persistence-hunter-examples.md",
+      "agent-examples/persistence-hunter-playbook.md",
+      "agent-examples/triage-agent-examples.md",
+      "agent-examples/triage-agent-playbook.md",
       "ai-assisted-forensics.md",
       "attack-mapping.md",
       "methodology.md",
@@ -14,10 +24,21 @@
   },
   {
     "kind": "frameworks",
+    "name": "knowledge-base",
+    "source": "agentic/code/frameworks/knowledge-base/docs",
+    "dest": "docs/frameworks/knowledge-base",
+    "files": [
+      "overview.md"
+    ]
+  },
+  {
+    "kind": "frameworks",
     "name": "media-curator",
     "source": "agentic/code/frameworks/media-curator/docs",
     "dest": "docs/frameworks/media-curator",
     "files": [
+      "agent-examples.md",
+      "agent-examples/acquisition-manager-examples.md",
       "overview.md",
       "standards-reference.md",
       "user-guide.md"
@@ -29,6 +50,13 @@
     "source": "agentic/code/frameworks/media-marketing-kit/docs",
     "dest": "docs/frameworks/media-marketing-kit",
     "files": [
+      "agent-examples.md",
+      "agent-examples/accessibility-checker-examples.md",
+      "agent-examples/campaign-orchestrator-examples.md",
+      "agent-examples/legal-reviewer-examples.md",
+      "agent-examples/marketing-project-manager-examples.md",
+      "agent-examples/reporting-specialist-examples.md",
+      "agent-examples/workflow-coordinator-examples.md",
       "overview.md",
       "quickstart.md"
     ]
@@ -50,8 +78,16 @@
     "source": "agentic/code/frameworks/research-complete/docs",
     "dest": "docs/frameworks/research-complete",
     "files": [
+      "agent-examples.md",
+      "agent-examples/citation-agent-examples.md",
+      "agent-examples/discovery-agent-examples.md",
+      "agent-examples/documentation-agent-examples.md",
+      "agent-examples/quality-agent-examples.md",
+      "agent-examples/research-acquisition-agent-examples.md",
+      "corpus-data-model.md",
       "overview.md",
-      "quickstart.md"
+      "quickstart.md",
+      "source-tracking.md"
     ]
   },
   {
@@ -61,6 +97,41 @@
     "dest": "docs/frameworks/sdlc-complete",
     "files": [
       "agent-design.md",
+      "agent-examples.md",
+      "agent-examples/api-designer-examples.md",
+      "agent-examples/api-documenter-examples.md",
+      "agent-examples/architecture-designer-examples.md",
+      "agent-examples/architecture-designer-tot-protocol-examples.md",
+      "agent-examples/architecture-documenter-examples.md",
+      "agent-examples/aws-specialist-examples.md",
+      "agent-examples/azure-specialist-examples.md",
+      "agent-examples/blockchain-developer-examples.md",
+      "agent-examples/code-reviewer-examples.md",
+      "agent-examples/compliance-checker-examples.md",
+      "agent-examples/cost-optimizer-examples.md",
+      "agent-examples/data-engineer-examples.md",
+      "agent-examples/django-expert-examples.md",
+      "agent-examples/documentation-archivist-examples.md",
+      "agent-examples/frontend-specialist-examples.md",
+      "agent-examples/gcp-specialist-examples.md",
+      "agent-examples/kubernetes-expert-examples.md",
+      "agent-examples/laziness-detector-examples.md",
+      "agent-examples/migration-planner-examples.md",
+      "agent-examples/mobile-developer-examples.md",
+      "agent-examples/multi-cloud-strategist-examples.md",
+      "agent-examples/progress-tracker-examples.md",
+      "agent-examples/prompt-reinforcement-examples.md",
+      "agent-examples/react-expert-examples.md",
+      "agent-examples/recovery-orchestrator-examples.md",
+      "agent-examples/regression-analyst-examples.md",
+      "agent-examples/requirements-analyst-examples.md",
+      "agent-examples/security-auditor-examples.md",
+      "agent-examples/security-auditor-owasp-checklist.md",
+      "agent-examples/spring-boot-expert-examples.md",
+      "agent-examples/technical-debt-analyst-examples.md",
+      "agent-examples/technical-writer-examples.md",
+      "agent-examples/test-documenter-examples.md",
+      "agent-examples/test-engineer-examples.md",
       "agent-permission-rationale.md",
       "agent-permission-tiers.md",
       "flow-cleanup-checklist.md",
@@ -71,6 +142,25 @@
       "token-security.md",
       "vendor-detection.md",
       "workspace-cleanup-pattern.md"
+    ]
+  },
+  {
+    "kind": "addons",
+    "name": "agent-loop",
+    "source": "agentic/code/addons/agent-loop/docs",
+    "dest": "docs/addons/agent-loop",
+    "files": [
+      "agent-persistence-integration.md",
+      "best-practices.md",
+      "cross-loop-learning.md",
+      "examples/coverage.md",
+      "examples/migration.md",
+      "examples/test-fix-loop.md",
+      "executable-feedback-guide.md",
+      "quickstart.md",
+      "reflection-memory-guide.md",
+      "troubleshooting.md",
+      "when-to-use-ralph.md"
     ]
   },
   {
@@ -94,12 +184,63 @@
   },
   {
     "kind": "addons",
+    "name": "aiwg-fleet",
+    "source": "agentic/code/addons/aiwg-fleet/docs",
+    "dest": "docs/addons/aiwg-fleet",
+    "files": [
+      "provider-activation.md"
+    ]
+  },
+  {
+    "kind": "addons",
     "name": "aiwg-utils",
     "source": "agentic/code/addons/aiwg-utils/docs",
     "dest": "docs/addons/aiwg-utils",
     "files": [
+      "agent-examples.md",
+      "agent-examples/aiwg-steward-examples.md",
+      "agent-examples/aiwg-steward-routing-reference.md",
       "overview.md",
-      "rules-reference.md"
+      "rules-reference.md",
+      "security/supply-chain/external-npm/_commands.md",
+      "security/supply-chain/external-npm/_template.md",
+      "security/supply-chain/external-npm/_upstream-issue-template.md",
+      "security/supply-chain/external-npm/better-sqlite3.md",
+      "security/supply-chain/external-npm/chalk.md",
+      "security/supply-chain/external-npm/chokidar.md",
+      "security/supply-chain/external-npm/cli-table3.md",
+      "security/supply-chain/external-npm/commander.md",
+      "security/supply-chain/external-npm/glob.md",
+      "security/supply-chain/external-npm/graceful-fs.md",
+      "security/supply-chain/external-npm/graphology-operators.md",
+      "security/supply-chain/external-npm/graphology-shortest-path.md",
+      "security/supply-chain/external-npm/graphology-traversal.md",
+      "security/supply-chain/external-npm/graphology-types.md",
+      "security/supply-chain/external-npm/graphology.md",
+      "security/supply-chain/external-npm/hnswlib-node.md",
+      "security/supply-chain/external-npm/hono__node-server.md",
+      "security/supply-chain/external-npm/hono.md",
+      "security/supply-chain/external-npm/js-yaml.md",
+      "security/supply-chain/external-npm/listr2.md",
+      "security/supply-chain/external-npm/matric__eval-client.md",
+      "security/supply-chain/external-npm/modelcontextprotocol__sdk.md",
+      "security/supply-chain/external-npm/node-pty.md",
+      "security/supply-chain/external-npm/ora.md",
+      "security/supply-chain/external-npm/README.md",
+      "security/supply-chain/external-npm/simple-statistics.md",
+      "security/supply-chain/external-npm/tsx.md",
+      "security/supply-chain/external-npm/types__js-yaml.md",
+      "security/supply-chain/external-npm/types__node.md",
+      "security/supply-chain/external-npm/types__semver.md",
+      "security/supply-chain/external-npm/typescript.md",
+      "security/supply-chain/external-npm/vitest__coverage-v8.md",
+      "security/supply-chain/external-npm/vitest__ui.md",
+      "security/supply-chain/external-npm/vitest.md",
+      "security/supply-chain/external-npm/ws.md",
+      "security/supply-chain/external-npm/xenova__transformers.md",
+      "security/supply-chain/external-npm/xterm__headless.md",
+      "security/supply-chain/external-npm/yaml.md",
+      "security/supply-chain/external-npm/zod.md"
     ]
   },
   {
@@ -133,30 +274,33 @@
   },
   {
     "kind": "addons",
-    "name": "prose-integration",
-    "source": "agentic/code/addons/prose-integration/docs",
-    "dest": "docs/addons/prose-integration",
+    "name": "llm-wiki",
+    "source": "agentic/code/addons/llm-wiki/docs",
+    "dest": "docs/addons/llm-wiki",
     "files": [
-      "overview.md"
+      "getting-started.md",
+      "obsidian-integration.md"
     ]
   },
   {
     "kind": "addons",
-    "name": "ralph",
-    "source": "agentic/code/addons/agent-loop/docs",
-    "dest": "docs/addons/ralph",
+    "name": "nlp-prod",
+    "source": "agentic/code/addons/nlp-prod/docs",
+    "dest": "docs/addons/nlp-prod",
     "files": [
-      "agent-persistence-integration.md",
-      "best-practices.md",
-      "cross-loop-learning.md",
-      "examples/coverage.md",
-      "examples/migration.md",
-      "examples/test-fix-loop.md",
-      "executable-feedback-guide.md",
-      "quickstart.md",
-      "reflection-memory-guide.md",
-      "troubleshooting.md",
-      "when-to-use-ralph.md"
+      "eval-loop.md",
+      "patterns.md",
+      "productionization.md"
+    ]
+  },
+  {
+    "kind": "addons",
+    "name": "prose-integration",
+    "source": "agentic/code/addons/prose-integration/docs",
+    "dest": "docs/addons/prose-integration",
+    "files": [
+      "integration-guide.md",
+      "overview.md"
     ]
   },
   {
@@ -165,6 +309,8 @@
     "source": "agentic/code/addons/rlm/docs",
     "dest": "docs/addons/rlm",
     "files": [
+      "agent-examples.md",
+      "agent-examples/rlm-agent-examples.md",
       "deployment-guide.md",
       "messaging-events.md",
       "multi-provider-guide.md",

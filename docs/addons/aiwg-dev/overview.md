@@ -6,8 +6,6 @@ aiwg-dev is the developer toolkit for contributors building AIWG itself — addi
 aiwg use aiwg-dev
 ```
 
-`aiwg-dev` is excluded from `aiwg use all` via `"devOnly": true` in its `manifest.json`. This flag tells `discoverAddons()` to skip the addon during bulk deployment. Any addon with `"devOnly": true` follows the same pattern — it must be installed explicitly and will never be included in `use all`.
-
 ## What It Provides
 
 ### Validation Skills

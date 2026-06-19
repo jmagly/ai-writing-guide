@@ -38,7 +38,7 @@ Eight agents, one per workflow stage:
 | Agent | Purpose | Key Capability |
 |-------|---------|----------------|
 | `discovery-agent` | Semantic search, gap detection | 200M+ papers via Semantic Scholar; citation network traversal |
-| `acquisition-agent` | Download PDFs, assign IDs | FAIR validation, SHA-256 checksums, deduplication |
+| `research-acquisition-agent` | Download PDFs, assign IDs | FAIR validation, SHA-256 checksums, deduplication |
 | `documentation-agent` | RAG summarization | Zero-hallucination target; multi-level summaries; Zettelkasten notes |
 | `citation-agent` | Format citations | 9000+ citation styles; citation network analysis |
 | `quality-agent` | Assess paper quality | GRADE methodology (High/Moderate/Low/Very Low) |
@@ -81,63 +81,6 @@ All research artifacts go in `.aiwg/research/`:
 │   └── notes/              # REF-XXX-literature-note.md + permanent notes
 └── config/                 # Per-agent configuration YAML files
 ```
-
-## Artifact Index and Graph Configuration
-
-The research-complete framework declares five built-in index graphs in its `manifest.json`. When you run `aiwg use research` (or `aiwg use all`), these graphs are automatically available — no manual `.aiwg/config.yaml` changes needed.
-
-| Graph | What it indexes | Edge type |
-|-------|----------------|-----------|
-| `papers` | `pdfs/full/` — one node per PDF, metadata from filename | — |
-| `summaries` | `documentation/references/` — deep analysis docs | — |
-| `web-sources` | `sources/web/` — article snapshots | — |
-| `indices` | `indices/` — by-topic, by-year | — |
-| `citation-network` | `documentation/citations/` — citation sidecars | `cites` / `cited-by` |
-
-The `citation-network` graph uses **citation sidecar edge extraction** — edges are read from structured tables in `REF-NNN-citations.md` files rather than `@-mentions`. This enables set-theoretic queries across the citation graph:
-
-```bash
-# Papers that cited both REF-008 and REF-016
-aiwg index query --set-query "cited_by(REF-008) AND cited_by(REF-016)" \
-  --graph citation-network
-
-# Semantic neighbors of a paper
-aiwg index neighbors --node REF-008 --semantic --top-k 5
-
-# Full citation neighborhood
-aiwg index neighbors --node REF-008 --depth 2 --graph citation-network
-```
-
-**Graph backends**: For large corpora (>1,000 papers), install optional backends:
-
-```bash
-npm install better-sqlite3         # SQLite: persistent, SQL set ops, best for citation queries
-npm install graphology graphology-operators graphology-traversal  # Louvain community detection
-```
-
-Activate in `.aiwg/config.yaml` (operator config overrides framework defaults):
-
-```yaml
-index:
-  graphs:
-    citation-network:
-      graphBackend: sqlite
-```
-
-**Semantic embedding**: Add similarity search:
-
-```bash
-npm install @xenova/transformers hnswlib-node
-```
-
-```yaml
-index:
-  embedding:
-    enabled: true
-    model: Xenova/all-MiniLM-L6-v2
-```
-
-See [Graph Backends](../../extensions/graph-backends.md) for the full tier comparison and configuration reference.
 
 ## Integration with SDLC
 

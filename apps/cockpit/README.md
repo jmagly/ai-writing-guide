@@ -166,12 +166,18 @@ families in inventory. For each target it verifies inventory normalization,
 runtime and transport posture, session backend evidence, session create/list,
 observe attach, and a minimal provider-backed workload through a controller
 session when control is advertised. The selected provider is invoked through the
-attached session (`codex exec --ask-for-approval never --sandbox read-only ...`
+attached session (`codex exec -s read-only ...`
 or `claude --print --permission-mode dontAsk --output-format text ...`) and must
-emit `AIWG_COCKPIT_LIVE_OK`, so the report proves the pre-authenticated CLI path
-rather than only shell plumbing. The matrix report records each target family
-independently (`matrix host`, `matrix container`, `matrix vm`) with the instance,
-runtime family, selected session backend, provider, and exact failure reason; the
+emit `AIWG_COCKPIT_LIVE_OK` and the expected discovery result (`issue-audit` by
+default). This proves a pre-authenticated agentic framework actually launched in
+the target session and could use AIWG discovery from that environment, rather
+than only proving shell plumbing or provider login. Set
+`AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT=<capability-name>` to validate a different
+discovered framework capability, or `AIWG_COCKPIT_LIVE_WORKLOAD=<prompt>` to
+replace the full prompt while still satisfying the marker and discovery checks.
+The matrix report records each target family independently (`matrix host`,
+`matrix container`, `matrix vm`) with the instance, runtime family, selected
+session backend, provider, discovery expectation, and exact failure reason; the
 test aggregates those records and fails only after all three target families have
 been attempted. Mock-only success does not satisfy this gate;
 `AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX=1` exists only for harness development.
@@ -198,9 +204,13 @@ version metadata through `/health` or `/version`.
 
 Known state as of the 2026-06-18 host live run:
 
-- Host target passes against agentic-sandbox debug source `1a939ab` using the
-  pre-authenticated Codex CLI and a managed `tmux` session. The AIWG-side bridge
-  fix landed in roctinam/aiwg `7674f399`.
+- Host target passes against the agentic-sandbox `v2026.6.17` prep build using
+  the pre-authenticated Codex CLI and a managed `tmux` session. The running
+  agent returned `AIWG_COCKPIT_LIVE_OK` and selected `issue-audit` through AIWG
+  discovery from inside the session.
+- Claude launched inside the same host session but did not inherit usable auth
+  state and reported that login was required. Treat Claude auth-state injection
+  as a separate follow-up from host runtime secure registration.
 - Docker/container target remains blocked upstream by secure transport material
   provisioning for the post-`AGENT_SECRET` model. Tracked in
   roctinam/agentic-sandbox#497.

@@ -273,7 +273,139 @@
     "configuration/setup-manifest",
     "getting-started/README",
     "mcp",
-    "configuration"
+    "configuration",
+    "frameworks/forensics-complete/agent-examples",
+    "frameworks/forensics-complete/agent-examples/container-analyst-examples",
+    "frameworks/forensics-complete/agent-examples/container-analyst-playbook",
+    "frameworks/forensics-complete/agent-examples/log-analyst-examples",
+    "frameworks/forensics-complete/agent-examples/network-analyst-examples",
+    "frameworks/forensics-complete/agent-examples/network-analyst-playbook",
+    "frameworks/forensics-complete/agent-examples/persistence-hunter-examples",
+    "frameworks/forensics-complete/agent-examples/persistence-hunter-playbook",
+    "frameworks/forensics-complete/agent-examples/triage-agent-examples",
+    "frameworks/forensics-complete/agent-examples/triage-agent-playbook",
+    "frameworks/knowledge-base",
+    "frameworks/knowledge-base/overview",
+    "frameworks/media-curator/agent-examples",
+    "frameworks/media-curator/agent-examples/acquisition-manager-examples",
+    "frameworks/media-marketing-kit/agent-examples",
+    "frameworks/media-marketing-kit/agent-examples/accessibility-checker-examples",
+    "frameworks/media-marketing-kit/agent-examples/campaign-orchestrator-examples",
+    "frameworks/media-marketing-kit/agent-examples/legal-reviewer-examples",
+    "frameworks/media-marketing-kit/agent-examples/marketing-project-manager-examples",
+    "frameworks/media-marketing-kit/agent-examples/reporting-specialist-examples",
+    "frameworks/media-marketing-kit/agent-examples/workflow-coordinator-examples",
+    "frameworks/research-complete/agent-examples",
+    "frameworks/research-complete/agent-examples/citation-agent-examples",
+    "frameworks/research-complete/agent-examples/discovery-agent-examples",
+    "frameworks/research-complete/agent-examples/documentation-agent-examples",
+    "frameworks/research-complete/agent-examples/quality-agent-examples",
+    "frameworks/research-complete/agent-examples/research-acquisition-agent-examples",
+    "frameworks/research-complete/corpus-data-model",
+    "frameworks/research-complete/source-tracking",
+    "frameworks/sdlc-complete/agent-examples",
+    "frameworks/sdlc-complete/agent-examples/api-designer-examples",
+    "frameworks/sdlc-complete/agent-examples/api-documenter-examples",
+    "frameworks/sdlc-complete/agent-examples/architecture-designer-examples",
+    "frameworks/sdlc-complete/agent-examples/architecture-designer-tot-protocol-examples",
+    "frameworks/sdlc-complete/agent-examples/architecture-documenter-examples",
+    "frameworks/sdlc-complete/agent-examples/aws-specialist-examples",
+    "frameworks/sdlc-complete/agent-examples/azure-specialist-examples",
+    "frameworks/sdlc-complete/agent-examples/blockchain-developer-examples",
+    "frameworks/sdlc-complete/agent-examples/code-reviewer-examples",
+    "frameworks/sdlc-complete/agent-examples/compliance-checker-examples",
+    "frameworks/sdlc-complete/agent-examples/cost-optimizer-examples",
+    "frameworks/sdlc-complete/agent-examples/data-engineer-examples",
+    "frameworks/sdlc-complete/agent-examples/django-expert-examples",
+    "frameworks/sdlc-complete/agent-examples/documentation-archivist-examples",
+    "frameworks/sdlc-complete/agent-examples/frontend-specialist-examples",
+    "frameworks/sdlc-complete/agent-examples/gcp-specialist-examples",
+    "frameworks/sdlc-complete/agent-examples/kubernetes-expert-examples",
+    "frameworks/sdlc-complete/agent-examples/laziness-detector-examples",
+    "frameworks/sdlc-complete/agent-examples/migration-planner-examples",
+    "frameworks/sdlc-complete/agent-examples/mobile-developer-examples",
+    "frameworks/sdlc-complete/agent-examples/multi-cloud-strategist-examples",
+    "frameworks/sdlc-complete/agent-examples/progress-tracker-examples",
+    "frameworks/sdlc-complete/agent-examples/prompt-reinforcement-examples",
+    "frameworks/sdlc-complete/agent-examples/react-expert-examples",
+    "frameworks/sdlc-complete/agent-examples/recovery-orchestrator-examples",
+    "frameworks/sdlc-complete/agent-examples/regression-analyst-examples",
+    "frameworks/sdlc-complete/agent-examples/requirements-analyst-examples",
+    "frameworks/sdlc-complete/agent-examples/security-auditor-examples",
+    "frameworks/sdlc-complete/agent-examples/security-auditor-owasp-checklist",
+    "frameworks/sdlc-complete/agent-examples/spring-boot-expert-examples",
+    "frameworks/sdlc-complete/agent-examples/technical-debt-analyst-examples",
+    "frameworks/sdlc-complete/agent-examples/technical-writer-examples",
+    "frameworks/sdlc-complete/agent-examples/test-documenter-examples",
+    "frameworks/sdlc-complete/agent-examples/test-engineer-examples",
+    "addons/agent-loop",
+    "addons/agent-loop/agent-persistence-integration",
+    "addons/agent-loop/best-practices",
+    "addons/agent-loop/cross-loop-learning",
+    "addons/agent-loop/examples",
+    "addons/agent-loop/examples/coverage",
+    "addons/agent-loop/examples/migration",
+    "addons/agent-loop/examples/test-fix-loop",
+    "addons/agent-loop/executable-feedback-guide",
+    "addons/agent-loop/quickstart",
+    "addons/agent-loop/reflection-memory-guide",
+    "addons/agent-loop/troubleshooting",
+    "addons/agent-loop/when-to-use-ralph",
+    "addons/aiwg-fleet",
+    "addons/aiwg-fleet/provider-activation",
+    "addons/aiwg-utils/agent-examples",
+    "addons/aiwg-utils/agent-examples/aiwg-steward-examples",
+    "addons/aiwg-utils/agent-examples/aiwg-steward-routing-reference",
+    "addons/aiwg-utils/security/supply-chain/external-npm",
+    "addons/aiwg-utils/security/supply-chain/external-npm/_commands",
+    "addons/aiwg-utils/security/supply-chain/external-npm/_template",
+    "addons/aiwg-utils/security/supply-chain/external-npm/_upstream-issue-template",
+    "addons/aiwg-utils/security/supply-chain/external-npm/better-sqlite3",
+    "addons/aiwg-utils/security/supply-chain/external-npm/chalk",
+    "addons/aiwg-utils/security/supply-chain/external-npm/chokidar",
+    "addons/aiwg-utils/security/supply-chain/external-npm/cli-table3",
+    "addons/aiwg-utils/security/supply-chain/external-npm/commander",
+    "addons/aiwg-utils/security/supply-chain/external-npm/glob",
+    "addons/aiwg-utils/security/supply-chain/external-npm/graceful-fs",
+    "addons/aiwg-utils/security/supply-chain/external-npm/graphology-operators",
+    "addons/aiwg-utils/security/supply-chain/external-npm/graphology-shortest-path",
+    "addons/aiwg-utils/security/supply-chain/external-npm/graphology-traversal",
+    "addons/aiwg-utils/security/supply-chain/external-npm/graphology-types",
+    "addons/aiwg-utils/security/supply-chain/external-npm/graphology",
+    "addons/aiwg-utils/security/supply-chain/external-npm/hnswlib-node",
+    "addons/aiwg-utils/security/supply-chain/external-npm/hono__node-server",
+    "addons/aiwg-utils/security/supply-chain/external-npm/hono",
+    "addons/aiwg-utils/security/supply-chain/external-npm/js-yaml",
+    "addons/aiwg-utils/security/supply-chain/external-npm/listr2",
+    "addons/aiwg-utils/security/supply-chain/external-npm/matric__eval-client",
+    "addons/aiwg-utils/security/supply-chain/external-npm/modelcontextprotocol__sdk",
+    "addons/aiwg-utils/security/supply-chain/external-npm/node-pty",
+    "addons/aiwg-utils/security/supply-chain/external-npm/ora",
+    "addons/aiwg-utils/security/supply-chain/external-npm/README",
+    "addons/aiwg-utils/security/supply-chain/external-npm/simple-statistics",
+    "addons/aiwg-utils/security/supply-chain/external-npm/tsx",
+    "addons/aiwg-utils/security/supply-chain/external-npm/types__js-yaml",
+    "addons/aiwg-utils/security/supply-chain/external-npm/types__node",
+    "addons/aiwg-utils/security/supply-chain/external-npm/types__semver",
+    "addons/aiwg-utils/security/supply-chain/external-npm/typescript",
+    "addons/aiwg-utils/security/supply-chain/external-npm/vitest__coverage-v8",
+    "addons/aiwg-utils/security/supply-chain/external-npm/vitest__ui",
+    "addons/aiwg-utils/security/supply-chain/external-npm/vitest",
+    "addons/aiwg-utils/security/supply-chain/external-npm/ws",
+    "addons/aiwg-utils/security/supply-chain/external-npm/xenova__transformers",
+    "addons/aiwg-utils/security/supply-chain/external-npm/xterm__headless",
+    "addons/aiwg-utils/security/supply-chain/external-npm/yaml",
+    "addons/aiwg-utils/security/supply-chain/external-npm/zod",
+    "addons/llm-wiki",
+    "addons/llm-wiki/getting-started",
+    "addons/llm-wiki/obsidian-integration",
+    "addons/nlp-prod",
+    "addons/nlp-prod/eval-loop",
+    "addons/nlp-prod/patterns",
+    "addons/nlp-prod/productionization",
+    "addons/prose-integration/integration-guide",
+    "addons/rlm/agent-examples",
+    "addons/rlm/agent-examples/rlm-agent-examples"
   ],
   "sections": [
     {
@@ -1982,6 +2114,930 @@
       "id": "configuration",
       "title": "Configuration",
       "summary": "AIWG configuration files and settings"
+    },
+    {
+      "id": "frameworks/forensics-complete/agent-examples",
+      "title": "Agent Examples",
+      "summary": "Discoverable home for the few-shot worked examples that used to live inline in",
+      "file": "frameworks/forensics-complete/agent-examples.md",
+      "parent": "frameworks/forensics-complete"
+    },
+    {
+      "id": "frameworks/forensics-complete/agent-examples/container-analyst-examples",
+      "title": "Container Analyst Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/forensics-complete/agent-examples/container-analyst-examples.md",
+      "parent": "frameworks/forensics-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/forensics-complete/agent-examples/container-analyst-playbook",
+      "title": "Container Analyst Playbook",
+      "summary": "Externalized detailed command sequences from the agent definition per the few-shot-examples rule (#1",
+      "file": "frameworks/forensics-complete/agent-examples/container-analyst-playbook.md",
+      "parent": "frameworks/forensics-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/forensics-complete/agent-examples/log-analyst-examples",
+      "title": "Log Analyst Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/forensics-complete/agent-examples/log-analyst-examples.md",
+      "parent": "frameworks/forensics-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/forensics-complete/agent-examples/network-analyst-examples",
+      "title": "Network Analyst Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/forensics-complete/agent-examples/network-analyst-examples.md",
+      "parent": "frameworks/forensics-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/forensics-complete/agent-examples/network-analyst-playbook",
+      "title": "Network Analyst Playbook",
+      "summary": "Externalized detailed command sequences from the agent definition per the few-shot-examples rule (#1",
+      "file": "frameworks/forensics-complete/agent-examples/network-analyst-playbook.md",
+      "parent": "frameworks/forensics-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/forensics-complete/agent-examples/persistence-hunter-examples",
+      "title": "Persistence Hunter Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/forensics-complete/agent-examples/persistence-hunter-examples.md",
+      "parent": "frameworks/forensics-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/forensics-complete/agent-examples/persistence-hunter-playbook",
+      "title": "Persistence Hunter Playbook",
+      "summary": "Externalized detailed command sequences from the agent definition per the few-shot-examples rule (#1",
+      "file": "frameworks/forensics-complete/agent-examples/persistence-hunter-playbook.md",
+      "parent": "frameworks/forensics-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/forensics-complete/agent-examples/triage-agent-examples",
+      "title": "Triage Agent Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/forensics-complete/agent-examples/triage-agent-examples.md",
+      "parent": "frameworks/forensics-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/forensics-complete/agent-examples/triage-agent-playbook",
+      "title": "Triage Agent Playbook",
+      "summary": "Externalized detailed command sequences from the agent definition per the few-shot-examples rule (#1",
+      "file": "frameworks/forensics-complete/agent-examples/triage-agent-playbook.md",
+      "parent": "frameworks/forensics-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/knowledge-base",
+      "title": "Knowledge Base",
+      "summary": "",
+      "collapsed": true,
+      "parent": "frameworks"
+    },
+    {
+      "id": "frameworks/knowledge-base/overview",
+      "title": "Overview",
+      "summary": "AIWG's existing frameworks — research-complete, media-curator, sdlc-complete — are purpose-built for",
+      "file": "frameworks/knowledge-base/overview.md",
+      "parent": "frameworks/knowledge-base"
+    },
+    {
+      "id": "frameworks/media-curator/agent-examples",
+      "title": "Agent Examples",
+      "summary": "Discoverable home for the few-shot worked examples that used to live inline in",
+      "file": "frameworks/media-curator/agent-examples.md",
+      "parent": "frameworks/media-curator"
+    },
+    {
+      "id": "frameworks/media-curator/agent-examples/acquisition-manager-examples",
+      "title": "Acquisition Manager Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/media-curator/agent-examples/acquisition-manager-examples.md",
+      "parent": "frameworks/media-curator/agent-examples"
+    },
+    {
+      "id": "frameworks/media-marketing-kit/agent-examples",
+      "title": "Agent Examples",
+      "summary": "Discoverable home for the few-shot worked examples that used to live inline in",
+      "file": "frameworks/media-marketing-kit/agent-examples.md",
+      "parent": "frameworks/media-marketing-kit"
+    },
+    {
+      "id": "frameworks/media-marketing-kit/agent-examples/accessibility-checker-examples",
+      "title": "Accessibility Checker Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/media-marketing-kit/agent-examples/accessibility-checker-examples.md",
+      "parent": "frameworks/media-marketing-kit/agent-examples"
+    },
+    {
+      "id": "frameworks/media-marketing-kit/agent-examples/campaign-orchestrator-examples",
+      "title": "Campaign Orchestrator Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/media-marketing-kit/agent-examples/campaign-orchestrator-examples.md",
+      "parent": "frameworks/media-marketing-kit/agent-examples"
+    },
+    {
+      "id": "frameworks/media-marketing-kit/agent-examples/legal-reviewer-examples",
+      "title": "Legal Reviewer Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/media-marketing-kit/agent-examples/legal-reviewer-examples.md",
+      "parent": "frameworks/media-marketing-kit/agent-examples"
+    },
+    {
+      "id": "frameworks/media-marketing-kit/agent-examples/marketing-project-manager-examples",
+      "title": "Marketing Project Manager Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/media-marketing-kit/agent-examples/marketing-project-manager-examples.md",
+      "parent": "frameworks/media-marketing-kit/agent-examples"
+    },
+    {
+      "id": "frameworks/media-marketing-kit/agent-examples/reporting-specialist-examples",
+      "title": "Reporting Specialist Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/media-marketing-kit/agent-examples/reporting-specialist-examples.md",
+      "parent": "frameworks/media-marketing-kit/agent-examples"
+    },
+    {
+      "id": "frameworks/media-marketing-kit/agent-examples/workflow-coordinator-examples",
+      "title": "Workflow Coordinator Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/media-marketing-kit/agent-examples/workflow-coordinator-examples.md",
+      "parent": "frameworks/media-marketing-kit/agent-examples"
+    },
+    {
+      "id": "frameworks/research-complete/agent-examples",
+      "title": "Agent Examples",
+      "summary": "Discoverable home for the few-shot worked examples that used to live inline in",
+      "file": "frameworks/research-complete/agent-examples.md",
+      "parent": "frameworks/research-complete"
+    },
+    {
+      "id": "frameworks/research-complete/agent-examples/citation-agent-examples",
+      "title": "Citation Agent Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/research-complete/agent-examples/citation-agent-examples.md",
+      "parent": "frameworks/research-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/research-complete/agent-examples/discovery-agent-examples",
+      "title": "Discovery Agent Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/research-complete/agent-examples/discovery-agent-examples.md",
+      "parent": "frameworks/research-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/research-complete/agent-examples/documentation-agent-examples",
+      "title": "Documentation Agent Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/research-complete/agent-examples/documentation-agent-examples.md",
+      "parent": "frameworks/research-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/research-complete/agent-examples/quality-agent-examples",
+      "title": "Quality Agent Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/research-complete/agent-examples/quality-agent-examples.md",
+      "parent": "frameworks/research-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/research-complete/agent-examples/research-acquisition-agent-examples",
+      "title": "Research Acquisition Agent Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/research-complete/agent-examples/research-acquisition-agent-examples.md",
+      "parent": "frameworks/research-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/research-complete/corpus-data-model",
+      "title": "Corpus Data Model",
+      "summary": "Authoritative reference for the research-corpus artifacts the research-complete",
+      "file": "frameworks/research-complete/corpus-data-model.md",
+      "parent": "frameworks/research-complete"
+    },
+    {
+      "id": "frameworks/research-complete/source-tracking",
+      "title": "Source Tracking",
+      "summary": "Purpose: record where each source was discovered (which account / surface), so high-yield curators a",
+      "file": "frameworks/research-complete/source-tracking.md",
+      "parent": "frameworks/research-complete"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples",
+      "title": "Agent Examples",
+      "summary": "Discoverable home for the few-shot worked examples that used to live inline in",
+      "file": "frameworks/sdlc-complete/agent-examples.md",
+      "parent": "frameworks/sdlc-complete"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/api-designer-examples",
+      "title": "Api Designer Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/api-designer-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/api-documenter-examples",
+      "title": "Api Documenter Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/api-documenter-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/architecture-designer-examples",
+      "title": "Architecture Designer Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/architecture-designer-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/architecture-designer-tot-protocol-examples",
+      "title": "Architecture Designer Tot Protocol Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/architecture-designer-tot-protocol-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/architecture-documenter-examples",
+      "title": "Architecture Documenter Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/architecture-documenter-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/aws-specialist-examples",
+      "title": "Aws Specialist Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/aws-specialist-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/azure-specialist-examples",
+      "title": "Azure Specialist Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/azure-specialist-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/blockchain-developer-examples",
+      "title": "Blockchain Developer Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/blockchain-developer-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/code-reviewer-examples",
+      "title": "Code Reviewer Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/code-reviewer-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/compliance-checker-examples",
+      "title": "Compliance Checker Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/compliance-checker-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/cost-optimizer-examples",
+      "title": "Cost Optimizer Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/cost-optimizer-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/data-engineer-examples",
+      "title": "Data Engineer Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/data-engineer-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/django-expert-examples",
+      "title": "Django Expert Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/django-expert-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/documentation-archivist-examples",
+      "title": "Documentation Archivist Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/documentation-archivist-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/frontend-specialist-examples",
+      "title": "Frontend Specialist Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/frontend-specialist-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/gcp-specialist-examples",
+      "title": "Gcp Specialist Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/gcp-specialist-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/kubernetes-expert-examples",
+      "title": "Kubernetes Expert Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/kubernetes-expert-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/laziness-detector-examples",
+      "title": "Laziness Detector Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/laziness-detector-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/migration-planner-examples",
+      "title": "Migration Planner Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/migration-planner-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/mobile-developer-examples",
+      "title": "Mobile Developer Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/mobile-developer-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/multi-cloud-strategist-examples",
+      "title": "Multi Cloud Strategist Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/multi-cloud-strategist-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/progress-tracker-examples",
+      "title": "Progress Tracker Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/progress-tracker-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/prompt-reinforcement-examples",
+      "title": "Prompt Reinforcement Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/prompt-reinforcement-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/react-expert-examples",
+      "title": "React Expert Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/react-expert-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/recovery-orchestrator-examples",
+      "title": "Recovery Orchestrator Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/recovery-orchestrator-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/regression-analyst-examples",
+      "title": "Regression Analyst Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/regression-analyst-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/requirements-analyst-examples",
+      "title": "Requirements Analyst Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/requirements-analyst-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/security-auditor-examples",
+      "title": "Security Auditor Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/security-auditor-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/security-auditor-owasp-checklist",
+      "title": "Security Auditor Owasp Checklist",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/security-auditor-owasp-checklist.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/spring-boot-expert-examples",
+      "title": "Spring Boot Expert Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/spring-boot-expert-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/technical-debt-analyst-examples",
+      "title": "Technical Debt Analyst Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/technical-debt-analyst-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/technical-writer-examples",
+      "title": "Technical Writer Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/technical-writer-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/test-documenter-examples",
+      "title": "Test Documenter Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/test-documenter-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/test-engineer-examples",
+      "title": "Test Engineer Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "frameworks/sdlc-complete/agent-examples/test-engineer-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "addons/agent-loop",
+      "title": "Agent Loop",
+      "summary": "",
+      "collapsed": true,
+      "parent": "addons"
+    },
+    {
+      "id": "addons/agent-loop/agent-persistence-integration",
+      "title": "Agent Persistence Integration",
+      "summary": "Version: 1.0.0",
+      "file": "addons/agent-loop/agent-persistence-integration.md",
+      "parent": "addons/agent-loop"
+    },
+    {
+      "id": "addons/agent-loop/best-practices",
+      "title": "Best Practices",
+      "summary": "Master iterative AI task execution with these guidelines.",
+      "file": "addons/agent-loop/best-practices.md",
+      "parent": "addons/agent-loop"
+    },
+    {
+      "id": "addons/agent-loop/cross-loop-learning",
+      "title": "Cross-Loop Learning",
+      "summary": "Pattern sharing and knowledge transfer across multiple agent loops.",
+      "file": "addons/agent-loop/cross-loop-learning.md",
+      "parent": "addons/agent-loop"
+    },
+    {
+      "id": "addons/agent-loop/examples",
+      "title": "Examples",
+      "summary": "",
+      "collapsed": true,
+      "parent": "addons/agent-loop"
+    },
+    {
+      "id": "addons/agent-loop/examples/coverage",
+      "title": "Coverage Example",
+      "summary": "Iteratively add tests until coverage threshold is met.",
+      "file": "addons/agent-loop/examples/coverage.md",
+      "parent": "addons/agent-loop/examples"
+    },
+    {
+      "id": "addons/agent-loop/examples/migration",
+      "title": "Migration Example",
+      "summary": "Migrate code between formats/versions iteratively.",
+      "file": "addons/agent-loop/examples/migration.md",
+      "parent": "addons/agent-loop/examples"
+    },
+    {
+      "id": "addons/agent-loop/examples/test-fix-loop",
+      "title": "Test-Fix Loop Example",
+      "summary": "Fix failing tests iteratively until all pass.",
+      "file": "addons/agent-loop/examples/test-fix-loop.md",
+      "parent": "addons/agent-loop/examples"
+    },
+    {
+      "id": "addons/agent-loop/executable-feedback-guide",
+      "title": "Executable Feedback Guide",
+      "summary": "Practical guide for implementing the execute-before-return pattern in code-generating agents. Based ",
+      "file": "addons/agent-loop/executable-feedback-guide.md",
+      "parent": "addons/agent-loop"
+    },
+    {
+      "id": "addons/agent-loop/quickstart",
+      "title": "Quick Start",
+      "summary": "Get started with iterative AI task execution in 5 minutes.",
+      "file": "addons/agent-loop/quickstart.md",
+      "parent": "addons/agent-loop"
+    },
+    {
+      "id": "addons/agent-loop/reflection-memory-guide",
+      "title": "Reflection & Memory Guide",
+      "summary": "Comprehensive guide to Al's episodic memory system based on the Reflexion framework.",
+      "file": "addons/agent-loop/reflection-memory-guide.md",
+      "parent": "addons/agent-loop"
+    },
+    {
+      "id": "addons/agent-loop/troubleshooting",
+      "title": "Troubleshooting",
+      "summary": "Solutions for common Al issues.",
+      "file": "addons/agent-loop/troubleshooting.md",
+      "parent": "addons/agent-loop"
+    },
+    {
+      "id": "addons/agent-loop/when-to-use-ralph",
+      "title": "When to Use Ralph",
+      "summary": "Understanding Al's sweet spot and avoiding the token-burning trap.",
+      "file": "addons/agent-loop/when-to-use-ralph.md",
+      "parent": "addons/agent-loop"
+    },
+    {
+      "id": "addons/aiwg-fleet",
+      "title": "Aiwg Fleet",
+      "summary": "",
+      "collapsed": true,
+      "parent": "addons"
+    },
+    {
+      "id": "addons/aiwg-fleet/provider-activation",
+      "title": "Provider Activation",
+      "summary": "The aiwg-fleet addon ships stock quiet-mode behavior bundles for small-plan bot fleets.",
+      "file": "addons/aiwg-fleet/provider-activation.md",
+      "parent": "addons/aiwg-fleet"
+    },
+    {
+      "id": "addons/aiwg-utils/agent-examples",
+      "title": "Agent Examples",
+      "summary": "Discoverable home for the few-shot worked examples, report scaffolds, and on-demand",
+      "file": "addons/aiwg-utils/agent-examples.md",
+      "parent": "addons/aiwg-utils"
+    },
+    {
+      "id": "addons/aiwg-utils/agent-examples/aiwg-steward-examples",
+      "title": "Aiwg Steward Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587).",
+      "file": "addons/aiwg-utils/agent-examples/aiwg-steward-examples.md",
+      "parent": "addons/aiwg-utils/agent-examples"
+    },
+    {
+      "id": "addons/aiwg-utils/agent-examples/aiwg-steward-routing-reference",
+      "title": "Aiwg Steward Routing Reference",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587, #1600).",
+      "file": "addons/aiwg-utils/agent-examples/aiwg-steward-routing-reference.md",
+      "parent": "addons/aiwg-utils/agent-examples"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm",
+      "title": "Security/Supply Chain/External Npm",
+      "summary": "",
+      "collapsed": true,
+      "parent": "addons/aiwg-utils"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/_commands",
+      "title": "_commands",
+      "summary": "These commands avoid executing untrusted lifecycle scripts during inspection.",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/_commands.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/_template",
+      "title": "_template",
+      "summary": "Generated: <YYYY-MM-DD>",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/_template.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/_upstream-issue-template",
+      "title": "_upstream Issue Template",
+      "summary": "Package: <name>",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/_upstream-issue-template.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/better-sqlite3",
+      "title": "Better Sqlite3",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/better-sqlite3.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/chalk",
+      "title": "Chalk",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/chalk.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/chokidar",
+      "title": "Chokidar",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/chokidar.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/cli-table3",
+      "title": "Cli Table3",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/cli-table3.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/commander",
+      "title": "Commander",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/commander.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/glob",
+      "title": "Glob",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/glob.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/graceful-fs",
+      "title": "Graceful Fs",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/graceful-fs.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/graphology-operators",
+      "title": "Graphology Operators",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/graphology-operators.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/graphology-shortest-path",
+      "title": "Graphology Shortest Path",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/graphology-shortest-path.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/graphology-traversal",
+      "title": "Graphology Traversal",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/graphology-traversal.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/graphology-types",
+      "title": "Graphology Types",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/graphology-types.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/graphology",
+      "title": "Graphology",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/graphology.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/hnswlib-node",
+      "title": "Hnswlib Node",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/hnswlib-node.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/hono__node-server",
+      "title": "Hono__node Server",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/hono__node-server.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/hono",
+      "title": "Hono",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/hono.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/js-yaml",
+      "title": "Js Yaml",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/js-yaml.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/listr2",
+      "title": "Listr2",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/listr2.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/matric__eval-client",
+      "title": "Matric__eval Client",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/matric__eval-client.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/modelcontextprotocol__sdk",
+      "title": "Modelcontextprotocol__sdk",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/modelcontextprotocol__sdk.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/node-pty",
+      "title": "Node Pty",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/node-pty.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/ora",
+      "title": "Ora",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/ora.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/README",
+      "title": "README",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/README.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/simple-statistics",
+      "title": "Simple Statistics",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/simple-statistics.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/tsx",
+      "title": "Tsx",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/tsx.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/types__js-yaml",
+      "title": "Types__js Yaml",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/types__js-yaml.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/types__node",
+      "title": "Types__node",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/types__node.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/types__semver",
+      "title": "Types__semver",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/types__semver.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/typescript",
+      "title": "Typescript",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/typescript.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/vitest__coverage-v8",
+      "title": "Vitest__coverage V8",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/vitest__coverage-v8.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/vitest__ui",
+      "title": "Vitest__ui",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/vitest__ui.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/vitest",
+      "title": "Vitest",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/vitest.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/ws",
+      "title": "Ws",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/ws.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/xenova__transformers",
+      "title": "Xenova__transformers",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/xenova__transformers.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/xterm__headless",
+      "title": "Xterm__headless",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/xterm__headless.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/yaml",
+      "title": "Yaml",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/yaml.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/aiwg-utils/security/supply-chain/external-npm/zod",
+      "title": "Zod",
+      "summary": "Generated: 2026-05-23",
+      "file": "addons/aiwg-utils/security/supply-chain/external-npm/zod.md",
+      "parent": "addons/aiwg-utils/security/supply-chain/external-npm"
+    },
+    {
+      "id": "addons/llm-wiki",
+      "title": "Llm Wiki",
+      "summary": "",
+      "collapsed": true,
+      "parent": "addons"
+    },
+    {
+      "id": "addons/llm-wiki/getting-started",
+      "title": "Getting Started",
+      "summary": "aiwg use llm-wiki",
+      "file": "addons/llm-wiki/getting-started.md",
+      "parent": "addons/llm-wiki"
+    },
+    {
+      "id": "addons/llm-wiki/obsidian-integration",
+      "title": "Obsidian Integration",
+      "summary": "LLM Wiki uses [[wikilink]] cross-references natively, making the .aiwg/wiki/ directory directly brow",
+      "file": "addons/llm-wiki/obsidian-integration.md",
+      "parent": "addons/llm-wiki"
+    },
+    {
+      "id": "addons/nlp-prod",
+      "title": "Nlp Prod",
+      "summary": "",
+      "collapsed": true,
+      "parent": "addons"
+    },
+    {
+      "id": "addons/nlp-prod/eval-loop",
+      "title": "Eval Loop",
+      "summary": "The eval loop is nlp-prod's production quality gate. The most important property is strict isolation",
+      "file": "addons/nlp-prod/eval-loop.md",
+      "parent": "addons/nlp-prod"
+    },
+    {
+      "id": "addons/nlp-prod/patterns",
+      "title": "Patterns",
+      "summary": "Six canonical patterns for LLM inference pipelines. Start with the simplest one that meets your requ",
+      "file": "addons/nlp-prod/patterns.md",
+      "parent": "addons/nlp-prod"
+    },
+    {
+      "id": "addons/nlp-prod/productionization",
+      "title": "Productionization",
+      "summary": "The aiwg nlp productionize command reviews a pipeline for production readiness and generates a harde",
+      "file": "addons/nlp-prod/productionization.md",
+      "parent": "addons/nlp-prod"
+    },
+    {
+      "id": "addons/prose-integration/integration-guide",
+      "title": "Integration Guide",
+      "summary": "Practical guide for using OpenProse programs within AIWG workflows. For conceptual overview, see ove",
+      "file": "addons/prose-integration/integration-guide.md",
+      "parent": "addons/prose-integration"
+    },
+    {
+      "id": "addons/rlm/agent-examples",
+      "title": "Agent Examples",
+      "summary": "Discoverable home for the few-shot worked examples that used to live inline in",
+      "file": "addons/rlm/agent-examples.md",
+      "parent": "addons/rlm"
+    },
+    {
+      "id": "addons/rlm/agent-examples/rlm-agent-examples",
+      "title": "Rlm Agent Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587/#1600).",
+      "file": "addons/rlm/agent-examples/rlm-agent-examples.md",
+      "parent": "addons/rlm/agent-examples"
     }
   ]
 }

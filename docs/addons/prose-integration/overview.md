@@ -22,7 +22,19 @@ errors:
   - cannot proceed when input is empty
 ```
 
-## The Five Skills
+## The Seven Skills
+
+### prose-detect
+
+Locate an existing OpenProse installation using a 7-signal priority chain (env var → AIWG config → AIWG-local install → plugin manifest → user home → global CLI → not found). All other prose skills call this first. Never installs silently.
+
+Manual trigger: `/prose-detect`
+
+### prose-install
+
+Install OpenProse for AIWG use when `/prose-detect` reports nothing is found. Confirms with the user before installing. Tries `npx skills add openprose/prose` first, falls back to git clone. Saves the resolved path to `.aiwg/config.json`.
+
+Manual trigger: `/prose-install`
 
 ### prose-setup
 
@@ -76,15 +88,18 @@ Multi-component programs use both phases:
 
 2. **Phase 2: Execution** — `prose-run` reads the manifest, spawns sessions for each component in dependency order, manages state, and returns output.
 
-## Auto-Install
+## Detection and Installation
 
-All skills automatically install OpenProse on first use. When you invoke any prose skill:
-1. Checks whether OpenProse exists at the configured path (default: `/tmp/prose`)
-2. If absent: clones `https://github.com/openprose/prose.git`
-3. If present but outdated: pulls latest from `main`
-4. Verifies key spec files exist (`prose.md`, `forme.md`, examples)
+All skills automatically detect OpenProse on first use via `/prose-detect`. The 7-signal detection chain checks env vars, AIWG config, AIWG-local install, project plugin manifests, user home, and global CLI.
 
-No manual setup required.
+If no installation is found, skills report an error and suggest running `/prose-install`. Installation is never silent — the user must confirm before any files are written.
+
+To manually trigger detection or installation:
+```bash
+/prose-detect    # find existing install
+/prose-install   # install if not found
+/prose-setup     # install or update (git pull if already present)
+```
 
 ## Configuration
 
