@@ -134,12 +134,21 @@ React app token-injected, falling back to a legacy page when no build is present
 
 ## Verify
 
+Tests run **at stages** — committed harnesses, never `/tmp` rigs (#1635):
+
+| Stage | Command | Executor | CI |
+|---|---|---|---|
+| **Unit / integration** | `npm --prefix apps/cockpit run check` · `npx vitest run test/integration/cockpit-bridge.test.js` | **mock** (automated-test-only) | always |
+| **Dev e2e** (full control-plane chain: health→inventory→create session→attach) | `npm run e2e:cockpit-dev` | **real**, safe-skip when absent | non-blocking |
+| **Release matrix** (host/docker/vm + provider workload, #1621) | `npm run uat:cockpit-live:matrix` | **real**, all three families | release gate |
+
 ```bash
 npm --prefix apps/cockpit run check     # build web + typecheck + render/a11y tests + smokes + PoCs
-npx vitest run test/integration/cockpit-bridge.test.js   # Bridge contract (CI)
+npx vitest run test/integration/cockpit-bridge.test.js   # Bridge contract + mock guard + port defaults (CI)
 npx vitest run test/smoke/cockpit-base-footprint.test.js # base-npm guard (CI)
-npm run uat:cockpit-live                                  # opt-in real sandbox gate
-npm run uat:cockpit-live:matrix                           # required host/docker/vm live matrix
+npm run e2e:cockpit-dev                                  # dev full-system e2e — real executor, skips cleanly
+npm run uat:cockpit-live                                  # opt-in real sandbox posture gate
+npm run uat:cockpit-live:matrix                           # required host/docker/vm live matrix (#1621)
 ```
 
 The React UI is also browser-verified per surface (see `.playwright-mcp/cockpit-*.png`).
