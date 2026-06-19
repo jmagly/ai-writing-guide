@@ -260,6 +260,49 @@ describe('cockpit Bridge — executor without running/approvals admin surface (#
   });
 });
 
+describe('cockpit mock — admin-surface contract guard (#1636)', () => {
+  // The mock is automated-test-only (the Bridge refuses it without
+  // AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR=1 — see "mock executor guard" above). It
+  // implements the legacy /admin/* surface. The real agentic-sandbox exposes
+  // /api/v2/admin/* and has NO running/approvals/cost admin routes — those three
+  // legacy routes are the KNOWN, tracked divergence the Bridge consumes for
+  // automated coverage until real-surface derivation lands (#1639). This guard
+  // pins the divergence so a NEW invented mock admin route fails CI instead of
+  // silently widening the mock↔real gap.
+  const KNOWN_LEGACY_DIVERGENCE = ['/admin/running', '/admin/approvals', '/admin/cost'];
+  // Admin capabilities that must NOT exist on the mock — neither the real v2
+  // surface nor the documented legacy-compat set includes these. Adding any one
+  // to the mock is new divergence and must be a conscious change to this guard.
+  const FORBIDDEN_INVENTED = ['/admin/missions', '/admin/quota', '/admin/sessions', '/admin/events', '/api/v2/admin/running', '/api/v2/admin/approvals'];
+  let m, mbase;
+  beforeAll(async () => {
+    m = createExecutor();
+    await new Promise((r) => m.listen(0, '127.0.0.1', r));
+    mbase = `http://127.0.0.1:${m.address().port}`;
+  });
+  afterAll(() => { m?.close(); });
+  const g = (p) => fetch(mbase + p);
+
+  it('serves exactly the known legacy-divergent admin routes', async () => {
+    for (const p of KNOWN_LEGACY_DIVERGENCE) {
+      expect((await g(p)).status, `${p} should be served by the mock`).toBe(200);
+    }
+  });
+
+  it('does not invent admin routes beyond the documented divergence', async () => {
+    for (const p of FORBIDDEN_INVENTED) {
+      expect((await g(p)).status, `${p} must NOT exist on the mock (new mock↔real divergence)`).toBe(404);
+    }
+  });
+
+  it('serves the real A2A agent surface the Bridge derives from (v2-aligned)', async () => {
+    const inst = '550e8400-e29b-41d4-a716-446655440000';
+    expect((await g(`/agents/${inst}/sessions`)).status).toBe(200);
+    expect((await g(`/agents/${inst}/tasks`)).status).toBe(200);
+    expect((await g(`/agents/${inst}/.well-known/agent-card.json`)).status).toBe(200);
+  });
+});
+
 describe('cockpit Bridge — port defaults off the executor range (#1634)', () => {
   it('defaults to an off-range port and never into the agentic-sandbox 8120-8122 range', () => {
     expect(DEFAULT_BRIDGE_PORT).toBe(8140);

@@ -113,7 +113,7 @@ React app token-injected, falling back to a legacy page when no build is present
 | Path | Role |
 |---|---|
 | `web/` | React 19 + Vite + TS UI (the surfaces above) |
-| `mock-executor/` | automated-test-only wire-faithful agentic-sandbox A2A v2 stand-in (conformance 33/0/17) |
+| `mock-executor/` | **automated-test-only** wire-faithful agentic-sandbox A2A v2 stand-in (conformance 33/0/17). The Bridge refuses it for human launches (needs `AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR=1`); a contract guard (#1636) pins its legacy `/admin/{running,approvals,cost}` divergence from real v2 so new drift fails CI. |
 | `bridge/` | the registry-bound control-plane server + static serving |
 | `shell-core/` | the cross-shell handshake (runtime token → connect) |
 | `vscode/` · `desktop/` | VS Code extension + Tauri shells over the same Bridge |
