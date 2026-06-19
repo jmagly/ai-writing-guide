@@ -280,6 +280,7 @@ The detailed review script and screenshot commands live in
 
 ## See also
 
+- `apps/cockpit/RELEASE.md` — cockpit release pattern (channels, publish leg, config-defaults gate)
 - `.aiwg/architecture/adr-cockpit-session-control-not-cli-runner.md` — the core model
 - `.aiwg/architecture/cockpit-sad.md` + `cockpit-instance-control-interface.md`
 - `.aiwg/ux/cockpit-ux-design.md` · `.aiwg/reports/cockpit-abm-gate.md`
