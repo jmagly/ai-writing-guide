@@ -262,12 +262,15 @@ Known state as of the 2026-06-19 host live run:
 - The previous Claude login-required blocker remains linked as
   roctinam/agentic-sandbox#499 for upstream regression tracking, but it was not
   reproduced by this isolated host proof.
-- Docker/container target remains blocked upstream by secure transport material
-  provisioning for the post-`AGENT_SECRET` model. Tracked in
-  roctinam/agentic-sandbox#497.
-- VM target remains blocked upstream because provisioning did not yield a
-  registered agent/session target for the matrix. Tracked in
-  roctinam/agentic-sandbox#498.
+- Docker/container secure bootstrap is fixed from the agentic-sandbox side in
+  `v2026.6.24`; roctinam/agentic-sandbox#497 is closed. AIWG still needs to
+  rerun this matrix against that release and record Cockpit-side evidence.
+- VM bootstrap/readiness is fixed from the agentic-sandbox side in
+  `v2026.6.24`; roctinam/agentic-sandbox#498 is closed. AIWG still needs to
+  rerun this matrix against that release and record Cockpit-side evidence.
+- Remaining upstream follow-ups are Claude auth-state propagation
+  (roctinam/agentic-sandbox#499) and agent-scoped PTY sessions not appearing in
+  the formal/global session registry (roctinam/agentic-sandbox#500).
 
 This gate extends #1617: #1617 proves Cockpit can talk to a reachable real
 executor; #1621 proves coverage across the intended base host, container, and VM
