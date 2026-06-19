@@ -14,7 +14,7 @@ const f = (p, o = {}) => fetch(base + p, { ...o, headers: { ...(o.headers || {})
 beforeAll(async () => {
   mock = createExecutor();
   await new Promise((r) => mock.listen(0, '127.0.0.1', r));
-  bridge = createBridge({ executorUrl: `http://127.0.0.1:${mock.address().port}` });
+  bridge = createBridge({ executorUrl: `http://127.0.0.1:${mock.address().port}`, allowMockExecutor: true });
   await new Promise((r) => bridge.listen(0, '127.0.0.1', r));
   base = `http://127.0.0.1:${bridge.address().port}`;
   token = bridge.cockpitToken;
@@ -75,6 +75,27 @@ describe('cockpit Bridge — control surface', () => {
     expect((await (await f('/api/approvals/apr-001?decision=approve', { method: 'POST' })).json()).status).toBe('approved');
     expect((await f('/api/approvals/apr-001?decision=deny', { method: 'POST' })).status).toBe(409);
     expect((await (await f('/api/cost')).json()).total.usd).toBeGreaterThan(0);
+  });
+});
+
+describe('cockpit Bridge — mock executor guard', () => {
+  let guardedMock, guardedBridge, guardedBase, guardedToken;
+  beforeAll(async () => {
+    guardedMock = createExecutor();
+    await new Promise((r) => guardedMock.listen(0, '127.0.0.1', r));
+    guardedBridge = createBridge({ executorUrl: `http://127.0.0.1:${guardedMock.address().port}` });
+    await new Promise((r) => guardedBridge.listen(0, '127.0.0.1', r));
+    guardedBase = `http://127.0.0.1:${guardedBridge.address().port}`;
+    guardedToken = guardedBridge.cockpitToken;
+  });
+  afterAll(() => { guardedBridge?.close(); guardedMock?.close(); });
+
+  it('refuses mock-like executors unless an automated harness opts in', async () => {
+    const res = await fetch(`${guardedBase}/api/inventory`, {
+      headers: { authorization: `Bearer ${guardedToken}` },
+    });
+    expect(res.status).toBe(502);
+    expect(await res.json()).toMatchObject({ error: 'mock_executor_refused' });
   });
 });
 
@@ -189,6 +210,53 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     expect(await (await cf('/api/instances/v2-host-1/start', { method: 'POST' })).json()).toMatchObject({ status: 'running' });
     expect(await (await cf('/api/instances/v2-host-1/stop', { method: 'POST' })).json()).toMatchObject({ status: 'stopped' });
     expect(await (await cf('/api/instances/v2-host-1', { method: 'DELETE' })).json()).toMatchObject({ destroyed: 'v2-host-1' });
+  });
+});
+
+describe('cockpit Bridge — executor without running/approvals admin surface (#1638)', () => {
+  // The real agentic-sandbox v2 admin router exposes instances/lifecycle but no
+  // /running and no /approvals route. The Bridge must degrade those to empty
+  // 200s (not 502/404) so the operator Home view binds inventory and stays usable.
+  let upstream, b, ubase, utoken;
+  beforeAll(async () => {
+    upstream = http.createServer((req, res) => {
+      const url = new URL(req.url, 'http://127.0.0.1');
+      const send = (status, body) => {
+        res.writeHead(status, { 'content-type': 'application/json' });
+        res.end(JSON.stringify(body));
+      };
+      if (url.pathname === '/api/v2/admin/instances') {
+        return send(200, { data: { instances: [{
+          instanceId: 'host-only-1', runtime: { kind: 'host' }, loadout: 'host-tools',
+          status: 'running', tenantId: 'default', launchContext: { selectedTier: 'host' },
+        }] } });
+      }
+      if (url.pathname === '/api/v1/agents') return send(200, { agents: [] });
+      // No running / approvals admin routes on this executor — everything else 404s.
+      return send(404, { error: 'not_found', path: url.pathname });
+    });
+    await new Promise((r) => upstream.listen(0, '127.0.0.1', r));
+    b = createBridge({ executorUrl: `http://127.0.0.1:${upstream.address().port}` });
+    await new Promise((r) => b.listen(0, '127.0.0.1', r));
+    ubase = `http://127.0.0.1:${b.address().port}`;
+    utoken = b.cockpitToken;
+  });
+  afterAll(() => { b?.close(); upstream?.close(); });
+
+  const uf = (p) => fetch(ubase + p, { headers: { authorization: `Bearer ${utoken}` } });
+
+  it('binds inventory while degrading running + approvals to empty 200s', async () => {
+    const inv = await uf('/api/inventory');
+    expect(inv.status).toBe(200);
+    expect((await inv.json()).count).toBe(1);
+
+    const running = await uf('/api/running');
+    expect(running.status).toBe(200);
+    expect(await running.json()).toMatchObject({ count: 0, running: [] });
+
+    const approvals = await uf('/api/approvals?status=pending');
+    expect(approvals.status).toBe(200);
+    expect(await approvals.json()).toMatchObject({ approvals: [] });
   });
 });
 

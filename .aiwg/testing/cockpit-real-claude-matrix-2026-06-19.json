@@ -1,0 +1,67 @@
+{
+  "issue": 1621,
+  "executor_url": "http://127.0.0.1:18232",
+  "required": true,
+  "matrix_required": true,
+  "provider": "claude",
+  "discovery_expect": "issue-audit",
+  "result": "fail",
+  "started_at": "2026-06-19T16:39:02.953Z",
+  "finished_at": "2026-06-19T16:39:04.383Z",
+  "conformance_report": null,
+  "executor_identity": {
+    "version_hint": "agentic-sandbox-4cb1c90"
+  },
+  "evidence": [
+    {
+      "name": "executor probe",
+      "status": "pass",
+      "detail": "reachable at http://127.0.0.1:18232"
+    },
+    {
+      "name": "executor identity",
+      "status": "pass",
+      "detail": "{\"version_hint\":\"agentic-sandbox-4cb1c90\"}"
+    },
+    {
+      "name": "Bridge health",
+      "status": "pass",
+      "detail": "Bridge reported executor http://127.0.0.1:18232"
+    },
+    {
+      "name": "inventory posture",
+      "status": "pass",
+      "detail": "1 instance(s) with normalized posture fields"
+    },
+    {
+      "name": "session metadata",
+      "status": "pass",
+      "detail": "1 session(s) reported attach metadata"
+    },
+    {
+      "name": "task projection",
+      "status": "skip",
+      "detail": "running endpoint returned 502"
+    },
+    {
+      "name": "matrix host",
+      "status": "pass",
+      "detail": "target=host; instance=019ee0bf-6747-7462-852e-59cfebf11f9c; runtime=host; backend=managed/tmux; provider=claude; provider CLI workload emitted AIWG_COCKPIT_LIVE_OK and discovery result issue-audit; output_bytes=356"
+    },
+    {
+      "name": "matrix container",
+      "status": "fail",
+      "detail": "missing required live target: container"
+    },
+    {
+      "name": "matrix vm",
+      "status": "fail",
+      "detail": "missing required live target: vm"
+    },
+    {
+      "name": "required host/container/vm matrix executes real provider-backed session workloads",
+      "status": "fail",
+      "detail": "required live matrix failed for 2/3 target(s): missing required live target: container | missing required live target: vm"
+    }
+  ]
+}

@@ -16,13 +16,13 @@ import { dirname, join, basename, extname } from 'node:path';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 // Primary seam for roctinam/aiwg#1589: Cockpit talks to a real agentic-sandbox
-// executor via this URL. MOCK_URL remains as a compatibility alias for older
-// scripts/tests that predate agentic-sandbox#460/#461.
+// executor via this URL. Mock executors are accepted only by explicit automated
+// test opt-in, never by default dev/operator launch.
 const EXECUTOR_URL =
   process.env.AIWG_COCKPIT_EXECUTOR_URL ??
   process.env.EXECUTOR_URL ??
-  process.env.MOCK_URL ??
   'http://127.0.0.1:8122';
+const ALLOW_MOCK_EXECUTOR = process.env.AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR === '1';
 const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
 // The built React app (apps/cockpit/web/dist). Served when present; falls back to the
 // legacy vanilla page so the Bridge works even before a web build.
@@ -198,6 +198,33 @@ async function fetchJsonFirst(candidates, { method = 'GET', headers, body: reque
   throw new Error(failures.join('; ') || 'no upstream candidates');
 }
 
+function mockExecutorReason(body) {
+  if (!body || typeof body !== 'object') return '';
+  const value = body;
+  if (value.mock === true) return 'health.mock=true';
+  if (String(value.name ?? '').toLowerCase().includes('mock')) return `health.name=${value.name}`;
+  if (Array.isArray(value.surfaces) && value.surfaces.includes('discovery') && value.surfaces.includes('admin')) {
+    return 'legacy mock health surfaces';
+  }
+  return '';
+}
+
+async function assertRealExecutor(executorUrl, allowMockExecutor) {
+  if (allowMockExecutor) return;
+  let health;
+  try {
+    health = await fetchJsonFirst([`${executorUrl}/health`]);
+  } catch {
+    return;
+  }
+  const reason = mockExecutorReason(health.body);
+  if (reason) {
+    const err = new Error(`mock executor refused for dev/operator launch (${reason}); use a real agentic-sandbox executor or set AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR=1 only inside automated tests`);
+    err.code = 'mock_executor_refused';
+    throw err;
+  }
+}
+
 async function proxyFirst(res, candidates, options) {
   try {
     const { status, body } = await fetchJsonFirst(candidates, options);
@@ -361,10 +388,26 @@ async function getInventory(executorUrl) {
 
 /** Running tasks across all instances (the running-agents board). */
 async function getRunning(executorUrl) {
-  const { body } = await fetchJsonFirst([
-    `${executorUrl}/admin/running`,
-    `${executorUrl}/api/v2/admin/running`,
-  ]);
+  let body;
+  try {
+    ({ body } = await fetchJsonFirst([
+      `${executorUrl}/admin/running`,
+      `${executorUrl}/api/v2/admin/running`,
+    ]));
+  } catch {
+    // The real agentic-sandbox v2 admin surface has no /running route (#1638);
+    // running work is derived per-instance from sessions/tasks (tracked under
+    // #1622). Until that derivation lands, degrade to an empty board rather
+    // than surfacing a 502 — so the operator Home view binds inventory and
+    // stays usable against any real executor that lacks this admin endpoint.
+    return {
+      source: executorUrl,
+      fetched_at: new Date().toISOString(),
+      count: 0,
+      running: [],
+      derived: 'executor exposes no admin running endpoint',
+    };
+  }
   const running = asArrayFromEnvelope(body, ['running', 'tasks', 'items', 'data']);
   const byId = new Map((await getInventory(executorUrl)).instances.map((i) => [i.id, i]));
   return {
@@ -384,6 +427,35 @@ async function getRunning(executorUrl) {
         transport: inst?.transport,
       };
     }),
+  };
+}
+
+/**
+ * Pending HITL approvals (the unified approval inbox). The real agentic-sandbox
+ * v2 admin surface has no /approvals route (#1638) — HITL prompts arrive via A2A
+ * `input-required` / `hitl-prompt/v1` (#1565). Until the Bridge derives the inbox
+ * from that surface, degrade to an empty inbox rather than surfacing a 404, so
+ * the operator Home view stays usable against a real executor.
+ */
+async function getApprovals(executorUrl, status) {
+  let body;
+  try {
+    ({ body } = await fetchJsonFirst([
+      `${executorUrl}/admin/approvals?status=${encodeURIComponent(status)}`,
+      `${executorUrl}/api/v2/admin/approvals?status=${encodeURIComponent(status)}`,
+    ]));
+  } catch {
+    return {
+      source: executorUrl,
+      fetched_at: new Date().toISOString(),
+      approvals: [],
+      derived: 'executor exposes no admin approvals endpoint',
+    };
+  }
+  return {
+    source: executorUrl,
+    fetched_at: new Date().toISOString(),
+    approvals: asArrayFromEnvelope(body, ['approvals', 'items', 'data']),
   };
 }
 
@@ -432,8 +504,8 @@ async function getSessions(executorUrl, instanceId) {
   };
 }
 
-export function createBridge({ executorUrl = EXECUTOR_URL, mockUrl, token } = {}) {
-  const upstreamUrl = mockUrl ?? executorUrl;
+export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = ALLOW_MOCK_EXECUTOR, token } = {}) {
+  const upstreamUrl = executorUrl;
   const TOKEN = token ?? randomBytes(24).toString('hex');
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
@@ -443,6 +515,13 @@ export function createBridge({ executorUrl = EXECUTOR_URL, mockUrl, token } = {}
       // gate the control surface: per-launch bearer token on every /api/ call
       if (url.pathname.startsWith('/api/') && !authed(req, url, TOKEN)) {
         return json(res, 401, { error: 'unauthorized', detail: 'missing or invalid cockpit token' });
+      }
+      if (url.pathname.startsWith('/api/')) {
+        try {
+          await assertRealExecutor(upstreamUrl, allowMockExecutor);
+        } catch (err) {
+          return json(res, 502, { error: err.code ?? 'executor_refused', message: String(err?.message ?? err) });
+        }
       }
       if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(upstreamUrl));
       if (url.pathname === '/api/running') return json(res, 200, await getRunning(upstreamUrl));
@@ -545,13 +624,13 @@ export function createBridge({ executorUrl = EXECUTOR_URL, mockUrl, token } = {}
 
       // --- approval inbox (UC-009) + cost (UC-010) ---
       if (url.pathname === '/api/approvals' && req.method === 'GET')
-        return proxy(res, 'GET', `${upstreamUrl}/admin/approvals?status=${encodeURIComponent(url.searchParams.get('status') || 'pending')}`);
+        return json(res, 200, await getApprovals(upstreamUrl, url.searchParams.get('status') || 'pending'));
       if ((m = url.pathname.match(/^\/api\/approvals\/([^/]+)$/)) && req.method === 'POST')
         return proxy(res, 'POST', `${upstreamUrl}/admin/approvals/${encodeURIComponent(m[1])}?decision=${encodeURIComponent(url.searchParams.get('decision') || '')}`);
       if (url.pathname === '/api/cost' && req.method === 'GET')
         return proxy(res, 'GET', `${upstreamUrl}/admin/cost`);
 
-      if (url.pathname === '/api/health') return json(res, 200, { status: 'ok', executor_url: upstreamUrl });
+      if (url.pathname === '/api/health') return json(res, 200, { status: 'ok', executor_url: upstreamUrl, mock_executor_allowed: allowMockExecutor });
       if (url.pathname === '/' || url.pathname === '/index.html') {
         const distIndex = join(WEB_DIST, 'index.html');
         const src = existsSync(distIndex) ? distIndex : join(__dir, 'public', 'index.html');

@@ -77,30 +77,26 @@ activity payloads. Legacy shared-secret and TOFU paths render as compatibility o
 degraded, not default-green. Agentic-sandbox owns transport provisioning and peer
 identity enforcement; Cockpit owns visibility and audit presentation.
 
-## Run (dev, against the bundled mock)
+## Run (dev/test, against a real agentic-sandbox executor)
 
 ```bash
 npm --prefix apps/cockpit run build:web                 # install + vite build → web/dist
-node apps/cockpit/mock-executor/src/server.mjs          # :8122  executor
-node apps/cockpit/bridge/src/server.mjs                 # :8120  → open the printed URL
-```
-
-## Run (against a real agentic-sandbox executor)
-
-```bash
 AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:<executor-port> \
   node apps/cockpit/bridge/src/server.mjs
 ```
 
-`EXECUTOR_URL` is accepted as a short alias. `MOCK_URL` remains only for older
-local scripts; new code should use `AIWG_COCKPIT_EXECUTOR_URL`.
+`EXECUTOR_URL` is accepted as a short alias, but new launch scripts should use
+`AIWG_COCKPIT_EXECUTOR_URL`. Human dev/test launches must point at a real
+agentic-sandbox executor. The bundled mock is reserved for automated tests and
+PoCs; if a mock-like executor is detected, the Bridge refuses it unless
+`AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR=1` is set by an automated harness.
 
-The Bridge accepts the bundled mock's legacy admin surface (`/admin/instances`,
-`/admin/running`) and real agentic-sandbox v2 admin surfaces
-(`/api/v2/admin/instances`, `/api/v2/admin/running`). Field normalization covers
-snake_case and camelCase payloads so live sandboxes can evolve without breaking
-the operator UI; unknown fields degrade to opaque posture rather than failing the
-screen.
+The Bridge keeps legacy admin-surface compatibility (`/admin/instances`,
+`/admin/running`) for automated coverage, but dev/test launches should target
+real agentic-sandbox v2 admin surfaces (`/api/v2/admin/instances`,
+`/api/v2/admin/running`). Field normalization covers snake_case and camelCase
+payloads so live sandboxes can evolve without breaking the operator UI; unknown
+fields degrade to opaque posture rather than failing the screen.
 
 `aiwg cockpit` (the operator command) will wrap this; the Bridge serves the built
 React app token-injected, falling back to a legacy page when no build is present.
@@ -110,7 +106,7 @@ React app token-injected, falling back to a legacy page when no build is present
 | Path | Role |
 |---|---|
 | `web/` | React 19 + Vite + TS UI (the surfaces above) |
-| `mock-executor/` | wire-faithful agentic-sandbox A2A v2 stand-in (conformance 33/0/17) |
+| `mock-executor/` | automated-test-only wire-faithful agentic-sandbox A2A v2 stand-in (conformance 33/0/17) |
 | `bridge/` | the registry-bound control-plane server + static serving |
 | `shell-core/` | the cross-shell handshake (runtime token → connect) |
 | `vscode/` · `desktop/` | VS Code extension + Tauri shells over the same Bridge |
@@ -150,6 +146,14 @@ evidence still names the tested agentic-sandbox build. A manual run against
 agentic-sandbox `v2026.6.15` or newer should attach its markdown/JSON result to
 epic roctinam/aiwg#1588 before the epic is considered done-done.
 
+The executable release-validation procedure is
+`.aiwg/testing/cockpit-real-integration-uat-runbook.md`. Use that runbook for
+real executor smoke, Codex provider evidence (#1631), Claude auth/evidence
+(#1632), strict host/container/VM matrix evidence (#1621), artifact naming, and
+safe evidence handling. The older
+`.aiwg/testing/cockpit-real-integration-uat-plan-2026-06-19.md` is the planning
+source, not the operator procedure.
+
 The stricter matrix gate for #1621 is intentionally separate from the mock lane:
 
 ```bash
@@ -175,6 +179,15 @@ than only proving shell plumbing or provider login. Set
 `AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT=<capability-name>` to validate a different
 discovered framework capability, or `AIWG_COCKPIT_LIVE_WORKLOAD=<prompt>` to
 replace the full prompt while still satisfying the marker and discovery checks.
+Set `AIWG_COCKPIT_LIVE_MATRIX_TARGETS=host` only for scoped rehearsal/evidence
+when Docker/container or VM are intentionally out of scope; the default remains
+`host,container,vm` for the release matrix. To prove controller-side PTY command
+injection can mutate target data, set
+`AIWG_COCKPIT_LIVE_MUTATION_FILE=<absolute-safe-test-path>` and optionally
+`AIWG_COCKPIT_LIVE_MUTATION_TEXT=<expected-content>`. The harness opens a fresh
+managed PTY session on the same target, observes it, drives a shell command via
+`pty.session_input`, waits for `AIWG_COCKPIT_MUTATION_OK`, then reads the file
+from the test runner and verifies the exact content.
 The matrix report records each target family independently (`matrix host`,
 `matrix container`, `matrix vm`) with the instance, runtime family, selected
 session backend, provider, discovery expectation, and exact failure reason; the
@@ -202,15 +215,25 @@ create/list, observe attach, and the provider-backed controller workload. Set
 `AIWG_COCKPIT_EXECUTOR_VERSION=<tag-or-commit>` when the executor does not expose
 version metadata through `/health` or `/version`.
 
-Known state as of the 2026-06-18 host live run:
+Known state as of the 2026-06-19 host live run:
 
-- Host target passes against the agentic-sandbox `v2026.6.17` prep build using
-  the pre-authenticated Codex CLI and a managed `tmux` session. The running
-  agent returned `AIWG_COCKPIT_LIVE_OK` and selected `issue-audit` through AIWG
-  discovery from inside the session.
-- Claude launched inside the same host session but did not inherit usable auth
-  state and reported that login was required. Treat Claude auth-state injection
-  as a separate follow-up from host runtime secure registration.
+- Host target passes against the local agentic-sandbox `4cb1c90` build using a
+  real mTLS-registered host agent and a managed `tmux` session.
+- Codex launched inside that managed host session and returned
+  `AIWG_COCKPIT_LIVE_OK` plus `issue-audit`; evidence lives at
+  `.aiwg/testing/cockpit-real-codex-matrix-2026-06-19.md/.json`.
+- Cockpit also proved direct PTY command injection and mutation on the same real
+  host path with `AIWG_COCKPIT_LIVE_MATRIX_TARGETS=host` and
+  `AIWG_COCKPIT_LIVE_MUTATION_FILE`; evidence lives at
+  `.aiwg/testing/cockpit-real-codex-mutation-2026-06-19.md/.json`, and the
+  verified mutation artifact is
+  `.aiwg/testing/cockpit-pty-mutation-2026-06-19.txt`.
+- Claude launched inside the same real host-session path and also returned
+  `AIWG_COCKPIT_LIVE_OK` plus `issue-audit`; evidence lives at
+  `.aiwg/testing/cockpit-real-claude-matrix-2026-06-19.md/.json`.
+- The previous Claude login-required blocker remains linked as
+  roctinam/agentic-sandbox#499 for upstream regression tracking, but it was not
+  reproduced by this isolated host proof.
 - Docker/container target remains blocked upstream by secure transport material
   provisioning for the post-`AGENT_SECRET` model. Tracked in
   roctinam/agentic-sandbox#497.
@@ -225,7 +248,7 @@ provider session path instead of only the mock or shell plumbing.
 
 ## Status
 
-Built and browser-verified against the bundled mock and wired for a real
+Built and browser-verified, with release evidence wired to a real
 agentic-sandbox executor through `AIWG_COCKPIT_EXECUTOR_URL`. The host target
 (agentic-sandbox#460) and direct/managed multiplexer sessions
 (agentic-sandbox#461) have landed upstream; the Bridge seam is now the

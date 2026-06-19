@@ -5,7 +5,7 @@
  * Strict local/release mode: set AIWG_COCKPIT_LIVE_REQUIRED=1 to fail instead.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -18,10 +18,19 @@ const EXECUTOR_URL =
   'http://127.0.0.1:8122';
 const REQUIRED = process.env.AIWG_COCKPIT_LIVE_REQUIRED === '1';
 const MATRIX_REQUIRED = process.env.AIWG_COCKPIT_LIVE_MATRIX_REQUIRED === '1';
+const MATRIX_TARGETS = (process.env.AIWG_COCKPIT_LIVE_MATRIX_TARGETS || 'host,container,vm')
+  .split(',')
+  .map((target) => target.trim())
+  .filter(Boolean);
 const ALLOW_MOCK_MATRIX = process.env.AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX === '1';
 const WORKLOAD_PROVIDER = (process.env.AIWG_COCKPIT_LIVE_PROVIDER || '').toLowerCase();
 const WORKLOAD_MARKER = 'AIWG_COCKPIT_LIVE_OK';
 const DISCOVERY_EXPECT = process.env.AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT || 'issue-audit';
+const startedAt = new Date().toISOString();
+const MUTATION_FILE = process.env.AIWG_COCKPIT_LIVE_MUTATION_FILE || '';
+const MUTATION_MARKER = 'AIWG_COCKPIT_MUTATION_OK';
+const MUTATION_TEXT = process.env.AIWG_COCKPIT_LIVE_MUTATION_TEXT ||
+  `cockpit-live-mutation ${startedAt}`;
 const WORKLOAD_TEXT = process.env.AIWG_COCKPIT_LIVE_WORKLOAD ||
   [
     'AIWG Cockpit live matrix check: use AIWG skill discovery from this running agent session.',
@@ -30,7 +39,6 @@ const WORKLOAD_TEXT = process.env.AIWG_COCKPIT_LIVE_WORKLOAD ||
   ].join(' ');
 const EXECUTOR_VERSION_HINT = process.env.AIWG_COCKPIT_EXECUTOR_VERSION || '';
 const REPORT_BASE = resolve(process.env.AIWG_COCKPIT_LIVE_REPORT ?? 'test-results/cockpit-live-uat');
-const startedAt = new Date().toISOString();
 
 interface Evidence {
   name: string;
@@ -133,17 +141,28 @@ function providerWorkloadCommand(provider: string, prompt: string): string {
   throw new Error(`unsupported live workload provider: ${provider}`);
 }
 
+function mutationCommand(): string {
+  if (!MUTATION_FILE) throw new Error('AIWG_COCKPIT_LIVE_MUTATION_FILE is not set');
+  return [
+    `mkdir -p ${shellQuote(dirname(MUTATION_FILE))}`,
+    `printf '%s\\n' ${shellQuote(MUTATION_TEXT)} > ${shellQuote(MUTATION_FILE)}`,
+    `printf '%s\\n' ${shellQuote(MUTATION_MARKER)}`,
+  ].join(' && ');
+}
+
 async function websocketSessionProbe(attachUrl: string, role: 'observer' | 'controller', workload?: string): Promise<{
   roleAssigned: boolean;
   output: string;
+  sawMutationMarker: boolean;
 }> {
   const ws = new WebSocket(attachUrl, 'pty-ws.v1');
   let roleAssigned = false;
   let output = '';
-  const done = new Promise<{ roleAssigned: boolean; output: string }>((resolve, reject) => {
+  let sawMutationMarker = false;
+  const done = new Promise<{ roleAssigned: boolean; output: string; sawMutationMarker: boolean }>((resolve, reject) => {
     const timeout = setTimeout(() => {
       ws.close();
-      resolve({ roleAssigned, output });
+      resolve({ roleAssigned, output, sawMutationMarker });
     }, workload ? 60_000 : 6_000);
     ws.addEventListener('open', () => undefined);
     ws.addEventListener('error', () => {
@@ -168,17 +187,29 @@ async function websocketSessionProbe(attachUrl: string, role: 'observer' | 'cont
         if (!workload && output.trim().length > 0) {
           clearTimeout(timeout);
           ws.close();
-          resolve({ roleAssigned, output });
+          resolve({ roleAssigned, output, sawMutationMarker });
+        }
+        if (workload && output.includes(MUTATION_MARKER)) {
+          sawMutationMarker = true;
+          clearTimeout(timeout);
+          ws.close();
+          resolve({ roleAssigned, output, sawMutationMarker });
         }
         if (workload && output.includes(WORKLOAD_MARKER) && output.includes(DISCOVERY_EXPECT)) {
           clearTimeout(timeout);
           ws.close();
-          resolve({ roleAssigned, output });
+          resolve({ roleAssigned, output, sawMutationMarker });
         }
       }
       if (msg.op === 'keyframe') {
         for (const frame of msg.payload?.frames ?? []) {
           output += Buffer.from(String(frame.payload?.data ?? ''), 'base64').toString('utf8');
+        }
+        if (workload && output.includes(MUTATION_MARKER)) {
+          sawMutationMarker = true;
+          clearTimeout(timeout);
+          ws.close();
+          resolve({ roleAssigned, output, sawMutationMarker });
         }
       }
       if (msg.op === 'error' && role === 'controller') {
@@ -191,6 +222,31 @@ async function websocketSessionProbe(attachUrl: string, role: 'observer' | 'cont
   return done;
 }
 
+async function verifyPtyMutation(attachUrl: string, targetDetail: string): Promise<string> {
+  await rm(MUTATION_FILE, { force: true });
+  const mutated = await websocketSessionProbe(attachUrl, 'controller', mutationCommand());
+  if (!mutated.roleAssigned) throw new Error(`${targetDetail}; mutation drive attach not granted`);
+  if (!mutated.sawMutationMarker) {
+    throw new Error(`${targetDetail}; mutation command did not emit ${MUTATION_MARKER}`);
+  }
+  let actual = '';
+  let lastError = '';
+  for (let i = 0; i < 40; i += 1) {
+    try {
+      actual = await readFile(MUTATION_FILE, 'utf8');
+      break;
+    } catch (err) {
+      lastError = String((err as Error).message || err);
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
+  if (!actual) throw new Error(`${targetDetail}; mutation file was not readable: ${lastError}`);
+  if (actual.trim() !== MUTATION_TEXT) {
+    throw new Error(`${targetDetail}; mutation file content mismatch`);
+  }
+  return `pty mutation verified at ${MUTATION_FILE}`;
+}
+
 async function writeReport({ reachable, reason }: { reachable: boolean; reason: string }) {
   const finishedAt = new Date().toISOString();
   const result = reachable
@@ -201,8 +257,11 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     executor_url: EXECUTOR_URL,
     required: REQUIRED,
     matrix_required: MATRIX_REQUIRED,
+    matrix_targets: MATRIX_TARGETS,
     provider: WORKLOAD_PROVIDER || null,
     discovery_expect: DISCOVERY_EXPECT,
+    mutation_file: MUTATION_FILE || null,
+    mutation_marker: MUTATION_FILE ? MUTATION_MARKER : null,
     result,
     started_at: startedAt,
     finished_at: finishedAt,
@@ -220,8 +279,10 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     `- Executor: ${EXECUTOR_URL}`,
     `- Required: ${REQUIRED ? 'yes' : 'no'}`,
     `- Matrix required: ${MATRIX_REQUIRED ? 'yes' : 'no'}`,
+    `- Matrix targets: ${MATRIX_TARGETS.join(', ')}`,
     `- Workload provider: ${WORKLOAD_PROVIDER || 'not specified'}`,
     `- Discovery expectation: ${DISCOVERY_EXPECT}`,
+    MUTATION_FILE ? `- Mutation file: ${MUTATION_FILE}` : '',
     `- Result: ${result}`,
     `- Started: ${startedAt}`,
     `- Finished: ${finishedAt}`,
@@ -359,7 +420,11 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
     const inv = await bridgeJson(base, token, '/api/inventory');
     expect(inv.status).toBe(200);
     const instances = inv.body.instances ?? [];
-    const requiredTargets: Array<'host' | 'container' | 'vm'> = ['host', 'container', 'vm'];
+    const requiredTargets = MATRIX_TARGETS as Array<'host' | 'container' | 'vm'>;
+    const unsupportedTargets = requiredTargets.filter((target) => !['host', 'container', 'vm'].includes(target));
+    if (requiredTargets.length === 0 || unsupportedTargets.length > 0) {
+      throw new Error(`AIWG_COCKPIT_LIVE_MATRIX_TARGETS must contain one or more of host,container,vm; unsupported=${unsupportedTargets.join(',')}`);
+    }
     const targetErrors: string[] = [];
     for (const target of requiredTargets) {
       try {
@@ -407,7 +472,31 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
         if (!driven.output.includes(DISCOVERY_EXPECT)) {
           throw new Error(`${targetDetail}; provider workload did not prove AIWG discovery result ${DISCOVERY_EXPECT}`);
         }
-        record(`matrix ${target}`, 'pass', `${targetDetail}; provider CLI workload emitted ${WORKLOAD_MARKER} and discovery result ${DISCOVERY_EXPECT}; output_bytes=${driven.output.length}`);
+        let mutationDetail = '';
+        if (MUTATION_FILE) {
+          const mutationStart = await bridgeJson(
+            base,
+            token,
+            `/api/instances/${encodeURIComponent(instance.id)}/sessions?mode=${encodeURIComponent(backend.mode ?? 'direct')}&backend=${encodeURIComponent(backend.backend ?? 'native')}`,
+            { method: 'POST' },
+          );
+          if (![200, 201].includes(mutationStart.status)) {
+            throw new Error(`${targetDetail}; mutation session create returned ${mutationStart.status}`);
+          }
+          if (!mutationStart.body.attach_url) {
+            throw new Error(`${targetDetail}; mutation session create returned no attach_url`);
+          }
+          const mutationObserved = await websocketSessionProbe(mutationStart.body.attach_url, 'observer');
+          if (!mutationObserved.roleAssigned) {
+            throw new Error(`${targetDetail}; mutation observe attach not granted`);
+          }
+          mutationDetail = await verifyPtyMutation(mutationStart.body.attach_url, targetDetail);
+        }
+        record(
+          `matrix ${target}`,
+          'pass',
+          `${targetDetail}; provider CLI workload emitted ${WORKLOAD_MARKER} and discovery result ${DISCOVERY_EXPECT}; output_bytes=${driven.output.length}${mutationDetail ? `; ${mutationDetail}` : ''}`,
+        );
       } catch (err) {
         const detail = String((err as Error).message || err);
         record(`matrix ${target}`, 'fail', detail);

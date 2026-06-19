@@ -1,0 +1,36 @@
+{
+  "issue": 1617,
+  "executor_url": "http://127.0.0.1:8122",
+  "required": true,
+  "result": "pass",
+  "started_at": "2026-06-17T23:16:32.146Z",
+  "finished_at": "2026-06-17T23:16:32.239Z",
+  "conformance_report": null,
+  "evidence": [
+    {
+      "name": "executor probe",
+      "status": "pass",
+      "detail": "reachable at http://127.0.0.1:8122"
+    },
+    {
+      "name": "Bridge health",
+      "status": "pass",
+      "detail": "Bridge reported executor http://127.0.0.1:8122"
+    },
+    {
+      "name": "inventory posture",
+      "status": "pass",
+      "detail": "1 instance(s) with normalized posture fields"
+    },
+    {
+      "name": "session metadata",
+      "status": "skip",
+      "detail": "sessions endpoint returned 502 or no sessions"
+    },
+    {
+      "name": "task projection",
+      "status": "skip",
+      "detail": "running endpoint returned 502"
+    }
+  ]
+}

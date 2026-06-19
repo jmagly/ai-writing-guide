@@ -8,7 +8,7 @@ const mock = createExecutor();
 await new Promise((r) => mock.listen(0, '127.0.0.1', r));
 const executorUrl = `http://127.0.0.1:${mock.address().port}`;
 
-const bridge = createBridge({ executorUrl });
+const bridge = createBridge({ executorUrl, allowMockExecutor: true });
 await new Promise((r) => bridge.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${bridge.address().port}`;
 // authed fetch helper — every /api/ call carries the per-launch bearer token

@@ -56,6 +56,7 @@
 ## Tooling / CI
 - Unit/integration/e2e in the AIWG TypeScript test harness; a11y via automated scanner; security lints (no-cred-storage, CSP, dep-source pinning) wired into CI; cross-OS matrix in CI (mirrors NFR-06).
 - Capability-parity checklist runs per integrated stack and is an explicit ABM gate artifact.
+- Cockpit real-integration UAT is defined in `.aiwg/testing/cockpit-real-integration-uat-runbook.md`. It separates mock baseline, real executor smoke, Codex provider UAT, Claude provider UAT, strict host/container/VM matrix, and manual operator workflow UAT. Mock-only success is not release evidence; provider evidence must use a real managed target session and preserve markdown/JSON reports under `.aiwg/testing/`.
 
 ## Exit criteria (ABM gate evidence)
 - T-ISO-01, T-PAR-01, and the T-SEC criticals are green for all in-scope stacks; a11y/perf/portability targets met or explicitly waived with rationale; spikes S-1..S-3 resolved or scoped.

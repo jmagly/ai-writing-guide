@@ -42,11 +42,17 @@ export function App() {
     let cancelled = false;
     const load = async () => {
       try {
-        const [health, inv, run, apr] = await Promise.all([
+        // Health + inventory decide "Bridge live". Running + approvals are
+        // enrichment that a real executor may not expose (#1638) — degrade each
+        // independently so the header stays live instead of "Bridge checking".
+        const [health, inv] = await Promise.all([
           api<{ executor_url: string }>('/api/health'),
           api<{ instances: Instance[] }>('/api/inventory'),
-          api<{ count: number }>('/api/running'),
-          api<{ approvals: Approval[] }>('/api/approvals?status=pending'),
+        ]);
+        if (cancelled) return;
+        const [run, apr] = await Promise.all([
+          api<{ count: number }>('/api/running').catch(() => ({ count: 0 })),
+          api<{ approvals: Approval[] }>('/api/approvals?status=pending').catch(() => ({ approvals: [] as Approval[] })),
         ]);
         if (cancelled) return;
         const kinds = inv.instances.map((i) => i.runtime_posture.kind);

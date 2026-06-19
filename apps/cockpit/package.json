@@ -32,7 +32,6 @@
     "web"
   ],
   "scripts": {
-    "start:mock": "node mock-executor/src/server.mjs",
     "start:bridge": "node bridge/src/server.mjs",
     "build:web": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build",
     "pack:dry": "npm pack --dry-run",

@@ -1,0 +1,22 @@
+# Cockpit Live UAT Report
+- Issue: #1621
+- Executor: http://127.0.0.1:18322
+- Required: yes
+- Matrix required: yes
+- Matrix targets: host
+- Workload provider: codex
+- Discovery expectation: issue-audit
+- Mutation file: /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-pty-mutation-2026-06-19.txt
+- Result: pass
+- Started: 2026-06-19T16:53:08.765Z
+- Finished: 2026-06-19T16:53:09.483Z
+- agentic-sandbox-conformance report: not provided
+- Executor identity: {"version_hint":"agentic-sandbox-4cb1c90"}
+## Evidence
+- PASS executor probe: reachable at http://127.0.0.1:18322
+- PASS executor identity: {"version_hint":"agentic-sandbox-4cb1c90"}
+- PASS Bridge health: Bridge reported executor http://127.0.0.1:18322
+- PASS inventory posture: 1 instance(s) with normalized posture fields
+- PASS session metadata: 2 session(s) reported attach metadata
+- SKIP task projection: running endpoint returned 502
+- PASS matrix host: target=host; instance=019ee0ca-a139-7962-9aad-f4f9421e0024; runtime=host; backend=managed/tmux; provider=codex; provider CLI workload emitted AIWG_COCKPIT_LIVE_OK and discovery result issue-audit; output_bytes=328; pty mutation verified at /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-pty-mutation-2026-06-19.txt

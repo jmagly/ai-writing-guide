@@ -1,0 +1,23 @@
+# Cockpit Live UAT Report
+- Issue: #1621
+- Executor: http://127.0.0.1:18232
+- Required: yes
+- Matrix required: yes
+- Workload provider: claude
+- Discovery expectation: issue-audit
+- Result: fail
+- Started: 2026-06-19T16:39:02.953Z
+- Finished: 2026-06-19T16:39:04.383Z
+- agentic-sandbox-conformance report: not provided
+- Executor identity: {"version_hint":"agentic-sandbox-4cb1c90"}
+## Evidence
+- PASS executor probe: reachable at http://127.0.0.1:18232
+- PASS executor identity: {"version_hint":"agentic-sandbox-4cb1c90"}
+- PASS Bridge health: Bridge reported executor http://127.0.0.1:18232
+- PASS inventory posture: 1 instance(s) with normalized posture fields
+- PASS session metadata: 1 session(s) reported attach metadata
+- SKIP task projection: running endpoint returned 502
+- PASS matrix host: target=host; instance=019ee0bf-6747-7462-852e-59cfebf11f9c; runtime=host; backend=managed/tmux; provider=claude; provider CLI workload emitted AIWG_COCKPIT_LIVE_OK and discovery result issue-audit; output_bytes=356
+- FAIL matrix container: missing required live target: container
+- FAIL matrix vm: missing required live target: vm
+- FAIL required host/container/vm matrix executes real provider-backed session workloads: required live matrix failed for 2/3 target(s): missing required live target: container | missing required live target: vm

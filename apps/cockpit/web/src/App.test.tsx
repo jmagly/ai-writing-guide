@@ -62,6 +62,33 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getByText(/host ✓ · docker - · vm -/)).toBeTruthy();
   });
 
+  it('stays connected when the executor exposes no running/approvals admin surface (#1638)', async () => {
+    // Real agentic-sandbox has no /running or /approvals admin route, so those
+    // Bridge endpoints error. Inventory + health succeed. The header must stay
+    // "Bridge live" and Home must bind inventory — not collapse to the
+    // "No stack connected" / "Bridge checking" empty state.
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [instance('host-1', 'host', 'Codex host')] });
+      if (url.includes('/api/running')) return errorResponse(502);
+      if (url.includes('/api/approvals')) return errorResponse(404);
+      if (url.includes('/api/cost')) return errorResponse(404);
+      return jsonResponse({});
+    }) as typeof fetch;
+
+    render(<App />);
+
+    // Header chrome stays live (enrichment failures degrade independently).
+    expect(await screen.findByText('Bridge live')).toBeTruthy();
+    expect(screen.getByText('1 stacks')).toBeTruthy();
+    expect(screen.getByText('0 running')).toBeTruthy();
+    expect(screen.getByText('0 approvals')).toBeTruthy();
+    // Home binds inventory and renders the operator wall, not the empty state.
+    expect(await screen.findByRole('heading', { name: /eleven-stack operator wall/i })).toBeTruthy();
+    expect(screen.queryByText(/no stack connected/i)).toBeNull();
+  });
+
   it('renders the radial operator-wall topology from live status data', async () => {
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -171,6 +198,13 @@ describe('App shell (rendered DOM)', () => {
 function jsonResponse(body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+function errorResponse(status: number): Response {
+  return new Response(JSON.stringify({ error: 'unavailable' }), {
+    status,
     headers: { 'Content-Type': 'application/json' },
   });
 }

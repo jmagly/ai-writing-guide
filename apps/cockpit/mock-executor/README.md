@@ -1,14 +1,19 @@
 # @aiwg/cockpit-mock-executor
 
-Wire-faithful mock of the **agentic-sandbox A2A v2** three-surface executor, so AIWG Cockpit (the Bridge + UI) can be built **in parallel** with the real executor work (agentic-sandbox#460 host target, #461 sessions). Dependency-free (Node built-in `http`/`ws`), validated against [`agentic-sandbox-conformance`](https://git.integrolabs.net/roctinam/agentic-sandbox-conformance).
+Wire-faithful mock of the **agentic-sandbox A2A v2** three-surface executor for
+automated Cockpit tests only. Human dev/test launches must use a real
+agentic-sandbox executor through `AIWG_COCKPIT_EXECUTOR_URL`; the Bridge refuses
+mock-like executors unless an automated harness explicitly sets
+`AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR=1`. Dependency-free (Node built-in `http`/`ws`),
+validated against [`agentic-sandbox-conformance`](https://git.integrolabs.net/roctinam/agentic-sandbox-conformance).
 
 Contract: `.aiwg/architecture/cockpit-instance-control-interface.md`. Not published in base `aiwg` npm (only `apps/web/dist` is); becomes part of `@aiwg/cockpit` when workspaces land (roctinam/aiwg#1593).
 
-## Run
+## Automated Test Use
 
 ```bash
-node src/server.mjs            # listens on 127.0.0.1:8122
-node src/smoke.mjs             # self-contained smoke test
+AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR=1 node src/server.mjs  # listens on 127.0.0.1:8122
+node src/smoke.mjs                                      # self-contained smoke test
 ```
 
 AgentCard: `http://127.0.0.1:8122/agents/<instance_id>/.well-known/agent-card.json`

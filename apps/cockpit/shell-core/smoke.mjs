@@ -3,13 +3,19 @@
 // resolve token+url, confirm liveness, authed call works, unauthed is rejected.
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { connect, webviewUrl, api } from './runtime.mjs';
 
 const BRIDGE = fileURLToPath(new URL('../bridge/src/server.mjs', import.meta.url));
 const PORT = 8147;
+const home = await mkdtemp(join(tmpdir(), 'cockpit-shell-smoke-'));
+process.env.HOME = home;
+
+const { connect, webviewUrl, api } = await import('./runtime.mjs');
 const child = spawn(process.execPath, [BRIDGE], {
-  env: { ...process.env, PORT: String(PORT), AIWG_COCKPIT_EXECUTOR_URL: 'http://127.0.0.1:1' }, // no live executor needed for the handshake
+  env: { ...process.env, HOME: home, PORT: String(PORT), AIWG_COCKPIT_EXECUTOR_URL: 'http://127.0.0.1:1' }, // no live executor needed for the handshake
   stdio: 'ignore',
 });
 
@@ -26,4 +32,5 @@ try {
   console.log(`SMOKE OK — shell handshake: runtime file -> token+url (:${rt.port}) -> authed Bridge, gate enforced`);
 } finally {
   child.kill();
+  await rm(home, { recursive: true, force: true });
 }

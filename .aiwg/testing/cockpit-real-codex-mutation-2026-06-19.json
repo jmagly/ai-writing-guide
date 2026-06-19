@@ -1,0 +1,57 @@
+{
+  "issue": 1621,
+  "executor_url": "http://127.0.0.1:18322",
+  "required": true,
+  "matrix_required": true,
+  "matrix_targets": [
+    "host"
+  ],
+  "provider": "codex",
+  "discovery_expect": "issue-audit",
+  "mutation_file": "/home/roctinam/dev/aiwg/.aiwg/testing/cockpit-pty-mutation-2026-06-19.txt",
+  "mutation_marker": "AIWG_COCKPIT_MUTATION_OK",
+  "result": "pass",
+  "started_at": "2026-06-19T16:53:08.765Z",
+  "finished_at": "2026-06-19T16:53:09.483Z",
+  "conformance_report": null,
+  "executor_identity": {
+    "version_hint": "agentic-sandbox-4cb1c90"
+  },
+  "evidence": [
+    {
+      "name": "executor probe",
+      "status": "pass",
+      "detail": "reachable at http://127.0.0.1:18322"
+    },
+    {
+      "name": "executor identity",
+      "status": "pass",
+      "detail": "{\"version_hint\":\"agentic-sandbox-4cb1c90\"}"
+    },
+    {
+      "name": "Bridge health",
+      "status": "pass",
+      "detail": "Bridge reported executor http://127.0.0.1:18322"
+    },
+    {
+      "name": "inventory posture",
+      "status": "pass",
+      "detail": "1 instance(s) with normalized posture fields"
+    },
+    {
+      "name": "session metadata",
+      "status": "pass",
+      "detail": "2 session(s) reported attach metadata"
+    },
+    {
+      "name": "task projection",
+      "status": "skip",
+      "detail": "running endpoint returned 502"
+    },
+    {
+      "name": "matrix host",
+      "status": "pass",
+      "detail": "target=host; instance=019ee0ca-a139-7962-9aad-f4f9421e0024; runtime=host; backend=managed/tmux; provider=codex; provider CLI workload emitted AIWG_COCKPIT_LIVE_OK and discovery result issue-audit; output_bytes=328; pty mutation verified at /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-pty-mutation-2026-06-19.txt"
+    }
+  ]
+}

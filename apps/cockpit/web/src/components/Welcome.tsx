@@ -43,12 +43,22 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
   useEffect(() => {
     (async () => {
       try {
-        const inv = await api<{ instances: Instance[] }>('/api/inventory');
-        const run = await api<{ count: number; running: RunningTask[] }>('/api/running');
-        const apr = await api<{ approvals: Approval[] }>('/api/approvals?status=pending');
-        const health = await api<{ executor_url: string }>('/api/health');
-        const cost = await api<Cost>('/api/cost').catch(() => null);
-        setSt({ instances: inv.instances, running: run.running, approvals: apr.approvals, cost, executor: health.executor_url, connected: inv.instances.length > 0 });
+        // Inventory + health are load-bearing: they decide whether a stack is
+        // connected. Fetch them first and let a failure fall through to the
+        // disconnected state.
+        const [inv, health] = await Promise.all([
+          api<{ instances: Instance[] }>('/api/inventory'),
+          api<{ executor_url: string }>('/api/health'),
+        ]);
+        // Running / approvals / cost are enrichment. A real executor may expose
+        // no such admin surface (#1638), so each degrades to empty on its own
+        // and must never blank the whole Home view.
+        const [run, apr, cost] = await Promise.all([
+          api<{ count: number; running: RunningTask[] }>('/api/running').catch(() => ({ running: [] as RunningTask[] })),
+          api<{ approvals: Approval[] }>('/api/approvals?status=pending').catch(() => ({ approvals: [] as Approval[] })),
+          api<Cost>('/api/cost').catch(() => null),
+        ]);
+        setSt({ instances: inv.instances, running: run.running ?? [], approvals: apr.approvals ?? [], cost, executor: health.executor_url, connected: inv.instances.length > 0 });
       } catch {
         setSt({ instances: [], running: [], approvals: [], cost: null, executor: '', connected: false });
       }
@@ -104,8 +114,8 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
         : !st.connected ? (
           <div className="card warn-card">
             <h3>No stack connected</h3>
-            <p>Cockpit talks to an agentic-sandbox executor. Start one (or the bundled mock) and point the Bridge at it:</p>
-            <pre className="terminal">node apps/cockpit/mock-executor/src/server.mjs   # or your agentic-sandbox{'\n'}node apps/cockpit/bridge/src/server.mjs</pre>
+            <p>Cockpit talks to a real agentic-sandbox executor. Start the executor, then point the Bridge at it:</p>
+            <pre className="terminal">AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:&lt;executor-port&gt; node apps/cockpit/bridge/src/server.mjs</pre>
           </div>
         ) : (
           <>
