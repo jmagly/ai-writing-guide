@@ -251,13 +251,17 @@ describe('wizard MVP plan', () => {
   });
 
   it('reports obvious wrong-folder cases without writing files', () => {
+    // Use '/' rather than '/tmp': both are "unsuitable" deploy roots, but the
+    // world-writable /tmp can hold a stray .git on dev boxes that the bounded
+    // parent walk picks up as a false project signal. '/' is reliably
+    // signal-free and its walk cannot escape upward. #1629.
     const plan = buildWizardPlan({
       dryRun: true,
       json: true,
       provider: 'codex',
       framework: 'sdlc',
       goal: '',
-      projectRoot: '/tmp',
+      projectRoot: '/',
     });
 
     expect(plan.writes_files).toBe(false);

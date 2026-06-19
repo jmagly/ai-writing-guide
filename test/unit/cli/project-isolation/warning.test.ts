@@ -16,18 +16,25 @@ import {
 } from '../../../../src/cli/project-isolation/warning.js';
 
 describe('maybeWarnProjectIsolation', () => {
+  let base: string;
   let root: string;
   let writes: string[];
   let activity: Array<{ op: string; summary: string }>;
 
   beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'aiwg-warn-'));
+    base = mkdtempSync(join(tmpdir(), 'aiwg-warn-'));
+    // Nest the working dir deep enough that detectProjectSignal's bounded
+    // MAX_PARENT_DEPTH=3 parent walk stays inside this temp tree and never
+    // reaches the shared /tmp (which may contain a stray .git on dev boxes,
+    // contaminating the no-signal expectation). #1629.
+    root = join(base, 'p1', 'p2', 'p3', 'work');
+    mkdirSync(root, { recursive: true });
     writes = [];
     activity = [];
   });
 
   afterEach(() => {
-    rmSync(root, { recursive: true, force: true });
+    rmSync(base, { recursive: true, force: true });
   });
 
   const noopDelay = async (_ms: number) => ({ cancelled: false });

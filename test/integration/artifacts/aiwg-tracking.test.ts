@@ -167,28 +167,17 @@ describe('.aiwg/ Tracking and Distribution (integration)', () => {
     });
 
     it('should not contain binary files', () => {
-      function findBinaries(dir: string): string[] {
-        const binaries: string[] = [];
-        if (!fs.existsSync(dir)) return binaries;
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const entry of entries) {
-          const full = path.join(dir, entry.name);
-          if (entry.isDirectory()) {
-            if (entry.name.startsWith('.')) continue;
-            binaries.push(...findBinaries(full));
-          } else {
-            const ext = path.extname(entry.name).toLowerCase();
-            const binaryExts = ['.exe', '.dll', '.so', '.dylib', '.bin', '.zip', '.tar', '.gz', '.png', '.jpg', '.jpeg'];
-            if (binaryExts.includes(ext)) {
-              binaries.push(full);
-            }
-          }
-        }
-        return binaries;
-      }
-
-      const binaries = findBinaries(AIWG_DIR);
-      expect(binaries, `Found binary files: ${binaries.join(', ')}`).toHaveLength(0);
+      // Scope to git-tracked files only. This suite validates content
+      // "tracked in git" (see file header); the no-binary-blobs rule targets
+      // committed blobs. Untracked local scratch (e.g. .aiwg/working/*.png)
+      // is out of scope and must not fail the test on a dev working tree. #1629.
+      const binaryExts = ['.exe', '.dll', '.so', '.dylib', '.bin', '.zip', '.tar', '.gz', '.png', '.jpg', '.jpeg'];
+      const tracked = execSync('git ls-files -z .aiwg', { cwd: REPO_ROOT })
+        .toString('utf-8')
+        .split('\0')
+        .filter(Boolean);
+      const binaries = tracked.filter((p) => binaryExts.includes(path.extname(p).toLowerCase()));
+      expect(binaries, `Found tracked binary files: ${binaries.join(', ')}`).toHaveLength(0);
     });
   });
 
