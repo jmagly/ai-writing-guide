@@ -430,6 +430,31 @@ async function listInstanceTasks(executorUrl, instanceId) {
 /** Running board derived from active A2A tasks across running instances (#1639).
  *  An instance with no reachable task surface contributes nothing rather than
  *  failing the whole board (so a real executor stays usable). */
+// Loadout catalog passthrough (#1641). The real executor exposes GET /api/v1/loadouts
+// (and v2 /loadouts); the mock mirrors it under /admin/loadouts. Normalized to a flat
+// {id,label,description,runtimes} list so the start-session picker can offer the full set
+// (vs. only echoing the instance's own loadout field).
+async function getLoadouts(executorUrl) {
+  const { target, body } = await fetchJsonFirst([
+    `${executorUrl}/api/v1/loadouts`,
+    `${executorUrl}/api/v2/loadouts`,
+    `${executorUrl}/loadouts`,
+    `${executorUrl}/admin/loadouts`,
+  ]);
+  const raw = asArrayFromEnvelope(body, ['loadouts', 'items', 'data']);
+  const loadouts = raw.map((l) => {
+    if (typeof l === 'string') return { id: l, label: l };
+    const id = l.id ?? l.name ?? l.loadout ?? l.slug;
+    return {
+      id,
+      label: l.label ?? l.display_name ?? l.displayName ?? id,
+      description: l.description ?? l.summary,
+      runtimes: l.runtimes ?? l.runtime_kinds ?? l.supported_runtimes,
+    };
+  }).filter((l) => l.id);
+  return { source: executorUrl, loadouts_path: new URL(target).pathname, count: loadouts.length, loadouts };
+}
+
 async function getRunning(executorUrl) {
   const instances = (await getInventory(executorUrl)).instances;
   const running = [];
@@ -556,6 +581,7 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
       }
       if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(upstreamUrl));
       if (url.pathname === '/api/running') return json(res, 200, await getRunning(upstreamUrl));
+      if (url.pathname === '/api/loadouts') return json(res, 200, await getLoadouts(upstreamUrl));
       if (url.pathname === '/api/sessions') {
         const inst = url.searchParams.get('instance');
         if (!inst) return json(res, 400, { error: 'instance_required' });

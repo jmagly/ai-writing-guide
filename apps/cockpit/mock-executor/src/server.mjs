@@ -6,7 +6,7 @@
 // against roctinam/agentic-sandbox-conformance.
 import http from 'node:http';
 import { buildAgentCard } from './agent-card.mjs';
-import { listInstances, getInstance, DEFAULT_INSTANCE, setInstanceState, destroyInstance, listApprovals, resolveApproval, costReport } from './store.mjs';
+import { listInstances, getInstance, DEFAULT_INSTANCE, setInstanceState, destroyInstance, listApprovals, resolveApproval, costReport, listLoadouts } from './store.mjs';
 import { handleSend, handleGetTask, handleListTasks, handleCancel, handleSubscribe, runningTasks, seedRunningTasks } from './a2a.mjs';
 import { attachPtyWs, listSessions, seedDemoSessions, createSession } from './pty-ws.mjs';
 
@@ -51,6 +51,9 @@ export function createExecutor() {
 
     // --- Admin: running tasks across instances (for the Cockpit running view) ---
     if (path === '/admin/running' && req.method === 'GET') return json(res, 200, { running: runningTasks() });
+
+    // --- Loadout catalog (#1641) — real exposes /api/v1/loadouts; mock mirrors here ---
+    if (path === '/admin/loadouts' && req.method === 'GET') return json(res, 200, { loadouts: listLoadouts() });
 
     // --- Admin: HITL approval queue (hitl-prompt/v1; UC-009) ---
     if (path === '/admin/approvals' && req.method === 'GET') return json(res, 200, { approvals: listApprovals(url.searchParams.get('status') || undefined) });

@@ -10,6 +10,7 @@ import { Approvals } from './components/Approvals';
 import { Explore } from './components/Explore';
 import { Library } from './components/Library';
 import { Actions } from './components/Actions';
+import { StartSessionModal } from './components/StartSessionModal';
 
 const TABS = [
   { id: 'welcome', label: 'Home' },
@@ -37,6 +38,8 @@ export function App() {
   const session = useSession();
   const [composer, setComposer] = useState('');
   const [chrome, setChrome] = useState<ChromeStatus | null>(null);
+  const [startOpen, setStartOpen] = useState(false);
+  const [startInst, setStartInst] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,17 +77,11 @@ export function App() {
     return () => { cancelled = true; window.clearInterval(timer); };
   }, []);
 
-  // The onboarding primary verb: create a session on a running instance and drop into it.
-  const startSession = async () => {
-    try {
-      const inv = await api<{ instances: Instance[] }>('/api/inventory');
-      const inst = inv.instances.find((i) => i.state === 'running') ?? inv.instances[0];
-      if (!inst) { alert('No stack connected — start an executor first.'); return; }
-      const s = await api<{ id: string; attach_url: string }>(`/api/instances/${encodeURIComponent(inst.id)}/sessions`, { method: 'POST' });
-      session.attach(s.attach_url);
-      setTab('sessions');
-    } catch (e) { alert((e as Error).message); }
-  };
+  // The onboarding primary verb: open the start-session picker (#1640/#1641). The picker
+  // is the single home for both this dashboard verb and the Sessions-tab Start button —
+  // neither launches blind with defaults, neither silently clobbers an attached session,
+  // and failures render inline in the picker instead of an alert().
+  const requestStart = (instanceId?: string) => { setStartInst(instanceId); setStartOpen(true); };
   const copyLaunchCommand = async () => {
     await navigator.clipboard?.writeText('aiwg cockpit');
   };
@@ -108,7 +105,7 @@ export function App() {
             </>
           )}
         </div>
-        <button className="meta" onClick={startSession}>▸ Start a session</button>
+        <button className="meta" onClick={() => requestStart()}>▸ Start a session</button>
         <button className="meta" onClick={copyLaunchCommand}>Copy CLI</button>
       </header>
       <div role="tablist" aria-label="Cockpit views">
@@ -120,12 +117,12 @@ export function App() {
         ))}
       </div>
       <main>
-        <Panel id="welcome" tab={tab}><Welcome onStartSession={startSession} goTo={(t) => setTab(t as TabId)} /></Panel>
+        <Panel id="welcome" tab={tab}><Welcome onStartSession={() => requestStart()} goTo={(t) => setTab(t as TabId)} /></Panel>
         <Panel id="inventory" tab={tab}><Inventory /></Panel>
         <Panel id="running" tab={tab}><Running /></Panel>
         {/* Sessions stays mounted so the WebSocket survives tab switches */}
         <section id="panel-sessions" role="tabpanel" aria-labelledby="tab-sessions" hidden={tab !== 'sessions'}>
-          <Sessions session={session} composer={composer} setComposer={setComposer} />
+          <Sessions session={session} composer={composer} setComposer={setComposer} onRequestStart={requestStart} />
         </section>
         <Panel id="approvals" tab={tab}><Approvals /></Panel>
         <Panel id="explore" tab={tab}><Explore /></Panel>
@@ -136,6 +133,13 @@ export function App() {
           <Actions session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />
         </Panel>
       </main>
+      <StartSessionModal
+        open={startOpen}
+        onClose={() => setStartOpen(false)}
+        session={session}
+        onStarted={() => setTab('sessions')}
+        initialInstanceId={startInst}
+      />
     </>
   );
 }

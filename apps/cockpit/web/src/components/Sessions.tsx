@@ -5,7 +5,7 @@ import { CapabilitySearch } from './CapabilitySearch';
 import type { Instance, SessionInfo, CapabilityResult } from '../types';
 import type { SessionApi } from '../useSession';
 
-export function Sessions({ session, composer, setComposer }: { session: SessionApi; composer: string; setComposer: (v: string) => void }) {
+export function Sessions({ session, composer, setComposer, onRequestStart }: { session: SessionApi; composer: string; setComposer: (v: string) => void; onRequestStart: (instanceId?: string) => void }) {
   const [instances, setInstances] = useState<Instance[]>([]);
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [instId, setInstId] = useState('');
@@ -55,15 +55,9 @@ export function Sessions({ session, composer, setComposer }: { session: SessionA
       setBackendKey(next ? `${next.mode}:${next.backend}` : '');
     }
   }, [backendKey, current]);
-  const startSelected = async () => {
-    if (!instId || !selectedBackend?.available) return;
-    const s = await api<{ id: string; attach_url: string }>(
-      `/api/instances/${encodeURIComponent(instId)}/sessions?mode=${encodeURIComponent(selectedBackend.mode)}&backend=${encodeURIComponent(selectedBackend.backend)}`,
-      { method: 'POST' },
-    );
-    loadSessions(instId);
-    session.attach(s.attach_url, false, 'observer');
-  };
+  // Starting now routes through the shared picker (#1640/#1641) so this tab and the
+  // dashboard verb share one params/clobber/error path. The selects below remain for
+  // attaching to / observing / driving sessions that already exist.
 
   return (
     <>
@@ -82,7 +76,7 @@ export function Sessions({ session, composer, setComposer }: { session: SessionA
             ? backends.map((b) => <option key={`${b.mode}:${b.backend}`} value={`${b.mode}:${b.backend}`} disabled={!b.available}>{b.mode} · {b.backend}{b.available ? '' : ` — ${b.reason ?? 'unsupported'}`}</option>)
             : <option value="">— not advertised —</option>}
         </select>
-        <button disabled={attached || !selectedBackend?.available} onClick={startSelected}>Start</button>
+        <button onClick={() => onRequestStart(instId)}>Start…</button>
         <label htmlFor="sel-session">Session</label>
         <select id="sel-session" value={attachUrl} onChange={(e) => setAttachUrl(e.target.value)}>
           {sessions.length

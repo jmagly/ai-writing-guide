@@ -71,6 +71,19 @@ export function getInstance(id) {
   return instances.get(id) ?? null;
 }
 
+// Loadout catalog (#1641) — the full set the operator can pick from at session start,
+// a superset of the loadouts the seeded instances happen to be running.
+export const loadouts = [
+  { id: 'agentic-dev', label: 'Agentic Dev', description: 'General coding agent loadout', runtimes: ['container', 'host', 'vm'] },
+  { id: 'security-audit', label: 'Security Audit', description: 'Hardened audit toolchain', runtimes: ['vm'] },
+  { id: 'host-tools', label: 'Host Tools', description: 'Native host operations', runtimes: ['host'] },
+  { id: 'research', label: 'Research', description: 'Long-context research corpus', runtimes: ['container', 'vm'] },
+  { id: 'minimal', label: 'Minimal', description: 'Bare shell, no framework deploy', runtimes: ['container', 'host', 'vm', 'wasm-edge'] },
+];
+export function listLoadouts() {
+  return loadouts;
+}
+
 // --- lifecycle mutators (Cockpit management, UC-012) ---
 export function setInstanceState(id, state) {
   const inst = instances.get(id);
