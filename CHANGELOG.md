@@ -7,6 +7,36 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.2] - 2026-06-18 — "Cockpit live-proof hardening"
+
+This patch release tightens the AIWG Cockpit live UAT gate so release evidence
+must prove a real agentic framework can start inside an agentic-sandbox session
+and use AIWG discovery from there.
+
+### Changed
+
+- **Cockpit live matrix proof is stricter.** Provider workloads now must emit
+  both `AIWG_COCKPIT_LIVE_OK` and an expected AIWG discovery result
+  (`issue-audit` by default). The default prompt asks the running provider to
+  use AIWG discovery to choose the capability for auditing open issue state and
+  release blockers.
+- **Codex live workload command updated.** Cockpit now invokes Codex with
+  `codex exec -s read-only`, matching the currently supported Codex CLI syntax.
+- **Docs synced from code.** Ran `docs:collect` to publish the current
+  code-to-docs component corpus and generated docs manifest.
+
+### Fixed
+
+- Cockpit live reports now record the discovery expectation and fail when the
+  provider only proves shell plumbing instead of real AIWG discovery.
+
+### Upgrade notes
+
+- No migration is required.
+- The 2026-06-18 host proof passed with Codex in a managed agentic-sandbox
+  `tmux` session. Claude launched in the same session but required login, so
+  Claude auth-state injection remains a separate follow-up.
+
 ## [2026.6.1] - 2026-06-15 — "AIWG Cockpit groundwork (beta), leaner agents & doc accuracy"
 
 A consolidation release on top of 2026.6.0. The headline is the **AIWG Cockpit** — a UX-first control plane over an AIWG install and multi-stack agentic sessions — landing as **beta groundwork**: the registry-bound core, instance-control bridge, Tauri + VS Code shells, local control-surface auth, and the UI contribution model are all in place, with the full operator UX arriving in a later release. Alongside it: the bulk **declarative-Flow migration** and the **cross-stack Mission conductor** are now complete, a fleet-wide **agent-definition debloat** brings every agent under the 16 KB dispatch ceiling, and a **documentation-accuracy pass** reconciles every skill/agent count against source.
@@ -1170,7 +1200,10 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 - New unit tests: 7 for `aiwg skill-lint` rubric (perfect/stub/no-triggers/agent-only/broken-YAML fixtures + threshold modes). Behavior-loader and concierge integration tests updated for canonical metadata.* shape.
 - `.agents/` deployment directory is now gitignored, mirroring `.claude/` and `.codex/` (#949). 395 generated files removed from the index; regenerable via `aiwg use`.
 
-[Unreleased]: https://github.com/jmagly/aiwg/compare/v2026.3.2...HEAD
+[Unreleased]: https://github.com/jmagly/aiwg/compare/v2026.6.2...HEAD
+[2026.6.2]: https://github.com/jmagly/aiwg/compare/v2026.6.1...v2026.6.2
+[2026.6.1]: https://github.com/jmagly/aiwg/compare/v2026.6.0...v2026.6.1
+[2026.6.0]: https://github.com/jmagly/aiwg/compare/v2026.5.13...v2026.6.0
 
 ## [2026.3.2] - 2026-03-04 – Service Release
 
