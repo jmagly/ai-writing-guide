@@ -43,7 +43,11 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .empty { color:var(--muted); padding:22px; } .err { color:var(--err); padding:12px 0; }
 .controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
 .controls label { color:var(--muted); font-size:13px; }
-.terminal { background:#0a0c10; border:1px solid var(--line); border-radius:10px; padding:14px; min-height:240px; max-height:48vh; overflow:auto; white-space:pre-wrap; word-break:break-word; font:13px/1.55 ui-monospace, monospace; color:#cdd3de; }
+/* Host for the xterm.js terminal — fixed height so FitAddon can size the PTY; xterm owns
+   its own scrollback and wrapping, so no overflow/white-space rules belong here. */
+.terminal { background:#0a0c10; border:1px solid var(--line); border-radius:10px; padding:8px; height:48vh; min-height:280px; overflow:hidden; }
+.terminal .xterm, .terminal .xterm-viewport, .terminal .xterm-screen { height:100%; }
+.terminal .xterm-viewport { overflow-y:auto; }
 .inputrow { display:flex; gap:8px; margin-top:12px; }
 .inputrow input { flex:1; font-family:ui-monospace, monospace; }
 .hint { color:var(--muted); font-size:13px; margin:6px 0 0; }

@@ -12,7 +12,6 @@ export function Sessions({ session, composer, setComposer }: { session: SessionA
   const [attachUrl, setAttachUrl] = useState('');
   const [backendKey, setBackendKey] = useState('');
   const [showPicker, setShowPicker] = useState(false);
-  const termRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const insertCap = (r: CapabilityResult) => {
@@ -42,9 +41,6 @@ export function Sessions({ session, composer, setComposer }: { session: SessionA
       .catch(() => { setSessions([]); setAttachUrl(''); });
   }, []);
   useEffect(() => { loadSessions(instId); }, [instId, loadSessions]);
-
-  // keep the terminal scrolled to the latest output
-  useEffect(() => { if (termRef.current) termRef.current.scrollTop = termRef.current.scrollHeight; }, [session.state.output]);
 
   const send = () => { if (session.sendInput(composer)) setComposer(''); };
   const attached = session.state.attached;
@@ -102,7 +98,7 @@ export function Sessions({ session, composer, setComposer }: { session: SessionA
           {selectedBackend && !selectedBackend.available ? ` ${selectedBackend.reason ?? 'Selected backend is unavailable.'}` : ''}
         </p>
       )}
-      <div className="terminal" ref={termRef} role="log" aria-live="polite" aria-label="Session output">{session.state.output}</div>
+      <div className="terminal" ref={session.openTerminal} role="log" aria-label="Session output" />
       {showPicker && (
         <div className="picker">
           <p className="hint" style={{ marginTop: 0 }}>Pick a capability to insert into the command — then Send to inject it. (Lookup is UI; the agent runs it.)</p>
