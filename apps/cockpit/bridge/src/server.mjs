@@ -654,8 +654,33 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
   return server;
 }
 
+// The agentic-sandbox canonical dev runner (`management/dev.sh`) binds
+// 8120 (gRPC) / 8121 (WS) / 8122 (HTTP). The Bridge must NOT default into that
+// range or it squats on the executor's own ports (#1634). Default off-range and
+// refuse to silently start on a reserved port.
+export const EXECUTOR_RESERVED_PORTS = [8120, 8121, 8122];
+export const DEFAULT_BRIDGE_PORT = 8140;
+
+/** Resolve the Bridge listen port from the environment with a sane, off-range
+ *  default. Throws on an invalid port or a collision with the executor range. */
+export function resolveBridgePort(env = process.env) {
+  const raw = env.PORT ?? env.AIWG_COCKPIT_BRIDGE_PORT;
+  const port = raw === undefined || raw === '' ? DEFAULT_BRIDGE_PORT : Number(raw);
+  if (!Number.isInteger(port) || port <= 0 || port > 65535) {
+    throw new Error(`Invalid Bridge port: ${JSON.stringify(raw)} (set PORT to a number 1-65535).`);
+  }
+  if (EXECUTOR_RESERVED_PORTS.includes(port)) {
+    throw new Error(
+      `Bridge port ${port} collides with the agentic-sandbox canonical range ` +
+      `(${EXECUTOR_RESERVED_PORTS.join('/')} = gRPC/WS/HTTP). The executor needs that ` +
+      `range — pick another port (default ${DEFAULT_BRIDGE_PORT}).`,
+    );
+  }
+  return port;
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const port = Number(process.env.PORT ?? 8120);
+  const port = resolveBridgePort();
   const server = createBridge();
   server.listen(port, '127.0.0.1', async () => {
     const file = await writeRuntimeToken({ token: server.cockpitToken, port, pid: process.pid });

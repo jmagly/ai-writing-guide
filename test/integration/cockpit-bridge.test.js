@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import http from 'node:http';
 import { createExecutor } from '../../apps/cockpit/mock-executor/src/server.mjs';
-import { createBridge } from '../../apps/cockpit/bridge/src/server.mjs';
+import { createBridge, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS } from '../../apps/cockpit/bridge/src/server.mjs';
 
 let mock, bridge, base, token;
 const f = (p, o = {}) => fetch(base + p, { ...o, headers: { ...(o.headers || {}), authorization: `Bearer ${token}` } });
@@ -257,6 +257,31 @@ describe('cockpit Bridge — executor without running/approvals admin surface (#
     const approvals = await uf('/api/approvals?status=pending');
     expect(approvals.status).toBe(200);
     expect(await approvals.json()).toMatchObject({ approvals: [] });
+  });
+});
+
+describe('cockpit Bridge — port defaults off the executor range (#1634)', () => {
+  it('defaults to an off-range port and never into the agentic-sandbox 8120-8122 range', () => {
+    expect(DEFAULT_BRIDGE_PORT).toBe(8140);
+    expect(EXECUTOR_RESERVED_PORTS).toEqual([8120, 8121, 8122]);
+    expect(resolveBridgePort({})).toBe(DEFAULT_BRIDGE_PORT);
+    expect(EXECUTOR_RESERVED_PORTS).not.toContain(resolveBridgePort({}));
+  });
+
+  it('honours an explicit PORT', () => {
+    expect(resolveBridgePort({ PORT: '8155' })).toBe(8155);
+    expect(resolveBridgePort({ AIWG_COCKPIT_BRIDGE_PORT: '8160' })).toBe(8160);
+  });
+
+  it('refuses to start on a reserved executor port instead of silently squatting', () => {
+    for (const p of EXECUTOR_RESERVED_PORTS) {
+      expect(() => resolveBridgePort({ PORT: String(p) })).toThrow(/collides with the agentic-sandbox/);
+    }
+  });
+
+  it('rejects an invalid PORT', () => {
+    expect(() => resolveBridgePort({ PORT: 'nope' })).toThrow(/Invalid Bridge port/);
+    expect(() => resolveBridgePort({ PORT: '70000' })).toThrow(/Invalid Bridge port/);
   });
 });
 

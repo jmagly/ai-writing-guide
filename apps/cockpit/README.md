@@ -85,6 +85,13 @@ AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:<executor-port> \
   node apps/cockpit/bridge/src/server.mjs
 ```
 
+**Ports (sane defaults, #1634).** The agentic-sandbox canonical dev runner
+(`management/dev.sh`) binds `8120` (gRPC) / `8121` (WS) / `8122` (HTTP). The
+Bridge therefore defaults to **`8140`** — off that range — so `node
+bridge/src/server.mjs` against a canonical executor on `8122` never collides.
+Override with `PORT` (or `AIWG_COCKPIT_BRIDGE_PORT`); the Bridge refuses to start
+on a reserved executor port (`8120/8121/8122`) rather than silently squat on it.
+
 `EXECUTOR_URL` is accepted as a short alias, but new launch scripts should use
 `AIWG_COCKPIT_EXECUTOR_URL`. Human dev/test launches must point at a real
 agentic-sandbox executor. The bundled mock is reserved for automated tests and
