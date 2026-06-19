@@ -25,6 +25,10 @@ export function Running() {
 
   return (
     <>
+      <p className="hint">
+        <strong>Fleet overview.</strong> Every task running across all stacks — a read-only board. To
+        attach to one and observe or drive it, open it in <strong>Sessions</strong> (the attached workspace).
+      </p>
       {cost && (
         <p className="hint">Spend across stacks: <strong>${cost.total.usd.toFixed(2)}</strong> · {(cost.total.input_tokens + cost.total.output_tokens).toLocaleString()} tokens</p>
       )}

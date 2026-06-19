@@ -67,6 +67,10 @@ export function Sessions({ session, composer, setComposer }: { session: SessionA
 
   return (
     <>
+      <p className="hint">
+        <strong>Workspace.</strong> Attach to a single session on one instance to observe or drive it. Start a
+        new session above, or pick a live task from the <strong>Running</strong> fleet board and open it here.
+      </p>
       <div className="controls">
         <label htmlFor="sel-instance">Instance</label>
         <select id="sel-instance" value={instId} onChange={(e) => setInstId(e.target.value)}>
