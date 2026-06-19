@@ -9,7 +9,10 @@ export function Explore() {
 
   const show = (r: CapabilityResult) => {
     setBody(null); setErr('');
-    api<{ type: string; name: string; body: string }>(`/api/show?type=${encodeURIComponent(r.type)}&name=${encodeURIComponent(r.name)}`)
+    // Fetch by the discovered path — deterministic even when a name is shared by two
+    // artifacts (e.g. two `aiwg-steward` agents), which would otherwise 502 (#1643).
+    const qs = `type=${encodeURIComponent(r.type)}&name=${encodeURIComponent(r.name)}&path=${encodeURIComponent(r.path)}`;
+    api<{ type: string; name: string; body: string }>(`/api/show?${qs}`)
       .then(setBody).catch((e) => setErr((e as Error).message));
   };
 

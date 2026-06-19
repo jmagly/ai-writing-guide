@@ -67,6 +67,14 @@ try {
   const shown = await (await f("/api/show?type=skill&name=flow-deploy-to-production")).json();
   assert.match(shown.body, /name:\s*flow-deploy-to-production/, 'show returns the skill body');
   assert.equal((await f("/api/capabilities")).status, 400, 'capabilities requires q');
+  // show by discovered PATH — deterministic, sidesteps ambiguous same-named artifacts (#1643)
+  const shownByPath = await (await f(`/api/show?path=${encodeURIComponent(hit.path)}`)).json();
+  assert.match(shownByPath.body, /name:\s*flow-deploy-to-production/, 'show-by-path returns the body');
+  assert.equal(shownByPath.path, hit.path, 'show-by-path echoes the resolved path');
+  // a missing artifact is a 4xx, never a 502 (ambiguous/not-found map to operator-correctable input)
+  assert.equal((await f('/api/show?type=agent&name=__definitely_not_a_real_artifact__')).status, 404, 'unknown artifact -> 404 not 502');
+  // a path outside the AIWG corpus is refused (no traversal)
+  assert.equal((await f(`/api/show?path=${encodeURIComponent('/etc/passwd')}`)).status, 400, 'path outside corpus -> 400');
 
   // contribution model: actions INJECT a command into a session — the Cockpit never
   // runs the CLI (adr-cockpit-session-control-not-cli-runner) (#1591)

@@ -12,7 +12,7 @@ import { existsSync } from 'node:fs';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, basename, extname } from 'node:path';
+import { dirname, join, basename, extname, resolve, sep } from 'node:path';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 // Primary seam for roctinam/aiwg#1589: Cockpit talks to a real agentic-sandbox
@@ -125,6 +125,24 @@ function deriveName(path) {
   const base = basename(path);
   if (/^SKILL\.(md|markdown)$/i.test(base)) return basename(dirname(path));
   return base.replace(/\.(md|markdown|ya?ml|json)$/i, '');
+}
+
+// /api/show resolution by PATH (#1643). `aiwg show <type> <name>` is ambiguous when
+// two artifacts share a name (e.g. two `aiwg-steward` agents) — it exits non-zero on
+// stderr, which the Bridge would otherwise surface as a 502. `discover` already returns
+// the exact path, so the Bridge reads that corpus file directly: deterministic, no
+// ambiguity. The path is constrained to the AIWG corpus root(s) to prevent traversal.
+const SHOW_EXT_RE = /\.(md|markdown|ya?ml|json)$/i;
+const CORPUS_ROOTS = [dirname(dirname(REPO_BIN)), process.env.AIWG_ROOT]
+  .filter(Boolean)
+  .map((r) => resolve(r));
+/** Resolve a discover-provided path to an absolute corpus file, or null if it escapes. */
+function resolveCorpusPath(p) {
+  let abs;
+  try { abs = resolve(String(p)); } catch { return null; }
+  if (!SHOW_EXT_RE.test(abs)) return null;
+  if (!CORPUS_ROOTS.some((root) => abs === root || abs.startsWith(root + sep))) return null;
+  return abs;
 }
 
 // --- UI contribution model (#1591): declarative screens/actions/event-hooks ---
@@ -555,9 +573,34 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         return json(res, 200, data);
       }
       if (url.pathname === '/api/show') {
-        const type = url.searchParams.get('type'), name = url.searchParams.get('name');
-        if (!type || !name) return json(res, 400, { error: 'type_and_name_required' });
-        return json(res, 200, { type, name, body: await runAiwg(['show', type, name]) });
+        const type = url.searchParams.get('type');
+        const name = url.searchParams.get('name');
+        const wantPath = url.searchParams.get('path');
+        // Preferred path: resolve by the discovered file path. Deterministic even when a
+        // name is shared by two artifacts (#1643). discover always returns this path.
+        if (wantPath) {
+          const resolved = resolveCorpusPath(wantPath);
+          if (!resolved) return json(res, 400, { error: 'path_outside_corpus' });
+          try {
+            const body = await readFile(resolved, 'utf8');
+            return json(res, 200, { type, name: name ?? deriveName(resolved), path: resolved, body });
+          } catch (e) {
+            return json(res, 404, { error: 'artifact_not_found', detail: String(e?.message ?? e) });
+          }
+        }
+        // Fallback: resolve by name via the CLI. Map ambiguity/not-found to 4xx — an
+        // ambiguous name is operator-correctable input, never a Bridge 502.
+        if (!type || !name) return json(res, 400, { error: 'type_name_or_path_required' });
+        try {
+          return json(res, 200, { type, name, body: await runAiwg(['show', type, name]) });
+        } catch (e) {
+          const detail = String(e?.message ?? e);
+          const ambiguous = /ambiguous/i.test(detail);
+          return json(res, ambiguous ? 409 : 404, {
+            error: ambiguous ? 'ambiguous_artifact' : 'artifact_not_found',
+            detail,
+          });
+        }
       }
       // user asset library — browse / clone-from-catalog / delete. AIWG install files
       // are never written; deletes are sandboxed to ~/.aiwg/cockpit/library.
