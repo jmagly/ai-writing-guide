@@ -79,6 +79,18 @@ identity enforcement; Cockpit owns visibility and audit presentation.
 
 ## Run (dev/test, against a real agentic-sandbox executor)
 
+One command (#1634) — checks for a reachable real executor, builds the web UI if
+needed, and launches the Bridge on its off-range default port:
+
+```bash
+npm --prefix apps/cockpit run dev            # → apps/cockpit/scripts/cockpit-dev.sh
+```
+
+It refuses to run against the bundled mock (automated-test-only) and tells you
+how to start the executor (`cd <agentic-sandbox>/management && ./dev.sh`) if none
+is reachable. Override `AIWG_COCKPIT_EXECUTOR_URL` (default `http://127.0.0.1:8122`)
+or `PORT` (default `8140`). Equivalent manual steps:
+
 ```bash
 npm --prefix apps/cockpit run build:web                 # install + vite build → web/dist
 AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:<executor-port> \
