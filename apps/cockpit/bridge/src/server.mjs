@@ -386,56 +386,69 @@ async function getInventory(executorUrl) {
   };
 }
 
-/** Running tasks across all instances (the running-agents board). */
+// --- task derivation (#1639) -------------------------------------------------
+// The real agentic-sandbox v2 admin surface has NO /running or /approvals route.
+// The running board and the approval inbox are derived from the real A2A task
+// surface (`/agents/{agentId}/tasks`) per instance — not from the mock's invented
+// /admin/running. A2A task lifecycle states: submitted/working/input-required are
+// active; completed/canceled/failed/rejected are terminal.
+const ACTIVE_TASK_STATES = new Set(['submitted', 'working', 'input-required', 'in_progress', 'running']);
+const taskState = (t) => t.status?.state ?? t.state ?? (typeof t.status === 'string' ? t.status : 'unknown');
+const taskIdOf = (t) => t.id ?? t.task_id ?? t.taskId;
+const taskTenantOf = (t) => t.metadata?.tenant_id ?? t.metadata?.tenantId ?? t.tenant ?? t.tenant_id ?? t.tenantId ?? 'default';
+
+/** Active tasks for one instance via the A2A task surface (#1639). The session
+ *  agent id (not the instance id) keys the agent routes on real executors. */
+async function listInstanceTasks(executorUrl, instanceId) {
+  const agentId = await resolveSessionAgentId(executorUrl, instanceId);
+  const candidates = unique([instanceId, agentId]).flatMap((id) => [
+    `${executorUrl}/agents/${encodeURIComponent(id)}/tasks`,
+    `${executorUrl}/api/v1/agents/${encodeURIComponent(id)}/tasks`,
+  ]);
+  const { body } = await fetchJsonFirst(candidates);
+  return asArrayFromEnvelope(body, ['tasks', 'items', 'data']);
+}
+
+/** Running board derived from active A2A tasks across running instances (#1639).
+ *  An instance with no reachable task surface contributes nothing rather than
+ *  failing the whole board (so a real executor stays usable). */
 async function getRunning(executorUrl) {
-  let body;
-  try {
-    ({ body } = await fetchJsonFirst([
-      `${executorUrl}/admin/running`,
-      `${executorUrl}/api/v2/admin/running`,
-    ]));
-  } catch {
-    // The real agentic-sandbox v2 admin surface has no /running route (#1638);
-    // running work is derived per-instance from sessions/tasks (tracked under
-    // #1622). Until that derivation lands, degrade to an empty board rather
-    // than surfacing a 502 — so the operator Home view binds inventory and
-    // stays usable against any real executor that lacks this admin endpoint.
-    return {
-      source: executorUrl,
-      fetched_at: new Date().toISOString(),
-      count: 0,
-      running: [],
-      derived: 'executor exposes no admin running endpoint',
-    };
-  }
-  const running = asArrayFromEnvelope(body, ['running', 'tasks', 'items', 'data']);
-  const byId = new Map((await getInventory(executorUrl)).instances.map((i) => [i.id, i]));
+  const instances = (await getInventory(executorUrl)).instances;
+  const running = [];
+  await Promise.all(
+    instances.filter((i) => i.state === 'running').map(async (inst) => {
+      let tasks;
+      try { tasks = await listInstanceTasks(executorUrl, inst.id); } catch { return; }
+      for (const t of tasks) {
+        const state = taskState(t);
+        if (!ACTIVE_TASK_STATES.has(state)) continue;
+        running.push({
+          instance_id: inst.id,
+          task_id: taskIdOf(t),
+          state,
+          tenant: taskTenantOf(t),
+          runtime_posture: inst.runtime_posture,
+          transport: inst.transport,
+        });
+      }
+    }),
+  );
   return {
     source: executorUrl,
     fetched_at: new Date().toISOString(),
     count: running.length,
-    running: running.map((t) => {
-      const instanceId = t.instance_id ?? t.instanceId ?? t.agent_instance_id ?? t.agentInstanceId;
-      const taskId = t.task_id ?? t.taskId ?? t.id;
-      const inst = byId.get(instanceId);
-      return {
-        instance_id: instanceId,
-        task_id: taskId,
-        state: t.state ?? t.status ?? 'unknown',
-        tenant: t.tenant ?? t.tenant_id ?? t.tenantId ?? 'default',
-        runtime_posture: inst?.runtime_posture,
-        transport: inst?.transport,
-      };
-    }),
+    running,
+    derived: 'per-instance A2A tasks',
   };
 }
 
 /**
  * Pending HITL approvals (the unified approval inbox). The real agentic-sandbox
- * v2 admin surface has no /approvals route (#1638) — HITL prompts arrive via A2A
- * `input-required` / `hitl-prompt/v1` (#1565). Until the Bridge derives the inbox
- * from that surface, degrade to an empty inbox rather than surfacing a 404, so
- * the operator Home view stays usable against a real executor.
+ * v2 admin surface has no /approvals route — HITL prompts arrive via A2A
+ * `input-required` / `hitl-prompt/v1`. Deriving the inbox (and routing the
+ * decision back to the task) from that surface is the remaining half of the v2
+ * work (#1639 follow-up, with #1565); until then degrade to an empty inbox
+ * rather than 404 so the operator Home view stays usable against a real executor.
  */
 async function getApprovals(executorUrl, status) {
   let body;

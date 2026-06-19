@@ -153,6 +153,10 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
       if (url.pathname === '/api/v1/agents/agent-v2-host-1/sessions' && req.method === 'GET') {
         return send(200, { items: [{ sessionId: 'sess-v2', seq: 2, members: 1, role_policy: 'observe-default', pty_ws_url: 'wss://{host}/agents/v2-host-1/sessions/sess-v2/attach' }] });
       }
+      // A2A task surface the Bridge derives the running board from (#1639).
+      if (url.pathname === '/agents/agent-v2-host-1/tasks' || url.pathname === '/api/v1/agents/agent-v2-host-1/tasks') {
+        return send(200, { tasks: [{ id: 'task-1', status: { state: 'working' }, metadata: { tenant_id: 'default' } }] });
+      }
       if (url.pathname === '/api/v1/agents/agent-v2-host-1/sessions' && req.method === 'POST') {
         let raw = '';
         req.on('data', (chunk) => { raw += chunk; });
