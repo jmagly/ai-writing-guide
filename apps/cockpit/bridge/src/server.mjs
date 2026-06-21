@@ -936,9 +936,8 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
           body: JSON.stringify({
             session_backend: backend || 'tmux',
             session_class: mode || 'managed',
-            command: 'sh -lc "cd /root && exec bash -l"',
+            command: 'bash',
             args: ['-l'],
-            cwd: '/root',
             working_dir: '/root',
           }),
         }));
