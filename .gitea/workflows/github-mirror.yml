@@ -12,10 +12,11 @@
 # get a GitHub Release.
 #
 # REQUIRED SECRETS:
-#   GH_TOKEN  - GitHub personal access token with `public_repo` scope
+#   GH_ACCESS_TOKEN - GitHub personal access token with `public_repo` scope
 #               (sufficient for tag push + release creation on the public
 #               jmagly/aiwg mirror). Workflow gracefully skips if absent so
-#               forks without a GitHub mirror don't fail CI.
+#               forks without a GitHub mirror don't fail CI. (Consumed as the
+#               GH_TOKEN env var that gh/the push URL read.)
 
 name: GitHub Mirror
 
@@ -77,23 +78,23 @@ jobs:
             echo "version=${TAG_VERSION}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Check GH_TOKEN availability
+      - name: Check GH_ACCESS_TOKEN availability
         id: token
         if: ${{ steps.classify.outputs.skip != 'true' }}
         run: |
           set -euo pipefail
-          if [ -z "${{ secrets.GH_TOKEN }}" ]; then
-            echo "GH_TOKEN secret is not configured. Skipping GitHub fan-out (forks without a GitHub mirror should leave this empty)."
+          if [ -z "${{ secrets.GH_ACCESS_TOKEN }}" ]; then
+            echo "GH_ACCESS_TOKEN secret is not configured. Skipping GitHub fan-out (forks without a GitHub mirror should leave this empty)."
             echo "skip=true" >> $GITHUB_OUTPUT
           else
-            echo "GH_TOKEN configured."
+            echo "GH_ACCESS_TOKEN configured."
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Push tag + main to GitHub mirror
         if: ${{ steps.classify.outputs.skip != 'true' && steps.token.outputs.skip != 'true' }}
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
           # Use a one-shot URL with embedded token; never echo the token.
@@ -136,7 +137,7 @@ jobs:
       - name: Create GitHub Release
         if: ${{ steps.classify.outputs.skip != 'true' && steps.token.outputs.skip != 'true' }}
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
           VERSION="${{ steps.classify.outputs.version }}"
@@ -160,7 +161,7 @@ jobs:
           if [ "${{ steps.classify.outputs.skip }}" = "true" ]; then
             echo "✓ Pre-release tag — GitHub fan-out skipped by design."
           elif [ "${{ steps.token.outputs.skip }}" = "true" ]; then
-            echo "✓ Stable tag, but GH_TOKEN not configured — skipped (fork mode)."
+            echo "✓ Stable tag, but GH_ACCESS_TOKEN not configured — skipped (fork mode)."
           else
             echo "✓ Stable tag v${{ steps.classify.outputs.version }} mirrored + released to github.com/jmagly/aiwg."
           fi
