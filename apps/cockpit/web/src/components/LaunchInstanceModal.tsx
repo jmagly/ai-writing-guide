@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
-import type { Loadout } from '../types';
+import { fmtId } from '../util';
+import type { Instance, Loadout } from '../types';
 
 type Runtime = 'host' | 'docker' | 'qemu';
 
@@ -34,6 +35,8 @@ export function LaunchInstanceModal({
   const [name, setName] = useState(() => `cockpit-${Date.now().toString(36)}`.slice(0, 32));
   const [loadout, setLoadout] = useState('host-tools');
   const [loadouts, setLoadouts] = useState<Loadout[]>([]);
+  const [instances, setInstances] = useState<Instance[]>([]);
+  const [hostId, setHostId] = useState('');
   const [image, setImage] = useState('agentic/codex:latest');
   const [customImage, setCustomImage] = useState('');
   const [profile, setProfile] = useState('');
@@ -46,9 +49,17 @@ export function LaunchInstanceModal({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    api<{ loadouts: Loadout[] }>('/api/loadouts')
-      .then((res) => { if (!cancelled) setLoadouts(res.loadouts ?? []); })
-      .catch(() => { if (!cancelled) setLoadouts([]); });
+    Promise.all([
+      api<{ loadouts: Loadout[] }>('/api/loadouts').catch(() => ({ loadouts: [] as Loadout[] })),
+      api<{ instances: Instance[] }>('/api/inventory').catch(() => ({ instances: [] as Instance[] })),
+    ])
+      .then(([lo, inv]) => {
+        if (cancelled) return;
+        setLoadouts(lo.loadouts ?? []);
+        setInstances(inv.instances ?? []);
+        const firstHost = (inv.instances ?? []).find(isUsableHost);
+        setHostId((current) => current || firstHost?.id || '');
+      });
     return () => { cancelled = true; };
   }, [open]);
 
@@ -69,6 +80,16 @@ export function LaunchInstanceModal({
   const launch = async () => {
     setBusy(true); setErr(''); setResult('');
     try {
+      if (runtime === 'host') {
+        const host = hostTargets(instances).find((i) => i.id === hostId) ?? hostTargets(instances)[0];
+        if (!host) throw new Error('No registered host target is available. Start/register the host agent first, or choose Docker container.');
+        setResult(openSession
+          ? `Using host target ${host.launch_context?.name ?? fmtId(host.id)}; starting session...`
+          : `Using host target ${host.launch_context?.name ?? fmtId(host.id)}`);
+        await onLaunched(host.id, openSession);
+        if (openSession) onClose();
+        return;
+      }
       const body: Record<string, unknown> = {
         name: name.replace(/[^a-z0-9-]/g, '-').replace(/^-+/, 'a-').slice(0, 63),
         runtime,
@@ -114,14 +135,34 @@ export function LaunchInstanceModal({
             <option value="docker">Docker container</option>
             <option value="qemu">VM / QEMU</option>
           </select>
-          <label htmlFor="li-name">Name</label>
-          <input id="li-name" value={name} onChange={(e) => setName(e.target.value)} />
+          {runtime === 'host' ? (
+            <>
+              <label htmlFor="li-host-target">Host target</label>
+              <select id="li-host-target" value={hostId} onChange={(e) => setHostId(e.target.value)}>
+                {hostTargets(instances).map((i) => <option key={i.id} value={i.id}>{i.launch_context?.name ?? fmtId(i.id)} - {i.loadout}</option>)}
+                {!hostTargets(instances).length && <option value="">No registered host available</option>}
+              </select>
+            </>
+          ) : (
+            <>
+              <label htmlFor="li-name">Name</label>
+              <input id="li-name" value={name} onChange={(e) => setName(e.target.value)} />
+            </>
+          )}
           <label htmlFor="li-loadout">Instance loadout</label>
-          <select id="li-loadout" value={loadout} onChange={(e) => setLoadout(e.target.value)}>
-            {loadoutOptions(loadouts, runtime).map((l) => <option key={l.id} value={l.id}>{l.label}{l.description ? ` - ${l.description}` : ''}</option>)}
-          </select>
-          <label htmlFor="li-profile">Profile</label>
-          <input id="li-profile" value={profile} onChange={(e) => setProfile(e.target.value)} placeholder="optional" />
+          {runtime === 'host' ? (
+            <span className="ro">host-tools</span>
+          ) : (
+            <select id="li-loadout" value={loadout} onChange={(e) => setLoadout(e.target.value)}>
+              {loadoutOptions(loadouts, runtime).map((l) => <option key={l.id} value={l.id}>{l.label}{l.description ? ` - ${l.description}` : ''}</option>)}
+            </select>
+          )}
+          {runtime !== 'host' && (
+            <>
+              <label htmlFor="li-profile">Profile</label>
+              <input id="li-profile" value={profile} onChange={(e) => setProfile(e.target.value)} placeholder="optional" />
+            </>
+          )}
           {runtime === 'docker' && (
             <>
               <label htmlFor="li-image">Container image</label>
@@ -151,7 +192,9 @@ export function LaunchInstanceModal({
         </div>
         <div className="modal-actions">
           <button onClick={onClose} disabled={busy}>Close</button>
-          <button className="cta" onClick={launch} disabled={busy || !name.trim() || (runtime === 'docker' && image === '__custom__' && !customImage.trim())}>{busy ? 'Working...' : openSession ? 'Create + start session' : 'Create instance'}</button>
+          <button className="cta" onClick={launch} disabled={busy || (runtime === 'host' && !hostId) || (runtime !== 'host' && !name.trim()) || (runtime === 'docker' && image === '__custom__' && !customImage.trim())}>
+            {busy ? 'Working...' : runtime === 'host' ? (openSession ? 'Start host session' : 'Use host') : openSession ? 'Create + start session' : 'Create instance'}
+          </button>
         </div>
       </div>
     </div>
@@ -159,6 +202,7 @@ export function LaunchInstanceModal({
 }
 
 function loadoutOptions(loadouts: Loadout[], runtime: Runtime) {
+  if (runtime === 'host') return FALLBACK_LOADOUTS.filter((l) => l.id === 'host-tools');
   const aliases = runtime === 'docker' ? ['docker', 'container'] : runtime === 'qemu' ? ['qemu', 'vm'] : [runtime];
   const merged = [...loadouts, ...FALLBACK_LOADOUTS].reduce<Loadout[]>((acc, loadout) => {
     if (!acc.some((existing) => existing.id === loadout.id)) acc.push(loadout);
@@ -166,4 +210,14 @@ function loadoutOptions(loadouts: Loadout[], runtime: Runtime) {
   }, []);
   const matching = merged.filter((l) => !l.runtimes?.length || l.runtimes.some((r) => aliases.includes(String(r).toLowerCase())));
   return matching.length ? matching : merged;
+}
+
+function hostTargets(instances: Instance[]) {
+  return instances.filter(isUsableHost);
+}
+
+function isUsableHost(instance: Instance) {
+  return instance.state === 'running'
+    && instance.runtime_posture?.kind === 'host'
+    && instance.session_backends?.some((backend) => backend.available !== false);
 }
