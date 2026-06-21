@@ -239,7 +239,7 @@ jobs:
         run: |
           set -o pipefail
           echo "=== Cockpit package contents ==="
-          npm --prefix apps/cockpit pack --dry-run 2>&1 | tee cockpit-pack-output.txt
+          npm pack ./apps/cockpit --dry-run 2>&1 | tee cockpit-pack-output.txt
 
       - name: Verify .aiwg/ excluded from package
         run: |
@@ -340,7 +340,7 @@ jobs:
         run: |
           set -o pipefail
           NPM_TAG='${{ steps.version.outputs.npm_tag }}'
-          npm --prefix apps/cockpit publish --provenance --access public --tag "$NPM_TAG" 2>&1 | tee cockpit-publish-output.txt || {
+          npm publish ./apps/cockpit --provenance --access public --tag "$NPM_TAG" 2>&1 | tee cockpit-publish-output.txt || {
             if grep -qE "cannot publish over|EPUBLISHCONFLICT|409" cockpit-publish-output.txt; then
               echo "✓ @aiwg/cockpit version already published to npmjs.org — treating as success"
             else

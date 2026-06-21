@@ -132,7 +132,7 @@ jobs:
         run: npm run lint:tarball
 
       - name: Check Cockpit package contents
-        run: npm --prefix apps/cockpit pack --dry-run
+        run: npm pack ./apps/cockpit --dry-run
 
       - name: Set pre-release version in package.json
         id: rcversion
@@ -175,7 +175,7 @@ jobs:
           cat > .npmrc << 'NPMRC'
           //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
           NPMRC
-          npm --prefix apps/cockpit publish --registry=${{ env.GITEA_NPM_REGISTRY }} --tag ${{ steps.rcversion.outputs.npm_tag }} 2>&1 | tee cockpit-publish-output.txt || {
+          npm publish ./apps/cockpit --registry=${{ env.GITEA_NPM_REGISTRY }} --tag ${{ steps.rcversion.outputs.npm_tag }} 2>&1 | tee cockpit-publish-output.txt || {
             if grep -qE "package version already exists|EPUBLISHCONFLICT|409" cockpit-publish-output.txt; then
               echo "✓ @aiwg/cockpit pre-release already published to Gitea"
             else
@@ -353,7 +353,7 @@ jobs:
         run: npm run lint:tarball
 
       - name: Check Cockpit package contents
-        run: npm --prefix apps/cockpit pack --dry-run
+        run: npm pack ./apps/cockpit --dry-run
 
       - name: Publish to Gitea npm registry
         if: ${{ github.event.inputs.dry_run != 'true' }}
@@ -388,7 +388,7 @@ jobs:
           cat > .npmrc << 'NPMRC'
           //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
           NPMRC
-          npm --prefix apps/cockpit publish --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee cockpit-publish-output.txt || {
+          npm publish ./apps/cockpit --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee cockpit-publish-output.txt || {
             if grep -qE "package version already exists|EPUBLISHCONFLICT|409" cockpit-publish-output.txt; then
               echo "✓ @aiwg/cockpit version already published to Gitea - treating as success"
             else
