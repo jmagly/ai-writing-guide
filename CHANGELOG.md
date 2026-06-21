@@ -7,6 +7,32 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.6] - 2026-06-21 — "Release-pipeline hardening, cont."
+
+Follow-on hardening surfaced while validating 2026.6.5's GitHub-mirror fix.
+
+### Fixed
+
+- **GitHub mirror tag-push is idempotent** — `github-mirror.yml` now tolerates
+  an already-existing tag on the mirror (matching the main-push guard), so a
+  workflow re-run — or a manual push that races the workflow — proceeds to
+  GitHub Release creation instead of failing on "tag already exists."
+- **Docsite strict-link build** — the v2026.6.4 and v2026.6.5 announcements
+  linked the CHANGELOG via a relative path that resolved outside the docs tree
+  and failed the docsite's strict-link check. They now use the absolute GitHub
+  URL like every prior announcement.
+
+### Changed
+
+- **Release runbook** — `CLAUDE.md` / `AIWG.md` step 8 no longer instructs a
+  manual `git push github`: the Gitea tag push (step 7) triggers the mirror
+  workflow, which pushes `main` + the tag to GitHub and creates the Release
+  itself. The manual push raced that and is now documented as not-to-do.
+
+### Upgrade notes
+
+- **No action required.** Tooling/release-process release; no CLI changes.
+
 ## [2026.6.5] - 2026-06-21 — "Release-pipeline hardening"
 
 A pipeline-fix cut. Two gaps surfaced while cutting 2026.6.4 are closed so
