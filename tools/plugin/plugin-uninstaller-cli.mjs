@@ -16,6 +16,7 @@
  * @module tools/plugin/plugin-uninstaller-cli
  */
 
+import { pathToFileURL } from 'url';
 import { importImpl } from '../_resolve-impl.mjs';
 
 async function loadPluginUninstaller() {
@@ -28,17 +29,25 @@ async function loadPluginUninstaller() {
   }
 }
 
-function parseArgs(args) {
+/**
+ * Parse CLI arguments. Unknown flags are recorded in `unknownFlag` (the first
+ * one seen) rather than silently dropped — `main()` reports them and exits
+ * non-zero instead of letting a stray flag shift positionals (#118).
+ *
+ * @param {string[]} args
+ * @returns {{pluginId:string|null, force:boolean, keepData:boolean, dryRun:boolean, help:boolean, unknownFlag:string|null}}
+ */
+export function parseArgs(args) {
   const options = {
     pluginId: null,
     force: false,
     keepData: false,
     dryRun: false,
-    help: false
+    help: false,
+    unknownFlag: null
   };
 
-  let i = 0;
-  while (i < args.length) {
+  for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
     if (arg === '--help' || arg === '-h') {
@@ -49,10 +58,12 @@ function parseArgs(args) {
       options.keepData = true;
     } else if (arg === '--dry-run') {
       options.dryRun = true;
-    } else if (!arg.startsWith('-') && !options.pluginId) {
+    } else if (arg.startsWith('-')) {
+      // Unknown flag — record the first occurrence; main() reports + exits.
+      if (!options.unknownFlag) options.unknownFlag = arg;
+    } else if (!options.pluginId) {
       options.pluginId = arg;
     }
-    i++;
   }
 
   return options;
@@ -95,19 +106,34 @@ async function main() {
   const args = process.argv.slice(2);
   const options = parseArgs(args);
 
+  // Reject unknown flags before any work (#118). `--provider` in particular is
+  // a natural reach for scoping removal, but it is not supported here.
+  if (options.unknownFlag) {
+    console.error(`Error: unknown flag ${options.unknownFlag}`);
+    if (options.unknownFlag === '--provider') {
+      console.error(
+        'Provider-scoped removal is not supported by `aiwg remove`. ' +
+        'Remove the plugin by id, or delete the provider-deployed artifacts manually. See jmagly/aiwg#118.'
+      );
+    }
+    console.error('Usage: aiwg remove <plugin-id> [--force] [--keep-data] [--dry-run]');
+    process.exit(2);
+  }
+
   if (options.help || !options.pluginId) {
     printHelp();
     process.exit(options.help ? 0 : 1);
   }
 
   try {
-    const { PluginUninstaller } = await loadPluginUninstaller();
+    const { createUninstaller } = await loadPluginUninstaller();
 
-    const uninstaller = new PluginUninstaller({
-      dryRun: options.dryRun,
-      force: options.force,
-      keepData: options.keepData
-    });
+    // Use the factory so the uninstaller is constructed with the resolved AIWG
+    // root (a string). The previous `new PluginUninstaller({...})` passed an
+    // options object as the `aiwgRoot` constructor arg, so `path.join(obj,
+    // 'registry.json')` threw "path argument must be of type string" before
+    // doing any work (#118).
+    const uninstaller = createUninstaller();
 
     console.log(`Uninstalling plugin: ${options.pluginId}...`);
 
@@ -115,20 +141,29 @@ async function main() {
       console.log('[DRY RUN] No changes will be made\n');
     }
 
-    const result = await uninstaller.uninstall(options.pluginId);
+    // Options must be passed to uninstall() — they were previously collected
+    // then dropped, leaving --force/--keep-data/--dry-run inert (#118).
+    const result = await uninstaller.uninstall(options.pluginId, {
+      force: options.force,
+      dryRun: options.dryRun,
+      keepProjects: options.keepData
+    });
 
     if (result.success) {
       console.log(`\n✓ Plugin ${options.pluginId} uninstalled successfully`);
-      if (result.removedDirectories) {
-        console.log('  Removed directories:');
-        result.removedDirectories.forEach(d => console.log(`    - ${d}`));
+      const stats = result.stats || {};
+      if (stats.dirsRemoved || stats.filesRemoved) {
+        console.log(`  Removed ${stats.dirsRemoved} director${stats.dirsRemoved === 1 ? 'y' : 'ies'}, ${stats.filesRemoved} file${stats.filesRemoved === 1 ? '' : 's'}`);
       }
+      if (stats.projectsArchived) {
+        console.log(`  Archived ${stats.projectsArchived} project(s)`);
+      }
+      for (const w of result.warnings || []) console.warn(`  ⚠ ${w}`);
     } else {
-      console.error(`\n✗ Failed to uninstall plugin: ${result.error}`);
-      if (result.dependents && result.dependents.length > 0) {
-        console.error('  Dependent plugins that must be removed first:');
-        result.dependents.forEach(d => console.error(`    - ${d}`));
-      }
+      const detail = result.errors && result.errors.length
+        ? result.errors.join('; ')
+        : 'unknown error';
+      console.error(`\n✗ Failed to uninstall plugin: ${detail}`);
       process.exit(1);
     }
   } catch (error) {
@@ -137,4 +172,10 @@ async function main() {
   }
 }
 
-main();
+// Only run when invoked directly (so the module is importable for testing
+// parseArgs without triggering a real uninstall).
+const invokedDirectly =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (invokedDirectly) {
+  main();
+}
