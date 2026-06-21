@@ -977,7 +977,16 @@ async function deployOneProjectLocalBundle(opts: {
   args.push('--skip-commands-migration');
 
   const captureOpts = quiet && !verbose ? { capture: true } : {};
-  const result = await runner.run('tools/agents/deploy-agents.mjs', args, captureOpts);
+  // Inject AIWG_ROOT so the deploy subprocess can resolve the upstream AIWG
+  // install root. The bundle's `--source` is its project-local path, so
+  // `computeAllKernelNames`/`computeAllArtifactBasenames` (which walk up from
+  // srcRoot looking for agentic/code/{frameworks,addons}) would otherwise fail
+  // and prune the provider's kernel skill directory with an empty desired set
+  // (#123). `frameworkRoot` is the AIWG install root that owns these trees.
+  const result = await runner.run('tools/agents/deploy-agents.mjs', args, {
+    ...captureOpts,
+    env: { AIWG_ROOT: frameworkRoot },
+  });
 
   // Approximate counts from the bundle's source dirs (deploy-agents.mjs is
   // idempotent and copies file-for-file from these dirs)

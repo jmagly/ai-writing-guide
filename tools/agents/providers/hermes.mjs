@@ -378,14 +378,21 @@ export async function deploy(opts) {
     // template-driven convenience install (not part of any framework's
     // skills/), so without this exemption the prune would delete it
     // every time it's auto-installed.
-    const desiredKernel = [...computeAllKernelNames(srcRoot), 'aiwg-orchestrate'];
-    pruneStaleAiwgSkills(kernelSkillsPath, desiredKernel, opts);
+    // `computeAllKernelNames` returns null when no AIWG framework/addon tree
+    // can be located (e.g. project-local bundle deploy without AIWG_ROOT).
+    // Skip both the prune and the manifest update in that case rather than
+    // operate on an empty desired set (#123).
+    const kernelNames = computeAllKernelNames(srcRoot);
+    if (kernelNames != null) {
+      const desiredKernel = [...kernelNames, 'aiwg-orchestrate'];
+      pruneStaleAiwgSkills(kernelSkillsPath, desiredKernel, opts);
 
-    // Register kernel skills in Hermes's bundled manifest so the Curator
-    // (v0.12.0+, 7-day archival cycle) does not archive them. Standard
-    // skills under `.aiwg/` are already protected by the dot-prefix rule
-    // in tools/skill_usage.py:241-243. (#1317 / S6)
-    updateBundledManifest(desiredKernel, opts);
+      // Register kernel skills in Hermes's bundled manifest so the Curator
+      // (v0.12.0+, 7-day archival cycle) does not archive them. Standard
+      // skills under `.aiwg/` are already protected by the dot-prefix rule
+      // in tools/skill_usage.py:241-243. (#1317 / S6)
+      updateBundledManifest(desiredKernel, opts);
+    }
   }
 
   // ── AGENTS.md + .hermes.md ─────────────────────────────────────────────────

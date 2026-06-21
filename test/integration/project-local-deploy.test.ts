@@ -34,8 +34,9 @@ function makeEnv(label: string): Env {
   mkdirSync(projectDir, { recursive: true });
   mkdirSync(homeDir, { recursive: true });
 
-  // Project-local extension bundle with one rule + one skill.
+  // Project-local extension bundle with one agent + one rule + one skill.
   const bundleDir = path.join(projectDir, '.aiwg', 'extensions', 'pl-test');
+  mkdirSync(path.join(bundleDir, 'agents'), { recursive: true });
   mkdirSync(path.join(bundleDir, 'rules'), { recursive: true });
   mkdirSync(path.join(bundleDir, 'skills', 'demo-skill'), { recursive: true });
 
@@ -48,10 +49,15 @@ function makeEnv(label: string): Env {
       version: '1.0.0',
       description: 'Integration test bundle',
       manifestVersion: '1',
-      platforms: { claude: 'full', cursor: 'full' },
+      platforms: { claude: 'full', cursor: 'full', factory: 'full', codex: 'full' },
       keywords: ['test'],
       deployment: { pathTemplate: '.{platform}/rules/{id}.md' },
     }, null, 2),
+  );
+
+  writeFileSync(
+    path.join(bundleDir, 'agents', 'pl-agent.md'),
+    `---\nname: PL Agent\ndescription: Agent from project-local bundle\nmodel: claude-sonnet-4-6\ntools: Read, Bash\n---\n\n# PL Agent\n`,
   );
 
   writeFileSync(
@@ -150,6 +156,81 @@ describe('project-local deploy integration (#1046)', () => {
     const cursorRule = path.join(env.projectDir, '.cursor', 'rules', 'pl-rule.md');
     const cursorRuleAlt = path.join(env.projectDir, '.cursor', 'rules', 'pl-rule.mdc');
     expect(existsSync(cursorRule) || existsSync(cursorRuleAlt)).toBe(true);
+  });
+
+  // #124: factory.mjs and codex.mjs must honor the isAddonSource short-circuit
+  // so project-local bundles deploy their agents + rules (previously 0/0).
+  it('DP-FACTORY (#124): deploys project-local agent + rule to .factory/ paths', () => {
+    const result = runDeploy(env, 'factory');
+    expect(result.status, result.stdout).toBe(0);
+
+    const agentFile = path.join(env.projectDir, '.factory', 'droids', 'pl-agent.md');
+    const ruleFile = path.join(env.projectDir, '.factory', 'rules', 'pl-rule.md');
+    expect(existsSync(agentFile), `factory agent should exist at ${agentFile}`).toBe(true);
+    expect(existsSync(ruleFile), `factory rule should exist at ${ruleFile}`).toBe(true);
+  });
+
+  it('DP-CODEX (#124): deploys project-local agent + rule to .codex/ paths', () => {
+    const result = runDeploy(env, 'codex');
+    expect(result.status, result.stdout).toBe(0);
+
+    const agentFile = path.join(env.projectDir, '.codex', 'agents', 'pl-agent.md');
+    const ruleFile = path.join(env.projectDir, '.codex', 'rules', 'pl-rule.md');
+    expect(existsSync(agentFile), `codex agent should exist at ${agentFile}`).toBe(true);
+    expect(existsSync(ruleFile), `codex rule should exist at ${ruleFile}`).toBe(true);
+  });
+
+  // #123: deploying a project-local bundle WITHOUT AIWG_ROOT must not empty the
+  // provider's kernel skill directory. computeAllKernelNames returns null when
+  // no AIWG framework/addon tree is locatable, and pruneStaleAiwgSkills skips
+  // pruning rather than treating the empty set as "delete every AIWG skill".
+  it('KERNEL-SAFE (#123): project-local deploy without AIWG_ROOT preserves existing kernel skills', () => {
+    // Pre-seed an AIWG-managed kernel skill in the provider's kernel dir.
+    const kernelDir = path.join(env.projectDir, '.claude', 'skills', 'preexisting-kernel');
+    mkdirSync(kernelDir, { recursive: true });
+    writeFileSync(
+      path.join(kernelDir, 'SKILL.md'),
+      `---\nnamespace: aiwg\nname: preexisting-kernel\ndescription: A pre-existing AIWG-managed kernel skill\n---\n\n# Preexisting Kernel\n`,
+    );
+    writeFileSync(path.join(kernelDir, '.aiwg-managed'), '');
+
+    // Deploy the project-local bundle with AIWG_ROOT explicitly unset so the
+    // walk-up cannot find the repo tree (the bug scenario from #123).
+    const args = [
+      DEPLOY_SCRIPT,
+      '--source', env.bundleDir,
+      '--deploy-commands', '--deploy-skills', '--deploy-rules',
+      '--provider', 'claude',
+      '--target', env.projectDir,
+      '--skip-commands-migration',
+      '--copy-all',
+    ];
+    let status = 0;
+    let out = '';
+    try {
+      // AIWG_ROOT unset + --source under the project's .aiwg/ tree means
+      // computeAllKernelNames walks up from the bundle path, finds no
+      // agentic/code/{frameworks,addons}, and returns null → prune skipped.
+      const cleanEnv: NodeJS.ProcessEnv = { ...process.env, HOME: env.homeDir, USERPROFILE: env.homeDir };
+      delete cleanEnv.AIWG_ROOT;
+      out = execFileSync(process.execPath, args, {
+        cwd: REPO_ROOT,
+        env: cleanEnv,
+        encoding: 'utf-8',
+        timeout: 120_000,
+      });
+    } catch (e: any) {
+      status = e.status ?? 1;
+      out = (e.stdout || '') + (e.stderr || '');
+    }
+
+    expect(status, out).toBe(0);
+    // The pre-existing AIWG-managed kernel skill must survive — it was NOT in
+    // the bundle, and with no resolvable AIWG root the prune must be skipped.
+    expect(
+      existsSync(path.join(kernelDir, 'SKILL.md')),
+      'pre-existing kernel skill must not be pruned when AIWG_ROOT is unresolvable',
+    ).toBe(true);
   });
 
   it('R-3: source bundle under .aiwg/ is preserved after deploy', () => {

@@ -952,27 +952,38 @@ export function deploySkillsWithKernelRouting(
  * multiple times — once per framework, once per addon batch).
  *
  * @param {string} srcRoot AIWG repo / install root
- * @returns {string[]} basenames of every source skill dir whose
- *   SKILL.md frontmatter has `kernel: true`
+ * @returns {string[]|null} basenames of every source skill dir whose
+ *   SKILL.md frontmatter has `kernel: true`, or `null` when no AIWG
+ *   framework/addon tree can be located. A `null` return signals the
+ *   caller (`pruneStaleAiwgSkills`) to SKIP pruning rather than treat an
+ *   empty set as "delete every AIWG skill" (#123). Mirrors the contract of
+ *   `computeAllArtifactBasenames` (#1627).
  */
 export function computeAllKernelNames(srcRoot) {
-  // The caller may pass an addon/framework path (e.g. when deploying a
-  // single addon), not the AIWG install root. Walk up until we find a
-  // directory that contains BOTH `agentic/code/frameworks` and
-  // `agentic/code/addons` — that's the AIWG root.
-  const aiwgRoot = process.env.AIWG_ROOT || (() => {
+  const hasAiwgTree = (dir) =>
+    fs.existsSync(path.join(dir, 'agentic', 'code', 'frameworks')) &&
+    fs.existsSync(path.join(dir, 'agentic', 'code', 'addons'));
+
+  // Prefer an explicit AIWG_ROOT, but only when it actually points at a real
+  // AIWG tree — a stale/bogus env value must not silently yield an empty
+  // desired set. Otherwise walk up from srcRoot (the caller may pass an
+  // addon/framework/project-local-bundle path, not the install root).
+  let aiwgRoot = null;
+  if (process.env.AIWG_ROOT && hasAiwgTree(process.env.AIWG_ROOT)) {
+    aiwgRoot = process.env.AIWG_ROOT;
+  } else {
     let cur = path.resolve(srcRoot);
     for (let i = 0; i < 8; i++) {
-      if (
-        fs.existsSync(path.join(cur, 'agentic', 'code', 'frameworks')) &&
-        fs.existsSync(path.join(cur, 'agentic', 'code', 'addons'))
-      ) return cur;
+      if (hasAiwgTree(cur)) { aiwgRoot = cur; break; }
       const parent = path.dirname(cur);
       if (parent === cur) break;
       cur = parent;
     }
-    return srcRoot;
-  })();
+  }
+
+  // No AIWG framework/addon tree found — e.g. deploying a project-local
+  // bundle with AIWG_ROOT unset. Return null so the prune is skipped.
+  if (!aiwgRoot) return null;
 
   const names = new Set();
   const roots = [
@@ -1014,13 +1025,18 @@ export function computeAllKernelNames(srcRoot) {
  *
  * @param {string} kernelDestDir absolute path to the platform's kernel
  *   skills dir (e.g. `<project>/.claude/skills/`)
- * @param {string[]} desiredKernelNames names of every kernel skill that
- *   SHOULD remain (basenames of source dirs)
+ * @param {string[]|null} desiredKernelNames names of every kernel skill that
+ *   SHOULD remain (basenames of source dirs). When `null` (no AIWG tree
+ *   located — see `computeAllKernelNames`), pruning is skipped entirely so a
+ *   project-local-bundle deploy without AIWG_ROOT never empties the kernel
+ *   skills directory (#123).
  * @param {object} opts `{ dryRun, verbose }`
  * @returns {number} count of pruned entries
  */
 export function pruneStaleAiwgSkills(kernelDestDir, desiredKernelNames, opts = {}) {
   if (!kernelDestDir || !fs.existsSync(kernelDestDir)) return 0;
+  // No global desired set — skip pruning rather than delete everything (#123).
+  if (desiredKernelNames == null) return 0;
   if (opts.dryRun) return 0;
   const desired = new Set(desiredKernelNames);
   let pruned = 0;
