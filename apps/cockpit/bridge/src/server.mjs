@@ -963,18 +963,24 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         if (backend) qs.set('backend', backend);
         if (loadout) qs.set('loadout', loadout);
         const sessionAgentId = await resolveSessionAgentId(upstreamUrl, id);
-        const candidates = unique([sessionAgentId, id]).map((agentId) => ({
-          target: `${upstreamUrl}/api/v1/agents/${encodeURIComponent(agentId)}/sessions`,
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            session_backend: backend || 'tmux',
-            session_class: mode || 'managed',
-            command: 'bash',
-            args: ['-l'],
-            working_dir: '/root',
-          }),
-        }));
+        const candidates = unique([sessionAgentId, id]).flatMap((agentId) => [
+          {
+            target: `${upstreamUrl}/api/v1/agents/${encodeURIComponent(agentId)}/sessions`,
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              session_backend: backend || 'tmux',
+              session_class: mode || 'managed',
+              command: 'bash',
+              args: ['-l'],
+              working_dir: '/root',
+            }),
+          },
+          {
+            target: `${upstreamUrl}/agents/${encodeURIComponent(agentId)}/sessions?${qs.toString()}`,
+            method: 'POST',
+          },
+        ]);
         let sessionCreate;
         try {
           sessionCreate = await fetchJsonFirst(candidates);

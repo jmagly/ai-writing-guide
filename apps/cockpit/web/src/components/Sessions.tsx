@@ -5,7 +5,7 @@ import { CapabilitySearch } from './CapabilitySearch';
 import type { Instance, SessionInfo, CapabilityResult } from '../types';
 import type { SessionApi } from '../useSession';
 
-export function Sessions({ session, composer, setComposer, onRequestStart }: { session: SessionApi; composer: string; setComposer: (v: string) => void; onRequestStart: (instanceId?: string) => void }) {
+export function Sessions({ session, composer, setComposer, onRequestStart, refreshMs = 5_000 }: { session: SessionApi; composer: string; setComposer: (v: string) => void; onRequestStart: (instanceId?: string) => void; refreshMs?: number }) {
   const [instances, setInstances] = useState<Instance[]>([]);
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [instId, setInstId] = useState('');
@@ -23,24 +23,41 @@ export function Sessions({ session, composer, setComposer, onRequestStart }: { s
     inputRef.current?.focus();
   };
 
-  useEffect(() => {
-    api<{ instances: Instance[] }>('/api/inventory')
+  const refreshInventory = useCallback(() => {
+    return api<{ instances: Instance[] }>('/api/inventory')
       .then((d) => {
         const sessionable = dedupeInstances(d.instances).filter((i) => i.state === 'running' && i.session_backends?.some((b) => b.available));
         setInstances(sessionable);
-        if (sessionable[0]) {
-          setInstId(sessionable[0].id);
-          const firstBackend = sessionable[0].session_backends.find((b) => b.available) ?? sessionable[0].session_backends[0];
-          if (firstBackend) setBackendKey(`${firstBackend.mode}:${firstBackend.backend}`);
-        }
+        setInstId((currentId) => {
+          if (currentId && sessionable.some((i) => i.id === currentId)) return currentId;
+          return sessionable[0]?.id ?? '';
+        });
+        setBackendKey((currentBackend) => {
+          if (currentBackend && sessionable.some((i) => i.session_backends.some((b) => `${b.mode}:${b.backend}` === currentBackend && b.available))) return currentBackend;
+          const firstBackend = sessionable[0]?.session_backends.find((b) => b.available) ?? sessionable[0]?.session_backends[0];
+          return firstBackend ? `${firstBackend.mode}:${firstBackend.backend}` : '';
+        });
       })
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    refreshInventory();
+    const timer = window.setInterval(refreshInventory, refreshMs);
+    return () => window.clearInterval(timer);
+  }, [refreshInventory, refreshMs]);
+
   const loadSessions = useCallback((id: string) => {
     if (!id) return;
     api<{ sessions: SessionInfo[] }>(`/api/sessions?instance=${encodeURIComponent(id)}`)
-      .then((d) => { setSessions(d.sessions); setAttachUrl(d.sessions[0]?.attach_url ?? ''); })
+      .then((d) => {
+        const nextSessions = d.sessions ?? [];
+        setSessions(nextSessions);
+        setAttachUrl((currentUrl) => {
+          if (currentUrl && nextSessions.some((s) => s.attach_url === currentUrl)) return currentUrl;
+          return nextSessions[0]?.attach_url ?? '';
+        });
+      })
       .catch((e) => { setSessions([]); setAttachUrl(''); setSessionErr((e as Error).message); });
   }, []);
   useEffect(() => { loadSessions(instId); }, [instId, loadSessions]);
@@ -52,6 +69,11 @@ export function Sessions({ session, composer, setComposer, onRequestStart }: { s
   const backends = current?.session_backends ?? [];
   const selectedBackend = backends.find((b) => `${b.mode}:${b.backend}` === backendKey) ?? backends.find((b) => b.available) ?? backends[0];
   const selectedSession = sessions.find((s) => s.attach_url === attachUrl);
+  useEffect(() => {
+    if (!session.state.url) return;
+    const sessionStillListed = sessions.some((s) => s.attach_url === session.state.url);
+    if (sessions.length && !sessionStillListed) session.detach();
+  }, [session.state.url, session.detach, sessions]);
   useEffect(() => {
     if (!current) return;
     const valid = current.session_backends.some((b) => `${b.mode}:${b.backend}` === backendKey);
