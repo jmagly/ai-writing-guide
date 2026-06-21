@@ -555,6 +555,50 @@ The spike outcome was to stay on npm — see
 reasoning. Short version: the migration cost in Wave 7 scope outweighs
 the benefit; the threat-model effect of either shape is equivalent.
 
+## Package ownership & npm registries
+
+AIWG ships **two** npm packages with **different ownership models** — this split
+is intentional; don't try to "unify" them.
+
+| Package | Scope / owner | Public install | Notes |
+|---------|---------------|----------------|-------|
+| `aiwg` | **unscoped**, owned by the user account `roctinam` | `npm install -g aiwg` | The base CLI. Deliberately kept unscoped under the user account — renaming to a scope would break every existing install. |
+| `@aiwg/cockpit` | **scoped**, under the `@aiwg` org | `npm install -g @aiwg/cockpit` | Opt-in Cockpit package. Lives under the org. |
+
+### Where each registry is published from
+
+- **npmjs.org (public) — GitHub Actions only.** `.github/workflows/npm-publish.yml`
+  publishes both packages via **OIDC trusted publishing + provenance** on tag push.
+  No npm token is involved (OIDC). GitHub Actions is the authority for npmjs.org
+  supply-chain distribution and verification.
+- **Gitea npm registry (mirror) — Gitea Actions only.** `.gitea/workflows/npm-publish.yml`
+  publishes both packages to Gitea's bundled registry for local package management.
+  Uses the `NPM_TOKEN` secret — a **Gitea API token (`gta_…`)** with `package:write`
+  (despite the name, it is NOT an npmjs.org token).
+- **Releases:** Gitea release = `.gitea/workflows/gitea-release.yml`; GitHub release
+  + mirror push = `.gitea/workflows/github-mirror.yml`.
+
+### OIDC trusted publishers are per-package
+
+Each package needs its **own** OIDC trusted publisher configured on npmjs.org,
+pointed at `jmagly/aiwg`'s `.github/workflows/npm-publish.yml`. `aiwg` has had one
+for a while; `@aiwg/cockpit` was added in June 2026.
+
+### Gotchas (learned the hard way — #1648)
+
+- **Publish a sub-package with the folder spec, never `--prefix`.** Use
+  `npm publish ./apps/cockpit …` and `npm pack ./apps/cockpit`. `npm --prefix
+  apps/cockpit publish` does **not** target the subdir — it republishes the root
+  `aiwg` package, hits `409`, and the error handler swallows it as success, so the
+  sub-package silently never publishes. Note the leading `./` — `npm publish
+  apps/cockpit` (no `./`) is read as a git spec and fails.
+- **A brand-new scoped package may need a one-time manual bootstrap.** npm trusted
+  publishing historically requires the package to exist before its per-package
+  trusted publisher can be configured. Bootstrap once with
+  `npm publish ./apps/<pkg> --access public --registry=https://registry.npmjs.org/ --otp=<code>`
+  (no `--provenance` locally — that only works from CI OIDC), then OIDC takes over
+  for subsequent releases.
+
 ## References
 
 - [Semantic Versioning 2.0.0](https://semver.org/)
@@ -568,3 +612,6 @@ the benefit; the threat-model effect of either shape is equivalent.
 - @.aiwg/architecture/adr-pnpm-workspace-migration.md - Why npm not pnpm
 - Issue #1290 — A15 release-age gate
 - Issue #1278 — Wave 7 (Mini Shai-Hulud supply-chain hardening) epic
+- Issue #1648 — cockpit publish targeting bug (`--prefix` vs folder spec)
+- @.github/workflows/npm-publish.yml - npmjs.org publish (OIDC + provenance)
+- @.gitea/workflows/npm-publish.yml - Gitea npm registry mirror
