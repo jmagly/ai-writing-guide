@@ -91,25 +91,24 @@ jobs:
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Push tag + main to GitHub mirror
+      - name: Push main to GitHub mirror (best-effort; operator pushes the tag)
         if: ${{ steps.classify.outputs.skip != 'true' && steps.token.outputs.skip != 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
           MIRROR="https://x-access-token:${GH_TOKEN}@github.com/jmagly/aiwg.git"
-          TAG="v${{ steps.classify.outputs.version }}"
-          # Use a one-shot URL with embedded token; never echo the token.
-          # The token lives only in this command's environment, not in git config.
-          # Idempotent: if the operator (or a prior run) already pushed the tag,
-          # git rejects it with "already exists" — that's fine, the tag is on the
-          # mirror either way and we still want to proceed to release creation.
-          git push "$MIRROR" "refs/tags/${TAG}:refs/tags/${TAG}" \
-            || echo "tag ${TAG} already on mirror (pushed manually or by a prior run) — continuing to release creation."
-          # Best-effort main push (idempotent — if mirror is ahead via a separate
-          # PR flow, this will fast-forward or no-op).
+          # NOTE: this workflow does NOT push the tag. The release-ceremony
+          # operator pushes the annotated, signed tag to the GitHub mirror
+          # (`git push github main --tags`). That matters because GitHub's own
+          # npm-publish workflow verifies the tag SIGNATURE — and a tag pushed
+          # from this runner arrives peeled to a lightweight (non-signed)
+          # object, which fails that gate. Pushing the tag is therefore the
+          # operator's job; this workflow's job is to create the Release.
+          # Best-effort main push (idempotent — operator usually already pushed
+          # main; rejected/​protected pushes are fine, the tag drives the release).
           git push "$MIRROR" "HEAD:refs/heads/main" \
-            || echo "main push declined (likely non-fast-forward or protected — that's fine, the tag is what matters for the release)."
+            || echo "main push declined (already pushed, non-fast-forward, or protected — fine; the operator-pushed tag drives the release)."
 
       - name: Resolve release body
         id: body
