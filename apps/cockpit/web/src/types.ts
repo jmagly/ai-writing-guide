@@ -17,7 +17,7 @@ export interface TransportPosture {
   evidence?: string;
   stale?: boolean;
 }
-export interface LaunchContext { cwd?: string; loadout?: string; runtime_kind?: string; host?: string; selected_tier?: string }
+export interface LaunchContext { cwd?: string; loadout?: string; runtime_kind?: string; host?: string; selected_tier?: string; name?: string; image_ref?: string; source?: string }
 export interface SessionBackend { mode: 'direct' | 'managed'; backend: string; replay?: boolean; keyframe?: boolean; drive?: boolean; observe?: boolean; available?: boolean; reason?: string }
 export interface Instance {
   id: string;
@@ -30,11 +30,14 @@ export interface Instance {
   host_daemon: HostDaemonStatus;
   transport: TransportPosture;
   launch_context: LaunchContext;
+  agent_ready?: boolean;
+  registered_agent_id?: string;
   session_backends: SessionBackend[];
 }
 export interface RunningTask { instance_id: string; task_id: string; state: string; tenant: string; runtime_posture?: RuntimePosture; transport?: TransportPosture }
-export interface SessionInfo { id: string; instance_id: string; seq: number; members: number; has_controller: boolean; attach_url: string; mode?: 'direct' | 'managed'; backend?: string; role_policy?: string; replay?: boolean; keyframe?: boolean; controllers?: number; observers?: number }
+export interface SessionInfo { id: string; instance_id: string; seq?: number; members?: number; has_controller?: boolean; attach_url: string; mode?: 'direct' | 'managed'; backend?: string; session_class?: string; session_backend?: string; role_policy?: string; replay?: boolean; keyframe?: boolean; controllers?: number; observers?: number }
 export interface Approval { id: string; instance_id: string; prompt: string; risk: string; status: string }
+export interface ResponseNeeded { id: string; instance_id: string; prompt: string; source: string; status: string; attach_url?: string | null }
 export interface InstanceCost { instance_id: string; tenant: string; input_tokens: number; output_tokens: number; usd: number }
 export interface Cost { total: { input_tokens: number; output_tokens: number; usd: number }; per_instance: InstanceCost[] }
 export interface Loadout { id: string; label: string; description?: string; runtimes?: string[] }

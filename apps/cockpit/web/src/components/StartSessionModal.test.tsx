@@ -3,7 +3,7 @@ import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/re
 import { StartSessionModal } from './StartSessionModal';
 import type { SessionApi } from '../useSession';
 
-// Minimal routed fetch mock: inventory + loadouts on open, POST session on start.
+// Minimal routed fetch mock: inventory on open, POST session on start.
 const INSTANCE = {
   id: 'inst-aaaaaaaa-1111', runtime: 'container', loadout: 'agentic-dev', state: 'running', tenant: 'default',
   card_url: '', runtime_posture: { kind: 'container', isolation: 'shared-kernel', label: 'container' },
@@ -11,17 +11,11 @@ const INSTANCE = {
   launch_context: { loadout: 'agentic-dev' },
   session_backends: [{ mode: 'managed', backend: 'tmux', available: true, drive: true }],
 };
-const LOADOUTS = [
-  { id: 'agentic-dev', label: 'Agentic Dev' },
-  { id: 'security-audit', label: 'Security Audit', description: 'Hardened' },
-];
-
 function mockFetch(postImpl?: () => Response | Promise<Response>) {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const ok = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
     if (url.includes('/api/inventory')) return ok({ instances: [INSTANCE] });
-    if (url.includes('/api/loadouts')) return ok({ loadouts: LOADOUTS });
     if (url.includes('/sessions') && init?.method === 'POST') {
       return postImpl ? postImpl() : ok({ id: 'sess-x', attach_url: 'ws://x/agents/i/sessions/sess-x/attach' });
     }
@@ -47,19 +41,20 @@ describe('StartSessionModal (#1640/#1641)', () => {
     expect(container.querySelector('[role="dialog"]')).toBeNull();
   });
 
-  it('surfaces the loadout catalog when opened', async () => {
+  it('surfaces the selected instance loadout when opened', async () => {
     globalThis.fetch = mockFetch();
     render(<StartSessionModal open onClose={() => {}} session={stubSession()} onStarted={() => {}} />);
     expect(await screen.findByRole('dialog', { name: /start a session/i })).toBeTruthy();
-    // both catalog loadouts are offered, not just the instance's own
-    await waitFor(() => expect(screen.getByRole('option', { name: /Security Audit/ })).toBeTruthy());
+    expect(screen.getByText('Instance loadout')).toBeTruthy();
+    expect(screen.getByText('agentic-dev')).toBeTruthy();
+    expect(screen.queryByRole('option', { name: /Security Audit/ })).toBeNull();
   });
 
-  it('warns before replacing an attached session (clobber guard)', async () => {
+  it('explains that attached sessions stay running when starting another session', async () => {
     globalThis.fetch = mockFetch();
     render(<StartSessionModal open onClose={() => {}} session={stubSession(true)} onStarted={() => {}} />);
-    expect(await screen.findByText(/starting will replace it/i)).toBeTruthy();
-    expect(screen.getByRole('button', { name: /replace & start/i })).toBeTruthy();
+    expect(await screen.findByText(/existing sessions keep running/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /start another session/i })).toBeTruthy();
   });
 
   it('starts: POSTs with explicit params, attaches, then closes', async () => {
@@ -72,7 +67,8 @@ describe('StartSessionModal (#1640/#1641)', () => {
     fireEvent.click(startBtn);
     await waitFor(() => expect(session.attach).toHaveBeenCalledWith(expect.stringContaining('/attach'), false, 'observer'));
     const postCall = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.find((c) => String(c[0]).includes('/sessions') && c[1]?.method === 'POST');
-    expect(String(postCall?.[0])).toMatch(/mode=managed&backend=tmux&loadout=agentic-dev/);
+    expect(String(postCall?.[0])).toMatch(/mode=managed&backend=tmux/);
+    expect(String(postCall?.[0])).not.toContain('loadout=');
     expect(onStarted).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
   });

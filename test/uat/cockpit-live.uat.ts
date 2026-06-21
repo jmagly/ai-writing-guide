@@ -22,6 +22,12 @@ const MATRIX_TARGETS = (process.env.AIWG_COCKPIT_LIVE_MATRIX_TARGETS || 'host,co
   .split(',')
   .map((target) => target.trim())
   .filter(Boolean);
+const PROVISION_TARGETS = process.env.AIWG_COCKPIT_LIVE_PROVISION === '1';
+const PROVISION_NAME_PREFIX = process.env.AIWG_COCKPIT_LIVE_PROVISION_NAME_PREFIX || 'cockpit-uat';
+const PROVISION_LOADOUT = process.env.AIWG_COCKPIT_LIVE_PROVISION_LOADOUT || '';
+const PROVISION_IMAGE = process.env.AIWG_COCKPIT_LIVE_PROVISION_IMAGE || '';
+const PROVISION_PROFILE = process.env.AIWG_COCKPIT_LIVE_PROVISION_PROFILE || '';
+const PROVISION_TIMEOUT_MS = Number(process.env.AIWG_COCKPIT_LIVE_PROVISION_TIMEOUT_MS || 180_000);
 const ALLOW_MOCK_MATRIX = process.env.AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX === '1';
 const WORKLOAD_PROVIDER = (process.env.AIWG_COCKPIT_LIVE_PROVIDER || '').toLowerCase();
 const WORKLOAD_MARKER = 'AIWG_COCKPIT_LIVE_OK';
@@ -48,6 +54,7 @@ interface Evidence {
 
 const evidence: Evidence[] = [];
 let executorIdentity: Record<string, unknown> = {};
+const provisionedInstances = new Map<string, string>();
 
 function record(name: string, status: Evidence['status'], detail: string) {
   evidence.push({ name, status, detail });
@@ -72,6 +79,21 @@ async function bridgeJson(base: string, token: string, path: string, init: Reque
 
 async function executorJson(path: string) {
   const r = await fetch(`${EXECUTOR_URL}${path}`, { signal: AbortSignal.timeout(3_000) });
+  return { status: r.status, body: await r.json().catch(() => ({})) };
+}
+
+async function executorJsonWithTimeout(path: string, timeoutMs = 5_000) {
+  const r = await fetch(`${EXECUTOR_URL}${path}`, { signal: AbortSignal.timeout(timeoutMs) });
+  return { status: r.status, body: await r.json().catch(() => ({})) };
+}
+
+async function executorPostJson(path: string, body: Record<string, unknown>, timeoutMs = 10_000) {
+  const r = await fetch(`${EXECUTOR_URL}${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
   return { status: r.status, body: await r.json().catch(() => ({})) };
 }
 
@@ -118,6 +140,103 @@ function runtimeFamily(instance: any): 'host' | 'container' | 'vm' | 'other' {
   if (kind === 'container' || kind === 'docker') return 'container';
   if (kind === 'vm') return 'vm';
   return 'other';
+}
+
+function provisionRuntime(target: string): string {
+  if (target === 'host') return 'host';
+  if (target === 'container') return 'docker';
+  if (target === 'vm') return 'qemu';
+  throw new Error(`unsupported provision target: ${target}`);
+}
+
+function provisionName(target: string): string {
+  return `${PROVISION_NAME_PREFIX}-${target}-${Date.now().toString(36)}`.replace(/[^a-z0-9-]/g, '-').slice(0, 63);
+}
+
+function provisionBody(target: string) {
+  const providerSuffix = WORKLOAD_PROVIDER && ['codex', 'claude'].includes(WORKLOAD_PROVIDER) ? WORKLOAD_PROVIDER : 'codex';
+  const body: Record<string, unknown> = {
+    name: provisionName(target),
+    runtime: provisionRuntime(target),
+    start: true,
+  };
+  if (target === 'host') {
+    body.loadout = PROVISION_LOADOUT || 'host-tools';
+  } else if (target === 'container') {
+    body.image = PROVISION_IMAGE || `agentic/${providerSuffix}:latest`;
+    if (PROVISION_LOADOUT) body.loadout = PROVISION_LOADOUT;
+  } else if (target === 'vm') {
+    body.loadout = PROVISION_LOADOUT || 'profiles/basic.yaml';
+  }
+  if (PROVISION_PROFILE) body.profile = PROVISION_PROFILE;
+  return body;
+}
+
+function asArrayFromEnvelope(body: any, keys: string[]) {
+  if (Array.isArray(body)) return body;
+  if (!body || typeof body !== 'object') return [];
+  for (const key of keys) {
+    if (Array.isArray(body[key])) return body[key];
+  }
+  if (body.data && typeof body.data === 'object') {
+    for (const key of keys) {
+      if (Array.isArray(body.data[key])) return body.data[key];
+    }
+  }
+  return [];
+}
+
+async function waitForOperation(operationId: string, target: string) {
+  const deadline = Date.now() + PROVISION_TIMEOUT_MS;
+  let last = '';
+  while (Date.now() < deadline) {
+    const op = await executorJsonWithTimeout(`/api/v2/admin/operations/${encodeURIComponent(operationId)}`, 5_000);
+    last = JSON.stringify(op.body);
+    const state = String(op.body?.state ?? '').toLowerCase();
+    if (state === 'succeeded' || state === 'completed') return op.body;
+    if (state === 'failed') throw new Error(`provision ${target} operation failed: ${last}`);
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+  }
+  throw new Error(`provision ${target} operation did not complete within ${PROVISION_TIMEOUT_MS}ms; last=${last}`);
+}
+
+async function waitForBootReady(base: string, token: string, target: 'host' | 'container' | 'vm', instanceId: string) {
+  const deadline = Date.now() + PROVISION_TIMEOUT_MS;
+  let last = '';
+  while (Date.now() < deadline) {
+    const inv = await bridgeJson(base, token, '/api/inventory')
+      .catch((err) => ({ status: 0, body: { error: String((err as Error).message || err) } }));
+    const agents = await executorJsonWithTimeout('/api/v1/agents', 5_000)
+      .catch((err) => ({ status: 0, body: { error: String((err as Error).message || err) } }));
+    const instances = inv.status === 200 ? (inv.body.instances ?? []) : [];
+    const instance = instanceId
+      ? instances.find((i: any) => String(i.id) === instanceId)
+      : instances.find((i: any) => runtimeFamily(i) === target);
+    const agentList = asArrayFromEnvelope(agents.body, ['agents', 'items', 'data']);
+    const agent = agentList.find((a: any) => String(a.instance_id ?? a.instanceId ?? '') === String(instance?.id ?? instanceId));
+    const backend = instance ? chooseBackend(instance) : undefined;
+    last = `inventory=${inv.status}/${JSON.stringify(instance ?? inv.body)} agents=${agents.status}/${JSON.stringify(agent ?? agents.body)}`;
+    if (instance && String(instance.state ?? '').toLowerCase() === 'running' && backend?.available !== false && agent) {
+      return { instance, agent, backend };
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+  }
+  throw new Error(`provisioned ${target} did not become boot-ready within ${PROVISION_TIMEOUT_MS}ms; last=${last}`);
+}
+
+async function provisionTarget(base: string, token: string, target: 'host' | 'container' | 'vm') {
+  const body = provisionBody(target);
+  const created = await executorPostJson('/api/v2/admin/instances', body);
+  if (![200, 201, 202].includes(created.status)) {
+    throw new Error(`provision ${target} returned ${created.status}: ${JSON.stringify(created.body)}`);
+  }
+  const operationId = String(created.body?.id ?? created.body?.operation?.id ?? '');
+  const instanceId = String(created.body?.instance_id ?? created.body?.instanceId ?? '');
+  if (!operationId) throw new Error(`provision ${target} returned no operation id: ${JSON.stringify(created.body)}`);
+  const op = await waitForOperation(operationId, target);
+  const ready = await waitForBootReady(base, token, target, String(op?.result?.instance_id ?? instanceId));
+  provisionedInstances.set(target, String(ready.instance.id));
+  return { operationId, instanceId: ready.instance.id, body, op, ready };
 }
 
 function chooseBackend(instance: any) {
@@ -258,6 +377,11 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     required: REQUIRED,
     matrix_required: MATRIX_REQUIRED,
     matrix_targets: MATRIX_TARGETS,
+    provision_targets: PROVISION_TARGETS,
+    provision_name_prefix: PROVISION_TARGETS ? PROVISION_NAME_PREFIX : null,
+    provision_loadout: PROVISION_TARGETS ? PROVISION_LOADOUT || null : null,
+    provision_image: PROVISION_TARGETS ? PROVISION_IMAGE || null : null,
+    provision_profile: PROVISION_TARGETS ? PROVISION_PROFILE || null : null,
     provider: WORKLOAD_PROVIDER || null,
     discovery_expect: DISCOVERY_EXPECT,
     mutation_file: MUTATION_FILE || null,
@@ -280,6 +404,7 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     `- Required: ${REQUIRED ? 'yes' : 'no'}`,
     `- Matrix required: ${MATRIX_REQUIRED ? 'yes' : 'no'}`,
     `- Matrix targets: ${MATRIX_TARGETS.join(', ')}`,
+    `- Provision targets: ${PROVISION_TARGETS ? 'yes' : 'no'}`,
     `- Workload provider: ${WORKLOAD_PROVIDER || 'not specified'}`,
     `- Discovery expectation: ${DISCOVERY_EXPECT}`,
     MUTATION_FILE ? `- Mutation file: ${MUTATION_FILE}` : '',
@@ -359,8 +484,8 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
       expect(Array.isArray(inv.body.instances)).toBe(true);
       if (inv.body.instances.length === 0) {
         const detail = 'live executor returned zero instances';
-        record('inventory posture', REQUIRED ? 'fail' : 'skip', detail);
-        if (REQUIRED) {
+        record('inventory posture', (REQUIRED && !PROVISION_TARGETS) ? 'fail' : 'skip', PROVISION_TARGETS ? `${detail}; matrix provision mode will create target(s)` : detail);
+        if (REQUIRED && !PROVISION_TARGETS) {
           throw new Error(`${detail}; provision at least one instance before required-green Cockpit live UAT`);
         }
         return;
@@ -379,7 +504,7 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
     if (inv.status !== 200 || !inv.body.instances?.length) {
       // eslint-disable-next-line no-console
       console.log('  Skipping session smoke — no inventory from live executor');
-      record('session smoke', 'skip', 'no inventory from live executor');
+      record('session smoke', 'skip', PROVISION_TARGETS ? 'no inventory before matrix provision step' : 'no inventory from live executor');
       return;
     }
     const id = inv.body.instances[0].id;
@@ -417,18 +542,31 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
       throw new Error('matrix-required mode refuses mock-only executor evidence; use a real agentic-sandbox or set AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX=1 for harness development only');
     }
 
-    const inv = await bridgeJson(base, token, '/api/inventory');
-    expect(inv.status).toBe(200);
-    const instances = inv.body.instances ?? [];
     const requiredTargets = MATRIX_TARGETS as Array<'host' | 'container' | 'vm'>;
     const unsupportedTargets = requiredTargets.filter((target) => !['host', 'container', 'vm'].includes(target));
     if (requiredTargets.length === 0 || unsupportedTargets.length > 0) {
       throw new Error(`AIWG_COCKPIT_LIVE_MATRIX_TARGETS must contain one or more of host,container,vm; unsupported=${unsupportedTargets.join(',')}`);
     }
+    if (PROVISION_TARGETS) {
+      for (const target of requiredTargets) {
+        const provisioned = await provisionTarget(base, token, target);
+        record(
+          `provision ${target}`,
+          'pass',
+          `operation=${provisioned.operationId}; instance=${provisioned.instanceId}; runtime=${runtimeFamily(provisioned.ready.instance)}; state=${provisioned.ready.instance.state}; backend=${provisioned.ready.backend.mode ?? 'unknown'}/${provisioned.ready.backend.backend ?? 'unknown'}; agent=${provisioned.ready.agent.id ?? provisioned.ready.agent.agent_id ?? 'registered'}`,
+        );
+      }
+    }
+    const latestInv = await bridgeJson(base, token, '/api/inventory');
+    expect(latestInv.status).toBe(200);
+    const latestInstances = latestInv.body.instances ?? [];
     const targetErrors: string[] = [];
     for (const target of requiredTargets) {
       try {
-        const instance = instances.find((i: any) => runtimeFamily(i) === target);
+        const provisionedId = provisionedInstances.get(target);
+        const instance = provisionedId
+          ? latestInstances.find((i: any) => String(i.id) === provisionedId)
+          : latestInstances.find((i: any) => runtimeFamily(i) === target);
         if (!instance) throw new Error(`missing required live target: ${target}`);
         const backend = chooseBackend(instance);
         if (!backend) throw new Error(`target ${target} has no session backend evidence`);
@@ -506,5 +644,5 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
     if (targetErrors.length > 0) {
       throw new Error(`required live matrix failed for ${targetErrors.length}/${requiredTargets.length} target(s): ${targetErrors.join(' | ')}`);
     }
-  }, 240_000);
+  }, PROVISION_TARGETS ? Math.max(240_000, PROVISION_TIMEOUT_MS + 120_000) : 240_000);
 });

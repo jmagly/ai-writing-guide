@@ -24,10 +24,11 @@ export function Sessions({ session, composer, setComposer, onRequestStart }: { s
   useEffect(() => {
     api<{ instances: Instance[] }>('/api/inventory')
       .then((d) => {
-        setInstances(d.instances);
-        if (d.instances[0]) {
-          setInstId(d.instances[0].id);
-          const firstBackend = d.instances[0].session_backends.find((b) => b.available) ?? d.instances[0].session_backends[0];
+        const sessionable = dedupeInstances(d.instances).filter((i) => i.state === 'running' && i.session_backends?.some((b) => b.available));
+        setInstances(sessionable);
+        if (sessionable[0]) {
+          setInstId(sessionable[0].id);
+          const firstBackend = sessionable[0].session_backends.find((b) => b.available) ?? sessionable[0].session_backends[0];
           if (firstBackend) setBackendKey(`${firstBackend.mode}:${firstBackend.backend}`);
         }
       })
@@ -44,6 +45,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart }: { s
 
   const send = () => { if (session.sendInput(composer)) setComposer(''); };
   const attached = session.state.attached;
+  const requestedReplayRole = session.state.role === 'controller' ? 'controller' : 'observer';
   const current = instances.find((i) => i.id === instId);
   const backends = current?.session_backends ?? [];
   const selectedBackend = backends.find((b) => `${b.mode}:${b.backend}` === backendKey) ?? backends.find((b) => b.available) ?? backends[0];
@@ -68,7 +70,8 @@ export function Sessions({ session, composer, setComposer, onRequestStart }: { s
       <div className="controls">
         <label htmlFor="sel-instance">Instance</label>
         <select id="sel-instance" value={instId} onChange={(e) => setInstId(e.target.value)}>
-          {instances.map((i) => <option key={i.id} value={i.id}>{fmtId(i.id)} · {i.loadout}</option>)}
+          {instances.map((i) => <option key={i.id} value={i.id}>{i.launch_context?.name ?? fmtId(i.id)} · {i.loadout}</option>)}
+          {!instances.length && <option value="">— no session-capable running instances —</option>}
         </select>
         <label htmlFor="sel-backend">Mode</label>
         <select id="sel-backend" value={backendKey} onChange={(e) => setBackendKey(e.target.value)}>
@@ -80,19 +83,22 @@ export function Sessions({ session, composer, setComposer, onRequestStart }: { s
         <label htmlFor="sel-session">Session</label>
         <select id="sel-session" value={attachUrl} onChange={(e) => setAttachUrl(e.target.value)}>
           {sessions.length
-            ? sessions.map((s) => <option key={s.id} value={s.attach_url}>{s.id} · {s.mode ?? 'direct'}/{s.backend ?? 'native'} · seq {s.seq} · {s.members} viewer(s)</option>)
+            ? sessions.map((s) => <option key={s.id} value={s.attach_url}>{s.id} · {s.mode ?? s.session_class ?? 'managed'}/{s.backend ?? s.session_backend ?? 'tmux'} · {current?.launch_context?.name ?? fmtId(instId)}</option>)
             : <option value="">— no sessions —</option>}
         </select>
-        <button disabled={attached || !attachUrl} onClick={() => session.attach(attachUrl, false, 'observer')}>Observe</button>
-        <button disabled={attached || !attachUrl || selectedBackend?.drive === false} onClick={() => session.attach(attachUrl, false, 'controller')}>Drive</button>
+        <button disabled={!attachUrl || (attached && session.state.role === 'observer')} onClick={() => session.attach(attachUrl, false, 'observer')}>Observe</button>
+        <button disabled={!attachUrl || selectedBackend?.drive === false || (attached && session.state.role === 'controller')} onClick={() => session.attach(attachUrl, false, 'controller')}>
+          {attached && session.state.role === 'observer' ? 'Take Control' : 'Drive'}
+        </button>
         <button disabled={!attached || selectedBackend?.keyframe === false} onClick={session.requestKeyframe}>Keyframe</button>
-        <button disabled={!attached} onClick={() => session.replay(attachUrl)}>Reattach + replay</button>
+        <button disabled={!attached} onClick={() => session.replay(attachUrl, requestedReplayRole)}>Reattach + replay</button>
         <button disabled={!attached} onClick={session.detach}>Detach</button>
         {session.state.role && <span className={`badge ${session.state.role}`}>{session.state.role}</span>}
       </div>
       {current && (
         <p className="hint">
           {current.runtime_posture.label} · {current.transport.label} ({current.transport.mode}) · attach starts as observe unless control is explicitly granted.
+          {attached && session.state.role === 'observer' ? ' Click Take Control to re-attach with write access.' : ''}
           {selectedBackend && !selectedBackend.available ? ` ${selectedBackend.reason ?? 'Selected backend is unavailable.'}` : ''}
         </p>
       )}
@@ -122,4 +128,13 @@ export function Sessions({ session, composer, setComposer, onRequestStart }: { s
       </p>
     </>
   );
+}
+
+function dedupeInstances(instances: Instance[]) {
+  const seen = new Set<string>();
+  return instances.filter((instance) => {
+    if (seen.has(instance.id)) return false;
+    seen.add(instance.id);
+    return true;
+  });
 }

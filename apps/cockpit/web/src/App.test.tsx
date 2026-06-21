@@ -34,6 +34,17 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getAllByRole('button', { name: /start a session/i }).length).toBeGreaterThanOrEqual(1);
   });
 
+  it('exposes additive host/docker/vm instance launch', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /launch instance/i }));
+    expect(screen.getByRole('dialog', { name: /new instance/i })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Host' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Docker container' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'VM / QEMU' })).toBeTruthy();
+    expect(screen.getByText(/existing instances and sessions keep running/i)).toBeTruthy();
+    expect(screen.getByText(/start a session automatically/i)).toBeTruthy();
+  });
+
   it('renders the welcome heading and its tabpanel (not blank)', () => {
     render(<App />);
     expect(screen.getByRole('heading', { name: /work alongside your agents/i })).toBeTruthy();
@@ -58,7 +69,7 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getAllByText('http://127.0.0.1:8122').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('1 stacks')).toBeTruthy();
     expect(screen.getByText('2 running')).toBeTruthy();
-    expect(screen.getByText('1 approvals')).toBeTruthy();
+    expect(screen.getByText('1 responses needed')).toBeTruthy();
     expect(screen.getByText(/host ✓ · docker - · vm -/)).toBeTruthy();
   });
 
@@ -83,7 +94,7 @@ describe('App shell (rendered DOM)', () => {
     expect(await screen.findByText('Bridge live')).toBeTruthy();
     expect(screen.getByText('1 stacks')).toBeTruthy();
     expect(screen.getByText('0 running')).toBeTruthy();
-    expect(screen.getByText('0 approvals')).toBeTruthy();
+    expect(screen.getByText('0 responses needed')).toBeTruthy();
     // Home binds inventory and renders the operator wall, not the empty state.
     expect(await screen.findByRole('heading', { name: /eleven-stack operator wall/i })).toBeTruthy();
     expect(screen.queryByText(/no stack connected/i)).toBeNull();

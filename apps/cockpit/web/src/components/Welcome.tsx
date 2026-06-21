@@ -10,6 +10,7 @@ interface Status {
   cost: Cost | null;
   executor: string;
   connected: boolean;
+  inventoryWarning?: string;
 }
 
 interface OrbitNode {
@@ -31,7 +32,13 @@ const ORBIT_POSITIONS = [
   [32, 72], [16, 58], [12, 34], [28, 16], [50, 30],
 ] as const;
 
-export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; goTo: (t: string) => void }) {
+interface InventoryEnvelope {
+  instances: Instance[];
+  degraded_admin_inventory?: string;
+  admin_error?: { title?: string; detail?: string; code?: string; status?: number };
+}
+
+export function Welcome({ onStartSession, onLaunchInstance, goTo }: { onStartSession: () => void; onLaunchInstance: () => void; goTo: (t: string) => void }) {
   const [st, setSt] = useState<Status | null>(null);
   const [firstRun] = useState(() => !localStorage.getItem('cockpit.welcomed'));
   const [selectedStackId, setSelectedStackId] = useState('');
@@ -47,7 +54,7 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
         // connected. Fetch them first and let a failure fall through to the
         // disconnected state.
         const [inv, health] = await Promise.all([
-          api<{ instances: Instance[] }>('/api/inventory'),
+          api<InventoryEnvelope>('/api/inventory'),
           api<{ executor_url: string }>('/api/health'),
         ]);
         // Running / approvals / cost are enrichment. A real executor may expose
@@ -58,7 +65,15 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
           api<{ approvals: Approval[] }>('/api/approvals?status=pending').catch(() => ({ approvals: [] as Approval[] })),
           api<Cost>('/api/cost').catch(() => null),
         ]);
-        setSt({ instances: inv.instances, running: run.running ?? [], approvals: apr.approvals ?? [], cost, executor: health.executor_url, connected: inv.instances.length > 0 });
+        setSt({
+          instances: inv.instances,
+          running: run.running ?? [],
+          approvals: apr.approvals ?? [],
+          cost,
+          executor: health.executor_url,
+          connected: inv.instances.length > 0,
+          inventoryWarning: inventoryWarning(inv),
+        });
       } catch {
         setSt({ instances: [], running: [], approvals: [], cost: null, executor: '', connected: false });
       }
@@ -98,6 +113,7 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
           </p>
         </div>
         <div className="hero-actions" aria-label="Primary Cockpit actions">
+          <button className="cta" onClick={onLaunchInstance}>＋ New instance + session</button>
           <button className="cta" onClick={onStartSession}>▸ Start a session</button>
           <button onClick={() => goTo('running')}>View board</button>
           <button onClick={copyStartCommand}>Copy CLI</button>
@@ -114,8 +130,21 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
         : !st.connected ? (
           <div className="card warn-card">
             <h3>No stack connected</h3>
-            <p>Cockpit talks to a real agentic-sandbox executor. Start the executor, then point the Bridge at it:</p>
-            <pre className="terminal">AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:&lt;executor-port&gt; node apps/cockpit/bridge/src/server.mjs</pre>
+            {st.executor ? (
+              <>
+                <p>Bridge is connected to a real executor at <code>{st.executor}</code>, but that executor is not reporting any registered instances or agents.</p>
+                {st.inventoryWarning && <p className="warn">Inventory note: {st.inventoryWarning}</p>}
+                <div className="cta-row">
+                  <button className="cta" onClick={onLaunchInstance}>＋ Launch instance</button>
+                  <button onClick={() => goTo('inventory')}>Open inventory</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p>Cockpit talks to a real agentic-sandbox executor. Start the executor, then point the Bridge at it:</p>
+                <pre className="terminal">AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:&lt;executor-port&gt; node apps/cockpit/bridge/src/server.mjs</pre>
+              </>
+            )}
           </div>
         ) : (
           <>
@@ -310,6 +339,16 @@ export function Welcome({ onStartSession, goTo }: { onStartSession: () => void; 
       )}
     </div>
   );
+}
+
+function inventoryWarning(inv: InventoryEnvelope) {
+  const admin = inv.admin_error;
+  return [
+    inv.degraded_admin_inventory,
+    admin?.code,
+    admin?.title,
+    admin?.detail,
+  ].filter(Boolean).join(' · ') || undefined;
 }
 
 function runtimeFamily(instance: Instance): string {

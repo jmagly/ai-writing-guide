@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import { fmtId } from '../util';
-import type { Approval } from '../types';
+import type { Approval, ResponseNeeded } from '../types';
 
-export function Approvals() {
+export function Approvals({ responses = [], goSessions }: { responses?: ResponseNeeded[]; goSessions?: () => void }) {
   const [items, setItems] = useState<Approval[] | null>(null);
   const [err, setErr] = useState('');
 
@@ -19,13 +19,28 @@ export function Approvals() {
 
   return (
     <>
-      <p className="hint">Unified approval inbox — <code>hitl-prompt/v1</code> requests from every stack, in one place. Decisions are operator authorization, not the agent's.</p>
+      <p className="hint">Unified response-needed inbox — formal <code>hitl-prompt/v1</code> approvals, provider prompts, and agent sessions waiting for human input.</p>
       {err && <p className="err">{err}</p>}
+      {responses.length > 0 && (
+        <section className="response-needed" aria-label="Sessions waiting for response">
+          <h2>Response Needed</h2>
+          {responses.map((r) => (
+            <article key={r.id} className="response-item">
+              <div>
+                <strong>{r.source === 'pty' ? 'Interactive session prompt' : r.source}</strong>
+                <p>{r.prompt}</p>
+                <span><code>{fmtId(r.instance_id)}</code> · {r.status}</span>
+              </div>
+              {goSessions && <button onClick={goSessions}>Open Session</button>}
+            </article>
+          ))}
+        </section>
+      )}
       {!items ? <p className="empty">Loading…</p>
-        : !items.length ? <p className="empty">No pending approvals.</p>
-          : (
+        : !items.length && !responses.length ? <p className="empty">No pending approvals or responses.</p>
+          : items.length ? (
             <table>
-              <caption>{items.length} awaiting your decision</caption>
+              <caption>{items.length} approval request(s) awaiting your decision</caption>
               <thead><tr><th scope="col">Request</th><th scope="col">Risk</th><th scope="col">Instance</th><th scope="col">Decision</th></tr></thead>
               <tbody>
                 {items.map((p) => (
@@ -41,7 +56,7 @@ export function Approvals() {
                 ))}
               </tbody>
             </table>
-          )}
+          ) : null}
     </>
   );
 }

@@ -79,17 +79,20 @@ identity enforcement; Cockpit owns visibility and audit presentation.
 
 ## Run (dev/test, against a real agentic-sandbox executor)
 
-One command (#1634) — checks for a reachable real executor, builds the web UI if
+One command (#1634) — prefers a reachable real executor, builds the web UI if
 needed, and launches the Bridge on its off-range default port:
 
 ```bash
 npm --prefix apps/cockpit run dev            # → apps/cockpit/scripts/cockpit-dev.sh
 ```
 
-It refuses to run against the bundled mock (automated-test-only) and tells you
-how to start the executor (`cd <agentic-sandbox>/management && ./dev.sh`) if none
-is reachable. Override `AIWG_COCKPIT_EXECUTOR_URL` (default `http://127.0.0.1:8122`)
-or `PORT` (default `8140`). Equivalent manual steps:
+It refuses to run against the bundled mock (automated-test-only). If no executor
+is reachable, Bridge startup best-effort launches an installed `agentic-mgmt`
+binary before serving Cockpit. Override `AIWG_COCKPIT_EXECUTOR_URL` (default
+`http://127.0.0.1:8122`) or `PORT` (default `8140`). Set
+`AIWG_COCKPIT_EXECUTOR_COMMAND` to pin the autostart command, or
+`AIWG_COCKPIT_AUTOSTART_EXECUTOR=0` to require an already-running executor.
+Equivalent manual steps:
 
 ```bash
 npm --prefix apps/cockpit run build:web                 # install + vite build → web/dist
@@ -116,6 +119,12 @@ real agentic-sandbox v2 admin surfaces (`/api/v2/admin/instances`,
 `/api/v2/admin/running`). Field normalization covers snake_case and camelCase
 payloads so live sandboxes can evolve without breaking the operator UI; unknown
 fields degrade to opaque posture rather than failing the screen.
+
+The top-bar **Launch instance** command provisions additive runtime targets
+through the real executor (`POST /api/v2/admin/instances`) for host, Docker, and
+QEMU/VM launches. Cockpit does not replace attached sessions when provisioning;
+it refreshes inventory and leaves concurrency and resource admission to
+agentic-sandbox.
 
 `aiwg cockpit` (the operator command) will wrap this; the Bridge serves the built
 React app token-injected, falling back to a legacy page when no build is present.
@@ -222,6 +231,23 @@ session backend, provider, discovery expectation, and exact failure reason; the
 test aggregates those records and fails only after all three target families have
 been attempted. Mock-only success does not satisfy this gate;
 `AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX=1` exists only for harness development.
+
+To prove the launch path itself, set `AIWG_COCKPIT_LIVE_PROVISION=1`. In this
+mode the matrix harness first calls the real executor admin API
+(`POST /api/v2/admin/instances`) for each requested target, waits for the
+operation to complete, waits for the instance to appear as running with a
+registered agent and session backend, then sends the selected provider command
+over the managed PTY interface. Provisioned instances are tracked by exact id so
+the workload is driven against the instance created by the UAT run. Optional
+overrides:
+
+- `AIWG_COCKPIT_LIVE_PROVISION_NAME_PREFIX` names launched instances; default is
+  `cockpit-uat`.
+- `AIWG_COCKPIT_LIVE_PROVISION_LOADOUT` overrides the default host or VM loadout.
+- `AIWG_COCKPIT_LIVE_PROVISION_IMAGE` overrides the Docker/container image.
+- `AIWG_COCKPIT_LIVE_PROVISION_PROFILE` passes an executor profile.
+- `AIWG_COCKPIT_LIVE_PROVISION_TIMEOUT_MS` controls operation and boot readiness
+  timeout; default is `180000`.
 
 ### Live matrix prerequisites (#1621)
 

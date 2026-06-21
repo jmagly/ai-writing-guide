@@ -16,12 +16,14 @@ import type { Role } from './types';
 type WsMsg = { op: string; seq?: number; payload?: { role?: Role; data?: string; code?: string; frames?: { seq: number; payload: { data: string } }[] } };
 
 export interface SessionState { attached: boolean; role: Role; url: string | null }
+export interface ResponseNeededState { needed: boolean; prompt: string; since: string | null; source: string }
 
 // The executor rejects resizes below this floor (management/src/ws/connection.rs).
 const RESIZE_FLOOR_COLS = 20;
 const RESIZE_FLOOR_ROWS = 5;
 
 const textEnc = new TextEncoder();
+const textDec = new TextDecoder();
 
 // base64 → raw bytes. xterm does its own UTF-8 decoding and escape-sequence parsing, so
 // it must receive bytes (Uint8Array) — handing it a Latin-1 string is exactly what made
@@ -43,6 +45,29 @@ const toB64 = (s: string): string => {
   return btoa(bin);
 };
 
+function stripAnsi(text: string): string {
+  return text
+    .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '')
+    .replace(/\x1b\][^\x07]*(?:\x07|\x1b\\)/g, '')
+    .replace(/\x1b[()][A-Za-z0-9]/g, '');
+}
+
+function interactivePromptFrom(output: string): string {
+  const clean = stripAnsi(output).replace(/\r/g, '\n');
+  const lines = clean.split('\n').map((line) => line.trim()).filter(Boolean).slice(-24);
+  const text = lines.join('\n');
+  const promptPatterns = [
+    /Enter to select\b/i,
+    /(?:↑|up)\/(?:↓|down)|arrow keys|navigate/i,
+    /\bEsc to cancel\b/i,
+    /\b(?:y\/n|Y\/n|y\/N|\[y\/N\]|\[Y\/n\])\b/,
+    /\b(?:choose|select|pick) (?:one|an option|a number)\b/i,
+    /\?$/,
+  ];
+  if (!promptPatterns.some((re) => re.test(text))) return '';
+  return lines.slice(-10).join('\n').slice(0, 900);
+}
+
 export function useSession() {
   const wsRef = useRef<WebSocket | null>(null);
   const lastSeq = useRef(0);
@@ -50,11 +75,30 @@ export function useSession() {
   const fitRef = useRef<FitAddon | null>(null);
   const roRef = useRef<ResizeObserver | null>(null);
   const roleRef = useRef<Role>(null); // current role, read by term.onData without re-subscribing
+  const outputTailRef = useRef('');
   const [state, setState] = useState<SessionState>({ attached: false, role: null, url: null });
+  const [responseNeeded, setResponseNeeded] = useState<ResponseNeededState>({ needed: false, prompt: '', since: null, source: 'pty' });
 
   const fit = () => { try { fitRef.current?.fit(); } catch { /* container hidden / zero-sized */ } };
-  const write = (bytes: Uint8Array) => { try { termRef.current?.write(bytes); } catch { /* term not open */ } };
+  const noteOutput = (bytes: Uint8Array) => {
+    const text = textDec.decode(bytes, { stream: true });
+    if (!text) return;
+    outputTailRef.current = (outputTailRef.current + text).slice(-6000);
+    const prompt = interactivePromptFrom(outputTailRef.current);
+    if (prompt) {
+      setResponseNeeded((prev) => (
+        prev.needed && prev.prompt === prompt
+          ? prev
+          : { needed: true, prompt, since: new Date().toISOString(), source: 'pty' }
+      ));
+    }
+  };
+  const write = (bytes: Uint8Array) => {
+    noteOutput(bytes);
+    try { termRef.current?.write(bytes); } catch { /* term not open */ }
+  };
   const sendOp = (op: string, payload?: unknown) => { try { wsRef.current?.send(JSON.stringify(payload === undefined ? { op } : { op, payload })); } catch { /* socket closed */ } };
+  const clearResponseNeeded = () => setResponseNeeded({ needed: false, prompt: '', since: null, source: 'pty' });
 
   // Mount the terminal into the host element (ref callback from the Sessions tab).
   // Idempotent: the Terminal is created once and reused across attaches. A ResizeObserver
@@ -78,6 +122,7 @@ export function useSession() {
       // Forward keystrokes to the PTY only while driving.
       term.onData((data) => {
         if (roleRef.current !== 'controller') return;
+        clearResponseNeeded();
         sendOp('pty.session_input', { data: toB64(data) });
       });
       // Keep tmux sized to the terminal so redraws don't wrap/overflow.
@@ -94,6 +139,7 @@ export function useSession() {
       roRef.current.observe(el);
     }
     fit();
+    requestAnimationFrame(() => fit());
   }, []);
 
   // Refit on window resize (ResizeObserver covers container changes; this covers the rest).
@@ -114,6 +160,8 @@ export function useSession() {
     wsRef.current?.close();
     if (!replay) lastSeq.current = 0;
     roleRef.current = null;
+    clearResponseNeeded();
+    outputTailRef.current = '';
     setState({ attached: false, role: null, url });
     if (!replay) { try { termRef.current?.reset(); } catch { /* */ } }
     const ws = new WebSocket(replay ? `${url}?replay_from=${lastSeq.current}` : url);
@@ -135,6 +183,7 @@ export function useSession() {
         case 'role_assigned':
           roleRef.current = m.payload?.role ?? null;
           setState((s) => ({ ...s, role: m.payload?.role ?? null }));
+          requestAnimationFrame(() => fit());
           break;
         case 'output':
           if (m.seq) lastSeq.current = Math.max(lastSeq.current, m.seq);
@@ -151,16 +200,21 @@ export function useSession() {
   }, []);
 
   const detach = useCallback(() => { wsRef.current?.close(); wsRef.current = null; }, []);
-  const replay = useCallback((url: string) => { detach(); setTimeout(() => attach(url, true, 'observer'), 50); }, [attach, detach]);
+  const replay = useCallback((url: string, requestedRole?: Exclude<Role, null>) => {
+    const role = requestedRole ?? roleRef.current ?? 'observer';
+    detach();
+    setTimeout(() => attach(url, true, role), 50);
+  }, [attach, detach]);
   const requestKeyframe = useCallback(() => sendOp('pty.request_keyframe'), []);
   // Composer line-input (the input row + Actions inject). Raw keystrokes go via term.onData.
   const sendInput = useCallback((text: string): boolean => {
     if (!wsRef.current || roleRef.current !== 'controller' || !text) return false;
+    clearResponseNeeded();
     sendOp('pty.session_input', { data: toB64(text + '\r\n') });
     return true;
   }, []);
 
-  return { state, attach, detach, replay, requestKeyframe, sendInput, openTerminal, isController: state.role === 'controller' };
+  return { state, responseNeeded, attach, detach, replay, requestKeyframe, sendInput, openTerminal, isController: state.role === 'controller' };
 }
 
 export type SessionApi = ReturnType<typeof useSession>;

@@ -5,13 +5,16 @@
 #
 #   apps/cockpit/scripts/cockpit-dev.sh        # or: npm --prefix apps/cockpit run dev
 #
-# It points the Bridge at a running executor with sane, off-range defaults; it
-# does NOT manage the executor's secrets/VMs (start that with its own dev.sh) and
-# it NEVER uses the bundled mock (the mock is automated-test-only).
+# It points the Bridge at a real executor with sane, off-range defaults. If the
+# executor is not reachable, the Bridge will best-effort start an installed
+# agentic-mgmt binary. It NEVER uses the bundled mock (the mock is
+# automated-test-only).
 #
 # Env:
 #   AIWG_COCKPIT_EXECUTOR_URL  real executor base URL (default http://127.0.0.1:8122)
 #   PORT / AIWG_COCKPIT_BRIDGE_PORT  Bridge port (default 8140, off the 8120-8122 range)
+#   AIWG_COCKPIT_EXECUTOR_COMMAND  command used for executor autostart
+#   AIWG_COCKPIT_AUTOSTART_EXECUTOR=0  disable executor autostart
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -29,7 +32,8 @@ case "$BRIDGE_PORT" in
     ;;
 esac
 
-# 1. Require a reachable REAL executor. Health endpoints differ across builds.
+# 1. Prefer a reachable REAL executor. If absent, server startup attempts
+#    autostart; this script must not fall back to the mock or block the Bridge.
 reachable=0
 for path in /healthz/http /healthz /health; do
   if curl -fsS --max-time 2 "${EXECUTOR_URL}${path}" >/dev/null 2>&1; then
@@ -39,18 +43,22 @@ for path in /healthz/http /healthz /health; do
 done
 if [ "$reachable" -ne 1 ]; then
   cat >&2 <<MSG
-✗ No real agentic-sandbox executor reachable at ${EXECUTOR_URL}.
+! No real agentic-sandbox executor reachable at ${EXECUTOR_URL}.
 
-Start the canonical dev executor first (it binds 8120 gRPC / 8121 WS / 8122 HTTP):
+Bridge startup will try to launch an installed agentic-mgmt binary. To pin the
+command, set AIWG_COCKPIT_EXECUTOR_COMMAND. To disable autostart, set
+AIWG_COCKPIT_AUTOSTART_EXECUTOR=0.
+
+Canonical manual executor startup still works:
 
     cd <agentic-sandbox>/management && ./dev.sh
 
-Then re-run this script, or set AIWG_COCKPIT_EXECUTOR_URL to your executor URL.
+Or set AIWG_COCKPIT_EXECUTOR_URL to your executor URL.
 The bundled mock is automated-test-only and is intentionally NOT used here.
 MSG
-  exit 1
+else
+  echo "✓ executor reachable at ${EXECUTOR_URL}"
 fi
-echo "✓ executor reachable at ${EXECUTOR_URL}"
 
 # 2. Build the web UI if there is no dist yet.
 if [ ! -d "${COCKPIT_DIR}/web/dist" ]; then

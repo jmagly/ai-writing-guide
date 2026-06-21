@@ -34,6 +34,12 @@ is allowed only for harness development.
 | `AIWG_COCKPIT_LIVE_REQUIRED=1` | release evidence | Fails instead of skipping when the executor is unreachable. |
 | `AIWG_COCKPIT_LIVE_MATRIX_REQUIRED=1` | strict matrix | Requires host, Docker/container, and VM target families. |
 | `AIWG_COCKPIT_LIVE_MATRIX_TARGETS` | scoped matrix | Optional comma-separated subset of `host,container,vm`; default is all three. |
+| `AIWG_COCKPIT_LIVE_PROVISION=1` | provisioned launch UAT | Creates requested targets through the real executor admin API before running provider workloads. |
+| `AIWG_COCKPIT_LIVE_PROVISION_NAME_PREFIX` | provisioned launch UAT | Optional instance name prefix; default is `cockpit-uat`. |
+| `AIWG_COCKPIT_LIVE_PROVISION_LOADOUT` | provisioned launch UAT | Optional host or VM loadout override. |
+| `AIWG_COCKPIT_LIVE_PROVISION_IMAGE` | provisioned launch UAT | Optional Docker/container image override. |
+| `AIWG_COCKPIT_LIVE_PROVISION_PROFILE` | provisioned launch UAT | Optional executor profile passed to instance creation. |
+| `AIWG_COCKPIT_LIVE_PROVISION_TIMEOUT_MS` | provisioned launch UAT | Optional operation and boot readiness timeout; default is `180000`. |
 | `AIWG_COCKPIT_LIVE_PROVIDER` | provider workloads | `codex` or `claude`. |
 | `AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT` | provider workloads | Expected AIWG discovery result; default is `issue-audit`. |
 | `AIWG_COCKPIT_LIVE_WORKLOAD` | optional | Override prompt while still requiring the marker and discovery result. |
@@ -166,6 +172,38 @@ Required evidence:
 
 This tier is scoped host evidence. It does not replace Tier 4 strict
 host/container/VM release evidence.
+
+## Tier 2B - Provisioned Launch/Boot/Command UAT
+
+Purpose: prove Cockpit can ask a real executor to launch an instance, wait for
+the target to boot into a session-capable state, then launch the selected
+agentic platform by sending its command over the managed PTY interface.
+
+```bash
+AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:<real-executor-port> \
+AIWG_COCKPIT_LIVE_REQUIRED=1 \
+AIWG_COCKPIT_LIVE_MATRIX_REQUIRED=1 \
+AIWG_COCKPIT_LIVE_MATRIX_TARGETS=host \
+AIWG_COCKPIT_LIVE_PROVISION=1 \
+AIWG_COCKPIT_LIVE_PROVIDER=codex \
+AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT=issue-audit \
+AIWG_COCKPIT_EXECUTOR_VERSION=<agentic-sandbox-tag-or-commit> \
+AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/cockpit-provision-host-codex-<date> \
+npm run uat:cockpit-live:matrix
+```
+
+Required evidence:
+
+- `provision host`: PASS with operation id, created instance id, runtime family,
+  running state, selected session backend, and registered agent id.
+- `matrix host`: PASS against the same provisioned instance id.
+- Provider workload is sent over `pty.session_input`, not executed by the test
+  runner, and emits `AIWG_COCKPIT_LIVE_OK` plus `issue-audit`.
+- Report includes `provision_targets: true` and the provision configuration.
+
+Use `AIWG_COCKPIT_LIVE_MATRIX_TARGETS=container` or `vm` for scoped follow-up
+runs, or omit it for the full host/container/VM launch matrix once all runtime
+families are expected to pass.
 
 ## Tier 3 - Claude Provider UAT
 

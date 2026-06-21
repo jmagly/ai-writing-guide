@@ -7,6 +7,55 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.3] - 2026-06-20 — "Cockpit groundwork → usable operator surface (real-executor proof)"
+
+June's closing cut turns the AIWG Cockpit from beta substrate into a control
+plane an operator can actually drive against a **real** agentic-sandbox. The
+running board is derived from real A2A tasks, starting a session is a single
+explicit picker, the attach view renders a true terminal, and the whole stack
+comes up with one command. None of this changes the base `npm i -g aiwg`
+footprint — Cockpit remains the opt-in `@aiwg/cockpit` package.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **Cockpit is usable against real executors** | The running board derives from real A2A tasks (#1639); Home stays usable against a real v2 executor and degrades the running/approvals panes instead of collapsing to "No stack connected" (#1638). The Bridge defaults off the executor port range and refuses reserved-port collisions. |
+| **Starting a session is one explicit picker** | A session-start modal (#1640, #1641) is the single home for both the dashboard verb and the Sessions tab: pick instance · runtime · loadout · backend · posture, confirm, attach. It surfaces the **full** loadout catalog via a new Bridge `/api/loadouts` passthrough, guards against silently replacing an attached session, and shows failures inline — no more param-less start that read as a no-op. |
+| **The attach view is a real terminal** | The Sessions pane renders the PTY through xterm.js, so ANSI/VT/tmux redraws are interpreted, not dumped as raw escape bytes. |
+| **One command brings up the whole stack** | A canonical one-command dev bring-up harness replaces the ad-hoc `/tmp` rigs, with documented test stages and a contract guard that pins the mock's admin surface to the real v2 divergence. |
+| **Capability injection + lookup are correct** | Picking a skill injects its plain name (discover-first resolves it), not a `/`-prefixed pseudo-command (#1642); `/api/show` resolves by the discovered path so same-named artifacts (e.g. two `aiwg-steward`) no longer 502 — ambiguity is a 4xx now (#1643). |
+
+### Added
+
+- **Cockpit running board from real A2A tasks (#1639, running half)** — the board is derived from the executor's real task surface, not a mock.
+- **Session-start picker modal (#1640, #1641)** — instance/runtime/loadout/backend/posture, the single home for both start paths; clobber guard + inline errors.
+- **Bridge `/api/loadouts` passthrough (#1641)** — proxies the executor loadout catalog (`/api/v1/loadouts`, v2 `/loadouts`), normalized to `{id,label,description,runtimes}`, so the picker offers the full set rather than echoing the instance's own loadout.
+- **One-command dev bring-up harness** — replaces the `/tmp` rigs; plus a dev-stage full-system e2e harness with documented test stages and a mock↔real contract guard.
+
+### Changed
+
+- **Running vs Sessions made legible (#1644)** — each panel opens with a one-line purpose statement (Running = fleet overview board; Sessions = attached workspace) and names the relationship.
+- **Release pattern + config-defaults gate formalized** for `@aiwg/cockpit` (sane tested defaults, packaging discipline).
+
+### Fixed
+
+- **Cockpit attach renders via xterm.js**, not raw bytes — escape sequences are interpreted (colors, tmux redraws, titles, bracketed paste).
+- **Cockpit Home degrades gracefully** against real v2 executors instead of collapsing to "No stack connected" (#1638); running/approvals panes degrade independently.
+- **Bridge port hygiene** — defaults off the executor port range and refuses reserved-port collisions.
+- **Capability injection** uses the plain skill name, not a `/` prefix (#1642).
+- **`/api/show` resolves by discovered path**; ambiguous same-named artifacts return a 4xx with disambiguation text instead of a 502 (#1643, bridge half — the persona-vs-agent indexing dedup is tracked separately).
+- **Deploy-adjacent tests hardened** against `/tmp` and untracked scratch.
+
+### Docs
+
+- **ADR: Cockpit chat-style agent view + output-parsing model (#1645)** — a per-session Terminal↔Chat toggle over the existing observer-default attach, a normalized `ChatEvent` contract, structured-stream-preferred / PTY-parser-fallback sourcing, first-in-scope Claude Code.
+- **LFD control-patterns research spike (#1585)** captured under research-planning.
+
+### Upgrade notes
+
+- **No action required.** Cockpit is the opt-in `@aiwg/cockpit` package; the base CLI footprint is unchanged.
+
 ## [2026.6.2] - 2026-06-18 — "Cockpit live-proof hardening"
 
 This patch release tightens the AIWG Cockpit live UAT gate so release evidence

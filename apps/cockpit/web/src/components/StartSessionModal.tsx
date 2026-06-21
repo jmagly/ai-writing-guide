@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { fmtId } from '../util';
-import type { Instance, Loadout } from '../types';
+import type { Instance } from '../types';
 import type { SessionApi } from '../useSession';
 
 // The single home for starting a session (#1640/#1641). Both the dashboard "Start a
 // session" verb and the Sessions-tab Start button open this picker, so neither launches
-// blind with defaults. Operator picks instance · runtime · loadout · backend · posture,
+// blind with defaults. Operator picks instance · runtime · backend · posture,
 // confirms, and only then do we POST with explicit params and attach. Failures render
 // inline here — never an alert() that reads as "nothing happened".
 interface Props {
@@ -19,7 +19,6 @@ interface Props {
 
 export function StartSessionModal({ open, onClose, session, onStarted, initialInstanceId }: Props) {
   const [instances, setInstances] = useState<Instance[]>([]);
-  const [loadouts, setLoadouts] = useState<Loadout[]>([]);
   const [instId, setInstId] = useState('');
   const [loadoutId, setLoadoutId] = useState('');
   const [backendKey, setBackendKey] = useState('');
@@ -27,7 +26,7 @@ export function StartSessionModal({ open, onClose, session, onStarted, initialIn
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  // Load instances + the full loadout catalog when the picker opens (not on mount, so a
+  // Load instances when the picker opens (not on mount, so a
   // closed modal never fetches — keeps the app shell test/inert).
   useEffect(() => {
     if (!open) return;
@@ -35,18 +34,21 @@ export function StartSessionModal({ open, onClose, session, onStarted, initialIn
     let cancelled = false;
     (async () => {
       try {
-        const [inv, lo] = await Promise.all([
-          api<{ instances: Instance[] }>('/api/inventory'),
-          api<{ loadouts: Loadout[] }>('/api/loadouts').catch(() => ({ loadouts: [] as Loadout[] })),
-        ]);
+        const inv = await api<{ instances: Instance[] }>('/api/inventory');
         if (cancelled) return;
-        setInstances(inv.instances);
-        setLoadouts(lo.loadouts);
-        const pick = inv.instances.find((i) => i.id === initialInstanceId)
-          ?? inv.instances.find((i) => i.state === 'running')
-          ?? inv.instances[0];
-        if (pick) setInstId(pick.id);
-        else setErr('No stack connected — start an executor first.');
+        const sessionable = dedupeInstances(inv.instances).filter((i) => i.state === 'running');
+        setInstances(sessionable);
+        const pick = sessionable.find((i) => i.id === initialInstanceId)
+          ?? sessionable.find((i) => i.session_backends?.some((b) => b.available))
+          ?? sessionable[0];
+        if (pick) {
+          setInstId(pick.id);
+          setLoadoutId(pick.launch_context?.loadout ?? pick.loadout ?? '');
+          const first = pick.session_backends?.find((b) => b.available) ?? pick.session_backends?.[0];
+          setBackendKey(first ? `${first.mode}:${first.backend}` : '');
+        } else {
+          setErr('No stack connected — start an executor first.');
+        }
       } catch (e) {
         if (!cancelled) setErr((e as Error).message);
       }
@@ -77,7 +79,6 @@ export function StartSessionModal({ open, onClose, session, onStarted, initialIn
     setBusy(true); setErr('');
     try {
       const qs = new URLSearchParams({ mode: selectedBackend.mode, backend: selectedBackend.backend });
-      if (loadoutId) qs.set('loadout', loadoutId);
       const s = await api<{ id: string; attach_url: string }>(
         `/api/instances/${encodeURIComponent(current.id)}/sessions?${qs}`, { method: 'POST' },
       );
@@ -104,7 +105,7 @@ export function StartSessionModal({ open, onClose, session, onStarted, initialIn
 
         {err && <p className="err">{err}</p>}
         {replacing && (
-          <p className="hint warn">You have an attached session — starting will replace it.</p>
+          <p className="hint warn">You have an attached view. Starting creates another managed session and switches Cockpit to it; existing sessions keep running.</p>
         )}
 
         <div className="form-grid">
@@ -118,13 +119,8 @@ export function StartSessionModal({ open, onClose, session, onStarted, initialIn
           <label>Runtime</label>
           <span className="ro">{current ? `${current.runtime_posture.label} (${current.runtime})` : '—'}</span>
 
-          <label htmlFor="ss-loadout">Loadout</label>
-          <select id="ss-loadout" value={loadoutId} onChange={(e) => setLoadoutId(e.target.value)}>
-            {/* keep the instance's own loadout selectable even if it's not in the catalog */}
-            {loadoutId && !loadouts.some((l) => l.id === loadoutId) && <option value={loadoutId}>{loadoutId} (current)</option>}
-            {loadouts.map((l) => <option key={l.id} value={l.id}>{l.label}{l.description ? ` — ${l.description}` : ''}</option>)}
-            {!loadouts.length && !loadoutId && <option value="">— none advertised —</option>}
-          </select>
+          <label>Instance loadout</label>
+          <span className="ro">{loadoutId || 'unknown'}{current?.launch_context?.image_ref ? ` · ${current.launch_context.image_ref}` : ''}</span>
 
           <label htmlFor="ss-backend">Backend</label>
           <select id="ss-backend" value={backendKey} onChange={(e) => setBackendKey(e.target.value)}>
@@ -154,10 +150,19 @@ export function StartSessionModal({ open, onClose, session, onStarted, initialIn
         <div className="modal-actions">
           <button onClick={onClose} disabled={busy}>Cancel</button>
           <button className="cta" onClick={start} disabled={!canStart}>
-            {busy ? 'Starting…' : replacing ? 'Replace & start' : 'Start session'}
+            {busy ? 'Starting…' : replacing ? 'Start another session' : 'Start session'}
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+function dedupeInstances(instances: Instance[]) {
+  const seen = new Set<string>();
+  return instances.filter((instance) => {
+    if (seen.has(instance.id)) return false;
+    seen.add(instance.id);
+    return true;
+  });
 }

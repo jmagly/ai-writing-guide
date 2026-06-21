@@ -23,6 +23,8 @@ const EXECUTOR_URL =
   process.env.EXECUTOR_URL ??
   'http://127.0.0.1:8122';
 const ALLOW_MOCK_EXECUTOR = process.env.AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR === '1';
+const AUTOSTART_EXECUTOR = process.env.AIWG_COCKPIT_AUTOSTART_EXECUTOR !== '0';
+const EXECUTOR_COMMAND = process.env.AIWG_COCKPIT_EXECUTOR_COMMAND ?? '';
 const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
 // The built React app (apps/cockpit/web/dist). Served when present; falls back to the
 // legacy vanilla page so the Bridge works even before a web build.
@@ -243,13 +245,119 @@ async function assertRealExecutor(executorUrl, allowMockExecutor) {
   }
 }
 
+async function probeExecutor(executorUrl) {
+  for (const path of ['/healthz/http', '/healthz', '/health']) {
+    try {
+      const r = await fetch(`${executorUrl}${path}`, { signal: AbortSignal.timeout(1_500) });
+      if (r.ok) return true;
+    } catch {
+      // Try the next health endpoint.
+    }
+  }
+  return false;
+}
+
+function defaultExecutorCommand() {
+  if (EXECUTOR_COMMAND) return EXECUTOR_COMMAND.split(/\s+/).filter(Boolean);
+  const candidates = [
+    '/home/roctinam/dev/agentic-sandbox/management/target/release/agentic-mgmt',
+    '/home/roctinam/dev/agentic-sandbox/management/target/debug/agentic-mgmt',
+    'agentic-mgmt',
+  ];
+  for (const c of candidates) {
+    if (c === 'agentic-mgmt' || existsSync(c)) return [c];
+  }
+  return [];
+}
+
+async function ensureExecutor(executorUrl) {
+  if (!AUTOSTART_EXECUTOR || await probeExecutor(executorUrl)) return;
+  const cmd = defaultExecutorCommand();
+  if (!cmd.length) return;
+  const child = spawn(cmd[0], cmd.slice(1), {
+    detached: true,
+    stdio: 'ignore',
+    env: { ...process.env },
+  });
+  child.unref();
+  for (let i = 0; i < 30; i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    if (await probeExecutor(executorUrl)) return;
+  }
+}
+
 async function proxyFirst(res, candidates, options) {
   try {
     const { status, body } = await fetchJsonFirst(candidates, options);
     return json(res, status, body);
   } catch (err) {
-    return json(res, 502, { error: 'bridge_upstream_error', message: String(err?.message ?? err) });
+    const message = String(err?.message ?? err);
+    const notFound = / -> 404(?:;|$)/.test(message);
+    const methodNotAllowed = / -> 405(?:;|$)/.test(message);
+    return json(res, notFound ? 404 : methodNotAllowed ? 405 : 502, {
+      error: notFound ? 'upstream_not_found' : methodNotAllowed ? 'upstream_method_not_allowed' : 'bridge_upstream_error',
+      message,
+    });
   }
+}
+
+async function destroyInstance(upstreamUrl, instanceId) {
+  const inventory = await getInventory(upstreamUrl).catch(() => ({ instances: [] }));
+  const inst = inventory.instances.find((i) => String(i.id) === String(instanceId));
+  const runtime = String(inst?.runtime ?? inst?.runtime_posture?.kind ?? '').toLowerCase();
+  const dockerName = inst?.launch_context?.name;
+  const candidates = [
+    { target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/destroy`, method: 'POST' },
+    { target: `${upstreamUrl}/admin/instances/${encodeURIComponent(instanceId)}/destroy`, method: 'POST' },
+    { target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}`, method: 'DELETE' },
+    { target: `${upstreamUrl}/admin/instances/${encodeURIComponent(instanceId)}`, method: 'DELETE' },
+  ];
+  try {
+    const result = await fetchJsonFirst(candidates);
+    if (result.status < 400) {
+      if (['docker', 'container'].includes(runtime) && dockerName) {
+        try {
+          await spawnCollect('docker', ['rm', '-f', dockerName]);
+          return {
+            ...result,
+            body: {
+              ...result.body,
+              cockpit_reconcile: 'docker-cli-after-admin-v2-success',
+              docker_name: dockerName,
+            },
+          };
+        } catch {
+          // If Docker already removed it, the admin result is still authoritative.
+        }
+      }
+      return result;
+    }
+  } catch {
+    // Current sandbox builds can list Docker rows in admin-v2 inventory while
+    // lifecycle verbs return instance.not_found. Fall through to a dev cleanup.
+  }
+
+  if (!inst || !['docker', 'container'].includes(runtime) || !dockerName) {
+    return {
+      target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/destroy`,
+      status: 404,
+      body: { error: 'instance_not_destroyable', message: `No destroyable runtime record for ${instanceId}` },
+    };
+  }
+
+  await spawnCollect('docker', ['rm', '-f', dockerName]);
+  return {
+    target: `docker rm -f ${dockerName}`,
+    status: 200,
+    body: {
+      id: instanceId,
+      name: dockerName,
+      runtime,
+      state: 'destroyed',
+      result: { state: 'destroyed' },
+      fallback: 'docker-cli-after-admin-v2-instance-not-found',
+    },
+  };
 }
 
 function asArrayFromEnvelope(body, keys) {
@@ -317,9 +425,9 @@ function normalizeHostDaemon(status, runtime) {
 }
 
 function normalizeTransport(posture) {
-  const raw = posture && typeof posture === 'object' ? posture : {};
+  const raw = typeof posture === 'string' ? { mode: posture } : (posture && typeof posture === 'object' ? posture : {});
   const mode = String(raw.mode ?? 'unknown');
-  const trust = String(raw.trust ?? '').toLowerCase();
+  const trust = String(raw.trust ?? raw.transport_posture ?? raw.posture ?? '').toLowerCase();
   const normalizedTrust = ['secure', 'local', 'compatibility', 'degraded', 'unknown'].includes(trust) ? trust : (
     /mtls|local-ca|client-cert/i.test(mode) ? 'secure' :
     /shared-secret|tofu|legacy/i.test(mode) ? 'compatibility' :
@@ -343,10 +451,22 @@ function normalizeTransport(posture) {
   };
 }
 
-function normalizeSessionBackends(backends, runtimeKind) {
+function normalizeSessionBackends(backends, runtimeKind, state = 'unknown', agentReady = false) {
   const list = Array.isArray(backends) ? backends : [];
   if (!list.length && runtimeKind === 'host') {
     return [{ mode: 'managed', backend: 'tmux', observe: true, drive: true, replay: false, keyframe: false, available: true, reason: 'agentic-sandbox v1 host session API default' }];
+  }
+  if (!list.length && ['docker', 'container', 'vm'].includes(runtimeKind) && String(state).toLowerCase() === 'running') {
+    return [{
+      mode: 'managed',
+      backend: 'tmux',
+      observe: true,
+      drive: true,
+      replay: true,
+      keyframe: true,
+      available: agentReady,
+      reason: agentReady ? 'agentic-sandbox v1 managed session API' : 'container is running but the agent has not registered; PTY sessions are not ready',
+    }];
   }
   if (!list.length) return [{ mode: 'direct', backend: 'native', observe: true, drive: false, replay: false, keyframe: false, available: false, reason: 'sandbox did not advertise session-host capabilities' }];
   return list.map((b) => ({
@@ -366,35 +486,164 @@ function normalizeInstance(executorUrl, i) {
   const runtime = String(runtimeValue);
   const runtimePosture = normalizeRuntimePosture(runtime);
   const id = i.instance_id ?? i.instanceId ?? i.agent_instance_id ?? i.id;
+  const loadout = i.loadout ?? i.launch_context?.loadout ?? i.launchContext?.loadout ?? i.runtime_extension?.loadout ?? i.runtimeExtension?.loadout ?? 'unknown';
+  const agentReady = Boolean(i.agent_ready ?? i.agentReady ?? i.registered_agent_id ?? i.registeredAgentId);
   return {
     id,
     runtime,
-    loadout: i.loadout ?? i.launch_context?.loadout ?? i.launchContext?.loadout ?? 'unknown',
+    loadout,
     state: i.state ?? i.status ?? 'unknown',
     tenant: i.tenant_id ?? i.tenant ?? i.tenantId ?? 'default',
     card_url: i.card_url ?? i.cardUrl ?? `${executorUrl}/agents/${encodeURIComponent(id)}/.well-known/agent-card.json`,
     runtime_posture: runtimePosture,
     host_daemon: normalizeHostDaemon(i.host_daemon ?? i.hostDaemon, runtimePosture.kind),
-    transport: normalizeTransport(i.transport ?? i.transport_posture ?? i.security_posture ?? i.security?.transport),
+    transport: normalizeTransport(
+      typeof i.transport === 'string' || typeof i.transport_posture === 'string'
+        ? { mode: i.transport, trust: i.transport_posture, source: 'agentic-sandbox admin-v2' }
+        : i.transport ?? i.transport_posture ?? i.security_posture ?? i.security?.transport,
+    ),
     launch_context: {
       cwd: i.launch_context?.cwd ?? i.launchContext?.cwd ?? i.cwd,
-      loadout: i.launch_context?.loadout ?? i.launchContext?.loadout ?? i.loadout,
+      loadout,
       runtime_kind: i.launch_context?.runtime_kind ?? i.launchContext?.runtimeKind ?? runtime,
       host: i.launch_context?.host ?? i.launchContext?.host ?? i.host_metadata?.hostname ?? i.hostMetadata?.hostname,
       selected_tier: i.launch_context?.selected_tier ?? i.launchContext?.selectedTier ?? i.operator_selected_tier ?? i.operatorSelectedTier ?? runtime,
+      name: i.name ?? i.launch_context?.name ?? i.launchContext?.name,
+      image_ref: i.image_ref ?? i.imageRef ?? i.runtime_extension?.image_ref ?? i.runtimeExtension?.imageRef,
+      source: i.runtime_extension ? 'agent-card runtime extension' : i.launch_context?.source ?? i.launchContext?.source,
     },
-    session_backends: normalizeSessionBackends(i.session_backends ?? i.sessionBackends ?? i.session_host?.backends ?? i.sessionHost?.backends ?? i.capabilities?.session_backends ?? i.capabilities?.sessionBackends, runtimePosture.kind),
+    agent_ready: agentReady,
+    registered_agent_id: i.registered_agent_id ?? i.registeredAgentId,
+    session_backends: normalizeSessionBackends(i.session_backends ?? i.sessionBackends ?? i.session_host?.backends ?? i.sessionHost?.backends ?? i.capabilities?.session_backends ?? i.capabilities?.sessionBackends, runtimePosture.kind, i.state ?? i.status, agentReady),
+  };
+}
+
+function runtimeExtensionFromCard(card) {
+  const extensions = card?.capabilities?.extensions;
+  if (!Array.isArray(extensions)) return null;
+  const ext = extensions.find((e) => String(e?.uri ?? '').includes('/extensions/runtime/'));
+  return ext?.params && typeof ext.params === 'object' ? ext.params : null;
+}
+
+async function enrichInstanceFromAgentCard(executorUrl, instance) {
+  const id = instance.instance_id ?? instance.instanceId ?? instance.id;
+  if (!id) return instance;
+  try {
+    const { body } = await fetchJsonFirst([
+      `${executorUrl}/agents/${encodeURIComponent(id)}/.well-known/agent-card.json`,
+    ]);
+    const runtimeExtension = runtimeExtensionFromCard(body);
+    if (!runtimeExtension) return instance;
+    return {
+      ...instance,
+      runtime_extension: runtimeExtension,
+      loadout: instance.loadout ?? runtimeExtension.loadout,
+      image_ref: instance.image_ref ?? runtimeExtension.image_ref,
+    };
+  } catch {
+    return instance;
+  }
+}
+
+async function getRegisteredAgents(executorUrl) {
+  try {
+    const { body } = await fetchJsonFirst([`${executorUrl}/api/v1/agents`]);
+    return asArrayFromEnvelope(body, ['agents', 'items', 'data']);
+  } catch {
+    return [];
+  }
+}
+
+function enrichInstanceFromAgentRegistry(instance, agents) {
+  const id = instance.instance_id ?? instance.instanceId ?? instance.id;
+  const agent = agents.find((a) => String(a.instance_id ?? a.instanceId ?? '') === String(id));
+  if (!agent) return { ...instance, agent_ready: false };
+  return {
+    ...instance,
+    agent_ready: true,
+    registered_agent_id: agent.id ?? agent.agent_id ?? agent.agentId,
+  };
+}
+
+function normalizeAgentInstance(executorUrl, agent) {
+  const id = agent.instance_id ?? agent.instanceId ?? agent.id ?? agent.agent_id ?? agent.agentId;
+  return normalizeInstance(executorUrl, {
+    id,
+    instance_id: id,
+    runtime: 'host',
+    loadout: agent.loadout ?? 'host-tools',
+    state: 'running',
+    tenant: agent.tenant_id ?? agent.tenantId ?? 'default',
+    transport: {
+      mode: agent.transport?.mode ?? 'mtls-agent-registration',
+      trust: agent.transport?.trust ?? 'secure',
+      source: 'agent registry fallback',
+      evidence: agent.peer_identity ?? agent.spiffe_id ?? agent.spiffeId,
+    },
+    host_daemon: {
+      status: 'available',
+      detail: `Registered host agent ${agent.id ?? agent.agent_id ?? agent.agentId ?? id}`,
+    },
+    launch_context: {
+      loadout: agent.loadout ?? 'host-tools',
+      runtime_kind: 'host',
+      host: agent.hostname,
+      selected_tier: 'host',
+    },
+    session_backends: agent.session_backends ?? agent.sessionBackends ?? [
+      { mode: 'managed', backend: 'tmux', observe: true, drive: true, replay: false, keyframe: false, available: true, reason: 'agent registry fallback' },
+    ],
+  });
+}
+
+async function getAgentBackedHostInventory(executorUrl, degradedDetail) {
+  const { target, body } = await fetchJsonFirst([`${executorUrl}/api/v1/agents`]);
+  const agents = asArrayFromEnvelope(body, ['agents', 'items', 'data']);
+  const instances = agents
+    .filter((agent) => agent.instance_id || agent.instanceId || agent.id || agent.agent_id || agent.agentId)
+    .map((agent) => normalizeAgentInstance(executorUrl, agent));
+  return {
+    source: executorUrl,
+    admin_path: new URL(target).pathname,
+    fetched_at: new Date().toISOString(),
+    count: instances.length,
+    degraded_admin_inventory: degradedDetail,
+    instances,
   };
 }
 
 /** Normalize the executor's admin inventory into the Bridge's UI shape. */
 async function getInventory(executorUrl) {
-  const { target, body } = await fetchJsonFirst([
+  const { target, status, body } = await fetchJsonFirst([
     `${executorUrl}/admin/instances`,
     `${executorUrl}/api/v2/admin/instances`,
   ]);
   const instances = asArrayFromEnvelope(body, ['instances', 'items', 'data']);
-  const normalized = instances.map((i) => normalizeInstance(executorUrl, i));
+  if (status >= 400 || !instances.length) {
+    const detail = status >= 400 ? `${new URL(target).pathname} returned ${status}` : `${new URL(target).pathname} returned no instances`;
+    try {
+      const fallback = await getAgentBackedHostInventory(executorUrl, detail);
+      if (fallback.instances.length) return fallback;
+    } catch {
+      // Preserve the admin inventory result when no agent-backed fallback is available.
+    }
+    if (status >= 400) {
+      return {
+        source: executorUrl,
+        admin_path: new URL(target).pathname,
+        fetched_at: new Date().toISOString(),
+        count: 0,
+        degraded_admin_inventory: detail,
+        admin_error: body,
+        instances: [],
+      };
+    }
+  }
+  const agents = await getRegisteredAgents(executorUrl);
+  const enriched = await Promise.all(instances.map((i) => enrichInstanceFromAgentCard(executorUrl, i)));
+  const normalized = enriched
+    .map((i) => enrichInstanceFromAgentRegistry(i, agents))
+    .map((i) => normalizeInstance(executorUrl, i));
   return {
     source: executorUrl,
     admin_path: new URL(target).pathname,
@@ -542,7 +791,7 @@ async function getSessions(executorUrl, instanceId) {
         return u.toString();
       } catch { /* fall through to legacy shape */ }
     }
-    return `${wsBase}/agents/${encodeURIComponent(instanceId)}/sessions/${encodeURIComponent(sessionId)}/attach`;
+    return `${wsBase}/agents/${encodeURIComponent(sessionAgentId)}/sessions/${encodeURIComponent(sessionId)}/attach`;
   };
   return {
     instance_id: instanceId,
@@ -582,6 +831,25 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
       if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(upstreamUrl));
       if (url.pathname === '/api/running') return json(res, 200, await getRunning(upstreamUrl));
       if (url.pathname === '/api/loadouts') return json(res, 200, await getLoadouts(upstreamUrl));
+      let m;
+      if (url.pathname === '/api/instances' && req.method === 'POST') {
+        const chunks = [];
+        for await (const chunk of req) chunks.push(chunk);
+        const requestBody = Buffer.concat(chunks).toString('utf8') || '{}';
+        return proxyFirst(res, [
+          {
+            target: `${upstreamUrl}/api/v2/admin/instances`,
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: requestBody,
+          },
+        ]);
+      }
+      if ((m = url.pathname.match(/^\/api\/operations\/([^/]+)$/)) && req.method === 'GET') {
+        return proxyFirst(res, [
+          `${upstreamUrl}/api/v2/admin/operations/${encodeURIComponent(m[1])}`,
+        ]);
+      }
       if (url.pathname === '/api/sessions') {
         const inst = url.searchParams.get('instance');
         if (!inst) return json(res, 400, { error: 'instance_required' });
@@ -653,31 +921,43 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
       // them. See adr-cockpit-session-control-not-cli-runner.md.
       if (url.pathname === '/api/contributions') return json(res, 200, await loadContributions());
       // --- start a session (the onboarding primary verb): create + issue attach_url ---
-      let m;
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/sessions$/)) && req.method === 'POST') {
         const id = decodeURIComponent(m[1]);
         const qs = new URLSearchParams();
-        const mode = url.searchParams.get('mode'), backend = url.searchParams.get('backend');
+        const mode = url.searchParams.get('mode'), backend = url.searchParams.get('backend'), loadout = url.searchParams.get('loadout');
         if (mode) qs.set('mode', mode);
         if (backend) qs.set('backend', backend);
+        if (loadout) qs.set('loadout', loadout);
         const sessionAgentId = await resolveSessionAgentId(upstreamUrl, id);
-        const candidates = unique([id, sessionAgentId]).flatMap((agentId) => [
-          `${upstreamUrl}/agents/${encodeURIComponent(agentId)}/sessions${qs.size ? `?${qs}` : ''}`,
-          `${upstreamUrl}/agents/${encodeURIComponent(agentId)}/v1/sessions${qs.size ? `?${qs}` : ''}`,
-          {
-            target: `${upstreamUrl}/api/v1/agents/${encodeURIComponent(agentId)}/sessions`,
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              session_backend: backend || 'tmux',
-              session_class: mode || 'managed',
-              command: 'bash',
-            }),
-          },
-        ]);
-        const { status, body } = await fetchJsonFirst(candidates, { method: 'POST' });
+        const candidates = unique([sessionAgentId, id]).map((agentId) => ({
+          target: `${upstreamUrl}/api/v1/agents/${encodeURIComponent(agentId)}/sessions`,
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            session_backend: backend || 'tmux',
+            session_class: mode || 'managed',
+            command: 'sh -lc "cd /root && exec bash -l"',
+            args: ['-l'],
+            cwd: '/root',
+            working_dir: '/root',
+          }),
+        }));
+        let sessionCreate;
+        try {
+          sessionCreate = await fetchJsonFirst(candidates);
+        } catch (err) {
+          return json(res, 409, {
+            error: 'agent_not_registered',
+            message: 'The instance is visible in inventory, but its agent has not registered yet; PTY sessions are not ready.',
+            detail: String(err?.message ?? err),
+          });
+        }
+        const { status, body } = sessionCreate;
         const wsBase = upstreamUrl.replace(/^http/i, 'ws');
         const sessionId = body.id ?? body.session_id ?? body.sessionId;
+        if (status >= 200 && status < 300 && !sessionId && !body.attach_url && !body.attachUrl && !body.pty_ws_url && !body.ptyWsUrl) {
+          return json(res, 502, { error: 'session_create_missing_id', message: 'executor created no attachable session identifier', body });
+        }
         let attachUrl = body.attach_url ?? body.attachUrl;
         if (!attachUrl && (body.pty_ws_url ?? body.ptyWsUrl)) {
           try {
@@ -686,7 +966,7 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
             attachUrl = u.toString();
           } catch { /* fall through to legacy shape */ }
         }
-        return json(res, status, { ...body, id: sessionId, attach_url: attachUrl ?? `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(sessionId)}/attach` });
+        return json(res, status, { ...body, id: sessionId, attach_url: attachUrl ?? `${wsBase}/agents/${encodeURIComponent(sessionAgentId)}/sessions/${encodeURIComponent(sessionId)}/attach` });
       }
 
       // --- management surface (UC-012): lifecycle + task cancel ---
@@ -695,12 +975,10 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
           `${upstreamUrl}/admin/instances/${encodeURIComponent(m[1])}/${m[2]}`,
           `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(m[1])}/${m[2]}`,
         ], { method: 'POST' });
-      if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)$/)) && req.method === 'DELETE')
-        return proxyFirst(res, [
-          { target: `${upstreamUrl}/admin/instances/${encodeURIComponent(m[1])}`, method: 'DELETE' },
-          { target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(m[1])}`, method: 'DELETE' },
-          { target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(m[1])}/destroy`, method: 'POST' },
-        ]);
+      if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)$/)) && req.method === 'DELETE') {
+        const { status, body } = await destroyInstance(upstreamUrl, decodeURIComponent(m[1]));
+        return json(res, status, body);
+      }
       if ((m = url.pathname.match(/^\/api\/tasks\/([^/]+)\/([^/]+)\/cancel$/)) && req.method === 'POST')
         return proxy(res, 'POST', `${upstreamUrl}/agents/${encodeURIComponent(m[1])}/tasks/${encodeURIComponent(m[2])}:cancel`);
 
@@ -763,6 +1041,7 @@ export function resolveBridgePort(env = process.env) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const port = resolveBridgePort();
+  await ensureExecutor(EXECUTOR_URL);
   const server = createBridge();
   server.listen(port, '127.0.0.1', async () => {
     const file = await writeRuntimeToken({ token: server.cockpitToken, port, pid: process.pid });
