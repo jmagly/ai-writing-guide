@@ -12,6 +12,8 @@ export function Sessions({ session, composer, setComposer, onRequestStart }: { s
   const [attachUrl, setAttachUrl] = useState('');
   const [backendKey, setBackendKey] = useState('');
   const [showPicker, setShowPicker] = useState(false);
+  const [endingSession, setEndingSession] = useState('');
+  const [sessionErr, setSessionErr] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const insertCap = (r: CapabilityResult) => {
@@ -39,7 +41,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart }: { s
     if (!id) return;
     api<{ sessions: SessionInfo[] }>(`/api/sessions?instance=${encodeURIComponent(id)}`)
       .then((d) => { setSessions(d.sessions); setAttachUrl(d.sessions[0]?.attach_url ?? ''); })
-      .catch(() => { setSessions([]); setAttachUrl(''); });
+      .catch((e) => { setSessions([]); setAttachUrl(''); setSessionErr((e as Error).message); });
   }, []);
   useEffect(() => { loadSessions(instId); }, [instId, loadSessions]);
 
@@ -49,6 +51,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart }: { s
   const current = instances.find((i) => i.id === instId);
   const backends = current?.session_backends ?? [];
   const selectedBackend = backends.find((b) => `${b.mode}:${b.backend}` === backendKey) ?? backends.find((b) => b.available) ?? backends[0];
+  const selectedSession = sessions.find((s) => s.attach_url === attachUrl);
   useEffect(() => {
     if (!current) return;
     const valid = current.session_backends.some((b) => `${b.mode}:${b.backend}` === backendKey);
@@ -60,6 +63,22 @@ export function Sessions({ session, composer, setComposer, onRequestStart }: { s
   // Starting now routes through the shared picker (#1640/#1641) so this tab and the
   // dashboard verb share one params/clobber/error path. The selects below remain for
   // attaching to / observing / driving sessions that already exist.
+  const endSelectedSession = async () => {
+    if (!current || !selectedSession) return;
+    const label = selectedSession.session_name ?? selectedSession.id;
+    if (!confirm(`End session ${label}? This closes the PTY and detaches connected views.`)) return;
+    setEndingSession(selectedSession.id);
+    setSessionErr('');
+    try {
+      await api(`/api/instances/${encodeURIComponent(current.id)}/sessions/${encodeURIComponent(selectedSession.id)}`, { method: 'DELETE' });
+      if (session.state.url === selectedSession.attach_url) session.detach();
+      await loadSessions(current.id);
+    } catch (e) {
+      setSessionErr((e as Error).message);
+    } finally {
+      setEndingSession('');
+    }
+  };
 
   return (
     <>
@@ -92,9 +111,17 @@ export function Sessions({ session, composer, setComposer, onRequestStart }: { s
         </button>
         <button disabled={!attached || selectedBackend?.keyframe === false} onClick={session.requestKeyframe}>Keyframe</button>
         <button disabled={!attached} onClick={() => session.replay(attachUrl, requestedReplayRole)}>Reattach + replay</button>
+        <button
+          disabled={!selectedSession || endingSession === selectedSession?.id}
+          onClick={endSelectedSession}
+          title="Terminate the selected PTY session on the agent"
+        >
+          {endingSession === selectedSession?.id ? 'Ending…' : 'End Session'}
+        </button>
         <button disabled={!attached} onClick={session.detach}>Detach</button>
         {session.state.role && <span className={`badge ${session.state.role}`}>{session.state.role}</span>}
       </div>
+      {sessionErr && <p className="err">Session action failed: {sessionErr}</p>}
       {current && (
         <p className="hint">
           {current.runtime_posture.label} · {current.transport.label} ({current.transport.mode}) · attach starts as observe unless control is explicitly granted.

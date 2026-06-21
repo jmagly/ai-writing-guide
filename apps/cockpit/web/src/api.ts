@@ -13,6 +13,7 @@ export function apiRaw(path: string, opts: RequestInit = {}): Promise<Response> 
 export async function api<T = unknown>(path: string, opts: RequestInit = {}): Promise<T> {
   const r = await apiRaw(path, opts);
   if (!r.ok) throw new Error(`${path} → ${r.status}`);
+  if (r.status === 204) return {} as T;
   return r.json() as Promise<T>;
 }
 

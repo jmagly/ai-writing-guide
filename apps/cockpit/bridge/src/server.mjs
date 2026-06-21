@@ -809,6 +809,36 @@ async function getSessions(executorUrl, instanceId) {
   };
 }
 
+async function endSession(executorUrl, instanceId, sessionId) {
+  const sessionAgentId = await resolveSessionAgentId(executorUrl, instanceId);
+  let sessions = [];
+  try {
+    sessions = (await getSessions(executorUrl, instanceId)).sessions;
+  } catch {
+    // Fall back to using the supplied id directly; older executors may not list
+    // before delete, and delete should remain useful during recovery cleanup.
+  }
+  const targetSession = sessions.find((s) => String(s.id) === String(sessionId)
+    || String(s.session_id ?? s.sessionId ?? '') === String(sessionId)
+    || String(s.session_name ?? s.sessionName ?? '') === String(sessionId));
+  const sessionName = targetSession?.session_name ?? targetSession?.sessionName ?? sessionId;
+  const { status, body } = await fetchJsonFirst(unique([sessionAgentId, instanceId]).map((agentId) => ({
+    target: `${executorUrl}/api/v1/agents/${encodeURIComponent(agentId)}/sessions/${encodeURIComponent(sessionName)}`,
+    method: 'DELETE',
+  })));
+  return {
+    status,
+    body: {
+      ...body,
+      id: sessionId,
+      session_name: sessionName,
+      instance_id: instanceId,
+      agent_id: sessionAgentId,
+      ended: status >= 200 && status < 300,
+    },
+  };
+}
+
 export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = ALLOW_MOCK_EXECUTOR, token } = {}) {
   const upstreamUrl = executorUrl;
   const TOKEN = token ?? randomBytes(24).toString('hex');
@@ -854,6 +884,10 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         const inst = url.searchParams.get('instance');
         if (!inst) return json(res, 400, { error: 'instance_required' });
         return json(res, 200, await getSessions(upstreamUrl, inst));
+      }
+      if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/sessions\/([^/]+)$/)) && req.method === 'DELETE') {
+        const { status, body } = await endSession(upstreamUrl, decodeURIComponent(m[1]), decodeURIComponent(m[2]));
+        return json(res, status, body);
       }
       // registry-bound, data-driven core — live, no app restart (#1592)
       if (url.pathname === '/api/capabilities') {
