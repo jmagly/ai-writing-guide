@@ -97,15 +97,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
+          MIRROR="https://x-access-token:${GH_TOKEN}@github.com/jmagly/aiwg.git"
+          TAG="v${{ steps.classify.outputs.version }}"
           # Use a one-shot URL with embedded token; never echo the token.
           # The token lives only in this command's environment, not in git config.
-          git push "https://x-access-token:${GH_TOKEN}@github.com/jmagly/aiwg.git" \
-            "refs/tags/v${{ steps.classify.outputs.version }}:refs/tags/v${{ steps.classify.outputs.version }}"
+          # Idempotent: if the operator (or a prior run) already pushed the tag,
+          # git rejects it with "already exists" — that's fine, the tag is on the
+          # mirror either way and we still want to proceed to release creation.
+          git push "$MIRROR" "refs/tags/${TAG}:refs/tags/${TAG}" \
+            || echo "tag ${TAG} already on mirror (pushed manually or by a prior run) — continuing to release creation."
           # Best-effort main push (idempotent — if mirror is ahead via a separate
           # PR flow, this will fast-forward or no-op).
-          git push "https://x-access-token:${GH_TOKEN}@github.com/jmagly/aiwg.git" \
-            "HEAD:refs/heads/main" || \
-            echo "main push declined (likely non-fast-forward — that's fine, the tag is what matters for the release)."
+          git push "$MIRROR" "HEAD:refs/heads/main" \
+            || echo "main push declined (likely non-fast-forward or protected — that's fine, the tag is what matters for the release)."
 
       - name: Resolve release body
         id: body
