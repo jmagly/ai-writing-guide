@@ -10,15 +10,18 @@
   "welcome": {
     "eyebrow": "AIWG",
     "headline": "Deploy a Virtual Organization",
-    "lead": "Architects, engineers, testers, forensics analysts, researchers, marketers — 85+ specialized agents that collaborate like a real team. Five frameworks, five addons, one CLI.",
+    "lead": "Architects, engineers, testers, forensics analysts, researchers, marketers — 200+ specialized agents that collaborate like a real team. Eight frameworks, 29 addons, one CLI.",
     "pillars": [
       "SDLC Complete — Full lifecycle from intake to production with 85+ agents, stage-gate workflows, and multi-agent orchestration",
       "Forensics Complete — Digital forensics and incident response: evidence acquisition, timeline building, IOC analysis, Sigma hunting",
       "Research Complete — Academic research workflows: discovery, acquisition, RAG-based documentation, FAIR-aligned citation management",
+      "Security Engineering — Applied security: cryptographic primitives, chain-of-trust, auth factors, supply-chain trust, and physical-threat modeling",
       "Media/Marketing Kit — Campaign orchestration from strategy through analytics, creative production, and channel management",
       "Media Curator — Intelligent media archive management: discography analysis, quality filtering, metadata curation, multi-platform export",
-      "Addons — RLM recursive context decomposition, voice profiles, testing quality enforcement, writing validation, UAT-MCP toolkit",
-      "8 platforms — Claude Code, GitHub Copilot, Cursor, Warp, Factory AI, OpenCode, OpenAI/Codex, Windsurf"
+      "Knowledge Base — Wiki and semantic-memory framework: document ingest, KB health checks, and llm-wiki profiles",
+      "Ops Complete — Operational infrastructure: incident response, runbooks, fleet inventory, and audit trails",
+      "29 addons — RLM recursive context decomposition, voice profiles, testing quality, writing validation, UAT-MCP toolkit, and more",
+      "11 platforms — Claude Code, OpenAI/Codex, GitHub Copilot, Factory AI, Cursor, OpenCode, Warp, Windsurf, OpenClaw, Hermes, OpenHuman"
     ],
     "checklist": [
       "Install globally: npm i -g aiwg",
@@ -51,6 +54,11 @@
     "logoPath": "favicon.svg",
     "showTagline": true,
     "showDate": true
+  },
+  "docsMap": {
+    "enabled": true,
+    "title": "Docs Map",
+    "renderer": "svg"
   },
   "collections": [
     {

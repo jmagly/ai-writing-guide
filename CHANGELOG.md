@@ -51,6 +51,9 @@ footprint — Cockpit remains the opt-in `@aiwg/cockpit` package.
 
 - **ADR: Cockpit chat-style agent view + output-parsing model (#1645)** — a per-session Terminal↔Chat toggle over the existing observer-default attach, a normalized `ChatEvent` contract, structured-stream-preferred / PTY-parser-fallback sourcing, first-in-scope Claude Code.
 - **LFD control-patterns research spike (#1585)** captured under research-planning.
+- **Docsite on Pagenary 6.13** — upgraded `@pagenary/publisher` to the self-minifying 6.13 line (roctinam/pagenary#14); dropped the redundant `terser` devDependency; fixed 3 broken doc links so the strict-link validation build passes.
+- **Docs Map enabled on docs.aiwg.io** — Pagenary's concept-derived relationship graph (444 nodes / 1,683 edges) is now a navigable view (#33).
+- **Refreshed docs.aiwg.io welcome copy** — accurate counts: 200+ agents, 8 frameworks, 29 addons, 11 platforms.
 
 ### Upgrade notes
 
