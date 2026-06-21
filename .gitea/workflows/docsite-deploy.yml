@@ -62,9 +62,9 @@ jobs:
 
       # The doc-site publisher is consumed from npm as the `@pagenary/publisher`
       # devDependency (bin: `pagenary`); no git clone, no GT_ACCESS_TOKEN.
-      # Migration: #1484. `terser` is also a devDependency so the published
-      # zero-dep package can minify output (roctinam/pagenary#14 tracks moving
-      # that into pagenary itself, after which terser can be dropped here).
+      # Migration: #1484. Output minification is built into pagenary as of
+      # 2026.6.13 (roctinam/pagenary#14, `build.config.json: minify`), so the
+      # previous `terser` devDependency was dropped — no separate minify step.
       - name: Install dependencies
         run: npm ci
 

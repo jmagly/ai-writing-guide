@@ -336,8 +336,8 @@ Al isn't for every phase of development - it's for the implementation phase afte
 
 - [Quickstart Guide](quickstart.md) - Getting started with Al
 - [Best Practices](best-practices.md) - Writing effective tasks and criteria
-- [AIWG SDLC Framework](@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md) - Documentation-first development
-- [Production Grade Guide](@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/docs/production-grade-guide.md) - How to document before you build
+- [AIWG SDLC Framework](https://github.com/jmagly/aiwg/blob/main/agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md) - Documentation-first development
+- [Production Grade Guide](https://github.com/jmagly/aiwg/blob/main/agentic/code/frameworks/sdlc-complete/docs/production-grade-guide.md) - How to document before you build
 
 ## External Resources
 
