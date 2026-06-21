@@ -7,6 +7,29 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.5] - 2026-06-21 — "Release-pipeline hardening"
+
+A pipeline-fix cut. Two gaps surfaced while cutting 2026.6.4 are closed so
+releases publish cleanly and the GitHub mirror actually creates Release pages.
+
+### Fixed
+
+- **`cut-tag.sh` now gates `package-lock.json` version lockstep** (new pre-tag
+  check 5/12). The 2026.6.4 prep bumped `package.json`, `marketplace.json`, and
+  `apps/cockpit` but not the lockfile, so CI's `check:versions` / `npm ci`
+  failed *after* the tag was pushed and the npm publish never ran. The wrapper
+  now catches a stale lockfile before tagging.
+- **GitHub mirror creates Release pages again** — `github-mirror.yml` checked
+  `secrets.GH_TOKEN`, but the configured Gitea Actions secret is
+  `GH_ACCESS_TOKEN`. The name mismatch made the mirror silently skip GitHub
+  Release creation (while reporting success) for v2026.6.2, v2026.6.3, and
+  v2026.6.4. It now reads `GH_ACCESS_TOKEN`, so stable tags get their GitHub
+  Release automatically.
+
+### Upgrade notes
+
+- **No action required.** Maintenance release; no API or CLI surface changes.
+
 ## [2026.6.4] - 2026-06-21 — "Project-local deploy parity + safer `aiwg remove`"
 
 A correctness cut. Project-local extension/addon bundles now deploy to **every**
