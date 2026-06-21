@@ -442,7 +442,11 @@ jobs:
         # When the token is absent the step warns and continues — the
         # tarball + signatures are already published, only the @next
         # channel lags until an operator advances it manually.
-        if: steps.version.outputs.prerelease == 'false'
+        # !cancelled() so a failure in an unrelated earlier step (e.g. the
+        # cockpit provenance verify) does NOT skip @next advancement — by
+        # this point aiwg is already published, and @next must not lag @latest.
+        # This was the v2026.6.3 failure mode (#1648 cascade stranded @next).
+        if: ${{ !cancelled() && steps.version.outputs.prerelease == 'false' }}
         env:
           # setup-node generates an npmrc at $NPM_CONFIG_USERCONFIG that
           # references ${NODE_AUTH_TOKEN}, so dropping the granular dist-tag
