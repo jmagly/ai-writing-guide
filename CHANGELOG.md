@@ -7,6 +7,42 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.4] - 2026-06-21 — "Project-local deploy parity + safer `aiwg remove`"
+
+A correctness cut. Project-local extension/addon bundles now deploy to **every**
+provider the same way they always did for Claude, `aiwg remove` fails cleanly
+instead of crashing, and the kernel-skill prune can no longer wipe your skills
+directory when it can't find the AIWG root. Plus the npm-publish pipeline is
+hardened so a single failing step no longer strands the `@next` channel.
+
+### Why this matters to users
+
+| What changed | What it gives you |
+|---|---|
+| **Project-local bundles deploy to Factory & Codex** | A `.aiwg/extensions/<id>/` bundle with `agents/` or `rules/` now lands in `.factory/droids` + `.factory/rules` and `.codex/agents` + `.codex/rules`, not just `.claude/`. Previously Factory and Codex silently deployed 0 agents and 0 rules from project-local bundles. (#124) |
+| **`AIWG_ROOT` is no longer required for project-local agent bundles** | Deploying an agent-shadowing bundle without `AIWG_ROOT` set no longer empties your provider's kernel skill directory (e.g. `.claude/skills/`). The CLI injects the root automatically, and the prune now skips rather than deleting everything when the root can't be resolved. (#123) |
+| **`aiwg remove` fails cleanly** | `aiwg remove all --provider X` and `aiwg remove <unknown-id>` no longer crash with a `path argument must be of type string` TypeError. Unknown flags on the upstream path are rejected with a clear message (exit 2); an unknown id reports `Plugin '<id>' is not installed` (exit 1). (#118) |
+| **`@next` channel can't be stranded by one bad step** | The npm-publish workflow advances `@next` even when an earlier publish step fails, so a partial failure no longer leaves the prerelease channel behind. |
+
+### Fixed
+
+- **Project-local bundles deploy on Factory and Codex (#124)** — `factory.mjs` and `codex.mjs` gained the same `isAddonSource` short-circuit `claude.mjs` already had, so bundle `agents/`/`rules/` deploy to the provider's paths instead of being skipped.
+- **Kernel-skill prune is null-safe (#123)** — `computeAllKernelNames` now returns `null` (and validates a stale `AIWG_ROOT`) when no `agentic/code/{frameworks,addons}` tree is locatable, and `pruneStaleAiwgSkills` skips on `null` rather than treating an empty set as "delete every AIWG skill." The `use` CLI also injects `AIWG_ROOT` into the project-local deploy subprocess. `hermes.mjs` guards the null before spreading.
+- **`aiwg remove` no longer crashes (#118)** — the plugin-uninstaller CLI constructed the uninstaller with an options object where an `aiwgRoot` string was expected (the source of the TypeError), never forwarded its options to `uninstall()`, and read non-existent result fields. It now uses `createUninstaller()`, forwards `{ force, dryRun, keepProjects }`, reports from `result.errors`/`result.stats`, and rejects unknown flags before doing any work.
+
+### Changed
+
+- **npm-publish hardening (CI)** — advance `@next` even when an earlier publish step fails; publish `@aiwg/cockpit` from `./apps/cockpit` rather than `npm --prefix`; scope the Gitea publish workflow to the Gitea npm registry only.
+
+### Docs
+
+- **Versioning runbook** — added package-ownership + npm-registry runbook to `docs/contributing/versioning.md`.
+- **`aiwg remove` reference** — clarified that `--provider`/`--keep-registry` apply only to the project-local revert path, that the upstream uninstaller rejects unknown flags (exit 2), and that an unknown id reports a clean "not installed" error.
+
+### Upgrade notes
+
+- **No action required.** If you previously set `AIWG_ROOT` solely to protect your kernel skills directory when deploying project-local agent bundles, that workaround is no longer necessary (it remains honored if set).
+
 ## [2026.6.3] - 2026-06-20 — "Cockpit groundwork → usable operator surface (real-executor proof)"
 
 June's closing cut turns the AIWG Cockpit from beta substrate into a control
