@@ -566,8 +566,9 @@ aiwg remove my-team-rules --force
 
 **Routing:**
 
-- If `<id>` matches a project-local entry in `aiwg.config.installed`, routes to the project-local revert handler ([design](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-aiwg-remove-revert.md)) which uses recorded `artifactHashes` to detect pristine vs mutated vs replaced deployed files.
-- Otherwise, falls through to the upstream framework / plugin uninstaller.
+- If `<id>` matches a project-local entry in `aiwg.config.installed`, routes to the project-local revert handler ([design](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-aiwg-remove-revert.md)) which uses recorded `artifactHashes` to detect pristine vs mutated vs replaced deployed files. The `--provider` and `--keep-registry` flags apply only to this path.
+- Otherwise, falls through to the upstream framework / plugin uninstaller, which accepts `--force`, `--keep-data`, and `--dry-run`. Unknown flags are rejected with a clear message (exit 2) instead of being silently ignored, and an unknown `<id>` reports `Plugin '<id>' is not installed` (exit 1) rather than crashing.
+- `--provider` is supported only for project-local removal or user-scope removal (`--scope user --provider <p>`). Passing it to an upstream framework removal returns a clear error naming the supported alternatives.
 
 **Source preservation invariant:** `aiwg remove` never deletes content under `.aiwg/<type>/<name>/`. To remove the source, use `rm -rf` explicitly.
 
