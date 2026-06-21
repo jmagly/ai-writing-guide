@@ -40,6 +40,7 @@ export function LaunchInstanceModal({
   const [image, setImage] = useState('agentic/codex:latest');
   const [customImage, setCustomImage] = useState('');
   const [profile, setProfile] = useState('');
+  const [sshKey, setSshKey] = useState('');
   const [mounts, setMounts] = useState('');
   const [openSession, setOpenSession] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -101,6 +102,7 @@ export function LaunchInstanceModal({
         body.image = image === '__custom__' ? customImage.trim() : image;
         body.agentshare = true;
       }
+      if (runtime === 'qemu' && sshKey.trim()) body.ssh_key = sshKey.trim();
       if (runtime === 'docker' && mounts.trim()) body.mounts = mounts.split('\n').map((m) => m.trim()).filter(Boolean);
       const op = await api<{ id?: string; instance_id?: string; instanceId?: string; operation?: { id?: string }; result?: { instance_id?: string; instanceId?: string } }>('/api/instances', {
         method: 'POST',
@@ -161,6 +163,17 @@ export function LaunchInstanceModal({
             <>
               <label htmlFor="li-profile">Profile</label>
               <input id="li-profile" value={profile} onChange={(e) => setProfile(e.target.value)} placeholder="optional" />
+            </>
+          )}
+          {runtime === 'qemu' && (
+            <>
+              <label htmlFor="li-ssh-key">SSH public key</label>
+              <input
+                id="li-ssh-key"
+                value={sshKey}
+                onChange={(e) => setSshKey(e.target.value)}
+                placeholder="auto-detect, or ~/.ssh/agentic_ed25519.pub"
+              />
             </>
           )}
           {runtime === 'docker' && (

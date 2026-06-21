@@ -389,6 +389,23 @@ function unique(values) {
   return [...new Set(values.filter(Boolean))];
 }
 
+function defaultSshPublicKey() {
+  const candidates = [
+    join(homedir(), '.ssh', 'agentic_ed25519.pub'),
+    join(homedir(), '.ssh', 'vm_ed25519.pub'),
+    join(homedir(), '.ssh', 'id_ed25519.pub'),
+    join(homedir(), '.ssh', 'id_rsa.pub'),
+    join(homedir(), '.ssh', 'id_ecdsa.pub'),
+  ];
+  return candidates.find((path) => existsSync(path)) ?? '';
+}
+
+function expandHome(path) {
+  if (path === '~') return homedir();
+  if (path.startsWith('~/')) return join(homedir(), path.slice(2));
+  return path;
+}
+
 function normalizeRuntimePosture(kind) {
   const runtime = String(kind || 'unknown').toLowerCase();
   if (runtime === 'host') return {
@@ -865,7 +882,32 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
       if (url.pathname === '/api/instances' && req.method === 'POST') {
         const chunks = [];
         for await (const chunk of req) chunks.push(chunk);
-        const requestBody = Buffer.concat(chunks).toString('utf8') || '{}';
+        const rawBody = Buffer.concat(chunks).toString('utf8') || '{}';
+        let payload;
+        try {
+          payload = JSON.parse(rawBody);
+        } catch {
+          return json(res, 400, { error: 'invalid_json' });
+        }
+        if (payload.runtime === 'qemu') {
+          const sshKey = expandHome(String(payload.ssh_key ?? payload.sshKey ?? '').trim()) || defaultSshPublicKey();
+          if (!sshKey) {
+            return json(res, 400, {
+              error: 'ssh_public_key_required',
+              message: 'VM / QEMU launch requires an SSH public key path on the executor host.',
+              detail: 'Create ~/.ssh/agentic_ed25519.pub or pass ssh_key in the launch request.',
+            });
+          }
+          if (!existsSync(sshKey)) {
+            return json(res, 400, {
+              error: 'ssh_public_key_not_found',
+              message: `SSH public key not found at ${sshKey}`,
+              detail: 'Choose an existing public key path on the executor host.',
+            });
+          }
+          payload.ssh_key = sshKey;
+        }
+        const requestBody = JSON.stringify(payload);
         return proxyFirst(res, [
           {
             target: `${upstreamUrl}/api/v2/admin/instances`,

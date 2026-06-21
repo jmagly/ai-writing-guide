@@ -52,6 +52,18 @@ describe('cockpit Bridge — control surface', () => {
     expect(s.sessions.find((x) => x.id === created.id)).toMatchObject({ mode: 'managed', backend: 'tmux' });
   });
 
+  it('rejects VM launch before provisioning when no SSH public key is configured', async () => {
+    const res = await f('/api/instances', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ runtime: 'qemu', name: 'vm-no-key', start: true, ssh_key: '/tmp/aiwg-missing-key.pub' }),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body).toMatchObject({ error: 'ssh_public_key_not_found' });
+    expect(body.message).toMatch(/SSH public key not found/);
+  });
+
   it('reports the configured agentic-sandbox executor seam', async () => {
     const h = await (await f('/api/health')).json();
     expect(h).toMatchObject({ status: 'ok' });

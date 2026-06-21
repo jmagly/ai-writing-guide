@@ -76,4 +76,22 @@ describe('LaunchInstanceModal', () => {
       agentshare: true,
     });
   });
+
+  it('passes a VM SSH public key path when launching QEMU', async () => {
+    globalThis.fetch = mockFetch();
+    const onLaunched = vi.fn();
+    render(<LaunchInstanceModal open onClose={() => {}} onLaunched={onLaunched} />);
+
+    fireEvent.change(await screen.findByLabelText('Runtime'), { target: { value: 'qemu' } });
+    fireEvent.change(await screen.findByLabelText('SSH public key'), { target: { value: '~/.ssh/agentic_ed25519.pub' } });
+    fireEvent.click(screen.getByRole('button', { name: /create \+ start session/i }));
+
+    await waitFor(() => expect(onLaunched).toHaveBeenCalledWith('docker-1', true, undefined));
+    const postCall = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls
+      .find((call) => String(call[0]).includes('/api/instances') && call[1]?.method === 'POST');
+    expect(JSON.parse(String(postCall?.[1]?.body))).toMatchObject({
+      runtime: 'qemu',
+      ssh_key: '~/.ssh/agentic_ed25519.pub',
+    });
+  });
 });
