@@ -7,6 +7,27 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.10] - 2026-06-22 - "Docsite-clean media research release"
+
+Recovery cut for the `2026.6.9` release line. The `2026.6.9` package reached
+the Gitea npm registry before the release tag was corrected, so this patch
+release republishes the media/research feature set from the corrected commit
+with strict docsite links fixed.
+
+### Fixed
+
+- **Docsite strict-link build is green again** - Agent-loop and LLM Wiki docs
+  now use repository URLs for source-tree-only references instead of generated
+  docsite-relative links that do not exist in `docs/`.
+- **Release tag now points at the corrected source** - `v2026.6.10` includes the
+  type-flexible Media Curator work, Research Complete media REF support, and the
+  docsite-link repair in one signed release commit.
+
+### Upgrade notes
+
+- **Prefer `2026.6.10` over `2026.6.9`.** The feature surface is the same, but
+  `2026.6.10` includes the docsite-link repair in the published package.
+
 ## [2026.6.9] - 2026-06-22 - "Type-flexible media curation + research media REF support"
 
 Feature cut for media collections that are not purely music libraries. Media
