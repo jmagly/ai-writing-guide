@@ -1,7 +1,7 @@
 {
   "framework": "research-complete",
   "version": "1.0.0",
-  "template_count": 14,
+  "template_count": 15,
   "last_updated": "2026-05-27",
   "templates": [
     {
@@ -137,6 +137,17 @@
       "reasoning_required": true
     },
     {
+      "template_id": "reference-media",
+      "filename": "reference-media.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "Time-based media reference/analysis doc for videos, lectures, podcasts, talks, and interviews with timestamp citations",
+      "use_case": "Induct media-curator acquisitions and transcript sidecars into a research corpus without paper-only fields",
+      "primary_agent": "Documentation Agent",
+      "progressive_disclosure": false,
+      "reasoning_required": true
+    },
+    {
       "template_id": "citation-sidecar",
       "filename": "citation-sidecar.md",
       "type": "document",
@@ -165,7 +176,7 @@
     "metadata": ["provenance-record", "acquisition-report"],
     "radar": ["radar-sidecar"],
     "profiles": ["entity-profile"],
-    "induction": ["reference-canonical", "reference-expanded", "citation-sidecar"],
+    "induction": ["reference-canonical", "reference-expanded", "reference-media", "citation-sidecar"],
     "discovery": ["source-profile"]
   },
   "usage_sequence": [

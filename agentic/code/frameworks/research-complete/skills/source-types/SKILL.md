@@ -2,7 +2,7 @@
 namespace: aiwg
 platforms: [all]
 name: source-types
-description: The canonical, extensible source-type registry for a research corpus — paper, preprint, blog, repo, book, chapter, standard, doc, discussion, encyclopedia, expert-material, internal-review. Replaces the drifting type / source_type / "Source Type" vocabularies with one registry that declares per-type template, required sections, citation format, acquisition method, storage, quality rules, and radar cadence. Surfaced via `aiwg corpus source-types`; consumed by the by-source-type index view, per-type induction audit, and acquisition dispatch.
+description: The canonical, extensible source-type registry for a research corpus — paper, preprint, blog, repo, book, chapter, standard, doc, discussion, encyclopedia, expert-material, video, audio, podcast, lecture, internal-review. Replaces the drifting type / source_type / "Source Type" vocabularies with one registry that declares per-type template, required sections, citation format, acquisition method, storage, quality rules, and radar cadence. Surfaced via `aiwg corpus source-types`; consumed by the by-source-type index view, per-type induction audit, and acquisition dispatch.
 commandHint:
   argumentHint: "source-types [--json]"
   allowedTools: Read, Bash, Write
@@ -53,8 +53,10 @@ Per canonical type: `template`, `required-sections`, `citation-format`,
 | blog | reference-web | url-venue-retrieved | web-snapshot | sources/web | biannual |
 | repo | reference-repo | repo-url-commit | git-clone | sources/repos | on-demand |
 | standard | reference-web | standard-id | web-snapshot | sources/web | annual |
+| video | reference-media | timestamp-transcript | media-curator | media/video | on-demand |
+| podcast | reference-media | timestamp-transcript | media-curator | media/audio | on-demand |
 
-(12 canonical types ship by default; `aiwg corpus source-types` lists them all.)
+(16 canonical types ship by default; `aiwg corpus source-types` lists them all.)
 
 ## Adding a new source type is config, not code
 
@@ -68,12 +70,12 @@ types:
   podcast:
     description: Podcast episode.
     aliases: [podcast, episode]
-    template: reference-web
-    required_sections: [Summary, Key Claim]
-    citation_format: url-venue-retrieved
-    acquisition: web-snapshot
-    storage: sources/audio
-    quality_rules: anecdotal-hedging
+    template: reference-media
+    required_sections: [Citation, Media Profile, Summary, Key Timestamps]
+    citation_format: timestamp-transcript
+    acquisition: media-curator
+    storage: media/audio
+    quality_rules: interview-hedged-grade
     default_radar_cadence: on-demand
 venue_fallback: { … }
 meta_roles: [redirect, stub, gap-note]

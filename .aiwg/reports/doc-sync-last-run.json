@@ -1,65 +1,67 @@
 {
-  "timestamp": "2026-05-25T19:00:00Z",
+  "timestamp": "2026-06-22T14:20:05Z",
   "direction": "code-to-docs",
-  "scope": "agentic/code/** plus all repository Markdown files",
-  "guidance": "include all of agentic/code and all Markdown files; AIWG capability lives in skills, agents, commands, templates, behaviors, rules, manifests, and generated guidance",
+  "scope": "agentic/code/** plus repository Markdown files",
+  "guidance": "include all of agentic/code and repository Markdown; AIWG capability lives in skills, agents, commands, templates, behaviors, rules, manifests, and generated guidance",
   "phases": [
     {
       "phase": "audit",
       "auditors_run": [
         "release-config",
-        "release-docs",
+        "doc-sync-skill-resolution",
+        "component-doc-collector",
         "media-curator-docs",
-        "readme-framework-counts",
-        "issue-follow-up-discovery",
-        "skill-cli-rule"
+        "research-complete-media-docs",
+        "release-docs",
+        "readme-freshness",
+        "issue-follow-up-discovery"
       ],
-      "findings_total": 9,
-      "findings_high": 2,
-      "findings_medium": 6,
+      "findings_total": 5,
+      "findings_high": 1,
+      "findings_medium": 3,
       "findings_low": 1
     },
     {
       "phase": "auto-fix",
-      "fixes_applied": 9,
+      "fixes_applied": 5,
       "files_modified": [
-        ".aiwg/release.config",
         "CHANGELOG.md",
-        "README.md",
         "docs/_manifest.json",
+        "docs/docs-sources.json",
         "docs/frameworks/media-curator/overview.md",
         "docs/releases/_manifest.json",
-        ".aiwg/reports/doc-sync-last-run.json",
-        "agentic/code/addons/aiwg-utils/rules/RULES-INDEX.md",
-        "agentic/code/addons/aiwg-utils/rules/cli-secondary.md"
+        ".aiwg/.last-doc-sync",
+        ".aiwg/reports/doc-sync-last-run.json"
       ],
       "files_created": [
-        ".aiwg/reports/doc-sync-20260525T190000Z.md",
-        "docs/releases/v2026.5.11-announcement.md"
+        ".aiwg/reports/doc-sync-20260622T142005Z.md",
+        "docs/frameworks/media-curator/type-flexible-curation.md",
+        "docs/releases/v2026.6.9-announcement.md"
       ]
     }
   ],
   "totals": {
-    "fixes_applied": 9,
+    "fixes_applied": 5,
     "fixes_remaining": 0,
-    "files_modified": 9,
-    "files_created": 2
+    "files_modified": 7,
+    "files_created": 3
   },
   "validation": {
-    "pending": [
+    "passed": [
+      "node tools/manifest/collect-component-docs.mjs --dry-run",
+      "npx vitest run test/unit/artifacts/source-types.test.ts test/unit/artifacts/time-based-media-contract.test.ts --config config/vitest.config.js",
+      "skill frontmatter parse for changed media/research/citation skills",
+      "node bin/aiwg.mjs discover \"induct media\" --limit 5",
+      "node bin/aiwg.mjs discover \"type flexible media curation\" --limit 5",
       "npm run check:versions",
-      "npm run typecheck",
+      "npx tsc --noEmit",
       "npm run build:cli",
       "npm test",
       "npm run uat"
     ]
   },
-  "report": ".aiwg/reports/doc-sync-20260525T190000Z.md",
+  "report": ".aiwg/reports/doc-sync-20260622T142005Z.md",
   "open_follow_up": [
-    "#1234",
-    "#1405",
-    "#1478",
-    "#1479",
-    "#1480"
+    "#1650"
   ]
 }

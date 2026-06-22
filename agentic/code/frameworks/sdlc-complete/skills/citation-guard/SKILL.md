@@ -18,6 +18,7 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 - "fabricated citations" / "hallucinated references" → citation authenticity check
 - "DOI check" → citation DOI validation
 - "verify sources" in research context → citation verification
+- "timestamp citation" / "transcript quote" → media timestamp citation check
 
 ## Purpose
 
@@ -34,6 +35,8 @@ When triggered, this skill:
 2. **Verify against corpus**:
    - Check each reference exists in `.aiwg/research/sources/` or `.aiwg/research/findings/`
    - Validate REF-XXX identifiers match frontmatter
+   - For media timestamp citations, verify the REF records a transcript sidecar,
+     the timestamp exists in `segments[]`, and the quoted words match the transcript text exactly
    - Flag any references not in corpus
 
 3. **Check GRADE compliance**:
@@ -65,6 +68,7 @@ activation:
   triggers_on_content:
     - pattern: "REF-\\d{3}"
     - pattern: "@\\.aiwg/research/"
+    - pattern: "@\\.aiwg/research/.*@\\s*\\d{1,2}:\\d{2}(?::\\d{2})?"
     - pattern: "according to"
     - pattern: "research (shows|demonstrates|suggests|indicates)"
     - pattern: "\\(\\w+ et al\\., \\d{4}\\)"

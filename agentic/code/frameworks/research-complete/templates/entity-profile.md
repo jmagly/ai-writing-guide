@@ -1,14 +1,14 @@
 ---
 prof-id: PROF-{TYPE}-{slug}
 name: ""
-type: person                # person | org | funder | group | source
+type: person                # person | org | funder | group | source | channel | feed | venue
 # NOTE: for type: source (discovery curators, PROF-S-), use the dedicated
 # source-profile template — see SOURCE-TRACKING / the discovery subsystem (#1499).
 affiliation: ""             # current primary affiliation (PROF-O- slug or free text)
 aliases: []                 # name variants: ["A. Smith", "Smith, Andrew"]
 corpus-refs: []             # list of REF-XXX identifiers where this entity appears
 roles:                      # entity's role in each corpus REF
-  REF-XXX: primary-author   # primary-author | co-author | org | funder | mentioned
+  REF-XXX: primary-author   # primary-author | co-author | speaker | host | channel | venue | org | funder | mentioned
 affiliations: []            # temporal affiliations (person type)
   # - org: PROF-O-slug
   #   start: YYYY
@@ -25,7 +25,7 @@ sources-searched: []        # semantic-scholar | google-scholar | orcid | arxiv 
 
 # {Name} — Entity Profile
 
-**Type**: {Person | Organization | Funder | Group}
+**Type**: {Person | Organization | Funder | Group | Channel | Feed | Venue}
 **Profile ID**: `{prof-id}`
 **Last refreshed**: {YYYY-MM-DD}
 **Next refresh due**: {YYYY-MM-DD}
@@ -34,7 +34,7 @@ sources-searched: []        # semantic-scholar | google-scholar | orcid | arxiv 
 
 ## 1. Entity Summary
 
-{One paragraph: who/what this entity is, primary affiliation, research identity. For people: career phase, core expertise, institutional context. For orgs: founding context, research mission, scale. For funders: scope, primary areas funded.}
+{One paragraph: who/what this entity is, primary affiliation, research identity. For people: career phase, core expertise, institutional context. For speakers in time-based media, record the verified speaker role and do not infer authorship. For orgs/channels/feeds/venues: publishing identity, host organization, research mission, scale. For funders: scope, primary areas funded.}
 
 **Research Identity**: {One sentence core descriptor.}
 **Affiliation**: {Current primary org, with link to PROF-O- profile if exists.}
@@ -47,10 +47,17 @@ sources-searched: []        # semantic-scholar | google-scholar | orcid | arxiv 
 | REF | Title | Role | Year | GRADE |
 |---|---|---|---|---|
 | [REF-XXX](../references/REF-XXX-*.md) | {Short title} | primary-author | YYYY | A |
+| [REF-YYY](../references/REF-YYY-*.md) | {Media title} | speaker | YYYY | B+ |
 
 **Total corpus appearances**: N
 **Date range**: YYYY – YYYY
 **Most recent**: REF-XXX ({Year})
+
+For time-based media:
+- Speakers reuse `PROF-P-<slug>` with role `speaker`, `host`, `interviewer`, or `panelist`.
+- Channels, podcast feeds, conference series, courses, and recording venues may
+  use `PROF-O-<slug>` when they are stable organizations or venues.
+- Discovery feeds/accounts use the dedicated `PROF-S-<slug>` source profile.
 
 ---
 

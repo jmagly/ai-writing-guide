@@ -405,7 +405,8 @@
     "addons/nlp-prod/productionization",
     "addons/prose-integration/integration-guide",
     "addons/rlm/agent-examples",
-    "addons/rlm/agent-examples/rlm-agent-examples"
+    "addons/rlm/agent-examples/rlm-agent-examples",
+    "frameworks/media-curator/type-flexible-curation"
   ],
   "sections": [
     {
@@ -3038,6 +3039,13 @@
       "summary": "Externalized from the agent definition per the few-shot-examples rule (#1587/#1600).",
       "file": "addons/rlm/agent-examples/rlm-agent-examples.md",
       "parent": "addons/rlm/agent-examples"
+    },
+    {
+      "id": "frameworks/media-curator/type-flexible-curation",
+      "title": "Type Flexible Curation",
+      "summary": "Media Curator treats audio, video, transcripts, image sets, documents, and mixed",
+      "file": "frameworks/media-curator/type-flexible-curation.md",
+      "parent": "frameworks/media-curator"
     }
   ]
 }

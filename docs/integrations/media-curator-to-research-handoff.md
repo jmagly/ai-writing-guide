@@ -7,7 +7,11 @@
 
 **Media curation is upstream. Research is downstream.** Acquisition of files from external sources is media curation's responsibility — research consumes what media curation provides.
 
-This handoff formalizes the boundary that removed ~40 embedded `curl` calls from research induction agents and eliminated duplicate functionality between `/research-acquire` and `/acquire`.
+This handoff formalizes the boundary that removed ~40 embedded `curl` calls from
+research induction agents and eliminated duplicate functionality between
+`/research-acquire` and `/acquire`. For time-based media, the same boundary now
+extends through `transcribe-media` and `induct-media`: media-curator acquires and
+transcribes; research-complete turns the result into citable REF artifacts.
 
 ## Responsibilities
 
@@ -33,6 +37,10 @@ Media curation answers: **"Given a URL or query, produce a file on disk."**
 
 Research answers: **"Given a file produced by media curation, extract knowledge and integrate it into the corpus."**
 
+For videos, lectures, podcasts, talks, and interviews, research-complete also
+answers: **"Given acquired media plus a transcript sidecar, produce a REF,
+sidecars, timestamp citations, and searchable corpus metadata."**
+
 ## Canonical Storage Locations
 
 Media curation writes to these paths; research reads from them:
@@ -49,6 +57,10 @@ Media curation writes to these paths; research reads from them:
 │   └── REF-016.txt
 └── metadata/                    # Extracted metadata sidecars
     └── REF-016.yaml
+media/
+├── video/                       # Copied or LFS-managed video when permitted
+├── audio/                       # Copied or LFS-managed audio when permitted
+└── transcripts/                 # Timestamped transcript sidecars
 ```
 
 ## Handoff Protocol
@@ -99,6 +111,47 @@ When research has gap analysis results, it asks media curation to hunt for speci
 /find-sources --query "LLM agent GUI interaction orchestration" --limit 10
 /acquire --plan .curator/sources/plan-XXX.yaml
 ```
+
+### 4. Time-based media induction
+
+When the source is a recording rather than a paper, media-curator produces an
+acquisition record and transcript sidecar before research-complete induction:
+
+```bash
+# Acquire through media-curator patterns (YouTube, Internet Archive, direct URL).
+/acquire --url "https://example.invalid/watch?v=lecture" --format video \
+  --output .aiwg/media/acquisitions/
+
+# Produce a research-grade transcript sidecar.
+/transcribe-media .aiwg/media/acquisitions/REF-123-lecture.mp4 \
+  --source-url "https://example.invalid/watch?v=lecture" \
+  --output .aiwg/research/media/transcripts/REF-123-lecture.transcript.json
+
+# Hand off to research-complete.
+/induct-media .aiwg/media/acquisitions/REF-123-lecture.metadata.json \
+  --transcript .aiwg/research/media/transcripts/REF-123-lecture.transcript.json \
+  --source-url "https://example.invalid/watch?v=lecture" \
+  --storage hash-only --ref-id REF-123
+```
+
+Expected research outputs:
+
+- `.aiwg/research/findings/REF-123.md` from `reference-media.md`
+- `.aiwg/research/citations/REF-123-citations.md` with spoken references
+- `.aiwg/research/radar/REF-123-radar.md`
+- index/search metadata for title, source type, speakers, channel/venue, source
+  URL, transcript path, and storage policy
+
+Timestamp citations use the corpus REF and exact transcript quote:
+
+```markdown
+@.aiwg/research/findings/REF-123.md @ 00:12:34 - "exact transcript quote"
+```
+
+`citation-guard` accepts this form only after the REF and transcript sidecar
+exist and the timestamped quote matches the transcript segment. `research-query`
+can then ground answers against the REF metadata and transcript text when the
+project index includes transcript content.
 
 ## Cross-Pollination
 

@@ -188,12 +188,56 @@ types:
   expert-material:
     description: Expert commentary, talk, or interview material.
     aliases: [expert-material, expert material, talk, interview, keynote]
-    template: reference-web
-    required_sections: ["Citation", "Summary", "Key Claim"]
-    citation_format: url-venue-retrieved
+    template: reference-media
+    required_sections: ["Citation", "Media Profile", "Summary", "Key Timestamps"]
+    citation_format: timestamp-transcript
     acquisition: manual
-    storage: sources/web
+    storage: media/transcripts
     quality_rules: expert-opinion-hedging
+    default_radar_cadence: on-demand
+
+  video:
+    description: Video, conference recording, course recording, or platform-hosted talk.
+    aliases: [video, recording, webcast, livestream, stream, lecture-video, conference-video]
+    template: reference-media
+    required_sections: ["Citation", "Media Profile", "Summary", "Key Timestamps", "Evidence and Transcript Method"]
+    citation_format: timestamp-transcript
+    acquisition: media-curator
+    storage: media/video
+    quality_rules: media-grade
+    default_radar_cadence: on-demand
+
+  audio:
+    description: Audio recording, lecture audio, or direct-hosted audio source.
+    aliases: [audio, audio-recording, lecture-audio, recording-audio]
+    template: reference-media
+    required_sections: ["Citation", "Media Profile", "Summary", "Key Timestamps", "Evidence and Transcript Method"]
+    citation_format: timestamp-transcript
+    acquisition: media-curator
+    storage: media/audio
+    quality_rules: media-grade
+    default_radar_cadence: on-demand
+
+  podcast:
+    description: Podcast episode or feed-hosted interview.
+    aliases: [podcast, podcast-episode, episode, interview-audio]
+    template: reference-media
+    required_sections: ["Citation", "Media Profile", "Summary", "Key Timestamps", "Evidence and Transcript Method"]
+    citation_format: timestamp-transcript
+    acquisition: media-curator
+    storage: media/audio
+    quality_rules: interview-hedged-grade
+    default_radar_cadence: on-demand
+
+  lecture:
+    description: Institutional lecture, course video, keynote, seminar, or invited talk recording.
+    aliases: [lecture, course, seminar, keynote, talk, invited-talk, conference-talk]
+    template: reference-media
+    required_sections: ["Citation", "Media Profile", "Summary", "Key Timestamps", "Evidence and Transcript Method"]
+    citation_format: timestamp-transcript
+    acquisition: media-curator
+    storage: media/video
+    quality_rules: lecture-grade
     default_radar_cadence: on-demand
 
   internal-review:

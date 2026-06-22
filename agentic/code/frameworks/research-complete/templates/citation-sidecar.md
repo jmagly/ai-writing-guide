@@ -60,6 +60,25 @@ Incoming rules:
     | — | (none recorded yet; preprint posted YYYY-MM-DD) | — | — | — | — |
 -->
 
+## Outgoing: Spoken References and Informal Mentions
+
+| # | Reference / mention text | Timestamp | Quote | Type | Inducted REF |
+|---|--------------------------|-----------|-------|------|--------------|
+| 1 | "{verbal reference as spoken}" | HH:MM:SS | "{exact transcript quote}" | informal | REF-YYY |
+| 2 | "{paper, project, person, or idea named verbally}" | HH:MM:SS | "{exact transcript quote}" | formal-citation | — |
+
+<!--
+Time-based media rules:
+- Use this table for talks, podcasts, interviews, lectures, and videos where a
+  speaker references work verbally instead of through a formal reference list.
+- Timestamp MUST point into the transcript sidecar.
+- Quote MUST match the transcript exactly.
+- Type values: formal-citation, informal, project, person, venue, unclear.
+- "Inducted REF" links to a corpus REF when the mentioned work is already in
+  the corpus; use "—" when the mention is unresolved or not yet inducted.
+- Do not force DOI/paper metadata for informal spoken references.
+-->
+
 ## Notes
 
 {Optional free-form notes about the citation network. Common patterns:
@@ -78,4 +97,6 @@ Format conventions:
   documentation/radar/REF-XXX-radar.md (radar sidecar) — all three share the REF id.
 - The 6-column table (`# | Title | Authors | Year | DOI/URL | Inducted REF`) is canonical.
 - Bidirectional consistency is enforced by the corpus audit (research-lint).
+- The spoken-reference table is additive for time-based media and does not
+  change existing paper citation sidecars.
 -->

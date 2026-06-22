@@ -1,6 +1,6 @@
 # Media Curator Framework
 
-Intelligent media archive management for building, curating, and maintaining comprehensive media collections. Handles discography analysis, source discovery, acquisition, quality assessment, metadata curation, and multi-platform export.
+Intelligent media archive management for building, curating, and maintaining comprehensive media collections. Handles type-flexible collection assessment, discography analysis where relevant, source discovery, acquisition, quality assessment, metadata curation, transcript sidecars for audio/video, integrity/provenance records, and multi-platform export.
 
 ## Quick Start
 
@@ -29,6 +29,9 @@ aiwg use media-curator
 # Create a research-grade transcript sidecar
 /transcribe-media /path/to/acquired-media.wav --source-url https://example.invalid/source
 
+# Hand acquired media and transcript metadata to research-complete
+/induct-media metadata.json --transcript media.transcript.json --source-url https://example.invalid/source --storage hash-only
+
 # Export for a specific platform
 /export --profile plex /path/to/collection /path/to/output
 ```
@@ -37,6 +40,7 @@ aiwg use media-curator
 
 | Capability | Agent | Command |
 |-----------|-------|---------|
+| Generic assess-and-plan for arbitrary collections | (integrated) | `/curate` |
 | Discography research and era identification | `discography-analyst` | `/analyze-artist` |
 | Multi-platform source discovery | `source-discoverer` | `/find-sources` |
 | Download orchestration with format selection | `acquisition-manager` | `/acquire` |
@@ -47,8 +51,14 @@ aiwg use media-curator
 | Multi-platform format export | (integrated) | `/export` |
 | SHA-256 integrity verification | (integrated) | `/verify-archive` |
 | Timestamped transcript sidecars | (integrated) | `/transcribe-media` |
+| Research media handoff | (research-complete) | `/induct-media` |
 
 ## Architecture
+
+The framework's generic routing decision is documented in
+`docs/type-flexible-curation.md`: start with assess-and-plan for unknown or
+mixed media, then select music/discography, transcript, acquisition, tagging,
+export, or research handoff paths based on evidence.
 
 ```
 media-curator/
@@ -84,6 +94,7 @@ media-curator/
 │   └── defaults.yaml               # Default configuration
 └── docs/
     ├── overview.md                  # Framework overview
+    ├── type-flexible-curation.md     # Generic media routing decision
     ├── user-guide.md                # User guide
     └── standards-reference.md       # Standards (PREMIS, PROV, ID3)
 ```

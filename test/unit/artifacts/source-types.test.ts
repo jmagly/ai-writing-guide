@@ -42,6 +42,8 @@ describe('normalizeSourceType (#1509) — folds the 3 drifting vocabularies', ()
     expect(normalizeSourceType({ bodySourceType: 'maintainer-doc' })).toBe('doc');
     expect(normalizeSourceType({ bodySourceType: 'standard' })).toBe('standard');
     expect(normalizeSourceType({ bodySourceType: 'expert-material' })).toBe('expert-material');
+    expect(normalizeSourceType({ bodySourceType: 'podcast-episode' })).toBe('podcast');
+    expect(normalizeSourceType({ bodySourceType: 'conference-talk' })).toBe('lecture');
   });
 
   it('routes doc-role values to the meta pseudo-type', () => {
@@ -82,8 +84,11 @@ describe('registry accessors', () => {
     expect(types).toContain('paper');
     expect(types).toContain('blog');
     expect(types).toContain('repo');
+    expect(types).toContain('video');
+    expect(types).toContain('podcast');
     expect(getSourceType('blog')?.template).toBe('reference-web');
     expect(getSourceType('repo')?.acquisition).toBe('git-clone');
+    expect(getSourceType('video')?.template).toBe('reference-media');
     expect(getSourceType('nope')).toBeNull();
   });
 });

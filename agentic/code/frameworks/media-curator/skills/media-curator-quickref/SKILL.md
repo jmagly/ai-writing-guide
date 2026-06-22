@@ -3,7 +3,7 @@ name: media-curator-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: AUTO-INVOKE when user mentions media curation, discography, archive, music collection, source acquisition, metadata tagging, Plex, Jellyfin, MPD. Media-curator framework quick reference — discovery phrases for discography analysis, source discovery, acquisition, quality filtering, metadata, archive integrity.
+description: AUTO-INVOKE when user mentions media curation, discography, archive, music collection, video/audio collection, source acquisition, metadata tagging, transcript, Plex, Jellyfin, MPD. Media-curator framework quick reference — discovery phrases for collection assessment, source discovery, acquisition, transcription, quality filtering, metadata, archive integrity, and research handoff.
 ---
 
 # Media Curator Framework — Quick Reference
@@ -31,24 +31,29 @@ If your platform's Skill tool errors on a non-kernel skill (expected — most ar
 
 ## What this framework is for
 
-End-to-end media archive management: discover sources across YouTube/Internet Archive/Bandcamp, acquire with `yt-dlp`-based patterns, score quality, embed cover art, apply consistent metadata, generate gap notes for missing content, verify integrity with SHA-256, and export to platform-specific formats (Plex, Jellyfin, MPD, mobile, archival).
+End-to-end media archive management for audio, video, and other curated asset collections. It can inspect the requested collection type, plan a workflow, discover sources across YouTube/Internet Archive/Bandcamp or other relevant surfaces, acquire with proven tools, score quality, apply consistent metadata, generate gap notes for missing content, verify integrity with SHA-256, transcribe acquired audio/video, and export to platform-specific formats (Plex, Jellyfin, MPD, mobile, archival).
 
 ## Capability domains
 
 | Domain | Covers |
 |---|---|
+| **Assess & plan** | Inspect arbitrary collection requests, examples, filenames, metadata, source URLs, and select workflow/tooling |
 | **Catalog planning** | Artist discography analysis, canonical catalog structure |
 | **Discovery & acquisition** | Find sources, download with quality scoring, yt-dlp / Internet Archive patterns |
+| **Transcription** | Timestamped transcript sidecars for acquired audio/video |
 | **Metadata & assembly** | Tag files, embed cover art, assemble compilations |
 | **Completeness & gaps** | Audit collection completeness, document missing content |
 | **Integrity & export** | SHA-256 verification, platform-specific export bundles |
-| **Provenance** | Track derivation chains for media files |
+| **Provenance** | Track derivation chains, source, license, and integrity records for curated assets |
+| **Research handoff** | Pass acquired media plus transcripts into research-complete `induct-media` |
 
 ## Curated discovery phrases
 
 ### Catalog planning
 
 ```bash
+aiwg discover "curate arbitrary media collection" # → curate
+aiwg discover "assess unsupported media type"      # → curate / provenance-tracking
 aiwg discover "analyze artist discography"     # → analyze-artist
 ```
 
@@ -61,6 +66,14 @@ aiwg discover "youtube acquisition"            # → youtube-acquisition (patter
 aiwg discover "archive acquisition"            # → archive-acquisition (pattern reference)
 aiwg discover "audio extraction"               # → audio-extraction (pattern reference)
 aiwg discover "quality filter media"           # → quality-filtering
+```
+
+### Transcription & research handoff
+
+```bash
+aiwg discover "transcribe media"               # → transcribe-media
+aiwg discover "media research handoff"         # → induct-media (research-complete)
+aiwg discover "video audio research induction" # → transcribe-media / induct-media
 ```
 
 ### Metadata & assembly
@@ -97,7 +110,8 @@ aiwg discover "provenance tracking"            # → provenance-tracking
 ## Workflow shape
 
 ```
-analyze-artist (catalog plan)  →
+assess request and examples  →
+analyze-artist or type-specific plan  →
   find-sources (discovery)  →
     quality-filtering (accept/reject)  →
       acquire (download)  →
@@ -108,6 +122,12 @@ analyze-artist (catalog plan)  →
 
 `gap-documentation` and `check-completeness` run cross-cutting at any stage.
 
+For unknown or lightly supported asset types, first inspect available examples,
+filenames, metadata, source URLs, and user intent. Prefer established libraries
+or tools; create narrow custom tooling only when necessary. If specialized
+handling is missing, produce a concrete plan, collect safe metadata/provenance
+and integrity records, and identify the follow-up tool or plugin needed.
+
 ## Artifact directory layout
 
 ```
@@ -115,6 +135,7 @@ analyze-artist (catalog plan)  →
 ├── catalogs/         # Per-artist canonical discographies
 ├── sources/          # Discovery output (ranked candidates)
 ├── acquisitions/     # Acquired files + checksums
+├── transcripts/      # Transcript sidecars for acquired audio/video
 ├── gaps/             # GAP-NOTE markers for missing content
 ├── exports/          # Platform-specific export bundles
 └── verify/           # Integrity reports

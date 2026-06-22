@@ -2,9 +2,16 @@
 namespace: aiwg
 name: curate
 platforms: [all]
-description: Orchestrate end-to-end media curation from analysis through acquisition, tagging, and verification
+description: Orchestrate type-flexible media curation from assessment and planning through acquisition, tagging/transcription, provenance, and verification
+userInvocable: true
+triggers:
+  - "curate arbitrary media collection"
+  - "assess unsupported media type"
+  - "plan mixed media archive"
+  - "curate media collection"
+  - "build media curation plan"
 commandHint:
-  argumentHint: '"<artist>" [--scope complete|era:NAME|style:NAME] [--output <dir>] [--quality <threshold>] [--export <profile>]'
+  argumentHint: '"<collection-or-artist>" [--scope complete|era:NAME|style:NAME|custom] [--output <dir>] [--quality <threshold>] [--export <profile>]'
   allowedTools: 'Bash, Read, Write, Glob, Grep, WebSearch, WebFetch, Task'
   model: opus
   category: media-curator
@@ -13,11 +20,40 @@ commandHint:
 
 # Curate Media Collection
 
-Main orchestration entry point for end-to-end media curation. Analyzes artist discography, discovers high-quality sources, acquires media, tags metadata, verifies integrity, checks completeness, and optionally exports to platform-specific formats.
+Main orchestration entry point for end-to-end media curation. It first assesses
+the requested collection type and available examples, then chooses the right
+workflow: artist discography curation, video/audio acquisition and transcript
+handoff, archive verification, metadata tagging, or a narrow custom tooling plan
+for unsupported asset types.
+
+## Triggers
+
+- "curate arbitrary media collection"
+- "assess unsupported media type"
+- "plan mixed media archive"
+- "curate media collection"
+- "build media curation plan"
 
 ## Purpose
 
-Media curation is a multi-phase workflow requiring coordination across analysis, discovery, acquisition, metadata tagging, verification, and export. This command orchestrates the full pipeline, managing dependencies between phases and ensuring quality at each step.
+Media curation is a multi-phase workflow requiring coordination across
+assessment, discovery, acquisition, metadata tagging, transcription when
+relevant, verification, provenance, and export. This command orchestrates the
+full pipeline, managing dependencies between phases and ensuring quality at
+each step.
+
+## Type-Flexible Intake
+
+Do not assume every request is an artist/music collection. Inspect:
+- user intent and desired output
+- available examples, filenames, metadata, source URLs, and licenses
+- target asset types and expected consumers
+- existing libraries/tools for the asset type
+
+If the framework has specialized handling, use it. If it does not, produce a
+concrete assess-and-plan result, collect safe provenance/source/license/fixity
+metadata, and identify the narrow reusable tool or plugin needed next. Existing
+audio/music workflows remain valid specialized paths.
 
 ## Parameters
 

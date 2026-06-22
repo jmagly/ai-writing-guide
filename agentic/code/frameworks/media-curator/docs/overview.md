@@ -2,7 +2,10 @@
 
 ## What It Does
 
-The Media Curator framework enables AI agents to build, curate, and maintain comprehensive media collections. It handles the full lifecycle from artist research through acquisition, organization, verification, and multi-platform export.
+The Media Curator framework enables AI agents to build, curate, and maintain
+comprehensive media collections. It handles the full lifecycle from
+type-flexible assessment through acquisition, organization, verification,
+transcription where needed, research handoff, and multi-platform export.
 
 ## Design Philosophy
 
@@ -17,6 +20,13 @@ Not all media is worth collecting. The framework applies multi-dimensional quali
 ### Classification by Production Context
 
 A key field-test learning: classify media by how it was produced (studio, live, broadcast), not how it sounds (acoustic, electric). A stripped-down studio recording is still a studio recording.
+
+### Type-Flexible Entry
+
+Unknown or mixed media starts with assess-and-plan rather than an audio-only
+path. The framework selects music/discography handling only when the request,
+metadata, filenames, or sources show that the archive is music-centered. See
+`type-flexible-curation.md` for the recorded routing decision.
 
 ### Integrity First
 
@@ -49,7 +59,7 @@ Every archive includes self-verifying SHA-256 checksums and W3C PROV-compliant p
 | `/export` | Multi-platform output |
 | `/verify-archive` | Integrity verification |
 
-### Skills (9)
+### Skills
 
 | Skill | Purpose |
 |-------|---------|
@@ -60,6 +70,8 @@ Every archive includes self-verifying SHA-256 checksums and W3C PROV-compliant p
 | Quality Filtering | Accept/reject logic |
 | Cover Art Embedding | Artwork embedding |
 | Integrity Verification | SHA-256 manifests |
+| Transcribe Media | Timestamped transcript sidecars |
+| Curate | Assess-and-plan for arbitrary or mixed media |
 | Gap Documentation | GAP-NOTE.md pattern |
 | Provenance Tracking | W3C PROV-O for media |
 

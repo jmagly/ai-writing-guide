@@ -6,10 +6,11 @@ The research corpus uses two complementary reference-doc templates:
 |----------|---------:|---------|
 | [`reference-canonical.md`](reference-canonical.md) | **15** | Most papers. Default choice. |
 | [`reference-expanded.md`](reference-expanded.md) | **21** | Foundational / peer-reviewed papers warranting deep analysis. |
+| [`reference-media.md`](reference-media.md) | **15** | Videos, lectures, podcasts, talks, and interviews with timestamped transcripts. |
 
 Both produce ref docs with YAML frontmatter (`ref_id`, `title`, `authors`, `year`, `source_type`, `venue`, `url`, `pdf_hash`), numbered section headings, and the same conventions for citation-network linking, BibTeX, revision history, and document classification. The **difference is depth** — the expanded template adds 6 sections.
 
-The matching citation sidecar uses [`citation-sidecar.md`](citation-sidecar.md); the freshness sidecar uses [`radar-sidecar.md`](radar-sidecar.md); entity profiles use [`entity-profile.md`](entity-profile.md).
+The matching citation sidecar uses [`citation-sidecar.md`](citation-sidecar.md); time-based media uses the same sidecar plus its spoken-reference table. The freshness sidecar uses [`radar-sidecar.md`](radar-sidecar.md); entity profiles use [`entity-profile.md`](entity-profile.md).
 
 ## Choosing between reference templates
 
@@ -31,6 +32,17 @@ This is the default (the large majority of ref docs).
 - Paper that demands a side-by-side comparison with alternatives to be useful
 
 **When in doubt: start canonical, promote later.** A canonical doc can be promoted by inserting the expanded-only sections at their canonical positions, renumbering subsequent sections, and adding a revision-history entry. Keep the original content; new sections are additive.
+
+**Use media when:**
+- the source is a recording rather than a PDF or web article
+- timestamp anchors are needed instead of page numbers
+- the evidence path includes a transcript hash and source media hash
+- the source records speakers, channel/feed/venue, and license posture
+
+Do not shoehorn a podcast or lecture into the paper template just to satisfy
+DOI, page-count, or BibTeX fields. If a conference talk also has a companion
+paper, induct the paper with the paper template and the recording with the
+media template, then cross-reference the two REFs.
 
 ## Section mapping: canonical ↔ expanded
 
@@ -67,11 +79,14 @@ This is the default (the large majority of ref docs).
 | `title` | yes | string | Full paper title, no leading `REF-XXX:` prefix |
 | `authors` | yes (where extractable) | list of strings | `"Lastname, F."` form |
 | `year` | yes (where known) | int | Publication year, not citation count |
-| `source_type` | yes | enum | `preprint`, `peer_reviewed_conference`, `peer_reviewed_journal`, `technical_report`, `survey`, `codebase`, `research_gap` |
+| `source_type` | yes | enum | Paper templates: `preprint`, `peer_reviewed_conference`, `peer_reviewed_journal`, `technical_report`, `survey`, `codebase`, `research_gap`; media template: `video`, `audio`, `podcast`, `lecture`, `interview`, `talk` |
 | `venue` | recommended | string | arXiv ID, conference, journal, or org blog |
 | `url` | recommended | string | Canonical landing URL |
 | `pdf_hash` | yes when PDF exists | string | SHA-256 of the PDF — the load-bearing integrity check |
 | `affiliation-primary` | optional | string or PROF-O ID | Primary author's institution |
 | `status` | optional | enum | `placeholder`, `pending-acquisition`, `acquisition-deficit` for partial inductions |
+| `transcript_path` | media | string | Path to timestamped transcript sidecar |
+| `transcript_hash` | media | string | SHA-256 of canonical transcript payload |
+| `media_storage.policy` | media | enum | `copied`, `lfs`, `object-storage`, or `hash-only` |
 
 > The GRADE quality letter is recorded in the Document Classification section as `**Quality**: A / A- / B / C / D` (the radar subsystem's GRADE extraction reads this form).

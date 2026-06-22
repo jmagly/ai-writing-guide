@@ -101,6 +101,19 @@ pair programming (@.aiwg/research/sources/williams-2000-pair.pdf, pp. 6-7),
 though the magnitude varies by context.
 ```
 
+For time-based media, use transcript timestamp anchors instead of page numbers:
+
+```markdown
+The speaker states: "Exact transcript quote"
+(@.aiwg/research/findings/REF-123.md @ 00:12:34).
+```
+
+Timestamp citations are valid only when:
+- the cited REF has a transcript sidecar recorded in the corpus,
+- the timestamp exists in that transcript,
+- the quoted words match the transcript exactly, and
+- the citation uses the corpus REF/finding path rather than a bare platform URL.
+
 ### Rule 5: Always Verify Source Exists Before Citing
 
 **FORBIDDEN**:
@@ -236,6 +249,23 @@ GRADE: VERY LOW - Anecdotal evidence only
 Note: Formal literature review planned - see @.aiwg/research/TODO.md
 ```
 
+### Time-Based Media GRADE Guidance
+
+Use the same hedging discipline for videos, lectures, podcasts, interviews, and
+talks, but grade the source context and transcript integrity explicitly:
+
+| Media source | Default GRADE | Citation requirement |
+|--------------|---------------|----------------------|
+| Peer-reviewed or official conference recording with verified venue and transcript | A- | REF path + timestamp + exact transcript quote |
+| Institutional lecture, course recording, or official seminar with identifiable speaker | B+ | REF path + timestamp + exact transcript quote |
+| Podcast or informal interview with identifiable expert(s) | B | REF path + timestamp + exact transcript quote; hedge interview claims |
+| Platform upload with unclear speaker, unclear provenance, or unverified transcript | C or lower | Use only with explicit limitations or corroboration |
+
+Do not promote a media source to paper-like authority because the speaker is
+credible. Record the format limitations: moderation, informal remarks,
+transcription quality, missing citations, and whether spoken references are
+formal citations or informal mentions.
+
 ## Agent Definition Requirements
 
 When creating agent definitions that generate documentation:
@@ -248,7 +278,7 @@ When creating agent definitions that generate documentation:
 
    Before citing any source:
    1. Verify file exists in @.aiwg/research/sources/
-   2. Extract exact quote with page/section number
+   2. Extract exact quote with page/section number, or timestamp for media
    3. Assess GRADE quality level
    4. Use appropriate hedging language
    5. Include full citation with @-mention
@@ -382,7 +412,10 @@ Before completing any content generation that includes citations:
 
 - [ ] All citations reference files in `.aiwg/research/sources/`
 - [ ] All cited files verified to exist using file system check
-- [ ] All quotes are exact with page/section numbers included
+- [ ] All quotes are exact with page/section numbers included, or timestamp
+      anchors for media transcript citations
+- [ ] Media timestamp citations point to an existing transcript segment and the
+      quoted words match that segment exactly
 - [ ] GRADE quality level assessed and documented for each citation
 - [ ] Claim language matches evidence quality (no overclaiming)
 - [ ] Uncertainty explicitly marked for LOW/VERY LOW quality sources

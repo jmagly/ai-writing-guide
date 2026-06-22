@@ -13,11 +13,13 @@ script:
 
 > **Deterministic execution (#1266)**: this skill has a `script:` entrypoint
 > that shells out to `aiwg regenerate "$@"`. Prefer
-> `aiwg run skill aiwg-regenerate -- <flags>` over agent-mediated invocation.
-> When invoked as a slash command on platforms without a deployed command stub,
-> the agent MUST run only `aiwg regenerate <flags>` and report its output — no
-> exploratory permission requests, no multi-step planning. The deterministic
-> CLI is the source of truth.
+> `aiwg run skill aiwg-regenerate -- <flags>` when a platform supports it.
+> The CLI owns the deterministic execution step: provider detection, file
+> writes, preservation logic, backups, and exit codes. The skill owns the
+> agentic layer around that step: intent alignment, output formatting,
+> workspace-state reconciliation, summary, next actions, gates, and recovery.
+> Do not reimplement regeneration manually or add redundant permission
+> prompts before calling the CLI for execution.
 
 # Regenerate Platform Context File
 

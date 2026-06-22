@@ -3,7 +3,7 @@ name: research-quickref
 namespace: aiwg
 platforms: [all]
 kernel: true
-description: AUTO-INVOKE when user mentions research, paper, citation, GRADE, corpus, provenance, literature review, induct paper, evidence, bibliography. Research framework quick reference — discovery phrases for corpus inception, paper acquisition, GRADE quality, citation graphs, provenance-tracked synthesis.
+description: AUTO-INVOKE when user mentions research, paper, citation, GRADE, corpus, provenance, literature review, induct paper, induct media, video/audio research, timestamp citations, evidence, bibliography. Research framework quick reference — discovery phrases for corpus inception, paper and media acquisition, GRADE quality, citation graphs, provenance-tracked synthesis.
 ---
 
 # Research Framework — Quick Reference
@@ -31,7 +31,7 @@ If your platform's Skill tool errors on a non-kernel skill (expected — most ar
 
 ## What this framework is for
 
-Research workflow automation. Builds and maintains a citation-graphed research corpus: discover papers, acquire PDFs, induct sources with structured analysis, assess quality via GRADE, build citation networks, query with grounded answers, and archive with W3C PROV provenance.
+Research workflow automation. Builds and maintains a citation-graphed research corpus: discover papers and time-based media, acquire PDFs or media/transcripts, induct sources with structured analysis, assess quality via GRADE, build citation networks, query with grounded answers, and archive with W3C PROV provenance.
 
 ## Capability domains
 
@@ -39,6 +39,7 @@ Research workflow automation. Builds and maintains a citation-graphed research c
 |---|---|
 | **Discovery & acquisition** | Find papers across academic databases, download PDFs, extract metadata |
 | **Induction & summarization** | Bring sources into the corpus with structured analysis and literature notes |
+| **Time-based media** | Induct videos, lectures, podcasts, interviews, transcript sidecars, timestamp citations |
 | **Quality assessment** | GRADE methodology — assess study design, sample size, conflicts, peer review |
 | **Citation graphs** | Build/maintain citation networks, detect gaps, traverse with `aiwg index neighbors` |
 | **Querying the corpus** | Grounded answers with inline REF-XXX citations |
@@ -60,6 +61,15 @@ aiwg discover "best practices audit"           # → best-practices-audit
 ```bash
 aiwg discover "induct research source"         # → induct-research (score 1.00)
 aiwg discover "research document summary"      # → research-document
+```
+
+### Time-based media
+
+```bash
+aiwg discover "induct media research source"   # → induct-media
+aiwg discover "video audio research induction" # → induct-media / transcribe-media
+aiwg discover "timestamp citation transcript"  # → induct-media / citation-guard
+aiwg discover "media REF template"             # → source-types / induct-media
 ```
 
 ### Quality assessment
@@ -113,6 +123,10 @@ Research artifacts go under `.aiwg/research/`:
 ├── findings/         # REF-XXX literature notes (one per source)
 ├── citations/        # Citation sidecars (REF-XXX-citations.md)
 ├── sources/          # Acquired papers (PDFs, metadata)
+├── media/            # Time-based media archive policy records
+│   ├── video/        # `media/video/` copied or LFS-managed video when permitted
+│   ├── audio/        # `media/audio/` copied or LFS-managed audio when permitted
+│   └── transcripts/  # `media/transcripts/` timestamped transcript sidecars
 ├── profiles/         # Entity profiles
 │   ├── people/       # PROF-P-* author/researcher profiles
 │   ├── orgs/         # PROF-O-* organizations
@@ -123,9 +137,23 @@ Research artifacts go under `.aiwg/research/`:
 
 ## ID conventions
 
-- `REF-NNN` — research papers (citation-network nodes)
+- `REF-NNN` — research papers or media sources (citation-network nodes)
 - `PROF-[POFG]-<slug>` — entity profiles (people / orgs / funders / groups)
+- `PROF-S-<slug>` — source/curator profiles for feeds, channels, or accounts
 - Both ID spaces are first-class in `aiwg index neighbors` traversal.
+
+## Timestamp citations
+
+For media REFs, cite transcript-verified moments instead of page numbers:
+
+```text
+@.aiwg/research/findings/REF-XXX.md @ HH:MM:SS - "exact transcript quote"
+```
+
+The timestamp must exist in the transcript sidecar, and the quote must match the
+transcript exactly. Use `induct-media` for media-curator acquisition handoff and
+record whether the source media is copied, stored through LFS/object storage, or
+tracked as a hash-only record.
 
 ## GRADE methodology
 

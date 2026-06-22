@@ -7,6 +7,52 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.9] - 2026-06-22 - "Type-flexible media curation + research media REF support"
+
+Feature cut for media collections that are not purely music libraries. Media
+Curator now starts unknown and mixed collections with an assess-and-plan path,
+and Research Complete can induct time-based media into REF artifacts with
+timestamp citations.
+
+### Added
+
+- **Type-flexible media routing** - Media Curator documents a generic
+  assess-and-plan entry point for arbitrary or mixed media collections before
+  selecting discography, acquisition, transcript, tagging, export, or research
+  handoff paths.
+- **Research media induction** - Research Complete adds an `induct-media` skill
+  and `reference-media.md` template for talks, lectures, podcasts, interviews,
+  videos, and other time-based sources.
+- **Timestamp citation contract** - Citation sidecars, citation guard guidance,
+  and source-type metadata now cover media REF artifacts, transcript segment
+  hashes, and exact timestamped quotes.
+- **Media-curator to research handoff docs** - The integration guide now
+  covers acquisition, transcript sidecars, storage policy, and downstream REF
+  outputs for time-based media.
+
+### Changed
+
+- **Media Curator docs are no longer music-first only** - Framework overview,
+  quickref, and curate skill guidance make music/discography handling a selected
+  route rather than the default for every media request.
+- **Research source types include audio/video/media** - Source taxonomy and
+  tests now recognize time-based media with transcript-aware citation metadata.
+- **Doc-sync includes skills and agents as code** - The release doc-sync audit
+  treats `agentic/code/**` and repository Markdown as the code-to-doc source of
+  truth, then republishes generated component docs.
+
+### Fixed
+
+- **Provider-specific generated guidance is not a substitute for source sync** -
+  Filed the Devin/Windsurf provider-copying follow-up as issue #1650 instead
+  of manually syncing quickrefs.
+
+### Upgrade notes
+
+- **No action required.** Existing media-curator and research workflows continue
+  to work. New `/curate`, `/transcribe-media`, and `/induct-media` guidance is
+  available after redeploying the relevant frameworks.
+
 ## [2026.6.8] - 2026-06-21 — "@aiwg/cockpit npm README polish"
 
 Maintenance cut to refresh the `@aiwg/cockpit` npm package page after the

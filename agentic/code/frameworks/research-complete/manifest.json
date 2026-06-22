@@ -58,6 +58,22 @@
       {
         "path": ".aiwg/frameworks/research-complete/knowledge/",
         "description": "Knowledge base and lit notes"
+      },
+      {
+        "path": ".aiwg/frameworks/research-complete/media/",
+        "description": "Time-based research media records"
+      },
+      {
+        "path": ".aiwg/frameworks/research-complete/media/video/",
+        "description": "Video sources when copied or LFS/object-storage backed"
+      },
+      {
+        "path": ".aiwg/frameworks/research-complete/media/audio/",
+        "description": "Audio sources when copied or LFS/object-storage backed"
+      },
+      {
+        "path": ".aiwg/frameworks/research-complete/media/transcripts/",
+        "description": "Timestamped transcript sidecars for media REFs"
       }
     ],
     "topology": {
@@ -65,6 +81,10 @@
       "rawSources": ".aiwg/research/sources",
       "derivedPages": {
         "summary": ".aiwg/research/findings",
+        "media": ".aiwg/research/media",
+        "mediaVideo": ".aiwg/research/media/video",
+        "mediaAudio": ".aiwg/research/media/audio",
+        "mediaTranscripts": ".aiwg/research/media/transcripts",
         "entity": ".aiwg/research/knowledge/entities",
         "concept": ".aiwg/research/knowledge/concepts",
         "synthesis": ".aiwg/research/synthesis"

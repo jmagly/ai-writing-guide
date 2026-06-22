@@ -6,15 +6,16 @@
 
 ## Overview
 
-The Research Framework provides a complete workflow for academic research management: discovering papers via semantic search, acquiring PDFs with FAIR validation, documenting papers using RAG-grounded LLM summarization, and synthesizing knowledge into literature notes. It automates 75% of the research process while maintaining high quality standards and preventing hallucinations.
+The Research Framework provides a complete workflow for academic research management: discovering papers and time-based media, acquiring PDFs or media/transcript artifacts with FAIR validation, documenting sources using RAG-grounded LLM summarization, and synthesizing knowledge into literature notes. It automates 75% of the research process while maintaining high quality standards and preventing hallucinations.
 
 ## Why Use This Framework
 
 | Problem | Solution | Time Savings |
 |---------|----------|--------------|
-| Manual paper search | Semantic search + gap detection | 60% faster |
+| Manual source search | Semantic search + gap detection | 60% faster |
 | Tracking paper sources | Persistent REF-XXX identifiers | Always organized |
 | Paywalled papers | Unpaywall integration + manual upload | Streamlined access |
+| Talks, lectures, podcasts | Media REF template + timestamp citations | Consistent induction |
 | Reading papers | RAG-based summarization | 75% faster (20min → 5min) |
 | Preventing hallucinations | Claim validation against source | 0% vs 56% hallucination rate |
 | Quality assessment | Automated GRADE scoring | Consistent standards |
@@ -26,8 +27,8 @@ The framework implements an 8-stage workflow:
 
 ```
 1. Discovery      → Find papers via semantic search
-2. Acquisition    → Download PDFs and extract metadata
-3. Documentation  → Summarize using RAG and extract structured data
+2. Acquisition    → Download PDFs/media and extract metadata
+3. Documentation  → Summarize using RAG/transcripts and extract structured data
 4. Citation       → Track citations and generate bibliographies
 5. Quality        → Assess source quality using GRADE methodology
 6. Synthesis      → Create literature notes and link related work
@@ -86,6 +87,10 @@ aiwg research --version
 │   ├── pdfs/
 │   ├── metadata/
 │   └── checksums.txt
+├── media/                   # Time-based media records
+│   ├── video/               # Copied/LFS/object-backed video when permitted
+│   ├── audio/               # Copied/LFS/object-backed audio when permitted
+│   └── transcripts/         # Timestamped transcript sidecars
 ├── knowledge/               # Summaries and notes
 │   ├── summaries/
 │   ├── extractions/
@@ -100,6 +105,12 @@ aiwg research --version
     ├── provenance-agent.yaml
     └── workflow-agent.yaml
 ```
+
+Media archival policy is recorded per REF: copy small/licensed files into the
+corpus, use Git LFS or object storage for large redistributable media, or keep a
+hash-only record when platform terms or size prevent storage. Timestamp
+citations point to the REF and exact transcript segment, not directly to a
+platform URL.
 
 ## Usage Examples
 
