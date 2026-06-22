@@ -18,7 +18,7 @@ Bridge (127.0.0.1:PORT, token-gated /api) ── proxies ──▶ agentic-sandb
 desktop window  (this app)   ◀── same UI ──▶   VS Code webview  /  browser
 ```
 
-## Build (toolchain-gated)
+## Build
 
 Requires the Rust toolchain + Tauri prerequisites. On Linux: `webkit2gtk-4.1`,
 `libsoup-3.0`, `libappindicator`. Then:
@@ -26,14 +26,14 @@ Requires the Rust toolchain + Tauri prerequisites. On Linux: `webkit2gtk-4.1`,
 ```bash
 cargo install tauri-cli --version '^2'   # once
 cd apps/cockpit/desktop
-cargo tauri init                          # generates icons/ + capabilities/ boilerplate (one-time)
 cargo tauri dev                           # run against a launched Bridge
 cargo tauri build                         # produce a bundle
 ```
 
-> The repo ships the load-the-Bridge logic (`main.rs`), the Tauri config, and the
-> frontend splash. `cargo tauri init` fills in the platform boilerplate (icons,
-> v2 capabilities) that is environment-specific and not checked in.
+The repo ships the load-the-Bridge logic (`main.rs`), the Tauri config, the
+frontend splash, a locked Rust dependency graph, and the generated desktop icon
+set needed by Tauri. `cargo tauri build` has been verified on Linux to produce
+`.deb`, `.rpm`, and `.AppImage` bundles.
 
 ## Why a token file (not a socket handshake)
 
