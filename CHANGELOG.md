@@ -7,6 +7,30 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.7] - 2026-06-21 — "@aiwg/cockpit provenance metadata"
+
+Maintenance cut to validate the new `@aiwg/cockpit` npm trusted-publishing leg
+after npm rejected 2026.6.6 with a provenance repository mismatch.
+
+### Fixed
+
+- **`@aiwg/cockpit` declares repository metadata for npm provenance** — the
+  package now publishes with `repository.url: https://github.com/jmagly/aiwg`
+  and `repository.directory: apps/cockpit`, matching the GitHub Actions source
+  identity in the Sigstore provenance bundle while still pointing consumers at
+  the subpackage location.
+- **Cockpit publishability guard covers provenance metadata** — the
+  `cockpit-base-footprint` smoke test now asserts the scoped package's
+  repository metadata, so the next missing/empty `repository.url` fails before
+  the release tag is pushed.
+- **Cockpit lockfile root version is back in lockstep** — the cockpit lockfile
+  root metadata now matches the release version.
+
+### Upgrade notes
+
+- **No action required.** Release-pipeline/package-metadata validation cut; no
+  CLI behavior changes.
+
 ## [2026.6.6] - 2026-06-21 — "Release-pipeline hardening, cont."
 
 Follow-on hardening surfaced while validating 2026.6.5's GitHub-mirror fix.

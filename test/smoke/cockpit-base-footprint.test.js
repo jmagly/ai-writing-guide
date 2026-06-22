@@ -30,6 +30,8 @@ describe('cockpit base-npm footprint guard (#1593)', () => {
     expect(cockpit.name).toBe('@aiwg/cockpit');
     expect(cockpit.private).not.toBe(true);
     expect(cockpit.version).toBe(core.version);
+    expect(cockpit.repository?.url).toBe('https://github.com/jmagly/aiwg');
+    expect(cockpit.repository?.directory).toBe('apps/cockpit');
     expect(cockpit.bin?.['aiwg-cockpit']).toBe('bridge/src/server.mjs');
     expect(cockpit.publishConfig?.access).toBe('public');
     expect(cockpit.files).toContain('bridge/');
