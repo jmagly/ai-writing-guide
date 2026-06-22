@@ -15,7 +15,13 @@ process.env.HOME = home;
 
 const { connect, webviewUrl, api } = await import('./runtime.mjs');
 const child = spawn(process.execPath, [BRIDGE], {
-  env: { ...process.env, HOME: home, PORT: String(PORT), AIWG_COCKPIT_EXECUTOR_URL: 'http://127.0.0.1:1' }, // no live executor needed for the handshake
+  env: {
+    ...process.env,
+    HOME: home,
+    PORT: String(PORT),
+    AIWG_COCKPIT_EXECUTOR_URL: 'http://127.0.0.1:1',
+    AIWG_COCKPIT_AUTOSTART_EXECUTOR: '0',
+  }, // no live executor needed for the handshake
   stdio: 'ignore',
 });
 
