@@ -1,16 +1,108 @@
+<div align="center">
+
 # AIWG Cockpit
 
-A **UX-first control plane** over your AIWG install and the multi-stack agentic
-sessions it runs — observe what agents are doing, take the wheel when you want, and
-coordinate from one place. It fronts the CLI and the registry; it never replaces them.
+**Local control plane for AIWG and multi-stack agentic sessions**
 
-> **The model (ADR):** the Cockpit is a *session-control surface, not a CLI runner*.
-> **Agents run the CLI — you direct the agents.** An action button injects a command
-> into an agentic session; the agent there runs it. The Cockpit only sources read-only
-> catalog data for display. See `.aiwg/architecture/adr-cockpit-session-control-not-cli-runner.md`.
+Observe live agent work, attach to sessions, handle approvals, launch runtime
+targets, and coordinate AIWG actions from one local operator surface. Cockpit
+fronts the AIWG CLI and the agentic-sandbox executor; it does not replace either.
 
-> **Opt-in, separately published.** Nothing here ships in the base `aiwg` npm package
-> (guarded by `test/smoke/cockpit-base-footprint.test.js`).
+```bash
+npm i -g aiwg        # install the base AIWG CLI
+aiwg use cockpit     # install the opt-in Cockpit package, version-locked to AIWG
+aiwg cockpit         # launch the local Bridge + web UI
+```
+
+[![npm version](https://img.shields.io/npm/v/%40aiwg%2Fcockpit/latest?label=%40aiwg%2Fcockpit&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/@aiwg/cockpit)
+[![base package](https://img.shields.io/npm/v/aiwg/latest?label=aiwg&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://github.com/jmagly/aiwg/blob/main/LICENSE)
+[![Node Version](https://img.shields.io/badge/node-%E2%89%A518.0.0-brightgreen?style=flat-square&logo=node.js)](https://nodejs.org)
+[![Repository](https://img.shields.io/badge/source-jmagly%2Faiwg-black?logo=github&style=flat-square)](https://github.com/jmagly/aiwg/tree/main/apps/cockpit)
+
+[**Quick Start**](#quick-start) · [**What You Get**](#what-you-get) · [**Architecture**](#architecture) · [**Verify**](#verify) · [**Release Pattern**](https://github.com/jmagly/aiwg/blob/main/apps/cockpit/RELEASE.md)
+
+</div>
+
+---
+
+## Quick Start
+
+The recommended path is through the base `aiwg` CLI. It installs Cockpit outside
+the base package footprint, under `~/.aiwg/cockpit/package`, and pins the Cockpit
+version to the installed AIWG version.
+
+```bash
+npm i -g aiwg
+aiwg use cockpit
+aiwg cockpit --status
+aiwg cockpit
+```
+
+For direct package testing, you can install the scoped package itself:
+
+```bash
+npm i -g @aiwg/cockpit
+aiwg-cockpit
+```
+
+Cockpit expects a reachable agentic-sandbox executor. By default the Bridge looks
+for `http://127.0.0.1:8122` and serves the local UI on `127.0.0.1:8140`.
+
+```bash
+AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:8122 aiwg cockpit
+```
+
+## What You Get
+
+- **Home** — connected-state overview, first-run flow, and a session-first entry point.
+- **Inventory** — host, container, Docker, and VM runtime targets with lifecycle controls.
+- **Running** — active work across stacks, spend posture, and task stop controls.
+- **Sessions** — observe-first terminal attach, explicit drive/control, and replay posture.
+- **Approvals** — unified human-in-the-loop decision inbox.
+- **Explore** — read-only AIWG capability catalog for discovery and routing.
+- **Library** — user-owned assets cloned/imported under `~/.aiwg/cockpit/library`.
+- **Actions** — contributed buttons that inject commands into an agentic session.
+
+## What Cockpit Is
+
+Cockpit is a **session-control surface, not a CLI runner**. Agents run the CLI;
+you direct the agents. An action button injects a command into an agentic
+session, and the agent in that session runs it. Cockpit sources read-only catalog
+data for display and sends control-plane requests through a local token-gated
+Bridge.
+
+Cockpit is also **opt-in and separately published**. Nothing here ships in the
+base `aiwg` npm package; `test/smoke/cockpit-base-footprint.test.js` guards that
+boundary.
+
+## What Cockpit Is Not
+
+- **Not a replacement for `aiwg`.** The CLI remains the source of truth for AIWG
+  install, deploy, discovery, and maintenance operations.
+- **Not an agent runtime.** Agent execution belongs to the provider stack and the
+  agentic-sandbox executor.
+- **Not cloud-hosted.** The current surface is local-first: loopback Bridge,
+  token-gated browser/VS Code/Tauri shells, and operator-owned runtime files.
+
+## Installation Troubleshooting
+
+If `aiwg cockpit` reports that Cockpit is not installed, run:
+
+```bash
+aiwg use cockpit
+```
+
+If the installed Cockpit version does not match the base AIWG version, refresh it
+the same way:
+
+```bash
+aiwg use cockpit
+```
+
+If direct global npm install fails with `EACCES`, use the same npm global-prefix
+fix documented in the root AIWG README, or prefer the base CLI path above so the
+Cockpit package is installed under `~/.aiwg/cockpit/package`.
 
 ## Architecture
 

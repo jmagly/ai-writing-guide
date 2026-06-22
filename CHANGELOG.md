@@ -7,6 +7,29 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.8] - 2026-06-21 — "@aiwg/cockpit npm README polish"
+
+Maintenance cut to refresh the `@aiwg/cockpit` npm package page after the
+trusted-publishing path was validated.
+
+### Changed
+
+- **Cockpit README now matches the npm-facing AIWG style** — the package README
+  opens with a centered product block, npm/source badges, quick install commands,
+  clear "what it is / what it is not" positioning, troubleshooting, and an
+  operator-focused feature summary before the existing architecture and
+  validation details.
+- **Install guidance points at the supported AIWG path first** — `aiwg use
+  cockpit` is documented as the recommended install because it keeps
+  `@aiwg/cockpit` outside the base footprint while version-locking it to the base
+  `aiwg` CLI. Direct `npm i -g @aiwg/cockpit` remains documented for package
+  testing.
+
+### Upgrade notes
+
+- **No action required.** Documentation/package-page release; no CLI behavior
+  changes.
+
 ## [2026.6.7] - 2026-06-21 — "@aiwg/cockpit provenance metadata"
 
 Maintenance cut to validate the new `@aiwg/cockpit` npm trusted-publishing leg
