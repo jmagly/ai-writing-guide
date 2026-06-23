@@ -89,16 +89,6 @@ async function executorJsonWithTimeout(path: string, timeoutMs = 5_000) {
   return { status: r.status, body: await r.json().catch(() => ({})) };
 }
 
-async function executorPostJson(path: string, body: Record<string, unknown>, timeoutMs = 10_000) {
-  const r = await fetch(`${EXECUTOR_URL}${path}`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  return { status: r.status, body: await r.json().catch(() => ({})) };
-}
-
 function identityFields(body: unknown): Record<string, unknown> {
   if (!body || typeof body !== 'object') return {};
   const allowed = new Set([
@@ -228,7 +218,15 @@ async function waitForBootReady(base: string, token: string, target: 'host' | 'c
 
 async function provisionTarget(base: string, token: string, target: 'host' | 'container' | 'vm') {
   const body = provisionBody(target);
-  const created = await executorPostJson('/api/v2/admin/instances', body);
+  // Provision through the Cockpit Bridge, not the executor directly: the Bridge
+  // injects the resolved ssh_key for qemu/VM launches (POST /api/instances ->
+  // upstream /api/v2/admin/instances). Posting straight to the executor skips
+  // that injection, so provision-vm.sh receives no --ssh-key. (#1658)
+  const created = await bridgeJson(base, token, '/api/instances', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   if (![200, 201, 202].includes(created.status)) {
     throw new Error(`provision ${target} returned ${created.status}: ${JSON.stringify(created.body)}`);
   }

@@ -1,0 +1,26 @@
+# Cockpit Live UAT Report
+- Issue: #1621
+- Executor: http://127.0.0.1:8122
+- Required: yes
+- Matrix required: yes
+- Matrix targets: vm
+- Provision targets: yes
+- Workload provider: codex
+- Discovery expectation: issue-audit
+- Result: fail
+- Started: 2026-06-23T15:12:34.251Z
+- Finished: 2026-06-23T15:12:35.497Z
+- agentic-sandbox-conformance report: not provided
+- JSON report: /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-real-codex-matrix-2026-06-23-vm-bridge-route.json
+- Markdown report: /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-real-codex-matrix-2026-06-23-vm-bridge-route.md
+- Executor identity: {"version_hint":"agentic-sandbox-v2026.6.30"}
+## Evidence
+- PASS executor probe: reachable at http://127.0.0.1:8122
+- PASS executor identity: {"version_hint":"agentic-sandbox-v2026.6.30"}
+- PASS Bridge health: Bridge reported executor http://127.0.0.1:8122
+- PASS inventory posture: 1 instance(s) with normalized posture fields
+- SKIP session metadata: sessions endpoint returned 200 or no sessions
+- PASS task projection: 0 running task(s) reported
+- FAIL provision vm: provision vm operation failed: {"id":"68fbb099-45b1-4a92-8961-3bcaf09dee0d","kind":"instance.provision","state":"failed","created_at":"2026-06-23T15:12:34.451018058Z","completed_at":"2026-06-23T15:12:34.476585458Z","error":{"type":"about:blank","title":"Operation failed","status":500,"code":"operation.failed","detail":"provision-vm.sh exited with code 1: 11:12:34 [ERROR] No SSH public key found. Specify with --ssh-key\n"}}
+- FAIL matrix vm: provision failed for required live target vm: provision vm operation failed: {"id":"68fbb099-45b1-4a92-8961-3bcaf09dee0d","kind":"instance.provision","state":"failed","created_at":"2026-06-23T15:12:34.451018058Z","completed_at":"2026-06-23T15:12:34.476585458Z","error":{"type":"about:blank","title":"Operation failed","status":500,"code":"operation.failed","detail":"provision-vm.sh exited with code 1: 11:12:34 [ERROR] No SSH public key found. Specify with --ssh-key\n"}}
+- FAIL required host/container/vm matrix executes real provider-backed session workloads: required live matrix failed for 1/1 target(s): provision failed for required live target vm: provision vm operation failed: {"id":"68fbb099-45b1-4a92-8961-3bcaf09dee0d","kind":"instance.provision","state":"failed","created_at":"2026-06-23T15:12:34.451018058Z","completed_at":"2026-06-23T15:12:34.476585458Z","error":{"type":"about:blank","title":"Operation failed","status":500,"code":"operation.failed","detail":"provision-vm.sh exited with code 1: 11:12:34 [ERROR] No SSH public key found. Specify with --ssh-key\n"}}
