@@ -45,6 +45,8 @@ const WORKLOAD_TEXT = process.env.AIWG_COCKPIT_LIVE_WORKLOAD ||
   ].join(' ');
 const EXECUTOR_VERSION_HINT = process.env.AIWG_COCKPIT_EXECUTOR_VERSION || '';
 const REPORT_BASE = resolve(process.env.AIWG_COCKPIT_LIVE_REPORT ?? 'test-results/cockpit-live-uat');
+const JSON_REPORT = `${REPORT_BASE}.json`;
+const MD_REPORT = `${REPORT_BASE}.md`;
 
 interface Evidence {
   name: string;
@@ -391,11 +393,17 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     finished_at: finishedAt,
     skip_reason: reachable ? undefined : reason,
     conformance_report: process.env.AIWG_SANDBOX_CONFORMANCE_REPORT || null,
+    artifact_paths: {
+      json_report: JSON_REPORT,
+      markdown_report: MD_REPORT,
+      conformance_report: process.env.AIWG_SANDBOX_CONFORMANCE_REPORT || null,
+      mutation_file: MUTATION_FILE || null,
+    },
     executor_identity: executorIdentity,
     evidence,
   };
   await mkdir(dirname(REPORT_BASE), { recursive: true });
-  await writeFile(`${REPORT_BASE}.json`, `${JSON.stringify(payload, null, 2)}\n`);
+  await writeFile(JSON_REPORT, `${JSON.stringify(payload, null, 2)}\n`);
   const lines = [
     '# Cockpit Live UAT Report',
     '',
@@ -413,6 +421,9 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     `- Finished: ${finishedAt}`,
     reachable ? '' : `- Skip reason: ${reason}`,
     `- agentic-sandbox-conformance report: ${payload.conformance_report ?? 'not provided'}`,
+    `- JSON report: ${JSON_REPORT}`,
+    `- Markdown report: ${MD_REPORT}`,
+    MUTATION_FILE ? `- Mutation artifact: ${MUTATION_FILE}` : '',
     `- Executor identity: ${Object.keys(executorIdentity).length ? JSON.stringify(executorIdentity) : 'not provided by executor'}`,
     '',
     '## Evidence',
@@ -420,9 +431,9 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     ...evidence.map((e) => `- ${e.status.toUpperCase()} ${e.name}: ${e.detail}`),
     '',
   ].filter(Boolean);
-  await writeFile(`${REPORT_BASE}.md`, `${lines.join('\n')}\n`);
+  await writeFile(MD_REPORT, `${lines.join('\n')}\n`);
   // eslint-disable-next-line no-console
-  console.log(`  Cockpit live UAT report: ${REPORT_BASE}.json and ${REPORT_BASE}.md`);
+  console.log(`  Cockpit live UAT report: ${JSON_REPORT} and ${MD_REPORT}`);
 }
 
 describe('Cockpit live UAT — real agentic-sandbox executor', () => {
@@ -547,22 +558,32 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
     if (requiredTargets.length === 0 || unsupportedTargets.length > 0) {
       throw new Error(`AIWG_COCKPIT_LIVE_MATRIX_TARGETS must contain one or more of host,container,vm; unsupported=${unsupportedTargets.join(',')}`);
     }
+    const targetErrors: string[] = [];
+    const provisionFailures = new Map<string, string>();
     if (PROVISION_TARGETS) {
       for (const target of requiredTargets) {
-        const provisioned = await provisionTarget(base, token, target);
-        record(
-          `provision ${target}`,
-          'pass',
-          `operation=${provisioned.operationId}; instance=${provisioned.instanceId}; runtime=${runtimeFamily(provisioned.ready.instance)}; state=${provisioned.ready.instance.state}; backend=${provisioned.ready.backend.mode ?? 'unknown'}/${provisioned.ready.backend.backend ?? 'unknown'}; agent=${provisioned.ready.agent.id ?? provisioned.ready.agent.agent_id ?? 'registered'}`,
-        );
+        try {
+          const provisioned = await provisionTarget(base, token, target);
+          record(
+            `provision ${target}`,
+            'pass',
+            `operation=${provisioned.operationId}; instance=${provisioned.instanceId}; runtime=${runtimeFamily(provisioned.ready.instance)}; state=${provisioned.ready.instance.state}; backend=${provisioned.ready.backend.mode ?? 'unknown'}/${provisioned.ready.backend.backend ?? 'unknown'}; agent=${provisioned.ready.agent.id ?? provisioned.ready.agent.agent_id ?? 'registered'}`,
+          );
+        } catch (err) {
+          const detail = String((err as Error).message || err);
+          provisionFailures.set(target, detail);
+          record(`provision ${target}`, 'fail', detail);
+        }
       }
     }
     const latestInv = await bridgeJson(base, token, '/api/inventory');
     expect(latestInv.status).toBe(200);
     const latestInstances = latestInv.body.instances ?? [];
-    const targetErrors: string[] = [];
     for (const target of requiredTargets) {
       try {
+        if (provisionFailures.has(target)) {
+          throw new Error(`provision failed for required live target ${target}: ${provisionFailures.get(target)}`);
+        }
         const provisionedId = provisionedInstances.get(target);
         const instance = provisionedId
           ? latestInstances.find((i: any) => String(i.id) === provisionedId)
@@ -592,6 +613,12 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
         if (!sessions.body.sessions?.some((s: any) => s.id === start.body.id)) {
           throw new Error(`${targetDetail}; created session ${start.body.id ?? 'unknown'} not listed`);
         }
+
+        const projected = await bridgeJson(base, token, '/api/running');
+        if (projected.status !== 200 || !Array.isArray(projected.body.running)) {
+          throw new Error(`${targetDetail}; running projection returned ${projected.status}`);
+        }
+        const projectedForTarget = projected.body.running.filter((t: any) => String(t.instance_id) === String(instance.id));
 
         const observed = await websocketSessionProbe(start.body.attach_url, 'observer');
         if (!observed.roleAssigned) throw new Error(`${targetDetail}; observe attach not granted`);
@@ -633,7 +660,7 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
         record(
           `matrix ${target}`,
           'pass',
-          `${targetDetail}; provider CLI workload emitted ${WORKLOAD_MARKER} and discovery result ${DISCOVERY_EXPECT}; output_bytes=${driven.output.length}${mutationDetail ? `; ${mutationDetail}` : ''}`,
+          `${targetDetail}; provider CLI workload emitted ${WORKLOAD_MARKER} and discovery result ${DISCOVERY_EXPECT}; running_projection_count=${projectedForTarget.length}; output_bytes=${driven.output.length}${mutationDetail ? `; ${mutationDetail}` : ''}`,
         );
       } catch (err) {
         const detail = String((err as Error).message || err);

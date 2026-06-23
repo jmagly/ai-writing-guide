@@ -5,7 +5,7 @@ import type { RunningTask, Cost } from '../types';
 
 interface Run { count: number; running: RunningTask[] }
 
-export function Running() {
+export function Running({ refreshTick = 0 }: { refreshTick?: number }) {
   const [run, setRun] = useState<Run | null>(null);
   const [cost, setCost] = useState<Cost | null>(null);
   const [err, setErr] = useState('');
@@ -14,7 +14,7 @@ export function Running() {
     api<Run>('/api/running').then((d) => { setRun(d); setErr(''); }).catch((e) => setErr((e as Error).message));
     api<Cost>('/api/cost').then(setCost).catch(() => setCost(null));
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, [load, refreshTick]);
 
   const stop = (t: RunningTask) =>
     api(`/api/tasks/${encodeURIComponent(t.instance_id)}/${encodeURIComponent(t.task_id)}/cancel`, { method: 'POST' })

@@ -3,14 +3,14 @@
 A lightweight native window hosting the **same registry-bound Bridge UI** as the
 VS Code shell and the browser. The shell does not replace the CLI or reimplement
 the control plane — `src-tauri/src/main.rs` waits for the Bridge's per-launch
-runtime token file (`~/.aiwg/cockpit/runtime/bridge.json`) and opens a window at
-the Bridge UI with the token on the query string.
+runtime handshake file (`~/.aiwg/cockpit/runtime/bridge.json`) and opens a window
+at the Bridge UI with the resolved per-launch token on the query string.
 
 ## Architecture
 
 ```
 operator/CLI: aiwg cockpit
-      │  (spawns the Bridge; writes runtime/bridge.json mode 600)
+      │  (spawns the Bridge; writes OS keychain token + runtime/bridge.json mode 600)
       ▼
 Bridge (127.0.0.1:PORT, token-gated /api) ── proxies ──▶ agentic-sandbox executor
       ▲
@@ -38,5 +38,6 @@ set needed by Tauri. `cargo tauri build` has been verified on Linux to produce
 ## Why a token file (not a socket handshake)
 
 The runtime file is the cross-platform handshake every shell shares (see
-`apps/cockpit/shell-core/runtime.mjs`). It is mode `600`; OS-keychain storage is a
-per-platform hardening follow-up (roctinam/aiwg#1595).
+`apps/cockpit/shell-core/runtime.mjs`). The Bridge stores the per-launch token in
+the OS credential backend when available and records a `token_ref`; `bridge.json`
+is mode `600` and records explicit fallback evidence when no backend is usable.

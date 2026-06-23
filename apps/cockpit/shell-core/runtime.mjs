@@ -1,19 +1,22 @@
 // Shell-core: the handshake every Cockpit shell (VS Code, Tauri, browser) shares.
 // The Bridge writes ~/.aiwg/cockpit/runtime/bridge.json (mode 600) on launch with
-// { token, port }. A shell reads it, waits for liveness, and loads the Bridge UI at
+// { token_ref, port } when OS-keychain storage is available, else { token, port }.
+// A shell resolves the token, waits for liveness, and loads the Bridge UI at
 // <url>/?token=<token>. Control plane is the gated Bridge API; data plane (pty) is
 // the executor URL the Bridge issues. This module is the one source of that contract.
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { readCockpitToken } from './keychain.mjs';
 
 export const RUNTIME_FILE = join(homedir(), '.aiwg', 'cockpit', 'runtime', 'bridge.json');
 
 /** Read the per-launch Bridge connection (token, port, url). Throws if not launched. */
 export async function readRuntime(file = RUNTIME_FILE) {
   const r = JSON.parse(await readFile(file, 'utf8'));
-  if (!r.token || !r.port) throw new Error(`runtime file ${file} missing token/port`);
-  return { ...r, url: `http://127.0.0.1:${r.port}` };
+  const token = r.token || await readCockpitToken(r.token_ref);
+  if (!token || !r.port) throw new Error(`runtime file ${file} missing token/port`);
+  return { ...r, token, url: `http://127.0.0.1:${r.port}` };
 }
 
 /** Resolve + wait for the Bridge to be reachable; returns { token, port, url }.

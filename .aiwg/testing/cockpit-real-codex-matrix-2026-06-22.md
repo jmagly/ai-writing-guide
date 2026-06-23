@@ -1,0 +1,21 @@
+# Cockpit Live UAT Report
+- Issue: #1621
+- Executor: http://127.0.0.1:8122
+- Required: yes
+- Matrix required: yes
+- Matrix targets: host, container, vm
+- Provision targets: yes
+- Workload provider: codex
+- Discovery expectation: issue-audit
+- Result: fail
+- Started: 2026-06-22T15:53:27.600Z
+- Finished: 2026-06-22T15:53:27.757Z
+- agentic-sandbox-conformance report: not provided
+- Executor identity: {"version_hint":"agentic-sandbox-v2026.6.28"}
+## Evidence
+- PASS executor probe: reachable at http://127.0.0.1:8122
+- PASS executor identity: {"version_hint":"agentic-sandbox-v2026.6.28"}
+- PASS Bridge health: Bridge reported executor http://127.0.0.1:8122
+- SKIP inventory posture: live executor returned zero instances; matrix provision mode will create target(s)
+- SKIP session smoke: no inventory before matrix provision step
+- FAIL required host/container/vm matrix executes real provider-backed session workloads: provision host returned 501: {"type":"https://agentic-sandbox.example/problems/runtime-not_implemented","title":"Runtime not implemented","status":501,"code":"runtime.not_implemented","detail":"host runtime requires the durable host supervisor/daemon tracked by agentic-sandbox#460 before provisioning can run safely"}

@@ -148,7 +148,11 @@
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     // per-launch token injected by the Bridge for the gated control surface
     const TOKEN = window.__COCKPIT_TOKEN__ || '';
-    const api = (u, o = {}) => fetch(u, { ...o, headers: { ...(o.headers || {}), authorization: 'Bearer ' + TOKEN } });
+    const api = (u, o = {}) => {
+      const method = String(o.method || 'GET').toUpperCase();
+      const csrf = ['GET', 'HEAD', 'OPTIONS'].includes(method) ? {} : { 'x-cockpit-csrf': TOKEN };
+      return fetch(u, { ...o, headers: { ...(o.headers || {}), ...csrf, authorization: 'Bearer ' + TOKEN } });
+    };
 
     // --- Inventory ---
     async function loadInventory() {
@@ -379,7 +383,7 @@
       }
     }
 
-    document.getElementById('refresh').addEventListener('click', () => {
+    function refreshActive() {
       const active = tabs.find((t) => t.getAttribute('aria-selected') === 'true').id;
       if (active === 'tab-inventory') loadInventory();
       else if (active === 'tab-running') loadRunning();
@@ -387,7 +391,12 @@
       else if (active === 'tab-approvals') loadApprovals();
       else if (active === 'tab-actions') loadActions();
       else discover();
-    });
+    }
+    document.getElementById('refresh').addEventListener('click', refreshActive);
+    if ('EventSource' in window && TOKEN) {
+      const events = new EventSource('/api/events?token=' + encodeURIComponent(TOKEN));
+      events.addEventListener('cockpit.refresh', refreshActive);
+    }
 
     loadInventory();
   </script>

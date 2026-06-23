@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useSession } from './useSession';
-import { api } from './api';
+import { api, TOKEN } from './api';
 import type { Approval, Instance, ResponseNeeded } from './types';
 import { Welcome } from './components/Welcome';
 import { Inventory } from './components/Inventory';
@@ -37,7 +37,10 @@ interface ChromeStatus {
 const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 export function App() {
-  const [tab, setTab] = useState<TabId>('welcome');
+  const [tab, setTab] = useState<TabId>(() => {
+    const hash = window.location.hash.replace(/^#/, '');
+    return TABS.some((t) => t.id === hash) ? hash as TabId : 'welcome';
+  });
   const session = useSession();
   const [composer, setComposer] = useState('');
   const [chrome, setChrome] = useState<ChromeStatus | null>(null);
@@ -81,6 +84,23 @@ export function App() {
     const timer = window.setInterval(load, 15_000);
     return () => { cancelled = true; window.clearInterval(timer); };
   }, [session.responseNeeded.needed, refreshTick]);
+
+  useEffect(() => {
+    if (typeof EventSource === 'undefined' || !TOKEN) return;
+    const events = new EventSource(`/api/events?token=${encodeURIComponent(TOKEN)}`);
+    events.addEventListener('cockpit.refresh', () => setRefreshTick((t) => t + 1));
+    events.onerror = () => undefined;
+    return () => events.close();
+  }, []);
+
+  useEffect(() => {
+    const onHash = () => {
+      const hash = window.location.hash.replace(/^#/, '');
+      if (TABS.some((t) => t.id === hash)) setTab(hash as TabId);
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
 
   // The onboarding primary verb: open the start-session picker (#1640/#1641). The picker
   // is the single home for both this dashboard verb and the Sessions-tab Start button —
@@ -144,18 +164,18 @@ export function App() {
       <main>
         <Panel id="welcome" tab={tab}><Welcome onStartSession={() => requestStart()} onLaunchInstance={() => setLaunchOpen(true)} goTo={(t) => setTab(t as TabId)} /></Panel>
         <Panel id="inventory" tab={tab}><Inventory onStartSession={requestStart} onLaunchInstance={() => setLaunchOpen(true)} /></Panel>
-        <Panel id="running" tab={tab}><Running /></Panel>
+        <Panel id="running" tab={tab}><Running refreshTick={refreshTick} /></Panel>
         {/* Sessions stays mounted so the WebSocket survives tab switches */}
         <section id="panel-sessions" role="tabpanel" aria-labelledby="tab-sessions" hidden={tab !== 'sessions'}>
           <Sessions session={session} composer={composer} setComposer={setComposer} onRequestStart={requestStart} />
         </section>
-        <Panel id="approvals" tab={tab}><Approvals responses={session.responseNeeded.needed ? [sessionResponse(session)] : []} goSessions={() => setTab('sessions')} /></Panel>
+        <Panel id="approvals" tab={tab}><Approvals refreshTick={refreshTick} responses={session.responseNeeded.needed ? [sessionResponse(session)] : []} goSessions={() => setTab('sessions')} /></Panel>
         <Panel id="explore" tab={tab}><Explore /></Panel>
         <Panel id="library" tab={tab}>
           <Library session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />
         </Panel>
         <Panel id="actions" tab={tab}>
-          <Actions session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />
+          <Actions refreshTick={refreshTick} session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />
         </Panel>
       </main>
       <StartSessionModal

@@ -90,6 +90,21 @@ export function createTaskFor(instanceId, inst, { messageId, parts = [], tenant 
   tasksOf(instanceId).set(taskId, task);
   return task;
 }
+
+export function createHitlTaskFor(instanceId, inst, { messageId, prompt, risk = 'medium', tenant = 'default' }) {
+  const task = createTaskFor(instanceId, inst, {
+    messageId,
+    parts: [{ kind: 'text', text: prompt }],
+    tenant,
+  });
+  task.status = { state: 'input-required', timestamp: new Date().toISOString(), message: prompt };
+  task.metadata = {
+    ...task.metadata,
+    risk,
+    hitl_prompt: { prompt, risk, schema: 'hitl-prompt/v1' },
+  };
+  return task;
+}
 export function getTaskFor(instanceId, taskId) { return tasksOf(instanceId).get(taskId) ?? null; }
 
 export function handleGetTask(req, res, instanceId, taskId) {
@@ -111,6 +126,25 @@ export function handleCancel(req, res, instanceId, taskId) {
   return send(res, 200, task);
 }
 
+export async function handleRespond(req, res, instanceId, taskId) {
+  const task = tasksOf(instanceId).get(taskId);
+  if (!task) return problem(res, 404, 'task.not_found', `no task ${taskId}`, { task_id: taskId });
+  if (task.status.state !== 'input-required') return problem(res, 409, 'unsupported_operation', `task is ${task.status.state}`);
+  const raw = await readBody(req);
+  let body = {};
+  try { body = raw ? JSON.parse(raw) : {}; } catch { return problem(res, 400, 'request.invalid_params', 'malformed JSON body'); }
+  const decision = body.decision ?? body.response?.metadata?.approval_decision ?? body.message?.metadata?.approval_decision;
+  if (decision !== 'approve' && decision !== 'deny') return problem(res, 400, 'request.invalid_params', 'decision must be approve|deny');
+  task.status = {
+    state: decision === 'approve' ? 'completed' : 'rejected',
+    timestamp: new Date().toISOString(),
+    terminal_at: new Date().toISOString(),
+  };
+  task.metadata.hitl_response = { decision };
+  task.artifacts.push({ artifactId: `hitl-${taskId}`, name: 'HITL decision', parts: [{ kind: 'text', text: decision }] });
+  return send(res, 200, task);
+}
+
 export function handleSubscribe(req, res, instanceId, taskId) {
   const task = tasksOf(instanceId).get(taskId);
   if (!task) return problem(res, 404, 'task.not_found', `no task ${taskId}`, { task_id: taskId });
@@ -124,9 +158,17 @@ export function handleSubscribe(req, res, instanceId, taskId) {
 export function seedRunningTasks() {
   for (const inst of listInstances()) {
     if (inst.state !== 'running') continue;
-    const have = [...tasksOf(inst.instance_id).values()].some((t) => t.status.state === 'working');
-    if (have) continue; // idempotent
-    createTaskFor(inst.instance_id, inst, { messageId: `seed-${inst.instance_id}`, parts: [{ kind: 'text', text: 'session active' }] });
+    const tasks = [...tasksOf(inst.instance_id).values()];
+    if (!tasks.some((t) => t.status.state === 'working')) {
+      createTaskFor(inst.instance_id, inst, { messageId: `seed-${inst.instance_id}`, parts: [{ kind: 'text', text: 'session active' }] });
+    }
+    if (inst.runtime === 'vm' && !tasks.some((t) => t.status.state === 'input-required')) {
+      createHitlTaskFor(inst.instance_id, inst, {
+        messageId: `seed-hitl-${inst.instance_id}`,
+        prompt: 'Deploy to production (security-audit stack)?',
+        risk: 'high',
+      });
+    }
   }
 }
 

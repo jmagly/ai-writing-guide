@@ -108,7 +108,7 @@ Cockpit package is installed under `~/.aiwg/cockpit/package`.
 
 ```
 operator / CLI:  aiwg cockpit
-       │  spawns the Bridge; writes ~/.aiwg/cockpit/runtime/bridge.json (token+port, 0600)
+       │  spawns the Bridge; writes OS keychain token + ~/.aiwg/cockpit/runtime/bridge.json (0600)
        ▼
 ┌─────────────────────────────────────────────────────────────┐
 │ Bridge (127.0.0.1, token-gated /api)                         │
@@ -228,7 +228,7 @@ React app token-injected, falling back to a legacy page when no build is present
 | `web/` | React 19 + Vite + TS UI (the surfaces above) |
 | `mock-executor/` | **automated-test-only** wire-faithful agentic-sandbox A2A v2 stand-in (conformance 33/0/17). The Bridge refuses it for human launches (needs `AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR=1`); a contract guard (#1636) pins its legacy `/admin/{running,approvals,cost}` divergence from real v2 so new drift fails CI. |
 | `bridge/` | the registry-bound control-plane server + static serving |
-| `shell-core/` | the cross-shell handshake (runtime token → connect) |
+| `shell-core/` | the cross-shell handshake (runtime token reference or fallback token → connect) |
 | `vscode/` · `desktop/` | VS Code extension + Tauri shells over the same Bridge |
 | `contrib/` | declarative UI contributions + schema (actions inject commands) |
 | `poc/` | Iteration-1 risk-gate PoCs (kill-bridge isolation, security) |
@@ -317,11 +317,12 @@ injection can mutate target data, set
 managed PTY session on the same target, observes it, drives a shell command via
 `pty.session_input`, waits for `AIWG_COCKPIT_MUTATION_OK`, then reads the file
 from the test runner and verifies the exact content.
-The matrix report records each target family independently (`matrix host`,
-`matrix container`, `matrix vm`) with the instance, runtime family, selected
-session backend, provider, discovery expectation, and exact failure reason; the
-test aggregates those records and fails only after all three target families have
-been attempted. Mock-only success does not satisfy this gate;
+The matrix report records each target family independently (`provision host`,
+`matrix host`, `provision container`, `matrix container`, `provision vm`,
+`matrix vm`) with the instance, runtime family, selected session backend,
+provider, discovery expectation, running-projection count, report artifact paths,
+and exact failure reason; the test aggregates those records and fails only after
+all requested target families have been attempted. Mock-only success does not satisfy this gate;
 `AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX=1` exists only for harness development.
 
 To prove the launch path itself, set `AIWG_COCKPIT_LIVE_PROVISION=1`. In this

@@ -28,6 +28,33 @@ describe('cockpit Bridge — control surface', () => {
     expect((await f('/api/inventory')).status).toBe(200);
   });
 
+  it('rejects spoofed browser origins and requires CSRF on browser mutations', async () => {
+    expect((await fetch(`${base}/api/inventory`, {
+      headers: { authorization: `Bearer ${token}`, origin: 'https://example.test' },
+    })).status).toBe(403);
+
+    const id = '9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b';
+    expect((await fetch(`${base}/api/instances/${id}/start`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, origin: base },
+    })).status).toBe(403);
+    expect((await fetch(`${base}/api/instances/${id}/start`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, origin: base, 'x-cockpit-csrf': token },
+    })).status).toBe(200);
+  });
+
+  it('streams token-gated live refresh events', async () => {
+    expect((await fetch(`${base}/api/events`)).status).toBe(401);
+    const res = await f('/api/events');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toMatch(/text\/event-stream/);
+    const reader = res.body.getReader();
+    const first = await reader.read();
+    await reader.cancel();
+    expect(new TextDecoder().decode(first.value)).toContain('event: cockpit.refresh');
+  });
+
   it('serves inventory, running, and sessions with a ws attach_url', async () => {
     const inv = await (await f('/api/inventory')).json();
     expect(inv.count).toBe(4);
@@ -84,8 +111,11 @@ describe('cockpit Bridge — control surface', () => {
     const id = '9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b';
     expect((await (await f(`/api/instances/${id}/start`, { method: 'POST' })).json()).state).toBe('running');
     expect((await (await f(`/api/instances/${id}/stop`, { method: 'POST' })).json()).state).toBe('stopped');
-    expect((await (await f('/api/approvals/apr-001?decision=approve', { method: 'POST' })).json()).status).toBe('approved');
-    expect((await f('/api/approvals/apr-001?decision=deny', { method: 'POST' })).status).toBe(409);
+    const approvals = await (await f('/api/approvals?status=pending')).json();
+    expect(approvals.derived).toBe('per-instance A2A input-required tasks');
+    expect(approvals.approvals[0]).toMatchObject({ status: 'pending', task_id: expect.any(String), derived: 'a2a input-required task' });
+    expect((await (await f(`/api/approvals/${encodeURIComponent(approvals.approvals[0].id)}?decision=approve`, { method: 'POST' })).json()).status.state).toBe('completed');
+    expect((await f(`/api/approvals/${encodeURIComponent(approvals.approvals[0].id)}?decision=deny`, { method: 'POST' })).status).toBe(409);
     expect((await (await f('/api/cost')).json()).total.usd).toBeGreaterThan(0);
   });
 });
@@ -165,9 +195,15 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
       if (url.pathname === '/api/v1/agents/agent-v2-host-1/sessions' && req.method === 'GET') {
         return send(200, { items: [{ sessionId: 'sess-v2', seq: 2, members: 1, role_policy: 'observe-default', pty_ws_url: 'wss://{host}/agents/v2-host-1/sessions/sess-v2/attach' }] });
       }
-      // A2A task surface the Bridge derives the running board from (#1639).
+      // A2A task surface the Bridge derives the running board + approval inbox from (#1639).
       if (url.pathname === '/agents/agent-v2-host-1/tasks' || url.pathname === '/api/v1/agents/agent-v2-host-1/tasks') {
-        return send(200, { tasks: [{ id: 'task-1', status: { state: 'working' }, metadata: { tenant_id: 'default' } }] });
+        return send(200, { tasks: [
+          { id: 'task-1', status: { state: 'working' }, metadata: { tenant_id: 'default' } },
+          { id: 'hitl-1', status: { state: 'input-required', message: 'Allow deploy?' }, metadata: { tenant_id: 'default', hitl_prompt: { prompt: 'Allow deploy?', risk: 'high' } } },
+        ] });
+      }
+      if (url.pathname === '/api/v1/agents/agent-v2-host-1/tasks/hitl-1:respond' && req.method === 'POST') {
+        return send(200, { id: 'hitl-1', status: { state: 'completed' }, metadata: { hitl_response: { decision: 'approve' } } });
       }
       if (url.pathname === '/api/v1/agents/agent-v2-host-1/sessions' && req.method === 'POST') {
         let raw = '';
@@ -208,6 +244,12 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     expect(running.running[0]).toMatchObject({ instance_id: 'v2-host-1', task_id: 'task-1', state: 'working' });
     expect(running.running[0].runtime_posture).toMatchObject({ isolation: 'least' });
 
+    const approvals = await (await cf('/api/approvals?status=pending')).json();
+    expect(approvals).toMatchObject({ derived: 'per-instance A2A input-required tasks' });
+    expect(approvals.approvals[0]).toMatchObject({ instance_id: 'v2-host-1', task_id: 'hitl-1', prompt: 'Allow deploy?', risk: 'high' });
+    const approved = await (await cf(`/api/approvals/${encodeURIComponent(approvals.approvals[0].id)}?decision=approve`, { method: 'POST' })).json();
+    expect(approved).toMatchObject({ id: 'hitl-1', status: { state: 'completed' } });
+
     const sessions = await (await cf('/api/sessions?instance=v2-host-1')).json();
     expect(sessions.sessions[0]).toMatchObject({ id: 'sess-v2', instance_id: 'v2-host-1' });
     expect(sessions.sessions[0].attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-v2\/attach$/);
@@ -231,8 +273,9 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
 
 describe('cockpit Bridge — executor without running/approvals admin surface (#1638)', () => {
   // The real agentic-sandbox v2 admin router exposes instances/lifecycle but no
-  // /running and no /approvals route. The Bridge must degrade those to empty
-  // 200s (not 502/404) so the operator Home view binds inventory and stays usable.
+  // /running and no /approvals route. The Bridge derives running/approvals from
+  // A2A tasks; when no task surface is available it returns empty 200s so Home
+  // binds inventory and stays usable.
   let upstream, b, ubase, utoken;
   beforeAll(async () => {
     upstream = http.createServer((req, res) => {
@@ -248,7 +291,7 @@ describe('cockpit Bridge — executor without running/approvals admin surface (#
         }] } });
       }
       if (url.pathname === '/api/v1/agents') return send(200, { agents: [] });
-      // No running / approvals admin routes on this executor — everything else 404s.
+      // No task surface on this executor — everything else 404s.
       return send(404, { error: 'not_found', path: url.pathname });
     });
     await new Promise((r) => upstream.listen(0, '127.0.0.1', r));
@@ -261,7 +304,7 @@ describe('cockpit Bridge — executor without running/approvals admin surface (#
 
   const uf = (p) => fetch(ubase + p, { headers: { authorization: `Bearer ${utoken}` } });
 
-  it('binds inventory while degrading running + approvals to empty 200s', async () => {
+  it('binds inventory while deriving empty running + approvals from absent task surfaces', async () => {
     const inv = await uf('/api/inventory');
     expect(inv.status).toBe(200);
     expect((await inv.json()).count).toBe(1);

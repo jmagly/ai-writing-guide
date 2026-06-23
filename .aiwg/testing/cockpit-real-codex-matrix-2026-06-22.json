@@ -1,0 +1,59 @@
+{
+  "issue": 1621,
+  "executor_url": "http://127.0.0.1:8122",
+  "required": true,
+  "matrix_required": true,
+  "matrix_targets": [
+    "host",
+    "container",
+    "vm"
+  ],
+  "provision_targets": true,
+  "provision_name_prefix": "cockpit-uat",
+  "provision_loadout": null,
+  "provision_image": null,
+  "provision_profile": null,
+  "provider": "codex",
+  "discovery_expect": "issue-audit",
+  "mutation_file": null,
+  "mutation_marker": null,
+  "result": "fail",
+  "started_at": "2026-06-22T15:53:27.600Z",
+  "finished_at": "2026-06-22T15:53:27.757Z",
+  "conformance_report": null,
+  "executor_identity": {
+    "version_hint": "agentic-sandbox-v2026.6.28"
+  },
+  "evidence": [
+    {
+      "name": "executor probe",
+      "status": "pass",
+      "detail": "reachable at http://127.0.0.1:8122"
+    },
+    {
+      "name": "executor identity",
+      "status": "pass",
+      "detail": "{\"version_hint\":\"agentic-sandbox-v2026.6.28\"}"
+    },
+    {
+      "name": "Bridge health",
+      "status": "pass",
+      "detail": "Bridge reported executor http://127.0.0.1:8122"
+    },
+    {
+      "name": "inventory posture",
+      "status": "skip",
+      "detail": "live executor returned zero instances; matrix provision mode will create target(s)"
+    },
+    {
+      "name": "session smoke",
+      "status": "skip",
+      "detail": "no inventory before matrix provision step"
+    },
+    {
+      "name": "required host/container/vm matrix executes real provider-backed session workloads",
+      "status": "fail",
+      "detail": "provision host returned 501: {\"type\":\"https://agentic-sandbox.example/problems/runtime-not_implemented\",\"title\":\"Runtime not implemented\",\"status\":501,\"code\":\"runtime.not_implemented\",\"detail\":\"host runtime requires the durable host supervisor/daemon tracked by agentic-sandbox#460 before provisioning can run safely\"}"
+    }
+  ]
+}

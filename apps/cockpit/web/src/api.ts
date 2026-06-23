@@ -7,7 +7,11 @@ declare global {
 const TOKEN = (typeof window !== 'undefined' && window.__COCKPIT_TOKEN__) || '';
 
 export function apiRaw(path: string, opts: RequestInit = {}): Promise<Response> {
-  return fetch(path, { ...opts, headers: { ...(opts.headers || {}), authorization: `Bearer ${TOKEN}` } });
+  const method = String(opts.method || 'GET').toUpperCase();
+  const headers = new Headers(opts.headers);
+  headers.set('authorization', `Bearer ${TOKEN}`);
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) headers.set('x-cockpit-csrf', TOKEN);
+  return fetch(path, { ...opts, headers });
 }
 
 export async function api<T = unknown>(path: string, opts: RequestInit = {}): Promise<T> {

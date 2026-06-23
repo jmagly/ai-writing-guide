@@ -43,14 +43,24 @@ try {
   assert.equal((await api('/api/inventory')).status, 200, 'S1: authed -> 200');
 
   // E1/S3 — approval integrity: a decision needs the token AND cannot be flipped
-  assert.equal((await fetch(`${base}/api/approvals/apr-002?decision=approve`, { method: 'POST' })).status, 401, 'E1: approval needs the gate token');
-  assert.equal((await (await api('/api/approvals/apr-001?decision=approve', { method: 'POST' })).json()).status, 'approved', 'S3: approval records the decision');
-  assert.equal((await api('/api/approvals/apr-001?decision=deny', { method: 'POST' })).status, 409, 'S3: a resolved approval cannot be flipped');
+  const approvals = await (await api('/api/approvals?status=pending')).json();
+  const approvalId = approvals.approvals[0].id;
+  assert.equal((await fetch(`${base}/api/approvals/${encodeURIComponent(approvalId)}?decision=approve`, { method: 'POST' })).status, 401, 'E1: approval needs the gate token');
+  assert.equal((await (await api(`/api/approvals/${encodeURIComponent(approvalId)}?decision=approve`, { method: 'POST' })).json()).status.state, 'completed', 'S3: approval records the decision');
+  assert.equal((await api(`/api/approvals/${encodeURIComponent(approvalId)}?decision=deny`, { method: 'POST' })).status, 409, 'S3: a resolved approval cannot be flipped');
 
   // I1 — no stack credentials at rest: the runtime file holds the overlay's own
   // per-launch token and nothing else; no provider/stack secret is stored.
   const keys = Object.keys(rt).sort();
-  assert.deepEqual(keys, ['pid', 'port', 'started_at', 'token'], `I1: runtime file keys are ${keys.join(',')} — only the overlay token, no stack creds`);
+  for (const required of ['pid', 'port', 'started_at', 'keychain_backed']) {
+    assert.ok(keys.includes(required), `I1: runtime file includes ${required}`);
+  }
+  assert.ok(keys.includes('token') || keys.includes('token_ref'), `I1: runtime file has token or keychain token_ref (${keys.join(',')})`);
+  if (rt.keychain_backed) {
+    assert.ok(rt.token_ref?.backend, 'I1: keychain-backed runtime includes backend reference');
+  } else {
+    assert.ok(rt.keychain_error, 'I1: non-keychain runtime records explicit fallback reason');
+  }
   const credLike = keys.filter((k) => /secret|password|provider|apikey|api_key|credential/i.test(k));
   assert.equal(credLike.length, 0, 'I1: no credential-like fields stored');
   // tenant_id is a routing token, not auth: a valid tenant still requires the gate

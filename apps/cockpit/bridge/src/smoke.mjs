@@ -106,9 +106,11 @@ try {
 
   // approval inbox (UC-009)
   const pend = await (await f('/api/approvals?status=pending')).json();
-  assert.ok(pend.approvals.length >= 2, 'pending approvals seeded');
-  const apr = await (await f('/api/approvals/apr-001?decision=approve', { method: 'POST' })).json();
-  assert.equal(apr.status, 'approved', 'approval resolves to approved');
+  assert.equal(pend.derived, 'per-instance A2A input-required tasks', 'approvals derive from A2A tasks');
+  assert.ok(pend.approvals.length >= 1, 'pending approvals seeded');
+  const approvalId = pend.approvals[0].id;
+  const apr = await (await f(`/api/approvals/${encodeURIComponent(approvalId)}?decision=approve`, { method: 'POST' })).json();
+  assert.equal(apr.status.state, 'completed', 'approval response completes the task');
   const pend2 = await (await f('/api/approvals?status=pending')).json();
   assert.equal(pend2.approvals.length, pend.approvals.length - 1, 'approved item leaves the queue');
 

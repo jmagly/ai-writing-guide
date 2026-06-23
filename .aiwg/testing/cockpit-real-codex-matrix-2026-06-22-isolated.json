@@ -1,0 +1,59 @@
+{
+  "issue": 1621,
+  "executor_url": "http://127.0.0.1:19222",
+  "required": true,
+  "matrix_required": true,
+  "matrix_targets": [
+    "host",
+    "container",
+    "vm"
+  ],
+  "provision_targets": true,
+  "provision_name_prefix": "cockpit-uat",
+  "provision_loadout": null,
+  "provision_image": null,
+  "provision_profile": null,
+  "provider": "codex",
+  "discovery_expect": "issue-audit",
+  "mutation_file": null,
+  "mutation_marker": null,
+  "result": "fail",
+  "started_at": "2026-06-22T15:56:27.431Z",
+  "finished_at": "2026-06-22T15:59:28.444Z",
+  "conformance_report": null,
+  "executor_identity": {
+    "version_hint": "agentic-sandbox-v2026.6.28-isolated-host-daemon"
+  },
+  "evidence": [
+    {
+      "name": "executor probe",
+      "status": "pass",
+      "detail": "reachable at http://127.0.0.1:19222"
+    },
+    {
+      "name": "executor identity",
+      "status": "pass",
+      "detail": "{\"version_hint\":\"agentic-sandbox-v2026.6.28-isolated-host-daemon\"}"
+    },
+    {
+      "name": "Bridge health",
+      "status": "pass",
+      "detail": "Bridge reported executor http://127.0.0.1:19222"
+    },
+    {
+      "name": "inventory posture",
+      "status": "skip",
+      "detail": "live executor returned zero instances; matrix provision mode will create target(s)"
+    },
+    {
+      "name": "session smoke",
+      "status": "skip",
+      "detail": "no inventory before matrix provision step"
+    },
+    {
+      "name": "required host/container/vm matrix executes real provider-backed session workloads",
+      "status": "fail",
+      "detail": "provisioned host did not become boot-ready within 180000ms; last=inventory=200/{\"id\":\"019ef00c-230d-76b2-89b0-cca2e42d60ef\",\"runtime\":\"host\",\"loadout\":\"host-tools\",\"state\":\"running\",\"tenant\":\"default\",\"card_url\":\"http://127.0.0.1:19222/agents/019ef00c-230d-76b2-89b0-cca2e42d60ef/.well-known/agent-card.json\",\"runtime_posture\":{\"kind\":\"host\",\"isolation\":\"least\",\"label\":\"Host / full host access\",\"warning\":\"Least isolated tier: this agent runs with direct host access.\"},\"host_daemon\":{\"status\":\"available\",\"detail\":\"Host daemon status was not reported.\"},\"transport\":{\"mode\":\"bootstrap-pending\",\"trust\":\"unknown\",\"label\":\"Unknown transport\",\"source\":\"agentic-sandbox admin-v2\",\"stale\":false},\"launch_context\":{\"loadout\":\"host-tools\",\"runtime_kind\":\"host\",\"selected_tier\":\"host\",\"name\":\"019ef00c-230d-76b2-89b0-cca2e42d60ef\",\"source\":\"agent-card runtime extension\"},\"agent_ready\":false,\"session_backends\":[{\"mode\":\"managed\",\"backend\":\"tmux\",\"observe\":true,\"drive\":true,\"replay\":false,\"keyframe\":false,\"available\":true,\"reason\":\"agentic-sandbox v1 host session API default\"}]} agents=200/{\"agents\":[]}"
+    }
+  ]
+}

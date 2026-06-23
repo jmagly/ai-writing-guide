@@ -7,10 +7,25 @@ const vscode = require('vscode');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const cp = require('child_process');
 
 function runtimeFile() {
   const override = vscode.workspace.getConfiguration('aiwg-cockpit').get('bridgeRuntimeFile');
   return override && override.length ? override : path.join(os.homedir(), '.aiwg', 'cockpit', 'runtime', 'bridge.json');
+}
+
+function readTokenRef(ref) {
+  if (!ref || !ref.backend) return '';
+  if (ref.backend === 'macos-keychain') {
+    return cp.execFileSync('security', ['find-generic-password', '-a', ref.account, '-s', ref.service || 'aiwg-cockpit-bridge', '-w'], { encoding: 'utf8' }).trim();
+  }
+  if (ref.backend === 'libsecret') {
+    return cp.execFileSync('secret-tool', ['lookup', 'service', ref.service || 'aiwg-cockpit-bridge', 'account', ref.account], { encoding: 'utf8' }).trim();
+  }
+  if (ref.backend === 'kwallet') {
+    return cp.execFileSync('kwallet-query', ['-f', ref.folder || 'AIWG Cockpit', '-r', ref.account, ref.wallet || 'kdewallet'], { encoding: 'utf8' }).trim();
+  }
+  throw new Error(`Unsupported Cockpit keychain backend: ${ref.backend}`);
 }
 
 /** Read the Bridge connection + confirm liveness; throws with a friendly hint if down. */
@@ -18,7 +33,8 @@ async function ensureRuntime() {
   let rt;
   try {
     const r = JSON.parse(fs.readFileSync(runtimeFile(), 'utf8'));
-    rt = { ...r, url: `http://127.0.0.1:${r.port}` };
+    const token = r.token || readTokenRef(r.token_ref);
+    rt = { ...r, token, url: `http://127.0.0.1:${r.port}` };
   } catch {
     throw new Error('AIWG Cockpit Bridge not found. Start it with `aiwg cockpit` (or `node apps/cockpit/bridge/src/server.mjs`) and retry.');
   }
@@ -42,14 +58,7 @@ function activate(context) {
     vscode.commands.registerCommand('aiwg-cockpit.auditIssues', async () => {
       let rt;
       try { rt = await ensureRuntime(); } catch (e) { return vscode.window.showWarningMessage(e.message); }
-      const out = vscode.window.createOutputChannel('AIWG Cockpit');
-      out.show(true);
-      out.appendLine('Running contributed action: audit-issues…');
-      try {
-        const r = await fetch(`${rt.url}/api/actions/audit-issues/run`, { method: 'POST', headers: { authorization: `Bearer ${rt.token}` } });
-        const j = await r.json();
-        out.appendLine(j.output || JSON.stringify(j, null, 2));
-      } catch (e) { out.appendLine('Error: ' + e.message); }
+      vscode.env.openExternal(vscode.Uri.parse(`${rt.url}/?token=${encodeURIComponent(rt.token)}#actions`));
     }),
   );
 }

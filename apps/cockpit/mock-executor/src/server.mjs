@@ -7,7 +7,7 @@
 import http from 'node:http';
 import { buildAgentCard } from './agent-card.mjs';
 import { listInstances, getInstance, DEFAULT_INSTANCE, setInstanceState, destroyInstance, listApprovals, resolveApproval, costReport, listLoadouts } from './store.mjs';
-import { handleSend, handleGetTask, handleListTasks, handleCancel, handleSubscribe, runningTasks, seedRunningTasks } from './a2a.mjs';
+import { handleSend, handleGetTask, handleListTasks, handleCancel, handleRespond, handleSubscribe, runningTasks, seedRunningTasks } from './a2a.mjs';
 import { attachPtyWs, listSessions, seedDemoSessions, createSession } from './pty-ws.mjs';
 
 function json(res, status, body, extraHeaders = {}) {
@@ -91,6 +91,7 @@ export function createExecutor() {
       if (rest === 'tasks' && req.method === 'GET') return handleListTasks(req, res, instanceId);
       let tm;
       if ((tm = rest.match(/^tasks\/(.+):cancel$/)) && req.method === 'POST') return handleCancel(req, res, instanceId, decodeURIComponent(tm[1]));
+      if ((tm = rest.match(/^tasks\/(.+):respond$/)) && req.method === 'POST') return handleRespond(req, res, instanceId, decodeURIComponent(tm[1]));
       if ((tm = rest.match(/^tasks\/([^/]+)\/subscribe$/)) && req.method === 'GET') return handleSubscribe(req, res, instanceId, decodeURIComponent(tm[1]));
       if ((tm = rest.match(/^tasks\/([^/:]+)$/)) && req.method === 'GET') return handleGetTask(req, res, instanceId, decodeURIComponent(tm[1]));
     }

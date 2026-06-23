@@ -13,6 +13,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, basename, extname, resolve, sep } from 'node:path';
+import { storeCockpitToken } from '../../shell-core/keychain.mjs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 // Primary seam for roctinam/aiwg#1589: Cockpit talks to a real agentic-sandbox
@@ -52,11 +53,47 @@ function authed(req, url, token) {
   try { return timingSafeEqual(Buffer.from(presented), Buffer.from(token)); } catch { return false; }
 }
 
+function isLocalHostName(hostname) {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]';
+}
+
+function validBrowserOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  try {
+    const o = new URL(String(origin));
+    const host = new URL(`http://${req.headers.host ?? 'localhost'}`);
+    return ['http:', 'https:'].includes(o.protocol) &&
+      isLocalHostName(o.hostname) &&
+      isLocalHostName(host.hostname) &&
+      (!o.port || !host.port || o.port === host.port);
+  } catch {
+    return false;
+  }
+}
+
+function validCsrf(req, token) {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method ?? 'GET')) return true;
+  if (!req.headers.origin) return true;
+  const csrf = String(req.headers['x-cockpit-csrf'] ?? '');
+  if (csrf.length !== token.length) return false;
+  try { return timingSafeEqual(Buffer.from(csrf), Buffer.from(token)); } catch { return false; }
+}
+
 /** Persist the per-launch token for the desktop/VS Code shells to read (mode 600). */
 async function writeRuntimeToken({ token, port, pid }) {
   await mkdir(RUNTIME_DIR, { recursive: true, mode: 0o700 });
   const file = join(RUNTIME_DIR, 'bridge.json');
-  await writeFile(file, JSON.stringify({ token, port, pid, started_at: new Date().toISOString() }, null, 2), { mode: 0o600 });
+  const runtime = { token, port, pid, started_at: new Date().toISOString(), keychain_backed: false };
+  try {
+    runtime.token_ref = await storeCockpitToken(token, `bridge-${pid}`);
+    runtime.keychain_backed = true;
+    if (process.env.AIWG_COCKPIT_KEYCHAIN_STRICT === '1') delete runtime.token;
+  } catch (e) {
+    runtime.keychain_error = String(e?.message ?? e);
+    if (process.env.AIWG_COCKPIT_REQUIRE_KEYCHAIN === '1') throw e;
+  }
+  await writeFile(file, JSON.stringify(runtime, null, 2), { mode: 0o600 });
   await chmod(file, 0o600);
   return file;
 }
@@ -751,34 +788,127 @@ async function getRunning(executorUrl) {
   };
 }
 
+function textFromParts(parts) {
+  if (!Array.isArray(parts)) return '';
+  return parts
+    .map((p) => p?.text ?? p?.content ?? p?.value ?? '')
+    .filter((p) => typeof p === 'string' && p.trim())
+    .join('\n');
+}
+
+function approvalPromptFromTask(task) {
+  const meta = task.metadata ?? {};
+  const status = typeof task.status === 'object' ? task.status : {};
+  const prompt = [
+    meta.hitl_prompt?.prompt,
+    meta.hitlPrompt?.prompt,
+    meta.approval?.prompt,
+    meta.prompt,
+    status.message,
+    status.prompt,
+    textFromParts(task.artifacts?.flatMap((a) => a.parts ?? [])),
+    textFromParts(task.history?.at?.(-1)?.parts),
+  ].find((v) => typeof v === 'string' && v.trim());
+  return String(prompt || 'Human input required');
+}
+
+function approvalFromTask(instance, task) {
+  const state = taskState(task);
+  const meta = task.metadata ?? {};
+  const hasHitlPrompt = meta.hitl_prompt || meta.hitlPrompt || meta.approval || meta['hitl-prompt/v1'];
+  if (state !== 'input-required' && !hasHitlPrompt) return null;
+  const taskId = taskIdOf(task);
+  if (!taskId) return null;
+  return {
+    id: `${instance.id}::${taskId}`,
+    instance_id: instance.id,
+    task_id: taskId,
+    prompt: approvalPromptFromTask(task),
+    risk: meta.risk ?? meta.approval?.risk ?? meta.hitl_prompt?.risk ?? 'unknown',
+    created_at: task.created_at ?? task.createdAt ?? task.status?.timestamp ?? task.metadata?.created_at,
+    status: state === 'input-required' ? 'pending' : state,
+    tenant: taskTenantOf(task),
+    derived: 'a2a input-required task',
+  };
+}
+
 /**
- * Pending HITL approvals (the unified approval inbox). The real agentic-sandbox
- * v2 admin surface has no /approvals route — HITL prompts arrive via A2A
- * `input-required` / `hitl-prompt/v1`. Deriving the inbox (and routing the
- * decision back to the task) from that surface is the remaining half of the v2
- * work (#1639 follow-up, with #1565); until then degrade to an empty inbox
- * rather than 404 so the operator Home view stays usable against a real executor.
+ * Pending HITL approvals (the unified approval inbox) derived from real A2A
+ * `input-required` / `hitl-prompt/v1` task surfaces. The real agentic-sandbox
+ * v2 admin router has no approvals queue, so this deliberately does not probe
+ * `/admin/approvals`.
  */
 async function getApprovals(executorUrl, status) {
-  let body;
-  try {
-    ({ body } = await fetchJsonFirst([
-      `${executorUrl}/admin/approvals?status=${encodeURIComponent(status)}`,
-      `${executorUrl}/api/v2/admin/approvals?status=${encodeURIComponent(status)}`,
-    ]));
-  } catch {
-    return {
-      source: executorUrl,
-      fetched_at: new Date().toISOString(),
-      approvals: [],
-      derived: 'executor exposes no admin approvals endpoint',
-    };
-  }
+  const instances = (await getInventory(executorUrl)).instances;
+  const approvals = [];
+  await Promise.all(
+    instances.filter((i) => i.state === 'running').map(async (inst) => {
+      let tasks;
+      try { tasks = await listInstanceTasks(executorUrl, inst.id); } catch { return; }
+      for (const t of tasks) {
+        const approval = approvalFromTask(inst, t);
+        if (!approval) continue;
+        if (status && status !== 'all' && approval.status !== status) continue;
+        approvals.push(approval);
+      }
+    }),
+  );
   return {
     source: executorUrl,
     fetched_at: new Date().toISOString(),
-    approvals: asArrayFromEnvelope(body, ['approvals', 'items', 'data']),
+    approvals,
+    derived: 'per-instance A2A input-required tasks',
   };
+}
+
+async function respondApproval(executorUrl, approvalId, decision) {
+  if (!['approve', 'deny'].includes(decision)) return { status: 400, body: { error: 'decision must be approve|deny' } };
+  const [instanceId, taskId] = String(approvalId).split('::');
+  if (!instanceId || !taskId) return { status: 400, body: { error: 'invalid_approval_id' } };
+  const agentId = await resolveSessionAgentId(executorUrl, instanceId);
+  const message = {
+    message: {
+      messageId: `cockpit-hitl-${Date.now()}`,
+      role: 'user',
+      taskId,
+      contextId: taskId,
+      parts: [{ kind: 'text', text: decision }],
+      metadata: { hitl_response: { decision }, approval_decision: decision },
+    },
+  };
+  const response = JSON.stringify({ decision, response: message.message });
+  const candidates = unique([agentId, instanceId]).flatMap((id) => [
+    {
+      target: `${executorUrl}/api/v1/agents/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}:respond`,
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: response,
+    },
+    {
+      target: `${executorUrl}/agents/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}:respond`,
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: response,
+    },
+    {
+      target: `${executorUrl}/api/v1/agents/${encodeURIComponent(id)}/messages:send`,
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(message),
+    },
+    {
+      target: `${executorUrl}/agents/${encodeURIComponent(id)}/messages:send`,
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(message),
+    },
+  ]);
+  try {
+    const { status, body } = await fetchJsonFirst(candidates);
+    return { status, body };
+  } catch (e) {
+    return { status: 409, body: { error: 'approval_response_failed', detail: String(e?.message ?? e) } };
+  }
 }
 
 /**
@@ -864,9 +994,15 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
     try {
       // unauthenticated liveness probe (no /api/ prefix) — for the shell to wait on
       if (url.pathname === '/healthz') return json(res, 200, { status: 'ok' });
+      if (url.pathname.startsWith('/api/') && !validBrowserOrigin(req)) {
+        return json(res, 403, { error: 'forbidden_origin' });
+      }
       // gate the control surface: per-launch bearer token on every /api/ call
       if (url.pathname.startsWith('/api/') && !authed(req, url, TOKEN)) {
         return json(res, 401, { error: 'unauthorized', detail: 'missing or invalid cockpit token' });
+      }
+      if (url.pathname.startsWith('/api/') && !validCsrf(req, TOKEN)) {
+        return json(res, 403, { error: 'csrf_required' });
       }
       if (url.pathname.startsWith('/api/')) {
         try {
@@ -874,6 +1010,21 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         } catch (err) {
           return json(res, 502, { error: err.code ?? 'executor_refused', message: String(err?.message ?? err) });
         }
+      }
+      if (url.pathname === '/api/events' && req.method === 'GET') {
+        res.writeHead(200, {
+          'content-type': 'text/event-stream',
+          'cache-control': 'no-cache',
+          connection: 'keep-alive',
+        });
+        const emit = (reason = 'heartbeat') => {
+          res.write(`event: cockpit.refresh\n`);
+          res.write(`data: ${JSON.stringify({ reason, ts: new Date().toISOString() })}\n\n`);
+        };
+        emit('connected');
+        const timer = setInterval(() => emit(), 5_000);
+        req.on('close', () => clearInterval(timer));
+        return;
       }
       if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(upstreamUrl));
       if (url.pathname === '/api/running') return json(res, 200, await getRunning(upstreamUrl));
@@ -1066,8 +1217,10 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
       // --- approval inbox (UC-009) + cost (UC-010) ---
       if (url.pathname === '/api/approvals' && req.method === 'GET')
         return json(res, 200, await getApprovals(upstreamUrl, url.searchParams.get('status') || 'pending'));
-      if ((m = url.pathname.match(/^\/api\/approvals\/([^/]+)$/)) && req.method === 'POST')
-        return proxy(res, 'POST', `${upstreamUrl}/admin/approvals/${encodeURIComponent(m[1])}?decision=${encodeURIComponent(url.searchParams.get('decision') || '')}`);
+      if ((m = url.pathname.match(/^\/api\/approvals\/([^/]+)$/)) && req.method === 'POST') {
+        const { status, body } = await respondApproval(upstreamUrl, decodeURIComponent(m[1]), url.searchParams.get('decision') || '');
+        return json(res, status, body);
+      }
       if (url.pathname === '/api/cost' && req.method === 'GET')
         return proxy(res, 'GET', `${upstreamUrl}/admin/cost`);
 
@@ -1079,7 +1232,11 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         // Inject the per-launch token so the same-origin app can call the gated API.
         const html = raw.replace('</head>', `<script>window.__COCKPIT_TOKEN__=${JSON.stringify(TOKEN)}</script>\n</head>`);
         // never cache the shell — it must always reference the latest hashed bundle
-        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });
+        res.writeHead(200, {
+          'content-type': 'text/html; charset=utf-8',
+          'cache-control': 'no-cache',
+          'set-cookie': `cockpit_csrf=${TOKEN}; Path=/; SameSite=Strict`,
+        });
         return res.end(html);
       }
       // static assets from the built web app (e.g. /assets/*.js, *.css)

@@ -8,7 +8,7 @@ the local control surface lives here.
 
 | File | Written by | Mode | Contents |
 |---|---|---|---|
-| `bridge.json` | the Bridge on launch | `0600` | `{ token, port, pid, started_at }` — the per-launch handshake every shell reads |
+| `bridge.json` | the Bridge on launch | `0600` | `{ token_ref, port, pid, started_at, keychain_backed }` when OS-keychain storage succeeds; otherwise `{ token, port, pid, started_at, keychain_backed:false, keychain_error }` |
 
 The directory itself is `0700`. The Bridge **rewrites** `bridge.json` on each launch
 (the token is per-launch, not persistent).
@@ -18,18 +18,26 @@ The directory itself is `0700`. The Bridge **rewrites** `bridge.json` on each la
 Every shell (browser, VS Code, Tauri) resolves the Bridge the same way — see
 `apps/cockpit/shell-core/runtime.mjs`:
 
-1. read `bridge.json` → `{ token, port }`
-2. wait for `http://127.0.0.1:<port>/healthz`
-3. load the UI at `http://127.0.0.1:<port>/?token=<token>`
+1. read `bridge.json` → `{ token_ref, port }` or fallback `{ token, port }`
+2. resolve `token_ref` through `apps/cockpit/shell-core/keychain.mjs` when present
+3. wait for `http://127.0.0.1:<port>/healthz`
+4. load the UI at `http://127.0.0.1:<port>/?token=<token>`
 
 ## Security
 
-- `bridge.json` holds **only the overlay's own per-launch token** — never a provider
-  or stack credential (verified by `apps/cockpit/poc/security-checks.mjs`, property I1).
+- The per-launch token is written to the OS credential backend when one is available:
+  macOS Keychain (`security`), Windows Credential Manager (`cmdkey`), Linux libsecret
+  (`secret-tool`), or opt-in KDE Wallet (`AIWG_COCKPIT_ENABLE_KWALLET=1`).
+- `bridge.json` holds **only the overlay's own per-launch token or token reference** —
+  never a provider or stack credential (verified by
+  `apps/cockpit/poc/security-checks.mjs`, property I1). Set
+  `AIWG_COCKPIT_KEYCHAIN_STRICT=1` to omit the inline token when keychain storage
+  succeeds; set `AIWG_COCKPIT_REQUIRE_KEYCHAIN=1` to fail Bridge launch if no OS
+  credential backend is usable.
 - `token` gates every `/api/*` call (constant-time bearer check); `tenant_id` elsewhere
   is a **routing** token, never authentication.
-- OS-keychain storage of the token is the platform-specific hardening follow-up
-  (roctinam/aiwg#1595); the `0600` file is the cross-platform handshake.
+- Browser-origin `/api/*` calls are localhost-origin checked, and state-changing
+  browser calls must include the CSRF double-submit header emitted by the web clients.
 
 ## Launch-cwd model
 

@@ -4,14 +4,14 @@ import type { ContribAction } from '../types';
 import type { SessionApi } from '../useSession';
 
 // Actions INJECT a command into an agentic session — the Cockpit never runs the CLI.
-export function Actions({ session, setComposer, goSessions }: { session: SessionApi; setComposer: (v: string) => void; goSessions: () => void }) {
+export function Actions({ refreshTick = 0, session, setComposer, goSessions }: { refreshTick?: number; session: SessionApi; setComposer: (v: string) => void; goSessions: () => void }) {
   const [actions, setActions] = useState<ContribAction[]>([]);
   const [err, setErr] = useState('');
   const [note, setNote] = useState('');
 
   useEffect(() => {
     api<{ actions: ContribAction[] }>('/api/contributions').then((d) => setActions(d.actions)).catch((e) => setErr((e as Error).message));
-  }, []);
+  }, [refreshTick]);
 
   const inject = (a: ContribAction) => {
     let command = a.inject.command;

@@ -3,7 +3,7 @@ import { api } from '../api';
 import { fmtId } from '../util';
 import type { Approval, ResponseNeeded } from '../types';
 
-export function Approvals({ responses = [], goSessions }: { responses?: ResponseNeeded[]; goSessions?: () => void }) {
+export function Approvals({ refreshTick = 0, responses = [], goSessions }: { refreshTick?: number; responses?: ResponseNeeded[]; goSessions?: () => void }) {
   const [items, setItems] = useState<Approval[] | null>(null);
   const [err, setErr] = useState('');
 
@@ -11,7 +11,7 @@ export function Approvals({ responses = [], goSessions }: { responses?: Response
     api<{ approvals: Approval[] }>('/api/approvals?status=pending')
       .then((d) => { setItems(d.approvals); setErr(''); }).catch((e) => setErr((e as Error).message));
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, [load, refreshTick]);
 
   const decide = (id: string, decision: 'approve' | 'deny') =>
     api(`/api/approvals/${encodeURIComponent(id)}?decision=${decision}`, { method: 'POST' })
