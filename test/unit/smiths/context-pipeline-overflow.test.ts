@@ -182,7 +182,7 @@ describe('buildAgentsMd thin-pointer body (#1239)', () => {
     expect(built.splitOccurred).toBe(false);
     expect(built.spilloverContent).toBe('');
     expect(built.warnings).toEqual([]);
-    expect(Buffer.byteLength(built.content, 'utf8')).toBeLessThan(4 * 1024);
+    expect(Buffer.byteLength(built.content, 'utf8')).toBeLessThan(8 * 1024);
   });
 });
 
@@ -210,7 +210,7 @@ describe('twin-file emission per ADR-1 §4', () => {
     expect(hermes).toContain('delegate_task');
 
     // Finalized context is still compact enough for provider startup context.
-    expect(Buffer.byteLength(hermes, 'utf8')).toBeLessThan(4 * 1024);
+    expect(Buffer.byteLength(hermes, 'utf8')).toBeLessThan(8 * 1024);
   });
 
   it('writes WARP.md alongside AGENTS.md for warp provider', async () => {
@@ -290,9 +290,10 @@ describe('generate end-to-end thin-pointer (#1239)', () => {
     expect(result.warnings).toEqual([]);
 
     const agentsContent = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf8');
-    expect(Buffer.byteLength(agentsContent, 'utf8')).toBeLessThan(4 * 1024);
-    expect(agentsContent).not.toContain('## Agents');
-    expect(agentsContent).not.toContain('auto-entry-');
+    expect(Buffer.byteLength(agentsContent, 'utf8')).toBeLessThan(8 * 1024);
+    expect(agentsContent).toContain('examples: auto-entry-000, auto-entry-001, auto-entry-002, auto-entry-003, auto-entry-004, +295 more.');
+    expect(agentsContent).not.toContain('auto-entry-299');
+    expect(agentsContent).not.toContain('Path: `.codex/agents/auto-entry-000.md`');
 
     // No spillover should be written by the happy path.
     await expect(

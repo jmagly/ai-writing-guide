@@ -274,11 +274,72 @@ describe('buildAgentsMd', () => {
 
   it('does not inline a link-index of deployed artifacts (#1239)', async () => {
     const { content, splitOccurred, spilloverContent } = await buildAgentsMd(baseOpts);
-    expect(content).not.toContain('## Agents');
+    expect(content).not.toContain('Path: `.codex/agents/api-designer.md`');
     expect(content).not.toContain('**api-designer**');
     expect(content).not.toContain('.codex/agents/api-designer.md');
     expect(splitOccurred).toBe(false);
     expect(spilloverContent).toBe('');
+  });
+
+  it('emits a quickref-style Tier 2 map with discover phrases and deep-load targets', async () => {
+    const { content } = await buildAgentsMd(baseOpts);
+    expect(content).toContain('## Tier 1 / Tier 2 / Tier 3 Loading Model');
+    expect(content).toContain('## Tier 2 Capability Map');
+    expect(content).toContain('Schema per entry: purpose, when to use, when not to use');
+    expect(content).toContain('`aiwg discover "agent for <task>"`');
+    expect(content).toContain('`aiwg show agent <name>`');
+    expect(content).toContain('Deployed summary: 1 recorded; examples: api-designer.');
+  });
+
+  it('keeps Tier 2 bounded for a large deployed corpus', async () => {
+    const huge: ContextPipelineOptions = {
+      ...baseOpts,
+      sections: [
+        {
+          type: 'agents',
+          entries: Array.from({ length: 500 }, (_, i) => ({
+            id: `agent-${i}`,
+            description: `Agent number ${i} with some descriptive text`,
+            path: `.codex/agents/agent-${i}.md`,
+          })),
+        },
+        {
+          type: 'skills',
+          entries: Array.from({ length: 500 }, (_, i) => ({
+            id: `skill-${i}`,
+            description: `Skill number ${i} with some descriptive text`,
+            path: `.codex/skills/skill-${i}/SKILL.md`,
+          })),
+        },
+      ],
+    };
+    const { content } = await buildAgentsMd(huge);
+    expect(content).toContain('examples: agent-0, agent-1, agent-2, agent-3, agent-4, +495 more.');
+    expect(content).toContain('examples: skill-0, skill-1, skill-2, skill-3, skill-4, +495 more.');
+    expect(content).not.toContain('agent-499');
+    expect(content).not.toContain('skill-499');
+    expect(Buffer.byteLength(content, 'utf8')).toBeLessThan(8 * 1024);
+  });
+
+  it('sanitizes Tier 2 sample IDs before emission', async () => {
+    const opts: ContextPipelineOptions = {
+      ...baseOpts,
+      sections: [
+        {
+          type: 'agents',
+          entries: [
+            {
+              id: 'bad`id',
+              description: 'Plain description',
+              path: '.codex/agents/bad-id.md',
+            },
+          ],
+        },
+      ],
+    };
+    const { content } = await buildAgentsMd(opts);
+    expect(content).toContain('examples: (redacted id).');
+    expect(content).not.toContain('bad`id');
   });
 
   it('points readers at aiwg discover / aiwg show', async () => {
@@ -304,7 +365,7 @@ describe('buildAgentsMd', () => {
       ],
     };
     const { content } = await buildAgentsMd(huge);
-    expect(Buffer.byteLength(content, 'utf8')).toBeLessThan(4 * 1024);
+    expect(Buffer.byteLength(content, 'utf8')).toBeLessThan(8 * 1024);
   });
 
   it('includes Project Context when provided', async () => {

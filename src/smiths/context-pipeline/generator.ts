@@ -40,6 +40,92 @@ const SECTION_TITLES: Record<IndexedArtifactType, string> = {
 };
 
 const AIWG_SIGNATURE_COMMENT = '<!-- aiwg-managed -->';
+const TIER2_SAMPLE_LIMIT = 5;
+
+const TIER2_KIND_GUIDANCE: Record<IndexedArtifactType, {
+  purpose: string;
+  useWhen: string;
+  avoidWhen: string;
+  discover: string[];
+  deepLoadType: string;
+  verification: string;
+}> = {
+  agents: {
+    purpose: 'Route specialized work to deployed agent personas without loading their full bodies.',
+    useWhen: 'The task names a role, asks for domain review, or needs focused delegation.',
+    avoidWhen: 'A direct CLI command or loaded skill already handles the work.',
+    discover: ['agent for <task>', '<domain> specialist agent', 'review <artifact> agent'],
+    deepLoadType: 'agent',
+    verification: 'Selected agent name and scope match the user request before delegation.',
+  },
+  rules: {
+    purpose: 'Expose policy and behavioral constraints as compact routing anchors.',
+    useWhen: 'The task involves safety, provider behavior, workflow discipline, or repo policy.',
+    avoidWhen: 'The user asks for broad framework discovery rather than a specific guardrail.',
+    discover: ['rule for <constraint>', '<provider> routing rule', 'context budget rule'],
+    deepLoadType: 'rule',
+    verification: 'The applied rule is named and the action taken conforms to it.',
+  },
+  skills: {
+    purpose: 'Route operator intents to executable AIWG workflows and procedural guidance.',
+    useWhen: 'The user names an AIWG capability, workflow, issue action, or framework task.',
+    avoidWhen: 'The task is ordinary code editing with no AIWG-specific workflow needed.',
+    discover: ['skill for <workflow>', 'address issues', 'regenerate context'],
+    deepLoadType: 'skill',
+    verification: 'The selected skill was read before invoking its workflow.',
+  },
+  behaviors: {
+    purpose: 'Summarize reactive behavior packs without carrying long interaction detail.',
+    useWhen: 'The task depends on session behavior, daemon interaction, or event-driven agent conduct.',
+    avoidWhen: 'A static rule or skill directly covers the requested action.',
+    discover: ['behavior for <interaction>', 'daemon behavior', 'session behavior'],
+    deepLoadType: 'behavior',
+    verification: 'The behavior trigger and expected effect are explicit before relying on it.',
+  },
+};
+
+function sampleIds(entries: readonly IndexEntry[]): string {
+  if (entries.length === 0) return 'none deployed';
+  const ids = entries.slice(0, TIER2_SAMPLE_LIMIT).map((entry) => {
+    const sanitized = sanitizeDescription(entry.id.slice(0, 120));
+    return sanitized.ok ? sanitized.value : '(redacted id)';
+  });
+  const suffix = entries.length > ids.length ? `, +${entries.length - ids.length} more` : '';
+  return `${ids.join(', ')}${suffix}`;
+}
+
+function renderTier2CapabilityMap(sections: readonly AgentsMdSection[]): string {
+  const byType = new Map<IndexedArtifactType, AgentsMdSection>();
+  for (const section of sections) {
+    byType.set(section.type, section);
+  }
+
+  const lines: string[] = [
+    '## Tier 2 Capability Map',
+    '',
+    'This is a quickref-style routing layer. Keep it in default context; load Tier 3 detail only through `aiwg discover` and `aiwg show`, not by traversing provider directories.',
+    '',
+    'Schema per entry: purpose, when to use, when not to use, curated discovery phrases, deep-load target, verification cue.',
+    '',
+  ];
+
+  for (const type of Object.keys(SECTION_TITLES) as IndexedArtifactType[]) {
+    const guidance = TIER2_KIND_GUIDANCE[type];
+    const entries = byType.get(type)?.entries ?? [];
+    lines.push(`### ${SECTION_TITLES[type]}`);
+    lines.push('');
+    lines.push(`- Purpose: ${guidance.purpose}`);
+    lines.push(`- When to use: ${guidance.useWhen}`);
+    lines.push(`- When not to use: ${guidance.avoidWhen}`);
+    lines.push(`- Curated discovery phrases: ${guidance.discover.map((phrase) => `\`aiwg discover "${phrase}"\``).join('; ')}`);
+    lines.push(`- Deep-load target: \`aiwg show ${guidance.deepLoadType} <name>\` after discovery selects the exact item.`);
+    lines.push(`- Deployed summary: ${entries.length} recorded; examples: ${sampleIds(entries)}.`);
+    lines.push(`- Verification cue: ${guidance.verification}`);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
 
 /**
  * Build the loud warning emitted when a pre-existing, non-AIWG-managed twin or
@@ -171,6 +257,15 @@ export async function buildAgentsMd(opts: ContextPipelineOptions): Promise<{
   parts.push('(for example `.codex/agents/`, `.warp/agents/`, `.github/agents/`).');
   parts.push('Use `aiwg discover "<intent>"` and `aiwg show <type> <name>` to browse');
   parts.push('skills, agents, rules, and commands across the installation.');
+  parts.push('');
+
+  parts.push('## Tier 1 / Tier 2 / Tier 3 Loading Model');
+  parts.push('');
+  parts.push('- Tier 1: this bridge plus the finalization block; always-loaded orientation only.');
+  parts.push('- Tier 2: compact quickref routing summaries; enough to choose a next lookup.');
+  parts.push('- Tier 3: full skill, rule, agent, behavior, docs, and examples; load only through `aiwg discover` / `aiwg show` or an explicit skill invocation.');
+  parts.push('');
+  parts.push(renderTier2CapabilityMap(opts.sections));
   parts.push('');
 
   parts.push(await buildContextFinalizationBlock(opts.projectPath));
