@@ -39,6 +39,7 @@
   "scripts": {
     "start:bridge": "node bridge/src/server.mjs",
     "dev": "bash scripts/cockpit-dev.sh",
+    "up": "bash scripts/cockpit-up.sh",
     "build:web": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build",
     "pack:dry": "npm pack --dry-run",
     "publish:dry": "npm publish --dry-run --access public",
