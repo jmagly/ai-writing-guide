@@ -1,0 +1,78 @@
+{
+  "issue": 1621,
+  "executor_url": "http://127.0.0.1:8122",
+  "required": true,
+  "matrix_required": true,
+  "matrix_targets": [
+    "vm"
+  ],
+  "provision_targets": true,
+  "provision_name_prefix": "cockpit-uat",
+  "provision_loadout": null,
+  "provision_image": null,
+  "provision_profile": null,
+  "provider": "codex",
+  "discovery_expect": "issue-audit",
+  "mutation_file": null,
+  "mutation_marker": null,
+  "result": "fail",
+  "started_at": "2026-06-23T15:46:12.361Z",
+  "finished_at": "2026-06-23T15:49:19.560Z",
+  "conformance_report": null,
+  "artifact_paths": {
+    "json_report": "/home/roctinam/dev/aiwg/.aiwg/testing/cockpit-real-codex-matrix-2026-06-23-vm-fresh-executor.json",
+    "markdown_report": "/home/roctinam/dev/aiwg/.aiwg/testing/cockpit-real-codex-matrix-2026-06-23-vm-fresh-executor.md",
+    "conformance_report": null,
+    "mutation_file": null
+  },
+  "executor_identity": {
+    "version_hint": "agentic-sandbox-v2026.6.30-rebuilt-3687454"
+  },
+  "evidence": [
+    {
+      "name": "executor probe",
+      "status": "pass",
+      "detail": "reachable at http://127.0.0.1:8122"
+    },
+    {
+      "name": "executor identity",
+      "status": "pass",
+      "detail": "{\"version_hint\":\"agentic-sandbox-v2026.6.30-rebuilt-3687454\"}"
+    },
+    {
+      "name": "Bridge health",
+      "status": "pass",
+      "detail": "Bridge reported executor http://127.0.0.1:8122"
+    },
+    {
+      "name": "inventory posture",
+      "status": "pass",
+      "detail": "1 instance(s) with normalized posture fields"
+    },
+    {
+      "name": "session metadata",
+      "status": "skip",
+      "detail": "sessions endpoint returned 200 or no sessions"
+    },
+    {
+      "name": "task projection",
+      "status": "pass",
+      "detail": "0 running task(s) reported"
+    },
+    {
+      "name": "provision vm",
+      "status": "fail",
+      "detail": "provisioned vm did not become boot-ready within 180000ms; last=inventory=200/{\"id\":\"019ef529-1c13-7143-a963-6e9d0e9caac1\",\"runtime\":\"qemu\",\"loadout\":\"profiles/basic.yaml\",\"state\":\"running\",\"tenant\":\"default\",\"card_url\":\"http://127.0.0.1:8122/agents/019ef529-1c13-7143-a963-6e9d0e9caac1/.well-known/agent-card.json\",\"runtime_posture\":{\"kind\":\"qemu\",\"isolation\":\"opaque\",\"label\":\"qemu / opaque runtime\",\"warning\":\"Future or unrecognized runtime kind; Cockpit is rendering it conservatively.\"},\"host_daemon\":{\"status\":\"unavailable\",\"detail\":\"Not applicable for this runtime tier.\"},\"transport\":{\"mode\":\"bootstrap-pending\",\"trust\":\"unknown\",\"label\":\"Unknown transport\",\"source\":\"agentic-sandbox admin-v2\",\"stale\":false},\"launch_context\":{\"loadout\":\"profiles/basic.yaml\",\"runtime_kind\":\"qemu\",\"selected_tier\":\"qemu\",\"name\":\"019ef529-1c13-7143-a963-6e9d0e9caac1\",\"source\":\"agent-card runtime extension\"},\"agent_ready\":false,\"session_backends\":[{\"mode\":\"direct\",\"backend\":\"native\",\"observe\":true,\"drive\":false,\"replay\":false,\"keyframe\":false,\"available\":false,\"reason\":\"sandbox did not advertise session-host capabilities\"}]} agents=200/{\"agents\":[{\"id\":\"release-test-codex\",\"instance_id\":\"019ef1ce-6513-7e81-b2dc-cb13ecf924ab\",\"hostname\":\"be86fea5ea75\",\"ip_address\":\"172.17.0.4\",\"status\":\"Ready\",\"setup_status\":\"ready\",\"connected_at\":1782229523937,\"last_heartbeat\":1782229753931,\"metrics\":{\"cpu_percent\":9.438362,\"memory_used_bytes\":46270873600,\"memory_total_bytes\":67092447232,\"disk_used_bytes\":1956694142976,\"disk_total_bytes\":2011859927040,\"load_avg\":[1.9,2.61,2.67],\"uptime_seconds\":348384},\"system_info\":{\"os\":\"Debian GNU/Linux 13 (trixie)\",\"kernel\":\"6.17.0-35-generic\",\"cpu_cores\":20,\"memory_bytes\":67092447232,\"disk_bytes\":2011859927040}}]}"
+    },
+    {
+      "name": "matrix vm",
+      "status": "fail",
+      "detail": "provision failed for required live target vm: provisioned vm did not become boot-ready within 180000ms; last=inventory=200/{\"id\":\"019ef529-1c13-7143-a963-6e9d0e9caac1\",\"runtime\":\"qemu\",\"loadout\":\"profiles/basic.yaml\",\"state\":\"running\",\"tenant\":\"default\",\"card_url\":\"http://127.0.0.1:8122/agents/019ef529-1c13-7143-a963-6e9d0e9caac1/.well-known/agent-card.json\",\"runtime_posture\":{\"kind\":\"qemu\",\"isolation\":\"opaque\",\"label\":\"qemu / opaque runtime\",\"warning\":\"Future or unrecognized runtime kind; Cockpit is rendering it conservatively.\"},\"host_daemon\":{\"status\":\"unavailable\",\"detail\":\"Not applicable for this runtime tier.\"},\"transport\":{\"mode\":\"bootstrap-pending\",\"trust\":\"unknown\",\"label\":\"Unknown transport\",\"source\":\"agentic-sandbox admin-v2\",\"stale\":false},\"launch_context\":{\"loadout\":\"profiles/basic.yaml\",\"runtime_kind\":\"qemu\",\"selected_tier\":\"qemu\",\"name\":\"019ef529-1c13-7143-a963-6e9d0e9caac1\",\"source\":\"agent-card runtime extension\"},\"agent_ready\":false,\"session_backends\":[{\"mode\":\"direct\",\"backend\":\"native\",\"observe\":true,\"drive\":false,\"replay\":false,\"keyframe\":false,\"available\":false,\"reason\":\"sandbox did not advertise session-host capabilities\"}]} agents=200/{\"agents\":[{\"id\":\"release-test-codex\",\"instance_id\":\"019ef1ce-6513-7e81-b2dc-cb13ecf924ab\",\"hostname\":\"be86fea5ea75\",\"ip_address\":\"172.17.0.4\",\"status\":\"Ready\",\"setup_status\":\"ready\",\"connected_at\":1782229523937,\"last_heartbeat\":1782229753931,\"metrics\":{\"cpu_percent\":9.438362,\"memory_used_bytes\":46270873600,\"memory_total_bytes\":67092447232,\"disk_used_bytes\":1956694142976,\"disk_total_bytes\":2011859927040,\"load_avg\":[1.9,2.61,2.67],\"uptime_seconds\":348384},\"system_info\":{\"os\":\"Debian GNU/Linux 13 (trixie)\",\"kernel\":\"6.17.0-35-generic\",\"cpu_cores\":20,\"memory_bytes\":67092447232,\"disk_bytes\":2011859927040}}]}"
+    },
+    {
+      "name": "required host/container/vm matrix executes real provider-backed session workloads",
+      "status": "fail",
+      "detail": "required live matrix failed for 1/1 target(s): provision failed for required live target vm: provisioned vm did not become boot-ready within 180000ms; last=inventory=200/{\"id\":\"019ef529-1c13-7143-a963-6e9d0e9caac1\",\"runtime\":\"qemu\",\"loadout\":\"profiles/basic.yaml\",\"state\":\"running\",\"tenant\":\"default\",\"card_url\":\"http://127.0.0.1:8122/agents/019ef529-1c13-7143-a963-6e9d0e9caac1/.well-known/agent-card.json\",\"runtime_posture\":{\"kind\":\"qemu\",\"isolation\":\"opaque\",\"label\":\"qemu / opaque runtime\",\"warning\":\"Future or unrecognized runtime kind; Cockpit is rendering it conservatively.\"},\"host_daemon\":{\"status\":\"unavailable\",\"detail\":\"Not applicable for this runtime tier.\"},\"transport\":{\"mode\":\"bootstrap-pending\",\"trust\":\"unknown\",\"label\":\"Unknown transport\",\"source\":\"agentic-sandbox admin-v2\",\"stale\":false},\"launch_context\":{\"loadout\":\"profiles/basic.yaml\",\"runtime_kind\":\"qemu\",\"selected_tier\":\"qemu\",\"name\":\"019ef529-1c13-7143-a963-6e9d0e9caac1\",\"source\":\"agent-card runtime extension\"},\"agent_ready\":false,\"session_backends\":[{\"mode\":\"direct\",\"backend\":\"native\",\"observe\":true,\"drive\":false,\"replay\":false,\"keyframe\":false,\"available\":false,\"reason\":\"sandbox did not advertise session-host capabilities\"}]} agents=200/{\"agents\":[{\"id\":\"release-test-codex\",\"instance_id\":\"019ef1ce-6513-7e81-b2dc-cb13ecf924ab\",\"hostname\":\"be86fea5ea75\",\"ip_address\":\"172.17.0.4\",\"status\":\"Ready\",\"setup_status\":\"ready\",\"connected_at\":1782229523937,\"last_heartbeat\":1782229753931,\"metrics\":{\"cpu_percent\":9.438362,\"memory_used_bytes\":46270873600,\"memory_total_bytes\":67092447232,\"disk_used_bytes\":1956694142976,\"disk_total_bytes\":2011859927040,\"load_avg\":[1.9,2.61,2.67],\"uptime_seconds\":348384},\"system_info\":{\"os\":\"Debian GNU/Linux 13 (trixie)\",\"kernel\":\"6.17.0-35-generic\",\"cpu_cores\":20,\"memory_bytes\":67092447232,\"disk_bytes\":2011859927040}}]}"
+    }
+  ]
+}
