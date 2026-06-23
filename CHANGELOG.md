@@ -7,6 +7,41 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.11] - 2026-06-23 - "Tiered provider-context bridge"
+
+Shrinks default agent startup context with a tiered provider-context model,
+validates the Cockpit live-VM Bridge path end to end, and adds a docsite
+Docs Map.
+
+### Added
+
+- **Tiered provider-context bridge (#1651, #1652)** - Generated provider
+  bridges (`AGENTS.md` and its provider twins) now render deployed
+  capabilities as a Tier 2 quickref capability map instead of a long-form
+  deployed-artifact index. Default agent startup context stays small - 93%
+  smaller on a 1,000-artifact fixture (106 KiB to 7.4 KiB) - while full Tier 3
+  bodies remain reachable through `aiwg discover` / `aiwg show`. A new bridge
+  size guard (`tools/lint/context-size-guard.mjs`, `npm run lint:context-sizes`)
+  enforces an 8 KiB ceiling on the always-loaded bridge. See
+  `docs/context-tier-model.md` and `docs/context-tier-pilot-report.md`.
+
+### Fixed
+
+- **Cockpit live VM matrix provisions through the Bridge (#1658)** - The
+  Cockpit live UAT matrix had been posting VM provision requests straight to
+  the executor, bypassing the Bridge's SSH-key injection for qemu launches, so
+  the VM target failed with "No SSH public key found". Provisioning now routes
+  through the Bridge, validating the agentic-sandbox v2 `ssh_key` passthrough
+  end to end against a current executor.
+
+### Changed
+
+- **Cockpit Bridge development** - OS-keychain token handshake in shell-core,
+  a live host/container/vm UAT matrix, mock-executor A2A parity, and a more
+  resilient web UI. (`apps/cockpit` is excluded from the published npm package.)
+- **Docsite Docs Map** - Override styling for the pagenary-rendered Docs Map
+  (SVG sizing and on-hover node labels).
+
 ## [2026.6.10] - 2026-06-22 - "Docsite-clean media research release"
 
 Recovery cut for the `2026.6.9` release line. The `2026.6.9` package reached
