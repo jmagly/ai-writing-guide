@@ -1564,6 +1564,36 @@ mark.hl {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   Docs Map
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.docs-map {
+  position: relative;
+}
+
+.docs-map-svg {
+  width: 100%;
+  min-height: 64vh;
+}
+
+.docs-map-label {
+  opacity: 0;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: var(--color-bg-page);
+  stroke-width: 5px;
+  fill: var(--color-text-primary);
+  font-size: 13px;
+  transition: opacity var(--transition-fast);
+}
+
+.docs-map-node:hover .docs-map-label,
+.docs-map-node:focus .docs-map-label,
+.docs-map-node:focus-visible .docs-map-label {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    Mobile Responsive Overrides
    ═══════════════════════════════════════════════════════════════════════════ */
 
