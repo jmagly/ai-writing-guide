@@ -3,6 +3,14 @@ namespace: aiwg
 platforms: [all]
 name: Transcribe Media
 description: Produce timestamped transcript sidecars for acquired audio/video with hashes, source metadata, speaker labels when available, and explicit degraded plans when STT tooling is missing
+triggers:
+  - "transcribe video"
+  - "transcribe audio"
+  - "transcribe podcast"
+  - "transcribe lecture"
+  - "generate transcript sidecar"
+  - "timestamped transcript for research"
+  - "video audio research induction"
 category: media-curator
 ---
 
