@@ -1,0 +1,57 @@
+{
+  "schema": "aiwg.media.transcript.v1",
+  "source": {
+    "path": ".aiwg/media/acquisitions/attention-mechanisms-in-practice.mp4",
+    "url": "https://example.invalid/watch?v=lecture101",
+    "title": "Attention Mechanisms in Practice",
+    "sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "transcript": {
+    "sha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "language": "en",
+    "generated_at": "2026-05-24T10:40:00.000000000Z",
+    "tool": {
+      "name": "fixture",
+      "version": "1.0.0",
+      "mode": "example"
+    },
+    "quality": {
+      "status": "machine-generated",
+      "limitations": [
+        "No diarization available; all segments use SPEAKER_00 fallback",
+        "Fixture text is illustrative only — human verification required before quoting"
+      ]
+    }
+  },
+  "segments": [
+    {
+      "id": "seg-000001",
+      "start": "00:00:05.000",
+      "end": "00:00:14.000",
+      "speaker": "SPEAKER_00",
+      "text": "Welcome. Today we cover attention mechanisms in practice."
+    },
+    {
+      "id": "seg-000002",
+      "start": "00:12:34.000",
+      "end": "00:12:41.500",
+      "speaker": "SPEAKER_00",
+      "text": "Attention lets the model weigh tokens by relevance rather than position."
+    },
+    {
+      "id": "seg-000003",
+      "start": "00:14:02.000",
+      "end": "00:14:11.250",
+      "speaker": "SPEAKER_00",
+      "text": "This builds directly on the 2014 work on attention from Bahdanau and colleagues."
+    }
+  ],
+  "provenance": {
+    "wasDerivedFrom": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "generatedEntity": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "activity": "transcribe-media",
+    "used": [
+      ".aiwg/media/acquisitions/attention-mechanisms-in-practice.mp4"
+    ]
+  }
+}

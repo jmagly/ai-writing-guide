@@ -162,6 +162,13 @@ Expected research outputs:
 - Index/search metadata includes source type, speaker, channel/venue, source
   URL, transcript path, and storage policy.
 
+A complete, runnable worked example — `sample.acquisition.json` (from
+media-curator `/acquire`) and `sample.transcript.json` (from `/transcribe-media`)
+plus the three expected output artifacts — lives in `examples/`. See
+`examples/README.md`. The acquisition fixture is byte-identical to
+media-curator's `acquire/examples/sample.acquisition.json`, so the input contract
+is exercised end to end.
+
 ## References
 
 - @$AIWG_ROOT/agentic/code/frameworks/media-curator/skills/transcribe-media/SKILL.md

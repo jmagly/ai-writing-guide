@@ -640,6 +640,68 @@ export_metadata() {
 }
 ```
 
+### Acquisition Manifest (research handoff)
+
+For the media-curator to research-complete handoff, `/acquire` writes a
+per-media **acquisition manifest** beside each downloaded file (in addition to
+the session-level `state.json` and `metadata-export.json`). This manifest is the
+producer side of the contract that `induct-media` consumes — it is the file you
+pass as the first positional argument to `/induct-media`.
+
+Recommended filename: `<media-basename>.acquisition.json`
+
+Schema and required fields:
+
+- `schema`: `aiwg.media.acquisition.v1`
+- `title` — human-readable title of the acquired media
+- `source_url` — canonical source URL (strip trackers; normalize `watch?v=` form)
+- `platform` — `YouTube`, `Internet Archive`, `Bandcamp`, `direct`, etc.
+- `format` — `audio` or `video`
+- `media_path` — local path to the acquired file
+- `sha256` — SHA-256 of the exact local media bytes (`sha256:<hex>` convention,
+  matching the integrity-verification skill)
+- `duration` — `HH:MM:SS`
+- `license` — explicit posture: `platform ToS only`, `CC-BY-4.0`,
+  `public domain`, etc. Never assert a redistributable license you cannot verify.
+
+Optional fields (recorded when known — they let `induct-media` backlink
+profiles and skip re-derivation):
+
+- `speakers` — array of `{ "name": "Family, Given" }`
+- `channel_or_venue` — `{ "name": "..." }` (e.g. a YouTube channel, podcast
+  feed, or conference such as NeurIPS)
+- `acquisition_id`, `acquired_at`, `session_id` — provenance back to this run
+
+Emit one manifest per completed download:
+
+```bash
+write_acquisition_manifest() {
+  local media_path="$1" source_url="$2" platform="$3" format="$4"
+  local title="$5" duration="$6" license="$7"
+  local sha
+  sha="sha256:$(sha256sum "$media_path" | awk '{print $1}')"
+  local manifest="${media_path%.*}.acquisition.json"
+
+  jq -n \
+    --arg title "$title" --arg url "$source_url" --arg platform "$platform" \
+    --arg format "$format" --arg path "$media_path" --arg sha "$sha" \
+    --arg duration "$duration" --arg license "$license" \
+    --arg sid "$SESSION_ID" --arg at "$(date -Iseconds)" \
+    '{
+      schema: "aiwg.media.acquisition.v1",
+      acquisition_id: $sid, acquired_at: $at, session_id: $sid,
+      title: $title, source_url: $url, platform: $platform, format: $format,
+      media_path: $path, sha256: $sha, duration: $duration, license: $license
+    }' > "$manifest"
+
+  echo "Acquisition manifest: $manifest"
+}
+```
+
+See `examples/sample.acquisition.json` for a minimal manifest, and
+@$AIWG_ROOT/docs/integrations/media-curator-to-research-handoff.md for the full
+acquire → transcribe-media → induct-media flow.
+
 ## Integration with Other Commands
 
 ### Typical Workflow
@@ -699,3 +761,5 @@ export_metadata() {
 - @$AIWG_ROOT/agentic/code/frameworks/media-curator/skills/youtube-acquisition/SKILL.md — yt-dlp patterns; **read the Prerequisites section before any YouTube acquisition** (EJS / PO-token / pip-vs-zipapp gotchas)
 - @$AIWG_ROOT/agentic/code/frameworks/media-curator/skills/integrity-verification/SKILL.md — Verify downloaded files after acquisition
 - @$AIWG_ROOT/agentic/code/frameworks/media-curator/skills/provenance-tracking/SKILL.md — Track origin and derivation of acquired media
+- @$AIWG_ROOT/agentic/code/frameworks/media-curator/skills/transcribe-media/SKILL.md — Transcribe acquired media before research induction
+- @$AIWG_ROOT/agentic/code/frameworks/research-complete/skills/induct-media/SKILL.md — Consumes the acquisition manifest (`aiwg.media.acquisition.v1`) for the research handoff

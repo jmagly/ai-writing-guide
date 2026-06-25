@@ -85,4 +85,62 @@ describe('time-based media research contract', () => {
     expect(handoff).toContain('citation-guard` accepts this form');
     expect(handoff).toContain('research-query');
   });
+
+  it('aligns the acquire → induct-media acquisition manifest contract (#1477)', () => {
+    // Producer side: acquire documents the per-media manifest schema and the
+    // fields induct-media consumes.
+    const acquire = read('agentic/code/frameworks/media-curator/skills/acquire/SKILL.md');
+    expect(acquire).toContain('aiwg.media.acquisition.v1');
+    for (const field of ['title', 'source_url', 'platform', 'media_path', 'sha256', 'duration', 'license']) {
+      expect(acquire).toContain(field);
+    }
+
+    // Consumer side: induct-media references the same schema name.
+    const induct = read('agentic/code/frameworks/research-complete/skills/induct-media/SKILL.md');
+    expect(induct).toContain('aiwg.media.acquisition.v1');
+    expect(induct).toContain('aiwg.media.transcript.v1');
+
+    // Producer fixture exists, parses, and carries the contract keys.
+    const producerRaw = read('agentic/code/frameworks/media-curator/skills/acquire/examples/sample.acquisition.json');
+    const producer = JSON.parse(producerRaw);
+    expect(producer.schema).toBe('aiwg.media.acquisition.v1');
+    for (const field of ['title', 'source_url', 'platform', 'media_path', 'sha256', 'duration', 'license']) {
+      expect(producer[field]).toBeTruthy();
+    }
+  });
+
+  it('ships a self-consistent induct-media worked fixture (#1477)', () => {
+    const base = 'agentic/code/frameworks/research-complete/skills/induct-media/examples';
+    for (const f of ['README.md', 'sample.acquisition.json', 'sample.transcript.json',
+      'expected-REF-101.md', 'expected-REF-101-citations.md', 'expected-REF-101-radar.md']) {
+      expect(() => read(`${base}/${f}`)).not.toThrow();
+    }
+
+    // The induct-media acquisition fixture must be byte-identical to the
+    // media-curator producer fixture — no contract drift between the two skills.
+    const consumerAcq = read(`${base}/sample.acquisition.json`);
+    const producerAcq = read('agentic/code/frameworks/media-curator/skills/acquire/examples/sample.acquisition.json');
+    expect(consumerAcq).toBe(producerAcq);
+
+    const acq = JSON.parse(consumerAcq);
+    const transcript = JSON.parse(read(`${base}/sample.transcript.json`));
+
+    // Transcript was derived from the acquired bytes.
+    expect(transcript.source.sha256).toBe(acq.sha256);
+
+    // Every spoken-reference timestamp in the citations sidecar points at a real
+    // transcript segment, and the quoted text matches that segment exactly.
+    const citations = read(`${base}/expected-REF-101-citations.md`);
+    const segments = transcript.segments as Array<{ start: string; text: string }>;
+    const tableRows = citations
+      .split('\n')
+      .filter((l) => /\|\s*\d{2}:\d{2}:\d{2}\s*\|/.test(l));
+    expect(tableRows.length).toBeGreaterThan(0);
+    for (const row of tableRows) {
+      const ts = row.match(/\b(\d{2}:\d{2}:\d{2})\b/)![1];
+      const seg = segments.find((s) => s.start.startsWith(ts));
+      expect(seg, `timestamp ${ts} must exist in transcript segments`).toBeTruthy();
+      expect(row).toContain(seg!.text);
+    }
+  });
 });
