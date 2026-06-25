@@ -201,6 +201,44 @@ describe('Artifact Query Engine', () => {
     expect(consoleErrorSpy).not.toHaveBeenCalledWith(expect.stringContaining('Ambiguous'));
   });
 
+  it('prefers canonical bundle agents over top-level persona mirrors for duplicate names (#1643)', async () => {
+    const canonicalPath = 'agentic/code/addons/aiwg-utils/agents/aiwg-steward.md';
+    const personaPath = 'agentic/code/agents/personas/aiwg-steward.md';
+    fs.mkdirSync(path.join(tmpDir, path.dirname(canonicalPath)), { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, path.dirname(personaPath)), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, canonicalPath), '---\nname: aiwg-steward\n---\n\n# Canonical Steward\n');
+    fs.writeFileSync(path.join(tmpDir, personaPath), '---\nname: aiwg-steward\n---\n\n# Persona Steward\n');
+
+    const indexPath = path.join(tmpDir, INDEX_DIR, 'metadata.json');
+    const idx: ArtifactIndex = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+    idx.entries[canonicalPath] = createMockEntry({
+      path: canonicalPath,
+      type: 'agent',
+      title: 'AIWG Steward',
+      summary: 'Canonical steward',
+    });
+    idx.entries[personaPath] = createMockEntry({
+      path: personaPath,
+      type: 'agent',
+      title: 'AIWG Steward',
+      summary: 'OpenHuman persona mirror',
+    });
+    fs.writeFileSync(indexPath, JSON.stringify(idx));
+
+    const prevRoot = process.env.AIWG_ROOT;
+    process.env.AIWG_ROOT = tmpDir;
+    try {
+      await showArtifact(tmpDir, { typeFilter: ['agent'], name: 'aiwg-steward', json: true });
+      const parsed = JSON.parse(consoleSpy.mock.calls.map(c => c[0]).join(''));
+      expect(parsed.path).toBe(path.join(tmpDir, canonicalPath));
+      expect(parsed.content).toContain('# Canonical Steward');
+      expect(consoleErrorSpy).not.toHaveBeenCalledWith(expect.stringContaining('Ambiguous'));
+    } finally {
+      if (prevRoot === undefined) delete process.env.AIWG_ROOT;
+      else process.env.AIWG_ROOT = prevRoot;
+    }
+  });
+
   it('resolves a persona agent via the corpus fallback when not in any index (#1623 U5)', async () => {
     // An index exists (so showArtifact does not early-exit) but does NOT
     // contain the persona agent — the exact "un-indexed / stale framework

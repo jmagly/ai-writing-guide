@@ -970,6 +970,15 @@ export async function showArtifact(
     );
   }
 
+  // Top-level `agentic/code/agents/personas/*` entries are OpenHuman persona
+  // mirrors for some canonical bundle agents. Keep them discoverable as agents,
+  // but do not let those mirrors make `aiwg show agent <name>` ambiguous when
+  // there is exactly one canonical non-persona match (#1643).
+  if (matches.length > 1 && types.includes('agent')) {
+    const nonPersonaMatches = matches.filter(e => !isTopLevelPersonaAgentPath(e.path));
+    if (nonPersonaMatches.length === 1) matches = nonPersonaMatches;
+  }
+
   if (matches.length === 0) {
     // Corpus fallback (#1221): when the artifact isn't in any indexed graph,
     // scan the AIWG_ROOT corpus for a likely match and render it with an
@@ -1095,4 +1104,8 @@ export async function showArtifact(
   }
   process.stdout.write(content);
   if (!content.endsWith('\n')) process.stdout.write('\n');
+}
+
+function isTopLevelPersonaAgentPath(entryPath: string): boolean {
+  return /(^|[/\\])agentic[/\\]code[/\\]agents[/\\]personas[/\\][^/\\]+\.md$/.test(entryPath);
 }
