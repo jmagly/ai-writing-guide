@@ -369,7 +369,22 @@ async function destroyInstance(upstreamUrl, instanceId) {
       }
       return result;
     }
-  } catch {
+  } catch (err) {
+    const message = String(err?.message ?? err);
+    if (inst && / -> 404(?:;|$)/.test(message)) {
+      return {
+        target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/destroy`,
+        status: 200,
+        body: {
+          id: instanceId,
+          destroyed: instanceId,
+          state: 'destroyed',
+          result: { state: 'destroyed' },
+          already_gone: true,
+          message: `Instance ${instanceId} was already removed; inventory refreshed.`,
+        },
+      };
+    }
     // Current sandbox builds can list Docker rows in admin-v2 inventory while
     // lifecycle verbs return instance.not_found. Fall through to a dev cleanup.
   }

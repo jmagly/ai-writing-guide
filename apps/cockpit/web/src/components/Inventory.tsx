@@ -9,6 +9,7 @@ export function Inventory({ onStartSession, onLaunchInstance }: { onStartSession
   const [data, setData] = useState<Inv | null>(null);
   const [err, setErr] = useState('');
   const [actionErr, setActionErr] = useState('');
+  const [actionMsg, setActionMsg] = useState('');
 
   const load = useCallback(() => {
     api<Inv>('/api/inventory').then((d) => { setData(d); setErr(''); }).catch((e) => setErr((e as Error).message));
@@ -16,7 +17,16 @@ export function Inventory({ onStartSession, onLaunchInstance }: { onStartSession
   useEffect(() => { load(); }, [load]);
 
   const control = (path: string, method: string) =>
-    api(path, { method }).then(() => { setActionErr(''); load(); }).catch((e) => setActionErr((e as Error).message));
+    api<{ already_gone?: boolean; message?: string }>(path, { method })
+      .then((result) => {
+        setActionErr('');
+        setActionMsg(result.already_gone ? (result.message ?? 'Instance already removed; inventory refreshed.') : '');
+        load();
+      })
+      .catch((e) => {
+        setActionMsg('');
+        setActionErr((e as Error).message);
+      });
 
   if (err) return <p className="err">Could not load inventory: {err}</p>;
   if (!data) return <p className="empty">Loading…</p>;
@@ -40,6 +50,7 @@ export function Inventory({ onStartSession, onLaunchInstance }: { onStartSession
         {onLaunchInstance && <button className="cta" onClick={onLaunchInstance}>＋ New instance + session</button>}
       </div>
       {actionErr && <p className="err">Action failed: {actionErr}</p>}
+      {actionMsg && <p className="hint" role="status">{actionMsg}</p>}
       <table>
         <caption>Available instance deployments</caption>
         <thead>

@@ -139,7 +139,14 @@
 
     // shared: POST/DELETE a control-plane call, then re-run a loader
     async function control(path, method, reload) {
-      try { await api(path, { method }); } catch (e) { alert(e.message); }
+      try {
+        const res = await api(path, { method });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(`${path} → ${res.status}`);
+        if (body.already_gone) {
+          meta.textContent = body.message || 'Instance already removed; inventory refreshed.';
+        }
+      } catch (e) { alert(e.message); }
       if (reload) reload();
     }
 

@@ -163,6 +163,13 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
               launchContext: { cwd: '/work', selectedTier: 'host' },
               hostDaemon: { status: 'degraded', detail: 'reachable with warnings' },
               security: { transport: { mode: 'mtls-local-ca', source: 'v2 admin', evidence: 'peer cert fingerprint' } },
+            }, {
+              instanceId: 'ghost-vm-1',
+              runtime: { kind: 'qemu' },
+              loadout: 'vm-tools',
+              status: 'running',
+              tenantId: 'default',
+              launchContext: { selectedTier: 'vm' },
             }],
           },
         });
@@ -268,6 +275,16 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     expect(await (await cf('/api/instances/v2-host-1/start', { method: 'POST' })).json()).toMatchObject({ status: 'running' });
     expect(await (await cf('/api/instances/v2-host-1/stop', { method: 'POST' })).json()).toMatchObject({ status: 'stopped' });
     expect(await (await cf('/api/instances/v2-host-1', { method: 'DELETE' })).json()).toMatchObject({ destroyed: 'v2-host-1' });
+  });
+
+  it('treats destroy 404 for an inventory-visible stale instance as already gone', async () => {
+    const res = await cf('/api/instances/ghost-vm-1', { method: 'DELETE' });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      destroyed: 'ghost-vm-1',
+      already_gone: true,
+      result: { state: 'destroyed' },
+    });
   });
 });
 

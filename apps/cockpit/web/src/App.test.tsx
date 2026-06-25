@@ -195,6 +195,30 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getByText('Destination')).toBeTruthy();
   });
 
+  it('treats stale destroy 404 responses as already removed in Inventory (#1660)', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const inventory = { instances: [instance('ghost-vm-1', 'vm', 'QEMU Codex')], count: 1, fetched_at: new Date().toISOString() };
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+      if (url.includes('/api/inventory')) return jsonResponse(inventory);
+      if (url.includes('/api/running')) return jsonResponse({ count: 0, running: [] });
+      if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
+      if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 0, output_tokens: 0, usd: 0 }, per_instance: [] });
+      if (url.includes('/api/instances/ghost-vm-1') && init?.method === 'DELETE') {
+        return jsonResponse({ destroyed: 'ghost-vm-1', already_gone: true, message: 'Instance ghost-vm-1 was already removed; inventory refreshed.' });
+      }
+      return jsonResponse({});
+    }) as typeof fetch;
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Inventory' }));
+    fireEvent.click(await screen.findByRole('button', { name: /destroy instance ghost-vm-1/i }));
+
+    expect((await screen.findByRole('status')).textContent).toMatch(/already removed; inventory refreshed/i);
+    expect(screen.queryByText(/action failed/i)).toBeNull();
+  });
+
   it('each tab has a matching labelled tabpanel (controls/labelledby pairing)', () => {
     render(<App />);
     for (const tab of screen.getAllByRole('tab')) {
