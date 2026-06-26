@@ -503,6 +503,24 @@ type: use-case
       warnSpy.mockRestore();
     });
 
+    it('should skip gracefully when any auto-selected graph dirs do not exist', async () => {
+      // `aiwg index build --all` auto-selects framework even though it is
+      // defaultBuild:false. Corpus repos should not fail just because they do
+      // not carry framework source directories locally.
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('process.exit');
+      });
+
+      await expect(buildIndex(tmpDir, { graph: 'framework', explicit: false })).resolves.toBeUndefined();
+
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('framework graph: scan directories not found'));
+      expect(exitSpy).not.toHaveBeenCalled();
+
+      exitSpy.mockRestore();
+      warnSpy.mockRestore();
+    });
+
     it('should error when explicitly requested graph dirs do not exist', async () => {
       // explicit: true (--graph codebase) should still hard-error
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

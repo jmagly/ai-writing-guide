@@ -289,7 +289,7 @@ async function handleBuild(args: string[]): Promise<void> {
     console.log('  --graph <name>   Build a specific graph only (built-in or user-defined)');
     console.log('');
     console.log('Built-in graph names: project, codebase, framework');
-    console.log('User-defined graphs: configure under index.graphs in .aiwg/config.yaml');
+    console.log('User-defined graphs: configure under index.graphs in .aiwg/aiwg.config');
     console.log('');
     console.log('Default behavior (no --graph): builds all graphs with defaultBuild: true');
     console.log('  Built-in defaults: project (always), codebase (skipped if src/test/tools absent)');

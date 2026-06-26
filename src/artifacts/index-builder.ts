@@ -548,9 +548,10 @@ export async function buildIndex(
   // Verify at least one scan directory exists
   const existingDirs = scanDirs.filter(d => fs.existsSync(d));
   if (existingDirs.length === 0) {
-    // If this graph was auto-selected (defaultBuild) rather than explicitly requested via --graph,
-    // skip gracefully — a docs-only repo should not be forced to have src/test/tools.
-    if (graphConfig?.defaultBuild && !explicit) {
+    // If this graph was auto-selected rather than explicitly requested via --graph,
+    // skip gracefully — docs/corpus repos should not be forced to have every
+    // built-in or user-defined graph root when `--all` asks for the available set.
+    if (!explicit) {
       const relDirs = scanDirs.map(d => path.relative(cwd, d)).join(', ');
       console.warn(`Warning: ${graph} graph: scan directories not found (${relDirs}), skipping`);
       return;
