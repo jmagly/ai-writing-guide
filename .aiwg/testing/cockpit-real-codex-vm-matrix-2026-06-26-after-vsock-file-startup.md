@@ -1,0 +1,26 @@
+# Cockpit Live UAT Report
+- Issue: #1621
+- Executor: http://127.0.0.1:8122
+- Required: yes
+- Matrix required: yes
+- Matrix targets: vm
+- Provision targets: yes
+- Workload provider: codex
+- Discovery expectation: issue-audit
+- Result: fail
+- Started: 2026-06-26T05:22:27.415Z
+- Finished: 2026-06-26T05:26:21.191Z
+- agentic-sandbox-conformance report: not provided
+- JSON report: /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-real-codex-vm-matrix-2026-06-26-after-vsock-file-startup.json
+- Markdown report: /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-real-codex-vm-matrix-2026-06-26-after-vsock-file-startup.md
+- Executor identity: {"version_hint":"agentic-sandbox-v2026.6.33-3-gbbf9fa1"}
+## Evidence
+- PASS executor probe: reachable at http://127.0.0.1:8122
+- PASS executor identity: {"version_hint":"agentic-sandbox-v2026.6.33-3-gbbf9fa1"}
+- PASS Bridge health: Bridge reported executor http://127.0.0.1:8122
+- PASS inventory posture: 1 instance(s) with normalized posture fields
+- SKIP session metadata: sessions endpoint returned 502 or no sessions
+- PASS task projection: 0 running task(s) reported
+- FAIL provision vm: provisioned vm did not become boot-ready within 180000ms; last=inventory=200/{"id":"019f0261-23d2-73a0-a100-a8f6595e9b63","runtime":"qemu","loadout":"profiles/basic.yaml","state":"running","tenant":"default","card_url":"http://127.0.0.1:8122/agents/019f0261-23d2-73a0-a100-a8f6595e9b63/.well-known/agent-card.json","runtime_posture":{"kind":"qemu","isolation":"opaque","label":"qemu / opaque runtime","warning":"Future or unrecognized runtime kind; Cockpit is rendering it conservatively."},"host_daemon":{"status":"unavailable","detail":"Not applicable for this runtime tier."},"transport":{"mode":"bootstrap-pending","trust":"unknown","label":"Unknown transport","source":"agentic-sandbox admin-v2","stale":false},"launch_context":{"loadout":"profiles/basic.yaml","runtime_kind":"qemu","selected_tier":"qemu","name":"019f0261-23d2-73a0-a100-a8f6595e9b63","source":"agent-card runtime extension"},"agent_ready":false,"session_backends":[{"mode":"direct","backend":"native","observe":true,"drive":false,"replay":false,"keyframe":false,"available":false,"reason":"sandbox did not advertise session-host capabilities"}]} agents=200/{"agents":[]}
+- FAIL matrix vm: provision failed for required live target vm: provisioned vm did not become boot-ready within 180000ms; last=inventory=200/{"id":"019f0261-23d2-73a0-a100-a8f6595e9b63","runtime":"qemu","loadout":"profiles/basic.yaml","state":"running","tenant":"default","card_url":"http://127.0.0.1:8122/agents/019f0261-23d2-73a0-a100-a8f6595e9b63/.well-known/agent-card.json","runtime_posture":{"kind":"qemu","isolation":"opaque","label":"qemu / opaque runtime","warning":"Future or unrecognized runtime kind; Cockpit is rendering it conservatively."},"host_daemon":{"status":"unavailable","detail":"Not applicable for this runtime tier."},"transport":{"mode":"bootstrap-pending","trust":"unknown","label":"Unknown transport","source":"agentic-sandbox admin-v2","stale":false},"launch_context":{"loadout":"profiles/basic.yaml","runtime_kind":"qemu","selected_tier":"qemu","name":"019f0261-23d2-73a0-a100-a8f6595e9b63","source":"agent-card runtime extension"},"agent_ready":false,"session_backends":[{"mode":"direct","backend":"native","observe":true,"drive":false,"replay":false,"keyframe":false,"available":false,"reason":"sandbox did not advertise session-host capabilities"}]} agents=200/{"agents":[]}
+- FAIL required host/container/vm matrix executes real provider-backed session workloads: required live matrix failed for 1/1 target(s): provision failed for required live target vm: provisioned vm did not become boot-ready within 180000ms; last=inventory=200/{"id":"019f0261-23d2-73a0-a100-a8f6595e9b63","runtime":"qemu","loadout":"profiles/basic.yaml","state":"running","tenant":"default","card_url":"http://127.0.0.1:8122/agents/019f0261-23d2-73a0-a100-a8f6595e9b63/.well-known/agent-card.json","runtime_posture":{"kind":"qemu","isolation":"opaque","label":"qemu / opaque runtime","warning":"Future or unrecognized runtime kind; Cockpit is rendering it conservatively."},"host_daemon":{"status":"unavailable","detail":"Not applicable for this runtime tier."},"transport":{"mode":"bootstrap-pending","trust":"unknown","label":"Unknown transport","source":"agentic-sandbox admin-v2","stale":false},"launch_context":{"loadout":"profiles/basic.yaml","runtime_kind":"qemu","selected_tier":"qemu","name":"019f0261-23d2-73a0-a100-a8f6595e9b63","source":"agent-card runtime extension"},"agent_ready":false,"session_backends":[{"mode":"direct","backend":"native","observe":true,"drive":false,"replay":false,"keyframe":false,"available":false,"reason":"sandbox did not advertise session-host capabilities"}]} agents=200/{"agents":[]}
