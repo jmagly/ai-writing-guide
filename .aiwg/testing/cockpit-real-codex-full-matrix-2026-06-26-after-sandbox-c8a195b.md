@@ -1,0 +1,29 @@
+# Cockpit Live UAT Report
+- Issue: #1621
+- Executor: http://127.0.0.1:8122
+- Required: yes
+- Matrix required: yes
+- Matrix targets: host, container, vm
+- Provision targets: yes
+- Workload provider: codex
+- Discovery expectation: issue-audit
+- Result: pass
+- Started: 2026-06-26T06:46:53.870Z
+- Finished: 2026-06-26T06:48:36.608Z
+- agentic-sandbox-conformance report: not provided
+- JSON report: /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-real-codex-full-matrix-2026-06-26-after-sandbox-c8a195b.json
+- Markdown report: /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-real-codex-full-matrix-2026-06-26-after-sandbox-c8a195b.md
+- Executor identity: {"version_hint":"agentic-sandbox-v2026.6.33-5-gc8a195b"}
+## Evidence
+- PASS executor probe: reachable at http://127.0.0.1:8122
+- PASS executor identity: {"version_hint":"agentic-sandbox-v2026.6.33-5-gc8a195b"}
+- PASS Bridge health: Bridge reported executor http://127.0.0.1:8122
+- PASS inventory posture: 1 instance(s) with normalized posture fields
+- SKIP session metadata: sessions endpoint returned 502 or no sessions
+- PASS task projection: 0 running task(s) reported
+- PASS provision host: operation=d4a7956d-3d49-402d-8f56-08d1153d6ec4; instance=019f02ae-71e0-7382-b665-7ba59c41b304; runtime=host; state=running; backend=managed/tmux; agent=host-019f02ae
+- PASS provision container: operation=c3bd44e2-7519-4e7c-8d1e-63e709dd73f2; instance=019f02ae-7b04-7170-80ee-52aa0bb581f2; runtime=container; state=running; backend=managed/tmux; agent=cockpit-uat-container-mqukj1me
+- PASS provision vm: operation=c926e991-32d2-40fe-9d2b-99c8ae81c6ba; instance=019f02ae-83b0-7c03-9a5b-5fa344549810; runtime=vm; state=running; backend=managed/tmux; agent=cockpit-uat-vm-mqukj3c3
+- PASS matrix host: target=host; instance=019f02ae-71e0-7382-b665-7ba59c41b304; runtime=host; backend=managed/tmux; provider=codex; provider CLI workload emitted AIWG_COCKPIT_LIVE_OK and discovery result issue-audit; running_projection_count=0; output_bytes=318
+- PASS matrix container: target=container; instance=019f02ae-7b04-7170-80ee-52aa0bb581f2; runtime=container; backend=managed/tmux; provider=codex; provider CLI workload emitted AIWG_COCKPIT_LIVE_OK and discovery result issue-audit; running_projection_count=0; output_bytes=318
+- PASS matrix vm: target=vm; instance=019f02ae-83b0-7c03-9a5b-5fa344549810; runtime=vm; backend=managed/tmux; provider=codex; provider CLI workload emitted AIWG_COCKPIT_LIVE_OK and discovery result issue-audit; running_projection_count=0; output_bytes=318
