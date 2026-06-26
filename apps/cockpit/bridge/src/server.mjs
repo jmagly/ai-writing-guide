@@ -472,7 +472,7 @@ function normalizeRuntimePosture(kind) {
     label: 'Container / shared kernel',
     warning: 'Container isolation shares the host kernel.',
   };
-  if (runtime === 'vm') return { kind: runtime, isolation: 'strong', label: 'VM / hardware boundary' };
+  if (runtime === 'vm' || runtime === 'qemu' || runtime === 'kvm') return { kind: 'vm', isolation: 'strong', label: 'VM / hardware boundary' };
   if (runtime === 'unknown') return { kind: runtime, isolation: 'unknown', label: 'Unknown runtime', warning: 'Runtime metadata was not reported by the sandbox.' };
   return {
     kind: runtime,
@@ -525,7 +525,7 @@ function normalizeSessionBackends(backends, runtimeKind, state = 'unknown', agen
   if (!list.length && runtimeKind === 'host') {
     return [{ mode: 'managed', backend: 'tmux', observe: true, drive: true, replay: false, keyframe: false, available: true, reason: 'agentic-sandbox v1 host session API default' }];
   }
-  if (!list.length && ['docker', 'container', 'vm'].includes(runtimeKind) && String(state).toLowerCase() === 'running') {
+  if (!list.length && ['docker', 'container', 'vm', 'qemu', 'kvm'].includes(runtimeKind) && String(state).toLowerCase() === 'running') {
     return [{
       mode: 'managed',
       backend: 'tmux',
@@ -1181,7 +1181,6 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
               session_class: mode || 'managed',
               command: 'bash',
               args: ['-l'],
-              working_dir: '/root',
             }),
           },
           {

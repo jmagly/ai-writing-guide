@@ -625,8 +625,20 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
           record(`matrix ${target}`, 'skip', `${targetDetail}; observe-only target with capability evidence: ${backend.reason ?? 'drive=false'}`);
           continue;
         }
+        const driveStart = await bridgeJson(
+          base,
+          token,
+          `/api/instances/${encodeURIComponent(instance.id)}/sessions?mode=${encodeURIComponent(backend.mode ?? 'direct')}&backend=${encodeURIComponent(backend.backend ?? 'native')}`,
+          { method: 'POST' },
+        );
+        if (![200, 201].includes(driveStart.status)) {
+          throw new Error(`${targetDetail}; drive session create returned ${driveStart.status}`);
+        }
+        if (!driveStart.body.attach_url) {
+          throw new Error(`${targetDetail}; drive session create returned no attach_url`);
+        }
         const providerCommand = providerWorkloadCommand(WORKLOAD_PROVIDER, WORKLOAD_TEXT);
-        const driven = await websocketSessionProbe(start.body.attach_url, 'controller', providerCommand);
+        const driven = await websocketSessionProbe(driveStart.body.attach_url, 'controller', providerCommand);
         if (!driven.roleAssigned) throw new Error(`${targetDetail}; drive attach not granted`);
         if (!driven.output.trim()) throw new Error(`${targetDetail}; no terminal output for provider workload`);
         if (!driven.output.includes(WORKLOAD_MARKER)) {

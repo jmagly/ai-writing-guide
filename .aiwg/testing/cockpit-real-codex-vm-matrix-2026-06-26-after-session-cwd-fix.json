@@ -1,0 +1,78 @@
+{
+  "issue": 1621,
+  "executor_url": "http://127.0.0.1:8122",
+  "required": true,
+  "matrix_required": true,
+  "matrix_targets": [
+    "vm"
+  ],
+  "provision_targets": true,
+  "provision_name_prefix": "cockpit-uat",
+  "provision_loadout": null,
+  "provision_image": null,
+  "provision_profile": null,
+  "provider": "codex",
+  "discovery_expect": "issue-audit",
+  "mutation_file": null,
+  "mutation_marker": null,
+  "result": "fail",
+  "started_at": "2026-06-26T06:09:41.676Z",
+  "finished_at": "2026-06-26T06:10:23.091Z",
+  "conformance_report": null,
+  "artifact_paths": {
+    "json_report": "/home/roctinam/dev/aiwg/.aiwg/testing/cockpit-real-codex-vm-matrix-2026-06-26-after-session-cwd-fix.json",
+    "markdown_report": "/home/roctinam/dev/aiwg/.aiwg/testing/cockpit-real-codex-vm-matrix-2026-06-26-after-session-cwd-fix.md",
+    "conformance_report": null,
+    "mutation_file": null
+  },
+  "executor_identity": {
+    "version_hint": "agentic-sandbox-v2026.6.33-3-gbbf9fa1-dirty"
+  },
+  "evidence": [
+    {
+      "name": "executor probe",
+      "status": "pass",
+      "detail": "reachable at http://127.0.0.1:8122"
+    },
+    {
+      "name": "executor identity",
+      "status": "pass",
+      "detail": "{\"version_hint\":\"agentic-sandbox-v2026.6.33-3-gbbf9fa1-dirty\"}"
+    },
+    {
+      "name": "Bridge health",
+      "status": "pass",
+      "detail": "Bridge reported executor http://127.0.0.1:8122"
+    },
+    {
+      "name": "inventory posture",
+      "status": "pass",
+      "detail": "1 instance(s) with normalized posture fields"
+    },
+    {
+      "name": "session metadata",
+      "status": "skip",
+      "detail": "sessions endpoint returned 502 or no sessions"
+    },
+    {
+      "name": "task projection",
+      "status": "pass",
+      "detail": "0 running task(s) reported"
+    },
+    {
+      "name": "provision vm",
+      "status": "pass",
+      "detail": "operation=d3e99d93-bac6-473f-afff-ef82fc57acbc; instance=019f028c-6057-7fd2-91ea-47e90d328b42; runtime=vm; state=running; backend=managed/tmux; agent=cockpit-uat-vm-mquj751n"
+    },
+    {
+      "name": "matrix vm",
+      "status": "fail",
+      "detail": "websocket controller denied: session.closed"
+    },
+    {
+      "name": "required host/container/vm matrix executes real provider-backed session workloads",
+      "status": "fail",
+      "detail": "required live matrix failed for 1/1 target(s): websocket controller denied: session.closed"
+    }
+  ]
+}

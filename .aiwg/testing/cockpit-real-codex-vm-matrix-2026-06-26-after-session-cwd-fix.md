@@ -1,0 +1,26 @@
+# Cockpit Live UAT Report
+- Issue: #1621
+- Executor: http://127.0.0.1:8122
+- Required: yes
+- Matrix required: yes
+- Matrix targets: vm
+- Provision targets: yes
+- Workload provider: codex
+- Discovery expectation: issue-audit
+- Result: fail
+- Started: 2026-06-26T06:09:41.676Z
+- Finished: 2026-06-26T06:10:23.091Z
+- agentic-sandbox-conformance report: not provided
+- JSON report: /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-real-codex-vm-matrix-2026-06-26-after-session-cwd-fix.json
+- Markdown report: /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-real-codex-vm-matrix-2026-06-26-after-session-cwd-fix.md
+- Executor identity: {"version_hint":"agentic-sandbox-v2026.6.33-3-gbbf9fa1-dirty"}
+## Evidence
+- PASS executor probe: reachable at http://127.0.0.1:8122
+- PASS executor identity: {"version_hint":"agentic-sandbox-v2026.6.33-3-gbbf9fa1-dirty"}
+- PASS Bridge health: Bridge reported executor http://127.0.0.1:8122
+- PASS inventory posture: 1 instance(s) with normalized posture fields
+- SKIP session metadata: sessions endpoint returned 502 or no sessions
+- PASS task projection: 0 running task(s) reported
+- PASS provision vm: operation=d3e99d93-bac6-473f-afff-ef82fc57acbc; instance=019f028c-6057-7fd2-91ea-47e90d328b42; runtime=vm; state=running; backend=managed/tmux; agent=cockpit-uat-vm-mquj751n
+- FAIL matrix vm: websocket controller denied: session.closed
+- FAIL required host/container/vm matrix executes real provider-backed session workloads: required live matrix failed for 1/1 target(s): websocket controller denied: session.closed

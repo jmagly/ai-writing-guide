@@ -170,6 +170,13 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
               status: 'running',
               tenantId: 'default',
               launchContext: { selectedTier: 'vm' },
+            }, {
+              instanceId: 'ready-qemu-1',
+              runtime: { kind: 'qemu' },
+              loadout: 'vm-tools',
+              status: 'running',
+              tenantId: 'default',
+              launchContext: { selectedTier: 'vm' },
             }],
           },
         });
@@ -194,7 +201,10 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
         return send(200, { destroyed: 'v2-host-1' });
       }
       if (url.pathname === '/api/v1/agents') {
-        return send(200, { agents: [{ id: 'agent-v2-host-1', instance_id: 'v2-host-1', status: 'Ready' }] });
+        return send(200, { agents: [
+          { id: 'agent-v2-host-1', instance_id: 'v2-host-1', status: 'Ready' },
+          { id: 'agent-ready-qemu-1', instance_id: 'ready-qemu-1', status: 'Ready' },
+        ] });
       }
       if (url.pathname === '/agents/v2-host-1/sessions') return send(404, { error: 'legacy_sessions_absent' });
       if (url.pathname === '/agents/v2-host-1/v1/sessions') return send(404, { error: 'preformal_sessions_absent' });
@@ -246,6 +256,12 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
       host_daemon: { status: 'degraded' },
     });
     expect(inv.instances[0].session_backends[0]).toMatchObject({ mode: 'managed', backend: 'tmux', available: true, drive: true });
+    expect(inv.instances.find((x) => x.id === 'ready-qemu-1')).toMatchObject({
+      runtime: 'qemu',
+      runtime_posture: { kind: 'vm', isolation: 'strong' },
+      agent_ready: true,
+      session_backends: [expect.objectContaining({ mode: 'managed', backend: 'tmux', available: true, drive: true })],
+    });
 
     const running = await (await cf('/api/running')).json();
     expect(running.running[0]).toMatchObject({ instance_id: 'v2-host-1', task_id: 'task-1', state: 'working' });
@@ -268,6 +284,7 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
       id: 'sess-created-v1',
       requested: { session_backend: 'tmux', session_class: 'managed', command: 'bash' },
     });
+    expect(created.requested).not.toHaveProperty('working_dir');
     expect(created.attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-created-v1\/attach$/);
   });
 
