@@ -1,0 +1,24 @@
+# Cockpit Live UAT Report
+- Issue: #1621
+- Executor: http://127.0.0.1:8122
+- Required: yes
+- Matrix required: yes
+- Matrix targets: vm
+- Provision targets: yes
+- Workload provider: codex
+- Discovery expectation: issue-audit
+- Result: pass
+- Started: 2026-06-27T20:07:20.538Z
+- Finished: 2026-06-27T20:07:48.217Z
+- agentic-sandbox-conformance report: not provided
+- JSON report: /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-vm-vsock-2026-06-27.json
+- Markdown report: /home/roctinam/dev/aiwg/.aiwg/testing/cockpit-vm-vsock-2026-06-27.md
+- Executor identity: {"version_hint":"agentic-sandbox-vsock-local"}
+## Evidence
+- PASS executor probe: reachable at http://127.0.0.1:8122
+- PASS executor identity: {"version_hint":"agentic-sandbox-vsock-local"}
+- PASS Bridge health: Bridge reported executor http://127.0.0.1:8122
+- SKIP inventory posture: live executor returned zero instances; matrix provision mode will create target(s)
+- SKIP session smoke: no inventory before matrix provision step
+- PASS provision vm: operation=d227d319-1d12-4001-87c8-11bcd38b3732; instance=019f0ab1-9f61-70f2-819c-6b67abacf624; runtime=vm; state=running; backend=managed/tmux; agent=cockpit-uat-vm-mqwsk7kq
+- PASS matrix vm: target=vm; instance=019f0ab1-9f61-70f2-819c-6b67abacf624; runtime=vm; backend=managed/tmux; provider=codex; provider CLI workload emitted AIWG_COCKPIT_LIVE_OK and discovery result issue-audit; running_projection_count=0; output_bytes=318
