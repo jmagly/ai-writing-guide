@@ -202,10 +202,21 @@ interface OperationStatus {
   error?: { message?: string; detail?: string; code?: string } | string;
 }
 
+// How long the picker waits for a newly-launched instance's agent to register
+// before handing the user back to Inventory. Heavy loadouts (e.g. full-suite —
+// all 9 providers × 6 frameworks) legitimately take well over a minute to
+// install and enroll their agent inside a fresh container/VM, so a short wait
+// produced false "no session-ready agent" failures for instances that were in
+// fact up and still installing. Overridable via window.AIWG_COCKPIT_SESSION_WAIT_S.
+const SESSION_READY_TIMEOUT_S = (() => {
+  const raw = Number((window as unknown as { AIWG_COCKPIT_SESSION_WAIT_S?: unknown }).AIWG_COCKPIT_SESSION_WAIT_S);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 150;
+})();
+
 async function waitForSessionReady(instanceId?: string, operationId?: string) {
   let last = '';
   let operationDetail = '';
-  for (let i = 0; i < 45; i += 1) {
+  for (let i = 0; i < SESSION_READY_TIMEOUT_S; i += 1) {
     if (operationId) {
       const op = await api<OperationStatus>(`/api/operations/${encodeURIComponent(operationId)}`);
       const state = String(op.state ?? '').toLowerCase();
@@ -234,7 +245,12 @@ async function waitForSessionReady(instanceId?: string, operationId?: string) {
     }
     await sleep(1_000);
   }
-  throw new Error(`Instance launched, but no session-ready agent appeared within 45s (${last}).`);
+  const where = instanceId ? `Instance ${instanceId}` : 'The instance';
+  throw new Error(
+    `${where} launched and is still installing its loadout — its agent had not registered after ${SESSION_READY_TIMEOUT_S}s `
+    + `(${last}). This is not a failure: heavy loadouts (e.g. full-suite) can take longer. `
+    + `It will appear under Inventory once its agent enrolls; open a session from there when it shows as running.`,
+  );
 }
 
 function operationFailure(op: OperationStatus) {

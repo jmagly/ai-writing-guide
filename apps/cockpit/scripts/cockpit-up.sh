@@ -88,7 +88,19 @@ MSG
       exit 1
     fi
     echo "• executor not up — bringing up the latest agentic-sandbox via ${SANDBOX_DIR}/management/dev.sh"
-    ( cd "${SANDBOX_DIR}/management" && ./dev.sh )
+    # Bring the executor up with all three runtime tiers usable from the Cockpit:
+    #   - VM: vsock transport (guest agents enroll over their hypervisor CID).
+    #   - Host: the opt-in bare-host runtime supervisor (in-process "local" mode;
+    #     without this the host tier fail-closes and the picker shows
+    #     "No registered host available"). See agentic-sandbox
+    #     docs/runtimes/host-supervisor.md.
+    #   - Docker: always available, no flag needed.
+    # Operators can override any of these in the environment before calling.
+    ( cd "${SANDBOX_DIR}/management" \
+        && AGENTIC_GRPC_VSOCK_PORT="${AGENTIC_GRPC_VSOCK_PORT:-8120}" \
+           AGENTIC_GRPC_VSOCK_CID_MAP_FILE="${AGENTIC_GRPC_VSOCK_CID_MAP_FILE:-/var/lib/agentic-sandbox/vms/.vsock-cid-registry}" \
+           AGENTIC_HOST_RUNTIME_ENABLED="${AGENTIC_HOST_RUNTIME_ENABLED:-1}" \
+           ./dev.sh )
     if executor_healthy; then
       echo "✓ agentic-sandbox executor up at ${EXECUTOR_URL}"
     else
