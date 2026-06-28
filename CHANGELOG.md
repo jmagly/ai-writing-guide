@@ -7,6 +7,50 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.12] - 2026-06-28 - "Cockpit VM sessions over vsock"
+
+Validates the Cockpit live VM session path end to end against the
+agentic-sandbox vsock transport line, adds a launcher that brings the executor
+and Cockpit up together, hardens stale-instance handling, and fixes two
+artifact-index edge cases.
+
+### Added
+
+- **`cockpit-up` launcher (#1657)** — `npm run cockpit:up` (and
+  `apps/cockpit/scripts/cockpit-up.sh`) ensures both halves of the stack are
+  running: it health-checks the agentic-sandbox executor, starts the latest
+  sandbox via its `management/dev.sh` if it is down, then brings up the Cockpit
+  Bridge and web UI. `--rebuild` forces a fresh web build.
+- **`acquire → induct-media` handoff contract (media-curator, research)** — the
+  media-curator acquisition flow now emits an explicit, validated handoff to the
+  research `induct-media` step so acquired media flows into the research corpus
+  without a manual bridge.
+
+### Fixed
+
+- **Cockpit live VM sessions validated over vsock (#561, #1659)** — re-ran the
+  Cockpit live matrix against the agentic-sandbox vsock transport line
+  (`v2026.6.31`–`v2026.6.34`). The VM target now provisions, enrolls over vsock,
+  reaches boot-ready, runs the provider workload, and tears down cleanly — the
+  path that previously hung at `bootstrap-pending`. Evidence:
+  `.aiwg/testing/cockpit-vm-vsock-2026-06-27.md/.json`.
+- **Cockpit treats a stale destroy 404 as already-gone (#1660)** — destroying an
+  instance the executor has already reaped no longer surfaces a raw 404; the
+  Bridge maps it to an `already_gone` result and refreshes inventory.
+- **Artifact index: prefer canonical agents over persona mirrors** — index
+  builds now resolve the canonical agent definition rather than a persona mirror
+  when both exist, preventing duplicate/incorrect agent records.
+- **Artifact index: handle missing graphs in `index build` all-graph mode** — a
+  missing graph no longer aborts an all-graph index build.
+
+### Documentation
+
+- Refreshed the Cockpit README agentic-sandbox compatibility notes to record the
+  `v2026.6.34` container and VM matrix re-validation.
+- Added explicit `aiwg discover` triggers to the media-curator
+  `transcribe-media` skill.
+- Refreshed the deployed-agent count in `AGENTS.md` to 198.
+
 ## [2026.6.11] - 2026-06-23 - "Tiered provider-context bridge"
 
 Shrinks default agent startup context with a tiered provider-context model,

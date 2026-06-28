@@ -382,11 +382,14 @@ Known state as of the 2026-06-19 host live run:
   roctinam/agentic-sandbox#499 for upstream regression tracking, but it was not
   reproduced by this isolated host proof.
 - Docker/container secure bootstrap is fixed from the agentic-sandbox side in
-  `v2026.6.24`; roctinam/agentic-sandbox#497 is closed. AIWG still needs to
-  rerun this matrix against that release and record Cockpit-side evidence.
-- VM bootstrap/readiness is fixed from the agentic-sandbox side in
-  `v2026.6.24`; roctinam/agentic-sandbox#498 is closed. AIWG still needs to
-  rerun this matrix against that release and record Cockpit-side evidence.
+  `v2026.6.24`; roctinam/agentic-sandbox#497 is closed. Re-validated Cockpit-side
+  against `v2026.6.34`: container matrix PASS.
+- VM bootstrap/readiness is fixed from the agentic-sandbox side via the vsock
+  transport line (`v2026.6.31`–`v2026.6.34`); roctinam/agentic-sandbox#498 and
+  the #561 transport regression are closed. Re-validated Cockpit-side against
+  `v2026.6.34`: VM matrix PASS — provision → vsock enroll → boot-ready → provider
+  workload → clean destroy. Evidence:
+  `.aiwg/testing/cockpit-vm-vsock-2026-06-27.md/.json`.
 - Remaining upstream follow-ups are Claude auth-state propagation
   (roctinam/agentic-sandbox#499) and agent-scoped PTY sessions not appearing in
   the formal/global session registry (roctinam/agentic-sandbox#500).
