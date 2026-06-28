@@ -116,8 +116,7 @@ export function Inventory({ onStartSession, onLaunchInstance }: { onStartSession
                   : <button aria-label={`Start instance ${fmtId(i.id)}`} onClick={() => control(`/api/instances/${encodeURIComponent(i.id)}/start`, 'POST')}>Start Instance</button>}{' '}
                 <button
                   aria-label={`Destroy instance ${fmtId(i.id)}`}
-                  disabled={i.state !== 'running' && i.runtime === 'docker'}
-                  title={i.state !== 'running' && i.runtime === 'docker' ? 'Sandbox reports this stopped Docker row but admin-v2 no longer has a destroyable instance record.' : undefined}
+                  title={i.state !== 'running' && i.runtime === 'docker' ? 'Stopped Docker row — Destroy removes the container directly (admin-v2 has no instance record).' : undefined}
                   onClick={() => { if (confirm(`Destroy ${fmtId(i.id)}? This cannot be undone.`)) control(`/api/instances/${encodeURIComponent(i.id)}`, 'DELETE'); }}
                 >
                   Destroy

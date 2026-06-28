@@ -371,7 +371,14 @@ async function destroyInstance(upstreamUrl, instanceId) {
     }
   } catch (err) {
     const message = String(err?.message ?? err);
-    if (inst && / -> 404(?:;|$)/.test(message)) {
+    // A docker/container row with a resolvable name is still physically
+    // removable even when admin-v2 has no instance record (404): fall through
+    // to the `docker rm -f` cleanup below so the stopped container is actually
+    // removed. Returning already_gone here would claim success while the
+    // container persists and re-appears on the next inventory poll — the
+    // "stale stopped Docker row can't be destroyed" failure.
+    const dockerCleanable = ['docker', 'container'].includes(runtime) && dockerName;
+    if (inst && !dockerCleanable && / -> 404(?:;|$)/.test(message)) {
       return {
         target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/destroy`,
         status: 200,
@@ -397,7 +404,18 @@ async function destroyInstance(upstreamUrl, instanceId) {
     };
   }
 
-  await spawnCollect('docker', ['rm', '-f', dockerName]);
+  let alreadyGone = false;
+  try {
+    await spawnCollect('docker', ['rm', '-f', dockerName]);
+  } catch (err) {
+    // `docker rm -f` errors only because the container is already gone (e.g.
+    // removed out-of-band). That is success for a destroy request, not a failure.
+    if (/No such container|is not running|not found/i.test(String(err?.message ?? err))) {
+      alreadyGone = true;
+    } else {
+      throw err;
+    }
+  }
   return {
     target: `docker rm -f ${dockerName}`,
     status: 200,
@@ -407,6 +425,8 @@ async function destroyInstance(upstreamUrl, instanceId) {
       runtime,
       state: 'destroyed',
       result: { state: 'destroyed' },
+      already_gone: alreadyGone,
+      message: alreadyGone ? `Container ${dockerName} was already removed; inventory refreshed.` : undefined,
       fallback: 'docker-cli-after-admin-v2-instance-not-found',
     },
   };

@@ -219,6 +219,27 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.queryByText(/action failed/i)).toBeNull();
   });
 
+  it('keeps Destroy enabled for a stopped Docker row so it can be cleaned up', async () => {
+    const stale = { ...instance('stale-dkr-1', 'docker', 'full-suite'), state: 'stopped' };
+    const inventory = { instances: [stale], count: 1, fetched_at: new Date().toISOString() };
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+      if (url.includes('/api/inventory')) return jsonResponse(inventory);
+      if (url.includes('/api/running')) return jsonResponse({ count: 0, running: [] });
+      if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
+      if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 0, output_tokens: 0, usd: 0 }, per_instance: [] });
+      return jsonResponse({});
+    }) as typeof fetch;
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Inventory' }));
+    const destroy = await screen.findByRole('button', { name: /destroy instance stale-dkr-1/i });
+    // Previously hard-disabled for stopped Docker rows, which trapped stale
+    // containers in inventory with no in-UI way to remove them.
+    expect((destroy as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it('each tab has a matching labelled tabpanel (controls/labelledby pairing)', () => {
     render(<App />);
     for (const tab of screen.getAllByRole('tab')) {
