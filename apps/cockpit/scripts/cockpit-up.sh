@@ -122,15 +122,22 @@ MSG
     echo "• executor not up — bringing up the latest agentic-sandbox via ${SANDBOX_DIR}/management/dev.sh"
     heal_vsock_cid_registry
     # Bring the executor up with all three runtime tiers usable from the Cockpit:
+    #   - Docker: the in-container agent enrolls by calling the executor's HTTP
+    #     bootstrap API over host.docker.internal:8122, so the plaintext
+    #     management listener must bind 0.0.0.0 (dev.sh defaults to loopback,
+    #     which fail-closes container enrollment with "Connection refused").
+    #     LISTEN_ADDR=0.0.0.0 + AGENTIC_ALLOW_PLAINTEXT_TCP=1 is dev.sh's
+    #     documented docker-reachable pattern (local-dev only).
     #   - VM: vsock transport (guest agents enroll over their hypervisor CID).
     #   - Host: the opt-in bare-host runtime supervisor (in-process "local" mode;
     #     without this the host tier fail-closes and the picker shows
     #     "No registered host available"). See agentic-sandbox
     #     docs/runtimes/host-supervisor.md.
-    #   - Docker: always available, no flag needed.
     # Operators can override any of these in the environment before calling.
     ( cd "${SANDBOX_DIR}/management" \
-        && AGENTIC_GRPC_VSOCK_PORT="${AGENTIC_GRPC_VSOCK_PORT:-8120}" \
+        && LISTEN_ADDR="${LISTEN_ADDR:-0.0.0.0:8120}" \
+           AGENTIC_ALLOW_PLAINTEXT_TCP="${AGENTIC_ALLOW_PLAINTEXT_TCP:-1}" \
+           AGENTIC_GRPC_VSOCK_PORT="${AGENTIC_GRPC_VSOCK_PORT:-8120}" \
            AGENTIC_GRPC_VSOCK_CID_MAP_FILE="${AGENTIC_GRPC_VSOCK_CID_MAP_FILE:-/var/lib/agentic-sandbox/vms/.vsock-cid-registry}" \
            AGENTIC_HOST_RUNTIME_ENABLED="${AGENTIC_HOST_RUNTIME_ENABLED:-1}" \
            ./dev.sh )
