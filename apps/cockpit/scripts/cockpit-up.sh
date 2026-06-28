@@ -55,6 +55,38 @@ executor_healthy() {
   return 1
 }
 
+# Defense-in-depth for agentic-sandbox #595: the file-backed vsock CID registry
+# is written `instance-id=cid` but parsed `cid=instance-id`, so a stale/reversed
+# entry makes the executor fail-closed on startup ("invalid vsock CID …") and
+# crash-loop on every restart after a VM was provisioned. Normalize the file to
+# the parser's `cid=instance-id` form before starting the executor: keep already
+# correct lines, flip reversed ones, drop unparseable ones. Forward-compatible —
+# once the writer is fixed upstream this is a pure no-op (correct lines pass
+# through). Runs only in the start path, when the executor is down and not
+# holding the file. Skip with AIWG_COCKPIT_HEAL_VSOCK_CID=0.
+heal_vsock_cid_registry() {
+  [ "${AIWG_COCKPIT_HEAL_VSOCK_CID:-1}" = "1" ] || return 0
+  local f="${AGENTIC_GRPC_VSOCK_CID_MAP_FILE:-/var/lib/agentic-sandbox/vms/.vsock-cid-registry}"
+  [ -s "$f" ] || return 0
+  local healed
+  healed="$(awk -F= '
+    /^[[:space:]]*($|#)/ { print; next }      # blank/comment: keep
+    NF < 2               { next }             # no "=": drop
+    $1 ~ /^[0-9]+$/      { print; next }      # cid=name: already correct
+    $2 ~ /^[0-9]+$/      { print $2"="$1; next }  # name=cid (the #595 bug): flip
+    { next }                                  # neither side numeric: drop
+  ' "$f" 2>/dev/null)"
+  [ "$healed" = "$(cat "$f" 2>/dev/null)" ] && return 0
+  if printf '%s\n' "$healed" > "$f" 2>/dev/null; then
+    echo "• healed vsock CID registry — normalized reversed/stale entries (agentic-sandbox #595)"
+  elif command -v sudo >/dev/null 2>&1 && printf '%s\n' "$healed" | sudo -n tee "$f" >/dev/null 2>&1; then
+    echo "• healed vsock CID registry via sudo (agentic-sandbox #595)"
+  else
+    echo "⚠ vsock CID registry at $f looks malformed (agentic-sandbox #595) and could not be rewritten;" >&2
+    echo "  the executor may crash-loop on start. Clear it manually:  : > $f" >&2
+  fi
+}
+
 resolve_sandbox_dir() {
   if [ -n "${AGENTIC_SANDBOX_DIR:-}" ]; then
     echo "${AGENTIC_SANDBOX_DIR}"
@@ -88,6 +120,7 @@ MSG
       exit 1
     fi
     echo "• executor not up — bringing up the latest agentic-sandbox via ${SANDBOX_DIR}/management/dev.sh"
+    heal_vsock_cid_registry
     # Bring the executor up with all three runtime tiers usable from the Cockpit:
     #   - VM: vsock transport (guest agents enroll over their hypervisor CID).
     #   - Host: the opt-in bare-host runtime supervisor (in-process "local" mode;
