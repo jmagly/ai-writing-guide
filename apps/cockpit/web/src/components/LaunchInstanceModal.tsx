@@ -22,6 +22,15 @@ const FALLBACK_LOADOUTS: Loadout[] = [
   { id: 'full-suite', label: 'full-suite', description: 'Multi-provider tool suite', runtimes: ['qemu', 'vm'] },
 ];
 
+// A fresh, collision-resistant instance name per launch. The executor keys
+// agents by instance name, so two instances sharing a name (e.g. a Docker
+// container and a VM both named `cockpit-<ts>`) register the same agent id and
+// shadow each other — the second launch silently knocks the first offline.
+// Date.now() alone collides within a page session (the name was generated once
+// at mount and reused); add random entropy and regenerate on every open/launch.
+const genInstanceName = () =>
+  `cockpit-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.slice(0, 32);
+
 export function LaunchInstanceModal({
   open,
   onClose,
@@ -32,7 +41,7 @@ export function LaunchInstanceModal({
   onLaunched: (instanceId?: string, openSession?: boolean, operationId?: string) => Promise<void> | void;
 }) {
   const [runtime, setRuntime] = useState<Runtime>('host');
-  const [name, setName] = useState(() => `cockpit-${Date.now().toString(36)}`.slice(0, 32));
+  const [name, setName] = useState(genInstanceName);
   const [loadout, setLoadout] = useState('host-tools');
   const [loadouts, setLoadouts] = useState<Loadout[]>([]);
   const [instances, setInstances] = useState<Instance[]>([]);
@@ -49,6 +58,9 @@ export function LaunchInstanceModal({
 
   useEffect(() => {
     if (!open) return;
+    // Fresh name every time the picker opens, so back-to-back launches (e.g.
+    // Docker then VM) never collide on the executor's name-keyed agent registry.
+    setName(genInstanceName());
     let cancelled = false;
     Promise.all([
       api<{ loadouts: Loadout[] }>('/api/loadouts').catch(() => ({ loadouts: [] as Loadout[] })),
@@ -116,6 +128,7 @@ export function LaunchInstanceModal({
         : `Launch accepted: ${instanceId ?? operationId ?? 'operation pending'}`);
       await onLaunched(instanceId, openSession, operationId);
       if (openSession) onClose();
+      else setName(genInstanceName()); // modal stays open — next launch gets a fresh, non-colliding name
     } catch (e) {
       setErr((e as Error).message);
     } finally {

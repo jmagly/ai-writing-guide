@@ -77,6 +77,21 @@ describe('LaunchInstanceModal', () => {
     });
   });
 
+  it('regenerates a fresh instance name on each open so back-to-back launches do not collide', async () => {
+    globalThis.fetch = mockFetch();
+    const { rerender } = render(<LaunchInstanceModal open onClose={() => {}} onLaunched={() => {}} />);
+    fireEvent.change(await screen.findByLabelText('Runtime'), { target: { value: 'docker' } });
+    const name1 = (await screen.findByLabelText('Name') as HTMLInputElement).value;
+    expect(name1).toMatch(/^cockpit-/);
+    // Close then reopen — the second launch (e.g. a VM after a Docker) must get a
+    // different name, or both register the same name-keyed agent and shadow each other.
+    rerender(<LaunchInstanceModal open={false} onClose={() => {}} onLaunched={() => {}} />);
+    rerender(<LaunchInstanceModal open onClose={() => {}} onLaunched={() => {}} />);
+    const name2 = (await screen.findByLabelText('Name') as HTMLInputElement).value;
+    expect(name2).toMatch(/^cockpit-/);
+    expect(name2).not.toBe(name1);
+  });
+
   it('passes a VM SSH public key path when launching QEMU', async () => {
     globalThis.fetch = mockFetch();
     const onLaunched = vi.fn();
