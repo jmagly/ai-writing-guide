@@ -73,7 +73,7 @@ export function buildClaudeArgs(options = {}) {
     '-p',
     '--verbose',
     '--model',
-    options.model ?? 'sonnet',
+    options.model ?? 'claude-sonnet-4-6',
     '--permission-mode',
     'plan',
     '--max-budget-usd',
@@ -91,7 +91,6 @@ export function buildClaudeArgs(options = {}) {
 }
 
 export function classifyClaudeStream(stdout, stderr = '') {
-  const text = `${stdout}\n${stderr}`;
   const lines = stdout.split(/\r?\n/).filter(Boolean);
   const parsed = [];
   for (const line of lines) {
@@ -108,27 +107,59 @@ export function classifyClaudeStream(stdout, stderr = '') {
     .map((item) => item.text)
     .join('\n');
   const resultText = parsed.map((event) => event?.result ?? '').filter(Boolean).join('\n');
-  const combined = `${text}\n${assistantText}\n${resultText}`;
+  const errorText = parsed
+    .map((event) => (typeof event?.error === 'string' ? event.error : ''))
+    .filter(Boolean)
+    .join('\n');
+  // Marker detection runs ONLY over channels the model itself authored — assistant
+  // text, the terminal result text, event-level error fields, and the CLI's own stderr.
+  // It must NOT scan raw stdout or `user`/tool_result events: when a workflow reads
+  // repo files that quote these markers (this harness, the spike report, the issue
+  // docs all contain "Not logged in" and "Context limit reached"), scanning tool
+  // output produces false auth/exhaustion verdicts. Observed in #1672 validation.
+  const modelText = `${assistantText}\n${resultText}\n${errorText}\n${stderr}`;
   const usageInputTokens = parsed.reduce((sum, event) => {
     const usage = event?.message?.usage ?? event?.usage;
     return sum + Number(usage?.input_tokens ?? 0) + Number(usage?.cache_read_input_tokens ?? 0);
   }, 0);
 
-  const authBlocked = /Not logged in|authentication_failed|Please run \/login/i.test(combined);
-  const contextExhausted = /Context limit reached|context[_ -]?limit|compact or \/clear/i.test(combined);
-  const reachedModel = usageInputTokens > 0 || (assistantText.length > 0 && !authBlocked);
-  const mentionsSafeScopeDiscovery = /git status --short|git diff --name-only|changed-file|scope/i.test(combined);
+  // A blocking rate-limit/credit rejection is signalled by the top-level
+  // rate_limit_info.status === 'rejected'. (overageStatus 'rejected' alone is not
+  // blocking — the base tier can still be 'allowed'.)
+  const rateLimitRejected = parsed.some(
+    (event) => event?.type === 'rate_limit_event' && event?.rate_limit_info?.status === 'rejected',
+  );
+  // The terminal result event reports whether the turn itself errored.
+  const resultErrored = parsed.some((event) => event?.type === 'result' && event?.is_error === true);
+
+  const authBlocked = /Not logged in|authentication_failed|Please run \/login/i.test(modelText);
+  // Usage-credit / 1M-context gate or any blocking rate-limit rejection. This must be
+  // detected separately: Claude emits the gate text inside an assistant event, so naive
+  // "assistant text exists" checks would misread it as a successful model run.
+  // Match the user-facing gate message, not the raw `out_of_credits` field — that field
+  // also appears (as overageDisabledReason) when the base tier is allowed and only
+  // overage is disabled, which is not a blocking condition.
+  const creditBlocked =
+    /Usage credits required|insufficient credits/i.test(modelText) || rateLimitRejected;
+  const contextExhausted = /Context limit reached|context[_ -]?limit|compact or \/clear/i.test(modelText);
+  // The model genuinely ran only if it consumed input tokens and was not stopped by an
+  // auth or credit gate. An API-error string in an assistant event is not a model run.
+  const reachedModel = usageInputTokens > 0 && !authBlocked && !creditBlocked;
+  const mentionsSafeScopeDiscovery = /git status --short|git diff --name-only|changed-file|scope/i.test(modelText);
 
   let verdict = 'unknown';
   if (authBlocked) verdict = 'auth-blocked';
+  else if (creditBlocked) verdict = 'credit-blocked';
   else if (contextExhausted) verdict = 'context-exhausted';
   else if (reachedModel) verdict = 'model-ran';
 
   return {
     verdict,
     authBlocked,
+    creditBlocked,
     contextExhausted,
     reachedModel,
+    resultErrored,
     mentionsSafeScopeDiscovery,
     usageInputTokens,
     assistantText,
@@ -168,14 +199,18 @@ Options:
   --workdir <path>        Disposable validation directory. Default: /tmp/aiwg-1672-claude-validation
   --prompt <text>         Repro prompt. Default: issue #1672 prompt.
   --claude-bin <path>     Claude Code binary. Default: claude
-  --model <model>         Claude model alias. Default: sonnet
+  --model <model>         Claude model. Default: claude-sonnet-4-6 (pinned standard context).
+                          A bare alias like "sonnet" inherits the parent session's
+                          1M-context attribute and is rejected by the usage-credit gate
+                          on 1M accounts before the model runs; pin the standard variant.
   --timeout-ms <n>        Kill Claude after this many ms. Default: 240000
   --skip-copy             Run in --workdir as-is instead of copying root.
   --help                  Show this help.
 
 The harness runs Claude Code in plan mode with edit/write/git mutation tools denied.
 It exits 0 when the model runs without context exhaustion, 2 when auth is missing,
-3 on context exhaustion, and 1 for other failures.`;
+3 on context exhaustion, 4 when blocked by a credit/rate-limit gate (environment
+cannot validate), and 1 for other failures.`;
 }
 
 export async function main(argv = process.argv.slice(2)) {
@@ -183,7 +218,7 @@ export async function main(argv = process.argv.slice(2)) {
   let workdir = '/tmp/aiwg-1672-claude-validation';
   let prompt = DEFAULT_REPRO_PROMPT;
   let claudeBin = 'claude';
-  let model = 'sonnet';
+  let model = 'claude-sonnet-4-6';
   let timeoutMs = 240000;
   let skipCopy = false;
 
@@ -260,8 +295,10 @@ export async function main(argv = process.argv.slice(2)) {
   const summary = {
     verdict: classification.verdict,
     authBlocked: classification.authBlocked,
+    creditBlocked: classification.creditBlocked,
     contextExhausted: classification.contextExhausted,
     reachedModel: classification.reachedModel,
+    resultErrored: classification.resultErrored,
     mentionsSafeScopeDiscovery: classification.mentionsSafeScopeDiscovery,
     usageInputTokens: classification.usageInputTokens,
     exitCode: result.code,
@@ -273,6 +310,7 @@ export async function main(argv = process.argv.slice(2)) {
   console.log(JSON.stringify(summary, null, 2));
 
   if (classification.authBlocked) return 2;
+  if (classification.creditBlocked) return 4;
   if (classification.contextExhausted) return 3;
   if (!classification.reachedModel) return 1;
   return 0;

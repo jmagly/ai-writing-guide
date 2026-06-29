@@ -4,8 +4,41 @@ AIWG Claude-facing artifacts must fit standard Claude Code Sonnet usage. Do not
 design skills, commands, or subagents around a 1M-context account.
 
 This note complements the listing-budget troubleshooting guide. Listing budgets
-cover the cost of skill names and descriptions at startup. This note covers the
-runtime cost after a skill or subagent is invoked.
+cover the cost of skill names and descriptions at startup. This note covers two
+further costs: the **aggregate startup context** Claude Code inlines on every
+session, and the **runtime cost** after a skill or subagent is invoked.
+
+The standard Claude Code Sonnet window (`claude-sonnet-4-6`) is **200,000
+tokens**. The 1M window is a premium tier gated behind usage credits. When the
+required context exceeds the standard window, Claude Code upgrades to the 1M
+tier; on accounts without 1M credits that upgrade is rejected
+(`Usage credits required for 1M context`), and on standard-only accounts it
+surfaces as immediate `Context limit reached` after the first few actions.
+
+## Startup Context Budget (root cause of #1672)
+
+Claude Code inlines the following into every session before any user prompt:
+
+- the base Claude Code system prompt and tool definitions,
+- `CLAUDE.md` and its `@`-includes (`AIWG.md`, `.aiwg/AIWG.md`), plus `AGENTS.md`,
+- every file in `.claude/rules/*.md` (full body),
+- the name + description of each listed skill and agent.
+
+Measured on a full `aiwg use all` deployment (June 2026), the AIWG-controlled
+portion alone was **~193K tokens** against the 200K window:
+
+| Component | ~Tokens | Share |
+|-----------|---------|-------|
+| `.claude/rules/*.md` (95 files) | ~170K | 88% |
+| `AIWG.md` + `CLAUDE.md` + `AGENTS.md` + `.aiwg/AIWG.md` | ~24K | 12% |
+
+With only ~7K of headroom left for the base system prompt, tool definitions, and
+skill/agent listings, a fresh in-repo session exceeds the standard window before
+work begins — which is what produced the #1672 exhaustion. **This is the dominant
+driver; bounding individual workflows is necessary but not sufficient.** The
+deployed standing-rules set must also shrink (fewer always-on rules, pointer or
+index form rather than full-text inlining) for heavy deployments to run on
+standard Sonnet. Measure it with `npm run lint:claude-context -- --startup`.
 
 ## Sources
 
@@ -98,16 +131,23 @@ commit-and-push":
 Use:
 
 ```bash
-npm run lint:claude-context
+npm run lint:claude-context              # startup budget + per-artifact inventory
+npm run lint:claude-context -- --startup # startup budget only
 ```
 
-The check inventories Claude-facing skills and agents by approximate token size
-and startup behavior. It flags:
+The check reports the aggregate startup-context budget (memory files + deployed
+`.claude/rules/*`) against the 200K standard window, then inventories
+Claude-facing skills and agents by approximate token size and startup behavior.
+It flags:
 
+- startup context over (or near) the standard Sonnet budget,
 - oversized skill bodies,
 - subagent `skills:` preloads,
 - broad parallel-dispatch wording,
 - unbounded or detailed output instructions.
+
+`--strict` exits non-zero on per-artifact violations or when startup context is
+over budget.
 
 For the live #1672 repro gate, use:
 
@@ -116,5 +156,20 @@ npm run validate:claude-context
 ```
 
 The harness runs the exact issue prompt in a disposable copy with remotes removed
-and mutation tools denied. It requires an authenticated Claude Code account and
-returns a distinct exit code for missing auth versus context exhaustion.
+and mutation tools denied. It pins the standard-context variant
+(`claude-sonnet-4-6`) rather than a bare `sonnet` alias, because a bare alias
+inherits the parent session's 1M-context attribute and is rejected by the
+usage-credit gate before the model runs. It requires an authenticated Claude Code
+account and returns distinct exit codes:
+
+| Exit | Meaning |
+|------|---------|
+| 0 | model ran without context exhaustion |
+| 1 | other failure |
+| 2 | authentication missing (`/login`) |
+| 3 | context exhaustion (`Context limit reached`) |
+| 4 | blocked by a credit/rate-limit gate (environment cannot validate) |
+
+Exit 4 is itself a signal: if the harness is credit-blocked on a tiny prompt
+inside the repo, the startup context is forcing the 1M upgrade — run
+`--startup` to confirm and reduce the deployed standing context.

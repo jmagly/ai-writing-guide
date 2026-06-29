@@ -224,13 +224,106 @@ Not logged in · Please run /login
 This means the live standard-context acceptance gate remains unverified in this
 environment.
 
+## Update 2026-06-29 (second pass): live run + root cause
+
+The live gate was finally reachable on an authenticated account. Running it
+surfaced two harness defects and, more importantly, the actual root cause.
+
+### Harness defects found and fixed
+
+1. **Bare `--model sonnet` requested 1M context.** On a 1M-capable account the
+   bare alias inherits the 1M-context attribute and the run is rejected by the
+   usage-credit gate (`rate_limit_info.status: rejected`,
+   `overageDisabledReason: out_of_credits`,
+   `API Error: Usage credits required for 1M context`) before the model executes.
+   The harness now pins `claude-sonnet-4-6` (the standard ~200K variant) so it
+   validates standard context regardless of account tier. A direct probe
+   confirmed: bare `sonnet` -> rejected; `claude-sonnet-4-6` -> `status: allowed`,
+   `is_error: false`.
+2. **The classifier read the credit-gate error string as a successful model
+   run.** Because the gate text arrives inside an `assistant` event, the old
+   `assistantText.length > 0` heuristic returned `model-ran` (exit 0) — a false
+   pass. The classifier now requires `usageInputTokens > 0` and adds a
+   `credit-blocked` verdict (exit 4) detected from a blocking
+   `rate_limit_info.status === 'rejected'` or the user-facing
+   `Usage credits required` message. The raw `out_of_credits` field is no longer
+   matched on text, because it also appears (as `overageDisabledReason`) when the
+   base tier is allowed and only overage is disabled.
+
+### Root cause: startup context exceeds the standard window
+
+With the model pinned correctly, a **one-word** prompt inside the repo copy was
+still credit-blocked with "Usage credits required for 1M context", while the same
+prompt from an empty `/tmp` ran fine. The only difference is the working
+directory's standing context. Measured with the new
+`npm run lint:claude-context -- --startup`:
+
+| Component | ~Tokens | Share |
+|-----------|---------|-------|
+| `.claude/rules/*.md` (95 files) | ~170K | 88% |
+| `AIWG.md` + `CLAUDE.md` + `AGENTS.md` + `.aiwg/AIWG.md` | ~24K | 12% |
+| **AIWG-controlled startup total** | **~193K** | of a 200K window |
+
+The standard Sonnet window is 200,000 tokens (confirmed by asking the pinned
+model directly). AIWG's standing context alone is ~193K, leaving ~7K for the base
+system prompt, tool definitions, and skill/agent listings — which tips the
+session over 200K, forcing the 1M upgrade. On a standard-only account the same
+condition surfaces as the #1672 symptom: `Context limit reached` after the first
+few actions.
+
+**This is the dominant driver of #1672.** The doc-sync workflow rewrite is
+necessary (it bounds the per-workflow cost) but cannot fix startup cost. The
+deployed standing-rules set is the lever: fewer always-on rules, or pointer/index
+form rather than full-text inlining of all 95 rule files.
+
+### New startup-context check
+
+`tools/lint/claude-context-inventory.mjs` now exposes `scanStartupContext()` and a
+`--startup` mode that sums the inlined memory + rules against the 200K budget and
+reports `ok` / `warn` / `over`. `--strict` fails when startup is over budget.
+Covered by `test/unit/lint/claude-context-inventory.test.ts`.
+
+### Workflow validation on standard context
+
+To validate the rewritten doc-sync workflow itself (separately from the startup
+root cause), the harness was run with `--skip-copy` against a workdir trimmed so
+startup fits the standard window (`.claude/rules` removed, `CLAUDE.md` stubbed,
+the rewritten doc-sync `SKILL.md` staged locally; measured startup ~2.6K tokens).
+
+Result (`claude-sonnet-4-6`, 200K window, plan mode, mutation tools denied): the
+model decomposed the request **scope-first** and did not exhaust context. Over 15
+turns (~2.6M cumulative input tokens via cache reads, all `result` events
+`is_error: false`, clean exit) it:
+
+- scoped doc-sync to "the 6 modified files" rather than a full-repo audit,
+- dispatched **two parallel Explore agents** for the noisy reconnaissance
+  (Explore skips CLAUDE.md/git-status and returns summaries, preserving the main
+  context),
+- bounded the blog lane to a single file/section,
+- ended with a `commit + push` handoff rather than chaining commit logic inline.
+
+This matches the #1672 expected behavior: decompose without immediate exhaustion,
+keep broad searches in isolated/bounded contexts, return concise results.
+
+A third harness defect surfaced and was fixed during this run: the classifier
+matched its marker regexes (`Not logged in`, `Context limit reached`) against the
+**contents of files the model read** (this harness, the spike report, and the
+issue docs all quote those phrases), producing false `auth-blocked` /
+`context-exhausted` verdicts. The classifier now scans only model-authored
+channels — assistant text, the terminal result text, event `error` fields, and
+CLI stderr — never `user`/tool_result events. Re-classifying the transcript with
+the fix yields `verdict: model-ran`, all blockers false,
+`mentionsSafeScopeDiscovery: true`. Locked in by a regression test.
+
 ## Remaining Work
 
-- Run the user scenario in a live authenticated standard-context Claude Code
-  account/model: `/clear`, then the combined doc-sync/blog/commit request from
-  #1672.
-- Decide whether to make `lint:claude-context --strict` a CI gate after a
-  backlog pass on large existing skills.
+- Reduce deployed standing startup context for heavy deployments so a fresh
+  in-repo Claude Code session fits the 200K standard window (the ~170K
+  `.claude/rules/*` inlining is the dominant lever). This is the substantive
+  follow-up and is larger than #1672's doc-sync scope — track separately.
+- Decide whether to make `lint:claude-context --strict` (including the startup
+  budget gate) a CI gate after a backlog pass on large existing skills and the
+  standing-rules deployment.
 - Split the biggest SDLC workflow skills into concise entry-point bodies plus
   supporting files loaded on demand.
 - Audit `plugins/**/agents/*.md` for `skills:` preloads and remove or justify

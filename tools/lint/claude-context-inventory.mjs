@@ -7,6 +7,24 @@ import YAML from 'yaml';
 export const DEFAULT_SKILL_CEILING_BYTES = 24 * 1024;
 export const DEFAULT_AGENT_CEILING_BYTES = 16 * 1024;
 
+// Standard Claude Code Sonnet context window (claude-sonnet-4-6). The 1M window is a
+// premium tier gated behind usage credits; AIWG must fit the standard baseline.
+export const STANDARD_SONNET_BUDGET_TOKENS = 200000;
+// Warn before the hard ceiling so there is headroom for the base system prompt, tool
+// definitions, skill listings, and at least the opening turns of real work.
+export const DEFAULT_STARTUP_WARN_RATIO = 0.6;
+
+// Files Claude Code inlines into every session at startup (full body), in load order.
+// Skill *bodies* are excluded: skills load by name/description and only inject their
+// body when invoked (see issue #1672 doc findings), so they are not mandatory startup.
+export const STARTUP_CONTEXT_SOURCES = [
+  { label: 'CLAUDE.md', kind: 'memory', glob: ['CLAUDE.md'] },
+  { label: 'AIWG.md', kind: 'memory', glob: ['AIWG.md'] },
+  { label: '.aiwg/AIWG.md', kind: 'memory', glob: ['.aiwg/AIWG.md'] },
+  { label: 'AGENTS.md', kind: 'memory', glob: ['AGENTS.md'] },
+  { label: '.claude/rules/*.md', kind: 'rules', dir: '.claude/rules', ext: '.md' },
+];
+
 export const DEFAULT_SKILL_GLOBS = [
   'agentic/code/**/skills/**/SKILL.md',
   'plugins/**/.claude-plugin/**/skills/**/SKILL.md',
@@ -128,6 +146,101 @@ export async function scanClaudeContextInventory(options = {}) {
   };
 }
 
+async function readIfExists(absPath) {
+  try {
+    return await fs.readFile(absPath, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+async function listDirFiles(dir, ext) {
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    return entries
+      .filter((entry) => entry.isFile() && (!ext || entry.name.endsWith(ext)))
+      .map((entry) => path.join(dir, entry.name))
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+// Measure the aggregate context Claude Code inlines at session startup and compare it
+// against the standard Sonnet budget. This is the dominant exhaustion driver in heavy
+// AIWG deployments: even an empty prompt can exceed the standard window before any work
+// begins, forcing a 1M-context upgrade (credit-gated) or immediate exhaustion.
+export async function scanStartupContext(options = {}) {
+  const rootDir = options.rootDir ?? process.cwd();
+  const budgetTokens = options.budgetTokens ?? STANDARD_SONNET_BUDGET_TOKENS;
+  const warnRatio = options.warnRatio ?? DEFAULT_STARTUP_WARN_RATIO;
+  const components = [];
+
+  for (const source of STARTUP_CONTEXT_SOURCES) {
+    if (source.glob) {
+      for (const rel of source.glob) {
+        const text = await readIfExists(path.join(rootDir, rel));
+        if (text == null) continue;
+        components.push({ label: rel, kind: source.kind, files: 1, bytes: Buffer.byteLength(text), approxTokens: approxTokens(text) });
+      }
+    } else if (source.dir) {
+      const files = await listDirFiles(path.join(rootDir, source.dir), source.ext);
+      let bytes = 0;
+      let tokens = 0;
+      for (const file of files) {
+        const text = await readIfExists(file);
+        if (text == null) continue;
+        bytes += Buffer.byteLength(text);
+        tokens += approxTokens(text);
+      }
+      if (files.length > 0) {
+        components.push({ label: source.label, kind: source.kind, files: files.length, bytes, approxTokens: tokens });
+      }
+    }
+  }
+
+  const totalTokens = components.reduce((sum, c) => sum + c.approxTokens, 0);
+  const totalBytes = components.reduce((sum, c) => sum + c.bytes, 0);
+  const warnTokens = Math.floor(budgetTokens * warnRatio);
+  let status = 'ok';
+  if (totalTokens > budgetTokens) status = 'over';
+  else if (totalTokens > warnTokens) status = 'warn';
+
+  return {
+    rootDir,
+    budgetTokens,
+    warnTokens,
+    warnRatio,
+    components: components.sort((a, b) => b.approxTokens - a.approxTokens),
+    totalBytes,
+    totalTokens,
+    status,
+  };
+}
+
+export function formatStartupContext(result) {
+  const lines = [];
+  lines.push('Startup context budget (standard Sonnet baseline):');
+  lines.push(
+    `  total ~${result.totalTokens} tokens vs budget ${result.budgetTokens} ` +
+      `(warn ${result.warnTokens}) -> ${result.status.toUpperCase()}`,
+  );
+  for (const c of result.components) {
+    lines.push(`    - ${c.label}: ~${c.approxTokens} tokens (${c.files} file${c.files === 1 ? '' : 's'})`);
+  }
+  if (result.status === 'over') {
+    lines.push(
+      '  OVER BUDGET: startup context exceeds the standard window. Claude Code will ' +
+        'upgrade to the credit-gated 1M tier or exhaust context before work begins. ' +
+        'Reduce deployed .claude/rules/* and memory files (pointer/index form, fewer ' +
+        'always-on rules).',
+    );
+  } else if (result.status === 'warn') {
+    lines.push('  WARNING: startup context leaves limited headroom for real work on standard Sonnet.');
+  }
+  return lines.join('\n');
+}
+
 function formatKb(bytes) {
   return `${(bytes / 1024).toFixed(1)} KiB`;
 }
@@ -159,6 +272,7 @@ export async function main(argv = process.argv.slice(2)) {
   let rootDir = process.cwd();
   let strict = false;
   let limit = 25;
+  let startupOnly = false;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -174,15 +288,33 @@ export async function main(argv = process.argv.slice(2)) {
       limit = Number(arg.slice('--limit='.length));
     } else if (arg === '--strict') {
       strict = true;
+    } else if (arg === '--startup') {
+      startupOnly = true;
     } else if (arg === '--help' || arg === '-h') {
-      console.log('Usage: node tools/lint/claude-context-inventory.mjs [--root <repo>] [--limit N] [--strict]');
+      console.log(
+        'Usage: node tools/lint/claude-context-inventory.mjs [--root <repo>] [--limit N] [--startup] [--strict]\n' +
+          '  --startup  Report only the aggregate startup-context budget.\n' +
+          '  --strict   Exit non-zero on per-artifact violations OR startup context over budget.',
+      );
       return 0;
     }
   }
 
+  const startup = await scanStartupContext({ rootDir });
+
+  if (startupOnly) {
+    const report = formatStartupContext(startup);
+    if (strict && startup.status === 'over') {
+      console.error(report);
+      return 1;
+    }
+    console.log(report);
+    return 0;
+  }
+
   const result = await scanClaudeContextInventory({ rootDir });
-  const report = formatClaudeContextInventory(result, { limit });
-  if (strict && result.violations.length > 0) {
+  const report = `${formatStartupContext(startup)}\n\n${formatClaudeContextInventory(result, { limit })}`;
+  if (strict && (result.violations.length > 0 || startup.status === 'over')) {
     console.error(report);
     return 1;
   }
