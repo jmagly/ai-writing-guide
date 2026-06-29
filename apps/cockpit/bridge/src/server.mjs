@@ -975,20 +975,26 @@ async function getSessions(executorUrl, instanceId) {
     }
     return `${wsBase}/agents/${encodeURIComponent(sessionAgentId)}/sessions/${encodeURIComponent(sessionId)}/attach`;
   };
-  return {
-    instance_id: instanceId,
-    sessions: sessions.map((s) => {
-      const sessionId = s.id ?? s.session_id ?? s.sessionId;
-      return {
-        ...s,
-        id: sessionId,
-        instance_id: s.instance_id ?? s.instanceId ?? instanceId,
-        agent_id: s.agent_id ?? s.agentId ?? sessionAgentId,
-        role_policy: s.role_policy ?? s.rolePolicy ?? (s.default_role === 'observer' ? 'observe-default' : s.default_role) ?? 'observe-default',
-        attach_url: normalizeAttachUrl(s, sessionId),
-      };
-    }),
-  };
+  // Dedup by session id: the executor can register/return the same session more
+  // than once (e.g. a session registered twice in its registry), which surfaced
+  // as duplicate rows that are impossible to tell apart in the Sessions picker.
+  // Keep the first occurrence of each id (and drop id-less entries).
+  const seen = new Set();
+  const deduped = [];
+  for (const s of sessions) {
+    const sessionId = s.id ?? s.session_id ?? s.sessionId;
+    if (!sessionId || seen.has(sessionId)) continue;
+    seen.add(sessionId);
+    deduped.push({
+      ...s,
+      id: sessionId,
+      instance_id: s.instance_id ?? s.instanceId ?? instanceId,
+      agent_id: s.agent_id ?? s.agentId ?? sessionAgentId,
+      role_policy: s.role_policy ?? s.rolePolicy ?? (s.default_role === 'observer' ? 'observe-default' : s.default_role) ?? 'observe-default',
+      attach_url: normalizeAttachUrl(s, sessionId),
+    });
+  }
+  return { instance_id: instanceId, sessions: deduped };
 }
 
 async function endSession(executorUrl, instanceId, sessionId) {

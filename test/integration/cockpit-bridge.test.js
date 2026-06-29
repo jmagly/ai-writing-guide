@@ -210,7 +210,10 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
       if (url.pathname === '/agents/v2-host-1/v1/sessions') return send(404, { error: 'preformal_sessions_absent' });
       if (url.pathname === '/api/v1/agents/v2-host-1/sessions') return send(404, { error: 'instance_id_is_not_session_agent_id' });
       if (url.pathname === '/api/v1/agents/agent-v2-host-1/sessions' && req.method === 'GET') {
-        return send(200, { items: [{ sessionId: 'sess-v2', seq: 2, members: 1, role_policy: 'observe-default', pty_ws_url: 'wss://{host}/agents/v2-host-1/sessions/sess-v2/attach' }] });
+        // Executor can list the same session twice (double-registered in its
+        // registry); the Bridge must dedup so the picker shows it once.
+        const one = { sessionId: 'sess-v2', seq: 2, members: 1, role_policy: 'observe-default', pty_ws_url: 'wss://{host}/agents/v2-host-1/sessions/sess-v2/attach' };
+        return send(200, { items: [one, { ...one }] });
       }
       // A2A task surface the Bridge derives the running board + approval inbox from (#1639).
       if (url.pathname === '/agents/agent-v2-host-1/tasks' || url.pathname === '/api/v1/agents/agent-v2-host-1/tasks') {
@@ -274,6 +277,8 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     expect(approved).toMatchObject({ id: 'hitl-1', status: { state: 'completed' } });
 
     const sessions = await (await cf('/api/sessions?instance=v2-host-1')).json();
+    // Executor returned sess-v2 twice; the Bridge dedups to a single row.
+    expect(sessions.sessions).toHaveLength(1);
     expect(sessions.sessions[0]).toMatchObject({ id: 'sess-v2', instance_id: 'v2-host-1' });
     expect(sessions.sessions[0].attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-v2\/attach$/);
   });
