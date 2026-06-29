@@ -60,7 +60,15 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
       })
       .catch((e) => { setSessions([]); setAttachUrl(''); setSessionErr((e as Error).message); });
   }, []);
-  useEffect(() => { loadSessions(instId); }, [instId, loadSessions]);
+  // Reload the selected instance's sessions on selection change AND on an interval,
+  // so a session created elsewhere (the Start modal, the Running board, another
+  // operator) shows up in the nav without re-selecting the instance.
+  useEffect(() => {
+    if (!instId) return;
+    loadSessions(instId);
+    const timer = window.setInterval(() => loadSessions(instId), refreshMs);
+    return () => window.clearInterval(timer);
+  }, [instId, loadSessions, refreshMs]);
 
   const send = () => { if (session.sendInput(composer)) setComposer(''); };
   const attached = session.state.attached;
