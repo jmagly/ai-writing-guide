@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, cleanup, within } from '@testing-library/react';
 import { Sessions } from './Sessions';
 import type { SessionApi } from '../useSession';
 
@@ -110,10 +110,44 @@ describe('Sessions', () => {
 
     render(<Sessions session={session} composer="" setComposer={() => {}} onRequestStart={() => {}} refreshMs={10} />);
 
-    expect(await screen.findByRole('option', { name: /docker-one/i })).toBeTruthy();
-    expect(await screen.findByRole('option', { name: /docker-two/i })).toBeTruthy();
-    expect(screen.queryByRole('option', { name: /docker-one/i })).toBeNull();
-    expect(await screen.findByRole('option', { name: /sess-new/i })).toBeTruthy();
+    // The nav lists instances as buttons (not <select> options) now (#1670).
+    expect(await screen.findByText('docker-one')).toBeTruthy();
+    // Inventory refresh swaps inst-1 → inst-2; the dead instance drops out and
+    // selection follows to the live one, whose session is listed underneath.
+    expect(await screen.findByText('docker-two')).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText('docker-one')).toBeNull());
+    // Scope to the nav (the active-session indicator also carries the id by title).
+    const nav = screen.getByLabelText('Instances and sessions');
+    expect(await within(nav).findByTitle('sess-new')).toBeTruthy();
+  });
+
+  it('distinguishes sessions by name + backend + viewer count in the nav (#1670)', async () => {
+    const session = stubSession();
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [INSTANCE] });
+      if (url.includes('/api/sessions?instance=')) return jsonResponse({
+        sessions: [
+          { id: 'sess-a', session_name: 'terminal-alpha', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-a/attach', mode: 'managed', backend: 'tmux', controllers: 1, observers: 1 },
+          { id: 'sess-b', session_name: 'terminal-beta', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-b/attach', mode: 'direct', backend: 'native', members: 0 },
+        ],
+      });
+      return new Response('{}', { status: 404 });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<Sessions session={session} composer="" setComposer={() => {}} onRequestStart={() => {}} />);
+
+    // Two distinct sessions, each shown by name with its own backend/viewer meta.
+    // Scope to the nav — the controls bar's active-session indicator echoes the label.
+    await screen.findByText('terminal-beta');
+    const nav = screen.getByLabelText('Instances and sessions');
+    expect(within(nav).getByText('terminal-alpha')).toBeTruthy();
+    expect(within(nav).getByText('terminal-beta')).toBeTruthy();
+    expect(within(nav).getByText('managed/tmux · 2 viewers')).toBeTruthy();
+    expect(within(nav).getByText('direct/native · 0 viewers')).toBeTruthy();
+    // sess-a has a controller connected → it carries the ctrl badge; sess-b does not.
+    expect(within(nav).getByTitle('A controller is connected')).toBeTruthy();
   });
 });
 

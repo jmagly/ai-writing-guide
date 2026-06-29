@@ -252,3 +252,38 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
 }
+
+/* Session workspace — persistent instances→sessions nav (agentic-sandbox-style control screen, #1670) */
+.session-workspace { display:grid; grid-template-columns:minmax(240px, 300px) minmax(0, 1fr); gap:16px; align-items:start; }
+@media (max-width: 820px) { .session-workspace { grid-template-columns:1fr; } }
+.session-nav { border:1px solid var(--line); border-radius:10px; background:var(--panel); padding:10px; max-height:calc(100vh - 250px); overflow-y:auto; }
+.session-nav-head { display:flex; align-items:center; justify-content:space-between; margin:2px 4px 8px; }
+.session-nav-head h2 { margin:0; font-size:15px; }
+.session-nav-head .hint { margin:0; }
+.nav-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px; }
+.nav-instance { border-radius:8px; border:1px solid transparent; }
+.nav-instance.selected { background:rgba(94,234,212,.06); border-color:var(--line); }
+.nav-instance-row { width:100%; display:flex; align-items:center; gap:8px; background:none; border:0; padding:8px; cursor:pointer; text-align:left; border-radius:8px; }
+.nav-instance-row:hover { border-color:transparent; background:rgba(148,163,184,.08); }
+.nav-instance-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; font-size:13px; }
+.nav-instance .state { font-size:11px; color:var(--muted); }
+.nav-instance .badge { font-size:10px; padding:1px 7px; text-transform:lowercase; }
+.nav-sessions { padding:0 6px 8px 10px; display:flex; flex-direction:column; gap:4px; }
+.nav-sessions ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:3px; }
+.nav-sessions li { display:flex; align-items:stretch; gap:4px; }
+.nav-session { flex:1; min-width:0; display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; background:none; border:1px solid transparent; border-left:2px solid var(--line); border-radius:6px; padding:6px 8px; cursor:pointer; text-align:left; }
+.nav-session:hover { background:rgba(148,163,184,.08); }
+.nav-session.selected { border-color:var(--accent); border-left-color:var(--accent); background:rgba(94,234,212,.08); }
+.nav-session.live { border-left-color:var(--ok); }
+.nav-session-name { flex-basis:100%; font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nav-session-meta { font-size:11px; color:var(--muted); }
+.nav-session .badge { padding:0 6px; font-size:10px; }
+.nav-session .live-dot { border-color:var(--ok); color:var(--ok); }
+.nav-session-end { align-self:center; padding:4px 9px; color:var(--muted); border-color:transparent; background:none; line-height:1; }
+.nav-session-end:hover:not(:disabled) { border-color:var(--err); color:var(--err); }
+.nav-new-session { margin-top:6px; align-self:flex-start; }
+.cta-sm { font-size:12px; padding:5px 10px; border-color:var(--accent); color:var(--accent); }
+.nav-empty { margin:4px 0; font-size:12px; }
+.session-main { min-width:0; }
+.controls-active { color:var(--muted); font-size:13px; padding:5px 10px; border:1px dashed var(--line); border-radius:7px; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.badge.live-dot { color:var(--ok); border-color:var(--ok); }
