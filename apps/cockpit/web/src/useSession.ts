@@ -189,8 +189,11 @@ export function useSession() {
     const connect = () => {
       const ws = new WebSocket(replay ? `${url}?replay_from=${lastSeq.current}` : url);
       wsRef.current = ws;
+      let gone = false; // a failing socket fires BOTH 'error' and 'close' — handle once
       ws.addEventListener('open', () => setState((s) => ({ ...s, attached: true, url })));
       const onGone = (kind: 'close' | 'error') => {
+        if (gone) return;
+        gone = true;
         roleRef.current = null;
         setState((s) => ({ ...s, attached: false, role: null }));
         // Clean detach, or we were already streaming → leave it (a real end/drop).
@@ -222,6 +225,10 @@ export function useSession() {
           case 'role_assigned':
             roleRef.current = m.payload?.role ?? null;
             setState((s) => ({ ...s, role: m.payload?.role ?? null }));
+            // Re-attaching to an established session whose shell is idle gets no
+            // live output and the join replay carries no keyframe — request one so
+            // the current screen paints immediately instead of staying blank.
+            if (!gotFrameRef.current) sendOp('pty.request_keyframe');
             requestAnimationFrame(() => fit());
             break;
           case 'output':

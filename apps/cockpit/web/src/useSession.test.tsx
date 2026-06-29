@@ -38,6 +38,16 @@ describe('useSession — retry through the PTY-readiness window (#1669)', () => 
     expect(MockWS.instances).toHaveLength(2);
   });
 
+  it('counts a failing socket once even though it fires both error and close', () => {
+    const { result } = renderHook(() => useSession());
+    act(() => { result.current.attach('ws://x/attach', false, 'controller'); });
+    // A real failing WebSocket dispatches BOTH 'error' and 'close'; that must
+    // burn only one retry slot, not two (otherwise the budget halves silently).
+    act(() => { MockWS.instances[0].emit('open'); MockWS.instances[0].emit('error'); MockWS.instances[0].emit('close'); });
+    act(() => { vi.advanceTimersByTime(1300); });
+    expect(MockWS.instances).toHaveLength(2);
+  });
+
   it('stops retrying once the first frame arrives (real stream established)', () => {
     const { result } = renderHook(() => useSession());
     act(() => { result.current.attach('ws://x/attach', false, 'controller'); });
