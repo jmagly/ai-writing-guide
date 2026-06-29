@@ -5,10 +5,12 @@ metadata:
   name: release-doc-sync
   labels: { domain: release }
 spec:
-  description: Invoke the doc-sync skill (code-to-docs) to reconcile documentation before release (flow-release Shape 2 "invoke_skill").
+  description: Invoke the bounded doc-sync skill (code-to-docs) to reconcile scoped release documentation without front-loading a full repository audit.
   version: "1.0.0"
   inputs:
     - { name: direction, type: string, required: false, default: code-to-docs }
+    - { name: scope, type: string, required: false, default: "docs,README.md,CHANGELOG.md" }
+    - { name: parallel, type: number, required: false, default: 2 }
     - { name: dry_run_first, type: boolean, required: false, default: true }
     - { name: hard_stop, type: boolean, required: false, default: true }
   outputs:

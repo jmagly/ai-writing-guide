@@ -4,6 +4,9 @@
 
 AIWG ships ~480 skills across the SDLC, forensics, research, marketing, and ops frameworks. When you install several frameworks together, the host platform (Claude Code, Codex, etc.) may run past its skill listing budget and silently drop the lowest-priority descriptions. This guide explains what's happening and how to fix it for your platform.
 
+For runtime costs after a Claude Code skill or subagent is invoked, see
+[`docs/providers/claude-context-budget.md`](providers/claude-context-budget.md).
+
 ---
 
 ## Quick fix by platform
@@ -250,6 +253,7 @@ aiwg doctor --no-budget-check
 ## References
 
 - Claude Code skill loading: <https://code.claude.com/docs/en/skills>
+- Claude Code runtime context-budget rules for AIWG: [`docs/providers/claude-context-budget.md`](providers/claude-context-budget.md)
 - Claude Code skill budget mechanics: <https://claudefa.st/blog/guide/mechanics/skill-listing-budget>
 - Claude Code settings reference: <https://claudefa.st/blog/guide/settings-reference>
 - Codex skills: <https://developers.openai.com/codex/skills>
