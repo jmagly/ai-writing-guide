@@ -973,7 +973,13 @@ async function getSessions(executorUrl, instanceId) {
         return u.toString();
       } catch { /* fall through to legacy shape */ }
     }
-    return `${wsBase}/agents/${encodeURIComponent(sessionAgentId)}/sessions/${encodeURIComponent(sessionId)}/attach`;
+    // Fallback URL construction (session entry carried no attach_url/pty_ws_url).
+    // The executor's pty-ws route keys the agent segment by the INSTANCE id, not
+    // the registered agent name — resolveSessionAgentId returns the name for some
+    // agents (e.g. VMs after a Bridge restart), which the route won't accept and
+    // the data-plane socket never connects (#1671). Use the instance id here; the
+    // agent name is only needed for the session-list FETCH, not the attach path.
+    return `${wsBase}/agents/${encodeURIComponent(instanceId)}/sessions/${encodeURIComponent(sessionId)}/attach`;
   };
   // Dedup by session id: the executor can register/return the same session more
   // than once (e.g. a session registered twice in its registry), which surfaced
@@ -1238,7 +1244,9 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
             attachUrl = u.toString();
           } catch { /* fall through to legacy shape */ }
         }
-        return json(res, status, { ...body, id: sessionId, attach_url: attachUrl ?? `${wsBase}/agents/${encodeURIComponent(sessionAgentId)}/sessions/${encodeURIComponent(sessionId)}/attach` });
+        // Same as the list path (#1671): the attach segment must be the instance
+        // id the executor's pty-ws route accepts, not the resolved agent name.
+        return json(res, status, { ...body, id: sessionId, attach_url: attachUrl ?? `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(sessionId)}/attach` });
       }
 
       // --- management surface (UC-012): lifecycle + task cancel ---

@@ -212,7 +212,11 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
       if (url.pathname === '/api/v1/agents/agent-v2-host-1/sessions' && req.method === 'GET') {
         // Executor can list the same session twice (double-registered in its
         // registry); the Bridge must dedup so the picker shows it once.
-        const one = { sessionId: 'sess-v2', seq: 2, members: 1, role_policy: 'observe-default', pty_ws_url: 'wss://{host}/agents/v2-host-1/sessions/sess-v2/attach' };
+        // No pty_ws_url here on purpose, so attach_url goes through the Bridge's
+        // fallback construction — which must key the path by the instance id
+        // (v2-host-1), NOT the resolved agent name (agent-v2-host-1) the
+        // executor's pty-ws route would reject (#1671).
+        const one = { sessionId: 'sess-v2', seq: 2, members: 1, role_policy: 'observe-default' };
         return send(200, { items: [one, { ...one }] });
       }
       // A2A task surface the Bridge derives the running board + approval inbox from (#1639).
@@ -280,7 +284,10 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     // Executor returned sess-v2 twice; the Bridge dedups to a single row.
     expect(sessions.sessions).toHaveLength(1);
     expect(sessions.sessions[0]).toMatchObject({ id: 'sess-v2', instance_id: 'v2-host-1' });
+    // #1671: the fallback-built attach_url keys the agent segment by the instance
+    // id, never the resolved agent name (agent-v2-host-1), which the route rejects.
     expect(sessions.sessions[0].attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-v2\/attach$/);
+    expect(sessions.sessions[0].attach_url).not.toContain('agent-v2-host-1');
   });
 
   it('creates sessions through the formal agentic-sandbox v1 session API', async () => {
