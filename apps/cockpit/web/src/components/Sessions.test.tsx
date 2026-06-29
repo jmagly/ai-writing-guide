@@ -121,6 +121,45 @@ describe('Sessions', () => {
     expect(await within(nav).findByTitle('sess-new')).toBeTruthy();
   });
 
+  it('auto-attaches in observe when a different session is selected (#1670)', async () => {
+    const session = stubSession(); // currently attached to .../sessions/sess-1/attach as controller
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [INSTANCE] });
+      if (url.includes('/api/sessions?instance=')) return jsonResponse({
+        sessions: [{ id: 'sess-2', session_name: 'terminal-other', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-2/attach', mode: 'managed', backend: 'tmux' }],
+      });
+      return new Response('{}', { status: 404 });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    render(<Sessions session={session} composer="" setComposer={() => {}} onRequestStart={() => {}} />);
+
+    const nav = screen.getByLabelText('Instances and sessions');
+    const sessBtn = await within(nav).findByTitle('sess-2');
+    fireEvent.click(sessBtn);
+    // Selecting a not-yet-attached session attaches it read-only; the operator clicks Drive to take over.
+    expect(session.attach).toHaveBeenCalledWith('ws://x/agents/inst-1/sessions/sess-2/attach', false, 'observer');
+  });
+
+  it('does not re-attach (downgrade) when re-selecting the session already attached', async () => {
+    const session = stubSession(); // state.url === .../sessions/sess-1/attach, role controller
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [INSTANCE] });
+      if (url.includes('/api/sessions?instance=')) return jsonResponse({
+        sessions: [{ id: 'sess-1', session_name: 'terminal-main', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-1/attach', mode: 'managed', backend: 'tmux' }],
+      });
+      return new Response('{}', { status: 404 });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    render(<Sessions session={session} composer="" setComposer={() => {}} onRequestStart={() => {}} />);
+
+    const nav = screen.getByLabelText('Instances and sessions');
+    fireEvent.click(await within(nav).findByTitle('sess-1'));
+    // Clicking the session we already drive must not downgrade us back to observer.
+    expect(session.attach).not.toHaveBeenCalled();
+  });
+
   it('distinguishes sessions by name + backend + viewer count in the nav (#1670)', async () => {
     const session = stubSession();
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {

@@ -147,7 +147,14 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
                             <li key={s.id}>
                               <button
                                 className={`nav-session${selS ? ' selected' : ''}${live ? ' live' : ''}`}
-                                onClick={() => setAttachUrl(s.attach_url)}
+                                // Selecting a session auto-attaches in observe (read-only) so the
+                                // operator immediately sees it; they click Drive to take control.
+                                // Re-selecting the session already attached here is a no-op (don't
+                                // downgrade an active controller back to observer).
+                                onClick={() => {
+                                  setAttachUrl(s.attach_url);
+                                  if (s.attach_url !== session.state.url) session.attach(s.attach_url, false, 'observer');
+                                }}
                                 title={s.id}
                               >
                                 <span className="nav-session-name">{sessionLabel(s)}</span>

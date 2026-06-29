@@ -125,6 +125,9 @@ export function useSession() {
         convertEol: false, // the PTY/tmux emits its own CR/LF
         scrollback: 2000,
         cursorBlink: false,
+        // Read-only until control is granted: observe must not capture keystrokes
+        // at all (not just drop them on send). Flipped to false on controller.
+        disableStdin: true,
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
         fontSize: 13,
         theme: { background: '#0a0c10', foreground: '#cdd3de' },
@@ -180,6 +183,7 @@ export function useSession() {
     wsRef.current?.close();
     if (!replay) lastSeq.current = 0;
     roleRef.current = null;
+    if (termRef.current) termRef.current.options.disableStdin = true; // read-only until role_assigned grants control
     clearResponseNeeded();
     outputTailRef.current = '';
     setState({ attached: false, role: null, url });
@@ -222,15 +226,19 @@ export function useSession() {
             if (t && t.cols >= RESIZE_FLOOR_COLS && t.rows >= RESIZE_FLOOR_ROWS) sendOp('pty.session_resize', { cols: t.cols, rows: t.rows });
             break;
           }
-          case 'role_assigned':
-            roleRef.current = m.payload?.role ?? null;
-            setState((s) => ({ ...s, role: m.payload?.role ?? null }));
+          case 'role_assigned': {
+            const role = m.payload?.role ?? null;
+            roleRef.current = role;
+            setState((s) => ({ ...s, role }));
+            // Only a controller may type into the terminal; observers are read-only.
+            if (termRef.current) termRef.current.options.disableStdin = role !== 'controller';
             // Re-attaching to an established session whose shell is idle gets no
             // live output and the join replay carries no keyframe — request one so
             // the current screen paints immediately instead of staying blank.
             if (!gotFrameRef.current) sendOp('pty.request_keyframe');
             requestAnimationFrame(() => fit());
             break;
+          }
           case 'output':
             gotFrameRef.current = true; retryRef.current = 0; // first frame → readiness reached
             if (m.seq) lastSeq.current = Math.max(lastSeq.current, m.seq);
@@ -251,6 +259,8 @@ export function useSession() {
 
   const detach = useCallback(() => {
     closedByUserRef.current = true;
+    roleRef.current = null;
+    if (termRef.current) termRef.current.options.disableStdin = true; // detached → read-only
     if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
     wsRef.current?.close();
     wsRef.current = null;
