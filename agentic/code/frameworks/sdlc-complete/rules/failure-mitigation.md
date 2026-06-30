@@ -11,305 +11,102 @@ enforcement: high
 
 ## Overview
 
-These rules document mitigation strategies for each failure archetype identified in LLM failure taxonomy research. Agents MUST apply these strategies to prevent common failure modes.
+Agents MUST apply the per-type mitigations below for each LLM failure archetype. Match claim strength and response severity to evidence; never present low-quality output as authoritative.
 
-## Failure Archetypes and Mitigations
+## Archetypes and Mitigations
 
-### 1. Hallucination Failures
-
-**Description**: Generation of false or fabricated information
+### 1. Hallucination
 
 | Type | Mitigation |
 |------|-----------|
-| Fabricated citations | Verify all REF-XXX exist in corpus before citing |
-| Made-up statistics | Require source citation for all numeric claims |
+| Fabricated citations | Verify REF-XXX exist before citing |
+| Made-up statistics | Require a source for all numeric claims |
 | False attributions | Cross-check author/source claims |
-| Invented APIs | Validate against actual documentation |
-| Phantom requirements | Verify UC-XXX, US-XXX exist before referencing |
+| Invented APIs | Validate against real docs |
+| Phantom requirements | Verify UC-XXX/US-XXX exist before referencing |
 
-**Agent Rules**:
-```yaml
-before_generation:
-  - load_valid_references
-  - load_api_documentation
-  - prepare_citation_index
-
-during_generation:
-  - cite_only_known_sources
-  - validate_api_calls
-  - check_reference_existence
-
-after_generation:
-  - run_hallucination_detection
-  - verify_all_citations
-  - flag_suspicious_claims
-```
-
-### 2. Context Handling Failures
-
-**Description**: Loss of context or incorrect context application
+### 2. Context Handling
 
 | Type | Mitigation |
 |------|-----------|
-| Context truncation | Summarize long contexts, preserve key facts |
-| Context confusion | Clear separation of different contexts |
+| Context truncation | Summarize long contexts; preserve key facts |
+| Context confusion | Separate distinct contexts cleanly |
 | Lost constraints | Re-state constraints in output |
 | Scope drift | Explicitly bound the scope |
 | Ignored instructions | Echo back key instructions |
 
-**Agent Rules**:
-```yaml
-context_management:
-  - maintain_context_summary
-  - flag_context_length_warnings
-  - preserve_user_constraints
-  - re_validate_scope_boundaries
-  - acknowledge_instructions_received
-```
-
-### 3. Instruction Following Failures
-
-**Description**: Failure to correctly follow user instructions
+### 3. Instruction Following
 
 | Type | Mitigation |
 |------|-----------|
 | Partial execution | Checklist all requested items |
-| Instruction misinterpretation | Confirm understanding before execution |
-| Overriding preferences | Respect explicit user preferences |
-| Adding unrequested features | Generate only what was asked |
-| Ignoring constraints | Track and apply all stated constraints |
+| Misinterpretation | Confirm understanding before execution |
+| Overriding preferences | Respect explicit preferences |
+| Unrequested features | Generate only what was asked |
+| Ignoring constraints | Track + apply all stated constraints |
 
-**Agent Rules**:
-```yaml
-instruction_handling:
-  - parse_instructions_to_checklist
-  - confirm_ambiguous_instructions
-  - track_completion_status
-  - never_add_unrequested_features
-  - preserve_all_constraints
-```
-
-### 4. Safety and Bias Failures
-
-**Description**: Generation of harmful or biased content
+### 4. Safety and Bias
 
 | Type | Mitigation |
 |------|-----------|
 | Harmful content | Apply content safety filters |
-| Bias amplification | Use diverse examples and perspectives |
-| Privacy violations | Redact PII, respect confidentiality |
-| Security vulnerabilities | Run security checks on generated code |
+| Bias amplification | Use diverse examples/perspectives |
+| Privacy violations | Redact PII; keep confidentiality |
+| Security vulnerabilities | Security-check generated code |
 | Ethical violations | Apply ethical guidelines |
 
-**Agent Rules**:
-```yaml
-safety_checks:
-  - filter_harmful_content
-  - check_for_bias_patterns
-  - redact_pii_before_output
-  - security_scan_generated_code
-  - verify_ethical_compliance
-```
-
 ### 5. Technical Errors
-
-**Description**: Incorrect technical output
 
 | Type | Mitigation |
 |------|-----------|
 | Syntax errors | Validate syntax before output |
-| Logic errors | Test generated logic |
-| Version mismatches | Check against current versions |
-| Dependency issues | Verify package availability |
-| Platform incompatibility | Check platform requirements |
+| Logic errors | Test the logic |
+| Version mismatches | Check current versions |
+| Dependency issues | Verify packages exist |
+| Platform incompatibility | Check platform reqs |
 
-**Agent Rules**:
-```yaml
-technical_validation:
-  - syntax_check_all_code
-  - validate_logic_consistency
-  - verify_version_compatibility
-  - check_dependency_availability
-  - test_platform_requirements
-```
-
-### 6. Consistency Failures
-
-**Description**: Internal contradictions or inconsistencies
+### 6. Consistency
 
 | Type | Mitigation |
 |------|-----------|
-| Self-contradiction | Track claims, check for conflicts |
+| Self-contradiction | Track claims; check conflicts |
 | Style inconsistency | Apply consistent voice/style |
 | Format inconsistency | Use templates |
 | Naming inconsistency | Maintain naming conventions |
-| Temporal inconsistency | Track and validate timelines |
-
-**Agent Rules**:
-```yaml
-consistency_checks:
-  - track_all_claims_made
-  - detect_contradictions
-  - apply_style_templates
-  - enforce_naming_conventions
-  - validate_temporal_consistency
-```
+| Temporal inconsistency | Track + validate timelines |
 
 ## Detection Strategies
 
-### Pre-Generation Detection
+- **Pre-generation** — flag risk conditions (context >50k tokens, complex multi-part request, unfamiliar domain, conflicting constraints); mitigate by summarizing, sub-tasking, clarifying, surfacing conflicts.
+- **During-generation** — on any warning sign (unknown references, instruction deviation, self-contradiction, scope creep): pause and verify, backtrack, request clarification.
+- **Post-generation** — validate: refs exist, links valid, stats sourced; no self-contradictions; style/format consistent; instructions/constraints applied; no truncation.
 
-Before generating content, check for conditions that increase failure risk:
-
-```yaml
-risk_factors:
-  high_risk:
-    - long_context (>50k tokens)
-    - complex_multi_part_request
-    - technical_domain_unfamiliar
-    - constraints_conflict
-
-  mitigation:
-    - summarize_context
-    - break_into_sub_tasks
-    - request_domain_clarification
-    - surface_constraint_conflicts
-```
-
-### During-Generation Detection
-
-While generating, watch for warning signs:
-
-```yaml
-warning_signs:
-  - generating_unknown_references
-  - deviating_from_instructions
-  - contradicting_earlier_statements
-  - exceeding_scope
-
-  action:
-  - pause_and_verify
-  - backtrack_if_needed
-  - request_clarification
-```
-
-### Post-Generation Detection
-
-After generating, validate output:
-
-```yaml
-validation:
-  citations:
-    - all_refs_exist_in_corpus
-    - all_links_valid
-    - all_stats_have_sources
-
-  consistency:
-    - no_self_contradictions
-    - style_matches_requirements
-    - format_follows_template
-
-  completeness:
-    - all_instructions_addressed
-    - all_constraints_applied
-    - no_truncation_occurred
-```
-
-## Quality Gates Integration
-
-Integrate failure detection with HITL gates:
-
-```yaml
-gate_integration:
-  inception_gate:
-    check_for:
-      - scope_clarity
-      - constraint_conflicts
-      - requirement_ambiguity
-
-  elaboration_gate:
-    check_for:
-      - requirement_hallucinations
-      - consistency_issues
-      - completeness_gaps
-
-  construction_gate:
-    check_for:
-      - technical_errors
-      - security_vulnerabilities
-      - code_consistency
-
-  transition_gate:
-    check_for:
-      - documentation_accuracy
-      - test_coverage_completeness
-      - deployment_readiness
-```
+Wire these checks into HITL gates per phase: inception (scope/constraint/requirement clarity), elaboration (hallucinations, consistency, completeness), construction (technical errors, security, code consistency), transition (doc accuracy, test coverage, deploy readiness).
 
 ## Severity Classification
 
 | Severity | Impact | Response |
 |----------|--------|----------|
-| Critical | Data loss, security breach, harmful output | Immediate block, human review required |
-| High | Incorrect functionality, significant misinformation | Block, attempt auto-fix, flag for review |
-| Medium | Minor errors, style issues | Warn, suggest fixes |
+| Critical | Data loss, security breach, harmful output | Block; require human review |
+| High | Incorrect functionality, significant misinformation | Block; auto-fix; flag for review |
+| Medium | Minor errors, style issues | Warn; suggest fixes |
 | Low | Cosmetic issues | Log for improvement |
 
-## Agent Protocol
+## Agent Protocol — Every Agent MUST
 
-### Every Agent MUST
-
-1. **Before generation**: Load relevant validation context
-2. **During generation**: Monitor for warning signs
-3. **After generation**: Run failure detection checks
-4. **On detection**: Apply appropriate response based on severity
-5. **Report**: Log all detected issues for analysis
-
-### Failure Response Flow
-
-```
-Detection → Classification → Response → Logging
-
-Detection:
-  - Pattern matching
-  - Reference validation
-  - Consistency checking
-
-Classification:
-  - Map to archetype
-  - Assign severity
-
-Response:
-  - Critical: Block + Human
-  - High: Block + Auto-fix
-  - Medium: Warn + Suggest
-  - Low: Log
-
-Logging:
-  - Record all detections
-  - Track patterns
-  - Update metrics
-```
-
-## Metrics and Monitoring
-
-Track these metrics to monitor failure rates:
-
-| Metric | Target | Alert Threshold |
-|--------|--------|-----------------|
-| Hallucination rate | <1% | >5% |
-| Instruction compliance | >95% | <90% |
-| Consistency score | >98% | <95% |
-| Technical error rate | <2% | >5% |
-| Safety filter triggers | <0.1% | >1% |
+1. **Before generation**: load relevant validation context.
+2. **During generation**: monitor for warning signs.
+3. **After generation**: run failure detection checks.
+4. **On detection**: classify (archetype + severity), then apply the severity-appropriate response above.
+5. **Report**: log all detected issues (record + track patterns); track failure rates to catch regressions.
 
 ## References
 
-- @.aiwg/research/findings/REF-002-failures-in-deployed-llm.md - Failure taxonomy
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/research/hallucination-detection.yaml - Detection schema
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/hitl-gates.md - Quality gates
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/flows/error-handling.yaml - Error handling
-- #140 - Implementation issue
+- @.aiwg/research/findings/REF-002-failures-in-deployed-llm.md
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/research/hallucination-detection.yaml
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/hitl-gates.md
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/flows/error-handling.yaml
+- #140
 
 ---
 

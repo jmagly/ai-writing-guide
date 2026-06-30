@@ -9,13 +9,11 @@ Safety and authoring rules for the `setup.aiwg.io/v1` SetupManifest language and
 ### HIGH
 
 #### installer-safety
-**Summary**: 7 mandatory safety behaviors for installer-agent and setup-run: show before run, confirm destructive operations, validate schema before execution, treat agentic steps as exception-handling only, collect all required params before execution begins, never put secrets in manifests, and treat platform mismatches as skips not errors.
-**When to apply**: Executing any SetupManifest, generating manifests, implementing setup-run or setup-validate skills, reviewing installer output for safety compliance
+**Summary**: 7 mandatory safety behaviors for installer-agent and setup-run: show before run, confirm destructive operations, validate schema before execution, treat agentic steps as exception-handling only, collect all required params before execution…
 **Full rule**: @$AIWG_ROOT/agentic/code/addons/agentic-installer/rules/installer-safety.md
 
 #### installer-authoring
-**Summary**: 5 authoring rules for SetupManifest files and script templates: script-first design (agentic steps are exception handling only), always source lib scripts in bash/PowerShell templates, manifests describe while scripts act, one manifest per logical installation unit, every manifest needs a recovery procedure.
-**When to apply**: Writing or reviewing setup.manifest.yaml files, generating script templates, authoring setup-generate skill output, code review of installer artifacts
+**Summary**: 5 authoring rules for SetupManifest files and script templates: script-first design (agentic steps are exception handling only), always source lib scripts in bash/PowerShell templates, manifests describe while scripts act, one manifest per…
 **Full rule**: @$AIWG_ROOT/agentic/code/addons/agentic-installer/rules/installer-authoring.md
 
 ---

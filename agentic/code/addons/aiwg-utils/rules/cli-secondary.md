@@ -11,91 +11,52 @@ enforcement: high
 
 ## Overview
 
-AIWG is **agentic-first**. The agent self-guides via skills and agents that carry the full priming context — rules, gates, preservation logic, recovery patterns. The CLI sits *underneath* that priming. It is the imperative tool the skill calls; it is not the agent's primary surface. Raw CLI commands augment skill workflows; they do not replace skills. The skill remains the driver/orchestrator and owns final formatting, presentation, synthesis, gates, and recovery behavior.
+AIWG is **agentic-first**. Skills/agents carry the priming (rules, gates, preservation logic, recovery); the CLI sits *underneath* as the imperative tool the skill calls. Raw CLI commands augment skill workflows; they do not replace skills. The skill is the driver and owns orchestration, formatting, synthesis, gates, and recovery.
 
 ## The Hierarchy
 
-The agent's preferred path for any action, in strict priority order:
+Preferred path for any action, strict priority order (P1→P4):
 
 | Priority | Surface | When |
 |---|---|---|
-| **1. Local skill or agent** | Already loaded in your context (kernel skills, framework quickrefs, deployed agents) | Always check here first — these are free to invoke |
-| **2. Discovered skill or agent** | Reachable via `aiwg discover "<need>"` + `aiwg show <type> <name>` | When no local skill matches; query the index before improvising or falling to the CLI |
-| **3. Raw CLI command** | Imperative invocation of `aiwg <command>` | Only when no skill exists, OR you are on the discovery surface, OR you are inside a skill that is calling the CLI as its step |
-| **4. Manual file operations** | Direct edits without going through skill or CLI | Last resort — bypasses both priming AND registry update logic |
+| **1. Local skill/agent** | Already in context (kernel skills, framework quickrefs, deployed agents) | Always check first — free to invoke |
+| **2. Discovered skill/agent** | `aiwg discover "<need>"` + `aiwg show <type> <name>` | No local match; query index before improvising or falling to CLI |
+| **3. Raw CLI** | `aiwg <command>` | Only when no skill exists, OR on the discovery surface, OR inside a skill calling CLI as its step |
+| **4. Manual file ops** | Direct edits bypassing skill/CLI | Last resort — bypasses priming AND registry update logic |
 
-**Rule of thumb**: if the agent is reaching for the raw CLI for an *action* (mutation, deploy, scaffold, regenerate), it should first ask "is there a skill for this — locally or via `aiwg discover`?" If yes, route through the skill.
-
-**Sole exception**: discovery and finder commands (`aiwg discover`, `aiwg show`, and friends listed in Rule 2) are themselves the priming entry points. They remain primary and direct-callable. They are *how* the agent gets to a discovered skill in the first place — they are the bridge from priority 2 down to priority 1.
-
-## The Flow
-
-```
-Agent receives task
-  ↓
-Is there a LOCAL skill in my context for this?
-  ├─ YES → invoke local skill (priority 1)
-  └─ NO ↓
-        aiwg discover "<need>"          ← discovery CLI is correct here
-        aiwg show skill <name>          ← discovery CLI is correct here
-        ↓
-        Invoke the discovered skill (priority 2)
-        ↓
-        Skill calls the CLI under the hood (priority 3, inside the skill)
-```
+Reaching for raw CLI for an *action* (mutation, deploy, scaffold, regenerate)? First ask "is there a skill — locally or via `aiwg discover`?" If yes, route through it. **Sole exception**: discovery/finder commands (Rule 2) are the priming entry points — primary and direct-callable; they bridge P2 to P1.
 
 ## Mandatory Rules
 
 ### Rule 1: Local Skill First, Then Discovered Skill, Then CLI
 
-For action commands, the priority is always: **local skill → discovered skill → raw CLI**. The agent must walk down the hierarchy in order, not jump to the CLI:
+Walk **local skill → discovered skill → raw CLI** in order; never jump to CLI. (1) Check context — kernel skills (`use`, `aiwg-doctor`, `aiwg-refresh`, `aiwg-regenerate`, `aiwg-status`, `steward`), framework quickrefs, deployed agents (`aiwg-steward`, `aiwg-finder`). (2) No local match → `aiwg discover "<need>"` (~385 of 400 skills are out of context but one query away). (3) Fall to raw CLI only per Rule 7. The skill carries the priming; the CLI alone does not.
 
-1. **Check what's already in your context** — kernel skills (`use`, `aiwg-doctor`, `aiwg-refresh`, `aiwg-regenerate`, `aiwg-status`, `steward`, etc.), framework quickrefs that name the right skill, deployed agents (`aiwg-steward`, `aiwg-finder`)
-2. **If no local match, run `aiwg discover "<need>"`** — the bulk of AIWG's surface (~385 of 400 skills) is not in your context but is one query away
-3. **Only fall to the raw CLI when** no local or discovered skill exists, the user explicitly typed the raw command, you are on the discovery surface (Rule 2), or you are inside a paired skill that is calling the CLI as its step
-
-The skill carries the priming. The CLI alone does not.
-
-**FORBIDDEN**:
-```
-User: "refresh AIWG"
-Agent: *runs `aiwg refresh` directly*    ← misses the refresh skill's preservation logic,
-                                            doctor pre-check, provider verification
-```
-
-**REQUIRED**:
-```
-User: "refresh AIWG"
-Agent: *invokes the aiwg-refresh skill*
-       *skill loads the priming: pre-flight doctor check, dry-run, provider confirmation*
-       *skill then calls `aiwg refresh` with the right flags*
-```
+**Example** — "refresh AIWG": **FORBIDDEN** = run `aiwg refresh` directly (skips preservation logic, doctor pre-check, provider verification). **REQUIRED** = invoke the `aiwg-refresh` skill, which loads that priming then calls `aiwg refresh` with the right flags.
 
 ### Rule 2: Discovery Commands Stay Primary
 
-These commands are themselves the priming entry points and MUST remain direct-callable. They are read-only / list-only by design:
+These are the priming entry points and MUST remain direct-callable (read-only / list-only). They have NO paired skill — they ARE the priming:
 
 | Command | Purpose |
 |---|---|
 | `aiwg discover` | Capability search across skills, agents, commands, rules |
 | `aiwg show` | Fetch the body of a discovered artifact |
 | `aiwg list` | List installed frameworks and addons |
-| `aiwg catalog` | Search and list marketplace packages |
+| `aiwg catalog` | Search/list marketplace packages |
 | `aiwg features` | List capability features |
-| `aiwg help` | Show CLI command reference |
+| `aiwg help` | CLI command reference |
 | `aiwg status` | Workspace health snapshot |
 | `aiwg version` | Version + channel info |
 | `aiwg runtime-info` | Provider + environment detection |
 | `aiwg agentcard` | List installed agent capability cards |
-| `aiwg-doctor` (read-only diagnostic mode) | Health check without repair |
-| `aiwg ralph-status`, `aiwg mc status`, `aiwg cost-report`, `aiwg metrics-tokens` | Read-only status |
-| Subcommand-level: `aiwg index query`, `aiwg index deps`, `aiwg index stats`, `aiwg packages list`, `aiwg packages info`, `aiwg storage show`, `aiwg storage list-backends` | Discovery within a multi-subcommand surface |
-
-The agent invokes these directly. They do NOT have a paired "priming skill" — they ARE the priming.
+| `aiwg-doctor` (read-only) | Health check without repair |
+| `aiwg ralph-status`, `mc status`, `cost-report`, `metrics-tokens` | Read-only status |
+| `aiwg index query/deps/stats`, `packages list/info`, `storage show/list-backends` | Discovery within a multi-subcommand surface |
 
 ### Rule 3: Mixed Subcommands — Classify Per Subcommand
 
-Some commands carry both discovery and action subcommands. Classify per subcommand:
+Commands carrying both discovery and action subcommands — classify per subcommand:
 
 | Command | Discovery subcommands | Action subcommands (skill-first) |
 |---|---|---|
@@ -104,134 +65,66 @@ Some commands carry both discovery and action subcommands. Classify per subcomma
 | `aiwg ops` | `status`, `list` | `init`, `adopt`, `discover --register`, `push` |
 | `aiwg storage` | `show`, `list-backends`, `test` | `migrate` |
 | `aiwg activity-log` | `show`, `stats` | `append`, `rotate` |
-| `aiwg memory` / `reflections` / `kb` / `provenance` / `research-store` | `path`, `list`, `get` | `put`, `delete`, `append-log` |
+| `aiwg memory`/`reflections`/`kb`/`provenance`/`research-store` | `path`, `list`, `get` | `put`, `delete`, `append-log` |
 
 ### Rule 4: Action Commands — Always Prefer Skill
 
-The following CLI commands have paired skills/agents. When the user's intent maps to one of these, invoke the skill — not the raw CLI:
+These CLI commands have paired skills/agents. When user intent maps to one, invoke the skill — not the raw CLI:
 
 | CLI command | Paired skill/agent | Why the skill matters |
 |---|---|---|
-| `aiwg use <framework>` | `use` skill | Deployment validation, conflict resolution, registry update gates |
-| `aiwg refresh` | `aiwg-refresh` skill | Pre-flight doctor check, dry-run preview, provider verification |
-| `aiwg regenerate` | `aiwg-regenerate` skill | Preserves team directives, AGENTS.md link integrity, AIWG.md pipeline |
-| `aiwg doctor` (repair mode) | `aiwg-doctor` skill | Diagnoses *and* invokes correct remediation skill per failure class |
-| `aiwg init` | `intake-start` / project-init skills | Solution profile validation, intake gate |
-| `aiwg new my-project` | `new-project` skill / intake-wizard | Scaffold + intake guidance |
-| `aiwg promote` | promote skill | Hash verification, source preservation invariant |
-| `aiwg remove` | use/remove skill | Reverts cleanly without orphaning |
-| `aiwg add-agent` / `add-command` / `add-skill` / `add-behavior` / `add-template` | AgentSmith / CommandSmith / SkillSmith / template-engine | Scaffold validation, metadata pre-fill, deployment wiring |
-| `aiwg scaffold-{addon,extension,framework}` | scaffold skills | Manifest validation, naming conventions, deployment path |
-| `aiwg ralph` | `ralph` skill | Completion-criteria validation, recovery protocol, anti-laziness gates |
-| `aiwg mc start/dispatch` | `mission-control` skill | Concurrency budget, supervisor wiring |
-| `aiwg doc-sync` | `doc-sync` skill | Drift assessment, interactive reconciliation |
-| `aiwg lint` / `aiwg cleanup-audit` / `aiwg best-practices-audit` | lint / audit skills | Threshold config, false-positive handling |
-| `aiwg sdlc-accelerate` | `sdlc-accelerate` skill | Phase-gate orchestration, multi-agent dispatch |
-| `aiwg execution-mode` / `snapshot` / `checkpoint` / `reproducibility-validate` | reproducibility skills | Mode-appropriate priming |
-| `aiwg steward` | `steward` agent | Provider-aware routing, fallback logic |
-| `aiwg index build` | the index-refresh patterns in `post-commit-index-refresh` rule | Targeted-graph rebuild, incremental mode |
+| `aiwg use <framework>` | `use` | Deploy validation, conflict resolution, registry gates |
+| `aiwg refresh` | `aiwg-refresh` | Doctor pre-check, dry-run, provider verification |
+| `aiwg regenerate` | `aiwg-regenerate` | Preserves team directives, AGENTS.md/AIWG.md integrity |
+| `aiwg doctor` (repair) | `aiwg-doctor` | Diagnoses + invokes correct remediation |
+| `aiwg init` | `intake-start` / project-init | Solution profile validation, intake gate |
+| `aiwg new my-project` | `new-project` / intake-wizard | Scaffold + intake guidance |
+| `aiwg promote` | promote | Hash verification, source preservation |
+| `aiwg remove` | use/remove | Reverts cleanly, no orphaning |
+| `add-agent`/`add-command`/`add-skill`/`add-behavior`/`add-template` | AgentSmith / CommandSmith / SkillSmith / template-engine | Scaffold validation, metadata, wiring |
+| `aiwg scaffold-{addon,extension,framework}` | scaffold skills | Manifest validation, naming, deploy path |
+| `aiwg ralph` | `ralph` | Completion-criteria, recovery, anti-laziness gates |
+| `aiwg mc start/dispatch` | `mission-control` | Concurrency budget, supervisor wiring |
+| `aiwg doc-sync` | `doc-sync` | Drift assessment, reconciliation |
+| `aiwg lint`/`cleanup-audit`/`best-practices-audit` | lint / audit skills | Threshold config, false-positive handling |
+| `aiwg sdlc-accelerate` | `sdlc-accelerate` | Phase-gate orchestration, multi-agent dispatch |
+| `execution-mode`/`snapshot`/`checkpoint`/`reproducibility-validate` | reproducibility skills | Mode-appropriate priming |
+| `aiwg steward` | `steward` agent | Provider-aware routing, fallback |
+| `aiwg index build` | `post-commit-index-refresh` patterns | Targeted-graph rebuild, incremental |
 | `aiwg ops <action>` (init, adopt, push) | ops framework skills | Workspace context, multi-repo discipline |
-| `aiwg storage migrate` | storage skills | Per-subsystem migration logic, backend validation |
+| `aiwg storage migrate` | storage skills | Per-subsystem migration, backend validation |
 
 ### Rule 5: CLI Augments; Skill Drives
 
-For paired action surfaces, raw CLI examples are implementation affordances only. They show what the skill may call, or what an explicit human operator may type, but they MUST NOT be documented as replacing the skill workflow.
-
-The skill is responsible for:
-
-- interpreting user intent and selecting the correct workflow path
-- running pre-flight checks, dry runs, preservation logic, and authorization gates
-- calling raw CLI commands as bounded execution steps when useful
-- synthesizing results from commands, files, agents, and validation output
-- producing final formatting, presentation, and user-facing conclusions
-- recording state, reports, and recovery guidance
-
-The CLI is responsible for narrow imperative execution. It should return structured facts, perform bounded mutations, or expose status that the skill can use. It should not be treated as the presentation layer for agent work.
-
-Documentation MAY keep CLI examples, but paired action examples must be framed as one of:
-
-1. a step the skill calls internally,
-2. an explicit operator command typed by the user, or
-3. a diagnostic/status command from the discovery surface.
-
-If docs imply `aiwg <action>` is the agent's preferred path while a paired skill exists, file/fix drift under #1480.
+For paired action surfaces, raw CLI examples are implementation affordances only (what the skill calls, or what a human operator types) — never documented as replacing the skill. The skill interprets intent, runs pre-flight/dry-run/preservation/authorization gates, calls CLI as bounded steps, synthesizes, owns formatting, and records state/recovery; the CLI does narrow imperative execution, not presentation. Docs MAY keep CLI examples, but paired-action examples must be framed as (1) a step the skill calls, (2) an explicit operator command, or (3) a discovery-surface diagnostic. Docs implying `aiwg <action>` is the agent's preferred path while a paired skill exists → file/fix drift under #1480.
 
 ### Rule 6: Skill Documentation Must Say So
 
-Every skill that has a paired CLI command MUST include a one-line note near the top:
-
-> Prefer invoking this skill over running `aiwg <command>` directly. The skill carries the priming this CLI command needs to be used correctly.
-
-And every CLI command reference doc (e.g. `docs/cli-reference.md`) MUST, for paired commands, link to the skill with a one-liner:
-
-> Agents: invoke via the `[skill-name]` skill rather than calling this CLI directly. See `aiwg show skill <name>`.
+Every skill with a paired CLI command MUST carry a one-line note: *"Prefer invoking this skill over running `aiwg <command>` directly. The skill carries the priming this CLI command needs."* Every CLI reference doc (e.g. `docs/cli-reference.md`) MUST, for paired commands, link the skill: *"Agents: invoke via the `[skill-name]` skill rather than calling this CLI directly. See `aiwg show skill <name>`."*
 
 ### Rule 7: When Raw CLI Is Acceptable
 
-The agent may invoke the CLI directly without going through a paired skill ONLY when:
-
-1. The user explicitly typed the raw command (`"run aiwg refresh"`, not `"refresh AIWG"`)
-2. No paired skill exists for the command
-3. The command is on the discovery surface (Rule 2)
-4. The agent is inside a paired skill, and that skill is calling the CLI as its imperative step
-5. The CLI is being used in a documented diagnostic-only mode (e.g. `aiwg doctor` for read-only health check, with no repair)
-
-## Detection Heuristics
-
-You may be in violation of this rule if:
-
-| Symptom | Likely cause |
-|---|---|
-| Agent ran `aiwg refresh` without first checking `aiwg refresh --dry-run` | Skipped the refresh skill's priming |
-| Agent ran `aiwg regenerate` and overwrote team directives | Skipped the regenerate skill's preservation logic |
-| Agent ran `aiwg use` and the workspace ended up in a half-deployed state | Skipped the use skill's verification gates |
-| Agent ran `aiwg ralph` without a measurable `--completion` argument | Skipped the ralph skill's completion-criteria validation |
-| Agent invoked CLI on a paired command without naming the skill that wraps it | Treated CLI as primary surface |
+Invoke the CLI directly without a paired skill ONLY when: (1) the user explicitly typed the raw command (`"run aiwg refresh"`, not `"refresh AIWG"`); (2) no paired skill exists for the command; (3) the command is on the discovery surface (Rule 2); (4) you are inside a paired skill calling the CLI as its imperative step; (5) the CLI is used in a documented diagnostic-only mode (e.g. `aiwg doctor` read-only, no repair).
 
 ## Recovery
 
-If you catch yourself about to invoke a paired CLI command directly:
-
-1. **STOP** before running it
-2. **DISCOVER** the paired skill: `aiwg discover "<the command's purpose>"`
-3. **FETCH** the skill: `aiwg show skill <name>`
-4. **INVOKE** the skill — let it call the CLI
-
-If the paired skill genuinely doesn't exist (which is rare for action commands), file an issue so the pairing can be added.
+About to invoke a paired CLI command directly? STOP → `aiwg discover "<purpose>"` → `aiwg show skill <name>` → invoke the skill. If the paired skill genuinely doesn't exist (rare), file an issue to add the pairing.
 
 ## Interaction with Other Rules
 
-This rule layers cleanly with:
-
-- **`skill-discovery`** — discovery itself is the exception this rule encodes; the two rules together describe the full agentic-first flow (discover → show → invoke skill → skill calls CLI)
-- **`self-maintenance`** — that rule's routing table now defers to this principle (skills first, CLI only when no pairing exists)
-- **`research-before-decision`** — the skill IS the priming research; invoking it satisfies the research requirement
-- **`human-authorization`** — many action CLIs have authorization gates wired into the skill, not the CLI itself; bypassing the skill bypasses the gate
-
-## Platform Applicability
-
-Universal. Every AIWG-supported provider receives the same skill/agent/CLI separation. The principle is platform-agnostic.
+Layers with `skill-discovery` (discovery is the encoded exception), `self-maintenance` (skills-first routing), `research-before-decision` (the skill IS the priming research), and `human-authorization` (gates live in the skill — bypassing it bypasses the gate). Universal across all AIWG providers.
 
 ## Checklist
 
-Before invoking any CLI command, walk the hierarchy in order:
-
-- [ ] Priority 1: Is there a **local skill** in my context (kernel skill, framework quickref entry, deployed agent) that does this? If yes, invoke it.
-- [ ] Priority 2: If no local skill, run `aiwg discover "<need>"`. Did discovery return a paired skill? If yes, fetch it with `aiwg show` and invoke it.
-- [ ] Priority 3: Only after priorities 1 and 2 are exhausted, consider running the CLI directly. Verify one of these holds:
-  - This is a discovery/finder command (Rule 2 table)
-  - This is a mixed command and I'm using a discovery subcommand (Rule 3)
-  - No paired skill exists (Rule 4 table doesn't list one; discover returns no results)
-  - I'm inside a paired skill that is calling the CLI as its step
-  - The user explicitly typed the raw command
-
-If priority 1 or 2 has a match and I'm still reaching for the CLI — stop and route through the skill.
+- [ ] P1: Local skill in context? Invoke it.
+- [ ] P2: Else `aiwg discover "<need>"`; returned a paired skill? `aiwg show` + invoke.
+- [ ] P3: Only after P1/P2 exhausted, run CLI directly per Rule 7. If P1/P2 matched and you're still reaching for the CLI, stop and route through the skill.
 
 ## References
 
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/skill-discovery.md — Discovery-first protocol
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/self-maintenance.md — Self-maintenance routing (now skill-first)
-- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/skills/aiwg-utils-quickref/SKILL.md — Kernel quickref, skill-first ordering
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/self-maintenance.md — Self-maintenance routing (skill-first)
+- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/skills/aiwg-utils-quickref/SKILL.md — Kernel quickref
 - Issue #1272 — Origin of this rule
 
 ---

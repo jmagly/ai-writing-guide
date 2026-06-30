@@ -7,525 +7,80 @@ enforcement: high
 **Enforcement Level**: HIGH
 **Scope**: All agents operating on large codebases or document corpora
 **Addon**: rlm (Recursive Language Model patterns)
-**Research Basis**: REF-089 Recursive Language Models (Zhang et al., 2026)
-**Issue**: #322 (Core RLM Addon)
+**Research Basis**: REF-089 (RLM, Zhang et al. 2026, GRADE LOW), REF-086 (scaling agent systems, DeepMind 2025, LOW), REF-088 (Wexford 2026, VERY LOW), REF-127 (Zylos 2026, VERY LOW), REF-169 (Evans et al. 2026, MODERATE)
+**Issue**: #322
 
 ## Overview
 
-These rules enforce Recursive Language Model (RLM) patterns for context management when working with large codebases, documentation corpora, or multi-file operations. Research shows that treating context as an external environment accessed programmatically through code outperforms loading entire contexts into the conversation window — up to 3x cost reduction while maintaining stronger performance.
-
-## Research Foundation
-
-These rules synthesize five references in the AIWG research corpus. Each finding is hedged according to its GRADE quality assessment.
-
-| REF | Source | GRADE | Used For |
-|-----|--------|-------|----------|
-| REF-089 (Zhang et al., MIT CSAIL, 2026) | arXiv 2512.24601v2 | LOW (peer-review pending) | Core RLM paradigm — Rules 1-5, Rule 10 |
-| REF-086 (Kim et al., Google DeepMind, 2025) | arXiv 2512.08296 | LOW (peer-review pending) | Coordination topology — Rule 6, Rule 7 |
-| REF-088 (Wexford, DEV blog, 2026) | dev.to | VERY LOW (practitioner synthesis) | Sub-agent count cap — Rule 8 |
-| REF-127 (Zylos Research, 2026) | Industry report | VERY LOW (aggregated industry data) | Long-running degradation — Rule 9 |
-| REF-169 (Evans et al., Google PoI, 2026) | arXiv 2603.20639 | MODERATE (preprint, established institution) | Centaur-mode design direction (forward-looking, not yet enforced) |
-
-### Core findings
-
-From **REF-089** (Recursive Language Models — Zhang et al., 2026):
-
-> "The key insight is that arbitrarily long user prompts should not be fed into the neural network directly but should instead be treated as *part of the environment* that the LLM is tasked to *symbolically and recursively interact with*." (p. 1)
-
-> "Compared to the summarization agent which ingests the entire input context, RLMs are up to 3× cheaper while maintaining stronger performance across all tasks because the RLM is able to selectively view context." (p. 6)
-
-> "Unfortunately, compaction is rarely expressive enough for tasks that require dense access throughout the prompt. It presumes that *some* details that appear early in the prompt can safely be forgotten to make room for new content." (p. 1)
-
-From **REF-086** (Towards a Science of Scaling Agent Systems — Kim et al., DeepMind, 2025):
-
-> "Independent multi-agent systems amplify errors at 17.2x the rate of single agents, while centralized coordination reduces this to 4.4x magnification." (Kim et al., 2025)
-
-> "Multi-agent coordination produces diminishing or negative returns once single-agent baselines exceed approximately 45% task performance." (Kim et al., 2025)
-
-> "Sequential reasoning tasks degraded by 39-70% across all multi-agent variants." (Kim et al., 2025)
-
-From **REF-088** (How to Build Multi-Agent Systems — Wexford, 2026 — *practitioner synthesis, not primary research*):
-
-> "Beyond 7 agents, coordination overhead begins to dominate actual productive work. The cognitive complexity of managing agent interactions grows faster than the capabilities gained." (Wexford, 2026)
-
-From **REF-127** (Long-Running AI Agents and Task Decomposition — Zylos Research, 2026 — *industry report, aggregated data*):
-
-> "Industry reports suggest agent success rate degrades after approximately 35 minutes of operation, and that doubling task duration quadruples the failure rate." (Zylos Research, 2026; primary citation not provided in source)
-
-From **REF-169** (Agentic AI and the Next Intelligence Explosion — Evans et al., 2026):
-
-> "A recursive descent into collective deliberation that expands when complexity demands and collapses when the problem resolves." (Evans, Bratton, & Agüera y Arcas, 2026)
-
-## Problem Statement
-
-When working with large codebases or document sets, agents frequently:
-- Load entire files into conversation context unnecessarily
-- Process all content sequentially instead of filtering first
-- Exhaust context windows with raw text rather than using programmatic access
-- Lose information through compaction/summarization when full details are needed
-- Fail to leverage recursive decomposition for complex multi-file tasks
-
-This produces:
-- Context window overflow and truncation
-- Degraded output quality as details are lost to compaction
-- Expensive token costs from processing irrelevant content
-- Inability to handle codebases larger than context window
-- Loss of information through lossy summarization
+Treat large context as an external environment accessed programmatically (Grep, targeted Read, sub-agents) rather than loaded wholesale into the conversation window. REF-089: this is up to 3× cheaper than summarization while preserving stronger performance, because the agent selectively views context instead of compacting (compaction loses early details needed for dense tasks). The failure modes these rules prevent: context overflow/truncation, quality loss from compaction, token waste on irrelevant content, and inability to handle corpora larger than the window.
 
 ## Mandatory Rules
 
 ### Rule 1: Symbolic Handles Over Raw Text
-
-**Research Basis**: REF-089 Design Choice 1 — Treat context as external environment
-
-When working with large files or multiple documents, reference by symbolic handle (file path) rather than loading full content into conversation.
-
-**FORBIDDEN**:
-```
-Agent task: Check authentication logic across the codebase
-
-Agent: Let me read all 47 files in src/auth/ into context
-*Loads 15,000 lines of code*
-*Context window 80% full*
-*Compaction kicks in, loses details*
-```
-
-**REQUIRED**:
-```
-Agent task: Check authentication logic across the codebase
-
-Agent: I'll work with the codebase as an external environment
-*Uses Grep to find password handling patterns*
-*Identifies 8 relevant functions*
-*Reads only those specific sections with line ranges*
-*Preserves full detail, uses <10% of context window*
-
-Symbolic handles maintained: src/auth/login.ts, src/auth/validate.ts
-Full content never loaded — accessed programmatically via Read when needed
-```
+Reference large files by symbolic handle (path) and read only the needed sections, rather than loading full content. **FORBIDDEN**: "read all 47 files in src/auth/ into context" (overflow → compaction → lost detail). **REQUIRED**: Grep for the pattern, identify the relevant functions, Read only those line ranges — full detail preserved at <10% window.
 
 ### Rule 2: Programmatic Access Over Full-Context Loading
-
-**Research Basis**: REF-089 Observation 4 — "Even without explicit training, RLMs exhibit interesting context decomposition and problem decomposition behavior." (p. 7)
-
-Before loading a large file, use code-based filtering (Grep, targeted Read with line ranges) rather than reading the entire content.
-
-**FORBIDDEN**:
-```
-Task: Find all functions that handle user input validation
-
-Agent: Let me read the entire 3,000-line utils.ts file
-*Loads full file*
-*Scans through 3,000 lines for validation functions*
-*Context now contains 2,800 lines of irrelevant code*
-```
-
-**REQUIRED**:
-```
-Task: Find all functions that handle user input validation
-
-Agent: I'll use programmatic access to filter before loading
-
-Step 1: Grep for validation patterns
-  grep -n "validate.*input" utils.ts
-  → Lines 42, 156, 892, 1240 contain matches
-
-Step 2: Read only relevant sections
-  Read utils.ts (lines 35-65)   # First function
-  Read utils.ts (lines 150-180) # Second function
-  ...
-
-Result: Context contains only 120 lines of relevant code (4% of file)
-Full details preserved, no compaction needed
-```
-
-**Emergent Strategies** (from REF-089 Section 4.1, pp. 7-8):
-- **Chunk by structure**: Use headers, function boundaries, class definitions
-- **Keyword filtering**: Grep for relevant patterns before reading
-- **Incremental aggregation**: Build understanding progressively via targeted reads
-- **Model priors**: Use domain knowledge to narrow search space first
+Before loading a large file, filter with code (Grep, line-range Read). **FORBIDDEN**: read an entire 3,000-line file to find validation functions. **REQUIRED**: `grep -n` for matches, then Read only those sections. Emergent strategies (REF-089 §4.1): chunk by structure (headers/function/class boundaries), keyword-filter before reading, aggregate incrementally, and use domain priors to narrow the search space.
 
 ### Rule 3: Recursive Sub-Calls for Dense Tasks
+When information is distributed across many files, delegate to parallel sub-agents (Task tool) that each Grep + read narrowly and return summaries — don't load everything into one context. Use sub-calls by file count:
 
-**Research Basis**: REF-089 pp. 5-6 — "On information-dense tasks like OOLONG or OOLONG-Pairs, we observed several cases where recursive LM sub-calling is necessary... Across all information-dense tasks, RLMs outperform the ablation without sub-calling by 10%-59%."
-
-When a task requires processing information distributed across many files, delegate to sub-agents via Task tool rather than trying to process everything in one context.
-
-**FORBIDDEN**:
-```
-Task: Analyze error handling patterns across 30 API endpoints
-
-Agent: Let me read all 30 endpoint files into context
-*Attempts to load 30 files × 500 lines = 15,000 lines*
-*Context overflow*
-*Compaction loses critical error handling details*
-```
-
-**REQUIRED**:
-```
-Task: Analyze error handling patterns across 30 API endpoints
-
-Agent: This is an information-dense task requiring distributed access.
-I'll use recursive sub-calls.
-
-Step 1: Identify all endpoint files
-  glob "src/api/**/*.ts"
-  → 30 endpoint files identified
-
-Step 2: Spawn parallel sub-agents (via Task tool)
-  Sub-agent 1: Analyze error handling in endpoints 1-10
-  Sub-agent 2: Analyze error handling in endpoints 11-20
-  Sub-agent 3: Analyze error handling in endpoints 21-30
-
-  Each sub-agent:
-    - Uses Grep to find error handling code
-    - Reads only try/catch blocks and error returns
-    - Summarizes patterns found (not raw code)
-
-Step 3: Aggregate sub-agent findings
-  Combine 3 summaries (total: ~500 tokens)
-  Identify common patterns and gaps
-
-Result: Full coverage, low context usage, no information loss
-```
-
-**When to Use Recursive Sub-Calls**:
-
-| Task Type | Use Sub-Calls? | Reason |
-|-----------|----------------|--------|
-| Single file analysis | No | Read with line ranges sufficient |
-| 2-5 related files | Maybe | Depends on total size |
-| 6-20 files | Yes | Parallel sub-agents more efficient |
-| >20 files | Definitely | Impossible to process in one context |
-| Cross-cutting concerns | Yes | Information distributed across codebase |
+| Files | Sub-calls? |
+|-------|-----------|
+| 1 | No — line-range Read suffices |
+| 2–5 | Maybe (depends on size) |
+| 6–20 | Yes |
+| >20 or cross-cutting | Definitely |
 
 ### Rule 4: Cost-Aware Sub-Call Management
-
-**Research Basis**: REF-089 Figure 3, p. 6 — RLM median cost comparable to base model, up to 3x cheaper than summarization, but high variance exists.
-
-Track sub-call count and estimated token cost. When total cost approaches budget, switch to more targeted strategies rather than broad scanning.
-
-**FORBIDDEN**:
-```
-Agent spawns 100 sub-agents to analyze every file in repository
-*Each sub-agent costs 5,000 tokens*
-*Total cost: 500,000 tokens*
-*Budget exhausted on preliminary analysis*
-*No tokens left for actual implementation*
-```
-
-**REQUIRED**:
-```
-Agent task: Find security vulnerabilities in authentication module
-
-Cost awareness protocol:
-1. Estimate task scope:
-   - 30 files in auth module
-   - Average 300 lines per file
-   - Potential cost: 30 sub-calls × 3k tokens = 90k tokens
-
-2. Check budget:
-   - Total budget: 100k tokens
-   - Estimated usage: 90k tokens (90% of budget)
-   - Decision: Budget is tight, use targeted strategy
-
-3. Apply filtering first:
-   - Grep for sensitive operations (password, token, session)
-   - Reduces scope to 8 critical files
-   - New estimate: 8 sub-calls × 3k tokens = 24k tokens (24%)
-   - Decision: Proceed with filtered approach
-
-Result: Task completed in 26k tokens (26% of budget)
-Buffer maintained for implementation work
-```
-
-**Cost Thresholds**:
-
-| Budget Usage | Action |
-|--------------|--------|
-| <30% | Safe to proceed with current strategy |
-| 30-50% | Monitor usage, prepare to filter more aggressively |
-| 50-70% | Apply additional filtering before sub-calls |
-| >70% | Switch to highly targeted approach or escalate |
-| >90% | Abort current strategy, request human guidance |
+Track sub-call count and estimated token cost; filter before fanning out so you don't exhaust budget on preliminary analysis. **FORBIDDEN**: spawn 100 sub-agents (500k tokens) before any implementation. **REQUIRED**: estimate scope, check budget, Grep-filter to the critical files first, then dispatch. Cost thresholds: <30% safe; 30–50% monitor; 50–70% filter more before sub-calls; >70% go highly targeted or escalate; >90% abort and request guidance.
 
 ### Rule 5: Emergent Decomposition Patterns
-
-**Research Basis**: REF-089 Section 4.1 — "Even without explicit training, RLMs exhibit interesting context decomposition and problem decomposition behavior." Lists emergent strategies: chunking by structure, keyword filtering, incremental aggregation.
-
-Use the decomposition patterns RLMs discover naturally. These are not prescribed strategies but observed best practices.
-
-**Pattern 1: Structural Chunking**
-
-**FORBIDDEN**:
-```
-Agent: Let me read the entire API documentation sequentially from top to bottom
-*Loads all 50 pages*
-*Loses details through compaction*
-```
-
-**REQUIRED**:
-```
-Agent: I'll chunk by document structure
-
-1. Read table of contents (identifies 8 sections)
-2. Determine which sections are relevant (3 of 8)
-3. Read only those sections (15 pages instead of 50)
-
-Structural boundary: Section headers
-```
-
-**Pattern 2: Keyword Filtering**
-
-**FORBIDDEN**:
-```
-Agent: I need to understand the database schema
-*Reads entire 50-file ORM model directory*
-```
-
-**REQUIRED**:
-```
-Agent: I'll filter by keywords first
-
-1. Grep for "@Entity" decorator (finds 15 model files)
-2. Grep for "userId" field (reduces to 5 relevant models)
-3. Read only those 5 model definitions
-
-Keyword filters: @Entity, userId
-```
-
-**Pattern 3: Incremental Aggregation**
-
-**FORBIDDEN**:
-```
-Agent: Let me collect all API endpoint signatures at once
-*Attempts to extract from 30 files in parallel*
-*Context overflow from trying to hold all results*
-```
-
-**REQUIRED**:
-```
-Agent: I'll aggregate incrementally via intermediate storage
-
-Iteration 1: Process endpoints 1-10
-  → Write results to .aiwg/working/endpoints-batch1.json
-
-Iteration 2: Process endpoints 11-20
-  → Append to .aiwg/working/endpoints-batch2.json
-
-Iteration 3: Process endpoints 21-30
-  → Append to .aiwg/working/endpoints-batch3.json
-
-Final step: Read all 3 batch files (compact summaries, not raw content)
-  → Synthesize complete API surface
-
-Incremental storage: Files as REPL variables
-```
-
-**Pattern 4: Model Priors (Domain Knowledge)**
-
-**FORBIDDEN**:
-```
-Agent: I need to find the authentication logic
-*Searches entire codebase alphabetically*
-*Wastes tokens scanning irrelevant directories*
-```
-
-**REQUIRED**:
-```
-Agent: I'll leverage domain knowledge to narrow search
-
-Domain prior: Authentication logic typically in:
-  - src/auth/
-  - src/middleware/
-  - Filenames containing "auth", "login", "session"
-
-1. Glob for these patterns first
-2. Only then examine matched files
-
-Search space reduced from 500 files to 12 files via priors
-```
+Apply the strategies RLMs use naturally: **structural chunking** (read the ToC, then only relevant sections), **keyword filtering** (Grep `@Entity`, then narrow by field, then read the few matches), **incremental aggregation** (process in batches, write intermediate results to `.aiwg/working/*.json` as REPL variables, synthesize from the compact batch files), and **model priors** (search likely locations — `src/auth/`, `src/middleware/`, `*auth*`/`*login*` — before scanning everything).
 
 ### Rule 6: RLM Is Centralized Coordination — Aggregate, Don't Bag-of-Agents
-
-**Research Basis**: REF-086 — independent multi-agent systems amplify errors at 17.2x; centralized coordination reduces this to 4.4x. (GRADE: LOW, peer-review pending.)
-
-RLM's recursive sub-call architecture is **centralized by design**: the root LLM is the controller, sub-agents are dispatched by the root and their outputs are aggregated by the root. This puts RLM in the 4.4x error-magnification bucket, not 17.2x. But `rlm-batch` parallel fan-out can degrade into "bag of agents" behavior if results are silently merged without active reconciliation.
-
-**FORBIDDEN**:
-```
-Agent dispatches /rlm-batch with 5 sub-agents
-Each sub-agent produces a finding
-Agent concatenates the 5 outputs and returns "here's the report"
-  ↑ no reconciliation, no conflict detection, no aggregation logic
-```
-
-**REQUIRED**:
-```
-Agent dispatches /rlm-batch with 5 sub-agents
-Each sub-agent produces a structured finding
-Agent (or aggregator strategy):
-  - Reconciles conflicts between sub-agent outputs
-  - Detects contradictions and flags them
-  - Produces a coherent synthesis with provenance
-  - Returns a single integrated result, not a concatenation
-```
-
-The `--aggregate` strategy on `rlm-batch` (e.g., `concat`, `summarize`) is the reconciliation layer. Choose it deliberately — `concat` is appropriate only when sub-agent outputs are guaranteed independent (one file each, no cross-cutting concerns).
+RLM is centralized by design (root dispatches sub-agents and aggregates their output) → REF-086's 4.4× error bucket, not 17.2×. But parallel `rlm-batch` fan-out degrades into "bag of agents" if results are silently concatenated. **FORBIDDEN**: concatenate 5 sub-agent findings and call it a report. **REQUIRED**: reconcile conflicts, flag contradictions, synthesize with provenance into a single integrated result. The `--aggregate` strategy is the reconciliation layer; `concat` is acceptable only when outputs are provably independent (one file each, no cross-cutting concerns).
 
 ### Rule 7: Don't Use RLM When a Single Agent Already Works
+RLM helps where a single agent struggles (long context, distributed info, multi-file synthesis); it adds pure overhead for focused queries and single-file analysis. **Decision threshold**: if a single Read+Grep resolves the task in <50% context, do not escalate to RLM. **Sequential-dependency warning**: if each step needs the prior step's answer, use one agent — splitting loses the chain. (REF-086: multi-agent returns go negative once the single-agent baseline exceeds ~45%.)
 
-**Research Basis**: REF-086 — multi-agent coordination produces diminishing or negative returns once single-agent baselines exceed approximately 45% task performance. Sequential reasoning tasks degrade 39-70% across all multi-agent variants. (GRADE: LOW, peer-review pending.)
-
-RLM is most valuable for tasks where a single agent struggles: long context, distributed information across many files, multi-file synthesis. For tasks where a single agent already performs well — focused queries, small files, single-file analysis — RLM adds coordination overhead without benefit.
-
-**Decision threshold**: If a single Read+Grep would resolve the task in <50% context utilization, do not escalate to RLM.
-
-**Sequential dependency warning**: If each step of the task depends on the prior step's result (each step needs the answer from the last), use a single agent. Splitting into sub-agents loses the chain.
-
-**FORBIDDEN**:
-```
-Task: Read this 200-line config file and tell me the database URL
-Agent: Let me dispatch /rlm-query against this file
-  ↑ overkill — single Read suffices
-```
-
-**REQUIRED**:
-```
-Task: Read this 200-line config file and tell me the database URL
-Agent: Reading the file directly
-*Read with line range; extract the URL*
-```
-
-Reserve RLM for tasks where the single-agent baseline genuinely struggles. Below the 45% threshold the coordination tax is paid in *negative* returns.
-
-### Rule 8: Concurrent Sub-Agent Cap — 3-7 Sweet Spot, Hard Cap at 7
-
-**Research Basis**: REF-088 — practitioner synthesis reports 3-7 agents as the optimal range; n*(n-1)/2 communication paths cause coordination overhead to dominate beyond 7. (GRADE: VERY LOW — practitioner blog, no primary research; corroborated by REF-086 LOW-grade primary research on coordination tax.)
-
-Concurrent sub-agent count from a single RLM dispatch must respect the multi-agent coordination sweet spot:
-
-| Concurrent count | Coordination state |
-|---|---|
-| 1-2 | Trivial, but loses parallelism benefits |
-| 3-5 | Optimal for most tasks |
-| 5-7 | Peak for complex tasks |
-| 8+ | Coordination overhead dominates; auto-batch into waves of ≤7 |
-
-**`rlm-batch` defaults**: `--max-parallel=4` is the default — mid-sweet-spot, n*(n-1)/2 = 6 paths, fits all `AIWG_CONTEXT_WINDOW` tiers ≥65k.
-
-**Hard cap**: Never spawn more than 7 concurrent sub-agents from a single RLM dispatch. If `--max-parallel` requests >7, auto-batch into sequential waves of ≤7.
-
-**Cross-reference**: When `AIWG_CONTEXT_WINDOW` is declared in the project context, the `context-budget` rule provides additional caps based on context-window tier. The smaller of the two limits applies. See `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md`.
-
-**Composes with the provider parallelism cap (#1359)**: When `.aiwg/aiwg.config` declares a `parallelism.max_parallel_subagents` cap, that value composes with the RLM 7-agent hard cap and the context-budget cap. The effective limit is the **minimum** of all applicable caps:
+### Rule 8: Concurrent Sub-Agent Cap — 3–7 Sweet Spot, Hard Cap 7
+Concurrent sub-agents per RLM dispatch: 1–2 trivial, **3–5 optimal**, 5–7 peak for complex tasks, 8+ coordination overhead dominates (auto-batch into waves of ≤7). `rlm-batch` default `--max-parallel=4`. **Hard cap: never >7** from one dispatch. Composes with the context-budget tier cap and the provider parallelism cap (#1359) — the effective limit is the **minimum** of all:
 
 ```
 effective_rlm_parallel = min(
-  parallelism.max_parallel_subagents,    // provider rate-limit cap
-  context_budget_tier_cap,               // from AIWG_CONTEXT_WINDOW
-  7                                      // RLM hard cap (this rule)
+  parallelism.max_parallel_subagents,   // provider rate-limit cap
+  context_budget_tier_cap,              // from AIWG_CONTEXT_WINDOW
+  7                                     // RLM hard cap (this rule)
 )
 ```
 
-For example, a Claude small-plan project with `parallelism.max_parallel_subagents=4` and an `AIWG_CONTEXT_WINDOW=512000` (which would otherwise allow 8-12 parallel) is capped at 4 for RLM dispatches. The provider cap wins because it reflects the actual rate-limit ceiling. See `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md` Rule 8 for the full composition formula.
+See `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md` and `subagent-scoping.md` Rule 8.
 
 ### Rule 9: Long-Running RLM Operations Must Checkpoint
-
-**Research Basis**: REF-127 — industry reports suggest agent success rate degrades after ~35 minutes of operation; doubling task duration quadruples the failure rate. (GRADE: VERY LOW — aggregated industry data, no primary citation given. Treat as warning signal, not hard limit.)
-
-For any RLM operation expected to exceed 30 minutes of wall-clock time:
-
-1. **Externalize state to filesystem** at regular intervals — intermediate result files, progress checkpoints under `.aiwg/working/rlm-runs/{id}/`
-2. **Make state recoverable** — agent must be able to resume from last checkpoint, not start over
-3. **Prefer split-into-loops over one-long-run** — if the task is shaped as "process N items, each takes M minutes," split into multiple `aiwg ralph`-style iterations with persistent state
-4. **Surface elapsed-time warning** — `rlm-status` should display elapsed wall-clock time and warn at 25 minutes that the operation is approaching the practitioner-reported degradation threshold
-
-**Why this matters**: REF-127's quadratic failure scaling (industry-reported, not peer-reviewed) implies a 60-minute run is roughly 4x more likely to fail than a 30-minute run. For RLM operations on large corpora, this is the difference between successful completion and partial failure with no recovery path.
-
-**Hedging**: The 35-minute threshold is *not* primary research. It is practitioner heuristic from an industry report (REF-127, GRADE: VERY LOW). Treat the rule as a defensive checkpoint discipline, not a precise ceiling.
+For any RLM run expected to exceed ~30 min wall-clock (REF-127, VERY LOW — treat as a warning, not a precise ceiling): externalize state to `.aiwg/working/rlm-runs/{id}/` at intervals; make it resumable from the last checkpoint (not from scratch); prefer split-into-loops (`aiwg ralph`-style iterations with persistent state) over one long run; surface an elapsed-time warning at ~25 min.
 
 ### Rule 10: Coding-Capable Models for the RLM Root
+RLM relies on the root emitting code (regex/glob/REPL) to filter context. Root agents (invoking `/rlm-query` or `/rlm-batch`): **sonnet or opus, never haiku**. Sub-agents doing simple extraction (count, yes/no, single-file match): haiku is fine; analysis/synthesis sub-agents: sonnet. Models with restrictive output limits (<4k) cap RLM effectiveness — warn before dispatch. Prefer `rlm-batch` (parallel) over chains of `rlm-query` (sequential) when recursion depth >1.
 
-**Research Basis**: REF-089 Appendix B — "Qwen3-8B (non-coder) struggled without sufficient coding capabilities." (GRADE: LOW, peer-review pending.)
+## Detection
 
-RLM relies on the root LLM emitting code (regex, glob, REPL operations) to filter and decompose context. Models without strong coding ability underperform as RLM root agents.
-
-**Required defaults**:
-- RLM root agents (the agent invoking `/rlm-query` or `/rlm-batch`): **sonnet or opus**, never haiku
-- RLM sub-agents performing simple extraction (single-file pattern matching, count, yes/no): **haiku is appropriate**
-- RLM sub-agents performing analysis or synthesis: **sonnet**
-
-**Output token limits matter** (REF-089 Appendix B): RLM root agents emit code, which can be verbose. Models with restrictive output token limits (<4k) cap RLM effectiveness. If the configured root model has lower output limits, surface a warning before dispatch.
-
-**Synchronous LM calls are slow** (REF-089 Appendix B): For deep recursive trees, synchronous sub-calls become prohibitive. Prefer `rlm-batch` (parallel fan-out) over chains of `rlm-query` (sequential) when recursion depth >1.
-
-## Detection Patterns
-
-### Signs of Missing RLM Patterns
-
-| Symptom | Indicates | RLM Solution |
-|---------|-----------|--------------|
-| Context window repeatedly at 90%+ usage | Loading full content | Use symbolic handles + programmatic access |
-| Compaction losing critical details | Too much raw text in context | Filter with Grep before loading |
-| Agent reports "cannot process all files" | Single-context limitation | Use recursive sub-calls |
-| High token costs on analysis tasks | Inefficient context usage | Apply keyword filtering first |
-| Agent provides superficial multi-file analysis | Context overflow | Delegate to parallel sub-agents |
-| Repeated re-reading of same files | No persistent state | Use intermediate files as REPL variables |
-
-### Warning Signs Before Context Overload
-
-| Check | Red Flag | RLM Mitigation |
-|-------|----------|----------------|
-| File count | >10 files needed | Use sub-agents |
-| Total lines | >5,000 lines | Apply structural chunking |
-| Context estimate | >50% of window | Filter with Grep first |
-| Information density | High detail needed throughout | Recursive sub-calls |
-| Cross-cutting concern | Logic spread across many files | Parallel sub-agents with aggregation |
+Signs of missing RLM patterns → mitigation: window repeatedly at 90%+ → symbolic handles + programmatic access; compaction losing detail → Grep-filter before loading; "cannot process all files" → recursive sub-calls; high analysis cost → keyword-filter first; superficial multi-file analysis → parallel sub-agents; repeated re-reading → intermediate files as REPL variables. Warning thresholds before overload: >10 files, >5,000 lines, >50% window estimate, high detail throughout, or cross-cutting logic.
 
 ## Checklist
 
-Before processing large context:
-
-- [ ] Estimated total tokens if loaded directly (would it exceed 50% of context window?)
-- [ ] Applied keyword filtering via Grep before loading
-- [ ] Used line ranges in Read for targeted access
-- [ ] Maintained symbolic file handles rather than loading full content
-- [ ] Checked if recursive sub-calls would be more efficient (>10 files)
-- [ ] Budget allocated for sub-calls if using delegation
-- [ ] Intermediate results saved to files (REPL variables) if iterative
-- [ ] Cost tracking enabled to monitor token usage
-
-Before spawning sub-agents for RLM recursion:
-
-- [ ] Task requires distributed information access (>5 files)
-- [ ] Budget allocated (estimated cost < 70% of total budget)
-- [ ] Each sub-task has clear scope (subagent-scoping rules followed)
-- [ ] Aggregation strategy defined (parallel or incremental)
-- [ ] Parent agent will receive summaries, not raw content from sub-agents
-
-## Limitations
-
-From REF-089 Appendix B, important limitations to be aware of:
-
-1. **Synchronous sub-calls are slow**: Production systems should use async/parallel execution (AIWG already supports via Task tool parallelism)
-2. **Models need coding ability**: Non-coder models struggle with programmatic context access (AIWG agents run in coding-capable environments by design)
-3. **Output token limits matter**: Models with limited output tokens underperform as RLMs (provider model selection should consider this)
-4. **High variance in costs**: Some RLM runs are expensive outliers (use percentile-based cost tracking, not just averages)
+Before processing large context: estimated direct-load tokens (>50% window?); Grep-filtered before loading; line-ranged Reads; symbolic handles kept; considered sub-calls (>10 files); budget allocated; intermediate results to files if iterative; cost tracking on. Before spawning sub-agents: task needs distributed access (>5 files); estimated cost <70% budget; each sub-task clearly scoped (per subagent-scoping); aggregation strategy defined; parent receives summaries, not raw content.
 
 ## References
 
-- @.aiwg/research/findings/REF-089-recursive-language-models.md - Complete research analysis
-- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md - Complementary research patterns
-- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md - Context limits for delegation
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/tao-loop.md - TAO loop integration with RLM patterns
-- @$AIWG_ROOT/tools/ralph-external/ - Agent loop implementation
-- @$AIWG_ROOT/tools/daemon/agent-supervisor.mjs - Agent orchestration
-- @$AIWG_ROOT/tools/daemon/task-store.mjs - Persistent state (REPL variables)
+- @.aiwg/research/findings/REF-089-recursive-language-models.md
+- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md
+- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/tao-loop.md
+- @$AIWG_ROOT/tools/ralph-external/ — agent loop implementation
 
 ---
 
 **Rule Status**: ACTIVE
 **Last Updated**: 2026-05-08
-**Research Basis**: REF-089 (Zhang, Kraska, & Khattab, 2026, GRADE: LOW); REF-086 (Kim et al., DeepMind, 2025, GRADE: LOW); REF-088 (Wexford, 2026, GRADE: VERY LOW); REF-127 (Zylos Research, 2026, GRADE: VERY LOW); REF-169 (Evans et al., 2026, GRADE: MODERATE)
-**Issue**: #322 (Core RLM Addon); #1196 (research-corpus update epic); #1197, #1198, #1199 (this update)
+**Issue**: #322; #1196, #1197, #1198, #1199

@@ -6,314 +6,64 @@ enforcement: high
 
 **Enforcement Level**: HIGH
 **Scope**: All SDLC phase transitions and critical checkpoints
-**Research Basis**: REF-057 Agent Laboratory
+**Research Basis**: REF-057 Agent Laboratory (HITL draft-then-edit: 84% cost reduction, 0.83 vs 4.2 revision cycles)
 **Issue**: #96
-
-## Overview
-
-These rules enforce configurable human gates at phase transitions, implementing the draft-then-edit workflow pattern that achieves 84% cost reduction vs fully autonomous operation.
-
-## Research Foundation
-
-| Finding | Impact |
-|---------|--------|
-| 84% cost reduction with HITL | Strategic human involvement dramatically reduces costs |
-| 0.83 vs 4.2 revision cycles | Early human input prevents cascading errors |
-| Draft-then-edit pattern | Let AI draft, human refine |
 
 ## Gate Types
 
-| Type | Behavior | Use Case |
-|------|----------|----------|
-| `approval` | Blocks until human approves | Phase transitions, major decisions |
-| `review` | Human reviews, auto-proceeds on timeout | Artifact quality checks |
-| `escalation` | Triggered by conditions | Budget overruns, confidence drops |
-| `checkpoint` | Informational, always proceeds | Progress updates |
+| Type | Behavior |
+|------|----------|
+| `approval` | Blocks until a human approves (phase transitions, major decisions) |
+| `review` | Human reviews; auto-proceeds on timeout (artifact quality checks) |
+| `escalation` | Triggered by conditions (budget overruns, confidence drops) |
+| `checkpoint` | Informational; always proceeds (progress updates) |
 
 ## Mandatory Rules
 
 ### Rule 1: Phase Transitions Require Gates
-
-**REQUIRED**: Every SDLC phase transition MUST have an approval gate:
-
-```yaml
-# Concept → Inception
-gate: GATE-C2I
-type: approval
-mode: ALWAYS
-
-# Inception → Elaboration
-gate: GATE-I2E
-type: approval
-mode: ALWAYS
-
-# Elaboration → Construction
-gate: GATE-E2C
-type: approval
-mode: ALWAYS
-
-# Construction → Transition
-gate: GATE-C2T
-type: approval
-mode: ALWAYS
-```
+Every SDLC phase transition MUST have an approval gate with `mode: ALWAYS`: GATE-C2I (Concept→Inception), GATE-I2E (Inception→Elaboration), GATE-E2C (Elaboration→Construction), GATE-C2T (Construction→Transition).
 
 ### Rule 2: Gate Modes
-
-Use appropriate modes for different scenarios:
-
-| Mode | When to Use |
-|------|-------------|
-| `ALWAYS` | Critical decisions, security-sensitive, compliance-required |
-| `CONDITIONAL` | Can auto-approve under specific conditions |
-| `NEVER` | Only for fully automated pipelines with human oversight elsewhere |
-| `TERMINATE` | Must stop and wait indefinitely |
+`ALWAYS` (critical/security/compliance), `CONDITIONAL` (auto-approve under explicit conditions), `NEVER` (only for fully automated pipelines with human oversight elsewhere), `TERMINATE` (stop and wait indefinitely).
 
 ### Rule 3: Timeout Actions
-
-Configure appropriate timeout behavior:
-
-```yaml
-# For approval gates - block until human responds
-timeout_action: block
-
-# For review gates - proceed after timeout
-timeout_action: proceed
-
-# For budget gates - abort on timeout
-timeout_action: abort
-```
+Configure per gate: approval → `block`; review → `proceed`; budget → `abort`.
 
 ### Rule 4: Cost Tracking is REQUIRED
-
-All gates MUST track cost metrics:
-
-```yaml
-cost_tracking:
-  track_enabled: true
-  metrics:
-    - time_to_decision
-    - revision_count
-    - token_cost_saved
-```
+Every gate tracks `time_to_decision`, `revision_count`, `token_cost_saved`.
 
 ### Rule 5: Audit Trail
-
-All gate decisions MUST be logged:
-
-```yaml
-audit:
-  log_decision: true
-  log_rationale: true
-  retention_days: 90
-```
+Every gate decision is logged with rationale (~90-day retention).
 
 ### Rule 6: Auto-Approve Conditions Must Be Explicit
-
-When using CONDITIONAL mode, conditions must be explicit and justified:
-
-**FORBIDDEN**:
-```yaml
-behavior:
-  mode: CONDITIONAL
-  # No conditions specified
-```
-
-**REQUIRED**:
-```yaml
-behavior:
-  mode: CONDITIONAL
-  auto_approve_conditions:
-    - condition: "confidence > 0.95 AND no_critical_issues"
-      reason: "High confidence with no blockers"
-    - condition: "artifact_type == 'documentation' AND spell_check_passed"
-      reason: "Low-risk documentation changes"
-```
+`CONDITIONAL` mode without stated `auto_approve_conditions` is FORBIDDEN. Each condition needs an explicit predicate and a reason (e.g. `confidence > 0.95 AND no_critical_issues` — "high confidence, no blockers").
 
 ### Rule 7: Presentation Must Aid Decision
+Gates present enough context to decide: artifacts ready, quality score, open issues, the action required, the artifacts to show, and a required question with explicit options.
 
-Gates must present sufficient context for human decision:
-
-```yaml
-presentation:
-  summary_template: |
-    ## Gate: {{gate_name}}
-
-    **Artifacts Ready**: {{artifact_count}}
-    **Quality Score**: {{quality_score}}
-    **Open Issues**: {{issue_count}}
-
-    {{action_required}}
-
-  artifacts_to_show:
-    - relevant/artifact/path.md
-
-  questions:
-    - id: "approved"
-      question: "Do you approve proceeding to {{next_phase}}?"
-      options: ["Yes", "No - needs revision", "Escalate"]
-      required: true
-```
-
-## Gate Configuration Schema
-
-All gates MUST conform to:
-```
-@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/flows/hitl-gate.yaml
-```
+### Rule 8: Artifact Omission Requires Human Approval
+Agents MUST NOT silently skip, abbreviate, or omit any SDLC artifact based on inferred project type/size/complexity — completeness is the default. To skip an artifact, surface an `ALWAYS`/`block` gate ("Skip generating {{artifact}}?" → No-generate-it (recommended) / Yes-skip / generate-abbreviated). Implicit skips produce inconsistent artifact sets and erode trust; the human must explicitly opt out.
 
 ## SDLC Phase Gates
 
-### Concept → Inception (GATE-C2I)
-- **Type**: approval
-- **Timeout**: 48 hours → block
-- **Artifacts**: Intake form, solution profile
-- **Questions**: Scope approved?
+| Gate | Timeout→block | Artifacts | Question |
+|------|---------------|-----------|----------|
+| GATE-C2I | 48h | intake form, solution profile | Scope approved? |
+| GATE-I2E | 48h | user stories, use cases, risk register | Requirements complete? |
+| GATE-E2C | 48h | SAD, ADRs, test strategy | Architecture approved? |
+| GATE-C2T | 24h | test results, deployment plan, security assessment | Ready for production? |
 
-### Inception → Elaboration (GATE-I2E)
-- **Type**: approval
-- **Timeout**: 48 hours → block
-- **Artifacts**: User stories, use cases, risk register
-- **Questions**: Requirements complete?
-
-### Elaboration → Construction (GATE-E2C)
-- **Type**: approval
-- **Timeout**: 48 hours → block
-- **Artifacts**: SAD, ADRs, test strategy
-- **Questions**: Architecture approved?
-
-### Construction → Transition (GATE-C2T)
-- **Type**: approval
-- **Timeout**: 24 hours → block
-- **Artifacts**: Test results, deployment plan, security assessment
-- **Questions**: Ready for production?
-
-## Integration Patterns
-
-### With Flow Commands
-
-```yaml
-# In flow command definition
-flow_phases:
-  - name: elaboration
-    exit_gate: GATE-E2C
-    gate_config:
-      mode: ALWAYS
-      notification:
-        channels: [cli, issue_comment]
-```
-
-### With Agent Loop
-
-```yaml
-# Al iteration checkpoint
-ralph_config:
-  iteration_gate:
-    trigger:
-      type: iteration_count
-      threshold: 10
-    behavior:
-      mode: CONDITIONAL
-      auto_approve_conditions:
-        - condition: "progress_rate > 0.1"
-          reason: "Making progress"
-```
-
-### With Cost Budgets
-
-```yaml
-# Budget checkpoint gate
-budget_gate:
-  trigger:
-    type: cost_threshold
-    threshold: 1000  # tokens
-  behavior:
-    mode: ALWAYS
-    timeout_action: abort
-```
-
-## Cost Savings Model
-
-Based on Agent Laboratory research:
-
-| Metric | Fully Autonomous | With HITL | Savings |
-|--------|------------------|-----------|---------|
-| Cost multiplier | 6.0x | 1.0x | 84% |
-| Error rate | 35% | 5% | 86% |
-| Revision cycles | 4.2 | 0.83 | 80% |
-
-## Notification Configuration
-
-Configure how humans are notified:
-
-```yaml
-notification:
-  channels:
-    - cli           # Show in terminal
-    - issue_comment # Post to issue
-    - slack         # Send Slack message (if configured)
-  urgency: high
-  message_template: |
-    **Gate Activated**: {{gate_name}}
-    **Action Required**: {{action_type}}
-    **Timeout**: {{timeout_remaining}}
-```
-
-## Rule 8: Artifact Omission Requires Human Approval
-
-**REQUIRED**: Agents MUST NOT silently skip, abbreviate, or omit any SDLC artifact based on inferred project type, size, or complexity. Completeness is the default.
-
-When an agent determines an artifact is low-value for the project context, it MUST surface a HITL gate:
-
-```yaml
-artifact_omission_gate:
-  trigger:
-    type: agent_skip_request
-    artifact: "{{artifact_name}}"
-  behavior:
-    mode: ALWAYS
-    timeout_action: block
-  presentation:
-    summary_template: |
-      ## Artifact Omission Request
-
-      **Artifact**: {{artifact_name}}
-      **Phase**: {{current_phase}}
-      **Reason**: {{agent_rationale}}
-
-      The agent suggests this artifact may not be needed for this project.
-      However, completeness is the default — skipping requires your approval.
-
-    questions:
-      - id: "skip_approved"
-        question: "Skip generating {{artifact_name}}?"
-        options:
-          - "No — generate it (recommended)"
-          - "Yes — skip this artifact"
-          - "Generate abbreviated version"
-        required: true
-```
-
-**Rationale**: Implicit decisions to skip documentation based on project type inference produce inconsistent, incomplete artifact sets and erode trust. The human must explicitly opt out of any artifact.
+All gates conform to `@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/flows/hitl-gate.yaml`. Integrates with flow commands (exit gates), agent loops (iteration-count checkpoint gates), and cost budgets (cost-threshold gates with `timeout_action: abort`). Notify via configured channels (cli, issue_comment, slack) with the gate name, action required, and timeout remaining.
 
 ## Checklist
 
-Before configuring a gate:
-
-- [ ] Gate type matches use case
-- [ ] Mode is appropriate for risk level
-- [ ] Timeout and timeout_action are configured
-- [ ] Cost tracking is enabled
-- [ ] Audit logging is enabled
-- [ ] Presentation aids human decision
-- [ ] Auto-approve conditions are justified (if CONDITIONAL)
+Gate type matches use case; mode appropriate for risk; timeout + timeout_action configured; cost tracking enabled; audit logging enabled; presentation aids the decision; auto-approve conditions justified (if CONDITIONAL).
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/flows/hitl-gate.yaml - Schema definition
-- @.aiwg/research/findings/REF-057-agent-laboratory.md - Research paper
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/flows/ - Flow implementations
-- #96 - Implementation issue
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/flows/hitl-gate.yaml
+- @.aiwg/research/findings/REF-057-agent-laboratory.md
+- #96
 
 ---
 

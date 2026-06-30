@@ -33,40 +33,33 @@ Core rules are non-negotiable defaults deployed to every AIWG installation.
 ### CRITICAL
 
 #### no-attribution
-**Summary**: AI tools are tools — never add attribution to commits, PRs, docs, or code. No "Co-Authored-By", no "Generated with", no tool branding. This is universal across all 8 providers.
-**When to apply**: Commit creation, PR drafting, code generation, documentation output
+**Summary**: AI tools are tools — never add attribution to commits, PRs, docs, or code.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/no-attribution.md
 
 #### token-security
-**Summary**: Never hard-code tokens, pass tokens as CLI arguments, echo token values, or commit tokens to git. Use the heredoc pattern for scoped token lifetime. File permissions mode 600. Load at point of use.
-**When to apply**: API integration, authentication code, command implementation, security review
+**Summary**: Never hard-code tokens, pass tokens as CLI arguments, echo token values, or commit tokens to git.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/token-security.md
 
 #### versioning
-**Summary**: CalVer format: YYYY.M.PATCH with NO leading zeros. npm rejects leading zeros — users can install but cannot update. Tags use `v` prefix (e.g., `v2026.1.5`).
-**When to apply**: Version bumps, release tagging, changelog updates, npm publishing, package.json edits
+**Summary**: CalVer format: YYYY.M.PATCH with NO leading zeros.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/versioning.md
 
 #### citation-policy
-**Summary**: Never fabricate citations, DOIs, URLs, or page numbers. Only cite sources that exist in the research corpus. Use GRADE methodology for quality-appropriate hedging language.
-**When to apply**: Documentation generation, claim justification, research corpus references, evidence quality assessment
+**Summary**: Never fabricate citations, DOIs, URLs, or page numbers.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/citation-policy.md
 
 ### HIGH
 
 #### anti-laziness
-**Summary**: Two halves. **Floor** (Rules 1–8): never delete tests, skip tests, remove features, weaken assertions, suppress CI signals, or hide blockers. Escalate after 3 failed attempts; recovery protocol PAUSE > DIAGNOSE > ADAPT > RETRY > ESCALATE. **Ceiling** ("Boil the Ocean Within Scope" + Rule 9): inside the authorized scope, deliver the whole thing — code + tests + docs + verification — tie off dangling threads, prefer real fix over workaround, ship the finished product not a plan. Strictly bounded by `human-authorization` and `scoped-reasoning`: the ambition applies inside the lines, never to expand them. Paired with `vague-discretion` for measurable completion.
-**When to apply**: Test failures, difficult bugs, refactoring challenges, coverage regression, premature task abandonment, returning a plan when a deliverable was requested, leaving identical bugs untouched in adjacent code, shipping code without tests/docs/verification
+**Summary**: Two halves.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/anti-laziness.md
 
 #### executable-feedback
-**Summary**: Code-generating agents must execute tests before returning results. Implements MetaGPT feedback pattern (+4.2% HumanEval, -63% revision cost). Track execution history and learn from failure patterns. Max 3 retries with root cause analysis.
-**When to apply**: Code generation, test execution, debug memory access, failure analysis
+**Summary**: Code-generating agents must execute tests before returning results.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/executable-feedback.md
 
 #### failure-mitigation
-**Summary**: Mitigation strategies for 6 LLM failure archetypes: hallucination, context loss, instruction drift, safety issues, technical errors, consistency failures. Applies specific detection and recovery for each type.
-**When to apply**: Pre-generation risk assessment, during-generation monitoring, post-generation validation
+**Summary**: Mitigation strategies for 6 LLM failure archetypes: hallucination, context loss, instruction drift, safety issues, technical errors, consistency failures.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/failure-mitigation.md
 
 ---
@@ -78,125 +71,101 @@ SDLC rules enforce workflow quality when the SDLC framework is deployed via `aiw
 ### HIGH
 
 #### actionable-feedback
-**Summary**: Structured, actionable feedback following Self-Refine principles. 94% of iteration failures stem from vague feedback. Every feedback item must include specific location, concrete action, and rationale.
-**When to apply**: Agent loops, iteration feedback cycles, code review, improvement tracking
+**Summary**: Structured, actionable feedback following Self-Refine principles.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/actionable-feedback.md
 
 #### mention-wiring
-**Summary**: Wire @-mentions during artifact creation, not as a separate step. Semantic tags indicate relationship types (implements, tests, depends, etc.). Enables traceability and bidirectional linking.
-**When to apply**: Artifact generation (code, docs, agents, commands, skills), reference creation
+**Summary**: Wire @-mentions during artifact creation, not as a separate step.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/mention-wiring.md
 
 #### hitl-gates
-**Summary**: Human-in-the-loop gates at SDLC phase transitions. 84% cost reduction with strategic human involvement. Blocks, reviews, or escalates based on configured mode and conditions.
-**When to apply**: Phase transitions, artifact quality gates, approval workflows, decision points
+**Summary**: Human-in-the-loop gates at SDLC phase transitions.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/hitl-gates.md
 
 #### agent-fallback
-**Summary**: Graceful degradation when specialized agents fail or are unavailable. System continues with reduced capability rather than failing. Maintains capability matrix with fallback chains for all roles.
-**When to apply**: Agent unavailability, permission denied, timeout, error thresholds, quality drops
+**Summary**: Graceful degradation when specialized agents fail or are unavailable.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/agent-fallback.md
 
 #### provenance-tracking
-**Summary**: W3C PROV-compliant tracking for all artifacts using Entity-Activity-Agent model with URN schema. Records derivation chains, timestamps, and bidirectional references for audit trails.
-**When to apply**: Artifact creation, derivation documentation, compliance requirements, quality auditing
+**Summary**: W3C PROV-compliant tracking for all artifacts using Entity-Activity-Agent model with URN schema.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/provenance-tracking.md
 
 #### tao-loop
-**Summary**: Standardizes Thought > Action > Observation loop across all iterative execution. ReAct pattern improves performance 34% and reduces hallucinations to 0% with tool grounding. Complete triplets required.
-**When to apply**: Iterative agent execution, agent loops, tool-using agents, reasoning traces
+**Summary**: Standardizes Thought > Action > Observation loop across all iterative execution.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/tao-loop.md
 
 #### reproducibility-validation
-**Summary**: Validates workflow reproducibility by detecting non-determinism sources. Required thresholds: compliance audit (100%), security scan (100%), test generation (95%). Reports variance with recommendations.
-**When to apply**: Compliance workflows, critical operations, quality gates, regulatory requirements
+**Summary**: Validates workflow reproducibility by detecting non-determinism sources.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/reproducibility-validation.md
 
 #### sdlc-orchestration
-**Summary**: Core orchestrator for SDLC workflows: interprets natural language, reads flow templates, launches multi-agent workflows. Pattern: Primary Author > Parallel Reviewers > Synthesizer > Archive.
-**When to apply**: Phase transitions, workflow execution, natural language commands, agent coordination
+**Summary**: Core orchestrator for SDLC workflows: interprets natural language, reads flow templates, launches multi-agent workflows.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/sdlc-orchestration.md
 
 #### agent-friendly-code
-**Summary**: Quantitative thresholds (300 LOC warning, 500 error) and qualitative patterns for agent-processable code. Single responsibility per file, descriptive names, no barrel files, flat directories, composition over inheritance. Configurable via CLAUDE.md or .aiwg/config.yaml.
-**When to apply**: Code generation, code review, refactoring, file creation, new module design
+**Summary**: Quantitative thresholds (300 LOC warning, 500 error) and qualitative patterns for agent-processable code.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/agent-friendly-code.md
 
 #### agent-generation-guardrails
-**Summary**: Runtime guardrails for code-generating agents. Check file size before writing; split proactively if exceeding thresholds; never enlarge files already over limits. Prevents the vicious cycle of agents creating files too large for future agents.
-**When to apply**: Code generation, file creation, file modification, append operations
+**Summary**: Runtime guardrails for code-generating agents.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/agent-generation-guardrails.md
 
 #### artifact-discovery
-**Summary**: Agent protocol for using `aiwg index` CLI as self-service artifact discovery tool. 5 mandatory rules: query before phase work, check deps before modifying, always use `--json`, rebuild after changes, use stats for health. Includes JSON output schemas.
-**When to apply**: Starting SDLC phase work, modifying artifacts, assessing project state, navigating dependencies
+**Summary**: Agent protocol for using `aiwg index` CLI as self-service artifact discovery tool.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/artifact-discovery.md
 
 #### self-maintenance
-**Summary**: Prefer AIWG CLI commands for installation/deployment tasks when available — the CLI keeps the registry in sync and handles provider detection. Run `aiwg sync --dry-run` at start of long sessions. Use Mission Control (`aiwg mc`) for parallel background work. Use whatever tools best complete the task; CLI is preferred, not mandatory.
-**When to apply**: Framework deployment, version updates, provider changes, long orchestration sessions, background task dispatch
+**Summary**: Prefer AIWG CLI commands for installation/deployment tasks when available — the CLI keeps the registry in sync and handles provider detection.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/self-maintenance.md
 
 ### MEDIUM
 
 #### hitl-patterns
-**Summary**: Human-in-the-loop patterns for agent-human collaboration including draft-then-edit workflow. Clear handoff points reduce errors; iterative refinement produces higher quality output.
-**When to apply**: Agent loops, draft review cycles, feedback incorporation, artifact finalization
+**Summary**: Human-in-the-loop patterns for agent-human collaboration including draft-then-edit workflow.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/hitl-patterns.md
 
 #### human-gate-display
-**Summary**: Rich display format for human approval gates with artifact preview, diff display, and decision logging. Clear action options and status indicators for optimal user experience.
-**When to apply**: Human review points, approval workflows, artifact inspection, decision capture
+**Summary**: Rich display format for human approval gates with artifact preview, diff display, and decision logging.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/human-gate-display.md
 
 #### thought-protocol
-**Summary**: Seven thought types structure agent reasoning: Goal, Research, Progress, Extraction, Reasoning, Exception, Synthesis. Research thought prevents uninformed action. Enables monitoring and debugging.
-**When to apply**: Agent system prompts, reasoning transparency, tool usage, quality gates
+**Summary**: Seven thought types structure agent reasoning: Goal, Research, Progress, Extraction, Reasoning, Exception, Synthesis.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/thought-protocol.md
 
 #### reasoning-sections
-**Summary**: Explicit reasoning sections in artifact templates following Chain-of-Thought patterns. CoT improves complex reasoning 2-4x. Numbered steps structure thinking transparently for review.
-**When to apply**: Template design, artifact generation, decision documentation, collaborative review
+**Summary**: Explicit reasoning sections in artifact templates following Chain-of-Thought patterns.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/reasoning-sections.md
 
 #### few-shot-examples
-**Summary**: 2-3 concrete examples required in every agent system prompt. Few-shot dramatically improves task performance. Examples show input/output pairs for simple, moderate, and complex scenarios.
-**When to apply**: Agent definition creation, system prompt design, domain-specific examples
+**Summary**: 2-3 concrete examples required in every agent system prompt.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/few-shot-examples.md
 
 #### best-output-selection
-**Summary**: Non-monotonic output selection — track highest quality across iterations rather than accepting final result. Quality often peaks early then degrades. Select best, not last.
-**When to apply**: Agent loops, iteration completion, quality scoring, degradation detection
+**Summary**: Non-monotonic output selection — track highest quality across iterations rather than accepting final result.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/best-output-selection.md
 
 #### reproducibility
-**Summary**: Reproducibility practices for workflows: strict mode (temperature=0, fixed seed), checkpoints at phase boundaries, configuration snapshots. 47% of workflows are non-reproducible without this.
-**When to apply**: Critical workflows, test generation, compliance, CI/CD, validation
+**Summary**: Reproducibility practices for workflows: strict mode (temperature=0, fixed seed), checkpoints at phase boundaries, configuration snapshots.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/reproducibility.md
 
 #### progressive-disclosure
-**Summary**: Progressive revelation in SDLC templates reducing cognitive load via collapsible sections. ESSENTIAL / EXPAND WHEN READY / ADVANCED phases. Scaffolding helps novices without hindering experts.
-**When to apply**: Template creation, documentation design, requirement gathering, artifact expansion
+**Summary**: Progressive revelation in SDLC templates reducing cognitive load via collapsible sections.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/progressive-disclosure.md
 
 #### conversable-agent-interface
-**Summary**: Standardized send/receive/generateReply agent interface following AutoGen pattern. Enables conversation persistence, replay, and debugging across multi-agent collaborations.
-**When to apply**: Agent definitions, multi-agent collaboration, conversation protocols, interface implementation
+**Summary**: Standardized send/receive/generateReply agent interface following AutoGen pattern.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/conversable-agent-interface.md
 
 #### auto-reply-chains
-**Summary**: Autonomous agent conversations with self-termination based on context. Removes central orchestration dependency. Defines termination keywords and safety limits for conversation chains.
-**When to apply**: Multi-agent conversations, automated dialogue, workflow orchestration
+**Summary**: Autonomous agent conversations with self-termination based on context.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/auto-reply-chains.md
 
 #### criticality-panel-sizing
-**Summary**: Ensemble review panel sizes based on task criticality. CRITICAL(7), HIGH(5), STANDARD(5), LOW(3). High-stakes decisions get larger panels; routine changes stay efficient.
-**When to apply**: Ensemble review, artifact classification, panel composition, threshold adjustment
+**Summary**: Ensemble review panel sizes based on task criticality.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/criticality-panel-sizing.md
 
 #### qualified-references
-**Summary**: Extends @-mentions with semantic relationship qualifiers (implements, tested-by, depends, derives-from, etc.). Enables queries like "what implements UC-001?" for knowledge graph navigation.
-**When to apply**: Reference creation, semantic linking, bidirectional consistency, traceability queries
+**Summary**: Extends @-mentions with semantic relationship qualifiers (implements, tested-by, depends, derives-from, etc.).
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/qualified-references.md
 
 ---
@@ -208,15 +177,13 @@ Research rules manage the research corpus. Deployed when research features are a
 ### HIGH
 
 #### research-metadata
-**Summary**: FAIR-compliant metadata for research documents with required YAML frontmatter. Key findings include metrics; DOI verification required; PDF checksums recorded; GRADE quality assessment mandatory.
-**When to apply**: Research document creation, citation validation, corpus management, metadata completeness
+**Summary**: FAIR-compliant metadata for research documents with required YAML frontmatter.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/research-metadata.md
 
 ### MEDIUM
 
 #### index-generation
-**Summary**: Auto-generate INDEX.md files from YAML frontmatter per FAIR F4 discoverability principle. Indexes by topic, year, license, and full listing with defined sorting rules.
-**When to apply**: Research corpus organization, documentation navigation, artifact discoverability
+**Summary**: Auto-generate INDEX.md files from YAML frontmatter per FAIR F4 discoverability principle.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/index-generation.md
 
 ---
@@ -228,25 +195,21 @@ These rules encode 12-factor methodology principles (https://12factor.net/) as d
 ### HIGH
 
 #### stateless-processes
-**Summary**: Application processes must be stateless — externalize session state, uploaded files, caches, and work state to backing services. File writes restricted to `/tmp` and declared volume mounts. Enables horizontal scaling and disposability. (Factor VI)
-**When to apply**: Architecture review, service design, SAD Process State Model section, scaling decisions
+**Summary**: Application processes must be stateless — externalize session state, uploaded files, caches, and work state to backing services.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/stateless-processes.md
 
 #### disposable-processes
-**Summary**: Fast startup (<10s) and graceful shutdown (SIGTERM handler, in-flight work completion within grace window). Enables rolling deployments, autoscaling, and crash recovery without data loss. (Factor IX)
-**When to apply**: Service design, deployment planning, operational readiness review, container/k8s deployments
+**Summary**: Fast startup (<10s) and graceful shutdown (SIGTERM handler, in-flight work completion within grace window).
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/disposable-processes.md
 
 #### logs-as-event-streams
-**Summary**: Write logs to stdout/stderr as unbuffered streams — no local log files, no in-app rotation. Structured JSON format preferred. Environment handles aggregation, routing, and persistence. (Factor XI)
-**When to apply**: Logging architecture, observability design, container log aggregation, deployment review
+**Summary**: Write logs to stdout/stderr as unbuffered streams — no local log files, no in-app rotation.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/logs-as-event-streams.md
 
 ### MEDIUM
 
 #### config-in-environment
-**Summary**: Configuration values that differ between environments (URLs, feature flags, resource limits) must come from environment variables. No hardcoded env-specific values in source. `.env.example` at project root documents every env var. Complements `token-security.md` for the non-secret config subset. (Factor III)
-**When to apply**: Configuration design, environment setup, deployment review, source code review
+**Summary**: Configuration values that differ between environments (URLs, feature flags, resource limits) must come from environment variables.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/config-in-environment.md
 
 ---
