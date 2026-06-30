@@ -7,7 +7,7 @@ mock-like executors unless an automated harness explicitly sets
 `AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR=1`. Dependency-free (Node built-in `http`/`ws`),
 validated against [`agentic-sandbox-conformance`](https://git.integrolabs.net/roctinam/agentic-sandbox-conformance).
 
-Contract: `.aiwg/architecture/cockpit-instance-control-interface.md`. Not published in base `aiwg` npm (only `apps/web/dist` is); becomes part of `@aiwg/cockpit` when workspaces land (roctinam/aiwg#1593).
+Contract: `.aiwg/architecture/cockpit-instance-control-interface.md`. Not published in base `aiwg` npm; it is test support for the opt-in `@aiwg/cockpit` package boundary (roctinam/aiwg#1593, #1654).
 
 ## Automated Test Use
 
