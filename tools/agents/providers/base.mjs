@@ -1230,6 +1230,7 @@ export function pruneStaleAiwgFiles(destDir, desiredStems, opts = {}) {
     const name = entry.name;
     if (name === MANIFEST_FILENAME) continue;
     if (name === 'RULES-INDEX.md') continue;
+    if (name === 'RULES-ONDEMAND.md') continue; // generated on-demand index (#1673)
     const lower = name.toLowerCase();
     if (!lower.endsWith('.md') && !lower.endsWith('.mdc')) continue;
 
@@ -1967,11 +1968,13 @@ export function collectFrameworkArtifacts(srcRoot, mode, options = {}) {
           artifacts.rules.push(
             ...listMdFiles(framework.components.rules.path)
               .filter((f) => !f.endsWith(indexBase))
+              .filter(isAlwaysOnRule) // tier gate (#1673)
           );
           continue;
         }
       }
-      artifacts.rules.push(...listMdFiles(framework.components.rules.path));
+      // tier gate (#1673): inline only always-on (CRITICAL/HIGH) rules
+      artifacts.rules.push(...listMdFiles(framework.components.rules.path).filter(isAlwaysOnRule));
     }
   }
 
@@ -2092,6 +2095,95 @@ export function getAddonSkillDirs(srcRoot, excludeAddons = []) {
  * @param {string[]} excludeAddons - Addon names to exclude (default: none)
  * @returns {string[]} - Array of rule file paths
  */
+/**
+ * Read a rule's enforcement level from its `enforcement:` frontmatter
+ * (#1673). Returns 'critical' | 'high' | 'medium' | 'low' | null.
+ */
+export function ruleEnforcementLevel(content) {
+  const m = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!m) return null;
+  const e = m[1].match(/^enforcement:\s*([A-Za-z]+)/m);
+  return e ? e[1].toLowerCase() : null;
+}
+
+/**
+ * Tier gate (#1673, enforcement-tiered deployment ADR). Only CRITICAL and HIGH
+ * rules are inlined into a provider's always-on rule directory; MEDIUM/LOW are
+ * left on-demand (reachable via `aiwg show rule <name>` and the assembled
+ * RULES-INDEX pointer index). Index files and rules with no enforcement marker
+ * default to always-on, so an un-triaged or structural file is never dropped.
+ */
+export function isAlwaysOnRule(filePath) {
+  const base = path.basename(filePath);
+  if (base === 'RULES-INDEX.md' || base === 'RULES-ONDEMAND.md') return true;
+  try {
+    const lvl = ruleEnforcementLevel(fs.readFileSync(filePath, 'utf8'));
+    return lvl !== 'medium' && lvl !== 'low';
+  } catch {
+    return true; // unreadable → keep (safe default)
+  }
+}
+
+/** Enumerate MEDIUM/LOW rule files (the on-demand tier) for the index. */
+export function listOnDemandRuleFiles(srcRoot, excludeAddons = []) {
+  const out = [];
+  const consider = (dir) => {
+    if (!fs.existsSync(dir)) return;
+    for (const f of listMdFiles(dir)) {
+      const b = path.basename(f);
+      if (b === 'RULES-INDEX.md' || b === 'RULES-ONDEMAND.md') continue;
+      if (!isAlwaysOnRule(f)) out.push(f);
+    }
+  };
+  for (const addon of discoverAddons(srcRoot)) {
+    if (excludeAddons.includes(addon.name)) continue;
+    consider(path.join(addon.path, 'rules'));
+  }
+  const codeRoot = path.join(resolveAiwgRoot(srcRoot) || srcRoot, 'agentic', 'code');
+  for (const fwDir of ['frameworks', 'extensions']) {
+    const base = path.join(codeRoot, fwDir);
+    if (!fs.existsSync(base)) continue;
+    for (const entry of fs.readdirSync(base, { withFileTypes: true })) {
+      if (entry.isDirectory()) consider(path.join(base, entry.name, 'rules'));
+    }
+  }
+  return out;
+}
+
+/**
+ * Write a compact on-demand rule index (#1673) into a provider's rule dir.
+ * Lists the MEDIUM/LOW rules that are NOT inlined at startup, with the
+ * `aiwg show rule <name>` fetch hint. Removes a stale index when empty.
+ */
+export function writeOnDemandRuleIndex(destDir, onDemandFiles, opts = {}) {
+  const indexPath = path.join(destDir, 'RULES-ONDEMAND.md');
+  const names = [...new Set((onDemandFiles || []).map((f) => path.basename(f).replace(/\.md$/, '')))].sort();
+  if (names.length === 0) {
+    try {
+      if (fs.existsSync(indexPath) && !opts.dryRun) fs.rmSync(indexPath);
+    } catch { /* ignore */ }
+    return 0;
+  }
+  const lines = [
+    '# On-Demand Rules (not inlined at startup)',
+    '',
+    'These MEDIUM/LOW-enforcement rules are not loaded into every session, to keep',
+    'the standard-context startup budget small. They still apply when relevant —',
+    'fetch any rule body on demand:',
+    '',
+    '```bash',
+    'aiwg show rule <name>',
+    '```',
+    '',
+    ...names.map((n) => `- \`${n}\` — \`aiwg show rule ${n}\``),
+    '',
+  ];
+  let content = lines.join('\n');
+  content = addManagedMarker(content, opts.deployVersion || 'unknown', opts.deploySource || 'bundled');
+  if (!opts.dryRun) fs.writeFileSync(indexPath, content, 'utf8');
+  return names.length;
+}
+
 export function getAddonRuleFiles(srcRoot, excludeAddons = []) {
   const addons = discoverAddons(srcRoot);
   const files = [];
@@ -2109,7 +2201,10 @@ export function getAddonRuleFiles(srcRoot, excludeAddons = []) {
     }
   }
 
-  return files;
+  // Tier gate (#1673): inline only always-on (CRITICAL/HIGH) rules. MEDIUM/LOW
+  // stay on-demand. Applied here so both the deploy enumeration and the prune
+  // desired-set (computeAllArtifactBasenames) exclude them for every provider.
+  return files.filter(isAlwaysOnRule);
 }
 
 /**

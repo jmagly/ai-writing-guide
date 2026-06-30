@@ -46,6 +46,8 @@ import {
   getAddonCommandFiles,
   getAddonSkillDirs,
   getAddonRuleFiles,
+  listOnDemandRuleFiles,
+  writeOnDemandRuleIndex,
   assembleRulesIndex,
   normalizeDeploymentMode,
   collectFrameworkArtifacts,
@@ -613,6 +615,14 @@ export async function deploy(opts) {
       if (verbose) console.log(`\nDeploying ${ruleFiles.length} rules...`);
       deployRules(ruleFiles, target, opts);
       counts.rules = ruleFiles.length;
+    }
+
+    // On-demand index (#1673): list the MEDIUM/LOW rules that were tier-gated
+    // out of the always-on set so agents can fetch them via `aiwg show rule`.
+    const rulesDestDir = path.join(target, paths.rules);
+    const onDemandCount = writeOnDemandRuleIndex(rulesDestDir, listOnDemandRuleFiles(srcRoot), opts);
+    if (verbose && onDemandCount > 0) {
+      console.log(`  On-demand rules (not inlined): ${onDemandCount} → RULES-ONDEMAND.md`);
     }
   }
 
