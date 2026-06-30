@@ -2666,6 +2666,7 @@ export function cleanupOldRuleFiles(rulesDir, opts = {}) {
     if (!entry.isFile()) continue;
     if (!entry.name.toLowerCase().endsWith('.md')) continue;
     if (entry.name === 'RULES-INDEX.md') continue;
+    if (entry.name === 'RULES-ONDEMAND.md') continue; // generated on-demand index (#1675) — protected like RULES-INDEX
     if (incomingBasenames.has(entry.name)) continue;
 
     const filePath = path.join(rulesDir, entry.name);
