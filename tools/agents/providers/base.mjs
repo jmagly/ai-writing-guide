@@ -1575,12 +1575,14 @@ export function buildRemotesTopologyBlock(targetDir) {
 export function interpolateContextTokens(content, opts) {
   const counts = opts?.counts || {};
   const topology = opts?.topology || '';
+  const onDemandRules = opts?.onDemandRules || '';
   return content
     .replace(/\{\{AGENTS_COUNT\}\}/g, String(counts.agents || 0))
     .replace(/\{\{COMMANDS_COUNT\}\}/g, String(counts.commands || 0))
     .replace(/\{\{SKILLS_COUNT\}\}/g, String(counts.skills || 0))
     .replace(/\{\{RULES_COUNT\}\}/g, String(counts.rules || 0))
-    .replace(/\{\{REMOTES_TOPOLOGY\}\}/g, topology);
+    .replace(/\{\{REMOTES_TOPOLOGY\}\}/g, topology)
+    .replace(/\{\{ON_DEMAND_RULES\}\}/g, onDemandRules);
 }
 
 /**
@@ -1618,10 +1620,14 @@ export function createManagedMdFromTemplate(target, destFilename, srcRoot, templ
   }
 
   let template = fs.readFileSync(templatePath, 'utf8');
-  // Token interpolation — gives every template-based provider {{REMOTES_TOPOLOGY}}
-  // and the shared count tokens for free.
+  // Token interpolation — gives every template-based provider {{REMOTES_TOPOLOGY}},
+  // {{ON_DEMAND_RULES}} (#1675), and the shared count tokens for free. The
+  // on-demand list is computed lazily only when the template references it.
   template = interpolateContextTokens(template, {
     topology: buildRemotesTopologyBlock(target),
+    onDemandRules: template.includes('{{ON_DEMAND_RULES}}')
+      ? renderOnDemandRuleSection(listOnDemandRuleFiles(srcRoot), { heading: '### On-Demand Rules' })
+      : '',
   });
 
   // Extract the AIWG section from the template (everything from its section
@@ -2151,13 +2157,51 @@ export function listOnDemandRuleFiles(srcRoot, excludeAddons = []) {
 }
 
 /**
+ * Sorted, de-duplicated rule names (basename minus `.md`) from a list of
+ * on-demand rule file paths. Shared by the discrete index writer and the
+ * aggregated-bridge section renderer so both stay in lock-step.
+ */
+export function onDemandRuleNames(onDemandFiles, exclude = []) {
+  const skip = new Set(exclude);
+  return [...new Set((onDemandFiles || []).map((f) => path.basename(f).replace(/\.md$/, '')))]
+    .filter((n) => !skip.has(n))
+    .sort();
+}
+
+/**
+ * Render the on-demand rule list as a markdown section (#1675) for aggregated
+ * providers whose rules live in a single bridge file (WARP.md, AGENTS.md)
+ * rather than a discrete `RULES-ONDEMAND.md`. Returns '' when nothing is
+ * on-demand so callers can skip the section entirely. `exclude` drops names
+ * already inlined verbatim in the bridge (e.g. Warp's aiwg-utils set).
+ */
+export function renderOnDemandRuleSection(onDemandFiles, opts = {}) {
+  const names = onDemandRuleNames(onDemandFiles, opts.exclude || []);
+  if (names.length === 0) return '';
+  const heading = opts.heading || '## On-Demand Rules';
+  return [
+    heading,
+    '',
+    'These MEDIUM/LOW-enforcement rules are not inlined here, to keep the',
+    'always-on context small. They still apply when relevant — fetch any body',
+    'on demand:',
+    '',
+    '```bash',
+    'aiwg show rule <name>',
+    '```',
+    '',
+    ...names.map((n) => `- \`${n}\` — \`aiwg show rule ${n}\``),
+  ].join('\n');
+}
+
+/**
  * Write a compact on-demand rule index (#1673) into a provider's rule dir.
  * Lists the MEDIUM/LOW rules that are NOT inlined at startup, with the
  * `aiwg show rule <name>` fetch hint. Removes a stale index when empty.
  */
 export function writeOnDemandRuleIndex(destDir, onDemandFiles, opts = {}) {
   const indexPath = path.join(destDir, 'RULES-ONDEMAND.md');
-  const names = [...new Set((onDemandFiles || []).map((f) => path.basename(f).replace(/\.md$/, '')))].sort();
+  const names = onDemandRuleNames(onDemandFiles);
   if (names.length === 0) {
     try {
       if (fs.existsSync(indexPath) && !opts.dryRun) fs.rmSync(indexPath);

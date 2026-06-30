@@ -45,6 +45,8 @@ import {
   computeAllKernelNames,
   normalizeDeploymentMode,
   collectFrameworkArtifacts,
+  listOnDemandRuleFiles,
+  writeOnDemandRuleIndex,
   cleanupOldRuleFiles,
   filterCommandsAgainstSkills,
   deploySoulCompanions
@@ -1067,6 +1069,17 @@ export async function deploy(opts) {
   if (shouldDeployRules || rulesOnly) {
     console.log(`\nDeploying ${ruleFiles.length} rules...`);
     deployRules(ruleFiles, target, opts);
+
+    // On-demand index (#1675): list the MEDIUM/LOW rules tier-gated out of the
+    // always-on set so agents can fetch them via `aiwg show rule`.
+    const onDemandCount = writeOnDemandRuleIndex(
+      path.join(target, paths.rules),
+      listOnDemandRuleFiles(srcRoot),
+      opts,
+    );
+    if (onDemandCount > 0) {
+      console.log(`  On-demand rules (not inlined): ${onDemandCount} → RULES-ONDEMAND.md`);
+    }
   }
 
   // Post-deployment

@@ -59,6 +59,11 @@ OpenHuman has no native command surface; AIWG commands surface through this
 `AGENTS.md` bridge and the deployed command-skills. Rule full bodies are on
 disk under `.openhuman/.aiwg/rules/` and reachable via `aiwg show rule <name>`.
 
+CRITICAL/HIGH rules are deployed to disk as always-on bodies. The MEDIUM/LOW
+tier is on-demand only — listed below, fetched via `aiwg show rule <name>`.
+
+{{ON_DEMAND_RULES}}
+
 ### Artifacts
 
 SDLC artifacts are stored in `.aiwg/` (project-local; never deployed):

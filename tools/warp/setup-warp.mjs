@@ -23,6 +23,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { listOnDemandRuleFiles, renderOnDemandRuleSection } from '../agents/providers/base.mjs';
 
 // AIWG-managed section headings (will be replaced on update)
 const AIWG_MANAGED_SECTIONS = [
@@ -417,6 +418,19 @@ function generateAIWGContent(aiwgRoot, mode) {
         content += section + '\n';
       }
     }
+  }
+
+  // On-demand tier (#1675): the MEDIUM/LOW rules NOT inlined above. Warp has no
+  // scanned `.warp/rules/` dir, so the bridge notes the tier with fetch hints.
+  // Exclude anything already inlined verbatim in the AIWG Rules section.
+  const inlinedRuleNames = rulePaths.map((p) => path.basename(p, '.md'));
+  const onDemandSection = renderOnDemandRuleSection(
+    listOnDemandRuleFiles(aiwgRoot),
+    { exclude: inlinedRuleNames },
+  );
+  if (onDemandSection) {
+    content += '---\n\n';
+    content += onDemandSection + '\n\n';
   }
 
   // Add natural language section

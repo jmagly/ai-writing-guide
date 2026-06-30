@@ -35,6 +35,8 @@ import {
   getAddonSkillDirs,
   normalizeDeploymentMode,
   collectFrameworkArtifacts,
+  listOnDemandRuleFiles,
+  renderOnDemandRuleSection,
 } from './base.mjs';
 
 // ============================================================================
@@ -231,7 +233,15 @@ Fetch on demand via \`mcp_aiwg_artifact_read\`:
 - \`security/\` — threat models
 `;
 
-  const output = [header, CRITICAL_RULE_DIRECTIVES, HERMES_AGENTS_MD_FOOTER].join('\n\n');
+  // On-demand tier (#1675): the MEDIUM/LOW rules not inlined above. Hermes has
+  // no scanned rule dir, so the bridge file notes the tier with fetch hints.
+  const onDemandSection = opts.srcRoot
+    ? renderOnDemandRuleSection(listOnDemandRuleFiles(opts.srcRoot))
+    : '';
+  const sections = [header, CRITICAL_RULE_DIRECTIVES];
+  if (onDemandSection) sections.push(onDemandSection);
+  sections.push(HERMES_AGENTS_MD_FOOTER);
+  const output = sections.join('\n\n');
   const destPath = path.join(targetDir, 'AGENTS.md');
 
   if (output.length > HERMES_AGENTS_MD_HARD_CAP) {

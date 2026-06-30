@@ -43,6 +43,8 @@ import {
   assembleRulesIndex,
   normalizeDeploymentMode,
   collectFrameworkArtifacts,
+  listOnDemandRuleFiles,
+  writeOnDemandRuleIndex,
   cleanupOldRuleFiles,
   filterAgentFiles,
   filterCommandsAgainstSkills,
@@ -506,6 +508,14 @@ export async function deploy(opts) {
       if (verbose) console.log(`\nDeploying ${ruleFiles.length} rules to ${paths.rules}...`);
       deployRules(ruleFiles, opts);
       counts.rules = ruleFiles.length;
+    }
+
+    // On-demand index (#1675): list the MEDIUM/LOW rules tier-gated out of the
+    // always-on set so agents can fetch them via `aiwg show rule`. OpenClaw's
+    // rule dir is the (absolute) home path, so no target join.
+    const onDemandCount = writeOnDemandRuleIndex(paths.rules, listOnDemandRuleFiles(srcRoot), opts);
+    if (verbose && onDemandCount > 0) {
+      console.log(`  On-demand rules (not inlined): ${onDemandCount} → RULES-ONDEMAND.md`);
     }
   }
 
