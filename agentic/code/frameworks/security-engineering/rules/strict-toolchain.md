@@ -1,4 +1,5 @@
 ---
+enforcement: high
 id: strict-toolchain
 severity: HIGH
 applies_to: [all-agents, test-engineer, security-auditor, code-reviewer]

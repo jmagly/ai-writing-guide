@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Actionable Feedback Rules
 
 **Enforcement Level**: HIGH

@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Ops Issue Tracking Rules
 
 **Enforcement Level**: MEDIUM

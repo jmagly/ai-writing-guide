@@ -1,4 +1,5 @@
 ---
+enforcement: medium
 name: disposable-processes
 severity: HIGH
 category: reliability
@@ -7,6 +8,7 @@ factor: 12-factor-IX
 
 # Disposable Processes
 
+**Enforcement Level**: MEDIUM
 ## Rule
 
 Processes must start fast and shut down gracefully. The runtime environment can kill or restart any process at any moment — the application must tolerate this without data loss, in-flight work loss, or noticeable user impact.

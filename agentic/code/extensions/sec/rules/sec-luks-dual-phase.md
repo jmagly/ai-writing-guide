@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # LUKS/TPM2 Dual-Phase Validation
 
 **Enforcement Level**: CRITICAL

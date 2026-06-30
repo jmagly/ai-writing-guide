@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Best Output Selection Rules
 
 **Enforcement Level**: MEDIUM

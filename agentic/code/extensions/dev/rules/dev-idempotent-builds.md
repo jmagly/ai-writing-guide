@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Idempotent Builds and Pinned Builder Images
 
 **Enforcement Level**: MEDIUM

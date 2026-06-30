@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Reasoning Sections Rules
 
 **Enforcement Level**: MEDIUM

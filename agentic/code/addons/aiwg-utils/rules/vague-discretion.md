@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Vague-Discretion Antipattern
 
 **Enforcement Level**: HIGH

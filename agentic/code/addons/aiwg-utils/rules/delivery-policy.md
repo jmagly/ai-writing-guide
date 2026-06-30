@@ -1,4 +1,5 @@
 ---
+enforcement: high
 id: delivery-policy
 severity: HIGH
 applies_to: [all-agents]

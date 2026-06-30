@@ -1,4 +1,5 @@
 ---
+enforcement: medium
 name: stateless-processes
 severity: HIGH
 category: architecture
@@ -7,6 +8,7 @@ factor: 12-factor-VI
 
 # Stateless Processes
 
+**Enforcement Level**: MEDIUM
 ## Rule
 
 Application processes must be stateless. Any data that must survive beyond a single request or job must be externalized to a backing service (database, cache, object store, queue).

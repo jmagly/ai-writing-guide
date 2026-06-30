@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Token Security Rules
 
 **Enforcement Level**: CRITICAL

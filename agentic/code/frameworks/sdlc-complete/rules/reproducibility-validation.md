@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Reproducibility Validation Rules
 
 **Enforcement Level**: HIGH

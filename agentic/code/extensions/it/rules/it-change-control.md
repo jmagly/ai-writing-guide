@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Change Control for Network and Identity Changes
 
 **Enforcement Level**: CRITICAL

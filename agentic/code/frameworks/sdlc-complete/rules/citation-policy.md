@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Citation Policy Rules
 
 **Enforcement Level**: CRITICAL

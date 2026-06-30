@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Addon Boundaries
 
 **Enforcement Level**: MEDIUM

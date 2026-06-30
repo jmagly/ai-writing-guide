@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Volatility Order
 
 **Enforcement Level**: HIGH

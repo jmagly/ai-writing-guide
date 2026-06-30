@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Self-Contained CI Builders
 
 **Enforcement Level**: HIGH

@@ -1,5 +1,10 @@
+---
+enforcement: medium
+---
+
 # sys-immutable-base
 
+**Enforcement Level**: MEDIUM
 ## Severity
 
 MEDIUM

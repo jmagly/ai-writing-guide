@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Research Metadata Rules
 
 **Enforcement Level**: HIGH

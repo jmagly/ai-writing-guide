@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Human-in-the-Loop Gate Rules
 
 **Enforcement Level**: HIGH

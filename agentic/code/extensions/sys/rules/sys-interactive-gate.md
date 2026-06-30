@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Interactive Command Gate
 
 **Enforcement Level**: HIGH

@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Non-Destructive Investigation
 
 **Enforcement Level**: CRITICAL

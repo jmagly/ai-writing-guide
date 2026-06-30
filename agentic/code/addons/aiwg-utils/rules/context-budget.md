@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Context Window Budget Rules
 
 **Enforcement Level**: MEDIUM

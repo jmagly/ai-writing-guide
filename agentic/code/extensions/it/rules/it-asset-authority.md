@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # CMDB as Source of Truth for Asset Records
 
 **Enforcement Level**: MEDIUM

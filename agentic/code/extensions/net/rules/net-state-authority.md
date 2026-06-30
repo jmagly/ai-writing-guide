@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Network State Authority
 
 **Enforcement Level**: HIGH

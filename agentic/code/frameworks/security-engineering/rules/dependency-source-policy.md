@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Dependency Source Policy
 
 **Enforcement Level**: HIGH

@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Implicit-Dependencies Antipattern
 
 **Enforcement Level**: MEDIUM

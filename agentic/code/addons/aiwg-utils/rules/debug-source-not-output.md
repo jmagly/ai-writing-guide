@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Debug Source Not Output Rules
 
 **Enforcement Level**: HIGH

@@ -1,4 +1,5 @@
 ---
+enforcement: high
 id: human-authorization
 severity: HIGH
 safety-critical: true

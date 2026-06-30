@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Network Change Blast Radius
 
 **Enforcement Level**: CRITICAL

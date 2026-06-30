@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Certificate Expiry Gates
 
 **Enforcement Level**: HIGH

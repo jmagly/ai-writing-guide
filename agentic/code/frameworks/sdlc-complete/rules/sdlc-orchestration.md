@@ -1,4 +1,5 @@
 ---
+enforcement: medium
 paths:
   - ".aiwg/**"
   - ".claude/commands/flow-*.md"
@@ -8,6 +9,7 @@ paths:
 
 # SDLC Orchestration Rules
 
+**Enforcement Level**: MEDIUM
 These rules apply when working with AIWG SDLC artifacts and workflow commands.
 
 ## Core Platform Orchestrator Role

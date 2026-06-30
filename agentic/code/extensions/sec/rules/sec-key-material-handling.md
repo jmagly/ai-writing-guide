@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Key Material Handling
 
 **Enforcement Level**: CRITICAL

@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Use Local or Discovered Skill Over Raw CLI
 
 **Enforcement Level**: HIGH

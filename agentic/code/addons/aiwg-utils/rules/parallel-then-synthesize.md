@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Parallel-Then-Synthesize Antipattern
 
 **Enforcement Level**: MEDIUM

@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Auto-Reply Chain Rules
 
 **Enforcement Level**: MEDIUM

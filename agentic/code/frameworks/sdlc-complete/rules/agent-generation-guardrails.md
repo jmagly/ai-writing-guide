@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Agent Code Generation Guardrails
 
 **Enforcement Level**: HIGH

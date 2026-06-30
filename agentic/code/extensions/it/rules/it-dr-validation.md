@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # DR Procedure Validation
 
 **Enforcement Level**: HIGH

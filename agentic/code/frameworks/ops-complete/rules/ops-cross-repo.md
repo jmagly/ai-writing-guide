@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Ops Cross-Repo Rules
 
 **Enforcement Level**: HIGH

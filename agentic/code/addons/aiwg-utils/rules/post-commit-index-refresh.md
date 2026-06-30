@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Post-Commit Index Refresh Rule
 
 **Enforcement Level**: MEDIUM

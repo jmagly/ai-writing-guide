@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Failure Archetype Mitigation Rules
 
 **Enforcement Level**: HIGH

@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Conversable Agent Interface Rules
 
 **Enforcement Level**: MEDIUM

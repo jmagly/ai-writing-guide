@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Anti-Laziness Rules
 
 **Enforcement Level**: HIGH

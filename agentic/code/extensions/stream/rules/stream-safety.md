@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Stream Credential and Configuration Safety
 
 **Enforcement Level**: CRITICAL

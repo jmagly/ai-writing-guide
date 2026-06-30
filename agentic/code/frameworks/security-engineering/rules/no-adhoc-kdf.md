@@ -1,4 +1,5 @@
 ---
+enforcement: high
 id: no-adhoc-kdf
 severity: HIGH
 applies_to: [all-agents, applied-cryptographer]

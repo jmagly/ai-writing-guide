@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Browser Control Safety
 
 **Enforcement Level**: HIGH

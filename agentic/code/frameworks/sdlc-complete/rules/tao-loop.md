@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # TAO Loop Standardization Rules
 
 **Enforcement Level**: HIGH

@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # AIWG Directory Reference Contract
 
 **Enforcement Level**: MEDIUM

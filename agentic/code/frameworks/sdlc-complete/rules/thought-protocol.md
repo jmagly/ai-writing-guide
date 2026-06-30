@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Thought Protocol Rules
 
 **Enforcement Level**: MEDIUM

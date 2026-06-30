@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # No Circular Skill Calls
 
 **Enforcement Level**: HIGH

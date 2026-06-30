@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Skill Placement Rules
 
 **Enforcement Level**: HIGH

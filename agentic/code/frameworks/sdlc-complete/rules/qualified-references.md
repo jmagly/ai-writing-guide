@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Qualified Cross-Reference Rules
 
 **Enforcement Level**: MEDIUM

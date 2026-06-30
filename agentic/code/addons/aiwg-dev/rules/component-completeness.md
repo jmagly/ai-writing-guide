@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Component Completeness Rules
 
 **Enforcement Level**: MEDIUM

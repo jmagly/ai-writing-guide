@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Instruction Comprehension Rules
 
 **Enforcement Level**: HIGH

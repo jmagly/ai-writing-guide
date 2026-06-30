@@ -1,4 +1,5 @@
 ---
+enforcement: medium
 paths:
   - "**/*.md"
   - "**/*.txt"
@@ -9,6 +10,7 @@ paths:
 
 # Voice Framework Rules
 
+**Enforcement Level**: MEDIUM
 These rules apply when working with markdown, documentation, or content files.
 
 ## Voice Profiles

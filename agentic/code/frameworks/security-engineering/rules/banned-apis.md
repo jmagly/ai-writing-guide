@@ -1,4 +1,5 @@
 ---
+enforcement: high
 id: banned-apis
 severity: HIGH
 applies_to: [all-agents, applied-cryptographer, security-auditor, code-reviewer]

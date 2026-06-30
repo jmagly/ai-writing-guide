@@ -1,7 +1,7 @@
 ---
 id: color-output-format
 name: Color Output Format
-enforcement: MEDIUM
+enforcement: medium
 scope: color-palette
 description: Consistent formatting for all color output across the color-palette addon.
 ---

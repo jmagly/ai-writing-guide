@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Reproducibility Rules
 
 **Enforcement Level**: MEDIUM

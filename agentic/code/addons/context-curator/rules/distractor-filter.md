@@ -1,5 +1,10 @@
+---
+enforcement: medium
+---
+
 # Distractor Filter
 
+**Enforcement Level**: MEDIUM
 Runtime guidance for context classification and distractor prevention.
 
 **Research**: REF-002 Archetype 3 - "Distractor-Induced Context Pollution"

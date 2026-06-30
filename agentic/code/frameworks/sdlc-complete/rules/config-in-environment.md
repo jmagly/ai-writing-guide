@@ -1,4 +1,5 @@
 ---
+enforcement: medium
 name: config-in-environment
 severity: MEDIUM
 category: configuration
@@ -7,6 +8,7 @@ factor: 12-factor-III
 
 # Config in the Environment
 
+**Enforcement Level**: MEDIUM
 ## Rule
 
 Configuration values that differ between deployment environments (dev, staging, production) must be stored in environment variables, not in source code or checked-in config files.

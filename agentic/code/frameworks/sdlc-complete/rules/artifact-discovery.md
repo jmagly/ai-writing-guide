@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Artifact Discovery Rules
 
 **Enforcement Level**: HIGH

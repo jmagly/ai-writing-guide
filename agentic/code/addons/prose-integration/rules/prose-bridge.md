@@ -1,4 +1,5 @@
 ---
+enforcement: medium
 name: prose-bridge
 level: MEDIUM
 scope: universal

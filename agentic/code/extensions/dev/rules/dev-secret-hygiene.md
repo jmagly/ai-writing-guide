@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Secret Hygiene in CI/CD Pipelines
 
 **Enforcement Level**: HIGH

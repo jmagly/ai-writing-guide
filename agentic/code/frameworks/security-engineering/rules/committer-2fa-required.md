@@ -1,4 +1,5 @@
 ---
+enforcement: high
 id: committer-2fa-required
 severity: HIGH
 applies_to: [all-agents, security-auditor, release-manager]

@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Red Flag Escalation
 
 **Enforcement Level**: CRITICAL

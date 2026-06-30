@@ -1,5 +1,10 @@
+---
+enforcement: high
+---
+
 # Respect Repo Access Manifest
 
+**Enforcement Level**: HIGH
 Agents must treat tool capability as separate from authorization. If a workspace has `.aiwg/ops/security/repo-access.manifest.yaml` or `.aiwg/security/repo-access.manifest.yaml`, check it before doing non-trivial work in any repository path.
 
 ## Rule

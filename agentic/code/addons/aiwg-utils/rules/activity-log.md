@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Activity Log Rule
 
 **Enforcement Level**: MEDIUM

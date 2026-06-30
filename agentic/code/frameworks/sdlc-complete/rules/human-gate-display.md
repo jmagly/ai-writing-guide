@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Human Gate Display Rules
 
 **Enforcement Level**: MEDIUM

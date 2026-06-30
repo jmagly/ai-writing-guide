@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Stream Pipeline Change Gates
 
 **Enforcement Level**: HIGH

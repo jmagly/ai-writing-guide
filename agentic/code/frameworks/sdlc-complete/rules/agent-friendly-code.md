@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Agent-Friendly Code Standards
 
 **Enforcement Level**: HIGH

@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Ops Documentation Rules
 
 **Enforcement Level**: HIGH

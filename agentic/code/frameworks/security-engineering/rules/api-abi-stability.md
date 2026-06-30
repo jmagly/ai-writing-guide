@@ -1,4 +1,5 @@
 ---
+enforcement: high
 id: api-abi-stability
 severity: HIGH
 applies_to: [all-agents, architect, release-manager, code-reviewer]

@@ -1,4 +1,5 @@
 ---
+enforcement: medium
 id: no-time-estimates
 severity: HIGH
 applies_to: [all-agents, orchestrators, planners, task-decomposers]
@@ -7,6 +8,7 @@ tags: [estimation, planning, scope, agents, parallelism]
 
 # No Time Estimates — Agent-Oriented Estimation Instead
 
+**Enforcement Level**: MEDIUM
 ## Rule
 
 **Never produce wall-clock time estimates.** Human+AI development velocity is unknowable and varies non-linearly with operator skill, model quality, task decomposability, and tool configuration. Time estimates are noise that pollutes context and creates false expectations.

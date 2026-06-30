@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Pipeline Safety — Never Suppress CI Signals
 
 **Enforcement Level**: CRITICAL

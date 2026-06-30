@@ -1,4 +1,5 @@
 ---
+enforcement: medium
 id: diversity-awareness
 name: Diversity Awareness
 severity: MEDIUM
@@ -8,6 +9,7 @@ description: Detect when Verbalized Sampling should be suggested or auto-applied
 
 # Diversity Awareness Rule
 
+**Enforcement Level**: MEDIUM
 ## Purpose
 
 Ensure agents consider output diversity when generating content, and suggest VS techniques when appropriate.

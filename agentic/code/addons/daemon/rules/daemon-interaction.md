@@ -1,4 +1,5 @@
 ---
+enforcement: high
 id: daemon-interaction
 name: Daemon Interaction Rules
 level: HIGH

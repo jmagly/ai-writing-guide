@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Hardware Safety — Dual-Phase Validation
 
 **Enforcement Level**: CRITICAL

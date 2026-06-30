@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Few-Shot Examples Rules
 
 **Enforcement Level**: MEDIUM

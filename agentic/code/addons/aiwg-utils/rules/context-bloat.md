@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Context-Bloat Antipattern
 
 **Enforcement Level**: MEDIUM

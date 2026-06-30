@@ -1,5 +1,10 @@
+---
+enforcement: medium
+---
+
 # Scoped Reasoning
 
+**Enforcement Level**: MEDIUM
 Enforce task boundaries throughout reasoning and output generation.
 
 **Research**: REF-002 Archetype 3 prevention through scope enforcement.

@@ -1,4 +1,5 @@
 ---
+enforcement: medium
 id: no-binary-blobs
 severity: MEDIUM
 applies_to: [all-agents, security-auditor, code-reviewer]

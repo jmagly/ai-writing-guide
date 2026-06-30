@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Research Before Decision Rules
 
 **Enforcement Level**: HIGH

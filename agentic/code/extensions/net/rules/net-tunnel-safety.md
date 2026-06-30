@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Tunnel Safety
 
 **Enforcement Level**: HIGH

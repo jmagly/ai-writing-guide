@@ -1,4 +1,5 @@
 ---
+enforcement: high
 id: crypto-flag-verification
 severity: HIGH
 applies_to: [all-agents, applied-cryptographer]

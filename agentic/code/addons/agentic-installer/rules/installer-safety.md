@@ -1,4 +1,5 @@
 ---
+enforcement: high
 name: installer-safety
 description: Mandatory safety behaviors for the installer-agent and setup-run skill. Prevents destructive actions, enforces user authorization, and protects against script injection.
 type: feedback
@@ -7,6 +8,7 @@ priority: HIGH
 
 # Installer Safety Rules
 
+**Enforcement Level**: HIGH
 Mandatory behaviors for all agents and skills operating on `setup.aiwg.io/v1` manifests.
 
 ## Rule 1: Show Before Run

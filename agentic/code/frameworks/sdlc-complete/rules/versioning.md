@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Versioning Rules
 
 **Enforcement Level**: CRITICAL

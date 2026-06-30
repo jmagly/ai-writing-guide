@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Subagent Scoping Rules
 
 **Enforcement Level**: HIGH

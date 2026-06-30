@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Index Generation Rules
 
 **Enforcement Level**: MEDIUM

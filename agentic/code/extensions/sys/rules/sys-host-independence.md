@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Host Documentation Independence
 
 **Enforcement Level**: HIGH

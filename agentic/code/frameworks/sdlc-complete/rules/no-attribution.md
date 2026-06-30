@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # No AI Attribution Rules
 
 **Enforcement Level**: CRITICAL

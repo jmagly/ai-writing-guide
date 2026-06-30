@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Service Health Check Requirement
 
 **Enforcement Level**: MEDIUM

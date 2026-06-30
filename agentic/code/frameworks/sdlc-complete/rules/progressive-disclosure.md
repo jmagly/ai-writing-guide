@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Progressive Disclosure Rules
 
 **Enforcement Level**: MEDIUM

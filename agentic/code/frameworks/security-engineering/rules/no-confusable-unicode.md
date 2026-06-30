@@ -1,4 +1,5 @@
 ---
+enforcement: high
 id: no-confusable-unicode
 severity: HIGH
 applies_to: [all-agents, security-auditor, code-reviewer]

@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Evidence Integrity
 
 **Enforcement Level**: CRITICAL

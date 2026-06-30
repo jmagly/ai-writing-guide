@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Skill Discovery Rules
 
 **Enforcement Level**: HIGH

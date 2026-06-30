@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # RLM Context Management Rules
 
 **Enforcement Level**: HIGH

@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # SDLC Right-Sizing
 
 **Enforcement Level**: HIGH

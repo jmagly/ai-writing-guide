@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Human-in-the-Loop (HITL) Patterns Rules
 
 **Enforcement Level**: MEDIUM

@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # AIWG Rules
 
 Deployable enforcement policies that define default behaviors AIWG users can count on.

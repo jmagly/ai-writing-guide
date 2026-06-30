@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Tool Quota and Loop Detection
 
 **Enforcement Level**: HIGH

@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Agent Fallback Rules
 
 **Enforcement Level**: HIGH

@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Auto-Compact and Continue
 
 **Enforcement Level**: HIGH

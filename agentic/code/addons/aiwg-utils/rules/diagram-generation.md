@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Diagram Generation Rules
 
 **Enforcement Level**: MEDIUM

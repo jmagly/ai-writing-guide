@@ -1,5 +1,10 @@
+---
+enforcement: medium
+---
+
 # Self-Maintenance Rule
 
+**Enforcement Level**: MEDIUM
 **Enforcement**: HIGH
 **Tier**: SDLC
 **Issue**: #484

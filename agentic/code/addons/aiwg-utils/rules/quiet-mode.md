@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Quiet Mode
 
 **Enforcement Level**: HIGH

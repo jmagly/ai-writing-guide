@@ -1,4 +1,5 @@
 ---
+enforcement: high
 id: no-key-reuse-across-purposes
 severity: HIGH
 applies_to: [all-agents, applied-cryptographer]

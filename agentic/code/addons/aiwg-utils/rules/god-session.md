@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # God-Session Antipattern
 
 **Enforcement Level**: HIGH

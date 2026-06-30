@@ -1,3 +1,7 @@
+---
+enforcement: critical
+---
+
 # Ops Safety Rules
 
 **Enforcement Level**: CRITICAL

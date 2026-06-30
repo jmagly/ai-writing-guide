@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # CI Action and Container Pinning
 
 **Enforcement Level**: HIGH

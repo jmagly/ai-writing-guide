@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Access Audit Frequency
 
 **Enforcement Level**: MEDIUM

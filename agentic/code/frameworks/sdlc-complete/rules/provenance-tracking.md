@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Provenance Tracking Rules
 
 **Enforcement Level**: HIGH

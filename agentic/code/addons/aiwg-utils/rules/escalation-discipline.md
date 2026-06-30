@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Escalation Discipline
 
 **Enforcement Level**: HIGH

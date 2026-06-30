@@ -1,4 +1,5 @@
 ---
+enforcement: high
 name: installer-authoring
 description: Authoring rules for setup.aiwg.io/v1 SetupManifest files and script templates. Enforces script-first design, template reuse, and consistent manifest structure.
 type: feedback
@@ -7,6 +8,7 @@ priority: HIGH
 
 # Installer Authoring Rules
 
+**Enforcement Level**: HIGH
 Rules for writing `setup.aiwg.io/v1` SetupManifest files and their accompanying scripts.
 
 ## Rule 1: Script-First Design

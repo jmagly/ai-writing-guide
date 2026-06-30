@@ -1,5 +1,10 @@
+---
+enforcement: medium
+---
+
 # Soul Enforcement
 
+**Enforcement Level**: MEDIUM
 A SOUL.md file is present at @SOUL.md.
 
 This file defines the agent's identity, worldview, voice, and standards

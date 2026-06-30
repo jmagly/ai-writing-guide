@@ -1,3 +1,7 @@
+---
+enforcement: high
+---
+
 # Executable Feedback Loop Rules
 
 **Enforcement Level**: HIGH

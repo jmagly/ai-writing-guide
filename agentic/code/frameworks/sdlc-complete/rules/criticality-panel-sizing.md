@@ -1,3 +1,7 @@
+---
+enforcement: medium
+---
+
 # Criticality-Based Panel Sizing Rules
 
 **Enforcement Level**: MEDIUM

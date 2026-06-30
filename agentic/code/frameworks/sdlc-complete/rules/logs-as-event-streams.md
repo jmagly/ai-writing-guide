@@ -1,4 +1,5 @@
 ---
+enforcement: medium
 name: logs-as-event-streams
 severity: HIGH
 category: observability
@@ -7,6 +8,7 @@ factor: 12-factor-XI
 
 # Logs as Event Streams
 
+**Enforcement Level**: MEDIUM
 ## Rule
 
 Applications must write logs as an unbuffered stream of events to stdout and stderr. The environment — container runtime, systemd, orchestrator, or log shipper — is responsible for routing, aggregation, persistence, and rotation.
