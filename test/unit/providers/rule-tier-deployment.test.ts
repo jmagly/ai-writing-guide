@@ -3,12 +3,21 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
+import { resolve } from 'path';
+import { readFileSync } from 'fs';
+
 // @ts-expect-error — .mjs provider module without type declarations
 import {
   ruleEnforcementLevel,
   isAlwaysOnRule,
   writeOnDemandRuleIndex,
+  getAddonRuleFiles,
+  collectFrameworkArtifacts,
+  listOnDemandRuleFiles,
 } from '../../../tools/agents/providers/base.mjs';
+
+const REPO_ROOT = resolve(__dirname, '../../..');
+const levelOf = (f: string): string | null => ruleEnforcementLevel(readFileSync(f, 'utf8'));
 
 async function tmpFile(name: string, content: string): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'aiwg-tier-'));
@@ -71,6 +80,32 @@ describe('rule tier deployment (#1673)', () => {
       writeOnDemandRuleIndex(dir, [join('x', 'foo.md')], { dryRun: true });
       await expect(access(join(dir, 'RULES-ONDEMAND.md'))).rejects.toThrow();
       await rm(dir, { recursive: true, force: true });
+    });
+  });
+
+  // Contract guard against the real repo source: the deploy enumerators must
+  // never feed MEDIUM/LOW rules into the always-on set, and the on-demand
+  // enumerator must surface them. Locks the tiering behavior in CI.
+  describe('deploy enumerators on real source', () => {
+    it('getAddonRuleFiles yields only always-on (no medium/low) rules', () => {
+      const files: string[] = getAddonRuleFiles(REPO_ROOT);
+      const leaked = files.filter((f) => ['medium', 'low'].includes(levelOf(f) as string));
+      expect(leaked).toEqual([]);
+    });
+
+    it('collectFrameworkArtifacts rules yield only always-on rules', () => {
+      const arts = collectFrameworkArtifacts(REPO_ROOT, 'all', { includeRules: true });
+      const leaked = (arts.rules as string[]).filter((f) => ['medium', 'low'].includes(levelOf(f) as string));
+      expect(leaked).toEqual([]);
+    });
+
+    it('listOnDemandRuleFiles surfaces the medium/low tier and nothing always-on', () => {
+      const od: string[] = listOnDemandRuleFiles(REPO_ROOT);
+      expect(od.length).toBeGreaterThan(0);
+      // every entry is genuinely medium/low
+      expect(od.every((f) => ['medium', 'low'].includes(levelOf(f) as string))).toBe(true);
+      // a known MEDIUM rule is present
+      expect(od.some((f) => f.endsWith('diagram-generation.md'))).toBe(true);
     });
   });
 });
