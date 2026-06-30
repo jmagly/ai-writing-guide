@@ -116,6 +116,7 @@
     "contributing/testing-requirements",
     "contributing/publishing-blog-posts",
     "blog",
+    "blog/2026-6-aiwg-june-2026-report",
     "blog/2026-6-aiwg-cockpit-desktop-control-plane",
     "blog/2026-6-aiwg-2026-6-0",
     "blog/2026-5-how-aiwg-builds-your-system-prompt",
@@ -1014,6 +1015,13 @@
       "title": "Blog",
       "summary": "AIWG engineering blog",
       "collapsed": true
+    },
+    {
+      "id": "blog/2026-6-aiwg-june-2026-report",
+      "title": "AIWG — June 2026 Report",
+      "summary": "A month-end report covering Cockpit, OpenHuman support, plain-words search, media research notes, and leaner startup context.",
+      "file": "blog/2026-6-aiwg-june-2026-report.md",
+      "parent": "blog"
     },
     {
       "id": "blog/2026-6-aiwg-cockpit-desktop-control-plane",
