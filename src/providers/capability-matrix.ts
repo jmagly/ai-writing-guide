@@ -83,6 +83,34 @@ export interface ProviderCapabilities {
   deploy_target: DeployTarget;
   aggregated_output: boolean;
   agent_capabilities?: Record<string, AgentCapabilities>;
+  /** Native interactive-question (UX) support. Absent => unknown / markdown fallback. @issue #1668 */
+  interaction?: InteractionCapabilities;
+}
+
+/**
+ * Describes how a provider supports structured interactive questions
+ * (e.g. Claude Code's AskUserQuestion, Codex's request_user_input / MCP elicitation).
+ * Consumed by the native-ux-tools rule and steward routing. @issue #1668
+ */
+export interface InteractionCapabilities {
+  /**
+   * - `native`     — agent may call a structured-question tool directly
+   * - `mode_gated` — tool exists but is gated by mode/feature flag (often off by default)
+   * - `mcp_only`   — structured questions reach the user only via MCP elicitation
+   * - `none`       — no native mechanism; markdown fallback
+   */
+  structured_questions: 'native' | 'mode_gated' | 'mcp_only' | 'none';
+  /** Name of the agent-facing tool, when one exists. */
+  tool?: string;
+  /** Feature flag gating the tool, when mode_gated. */
+  feature_flag?: string;
+  /** Whether the agent-facing tool is available by default. */
+  default_available?: boolean;
+  /** MCP elicitation support level, when applicable. */
+  mcp_elicitation?: 'stable' | 'experimental' | 'none';
+  /** Fallback mechanism when the native tool is unavailable. */
+  fallback?: string;
+  notes?: string;
 }
 
 export interface AgentCapabilities {

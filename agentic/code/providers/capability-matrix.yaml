@@ -45,6 +45,12 @@ providers:
       hook_file: AIWG.md
       hook_directive: "@AIWG.md"
       context_file: CLAUDE.md
+    # Interactive-question (native UX) capability — consumed by the native-ux-tools
+    # rule and steward routing (#1668). `native` => agent may call the tool directly.
+    interaction:
+      structured_questions: native
+      tool: AskUserQuestion
+      notes: Always available in the agent tool surface.
     deploy_target: project
     aggregated_output: false
     agent_capabilities:
@@ -108,6 +114,20 @@ providers:
       hook_file: AIWG-codex.md
       fallback: full-inject
       context_file: CODEX.md
+    # Interactive-question (native UX) capability — see native-ux-tools rule (#1668).
+    # Agent-initiated `request_user_input` is mode-gated and OFF by default
+    # (feature `default_mode_request_user_input`, "under development"); MCP elicitation
+    # (`tool_call_mcp_elicitation`, stable) is the server-initiated structured path.
+    interaction:
+      structured_questions: mode_gated
+      tool: request_user_input
+      feature_flag: default_mode_request_user_input
+      default_available: false
+      mcp_elicitation: stable
+      fallback: markdown
+      notes: >-
+        In Default mode the agent has no interactive-question tool; falls back to
+        formatted markdown. Structured forms reach the user via MCP elicitation.
     deploy_target: mixed
     aggregated_output: true
     agent_capabilities:
