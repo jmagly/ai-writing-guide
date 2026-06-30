@@ -77,6 +77,13 @@ modes/builds or when an operator enables the experimental flag
 Operators who want richer guided setup/triage UX in Codex today should rely on
 **MCP elicitation** (stable) via an AIWG MCP tool, not the agent-initiated tool.
 
+**AIWG provides this path:** when the AIWG MCP server is connected, call the
+**`ask-user`** tool with a `question` + `options` (and `multiSelect`). On Codex it
+emits a native single/multi-select elicitation form and returns the choice; on
+clients without elicitation it returns a markdown prompt for you to present. This
+lets a Codex agent ask structured questions even though its own
+`request_user_input` tool is unavailable in Default mode (#1676).
+
 ## Examples
 
 ### Correct (Claude Code — native tool available)

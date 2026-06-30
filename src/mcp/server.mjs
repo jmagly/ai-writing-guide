@@ -20,6 +20,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { registerDiscoveryTools } from './tools/discovery.mjs';
 import { registerCommandRunTool } from './tools/command-run.mjs';
+import { registerInteractionTools } from './tools/interaction.mjs';
 import { parseToolsets, registerOptInToolsets, KNOWN_TOOLSETS } from './tools/subsystems.mjs';
 import { AIWG_ROOT } from './helpers.mjs';
 
@@ -81,6 +82,12 @@ export function createServer() {
   //   command-run (allow-listed CLI dispatch)
   // ============================================
   registerCommandRunTool(server);
+
+  // ============================================
+  // Interaction toolset (#1676) — registers:
+  //   ask-user (structured question via MCP elicitation, markdown fallback)
+  // ============================================
+  registerInteractionTools(server);
 
   // ============================================
   // Opt-in subsystem toolsets (#1322-#1332)
