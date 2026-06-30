@@ -175,17 +175,17 @@ These files contain:
 
 Not everything loads at once — that would overwhelm the AI's context window. AIWG uses a two-tier loading strategy:
 
-**Always loaded** (compact summaries):
+**Always loaded** (every session):
 - Project overview and structure
-- Core rules (no-attribution, token-security, anti-laziness)
+- Core rules — the CRITICAL and HIGH enforcement tiers (no-attribution, token-security, anti-laziness, and the rest) inlined directly
 - Available commands and agents (names only)
 
 **Loaded on demand** (full details):
 - Individual agent expertise profiles
-- Detailed rule enforcement instructions
+- Lower-tier rule bodies (MEDIUM/LOW) — indexed in `RULES-ONDEMAND.md` and fetched with `aiwg show rule <name>`
 - Architecture and requirements documents
 
-On-demand loading happens through `@`-mentions. When the AI sees `@.aiwg/architecture/sad.md` in a conversation, it loads that specific document for context.
+On-demand loading happens two ways: `.aiwg/` documents load through `@`-mentions (when the AI sees `@.aiwg/architecture/sad.md` in a conversation, it loads that document); rule bodies below the always-on tier load via `aiwg show rule <name>` from the `RULES-ONDEMAND.md` index.
 
 ## 4. Hooks and Flows
 
@@ -301,7 +301,7 @@ Let's walk through what happens when a user says **"transition to elaboration"**
 
 ### Step 1: Natural Language Recognition
 
-The SDLC orchestration rule (always loaded) recognizes this as a phase transition request. It maps the phrase to the `flow-inception-to-elaboration` flow template.
+The SDLC orchestration rule recognizes this as a phase transition request. It maps the phrase to the `flow-inception-to-elaboration` flow template.
 
 ### Step 2: Read Flow Template
 

@@ -7,6 +7,74 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.6.13] - 2026-06-30 - "Tiered rules — leaner startup context"
+
+Lands enforcement-tiered rule deployment: rules now declare a canonical
+enforcement level, and only CRITICAL/HIGH rules are inlined into each provider's
+always-on context while MEDIUM/LOW rules become on-demand (reachable via
+`aiwg show rule` and a generated `RULES-ONDEMAND.md` index). Combined with
+compression of the largest always-on rule bodies, a full `aiwg use all` Claude
+startup drops from ~193K to ~110K tokens — comfortably under the 120K working-
+headroom target on the standard Sonnet window. Also extends the Cockpit session
+workspace with a read-only observe terminal and persistent instance/session
+navigation, and hardens executor enrollment.
+
+### Added
+
+- **Enforcement-tiered rule deployment (#1673)** — every rule now carries a
+  canonical `enforcement:` frontmatter level (CRITICAL/HIGH/MEDIUM/LOW). Deploy
+  inlines only the always-on CRITICAL/HIGH tier into each provider's rule
+  directory; MEDIUM/LOW rules stay on-demand. A CI guard keeps the tiering
+  honest. See `.aiwg/architecture/adr-rule-deployment-context-budget.md`.
+- **`RULES-ONDEMAND.md` across all providers (#1675)** — the on-demand rule
+  index (the MEDIUM/LOW tier, each fetchable via `aiwg show rule <name>`) now
+  ships from every provider, not just Claude. File-based providers (codex,
+  factory, cursor, copilot, opencode, windsurf, openclaw) write
+  `RULES-ONDEMAND.md` into their rule directory; aggregated providers note the
+  tier in their bridge file — warp in `WARP.md`, hermes/openhuman in `AGENTS.md`
+  (via a `{{ON_DEMAND_RULES}}` template token).
+- **Claude startup-context budget in `aiwg doctor` (#1672)** — doctor reports
+  the aggregate context Claude Code inlines at session start versus the standard
+  Sonnet window with an OK/WARN/OVER verdict. `npm run lint:claude-context --
+  --startup [--strict]` enforces the budget in CI.
+- **Cockpit read-only observe terminal** — observe a running session's terminal
+  output read-only, with auto-observe when a session is selected.
+- **Cockpit persistent instances + sessions navigation (#1670)** — a persistent
+  instances/sessions nav for the session workspace, refreshed on an interval.
+
+### Changed
+
+- **Compressed the largest always-on rule bodies (#1674)** — `anti-laziness`,
+  `skill-discovery`, `subagent-scoping`, `rlm-context-management`,
+  `cli-secondary`, `citation-policy`, `auto-compact-continue`,
+  `provenance-tracking`, `failure-mitigation`, and others were trimmed of
+  non-normative illustration (research-quote blocks, metrics dashboards,
+  integration YAML, prompt-reinforcement galleries, ASCII diagrams) while
+  preserving every FORBIDDEN/REQUIRED directive, rule statement, and enforcement
+  level. Component `RULES-INDEX.md` summaries were tightened to one line.
+  Detailed material remains reachable via `aiwg show rule`.
+
+### Fixed
+
+- **Protect `RULES-ONDEMAND.md` in rule-dir cleanup (#1675)** — the generated
+  on-demand index is now guarded from pruning, symmetric with `RULES-INDEX.md`.
+- **Cockpit executor enrollment hardening (#1669, #1670, #1671)** — the executor
+  binds to `0.0.0.0` in `cockpit-up` so Docker agents can enroll; the vsock CID
+  registry auto-heals before executor start (agentic-sandbox #595); longer
+  session-ready wait with all-tier executor wiring; interactive attach retries
+  through the PTY-readiness window; the attach URL is built from the instance id
+  rather than the resolved agent name.
+- **Cockpit session-list robustness** — session lists are de-duplicated by id
+  (executor double-registration), ws error/close handling is de-duplicated and a
+  keyframe is requested on re-attach, unique instance names per launch avoid
+  docker/VM agent-id collisions, and stale stopped-Docker rows are destroyable.
+
+### Documentation
+
+- Reconciled `docs/how-it-works.md` rule-loading sections with the tiered model:
+  always-loaded = CRITICAL/HIGH (inlined); on-demand = MEDIUM/LOW (indexed in
+  `RULES-ONDEMAND.md`, fetched via `aiwg show rule <name>`).
+
 ## [2026.6.12] - 2026-06-28 - "Cockpit VM sessions over vsock"
 
 Validates the Cockpit live VM session path end to end against the
