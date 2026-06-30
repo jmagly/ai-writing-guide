@@ -12,6 +12,7 @@ import { pathToFileURL } from 'url';
 import { execFileSync, execSync } from 'child_process';
 import chalk from 'chalk';
 import { importImpl } from '../_resolve-impl.mjs';
+import { scanStartupContext } from '../lint/claude-context-inventory.mjs';
 
 const { getFrameworkRoot, getVersionInfo } = await importImpl(
   import.meta.url,
@@ -362,6 +363,54 @@ async function checkSkillBudgetForProvider(provName, label, skillsPathRel) {
   }
 }
 
+// Startup-context budget (#1673). The skill-listing budget above covers skill
+// names/descriptions; this measures the aggregate context Claude Code inlines at
+// session start — memory files + every `.claude/rules/*.md` (full body, no
+// progressive disclosure) — against the 200K standard Sonnet window. On heavy
+// `aiwg use all` deployments this is the dominant exhaustion driver (#1672): the
+// standing rules alone can exceed the window before any prompt, forcing the
+// credit-gated 1M upgrade or immediate `Context limit reached`. Claude-only;
+// non-fatal (re-deploy can't fix a structural over-budget — see the
+// enforcement-tiered deployment ADR).
+async function checkStartupContextBudget(provName, label) {
+  if (provName !== 'claude') return;
+  let startup;
+  try {
+    startup = await scanStartupContext({ rootDir: process.cwd() });
+  } catch {
+    return; // best-effort; never block doctor on the budget probe
+  }
+  if (!startup || startup.components.length === 0) return; // nothing deployed here
+
+  const k = (n) => `${Math.round(n / 1000)}K`;
+  const top = startup.components
+    .slice(0, 2)
+    .map((c) => `${c.label} ~${k(c.approxTokens)}`)
+    .join(', ');
+  const headline =
+    `~${k(startup.totalTokens)} tok of ${k(startup.budgetTokens)} standard window ` +
+    `(memory + .claude/rules); top: ${top}`;
+
+  if (startup.status === 'over') {
+    check(
+      `${label} Startup Context`,
+      'warn',
+      `OVER budget — ${headline}. Exceeds the standard Sonnet window before any prompt; ` +
+        `forces the credit-gated 1M tier or immediate exhaustion. Reduce always-on rules ` +
+        `(see the enforcement-tiered deployment ADR / #1673) or narrow the install.`,
+    );
+  } else if (startup.status === 'warn') {
+    check(
+      `${label} Startup Context`,
+      'warn',
+      `tight — ${headline}. Limited headroom for real work on standard Sonnet. ` +
+        `Run \`npm run lint:claude-context -- --startup\` for the breakdown (#1673).`,
+    );
+  } else {
+    check(`${label} Startup Context`, 'ok', headline);
+  }
+}
+
 async function loadProvider(name) {
   try {
     const providerPath = path.join(AIWG_ROOT, 'tools/agents/providers', `${name}.mjs`);
@@ -663,6 +712,7 @@ async function runDoctor() {
       const budgetPath = provider.kernelSkillsPath || provider.paths.skills;
       await checkSkillBudgetForProvider(provName, label, budgetPath);
       await checkTotalDeployedSkillBudgetForProvider(provName, label, provider);
+      await checkStartupContextBudget(provName, label);
     }
   }
 

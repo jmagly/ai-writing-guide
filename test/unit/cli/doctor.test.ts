@@ -437,3 +437,42 @@ describe('tools/cli/doctor.mjs — agent-def size ceiling (#1587)', () => {
     expect(ci).toContain('npm run lint:agent-sizes');
   });
 });
+
+// ── Startup-context budget (#1673) ───────────────────────────
+
+describe('tools/cli/doctor.mjs — startup-context budget (#1673)', () => {
+  let content: string;
+  beforeEach(async () => {
+    const { readFileSync } = await import('fs');
+    content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+  });
+
+  it('imports the shared startup-context scanner', () => {
+    expect(content).toContain('scanStartupContext');
+    expect(content).toContain("from '../lint/claude-context-inventory.mjs'");
+  });
+
+  it('defines and invokes a claude-only startup-context check', () => {
+    expect(content).toContain('async function checkStartupContextBudget');
+    expect(content).toContain('await checkStartupContextBudget(provName, label)');
+    // Claude-only guard
+    expect(content).toMatch(/checkStartupContextBudget[\s\S]*?if \(provName !== 'claude'\) return;/);
+  });
+
+  it('respects the --no-budget-check opt-out', () => {
+    // The call lives inside the existing `if (!noBudgetCheck)` block.
+    expect(content).toMatch(/if \(!noBudgetCheck\)[\s\S]*?checkStartupContextBudget/);
+  });
+
+  it('reports over/near budget as non-fatal warn, not a doctor-failing error', () => {
+    const fn = content.slice(
+      content.indexOf('async function checkStartupContextBudget'),
+      content.indexOf('async function loadProvider'),
+    );
+    expect(fn).toContain("'over'");
+    expect(fn).toContain("'warn'");
+    // Must not fail doctor (error => exit 1) for a structural over-budget.
+    expect(fn).not.toContain("'error'");
+    expect(fn).toContain('Startup Context');
+  });
+});

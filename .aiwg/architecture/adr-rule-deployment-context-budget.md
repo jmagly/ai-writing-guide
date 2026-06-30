@@ -2,11 +2,31 @@
 
 ## Status
 
-**PROPOSED**
+**ACCEPTED**
 
 ## Date
 
 2026-06-29
+
+## Decision Record
+
+Accepted 2026-06-29 (operator sign-off via address-issues #1673 interactive gate):
+
+1. **Always-on tier:** CRITICAL + HIGH inlined (~115K); MEDIUM + unlabelled +
+   generated behaviors move to on-demand.
+2. **Enforcement-level source:** migrate to a machine-readable YAML frontmatter
+   field (`enforcement: critical|high|medium|low`) across all rule files, and
+   triage the 20 unlabelled rules as part of the migration.
+3. **Target headroom:** ≤120K AIWG-controlled startup — tiering **plus**
+   compressing the largest always-on HIGH rule bodies (body + supporting files,
+   as done for doc-sync in #1672).
+4. **Sequencing:** bounded-first.
+   - Cycle 2 — additive diagnostics: `aiwg doctor` reports the real startup load
+     (reusing the #1672 `scanStartupContext` helper) and the registry-drift fix.
+   - Cycle 3 — deploy-path tier selection + on-demand rule index +
+     frontmatter migration.
+   - Cycle 4 — body compression of the largest HIGH rules; then gate
+     `lint:claude-context --strict` (incl. startup budget) in CI.
 
 ## Context
 
