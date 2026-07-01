@@ -11,6 +11,21 @@ This directory is **project-local extended memory** — it stores SDLC artifacts
 - **For the AIWG repository specifically**: this directory contains artifacts from AIWG's own development (dogfooding). These files may look like framework source — schemas, research docs, flow definitions — but they are project-local artifacts, not deployable framework components.
 - **Framework source code lives in `agentic/code/`** — see `docs/development/aiwg-development-guide.md` for the full source vs output distinction.
 
+## Tracking Taxonomy
+
+`.aiwg/` mixes durable project records with host-local runtime state. Use this
+taxonomy before adding, moving, or deleting files.
+
+| Class | Paths | Git Policy | Notes |
+|-------|-------|------------|-------|
+| Project records | `architecture/`, `requirements/`, `intake/`, `planning/`, `risks/`, `testing/`, `security/`, `reports/`, `research/`, `studies/`, `flows/`, `traceability/`, `transition/`, `ux/`, `references/`, `management/`, `proposals/`, `patterns/`, `kb/` | Track when the file is intentional evidence, a decision record, a report, or a reusable project artifact. | These paths are AIWG dogfooding records for this repository, not upstream product source. |
+| Project-local capability records | `smiths/`, `templates/`, selected `config/`, `frameworks/registry.json` | Track stable definitions and registry snapshots. | Deployable upstream framework/addon/plugin source still belongs under `agentic/code/**`. Runtime framework copies under `.aiwg/frameworks/*/` stay ignored. |
+| Release and sync markers | `release.config`, `release-process.md`, `.last-doc-sync`, `AIWG.md` | Track when they describe repository release process, docs sync state, or stable project context. | Provider bridge files generated outside `.aiwg/` remain disposable unless separately documented. |
+| Archive | `archive/` | Track historical records that should remain reproducible. | New archival material should use `.aiwg/archive/<domain-or-date>/`. Preserve older nested archive paths as historical locations unless a cleanup issue moves them deliberately. |
+| Working drafts | `working/` | Ignored for new files. Promote durable work to the appropriate project-record path before committing. | Existing tracked spike notes are retained as historical records; do not use them as precedent for new temporary output. |
+| Local issue store | `issues/` | Ignored for issue content. | In this repository, `.aiwg/aiwg.config` points issue tracking at the Gitea `origin` remote. Treat Gitea as authoritative; local issue files are scratch or migration state unless the project config points to a local issue store. |
+| Runtime, cache, and generated state | `.index/`, `.storage-cache/`, `ralph/`, `ralph-external/`, `marketing/`, `forensics/`, `research/synthesis/`, `.milestones.json`, `browser-allowlist.yaml`, `aiwg.config` | Ignored and safe to regenerate or clean when not actively in use. | See `docs/generated-output-policy.md` for cleanup commands and generated-path validation. |
+
 ## Directory Structure
 
 ### Standard SDLC Directories
@@ -26,7 +41,7 @@ This directory is **project-local extended memory** — it stores SDLC artifacts
 | `security/` | Security artifacts | Threat models, security assessments |
 | `deployment/` | Deployment artifacts | Deployment plans, runbooks |
 | `reports/` | Generated reports | Phase reports, assessments, summaries |
-| `working/` | Temporary workspace | In-progress drafts (safe to clean) |
+| `working/` | Temporary workspace | In-progress drafts (ignored for new files; safe to clean after promotion) |
 
 ### Extended Directories
 
@@ -37,7 +52,7 @@ This directory is **project-local extended memory** — it stores SDLC artifacts
 | `management/` | Strategic docs | Business case, vision, roadmap |
 | `config/` | Configuration | Plugin registry, system config |
 | `smiths/` | Agent tooling | AgentSmith, SkillSmith, CommandSmith definitions |
-| `ralph/` | Agent Loop state | Iteration state, completion reports |
+| `ralph/` | Agent Loop state | Runtime iteration state and completion reports |
 | `archive/` | Historical artifacts | Completed phases, deprecated content |
 | `transition/` | Release preparation | UAT framework, release checklist |
 
@@ -46,8 +61,8 @@ This directory is **project-local extended memory** — it stores SDLC artifacts
 ### 1. Working Directory Lifecycle
 
 Files in `working/` should be:
-- **Promoted** to permanent location when complete
-- **Archived** if abandoned but potentially useful
+- **Promoted** to a permanent project-record location when complete
+- **Archived** under `archive/` if abandoned but potentially useful
 - **Deleted** if truly temporary
 
 Never let `working/` accumulate stale files.
@@ -110,6 +125,10 @@ Ralph operations create:
 - `.aiwg/ralph/iterations/` - Iteration history
 - `.aiwg/ralph/completion-{timestamp}.md` - Final reports
 
+These files are runtime state by default and are ignored in this repository.
+Promote only final reports or decisions that need long-term project evidence
+into `reports/`, `planning/`, `architecture/`, or another project-record path.
+
 ## File Discovery
 
 ### Find artifacts by type:
@@ -139,8 +158,10 @@ ls .aiwg/reports/issue-*.md
 - [CHANGELOG.md](../CHANGELOG.md) - Version history
 - [agentic/](../agentic/) - Agent and skill definitions
 - [docs/](../docs/) - User documentation
+- [docs/generated-output-policy.md](../docs/generated-output-policy.md) - Cleanup and tracked generated-output rules
+- [docs/repo-layout-source-taxonomy.md](../docs/repo-layout-source-taxonomy.md) - Source-of-truth boundaries for source-like directories
 
 ---
 
-*Last updated: 2026-01-13*
+*Last updated: 2026-07-01*
 *Maintained by: AIWG SDLC Framework*
