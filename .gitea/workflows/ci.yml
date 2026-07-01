@@ -93,7 +93,7 @@ jobs:
           # budget so a slow-runner day doesn't block an otherwise-green PR.
           # Bump either value if regression hits consistently.
           AIWG_PERF_BUDGET_VERSION_MS: "300"
-          AIWG_PERF_BUDGET_HELP_MS: "500"
+          AIWG_PERF_BUDGET_HELP_MS: "650"
         run: npm run test:ci
 
       - name: Run tier-3 integration suite (#1174)

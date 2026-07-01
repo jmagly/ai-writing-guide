@@ -971,10 +971,24 @@ export async function showArtifact(
     );
   }
 
+  matches = uniqueEntriesByPath(matches);
+
   // Top-level `agentic/code/agents/personas/*` entries are OpenHuman persona
   // mirrors for some canonical bundle agents. Keep them discoverable as agents,
-  // but do not let those mirrors make `aiwg show agent <name>` ambiguous when
-  // there is exactly one canonical non-persona match (#1643).
+  // but do not let those mirrors or stale/global framework index entries make
+  // `aiwg show agent <name>` ambiguous when there is exactly one canonical
+  // bundle-source agent match (#1643).
+  if (matches.length > 1 && types.includes('agent')) {
+    const canonicalSourceMatches = matches.filter(e => isCanonicalSourceAgentPath(e.path));
+    if (canonicalSourceMatches.length === 1) matches = canonicalSourceMatches;
+  }
+
+  if (matches.length > 1 && types.includes('agent')) {
+    const canonicalBundleMatches = matches.filter(e => isCanonicalBundleAgentPath(e.path));
+    const canonicalBundlePaths = uniqueEntriesByPath(canonicalBundleMatches);
+    if (canonicalBundlePaths.length === 1) matches = canonicalBundlePaths;
+  }
+
   if (matches.length > 1 && types.includes('agent')) {
     const nonPersonaMatches = matches.filter(e => !isTopLevelPersonaAgentPath(e.path));
     if (nonPersonaMatches.length === 1) matches = nonPersonaMatches;
@@ -1109,4 +1123,23 @@ export async function showArtifact(
 
 function isTopLevelPersonaAgentPath(entryPath: string): boolean {
   return /(^|[/\\])agentic[/\\]code[/\\]agents[/\\]personas[/\\][^/\\]+\.md$/.test(entryPath);
+}
+
+function isCanonicalBundleAgentPath(entryPath: string): boolean {
+  return /(^|[/\\])agentic[/\\]code[/\\](?:frameworks|addons|extensions|plugins)[/\\][^/\\]+[/\\]agents[/\\][^/\\]+\.md$/.test(entryPath);
+}
+
+function isCanonicalSourceAgentPath(entryPath: string): boolean {
+  return /(^|[/\\])agentic[/\\]code[/\\](?:frameworks|addons|extensions)[/\\][^/\\]+[/\\]agents[/\\][^/\\]+\.md$/.test(entryPath);
+}
+
+function uniqueEntriesByPath(entries: MetadataEntry[]): MetadataEntry[] {
+  const seen = new Set<string>();
+  const unique: MetadataEntry[] = [];
+  for (const entry of entries) {
+    if (seen.has(entry.path)) continue;
+    seen.add(entry.path);
+    unique.push(entry);
+  }
+  return unique;
 }
