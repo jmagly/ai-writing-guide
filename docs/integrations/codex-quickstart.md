@@ -380,7 +380,7 @@ Marketplace file format:
       "name": "my-plugin",
       "source": {
         "source": "local",
-        "path": "./plugins/my-plugin"
+        "path": "./agentic/code/plugins/my-plugin"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -411,7 +411,7 @@ aiwg use sdlc --provider codex --as-plugin
 node tools/plugin/package-plugins.mjs --plugin codex-sdlc
 ```
 
-The bundle is written to `plugins/sdlc/` and a marketplace entry is created at `.agents/plugins/marketplace.json` so your team can install it via the Codex `/plugins` panel without any external registry.
+The bundle is written to `agentic/code/plugins/sdlc/` and a marketplace entry is created at `.agents/plugins/marketplace.json` so your team can install it via the Codex `/plugins` panel without any external registry.
 
 #### Local plugin development workflow
 
@@ -444,7 +444,7 @@ EOF
 
 # 5. Add to repo marketplace
 mkdir -p .agents/plugins
-# Add marketplace.json pointing to ./plugins/my-plugin
+# Add marketplace.json pointing to ./agentic/code/plugins/my-plugin
 
 # 6. Restart Codex to pick up the plugin
 ```

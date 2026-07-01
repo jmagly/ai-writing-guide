@@ -378,7 +378,7 @@ export function createAgentsMd(target, srcRoot, dryRun) {
  * Generate a Codex plugin bundle for AIWG SDLC.
  *
  * Creates:
- *   <targetDir>/plugins/sdlc/.codex-plugin/plugin.json  — Codex plugin manifest
+ *   <targetDir>/agentic/code/plugins/sdlc/.codex-plugin/plugin.json  — Codex plugin manifest
  *   <targetDir>/.agents/plugins/marketplace.json        — Repo marketplace entry
  *
  * @param {string} targetDir - Root directory where bundle is written
@@ -414,7 +414,7 @@ export function generatePluginBundle(targetDir, opts = {}) {
     keywords: ['sdlc', 'aiwg', 'agents', 'architecture', 'security', 'testing', 'deployment']
   };
 
-  const pluginJsonDir = path.join(targetDir, 'plugins', 'sdlc', '.codex-plugin');
+  const pluginJsonDir = path.join(targetDir, 'agentic', 'code', 'plugins', 'sdlc', '.codex-plugin');
   const pluginJsonPath = path.join(pluginJsonDir, 'plugin.json');
 
   if (dryRun) {
@@ -434,7 +434,7 @@ export function generatePluginBundle(targetDir, opts = {}) {
       {
         name: 'aiwg-sdlc',
         source: {
-          path: './plugins/sdlc',
+          path: './agentic/code/plugins/sdlc',
           source: 'local'
         },
         policy: {

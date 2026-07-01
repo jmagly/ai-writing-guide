@@ -1,0 +1,18 @@
+{
+  "schema": "aiwg.media.acquisition.v1",
+  "acquisition_id": "20260524-101500",
+  "acquired_at": "2026-05-24T10:15:00-04:00",
+  "session_id": "20260524-101500",
+  "title": "Attention Mechanisms in Practice",
+  "source_url": "https://example.invalid/watch?v=lecture101",
+  "platform": "YouTube",
+  "format": "video",
+  "media_path": ".aiwg/media/acquisitions/attention-mechanisms-in-practice.mp4",
+  "sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "duration": "00:42:00",
+  "speakers": [
+    { "name": "Doe, Jane" }
+  ],
+  "channel_or_venue": { "name": "Example University Lectures" },
+  "license": "platform ToS only"
+}

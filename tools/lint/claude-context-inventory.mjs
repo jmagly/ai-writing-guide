@@ -27,14 +27,12 @@ export const STARTUP_CONTEXT_SOURCES = [
 
 export const DEFAULT_SKILL_GLOBS = [
   'agentic/code/**/skills/**/SKILL.md',
-  'plugins/**/.claude-plugin/**/skills/**/SKILL.md',
   '.claude/skills/**/SKILL.md',
   '.github/skills/**/SKILL.md',
 ];
 
 export const DEFAULT_AGENT_DIRS = [
   'agentic/code',
-  'plugins',
   '.claude/agents',
   '.github/agents',
 ];
@@ -87,7 +85,6 @@ function toRel(rootDir, absPath) {
 function isClaudeFacing(relPath) {
   return (
     relPath.startsWith('agentic/code/') ||
-    relPath.startsWith('plugins/') ||
     relPath.startsWith('.claude/') ||
     relPath.startsWith('.github/')
   );

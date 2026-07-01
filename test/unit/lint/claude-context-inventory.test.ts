@@ -45,7 +45,7 @@ ${'x'.repeat(1024)}
     const root = await mkdtemp(join(tmpdir(), 'aiwg-claude-context-'));
     await write(
       root,
-      'plugins/demo/agents/reviewer.md',
+      'agentic/code/plugins/demo/agents/reviewer.md',
       `---
 name: reviewer
 description: Demo

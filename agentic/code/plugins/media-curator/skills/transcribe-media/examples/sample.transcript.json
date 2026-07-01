@@ -1,0 +1,50 @@
+{
+  "schema": "aiwg.media.transcript.v1",
+  "source": {
+    "path": "media/sample-interview.wav",
+    "url": "https://example.invalid/media/sample-interview",
+    "title": "Sample Interview",
+    "sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "transcript": {
+    "sha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "language": "en",
+    "generated_at": "2026-05-25T15:30:00.000000000Z",
+    "tool": {
+      "name": "fixture",
+      "version": "1.0.0",
+      "mode": "example"
+    },
+    "quality": {
+      "status": "machine-generated",
+      "limitations": [
+        "No diarization available; all segments use SPEAKER_00 fallback",
+        "Fixture text is illustrative only"
+      ]
+    }
+  },
+  "segments": [
+    {
+      "id": "seg-000001",
+      "start": "00:00:00.000",
+      "end": "00:00:03.500",
+      "speaker": "SPEAKER_00",
+      "text": "Welcome to the sample recording."
+    },
+    {
+      "id": "seg-000002",
+      "start": "00:00:03.500",
+      "end": "00:00:06.250",
+      "speaker": "SPEAKER_00",
+      "text": "This sidecar demonstrates transcript structure."
+    }
+  ],
+  "provenance": {
+    "wasDerivedFrom": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "generatedEntity": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "activity": "transcribe-media",
+    "used": [
+      "media/sample-interview.wav"
+    ]
+  }
+}

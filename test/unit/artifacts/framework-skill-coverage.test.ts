@@ -60,6 +60,7 @@ describe('framework graph skill coverage', () => {
         'agentic/code/frameworks',
         'agentic/code/addons',
         'agentic/code/extensions',
+        'agentic/code/plugins',
         'agentic/code/agents',
         'agentic/code/behaviors',
       ];

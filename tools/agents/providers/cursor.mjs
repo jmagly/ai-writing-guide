@@ -616,7 +616,7 @@ export async function deploy(opts) {
  * Layout produced:
  *   <targetDir>/.cursor-plugin/plugin.json  — the plugin manifest
  *
- * @param {string} targetDir - Plugin bundle root (typically plugins/<name>/)
+ * @param {string} targetDir - Plugin bundle root (typically agentic/code/plugins/<name>/)
  * @param {{ dryRun?: boolean, srcRoot?: string, name?: string, version?: string, description?: string, contents?: object }} opts
  */
 export function generatePluginBundle(targetDir, opts = {}) {

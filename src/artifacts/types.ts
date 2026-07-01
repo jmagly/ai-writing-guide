@@ -443,9 +443,10 @@ export interface GraphConfig {
 export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
   framework: {
     type: 'framework',
-    // Includes `agentic/code/extensions` and `agentic/code/behaviors`
-    // (#1221) so extension bundles (sys, net, it, sec, stream, dev) and
-    // top-level behaviors (concierge, security-sentinel, ...) appear in
+    // Includes `agentic/code/extensions`, `agentic/code/plugins`, and
+    // `agentic/code/behaviors` so extension bundles (sys, net, it, sec,
+    // stream, dev), marketplace plugin bundles, and top-level behaviors
+    // (concierge, security-sentinel, ...) appear in
     // `aiwg discover` alongside frameworks and addons. `inferType()` in
     // index-builder.ts uses nearest-type-dir ancestor matching to handle
     // every nested layout (slug vs flat, frameworks/<f>/extensions/<sub>,
@@ -454,6 +455,7 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
       'agentic/code/frameworks',
       'agentic/code/addons',
       'agentic/code/extensions',
+      'agentic/code/plugins',
       'agentic/code/agents',
       'agentic/code/behaviors',
       'docs',
@@ -588,6 +590,7 @@ export function loadModuleGraphConfigs(cwd: string, diagnostics?: GraphConfigWar
     const searchRoots = [
       `${cwd}/agentic/code/frameworks`,
       `${cwd}/agentic/code/addons`,
+      `${cwd}/agentic/code/plugins`,
     ];
 
     for (const entry of registry.frameworks) {

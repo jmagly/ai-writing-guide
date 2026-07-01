@@ -49,7 +49,7 @@ jobs:
           # Codex plugins are registered via .agents/plugins/marketplace.json
           # instead of per-plugin .claude-plugin/plugin.json. Accept either.
           CODEX_MARKETPLACE=".agents/plugins/marketplace.json"
-          for plugin in plugins/*/; do
+          for plugin in agentic/code/plugins/*/; do
             name=$(basename "$plugin")
             if [ -f "$plugin.claude-plugin/plugin.json" ]; then
               echo "✓ $name: claude manifest valid"
@@ -74,9 +74,9 @@ jobs:
           elif [ -f "marketplace.json" ]; then
             echo "✓ marketplace.json exists at repo root"
             cat "marketplace.json" | head -20
-          elif [ -f "plugins/.claude-plugin/marketplace.json" ]; then
-            echo "✓ marketplace.json exists in plugins/"
-            cat "plugins/.claude-plugin/marketplace.json" | head -20
+          elif [ -f "agentic/code/plugins/.claude-plugin/marketplace.json" ]; then
+            echo "✓ marketplace.json exists in agentic/code/plugins/"
+            cat "agentic/code/plugins/.claude-plugin/marketplace.json" | head -20
           else
             echo "✗ marketplace.json missing"
             exit 1
@@ -85,7 +85,7 @@ jobs:
       - name: Verify .aiwg/ excluded from plugins
         run: |
           FOUND=0
-          for plugin in plugins/*/; do
+          for plugin in agentic/code/plugins/*/; do
             if find "$plugin" -path '*/.aiwg/*' 2>/dev/null | grep -q .; then
               echo "FATAL: .aiwg/ content found in plugin $(basename $plugin)!"
               find "$plugin" -path '*/.aiwg/*'
@@ -103,7 +103,7 @@ jobs:
           echo "## Plugin Build Complete"
           echo ""
           echo "### Built Plugins:"
-          for plugin in plugins/*/; do
+          for plugin in agentic/code/plugins/*/; do
             if [ -d "$plugin" ]; then
               echo "- $(basename $plugin)"
             fi

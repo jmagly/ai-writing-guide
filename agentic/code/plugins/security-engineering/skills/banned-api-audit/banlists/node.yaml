@@ -1,0 +1,64 @@
+# Starter banlist for Node.js / JavaScript / TypeScript.
+# Targets dynamic-code-execution and shell-injection vectors common to JS ecosystems.
+version: 1
+languages:
+  node:
+    - pattern: 're:\beval\s*\('
+      reason: "Arbitrary code execution — no JS sandbox is reliable"
+      replacement: "JSON.parse, dedicated parser, or explicit dispatch"
+      cwe: "CWE-95"
+    - pattern: 're:new\s+Function\s*\('
+      reason: "Equivalent to eval — runs caller-supplied code"
+      replacement: "Explicit dispatch table or template engine"
+      cwe: "CWE-95"
+    - pattern: 're:vm\.runInThisContext\s*\('
+      reason: "Same RCE surface as eval; sandbox claims are unreliable"
+      replacement: "Process isolation if untrusted code must run"
+      cwe: "CWE-95"
+    - pattern: 're:vm\.runInNewContext\s*\('
+      reason: "vm contexts are NOT a security boundary in Node"
+      replacement: "Subprocess or container isolation"
+      cwe: "CWE-95"
+    - pattern: 're:child_process\.exec(?!File)\s*\('
+      reason: "Spawns a shell with concatenated string — injection on user input"
+      replacement: "child_process.execFile([argv]) — argv form, no shell"
+      cwe: "CWE-78"
+    - pattern: 're:child_process\.execSync\s*\('
+      reason: "Synchronous shell execution — same injection class"
+      replacement: "execFileSync([argv])"
+      cwe: "CWE-78"
+    - pattern: 're:child_process\.spawn\s*\([^,)]*,\s*[^,)]*,\s*\{[^}]*shell\s*:\s*true'
+      reason: "spawn with shell:true bypasses argv safety"
+      replacement: "spawn(cmd, [argv]) without shell option"
+      cwe: "CWE-78"
+    - pattern: 're:require\s*\(\s*[`"]?\$\{'
+      reason: "Dynamic require with template literal — RCE if attacker controls path"
+      replacement: "Static require or explicit whitelist + path validation"
+      cwe: "CWE-95, CWE-22"
+    - pattern: 're:document\.write\s*\('
+      reason: "XSS vector; reflows DOM unpredictably"
+      replacement: "DOM API (createElement, textContent) or sanitized framework rendering"
+      cwe: "CWE-79"
+    - pattern: 're:\.innerHTML\s*='
+      reason: "XSS if any portion of the string is user-influenced"
+      replacement: "textContent for text; sanitized template engine for HTML; DOMPurify if HTML is required"
+      cwe: "CWE-79"
+      severity: MEDIUM
+    - pattern: 're:dangerouslySetInnerHTML'
+      reason: "React XSS bypass — auditable but must be justified per use"
+      replacement: "Plain JSX rendering; DOMPurify-sanitized HTML only if unavoidable"
+      cwe: "CWE-79"
+      severity: MEDIUM
+    - pattern: 're:fs\.(?:open|read|write|append)File(?:Sync)?\s*\(\s*[`"]?\.\.'
+      reason: "Path traversal vector when path starts with '..'"
+      replacement: "path.resolve + verify result starts with intended base directory"
+      cwe: "CWE-22"
+exclusions:
+  paths:
+    - "test/**"
+    - "tests/**"
+    - "**/*.test.{js,ts,jsx,tsx}"
+    - "**/*.spec.{js,ts,jsx,tsx}"
+    - "node_modules/**"
+    - "dist/**"
+    - "build/**"

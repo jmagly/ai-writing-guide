@@ -8,7 +8,7 @@
  * Usage:
  *   node tools/plugin/package-plugins.mjs --all              # Package all plugins
  *   node tools/plugin/package-plugins.mjs --plugin aiwg-sdlc # Package specific plugin
- *   node tools/plugin/package-plugins.mjs --clean            # Clean plugins directory
+ *   node tools/plugin/package-plugins.mjs --clean            # Clean agentic/code/plugins directory
  *   node tools/plugin/package-plugins.mjs --dry-run          # Show what would be copied
  */
 
@@ -19,7 +19,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '../..');
-const PLUGINS_DIR = path.join(ROOT_DIR, 'plugins');
+const PLUGINS_DIR = path.join(ROOT_DIR, 'agentic/code/plugins');
 
 // Plugin configurations
 const PLUGIN_CONFIGS = {
@@ -771,8 +771,16 @@ async function packageCodexPlugin(name, config, options) {
     srcRoot: ROOT_DIR
   });
 
-  // Copy sources into the plugin directory for self-containment
   const pluginDir = path.join(PLUGINS_DIR, name);
+
+  if (options.clean) {
+    console.log('  🧹 Cleaning existing files...');
+    if (!options.dryRun) {
+      cleanPlugin(pluginDir);
+    }
+  }
+
+  // Copy sources into the plugin directory for self-containment
   for (const [type, srcPath] of Object.entries(config.sources || {})) {
     const destPath = path.join(pluginDir, type);
     console.log(`  📁 Copying ${type}...`);
@@ -807,6 +815,13 @@ async function packageProviderPlugin(name, config, options, provider) {
 
   const pluginDir = path.join(PLUGINS_DIR, name);
 
+  if (options.clean) {
+    console.log('  🧹 Cleaning existing files...');
+    if (!options.dryRun) {
+      cleanPlugin(pluginDir);
+    }
+  }
+
   providerModule.generatePluginBundle(pluginDir, {
     dryRun: options.dryRun,
     srcRoot: ROOT_DIR,
@@ -840,7 +855,7 @@ function writeCodexMarketplaceManifest(options) {
     .filter(([, config]) => config.pluginType === 'codex' || config.supportsCodex !== false)
     .map(([pluginName, config]) => ({
       name: pluginName,
-      source: { source: 'local', path: `./plugins/${pluginName}` },
+      source: { source: 'local', path: `./agentic/code/plugins/${pluginName}` },
       policy: {
         installation: 'AVAILABLE',
         authentication: 'ON_INSTALL',
@@ -942,7 +957,7 @@ async function main() {
 
   console.log('\n✨ Done!');
   console.log('\nTo test locally:');
-  console.log('  /plugin marketplace add ./plugins         # Claude Code');
+  console.log('  /plugin marketplace add ./agentic/code/plugins  # Claude Code');
   console.log('  /plugin install sdlc@aiwg');
   console.log('\nFor other providers:');
   console.log('  aiwg use sdlc --provider codex            # Codex (reads .agents/plugins/marketplace.json)');

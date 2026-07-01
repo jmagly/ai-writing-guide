@@ -771,7 +771,7 @@ export interface ShowParams {
  * Scan the AIWG_ROOT corpus for an artifact matching `name` (#1221).
  *
  * Walks the well-known artifact layouts under
- * `agentic/code/{frameworks,addons,extensions}/<bundle>/{skills,agents,commands,rules,templates}/`
+ * `agentic/code/{frameworks,addons,extensions,plugins}/<bundle>/{skills,agents,commands,rules,templates}/`
  * and returns the first match. Used as a fallback in `aiwg show` when an
  * artifact isn't in any built index — either because the workspace hasn't
  * been deployed to yet, or because the bundle hasn't been installed.
@@ -786,17 +786,18 @@ async function findCorpusArtifact(
 ): Promise<{
   path: string;
   type: string;
-  bundleKind: 'framework' | 'addon' | 'extension' | null;
+  bundleKind: 'framework' | 'addon' | 'extension' | 'plugin' | null;
   bundleId: string | null;
 } | null> {
   const fs = await import('node:fs');
   const path = await import('node:path');
   const fsp = fs.promises;
 
-  const groups: Array<{ kind: 'framework' | 'addon' | 'extension'; dir: string }> = [
+  const groups: Array<{ kind: 'framework' | 'addon' | 'extension' | 'plugin'; dir: string }> = [
     { kind: 'framework', dir: path.join(aiwgRoot, 'agentic/code/frameworks') },
     { kind: 'addon', dir: path.join(aiwgRoot, 'agentic/code/addons') },
     { kind: 'extension', dir: path.join(aiwgRoot, 'agentic/code/extensions') },
+    { kind: 'plugin', dir: path.join(aiwgRoot, 'agentic/code/plugins') },
   ];
 
   // (subdir, type, layout) — 'flat' = `<name>.md`, 'slug' = `<name>/SKILL.md`

@@ -69,7 +69,6 @@
     "tools/",
     "agentic/",
     "templates/",
-    "plugins/",
     "man/",
     "apps/web/dist",
     "CLAUDE.md"

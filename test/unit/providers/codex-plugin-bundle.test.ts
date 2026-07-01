@@ -48,7 +48,7 @@ describe('Codex Plugin Bundle Generator', () => {
 
       generatePluginBundle(tmpDir, { dryRun: false, srcRoot: REPO_ROOT });
 
-      const pluginJsonPath = path.join(tmpDir, 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
+      const pluginJsonPath = path.join(tmpDir, 'agentic', 'code', 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
       expect(fs.existsSync(pluginJsonPath)).toBe(true);
     });
 
@@ -57,7 +57,7 @@ describe('Codex Plugin Bundle Generator', () => {
 
       generatePluginBundle(tmpDir, { dryRun: false, srcRoot: REPO_ROOT });
 
-      const pluginJsonPath = path.join(tmpDir, 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
+      const pluginJsonPath = path.join(tmpDir, 'agentic', 'code', 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
       const manifest = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf8'));
 
       expect(manifest.name).toBe('aiwg-sdlc');
@@ -71,7 +71,7 @@ describe('Codex Plugin Bundle Generator', () => {
 
       generatePluginBundle(tmpDir, { dryRun: false, srcRoot: REPO_ROOT });
 
-      const pluginJsonPath = path.join(tmpDir, 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
+      const pluginJsonPath = path.join(tmpDir, 'agentic', 'code', 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
       const manifest = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf8'));
 
       // Codex requires skills path as relative path with ./ prefix
@@ -84,7 +84,7 @@ describe('Codex Plugin Bundle Generator', () => {
 
       generatePluginBundle(tmpDir, { dryRun: false, srcRoot: REPO_ROOT });
 
-      const pluginJsonPath = path.join(tmpDir, 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
+      const pluginJsonPath = path.join(tmpDir, 'agentic', 'code', 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
       const manifest = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf8'));
 
       expect(manifest.author).toBeDefined();
@@ -133,6 +133,7 @@ describe('Codex Plugin Bundle Generator', () => {
 
       // source.path must start with ./ (Codex requirement)
       expect(sdlcPlugin.source.path).toMatch(/^\.\//);
+      expect(sdlcPlugin.source.path).toBe('./agentic/code/plugins/sdlc');
       expect(sdlcPlugin.source.source).toBe('local');
 
       // policy.installation must be valid value
@@ -146,7 +147,7 @@ describe('Codex Plugin Bundle Generator', () => {
 
       generatePluginBundle(tmpDir, { dryRun: true, srcRoot: REPO_ROOT });
 
-      const pluginJsonPath = path.join(tmpDir, 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
+      const pluginJsonPath = path.join(tmpDir, 'agentic', 'code', 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
       const marketplacePath = path.join(tmpDir, '.agents', 'plugins', 'marketplace.json');
 
       expect(fs.existsSync(pluginJsonPath)).toBe(false);
@@ -158,7 +159,7 @@ describe('Codex Plugin Bundle Generator', () => {
 
       generatePluginBundle(tmpDir, { dryRun: false, srcRoot: REPO_ROOT });
 
-      const pluginJsonPath = path.join(tmpDir, 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
+      const pluginJsonPath = path.join(tmpDir, 'agentic', 'code', 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
       const manifest = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf8'));
 
       // Version should match package.json format (not 'unknown')
@@ -172,7 +173,7 @@ describe('Codex Plugin Bundle Generator', () => {
 
       generatePluginBundle(tmpDir, { dryRun: false, srcRoot: REPO_ROOT, version: '2026.4.99' });
 
-      const pluginJsonPath = path.join(tmpDir, 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
+      const pluginJsonPath = path.join(tmpDir, 'agentic', 'code', 'plugins', 'sdlc', '.codex-plugin', 'plugin.json');
       const manifest = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf8'));
 
       expect(manifest.version).toBe('2026.4.99');

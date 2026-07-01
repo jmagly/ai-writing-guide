@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/security-engineering/banned-apis.v1.json",
+  "title": "AIWG banned API banlist",
+  "type": "object",
+  "required": ["version", "languages"],
+  "properties": {
+    "version": { "const": 1 },
+    "languages": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["pattern", "reason", "replacement"],
+          "properties": {
+            "pattern": { "type": "string", "minLength": 1 },
+            "reason": { "type": "string", "minLength": 1 },
+            "replacement": { "type": "string", "minLength": 1 },
+            "severity": { "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+            "cwe": { "type": "string" },
+            "paths": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": true
+        }
+      }
+    },
+    "paths": { "type": "array", "items": { "type": "string" } },
+    "exclusions": {
+      "type": "object",
+      "properties": {
+        "paths": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
