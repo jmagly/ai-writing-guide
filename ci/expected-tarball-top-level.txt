@@ -46,6 +46,5 @@ bin
 dist
 man
 package.json
-plugins
 templates
 tools
