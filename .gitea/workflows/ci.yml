@@ -79,6 +79,11 @@ jobs:
         # violates the declared _validates_as shape. (#1178)
         run: npm run lint:schemas
 
+      - name: Lint tracked generated artifacts
+        # Keeps local build outputs, provider exports, indexes, caches,
+        # coverage, and test results out of git unless explicitly allowlisted.
+        run: npm run lint:generated-artifacts
+
       - name: Run conformance suite (fixture mode)
         # Exercises the executor-contract v1 dispatch path via fixture replay.
         # Runs as a separate step (not folded into test:ci) to keep the existing

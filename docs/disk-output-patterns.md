@@ -104,6 +104,10 @@ Disk outputs are session-scoped. For persistence across sessions:
 - Record summaries in debug memory
 - Reference paths are ephemeral - store content, not paths
 
+For repository cleanup and source-control rules covering generated output,
+caches, provider exports, and tracked static docs assets, see
+[Generated Output Policy](generated-output-policy.md).
+
 ## Best Practices
 
 1. **Always read full output** for test failures - truncated output misses root causes
