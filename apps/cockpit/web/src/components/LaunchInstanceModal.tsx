@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { fmtId } from '../util';
-import type { Instance, Loadout } from '../types';
+import type { ExecutorCapabilities, Instance, Loadout } from '../types';
 
 type Runtime = 'host' | 'docker' | 'qemu';
 
@@ -46,6 +46,7 @@ export function LaunchInstanceModal({
   const [loadouts, setLoadouts] = useState<Loadout[]>([]);
   const [instances, setInstances] = useState<Instance[]>([]);
   const [hostId, setHostId] = useState('');
+  const [executorCaps, setExecutorCaps] = useState<ExecutorCapabilities | null>(null);
   const [image, setImage] = useState('agentic/codex:latest');
   const [customImage, setCustomImage] = useState('');
   const [profile, setProfile] = useState('');
@@ -65,11 +66,13 @@ export function LaunchInstanceModal({
     Promise.all([
       api<{ loadouts: Loadout[] }>('/api/loadouts').catch(() => ({ loadouts: [] as Loadout[] })),
       api<{ instances: Instance[] }>('/api/inventory').catch(() => ({ instances: [] as Instance[] })),
+      api<ExecutorCapabilities>('/api/executor/capabilities').catch(() => null),
     ])
-      .then(([lo, inv]) => {
+      .then(([lo, inv, caps]) => {
         if (cancelled) return;
         setLoadouts(lo.loadouts ?? []);
         setInstances(inv.instances ?? []);
+        setExecutorCaps(caps);
         const firstHost = (inv.instances ?? []).find(isUsableHost);
         setHostId((current) => current || firstHost?.id || '');
       });
@@ -95,12 +98,36 @@ export function LaunchInstanceModal({
     try {
       if (runtime === 'host') {
         const host = hostTargets(instances).find((i) => i.id === hostId) ?? hostTargets(instances)[0];
-        if (!host) throw new Error('No registered host target is available. Start/register the host agent first, or choose Docker container.');
+        if (host) {
+          setResult(openSession
+            ? `Using host target ${host.launch_context?.name ?? fmtId(host.id)}; starting session...`
+            : `Using host target ${host.launch_context?.name ?? fmtId(host.id)}`);
+          await onLaunched(host.id, openSession);
+          if (openSession) onClose();
+          return;
+        }
+        if (!executorCaps?.host_runtime_enabled) {
+          throw new Error('Host runtime is not enabled on this executor. Enable the host supervisor or choose Docker container.');
+        }
+        const body = {
+          name: name.replace(/[^a-z0-9-]/g, '-').replace(/^-+/, 'a-').slice(0, 63),
+          runtime: 'host',
+          loadout: 'host-tools',
+          start: true,
+        };
+        const op = await api<{ id?: string; instance_id?: string; instanceId?: string; operation?: { id?: string }; result?: { instance_id?: string; instanceId?: string } }>('/api/instances', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const instanceId = op.instance_id ?? op.instanceId ?? op.result?.instance_id ?? op.result?.instanceId;
+        const operationId = op.id ?? op.operation?.id;
         setResult(openSession
-          ? `Using host target ${host.launch_context?.name ?? fmtId(host.id)}; starting session...`
-          : `Using host target ${host.launch_context?.name ?? fmtId(host.id)}`);
-        await onLaunched(host.id, openSession);
+          ? `Host launch accepted: ${instanceId ?? operationId ?? 'operation pending'}; waiting for session...`
+          : `Host launch accepted: ${instanceId ?? operationId ?? 'operation pending'}`);
+        await onLaunched(instanceId, openSession, operationId);
         if (openSession) onClose();
+        else setName(genInstanceName());
         return;
       }
       const body: Record<string, unknown> = {
@@ -155,8 +182,15 @@ export function LaunchInstanceModal({
               <label htmlFor="li-host-target">Host target</label>
               <select id="li-host-target" value={hostId} onChange={(e) => setHostId(e.target.value)}>
                 {hostTargets(instances).map((i) => <option key={i.id} value={i.id}>{i.launch_context?.name ?? fmtId(i.id)} - {i.loadout}</option>)}
-                {!hostTargets(instances).length && <option value="">No registered host available</option>}
+                {!hostTargets(instances).length && executorCaps?.host_runtime_enabled && <option value="">Local host runtime - create new</option>}
+                {!hostTargets(instances).length && !executorCaps?.host_runtime_enabled && <option value="">Host runtime not enabled</option>}
               </select>
+              {!hostTargets(instances).length && executorCaps?.host_runtime_enabled && (
+                <>
+                  <label htmlFor="li-name">Name</label>
+                  <input id="li-name" value={name} onChange={(e) => setName(e.target.value)} />
+                </>
+              )}
             </>
           ) : (
             <>
@@ -218,7 +252,7 @@ export function LaunchInstanceModal({
         </div>
         <div className="modal-actions">
           <button onClick={onClose} disabled={busy}>Close</button>
-          <button className="cta" onClick={launch} disabled={busy || (runtime === 'host' && !hostId) || (runtime !== 'host' && !name.trim()) || (runtime === 'docker' && image === '__custom__' && !customImage.trim())}>
+          <button className="cta" onClick={launch} disabled={busy || (runtime === 'host' && !hostId && !executorCaps?.host_runtime_enabled) || (runtime === 'host' && !hostId && !name.trim()) || (runtime !== 'host' && !name.trim()) || (runtime === 'docker' && image === '__custom__' && !customImage.trim())}>
             {busy ? 'Working...' : runtime === 'host' ? (openSession ? 'Start host session' : 'Use host') : openSession ? 'Create + start session' : 'Create instance'}
           </button>
         </div>

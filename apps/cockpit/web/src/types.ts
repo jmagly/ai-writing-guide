@@ -41,6 +41,7 @@ export interface ResponseNeeded { id: string; instance_id: string; prompt: strin
 export interface InstanceCost { instance_id: string; tenant: string; input_tokens: number; output_tokens: number; usd: number }
 export interface Cost { total: { input_tokens: number; output_tokens: number; usd: number }; per_instance: InstanceCost[] }
 export interface Loadout { id: string; label: string; description?: string; runtimes?: string[] }
+export interface ExecutorCapabilities { status: string; source?: string | null; host_runtime_enabled: boolean; raw_status?: string; error?: string }
 export interface CapabilityResult { path: string; type: string; title?: string; capability?: string; score?: number; name: string; triggers?: string[] }
 export interface ContribAction { id: string; title: string; icon?: string; group?: string; source: string; inject: { command: string; target?: string; needs_args?: boolean; args_hint?: string } }
 export type Role = 'controller' | 'observer' | null;

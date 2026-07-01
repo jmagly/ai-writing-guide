@@ -22,13 +22,22 @@ const LOADOUTS = [
   { id: 'agentic-dev', label: 'agentic-dev', description: 'Developer tools', runtimes: ['docker', 'container'] },
 ];
 
-function mockFetch() {
+function mockFetch({
+  instances = [HOST_INSTANCE],
+  executorCaps = null,
+  createdInstanceId = 'docker-1',
+}: {
+  instances?: unknown[];
+  executorCaps?: unknown;
+  createdInstanceId?: string;
+} = {}) {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const ok = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
     if (url.includes('/api/loadouts')) return ok({ loadouts: LOADOUTS });
-    if (url.includes('/api/inventory')) return ok({ instances: [HOST_INSTANCE] });
-    if (url.includes('/api/instances') && init?.method === 'POST') return ok({ instance_id: 'docker-1' });
+    if (url.includes('/api/inventory')) return ok({ instances });
+    if (url.includes('/api/executor/capabilities') && executorCaps) return ok(executorCaps);
+    if (url.includes('/api/instances') && init?.method === 'POST') return ok({ instance_id: createdInstanceId });
     return new Response('{}', { status: 404 });
   }) as unknown as typeof fetch;
 }
@@ -37,7 +46,7 @@ beforeEach(() => { (window as unknown as { __COCKPIT_TOKEN__: string }).__COCKPI
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('LaunchInstanceModal', () => {
-  it('uses an existing host target instead of provisioning unsupported host instances', async () => {
+  it('uses an existing host target when one is already registered', async () => {
     globalThis.fetch = mockFetch();
     const onLaunched = vi.fn();
     const onClose = vi.fn();
@@ -53,6 +62,30 @@ describe('LaunchInstanceModal', () => {
     const postCall = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls
       .find((call) => String(call[0]).includes('/api/instances') && call[1]?.method === 'POST');
     expect(postCall).toBeUndefined();
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('provisions the first host instance when the executor host supervisor is enabled', async () => {
+    globalThis.fetch = mockFetch({
+      instances: [],
+      executorCaps: { status: 'ok', source: '/healthz/deep', host_runtime_enabled: true },
+      createdInstanceId: 'host-created-1',
+    });
+    const onLaunched = vi.fn();
+    const onClose = vi.fn();
+    render(<LaunchInstanceModal open onClose={onClose} onLaunched={onLaunched} />);
+
+    expect(await screen.findByRole('option', { name: /local host runtime - create new/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /start host session/i }));
+
+    await waitFor(() => expect(onLaunched).toHaveBeenCalledWith('host-created-1', true, undefined));
+    const postCall = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls
+      .find((call) => String(call[0]).includes('/api/instances') && call[1]?.method === 'POST');
+    expect(JSON.parse(String(postCall?.[1]?.body))).toMatchObject({
+      runtime: 'host',
+      loadout: 'host-tools',
+      start: true,
+    });
     expect(onClose).toHaveBeenCalled();
   });
 

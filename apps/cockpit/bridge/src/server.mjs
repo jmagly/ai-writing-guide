@@ -294,6 +294,26 @@ async function probeExecutor(executorUrl) {
   return false;
 }
 
+async function getExecutorCapabilities(executorUrl) {
+  const candidates = ['/healthz/deep', '/healthz', '/health'].map((path) => `${executorUrl}${path}`);
+  try {
+    const { target, body } = await fetchJsonFirst(candidates);
+    return {
+      status: 'ok',
+      source: new URL(target).pathname,
+      host_runtime_enabled: body.host_runtime_enabled === true || body.hostRuntimeEnabled === true,
+      raw_status: body.status ?? body.state ?? 'unknown',
+    };
+  } catch (err) {
+    return {
+      status: 'unreachable',
+      source: null,
+      host_runtime_enabled: false,
+      error: String(err?.message ?? err),
+    };
+  }
+}
+
 function defaultExecutorCommand() {
   if (EXECUTOR_COMMAND) return EXECUTOR_COMMAND.split(/\s+/).filter(Boolean);
   const candidates = [
@@ -1074,6 +1094,7 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         return;
       }
       if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(upstreamUrl));
+      if (url.pathname === '/api/executor/capabilities') return json(res, 200, await getExecutorCapabilities(upstreamUrl));
       if (url.pathname === '/api/running') return json(res, 200, await getRunning(upstreamUrl));
       if (url.pathname === '/api/loadouts') return json(res, 200, await getLoadouts(upstreamUrl));
       let m;
