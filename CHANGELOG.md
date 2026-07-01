@@ -7,6 +7,37 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.0] - 2026-07-01 - "MCP elicitation and native interaction routing"
+
+Adds an MCP `ask-user` interaction tool that can emit protocol-native
+elicitation requests when the client supports them, with a markdown fallback
+for surfaces that do not. The provider capability matrix now records native
+interactive-question support so AIWG can route human-in-the-loop prompts through
+the best available UX per provider.
+
+### Added
+
+- **MCP `ask-user` tool** — emits MCP elicitation requests with structured
+  schema support and falls back to markdown prompts when elicitation is
+  unavailable.
+- **Elicitation helper coverage** — unit tests cover protocol-native
+  elicitation, markdown fallback behavior, and response normalization.
+- **Native UX capability metadata** — provider capability data now advertises
+  interactive-question support, with coverage for the native UX interaction
+  mapping.
+
+### Changed
+
+- **Codex interaction guidance** — documents the `request_user_input`
+  interactive-question mechanism and mode gating so AIWG routing can prefer the
+  provider-native path when available.
+- **Cockpit console topology ADR** — accepts the merged console topology
+  direction for Cockpit session UX.
+
+### Documentation
+
+- Published the June 2026 AIWG progress report and updated the docs manifests.
+
 ## [2026.6.13] - 2026-06-30 - "Tiered rules — leaner startup context"
 
 Lands enforcement-tiered rule deployment: rules now declare a canonical
