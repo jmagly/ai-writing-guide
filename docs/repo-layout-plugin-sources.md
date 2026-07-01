@@ -11,6 +11,9 @@ Codex, Factory, Cursor, and other provider marketplace formats. Top-level
 `plugins/` is not a canonical source path and should not be recreated by
 packaging, CI, tests, or documentation.
 
+For the broader root `templates/`, `schemas/`, and `config/` source taxonomy,
+see [Repository Source Taxonomy](repo-layout-source-taxonomy.md).
+
 ## Directory Inventory
 
 | Path | Classification | Boundary |
