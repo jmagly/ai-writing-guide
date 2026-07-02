@@ -24,11 +24,11 @@ reach OpenHuman whenever it drives an external coding host (`claude_code`,
 `factory`) inside the workspace, and they prime OpenHuman's own `AGENTS.md`
 discovery. No format conversion happens.
 
-**Tier 2 — native harness (opt-in, later).** OpenHuman's own agent harness
-(`spawn_subagent`) loads TOML specialists from `<ws>/agents/*.toml`. Registering
-selected AIWG agents there is a curated, flag-gated follow-up tracked in
-[#1559](https://git.integrolabs.net/roctinam/aiwg/issues/1559). It is **not**
-part of the default deploy.
+**Tier 2 — native harness (opt-in).** OpenHuman's own agent harness
+(`spawn_subagent`) loads TOML specialists from `<ws>/agents/*.toml` and
+`~/.openhuman/agents/*.toml`. AIWG can register selected agents there with
+`--harness-agents=...`. It is curated and flag-gated; the default deploy emits
+no native harness stubs.
 
 | Artifact | Where it lands | Notes |
 |----------|----------------|-------|
@@ -38,6 +38,7 @@ part of the default deploy.
 | Commands | `AGENTS.md` (aggregated) | OpenHuman has no native command surface; command-skills also deploy as skills |
 | Rules | `~/.openhuman/.aiwg/rules/` + `AGENTS.md` | Full bodies on disk for `aiwg show rule`; critical directives inline in `AGENTS.md` |
 | Config bridge | `AGENTS.md` | Discover-First orientation |
+| Native harness stubs (opt-in) | `<ws>/agents/aiwg_*.toml` + `<ws>/agent/prompts/aiwg/*.md` | Selected only via `--harness-agents`; prompt bodies are frontmatter-stripped |
 
 OpenHuman is "codex-shaped" (AGENTS.md bridge, cross-provider `.agents/`) but
 deploys discrete markdown agents and treats commands/rules as aggregated, the
@@ -70,8 +71,28 @@ ls .agents/agents/        # markdown personas (workspace-scoped)
 cat AGENTS.md             # Discover-First bridge
 ```
 
-Nothing is written to `<ws>/agents/` or `<ws>/agent/prompts/` — those belong to
-the opt-in Tier-2 harness surface ([#1559](https://git.integrolabs.net/roctinam/aiwg/issues/1559)).
+Nothing is written to `<ws>/agents/` or `<ws>/agent/prompts/` unless you select
+Tier-2 native harness agents.
+
+## Optional Native Harness Agents
+
+Use `--harness-agents` to expose a small curated set of AIWG specialists through
+OpenHuman's `spawn_subagent` registry:
+
+```bash
+aiwg use sdlc --provider openhuman --harness-agents=test-engineer,security-auditor
+```
+
+Project scope writes thin TOML stubs under `agents/` and stripped prompt bodies
+under `agent/prompts/aiwg/`. User scope writes self-contained inline TOML stubs
+under `~/.openhuman/agents/`:
+
+```bash
+aiwg use sdlc --provider openhuman --scope user --harness-agents=test-engineer
+```
+
+Re-run `aiwg doctor --provider openhuman` to validate the optional Tier-2
+stubs. The default no-selector deploy remains Tier-1 only.
 
 ## Why skills install globally (no trust marker needed)
 

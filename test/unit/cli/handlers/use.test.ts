@@ -8,11 +8,20 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdir, rm, writeFile } from 'fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import os from 'os';
-import { getAllAddons, isValidAddon, addonPath, USE_ALL_DISALLOW, useHandler, nextStepsFor } from '../../../../src/cli/handlers/use.js';
+import {
+  getAllAddons,
+  isValidAddon,
+  addonPath,
+  USE_ALL_DISALLOW,
+  useHandler,
+  nextStepsFor,
+  deployOpenHumanHarnessAgents,
+  parseOpenHumanHarnessAgentSelector,
+} from '../../../../src/cli/handlers/use.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -252,5 +261,127 @@ describe('use cockpit', () => {
     expect(result.exitCode).toBe(0);
     expect(result.message).toContain('@aiwg/cockpit@2026.6.1');
     expect(result.message).toContain('Run without --dry-run');
+  });
+});
+
+describe('OpenHuman native harness stubs (#1559)', () => {
+  let tmpDir: string;
+  let oldHome: string | undefined;
+  let oldOpenHumanHome: string | undefined;
+
+  async function writeAgent(root: string, slug: string, content: string) {
+    const agentsDir = path.join(root, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'agents');
+    await mkdir(agentsDir, { recursive: true });
+    await writeFile(path.join(agentsDir, `${slug}.md`), content, 'utf-8');
+  }
+
+  beforeEach(async () => {
+    tmpDir = path.join(os.tmpdir(), `aiwg-openhuman-harness-test-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    oldHome = process.env.HOME;
+    oldOpenHumanHome = process.env.OPENHUMAN_HOME;
+    process.env.HOME = path.join(tmpDir, 'home');
+    process.env.OPENHUMAN_HOME = path.join(tmpDir, 'openhuman-home');
+    await mkdir(tmpDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    if (oldHome === undefined) delete process.env.HOME;
+    else process.env.HOME = oldHome;
+    if (oldOpenHumanHome === undefined) delete process.env.OPENHUMAN_HOME;
+    else process.env.OPENHUMAN_HOME = oldOpenHumanHome;
+    if (existsSync(tmpDir)) await rm(tmpDir, { recursive: true, force: true });
+  });
+
+  it('parses --harness-agents selectors and keeps no-selector default empty', () => {
+    expect(parseOpenHumanHarnessAgentSelector(['--provider', 'openhuman'])).toEqual([]);
+    expect(parseOpenHumanHarnessAgentSelector(['--harness-agents=test-engineer, security-auditor'])).toEqual([
+      'test-engineer',
+      'security-auditor',
+    ]);
+    expect(parseOpenHumanHarnessAgentSelector(['--harness-agents', 'TestEngineer,test-engineer.md'])).toEqual([
+      'test-engineer',
+    ]);
+  });
+
+  it('emits project-scope TOML plus a frontmatter-stripped prompt file', async () => {
+    await writeAgent(tmpDir, 'test-engineer', `---
+name: Test Engineer
+description: Creates comprehensive test suites
+model: sonnet
+---
+# Test Engineer
+
+Write tests.
+`);
+
+    const target = path.join(tmpDir, 'project');
+    const result = await deployOpenHumanHarnessAgents({
+      frameworkRoot: tmpDir,
+      target,
+      selectors: ['test-engineer'],
+      scope: 'project',
+    });
+
+    expect(result.emitted).toBe(1);
+    const toml = await readFile(path.join(target, 'agents', 'aiwg_test_engineer.toml'), 'utf-8');
+    expect(toml).toContain('id = "aiwg_test_engineer"');
+    expect(toml).toContain('when_to_use = "Creates comprehensive test suites"');
+    expect(toml).toContain('display_name = "Test Engineer"');
+    expect(toml).toContain('[system_prompt]');
+    expect(toml).toContain('file = "aiwg/test_engineer.md"');
+    expect(toml).not.toMatch(/^subagents\s*=/m);
+
+    const prompt = await readFile(path.join(target, 'agent', 'prompts', 'aiwg', 'test_engineer.md'), 'utf-8');
+    expect(prompt).toBe('# Test Engineer\n\nWrite tests.\n');
+    expect(prompt).not.toMatch(/^---$/m);
+  });
+
+  it('emits user-scope TOML with an inline prompt and no project prompt file', async () => {
+    await writeAgent(tmpDir, 'security-auditor', `---
+description: Reviews code for security issues
+---
+Audit the code.
+`);
+
+    const target = path.join(tmpDir, 'project');
+    const result = await deployOpenHumanHarnessAgents({
+      frameworkRoot: tmpDir,
+      target,
+      selectors: ['security-auditor'],
+      scope: 'user',
+    });
+
+    expect(result.emitted).toBe(1);
+    const toml = await readFile(path.join(process.env.OPENHUMAN_HOME!, 'agents', 'aiwg_security_auditor.toml'), 'utf-8');
+    expect(toml).toContain('id = "aiwg_security_auditor"');
+    expect(toml).toContain('when_to_use = "Reviews code for security issues"');
+    expect(toml).toContain("inline = '''Audit the code.'''");
+    expect(existsSync(path.join(target, 'agent', 'prompts', 'aiwg', 'security_auditor.md'))).toBe(false);
+  });
+
+  it('is idempotent for repeated project-scope emission', async () => {
+    await writeAgent(tmpDir, 'test-engineer', `---
+description: Creates tests
+---
+Write tests.
+`);
+    const target = path.join(tmpDir, 'project');
+
+    await deployOpenHumanHarnessAgents({ frameworkRoot: tmpDir, target, selectors: ['test-engineer'], scope: 'project' });
+    const firstToml = await readFile(path.join(target, 'agents', 'aiwg_test_engineer.toml'), 'utf-8');
+    const firstPrompt = await readFile(path.join(target, 'agent', 'prompts', 'aiwg', 'test_engineer.md'), 'utf-8');
+    await deployOpenHumanHarnessAgents({ frameworkRoot: tmpDir, target, selectors: ['test-engineer'], scope: 'project' });
+
+    expect(await readFile(path.join(target, 'agents', 'aiwg_test_engineer.toml'), 'utf-8')).toBe(firstToml);
+    expect(await readFile(path.join(target, 'agent', 'prompts', 'aiwg', 'test_engineer.md'), 'utf-8')).toBe(firstPrompt);
+  });
+
+  it('fails when the selected AIWG agent is unknown', async () => {
+    await expect(deployOpenHumanHarnessAgents({
+      frameworkRoot: tmpDir,
+      target: path.join(tmpDir, 'project'),
+      selectors: ['missing-agent'],
+      scope: 'project',
+    })).rejects.toThrow("Unknown AIWG agent 'missing-agent'");
   });
 });

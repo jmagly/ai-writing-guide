@@ -327,6 +327,16 @@ describe('doctor: provider awareness (regression)', () => {
     expect(hasProviderFlag || importsProviderRegistry).toBe(true);
   });
 
+  it('knows OpenHuman and validates optional Tier-2 harness stubs', async () => {
+    const { readFileSync } = await import('fs');
+    const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+
+    expect(content).toMatch(/openhuman:\s*'OpenHuman'/);
+    expect(content).toContain('checkOpenHumanHarnessTier2');
+    expect(content).toContain('OpenHuman Tier-2 harness');
+    expect(content).toContain("'agent', 'prompts'");
+  });
+
   it('source script does not hardcode only .claude/ paths for agent/command checks', async () => {
     const { readFileSync } = await import('fs');
     const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');

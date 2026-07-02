@@ -13,6 +13,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import YAML from 'yaml';
 import { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { createScriptRunner } from './script-runner.js';
 import { getFrameworkRoot, getVersionInfo } from '../../channel/manager.mjs';
@@ -1054,6 +1055,7 @@ async function deployProjectLocalBundles(opts: {
 }
 
 const USE_FLAGS_WITH_VALUES = new Set([
+  '--harness-agents',
   '--profile',
   '--provider',
   '--platform',
@@ -1062,6 +1064,213 @@ const USE_FLAGS_WITH_VALUES = new Set([
   '--scope',
   '--target',
 ]);
+
+type OpenHumanHarnessScope = 'project' | 'user';
+
+export interface OpenHumanHarnessDeployResult {
+  emitted: number;
+  tomlPaths: string[];
+  promptPaths: string[];
+}
+
+interface ParsedAgentMarkdown {
+  slug: string;
+  frontmatter: Record<string, unknown>;
+  body: string;
+}
+
+function readFlagValue(args: string[], name: string): string | undefined {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === name) return args[i + 1];
+    if (arg.startsWith(`${name}=`)) return arg.slice(name.length + 1);
+  }
+  return undefined;
+}
+
+function removeFlagWithOptionalValue(args: string[], name: string): string[] {
+  const result: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === name) {
+      i++;
+      continue;
+    }
+    if (arg.startsWith(`${name}=`)) continue;
+    result.push(arg);
+  }
+  return result;
+}
+
+export function parseOpenHumanHarnessAgentSelector(args: string[]): string[] {
+  const value = readFlagValue(args, '--harness-agents');
+  if (!value) return [];
+  return Array.from(new Set(
+    value
+      .split(',')
+      .map((entry) => slugifyAgentName(entry))
+      .filter(Boolean)
+  ));
+}
+
+function slugifyAgentName(value: string): string {
+  return value
+    .trim()
+    .replace(/\.md$/i, '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function snakeAgentId(slug: string): string {
+  return slug.replace(/-/g, '_');
+}
+
+function titleFromSlug(slug: string): string {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function parseAgentMarkdown(slug: string, content: string): ParsedAgentMarkdown {
+  if (!content.startsWith('---\n')) {
+    return { slug, frontmatter: {}, body: content.trimStart() };
+  }
+  const end = content.indexOf('\n---', 4);
+  if (end < 0) return { slug, frontmatter: {}, body: content.trimStart() };
+
+  const rawFrontmatter = content.slice(4, end);
+  const bodyStart = content.indexOf('\n', end + 4);
+  const body = bodyStart >= 0 ? content.slice(bodyStart + 1) : '';
+  const parsed = YAML.parse(rawFrontmatter);
+  return {
+    slug,
+    frontmatter: parsed && typeof parsed === 'object' ? parsed as Record<string, unknown> : {},
+    body: body.trimStart(),
+  };
+}
+
+function frontmatterString(meta: Record<string, unknown>, key: string): string | undefined {
+  const value = meta[key];
+  if (typeof value === 'string') return value;
+  return undefined;
+}
+
+function normalizeDescription(value: string | undefined, slug: string): string {
+  const description = value?.replace(/\s+/g, ' ').trim();
+  return description || `Use the ${titleFromSlug(slug)} AIWG specialist.`;
+}
+
+function escapeTomlBasicString(value: string): string {
+  return JSON.stringify(value);
+}
+
+function tomlMultilineLiteral(value: string): string {
+  // TOML literal strings cannot contain three consecutive apostrophes.
+  return `'''${value.replace(/'''/g, "''\\'")}'''`;
+}
+
+function projectHarnessToml(agent: ParsedAgentMarkdown): string {
+  const id = snakeAgentId(agent.slug);
+  return [
+    '# AIWG-managed OpenHuman harness stub; do not hand-edit.',
+    `id = "aiwg_${id}"`,
+    `when_to_use = ${escapeTomlBasicString(normalizeDescription(frontmatterString(agent.frontmatter, 'description'), agent.slug))}`,
+    `display_name = ${escapeTomlBasicString(frontmatterString(agent.frontmatter, 'name') || titleFromSlug(agent.slug))}`,
+    '',
+    '[system_prompt]',
+    `file = "aiwg/${id}.md"`,
+    '',
+  ].join('\n');
+}
+
+function userHarnessToml(agent: ParsedAgentMarkdown): string {
+  const id = snakeAgentId(agent.slug);
+  return [
+    '# AIWG-managed OpenHuman harness stub; do not hand-edit.',
+    `id = "aiwg_${id}"`,
+    `when_to_use = ${escapeTomlBasicString(normalizeDescription(frontmatterString(agent.frontmatter, 'description'), agent.slug))}`,
+    `display_name = ${escapeTomlBasicString(frontmatterString(agent.frontmatter, 'name') || titleFromSlug(agent.slug))}`,
+    '',
+    '[system_prompt]',
+    `inline = ${tomlMultilineLiteral(agent.body.trim())}`,
+    '',
+  ].join('\n');
+}
+
+function assertNoSubagentsKey(toml: string): void {
+  if (/^\s*subagents\s*=/m.test(toml)) {
+    throw new Error('OpenHuman AIWG harness stubs must not emit `subagents` for Worker-tier agents');
+  }
+}
+
+function openHumanHomeDir(): string {
+  return process.env.OPENHUMAN_HOME || path.join(os.homedir(), '.openhuman');
+}
+
+async function writeManagedFile(filePath: string, content: string, dryRun: boolean): Promise<void> {
+  if (dryRun) return;
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(filePath, content, 'utf-8');
+}
+
+async function readSourceAgent(frameworkRoot: string, slug: string): Promise<ParsedAgentMarkdown> {
+  const candidates = [
+    path.join(frameworkRoot, 'agentic/code/frameworks/sdlc-complete/agents', `${slug}.md`),
+    path.join(frameworkRoot, 'agentic/code/agents/personas', `${slug}.md`),
+  ];
+  for (const candidate of candidates) {
+    try {
+      const content = await fs.readFile(candidate, 'utf-8');
+      const parsed = parseAgentMarkdown(slug, content);
+      if (!parsed.body.trim()) throw new Error(`${candidate} has an empty prompt body after frontmatter stripping`);
+      return parsed;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    }
+  }
+  throw new Error(`Unknown AIWG agent '${slug}' for --harness-agents`);
+}
+
+export async function deployOpenHumanHarnessAgents(opts: {
+  frameworkRoot: string;
+  target: string;
+  selectors: string[];
+  scope: OpenHumanHarnessScope;
+  dryRun?: boolean;
+}): Promise<OpenHumanHarnessDeployResult> {
+  const uniqueSelectors = Array.from(new Set(opts.selectors.map(slugifyAgentName).filter(Boolean)));
+  if (uniqueSelectors.length === 0) return { emitted: 0, tomlPaths: [], promptPaths: [] };
+
+  const tomlRoot = opts.scope === 'user'
+    ? path.join(openHumanHomeDir(), 'agents')
+    : path.join(opts.target, 'agents');
+  const promptRoot = path.join(opts.target, 'agent', 'prompts', 'aiwg');
+  const tomlPaths: string[] = [];
+  const promptPaths: string[] = [];
+
+  for (const slug of uniqueSelectors) {
+    const agent = await readSourceAgent(opts.frameworkRoot, slug);
+    const id = snakeAgentId(slug);
+    const toml = opts.scope === 'user' ? userHarnessToml(agent) : projectHarnessToml(agent);
+    assertNoSubagentsKey(toml);
+
+    const tomlPath = path.join(tomlRoot, `aiwg_${id}.toml`);
+    tomlPaths.push(tomlPath);
+    await writeManagedFile(tomlPath, toml, !!opts.dryRun);
+
+    if (opts.scope === 'project') {
+      const promptPath = path.join(promptRoot, `${id}.md`);
+      promptPaths.push(promptPath);
+      await writeManagedFile(promptPath, agent.body.trimStart(), !!opts.dryRun);
+    }
+  }
+
+  return { emitted: uniqueSelectors.length, tomlPaths, promptPaths };
+}
 
 function firstUsePositional(args: string[]): string | undefined {
   for (let i = 0; i < args.length; i++) {
@@ -1660,6 +1869,7 @@ export class UseHandler implements CommandHandler {
     const ciHooksEnabled = remainingArgs.includes('--ci-hooks-enabled');
     const force = remainingArgs.includes('--force');
     const skipConflicts = remainingArgs.includes('--skip-conflicts');
+    const harnessAgentSelectors = parseOpenHumanHarnessAgentSelector(remainingArgs);
 
     // PUW-027 (#1128): --scope user|project per ADR-4. Default project.
     // #1156 Phase 1: --user is a shorthand for --scope user.
@@ -1681,10 +1891,11 @@ export class UseHandler implements CommandHandler {
     const filteredArgs = deployArgs.filter(
       a => a !== '--no-utils' && a !== '--no-project-local' && a !== '--ci-hooks-enabled' && a !== '--force' && a !== '--skip-conflicts'
     );
+    const deployFilteredArgs = removeFlagWithOptionalValue(filteredArgs, '--harness-agents');
 
     // Pass --quiet to suppress deploy-agents.mjs header/footer in default mode (#460)
     // Dry-run must not capture output — its purpose is to show what would happen
-    if (!verbose && !dryRun) filteredArgs.push('--quiet');
+    if (!verbose && !dryRun) deployFilteredArgs.push('--quiet');
 
     // Extract provider and target from remainingArgs to pass to addon deployments
     // Config-first resolution (#621): explicit --provider overrides config, config overrides default 'claude'
@@ -1716,6 +1927,13 @@ export class UseHandler implements CommandHandler {
     const provider = providers[0];
     const targetIdx = remainingArgs.findIndex(a => a === '--target');
     const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
+
+    if (harnessAgentSelectors.length > 0 && provider !== 'openhuman') {
+      return {
+        exitCode: 1,
+        message: '--harness-agents is only supported with --provider openhuman',
+      };
+    }
 
     // #1526 — OpenClaw is user-scope-only. An unflagged deploy defaults to
     // 'project' (ADR-4 default); coerce it to 'user' rather than erroring, so
@@ -1777,10 +1995,30 @@ export class UseHandler implements CommandHandler {
       ui.blank();
     }
     const runner = createScriptRunner(ctx.frameworkRoot);
-    const mainResult = await runner.run('tools/agents/deploy-agents.mjs', filteredArgs, captureOpts);
+    const mainResult = await runner.run('tools/agents/deploy-agents.mjs', deployFilteredArgs, captureOpts);
 
     if (mainResult.exitCode !== 0) {
       return mainResult;
+    }
+
+    if (harnessAgentSelectors.length > 0) {
+      try {
+        const harness = await deployOpenHumanHarnessAgents({
+          frameworkRoot,
+          target,
+          selectors: harnessAgentSelectors,
+          scope,
+          dryRun,
+        });
+        if (verbose || !quiet) {
+          ui.dim(`  OpenHuman native harness stubs: ${harness.emitted}`);
+        }
+      } catch (error) {
+        return {
+          exitCode: 1,
+          message: `OpenHuman harness agent deployment failed: ${error instanceof Error ? error.message : String(error)}`,
+        };
+      }
     }
 
     // Build common args for addon deployments (inherit provider and target)

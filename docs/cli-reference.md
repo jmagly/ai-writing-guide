@@ -373,6 +373,7 @@ aiwg use <framework|addon>
 - `--force` - Overwrite existing deployments
 - `--dry-run` - Preview without making changes
 - `--ci-hooks-enabled` - Also deploy CI workflow files to `.github/workflows/` and/or `.gitea/workflows/` (opt-in; detects forge from `.git/config`). Review deployed files before committing.
+- `--harness-agents <list>` - OpenHuman only: emit optional native `spawn_subagent` TOML stubs for a comma-separated curated agent list (for example `test-engineer,security-auditor`). Default deploy emits none.
 - `--skip-commands-migration` - Skip deleting the legacy commands directory (warns about duplicate entries in the command palette)
 - `--profile <name>` - Select a topology profile for addons that declare multiple page templates (e.g., `llm-wiki` ships `book-companion | personal | research-deep-dive | business-team | generic`). Without the flag, an interactive prompt appears on TTY. The selection is written to `.aiwg/<namespace>/config.json` so subsequent skill invocations pick the right template.
 
