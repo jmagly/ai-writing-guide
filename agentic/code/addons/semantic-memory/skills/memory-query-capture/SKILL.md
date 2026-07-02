@@ -110,6 +110,11 @@ memory-query-capture --consumer sdlc-complete --type analysis --title "Microserv
 
 This skill's persistence flows through `resolveStorage('memory')`. On the default `fs` backend the memory subsystem lives at `.aiwg/memory/` and behavior is byte-identical to direct file writes. To redirect memory artifacts into Obsidian, Logseq, Fortemi, or another backend without changing this skill, configure `.aiwg/storage.config` (#934).
 
+Fortemi storage routing here is only a persistence backend choice. It does not
+switch semantic-memory query capture to the Fortemi Core index/search backend;
+memory records join that preview through the artifact export/sync path and are
+queried with explicit `--backend fortemi-core` graph commands.
+
 When this skill needs to read or write memory artifacts from a Bash step:
 
 ```bash

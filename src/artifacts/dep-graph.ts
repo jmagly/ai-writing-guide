@@ -12,6 +12,7 @@
 import type { DependencyGraph, GraphType, TypedEdge } from './types.js';
 import { normalizeEdges } from './types.js';
 import { loadDependencyGraph, loadGraphIndexFile } from './index-reader.js';
+import { buildFortemiCoreDependencyGraph } from './fortemi-core-query-adapter.js';
 
 export interface DepsOptions {
   direction?: 'upstream' | 'downstream' | 'both';
@@ -19,6 +20,7 @@ export interface DepsOptions {
   json?: boolean;
   graph?: GraphType;
   edgeType?: string;
+  backend?: 'local' | 'fortemi-core';
 }
 
 interface TraversalResult {
@@ -102,11 +104,32 @@ export async function showDeps(
   artifactPath: string,
   options: DepsOptions = {}
 ): Promise<void> {
-  const { direction = 'both', depth = 3, json = false, graph: graphType, edgeType } = options;
+  const { direction = 'both', depth = 3, json = false, graph: graphType, edgeType, backend = 'local' } = options;
 
   let depGraph: DependencyGraph | null = null;
 
-  if (graphType) {
+  if (backend === 'fortemi-core') {
+    const loaded = buildFortemiCoreDependencyGraph(cwd, graphType ?? 'project');
+    if (!loaded.graph) {
+      if (json) {
+        console.log(
+          JSON.stringify(
+            { error: 'fortemi-core-index-unavailable', hint: loaded.reason },
+            null,
+            2,
+          ),
+        );
+      } else {
+        console.error('Error: Fortemi Core static index is unavailable.');
+        console.log(
+          loaded.reason ??
+            "Run 'aiwg index sync --backend fortemi-core' first.",
+        );
+      }
+      process.exit(1);
+    }
+    depGraph = loaded.graph;
+  } else if (graphType) {
     depGraph = loadGraphIndexFile<DependencyGraph>(cwd, 'dependencies.json', graphType);
     if (!depGraph) {
       console.error(`Error: No artifact index found for graph '${graphType}'.`);
@@ -154,6 +177,7 @@ export async function showDeps(
   if (json) {
     console.log(JSON.stringify({
       artifact: artifactPath,
+      backend,
       direction,
       depth,
       upstream: flattenResults(upstreamResults),

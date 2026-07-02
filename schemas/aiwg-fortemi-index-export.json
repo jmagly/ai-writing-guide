@@ -4,15 +4,10 @@
   "title": "AIWG Fortemi Index Export",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schema_version",
-    "generated_at",
-    "source",
-    "items"
-  ],
+  "required": ["schema_version", "generated_at", "source", "items"],
   "properties": {
     "schema_version": {
-      "const": "aiwg.fortemi.index.export.v1"
+      "enum": ["aiwg.fortemi.index.export.v1", "aiwg.fortemi.index.export.v2"]
     },
     "generated_at": {
       "type": "string",
@@ -21,10 +16,7 @@
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "repo",
-        "privacy"
-      ],
+      "required": ["repo", "privacy"],
       "properties": {
         "repo": {
           "type": "string",
@@ -32,6 +24,23 @@
         },
         "privacy": {
           "$ref": "#/$defs/privacy"
+        },
+        "graph": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["previous_schema_version", "strategy"],
+      "properties": {
+        "previous_schema_version": {
+          "const": "aiwg.fortemi.index.export.v1"
+        },
+        "strategy": {
+          "const": "supported"
         }
       }
     },
@@ -42,13 +51,173 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "aiwg.fortemi.index.export.v1"
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": ["compatibility"]
+        },
+        "properties": {
+          "source": {
+            "not": {
+              "required": ["graph"]
+            }
+          },
+          "items": {
+            "items": {
+              "allOf": [
+                {
+                  "properties": {
+                    "schema_version": {
+                      "const": "aiwg.fortemi.index.record.v1"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/$defs/v1RecordCompatibility"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "aiwg.fortemi.index.export.v2"
+          }
+        }
+      },
+      "then": {
+        "required": ["compatibility"],
+        "properties": {
+          "source": {
+            "required": ["graph"]
+          },
+          "items": {
+            "items": {
+              "properties": {
+                "schema_version": {
+                  "const": "aiwg.fortemi.index.record.v2"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "privacy": {
-      "enum": [
-        "private",
-        "sanitized",
-        "public"
+      "enum": ["private", "sanitized", "public"]
+    },
+    "recordType": {
+      "anyOf": [
+        {
+          "enum": [
+            "crm.contact",
+            "crm.organization",
+            "crm.event",
+            "crm.interaction",
+            "aiwg.artifact",
+            "aiwg.skill",
+            "aiwg.agent",
+            "aiwg.command",
+            "aiwg.rule",
+            "aiwg.behavior",
+            "aiwg.flow",
+            "aiwg.provider",
+            "aiwg.bundle",
+            "aiwg.research.ref",
+            "aiwg.research.profile",
+            "aiwg.research.view",
+            "aiwg.research.synthesis",
+            "aiwg.kb.page",
+            "aiwg.memory.entry",
+            "aiwg.issue"
+          ]
+        },
+        {
+          "type": "string",
+          "pattern": "^aiwg\\.project\\.[A-Za-z0-9_.-]+$"
+        }
       ]
+    },
+    "stringArray": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "v1RecordCompatibility": {
+      "type": "object",
+      "not": {
+        "anyOf": [
+          {
+            "required": ["name"]
+          },
+          {
+            "required": ["summary"]
+          },
+          {
+            "required": ["search"]
+          },
+          {
+            "required": ["chunks"]
+          },
+          {
+            "required": ["embeddings"]
+          }
+        ]
+      },
+      "properties": {
+        "source": {
+          "not": {
+            "anyOf": [
+              {
+                "required": ["origin"]
+              },
+              {
+                "required": ["generated"]
+              },
+              {
+                "required": ["checksum"]
+              },
+              {
+                "required": ["updated_at"]
+              }
+            ]
+          }
+        },
+        "relationships": {
+          "items": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["target_path"]
+                },
+                {
+                  "required": ["direction"]
+                }
+              ]
+            }
+          }
+        },
+        "privacy": {
+          "not": {
+            "required": ["locality"]
+          }
+        }
+      }
     },
     "record": {
       "type": "object",
@@ -70,29 +239,22 @@
       ],
       "properties": {
         "schema_version": {
-          "const": "aiwg.fortemi.index.record.v1"
+          "enum": [
+            "aiwg.fortemi.index.record.v1",
+            "aiwg.fortemi.index.record.v2"
+          ]
         },
         "id": {
           "type": "string",
           "minLength": 1
         },
         "type": {
-          "enum": [
-            "crm.contact",
-            "crm.organization",
-            "crm.event",
-            "crm.interaction",
-            "aiwg.artifact"
-          ]
+          "$ref": "#/$defs/recordType"
         },
         "source": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "path",
-            "repo_relative_path",
-            "locator"
-          ],
+          "required": ["path", "repo_relative_path", "locator"],
           "properties": {
             "path": {
               "type": "string",
@@ -105,45 +267,100 @@
             "locator": {
               "type": "string",
               "minLength": 1
+            },
+            "origin": {
+              "type": "string",
+              "minLength": 1
+            },
+            "generated": {
+              "type": "boolean"
+            },
+            "checksum": {
+              "type": "string"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time"
             }
           }
         },
         "title": {
           "type": "string"
         },
+        "name": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
         "text": {
           "type": "string"
+        },
+        "search": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "title",
+            "body",
+            "triggers",
+            "aliases",
+            "tags",
+            "frontmatter"
+          ],
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "string"
+            },
+            "body": {
+              "type": "string"
+            },
+            "triggers": {
+              "$ref": "#/$defs/stringArray"
+            },
+            "aliases": {
+              "$ref": "#/$defs/stringArray"
+            },
+            "capability": {
+              "type": "string"
+            },
+            "tags": {
+              "$ref": "#/$defs/stringArray"
+            },
+            "phase": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            },
+            "frontmatter": {
+              "type": "object"
+            }
+          }
         },
         "facets": {
           "type": "object",
           "additionalProperties": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "$ref": "#/$defs/stringArray"
           }
         },
         "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "$ref": "#/$defs/stringArray"
         },
         "concepts": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "$ref": "#/$defs/stringArray"
         },
         "relationships": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "type",
-              "target_id"
-            ],
+            "required": ["type", "target_id"],
             "properties": {
               "type": {
                 "type": "string",
@@ -155,6 +372,12 @@
               },
               "source_path": {
                 "type": "string"
+              },
+              "target_path": {
+                "type": "string"
+              },
+              "direction": {
+                "enum": ["upstream", "downstream", "related"]
               }
             }
           }
@@ -165,13 +388,7 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "field",
-              "source",
-              "path",
-              "confidence",
-              "privacy"
-            ],
+            "required": ["field", "source", "path", "confidence", "privacy"],
             "properties": {
               "field": {
                 "type": "string",
@@ -186,12 +403,7 @@
                 "minLength": 1
               },
               "confidence": {
-                "enum": [
-                  "source",
-                  "candidate",
-                  "reviewed",
-                  "rejected"
-                ]
+                "enum": ["source", "candidate", "reviewed", "rejected"]
               },
               "privacy": {
                 "$ref": "#/$defs/privacy"
@@ -202,16 +414,58 @@
         "privacy": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "classification",
-            "pii"
-          ],
+          "required": ["classification", "pii"],
           "properties": {
             "classification": {
               "$ref": "#/$defs/privacy"
             },
             "pii": {
               "type": "boolean"
+            },
+            "locality": {
+              "enum": ["project", "framework", "external"]
+            }
+          }
+        },
+        "chunks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "text", "checksum"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "text": {
+                "type": "string"
+              },
+              "checksum": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "embeddings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["model", "input_hash"],
+            "properties": {
+              "model": {
+                "type": "string"
+              },
+              "chunk_id": {
+                "type": "string"
+              },
+              "vector_ref": {
+                "type": "string"
+              },
+              "input_hash": {
+                "type": "string"
+              }
             }
           }
         },

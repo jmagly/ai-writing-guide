@@ -1506,6 +1506,26 @@ export const researchStoreHandler: CommandHandler = {
   },
 };
 
+/** Executable source-selection companion to the research-query skill. */
+export const researchQueryHandler: CommandHandler = {
+  id: 'research-query',
+  name: 'Research Query',
+  description: 'Select research sources for a question with local or Fortemi Core retrieval',
+  category: 'index',
+  aliases: [],
+
+  async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    try {
+      const { main } = await import('../../research/query-cli.js');
+      await main(ctx.args, ctx.cwd);
+      return { exitCode: 0 };
+    } catch (error) {
+      const result = handlerResultFromError(error);
+      return { ...result, message: `research-query command failed: ${result.message}` };
+    }
+  },
+};
+
 /**
  * Reflections command handler
  *
@@ -1756,6 +1776,7 @@ export const subcommandHandlers: CommandHandler[] = [
   reflectionsHandler,
   provenanceHandler,
   researchStoreHandler,
+  researchQueryHandler,
   chunkHandler,
   fanoutHandler,
   rlmPrepHandler,

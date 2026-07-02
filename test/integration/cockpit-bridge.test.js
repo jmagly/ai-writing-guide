@@ -107,6 +107,22 @@ describe('cockpit Bridge — control surface', () => {
     expect((await f('/api/actions/audit-issues/run', { method: 'POST' })).status).toBe(404);
   });
 
+  it('rejects malformed capability search filters before shelling to aiwg discover', async () => {
+    const missingQuery = await f('/api/capabilities');
+    expect(missingQuery.status).toBe(400);
+    expect(await missingQuery.json()).toMatchObject({ error: 'q_required' });
+
+    const invalidType = await f('/api/capabilities?q=index&type=backend');
+    expect(invalidType.status).toBe(400);
+    expect(await invalidType.json()).toMatchObject({ error: 'invalid_type' });
+
+    for (const limit of ['0', '-1', '2.5', '51', 'many']) {
+      const invalidLimit = await f(`/api/capabilities?q=index&limit=${encodeURIComponent(limit)}`);
+      expect(invalidLimit.status).toBe(400);
+      expect(await invalidLimit.json()).toMatchObject({ error: 'invalid_limit' });
+    }
+  });
+
   it('drives lifecycle, approvals (no flip), and cost', async () => {
     const id = '9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b';
     expect((await (await f(`/api/instances/${id}/start`, { method: 'POST' })).json()).state).toBe('running');

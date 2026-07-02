@@ -1138,6 +1138,34 @@ export const corpusCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const researchQueryCommand: Extension = {
+  id: 'research-query',
+  type: 'skill',
+  name: 'Research Query',
+  description: 'Select local or Fortemi Core-backed research sources for a question',
+  version: '1.0.0',
+  capabilities: ['cli', 'research', 'corpus', 'query', 'citations', 'fortemi-core'],
+  keywords: ['research-query', 'research query', 'corpus query', 'sources-only', 'GRADE', 'REF', 'Fortemi Core'],
+  category: 'index',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['research query', 'query the corpus', 'what does the research say', 'search research'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<question> [--backend local|fortemi-core] [--depth quick|thorough] [--sources-only] [--max-sources N] [--json] [--save]',
+      allowedTools: ['Bash', 'Read', 'Write'],
+      executionSteps: [
+        'Parse question and retrieval options',
+        'Load local or Fortemi Core static index records',
+        'Rank research REF/PROF/synthesis sources',
+        'Emit source-selection table or JSON for skill-mediated synthesis',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Discovery — first-class top-level verb (#1212)
 //
 // Discovery is the operator surface for finding AIWG skills, agents, commands,
@@ -3349,6 +3377,7 @@ export const commandDefinitions: Extension[] = [
   // Index + Discovery (3)
   indexCommand,
   corpusCommand,
+  researchQueryCommand,
   discoverCommand,
   showCommand,
 

@@ -2,7 +2,7 @@
 namespace: aiwg
 name: index
 platforms: [all]
-description: Build, query, inspect dependencies, and report statistics for the searchable index of SDLC artifacts in .aiwg/
+description: Build, query, inspect dependencies, sync Fortemi Core cache, and report status for the searchable index of SDLC artifacts in .aiwg/
 ---
 
 # Artifact Index
@@ -18,7 +18,12 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 - "index my artifacts" → build
 - "find requirements about authentication" → query "authentication"
 - "what depends on UC-001" → deps .aiwg/requirements/UC-001.md
+- "show neighboring artifacts" → neighbors --node <id>
+- "compare related artifacts" → set --op intersection --node-a <id> --node-b <id>
 - "how many artifacts are indexed" → stats
+- "is the index healthy" → status
+- "export the index for Fortemi" → export --format fortemi
+- "sync the Fortemi cache" → sync --backend fortemi-core
 - "refresh the index" → build --force
 
 ## Trigger Patterns Reference
@@ -30,8 +35,13 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | Force rebuild | "rebuild the index from scratch" | Run `aiwg index build --force --verbose` |
 | Text search | "search artifacts for authentication" | Run `aiwg index query "authentication"` |
 | Dependency graph | "show dependencies for the SAD" | Run `aiwg index deps .aiwg/architecture/software-architecture-doc.md` |
+| Neighbor graph | "show related nodes for REF-001" | Run `aiwg index neighbors --graph <name> --node REF-001` |
+| Set operation | "what overlaps between these two nodes" | Run `aiwg index set --graph <name> --op intersection --node-a <id> --node-b <id>` |
 | Statistics | "how many artifacts are indexed?" | Run `aiwg index stats` |
+| Health/status | "is the index stale?" | Run `aiwg index status --json` |
 | JSON output | "get index stats as JSON" | Run `aiwg index stats --json` |
+| Fortemi export | "export this index for Fortemi" | Run `aiwg index export --format fortemi --schema-version v2` |
+| Fortemi cache | "sync the Fortemi Core index" | Run `aiwg index sync --backend fortemi-core` |
 
 > **`.aiwg/.index/` is a regenerable build artifact, not committed.** It is gitignored by default (`aiwg use` / `aiwg regenerate` / scaffolding add it to `.gitignore`), so a fresh clone has no index — `aiwg index build --all` is the standard bootstrap. `aiwg doctor` flags a missing index (`info`, when an `index` block is declared in `.aiwg/aiwg.config` — the canonical home as of #1491 — or legacy `.aiwg/config.yaml`) or a stale one (`warn`, when recorded source files changed) and points back to `aiwg index build`.
 
@@ -59,20 +69,49 @@ When triggered:
    # Machine-readable search results
    aiwg index query "<text>" --json
 
+   # Opt-in Fortemi Core static-cache query
+   aiwg index query "<text>" --backend fortemi-core --json
+
+   # Fortemi static semantic and filtered hybrid query modes
+   aiwg index query "<text>" --semantic --backend fortemi-core --json
+   aiwg index query "<text>" --hybrid --backend fortemi-core --type adr --tags search --json
+
    # Show dependency graph for an artifact
    aiwg index deps <artifact-path>
 
    # Machine-readable dependency graph
    aiwg index deps <artifact-path> --json
 
+   # Inspect neighbor traversal or set relationships
+   aiwg index neighbors --graph <name> --node <node-id> --json
+   aiwg index set --graph <name> --op intersection --node-a <node-id> --node-b <node-id> --json
+
    # Show index statistics
    aiwg index stats
 
    # Machine-readable statistics
    aiwg index stats --json
+
+   # Health/status, including optional Fortemi Core cache state
+   aiwg index status --json
+
+   # Export and sync the opt-in Fortemi Core static cache
+   aiwg index export --format fortemi --schema-version v2
+   aiwg index sync --backend fortemi-core
    ```
 
 3. **Report the result** — surface the relevant matches, dependencies, or counts.
+
+### Fortemi Core Backend
+
+The local `.aiwg/.index` backend remains the default. Use
+`--backend fortemi-core` only when the project has already run
+`aiwg index sync --backend fortemi-core`. If the Fortemi cache is missing or
+stale, rerun the same command without `--backend fortemi-core` to fall back to
+the local index. A valid synced Fortemi cache with zero items is not stale:
+query/fulltext return empty results, discover reports a Fortemi static-cache
+no-match hint, and show does not fall back to the local AIWG corpus when the
+Fortemi backend was explicit.
 
 ## Examples
 

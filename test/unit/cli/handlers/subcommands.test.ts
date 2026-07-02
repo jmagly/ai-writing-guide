@@ -10,6 +10,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { HandlerContext } from "../../../../src/cli/handlers/types.js";
+import { researchQueryCommand } from "../../../../src/extensions/commands/definitions.js";
 
 // Mock script runner
 const mockRun = vi.fn().mockResolvedValue({ exitCode: 0 });
@@ -68,6 +69,8 @@ import {
   packagePluginHandler,
   packageAllPluginsHandler,
   indexHandler,
+  discoverHandler,
+  showHandler,
   configHandler,
   opsHandler,
   subcommandHandlers,
@@ -204,7 +207,8 @@ describe("Subcommand Handlers", () => {
         tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "aiwg-list-1530-"));
         // Reset the singleton registry between scenarios so detection runs
         // fresh against each tmp workspace.
-        const { getRegistry } = await import("../../../../src/extensions/registry.js");
+        const { getRegistry } =
+          await import("../../../../src/extensions/registry.js");
         const reg = getRegistry();
         const before = reg.size;
         reg.clear?.();
@@ -225,13 +229,17 @@ describe("Subcommand Handlers", () => {
           cwd: tmpDir,
         });
         expect(result.exitCode).toBe(0);
-        expect(result.message).toMatch(/No agents, skills, or commands deployed/);
+        expect(result.message).toMatch(
+          /No agents, skills, or commands deployed/,
+        );
         expect(result.message).toMatch(/aiwg use sdlc/);
       });
 
       it("errors when --provider names a provider that is not deployed", async () => {
         // Seed only .codex/ so --provider claude returns the not-deployed error
-        fs.mkdirSync(path.join(tmpDir, ".codex", "agents"), { recursive: true });
+        fs.mkdirSync(path.join(tmpDir, ".codex", "agents"), {
+          recursive: true,
+        });
         fs.writeFileSync(
           path.join(tmpDir, ".codex", "agents", "stub.md"),
           "---\nname: stub\ndescription: stub\n---\n",
@@ -475,6 +483,52 @@ describe("Subcommand Handlers", () => {
     });
   });
 
+  describe("discoverHandler", () => {
+    it("forwards top-level discover args, including Fortemi backend selection", async () => {
+      mockContext.args = [
+        "static retrieval",
+        "--backend",
+        "fortemi-core",
+        "--json",
+      ];
+
+      const result = await discoverHandler.execute(mockContext);
+
+      expect(result.exitCode).toBe(0);
+      expect(mockIndexMain).toHaveBeenCalledWith([
+        "discover",
+        "static retrieval",
+        "--backend",
+        "fortemi-core",
+        "--json",
+      ]);
+    });
+  });
+
+  describe("showHandler", () => {
+    it("forwards top-level show args, including Fortemi backend selection", async () => {
+      mockContext.args = [
+        "skill",
+        "research-query",
+        "--backend",
+        "fortemi-core",
+        "--json",
+      ];
+
+      const result = await showHandler.execute(mockContext);
+
+      expect(result.exitCode).toBe(0);
+      expect(mockIndexMain).toHaveBeenCalledWith([
+        "show",
+        "skill",
+        "research-query",
+        "--backend",
+        "fortemi-core",
+        "--json",
+      ]);
+    });
+  });
+
   describe("configHandler", () => {
     it("should have correct metadata", () => {
       expect(configHandler.id).toBe("config");
@@ -557,7 +611,7 @@ describe("Subcommand Handlers", () => {
 
   describe("subcommandHandlers array", () => {
     it("should export all subcommand handlers with correct IDs", () => {
-      expect(subcommandHandlers).toHaveLength(32);
+      expect(subcommandHandlers).toHaveLength(33);
 
       const handlerIds = subcommandHandlers.map((h) => h.id);
       const expectedIds = [
@@ -587,6 +641,7 @@ describe("Subcommand Handlers", () => {
         "reflections",
         "provenance",
         "research-store",
+        "research-query",
         "chunk",
         "fanout",
         "rlm-prep",
@@ -640,6 +695,15 @@ describe("Subcommand Handlers", () => {
         const handler = subcommandHandlers.find((h) => h.id === id);
         expect(handler?.category).toBe(category);
       }
+    });
+
+    it("documents research-query save support in provider command metadata", () => {
+      const metadata = researchQueryCommand.metadata as {
+        commandHint?: { argumentHint?: string; allowedTools?: string[] };
+      };
+
+      expect(metadata.commandHint?.argumentHint).toContain("--save");
+      expect(metadata.commandHint?.allowedTools).toContain("Write");
     });
   });
 

@@ -31,6 +31,7 @@ const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
 // legacy vanilla page so the Bridge works even before a web build.
 const WEB_DIST = fileURLToPath(new URL('../../web/dist', import.meta.url));
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png', '.woff2': 'font/woff2', '.map': 'application/json' };
+const CAPABILITY_TYPES = new Set(['skill', 'agent', 'command', 'rule', 'flow']);
 
 /** Serve a static file from the built web app, sandboxed to WEB_DIST. Returns true if served. */
 async function serveDistFile(res, relPath) {
@@ -1154,9 +1155,20 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
       if (url.pathname === '/api/capabilities') {
         const q = (url.searchParams.get('q') || '').trim();
         if (!q) return json(res, 400, { error: 'q_required' });
-        const args = ['discover', q, '--json', '--limit', String(Number(url.searchParams.get('limit')) || 8)];
+        const rawLimit = url.searchParams.get('limit') ?? '8';
+        const limit = Number(rawLimit);
+        if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
+          return json(res, 400, { error: 'invalid_limit', detail: 'limit must be an integer from 1 to 50' });
+        }
+        const args = ['discover', q, '--json', '--limit', String(limit)];
         const type = url.searchParams.get('type');
-        if (type && type !== 'all') args.push('--type', type);
+        if (type && type !== 'all') {
+          const types = type.split(',').map((t) => t.trim()).filter(Boolean);
+          if (!types.length || types.some((t) => !CAPABILITY_TYPES.has(t))) {
+            return json(res, 400, { error: 'invalid_type', detail: 'type must be all, skill, agent, command, rule, flow, or a comma list of those kinds' });
+          }
+          args.push('--type', types.join(','));
+        }
         const data = JSON.parse(await runAiwg(args));
         data.results = (data.results || []).map((r) => ({ ...r, name: deriveName(r.path) }));
         return json(res, 200, data);

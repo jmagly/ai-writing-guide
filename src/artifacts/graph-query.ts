@@ -12,6 +12,7 @@
 import type { DependencyGraph, GraphType, TypedEdge } from './types.js';
 import { normalizeEdges } from './types.js';
 import { loadGraphIndexFile } from './index-reader.js';
+import { buildFortemiCoreDependencyGraph } from './fortemi-core-query-adapter.js';
 
 export interface NeighborsOptions {
   /** Graph to query */
@@ -24,6 +25,8 @@ export interface NeighborsOptions {
   edgeType?: string;
   /** Output format */
   json?: boolean;
+  /** Query backend */
+  backend?: 'local' | 'fortemi-core';
 }
 
 export interface SetQueryOptions {
@@ -41,6 +44,8 @@ export interface SetQueryOptions {
   edgeType?: string;
   /** Output format */
   json?: boolean;
+  /** Query backend */
+  backend?: 'local' | 'fortemi-core';
 }
 
 /**
@@ -144,9 +149,33 @@ export async function showNeighbors(
   cwd: string,
   options: NeighborsOptions
 ): Promise<void> {
-  const { graph: graphType, node, direction = 'both', edgeType, json = false } = options;
+  const { graph: graphType, node, direction = 'both', edgeType, json = false, backend = 'local' } = options;
 
-  const graph = loadGraph(cwd, graphType);
+  let graph: DependencyGraph | null = null;
+  if (backend === 'fortemi-core') {
+    const loaded = buildFortemiCoreDependencyGraph(cwd, graphType);
+    if (!loaded.graph) {
+      if (json) {
+        console.log(
+          JSON.stringify(
+            { error: 'fortemi-core-index-unavailable', hint: loaded.reason },
+            null,
+            2,
+          ),
+        );
+      } else {
+        console.error('Error: Fortemi Core static index is unavailable.');
+        console.log(
+          loaded.reason ??
+            "Run 'aiwg index sync --backend fortemi-core' first.",
+        );
+      }
+      process.exit(1);
+    }
+    graph = loaded.graph;
+  } else {
+    graph = loadGraph(cwd, graphType);
+  }
   if (!graph) {
     console.error(`Error: No index found for graph '${graphType}'.`);
     console.log("Run 'aiwg index build --graph " + graphType + "' first.");
@@ -171,6 +200,7 @@ export async function showNeighbors(
   if (json) {
     console.log(JSON.stringify({
       graph: graphType,
+      backend,
       node: resolved,
       direction,
       edgeType: edgeType ?? null,
@@ -199,9 +229,33 @@ export async function executeSetQuery(
   cwd: string,
   options: SetQueryOptions
 ): Promise<void> {
-  const { graph: graphType, op, nodeA, nodeB, direction = 'in', edgeType, json = false } = options;
+  const { graph: graphType, op, nodeA, nodeB, direction = 'in', edgeType, json = false, backend = 'local' } = options;
 
-  const graph = loadGraph(cwd, graphType);
+  let graph: DependencyGraph | null = null;
+  if (backend === 'fortemi-core') {
+    const loaded = buildFortemiCoreDependencyGraph(cwd, graphType);
+    if (!loaded.graph) {
+      if (json) {
+        console.log(
+          JSON.stringify(
+            { error: 'fortemi-core-index-unavailable', hint: loaded.reason },
+            null,
+            2,
+          ),
+        );
+      } else {
+        console.error('Error: Fortemi Core static index is unavailable.');
+        console.log(
+          loaded.reason ??
+            "Run 'aiwg index sync --backend fortemi-core' first.",
+        );
+      }
+      process.exit(1);
+    }
+    graph = loaded.graph;
+  } else {
+    graph = loadGraph(cwd, graphType);
+  }
   if (!graph) {
     console.error(`Error: No index found for graph '${graphType}'.`);
     process.exit(1);
@@ -238,6 +292,7 @@ export async function executeSetQuery(
   if (json) {
     console.log(JSON.stringify({
       graph: graphType,
+      backend,
       op,
       nodeA: resolvedA,
       nodeB: resolvedB,

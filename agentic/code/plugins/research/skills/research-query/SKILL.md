@@ -4,7 +4,7 @@ platforms: [all]
 name: research-query
 description: Search the local research corpus, read matching findings, and synthesize an answer with inline citations to REF-XXX sources. The "query" operation for the research pipeline.
 commandHint:
-  argumentHint: "<question> [--depth quick|thorough] [--save] [--sources-only] [--max-sources N]"
+  argumentHint: "<question> [--backend local|fortemi-core] [--depth quick|thorough] [--save] [--sources-only] [--max-sources N]"
   allowedTools: Read, Write, Glob, Grep, Bash
   model: sonnet
   category: research-retrieval
@@ -31,6 +31,12 @@ A natural language question to answer from the corpus.
 ### `--depth` (optional)
 Search depth: `quick` (tag + title matching only) or `thorough` (full-text content search). Default: `thorough`.
 
+### `--backend` (optional)
+Retrieval backend for the executable source-selection wrapper: `local` or `fortemi-core`. Default: `local`.
+When `fortemi-core` is explicit, the Fortemi static cache must already be
+synced with `aiwg index sync --backend fortemi-core`; missing, stale, or
+malformed caches fail with recovery guidance instead of falling back silently.
+
 ### `--save` (optional)
 Save the synthesized answer as a new artifact in `.aiwg/research/synthesis/`.
 
@@ -41,6 +47,11 @@ List matching sources without synthesizing an answer.
 Maximum number of sources to read and synthesize from. Default: 10.
 
 ## Execution Flow
+
+The executable CLI wrapper `aiwg research-query` performs deterministic source
+selection and can emit JSON for tests and automation. It does not replace the
+skill's synthesis responsibilities; agents still write the final answer with
+GRADE-aware hedging, contradictions, gaps, and inline REF citations.
 
 ### Phase 1: Corpus Search
 
@@ -161,6 +172,9 @@ confidence: moderate
 
 # Quick search (tags and titles only)
 /research-query "prompt injection defenses" --depth quick
+
+# Use the Fortemi Core static cache for source selection
+aiwg research-query "prompt injection defenses" --backend fortemi-core --sources-only --json
 
 # Just list matching sources
 /research-query "multi-agent orchestration" --sources-only

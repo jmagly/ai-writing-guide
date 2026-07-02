@@ -104,6 +104,14 @@ describe('collectIndexStatus (#1624)', () => {
     expect(report.summary.orphans).toBeGreaterThanOrEqual(1);
   });
 
+  it('does not flag the managed Fortemi Core cache namespace as an orphan', () => {
+    const fortemiCache = path.join(tmp, '.aiwg', '.index', 'fortemi-core', 'project');
+    fs.mkdirSync(fortemiCache, { recursive: true });
+    const report = collectIndexStatus(tmp);
+    expect(report.orphanIndexDirs.some((d) => d.includes('fortemi-core'))).toBe(false);
+    expect(report.summary.orphans).toBe(0);
+  });
+
   it('registers a valid operator graph and does not flag it as orphan', () => {
     const aiwgDir = path.join(tmp, '.aiwg');
     fs.mkdirSync(path.join(aiwgDir, '.index', 'refs'), { recursive: true });

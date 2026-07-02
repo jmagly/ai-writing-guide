@@ -35,6 +35,12 @@ aiwg kb list --prefix entities/
 aiwg kb get entities/foo.md
 ```
 
+Fortemi storage routing here is only a persistence backend choice. It is not the
+Fortemi Core index/search backend used by `aiwg index ... --backend
+fortemi-core`; KB graph health remains local/storage-routed, while Fortemi Core
+traversal parity is exercised through `aiwg index neighbors --graph kb
+--backend fortemi-core` after an explicit sync.
+
 ### `--fix` (optional)
 Automatically repair issues that are safe to fix without human judgment:
 - Remove references to confirmed-missing pages from Sources tables

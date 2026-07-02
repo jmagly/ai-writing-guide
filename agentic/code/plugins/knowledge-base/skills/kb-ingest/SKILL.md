@@ -47,6 +47,11 @@ echo "# Foo" | aiwg kb put entities/foo.md
 echo "# Foo" > "$KB_ROOT/entities/foo.md"
 ```
 
+Fortemi storage routing here is only a persistence backend choice. It is not the
+Fortemi Core index/search backend used by `aiwg index ... --backend
+fortemi-core`; KB pages join that preview only after the artifact graph has been
+built and synced with `aiwg index sync --backend fortemi-core`.
+
 ### `--dry-run` (optional)
 Show what would be created or updated without writing files.
 

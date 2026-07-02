@@ -40,7 +40,20 @@ describe('corpus markdown views — golden parity with build.py', () => {
   const goldenFiles = readdirSync(GOLDEN).filter((f) => f.endsWith('.md'));
 
   it('renders all 12 views', () => {
-    expect(goldenFiles).toHaveLength(12);
+    expect(goldenFiles.sort()).toEqual([
+      'authors.md',
+      'by-author.md',
+      'by-bridge.md',
+      'by-method.md',
+      'by-model-size.md',
+      'by-org.md',
+      'by-topic.md',
+      'by-venue.md',
+      'by-year.md',
+      'citation-network.md',
+      'training-pipeline.md',
+      'unprofiled-hubs.md',
+    ]);
     for (const f of goldenFiles) {
       expect(existsSync(join(tmp, 'indices', f)), `missing rendered view: ${f}`).toBe(true);
     }

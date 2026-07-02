@@ -198,6 +198,15 @@ The default template uses markers for computed vs analyzed sections:
 | `research-gap-detect` | Cluster data feeds into gap narrative |
 | `research-status` | Snapshot is the detailed version of the health score |
 
+## Fortemi Core Migration Note
+
+During the Fortemi Core index migration preview, corpus snapshots remain
+AIWG-rendered from corpus sidecars, corpus views, and the local `.aiwg/.index`
+artifacts. Do not use `--backend fortemi-core` as the source of truth for
+snapshot metrics until #1690 explicitly accepts a Fortemi-projected snapshot
+contract and #1691 parity fixtures prove identical REF/PROF, citation,
+profile, radar, discovery, and quality metrics.
+
 ## Examples
 
 ```bash

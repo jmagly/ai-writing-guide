@@ -28,6 +28,10 @@ import {
   type GraphType,
   type ArtifactIndex,
 } from './types.js';
+import {
+  getFortemiCoreSyncStatus,
+  type FortemiCoreSyncStatus,
+} from './fortemi-core-sync.js';
 
 export interface GraphStatus {
   /** Graph name (e.g. `framework`, `project`, or a user/module graph). */
@@ -61,6 +65,8 @@ export interface IndexStatusReport {
   orphanIndexDirs: string[];
   /** Non-silent graph-config load problems (#1624). */
   warnings: GraphConfigWarning[];
+  /** Opt-in Fortemi Core static-index cache status. Absent projects are quiet. */
+  fortemiCore: FortemiCoreSyncStatus;
   /** Convenience roll-up for the doctor gate. */
   summary: {
     total: number;
@@ -71,7 +77,10 @@ export interface IndexStatusReport {
   };
 }
 
-function readBuiltMeta(indexDir: string): { builtAt: string | null; entries: number | null } {
+function readBuiltMeta(indexDir: string): {
+  builtAt: string | null;
+  entries: number | null;
+} {
   try {
     const metaPath = path.join(indexDir, 'metadata.json');
     if (!fs.existsSync(metaPath)) return { builtAt: null, entries: null };
@@ -92,7 +101,10 @@ function readBuiltMeta(indexDir: string): { builtAt: string | null; entries: num
  *
  * @param nowMs - injectable clock for deterministic tests (defaults to Date.now()).
  */
-export function collectIndexStatus(cwd: string, nowMs?: number): IndexStatusReport {
+export function collectIndexStatus(
+  cwd: string,
+  nowMs?: number,
+): IndexStatusReport {
   // Populate the registry from module + operator config, collecting warnings
   // instead of letting malformed defs vanish (#1624).
   const warnings: GraphConfigWarning[] = [];
@@ -129,12 +141,17 @@ export function collectIndexStatus(cwd: string, nowMs?: number): IndexStatusRepo
   // On-disk drift: project-local index dirs (`.aiwg/.index/<name>`) that no
   // registered graph claims. The framework graph lives in XDG, not here, so
   // this scan is project-local by construction.
+  const reservedIndexDirs = new Set(['fortemi-core']);
   const registeredNames = new Set(Object.keys(GRAPH_CONFIGS));
   const orphanIndexDirs: string[] = [];
   const projectIndexRoot = path.join(cwd, '.aiwg', '.index');
   try {
     for (const d of fs.readdirSync(projectIndexRoot, { withFileTypes: true })) {
-      if (d.isDirectory() && !registeredNames.has(d.name)) {
+      if (
+        d.isDirectory() &&
+        !registeredNames.has(d.name) &&
+        !reservedIndexDirs.has(d.name)
+      ) {
         orphanIndexDirs.push(path.join(projectIndexRoot, d.name));
       }
     }
@@ -149,6 +166,7 @@ export function collectIndexStatus(cwd: string, nowMs?: number): IndexStatusRepo
     graphs,
     orphanIndexDirs,
     warnings,
+    fortemiCore: getFortemiCoreSyncStatus(cwd),
     summary: {
       total: graphs.length,
       built,
@@ -175,7 +193,13 @@ export async function showIndexStatus(
   console.log('');
   const rows = report.graphs
     .slice()
-    .sort((a, b) => (a.origin === b.origin ? a.name.localeCompare(b.name) : a.origin === 'builtin' ? -1 : 1));
+    .sort((a, b) =>
+      a.origin === b.origin
+        ? a.name.localeCompare(b.name)
+        : a.origin === 'builtin'
+          ? -1
+          : 1,
+    );
   // Column header.
   console.log(
     '  ' +
@@ -188,7 +212,12 @@ export async function showIndexStatus(
   );
   for (const g of rows) {
     const state = g.built ? 'built' : g.missing ? 'MISSING' : 'unbuilt';
-    const age = g.ageHours === null ? '—' : g.ageHours < 48 ? `${g.ageHours}h` : `${Math.round(g.ageHours / 24)}d`;
+    const age =
+      g.ageHours === null
+        ? '—'
+        : g.ageHours < 48
+          ? `${g.ageHours}h`
+          : `${Math.round(g.ageHours / 24)}d`;
     console.log(
       '  ' +
         g.name.padEnd(22) +
@@ -202,21 +231,45 @@ export async function showIndexStatus(
 
   if (report.orphanIndexDirs.length > 0) {
     console.log('');
-    console.log(`⚠ Drift — ${report.orphanIndexDirs.length} on-disk index dir(s) match no registered graph:`);
-    for (const d of report.orphanIndexDirs) console.log(`    ${shortenPath(d, cwd)}`);
-    console.log('    (remove the dir, or register the graph under index.graphs in .aiwg/aiwg.config)');
+    console.log(
+      `⚠ Drift — ${report.orphanIndexDirs.length} on-disk index dir(s) match no registered graph:`,
+    );
+    for (const d of report.orphanIndexDirs)
+      console.log(`    ${shortenPath(d, cwd)}`);
+    console.log(
+      '    (remove the dir, or register the graph under index.graphs in .aiwg/aiwg.config)',
+    );
   }
 
   if (report.warnings.length > 0) {
     console.log('');
-    console.log(`⚠ ${report.warnings.length} graph-config warning(s) — these were previously dropped silently (#1624):`);
-    for (const w of report.warnings) console.log(`    [${w.source}] ${w.graph}: ${w.reason}`);
+    console.log(
+      `⚠ ${report.warnings.length} graph-config warning(s) — these were previously dropped silently (#1624):`,
+    );
+    for (const w of report.warnings)
+      console.log(`    [${w.source}] ${w.graph}: ${w.reason}`);
+  }
+
+  if (report.fortemiCore.optedIn) {
+    console.log('');
+    const state = report.fortemiCore.built
+      ? report.fortemiCore.stale
+        ? 'STALE'
+        : 'built'
+      : 'MISSING';
+    console.log(
+      `Fortemi Core static index: ${state} (${report.fortemiCore.itemCount ?? 0} item(s)) → ${shortenPath(report.fortemiCore.location, cwd)}`,
+    );
+    if (report.fortemiCore.reason)
+      console.log(`    ${report.fortemiCore.reason}`);
   }
 
   const { missing } = report.summary;
   if (missing > 0) {
     console.log('');
-    console.log(`⚠ ${missing} registered durable index(es) are not built. Run \`aiwg index build --all\`.`);
+    console.log(
+      `⚠ ${missing} registered durable index(es) are not built. Run \`aiwg index build --all\`.`,
+    );
   }
 
   console.log('');

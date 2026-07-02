@@ -291,6 +291,21 @@ describe('doctor: .gitignore check', () => {
   });
 });
 
+describe('doctor: durable index findings (#1691)', () => {
+  it('imports collectIndexStatus and reports durable-index drift through doctor', async () => {
+    const { readFileSync } = await import('fs');
+    const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+
+    expect(content).toContain('collectIndexStatus');
+    expect(content).toContain("'durable-indices'");
+    expect(content).toContain('graph-config problem(s) previously dropped silently');
+    expect(content).toContain('on-disk index dir(s) match no registered graph');
+    expect(content).toContain('registered durable index(es) not built');
+    expect(content).toContain('run "aiwg index status"');
+    expect(content).toContain('run "aiwg index build --all"');
+  });
+});
+
 // ── Provider awareness (regression: doctor defaults to Claude Code) ──
 //
 // Bug report: `aiwg doctor` is hardcoded to .claude/agents and .claude/commands,

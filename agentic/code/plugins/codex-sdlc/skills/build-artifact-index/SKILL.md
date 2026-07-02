@@ -29,9 +29,23 @@ aiwg index build --force
 
 # With progress output
 aiwg index build --verbose
+
+# Build every configured graph
+aiwg index build --all
 ```
 
 Report what changed: new artifacts indexed, updated, unchanged, and removed counts.
+
+If the operator explicitly asks for Fortemi Core preview cache refresh after a
+successful build, run:
+
+```bash
+aiwg index sync --backend fortemi-core
+aiwg index status --json
+```
+
+Do not switch default behavior to Fortemi Core; the synced cache is opt-in and
+read only when commands pass `--backend fortemi-core`.
 
 ### Archived Query Answers
 
@@ -52,9 +66,12 @@ After building, verify the index is healthy:
 
 ```bash
 aiwg index stats --json
+aiwg index status --json
 ```
 
 Report total artifacts indexed, coverage by phase, and any orphaned artifacts.
+When a Fortemi Core cache exists, also report whether it is built, stale, and
+how many items it contains.
 
 ## When to Run
 

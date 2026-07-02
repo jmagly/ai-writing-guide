@@ -7,6 +7,54 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.1] - Unreleased - "Fortemi Core index migration preview"
+
+Adds an opt-in Fortemi Core static-cache backend for AIWG project indexes while
+preserving the existing local `.aiwg/.index` backend as the default and rollback
+path. The migration preview targets the newly released
+`@fortemi/core@2026.7.0` AIWG index surface without making Fortemi Core a
+required runtime dependency for normal discovery/search commands.
+
+### Added
+
+- **Fortemi v2 export contract** — `aiwg index export --format fortemi
+  --schema-version v2` emits AIWG domain records with search projections, typed
+  relationships, privacy locality, source-body chunks, and embedding metadata
+  slots for the shared Fortemi semantic path.
+- **Fortemi Core static cache preview** — `aiwg index sync --backend
+  fortemi-core` materializes `.aiwg/.index/fortemi-core/<graph>/` cache files
+  that opt-in commands can read explicitly with `--backend fortemi-core`.
+- **Valid empty-cache semantics** — a synced Fortemi Core cache with zero items
+  is treated as a valid empty index: queries return empty result sets,
+  discovery reports a Fortemi static-cache no-match hint, and `show` does not
+  fall back to the local AIWG corpus when the backend is explicit.
+- **Fortemi-backed query parity** — discovery/show, metadata query,
+  fulltext/static semantic/hybrid query, dependency traversal, neighbor
+  traversal, set operations, KB/research graph traversal, and `research-query`
+  source selection now have no-regression parity fixtures.
+
+### Changed
+
+- **Research query command metadata** — provider command definitions now expose
+  `research-query --save` with `Write` permission so command-surface metadata
+  matches the CLI and skill documentation.
+- **Fortemi boundary docs** — KB/memory storage routing, the Fortemi MCP storage
+  backend, and local issue search now explicitly remain separate from the
+  opt-in Fortemi Core static index/search backend unless commands pass
+  `--backend fortemi-core`. Related tracker items #1551 and #1508 remain
+  non-closing follow-ups for body-level embedding and the provider-neutral
+  corpus-to-storage/index boundary; direct Fortemi REST import and
+  hardcoded-token patterns stay out of scope.
+- **Default-switch gate docs** — release and integration notes keep the Fortemi
+  backend opt-in and require a later switch issue to prove both default Fortemi
+  behavior and forced-local rollback before changing defaults.
+
+### Documentation
+
+- Added the Fortemi index export integration guide, Fortemi migration ADR,
+  surface inventory, traceability matrix, completion gate audit, and release
+  announcement for the preview.
+
 ## [2026.7.0] - 2026-07-01 - "MCP elicitation and native interaction routing"
 
 Adds an MCP `ask-user` interaction tool that can emit protocol-native

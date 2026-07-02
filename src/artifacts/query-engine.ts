@@ -46,6 +46,7 @@ function readEntryBody(cwd: string, entryPath: string): string | null {
 export interface QueryOptions {
   json?: boolean;
   graph?: GraphType;
+  backend?: 'local' | 'fortemi-core';
 }
 
 /**
@@ -310,12 +311,29 @@ export async function queryIndex(
   params: QueryParams,
   options: QueryOptions = {}
 ): Promise<void> {
-  const { graph } = options;
+  const { graph, backend } = options;
   const startTime = Date.now();
 
   let candidates: MetadataEntry[];
 
-  if (graph) {
+  if (backend === 'fortemi-core') {
+    const { loadFortemiCoreMetadataEntries } = await import('./fortemi-core-query-adapter.js');
+    const loaded = loadFortemiCoreMetadataEntries(cwd, graph ?? 'project');
+    if (loaded.reason) {
+      if (options.json) {
+        console.log(JSON.stringify({
+          query: { text: params.text, backend: 'fortemi-core', graph: graph ?? 'project' },
+          results: [],
+          total: 0,
+          hint: loaded.reason ?? 'Fortemi Core static index is unavailable.',
+        }, null, 2));
+      } else {
+        console.error('Error: ' + (loaded.reason ?? 'Fortemi Core static index is unavailable.'));
+      }
+      process.exit(1);
+    }
+    candidates = loaded.entries;
+  } else if (graph) {
     // Single graph mode
     const index = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', graph);
     if (!index) {
@@ -370,7 +388,49 @@ export async function queryIndex(
   // Score and rank
   let results: QueryResult[];
   const matchedById = new Map<string, string[]>();
-  if (params.text && params.fulltext) {
+  if (params.text && params.fulltext && backend === 'fortemi-core') {
+    const { queryFortemiCoreStaticFulltextIndex } = await import('./fortemi-core-query-adapter.js');
+    const queried = queryFortemiCoreStaticFulltextIndex(cwd, {
+      graph: graph ?? 'project',
+      text: params.text,
+      limit: params.limit ?? 20,
+      path: params.path,
+      type: params.type,
+      phase: params.phase,
+      tags: params.tags,
+    });
+    if (queried.reason) {
+      if (options.json) {
+        console.log(JSON.stringify({
+          query: { text: params.text, backend: 'fortemi-core', graph: graph ?? 'project' },
+          mode: 'fulltext',
+          results: [],
+          total: 0,
+          hint: queried.reason,
+        }, null, 2));
+      } else {
+        console.error('Error: ' + queried.reason);
+      }
+      process.exit(1);
+    }
+    results = queried.results.map(result => {
+      const entry: MetadataEntry = {
+        path: result.path,
+        type: result.type,
+        phase: result.phase,
+        title: result.title,
+        tags: result.tags,
+        created: '',
+        updated: '',
+        checksum: '',
+        summary: result.summary,
+        dependencies: [],
+        dependents: [],
+      };
+      matchedById.set(result.path, result.matched);
+      return { entry, score: result.score };
+    });
+  } else if (params.text && params.fulltext) {
     // Lexical full-text (#1494): read candidate bodies and BM25-rank. The
     // index is the candidate set; ranking is over actual body content, not
     // the metadata/summary the default path scores.
@@ -408,7 +468,7 @@ export async function queryIndex(
   // Output
   if (options.json) {
     console.log(JSON.stringify({
-      query: { text: params.text, filters: { type: params.type, phase: params.phase, tags: params.tags, path: params.path } },
+      query: { text: params.text, filters: { type: params.type, phase: params.phase, tags: params.tags, path: params.path }, backend: backend ?? 'local' },
       mode: params.fulltext ? 'fulltext' : 'metadata',
       results: results.map(r => ({
         path: r.entry.path,
@@ -466,6 +526,8 @@ export interface DiscoverParams {
   json?: boolean;
   /** Override default graph (defaults to `framework`, falls back to `project`) */
   graph?: GraphType;
+  /** Optional compatibility backend. Default local path is unchanged. */
+  backend?: 'local' | 'fortemi-core';
 }
 
 // `flow` is included so discoverable YAML Flow documents (flow.aiwg.io/v1 /
@@ -539,7 +601,24 @@ export async function discoverCapability(
   // Source: prefer `framework` graph (built post-deploy), fall back to
   // project / codebase / legacy depending on what's available.
   let entries: MetadataEntry[] = [];
-  if (params.graph) {
+  if (params.backend === 'fortemi-core') {
+    const { loadFortemiCoreMetadataEntries } = await import('./fortemi-core-query-adapter.js');
+    const loaded = loadFortemiCoreMetadataEntries(cwd, params.graph ?? 'project');
+    entries = loaded.entries;
+    if (entries.length === 0 && loaded.reason) {
+      if (params.json) {
+        console.log(JSON.stringify({
+          query: { phrase: params.phrase, types, limit, backend: 'fortemi-core' },
+          results: [],
+          total: 0,
+          hint: loaded.reason,
+        }, null, 2));
+      } else {
+        console.error('Error: ' + loaded.reason);
+      }
+      process.exit(1);
+    }
+  } else if (params.graph) {
     const idx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', params.graph);
     if (idx) entries = Object.values(idx.entries);
   } else {
@@ -595,7 +674,7 @@ export async function discoverCapability(
     }
   }
 
-  if (entries.length === 0) {
+  if (entries.length === 0 && params.backend !== 'fortemi-core') {
     // Empty-index case (#1221). Surface a hint that explains the gap rather
     // than returning a bare zero-result envelope — the latter trains agents
     // to conclude "AIWG doesn't have a skill for that" when in fact the
@@ -690,12 +769,14 @@ export async function discoverCapability(
   // nothing scored, the phrase didn't match an indexed capability — suggest a
   // broader phrase / type filter, and a capability refresh via `aiwg use`.
   const emptyResultHint = scored.length === 0
-    ? `No capability matched "${params.phrase}" among ${entries.length} indexed capabilities. Try a broader phrase or a \`--type\` filter. If you just installed or authored capabilities, refresh discovery with \`aiwg use <framework>\` (or \`aiwg index build\`).`
+    ? params.backend === 'fortemi-core'
+      ? `No capability matched "${params.phrase}" among ${entries.length} Fortemi Core static-cache capabilities. Try a broader phrase or a \`--type\` filter. If the local index changed, refresh the cache with \`aiwg index sync --backend fortemi-core\`, or omit \`--backend fortemi-core\` to use the local index.`
+      : `No capability matched "${params.phrase}" among ${entries.length} indexed capabilities. Try a broader phrase or a \`--type\` filter. If you just installed or authored capabilities, refresh discovery with \`aiwg use <framework>\` (or \`aiwg index build\`).`
     : null;
 
   if (params.json) {
     console.log(JSON.stringify({
-      query: { phrase: params.phrase, types, limit, aiwg_root: aiwgRoot ?? null },
+      query: { phrase: params.phrase, types, limit, aiwg_root: aiwgRoot ?? null, backend: params.backend ?? 'local' },
       results: scored.map(r => ({
         path: resolvePath(r.entry),
         type: r.entry.type,
@@ -765,6 +846,8 @@ export interface ShowParams {
   graph?: GraphType;
   /** When ambiguous, pick the first match instead of erroring */
   first?: boolean;
+  /** Optional compatibility backend. Default local path is unchanged. */
+  backend?: 'local' | 'fortemi-core';
 }
 
 /**
@@ -926,7 +1009,23 @@ export async function showArtifact(
 
   // Source the same graphs as discoverCapability for symmetry.
   let entries: MetadataEntry[] = [];
-  if (params.graph) {
+  if (params.backend === 'fortemi-core') {
+    const { loadFortemiCoreMetadataEntries } = await import('./fortemi-core-query-adapter.js');
+    const loaded = loadFortemiCoreMetadataEntries(cwd, params.graph ?? 'project');
+    entries = loaded.entries;
+    if (entries.length === 0 && loaded.reason) {
+      if (params.json) {
+        console.log(JSON.stringify({
+          backend: 'fortemi-core',
+          name: params.name,
+          error: loaded.reason,
+        }, null, 2));
+      } else {
+        console.error('Error: ' + loaded.reason);
+      }
+      process.exit(1);
+    }
+  } else if (params.graph) {
     const idx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', params.graph);
     if (idx) entries = Object.values(idx.entries);
   } else {
@@ -940,7 +1039,7 @@ export async function showArtifact(
     }
   }
 
-  if (entries.length === 0) {
+  if (entries.length === 0 && params.backend !== 'fortemi-core') {
     console.error('Error: No artifact index found.');
     console.error('Run `aiwg index build --graph framework` (or `aiwg use <framework>`) first.');
     process.exit(1);
@@ -1000,7 +1099,7 @@ export async function showArtifact(
     // "(uninstalled)" banner. This keeps `aiwg show` useful in workspaces
     // where the operator hasn't run `aiwg use` yet, or where the framework
     // index is stale, rather than exiting with a misleading "not found".
-    if (aiwgRoot) {
+    if (aiwgRoot && params.backend !== 'fortemi-core') {
       const corpusMatch = await findCorpusArtifact(aiwgRoot, needle, types);
       if (corpusMatch) {
         let content: string;

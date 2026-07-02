@@ -28,6 +28,9 @@ export async function main(args: string[], cwd = process.cwd()): Promise<void> {
   const parsed = parseArgs(args);
   const subcommand = parsed.positional[0];
   const rest = parsed.positional.slice(1);
+  if (parsed.flags.has('backend')) {
+    throw new Error('aiwg issue commands use the local issue provider; --backend is not supported');
+  }
   const provider = stringFlag(parsed, 'provider');
   if (provider && provider !== 'local') {
     throw new Error(`aiwg issue is for local issue storage only; configured external trackers use their tracker tools (${provider})`);
@@ -325,7 +328,7 @@ function printUsage(): void {
   console.log(`Usage:
   aiwg issue init [--prefix KEY] [--padding N]
   aiwg issue new --title "..." [--body "..."] [--body-file path]
-  aiwg issue list [--status open] [--label bug] [--limit 20] [--json]
+  aiwg issue list [--status open] [--label bug] [--search text] [--limit 20] [--json]
   aiwg issue show <KEY> [--comments last:10|all]
   aiwg issue import --from gitea|github --snapshot-file path [--json]
   aiwg issue export <KEY> --to gitea|github [--out path]

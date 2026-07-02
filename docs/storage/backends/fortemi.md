@@ -10,6 +10,23 @@ Use this backend when:
 - You're running AIWG against a Fortemi instance and want memory artifacts to flow into Fortemi's semantic-memory graph
 - You're prototyping the integration
 
+## Fortemi Core Migration Boundary
+
+This backend is the older Fortemi MCP storage adapter. It is not the Fortemi
+Core index/search backend used by:
+
+```bash
+aiwg index sync --backend fortemi-core
+aiwg index query "..." --backend fortemi-core
+aiwg index neighbors --graph kb --backend fortemi-core
+```
+
+Configuring a subsystem with `"type": "fortemi"` changes persistence for that
+subsystem through Fortemi MCP tools. It does not switch AIWG discovery,
+artifact query, graph traversal, research-query, or KB traversal to the
+Fortemi Core static cache. Those paths remain opt-in through explicit
+`--backend fortemi-core` commands after an artifact graph sync.
+
 ## Configuration
 
 ```jsonc
