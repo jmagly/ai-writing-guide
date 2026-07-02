@@ -109,7 +109,7 @@ npx aiwg doctor --prefix /path/to/project
 ```
 
 Use the non-interactive guide for cloud-init, Docker, and CI examples:
-[Non-Interactive Installation](install/non-interactive.md).
+[Non-Interactive Installation](/install/non-interactive).
 
 ## Provider Handoff
 
@@ -182,4 +182,4 @@ flow is platform-first and steward-first.
 - [Provider Handoff](getting-started/provider-handoff.md)
 - [Verify AIWG Is Working](getting-started/verify-aiwg-is-working.md)
 - [macOS Install Guide](getting-started/macos-install.md)
-- [Non-Interactive Installation](install/non-interactive.md)
+- [Non-Interactive Installation](/install/non-interactive)
