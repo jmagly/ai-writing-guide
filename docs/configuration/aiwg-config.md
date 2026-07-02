@@ -43,6 +43,7 @@ Writes are atomic: the loader writes to a randomly-suffixed temp sibling, then
 | `scripts`   | `Record<string, string>`         | yes      | User-defined scripts, run via `aiwg run <name>`. Executed with `sh -c "<command>"` (or `cmd /c` on Windows). Defaults to `{}`.                        |
 | `remotes`   | `RemotesConfig`                  | optional | Repo origin topology. When absent, agents treat `origin` as primary. See [Remotes Block](#remotes-block).                                             |
 | `delivery`  | `DeliveryConfig`                 | optional | Repo control / delivery policy. When absent, runtime defaults apply. See [Delivery Block](#delivery-block).                                           |
+| `build`     | `BuildConfig`                    | optional | Project build policy, including large-build host resource preflight. See [Build Block](#build-block).                                                 |
 
 Valid `providers` values: `claude`, `factory`, `codex`, `opencode`, `copilot`, `cursor`,
 `warp`, `windsurf`, `hermes`, `openclaw`.
@@ -147,6 +148,74 @@ must read and respect this block. Key points:
 - Don't ask the user to pick a workflow when the config already answers it.
 
 Full rule: `agentic/code/addons/aiwg-utils/rules/delivery-policy.md`.
+
+## Build Block
+
+The `build` block configures project-local build behavior. `build.resource_preflight`
+is consulted by the repository's large build scripts before expensive package installs,
+TypeScript compilation, or web bundle generation.
+
+When the block is absent or `enabled` is not `true`, the preflight is skipped.
+
+### `resource_preflight` fields
+
+| Field          | Type                   | Default      | Description                                                                                  |
+| -------------- | ---------------------- | ------------ | -------------------------------------------------------------------------------------------- |
+| `enabled`      | bool                   | `false`      | Enables host resource checks before large build commands.                                    |
+| `mode`         | enum                   | `configured` | `configured` checks only explicit thresholds; `auto_detect` fills omitted thresholds first.  |
+| `requirements` | `ResourceRequirements` | `{}`         | Minimum host resources. Any omitted threshold is ignored in `configured` mode.               |
+
+#### `mode` values
+
+- `configured` — check only thresholds explicitly set in the project config. This is
+  the cheapest path when the project already knows the resources it requires.
+- `auto_detect` — merge explicit thresholds over conservative defaults before checking
+  the host. Defaults are `8 GB` memory, `5 GB` free disk, `2` CPU cores, and `0 GB`
+  swap.
+
+#### `requirements` fields
+
+| Field              | Unit | Description                                      |
+| ------------------ | ---- | ------------------------------------------------ |
+| `min_memory_gb`    | GB   | Minimum total system memory.                     |
+| `min_free_disk_gb` | GB   | Minimum free disk at the project directory.      |
+| `min_cpus`         | count | Minimum logical CPU cores.                      |
+| `min_swap_gb`      | GB   | Minimum configured swap. Set `0` to ignore swap. |
+
+Example, explicit config-only thresholds:
+
+```json
+{
+  "build": {
+    "resource_preflight": {
+      "enabled": true,
+      "mode": "configured",
+      "requirements": {
+        "min_memory_gb": 16,
+        "min_free_disk_gb": 50,
+        "min_cpus": 8,
+        "min_swap_gb": 4
+      }
+    }
+  }
+}
+```
+
+Example, auto-detected defaults with one project override:
+
+```json
+{
+  "build": {
+    "resource_preflight": {
+      "enabled": true,
+      "mode": "auto_detect",
+      "requirements": {
+        "min_free_disk_gb": 20
+      }
+    }
+  }
+}
+```
 
 ## Remotes Block
 

@@ -204,6 +204,13 @@ export interface AiwgConfig {
    * @implements #1614
    */
   command_log?: CommandLogConfig;
+
+  /**
+   * Project build policy. Large build workflows consult this before expensive
+   * package installs, TypeScript compilation, or web bundle generation.
+   * @implements #1692
+   */
+  build?: BuildConfig;
 }
 
 /** Research-complete framework settings (#1497). */
@@ -220,6 +227,35 @@ export interface CommandLogConfig {
   scopes?: Array<'project' | 'global'>;
   /** Maximum bytes per JSONL store before rotation to `.1`. */
   max_bytes?: number;
+}
+
+/** Large-build host resource preflight mode (#1692). */
+export type BuildResourcePreflightMode = 'auto_detect' | 'configured';
+
+/** Explicit host resource thresholds for large builds (#1692). */
+export interface BuildResourceRequirements {
+  min_memory_gb?: number;
+  min_free_disk_gb?: number;
+  min_cpus?: number;
+  min_swap_gb?: number;
+}
+
+/** Cheap host-resource preflight run before expensive build commands (#1692). */
+export interface BuildResourcePreflightConfig {
+  /** Enable preflight checks for project build scripts. Defaults to false when absent. */
+  enabled?: boolean;
+  /**
+   * `configured` checks only explicit requirements. `auto_detect` fills omitted
+   * requirements with conservative defaults before checking the host.
+   */
+  mode?: BuildResourcePreflightMode;
+  /** Project-specific minimum host resources. */
+  requirements?: BuildResourceRequirements;
+}
+
+/** Project build policy block (#1692). */
+export interface BuildConfig {
+  resource_preflight?: BuildResourcePreflightConfig;
 }
 
 /**
