@@ -69,6 +69,27 @@ Located at `.aiwg/aiwg.config` (top level), the `delivery` block contains:
 
 ## Mandatory Rules
 
+### Rule 0: Run The Project Config Preflight Before Tracker Or Git Writes
+
+Before filing an issue, commenting on an issue, closing an issue, changing
+labels or milestones, creating a branch, committing, pushing, opening a PR, or
+preparing release tags, the agent MUST run a project-config preflight:
+
+1. Read `.aiwg/aiwg.config` from the repository root.
+2. Resolve `remotes.primary`, `remotes.issue_tracker`, and `remotes.ci`.
+3. Resolve `delivery.mode`, `delivery.default_branch`, signing requirements,
+   and `delivery.committer` when present.
+4. Resolve `remotes.tracker_actor` for tracker mutations and reject any route
+   that would write as a login listed in `remotes.tracker_actor.forbid_actors`.
+5. If the config file is missing, unreadable, invalid, or ambiguous, stop and
+   report the exact missing/ambiguous field instead of guessing a provider,
+   remote, branch lifecycle, or commit identity.
+
+This preflight is required for both issue workflows and commit/PR workflows.
+Read-only issue inspection may use any available credential, but tracker
+mutations and git delivery actions must follow the configured topology and
+identity.
+
 ### Rule 1: Read the Delivery Block Before Any Git Workflow Action
 
 Before recommending or executing **any** of:

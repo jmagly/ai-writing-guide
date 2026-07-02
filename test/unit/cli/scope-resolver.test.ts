@@ -78,6 +78,15 @@ describe('resolveScopePaths', () => {
     expect(r.rules).toBe(path.join(homedir(), '.claude', 'rules'));
   });
 
+  it('returns user-scope OpenHuman AIWG payload paths without inventing global agents or commands', () => {
+    const r = resolveScopePaths('openhuman', 'user', projectPaths);
+    expect(r.agents).toBe('');
+    expect(r.skills).toBe(path.join(homedir(), '.openhuman', '.aiwg', 'skills'));
+    expect(r.commands).toBe('');
+    expect(r.rules).toBe(path.join(homedir(), '.openhuman', '.aiwg', 'rules'));
+    expect(r.behaviors).toBe('');
+  });
+
   it('falls back to project paths for unknown provider', () => {
     const r = resolveScopePaths('nonexistent', 'user', projectPaths);
     expect(r).toEqual(projectPaths);
@@ -236,8 +245,8 @@ describe('rejectOpenClawProjectScope (#1156)', () => {
 });
 
 describe('USER_SCOPE_PATHS coverage', () => {
-  it('covers all 10 supported providers', () => {
-    const expected = ['claude', 'codex', 'copilot', 'cursor', 'opencode', 'warp', 'windsurf', 'hermes', 'openclaw', 'factory'];
+  it('covers all 11 supported providers', () => {
+    const expected = ['claude', 'codex', 'copilot', 'cursor', 'opencode', 'warp', 'windsurf', 'hermes', 'openclaw', 'openhuman', 'factory'];
     for (const p of expected) {
       expect(USER_SCOPE_PATHS[p], `${p} should have user-scope paths`).toBeDefined();
     }

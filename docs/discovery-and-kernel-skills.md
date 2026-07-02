@@ -1,7 +1,7 @@
 # Discovery and Kernel Skills — Best Practices
 
 > **Version**: 2026.5.0+
-> **Status**: Active — landed across all 10 supported providers
+> **Status**: Active — landed across all 11 supported providers
 > **Reference**: epics [#1212](https://git.integrolabs.net/roctinam/aiwg/issues/1212), [#1217](https://git.integrolabs.net/roctinam/aiwg/issues/1217), [#1218](https://git.integrolabs.net/roctinam/aiwg/issues/1218); [`skill-discovery`](../agentic/code/addons/aiwg-utils/rules/skill-discovery.md) rule (HIGH)
 
 ## What changed and why
@@ -535,4 +535,4 @@ The bar for kernel-tier skills is high. Today's kernel falls into two categories
 - Epic [#1218](https://git.integrolabs.net/roctinam/aiwg/issues/1218) — `aiwg show` companion to discover
 - [`aiwg-utils-quickref`](../agentic/code/addons/aiwg-utils/skills/aiwg-utils-quickref/SKILL.md) — kernel utility quickref that surfaces this discipline
 - [Architecture audit](../.aiwg/architecture/audit-index-subsystem-2026-05.md) — index subsystem audit that produced the 450-LOC implementation path
-- [Provider landscape research](../.aiwg/research/findings/skill-budget-landscape-2026-05.md) — survey of skill-budget caps across the 10 supported providers
+- [Provider landscape research](../.aiwg/research/findings/skill-budget-landscape-2026-05.md) — survey of skill-budget caps across the supported providers before OpenHuman was added

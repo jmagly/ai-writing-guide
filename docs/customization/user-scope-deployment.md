@@ -48,6 +48,7 @@ aiwg remove sdlc --user --provider claude --dry-run
 |----------|-----------------|--------|
 | Claude Code | `~/.claude/{agents,commands,skills,rules}/` | **Verified** ([docs](https://code.claude.com/docs/en/skills)) |
 | OpenClaw | `~/.openclaw/{agents,commands,skills,rules,behaviors}/` | Always user-scope (no `--scope project`) |
+| OpenHuman | `~/.openhuman/skills/` for kernel skills; `~/.openhuman/.aiwg/{skills,rules}/` for AIWG payload; agents remain project `.agents/agents/` | **Verified** against OpenHuman induction ADR; home-dir provider with AGENTS.md command/rule bridge |
 | Hermes | `~/.hermes/skills/` | Always user-scope (skills only) |
 | Codex | `~/.agents/skills/` (skills); `~/.codex/prompts/` (commands; deploy-for-visibility, not auto-scanned) | **Verified** ([`codex-rs/core-skills/src/loader.rs`](https://github.com/openai/codex)) |
 | Cursor | `~/.cursor/{agents,skills,commands,rules}/` (harmless mirror; not auto-scanned) | **Non-applicable** — Cursor's "User Rules" feature is in-app settings, not filesystem-discovered; only project-scope `.cursor/rules/*.mdc` is confirmed. See [#1159](https://git.integrolabs.net/roctinam/aiwg/issues/1159) |
@@ -176,7 +177,7 @@ recorded entry doesn't exist on disk anymore — usually because
 something was deleted manually. Repair by re-running `aiwg use` or
 clear the stale registry entry with `aiwg remove --scope user`.
 
-## OpenClaw and Hermes
+## OpenClaw, OpenHuman, and Hermes
 
 OpenClaw is exclusively user-scope by design — its native discovery
 model only reads from `~/.openclaw/`. So:
@@ -186,6 +187,13 @@ model only reads from `~/.openclaw/`. So:
 - `aiwg use ... --provider openclaw --scope user` is a no-op
 - `aiwg use ... --provider openclaw --scope project` errors with a
   clear message: there is no project-scope OpenClaw deploy to track
+
+OpenHuman is also home-dir-oriented for skills. `aiwg use ... --provider
+openhuman --scope user` records the OpenHuman home-rooted payload in the
+user registry so `aiwg list --scope user`, `aiwg doctor --scope user`, and
+`aiwg remove --scope user --provider openhuman` can reason about it from
+any cwd. Markdown agents remain workspace-scoped at `.agents/agents/` by
+design, and commands/rules are bridged through `AGENTS.md`.
 
 Hermes is similar (skills-only at user scope by design).
 

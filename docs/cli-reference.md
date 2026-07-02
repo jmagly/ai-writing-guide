@@ -139,7 +139,7 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 
 **Flags:**
 
-- `--provider <name>` — Inspect a specific provider's deployment paths (claude, factory, codex, copilot, cursor, opencode, warp, windsurf, openclaw, hermes). Defaults to auto-detect across deployed providers.
+- `--provider <name>` — Inspect a specific provider's deployment paths (claude, factory, codex, copilot, cursor, opencode, warp, windsurf, openclaw, openhuman, hermes). Defaults to auto-detect across deployed providers.
 - `--all-providers` — Enumerate every supported provider, including ones with nothing deployed.
 - `--project-local` — Show only the project-local artifacts section. Exit code reflects only project-local findings.
 - `--quiet` — Suppress informational subsections (counts, shadows). Show only failures.
@@ -362,7 +362,7 @@ aiwg use <framework|addon>
 
 **Options:**
 
-- `--provider <name>` - Target platform (claude, copilot, factory, cursor, windsurf, warp, codex, opencode, hermes, openclaw, local)
+- `--provider <name>` - Target platform (claude, copilot, factory, cursor, windsurf, warp, codex, opencode, hermes, openclaw, openhuman, local)
 - `--model <name>` - Override model for all tiers (blanket)
 - `--reasoning-model <name>` - Override reasoning tier model (alias: `--reasoning`)
 - `--coding-model <name>` - Override coding tier model (alias: `--coding`)
@@ -459,6 +459,7 @@ aiwg use sdlc --ci-hooks-enabled --dry-run
 | OpenCode | `opencode` | `.opencode/agent/`, `.opencode/commands/`, `.opencode/skill/`, `.opencode/rule/` | — |
 | Hermes | `hermes` | `~/.hermes/skills/`, `AGENTS.md` (lean) | — |
 | OpenClaw | `openclaw` | `~/.openclaw/agents/`, `~/.openclaw/commands/`, `~/.openclaw/skills/`, `~/.openclaw/rules/`, `~/.openclaw/behaviors/` | ✓ |
+| OpenHuman | `openhuman` | `.agents/agents/`, `~/.openhuman/skills/`, `~/.openhuman/.aiwg/{skills,rules}/`, `AGENTS.md` | — |
 | Local/Ollama | `local` | Same as `claude` (local model, Claude Code paths) | — |
 
 **Commands → Skills migration:**
@@ -3466,7 +3467,7 @@ aiwg show skill research-query --backend fortemi-core --json
 
 ### Best-practice usage guidance
 
-Discovery is the operator surface that makes the **kernel + on-demand model** work across all 10 supported providers (Claude Code, Cursor, Factory, Copilot, OpenCode, Warp, Windsurf, OpenClaw, Hermes, Codex). Each provider deploys a small kernel set of always-loaded quickref skills; everything else sits at `<provider-dir>/.aiwg/skills/` and is reached via `aiwg discover`.
+Discovery is the operator surface that makes the **kernel + on-demand model** work across all 11 supported providers (Claude Code, Cursor, Factory, Copilot, OpenCode, Warp, Windsurf, OpenClaw, OpenHuman, Hermes, Codex). Each provider deploys a small kernel set of always-loaded quickref skills; everything else sits at `<provider-dir>/.aiwg/skills/` and is reached via `aiwg discover`.
 
 **Lead with discovery, not with memory.** When a user describes a capability, query first:
 

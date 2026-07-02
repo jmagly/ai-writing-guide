@@ -175,6 +175,17 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
     rules: path.join(homedir(), '.openclaw', 'rules'),
     behaviors: path.join(homedir(), '.openclaw', 'behaviors'),
   },
+  openhuman: {
+    // #1694 — OpenHuman is a home-dir provider, but Tier-1 intentionally
+    // keeps markdown agents workspace-scoped at .agents/agents and aggregates
+    // commands through AGENTS.md. User-scope registration must still know the
+    // provider's home-rooted AIWG payload so list/remove/doctor can track it.
+    agents: '',
+    skills: path.join(homedir(), '.openhuman', '.aiwg', 'skills'),
+    commands: '',
+    rules: path.join(homedir(), '.openhuman', '.aiwg', 'rules'),
+    behaviors: '',
+  },
   factory: {
     // #1164 — Verified against Factory docs (docs.factory.ai/cli/configuration/skills).
     // Skills primary user-scope path is ~/.factory/skills/, NOT the
