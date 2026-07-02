@@ -2,7 +2,7 @@
 title: Fortemi Core Migration Completion Gate Audit
 date: 2026-07-02
 parent_issue: 1664
-status: not-production-ready
+status: delivered-opt-in-not-default-switch
 ---
 
 # Fortemi Core Migration Completion Gate Audit
@@ -18,22 +18,23 @@ For the delivery-to-operations handoff decision, see
 
 ## Summary
 
-Current state: local implementation and fixture coverage are substantially
-advanced, but the migration is not production-ready.
+Current state: the opt-in Fortemi Core backend phase is delivered to
+`origin/main` with green remote CI. The migration is not approved for a default
+backend switch.
 
 Blocking reasons:
 
-- AIWG child issues #1684-#1691 are still open.
+- AIWG child issues #1684-#1691 still need tracker closeout comments/closures
+  using the pushed commit and CI evidence.
 - A refreshed read-only tracker snapshot at
   `.aiwg/planning/fortemi-core-index-migration/tracker-status-refresh.md`
   confirms #1664 and #1684-#1691 remain open as of 2026-07-02T05:44:04-04:00.
 - Public commit status for `origin/main`/`HEAD`
-  `549aa2a9841f0e59b8b8c35f00eec4f11b68a921` is green for `CI / Test (push)`
-  and `CI / Build (push)`, but #1691 has not passed in CI for the exact local
-  WIP state because the Fortemi migration changes remain uncommitted in this
-  checkout.
-- Current branch state verified on 2026-07-02: only local `main` is present,
-  tracking `origin/main`; the working tree is still uncommitted WIP.
+  `52f468e9ffc195bec18eb793b888e77992bafd01` is green for `CI / Test (push)`,
+  `CI / Build (push)`, `Docsite Build / Build Documentation Site (push)`, and
+  `Docsite Deploy / Build & Deploy Documentation (push)`.
+- Current branch state verified on 2026-07-02: local `main` tracks
+  `origin/main` at `52f468e9ffc195bec18eb793b888e77992bafd01`.
 - Direct `@fortemi/core` v2 export acceptance remains blocked upstream; AIWG has
   a tested v2-to-v1 compatibility projection but not direct v2 package support.
 - No default-backend switch issue has been filed and completed after gates.
@@ -43,7 +44,7 @@ Blocking reasons:
   #1689, and #1691, not a dedicated switch issue. A ready-to-file draft exists
   at
   `.aiwg/planning/fortemi-core-index-migration/default-backend-switch-issue-draft.md`.
-- The WIP is not committed or delivered through review/CI yet.
+- The WIP is committed and delivered through direct-mode `origin/main` CI.
 - PR-readiness steps are captured in
   `.aiwg/planning/fortemi-core-index-migration/pr-readiness-checklist.md`,
   including pre-push local gates, remote CI evidence to capture, tracker
@@ -54,8 +55,9 @@ Blocking reasons:
 - Post-CI tracker closeout is documented in
   `.aiwg/planning/fortemi-core-index-migration/post-ci-tracker-closeout-plan.md`.
   The operator authorized Gitea MCP on 2026-07-02 for tracker writes, but
-  closure cannot be executed until remote CI exists for the actual WIP commit
-  and the package-boundary gate is resolved or explicitly deferred.
+  opt-in child issue closeout can now use the pushed commit and CI evidence.
+  Default-switch filing remains blocked until the package-boundary gate is
+  resolved or explicitly deferred.
 - A local CI workflow audit exists at
   `.aiwg/security/working/ci-workflow-audit.md`. It found no tag-pinned actions,
   no undigested workflow containers, no executable `:latest` references, no
@@ -72,12 +74,12 @@ Blocking reasons:
 | Requirement                                            | Current evidence                                                                                                                                                                                                                                                                | Status      | Next action                                                                                        |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------- |
 | All #1664 child issues closed or explicitly superseded | Gitea issue reads on 2026-07-02 show #1684, #1685, #1686, #1687, #1688, #1689, #1690, and #1691 are still open. Status comments exist on each implemented slice, but none is closed or superseded.                                                                              | Not met     | Close implementation issues only after branch review/CI, or add explicit supersession comments.    |
-| #1691 parity fixtures green in CI                      | Latest local `npm run test:ci` pass after review-scope hardening: main suite `425` test files passed, `2` skipped; `7367` tests passed, `28` skipped; UAT suite `5` files and `95` tests passed. No remote CI run is available for this WIP. | Not met     | Push branch/PR and require green CI for the #1691 suites and full required test matrix.            |
+| #1691 parity fixtures green in CI                      | Latest local `npm run test:ci` pass after review-scope hardening: main suite `425` test files passed, `2` skipped; `7367` tests passed, `28` skipped; UAT suite `5` files and `95` tests passed. Remote commit `52f468e9ffc195bec18eb793b888e77992bafd01` is green for CI/Test, CI/Build, Docsite Build, and Docsite Deploy. | Met         | Use this evidence for opt-in child closeout; do not switch defaults yet.                           |
 | Fortemi Core backend fallback/rollback documented      | `docs/integrations/fortemi-index-export.md` documents opt-in cache, local fallback, stale/cache behavior, and rollback by omitting `--backend fortemi-core` and preserving `.aiwg/.index/<graph>/`. ADR includes rollback window requirements.                                  | Locally met | Keep through review; verify docs render and remain accurate after final code review.               |
 | Docs and ADRs updated                                  | Local files exist: `.aiwg/architecture/adr-fortemi-core-indexing-substrate.md`, `.aiwg/planning/fortemi-core-index-migration/current-surface-inventory.md`, `docs/integrations/fortemi-index-export.md`.                                                                        | Locally met | Link from tracker/PR and close #1684/#1685 only after acceptance.                                  |
 | Release notes or migration notes exist                 | `CHANGELOG.md` has a `2026.7.1` Fortemi Core migration preview section; `docs/releases/v2026.7.1-announcement.md` exists and release manifest is updated locally. Release-facing docs include the valid empty-cache behavior and storage/issue boundaries.                         | Locally met | Review release note scope before finalizing version/date.                                          |
 | Default switch completed only after gates              | ADR and docs keep Fortemi Core backend opt-in. Public Gitea issue search on 2026-07-02 for `default backend`, `default-backend`, `default switch`, `switch AIWG index/search default`, and `Fortemi Core default` found only existing migration issues #1664, #1684, #1689, and #1691, not a dedicated default-backend switch issue. | Not met     | File default-switch issue only after #1691 is green in CI and upstream/package boundary is agreed. |
-| No live Fortemi dependency in required CI              | `test/unit/artifacts/fortemi-core-parity.test.ts` gates live integration behind `AIWG_FORTEMI_CORE_LIVE`; static fixtures run without external service. `.gitea/workflows/ci.yml` runs `npm run test:ci` with only perf-budget env vars and does not set `AIWG_FORTEMI_CORE_LIVE` or `AIWG_FORTEMI_CORE_PACKAGE_REQUIRED`. `.aiwg/security/working/ci-workflow-audit.md` also confirms the optional package-boundary workflow is not installed. | Locally met | Reconfirm after any workflow change; remote CI still required for merge evidence.                  |
+| No live Fortemi dependency in required CI              | `test/unit/artifacts/fortemi-core-parity.test.ts` gates live integration behind `AIWG_FORTEMI_CORE_LIVE`; static fixtures run without external service. `.gitea/workflows/ci.yml` runs `npm run test:ci` with only perf-budget env vars and does not set `AIWG_FORTEMI_CORE_LIVE` or `AIWG_FORTEMI_CORE_PACKAGE_REQUIRED`. `.aiwg/security/working/ci-workflow-audit.md` also confirms the optional package-boundary workflow is not installed. Remote CI/Test is green for the pushed commit. | Met | Reconfirm after any workflow change.                                                              |
 | No hardcoded credentials or direct REST import pattern | New local sync/export paths write static cache files and do not add credentials or Fortemi REST import code. `test/unit/artifacts/fortemi-core-security.test.ts` statically guards the required static backend files against direct network clients and credential hooks.       | Locally met | Reconfirm in review/security scan before merge.                                                    |
 | `.aiwg/.index` fallback preserved                      | Local backend remains default. Fortemi cache lives under `.aiwg/.index/fortemi-core/<graph>/`; docs warn not to remove `.aiwg/.index/<graph>/` during rollback.                                                                                                                 | Locally met | Keep default backend unchanged until post-switch rollback window.                                  |
 
@@ -85,14 +87,14 @@ Blocking reasons:
 
 | Issue | Scope                         | Local evidence                                                                                                                                                                                                                                                                                                                                                                                    | Closure readiness |
 | ----- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| #1685 | Current surface inventory     | `.aiwg/planning/fortemi-core-index-migration/current-surface-inventory.md` covers discovery/show, index CLI, research, KB/memory, Cockpit, storage/Fortemi bridge, local issue/search, #1551, and #1508. Status comment: issuecomment-77466.                                                                                                                                                      | Needs CI/review   |
-| #1684 | ADR                           | `.aiwg/architecture/adr-fortemi-core-indexing-substrate.md` defines ownership boundary, data model, command compatibility, fallback, gates, rollback, and `@fortemi/core@2026.7.0` baseline. It now explicitly locks the Fortemi MCP storage vs Fortemi Core search boundary, the local issue search boundary, and optional package-boundary release-age safeguards. Status comment: issuecomment-77469. | Needs CI/review   |
+| #1685 | Current surface inventory     | `.aiwg/planning/fortemi-core-index-migration/current-surface-inventory.md` covers discovery/show, index CLI, research, KB/memory, Cockpit, storage/Fortemi bridge, local issue/search, #1551, and #1508. Status comment: issuecomment-77466.                                                                                                                                                      | Ready to close    |
+| #1684 | ADR                           | `.aiwg/architecture/adr-fortemi-core-indexing-substrate.md` defines ownership boundary, data model, command compatibility, fallback, gates, rollback, and `@fortemi/core@2026.7.0` baseline. It now explicitly locks the Fortemi MCP storage vs Fortemi Core search boundary, the local issue search boundary, and optional package-boundary release-age safeguards. Status comment: issuecomment-77469. | Ready to close    |
 | #1686 | v2 export contract            | `schemas/aiwg-fortemi-index-export.json` and `src/artifacts/browser-export.ts` add v2 all-domain records plus v2-to-v1 compatibility projection. The schema fixture now exercises every v2 AIWG record domain, including behavior/provider/bundle/research-view/synthesis/memory/issue records. Status comment: issuecomment-77471. Upstream direct v2 support remains Fortemi/fortemi-react#219. | Partially gated   |
-| #1687 | Sync/ingest pipeline          | `src/artifacts/fortemi-core-sync.ts`, `aiwg index sync --backend fortemi-core`, manifest/status behavior, stale-source, checksum-drift, unreadable-manifest, unreadable-export, and schema-drift detection tests exist. Final local status shows Fortemi cache built, fresh, and non-orphaned. Status comments: issuecomment-77473, issuecomment-77484.                                                                 | Needs CI/review   |
-| #1688 | Discover/show parity          | `--backend fortemi-core` paths for discover/show use materialized static cache; tests cover ranking, exact fetch, title fallback, canonical agent duplicate preference, ambiguity, missing cache, schema mismatch, and corrupt cache. Status comment: issuecomment-77474.                                                                                                                                                                               | Needs CI/review   |
-| #1689 | Index CLI compatibility       | Backend flags exist for query/deps/neighbors/set/discover/show; export v2 and sync are wired; semantic and hybrid CLI Fortemi static paths have direct public-router coverage. Public CLI fixtures now cover stats/status/export/sync plus Fortemi cache status. Local issue search remains a separate provider surface and rejects `--backend fortemi-core` instead of silently implying Fortemi support. Status comment exists from earlier implementation.                                                                               | Needs CI/review   |
-| #1690 | Research/KB migration         | `aiwg research-query` executable source-selection wrapper supports `--backend fortemi-core`; tests cover local/Fortemi retrieval parity, REF/PROF, GRADE, JSON/save, and strict value parsing for backend/depth/graph/max-source flags. Corpus view/parser tests pin golden view names plus radar/discovery/funder renderers, with corpus-snapshot docs preserving the local snapshot boundary. KB graph traversal parity covered in Fortemi fixtures. Status comments include issuecomment-77464.                                                       | Needs CI/review   |
-| #1691 | No-regression parity fixtures | Local parity fixtures now cover discover/show ranking and fetch behavior, including title fallback and canonical agent duplicate preference; query/fulltext/public semantic/public hybrid; graph traversal; research/KB; v1/v2 export; local issue search backend-boundary rejection; Cockpit capability-search malformed type/limit rejection; missing/stale/corrupt/schema cache; fresh clone/malformed config via index-status tests; and live test skip gating. Comments through 77488.                                                                                                              | Needs CI          |
+| #1687 | Sync/ingest pipeline          | `src/artifacts/fortemi-core-sync.ts`, `aiwg index sync --backend fortemi-core`, manifest/status behavior, stale-source, checksum-drift, unreadable-manifest, unreadable-export, and schema-drift detection tests exist. Final local status shows Fortemi cache built, fresh, and non-orphaned. Status comments: issuecomment-77473, issuecomment-77484.                                                                 | Ready to close    |
+| #1688 | Discover/show parity          | `--backend fortemi-core` paths for discover/show use materialized static cache; tests cover ranking, exact fetch, title fallback, canonical agent duplicate preference, ambiguity, missing cache, schema mismatch, and corrupt cache. Status comment: issuecomment-77474.                                                                                                                                                                               | Ready to close    |
+| #1689 | Index CLI compatibility       | Backend flags exist for query/deps/neighbors/set/discover/show; export v2 and sync are wired; semantic and hybrid CLI Fortemi static paths have direct public-router coverage. Public CLI fixtures now cover stats/status/export/sync plus Fortemi cache status. Local issue search remains a separate provider surface and rejects `--backend fortemi-core` instead of silently implying Fortemi support. Status comment exists from earlier implementation.                                                                               | Ready to close    |
+| #1690 | Research/KB migration         | `aiwg research-query` executable source-selection wrapper supports `--backend fortemi-core`; tests cover local/Fortemi retrieval parity, REF/PROF, GRADE, JSON/save, and strict value parsing for backend/depth/graph/max-source flags. Corpus view/parser tests pin golden view names plus radar/discovery/funder renderers, with corpus-snapshot docs preserving the local snapshot boundary. KB graph traversal parity covered in Fortemi fixtures. Status comments include issuecomment-77464.                                                       | Ready to close    |
+| #1691 | No-regression parity fixtures | Local parity fixtures now cover discover/show ranking and fetch behavior, including title fallback and canonical agent duplicate preference; query/fulltext/public semantic/public hybrid; graph traversal; research/KB; v1/v2 export; local issue search backend-boundary rejection; Cockpit capability-search malformed type/limit rejection; missing/stale/corrupt/schema cache; fresh clone/malformed config via index-status tests; and live test skip gating. Comments through 77488.                                                                                                              | Ready to close    |
 
 ## Local Verification Evidence
 
