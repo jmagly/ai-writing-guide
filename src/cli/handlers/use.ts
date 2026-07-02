@@ -493,147 +493,55 @@ async function runPreDeployCollisionCheck(opts: {
   return true;
 }
 
+function agenticNextSteps(openStep: string): string[] {
+  return [
+    openStep,
+    'Ask the steward:  "Check that AIWG is installed correctly and tell me what I can do here."',
+    'Regenerate:       Use aiwg-regenerate in-session when context files need rebuilding.',
+    'Install runbook:  docs/agentic-install-runbook.md',
+    'Diagnostics:      aiwg doctor',
+  ];
+}
+
 /**
- * Framework-specific next steps guidance
+ * Framework-specific next steps guidance.
+ *
+ * Keep this handoff user-facing: `aiwg use` is the main human CLI entry point;
+ * discovery, capability lookup, and agent-loop commands are agent tools.
  *
  * Keyed as `<provider>/<framework>` with fallback to `<framework>`.
  * The 'claude' provider is the default (shown for all unrecognized providers).
  */
 const NEXT_STEPS: Record<string, string[]> = {
-  // Claude Code (default)
-  //
-  // Standard skills no longer deploy as slash commands. Reach AIWG
-  // capabilities through `aiwg discover` (CLI) or natural-language
-  // requests (the agent queries the index for you).
-  'sdlc': [
-    'Find a skill:      aiwg discover "<what you want to do>"',
-    'Browse via Claude: open Claude and ask for the "accelerated SDLC" or "create intake"',
-    'Direct CLI:        aiwg sdlc-accelerate "Your project idea"',
-    'Check health:      aiwg doctor',
-  ],
-  'marketing': [
-    'Find a skill:      aiwg discover "<marketing need>"',
-    'Browse via Claude: ask for "marketing intake" or "campaign kickoff" — agent queries the index',
-    'Check health:      aiwg doctor',
-  ],
-  'media-curator': [
-    'Find a skill:      aiwg discover "<media task>"',
-    'Browse via Claude: ask "analyze [artist] discography" or "find sources for [content]"',
-    'Check health:      aiwg doctor',
-  ],
-  'research': [
-    'Find a skill:      aiwg discover "<research task>"',
-    'Browse via Claude: ask "research workflow" or "induct [paper]" — agent queries the index',
-    'Check health:      aiwg doctor',
-  ],
-  'security-engineering': [
-    'Find a skill:      aiwg discover "<security decision>"',
-    'Crypto primitives: ask "choose AEAD" or "ad-hoc KDF review"',
-    'Chain of trust:    ask "review the boot chain" or "signed bootstrap design"',
-    'Decision template: agentic/code/frameworks/security-engineering/templates/cryptographic-decisions.md',
-    'Check health:      aiwg doctor',
-  ],
-  'all': [
-    'Find a skill:      aiwg discover "<what you want to do>"',
-    'Browse via Claude: open Claude and describe your need — agent queries the index',
-    'Direct CLI:        aiwg sdlc-accelerate "Your project idea"',
-    'Check health:      aiwg doctor',
-  ],
+  'sdlc': agenticNextSteps('Open platform:    Open Claude Code, Codex, Cursor, Warp, or your chosen AI tool.'),
+  'marketing': agenticNextSteps('Open platform:    Open your chosen AI tool and ask for a campaign or marketing intake.'),
+  'media-curator': agenticNextSteps('Open platform:    Open your chosen AI tool and ask for a media collection next action.'),
+  'research': agenticNextSteps('Open platform:    Open your chosen AI tool and ask for a research workflow next action.'),
+  'security-engineering': agenticNextSteps('Open platform:    Open your chosen AI tool and ask for a security-engineering decision path.'),
+  'all': agenticNextSteps('Open platform:    Open Claude Code, Codex, Cursor, Warp, or your chosen AI tool.'),
 
-  // Hermes Agent (MCP-based)
-  // Verified against Hermes v0.4.0+ source (hermes_cli/main.py:10860 —
-  // mcp subcommand surface is `serve`, `add`, `remove`, `list`, `test`,
-  // `configure`; no `install` subcommand). #1243.
-  'hermes/sdlc': [
-    'Connect via MCP:   hermes mcp add aiwg --command aiwg --args mcp serve',
-    '   (or manual:     add aiwg to ~/.hermes/config.yaml — see `aiwg mcp info`)',
-    'Start Hermes:      hermes chat "Create an architecture decision for..."',
-    'MCP guide:         docs/integrations/hermes-quickstart.md',
-  ],
-  'hermes/marketing': [
-    'Connect via MCP:   hermes mcp add aiwg --command aiwg --args mcp serve',
-    '   (or manual:     add aiwg to ~/.hermes/config.yaml — see `aiwg mcp info`)',
-    'Start Hermes:      hermes chat "Create a marketing campaign for..."',
-    'MCP guide:         docs/integrations/hermes-quickstart.md',
-  ],
-  'hermes/all': [
-    'Connect via MCP:   hermes mcp add aiwg --command aiwg --args mcp serve',
-    '   (or manual:     add aiwg to ~/.hermes/config.yaml — see `aiwg mcp info`)',
-    'Start Hermes:      hermes chat',
-    'AIWG MCP guide:   docs/integrations/hermes-quickstart.md',
-  ],
+  'hermes/sdlc': agenticNextSteps('Start Hermes:      Open a Hermes chat attached to this project.'),
+  'hermes/marketing': agenticNextSteps('Start Hermes:      Open a Hermes chat attached to this project.'),
+  'hermes/all': agenticNextSteps('Start Hermes:      Open a Hermes chat attached to this project.'),
 
-  // Factory AI
-  'factory/sdlc': [
-    'Find a skill:      aiwg discover "<what you want to do>"',
-    'Open Factory:      factory (droids deployed; ask for "accelerated SDLC")',
-    'Direct CLI:        aiwg sdlc-accelerate "Your project idea"',
-    'Check health:      aiwg doctor',
-  ],
-
-  // Cursor
-  'cursor/sdlc': [
-    'Find a skill:      aiwg discover "<what you want to do>"',
-    'Open Cursor:       cursor . (agents in .cursor/agents/; ask for "accelerated SDLC")',
-    'Direct CLI:        aiwg sdlc-accelerate "Your project idea"',
-    'Check health:      aiwg doctor',
-  ],
-
-  // Warp Terminal
-  'warp/sdlc': [
-    'Find a skill:      aiwg discover "<what you want to do>"',
-    'Open Warp:         warp (agents/commands aggregated into WARP.md)',
-    'Direct CLI:        aiwg sdlc-accelerate "Your project idea"',
-    'Check health:      aiwg doctor',
-  ],
-
-  // GitHub Copilot
-  'copilot/sdlc': [
-    'Find a skill:      aiwg discover "<what you want to do>"',
-    'Open VS Code:      code . (Copilot agents in .github/agents/)',
-    'Copilot chat:      @workspace use the SDLC workflow agents',
-    'Check health:      aiwg doctor',
-  ],
-
-  // OpenAI Codex
-  'codex/sdlc': [
-    'Find a skill:      aiwg discover "<what you want to do>"',
-    'Open Codex:        codex (agents in .codex/agents/, prompts in ~/.codex/prompts/)',
-    'Direct CLI:        aiwg sdlc-accelerate "Your project idea"',
-    'Check health:      aiwg doctor',
-  ],
-
-  // Windsurf
-  'windsurf/sdlc': [
-    'Find a skill:      aiwg discover "<what you want to do>"',
-    'Open Windsurf:     AGENTS.md and .windsurf/ are ready',
-    'Ask Cascade:       "accelerated SDLC for my project" — agent queries the index',
-    'Check health:      aiwg doctor',
-  ],
-
-  // OpenClaw
-  'openclaw/sdlc': [
-    'Configure MCP:     Add aiwg to ~/.openclaw/config.yaml (see docs/openclaw-guide.md)',
-    'Start OpenClaw:    openclaw (agents, skills, commands, rules, behaviors deployed)',
-    'Verify:            openclaw skills list | grep aiwg',
-  ],
-  'openclaw/marketing': [
-    'Configure MCP:     Add aiwg to ~/.openclaw/config.yaml (see docs/openclaw-guide.md)',
-    'Start OpenClaw:    openclaw (marketing agents and skills deployed)',
-    'Verify:            openclaw skills list | grep aiwg',
-  ],
-  'openclaw/all': [
-    'Configure MCP:     Add aiwg to ~/.openclaw/config.yaml (see docs/openclaw-guide.md)',
-    'Start OpenClaw:    openclaw (all frameworks deployed)',
-    'Full guide:        docs/openclaw-guide.md',
-  ],
+  'factory/sdlc': agenticNextSteps('Open Factory:      Start Factory from this project root.'),
+  'cursor/sdlc': agenticNextSteps('Open Cursor:       Open this project in Cursor.'),
+  'warp/sdlc': agenticNextSteps('Open Warp:         Start a Warp session in this project root.'),
+  'copilot/sdlc': agenticNextSteps('Open VS Code:      Open this workspace and use Copilot Chat.'),
+  'codex/sdlc': agenticNextSteps('Open Codex:        Restart Codex in this project root.'),
+  'windsurf/sdlc': agenticNextSteps('Open Windsurf:     Open this project in Windsurf and ask Cascade for AIWG status.'),
+  'openclaw/sdlc': agenticNextSteps('Start OpenClaw:    Open OpenClaw with this project workspace.'),
+  'openclaw/marketing': agenticNextSteps('Start OpenClaw:    Open OpenClaw with this project workspace.'),
+  'openclaw/all': agenticNextSteps('Start OpenClaw:    Open OpenClaw with this project workspace.'),
 };
 
-function printNextSteps(framework: Framework, provider: string = 'claude'): void {
-  // Try provider-specific first, fall back to generic
+export function nextStepsFor(framework: Framework, provider: string = 'claude'): string[] {
   const providerKey = `${provider}/${framework}`;
-  const steps = NEXT_STEPS[providerKey] ?? NEXT_STEPS[framework] ?? NEXT_STEPS.sdlc;
-  ui.section('Next steps:', steps);
+  return NEXT_STEPS[providerKey] ?? NEXT_STEPS[framework] ?? NEXT_STEPS.sdlc;
+}
+
+function printNextSteps(framework: Framework, provider: string = 'claude'): void {
+  ui.section('Next steps:', nextStepsFor(framework, provider));
 }
 
 /**
@@ -2080,8 +1988,8 @@ export class UseHandler implements CommandHandler {
         // progress through; otherwise we show a single-line spinner-
         // style message and capture the noisy stat lines.
         ui.blank();
-        ui.info('Building capability index for `aiwg discover`…');
-        ui.dim('  Indexing skills, agents, commands, and rules. Reused incrementally on next deploy.');
+        ui.info('Building capability index…');
+        ui.dim('  Indexing skills, agents, commands, and rules for agent-side lookup.');
 
         const indexStart = Date.now();
         // Capture buildIndex's own console.log noise unless verbose
@@ -2096,13 +2004,13 @@ export class UseHandler implements CommandHandler {
           console.log = origLog;
           discoverableSkillCount = await countDiscoverableSkills(aiwgRootForIndex);
           const indexElapsedSec = ((Date.now() - indexStart) / 1000).toFixed(1);
-          ui.success(`Capability index ready (${indexElapsedSec}s) — try \`aiwg discover "<phrase>"\``);
+          ui.success(`Capability index ready (${indexElapsedSec}s) — agents can search the installed capability set.`);
         } catch (error) {
           console.log = origLog;
           ui.warn(
             `Capability index build failed: ${error instanceof Error ? error.message : String(error)}`,
           );
-          ui.dim('  Deploy succeeded — skills reachable, but `aiwg discover` may return stale results until next rebuild.');
+          ui.dim('  Deploy succeeded — skills are reachable, but agent-side capability search may be stale until the next rebuild.');
         }
       } else if (verbose) {
         console.log('Framework source not found; skipping capability index rebuild');
@@ -2357,7 +2265,7 @@ export class UseHandler implements CommandHandler {
         // hosts OpenHuman drives. Tell the operator where things went.
         if (provider === 'openhuman') {
           ui.dim('  Skills installed globally → ~/.openhuman/skills/ (open OpenHuman → Skills to see them)');
-          ui.dim('  The full skill set is discover-reachable: aiwg discover "<what you want to do>"');
+          ui.dim('  The full skill set is available to agent-side capability search.');
         }
 
         if (verbose && ctxResult.agentsMdPath) {

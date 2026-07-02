@@ -12,7 +12,7 @@ import { mkdir, rm, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import os from 'os';
-import { getAllAddons, isValidAddon, addonPath, USE_ALL_DISALLOW, useHandler } from '../../../../src/cli/handlers/use.js';
+import { getAllAddons, isValidAddon, addonPath, USE_ALL_DISALLOW, useHandler, nextStepsFor } from '../../../../src/cli/handlers/use.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -41,6 +41,31 @@ describe('USE_ALL_DISALLOW', () => {
     for (const addon of standardAddons) {
       expect(USE_ALL_DISALLOW.has(addon)).toBe(false);
     }
+  });
+});
+
+describe('nextStepsFor()', () => {
+  it('keeps default aiwg use success guidance platform-first and steward-first', () => {
+    const steps = nextStepsFor('sdlc');
+    const output = steps.join('\n');
+
+    expect(output).toContain('Open platform');
+    expect(output).toContain('Ask the steward');
+    expect(output).toContain('aiwg-regenerate');
+    expect(output).toContain('aiwg doctor');
+    expect(output).toContain('docs/agentic-install-runbook.md');
+    expect(output).not.toContain('aiwg discover');
+    expect(output).not.toContain('aiwg sdlc-accelerate');
+  });
+
+  it('keeps provider-specific handoffs out of agent-oriented CLI commands', () => {
+    const output = nextStepsFor('sdlc', 'codex').join('\n');
+
+    expect(output).toContain('Open Codex');
+    expect(output).toContain('Ask the steward');
+    expect(output).toContain('aiwg-regenerate');
+    expect(output).not.toContain('aiwg discover');
+    expect(output).not.toContain('aiwg sdlc-accelerate');
   });
 });
 

@@ -2,6 +2,9 @@
 
 Use this recipe before depending on AIWG for project work.
 
+For full installation from a fresh machine or fresh project, use the
+[Agentic Install Runbook](../agentic-install-runbook.md) first.
+
 You stay in the chat. The agent checks the deployment state, runs the status probe, and reports back. You do not need to type the probe commands yourself — they are the agent's tool, not yours.
 
 ## Do This
@@ -84,6 +87,7 @@ Once verification succeeds, pick one focused recipe: [Find One Capability](first
 ## Related
 
 - [Start Here](start-here.md)
+- [Agentic Install Runbook](../agentic-install-runbook.md)
 - [Beginner Language Map](language-map.md)
 - [Provider Handoff](provider-handoff.md)
 - [Scope And Recovery](scope-and-recovery.md)

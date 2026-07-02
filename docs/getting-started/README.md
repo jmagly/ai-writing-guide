@@ -9,6 +9,7 @@ Find the scenario that matches where you are right now.
 | I want to... | Guide |
 |---|---|
 | Get one useful AIWG result before learning the whole system | [Start Here](start-here.md) |
+| Have an agent or steward install AIWG from zero to running | [Agentic Install Runbook](../agentic-install-runbook.md) |
 | Install AIWG on macOS or fix npm `EACCES` | [macOS Install Guide](macos-install.md) |
 | Walk through provider, project, framework, deployment, and verification choices | [Start Here: guided wizard](start-here.md#minimal-command-path) |
 | Ask AIWG which path to use first | [Ask The Steward To Route You](first-success-ask-steward.md) |
@@ -56,6 +57,10 @@ Find the scenario that matches where you are right now.
 Read the one-paragraph version of each below, then click the one that sounds right.
 
 **Start Here** — You are new to AIWG and want one useful result. Tell the agent what you are trying to do, run `aiwg wizard` when you're ready for guided deployment, then ask the agent to verify the workspace is engaged.
+
+**Agentic Install Runbook** — You want one canonical setup document an agent can
+follow from prerequisites through deployment, verification, provider handoff,
+and common repair paths.
 
 **Ask The Steward To Route You** — You want AIWG to choose a path for your goal. Ask the steward in chat for one recommendation; the agent verifies it against AIWG's capability index before answering.
 

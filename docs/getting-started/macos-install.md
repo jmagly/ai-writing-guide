@@ -3,6 +3,9 @@
 Use this guide when installing AIWG on a Mac, especially if `npm install -g aiwg`
 fails with `EACCES` under `/usr/local/lib/node_modules`.
 
+For the complete agent/steward setup path after the Mac install succeeds, see
+the [Agentic Install Runbook](../agentic-install-runbook.md).
+
 Verified against the npm and Node.js documentation on 2026-06-02:
 
 - npm recommends installing Node.js and npm with a Node version manager such as

@@ -17,6 +17,9 @@ aiwg wizard
 aiwg status --probe --json
 ```
 
+For a full zero-to-running install path that agents can follow directly, see
+the [Agentic Install Runbook](../agentic-install-runbook.md).
+
 The provider-specific part is where you open the AI session and which deployed files the tool is expected to read.
 
 ## Pick Your AI Tool
@@ -71,5 +74,6 @@ Recommend one AIWG path for this project, one reason, and one fallback.
 ## Related
 
 - [Start Here](start-here.md)
+- [Agentic Install Runbook](../agentic-install-runbook.md)
 - [Verify AIWG Is Working](verify-aiwg-is-working.md)
 - [Scope And Recovery](scope-and-recovery.md)

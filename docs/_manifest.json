@@ -30,6 +30,7 @@
     "welcome",
     "getting-started",
     "getting-started/start-here",
+    "agentic-install-runbook",
     "getting-started/language-map",
     "getting-started/first-success-ask-steward",
     "getting-started/first-success-find-capability",
@@ -426,6 +427,13 @@
       "title": "Start Here",
       "summary": "Beginner path from plain-language goal to first useful AIWG result",
       "file": "getting-started/start-here.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "agentic-install-runbook",
+      "title": "Agentic Install Runbook",
+      "summary": "Canonical zero-to-running setup path for agents and stewards",
+      "file": "agentic-install-runbook.md",
       "parent": "getting-started"
     },
     {

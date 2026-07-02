@@ -15,6 +15,8 @@ aiwg use sdlc        # deploy SDLC framework
 
 macOS users: if npm fails with `EACCES` under `/usr/local/lib/node_modules`,
 use the [macOS Install Guide](docs/getting-started/macos-install.md).
+Agents and stewards setting up AIWG end-to-end should use the
+[Agentic Install Runbook](docs/agentic-install-runbook.md).
 
 [![npm version](https://img.shields.io/npm/v/aiwg/latest?label=npm&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
 [![npm downloads](https://img.shields.io/npm/dm/aiwg?color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
@@ -93,7 +95,10 @@ Around that core, AIWG ships agent-facing utilities for things the base platform
 
 The trade-off is real: when the same agent set loads into every session, context from one project can bleed into reasoning about another. Research (REF-720, *Lost in Multi-Turn Conversation*, MSR/Salesforce 2025) measured a 39% capability drop when this happens. The non-blocking project-isolation warning surfaces the trade-off at deploy time so the scope choice is informed. Neither scope is wrong; pick the one that fits the workflow.
 
-See `docs/cli-reference.md` (under `aiwg use` → "Scope models") for the per-provider details and the global-install rough-edge inventory.
+See the [Agentic Install Runbook](docs/agentic-install-runbook.md) for the
+zero-to-running setup path, and `docs/cli-reference.md` (under `aiwg use` →
+"Scope models") for the per-provider details and the global-install rough-edge
+inventory.
 
 ## Simple Building Blocks
 

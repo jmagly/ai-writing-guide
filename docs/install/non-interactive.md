@@ -2,6 +2,9 @@
 
 Guide for deploying AIWG frameworks in non-interactive environments: cloud-init, CI/CD pipelines, provisioning scripts, and automated setups.
 
+For the broader zero-to-running setup flow, including provider handoff and
+verification prompts, see the [Agentic Install Runbook](../agentic-install-runbook.md).
+
 ## The Problem
 
 `aiwg use` needs to be on PATH and expects an interactive TTY for first-time config. In automated environments (cloud-init, Docker build, CI), neither is guaranteed:
@@ -113,5 +116,6 @@ RUN npm install -g aiwg \
 
 ## Related
 
+- [Agentic Install Runbook](../agentic-install-runbook.md) — Canonical setup flow
 - [CLI Reference](../cli-reference.md) — Full command documentation
 - [agentic-sandbox loadouts](https://github.com/jmagly/agentic-sandbox) — VM provisioning that calls `aiwg use`

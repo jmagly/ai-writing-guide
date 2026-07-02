@@ -53,6 +53,9 @@ If you want to deploy a specific framework without the wizard:
 aiwg use sdlc
 ```
 
+If you want an agent or steward to handle the whole setup from prerequisites to
+provider handoff, use the [Agentic Install Runbook](../agentic-install-runbook.md).
+
 Then check that everything is engaged:
 
 ```bash
@@ -113,6 +116,7 @@ For more depth, see [Verify AIWG Is Working](verify-aiwg-is-working.md).
 - [Verify your setup](verify-aiwg-is-working.md)
 - [Provider handoff](provider-handoff.md)
 - [Scope and recovery](scope-and-recovery.md)
+- [Agentic install runbook](../agentic-install-runbook.md)
 
 ## Help And Contributions
 
