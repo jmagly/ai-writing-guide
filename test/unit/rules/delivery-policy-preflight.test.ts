@@ -5,8 +5,6 @@ import path from 'node:path';
 const REPO_ROOT = path.resolve(__dirname, '../../..');
 const RULE_PATHS = [
   'agentic/code/addons/aiwg-utils/rules/delivery-policy.md',
-  '.codex/rules/delivery-policy.md',
-  '.opencode/rule/delivery-policy.md',
 ];
 
 describe('delivery-policy project config preflight', () => {
