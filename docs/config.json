@@ -42,6 +42,7 @@
     "siteUrl": "https://docs.aiwg.io",
     "generateSitemap": true,
     "generateStaticPages": true,
+    "rootHtmlFallback": true,
     "generateRobotsTxt": true,
     "defaultChangeFreq": "weekly",
     "structuredData": {

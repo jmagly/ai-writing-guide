@@ -302,7 +302,7 @@
   },
   "devDependencies": {
     "@fortemi/core": "^2026.7.1",
-    "@pagenary/publisher": "^2026.6.19",
+    "@pagenary/publisher": "^2026.7.12",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.8.0",
     "@types/semver": "^7.7.1",
