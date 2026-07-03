@@ -164,6 +164,12 @@ jobs:
         # published in .gitea/keys/maintainers.asc (or .gitea/allowed_signers)
         # halts the workflow before npm sees the publish request. See
         # tools/ci/verify-signed-tag.sh and docs/contributing/versioning.md.
+        env:
+          # workflow_dispatch runs on the selected branch, so GitHub leaves
+          # GITHUB_REF as refs/heads/<branch> even after we detach to the
+          # requested tag. The shared verifier intentionally gates on
+          # GITHUB_REF, so provide the release tag ref explicitly.
+          GITHUB_REF: refs/tags/${{ steps.release_tag.outputs.release_tag }}
         run: bash tools/ci/verify-signed-tag.sh
 
       - name: Setup Node.js with npmjs.org registry
