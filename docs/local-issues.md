@@ -2,6 +2,11 @@
 
 AIWG can keep a project-local issue tracker under `.aiwg/issues/` for projects that do not use Gitea or GitHub as the working tracker. The local tracker is a Git-friendly store: issue bodies live in markdown files, event metadata lives in JSONL files, and indexes are rebuildable.
 
+`aiwg setup project --issue-provider local` configures `.aiwg/aiwg.config` to
+route issue operations to the local store by setting `remotes.issue_tracker` to
+`local`. It does not migrate external issues by itself; use the import/export
+commands below for explicit migration or synchronization work.
+
 ## Layout
 
 ```text

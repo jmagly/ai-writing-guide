@@ -516,6 +516,39 @@ export const initCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const setupCommand: Extension = {
+  id: 'setup',
+  type: 'skill',
+  name: 'Setup',
+  description: 'Guided project setup wizard for repo policy, tracker, delivery, and signing configuration',
+  version: '1.0.0',
+  capabilities: ['cli', 'project', 'config', 'setup', 'issues', 'delivery-policy'],
+  keywords: ['setup', 'wizard', 'repo policy', 'tracker', 'delivery', 'signing', 'remotes'],
+  category: 'project',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: [
+      'setup project',
+      'configure repo policy',
+      'configure issue tracker',
+      'configure delivery policy',
+    ],
+    commandHint: {
+      template: 'utility',
+      argumentHint: 'project [--yes] [--dry-run] [--target <dir>]',
+      allowedTools: ['Read', 'Write', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 export const issueCommand: Extension = {
   id: 'issue',
   type: 'skill',
@@ -3285,6 +3318,7 @@ export const commandDefinitions: Extension[] = [
   // Project
   newCommand,
   initCommand,
+  setupCommand,
   issueCommand,
   issueAuditCommand,
   addressIssuesCommand,

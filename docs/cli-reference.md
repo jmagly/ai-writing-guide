@@ -959,6 +959,45 @@ If a config already exists, the command exits without changes unless `--force` i
 
 ---
 
+### setup
+
+Configure project-level repository policy, issue tracker routing, delivery
+mode, and signing metadata without hand-editing `.aiwg/aiwg.config`.
+
+```bash
+aiwg setup project [--yes] [--dry-run] [--target <dir>]
+```
+
+Use `--dry-run` first to preview the config blocks that will change. The wizard
+detects Git remotes and proposes `remotes.primary`, `remotes.issue_tracker`,
+`remotes.ci`, secondary mirrors, tracker tooling, delivery policy, committer
+identity, and signing metadata. In non-interactive contexts it refuses to write
+unless `--yes` is present.
+
+Common overrides:
+
+```bash
+aiwg setup project --dry-run
+aiwg setup project --yes --providers claude,codex
+aiwg setup project --yes --issue-provider gitea --tracker-actor-login roctinam
+aiwg setup project --yes --delivery-mode direct --default-branch main
+aiwg setup project --yes --issue-provider local
+```
+
+`--issue-provider` accepts `gitea`, `github`, or `local`. Local mode writes
+`remotes.issue_tracker: "local"` and pairs with the `.aiwg/issues/` store
+managed by `aiwg issue init`. Self-hosted remotes that cannot be classified from
+their URL require an explicit provider choice or confirmation.
+
+The wizard validates the proposed repo/tracker/delivery/signing combination
+before writing and keeps manual `.aiwg/aiwg.config` editing supported for
+advanced cases.
+
+**Capabilities:** cli, project, config, setup, issues, delivery-policy
+**Tools:** Read, Write, Bash
+
+---
+
 ### run
 
 Two routes, dispatched by the first argument:
