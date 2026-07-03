@@ -2,12 +2,12 @@
 namespace: aiwg
 name: uninstall-plugin
 platforms: [all]
-description: Remove a previously installed Claude Code plugin and unregister it from the local plugin registry
+description: Remove a previously installed Claude Code marketplace plugin and unregister it from the local plugin registry
 ---
 
 # Uninstall Plugin
 
-You remove a previously installed Claude Code plugin. You remove deployed plugin files and unregister the plugin from the local plugin registry.
+You remove a previously installed Claude Code marketplace plugin. In AIWG vocabulary, the plugin is the delivery wrapper; the deployed files are its extension, addon, or framework payload. You remove deployed files and unregister the wrapper from the local plugin registry.
 
 ## Triggers
 
@@ -52,7 +52,7 @@ When triggered:
    aiwg uninstall-plugin sdlc@aiwg --keep-artifacts
    ```
 
-3. **Report the result** — list what was removed (agents, commands, skills, rules) and confirm the plugin is deregistered.
+3. **Report the result** — list what was removed (agents, commands, skills, rules) and confirm the marketplace wrapper is deregistered.
 
 ## What Gets Removed
 
@@ -62,15 +62,15 @@ When triggered:
 | Command files | Files in `.claude/commands/` that belong to the plugin |
 | Skill files | Files in `.claude/skills/` that belong to the plugin |
 | Rule files | Files in `.claude/rules/` that belong to the plugin |
-| Registry entry | Plugin entry removed from local plugin registry |
+| Registry entry | Delivery-wrapper entry removed from local plugin registry |
 
 ## What Is NOT Removed
 
 | Preserved | Reason |
 |-----------|--------|
-| `.aiwg/` project artifacts | These are your project output, not plugin files |
-| Shared skills used by other plugins | Removed only when last dependent plugin is removed |
-| Custom modifications to plugin files | Files modified after install are flagged, not deleted |
+| `.aiwg/` project artifacts | These are your project output, not marketplace package files |
+| Shared skills used by other packages | Removed only when the last dependent package is removed |
+| Custom modifications to deployed package files | Files modified after install are flagged, not deleted |
 
 ## Examples
 

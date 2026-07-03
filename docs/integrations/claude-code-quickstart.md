@@ -178,9 +178,9 @@ See [Al Guide](../ralph-guide.md) for full documentation.
 
 ---
 
-## Available Plugins
+## Available Marketplace Packages
 
-| Plugin | Description | Install |
+| Package | Description | Install |
 |--------|-------------|---------|
 | `sdlc@aiwg` | Full SDLC framework | `/plugin install sdlc@aiwg` |
 | `marketing@aiwg` | Full marketing framework | `/plugin install marketing@aiwg` |

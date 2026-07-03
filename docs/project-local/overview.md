@@ -1,12 +1,13 @@
 ---
 title: Project-Local Customization
-description: Author project-specific extensions, addons, frameworks, and plugins under .aiwg/ that deploy alongside upstream.
+description: Author project-specific extensions, addons, and frameworks under .aiwg/ that deploy alongside upstream.
 ---
 
 # Project-Local Customization
 
-> **Status**: Shipped in 2026.5.x. The `.aiwg/{extensions,addons,frameworks,plugins}/<name>/` layout
+> **Status**: Shipped in 2026.5.x. The `.aiwg/{extensions,addons,frameworks}/<name>/` content layout
 > superseded the original single-directory `.aiwg/.project/` proposal (#750 → epic [#1033](https://git.integrolabs.net/roctinam/aiwg/issues/1033)).
+> `.aiwg/plugins/<name>/` remains supported for marketplace delivery wrappers.
 
 ## Canonical docs
 

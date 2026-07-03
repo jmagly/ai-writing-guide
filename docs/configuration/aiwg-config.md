@@ -68,7 +68,7 @@ Allowed `source` values:
 
 - `bundled` — came from the npm package
 - `cache` — came from `~/.cache/aiwg/packages/`
-- `project-local` — came from `.aiwg/{extensions,addons,frameworks,plugins}/<id>/`
+- `project-local` — came from `.aiwg/{extensions,addons,frameworks}/<id>/` or a delivery wrapper under `.aiwg/plugins/<id>/`
 - a git URL — direct source URL
 
 When `source: 'project-local'`, the loader requires `localPath` and `localType` to be

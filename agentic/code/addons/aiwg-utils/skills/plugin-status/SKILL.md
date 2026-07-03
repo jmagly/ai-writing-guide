@@ -2,12 +2,12 @@
 namespace: aiwg
 name: plugin-status
 platforms: [all]
-description: List installed Claude Code plugins with version, install date, and enabled status
+description: List installed Claude Code marketplace plugins with version, install date, and enabled status
 ---
 
 # Plugin Status
 
-You list all installed Claude Code plugins with their version, install date, and enabled status.
+You list installed Claude Code marketplace plugins with their version, install date, and enabled status. In AIWG vocabulary, these are delivery wrappers around extension, addon, or framework payloads.
 
 ## Triggers
 
@@ -55,12 +55,12 @@ When triggered:
    aiwg plugin-status --json
    ```
 
-3. **Report the result** — show plugin name, version, install date, enabled status, and update availability.
+3. **Report the result** — show package name, version, install date, enabled status, and update availability.
 
 ## Output Format
 
 ```
-Installed Plugins (2)
+Installed Marketplace Packages (2)
 
   sdlc@aiwg
     Version:     2026.3.15

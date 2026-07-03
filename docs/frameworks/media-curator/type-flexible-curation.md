@@ -44,10 +44,11 @@ tooling that fits the observed need:
 3. Wrap the tool as a skill or small helper that preserves the generic contract:
    input discovery/acquisition, quality assessment, metadata/provenance,
    integrity, and export or handoff.
-4. Keep type-specific fields in that specialized skill or plugin. Do not move
+4. Keep type-specific fields in that specialized skill or bundle. Do not move
    them into the generic intake unless they apply across asset classes.
 5. If the workflow is project-specific or experimental, author it as a
-   project-local bundle under `.aiwg/{extensions,addons,frameworks,plugins}/`
+   project-local content bundle under `.aiwg/{extensions,addons,frameworks}/`
+   or as a marketplace delivery wrapper under `.aiwg/plugins/`
    and promote upstream only after the contract stabilizes.
 
 ## Consequences

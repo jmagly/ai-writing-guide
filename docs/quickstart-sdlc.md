@@ -6,7 +6,7 @@ Build software with AI-assisted lifecycle management: Inception → Elaboration 
 
 ## Install & Deploy
 
-### Option A: Claude Code Plugin (Recommended)
+### Option A: Claude Code Marketplace (Recommended)
 
 Native Claude Code integration - no npm required:
 

@@ -367,7 +367,7 @@ Before starting any orchestration session > 30 minutes:
 
 ## Project-Local Customization
 
-Per-project rules, skills, agents, addons, or frameworks live under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/`. They're discovered automatically by `aiwg use` and deploy alongside upstream artifacts. The bundle layout is **byte-identical** in shape to its upstream form, so `aiwg promote` is a hash-verified copy with zero rewrite ([identical-form ADR](.aiwg/architecture/adr-identical-form-portability.md)).
+Per-project content bundles live under `.aiwg/{extensions,addons,frameworks}/<name>/`. Use `.aiwg/plugins/<name>/` only when wrapping an extension, addon, or framework for marketplace delivery. They're discovered automatically by `aiwg use` and deploy alongside upstream artifacts. The bundle layout is **byte-identical** in shape to its upstream form, so `aiwg promote` is a hash-verified copy with zero rewrite ([identical-form ADR](.aiwg/architecture/adr-identical-form-portability.md)).
 
 ### CLI commands
 
@@ -377,7 +377,7 @@ aiwg new-bundle <name> --type extension --starter rule
 aiwg new-extension <name>      # alias: --type extension
 aiwg new-addon <name>          # alias: --type addon
 aiwg new-framework <name>      # alias: --type framework
-aiwg new-plugin <name>         # alias: --type plugin
+aiwg new-plugin <name>         # alias: --type plugin; marketplace delivery wrapper
 
 # Deploy / inspect
 aiwg use <name>                # deploy a single project-local bundle
@@ -580,4 +580,3 @@ aiwg hook-enable
 - **Issues**: https://github.com/jmagly/aiwg/issues
 - **Discussions**: https://github.com/jmagly/aiwg/discussions
 - **Documentation**: https://github.com/jmagly/aiwg/blob/main/README.md
-

@@ -65,9 +65,9 @@ Route these intents directly:
 
 | User intent | Primary route | Notes |
 |---|---|---|
-| Create a repo/project-level skill | `aiwg new-bundle <name> --starter skill` or `aiwg new-extension <name> --starter skill` | Creates source under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/`; deploy with `aiwg use <name>`. |
+| Create a repo/project-level skill | `aiwg new-bundle <name> --starter skill` or `aiwg new-extension <name> --starter skill` | Creates content source under `.aiwg/{extensions,addons,frameworks}/<name>/`; deploy with `aiwg use <name>`. |
 | Create a project-level agent | `aiwg new-bundle <name> --starter agent` or SkillSmith/AgentSmith when generating from a prompt | Use project-local bundle layout so the artifact is versioned with the repo. |
-| Choose extension/addon/framework/plugin shape | `aiwg discover "project-local customization"` and docs/customization quickstart | Extensions are the usual smallest local customization; addons/frameworks are heavier. |
+| Choose extension/addon/framework shape | `aiwg discover "project-local customization"` and docs/customization quickstart | Extensions are the usual smallest local customization; addons/frameworks are heavier. Plugins are marketplace delivery wrappers. |
 | Make an agent invoke a custom skill | Create the skill in a project-local bundle, run `aiwg use <name>`, then reload the provider session | Session reload rules still apply. |
 
 Canonical docs: `docs/customization/project-local-quickstart.md`, `docs/project-local/overview.md`, and `docs/project-local/manifest-reference.md`. Mention that project-local artifacts are trusted repo code and should be reviewed before deploy.

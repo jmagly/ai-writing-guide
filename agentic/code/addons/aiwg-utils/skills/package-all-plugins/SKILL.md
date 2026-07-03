@@ -2,12 +2,12 @@
 namespace: aiwg
 name: package-all-plugins
 platforms: [all]
-description: Batch package every AIWG/Codex plugin in the workspace into distributable plugin archives — runs package-plugin for all plugins at once
+description: Batch package every AIWG/Codex marketplace wrapper in the workspace into distributable plugin archives — runs package-plugin for all wrappers at once
 ---
 
 # Package All Plugins
 
-You run `package-plugin` for every plugin in the workspace in a single batch operation. This is **plugin packaging** — it produces AIWG/Codex plugin archives. It is **not** native/language-toolchain release packaging (Rust crates, `.deb`/`.rpm`, container images, GHCR, or release-asset checksums). For native or full release-pipeline work use `flow-release` / `release-publication-verify`, not this skill.
+You run `package-plugin` for every marketplace wrapper in the workspace in a single batch operation. This is **plugin packaging** — it produces AIWG/Codex plugin archives that wrap extension, addon, or framework payloads. It is **not** native/language-toolchain release packaging (Rust crates, `.deb`/`.rpm`, container images, GHCR, or release-asset checksums). For native or full release-pipeline work use `flow-release` / `release-publication-verify`, not this skill.
 
 ## Triggers
 
@@ -61,7 +61,7 @@ When triggered:
    aiwg package-all-plugins --bump patch
    ```
 
-3. **Report the result** — list each plugin with its status (packaged, failed, skipped), total count, and any errors.
+3. **Report the result** — list each marketplace wrapper with its status (packaged, failed, skipped), total count, and any errors.
 
 ## Output Format
 
@@ -83,7 +83,7 @@ By default (`--abort-on-error`), the batch stops at the first failure and report
 
 ## Relationship to `package-plugin`
 
-`package-all-plugins` is a thin loop over `package-plugin`. Each plugin runs through the same validation and packaging logic as a single `package-plugin` call. Flags like `--dry-run`, `--publish`, and `--bump` are forwarded to each plugin invocation.
+`package-all-plugins` is a thin loop over `package-plugin`. Each marketplace wrapper runs through the same validation and packaging logic as a single `package-plugin` call. Flags like `--dry-run`, `--publish`, and `--bump` are forwarded to each invocation.
 
 ## Examples
 

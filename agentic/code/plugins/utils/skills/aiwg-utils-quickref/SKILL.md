@@ -204,7 +204,7 @@ aiwg discover "scaffold a project"             # → new-project (+ new-bundle f
 
 ### Project-local extensions (pilot → promote)
 
-AIWG supports authoring rules/skills/agents per-project under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/` — pilot here, promote upstream when mature.
+AIWG supports authoring rules/skills/agents per-project under `.aiwg/{extensions,addons,frameworks}/<name>/` — pilot here, promote upstream when mature. Use `.aiwg/plugins/<name>/` only for marketplace delivery wrappers.
 
 ```bash
 aiwg new-bundle <name>                         # scaffold; auto-builds project graph

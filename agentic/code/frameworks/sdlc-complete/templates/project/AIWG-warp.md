@@ -17,7 +17,7 @@ SDLC Complete — agents, commands, skills, and rules for full lifecycle coverag
 
 ## Customize Per Project
 
-Author project-specific rules, skills, agents, addons, or frameworks under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/`. Discovered automatically by `aiwg use`.
+Author project-specific content bundles under `.aiwg/{extensions,addons,frameworks}/<name>/`. Use `.aiwg/plugins/<name>/` only for marketplace delivery wrappers. Discovered automatically by `aiwg use`.
 
 ```bash
 aiwg new-bundle my-rules --type extension --starter rule

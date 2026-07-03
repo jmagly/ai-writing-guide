@@ -6,7 +6,7 @@
 
 **Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 6 more platforms**
 
-200+ agents, 67+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks + training marketplace plugin, 27 addons. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
+200+ agents, 67+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 27 addons, and a training marketplace package. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
 
 ```bash
 npm i -g aiwg        # install globally
@@ -453,7 +453,7 @@ The orchestration pattern: **Primary Author → Parallel Reviewers → Synthesiz
 - **35 enforcement rules** — anti-laziness detection, token security, citation integrity, executable feedback, failure mitigation across 6 LLM archetypes
 - **334 artifact templates** — progressive disclosure templates for requirements, architecture, testing, security, deployment, and more
 - **8 platform support** — deploy to Claude Code, Copilot, Cursor, Warp, Factory AI, OpenCode, Codex, and Windsurf
-- **8 core frameworks + training marketplace plugin** — SDLC, Digital Forensics, Marketing Operations, Research Management, Media Curation, Ops Infrastructure, Knowledge Base, Security Engineering, plus [`aiwg-training`](https://github.com/jmagly/aiwg-training) for fine-tuning dataset curation (corpus-to-dataset pipeline with DPO/KTO/ORPO/SimPO export)
+- **8 core frameworks + training marketplace package** — SDLC, Digital Forensics, Marketing Operations, Research Management, Media Curation, Ops Infrastructure, Knowledge Base, Security Engineering, plus [`aiwg-training`](https://github.com/jmagly/aiwg-training) for fine-tuning dataset curation (corpus-to-dataset pipeline with DPO/KTO/ORPO/SimPO export)
 - **27 addons** — semantic-memory kernel, llm-wiki (Obsidian-native knowledge base), RLM recursive decomposition, voice profiles, testing quality, mutation testing, UAT automation, and more
 - **Agent Loop** — iterative task execution with automatic error recovery and crash resilience (6-8 hour sessions)
 - **RLM addon** — recursive context decomposition for processing 10M+ tokens via sub-agent delegation
@@ -503,8 +503,9 @@ aiwg doctor
 ### Customize Without Forking
 
 Author project-specific rules, skills, agents, addons, or frameworks
-directly under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/`.
-No fork, no rebuild. Discovered automatically by `aiwg use`.
+directly under `.aiwg/{extensions,addons,frameworks}/<name>/`. Use
+`.aiwg/plugins/<name>/` only when you are wrapping a bundle for marketplace
+delivery. No fork, no rebuild. Discovered automatically by `aiwg use`.
 
 ```bash
 aiwg new-bundle my-team-rules --type extension --starter rule
@@ -519,7 +520,7 @@ The bundle is **byte-identical** in shape to its upstream form, so
 [customization guide](docs/customization/README.md) for the three paths
 (project-local, fork, corpus).
 
-### Claude Code Plugin (Alternative)
+### Claude Code Marketplace (Alternative)
 
 ```bash
 /plugin marketplace add jmagly/ai-writing-guide
@@ -1275,7 +1276,7 @@ All 8 platforms receive agents, commands, skills, and rules. Deployment adapts t
 | **Workspace** | `status`, `migrate-workspace`, `rollback-workspace` | Workspace health and migration |
 | **MCP** | `mcp serve`, `mcp install`, `mcp info` | Model Context Protocol server |
 | **Catalog** | `catalog list`, `catalog info`, `catalog search` | Browse available extensions |
-| **Plugins** | `install-plugin`, `uninstall-plugin`, `plugin-status`, `package-plugin`, `package-all-plugins` | Plugin management |
+| **Marketplace packaging** | `install-plugin`, `uninstall-plugin`, `plugin-status`, `package-plugin`, `package-all-plugins` | Install and package delivery wrappers |
 | **Scaffolding** | `add-agent`, `add-command`, `add-skill`, `add-template`, `scaffold-addon`, `scaffold-extension`, `scaffold-framework` | Create new extensions |
 | **Ralph** | `ralph`, `ralph-status`, `ralph-abort`, `ralph-resume`, `ralph-external`, `ralph-memory`, `ralph-config` | Iterative execution engine |
 | **Metrics** | `cost-report`, `cost-history`, `metrics-tokens` | Token usage and cost tracking |

@@ -6,11 +6,11 @@
 
 ## Overview
 
-This guide documents the AIWG plugin marketplace distribution system for Claude Code. The marketplace provides pre-packaged, versioned plugins that users can install with a single command.
+This guide documents the AIWG plugin marketplace distribution system for Claude Code. In AIWG vocabulary, a plugin is a marketplace delivery wrapper around an extension, addon, or framework payload. The marketplace provides pre-packaged, versioned wrappers that users can install with a single command.
 
 ## AIWG Plugin Registry
 
-The AIWG marketplace hosts 4 official plugins:
+The AIWG marketplace hosts 4 official packages:
 
 | Plugin | ID | Description | Size | Agents | Commands |
 |--------|-----|-------------|------|--------|----------|
@@ -66,7 +66,7 @@ Check installed plugins:
 /plugin info sdlc@aiwg
 ```
 
-Expected output:
+Expected Claude Code output:
 ```
 Installed Plugins:
   ✓ sdlc@aiwg v2026.2.0 (35 agents, 40 commands)
@@ -253,7 +253,7 @@ Problem: Builds break due to plugin updates.
 Solution:
 ```bash
 # In CI config
-- name: Install plugins
+- name: Install marketplace packages
   run: |
     /plugin install sdlc@aiwg --sha ${{ vars.AIWG_SDLC_SHA }}
     /plugin config set auto_update false
@@ -753,7 +753,7 @@ curl -I https://github.com/jmagly/aiwg
 - @.claude/rules/versioning.md - CalVer versioning rules
 - @docs/cli-reference.md - CLI command reference
 - @CLAUDE.md - Project-level installation guide
-- @agentic/code/frameworks/sdlc-complete/manifest.json - Plugin manifest example
+- @agentic/code/frameworks/sdlc-complete/manifest.json - Manifest example
 - Issue #282 - Plugin marketplace verification
 
 ---

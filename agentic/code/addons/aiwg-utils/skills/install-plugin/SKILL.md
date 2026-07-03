@@ -2,12 +2,12 @@
 namespace: aiwg
 name: install-plugin
 platforms: [all]
-description: Install plugins into Claude Code from the AIWG marketplace with registry lookup, download, and local deployment
+description: Install Claude Code marketplace plugins with registry lookup, download, and local deployment
 ---
 
 # Install Plugin
 
-You install a plugin into Claude Code from the AIWG marketplace. Plugins are pre-packaged bundles of agents, skills, commands, and rules. You handle registry lookup, download, and local deployment.
+You install a Claude Code marketplace plugin. In AIWG vocabulary, a plugin is a delivery wrapper around an extension, addon, or framework, not a separate content type. You handle registry lookup, download, and local deployment.
 
 ## Triggers
 
@@ -57,11 +57,11 @@ When triggered:
    aiwg install-plugin sdlc@aiwg --force
    ```
 
-3. **Report the result** — confirm which agents, skills, commands, and rules were installed and where.
+3. **Report the result** — name the installed marketplace wrapper and confirm which agents, skills, commands, and rules were deployed and where.
 
-## Available Plugins (AIWG Marketplace)
+## Available Marketplace Packages
 
-| Plugin | Contents | Use Case |
+| Package | Payload | Use Case |
 |--------|----------|----------|
 | `sdlc@aiwg` | 58 agents, 42 commands, SDLC workflows | Full software development lifecycle |
 | `voice@aiwg` | Voice profiles, soul system | Content style and persona management |
@@ -70,12 +70,12 @@ When triggered:
 
 ## What Happens on Install
 
-1. Plugin manifest fetched from marketplace
+1. Delivery manifest fetched from marketplace
 2. Agents deployed to `.claude/agents/`
 3. Commands deployed to `.claude/commands/`
 4. Skills deployed to `.claude/skills/`
 5. Rules deployed to `.claude/rules/`
-6. Plugin registered in local plugin registry
+6. Delivery wrapper registered in local plugin registry
 
 ## Examples
 

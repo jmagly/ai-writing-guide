@@ -2,12 +2,12 @@
 namespace: aiwg
 name: package-plugin
 platforms: [all]
-description: Bundle a single plugin into a distributable marketplace archive, validating metadata and optionally publishing
+description: Bundle a single marketplace delivery wrapper into a distributable archive, validating metadata and optionally publishing
 ---
 
 # Package Plugin
 
-You bundle a single plugin into a distributable package for the AIWG marketplace. You validate metadata, create the package archive, and optionally publish to the registry.
+You bundle a single marketplace delivery wrapper for the AIWG marketplace. In AIWG vocabulary, the plugin layer packages an extension, addon, or framework payload for distribution. You validate metadata, create the package archive, and optionally publish to the registry.
 
 ## Triggers
 
@@ -34,7 +34,7 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 When triggered:
 
 1. **Extract intent**:
-   - Which plugin is being packaged?
+   - Which delivery wrapper is being packaged?
    - Should it be published after packaging, or just archived locally?
    - Is a version bump needed?
    - Is this a validation dry run?
@@ -42,7 +42,7 @@ When triggered:
 2. **Run the appropriate command**:
 
    ```bash
-   # Package a plugin (creates archive, no publish)
+   # Package a marketplace wrapper (creates archive, no publish)
    aiwg package-plugin sdlc
    aiwg package-plugin voice
    aiwg package-plugin marketing
@@ -65,7 +65,7 @@ When triggered:
 
 ## What the Package Contains
 
-A plugin package archive (`.aiwg-plugin.tar.gz`) includes:
+A plugin package archive (`.aiwg-plugin.tar.gz`) is a delivery wrapper. It includes the manifest plus the payload files being distributed:
 
 | Contents | Path in Archive |
 |----------|----------------|
@@ -73,7 +73,7 @@ A plugin package archive (`.aiwg-plugin.tar.gz`) includes:
 | Command definitions | `commands/` |
 | Skill definitions | `skills/` |
 | Rule definitions | `rules/` |
-| Plugin manifest | `plugin.json` |
+| Delivery manifest | `plugin.json` |
 | Changelog | `CHANGELOG.md` (if present) |
 
 Files excluded from packages: `.aiwg/working/`, test fixtures, development-only configs.
@@ -84,7 +84,7 @@ Before creating the archive, the command automatically runs:
 
 1. `aiwg validate-metadata` — all extension definitions must pass
 2. Version format check — must be valid CalVer
-3. Manifest completeness — `id`, `name`, `description`, `version` required
+3. Delivery manifest completeness — `id`, `name`, `description`, `version` required
 
 Packaging fails if any validation step fails.
 

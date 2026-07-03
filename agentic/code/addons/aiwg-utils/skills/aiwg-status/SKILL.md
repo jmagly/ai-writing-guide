@@ -52,7 +52,7 @@ When triggered:
 3. **What the dashboard shows**:
    - Installed frameworks and addons from `.aiwg/frameworks/registry.json` (name, version, install date)
    - Deployed provider artifact directories (e.g., `.claude/`, `.github/`, `.cursor/`)
-   - Project-local bundles under `.aiwg/{extensions,addons,frameworks,plugins}/`
+   - Project-local content bundles under `.aiwg/{extensions,addons,frameworks}/` and delivery wrappers under `.aiwg/plugins/`
    - `.aiwg/` artifact counts per subdirectory (`requirements/`: 4 files, `architecture/`: 2 files, etc.)
    - Last sync timestamp
    - Overall health indicator (OK / WARN / ERROR)

@@ -35,9 +35,10 @@ so `aiwg promote` is a copy, not a migration.
 ## Discovery
 
 `aiwg use`, `aiwg doctor`, and `aiwg list --project-local` all run the
-same discovery scanner. It walks `.aiwg/{extensions,addons,frameworks,plugins}/`,
-validates each `manifest.json` against the canonical Zod schema, and
-returns structured results.
+same discovery scanner. It walks `.aiwg/{extensions,addons,frameworks}/`
+for content bundles and `.aiwg/plugins/` for marketplace delivery wrappers,
+validates each `manifest.json` against the canonical Zod schema, and returns
+structured results.
 
 What discovery enforces:
 - Manifest matches the JSON Schema (kebab-case ids, ≤ 64 KB, ≤ 200

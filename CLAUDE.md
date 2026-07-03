@@ -111,13 +111,13 @@ All 10 providers receive all 4 artifact types (agents, commands, skills, rules).
 
 ## Installation
 
-### Claude Code Plugin (Recommended)
+### Claude Code Marketplace (Recommended)
 
 ```bash
 # Add AIWG marketplace (one-time)
 /plugin marketplace add jmagly/ai-writing-guide
 
-# Install plugins (13 published in marketplace.json)
+# Install marketplace packages (13 published in marketplace.json)
 /plugin install sdlc@aiwg                  # Full SDLC framework
 /plugin install marketing@aiwg             # Marketing operations framework
 /plugin install forensics@aiwg             # Digital forensics & incident response
@@ -221,7 +221,7 @@ AIWG uses a unified extension system for all extension types:
 | **Catalog** (1) | catalog (list, info, search) |
 | **Toolsmith** (1) | runtime-info |
 | **Utility** (3) | prefill-cards, contribute-start, validate-metadata |
-| **Plugin** (5) | install-plugin, uninstall-plugin, plugin-status, package-plugin, package-all-plugins |
+| **Marketplace packaging** (5) | install-plugin, uninstall-plugin, plugin-status, package-plugin, package-all-plugins |
 | **Scaffolding** (7) | add-agent, add-command, add-skill, add-template, scaffold-addon, scaffold-extension, scaffold-framework |
 | **Orchestration** (1) | mc (start, dispatch, status, watch, abort, pause, resume, stop, list) |
 | **Ralph** (8) | ralph, ralph-status, ralph-abort, ralph-resume, ralph-attach, agent-loop-ext, ralph-memory, ralph-config |
@@ -249,10 +249,11 @@ aiwg list                    # List installed frameworks
 aiwg remove sdlc             # Remove framework
 aiwg remove my-bundle        # Remove project-local bundle (source preserved; --force, --dry-run supported)
 
-# Project-local bundles (.aiwg/{extensions,addons,frameworks,plugins}/<name>/)
+# Project-local content bundles (.aiwg/{extensions,addons,frameworks}/<name>/)
 aiwg new-bundle my-rules --type extension --starter rule    # Scaffold project-local bundle
 aiwg new-extension my-ext                                   # Alias: --type extension implied
 aiwg new-addon my-pack                                      # Alias: --type addon implied
+aiwg new-plugin my-wrapper                                  # Marketplace delivery wrapper only
 aiwg use my-rules                                           # Deploy a single project-local bundle
 aiwg list --project-local                                   # Show project-local inventory
 aiwg doctor --project-local                                 # Health check (counts, validation, drift, matrix)

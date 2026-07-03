@@ -1,8 +1,9 @@
 # Project-Local Bundle Examples
 
-Reference projects for the `.aiwg/{extensions,addons,frameworks,plugins}/<name>/`
-layout. Each example here is shaped so you can copy it directly into
-your own project's `.aiwg/` directory.
+Reference projects for the `.aiwg/{extensions,addons,frameworks}/<name>/`
+content layout and `.aiwg/plugins/<name>/` marketplace-wrapper layout. Each
+example here is shaped so you can copy it directly into your own project's
+`.aiwg/` directory.
 
 ## Generate an example interactively
 

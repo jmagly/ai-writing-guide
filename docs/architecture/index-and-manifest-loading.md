@@ -75,7 +75,7 @@ First module wins on name collisions among modules. Built-ins are never overridd
 
 ### Bundle manifests (project-local artifacts)
 
-A separate Zod schema in `src/extensions/manifest.ts` validates project-local bundles under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/manifest.json`. This is the **bundle** manifest (a directory of artifacts), distinct from the **framework** `manifest.json` consumed by the graph-config loader above. Limits and rules:
+A separate Zod schema in `src/extensions/manifest.ts` validates project-local content bundles under `.aiwg/{extensions,addons,frameworks}/<name>/manifest.json` and marketplace delivery wrappers under `.aiwg/plugins/<name>/manifest.json`. This is the **bundle** manifest (a directory of artifacts), distinct from the **framework** `manifest.json` consumed by the graph-config loader above. Limits and rules:
 
 | Constant | Value | Purpose |
 |---|---|---|
@@ -203,7 +203,7 @@ Both `discover` and `show` return paths anchored to `$AIWG_ROOT` for framework a
 | `aiwg discover` returns stale results | `aiwg index stats --graph <name>` to confirm timestamps; `aiwg index build --graph <name> --force` if recent edits aren't reflected |
 | Discover returns nothing for a known skill | Confirm the skill's scanDir is in the graph's `scanDirs`; check `agentic/code/<framework>/manifest.json` `index.graphs` if a custom graph is expected |
 | Framework graph empty after first install | `aiwg index build --graph framework` — confirm `~/.local/share/aiwg/index/framework/metadata.json` is non-empty |
-| Project-local bundle not appearing | `aiwg doctor --project-local` (validates manifest); confirm bundle is under `.aiwg/{extensions,addons,frameworks,plugins}/<name>/` |
+| Project-local bundle not appearing | `aiwg doctor --project-local` (validates manifest); confirm content bundles are under `.aiwg/{extensions,addons,frameworks}/<name>/` and marketplace wrappers are under `.aiwg/plugins/<name>/` |
 | Safety-critical denylist hit | `src/extensions/upstream-registry.ts` — confirm upstream `manifest.json` carries `safety-critical: true` and the project-local manifest lacks the required `overrides:` |
 
 ## See also
