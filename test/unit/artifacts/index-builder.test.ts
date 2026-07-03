@@ -24,7 +24,7 @@ describe('loadUserGraphConfigs', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
     // Clean up any user-defined graphs added to GRAPH_CONFIGS
     for (const key of Object.keys(GRAPH_CONFIGS)) {
-      if (!['framework', 'project', 'codebase'].includes(key)) {
+      if (!['framework', 'project', 'codebase', 'source'].includes(key)) {
         delete GRAPH_CONFIGS[key];
       }
     }
@@ -86,7 +86,7 @@ describe('loadModuleGraphConfigs', () => {
   afterEach(() => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
     for (const key of Object.keys(GRAPH_CONFIGS)) {
-      if (!['framework', 'project', 'codebase'].includes(key)) {
+      if (!['framework', 'project', 'codebase', 'source'].includes(key)) {
         delete GRAPH_CONFIGS[key];
       }
     }
@@ -210,7 +210,7 @@ describe('loadUserGraphConfigs with module graphs', () => {
   afterEach(() => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
     for (const key of Object.keys(GRAPH_CONFIGS)) {
-      if (!['framework', 'project', 'codebase'].includes(key)) {
+      if (!['framework', 'project', 'codebase', 'source'].includes(key)) {
         delete GRAPH_CONFIGS[key];
       }
     }
@@ -683,7 +683,7 @@ Depends on @.aiwg/requirements/UC-001.md
     afterEach(() => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
       for (const key of Object.keys(GRAPH_CONFIGS)) {
-        if (!['framework', 'project', 'codebase'].includes(key)) {
+        if (!['framework', 'project', 'codebase', 'source'].includes(key)) {
           delete GRAPH_CONFIGS[key];
         }
       }

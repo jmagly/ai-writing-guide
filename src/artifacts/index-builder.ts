@@ -577,6 +577,20 @@ export async function buildIndex(
   // effectiveOutputCwd is used for backward-compat loadMetadataIndex calls
   const effectiveOutputCwd = outputDir ?? cwd;
 
+  if (graph === 'source') {
+    const { buildSourceGraphIndex } = await import('./source-graph.js');
+    await buildSourceGraphIndex({
+      cwd,
+      outputDir: indexOutputDir,
+      effectiveOutputCwd,
+      verbose,
+    });
+    const buildTimeMs = Date.now() - startTime;
+    console.log(`Source graph built in ${buildTimeMs}ms`);
+    console.log(`  Output: ${INDEX_DIR}/source/`);
+    return;
+  }
+
   // Load existing index for incremental updates
   const existingIndex = force ? null : loadGraphIndexFile<ArtifactIndex>(effectiveOutputCwd, 'metadata.json', graph);
   const existingEntries = existingIndex?.entries ?? {};

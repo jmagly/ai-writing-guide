@@ -411,7 +411,7 @@ No citations found.
       fs.rmSync(tmpDir, { recursive: true, force: true });
       // Clean up any user-defined graphs
       for (const key of Object.keys(GRAPH_CONFIGS)) {
-        if (!['framework', 'project', 'codebase'].includes(key)) {
+        if (!['framework', 'project', 'codebase', 'source'].includes(key)) {
           delete GRAPH_CONFIGS[key];
         }
       }

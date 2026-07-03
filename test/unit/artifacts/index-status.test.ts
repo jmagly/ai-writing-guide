@@ -38,18 +38,19 @@ describe('collectIndexStatus (#1624)', () => {
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
-  it('enumerates the three built-in graphs and flags missing durable indices', () => {
+  it('enumerates the built-in graphs and flags missing durable indices', () => {
     const report = collectIndexStatus(tmp);
     const names = report.graphs.map((g) => g.name).sort();
-    expect(names).toEqual(['codebase', 'framework', 'project']);
+    expect(names).toEqual(['codebase', 'framework', 'project', 'source']);
     // Nothing built in a fresh workspace.
     expect(report.summary.built).toBe(0);
     // project + codebase opt into default builds → flagged missing; framework
-    // does not (defaultBuild:false) → not flagged.
+    // and source do not (defaultBuild:false) → not flagged.
     const byName = Object.fromEntries(report.graphs.map((g) => [g.name, g]));
     expect(byName.project.missing).toBe(true);
     expect(byName.codebase.missing).toBe(true);
     expect(byName.framework.missing).toBe(false);
+    expect(byName.source.missing).toBe(false);
     expect(byName.project.origin).toBe('builtin');
   });
 

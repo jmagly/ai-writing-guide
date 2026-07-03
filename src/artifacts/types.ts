@@ -296,7 +296,7 @@ export const INDEX_VERSION = '1.0.0';
  *
  * @implements #421 #426
  */
-export type BuiltinGraphType = 'framework' | 'project' | 'codebase';
+export type BuiltinGraphType = 'framework' | 'project' | 'codebase' | 'source';
 
 /**
  * Any graph identifier — built-in or user-defined via .aiwg/config.yaml
@@ -481,6 +481,13 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
     extensions: ['.ts', '.mts', '.js', '.mjs', '.json', '.yaml'],
     shared: false,
     defaultBuild: true,
+  },
+  source: {
+    type: 'source',
+    scanDirs: ['src', 'tools', 'test', 'config', 'bin', 'apps', 'vscode-extension'],
+    extensions: ['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs'],
+    shared: false,
+    defaultBuild: false,
   },
 };
 

@@ -31,6 +31,7 @@ export type AiwgFortemiRecordType =
   | "aiwg.kb.page"
   | "aiwg.memory.entry"
   | "aiwg.issue"
+  | `aiwg.source.${string}`
   | `aiwg.project.${string}`;
 
 export type AiwgFortemiExportSchemaVersion = "v1" | "v2";
@@ -280,6 +281,9 @@ function relationshipsForEntry(
       source_path: edge.path,
       target_path: edge.path,
       direction: prefix,
+      metadata: Object.fromEntries(
+        Object.entries(edge).filter(([key]) => key !== "path" && key !== "type"),
+      ),
     });
   };
 
@@ -342,6 +346,20 @@ function recordTypeForEntry(
       return "aiwg.memory.entry";
     case "issue":
       return "aiwg.issue";
+    case "source.file":
+      return "aiwg.source.file";
+    case "source.module":
+      return "aiwg.source.module";
+    case "source.package":
+      return "aiwg.source.package";
+    case "source.builtin":
+      return "aiwg.source.builtin";
+    case "source.asset":
+      return "aiwg.source.asset";
+    case "source.unresolved":
+      return "aiwg.source.unresolved";
+    case "source.entrypoint":
+      return "aiwg.source.entrypoint";
     default:
       if (
         pathText.includes("/research/references/") ||

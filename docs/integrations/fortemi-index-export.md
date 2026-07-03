@@ -13,6 +13,8 @@ default AIWG artifact search/traversal paths:
 ```bash
 aiwg index export --format fortemi --graph project --schema-version v2 --out aiwg-fortemi-index-v2.json
 aiwg index sync --graph project
+aiwg index build --graph source
+aiwg index sync --graph source
 ```
 
 The sync command materializes:
@@ -67,6 +69,9 @@ replacement:
 - knowledge and memory: `aiwg.kb.page`, `aiwg.memory.entry`;
 - tracking and project artifacts: `aiwg.issue`, `aiwg.project.*`, and
   `aiwg.artifact` fallback records.
+- source graph records: `aiwg.source.file`, `aiwg.source.module`,
+  `aiwg.source.package`, `aiwg.source.builtin`, `aiwg.source.asset`,
+  `aiwg.source.unresolved`, and `aiwg.source.entrypoint`.
 
 Each v2 item can include:
 
@@ -80,6 +85,28 @@ Each v2 item can include:
   citation, profile, and KB graph traversal can be reconstructed;
 - source-body chunks and embedding metadata slots for the Fortemi chunk/body
   embedding path.
+
+### Source Graph Export Boundary
+
+The `source` graph is built locally by AIWG from the filesystem with the
+TypeScript compiler API resolver selected in
+`.aiwg/architecture/adr-source-code-graph-module-resolution.md`. Fortemi Core
+does not scan the repository. It receives the already-built graph through
+`aiwg index export --format fortemi --graph source --schema-version v2` or
+`aiwg index sync --graph source`.
+
+Source graph exports preserve import relationships, type-only imports,
+re-exports, dynamic imports, CommonJS requires, external package and builtin
+dependencies, asset imports, entrypoint reachability, derived
+implementation-to-test `exercised_by` links, and unresolved import diagnostics.
+The original specifier, resolved target, source location, confidence, and
+diagnostic metadata are carried on relationship metadata.
+
+Source text chunks are included only through the normal v2 chunk field and can
+be suppressed by callers of the export API for static fixtures or package-size
+boundaries. The local `.aiwg/.index/source/` graph remains the fallback source
+of truth; Fortemi storage/MCP persistence is separate from this static
+index/search cache.
 
 ## Fortemi-Backed CLI Paths
 
