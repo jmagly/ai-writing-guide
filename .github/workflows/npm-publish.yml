@@ -411,7 +411,9 @@ jobs:
             exit 1
           fi
           echo "✓ Provenance attestation present for aiwg@${VERSION}"
-          echo "$ATTESTATIONS" | jq '.' | head -40
+          ATTESTATION_PREVIEW=$(mktemp)
+          printf '%s\n' "$ATTESTATIONS" | jq '.' > "$ATTESTATION_PREVIEW"
+          head -40 "$ATTESTATION_PREVIEW"
 
           COCKPIT_ATTESTATIONS=$(npm view "@aiwg/cockpit@${VERSION}" --json 2>/dev/null | jq -r '.dist.attestations // empty')
           if [ -z "$COCKPIT_ATTESTATIONS" ]; then
