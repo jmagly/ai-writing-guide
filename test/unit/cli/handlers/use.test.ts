@@ -21,6 +21,7 @@ import {
   nextStepsFor,
   deployOpenHumanHarnessAgents,
   parseOpenHumanHarnessAgentSelector,
+  resolveOpenHumanHarnessAgentSelectors,
 } from '../../../../src/cli/handlers/use.js';
 
 // ---------------------------------------------------------------------------
@@ -303,6 +304,14 @@ describe('OpenHuman native harness stubs (#1559)', () => {
     ]);
   });
 
+  it('resolves curated OpenHuman harness defaults unless disabled or explicitly selected', () => {
+    const defaults = resolveOpenHumanHarnessAgentSelectors(['--provider', 'openhuman']);
+    expect(defaults).toContain('software-implementer');
+    expect(defaults).toContain('test-engineer');
+    expect(resolveOpenHumanHarnessAgentSelectors(['--provider', 'openhuman', '--no-harness-agents'])).toEqual([]);
+    expect(resolveOpenHumanHarnessAgentSelectors(['--harness-agents=security-auditor'])).toEqual(['security-auditor']);
+  });
+
   it('emits project-scope TOML plus a frontmatter-stripped prompt file', async () => {
     await writeAgent(tmpDir, 'test-engineer', `---
 name: Test Engineer
@@ -336,7 +345,7 @@ Write tests.
     expect(prompt).not.toMatch(/^---$/m);
   });
 
-  it('emits user-scope TOML with an inline prompt and no project prompt file', async () => {
+  it('emits user-scope rich TOML with an inline prompt and no project prompt file', async () => {
     await writeAgent(tmpDir, 'security-auditor', `---
 description: Reviews code for security issues
 ---
@@ -355,7 +364,14 @@ Audit the code.
     const toml = await readFile(path.join(process.env.OPENHUMAN_HOME!, 'agents', 'aiwg_security_auditor.toml'), 'utf-8');
     expect(toml).toContain('id = "aiwg_security_auditor"');
     expect(toml).toContain('when_to_use = "Reviews code for security issues"');
+    expect(toml).toContain('agent_tier = "worker"');
+    expect(toml).toContain('iteration_policy = "extended"');
+    expect(toml).toContain('sandbox_mode = "none"');
+    expect(toml).toContain('tokenjuice_compression = "light"');
     expect(toml).toContain("inline = '''Audit the code.'''");
+    expect(toml).toContain('[model]');
+    expect(toml).toContain('hint = "coding"');
+    expect(toml).not.toMatch(/^subagents\s*=/m);
     expect(existsSync(path.join(target, 'agent', 'prompts', 'aiwg', 'security_auditor.md'))).toBe(false);
   });
 

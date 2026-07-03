@@ -35,20 +35,14 @@ export const AGENTS_MD_PROVIDERS: ReadonlySet<Platform> = new Set([
   'warp',
   'factory',
   'opencode',
-  // OpenHuman (#1552) ships `.agents/` + `AGENTS.md` natively; its bridge IS
-  // AGENTS.md (commands/rules aggregate there, discover-first is induced
-  // through it — see adr-openhuman-agent-target.md). The induction wired the
-  // path layer (getConfigFileName('openhuman') === 'AGENTS.md') but missed this
-  // policy gate, so AGENTS.md was never emitted (#1560 validation finding).
-  'openhuman',
 ]);
 
-export type AgentsMdProvider = Platform & ('codex' | 'copilot' | 'cursor' | 'windsurf' | 'hermes' | 'warp' | 'factory' | 'opencode' | 'openhuman');
+export type AgentsMdProvider = Platform & ('codex' | 'copilot' | 'cursor' | 'windsurf' | 'hermes' | 'warp' | 'factory' | 'opencode');
 
 /**
  * Whether the context-pipeline has ANY work to do for this provider.
  * Returns false only for providers that have no project-local context
- * footprint: OpenClaw (home-dir-only) and 'generic' (no specific provider).
+ * footprint: OpenClaw/OpenHuman (home-dir-only) and 'generic' (no specific provider).
  *
  * Claude returns TRUE — it needs AIWG.md + a CLAUDE.md hook update.
  */
@@ -58,10 +52,10 @@ export function shouldEmitContextFiles(provider: Platform): boolean {
 
 /**
  * Whether to emit AIWG.md at project root. True for every project-local
- * provider; false only for OpenClaw (home-dir-only) and 'generic'.
+ * provider; false only for home-dir-only providers and 'generic'.
  */
 export function shouldEmitAiwgMd(provider: Platform): boolean {
-  return provider !== 'openclaw' && provider !== 'generic';
+  return provider !== 'openclaw' && provider !== 'openhuman' && provider !== 'generic';
 }
 
 /**

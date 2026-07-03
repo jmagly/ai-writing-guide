@@ -15,8 +15,8 @@ import { normalizeProviderId } from '../../../src/cli/provider-resolution.js';
 describe('OpenHuman provider path resolution (#1555)', () => {
   const proj = '/mock/project';
 
-  it('resolves agents to .agents/agents (markdown personas, Tier-1)', () => {
-    expect(getAgentsDirectory('openhuman', proj)).toBe(join(proj, '.agents/agents'));
+  it('does not expose a project markdown agent directory', () => {
+    expect(getAgentsDirectory('openhuman', proj)).toBe('');
   });
 
   it('resolves skills to global/home-dir ~/.openhuman/skills (ungated, surfaced by the Skills library; #1553)', () => {
@@ -27,12 +27,12 @@ describe('OpenHuman provider path resolution (#1555)', () => {
     expect(getCommandsDirectory('openhuman', proj)).toBe('');
   });
 
-  it('aggregates rules via AGENTS.md (no native rules dir)', () => {
-    expect(getRulesDirectory('openhuman', proj)).toBe('');
+  it('stores AIWG rule bodies under the OpenHuman home support directory', () => {
+    expect(getRulesDirectory('openhuman', proj)).toBe(join(homedir(), '.openhuman', '.aiwg', 'rules'));
   });
 
-  it('uses AGENTS.md as the bridge config file', () => {
-    expect(getConfigFileName('openhuman')).toBe('AGENTS.md');
+  it('does not use a project config bridge file', () => {
+    expect(getConfigFileName('openhuman')).toBe('');
   });
 
   it('normalizes the openhuman provider id (case-insensitive)', () => {

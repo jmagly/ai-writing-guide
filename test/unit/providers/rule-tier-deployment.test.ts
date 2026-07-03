@@ -21,8 +21,6 @@ import {
 } from '../../../tools/agents/providers/base.mjs';
 // @ts-expect-error — .mjs provider module without type declarations
 import { generateAgentsMd as hermesAgentsMd } from '../../../tools/agents/providers/hermes.mjs';
-// @ts-expect-error — .mjs provider module without type declarations
-import { createAgentsMd as openhumanAgentsMd } from '../../../tools/agents/providers/openhuman.mjs';
 
 const REPO_ROOT = resolve(__dirname, '../../..');
 const levelOf = (f: string): string | null => ruleEnforcementLevel(readFileSync(f, 'utf8'));
@@ -229,16 +227,6 @@ describe('on-demand index propagation (#1675)', () => {
       expect(body).toContain('On-Demand Rules');
       expect(body).toContain('aiwg show rule ');
       expect(body.length).toBeLessThan(19_000); // Hermes hard cap
-      await rm(target, { recursive: true, force: true });
-    });
-
-    it('openhuman AGENTS.md substitutes the {{ON_DEMAND_RULES}} token', async () => {
-      const target = await mkdtemp(join(tmpdir(), 'aiwg-od-oh-'));
-      openhumanAgentsMd(target, REPO_ROOT, false);
-      const body = await readFile(join(target, 'AGENTS.md'), 'utf8');
-      expect(body).toContain('On-Demand Rules');
-      expect(body).toContain('aiwg show rule ');
-      expect(body).not.toContain('{{ON_DEMAND_RULES}}');
       await rm(target, { recursive: true, force: true });
     });
 

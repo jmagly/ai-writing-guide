@@ -1,6 +1,6 @@
 {
   "name": "aiwg",
-  "version": "2026.7.0",
+  "version": "2026.7.1",
   "description": "Deployment tool and support utility for AI context. Copies agents, skills, commands, rules, and behaviors into the paths each AI platform reads (Claude Code, Codex, Copilot, Cursor, Warp, OpenClaw, and 6 more) so one source of truth works across 10 platforms. Optional utilities for persistent artifact memory, background orchestration, autonomous loops, and artifact indexing.",
   "type": "module",
   "bin": {
@@ -14,6 +14,10 @@
   "scripts": {
     "docs:collect": "node tools/manifest/collect-component-docs.mjs",
     "docs:collect:dry": "node tools/manifest/collect-component-docs.mjs --dry-run",
+    "release:fortemi-index": "tsx tools/release/build-fortemi-core-indices.mjs",
+    "prepack": "npm run release:fortemi-index",
+    "test:release-discovery": "vitest run --config config/vitest.config.js test/integration/artifacts/discover-fortemi-corpus.test.ts",
+    "ci:fortemi-index": "npm run test:release-discovery && npm run lint:fortemi-prebuilt-package",
     "validate-metadata": "aiwg validate-metadata",
     "package-plugins": "node tools/plugin/package-plugins.mjs --all",
     "package-plugins:clean": "node tools/plugin/package-plugins.mjs --all --clean",
@@ -55,6 +59,7 @@
     "lint:dep-sources": "node tools/lint/dep-source.mjs",
     "lint:affected-packages": "node tools/lint/affected-packages.mjs",
     "lint:tarball": "node tools/lint/tarball-audit.mjs",
+    "lint:fortemi-prebuilt-package": "node tools/lint/fortemi-prebuilt-package.mjs",
     "lint:audit-signatures": "node tools/lint/audit-signatures.mjs",
     "lint:context-sizes": "node tools/lint/context-size-guard.mjs",
     "lint:agent-sizes": "node tools/lint/agent-def-sizes.mjs",
@@ -91,6 +96,7 @@
     "!agentic/**/package-lock.json",
     "!agentic/**/package.json",
     "!agentic/**/tsconfig.json",
+    "prebuilt/",
     "docs/",
     "templates/",
     "man/",

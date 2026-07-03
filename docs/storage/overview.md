@@ -4,7 +4,7 @@ AIWG persists artifacts (memory pages, knowledge-base entries, activity log, ref
 
 - **Obsidian** vault — your AIWG memory becomes searchable via the graph
 - **Logseq** graph — pages flow into your daily journal workflow
-- **Fortemi** — first-party semantic-memory backend (Rust + Postgres + pgvector)
+- **Fortemi** — legacy MCP semantic-memory storage adapter (Rust + Postgres + pgvector); deprecated for index/search routing
 - A different filesystem location — heavy artifacts on a secondary drive
 - Any future backend (S3, WebDAV, Notion, AnythingLLM — tracked, not yet shipped)
 
@@ -122,7 +122,7 @@ See `docs/storage/security.md` for the full security model — credential handli
 | `fs`          | READY       | Default; local filesystem |
 | `obsidian`    | READY       | Direct fs writes against vault; refuses `.obsidian/` config dir |
 | `logseq`      | READY       | Direct fs writes against graph; YAML→`property::` transform |
-| `fortemi`     | READY (alpha) | Routes through Fortemi MCP tool surface |
+| `fortemi`     | READY (alpha, legacy for search) | Routes persistence through Fortemi MCP tools; use `--backend fortemi-core` for index/search |
 | `notion`      | STUB (#959) | Planned — REST + external_id upsert |
 | `anythingllm` | STUB (#960) | Planned — multipart upload + cache mirror |
 | `s3`          | STUB (#962) | Planned — phase 3 (bulk artifacts) |
@@ -135,6 +135,7 @@ See `docs/storage/security.md` for the full security model — credential handli
 - `docs/storage/security.md` — credential handling, path safety, doctor validation
 - `docs/storage/migration.md` — `aiwg storage migrate` walkthrough
 - `docs/storage/backends/<type>.md` — per-backend setup, env vars, caveats
+- `docs/fortemi-core-prebuilt-indices.md` — Fortemi Core prebuilt framework index packaged with npm releases
 - `.aiwg/architecture/storage-design.md` — full design (adapter interface, subsystem registry, phasing)
 - `.aiwg/architecture/adr-configurable-storage-backends.md` — decision record
 - `.aiwg/architecture/schemas/storage.config.v1.json` — published JSON Schema

@@ -1,21 +1,16 @@
 /**
  * OpenHuman provider (tinyhumansai/openhuman) — Tier-1 deployment.
  *
- * OpenHuman is an OSS personal-AI runtime (Rust core + React/Tauri shell). It
- * is AIWG-convention-aware out of the box: it ships `.agents/`, `AGENTS.md`,
- * `.claude/`, and `.codex/`. This module wires AIWG's *host-integration* tier:
+ * OpenHuman is an OSS personal-AI runtime (Rust core + React/Tauri shell).
+ * This module wires AIWG into OpenHuman's user-global app roots:
  *
- *   - agents   -> .agents/agents/  (markdown personas; consumed by external
- *                 coding hosts OpenHuman drives — claude_code/factory. The
- *                 native harness TOML surface is Tier-2, see #1559.)
- *   - skills   -> kernel: .openhuman/skills/  (project-scope native scan root,
- *                 ops_discover.rs; trust-marker gated, #1553)
- *                 standard: .openhuman/.aiwg/skills/  (sequestered, index-driven)
- *   - commands -> aggregated via AGENTS.md (OpenHuman has no native command
- *                 surface); discrete files sequestered under .openhuman/.aiwg/
- *   - rules    -> aggregated into AGENTS.md (### Rule: inline / `aiwg show rule`);
- *                 full bodies sequestered under .openhuman/.aiwg/rules/
- *   - config   -> AGENTS.md (Discover-First bridge)
+ *   - agents   -> no markdown persona deploy; OpenHuman native custom agents
+ *                 are TOML-only under ~/.openhuman/agents (Tier-2, #1559)
+ *   - skills   -> kernel: ~/.openhuman/skills/ (native user-scope scan root;
+ *                 visible in the OpenHuman Skills UI)
+ *                 standard: AIWG index/discovery only
+ *   - commands -> no native command directory; command-skills deploy as skills
+ *   - rules    -> full bodies under ~/.openhuman/.aiwg/rules/ for `aiwg show`
  *
  * Decisions: ADR `.aiwg/architecture/adr-openhuman-agent-target.md`.
  * Epic #1552 · this module: #1555.
@@ -27,8 +22,6 @@ import {
   ensureDir,
   deployFiles,
   deploySkillsWithKernelRouting,
-  createAgentsMdFromTemplate,
-  initializeFrameworkWorkspace,
   getAddonAgentFiles,
   getAddonCommandFiles,
   getAddonSkillDirs,
@@ -37,7 +30,6 @@ import {
   normalizeDeploymentMode,
   cleanupOldRuleFiles,
   filterCommandsAgainstSkills,
-  deploySoulCompanions,
 } from './base.mjs';
 
 // ============================================================================
@@ -48,43 +40,37 @@ export const name = 'openhuman';
 export const aliases = [];
 
 export const paths = {
-  // Personas stay WORKSPACE-scoped — the external coding hosts OpenHuman drives
-  // (claude_code/factory) read <ws>/.agents/agents/. Not part of the global install.
-  agents: '.agents/agents/',
-  // OpenHuman has no native command surface — commands aggregate into AGENTS.md
-  // and the command-skills (/aiwg-doctor etc.) deploy as skills. Empty path =>
-  // no discrete command files (matches src PROVIDER_PATHS; avoids the
-  // commands→skills migration path). Same shape as hermes.
+  // OpenHuman's native custom-agent surface is TOML-only under
+  // ~/.openhuman/agents. Markdown personas are not a project-level OpenHuman
+  // install target.
+  agents: '',
+  // OpenHuman has no native command surface. Empty path => no discrete command
+  // files; command-skills are reachable only through the kernel skill copy or
+  // AIWG index/discovery.
   commands: '',
-  // Standard (non-kernel) skills sequestered under the HOME install for
-  // index-driven discovery; kernel set → kernelSkillsPath. Home/global like
-  // OpenClaw (#1553 follow-up) — OpenHuman is a persistent app whose Skills
-  // library scans the user-scope ~/.openhuman tree, not a per-workspace dir.
+  // Standard (non-kernel) skills are not copied for OpenHuman. This legacy
+  // path is passed to the shared router only so old hidden copies can be pruned.
   skills: path.join(os.homedir(), '.openhuman', '.aiwg', 'skills'),
-  // Full rule bodies for `aiwg show rule`; critical directives inline in AGENTS.md.
+  // Full rule bodies for `aiwg show rule`.
   rules: path.join(os.homedir(), '.openhuman', '.aiwg', 'rules'),
 };
 
-// Kernel skills (always-loaded) → user-scope native scan root. OpenHuman's
-// ops_discover.rs scans ~/.openhuman/skills/ at USER scope WITHOUT a trust gate
-// (the trust marker only governs <ws>/.openhuman/skills/ project scope). A
-// global install is therefore ungated and is exactly what the app's Skills
-// library surfaces ("place Hermes-style folders under ~/.openhuman/skills").
-// Absolute — deploy uses it directly, not joined with the workspace target.
+// OpenHuman's native user-scope scan root for kernel skills.
 export const kernelSkillsPath = path.join(os.homedir(), '.openhuman', 'skills');
 
 export const support = {
-  agents: 'conventional',   // .agents/agents/ — consumed by coding hosts OpenHuman drives
-  commands: 'aggregated',   // via AGENTS.md
+  agents: 'none',           // Native TOML harness agents are emitted by the CLI
+  commands: 'none',
   skills: 'native',         // .openhuman/skills/ natively scanned
-  rules: 'aggregated',      // AGENTS.md ### Rule: inline + `aiwg show rule`
+  rules: 'indexed',         // `aiwg show rule`
 };
 
 export const capabilities = {
   skills: true,
   rules: true,
-  aggregatedOutput: true,
+  aggregatedOutput: false,
   yamlFormat: false,
+  homeDirectoryDeploy: true,
 };
 
 // ============================================================================
@@ -93,9 +79,9 @@ export const capabilities = {
 
 /**
  * OpenHuman uses its own model namespace (neocortex-*, router hints
- * reasoning/coding/agentic/local). AIWG `sonnet/opus/haiku` do not map cleanly,
- * so Tier-1 deploys personas verbatim and the (Tier-2) harness inherits the
- * parent model (ModelSpec::Inherit) when `[model]` is omitted. Pass-through.
+ * reasoning/coding/agentic/local). AIWG `sonnet/opus/haiku` do not map cleanly.
+ * Markdown personas are not deployed for OpenHuman; native harness agents
+ * inherit the parent model (ModelSpec::Inherit) when `[model]` is omitted.
  * See ADR adr-openhuman-agent-target.
  */
 export function mapModel(originalModel) {
@@ -106,10 +92,7 @@ export function mapModel(originalModel) {
 // Content Transformation
 // ============================================================================
 
-/**
- * Markdown personas deploy as-is. Frontmatter (name/description/model) is left
- * intact — it is exactly the shape external coding hosts read from `.agents/`.
- */
+/** Markdown personas are not a supported OpenHuman install target. */
 export function transformAgent(srcPath, content) {
   return content;
 }
@@ -118,40 +101,54 @@ export function transformCommand(srcPath, content) {
   return content;
 }
 
+export function transformSkillFrontmatter(content) {
+  if (!content.startsWith('---\n')) return content;
+  const end = content.indexOf('\n---', 4);
+  if (end < 0) return content;
+
+  let fm = content.slice(4, end);
+  const body = content.slice(end);
+
+  // OpenHuman currently classifies any SKILL.md with non-empty `platforms` as
+  // Hermes format. AIWG deploys directly into OpenHuman's user-global scan root,
+  // so the platform hint is not needed in the deployed copy and would mislabel
+  // the UI badge.
+  fm = fm
+    .replace(/^platforms:\s*\[[^\]]*\]\n?/m, '')
+    .replace(/^platforms:\s*\n(?:[ \t]+-[ \t]+\S[^\n]*\n?)*/m, '');
+
+  return `---\n${fm.trimEnd()}\n${body}`;
+}
+
 // ============================================================================
 // Deployment
 // ============================================================================
 
 export function deployAgents(agentFiles, targetDir, opts) {
-  const destDir = path.join(targetDir, paths.agents);
-  ensureDir(destDir, opts.dryRun);
-  return deployFiles(agentFiles, destDir, { ...opts, injectPlatform: true }, transformAgent);
+  return 0;
 }
 
 export function deployCommands(commandFiles, targetDir, opts) {
-  // Aggregated provider — no discrete command files. Commands surface via
-  // AGENTS.md and the deployed command-skills. No-op by design.
-  if (!paths.commands) return;
-  const destDir = path.join(targetDir, paths.commands);
-  ensureDir(destDir, opts.dryRun);
-  return deployFiles(commandFiles, destDir, opts, transformCommand);
+  return 0;
 }
 
 /**
  * Kernel-vs-standard skill routing (#1212/#1216):
- *   - kernel   → .openhuman/skills/        (native scan root)
- *   - standard → .openhuman/.aiwg/skills/  (index-discoverable)
+ *   - kernel   → ~/.openhuman/skills/        (native UI scan root)
+ *   - standard → not copied                  (AIWG index/discovery)
  */
 export function deploySkills(skillDirs, targetDir, opts) {
-  // Skills are HOME-rooted (absolute) for the global install; use them
-  // directly rather than joining under the workspace target.
   const standardDestDir = path.isAbsolute(paths.skills)
     ? paths.skills
     : path.join(targetDir, paths.skills);
   const kernelDestDir = path.isAbsolute(kernelSkillsPath)
     ? kernelSkillsPath
     : path.join(targetDir, kernelSkillsPath);
-  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
+  return deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, {
+    ...opts,
+    copyStandardSkills: false,
+    transformSkillMd: transformSkillFrontmatter,
+  });
 }
 
 export function deployRules(ruleFiles, targetDir, opts) {
@@ -163,24 +160,8 @@ export function deployRules(ruleFiles, targetDir, opts) {
   return deployFiles(ruleFiles, destDir, opts, transformAgent);
 }
 
-// ============================================================================
-// AGENTS.md
-// ============================================================================
-
-/**
- * Create/update the AGENTS.md bridge from the OpenHuman-specific template
- * (Discover-First protocol + .openhuman/skills paths). Preserves operator
- * content outside the AIWG-managed section.
- */
-export function createAgentsMd(target, srcRoot, dryRun) {
-  createAgentsMdFromTemplate(target, srcRoot, 'openhuman/AGENTS.md.aiwg-template', dryRun);
-}
-
 export async function postDeploy(targetDir, opts) {
-  initializeFrameworkWorkspace(targetDir, opts.mode, opts.dryRun, opts.srcRoot);
-  if (opts.createAgentsMd) {
-    createAgentsMd(targetDir, opts.srcRoot, opts.dryRun);
-  }
+  return;
 }
 
 export function getFileExtension() {
@@ -202,7 +183,6 @@ export async function deploy(opts) {
     commandsOnly,
     skillsOnly,
     rulesOnly,
-    createAgentsMd: shouldCreateAgentsMd,
   } = opts;
 
   console.log(`\n=== OpenHuman Provider ===`);
@@ -233,21 +213,12 @@ export async function deploy(opts) {
     consolidatedSdlcRules: true,
   });
   agentFiles.push(...fw.agents);
-  const soulFiles = [...(fw.souls || [])];
   commandFiles.push(...fw.commands);
   skillDirs.push(...fw.skills);
   ruleFiles.push(...fw.rules);
 
-  // Agents (markdown personas → .agents/agents/)
   if (!commandsOnly && !skillsOnly && !rulesOnly) {
-    console.log(`\nDeploying ${agentFiles.length} agents to .agents/agents/...`);
-    deployAgents(agentFiles, target, opts);
-
-    if (soulFiles.length > 0) {
-      const destDir = path.join(target, paths.agents);
-      console.log(`\nDeploying ${soulFiles.length} soul files...`);
-      deploySoulCompanions(soulFiles, destDir, opts);
-    }
+    console.log(`\nSkipping markdown agents: OpenHuman native agents are TOML-only under ~/.openhuman/agents.`);
   }
 
   // Commands take a back seat to skills where they collide.
@@ -255,24 +226,25 @@ export async function deploy(opts) {
     ? filterCommandsAgainstSkills(commandFiles, skillDirs)
     : commandFiles;
 
-  // Commands aggregate via AGENTS.md (paths.commands is empty) — nothing
-  // discrete to deploy. The command-skills reach OpenHuman as skills below.
+  // No native command directory. Command-skills reach OpenHuman only when they
+  // are kernel skills copied to ~/.openhuman/skills; otherwise AIWG discovery
+  // finds them on demand.
   if ((shouldDeployCommands || commandsOnly) && paths.commands) {
     console.log(`\nDeploying ${filteredCommands.length} commands...`);
     deployCommands(filteredCommands, target, opts);
   }
 
   if (shouldDeploySkills || skillsOnly) {
-    console.log(`\nDeploying ${skillDirs.length} skills...`);
+    console.log(`\nDeploying ${skillDirs.length} skills (kernel → ~/.openhuman/skills, standard → index/discovery)...`);
     deploySkills(skillDirs, target, opts);
   }
 
   if (shouldDeployRules || rulesOnly) {
-    console.log(`\nDeploying ${ruleFiles.length} rules (sequestered; critical directives inline in AGENTS.md)...`);
+    console.log(`\nDeploying ${ruleFiles.length} rules for AIWG discovery...`);
     deployRules(ruleFiles, target, opts);
   }
 
-  await postDeploy(target, { ...opts, createAgentsMd: shouldCreateAgentsMd });
+  await postDeploy(target, opts);
 
   console.log('\n=== OpenHuman deployment complete ===\n');
 }
@@ -295,7 +267,7 @@ export default {
   deployCommands,
   deploySkills,
   deployRules,
-  createAgentsMd,
+  transformSkillFrontmatter,
   postDeploy,
   getFileExtension,
   deploy,

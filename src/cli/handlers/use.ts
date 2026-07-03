@@ -316,14 +316,13 @@ const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands:
     behaviors: path.join(os.homedir(), '.openclaw', 'behaviors'), // Native behavior support
   },
   openhuman: {
-    agents: '.agents/agents',          // Markdown personas (Tier-1); workspace-scoped — reaches the external coding hosts OpenHuman drives. Harness TOML is Tier-2 (#1559)
-    // Global/home-dir install like OpenClaw (#1553 follow-up): OpenHuman's
-    // Skills library scans ~/.openhuman/skills/ (user scope, ungated). Standard
-    // skills sequestered under ~/.openhuman/.aiwg/skills/ for index-driven
-    // discovery; kernel set → PROVIDER_KERNEL_SKILL_PATHS (~/.openhuman/skills/).
+    // OpenHuman is app/user-global for AIWG installs. The app's Skills UI and
+    // registry install path use ~/.openhuman/skills; native custom agents are
+    // TOML-only under ~/.openhuman/agents. Do not write project .agents/agents.
+    agents: '',
     skills: path.join(os.homedir(), '.openhuman', '.aiwg', 'skills'),
-    commands: '',                      // Aggregated into AGENTS.md (no native command dir)
-    rules: '',                         // Aggregated into AGENTS.md (### Rule: inline)
+    commands: '',                      // No native command dir
+    rules: path.join(os.homedir(), '.openhuman', '.aiwg', 'rules'),
     behaviors: '',                     // Not supported
   },
 };
@@ -534,6 +533,9 @@ const NEXT_STEPS: Record<string, string[]> = {
   'openclaw/sdlc': agenticNextSteps('Start OpenClaw:    Open OpenClaw with this project workspace.'),
   'openclaw/marketing': agenticNextSteps('Start OpenClaw:    Open OpenClaw with this project workspace.'),
   'openclaw/all': agenticNextSteps('Start OpenClaw:    Open OpenClaw with this project workspace.'),
+  'openhuman/sdlc': agenticNextSteps('Open OpenHuman:    Open OpenHuman and check the Skills view for AIWG kernel skills.'),
+  'openhuman/marketing': agenticNextSteps('Open OpenHuman:    Open OpenHuman and check the Skills view for AIWG kernel skills.'),
+  'openhuman/all': agenticNextSteps('Open OpenHuman:    Open OpenHuman and check the Skills view for AIWG kernel skills.'),
 };
 
 export function nextStepsFor(framework: Framework, provider: string = 'claude'): string[] {
@@ -1067,6 +1069,106 @@ const USE_FLAGS_WITH_VALUES = new Set([
 
 type OpenHumanHarnessScope = 'project' | 'user';
 
+export const OPENHUMAN_DEFAULT_HARNESS_AGENTS = [
+  'architecture-designer',
+  'code-reviewer',
+  'project-manager',
+  'requirements-analyst',
+  'security-auditor',
+  'software-implementer',
+  'technical-writer',
+  'test-engineer',
+] as const;
+
+interface OpenHumanHarnessProfile {
+  modelHint: 'agentic' | 'coding' | 'reasoning';
+  temperature: number;
+  maxIterations: number;
+  iterationPolicy: 'strict' | 'extended';
+  maxResultChars: number;
+  maxTurnOutputTokens: number;
+  timeoutSecs: number;
+  sandboxMode: 'none' | 'read_only' | 'sandboxed';
+  tokenjuiceCompression: 'auto' | 'full' | 'light' | 'off';
+}
+
+const OPENHUMAN_DEFAULT_HARNESS_PROFILE: OpenHumanHarnessProfile = {
+  modelHint: 'agentic',
+  temperature: 0.35,
+  maxIterations: 10,
+  iterationPolicy: 'strict',
+  maxResultChars: 18000,
+  maxTurnOutputTokens: 6000,
+  timeoutSecs: 900,
+  sandboxMode: 'none',
+  tokenjuiceCompression: 'auto',
+};
+
+const OPENHUMAN_HARNESS_PROFILES: Record<string, Partial<OpenHumanHarnessProfile>> = {
+  'architecture-designer': {
+    modelHint: 'reasoning',
+    maxIterations: 14,
+    iterationPolicy: 'extended',
+    maxResultChars: 24000,
+    maxTurnOutputTokens: 8000,
+    timeoutSecs: 1200,
+  },
+  'code-reviewer': {
+    modelHint: 'coding',
+    temperature: 0.25,
+    maxIterations: 10,
+    maxResultChars: 20000,
+    tokenjuiceCompression: 'light',
+  },
+  'project-manager': {
+    modelHint: 'agentic',
+    maxIterations: 8,
+    maxResultChars: 14000,
+  },
+  'requirements-analyst': {
+    modelHint: 'reasoning',
+    maxIterations: 12,
+    iterationPolicy: 'extended',
+    maxResultChars: 22000,
+  },
+  'security-auditor': {
+    modelHint: 'coding',
+    temperature: 0.2,
+    maxIterations: 12,
+    iterationPolicy: 'extended',
+    maxResultChars: 24000,
+    maxTurnOutputTokens: 8000,
+    timeoutSecs: 1200,
+    tokenjuiceCompression: 'light',
+  },
+  'software-implementer': {
+    modelHint: 'coding',
+    temperature: 0.25,
+    maxIterations: 16,
+    iterationPolicy: 'extended',
+    maxResultChars: 26000,
+    maxTurnOutputTokens: 9000,
+    timeoutSecs: 1500,
+    tokenjuiceCompression: 'light',
+  },
+  'technical-writer': {
+    modelHint: 'agentic',
+    temperature: 0.45,
+    maxIterations: 8,
+    maxResultChars: 18000,
+  },
+  'test-engineer': {
+    modelHint: 'coding',
+    temperature: 0.25,
+    maxIterations: 14,
+    iterationPolicy: 'extended',
+    maxResultChars: 24000,
+    maxTurnOutputTokens: 8000,
+    timeoutSecs: 1200,
+    tokenjuiceCompression: 'light',
+  },
+};
+
 export interface OpenHumanHarnessDeployResult {
   emitted: number;
   tomlPaths: string[];
@@ -1111,6 +1213,16 @@ export function parseOpenHumanHarnessAgentSelector(args: string[]): string[] {
       .map((entry) => slugifyAgentName(entry))
       .filter(Boolean)
   ));
+}
+
+function hasFlag(args: string[], name: string): boolean {
+  return args.some((arg) => arg === name || arg.startsWith(`${name}=`));
+}
+
+export function resolveOpenHumanHarnessAgentSelectors(args: string[]): string[] {
+  if (args.includes('--no-harness-agents')) return [];
+  if (hasFlag(args, '--harness-agents')) return parseOpenHumanHarnessAgentSelector(args);
+  return [...OPENHUMAN_DEFAULT_HARNESS_AGENTS];
 }
 
 function slugifyAgentName(value: string): string {
@@ -1173,10 +1285,55 @@ function tomlMultilineLiteral(value: string): string {
   return `'''${value.replace(/'''/g, "''\\'")}'''`;
 }
 
+function openHumanHarnessProfile(slug: string): OpenHumanHarnessProfile {
+  return {
+    ...OPENHUMAN_DEFAULT_HARNESS_PROFILE,
+    ...(OPENHUMAN_HARNESS_PROFILES[slug] ?? {}),
+  };
+}
+
+function renderOpenHumanHarnessToml(agent: ParsedAgentMarkdown, promptBody: string): string {
+  const id = snakeAgentId(agent.slug);
+  const profile = openHumanHarnessProfile(agent.slug);
+  return [
+    '# AIWG-managed OpenHuman native harness agent; do not hand-edit.',
+    '# Source template: agentic/code/frameworks/sdlc-complete/templates/openhuman/agent.toml.aiwg-template',
+    `id = "aiwg_${id}"`,
+    `when_to_use = ${escapeTomlBasicString(normalizeDescription(frontmatterString(agent.frontmatter, 'description'), agent.slug))}`,
+    `display_name = ${escapeTomlBasicString(frontmatterString(agent.frontmatter, 'name') || titleFromSlug(agent.slug))}`,
+    '',
+    'agent_tier = "worker"',
+    `temperature = ${profile.temperature}`,
+    `max_iterations = ${profile.maxIterations}`,
+    `iteration_policy = "${profile.iterationPolicy}"`,
+    `max_result_chars = ${profile.maxResultChars}`,
+    `max_turn_output_tokens = ${profile.maxTurnOutputTokens}`,
+    `timeout_secs = ${profile.timeoutSecs}`,
+    `sandbox_mode = "${profile.sandboxMode}"`,
+    `tokenjuice_compression = "${profile.tokenjuiceCompression}"`,
+    '',
+    'omit_identity = true',
+    'omit_memory_context = true',
+    'omit_safety_preamble = true',
+    'omit_skills_catalog = false',
+    'omit_profile = true',
+    'omit_memory_md = false',
+    'background = false',
+    'trigger_memory_agent = "never"',
+    '',
+    '[system_prompt]',
+    `inline = ${tomlMultilineLiteral(promptBody.trim())}`,
+    '',
+    '[model]',
+    `hint = "${profile.modelHint}"`,
+    '',
+  ].join('\n');
+}
+
 function projectHarnessToml(agent: ParsedAgentMarkdown): string {
   const id = snakeAgentId(agent.slug);
   return [
-    '# AIWG-managed OpenHuman harness stub; do not hand-edit.',
+    '# AIWG-managed OpenHuman harness definition; do not hand-edit.',
     `id = "aiwg_${id}"`,
     `when_to_use = ${escapeTomlBasicString(normalizeDescription(frontmatterString(agent.frontmatter, 'description'), agent.slug))}`,
     `display_name = ${escapeTomlBasicString(frontmatterString(agent.frontmatter, 'name') || titleFromSlug(agent.slug))}`,
@@ -1188,22 +1345,12 @@ function projectHarnessToml(agent: ParsedAgentMarkdown): string {
 }
 
 function userHarnessToml(agent: ParsedAgentMarkdown): string {
-  const id = snakeAgentId(agent.slug);
-  return [
-    '# AIWG-managed OpenHuman harness stub; do not hand-edit.',
-    `id = "aiwg_${id}"`,
-    `when_to_use = ${escapeTomlBasicString(normalizeDescription(frontmatterString(agent.frontmatter, 'description'), agent.slug))}`,
-    `display_name = ${escapeTomlBasicString(frontmatterString(agent.frontmatter, 'name') || titleFromSlug(agent.slug))}`,
-    '',
-    '[system_prompt]',
-    `inline = ${tomlMultilineLiteral(agent.body.trim())}`,
-    '',
-  ].join('\n');
+  return renderOpenHumanHarnessToml(agent, agent.body);
 }
 
 function assertNoSubagentsKey(toml: string): void {
   if (/^\s*subagents\s*=/m.test(toml)) {
-    throw new Error('OpenHuman AIWG harness stubs must not emit `subagents` for Worker-tier agents');
+    throw new Error('OpenHuman AIWG harness definitions must not emit `subagents` for Worker-tier agents');
   }
 }
 
@@ -1869,7 +2016,7 @@ export class UseHandler implements CommandHandler {
     const ciHooksEnabled = remainingArgs.includes('--ci-hooks-enabled');
     const force = remainingArgs.includes('--force');
     const skipConflicts = remainingArgs.includes('--skip-conflicts');
-    const harnessAgentSelectors = parseOpenHumanHarnessAgentSelector(remainingArgs);
+    const explicitHarnessAgentSelectors = parseOpenHumanHarnessAgentSelector(remainingArgs);
 
     // PUW-027 (#1128): --scope user|project per ADR-4. Default project.
     // #1156 Phase 1: --user is a shorthand for --scope user.
@@ -1889,7 +2036,7 @@ export class UseHandler implements CommandHandler {
       ui.dim(`  --scope user: deploy targets mirror to home-rooted paths per ADR-4 §2`);
     }
     const filteredArgs = deployArgs.filter(
-      a => a !== '--no-utils' && a !== '--no-project-local' && a !== '--ci-hooks-enabled' && a !== '--force' && a !== '--skip-conflicts'
+      a => a !== '--no-utils' && a !== '--no-project-local' && a !== '--ci-hooks-enabled' && a !== '--force' && a !== '--skip-conflicts' && a !== '--no-harness-agents'
     );
     const deployFilteredArgs = removeFlagWithOptionalValue(filteredArgs, '--harness-agents');
 
@@ -1928,23 +2075,21 @@ export class UseHandler implements CommandHandler {
     const targetIdx = remainingArgs.findIndex(a => a === '--target');
     const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
 
-    if (harnessAgentSelectors.length > 0 && provider !== 'openhuman') {
+    if (explicitHarnessAgentSelectors.length > 0 && provider !== 'openhuman') {
       return {
         exitCode: 1,
         message: '--harness-agents is only supported with --provider openhuman',
       };
     }
 
-    // #1526 — OpenClaw is user-scope-only. An unflagged deploy defaults to
-    // 'project' (ADR-4 default); coerce it to 'user' rather than erroring, so
-    // `aiwg use <framework> --provider openclaw` works as the rejection message
-    // itself promises ("omit the flag"). Only an explicit `--scope project` is
-    // rejected below.
-    if (provider === 'openclaw' && scope === 'project' && !remainingArgs.includes('--scope')) {
+    // #1526 / OpenHuman source alignment — OpenClaw and OpenHuman are
+    // user-global app installs. An unflagged deploy should work; explicit
+    // `--scope project` is rejected below.
+    if ((provider === 'openclaw' || provider === 'openhuman') && scope === 'project' && !remainingArgs.includes('--scope')) {
       scope = 'user';
     }
 
-    // #1156 Phase 1 — OpenClaw is exclusively user-scope; reject explicit --scope project.
+    // #1156 Phase 1 — home-dir providers reject explicit --scope project.
     try {
       rejectOpenClawProjectScope(provider, scope);
     } catch (err) {
@@ -2001,17 +2146,20 @@ export class UseHandler implements CommandHandler {
       return mainResult;
     }
 
+    const harnessAgentSelectors = provider === 'openhuman'
+      ? resolveOpenHumanHarnessAgentSelectors(remainingArgs)
+      : [];
     if (harnessAgentSelectors.length > 0) {
       try {
         const harness = await deployOpenHumanHarnessAgents({
           frameworkRoot,
           target,
           selectors: harnessAgentSelectors,
-          scope,
+          scope: 'user',
           dryRun,
         });
         if (verbose || !quiet) {
-          ui.dim(`  OpenHuman native harness stubs: ${harness.emitted}`);
+          ui.dim(`  OpenHuman native harness agents: ${harness.emitted}`);
         }
       } catch (error) {
         return {
@@ -2301,7 +2449,7 @@ export class UseHandler implements CommandHandler {
     // mirror, record the deploy in the per-user registry at
     // ~/.aiwg/installed.json so `aiwg list --scope user` and `aiwg remove
     // --scope user` can find it from any cwd.
-    if (scope === 'user' && !dryRun) {
+    if (scope === 'user' && provider !== 'openhuman' && !dryRun) {
       try {
         const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
         const resolveProjectPath = (p: string): string =>
@@ -2496,15 +2644,6 @@ export class UseHandler implements CommandHandler {
           force: forceContext,
           skip: { aiwgMd: skipAiwgMd, agentsMd: skipAgentsMd },
         });
-
-        // OpenHuman is a global/home-dir install like OpenClaw (#1553): kernel
-        // skills land in ~/.openhuman/skills/ (ungated, surfaced by the Skills
-        // library); personas + AGENTS.md stay in this workspace for the coding
-        // hosts OpenHuman drives. Tell the operator where things went.
-        if (provider === 'openhuman') {
-          ui.dim('  Skills installed globally → ~/.openhuman/skills/ (open OpenHuman → Skills to see them)');
-          ui.dim('  The full skill set is available to agent-side capability search.');
-        }
 
         if (verbose && ctxResult.agentsMdPath) {
           ui.dim(`  Wrote AGENTS.md (${ctxResult.agentsMdBytes} bytes)`);

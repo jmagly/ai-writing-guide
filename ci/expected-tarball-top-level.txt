@@ -47,5 +47,6 @@ dist
 docs
 man
 package.json
+prebuilt
 templates
 tools

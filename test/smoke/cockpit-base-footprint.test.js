@@ -7,12 +7,24 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { mkdirSync } from 'node:fs';
 
+function parseNpmPackJson(stdout) {
+  try {
+    return JSON.parse(stdout);
+  } catch {
+    const start = stdout.lastIndexOf('\n[');
+    if (start >= 0) return JSON.parse(stdout.slice(start + 1));
+    const first = stdout.indexOf('[');
+    if (first >= 0) return JSON.parse(stdout.slice(first));
+    throw new Error('no JSON array found in npm pack output');
+  }
+}
+
 describe('cockpit base-npm footprint guard (#1593)', () => {
   it('publishes zero apps/cockpit files in the base aiwg tarball', () => {
     const out = execFileSync('npm', ['pack', '--dry-run', '--json'], {
       encoding: 'utf8', cwd: process.cwd(), maxBuffer: 64 * 1024 * 1024,
     });
-    const files = (JSON.parse(out)[0]?.files ?? []).map((f) => f.path);
+    const files = (parseNpmPackJson(out)[0]?.files ?? []).map((f) => f.path);
     const leaked = files.filter((f) => f.startsWith('apps/cockpit'));
     expect(leaked, `apps/cockpit must not ship in base aiwg — leaked: ${leaked.slice(0, 5).join(', ')}`).toHaveLength(0);
   }, 120000); // npm pack walks the full base tarball (~6k files) — allow headroom
@@ -47,7 +59,7 @@ describe('cockpit base-npm footprint guard (#1593)', () => {
       env: { ...process.env, npm_config_cache: npmCache },
       maxBuffer: 64 * 1024 * 1024,
     });
-    const pack = JSON.parse(out)[0];
+    const pack = parseNpmPackJson(out)[0];
     const files = (pack?.files ?? []).map((f) => f.path);
 
     expect(pack?.name).toBe('@aiwg/cockpit');

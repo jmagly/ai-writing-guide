@@ -17,6 +17,10 @@ aiwg storage migrate <subsystem> --from <spec> --to <spec> [--dry-run]
 | `logseq`    | graph directory                          | `logseq:~/.logseq/graphs/work`          |
 | `fortemi`   | MCP server name                          | `fortemi:fortemi`                       |
 
+`fortemi:<server-name>` targets the legacy Fortemi MCP storage adapter only. It
+does not create or update Fortemi Core index/search caches; run
+`aiwg index sync --backend fortemi-core` for that path.
+
 Optional flags:
 - `--from-folder <subfolder>` — Obsidian-only, applies to source
 - `--to-folder <subfolder>` — Obsidian-only, applies to destination
@@ -62,7 +66,7 @@ aiwg storage migrate research \
 # .aiwg/storage.config → roots.research = "/mnt/archive/aiwg-research"
 ```
 
-### Move agent-loop memory into Fortemi
+### Move agent-loop memory into Fortemi MCP storage
 
 ```bash
 aiwg storage migrate memory \

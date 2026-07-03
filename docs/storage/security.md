@@ -32,7 +32,7 @@ Each backend documents its env-var (and optional OS-keychain) requirements:
 | `logseq`       | `LOGSEQ_API_TOKEN` (only when `useApi: true`)                         |
 | `notion`       | `NOTION_API_TOKEN` *(planned, #959)*                                  |
 | `anythingllm`  | `ANYTHINGLLM_API_KEY` *(planned, #960)*                               |
-| `fortemi`      | governed by AIWG MCP server config, not by `storage.config`           |
+| `fortemi`      | governed by AIWG MCP server config, not by `storage.config`; legacy storage only, not Fortemi Core index/search |
 | `s3`           | AWS default credential chain *(planned, #962)*                        |
 | `webdav`       | `AIWG_WEBDAV_USER` + `AIWG_WEBDAV_PASSWORD` or `AIWG_WEBDAV_TOKEN` *(planned, #963)* |
 

@@ -235,6 +235,12 @@ jobs:
           echo "=== Package contents ==="
           npm pack --dry-run 2>&1 | tee pack-output.txt
 
+      - name: Verify Fortemi Core prebuilt index package (#1697)
+        # Runs npm pack through prepack, then verifies the Fortemi Core v2
+        # framework export + manifest are present in the tarball and match
+        # their checksum/schema contract.
+        run: npm run lint:fortemi-prebuilt-package
+
       - name: Check Cockpit package contents
         run: |
           set -o pipefail

@@ -1,5 +1,5 @@
-timestamp: 2026-06-22T14:20:05Z
+timestamp: 2026-07-03T03:25:33Z
 direction: code-to-docs
-scope: agentic/code/** plus repository Markdown; skills and agents treated as code
-files_changed: 29
-report: .aiwg/reports/doc-sync-20260622T142005Z.md
+scope: Fortemi Core search/index packaging, prebuilt indices, legacy Fortemi storage boundary
+files_changed: 11
+report: .aiwg/reports/doc-sync-audit-20260703T032533Z.md

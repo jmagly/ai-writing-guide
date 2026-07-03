@@ -140,6 +140,7 @@ export interface BrowserIndexExportOptions {
   privacy?: AiwgPrivacyClassification;
   generatedAt?: string;
   schemaVersion?: AiwgFortemiExportSchemaVersion;
+  includeSourceBody?: boolean;
 }
 
 function stableArtifactId(artifactPath: string): string {
@@ -486,7 +487,7 @@ export function buildAiwgFortemiIndexExport(
         privacy,
         schemaVersion,
         recordTypesByPath,
-        sourceBodyForEntry(cwd, entry),
+        options.includeSourceBody === false ? "" : sourceBodyForEntry(cwd, entry),
       ),
     )
     .sort((left, right) => left.id.localeCompare(right.id));

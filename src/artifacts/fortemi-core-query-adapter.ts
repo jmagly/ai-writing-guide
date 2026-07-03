@@ -10,7 +10,7 @@ import type {
   AiwgFortemiRecord,
 } from "./browser-export.js";
 import { bm25Rank, type FullTextDoc } from "./fulltext.js";
-import { getFortemiCoreSyncStatus } from "./fortemi-core-sync.js";
+import { getFortemiCorePrebuiltStatus, getFortemiCoreSyncStatus } from "./fortemi-core-sync.js";
 
 export interface FortemiCoreLoadResult {
   entries: MetadataEntry[];
@@ -158,7 +158,13 @@ function loadFortemiCoreExport(
   cwd: string,
   graph: GraphType = "project",
 ): FortemiCoreExportLoadResult {
-  const status = getFortemiCoreSyncStatus(cwd, graph);
+  let status = getFortemiCoreSyncStatus(cwd, graph);
+  if ((!status.optedIn || !status.built || status.stale) && graph === "framework") {
+    const prebuilt = getFortemiCorePrebuiltStatus(graph);
+    if (prebuilt.optedIn && prebuilt.built && !prebuilt.stale) {
+      status = prebuilt;
+    }
+  }
   if (!status.optedIn) {
     return {
       reason: `Fortemi Core static index is not materialized for graph '${graph}'. Run 'aiwg index sync --backend fortemi-core${graph === "project" ? "" : ` --graph ${graph}`}' first, or omit '--backend fortemi-core' to use the local index.`,

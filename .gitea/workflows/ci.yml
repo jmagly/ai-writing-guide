@@ -72,6 +72,12 @@ jobs:
       - name: Build CLI (required by integration tests that spawn bin/aiwg.mjs)
         run: npm run build:cli
 
+      - name: Run Fortemi Core index release gate (#1696/#1697)
+        # Builds the real framework corpus index, validates the checked-in
+        # discovery query matrix against local + Fortemi Core backends, and
+        # proves npm packaging includes the generated prebuilt index contract.
+        run: npm run ci:fortemi-index
+
       - name: Lint schemas
         # Validates schemas/executor-v1.json (draft-2020-12) and all
         # fixtures in test/conformance/executor-v1/fixtures/ against it.

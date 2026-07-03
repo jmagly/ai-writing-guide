@@ -5,10 +5,9 @@ Deploy AIWG into [OpenHuman](https://github.com/tinyhumansai/openhuman)
 React/Tauri desktop shell, single `openhuman-core` binary) with a built-in
 coder toolset and an agent harness.
 
-OpenHuman is **AIWG-convention-aware out of the box**: it already ships
-`.agents/`, `AGENTS.md`, `.claude/`, and `.codex/`. That makes induction
-low-friction — AIWG's cross-provider conventions land where OpenHuman (and the
-coding hosts it drives) already look.
+OpenHuman's user-facing skill install path is `~/.openhuman/skills/`. AIWG uses
+that path only for kernel skills that should appear in the OpenHuman UI; the
+rest of the AIWG corpus remains available through AIWG discovery.
 
 > Status: **experimental** (induction epic
 > [#1552](https://git.integrolabs.net/roctinam/aiwg/issues/1552)). The
@@ -18,31 +17,26 @@ coding hosts it drives) already look.
 
 AIWG reaches OpenHuman through two tiers.
 
-**Tier 1 — host integration (default).** AIWG deploys markdown agent personas,
-skills, and an `AGENTS.md` bridge using OpenHuman's native conventions. These
-reach OpenHuman whenever it drives an external coding host (`claude_code`,
-`factory`) inside the workspace, and they prime OpenHuman's own `AGENTS.md`
-discovery. No format conversion happens.
+**Tier 1 — user-global skills (default).** AIWG deploys OpenHuman-visible
+kernel skills to `~/.openhuman/skills/`. Standard skills stay in AIWG's
+index/discovery system and are reached through `aiwg discover` / `aiwg show`;
+they are not copied into the OpenHuman UI scan root.
 
-**Tier 2 — native harness (opt-in).** OpenHuman's own agent harness
-(`spawn_subagent`) loads TOML specialists from `<ws>/agents/*.toml` and
-`~/.openhuman/agents/*.toml`. AIWG can register selected agents there with
-`--harness-agents=...`. It is curated and flag-gated; the default deploy emits
-no native harness stubs.
+**Tier 2 — native harness agents (default curated set).** OpenHuman's own agent harness
+(`spawn_subagent`) loads TOML specialists from `~/.openhuman/agents/*.toml`.
+AIWG registers a curated set of rich native TOML worker agents there by default.
+Use `--harness-agents=...` to replace the default set, or
+`--no-harness-agents` for a kernel-skills-only deploy.
 
 | Artifact | Where it lands | Notes |
 |----------|----------------|-------|
-| Agents | `.agents/agents/*.md` | Markdown personas, deployed verbatim (frontmatter intact) |
+| Agents | `~/.openhuman/agents/aiwg_*.toml` | Curated native TOML worker agents; rich definitions rendered from AIWG markdown and the OpenHuman TOML template |
 | Skills (kernel) | `~/.openhuman/skills/` | **Global/home-dir like OpenClaw** — ungated user-scope native scan root (`ops_discover.rs`, one-level); exactly what the app's Skills library surfaces |
-| Skills (standard) | `~/.openhuman/.aiwg/skills/` | Sequestered for index-driven discovery (`aiwg discover`) |
-| Commands | `AGENTS.md` (aggregated) | OpenHuman has no native command surface; command-skills also deploy as skills |
-| Rules | `~/.openhuman/.aiwg/rules/` + `AGENTS.md` | Full bodies on disk for `aiwg show rule`; critical directives inline in `AGENTS.md` |
-| Config bridge | `AGENTS.md` | Discover-First orientation |
-| Native harness stubs (opt-in) | `<ws>/agents/aiwg_*.toml` + `<ws>/agent/prompts/aiwg/*.md` | Selected only via `--harness-agents`; prompt bodies are frontmatter-stripped |
+| Skills (standard) | AIWG index/discovery | Not copied into OpenHuman scan roots |
+| Commands | skills/index only | OpenHuman has no native command directory |
+| Rules | `~/.openhuman/.aiwg/rules/` | Full bodies on disk for `aiwg show rule` |
 
-OpenHuman is "codex-shaped" (AGENTS.md bridge, cross-provider `.agents/`) but
-deploys discrete markdown agents and treats commands/rules as aggregated, the
-way Hermes does.
+OpenHuman is a user-global app install target for AIWG, like OpenClaw.
 
 ## Prerequisites
 
@@ -51,48 +45,44 @@ way Hermes does.
 
 ## Quick start
 
-From your project root:
-
 ```bash
 aiwg use sdlc --provider openhuman
 ```
 
 This deploys:
 
-- Kernel skills **globally** to `~/.openhuman/skills/`, standard skills to `~/.openhuman/.aiwg/skills/`
-- Agent personas to the workspace `.agents/agents/` (Tier 1)
-- An `AGENTS.md` bridge at the project root
+- Kernel skills to `~/.openhuman/skills/` so they appear in OpenHuman's Skills UI
+- Curated native harness TOMLs to `~/.openhuman/agents/` for OpenHuman `spawn_subagent`
+- Standard skills remain available through AIWG index/discovery; they are not copied into OpenHuman scan roots
+- Rules to `~/.openhuman/.aiwg/rules/`
 
 Verify:
 
 ```bash
-ls ~/.openhuman/skills/   # kernel skills (global, always-loaded set — appear in the Skills library)
-ls .agents/agents/        # markdown personas (workspace-scoped)
-cat AGENTS.md             # Discover-First bridge
+ls ~/.openhuman/skills/        # kernel skills visible to OpenHuman
+ls ~/.openhuman/agents/        # AIWG native harness TOMLs
 ```
 
-Nothing is written to `<ws>/agents/` or `<ws>/agent/prompts/` unless you select
-Tier-2 native harness agents.
+Nothing is written to project-level OpenHuman directories.
 
-## Optional Native Harness Agents
+## Native Harness Agent Selection
 
-Use `--harness-agents` to expose a small curated set of AIWG specialists through
-OpenHuman's `spawn_subagent` registry:
+The default deploy writes a curated set of AIWG specialists through OpenHuman's
+`spawn_subagent` registry. Override the set with `--harness-agents`:
 
 ```bash
 aiwg use sdlc --provider openhuman --harness-agents=test-engineer,security-auditor
 ```
 
-Project scope writes thin TOML stubs under `agents/` and stripped prompt bodies
-under `agent/prompts/aiwg/`. User scope writes self-contained inline TOML stubs
-under `~/.openhuman/agents/`:
-
-```bash
-aiwg use sdlc --provider openhuman --scope user --harness-agents=test-engineer
-```
+OpenHuman is user-global, so harness selection writes self-contained inline
+TOML definitions under `~/.openhuman/agents/`. Each definition is rendered from
+`agentic/code/frameworks/sdlc-complete/templates/openhuman/agent.toml.aiwg-template`
+and includes OpenHuman-native model hints, worker tier, runtime caps, sandbox
+mode, TokenJuice profile, and context omission settings.
 
 Re-run `aiwg doctor --provider openhuman` to validate the optional Tier-2
-stubs. The default no-selector deploy remains Tier-1 only.
+definitions. Use `--no-harness-agents` when you want only kernel skills and
+rules.
 
 ## Why skills install globally (no trust marker needed)
 
@@ -104,9 +94,7 @@ installs the kernel set there, like OpenClaw's home-dir model. No trust marker
 is involved.
 
 The trust marker only governs **project-scope** roots (`<ws>/.openhuman/skills/`),
-which AIWG no longer deploys to. Personas and the `AGENTS.md` bridge stay
-workspace-scoped because the external coding hosts OpenHuman drives
-(`claude_code`/`factory`) read them from the workspace.
+which AIWG does not deploy to for OpenHuman.
 (Resolution tracked in [#1553](https://git.integrolabs.net/roctinam/aiwg/issues/1553).)
 
 ## Caveat: skill execution is being rebuilt
@@ -116,15 +104,6 @@ metadata/discovery-only at present. **Discovery, install, and catalog rendering
 work today; end-to-end skill execution does not yet.** AIWG targets
 discovery/deploy parity first. Check the current OpenHuman domain modules before
 assuming a skill runs end-to-end.
-
-## Bidirectional relationship
-
-The integration runs both ways. OpenHuman can itself **drive** other agents as
-inference backends — it ships drivers for `claude_code`
-(`src/openhuman/inference/provider/claude_code/`) and `factory`. When it does,
-the AIWG markdown personas in `.agents/agents/` and the `AGENTS.md` bridge are
-exactly what those hosts read. So a single Tier-1 deploy serves both OpenHuman's
-own discovery and the coding hosts it orchestrates.
 
 ## Discover-First inside OpenHuman
 
@@ -136,13 +115,13 @@ aiwg show skill flow-security-review        # fetch the body
 ```
 
 Run `aiwg discover` before concluding AIWG lacks a capability — it indexes the
-full installed corpus, not just the kernel set surfaced in `AGENTS.md`.
+full installed corpus, not just the kernel set copied into `~/.openhuman/skills/`.
 
 ## State boundaries
 
 - `.aiwg/` holds project-local SDLC artifacts (requirements, architecture,
   reports). It is never deployed to other systems.
-- `~/.openhuman/skills/` (global), workspace `.agents/agents/`, and `AGENTS.md` are AIWG-managed
+- `~/.openhuman/skills/` kernel skills and `~/.openhuman/.aiwg/rules/` are AIWG-managed
   deploy outputs — safe to regenerate with `aiwg refresh --provider openhuman`.
 
 ## See also
@@ -150,4 +129,4 @@ full installed corpus, not just the kernel set surfaced in `AGENTS.md`.
 - Provider induction epic: [#1552](https://git.integrolabs.net/roctinam/aiwg/issues/1552)
 - Agent target decision: `.aiwg/architecture/adr-openhuman-agent-target.md`
 - Tier-2 native harness: [#1559](https://git.integrolabs.net/roctinam/aiwg/issues/1559)
-- `docs/integrations/hermes-quickstart.md` — the closest analog (AGENTS.md bridge)
+- `docs/integrations/openclaw-quickstart.md` — closest user-global install analog

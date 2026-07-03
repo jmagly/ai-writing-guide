@@ -28,6 +28,12 @@ generated timestamp, so a repeated sync over unchanged index content reports
 
 The cache is opt-in. AIWG continues to read `.aiwg/.index/<graph>/` as the
 local fallback until the Fortemi Core default switch is separately approved.
+Release packages also include a prebuilt `framework` graph cache under
+`prebuilt/fortemi-core/framework/` so `aiwg discover ... --backend fortemi-core`
+can answer from the distro package when no local framework cache exists. This
+packaged cache is a compact metadata/capability projection; run a local
+`aiwg index sync --backend fortemi-core --graph framework` when source-body
+fulltext fidelity is required.
 
 ## Contracts
 
@@ -164,6 +170,11 @@ Rollback is file-level and does not require data migration:
 Do not remove `.aiwg/.index/<graph>/` during rollback. That directory is the
 authoritative fallback until the default switch issue has passed the parity
 gates and shipped with a rollback window.
+
+Packaged framework discovery has a second fallback: the npm tarball ships
+`prebuilt/fortemi-core/framework/` with a manifest checksum and size ceiling.
+The release gate validates that `npm pack` includes those files and that
+Fortemi-backed discovery works with an empty `XDG_DATA_HOME`.
 
 ## Privacy
 

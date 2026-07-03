@@ -35,6 +35,10 @@ const { collectIndexStatus } = await importImpl(
   import.meta.url,
   'artifacts/index-status.js'
 );
+const { getFortemiCorePrebuiltStatus, getFortemiCoreSyncStatus } = await importImpl(
+  import.meta.url,
+  'artifacts/fortemi-core-sync.js'
+);
 
 // AIWG_ROOT: env override > channel-manager resolved path > legacy edge path
 // getFrameworkRoot() resolves correctly for npm global installs, edge, and dev channels.
@@ -525,11 +529,11 @@ async function checkOpenHumanHarnessTier2() {
       }
       if (!parsed.whenToUse.trim()) findings.push(`${tomlPath}: missing when_to_use`);
       if (!parsed.hasSystemPromptTable) findings.push(`${tomlPath}: missing [system_prompt] table`);
-      if (parsed.hasSubagents) findings.push(`${tomlPath}: Worker-tier AIWG stubs must not set subagents`);
+      if (parsed.hasSubagents) findings.push(`${tomlPath}: Worker-tier AIWG harness definitions must not set subagents`);
 
       if (root.scope === 'project') {
         if (!parsed.file) {
-          findings.push(`${tomlPath}: project-scope stub must use [system_prompt] file`);
+          findings.push(`${tomlPath}: project-scope harness definition must use [system_prompt] file`);
         } else {
           const promptPath = path.join(process.cwd(), 'agent', 'prompts', parsed.file);
           try {
@@ -540,10 +544,10 @@ async function checkOpenHumanHarnessTier2() {
             findings.push(`${tomlPath}: prompt file missing (${promptPath})`);
           }
         }
-        if (parsed.inline) findings.push(`${tomlPath}: project-scope stub should not inline the prompt`);
+        if (parsed.inline) findings.push(`${tomlPath}: project-scope harness definition should not inline the prompt`);
       } else {
-        if (!parsed.inline.trim()) findings.push(`${tomlPath}: user-scope stub must contain a non-empty inline prompt`);
-        if (parsed.file) findings.push(`${tomlPath}: user-scope stub should not use file prompts`);
+        if (!parsed.inline.trim()) findings.push(`${tomlPath}: user-scope harness definition must contain a non-empty inline prompt`);
+        if (parsed.file) findings.push(`${tomlPath}: user-scope harness definition should not use file prompts`);
       }
     }
   }
@@ -551,9 +555,9 @@ async function checkOpenHumanHarnessTier2() {
   if (findings.length > 0) {
     check('OpenHuman Tier-2 harness', 'error', findings.slice(0, 4).join('; ') + (findings.length > 4 ? `; +${findings.length - 4} more` : ''));
   } else if (fileCount > 0) {
-    check('OpenHuman Tier-2 harness', 'ok', `${fileCount} AIWG native harness stub(s) valid`);
+    check('OpenHuman Tier-2 harness', 'ok', `${fileCount} AIWG native harness definition(s) valid`);
   } else {
-    check('OpenHuman Tier-2 harness', 'ok', 'No opt-in AIWG native harness stubs selected');
+    check('OpenHuman Tier-2 harness', 'ok', 'No AIWG native harness definitions installed');
   }
 }
 
@@ -1746,6 +1750,26 @@ async function runDoctor() {
     }
   } catch {
     // Non-fatal — never break doctor on the durable-index probe.
+  }
+
+  // 13c. Fortemi Core prebuilt framework index (#1697) — release packages
+  // should include this cache so Fortemi-backed discovery can answer framework
+  // queries without forcing a local rebuild first.
+  try {
+    const local = getFortemiCoreSyncStatus(process.cwd(), 'framework');
+    const prebuilt = getFortemiCorePrebuiltStatus('framework');
+    if (prebuilt.built && !prebuilt.stale) {
+      const localNote = local.built && !local.stale ? '; local cache also ready' : '';
+      check('fortemi-core-index', 'ok', `prebuilt framework index present (${prebuilt.itemCount ?? 0} items${localNote})`);
+    } else if (local.built && !local.stale) {
+      check('fortemi-core-index', 'ok', `local framework cache ready (${local.itemCount ?? 0} items); prebuilt package index not present`);
+    } else if (prebuilt.optedIn && prebuilt.stale) {
+      check('fortemi-core-index', 'warn', `${prebuilt.reason ?? 'prebuilt framework index is stale'} — run "npm run release:fortemi-index" before release packaging`);
+    } else {
+      check('fortemi-core-index', 'info', 'no prebuilt framework index packaged; Fortemi discovery will require "aiwg index sync --backend fortemi-core --graph framework"');
+    }
+  } catch {
+    // Non-fatal — older installs may not expose the helper yet.
   }
 
   // Print results

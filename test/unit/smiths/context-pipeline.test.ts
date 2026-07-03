@@ -443,24 +443,6 @@ describe('context finalization emission', () => {
     expect(second.match(/## Context Finalization/g)).toHaveLength(1);
   });
 
-  // #1553 follow-up — OpenHuman is a global/home-dir install like OpenClaw:
-  // kernel skills deploy to ~/.openhuman/skills/ (USER scope, ungated). The
-  // workspace `.openhuman/trust` marker only ever governed PROJECT-scope skills,
-  // which AIWG no longer deploys — so the marker is moot and must NOT be written.
-  // The AGENTS.md discover-first bridge is still emitted in the workspace (#1560).
-  it('emits the AGENTS.md bridge for openhuman without writing a project-scope trust marker (#1553)', async () => {
-    const dir = makeTmpDir();
-    try {
-      const result = await generate({
-        provider: 'openhuman', projectPath: dir, sections: [], detectExistingFiles: true,
-      });
-      expect(result.agentsMdPath).toBe(join(dir, 'AGENTS.md'));
-      expect(existsSync(join(dir, '.openhuman', 'trust'))).toBe(false);
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
-
   it('emits root, normalized, and provider twin context files with discover-first guidance', async () => {
     const dir = makeTmpDir();
     try {

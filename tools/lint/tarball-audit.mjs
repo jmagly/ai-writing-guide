@@ -99,9 +99,21 @@ if (result.status !== 0) {
   process.exit(2);
 }
 
+function parseNpmPackJson(stdout) {
+  try {
+    return JSON.parse(stdout);
+  } catch {
+    const start = stdout.lastIndexOf('\n[');
+    if (start >= 0) return JSON.parse(stdout.slice(start + 1));
+    const first = stdout.indexOf('[');
+    if (first >= 0) return JSON.parse(stdout.slice(first));
+    throw new Error('no JSON array found in npm pack output');
+  }
+}
+
 let packJson;
 try {
-  packJson = JSON.parse(result.stdout);
+  packJson = parseNpmPackJson(result.stdout);
 } catch (err) {
   console.error(`✗ Could not parse \`npm pack\` JSON output: ${err.message}`);
   process.exit(2);

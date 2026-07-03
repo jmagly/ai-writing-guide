@@ -49,6 +49,49 @@ export interface QueryOptions {
   backend?: 'local' | 'fortemi-core';
 }
 
+const DISCOVER_TYPE_ORDER = new Map(
+  ['skill', 'agent', 'command', 'rule', 'flow', 'behavior', 'template', 'doc'].map((type, index) => [type, index]),
+);
+
+function canonicalLocalityRank(entryPath: string): number {
+  const normalized = entryPath.replace(/\\/g, '/');
+  if (normalized.includes('/plugins/') || normalized.startsWith('agentic/code/plugins/')) return 2;
+  if (
+    normalized.includes('/frameworks/') ||
+    normalized.includes('/addons/') ||
+    normalized.includes('/extensions/') ||
+    normalized.startsWith('agentic/code/frameworks/') ||
+    normalized.startsWith('agentic/code/addons/') ||
+    normalized.startsWith('agentic/code/extensions/')
+  ) {
+    return 0;
+  }
+  return 1;
+}
+
+function compareText(left: string | undefined, right: string | undefined): number {
+  return (left ?? '').localeCompare(right ?? '');
+}
+
+export function compareDiscoverResults(left: QueryResult, right: QueryResult): number {
+  const scoreCmp = right.score - left.score;
+  if (scoreCmp !== 0) return scoreCmp;
+
+  const localityCmp =
+    canonicalLocalityRank(left.entry.path) - canonicalLocalityRank(right.entry.path);
+  if (localityCmp !== 0) return localityCmp;
+
+  const typeCmp =
+    (DISCOVER_TYPE_ORDER.get(left.entry.type) ?? 99) -
+    (DISCOVER_TYPE_ORDER.get(right.entry.type) ?? 99);
+  if (typeCmp !== 0) return typeCmp;
+
+  const nameCmp = compareText(left.entry.name ?? left.entry.title, right.entry.name ?? right.entry.title);
+  if (nameCmp !== 0) return nameCmp;
+
+  return left.entry.path.localeCompare(right.entry.path);
+}
+
 /**
  * Stop-words to drop when tokenizing a discovery phrase. Keep short —
  * we want the user's verbs and nouns to dominate scoring.
@@ -453,7 +496,7 @@ export async function queryIndex(
     results = candidates
       .map(entry => ({ entry, score: scoreEntry(entry, params.text!) }))
       .filter(r => r.score > 0)
-      .sort((a, b) => b.score - a.score);
+      .sort(compareDiscoverResults);
   } else {
     // No keyword — return all filtered results with score 1.0
     results = candidates.map(entry => ({ entry, score: 1.0 }));
@@ -704,7 +747,7 @@ export async function discoverCapability(
   const strictScored = candidates
     .map(entry => ({ entry, score: scoreEntry(entry, params.phrase) }))
     .filter(r => r.score > 0)
-    .sort((a, b) => b.score - a.score);
+    .sort(compareDiscoverResults);
 
   // Single-pass facet fusion (#1623 U3): fuse the curated feature→capability
   // facets (expansion / persona / project / provider-capability) into the
@@ -731,7 +774,7 @@ export async function discoverCapability(
     const relaxedFull = candidates
       .map(entry => ({ entry, score: scoreEntry(entry, params.phrase, { relaxOverlap: true }) }))
       .filter(r => r.score >= RELAXED_MIN_SCORE)
-      .sort((a, b) => b.score - a.score);
+      .sort(compareDiscoverResults);
     const relaxedScored = (await applyFacetFusion(relaxedFull, candidates, params.phrase)).slice(0, limit);
     if (relaxedScored.length > 0) {
       scored = relaxedScored;

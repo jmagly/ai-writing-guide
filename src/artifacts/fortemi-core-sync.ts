@@ -32,6 +32,7 @@ export interface FortemiCoreSyncManifest {
 
 export interface FortemiCoreSyncStatus {
   optedIn: boolean;
+  source: "local" | "prebuilt" | "none";
   graph: string;
   location: string;
   manifestPath: string;
@@ -47,6 +48,23 @@ export interface FortemiCoreSyncStatus {
 
 function syncDir(cwd: string, graph: string): string {
   return path.join(cwd, ".aiwg", ".index", "fortemi-core", graph);
+}
+
+function findPackageRoot(startDir: string): string | null {
+  let current = startDir;
+  for (;;) {
+    if (fs.existsSync(path.join(current, "package.json"))) return current;
+    const parent = path.dirname(current);
+    if (parent === current) return null;
+    current = parent;
+  }
+}
+
+function prebuiltDir(graph: string): string | null {
+  const moduleDir = path.dirname(new URL(import.meta.url).pathname);
+  const packageRoot = findPackageRoot(moduleDir);
+  if (!packageRoot) return null;
+  return path.join(packageRoot, "prebuilt", "fortemi-core", graph);
 }
 
 function sha256(text: string): string {
@@ -158,6 +176,7 @@ export function getFortemiCoreSyncStatus(
   if (!manifest) {
     return {
       optedIn: manifestReadReason !== null,
+      source: "none",
       graph,
       location: dir,
       manifestPath,
@@ -202,6 +221,7 @@ export function getFortemiCoreSyncStatus(
   const stale = !exportExists || exportReadReason !== null || sourceIsNewer;
   return {
     optedIn: true,
+    source: "local",
     graph,
     location: dir,
     manifestPath,
@@ -218,6 +238,64 @@ export function getFortemiCoreSyncStatus(
         ? exportReadReason
       : sourceIsNewer
         ? "source index is newer than the Fortemi Core static cache"
-        : null,
+      : null,
+  };
+}
+
+export function getFortemiCorePrebuiltStatus(
+  graph: string = "framework",
+): FortemiCoreSyncStatus {
+  const dir = prebuiltDir(graph) ?? path.join(process.cwd(), "prebuilt", "fortemi-core", graph);
+  const manifestPath = path.join(dir, "manifest.json");
+  const exportPath = path.join(dir, "aiwg-fortemi-index-v2.json");
+  const { manifest, reason: manifestReadReason } = readManifestResult(manifestPath);
+  if (!manifest) {
+    return {
+      optedIn: false,
+      source: "none",
+      graph,
+      location: dir,
+      manifestPath,
+      exportPath,
+      built: false,
+      stale: false,
+      itemCount: null,
+      exportChecksum: null,
+      generatedAt: null,
+      sourceIndexBuiltAt: null,
+      reason: manifestReadReason,
+    };
+  }
+
+  const exportExists = fs.existsSync(exportPath);
+  let reason: string | null = null;
+  if (exportExists) {
+    try {
+      const exportText = fs.readFileSync(exportPath, "utf-8");
+      const exported = JSON.parse(exportText) as AiwgFortemiIndexExport;
+      if (sha256(exportText) !== manifest.export_checksum) {
+        reason = "prebuilt export checksum does not match manifest";
+      } else if (exported.schema_version !== manifest.export_schema_version) {
+        reason = `prebuilt export schema '${exported.schema_version}' does not match manifest '${manifest.export_schema_version}'`;
+      }
+    } catch (err) {
+      reason = `prebuilt export file is unreadable: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  return {
+    optedIn: true,
+    source: "prebuilt",
+    graph,
+    location: dir,
+    manifestPath,
+    exportPath,
+    built: exportExists,
+    stale: !exportExists || reason !== null,
+    itemCount: manifest.item_count,
+    exportChecksum: manifest.export_checksum,
+    generatedAt: manifest.generated_at,
+    sourceIndexBuiltAt: manifest.source_index_built_at,
+    reason: !exportExists ? "prebuilt manifest exists but export file is missing" : reason,
   };
 }

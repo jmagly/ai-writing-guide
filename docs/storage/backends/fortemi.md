@@ -1,10 +1,14 @@
-# Backend: `fortemi` (alpha)
+# Backend: `fortemi` (alpha, legacy for search)
 
 Routes a subsystem's persistence into [Fortemi](https://github.com/jmagly/aiwg/blob/main/.aiwg/planning/training-framework/phase-4-fortemi-review.md), the first-party AIWG semantic-memory project. Fortemi is Rust + PostgreSQL + pgvector with SKOS hierarchies, MRL embeddings, and W3C PROV provenance. Communication happens over MCP.
 
-## Status: alpha
+## Status: alpha MCP storage adapter
 
 The adapter ships with the parameter shapes documented in `phase-4-fortemi-review.md`, but those shapes have **not been formally validated against a live Fortemi instance**. Real-world parameter mismatches surface as MCP errors that bubble up to the consumer.
+
+This adapter is deprecated for index/search routing. New discovery, artifact
+query, graph traversal, and release-package fallback work uses the Fortemi Core
+static-cache backend selected explicitly with `--backend fortemi-core`.
 
 Use this backend when:
 - You're running AIWG against a Fortemi instance and want memory artifacts to flow into Fortemi's semantic-memory graph
@@ -26,6 +30,11 @@ subsystem through Fortemi MCP tools. It does not switch AIWG discovery,
 artifact query, graph traversal, research-query, or KB traversal to the
 Fortemi Core static cache. Those paths remain opt-in through explicit
 `--backend fortemi-core` commands after an artifact graph sync.
+
+Release packages also include a prebuilt Fortemi Core `framework` index for
+capability discovery fallback. See
+[`docs/fortemi-core-prebuilt-indices.md`](../../fortemi-core-prebuilt-indices.md)
+for the cache contract and release matrix maintenance workflow.
 
 ## Configuration
 

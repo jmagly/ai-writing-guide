@@ -131,6 +131,12 @@ jobs:
         # entries against ci/expected-tarball-top-level.txt.
         run: npm run lint:tarball
 
+      - name: Verify Fortemi Core prebuilt index package (#1697)
+        # Runs npm pack through prepack, then verifies the Fortemi Core v2
+        # framework export + manifest are present in the tarball and match
+        # their checksum/schema contract.
+        run: npm run lint:fortemi-prebuilt-package
+
       - name: Check Cockpit package contents
         run: npm pack ./apps/cockpit --dry-run
 
@@ -330,6 +336,12 @@ jobs:
             exit 1
           fi
           echo "✓ .aiwg/ correctly excluded from npm package"
+
+      - name: Verify Fortemi Core prebuilt index package (#1697)
+        # Runs npm pack through prepack, then verifies the Fortemi Core v2
+        # framework export + manifest are present in the tarball and match
+        # their checksum/schema contract.
+        run: npm run lint:fortemi-prebuilt-package
 
       - name: Audit dep-graph signatures (#1288 / A12)
         # Hard gate: `npm audit signatures` verifies every package in the

@@ -373,7 +373,8 @@ aiwg use <framework|addon>
 - `--force` - Overwrite existing deployments
 - `--dry-run` - Preview without making changes
 - `--ci-hooks-enabled` - Also deploy CI workflow files to `.github/workflows/` and/or `.gitea/workflows/` (opt-in; detects forge from `.git/config`). Review deployed files before committing.
-- `--harness-agents <list>` - OpenHuman only: emit optional native `spawn_subagent` TOML stubs for a comma-separated curated agent list (for example `test-engineer,security-auditor`). Default deploy emits none.
+- `--harness-agents <list>` - OpenHuman only: replace the default curated native `spawn_subagent` TOML agent set with a comma-separated list (for example `test-engineer,security-auditor`).
+- `--no-harness-agents` - OpenHuman only: skip native TOML harness agents and deploy only kernel skills/rules.
 - `--skip-commands-migration` - Skip deleting the legacy commands directory (warns about duplicate entries in the command palette)
 - `--profile <name>` - Select a topology profile for addons that declare multiple page templates (e.g., `llm-wiki` ships `book-companion | personal | research-deep-dive | business-team | generic`). Without the flag, an interactive prompt appears on TTY. The selection is written to `.aiwg/<namespace>/config.json` so subsequent skill invocations pick the right template.
 
@@ -3371,13 +3372,15 @@ aiwg discover "<phrase>" [options]
 
 **Options:**
 
-- `--limit <N>` — Max ranked results (default: 10)
-- `--type <kinds>` — Comma-separated filter; defaults to `skill,agent,command,rule`. Examples: `--type skill`, `--type skill,agent`
+- `--limit <N>` — Max ranked results (default: 5)
+- `--type <kinds>` — Comma-separated filter; defaults to `skill,agent,command,rule,flow`. Examples: `--type skill`, `--type skill,agent`
 - `--json` — Emit a stable JSON schema (`path`, `type`, `title`, `score`, `triggers`, `capability`, `kernel`) for programmatic agent consumption
 - `--graph <name>` — Override the default graph. Defaults to `framework` (the AIWG capability graph), which is rebuilt automatically after every `aiwg use`.
 - `--backend <local|fortemi-core>` — Query backend. Default is `local`;
   `fortemi-core` reads the opt-in static cache created by
-  `aiwg index sync --backend fortemi-core`.
+  `aiwg index sync --backend fortemi-core`. For the `framework` graph it can
+  fall back to the packaged prebuilt index described in
+  [`docs/fortemi-core-prebuilt-indices.md`](fortemi-core-prebuilt-indices.md).
 
 **Examples:**
 
@@ -3742,7 +3745,7 @@ aiwg index query [search-text] [options]
 - `--fulltext` - Lexical full-text search over artifact **bodies** (BM25), instead of the default metadata scoring. Distinct from `--semantic` (conceptual).
 - `--semantic` - Use semantic similarity search (requires embedding index, or Fortemi static cache when paired with `--backend fortemi-core`)
 - `--hybrid` - Use Fortemi Core static hybrid scoring plus the type/phase/tag/path filters. Requires `--backend fortemi-core`.
-- `--backend <local|fortemi-core>` - Query backend. Default is `local`; `fortemi-core` reads the opt-in static cache created by `aiwg index sync --backend fortemi-core`.
+- `--backend <local|fortemi-core>` - Query backend. Default is `local`; `fortemi-core` reads the opt-in static cache created by `aiwg index sync --backend fortemi-core`. For `--graph framework`, packaged releases can fall back to the prebuilt index described in [`docs/fortemi-core-prebuilt-indices.md`](fortemi-core-prebuilt-indices.md).
 - `--set-query <expr>` - Set-theoretic query, e.g. `"cited_by(REF-008) AND cited_by(REF-016)"` (SQLite backend recommended)
 - `--json` - Output as JSON (recommended for agents)
 
@@ -3977,7 +3980,12 @@ aiwg index stats --graph framework
 
 ## Storage Commands
 
-AIWG persists artifacts (memory pages, knowledge-base entries, activity log, reflections, provenance records, research corpus, sandbox identities) through a pluggable storage adapter system (#934). By default everything lives on the local filesystem under `.aiwg/`. With `.aiwg/storage.config` you can route any subsystem to Obsidian, Logseq, Fortemi, or a different filesystem location.
+AIWG persists artifacts (memory pages, knowledge-base entries, activity log, reflections, provenance records, research corpus, sandbox identities) through a pluggable storage adapter system (#934). By default everything lives on the local filesystem under `.aiwg/`. With `.aiwg/storage.config` you can route any subsystem to Obsidian, Logseq, the legacy Fortemi MCP storage adapter, or a different filesystem location.
+
+The `fortemi` storage backend is separate from Fortemi Core index/search. Use
+`aiwg index sync --backend fortemi-core` and query commands with
+`--backend fortemi-core` for the new static-cache search path and packaged
+prebuilt framework fallback.
 
 **See [`docs/storage/`](storage/README.md) for the full guide** — overview, security model, migration walkthrough, and per-backend pages.
 
@@ -4024,7 +4032,7 @@ aiwg storage migrate memory \
   --to-folder AIWG/memory
 ```
 
-**Implemented backends:** `fs`, `obsidian`, `logseq`, `fortemi` (alpha).
+**Implemented backends:** `fs`, `obsidian`, `logseq`, `fortemi` (alpha MCP storage adapter; legacy for search).
 **Stub (tracked):** `notion` (#959), `anythingllm` (#960), `s3` (#962), `webdav` (#963).
 
 **Migrate spec format:** `<type>:<location>` (e.g., `fs:./dir`, `obsidian:~/vault`, `logseq:./graph`, `fortemi:server-name`). Use `--from-folder`/`--to-folder` for Obsidian subfolders. See `docs/storage/migration.md` for details.

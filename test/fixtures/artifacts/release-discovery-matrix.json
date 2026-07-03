@@ -1,0 +1,134 @@
+{
+  "schema_version": "aiwg.release.discovery-matrix.v1",
+  "description": "Release-gate capability discovery expectations for the real AIWG framework corpus.",
+  "default_graph": "framework",
+  "default_limit": 5,
+  "cases": [
+    {
+      "id": "marketing-campaign-intake",
+      "domain": "marketing",
+      "phrase": "campaign intake",
+      "expected_path": "agentic/code/frameworks/media-marketing-kit/skills/intake-start-campaign/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5
+    },
+    {
+      "id": "forensics-timeline",
+      "domain": "forensics",
+      "phrase": "forensic timeline",
+      "expected_path": "agentic/code/frameworks/forensics-complete/skills/forensics-timeline/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5,
+      "expected_top_path": "agentic/code/frameworks/forensics-complete/skills/forensics-timeline/SKILL.md"
+    },
+    {
+      "id": "research-grade-citations",
+      "domain": "research",
+      "phrase": "paper citation GRADE",
+      "expected_path": "agentic/code/frameworks/sdlc-complete/skills/grade-on-ingest/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5
+    },
+    {
+      "id": "media-curation-metadata",
+      "domain": "media-curator",
+      "phrase": "media collection metadata",
+      "expected_path": "agentic/code/frameworks/media-curator/skills/curate/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5,
+      "expected_top_path": "agentic/code/frameworks/media-curator/skills/curate/SKILL.md"
+    },
+    {
+      "id": "ops-runbook",
+      "domain": "ops",
+      "phrase": "ops runbook",
+      "expected_path": "agentic/code/frameworks/ops-complete/agents/ops-runbook-executor.md",
+      "expected_type": "agent",
+      "max_rank": 5
+    },
+    {
+      "id": "knowledge-memory-ingest",
+      "domain": "knowledge-base",
+      "phrase": "knowledge ingest memory",
+      "expected_path": "agentic/code/addons/semantic-memory/skills/memory-ingest/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5
+    },
+    {
+      "id": "security-assessment",
+      "domain": "security-engineering",
+      "phrase": "security assessment",
+      "expected_path": "agentic/code/frameworks/sdlc-complete/skills/security-assessment/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5
+    },
+    {
+      "id": "aiwg-doctor",
+      "domain": "aiwg-utils",
+      "phrase": "aiwg doctor",
+      "expected_path": "agentic/code/addons/aiwg-utils/skills/aiwg-doctor/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5
+    },
+    {
+      "id": "mention-lint",
+      "domain": "aiwg-utils",
+      "phrase": "mention lint",
+      "expected_path": "agentic/code/addons/aiwg-utils/skills/mention-lint/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5,
+      "expected_top_path": "agentic/code/addons/aiwg-utils/skills/mention-lint/SKILL.md"
+    },
+    {
+      "id": "plugin-packaging",
+      "domain": "tooling",
+      "phrase": "package all plugins",
+      "expected_path": "agentic/code/addons/aiwg-utils/skills/package-all-plugins/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5
+    },
+    {
+      "id": "release-assert-artifacts",
+      "domain": "sdlc",
+      "phrase": "release assert artifacts",
+      "expected_path": "agentic/code/frameworks/sdlc-complete/flows/capabilities/release-assert-artifacts.yaml",
+      "expected_type": "flow",
+      "max_rank": 5
+    },
+    {
+      "id": "skill-discovery-rule",
+      "domain": "rule",
+      "phrase": "skill discovery",
+      "expected_path": "agentic/code/addons/aiwg-utils/rules/skill-discovery.md",
+      "expected_type": "rule",
+      "max_rank": 5
+    },
+    {
+      "id": "address-issues-command",
+      "domain": "command",
+      "phrase": "address issues",
+      "type_filter": ["command"],
+      "expected_path": "agentic/code/frameworks/sdlc-complete/commands/address-issues.md",
+      "expected_type": "command",
+      "max_rank": 5,
+      "expected_top_path": "agentic/code/frameworks/sdlc-complete/commands/address-issues.md"
+    },
+    {
+      "id": "project-intake-template",
+      "domain": "template",
+      "phrase": "project intake template",
+      "type_filter": ["template"],
+      "expected_path": "agentic/code/frameworks/sdlc-complete/templates/intake/project-intake-template.md",
+      "expected_type": "template",
+      "max_rank": 5
+    },
+    {
+      "id": "steward-quickref",
+      "domain": "steward",
+      "phrase": "steward capabilities",
+      "expected_path": "agentic/code/addons/aiwg-utils/skills/steward-quickref/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5
+    }
+  ]
+}

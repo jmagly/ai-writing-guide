@@ -10,22 +10,23 @@
  * new regressions rather than baselining today's number. They can be
  * overridden via env for specific CI needs:
  *
- *   AIWG_PACK_PACKED_BUDGET_KB    — default 12000 (12 MB)
- *   AIWG_PACK_UNPACKED_BUDGET_KB  — default 40000 (40 MB)
- *   AIWG_PACK_FILES_BUDGET        — default 4000 (file count)
+ *   AIWG_PACK_PACKED_BUDGET_KB    — default 22000 (22 MB)
+ *   AIWG_PACK_UNPACKED_BUDGET_KB  — default 70000 (70 MB)
+ *   AIWG_PACK_FILES_BUDGET        — default 5000 (file count)
  *
- * The 5 MB install-size target in Phase 6 (#923) is aspirational and
- * requires a bundler migration — tracked separately. This gate prevents
- * the package from ballooning in the meantime.
+ * The package intentionally ships a prebuilt Fortemi Core framework discovery
+ * index so users do not have to build that index after install. The dedicated
+ * Fortemi prebuilt package gate caps that export separately; this broader gate
+ * catches unrelated package growth.
  *
  * Usage: node tools/cli/check-install-size.mjs [--verbose]
  */
 
 import { execSync } from 'child_process';
 
-const PACKED_BUDGET_KB = parseIntEnv('AIWG_PACK_PACKED_BUDGET_KB', 12_000);
-const UNPACKED_BUDGET_KB = parseIntEnv('AIWG_PACK_UNPACKED_BUDGET_KB', 40_000);
-const FILES_BUDGET = parseIntEnv('AIWG_PACK_FILES_BUDGET', 4_000);
+const PACKED_BUDGET_KB = parseIntEnv('AIWG_PACK_PACKED_BUDGET_KB', 22_000);
+const UNPACKED_BUDGET_KB = parseIntEnv('AIWG_PACK_UNPACKED_BUDGET_KB', 70_000);
+const FILES_BUDGET = parseIntEnv('AIWG_PACK_FILES_BUDGET', 5_000);
 
 const verbose = process.argv.includes('--verbose');
 
@@ -43,11 +44,23 @@ function fmtMb(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
+function parseNpmPackJson(stdout) {
+  try {
+    return JSON.parse(stdout);
+  } catch {
+    const start = stdout.lastIndexOf('\n[');
+    if (start >= 0) return JSON.parse(stdout.slice(start + 1));
+    const first = stdout.indexOf('[');
+    if (first >= 0) return JSON.parse(stdout.slice(first));
+    throw new Error('no JSON array found in npm pack output');
+  }
+}
+
 try {
   // `npm pack --dry-run --json` returns an array with one entry per tarball.
   // We use the first entry (single package).
   const raw = execSync('npm pack --dry-run --json', { stdio: ['ignore', 'pipe', 'pipe'] });
-  const out = JSON.parse(raw.toString());
+  const out = parseNpmPackJson(raw.toString());
   const pkg = Array.isArray(out) ? out[0] : out;
   if (!pkg || typeof pkg.size !== 'number') {
     console.error('check-install-size: unexpected npm pack output');

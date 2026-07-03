@@ -176,12 +176,12 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
     behaviors: path.join(homedir(), '.openclaw', 'behaviors'),
   },
   openhuman: {
-    // #1694 — OpenHuman is a home-dir provider, but Tier-1 intentionally
-    // keeps markdown agents workspace-scoped at .agents/agents and aggregates
-    // commands through AGENTS.md. User-scope registration must still know the
-    // provider's home-rooted AIWG payload so list/remove/doctor can track it.
+    // OpenHuman is a home-dir app provider for AIWG installs. The app's native
+    // skills registry installs to ~/.openhuman/skills, and custom agents are
+    // TOML-only under ~/.openhuman/agents. AIWG does not invent a project-level
+    // markdown-agent install for OpenHuman.
     agents: '',
-    skills: path.join(homedir(), '.openhuman', '.aiwg', 'skills'),
+    skills: path.join(homedir(), '.openhuman', 'skills'),
     commands: '',
     rules: path.join(homedir(), '.openhuman', '.aiwg', 'rules'),
     behaviors: '',
@@ -379,19 +379,21 @@ async function mirrorArtifactDir(src: string, dst: string): Promise<ArtifactMirr
 }
 
 /**
- * #1156 Phase 1 — OpenClaw is exclusively user-scope. `--scope project` against
- * OpenClaw is meaningless because all OpenClaw paths are already home-rooted;
+ * #1156 Phase 1 — some app providers are exclusively user-scope. `--scope
+ * project` against them is meaningless because their paths are home-rooted;
  * silently accepting it would create the false impression that project-scope
  * deploys are tracked. This helper is called by the use/list/remove handlers
- * to fail fast with a clear message on `--scope project --provider openclaw`.
+ * to fail fast with a clear message on explicit project scope.
  *
- * `--scope user --provider openclaw` is a no-op: that's already what OpenClaw
- * does without the flag.
+ * `--scope user` is a no-op for these providers: that's already what they do
+ * without the flag.
  */
 export function rejectOpenClawProjectScope(provider: string, scope: Scope): void {
-  if (provider === 'openclaw' && scope === 'project') {
+  if ((provider === 'openclaw' || provider === 'openhuman') && scope === 'project') {
+    const label = provider === 'openhuman' ? 'OpenHuman' : 'OpenClaw';
+    const home = provider === 'openhuman' ? '~/.openhuman/' : '~/.openclaw/';
     throw new Error(
-      "OpenClaw is exclusively user-scope (~/.openclaw/). '--scope project' is not supported for this provider; omit the flag or pass '--scope user'.",
+      `${label} is exclusively user-scope (${home}). '--scope project' is not supported for this provider; omit the flag or pass '--scope user'.`,
     );
   }
 }

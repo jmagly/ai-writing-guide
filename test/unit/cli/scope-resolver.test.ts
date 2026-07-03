@@ -78,10 +78,10 @@ describe('resolveScopePaths', () => {
     expect(r.rules).toBe(path.join(homedir(), '.claude', 'rules'));
   });
 
-  it('returns user-scope OpenHuman AIWG payload paths without inventing global agents or commands', () => {
+  it('returns user-scope OpenHuman paths without inventing global agents or commands', () => {
     const r = resolveScopePaths('openhuman', 'user', projectPaths);
     expect(r.agents).toBe('');
-    expect(r.skills).toBe(path.join(homedir(), '.openhuman', '.aiwg', 'skills'));
+    expect(r.skills).toBe(path.join(homedir(), '.openhuman', 'skills'));
     expect(r.commands).toBe('');
     expect(r.rules).toBe(path.join(homedir(), '.openhuman', '.aiwg', 'rules'));
     expect(r.behaviors).toBe('');
@@ -241,6 +241,16 @@ describe('rejectOpenClawProjectScope (#1156)', () => {
     expect(() => rejectOpenClawProjectScope('claude', 'project')).not.toThrow();
     expect(() => rejectOpenClawProjectScope('claude', 'user')).not.toThrow();
     expect(() => rejectOpenClawProjectScope('codex', 'project')).not.toThrow();
+  });
+
+  it('throws on --scope project + openhuman', () => {
+    expect(() => rejectOpenClawProjectScope('openhuman', 'project')).toThrow(
+      /OpenHuman is exclusively user-scope/,
+    );
+  });
+
+  it('is a no-op for openhuman + scope user', () => {
+    expect(() => rejectOpenClawProjectScope('openhuman', 'user')).not.toThrow();
   });
 });
 

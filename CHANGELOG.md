@@ -7,7 +7,7 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
-## [2026.7.1] - Unreleased - "Fortemi Core index migration preview"
+## [2026.7.1] - 2026-07-03 - "Fortemi Core index migration preview"
 
 Adds an opt-in Fortemi Core static-cache backend for AIWG project indexes while
 preserving the existing local `.aiwg/.index` backend as the default and rollback
@@ -32,6 +32,16 @@ required runtime dependency for normal discovery/search commands.
   fulltext/static semantic/hybrid query, dependency traversal, neighbor
   traversal, set operations, KB/research graph traversal, and `research-query`
   source selection now have no-regression parity fixtures.
+- **Prebuilt framework discovery index** — npm packages now build and include
+  `prebuilt/fortemi-core/framework/` through `prepack`, with a release gate that
+  validates the matrix, tarball contents, manifest checksum, size ceiling, and
+  packaged Fortemi Core fallback discovery. The packaged cache is a compact
+  metadata/capability projection; source-body fulltext remains a local sync
+  behavior.
+- **Install-size budget rebased for prebuilt indices** — the package budget now
+  accounts for the intentionally bundled Fortemi Core framework index that users
+  previously had to build locally, while the Fortemi-specific gate still caps
+  the prebuilt export.
 
 ### Changed
 
@@ -48,6 +58,9 @@ required runtime dependency for normal discovery/search commands.
 - **Default-switch gate docs** — release and integration notes keep the Fortemi
   backend opt-in and require a later switch issue to prove both default Fortemi
   behavior and forced-local rollback before changing defaults.
+- **Legacy Fortemi storage wording** — storage docs now mark the `fortemi` MCP
+  backend as persistence-only and deprecated for discovery/search routing; the
+  Fortemi Core static cache is the documented search path.
 
 ### Documentation
 

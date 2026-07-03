@@ -1,0 +1,43 @@
+# AIWG-managed OpenHuman native harness agent template.
+# Render target: ~/.openhuman/agents/aiwg_<agent_id>.toml
+#
+# OpenHuman source contract:
+# - Custom definitions are one TOML file per agent under ~/.openhuman/agents/.
+# - Required fields: id, when_to_use, non-empty [system_prompt].
+# - Top-level scalar fields must appear before [system_prompt] / [model].
+# - Worker-tier agents must not declare subagents.
+#
+# Placeholders are rendered by src/cli/handlers/use.ts:
+#   {{ID}}, {{WHEN_TO_USE}}, {{DISPLAY_NAME}}, {{MODEL_HINT}},
+#   {{TEMPERATURE}}, {{MAX_ITERATIONS}}, {{ITERATION_POLICY}},
+#   {{MAX_RESULT_CHARS}}, {{MAX_TURN_OUTPUT_TOKENS}}, {{TIMEOUT_SECS}},
+#   {{SANDBOX_MODE}}, {{TOKENJUICE_COMPRESSION}}, {{SYSTEM_PROMPT_INLINE}}
+
+id = "{{ID}}"
+when_to_use = "{{WHEN_TO_USE}}"
+display_name = "{{DISPLAY_NAME}}"
+
+agent_tier = "worker"
+temperature = {{TEMPERATURE}}
+max_iterations = {{MAX_ITERATIONS}}
+iteration_policy = "{{ITERATION_POLICY}}"
+max_result_chars = {{MAX_RESULT_CHARS}}
+max_turn_output_tokens = {{MAX_TURN_OUTPUT_TOKENS}}
+timeout_secs = {{TIMEOUT_SECS}}
+sandbox_mode = "{{SANDBOX_MODE}}"
+tokenjuice_compression = "{{TOKENJUICE_COMPRESSION}}"
+
+omit_identity = true
+omit_memory_context = true
+omit_safety_preamble = true
+omit_skills_catalog = false
+omit_profile = true
+omit_memory_md = false
+background = false
+trigger_memory_agent = "never"
+
+[system_prompt]
+inline = {{SYSTEM_PROMPT_INLINE}}
+
+[model]
+hint = "{{MODEL_HINT}}"
