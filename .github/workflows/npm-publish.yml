@@ -156,7 +156,6 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           TAG='${{ steps.release_tag.outputs.release_tag }}'
           git fetch origin "+refs/tags/${TAG}:refs/tags/${TAG}" --depth=1
-          git checkout --detach "refs/tags/${TAG}"
 
       - name: Verify signed tag (#1299 / A9 gate)
         # Hard cryptographic gate — the same script that gates the Gitea
@@ -171,6 +170,12 @@ jobs:
           # override, so pass an explicit verifier-only tag ref.
           AIWG_VERIFY_TAG_REF: refs/tags/${{ steps.release_tag.outputs.release_tag }}
         run: bash tools/ci/verify-signed-tag.sh
+
+      - name: Checkout release tag
+        run: |
+          set -o pipefail
+          TAG='${{ steps.release_tag.outputs.release_tag }}'
+          git checkout --detach "refs/tags/${TAG}"
 
       - name: Setup Node.js with npmjs.org registry
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # v5.0.0 (ci/digests.txt) — Node 24
