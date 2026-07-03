@@ -23,6 +23,7 @@ import {
   GRAPH_CONFIGS,
   BUILTIN_GRAPH_CONFIGS,
   getGraphIndexDir,
+  loadGlobalGraphConfigs,
   loadUserGraphConfigs,
   type GraphConfigWarning,
   type GraphType,
@@ -109,6 +110,7 @@ export function collectIndexStatus(
   // instead of letting malformed defs vanish (#1624).
   const warnings: GraphConfigWarning[] = [];
   loadUserGraphConfigs(cwd, warnings);
+  loadGlobalGraphConfigs(warnings);
 
   const now = nowMs ?? Date.now();
   const graphs: GraphStatus[] = [];

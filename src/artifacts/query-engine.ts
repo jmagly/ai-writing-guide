@@ -13,6 +13,7 @@ import { minimatch } from 'minimatch';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { QueryParams, QueryResult, MetadataEntry, GraphType, ArtifactIndex } from './types.js';
+import { loadGlobalGraphConfigs } from './types.js';
 import { loadMetadataIndex, loadGraphIndexFile } from './index-reader.js';
 import { bm25Rank, type FullTextDoc } from './fulltext.js';
 import { parseFrontmatter } from './index-builder.js';
@@ -57,7 +58,8 @@ const DISCOVER_TYPE_ORDER = new Map(
 
 function canonicalLocalityRank(entryPath: string): number {
   const normalized = entryPath.replace(/\\/g, '/');
-  if (normalized.includes('/plugins/') || normalized.startsWith('agentic/code/plugins/')) return 2;
+  if (normalized.startsWith('.aiwg/') || normalized.includes('/.aiwg/')) return 0;
+  if (normalized.includes('/plugins/') || normalized.startsWith('agentic/code/plugins/')) return 3;
   if (
     normalized.includes('/frameworks/') ||
     normalized.includes('/addons/') ||
@@ -66,9 +68,36 @@ function canonicalLocalityRank(entryPath: string): number {
     normalized.startsWith('agentic/code/addons/') ||
     normalized.startsWith('agentic/code/extensions/')
   ) {
-    return 0;
+    return 2;
   }
   return 1;
+}
+
+type ProvenancedEntry = MetadataEntry & {
+  indexGraph?: string;
+  indexScope?: 'project' | 'user' | 'packaged' | 'codebase' | 'custom';
+};
+
+function graphScope(graph: GraphType): ProvenancedEntry['indexScope'] {
+  if (graph === 'project') return 'project';
+  if (graph === 'user' || graph.startsWith('user-')) return 'user';
+  if (graph === 'framework') return 'packaged';
+  if (graph === 'codebase' || graph === 'source') return 'codebase';
+  return 'custom';
+}
+
+function withIndexProvenance(entry: MetadataEntry, graph: GraphType): ProvenancedEntry {
+  return { ...entry, indexGraph: graph, indexScope: graphScope(graph) };
+}
+
+function scopeRank(entry: MetadataEntry): number {
+  const scope = (entry as ProvenancedEntry).indexScope;
+  if (scope === 'project') return 0;
+  if (scope === 'user') return 1;
+  if (scope === 'custom') return 2;
+  if (scope === 'packaged') return 3;
+  if (scope === 'codebase') return 4;
+  return canonicalLocalityRank(entry.path);
 }
 
 function compareText(left: string | undefined, right: string | undefined): number {
@@ -79,8 +108,7 @@ export function compareDiscoverResults(left: QueryResult, right: QueryResult): n
   const scoreCmp = right.score - left.score;
   if (scoreCmp !== 0) return scoreCmp;
 
-  const localityCmp =
-    canonicalLocalityRank(left.entry.path) - canonicalLocalityRank(right.entry.path);
+  const localityCmp = scopeRank(left.entry) - scopeRank(right.entry);
   if (localityCmp !== 0) return localityCmp;
 
   const typeCmp =
@@ -588,7 +616,29 @@ export interface DiscoverParams {
 // flow-deploy-to-production skill.
 const DEFAULT_DISCOVER_TYPES = ['skill', 'agent', 'command', 'rule', 'flow'];
 
-const DEFAULT_CAPABILITY_GRAPHS: GraphType[] = ['framework', 'project'];
+const DEFAULT_CAPABILITY_GRAPHS: GraphType[] = ['project', 'user', 'framework'];
+
+function projectAllowsUserIndices(cwd: string): boolean {
+  try {
+    const configPath = path.join(cwd, '.aiwg', 'aiwg.config');
+    if (!fs.existsSync(configPath)) return true;
+    const parsed = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as Record<string, unknown>;
+    const index = parsed.index as Record<string, unknown> | undefined;
+    const userIndices = index?.userIndices as Record<string, unknown> | undefined;
+    if (userIndices?.enabled === false) return false;
+    const indices = parsed.indices as Record<string, unknown> | undefined;
+    const user = indices?.user as Record<string, unknown> | undefined;
+    if (user?.enabled === false) return false;
+  } catch {
+    return true;
+  }
+  return true;
+}
+
+function defaultCapabilityGraphs(cwd: string): GraphType[] {
+  if (projectAllowsUserIndices(cwd)) return DEFAULT_CAPABILITY_GRAPHS;
+  return DEFAULT_CAPABILITY_GRAPHS.filter((graph) => graph !== 'user' && !graph.startsWith('user-'));
+}
 
 /**
  * Resolve the AIWG installation root for path-anchoring discover output.
@@ -637,6 +687,7 @@ export async function discoverCapability(
   cwd: string,
   params: DiscoverParams,
 ): Promise<void> {
+  loadGlobalGraphConfigs();
   const startTime = Date.now();
   const types = params.typeFilter && params.typeFilter.length > 0
     ? params.typeFilter
@@ -658,7 +709,7 @@ export async function discoverCapability(
   let fortemiCoreDiscoveryScores: Map<string, number> | null = null;
 
   if (backend === 'fortemi-core') {
-    const graphs = params.graph ? [params.graph] : DEFAULT_CAPABILITY_GRAPHS;
+    const graphs = params.graph ? [params.graph] : defaultCapabilityGraphs(cwd);
     const {
       loadFortemiCoreMetadataEntries,
       queryFortemiCoreAiwgDiscovery,
@@ -667,7 +718,7 @@ export async function discoverCapability(
     for (const graph of graphs) {
       const loaded = loadFortemiCoreMetadataEntries(cwd, graph);
       if (loaded.reason) unavailableReason ??= loaded.reason;
-      entries.push(...loaded.entries);
+      entries.push(...loaded.entries.map((entry) => withIndexProvenance(entry, graph)));
       const discovered = await queryFortemiCoreAiwgDiscovery(cwd, {
         graph,
         text: params.phrase,
@@ -700,7 +751,7 @@ export async function discoverCapability(
     }
   } else if (params.graph) {
     const idx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', params.graph);
-    if (idx) entries = Object.values(idx.entries);
+    if (idx) entries = Object.values(idx.entries).map((entry) => withIndexProvenance(entry, params.graph!));
   } else {
     // discover is EXCLUSIVELY the agentic-capability surface (#1545): source
     // the `framework` graph (deployed AIWG capabilities) + project-local
@@ -742,12 +793,17 @@ export async function discoverCapability(
         fwIdx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', 'framework');
       }
     }
-    if (fwIdx) entries.push(...Object.values(fwIdx.entries));
+    const includeUser = projectAllowsUserIndices(cwd);
     // Project-local capability artifacts (skills/agents/commands/rules authored
     // in this project). The DEFAULT_DISCOVER_TYPES filter keeps non-capability
     // project artifacts (requirements, ADRs, …) out of results.
     const projIdx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', 'project');
-    if (projIdx) entries.push(...Object.values(projIdx.entries));
+    if (projIdx) entries.push(...Object.values(projIdx.entries).map((entry) => withIndexProvenance(entry, 'project')));
+    if (includeUser) {
+      const userIdx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', 'user');
+      if (userIdx) entries.push(...Object.values(userIdx.entries).map((entry) => withIndexProvenance(entry, 'user')));
+    }
+    if (fwIdx) entries.push(...Object.values(fwIdx.entries).map((entry) => withIndexProvenance(entry, 'framework')));
     if (entries.length === 0) {
       const legacy = loadMetadataIndex(cwd);
       if (legacy) entries.push(...Object.values(legacy.entries));
@@ -878,6 +934,10 @@ export async function discoverCapability(
         triggers: r.entry.triggers ?? [],
         capability: r.entry.capability ?? r.entry.summary,
         kernel: r.entry.kernel ?? false,
+        provenance: {
+          graph: (r.entry as ProvenancedEntry).indexGraph ?? null,
+          scope: (r.entry as ProvenancedEntry).indexScope ?? null,
+        },
         // #1227 — surface script-bearing skills so agents know to use
         // `aiwg run skill <name>` instead of executing instructions
         // themselves.
@@ -1093,6 +1153,7 @@ export async function showArtifact(
   cwd: string,
   params: ShowParams,
 ): Promise<void> {
+  loadGlobalGraphConfigs();
   const { promises: fs } = await import('node:fs');
   const path = await import('node:path');
   const types = params.typeFilter && params.typeFilter.length > 0
@@ -1104,12 +1165,12 @@ export async function showArtifact(
   let entries: MetadataEntry[] = [];
   if (params.backend === 'fortemi-core') {
     const { loadFortemiCoreMetadataEntries } = await import('./fortemi-core-query-adapter.js');
-    const graphs = params.graph ? [params.graph] : DEFAULT_CAPABILITY_GRAPHS;
+    const graphs = params.graph ? [params.graph] : defaultCapabilityGraphs(cwd);
     let unavailableReason: string | undefined;
     for (const graph of graphs) {
       const loaded = loadFortemiCoreMetadataEntries(cwd, graph);
       if (loaded.reason) unavailableReason ??= loaded.reason;
-      entries.push(...loaded.entries);
+      entries.push(...loaded.entries.map((entry) => withIndexProvenance(entry, graph)));
     }
     if (entries.length === 0 && unavailableReason) {
       if (params.json) {
@@ -1125,11 +1186,11 @@ export async function showArtifact(
     }
   } else if (params.graph) {
     const idx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', params.graph);
-    if (idx) entries = Object.values(idx.entries);
+    if (idx) entries = Object.values(idx.entries).map((entry) => withIndexProvenance(entry, params.graph!));
   } else {
-    for (const g of ['framework', 'project', 'codebase'] as GraphType[]) {
+    for (const g of defaultCapabilityGraphs(cwd) as GraphType[]) {
       const idx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', g);
-      if (idx) entries.push(...Object.values(idx.entries));
+      if (idx) entries.push(...Object.values(idx.entries).map((entry) => withIndexProvenance(entry, g)));
     }
     if (entries.length === 0) {
       const legacy = loadMetadataIndex(cwd);
@@ -1169,6 +1230,17 @@ export async function showArtifact(
   }
 
   matches = uniqueEntriesByPath(matches);
+  matches = matches.sort((a, b) => scopeRank(a) - scopeRank(b) || a.path.localeCompare(b.path));
+
+  if (matches.length > 1) {
+    const sameIdentity = matches.every((entry) =>
+      entry.type === matches[0].type &&
+      (entry.name ?? '').toLowerCase() === (matches[0].name ?? '').toLowerCase(),
+    );
+    if (sameIdentity && scopeRank(matches[0]) < scopeRank(matches[1])) {
+      matches = [matches[0]];
+    }
+  }
 
   // Plugin skill copies mirror bundle-source skills for platform packaging.
   // A bare `aiwg show skill <name>` should resolve the canonical source skill
@@ -1265,6 +1337,9 @@ export async function showArtifact(
     if (aiwgRoot && entry.path.startsWith('agentic/code/')) {
       return path.join(aiwgRoot, entry.path);
     }
+    if ((entry as ProvenancedEntry).indexScope === 'user' && entry.path.startsWith('~/.aiwg/')) {
+      return path.join(process.env.HOME ?? '', entry.path.slice(2));
+    }
     // Project-graph entries are stored relative to the project root (cwd).
     return path.join(cwd, entry.path);
   }
@@ -1279,6 +1354,10 @@ export async function showArtifact(
           type: e.type,
           title: e.title,
           kernel: e.kernel ?? false,
+          provenance: {
+            graph: (e as ProvenancedEntry).indexGraph ?? null,
+            scope: (e as ProvenancedEntry).indexScope ?? null,
+          },
         })),
       }, null, 2));
     } else {
@@ -1309,6 +1388,10 @@ export async function showArtifact(
       type: entry.type,
       title: entry.title,
       kernel: entry.kernel ?? false,
+      provenance: {
+        graph: (entry as ProvenancedEntry).indexGraph ?? null,
+        scope: (entry as ProvenancedEntry).indexScope ?? null,
+      },
       // #1227 — surface script-bearing skills so callers can route to
       // `aiwg run skill <name>` instead of treating SKILL.md as
       // instructions for the agent to execute itself.

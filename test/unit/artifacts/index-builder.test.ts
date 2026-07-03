@@ -10,7 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { parseFrontmatter, extractMentions, buildIndex, normalizeNamedCaptures, buildFilenameMetadataEntry } from '../../../src/artifacts/index-builder.js';
-import { INDEX_DIR, GRAPH_CONFIGS, loadUserGraphConfigs, loadModuleGraphConfigs, normalizeEdge, normalizeEdges } from '../../../src/artifacts/types.js';
+import { INDEX_DIR, GRAPH_CONFIGS, loadUserGraphConfigs, loadModuleGraphConfigs, loadGlobalGraphConfigs, normalizeEdge, normalizeEdges, getGraphIndexDir } from '../../../src/artifacts/types.js';
 import type { TypedEdge, DependencyGraph } from '../../../src/artifacts/types.js';
 
 describe('loadUserGraphConfigs', () => {
@@ -24,7 +24,7 @@ describe('loadUserGraphConfigs', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
     // Clean up any user-defined graphs added to GRAPH_CONFIGS
     for (const key of Object.keys(GRAPH_CONFIGS)) {
-      if (!['framework', 'project', 'codebase', 'source'].includes(key)) {
+      if (!['framework', 'project', 'codebase', 'source', 'user'].includes(key)) {
         delete GRAPH_CONFIGS[key];
       }
     }
@@ -86,7 +86,7 @@ describe('loadModuleGraphConfigs', () => {
   afterEach(() => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
     for (const key of Object.keys(GRAPH_CONFIGS)) {
-      if (!['framework', 'project', 'codebase', 'source'].includes(key)) {
+      if (!['framework', 'project', 'codebase', 'source', 'user'].includes(key)) {
         delete GRAPH_CONFIGS[key];
       }
     }
@@ -210,7 +210,7 @@ describe('loadUserGraphConfigs with module graphs', () => {
   afterEach(() => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
     for (const key of Object.keys(GRAPH_CONFIGS)) {
-      if (!['framework', 'project', 'codebase', 'source'].includes(key)) {
+      if (!['framework', 'project', 'codebase', 'source', 'user'].includes(key)) {
         delete GRAPH_CONFIGS[key];
       }
     }
@@ -252,6 +252,87 @@ index:
     expect(loaded).toContain('papers');
     // Operator config wins over module config
     expect(GRAPH_CONFIGS['papers'].scanDirs).toEqual(['my/custom/pdfs']);
+  });
+});
+
+describe('loadGlobalGraphConfigs', () => {
+  let tmpDir: string;
+  let prevHome: string | undefined;
+  let prevXdg: string | undefined;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-global-graphs-test-'));
+    prevHome = process.env.HOME;
+    prevXdg = process.env.XDG_DATA_HOME;
+    process.env.HOME = path.join(tmpDir, 'home');
+    process.env.XDG_DATA_HOME = path.join(tmpDir, 'xdg');
+  });
+
+  afterEach(() => {
+    if (prevHome === undefined) delete process.env.HOME;
+    else process.env.HOME = prevHome;
+    if (prevXdg === undefined) delete process.env.XDG_DATA_HOME;
+    else process.env.XDG_DATA_HOME = prevXdg;
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    for (const key of Object.keys(GRAPH_CONFIGS)) {
+      if (!['framework', 'project', 'codebase', 'source', 'user'].includes(key)) {
+        delete GRAPH_CONFIGS[key];
+      }
+    }
+  });
+
+  it('loads and builds named user-level graphs from ~/.aiwg/aiwg.config', async () => {
+    const homeAiwg = path.join(process.env.HOME!, '.aiwg');
+    fs.mkdirSync(path.join(homeAiwg, 'indices', 'personal'), { recursive: true });
+    fs.mkdirSync(path.join(homeAiwg, 'indices', 'org'), { recursive: true });
+    fs.writeFileSync(path.join(homeAiwg, 'indices', 'personal', 'note.md'), '# Personal Index\n\nReusable note.\n');
+    fs.writeFileSync(path.join(homeAiwg, 'indices', 'org', 'runbook.md'), '# Org Runbook\n\nReusable runbook.\n');
+    fs.writeFileSync(path.join(homeAiwg, 'aiwg.config'), JSON.stringify({
+      version: '1',
+      indices: {
+        user: {
+          enabled: true,
+          roots: {
+            org: {
+              path: '~/.aiwg/indices/org',
+              backend: 'local',
+            },
+          },
+        },
+      },
+      index: {
+        graphs: {
+          personal: {
+            scanDirs: ['~/.aiwg/indices/personal'],
+            extensions: ['.md'],
+            defaultBuild: false,
+          },
+        },
+      },
+    }));
+
+    const loaded = loadGlobalGraphConfigs();
+    expect(loaded).toContain('personal');
+    expect(loaded).toContain('org');
+    expect(GRAPH_CONFIGS.personal.shared).toBe(true);
+    expect(GRAPH_CONFIGS.org.shared).toBe(true);
+
+    const projectDir = path.join(tmpDir, 'project');
+    fs.mkdirSync(projectDir, { recursive: true });
+    await buildIndex(projectDir, { graph: 'personal', force: true });
+    const graphDir = getGraphIndexDir(projectDir, 'personal');
+    expect(graphDir).toBe(path.join(process.env.XDG_DATA_HOME!, 'aiwg', 'index', 'personal'));
+    const metadata = JSON.parse(fs.readFileSync(path.join(graphDir, 'metadata.json'), 'utf-8'));
+    expect(Object.keys(metadata.entries)).toEqual([
+      path.join(process.env.HOME!, '.aiwg', 'indices', 'personal', 'note.md'),
+    ]);
+
+    await buildIndex(projectDir, { graph: 'org', force: true });
+    const orgDir = getGraphIndexDir(projectDir, 'org');
+    const orgMetadata = JSON.parse(fs.readFileSync(path.join(orgDir, 'metadata.json'), 'utf-8'));
+    expect(Object.keys(orgMetadata.entries)).toEqual([
+      path.join(process.env.HOME!, '.aiwg', 'indices', 'org', 'runbook.md'),
+    ]);
   });
 });
 
@@ -683,7 +764,7 @@ Depends on @.aiwg/requirements/UC-001.md
     afterEach(() => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
       for (const key of Object.keys(GRAPH_CONFIGS)) {
-        if (!['framework', 'project', 'codebase', 'source'].includes(key)) {
+        if (!['framework', 'project', 'codebase', 'source', 'user'].includes(key)) {
           delete GRAPH_CONFIGS[key];
         }
       }

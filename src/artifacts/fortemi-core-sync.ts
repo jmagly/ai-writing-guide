@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import type { GraphType } from "./types.js";
+import { GRAPH_CONFIGS, loadGlobalGraphConfigs } from "./types.js";
 import {
   buildAiwgFortemiIndexExport,
   type AiwgPrivacyClassification,
@@ -47,6 +48,12 @@ export interface FortemiCoreSyncStatus {
 }
 
 function syncDir(cwd: string, graph: string): string {
+  loadGlobalGraphConfigs();
+  const config = GRAPH_CONFIGS[graph];
+  if (graph === "framework" || config?.shared) {
+    const xdgData = process.env.XDG_DATA_HOME ?? path.join(process.env.HOME ?? cwd, ".local", "share");
+    return path.join(xdgData, "aiwg", "index", "fortemi-core", graph);
+  }
   return path.join(cwd, ".aiwg", ".index", "fortemi-core", graph);
 }
 

@@ -196,6 +196,59 @@
             "indices": { "$ref": "#/definitions/IndexMarkdownIndices" }
           },
           "additionalProperties": { "$ref": "#/definitions/IndexGraphDef" }
+        },
+        "userIndices": {
+          "type": "object",
+          "description": "Controls whether user/global index sidecars are included by default in merged capability discovery/show.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "When false, default capability discovery/show omit user/global sidecars unless --graph user is selected explicitly."
+            }
+          }
+        }
+      }
+    },
+    "indices": {
+      "type": "object",
+      "description": "User/global index shorthand. Declares shared sidecar roots that can be used from any project.",
+      "additionalProperties": false,
+      "properties": {
+        "user": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "When false, default capability discovery/show omit user/global sidecars unless selected explicitly."
+            },
+            "roots": {
+              "type": "object",
+              "description": "Named user-level index roots. Each key becomes an addressable shared graph name.",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["path"],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Filesystem path for this user-level index root. Supports ~ expansion."
+                  },
+                  "backend": {
+                    "type": "string",
+                    "enum": ["local", "fortemi-core"],
+                    "description": "Preferred backend for this root. AIWG still builds the local graph before Fortemi sync."
+                  },
+                  "extensions": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "File extensions to index. Defaults to markdown, YAML, and JSON."
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },

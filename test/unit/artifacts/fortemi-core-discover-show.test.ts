@@ -8,6 +8,7 @@ import {
   queryIndex,
   showArtifact,
 } from "../../../src/artifacts/query-engine.js";
+import { buildIndex } from "../../../src/artifacts/index-builder.js";
 import { main as indexCliMain } from "../../../src/artifacts/cli.js";
 import { showDeps } from "../../../src/artifacts/dep-graph.js";
 import { showNeighbors } from "../../../src/artifacts/graph-query.js";
@@ -109,6 +110,7 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
   let tmp: string;
   let originalXdgDataHome: string | undefined;
   let originalAiwgRoot: string | undefined;
+  let originalHome: string | undefined;
   let consoleSpy: ReturnType<typeof vi.spyOn>;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
   let stdoutSpy: ReturnType<typeof vi.spyOn>;
@@ -117,8 +119,10 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aiwg-fortemi-discover-"));
     originalXdgDataHome = process.env.XDG_DATA_HOME;
     originalAiwgRoot = process.env.AIWG_ROOT;
+    originalHome = process.env.HOME;
     process.env.XDG_DATA_HOME = path.join(tmp, "xdg-data");
     process.env.AIWG_ROOT = tmp;
+    process.env.HOME = path.join(tmp, "home");
     consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     stdoutSpy = vi
@@ -134,6 +138,8 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     else process.env.XDG_DATA_HOME = originalXdgDataHome;
     if (originalAiwgRoot === undefined) delete process.env.AIWG_ROOT;
     else process.env.AIWG_ROOT = originalAiwgRoot;
+    if (originalHome === undefined) delete process.env.HOME;
+    else process.env.HOME = originalHome;
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
@@ -294,6 +300,195 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     const shown = readConsoleJson();
     expect(shown.path).toContain(customSkill.path);
     expect(shown.content).toContain("# Custom Review");
+  });
+
+  it("includes user-global custom skills in default Fortemi Core capability discovery and show", async () => {
+    const userSkillDir = path.join(process.env.HOME!, ".aiwg", "skills", "user-custom-review");
+    fs.mkdirSync(userSkillDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(userSkillDir, "SKILL.md"),
+      [
+        "---",
+        "name: user-custom-review",
+        "description: Run the user's global custom review workflow.",
+        "triggers:",
+        "  - user custom review",
+        "---",
+        "# User Custom Review",
+        "",
+        "Review from the user-global skill sidecar.",
+        "",
+      ].join("\n"),
+    );
+
+    await buildIndex(tmp, { graph: "user", force: true });
+    const manifest = syncFortemiCoreIndex(tmp, {
+      graph: "user",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
+    consoleSpy.mockClear();
+    expect(manifest.export_path).toContain("fortemi-core/user");
+    expect(getFortemiCoreSyncStatus(tmp, "user").location).toContain(
+      path.join("xdg-data", "aiwg", "index", "fortemi-core", "user"),
+    );
+
+    await discoverCapability(tmp, {
+      phrase: "user custom review",
+      json: true,
+      limit: 3,
+    });
+    const discover = readConsoleJson();
+    expect(discover.query.graph).toBe("capability-default");
+    expect(discover.results[0]).toMatchObject({
+      title: "User Custom Review",
+      provenance: { graph: "user", scope: "user" },
+    });
+    expect(discover.results[0].path).toContain("user-custom-review/SKILL.md");
+    consoleSpy.mockClear();
+
+    await showArtifact(tmp, {
+      typeFilter: ["skill"],
+      name: "user-custom-review",
+      json: true,
+      backend: "fortemi-core",
+    });
+    const shown = readConsoleJson();
+    expect(shown.path).toContain("user-custom-review/SKILL.md");
+    expect(shown.provenance).toEqual({ graph: "user", scope: "user" });
+    expect(shown.content).toContain("# User Custom Review");
+    consoleSpy.mockClear();
+
+    await discoverCapability(tmp, {
+      phrase: "user custom review",
+      json: true,
+      limit: 3,
+      backend: "local",
+    });
+    const local = readConsoleJson();
+    expect(local.results[0]).toMatchObject({
+      title: "User Custom Review",
+      provenance: { graph: "user", scope: "user" },
+    });
+  });
+
+  it("gives project-local capabilities precedence over user and packaged duplicates", async () => {
+    const projectSkill = entry({
+      path: ".aiwg/skills/shared-review/SKILL.md",
+      title: "Project Shared Review",
+      name: "shared-review",
+      summary: "Project-specific shared review.",
+      triggers: ["shared review"],
+      capability: "Run the project shared review.",
+    });
+    const frameworkSkill = entry({
+      path: "agentic/code/frameworks/sdlc-complete/skills/shared-review/SKILL.md",
+      title: "Framework Shared Review",
+      name: "shared-review",
+      summary: "Framework shared review.",
+      triggers: ["shared review"],
+      capability: "Run the packaged shared review.",
+    });
+    const userSkillDir = path.join(process.env.HOME!, ".aiwg", "skills", "shared-review");
+    fs.mkdirSync(userSkillDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(userSkillDir, "SKILL.md"),
+      [
+        "---",
+        "name: shared-review",
+        "description: User shared review.",
+        "triggers:",
+        "  - shared review",
+        "---",
+        "# User Shared Review",
+        "",
+      ].join("\n"),
+    );
+
+    writeProjectGraph(tmp, [projectSkill], undefined, "project");
+    writeProjectGraph(tmp, [frameworkSkill], undefined, "framework");
+    await buildIndex(tmp, { graph: "user", force: true });
+    syncFortemiCoreIndex(tmp, { graph: "project", generatedAt: "2026-01-05T00:00:00.000Z" });
+    syncFortemiCoreIndex(tmp, { graph: "framework", generatedAt: "2026-01-05T00:00:00.000Z" });
+    syncFortemiCoreIndex(tmp, { graph: "user", generatedAt: "2026-01-05T00:00:00.000Z" });
+    consoleSpy.mockClear();
+
+    await discoverCapability(tmp, {
+      phrase: "shared review",
+      json: true,
+      limit: 3,
+    });
+    const discover = readConsoleJson();
+    expect(discover.results.map((result: any) => result.provenance.scope)).toEqual([
+      "project",
+      "user",
+      "packaged",
+    ]);
+    consoleSpy.mockClear();
+
+    await showArtifact(tmp, {
+      typeFilter: ["skill"],
+      name: "shared-review",
+      json: true,
+      backend: "fortemi-core",
+    });
+    const shown = readConsoleJson();
+    expect(shown.title).toBe("Project Shared Review");
+    expect(shown.provenance).toEqual({ graph: "project", scope: "project" });
+  });
+
+  it("lets project config disable user-global capability sidecars by default", async () => {
+    const userSkillDir = path.join(process.env.HOME!, ".aiwg", "skills", "blocked-global-review");
+    fs.mkdirSync(userSkillDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(userSkillDir, "SKILL.md"),
+      [
+        "---",
+        "name: blocked-global-review",
+        "description: User global review blocked by project config.",
+        "triggers:",
+        "  - blocked global review",
+        "---",
+        "# Blocked Global Review",
+        "",
+      ].join("\n"),
+    );
+    fs.mkdirSync(path.join(tmp, ".aiwg"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, ".aiwg", "aiwg.config"),
+      JSON.stringify({ version: "1", index: { userIndices: { enabled: false } } }),
+    );
+    const projectSkill = entry({
+      path: ".aiwg/skills/local-only/SKILL.md",
+      title: "Local Only",
+      name: "local-only",
+      summary: "Local capability keeps the default search available.",
+      triggers: ["local only"],
+      capability: "Local-only capability.",
+    });
+    writeProjectGraph(tmp, [projectSkill], undefined, "project");
+    await buildIndex(tmp, { graph: "user", force: true });
+    syncFortemiCoreIndex(tmp, { graph: "project", generatedAt: "2026-01-05T00:00:00.000Z" });
+    syncFortemiCoreIndex(tmp, { graph: "user", generatedAt: "2026-01-05T00:00:00.000Z" });
+    consoleSpy.mockClear();
+
+    await discoverCapability(tmp, {
+      phrase: "blocked global review",
+      json: true,
+      limit: 3,
+    });
+    const blocked = readConsoleJson();
+    expect(blocked.results.some((result: any) => result.provenance.scope === "user")).toBe(false);
+    expect(blocked.results.some((result: any) => result.path.includes("blocked-global-review"))).toBe(false);
+    consoleSpy.mockClear();
+
+    await discoverCapability(tmp, {
+      phrase: "blocked global review",
+      graph: "user",
+      json: true,
+      limit: 3,
+    });
+    const explicit = readConsoleJson();
+    expect(explicit.results[0].provenance).toEqual({ graph: "user", scope: "user" });
   });
 
   it("fetches exact bodies and preserves ambiguous-name diagnostics", async () => {

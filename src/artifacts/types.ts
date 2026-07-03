@@ -296,7 +296,7 @@ export const INDEX_VERSION = '1.0.0';
  *
  * @implements #421 #426
  */
-export type BuiltinGraphType = 'framework' | 'project' | 'codebase' | 'source';
+export type BuiltinGraphType = 'framework' | 'project' | 'codebase' | 'source' | 'user';
 
 /**
  * Any graph identifier — built-in or user-defined via .aiwg/config.yaml
@@ -487,6 +487,20 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
     scanDirs: ['src', 'tools', 'test', 'config', 'bin', 'apps', 'vscode-extension'],
     extensions: ['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs'],
     shared: false,
+    defaultBuild: false,
+  },
+  user: {
+    type: 'user',
+    scanDirs: [
+      '~/.aiwg/skills',
+      '~/.aiwg/agents',
+      '~/.aiwg/commands',
+      '~/.aiwg/rules',
+      '~/.aiwg/flows',
+      '~/.aiwg/frameworks',
+    ],
+    extensions: ['.md', '.yaml', '.json'],
+    shared: true,
     defaultBuild: false,
   },
 };
@@ -752,6 +766,87 @@ export function loadUserGraphConfigs(cwd: string, diagnostics?: GraphConfigWarni
   return loaded;
 }
 
+/**
+ * Load user/global graph configs from ~/.aiwg/aiwg.config.
+ *
+ * These graphs are shared across projects and written to the XDG AIWG index
+ * sidecar. They intentionally cannot override built-in graph names or
+ * project/operator graph names; project-local definitions remain more
+ * specific than broad user-level defaults.
+ */
+export function loadGlobalGraphConfigs(diagnostics?: GraphConfigWarning[]): string[] {
+  const loaded: string[] = [];
+  const home = process.env.HOME;
+  if (!home) return loaded;
+  const configPath = `${home}/.aiwg/aiwg.config`;
+  let graphs: Record<string, unknown> | undefined;
+  let rootGraphs: Record<string, unknown> | undefined;
+  try {
+    if (!fs.existsSync(configPath)) return loaded;
+    const parsed = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as Record<string, unknown>;
+    const index = parsed.index as Record<string, unknown> | undefined;
+    const g = index?.graphs as Record<string, unknown> | undefined;
+    if (g && typeof g === 'object') graphs = g;
+    const indices = parsed.indices as Record<string, unknown> | undefined;
+    const user = indices?.user as Record<string, unknown> | undefined;
+    const roots = user?.roots as Record<string, unknown> | undefined;
+    if (roots && typeof roots === 'object') rootGraphs = roots;
+  } catch {
+    diagnostics?.push({
+      graph: '~/.aiwg/aiwg.config',
+      reason: 'user aiwg.config is not valid JSON — index.graphs not loaded',
+      source: 'operator-config',
+    });
+    return loaded;
+  }
+  if (rootGraphs) {
+    for (const [name, rawRoot] of Object.entries(rootGraphs)) {
+      if (name in GRAPH_CONFIGS) continue;
+      if (!rawRoot || typeof rawRoot !== 'object' || Array.isArray(rawRoot)) {
+        diagnostics?.push({
+          graph: name,
+          reason: 'invalid user-level root definition — expected an object with `path`',
+          source: 'operator-config',
+        });
+        continue;
+      }
+      const root = rawRoot as Record<string, unknown>;
+      if (typeof root.path !== 'string' || root.path.trim() === '') {
+        diagnostics?.push({
+          graph: name,
+          reason: 'invalid user-level root definition — `path` is required',
+          source: 'operator-config',
+        });
+        continue;
+      }
+      GRAPH_CONFIGS[name] = {
+        type: name,
+        scanDirs: [root.path],
+        extensions: Array.isArray(root.extensions) ? root.extensions.map(String) : ['.md', '.yaml', '.json'],
+        shared: true,
+        defaultBuild: false,
+      };
+      loaded.push(name);
+    }
+  }
+  if (!graphs) return loaded;
+  for (const [name, def] of Object.entries(graphs)) {
+    if (name in GRAPH_CONFIGS) continue;
+    const graphConfig = parseGraphDef(name, def as Record<string, unknown>);
+    if (!graphConfig) {
+      diagnostics?.push({
+        graph: name,
+        reason: 'invalid user-level graph definition — `scanDirs` is missing or not an array',
+        source: 'operator-config',
+      });
+      continue;
+    }
+    GRAPH_CONFIGS[name] = { ...graphConfig, shared: true };
+    loaded.push(name);
+  }
+  return loaded;
+}
+
 /** Module-scoped guard so the config.yaml deprecation note prints at most once per process. */
 let yamlIndexDeprecationWarned = false;
 
@@ -763,10 +858,11 @@ let yamlIndexDeprecationWarned = false;
  * @returns Absolute path to the graph's index directory
  */
 export function getGraphIndexDir(cwd: string, graphType: GraphType): string {
-  if (graphType === 'framework') {
+  const config = GRAPH_CONFIGS[graphType];
+  if (graphType === 'framework' || config?.shared) {
     // Shared across projects — XDG data directory
     const xdgData = process.env.XDG_DATA_HOME ?? `${process.env.HOME}/.local/share`;
-    return `${xdgData}/aiwg/index/framework`;
+    return `${xdgData}/aiwg/index/${graphType}`;
   }
   return `${cwd}/.aiwg/.index/${graphType}`;
 }

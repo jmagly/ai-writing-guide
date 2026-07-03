@@ -41,16 +41,17 @@ describe('collectIndexStatus (#1624)', () => {
   it('enumerates the built-in graphs and flags missing durable indices', () => {
     const report = collectIndexStatus(tmp);
     const names = report.graphs.map((g) => g.name).sort();
-    expect(names).toEqual(['codebase', 'framework', 'project', 'source']);
+    expect(names).toEqual(['codebase', 'framework', 'project', 'source', 'user']);
     // Nothing built in a fresh workspace.
     expect(report.summary.built).toBe(0);
     // project + codebase opt into default builds → flagged missing; framework
-    // and source do not (defaultBuild:false) → not flagged.
+    // source/user/framework do not (defaultBuild:false) → not flagged.
     const byName = Object.fromEntries(report.graphs.map((g) => [g.name, g]));
     expect(byName.project.missing).toBe(true);
     expect(byName.codebase.missing).toBe(true);
     expect(byName.framework.missing).toBe(false);
     expect(byName.source.missing).toBe(false);
+    expect(byName.user.missing).toBe(false);
     expect(byName.project.origin).toBe('builtin');
   });
 

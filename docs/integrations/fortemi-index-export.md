@@ -15,6 +15,8 @@ aiwg index export --format fortemi --graph project --schema-version v2 --out aiw
 aiwg index sync --graph project
 aiwg index build --graph source
 aiwg index sync --graph source
+aiwg index build --graph user
+aiwg index sync --graph user
 ```
 
 The sync command materializes:
@@ -214,6 +216,9 @@ already-public source material.
 
 Fortemi React consumes the JSON locally; `aiwg index export` and
 `aiwg index sync` do not require a hosted backend.
+
+For user/global capability sidecars under `~/.aiwg`, see
+[`docs/user-level-indices.md`](../user-level-indices.md).
 
 ## Migration Gates
 

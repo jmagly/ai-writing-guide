@@ -19,7 +19,7 @@ import os from 'os';
 import { main } from '../../../src/artifacts/cli.js';
 import { GRAPH_CONFIGS } from '../../../src/artifacts/types.js';
 
-const BUILTIN_GRAPH_NAMES = ['framework', 'project', 'codebase', 'source'];
+const BUILTIN_GRAPH_NAMES = ['framework', 'project', 'codebase', 'source', 'user'];
 
 function cleanUserGraphs() {
   for (const key of Object.keys(GRAPH_CONFIGS)) {

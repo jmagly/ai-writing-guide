@@ -15,7 +15,7 @@ import path from 'path';
 import { createHash } from 'crypto';
 import { load as loadYaml } from 'js-yaml';
 import type { MetadataEntry, ArtifactIndex, TagIndex, DependencyGraph, GraphType, TypedEdge, MetadataSupplementConfig } from './types.js';
-import { INDEX_VERSION, INDEX_DIR, PHASE_DIRECTORIES, GRAPH_CONFIGS, loadUserGraphConfigs } from './types.js';
+import { INDEX_VERSION, INDEX_DIR, PHASE_DIRECTORIES, GRAPH_CONFIGS, loadUserGraphConfigs, loadGlobalGraphConfigs } from './types.js';
 import { parseCitationSidecar, citationResultToEdges, buildRefToPathMap } from './citation-parser.js';
 import { writeIndexFile, resolveIndexDir, loadGraphIndexFile } from './index-reader.js';
 import { loadManifest, writeManifest, statMatches, makeEntry, type ChecksumManifest, type ManifestStats } from './checksum-manifest.js';
@@ -27,6 +27,25 @@ export interface BuildOptions {
   outputDir?: string; // Override index output directory (default: <cwd>/.aiwg/.index/)
   graph?: GraphType;  // Target a specific graph (default: project for backward compat)
   explicit?: boolean; // true when graph was requested via --graph flag; false for auto-selected defaultBuild graphs
+}
+
+function expandScanDir(cwd: string, scanDir: string): string {
+  if (scanDir === '~') return process.env.HOME ?? scanDir;
+  if (scanDir.startsWith('~/')) {
+    return path.join(process.env.HOME ?? '', scanDir.slice(2));
+  }
+  if (path.isAbsolute(scanDir)) return scanDir;
+  return path.join(cwd, scanDir);
+}
+
+function indexPathFor(cwd: string, fullPath: string): string {
+  const rel = path.relative(cwd, fullPath);
+  if (!rel.startsWith('..') && !path.isAbsolute(rel)) return rel;
+  return fullPath;
+}
+
+function absoluteEntryPath(cwd: string, entryPath: string): string {
+  return path.isAbsolute(entryPath) ? entryPath : path.join(cwd, entryPath);
 }
 
 /**
@@ -526,6 +545,7 @@ export async function buildIndex(
 
   // Ensure user-defined graphs are loaded
   loadUserGraphConfigs(cwd);
+  loadGlobalGraphConfigs();
 
   // Determine scan directories based on graph type
   const graphConfig = graph ? GRAPH_CONFIGS[graph] : undefined;
@@ -537,7 +557,7 @@ export async function buildIndex(
     scanDirs = [path.join(cwd, scope)];
     fileExtensions = ['.md', '.yaml', '.json'];
   } else if (graphConfig) {
-    scanDirs = graphConfig.scanDirs.map(d => path.join(cwd, d));
+    scanDirs = graphConfig.scanDirs.map(d => expandScanDir(cwd, d));
     fileExtensions = graphConfig.extensions;
   } else {
     // Default: scan .aiwg/ (backward compatible)
@@ -625,7 +645,7 @@ export async function buildIndex(
   const useFilenameMetadata = graphConfig?.nodeStrategy === 'filename-metadata';
 
   for (const fullPath of files) {
-    const relativePath = path.relative(cwd, fullPath);
+    const relativePath = indexPathFor(cwd, fullPath);
 
     let entry: MetadataEntry;
 
@@ -792,7 +812,7 @@ export async function buildIndex(
     // Build REF-XXX → path map from all entries with ref frontmatter
     const entryFrontmatter = new Map<string, Record<string, unknown>>();
     for (const entryPath of Object.keys(entries)) {
-      const fullPath = path.join(cwd, entryPath);
+      const fullPath = absoluteEntryPath(cwd, entryPath);
       if (fs.existsSync(fullPath)) {
         const content = fs.readFileSync(fullPath, 'utf-8');
         const { data } = parseFrontmatter(content);
@@ -804,7 +824,7 @@ export async function buildIndex(
     // Parse each entry as a citation sidecar and extract edges
     let citationEdgeCount = 0;
     for (const entryPath of Object.keys(entries)) {
-      const fullPath = path.join(cwd, entryPath);
+      const fullPath = absoluteEntryPath(cwd, entryPath);
       if (!fs.existsSync(fullPath)) continue;
 
       const content = fs.readFileSync(fullPath, 'utf-8');
@@ -930,6 +950,6 @@ export async function buildIndex(
       console.log(`  Pruned ${manifestStats.pruned} stale manifest entries (files no longer on disk)`);
     }
   }
-  const displayDir = graph ? `${INDEX_DIR}/${graph}/` : `${INDEX_DIR}/`;
+  const displayDir = graph ? indexOutputDir : `${INDEX_DIR}/`;
   console.log(`  Output: ${displayDir}`);
 }

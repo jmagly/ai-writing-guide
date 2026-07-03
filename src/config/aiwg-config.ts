@@ -193,6 +193,12 @@ export interface AiwgConfig {
   index?: IndexConfig;
 
   /**
+   * User/global index shorthand. `indices.user.roots.<name>.path` declares a
+   * shared user-level graph available from any project.
+   */
+  indices?: UserIndicesConfig;
+
+  /**
    * Research-complete framework settings — corpus root for the research
    * corpus (references/citations/radar/profiles under `<corpusRoot>/documentation/`).
    * @implements #1497
@@ -505,6 +511,20 @@ export function resolveParallelism(
  */
 export interface IndexConfig {
   graphs?: Record<string, IndexGraphDef | IndexMarkdownIndices>;
+  userIndices?: {
+    enabled?: boolean;
+  };
+}
+
+export interface UserIndicesConfig {
+  user?: {
+    enabled?: boolean;
+    roots?: Record<string, {
+      path: string;
+      backend?: 'local' | 'fortemi-core';
+      extensions?: string[];
+    }>;
+  };
 }
 
 /** A JSON node/edge index graph def. Mirrors GraphConfig (src/artifacts/types.ts). */

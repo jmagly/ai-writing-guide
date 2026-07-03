@@ -234,7 +234,7 @@ function registerIndexToolset(server) {
     description: 'Rebuild the artifact index (project / codebase / framework / user graphs). Mirrors `aiwg index build`.',
     inputSchema: {
       force: z.boolean().default(false).describe('Force full rebuild'),
-      graph: z.enum(['project', 'codebase', 'framework']).optional().describe('Restrict to one graph'),
+      graph: z.enum(['project', 'codebase', 'source', 'user', 'framework']).optional().describe('Restrict to one graph'),
     },
     buildArgs: ({ force, graph }) => {
       const args = [];

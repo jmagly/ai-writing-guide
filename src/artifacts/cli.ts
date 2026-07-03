@@ -18,7 +18,7 @@
  */
 
 import type { GraphType } from './types.js';
-import { GRAPH_CONFIGS, loadUserGraphConfigs } from './types.js';
+import { GRAPH_CONFIGS, loadUserGraphConfigs, loadGlobalGraphConfigs } from './types.js';
 import { SUPPORTED_VIEWS } from './corpus-views/renderers.js';
 
 /** Parse --graph flag from args, returns undefined for "all graphs" */
@@ -32,6 +32,7 @@ function parseGraphFlag(args: string[]): GraphType | undefined {
   const val = args[idx + 1];
   // Load user-defined graphs so validation is complete
   loadUserGraphConfigs(process.cwd());
+  loadGlobalGraphConfigs();
   if (val in GRAPH_CONFIGS) return val;
   // Corpus markdown views (#1490) are valid --graph targets for `index build`.
   if ((SUPPORTED_VIEWS as readonly string[]).includes(val)) return val;
@@ -243,7 +244,7 @@ function printIndexUsage(): void {
   console.log('  watch      Start a filesystem watcher for automatic incremental index updates');
   console.log('');
   console.log('Options:');
-  console.log('  --graph <name>  Target a specific graph (framework, project, codebase, source, or user-defined)');
+  console.log('  --graph <name>  Target a specific graph (framework, project, codebase, source, user, or user-defined)');
   console.log('  --all           Build all known graphs (including user-defined)');
   console.log('');
   console.log('Examples:');
@@ -371,7 +372,7 @@ async function handleBuild(args: string[]): Promise<void> {
     console.log('  --scope <dir>    Limit scan to a specific subdirectory');
     console.log('  --graph <name>   Build a specific graph only (built-in or user-defined)');
     console.log('');
-    console.log('Built-in graph names: project, codebase, source, framework');
+    console.log('Built-in graph names: project, codebase, source, user, framework');
     console.log('User-defined graphs: configure under index.graphs in .aiwg/aiwg.config');
     console.log('');
     console.log('Default behavior (no --graph): builds all graphs with defaultBuild: true');
@@ -382,6 +383,7 @@ async function handleBuild(args: string[]): Promise<void> {
     console.log('  aiwg index build --force');
     console.log('  aiwg index build --graph codebase --force');
     console.log('  aiwg index build --graph source --force');
+    console.log('  aiwg index build --graph user --force');
     console.log('  aiwg index build --graph references            # user-defined graph');
     console.log('  aiwg index build --scope documentation/references');
     console.log('  aiwg index build --all');
@@ -408,6 +410,7 @@ async function handleBuild(args: string[]): Promise<void> {
 
   // Load user-defined graphs
   loadUserGraphConfigs(cwd);
+  loadGlobalGraphConfigs();
 
   let jsonBuilt = false;
   if (graph) {

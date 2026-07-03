@@ -39,7 +39,7 @@ beforeEach(() => {
   fs.mkdirSync(cwd, { recursive: true });
   // Clear any user-defined graphs leaked from earlier tests
   for (const k of Object.keys(GRAPH_CONFIGS)) {
-    if (!['framework', 'project', 'codebase', 'source'].includes(k)) {
+    if (!['framework', 'project', 'codebase', 'source', 'user'].includes(k)) {
       delete GRAPH_CONFIGS[k];
     }
   }
