@@ -197,12 +197,29 @@ describe('CLI Router Integration Tests', () => {
     });
 
     it('should route doctor command', async () => {
-      const output = await runCli(['doctor']);
+      let context: HandlerContext | undefined;
+      const output = await runCliWithMockHandler(
+        'doctor',
+        {
+          id: 'doctor',
+          name: 'Mock Doctor',
+          description: 'Mock doctor handler for router dispatch tests',
+          category: 'maintenance',
+          aliases: ['-doctor', '--doctor'],
+          async execute(ctx: HandlerContext): Promise<HandlerResult> {
+            context = ctx;
+            return { exitCode: 0, message: 'mock doctor executed' };
+          },
+        },
+        ['doctor'],
+      );
 
       // Doctor command executes (output depends on environment)
       // Just verify it doesn't show "unknown command"
       const combined = output.stdout.join('\n') + output.stderr.join('\n');
       expect(combined).not.toMatch(/Unknown command: doctor/i);
+      expect(context?.args).toEqual([]);
+      expect(context?.rawArgs).toEqual(['doctor']);
     });
 
     it('should route list command', async () => {

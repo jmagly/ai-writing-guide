@@ -96,6 +96,22 @@
       "max_rank": 5
     },
     {
+      "id": "release-flow-skill",
+      "domain": "sdlc",
+      "phrase": "release flow",
+      "expected_path": "agentic/code/frameworks/sdlc-complete/skills/flow-release/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5
+    },
+    {
+      "id": "run-release-flow-skill",
+      "domain": "sdlc",
+      "phrase": "run the release flow",
+      "expected_path": "agentic/code/frameworks/sdlc-complete/skills/flow-release/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5
+    },
+    {
       "id": "skill-discovery-rule",
       "domain": "rule",
       "phrase": "skill discovery",

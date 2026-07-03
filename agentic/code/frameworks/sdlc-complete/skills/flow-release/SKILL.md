@@ -8,6 +8,11 @@ triggers:
   - "help me make the build or deployment path safer"
   - "start with pipeline safety or release readiness"
   - "pipeline safety ci"
+  - "release flow"
+  - "flow release"
+  - "flow-release"
+  - "run the release flow"
+  - "run release flow"
 commandHint:
   argumentHint: '<version> [--channel <stable|rc|beta|alpha|nightly>] [--dry-run] [--skip-uat] [--no-mirror] [--config <path>] [--guidance "text"]'
   allowedTools: 'Task, Read, Write, Edit, Bash, Glob, Grep, mcp__git-gitea__*'
@@ -47,6 +52,10 @@ When the user requests a release:
 ## Natural language triggers
 
 - "release v2026.5.2"
+- "release flow"
+- "flow release"
+- "flow-release"
+- "run the release flow"
 - "cut a release"
 - "promote to stable"
 - "ship it"

@@ -7,6 +7,44 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.3] - 2026-07-03 - "Fortemi capability discovery parity"
+
+Restores the default AIWG capability discovery contract after the Fortemi Core
+backend became the default search path. Framework skills, project-local custom
+skills, and quickref-guided discover phrases now resolve through the Fortemi
+static cache without requiring `--graph framework` or `--backend local`.
+
+### Fixed
+
+- **Framework capability discovery default** — `aiwg discover` and `aiwg show`
+  now use the capability-default graph surface on the Fortemi backend, merging
+  framework and project caches instead of searching only the project graph.
+- **Canonical skill lookup** — bare `aiwg show skill doc-sync` and
+  `aiwg show skill flow-release` resolve canonical framework source skills
+  instead of returning ambiguity envelopes caused by plugin mirror copies.
+- **Release-flow discoverability** — `flow-release` now declares `release flow`
+  and related trigger phrases, and exact trigger matches rank above generic
+  substring hits.
+- **Project-local custom skill search** — project `.aiwg/skills/.../SKILL.md`
+  capabilities are included in the default Fortemi discovery/show surface after
+  the project graph is built and synced.
+
+### Added
+
+- **Real-corpus Fortemi parity tests** — the integration matrix now compares
+  Fortemi default discovery against local framework discovery over the real AIWG
+  corpus by ordered paths, not only idealized fixtures.
+- **Project custom capability regression** — tests create a project-local custom
+  skill and verify default Fortemi discovery/show can find it.
+- **Quickref-guided UAT evidence** — live validation now checks curated
+  quickref discover phrases across the core and framework quickref corpus.
+
+### Follow-up
+
+- Filed #1709 to design user/global `~/.aiwg` sidecar capability indices so
+  personal custom skills can ride alongside framework and project caches without
+  mutating AIWG's packaged framework index.
+
 ## [2026.7.2] - 2026-07-03 - "Fortemi Core package gate correction"
 
 Reissues the Fortemi Core index migration preview after the `v2026.7.1`

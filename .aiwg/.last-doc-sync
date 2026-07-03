@@ -1,5 +1,5 @@
-timestamp: 2026-07-03T03:25:33Z
+timestamp: 2026-07-03T20:24:53Z
 direction: code-to-docs
-scope: Fortemi Core search/index packaging, prebuilt indices, legacy Fortemi storage boundary
-files_changed: 11
-report: .aiwg/reports/doc-sync-audit-20260703T032533Z.md
+scope: Fortemi capability discovery parity release 2026.7.3
+files_changed: 1
+report: .aiwg/reports/doc-sync-audit-20260703T202453Z.md

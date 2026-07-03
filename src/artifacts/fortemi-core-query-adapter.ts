@@ -55,6 +55,18 @@ export interface FortemiCoreStaticFulltextResult extends FortemiCoreStaticSearch
   summary: string;
 }
 
+export interface FortemiCoreAiwgDiscoveryOptions {
+  graph?: GraphType;
+  text: string;
+  limit?: number;
+  types?: string[];
+}
+
+export interface FortemiCoreAiwgDiscoveryResult {
+  entry: MetadataEntry;
+  score: number;
+}
+
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
@@ -246,6 +258,62 @@ export function loadFortemiCoreMetadataEntries(
   const loaded = loadFortemiCoreExport(cwd, graph);
   if (!loaded.exported) return { entries: [], reason: loaded.reason };
   return { entries: loaded.exported.items.map(entryFromRecord) };
+}
+
+export async function queryFortemiCoreAiwgDiscovery(
+  cwd: string,
+  options: FortemiCoreAiwgDiscoveryOptions,
+):
+  Promise<
+    | { results: FortemiCoreAiwgDiscoveryResult[]; reason?: undefined }
+    | { results: []; reason: string }
+  > {
+  const loaded = loadFortemiCoreExport(cwd, options.graph ?? "framework");
+  if (!loaded.exported) {
+    return {
+      results: [],
+      reason: loaded.reason ?? "Fortemi Core static index is unavailable.",
+    };
+  }
+
+  const typeSet = options.types && options.types.length > 0
+    ? new Set(options.types)
+    : null;
+  const fortemiTypes = options.types?.map((type) => `aiwg.${type}`);
+  const { queryAiwgFortemiIndex } = await import("@fortemi/core/aiwg-index");
+  const queried = queryAiwgFortemiIndex(loaded.exported as any, options.text, {
+    limit: options.limit ?? 10,
+    rank: true,
+    includeMatches: false,
+    searchProfile: "aiwg-discovery",
+    ...(fortemiTypes && fortemiTypes.length > 0 ? { types: fortemiTypes as any } : {}),
+  });
+  const rankedItems =
+    queried.rankedItems ??
+    queried.items.map((item, index) => ({
+      item,
+      rank: queried.items.length - index,
+    }));
+
+  const maxRank = Math.max(
+    1,
+    ...rankedItems.map((result) =>
+      typeof result.rank === "number" ? result.rank : 0,
+    ),
+  );
+  const results = rankedItems
+    .map((result, index) => {
+      const entry = entryFromRecord(result.item as AiwgFortemiRecord);
+      return {
+        entry,
+        score: typeof result.rank === "number"
+          ? result.rank / maxRank
+          : (rankedItems.length - index) / rankedItems.length,
+      };
+    })
+    .filter((result) => !typeSet || typeSet.has(result.entry.type));
+
+  return { results };
 }
 
 export function buildFortemiCoreArtifactIndex(

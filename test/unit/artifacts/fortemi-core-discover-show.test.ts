@@ -18,9 +18,11 @@ import {
 import type {
   ArtifactIndex,
   DependencyGraph,
+  GraphType,
   IndexStats,
   MetadataEntry,
 } from "../../../src/artifacts/types.js";
+import { getGraphIndexDir } from "../../../src/artifacts/types.js";
 
 function entry(overrides: Partial<MetadataEntry>): MetadataEntry {
   return {
@@ -48,7 +50,7 @@ function writeProjectGraph(
   dependencies?: DependencyGraph,
   graphName = "project",
 ): void {
-  const graphDir = path.join(root, ".aiwg", ".index", graphName);
+  const graphDir = getGraphIndexDir(root, graphName as GraphType);
   fs.mkdirSync(graphDir, { recursive: true });
   const index: ArtifactIndex = {
     version: "1.0.0",
@@ -105,12 +107,18 @@ function writeProjectGraph(
 
 describe("Fortemi Core discover/show parity adapter (#1688)", () => {
   let tmp: string;
+  let originalXdgDataHome: string | undefined;
+  let originalAiwgRoot: string | undefined;
   let consoleSpy: ReturnType<typeof vi.spyOn>;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
   let stdoutSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aiwg-fortemi-discover-"));
+    originalXdgDataHome = process.env.XDG_DATA_HOME;
+    originalAiwgRoot = process.env.AIWG_ROOT;
+    process.env.XDG_DATA_HOME = path.join(tmp, "xdg-data");
+    process.env.AIWG_ROOT = tmp;
     consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     stdoutSpy = vi
@@ -122,6 +130,10 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     consoleSpy.mockRestore();
     consoleErrorSpy.mockRestore();
     stdoutSpy.mockRestore();
+    if (originalXdgDataHome === undefined) delete process.env.XDG_DATA_HOME;
+    else process.env.XDG_DATA_HOME = originalXdgDataHome;
+    if (originalAiwgRoot === undefined) delete process.env.AIWG_ROOT;
+    else process.env.AIWG_ROOT = originalAiwgRoot;
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
@@ -179,6 +191,109 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
       local.results.map((result: any) => result.path),
     );
     expect(fortemi.results[0].title).toBe("Intake Wizard");
+  });
+
+  it("defaults capability discover and show to the framework graph on Fortemi Core", async () => {
+    const projectSkill = entry({
+      path: ".aiwg/skills/project-intake/SKILL.md",
+      title: "Project Intake",
+      name: "project-intake",
+      summary: "Collect project intake notes.",
+      triggers: ["project intake"],
+      capability: "Collect project intake notes.",
+    });
+    const frameworkSkill = entry({
+      path: "agentic/code/frameworks/sdlc-complete/skills/doc-sync/SKILL.md",
+      title: "Doc Sync",
+      name: "doc-sync",
+      tags: ["documentation", "sync"],
+      summary: "Synchronize code changes into documentation.",
+      triggers: ["doc sync code to docs", "sync docs"],
+      capability: "Keep documentation aligned with implementation changes.",
+    });
+    writeProjectGraph(tmp, [projectSkill], undefined, "project");
+    writeProjectGraph(tmp, [frameworkSkill], undefined, "framework");
+    syncFortemiCoreIndex(tmp, {
+      graph: "project",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
+    syncFortemiCoreIndex(tmp, {
+      graph: "framework",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
+
+    await discoverCapability(tmp, {
+      phrase: "doc sync code to docs",
+      json: true,
+      limit: 3,
+    });
+    const discover = readConsoleJson();
+    expect(discover.query.backend).toBe("fortemi-core");
+    expect(discover.query.graph).toBe("capability-default");
+    expect(discover.results[0].path).toContain(frameworkSkill.path);
+    consoleSpy.mockClear();
+
+    await showArtifact(tmp, {
+      typeFilter: ["skill"],
+      name: "doc-sync",
+      json: true,
+      backend: "fortemi-core",
+    });
+    const shown = readConsoleJson();
+    expect(shown.path).toContain(frameworkSkill.path);
+    expect(shown.content).toContain("# Doc Sync");
+  });
+
+  it("includes project-local custom skills in default Fortemi Core capability discovery", async () => {
+    const customSkill = entry({
+      path: ".aiwg/skills/custom-review/SKILL.md",
+      title: "Custom Review",
+      name: "custom-review",
+      tags: ["custom", "review"],
+      summary: "Run the team's custom review workflow.",
+      triggers: ["custom review workflow", "team review"],
+      capability: "Run project-local custom review workflow.",
+    });
+    const frameworkSkill = entry({
+      path: "agentic/code/frameworks/sdlc-complete/skills/doc-sync/SKILL.md",
+      title: "Doc Sync",
+      name: "doc-sync",
+      tags: ["documentation", "sync"],
+      summary: "Synchronize code changes into documentation.",
+      triggers: ["doc sync"],
+      capability: "Keep documentation aligned with implementation changes.",
+    });
+    writeProjectGraph(tmp, [customSkill], undefined, "project");
+    writeProjectGraph(tmp, [frameworkSkill], undefined, "framework");
+    syncFortemiCoreIndex(tmp, {
+      graph: "project",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
+    syncFortemiCoreIndex(tmp, {
+      graph: "framework",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
+
+    await discoverCapability(tmp, {
+      phrase: "custom review workflow",
+      json: true,
+      limit: 3,
+    });
+    const discover = readConsoleJson();
+    expect(discover.query.backend).toBe("fortemi-core");
+    expect(discover.query.graph).toBe("capability-default");
+    expect(discover.results[0].path).toContain(customSkill.path);
+    consoleSpy.mockClear();
+
+    await showArtifact(tmp, {
+      typeFilter: ["skill"],
+      name: "custom-review",
+      json: true,
+      backend: "fortemi-core",
+    });
+    const shown = readConsoleJson();
+    expect(shown.path).toContain(customSkill.path);
+    expect(shown.content).toContain("# Custom Review");
   });
 
   it("fetches exact bodies and preserves ambiguous-name diagnostics", async () => {

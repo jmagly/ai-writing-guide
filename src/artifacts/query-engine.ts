@@ -231,6 +231,7 @@ function scoreEntry(entry: MetadataEntry, text: string, opts: { relaxOverlap?: b
   // for multi-token queries gives a tighter (content-only) phrase to match.
   // Pure-stopword queries fall back to the raw text.
   const lower = tokens.length > 0 ? tokens.join(' ') : text.toLowerCase().trim();
+  const rawLower = text.toLowerCase().trim();
   let score = 0;
 
   // Exact-name floor (#1233) — if the query (normalized) exactly matches
@@ -262,7 +263,7 @@ function scoreEntry(entry: MetadataEntry, text: string, opts: { relaxOverlap?: b
   const typeLower = entry.type.toLowerCase();
   const capabilityLower = entry.capability ? entry.capability.toLowerCase() : '';
   const tagsLower = entry.tags.map(t => t.toLowerCase());
-  const triggersLower = entry.triggers ?? [];
+  const triggersLower = (entry.triggers ?? []).map(trigger => trigger.toLowerCase());
 
   // For multi-token queries, require ≥50% token overlap to count
   // partial matches. This keeps gibberish queries (e.g.,
@@ -283,10 +284,14 @@ function scoreEntry(entry: MetadataEntry, text: string, opts: { relaxOverlap?: b
   // phrase wins big; substring or token-overlap is still strong.
   if (triggersLower.length > 0) {
     for (const trigger of triggersLower) {
-      if (trigger === lower) {
-        score += 0.4 * 4;
-        break;
-      } else if (trigger.includes(lower) || lower.includes(trigger)) {
+      if (trigger === lower || trigger === rawLower) {
+        return 1.0008;
+      } else if (
+        trigger.includes(lower) ||
+        lower.includes(trigger) ||
+        trigger.includes(rawLower) ||
+        rawLower.includes(trigger)
+      ) {
         score += 0.25 * 4;
       } else if (useMultiToken) {
         const hits = tokens.filter(t => trigger.includes(t)).length;
@@ -583,6 +588,8 @@ export interface DiscoverParams {
 // flow-deploy-to-production skill.
 const DEFAULT_DISCOVER_TYPES = ['skill', 'agent', 'command', 'rule', 'flow'];
 
+const DEFAULT_CAPABILITY_GRAPHS: GraphType[] = ['framework', 'project'];
+
 /**
  * Resolve the AIWG installation root for path-anchoring discover output.
  * Discover returns paths anchored to AIWG_ROOT so the agent's `Read`
@@ -648,21 +655,46 @@ export async function discoverCapability(
   // project / codebase / legacy depending on what's available.
   let entries: MetadataEntry[] = [];
   const backend = params.backend ?? DEFAULT_ARTIFACT_SEARCH_BACKEND;
+  let fortemiCoreDiscoveryScores: Map<string, number> | null = null;
 
   if (backend === 'fortemi-core') {
-    const { loadFortemiCoreMetadataEntries } = await import('./fortemi-core-query-adapter.js');
-    const loaded = loadFortemiCoreMetadataEntries(cwd, params.graph ?? 'project');
-    entries = loaded.entries;
-    if (entries.length === 0 && loaded.reason) {
+    const graphs = params.graph ? [params.graph] : DEFAULT_CAPABILITY_GRAPHS;
+    const {
+      loadFortemiCoreMetadataEntries,
+      queryFortemiCoreAiwgDiscovery,
+    } = await import('./fortemi-core-query-adapter.js');
+    let unavailableReason: string | undefined;
+    for (const graph of graphs) {
+      const loaded = loadFortemiCoreMetadataEntries(cwd, graph);
+      if (loaded.reason) unavailableReason ??= loaded.reason;
+      entries.push(...loaded.entries);
+      const discovered = await queryFortemiCoreAiwgDiscovery(cwd, {
+        graph,
+        text: params.phrase,
+        limit: Math.max(limit * 10, 50),
+        types,
+      });
+      if (!discovered.reason) {
+        fortemiCoreDiscoveryScores ??= new Map();
+        for (const result of discovered.results) {
+          if (result.score <= 0) continue;
+          fortemiCoreDiscoveryScores.set(
+            result.entry.path,
+            Math.max(fortemiCoreDiscoveryScores.get(result.entry.path) ?? 0, result.score),
+          );
+        }
+      }
+    }
+    if (entries.length === 0 && unavailableReason) {
       if (params.json) {
         console.log(JSON.stringify({
-          query: { phrase: params.phrase, types, limit, backend: 'fortemi-core' },
+          query: { phrase: params.phrase, types, limit, backend: 'fortemi-core', graph: params.graph ?? 'capability-default' },
           results: [],
           total: 0,
-          hint: loaded.reason,
+          hint: unavailableReason,
         }, null, 2));
       } else {
-        console.error('Error: ' + loaded.reason);
+        console.error('Error: ' + unavailableReason);
       }
       process.exit(1);
     }
@@ -749,10 +781,23 @@ export async function discoverCapability(
   // fusion below can inject/lift curated capabilities into the top-K before
   // truncation — a capability that the lexical pass ranked outside `limit`
   // (or missed entirely) still surfaces when the query activates its facet.
-  const strictScored = candidates
-    .map(entry => ({ entry, score: scoreEntry(entry, params.phrase) }))
+  const legacyStrictScored = candidates
+    .map(entry => {
+      const legacyScore = scoreEntry(entry, params.phrase);
+      const fortemiScore = fortemiCoreDiscoveryScores?.get(entry.path) ?? 0;
+      return {
+        entry,
+        score: legacyScore > 0 ? legacyScore : fortemiScore * 0.2,
+        legacyScore,
+      };
+    })
     .filter(r => r.score > 0)
     .sort(compareDiscoverResults);
+  const strictScored = (
+    legacyStrictScored.some(result => result.legacyScore > 0)
+      ? legacyStrictScored.filter(result => result.legacyScore > 0)
+      : legacyStrictScored
+  ).map(({ entry, score }) => ({ entry, score }));
 
   // Single-pass facet fusion (#1623 U3): fuse the curated feature→capability
   // facets (expansion / persona / project / provider-capability) into the
@@ -824,7 +869,7 @@ export async function discoverCapability(
 
   if (params.json) {
     console.log(JSON.stringify({
-      query: { phrase: params.phrase, types, limit, aiwg_root: aiwgRoot ?? null, backend },
+      query: { phrase: params.phrase, types, limit, aiwg_root: aiwgRoot ?? null, backend, graph: backend === 'fortemi-core' ? params.graph ?? 'capability-default' : params.graph },
       results: scored.map(r => ({
         path: resolvePath(r.entry),
         type: r.entry.type,
@@ -1059,17 +1104,22 @@ export async function showArtifact(
   let entries: MetadataEntry[] = [];
   if (params.backend === 'fortemi-core') {
     const { loadFortemiCoreMetadataEntries } = await import('./fortemi-core-query-adapter.js');
-    const loaded = loadFortemiCoreMetadataEntries(cwd, params.graph ?? 'project');
-    entries = loaded.entries;
-    if (entries.length === 0 && loaded.reason) {
+    const graphs = params.graph ? [params.graph] : DEFAULT_CAPABILITY_GRAPHS;
+    let unavailableReason: string | undefined;
+    for (const graph of graphs) {
+      const loaded = loadFortemiCoreMetadataEntries(cwd, graph);
+      if (loaded.reason) unavailableReason ??= loaded.reason;
+      entries.push(...loaded.entries);
+    }
+    if (entries.length === 0 && unavailableReason) {
       if (params.json) {
         console.log(JSON.stringify({
           backend: 'fortemi-core',
           name: params.name,
-          error: loaded.reason,
+          error: unavailableReason,
         }, null, 2));
       } else {
-        console.error('Error: ' + loaded.reason);
+        console.error('Error: ' + unavailableReason);
       }
       process.exit(1);
     }
@@ -1119,6 +1169,20 @@ export async function showArtifact(
   }
 
   matches = uniqueEntriesByPath(matches);
+
+  // Plugin skill copies mirror bundle-source skills for platform packaging.
+  // A bare `aiwg show skill <name>` should resolve the canonical source skill
+  // when there is exactly one framework/addon/extension owner, instead of
+  // forcing operators through an ambiguity list of mirrors.
+  if (matches.length > 1 && types.includes('skill')) {
+    const frameworkSkillMatches = matches.filter(e => isFrameworkSourceSkillPath(e.path));
+    if (frameworkSkillMatches.length === 1) matches = frameworkSkillMatches;
+  }
+
+  if (matches.length > 1 && types.includes('skill')) {
+    const sourceSkillMatches = matches.filter(e => isCanonicalSourceSkillPath(e.path));
+    if (sourceSkillMatches.length === 1) matches = sourceSkillMatches;
+  }
 
   // Top-level `agentic/code/agents/personas/*` entries are OpenHuman persona
   // mirrors for some canonical bundle agents. Keep them discoverable as agents,
@@ -1278,6 +1342,14 @@ function isCanonicalBundleAgentPath(entryPath: string): boolean {
 
 function isCanonicalSourceAgentPath(entryPath: string): boolean {
   return /(^|[/\\])agentic[/\\]code[/\\](?:frameworks|addons|extensions)[/\\][^/\\]+[/\\]agents[/\\][^/\\]+\.md$/.test(entryPath);
+}
+
+function isFrameworkSourceSkillPath(entryPath: string): boolean {
+  return /(^|[/\\])agentic[/\\]code[/\\]frameworks[/\\][^/\\]+[/\\]skills[/\\][^/\\]+[/\\]SKILL\.md$/.test(entryPath);
+}
+
+function isCanonicalSourceSkillPath(entryPath: string): boolean {
+  return /(^|[/\\])agentic[/\\]code[/\\](?:frameworks|addons|extensions)[/\\][^/\\]+[/\\]skills[/\\][^/\\]+[/\\]SKILL\.md$/.test(entryPath);
 }
 
 function uniqueEntriesByPath(entries: MetadataEntry[]): MetadataEntry[] {

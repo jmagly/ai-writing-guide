@@ -3038,7 +3038,7 @@ aiwg ralph-config preset conservative
 
 ### doc-sync
 
-Synchronize documentation and code to eliminate drift.
+Synchronize documentation and code with bounded, scope-first drift checks.
 
 ```bash
 aiwg doc-sync <direction> [options]
@@ -3054,7 +3054,7 @@ aiwg doc-sync <direction> [options]
 - `--guidance "text"` - Human guidance for ambiguous cases
 - `--scope "path"` - Limit to specific directory (default: `.`)
 - `--dry-run` - Audit only, no modifications
-- `--parallel N` - Max concurrent audit agents (default: 4)
+- `--parallel N` - Max concurrent audit agents (default: 2, maximum: 4)
 - `--incremental` - Git-diff since last sync instead of full scan
 - `--verbose` - Detailed per-file findings
 - `--no-commit` - Skip auto-commit
@@ -3074,15 +3074,13 @@ aiwg doc-sync <direction> [options]
 
 **Execution phases:**
 
-1. Init and file inventory
-2. Parallel domain audit (8 auditors)
-3. Cross-reference validation
-4. Drift report generation
-5. Sync planning (auto-fixable / template-fixable / human-required)
-6. Auto-fix application
-7. agent loop refinement for complex items
-8. Validation of changes
-9. Record sync state and commit
+1. Inspect changed files and derive a bounded scope
+2. Select only the audit lanes relevant to that scope
+3. Run capped auditors with concise findings and detailed notes under `.aiwg/working/doc-sync/`
+4. Merge summaries into a drift report
+5. Apply high-confidence fixes when not running `--dry-run`
+6. Validate modified files with targeted checks
+7. Record sync state and commit only when requested by the surrounding workflow
 
 **Examples:**
 
