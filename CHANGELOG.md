@@ -7,6 +7,19 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.4] - 2026-07-03 - "Fortemi discovery release alignment"
+
+Supersedes `2026.7.3` as the artifact-aligned stable release after the first
+tag push published `aiwg@2026.7.3` before `main` was rebased onto the latest
+remote documentation commit. This release keeps the Fortemi capability
+discovery parity fixes and restores package, tag, and `main` consistency.
+
+### Fixed
+
+- **Release artifact alignment** — publishes the Fortemi capability discovery
+  parity fix from the current `main` lineage, including the latest Pagenary
+  documentation dependency update already present on origin.
+
 ## [2026.7.3] - 2026-07-03 - "Fortemi capability discovery parity"
 
 Restores the default AIWG capability discovery contract after the Fortemi Core
