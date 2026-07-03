@@ -73,6 +73,7 @@
     "reference",
     "CLI_USAGE",
     "cli-reference",
+    "fortemi-core-prebuilt-indices",
     "local-issues",
     "ralph-guide",
     "simple-language-translations",
@@ -724,6 +725,13 @@
       "title": "All Commands",
       "summary": "Every aiwg command with examples",
       "file": "cli-reference.md",
+      "parent": "reference"
+    },
+    {
+      "id": "fortemi-core-prebuilt-indices",
+      "title": "Fortemi Core Prebuilt Indices",
+      "summary": "Packaged Fortemi Core framework index artifacts and release gates",
+      "file": "fortemi-core-prebuilt-indices.md",
       "parent": "reference"
     },
     {
