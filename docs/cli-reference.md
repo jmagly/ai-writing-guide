@@ -3533,6 +3533,8 @@ aiwg index <subcommand> [options]
 - `query` - Search artifacts by keyword, type, phase, tags
 - `discover` - Capability search across AIWG skills/agents/commands/rules (canonical form is the top-level [`aiwg discover`](#discover); this subcommand is preserved for backward compatibility)
 - `show` - Print the full text of a specific skill/agent/command/rule (canonical form is the top-level [`aiwg show`](#show))
+- `sync` - Materialize the Fortemi Core static index cache for a graph
+- `migrate-legacy` - Move compatible legacy root indexes into graph sidecar indexes without modifying packaged/prebuilt indexes
 - `deps` - Show artifact dependency graph
 - `stats` - Show index statistics
 - `status` - Enumerate the durable index-graph registry (built-in + module + operator graphs) with build state, freshness, and drift; flags registered-but-unbuilt indices, on-disk dirs matching no graph, and graph-config defs that previously failed to load silently (#1624). Alias: `list`. Add `--json` for a stable envelope.
@@ -3975,6 +3977,38 @@ aiwg index stats --graph project --json
 # Framework graph stats
 aiwg index stats --graph framework
 ```
+
+### index migrate-legacy
+
+Move compatible legacy root index files into the graph sidecar layout used by
+Fortemi Core search. Project scope migrates `.aiwg/.index/*.json` into
+`.aiwg/.index/project/*.json`, then refreshes the project Fortemi Core static
+cache. User and global scopes are available for sidecar-index migration work and
+report missing legacy roots without touching packaged/prebuilt AIWG indexes.
+
+```bash
+aiwg index migrate-legacy [--scope project|user|global | --all] [options]
+```
+
+**Options:**
+
+- `--scope <name>` - Scope to migrate: `project`, `user`, or `global` (default: `project`)
+- `--all` - Inspect/migrate project, user, and global scopes
+- `--dry-run` - Report planned changes without writing files
+- `--no-fortemi-sync` - Skip Fortemi Core cache refresh for project scope
+- `--generated-at <iso>` - Deterministic timestamp for fixtures/support repros
+- `--json` - Print the migration report as JSON
+
+Examples:
+
+```bash
+aiwg index migrate-legacy --scope project --dry-run
+aiwg index migrate-legacy --scope project
+aiwg index migrate-legacy --all --json
+```
+
+If `metadata.json` is missing, unreadable, or has an incompatible schema
+version, the command reports `needs-rebuild` instead of silently falling back.
 
 ---
 

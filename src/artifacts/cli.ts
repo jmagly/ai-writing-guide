@@ -148,6 +148,10 @@ export async function main(args: string[]): Promise<void> {
       await handleSync(subcommandArgs);
       break;
 
+    case 'migrate-legacy':
+      await handleMigrateLegacy(subcommandArgs);
+      break;
+
     case 'deps':
       await handleDeps(subcommandArgs);
       break;
@@ -212,7 +216,7 @@ export async function main(args: string[]): Promise<void> {
 
     default:
       console.error(`Error: Unknown index subcommand '${subcommand}'`);
-      console.log('Available: build, query, discover, show, export, sync, deps, stats, status, list, neighbors, set, embed, similar, dedup-report, watch');
+      console.log('Available: build, query, discover, show, export, sync, migrate-legacy, deps, stats, status, list, neighbors, set, embed, similar, dedup-report, watch');
       process.exit(1);
   }
 }
@@ -227,6 +231,7 @@ function printIndexUsage(): void {
   console.log('  show       Print the full text of a specific skill/agent/command/rule');
   console.log('  export     Export a browser-consumable index contract');
   console.log('  sync       Materialize the Fortemi Core static index cache');
+  console.log('  migrate-legacy  Move legacy root indexes into graph sidecar indexes');
   console.log('  deps       Show artifact dependency graph');
   console.log('  stats      Show index statistics');
   console.log('  status     Enumerate the index-graph registry (freshness + drift); alias: list');
@@ -252,6 +257,7 @@ function printIndexUsage(): void {
   console.log('  aiwg index show skill flow-deploy-to-production --json');
   console.log('  aiwg index show agent aiwg-steward');
   console.log('  aiwg index export --format fortemi --graph project --out aiwg-fortemi-index.json');
+  console.log('  aiwg index migrate-legacy --scope project --dry-run');
   console.log('  aiwg index query "authentication" --type use-case');
   console.log('  aiwg index query "security rules" --graph framework --json');
   console.log('  aiwg index query "mixture of experts" --fulltext --graph papers   # body text, BM25');
@@ -934,6 +940,89 @@ async function handleSync(args: string[]): Promise<void> {
       return;
     }
     console.log(`Fortemi Core ${manifest.status}: ${manifest.item_count} item(s) → ${manifest.export_path}`);
+  } catch (err) {
+    console.error('Error: ' + (err instanceof Error ? err.message : String(err)));
+    process.exit(1);
+  }
+}
+
+/**
+ * Handle 'index migrate-legacy' command.
+ */
+async function handleMigrateLegacy(args: string[]): Promise<void> {
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log('Usage: aiwg index migrate-legacy [--scope project|user|global | --all] [options]');
+    console.log('');
+    console.log('Migrates compatible legacy root index files into graph sidecar index');
+    console.log('directories. Project scope moves .aiwg/.index/*.json to');
+    console.log('.aiwg/.index/project/*.json and refreshes the Fortemi Core static');
+    console.log('cache. User/global scopes report or migrate their corresponding');
+    console.log('sidecar locations without modifying packaged/prebuilt AIWG indexes.');
+    console.log('');
+    console.log('Options:');
+    console.log('  --scope <name>         Scope to migrate: project, user, or global (default: project)');
+    console.log('  --all                  Migrate project, user, and global scopes');
+    console.log('  --dry-run              Print planned changes without writing files');
+    console.log('  --no-fortemi-sync      Do not refresh the project Fortemi Core static cache');
+    console.log('  --generated-at <iso>   Override generated timestamp for deterministic fixtures');
+    console.log('  --json                 Print the migration report as JSON');
+    console.log('');
+    console.log('Examples:');
+    console.log('  aiwg index migrate-legacy --scope project --dry-run');
+    console.log('  aiwg index migrate-legacy --all --json');
+    return;
+  }
+
+  const all = args.includes('--all');
+  const scopeValue = parseFlagValue(args, '--scope', 'Error: --scope requires project, user, or global');
+  if (all && scopeValue) {
+    console.error('Error: pass either --all or --scope, not both');
+    process.exit(1);
+  }
+  const allowedScopes = ['project', 'user', 'global'] as const;
+  const scopes = all
+    ? [...allowedScopes]
+    : scopeValue
+      ? [scopeValue]
+      : ['project'];
+  const invalidScope = scopes.find((scope) => !allowedScopes.includes(scope as typeof allowedScopes[number]));
+  if (invalidScope) {
+    console.error('Error: --scope must be project, user, or global');
+    process.exit(1);
+  }
+
+  const generatedAt = parseFlagValue(args, '--generated-at', 'Error: --generated-at requires an ISO timestamp value');
+  const { migrateLegacyIndex } = await import('./legacy-index-migration.js');
+  try {
+    const report = migrateLegacyIndex(process.cwd(), {
+      scopes: scopes as Array<'project' | 'user' | 'global'>,
+      dryRun: args.includes('--dry-run'),
+      syncFortemi: !args.includes('--no-fortemi-sync'),
+      generatedAt,
+    });
+
+    if (args.includes('--json')) {
+      console.log(JSON.stringify(report, null, 2));
+      return;
+    }
+
+    console.log(`Legacy index migration ${report.dryRun ? '(DRY RUN)' : 'complete'}`);
+    for (const result of report.results) {
+      const entries = result.entries === null ? 'unknown' : String(result.entries);
+      const detail = result.reason ? ` — ${result.reason}` : '';
+      console.log(`  ${result.scope}: ${result.status} (${entries} entries)${detail}`);
+      for (const file of result.files) {
+        console.log(`    ${file.name}: ${file.status}`);
+      }
+      if (result.fortemiCore) {
+        console.log(
+          `    fortemi-core: ${result.fortemiCore.status} (${result.fortemiCore.itemCount} item(s)) → ${result.fortemiCore.exportPath}`,
+        );
+      }
+    }
+    if (report.reportPath) {
+      console.log(`  report: ${report.reportPath}`);
+    }
   } catch (err) {
     console.error('Error: ' + (err instanceof Error ? err.message : String(err)));
     process.exit(1);
