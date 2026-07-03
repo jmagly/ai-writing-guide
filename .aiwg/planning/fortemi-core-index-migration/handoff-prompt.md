@@ -138,7 +138,7 @@ For #1691, build parity fixtures that compare current local backend vs Fortemi C
 Required audit gates:
 
 - no public command behavior changes without #1684 ADR approval
-- no default backend switch until #1691 is green
+- no legacy backend removal until #1691 is green
 - no live Fortemi dependency in required CI
 - no hardcoded credentials or direct REST import patterns
 - no removal of `.aiwg/.index` fallback until rollback has shipped for at least one release

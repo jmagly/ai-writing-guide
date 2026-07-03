@@ -19,7 +19,7 @@ aiwg storage migrate <subsystem> --from <spec> --to <spec> [--dry-run]
 
 `fortemi:<server-name>` targets the legacy Fortemi MCP storage adapter only. It
 does not create or update Fortemi Core index/search caches; run
-`aiwg index sync --backend fortemi-core` for that path.
+`aiwg index sync` for that path.
 
 Optional flags:
 - `--from-folder <subfolder>` — Obsidian-only, applies to source

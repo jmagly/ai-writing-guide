@@ -23,7 +23,7 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 - "how many artifacts are indexed" → stats
 - "is the index healthy" → status
 - "export the index for Fortemi" → export --format fortemi
-- "sync the Fortemi cache" → sync --backend fortemi-core
+- "sync the Fortemi cache" → sync
 - "refresh the index" → build --force
 
 ## Trigger Patterns Reference
@@ -41,7 +41,7 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | Health/status | "is the index stale?" | Run `aiwg index status --json` |
 | JSON output | "get index stats as JSON" | Run `aiwg index stats --json` |
 | Fortemi export | "export this index for Fortemi" | Run `aiwg index export --format fortemi --schema-version v2` |
-| Fortemi cache | "sync the Fortemi Core index" | Run `aiwg index sync --backend fortemi-core` |
+| Fortemi cache | "sync the Fortemi Core index" | Run `aiwg index sync` |
 
 > **`.aiwg/.index/` is a regenerable build artifact, not committed.** It is gitignored by default (`aiwg use` / `aiwg regenerate` / scaffolding add it to `.gitignore`), so a fresh clone has no index — `aiwg index build --all` is the standard bootstrap. `aiwg doctor` flags a missing index (`info`, when an `index` block is declared in `.aiwg/aiwg.config` — the canonical home as of #1491 — or legacy `.aiwg/config.yaml`) or a stale one (`warn`, when recorded source files changed) and points back to `aiwg index build`.
 
@@ -69,12 +69,12 @@ When triggered:
    # Machine-readable search results
    aiwg index query "<text>" --json
 
-   # Opt-in Fortemi Core static-cache query
-   aiwg index query "<text>" --backend fortemi-core --json
+   # default Fortemi Core static-cache query
+   aiwg index query "<text>" --json
 
    # Fortemi static semantic and filtered hybrid query modes
-   aiwg index query "<text>" --semantic --backend fortemi-core --json
-   aiwg index query "<text>" --hybrid --backend fortemi-core --type adr --tags search --json
+   aiwg index query "<text>" --semantic --json
+   aiwg index query "<text>" --hybrid --type adr --tags search --json
 
    # Show dependency graph for an artifact
    aiwg index deps <artifact-path>
@@ -95,20 +95,19 @@ When triggered:
    # Health/status, including optional Fortemi Core cache state
    aiwg index status --json
 
-   # Export and sync the opt-in Fortemi Core static cache
+   # Export and sync the default Fortemi Core static cache
    aiwg index export --format fortemi --schema-version v2
-   aiwg index sync --backend fortemi-core
+   aiwg index sync
    ```
 
 3. **Report the result** — surface the relevant matches, dependencies, or counts.
 
 ### Fortemi Core Backend
 
-The local `.aiwg/.index` backend remains the default. Use
-`--backend fortemi-core` only when the project has already run
-`aiwg index sync --backend fortemi-core`. If the Fortemi cache is missing or
-stale, rerun the same command without `--backend fortemi-core` to fall back to
-the local index. A valid synced Fortemi cache with zero items is not stale:
+Fortemi Core is the default artifact search backend after `aiwg index sync`.
+Use `--backend local` only for the legacy local fallback during the phase-out
+window. If the Fortemi cache is missing or stale, run `aiwg index sync`.
+A valid synced Fortemi cache with zero items is not stale:
 query/fulltext return empty results, discover reports a Fortemi static-cache
 no-match hint, and show does not fall back to the local AIWG corpus when the
 Fortemi backend was explicit.

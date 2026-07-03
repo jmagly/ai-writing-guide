@@ -89,7 +89,7 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
 
   async function captureDiscover(
     phrase: string,
-    backend?: 'fortemi-core',
+    backend: 'local' | 'fortemi-core',
   ): Promise<DiscoverResult> {
     const captured: string[] = [];
     const original = console.log;
@@ -101,7 +101,7 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
         json: true,
         limit: 5,
         typeFilter: MATRIX.cases.find((testCase) => testCase.phrase === phrase)?.type_filter,
-        ...(backend ? { backend } : {}),
+        backend,
       });
     } finally {
       console.log = original;
@@ -111,10 +111,11 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
 
   for (const testCase of MATRIX.cases) {
     it(`matches local discovery for "${testCase.phrase}"`, async () => {
-      const local = await captureDiscover(testCase.phrase);
+      const local = await captureDiscover(testCase.phrase, 'local');
       const fortemi = await captureDiscover(testCase.phrase, 'fortemi-core');
 
       expect(local.total, `${testCase.phrase} local result count`).toBeGreaterThan(0);
+      expect(local.query.backend).toBe('local');
       expect(fortemi.query.backend).toBe('fortemi-core');
       expect(fortemi.total, `${testCase.phrase} Fortemi result count`).toBeGreaterThan(0);
 

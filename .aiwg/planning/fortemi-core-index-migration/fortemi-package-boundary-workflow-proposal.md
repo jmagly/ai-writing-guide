@@ -16,27 +16,27 @@ YAML body into:
 ```
 
 The workflow is intentionally separate from required CI. It verifies AIWG's
-v2-to-v1 compatibility projection against the published
-`@fortemi/core@2026.7.0` AIWG index validator without changing `package.json` or
+direct v2 export validation and query behavior against the published
+`@fortemi/core@2026.7.1` AIWG index validator without changing `package.json` or
 `package-lock.json`.
 
 Passing this optional package-boundary workflow does not switch defaults. It is
 one input to the later default-backend switch issue, which must still prove
-remote CI parity for both default Fortemi behavior and forced-local rollback
+remote CI parity for both default Fortemi behavior and `--backend local` rollback
 behavior before any default changes.
 
 ## npm Release-Age Override Record
 
 The workflow uses a one-command `--min-release-age=0` override because
-`@fortemi/core@2026.7.0` was freshly released during the migration and the
+`@fortemi/core@2026.7.1` was freshly released during the migration and the
 package boundary itself is the subject under test.
 
 Override details:
 
-- Package and version: `@fortemi/core@2026.7.0`.
+- Package and version: `@fortemi/core@2026.7.1`.
 - Reason waiting is not acceptable: the #1664 migration needs current-package
-  evidence before maintainers can decide whether the v2-to-v1 projection is an
-  acceptable temporary package boundary.
+  evidence before maintainers can rely on direct v2 package validation as the
+  active package boundary.
 - Approval required: explicit human approval before copying this proposal into
   `.gitea/workflows/`; PR execution is also label-gated with
   `fortemi:package-boundary`.
@@ -64,7 +64,7 @@ Override details:
 - The job does not reference `secrets.*`; the fresh-package install is
   dependency-manifest-neutral and lifecycle-script-disabled.
 - The only release-age bypass is the single documented
-  `npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.0`
+  `npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.1`
   command.
 
 ## Proposed Workflow
@@ -72,11 +72,11 @@ Override details:
 ```yaml
 # Fortemi Package Boundary
 #
-# Verifies AIWG's v2-to-v1 compatibility projection against the published
-# @fortemi/core AIWG index validator. This is intentionally separate from the
+# Verifies AIWG's direct v2 export validation and query behavior against the
+# published @fortemi/core AIWG index validator. This is intentionally separate from the
 # required CI workflow: the migration must not make normal CI depend on a fresh
 # optional Fortemi package release, but maintainers need a reproducible remote
-# gate before accepting the package boundary or closing #1691.
+# gate before relying on the package boundary or closing #1691.
 
 name: Fortemi Package Boundary
 
@@ -91,7 +91,7 @@ concurrency:
 
 jobs:
   fortemi-package-boundary:
-    name: "@fortemi/core@2026.7.0 AIWG Index Contract"
+    name: "@fortemi/core@2026.7.1 AIWG Index Contract"
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5 # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 10
@@ -116,12 +116,12 @@ jobs:
 
       - name: Install Fortemi package boundary dependency
         # This is a narrow, documented override for the freshly released
-        # @fortemi/core@2026.7.0 package. It does not update package.json or
+        # @fortemi/core@2026.7.1 package. It does not update package.json or
         # package-lock.json, and lifecycle scripts are disabled for this
         # package-boundary smoke test.
-        run: npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.0
+        run: npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.1
 
-      - name: Validate AIWG Fortemi compatibility projection
+      - name: Validate AIWG Fortemi direct v2 package contract
         env:
           AIWG_FORTEMI_CORE_PACKAGE_REQUIRED: "1"
         run: npm test -- --run test/unit/artifacts/browser-export.test.ts
@@ -132,10 +132,10 @@ jobs:
 The workflow command sequence was validated locally on 2026-07-02:
 
 ```bash
-npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.0
+npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.1
 AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1 npm test -- --run test/unit/artifacts/browser-export.test.ts
 npm ci
 ```
 
-Result: the required package-boundary test passed (`5` tests), and `npm ci`
+Result: the required package-boundary test passed, and `npm ci`
 restored the lockfile dependency set afterward.

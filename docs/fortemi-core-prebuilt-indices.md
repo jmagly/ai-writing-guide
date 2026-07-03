@@ -12,7 +12,7 @@ The manifest records the graph, schema, generated timestamp, item count, privacy
 classification, and SHA-256 checksum. The packaged export is a compact
 metadata/capability projection: it is meant to keep framework discovery working
 from the npm distro without shipping the full framework source body corpus.
-`aiwg index discover ... --backend fortemi-core --graph framework` first uses a
+`aiwg index discover ... --graph framework` first uses a
 valid local cache under `.aiwg/.index/fortemi-core/`. If no compatible local
 framework cache exists, it falls back to the packaged prebuilt framework index.
 
@@ -33,7 +33,7 @@ locally modified corpus content:
 
 ```bash
 aiwg index build --graph framework --force
-aiwg index sync --backend fortemi-core --graph framework
+aiwg index sync --graph framework
 ```
 
 Release-gate discovery expectations live in

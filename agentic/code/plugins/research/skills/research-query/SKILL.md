@@ -32,10 +32,11 @@ A natural language question to answer from the corpus.
 Search depth: `quick` (tag + title matching only) or `thorough` (full-text content search). Default: `thorough`.
 
 ### `--backend` (optional)
-Retrieval backend for the executable source-selection wrapper: `local` or `fortemi-core`. Default: `local`.
-When `fortemi-core` is explicit, the Fortemi static cache must already be
-synced with `aiwg index sync --backend fortemi-core`; missing, stale, or
-malformed caches fail with recovery guidance instead of falling back silently.
+Retrieval backend for the executable source-selection wrapper: `fortemi-core` or `local`. Default: `fortemi-core`.
+By default, research-query uses the Fortemi static cache after it is synced
+with `aiwg index sync`; missing, stale, or malformed caches fail with recovery guidance
+instead of falling back silently. Use `--backend local` only for the legacy
+local corpus fallback.
 
 ### `--save` (optional)
 Save the synthesized answer as a new artifact in `.aiwg/research/synthesis/`.
@@ -174,7 +175,7 @@ confidence: moderate
 /research-query "prompt injection defenses" --depth quick
 
 # Use the Fortemi Core static cache for source selection
-aiwg research-query "prompt injection defenses" --backend fortemi-core --sources-only --json
+aiwg research-query "prompt injection defenses" --sources-only --json
 
 # Just list matching sources
 /research-query "multi-agent orchestration" --sources-only

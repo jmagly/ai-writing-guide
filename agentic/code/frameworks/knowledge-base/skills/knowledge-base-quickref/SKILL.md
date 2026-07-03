@@ -81,10 +81,10 @@ aiwg index neighbors --graph kb --node <slug>  # traverse the KB graph
 
 KB ingest and health operations continue to use `resolveStorage('kb')` and the
 semantic-memory topology. Fortemi storage routing, when configured through
-`.aiwg/storage.config`, is separate from the opt-in Fortemi Core index/search
-backend. During the migration preview, use `--backend fortemi-core` only on
+`.aiwg/storage.config`, is separate from the default Fortemi Core index/search
+backend. During the migration preview, use `--backend local` for legacy fallback only on
 artifact graph commands such as `aiwg index neighbors --graph kb` after
-`aiwg index sync --backend fortemi-core`; do not treat `kb-ingest` or
+`aiwg index sync`; do not treat `kb-ingest` or
 `kb-health` as Fortemi Core ingest commands.
 
 ## How knowledge-base composes with semantic-memory

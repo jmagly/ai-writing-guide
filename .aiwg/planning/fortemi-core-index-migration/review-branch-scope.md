@@ -7,13 +7,13 @@ status: commit-scope-ready
 
 # Fortemi Core Migration Review Branch Scope
 
-This manifest defines the intended file scope for the #1664 opt-in Fortemi Core
+This manifest defines the intended file scope for the #1664 default Fortemi Core
 backend review branch. It is a commit-preparation artifact, not tracker
 closeout evidence and not permission to push or mutate issues.
 
 ## Include In Review Branch
 
-Include the Fortemi Core opt-in backend implementation and its local evidence:
+Include the Fortemi Core default backend implementation and its local evidence:
 
 - Fortemi export/schema/cache/query implementation:
   - `schemas/aiwg-fortemi-index-export.json`
@@ -92,9 +92,9 @@ Do not include unrelated or generated local artifacts:
   fortemi-core`.
 - Do not include `.gitea/workflows/` changes unless a human maintainer
   explicitly authorizes installing the optional package-boundary workflow.
-- Do not include package manifest or lockfile changes for the transient
-  `@fortemi/core@2026.7.0` package-boundary smoke install unless a maintainer
-  approves adopting that dependency path.
+- Include package manifest and lockfile changes only when adopting the active
+  `@fortemi/core@2026.7.1` direct-v2 package contract; do not include unrelated
+  transient smoke-install churn.
 
 ## Pre-Commit Verification
 
@@ -106,7 +106,7 @@ git status --short --branch
 npm run build:cli
 npm run test:ci
 aiwg index build --all
-aiwg index sync --backend fortemi-core
+aiwg index sync
 aiwg index status --json
 aiwg doctor
 git diff --check

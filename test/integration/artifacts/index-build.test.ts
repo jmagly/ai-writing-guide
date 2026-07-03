@@ -17,6 +17,13 @@ import type { ArtifactIndex, TagIndex, DependencyGraph, IndexStats } from '../..
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
 const AIWG_DIR = path.join(REPO_ROOT, '.aiwg');
+const INDEX_BUILD_BUDGET_MS = parseIntEnv('AIWG_INDEX_BUILD_BUDGET_MS', 15_000);
+
+function parseIntEnv(name: string, def: number): number {
+  const raw = process.env[name];
+  const n = raw ? parseInt(raw, 10) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : def;
+}
 
 describe('Artifact Index Build (integration)', () => {
   let tmpDir: string;
@@ -96,9 +103,12 @@ describe('Artifact Index Build (integration)', () => {
     expect(metadata.buildTimeMs).toBeGreaterThan(0);
   });
 
-  it('should build within performance budget (< 10s)', () => {
+  it(`should build within performance budget (< ${INDEX_BUILD_BUDGET_MS / 1000}s)`, () => {
     if (!metadata) return;
-    expect(metadata.buildTimeMs).toBeLessThan(10_000);
+    // The package now ships prebuilt Fortemi indexes that users previously
+    // built locally, so the real-corpus smoke budget accounts for that larger
+    // indexed artifact set while still catching material regressions.
+    expect(metadata.buildTimeMs).toBeLessThan(INDEX_BUILD_BUDGET_MS);
   });
 
   it('should produce consistent stats', () => {

@@ -63,9 +63,10 @@ static/browser indexes, and PGlite/local-first search. AIWG keeps ownership of
 source scanning, public CLI/skill behavior, project-local policy, fallback
 caches, and compatibility shims.
 
-This is a phased migration. The default backend remains the current AIWG local
-index until #1691 parity fixtures pass in CI and the default-switch issue
-explicitly approves the change.
+This migration has entered the default-backend phase. Fortemi Core is the
+default backend for artifact search, discovery, traversal, and research source
+selection. The current AIWG local index remains available through
+`--backend local` as a legacy fallback during the July 2026 deprecation window.
 
 ## Ownership Boundary
 
@@ -170,25 +171,24 @@ The Fortemi issues were readable on 2026-07-02 and showed closed tracker state.
 Closed state is not enough for AIWG adoption; #1686-#1691 must validate the
 actual package/API behavior against AIWG fixtures.
 
-`@fortemi/core@2026.7.0` was verified from npm on 2026-07-02. It publishes the
-`@fortemi/core/aiwg-index` subpath with static query, chunked index,
-relationship traversal, and static semantic/hybrid helpers. It still types and
-validates the AIWG export envelope as `aiwg.fortemi.index.export.v1` and records
-as `aiwg.fortemi.index.record.v1`, so AIWG v2 all-domain exports remain behind
-the Fortemi v2 contract follow-up. Its relationship helpers operate on
-normalized `source_id`/`target_id` edges; AIWG's v2 `direction`/`target_path`
-projection remains an adapter concern unless Fortemi accepts those fields
-directly.
+`@fortemi/core@2026.7.1` was verified from npm on 2026-07-03. It publishes the
+`@fortemi/core/aiwg-index` subpath with direct
+`aiwg.fortemi.index.export.v2` validation, v2 record validation, static query,
+chunked index helpers, relationship traversal, static semantic/hybrid helpers,
+SKOS metadata fields, and provenance-event fields. Its relationship helpers now
+accept AIWG v2 relationship fields such as `target_path`, `direction`,
+`privacy`, `confidence`, and `metadata`, so the Fortemi v2 export-contract gate
+is satisfied for the current static export contract.
 
-AIWG therefore ships a tested v2-to-v1 compatibility projection for the
-2026.7.0 package baseline. The projection preserves AIWG domain record types,
-stable IDs, facets, tags, concepts, provenance, privacy classification, and
-upstream/related relationships while stripping v2-only fields (`search`,
-`chunks`, `embeddings`, source origin/checksum, privacy locality, and downstream
-reverse edges). This is an adapter bridge for package compatibility; it does
-not replace the Fortemi v2 export-contract gate.
+AIWG still ships a tested v2-to-v1 compatibility projection for older v1
+consumers. The projection preserves AIWG domain record types, stable IDs,
+facets, tags, concepts, provenance, privacy classification, and upstream/related
+relationships while stripping v2-only fields (`search`, `chunks`, `embeddings`,
+SKOS metadata, provenance events, source origin/checksum, privacy locality, and
+downstream reverse edges). This is a legacy compatibility bridge, not the
+primary package boundary.
 
-Package-boundary evidence for `@fortemi/core@2026.7.0` is optional and separate
+Package-boundary evidence for `@fortemi/core@2026.7.1` is optional and separate
 from required CI until maintainers explicitly approve it. The proposed
 package-boundary workflow must remain label-gated, use the documented one-off
 `--min-release-age=0` override only for this freshly released package, disable
@@ -228,17 +228,19 @@ Fallback is part of the public contract:
 
 | Failure / environment                 | Required behavior                                                                                                                                                              |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Fortemi Core not installed            | Commands use the current local backend and print no warning unless the project explicitly opted into Fortemi.                                                                  |
-| Optional semantic dependencies absent | Lexical/metadata modes keep working. Local embedding commands fail with actionable install/config guidance; Fortemi static-cache semantic fixtures remain package-independent. |
+| Fortemi Core package not installed    | Required package-contract tests fail; releases must include `@fortemi/core`.                                                                                                  |
+| Optional local semantic dependencies absent | Fortemi static semantic/hybrid modes keep working. Legacy local embedding commands fail with actionable install/config guidance.                                      |
 | Fresh clone with no `.aiwg/.index`    | `aiwg index build --all` remains the bootstrap path; `aiwg discover` can auto-ensure the framework graph where current behavior does.                                          |
-| Fortemi cache missing/stale/corrupt   | Opted-in projects get `aiwg index status` / `aiwg doctor` warnings with repair commands; non-opted-in projects do not.                                                         |
-| Schema mismatch                       | Refuse Fortemi-backed execution for affected commands, report expected/actual schema versions, and fall back to local backend when safe.                                       |
+| Fortemi cache missing/stale/corrupt   | Default artifact search commands fail with repair commands. Operators can pass `--backend local` during the deprecation window.                                                |
+| Schema mismatch                       | Refuse Fortemi-backed execution for affected commands, report expected/actual schema versions, and point to `aiwg index sync` or `--backend local`.                            |
 | Browser/static index absent           | Cockpit/Fortemi React surfaces show actionable missing-index state and do not silently query stale or partial data.                                                            |
 | Live Fortemi unavailable              | Required CI and default local commands must not require a live Fortemi service. Optional live tests skip cleanly without credentials.                                          |
 
 ## Release Gates
 
-No default backend switch is allowed until all gates pass:
+Fortemi Core defaulting is allowed because the package and parity gates passed.
+Removing the legacy local backend is not allowed until all deprecation gates
+pass:
 
 - #1685 inventory and this ADR are committed.
 - #1686 v2 schema/export fixtures pass and v1 compatibility is proven or
@@ -246,12 +248,13 @@ No default backend switch is allowed until all gates pass:
 - #1687 sync/ingest tests pass without live Fortemi infrastructure.
 - #1688/#1689/#1690 parity tests pass for their public surfaces.
 - #1691 parity suite is green in CI.
-- Any optional package-boundary workflow for `@fortemi/core@2026.7.0` is
+- Any optional package-boundary workflow for `@fortemi/core@2026.7.1` is
   explicitly human-approved before installation, remains separate from required
   CI, and follows the documented release-age override safeguards.
 - `npm run build:cli`, `npm test`, `aiwg index build --all`,
   `aiwg index status --json`, and `aiwg doctor` pass on the migration branch.
-- No public command behavior changes without an ADR update.
+- Public command behavior changes must preserve `--backend local` through the
+  deprecation window.
 - No hardcoded credentials, direct REST import shortcuts, or required live
   Fortemi dependency in CI.
 - `.aiwg/.index` fallback remains shipped and documented for at least one
@@ -261,7 +264,7 @@ No default backend switch is allowed until all gates pass:
 
 Rollback must remain simple and local-first:
 
-1. Keep the current local backend as a selectable backend through the
+1. Keep the current local backend selectable with `--backend local` through the
    deprecation window.
 2. Keep `.aiwg/.index` build/read code intact until at least one release after
    the default switch and until rollback docs have been exercised.

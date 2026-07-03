@@ -7,21 +7,22 @@ status: pending-tracker-login-and-remote-ci
 
 # Fortemi Core Migration PR Readiness Checklist
 
-This checklist prepares the opt-in Fortemi Core backend work for review and
-remote CI. It does not authorize a default backend switch, release tag, workflow
+This checklist prepares the default Fortemi Core backend work for review and
+remote CI. It does not authorize legacy-backend removal, release tag, workflow
 installation, or tracker mutation.
 
 ## Scope For The Review Branch
 
-Include the local implementation and evidence for the opt-in backend phase:
+Include the local implementation and evidence for the Fortemi default backend
+phase:
 
 - Fortemi Core v2 all-domain export and v2-to-v1 package compatibility
   projection.
-- `aiwg index sync --backend fortemi-core` static-cache materialization.
-- Opt-in Fortemi backend support for discover/show/query/fulltext/static
+- `aiwg index sync` static-cache materialization.
+- Default Fortemi backend support for discover/show/query/fulltext/static
   semantic/static hybrid/deps/neighbors/status/export paths.
 - Research-query and KB graph traversal parity through explicit
-  `--backend fortemi-core`.
+  `--backend local` for legacy fallback.
 - Documentation, ADR, release note, completion audit, handoff readiness report,
   traceability matrix, package-boundary proposal, package-boundary decision
   record, Fortemi React issue audit, CI workflow audit, review branch scope
@@ -41,7 +42,7 @@ git status --short --branch
 npm run build:cli
 npm run test:ci
 aiwg index build --all
-aiwg index sync --backend fortemi-core
+aiwg index sync
 aiwg index status --json
 aiwg doctor
 git diff --check
@@ -58,7 +59,7 @@ Expected local state before push:
   Fortemi blockers.
 - `git diff -- .gitea/workflows AGENTS.md` is empty.
 - `tea login list` shows a `roctinam` login before any tracker write. If it is
-  empty, do not comment, close issues, label issues, file the default-switch
+  empty, do not comment, close issues, label issues, file a legacy-removal
   issue, or file Fortemi React issues from this environment.
 
 Latest local evidence captured before this checklist:
@@ -75,7 +76,7 @@ Latest local evidence captured before this checklist:
   passed).
 - `aiwg index build --all` reported framework `3684`, project `1097`, and
   codebase `1197` artifacts.
-- `aiwg index sync --backend fortemi-core` reported the Fortemi Core project
+- `aiwg index sync` reported the Fortemi Core project
   cache updated with `1097` items after the latest evidence refresh.
 - `aiwg index status --json` reported Fortemi Core `stale: false` and no index
   warnings.
@@ -99,11 +100,9 @@ After push, capture:
   body-level embedding acceptance case and #1508 as deferred until the
   provider-neutral corpus storage/index boundary is approved.
 - Whether the optional package-boundary workflow was installed by explicit
-  human approval. If not installed, record that the package-boundary decision
-  remains one of:
-  - accepted v2-to-v1 projection for `@fortemi/core@2026.7.0`;
-  - deferred direct v2 acceptance to Fortemi React #219;
-  - separate approved package-boundary smoke job.
+  human approval. If not installed, record that local package-boundary evidence
+  uses `@fortemi/core@2026.7.1` direct v2 validation/query behavior and the
+  v2-to-v1 projection remains only a legacy compatibility bridge.
 
 Remote CI must prove `npm run test:ci` on the pushed commit. Local full-suite
 success is readiness evidence only.
@@ -128,13 +127,12 @@ the maintainer explicitly accepts them. Do not use them as closeout proof.
 
 ## Explicit Non-Goals
 
-- Do not switch the default index/search backend in this PR.
 - Do not remove `.aiwg/.index/<graph>/` fallback behavior.
 - Do not install the optional package-boundary workflow under
   `.gitea/workflows/` without explicit human authorization.
 - Do not add a live Fortemi dependency to required CI.
-- Do not file the default-backend switch issue until #1691 has remote CI
-  evidence and the package boundary is accepted or explicitly deferred.
+- Do not file a legacy-backend removal issue until #1691 has remote CI evidence
+  and the package boundary is accepted or explicitly deferred.
 - Do not use the Gitea connector or `roctibot` for tracker mutations.
 
 ## Review Focus

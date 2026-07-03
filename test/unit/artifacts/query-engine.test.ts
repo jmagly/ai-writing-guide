@@ -87,13 +87,13 @@ describe('Artifact Query Engine', () => {
   });
 
   it('should find entries by keyword in title', async () => {
-    await queryIndex(tmpDir, { text: 'Login' });
+    await queryIndex(tmpDir, { text: 'Login' }, { backend: 'local' });
     const output = consoleSpy.mock.calls.map(c => c[0]).join('\n');
     expect(output).toContain('Login');
   });
 
   it('should filter by type', async () => {
-    await queryIndex(tmpDir, { type: 'adr' }, { json: true });
+    await queryIndex(tmpDir, { type: 'adr' }, { json: true, backend: 'local' });
     const jsonOutput = consoleSpy.mock.calls.map(c => c[0]).join('');
     const parsed = JSON.parse(jsonOutput);
     expect(parsed.results).toHaveLength(1);
@@ -101,7 +101,7 @@ describe('Artifact Query Engine', () => {
   });
 
   it('should filter by phase', async () => {
-    await queryIndex(tmpDir, { phase: 'testing' }, { json: true });
+    await queryIndex(tmpDir, { phase: 'testing' }, { json: true, backend: 'local' });
     const jsonOutput = consoleSpy.mock.calls.map(c => c[0]).join('');
     const parsed = JSON.parse(jsonOutput);
     expect(parsed.results).toHaveLength(1);
@@ -109,7 +109,7 @@ describe('Artifact Query Engine', () => {
   });
 
   it('should filter by tags (AND logic)', async () => {
-    await queryIndex(tmpDir, { tags: ['auth', 'security'] }, { json: true });
+    await queryIndex(tmpDir, { tags: ['auth', 'security'] }, { json: true, backend: 'local' });
     const jsonOutput = consoleSpy.mock.calls.map(c => c[0]).join('');
     const parsed = JSON.parse(jsonOutput);
     // Only UC-001 has both auth AND security
@@ -118,28 +118,28 @@ describe('Artifact Query Engine', () => {
   });
 
   it('should return all entries when no text query provided', async () => {
-    await queryIndex(tmpDir, {}, { json: true });
+    await queryIndex(tmpDir, {}, { json: true, backend: 'local' });
     const jsonOutput = consoleSpy.mock.calls.map(c => c[0]).join('');
     const parsed = JSON.parse(jsonOutput);
     expect(parsed.results).toHaveLength(4);
   });
 
   it('should respect limit parameter', async () => {
-    await queryIndex(tmpDir, { limit: 2 }, { json: true });
+    await queryIndex(tmpDir, { limit: 2 }, { json: true, backend: 'local' });
     const jsonOutput = consoleSpy.mock.calls.map(c => c[0]).join('');
     const parsed = JSON.parse(jsonOutput);
     expect(parsed.results).toHaveLength(2);
   });
 
   it('should output human-readable format by default', async () => {
-    await queryIndex(tmpDir, { text: 'Login' });
+    await queryIndex(tmpDir, { text: 'Login' }, { backend: 'local' });
     const output = consoleSpy.mock.calls.map(c => c[0]).join('\n');
     expect(output).toContain('Results for');
     expect(output).toContain('Score');
   });
 
   it('should handle no results gracefully', async () => {
-    await queryIndex(tmpDir, { text: 'nonexistent-xyz' });
+    await queryIndex(tmpDir, { text: 'nonexistent-xyz' }, { backend: 'local' });
     const output = consoleSpy.mock.calls.map(c => c[0]).join('\n');
     expect(output).toContain('No results found');
   });
@@ -150,7 +150,7 @@ describe('Artifact Query Engine', () => {
       throw new Error('process.exit');
     });
 
-    await expect(queryIndex(emptyDir, {})).rejects.toThrow('process.exit');
+    await expect(queryIndex(emptyDir, {}, { backend: 'local' })).rejects.toThrow('process.exit');
 
     exitSpy.mockRestore();
     fs.rmSync(emptyDir, { recursive: true, force: true });

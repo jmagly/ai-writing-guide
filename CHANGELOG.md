@@ -65,14 +65,14 @@ required runtime dependency for normal discovery/search commands.
   matches the CLI and skill documentation.
 - **Fortemi boundary docs** — KB/memory storage routing, the Fortemi MCP storage
   backend, and local issue search now explicitly remain separate from the
-  opt-in Fortemi Core static index/search backend unless commands pass
-  `--backend fortemi-core`. Related tracker items #1551 and #1508 remain
+  default Fortemi Core static index/search backend, with legacy local fallback
+  selected through `--backend local`. Related tracker items #1551 and #1508 remain
   non-closing follow-ups for body-level embedding and the provider-neutral
   corpus-to-storage/index boundary; direct Fortemi REST import and
   hardcoded-token patterns stay out of scope.
-- **Default-switch gate docs** — release and integration notes keep the Fortemi
-  backend opt-in and require a later switch issue to prove both default Fortemi
-  behavior and forced-local rollback before changing defaults.
+- **Legacy rollback gate docs** — release and integration notes keep legacy
+  backend removal gated on #1691 parity fixtures, valid-empty-cache behavior,
+  and `--backend local` rollback evidence.
 - **Legacy Fortemi storage wording** — storage docs now mark the `fortemi` MCP
   backend as persistence-only and deprecated for discovery/search routing; the
   Fortemi Core static cache is the documented search path.

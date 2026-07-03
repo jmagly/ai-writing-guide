@@ -306,6 +306,19 @@ describe('doctor: durable index findings (#1691)', () => {
   });
 });
 
+describe('doctor: Fortemi Core prebuilt index findings (#1697)', () => {
+  it('reports packaged prebuilt framework index readiness and stale states', async () => {
+    const { readFileSync } = await import('fs');
+    const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+
+    expect(content).toContain('getFortemiCorePrebuiltStatus');
+    expect(content).toContain('getFortemiCoreSyncStatus');
+    expect(content).toContain('fortemi-core-index');
+    expect(content).toContain('prebuilt framework index present');
+    expect(content).toContain('run "npm run release:fortemi-index" before release packaging');
+  });
+});
+
 // ── Provider awareness (regression: doctor defaults to Claude Code) ──
 //
 // Bug report: `aiwg doctor` is hardcoded to .claude/agents and .claude/commands,

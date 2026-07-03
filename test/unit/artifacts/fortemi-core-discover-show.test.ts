@@ -247,9 +247,9 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
         }),
       ).rejects.toThrow("process.exit");
       const parsed = readConsoleJson();
-      expect(parsed.hint).toContain("aiwg index sync --backend fortemi-core");
+      expect(parsed.hint).toContain("aiwg index sync");
       expect(parsed.hint).toContain(
-        "omit '--backend fortemi-core' to use the local index",
+        "pass '--backend local' to use the legacy local index",
       );
       expect(exitSpy).toHaveBeenCalledWith(1);
     } finally {
@@ -301,7 +301,7 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
         "export schema 'aiwg.fortemi.index.export.v1' does not match manifest 'aiwg.fortemi.index.export.v2'",
       );
       expect(parsed.hint).toContain(
-        "Re-run 'aiwg index sync --backend fortemi-core'",
+        "Re-run 'aiwg index sync'",
       );
       expect(exitSpy).toHaveBeenCalledWith(1);
     } finally {
@@ -384,7 +384,7 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
       "among 0 Fortemi Core static-cache capabilities",
     );
     expect(discover.hint).toContain(
-      "aiwg index sync --backend fortemi-core",
+      "aiwg index sync",
     );
     consoleSpy.mockClear();
 

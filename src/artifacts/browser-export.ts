@@ -61,6 +61,10 @@ export interface AiwgFortemiRelationship {
   source_path?: string;
   target_path?: string;
   direction?: "upstream" | "downstream" | "related";
+  label?: string;
+  confidence?: number;
+  privacy?: AiwgPrivacyClassification;
+  metadata?: Record<string, unknown>;
 }
 
 export interface AiwgFortemiProvenance {
@@ -69,6 +73,38 @@ export interface AiwgFortemiProvenance {
   path: string;
   confidence: AiwgProvenanceConfidence;
   privacy: AiwgPrivacyClassification;
+}
+
+export interface AiwgFortemiSkosConcept {
+  id: string;
+  prefLabel: string;
+  definition?: string;
+  scheme?: string;
+  notation?: string;
+  uri?: string;
+  altLabels?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface AiwgFortemiSkosRelation {
+  type: string;
+  source_id: string;
+  target_id: string;
+  source_path?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AiwgFortemiProvenanceEvent {
+  id?: string;
+  activity: string;
+  agent?: string;
+  started_at?: string;
+  ended_at?: string;
+  source?: string;
+  path?: string;
+  confidence?: AiwgProvenanceConfidence;
+  privacy?: AiwgPrivacyClassification;
+  attributes?: Record<string, unknown>;
 }
 
 export interface AiwgFortemiRecord {
@@ -106,14 +142,28 @@ export interface AiwgFortemiRecord {
   chunks?: Array<{
     id: string;
     text: string;
+    body?: string;
+    summary?: string;
+    source_path?: string;
+    metadata?: Record<string, unknown>;
     checksum: string;
   }>;
   embeddings?: Array<{
+    id?: string;
     model: string;
+    embedding?: number[];
+    vector?: number[];
+    granularity?: string;
+    source_path?: string;
+    metadata?: Record<string, unknown>;
     chunk_id?: string;
     vector_ref?: string;
     input_hash: string;
   }>;
+  skos_concepts?: AiwgFortemiSkosConcept[];
+  skos_relations?: AiwgFortemiSkosRelation[];
+  provenance_events?: AiwgFortemiProvenanceEvent[];
+  compatibility?: Record<string, unknown>;
   updated_at: string;
 }
 
@@ -381,7 +431,9 @@ function recordForEntry(
             tags: uniqueSorted(entry.tags),
             phase: entry.phase,
             type: entry.type,
-            frontmatter: {},
+            frontmatter: {
+              ...(entry.kernel === undefined ? {} : { kernel: entry.kernel }),
+            },
           },
         }
       : {}),

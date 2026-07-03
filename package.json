@@ -301,6 +301,7 @@
     }
   },
   "devDependencies": {
+    "@fortemi/core": "^2026.7.1",
     "@pagenary/publisher": "^2026.6.19",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.8.0",

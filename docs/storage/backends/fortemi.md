@@ -8,7 +8,8 @@ The adapter ships with the parameter shapes documented in `phase-4-fortemi-revie
 
 This adapter is deprecated for index/search routing. New discovery, artifact
 query, graph traversal, and release-package fallback work uses the Fortemi Core
-static-cache backend selected explicitly with `--backend fortemi-core`.
+static-cache backend by default; `--backend local` selects the legacy local
+fallback during the phase-out window.
 
 Use this backend when:
 - You're running AIWG against a Fortemi instance and want memory artifacts to flow into Fortemi's semantic-memory graph
@@ -20,16 +21,17 @@ This backend is the older Fortemi MCP storage adapter. It is not the Fortemi
 Core index/search backend used by:
 
 ```bash
-aiwg index sync --backend fortemi-core
-aiwg index query "..." --backend fortemi-core
-aiwg index neighbors --graph kb --backend fortemi-core
+aiwg index sync
+aiwg index query "..."
+aiwg index neighbors --graph kb
 ```
 
 Configuring a subsystem with `"type": "fortemi"` changes persistence for that
 subsystem through Fortemi MCP tools. It does not switch AIWG discovery,
 artifact query, graph traversal, research-query, or KB traversal to the
-Fortemi Core static cache. Those paths remain opt-in through explicit
-`--backend fortemi-core` commands after an artifact graph sync.
+Fortemi Core static cache. Those paths use Fortemi Core by default after an
+artifact graph sync; `--backend local` selects the legacy local fallback during
+the phase-out window.
 
 Release packages also include a prebuilt Fortemi Core `framework` index for
 capability discovery fallback. See

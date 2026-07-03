@@ -7,12 +7,12 @@ default remains the v1 compatibility contract:
 aiwg index export --format fortemi --graph project --out aiwg-fortemi-index.json
 ```
 
-The Fortemi Core migration adds an opt-in v2 contract and a local static cache
-used by the Fortemi-backed AIWG CLI paths:
+The Fortemi Core migration uses a v2 contract and local static cache for the
+default AIWG artifact search/traversal paths:
 
 ```bash
 aiwg index export --format fortemi --graph project --schema-version v2 --out aiwg-fortemi-index-v2.json
-aiwg index sync --backend fortemi-core --graph project
+aiwg index sync --graph project
 ```
 
 The sync command materializes:
@@ -26,13 +26,14 @@ Incremental syncs compare against the previous manifest before stamping a new
 generated timestamp, so a repeated sync over unchanged index content reports
 `status: "unchanged"` instead of churn from timestamp-only differences.
 
-The cache is opt-in. AIWG continues to read `.aiwg/.index/<graph>/` as the
-local fallback until the Fortemi Core default switch is separately approved.
+The cache is the default artifact search backend. AIWG continues to ship
+`.aiwg/.index/<graph>/` as the explicit legacy fallback while the local backend
+is phased out.
 Release packages also include a prebuilt `framework` graph cache under
-`prebuilt/fortemi-core/framework/` so `aiwg discover ... --backend fortemi-core`
-can answer from the distro package when no local framework cache exists. This
+`prebuilt/fortemi-core/framework/` so `aiwg discover ...` can answer from the
+distro package when no local framework cache exists. This
 packaged cache is a compact metadata/capability projection; run a local
-`aiwg index sync --backend fortemi-core --graph framework` when source-body
+`aiwg index sync --graph framework` when source-body
 fulltext fidelity is required.
 
 ## Contracts
@@ -46,13 +47,13 @@ envelope with `crm.contact`, `crm.organization`, `crm.event`, and
 
 The v1 shape is preserved for existing Fortemi React consumers.
 
-AIWG also exposes a v2-to-v1 compatibility projection for the current
-`@fortemi/core@2026.7.0` AIWG package validator. The projection keeps AIWG
-domain record types and searchable text, but removes v2-only fields and
-downstream reverse relationships so the result fits the published v1 static
-index contract. The JSON schema enforces that boundary by rejecting v1 exports
-with v2-only compatibility metadata, graph source metadata, search/chunk fields,
-or directional relationship fields.
+AIWG also keeps a v2-to-v1 compatibility projection for older Fortemi React
+consumers that still read the v1 static index contract. The projection keeps
+AIWG domain record types and searchable text, but removes v2-only fields and
+downstream reverse relationships. The JSON schema enforces that boundary by
+rejecting v1 exports with v2-only compatibility metadata, graph source
+metadata, search/chunk fields, SKOS/provenance-event metadata, or directional
+relationship fields.
 
 ### v2 Migration Contract
 
@@ -82,37 +83,37 @@ Each v2 item can include:
 
 ## Fortemi-Backed CLI Paths
 
-After `aiwg index sync --backend fortemi-core`, these commands can read the
-local v2 static cache:
+After `aiwg index sync`, these commands read the local v2 static cache by
+default:
 
 ```bash
-aiwg index discover "intake workflow" --backend fortemi-core
-aiwg index show skill intake-wizard --backend fortemi-core
-aiwg index query "retrieval" --backend fortemi-core --json
-aiwg index query "static retrieval evidence" --fulltext --backend fortemi-core --json
-aiwg index query "static retrieval evidence" --semantic --backend fortemi-core --json
-aiwg index query "static retrieval architecture" --hybrid --backend fortemi-core --type adr --tags search --path .aiwg/architecture --json
-aiwg index deps .aiwg/architecture/search-adr.md --backend fortemi-core --json
-aiwg index neighbors --graph kb --node retrieval.md --backend fortemi-core --json
-aiwg index set --graph project --op intersection --node-a REF-001 --node-b .aiwg/research/profiles/PROF-001.md --backend fortemi-core --json
-aiwg research-query "static retrieval evidence" --backend fortemi-core --sources-only --json
+aiwg index discover "intake workflow"
+aiwg index show skill intake-wizard
+aiwg index query "retrieval" --json
+aiwg index query "static retrieval evidence" --fulltext --json
+aiwg index query "static retrieval evidence" --semantic --json
+aiwg index query "static retrieval architecture" --hybrid --type adr --tags search --path .aiwg/architecture --json
+aiwg index deps .aiwg/architecture/search-adr.md --json
+aiwg index neighbors --graph kb --node retrieval.md --json
+aiwg index set --graph project --op intersection --node-a REF-001 --node-b .aiwg/research/profiles/PROF-001.md --json
+aiwg research-query "static retrieval evidence" --sources-only --json
 ```
 
 The top-level `aiwg discover` and `aiwg show` routes delegate to the same
-artifact CLI and inherit the backend flag.
+artifact CLI and inherit the default Fortemi Core backend. Pass
+`--backend local` only for the legacy fallback.
 
 `aiwg research-query` uses the same static cache for deterministic research
 source selection. It emits REF/PROF source metadata and GRADE extraction for the
 research-query skill to synthesize from; it does not replace the agent-mediated
 answer-writing step.
 
-`aiwg index query --hybrid --backend fortemi-core` is intentionally tied to the
+`aiwg index query --hybrid` is intentionally tied to the
 Fortemi static cache. It combines static semantic/chunk scoring with the
 existing metadata filters (`--type`, `--phase`, `--tags`, and `--path`) so the
-preview exercises the same filtered hybrid contract Fortemi Core exposes without
-changing the local default query behavior.
+default path exercises the same filtered hybrid contract Fortemi Core exposes.
 
-`aiwg index query --fulltext --backend fortemi-core` also stays cache-local: it
+`aiwg index query --fulltext` also stays cache-local by default: it
 ranks the exported v2 record text/chunks, including source body captured at
 sync time, with BM25 and preserves the same type/phase/tag/path filters. It
 does not need to reread the original source files after the cache has been
@@ -120,20 +121,20 @@ synced.
 
 ## Fallback And Rollback
 
-The Fortemi Core backend is not the default. If the static cache is missing,
-stale, malformed, or incompatible, the Fortemi-backed commands fail with
-actionable guidance and the operator can immediately retry without the backend
-flag:
+Fortemi Core is the default artifact search backend. If the static cache is
+missing, stale, malformed, or incompatible, the commands fail with actionable
+guidance and the operator can immediately retry with the explicit legacy
+backend:
 
 ```bash
-# Fortemi-backed, opt-in
-aiwg index query "retrieval" --backend fortemi-core
-
-# Local fallback
+# Fortemi-backed default
 aiwg index query "retrieval"
+
+# Legacy local fallback
+aiwg index query "retrieval" --backend local
 ```
 
-`aiwg index status --json` also reports the opt-in Fortemi cache only after a
+`aiwg index status --json` also reports the Fortemi cache after a
 project has synced it or a Fortemi cache manifest exists. It marks the cache
 stale when the manifest is unreadable, when the export file is missing or
 unreadable, when the export checksum no longer matches the manifest, when the
@@ -148,7 +149,8 @@ from missing or corrupt cache recovery.
 
 Rollback is file-level and does not require data migration:
 
-1. Stop passing `--backend fortemi-core`.
+1. Pass `--backend local` on search/traversal commands to select the legacy
+   local backend.
 2. Rebuild the local graph if needed:
 
    ```bash
@@ -164,12 +166,11 @@ Rollback is file-level and does not require data migration:
 4. Re-sync later:
 
    ```bash
-   aiwg index sync --backend fortemi-core --graph project
+   aiwg index sync --graph project
    ```
 
 Do not remove `.aiwg/.index/<graph>/` during rollback. That directory is the
-authoritative fallback until the default switch issue has passed the parity
-gates and shipped with a rollback window.
+legacy fallback during the deprecation window.
 
 Packaged framework discovery has a second fallback: the npm tarball ships
 `prebuilt/fortemi-core/framework/` with a manifest checksum and size ceiling.
@@ -185,34 +186,34 @@ identifiers, and operational notes. Use `--privacy public` only for
 already-public source material.
 
 Fortemi React consumes the JSON locally; `aiwg index export` and
-`aiwg index sync --backend fortemi-core` do not require a hosted backend.
+`aiwg index sync` do not require a hosted backend.
 
 ## Migration Gates
 
-The default backend must not switch until:
+The default backend is Fortemi Core. The legacy local backend must remain
+available until:
 
 - #1691 parity fixtures run green in CI;
-- the Fortemi package accepts the v2 contract and either accepts v2 relationship
-  traversal fields directly or AIWG ships a tested projection into Fortemi's
-  normalized relationship APIs;
+- the Fortemi 2026.7.1 package contract remains green against AIWG v2 export,
+  query, and relationship traversal fixtures;
 - semantic/hybrid behavior keeps the static-cache CI fixture green, with any
   direct Fortemi package integration gated and skipped cleanly without
   credentials or optional dependencies;
-- fallback/rollback remains documented and tested, including a forced-local
-  rollback selector or config path after the default switch.
+- fallback/rollback remains documented and tested through `--backend local`
+  for the deprecation window.
 
-`@fortemi/core@2026.7.0` is the first relevant released baseline for this
-migration. It includes `@fortemi/core/aiwg-index`, relationship traversal, and
-static semantic/hybrid helpers, but its published AIWG export validator remains
-v1-only. AIWG's compatibility projection is tested against that contract when
-the package is installed. The proposed package-boundary workflow in
+`@fortemi/core@2026.7.1` is the active released baseline for this migration.
+It includes `@fortemi/core/aiwg-index`, direct
+`aiwg.fortemi.index.export.v2` validation, v2 relationship fields, chunked
+index helpers, relationship traversal, static semantic/hybrid helpers, SKOS
+metadata fields, and provenance-event fields. AIWG tests direct v2 validation
+and query behavior against that contract when the package is installed. The
+proposed package-boundary workflow in
 `.aiwg/planning/fortemi-core-index-migration/fortemi-package-boundary-workflow-proposal.md`
-installs `@fortemi/core@2026.7.0` without changing the lockfile and sets
+installs `@fortemi/core@2026.7.1` without changing the lockfile and sets
 `AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1` so a reviewed CI copy would fail if
-`@fortemi/core/aiwg-index` is unavailable or rejects the compatibility
-projection.
+`@fortemi/core/aiwg-index` is unavailable or rejects the direct v2 export.
 
-The default static fixture path does not require the package. v2 export adoption
-remains gated until the package accepts `aiwg.fortemi.index.export.v2` fixtures
-directly, or the v2-to-v1 projection is explicitly approved as the long-term
-package boundary.
+The default static fixture path does not require a live service. Removing the
+legacy local backend remains gated by deprecation, fallback, and rollback
+evidence.

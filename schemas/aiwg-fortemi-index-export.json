@@ -121,41 +121,19 @@
       "enum": ["private", "sanitized", "public"]
     },
     "recordType": {
-      "anyOf": [
-        {
-          "enum": [
-            "crm.contact",
-            "crm.organization",
-            "crm.event",
-            "crm.interaction",
-            "aiwg.artifact",
-            "aiwg.skill",
-            "aiwg.agent",
-            "aiwg.command",
-            "aiwg.rule",
-            "aiwg.behavior",
-            "aiwg.flow",
-            "aiwg.provider",
-            "aiwg.bundle",
-            "aiwg.research.ref",
-            "aiwg.research.profile",
-            "aiwg.research.view",
-            "aiwg.research.synthesis",
-            "aiwg.kb.page",
-            "aiwg.memory.entry",
-            "aiwg.issue"
-          ]
-        },
-        {
-          "type": "string",
-          "pattern": "^aiwg\\.project\\.[A-Za-z0-9_.-]+$"
-        }
-      ]
+      "type": "string",
+      "minLength": 1
     },
     "stringArray": {
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "numberArray": {
+      "type": "array",
+      "items": {
+        "type": "number"
       }
     },
     "v1RecordCompatibility": {
@@ -176,6 +154,18 @@
           },
           {
             "required": ["embeddings"]
+          },
+          {
+            "required": ["compatibility"]
+          },
+          {
+            "required": ["skos_concepts"]
+          },
+          {
+            "required": ["skos_relations"]
+          },
+          {
+            "required": ["provenance_events"]
           }
         ]
       },
@@ -207,6 +197,18 @@
                 },
                 {
                   "required": ["direction"]
+                },
+                {
+                  "required": ["label"]
+                },
+                {
+                  "required": ["confidence"]
+                },
+                {
+                  "required": ["privacy"]
+                },
+                {
+                  "required": ["metadata"]
                 }
               ]
             }
@@ -378,6 +380,18 @@
               },
               "direction": {
                 "enum": ["upstream", "downstream", "related"]
+              },
+              "label": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "privacy": {
+                "$ref": "#/$defs/privacy"
+              },
+              "metadata": {
+                "type": "object"
               }
             }
           }
@@ -432,7 +446,6 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "text", "checksum"],
             "properties": {
               "id": {
                 "type": "string",
@@ -440,6 +453,18 @@
               },
               "text": {
                 "type": "string"
+              },
+              "body": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "source_path": {
+                "type": "string"
+              },
+              "metadata": {
+                "type": "object"
               },
               "checksum": {
                 "type": "string"
@@ -452,10 +477,27 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["model", "input_hash"],
             "properties": {
+              "id": {
+                "type": "string"
+              },
               "model": {
                 "type": "string"
+              },
+              "embedding": {
+                "$ref": "#/$defs/numberArray"
+              },
+              "vector": {
+                "$ref": "#/$defs/numberArray"
+              },
+              "granularity": {
+                "type": "string"
+              },
+              "source_path": {
+                "type": "string"
+              },
+              "metadata": {
+                "type": "object"
               },
               "chunk_id": {
                 "type": "string"
@@ -465,6 +507,116 @@
               },
               "input_hash": {
                 "type": "string"
+              }
+            }
+          }
+        },
+        "compatibility": {
+          "type": "object"
+        },
+        "skos_concepts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "prefLabel"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "prefLabel": {
+                "type": "string",
+                "minLength": 1
+              },
+              "definition": {
+                "type": "string"
+              },
+              "scheme": {
+                "type": "string"
+              },
+              "notation": {
+                "type": "string"
+              },
+              "uri": {
+                "type": "string"
+              },
+              "altLabels": {
+                "$ref": "#/$defs/stringArray"
+              },
+              "metadata": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "skos_relations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "source_id", "target_id"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "target_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_path": {
+                "type": "string"
+              },
+              "metadata": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "provenance_events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["activity"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "activity": {
+                "type": "string",
+                "minLength": 1
+              },
+              "agent": {
+                "type": "string"
+              },
+              "started_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "ended_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "source": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "confidence": {
+                "enum": ["source", "candidate", "reviewed", "rejected"]
+              },
+              "privacy": {
+                "$ref": "#/$defs/privacy"
+              },
+              "attributes": {
+                "type": "object"
               }
             }
           }

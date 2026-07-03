@@ -167,7 +167,7 @@ function loadFortemiCoreExport(
   }
   if (!status.optedIn) {
     return {
-      reason: `Fortemi Core static index is not materialized for graph '${graph}'. Run 'aiwg index sync --backend fortemi-core${graph === "project" ? "" : ` --graph ${graph}`}' first, or omit '--backend fortemi-core' to use the local index.`,
+      reason: `Fortemi Core static index is not materialized for graph '${graph}'. Run 'aiwg index sync${graph === "project" ? "" : ` --graph ${graph}`}' first, or pass '--backend local' to use the legacy local index.`,
     };
   }
   if (!status.built || status.stale) {
@@ -175,7 +175,7 @@ function loadFortemiCoreExport(
       reason: `${
         status.reason ??
         `Fortemi Core static index for graph '${graph}' is stale or incomplete`
-      }. Re-run 'aiwg index sync --backend fortemi-core' or omit '--backend fortemi-core' to use the local index.`,
+      }. Re-run 'aiwg index sync' or pass '--backend local' to use the legacy local index.`,
     };
   }
 
@@ -185,7 +185,7 @@ function loadFortemiCoreExport(
     ) as AiwgFortemiIndexExport;
     if (exported.schema_version !== "aiwg.fortemi.index.export.v2") {
       return {
-        reason: `Fortemi Core static index has schema '${exported.schema_version}', expected 'aiwg.fortemi.index.export.v2'. Re-run 'aiwg index sync --backend fortemi-core'.`,
+        reason: `Fortemi Core static index has schema '${exported.schema_version}', expected 'aiwg.fortemi.index.export.v2'. Re-run 'aiwg index sync'.`,
       };
     }
     return { exported };
@@ -232,6 +232,10 @@ function entryFromRecord(record: AiwgFortemiRecord): MetadataEntry {
       ),
     triggers: record.search?.triggers,
     capability: record.search?.capability,
+    kernel:
+      typeof record.search?.frontmatter?.kernel === "boolean"
+        ? record.search.frontmatter.kernel
+        : undefined,
   };
 }
 

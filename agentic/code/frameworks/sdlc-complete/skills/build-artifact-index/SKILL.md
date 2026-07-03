@@ -36,16 +36,17 @@ aiwg index build --all
 
 Report what changed: new artifacts indexed, updated, unchanged, and removed counts.
 
-If the operator explicitly asks for Fortemi Core preview cache refresh after a
+If the operator explicitly asks for Fortemi Core cache refresh after a
 successful build, run:
 
 ```bash
-aiwg index sync --backend fortemi-core
+aiwg index sync
 aiwg index status --json
 ```
 
-Do not switch default behavior to Fortemi Core; the synced cache is opt-in and
-read only when commands pass `--backend fortemi-core`.
+Fortemi Core is the default artifact search backend after sync. Keep the
+legacy local backend available behind `--backend local` during the phase-out
+window.
 
 ### Archived Query Answers
 

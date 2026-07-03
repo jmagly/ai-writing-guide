@@ -104,7 +104,7 @@ export async function showDeps(
   artifactPath: string,
   options: DepsOptions = {}
 ): Promise<void> {
-  const { direction = 'both', depth = 3, json = false, graph: graphType, edgeType, backend = 'local' } = options;
+  const { direction = 'both', depth = 3, json = false, graph: graphType, edgeType, backend = 'fortemi-core' } = options;
 
   let depGraph: DependencyGraph | null = null;
 
@@ -123,7 +123,7 @@ export async function showDeps(
         console.error('Error: Fortemi Core static index is unavailable.');
         console.log(
           loaded.reason ??
-            "Run 'aiwg index sync --backend fortemi-core' first.",
+            "Run 'aiwg index sync' first, or pass '--backend local' to use the legacy local index.",
         );
       }
       process.exit(1);

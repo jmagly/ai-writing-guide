@@ -75,7 +75,7 @@ describe('cargo supply-chain audit discovery (#1479)', () => {
       await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
       const captured: string[] = [];
       console.log = (...a: unknown[]) => captured.push(a.join(' '));
-      await discoverCapability(cwd, { phrase: 'cargo crate supply chain audit', json: true, limit: 5 });
+      await discoverCapability(cwd, { phrase: 'cargo crate supply chain audit', json: true, backend: 'local', limit: 5 });
       console.log = origLog;
 
       const parsed = JSON.parse(captured.join('\n'));

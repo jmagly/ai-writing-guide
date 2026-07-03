@@ -49,6 +49,8 @@ export interface QueryOptions {
   backend?: 'local' | 'fortemi-core';
 }
 
+const DEFAULT_ARTIFACT_SEARCH_BACKEND: 'fortemi-core' = 'fortemi-core';
+
 const DISCOVER_TYPE_ORDER = new Map(
   ['skill', 'agent', 'command', 'rule', 'flow', 'behavior', 'template', 'doc'].map((type, index) => [type, index]),
 );
@@ -354,7 +356,8 @@ export async function queryIndex(
   params: QueryParams,
   options: QueryOptions = {}
 ): Promise<void> {
-  const { graph, backend } = options;
+  const { graph } = options;
+  const backend = options.backend ?? DEFAULT_ARTIFACT_SEARCH_BACKEND;
   const startTime = Date.now();
 
   let candidates: MetadataEntry[];
@@ -511,7 +514,7 @@ export async function queryIndex(
   // Output
   if (options.json) {
     console.log(JSON.stringify({
-      query: { text: params.text, filters: { type: params.type, phase: params.phase, tags: params.tags, path: params.path }, backend: backend ?? 'local' },
+      query: { text: params.text, filters: { type: params.type, phase: params.phase, tags: params.tags, path: params.path }, backend },
       mode: params.fulltext ? 'fulltext' : 'metadata',
       results: results.map(r => ({
         path: r.entry.path,
@@ -569,7 +572,7 @@ export interface DiscoverParams {
   json?: boolean;
   /** Override default graph (defaults to `framework`, falls back to `project`) */
   graph?: GraphType;
-  /** Optional compatibility backend. Default local path is unchanged. */
+  /** Query backend. Defaults to Fortemi Core; use local for the legacy path. */
   backend?: 'local' | 'fortemi-core';
 }
 
@@ -644,7 +647,9 @@ export async function discoverCapability(
   // Source: prefer `framework` graph (built post-deploy), fall back to
   // project / codebase / legacy depending on what's available.
   let entries: MetadataEntry[] = [];
-  if (params.backend === 'fortemi-core') {
+  const backend = params.backend ?? DEFAULT_ARTIFACT_SEARCH_BACKEND;
+
+  if (backend === 'fortemi-core') {
     const { loadFortemiCoreMetadataEntries } = await import('./fortemi-core-query-adapter.js');
     const loaded = loadFortemiCoreMetadataEntries(cwd, params.graph ?? 'project');
     entries = loaded.entries;
@@ -717,7 +722,7 @@ export async function discoverCapability(
     }
   }
 
-  if (entries.length === 0 && params.backend !== 'fortemi-core') {
+  if (entries.length === 0 && backend !== 'fortemi-core') {
     // Empty-index case (#1221). Surface a hint that explains the gap rather
     // than returning a bare zero-result envelope — the latter trains agents
     // to conclude "AIWG doesn't have a skill for that" when in fact the
@@ -812,14 +817,14 @@ export async function discoverCapability(
   // nothing scored, the phrase didn't match an indexed capability — suggest a
   // broader phrase / type filter, and a capability refresh via `aiwg use`.
   const emptyResultHint = scored.length === 0
-    ? params.backend === 'fortemi-core'
-      ? `No capability matched "${params.phrase}" among ${entries.length} Fortemi Core static-cache capabilities. Try a broader phrase or a \`--type\` filter. If the local index changed, refresh the cache with \`aiwg index sync --backend fortemi-core\`, or omit \`--backend fortemi-core\` to use the local index.`
+    ? backend === 'fortemi-core'
+      ? `No capability matched "${params.phrase}" among ${entries.length} Fortemi Core static-cache capabilities. Try a broader phrase or a \`--type\` filter. If the local index changed, refresh the cache with \`aiwg index sync\`, or pass \`--backend local\` to use the legacy local index.`
       : `No capability matched "${params.phrase}" among ${entries.length} indexed capabilities. Try a broader phrase or a \`--type\` filter. If you just installed or authored capabilities, refresh discovery with \`aiwg use <framework>\` (or \`aiwg index build\`).`
     : null;
 
   if (params.json) {
     console.log(JSON.stringify({
-      query: { phrase: params.phrase, types, limit, aiwg_root: aiwgRoot ?? null, backend: params.backend ?? 'local' },
+      query: { phrase: params.phrase, types, limit, aiwg_root: aiwgRoot ?? null, backend },
       results: scored.map(r => ({
         path: resolvePath(r.entry),
         type: r.entry.type,
@@ -889,7 +894,7 @@ export interface ShowParams {
   graph?: GraphType;
   /** When ambiguous, pick the first match instead of erroring */
   first?: boolean;
-  /** Optional compatibility backend. Default local path is unchanged. */
+  /** Query backend. Defaults to Fortemi Core; use local for the legacy path. */
   backend?: 'local' | 'fortemi-core';
 }
 

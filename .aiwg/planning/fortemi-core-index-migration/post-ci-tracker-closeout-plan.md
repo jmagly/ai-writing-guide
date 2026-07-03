@@ -12,7 +12,7 @@ work is committed, pushed, and validated by remote CI. Local `tea` currently
 has no configured login, but the operator authorized the Gitea MCP connector on
 2026-07-02 for tracker writes when needed. That authorization allows
 non-closing status comments and Fortemi React issue filing if a distinct gap is
-found. It does not satisfy the remote CI, package-boundary, or default-switch
+found. It does not satisfy the remote CI, package-boundary, or legacy-removal
 gates.
 
 ## Preconditions
@@ -38,10 +38,9 @@ All of these must be true before closing or superseding any AIWG child issue:
 - The CI run URL or run ID is captured in tracker comments.
 - No new local blockers are present in `git status --short`,
   `aiwg index status --json`, or `aiwg doctor`.
-- The package-boundary gate is resolved: either a separate
-  `AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1` job is green with `@fortemi/core`, or
-  the maintainer explicitly accepts the v2-to-v1 projection as the current
-  boundary for `@fortemi/core@2026.7.0`.
+- The direct-v2 package-boundary gate remains green: an
+  `AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1` job is green with
+  `@fortemi/core@2026.7.1` direct v2 validation/query behavior.
 
 Verification commands before any tracker mutation:
 
@@ -124,7 +123,7 @@ as the issue body source when those gates are satisfied.
 
 ## Related Issue Handling
 
-Do not close #1551 or #1508 as part of the #1664 opt-in backend closeout.
+Do not close #1551 or #1508 as part of the #1664 Fortemi default backend closeout.
 They are related ordering gates, not child issues in the #1664 roadmap.
 
 After #1690 and #1691 are closed or explicitly superseded, post non-closing
@@ -143,7 +142,7 @@ Suggested #1551 status comment:
 ```text
 Status from #1664 Fortemi Core migration:
 
-- AIWG now exports source-body chunks in the opt-in Fortemi static index path.
+- AIWG now exports source-body chunks in the default Fortemi static index path.
 - The default embedding/dedup path remains local and optional.
 - This issue stays open as the body-level embedding acceptance case until the
   #1690/#1691 evidence and Fortemi package-boundary decision prove whether
@@ -191,7 +190,7 @@ Closing as implemented for the Fortemi Core migration roadmap.
 Closeout evidence for #1684:
 
 - ADR is documented in `.aiwg/architecture/adr-fortemi-core-indexing-substrate.md`.
-- It records the `@fortemi/core@2026.7.0` baseline, AIWG adapter/cache boundary, opt-in backend behavior, fallback/rollback path, no-regression gates, and default-switch criteria.
+- It records the `@fortemi/core@2026.7.1` direct-v2 baseline, AIWG adapter/cache boundary, default backend behavior, fallback/rollback path, no-regression gates, and legacy-removal criteria.
 - Remote CI: <CI URL or run ID>
 - Commit: <SHA>
 
@@ -204,12 +203,12 @@ Closing as implemented for the Fortemi Core migration roadmap.
 Closeout evidence for #1686:
 
 - `schemas/aiwg-fortemi-index-export.json` defines the v2 all-domain AIWG export envelope.
-- `src/artifacts/browser-export.ts` emits v2 records and includes the v2-to-v1 compatibility projection for the published Fortemi package validator.
+- `src/artifacts/browser-export.ts` emits v2 records, validates direct v2 exports against the published Fortemi package contract, and keeps the v2-to-v1 compatibility projection for legacy consumers.
 - Fixtures cover artifact, skill, agent, command, rule, behavior, flow, provider, bundle, research REF/profile/view/synthesis, KB page, memory entry, and issue records.
 - Remote CI: <CI URL or run ID>
 - Commit: <SHA>
 
-Package-boundary note: direct v2 acceptance remains tracked on Fortemi React unless the maintainer accepts the compatibility projection as the current boundary.
+Package-boundary note: `@fortemi/core@2026.7.1` satisfies direct v2 package validation; maintainer tracker closeout should mark #219/#220 satisfied or superseded.
 ```
 
 ### #1687
@@ -217,7 +216,7 @@ Package-boundary note: direct v2 acceptance remains tracked on Fortemi React unl
 ```text
 Closeout evidence for #1687:
 
-- `aiwg index sync --backend fortemi-core` materializes the project static cache and manifest under `.aiwg/.index/fortemi-core/<graph>/`.
+- `aiwg index sync` materializes the project static cache and manifest under `.aiwg/.index/fortemi-core/<graph>/`.
 - Status handling reports missing/stale/corrupt/schema-incompatible cache states without removing the local fallback graph, and valid empty caches remain built empty indexes rather than recovery failures.
 - Latest local sync evidence before CI: 1097 project items and a current export
   checksum from the final `aiwg index status --json` command output. Do not
@@ -234,7 +233,7 @@ Closing as implemented after remote validation.
 ```text
 Closeout evidence for #1688:
 
-- `--backend fortemi-core` discover/show paths read the materialized static cache.
+- `--backend local` for legacy fallback discover/show paths read the materialized static cache.
 - Tests cover ranking, exact fetch, ambiguity, valid empty cache, missing cache, stale cache, corrupt cache, and schema mismatch behavior.
 - Remote CI: <CI URL or run ID>
 - Commit: <SHA>
@@ -247,7 +246,7 @@ Closing as implemented after remote validation.
 ```text
 Closeout evidence for #1689:
 
-- `aiwg index` preserves local defaults and adds opt-in `--backend fortemi-core` support for query, deps, neighbors, set, discover, show, sync, status, and export paths.
+- `aiwg index` defaults to Fortemi Core and preserves `--backend local` for legacy fallback support for query, deps, neighbors, set, discover, show, sync, status, and export paths.
 - Public-router tests cover stats/status/export/sync plus Fortemi static semantic and filtered hybrid query modes.
 - Remote CI: <CI URL or run ID>
 - Commit: <SHA>
@@ -260,7 +259,7 @@ Closing as implemented after remote validation.
 ```text
 Closeout evidence for #1690:
 
-- `aiwg research-query` supports deterministic source selection from the Fortemi static cache through `--backend fortemi-core`.
+- `aiwg research-query` supports deterministic source selection from the Fortemi static cache through `--backend local` for legacy fallback.
 - Tests cover local/Fortemi retrieval parity, REF/PROF metadata, GRADE extraction, JSON, save behavior, and KB graph traversal parity.
 - Remote CI: <CI URL or run ID>
 - Commit: <SHA>
@@ -278,7 +277,7 @@ Closeout evidence for #1691:
 - Remote CI: <CI URL or run ID>
 - Commit: <SHA>
 
-Closing as the parity gate for the opt-in Fortemi Core backend. This does not switch the default backend.
+Closing as the parity gate for the default Fortemi Core backend. This does not switch the default backend.
 ```
 
 ## Parent Closeout Comment
@@ -291,12 +290,12 @@ Roadmap closeout for #1664:
 
 - #1685-#1691 are closed or explicitly superseded.
 - Remote CI is green for the pushed commit: <CI URL or run ID>.
-- Fortemi Core backend remains opt-in through `--backend fortemi-core`.
+- Fortemi Core backend is default; `--backend local` remains available for legacy fallback.
 - Fallback/rollback is documented in `docs/integrations/fortemi-index-export.md`.
 - ADR and release notes are present.
-- Default backend switch is not included in this closeout and remains gated on a separate issue after the package-boundary decision and rollback window.
+- Legacy backend removal is not included in this closeout and remains gated on a separate issue after the package-boundary decision and rollback window.
 
-Closing the migration planning/implementation roadmap as complete for the opt-in backend phase.
+Closing the migration planning/implementation roadmap as complete for the Fortemi default backend phase.
 ```
 
 ## Default-Backend Switch Issue Draft
@@ -308,7 +307,7 @@ is accepted or explicitly deferred:
 Title: research(index): switch AIWG index/search default to Fortemi Core after rollback window
 
 Body:
-Follow-up to #1664. The opt-in Fortemi Core backend is implemented and parity-gated.
+Follow-up to #1664. The default Fortemi Core backend is implemented and parity-gated.
 
 Scope:
 - Switch default query/discover/show/index paths from local graph internals to Fortemi Core static cache where accepted by the ADR.
@@ -327,7 +326,7 @@ Acceptance criteria:
 - A documented backend selector or config flag forces local mode for rollback.
 - `.aiwg/.index/<graph>/` local fallback remains built, tested, and shipped for
   at least one release after the default switch.
-- Remote CI covers both default Fortemi behavior and forced-local rollback
+- Remote CI covers both default Fortemi behavior and `--backend local` rollback
   behavior.
 - Required CI still has no live Fortemi service, Fortemi credentials, or
   `AIWG_FORTEMI_CORE_PACKAGE_REQUIRED` dependency.
@@ -347,11 +346,11 @@ Package-boundary decision record:
 
 Use existing Fortemi React issues where possible:
 
-- Fortemi/fortemi-react#219 for direct v2 AIWG export/record acceptance.
-- Fortemi/fortemi-react#220 for normalized relationship projection acceptance.
+- Fortemi/fortemi-react#219 for direct v2 AIWG export/record acceptance closeout.
+- Fortemi/fortemi-react#220 for v2 relationship-field acceptance closeout.
 
 File a new Fortemi React issue only if remote package-boundary validation finds
-a distinct `@fortemi/core@2026.7.0` capability gap that is not covered by #219
+a distinct `@fortemi/core@2026.7.1` capability gap that is not covered by #219
 or #220. Any such issue must be filed through the compliant tracker route for
 that repository; in this environment the operator-authorized Gitea MCP connector
 is available for that purpose.

@@ -31,9 +31,7 @@ Parent roadmap: #1664
 Prerequisite parity gate: #1691
 
 This issue must remain blocked until #1691 is green in remote CI and the
-Fortemi package boundary is accepted: either direct v2 records are accepted by
-`@fortemi/core/aiwg-index`, or AIWG's tested v2-to-v1 projection is explicitly
-accepted as the current package boundary.
+Fortemi 2026.7.1 direct-v2 package boundary remains green against AIWG fixtures.
 
 ## Scope
 
@@ -51,8 +49,8 @@ accepted as the current package boundary.
 - [ ] #1684-#1691 are closed or explicitly superseded with compliant tracker
       comments through `tea` as `roctinam`.
 - [ ] #1691 parity fixtures are green in remote CI for the migration commit.
-- [ ] The package-boundary decision is recorded: direct v2 package acceptance,
-      or explicit acceptance of the v2-to-v1 projection as the current boundary.
+- [ ] The package-boundary decision records direct v2 package acceptance for
+      `@fortemi/core@2026.7.1`.
 - [ ] `npm run build:cli`, `npm test`, `aiwg index build --all`,
       `aiwg index status --json`, and `aiwg doctor` pass on the switch branch.
 - [ ] Rollback docs have been reviewed and still reference a working local
@@ -61,10 +59,10 @@ accepted as the current package boundary.
 ## Acceptance Criteria
 
 - [ ] Default command behavior uses Fortemi Core for the accepted surfaces
-      without requiring users to pass `--backend fortemi-core`.
+      without requiring users to pass `--backend local` for legacy fallback.
 - [ ] `--backend local` or an equivalent documented config selector forces the
       local `.aiwg/.index/<graph>/` backend.
-- [ ] Remote CI covers default Fortemi behavior and forced-local rollback
+- [ ] Remote CI covers default Fortemi behavior and `--backend local` rollback
       behavior for discover/show, query/fulltext, semantic/hybrid, deps,
       neighbors/set, research-query, and KB graph traversal.
 - [ ] Required CI does not require a live Fortemi service, Fortemi credentials,
@@ -93,13 +91,13 @@ Expected local and CI verification:
 npm run build:cli
 npm test
 aiwg index build --all
-aiwg index sync --backend fortemi-core
+aiwg index sync
 aiwg index status --json
 aiwg doctor
 ```
 
 Switch-specific verification must also include focused tests proving the new
-default path and forced-local rollback path for:
+default path and `--backend local` rollback path for:
 
 - `aiwg discover` / `aiwg show`
 - `aiwg index query` fulltext, semantic, hybrid, metadata filters, and JSON

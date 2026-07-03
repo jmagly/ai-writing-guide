@@ -41,7 +41,7 @@ Schema per entry: purpose, when to use, when not to use, curated discovery phras
 - When not to use: The user asks for broad framework discovery rather than a specific guardrail.
 - Curated discovery phrases: `aiwg discover "rule for <constraint>"`; `aiwg discover "<provider> routing rule"`; `aiwg discover "context budget rule"`
 - Deep-load target: `aiwg show rule <name>` after discovery selects the exact item.
-- Deployed summary: 58 recorded; examples: RULES-INDEX, activity-log, agent-deployment, api-abi-stability, auto-compact-continue, +53 more.
+- Deployed summary: 0 recorded; examples: none deployed.
 - Verification cue: The applied rule is named and the action taken conforms to it.
 
 ### Skills

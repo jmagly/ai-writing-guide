@@ -130,14 +130,14 @@ describe('routing documentation regressions', () => {
 
     const quickref = read('agentic/code/frameworks/knowledge-base/skills/knowledge-base-quickref/SKILL.md');
     expect(quickref).toContain('aiwg index neighbors --graph kb');
-    expect(quickref).toContain('aiwg index sync --backend fortemi-core');
+    expect(quickref).toContain('aiwg index sync');
   });
 
   it('Fortemi storage docs stay separate from Fortemi Core index/search', () => {
     const doc = read('docs/storage/backends/fortemi.md');
     expect(doc).toContain('Fortemi MCP storage adapter');
     expect(doc).toMatch(/not the Fortemi\s+Core index\/search backend/);
-    expect(doc).toContain('aiwg index sync --backend fortemi-core');
+    expect(doc).toContain('aiwg index sync');
     expect(doc).toContain('"type": "fortemi"');
   });
 
@@ -145,20 +145,20 @@ describe('routing documentation regressions', () => {
     const ref = read('docs/cli-reference.md');
 
     expect(ref).toContain(
-      'aiwg index query "static retrieval evidence" --fulltext --backend fortemi-core --graph project --json',
+      'aiwg index query "static retrieval evidence" --fulltext --graph project --json',
     );
     expect(ref).toContain('Fortemi static-cache text/chunks');
     expect(ref).toContain('without rereading source files');
-    expect(ref).toContain('aiwg index neighbors --graph kb --node retrieval.md --backend fortemi-core --json');
+    expect(ref).toContain('aiwg index neighbors --graph kb --node retrieval.md --json');
     expect(ref).toContain(
-      'aiwg index deps .aiwg/architecture/search-adr.md --backend fortemi-core --graph project --json',
+      'aiwg index deps .aiwg/architecture/search-adr.md --graph project --json',
     );
     expect(ref).toContain('aiwg index neighbors --graph <name> --node <id> [options]');
     expect(ref).toContain('Use `aiwg index similar` for semantic-neighbor lookup.');
     expect(ref).not.toContain('aiwg index neighbors --node REF-008 --semantic --top-k 5');
     expect(ref).not.toContain('aiwg index neighbors --node REF-008 --depth 2');
-    expect(ref).toContain('fortemi-core` reads graph relationships');
-    expect(ref).toContain('fortemi-core` reads dependency relationships');
+    expect(ref).toContain('Fortemi Core reads graph relationships');
+    expect(ref).toContain('Fortemi Core reads dependency relationships');
 
     const indexDocs = [
       'agentic/code/addons/aiwg-utils/skills/index/SKILL.md',
@@ -179,9 +179,9 @@ describe('routing documentation regressions', () => {
     ];
     for (const docPath of artifactLookupDocs) {
       const doc = read(docPath);
-      expect(doc).toContain('aiwg index neighbors --graph project --node UC-001 --backend fortemi-core --json');
+      expect(doc).toContain('aiwg index neighbors --graph project --node UC-001 --json');
       expect(doc).toContain(
-        'aiwg index set --graph project --op intersection --node-a UC-001 --node-b ADR-001 --backend fortemi-core --json',
+        'aiwg index set --graph project --op intersection --node-a UC-001 --node-b ADR-001 --json',
       );
     }
   });
@@ -214,8 +214,8 @@ describe('routing documentation regressions', () => {
     expect(doc).toMatch(/reports\s+`status: "unchanged"`/);
     expect(doc).toContain('A valid synced cache with zero items is not stale');
     expect(doc).toMatch(/Fortemi\s+static-cache no-match hint/);
-    expect(doc).toContain('forced-local');
-    expect(doc).toContain('rollback selector or config path');
+    expect(doc).toContain('--backend local');
+    expect(doc).toContain('Pass `--backend local` on search/traversal commands');
 
     const addonSkill = read('agentic/code/addons/aiwg-utils/skills/index/SKILL.md');
     const pluginSkill = read('agentic/code/plugins/utils/skills/index/SKILL.md');
@@ -241,7 +241,7 @@ describe('routing documentation regressions', () => {
     expect(release).toContain('source-body chunks');
     expect(release).toContain('embedding metadata slots');
     expect(release).toContain('static semantic/hybrid query');
-    expect(release).toContain('forced-local rollback behavior');
+    expect(release).toContain('--backend local');
     expect(release).toContain('#1551');
     expect(release).toContain('#1508');
     expect(release).toMatch(/body-level embedding/);
@@ -254,8 +254,8 @@ describe('routing documentation regressions', () => {
     expect(changelog).toContain('source-body chunks');
     expect(changelog).toMatch(/embedding metadata\s+slots/);
     expect(changelog).toContain('fulltext/static semantic/hybrid query');
-    expect(changelog).toContain('Default-switch gate docs');
-    expect(changelog).toContain('forced-local rollback');
+    expect(changelog).toContain('Legacy rollback gate docs');
+    expect(changelog).toContain('`--backend local` rollback');
     expect(changelog).toContain('#1551');
     expect(changelog).toContain('#1508');
     expect(changelog).toMatch(/body-level embedding/);
@@ -271,13 +271,14 @@ describe('routing documentation regressions', () => {
     expect(doc).toMatch(/use `aiwg index` commands for\s+artifact-index Fortemi Core queries/);
   });
 
-  it('research-query docs require an explicit synced Fortemi Core cache', () => {
+  it('research-query docs use the synced Fortemi Core cache by default', () => {
     const source = read('agentic/code/frameworks/research-complete/skills/research-query/SKILL.md');
     const plugin = read('agentic/code/plugins/research/skills/research-query/SKILL.md');
 
     for (const doc of [source, plugin]) {
-      expect(doc).toContain('When `fortemi-core` is explicit');
-      expect(doc).toContain('aiwg index sync --backend fortemi-core');
+      expect(doc).toContain('By default, research-query uses the Fortemi static cache');
+      expect(doc).toContain('aiwg index sync');
+      expect(doc).toContain('--backend local');
       expect(doc).toContain('fail with recovery guidance');
       expect(doc).toContain('instead of falling back silently');
     }
@@ -309,7 +310,7 @@ describe('routing documentation regressions', () => {
     const proposal = read('.aiwg/planning/fortemi-core-index-migration/fortemi-package-boundary-workflow-proposal.md');
 
     expect(proposal).toContain('npm Release-Age Override Record');
-    expect(proposal).toContain('@fortemi/core@2026.7.0');
+    expect(proposal).toContain('@fortemi/core@2026.7.1');
     expect(proposal).toContain('--min-release-age=0');
     expect(proposal).toContain('explicit human approval');
     expect(proposal).toContain('Approval record to fill before copying');
@@ -323,7 +324,7 @@ describe('routing documentation regressions', () => {
     expect(proposal).toContain('--ignore-scripts');
     expect(proposal).toContain('AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1');
     expect(proposal).toContain('does not switch defaults');
-    expect(proposal).toContain('forced-local rollback');
+    expect(proposal).toContain('`--backend local` rollback');
     expect(proposal).toContain('npm ci');
   });
 
@@ -355,7 +356,7 @@ describe('routing documentation regressions', () => {
     expect(traceability).toContain('tracker-status-refresh.md');
     expect(traceability).toContain('package-boundary-decision-record.md');
     expect(traceability).toContain('handoff-readiness-report.md');
-    expect(checklist).toContain('Do not switch the default index/search backend');
+    expect(checklist).toContain('Do not remove `.aiwg/.index/<graph>/` fallback behavior');
     expect(checklist).toContain('tracker-status-refresh.md');
     expect(checklist).toContain('package-boundary decision');
     expect(checklist).toContain('handoff readiness report');
@@ -367,7 +368,7 @@ describe('routing documentation regressions', () => {
     expect(checklist).not.toContain('after adding the review branch scope manifest');
     expect(trackerStatus).toContain('issuecomment-77378');
     expect(trackerStatus).toContain('Comment id: 77378');
-    expect(trackerStatus).toContain('#1685 -> #1684 -> #1686 -> #1687 -> (#1688 + #1689 + #1690) -> #1691 -> default-switch issue');
+    expect(trackerStatus).toContain('#1685 -> #1684 -> #1686 -> #1687 -> (#1688 + #1689 + #1690) -> #1691 -> legacy-removal issue');
     expect(trackerStatus).toContain('no live Fortemi');
     expect(trackerStatus).toContain('historical tracker-source fact');
     expect(trackerStatus).toContain('future tracker mutations use `tea` as `roctinam`');
@@ -406,9 +407,9 @@ describe('routing documentation regressions', () => {
     expect(draft).toContain('Do not file it until');
     expect(draft).toContain('through `tea` as `roctinam`');
     expect(draft).toContain('#1691 is green in remote CI');
-    expect(draft).toContain('v2-to-v1 projection');
+    expect(draft).toContain('direct v2 package acceptance');
     expect(draft).toContain('`--backend local`');
-    expect(draft).toContain('forced-local rollback');
+    expect(draft).toContain('`--backend local` rollback');
     expect(draft).toContain('AIWG_FORTEMI_CORE_PACKAGE_REQUIRED');
     expect(draft).toContain('Removing the local `.aiwg/.index/<graph>/` backend');
     expect(draft).toContain('missing/stale/corrupt/schema-mismatched Fortemi cache recovery');
@@ -471,14 +472,14 @@ describe('routing documentation regressions', () => {
 
     expect(audit).toMatch(/[Pp]ublic Gitea API recheck/);
     expect(audit).toMatch(/listed\s+three open Fortemi/);
-    expect(audit).toMatch(/#219 and #220\s+remain open for AIWG v2/);
+    expect(audit).toMatch(/#219 and #220 were\s+the AIWG v2/);
     expect(audit).toMatch(/#212 is an unrelated\s+GraphRAG integration spike/);
     expect(audit).toContain('recheck on');
-    expect(audit).toContain('version publish time');
-    expect(audit).toMatch(/not proof of direct v2\s+acceptance/);
+    expect(audit).toContain('direct v2 package contract');
+    expect(audit).toMatch(/validator now accept AIWG v2/);
     expect(audit).toContain('No new Fortemi React issue is needed at this time');
-    expect(audit).toContain('direct v2 package acceptance');
-    expect(audit).toContain('v2 relationship-field traversal');
+    expect(audit).toContain('direct v2 package contract');
+    expect(audit).toContain('v2 relationship-field validation');
     expect(audit).toContain('local v2-to-v1 projection');
     expect(audit).toContain('operator-authorized Gitea MCP connector');
   });
@@ -520,20 +521,19 @@ describe('routing documentation regressions', () => {
     expect(plan).toContain('Acceptance criteria');
     expect(plan).toContain('forces local mode for rollback');
     expect(plan).toContain('at least one release after the default switch');
-    expect(plan).toMatch(/Remote CI covers both default Fortemi behavior and forced-local rollback\s+behavior/);
+    expect(plan).toMatch(/Remote CI covers both default Fortemi behavior and `--backend local` rollback\s+behavior/);
     expect(plan).toContain('Required CI still has no live Fortemi service');
     expect(plan).toContain('AIWG_FORTEMI_CORE_PACKAGE_REQUIRED');
   });
 
-  it('Fortemi completion audit records that no default-backend switch issue exists yet', () => {
+  it('Fortemi completion audit records that legacy removal remains gated', () => {
     const audit = read('.aiwg/planning/fortemi-core-index-migration/completion-gate-audit.md');
     const traceability = read('.aiwg/planning/fortemi-core-index-migration/traceability-matrix.md');
 
     for (const doc of [audit, traceability]) {
-      expect(doc).toContain('Public Gitea issue search on 2026-07-02');
-      expect(doc).toContain('`default backend`');
-      expect(doc).toContain('`switch AIWG index/search default`');
-      expect(doc).toContain('not a dedicated default-backend switch issue');
+      expect(doc).toContain('legacy');
+      expect(doc).toContain('--backend local');
+      expect(doc).toContain('removal');
     }
   });
 
@@ -576,22 +576,22 @@ describe('routing documentation regressions', () => {
 
     for (const doc of [audit, traceability]) {
       expect(doc).toContain(
-        'npm view @fortemi/core@2026.7.0 version dist-tags exports',
+        'npm view @fortemi/core@2026.7.1 version dist-tags exports',
       );
-      expect(doc).toContain('dist.integrity dist.tarball time --json');
-      expect(doc).toMatch(/confirmed the\s+published package still exports `\.\/aiwg-index`/);
+      expect(doc).toContain('--min-release-age=0');
+      expect(doc).toMatch(/confirmed the\s+published (package still exports|exports still include)\s+`\.\/aiwg-index`/);
       expect(doc).toMatch(/PASS evidence for\s+package availability/);
-      expect(doc).toMatch(/direct v2[\s\S]*acceptance\s+remains MISSING/i);
+      expect(doc).toMatch(/direct v2[\s\S]*package-contract adoption/i);
     }
 
-    expect(decision).toContain('temporary bridge');
-    expect(decision).toContain('aiwg.fortemi.index.export.v1');
-    expect(decision).toContain('aiwg.fortemi.index.record.v1');
+    expect(decision).toContain('direct-v2-accepted');
+    expect(decision).toContain('aiwg.fortemi.index.export.v2');
+    expect(decision).toContain('aiwg.fortemi.index.record.v2');
     expect(decision).toContain('--min-release-age=0');
     expect(decision).toContain('no `preinstall`, `install`, `postinstall`, or `prepare`');
     expect(decision).toContain('Fortemi/fortemi-react#219');
     expect(decision).toContain('Fortemi/fortemi-react#220');
-    expect(decision).toContain('must not switch AIWG');
+    expect(decision).toContain('Fortemi Core is the default backend');
   });
 
   it('Fortemi Core ADR locks storage, issue-search, and package-boundary limits', () => {
@@ -603,7 +603,7 @@ describe('routing documentation regressions', () => {
     expect(adr).toContain('aiwg issue list --search');
     expect(adr).toContain('.aiwg/issues/index/issues.index.json');
     expect(adr).toContain('local issue CLI contract');
-    expect(adr).toContain('@fortemi/core@2026.7.0');
+    expect(adr).toContain('@fortemi/core@2026.7.1');
     expect(adr).toContain('--min-release-age=0');
     expect(adr).toContain('--ignore-scripts');
     expect(adr).toContain('AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1');

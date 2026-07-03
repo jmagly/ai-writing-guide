@@ -74,28 +74,28 @@ describe('Artifact Dependency Graph', () => {
   });
 
   it('should show both upstream and downstream by default', async () => {
-    await showDeps(tmpDir, '.aiwg/architecture/adr-001.md');
+    await showDeps(tmpDir, '.aiwg/architecture/adr-001.md', { backend: 'local' });
     const output = consoleSpy.mock.calls.map(c => c[0]).join('\n');
     expect(output).toContain('UPSTREAM');
     expect(output).toContain('DOWNSTREAM');
   });
 
   it('should show upstream only when direction is upstream', async () => {
-    await showDeps(tmpDir, '.aiwg/architecture/adr-001.md', { direction: 'upstream' });
+    await showDeps(tmpDir, '.aiwg/architecture/adr-001.md', { direction: 'upstream', backend: 'local' });
     const output = consoleSpy.mock.calls.map(c => c[0]).join('\n');
     expect(output).toContain('UPSTREAM');
     expect(output).not.toContain('DOWNSTREAM');
   });
 
   it('should show downstream only when direction is downstream', async () => {
-    await showDeps(tmpDir, '.aiwg/requirements/UC-001.md', { direction: 'downstream' });
+    await showDeps(tmpDir, '.aiwg/requirements/UC-001.md', { direction: 'downstream', backend: 'local' });
     const output = consoleSpy.mock.calls.map(c => c[0]).join('\n');
     expect(output).not.toContain('UPSTREAM');
     expect(output).toContain('DOWNSTREAM');
   });
 
   it('should output JSON when json option is set', async () => {
-    await showDeps(tmpDir, '.aiwg/requirements/UC-001.md', { json: true });
+    await showDeps(tmpDir, '.aiwg/requirements/UC-001.md', { json: true, backend: 'local' });
     const jsonOutput = consoleSpy.mock.calls.map(c => c[0]).join('');
     const parsed = JSON.parse(jsonOutput);
     expect(parsed.artifact).toBe('.aiwg/requirements/UC-001.md');
@@ -105,7 +105,7 @@ describe('Artifact Dependency Graph', () => {
   });
 
   it('should handle orphaned artifacts (no dependencies)', async () => {
-    await showDeps(tmpDir, '.aiwg/risks/risk-register.md', { json: true });
+    await showDeps(tmpDir, '.aiwg/risks/risk-register.md', { json: true, backend: 'local' });
     const jsonOutput = consoleSpy.mock.calls.map(c => c[0]).join('');
     const parsed = JSON.parse(jsonOutput);
     expect(parsed.upstream).toHaveLength(0);
@@ -113,7 +113,7 @@ describe('Artifact Dependency Graph', () => {
   });
 
   it('should respect depth limit', async () => {
-    await showDeps(tmpDir, '.aiwg/requirements/UC-001.md', { depth: 1, json: true });
+    await showDeps(tmpDir, '.aiwg/requirements/UC-001.md', { depth: 1, json: true, backend: 'local' });
     const jsonOutput = consoleSpy.mock.calls.map(c => c[0]).join('');
     const parsed = JSON.parse(jsonOutput);
     // At depth 1, should get direct downstream but not transitive
@@ -126,7 +126,7 @@ describe('Artifact Dependency Graph', () => {
       throw new Error('process.exit');
     });
 
-    await expect(showDeps(tmpDir, '.aiwg/nonexistent.md')).rejects.toThrow('process.exit');
+    await expect(showDeps(tmpDir, '.aiwg/nonexistent.md', { backend: 'local' })).rejects.toThrow('process.exit');
 
     exitSpy.mockRestore();
   });
@@ -137,7 +137,7 @@ describe('Artifact Dependency Graph', () => {
       throw new Error('process.exit');
     });
 
-    await expect(showDeps(emptyDir, '.aiwg/foo.md')).rejects.toThrow('process.exit');
+    await expect(showDeps(emptyDir, '.aiwg/foo.md', { backend: 'local' })).rejects.toThrow('process.exit');
 
     exitSpy.mockRestore();
     fs.rmSync(emptyDir, { recursive: true, force: true });

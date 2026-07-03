@@ -214,6 +214,7 @@ describe('Cross-Graph Set Queries', () => {
         direction: 'in',
         edgeType: 'cites',
         json: true,
+        backend: 'local',
       });
 
       const output = consoleSpy.mock.calls.map(c => c[0]).join('');
@@ -228,6 +229,7 @@ describe('Cross-Graph Set Queries', () => {
         graph: 'citation-network',
         node: 'REF-008',
         direction: 'out',
+        backend: 'local',
       });
 
       const output = consoleSpy.mock.calls.map(c => c[0]).join('\n');
@@ -267,6 +269,7 @@ describe('Cross-Graph Set Queries', () => {
         nodeB: 'REF-016',
         direction: 'out',
         json: true,
+        backend: 'local',
       });
 
       const output = consoleSpy.mock.calls.map(c => c[0]).join('');
@@ -286,6 +289,7 @@ describe('Cross-Graph Set Queries', () => {
         direction: 'in',
         edgeType: 'cites',
         json: true,
+        backend: 'local',
       });
 
       const output = consoleSpy.mock.calls.map(c => c[0]).join('');
@@ -304,6 +308,7 @@ describe('Cross-Graph Set Queries', () => {
         direction: 'in',
         edgeType: 'cites',
         json: true,
+        backend: 'local',
       });
 
       const output = consoleSpy.mock.calls.map(c => c[0]).join('');

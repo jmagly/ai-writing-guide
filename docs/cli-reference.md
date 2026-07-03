@@ -3376,9 +3376,10 @@ aiwg discover "<phrase>" [options]
 - `--type <kinds>` — Comma-separated filter; defaults to `skill,agent,command,rule,flow`. Examples: `--type skill`, `--type skill,agent`
 - `--json` — Emit a stable JSON schema (`path`, `type`, `title`, `score`, `triggers`, `capability`, `kernel`) for programmatic agent consumption
 - `--graph <name>` — Override the default graph. Defaults to `framework` (the AIWG capability graph), which is rebuilt automatically after every `aiwg use`.
-- `--backend <local|fortemi-core>` — Query backend. Default is `local`;
-  `fortemi-core` reads the opt-in static cache created by
-  `aiwg index sync --backend fortemi-core`. For the `framework` graph it can
+- `--backend <fortemi-core|local>` — Query backend. Default is
+  `fortemi-core`; `local` selects the legacy local fallback. The Fortemi Core
+  backend reads the static cache created by `aiwg index sync`. For the
+  `framework` graph it can
   fall back to the packaged prebuilt index described in
   [`docs/fortemi-core-prebuilt-indices.md`](fortemi-core-prebuilt-indices.md).
 
@@ -3389,7 +3390,7 @@ aiwg discover "create intake"                       # ranks intake-* skills + in
 aiwg discover "deploy production" --limit 3         # flow-deploy-to-production tops at score 0.51
 aiwg discover "audit security" --type skill         # narrow to skills only
 aiwg discover "review code" --type agent --json     # JSON for sub-agent consumption
-aiwg discover "static retrieval" --backend fortemi-core --json
+aiwg discover "static retrieval" --json
 ```
 
 **Output (default):**
@@ -3441,9 +3442,9 @@ aiwg index show <type> <name> [options]      # equivalent
 - `--json` — Emit `{ path, type, title, kernel, content }` envelope. Default mode streams the file unmodified.
 - `--first` — On ambiguity, pick the top match instead of erroring with the disambiguation list.
 - `--graph <name>` — Override the default graph (defaults to `framework` then `project`).
-- `--backend <local|fortemi-core>` — Lookup backend. Default is `local`;
-  `fortemi-core` reads the opt-in static cache created by
-  `aiwg index sync --backend fortemi-core`.
+- `--backend <fortemi-core|local>` — Lookup backend. Default is
+  `fortemi-core`; `local` selects the legacy local fallback. The Fortemi Core
+  backend reads the static cache created by `aiwg index sync`.
 
 **Lookup order:**
 
@@ -3459,7 +3460,7 @@ aiwg show skill flow-deploy-to-production --json    # path + content envelope
 aiwg show agent aiwg-steward                        # agent definition
 aiwg show command discover                          # CLI command spec
 aiwg show rule no-attribution                       # rule body
-aiwg show skill research-query --backend fortemi-core --json
+aiwg show skill research-query --json
 ```
 
 **Errors:**
@@ -3743,9 +3744,9 @@ aiwg index query [search-text] [options]
 - `--limit <n>` - Maximum number of results (default: 20)
 - `--graph <type>` - Search a specific graph only
 - `--fulltext` - Lexical full-text search over artifact **bodies** (BM25), instead of the default metadata scoring. Distinct from `--semantic` (conceptual).
-- `--semantic` - Use semantic similarity search (requires embedding index, or Fortemi static cache when paired with `--backend fortemi-core`)
-- `--hybrid` - Use Fortemi Core static hybrid scoring plus the type/phase/tag/path filters. Requires `--backend fortemi-core`.
-- `--backend <local|fortemi-core>` - Query backend. Default is `local`; `fortemi-core` reads the opt-in static cache created by `aiwg index sync --backend fortemi-core`. For `--graph framework`, packaged releases can fall back to the prebuilt index described in [`docs/fortemi-core-prebuilt-indices.md`](fortemi-core-prebuilt-indices.md).
+- `--semantic` - Use Fortemi Core static semantic scoring by default, or the legacy embedding index with `--backend local`
+- `--hybrid` - Use Fortemi Core static hybrid scoring plus the type/phase/tag/path filters
+- `--backend <fortemi-core|local>` - Query backend. Default is `fortemi-core`; `local` is the legacy fallback during the deprecation window. Fortemi Core reads the static cache created by `aiwg index sync`. For `--graph framework`, packaged releases can fall back to the prebuilt index described in [`docs/fortemi-core-prebuilt-indices.md`](fortemi-core-prebuilt-indices.md).
 - `--set-query <expr>` - Set-theoretic query, e.g. `"cited_by(REF-008) AND cited_by(REF-016)"` (SQLite backend recommended)
 - `--json` - Output as JSON (recommended for agents)
 
@@ -3757,11 +3758,11 @@ aiwg index query [search-text] [options]
 |------|-------|---------|
 | Default (any graph) | **Metadata only** — title (3x), tags (2x), capability/triggers, the 500-char summary (1x), path (0.5x). The index stores a truncated summary, **not** the full body. | Weighted field-match |
 | `--fulltext` (local backend) | **Full artifact body** — reads each candidate node's source file and matches body text (frontmatter stripped). Catches content that never reaches the summary. | BM25 (top hit normalized to 1.0; JSON adds `matched` terms + `mode: "fulltext"`) |
-| `--fulltext --backend fortemi-core` | Fortemi static-cache text/chunks exported by `aiwg index sync --backend fortemi-core`. Preserves type/phase/tag/path filters without rereading source files. | BM25 over exported static text/chunks |
-| `--semantic` | Conceptual similarity via the embedding index, or the Fortemi static cache when paired with `--backend fortemi-core`. | Cosine over embeddings or static Fortemi chunk scoring |
-| `--hybrid --backend fortemi-core` | Fortemi static semantic scoring filtered by path/type/phase/tags. | Static Fortemi score plus filter/facet matches |
+| `--fulltext` | Fortemi static-cache text/chunks exported by `aiwg index sync`. Preserves type/phase/tag/path filters without rereading source files. Use `--backend local` for legacy body reads. | BM25 over exported static text/chunks |
+| `--semantic` | Fortemi static semantic scoring by default. Use `--backend local` for the legacy embedding index. | Static Fortemi chunk scoring or cosine over local embeddings |
+| `--hybrid` | Fortemi static semantic scoring filtered by path/type/phase/tags. | Static Fortemi score plus filter/facet matches |
 
-Use the default for "find the artifact named/about X"; `--fulltext` for "find the document whose **body** discusses X"; `--semantic` for "find documents conceptually near X"; `--hybrid --backend fortemi-core` for Fortemi static-cache semantic ranking constrained by metadata filters. The candidate set (which nodes are considered) is the same in local metadata/fulltext/semantic modes — the graph + filter flags select candidates, the mode decides ranking.
+Use the default for "find the artifact named/about X"; `--fulltext` for "find the document whose **body** discusses X"; `--semantic` for "find documents conceptually near X"; `--hybrid` for Fortemi static-cache semantic ranking constrained by metadata filters. Pass `--backend local` only when you need the legacy local index path during the phase-out window.
 
 **Examples:**
 
@@ -3782,16 +3783,16 @@ aiwg index query "login" --type use-case --phase requirements
 aiwg index query "mixture of experts routing" --fulltext --graph papers
 
 # Fortemi static-cache fulltext over exported record text/chunks
-aiwg index query "static retrieval evidence" --fulltext --backend fortemi-core --graph project --json
+aiwg index query "static retrieval evidence" --fulltext --graph project --json
 
 # Semantic similarity search (embedding index required)
 aiwg index query "dense retrieval for question answering" --semantic --graph citation-network
 
 # Fortemi static-cache semantic search
-aiwg index query "static retrieval evidence" --semantic --backend fortemi-core --graph project --json
+aiwg index query "static retrieval evidence" --semantic --graph project --json
 
 # Fortemi static-cache hybrid search with metadata filters
-aiwg index query "static retrieval architecture" --hybrid --backend fortemi-core --type adr --tags search --path .aiwg/architecture --json
+aiwg index query "static retrieval architecture" --hybrid --type adr --tags search --path .aiwg/architecture --json
 
 # Set-theoretic: papers citing both REF-008 and REF-016
 aiwg index query --set-query "cited_by(REF-008) AND cited_by(REF-016)" --graph citation-network
@@ -3817,9 +3818,9 @@ aiwg index neighbors --graph <name> --node <id> [options]
 - `--node <id>` - Node identifier (e.g., `REF-008`, `.aiwg/requirements/UC-001.md`)
 - `--direction <dir>` - `in`, `out`, or `both` (default: `both`)
 - `--edge-type <type>` - Filter by edge type (e.g., `cites`, `cited-by`, `implements`, `depends-on`)
-- `--backend <local|fortemi-core>` - Query backend. Default is `local`;
-  `fortemi-core` reads graph relationships from the opt-in static cache
-  created by `aiwg index sync --backend fortemi-core`.
+- `--backend <fortemi-core|local>` - Query backend. Default is `fortemi-core`;
+  Fortemi Core reads graph relationships from the static cache, while `local`
+  uses the legacy graph files during the phase-out window.
 - `--json` - Output as JSON
 
 **Examples:**
@@ -3838,7 +3839,7 @@ aiwg index neighbors --graph citation-network --node REF-008 --direction out --e
 aiwg index neighbors --graph project --node .aiwg/requirements/UC-001.md --edge-type implements
 
 # Fortemi static-cache graph traversal
-aiwg index neighbors --graph kb --node retrieval.md --backend fortemi-core --json
+aiwg index neighbors --graph kb --node retrieval.md --json
 ```
 
 **Typed edge types:**
@@ -3901,9 +3902,10 @@ aiwg index deps <path> [options]
 - `--direction <dir>` - Direction: `upstream`, `downstream`, or `both` (default: `both`)
 - `--depth <n>` - Maximum traversal depth (default: 3)
 - `--graph <type>` - Use a specific graph's dependency data
-- `--backend <local|fortemi-core>` - Query backend. Default is `local`;
-  `fortemi-core` reads dependency relationships from the opt-in static cache
-  created by `aiwg index sync --backend fortemi-core`.
+- `--backend <fortemi-core|local>` - Query backend. Default is `fortemi-core`;
+  Fortemi Core reads dependency relationships from the static cache, while
+  `local` reads dependency relationships from the legacy graph files during the
+  phase-out window.
 - `--json` - Output as JSON (recommended for agents)
 
 **Behavior:**
@@ -3930,7 +3932,7 @@ aiwg index deps .aiwg/architecture/adr-001.md --depth 2 --json
 aiwg index deps agentic/code/frameworks/sdlc-complete/rules/artifact-discovery.md --graph framework
 
 # Fortemi static-cache dependency traversal
-aiwg index deps .aiwg/architecture/search-adr.md --backend fortemi-core --graph project --json
+aiwg index deps .aiwg/architecture/search-adr.md --graph project --json
 ```
 
 ---
@@ -3983,8 +3985,8 @@ aiwg index stats --graph framework
 AIWG persists artifacts (memory pages, knowledge-base entries, activity log, reflections, provenance records, research corpus, sandbox identities) through a pluggable storage adapter system (#934). By default everything lives on the local filesystem under `.aiwg/`. With `.aiwg/storage.config` you can route any subsystem to Obsidian, Logseq, the legacy Fortemi MCP storage adapter, or a different filesystem location.
 
 The `fortemi` storage backend is separate from Fortemi Core index/search. Use
-`aiwg index sync --backend fortemi-core` and query commands with
-`--backend fortemi-core` for the new static-cache search path and packaged
+`aiwg index sync` and query commands with
+`--backend local` for legacy fallback for the new static-cache search path and packaged
 prebuilt framework fallback.
 
 **See [`docs/storage/`](storage/README.md) for the full guide** — overview, security model, migration walkthrough, and per-backend pages.

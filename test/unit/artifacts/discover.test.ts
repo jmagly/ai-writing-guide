@@ -285,7 +285,7 @@ describe('discoverCapability — JSON output', () => {
     await discoverCapability(cwd, {
       phrase: 'create intake',
       graph: 'framework',
-      json: true,
+      json: true, backend: 'local',
       limit: 3,
     });
 
@@ -334,7 +334,7 @@ describe('discoverCapability — JSON output', () => {
     await discoverCapability(cwd, {
       phrase: 'intake paperwork submission registration',
       graph: 'framework',
-      json: true,
+      json: true, backend: 'local',
       limit: 3,
     });
     logSpy.mockRestore();
@@ -371,7 +371,7 @@ describe('discoverCapability — JSON output', () => {
       const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
         captured.push(args.join(' ')),
       );
-      await discoverCapability(cwd, { phrase, graph: 'framework', json: true, limit: 3 });
+      await discoverCapability(cwd, { phrase, graph: 'framework', json: true, backend: 'local', limit: 3 });
       logSpy.mockRestore();
       return JSON.parse(captured.join('\n'));
     };
@@ -409,7 +409,7 @@ describe('discoverCapability — JSON output', () => {
       const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
         captured.push(args.join(' ')),
       );
-      await discoverCapability(cwd, { phrase, graph: 'framework', json: true, limit: 3 });
+      await discoverCapability(cwd, { phrase, graph: 'framework', json: true, backend: 'local', limit: 3 });
       logSpy.mockRestore();
       const parsed = JSON.parse(captured.join('\n'));
       expect(parsed.results.length, `"${phrase}" should not dead-end`).toBeGreaterThan(0);
@@ -454,7 +454,7 @@ describe('discoverCapability — JSON output', () => {
     await discoverCapability(cwd, {
       phrase: 'kernel quickref',
       graph: 'framework',
-      json: true,
+      json: true, backend: 'local',
       limit: 5,
     });
 
@@ -524,7 +524,7 @@ describe('discoverCapability — JSON output', () => {
       await discoverCapability(cwd, {
         phrase,
         graph: 'framework',
-        json: true,
+        json: true, backend: 'local',
         limit: 3,
       });
       logSpy.mockRestore();
@@ -565,7 +565,7 @@ describe('discoverCapability — JSON output', () => {
       await discoverCapability(cwd, {
         phrase: 'sdlc-acclerate',
         graph: 'framework',
-        json: true,
+        json: true, backend: 'local',
         limit: 3,
       });
       logSpy.mockRestore();
@@ -600,7 +600,7 @@ describe('discoverCapability — exclusive capability surface (#1545)', () => {
     const captured: string[] = [];
     const logSpy = vi.spyOn(console, 'log').mockImplementation((...a) => captured.push(a.join(' ')));
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    await discoverCapability(cwd, { phrase: 'deploy to production', json: true, limit: 3 });
+    await discoverCapability(cwd, { phrase: 'deploy to production', json: true, backend: 'local', limit: 3 });
     logSpy.mockRestore();
     errSpy.mockRestore();
 
@@ -619,7 +619,7 @@ describe('discoverCapability — exclusive capability surface (#1545)', () => {
     const captured: string[] = [];
     const logSpy = vi.spyOn(console, 'log').mockImplementation((...a) => captured.push(a.join(' ')));
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    await discoverCapability(cwd, { phrase: 'deploy', json: true, limit: 10 });
+    await discoverCapability(cwd, { phrase: 'deploy', json: true, backend: 'local', limit: 10 });
     logSpy.mockRestore();
     errSpy.mockRestore();
 
@@ -665,7 +665,7 @@ describe('discoverCapability — Flow documents surface in default discover (#15
     const logSpy = vi.spyOn(console, 'log').mockImplementation((...a) => captured.push(a.join(' ')));
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // No typeFilter → exercises DEFAULT_DISCOVER_TYPES (which now includes `flow`).
-    await discoverCapability(cwd, { phrase: 'ship release to production', json: true, limit: 5 });
+    await discoverCapability(cwd, { phrase: 'ship release to production', json: true, backend: 'local', limit: 5 });
     logSpy.mockRestore();
     errSpy.mockRestore();
 
@@ -711,7 +711,7 @@ describe('discoverCapability — deployed commands are discoverable (#1541)', ()
         const captured: string[] = [];
         const logSpy = vi.spyOn(console, 'log').mockImplementation((...a) => captured.push(a.join(' ')));
         const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-        await discoverCapability(cwd, { phrase: 'addr-issues', typeFilter: ['command'], json: true, limit: 5 });
+        await discoverCapability(cwd, { phrase: 'addr-issues', typeFilter: ['command'], json: true, backend: 'local', limit: 5 });
         logSpy.mockRestore(); errSpy.mockRestore();
         const parsed = JSON.parse(captured.join('\n'));
         const hit = parsed.results.find((r: { path: string; type: string }) => r.path.endsWith('commands/addr-issues.md'));
@@ -741,7 +741,7 @@ describe('discoverCapability — deployed commands are discoverable (#1541)', ()
       const captured: string[] = [];
       const logSpy = vi.spyOn(console, 'log').mockImplementation((...a) => captured.push(a.join(' ')));
       const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      await discoverCapability(userProject, { phrase: 'addr-issues', typeFilter: ['command'], json: true, limit: 5 });
+      await discoverCapability(userProject, { phrase: 'addr-issues', typeFilter: ['command'], json: true, backend: 'local', limit: 5 });
       logSpy.mockRestore(); errSpy.mockRestore();
       const parsed = JSON.parse(captured.join('\n'));
       const hit = parsed.results?.find((r: { path: string }) => r.path.endsWith('commands/addr-issues.md'));
@@ -789,7 +789,7 @@ describe('discover — native-release vs plugin packaging routing (#1598)', () =
     const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
       captured.push(args.join(' ')),
     );
-    await discoverCapability(cwd, { phrase, graph: 'framework', json: true, limit: 5 });
+    await discoverCapability(cwd, { phrase, graph: 'framework', json: true, backend: 'local', limit: 5 });
     logSpy.mockRestore();
     return JSON.parse(captured.join('\n'));
   };
@@ -867,7 +867,7 @@ describe('discover — native-release vs plugin packaging routing (#1598)', () =
     await discoverCapability(cwd, {
       phrase: 'post tag release asset verifier GHCR packages installer release assets',
       graph: 'framework',
-      json: true,
+      json: true, backend: 'local',
       limit: 5,
     });
     logSpy.mockRestore();

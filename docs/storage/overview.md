@@ -122,7 +122,7 @@ See `docs/storage/security.md` for the full security model — credential handli
 | `fs`          | READY       | Default; local filesystem |
 | `obsidian`    | READY       | Direct fs writes against vault; refuses `.obsidian/` config dir |
 | `logseq`      | READY       | Direct fs writes against graph; YAML→`property::` transform |
-| `fortemi`     | READY (alpha, legacy for search) | Routes persistence through Fortemi MCP tools; use `--backend fortemi-core` for index/search |
+| `fortemi`     | READY (alpha, legacy for search) | Routes persistence through Fortemi MCP tools; index/search uses Fortemi Core by default; use `--backend local` for legacy fallback |
 | `notion`      | STUB (#959) | Planned — REST + external_id upsert |
 | `anythingllm` | STUB (#960) | Planned — multipart upload + cache mirror |
 | `s3`          | STUB (#962) | Planned — phase 3 (bulk artifacts) |

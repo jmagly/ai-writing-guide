@@ -49,6 +49,10 @@ function parseBackendFlag(args: string[]): 'local' | 'fortemi-core' | undefined 
   process.exit(1);
 }
 
+function parseSearchBackendFlag(args: string[]): 'local' | 'fortemi-core' {
+  return parseBackendFlag(args) ?? 'fortemi-core';
+}
+
 function firstPositionalArg(args: string[], valueFlags: string[]): string | undefined {
   const skip = new Set<number>();
   for (let i = 0; i < args.length; i++) {
@@ -222,7 +226,7 @@ function printIndexUsage(): void {
   console.log('  discover   Capability search across skills/agents/commands/rules (#1214)');
   console.log('  show       Print the full text of a specific skill/agent/command/rule');
   console.log('  export     Export a browser-consumable index contract');
-  console.log('  sync       Materialize an opt-in Fortemi Core static index cache');
+  console.log('  sync       Materialize the Fortemi Core static index cache');
   console.log('  deps       Show artifact dependency graph');
   console.log('  stats      Show index statistics');
   console.log('  status     Enumerate the index-graph registry (freshness + drift); alias: list');
@@ -507,7 +511,7 @@ async function handleQuery(args: string[]): Promise<void> {
   const pathPattern = parseFlagValue(flags, '--path', 'Error: --path requires a value');
 
   const graph = parseGraphFlag(flags);
-  const backend = parseBackendFlag(flags);
+  const backend = parseSearchBackendFlag(flags);
 
   // --semantic (#1493): conceptual similarity via the embedding index.
   if (flags.includes('--semantic')) {
@@ -687,7 +691,7 @@ interface HybridQueryOptions {
   tags?: string[];
 }
 
-/** `aiwg index query "..." --hybrid --backend fortemi-core` — static semantic scoring plus filters/facets. */
+/** `aiwg index query "..." --hybrid` — static semantic scoring plus filters/facets. */
 async function runHybridQuery(
   cwd: string,
   options: HybridQueryOptions,
@@ -695,7 +699,7 @@ async function runHybridQuery(
   backend: 'local' | 'fortemi-core' | undefined,
 ): Promise<void> {
   if (backend !== 'fortemi-core') {
-    console.error('Error: --hybrid currently requires --backend fortemi-core for the static Fortemi Core contract.');
+    console.error('Error: --hybrid uses the Fortemi Core static contract by default. Remove --backend local or use local semantic/fulltext modes separately.');
     process.exit(1);
   }
 
@@ -889,10 +893,10 @@ async function handleExport(args: string[]): Promise<void> {
  */
 async function handleSync(args: string[]): Promise<void> {
   if (args.includes('--help') || args.includes('-h')) {
-    console.log('Usage: aiwg index sync --backend fortemi-core [options]');
+    console.log('Usage: aiwg index sync [--backend fortemi-core] [options]');
     console.log('');
     console.log('Options:');
-    console.log('  --backend fortemi-core  Materialize the Fortemi Core static index cache (required)');
+    console.log('  --backend fortemi-core  Materialize the Fortemi Core static index cache (default)');
     console.log('  --graph <name>          Graph to sync (default: project)');
     console.log('  --repo <name>           Source repository label (default: cwd basename)');
     console.log('  --privacy <level>       private, sanitized, or public (default: private)');
@@ -901,9 +905,9 @@ async function handleSync(args: string[]): Promise<void> {
     return;
   }
 
-  const backend = parseBackendFlag(args);
+  const backend = parseSearchBackendFlag(args);
   if (backend !== 'fortemi-core') {
-    console.error('Error: index sync requires --backend fortemi-core');
+    console.error('Error: index sync only supports the fortemi-core backend; omit --backend or pass --backend fortemi-core');
     process.exit(1);
   }
 
@@ -950,7 +954,7 @@ async function handleDeps(args: string[]): Promise<void> {
   if (!artifactPath) {
     console.error('Error: Artifact path required');
     console.log(
-      'Usage: aiwg index deps <path> [--direction upstream|downstream|both] [--depth N] [--json] [--backend fortemi-core]',
+      'Usage: aiwg index deps <path> [--direction upstream|downstream|both] [--depth N] [--json] [--backend fortemi-core|local]',
     );
     process.exit(1);
   }
@@ -968,7 +972,7 @@ async function handleDeps(args: string[]): Promise<void> {
   const edgeType = parseFlagValue(args, '--edge-type', 'Error: --edge-type requires a value');
 
   const graph = parseGraphFlag(args);
-  const backend = parseBackendFlag(args);
+  const backend = parseBackendFlag(args) ?? 'fortemi-core';
 
   await showDeps(cwd, artifactPath, {
     direction,
@@ -1033,7 +1037,7 @@ async function handleNeighbors(args: string[]): Promise<void> {
     console.log('  --node <id>         Node path or REF-XXX identifier (required)');
     console.log('  --direction <dir>   in (upstream), out (downstream), or both (default: both)');
     console.log('  --edge-type <type>  Filter by edge type (e.g., "cites", "depends-on")');
-    console.log('  --backend <name>    local or fortemi-core (default: local)');
+  console.log('  --backend <name>    fortemi-core or local legacy fallback (default: fortemi-core)');
     console.log('  --json              Output as JSON');
     console.log('');
     console.log('Examples:');
@@ -1075,7 +1079,7 @@ async function handleNeighbors(args: string[]): Promise<void> {
   const edgeType = parseFlagValue(args, '--edge-type', 'Error: --edge-type requires a value');
 
   const json = args.includes('--json');
-  const backend = parseBackendFlag(args);
+  const backend = parseSearchBackendFlag(args);
 
   await showNeighbors(cwd, { graph, node, direction, edgeType, json, backend });
 }
@@ -1101,7 +1105,7 @@ async function handleSetQuery(args: string[]): Promise<void> {
     console.log('  --node-b <id>       Second node (required)');
     console.log('  --direction <dir>   in (upstream) or out (downstream) (default: in)');
     console.log('  --edge-type <type>  Filter by edge type');
-    console.log('  --backend <name>    local or fortemi-core (default: local)');
+  console.log('  --backend <name>    fortemi-core or local legacy fallback (default: fortemi-core)');
     console.log('  --json              Output as JSON');
     console.log('');
     console.log('Examples:');
@@ -1154,7 +1158,7 @@ async function handleSetQuery(args: string[]): Promise<void> {
   const edgeType = parseFlagValue(args, '--edge-type', 'Error: --edge-type requires a value');
 
   const json = args.includes('--json');
-  const backend = parseBackendFlag(args);
+  const backend = parseSearchBackendFlag(args);
 
   await executeSetQuery(cwd, {
     graph,
@@ -1201,7 +1205,7 @@ async function handleDiscover(args: string[]): Promise<void> {
     console.error('Error: aiwg index discover requires a search phrase');
     console.log('');
     console.log(
-      'Usage: aiwg index discover "<phrase>" [--type <kinds>] [--limit N] [--json] [--graph <name>] [--backend fortemi-core]',
+      'Usage: aiwg index discover "<phrase>" [--type <kinds>] [--limit N] [--json] [--graph <name>] [--backend local|fortemi-core]',
     );
     console.log('');
     console.log('Examples:');
@@ -1222,7 +1226,7 @@ async function handleDiscover(args: string[]): Promise<void> {
   const json = flags.includes('--json');
 
   const graph = parseGraphFlag(flags);
-  const backend = parseBackendFlag(flags);
+  const backend = parseSearchBackendFlag(flags);
 
   await discoverCapability(cwd, {
     phrase,
@@ -1239,7 +1243,7 @@ async function handleDiscover(args: string[]): Promise<void> {
  * artifact by type and name.
  *
  * Shape (#1218):
- *   aiwg show <type> <name> [--json] [--first] [--graph <name>] [--backend fortemi-core]
+ *   aiwg show <type> <name> [--json] [--first] [--graph <name>] [--backend local|fortemi-core]
  *
  * Type is positional (not a flag) so the verb reads as
  * "show <kind> <name>". `<type>` is one of: skill, agent, command, rule.
@@ -1263,7 +1267,7 @@ async function handleShow(args: string[]): Promise<void> {
   const ALLOWED_TYPES = ['skill', 'agent', 'command', 'rule'];
   const HELP_TEXT = [
     '',
-    'Usage: aiwg show <type> <name> [--json] [--first] [--graph <name>] [--backend fortemi-core]',
+    'Usage: aiwg show <type> <name> [--json] [--first] [--graph <name>] [--backend local|fortemi-core]',
     '       aiwg index show <type> <name> ...',
     '',
     'Types: skill | agent | command | rule',
@@ -1319,7 +1323,7 @@ async function handleShow(args: string[]): Promise<void> {
   }
 
   const graph = parseGraphFlag(flags);
-  const backend = parseBackendFlag(flags);
+  const backend = parseSearchBackendFlag(flags);
 
   await showArtifact(cwd, {
     name,

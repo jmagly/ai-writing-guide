@@ -44,12 +44,12 @@ aiwg index query --tags security,auth --json
 # Combined filters
 aiwg index query "login" --type use-case --phase requirements --json
 
-# Opt-in Fortemi Core static cache
-aiwg index query "login" --backend fortemi-core --json
+# default Fortemi Core static cache
+aiwg index query "login" --json
 
 # Fortemi static semantic and filtered hybrid modes
-aiwg index query "login architecture" --semantic --backend fortemi-core --json
-aiwg index query "login architecture" --hybrid --backend fortemi-core --type adr --tags auth --json
+aiwg index query "login architecture" --semantic --json
+aiwg index query "login architecture" --hybrid --type adr --tags auth --json
 ```
 
 Parse the JSON output and present results in a readable summary:
@@ -72,9 +72,9 @@ aiwg index deps .aiwg/requirements/UC-001.md --direction upstream --json
 aiwg index deps .aiwg/requirements/UC-001.md --direction downstream --json
 
 # Fortemi Core static-cache traversal, when synced
-aiwg index deps .aiwg/requirements/UC-001.md --backend fortemi-core --json
-aiwg index neighbors --graph project --node UC-001 --backend fortemi-core --json
-aiwg index set --graph project --op intersection --node-a UC-001 --node-b ADR-001 --backend fortemi-core --json
+aiwg index deps .aiwg/requirements/UC-001.md --json
+aiwg index neighbors --graph project --node UC-001 --json
+aiwg index set --graph project --op intersection --node-a UC-001 --node-b ADR-001 --json
 ```
 
 Present the dependency tree in a readable format:
@@ -152,8 +152,8 @@ Found 3 artifacts about "authentication":
 
 - Artifact index must exist (`aiwg index build` must have been run)
 - If index doesn't exist, offer to build it first
-- Fortemi Core lookups require `aiwg index sync --backend fortemi-core`; if the
-  static cache is missing or stale, omit `--backend fortemi-core` and use the
+- Fortemi Core lookups require `aiwg index sync`; if the
+  static cache is missing or stale, omit the legacy backend and use the
   local index
 
 ## References

@@ -158,14 +158,14 @@ describe('queryIndex --fulltext integration (#1494)', () => {
   });
 
   it('default (metadata) mode does NOT find a body-only term', async () => {
-    await queryIndex(tmpDir, { text: 'quantization' }, { json: true });
+    await queryIndex(tmpDir, { text: 'quantization' }, { json: true, backend: 'local' });
     const parsed = JSON.parse(consoleSpy.mock.calls.map((c) => c[0]).join(''));
     expect(parsed.mode).toBe('metadata');
     expect(parsed.results).toHaveLength(0);
   });
 
   it('--fulltext finds the body-only term and reports mode + matched', async () => {
-    await queryIndex(tmpDir, { text: 'quantization', fulltext: true }, { json: true });
+    await queryIndex(tmpDir, { text: 'quantization', fulltext: true }, { json: true, backend: 'local' });
     const parsed = JSON.parse(consoleSpy.mock.calls.map((c) => c[0]).join(''));
     expect(parsed.mode).toBe('fulltext');
     expect(parsed.results).toHaveLength(1);
@@ -176,7 +176,7 @@ describe('queryIndex --fulltext integration (#1494)', () => {
 
   it('--fulltext respects filter flags as the candidate set', async () => {
     // Restrict candidates by tag; the matching doc is excluded → no hit.
-    await queryIndex(tmpDir, { text: 'quantization', fulltext: true, tags: ['cache'] }, { json: true });
+    await queryIndex(tmpDir, { text: 'quantization', fulltext: true, tags: ['cache'] }, { json: true, backend: 'local' });
     const parsed = JSON.parse(consoleSpy.mock.calls.map((c) => c[0]).join(''));
     expect(parsed.results).toHaveLength(0);
   });
@@ -191,7 +191,7 @@ describe('queryIndex --fulltext integration (#1494)', () => {
       summary: 'quantization in summary',
     });
     fs.writeFileSync(indexPath, JSON.stringify(idx));
-    await queryIndex(tmpDir, { text: 'quantization', fulltext: true }, { json: true });
+    await queryIndex(tmpDir, { text: 'quantization', fulltext: true }, { json: true, backend: 'local' });
     const parsed = JSON.parse(consoleSpy.mock.calls.map((c) => c[0]).join(''));
     // Only the real on-disk body hit; the ghost (file missing) is skipped.
     expect(parsed.results.map((r: { path: string }) => r.path)).toEqual(['.aiwg/requirements/UC-001.md']);

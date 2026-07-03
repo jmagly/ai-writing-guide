@@ -109,8 +109,12 @@ describe("research-query executable source selection", () => {
     ]);
   }
 
-  it("selects matching research sources from the local artifact graph", async () => {
+  it("selects matching research sources from the Fortemi Core cache by default", async () => {
     seed();
+    syncFortemiCoreIndex(tmp, {
+      graph: "project",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
 
     const result = await runResearchQuery(tmp, {
       question: "static retrieval source selection",
@@ -118,7 +122,7 @@ describe("research-query executable source selection", () => {
       maxSources: 3,
     });
 
-    expect(result.query.backend).toBe("local");
+    expect(result.query.backend).toBe("fortemi-core");
     expect(result.sources.map((source) => source.id)).toEqual([
       "REF-001",
       "PROF-001",
@@ -128,6 +132,23 @@ describe("research-query executable source selection", () => {
       relevance: "direct",
       path: ".aiwg/research/findings/REF-001.md",
     });
+  });
+
+  it("keeps the legacy local artifact graph behind --backend local", async () => {
+    seed();
+
+    const result = await runResearchQuery(tmp, {
+      question: "static retrieval source selection",
+      depth: "thorough",
+      maxSources: 3,
+      backend: "local",
+    });
+
+    expect(result.query.backend).toBe("local");
+    expect(result.sources.map((source) => source.id)).toEqual([
+      "REF-001",
+      "PROF-001",
+    ]);
   });
 
   it("keeps source-selection parity with the Fortemi Core static cache", async () => {
@@ -140,11 +161,11 @@ describe("research-query executable source selection", () => {
     const local = await runResearchQuery(tmp, {
       question: "retrieval source selection",
       depth: "quick",
+      backend: "local",
     });
     const fortemi = await runResearchQuery(tmp, {
       question: "retrieval source selection",
       depth: "quick",
-      backend: "fortemi-core",
     });
 
     expect(fortemi.query.backend).toBe("fortemi-core");
@@ -162,11 +183,15 @@ describe("research-query executable source selection", () => {
         depth: "quick",
         backend: "fortemi-core",
       }),
-    ).rejects.toThrow("aiwg index sync --backend fortemi-core");
+    ).rejects.toThrow("aiwg index sync");
   });
 
   it("emits JSON and can save a source-selection artifact", async () => {
     seed();
+    syncFortemiCoreIndex(tmp, {
+      graph: "project",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
 
     await main(
       [

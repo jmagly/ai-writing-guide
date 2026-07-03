@@ -37,6 +37,16 @@ async function loadOptionalFortemiAiwgIndex(): Promise<{
   validateAiwgFortemiIndexExport?: (value: unknown) => {
     ok?: boolean;
     valid?: boolean;
+    errors?: string[];
+  };
+  queryAiwgFortemiIndex?: (
+    index: unknown,
+    query?: string,
+    options?: Record<string, unknown>,
+  ) => {
+    total: number;
+    items: unknown[];
+    rankedItems?: Array<{ rank: number; matches?: unknown[] }>;
   };
 } | null> {
   try {
@@ -44,6 +54,16 @@ async function loadOptionalFortemiAiwgIndex(): Promise<{
       validateAiwgFortemiIndexExport?: (value: unknown) => {
         ok?: boolean;
         valid?: boolean;
+        errors?: string[];
+      };
+      queryAiwgFortemiIndex?: (
+        index: unknown,
+        query?: string,
+        options?: Record<string, unknown>,
+      ) => {
+        total: number;
+        items: unknown[];
+        rankedItems?: Array<{ rank: number; matches?: unknown[] }>;
       };
     };
   } catch (error) {
@@ -192,7 +212,7 @@ describe("AIWG Fortemi browser index export", () => {
     );
   });
 
-  it("emits deterministic v2 all-domain records validated by the published schema", () => {
+  it("emits deterministic v2 all-domain records validated by the latest Fortemi Core contract", async () => {
     writeIndex(
       {
         "agentic/code/addons/aiwg-utils/skills/aiwg-doctor/SKILL.md": entry({
@@ -204,6 +224,7 @@ describe("AIWG Fortemi browser index export", () => {
           summary: "Run workspace health diagnostics.",
           triggers: ["doctor", "health check"],
           capability: "Diagnose the AIWG workspace.",
+          kernel: true,
         }),
         ".opencode/agent/software-implementer.md": entry({
           path: ".opencode/agent/software-implementer.md",
@@ -420,6 +441,9 @@ describe("AIWG Fortemi browser index export", () => {
       search: {
         triggers: ["doctor", "health check"],
         capability: "Diagnose the AIWG workspace.",
+        frontmatter: {
+          kernel: true,
+        },
       },
       privacy: {
         locality: "framework",
@@ -443,9 +467,44 @@ describe("AIWG Fortemi browser index export", () => {
       target_path: ".aiwg/research/references/REF-001.md",
     });
     expect(synthesis?.source.generated).toBe(false);
+
+    const fortemi = await loadOptionalFortemiAiwgIndex();
+    if (
+      process.env.AIWG_FORTEMI_CORE_PACKAGE_REQUIRED === "1" &&
+      (!fortemi?.validateAiwgFortemiIndexExport ||
+        !fortemi?.queryAiwgFortemiIndex)
+    ) {
+      throw new Error(
+        "AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1 but @fortemi/core/aiwg-index does not expose the latest validation/query contract",
+      );
+    }
+    if (fortemi?.validateAiwgFortemiIndexExport) {
+      const result = fortemi.validateAiwgFortemiIndexExport(exported);
+      expect(
+        fortemiValidationPassed(result),
+        JSON.stringify(result.errors, null, 2),
+      ).toBe(true);
+    }
+    if (fortemi?.queryAiwgFortemiIndex) {
+      const queried = fortemi.queryAiwgFortemiIndex(
+        exported,
+        "doctor health check",
+        {
+          searchProfile: "aiwg-discovery",
+          limit: 2,
+          includeMatches: true,
+        },
+      );
+      expect(queried.total).toBeGreaterThan(0);
+      expect(queried.items[0]).toMatchObject({
+        id: skill?.id,
+        type: "aiwg.skill",
+      });
+      expect(queried.rankedItems?.[0]?.rank).toBeGreaterThan(0);
+    }
   });
 
-  it("projects v2 records into the current Fortemi Core v1 package contract", async () => {
+  it("keeps the legacy v2-to-v1 compatibility projection valid", async () => {
     writeIndex(
       {
         "agentic/code/addons/aiwg-utils/skills/aiwg-doctor/SKILL.md": entry({

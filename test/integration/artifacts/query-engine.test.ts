@@ -47,7 +47,7 @@ describe('Artifact Query Engine (integration)', () => {
     const origLog = console.log;
     console.log = (...args: unknown[]) => logs.push(args.map(String).join(' '));
     try {
-      await queryIndex(tmpDir, params, { json: true });
+      await queryIndex(tmpDir, params, { json: true, backend: 'local' });
     } finally {
       console.log = origLog;
     }

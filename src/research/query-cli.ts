@@ -87,7 +87,7 @@ const STOPWORDS = new Set([
 
 function usage(): string {
   return [
-    "Usage: aiwg research-query <question> [--backend local|fortemi-core] [--graph <name>]",
+    "Usage: aiwg research-query <question> [--backend fortemi-core|local] [--graph <name>]",
     "                           [--depth quick|thorough] [--sources-only] [--max-sources N]",
     "                           [--json] [--save]",
   ].join("\n");
@@ -182,7 +182,7 @@ function parseArgs(args: string[]): ResearchQueryOptions {
 
   return {
     question,
-    backend: backend ?? "local",
+    backend: backend ?? "fortemi-core",
     graph: (flagValue(args, "--graph", "--graph requires a graph name") ??
       "project") as GraphType,
     depth,
@@ -326,7 +326,7 @@ export async function runResearchQuery(
   options: ResearchQueryOptions,
 ): Promise<ResearchQueryResult> {
   const graph = options.graph ?? "project";
-  const backend = options.backend ?? "local";
+  const backend = options.backend ?? "fortemi-core";
   const depth = options.depth ?? "thorough";
   const maxSources = options.maxSources ?? 10;
   const loaded = await backendEntries(cwd, graph, backend);
@@ -423,7 +423,7 @@ function renderMarkdown(result: ResearchQueryResult, saved = false): string {
       ? renderSourcesTable(result.sources)
       : "No matching research sources found.",
   ];
-  if (!result.query.backend || result.query.backend === "local") {
+  if (result.query.backend === "local") {
     sections.push(
       "",
       "Use the research-query skill to synthesize an answer from these sources with GRADE-aware hedging and inline REF citations.",

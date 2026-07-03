@@ -12,11 +12,11 @@
  *
  * Budgets (from epic #924 and #923 targets):
  *   `aiwg --version` overhead ≤ 150ms (tight budget, no room for tsx forks)
- *   `aiwg help`     overhead ≤ 1000ms under full-suite load
+ *   `aiwg help`     overhead ≤ 1250ms under full-suite load
  *
  * Overridable via env for slow CI machines:
  *   AIWG_PERF_BUDGET_VERSION_MS (default 150)
- *   AIWG_PERF_BUDGET_HELP_MS    (default 1000)
+ *   AIWG_PERF_BUDGET_HELP_MS    (default 1250)
  *
  * Phase 5 of the CLI Stabilization Epic (#922).
  */
@@ -37,10 +37,11 @@ const missingBuild = !existsSync(ROUTER_PATH);
 
 // #1302: `aiwg --version` now has a package-metadata fast path and is back
 // under the original tight budget. `help` still pays router startup cost under
-// parallel load, so keep its realistic full-suite budget until a separate help-path
-// optimization lands.
+// parallel load, and the default Fortemi index integration adds more packaged
+// command/search surface to load, so keep its realistic full-suite budget until
+// a separate help-path optimization lands.
 const VERSION_BUDGET_MS = parseIntEnv('AIWG_PERF_BUDGET_VERSION_MS', 150);
-const HELP_BUDGET_MS = parseIntEnv('AIWG_PERF_BUDGET_HELP_MS', 1000);
+const HELP_BUDGET_MS = parseIntEnv('AIWG_PERF_BUDGET_HELP_MS', 1250);
 
 function parseIntEnv(name: string, def: number): number {
   const raw = process.env[name];

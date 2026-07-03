@@ -149,7 +149,7 @@ export async function showNeighbors(
   cwd: string,
   options: NeighborsOptions
 ): Promise<void> {
-  const { graph: graphType, node, direction = 'both', edgeType, json = false, backend = 'local' } = options;
+  const { graph: graphType, node, direction = 'both', edgeType, json = false, backend = 'fortemi-core' } = options;
 
   let graph: DependencyGraph | null = null;
   if (backend === 'fortemi-core') {
@@ -167,7 +167,7 @@ export async function showNeighbors(
         console.error('Error: Fortemi Core static index is unavailable.');
         console.log(
           loaded.reason ??
-            "Run 'aiwg index sync --backend fortemi-core' first.",
+            "Run 'aiwg index sync' first, or pass '--backend local' to use the legacy local index.",
         );
       }
       process.exit(1);
@@ -229,7 +229,7 @@ export async function executeSetQuery(
   cwd: string,
   options: SetQueryOptions
 ): Promise<void> {
-  const { graph: graphType, op, nodeA, nodeB, direction = 'in', edgeType, json = false, backend = 'local' } = options;
+  const { graph: graphType, op, nodeA, nodeB, direction = 'in', edgeType, json = false, backend = 'fortemi-core' } = options;
 
   let graph: DependencyGraph | null = null;
   if (backend === 'fortemi-core') {
@@ -247,7 +247,7 @@ export async function executeSetQuery(
         console.error('Error: Fortemi Core static index is unavailable.');
         console.log(
           loaded.reason ??
-            "Run 'aiwg index sync --backend fortemi-core' first.",
+            "Run 'aiwg index sync' first, or pass '--backend local' to use the legacy local index.",
         );
       }
       process.exit(1);
