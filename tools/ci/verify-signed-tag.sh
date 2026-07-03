@@ -27,7 +27,7 @@ set -euo pipefail
 # Extract the tag name from $GITHUB_REF. Gitea Actions uses GitHub-compatible
 # refs: `refs/tags/vYYYY.M.PATCH`.
 # ---------------------------------------------------------------------------
-GH_REF="${GITHUB_REF:-}"
+GH_REF="${AIWG_VERIFY_TAG_REF:-${GITHUB_REF:-}}"
 TAG="${GH_REF#refs/tags/}"
 if [ -z "$TAG" ] || [ "$TAG" = "$GH_REF" ]; then
   cat <<EOF >&2
