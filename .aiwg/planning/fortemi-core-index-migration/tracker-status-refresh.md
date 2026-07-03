@@ -8,9 +8,9 @@ status: read-only-open
 # Fortemi Core Migration Tracker Status Refresh
 
 This began as a read-only issue-audit snapshot for the #1664 Fortemi Core
-migration roadmap. It now also records the 2026-07-03 follow-up issue read and
-local verification evidence for #1696-#1699. It is not closeout evidence until
-the changes are committed, pushed, and CI is green.
+migration roadmap. It now also records the 2026-07-03 follow-up issue read,
+local verification evidence, remote CI evidence, and tracker closeout for
+#1696-#1698. #1699 remains open by design.
 
 ## Query
 
@@ -59,9 +59,9 @@ Provider: Gitea origin through the configured MCP connector.
 
 | Issue | State | Updated | Labels | Title | Required handling |
 | ----- | ----- | ------- | ------ | ----- | ----------------- |
-| #1696 | open | 2026-07-02T22:59:02-04:00 | none | feat(index): add release-gate capability discovery query matrix | Locally satisfied by the checked-in release discovery matrix and corrected local/Fortemi backend test; keep open until commit and CI. |
-| #1697 | open | 2026-07-02T22:59:19-04:00 | none | feat(index): publish prebuilt Fortemi Core indices with releases | Locally satisfied by `prepack`, package allowlist, manifest/checksum gate, packaged fallback discovery, docs, and doctor reporting; keep open until commit and CI. |
-| #1698 | open | 2026-07-02T22:59:36-04:00 | none | fix(index): stabilize duplicate tie ordering between local and Fortemi discovery | Locally satisfied for default discovery by shared `compareDiscoverResults` canonical source-before-plugin ordering and the corrected matrix top-result assertions; keep open until commit and CI. |
+| #1696 | closed | 2026-07-03T12:53:25-04:00 | none | feat(index): add release-gate capability discovery query matrix | Closed after signed commits, local verification, remote CI run 3237, and completion comment issuecomment-77893. |
+| #1697 | closed | 2026-07-03T12:53:26-04:00 | none | feat(index): publish prebuilt Fortemi Core indices with releases | Closed after signed commits, local package/docsite verification, remote CI run 3237, docsite runs 3238/3239, and completion comment issuecomment-77894. |
+| #1698 | closed | 2026-07-03T12:53:26-04:00 | none | fix(index): stabilize duplicate tie ordering between local and Fortemi discovery | Closed after signed commits, local duplicate-order verification, remote CI run 3237, and completion comment issuecomment-77895. |
 | #1699 | open | 2026-07-03T02:28:58-04:00 | docs, enhancement, index, research | feat(code-graph): research path imports and ADR for source graphing | Keep open. This is not closed by the Fortemi indexing ADR; attach it to the broader code-graph/source-graph refactor track. |
 
 ## 2026-07-03 Local Verification Addendum
@@ -93,6 +93,16 @@ Observed evidence:
 - Doctor now has regression coverage for `fortemi-core-index` reporting:
   prebuilt present, stale prebuilt, and local-cache fallback wording are guarded
   by static assertions in `test/unit/cli/doctor.test.ts`.
+- Signed commit `f522e472` delivered the Fortemi release gates and references
+  #1664, #1696, #1697, #1698, and #1699.
+- Signed commit `0b34de74` added the prebuilt-index page to the docs site
+  manifest after strict docsite links caught the missing navigation entry.
+- Remote run 3237 passed on `0b34de74`: `Test` and `Build` jobs succeeded.
+- Remote docsite runs 3238 and 3239 passed on `0b34de74`.
+- #1696, #1697, and #1698 were closed with explicit completion comments.
+- #1664 received parent refresh issuecomment-77874 before closeout; #1699
+  received issuecomment-77873 documenting why it remains open for code-graph
+  ADR work.
 
 ## Roadmap Comment
 
@@ -136,19 +146,20 @@ gates.
 
 ## Interpretation
 
-- All #1664 roadmap children remain open.
+- Original #1664 roadmap children #1684-#1691 were not closed by this follow-up
+  snapshot. Follow-up release blockers #1696-#1698 are closed as complete.
 - Latest roadmap-child recheck on 2026-07-02T05:44:04-04:00 found no state,
   label, or updated-at changes from the previous snapshot.
 - Related issues #1551 and #1508 remain open in their expected handoff roles:
   #1551 is the body-level embedding decision/acceptance case, and #1508 remains
   deferred until the provider-neutral corpus storage/index boundary is settled.
-- No child issue is ready for closure until the WIP is committed, pushed,
-  remote CI is green, and the direct-v2 package-boundary gate remains green. The operator
-  authorized Gitea MCP on 2026-07-02, so non-closing status comments are no
-  longer blocked by local `tea` configuration.
+- #1696-#1698 have the required commit, push, remote CI, and tracker closeout
+  evidence. The operator authorized Gitea MCP on 2026-07-02, so these tracker
+  comments and closures used the configured Gitea route rather than local
+  `tea`.
 - The local implementation can continue to improve readiness, but production
-  completion remains externally gated by remote CI and compliant tracker
-  mutation access.
+  completion of the broader #1664 roadmap remains gated by the still-open
+  roadmap children and the separately open #1699 code-graph ADR track.
 
 ## Mutation Guard
 
