@@ -7,6 +7,21 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.2] - 2026-07-03 - "Fortemi Core package gate correction"
+
+Reissues the Fortemi Core index migration preview after the `v2026.7.1`
+publish workflow stopped before npm publication. The package contents were
+clean, but the publish gate grepped lifecycle output and matched the prepack
+log line for the generated local `.aiwg/.index/framework/` cache.
+
+### Fixed
+
+- **Structured `.aiwg/` package exclusion gate** — GitHub and Gitea publish
+  workflows now verify `.aiwg/` exclusion from npm's structured
+  `npm pack --dry-run --json` file list instead of scanning lifecycle logs.
+  The integration test uses the same structured check so generated prepack
+  diagnostics cannot produce a false positive.
+
 ## [2026.7.1] - 2026-07-03 - "Fortemi Core index migration preview"
 
 Adds an opt-in Fortemi Core static-cache backend for AIWG project indexes while
