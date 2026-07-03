@@ -6,18 +6,28 @@ project: "aiwg"
 type: report
 tags: [report, "2026-06", "aiwg"]
 summary: "A new dashboard to watch and steer your AI agents, search that finds the right tool from plain words, support for more AI tools, and leaner startup context that keeps agents reliable."
-hero: "https://docs.aiwg.io/assets/blog/2026-6-aiwg-2026-6-0.png"
+hero: "https://docs.aiwg.io/assets/blog/2026-6-aiwg-june-2026-report.png"
 reading_time: 9
 status: "published"
 canonical: "https://aiwg.io/blog/2026-6-aiwg-june-2026-report"
 pillar: "1 report"
 audience: "AIWG users and evaluators who want the June 2026 release summary"
-aiwg_refs: ["@aiwg/cockpit", "OpenHuman provider", "aiwg discover", "aiwg show rule", "aiwg doctor", "RULES-ONDEMAND.md"]
+aiwg_refs:
+  [
+    "@aiwg/cockpit",
+    "OpenHuman provider",
+    "aiwg discover",
+    "aiwg show rule",
+    "aiwg doctor",
+    "RULES-ONDEMAND.md",
+  ]
 ---
 
 # AIWG — June 2026
 
-*AIWG is a toolkit that helps AI coding agents work in a clear, reliable way. It gives them skills, rules, and shared memory so they make fewer mistakes and stay easy to follow.*
+![An operator's control console for AI coding agents: glowing dashboard panels and orchestration nodes wired to a central hub with a clear stop/approve control.](/assets/blog/2026-6-aiwg-june-2026-report.png)
+
+_AIWG is a toolkit that helps AI coding agents work in a clear, reliable way. It gives them skills, rules, and shared memory so they make fewer mistakes and stay easy to follow._
 
 ## TL;DR
 
@@ -25,13 +35,13 @@ June was a building month. The headline is **Cockpit** — a new opt-in dashboar
 
 ## By the numbers
 
-| What's public | Value |
-|---|---|
-| Published packages | `aiwg` · `@aiwg/cockpit` (opt-in) — on npm |
-| New this month | `@aiwg/cockpit` (the agent dashboard) · OpenHuman support · tiered rules |
-| Key capabilities | watch & steer agents · plain-words search · lean startup context · works across many AI tools |
-| Docs | docs.aiwg.io |
-| Source | github.com/jmagly/aiwg |
+| What's public      | Value                                                                                         |
+| ------------------ | --------------------------------------------------------------------------------------------- |
+| Published packages | `aiwg` · `@aiwg/cockpit` (opt-in) — on npm                                                    |
+| New this month     | `@aiwg/cockpit` (the agent dashboard) · OpenHuman support · tiered rules                      |
+| Key capabilities   | watch & steer agents · plain-words search · lean startup context · works across many AI tools |
+| Docs               | docs.aiwg.io                                                                                  |
+| Source             | github.com/jmagly/aiwg                                                                        |
 
 ## Highlights
 
@@ -150,3 +160,7 @@ More Cockpit polish, including the chat-style agent view and clearer tabs. More 
 - **Releases:** 2026.6.0 through 2026.6.13, published to npm through June.
 - **Source / docs:** github.com/jmagly/aiwg · docs.aiwg.io · window: all of June 2026.
 - **Tracking:** part of the June update cycle.
+
+## Tools & transparency
+
+Hero image: AI-generated with ChatGPT from a brand-specified prompt; no text or logos are AI-rendered.
