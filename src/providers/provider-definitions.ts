@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { homedir } from 'os';
+import { join } from 'path';
 import type { Platform } from '../agents/types.js';
 import {
   getProviderCapabilities,
@@ -20,6 +22,9 @@ export type ProviderDetection = {
 };
 
 export type ProviderArtifactPaths = Record<'agents' | 'commands' | 'skills' | 'rules' | 'behaviors', string | null>;
+export type ProviderArtifactPathStrings = Record<'agents' | 'commands' | 'skills' | 'rules' | 'behaviors', string>;
+export type ProviderContextDiscoveryPaths = Record<'agents' | 'skills' | 'rules' | 'behaviors', string | null>;
+export type ProviderContextDiscoveryPathStrings = Record<'agents' | 'skills' | 'rules' | 'behaviors', string>;
 
 export type ProviderContextFiles = {
   aiwgMd: boolean;
@@ -33,8 +38,19 @@ export type ProviderPaths = {
   deployTarget: DeployTarget;
   artifacts: ProviderArtifactPaths;
   kernelSkills: string | null;
+  contextDiscovery: ProviderContextDiscoveryPaths;
   configFile: string | null;
   contextFiles: ProviderContextFiles;
+};
+
+export type ProviderSmithPaths = {
+  agents: string | null;
+  commands: string | null;
+  skills: string | null;
+  rules: string | null;
+  fileExtension: '.md' | '.json';
+  configFile: string | null;
+  aggregated: boolean;
 };
 
 export type ProviderSkillNamespace = {
@@ -44,6 +60,7 @@ export type ProviderSkillNamespace = {
   subdirLayout: boolean;
   maxNameLength?: number;
   maxDescriptionLength?: number;
+  appendToDescription?: string;
 };
 
 export type ProviderAdapters = {
@@ -63,6 +80,7 @@ export interface ProviderDefinition {
   surfaces: ProviderSurface;
   detection: ProviderDetection;
   paths: ProviderPaths;
+  smithPaths: ProviderSmithPaths;
   skillNamespace: ProviderSkillNamespace;
   adapters: ProviderAdapters;
   capabilities: {
@@ -114,6 +132,12 @@ const ProviderDefinitionSchema = z.object({
     deployTarget: z.enum(['project', 'home', 'mixed']),
     artifacts: ArtifactPathsSchema,
     kernelSkills: z.string().nullable(),
+    contextDiscovery: z.object({
+      agents: z.string().nullable(),
+      skills: z.string().nullable(),
+      rules: z.string().nullable(),
+      behaviors: z.string().nullable(),
+    }),
     configFile: z.string().nullable(),
     contextFiles: z.object({
       aiwgMd: z.boolean(),
@@ -123,6 +147,15 @@ const ProviderDefinitionSchema = z.object({
       contextFile: z.string().nullable(),
     }),
   }),
+  smithPaths: z.object({
+    agents: z.string().nullable(),
+    commands: z.string().nullable(),
+    skills: z.string().nullable(),
+    rules: z.string().nullable(),
+    fileExtension: z.enum(['.md', '.json']),
+    configFile: z.string().nullable(),
+    aggregated: z.boolean(),
+  }),
   skillNamespace: z.object({
     deploymentGroup: z.enum(['deep-recursion', 'one-level', 'mcp-skip']),
     pathType: z.enum(['project', 'home-dir']),
@@ -130,6 +163,7 @@ const ProviderDefinitionSchema = z.object({
     subdirLayout: z.boolean(),
     maxNameLength: z.number().int().positive().optional(),
     maxDescriptionLength: z.number().int().positive().optional(),
+    appendToDescription: z.string().min(1).optional(),
   }),
   adapters: z.object({
     agentFormat: z.string().min(1),
@@ -163,7 +197,10 @@ const PROVIDER_IDS: Platform[] = [
 type BuiltInSeed = Omit<ProviderDefinition, 'displayName' | 'status' | 'paths' | 'capabilities'> & {
   displayName?: string;
   status?: ProviderStatus;
-  paths: Omit<ProviderPaths, 'deployTarget'> & { deployTarget?: DeployTarget };
+  paths: Omit<ProviderPaths, 'deployTarget' | 'contextDiscovery'> & {
+    deployTarget?: DeployTarget;
+    contextDiscovery?: ProviderContextDiscoveryPaths;
+  };
   matrixRef: string | null;
 };
 
@@ -191,6 +228,15 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       kernelSkills: '.claude/skills',
       configFile: 'CLAUDE.md',
       contextFiles: { aiwgMd: true, agentsMd: false, claudeMdHook: true, hookFile: null, contextFile: 'CLAUDE.md' },
+    },
+    smithPaths: {
+      agents: '.claude/agents',
+      commands: '.claude/commands',
+      skills: '.claude/skills',
+      rules: '.claude/rules',
+      fileExtension: '.md',
+      configFile: 'CLAUDE.md',
+      aggregated: false,
     },
     skillNamespace: {
       deploymentGroup: 'deep-recursion',
@@ -227,8 +273,23 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
         behaviors: '.codex/rules',
       },
       kernelSkills: '.agents/skills',
+      contextDiscovery: {
+        agents: '.codex/agents',
+        skills: '.agents/skills',
+        rules: '.codex/rules',
+        behaviors: null,
+      },
       configFile: 'AGENTS.md',
       contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    smithPaths: {
+      agents: '.codex/agents',
+      commands: '.codex/commands',
+      skills: '.codex/skills',
+      rules: '.codex/rules',
+      fileExtension: '.md',
+      configFile: 'AGENTS.md',
+      aggregated: false,
     },
     skillNamespace: {
       deploymentGroup: 'deep-recursion',
@@ -267,8 +328,23 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
         behaviors: '.github/copilot-rules',
       },
       kernelSkills: '.github/skills',
+      contextDiscovery: {
+        agents: '.github/agents',
+        skills: '.github/.aiwg/skills',
+        rules: '.github/instructions',
+        behaviors: null,
+      },
       configFile: 'copilot-instructions.md',
       contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    smithPaths: {
+      agents: '.github/agents',
+      commands: '.github/agents',
+      skills: '.github/skills',
+      rules: '.github/copilot-rules',
+      fileExtension: '.md',
+      configFile: 'copilot-instructions.md',
+      aggregated: false,
     },
     skillNamespace: {
       deploymentGroup: 'deep-recursion',
@@ -308,6 +384,15 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       configFile: 'AGENTS.md',
       contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
     },
+    smithPaths: {
+      agents: '.cursor/agents',
+      commands: '.cursor/commands',
+      skills: '.cursor/skills',
+      rules: '.cursor/rules',
+      fileExtension: '.json',
+      configFile: 'AGENTS.md',
+      aggregated: false,
+    },
     skillNamespace: {
       deploymentGroup: 'deep-recursion',
       pathType: 'project',
@@ -346,10 +431,20 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       configFile: 'AGENTS.md',
       contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
     },
+    smithPaths: {
+      agents: '.factory/droids',
+      commands: '.factory/commands',
+      skills: '.factory/skills',
+      rules: '.factory/rules',
+      fileExtension: '.md',
+      configFile: 'AGENTS.md',
+      aggregated: false,
+    },
     skillNamespace: {
       deploymentGroup: 'deep-recursion',
       pathType: 'project',
       skillsBaseDir: '.factory/skills',
+      appendToDescription: 'Use when relevant to the task.',
       subdirLayout: true,
     },
     adapters: {
@@ -382,6 +477,15 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       kernelSkills: '~/.hermes/skills',
       configFile: 'AGENTS.md',
       contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: '.hermes.md', contextFile: 'AGENTS.md' },
+    },
+    smithPaths: {
+      agents: null,
+      commands: null,
+      skills: '~/.hermes/skills',
+      rules: null,
+      fileExtension: '.md',
+      configFile: 'AGENTS.md',
+      aggregated: false,
     },
     skillNamespace: {
       deploymentGroup: 'mcp-skip',
@@ -420,6 +524,15 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       kernelSkills: '.opencode/skill',
       configFile: 'AGENTS.md',
       contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    smithPaths: {
+      agents: null,
+      commands: '.opencode/command',
+      skills: '.opencode/skill',
+      rules: '.opencode/rule',
+      fileExtension: '.md',
+      configFile: 'AGENTS.md',
+      aggregated: false,
     },
     skillNamespace: {
       deploymentGroup: 'deep-recursion',
@@ -460,6 +573,15 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       configFile: 'AGENTS.md',
       contextFiles: { aiwgMd: false, agentsMd: false, claudeMdHook: false, hookFile: null, contextFile: '~/.openclaw/config.yaml' },
     },
+    smithPaths: {
+      agents: '~/.openclaw/agents',
+      commands: '~/.openclaw/commands',
+      skills: '~/.openclaw/skills',
+      rules: '~/.openclaw/rules',
+      fileExtension: '.md',
+      configFile: 'AGENTS.md',
+      aggregated: false,
+    },
     skillNamespace: {
       deploymentGroup: 'deep-recursion',
       pathType: 'home-dir',
@@ -496,8 +618,23 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
         behaviors: null,
       },
       kernelSkills: '~/.openhuman/skills',
+      contextDiscovery: {
+        agents: '.agents/agents',
+        skills: '~/.openhuman/.aiwg/skills',
+        rules: '~/.openhuman/.aiwg/rules',
+        behaviors: null,
+      },
       configFile: null,
       contextFiles: { aiwgMd: false, agentsMd: false, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    smithPaths: {
+      agents: null,
+      commands: null,
+      skills: '~/.openhuman/skills',
+      rules: '~/.openhuman/.aiwg/rules',
+      fileExtension: '.md',
+      configFile: null,
+      aggregated: false,
     },
     skillNamespace: {
       deploymentGroup: 'deep-recursion',
@@ -536,6 +673,15 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       kernelSkills: '.warp/skills',
       configFile: 'WARP.md',
       contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: 'AIWG-warp.md', contextFile: 'WARP.md' },
+    },
+    smithPaths: {
+      agents: '.warp/agents',
+      commands: '.warp/commands',
+      skills: '.warp/skills',
+      rules: '.warp/rules',
+      fileExtension: '.md',
+      configFile: 'WARP.md',
+      aggregated: true,
     },
     skillNamespace: {
       deploymentGroup: 'deep-recursion',
@@ -579,6 +725,15 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       configFile: '.windsurfrules',
       contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: 'AIWG-windsurf.md', contextFile: 'AGENTS.md' },
     },
+    smithPaths: {
+      agents: '.windsurf/agents',
+      commands: '.windsurf/workflows',
+      skills: '.windsurf/skills',
+      rules: '.windsurf/rules',
+      fileExtension: '.md',
+      configFile: '.windsurfrules',
+      aggregated: true,
+    },
     skillNamespace: {
       deploymentGroup: 'one-level',
       pathType: 'project',
@@ -619,6 +774,15 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       configFile: 'README.md',
       contextFiles: { aiwgMd: false, agentsMd: false, claudeMdHook: false, hookFile: null, contextFile: 'README.md' },
     },
+    smithPaths: {
+      agents: 'agents',
+      commands: 'commands',
+      skills: 'skills',
+      rules: 'rules',
+      fileExtension: '.md',
+      configFile: 'README.md',
+      aggregated: false,
+    },
     skillNamespace: {
       deploymentGroup: 'deep-recursion',
       pathType: 'project',
@@ -640,6 +804,12 @@ let cachedRegistry: Map<Platform, ProviderDefinition> | null = null;
 
 function buildDefinition(seed: BuiltInSeed): ProviderDefinition {
   const capabilities = seed.matrixRef ? getProviderCapabilities(seed.matrixRef) : undefined;
+  const contextDiscovery = seed.paths.contextDiscovery ?? {
+    agents: seed.paths.artifacts.agents,
+    skills: seed.paths.artifacts.skills,
+    rules: seed.paths.artifacts.rules,
+    behaviors: null,
+  };
   const definition: ProviderDefinition = {
     ...seed,
     displayName: seed.displayName ?? capabilities?.display_name ?? seed.id,
@@ -647,6 +817,7 @@ function buildDefinition(seed: BuiltInSeed): ProviderDefinition {
     paths: {
       ...seed.paths,
       deployTarget: seed.paths.deployTarget ?? capabilities?.deploy_target ?? 'project',
+      contextDiscovery,
     },
     capabilities: {
       matrixRef: seed.matrixRef,
@@ -693,6 +864,50 @@ export function getProviderDefinition(provider: string | null | undefined): Prov
   const normalized = normalizeProviderDefinitionId(provider);
   if (!normalized) return undefined;
   return loadProviderDefinitionRegistry().get(normalized);
+}
+
+export function expandProviderHomePath(providerPath: string | null): string {
+  if (!providerPath) return '';
+  if (providerPath === '~') return homedir();
+  if (providerPath.startsWith('~/')) return join(homedir(), providerPath.slice(2));
+  return providerPath;
+}
+
+export function getProviderArtifactPathStrings(provider: string | null | undefined): ProviderArtifactPathStrings | undefined {
+  const definition = getProviderDefinition(provider);
+  if (!definition) return undefined;
+  return {
+    agents: expandProviderHomePath(definition.paths.artifacts.agents),
+    commands: expandProviderHomePath(definition.paths.artifacts.commands),
+    skills: expandProviderHomePath(definition.paths.artifacts.skills),
+    rules: expandProviderHomePath(definition.paths.artifacts.rules),
+    behaviors: expandProviderHomePath(definition.paths.artifacts.behaviors),
+  };
+}
+
+export function getProviderContextDiscoveryPathStrings(
+  provider: string | null | undefined
+): ProviderContextDiscoveryPathStrings | undefined {
+  const definition = getProviderDefinition(provider);
+  if (!definition) return undefined;
+  return {
+    agents: expandProviderHomePath(definition.paths.contextDiscovery.agents),
+    skills: expandProviderHomePath(definition.paths.contextDiscovery.skills),
+    rules: expandProviderHomePath(definition.paths.contextDiscovery.rules),
+    behaviors: expandProviderHomePath(definition.paths.contextDiscovery.behaviors),
+  };
+}
+
+export function getProviderKernelSkillPath(provider: string | null | undefined): string {
+  const definition = getProviderDefinition(provider);
+  return expandProviderHomePath(definition?.paths.kernelSkills ?? null);
+}
+
+export function resolveProviderPathValue(providerPath: string | null, projectPath: string): string {
+  const expandedPath = expandProviderHomePath(providerPath);
+  if (!expandedPath) return '';
+  if (expandedPath.startsWith('/')) return expandedPath;
+  return join(projectPath, expandedPath);
 }
 
 export function normalizeProviderDefinitionId(provider: string | null | undefined): Platform | null {

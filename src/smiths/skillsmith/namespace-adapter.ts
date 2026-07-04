@@ -21,6 +21,7 @@
 import * as os from 'os';
 import * as path from 'path';
 import type { Platform } from '../../agents/types.js';
+import { listProviderDefinitions } from '../../providers/provider-definitions.js';
 
 // ============================================
 // Types
@@ -100,126 +101,23 @@ export interface NamespaceDeployResult {
 
 /**
  * Per-platform adapter table.
- * Keyed by Platform value; includes a 'generic' fallback.
+ * Derived from ProviderDefinition.skillNamespace; includes a 'generic' fallback.
  */
-export const NAMESPACE_ADAPTERS: Record<Platform | 'generic', NamespaceAdapter> = {
-  // ── Group A — Deep Recursion ────────────────────────────────────────────
-  // These platforms support unlimited subdirectory recursion.
-  // Deploy BOTH the canonical subdir layout AND the prefixed slug fallback.
-
-  claude: {
-    platform: 'claude',
-    deploymentGroup: 'deep-recursion',
-    pathType: 'project',
-    skillsBaseDir: '.claude/skills',
-    subdirLayout: true,
-  },
-
-  cursor: {
-    platform: 'cursor',
-    deploymentGroup: 'deep-recursion',
-    pathType: 'project',
-    skillsBaseDir: '.cursor/skills',
-    subdirLayout: true,
-  },
-
-  codex: {
-    platform: 'codex',
-    deploymentGroup: 'deep-recursion',
-    pathType: 'home-dir',
-    skillsBaseDir: '.codex/skills', // resolves to ~/.codex/skills
-    maxNameLength: 100,
-    maxDescriptionLength: 500,
-    subdirLayout: true,
-  },
-
-  openhuman: {
-    platform: 'openhuman',
-    deploymentGroup: 'deep-recursion',
-    pathType: 'home-dir', // Global/home-dir like OpenClaw (#1553) — resolves to ~/.openhuman/skills (ungated, surfaced by the Skills library)
-    skillsBaseDir: '.openhuman/skills',
-    subdirLayout: true,
-  },
-
-  opencode: {
-    platform: 'opencode',
-    deploymentGroup: 'deep-recursion',
-    pathType: 'project',
-    skillsBaseDir: '.opencode/skill',
-    subdirLayout: true,
-  },
-
-  openclaw: {
-    platform: 'openclaw',
-    deploymentGroup: 'deep-recursion',
-    pathType: 'home-dir',
-    skillsBaseDir: '.openclaw/skills', // resolves to ~/.openclaw/skills
-    subdirLayout: true,
-  },
-
-  // Source-confirmed deep recursion (ADR §Platform Compatibility Matrix, #695 cycle #2):
-  //   Factory AI: .factory/skills/, .agent/skills/, ~/.factory/skills/
-  //   Warp:       .agents/skills/, .warp/skills/, .claude/skills/, all platform dirs
-  //   Copilot:    .github/skills/, .claude/skills/, .agents/skills/, ~/.copilot/skills/
-
-  factory: {
-    platform: 'factory',
-    deploymentGroup: 'deep-recursion',
-    pathType: 'project',
-    skillsBaseDir: '.factory/skills',
-    appendToDescription: 'Use when relevant to the task.',
-    subdirLayout: true,
-  },
-
-  warp: {
-    platform: 'warp',
-    deploymentGroup: 'deep-recursion',
-    pathType: 'project',
-    skillsBaseDir: '.warp/skills',
-    subdirLayout: true,
-  },
-
-  copilot: {
-    platform: 'copilot',
-    deploymentGroup: 'deep-recursion',
-    pathType: 'project',
-    skillsBaseDir: '.github/skills',
-    subdirLayout: true,
-  },
-
-  // ── Group B — One-Level Subdirs ─────────────────────────────────────────
-  // Windsurf is the sole platform with 1-level subdirectory discovery.
-  // Deploy ONLY the prefixed slug — adding a second level would break discovery.
-
-  windsurf: {
-    platform: 'windsurf',
-    deploymentGroup: 'one-level',
-    pathType: 'project',
-    skillsBaseDir: '.windsurf/skills',
-    subdirLayout: false,
-  },
-
-  // ── Group D — MCP / Not Direct Deploy Target ────────────────────────────
-  // Hermes manages its own skill system via MCP sidecar.
-  // AIWG provides a template but does NOT deploy skills directly.
-
-  hermes: {
-    platform: 'hermes',
-    deploymentGroup: 'mcp-skip',
-    pathType: 'home-dir',
-    skillsBaseDir: '.hermes/skills',
-    subdirLayout: false,
-  },
-
-  // ── Generic Fallback ────────────────────────────────────────────────────
-  generic: {
-    platform: 'generic',
-    deploymentGroup: 'deep-recursion',
-    pathType: 'project',
-    skillsBaseDir: 'skills',
-    subdirLayout: true,
-  },
-};
+export const NAMESPACE_ADAPTERS: Record<Platform | 'generic', NamespaceAdapter> = Object.fromEntries(
+  listProviderDefinitions().map((definition) => [
+    definition.id,
+    {
+      platform: definition.id,
+      deploymentGroup: definition.skillNamespace.deploymentGroup,
+      pathType: definition.skillNamespace.pathType,
+      skillsBaseDir: definition.skillNamespace.skillsBaseDir,
+      subdirLayout: definition.skillNamespace.subdirLayout,
+      maxNameLength: definition.skillNamespace.maxNameLength,
+      maxDescriptionLength: definition.skillNamespace.maxDescriptionLength,
+      appendToDescription: definition.skillNamespace.appendToDescription,
+    },
+  ]),
+) as Record<Platform | 'generic', NamespaceAdapter>;
 
 // ============================================
 // Helpers

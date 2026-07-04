@@ -18,6 +18,7 @@
  */
 
 import type { Platform } from '../../agents/types.js';
+import { getProviderDefinition, listProviderDefinitions } from '../../providers/provider-definitions.js';
 
 /**
  * Providers that receive AGENTS.md emission at project root.
@@ -26,16 +27,11 @@ import type { Platform } from '../../agents/types.js';
  * - ADR-1 §3 default-on rollout (`.aiwg/architecture/adr-agents-md-aggregation.md`)
  * - ADR-1 §4 per-provider variants table (file-name + twin-file emission)
  */
-export const AGENTS_MD_PROVIDERS: ReadonlySet<Platform> = new Set([
-  'codex',
-  'copilot',
-  'cursor',
-  'windsurf',
-  'hermes',
-  'warp',
-  'factory',
-  'opencode',
-]);
+export const AGENTS_MD_PROVIDERS: ReadonlySet<Platform> = new Set(
+  listProviderDefinitions()
+    .filter((definition) => definition.paths.contextFiles.agentsMd)
+    .map((definition) => definition.id),
+);
 
 export type AgentsMdProvider = Platform & ('codex' | 'copilot' | 'cursor' | 'windsurf' | 'hermes' | 'warp' | 'factory' | 'opencode');
 
@@ -55,7 +51,7 @@ export function shouldEmitContextFiles(provider: Platform): boolean {
  * provider; false only for home-dir-only providers and 'generic'.
  */
 export function shouldEmitAiwgMd(provider: Platform): boolean {
-  return provider !== 'openclaw' && provider !== 'openhuman' && provider !== 'generic';
+  return getProviderDefinition(provider)?.paths.contextFiles.aiwgMd ?? false;
 }
 
 /**
@@ -65,7 +61,7 @@ export function shouldEmitAiwgMd(provider: Platform): boolean {
  * and generic.
  */
 export function shouldEmitAgentsMd(provider: Platform): boolean {
-  return AGENTS_MD_PROVIDERS.has(provider);
+  return getProviderDefinition(provider)?.paths.contextFiles.agentsMd ?? false;
 }
 
 /**
@@ -74,5 +70,5 @@ export function shouldEmitAgentsMd(provider: Platform): boolean {
  * `@AIWG.md` include; operator content outside the block is preserved.
  */
 export function shouldEmitClaudeMdHook(provider: Platform): boolean {
-  return provider === 'claude';
+  return getProviderDefinition(provider)?.paths.contextFiles.claudeMdHook ?? false;
 }

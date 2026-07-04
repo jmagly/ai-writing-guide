@@ -34,6 +34,10 @@ describe('provider definition registry', () => {
       expect(definition.paths.artifacts).toHaveProperty('skills');
       expect(definition.paths.artifacts).toHaveProperty('rules');
       expect(definition.paths.artifacts).toHaveProperty('behaviors');
+      expect(definition.paths.contextDiscovery).toHaveProperty('agents');
+      expect(definition.paths.contextDiscovery).toHaveProperty('skills');
+      expect(definition.paths.contextDiscovery).toHaveProperty('rules');
+      expect(definition.paths.contextDiscovery).toHaveProperty('behaviors');
       expect(definition.adapters.agentFormat).toBeTruthy();
     }
   });
@@ -64,5 +68,23 @@ describe('provider definition registry', () => {
     expect(getProviderDefinition('openhuman')?.paths.deployTarget).toBe('mixed');
     expect(getProviderDefinition('openhuman')?.paths.kernelSkills).toBe('~/.openhuman/skills');
     expect(getProviderDefinition('windsurf')?.surfaces.precedence).toContain('.devin/rules/');
+  });
+
+  it('models smith-facing paths separately from deploy paths where legacy behavior differs', () => {
+    expect(getProviderDefinition('copilot')?.paths.artifacts.commands).toBe('.github/commands');
+    expect(getProviderDefinition('copilot')?.smithPaths.commands).toBe('.github/agents');
+    expect(getProviderDefinition('opencode')?.paths.artifacts.agents).toBe('.opencode/agent');
+    expect(getProviderDefinition('opencode')?.smithPaths.agents).toBeNull();
+    expect(getProviderDefinition('openhuman')?.paths.artifacts.skills).toBe('~/.openhuman/.aiwg/skills');
+    expect(getProviderDefinition('openhuman')?.smithPaths.skills).toBe('~/.openhuman/skills');
+  });
+
+  it('models context-discovery paths separately where regenerate differs from deploy paths', () => {
+    expect(getProviderDefinition('codex')?.paths.artifacts.skills).toBe('.codex/.aiwg/skills');
+    expect(getProviderDefinition('codex')?.paths.contextDiscovery.skills).toBe('.agents/skills');
+    expect(getProviderDefinition('copilot')?.paths.artifacts.rules).toBe('.github/copilot-rules');
+    expect(getProviderDefinition('copilot')?.paths.contextDiscovery.rules).toBe('.github/instructions');
+    expect(getProviderDefinition('openhuman')?.paths.artifacts.agents).toBeNull();
+    expect(getProviderDefinition('openhuman')?.paths.contextDiscovery.agents).toBe('.agents/agents');
   });
 });

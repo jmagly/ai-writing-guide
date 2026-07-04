@@ -20,7 +20,6 @@
  */
 
 import * as path from 'path';
-import os from 'os';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { AiwgError, EXIT_CODES, handlerResultFromError } from '../errors.js';
 import * as ui from '../ui.js';
@@ -31,23 +30,7 @@ import {
 } from '../../smiths/context-pipeline/index.js';
 import type { Platform } from '../../agents/types.js';
 import { resolveActiveProvider } from '../provider-resolution.js';
-
-
-// Minimal provider paths — only what the generator needs to discover deployed
-// artifacts. Mirrors PROVIDER_PATHS in use.ts; consolidating is a separate
-// follow-up.
-const PROVIDER_PATHS_MIN: Record<string, { agents: string; skills: string; rules: string; behaviors: string }> = {
-  claude:    { agents: '.claude/agents',    skills: '.claude/.aiwg/skills',    rules: '.claude/rules',    behaviors: '' },
-  codex:     { agents: '.codex/agents',     skills: '.agents/skills',          rules: '.codex/rules',     behaviors: '' },
-  copilot:   { agents: '.github/agents',    skills: '.github/.aiwg/skills',    rules: '.github/instructions', behaviors: '' },
-  cursor:    { agents: '.cursor/agents',    skills: '.cursor/.aiwg/skills',    rules: '.cursor/rules',    behaviors: '' },
-  factory:   { agents: '.factory/droids',   skills: '.factory/.aiwg/skills',   rules: '.factory/rules',   behaviors: '' },
-  opencode:  { agents: '.opencode/agent',   skills: '.opencode/.aiwg/skill',   rules: '.opencode/rule',   behaviors: '' },
-  warp:      { agents: '.warp/agents',      skills: '.warp/.aiwg/skills',      rules: '.warp/rules',      behaviors: '' },
-  windsurf:  { agents: '.windsurf/agents',  skills: '.windsurf/.aiwg/skills',  rules: '.windsurf/rules',  behaviors: '' },
-  // Global/home-dir like OpenClaw (#1553): skills/rules live under ~/.openhuman; personas stay workspace for the coding hosts.
-  openhuman: { agents: '.agents/agents',    skills: path.join(os.homedir(), '.openhuman', '.aiwg', 'skills'), rules: path.join(os.homedir(), '.openhuman', '.aiwg', 'rules'), behaviors: '' },
-};
+import { getProviderContextDiscoveryPathStrings } from '../../providers/provider-definitions.js';
 
 async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   if (args.includes('--help') || args.includes('-h')) {
@@ -130,7 +113,8 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
     return;
   }
 
-  const paths = PROVIDER_PATHS_MIN[provider] ?? PROVIDER_PATHS_MIN.claude;
+  const paths = getProviderContextDiscoveryPathStrings(provider) ?? getProviderContextDiscoveryPathStrings('claude');
+  if (!paths) throw new Error(`Missing context discovery paths for provider ${provider}`);
   const sections = await discoverDeployedArtifacts(target, {
     agents: paths.agents,
     rules: paths.rules,

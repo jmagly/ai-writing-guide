@@ -54,6 +54,11 @@ import {
   resolveWorkspaceSignalPlan,
   writeWorkspaceSignalPlan,
 } from '../workspace-signals.js';
+import {
+  getProviderArtifactPathStrings,
+  getProviderKernelSkillPath,
+  type ProviderArtifactPathStrings,
+} from '../../providers/provider-definitions.js';
 
 // Module-level guard so the iteration loops further down (which re-enter
 // execute() per framework/provider) don't re-emit the warning each pass.
@@ -219,132 +224,15 @@ export function addonPath(frameworkRoot: string, name: string): string {
   return path.join(frameworkRoot, 'agentic/code/addons', folderName);
 }
 
-/**
- * Provider to deployment paths mapping
- *
- * The `behaviors` field tracks where behavior artifacts are deployed per provider.
- * OpenClaw is the first platform with native behavior support (~/.openclaw/behaviors/).
- * Other providers receive behaviors via emulation: Claude Code via .claude/hooks/,
- * Warp via aggregation into WARP.md (empty string = aggregated, not file-per-behavior),
- * all others via the provider rules directory.
- *
- * @implements #609
- */
-const PROVIDER_PATHS: Record<string, { agents: string; skills: string; commands: string; rules: string; behaviors: string }> = {
-  claude: {
-    agents: '.claude/agents',
-    // Skills hidden under .claude/.aiwg/skills so Claude Code's flat-namespace
-    // skill-listing budget doesn't truncate them. Discovery is index-driven
-    // via `aiwg index` (epic #1212). Kernel skills (always-loaded set) deploy
-    // separately to .claude/skills/ for native platform discovery.
-    skills: '.claude/.aiwg/skills',
-    commands: '.claude/commands',
-    rules: '.claude/rules',
-    behaviors: '.claude/hooks',  // Emulated via hook wrapper
-  },
-  factory: {
-    agents: '.factory/droids',
-    // Skills hidden under .aiwg/ for index-driven discovery (#1212)
-    skills: '.factory/.aiwg/skills',
-    commands: '.factory/commands',
-    rules: '.factory/rules',
-    behaviors: '.factory/rules', // Emulated via session wrapper in rules dir
-  },
-  codex: {
-    agents: '.codex/agents',
-    skills: '.codex/.aiwg/skills',
-    commands: '.codex/commands',
-    rules: '.codex/rules',
-    behaviors: '.codex/rules',   // Emulated via session wrapper
-  },
-  opencode: {
-    agents: '.opencode/agent',  // Discovered via {agent,agents}/**/*.md glob (#773)
-    skills: '.opencode/.aiwg/skill',
-    commands: '.opencode/command', // OpenCode scans .opencode/command/**/*.md via ConfigCommand.load() (PUW-006 #1107)
-    rules: '.opencode/rule',
-    behaviors: '.opencode/rule', // Emulated via session wrapper
-  },
-  copilot: {
-    agents: '.github/agents',
-    skills: '.github/.aiwg/skills',
-    commands: '.github/commands',
-    rules: '.github/copilot-rules',
-    behaviors: '.github/copilot-rules', // Emulated via session wrapper
-  },
-  cursor: {
-    agents: '.cursor/agents',
-    skills: '.cursor/.aiwg/skills',
-    commands: '.cursor/commands',
-    rules: '.cursor/rules',
-    behaviors: '.cursor/rules',  // Emulated via session wrapper
-  },
-  warp: {
-    agents: '.warp/agents',
-    skills: '.warp/.aiwg/skills',
-    commands: '.warp/commands',
-    rules: '.warp/rules',
-    behaviors: '',               // Aggregated into WARP.md behaviors section
-  },
-  windsurf: {
-    agents: '.windsurf/agents',
-    skills: '.windsurf/.aiwg/skills',
-    commands: '.windsurf/workflows',
-    rules: '.windsurf/rules',
-    behaviors: '.windsurf/rules', // Emulated via session wrapper
-  },
-  hermes: {
-    agents: '',                                                              // Aggregated into AGENTS.md at project root
-    // The .aiwg/ subdir is the legacy sequester (#1212) for non-kernel
-    // standard skills. Post-rc.14 kernel pivot, kernel skills land one
-    // level up at ~/.hermes/skills/<name>/ where Hermes natively scans;
-    // this `.aiwg/skills/` path stays empty in current deploys but is
-    // preserved here for the legacy mirror code path. See #1241.
-    skills: path.join(os.homedir(), '.hermes', '.aiwg', 'skills'),
-    commands: '',                                                            // Served via MCP, not file-deployed
-    rules: '',                                                               // Not applicable — Hermes uses AGENTS.md
-    behaviors: '',                                                           // Not yet supported
-  },
-  openclaw: {
-    agents: path.join(os.homedir(), '.openclaw', 'agents'),
-    // Sequestered under ~/.openclaw/.aiwg/skills/ for index-driven discovery
-    // (#1212). OpenClaw's 150-skill cap is the binding constraint; the kernel
-    // set goes to ~/.openclaw/skills/aiwg/<name> (preserved by the provider's
-    // own deploySkills, not represented here).
-    skills: path.join(os.homedir(), '.openclaw', '.aiwg', 'skills'),
-    commands: path.join(os.homedir(), '.openclaw', 'commands'),
-    rules: path.join(os.homedir(), '.openclaw', 'rules'),
-    behaviors: path.join(os.homedir(), '.openclaw', 'behaviors'), // Native behavior support
-  },
-  openhuman: {
-    // OpenHuman is app/user-global for AIWG installs. The app's Skills UI and
-    // registry install path use ~/.openhuman/skills; native custom agents are
-    // TOML-only under ~/.openhuman/agents. Do not write project .agents/agents.
-    agents: '',
-    skills: path.join(os.homedir(), '.openhuman', '.aiwg', 'skills'),
-    commands: '',                      // No native command dir
-    rules: path.join(os.homedir(), '.openhuman', '.aiwg', 'rules'),
-    behaviors: '',                     // Not supported
-  },
-};
+function getProviderPaths(provider: string): ProviderArtifactPathStrings {
+  const paths = getProviderArtifactPathStrings(provider) ?? getProviderArtifactPathStrings('claude');
+  if (!paths) throw new Error(`Missing provider paths for ${provider}`);
+  return paths;
+}
 
-const PROVIDER_KERNEL_SKILL_PATHS: Record<string, string> = {
-  claude: '.claude/skills',
-  factory: '.factory/skills',
-  // Project-local .agents/skills/ — the cross-provider canonical path codex-rs
-  // scans (codex-rs/core-skills/src/loader.rs). The legacy ~/.codex/skills/
-  // home dir is deprecated and pruned on deploy; writing both made codex list
-  // every kernel skill twice (#766 regression fix).
-  codex: '.agents/skills',
-  opencode: '.opencode/skill',
-  copilot: '.github/skills',
-  cursor: '.cursor/skills',
-  warp: '.warp/skills',
-  windsurf: '.windsurf/skills',
-  openclaw: path.join(os.homedir(), '.openclaw', 'skills', 'aiwg'),
-  // Global/home-dir native scan root (ops_discover.rs, one-level: ~/.openhuman/skills/<name>/SKILL.md).
-  // User-scope is ungated — no trust marker needed — and is what OpenHuman's Skills library surfaces (#1553).
-  openhuman: path.join(os.homedir(), '.openhuman', 'skills'),
-};
+function getProviderKernelSkillsPath(provider: string): string {
+  return getProviderKernelSkillPath(provider) || getProviderKernelSkillPath('claude');
+}
 
 const MIRRORED_STANDARD_COMMAND_SKILLS = new Set([
   'aiwg-setup-project',
@@ -466,7 +354,7 @@ async function runPreDeployCollisionCheck(opts: {
   const skillNames = await listSourceSkillNames(sourceSkillsDir);
   if (skillNames.length === 0) return true; // nothing to check
 
-  const providerPaths = PROVIDER_PATHS[provider] ?? PROVIDER_PATHS.claude;
+  const providerPaths = getProviderPaths(provider);
   const skillsBaseDir = path.isAbsolute(providerPaths.skills)
     ? providerPaths.skills
     : path.join(target, providerPaths.skills);
@@ -1746,7 +1634,7 @@ export class UseHandler implements CommandHandler {
         if (!dryRun) {
           try {
             const registry = getRegistry();
-            const paths = PROVIDER_PATHS[providerName] || PROVIDER_PATHS.claude;
+            const paths = getProviderPaths(providerName);
             await registerDeployedExtensions(registry, {
               agentsPath: paths.agents,
               skillsPath: paths.skills,
@@ -1874,7 +1762,7 @@ export class UseHandler implements CommandHandler {
       // Register deployed extensions
       try {
         const registry = getRegistry();
-        const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
+        const paths = getProviderPaths(provider);
         await registerDeployedExtensions(registry, {
           agentsPath: paths.agents,
           skillsPath: paths.skills,
@@ -2242,10 +2130,10 @@ export class UseHandler implements CommandHandler {
       }
     }
 
-    const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
+    const paths = getProviderPaths(provider);
     const targetSkillsDir = resolveProviderPath(target, paths.skills);
     const targetCommandsDir = paths.commands ? resolveProviderPath(target, paths.commands) : '';
-    const kernelSkillsPath = PROVIDER_KERNEL_SKILL_PATHS[provider];
+    const kernelSkillsPath = getProviderKernelSkillsPath(provider);
     const targetKernelSkillsDir = kernelSkillsPath ? resolveProviderPath(target, kernelSkillsPath) : '';
 
     // Translate deployed skills to commands for providers that require legacy command format.
@@ -2327,7 +2215,7 @@ export class UseHandler implements CommandHandler {
     }
     try {
       const registry = getRegistry();
-      const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
+      const paths = getProviderPaths(provider);
 
       await registerDeployedExtensions(registry, {
         agentsPath: paths.agents,
@@ -2407,7 +2295,7 @@ export class UseHandler implements CommandHandler {
     let counts = { agents: 0, commands: 0, skills: 0, rules: 0, behaviors: 0 };
     if (quiet) {
       // Count deployed artifacts
-      const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
+      const paths = getProviderPaths(provider);
       counts = await countDeployedArtifacts(target, paths);
       if (counts.agents > 0) ui.deployCount('Agents', counts.agents);
       if (counts.commands > 0) ui.deployCount('Commands', counts.commands);
@@ -2451,7 +2339,7 @@ export class UseHandler implements CommandHandler {
     // --scope user` can find it from any cwd.
     if (scope === 'user' && provider !== 'openhuman' && !dryRun) {
       try {
-        const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
+        const paths = getProviderPaths(provider);
         const resolveProjectPath = (p: string): string =>
           !p ? '' : path.isAbsolute(p) ? p : path.join(target, p);
         const projectPaths = {
@@ -2628,7 +2516,7 @@ export class UseHandler implements CommandHandler {
       const forceContext = remainingArgs.includes('--force-context-files');
 
       try {
-        const paths = PROVIDER_PATHS[provider] || PROVIDER_PATHS.claude;
+        const paths = getProviderPaths(provider);
         const sections = await discoverDeployedArtifacts(target, {
           agents: paths.agents,
           rules: paths.rules,
