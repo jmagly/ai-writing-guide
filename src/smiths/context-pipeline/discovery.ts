@@ -11,7 +11,7 @@
  * Skill discovery is folder-based (each skill is a directory containing
  * SKILL.md). Agent/rule/behavior discovery is file-based (each artifact is
  * one .md file). The asymmetry mirrors the deploy-path conventions defined in
- * `src/cli/handlers/use.ts` PROVIDER_PATHS.
+ * `ProviderDefinition.paths.contextDiscovery`.
  */
 
 import { promises as fs } from 'node:fs';
@@ -20,9 +20,9 @@ import * as yaml from 'js-yaml';
 import type { AgentsMdSection, IndexEntry, IndexedArtifactType } from './types.js';
 
 /**
- * Path map for one provider's deploy targets. Subset of the PROVIDER_PATHS
- * record in `src/cli/handlers/use.ts` — only the four indexed types are
- * needed here. Empty string means "this provider does not deploy this type
+ * Path map for one provider's deploy targets. Subset of
+ * `ProviderDefinition.paths.contextDiscovery` — only the four indexed types
+ * are needed here. Empty string means "this provider does not deploy this type
  * to a discrete directory" (e.g. Hermes agents are aggregated into AGENTS.md
  * itself; OpenCode commands derive from skills; Codex commands hit a static
  * built-in enum that does not auto-scan files).

@@ -22,9 +22,9 @@ export type IndexedArtifactType = 'agents' | 'rules' | 'skills' | 'behaviors';
 /**
  * One entry in an AGENTS.md link-index section.
  *
- * Path field MUST originate from the AIWG-owned PROVIDER_PATHS map plus the
- * canonical `~/.agents/skills/` cross-provider user-scope target. The allowlist
- * in `allowlist.ts` enforces this.
+ * Path field MUST originate from the AIWG-owned ProviderDefinition registry
+ * plus the canonical `~/.agents/skills/` cross-provider user-scope target.
+ * The allowlist in `allowlist.ts` enforces this.
  */
 export interface IndexEntry {
   /** Artifact id (kebab-case, matches the deployed file's basename) */

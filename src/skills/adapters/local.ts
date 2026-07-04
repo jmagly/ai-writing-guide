@@ -11,9 +11,22 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import type { RegistryAdapter, SkillResult, SkillDetails, InstallOptions } from '../types.js';
+import {
+  getProviderDefinition,
+  resolveProviderPathValue,
+} from '../../providers/provider-definitions.js';
 
 const _scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const AIWG_ROOT = process.env.AIWG_ROOT || path.resolve(_scriptDir, '../../../');
+
+function resolveSkillFallbackPath(target: string, projectDir: string, name: string): string {
+  const definition = getProviderDefinition(target);
+  if (!definition) return path.join(projectDir, `.${target}/skills`, name);
+  const basePath = definition.skillNamespace.pathType === 'home-dir'
+    ? `~/${definition.skillNamespace.skillsBaseDir}`
+    : definition.skillNamespace.skillsBaseDir;
+  return path.join(resolveProviderPathValue(basePath, projectDir), name);
+}
 
 interface ManifestSkill {
   name: string;
@@ -308,25 +321,7 @@ export class LocalAdapter implements RegistryAdapter {
         name
       );
     } catch {
-      // Fallback: construct path from known conventions
-      const platformDirs: Record<string, string> = {
-        claude: '.claude/skills',
-        copilot: '.github/skills',
-        factory: '.factory/skills',
-        cursor: '.cursor/skills',
-        codex: '.codex/skills',
-        opencode: '.opencode/skill',
-        warp: '.warp/skills',
-        windsurf: '.windsurf/skills',
-        openclaw: path.join(
-          process.env.HOME || '~',
-          '.openclaw',
-          'skills'
-        ),
-        generic: 'skills',
-      };
-      const baseDir = platformDirs[target] || `.${target}/skills`;
-      targetDir = path.join(projectDir, baseDir, name);
+      targetDir = resolveSkillFallbackPath(target, projectDir, name);
     }
 
     // Copy skill directory to target

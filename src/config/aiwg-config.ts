@@ -12,9 +12,14 @@
 import { readFile, writeFile, mkdir, access, readdir, rename, unlink } from 'fs/promises';
 import { createHash, randomBytes } from 'crypto';
 import { resolve, join, isAbsolute } from 'path';
-import { homedir } from 'os';
 import type { ProjectLocalType } from '../extensions/manifest.js';
 import { normalizeNamedCaptures } from '../artifacts/index-builder.js';
+import {
+  getProviderDefinition,
+  PROVIDER_IDS,
+  resolveProviderPathValue,
+} from '../providers/provider-definitions.js';
+import type { Platform } from '../agents/types.js';
 
 const CONFIG_FILENAME = 'aiwg.config';
 const AIWG_DIR = '.aiwg';
@@ -769,14 +774,8 @@ export function resolveRemotes(remotes: RemotesConfig | undefined): ResolvedRemo
   };
 }
 
-/**
- * Valid provider names (mirrors PROVIDER_PATHS in use.ts)
- */
-export const VALID_PROVIDERS = [
-  'claude', 'factory', 'codex', 'opencode', 'copilot',
-  'cursor', 'warp', 'windsurf', 'hermes', 'openclaw', 'openhuman',
-] as const;
-export type Provider = typeof VALID_PROVIDERS[number];
+export const VALID_PROVIDERS = PROVIDER_IDS.filter((provider) => provider !== 'generic');
+export type Provider = Exclude<Platform, 'generic'>;
 
 /**
  * Empty config template.
@@ -994,22 +993,19 @@ export async function hashManifest(manifestPath: string): Promise<string | undef
   }
 }
 
-/**
- * Provider → relative deployment directories (project-relative unless absolute).
- * Mirrors PROVIDER_PATHS in use.ts; kept here to avoid circular imports.
- */
-const PROVIDER_DEPLOY_DIRS: Record<string, { agents: string; skills: string; commands: string; rules: string }> = {
-  claude:   { agents: '.claude/agents',       skills: '.claude/.aiwg/skills', commands: '.claude/commands',    rules: '.claude/rules'          },
-  copilot:  { agents: '.github/agents',       skills: '.github/.aiwg/skills', commands: '.github/commands',   rules: '.github/copilot-rules'   },
-  cursor:   { agents: '.cursor/agents',       skills: '.cursor/.aiwg/skills', commands: '.cursor/commands',    rules: '.cursor/rules'           },
-  opencode: { agents: '.opencode/agent',      skills: '.opencode/.aiwg/skill', commands: '.opencode/command',  rules: '.opencode/rule'           },
-  warp:     { agents: '.warp/agents',         skills: '.warp/.aiwg/skills',   commands: '.warp/commands',      rules: '.warp/rules'             },
-  windsurf: { agents: '.windsurf/agents',     skills: '.windsurf/.aiwg/skills', commands: '.windsurf/workflows', rules: '.windsurf/rules'       },
-  factory:  { agents: '.factory/droids',      skills: '.factory/.aiwg/skills', commands: '.factory/commands',   rules: '.factory/rules'          },
-  codex:    { agents: '.codex/agents',        skills: '.codex/.aiwg/skills',  commands: '.codex/commands',     rules: '.codex/rules'            },
-  hermes:   { agents: '',                     skills: join(homedir(), '.hermes', '.aiwg', 'skills'), commands: '',  rules: ''                    },
-  openclaw: { agents: join(homedir(), '.openclaw', 'agents'), skills: join(homedir(), '.openclaw', '.aiwg', 'skills'), commands: join(homedir(), '.openclaw', 'commands'), rules: join(homedir(), '.openclaw', 'rules') },
-};
+function getProviderDeployDirs(
+  provider: string,
+  projectDir: string,
+): { agents: string; skills: string; commands: string; rules: string } | null {
+  const artifacts = getProviderDefinition(provider)?.paths.artifacts;
+  if (!artifacts) return null;
+  return {
+    agents: resolveProviderPathValue(artifacts.agents, projectDir),
+    skills: resolveProviderPathValue(artifacts.skills, projectDir),
+    commands: resolveProviderPathValue(artifacts.commands, projectDir),
+    rules: resolveProviderPathValue(artifacts.rules, projectDir),
+  };
+}
 
 /**
  * Count .md files or subdirectories in a deployment directory.
@@ -1050,7 +1046,7 @@ export async function populateDeployedTo(
   if (entriesNeedingPopulation.length === 0) return config;
 
   for (const provider of config.providers) {
-    const dirs = PROVIDER_DEPLOY_DIRS[provider];
+    const dirs = getProviderDeployDirs(provider, projectDir);
     if (!dirs) continue;
 
     const counts: DeployedArtifactCounts = {

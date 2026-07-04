@@ -2,11 +2,11 @@
  * Path-emission allowlist for AGENTS.md link-index entries.
  *
  * Per ADR-1 §2 (security mitigation R2): the generator MUST only emit `Path:` values
- * that match a path produced by the AIWG-owned PROVIDER_PATHS map plus the canonical
- * `~/.agents/skills/` cross-provider user-scope target. Files deployed by project-local
- * manifests at non-AIWG paths are not indexed. This closes the link-redirect attack
- * surface where a malicious project-local artifact could cite a shadow file outside
- * AIWG's path-map domain.
+ * that match a path produced by the AIWG-owned ProviderDefinition registry plus
+ * the canonical `~/.agents/skills/` cross-provider user-scope target. Files
+ * deployed by project-local manifests at non-AIWG paths are not indexed. This
+ * closes the link-redirect attack surface where a malicious project-local
+ * artifact could cite a shadow file outside AIWG's path-map domain.
  */
 
 import { homedir } from 'node:os';
@@ -15,13 +15,13 @@ import * as path from 'node:path';
 /**
  * The AIWG-owned path prefixes that may appear in an AGENTS.md link entry.
  *
- * Mirrors the per-provider directory list from `src/cli/handlers/use.ts` PROVIDER_PATHS,
+ * Mirrors the per-provider directory list from `ProviderDefinition.paths.artifacts`,
  * generalized to prefixes (so per-artifact subpaths under each prefix are accepted).
  *
  * Sources kept in sync:
- * - `src/cli/handlers/use.ts:161-232` PROVIDER_PATHS
+ * - `src/providers/provider-definitions.ts`
  * - `src/smiths/platform-paths.ts` (TypeScript path resolvers)
- * - `src/config/aiwg-config.ts:552`
+ * - `src/config/aiwg-config.ts`
  *
  * If a new platform path is added there, add it here.
  */

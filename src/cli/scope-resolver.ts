@@ -58,8 +58,8 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
     // filesystem scan. `~/.config/github-copilot/` exists on Linux but
     // stores auth state, not customization markdown files. Workspace
     // customization is `.github/{copilot-instructions.md,prompts/,agents/,
-    // instructions/}` — see `PROVIDER_PATHS.copilot` in use.ts for the
-    // project-scope deploy that IS verified.
+    // instructions/}` — see the Copilot `ProviderDefinition.paths.artifacts`
+    // entry for the project-scope deploy that IS verified.
     //
     // The paths below remain populated as a "harmless mirror" — deploying
     // there does not break Copilot, but the runtime won't pick them up.
@@ -242,9 +242,9 @@ export function userScopeConfigPath(): string {
 
 /**
  * Resolve the deploy paths for a (provider, scope) pair. For project scope,
- * returns the project-relative paths from PROVIDER_PATHS (the caller resolves
- * them against the project dir). For user scope, returns the absolute home-
- * rooted paths from USER_SCOPE_PATHS.
+ * returns ProviderDefinition-backed project-relative paths (the caller
+ * resolves them against the project dir). For user scope, returns the
+ * absolute home-rooted paths from USER_SCOPE_PATHS.
  */
 export function resolveScopePaths(
   provider: string,

@@ -16,8 +16,21 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import type { RegistryAdapter, SkillResult, SkillDetails, InstallOptions } from '../types.js';
+import {
+  getProviderDefinition,
+  resolveProviderPathValue,
+} from '../../providers/provider-definitions.js';
 
 const CLAWHUB_API_BASE = 'https://clawhub.ai/api/v1';
+
+function resolveSkillFallbackPath(target: string, projectDir: string, name: string): string {
+  const definition = getProviderDefinition(target);
+  if (!definition) return path.join(projectDir, `.${target}/skills`, name);
+  const basePath = definition.skillNamespace.pathType === 'home-dir'
+    ? `~/${definition.skillNamespace.skillsBaseDir}`
+    : definition.skillNamespace.skillsBaseDir;
+  return path.join(resolveProviderPathValue(basePath, projectDir), name);
+}
 
 /**
  * Attempt a ClawHub API request
@@ -205,20 +218,7 @@ export class ClawHubAdapter implements RegistryAdapter {
         name
       );
     } catch {
-      const platformDirs: Record<string, string> = {
-        claude: '.claude/skills',
-        copilot: '.github/skills',
-        factory: '.factory/skills',
-        cursor: '.cursor/skills',
-        codex: '.codex/skills',
-        opencode: '.opencode/skill',
-        warp: '.warp/skills',
-        windsurf: '.windsurf/skills',
-        openclaw: path.join(process.env.HOME || '~', '.openclaw', 'skills'),
-        generic: 'skills',
-      };
-      const baseDir = platformDirs[target] || `.${target}/skills`;
-      targetDir = path.join(options.projectDir, baseDir, name);
+      targetDir = resolveSkillFallbackPath(target, options.projectDir, name);
     }
 
     // Try CLI install (downloads to a temp location, then we copy)

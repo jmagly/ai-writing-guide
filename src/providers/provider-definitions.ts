@@ -213,7 +213,7 @@ const ProviderDefinitionSchema = z.object({
   }),
 }) satisfies z.ZodType<ProviderDefinition>;
 
-const PROVIDER_IDS: Platform[] = [
+export const PROVIDER_IDS: readonly Platform[] = [
   'claude',
   'codex',
   'copilot',
