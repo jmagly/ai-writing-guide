@@ -15,6 +15,12 @@ import { readFile, writeFile, mkdir } from 'fs/promises';
 import { resolve } from 'path';
 import { homedir } from 'os';
 import { existsSync } from 'fs';
+import {
+  getMcpInjectionDefinition,
+  listMcpInjectProviderIds,
+  normalizeRuntimeProviderId,
+  resolveMcpConfigPath,
+} from '../providers/provider-definitions.mjs';
 
 // ============================================
 // Config dir resolution (inlined from user-config.ts)
@@ -183,23 +189,10 @@ export class McpServerRegistry {
 // ============================================
 
 function buildServerConfig(server, provider) {
-  switch (provider) {
-    case 'claude-code':
-    case 'claude': {
-      if (server.type === 'stdio') {
-        return {
-          command: server.command,
-          args: server.args || [],
-          ...(server.env ? { env: server.env } : {}),
-        };
-      }
-      return {
-        url: server.url,
-        ...(server.headers ? { headers: server.headers } : {}),
-      };
-    }
+  const mcpDefinition = getMcpInjectionDefinition(provider);
 
-    case 'cursor': {
+  switch (mcpDefinition?.serverConfigFormat) {
+    case 'standard': {
       if (server.type === 'stdio') {
         return {
           command: server.command,
@@ -246,23 +239,7 @@ function buildServerConfig(server, provider) {
       };
     }
 
-    case 'windsurf':
-    case 'warp': {
-      if (server.type === 'stdio') {
-        return {
-          command: server.command,
-          args: server.args || [],
-          ...(server.env ? { env: server.env } : {}),
-        };
-      }
-      return {
-        url: server.url,
-        ...(server.headers ? { headers: server.headers } : {}),
-      };
-    }
-
-    case 'codex':
-    case 'openai':
+    case 'toml':
       return {};
 
     default:
@@ -291,25 +268,13 @@ function buildServerToml(server) {
 }
 
 export function getProviderConfigPath(provider, projectDir = '.') {
-  const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-
-  const pathMap = {
-    'claude-code': resolve(projectDir, '.claude/settings.local.json'),
-    claude: resolve(projectDir, '.claude/settings.local.json'),
-    cursor: resolve(projectDir, '.cursor/mcp.json'),
-    factory: resolve(homeDir, '.factory/mcp.json'),
-    codex: resolve(homeDir, '.codex/config.toml'),
-    openai: resolve(homeDir, '.codex/config.toml'),
-    opencode: resolve(projectDir, 'opencode.json'),
-    windsurf: resolve(homeDir, '.codeium/windsurf/mcp_config.json'),
-    warp: resolve(homeDir, '.warp/mcp.json'),
-  };
-
-  return pathMap[provider] || '';
+  return resolveMcpConfigPath(provider, projectDir);
 }
 
 export async function injectServers(registry, provider, options = {}) {
   const { servers: serverFilter, projectDir = '.', dryRun = false } = options;
+  const normalizedProvider = normalizeRuntimeProviderId(provider);
+  const mcpDefinition = getMcpInjectionDefinition(provider);
   const configPath = getProviderConfigPath(provider, projectDir);
   const result = {
     provider,
@@ -317,6 +282,11 @@ export async function injectServers(registry, provider, options = {}) {
     serversInjected: [],
     alreadyPresent: [],
   };
+
+  if (!normalizedProvider || !mcpDefinition) {
+    result.error = `Unsupported provider: ${provider}`;
+    return result;
+  }
 
   let allServers = await registry.list();
   if (serverFilter && serverFilter.length > 0) {
@@ -328,7 +298,7 @@ export async function injectServers(registry, provider, options = {}) {
     return result;
   }
 
-  if (provider === 'codex' || provider === 'openai') {
+  if (mcpDefinition?.configFormat === 'toml') {
     return injectToml(registry, allServers, configPath, provider, dryRun, result);
   }
 
@@ -344,7 +314,7 @@ async function injectJson(registry, servers, configPath, provider, dryRun, resul
     // File doesn't exist
   }
 
-  const mcpKey = provider === 'opencode' ? 'mcp' : 'mcpServers';
+  const mcpKey = getMcpInjectionDefinition(provider)?.serversKey || 'mcpServers';
   const existingServers = existing[mcpKey] || {};
   const newServers = { ...existingServers };
 
@@ -414,12 +384,4 @@ function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export const SUPPORTED_PROVIDERS = [
-  'claude-code',
-  'cursor',
-  'factory',
-  'codex',
-  'opencode',
-  'windsurf',
-  'warp',
-];
+export const SUPPORTED_PROVIDERS = listMcpInjectProviderIds();

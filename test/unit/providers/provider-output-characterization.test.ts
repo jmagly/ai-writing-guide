@@ -261,6 +261,11 @@ describe('provider output characterization for registry migration', () => {
     vi.stubEnv('USERPROFILE', homeDir);
 
     const { getProviderConfigPath, SUPPORTED_PROVIDERS } = await import('../../../src/mcp/registry.mjs');
+    const {
+      getMcpInjectionDefinition,
+      listMcpInjectProviderIds,
+      normalizeRuntimeProviderId,
+    } = await import('../../../src/providers/provider-definitions.mjs');
 
     expect(SUPPORTED_PROVIDERS).toEqual([
       'claude-code',
@@ -271,10 +276,17 @@ describe('provider output characterization for registry migration', () => {
       'windsurf',
       'warp',
     ]);
+    expect(listMcpInjectProviderIds()).toEqual(SUPPORTED_PROVIDERS);
+    expect(normalizeRuntimeProviderId('claude')).toBe('claude-code');
+    expect(normalizeRuntimeProviderId('openai')).toBe('codex');
+    expect(getMcpInjectionDefinition('openai')?.configFormat).toBe('toml');
+    expect(getMcpInjectionDefinition('opencode')?.serversKey).toBe('mcp');
     expect(getProviderConfigPath('claude-code', projectDir)).toBe(resolve(projectDir, '.claude/settings.local.json'));
+    expect(getProviderConfigPath('claude', projectDir)).toBe(resolve(projectDir, '.claude/settings.local.json'));
     expect(getProviderConfigPath('cursor', projectDir)).toBe(resolve(projectDir, '.cursor/mcp.json'));
     expect(getProviderConfigPath('factory', projectDir)).toBe(resolve(homeDir, '.factory/mcp.json'));
     expect(getProviderConfigPath('codex', projectDir)).toBe(resolve(homeDir, '.codex/config.toml'));
+    expect(getProviderConfigPath('openai', projectDir)).toBe(resolve(homeDir, '.codex/config.toml'));
     expect(getProviderConfigPath('opencode', projectDir)).toBe(resolve(projectDir, 'opencode.json'));
     expect(getProviderConfigPath('windsurf', projectDir)).toBe(resolve(homeDir, '.codeium/windsurf/mcp_config.json'));
     expect(getProviderConfigPath('warp', projectDir)).toBe(resolve(homeDir, '.warp/mcp.json'));

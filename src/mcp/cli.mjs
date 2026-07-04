@@ -17,6 +17,7 @@ import {
   getProviderConfigPath,
 } from './registry.mjs';
 import { McpProfileRegistry } from './profiles.mjs';
+import { getMcpInjectionDefinition } from '../providers/provider-definitions.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -677,7 +678,7 @@ async function handleInject(args) {
     }
   } else {
     const normalized = provider === 'claude' ? 'claude-code' : provider;
-    if (!SUPPORTED_PROVIDERS.includes(normalized) && normalized !== 'openai') {
+    if (!getMcpInjectionDefinition(normalized)) {
       console.error(`Unknown provider: ${provider}`);
       console.error(`Supported providers: ${SUPPORTED_PROVIDERS.join(', ')}`);
       process.exit(1);
@@ -685,15 +686,12 @@ async function handleInject(args) {
     providers = [normalized];
   }
 
-  // Ephemeral mode — providers that don't support it
-  const EPHEMERAL_UNSUPPORTED = ['warp'];
-  const EPHEMERAL_SUPPORTED = ['claude-code', 'claude', 'codex', 'openai'];
-
   if (ephemeral) {
     for (const p of providers) {
-      if (EPHEMERAL_UNSUPPORTED.includes(p)) {
+      const mcpDefinition = getMcpInjectionDefinition(p);
+      if (!mcpDefinition?.supportsEphemeral) {
         console.error(`Error: --ephemeral is not supported for provider "${p}".`);
-        console.error(`  Warp configures MCP servers via its UI only. No file-based ephemeral config is available.`);
+        if (mcpDefinition?.unsupportedReason) console.error(`  ${mcpDefinition.unsupportedReason}`);
         process.exit(1);
       }
     }
@@ -723,10 +721,11 @@ async function handleInject(args) {
       }
 
       // Build ephemeral config in provider's format
-      const mcpKey = p === 'opencode' ? 'mcp' : 'mcpServers';
+      const mcpDefinition = getMcpInjectionDefinition(p);
+      const mcpKey = mcpDefinition?.serversKey || 'mcpServers';
       const mcpBlock = {};
       for (const server of servers) {
-        if (p === 'codex' || p === 'openai') {
+        if (mcpDefinition?.configFormat === 'toml') {
           // TOML providers get a note — ephemeral TOML is handled by codex-runtime adapter
           console.log(`  ${p}: TOML ephemeral config requires the codex-runtime adapter.`);
           console.log(`  Use "aiwg session --provider codex --profile ${profileName}" instead.`);
