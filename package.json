@@ -89,6 +89,7 @@
     "!tools/**/*.ps1",
     "!tools/**/Dockerfile",
     "!tools/lint/",
+    "tools/lint/claude-context-inventory.mjs",
     "!tools/manifest/",
     "!tools/release/",
     "agentic/",

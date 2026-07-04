@@ -220,6 +220,32 @@ try {
   if (installedDiscover.stderr.includes("Cannot find package '@fortemi/core'")) {
     fail('packed production install is missing @fortemi/core at runtime');
   }
+
+  const installedRoot = path.join(installDir, 'node_modules', 'aiwg');
+  const installedDoctor = spawnSync(
+    process.execPath,
+    [path.join(installedRoot, 'tools', 'cli', 'doctor.mjs'), '--no-budget-check'],
+    {
+      cwd: tmp,
+      encoding: 'utf8',
+      maxBuffer: 16 * 1024 * 1024,
+      env: {
+        ...process.env,
+        XDG_DATA_HOME: path.join(tmp, 'xdg-doctor'),
+        AIWG_ROOT: installedRoot,
+      },
+    },
+  );
+  const doctorOutput = `${installedDoctor.stdout}\n${installedDoctor.stderr}`;
+  if (
+    doctorOutput.includes('ERR_MODULE_NOT_FOUND') ||
+    doctorOutput.includes('Cannot find module') ||
+    doctorOutput.includes('Cannot find package')
+  ) {
+    console.error(installedDoctor.stdout);
+    console.error(installedDoctor.stderr);
+    fail(`packed production install doctor import smoke hit module resolution failure (status ${installedDoctor.status})`);
+  }
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

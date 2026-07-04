@@ -107,6 +107,33 @@ describe('.aiwg/ Tracking and Distribution (integration)', () => {
         .filter((filePath: string) => filePath === '.aiwg' || filePath.startsWith('.aiwg/'));
       expect(aiwgFiles, 'npm pack should include 0 .aiwg/ files').toHaveLength(0);
     });
+
+    it('should include doctor.mjs and its runtime lint import in npm pack dry-run', () => {
+      const output = execSync('npm pack --dry-run --json', {
+        cwd: REPO_ROOT,
+        encoding: 'utf-8',
+        timeout: 120_000,
+      });
+      function parseNpmPackJson(stdout: string) {
+        try {
+          return JSON.parse(stdout);
+        } catch {
+          const start = stdout.lastIndexOf('\n[');
+          if (start >= 0) return JSON.parse(stdout.slice(start + 1));
+          const first = stdout.indexOf('[');
+          if (first >= 0) return JSON.parse(stdout.slice(first));
+          throw new Error('no JSON array found in npm pack output');
+        }
+      }
+      const pack = parseNpmPackJson(output);
+      const files = new Set((pack?.[0]?.files ?? []).map((file: { path?: string }) => file.path ?? ''));
+
+      expect(files.has('tools/cli/doctor.mjs'), 'doctor.mjs must ship in npm package').toBe(true);
+      expect(
+        files.has('tools/lint/claude-context-inventory.mjs'),
+        'doctor.mjs imports tools/lint/claude-context-inventory.mjs at runtime',
+      ).toBe(true);
+    });
   });
 
   // ─────────────────────────────────────────────────────
