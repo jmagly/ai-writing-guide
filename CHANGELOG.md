@@ -7,6 +7,20 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.5] - 2026-07-03 - "Fortemi runtime dependency packaging"
+
+Ships the Fortemi Core runtime dependency in the global npm package so the
+default Fortemi-backed discovery path works immediately after install.
+
+### Fixed
+
+- **Fortemi Core runtime dependency** — `@fortemi/core` now ships as a runtime
+  dependency, allowing global installs to run `aiwg discover` without manually
+  installing `@fortemi/core` beside the CLI.
+- **Production package smoke coverage** — the Fortemi prebuilt package gate now
+  installs the packed tarball with development dependencies omitted and runs
+  `aiwg discover "test"` from that install to catch missing runtime packages.
+
 ## [2026.7.4] - 2026-07-03 - "Fortemi discovery release alignment"
 
 Supersedes `2026.7.3` as the artifact-aligned stable release after the first
