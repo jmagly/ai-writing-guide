@@ -4,7 +4,7 @@
  * AIWG-managed projects historically `.gitignore` the whole `.aiwg/` tree
  * because most of it is generated state (working scratch, ralph state,
  * research corpora, etc.). With #1033's project-local artifact lifecycle,
- * `.aiwg/{addons,extensions,frameworks,plugins}/` is now also operator-
+ * `.aiwg/{addons,extensions,frameworks,plugins,providers}/` is now also operator-
  * authored source — and a blanket ignore silently drops it from version
  * control.
  *
@@ -46,6 +46,7 @@ export const AIWG_GITIGNORE_BLOCK = [
   '!.aiwg/extensions/',
   '!.aiwg/frameworks/',
   '!.aiwg/plugins/',
+  '!.aiwg/providers/',
   '',
 ].join('\n');
 
@@ -55,7 +56,8 @@ export interface BlanketIgnoreReport {
   /**
    * True when `.gitignore` already explicitly un-ignores at least one of
    * the project-local source directories (addons/extensions/frameworks/
-   * plugins). Treated as "operator already configured this — don't touch".
+   * plugins/providers). Treated as "operator already configured this —
+   * don't touch".
    */
   hasExistingNegation: boolean;
   /**
@@ -108,9 +110,9 @@ export async function detectAiwgBlanketIgnore(
 
   const isSourceNegation = (l: string): boolean => {
     if (!l.startsWith('!')) return false;
-    // `.aiwg/addons/`, `.aiwg/extensions/foo`, `/.aiwg/plugins/**`, etc.
+    // `.aiwg/addons/`, `.aiwg/extensions/foo`, `/.aiwg/providers/**`, etc.
     const body = l.slice(1).replace(/^\//, '');
-    return /^\.aiwg\/(addons|extensions|frameworks|plugins)(\/.*)?$/.test(body);
+    return /^\.aiwg\/(addons|extensions|frameworks|plugins|providers)(\/.*)?$/.test(body);
   };
 
   const blanketIgnore = stripped.some(isBlanket);
@@ -125,7 +127,7 @@ export interface AppendResult {
   added: boolean;
   /**
    * Brief reason, for printing. e.g.
-   *   "appended .aiwg/{addons,extensions,frameworks,plugins} un-ignore block"
+   *   "appended .aiwg/{addons,extensions,frameworks,plugins,providers} un-ignore block"
    *   "no .gitignore — skipped"
    *   "no blanket .aiwg ignore — already tracking sources"
    *   "block already present — no change"
@@ -172,7 +174,7 @@ export async function appendAiwgSourceTrackBlock(
   const existing = await readFile(path, 'utf8');
   const sep = existing.endsWith('\n') ? '' : '\n';
   await writeFile(path, existing + sep + AIWG_GITIGNORE_BLOCK, 'utf8');
-  return { added: true, reason: 'appended .aiwg/{addons,extensions,frameworks,plugins} un-ignore block' };
+  return { added: true, reason: 'appended .aiwg/{addons,extensions,frameworks,plugins,providers} un-ignore block' };
 }
 
 /**

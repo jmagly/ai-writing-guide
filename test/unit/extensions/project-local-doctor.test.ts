@@ -41,6 +41,26 @@ function writeBundle(projectDir: string, id: string, opts: { ruleBody?: string; 
   );
 }
 
+function writeProviderBundle(projectDir: string, id: string): void {
+  const dir = join(projectDir, '.aiwg', 'providers', id);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(
+    join(dir, 'manifest.json'),
+    JSON.stringify({
+      id,
+      type: 'provider',
+      name: id,
+      version: '1.0.0',
+      description: 'Test provider bundle',
+      manifestVersion: '1',
+      platforms: { claude: 'full' },
+      keywords: ['test'],
+      deployment: { pathTemplate: '.{platform}/skills/{id}.md' },
+      providerConfig: { extends: 'claude', displayName: id },
+    }, null, 2),
+  );
+}
+
 function deployRule(projectDir: string, body = 'rule body'): void {
   mkdirSync(join(projectDir, '.claude', 'rules'), { recursive: true });
   writeFileSync(join(projectDir, '.claude', 'rules', 'r1.md'), body);
@@ -89,15 +109,18 @@ describe('project-local-doctor (DC-1)', () => {
   it('reports per-type counts and bundle ids when content exists', async () => {
     writeBundle(projectDir, 'foo');
     writeBundle(projectDir, 'bar');
+    writeProviderBundle(projectDir, 'custom-provider');
 
     const r = await buildProjectLocalDoctorSection({
       projectDir, frameworkRoot, config: null,
     });
     expect(r.output).toContain('Project-local artifacts');
-    expect(r.output).toContain('Discovered: 2 bundle');
+    expect(r.output).toContain('Discovered: 3 bundle');
     expect(r.output).toContain('extensions');
+    expect(r.output).toContain('providers');
     expect(r.output).toContain('foo');
     expect(r.output).toContain('bar');
+    expect(r.output).toContain('custom-provider');
   });
 
   it('surfaces validation errors with structured rows', async () => {

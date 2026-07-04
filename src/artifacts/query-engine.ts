@@ -960,7 +960,7 @@ export async function discoverCapability(
 
   // Build a hint string when the index has entries but no scored matches —
   // this is the second silent-failure mode #1221 calls out. When the workspace
-  // has project-local content (.aiwg/{extensions,addons,frameworks,plugins}/)
+  // has project-local content (.aiwg/{extensions,addons,frameworks,plugins,providers}/)
   // surface a project-graph rebuild hint (#1235).
   // discover-appropriate hint (#1545): never push index/graph mechanics. If
   // nothing scored, the phrase didn't match an indexed capability — suggest a

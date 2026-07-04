@@ -1,7 +1,7 @@
 /**
  * Bundle Manifest Schema (Zod)
  *
- * Validates `.aiwg/{extensions,addons,frameworks,plugins}/<name>/manifest.json`
+ * Validates `.aiwg/{extensions,addons,frameworks,plugins,providers}/<name>/manifest.json`
  * for project-local artifact bundles. Implements the design in
  * `.aiwg/architecture/design-manifest-schema.md` (#1044).
  *
@@ -39,6 +39,7 @@ export const ProjectLocalTypeSchema = z.enum([
   'addon',
   'framework',
   'plugin',
+  'provider',
 ]);
 
 export type ProjectLocalType = z.infer<typeof ProjectLocalTypeSchema>;
@@ -116,6 +117,24 @@ export const PluginConfigSchema = z.object({
   payloadPath: safeRelativePath,
 }).strict();
 
+export const ProviderConfigSchema = z.object({
+  extends: z.enum([
+    'claude',
+    'codex',
+    'copilot',
+    'cursor',
+    'factory',
+    'hermes',
+    'opencode',
+    'openclaw',
+    'openhuman',
+    'warp',
+    'windsurf',
+  ]),
+  displayName: z.string().min(1).max(128).optional(),
+  aliases: z.array(z.string().min(1).max(64)).max(20).optional(),
+}).strict();
+
 // ============================================
 // Top-level BundleManifestSchema
 // ============================================
@@ -145,6 +164,7 @@ export const BundleManifestSchema = z.object({
   frameworkConfig: FrameworkConfigSchema.optional(),
   extensionConfig: ExtensionConfigSchema.optional(),
   pluginConfig: PluginConfigSchema.optional(),
+  providerConfig: ProviderConfigSchema.optional(),
 
   // Override / safety-critical declarations (#1041)
   'safety-critical': z.boolean().optional(),
@@ -163,6 +183,7 @@ export const BundleManifestSchema = z.object({
         framework: m.frameworkConfig !== undefined,
         extension: m.extensionConfig !== undefined,
         plugin: m.pluginConfig !== undefined,
+        provider: m.providerConfig !== undefined,
       };
       const presentCount = Object.values(present).filter(Boolean).length;
       // Extension is the only type that may omit its config block; others require it
@@ -171,7 +192,7 @@ export const BundleManifestSchema = z.object({
       }
       return presentCount === 1 && present[m.type as keyof typeof present];
     },
-    { message: 'type must match its corresponding *Config block (addon→addonConfig, framework→frameworkConfig, plugin→pluginConfig; extension may omit extensionConfig)' }
+    { message: 'type must match its corresponding *Config block (addon→addonConfig, framework→frameworkConfig, plugin→pluginConfig, provider→providerConfig; extension may omit extensionConfig)' }
   );
 
 export type BundleManifest = z.infer<typeof BundleManifestSchema>;

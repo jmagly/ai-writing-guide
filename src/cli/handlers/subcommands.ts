@@ -419,7 +419,7 @@ function formatProjectLocalOnly(
 
   if (total === 0 && result.errors.length === 0) {
     output += '\nNo project-local bundles found.\n';
-    output += '\nTip: place a manifest.json under .aiwg/{extensions,addons,frameworks,plugins}/<name>/ to author a project-local artifact.\n';
+    output += '\nTip: place a manifest.json under .aiwg/{extensions,addons,frameworks,plugins,providers}/<name>/ to author a project-local artifact.\n';
     return { exitCode: 0, message: output };
   }
 
@@ -922,7 +922,7 @@ export const newBundleHandler: CommandHandler = {
   name: 'New Bundle',
   description: 'Scaffold a project-local bundle under .aiwg/{type}/{name}/',
   category: 'scaffolding',
-  aliases: ['new-extension', 'new-addon', 'new-framework', 'new-plugin'],
+  aliases: ['new-extension', 'new-addon', 'new-framework', 'new-plugin', 'new-provider'],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
     const args = ctx.args;
@@ -930,25 +930,26 @@ export const newBundleHandler: CommandHandler = {
     if (!positional) {
       return {
         exitCode: 1,
-        message: 'Error: bundle name required\n\nUsage: aiwg new-bundle <name> [--type extension|addon|framework|plugin] [--starter skill|rule|agent|minimal] [--description "..."]',
+        message: 'Error: bundle name required\n\nUsage: aiwg new-bundle <name> [--type extension|addon|framework|plugin|provider] [--starter skill|rule|agent|minimal] [--description "..."]',
       };
     }
 
     // Type can be inferred from the alias used to invoke (new-extension etc.)
-    const aliasMap: Record<string, 'extension' | 'addon' | 'framework' | 'plugin'> = {
+    const aliasMap: Record<string, 'extension' | 'addon' | 'framework' | 'plugin' | 'provider'> = {
       'new-extension': 'extension',
       'new-addon': 'addon',
       'new-framework': 'framework',
       'new-plugin': 'plugin',
+      'new-provider': 'provider',
     };
     const invoked = ctx.rawArgs[0] ?? '';
     const aliasType = aliasMap[invoked];
 
     const typeIdx = args.findIndex(a => a === '--type');
     const typeFlag = typeIdx >= 0 ? args[typeIdx + 1] : undefined;
-    const type = (typeFlag ?? aliasType ?? 'extension') as 'extension' | 'addon' | 'framework' | 'plugin';
-    if (!['extension', 'addon', 'framework', 'plugin'].includes(type)) {
-      return { exitCode: 1, message: `Error: --type must be one of extension|addon|framework|plugin (got '${type}')` };
+    const type = (typeFlag ?? aliasType ?? 'extension') as 'extension' | 'addon' | 'framework' | 'plugin' | 'provider';
+    if (!['extension', 'addon', 'framework', 'plugin', 'provider'].includes(type)) {
+      return { exitCode: 1, message: `Error: --type must be one of extension|addon|framework|plugin|provider (got '${type}')` };
     }
 
     const starterIdx = args.findIndex(a => a === '--starter');
@@ -1005,7 +1006,7 @@ export const newBundleHandler: CommandHandler = {
         if (ig.added) {
           console.log('');
           console.log(`  → ${ig.reason}`);
-          console.log('    .aiwg/{addons,extensions,frameworks,plugins}/ now tracked by git.');
+          console.log('    .aiwg/{addons,extensions,frameworks,plugins,providers}/ now tracked by git.');
           console.log('    Generated state under .aiwg/ (working/, ralph/, research/, ...) stays ignored.');
         }
       } catch {

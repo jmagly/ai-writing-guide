@@ -40,7 +40,7 @@ export interface InstalledEntry {
    * Source of the deployment:
    *   "bundled"       — came from the npm package
    *   "cache"         — came from ~/.cache/aiwg/packages/ (#557)
-   *   "project-local" — came from .aiwg/{extensions,addons,frameworks,plugins}/<id>/ (#1035)
+   *   "project-local" — came from .aiwg/{extensions,addons,frameworks,plugins,providers}/<id>/ (#1035)
    *   git URL         — direct source URL
    */
   source: 'bundled' | 'cache' | 'project-local' | string;

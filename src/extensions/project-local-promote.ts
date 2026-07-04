@@ -89,6 +89,7 @@ const TYPE_TO_UPSTREAM_DIR: Record<ProjectLocalType, string> = {
   addon: 'agentic/code/addons',
   framework: 'agentic/code/frameworks',
   plugin: 'agentic/code/addons',
+  provider: 'agentic/code/providers',
 };
 
 async function sha256(absPath: string): Promise<string> {
@@ -170,7 +171,7 @@ export async function promoteProjectLocalBundle(
   const discovery = await discoverProjectLocalBundles(projectDir);
   const bundle = discovery.bundles.find(b => b.id === bundleId);
   if (!bundle) {
-    return { ok: false, failureReason: 'bundle-not-found', message: `No project-local bundle '${bundleId}' under .aiwg/{extensions,addons,frameworks,plugins}/` };
+    return { ok: false, failureReason: 'bundle-not-found', message: `No project-local bundle '${bundleId}' under .aiwg/{extensions,addons,frameworks,plugins,providers}/` };
   }
 
   // Pre-flight 2: corpus path required for --to corpus
@@ -293,4 +294,3 @@ export async function promoteProjectLocalBundle(
 
   return { ok: true, plan, copied: sourceRels };
 }
-

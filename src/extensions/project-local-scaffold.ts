@@ -51,6 +51,7 @@ const TYPE_TO_DIR: Record<ProjectLocalType, string> = {
   addon: 'addons',
   framework: 'frameworks',
   plugin: 'plugins',
+  provider: 'providers',
 };
 
 const NAME_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
@@ -74,12 +75,24 @@ function buildManifest(opts: ScaffoldOptions): Record<string, unknown> {
     base['frameworkConfig'] = { path: 'src/' };
   } else if (type === 'plugin') {
     base['pluginConfig'] = { payloadType: 'addon', payloadPath: 'payload/' };
+  } else if (type === 'provider') {
+    base['providerConfig'] = { extends: 'claude', displayName: name };
   }
   return base;
 }
 
 function readme(opts: ScaffoldOptions): string {
   const { type, name, description = '' } = opts;
+  const usage = type === 'provider'
+    ? `Select this provider while deploying a framework:
+\`\`\`bash
+aiwg use sdlc --provider ${name}
+\`\`\``
+    : `Deploy to your configured providers:
+\`\`\`bash
+aiwg use ${name}
+\`\`\``;
+  const upstreamDir = type === 'provider' ? 'providers' : 'addons';
   return `# ${name}
 
 ${description || `Project-local ${type} bundle.`}
@@ -87,8 +100,7 @@ ${description || `Project-local ${type} bundle.`}
 ## What this is
 
 A project-local AIWG ${type} living under \`.aiwg/${TYPE_TO_DIR[type]}/${name}/\`.
-Discovered automatically by \`aiwg use\` and deployed alongside upstream
-artifacts.
+Discovered automatically by \`aiwg use\`${type === 'provider' ? ' as a provider alias.' : ' and deployed alongside upstream artifacts.'}
 
 ## Layout
 
@@ -96,15 +108,12 @@ artifacts.
 .aiwg/${TYPE_TO_DIR[type]}/${name}/
 ├── manifest.json          # Bundle metadata (validated by aiwg)
 ├── README.md              # This file
-└── ${type === 'framework' ? 'src/' : type === 'plugin' ? 'payload/' : 'skills/ or rules/'}
+└── ${type === 'framework' ? 'src/' : type === 'plugin' ? 'payload/' : type === 'provider' ? 'manifest.json only' : 'skills/ or rules/'}
 \`\`\`
 
 ## Usage
 
-Deploy to your configured providers:
-\`\`\`bash
-aiwg use ${name}
-\`\`\`
+${usage}
 
 Inspect health:
 \`\`\`bash
@@ -119,7 +128,7 @@ aiwg remove ${name}
 ## Identical-form portability
 
 This directory is shaped **byte-identical** to upstream
-\`agentic/code/addons/${name}/\`. To graduate, run:
+\`agentic/code/${upstreamDir}/${name}/\`. To graduate, run:
 
 \`\`\`bash
 aiwg promote ${name} --dry-run     # preview
@@ -228,7 +237,7 @@ export async function scaffoldProjectLocalBundle(
   if (dryRun) {
     // Compute the file list without writing anything.
     const starter: StarterKind =
-      options.starter ?? (options.type === 'framework' || options.type === 'plugin' ? 'minimal' : 'skill');
+      options.starter ?? (options.type === 'framework' || options.type === 'plugin' || options.type === 'provider' ? 'minimal' : 'skill');
     const filesCreated: string[] = ['manifest.json', 'README.md'];
     if (starter === 'skill') filesCreated.push(`skills/${options.name}-skill/SKILL.md`);
     else if (starter === 'rule') filesCreated.push(`rules/${options.name}.md`);
@@ -243,7 +252,7 @@ export async function scaffoldProjectLocalBundle(
 
   // Pick starter
   const starter: StarterKind =
-    options.starter ?? (options.type === 'framework' || options.type === 'plugin' ? 'minimal' : 'skill');
+    options.starter ?? (options.type === 'framework' || options.type === 'plugin' || options.type === 'provider' ? 'minimal' : 'skill');
 
   // manifest.json
   const manifest = buildManifest(options);
@@ -296,6 +305,5 @@ export async function scaffoldProjectLocalBundle(
     );
     filesCreated.push('payload/.gitkeep');
   }
-
   return { bundlePath, filesCreated, alreadyExists: false };
 }

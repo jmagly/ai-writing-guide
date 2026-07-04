@@ -63,13 +63,14 @@ async function hashDeployed(absPath: string): Promise<{ raw: string; normalized:
   }
 }
 
-const TYPES: readonly ProjectLocalType[] = ['extension', 'addon', 'framework', 'plugin'];
+const TYPES: readonly ProjectLocalType[] = ['extension', 'addon', 'framework', 'plugin', 'provider'];
 
 const TYPE_DIR: Record<ProjectLocalType, string> = {
   extension: 'extensions',
   addon: 'addons',
   framework: 'frameworks',
   plugin: 'plugins',
+  provider: 'providers',
 };
 
 // Per PUW-026 (#1127): home-deploying providers get absolute prefixes so

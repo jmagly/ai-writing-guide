@@ -21,7 +21,7 @@ function makeTmpDir(): string {
 
 function writeBundle(
   projectDir: string,
-  type: 'extensions' | 'addons' | 'frameworks' | 'plugins',
+  type: 'extensions' | 'addons' | 'frameworks' | 'plugins' | 'providers',
   name: string,
   manifest: Record<string, unknown>
 ): void {
@@ -97,15 +97,16 @@ describe('project-local-discovery', () => {
       expect(result.isEmpty).toBe(false);
     });
 
-    it('discovers bundles across all four type directories', async () => {
+    it('discovers bundles across all project-local type directories', async () => {
       writeBundle(tmpDir, 'extensions', 'a', validManifest({ id: 'a', type: 'extension', addonConfig: undefined }));
       writeBundle(tmpDir, 'addons', 'b', validManifest({ id: 'b' }));
       writeBundle(tmpDir, 'frameworks', 'c', validManifest({ id: 'c', type: 'framework', addonConfig: undefined, frameworkConfig: { path: 'src/' } }));
       writeBundle(tmpDir, 'plugins', 'd', validManifest({ id: 'd', type: 'plugin', addonConfig: undefined, pluginConfig: { payloadType: 'addon', payloadPath: 'payload/' } }));
+      writeBundle(tmpDir, 'providers', 'e', validManifest({ id: 'e', type: 'provider', addonConfig: undefined, providerConfig: { extends: 'claude' } }));
 
       const result = await discoverProjectLocalBundles(tmpDir);
-      expect(result.bundles).toHaveLength(4);
-      expect(result.counts).toEqual({ extension: 1, addon: 1, framework: 1, plugin: 1 });
+      expect(result.bundles).toHaveLength(5);
+      expect(result.counts).toEqual({ extension: 1, addon: 1, framework: 1, plugin: 1, provider: 1 });
     });
   });
 

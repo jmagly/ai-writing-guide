@@ -1,7 +1,7 @@
 /**
  * Project-Local Bundle Discovery
  *
- * Scans `.aiwg/{extensions,addons,frameworks,plugins}/<name>/manifest.json`
+ * Scans `.aiwg/{extensions,addons,frameworks,plugins,providers}/<name>/manifest.json`
  * and validates each manifest against the unified schema. Read-only — no
  * deployment side effects.
  *
@@ -23,26 +23,13 @@ import {
 } from './manifest.js';
 
 const AIWG_DIR = '.aiwg';
-const SCAN_TYPES: ProjectLocalType[] = ['extensions', 'addons', 'frameworks', 'plugins'].map(
-  // typed elsewhere; the directory names are the plural of the type
-  (s) => s as 'extensions' | 'addons' | 'frameworks' | 'plugins'
-).map((dir) => {
-  // Map directory name to canonical singular type. ExtensionS → extension, etc.
-  const map: Record<string, ProjectLocalType> = {
-    extensions: 'extension',
-    addons: 'addon',
-    frameworks: 'framework',
-    plugins: 'plugin',
-  };
-  return map[dir];
-});
-
 /** Directory name → singular type */
 const DIR_TO_TYPE: Record<string, ProjectLocalType> = {
   extensions: 'extension',
   addons: 'addon',
   frameworks: 'framework',
   plugins: 'plugin',
+  providers: 'provider',
 };
 
 const SCAN_DIRS = Object.keys(DIR_TO_TYPE);
@@ -77,7 +64,7 @@ export interface DiscoveryOptions {
 }
 
 /**
- * Scan all four `.aiwg/<type>/` directories for project-local bundles. Returns
+ * Scan all project-local `.aiwg/<type>/` directories for bundles. Returns
  * a structured result with bundles, errors, and counts. Missing directories
  * are silently skipped (per #1039 §3 / UC-PL-6).
  */
@@ -92,6 +79,7 @@ export async function discoverProjectLocalBundles(
     addon: 0,
     framework: 0,
     plugin: 0,
+    provider: 0,
   };
 
   let totalScanned = 0;
@@ -177,7 +165,7 @@ export async function discoverProjectLocalBundles(
 
   // Cross-bundle: check for case-insensitive id collisions within a single type
   // (NFR-PL-6) and duplicate ids (per #1041 §4 case 6)
-  for (const type of ['extension', 'addon', 'framework', 'plugin'] as ProjectLocalType[]) {
+  for (const type of ['extension', 'addon', 'framework', 'plugin', 'provider'] as ProjectLocalType[]) {
     const bundlesOfType = bundles.filter((b) => b.type === type);
     const idsLower = new Map<string, ProjectLocalBundle[]>();
     for (const b of bundlesOfType) {
@@ -340,6 +328,3 @@ export async function loadAndValidateManifest(
     errors: [],
   };
 }
-
-// Suppress unused import noise from the SCAN_TYPES helper (kept for clarity)
-void SCAN_TYPES;

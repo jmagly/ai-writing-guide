@@ -350,7 +350,7 @@ export const newBundleCommand: Extension = {
   description: 'Scaffold a project-local bundle under .aiwg/{type}/{name}/',
   version: '1.0.0',
   capabilities: ['cli', 'scaffolding', 'project-local'],
-  keywords: ['new', 'bundle', 'scaffold', 'project-local', 'extension', 'addon', 'framework', 'plugin'],
+  keywords: ['new', 'bundle', 'scaffold', 'project-local', 'extension', 'addon', 'framework', 'plugin', 'provider'],
   category: 'scaffolding',
   platforms: {
     claude: 'full',
@@ -362,10 +362,10 @@ export const newBundleCommand: Extension = {
   },
   metadata: {
     type: 'skill',
-    triggerPhrases: ['new bundle', 'scaffold project-local', 'new extension', 'new addon'],
+    triggerPhrases: ['new bundle', 'scaffold project-local', 'new extension', 'new addon', 'new provider'],
     commandHint: {
       template: 'utility',
-      argumentHint: '<name> [--type extension|addon|framework|plugin] [--starter skill|rule|agent|minimal] [--description "..."]',
+      argumentHint: '<name> [--type extension|addon|framework|plugin|provider] [--starter skill|rule|agent|minimal] [--description "..."]',
       allowedTools: ['Read', 'Write', 'Bash'],
     },
   } satisfies SkillMetadata,

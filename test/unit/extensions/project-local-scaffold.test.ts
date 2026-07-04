@@ -72,6 +72,20 @@ describe('scaffoldProjectLocalBundle (#1050)', () => {
     expect(BundleManifestSchema.safeParse(manifest).success).toBe(true);
   });
 
+  it('creates provider bundle with providerConfig and no starter artifact by default', async () => {
+    const result = await scaffoldProjectLocalBundle({ type: 'provider', name: 'custom-provider', projectDir });
+    const manifest = JSON.parse(readFileSync(join(result.bundlePath, 'manifest.json'), 'utf-8'));
+    expect(result.bundlePath).toContain('.aiwg/providers/custom-provider');
+    expect(result.filesCreated).toEqual(['manifest.json', 'README.md']);
+    expect(manifest.type).toBe('provider');
+    expect(manifest.providerConfig).toEqual({ extends: 'claude', displayName: 'custom-provider' });
+    expect(existsSync(join(result.bundlePath, 'skills'))).toBe(false);
+    const readme = readFileSync(join(result.bundlePath, 'README.md'), 'utf-8');
+    expect(readme).toContain('aiwg use sdlc --provider custom-provider');
+    expect(readme).not.toContain('aiwg use custom-provider');
+    expect(BundleManifestSchema.safeParse(manifest).success).toBe(true);
+  });
+
   it('honors --starter rule', async () => {
     const result = await scaffoldProjectLocalBundle({
       type: 'extension', name: 'rl', starter: 'rule', projectDir,

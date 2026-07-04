@@ -73,6 +73,7 @@ import {
   showHandler,
   configHandler,
   opsHandler,
+  newBundleHandler,
   subcommandHandlers,
 } from "../../../../src/cli/handlers/subcommands.js";
 
@@ -311,6 +312,33 @@ describe("Subcommand Handlers", () => {
         mockContext.args,
         { cwd: mockContext.cwd },
       );
+    });
+  });
+
+  describe("newBundleHandler", () => {
+    it("infers provider bundles from the new-provider alias", async () => {
+      const fs = require("node:fs");
+      const path = require("node:path");
+      const os = require("node:os");
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "aiwg-new-provider-"));
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+      try {
+        const result = await newBundleHandler.execute({
+          ...mockContext,
+          cwd: tmpDir,
+          rawArgs: ["new-provider", "custom-provider"],
+          args: ["custom-provider"],
+        });
+
+        expect(result.exitCode).toBe(0);
+        const manifestPath = path.join(tmpDir, ".aiwg", "providers", "custom-provider", "manifest.json");
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+        expect(manifest.type).toBe("provider");
+        expect(manifest.providerConfig).toEqual({ extends: "claude", displayName: "custom-provider" });
+      } finally {
+        logSpy.mockRestore();
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      }
     });
   });
 

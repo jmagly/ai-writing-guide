@@ -39,6 +39,27 @@ function writeBundle(projectDir: string, id: string, opts: { withRefs?: boolean 
   return dir;
 }
 
+function writeProviderBundle(projectDir: string, id: string): string {
+  const dir = join(projectDir, '.aiwg', 'providers', id);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(
+    join(dir, 'manifest.json'),
+    JSON.stringify({
+      id,
+      type: 'provider',
+      name: id,
+      version: '1.0.0',
+      description: 'Test provider',
+      manifestVersion: '1',
+      platforms: { claude: 'full' },
+      keywords: ['test'],
+      deployment: { pathTemplate: '.{platform}/skills/{id}.md' },
+      providerConfig: { extends: 'claude', displayName: id },
+    }, null, 2),
+  );
+  return dir;
+}
+
 function makeConfig(bundleId: string): AiwgConfig {
   return {
     version: '1', providers: ['claude'],
@@ -94,6 +115,23 @@ describe('promoteProjectLocalBundle (#1037)', () => {
     expect(existsSync(r.plan!.destination)).toBe(false);
     // Registry unchanged
     expect(config.installed['foo'].source).toBe('project-local');
+  });
+
+  it('PR-2: --dry-run promotes provider bundles to the provider upstream directory', async () => {
+    writeProviderBundle(projectDir, 'custom-provider');
+    const config = {
+      version: '1',
+      providers: ['claude'],
+      installed: {},
+      scripts: {},
+    } as AiwgConfig;
+
+    const r = await promoteProjectLocalBundle(config, projectDir, 'custom-provider', {
+      dryRun: true, frameworkRoot,
+    });
+    expect(r.ok).toBe(true);
+    expect(r.plan!.destination).toBe(join(frameworkRoot, 'agentic/code/providers/custom-provider'));
+    expect(existsSync(r.plan!.destination)).toBe(false);
   });
 
   it('PR-3: copy succeeds and re-hash verifies; registry source flips to bundled', async () => {

@@ -795,8 +795,10 @@ async function deployOneProjectLocalBundle(opts: {
 }
 
 /**
- * Discover and deploy all project-local bundles from `.aiwg/{extensions,addons,
- * frameworks,plugins}/<id>/` for one provider. Updates `aiwg.config.installed`
+ * Discover and deploy artifact-bearing project-local bundles from
+ * `.aiwg/{extensions,addons,frameworks,plugins,providers}/<id>/` for one
+ * provider. Provider bundles are metadata and are consumed by --provider
+ * resolution, not deployed as artifacts. Updates `aiwg.config.installed`
  * with `source: 'project-local'` entries.
  *
  * Returns the number of bundles deployed and any deploy errors.
@@ -825,7 +827,7 @@ async function deployProjectLocalBundles(opts: {
 
   const targetBundles = onlyBundleId
     ? discovery.bundles.filter(b => b.id === onlyBundleId)
-    : discovery.bundles;
+    : discovery.bundles.filter(b => b.type !== 'provider');
 
   if (targetBundles.length === 0) {
     return { deployed: 0, failed: 0, bundles: [] };
@@ -942,6 +944,17 @@ async function deployProjectLocalBundles(opts: {
   }
 
   return { deployed, failed, bundles: targetBundles };
+}
+
+async function resolveProjectLocalProviderAdapter(
+  projectDir: string,
+  provider: string,
+): Promise<{ provider: string; requestedProvider?: string; bundle?: ProjectLocalBundle }> {
+  const discovery = await discoverProjectLocalBundles(projectDir);
+  const bundle = discovery.bundles.find((candidate) => candidate.type === 'provider' && candidate.id === provider);
+  const extendsProvider = bundle?.manifest.providerConfig?.extends;
+  if (!bundle || !extendsProvider) return { provider };
+  return { provider: extendsProvider, requestedProvider: provider, bundle };
 }
 
 const USE_FLAGS_WITH_VALUES = new Set([
@@ -1089,6 +1102,20 @@ function removeFlagWithOptionalValue(args: string[], name: string): string[] {
     if (arg.startsWith(`${name}=`)) continue;
     result.push(arg);
   }
+  return result;
+}
+
+function withProviderOverride(args: string[], provider: string): string[] {
+  const result: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if ((arg === '--provider' || arg === '--platform') && i + 1 < args.length) {
+      i++;
+      continue;
+    }
+    result.push(arg);
+  }
+  result.push('--provider', provider);
   return result;
 }
 
@@ -1680,11 +1707,18 @@ export class UseHandler implements CommandHandler {
 
     // Project-local bundle resolution: when the name doesn't match an upstream
     // framework, addon, or extension, check `.aiwg/{extensions,addons,
-    // frameworks,plugins}/<id>/` for a matching bundle. (#1035)
+    // frameworks,plugins,providers}/<id>/` for a matching bundle. (#1035)
     if (!isFramework && !isAddon && !isExtension) {
       const discovery = await discoverProjectLocalBundles(projectDir);
       const match = discovery.bundles.find(b => b.id === framework);
       if (match) {
+        if (match.type === 'provider') {
+          return {
+            exitCode: 1,
+            message: `Project-local provider '${match.id}' is selected with --provider.\n\nExample: aiwg use sdlc --provider ${match.id}`,
+          };
+        }
+
         const providerIdx = remainingArgs.findIndex(a => a === '--provider' || a === '--platform');
         const explicitProvider = providerIdx >= 0 && remainingArgs[providerIdx + 1] ? remainingArgs[providerIdx + 1] : null;
         const dryRunSingle = remainingArgs.includes('--dry-run');
@@ -1959,9 +1993,18 @@ export class UseHandler implements CommandHandler {
       return { exitCode: 0 };
     }
 
-    const provider = providers[0];
+    const requestedProvider = providers[0];
+    const providerResolution = await resolveProjectLocalProviderAdapter(projectDir, requestedProvider);
+    const provider = providerResolution.provider;
+    const providerDeployArgs = providerResolution.requestedProvider
+      ? withProviderOverride(deployFilteredArgs, provider)
+      : deployFilteredArgs;
     const targetIdx = remainingArgs.findIndex(a => a === '--target');
     const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
+
+    if ((verbose || dryRun) && providerResolution.requestedProvider) {
+      ui.dim(`  project-local provider '${providerResolution.requestedProvider}' extends '${provider}'`);
+    }
 
     if (explicitHarnessAgentSelectors.length > 0 && provider !== 'openhuman') {
       return {
@@ -2028,7 +2071,7 @@ export class UseHandler implements CommandHandler {
       ui.blank();
     }
     const runner = createScriptRunner(ctx.frameworkRoot);
-    const mainResult = await runner.run('tools/agents/deploy-agents.mjs', deployFilteredArgs, captureOpts);
+    const mainResult = await runner.run('tools/agents/deploy-agents.mjs', providerDeployArgs, captureOpts);
 
     if (mainResult.exitCode !== 0) {
       return mainResult;
