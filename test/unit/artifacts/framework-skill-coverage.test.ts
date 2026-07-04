@@ -3,8 +3,8 @@
  *
  * Guards the contract that every canonical SKILL.md under the built-in AIWG
  * frameworks/addons/extensions corpus is present in the framework discovery
- * graph, while nested support files under a skill directory are not advertised
- * as standalone skills.
+ * graph, while provider/plugin mirror copies and nested support files under a
+ * skill directory are not advertised as standalone skills.
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -60,7 +60,6 @@ describe('framework graph skill coverage', () => {
         'agentic/code/frameworks',
         'agentic/code/addons',
         'agentic/code/extensions',
-        'agentic/code/plugins',
         'agentic/code/agents',
         'agentic/code/behaviors',
       ];
@@ -72,6 +71,64 @@ describe('framework graph skill coverage', () => {
       expect(missing).toEqual([]);
     } finally {
       fs.rmSync(outputDir, { recursive: true, force: true });
+    }
+  });
+
+  it('does not index provider/plugin mirror SKILL.md copies in the framework graph', async () => {
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-plugin-mirror-'));
+    try {
+      const canonicalSkill = path.join(
+        tmpRoot,
+        'agentic',
+        'code',
+        'frameworks',
+        'demo-framework',
+        'skills',
+        'demo-skill',
+        'SKILL.md',
+      );
+      const mirrorSkill = path.join(
+        tmpRoot,
+        'agentic',
+        'code',
+        'plugins',
+        'demo-plugin',
+        'skills',
+        'demo-skill',
+        'SKILL.md',
+      );
+      fs.mkdirSync(path.dirname(canonicalSkill), { recursive: true });
+      fs.mkdirSync(path.dirname(mirrorSkill), { recursive: true });
+      const body = '---\nname: demo-skill\ndescription: Demo skill\n---\n\n# Demo Skill\n';
+      fs.writeFileSync(canonicalSkill, body, 'utf8');
+      fs.writeFileSync(mirrorSkill, body, 'utf8');
+
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      await buildIndex(tmpRoot, {
+        graph: 'framework',
+        force: true,
+        explicit: true,
+        outputDir: tmpRoot,
+      });
+      consoleSpy.mockRestore();
+      consoleErrSpy.mockRestore();
+
+      const indexPath = path.join(
+        tmpRoot,
+        '.aiwg',
+        '.index',
+        'framework',
+        'metadata.json',
+      );
+      const index: ArtifactIndex = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+
+      expect(index.entries['agentic/code/frameworks/demo-framework/skills/demo-skill/SKILL.md']?.type)
+        .toBe('skill');
+      expect(index.entries['agentic/code/plugins/demo-plugin/skills/demo-skill/SKILL.md'])
+        .toBeUndefined();
+    } finally {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
     }
   });
 
