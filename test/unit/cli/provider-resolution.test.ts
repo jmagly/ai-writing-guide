@@ -9,7 +9,34 @@ vi.mock('../../../src/config/aiwg-config.js', () => ({
 import {
   resolveActiveProvider,
   commandLooksLikeProvider,
+  capabilityProviderId,
+  normalizeProviderId,
 } from '../../../src/cli/provider-resolution.js';
+
+describe('normalizeProviderId', () => {
+  it('resolves provider aliases from ProviderDefinition data', () => {
+    expect(normalizeProviderId('claude-code')).toBe('claude');
+    expect(normalizeProviderId('openai')).toBe('codex');
+    expect(normalizeProviderId('tinyhumansai')).toBe('openhuman');
+    expect(normalizeProviderId('devin-desktop')).toBe('windsurf');
+  });
+
+  it('returns null for unknown provider ids', () => {
+    expect(normalizeProviderId('missing-provider')).toBeNull();
+    expect(normalizeProviderId('')).toBeNull();
+    expect(normalizeProviderId(null)).toBeNull();
+  });
+});
+
+describe('capabilityProviderId', () => {
+  it('uses ProviderDefinition capability ids while preserving unknown strings', () => {
+    expect(capabilityProviderId('claude')).toBe('claude-code');
+    expect(capabilityProviderId('openai')).toBe('codex');
+    expect(capabilityProviderId('codex')).toBe('codex');
+    expect(capabilityProviderId('unknown-provider')).toBe('unknown-provider');
+    expect(capabilityProviderId(null)).toBeNull();
+  });
+});
 
 describe('commandLooksLikeProvider (process-tree branch)', () => {
   // Process-tree detection parity for the home-dir global operators. Env-marker
@@ -33,6 +60,18 @@ describe('commandLooksLikeProvider (process-tree branch)', () => {
 });
 
 describe('resolveActiveProvider', () => {
+  it('detects runtime env markers from ProviderDefinition data', async () => {
+    const resolution = await resolveActiveProvider({
+      cwd: '/mock/project',
+      env: { OPENHUMAN_HOME: '/tmp/openhuman-home' },
+      detectProcess: false,
+    });
+
+    expect(resolution.provider).toBe('openhuman');
+    expect(resolution.source).toBe('runtime-env');
+    expect(resolution.reason).toBe('runtime environment marker');
+  });
+
   it('detects Codex from process ancestry when Codex env markers are absent', async () => {
     mockReadAiwgConfig.mockResolvedValue({
       version: '1',

@@ -1,6 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { readAiwgConfig } from '../config/aiwg-config.js';
 import type { Platform } from '../agents/types.js';
+import {
+  getProviderDefinition,
+  listProviderDefinitions,
+  normalizeProviderDefinitionId,
+} from '../providers/provider-definitions.js';
 
 export type ProviderResolutionSource =
   | 'explicit'
@@ -19,35 +24,14 @@ export interface ProviderResolution {
   reason: string;
 }
 
-const PROVIDERS: Platform[] = [
-  'claude',
-  'codex',
-  'copilot',
-  'cursor',
-  'factory',
-  'hermes',
-  'opencode',
-  'openclaw',
-  'openhuman',
-  'warp',
-  'windsurf',
-  'generic',
-];
-
 export function normalizeProviderId(provider: string | undefined | null): Platform | null {
-  const normalized = provider?.trim().toLowerCase();
-  if (!normalized) return null;
-  if (normalized === 'claude-code') return 'claude';
-  if (normalized === 'openai') return 'codex';
-  if ((PROVIDERS as string[]).includes(normalized)) return normalized as Platform;
-  return null;
+  return normalizeProviderDefinitionId(provider);
 }
 
 export function capabilityProviderId(provider: Platform | string | null): string | null {
   if (!provider) return null;
-  if (provider === 'claude') return 'claude-code';
-  if (provider === 'openai') return 'codex';
-  return provider;
+  const definition = getProviderDefinition(provider);
+  return definition?.detection.capabilityId ?? provider;
 }
 
 function uniqueProviders(providers: Iterable<string | undefined | null>): Platform[] {
@@ -60,30 +44,28 @@ function uniqueProviders(providers: Iterable<string | undefined | null>): Platfo
 }
 
 function detectProviderFromRuntimeEnv(env: NodeJS.ProcessEnv): Platform | null {
-  if (env.CODEX_SANDBOX || env.CODEX_HOME || env.CODEX_API_KEY || env.OPENAI_API_KEY) return 'codex';
-  if (env.CURSOR_TRACE_ID || env.CURSOR_VERSION) return 'cursor';
-  if (env.WINDSURF_VERSION) return 'windsurf';
-  if (env.WARP_SESSION_ID || env.WARP_TERMINAL) return 'warp';
-  if (env.COPILOT_AGENT || env.GITHUB_COPILOT_TOKEN) return 'copilot';
-  if (env.OPENCLAW_VERSION) return 'openclaw';
-  if (env.OPENHUMAN_HOME || env.OPENHUMAN_CORE_TOKEN) return 'openhuman';
-  if (env.FACTORY_AGENT_ID) return 'factory';
-  if (env.OPENCODE_VERSION) return 'opencode';
-  if (env.CLAUDE_CODE_VERSION || env.ANTHROPIC_API_KEY) return 'claude';
+  const definitions = [...listProviderDefinitions()].sort(
+    (a, b) => (a.detection.runtimeEnvPriority ?? Number.MAX_SAFE_INTEGER) - (b.detection.runtimeEnvPriority ?? Number.MAX_SAFE_INTEGER),
+  );
+  for (const definition of definitions) {
+    if (definition.detection.env.some((marker) => Boolean(env[marker]))) return definition.id;
+  }
   return null;
+}
+
+function commandMatchesProviderMarker(command: string, marker: string): boolean {
+  const escaped = marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (marker.includes('/') || marker.includes('@')) return command.includes(marker);
+  return new RegExp(`(?:^|[/\\s])${escaped}(?:$|[\\s/])`).test(command);
 }
 
 export function commandLooksLikeProvider(command: string): Platform | null {
   const lower = command.toLowerCase();
-  if (lower.includes('@openai/codex') || /(?:^|[/\s])codex(?:$|[\s/])/.test(lower)) return 'codex';
-  if (lower.includes('claude-code') || /(?:^|[/\s])claude(?:$|[\s/])/.test(lower)) return 'claude';
-  if (lower.includes('opencode')) return 'opencode';
-  if (lower.includes('cursor')) return 'cursor';
-  if (lower.includes('windsurf')) return 'windsurf';
-  if (lower.includes('warp')) return 'warp';
-  if (lower.includes('factory')) return 'factory';
-  if (lower.includes('openclaw')) return 'openclaw';
-  if (lower.includes('openhuman')) return 'openhuman';
+  for (const definition of listProviderDefinitions()) {
+    if (definition.detection.process.some((marker) => commandMatchesProviderMarker(lower, marker))) {
+      return definition.id;
+    }
+  }
   return null;
 }
 

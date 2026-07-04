@@ -16,6 +16,7 @@ export type ProviderDetection = {
   env: string[];
   process: string[];
   capabilityId: string;
+  runtimeEnvPriority?: number;
 };
 
 export type ProviderArtifactPaths = Record<'agents' | 'commands' | 'skills' | 'rules' | 'behaviors', string | null>;
@@ -107,6 +108,7 @@ const ProviderDefinitionSchema = z.object({
     env: z.array(z.string().min(1)),
     process: z.array(z.string().min(1)),
     capabilityId: z.string().min(1),
+    runtimeEnvPriority: z.number().int().positive().optional(),
   }),
   paths: z.object({
     deployTarget: z.enum(['project', 'home', 'mixed']),
@@ -176,6 +178,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       env: ['CLAUDE_CODE_VERSION', 'ANTHROPIC_API_KEY'],
       process: ['claude-code', 'claude'],
       capabilityId: 'claude-code',
+      runtimeEnvPriority: 100,
     },
     paths: {
       artifacts: {
@@ -213,6 +216,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       env: ['CODEX_SANDBOX', 'CODEX_HOME', 'CODEX_API_KEY', 'OPENAI_API_KEY'],
       process: ['@openai/codex', 'codex'],
       capabilityId: 'codex',
+      runtimeEnvPriority: 10,
     },
     paths: {
       artifacts: {
@@ -252,6 +256,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       env: ['COPILOT_AGENT', 'GITHUB_COPILOT_TOKEN'],
       process: ['copilot'],
       capabilityId: 'copilot',
+      runtimeEnvPriority: 50,
     },
     paths: {
       artifacts: {
@@ -289,6 +294,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       env: ['CURSOR_TRACE_ID', 'CURSOR_VERSION'],
       process: ['cursor'],
       capabilityId: 'cursor',
+      runtimeEnvPriority: 20,
     },
     paths: {
       artifacts: {
@@ -326,6 +332,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       env: ['FACTORY_AGENT_ID'],
       process: ['factory'],
       capabilityId: 'factory',
+      runtimeEnvPriority: 80,
     },
     paths: {
       artifacts: {
@@ -400,6 +407,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       env: ['OPENCODE_VERSION'],
       process: ['opencode'],
       capabilityId: 'opencode',
+      runtimeEnvPriority: 90,
     },
     paths: {
       artifacts: {
@@ -437,6 +445,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       env: ['OPENCLAW_VERSION'],
       process: ['openclaw'],
       capabilityId: 'openclaw',
+      runtimeEnvPriority: 60,
     },
     paths: {
       deployTarget: 'home',
@@ -475,6 +484,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       env: ['OPENHUMAN_HOME', 'OPENHUMAN_CORE_TOKEN'],
       process: ['openhuman'],
       capabilityId: 'openhuman',
+      runtimeEnvPriority: 70,
     },
     paths: {
       deployTarget: 'mixed',
@@ -513,6 +523,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       env: ['WARP_SESSION_ID', 'WARP_TERMINAL'],
       process: ['warp'],
       capabilityId: 'warp',
+      runtimeEnvPriority: 40,
     },
     paths: {
       artifacts: {
@@ -554,6 +565,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       env: ['WINDSURF_VERSION'],
       process: ['windsurf'],
       capabilityId: 'windsurf',
+      runtimeEnvPriority: 30,
     },
     paths: {
       artifacts: {
