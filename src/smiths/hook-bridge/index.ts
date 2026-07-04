@@ -15,6 +15,7 @@ import { translateForCodex } from './codex-translator.js';
 import { translateForCopilot } from './copilot-translator.js';
 import { translateForFactory } from './factory-translator.js';
 import { translateForHermes } from './hermes-translator.js';
+import { getProviderDefinition } from '../../providers/provider-definitions.js';
 
 export type { HookSource, HookEvent, HookExitSemantic, TranslateOptions, TranslateResult, ProviderTranslator } from './types.js';
 export { AIWG_ENV_VARS, NATIVE_ENV_VAR_MAP } from './types.js';
@@ -40,6 +41,11 @@ export const TRANSLATORS: Record<string, ProviderTranslator> = {
   hermes: translateForHermes,
 };
 
+function resolveHookTranslator(providerId: string): ProviderTranslator | undefined {
+  const adapterKey = getProviderDefinition(providerId)?.adapters.hookBridge ?? providerId;
+  return adapterKey ? TRANSLATORS[adapterKey] : undefined;
+}
+
 /**
  * Translate one source across an explicit list of providers. Per-provider
  * failures are captured as TranslateResult entries (skipped=true with
@@ -53,7 +59,7 @@ export async function bridgeAll(
   const results: TranslateResult[] = [];
   for (const source of sources) {
     for (const providerId of providers) {
-      const translator = TRANSLATORS[providerId];
+      const translator = resolveHookTranslator(providerId);
       if (!translator) {
         results.push({
           provider: providerId,

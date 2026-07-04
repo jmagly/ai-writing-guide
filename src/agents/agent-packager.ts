@@ -5,46 +5,42 @@
  */
 
 import type { AgentInfo, Platform, PackagedAgent } from './types.js';
+import { getProviderDefinition } from '../providers/provider-definitions.js';
+
+type AgentFormatAdapter = (agent: AgentInfo) => string;
 
 export class AgentPackager {
+  private getAgentFormatAdapters(): Record<string, AgentFormatAdapter> {
+    return {
+      'claude-markdown': (agent) => this.convertToClaudeFormat(agent),
+      'cursor-json': (agent) => this.convertToCursorFormat(agent),
+      'codex-markdown': (agent) => this.convertToCodexFormat(agent),
+      'copilot-markdown': (agent) => this.convertToGenericFormat(agent),
+      'factory-droid': (agent) => this.convertToClaudeFormat(agent),
+      'generic-markdown': (agent) => this.convertToGenericFormat(agent),
+      'windsurf-markdown': (agent) => this.convertToWindsurfFormat(agent),
+    };
+  }
+
   /**
    * Package agent for target platform
    */
   async package(agent: AgentInfo, platform: Platform): Promise<PackagedAgent> {
-    let content: string;
+    const definition = getProviderDefinition(platform);
+    if (!definition) {
+      throw new Error(`Unknown platform: ${platform}`);
+    }
 
-    switch (platform) {
-      case 'claude':
-        content = this.convertToClaudeFormat(agent);
-        break;
-      case 'cursor':
-        content = this.convertToCursorFormat(agent);
-        break;
-      case 'codex':
-        content = this.convertToCodexFormat(agent);
-        break;
-      case 'copilot':
-        // Copilot uses generic format - manual setup required
-        content = this.convertToGenericFormat(agent);
-        break;
-      case 'factory':
-        // Factory uses Claude format but deployment scripts transform tools/models separately
-        content = this.convertToClaudeFormat(agent);
-        break;
-      case 'generic':
-        content = this.convertToGenericFormat(agent);
-        break;
-      case 'windsurf':
-        content = this.convertToWindsurfFormat(agent);
-        break;
-      default:
-        throw new Error(`Unknown platform: ${platform}`);
+    const adapterKey = definition.adapters.agentFormat;
+    const adapter = this.getAgentFormatAdapters()[adapterKey];
+    if (!adapter) {
+      throw new Error(`Unknown agent format adapter '${adapterKey}' for platform: ${platform}`);
     }
 
     return {
       agent,
-      content,
-      format: platform,
+      content: adapter(agent),
+      format: definition.id,
     };
   }
 
@@ -242,19 +238,7 @@ export class AgentPackager {
    * Get file extension for platform
    */
   getFileExtension(platform: Platform): string {
-    switch (platform) {
-      case 'claude':
-      case 'codex':
-      case 'copilot':
-      case 'factory':
-      case 'generic':
-      case 'windsurf':
-        return '.md';
-      case 'cursor':
-        return '.json';
-      default:
-        return '.md';
-    }
+    return getProviderDefinition(platform)?.smithPaths.fileExtension ?? '.md';
   }
 
   /**

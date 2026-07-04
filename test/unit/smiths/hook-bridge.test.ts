@@ -282,6 +282,19 @@ describe('bridgeAll', () => {
     expect(results[0].skipped).toBe(true);
     expect(results[0].skipReason).toContain('no translator registered');
   });
+
+  it('resolves provider aliases through ProviderDefinition hookBridge metadata', async () => {
+    const results = await bridgeAll([SAMPLE_HOOK], ['openai'], { projectPath: tmpDir, dryRun: true });
+    expect(results).toHaveLength(1);
+    expect(results[0].skipped).toBe(false);
+    expect(results[0].provider).toBe('codex');
+  });
+
+  it('skips providers whose ProviderDefinition declares no hook bridge adapter', async () => {
+    const results = await bridgeAll([SAMPLE_HOOK], ['windsurf'], { projectPath: tmpDir });
+    expect(results[0].skipped).toBe(true);
+    expect(results[0].skipReason).toContain('no translator registered');
+  });
 });
 
 describe('TRANSLATORS registry + AIWG_ENV_VARS exports', () => {

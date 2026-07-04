@@ -244,6 +244,17 @@ describe("injectServers", () => {
     expect(written.mcpServers.gitea).toBeDefined();
   });
 
+  it("should inject claude alias using ProviderDefinition mcp adapter metadata", async () => {
+    const result = await injectServers(registry, "claude", {
+      projectDir,
+    });
+
+    expect(result.serversInjected).toContain("fortemi");
+    const configPath = join(projectDir, ".claude/settings.local.json");
+    const written = JSON.parse(await readFile(configPath, "utf-8"));
+    expect(written.mcpServers.fortemi.url).toBe("https://memory.internal/mcp");
+  });
+
   it("should inject into cursor config", async () => {
     const result = await injectServers(registry, "cursor", { projectDir });
 

@@ -11,6 +11,7 @@
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { resolve } from 'path';
 import { resolveConfigDir } from '../config/user-config.js';
+import { getProviderDefinition } from '../providers/provider-definitions.js';
 
 // ============================================
 // Types
@@ -69,6 +70,8 @@ export type InjectProvider =
   | 'opencode'
   | 'windsurf'
   | 'warp';
+
+type McpInjectionAdapter = 'claude-code' | 'cursor' | 'factory' | 'codex' | 'opencode' | 'windsurf' | 'warp' | null;
 
 // ============================================
 // Registry
@@ -228,9 +231,9 @@ function buildServerConfig(
   server: McpServerDefinition,
   provider: InjectProvider,
 ): Record<string, unknown> {
-  switch (provider) {
-    case 'claude-code':
-    case 'claude': {
+  const adapter = getProviderDefinition(provider)?.adapters.mcpInjection as McpInjectionAdapter | undefined;
+  switch (adapter) {
+    case 'claude-code': {
       if (server.type === 'stdio') {
         return {
           command: server.command,
@@ -308,7 +311,6 @@ function buildServerConfig(
     }
 
     case 'codex':
-    case 'openai':
       // TOML format handled separately
       return {};
 

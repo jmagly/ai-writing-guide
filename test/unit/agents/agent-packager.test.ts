@@ -221,6 +221,29 @@ describe('AgentPackager', () => {
     });
   });
 
+  describe('ProviderDefinition adapter dispatch', () => {
+    it('uses provider definition adapter keys for supported formats', async () => {
+      const agent = createSampleAgent();
+
+      await expect(packager.package(agent, 'factory')).resolves.toMatchObject({
+        format: 'factory',
+        content: expect.stringContaining('name: test-agent'),
+      });
+      await expect(packager.package(agent, 'windsurf')).resolves.toMatchObject({
+        format: 'windsurf',
+        content: expect.stringContaining('### test-agent'),
+      });
+    });
+
+    it('reports unsupported provider format adapters explicitly', async () => {
+      const agent = createSampleAgent();
+
+      await expect(packager.package(agent, 'opencode')).rejects.toThrow(
+        "Unknown agent format adapter 'opencode-markdown'",
+      );
+    });
+  });
+
   describe('getFileName', () => {
     it('should generate correct filename for each platform', () => {
       const agent = createSampleAgent();
