@@ -9,6 +9,7 @@
 
 import { describe, it, expect } from 'vitest';
 import * as path from 'path';
+import { homedir } from 'os';
 import { PlatformSkillResolver } from '../../../src/smiths/skillsmith/platform-resolver.js';
 
 const PROJECT = '/tmp/test-project';
@@ -53,6 +54,11 @@ describe('PlatformSkillResolver.getNamespacedSkillPath', () => {
     // No namespace subdir — just slug under base
     expect(p).toBe(path.join(PROJECT, '.windsurf/skills/aiwg-sync'));
     expect(p).not.toContain('/aiwg/');
+  });
+
+  it('deploys under home-dir namespace subdir on Codex', () => {
+    const p = PlatformSkillResolver.getNamespacedSkillPath('codex', PROJECT, 'sync', NS);
+    expect(p).toBe(path.join(homedir(), '.codex/skills/aiwg/aiwg-sync'));
   });
 
   it('is idempotent for aiwg-* skill names on Claude Code', () => {

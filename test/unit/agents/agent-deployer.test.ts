@@ -382,6 +382,23 @@ Content`,
       const agentsDir = path.join(projectDir, customPath);
       expect(existsSync(agentsDir)).toBe(true);
     });
+
+    it('should deploy Windsurf agents to the ProviderDefinition artifact path', async () => {
+      const target: DeploymentTarget = {
+        platform: 'windsurf',
+        projectPath: projectDir,
+      };
+
+      const originalLoad = deployer.loadAgents.bind(deployer);
+      deployer.loadAgents = async () => originalLoad(agentsSourceDir);
+
+      await deployer.deploy(target);
+
+      const agentsDir = path.join(projectDir, '.windsurf/agents');
+      expect(existsSync(agentsDir)).toBe(true);
+      const files = await fs.readdir(agentsDir);
+      expect(files.some((f) => f === 'writing-validator.md')).toBe(true);
+    });
   });
 
   describe('deployBatch', () => {

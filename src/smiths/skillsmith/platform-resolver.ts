@@ -4,88 +4,31 @@
  * @module smiths/skillsmith/platform-resolver
  */
 
-import * as os from 'os';
+import { homedir } from 'os';
 import * as path from 'path';
 import type { Platform } from '../../agents/types.js';
 import type { PlatformSkillConfig } from './types.js';
+import { getProviderDefinition } from '../../providers/provider-definitions.js';
 
 /**
- * Platform-specific skill configurations
+ * Platform-specific skill configuration derived from ProviderDefinition.
  */
-const PLATFORM_CONFIGS: Record<Platform, PlatformSkillConfig> = {
-  claude: {
-    baseDir: '.claude/skills',
-    extension: '.md',
+function getPlatformSkillConfig(platform: Platform): PlatformSkillConfig {
+  const definition = getProviderDefinition(platform);
+  if (!definition) throw new Error(`Unknown platform: ${platform}`);
+
+  const namespace = definition.skillNamespace;
+  const baseDir = namespace.pathType === 'home-dir'
+    ? `~/${namespace.skillsBaseDir}`
+    : namespace.skillsBaseDir;
+
+  return {
+    baseDir,
+    extension: definition.smithPaths.fileExtension,
     supportsSkills: true,
-    supportsSubdirectory: true,
-  },
-  factory: {
-    baseDir: '.factory/skills',
-    extension: '.md',
-    supportsSkills: true,
-    supportsSubdirectory: true,
-  },
-  cursor: {
-    baseDir: '.cursor/skills',
-    extension: '.md',
-    supportsSkills: true,
-    supportsSubdirectory: true,
-  },
-  codex: {
-    baseDir: '~/.codex/skills', // Home-dir deployment; path.join(os.homedir(), ...) at call site
-    extension: '.md',
-    supportsSkills: true,
-    supportsSubdirectory: true,
-  },
-  opencode: {
-    baseDir: '.opencode/skill',
-    extension: '.md',
-    supportsSkills: true,
-    supportsSubdirectory: true,
-  },
-  warp: {
-    baseDir: '.warp/skills',
-    extension: '.md',
-    supportsSkills: true,
-    supportsSubdirectory: true,
-  },
-  windsurf: {
-    baseDir: '.windsurf/skills',
-    extension: '.md',
-    supportsSkills: true,
-    supportsSubdirectory: false, // 1-level discovery only — native since v1.13.6
-  },
-  copilot: {
-    baseDir: '.github/skills',
-    extension: '.md',
-    supportsSkills: true,
-    supportsSubdirectory: true,
-  },
-  generic: {
-    baseDir: 'skills',
-    extension: '.md',
-    supportsSkills: true,
-    supportsSubdirectory: true,
-  },
-  hermes: {
-    baseDir: '.hermes/skills',
-    extension: '.md',
-    supportsSkills: true,
-    supportsSubdirectory: true,
-  },
-  openhuman: {
-    baseDir: '~/.openhuman/skills', // Global/home-dir like OpenClaw (#1553); ungated user-scope scan root surfaced by the Skills library. ~/ resolved via os.homedir() at call site
-    extension: '.md',
-    supportsSkills: true,
-    supportsSubdirectory: true,
-  },
-  openclaw: {
-    baseDir: '.openclaw/skills',
-    extension: '.md',
-    supportsSkills: true,
-    supportsSubdirectory: true,
-  },
-};
+    supportsSubdirectory: namespace.subdirLayout,
+  };
+}
 
 /**
  * Resolve platform-specific skill paths
@@ -95,7 +38,7 @@ export class PlatformSkillResolver {
    * Get platform configuration for skills
    */
   static getConfig(platform: Platform): PlatformSkillConfig {
-    return PLATFORM_CONFIGS[platform];
+    return getPlatformSkillConfig(platform);
   }
 
   /**
@@ -105,7 +48,7 @@ export class PlatformSkillResolver {
   static getBaseDir(platform: Platform, projectPath: string): string {
     const config = this.getConfig(platform);
     if (config.baseDir.startsWith('~/')) {
-      return path.join(os.homedir(), config.baseDir.slice(2));
+      return path.join(homedir(), config.baseDir.slice(2));
     }
     return path.join(projectPath, config.baseDir);
   }
@@ -199,7 +142,7 @@ export class PlatformSkillResolver {
   ): string {
     const config = this.getConfig(platform);
     const slug = this.computeCanonicalSlug(skillName, namespace);
-    const baseDir = path.join(projectPath, config.baseDir);
+    const baseDir = this.getBaseDir(platform, projectPath);
 
     if (config.supportsSubdirectory) {
       return path.join(baseDir, namespace, slug);

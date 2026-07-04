@@ -16,6 +16,7 @@ import type {
 } from './types.js';
 import type { Platform } from '../../agents/types.js';
 import { AgentPackager } from '../../agents/agent-packager.js';
+import { getProviderDefinition } from '../../providers/provider-definitions.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -510,23 +511,9 @@ export class AgentGenerator {
    * Get deployment path for platform
    */
   private getDeploymentPath(projectPath: string, platform: Platform, name: string): string {
-    const platformDirs: Record<Platform, string> = {
-      claude: '.claude/agents',
-      codex: '.codex/agents',
-      copilot: '.github/agents',
-      cursor: '.cursor/agents',
-      factory: '.factory/droids',
-      opencode: '.opencode/agent',
-      warp: '.warp/agents',
-      generic: 'agents',
-      windsurf: '.windsurf/agents',
-      hermes: '',
-      openclaw: '.openclaw/agents',
-      openhuman: '.agents/agents',
-    };
-
+    const platformDir = getProviderDefinition(platform)?.paths.artifacts.agents ?? '';
     const ext = this.packager.getFileExtension(platform);
-    return path.join(projectPath, platformDirs[platform], `${name}${ext}`);
+    return path.join(projectPath, platformDir, `${name}${ext}`);
   }
 
   /**

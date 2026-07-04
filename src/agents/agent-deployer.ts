@@ -22,10 +22,10 @@ import type {
   DeploymentResult,
   AgentDeploymentResult,
   AgentMetadata,
-  Platform,
 } from './types.js';
 import { AgentValidator } from './agent-validator.js';
 import { AgentPackager } from './agent-packager.js';
+import { getProviderDefinition } from '../providers/provider-definitions.js';
 
 export class AgentDeployer {
   private validator: AgentValidator;
@@ -391,22 +391,9 @@ export class AgentDeployer {
       return path.resolve(target.projectPath, target.agentsPath);
     }
 
-    const platformDirs: Record<Platform, string> = {
-      claude: '.claude/agents',
-      codex: '.codex/agents',
-      copilot: '.github/agents',
-      cursor: '.cursor/agents',
-      factory: '.factory/droids',
-      opencode: '', // Agents are config-only in OpenCode — no directory scanned
-      warp: '.warp/agents',
-      generic: 'agents',
-      windsurf: '.windsurf/agents',
-      hermes: '',
-      openclaw: '.openclaw/agents',
-      openhuman: '.agents/agents',
-    };
-
-    return path.resolve(target.projectPath, platformDirs[target.platform]);
+    const definition = getProviderDefinition(target.platform);
+    const agentsPath = definition?.paths.artifacts.agents ?? '';
+    return path.resolve(target.projectPath, agentsPath);
   }
 
   /**

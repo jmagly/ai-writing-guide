@@ -5,9 +5,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { homedir } from 'os';
 import { generateSkill, deploySkill } from '../../../src/smiths/skillsmith/generator.js';
 import { PlatformSkillResolver } from '../../../src/smiths/skillsmith/platform-resolver.js';
 import type { SkillOptions } from '../../../src/smiths/skillsmith/types.js';
+import { getProviderDefinition } from '../../../src/providers/provider-definitions.js';
 
 describe('SkillSmith', () => {
   describe('PlatformSkillResolver', () => {
@@ -46,6 +48,25 @@ describe('SkillSmith', () => {
       expect(PlatformSkillResolver.getBaseDir('cursor', '/project')).toBe(
         '/project/.cursor/skills'
       );
+      expect(PlatformSkillResolver.getBaseDir('codex', '/project')).toBe(
+        `${homedir()}/.codex/skills`
+      );
+    });
+
+    it('derives platform skill configuration from ProviderDefinition', () => {
+      const codex = getProviderDefinition('codex');
+      const windsurf = getProviderDefinition('windsurf');
+
+      expect(PlatformSkillResolver.getConfig('codex')).toMatchObject({
+        baseDir: `~/${codex?.skillNamespace.skillsBaseDir}`,
+        extension: codex?.smithPaths.fileExtension,
+        supportsSubdirectory: codex?.skillNamespace.subdirLayout,
+      });
+      expect(PlatformSkillResolver.getConfig('windsurf')).toMatchObject({
+        baseDir: windsurf?.skillNamespace.skillsBaseDir,
+        extension: windsurf?.smithPaths.fileExtension,
+        supportsSubdirectory: false,
+      });
     });
 
     it('should identify platforms with native skill support', () => {

@@ -187,6 +187,19 @@ describe('AgentGenerator', () => {
       expect(agent.path).toBe(path.join(tempDir, '.cursor/agents/test-agent.json'));
     });
 
+    it('should generate deployment path from ProviderDefinition for windsurf', async () => {
+      const options: AgentOptions = {
+        name: 'test-agent',
+        description: 'Test agent',
+        platform: 'windsurf',
+        projectPath: tempDir,
+      };
+
+      const agent = await generator.generateAgent(options);
+
+      expect(agent.path).toBe(path.join(tempDir, '.windsurf/agents/test-agent.md'));
+    });
+
     it('should validate agent name format', async () => {
       const options: AgentOptions = {
         name: 'Invalid_Name',
