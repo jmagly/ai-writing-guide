@@ -7,6 +7,19 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Discover metadata lookup** — `aiwg show metadata <id-or-name>` now emits
+  the stable discover id, full path set, provenance, and Fortemi Core metadata
+  for a discovered artifact.
+
+### Changed
+
+- **Pathless capability discovery** — `aiwg discover` CLI output now fronts a
+  stable artifact identifier instead of filesystem paths. `aiwg show` resolves
+  those identifiers first while preserving exact path lookup as a secondary,
+  backward-compatible parameter.
+
 ## [2026.7.5] - 2026-07-03 - "Fortemi runtime dependency packaging"
 
 Ships the Fortemi Core runtime dependency in the global npm package so the

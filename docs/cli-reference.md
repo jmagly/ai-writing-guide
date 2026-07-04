@@ -3425,7 +3425,7 @@ aiwg discover "<phrase>" [options]
 
 - `--limit <N>` — Max ranked results (default: 5)
 - `--type <kinds>` — Comma-separated filter; defaults to `skill,agent,command,rule,flow`. Examples: `--type skill`, `--type skill,agent`
-- `--json` — Emit a stable JSON schema (`path`, `type`, `title`, `score`, `triggers`, `capability`, `kernel`) for programmatic agent consumption
+- `--json` — Emit a stable JSON schema (`id`, `type`, `name`, `title`, `score`, `triggers`, `capability`, `kernel`, `provenance`) for programmatic agent consumption. Paths are intentionally omitted from discover output; use `aiwg show metadata <id>` when path/debug metadata is required.
 - `--graph <name>` — Override the default graph. Defaults to `framework` (the AIWG capability graph), which is rebuilt automatically after every `aiwg use`.
 - `--backend <fortemi-core|local>` — Query backend. Default is
   `fortemi-core`; `local` selects the legacy local fallback. The Fortemi Core
@@ -3446,18 +3446,18 @@ aiwg discover "static retrieval" --json
 
 **Output (default):**
 
-Token-tight format optimized for in-context agent consumption — names the path, type, score, the top trigger phrase that earned the match, and the capability description.
+Token-tight format optimized for in-context agent consumption — names the stable id, type, score, the top trigger phrase that earned the match, and the capability description.
 
 ```
 Discovery results for "deploy production" (3 matches, 16ms):
 
-    score=0.51  skill   .../sdlc-complete/skills/flow-deploy-to-production/SKILL.md
+    score=0.51  skill   id=aiwg:skill:6f1477d99813ca8d name=flow-deploy-to-production
                 Orchestrate production deployment with strategy selection, validation,
                 automated rollback, and regression gates
-    score=0.36  skill   .../aiwg-utils/skills/customize-rebuild/SKILL.md
+    score=0.36  skill   id=aiwg:skill:e19e287b8a5968bd name=customize-rebuild
                 Rebuild and redeploy AIWG from local customization source
                 trigger: "apply my changes"
-    score=0.26  agent   .../media-marketing-kit/agents/production-coordinator.md
+    score=0.26  agent   id=aiwg:agent:8a3649d8324e1cc1 name=production-coordinator
                 Manages creative production workflows, coordinates timelines
 
 ★ = kernel skill (always-loaded). Others are reachable via the index.
@@ -3482,15 +3482,16 @@ Multi-token queries require ≥50% token overlap to surface partial matches — 
 Print the full text of a specific AIWG skill, agent, command, or rule by name (#1218). The companion to `discover`: where discover ranks candidates, show fetches the body so consumers don't navigate AIWG's storage paths themselves.
 
 ```bash
-aiwg show <type> <name> [options]
+aiwg show <type> <id-or-name-or-path> [options]
+aiwg show metadata <id-or-name-or-path> [options]
 aiwg index show <type> <name> [options]      # equivalent
 ```
 
-**Type** is positional and required. Allowed values: `skill`, `agent`, `command`, `rule`.
+**Type** is positional for body lookup. Allowed values: `skill`, `agent`, `command`, `rule`. Metadata lookup uses `metadata` as the subcommand and accepts the same identifier/name/path forms.
 
 **Options:**
 
-- `--json` — Emit `{ path, type, title, kernel, content }` envelope. Default mode streams the file unmodified.
+- `--json` — For body lookup, emit `{ id, path, type, name, title, kernel, content }`. For `show metadata`, emit `{ id, backend, type, name, title, paths, provenance, metadata }`. Default body mode streams the file unmodified.
 - `--first` — On ambiguity, pick the top match instead of erroring with the disambiguation list.
 - `--graph <name>` — Override the default graph (defaults to `framework` then `project`).
 - `--backend <fortemi-core|local>` — Lookup backend. Default is
@@ -3499,15 +3500,17 @@ aiwg index show <type> <name> [options]      # equivalent
 
 **Lookup order:**
 
-1. Exact path match against any indexed entry's stored path
-2. Basename match (skill directory name like `intake-wizard`, or filename stem for agents)
-3. Title match (case-insensitive)
+1. Stable discover/Fortemi id from `aiwg discover --json`
+2. Exact path match against any indexed entry's stored path (backward-compatible fallback)
+3. Basename match (skill directory name like `intake-wizard`, or filename stem for agents)
+4. Title match (case-insensitive)
 
 **Examples:**
 
 ```bash
-aiwg show skill intake-wizard                       # streams SKILL.md to stdout
-aiwg show skill flow-deploy-to-production --json    # path + content envelope
+aiwg show skill aiwg:skill:6f1477d99813ca8d         # streams SKILL.md to stdout
+aiwg show skill flow-deploy-to-production --json    # id + path + content envelope
+aiwg show metadata aiwg:skill:6f1477d99813ca8d --json # full Fortemi metadata + paths
 aiwg show agent aiwg-steward                        # agent definition
 aiwg show command discover                          # CLI command spec
 aiwg show rule no-attribution                       # rule body
@@ -3516,10 +3519,10 @@ aiwg show skill research-query --json
 
 **Errors:**
 
-- Calling `aiwg show <name>` with the type omitted prints a "did you mean: aiwg show skill <name>?" hint and exits 1.
+- Calling `aiwg show <name>` with the type omitted succeeds only when the identifier/name/path is unambiguous across artifact types.
 - Ambiguous matches list all candidates and exit 2 unless `--first` is supplied.
 
-**Why a separate command:** the kernel pivot (#1212) intentionally hides ~460 skills from the platform's flat scan; the no-copy default (#1217) leaves them at `$AIWG_ROOT` rather than mirroring per-project. `aiwg show` makes them trivially reachable without the consumer needing to know the storage layout. Pair with `aiwg discover` for find → fetch.
+**Why a separate command:** the kernel pivot (#1212) intentionally hides ~460 skills from the platform's flat scan; the no-copy default (#1217) leaves them at `$AIWG_ROOT` rather than mirroring per-project. `aiwg show` makes them trivially reachable without the consumer needing to know the storage layout. Pair with `aiwg discover` for find → fetch, and use `aiwg show metadata <id>` only when you need the full metadata/path envelope.
 
 ### Best-practice usage guidance
 
@@ -3535,11 +3538,11 @@ Then surface the top match (or top-3 candidates) — this makes your reasoning a
 
 **Use type filters to tighten results.** When the user wants a workflow, restrict to `--type skill`. When they want to know who handles something, `--type agent`. When they ask about enforcement, `--type rule`.
 
-**Use `--json` from sub-agents.** The JSON schema (`path / type / title / score / triggers / capability / kernel`) is stable and compact enough to forward to a subagent without context-bloat.
+**Use `--json` from sub-agents.** The JSON schema (`id / type / name / title / score / triggers / capability / kernel / provenance`) is stable and compact enough to forward to a subagent without context-bloat. It avoids filesystem paths by default; fetch paths separately with `aiwg show metadata <id> --json` when needed.
 
 **Don't skip discovery before declining or improvising.** The `skill-discovery` HIGH framing rule mandates `aiwg discover` before saying "AIWG can't do that" or writing a custom workflow from scratch. Most AIWG skills (~460 of 480 today) are NOT in your loaded context — the kernel set is just the orientation layer + self-maintenance ops.
 
-**Read skill bodies via `aiwg show`, not via filesystem paths.** When discovery returns a candidate and you need its full body, call `aiwg show skill <name>`. Don't construct paths or `cat` files directly — the CLI is the access point and works the same regardless of where AIWG is installed.
+**Read skill bodies via `aiwg show`, not via filesystem paths.** When discovery returns a candidate and you need its full body, call `aiwg show skill <id>` (or the stable name if that is all you have). Don't construct paths or `cat` files directly — the CLI is the access point and works the same regardless of where AIWG is installed. Exact path parameters remain supported for compatibility, but identifier lookup is the primary path.
 
 **Skip discovery only when:**
 - The user named a specific skill or command (e.g., `/flow-deploy-to-production`)

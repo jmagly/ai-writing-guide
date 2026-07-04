@@ -166,7 +166,7 @@ function matchesPath(recordPath: string, pattern: string): boolean {
   return recordPath.includes(pattern);
 }
 
-function loadFortemiCoreExport(
+export function loadFortemiCoreExport(
   cwd: string,
   graph: GraphType = "project",
 ): FortemiCoreExportLoadResult {

@@ -250,6 +250,86 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     expect(shown.content).toContain("# Doc Sync");
   });
 
+  it("CLI discover returns stable ids instead of paths, and show metadata exposes paths on demand", async () => {
+    const frameworkSkill = entry({
+      path: "agentic/code/frameworks/sdlc-complete/skills/doc-sync/SKILL.md",
+      title: "Doc Sync",
+      name: "doc-sync",
+      tags: ["documentation", "sync"],
+      summary: "Synchronize code changes into documentation.",
+      triggers: ["doc sync code to docs", "sync docs"],
+      capability: "Keep documentation aligned with implementation changes.",
+    });
+    writeProjectGraph(tmp, [frameworkSkill], undefined, "framework");
+    syncFortemiCoreIndex(tmp, {
+      graph: "framework",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
+
+    const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(tmp);
+    try {
+      await indexCliMain([
+        "discover",
+        "doc sync code to docs",
+        "--json",
+        "--limit",
+        "1",
+      ]);
+      const discover = readConsoleJson();
+      consoleSpy.mockClear();
+
+      expect(discover.results[0].id).toMatch(/^aiwg:skill:[a-f0-9]{16}$/);
+      expect(discover.results[0]).not.toHaveProperty("path");
+      expect(discover.results[0].name).toBe("doc-sync");
+
+      await indexCliMain([
+        "show",
+        "metadata",
+        discover.results[0].id,
+        "--json",
+      ]);
+      const metadata = readConsoleJson();
+      consoleSpy.mockClear();
+
+      expect(metadata.id).toBe(discover.results[0].id);
+      expect(metadata.metadata.id).toBe(discover.results[0].id);
+      expect(metadata.metadata.source.path).toBe(frameworkSkill.path);
+      expect(metadata.paths.indexed).toBe(frameworkSkill.path);
+      expect(metadata.paths.absolute).toContain(frameworkSkill.path);
+    } finally {
+      cwdSpy.mockRestore();
+    }
+  });
+
+  it("keeps path lookup as a secondary show parameter after id lookup", async () => {
+    const frameworkSkill = entry({
+      path: "agentic/code/frameworks/sdlc-complete/skills/doc-sync/SKILL.md",
+      title: "Doc Sync",
+      name: "doc-sync",
+      tags: ["documentation", "sync"],
+      summary: "Synchronize code changes into documentation.",
+      triggers: ["doc sync code to docs", "sync docs"],
+      capability: "Keep documentation aligned with implementation changes.",
+    });
+    writeProjectGraph(tmp, [frameworkSkill], undefined, "framework");
+    syncFortemiCoreIndex(tmp, {
+      graph: "framework",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
+
+    await showArtifact(tmp, {
+      typeFilter: ["skill"],
+      name: frameworkSkill.path,
+      json: true,
+      backend: "fortemi-core",
+    });
+    const shown = readConsoleJson();
+    consoleSpy.mockClear();
+
+    expect(shown.path).toContain(frameworkSkill.path);
+    expect(shown.content).toContain("# Doc Sync");
+  });
+
   it("includes project-local custom skills in default Fortemi Core capability discovery", async () => {
     const customSkill = entry({
       path: ".aiwg/skills/custom-review/SKILL.md",

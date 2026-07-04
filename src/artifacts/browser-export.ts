@@ -201,7 +201,7 @@ function stableArtifactId(artifactPath: string): string {
   );
 }
 
-function stableRecordId(
+export function stableRecordId(
   recordType: AiwgFortemiRecordType,
   artifactPath: string,
 ): string {
@@ -296,7 +296,7 @@ function relationshipsForEntry(
   });
 }
 
-function recordTypeForEntry(
+export function recordTypeForEntry(
   entry: MetadataEntry,
   schemaVersion: AiwgFortemiExportSchemaVersion,
 ): AiwgFortemiRecordType {

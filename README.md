@@ -1095,13 +1095,17 @@ The headline operator surface for finding and reading AIWG capabilities. Most AI
 aiwg discover "deploy production"           # → flow-deploy-to-production
 aiwg discover "create intake"               # → intake-* family
 aiwg discover "audit security" --type skill --limit 5
-aiwg discover "<phrase>" --json             # stable schema for sub-agents
+aiwg discover "<phrase>" --json             # stable ids for sub-agents, no paths
 
 # Fetch the full body of a specific artifact (companion to discover)
+aiwg show skill aiwg:skill:6f1477d99813ca8d
 aiwg show skill flow-deploy-to-production
 aiwg show agent aiwg-steward
 aiwg show command discover
 aiwg show rule no-attribution
+
+# Inspect Fortemi metadata and resolved paths when needed
+aiwg show metadata aiwg:skill:6f1477d99813ca8d --json
 ```
 
 The kernel quickrefs ship **curated, validated discovery phrases per capability domain** — phrases tested against the live scorer to surface the right top-3 candidates. The 6 self-maintenance ops (`steward`, `aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`) stay loaded so the agent retains repair surfaces even when discovery itself is broken. See [`docs/discovery-and-kernel-skills.md`](docs/discovery-and-kernel-skills.md) for the full best-practices guide, ASCII flow diagrams, and verification steps.

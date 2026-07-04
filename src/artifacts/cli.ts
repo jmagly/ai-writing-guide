@@ -256,6 +256,7 @@ function printIndexUsage(): void {
   console.log('  aiwg index discover "audit security" --type skill');
   console.log('  aiwg index show skill intake-wizard');
   console.log('  aiwg index show skill flow-deploy-to-production --json');
+  console.log('  aiwg index show metadata aiwg:skill:4840fa441622f676 --json');
   console.log('  aiwg index show agent aiwg-steward');
   console.log('  aiwg index export --format fortemi --graph project --out aiwg-fortemi-index.json');
   console.log('  aiwg index migrate-legacy --scope project --dry-run');
@@ -1328,6 +1329,7 @@ async function handleDiscover(args: string[]): Promise<void> {
     json,
     graph,
     backend,
+    includePaths: false,
   });
 }
 
@@ -1345,7 +1347,7 @@ async function handleDiscover(args: string[]): Promise<void> {
  * the artifact body so consumers don't need to navigate the filesystem.
  */
 async function handleShow(args: string[]): Promise<void> {
-  const { showArtifact } = await import('./query-engine.js');
+  const { showArtifact, showMetadata } = await import('./query-engine.js');
   const cwd = process.cwd();
 
   const positional: string[] = [];
@@ -1361,6 +1363,7 @@ async function handleShow(args: string[]): Promise<void> {
   const HELP_TEXT = [
     '',
     'Usage: aiwg show <type> <name> [--json] [--first] [--graph <name>] [--backend local|fortemi-core]',
+    '       aiwg show metadata <id-or-name-or-path> [--json] [--first] [--graph <name>] [--backend local|fortemi-core]',
     '       aiwg index show <type> <name> ...',
     '',
     'Types: skill | agent | command | rule',
@@ -1368,16 +1371,23 @@ async function handleShow(args: string[]): Promise<void> {
     'Examples:',
     '  aiwg show skill intake-wizard',
     '  aiwg show skill flow-deploy-to-production --json',
+    '  aiwg show metadata aiwg:skill:4840fa441622f676 --json',
     '  aiwg show agent aiwg-steward',
     '  aiwg show command discover',
     '',
-    'Tip: use `aiwg discover "<phrase>"` first to find the right name.',
+    'Tip: use `aiwg discover "<phrase>" --json` first to find the stable id.',
   ].join('\n');
 
   if (positional.length === 0) {
     console.error('Error: aiwg show requires a type and name');
     console.error(HELP_TEXT);
     process.exit(1);
+  }
+
+  const firstLower = positional[0].toLowerCase();
+  const metadataMode = firstLower === 'metadata';
+  if (metadataMode) {
+    positional.shift();
   }
 
   // Wave A (#1218): if the first positional is a known type, treat it
@@ -1387,8 +1397,14 @@ async function handleShow(args: string[]): Promise<void> {
   // with the disambiguation list (existing behavior in showArtifact).
   let type: string | null = null;
   let name: string;
-  const firstLower = positional[0].toLowerCase();
-  if (ALLOWED_TYPES.includes(firstLower)) {
+  if (metadataMode) {
+    name = positional.join(' ').trim();
+    if (!name) {
+      console.error('Error: aiwg show metadata requires an id, name, or path');
+      console.error(HELP_TEXT);
+      process.exit(1);
+    }
+  } else if (ALLOWED_TYPES.includes(firstLower)) {
     type = firstLower;
     name = positional.slice(1).join(' ').trim();
     if (!name) {
@@ -1418,12 +1434,15 @@ async function handleShow(args: string[]): Promise<void> {
   const graph = parseGraphFlag(flags);
   const backend = parseSearchBackendFlag(flags);
 
-  await showArtifact(cwd, {
+  const params = {
     name,
     typeFilter: type ? [type] : undefined,
     json,
     first,
     graph,
     backend,
-  });
+  };
+
+  if (metadataMode) await showMetadata(cwd, params);
+  else await showArtifact(cwd, params);
 }
