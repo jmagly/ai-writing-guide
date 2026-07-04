@@ -612,6 +612,8 @@ export interface DiscoverParams {
   limit?: number;
   /** JSON output mode */
   json?: boolean;
+  /** Pretty-print JSON output. Defaults to true for CLI compatibility. */
+  jsonPretty?: boolean;
   /** Override default graph (defaults to `framework`, falls back to `project`) */
   graph?: GraphType;
   /** Query backend. Defaults to Fortemi Core; use local for the legacy path. */
@@ -681,6 +683,13 @@ function buildRunHint(entry: MetadataEntry): string {
   }
   const argsHint = entry.script?.argsHint ? ` -- ${entry.script.argsHint}` : '';
   return `aiwg run skill ${name}${argsHint}`;
+}
+
+function showHintForDiscoverResult(entry: MetadataEntry, id: string): string {
+  if (['skill', 'agent', 'command', 'rule'].includes(entry.type)) {
+    return `aiwg show ${entry.type} ${id}`;
+  }
+  return `aiwg show ${id}`;
 }
 
 async function getAiwgRootForDiscover(): Promise<string | null> {
@@ -941,6 +950,7 @@ export async function discoverCapability(
   const includePaths = params.includePaths ?? true;
 
   if (params.json) {
+    const jsonIndent = params.jsonPretty === false ? undefined : 2;
     console.log(JSON.stringify({
       query: { phrase: params.phrase, types, limit, aiwg_root: aiwgRoot ?? null, backend, graph: backend === 'fortemi-core' ? params.graph ?? 'capability-default' : params.graph },
       results: scored.map(r => ({
@@ -971,7 +981,7 @@ export async function discoverCapability(
       query_time_ms: queryTimeMs,
       ...(relaxed ? { relaxed_overlap: true } : {}),
       ...(emptyResultHint ? { hint: emptyResultHint } : {}),
-    }, null, 2));
+    }, null, jsonIndent));
     return;
   }
 
@@ -984,31 +994,38 @@ export async function discoverCapability(
   const relaxedNote = relaxed ? ' — relaxed match (verbose query)' : '';
   console.log(`Discovery results for "${params.phrase}" (${scored.length} matches, ${queryTimeMs}ms)${relaxedNote}:`);
   console.log('');
-  for (const r of scored) {
-    const score = r.score.toFixed(2).padStart(4);
-    const type = r.entry.type.padEnd(7);
-    const kernelTag = r.entry.kernel ? '★ ' : '  ';
-    const execTag = r.entry.script ? ' [exec]' : '';
-    const name = r.entry.name ? ` name=${r.entry.name}` : '';
-    const locator = includePaths
-      ? resolvePath(r.entry)
-      : `id=${discoveryIdForEntry(r.entry)}${name}`;
+  for (let i = 0; i < scored.length; i++) {
+    const r = scored[i];
+    const id = discoveryIdForEntry(r.entry);
+    const score = r.score.toFixed(2);
+    const flags = [
+      r.entry.kernel ? 'kernel' : null,
+      r.entry.script ? 'exec' : null,
+    ].filter(Boolean).join(', ');
+    const locator = includePaths ? resolvePath(r.entry) : id;
     const topTrigger = r.entry.triggers && r.entry.triggers.length > 0
       ? r.entry.triggers[0]
       : '';
-    console.log(`  ${kernelTag}score=${score}  ${type} ${locator}${execTag}`);
-    if (r.entry.capability) {
-      console.log(`               ${r.entry.capability}`);
+    console.log(`${i + 1}. ${r.entry.title}`);
+    console.log(`   type: ${r.entry.type}  score: ${score}${flags ? `  flags: ${flags}` : ''}`);
+    console.log(`   ${includePaths ? 'path' : 'id'}: ${locator}`);
+    if (r.entry.name) {
+      console.log(`   name: ${r.entry.name}`);
     }
-    if (r.entry.script) {
-      console.log(`               run: ${buildRunHint(r.entry)}`);
+    if (r.entry.capability) {
+      console.log(`   capability: ${r.entry.capability}`);
     }
     if (topTrigger) {
-      console.log(`               trigger: "${topTrigger}"`);
+      console.log(`   trigger: "${topTrigger}"`);
     }
+    if (r.entry.script) {
+      console.log(`   run: ${buildRunHint(r.entry)}`);
+    } else if (!includePaths) {
+      console.log(`   show: ${showHintForDiscoverResult(r.entry, id)}`);
+    }
+    console.log('');
   }
-  console.log('');
-  console.log('★ = kernel skill (always-loaded). Others are reachable via the index.');
+  console.log('Use `--format json` for machine-readable output. Use `aiwg show metadata <id>` for paths and full metadata.');
 }
 
 export interface ShowParams {

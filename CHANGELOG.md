@@ -19,6 +19,10 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   stable artifact identifier instead of filesystem paths. `aiwg show` resolves
   those identifiers first while preserving exact path lookup as a secondary,
   backward-compatible parameter.
+- **Readable discovery text output** — `aiwg discover` now supports
+  `--format json|text`, `--pretty`, and `--compact`, and renders default text
+  results as numbered, multi-line blocks with explicit `show` follow-up
+  commands.
 
 ## [2026.7.5] - 2026-07-03 - "Fortemi runtime dependency packaging"
 

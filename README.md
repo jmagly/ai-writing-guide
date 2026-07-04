@@ -1095,7 +1095,8 @@ The headline operator surface for finding and reading AIWG capabilities. Most AI
 aiwg discover "deploy production"           # → flow-deploy-to-production
 aiwg discover "create intake"               # → intake-* family
 aiwg discover "audit security" --type skill --limit 5
-aiwg discover "<phrase>" --json             # stable ids for sub-agents, no paths
+aiwg discover "<phrase>" --format json      # stable ids for sub-agents, no paths
+aiwg discover "<phrase>" --format json --compact
 
 # Fetch the full body of a specific artifact (companion to discover)
 aiwg show skill aiwg:skill:6f1477d99813ca8d

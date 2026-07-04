@@ -3425,7 +3425,10 @@ aiwg discover "<phrase>" [options]
 
 - `--limit <N>` — Max ranked results (default: 5)
 - `--type <kinds>` — Comma-separated filter; defaults to `skill,agent,command,rule,flow`. Examples: `--type skill`, `--type skill,agent`
-- `--json` — Emit a stable JSON schema (`id`, `type`, `name`, `title`, `score`, `triggers`, `capability`, `kernel`, `provenance`) for programmatic agent consumption. Paths are intentionally omitted from discover output; use `aiwg show metadata <id>` when path/debug metadata is required.
+- `--json` / `--format json` — Emit a stable JSON schema (`id`, `type`, `name`, `title`, `score`, `triggers`, `capability`, `kernel`, `provenance`) for programmatic agent consumption. Paths are intentionally omitted from discover output; use `aiwg show metadata <id>` when path/debug metadata is required.
+- `--format text` — Emit readable text output (default).
+- `--pretty` — Pretty-print JSON output with indentation (default for compatibility).
+- `--compact` — Emit single-line JSON output for scripts.
 - `--graph <name>` — Override the default graph. Defaults to `framework` (the AIWG capability graph), which is rebuilt automatically after every `aiwg use`.
 - `--backend <fortemi-core|local>` — Query backend. Default is
   `fortemi-core`; `local` selects the legacy local fallback. The Fortemi Core
@@ -3440,27 +3443,26 @@ aiwg discover "<phrase>" [options]
 aiwg discover "create intake"                       # ranks intake-* skills + intake-coordinator agent
 aiwg discover "deploy production" --limit 3         # flow-deploy-to-production tops at score 0.51
 aiwg discover "audit security" --type skill         # narrow to skills only
-aiwg discover "review code" --type agent --json     # JSON for sub-agent consumption
-aiwg discover "static retrieval" --json
+aiwg discover "review code" --type agent --format json --compact # JSON for sub-agent consumption
+aiwg discover "static retrieval" --json                # legacy JSON alias
 ```
 
 **Output (default):**
 
-Token-tight format optimized for in-context agent consumption — names the stable id, type, score, the top trigger phrase that earned the match, and the capability description.
+Readable format optimized for agent follow-up — names the stable id, type, score, top trigger phrase, capability description, and the next `aiwg show` command.
 
 ```
 Discovery results for "deploy production" (3 matches, 16ms):
 
-    score=0.51  skill   id=aiwg:skill:6f1477d99813ca8d name=flow-deploy-to-production
-                Orchestrate production deployment with strategy selection, validation,
-                automated rollback, and regression gates
-    score=0.36  skill   id=aiwg:skill:e19e287b8a5968bd name=customize-rebuild
-                Rebuild and redeploy AIWG from local customization source
-                trigger: "apply my changes"
-    score=0.26  agent   id=aiwg:agent:8a3649d8324e1cc1 name=production-coordinator
-                Manages creative production workflows, coordinates timelines
+1. Flow Deploy To Production
+   type: skill  score: 0.51
+   id: aiwg:skill:6f1477d99813ca8d
+   name: flow-deploy-to-production
+   capability: Orchestrate production deployment with strategy selection, validation,
+   trigger: "deploy production"
+   show: aiwg show skill aiwg:skill:6f1477d99813ca8d
 
-★ = kernel skill (always-loaded). Others are reachable via the index.
+Use `--format json` for machine-readable output. Use `aiwg show metadata <id>` for paths and full metadata.
 ```
 
 **How scoring works:**

@@ -301,6 +301,60 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     }
   });
 
+  it("CLI discover supports explicit JSON format switches and readable text output", async () => {
+    const frameworkSkill = entry({
+      path: "agentic/code/frameworks/sdlc-complete/skills/doc-sync/SKILL.md",
+      title: "Doc Sync",
+      name: "doc-sync",
+      tags: ["documentation", "sync"],
+      summary: "Synchronize code changes into documentation.",
+      triggers: ["doc sync code to docs", "sync docs"],
+      capability: "Keep documentation aligned with implementation changes.",
+    });
+    writeProjectGraph(tmp, [frameworkSkill], undefined, "framework");
+    syncFortemiCoreIndex(tmp, {
+      graph: "framework",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
+
+    const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(tmp);
+    try {
+      await indexCliMain([
+        "discover",
+        "doc sync code to docs",
+        "--format",
+        "json",
+        "--compact",
+        "--limit",
+        "1",
+      ]);
+      const compactJson = consoleSpy.mock.calls.map((call) => call[0]).join("");
+      const compact = JSON.parse(compactJson);
+      consoleSpy.mockClear();
+
+      expect(compactJson).not.toContain("\n");
+      expect(compact.results[0].id).toMatch(/^aiwg:skill:[a-f0-9]{16}$/);
+      expect(compact.results[0]).not.toHaveProperty("path");
+
+      await indexCliMain([
+        "discover",
+        "doc sync code to docs",
+        "--limit",
+        "1",
+      ]);
+      const text = consoleSpy.mock.calls.map((call) => call[0]).join("\n");
+      consoleSpy.mockClear();
+
+      expect(text).toContain("1. Doc Sync");
+      expect(text).toContain("type: skill  score:");
+      expect(text).toContain(`id: ${compact.results[0].id}`);
+      expect(text).toContain("show: aiwg show skill");
+      expect(text).not.toContain(frameworkSkill.path);
+    } finally {
+      cwdSpy.mockRestore();
+    }
+  });
+
   it("keeps path lookup as a secondary show parameter after id lookup", async () => {
     const frameworkSkill = entry({
       path: "agentic/code/frameworks/sdlc-complete/skills/doc-sync/SKILL.md",

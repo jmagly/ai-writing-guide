@@ -1299,14 +1299,14 @@ async function handleDiscover(args: string[]): Promise<void> {
     console.error('Error: aiwg index discover requires a search phrase');
     console.log('');
     console.log(
-      'Usage: aiwg index discover "<phrase>" [--type <kinds>] [--limit N] [--json] [--graph <name>] [--backend local|fortemi-core]',
+      'Usage: aiwg index discover "<phrase>" [--type <kinds>] [--limit N] [--json|--format json|text] [--pretty|--compact] [--graph <name>] [--backend local|fortemi-core]',
     );
     console.log('');
     console.log('Examples:');
     console.log('  aiwg index discover "create intake"');
     console.log('  aiwg index discover "deploy production" --limit 5');
     console.log('  aiwg index discover "audit security" --type skill,agent');
-    console.log('  aiwg index discover "intake" --json');
+    console.log('  aiwg index discover "intake" --format json --pretty');
     process.exit(1);
   }
 
@@ -1317,7 +1317,17 @@ async function handleDiscover(args: string[]): Promise<void> {
     .filter(Boolean);
   // K=5 default — see query-engine.ts comment (#1218 Wave A).
   const limit = parsePositiveIntegerFlag(flags, '--limit', 5, 'Error: --limit must be a positive integer');
-  const json = flags.includes('--json');
+  const format = parseFlagValue(flags, '--format', 'Error: --format requires text or json') ?? 'text';
+  if (format !== 'text' && format !== 'json') {
+    console.error('Error: --format must be text or json');
+    process.exit(1);
+  }
+  const json = flags.includes('--json') || format === 'json';
+  if (flags.includes('--pretty') && flags.includes('--compact')) {
+    console.error('Error: --pretty and --compact cannot be used together');
+    process.exit(1);
+  }
+  const jsonPretty = !flags.includes('--compact');
 
   const graph = parseGraphFlag(flags);
   const backend = parseSearchBackendFlag(flags);
@@ -1327,6 +1337,7 @@ async function handleDiscover(args: string[]): Promise<void> {
     typeFilter,
     limit,
     json,
+    jsonPretty,
     graph,
     backend,
     includePaths: false,
