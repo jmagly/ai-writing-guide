@@ -1,6 +1,70 @@
 import { LocalIssueProviderCore, localIssueRoot } from './index.js';
 import type { LocalIssueFilter } from './types.js';
 
+export const QUESTION_LABEL = 'question';
+
+export interface QuestionLabelPlanInput {
+  issueLabels: string[];
+  repositoryLabels: string[];
+  unresolvedQuestionCount: number;
+}
+
+export interface QuestionLabelPlan {
+  label: typeof QUESTION_LABEL;
+  createLabel: boolean;
+  addLabel: boolean;
+  removeLabel: boolean;
+  keepLabel: boolean;
+  reason: 'open-questions' | 'answered' | 'already-clear';
+}
+
+function hasLabel(labels: string[], name: string): boolean {
+  return labels.some((label) => label.toLowerCase() === name.toLowerCase());
+}
+
+/**
+ * Plan the tracker label mutation for address-issues open questions (#1726).
+ *
+ * The caller owns provider-specific API calls; this function keeps the state
+ * transition deterministic and idempotent across Gitea/GitHub/local stores.
+ */
+export function planQuestionLabelUpdate(input: QuestionLabelPlanInput): QuestionLabelPlan {
+  const issueHasQuestion = hasLabel(input.issueLabels, QUESTION_LABEL);
+  const repoHasQuestion = hasLabel(input.repositoryLabels, QUESTION_LABEL);
+  const hasOpenQuestions = input.unresolvedQuestionCount > 0;
+
+  if (hasOpenQuestions) {
+    return {
+      label: QUESTION_LABEL,
+      createLabel: !repoHasQuestion,
+      addLabel: !issueHasQuestion,
+      removeLabel: false,
+      keepLabel: issueHasQuestion,
+      reason: 'open-questions',
+    };
+  }
+
+  if (issueHasQuestion) {
+    return {
+      label: QUESTION_LABEL,
+      createLabel: false,
+      addLabel: false,
+      removeLabel: true,
+      keepLabel: false,
+      reason: 'answered',
+    };
+  }
+
+  return {
+    label: QUESTION_LABEL,
+    createLabel: false,
+    addLabel: false,
+    removeLabel: false,
+    keepLabel: false,
+    reason: 'already-clear',
+  };
+}
+
 interface ParsedArgs {
   positional: string[];
   flags: Map<string, string | boolean>;

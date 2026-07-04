@@ -22,6 +22,27 @@ describe('routing documentation regressions', () => {
     expect(existsSync(resolve(repo, '.aiwg/architecture/adr-codex-goal-routing.md'))).toBe(true);
   });
 
+  it('address-issues maintains question labels for unresolved workflow questions (#1726)', () => {
+    const docs = [
+      'agentic/code/frameworks/sdlc-complete/skills/address-issues/SKILL.md',
+      'agentic/code/plugins/sdlc/skills/address-issues/SKILL.md',
+      'agentic/code/plugins/codex-sdlc/skills/address-issues/SKILL.md',
+    ];
+
+    for (const docPath of docs) {
+      const doc = read(docPath);
+      expect(doc).toContain('question-label-lifecycle');
+      expect(doc).toContain('Audit stale `question` labels');
+      expect(doc).toContain('If the tracker lacks a `question` label, create it once');
+      expect(doc).toContain('Add the label after posting the question-bearing comment');
+      expect(doc).toContain('remove the `question` label only if no other unresolved `Open Questions` remain');
+      expect(doc).toContain('Question labels are active-state labels');
+    }
+
+    const template = read('agentic/code/frameworks/sdlc-complete/templates/issue-comments/feedback-needed.md');
+    expect(template).toContain('Apply the `question` label while any specific question above is unanswered');
+  });
+
   it('agent-loop documents external-route /workflow handling (verified against codex 0.135.0)', () => {
     const skill = read('agentic/code/addons/agent-loop/skills/agent-loop/SKILL.md');
     expect(skill).toContain('native dynamic orchestration (Claude Code Workflow tool)');

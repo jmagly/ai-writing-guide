@@ -7,7 +7,7 @@
 // per-launch token + OS-keychain (roctinam/aiwg#1595).
 import http from 'node:http';
 import { spawn } from 'node:child_process';
-import { readFile, mkdir, writeFile, chmod, readdir, cp, rm, stat } from 'node:fs/promises';
+import { readFile, mkdir, writeFile, chmod, readdir, cp, rm, stat, appendFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { homedir } from 'node:os';
@@ -27,11 +27,14 @@ const ALLOW_MOCK_EXECUTOR = process.env.AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR === '1'
 const AUTOSTART_EXECUTOR = process.env.AIWG_COCKPIT_AUTOSTART_EXECUTOR !== '0';
 const EXECUTOR_COMMAND = process.env.AIWG_COCKPIT_EXECUTOR_COMMAND ?? '';
 const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
+const auditDir = () => process.env.AIWG_COCKPIT_AUDIT_DIR || join(homedir(), '.aiwg', 'cockpit', 'audit');
+const auditLog = () => join(auditDir(), 'events.jsonl');
 // The built React app (apps/cockpit/web/dist). Served when present; falls back to the
 // legacy vanilla page so the Bridge works even before a web build.
 const WEB_DIST = fileURLToPath(new URL('../../web/dist', import.meta.url));
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png', '.woff2': 'font/woff2', '.map': 'application/json' };
 const CAPABILITY_TYPES = new Set(['skill', 'agent', 'command', 'rule', 'flow']);
+const mcSessionsDir = () => join(process.cwd(), '.aiwg', 'ralph-external', 'mc', 'sessions');
 
 /** Serve a static file from the built web app, sandboxed to WEB_DIST. Returns true if served. */
 async function serveDistFile(res, relPath) {
@@ -86,13 +89,14 @@ async function writeRuntimeToken({ token, port, pid }) {
   await mkdir(RUNTIME_DIR, { recursive: true, mode: 0o700 });
   const file = join(RUNTIME_DIR, 'bridge.json');
   const runtime = { token, port, pid, started_at: new Date().toISOString(), keychain_backed: false };
+  const strict = process.env.AIWG_COCKPIT_KEYCHAIN_STRICT === '1';
   try {
     runtime.token_ref = await storeCockpitToken(token, `bridge-${pid}`);
     runtime.keychain_backed = true;
-    if (process.env.AIWG_COCKPIT_KEYCHAIN_STRICT === '1') delete runtime.token;
+    if (strict) delete runtime.token;
   } catch (e) {
     runtime.keychain_error = String(e?.message ?? e);
-    if (process.env.AIWG_COCKPIT_REQUIRE_KEYCHAIN === '1') throw e;
+    if (strict || process.env.AIWG_COCKPIT_REQUIRE_KEYCHAIN === '1') throw e;
   }
   await writeFile(file, JSON.stringify(runtime, null, 2), { mode: 0o600 });
   await chmod(file, 0o600);
@@ -201,13 +205,25 @@ function validateContribution(m, where) {
     if (!a.inject || typeof a.inject.command !== 'string') fail(`action ${a.id}: inject.command (string) required`);
     if (a.inject.target && !['focused', 'new'].includes(a.inject.target)) fail(`action ${a.id}: inject.target must be focused|new`);
   }
-  for (const s of c.screens || []) { if (!ID_RE.test(s.id || '') || typeof s.source !== 'string') fail(`screen invalid: ${s.id}`); }
+  for (const s of c.screens || []) {
+    if (!ID_RE.test(s.id || '')) fail(`screen.id invalid: ${s.id}`);
+    if (typeof s.title !== 'string') fail(`screen ${s.id}: title required`);
+    if (typeof s.source !== 'string') fail(`screen ${s.id}: source required`);
+  }
+  for (const w of c.workflows || []) {
+    if (!ID_RE.test(w.id || '')) fail(`workflow.id invalid: ${w.id}`);
+    if (typeof w.title !== 'string') fail(`workflow ${w.id}: title required`);
+    if (!Array.isArray(w.steps) || w.steps.length === 0) fail(`workflow ${w.id}: steps required`);
+    for (const step of w.steps) {
+      if (!step || typeof step !== 'object' || !ID_RE.test(step.action || '')) fail(`workflow ${w.id}: step.action invalid`);
+    }
+  }
   for (const h of c.hooks || []) { if (typeof h.on !== 'string' || !ID_RE.test(h.action || '')) fail(`hook invalid: on=${h.on}`); }
   return m;
 }
 /** Load + validate + merge all contribution manifests across the configured dirs. */
 async function loadContributions() {
-  const sources = [], actions = [], screens = [], hooks = [];
+  const sources = [], actions = [], screens = [], hooks = [], workflows = [];
   for (const dir of CONTRIB_DIRS) {
     let entries = [];
     try { entries = (await readdir(dir)).filter((f) => f.endsWith('.json') && f !== 'contribution.schema.json'); } catch { continue; }
@@ -215,16 +231,123 @@ async function loadContributions() {
       const m = validateContribution(JSON.parse(await readFile(join(dir, file), 'utf8')), file);
       sources.push({ id: m.id, version: m.version, title: m.title ?? m.id, file });
       for (const a of m.contributes?.actions || []) actions.push({ ...a, source: m.id });
-      for (const s of m.contributes?.screens || []) screens.push({ ...s, source: m.id });
+      for (const s of m.contributes?.screens || []) screens.push({ ...s, contribution: m.id });
       for (const h of m.contributes?.hooks || []) hooks.push({ ...h, source: m.id });
+      for (const w of m.contributes?.workflows || []) workflows.push({ ...w, source: m.id });
     }
   }
-  return { sources, actions, screens, hooks };
+  return { sources, actions, screens, hooks, workflows };
+}
+
+function safeIndexGraph(value) {
+  const graph = String(value ?? '').trim();
+  if (!graph) return '';
+  if (!ID_RE.test(graph)) throw new Error('graph must match [a-z0-9._-]{1,64}');
+  return graph;
+}
+
+function safeIndexLimit(value, fallback = 20) {
+  const n = Number(value ?? fallback);
+  if (!Number.isInteger(n) || n < 1 || n > 100) throw new Error('limit must be an integer from 1 to 100');
+  return n;
+}
+
+async function getIndexStatus() {
+  return JSON.parse(await runAiwg(['index', 'status', '--json']));
+}
+
+async function queryIndex(url) {
+  const q = (url.searchParams.get('q') || '').trim();
+  if (!q) return { status: 400, body: { error: 'q_required' } };
+  let limit;
+  try { limit = safeIndexLimit(url.searchParams.get('limit'), 20); }
+  catch (e) { return { status: 400, body: { error: 'invalid_limit', detail: String(e?.message ?? e) } }; }
+  const args = ['index', 'query', q, '--json', '--backend', 'local', '--limit', String(limit)];
+  try {
+    const graph = safeIndexGraph(url.searchParams.get('graph'));
+    if (graph) args.push('--graph', graph);
+  } catch (e) { return { status: 400, body: { error: 'invalid_graph', detail: String(e?.message ?? e) } }; }
+  for (const flag of ['type', 'phase', 'tags', 'path']) {
+    const value = (url.searchParams.get(flag) || '').trim();
+    if (value) args.push(`--${flag}`, value);
+  }
+  return { status: 200, body: JSON.parse(await runAiwg(args)) };
+}
+
+async function rebuildIndex(req) {
+  const parsed = await readJsonBody(req);
+  if (parsed.error) return { status: 400, body: { error: parsed.error } };
+  const body = parsed.body || {};
+  const args = ['index', 'build'];
+  try {
+    const graph = safeIndexGraph(body.graph);
+    if (graph) args.push('--graph', graph);
+  } catch (e) { return { status: 400, body: { error: 'invalid_graph', detail: String(e?.message ?? e) } }; }
+  if (body.all === true) args.push('--all');
+  if (body.force === true) args.push('--force');
+  const requested = await appendAudit('index.rebuild.requested', { graph: body.graph ?? null, all: body.all === true, force: body.force === true });
+  const output = await runAiwg(args);
+  const status = await getIndexStatus();
+  await appendAudit('index.rebuild.completed', { request_ts: requested.ts, graph: body.graph ?? null, all: body.all === true, force: body.force === true });
+  return { status: 200, body: { ok: true, command: `aiwg ${args.join(' ')}`, output, status } };
 }
 
 function json(res, status, body) {
   res.writeHead(status, { 'content-type': 'application/json' });
   res.end(JSON.stringify(body));
+}
+
+function redactAuditValue(value) {
+  if (value === undefined || value === null) return value;
+  if (Array.isArray(value)) return value.map(redactAuditValue);
+  if (typeof value === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (/token|secret|password|credential|api[_-]?key|authorization|csrf/i.test(k)) out[k] = '[redacted]';
+      else out[k] = redactAuditValue(v);
+    }
+    return out;
+  }
+  if (typeof value === 'string' && /(bearer\s+[a-z0-9._-]+|sk-[a-z0-9]|gh[pousr]_[a-z0-9])/i.test(value)) return '[redacted]';
+  return value;
+}
+
+async function appendAudit(event, fields = {}) {
+  const dir = auditDir();
+  const log = auditLog();
+  await mkdir(dir, { recursive: true, mode: 0o700 });
+  const entry = redactAuditValue({
+    event,
+    ts: new Date().toISOString(),
+    actor: 'operator',
+    surface: 'cockpit-bridge',
+    ...fields,
+  });
+  await appendFile(log, JSON.stringify(entry) + '\n', { mode: 0o600 });
+  await chmod(log, 0o600).catch(() => undefined);
+  return entry;
+}
+
+async function readAudit({ limit = 50 } = {}) {
+  try {
+    const raw = await readFile(auditLog(), 'utf8');
+    return raw.trim().split(/\n+/).filter(Boolean).slice(-limit).map((line) => {
+      try { return JSON.parse(line); } catch { return { event: 'unparsed', line }; }
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function readJsonBody(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const rawBody = Buffer.concat(chunks).toString('utf8') || '{}';
+  try {
+    return { body: JSON.parse(rawBody) };
+  } catch {
+    return { error: 'invalid_json' };
+  }
 }
 
 /** Forward a control-plane call to the executor admin surface, relaying status + body. */
@@ -917,6 +1040,185 @@ async function getApprovals(executorUrl, status) {
   };
 }
 
+const TERMINAL_MISSION_STATES = new Set(['done', 'completed', 'complete', 'failed', 'aborted', 'canceled', 'cancelled', 'rejected']);
+
+function normalizeMissionStatus(status) {
+  const value = String(status ?? 'unknown').toLowerCase();
+  if (value === 'done' || value === 'complete') return 'completed';
+  if (value === 'cancelled' || value === 'canceled') return 'aborted';
+  if (['queued', 'running', 'paused', 'completed', 'failed', 'aborted', 'input-required', 'awaiting-approval', 'unknown'].includes(value)) return value;
+  return value;
+}
+
+function missionSummary(mission) {
+  const status = normalizeMissionStatus(mission.status);
+  return {
+    id: String(mission.id ?? mission.mission_id ?? mission.missionId ?? ''),
+    title: mission.objective ?? mission.goal ?? mission.task ?? mission.title ?? 'Untitled mission',
+    completion: mission.completion ?? mission.completionCriterion ?? mission.completion_criterion,
+    status,
+    loop: mission.loop ?? mission.iteration ?? mission.currentIteration ?? 0,
+    max_iterations: mission.maxIterations ?? mission.max_iterations ?? mission.maxIterations ?? 0,
+    priority: mission.priority ?? 'normal',
+    mode: mission.mode ?? 'direct',
+    target_agent: mission.targetAgent ?? mission.target_agent,
+    ralph_loop_id: mission.ralphLoopId ?? mission.ralph_loop_id,
+    ralph_pid: mission.ralphPid ?? mission.ralph_pid,
+    started_at: mission.startedAt ?? mission.started_at,
+    completed_at: mission.completedAt ?? mission.completed_at,
+    error: mission.error,
+    terminal: TERMINAL_MISSION_STATES.has(status),
+  };
+}
+
+async function readMcAudit(sessionId) {
+  const logPath = join(mcSessionsDir(), sessionId, 'log.jsonl');
+  try {
+    const raw = await readFile(logPath, 'utf8');
+    return raw.trim().split(/\n+/).filter(Boolean).map((line) => {
+      try { return JSON.parse(line); } catch { return { event: 'unparsed', line }; }
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function readMcSessions() {
+  let entries = [];
+  const sessionsDir = mcSessionsDir();
+  try { entries = await readdir(sessionsDir, { withFileTypes: true }); } catch { return []; }
+  const sessions = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    try {
+      const raw = await readFile(join(sessionsDir, entry.name, 'session.json'), 'utf8');
+      const session = JSON.parse(raw);
+      const audit = await readMcAudit(entry.name);
+      sessions.push({
+        id: String(session.id ?? entry.name),
+        name: session.name ?? entry.name,
+        state: session.state ?? 'unknown',
+        source: 'aiwg-mc',
+        created_at: session.createdAt ?? session.created_at,
+        updated_at: session.updatedAt ?? session.updated_at,
+        max_missions: session.maxMissions ?? session.max_missions,
+        audit_count: audit.length,
+        audit_tail: audit.slice(-8),
+        missions: (session.missions ?? []).map((m) => ({ ...missionSummary(m), session_id: session.id ?? entry.name, source: 'aiwg-mc' })),
+      });
+    } catch {
+      // Ignore malformed or half-written sessions; the next refresh will retry.
+    }
+  }
+  sessions.sort((a, b) => String(b.updated_at ?? '').localeCompare(String(a.updated_at ?? '')));
+  return sessions;
+}
+
+async function taskMissionSession(executorUrl) {
+  const running = await getRunning(executorUrl).catch(() => ({ running: [] }));
+  const approvals = await getApprovals(executorUrl, 'pending').catch(() => ({ approvals: [] }));
+  const taskMissions = [
+    ...(running.running ?? []).map((t) => ({
+      id: `${t.instance_id}::${t.task_id}`,
+      session_id: 'executor-live',
+      source: 'executor-task',
+      title: `Task ${t.task_id}`,
+      status: normalizeMissionStatus(t.state),
+      instance_id: t.instance_id,
+      task_id: t.task_id,
+      tenant: t.tenant,
+      runtime_posture: t.runtime_posture,
+      transport: t.transport,
+      terminal: false,
+    })),
+    ...(approvals.approvals ?? []).map((a) => ({
+      id: a.id,
+      session_id: 'executor-live',
+      source: 'hitl-approval',
+      title: a.prompt,
+      status: 'awaiting-approval',
+      instance_id: a.instance_id,
+      task_id: a.task_id,
+      tenant: a.tenant,
+      risk: a.risk,
+      terminal: false,
+    })),
+  ];
+  if (!taskMissions.length) return null;
+  return {
+    id: 'executor-live',
+    name: 'Executor live tasks',
+    state: 'active',
+    source: 'agentic-sandbox',
+    updated_at: new Date().toISOString(),
+    audit_count: 0,
+    audit_tail: [],
+    missions: taskMissions,
+  };
+}
+
+async function getMissions(executorUrl) {
+  const sessions = await readMcSessions();
+  const live = await taskMissionSession(executorUrl);
+  if (live) sessions.unshift(live);
+  const missions = sessions.flatMap((s) => s.missions);
+  return {
+    source: 'aiwg-mc + agentic-sandbox',
+    fetched_at: new Date().toISOString(),
+    count: missions.length,
+    sessions,
+    missions,
+  };
+}
+
+async function getSessionEventRows(executorUrl, instances) {
+  const rows = [];
+  await Promise.all((instances ?? []).map(async (inst) => {
+    let sessions;
+    try { sessions = (await getSessions(executorUrl, inst.id)).sessions; } catch { return; }
+    for (const session of sessions) {
+      rows.push({
+        id: session.id,
+        instance_id: inst.id,
+        agent_id: session.agent_id,
+        state: session.state ?? session.status ?? session.session_state ?? 'available',
+        role_policy: session.role_policy,
+        backend: session.backend ?? session.session_backend,
+        mode: session.mode ?? session.session_class,
+      });
+    }
+  }));
+  return rows;
+}
+
+async function getEventSnapshot(executorUrl) {
+  const inventory = await getInventory(executorUrl).catch(() => ({ instances: [] }));
+  const [running, approvals, missions, sessions] = await Promise.all([
+    getRunning(executorUrl).catch(() => ({ running: [] })),
+    getApprovals(executorUrl, 'pending').catch(() => ({ approvals: [] })),
+    getMissions(executorUrl).catch(() => ({ missions: [] })),
+    getSessionEventRows(executorUrl, inventory.instances).catch(() => []),
+  ]);
+  const ts = new Date().toISOString();
+  const events = [];
+  for (const inst of inventory.instances ?? []) {
+    events.push({ id: `instance:${inst.id}`, type: 'inventory.instance', source: 'agentic-sandbox', subject: inst.id, state: inst.state, ts, ref: { instance_id: inst.id } });
+  }
+  for (const task of running.running ?? []) {
+    events.push({ id: `task:${task.instance_id}:${task.task_id}`, type: 'task.lifecycle', source: 'a2a', subject: task.task_id, state: task.state, ts, ref: { instance_id: task.instance_id, task_id: task.task_id } });
+  }
+  for (const approval of approvals.approvals ?? []) {
+    events.push({ id: `approval:${approval.id}`, type: 'hitl.approval', source: 'a2a', subject: approval.task_id ?? approval.id, state: approval.status, severity: approval.risk, ts, ref: { instance_id: approval.instance_id, approval_id: approval.id } });
+  }
+  for (const session of sessions ?? []) {
+    events.push({ id: `session:${session.instance_id}:${session.id}`, type: 'session.lifecycle', source: 'pty-session', subject: session.id, state: session.state, ts, ref: { instance_id: session.instance_id, session_id: session.id, agent_id: session.agent_id, backend: session.backend, mode: session.mode, role_policy: session.role_policy } });
+  }
+  for (const mission of missions.missions ?? []) {
+    events.push({ id: `mission:${mission.id}`, type: 'mission.lifecycle', source: mission.source ?? 'aiwg-mc', subject: mission.id, state: mission.status, ts, ref: { session_id: mission.session_id, mission_id: mission.id, ralph_loop_id: mission.ralph_loop_id } });
+  }
+  return { source: 'cockpit.unified-event-model/v1', fetched_at: ts, count: events.length, events };
+}
+
 async function respondApproval(executorUrl, approvalId, decision) {
   if (!['approve', 'deny'].includes(decision)) return { status: 400, body: { error: 'decision must be approve|deny' } };
   const [instanceId, taskId] = String(approvalId).split('::');
@@ -1097,18 +1399,35 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
       if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(upstreamUrl));
       if (url.pathname === '/api/executor/capabilities') return json(res, 200, await getExecutorCapabilities(upstreamUrl));
       if (url.pathname === '/api/running') return json(res, 200, await getRunning(upstreamUrl));
+      if (url.pathname === '/api/missions') return json(res, 200, await getMissions(upstreamUrl));
+      if (url.pathname === '/api/events/snapshot') return json(res, 200, await getEventSnapshot(upstreamUrl));
       if (url.pathname === '/api/loadouts') return json(res, 200, await getLoadouts(upstreamUrl));
+      if (url.pathname === '/api/index/status' && req.method === 'GET') return json(res, 200, await getIndexStatus());
+      if (url.pathname === '/api/index/query' && req.method === 'GET') {
+        const result = await queryIndex(url);
+        return json(res, result.status, result.body);
+      }
+      if (url.pathname === '/api/index/rebuild' && req.method === 'POST') {
+        const result = await rebuildIndex(req);
+        return json(res, result.status, result.body);
+      }
+      if (url.pathname === '/api/audit' && req.method === 'GET') {
+        const limit = Math.max(1, Math.min(200, Number(url.searchParams.get('limit') || 50)));
+        return json(res, 200, { source: 'cockpit-bridge-audit/v1', audit: await readAudit({ limit }) });
+      }
+      if (url.pathname === '/api/audit/intent' && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        const body = parsed.body || {};
+        const event = typeof body.event === 'string' && body.event.trim() ? body.event.trim() : 'operator.intent';
+        const entry = await appendAudit(event, { detail: body.detail ?? body });
+        return json(res, 201, entry);
+      }
       let m;
       if (url.pathname === '/api/instances' && req.method === 'POST') {
-        const chunks = [];
-        for await (const chunk of req) chunks.push(chunk);
-        const rawBody = Buffer.concat(chunks).toString('utf8') || '{}';
-        let payload;
-        try {
-          payload = JSON.parse(rawBody);
-        } catch {
-          return json(res, 400, { error: 'invalid_json' });
-        }
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        const payload = parsed.body;
         if (payload.runtime === 'qemu') {
           const sshKey = expandHome(String(payload.ssh_key ?? payload.sshKey ?? '').trim()) || defaultSshPublicKey();
           if (!sshKey) {
@@ -1128,14 +1447,22 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
           payload.ssh_key = sshKey;
         }
         const requestBody = JSON.stringify(payload);
-        return proxyFirst(res, [
+        const before = await appendAudit('instance.launch.requested', {
+          runtime: payload.runtime,
+          name: payload.name,
+          loadout: payload.loadout,
+          start: payload.start,
+        });
+        const result = await fetchJsonFirst([
           {
             target: `${upstreamUrl}/api/v2/admin/instances`,
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: requestBody,
           },
-        ]);
+        ]).catch((err) => ({ status: 502, body: { error: 'bridge_upstream_error', message: String(err?.message ?? err) } }));
+        await appendAudit('instance.launch.result', { request_ts: before.ts, status: result.status, result: result.body });
+        return json(res, result.status, result.body);
       }
       if ((m = url.pathname.match(/^\/api\/operations\/([^/]+)$/)) && req.method === 'GET') {
         return proxyFirst(res, [
@@ -1170,7 +1497,10 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
           args.push('--type', types.join(','));
         }
         const data = JSON.parse(await runAiwg(args));
-        data.results = (data.results || []).map((r) => ({ ...r, name: deriveName(r.path) }));
+        data.results = (data.results || []).map((r) => ({
+          ...r,
+          name: r.name || (r.path ? deriveName(r.path) : ''),
+        }));
         return json(res, 200, data);
       }
       if (url.pathname === '/api/show') {
@@ -1279,27 +1609,37 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         }
         // Same as the list path (#1671): the attach segment must be the instance
         // id the executor's pty-ws route accepts, not the resolved agent name.
+        await appendAudit('session.start.requested', { instance_id: id, mode: mode || 'managed', backend: backend || 'tmux', loadout, status, session_id: sessionId });
         return json(res, status, { ...body, id: sessionId, attach_url: attachUrl ?? `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(sessionId)}/attach` });
       }
 
       // --- management surface (UC-012): lifecycle + task cancel ---
-      if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/(start|stop)$/)) && req.method === 'POST')
-        return proxyFirst(res, [
+      if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/(start|stop)$/)) && req.method === 'POST') {
+        const result = await fetchJsonFirst([
           `${upstreamUrl}/admin/instances/${encodeURIComponent(m[1])}/${m[2]}`,
           `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(m[1])}/${m[2]}`,
-        ], { method: 'POST' });
+        ], { method: 'POST' }).catch((err) => ({ status: 502, body: { error: 'bridge_upstream_error', message: String(err?.message ?? err) } }));
+        await appendAudit('instance.lifecycle.requested', { instance_id: decodeURIComponent(m[1]), action: m[2], status: result.status, result: result.body });
+        return json(res, result.status, result.body);
+      }
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)$/)) && req.method === 'DELETE') {
         const { status, body } = await destroyInstance(upstreamUrl, decodeURIComponent(m[1]));
+        await appendAudit('instance.destroy.requested', { instance_id: decodeURIComponent(m[1]), status, result: body });
         return json(res, status, body);
       }
-      if ((m = url.pathname.match(/^\/api\/tasks\/([^/]+)\/([^/]+)\/cancel$/)) && req.method === 'POST')
+      if ((m = url.pathname.match(/^\/api\/tasks\/([^/]+)\/([^/]+)\/cancel$/)) && req.method === 'POST') {
+        await appendAudit('task.cancel.requested', { instance_id: decodeURIComponent(m[1]), task_id: decodeURIComponent(m[2]) });
         return proxy(res, 'POST', `${upstreamUrl}/agents/${encodeURIComponent(m[1])}/tasks/${encodeURIComponent(m[2])}:cancel`);
+      }
 
       // --- approval inbox (UC-009) + cost (UC-010) ---
       if (url.pathname === '/api/approvals' && req.method === 'GET')
         return json(res, 200, await getApprovals(upstreamUrl, url.searchParams.get('status') || 'pending'));
       if ((m = url.pathname.match(/^\/api\/approvals\/([^/]+)$/)) && req.method === 'POST') {
-        const { status, body } = await respondApproval(upstreamUrl, decodeURIComponent(m[1]), url.searchParams.get('decision') || '');
+        const approvalId = decodeURIComponent(m[1]);
+        const decision = url.searchParams.get('decision') || '';
+        const { status, body } = await respondApproval(upstreamUrl, approvalId, decision);
+        await appendAudit('approval.response.submitted', { approval_id: approvalId, decision, status, result: body });
         return json(res, status, body);
       }
       if (url.pathname === '/api/cost' && req.method === 'GET')
@@ -1363,8 +1703,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await ensureExecutor(EXECUTOR_URL);
   const server = createBridge();
   server.listen(port, '127.0.0.1', async () => {
-    const file = await writeRuntimeToken({ token: server.cockpitToken, port, pid: process.pid });
-    console.log(`[cockpit-bridge] http://127.0.0.1:${port}  (executor ${EXECUTOR_URL})`);
-    console.log(`  token written ${file} (mode 600) — open the URL in a browser or attach a shell`);
+    try {
+      const file = await writeRuntimeToken({ token: server.cockpitToken, port, pid: process.pid });
+      console.log(`[cockpit-bridge] http://127.0.0.1:${port}  (executor ${EXECUTOR_URL})`);
+      console.log(`  token written ${file} (mode 600) — open the URL in a browser or attach a shell`);
+    } catch (err) {
+      console.error(`[cockpit-bridge] failed to persist runtime token: ${String(err?.message ?? err)}`);
+      server.close(() => process.exit(1));
+    }
   });
 }

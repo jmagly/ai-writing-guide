@@ -2,14 +2,36 @@
   "$schema": "./contribution.schema.json",
   "id": "aiwg-core",
   "version": "1.0.0",
-  "title": "AIWG Core Actions",
+  "title": "AIWG Core Contributions",
   "contributes": {
     "actions": [
       { "id": "audit-issues",   "title": "Audit Issues",   "icon": "🔍", "group": "issues",      "inject": { "command": "/issue-audit", "target": "focused" } },
       { "id": "address-issues", "title": "Address Issues", "icon": "🛠️", "group": "issues",      "inject": { "command": "/address-issues", "target": "focused", "needs_args": true, "args_hint": "issue numbers, space-separated" } },
       { "id": "doctor",         "title": "Doctor",          "icon": "🩺", "group": "maintenance", "inject": { "command": "/aiwg-doctor", "target": "focused" } }
     ],
-    "screens": [],
+    "screens": [
+      { "id": "index-live", "title": "Live Index", "source": "cockpit://index/live" },
+      { "id": "issue-workbench", "title": "Issue Workbench", "source": "cockpit://issues/workbench" }
+    ],
+    "workflows": [
+      {
+        "id": "issue-resolution",
+        "title": "Issue Resolution",
+        "description": "Audit selected issues, then dispatch the address-issues loop.",
+        "steps": [
+          { "action": "audit-issues", "label": "Audit" },
+          { "action": "address-issues", "label": "Address" }
+        ]
+      },
+      {
+        "id": "maintenance-check",
+        "title": "Maintenance Check",
+        "description": "Run the AIWG doctor through an attached agentic session.",
+        "steps": [
+          { "action": "doctor", "label": "Doctor" }
+        ]
+      }
+    ],
     "hooks": []
   }
 }

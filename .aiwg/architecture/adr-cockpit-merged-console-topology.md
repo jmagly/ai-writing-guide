@@ -4,6 +4,7 @@
 **Date**: 2026-06-30
 **Issue**: roctinam/aiwg#1654
 **Related**: @.aiwg/architecture/adr-cockpit-package-topology.md, @.aiwg/architecture/adr-cockpit-ui-stack.md, @.aiwg/architecture/adr-cockpit-instance-control-substrate.md, @.aiwg/architecture/adr-cockpit-coordination-bus.md, @.aiwg/architecture/adr-cockpit-session-control-not-cli-runner.md
+**Current-state audit**: @.aiwg/planning/cockpit-current-state-audit-2026-07-04.md
 
 ## Context
 
@@ -84,3 +85,20 @@ projection, operator authorization, attach/handoff affordances, and display.
 - Existing package-footprint guards remain valid: `apps/cockpit/**` must not
   leak into the base `aiwg` tarball, while `@aiwg/cockpit` carries the heavier
   merged-console payload.
+
+## 2026-07-04 Audit Update
+
+The topology decision is now the active baseline, not a pending decision.
+agentic-sandbox has advanced to the July `v2026.7.1` release line, and Cockpit
+already targets the real v2 executor by default:
+
+- the Bridge refuses mock-like executors unless an automated harness opts in;
+- inventory normalizes real admin v2 payloads;
+- Running derives from per-instance A2A task surfaces;
+- Approvals derive from A2A `input-required` / `hitl-prompt/v1` task surfaces;
+- sessions use the real session APIs and direct PTY attach URLs;
+- `test/integration/cockpit-bridge.test.js` covers the real-v2-shaped path.
+
+Therefore aiwg#1654 is ready to close. Follow-on work belongs under aiwg#1655
+(Bridge backend completion), aiwg#1656 (UI consolidation), and aiwg#1657
+(durable Mission surface).

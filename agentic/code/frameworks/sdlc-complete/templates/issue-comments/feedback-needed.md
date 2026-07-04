@@ -46,6 +46,12 @@
 2. {question_2}
 3. {question_3}
 
+## Label State
+
+Apply the `question` label while any specific question above is unanswered. Remove
+the label only after all tracked questions in this comment have been answered to
+the workflow's satisfaction.
+
 ## Blocking Items
 
 {if_applicable}

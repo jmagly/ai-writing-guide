@@ -1,104 +1,62 @@
 .app {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: #0b1220;
+  color: #f8fafc;
+  font: 15px/1.5 system-ui, sans-serif;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 8px 16px;
-  background: #111;
-  border-bottom: 1px solid #2a2a2a;
-  flex-shrink: 0;
+.panel {
+  width: min(680px, 100%);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: #111827;
+  padding: 28px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .32);
 }
 
-.title {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0;
-  color: #5a8fff;
-  white-space: nowrap;
-}
-
-.nav {
-  display: flex;
-  gap: 4px;
-}
-
-.nav button {
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: #888;
-  cursor: pointer;
-  font-size: 13px;
-  padding: 4px 12px;
-  transition: background 0.15s, color 0.15s;
-}
-
-.nav button:hover,
-.nav button:focus-visible {
-  background: #2a2a2a;
-  color: #e0e0e0;
-  outline: 2px solid #5a8fff;
-  outline-offset: 2px;
-}
-
-.nav button.active {
-  background: #1a2a4a;
-  color: #8ab8ff;
-}
-
-.sessionControl {
-  margin-left: auto;
-}
-
-.headerRight {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.newTaskBtn {
-  background: #1a3a7a;
-  border: 1px solid #2a5aaa;
-  border-radius: 4px;
-  color: #8ab8ff;
-  cursor: pointer;
+.eyebrow {
+  margin: 0 0 6px;
+  color: #5eead4;
   font-size: 12px;
-  font-weight: 600;
-  padding: 4px 12px;
-  white-space: nowrap;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
-.newTaskBtn:hover,
-.newTaskBtn:focus-visible {
-  background: #2a4a8a;
-  outline: 2px solid #5a8fff;
-  outline-offset: 2px;
+h1 {
+  margin: 0 0 12px;
+  font-size: 28px;
+  line-height: 1.15;
 }
 
-.main {
-  flex: 1;
-  overflow: hidden;
-  padding: 12px;
+p {
+  color: #cbd5e1;
 }
 
-.placeholder {
+code {
+  color: #f8fafc;
+  background: #0b1220;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 3px 7px;
+}
+
+a {
+  color: #93c5fd;
+}
+
+.actions {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 10px;
   align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #666;
-  text-align: center;
+  margin: 18px 0;
 }
 
-.placeholder h2 {
-  color: #888;
-  font-size: 18px;
+.note {
+  margin-bottom: 0;
+  font-size: 13px;
 }

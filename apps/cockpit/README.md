@@ -60,9 +60,11 @@ AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:8122 aiwg cockpit
 - **Running** — active work across stacks, spend posture, and task stop controls.
 - **Sessions** — observe-first terminal attach, explicit drive/control, and replay posture.
 - **Approvals** — unified human-in-the-loop decision inbox.
-- **Explore** — read-only AIWG capability catalog for discovery and routing.
+- **Explore** — live index status/query/rebuild plus read-only AIWG capability catalog.
 - **Library** — user-owned assets cloned/imported under `~/.aiwg/cockpit/library`.
-- **Actions** — contributed buttons that inject commands into an agentic session.
+- **Telemetry** — unified event feed, Mission/session/task/approval/inventory posture, and spend.
+- **Memory** — browser-local operator notes plus Mission completion notes from MC state.
+- **Actions** — contributed actions, first-party screens, and workflows; action steps inject commands into an agentic session.
 
 ## What Cockpit Is
 
@@ -138,9 +140,11 @@ operator / CLI:  aiwg cockpit
 | **Running** | Running work across stacks + cross-stack spend + per-task Stop. |
 | **Sessions** | Live pty terminal — observe/drive, keyframe, non-destructive replay; inline **＋ capability picker**. |
 | **Approvals** | Unified HITL inbox (`hitl-prompt/v1`); decisions = operator authorization. |
-| **Explore** | Read-only AIWG catalog — Tenor-style capability search (fortemi-react-modeled). |
+| **Explore** | Live artifact-index status/query/rebuild plus read-only AIWG catalog search. |
 | **Library** | Your own assets — clone from the catalog / import / remove. AIWG files never overwritten. |
-| **Actions** | Contributed buttons that **inject a command into a session** (the agent runs it). |
+| **Telemetry** | Unified event model over inventory, sessions, tasks, approvals, Missions, and cost posture. |
+| **Memory** | Operator notes and auto-created Mission completion notes from durable `aiwg mc` state. |
+| **Actions** | Contributed actions, first-party screens, and workflows. Action steps **inject a command into a session** (the agent runs it). |
 
 ## Runtime, Session, and Trust Posture
 
@@ -168,6 +172,14 @@ storing tokens, private keys, CSRs, or bearer material in UI state, logs, or
 activity payloads. Legacy shared-secret and TOFU paths render as compatibility or
 degraded, not default-green. Agentic-sandbox owns transport provisioning and peer
 identity enforcement; Cockpit owns visibility and audit presentation.
+
+Set `AIWG_COCKPIT_KEYCHAIN_STRICT=1` when shells must refuse plaintext runtime
+tokens. In strict mode the Bridge exits if it cannot persist the per-launch token
+to the OS keychain, and shell-core refuses runtime files that only contain a
+plaintext token. Operator intent is also recorded in a local redacted audit log
+under `~/.aiwg/cockpit/audit/events.jsonl` for lifecycle, session, action-inject,
+and approval-response decisions; bearer material and provider credentials are
+redacted before write.
 
 ## Run (dev/test, against a real agentic-sandbox executor)
 

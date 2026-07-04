@@ -1,6 +1,7 @@
 // End-to-end data-path smoke: executor fixture (admin) -> Bridge (/api/inventory) -> served screen.
 // Self-contained (own ports); no deps. Exits non-zero on failure.
 import assert from 'node:assert/strict';
+import { fileURLToPath } from 'node:url';
 import { createExecutor } from '../../mock-executor/src/server.mjs';
 import { createBridge } from './server.mjs';
 
@@ -74,9 +75,13 @@ try {
   assert.match(shown.body, /name:\s*flow-deploy-to-production/, 'show returns the skill body');
   assert.equal((await f("/api/capabilities")).status, 400, 'capabilities requires q');
   // show by discovered PATH — deterministic, sidesteps ambiguous same-named artifacts (#1643)
-  const shownByPath = await (await f(`/api/show?path=${encodeURIComponent(hit.path)}`)).json();
-  assert.match(shownByPath.body, /name:\s*flow-deploy-to-production/, 'show-by-path returns the body');
-  assert.equal(shownByPath.path, hit.path, 'show-by-path echoes the resolved path');
+  if (hit.path) {
+    const shownByPath = await (await f(`/api/show?path=${encodeURIComponent(hit.path)}`)).json();
+    assert.match(shownByPath.body, /name:\s*flow-deploy-to-production/, 'show-by-path returns the body');
+    assert.equal(shownByPath.path, hit.path, 'show-by-path echoes the resolved path');
+  } else {
+    assert.ok(hit.id, 'pathless discover result carries a stable id');
+  }
   // a missing artifact is a 4xx, never a 502 (ambiguous/not-found map to operator-correctable input)
   assert.equal((await f('/api/show?type=agent&name=__definitely_not_a_real_artifact__')).status, 404, 'unknown artifact -> 404 not 502');
   // a path outside the AIWG corpus is refused (no traversal)
@@ -123,7 +128,8 @@ try {
 
   // user asset library: clone a catalog asset into the library, list it, delete it.
   // (AIWG source is read-only — clone copies into ~/.aiwg/cockpit/library, never the reverse.)
-  const cloneRes = await f(`/api/library/clone?type=${encodeURIComponent(hit.type)}&name=${encodeURIComponent(hit.name)}&path=${encodeURIComponent(hit.path)}`, { method: 'POST' });
+  const libraryPath = hit.path || fileURLToPath(new URL('../../../../agentic/code/frameworks/sdlc-complete/skills/flow-deploy-to-production/SKILL.md', import.meta.url));
+  const cloneRes = await f(`/api/library/clone?type=${encodeURIComponent(hit.type)}&name=${encodeURIComponent(hit.name)}&path=${encodeURIComponent(libraryPath)}`, { method: 'POST' });
   assert.ok([201, 400].includes(cloneRes.status), 'clone returns 201 (new) or 400 (already present)');
   const lib1 = await (await f('/api/library')).json();
   assert.ok(lib1.library.some((a) => a.name === hit.name), 'cloned asset appears in the user library');

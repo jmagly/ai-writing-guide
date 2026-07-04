@@ -38,6 +38,9 @@ async function canRun(cmd) {
 }
 
 export async function storeCockpitToken(token, account = `bridge-${process.pid}`) {
+  if (process.env.AIWG_COCKPIT_KEYCHAIN_DISABLED === '1') {
+    throw new Error('OS keychain disabled by AIWG_COCKPIT_KEYCHAIN_DISABLED');
+  }
   const os = platform();
   if (os === 'darwin' && await canRun('security')) {
     await collect('security', ['add-generic-password', '-a', account, '-s', SERVICE, '-w', token, '-U']);

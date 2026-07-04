@@ -45,10 +45,37 @@
           "items": {
             "type": "object",
             "required": ["id", "title", "source"],
+            "additionalProperties": false,
             "properties": {
               "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
               "title": { "type": "string" },
               "source": { "type": "string", "description": "url or path the screen iframe/region loads" }
+            }
+          }
+        },
+        "workflows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "title", "steps"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+              "title": { "type": "string" },
+              "description": { "type": "string" },
+              "steps": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["action"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "action": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+                    "label": { "type": "string" }
+                  }
+                }
+              }
             }
           }
         },
@@ -57,6 +84,7 @@
           "items": {
             "type": "object",
             "required": ["on", "action"],
+            "additionalProperties": false,
             "properties": {
               "on": { "type": "string", "description": "event name, e.g. session.output, instance.state-changed" },
               "action": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$", "description": "id of a contributed action to run" }

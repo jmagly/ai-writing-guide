@@ -5,11 +5,14 @@ import type { Approval, Instance, ResponseNeeded } from './types';
 import { Welcome } from './components/Welcome';
 import { Inventory } from './components/Inventory';
 import { Running } from './components/Running';
+import { Missions } from './components/Missions';
 import { Sessions } from './components/Sessions';
 import { Approvals } from './components/Approvals';
 import { Explore } from './components/Explore';
 import { Library } from './components/Library';
 import { Actions } from './components/Actions';
+import { Telemetry } from './components/Telemetry';
+import { Memory } from './components/Memory';
 import { StartSessionModal } from './components/StartSessionModal';
 import { LaunchInstanceModal } from './components/LaunchInstanceModal';
 
@@ -17,10 +20,13 @@ const TABS = [
   { id: 'welcome', label: 'Home' },
   { id: 'inventory', label: 'Inventory' },
   { id: 'running', label: 'Running' },
+  { id: 'missions', label: 'Missions' },
   { id: 'sessions', label: 'Sessions' },
   { id: 'approvals', label: 'Approvals' },
   { id: 'explore', label: 'Explore' },
   { id: 'library', label: 'Library' },
+  { id: 'telemetry', label: 'Telemetry' },
+  { id: 'memory', label: 'Memory' },
   { id: 'actions', label: 'Actions' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
@@ -165,6 +171,7 @@ export function App() {
         <Panel id="welcome" tab={tab}><Welcome onStartSession={() => requestStart()} onLaunchInstance={() => setLaunchOpen(true)} goTo={(t) => setTab(t as TabId)} /></Panel>
         <Panel id="inventory" tab={tab}><Inventory onStartSession={requestStart} onLaunchInstance={() => setLaunchOpen(true)} /></Panel>
         <Panel id="running" tab={tab}><Running refreshTick={refreshTick} /></Panel>
+        <Panel id="missions" tab={tab}><Missions refreshTick={refreshTick} /></Panel>
         {/* Sessions stays mounted so the WebSocket survives tab switches */}
         <section id="panel-sessions" role="tabpanel" aria-labelledby="tab-sessions" hidden={tab !== 'sessions'}>
           <Sessions session={session} composer={composer} setComposer={setComposer} onRequestStart={requestStart} />
@@ -174,6 +181,8 @@ export function App() {
         <Panel id="library" tab={tab}>
           <Library session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />
         </Panel>
+        <Panel id="telemetry" tab={tab}><Telemetry refreshTick={refreshTick} /></Panel>
+        <Panel id="memory" tab={tab}><Memory refreshTick={refreshTick} /></Panel>
         <Panel id="actions" tab={tab}>
           <Actions refreshTick={refreshTick} session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />
         </Panel>

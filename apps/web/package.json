@@ -2,7 +2,7 @@
   "name": "@aiwg/web",
   "version": "0.1.0",
   "private": true,
-  "description": "AIWG web dashboard — real-time terminal viewer and mission control",
+  "description": "AIWG serve compatibility UI — redirects operators to Cockpit",
   "type": "module",
   "scripts": {
     "dev": "vite",

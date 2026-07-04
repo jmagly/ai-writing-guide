@@ -51,6 +51,7 @@ These templates provide consistent, professional comments for issue tracking sys
 - Deliverables ready for review
 - Specific feedback areas
 - Questions requiring answers
+- Label state for the `question` label while answers are outstanding
 - Blocking items (if any)
 - Timeline impact
 - Requested reviewers
@@ -60,6 +61,10 @@ These templates provide consistent, professional comments for issue tracking sys
 /issue-comment 17 --type feedback --interactive
 # Prompts for feedback details, uses feedback-needed.md
 ```
+
+If a feedback-needed or address-issues cycle comment includes unanswered
+questions, ensure the issue has the `question` label. Remove it only when all
+tracked questions on the issue are answered.
 
 ---
 

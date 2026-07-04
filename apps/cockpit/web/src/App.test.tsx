@@ -12,10 +12,10 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-const TAB_LABELS = ['Home', 'Inventory', 'Running', 'Sessions', 'Approvals', 'Explore', 'Library', 'Actions'];
+const TAB_LABELS = ['Home', 'Inventory', 'Running', 'Missions', 'Sessions', 'Approvals', 'Explore', 'Library', 'Telemetry', 'Memory', 'Actions'];
 
 describe('App shell (rendered DOM)', () => {
-  it('renders an ARIA tablist with all eight tabs', () => {
+  it('renders an ARIA tablist with all Cockpit tabs', () => {
     render(<App />);
     expect(screen.getByRole('tablist', { name: /cockpit views/i })).toBeTruthy();
     expect(screen.getAllByRole('tab')).toHaveLength(TAB_LABELS.length);
@@ -43,6 +43,108 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getByRole('option', { name: 'VM / QEMU' })).toBeTruthy();
     expect(screen.getByText(/existing instances and sessions keep running/i)).toBeTruthy();
     expect(screen.getByText(/start a session automatically/i)).toBeTruthy();
+  });
+
+  it('renders durable Missions projection from aiwg mc state and live executor work', async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [instance('host-1', 'host', 'Codex host')] });
+      if (url.includes('/api/running')) return jsonResponse({ count: 1, running: [{ instance_id: 'host-1', task_id: 'task-abc', state: 'working', tenant: 'local' }] });
+      if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
+      if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 0, output_tokens: 0, usd: 0 }, per_instance: [] });
+      if (url.includes('/api/missions')) return jsonResponse({
+        source: 'aiwg-mc + agentic-sandbox',
+        fetched_at: new Date().toISOString(),
+        count: 2,
+        sessions: [{
+          id: 'mc-1',
+          name: 'Release hardening',
+          state: 'active',
+          source: 'aiwg-mc',
+          audit_count: 1,
+          audit_tail: [{ event: 'mission_dispatched', ts: '2026-07-04T12:00:00.000Z', missionId: 'm-1' }],
+          missions: [{ id: 'm-1', session_id: 'mc-1', source: 'aiwg-mc', title: 'Finish cockpit', status: 'running', loop: 1, max_iterations: 5, terminal: false }],
+        }, {
+          id: 'executor-live',
+          name: 'Executor live tasks',
+          state: 'active',
+          source: 'agentic-sandbox',
+          audit_count: 0,
+          audit_tail: [],
+          missions: [{ id: 'host-1::task-abc', session_id: 'executor-live', source: 'executor-task', title: 'Task task-abc', status: 'working', instance_id: 'host-1', task_id: 'task-abc', terminal: false }],
+        }],
+        missions: [
+          { id: 'm-1', session_id: 'mc-1', source: 'aiwg-mc', title: 'Finish cockpit', status: 'running', terminal: false },
+          { id: 'host-1::task-abc', session_id: 'executor-live', source: 'executor-task', title: 'Task task-abc', status: 'working', terminal: false },
+        ],
+      });
+      return jsonResponse({});
+    }) as typeof fetch;
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Missions' }));
+
+    expect((await screen.findAllByText('Release hardening')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByLabelText('Mission status summary').textContent).toContain('2 total');
+    expect(screen.getByText('Finish cockpit')).toBeTruthy();
+    expect(screen.getByText(/mission_dispatched/)).toBeTruthy();
+  });
+
+  it('renders Bridge-backed Telemetry from unified events and cost', async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [instance('host-1', 'host', 'Codex host')] });
+      if (url.includes('/api/running')) return jsonResponse({ count: 1, running: [{ instance_id: 'host-1', task_id: 'task-abc', state: 'working', tenant: 'local' }] });
+      if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
+      if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 1000, output_tokens: 2000, usd: 0.42 }, per_instance: [] });
+      if (url.includes('/api/missions')) return jsonResponse({ count: 1, sessions: [], missions: [{ id: 'm-1', session_id: 'mc-1', source: 'aiwg-mc', title: 'Mission', status: 'completed', terminal: true }] });
+      if (url.includes('/api/events/snapshot')) return jsonResponse({
+        source: 'cockpit.unified-event-model/v1',
+        fetched_at: new Date().toISOString(),
+        count: 2,
+          events: [
+            { id: 'mission:m-1', type: 'mission.lifecycle', source: 'aiwg-mc', subject: 'm-1', state: 'completed', ts: new Date().toISOString() },
+            { id: 'session:host-1:sess-1', type: 'session.lifecycle', source: 'pty-session', subject: 'sess-1', state: 'available', ts: new Date().toISOString() },
+            { id: 'task:task-abc', type: 'task.lifecycle', source: 'a2a', subject: 'task-abc', state: 'working', ts: new Date().toISOString() },
+          ],
+      });
+      return jsonResponse({});
+    }) as typeof fetch;
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Telemetry' }));
+
+    expect(await screen.findByText('cockpit.unified-event-model/v1')).toBeTruthy();
+    expect(screen.getByText('$0.42')).toBeTruthy();
+    expect(screen.getByText('mission.lifecycle')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'session' }));
+    expect(screen.getByText('session.lifecycle')).toBeTruthy();
+  });
+
+  it('renders local Memory and auto-notes terminal Missions', async () => {
+    localStorage.clear();
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [instance('host-1', 'host', 'Codex host')] });
+      if (url.includes('/api/running')) return jsonResponse({ count: 0, running: [] });
+      if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
+      if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 0, output_tokens: 0, usd: 0 }, per_instance: [] });
+      if (url.includes('/api/missions')) return jsonResponse({
+        count: 1,
+        sessions: [],
+        missions: [{ id: 'm-done', session_id: 'mc-1', source: 'aiwg-mc', title: 'Closed release gate', status: 'completed', completed_at: '2026-07-04T12:00:00.000Z', terminal: true }],
+      });
+      return jsonResponse({});
+    }) as typeof fetch;
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Memory' }));
+
+    expect(await screen.findByText('Closed release gate')).toBeTruthy();
+    expect(screen.getByText(/1 saved/i)).toBeTruthy();
   });
 
   it('renders the welcome heading and its tabpanel (not blank)', () => {
@@ -158,16 +260,58 @@ describe('App shell (rendered DOM)', () => {
           source: 'test',
           inject: { command: 'aiwg doctor' },
         }],
+        screens: [{ id: 'index-live', title: 'Live Index', source: 'cockpit://index/live', contribution: 'test' }],
+        workflows: [{
+          id: 'maintenance-check',
+          title: 'Maintenance Check',
+          description: 'Run doctor through an agentic session.',
+          source: 'test',
+          steps: [{ action: 'doctor', label: 'Doctor' }],
+        }],
       });
       return jsonResponse({});
     }) as typeof fetch;
 
     render(<App />);
     fireEvent.click(screen.getByRole('tab', { name: 'Actions' }));
+    expect(await screen.findByText('Live Index')).toBeTruthy();
+    expect(screen.getByText('Maintenance Check')).toBeTruthy();
     fireEvent.click(await screen.findByRole('button', { name: /copy CLI command for run doctor/i }));
 
     expect(writeText).toHaveBeenCalledWith('aiwg doctor');
     await waitFor(() => expect(screen.getByText(/copied "aiwg doctor"/i)).toBeTruthy());
+  });
+
+  it('renders live index status and query results in Explore', async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [instance('host-1', 'host', 'Codex host')] });
+      if (url.includes('/api/running')) return jsonResponse({ count: 0, running: [] });
+      if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
+      if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 0, output_tokens: 0, usd: 0 }, per_instance: [] });
+      if (url.includes('/api/index/status')) return jsonResponse({
+        graphs: [{ name: 'project', origin: 'builtin', shared: false, defaultBuild: true, location: '.aiwg/.index/project', built: true, builtAt: '2026-07-04T12:00:00.000Z', ageHours: 1, entries: 42, missing: false }],
+        orphanIndexDirs: [],
+        warnings: [],
+        summary: { total: 1, built: 1, missing: 0, orphans: 0, warnings: 0 },
+      });
+      if (url.includes('/api/index/query')) return jsonResponse({
+        results: [{ path: '.aiwg/requirements/UC-001.md', title: 'Mission requirements', type: 'use-case', phase: 'requirements', summary: 'Operator workflow coverage', score: 0.91 }],
+        total: 1,
+      });
+      return jsonResponse({});
+    }) as typeof fetch;
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Explore' }));
+
+    expect(await screen.findByText(/1\/1 graphs built/i)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/index query/i), { target: { value: 'mission' } });
+    fireEvent.click(screen.getByRole('button', { name: /search index/i }));
+
+    expect(await screen.findByText('Mission requirements')).toBeTruthy();
+    expect(screen.getByText(/operator workflow coverage/i)).toBeTruthy();
   });
 
   it('can open the mission-handoff review layout from a shareable URL', async () => {

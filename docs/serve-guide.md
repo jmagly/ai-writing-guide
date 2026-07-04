@@ -34,14 +34,21 @@ The dashboard opens at `http://127.0.0.1:7337` by default.
 
 ## Web Dashboard
 
-The dashboard is a React SPA with four tabs:
+The maintained operator dashboard is Cockpit, a React SPA served by the local Bridge:
 
 | Tab | Purpose |
 |-----|---------|
+| **Home** | Live stack overview, first-run flow, and session-first entry point |
+| **Inventory** | Host, container, Docker, and VM runtime targets with lifecycle controls |
+| **Running** | Active work across stacks and task stop controls |
 | **Missions** | Dispatch, monitor, pause, resume, and abort Mission Control tasks |
-| **Sandbox** | Manage registered agentic-sandbox instances — combined Instances panel with runtime badges, lifecycle controls, and a multi-pane terminal stack (#1146) |
-| **Telemetry** | Token usage, gate pass/fail rates, iteration counts, scope progress |
-| **Memory** | Agent memory inspection |
+| **Sessions** | Observe-first terminal attach, explicit drive/control, and replay posture |
+| **Approvals** | Unified human-in-the-loop decision inbox |
+| **Explore** | Live artifact-index status/query/rebuild and capability catalog search |
+| **Library** | User-owned assets cloned/imported under `~/.aiwg/cockpit/library` |
+| **Telemetry** | Unified event feed and cost posture |
+| **Memory** | Operator notes and Mission completion notes |
+| **Actions** | Contributed actions, first-party screens, and workflows |
 
 The standalone **Terminal** tab present in earlier builds was retired in #1146 phase 3. Terminal sessions now live inside the Sandbox tab as per-instance panes in a multi-pane stack — each VM, container, or agent attaches its own pane independently.
 
@@ -424,7 +431,7 @@ If you need to expose the server on a network interface (`--bind 0.0.0.0`), plac
 │                  aiwg serve                      │
 │                                                  │
 │  Hono HTTP Server (port 7337)                    │
-│  ├── Static files ── React SPA (apps/web/dist/)  │
+│  ├── Static files ── compatibility UI (apps/web/dist/) │
 │  ├── /api/sandboxes/* ── Sandbox Registry        │
 │  ├── /api/hitl/* ── HITL Relay                   │
 │  ├── /api/sessions/* ── Session Management       │
@@ -451,15 +458,18 @@ If you need to expose the server on a network interface (`--bind 0.0.0.0`), plac
 | | `aiwg serve` | `aiwg daemon` |
 |---|---|---|
 | **Default port** | 7337 | 7474 |
-| **Purpose** | Operator dashboard for sandbox fleet | Background task supervisor |
+| **Purpose** | Serve API and sandbox registry; Cockpit is the operator console | Background task supervisor |
 | **Manages** | Sandbox instances, agents, HITL | Task queue, scheduled jobs, watches |
 | **Start command** | `aiwg serve` | `aiwg daemon start` |
 
 They can run simultaneously and serve complementary roles.
 
-## Building the Dashboard
+## Building the Compatibility UI
 
-The React dashboard must be built before `aiwg serve` can serve it:
+`apps/web` is retained as a small compatibility bundle for `aiwg serve`. The
+merged operator console is `aiwg cockpit` / `apps/cockpit/web`.
+
+Build the compatibility UI before `aiwg serve` can serve static files:
 
 ```bash
 cd apps/web
@@ -467,7 +477,7 @@ pnpm install
 pnpm build
 ```
 
-If the build output (`apps/web/dist/`) is missing, the server returns a 503 text response instead of the dashboard UI.
+If the build output (`apps/web/dist/`) is missing, the server returns a 503 text response instead of the compatibility UI.
 
 For development with hot reload:
 
@@ -476,7 +486,7 @@ cd apps/web
 pnpm dev
 ```
 
-The Vite dev server proxies `/api` and `/ws` to `http://localhost:7337`, so you need `aiwg serve` running alongside it.
+The Vite dev server proxies `/api` and `/ws` to `http://localhost:7337`, so you need `aiwg serve` running alongside it. New operator-console development should happen under `apps/cockpit/web`.
 
 ## Troubleshooting
 
@@ -485,7 +495,7 @@ The Vite dev server proxies `/api` and `/ws` to `http://localhost:7337`, so you 
 npm install hono @hono/node-server
 ```
 
-**Dashboard shows 503** — Build the web app first:
+**Compatibility UI shows 503** — Build the web app first:
 ```bash
 cd apps/web && pnpm build
 ```
@@ -495,7 +505,7 @@ cd apps/web && pnpm build
 2. The sandbox successfully called `POST /api/sandboxes/register` (check sandbox logs)
 3. The WebSocket connection was established (check browser DevTools network tab)
 
-**HITL drawer not appearing** — Verify the sandbox is connected (green status in Sandbox tab) and the `hitl.input_required` event includes a valid `hitlId`.
+**HITL drawer not appearing** — Use Cockpit's Approvals tab for the merged operator surface; for legacy serve API debugging, verify the sandbox emitted a valid `hitl.input_required` event.
 
 ## Test tiers
 

@@ -14,6 +14,9 @@ export const RUNTIME_FILE = join(homedir(), '.aiwg', 'cockpit', 'runtime', 'brid
 /** Read the per-launch Bridge connection (token, port, url). Throws if not launched. */
 export async function readRuntime(file = RUNTIME_FILE) {
   const r = JSON.parse(await readFile(file, 'utf8'));
+  if (process.env.AIWG_COCKPIT_KEYCHAIN_STRICT === '1' && !r.token_ref) {
+    throw new Error(`runtime file ${file} is not keychain-backed in strict mode`);
+  }
   const token = r.token || await readCockpitToken(r.token_ref);
   if (!token || !r.port) throw new Error(`runtime file ${file} missing token/port`);
   return { ...r, token, url: `http://127.0.0.1:${r.port}` };
