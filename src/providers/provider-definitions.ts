@@ -1,0 +1,697 @@
+import { z } from 'zod';
+import type { Platform } from '../agents/types.js';
+import {
+  getProviderCapabilities,
+  type DeployTarget,
+  type ProviderStatus,
+} from './capability-matrix.js';
+
+export type ProviderSurface = {
+  primary: string;
+  compatibility: string[];
+  precedence: string[];
+};
+
+export type ProviderDetection = {
+  env: string[];
+  process: string[];
+  capabilityId: string;
+};
+
+export type ProviderArtifactPaths = Record<'agents' | 'commands' | 'skills' | 'rules' | 'behaviors', string | null>;
+
+export type ProviderContextFiles = {
+  aiwgMd: boolean;
+  agentsMd: boolean;
+  claudeMdHook: boolean;
+  hookFile: string | null;
+  contextFile: string | null;
+};
+
+export type ProviderPaths = {
+  deployTarget: DeployTarget;
+  artifacts: ProviderArtifactPaths;
+  kernelSkills: string | null;
+  configFile: string | null;
+  contextFiles: ProviderContextFiles;
+};
+
+export type ProviderSkillNamespace = {
+  deploymentGroup: 'deep-recursion' | 'one-level' | 'mcp-skip';
+  pathType: 'project' | 'home-dir';
+  skillsBaseDir: string;
+  subdirLayout: boolean;
+  maxNameLength?: number;
+  maxDescriptionLength?: number;
+};
+
+export type ProviderAdapters = {
+  agentFormat: string;
+  hookBridge: string | null;
+  mcpInjection: string | null;
+  contextAggregation: string | null;
+  ruleFormat: string | null;
+};
+
+export interface ProviderDefinition {
+  id: Platform;
+  displayName: string;
+  aliases: string[];
+  status: ProviderStatus;
+  builtIn: boolean;
+  surfaces: ProviderSurface;
+  detection: ProviderDetection;
+  paths: ProviderPaths;
+  skillNamespace: ProviderSkillNamespace;
+  adapters: ProviderAdapters;
+  capabilities: {
+    matrixRef: string | null;
+    nativeFeatures: Record<string, boolean>;
+    emulation: Record<string, string | null>;
+  };
+}
+
+const ArtifactPathsSchema = z.object({
+  agents: z.string().nullable(),
+  commands: z.string().nullable(),
+  skills: z.string().nullable(),
+  rules: z.string().nullable(),
+  behaviors: z.string().nullable(),
+});
+
+const ProviderDefinitionSchema = z.object({
+  id: z.enum([
+    'claude',
+    'codex',
+    'copilot',
+    'cursor',
+    'factory',
+    'hermes',
+    'opencode',
+    'openclaw',
+    'openhuman',
+    'warp',
+    'windsurf',
+    'generic',
+  ]),
+  displayName: z.string().min(1),
+  aliases: z.array(z.string().min(1)),
+  status: z.enum(['stable', 'experimental', 'deprecated']),
+  builtIn: z.boolean(),
+  surfaces: z.object({
+    primary: z.string().min(1),
+    compatibility: z.array(z.string().min(1)),
+    precedence: z.array(z.string().min(1)),
+  }),
+  detection: z.object({
+    env: z.array(z.string().min(1)),
+    process: z.array(z.string().min(1)),
+    capabilityId: z.string().min(1),
+  }),
+  paths: z.object({
+    deployTarget: z.enum(['project', 'home', 'mixed']),
+    artifacts: ArtifactPathsSchema,
+    kernelSkills: z.string().nullable(),
+    configFile: z.string().nullable(),
+    contextFiles: z.object({
+      aiwgMd: z.boolean(),
+      agentsMd: z.boolean(),
+      claudeMdHook: z.boolean(),
+      hookFile: z.string().nullable(),
+      contextFile: z.string().nullable(),
+    }),
+  }),
+  skillNamespace: z.object({
+    deploymentGroup: z.enum(['deep-recursion', 'one-level', 'mcp-skip']),
+    pathType: z.enum(['project', 'home-dir']),
+    skillsBaseDir: z.string().min(1),
+    subdirLayout: z.boolean(),
+    maxNameLength: z.number().int().positive().optional(),
+    maxDescriptionLength: z.number().int().positive().optional(),
+  }),
+  adapters: z.object({
+    agentFormat: z.string().min(1),
+    hookBridge: z.string().nullable(),
+    mcpInjection: z.string().nullable(),
+    contextAggregation: z.string().nullable(),
+    ruleFormat: z.string().nullable(),
+  }),
+  capabilities: z.object({
+    matrixRef: z.string().nullable(),
+    nativeFeatures: z.record(z.boolean()),
+    emulation: z.record(z.string().nullable()),
+  }),
+}) satisfies z.ZodType<ProviderDefinition>;
+
+const PROVIDER_IDS: Platform[] = [
+  'claude',
+  'codex',
+  'copilot',
+  'cursor',
+  'factory',
+  'hermes',
+  'opencode',
+  'openclaw',
+  'openhuman',
+  'warp',
+  'windsurf',
+  'generic',
+];
+
+type BuiltInSeed = Omit<ProviderDefinition, 'displayName' | 'status' | 'paths' | 'capabilities'> & {
+  displayName?: string;
+  status?: ProviderStatus;
+  paths: Omit<ProviderPaths, 'deployTarget'> & { deployTarget?: DeployTarget };
+  matrixRef: string | null;
+};
+
+const BUILT_IN_SEEDS: BuiltInSeed[] = [
+  {
+    id: 'claude',
+    displayName: 'Claude Code',
+    aliases: ['claude-code'],
+    builtIn: true,
+    surfaces: { primary: 'claude-code', compatibility: ['claude'], precedence: ['.claude/', 'CLAUDE.md'] },
+    detection: {
+      env: ['CLAUDE_CODE_VERSION', 'ANTHROPIC_API_KEY'],
+      process: ['claude-code', 'claude'],
+      capabilityId: 'claude-code',
+    },
+    paths: {
+      artifacts: {
+        agents: '.claude/agents',
+        commands: '.claude/commands',
+        skills: '.claude/.aiwg/skills',
+        rules: '.claude/rules',
+        behaviors: '.claude/hooks',
+      },
+      kernelSkills: '.claude/skills',
+      configFile: 'CLAUDE.md',
+      contextFiles: { aiwgMd: true, agentsMd: false, claudeMdHook: true, hookFile: null, contextFile: 'CLAUDE.md' },
+    },
+    skillNamespace: {
+      deploymentGroup: 'deep-recursion',
+      pathType: 'project',
+      skillsBaseDir: '.claude/skills',
+      subdirLayout: true,
+    },
+    adapters: {
+      agentFormat: 'claude-markdown',
+      hookBridge: null,
+      mcpInjection: 'claude-code',
+      contextAggregation: 'claude-hook',
+      ruleFormat: 'markdown',
+    },
+    matrixRef: 'claude-code',
+  },
+  {
+    id: 'codex',
+    aliases: ['openai'],
+    builtIn: true,
+    surfaces: { primary: 'codex', compatibility: ['openai'], precedence: ['.agents/skills/', '.codex/'] },
+    detection: {
+      env: ['CODEX_SANDBOX', 'CODEX_HOME', 'CODEX_API_KEY', 'OPENAI_API_KEY'],
+      process: ['@openai/codex', 'codex'],
+      capabilityId: 'codex',
+    },
+    paths: {
+      artifacts: {
+        agents: '.codex/agents',
+        commands: '.codex/commands',
+        skills: '.codex/.aiwg/skills',
+        rules: '.codex/rules',
+        behaviors: '.codex/rules',
+      },
+      kernelSkills: '.agents/skills',
+      configFile: 'AGENTS.md',
+      contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    skillNamespace: {
+      deploymentGroup: 'deep-recursion',
+      pathType: 'home-dir',
+      skillsBaseDir: '.codex/skills',
+      maxNameLength: 100,
+      maxDescriptionLength: 500,
+      subdirLayout: true,
+    },
+    adapters: {
+      agentFormat: 'codex-markdown',
+      hookBridge: 'codex',
+      mcpInjection: 'codex',
+      contextAggregation: 'agents-md',
+      ruleFormat: 'markdown',
+    },
+    matrixRef: 'codex',
+  },
+  {
+    id: 'copilot',
+    aliases: ['github-copilot'],
+    builtIn: true,
+    surfaces: { primary: 'copilot', compatibility: ['github-copilot'], precedence: ['.github/'] },
+    detection: {
+      env: ['COPILOT_AGENT', 'GITHUB_COPILOT_TOKEN'],
+      process: ['copilot'],
+      capabilityId: 'copilot',
+    },
+    paths: {
+      artifacts: {
+        agents: '.github/agents',
+        commands: '.github/commands',
+        skills: '.github/.aiwg/skills',
+        rules: '.github/copilot-rules',
+        behaviors: '.github/copilot-rules',
+      },
+      kernelSkills: '.github/skills',
+      configFile: 'copilot-instructions.md',
+      contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    skillNamespace: {
+      deploymentGroup: 'deep-recursion',
+      pathType: 'project',
+      skillsBaseDir: '.github/skills',
+      subdirLayout: true,
+    },
+    adapters: {
+      agentFormat: 'copilot-markdown',
+      hookBridge: 'copilot',
+      mcpInjection: null,
+      contextAggregation: 'agents-md',
+      ruleFormat: 'markdown',
+    },
+    matrixRef: 'copilot',
+  },
+  {
+    id: 'cursor',
+    aliases: [],
+    builtIn: true,
+    surfaces: { primary: 'cursor', compatibility: [], precedence: ['AGENTS.md', '.cursor/rules/'] },
+    detection: {
+      env: ['CURSOR_TRACE_ID', 'CURSOR_VERSION'],
+      process: ['cursor'],
+      capabilityId: 'cursor',
+    },
+    paths: {
+      artifacts: {
+        agents: '.cursor/agents',
+        commands: '.cursor/commands',
+        skills: '.cursor/.aiwg/skills',
+        rules: '.cursor/rules',
+        behaviors: '.cursor/rules',
+      },
+      kernelSkills: '.cursor/skills',
+      configFile: 'AGENTS.md',
+      contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    skillNamespace: {
+      deploymentGroup: 'deep-recursion',
+      pathType: 'project',
+      skillsBaseDir: '.cursor/skills',
+      subdirLayout: true,
+    },
+    adapters: {
+      agentFormat: 'cursor-json',
+      hookBridge: null,
+      mcpInjection: 'cursor',
+      contextAggregation: 'agents-md',
+      ruleFormat: 'mdc',
+    },
+    matrixRef: 'cursor',
+  },
+  {
+    id: 'factory',
+    aliases: ['factory-ai'],
+    builtIn: true,
+    surfaces: { primary: 'factory', compatibility: ['factory-ai'], precedence: ['.factory/', 'AGENTS.md'] },
+    detection: {
+      env: ['FACTORY_AGENT_ID'],
+      process: ['factory'],
+      capabilityId: 'factory',
+    },
+    paths: {
+      artifacts: {
+        agents: '.factory/droids',
+        commands: '.factory/commands',
+        skills: '.factory/.aiwg/skills',
+        rules: '.factory/rules',
+        behaviors: '.factory/rules',
+      },
+      kernelSkills: '.factory/skills',
+      configFile: 'AGENTS.md',
+      contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    skillNamespace: {
+      deploymentGroup: 'deep-recursion',
+      pathType: 'project',
+      skillsBaseDir: '.factory/skills',
+      subdirLayout: true,
+    },
+    adapters: {
+      agentFormat: 'factory-droid',
+      hookBridge: 'factory',
+      mcpInjection: 'factory',
+      contextAggregation: 'agents-md',
+      ruleFormat: 'markdown',
+    },
+    matrixRef: 'factory',
+  },
+  {
+    id: 'hermes',
+    aliases: [],
+    builtIn: true,
+    surfaces: { primary: 'hermes', compatibility: [], precedence: ['AGENTS.md', '.hermes.md', '~/.hermes/skills/'] },
+    detection: {
+      env: [],
+      process: ['hermes'],
+      capabilityId: 'hermes',
+    },
+    paths: {
+      artifacts: {
+        agents: null,
+        commands: null,
+        skills: '~/.hermes/.aiwg/skills',
+        rules: null,
+        behaviors: null,
+      },
+      kernelSkills: '~/.hermes/skills',
+      configFile: 'AGENTS.md',
+      contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: '.hermes.md', contextFile: 'AGENTS.md' },
+    },
+    skillNamespace: {
+      deploymentGroup: 'mcp-skip',
+      pathType: 'home-dir',
+      skillsBaseDir: '.hermes/skills',
+      subdirLayout: false,
+    },
+    adapters: {
+      agentFormat: 'agents-md',
+      hookBridge: 'hermes',
+      mcpInjection: null,
+      contextAggregation: 'agents-md',
+      ruleFormat: 'agents-md-section',
+    },
+    matrixRef: 'hermes',
+  },
+  {
+    id: 'opencode',
+    aliases: [],
+    builtIn: true,
+    surfaces: { primary: 'opencode', compatibility: [], precedence: ['.opencode/', 'AGENTS.md'] },
+    detection: {
+      env: ['OPENCODE_VERSION'],
+      process: ['opencode'],
+      capabilityId: 'opencode',
+    },
+    paths: {
+      artifacts: {
+        agents: '.opencode/agent',
+        commands: '.opencode/command',
+        skills: '.opencode/.aiwg/skill',
+        rules: '.opencode/rule',
+        behaviors: '.opencode/rule',
+      },
+      kernelSkills: '.opencode/skill',
+      configFile: 'AGENTS.md',
+      contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    skillNamespace: {
+      deploymentGroup: 'deep-recursion',
+      pathType: 'project',
+      skillsBaseDir: '.opencode/skill',
+      subdirLayout: true,
+    },
+    adapters: {
+      agentFormat: 'opencode-markdown',
+      hookBridge: null,
+      mcpInjection: 'opencode',
+      contextAggregation: 'agents-md',
+      ruleFormat: 'markdown',
+    },
+    matrixRef: 'opencode',
+  },
+  {
+    id: 'openclaw',
+    aliases: [],
+    builtIn: true,
+    surfaces: { primary: 'openclaw', compatibility: [], precedence: ['~/.openclaw/'] },
+    detection: {
+      env: ['OPENCLAW_VERSION'],
+      process: ['openclaw'],
+      capabilityId: 'openclaw',
+    },
+    paths: {
+      deployTarget: 'home',
+      artifacts: {
+        agents: '~/.openclaw/agents',
+        commands: '~/.openclaw/commands',
+        skills: '~/.openclaw/.aiwg/skills',
+        rules: '~/.openclaw/rules',
+        behaviors: '~/.openclaw/behaviors',
+      },
+      kernelSkills: '~/.openclaw/skills/aiwg',
+      configFile: 'AGENTS.md',
+      contextFiles: { aiwgMd: false, agentsMd: false, claudeMdHook: false, hookFile: null, contextFile: '~/.openclaw/config.yaml' },
+    },
+    skillNamespace: {
+      deploymentGroup: 'deep-recursion',
+      pathType: 'home-dir',
+      skillsBaseDir: '.openclaw/skills',
+      subdirLayout: true,
+    },
+    adapters: {
+      agentFormat: 'openclaw-markdown',
+      hookBridge: null,
+      mcpInjection: null,
+      contextAggregation: null,
+      ruleFormat: 'markdown',
+    },
+    matrixRef: 'openclaw',
+  },
+  {
+    id: 'openhuman',
+    aliases: ['tinyhumansai'],
+    builtIn: true,
+    surfaces: { primary: 'openhuman', compatibility: ['tinyhumansai'], precedence: ['~/.openhuman/skills/', 'AGENTS.md'] },
+    detection: {
+      env: ['OPENHUMAN_HOME', 'OPENHUMAN_CORE_TOKEN'],
+      process: ['openhuman'],
+      capabilityId: 'openhuman',
+    },
+    paths: {
+      deployTarget: 'mixed',
+      artifacts: {
+        agents: null,
+        commands: null,
+        skills: '~/.openhuman/.aiwg/skills',
+        rules: '~/.openhuman/.aiwg/rules',
+        behaviors: null,
+      },
+      kernelSkills: '~/.openhuman/skills',
+      configFile: null,
+      contextFiles: { aiwgMd: false, agentsMd: false, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    skillNamespace: {
+      deploymentGroup: 'deep-recursion',
+      pathType: 'home-dir',
+      skillsBaseDir: '.openhuman/skills',
+      subdirLayout: true,
+    },
+    adapters: {
+      agentFormat: 'openhuman-agents-md',
+      hookBridge: null,
+      mcpInjection: null,
+      contextAggregation: 'agents-md',
+      ruleFormat: 'agents-md-section',
+    },
+    matrixRef: 'openhuman',
+  },
+  {
+    id: 'warp',
+    aliases: [],
+    builtIn: true,
+    surfaces: { primary: 'warp', compatibility: [], precedence: ['WARP.md', '.warp/'] },
+    detection: {
+      env: ['WARP_SESSION_ID', 'WARP_TERMINAL'],
+      process: ['warp'],
+      capabilityId: 'warp',
+    },
+    paths: {
+      artifacts: {
+        agents: '.warp/agents',
+        commands: '.warp/commands',
+        skills: '.warp/.aiwg/skills',
+        rules: '.warp/rules',
+        behaviors: null,
+      },
+      kernelSkills: '.warp/skills',
+      configFile: 'WARP.md',
+      contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: 'AIWG-warp.md', contextFile: 'WARP.md' },
+    },
+    skillNamespace: {
+      deploymentGroup: 'deep-recursion',
+      pathType: 'project',
+      skillsBaseDir: '.warp/skills',
+      subdirLayout: true,
+    },
+    adapters: {
+      agentFormat: 'warp-markdown',
+      hookBridge: null,
+      mcpInjection: 'warp',
+      contextAggregation: 'warp-md',
+      ruleFormat: 'markdown',
+    },
+    matrixRef: 'warp',
+  },
+  {
+    id: 'windsurf',
+    aliases: ['devin-desktop'],
+    builtIn: true,
+    surfaces: {
+      primary: 'windsurf',
+      compatibility: ['devin-desktop'],
+      precedence: ['.devin/rules/', '.windsurf/rules/', 'AGENTS.md'],
+    },
+    detection: {
+      env: ['WINDSURF_VERSION'],
+      process: ['windsurf'],
+      capabilityId: 'windsurf',
+    },
+    paths: {
+      artifacts: {
+        agents: '.windsurf/agents',
+        commands: '.windsurf/workflows',
+        skills: '.windsurf/.aiwg/skills',
+        rules: '.windsurf/rules',
+        behaviors: '.windsurf/rules',
+      },
+      kernelSkills: '.windsurf/skills',
+      configFile: '.windsurfrules',
+      contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: 'AIWG-windsurf.md', contextFile: 'AGENTS.md' },
+    },
+    skillNamespace: {
+      deploymentGroup: 'one-level',
+      pathType: 'project',
+      skillsBaseDir: '.windsurf/skills',
+      subdirLayout: false,
+    },
+    adapters: {
+      agentFormat: 'windsurf-markdown',
+      hookBridge: null,
+      mcpInjection: 'windsurf',
+      contextAggregation: 'agents-md',
+      ruleFormat: 'windsurf-rule',
+    },
+    matrixRef: 'windsurf',
+  },
+  {
+    id: 'generic',
+    displayName: 'Generic',
+    status: 'stable',
+    aliases: [],
+    builtIn: true,
+    surfaces: { primary: 'generic', compatibility: [], precedence: ['agents/', 'skills/', 'rules/'] },
+    detection: {
+      env: [],
+      process: [],
+      capabilityId: 'generic',
+    },
+    paths: {
+      deployTarget: 'project',
+      artifacts: {
+        agents: 'agents',
+        commands: 'commands',
+        skills: 'skills',
+        rules: 'rules',
+        behaviors: null,
+      },
+      kernelSkills: null,
+      configFile: 'README.md',
+      contextFiles: { aiwgMd: false, agentsMd: false, claudeMdHook: false, hookFile: null, contextFile: 'README.md' },
+    },
+    skillNamespace: {
+      deploymentGroup: 'deep-recursion',
+      pathType: 'project',
+      skillsBaseDir: 'skills',
+      subdirLayout: true,
+    },
+    adapters: {
+      agentFormat: 'generic-markdown',
+      hookBridge: null,
+      mcpInjection: null,
+      contextAggregation: null,
+      ruleFormat: 'markdown',
+    },
+    matrixRef: null,
+  },
+];
+
+let cachedRegistry: Map<Platform, ProviderDefinition> | null = null;
+
+function buildDefinition(seed: BuiltInSeed): ProviderDefinition {
+  const capabilities = seed.matrixRef ? getProviderCapabilities(seed.matrixRef) : undefined;
+  const definition: ProviderDefinition = {
+    ...seed,
+    displayName: seed.displayName ?? capabilities?.display_name ?? seed.id,
+    status: seed.status ?? capabilities?.status ?? 'experimental',
+    paths: {
+      ...seed.paths,
+      deployTarget: seed.paths.deployTarget ?? capabilities?.deploy_target ?? 'project',
+    },
+    capabilities: {
+      matrixRef: seed.matrixRef,
+      nativeFeatures: capabilities?.native_features ?? {},
+      emulation: capabilities?.emulation ?? {},
+    },
+  };
+  return ProviderDefinitionSchema.parse(definition);
+}
+
+function assertNoDuplicateAliases(definitions: ProviderDefinition[]): void {
+  const seen = new Map<string, Platform>();
+  for (const definition of definitions) {
+    for (const candidate of [definition.id, ...definition.aliases]) {
+      const normalized = candidate.toLowerCase();
+      const existing = seen.get(normalized);
+      if (existing && existing !== definition.id) {
+        throw new Error(`Provider alias "${candidate}" is declared by both ${existing} and ${definition.id}`);
+      }
+      seen.set(normalized, definition.id);
+    }
+  }
+}
+
+export function listProviderDefinitions(): ProviderDefinition[] {
+  if (!cachedRegistry) {
+    const definitions = BUILT_IN_SEEDS.map(buildDefinition);
+    assertNoDuplicateAliases(definitions);
+    cachedRegistry = new Map(definitions.map((definition) => [definition.id, definition]));
+  }
+  return PROVIDER_IDS.map((id) => {
+    const definition = cachedRegistry?.get(id);
+    if (!definition) throw new Error(`Missing provider definition for ${id}`);
+    return definition;
+  });
+}
+
+export function loadProviderDefinitionRegistry(): ReadonlyMap<Platform, ProviderDefinition> {
+  listProviderDefinitions();
+  return cachedRegistry as ReadonlyMap<Platform, ProviderDefinition>;
+}
+
+export function getProviderDefinition(provider: string | null | undefined): ProviderDefinition | undefined {
+  const normalized = normalizeProviderDefinitionId(provider);
+  if (!normalized) return undefined;
+  return loadProviderDefinitionRegistry().get(normalized);
+}
+
+export function normalizeProviderDefinitionId(provider: string | null | undefined): Platform | null {
+  const normalized = provider?.trim().toLowerCase();
+  if (!normalized) return null;
+  for (const definition of listProviderDefinitions()) {
+    if (definition.id === normalized || definition.aliases.includes(normalized)) return definition.id;
+  }
+  return null;
+}
+
+export function validateProviderDefinitionRegistry(): ProviderDefinition[] {
+  return listProviderDefinitions();
+}
