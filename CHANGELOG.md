@@ -7,6 +7,19 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.10] - 2026-07-04 - "npm tarball recovery"
+
+Supersedes `2026.7.9` after npmjs.org accepted package metadata and provenance
+for the base `aiwg` package while its immutable tarball URL temporarily returned
+404 during install checks. This reissues the same release payload with a fresh
+package version and verified install target.
+
+### Fixed
+
+- **npmjs.org base package installability** — reissues `aiwg` with a fresh
+  immutable package version after `2026.7.9` metadata initially pointed at a
+  missing registry tarball object; `@aiwg/cockpit@2026.7.9` remained healthy.
+
 ## [2026.7.9] - 2026-07-04 - "Release manifest publish gate"
 
 Supersedes `2026.7.8` after the GitHub npmjs.org publish workflow stopped in
