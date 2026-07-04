@@ -74,6 +74,7 @@
     "CLI_USAGE",
     "cli-reference",
     "fortemi-core-prebuilt-indices",
+    "user-level-indices",
     "local-issues",
     "ralph-guide",
     "simple-language-translations",
@@ -732,6 +733,13 @@
       "title": "Fortemi Core Prebuilt Indices",
       "summary": "Packaged Fortemi Core framework index artifacts and release gates",
       "file": "fortemi-core-prebuilt-indices.md",
+      "parent": "reference"
+    },
+    {
+      "id": "user-level-indices",
+      "title": "User-Level Indices",
+      "summary": "Shared user-level capability and corpus indices",
+      "file": "user-level-indices.md",
       "parent": "reference"
     },
     {
