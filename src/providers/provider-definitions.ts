@@ -12,6 +12,26 @@ export type ProviderSurface = {
   primary: string;
   compatibility: string[];
   precedence: string[];
+  related: ProviderRelatedSurface[];
+};
+
+export type ProviderSurfaceRelationship = 'same-provider' | 'shared-adapter' | 'future-provider' | 'companion-standard';
+
+export type ProviderSurfacePathMap = {
+  rules: string[];
+  skills: string[];
+  agentsMd: string[];
+  legacy: string[];
+};
+
+export type ProviderRelatedSurface = {
+  id: string;
+  displayName: string;
+  relationship: ProviderSurfaceRelationship;
+  deployable: boolean;
+  aliases: string[];
+  paths: ProviderSurfacePathMap;
+  notes: string[];
 };
 
 export type ProviderDetection = {
@@ -121,6 +141,20 @@ const ProviderDefinitionSchema = z.object({
     primary: z.string().min(1),
     compatibility: z.array(z.string().min(1)),
     precedence: z.array(z.string().min(1)),
+    related: z.array(z.object({
+      id: z.string().min(1),
+      displayName: z.string().min(1),
+      relationship: z.enum(['same-provider', 'shared-adapter', 'future-provider', 'companion-standard']),
+      deployable: z.boolean(),
+      aliases: z.array(z.string().min(1)),
+      paths: z.object({
+        rules: z.array(z.string().min(1)),
+        skills: z.array(z.string().min(1)),
+        agentsMd: z.array(z.string().min(1)),
+        legacy: z.array(z.string().min(1)),
+      }),
+      notes: z.array(z.string().min(1)),
+    })),
   }),
   detection: z.object({
     env: z.array(z.string().min(1)),
@@ -210,7 +244,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     displayName: 'Claude Code',
     aliases: ['claude-code'],
     builtIn: true,
-    surfaces: { primary: 'claude-code', compatibility: ['claude'], precedence: ['.claude/', 'CLAUDE.md'] },
+    surfaces: { primary: 'claude-code', compatibility: ['claude'], precedence: ['.claude/', 'CLAUDE.md'], related: [] },
     detection: {
       env: ['CLAUDE_CODE_VERSION', 'ANTHROPIC_API_KEY'],
       process: ['claude-code', 'claude'],
@@ -257,7 +291,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     id: 'codex',
     aliases: ['openai'],
     builtIn: true,
-    surfaces: { primary: 'codex', compatibility: ['openai'], precedence: ['.agents/skills/', '.codex/'] },
+    surfaces: { primary: 'codex', compatibility: ['openai'], precedence: ['.agents/skills/', '.codex/'], related: [] },
     detection: {
       env: ['CODEX_SANDBOX', 'CODEX_HOME', 'CODEX_API_KEY', 'OPENAI_API_KEY'],
       process: ['@openai/codex', 'codex'],
@@ -312,7 +346,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     id: 'copilot',
     aliases: ['github-copilot'],
     builtIn: true,
-    surfaces: { primary: 'copilot', compatibility: ['github-copilot'], precedence: ['.github/'] },
+    surfaces: { primary: 'copilot', compatibility: ['github-copilot'], precedence: ['.github/'], related: [] },
     detection: {
       env: ['COPILOT_AGENT', 'GITHUB_COPILOT_TOKEN'],
       process: ['copilot'],
@@ -365,7 +399,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     id: 'cursor',
     aliases: [],
     builtIn: true,
-    surfaces: { primary: 'cursor', compatibility: [], precedence: ['AGENTS.md', '.cursor/rules/'] },
+    surfaces: { primary: 'cursor', compatibility: [], precedence: ['AGENTS.md', '.cursor/rules/'], related: [] },
     detection: {
       env: ['CURSOR_TRACE_ID', 'CURSOR_VERSION'],
       process: ['cursor'],
@@ -412,7 +446,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     id: 'factory',
     aliases: ['factory-ai'],
     builtIn: true,
-    surfaces: { primary: 'factory', compatibility: ['factory-ai'], precedence: ['.factory/', 'AGENTS.md'] },
+    surfaces: { primary: 'factory', compatibility: ['factory-ai'], precedence: ['.factory/', 'AGENTS.md'], related: [] },
     detection: {
       env: ['FACTORY_AGENT_ID'],
       process: ['factory'],
@@ -460,7 +494,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     id: 'hermes',
     aliases: [],
     builtIn: true,
-    surfaces: { primary: 'hermes', compatibility: [], precedence: ['AGENTS.md', '.hermes.md', '~/.hermes/skills/'] },
+    surfaces: { primary: 'hermes', compatibility: [], precedence: ['AGENTS.md', '.hermes.md', '~/.hermes/skills/'], related: [] },
     detection: {
       env: [],
       process: ['hermes'],
@@ -506,7 +540,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     id: 'opencode',
     aliases: [],
     builtIn: true,
-    surfaces: { primary: 'opencode', compatibility: [], precedence: ['.opencode/', 'AGENTS.md'] },
+    surfaces: { primary: 'opencode', compatibility: [], precedence: ['.opencode/', 'AGENTS.md'], related: [] },
     detection: {
       env: ['OPENCODE_VERSION'],
       process: ['opencode'],
@@ -553,7 +587,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     id: 'openclaw',
     aliases: [],
     builtIn: true,
-    surfaces: { primary: 'openclaw', compatibility: [], precedence: ['~/.openclaw/'] },
+    surfaces: { primary: 'openclaw', compatibility: [], precedence: ['~/.openclaw/'], related: [] },
     detection: {
       env: ['OPENCLAW_VERSION'],
       process: ['openclaw'],
@@ -601,7 +635,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     id: 'openhuman',
     aliases: ['tinyhumansai'],
     builtIn: true,
-    surfaces: { primary: 'openhuman', compatibility: ['tinyhumansai'], precedence: ['~/.openhuman/skills/', 'AGENTS.md'] },
+    surfaces: { primary: 'openhuman', compatibility: ['tinyhumansai'], precedence: ['~/.openhuman/skills/', 'AGENTS.md'], related: [] },
     detection: {
       env: ['OPENHUMAN_HOME', 'OPENHUMAN_CORE_TOKEN'],
       process: ['openhuman'],
@@ -655,7 +689,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     id: 'warp',
     aliases: [],
     builtIn: true,
-    surfaces: { primary: 'warp', compatibility: [], precedence: ['WARP.md', '.warp/'] },
+    surfaces: { primary: 'warp', compatibility: [], precedence: ['WARP.md', '.warp/'], related: [] },
     detection: {
       env: ['WARP_SESSION_ID', 'WARP_TERMINAL'],
       process: ['warp'],
@@ -704,8 +738,59 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     builtIn: true,
     surfaces: {
       primary: 'windsurf',
-      compatibility: ['devin-desktop'],
-      precedence: ['.devin/rules/', '.windsurf/rules/', 'AGENTS.md'],
+      compatibility: ['devin-desktop', 'devin-local', 'cascade'],
+      precedence: ['.devin/rules/', '.windsurf/rules/', 'AGENTS.md', '.windsurfrules'],
+      related: [
+        {
+          id: 'devin-desktop',
+          displayName: 'Devin Desktop',
+          relationship: 'same-provider',
+          deployable: true,
+          aliases: ['windsurf', 'cascade'],
+          paths: {
+            rules: ['.devin/rules/*.md', '.windsurf/rules/*.md'],
+            skills: [],
+            agentsMd: ['AGENTS.md', 'agents.md'],
+            legacy: ['.windsurfrules'],
+          },
+          notes: [
+            'Devin Desktop is the renamed Windsurf local IDE surface; --provider windsurf remains the deployable compatibility id.',
+            '.devin/rules is preferred and takes precedence over .windsurf/rules, but AIWG does not emit .devin output until a behavior-change issue lands.',
+          ],
+        },
+        {
+          id: 'devin-cli',
+          displayName: 'Devin CLI',
+          relationship: 'future-provider',
+          deployable: false,
+          aliases: [],
+          paths: {
+            rules: ['AGENTS.md', 'AGENTS.local.md', 'AGENT.md', '.windsurfrules', 'CLAUDE.md'],
+            skills: ['.devin/skills/<skill-name>/SKILL.md', '.windsurf/skills/<skill-name>/SKILL.md'],
+            agentsMd: ['AGENTS.md'],
+            legacy: ['.windsurfrules'],
+          },
+          notes: [
+            'Devin CLI has distinct rules and skills surfaces and should not normalize to windsurf until a dedicated provider behavior issue adds writer support.',
+          ],
+        },
+        {
+          id: 'devin-product-skills',
+          displayName: 'Devin Product Skills',
+          relationship: 'companion-standard',
+          deployable: false,
+          aliases: [],
+          paths: {
+            rules: [],
+            skills: ['.agents/skills/<skill-name>/SKILL.md'],
+            agentsMd: [],
+            legacy: [],
+          },
+          notes: [
+            'Devin product skills use the Agent Skills layout and are recorded here as a readable surface, not as current AIWG windsurf deploy output.',
+          ],
+        },
+      ],
     },
     detection: {
       env: ['WINDSURF_VERSION'],
@@ -755,7 +840,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     status: 'stable',
     aliases: [],
     builtIn: true,
-    surfaces: { primary: 'generic', compatibility: [], precedence: ['agents/', 'skills/', 'rules/'] },
+    surfaces: { primary: 'generic', compatibility: [], precedence: ['agents/', 'skills/', 'rules/'], related: [] },
     detection: {
       env: [],
       process: [],

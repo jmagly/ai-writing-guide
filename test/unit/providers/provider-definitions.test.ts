@@ -68,6 +68,38 @@ describe('provider definition registry', () => {
     expect(getProviderDefinition('openhuman')?.paths.deployTarget).toBe('mixed');
     expect(getProviderDefinition('openhuman')?.paths.kernelSkills).toBe('~/.openhuman/skills');
     expect(getProviderDefinition('windsurf')?.surfaces.precedence).toContain('.devin/rules/');
+    expect(getProviderDefinition('windsurf')?.paths.artifacts.rules).toBe('.windsurf/rules');
+    expect(getProviderDefinition('windsurf')?.paths.kernelSkills).toBe('.windsurf/skills');
+  });
+
+  it('records the Devin/Windsurf topology decision without enabling .devin writes', () => {
+    const windsurf = getProviderDefinition('windsurf');
+    expect(windsurf).toBeDefined();
+    expect(normalizeProviderDefinitionId('devin-desktop')).toBe('windsurf');
+    expect(normalizeProviderDefinitionId('devin-cli')).toBeNull();
+
+    const desktop = windsurf?.surfaces.related.find((surface) => surface.id === 'devin-desktop');
+    expect(desktop?.relationship).toBe('same-provider');
+    expect(desktop?.deployable).toBe(true);
+    expect(desktop?.paths.rules).toEqual(['.devin/rules/*.md', '.windsurf/rules/*.md']);
+    expect(desktop?.paths.agentsMd).toEqual(['AGENTS.md', 'agents.md']);
+    expect(windsurf?.surfaces.precedence).toEqual([
+      '.devin/rules/',
+      '.windsurf/rules/',
+      'AGENTS.md',
+      '.windsurfrules',
+    ]);
+
+    const cli = windsurf?.surfaces.related.find((surface) => surface.id === 'devin-cli');
+    expect(cli?.relationship).toBe('future-provider');
+    expect(cli?.deployable).toBe(false);
+    expect(cli?.paths.rules).toContain('AGENTS.md');
+    expect(cli?.paths.skills).toContain('.devin/skills/<skill-name>/SKILL.md');
+
+    const productSkills = windsurf?.surfaces.related.find((surface) => surface.id === 'devin-product-skills');
+    expect(productSkills?.relationship).toBe('companion-standard');
+    expect(productSkills?.deployable).toBe(false);
+    expect(productSkills?.paths.skills).toEqual(['.agents/skills/<skill-name>/SKILL.md']);
   });
 
   it('models smith-facing paths separately from deploy paths where legacy behavior differs', () => {
