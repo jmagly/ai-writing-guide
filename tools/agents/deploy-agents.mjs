@@ -98,10 +98,26 @@ function getDeployVersion(srcRoot) {
 // ============================================================================
 
 const PROVIDER_ALIASES = {
-  'openai': 'codex'
+  'openai': 'codex',
+  'devin-desktop': 'windsurf',
+  'devin-local': 'windsurf',
+  'cascade': 'windsurf',
 };
 
 const AVAILABLE_PROVIDERS = ['claude', 'factory', 'codex', 'opencode', 'copilot', 'cursor', 'warp', 'windsurf', 'hermes', 'openclaw', 'openhuman'];
+
+const UNSUPPORTED_PROVIDER_HINTS = {
+  devin: [
+    'Devin Desktop is supported through the Windsurf compatibility adapter:',
+    '  aiwg use sdlc --provider windsurf',
+    '  aiwg use sdlc --provider devin-desktop',
+    'Devin CLI has distinct rules/skills surfaces and is recorded as future-provider metadata; AIWG does not emit .devin/ provider output yet.',
+  ],
+  'devin-cli': [
+    'Devin CLI has distinct rules/skills surfaces and is not a deployable AIWG provider yet.',
+    'Use --provider windsurf or --provider devin-desktop for Devin Desktop/Windsurf local IDE deployments.',
+  ],
+};
 
 const MIRRORED_STANDARD_COMMAND_SKILLS = new Set([
   'aiwg-setup-project',
@@ -509,11 +525,16 @@ Examples:
  * Resolve provider name (handle aliases)
  */
 function resolveProvider(name) {
-  const resolved = PROVIDER_ALIASES[name] || name;
+  const candidate = String(name || '').trim().toLowerCase();
+  const resolved = PROVIDER_ALIASES[candidate] || candidate;
   if (!AVAILABLE_PROVIDERS.includes(resolved)) {
     console.error(`Unknown provider: ${name}`);
     console.error(`Available providers: ${AVAILABLE_PROVIDERS.join(', ')}`);
     console.error(`Aliases: ${Object.entries(PROVIDER_ALIASES).map(([a, p]) => `${a} -> ${p}`).join(', ')}`);
+    if (UNSUPPORTED_PROVIDER_HINTS[candidate]) {
+      console.error('');
+      for (const line of UNSUPPORTED_PROVIDER_HINTS[candidate]) console.error(line);
+    }
     process.exit(1);
   }
   return resolved;

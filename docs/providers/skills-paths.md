@@ -121,6 +121,16 @@ Deploying to `.agents/skills/` is the most portable option if you need a single 
 
 - Codeium — closed source; path from documentation only
 - Status: experimental
+- Devin Desktop is modeled as the renamed/evolved Windsurf local IDE surface.
+  AIWG keeps `windsurf` as the deployable compatibility id, and
+  `devin-desktop`, `devin-local`, and `cascade` resolve to the same writer
+  adapter. Use `aiwg use sdlc --provider windsurf` or
+  `aiwg use sdlc --provider devin-desktop`.
+- AIWG does not currently emit `.devin/` provider output. `.devin/` remains
+  ignored local provider state; committed source should use `.windsurf/` output
+  plus `AGENTS.md` until a dedicated Devin CLI provider writer exists.
+- Bare `--provider devin` and `--provider devin-cli` are intentionally rejected
+  with guidance, because Devin CLI has distinct rules/skills surfaces.
 
 ---
 

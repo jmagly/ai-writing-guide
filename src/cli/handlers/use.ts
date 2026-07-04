@@ -57,6 +57,7 @@ import {
 import {
   getProviderArtifactPathStrings,
   getProviderKernelSkillPath,
+  normalizeProviderDefinitionId,
   type ProviderArtifactPathStrings,
 } from '../../providers/provider-definitions.js';
 
@@ -955,6 +956,30 @@ async function resolveProjectLocalProviderAdapter(
   const extendsProvider = bundle?.manifest.providerConfig?.extends;
   if (!bundle || !extendsProvider) return { provider };
   return { provider: extendsProvider, requestedProvider: provider, bundle };
+}
+
+function resolveBuiltInProviderForUse(provider: string): { provider: string; requestedProvider?: string } {
+  const normalized = normalizeProviderDefinitionId(provider);
+  if (normalized && normalized !== provider) {
+    return { provider: normalized, requestedProvider: provider };
+  }
+  return { provider };
+}
+
+function unsupportedProviderMessage(provider: string): string | null {
+  const normalized = provider.trim().toLowerCase();
+  if (normalized === 'devin' || normalized === 'devin-cli') {
+    return [
+      `Unsupported provider: ${provider}`,
+      '',
+      'Devin Desktop is supported through the Windsurf compatibility adapter:',
+      '  aiwg use sdlc --provider windsurf',
+      '  aiwg use sdlc --provider devin-desktop',
+      '',
+      'Devin CLI has distinct rules/skills surfaces and is recorded as future-provider metadata; AIWG does not emit .devin/ provider output yet.',
+    ].join('\n');
+  }
+  return null;
 }
 
 const USE_FLAGS_WITH_VALUES = new Set([
@@ -1994,16 +2019,27 @@ export class UseHandler implements CommandHandler {
     }
 
     const requestedProvider = providers[0];
-    const providerResolution = await resolveProjectLocalProviderAdapter(projectDir, requestedProvider);
-    const provider = providerResolution.provider;
-    const providerDeployArgs = providerResolution.requestedProvider
+    const projectLocalProviderResolution = await resolveProjectLocalProviderAdapter(projectDir, requestedProvider);
+    const builtInProviderResolution = projectLocalProviderResolution.requestedProvider
+      ? { provider: projectLocalProviderResolution.provider, requestedProvider: projectLocalProviderResolution.requestedProvider }
+      : resolveBuiltInProviderForUse(projectLocalProviderResolution.provider);
+    const unsupportedMessage = projectLocalProviderResolution.requestedProvider
+      ? null
+      : unsupportedProviderMessage(requestedProvider);
+    if (unsupportedMessage) {
+      return { exitCode: 1, message: unsupportedMessage };
+    }
+    const provider = builtInProviderResolution.provider;
+    const providerDeployArgs = builtInProviderResolution.requestedProvider
       ? withProviderOverride(deployFilteredArgs, provider)
       : deployFilteredArgs;
     const targetIdx = remainingArgs.findIndex(a => a === '--target');
     const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
 
-    if ((verbose || dryRun) && providerResolution.requestedProvider) {
-      ui.dim(`  project-local provider '${providerResolution.requestedProvider}' extends '${provider}'`);
+    if ((verbose || dryRun) && projectLocalProviderResolution.requestedProvider) {
+      ui.dim(`  project-local provider '${projectLocalProviderResolution.requestedProvider}' extends '${provider}'`);
+    } else if ((verbose || dryRun) && builtInProviderResolution.requestedProvider) {
+      ui.dim(`  provider alias '${builtInProviderResolution.requestedProvider}' resolves to '${provider}'`);
     }
 
     if (explicitHarnessAgentSelectors.length > 0 && provider !== 'openhuman') {

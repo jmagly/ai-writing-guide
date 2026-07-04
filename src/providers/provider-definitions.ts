@@ -734,7 +734,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
   },
   {
     id: 'windsurf',
-    aliases: ['devin-desktop'],
+    aliases: ['devin-desktop', 'devin-local', 'cascade'],
     builtIn: true,
     surfaces: {
       primary: 'windsurf',
@@ -755,7 +755,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
           },
           notes: [
             'Devin Desktop is the renamed Windsurf local IDE surface; --provider windsurf remains the deployable compatibility id.',
-            '.devin/rules is preferred and takes precedence over .windsurf/rules, but AIWG does not emit .devin output until a behavior-change issue lands.',
+            '.devin/rules is preferred by Devin Desktop, but AIWG keeps .devin/ as ignored local provider output and currently emits the compatibility surface through .windsurf/ plus AGENTS.md.',
           ],
         },
         {

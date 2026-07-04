@@ -19,6 +19,8 @@ describe('normalizeProviderId', () => {
     expect(normalizeProviderId('openai')).toBe('codex');
     expect(normalizeProviderId('tinyhumansai')).toBe('openhuman');
     expect(normalizeProviderId('devin-desktop')).toBe('windsurf');
+    expect(normalizeProviderId('devin-local')).toBe('windsurf');
+    expect(normalizeProviderId('cascade')).toBe('windsurf');
   });
 
   it('returns null for unknown provider ids', () => {
