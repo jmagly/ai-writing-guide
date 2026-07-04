@@ -27,8 +27,21 @@ import {
 } from '../../providers/capability-matrix.js';
 import { getProjectDir } from '../../config/aiwg-config.js';
 import { capabilityProviderId, normalizeProviderId, resolveActiveProvider } from '../provider-resolution.js';
+import {
+  discoverProjectLocalBundles,
+  type ProjectLocalBundle,
+} from '../../extensions/project-local-discovery.js';
 
 const BASELINE_PROVIDER = 'claude-code';
+
+interface ResolvedStewardProvider {
+  id: string;
+  provider: ProviderCapabilities;
+  projectLocal?: {
+    id: string;
+    baseAdapter: string;
+  };
+}
 
 // ── Feature name normalization ────────────────────────────────────────────────
 
@@ -62,9 +75,18 @@ function emulationLabel(strategy: string | null): string {
   return strategy;
 }
 
-function formatProvider(id: string, provider: ProviderCapabilities, matrix: CapabilityMatrix): string {
+function formatProvider(
+  id: string,
+  provider: ProviderCapabilities,
+  matrix: CapabilityMatrix,
+  meta?: ResolvedStewardProvider['projectLocal'],
+): string {
   const lines: string[] = [];
   lines.push(`\n  Provider: ${provider.display_name} (${id})`);
+  if (meta) {
+    lines.push(`  Project-local: yes`);
+    lines.push(`  Base adapter:   ${meta.baseAdapter}`);
+  }
   lines.push(`  Status:   ${provider.status}`);
   lines.push(`  Daemon:   ${provider.daemon_tier}${provider.daemon_pty_adapter ? ' (+ pty-adapter)' : ''}`);
   lines.push(`  ${'─'.repeat(60)}`);
@@ -85,6 +107,67 @@ function formatProvider(id: string, provider: ProviderCapabilities, matrix: Capa
     }
   }
   return lines.join('\n');
+}
+
+async function findProjectLocalProvider(
+  projectDir: string,
+  requestedProvider: string,
+): Promise<ProjectLocalBundle | undefined> {
+  const discovery = await discoverProjectLocalBundles(projectDir);
+  const requested = requestedProvider.trim().toLowerCase();
+  return discovery.bundles.find((bundle) => {
+    if (bundle.type !== 'provider') return false;
+    const config = bundle.manifest.providerConfig;
+    return bundle.id === requested || config?.aliases?.some((alias) => alias.toLowerCase() === requested);
+  });
+}
+
+async function resolveStewardProvider(
+  matrix: CapabilityMatrix,
+  requestedProvider: string,
+  ctx?: HandlerContext,
+): Promise<ResolvedStewardProvider | null> {
+  const normalizedProvider = normalizeProviderId(requestedProvider);
+  const builtInCapabilityId = capabilityProviderId(normalizedProvider);
+  if (builtInCapabilityId && matrix.providers[builtInCapabilityId]) {
+    return {
+      id: builtInCapabilityId,
+      provider: matrix.providers[builtInCapabilityId],
+    };
+  }
+
+  const projectDir = ctx ? getProjectDir(ctx, ctx.args) : process.cwd();
+  const bundle = await findProjectLocalProvider(projectDir, requestedProvider);
+  const providerConfig = bundle?.manifest.providerConfig;
+  if (!bundle || !providerConfig) return null;
+
+  const baseCapabilityId = capabilityProviderId(normalizeProviderId(providerConfig.extends)) ?? providerConfig.extends;
+  const baseProvider = matrix.providers[baseCapabilityId];
+  if (!baseProvider) return null;
+
+  const overrides = providerConfig.capabilities;
+  const provider: ProviderCapabilities = {
+    ...baseProvider,
+    display_name: providerConfig.displayName ?? bundle.manifest.name ?? bundle.id,
+    aliases: providerConfig.aliases,
+    native_features: {
+      ...baseProvider.native_features,
+      ...(overrides?.nativeFeatures ?? {}),
+    },
+    emulation: {
+      ...baseProvider.emulation,
+      ...(overrides?.emulation ?? {}),
+    },
+  };
+
+  return {
+    id: bundle.id,
+    provider,
+    projectLocal: {
+      id: bundle.id,
+      baseAdapter: providerConfig.extends,
+    },
+  };
 }
 
 function printFullMatrix(matrix: CapabilityMatrix): void {
@@ -157,24 +240,24 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
     }
 
     if (providerFlag >= 0) {
-      const providerId = capabilityProviderId(normalizeProviderId(args[providerFlag + 1])) ?? '';
-      if (!providerId) throw new AiwgError({
+      const requestedProvider = args[providerFlag + 1];
+      if (!requestedProvider) throw new AiwgError({
         code: 'ERR_USAGE_MISSING_VALUE',
         message: '--provider requires a provider name',
         hint: 'Example: aiwg steward capabilities --provider claude-code',
         exitCode: EXIT_CODES.USAGE,
       });
-      const provider = matrix.providers[providerId];
-      if (!provider) {
+      const resolved = await resolveStewardProvider(matrix, requestedProvider, ctx);
+      if (!resolved) {
         const known = Object.keys(matrix.providers).join(', ');
         throw new AiwgError({
           code: 'ERR_USAGE_UNKNOWN_PROVIDER',
-          message: `Unknown provider: ${providerId}`,
-          hint: `Known providers: ${known}`,
+          message: `Unknown provider: ${requestedProvider}`,
+          hint: `Known providers: ${known}. Project-local providers must live under .aiwg/providers/<id>/manifest.json.`,
           exitCode: EXIT_CODES.USAGE,
         });
       }
-      console.log(formatProvider(providerId, provider, matrix));
+      console.log(formatProvider(resolved.id, resolved.provider, matrix, resolved.projectLocal));
       return;
     }
 

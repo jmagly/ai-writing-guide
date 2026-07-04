@@ -117,6 +117,29 @@ export const PluginConfigSchema = z.object({
   payloadPath: safeRelativePath,
 }).strict();
 
+const ProviderCapabilityFeatureSchema = z.enum([
+  'cron',
+  'agent_teams',
+  'tasks',
+  'mcp',
+  'behaviors',
+  'mission_control',
+  'daemon',
+]);
+
+const ProviderCapabilityEmulationSchema = z.enum([
+  'native',
+  'hooks',
+  'aiwg-mc',
+  'aiwg-schedule',
+  'aiwg-daemon',
+]).nullable();
+
+const ProviderCapabilityOverridesSchema = z.object({
+  nativeFeatures: z.record(ProviderCapabilityFeatureSchema, z.boolean()).optional(),
+  emulation: z.record(ProviderCapabilityFeatureSchema, ProviderCapabilityEmulationSchema).optional(),
+}).strict();
+
 export const ProviderConfigSchema = z.object({
   extends: z.enum([
     'claude',
@@ -133,6 +156,7 @@ export const ProviderConfigSchema = z.object({
   ]),
   displayName: z.string().min(1).max(128).optional(),
   aliases: z.array(z.string().min(1).max(64)).max(20).optional(),
+  capabilities: ProviderCapabilityOverridesSchema.optional(),
 }).strict();
 
 // ============================================

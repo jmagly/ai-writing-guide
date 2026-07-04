@@ -115,12 +115,25 @@ new built-in provider writer. The manifest contains:
   "type": "provider",
   "providerConfig": {
     "extends": "claude",
-    "displayName": "my-provider"
+    "displayName": "my-provider",
+    "capabilities": {
+      "nativeFeatures": {
+        "cron": true
+      },
+      "emulation": {
+        "mission_control": "aiwg-mc"
+      }
+    }
   }
 }
 ```
 
 `providerConfig.extends` delegates writing to an existing provider adapter.
+Optional `providerConfig.capabilities` values are data-only overrides for
+`aiwg steward capabilities --provider <custom>`; they do not create new
+deployment paths. Supported feature keys are `cron`, `agent_teams`, `tasks`,
+`mcp`, `behaviors`, `mission_control`, and `daemon`.
+
 Use the custom id only as a selector:
 
 ```bash

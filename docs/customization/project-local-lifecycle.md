@@ -19,6 +19,8 @@ Each `<id>/` contains a `manifest.json`. Artifact-bearing bundles also
 contain artifacts (skills/, rules/, agents/, commands/). Provider bundles
 are metadata-only in phase 0: `providerConfig.extends` selects an existing
 writer adapter while preserving a custom provider id at the CLI boundary.
+Provider bundles may also declare `providerConfig.capabilities` as
+data-only overrides consumed by `aiwg steward capabilities --provider <custom>`.
 The directory is **byte-identical** in shape to its upstream counterpart
 at `agentic/code/{addons,frameworks,providers}/` so `aiwg promote` is a
 copy, not a migration.
@@ -76,6 +78,25 @@ The generated manifest contains `providerConfig.extends` (default:
 `claude`). In phase 0, this delegates output writing to the existing
 provider adapter. It does **not** define new writer behavior or new
 filesystem targets by itself.
+
+To customize steward guidance, add optional capability overrides:
+
+```json
+{
+  "providerConfig": {
+    "extends": "codex",
+    "displayName": "my-codex",
+    "capabilities": {
+      "nativeFeatures": { "cron": true },
+      "emulation": { "mission_control": "aiwg-mc" }
+    }
+  }
+}
+```
+
+Supported feature keys are `cron`, `agent_teams`, `tasks`, `mcp`,
+`behaviors`, `mission_control`, and `daemon`. Invalid feature keys fail
+manifest validation.
 
 Per-bundle deploy:
 1. Resolve shadows against the upstream registry

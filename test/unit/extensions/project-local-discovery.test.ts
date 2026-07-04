@@ -108,6 +108,28 @@ describe('project-local-discovery', () => {
       expect(result.bundles).toHaveLength(5);
       expect(result.counts).toEqual({ extension: 1, addon: 1, framework: 1, plugin: 1, provider: 1 });
     });
+
+    it('accepts provider capability overrides with canonical feature keys', async () => {
+      writeBundle(tmpDir, 'providers', 'custom-codex', validManifest({
+        id: 'custom-codex',
+        type: 'provider',
+        addonConfig: undefined,
+        providerConfig: {
+          extends: 'codex',
+          displayName: 'Custom Codex',
+          capabilities: {
+            nativeFeatures: { cron: true },
+            emulation: { daemon: 'aiwg-daemon', mission_control: null },
+          },
+        },
+      }));
+
+      const result = await discoverProjectLocalBundles(tmpDir);
+
+      expect(result.errors).toEqual([]);
+      expect(result.bundles).toHaveLength(1);
+      expect(result.bundles[0].manifest.providerConfig?.capabilities?.nativeFeatures?.cron).toBe(true);
+    });
   });
 
   describe('UC-PL-5: malformed manifest tolerance', () => {
@@ -132,6 +154,25 @@ describe('project-local-discovery', () => {
       const result = await discoverProjectLocalBundles(tmpDir);
       expect(result.bundles).toHaveLength(0);
       expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('rejects provider capability overrides with unknown feature keys', async () => {
+      writeBundle(tmpDir, 'providers', 'bad-provider', validManifest({
+        id: 'bad-provider',
+        type: 'provider',
+        addonConfig: undefined,
+        providerConfig: {
+          extends: 'codex',
+          capabilities: {
+            nativeFeatures: { scheduler: true },
+          },
+        },
+      }));
+
+      const result = await discoverProjectLocalBundles(tmpDir);
+
+      expect(result.bundles).toHaveLength(0);
+      expect(result.errors.some((e) => e.field === 'providerConfig.capabilities.nativeFeatures.scheduler')).toBe(true);
     });
 
     it('rejects manifest with mismatched type vs directory', async () => {

@@ -6,6 +6,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { mkdirSync, rmSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 import type { HandlerContext } from '../../../../src/cli/handlers/types.js';
 
 // ── Mock fs and js-yaml ───────────────────────────────────────
@@ -15,50 +18,55 @@ const sampleMatrix = {
   updated: '2026-04-01',
   baseline: 'claude-code',
   features: {
-    scheduler: {
+    cron: {
       description: 'Native task scheduling',
-      aiwg_fallback: 'aiwg ralph',
+      native_example: 'CronCreate',
+      emulation_strategies: { 'aiwg-schedule': 'Use AIWG scheduled tasks' },
     },
-    'mission-control': {
+    mission_control: {
       description: 'Multi-loop orchestration',
-      aiwg_fallback: 'aiwg mc',
+      native_example: null,
+      emulation_strategies: { 'aiwg-mc': 'Use AIWG mission control' },
+    },
+    daemon: {
+      description: 'Background execution',
+      native_example: 'daemon start',
+      emulation_strategies: { 'aiwg-daemon': 'Use AIWG daemon' },
     },
   },
   providers: {
     'claude-code': {
       display_name: 'Claude Code',
-      capabilities: {
-        scheduler: {
-          native: true,
-          native_tool: 'TodoWrite',
-          aiwg_command: null,
-          routing: 'Use TodoWrite directly',
-        },
-        'mission-control': {
-          native: false,
-          native_tool: null,
-          aiwg_command: 'aiwg mc',
-          routing: 'Use aiwg mc',
-        },
-      },
+      aliases: ['claude'],
+      status: 'stable',
+      daemon_tier: 'pty-adapter',
+      daemon_pty_adapter: true,
+      artifact_paths: {},
+      native_features: { cron: true, mission_control: false, daemon: false },
+      emulation: { cron: 'native', mission_control: 'aiwg-mc', daemon: 'aiwg-daemon' },
+      hook_wiring: { at_link_support: true, context_file: 'CLAUDE.md' },
+      deploy_target: 'project',
+      aggregated_output: false,
     },
     codex: {
       display_name: 'Codex',
-      capabilities: {
-        scheduler: {
-          native: false,
-          native_tool: null,
-          aiwg_command: 'aiwg ralph',
-          routing: 'Use aiwg ralph for task loops',
-        },
-      },
+      status: 'stable',
+      daemon_tier: 'native',
+      daemon_pty_adapter: false,
+      artifact_paths: {},
+      native_features: { cron: false, mission_control: false, daemon: true },
+      emulation: { cron: 'aiwg-schedule', mission_control: 'aiwg-mc', daemon: 'native' },
+      hook_wiring: { at_link_support: false, context_file: 'AGENTS.md' },
+      deploy_target: 'project',
+      aggregated_output: false,
     },
   },
 };
 
-vi.mock('node:fs/promises', () => ({
-  readFile: vi.fn().mockResolvedValue('mocked-yaml'),
-}));
+vi.mock('node:fs/promises', async () => {
+  const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
+  return actual;
+});
 
 vi.mock('js-yaml', () => ({
   default: { load: vi.fn(() => sampleMatrix) },
@@ -111,12 +119,40 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function makeCtx(args: string[] = []): HandlerContext {
+function makeCtx(args: string[] = [], cwd = '/mock/cwd'): HandlerContext {
   return {
     args,
     rawArgs: ['steward', ...args],
-    cwd: '/mock/cwd',
+    cwd,
     frameworkRoot: '/mock/framework/root',
+  };
+}
+
+function makeTmpDir(): string {
+  const dir = join(tmpdir(), `aiwg-steward-provider-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`);
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+function writeProviderBundle(projectDir: string, manifest: Record<string, unknown>): void {
+  const bundleDir = join(projectDir, '.aiwg', 'providers', String(manifest.id));
+  mkdirSync(bundleDir, { recursive: true });
+  writeFileSync(join(bundleDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+}
+
+function validProviderManifest(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id: 'custom-codex',
+    type: 'provider',
+    name: 'Custom Codex',
+    version: '1.0.0',
+    description: 'Custom provider for steward tests',
+    manifestVersion: '1',
+    platforms: { codex: 'full' },
+    keywords: ['test'],
+    deployment: { pathTemplate: '.codex/{id}.md' },
+    providerConfig: { extends: 'codex', displayName: 'Custom Codex' },
+    ...overrides,
   };
 }
 
@@ -162,6 +198,38 @@ describe('steward capabilities --provider', () => {
     expect(result.exitCode).toBe(2);
     consoleSpy.mockRestore();
   });
+
+  it('overlays project-local provider capability overrides on its base adapter', async () => {
+    const tmpDir = makeTmpDir();
+    writeProviderBundle(tmpDir, validProviderManifest({
+      id: 'custom-codex',
+      providerConfig: {
+        extends: 'codex',
+        displayName: 'Custom Codex',
+        aliases: ['custom-code'],
+        capabilities: {
+          nativeFeatures: { cron: true },
+          emulation: { mission_control: null },
+        },
+      },
+    }));
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    try {
+      const result = await stewardHandler.execute(makeCtx(['capabilities', '--provider', 'custom-code'], tmpDir));
+
+      expect(result.exitCode).toBe(0);
+      const output = consoleSpy.mock.calls.map(([s]) => String(s)).join('\n');
+      expect(output).toContain('Provider: Custom Codex (custom-codex)');
+      expect(output).toContain('Project-local: yes');
+      expect(output).toContain('Base adapter:   codex');
+      expect(output).toContain('cron — ✓ native');
+      expect(output).toContain('mission_control — - not supported');
+    } finally {
+      consoleSpy.mockRestore();
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('steward capabilities provider detection', () => {
@@ -203,7 +271,7 @@ describe('steward capabilities provider detection', () => {
 describe('steward capabilities --feature', () => {
   it('exits 0 for known feature', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const result = await stewardHandler.execute(makeCtx(['capabilities', '--feature', 'scheduler']));
+    const result = await stewardHandler.execute(makeCtx(['capabilities', '--feature', 'cron']));
     expect(result.exitCode).toBe(0);
     consoleSpy.mockRestore();
   });
@@ -228,7 +296,7 @@ describe('steward capabilities --all', () => {
 describe('steward find --capability', () => {
   it('exits 0 for known capability', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const result = await stewardHandler.execute(makeCtx(['find', '--capability', 'scheduler']));
+    const result = await stewardHandler.execute(makeCtx(['find', '--capability', 'cron']));
     expect(result.exitCode).toBe(0);
     consoleSpy.mockRestore();
   });

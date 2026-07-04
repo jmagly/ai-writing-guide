@@ -677,7 +677,7 @@ aiwg use sdlc --provider my-provider
 
 - `manifest.json` — valid against the canonical schema, all required fields filled
 - `README.md` — usage, customization tips, identical-form reminder, deploy/remove/promote commands
-- Provider bundles include `providerConfig.extends`; in phase 0 this reuses an existing writer adapter and does not define new output paths by itself.
+- Provider bundles include `providerConfig.extends`; in phase 0 this reuses an existing writer adapter and does not define new output paths by itself. Optional `providerConfig.capabilities` overrides are consumed by `aiwg steward capabilities --provider <custom>`.
 - Starter artifact: `skills/<name>-skill/SKILL.md`, `rules/<name>.md`, or `agents/<name>.md` depending on `--starter`
 - Type-specific stubs: `src/.gitkeep` for framework, `payload/.gitkeep` for plugin
 
