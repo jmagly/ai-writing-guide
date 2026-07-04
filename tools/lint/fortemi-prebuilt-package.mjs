@@ -136,8 +136,32 @@ try {
     fail(`Fortemi Core prebuilt fallback discovery exited with status ${discover.status}`);
   }
   const result = JSON.parse(discover.stdout);
-  const hit = result.results?.some((entry) =>
-    entry.path.includes('agentic/code/frameworks/media-marketing-kit/skills/intake-start-campaign/SKILL.md') &&
+  const metadataMatches = [];
+  for (const entry of result.results ?? []) {
+    if (entry.type !== 'skill' || typeof entry.id !== 'string') continue;
+    const show = spawnSync(
+      process.execPath,
+      ['bin/aiwg.mjs', 'show', 'metadata', entry.id, '--graph', 'framework', '--backend', 'fortemi-core', '--json'],
+      {
+        cwd: repoRoot,
+        encoding: 'utf8',
+        maxBuffer: 16 * 1024 * 1024,
+        env: {
+          ...process.env,
+          XDG_DATA_HOME: path.join(tmp, 'xdg'),
+          AIWG_ROOT: repoRoot,
+        },
+      },
+    );
+    if (show.status !== 0) {
+      console.error(show.stdout);
+      console.error(show.stderr);
+      fail(`Fortemi Core prebuilt fallback metadata lookup exited with status ${show.status}`);
+    }
+    metadataMatches.push(JSON.parse(show.stdout));
+  }
+  const hit = metadataMatches.some((entry) =>
+    entry.paths?.indexed?.includes('agentic/code/frameworks/media-marketing-kit/skills/intake-start-campaign/SKILL.md') &&
     entry.type === 'skill'
   );
   if (!hit) {

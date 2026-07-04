@@ -7,6 +7,22 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.7] - 2026-07-03 - "Pathless discovery package gate"
+
+Supersedes `2026.7.6` after the first tag's npm publish workflow stopped at
+the Fortemi Core prebuilt package gate. This release keeps the pathless
+discovery and canonical capability index changes while aligning the release
+gate with the new `show metadata` path contract.
+
+### Fixed
+
+- **Fortemi prebuilt package gate** — the release smoke test now validates
+  pathless discover results by resolving each stable id through
+  `aiwg show metadata`, then checking the indexed path from metadata.
+- **npm publish follow-up guard** — the GitHub `@next` dist-tag step now waits
+  for the publish and verification gates to succeed before trying to tag a
+  version on npmjs.org.
+
 ## [2026.7.6] - 2026-07-03 - "Pathless discovery and canonical capability index"
 
 This release tightens the AIWG discover/show workflow for agents: discovery
