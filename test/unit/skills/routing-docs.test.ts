@@ -56,7 +56,11 @@ describe('routing documentation regressions', () => {
     for (const doc of [steward, persona]) {
       expect(doc).toContain('Project-Local Authoring Routing');
       expect(doc).toContain('aiwg new-bundle <name> --starter skill');
+      expect(doc).toContain('aiwg new-provider <name>');
+      expect(doc).toContain('providerConfig.extends');
       expect(doc).toContain('docs/customization/project-local-quickstart.md');
+      expect(doc).toContain('docs/customization/project-local-lifecycle.md');
+      expect(doc).not.toContain('docs/project-local/overview.md');
     }
     const quickref = read('agentic/code/addons/aiwg-utils/skills/aiwg-utils-quickref/SKILL.md');
     expect(quickref).toContain('aiwg discover "project-local customization"');

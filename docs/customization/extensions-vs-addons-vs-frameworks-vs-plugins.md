@@ -1,8 +1,8 @@
-# Extensions vs Addons vs Frameworks vs Plugins
+# Extensions vs Addons vs Frameworks vs Plugins vs Providers
 
-AIWG ships four overlapping artifact-bundle concepts. They sound similar
+AIWG ships five overlapping bundle concepts. They sound similar
 and the boundaries are subtle, so this doc is the canonical reference for
-which one to author when. Project-local artifacts can be any of the four.
+which one to author when. Project-local bundles can be any of the five.
 
 ## One-sentence definitions
 
@@ -12,21 +12,23 @@ which one to author when. Project-local artifacts can be any of the four.
 | **Addon** | A focused feature pack — usually 2–10 related extensions delivered together | `aiwg-utils` (rules + skills + agents working as a coherent set) |
 | **Framework** | A complete workflow domain — many addons + curated agents + templates | `sdlc-complete` (93 agents, 116 skills, full SDLC) |
 | **Plugin** | A delivery mechanism — packages any of the above for marketplace distribution | A versioned `.zip` containing an addon for `/plugin install` |
+| **Provider** | A deploy-target definition — selects an existing writer adapter for a custom provider id | `.aiwg/providers/my-provider/` extending `claude` |
 
-The first three are **content**. The fourth is **packaging**.
+The first three are **content**. The fourth is **packaging**. The fifth is
+**provider metadata**.
 
 ## Comparison
 
-| Property | Extension | Addon | Framework | Plugin |
-|----------|-----------|-------|-----------|--------|
-| Granularity | 1 capability | 2–10 capabilities | 50+ capabilities | wraps any of the above |
-| Manifest | `manifest.json` with `type: extension` | `type: addon` + `addonConfig` | `type: framework` + `frameworkConfig` | `type: plugin` + `pluginConfig` |
-| Lifecycle | edit → deploy | edit → deploy | edit → deploy | package → install |
-| Distribution | bundled / project-local / marketplace | bundled / project-local / marketplace | bundled / project-local / marketplace | marketplace only |
-| Override semantics | follows shadow-resolution policy (#1041) | same | same | inherited from payload type |
-| Project-local? | yes (`.aiwg/extensions/`) | yes (`.aiwg/addons/`) | yes (`.aiwg/frameworks/`) | yes (`.aiwg/plugins/`) |
-| Identical-form portability | yes | yes | yes | yes (payload is byte-identical) |
-| Graduation path | project-local → upstream | same | same | unwrap payload, then graduate |
+| Property | Extension | Addon | Framework | Plugin | Provider |
+|----------|-----------|-------|-----------|--------|----------|
+| Granularity | 1 capability | 2-10 capabilities | 50+ capabilities | wraps any of the above | 1 provider id |
+| Manifest | `manifest.json` with `type: extension` | `type: addon` + `addonConfig` | `type: framework` + `frameworkConfig` | `type: plugin` + `pluginConfig` | `type: provider` + `providerConfig` |
+| Lifecycle | edit → deploy | edit → deploy | edit → deploy | package → install | edit → select with `--provider` |
+| Distribution | bundled / project-local / marketplace | bundled / project-local / marketplace | bundled / project-local / marketplace | marketplace only | bundled / project-local / corpus |
+| Override semantics | follows shadow-resolution policy (#1041) | same | same | inherited from payload type | provider id selection |
+| Project-local? | yes (`.aiwg/extensions/`) | yes (`.aiwg/addons/`) | yes (`.aiwg/frameworks/`) | yes (`.aiwg/plugins/`) | yes (`.aiwg/providers/`) |
+| Identical-form portability | yes | yes | yes | yes (payload is byte-identical) | yes |
+| Graduation path | project-local → upstream | same | same | unwrap payload, then graduate | project-local → `agentic/code/providers/` |
 
 ## Decision tree — "I want to add X"
 
@@ -48,6 +50,10 @@ What are you adding?
 └─ I want to publish my addon/framework so others can install it
     └─→ Plugin
         Example: a marketplace-distributed addon with versioning
+
+└─ I want a custom provider id that reuses an existing writer adapter
+    └─→ Provider
+        Example: "my-provider" selected with `aiwg use sdlc --provider my-provider`
 ```
 
 ## Common scenarios
@@ -58,6 +64,7 @@ What are you adding?
 | Add a custom voice profile + matching agents | Addon | `.aiwg/addons/` |
 | Build a regulated-industry SDLC variant | Framework | `.aiwg/frameworks/` |
 | Distribute your addon publicly | Plugin (wraps your addon) | marketplace |
+| Select a custom provider id for an existing adapter | Provider | `.aiwg/providers/` |
 | Override an upstream skill for your team only | Extension | `.aiwg/extensions/` (shadow w/ override) |
 | Override a *safety-critical* upstream rule | Extension | `.aiwg/extensions/` w/ explicit `overrides:` |
 
@@ -88,6 +95,7 @@ artifact semantics.
 .aiwg/addons/foo/        ─┤
 .aiwg/frameworks/foo/    ─┤── aiwg promote → upstream (agentic/code/{addons,frameworks}/)
 .aiwg/plugins/foo/       ─┘                ↓
+.aiwg/providers/foo/     ───── aiwg promote → upstream (agentic/code/providers/)
                                             corpus (your team's private tree)
                                             ↓
                                             marketplace (plugin-packaged)
@@ -97,12 +105,37 @@ The **identical-form portability invariant** ([ADR #1038](https://github.com/jma
 means a project-local bundle is byte-identical to its upstream form.
 `aiwg promote` is therefore a copy + verify; no rewrite, no migration.
 
+## Provider phase-0 semantics
+
+Project-local provider bundles are intentionally narrower than adding a
+new built-in provider writer. The manifest contains:
+
+```json
+{
+  "type": "provider",
+  "providerConfig": {
+    "extends": "claude",
+    "displayName": "my-provider"
+  }
+}
+```
+
+`providerConfig.extends` delegates writing to an existing provider adapter.
+Use the custom id only as a selector:
+
+```bash
+aiwg use sdlc --provider my-provider
+```
+
+Do not expect `aiwg use my-provider` to deploy anything; provider bundles
+are metadata, not artifact-bearing targets.
+
 ## Cross-references
 
 - Bundle manifest schema: [`@src/extensions/types.ts`](../../src/extensions/types.ts), [`design-manifest-schema.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-manifest-schema.md)
 - Identical-form ADR: [`adr-identical-form-portability.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-identical-form-portability.md)
 - Directory layout ADR: [`adr-aiwg-directory-layout.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-aiwg-directory-layout.md)
 - Override / shadow policy: [`adr-override-shadow-policy.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-override-shadow-policy.md)
-- Scaffolding CLI: `aiwg new-bundle <name> --type {extension|addon|framework|plugin}`
+- Scaffolding CLI: `aiwg new-bundle <name> --type {extension|addon|framework|plugin|provider}`
 - Lifecycle guide: [`project-local-lifecycle.md`](project-local-lifecycle.md)
 - 5-minute quickstart: [`project-local-quickstart.md`](project-local-quickstart.md)

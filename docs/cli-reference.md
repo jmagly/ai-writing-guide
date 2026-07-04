@@ -594,7 +594,7 @@ aiwg promote <name> [--to upstream|corpus <path>] [--dry-run] [--cleanup] [--for
 
 **Flags:**
 
-- `--to upstream` (default) — Copy to `agentic/code/addons/<name>/` (or `agentic/code/frameworks/<name>/` for `type: framework`)
+- `--to upstream` (default) — Copy to `agentic/code/addons/<name>/`, `agentic/code/frameworks/<name>/`, or `agentic/code/providers/<name>/` based on bundle type.
 - `--to corpus <path>` — Copy to `<path>/<name>/`. The path must exist; `<name>` must not pre-exist there.
 - `--dry-run` — Print the plan (source, destination, file count, total bytes); no writes.
 - `--cleanup` — Remove the `.aiwg/<type>/<name>/` source after a successful copy.
@@ -634,7 +634,7 @@ aiwg promote my-team-rules --cleanup                 # remove .aiwg source after
 Scaffold a project-local bundle under `.aiwg/{type}/{name}/` with a valid manifest, a starter artifact, and a README that includes the identical-form portability reminder.
 
 ```bash
-aiwg new-bundle <name> [--type extension|addon|framework|plugin] [--starter skill|rule|agent|minimal] [--description "..."]
+aiwg new-bundle <name> [--type extension|addon|framework|plugin|provider] [--starter skill|rule|agent|minimal] [--description "..."]
 ```
 
 **Arguments:**
@@ -643,11 +643,11 @@ aiwg new-bundle <name> [--type extension|addon|framework|plugin] [--starter skil
 
 **Flags:**
 
-- `--type` — Bundle type (default: `extension`). Inferred from invocation when called via aliases (`new-extension`, `new-addon`, `new-framework`, `new-plugin`).
-- `--starter` — Which starter artifact to drop in. Default: `skill` for addon/extension; `minimal` for framework/plugin.
+- `--type` — Bundle type (default: `extension`). Inferred from invocation when called via aliases (`new-extension`, `new-addon`, `new-framework`, `new-plugin`, `new-provider`).
+- `--starter` — Which starter artifact to drop in. Default: `skill` for addon/extension; `minimal` for framework/plugin/provider.
 - `--description` — Free-text human description for the manifest.
 
-**Aliases:** `new-extension`, `new-addon`, `new-framework`, `new-plugin`
+**Aliases:** `new-extension`, `new-addon`, `new-framework`, `new-plugin`, `new-provider`
 
 **Capabilities:** cli, scaffolding, project-local
 **Platforms:** All
@@ -667,12 +667,17 @@ aiwg new-framework healthcare-sdlc
 
 # Plugin (minimal starter)
 aiwg new-plugin my-distro --starter minimal
+
+# Provider selector that reuses an existing adapter
+aiwg new-provider my-provider
+aiwg use sdlc --provider my-provider
 ```
 
 **What gets created:**
 
 - `manifest.json` — valid against the canonical schema, all required fields filled
 - `README.md` — usage, customization tips, identical-form reminder, deploy/remove/promote commands
+- Provider bundles include `providerConfig.extends`; in phase 0 this reuses an existing writer adapter and does not define new output paths by itself.
 - Starter artifact: `skills/<name>-skill/SKILL.md`, `rules/<name>.md`, or `agents/<name>.md` depending on `--starter`
 - Type-specific stubs: `src/.gitkeep` for framework, `payload/.gitkeep` for plugin
 
