@@ -7,6 +7,20 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.9] - 2026-07-04 - "Release manifest publish gate"
+
+Supersedes `2026.7.8` after the GitHub npmjs.org publish workflow stopped in
+the full test gate before publishing any npm artifacts. This release keeps the
+Cockpit merged-console and issue-question workflow changes while relaxing a
+stale release-manifest test that assumed the Fortemi preview announcement would
+remain the newest release forever.
+
+### Fixed
+
+- **Release manifest regression test** — the Fortemi preview release-notes test
+  now asserts that `v2026.7.1-announcement` remains listed in the release
+  manifest, not that it is permanently the first entry.
+
 ## [2026.7.8] - 2026-07-04 - "Cockpit merged console and issue questions"
 
 This release completes the current Cockpit merged-console slice and tightens the

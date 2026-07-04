@@ -255,7 +255,7 @@ describe('routing documentation regressions', () => {
     const manifest = JSON.parse(read('docs/releases/_manifest.json')) as { order?: string[] };
     const changelog = read('CHANGELOG.md');
 
-    expect(manifest.order?.[0]).toBe('v2026.7.1-announcement');
+    expect(manifest.order).toContain('v2026.7.1-announcement');
     expect(release).toContain('Boundary clarifications');
     expect(release).toContain('Fortemi MCP');
     expect(release).toContain('aiwg issue list --search');
