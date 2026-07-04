@@ -7,6 +7,27 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.8] - 2026-07-04 - "Cockpit merged console and issue questions"
+
+This release completes the current Cockpit merged-console slice and tightens the
+address-issues workflow so unresolved issue questions remain findable from the
+tracker label surface.
+
+### Added
+
+- **Cockpit merged console surfaces** — the Cockpit shell now exposes Bridge
+  mission projection, unified event snapshots, telemetry, memory, missions, and
+  apps/web compatibility surfaces for the merged operator-console workflow.
+- **Issue question tracking label** — address-issues now creates or reuses a
+  `question` label when filing unresolved questions in issue comments, then
+  removes it once the question has been answered to satisfaction.
+
+### Fixed
+
+- **Pathless Cockpit smoke compatibility** — Cockpit smoke coverage now handles
+  Fortemi discover results without filesystem paths by preserving result names
+  and using a known release-flow skill path for the library clone check.
+
 ## [2026.7.7] - 2026-07-03 - "Pathless discovery package gate"
 
 Supersedes `2026.7.6` after the first tag's npm publish workflow stopped at
