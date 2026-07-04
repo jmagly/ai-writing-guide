@@ -14,10 +14,32 @@ npm install -g aiwg
 
 ---
 
-## Step 2 — Deploy to your project
+## Step 2 — Establish project setup
 
 ```bash
 cd /path/to/your/project
+```
+
+Ask your AI assistant to set up AIWG for this repository:
+
+```
+Help me set up this project for AIWG.
+```
+
+The setup conversation should establish how this repository actually works:
+which remotes matter, where issues live, whether delivery is direct-to-main or
+branch/PR based, what commit and signing policy applies, which providers should
+be enabled, and whether `.aiwg/issues/` should be used for local issue storage.
+
+The assistant may call `aiwg setup project --dry-run` or
+`aiwg setup project --yes` while working with you, but the important surface is
+the guided conversation. You should not have to map repo policy fields by hand.
+
+---
+
+## Step 3 — Deploy to your project
+
+```bash
 aiwg use sdlc
 ```
 
@@ -25,7 +47,7 @@ This installs the agents, commands, and rules into `.claude/`. Claude Code picks
 
 ---
 
-## Step 3 — Let the AI read the codebase
+## Step 4 — Let the AI read the codebase
 
 Open Claude Code:
 
@@ -50,7 +72,7 @@ You don't have to answer questions or fill out forms. It reads the code.
 
 ---
 
-## Step 4 — Review what it found
+## Step 5 — Review what it found
 
 The intake document lands at `.aiwg/intake/`. Read it and correct anything that's wrong:
 
@@ -62,15 +84,18 @@ Or open `.aiwg/intake/project-intake.md` directly and edit it. This document dri
 
 ---
 
-## Step 5 — Set up project context
+## Step 6 — Set up project context
 
-Run the project setup command so future sessions load the right context:
+After the repo policy setup and intake scan, ask the assistant to wire the
+project context so future sessions load the right background:
 
 ```
 /aiwg-setup-project
 ```
 
-This wires the intake into the Claude Code configuration so the AI has persistent context across sessions. You don't have to re-explain the project every time you open a new terminal.
+This wires the intake into the provider configuration so the AI has persistent
+context across sessions. It complements the earlier setup conversation about
+remotes, issue storage, delivery behavior, and policy.
 
 ---
 

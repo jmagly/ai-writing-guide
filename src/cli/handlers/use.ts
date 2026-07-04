@@ -1598,7 +1598,7 @@ export class UseHandler implements CommandHandler {
         config = emptyConfig([autoProvider]);
         if (!_isDryRun) await writeAiwgConfig(projectDir, config);
         if (!_isDryRun && _isBulkIntent && framework === 'all') {
-          ui.dim(`  No .aiwg/aiwg.config found — auto-created with provider '${autoProvider}'. Run 'aiwg init' to customize.`);
+          ui.dim(`  No .aiwg/aiwg.config found — auto-created with provider '${autoProvider}'. Ask your AIWG agent to review repo/tracker/delivery policy.`);
         }
       } else if (process.stdin.isTTY) {
         // Interactive terminal with no config → run init wizard inline (#720)
@@ -1612,7 +1612,7 @@ export class UseHandler implements CommandHandler {
     if (!framework) {
       if (!config || Object.keys(config.installed).length === 0) {
         const advisory = !config
-          ? "\n\nRun 'aiwg init' to configure providers and track deployments."
+          ? "\n\nRun 'aiwg init', then ask your AIWG agent to establish providers, tracker, and delivery policy."
           : '';
         return {
           exitCode: 1,
@@ -2058,7 +2058,7 @@ export class UseHandler implements CommandHandler {
     } else {
       providers = ['claude'];
       if (!config) {
-        ui.warn("No .aiwg/aiwg.config found. Run 'aiwg init' to configure providers for this project.");
+        ui.warn("No .aiwg/aiwg.config found. Run 'aiwg init', then ask your AIWG agent to configure this project properly.");
       }
     }
 

@@ -13,6 +13,11 @@ npm i -g aiwg        # install globally
 aiwg use sdlc        # deploy SDLC framework
 ```
 
+Then ask your AI assistant to set up the project for AIWG. The agent-led setup
+conversation should establish remotes, issue storage, delivery behavior,
+signing policy, and provider choices; the assistant may call `aiwg setup project`
+as the underlying CLI helper.
+
 macOS users: if npm fails with `EACCES` under `/usr/local/lib/node_modules`,
 use the [macOS Install Guide](docs/getting-started/macos-install.md).
 Agents and stewards setting up AIWG end-to-end should use the
@@ -133,7 +138,8 @@ The user surface is the conversation with your AI tool. You install AIWG, deploy
 The CLI exists mostly for the agent to call under the hood. The commands a user typically runs by hand are a short list:
 
 - `aiwg use <framework>` — deploy AIWG to your project (one-time per framework, per project)
-- `aiwg wizard` — guided first-run setup
+- Project setup agent/skill — recommended guided setup conversation for repo, tracker, delivery, signing, and provider policy
+- `aiwg wizard` — guided first-run goal routing
 - `aiwg new <project>` — scaffold a new project
 - `aiwg status` — what's deployed and engaged in this workspace
 - `aiwg doctor` — health check

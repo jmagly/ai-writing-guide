@@ -91,7 +91,7 @@ async function askProviders(rl: readline.Interface, signal?: AbortSignal): Promi
 export const initHandler: CommandHandler = {
   id: 'init',
   name: 'Init',
-  description: 'Initialise project with .aiwg/aiwg.config (provider registry + scripts)',
+  description: 'Initialise the baseline .aiwg/aiwg.config for an agent-led project setup',
   category: 'project',
   aliases: [],
 
@@ -110,7 +110,7 @@ export const initHandler: CommandHandler = {
     const projectDir = ctx.cwd;
 
     ui.blank();
-    console.log(`  ${ui.brandMark()} ${ui.bold('AIWG Project Setup')}`);
+    console.log(`  ${ui.brandMark()} ${ui.bold('AIWG Baseline Config')}`);
     ui.rule();
 
     // Check for existing config
@@ -124,7 +124,9 @@ export const initHandler: CommandHandler = {
         console.log(`  Scripts: ${Object.keys(existing.scripts).join(', ')}`);
       }
       ui.blank();
-      ui.dim('  Run `aiwg init --force` to overwrite.');
+      ui.dim('  Ask your AIWG agent to review repo, tracker, delivery, signing, and provider policy.');
+      ui.dim('  Agents may use `aiwg setup project --dry-run` as the CLI helper for that review.');
+      ui.dim('  Run `aiwg init --force` only when you need to recreate the baseline config.');
       ui.blank();
       return { exitCode: 0 };
     }
@@ -195,9 +197,10 @@ export const initHandler: CommandHandler = {
     }
     ui.blank();
     console.log('  Next steps:');
-    console.log('    aiwg use sdlc         Deploy SDLC framework to all configured providers');
-    console.log('    aiwg run deploy       Run the deploy script');
-    console.log('    aiwg run              List all defined scripts');
+    console.log('    Ask your AIWG agent: "Help me set up this project for AIWG."');
+    console.log('    The agent may use `aiwg setup project --dry-run` to preview policy choices.');
+    console.log('    aiwg use sdlc                 Deploy SDLC framework to configured providers');
+    console.log('    aiwg run                      List all defined scripts');
     ui.blank();
 
     return { exitCode: 0 };

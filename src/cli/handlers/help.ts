@@ -60,6 +60,8 @@ function displayHelp(): void {
 
   helpGroup('PROJECT', [
     ['new <name>', 'Create new project with SDLC templates'],
+    ['init', 'Create the baseline .aiwg/aiwg.config file'],
+    ['setup project', 'CLI helper used by agents for repo/tracker/delivery/signing policy'],
   ]);
 
   helpGroup('WORKSPACE', [

@@ -441,7 +441,7 @@ function printPlan(plan: SetupProjectPlan): void {
 export const setupHandler: CommandHandler = {
   id: 'setup',
   name: 'Setup',
-  description: 'Guided project setup wizard for repository policy and tracker configuration',
+  description: 'CLI helper for agent-led repository policy and tracker setup',
   category: 'project',
   aliases: [],
 

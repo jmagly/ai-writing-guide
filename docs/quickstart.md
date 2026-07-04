@@ -60,11 +60,22 @@ cd /path/to/your/project
 # New project? Scaffold first:
 aiwg -new
 
-# Then deploy framework:
+# Deploy framework artifacts:
 aiwg use sdlc              # Software development
 aiwg use marketing         # Marketing campaigns
 aiwg use all               # Everything
 ```
+
+Then ask your AI assistant to set up the project for AIWG:
+
+```
+Help me set up this project for AIWG.
+```
+
+The agent-led setup conversation should determine the right repository
+behavior, issue storage, delivery policy, signing expectations, and provider
+choices for your project. The assistant may use `aiwg setup project` behind the
+scenes to preview and write the resulting `.aiwg/aiwg.config` policy.
 
 Open in your AI platform and integrate:
 

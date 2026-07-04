@@ -520,10 +520,10 @@ export const setupCommand: Extension = {
   id: 'setup',
   type: 'skill',
   name: 'Setup',
-  description: 'Guided project setup wizard for repo policy, tracker, delivery, and signing configuration',
+  description: 'CLI helper for agent-led project setup policy previews and writes',
   version: '1.0.0',
   capabilities: ['cli', 'project', 'config', 'setup', 'issues', 'delivery-policy'],
-  keywords: ['setup', 'wizard', 'repo policy', 'tracker', 'delivery', 'signing', 'remotes'],
+  keywords: ['setup', 'agent-led setup', 'repo policy', 'tracker', 'delivery', 'signing', 'remotes'],
   category: 'project',
   platforms: {
     claude: 'full',

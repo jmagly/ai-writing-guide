@@ -84,7 +84,7 @@ export const runHandler: CommandHandler = {
         message: [
           "Error: No .aiwg/aiwg.config found in this project.",
           '',
-          "Run 'aiwg init' to create one and define scripts.",
+          "Run 'aiwg init' to create one, then ask your AIWG agent to establish project policy.",
         ].join('\n'),
       };
     }
@@ -126,7 +126,7 @@ export const runHandler: CommandHandler = {
       const available = Object.keys(scripts);
       const hint = available.length > 0
         ? `\nAvailable: ${available.join(', ')}`
-        : '\nNo scripts defined. Run `aiwg init` to add some.';
+        : '\nNo scripts defined. Run `aiwg init`, then ask your AIWG agent to finish project setup.';
       return {
         exitCode: 1,
         message: `Error: No script named '${scriptName}'${hint}`,

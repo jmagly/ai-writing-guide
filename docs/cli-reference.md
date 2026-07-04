@@ -761,6 +761,17 @@ aiwg packages remove <key>
 
 ## Project Setup
 
+For normal use, front project setup through the AIWG agent or setup skill:
+
+```text
+Help me set up this project for AIWG.
+```
+
+The agent should work with the user interactively to establish repo behavior,
+issue storage, delivery policy, signing expectations, provider choices, and any
+local issue-store needs. The CLI commands below are the underlying tools the
+agent may call while doing that work.
+
 ### new
 
 Create new project with SDLC templates.
@@ -961,17 +972,20 @@ If a config already exists, the command exits without changes unless `--force` i
 
 ### setup
 
-Configure project-level repository policy, issue tracker routing, delivery
-mode, and signing metadata without hand-editing `.aiwg/aiwg.config`.
+CLI helper for project-level repository policy, issue tracker routing, delivery
+mode, and signing metadata. This command is usually called by an AIWG
+agent/skill during the guided setup conversation rather than used as the first
+user-facing step.
 
 ```bash
 aiwg setup project [--yes] [--dry-run] [--target <dir>]
 ```
 
-Use `--dry-run` first to preview the config blocks that will change. The wizard
-detects Git remotes and proposes `remotes.primary`, `remotes.issue_tracker`,
-`remotes.ci`, secondary mirrors, tracker tooling, delivery policy, committer
-identity, and signing metadata. In non-interactive contexts it refuses to write
+The helper detects Git remotes and proposes `remotes.primary`,
+`remotes.issue_tracker`, `remotes.ci`, secondary mirrors, tracker tooling,
+delivery policy, committer identity, and signing metadata. Agents should use
+`--dry-run` first, discuss the preview with the user, then write only after the
+policy choices are understood. In non-interactive contexts it refuses to write
 unless `--yes` is present.
 
 Common overrides:
@@ -989,9 +1003,9 @@ aiwg setup project --yes --issue-provider local
 managed by `aiwg issue init`. Self-hosted remotes that cannot be classified from
 their URL require an explicit provider choice or confirmation.
 
-The wizard validates the proposed repo/tracker/delivery/signing combination
-before writing and keeps manual `.aiwg/aiwg.config` editing supported for
-advanced cases.
+The helper validates the proposed repo/tracker/delivery/signing combination
+before writing. Manual `.aiwg/aiwg.config` editing remains available for
+advanced cases, but the preferred user experience is the agent-led setup flow.
 
 **Capabilities:** cli, project, config, setup, issues, delivery-policy
 **Tools:** Read, Write, Bash
