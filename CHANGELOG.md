@@ -7,6 +7,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.6] - 2026-07-03 - "Pathless discovery and canonical capability index"
+
+This release tightens the AIWG discover/show workflow for agents: discovery
+now returns stable capability identifiers instead of file paths, detailed path
+metadata moves behind an explicit command, and the framework capability index
+stops indexing provider/plugin mirror copies.
+
 ### Added
 
 - **Discover metadata lookup** — `aiwg show metadata <id-or-name>` now emits
