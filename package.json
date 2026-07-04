@@ -269,6 +269,7 @@
     "auto-install-peers": true
   },
   "dependencies": {
+    "@fortemi/core": "^2026.7.1",
     "@modelcontextprotocol/sdk": "^1.24.0",
     "chalk": "^4.1.2",
     "chokidar": "^3.6.0",
@@ -301,7 +302,6 @@
     }
   },
   "devDependencies": {
-    "@fortemi/core": "^2026.7.1",
     "@pagenary/publisher": "^2026.7.12",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.8.0",

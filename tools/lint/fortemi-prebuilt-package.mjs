@@ -143,6 +143,59 @@ try {
   if (!hit) {
     fail('Fortemi Core prebuilt fallback discovery did not return intake-start-campaign for "campaign intake"');
   }
+
+  const packOut = spawnSync('npm', ['pack', '--json', '--pack-destination', tmp], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (packOut.status !== 0) {
+    console.error(packOut.stdout);
+    console.error(packOut.stderr);
+    fail(`npm pack --pack-destination exited with status ${packOut.status}`);
+  }
+  const packed = parseNpmPackJson(packOut.stdout)?.[0];
+  const tarball = packed?.filename ? path.join(tmp, packed.filename) : undefined;
+  if (!tarball || !existsSync(tarball)) fail('npm pack did not produce a tarball for packed-install smoke');
+
+  const installDir = path.join(tmp, 'install');
+  // @fortemi/core is a first-party runtime dependency for Fortemi discovery.
+  // The release-age override is scoped to this packed-install smoke so the
+  // gate verifies production packaging even while the dependency is inside
+  // the normal seven-day freshness window.
+  const install = spawnSync('npm', ['install', '--omit=dev', '--min-release-age=0', '--prefix', installDir, tarball], {
+    cwd: tmp,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (install.status !== 0) {
+    console.error(install.stdout);
+    console.error(install.stderr);
+    fail(`packed production install exited with status ${install.status}`);
+  }
+  const installedCli = path.join(installDir, 'node_modules', 'aiwg', 'bin', 'aiwg.mjs');
+  const installedDiscover = spawnSync(
+    process.execPath,
+    [installedCli, 'discover', 'test', '--limit', '1', '--json'],
+    {
+      cwd: tmp,
+      encoding: 'utf8',
+      maxBuffer: 16 * 1024 * 1024,
+      env: {
+        ...process.env,
+        XDG_DATA_HOME: path.join(tmp, 'xdg-installed'),
+        AIWG_ROOT: path.join(installDir, 'node_modules', 'aiwg'),
+      },
+    },
+  );
+  if (installedDiscover.status !== 0) {
+    console.error(installedDiscover.stdout);
+    console.error(installedDiscover.stderr);
+    fail(`packed production install discover smoke exited with status ${installedDiscover.status}`);
+  }
+  if (installedDiscover.stderr.includes("Cannot find package '@fortemi/core'")) {
+    fail('packed production install is missing @fortemi/core at runtime');
+  }
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
