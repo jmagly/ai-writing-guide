@@ -99,6 +99,26 @@ function discoveryIdForEntry(entry: MetadataEntry): string {
   return stableRecordId(recordTypeForEntry(entry, 'v2'), entry.path);
 }
 
+function logicalDiscoverKey(entry: MetadataEntry): string {
+  const identity = (entry.name ?? entry.title ?? path.basename(entry.path))
+    .toLowerCase()
+    .replace(/[-_\s]+/g, ' ')
+    .trim();
+  return `${entry.type}:${identity}`;
+}
+
+function dedupeDiscoverResults(results: QueryResult[]): QueryResult[] {
+  const bestByIdentity = new Map<string, QueryResult>();
+  for (const result of results) {
+    const key = logicalDiscoverKey(result.entry);
+    const existing = bestByIdentity.get(key);
+    if (!existing || compareDiscoverResults(result, existing) < 0) {
+      bestByIdentity.set(key, result);
+    }
+  }
+  return Array.from(bestByIdentity.values()).sort(compareDiscoverResults);
+}
+
 function scopeRank(entry: MetadataEntry): number {
   const scope = (entry as ProvenancedEntry).indexScope;
   if (scope === 'project') return 0;
@@ -884,7 +904,9 @@ export async function discoverCapability(
   // lexical ranking so canonical domain phrases rank their owning capability
   // top-K instead of being out-scored by artifacts that merely mention the
   // word. Facet activation can also rescue an otherwise-empty strict pass.
-  let scored = (await applyFacetFusion(strictScored, candidates, params.phrase)).slice(0, limit);
+  let scored = dedupeDiscoverResults(
+    await applyFacetFusion(strictScored, candidates, params.phrase),
+  ).slice(0, limit);
 
   // #1561 — verbose-query fallback. A wordy full-sentence query
   // ("find me a skill that handles intake forms") dilutes the token hit ratio
@@ -905,7 +927,9 @@ export async function discoverCapability(
       .map(entry => ({ entry, score: scoreEntry(entry, params.phrase, { relaxOverlap: true }) }))
       .filter(r => r.score >= RELAXED_MIN_SCORE)
       .sort(compareDiscoverResults);
-    const relaxedScored = (await applyFacetFusion(relaxedFull, candidates, params.phrase)).slice(0, limit);
+    const relaxedScored = dedupeDiscoverResults(
+      await applyFacetFusion(relaxedFull, candidates, params.phrase),
+    ).slice(0, limit);
     if (relaxedScored.length > 0) {
       scored = relaxedScored;
       relaxed = true;

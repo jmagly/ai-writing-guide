@@ -355,6 +355,54 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     }
   });
 
+  it("deduplicates plugin mirror copies from discover results before limiting", async () => {
+    const sourceSkill = entry({
+      path: "agentic/code/frameworks/sdlc-complete/skills/artifact-lookup/SKILL.md",
+      title: "artifact-lookup",
+      name: "artifact-lookup",
+      tags: ["artifact", "test"],
+      summary: "Search and navigate SDLC artifacts by topic, type, phase, or tag using the aiwg index CLI.",
+      triggers: ["find my test plan", "where is artifact"],
+      capability: "Search and navigate SDLC artifacts by topic, type, phase, or tag using the aiwg index CLI.",
+    });
+    const pluginMirror = entry({
+      ...sourceSkill,
+      path: "agentic/code/plugins/sdlc/skills/artifact-lookup/SKILL.md",
+    });
+    const codexMirror = entry({
+      ...sourceSkill,
+      path: "agentic/code/plugins/codex-sdlc/skills/artifact-lookup/SKILL.md",
+    });
+    const otherSkill = entry({
+      path: "agentic/code/frameworks/sdlc-complete/skills/test-plan/SKILL.md",
+      title: "Test Plan",
+      name: "test-plan",
+      tags: ["test"],
+      summary: "Create test plans for SDLC work.",
+      triggers: ["test plan"],
+      capability: "Create test plans for SDLC work.",
+    });
+    writeProjectGraph(tmp, [sourceSkill, pluginMirror, codexMirror, otherSkill], undefined, "framework");
+    syncFortemiCoreIndex(tmp, {
+      graph: "framework",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
+
+    await discoverCapability(tmp, {
+      phrase: "test",
+      json: true,
+      limit: 5,
+      backend: "fortemi-core",
+    });
+    const discovered = readConsoleJson();
+    consoleSpy.mockClear();
+
+    const artifactLookup = discovered.results.filter((result: any) => result.name === "artifact-lookup");
+    expect(artifactLookup).toHaveLength(1);
+    expect(artifactLookup[0].path).toContain(sourceSkill.path);
+    expect(discovered.results.map((result: any) => result.name)).toContain("test-plan");
+  });
+
   it("keeps path lookup as a secondary show parameter after id lookup", async () => {
     const frameworkSkill = entry({
       path: "agentic/code/frameworks/sdlc-complete/skills/doc-sync/SKILL.md",
@@ -552,11 +600,8 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
       limit: 3,
     });
     const discover = readConsoleJson();
-    expect(discover.results.map((result: any) => result.provenance.scope)).toEqual([
-      "project",
-      "user",
-      "packaged",
-    ]);
+    expect(discover.results.map((result: any) => result.provenance.scope)).toEqual(["project"]);
+    expect(discover.results[0].title).toBe("Project Shared Review");
     consoleSpy.mockClear();
 
     await showArtifact(tmp, {
