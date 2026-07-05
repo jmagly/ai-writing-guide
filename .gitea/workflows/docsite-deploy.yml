@@ -196,7 +196,7 @@ jobs:
           # Dry-run first so the job fails before mutation if a protected
           # tenant subtree would be deleted. The receiver-protect filters are
           # kept on the real sync below.
-          rsync -avzn --delete --timeout=60 --contimeout=20 \
+          rsync -avzn --delete --timeout=60 \
             "${RSYNC_PROTECT_ARGS[@]}" \
             -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4" \
             "${{ gitea.workspace }}/dist/aiwg-docs/" \
@@ -210,7 +210,7 @@ jobs:
             fi
           done
 
-          rsync -avz --delete --timeout=60 --contimeout=20 \
+          rsync -avz --delete --timeout=60 \
             "${RSYNC_PROTECT_ARGS[@]}" \
             -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4" \
             "${{ gitea.workspace }}/dist/aiwg-docs/" \
