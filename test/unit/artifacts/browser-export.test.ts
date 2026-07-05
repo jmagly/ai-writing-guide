@@ -504,6 +504,79 @@ describe("AIWG Fortemi browser index export", () => {
     }
   });
 
+  it("omits binary and oversized source bodies from v2 records while preserving searchable metadata", () => {
+    writeIndex(
+      {
+        "pdfs/full/REF-001-security.pdf": entry({
+          path: "pdfs/full/REF-001-security.pdf",
+          type: "research-ref",
+          phase: "research",
+          title: "Security PDF",
+          name: "REF-001",
+          summary: "A PDF reference that should stay metadata-only.",
+          tags: ["pdf"],
+        }),
+        ".aiwg/notes/large.md": entry({
+          path: ".aiwg/notes/large.md",
+          type: "document",
+          phase: "research",
+          title: "Large Note",
+          name: "large-note",
+          summary: "A text source over the source-body guard.",
+          tags: ["large"],
+        }),
+        ".aiwg/notes/small.md": entry({
+          path: ".aiwg/notes/small.md",
+          type: "document",
+          phase: "research",
+          title: "Small Note",
+          name: "small-note",
+          summary: "A text source under the source-body guard.",
+          tags: ["small"],
+        }),
+      },
+      {},
+    );
+    const pdfPath = path.join(tmpDir, "pdfs/full/REF-001-security.pdf");
+    const largePath = path.join(tmpDir, ".aiwg/notes/large.md");
+    const smallPath = path.join(tmpDir, ".aiwg/notes/small.md");
+    fs.mkdirSync(path.dirname(pdfPath), { recursive: true });
+    fs.mkdirSync(path.dirname(largePath), { recursive: true });
+    fs.writeFileSync(pdfPath, Buffer.from("%PDF-1.7\n\0binary body that must not enter search"));
+    fs.writeFileSync(largePath, "large body phrase\n".repeat(32));
+    fs.writeFileSync(smallPath, "---\ntitle: Small Note\n---\nsmall body phrase\n");
+
+    const exported = buildAiwgFortemiIndexExport(tmpDir, {
+      repo: "roctinam/aiwg",
+      privacy: "sanitized",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+      schemaVersion: "v2",
+      maxSourceBodyBytes: 128,
+    });
+    const validate = loadFortemiExportSchemaValidator();
+
+    expect(validate(exported), JSON.stringify(validate.errors, null, 2)).toBe(
+      true,
+    );
+    const pdf = exported.items.find(
+      (item) => item.source.path === "pdfs/full/REF-001-security.pdf",
+    );
+    const large = exported.items.find(
+      (item) => item.source.path === ".aiwg/notes/large.md",
+    );
+    const small = exported.items.find(
+      (item) => item.source.path === ".aiwg/notes/small.md",
+    );
+
+    expect(pdf?.search?.body).toContain("Security PDF");
+    expect(pdf?.search?.body).not.toContain("%PDF");
+    expect(pdf?.search?.body).not.toContain("binary body");
+    expect(pdf?.chunks?.[0].text).toBe(pdf?.search?.body);
+    expect(large?.search?.body).toContain("Large Note");
+    expect(large?.search?.body).not.toContain("large body phrase");
+    expect(small?.search?.body).toContain("small body phrase");
+  });
+
   it("keeps the legacy v2-to-v1 compatibility projection valid", async () => {
     writeIndex(
       {

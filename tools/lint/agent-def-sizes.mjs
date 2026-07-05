@@ -16,9 +16,7 @@ export const DEPLOYED_AGENT_DIRS = [
   '.windsurf/agents',
 ];
 
-export const AGENT_DEF_SIZE_ALLOWLIST = {
-  'security-auditor': 'Documented #1587 gate-dense outlier; keep under review while CI blocks all other regrowth.',
-};
+export const AGENT_DEF_SIZE_ALLOWLIST = {};
 
 const AGENT_FILE_RE = /\.(?:agent\.md|soul\.md|md)$/;
 

@@ -17,21 +17,22 @@ async function writeAgent(root: string, relDir: string, name: string, bytes: num
 }
 
 describe('lint:agent-sizes', () => {
-  it('requires a rationale for the only allow-listed oversized agent', () => {
-    expect(Object.keys(AGENT_DEF_SIZE_ALLOWLIST)).toEqual(['security-auditor']);
-    expect(AGENT_DEF_SIZE_ALLOWLIST['security-auditor']).toContain('#1587');
+  it('does not allow-list oversized deployed agents', () => {
+    expect(AGENT_DEF_SIZE_ALLOWLIST).toEqual({});
   });
 
-  it('honors the security-auditor allow-list across deployed filename variants', async () => {
+  it('fails security-auditor when any deployed filename variant exceeds the ceiling', async () => {
     const root = await mkdtemp(join(tmpdir(), 'aiwg-agent-size-'));
     await writeAgent(root, '.claude/agents', 'security-auditor.md', AGENT_DEF_CEILING_BYTES + 100);
     await writeAgent(root, '.github/agents', 'security-auditor.agent.md', AGENT_DEF_CEILING_BYTES + 100);
 
     const result = await scanDeployedAgentDefSizes({ rootDir: root });
 
-    expect(result.violations).toEqual([]);
-    expect(result.allowedOversized).toHaveLength(2);
-    expect(result.allowedOversized.every((item) => item.rationale.includes('#1587'))).toBe(true);
+    expect(result.allowedOversized).toEqual([]);
+    expect(result.violations.map((item) => item.path)).toEqual([
+      '.claude/agents/security-auditor.md',
+      '.github/agents/security-auditor.agent.md',
+    ]);
   });
 
   it('fails a non-exempt deployed agent over the ceiling', async () => {

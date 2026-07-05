@@ -192,7 +192,48 @@ export interface BrowserIndexExportOptions {
   generatedAt?: string;
   schemaVersion?: AiwgFortemiExportSchemaVersion;
   includeSourceBody?: boolean;
+  maxSourceBodyBytes?: number;
 }
+
+export const DEFAULT_MAX_SOURCE_BODY_BYTES = 256 * 1024;
+
+const BINARY_SOURCE_EXTENSIONS = new Set([
+  ".7z",
+  ".a",
+  ".avi",
+  ".bin",
+  ".bmp",
+  ".bz2",
+  ".class",
+  ".dll",
+  ".doc",
+  ".docx",
+  ".dylib",
+  ".exe",
+  ".gif",
+  ".gz",
+  ".ico",
+  ".jar",
+  ".jpeg",
+  ".jpg",
+  ".mov",
+  ".mp3",
+  ".mp4",
+  ".o",
+  ".odt",
+  ".pdf",
+  ".png",
+  ".ppt",
+  ".pptx",
+  ".so",
+  ".tar",
+  ".tgz",
+  ".war",
+  ".webp",
+  ".xls",
+  ".xlsx",
+  ".zip",
+]);
 
 function stableArtifactId(artifactPath: string): string {
   return (
@@ -242,12 +283,30 @@ function stripFrontmatter(text: string): string {
   return match ? text.slice(match[0].length) : text;
 }
 
-function sourceBodyForEntry(cwd: string, entry: MetadataEntry): string {
+function looksBinary(buffer: Buffer): boolean {
+  if (buffer.includes(0)) return true;
+  const sample = buffer.subarray(0, Math.min(buffer.length, 4096)).toString("utf-8");
+  if (sample.length === 0) return false;
+  const replacementCount = (sample.match(/\uFFFD/g) ?? []).length;
+  return replacementCount / sample.length > 0.01;
+}
+
+function sourceBodyForEntry(
+  cwd: string,
+  entry: MetadataEntry,
+  maxBytes: number,
+): string {
   const sourcePath = path.isAbsolute(entry.path)
     ? entry.path
     : path.join(cwd, entry.path);
   try {
-    return stripFrontmatter(fs.readFileSync(sourcePath, "utf-8")).trim();
+    const stat = fs.statSync(sourcePath);
+    if (!stat.isFile() || stat.size > maxBytes) return "";
+    if (BINARY_SOURCE_EXTENSIONS.has(path.extname(sourcePath).toLowerCase()))
+      return "";
+    const buffer = fs.readFileSync(sourcePath);
+    if (looksBinary(buffer)) return "";
+    return stripFrontmatter(buffer.toString("utf-8")).trim();
   } catch {
     return "";
   }
@@ -541,6 +600,8 @@ export function buildAiwgFortemiIndexExport(
   );
   const privacy = options.privacy ?? "private";
   const repo = options.repo ?? path.basename(cwd);
+  const maxSourceBodyBytes =
+    options.maxSourceBodyBytes ?? DEFAULT_MAX_SOURCE_BODY_BYTES;
   const entries = Object.values(index.entries);
   const recordTypesByPath = new Map(
     entries.map((entry) => [
@@ -557,7 +618,9 @@ export function buildAiwgFortemiIndexExport(
         privacy,
         schemaVersion,
         recordTypesByPath,
-        options.includeSourceBody === false ? "" : sourceBodyForEntry(cwd, entry),
+        options.includeSourceBody === false
+          ? ""
+          : sourceBodyForEntry(cwd, entry, maxSourceBodyBytes),
       ),
     )
     .sort((left, right) => left.id.localeCompare(right.id));
