@@ -153,6 +153,7 @@ export function useSession() {
       });
       // Keep tmux sized to the terminal so redraws don't wrap/overflow.
       term.onResize(({ cols, rows }) => {
+        if (roleRef.current !== 'controller') return;
         if (cols < RESIZE_FLOOR_COLS || rows < RESIZE_FLOOR_ROWS) return;
         sendOp('pty.session_resize', { cols, rows });
       });
@@ -232,7 +233,7 @@ export function useSession() {
             sendOp('pty.join_session', { role: requestedRole });
             // Tell the PTY our current dimensions up front so the first tmux redraw fits.
             const t = termRef.current;
-            if (t && t.cols >= RESIZE_FLOOR_COLS && t.rows >= RESIZE_FLOOR_ROWS) sendOp('pty.session_resize', { cols: t.cols, rows: t.rows });
+            if (requestedRole === 'controller' && t && t.cols >= RESIZE_FLOOR_COLS && t.rows >= RESIZE_FLOOR_ROWS) sendOp('pty.session_resize', { cols: t.cols, rows: t.rows });
             break;
           }
           case 'role_assigned': {

@@ -1317,6 +1317,10 @@ async function getSessions(executorUrl, instanceId) {
     `${executorUrl}/api/v1/agents/${encodeURIComponent(agentId)}/sessions`,
   ]));
   const sessions = asArrayFromEnvelope(body, ['sessions', 'items', 'data']);
+  return normalizeSessionRows({ sessions, executorUrl, instanceId, sessionAgentId });
+}
+
+export function normalizeSessionRows({ sessions, executorUrl, instanceId, sessionAgentId = instanceId }) {
   const wsBase = executorUrl.replace(/^http/i, 'ws');
   const normalizeAttachUrl = (s, sessionId) => {
     const explicit = s.attach_url ?? s.attachUrl;
@@ -1337,36 +1341,57 @@ async function getSessions(executorUrl, instanceId) {
     // agent name is only needed for the session-list FETCH, not the attach path.
     return `${wsBase}/agents/${encodeURIComponent(instanceId)}/sessions/${encodeURIComponent(sessionId)}/attach`;
   };
-  const sessionKey = (entry, sessionId) => String(entry.command_id ?? entry.commandId ?? sessionId);
-  const fallbackScore = (entry, key) => {
+  const sessionAliases = (entry, sessionId) => {
+    const aliases = [`session:${sessionId}`];
+    const commandId = entry.command_id ?? entry.commandId;
+    if (commandId) aliases.push(`command:${commandId}`);
+    return aliases;
+  };
+  const fallbackScore = (entry) => {
+    const sessionId = String(entry.id ?? entry.session_id ?? entry.sessionId ?? '');
+    const commandId = String(entry.command_id ?? entry.commandId ?? '');
     const id = String(entry.id ?? '');
     const name = String(entry.session_name ?? entry.sessionName ?? '');
     const command = String(entry.command ?? '').trim();
     let score = 0;
-    if (id && id === key) score += 2;
-    if (name && name === key) score += 2;
+    if (id && commandId && id === commandId) score += 2;
+    if (name && (name === sessionId || name === commandId)) score += 2;
     if (/^\/?bin\/bash\s+-l$/.test(command)) score += 1;
+    if (entry.has_screen === false || entry.hasScreen === false) score += 1;
     return score;
   };
   const namedScore = (entry) => {
     const name = String(entry.session_name ?? entry.sessionName ?? '');
-    if (/^terminal-[a-z0-9-]+$/i.test(name)) return 2;
-    return name ? 1 : 0;
+    let score = name ? 1 : 0;
+    if (/^terminal-[a-z0-9-]+$/i.test(name)) score += 2;
+    if (entry.has_screen === true || entry.hasScreen === true) score += 1;
+    return score;
   };
-  const shouldReplace = (existing, candidate, key) => {
-    const existingFallback = fallbackScore(existing, key);
-    const candidateFallback = fallbackScore(candidate, key);
+  const shouldReplace = (existing, candidate) => {
+    const existingFallback = fallbackScore(existing);
+    const candidateFallback = fallbackScore(candidate);
     if (existingFallback !== candidateFallback) return candidateFallback < existingFallback;
     const existingNamed = namedScore(existing);
     const candidateNamed = namedScore(candidate);
     if (existingNamed !== candidateNamed) return candidateNamed > existingNamed;
     return false;
   };
-  // Dedup by command id when present. The executor can expose a formal
-  // Cockpit-created session plus an attach-side fallback shell for the same PTY
-  // command id; showing both creates duplicate rows and can attach users to the
-  // fallback shell. Prefer the named session Cockpit created.
-  const byKey = new Map();
+  const mergeGroups = (target, source) => {
+    if (target === source) return target;
+    for (const alias of source.aliases) {
+      target.aliases.add(alias);
+      groupsByAlias.set(alias, target);
+    }
+    source.merged = true;
+    if (!target.value || (source.value && shouldReplace(target.value, source.value))) target.value = source.value;
+    return target;
+  };
+  // Dedup by every stable alias we see. Docker/host fallback rows can share a
+  // command id with the Cockpit-created session; QEMU fallback rows can instead
+  // share only the formal session id while carrying a different command id. Keep
+  // the named/screen-backed session row so the UI exposes the working attach URL.
+  const groups = [];
+  const groupsByAlias = new Map();
   for (const s of sessions) {
     const sessionId = s.id ?? s.session_id ?? s.sessionId;
     if (!sessionId) continue;
@@ -1378,11 +1403,21 @@ async function getSessions(executorUrl, instanceId) {
       role_policy: s.role_policy ?? s.rolePolicy ?? (s.default_role === 'observer' ? 'observe-default' : s.default_role) ?? 'observe-default',
       attach_url: normalizeAttachUrl(s, sessionId),
     };
-    const key = sessionKey(s, sessionId);
-    const existing = byKey.get(key);
-    if (!existing || shouldReplace(existing, normalized, key)) byKey.set(key, normalized);
+    const aliases = sessionAliases(s, sessionId);
+    let group = aliases.map((alias) => groupsByAlias.get(alias)).find(Boolean);
+    if (!group) {
+      group = { aliases: new Set(), value: null, merged: false };
+      groups.push(group);
+    }
+    for (const alias of aliases) {
+      const other = groupsByAlias.get(alias);
+      if (other && other !== group) group = mergeGroups(group, other);
+      group.aliases.add(alias);
+      groupsByAlias.set(alias, group);
+    }
+    if (!group.value || shouldReplace(group.value, normalized)) group.value = normalized;
   }
-  return { instance_id: instanceId, sessions: [...byKey.values()] };
+  return { instance_id: instanceId, sessions: groups.filter((group) => !group.merged && group.value).map((group) => group.value) };
 }
 
 async function endSession(executorUrl, instanceId, sessionId) {

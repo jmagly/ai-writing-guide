@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { createExecutor } from '../../mock-executor/src/server.mjs';
-import { createBridge } from './server.mjs';
+import { createBridge, normalizeSessionRows } from './server.mjs';
 
 const mock = createExecutor();
 await new Promise((r) => mock.listen(0, '127.0.0.1', r));
@@ -55,6 +55,32 @@ try {
   assert.equal(demo.mode, 'direct', 'demo session mode');
   assert.equal(demo.backend, 'native', 'demo session backend');
   assert.equal(demo.role_policy, 'observe-default', 'session role policy');
+
+  const qemuDedup = normalizeSessionRows({
+    executorUrl,
+    instanceId: 'vm-1',
+    sessionAgentId: 'vm-agent-name',
+    sessions: [
+      {
+        id: 'sess-formal',
+        session_id: 'sess-formal',
+        command_id: 'cmd-real',
+        session_name: 'terminal-qemu',
+        command: '/bin/bash',
+        has_screen: true,
+      },
+      {
+        id: 'sess-formal',
+        session_id: 'sess-formal',
+        command_id: 'sess-formal',
+        session_name: 'sess-formal',
+        command: '/bin/bash -l',
+        has_screen: false,
+      },
+    ],
+  });
+  assert.equal(qemuDedup.sessions.length, 1, 'QEMU formal session + fallback row dedupe to one session');
+  assert.equal(qemuDedup.sessions[0].session_name, 'terminal-qemu', 'dedupe keeps the named screen-backed session');
 
   // missing instance param is a 400
   assert.equal((await f("/api/sessions")).status, 400, 'sessions requires instance');
