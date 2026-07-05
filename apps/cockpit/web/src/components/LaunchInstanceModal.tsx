@@ -141,7 +141,10 @@ export function LaunchInstanceModal({
         body.image = image === '__custom__' ? customImage.trim() : image;
         body.agentshare = true;
       }
-      if (runtime === 'qemu' && sshKey.trim()) body.ssh_key = sshKey.trim();
+      if (runtime === 'qemu') {
+        body.agentshare = true;
+        if (sshKey.trim()) body.ssh_key = sshKey.trim();
+      }
       if (runtime === 'docker' && mounts.trim()) body.mounts = mounts.split('\n').map((m) => m.trim()).filter(Boolean);
       const op = await api<{ id?: string; instance_id?: string; instanceId?: string; operation?: { id?: string }; result?: { instance_id?: string; instanceId?: string } }>('/api/instances', {
         method: 'POST',

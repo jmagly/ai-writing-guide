@@ -139,6 +139,7 @@ describe('LaunchInstanceModal', () => {
       .find((call) => String(call[0]).includes('/api/instances') && call[1]?.method === 'POST');
     expect(JSON.parse(String(postCall?.[1]?.body))).toMatchObject({
       runtime: 'qemu',
+      agentshare: true,
       ssh_key: '~/.ssh/agentic_ed25519.pub',
     });
   });
