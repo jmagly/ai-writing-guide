@@ -40,7 +40,7 @@ jobs:
     name: Build & Deploy Documentation
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
-    timeout-minutes: 15
+    timeout-minutes: 30
     # Force bash so `set -o pipefail` works (gitea-runner-host default is sh/dash).
     defaults:
       run:
@@ -147,6 +147,15 @@ jobs:
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
         run: |
           set -euo pipefail
+          SSH_OPTS=(
+            -i ~/.ssh/deploy_key
+            -p "${DEPLOY_PORT}"
+            -o StrictHostKeyChecking=accept-new
+            -o BatchMode=yes
+            -o ConnectTimeout=20
+            -o ServerAliveInterval=15
+            -o ServerAliveCountMax=4
+          )
           DEPLOY_ROOT="${DEPLOY_PATH%/}/"
           # rsync/ssh do NOT reliably expand `~` — a single-quoted `~/...` reaches
           # the remote `mkdir`/rsync literally and creates a directory named `~`
@@ -158,7 +167,7 @@ jobs:
           case "$DEPLOY_ROOT" in
             /*) : ;;  # already absolute — use as-is
             *)
-              REMOTE_HOME="$(ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
+              REMOTE_HOME="$(ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
               # Strip a single leading literal ~ (escaped \~ so the strip pattern is
               # not itself tilde-expanded), then a single leading /, then anchor to
               # the remote $HOME. Handles ~/path, bare ~, and relative path. A quoted
@@ -181,16 +190,15 @@ jobs:
             echo "Protecting shared docs tenant /${clean}/ from rsync deletion"
             RSYNC_PROTECT_ARGS+=(--filter "P /${clean}/***")
           done
-          ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
-            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+          ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
             "mkdir -p '${DEPLOY_ROOT}'"
 
           # Dry-run first so the job fails before mutation if a protected
           # tenant subtree would be deleted. The receiver-protect filters are
           # kept on the real sync below.
-          rsync -avzn --delete \
+          rsync -avzn --delete --timeout=60 --contimeout=20 \
             "${RSYNC_PROTECT_ARGS[@]}" \
-            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4" \
             "${{ gitea.workspace }}/dist/aiwg-docs/" \
             "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_ROOT}" | tee /tmp/docsite-rsync-plan.txt
           for subpath in ${PROTECTED_DOCS_SUBPATHS}; do
@@ -202,13 +210,12 @@ jobs:
             fi
           done
 
-          rsync -avz --delete \
+          rsync -avz --delete --timeout=60 --contimeout=20 \
             "${RSYNC_PROTECT_ARGS[@]}" \
-            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4" \
             "${{ gitea.workspace }}/dist/aiwg-docs/" \
             "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_ROOT}"
-          ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
-            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+          ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
             "set -e
              if [ ! -d '${DEPLOY_ROOT}sections' ]; then
                echo '::error::Rsync completed but sections/ is missing at ${DEPLOY_ROOT}'
@@ -228,6 +235,15 @@ jobs:
           GITEA_EVENT_NAME: ${{ gitea.event_name }}
         run: |
           set -euo pipefail
+          SSH_OPTS=(
+            -i ~/.ssh/deploy_key
+            -p "${DEPLOY_PORT}"
+            -o StrictHostKeyChecking=accept-new
+            -o BatchMode=yes
+            -o ConnectTimeout=20
+            -o ServerAliveInterval=15
+            -o ServerAliveCountMax=4
+          )
           DEPLOY_ROOT="${DEPLOY_PATH%/}/"
           # rsync/ssh do NOT reliably expand `~` — a single-quoted `~/...` reaches
           # the remote `mkdir`/rsync literally and creates a directory named `~`
@@ -239,7 +255,7 @@ jobs:
           case "$DEPLOY_ROOT" in
             /*) : ;;  # already absolute — use as-is
             *)
-              REMOTE_HOME="$(ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
+              REMOTE_HOME="$(ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
               # Strip a single leading literal ~ (escaped \~ so the strip pattern is
               # not itself tilde-expanded), then a single leading /, then anchor to
               # the remote $HOME. Handles ~/path, bare ~, and relative path. A quoted
@@ -264,8 +280,7 @@ jobs:
             MODE=tag
             SECTION_FILE="sections/releases--${GITEA_REF_NAME}-announcement.js"
             echo "Verify mode: tag — checking ${SECTION_FILE}"
-            ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
-              "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
               "if [ -f '${DEPLOY_ROOT}${SECTION_FILE}' ]; then
                  echo 'Deploy verified: ${SECTION_FILE} is on disk for ${GITEA_REF_NAME}'
                else
@@ -284,8 +299,7 @@ jobs:
           else
             MODE=docs-only
             echo "Verify mode: docs-only (ref=${GITEA_REF}, event=${GITEA_EVENT_NAME})"
-            ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=accept-new \
-              "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
               "set -e
                if [ -f '${DEPLOY_ROOT}index.html' ]; then
                  echo 'index.html present.'
