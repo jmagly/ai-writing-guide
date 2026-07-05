@@ -51,6 +51,13 @@ const toB64 = (s: string): string => {
   return btoa(bin);
 };
 
+export function stripTerminalAutoResponses(data: string): string {
+  return data
+    .replace(/\x1b\][\s\S]*?(?:\x07|\x1b\\)/g, '')
+    .replace(/\x1b\[\?[0-9;]*[cnhl]/g, '')
+    .replace(/\x1b\[[0-9;]*[Rn]/g, '');
+}
+
 function stripAnsi(text: string): string {
   return text
     .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '')
@@ -139,8 +146,10 @@ export function useSession() {
       // Forward keystrokes to the PTY only while driving.
       term.onData((data) => {
         if (roleRef.current !== 'controller') return;
+        const userData = stripTerminalAutoResponses(data);
+        if (!userData) return;
         clearResponseNeeded();
-        sendOp('pty.session_input', { data: toB64(data) });
+        sendOp('pty.session_input', { data: toB64(userData) });
       });
       // Keep tmux sized to the terminal so redraws don't wrap/overflow.
       term.onResize(({ cols, rows }) => {

@@ -53,6 +53,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
       .then((d) => {
         const nextSessions = d.sessions ?? [];
         setSessions(nextSessions);
+        setSessionErr('');
         setAttachUrl((currentUrl) => {
           if (currentUrl && nextSessions.some((s) => s.attach_url === currentUrl)) return currentUrl;
           return nextSessions[0]?.attach_url ?? '';

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useSession } from './useSession';
+import { stripTerminalAutoResponses, useSession } from './useSession';
 
 // Minimal WebSocket double: records every constructed socket and lets the test
 // drive open/close/message. Mirrors the readiness-race timing (#1669).
@@ -22,6 +22,17 @@ beforeEach(() => {
   vi.useFakeTimers();
 });
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
+
+describe('stripTerminalAutoResponses', () => {
+  it('drops OSC color query replies without dropping real input', () => {
+    const data = '\x1b]10;rgb:cdcd/d3d3/dede\x07ls\x1b]11;rgb:0a0a/0c0c/1010\x1b\\\r';
+    expect(stripTerminalAutoResponses(data)).toBe('ls\r');
+  });
+
+  it('drops terminal identity/status replies', () => {
+    expect(stripTerminalAutoResponses('\x1b[?1;2chello\x1b[0n\x1b[12;40R')).toBe('hello');
+  });
+});
 
 describe('useSession — retry through the PTY-readiness window (#1669)', () => {
   it('reconnects on an early empty close instead of giving up', () => {

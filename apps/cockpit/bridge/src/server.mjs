@@ -773,8 +773,8 @@ function defaultSessionLaunch(instance) {
   }
   if (runtime === 'container' || runtime === 'docker' || runtime === 'vm' || runtime === 'qemu' || runtime === 'kvm') {
     return {
-      command: '/bin/sh',
-      args: ['-lc', 'cd "$HOME" && exec bash -l'],
+      command: '/bin/bash',
+      args: ['-lc', 'cd "${HOME:-/root}" && exec /bin/bash -l'],
       working_dir: '/root',
     };
   }
@@ -1337,26 +1337,52 @@ async function getSessions(executorUrl, instanceId) {
     // agent name is only needed for the session-list FETCH, not the attach path.
     return `${wsBase}/agents/${encodeURIComponent(instanceId)}/sessions/${encodeURIComponent(sessionId)}/attach`;
   };
-  // Dedup by session id: the executor can register/return the same session more
-  // than once (e.g. a session registered twice in its registry), which surfaced
-  // as duplicate rows that are impossible to tell apart in the Sessions picker.
-  // Keep the first occurrence of each id (and drop id-less entries).
-  const seen = new Set();
-  const deduped = [];
+  const sessionKey = (entry, sessionId) => String(entry.command_id ?? entry.commandId ?? sessionId);
+  const fallbackScore = (entry, key) => {
+    const id = String(entry.id ?? '');
+    const name = String(entry.session_name ?? entry.sessionName ?? '');
+    const command = String(entry.command ?? '').trim();
+    let score = 0;
+    if (id && id === key) score += 2;
+    if (name && name === key) score += 2;
+    if (/^\/?bin\/bash\s+-l$/.test(command)) score += 1;
+    return score;
+  };
+  const namedScore = (entry) => {
+    const name = String(entry.session_name ?? entry.sessionName ?? '');
+    if (/^terminal-[a-z0-9-]+$/i.test(name)) return 2;
+    return name ? 1 : 0;
+  };
+  const shouldReplace = (existing, candidate, key) => {
+    const existingFallback = fallbackScore(existing, key);
+    const candidateFallback = fallbackScore(candidate, key);
+    if (existingFallback !== candidateFallback) return candidateFallback < existingFallback;
+    const existingNamed = namedScore(existing);
+    const candidateNamed = namedScore(candidate);
+    if (existingNamed !== candidateNamed) return candidateNamed > existingNamed;
+    return false;
+  };
+  // Dedup by command id when present. The executor can expose a formal
+  // Cockpit-created session plus an attach-side fallback shell for the same PTY
+  // command id; showing both creates duplicate rows and can attach users to the
+  // fallback shell. Prefer the named session Cockpit created.
+  const byKey = new Map();
   for (const s of sessions) {
     const sessionId = s.id ?? s.session_id ?? s.sessionId;
-    if (!sessionId || seen.has(sessionId)) continue;
-    seen.add(sessionId);
-    deduped.push({
+    if (!sessionId) continue;
+    const normalized = {
       ...s,
       id: sessionId,
       instance_id: s.instance_id ?? s.instanceId ?? instanceId,
       agent_id: s.agent_id ?? s.agentId ?? sessionAgentId,
       role_policy: s.role_policy ?? s.rolePolicy ?? (s.default_role === 'observer' ? 'observe-default' : s.default_role) ?? 'observe-default',
       attach_url: normalizeAttachUrl(s, sessionId),
-    });
+    };
+    const key = sessionKey(s, sessionId);
+    const existing = byKey.get(key);
+    if (!existing || shouldReplace(existing, normalized, key)) byKey.set(key, normalized);
   }
-  return { instance_id: instanceId, sessions: deduped };
+  return { instance_id: instanceId, sessions: [...byKey.values()] };
 }
 
 async function endSession(executorUrl, instanceId, sessionId) {
