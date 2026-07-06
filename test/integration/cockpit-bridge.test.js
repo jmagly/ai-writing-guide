@@ -10,7 +10,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createExecutor } from '../../apps/cockpit/mock-executor/src/server.mjs';
-import { createBridge, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS } from '../../apps/cockpit/bridge/src/server.mjs';
+import { createBridge, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, fetchJsonFirst } from '../../apps/cockpit/bridge/src/server.mjs';
 
 let mock, bridge, base, token;
 const testMcSessionId = `mc-cockpit-test-${Date.now()}`;
@@ -113,8 +113,38 @@ describe('cockpit Bridge — control surface', () => {
     const id = '550e8400-e29b-41d4-a716-446655440000';
     const created = await (await f(`/api/instances/${id}/sessions?mode=managed&backend=tmux`, { method: 'POST' })).json();
     expect(created.attach_url).toMatch(/^ws:\/\/.*\/attach$/);
+    expect(created.session_name).toMatch(/^cockpit-/);
+    const repeated = await (await f(`/api/instances/${id}/sessions?mode=managed&backend=tmux`, { method: 'POST' })).json();
+    expect(repeated).toMatchObject({ id: created.id, session_name: created.session_name, reused: true });
     const s = await (await f(`/api/sessions?instance=${id}`)).json();
     expect(s.sessions.find((x) => x.id === created.id)).toMatchObject({ mode: 'managed', backend: 'tmux' });
+    expect(s.sessions.filter((x) => x.session_name === created.session_name)).toHaveLength(1);
+  });
+
+  it('does not fall through to another POST candidate after a timeout (#1738)', async () => {
+    let secondHit = false;
+    const upstream = http.createServer((req, res) => {
+      if (req.url === '/slow' && req.method === 'POST') return;
+      if (req.url === '/second' && req.method === 'POST') {
+        secondHit = true;
+        res.writeHead(201, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ created: true }));
+        return;
+      }
+      res.writeHead(404, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ error: 'not_found' }));
+    });
+    await new Promise((r) => upstream.listen(0, '127.0.0.1', r));
+    try {
+      const root = `http://127.0.0.1:${upstream.address().port}`;
+      await expect(fetchJsonFirst([
+        { target: `${root}/slow`, method: 'POST' },
+        { target: `${root}/second`, method: 'POST' },
+      ], { timeoutMs: 5 })).rejects.toThrow(/timeout after 5ms/);
+      expect(secondHit).toBe(false);
+    } finally {
+      upstream.close();
+    }
   });
 
   it('rejects VM launch before provisioning when no SSH public key is configured', async () => {
@@ -419,7 +449,7 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     const created = await (await cf('/api/instances/v2-host-1/sessions', { method: 'POST' })).json();
     expect(created).toMatchObject({
       id: 'sess-created-v1',
-      requested: { session_backend: 'tmux', session_class: 'managed', command: 'bash', working_dir: '/work' },
+      requested: { session_name: 'cockpit-v2-host-1-managed-tmux', session_backend: 'tmux', session_class: 'managed', command: 'bash', working_dir: '/work' },
     });
     expect(created.attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-created-v1\/attach$/);
   });

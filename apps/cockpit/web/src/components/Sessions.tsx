@@ -14,6 +14,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
   const [showPicker, setShowPicker] = useState(false);
   const [endingSession, setEndingSession] = useState('');
   const [sessionErr, setSessionErr] = useState('');
+  const [attachedInstanceId, setAttachedInstanceId] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const insertCap = (r: CapabilityResult) => {
@@ -78,11 +79,25 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
   const backends = current?.session_backends ?? [];
   const selectedBackend = backends.find((b) => `${b.mode}:${b.backend}` === backendKey) ?? backends.find((b) => b.available) ?? backends[0];
   const selectedSession = sessions.find((s) => s.attach_url === attachUrl);
+  const attachedOwner = attachedInstanceId || instanceIdFromAttachUrl(session.state.url);
+  const attachToSession = (s: SessionInfo, role: 'controller' | 'observer') => {
+    setAttachedInstanceId(s.instance_id || instId);
+    session.attach(s.attach_url, false, role);
+  };
+  const replaySession = (s: SessionInfo, role: 'controller' | 'observer') => {
+    setAttachedInstanceId(s.instance_id || instId);
+    session.replay(s.attach_url, role);
+  };
+  const detachSession = () => {
+    setAttachedInstanceId('');
+    session.detach();
+  };
   useEffect(() => {
     if (!session.state.url) return;
+    if (!attachedOwner || attachedOwner !== instId) return;
     const sessionStillListed = sessions.some((s) => s.attach_url === session.state.url);
-    if (sessions.length && !sessionStillListed) session.detach();
-  }, [session.state.url, session.detach, sessions]);
+    if (sessions.length && !sessionStillListed) detachSession();
+  }, [attachedOwner, instId, session.state.url, sessions]);
   useEffect(() => {
     if (!current) return;
     const valid = current.session_backends.some((b) => `${b.mode}:${b.backend}` === backendKey);
@@ -103,7 +118,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
     setSessionErr('');
     try {
       await api(`/api/instances/${encodeURIComponent(current.id)}/sessions/${encodeURIComponent(s.id)}`, { method: 'DELETE' });
-      if (session.state.url === s.attach_url) session.detach();
+      if (session.state.url === s.attach_url) detachSession();
       await loadSessions(current.id);
     } catch (e) {
       setSessionErr((e as Error).message);
@@ -156,9 +171,9 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
                                   const role = session.state.role === 'controller' && selectedBackend?.drive !== false ? 'controller' : 'observer';
                                   setAttachUrl(s.attach_url);
                                   if (s.attach_url === session.state.url && attached) {
-                                    session.replay(s.attach_url, role);
+                                    replaySession(s, role);
                                   } else {
-                                    session.attach(s.attach_url, false, role);
+                                    attachToSession(s, role);
                                   }
                                 }}
                                 title={s.id}
@@ -201,13 +216,13 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
               </>
             )}
             <span className="controls-active" title={selectedSession?.id}>{selectedSession ? sessionLabel(selectedSession) : '— no session selected —'}</span>
-            <button disabled={!attachUrl || (attached && session.state.role === 'observer')} onClick={() => session.attach(attachUrl, false, 'observer')}>Observe</button>
-            <button disabled={!attachUrl || selectedBackend?.drive === false || (attached && session.state.role === 'controller')} onClick={() => session.attach(attachUrl, false, 'controller')}>
+            <button disabled={!attachUrl || (attached && session.state.role === 'observer')} onClick={() => selectedSession && attachToSession(selectedSession, 'observer')}>Observe</button>
+            <button disabled={!attachUrl || selectedBackend?.drive === false || (attached && session.state.role === 'controller')} onClick={() => selectedSession && attachToSession(selectedSession, 'controller')}>
               {attached && session.state.role === 'observer' ? 'Take Control' : 'Drive'}
             </button>
             <button disabled={!attached || selectedBackend?.keyframe === false} onClick={session.requestKeyframe}>Keyframe</button>
-            <button disabled={!attached} onClick={() => session.replay(attachUrl, requestedReplayRole)}>Reattach + replay</button>
-            <button disabled={!attached} onClick={session.detach}>Detach</button>
+            <button disabled={!attached} onClick={() => selectedSession && replaySession(selectedSession, requestedReplayRole)}>Reattach + replay</button>
+            <button disabled={!attached} onClick={detachSession}>Detach</button>
             {session.state.role && <span className={`badge ${session.state.role}`}>{session.state.role}</span>}
           </div>
           {sessionErr && <p className="err">Session action failed: {sessionErr}</p>}
@@ -254,6 +269,18 @@ function sessionMeta(s: SessionInfo): string {
 }
 function sessionHoldsController(s: SessionInfo): boolean {
   return s.has_controller === true || (s.controllers ?? 0) > 0;
+}
+
+function instanceIdFromAttachUrl(url: string | null): string {
+  if (!url) return '';
+  try {
+    const parsed = new URL(url);
+    const match = parsed.pathname.match(/\/agents\/([^/]+)\/sessions\//);
+    return match ? decodeURIComponent(match[1]) : '';
+  } catch {
+    const match = url.match(/\/agents\/([^/]+)\/sessions\//);
+    return match ? decodeURIComponent(match[1]) : '';
+  }
 }
 
 function dedupeInstances(instances: Instance[]) {

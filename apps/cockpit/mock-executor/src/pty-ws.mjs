@@ -76,6 +76,7 @@ export function listSessions(instanceId) {
       observers: s.members.filter((m) => m.role === 'observer').length,
       mode: s.mode ?? 'direct',
       backend: s.backend ?? 'native',
+      session_name: s.sessionName,
       role_policy: 'observe-default',
       replay: true,
       keyframe: true,
@@ -83,14 +84,19 @@ export function listSessions(instanceId) {
 }
 
 /** Create a fresh session on an instance (the "Start a session" primary verb). */
-export function createSession(instanceId, { mode = 'direct', backend = 'native' } = {}) {
+export function createSession(instanceId, { mode = 'direct', backend = 'native', sessionName } = {}) {
+  const existing = sessionName
+    ? [...sessions.values()].find((s) => s.instanceId === instanceId && s.sessionName === sessionName)
+    : null;
+  if (existing) return { id: existing.id, session_name: existing.sessionName, instance_id: instanceId };
   const id = `sess-${randomUUID().slice(0, 8)}`;
   const session = sessionOf(id, instanceId);
   session.mode = mode;
   session.backend = backend;
+  session.sessionName = sessionName;
   const seq = ++session.seq;
   session.frames.push({ op: 'output', seq, payload: { stream: 'stdout', data: b64(`$ cockpit session ${id} ready on ${mode}/${backend}\r\n`) } });
-  return { id, instance_id: instanceId };
+  return { id, session_name: sessionName, instance_id: instanceId };
 }
 
 /** Seed one demo pty session with a short transcript so observe/replay show content immediately. */

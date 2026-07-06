@@ -357,7 +357,23 @@ async function proxy(res, method, target) {
   return json(res, r.status, body);
 }
 
-async function fetchJsonFirst(candidates, { method = 'GET', headers, body: requestBodyOption, timeoutMs = 0 } = {}) {
+const SAFE_FALLBACK_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+function isAbortError(err) {
+  return err?.name === 'AbortError' || /aborted|abort/i.test(String(err?.message ?? err));
+}
+
+function isConnectionRefusedError(err) {
+  const text = [
+    err?.code,
+    err?.cause?.code,
+    err?.message,
+    err?.cause?.message,
+  ].filter(Boolean).join(' ');
+  return /ECONNREFUSED|connection refused/i.test(text);
+}
+
+export async function fetchJsonFirst(candidates, { method = 'GET', headers, body: requestBodyOption, timeoutMs = 0 } = {}) {
   const failures = [];
   for (const candidate of candidates) {
     const target = typeof candidate === 'string' ? candidate : candidate.target;
@@ -370,7 +386,13 @@ async function fetchJsonFirst(candidates, { method = 'GET', headers, body: reque
     try {
       r = await fetch(target, { method: requestMethod, headers: requestHeaders, body: requestBody, ...(controller ? { signal: controller.signal } : {}) });
     } catch (err) {
-      failures.push(`${target} -> ${String(err?.message ?? err)}`);
+      const failure = isAbortError(err) && timeoutMs > 0
+        ? `${target} -> timeout after ${timeoutMs}ms`
+        : `${target} -> ${String(err?.message ?? err)}`;
+      failures.push(failure);
+      const safeToTryNext = SAFE_FALLBACK_METHODS.has(String(requestMethod).toUpperCase())
+        || isConnectionRefusedError(err);
+      if (!safeToTryNext) throw new Error(failures.join('; '));
       continue;
     } finally {
       if (timeout) clearTimeout(timeout);
@@ -786,6 +808,15 @@ function defaultSessionLaunch(instance) {
     command: 'bash',
     args: ['-l'],
   };
+}
+
+function stableSessionName(instanceId, { mode = 'managed', backend = 'tmux' } = {}) {
+  const slug = (value) => String(value || 'default')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 36) || 'default';
+  return `cockpit-${slug(instanceId)}-${slug(mode)}-${slug(backend)}`;
 }
 
 function runtimeExtensionFromCard(card) {
@@ -1454,6 +1485,20 @@ async function endSession(executorUrl, instanceId, sessionId) {
   };
 }
 
+async function findReusableSession(executorUrl, instanceId, sessionName) {
+  const sessions = (await getSessions(executorUrl, instanceId)).sessions;
+  return sessions.find((s) => String(s.session_name ?? s.sessionName ?? '') === String(sessionName));
+}
+
+function sessionResponseFromRow(row) {
+  return {
+    ...row,
+    id: row.id ?? row.session_id ?? row.sessionId,
+    attach_url: row.attach_url ?? row.attachUrl,
+    reused: true,
+  };
+}
+
 export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = ALLOW_MOCK_EXECUTOR, token } = {}) {
   const upstreamUrl = executorUrl;
   const TOKEN = token ?? randomBytes(24).toString('hex');
@@ -1664,6 +1709,7 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         if (backend) qs.set('backend', backend);
         if (loadout) qs.set('loadout', loadout);
         const sessionAgentId = await resolveSessionAgentId(upstreamUrl, id);
+        const sessionName = stableSessionName(id, { mode: mode || 'managed', backend: backend || 'tmux' });
         let sessionLaunch = defaultSessionLaunch();
         try {
           const inventory = await getInventory(upstreamUrl);
@@ -1672,28 +1718,45 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
           // Session creation can still proceed without an explicit cwd; the
           // executor/agent will fall back to its own process cwd.
         }
+        try {
+          const reusable = await findReusableSession(upstreamUrl, id, sessionName);
+          if (reusable) return json(res, 200, sessionResponseFromRow(reusable));
+        } catch {
+          // If listing is not available yet, fall through to create. A failed or
+          // timed-out create lists again below before reporting failure.
+        }
+        const sessionBody = JSON.stringify({
+          session_name: sessionName,
+          session_backend: backend || 'tmux',
+          session_class: mode || 'managed',
+          command: sessionLaunch.command,
+          args: sessionLaunch.args,
+          ...(sessionLaunch.working_dir ? { working_dir: sessionLaunch.working_dir } : {}),
+        });
         const candidates = unique([sessionAgentId, id]).flatMap((agentId) => [
           {
             target: `${upstreamUrl}/api/v1/agents/${encodeURIComponent(agentId)}/sessions`,
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              session_backend: backend || 'tmux',
-              session_class: mode || 'managed',
-              command: sessionLaunch.command,
-              args: sessionLaunch.args,
-              ...(sessionLaunch.working_dir ? { working_dir: sessionLaunch.working_dir } : {}),
-            }),
+            body: sessionBody,
           },
           {
             target: `${upstreamUrl}/agents/${encodeURIComponent(agentId)}/sessions?${qs.toString()}`,
             method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: sessionBody,
           },
         ]);
         let sessionCreate;
         try {
           sessionCreate = await fetchJsonFirst(candidates, { timeoutMs: 8000 });
         } catch (err) {
+          try {
+            const reusable = await findReusableSession(upstreamUrl, id, sessionName);
+            if (reusable) return json(res, 200, sessionResponseFromRow(reusable));
+          } catch {
+            // Preserve the original create failure; reuse is a recovery path only.
+          }
           return json(res, 409, {
             error: 'agent_not_registered',
             message: 'The instance is visible in inventory, but its agent has not registered yet; PTY sessions are not ready.',
@@ -1701,6 +1764,15 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
           });
         }
         const { status, body } = sessionCreate;
+        if (status < 200 || status >= 300) {
+          try {
+            const reusable = await findReusableSession(upstreamUrl, id, sessionName);
+            if (reusable) return json(res, 200, sessionResponseFromRow(reusable));
+          } catch {
+            // Return the upstream non-2xx response when no reusable session is visible.
+          }
+          return json(res, status, body);
+        }
         const wsBase = upstreamUrl.replace(/^http/i, 'ws');
         const sessionId = body.id ?? body.session_id ?? body.sessionId;
         if (status >= 200 && status < 300 && !sessionId && !body.attach_url && !body.attachUrl && !body.pty_ws_url && !body.ptyWsUrl) {
@@ -1716,8 +1788,8 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         }
         // Same as the list path (#1671): the attach segment must be the instance
         // id the executor's pty-ws route accepts, not the resolved agent name.
-        await appendAudit('session.start.requested', { instance_id: id, mode: mode || 'managed', backend: backend || 'tmux', loadout, status, session_id: sessionId });
-        return json(res, status, { ...body, id: sessionId, attach_url: attachUrl ?? `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(sessionId)}/attach` });
+        await appendAudit('session.start.requested', { instance_id: id, mode: mode || 'managed', backend: backend || 'tmux', loadout, status, session_id: sessionId, session_name: sessionName });
+        return json(res, status, { ...body, id: sessionId, session_name: body.session_name ?? body.sessionName ?? sessionName, attach_url: attachUrl ?? `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(sessionId)}/attach` });
       }
 
       // --- management surface (UC-012): lifecycle + task cancel ---

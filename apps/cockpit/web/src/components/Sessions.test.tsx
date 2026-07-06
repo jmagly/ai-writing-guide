@@ -142,6 +142,30 @@ describe('Sessions', () => {
     expect(session.attach).toHaveBeenCalledWith('ws://x/agents/inst-1/sessions/sess-2/attach', false, 'controller');
   });
 
+  it('does not detach the live session when browsing another instance (#1739)', async () => {
+    const session = stubSession();
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [INSTANCE, INSTANCE_NEXT] });
+      if (url.includes('instance=inst-1')) return jsonResponse({
+        sessions: [{ id: 'sess-1', session_name: 'terminal-main', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-1/attach', mode: 'managed', backend: 'tmux' }],
+      });
+      if (url.includes('instance=inst-2')) return jsonResponse({
+        sessions: [{ id: 'sess-2', session_name: 'terminal-other', instance_id: 'inst-2', attach_url: 'ws://x/agents/inst-2/sessions/sess-2/attach', mode: 'managed', backend: 'tmux' }],
+      });
+      return new Response('{}', { status: 404 });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<Sessions session={session} composer="" setComposer={() => {}} onRequestStart={() => {}} />);
+
+    expect((await screen.findAllByTitle('sess-1')).length).toBeGreaterThan(0);
+    fireEvent.click(await screen.findByText('docker-two'));
+    expect((await screen.findAllByText('terminal-other')).length).toBeGreaterThan(0);
+
+    expect(session.detach).not.toHaveBeenCalled();
+  });
+
   it('reattaches with replay instead of downgrading when re-selecting the session already attached', async () => {
     const session = stubSession(); // state.url === .../sessions/sess-1/attach, role controller
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
-import { App } from './App';
+import { App, waitForSessionReady } from './App';
 
 // Rendered-DOM coverage (the a11y assertions deferred from T2, and a guard against the
 // "blank render" class of bug). The Welcome tab fetches inventory/running/approvals on
@@ -43,6 +43,26 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getByRole('option', { name: 'VM / QEMU' })).toBeTruthy();
     expect(screen.getByText(/existing instances and sessions keep running/i)).toBeTruthy();
     expect(screen.getByText(/start a session automatically/i)).toBeTruthy();
+  });
+
+  it('does not bind launch session creation to the first unrelated running instance (#1743)', async () => {
+    vi.useFakeTimers();
+    try {
+      globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/api/operations/op-1')) return jsonResponse({ id: 'op-1', state: 'running', result: { runtime: 'docker' } });
+        if (url.includes('/api/inventory')) return jsonResponse({ instances: [instance('busy-existing', 'container', 'Existing stack')] });
+        return jsonResponse({});
+      }) as typeof fetch;
+
+      const ready = waitForSessionReady(undefined, 'op-1');
+      const rejection = expect(ready).rejects.toThrow(/waiting for launch operation to report instance id/i);
+      for (let i = 0; i < 151; i += 1) await vi.advanceTimersByTimeAsync(1_000);
+      await rejection;
+      expect(globalThis.fetch).not.toHaveBeenCalledWith(expect.stringContaining('/api/instances/busy-existing/sessions'), expect.anything());
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('renders durable Missions projection from aiwg mc state and live executor work', async () => {

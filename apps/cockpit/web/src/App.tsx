@@ -222,7 +222,7 @@ const SESSION_READY_TIMEOUT_S = (() => {
   return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 150;
 })();
 
-async function waitForSessionReady(instanceId?: string, operationId?: string) {
+export async function waitForSessionReady(instanceId?: string, operationId?: string) {
   let last = '';
   let operationDetail = '';
   for (let i = 0; i < SESSION_READY_TIMEOUT_S; i += 1) {
@@ -239,9 +239,7 @@ async function waitForSessionReady(instanceId?: string, operationId?: string) {
     }
     const inv = await api<{ instances: Instance[] }>('/api/inventory');
     const candidates = inv.instances.filter((inst) => String(inst.state).toLowerCase() === 'running');
-    const selected = instanceId
-      ? candidates.find((inst) => inst.id === instanceId)
-      : candidates[0];
+    const selected = instanceId ? candidates.find((inst) => inst.id === instanceId) : null;
     if (selected) {
       const backend = selected.session_backends.find((b) => b.available !== false) ?? selected.session_backends[0];
       if (backend && backend.available !== false) return selected;
@@ -249,7 +247,7 @@ async function waitForSessionReady(instanceId?: string, operationId?: string) {
     } else {
       last = [
         operationDetail,
-        instanceId ? `instance ${instanceId} not visible in inventory yet` : 'no running instance visible in inventory yet',
+        instanceId ? `instance ${instanceId} not visible in inventory yet` : 'waiting for launch operation to report instance id',
       ].filter(Boolean).join('; ');
     }
     await sleep(1_000);
