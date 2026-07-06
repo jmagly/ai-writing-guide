@@ -419,9 +419,8 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     const created = await (await cf('/api/instances/v2-host-1/sessions', { method: 'POST' })).json();
     expect(created).toMatchObject({
       id: 'sess-created-v1',
-      requested: { session_backend: 'tmux', session_class: 'managed', command: 'bash' },
+      requested: { session_backend: 'tmux', session_class: 'managed', command: 'bash', working_dir: '/work' },
     });
-    expect(created.requested).not.toHaveProperty('working_dir');
     expect(created.attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-created-v1\/attach$/);
   });
 
