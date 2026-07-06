@@ -11,13 +11,13 @@ const INSTANCE = {
   launch_context: { loadout: 'agentic-dev' },
   session_backends: [{ mode: 'managed', backend: 'tmux', available: true, drive: true }],
 };
-function mockFetch(postImpl?: () => Response | Promise<Response>) {
+function mockFetch(postImpl?: (init?: RequestInit) => Response | Promise<Response>) {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const ok = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
     if (url.includes('/api/inventory')) return ok({ instances: [INSTANCE] });
     if (url.includes('/sessions') && init?.method === 'POST') {
-      return postImpl ? postImpl() : ok({ id: 'sess-x', attach_url: 'ws://x/agents/i/sessions/sess-x/attach' });
+      return postImpl ? postImpl(init) : ok({ id: 'sess-x', attach_url: 'ws://x/agents/i/sessions/sess-x/attach' });
     }
     return new Response('{}', { status: 404 });
   }) as unknown as typeof fetch;
@@ -32,7 +32,7 @@ function stubSession(attached = false): SessionApi {
 }
 
 beforeEach(() => { (window as unknown as { __COCKPIT_TOKEN__: string }).__COCKPIT_TOKEN__ = 't'; });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe('StartSessionModal (#1640/#1641)', () => {
   it('renders nothing when closed', () => {
@@ -82,5 +82,28 @@ describe('StartSessionModal (#1640/#1641)', () => {
     fireEvent.click(startBtn);
     await waitFor(() => expect(screen.getByText(/→ 500/)).toBeTruthy());
     expect(alertSpy).not.toHaveBeenCalled();
+  });
+
+  it('unlocks when session start times out', async () => {
+    globalThis.fetch = mockFetch((init) => new Promise<Response>((_, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    }));
+    render(<StartSessionModal open onClose={() => {}} session={stubSession()} onStarted={() => {}} startTimeoutMs={5} />);
+    const startBtn = await screen.findByRole('button', { name: /start session/i });
+    await waitFor(() => expect((startBtn as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(startBtn);
+    expect(await screen.findByRole('button', { name: /starting/i })).toBeTruthy();
+    await waitFor(() => expect(screen.getByText(/timed out/i)).toBeTruthy());
+    expect(screen.getByRole('button', { name: /start session/i })).toBeTruthy();
+  });
+
+  it('unlocks when the bridge returns no attach URL', async () => {
+    globalThis.fetch = mockFetch(() => new Response('{"id":"sess-x"}', { status: 200, headers: { 'content-type': 'application/json' } }));
+    render(<StartSessionModal open onClose={() => {}} session={stubSession()} onStarted={() => {}} />);
+    const startBtn = await screen.findByRole('button', { name: /start session/i });
+    await waitFor(() => expect((startBtn as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(startBtn);
+    await waitFor(() => expect(screen.getByText(/no attach URL/i)).toBeTruthy());
+    expect(screen.getByRole('button', { name: /start session/i })).toBeTruthy();
   });
 });

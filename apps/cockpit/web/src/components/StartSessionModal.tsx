@@ -15,9 +15,12 @@ interface Props {
   session: SessionApi;
   onStarted: () => void;          // switch to the Sessions workspace after attach
   initialInstanceId?: string;     // pre-select when opened from a specific instance/board
+  startTimeoutMs?: number;
 }
 
-export function StartSessionModal({ open, onClose, session, onStarted, initialInstanceId }: Props) {
+const START_SESSION_TIMEOUT_MS = 15000;
+
+export function StartSessionModal({ open, onClose, session, onStarted, initialInstanceId, startTimeoutMs = START_SESSION_TIMEOUT_MS }: Props) {
   const [instances, setInstances] = useState<Instance[]>([]);
   const [instId, setInstId] = useState('');
   const [loadoutId, setLoadoutId] = useState('');
@@ -77,17 +80,26 @@ export function StartSessionModal({ open, onClose, session, onStarted, initialIn
   const start = async () => {
     if (!current || !selectedBackend) return;
     setBusy(true); setErr('');
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), startTimeoutMs);
     try {
       const qs = new URLSearchParams({ mode: selectedBackend.mode, backend: selectedBackend.backend });
       const s = await api<{ id: string; attach_url: string }>(
-        `/api/instances/${encodeURIComponent(current.id)}/sessions?${qs}`, { method: 'POST' },
+        `/api/instances/${encodeURIComponent(current.id)}/sessions?${qs}`,
+        { method: 'POST', signal: controller.signal },
       );
+      if (!s.attach_url) throw new Error('Session started but no attach URL was returned.');
       session.attach(s.attach_url, false, posture);
       onStarted();
       onClose();
     } catch (e) {
-      setErr((e as Error).message);   // inline — the operator sees exactly why
+      const message = e instanceof DOMException && e.name === 'AbortError'
+        ? 'Starting the session timed out. The instance may still be preparing PTY support; refresh sessions and try again.'
+        : (e as Error).message;
+      setErr(message);   // inline — the operator sees exactly why
       setBusy(false);
+    } finally {
+      window.clearTimeout(timeout);
     }
   };
 

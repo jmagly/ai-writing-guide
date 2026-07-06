@@ -357,19 +357,23 @@ async function proxy(res, method, target) {
   return json(res, r.status, body);
 }
 
-async function fetchJsonFirst(candidates, { method = 'GET', headers, body: requestBodyOption } = {}) {
+async function fetchJsonFirst(candidates, { method = 'GET', headers, body: requestBodyOption, timeoutMs = 0 } = {}) {
   const failures = [];
   for (const candidate of candidates) {
     const target = typeof candidate === 'string' ? candidate : candidate.target;
     const requestMethod = typeof candidate === 'string' ? method : candidate.method ?? method;
     const requestHeaders = typeof candidate === 'string' ? headers : candidate.headers ?? headers;
     const requestBody = typeof candidate === 'string' ? requestBodyOption : candidate.body ?? requestBodyOption;
+    const controller = timeoutMs > 0 ? new AbortController() : null;
+    const timeout = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
     let r;
     try {
-      r = await fetch(target, { method: requestMethod, headers: requestHeaders, body: requestBody });
+      r = await fetch(target, { method: requestMethod, headers: requestHeaders, body: requestBody, ...(controller ? { signal: controller.signal } : {}) });
     } catch (err) {
       failures.push(`${target} -> ${String(err?.message ?? err)}`);
       continue;
+    } finally {
+      if (timeout) clearTimeout(timeout);
     }
     const responseBody = await r.json().catch(() => ({}));
     if (r.ok) return { target, status: r.status, body: responseBody };
@@ -1688,7 +1692,7 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         ]);
         let sessionCreate;
         try {
-          sessionCreate = await fetchJsonFirst(candidates);
+          sessionCreate = await fetchJsonFirst(candidates, { timeoutMs: 8000 });
         } catch (err) {
           return json(res, 409, {
             error: 'agent_not_registered',
