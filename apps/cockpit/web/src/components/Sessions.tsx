@@ -148,13 +148,18 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
                             <li key={s.id}>
                               <button
                                 className={`nav-session${selS ? ' selected' : ''}${live ? ' live' : ''}`}
-                                // Selecting a session auto-attaches in observe (read-only) so the
-                                // operator immediately sees it; they click Drive to take control.
-                                // Re-selecting the session already attached here is a no-op (don't
-                                // downgrade an active controller back to observer).
+                                // Selecting a session keeps the operator's current posture when
+                                // possible. If they are already driving, do not silently downgrade
+                                // to observe; if they click the attached row, reattach+replay so
+                                // Docker/tmux streams repaint and control is reasserted.
                                 onClick={() => {
+                                  const role = session.state.role === 'controller' && selectedBackend?.drive !== false ? 'controller' : 'observer';
                                   setAttachUrl(s.attach_url);
-                                  if (s.attach_url !== session.state.url) session.attach(s.attach_url, false, 'observer');
+                                  if (s.attach_url === session.state.url && attached) {
+                                    session.replay(s.attach_url, role);
+                                  } else {
+                                    session.attach(s.attach_url, false, role);
+                                  }
                                 }}
                                 title={s.id}
                               >

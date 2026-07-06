@@ -121,7 +121,7 @@ describe('Sessions', () => {
     expect(await within(nav).findByTitle('sess-new')).toBeTruthy();
   });
 
-  it('auto-attaches in observe when a different session is selected (#1670)', async () => {
+  it('keeps controller posture when a different session is selected while driving (#1670)', async () => {
     const session = stubSession(); // currently attached to .../sessions/sess-1/attach as controller
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -137,11 +137,12 @@ describe('Sessions', () => {
     const nav = screen.getByLabelText('Instances and sessions');
     const sessBtn = await within(nav).findByTitle('sess-2');
     fireEvent.click(sessBtn);
-    // Selecting a not-yet-attached session attaches it read-only; the operator clicks Drive to take over.
-    expect(session.attach).toHaveBeenCalledWith('ws://x/agents/inst-1/sessions/sess-2/attach', false, 'observer');
+    // Selecting a not-yet-attached session should not silently downgrade an
+    // operator who is already driving another session.
+    expect(session.attach).toHaveBeenCalledWith('ws://x/agents/inst-1/sessions/sess-2/attach', false, 'controller');
   });
 
-  it('does not re-attach (downgrade) when re-selecting the session already attached', async () => {
+  it('reattaches with replay instead of downgrading when re-selecting the session already attached', async () => {
     const session = stubSession(); // state.url === .../sessions/sess-1/attach, role controller
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -156,8 +157,10 @@ describe('Sessions', () => {
 
     const nav = screen.getByLabelText('Instances and sessions');
     fireEvent.click(await within(nav).findByTitle('sess-1'));
-    // Clicking the session we already drive must not downgrade us back to observer.
+    // Clicking the session we already drive replays/reasserts controller; it
+    // must not downgrade us back to observer.
     expect(session.attach).not.toHaveBeenCalled();
+    expect(session.replay).toHaveBeenCalledWith('ws://x/agents/inst-1/sessions/sess-1/attach', 'controller');
   });
 
   it('distinguishes sessions by name + backend + viewer count in the nav (#1670)', async () => {
