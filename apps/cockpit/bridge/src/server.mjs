@@ -791,17 +791,23 @@ function normalizeInstance(executorUrl, i) {
 function defaultSessionLaunch(instance) {
   const runtime = String(instance?.runtime_posture?.kind ?? instance?.runtime ?? '').toLowerCase();
   if (runtime === 'host') {
+    // Honor the executor-reported cwd — it is valid on the target host, including
+    // remote worker hosts whose filesystem does not mirror the Bridge machine.
+    // Fall back to the operator home only when the executor reports no cwd;
+    // hardcoding homedir() would resolve the Bridge's local home and break
+    // sessions on any host runtime that is not the Bridge machine itself.
     return {
       command: 'bash',
       args: ['-l'],
-      working_dir: instance?.launch_context?.cwd,
+      working_dir: instance?.launch_context?.cwd ?? homedir(),
     };
   }
   if (runtime === 'container' || runtime === 'docker' || runtime === 'vm' || runtime === 'qemu' || runtime === 'kvm') {
+    const home = runtime === 'container' || runtime === 'docker' ? '/root' : '/home/agent';
     return {
       command: '/bin/bash',
-      args: ['-lc', 'cd "${HOME:-/root}" && exec /bin/bash -l'],
-      working_dir: '/root',
+      args: ['-lc', `cd ${shellSingleQuote(home)} && exec /bin/bash -l`],
+      working_dir: home,
     };
   }
   return {
@@ -817,6 +823,10 @@ function stableSessionName(instanceId, { mode = 'managed', backend = 'tmux' } = 
     .replace(/^-+|-+$/g, '')
     .slice(0, 36) || 'default';
   return `cockpit-${slug(instanceId)}-${slug(mode)}-${slug(backend)}`;
+}
+
+function shellSingleQuote(value) {
+  return `'${String(value).replaceAll("'", "'\"'\"'")}'`;
 }
 
 function runtimeExtensionFromCard(card) {

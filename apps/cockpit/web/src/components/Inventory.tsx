@@ -45,13 +45,13 @@ export function Inventory({ onStartSession, onLaunchInstance }: { onStartSession
       <div className="section-toolbar">
         <div>
           <h2>Agent instances</h2>
-          <p className="hint">{data.count} target(s) · {new Date(data.fetched_at).toLocaleTimeString()}</p>
+          <p className="hint">{data.count} {data.count === 1 ? 'target' : 'targets'} · {new Date(data.fetched_at).toLocaleTimeString()}</p>
         </div>
-        {onLaunchInstance && <button className="cta" onClick={onLaunchInstance}>＋ New instance + session</button>}
+        {onLaunchInstance && <button className="cta" onClick={onLaunchInstance}>New instance</button>}
       </div>
       {actionErr && <p className="err">Action failed: {actionErr}</p>}
       {actionMsg && <p className="hint" role="status">{actionMsg}</p>}
-      <table>
+      <table className="inventory-table">
         <caption>Available instance deployments</caption>
         <thead>
           <tr>
@@ -71,11 +71,11 @@ export function Inventory({ onStartSession, onLaunchInstance }: { onStartSession
                 const unavailableReason = i.session_backends?.find((b) => !b.available)?.reason;
                 return (
             <>
-              <td>
+              <td className="instance-cell">
                 <code title={i.id}>{i.launch_context?.name ?? fmtId(i.id)}</code>
                 {i.launch_context?.name && <div className="cell-note">{fmtId(i.id)}</div>}
               </td>
-              <td>
+              <td className="runtime-cell">
                 <span className={`badge isolation-${i.runtime_posture.isolation}`} title={i.runtime_posture.warning || i.runtime_posture.label}>
                   {i.runtime_posture.label}
                 </span>
@@ -92,7 +92,7 @@ export function Inventory({ onStartSession, onLaunchInstance }: { onStartSession
                 </span>
                 <div className="cell-note">{i.transport.mode}{i.transport.stale ? ' · stale' : ''}</div>
               </td>
-              <td>
+              <td className="daemon-cell">
                 <span className={`badge daemon-${i.host_daemon.status}`}>{i.host_daemon.status.replace('_', ' ')}</span>
                 {i.host_daemon.detail && <div className="cell-note">{i.host_daemon.detail}</div>}
                 {i.host_daemon.operator_command && <code title="Operator start command">{i.host_daemon.operator_command}</code>}
@@ -108,12 +108,12 @@ export function Inventory({ onStartSession, onLaunchInstance }: { onStartSession
                     title={!sessionReady ? unavailableReason : undefined}
                     onClick={() => onStartSession(i.id)}
                   >
-                    New Session
+                    Session
                   </button>
                 )}{' '}
                 {i.state === 'running'
-                  ? <button aria-label={`Stop instance ${fmtId(i.id)}`} onClick={() => control(`/api/instances/${encodeURIComponent(i.id)}/stop`, 'POST')}>Stop Instance</button>
-                  : <button aria-label={`Start instance ${fmtId(i.id)}`} onClick={() => control(`/api/instances/${encodeURIComponent(i.id)}/start`, 'POST')}>Start Instance</button>}{' '}
+                  ? <button aria-label={`Stop instance ${fmtId(i.id)}`} onClick={() => control(`/api/instances/${encodeURIComponent(i.id)}/stop`, 'POST')}>Stop</button>
+                  : <button aria-label={`Start instance ${fmtId(i.id)}`} onClick={() => control(`/api/instances/${encodeURIComponent(i.id)}/start`, 'POST')}>Start</button>}{' '}
                 <button
                   aria-label={`Destroy instance ${fmtId(i.id)}`}
                   title={i.state !== 'running' && i.runtime === 'docker' ? 'Stopped Docker row — Destroy removes the container directly (admin-v2 has no instance record).' : undefined}

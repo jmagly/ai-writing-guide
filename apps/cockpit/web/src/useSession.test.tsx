@@ -134,7 +134,7 @@ describe('useSession — retry through the PTY-readiness window (#1669)', () => 
     expect(result.current.state.role).toBe('controller');
   });
 
-  it('reattaches for replay immediately and asks the active socket for replay_from', () => {
+  it('reattaches for replay immediately and requests replay_from in the join payload', () => {
     const { result } = renderHook(() => useSession());
     act(() => { result.current.attach('ws://x/session', false, 'controller'); });
     const first = MockWS.instances[0];
@@ -146,7 +146,7 @@ describe('useSession — retry through the PTY-readiness window (#1669)', () => 
     act(() => { result.current.replay('ws://x/session', 'controller'); });
     expect(MockWS.instances).toHaveLength(2);
     const replay = MockWS.instances[1];
-    expect(replay.url).toBe('ws://x/session?replay_from=12');
+    expect(replay.url).toBe('ws://x/session');
 
     act(() => { replay.emit('message', { data: JSON.stringify({ op: 'binding_hello' }) }); });
     expect(JSON.parse(replay.sent[0])).toEqual({ op: 'pty.join_session', payload: { role: 'controller', replay_from: 12 } });

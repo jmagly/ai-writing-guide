@@ -38,13 +38,29 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .badge.isolation-strong, .badge.trust-secure, .badge.daemon-available, .badge.daemon-detected { border-color:var(--ok); color:var(--ok); }
 .badge.isolation-unknown, .badge.trust-unknown, .badge.daemon-unavailable { border-color:var(--idle); color:var(--muted); }
 .cell-note { color:var(--muted); font-size:12px; margin-top:3px; max-width:260px; }
+.inventory-table { table-layout:fixed; }
+.inventory-table th, .inventory-table td { vertical-align:top; }
+.inventory-table th:nth-child(1), .inventory-table td:nth-child(1) { width:17%; }
+.inventory-table th:nth-child(2), .inventory-table td:nth-child(2) { width:15%; }
+.inventory-table th:nth-child(3), .inventory-table td:nth-child(3) { width:13%; }
+.inventory-table th:nth-child(4), .inventory-table td:nth-child(4) { width:11%; }
+.inventory-table th:nth-child(5), .inventory-table td:nth-child(5) { width:13%; }
+.inventory-table th:nth-child(6), .inventory-table td:nth-child(6) { width:7%; }
+.inventory-table th:nth-child(7), .inventory-table td:nth-child(7) { width:6%; }
+.inventory-table th:nth-child(8), .inventory-table td:nth-child(8) { width:18%; }
+.inventory-table .badge { max-width:100%; white-space:normal; line-height:1.35; }
+.inventory-table code { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.inventory-table .cell-note { max-width:100%; overflow-wrap:anywhere; line-height:1.4; }
+.runtime-cell .cell-note, .daemon-cell .cell-note { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
 .state { display:inline-flex; align-items:center; gap:7px; }
 .dot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; background:var(--idle); }
 .state.running .dot, .state.working .dot { background:var(--ok); } .state.provisioning .dot { background:var(--warn); }
 .empty { color:var(--muted); padding:22px; } .err { color:var(--err); padding:12px 0; }
 .controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
 .controls label { color:var(--muted); font-size:13px; }
-.manage-actions { white-space:nowrap; display:flex; gap:8px; align-items:center; }
+.manage-actions { white-space:nowrap; display:flex; gap:8px; align-items:flex-start; justify-content:flex-start; }
+.inventory-table .manage-actions button { min-width:74px; min-height:38px; padding-inline:10px; }
+.inventory-table .manage-actions .cta { min-width:92px; }
 .section-toolbar { display:flex; align-items:flex-end; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:14px; }
 .section-toolbar h2 { margin:0; font-size:20px; }
 .empty-state { display:grid; gap:10px; justify-items:start; border:1px solid var(--line); border-radius:8px; padding:18px; background:var(--panel); }

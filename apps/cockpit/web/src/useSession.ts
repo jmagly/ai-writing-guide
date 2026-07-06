@@ -208,7 +208,10 @@ export function useSession() {
     // Open (or re-open, on a readiness retry) the data-plane socket.
     const connect = () => {
       if (connectionIdRef.current !== connectionId || closedByUserRef.current) return;
-      const ws = new WebSocket(replay ? `${url}?replay_from=${lastSeq.current}` : url);
+      // Replay is requested in pty.join_session below. Duplicating replay_from
+      // in the pty-ws URL makes the gateway emit replay.out_of_range even when
+      // the join succeeds and frames stream, so keep the socket URL stable.
+      const ws = new WebSocket(url);
       wsRef.current = ws;
       let gone = false; // a failing socket fires BOTH 'error' and 'close' — handle once
       ws.addEventListener('open', () => {
