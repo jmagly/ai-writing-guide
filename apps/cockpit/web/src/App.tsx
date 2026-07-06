@@ -129,7 +129,7 @@ export function App() {
       const s = await api<{ id: string; attach_url: string }>(
         `/api/instances/${encodeURIComponent(inst.id)}/sessions?${qs}`, { method: 'POST' },
       );
-      session.attach(s.attach_url, false, backend.drive === false ? 'observer' : 'controller');
+      session.attach(s.attach_url, false, backend.drive === false ? 'observer' : 'controller', { instanceId: inst.id, sessionId: s.id });
       setTab('sessions');
     } else {
       setTab('inventory');

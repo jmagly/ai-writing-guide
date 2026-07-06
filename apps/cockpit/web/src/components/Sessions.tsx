@@ -118,7 +118,6 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
     loadSessions(instId).catch((e) => setSessionErr((e as Error).message));
   }, [instId, loadSessions]);
 
-  const send = () => { if (session.sendInput(composer)) setComposer(''); };
   const attached = session.state.attached;
   const requestedReplayRole = session.state.role === 'controller' ? 'controller' : 'observer';
   const current = instances.find((i) => i.id === instId);
@@ -127,17 +126,19 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
   const selectedSession = sessions.find((s) => sessionKey(s) === selectedSessionKey);
   const attachedOwner = attachedInstanceId || instanceIdFromAttachUrl(session.state.url);
   const attachedKey = attachedOwner && attachedSessionId ? `${attachedOwner}:${attachedSessionId}` : sessionKeyFromAttachUrl(session.state.url);
+  const activeTarget = session.state.target ?? (attachedOwner && attachedSessionId ? { instanceId: attachedOwner, sessionId: attachedSessionId } : null);
+  const send = () => { if (session.sendInput(composer, activeTarget)) setComposer(''); };
   const attachToSession = (s: SessionInfo, role: 'controller' | 'observer') => {
     setAttachedInstanceId(s.instance_id || instId);
     setAttachedSessionId(String(s.id));
     setRegistryActiveSession(s.instance_id || instId, String(s.id));
-    session.attach(s.attach_url, false, role);
+    session.attach(s.attach_url, false, role, { instanceId: s.instance_id || instId, sessionId: String(s.id) });
   };
   const replaySession = (s: SessionInfo, role: 'controller' | 'observer') => {
     setAttachedInstanceId(s.instance_id || instId);
     setAttachedSessionId(String(s.id));
     setRegistryActiveSession(s.instance_id || instId, String(s.id));
-    session.replay(s.attach_url, role);
+    session.replay(s.attach_url, role, { instanceId: s.instance_id || instId, sessionId: String(s.id) });
   };
   const detachSession = () => {
     setAttachedInstanceId('');

@@ -65,7 +65,7 @@ describe('StartSessionModal (#1640/#1641)', () => {
     const startBtn = await screen.findByRole('button', { name: /start session/i });
     await waitFor(() => expect((startBtn as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(startBtn);
-    await waitFor(() => expect(session.attach).toHaveBeenCalledWith(expect.stringContaining('/attach'), false, 'observer'));
+    await waitFor(() => expect(session.attach).toHaveBeenCalledWith(expect.stringContaining('/attach'), false, 'observer', { instanceId: 'inst-aaaaaaaa-1111', sessionId: 'sess-x' }));
     const postCall = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.find((c) => String(c[0]).includes('/sessions') && c[1]?.method === 'POST');
     expect(String(postCall?.[0])).toMatch(/mode=managed&backend=tmux/);
     expect(String(postCall?.[0])).not.toContain('loadout=');

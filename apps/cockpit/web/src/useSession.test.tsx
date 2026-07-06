@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { stripTerminalAutoResponses, useSession } from './useSession';
+import { sessionTargetFromAttachUrl, stripTerminalAutoResponses, useSession } from './useSession';
 
 const terminalWrites = vi.hoisted(() => [] as string[]);
 
@@ -56,6 +56,15 @@ describe('stripTerminalAutoResponses', () => {
 
   it('drops terminal identity/status replies', () => {
     expect(stripTerminalAutoResponses('\x1b[?1;2chello\x1b[0n\x1b[12;40R')).toBe('hello');
+  });
+});
+
+describe('sessionTargetFromAttachUrl', () => {
+  it('parses executor attach URLs into explicit injection targets', () => {
+    expect(sessionTargetFromAttachUrl('ws://x/agents/inst%201/sessions/sess%2F1/attach')).toEqual({
+      instanceId: 'inst 1',
+      sessionId: 'sess/1',
+    });
   });
 });
 
@@ -293,5 +302,28 @@ describe('useSession — retry through the PTY-readiness window (#1669)', () => 
     expect(terminalWrites.join('')).not.toContain('no output yet');
     expect(ws.sent.map((s) => JSON.parse(s)).filter((m) => m.op === 'pty.request_keyframe')).toHaveLength(0);
     expect(MockWS.instances).toHaveLength(1);
+  });
+
+  it('refuses targeted input when the requested session does not match the attached socket', () => {
+    const { result } = renderHook(() => useSession());
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    act(() => { result.current.openTerminal(host); });
+    act(() => { result.current.attach('ws://x/agents/inst-a/sessions/sess-a/attach', false, 'controller'); });
+    const ws = MockWS.instances[0];
+
+    act(() => {
+      ws.emit('open');
+      ws.emit('message', { data: JSON.stringify({ op: 'role_assigned', payload: { role: 'controller' } }) });
+    });
+
+    let sent = true;
+    act(() => {
+      sent = result.current.sendInput('rm -rf /', { instanceId: 'inst-b', sessionId: 'sess-b' });
+    });
+
+    expect(sent).toBe(false);
+    expect(ws.sent.map((s) => JSON.parse(s)).filter((m) => m.op === 'pty.session_input')).toHaveLength(0);
+    expect(terminalWrites.join('')).toContain('inject refused: target inst-b:sess-b does not match attached session inst-a:sess-a');
   });
 });

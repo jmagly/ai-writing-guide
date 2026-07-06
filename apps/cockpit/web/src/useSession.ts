@@ -15,7 +15,8 @@ import type { Role } from './types';
 // to the terminal via pty.session_resize.
 type WsMsg = { op: string; seq?: number; payload?: { role?: Role; data?: string; code?: string; frames?: { seq: number; payload: { data: string } }[] } };
 
-export interface SessionState { attached: boolean; role: Role; url: string | null }
+export interface SessionTarget { instanceId: string; sessionId: string }
+export interface SessionState { attached: boolean; role: Role; url: string | null; target: SessionTarget | null }
 export interface ResponseNeededState { needed: boolean; prompt: string; since: string | null; source: string }
 
 // The executor rejects resizes below this floor (management/src/ws/connection.rs).
@@ -52,6 +53,19 @@ const toB64 = (s: string): string => {
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin);
 };
+
+export function sessionTargetFromAttachUrl(url: string | null): SessionTarget | null {
+  if (!url) return null;
+  const pattern = /\/agents\/([^/]+)\/sessions\/([^/]+)\/attach/;
+  try {
+    const parsed = new URL(url);
+    const match = parsed.pathname.match(pattern);
+    return match ? { instanceId: decodeURIComponent(match[1]), sessionId: decodeURIComponent(match[2]) } : null;
+  } catch {
+    const match = url.match(pattern);
+    return match ? { instanceId: decodeURIComponent(match[1]), sessionId: decodeURIComponent(match[2]) } : null;
+  }
+}
 
 export function stripTerminalAutoResponses(data: string): string {
   return data
@@ -90,6 +104,7 @@ export function useSession() {
   const fitRef = useRef<FitAddon | null>(null);
   const roRef = useRef<ResizeObserver | null>(null);
   const roleRef = useRef<Role>(null); // current role, read by term.onData without re-subscribing
+  const targetRef = useRef<SessionTarget | null>(null);
   const outputTailRef = useRef('');
   const connectionIdRef = useRef(0);
   // Retry-through-readiness state (#1669): a freshly-launched VM/container can
@@ -102,7 +117,7 @@ export function useSession() {
   const firstFrameNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firstFrameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closedByUserRef = useRef(false); // detach()/new attach — suppress reconnect
-  const [state, setState] = useState<SessionState>({ attached: false, role: null, url: null });
+  const [state, setState] = useState<SessionState>({ attached: false, role: null, url: null, target: null });
   const [responseNeeded, setResponseNeeded] = useState<ResponseNeededState>({ needed: false, prompt: '', since: null, source: 'pty' });
 
   const fit = () => { try { fitRef.current?.fit(); } catch { /* container hidden / zero-sized */ } };
@@ -204,7 +219,7 @@ export function useSession() {
     wsRef.current?.close();
   }, []);
 
-  const attach = useCallback((url: string, replay = false, requestedRole: Exclude<Role, null> = 'observer') => {
+  const attach = useCallback((url: string, replay = false, requestedRole: Exclude<Role, null> = 'observer', target?: SessionTarget | null) => {
     if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
     clearFirstFrameTimer();
     const connectionId = connectionIdRef.current + 1;
@@ -215,10 +230,11 @@ export function useSession() {
     wsRef.current?.close();
     if (!replay) lastSeq.current = 0;
     roleRef.current = null;
+    targetRef.current = target ?? sessionTargetFromAttachUrl(url);
     if (termRef.current) termRef.current.options.disableStdin = true; // read-only until role_assigned grants control
     clearResponseNeeded();
     outputTailRef.current = '';
-    setState({ attached: false, role: null, url });
+    setState({ attached: false, role: null, url, target: targetRef.current });
     if (!replay) { try { termRef.current?.reset(); } catch { /* */ } }
 
     // Open (or re-open, on a readiness retry) the data-plane socket.
@@ -232,7 +248,7 @@ export function useSession() {
       let gone = false; // a failing socket fires BOTH 'error' and 'close' — handle once
       ws.addEventListener('open', () => {
         if (connectionIdRef.current !== connectionId || wsRef.current !== ws) return;
-        setState((s) => ({ ...s, attached: true, url }));
+        setState((s) => ({ ...s, attached: true, url, target: targetRef.current }));
         clearFirstFrameTimer();
         firstFrameNoticeTimerRef.current = setTimeout(() => {
           if (connectionIdRef.current !== connectionId || wsRef.current !== ws || closedByUserRef.current || gotFrameRef.current) return;
@@ -326,20 +342,28 @@ export function useSession() {
     closedByUserRef.current = true;
     connectionIdRef.current += 1;
     roleRef.current = null;
+    targetRef.current = null;
     if (termRef.current) termRef.current.options.disableStdin = true; // detached → read-only
     if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
     clearFirstFrameTimer();
     wsRef.current?.close();
     wsRef.current = null;
   }, []);
-  const replay = useCallback((url: string, requestedRole?: Exclude<Role, null>) => {
+  const replay = useCallback((url: string, requestedRole?: Exclude<Role, null>, target?: SessionTarget | null) => {
     const role = requestedRole ?? roleRef.current ?? 'observer';
-    attach(url, true, role);
+    attach(url, true, role, target);
   }, [attach]);
   const requestKeyframe = useCallback(() => sendOp('pty.request_keyframe'), []);
   // Composer line-input (the input row + Actions inject). Raw keystrokes go via term.onData.
-  const sendInput = useCallback((text: string): boolean => {
+  const sendInput = useCallback((text: string, target?: SessionTarget | null): boolean => {
     if (!wsRef.current || roleRef.current !== 'controller' || !text) return false;
+    if (target) {
+      const active = targetRef.current;
+      if (!active || active.instanceId !== target.instanceId || active.sessionId !== target.sessionId) {
+        try { termRef.current?.write(textEnc.encode(`\r\n[inject refused: target ${target.instanceId}:${target.sessionId} does not match attached session ${active ? `${active.instanceId}:${active.sessionId}` : 'none'}]\r\n`)); } catch { /* term not open */ }
+        return false;
+      }
+    }
     clearResponseNeeded();
     sendOp('pty.session_input', { data: toB64(text + '\r\n') });
     return true;

@@ -142,7 +142,7 @@ describe('Sessions', () => {
     fireEvent.click(sessBtn);
     // Selecting a not-yet-attached session should not silently downgrade an
     // operator who is already driving another session.
-    expect(session.attach).toHaveBeenCalledWith('ws://x/agents/inst-1/sessions/sess-2/attach', false, 'controller');
+    expect(session.attach).toHaveBeenCalledWith('ws://x/agents/inst-1/sessions/sess-2/attach', false, 'controller', { instanceId: 'inst-1', sessionId: 'sess-2' });
   });
 
   it('does not detach the live session when browsing another instance (#1739)', async () => {
@@ -265,7 +265,7 @@ describe('Sessions', () => {
     // Clicking the session we already drive replays/reasserts controller; it
     // must not downgrade us back to observer.
     expect(session.attach).not.toHaveBeenCalled();
-    expect(session.replay).toHaveBeenCalledWith('ws://x/agents/inst-1/sessions/sess-1/attach', 'controller');
+    expect(session.replay).toHaveBeenCalledWith('ws://x/agents/inst-1/sessions/sess-1/attach', 'controller', { instanceId: 'inst-1', sessionId: 'sess-1' });
   });
 
   it('distinguishes sessions by name + backend + viewer count in the nav (#1670)', async () => {

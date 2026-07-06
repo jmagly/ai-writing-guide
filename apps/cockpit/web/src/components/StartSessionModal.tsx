@@ -89,7 +89,7 @@ export function StartSessionModal({ open, onClose, session, onStarted, initialIn
         { method: 'POST', signal: controller.signal },
       );
       if (!s.attach_url) throw new Error('Session started but no attach URL was returned.');
-      session.attach(s.attach_url, false, posture);
+      session.attach(s.attach_url, false, posture, { instanceId: current.id, sessionId: s.id });
       onStarted();
       onClose();
     } catch (e) {

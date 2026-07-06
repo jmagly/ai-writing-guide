@@ -29,7 +29,7 @@ export function Library({ session, setComposer, goSessions }: { session: Session
   };
   const use = (a: LibraryAsset) => {
     const cmd = capRef(a.type, a.name.replace(/\.(md|markdown|ya?ml|json)$/i, ''));
-    if (!(session.isController && session.sendInput(cmd))) setComposer(cmd);
+    if (!(session.isController && session.state.target && session.sendInput(cmd, session.state.target))) setComposer(cmd);
     goSessions();
   };
 
