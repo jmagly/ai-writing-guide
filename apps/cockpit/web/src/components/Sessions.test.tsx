@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, cleanup, within } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, cleanup, within, act } from '@testing-library/react';
 import { Sessions } from './Sessions';
 import type { SessionApi } from '../useSession';
+import { resetSessionRegistryForTest, updateRegistrySessionSnapshot } from '../sessionRegistry';
 
 const INSTANCE = {
   id: 'inst-1',
@@ -39,6 +40,7 @@ function stubSession(state: Partial<SessionApi['state']> = {}): SessionApi {
 
 beforeEach(() => {
   (window as unknown as { __COCKPIT_TOKEN__: string }).__COCKPIT_TOKEN__ = 'test-token';
+  resetSessionRegistryForTest();
   vi.spyOn(window, 'confirm').mockReturnValue(true);
 });
 
@@ -293,6 +295,35 @@ describe('Sessions', () => {
     expect(within(nav).getByText('direct/native · 0 viewers')).toBeTruthy();
     // sess-a has a controller connected → it carries the ctrl badge; sess-b does not.
     expect(within(nav).getByTitle('A controller is connected')).toBeTruthy();
+  });
+
+  it('shows registry unread and response-needed badges and clears unread on view', async () => {
+    const session = stubSession({ attached: false, role: null, url: null });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [INSTANCE] });
+      if (url.includes('/api/sessions?instance=')) return jsonResponse({
+        sessions: [
+          { id: 'sess-a', session_name: 'terminal-alpha', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-a/attach', mode: 'managed', backend: 'tmux' },
+          { id: 'sess-b', session_name: 'terminal-beta', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-b/attach', mode: 'managed', backend: 'tmux' },
+        ],
+      });
+      return new Response('{}', { status: 404 });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<Sessions session={session} composer="" setComposer={() => {}} onRequestStart={() => {}} />);
+
+    const nav = screen.getByLabelText('Instances and sessions');
+    const beta = await within(nav).findByTitle('sess-b');
+    act(() => updateRegistrySessionSnapshot('inst-1', 'sess-b', 'Deploy to prod? [y/N]\n'));
+
+    expect(await within(nav).findByTitle('Unread output')).toBeTruthy();
+    expect(within(nav).getByTitle('Response needed')).toBeTruthy();
+
+    fireEvent.click(beta);
+    await waitFor(() => expect(within(nav).queryByTitle('Unread output')).toBeNull());
+    expect(within(nav).getByTitle('Response needed')).toBeTruthy();
   });
 
   it('omits viewer counts when the session source does not provide membership fields (#1745)', async () => {

@@ -15,6 +15,7 @@ import { Telemetry } from './components/Telemetry';
 import { Memory } from './components/Memory';
 import { StartSessionModal } from './components/StartSessionModal';
 import { LaunchInstanceModal } from './components/LaunchInstanceModal';
+import { registryResponseNeededItems, useSessionRegistry } from './sessionRegistry';
 
 const TABS = [
   { id: 'welcome', label: 'Home' },
@@ -48,6 +49,8 @@ export function App() {
     return TABS.some((t) => t.id === hash) ? hash as TabId : 'welcome';
   });
   const session = useSession();
+  const sessionRegistry = useSessionRegistry();
+  const registryResponses = registryResponseNeededItems(sessionRegistry).filter((response) => response.id !== `pty:${sessionRegistry.activeKey}`);
   const [composer, setComposer] = useState('');
   const [chrome, setChrome] = useState<ChromeStatus | null>(null);
   const [startOpen, setStartOpen] = useState(false);
@@ -73,11 +76,12 @@ export function App() {
         ]);
         if (cancelled) return;
         const kinds = inv.instances.map((i) => i.runtime_posture.kind);
+        const attachedResponseCount = session.responseNeeded.needed ? 1 : 0;
         setChrome({
           executor: health.executor_url,
           instances: inv.instances.length,
           running: run.count,
-          responses: apr.approvals.length + (session.responseNeeded.needed ? 1 : 0),
+          responses: apr.approvals.length + registryResponses.length + attachedResponseCount,
           host: kinds.includes('host'),
           container: kinds.includes('container') || kinds.includes('docker'),
           vm: kinds.includes('vm'),
@@ -89,7 +93,7 @@ export function App() {
     load();
     const timer = window.setInterval(load, 15_000);
     return () => { cancelled = true; window.clearInterval(timer); };
-  }, [session.responseNeeded.needed, refreshTick]);
+  }, [session.responseNeeded.needed, refreshTick, registryResponses.length]);
 
   useEffect(() => {
     if (typeof EventSource === 'undefined' || !TOKEN) return;
@@ -176,7 +180,7 @@ export function App() {
         <section id="panel-sessions" role="tabpanel" aria-labelledby="tab-sessions" hidden={tab !== 'sessions'}>
           <Sessions session={session} composer={composer} setComposer={setComposer} onRequestStart={requestStart} />
         </section>
-        <Panel id="approvals" tab={tab}><Approvals refreshTick={refreshTick} responses={session.responseNeeded.needed ? [sessionResponse(session)] : []} goSessions={() => setTab('sessions')} /></Panel>
+        <Panel id="approvals" tab={tab}><Approvals refreshTick={refreshTick} responses={[...registryResponses, ...(session.responseNeeded.needed ? [sessionResponse(session)] : [])]} goSessions={() => setTab('sessions')} /></Panel>
         <Panel id="explore" tab={tab}><Explore /></Panel>
         <Panel id="library" tab={tab}>
           <Library session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />

@@ -345,6 +345,8 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .nav-session-meta { font-size:11px; color:var(--muted); }
 .nav-session .badge { padding:0 6px; font-size:10px; }
 .nav-session .live-dot { border-color:var(--ok); color:var(--ok); }
+.nav-session .unread { border-color:var(--accent2); color:var(--accent2); }
+.nav-session .response { border-color:var(--warn); color:var(--warn); }
 .nav-session-end { align-self:center; padding:4px 9px; color:var(--muted); border-color:transparent; background:none; line-height:1; }
 .nav-session-end:hover:not(:disabled) { border-color:var(--err); color:var(--err); }
 .nav-new-session { margin-top:6px; align-self:flex-start; }

@@ -3,6 +3,7 @@ import {
   getSessionRegistrySnapshot,
   interactivePromptFrom,
   markRegistrySessionViewed,
+  registryResponseNeededItems,
   resetSessionRegistryForTest,
   sessionRegistryKey,
   setRegistryActiveSession,
@@ -78,6 +79,20 @@ describe('sessionRegistry', () => {
       since: '2026-07-06T20:03:00.000Z',
       source: 'snapshot',
     });
+  });
+
+  it('projects response-needed entries for the approvals inbox', () => {
+    upsertRegistrySessions([SESSION_A]);
+    updateRegistrySessionSnapshot('inst-a', 'sess-a', 'Deploy to prod? [y/N]\n', { now: '2026-07-06T20:03:00.000Z' });
+
+    expect(registryResponseNeededItems(getSessionRegistrySnapshot())).toEqual([{
+      id: 'pty:inst-a:sess-a',
+      instance_id: 'inst-a',
+      prompt: 'Deploy to prod? [y/N]',
+      source: 'snapshot',
+      status: 'response-needed',
+      attach_url: 'ws://x/agents/inst-a/sessions/sess-a/attach',
+    }]);
   });
 
   it('notifies subscribers when registry state changes', () => {

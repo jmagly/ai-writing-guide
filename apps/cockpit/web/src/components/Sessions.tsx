@@ -4,7 +4,7 @@ import { fmtId, capRef } from '../util';
 import { CapabilitySearch } from './CapabilitySearch';
 import type { Instance, SessionInfo, CapabilityResult } from '../types';
 import type { SessionApi } from '../useSession';
-import { markRegistrySessionViewed, setRegistryActiveSession, upsertRegistrySessions } from '../sessionRegistry';
+import { markRegistrySessionViewed, sessionRegistryKeyFor, setRegistryActiveSession, upsertRegistrySessions, useSessionRegistry } from '../sessionRegistry';
 import { useSessionSnapshotMonitor } from '../sessionMonitor';
 
 export function Sessions({ session, composer, setComposer, onRequestStart, refreshMs = 5_000 }: { session: SessionApi; composer: string; setComposer: (v: string) => void; onRequestStart: (instanceId?: string) => void; refreshMs?: number }) {
@@ -25,6 +25,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
   const sessionsSeqRef = useRef(0);
   const missingAttachedPollsRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const sessionRegistry = useSessionRegistry();
 
   useSessionSnapshotMonitor();
 
@@ -223,6 +224,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
                           const key = sessionKey(s);
                           const selS = key === selectedSessionKey;
                           const live = key === attachedKey && attached;
+                          const registryEntry = sessionRegistry.entries[sessionRegistryKeyFor(s)];
                           return (
                             <li key={s.id}>
                               <button
@@ -245,6 +247,8 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
                                 <span className="nav-session-name">{sessionLabel(s)}</span>
                                 <span className="nav-session-meta">{sessionMeta(s)}</span>
                                 {sessionHoldsController(s) && <span className="badge controller" title="A controller is connected">ctrl</span>}
+                                {registryEntry?.unread && <span className="badge unread" title="Unread output">unread</span>}
+                                {registryEntry?.responseNeeded.needed && <span className="badge response" title="Response needed">response</span>}
                                 {live && <span className="badge live-dot" title="Attached here">●</span>}
                               </button>
                               <button

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { SessionInfo } from './types';
+import type { ResponseNeeded, SessionInfo } from './types';
 
 export interface RegistryResponseNeeded {
   needed: boolean;
@@ -59,6 +59,19 @@ export function getSessionRegistrySnapshot(): RegistryState {
 
 export function useSessionRegistry(): RegistryState {
   return useSyncExternalStore(subscribeSessionRegistry, getSessionRegistrySnapshot, getSessionRegistrySnapshot);
+}
+
+export function registryResponseNeededItems(registry: RegistryState): ResponseNeeded[] {
+  return Object.values(registry.entries)
+    .filter((entry) => entry.responseNeeded.needed)
+    .map((entry) => ({
+      id: `pty:${entry.key}`,
+      instance_id: entry.instanceId,
+      prompt: entry.responseNeeded.prompt,
+      source: entry.responseNeeded.source,
+      status: 'response-needed',
+      attach_url: entry.metadata.attach_url,
+    }));
 }
 
 export function resetSessionRegistryForTest() {
