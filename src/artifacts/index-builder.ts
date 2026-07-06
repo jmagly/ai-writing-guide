@@ -674,7 +674,17 @@ export async function buildIndex(
 
       // Phase 1: stat-based quick filter — skip content read if mtime+size match manifest.
       // This is the fast path: unchanged files don't touch the filesystem beyond fs.statSync.
-      const stat = fs.statSync(fullPath);
+      let stat: fs.Stats;
+      try {
+        stat = fs.statSync(fullPath);
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+          manifestStats.pruned++;
+          if (verbose) console.log(`  skipped missing: ${relativePath}`);
+          continue;
+        }
+        throw err;
+      }
       const manifestEntry = manifest.entries[relativePath];
 
       if (!force && statMatches(stat, manifestEntry) && existingEntries[relativePath]?.checksum === manifestEntry?.checksum) {

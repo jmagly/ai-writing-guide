@@ -963,6 +963,12 @@ export function computeAllKernelNames(srcRoot) {
   const hasAiwgTree = (dir) =>
     fs.existsSync(path.join(dir, 'agentic', 'code', 'frameworks')) &&
     fs.existsSync(path.join(dir, 'agentic', 'code', 'addons'));
+  const isRootOrSourceDescendant = (candidate, original) => {
+    const root = path.resolve(candidate);
+    const source = path.resolve(original);
+    const agenticCode = path.join(root, 'agentic', 'code');
+    return source === root || source === agenticCode || source.startsWith(`${agenticCode}${path.sep}`);
+  };
 
   // Prefer an explicit AIWG_ROOT, but only when it actually points at a real
   // AIWG tree — a stale/bogus env value must not silently yield an empty
@@ -974,7 +980,7 @@ export function computeAllKernelNames(srcRoot) {
   } else {
     let cur = path.resolve(srcRoot);
     for (let i = 0; i < 8; i++) {
-      if (hasAiwgTree(cur)) { aiwgRoot = cur; break; }
+      if (hasAiwgTree(cur) && isRootOrSourceDescendant(cur, srcRoot)) { aiwgRoot = cur; break; }
       const parent = path.dirname(cur);
       if (parent === cur) break;
       cur = parent;
@@ -1169,13 +1175,19 @@ export function resolveAiwgRoot(srcRoot) {
   const hasTree = (dir) =>
     fs.existsSync(path.join(dir, 'agentic', 'code', 'frameworks')) &&
     fs.existsSync(path.join(dir, 'agentic', 'code', 'addons'));
+  const isRootOrSourceDescendant = (candidate, original) => {
+    const root = path.resolve(candidate);
+    const source = path.resolve(original);
+    const agenticCode = path.join(root, 'agentic', 'code');
+    return source === root || source === agenticCode || source.startsWith(`${agenticCode}${path.sep}`);
+  };
 
   if (process.env.AIWG_ROOT && hasTree(process.env.AIWG_ROOT)) {
     return process.env.AIWG_ROOT;
   }
   let cur = path.resolve(srcRoot);
   for (let i = 0; i < 8; i++) {
-    if (hasTree(cur)) return cur;
+    if (hasTree(cur) && isRootOrSourceDescendant(cur, srcRoot)) return cur;
     const parent = path.dirname(cur);
     if (parent === cur) break;
     cur = parent;

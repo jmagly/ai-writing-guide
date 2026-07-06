@@ -7,6 +7,28 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.11] - 2026-07-06 - "Cockpit session stabilization"
+
+This release supersedes `2026.7.10` so the stable tag includes the Cockpit
+session-management fixes, docsite deploy timeout hardening, blog backfill, and
+CI test-contract correction that landed after the npm tarball recovery tag.
+
+### Added
+
+- **2025 report blog backfill** — adds the August, September, October, and
+  November 2025 AIWG report posts to the docs blog corpus.
+
+### Fixed
+
+- **Cockpit session startup and attach stability** — stabilizes host, Docker,
+  and QEMU session startup by collapsing duplicate fallback rows, isolating PTY
+  socket ownership, preserving control during row replay, bounding session-start
+  waits, and starting host runtime sessions through the Bridge.
+- **Docsite deploy timeout handling** — bounds docsite deploy SSH and rsync
+  connection waits so failed deploy connectivity does not hang indefinitely.
+- **Cockpit bridge CI contract** — updates the integration test to expect the
+  host launch working directory now intentionally sent by session creation.
+
 ## [2026.7.10] - 2026-07-04 - "npm tarball recovery"
 
 Supersedes `2026.7.9` after npmjs.org accepted package metadata and provenance
