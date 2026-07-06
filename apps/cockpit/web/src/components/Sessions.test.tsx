@@ -22,9 +22,10 @@ const INSTANCE_NEXT = {
   launch_context: { name: 'docker-two', loadout: 'agentic-dev' },
 };
 
-function stubSession(): SessionApi {
+function stubSession(state: Partial<SessionApi['state']> = {}): SessionApi {
+  const nextState = { attached: true, role: 'controller', url: 'ws://x/agents/inst-1/sessions/sess-1/attach', ...state };
   return {
-    state: { attached: true, role: 'controller', url: 'ws://x/agents/inst-1/sessions/sess-1/attach' },
+    state: nextState,
     responseNeeded: { needed: false, prompt: '', since: null, source: 'pty' },
     attach: vi.fn(),
     detach: vi.fn(),
@@ -32,7 +33,7 @@ function stubSession(): SessionApi {
     requestKeyframe: vi.fn(),
     sendInput: vi.fn(),
     openTerminal: vi.fn(),
-    isController: true,
+    isController: nextState.role === 'controller',
   } as unknown as SessionApi;
 }
 
@@ -74,11 +75,11 @@ describe('Sessions', () => {
       expect.stringContaining('/api/instances/inst-1/sessions/sess-1'),
       expect.objectContaining({ method: 'DELETE' }),
     ));
-    expect(session.detach).toHaveBeenCalled();
+    await waitFor(() => expect(session.detach).toHaveBeenCalled());
   });
 
   it('refreshes stale recovered inventory and stops offering dead session attach URLs', async () => {
-    const session = stubSession();
+    const session = stubSession({ attached: false, role: null, url: null });
     const inventories = [
       { instances: [INSTANCE] },
       { instances: [INSTANCE_NEXT] },
@@ -164,6 +165,84 @@ describe('Sessions', () => {
     expect((await screen.findAllByText('terminal-other')).length).toBeGreaterThan(0);
 
     expect(session.detach).not.toHaveBeenCalled();
+  });
+
+  it('treats the instance/session pair as live identity when attach URLs diverge (#1741)', async () => {
+    const session = stubSession({ url: 'ws://executor-a/agents/inst-1/sessions/sess-1/attach?from=create' });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [INSTANCE] });
+      if (url.includes('/api/sessions?instance=')) return jsonResponse({
+        sessions: [{
+          id: 'sess-1',
+          session_name: 'terminal-main',
+          instance_id: 'inst-1',
+          attach_url: 'ws://executor-b/agents/inst-1/sessions/sess-1/attach',
+          mode: 'managed',
+          backend: 'tmux',
+        }],
+      });
+      return new Response('{}', { status: 404 });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<Sessions session={session} composer="" setComposer={() => {}} onRequestStart={() => {}} />);
+
+    const nav = screen.getByLabelText('Instances and sessions');
+    expect(await within(nav).findByTitle('Attached here')).toBeTruthy();
+    expect(session.detach).not.toHaveBeenCalled();
+  });
+
+  it('ignores stale session-list responses after switching instances (#1740)', async () => {
+    const session = stubSession({ attached: false, role: null, url: null });
+    let resolveInst1: (value: Response) => void = () => {};
+    const inst1Sessions = new Promise<Response>((resolve) => { resolveInst1 = resolve; });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [INSTANCE, INSTANCE_NEXT] });
+      if (url.includes('instance=inst-1')) return inst1Sessions;
+      if (url.includes('instance=inst-2')) return jsonResponse({
+        sessions: [{ id: 'sess-2', session_name: 'terminal-two', instance_id: 'inst-2', attach_url: 'ws://x/agents/inst-2/sessions/sess-2/attach', mode: 'managed', backend: 'tmux' }],
+      });
+      return new Response('{}', { status: 404 });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<Sessions session={session} composer="" setComposer={() => {}} onRequestStart={() => {}} refreshMs={60_000} />);
+
+    fireEvent.click(await screen.findByText('docker-two'));
+    const nav = screen.getByLabelText('Instances and sessions');
+    expect(await within(nav).findByTitle('sess-2')).toBeTruthy();
+
+    resolveInst1(jsonResponse({
+      sessions: [{ id: 'sess-1', session_name: 'terminal-one', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-1/attach', mode: 'managed', backend: 'tmux' }],
+    }));
+
+    await waitFor(() => expect(within(nav).queryByText('terminal-one')).toBeNull());
+    expect(within(nav).getByText('terminal-two')).toBeTruthy();
+  });
+
+  it('requires two consecutive missing polls before detaching the attached session (#1740)', async () => {
+    const session = stubSession();
+    const sessionResponses = [
+      [{ id: 'sess-1', session_name: 'terminal-main', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-1/attach', mode: 'managed', backend: 'tmux' }],
+      [{ id: 'sess-1', session_name: 'terminal-main', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-1/attach', mode: 'managed', backend: 'tmux' }],
+      [{ id: 'sess-other', session_name: 'terminal-other', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-other/attach', mode: 'managed', backend: 'tmux' }],
+      [{ id: 'sess-other', session_name: 'terminal-other', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-other/attach', mode: 'managed', backend: 'tmux' }],
+    ];
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [INSTANCE] });
+      if (url.includes('/api/sessions?instance=')) return jsonResponse({ sessions: sessionResponses.shift() ?? sessionResponses[sessionResponses.length - 1] ?? [] });
+      return new Response('{}', { status: 404 });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<Sessions session={session} composer="" setComposer={() => {}} onRequestStart={() => {}} refreshMs={250} />);
+    expect(await screen.findByTitle('sess-other')).toBeTruthy();
+    expect(session.detach).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(session.detach).toHaveBeenCalledTimes(1), { timeout: 1_200 });
   });
 
   it('reattaches with replay instead of downgrading when re-selecting the session already attached', async () => {

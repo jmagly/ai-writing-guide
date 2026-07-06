@@ -616,10 +616,22 @@ function asArrayFromEnvelope(body, keys) {
   return [];
 }
 
+const AGENT_ID_CACHE_TTL_MS = Number(process.env.AIWG_COCKPIT_AGENT_CACHE_TTL_MS ?? 5_000);
+const agentListCache = new Map();
+
+async function getAgentList(executorUrl) {
+  const cached = agentListCache.get(executorUrl);
+  const now = Date.now();
+  if (cached && cached.expiresAt > now) return cached.agents;
+  const { body } = await fetchJsonFirst([`${executorUrl}/api/v1/agents`]);
+  const agents = asArrayFromEnvelope(body, ['agents', 'items', 'data']);
+  agentListCache.set(executorUrl, { agents, expiresAt: now + AGENT_ID_CACHE_TTL_MS });
+  return agents;
+}
+
 async function resolveSessionAgentId(executorUrl, instanceId) {
   try {
-    const { body } = await fetchJsonFirst([`${executorUrl}/api/v1/agents`]);
-    const agents = asArrayFromEnvelope(body, ['agents', 'items', 'data']);
+    const agents = await getAgentList(executorUrl);
     const agent = agents.find((a) => String(a.instance_id ?? a.instanceId ?? '') === String(instanceId));
     return agent?.id ?? agent?.agent_id ?? agent?.agentId ?? instanceId;
   } catch {
@@ -858,8 +870,7 @@ async function enrichInstanceFromAgentCard(executorUrl, instance) {
 
 async function getRegisteredAgents(executorUrl) {
   try {
-    const { body } = await fetchJsonFirst([`${executorUrl}/api/v1/agents`]);
-    return asArrayFromEnvelope(body, ['agents', 'items', 'data']);
+    return await getAgentList(executorUrl);
   } catch {
     return [];
   }

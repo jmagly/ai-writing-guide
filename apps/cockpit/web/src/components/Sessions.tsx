@@ -9,13 +9,23 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
   const [instances, setInstances] = useState<Instance[]>([]);
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [instId, setInstId] = useState('');
-  const [attachUrl, setAttachUrl] = useState('');
+  const [selectedSessionKey, setSelectedSessionKey] = useState('');
   const [backendKey, setBackendKey] = useState('');
   const [showPicker, setShowPicker] = useState(false);
   const [endingSession, setEndingSession] = useState('');
   const [sessionErr, setSessionErr] = useState('');
   const [attachedInstanceId, setAttachedInstanceId] = useState('');
+  const [attachedSessionId, setAttachedSessionId] = useState('');
+  const instIdRef = useRef('');
+  const attachedRef = useRef(false);
+  const attachedOwnerRef = useRef('');
+  const inventorySeqRef = useRef(0);
+  const sessionsSeqRef = useRef(0);
+  const missingAttachedPollsRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { instIdRef.current = instId; }, [instId]);
+  useEffect(() => { attachedRef.current = session.state.attached; }, [session.state.attached]);
 
   const insertCap = (r: CapabilityResult) => {
     const sep = composer && !composer.endsWith(' ') ? ' ' : '';
@@ -24,53 +34,83 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
     inputRef.current?.focus();
   };
 
-  const refreshInventory = useCallback(() => {
-    return api<{ instances: Instance[] }>('/api/inventory')
-      .then((d) => {
-        const sessionable = dedupeInstances(d.instances).filter((i) => i.state === 'running' && i.session_backends?.some((b) => b.available));
-        setInstances(sessionable);
-        setInstId((currentId) => {
-          if (currentId && sessionable.some((i) => i.id === currentId)) return currentId;
-          return sessionable[0]?.id ?? '';
-        });
-        setBackendKey((currentBackend) => {
-          if (currentBackend && sessionable.some((i) => i.session_backends.some((b) => `${b.mode}:${b.backend}` === currentBackend && b.available))) return currentBackend;
-          const firstBackend = sessionable[0]?.session_backends.find((b) => b.available) ?? sessionable[0]?.session_backends[0];
-          return firstBackend ? `${firstBackend.mode}:${firstBackend.backend}` : '';
-        });
-      })
-      .catch(() => {});
+  const refreshInventory = useCallback(async () => {
+    const seq = inventorySeqRef.current + 1;
+    inventorySeqRef.current = seq;
+    const d = await api<{ instances: Instance[] }>('/api/inventory');
+    if (seq !== inventorySeqRef.current) return;
+    const sessionable = dedupeInstances(d.instances).filter((i) => i.state === 'running' && i.session_backends?.some((b) => b.available));
+    setInstances(sessionable);
+    const currentId = instIdRef.current;
+    let nextId = sessionable[0]?.id ?? '';
+    if (currentId && sessionable.some((i) => i.id === currentId)) nextId = currentId;
+    else if (attachedRef.current && currentId) nextId = currentId;
+    instIdRef.current = nextId;
+    setInstId(nextId);
+    setBackendKey((currentBackend) => {
+      const selectedInstance = sessionable.find((i) => i.id === nextId) ?? sessionable[0];
+      if (currentBackend && selectedInstance?.session_backends.some((b) => `${b.mode}:${b.backend}` === currentBackend && b.available)) return currentBackend;
+      if (attachedRef.current && currentBackend) return currentBackend;
+      const firstBackend = selectedInstance?.session_backends.find((b) => b.available) ?? selectedInstance?.session_backends[0];
+      return firstBackend ? `${firstBackend.mode}:${firstBackend.backend}` : '';
+    });
   }, []);
 
   useEffect(() => {
-    refreshInventory();
-    const timer = window.setInterval(refreshInventory, refreshMs);
-    return () => window.clearInterval(timer);
-  }, [refreshInventory, refreshMs]);
+    attachedOwnerRef.current = attachedInstanceId || instanceIdFromAttachUrl(session.state.url);
+  }, [attachedInstanceId, session.state.url]);
 
-  const loadSessions = useCallback((id: string) => {
+  const loadSessions = useCallback(async (id: string) => {
     if (!id) return;
-    api<{ sessions: SessionInfo[] }>(`/api/sessions?instance=${encodeURIComponent(id)}`)
-      .then((d) => {
-        const nextSessions = d.sessions ?? [];
-        setSessions(nextSessions);
-        setSessionErr('');
-        setAttachUrl((currentUrl) => {
-          if (currentUrl && nextSessions.some((s) => s.attach_url === currentUrl)) return currentUrl;
-          return nextSessions[0]?.attach_url ?? '';
-        });
-      })
-      .catch((e) => { setSessions([]); setAttachUrl(''); setSessionErr((e as Error).message); });
+    const seq = sessionsSeqRef.current + 1;
+    sessionsSeqRef.current = seq;
+    const d = await api<{ sessions: SessionInfo[] }>(`/api/sessions?instance=${encodeURIComponent(id)}`);
+    if (seq !== sessionsSeqRef.current || id !== instIdRef.current) return;
+    const nextSessions = d.sessions ?? [];
+    setSessions(nextSessions);
+    setSessionErr('');
+    setSelectedSessionKey((currentKey) => {
+      if (currentKey && nextSessions.some((s) => sessionKey(s) === currentKey)) return currentKey;
+      if (attachedRef.current && attachedOwnerRef.current === id && currentKey) return currentKey;
+      return nextSessions[0] ? sessionKey(nextSessions[0]) : '';
+    });
   }, []);
-  // Reload the selected instance's sessions on selection change AND on an interval,
-  // so a session created elsewhere (the Start modal, the Running board, another
-  // operator) shows up in the nav without re-selecting the instance.
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: number | undefined;
+    let delay = refreshMs;
+    const schedule = (ms: number) => {
+      timer = window.setTimeout(tick, ms);
+    };
+    const tick = async () => {
+      if (cancelled) return;
+      if (endingSession) {
+        schedule(refreshMs);
+        return;
+      }
+      try {
+        const idBeforeInventory = instIdRef.current;
+        await refreshInventory();
+        if (idBeforeInventory && idBeforeInventory === instIdRef.current) await loadSessions(instIdRef.current);
+        delay = refreshMs;
+      } catch (e) {
+        if (!cancelled) setSessionErr((e as Error).message);
+        delay = Math.min(Math.max(refreshMs, delay * 2), 30_000);
+      }
+      if (!cancelled) schedule(delay);
+    };
+    tick();
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [endingSession, loadSessions, refreshInventory, refreshMs]);
+
   useEffect(() => {
     if (!instId) return;
-    loadSessions(instId);
-    const timer = window.setInterval(() => loadSessions(instId), refreshMs);
-    return () => window.clearInterval(timer);
-  }, [instId, loadSessions, refreshMs]);
+    loadSessions(instId).catch((e) => setSessionErr((e as Error).message));
+  }, [instId, loadSessions]);
 
   const send = () => { if (session.sendInput(composer)) setComposer(''); };
   const attached = session.state.attached;
@@ -78,26 +118,37 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
   const current = instances.find((i) => i.id === instId);
   const backends = current?.session_backends ?? [];
   const selectedBackend = backends.find((b) => `${b.mode}:${b.backend}` === backendKey) ?? backends.find((b) => b.available) ?? backends[0];
-  const selectedSession = sessions.find((s) => s.attach_url === attachUrl);
+  const selectedSession = sessions.find((s) => sessionKey(s) === selectedSessionKey);
   const attachedOwner = attachedInstanceId || instanceIdFromAttachUrl(session.state.url);
+  const attachedKey = attachedOwner && attachedSessionId ? `${attachedOwner}:${attachedSessionId}` : sessionKeyFromAttachUrl(session.state.url);
   const attachToSession = (s: SessionInfo, role: 'controller' | 'observer') => {
     setAttachedInstanceId(s.instance_id || instId);
+    setAttachedSessionId(String(s.id));
     session.attach(s.attach_url, false, role);
   };
   const replaySession = (s: SessionInfo, role: 'controller' | 'observer') => {
     setAttachedInstanceId(s.instance_id || instId);
+    setAttachedSessionId(String(s.id));
     session.replay(s.attach_url, role);
   };
   const detachSession = () => {
     setAttachedInstanceId('');
+    setAttachedSessionId('');
     session.detach();
   };
   useEffect(() => {
     if (!session.state.url) return;
     if (!attachedOwner || attachedOwner !== instId) return;
-    const sessionStillListed = sessions.some((s) => s.attach_url === session.state.url);
-    if (sessions.length && !sessionStillListed) detachSession();
-  }, [attachedOwner, instId, session.state.url, sessions]);
+    const sessionStillListed = sessions.some((s) => sessionKey(s) === attachedKey);
+    if (sessionStillListed) {
+      missingAttachedPollsRef.current = 0;
+      return;
+    }
+    if (sessions.length) {
+      missingAttachedPollsRef.current += 1;
+      if (missingAttachedPollsRef.current >= 2) detachSession();
+    }
+  }, [attachedKey, attachedOwner, instId, session.state.url, sessions]);
   useEffect(() => {
     if (!current) return;
     const valid = current.session_backends.some((b) => `${b.mode}:${b.backend}` === backendKey);
@@ -118,7 +169,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
     setSessionErr('');
     try {
       await api(`/api/instances/${encodeURIComponent(current.id)}/sessions/${encodeURIComponent(s.id)}`, { method: 'DELETE' });
-      if (session.state.url === s.attach_url) detachSession();
+      if (sessionKey(s) === attachedKey) detachSession();
       await loadSessions(current.id);
     } catch (e) {
       setSessionErr((e as Error).message);
@@ -157,8 +208,9 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
                       {sessions.length === 0 && <p className="empty nav-empty">No sessions yet.</p>}
                       <ul>
                         {sessions.map((s) => {
-                          const selS = s.attach_url === attachUrl;
-                          const live = session.state.url === s.attach_url && attached;
+                          const key = sessionKey(s);
+                          const selS = key === selectedSessionKey;
+                          const live = key === attachedKey && attached;
                           return (
                             <li key={s.id}>
                               <button
@@ -169,8 +221,8 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
                                 // Docker/tmux streams repaint and control is reasserted.
                                 onClick={() => {
                                   const role = session.state.role === 'controller' && selectedBackend?.drive !== false ? 'controller' : 'observer';
-                                  setAttachUrl(s.attach_url);
-                                  if (s.attach_url === session.state.url && attached) {
+                                  setSelectedSessionKey(key);
+                                  if (key === attachedKey && attached) {
                                     replaySession(s, role);
                                   } else {
                                     attachToSession(s, role);
@@ -216,8 +268,8 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
               </>
             )}
             <span className="controls-active" title={selectedSession?.id}>{selectedSession ? sessionLabel(selectedSession) : '— no session selected —'}</span>
-            <button disabled={!attachUrl || (attached && session.state.role === 'observer')} onClick={() => selectedSession && attachToSession(selectedSession, 'observer')}>Observe</button>
-            <button disabled={!attachUrl || selectedBackend?.drive === false || (attached && session.state.role === 'controller')} onClick={() => selectedSession && attachToSession(selectedSession, 'controller')}>
+            <button disabled={!selectedSession || (attached && session.state.role === 'observer')} onClick={() => selectedSession && attachToSession(selectedSession, 'observer')}>Observe</button>
+            <button disabled={!selectedSession || selectedBackend?.drive === false || (attached && session.state.role === 'controller')} onClick={() => selectedSession && attachToSession(selectedSession, 'controller')}>
               {attached && session.state.role === 'observer' ? 'Take Control' : 'Drive'}
             </button>
             <button disabled={!attached || selectedBackend?.keyframe === false} onClick={session.requestKeyframe}>Keyframe</button>
@@ -271,16 +323,30 @@ function sessionHoldsController(s: SessionInfo): boolean {
   return s.has_controller === true || (s.controllers ?? 0) > 0;
 }
 
-function instanceIdFromAttachUrl(url: string | null): string {
-  if (!url) return '';
+function sessionKey(s: SessionInfo): string {
+  return `${s.instance_id}:${s.id}`;
+}
+
+function sessionKeyFromAttachUrl(url: string | null): string {
+  const parts = sessionPartsFromAttachUrl(url);
+  return parts ? `${parts.instanceId}:${parts.sessionId}` : '';
+}
+
+function sessionPartsFromAttachUrl(url: string | null): { instanceId: string; sessionId: string } | null {
+  if (!url) return null;
+  const pattern = /\/agents\/([^/]+)\/sessions\/([^/]+)\/attach/;
   try {
     const parsed = new URL(url);
-    const match = parsed.pathname.match(/\/agents\/([^/]+)\/sessions\//);
-    return match ? decodeURIComponent(match[1]) : '';
+    const match = parsed.pathname.match(pattern);
+    return match ? { instanceId: decodeURIComponent(match[1]), sessionId: decodeURIComponent(match[2]) } : null;
   } catch {
-    const match = url.match(/\/agents\/([^/]+)\/sessions\//);
-    return match ? decodeURIComponent(match[1]) : '';
+    const match = url.match(pattern);
+    return match ? { instanceId: decodeURIComponent(match[1]), sessionId: decodeURIComponent(match[2]) } : null;
   }
+}
+
+function instanceIdFromAttachUrl(url: string | null): string {
+  return sessionPartsFromAttachUrl(url)?.instanceId ?? '';
 }
 
 function dedupeInstances(instances: Instance[]) {

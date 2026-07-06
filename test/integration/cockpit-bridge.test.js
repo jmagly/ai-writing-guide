@@ -454,6 +454,44 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     expect(created.attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-created-v1\/attach$/);
   });
 
+  it('caches agent-list resolution across session polls (#1747)', async () => {
+    let agentListCalls = 0;
+    const cacheUpstream = http.createServer((req, res) => {
+      const url = new URL(req.url, 'http://127.0.0.1');
+      const send = (status, body) => {
+        res.writeHead(status, { 'content-type': 'application/json' });
+        res.end(JSON.stringify(body));
+      };
+      if (url.pathname === '/health') return send(200, { status: 'ok' });
+      if (url.pathname === '/api/v1/agents') {
+        agentListCalls += 1;
+        return send(200, { agents: [{ id: 'cache-agent', instance_id: 'cache-inst', status: 'Ready' }] });
+      }
+      if (url.pathname === '/agents/cache-inst/sessions') return send(404, { error: 'instance_id_is_not_session_agent_id' });
+      if (url.pathname === '/agents/cache-inst/v1/sessions') return send(404, { error: 'instance_id_is_not_session_agent_id' });
+      if (url.pathname === '/api/v1/agents/cache-inst/sessions') return send(404, { error: 'instance_id_is_not_session_agent_id' });
+      if (url.pathname === '/api/v1/agents/cache-agent/sessions') {
+        return send(200, { sessions: [{ id: 'cached-sess', instance_id: 'cache-inst', pty_ws_url: 'wss://{host}/agents/cache-inst/sessions/cached-sess/attach' }] });
+      }
+      return send(404, { error: 'not_found', path: url.pathname });
+    });
+    let cacheBridge;
+    try {
+      await new Promise((r) => cacheUpstream.listen(0, '127.0.0.1', r));
+      cacheBridge = createBridge({ executorUrl: `http://127.0.0.1:${cacheUpstream.address().port}` });
+      await new Promise((r) => cacheBridge.listen(0, '127.0.0.1', r));
+      const cacheBase = `http://127.0.0.1:${cacheBridge.address().port}`;
+      const cacheFetch = (p) => fetch(cacheBase + p, { headers: { authorization: `Bearer ${cacheBridge.cockpitToken}` } });
+
+      expect((await (await cacheFetch('/api/sessions?instance=cache-inst')).json()).sessions[0]).toMatchObject({ id: 'cached-sess' });
+      expect((await (await cacheFetch('/api/sessions?instance=cache-inst')).json()).sessions[0]).toMatchObject({ id: 'cached-sess' });
+      expect(agentListCalls).toBe(1);
+    } finally {
+      cacheBridge?.close();
+      cacheUpstream.close();
+    }
+  });
+
   it('falls back to v2 lifecycle routes for start, stop, and destroy', async () => {
     expect(await (await cf('/api/instances/v2-host-1/start', { method: 'POST' })).json()).toMatchObject({ status: 'running' });
     expect(await (await cf('/api/instances/v2-host-1/stop', { method: 'POST' })).json()).toMatchObject({ status: 'stopped' });
