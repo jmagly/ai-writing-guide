@@ -2,6 +2,30 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { stripTerminalAutoResponses, useSession } from './useSession';
 
+const terminalWrites = vi.hoisted(() => [] as string[]);
+
+vi.mock('@xterm/xterm', () => ({
+  Terminal: class {
+    options: Record<string, unknown>;
+    cols = 80;
+    rows = 24;
+    constructor(options: Record<string, unknown>) { this.options = options; }
+    loadAddon() {}
+    onData(_fn: (data: string) => void) {}
+    onResize(_fn: (size: { cols: number; rows: number }) => void) {}
+    open() {}
+    write(data: Uint8Array | string) {
+      terminalWrites.push(typeof data === 'string' ? data : new TextDecoder().decode(data));
+    }
+    reset() { terminalWrites.length = 0; }
+    dispose() {}
+  },
+}));
+
+vi.mock('@xterm/addon-fit', () => ({
+  FitAddon: class { fit() {} },
+}));
+
 // Minimal WebSocket double: records every constructed socket and lets the test
 // drive open/close/message. Mirrors the readiness-race timing (#1669).
 class MockWS {
@@ -18,6 +42,7 @@ class MockWS {
 
 beforeEach(() => {
   MockWS.instances = [];
+  terminalWrites.length = 0;
   (globalThis as unknown as { WebSocket: unknown }).WebSocket = MockWS as unknown;
   vi.useFakeTimers();
 });
@@ -111,8 +136,35 @@ describe('useSession — retry through the PTY-readiness window (#1669)', () => 
       current.emit('message', { data: JSON.stringify({ op: 'binding_hello' }) });
       current.emit('message', { data: JSON.stringify({ op: 'role_assigned', payload: { role: 'observer' } }) });
     });
-    expect(JSON.parse(current.sent[0])).toEqual({ op: 'pty.join_session', payload: { role: 'observer' } });
+    expect(JSON.parse(current.sent[0])).toEqual({ op: 'pty.join_session', payload: { role: 'observer', replay_from: 0 } });
     expect(result.current.state.role).toBe('observer');
+  });
+
+  it('requests a bounded ring replay on fresh attach joins (#1744)', () => {
+    const { result } = renderHook(() => useSession());
+    act(() => { result.current.attach('ws://x/session', false, 'observer'); });
+    const ws = MockWS.instances[0];
+
+    act(() => { ws.emit('message', { data: JSON.stringify({ op: 'binding_hello' }) }); });
+
+    expect(JSON.parse(ws.sent[0])).toEqual({ op: 'pty.join_session', payload: { role: 'observer', replay_from: 0 } });
+    expect(ws.url).toBe('ws://x/session');
+  });
+
+  it('paints replayed prior output from the joined stream on a fresh attach (#1744)', () => {
+    const { result } = renderHook(() => useSession());
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    act(() => { result.current.openTerminal(host); });
+
+    act(() => { result.current.attach('ws://x/session', false, 'observer'); });
+    const ws = MockWS.instances[0];
+    act(() => {
+      ws.emit('message', { data: JSON.stringify({ op: 'binding_hello' }) });
+      ws.emit('message', { data: JSON.stringify({ op: 'output', seq: 8, payload: { data: btoa('prior output') } }) });
+    });
+
+    expect(terminalWrites.join('')).toContain('prior output');
   });
 
   it('does not let a stale close clear the active controller role', () => {
@@ -150,5 +202,96 @@ describe('useSession — retry through the PTY-readiness window (#1669)', () => 
 
     act(() => { replay.emit('message', { data: JSON.stringify({ op: 'binding_hello' }) }); });
     expect(JSON.parse(replay.sent[0])).toEqual({ op: 'pty.join_session', payload: { role: 'controller', replay_from: 12 } });
+  });
+
+  it('requests a keyframe when a controller socket opens but stays silent (#1746)', () => {
+    const { result } = renderHook(() => useSession());
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    act(() => { result.current.openTerminal(host); });
+    act(() => { result.current.attach('ws://x/session', false, 'controller'); });
+    const ws = MockWS.instances[0];
+
+    act(() => {
+      ws.emit('open');
+      ws.emit('message', { data: JSON.stringify({ op: 'binding_hello' }) });
+      ws.emit('message', { data: JSON.stringify({ op: 'role_assigned', payload: { role: 'controller' } }) });
+      vi.advanceTimersByTime(2000);
+    });
+    expect(terminalWrites.join('')).toContain('[attached — no output yet]');
+
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+
+    expect(terminalWrites.join('')).toContain('[attached — no output after 4s; requesting repaint]');
+    expect(ws.sent.map((s) => JSON.parse(s)).filter((m) => m.op === 'pty.request_keyframe')).toHaveLength(1);
+    expect(MockWS.instances).toHaveLength(1);
+  });
+
+  it('reconnects once with replay_from zero when an observer socket stays silent (#1746)', () => {
+    const { result } = renderHook(() => useSession());
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    act(() => { result.current.openTerminal(host); });
+    act(() => { result.current.attach('ws://x/session', false, 'observer'); });
+    const first = MockWS.instances[0];
+
+    act(() => {
+      first.emit('open');
+      first.emit('message', { data: JSON.stringify({ op: 'binding_hello' }) });
+      first.emit('message', { data: JSON.stringify({ op: 'role_assigned', payload: { role: 'observer' } }) });
+      vi.advanceTimersByTime(4000);
+    });
+
+    expect(terminalWrites.join('')).toContain('[attached — no output after 4s; requesting repaint]');
+    expect(MockWS.instances).toHaveLength(2);
+    const replay = MockWS.instances[1];
+    act(() => { replay.emit('message', { data: JSON.stringify({ op: 'binding_hello' }) }); });
+    expect(JSON.parse(replay.sent[0])).toEqual({ op: 'pty.join_session', payload: { role: 'observer', replay_from: 0 } });
+  });
+
+  it('does not recover when the first frame arrives before the deadline (#1746)', () => {
+    const { result } = renderHook(() => useSession());
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    act(() => { result.current.openTerminal(host); });
+    act(() => { result.current.attach('ws://x/session', false, 'controller'); });
+    const ws = MockWS.instances[0];
+
+    act(() => {
+      ws.emit('open');
+      ws.emit('message', { data: JSON.stringify({ op: 'role_assigned', payload: { role: 'controller' } }) });
+      vi.advanceTimersByTime(1000);
+      ws.emit('message', { data: JSON.stringify({ op: 'output', seq: 1, payload: { data: btoa('ready') } }) });
+      vi.advanceTimersByTime(4000);
+    });
+
+    expect(terminalWrites.join('')).toContain('ready');
+    expect(terminalWrites.join('')).not.toContain('no output after');
+    expect(terminalWrites.join('')).not.toContain('no output yet');
+    expect(ws.sent.map((s) => JSON.parse(s)).filter((m) => m.op === 'pty.request_keyframe')).toHaveLength(0);
+    expect(MockWS.instances).toHaveLength(1);
+  });
+
+  it('cleans up the first-frame deadline on user detach (#1746)', () => {
+    const { result } = renderHook(() => useSession());
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    act(() => { result.current.openTerminal(host); });
+    act(() => { result.current.attach('ws://x/session', false, 'controller'); });
+    const ws = MockWS.instances[0];
+
+    act(() => {
+      ws.emit('open');
+      ws.emit('message', { data: JSON.stringify({ op: 'role_assigned', payload: { role: 'controller' } }) });
+      result.current.detach();
+      vi.advanceTimersByTime(4000);
+    });
+
+    expect(terminalWrites.join('')).not.toContain('no output after');
+    expect(terminalWrites.join('')).not.toContain('no output yet');
+    expect(ws.sent.map((s) => JSON.parse(s)).filter((m) => m.op === 'pty.request_keyframe')).toHaveLength(0);
+    expect(MockWS.instances).toHaveLength(1);
   });
 });

@@ -27,6 +27,8 @@ const RESIZE_FLOOR_ROWS = 5;
 // up; ~7s of reconnects rides past that without a hard error.
 const MAX_READY_RETRIES = 6;
 const READY_RETRY_MS = 1200;
+const FIRST_FRAME_NOTICE_MS = 2000;
+const FIRST_FRAME_DEADLINE_MS = 4000;
 
 const textEnc = new TextEncoder();
 const textDec = new TextDecoder();
@@ -97,6 +99,8 @@ export function useSession() {
   const gotFrameRef = useRef(false);   // any output/keyframe seen on the current attach
   const retryRef = useRef(0);          // reconnect attempts since the last user-initiated attach
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const firstFrameNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const firstFrameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closedByUserRef = useRef(false); // detach()/new attach — suppress reconnect
   const [state, setState] = useState<SessionState>({ attached: false, role: null, url: null });
   const [responseNeeded, setResponseNeeded] = useState<ResponseNeededState>({ needed: false, prompt: '', since: null, source: 'pty' });
@@ -123,6 +127,16 @@ export function useSession() {
   const sendOp = (op: string, payload?: unknown) => { try { wsRef.current?.send(encodeOp(op, payload)); } catch { /* socket closed */ } };
   const sendOn = (ws: WebSocket, op: string, payload?: unknown) => { try { ws.send(encodeOp(op, payload)); } catch { /* socket closed */ } };
   const clearResponseNeeded = () => setResponseNeeded({ needed: false, prompt: '', since: null, source: 'pty' });
+  const clearFirstFrameTimer = () => {
+    if (firstFrameNoticeTimerRef.current) {
+      clearTimeout(firstFrameNoticeTimerRef.current);
+      firstFrameNoticeTimerRef.current = null;
+    }
+    if (firstFrameTimerRef.current) {
+      clearTimeout(firstFrameTimerRef.current);
+      firstFrameTimerRef.current = null;
+    }
+  };
 
   // Mount the terminal into the host element (ref callback from the Sessions tab).
   // Idempotent: the Terminal is created once and reused across attaches. A ResizeObserver
@@ -185,12 +199,14 @@ export function useSession() {
     try { termRef.current?.dispose(); } catch { /* */ }
     closedByUserRef.current = true;
     if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
+    clearFirstFrameTimer();
     connectionIdRef.current += 1;
     wsRef.current?.close();
   }, []);
 
   const attach = useCallback((url: string, replay = false, requestedRole: Exclude<Role, null> = 'observer') => {
     if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
+    clearFirstFrameTimer();
     const connectionId = connectionIdRef.current + 1;
     connectionIdRef.current = connectionId;
     closedByUserRef.current = false;
@@ -206,7 +222,7 @@ export function useSession() {
     if (!replay) { try { termRef.current?.reset(); } catch { /* */ } }
 
     // Open (or re-open, on a readiness retry) the data-plane socket.
-    const connect = () => {
+    const connect = (replayFromOverride?: number) => {
       if (connectionIdRef.current !== connectionId || closedByUserRef.current) return;
       // Replay is requested in pty.join_session below. Duplicating replay_from
       // in the pty-ws URL makes the gateway emit replay.out_of_range even when
@@ -217,11 +233,33 @@ export function useSession() {
       ws.addEventListener('open', () => {
         if (connectionIdRef.current !== connectionId || wsRef.current !== ws) return;
         setState((s) => ({ ...s, attached: true, url }));
+        clearFirstFrameTimer();
+        firstFrameNoticeTimerRef.current = setTimeout(() => {
+          if (connectionIdRef.current !== connectionId || wsRef.current !== ws || closedByUserRef.current || gotFrameRef.current) return;
+          write(textEnc.encode('\r\n[attached — no output yet]\r\n'));
+        }, FIRST_FRAME_NOTICE_MS);
+        firstFrameTimerRef.current = setTimeout(() => {
+          if (connectionIdRef.current !== connectionId || wsRef.current !== ws || closedByUserRef.current || gotFrameRef.current) return;
+          if (roleRef.current === 'controller') {
+            write(textEnc.encode(`\r\n[attached — no output after ${Math.round(FIRST_FRAME_DEADLINE_MS / 1000)}s; requesting repaint]\r\n`));
+            sendOn(ws, 'pty.request_keyframe');
+            return;
+          }
+          if (retryRef.current >= MAX_READY_RETRIES) {
+            write(textEnc.encode(`\r\n[attached — no output after ${Math.round(FIRST_FRAME_DEADLINE_MS / 1000)}s]\r\n`));
+            return;
+          }
+          retryRef.current += 1;
+          write(textEnc.encode(`\r\n[attached — no output after ${Math.round(FIRST_FRAME_DEADLINE_MS / 1000)}s; requesting repaint]\r\n`));
+          try { ws.close(); } catch { /* socket may already be closed */ }
+          connect(0);
+        }, FIRST_FRAME_DEADLINE_MS);
       });
       const onGone = (kind: 'close' | 'error') => {
         if (connectionIdRef.current !== connectionId || wsRef.current !== ws) return;
         if (gone) return;
         gone = true;
+        clearFirstFrameTimer();
         roleRef.current = null;
         setState((s) => ({ ...s, attached: false, role: null }));
         // Clean detach, or we were already streaming → leave it (a real end/drop).
@@ -245,7 +283,8 @@ export function useSession() {
         try { m = JSON.parse(ev.data as string); } catch { return; }
         switch (m.op) {
           case 'binding_hello': {
-            sendOn(ws, 'pty.join_session', { role: requestedRole, ...(replay ? { replay_from: lastSeq.current } : {}) });
+            const replayFrom = replayFromOverride ?? (replay ? lastSeq.current : 0);
+            sendOn(ws, 'pty.join_session', { role: requestedRole, replay_from: replayFrom });
             // Tell the PTY our current dimensions up front so the first tmux redraw fits.
             const t = termRef.current;
             if (requestedRole === 'controller' && t && t.cols >= RESIZE_FLOOR_COLS && t.rows >= RESIZE_FLOOR_ROWS) sendOn(ws, 'pty.session_resize', { cols: t.cols, rows: t.rows });
@@ -264,11 +303,13 @@ export function useSession() {
             break;
           }
           case 'output':
+            clearFirstFrameTimer();
             gotFrameRef.current = true; retryRef.current = 0; // first frame → readiness reached
             if (m.seq) lastSeq.current = Math.max(lastSeq.current, m.seq);
             write(b64ToBytes(m.payload?.data ?? ''));
             break;
           case 'keyframe':
+            clearFirstFrameTimer();
             gotFrameRef.current = true; retryRef.current = 0;
             for (const f of m.payload?.frames ?? []) { if (f.seq) lastSeq.current = Math.max(lastSeq.current, f.seq); write(b64ToBytes(f.payload.data)); }
             break;
@@ -287,6 +328,7 @@ export function useSession() {
     roleRef.current = null;
     if (termRef.current) termRef.current.options.disableStdin = true; // detached → read-only
     if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
+    clearFirstFrameTimer();
     wsRef.current?.close();
     wsRef.current = null;
   }, []);

@@ -316,6 +316,7 @@ function sessionLabel(s: SessionInfo): string {
 }
 function sessionMeta(s: SessionInfo): string {
   const backend = `${s.mode ?? s.session_class ?? 'managed'}/${s.backend ?? s.session_backend ?? 'tmux'}`;
+  if (s.members == null && s.controllers == null && s.observers == null) return backend;
   const viewers = s.members ?? ((s.controllers ?? 0) + (s.observers ?? 0));
   return `${backend} · ${viewers} viewer${viewers === 1 ? '' : 's'}`;
 }

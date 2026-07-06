@@ -294,6 +294,31 @@ describe('Sessions', () => {
     // sess-a has a controller connected → it carries the ctrl badge; sess-b does not.
     expect(within(nav).getByTitle('A controller is connected')).toBeTruthy();
   });
+
+  it('omits viewer counts when the session source does not provide membership fields (#1745)', async () => {
+    const session = stubSession();
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [INSTANCE] });
+      if (url.includes('/api/sessions?instance=')) return jsonResponse({
+        sessions: [
+          { id: 'sess-v1', session_name: 'terminal-v1', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-v1/attach', mode: 'managed', backend: 'tmux' },
+          { id: 'sess-rich', session_name: 'terminal-rich', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-rich/attach', mode: 'managed', backend: 'tmux', members: 2, has_controller: true },
+        ],
+      });
+      return new Response('{}', { status: 404 });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<Sessions session={session} composer="" setComposer={() => {}} onRequestStart={() => {}} />);
+
+    await screen.findByText('terminal-rich');
+    const nav = screen.getByLabelText('Instances and sessions');
+    expect(within(nav).getAllByText('managed/tmux')).toHaveLength(1);
+    expect(within(nav).getByText('managed/tmux · 2 viewers')).toBeTruthy();
+    expect(within(nav).getByTitle('A controller is connected')).toBeTruthy();
+    expect(within(nav).queryByText('0 viewers')).toBeNull();
+  });
 });
 
 function jsonResponse(body: unknown): Response {
