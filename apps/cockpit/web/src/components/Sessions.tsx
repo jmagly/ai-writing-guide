@@ -4,6 +4,8 @@ import { fmtId, capRef } from '../util';
 import { CapabilitySearch } from './CapabilitySearch';
 import type { Instance, SessionInfo, CapabilityResult } from '../types';
 import type { SessionApi } from '../useSession';
+import { markRegistrySessionViewed, setRegistryActiveSession, upsertRegistrySessions } from '../sessionRegistry';
+import { useSessionSnapshotMonitor } from '../sessionMonitor';
 
 export function Sessions({ session, composer, setComposer, onRequestStart, refreshMs = 5_000 }: { session: SessionApi; composer: string; setComposer: (v: string) => void; onRequestStart: (instanceId?: string) => void; refreshMs?: number }) {
   const [instances, setInstances] = useState<Instance[]>([]);
@@ -23,6 +25,8 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
   const sessionsSeqRef = useRef(0);
   const missingAttachedPollsRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useSessionSnapshotMonitor();
 
   useEffect(() => { instIdRef.current = instId; }, [instId]);
   useEffect(() => { attachedRef.current = session.state.attached; }, [session.state.attached]);
@@ -67,6 +71,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
     const d = await api<{ sessions: SessionInfo[] }>(`/api/sessions?instance=${encodeURIComponent(id)}`);
     if (seq !== sessionsSeqRef.current || id !== instIdRef.current) return;
     const nextSessions = d.sessions ?? [];
+    upsertRegistrySessions(nextSessions);
     setSessions(nextSessions);
     setSessionErr('');
     setSelectedSessionKey((currentKey) => {
@@ -124,18 +129,25 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
   const attachToSession = (s: SessionInfo, role: 'controller' | 'observer') => {
     setAttachedInstanceId(s.instance_id || instId);
     setAttachedSessionId(String(s.id));
+    setRegistryActiveSession(s.instance_id || instId, String(s.id));
     session.attach(s.attach_url, false, role);
   };
   const replaySession = (s: SessionInfo, role: 'controller' | 'observer') => {
     setAttachedInstanceId(s.instance_id || instId);
     setAttachedSessionId(String(s.id));
+    setRegistryActiveSession(s.instance_id || instId, String(s.id));
     session.replay(s.attach_url, role);
   };
   const detachSession = () => {
     setAttachedInstanceId('');
     setAttachedSessionId('');
+    setRegistryActiveSession(null, null);
     session.detach();
   };
+  useEffect(() => {
+    const selected = sessions.find((s) => sessionKey(s) === selectedSessionKey);
+    if (selected) markRegistrySessionViewed(selected.instance_id, String(selected.id));
+  }, [selectedSessionKey, sessions]);
   useEffect(() => {
     if (!session.state.url) return;
     if (!attachedOwner || attachedOwner !== instId) return;

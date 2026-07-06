@@ -35,7 +35,7 @@ export interface Instance {
   session_backends: SessionBackend[];
 }
 export interface RunningTask { instance_id: string; task_id: string; state: string; tenant: string; runtime_posture?: RuntimePosture; transport?: TransportPosture }
-export interface SessionInfo { id: string; instance_id: string; seq?: number; members?: number; has_controller?: boolean; attach_url: string; mode?: 'direct' | 'managed'; backend?: string; session_name?: string; sessionName?: string; session_class?: string; session_backend?: string; role_policy?: string; replay?: boolean; keyframe?: boolean; controllers?: number; observers?: number }
+export interface SessionInfo { id: string; instance_id: string; seq?: number; members?: number; has_controller?: boolean; attach_url: string; mode?: 'direct' | 'managed'; backend?: string; session_name?: string; sessionName?: string; session_class?: string; session_backend?: string; role_policy?: string; replay?: boolean; keyframe?: boolean; controllers?: number; observers?: number; has_screen?: boolean; hasScreen?: boolean }
 export interface Approval { id: string; instance_id: string; prompt: string; risk: string; status: string }
 export interface ResponseNeeded { id: string; instance_id: string; prompt: string; source: string; status: string; attach_url?: string | null }
 export interface MissionAuditEvent { event?: string; ts?: string; missionId?: string; mission_id?: string; objective?: string; [key: string]: unknown }
