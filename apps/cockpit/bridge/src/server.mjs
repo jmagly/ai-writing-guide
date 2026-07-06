@@ -1376,6 +1376,50 @@ async function getSessions(executorUrl, instanceId) {
   return normalizeSessionRows({ sessions, executorUrl, instanceId, sessionAgentId });
 }
 
+function normalizeScreenSnapshot(body, { instanceId, sessionId, source }) {
+  const text = String(body?.text ?? body?.snapshot ?? body?.screen ?? body?.content ?? '');
+  const rawLines = Array.isArray(body?.lines) ? body.lines : text.replace(/\r/g, '\n').split('\n');
+  return {
+    instance_id: instanceId,
+    session_id: sessionId,
+    text,
+    lines: rawLines.map((line) => String(line)).filter(Boolean).slice(-80),
+    seq: body?.seq ?? body?.sequence ?? body?.anchor_sequence ?? body?.anchorSequence ?? null,
+    fetched_at: new Date().toISOString(),
+    source,
+    snapshot_format: body?.snapshot_format ?? body?.snapshotFormat ?? body?.format ?? 'text/plain',
+  };
+}
+
+async function getSessionScreen(executorUrl, instanceId, sessionId) {
+  const sessionAgentId = await resolveSessionAgentId(executorUrl, instanceId);
+  const agentIds = unique([sessionAgentId, instanceId]);
+  const paths = agentIds.flatMap((agentId) => {
+    const encodedAgent = encodeURIComponent(agentId);
+    const encodedSession = encodeURIComponent(sessionId);
+    return [
+      `${executorUrl}/api/v1/agents/${encodedAgent}/sessions/${encodedSession}/screen`,
+      `${executorUrl}/api/v1/agents/${encodedAgent}/sessions/${encodedSession}/screen-state`,
+      `${executorUrl}/agents/${encodedAgent}/sessions/${encodedSession}/screen`,
+      `${executorUrl}/agents/${encodedAgent}/sessions/${encodedSession}/screen-state`,
+    ];
+  });
+  try {
+    const { body, target, status } = await fetchJsonFirst(paths);
+    return { status, body: normalizeScreenSnapshot(body, { instanceId, sessionId, source: target }) };
+  } catch (e) {
+    return {
+      status: 404,
+      body: {
+        error: 'session_screen_unavailable',
+        instance_id: instanceId,
+        session_id: sessionId,
+        detail: String(e?.message ?? e),
+      },
+    };
+  }
+}
+
 export function normalizeSessionRows({ sessions, executorUrl, instanceId, sessionAgentId = instanceId }) {
   const wsBase = executorUrl.replace(/^http/i, 'ws');
   const normalizeAttachUrl = (s, sessionId) => {
@@ -1640,6 +1684,10 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
       }
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/sessions\/([^/]+)$/)) && req.method === 'DELETE') {
         const { status, body } = await endSession(upstreamUrl, decodeURIComponent(m[1]), decodeURIComponent(m[2]));
+        return json(res, status, body);
+      }
+      if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/sessions\/([^/]+)\/screen$/)) && req.method === 'GET') {
+        const { status, body } = await getSessionScreen(upstreamUrl, decodeURIComponent(m[1]), decodeURIComponent(m[2]));
         return json(res, status, body);
       }
       // registry-bound, data-driven core — live, no app restart (#1592)

@@ -109,6 +109,17 @@ describe('cockpit Bridge — control surface', () => {
     expect(s.sessions.find((x) => x.id === 'demo-shell')).toMatchObject({ mode: 'direct', backend: 'native', role_policy: 'observe-default' });
   });
 
+  it('proxies server-side PTY screen snapshots for background monitoring (#1742)', async () => {
+    const screen = await (await f('/api/instances/550e8400-e29b-41d4-a716-446655440000/sessions/demo-shell/screen')).json();
+    expect(screen).toMatchObject({
+      instance_id: '550e8400-e29b-41d4-a716-446655440000',
+      session_id: 'demo-shell',
+      snapshot_format: 'text/plain',
+    });
+    expect(screen.text).toContain('aiwg discover');
+    expect(screen.lines.some((line) => line.includes('flow-deploy-to-production'))).toBe(true);
+  });
+
   it('creates sessions with sandbox-advertised direct or managed backend selection', async () => {
     const id = '550e8400-e29b-41d4-a716-446655440000';
     const created = await (await f(`/api/instances/${id}/sessions?mode=managed&backend=tmux`, { method: 'POST' })).json();
@@ -374,6 +385,9 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
         const one = { sessionId: 'sess-v2', seq: 2, members: 1, role_policy: 'observe-default' };
         return send(200, { items: [one, { ...one }] });
       }
+      if (url.pathname === '/api/v1/agents/agent-v2-host-1/sessions/sess-v2/screen' && req.method === 'GET') {
+        return send(200, { seq: 3, text: 'v2 session line\nNeed input? [y/N]\n', snapshot_format: 'text/plain' });
+      }
       // A2A task surface the Bridge derives the running board + approval inbox from (#1639).
       if (url.pathname === '/agents/agent-v2-host-1/tasks' || url.pathname === '/api/v1/agents/agent-v2-host-1/tasks') {
         return send(200, { tasks: [
@@ -443,6 +457,11 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     // id, never the resolved agent name (agent-v2-host-1), which the route rejects.
     expect(sessions.sessions[0].attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-v2\/attach$/);
     expect(sessions.sessions[0].attach_url).not.toContain('agent-v2-host-1');
+
+    const screen = await (await cf('/api/instances/v2-host-1/sessions/sess-v2/screen')).json();
+    expect(screen).toMatchObject({ instance_id: 'v2-host-1', session_id: 'sess-v2', seq: 3 });
+    expect(screen.text).toContain('Need input?');
+    expect(screen.source).toContain('/api/v1/agents/agent-v2-host-1/sessions/sess-v2/screen');
   });
 
   it('creates sessions through the formal agentic-sandbox v1 session API', async () => {

@@ -83,6 +83,20 @@ export function listSessions(instanceId) {
     }));
 }
 
+export function getSessionScreen(instanceId, sessionId) {
+  const s = sessions.get(sessionId);
+  if (!s || (instanceId && s.instanceId !== instanceId)) return null;
+  const text = s.frames.map((frame) => Buffer.from(frame.payload?.data ?? '', 'base64').toString('utf8')).join('');
+  return {
+    session_id: s.id,
+    instance_id: s.instanceId,
+    seq: s.seq,
+    text,
+    lines: text.replace(/\r/g, '\n').split('\n').filter(Boolean).slice(-80),
+    snapshot_format: 'text/plain',
+  };
+}
+
 /** Create a fresh session on an instance (the "Start a session" primary verb). */
 export function createSession(instanceId, { mode = 'direct', backend = 'native', sessionName } = {}) {
   const existing = sessionName
