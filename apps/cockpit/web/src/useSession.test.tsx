@@ -88,4 +88,67 @@ describe('useSession — retry through the PTY-readiness window (#1669)', () => 
     // 1 initial + 6 retries = 7 sockets, then it stops.
     expect(MockWS.instances.length).toBeLessThanOrEqual(7);
   });
+
+  it('ignores stale socket messages after switching sessions', () => {
+    const { result } = renderHook(() => useSession());
+    act(() => { result.current.attach('ws://x/agents/i/sessions/old/attach', false, 'controller'); });
+    const old = MockWS.instances[0];
+    act(() => { result.current.attach('ws://x/agents/i/sessions/new/attach', false, 'observer'); });
+    const current = MockWS.instances[1];
+
+    act(() => {
+      old.emit('open');
+      old.emit('message', { data: JSON.stringify({ op: 'binding_hello' }) });
+      old.emit('message', { data: JSON.stringify({ op: 'role_assigned', payload: { role: 'controller' } }) });
+      old.emit('close');
+    });
+    expect(old.sent).toEqual([]);
+    expect(result.current.state.url).toBe('ws://x/agents/i/sessions/new/attach');
+    expect(result.current.state.role).toBeNull();
+
+    act(() => {
+      current.emit('open');
+      current.emit('message', { data: JSON.stringify({ op: 'binding_hello' }) });
+      current.emit('message', { data: JSON.stringify({ op: 'role_assigned', payload: { role: 'observer' } }) });
+    });
+    expect(JSON.parse(current.sent[0])).toEqual({ op: 'pty.join_session', payload: { role: 'observer' } });
+    expect(result.current.state.role).toBe('observer');
+  });
+
+  it('does not let a stale close clear the active controller role', () => {
+    const { result } = renderHook(() => useSession());
+    act(() => { result.current.attach('ws://x/old', false, 'observer'); });
+    const old = MockWS.instances[0];
+    act(() => { result.current.attach('ws://x/new', false, 'controller'); });
+    const current = MockWS.instances[1];
+
+    act(() => {
+      current.emit('open');
+      current.emit('message', { data: JSON.stringify({ op: 'role_assigned', payload: { role: 'controller' } }) });
+    });
+    expect(result.current.state.role).toBe('controller');
+
+    act(() => { old.emit('close'); });
+    expect(result.current.state.url).toBe('ws://x/new');
+    expect(result.current.state.attached).toBe(true);
+    expect(result.current.state.role).toBe('controller');
+  });
+
+  it('reattaches for replay immediately and asks the active socket for replay_from', () => {
+    const { result } = renderHook(() => useSession());
+    act(() => { result.current.attach('ws://x/session', false, 'controller'); });
+    const first = MockWS.instances[0];
+    act(() => {
+      first.emit('open');
+      first.emit('message', { data: JSON.stringify({ op: 'output', seq: 12, payload: { data: btoa('ready') } }) });
+    });
+
+    act(() => { result.current.replay('ws://x/session', 'controller'); });
+    expect(MockWS.instances).toHaveLength(2);
+    const replay = MockWS.instances[1];
+    expect(replay.url).toBe('ws://x/session?replay_from=12');
+
+    act(() => { replay.emit('message', { data: JSON.stringify({ op: 'binding_hello' }) }); });
+    expect(JSON.parse(replay.sent[0])).toEqual({ op: 'pty.join_session', payload: { role: 'controller', replay_from: 12 } });
+  });
 });
