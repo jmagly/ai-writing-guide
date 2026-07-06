@@ -1504,19 +1504,29 @@ mark.hl {
    Bottom Navigation (Prev/Next)
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* Publisher markup wraps the buttons in .bottom-nav__inner (with
+   .bottom-nav-spacer placeholders for missing sides); the nav itself is just
+   the full-width separator. Blog posts add .bottom-nav--posts with a third
+   back-to-index affordance between prev and next. */
 .bottom-nav {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
   margin-top: var(--space-6);
   padding-top: var(--space-4);
   border-top: 1px solid var(--color-border-subtle);
+}
+
+.bottom-nav__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
 }
 
 .bottom-nav-item {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
+  max-width: 44%;
 }
 
 .bottom-nav-prev {
@@ -1526,6 +1536,16 @@ mark.hl {
 .bottom-nav-next {
   flex-direction: row;
   margin-left: auto;
+}
+
+/* Three-up post nav: space-between places the items; the docs two-up
+   auto margin would shove the index pill off-center. */
+.bottom-nav--posts .bottom-nav-next {
+  margin-left: 0;
+}
+
+.bottom-nav-spacer {
+  flex: 1;
 }
 
 .bottom-nav-chevron {
@@ -1540,9 +1560,31 @@ mark.hl {
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   transition: var(--transition-fast);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bottom-nav-link:hover {
+  border-color: var(--color-accent-cyan);
+  color: var(--color-accent-cyan);
+}
+
+/* Back-to-index pill (blog post nav) */
+.bottom-nav-index {
+  align-self: center;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+  transition: var(--transition-fast);
+}
+
+.bottom-nav-index:hover,
+.bottom-nav-index:focus-visible {
   border-color: var(--color-accent-cyan);
   color: var(--color-accent-cyan);
 }
@@ -1722,14 +1764,39 @@ mark.hl {
     font-size: 1.1rem;
   }
 
-  /* Bottom navigation: stack vertically */
-  .bottom-nav {
+  /* Bottom navigation: stack vertically, one compact line per button.
+     Long post titles truncate (nowrap + ellipsis from the base rule)
+     instead of blowing the buttons up to multiple lines. */
+  .bottom-nav__inner {
     flex-direction: column;
+    align-items: stretch;
     gap: var(--space-2);
+  }
+
+  .bottom-nav-item {
+    width: 100%;
+    max-width: none;
   }
 
   .bottom-nav-next {
     margin-left: 0;
+  }
+
+  .bottom-nav-spacer {
+    display: none;
+  }
+
+  .bottom-nav-link {
+    flex: 1;
+    text-align: center;
+    font-size: var(--font-size-xs);
+    padding: var(--space-2);
+  }
+
+  /* Keep the two post buttons adjacent; index pill drops below, centered */
+  .bottom-nav--posts .bottom-nav-index {
+    order: 1;
+    align-self: center;
   }
 
   /* Command palette full-width on mobile */
