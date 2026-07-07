@@ -119,22 +119,36 @@ export function App() {
   const requestStart = (instanceId?: string) => { setStartInst(instanceId); setStartOpen(true); };
   const handleLaunched = async (instanceId?: string, openSession?: boolean, operationId?: string) => {
     setRefreshTick((t) => t + 1);
-    if (openSession) {
-      const inst = await waitForSessionReady(instanceId, operationId);
-      const backend = inst.session_backends.find((b) => b.available !== false && b.drive !== false)
-        ?? inst.session_backends.find((b) => b.available !== false)
-        ?? inst.session_backends[0];
-      if (!backend || backend.available === false) throw new Error(backend?.reason ?? 'No available session backend for the new instance.');
-      const qs = new URLSearchParams({ mode: backend.mode, backend: backend.backend });
-      const s = await api<{ id: string; attach_url: string }>(
-        `/api/instances/${encodeURIComponent(inst.id)}/sessions?${qs}`, { method: 'POST' },
-      );
-      session.attach(s.attach_url, false, backend.drive === false ? 'observer' : 'controller', { instanceId: inst.id, sessionId: s.id });
-      setTab('sessions');
-    } else {
+    if (!openSession) {
       setTab('inventory');
+      setRefreshTick((t) => t + 1);
+      return;
     }
-    setRefreshTick((t) => t + 1);
+    // Readiness can take minutes for heavy loadouts (e.g. full-suite) or stall if the
+    // executor is degraded. Never block the launch modal on it: switch to the Sessions
+    // workspace now and run the wait+attach in the background. If it doesn't complete,
+    // the instance is still visible under Inventory to start a session from manually.
+    setTab('sessions');
+    void (async () => {
+      try {
+        const inst = await waitForSessionReady(instanceId, operationId);
+        const backend = inst.session_backends.find((b) => b.available !== false && b.drive !== false)
+          ?? inst.session_backends.find((b) => b.available !== false)
+          ?? inst.session_backends[0];
+        if (!backend || backend.available === false) throw new Error(backend?.reason ?? 'No available session backend for the new instance.');
+        const qs = new URLSearchParams({ mode: backend.mode, backend: backend.backend });
+        const s = await api<{ id: string; attach_url: string }>(
+          `/api/instances/${encodeURIComponent(inst.id)}/sessions?${qs}`, { method: 'POST' },
+        );
+        session.attach(s.attach_url, false, backend.drive === false ? 'observer' : 'controller', { instanceId: inst.id, sessionId: s.id });
+      } catch (e) {
+        // Non-blocking: surface via console; the instance remains in Inventory.
+        console.warn('auto-session after launch did not complete:', (e as Error).message);
+      } finally {
+        setRefreshTick((t) => t + 1);
+      }
+    })();
+    return;
   };
   const copyLaunchCommand = async () => {
     await navigator.clipboard?.writeText('aiwg cockpit');
