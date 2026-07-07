@@ -34,6 +34,11 @@ export function StartSessionModal({ open, onClose, session, onStarted, initialIn
   useEffect(() => {
     if (!open) return;
     setErr('');
+    // The modal stays mounted across open/close, so stale state persists. A
+    // successful start left busy=true (it was only cleared on failure), which
+    // re-rendered the next open with a permanently greyed-out "Starting…"
+    // button until a full page refresh. Reset on every open.
+    setBusy(false);
     let cancelled = false;
     (async () => {
       try {
@@ -92,6 +97,7 @@ export function StartSessionModal({ open, onClose, session, onStarted, initialIn
       session.attach(s.attach_url, false, posture, { instanceId: current.id, sessionId: s.id });
       onStarted();
       onClose();
+      setBusy(false);
     } catch (e) {
       const message = e instanceof DOMException && e.name === 'AbortError'
         ? 'Starting the session timed out. The instance may still be preparing PTY support; refresh sessions and try again.'

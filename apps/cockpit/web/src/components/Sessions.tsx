@@ -115,6 +115,10 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
 
   useEffect(() => {
     if (!instId) return;
+    // Clear the previous instance's rows immediately so a slow load never shows
+    // the wrong instance's sessions in the nav during the switch.
+    setSessions([]);
+    setSessionErr('');
     loadSessions(instId).catch((e) => setSessionErr((e as Error).message));
   }, [instId, loadSessions]);
 

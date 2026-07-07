@@ -828,13 +828,19 @@ function defaultSessionLaunch(instance) {
   };
 }
 
-function stableSessionName(instanceId, { mode = 'managed', backend = 'tmux' } = {}) {
+// Deterministic prefix + per-request nonce. The name is IDENTICAL across this
+// request's fallback candidates (so a timed-out-but-created session is
+// recoverable by name, and the executor's 409-by-name guard dedupes candidate
+// retries) but UNIQUE across requests — operators can hold multiple concurrent
+// sessions per (instance, mode, backend). A fully canonical name here silently
+// reused the first session on every subsequent "New session" click.
+function sessionNameFor(instanceId, { mode = 'managed', backend = 'tmux' } = {}) {
   const slug = (value) => String(value || 'default')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 36) || 'default';
-  return `cockpit-${slug(instanceId)}-${slug(mode)}-${slug(backend)}`;
+  return `cockpit-${slug(instanceId)}-${slug(mode)}-${slug(backend)}-${randomBytes(3).toString('hex')}`;
 }
 
 function shellSingleQuote(value) {
@@ -1778,7 +1784,7 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         if (backend) qs.set('backend', backend);
         if (loadout) qs.set('loadout', loadout);
         const sessionAgentId = await resolveSessionAgentId(upstreamUrl, id);
-        const sessionName = stableSessionName(id, { mode: mode || 'managed', backend: backend || 'tmux' });
+        const sessionName = sessionNameFor(id, { mode: mode || 'managed', backend: backend || 'tmux' });
         let sessionLaunch = defaultSessionLaunch();
         try {
           const inventory = await getInventory(upstreamUrl);
@@ -1787,13 +1793,9 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
           // Session creation can still proceed without an explicit cwd; the
           // executor/agent will fall back to its own process cwd.
         }
-        try {
-          const reusable = await findReusableSession(upstreamUrl, id, sessionName);
-          if (reusable) return json(res, 200, sessionResponseFromRow(reusable));
-        } catch {
-          // If listing is not available yet, fall through to create. A failed or
-          // timed-out create lists again below before reporting failure.
-        }
+        // No pre-create reuse lookup: every create request gets its own uniquely
+        // named session (multi-session per instance is supported). Recovery by
+        // name below still catches a create that timed out after succeeding.
         const sessionBody = JSON.stringify({
           session_name: sessionName,
           session_backend: backend || 'tmux',

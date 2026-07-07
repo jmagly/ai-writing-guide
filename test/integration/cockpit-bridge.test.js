@@ -125,11 +125,15 @@ describe('cockpit Bridge — control surface', () => {
     const created = await (await f(`/api/instances/${id}/sessions?mode=managed&backend=tmux`, { method: 'POST' })).json();
     expect(created.attach_url).toMatch(/^ws:\/\/.*\/attach$/);
     expect(created.session_name).toMatch(/^cockpit-/);
-    const repeated = await (await f(`/api/instances/${id}/sessions?mode=managed&backend=tmux`, { method: 'POST' })).json();
-    expect(repeated).toMatchObject({ id: created.id, session_name: created.session_name, reused: true });
+    // Multi-session per instance: a second create is a NEW session (unique
+    // per-request name), never a silent reuse of the first (#1749 follow-up to
+    // the #1738 dedupe — dedupe now applies within one request's candidates only).
+    const second = await (await f(`/api/instances/${id}/sessions?mode=managed&backend=tmux`, { method: 'POST' })).json();
+    expect(second.id).not.toBe(created.id);
+    expect(second.session_name).not.toBe(created.session_name);
     const s = await (await f(`/api/sessions?instance=${id}`)).json();
     expect(s.sessions.find((x) => x.id === created.id)).toMatchObject({ session_class: 'managed', session_backend: 'tmux' });
-    expect(s.sessions.filter((x) => x.session_name === created.session_name)).toHaveLength(1);
+    expect(s.sessions.find((x) => x.id === second.id)).toBeTruthy();
   });
 
   it('does not fall through to another POST candidate after a timeout (#1738)', async () => {
@@ -483,8 +487,10 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     const created = await (await cf('/api/instances/v2-host-1/sessions', { method: 'POST' })).json();
     expect(created).toMatchObject({
       id: 'sess-created-v1',
-      requested: { session_name: 'cockpit-v2-host-1-managed-tmux', session_backend: 'tmux', session_class: 'managed', command: 'bash', working_dir: '/work' },
+      requested: { session_backend: 'tmux', session_class: 'managed', command: 'bash', working_dir: '/work' },
     });
+    // Deterministic prefix + per-request nonce (multi-session per instance).
+    expect(created.requested.session_name).toMatch(/^cockpit-v2-host-1-managed-tmux-[0-9a-f]{6}$/);
     expect(created.attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-created-v1\/attach$/);
   });
 
