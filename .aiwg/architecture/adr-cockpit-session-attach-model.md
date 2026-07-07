@@ -1,8 +1,16 @@
 # ADR: Cockpit Session Attach Model — Observer-Default via PTY-Bridge/Screen-Reader, Non-Destructive
 
-**Status**: Proposed
-**Phase**: Elaboration
-**Related**: @.aiwg/architecture/cockpit-sad.md, UC-COCKPIT-005 (attach), UC-COCKPIT-004 (start), @.aiwg/requirements/nfr-modules/cockpit-nfrs.md (NFR-01, NFR-02), @.aiwg/risks/cockpit-risk-register.md (D1)
+**Status**: Accepted (implemented + verified 2026-07-07)
+**Phase**: Elaboration → Construction
+**Related**: @.aiwg/architecture/cockpit-sad.md, @.aiwg/architecture/adr-cockpit-multi-session-terminal-model.md (client-side rendering model), UC-COCKPIT-005 (attach), UC-COCKPIT-004 (start), @.aiwg/requirements/nfr-modules/cockpit-nfrs.md (NFR-01, NFR-02), @.aiwg/risks/cockpit-risk-register.md (D1)
+
+> **Implementation note (2026-07-07)**: the observer-default / opt-in
+> capability-gated drive / non-destructive semantics below are implemented in
+> `useSession`/`Sessions.tsx`. *How* the client renders and switches between
+> attached sessions (one persistent terminal per session) is a separate decision
+> documented in `adr-cockpit-multi-session-terminal-model.md`. Controller
+> exclusivity / takeover truthfulness still depends on upstream agentic-sandbox
+> #501 (audit U1).
 
 ## Reasoning
 

@@ -280,6 +280,46 @@ observers cannot request a keyframe on controller-gated backends. An auto-keyfra
    (response-needed, liveness, unread badges, snapshot previews) — pairs with
    upstream U2/U4; U1 needed before "Take Control" can be truthful.
 
+## Part 5 — Resolution log (2026-07-07)
+
+All Cockpit findings were resolved during a UAT-driven stabilization pass;
+executor-side causes were filed as agentic-sandbox issues. Commits are on
+`roctinam/aiwg` `main` (delivery mode: direct).
+
+| Finding | Resolution | Ref |
+|---|---|---|
+| F1 duplicate sessions | deterministic `session_name` + no fallback-on-timeout (#1738); then a per-request nonce so multiple concurrent sessions per instance are supported instead of silently reused | `be8a311dc` |
+| F2 forced detach on browse | per-session persistent terminals — switching instances/sessions no longer detaches the live session | `15480b72a` |
+| F3 stale list under wrong instance | clear `sessions` immediately on instance switch; request-token race guard | `be8a311dc` |
+| F4 `attach_url` as identity | `(instance_id, session_id)` identity via the v2 SessionEntry schema | v2-schema pass |
+| F5 single global terminal | **per-session persistent terminals + session registry — the target-UX architecture** (see ADR) | `15480b72a` (#1749) |
+| F6 wrong-instance launch | no `candidates[0]` fallback; terminal-state fast-fail in the readiness wait | launch pass |
+| F7 blank terminal / no keyframe | keyframe-on-deadline (#1746); persistent terminals keep the screen painted across switches (no "press enter") | `15480b72a` |
+| F8 dead viewer/controller fields | v2 `membership`/`liveness` consumed directly (no translators) | v2-schema pass |
+| F9 readiness retry breadth | readiness-retry lifecycle preserved per connection | `15480b72a` |
+| F10 polling storm / 404 flood | stop polling a session's `/screen` after its first 404; `apiRaw` non-throwing | `be8a311dc` |
+
+### Additional findings surfaced during live UAT (not in the original static audit)
+
+| Area | Finding | Resolution | Ref |
+|---|---|---|---|
+| Host runtime | `agent-client` dialed the plaintext gRPC port for mTLS enrollment; the binary was also absent from PATH | route the host supervisor's management endpoint to the mTLS listener; set TLS server name to the cert's name; build+install `agent-client` | agentic-sandbox #609 (`38b4f9b`) |
+| Container | bootstrap-enrollment HTTP bound the loopback IP, unreachable from Docker via `host.docker.internal` | `AGENTIC_HTTP_LISTEN_IP` widens the HTTP bind | agentic-sandbox #610 (`38b4f9b`) |
+| Host sessions | host PTY sessions absent from the session-list API (regression vs closed #500) | Cockpit nav merges the attached session; executor fix filed | aiwg `5621c11ed` / agentic-sandbox #611 |
+| VM | libvirtd hung by heavy `full-suite` VM provisions; static `.ip-registry` exhausted (201-254) because destroy never releases IPs | killed the stuck provisions + restarted libvirtd + cleared the stale registry; IP/CID leak folded into the destroy-cleanup issue | agentic-sandbox #607, #608 |
+| Launch UX | launch modal blocked ~150s on the readiness wait (greyed "Working…") | switch to Sessions and run the wait+attach in the background | `f93f0eb07` |
+| Start-session UX | `busy` flag was cleared only on failure, leaving the Start button permanently disabled until a page refresh | reset on modal open and on success | `be8a311dc` |
+| Inventory | tab did not auto-refresh; instances launched after mount were invisible | poll + app-wide `refreshTick` | prior pass |
+
+**Operational guidance captured:** the `full-suite` loadout (all 9 providers ×
+6 frameworks) is unsuitable for a VM — its install hangs libvirtd. Use `basic`
+or `claude-only` for VM targets.
+
+**Net state:** host + Docker + VM (basic loadout) all provision, enroll, attach,
+and stream; multiple concurrent sessions per instance; switching preserves each
+session's scrollback and live prompt. Open executor items: agentic-sandbox #607,
+#608, #611 (filed with root-cause analysis and fix plans).
+
 ## Provenance
 
 - Derived from: `apps/cockpit/web/src/useSession.ts`, `web/src/components/Sessions.tsx`,
