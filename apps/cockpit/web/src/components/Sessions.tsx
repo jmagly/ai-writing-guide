@@ -329,16 +329,18 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
 }
 
 function sessionLabel(s: SessionInfo): string {
-  return s.session_name ?? s.sessionName ?? fmtId(s.id);
+  return s.session_name ?? fmtId(s.id);
 }
 function sessionMeta(s: SessionInfo): string {
-  const backend = `${s.mode ?? s.session_class ?? 'managed'}/${s.backend ?? s.session_backend ?? 'tmux'}`;
-  if (s.members == null && s.controllers == null && s.observers == null) return backend;
-  const viewers = s.members ?? ((s.controllers ?? 0) + (s.observers ?? 0));
+  const backend = `${s.session_class ?? 'managed'}/${s.session_backend ?? 'tmux'}`;
+  // v2 membership is authoritative; omit the viewer fragment when the executor
+  // doesn't advertise membership rather than implying "0 viewers".
+  if (!s.membership) return backend;
+  const viewers = s.membership.attachment_count;
   return `${backend} · ${viewers} viewer${viewers === 1 ? '' : 's'}`;
 }
 function sessionHoldsController(s: SessionInfo): boolean {
-  return s.has_controller === true || (s.controllers ?? 0) > 0;
+  return (s.membership?.controllers.length ?? 0) > 0;
 }
 
 function sessionKey(s: SessionInfo): string {

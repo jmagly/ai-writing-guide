@@ -275,8 +275,8 @@ describe('Sessions', () => {
       if (url.includes('/api/inventory')) return jsonResponse({ instances: [INSTANCE] });
       if (url.includes('/api/sessions?instance=')) return jsonResponse({
         sessions: [
-          { id: 'sess-a', session_name: 'terminal-alpha', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-a/attach', mode: 'managed', backend: 'tmux', controllers: 1, observers: 1 },
-          { id: 'sess-b', session_name: 'terminal-beta', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-b/attach', mode: 'direct', backend: 'native', members: 0 },
+          { id: 'sess-a', session_name: 'terminal-alpha', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-a/attach', session_class: 'managed', session_backend: 'tmux', membership: { controllers: ['c1'], observers: ['o1'], attachment_count: 2 } },
+          { id: 'sess-b', session_name: 'terminal-beta', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-b/attach', session_class: 'direct', session_backend: 'native', membership: { controllers: [], observers: [], attachment_count: 0 } },
         ],
       });
       return new Response('{}', { status: 404 });
@@ -304,8 +304,8 @@ describe('Sessions', () => {
       if (url.includes('/api/inventory')) return jsonResponse({ instances: [INSTANCE] });
       if (url.includes('/api/sessions?instance=')) return jsonResponse({
         sessions: [
-          { id: 'sess-a', session_name: 'terminal-alpha', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-a/attach', mode: 'managed', backend: 'tmux' },
-          { id: 'sess-b', session_name: 'terminal-beta', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-b/attach', mode: 'managed', backend: 'tmux' },
+          { id: 'sess-a', session_name: 'terminal-alpha', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-a/attach', session_class: 'managed', session_backend: 'tmux' },
+          { id: 'sess-b', session_name: 'terminal-beta', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-b/attach', session_class: 'managed', session_backend: 'tmux' },
         ],
       });
       return new Response('{}', { status: 404 });
@@ -333,8 +333,8 @@ describe('Sessions', () => {
       if (url.includes('/api/inventory')) return jsonResponse({ instances: [INSTANCE] });
       if (url.includes('/api/sessions?instance=')) return jsonResponse({
         sessions: [
-          { id: 'sess-v1', session_name: 'terminal-v1', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-v1/attach', mode: 'managed', backend: 'tmux' },
-          { id: 'sess-rich', session_name: 'terminal-rich', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-rich/attach', mode: 'managed', backend: 'tmux', members: 2, has_controller: true },
+          { id: 'sess-bare', session_name: 'terminal-bare', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-bare/attach', session_class: 'managed', session_backend: 'tmux' },
+          { id: 'sess-rich', session_name: 'terminal-rich', instance_id: 'inst-1', attach_url: 'ws://x/agents/inst-1/sessions/sess-rich/attach', session_class: 'managed', session_backend: 'tmux', membership: { controllers: ['c1'], observers: ['o1'], attachment_count: 2 } },
         ],
       });
       return new Response('{}', { status: 404 });

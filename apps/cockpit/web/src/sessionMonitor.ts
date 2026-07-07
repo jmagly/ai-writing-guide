@@ -34,7 +34,7 @@ export function useSessionSnapshotMonitor(refreshMs = 12_000) {
       }
       const entries = Object.values(getSessionRegistrySnapshot().entries)
         .filter((entry) => !entry.attached)
-        .filter((entry) => entry.metadata.has_screen !== false && entry.metadata.hasScreen !== false);
+        .filter((entry) => entry.metadata.has_screen !== false);
       await Promise.all(entries.map(async (entry) => {
         try {
           const snapshot = await api<ScreenSnapshotResponse>(

@@ -106,7 +106,7 @@ describe('cockpit Bridge — control surface', () => {
     expect(run.running[0]).toHaveProperty('transport');
     const s = await (await f('/api/sessions?instance=550e8400-e29b-41d4-a716-446655440000')).json();
     expect(s.sessions.find((x) => x.id === 'demo-shell')?.attach_url).toMatch(/^ws:\/\/.*\/attach$/);
-    expect(s.sessions.find((x) => x.id === 'demo-shell')).toMatchObject({ mode: 'direct', backend: 'native', role_policy: 'observe-default' });
+    expect(s.sessions.find((x) => x.id === 'demo-shell')).toMatchObject({ session_class: 'direct', session_backend: 'native', role_policy: 'observe-default' });
   });
 
   it('proxies server-side PTY screen snapshots for background monitoring (#1742)', async () => {
@@ -128,7 +128,7 @@ describe('cockpit Bridge — control surface', () => {
     const repeated = await (await f(`/api/instances/${id}/sessions?mode=managed&backend=tmux`, { method: 'POST' })).json();
     expect(repeated).toMatchObject({ id: created.id, session_name: created.session_name, reused: true });
     const s = await (await f(`/api/sessions?instance=${id}`)).json();
-    expect(s.sessions.find((x) => x.id === created.id)).toMatchObject({ mode: 'managed', backend: 'tmux' });
+    expect(s.sessions.find((x) => x.id === created.id)).toMatchObject({ session_class: 'managed', session_backend: 'tmux' });
     expect(s.sessions.filter((x) => x.session_name === created.session_name)).toHaveLength(1);
   });
 
@@ -382,7 +382,17 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
         // fallback construction — which must key the path by the instance id
         // (v2-host-1), NOT the resolved agent name (agent-v2-host-1) the
         // executor's pty-ws route would reject (#1671).
-        const one = { sessionId: 'sess-v2', seq: 2, members: 1, role_policy: 'observe-default' };
+        // v2 SessionEntry shape (v2026.7.2): membership/liveness objects. The Bridge
+        // consumes these directly — no flat-field translation (#1745).
+        const one = {
+          session_id: 'sess-v2',
+          session_name: 'terminal-v2',
+          session_backend: 'tmux',
+          session_class: 'managed',
+          role_policy: 'observe-default',
+          membership: { controllers: ['ctrl-1'], observers: ['obs-1', 'obs-2'], attachment_count: 3 },
+          liveness: { agent_connected: true, has_screen: true, replay_newest_seq: 2, max_client_lag: 0 },
+        };
         return send(200, { items: [one, { ...one }] });
       }
       if (url.pathname === '/api/v1/agents/agent-v2-host-1/sessions/sess-v2/screen' && req.method === 'GET') {
@@ -453,6 +463,11 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     // Executor returned sess-v2 twice; the Bridge dedups to a single row.
     expect(sessions.sessions).toHaveLength(1);
     expect(sessions.sessions[0]).toMatchObject({ id: 'sess-v2', instance_id: 'v2-host-1' });
+    // #1745: the v2 membership/liveness objects pass through the Bridge untouched —
+    // no flat-field translation — so the UI reads real controller/observer counts.
+    expect(sessions.sessions[0].membership).toEqual({ controllers: ['ctrl-1'], observers: ['obs-1', 'obs-2'], attachment_count: 3 });
+    expect(sessions.sessions[0].session_backend).toBe('tmux');
+    expect(sessions.sessions[0].session_class).toBe('managed');
     // #1671: the fallback-built attach_url keys the agent segment by the instance
     // id, never the resolved agent name (agent-v2-host-1), which the route rejects.
     expect(sessions.sessions[0].attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-v2\/attach$/);

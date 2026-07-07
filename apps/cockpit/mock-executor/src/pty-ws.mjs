@@ -62,25 +62,32 @@ function buildKeyframe(s) {
 
 const b64 = (str) => Buffer.from(str, 'utf8').toString('base64');
 
-/** List sessions (optionally scoped to one instance) for the Cockpit session picker. */
+/** List sessions (optionally scoped to one instance) for the Cockpit session picker.
+ * Emits the agentic-sandbox v2 SessionEntry shape (membership/liveness objects) so the
+ * whole stack exercises the same contract as a real v2026.7.2+ executor. */
 export function listSessions(instanceId) {
   return [...sessions.values()]
     .filter((s) => !instanceId || s.instanceId === instanceId)
-    .map((s) => ({
-      id: s.id,
-      instance_id: s.instanceId,
-      seq: s.seq,
-      members: s.members.length,
-      has_controller: s.hasController,
-      controllers: s.members.filter((m) => m.role === 'controller').length,
-      observers: s.members.filter((m) => m.role === 'observer').length,
-      mode: s.mode ?? 'direct',
-      backend: s.backend ?? 'native',
-      session_name: s.sessionName,
-      role_policy: 'observe-default',
-      replay: true,
-      keyframe: true,
-    }));
+    .map((s) => {
+      const controllers = s.members.filter((m) => m.role === 'controller').map((m) => m.clientId);
+      const observers = s.members.filter((m) => m.role === 'observer').map((m) => m.clientId);
+      const hasScreen = s.frames.length > 0;
+      return {
+        session_id: s.id,
+        id: s.id,
+        instance_id: s.instanceId,
+        session_name: s.sessionName,
+        session_type: 'interactive',
+        session_class: s.mode ?? 'direct',
+        session_backend: s.backend ?? 'native',
+        has_screen: hasScreen,
+        role_policy: 'observe-default',
+        default_role: 'observer',
+        membership: { controllers, observers, attachment_count: s.members.length },
+        liveness: { agent_connected: true, has_screen: hasScreen, replay_newest_seq: s.seq, max_client_lag: 0 },
+        pty_ws_url: `ws://{host}/agents/${s.instanceId}/sessions/${s.id}/attach`,
+      };
+    });
 }
 
 export function getSessionScreen(instanceId, sessionId) {

@@ -35,7 +35,29 @@ export interface Instance {
   session_backends: SessionBackend[];
 }
 export interface RunningTask { instance_id: string; task_id: string; state: string; tenant: string; runtime_posture?: RuntimePosture; transport?: TransportPosture }
-export interface SessionInfo { id: string; instance_id: string; seq?: number; members?: number; has_controller?: boolean; attach_url: string; mode?: 'direct' | 'managed'; backend?: string; session_name?: string; sessionName?: string; session_class?: string; session_backend?: string; role_policy?: string; replay?: boolean; keyframe?: boolean; controllers?: number; observers?: number; has_screen?: boolean; hasScreen?: boolean }
+// Session model mirrors the agentic-sandbox v2 SessionEntry (management/src/http/sessions.rs,
+// released in v2026.7.2). Cockpit consumes the v2 objects directly — no flat-field
+// translation. `id` is the Cockpit primary key, set from the v2 `session_id`; `attach_url`
+// is the data-plane URL the Bridge resolves. membership/liveness are the v2 sub-objects.
+export interface SessionMembership { controllers: string[]; observers: string[]; attachment_count: number }
+export interface SessionLiveness { agent_connected: boolean; has_screen: boolean; replay_newest_seq?: number | null; max_client_lag: number }
+export interface SessionInfo {
+  id: string;
+  session_id?: string;
+  instance_id: string;
+  agent_id?: string;
+  session_name?: string;
+  session_type?: string;
+  session_backend?: string;
+  session_class?: string;
+  attach_url: string;
+  pty_ws_url?: string;
+  has_screen?: boolean;
+  role_policy?: string;
+  default_role?: string;
+  membership?: SessionMembership;
+  liveness?: SessionLiveness;
+}
 export interface Approval { id: string; instance_id: string; prompt: string; risk: string; status: string }
 export interface ResponseNeeded { id: string; instance_id: string; prompt: string; source: string; status: string; attach_url?: string | null }
 export interface MissionAuditEvent { event?: string; ts?: string; missionId?: string; mission_id?: string; objective?: string; [key: string]: unknown }

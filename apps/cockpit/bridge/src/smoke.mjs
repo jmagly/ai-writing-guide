@@ -51,9 +51,9 @@ try {
   const demo = sess.sessions.find((s) => s.id === 'demo-shell');
   assert.ok(demo, 'demo-shell session present');
   assert.match(demo.attach_url, /^ws:\/\/.*\/agents\/.*\/sessions\/demo-shell\/attach$/, 'ws attach_url shape');
-  assert.ok(demo.seq >= 3, 'demo session has a seeded transcript');
-  assert.equal(demo.mode, 'direct', 'demo session mode');
-  assert.equal(demo.backend, 'native', 'demo session backend');
+  assert.ok(demo.liveness.replay_newest_seq >= 3, 'demo session has a seeded transcript');
+  assert.equal(demo.session_class, 'direct', 'demo session class');
+  assert.equal(demo.session_backend, 'native', 'demo session backend');
   assert.equal(demo.role_policy, 'observe-default', 'session role policy');
 
   const qemuDedup = normalizeSessionRows({

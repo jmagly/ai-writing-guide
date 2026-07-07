@@ -1272,8 +1272,8 @@ async function getSessionEventRows(executorUrl, instances) {
         agent_id: session.agent_id,
         state: session.state ?? session.status ?? session.session_state ?? 'available',
         role_policy: session.role_policy,
-        backend: session.backend ?? session.session_backend,
-        mode: session.mode ?? session.session_class,
+        session_backend: session.session_backend,
+        session_class: session.session_class,
       });
     }
   }));
@@ -1300,7 +1300,7 @@ async function getEventSnapshot(executorUrl) {
     events.push({ id: `approval:${approval.id}`, type: 'hitl.approval', source: 'a2a', subject: approval.task_id ?? approval.id, state: approval.status, severity: approval.risk, ts, ref: { instance_id: approval.instance_id, approval_id: approval.id } });
   }
   for (const session of sessions ?? []) {
-    events.push({ id: `session:${session.instance_id}:${session.id}`, type: 'session.lifecycle', source: 'pty-session', subject: session.id, state: session.state, ts, ref: { instance_id: session.instance_id, session_id: session.id, agent_id: session.agent_id, backend: session.backend, mode: session.mode, role_policy: session.role_policy } });
+    events.push({ id: `session:${session.instance_id}:${session.id}`, type: 'session.lifecycle', source: 'pty-session', subject: session.id, state: session.state, ts, ref: { instance_id: session.instance_id, session_id: session.id, agent_id: session.agent_id, session_backend: session.session_backend, session_class: session.session_class, role_policy: session.role_policy } });
   }
   for (const mission of missions.missions ?? []) {
     events.push({ id: `mission:${mission.id}`, type: 'mission.lifecycle', source: mission.source ?? 'aiwg-mc', subject: mission.id, state: mission.status, ts, ref: { session_id: mission.session_id, mission_id: mission.id, ralph_loop_id: mission.ralph_loop_id } });
