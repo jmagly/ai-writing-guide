@@ -127,6 +127,22 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
   const attachedOwner = attachedInstanceId || instanceIdFromAttachUrl(session.state.url);
   const attachedKey = attachedOwner && attachedSessionId ? `${attachedOwner}:${attachedSessionId}` : sessionKeyFromAttachUrl(session.state.url);
   const activeTarget = session.state.target ?? (attachedOwner && attachedSessionId ? { instanceId: attachedOwner, sessionId: attachedSessionId } : null);
+  // Merge the currently-attached session into the nav even when the executor's
+  // session-list API omits it. Host-runtime PTY sessions are not returned by
+  // list_sessions (agentic-sandbox #500 follow-up), so a live, attached session
+  // would otherwise render as "No sessions yet". The synthetic row reuses the
+  // attach URL Cockpit already holds so selecting it re-attaches/replays.
+  const displaySessions: SessionInfo[] = (attached && attachedOwner === instId && attachedSessionId
+    && !sessions.some((s) => sessionKey(s) === attachedKey))
+    ? [...sessions, {
+        id: attachedSessionId,
+        instance_id: instId,
+        attach_url: session.state.url ?? '',
+        session_name: 'attached session',
+        session_backend: selectedBackend?.backend,
+        session_class: selectedBackend?.mode,
+      }]
+    : sessions;
   const send = () => { if (session.sendInput(composer, activeTarget)) setComposer(''); };
   const attachToSession = (s: SessionInfo, role: 'controller' | 'observer') => {
     setAttachedInstanceId(s.instance_id || instId);
@@ -219,9 +235,9 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
                   </button>
                   {isSel && (
                     <div className="nav-sessions">
-                      {sessions.length === 0 && <p className="empty nav-empty">No sessions yet.</p>}
+                      {displaySessions.length === 0 && <p className="empty nav-empty">No sessions yet.</p>}
                       <ul>
-                        {sessions.map((s) => {
+                        {displaySessions.map((s) => {
                           const key = sessionKey(s);
                           const selS = key === selectedSessionKey;
                           const live = key === attachedKey && attached;
