@@ -19,6 +19,10 @@ describe('delivery-policy project config preflight', () => {
       expect(content).toContain('Resolve `remotes.primary`, `remotes.issue_tracker`, and `remotes.ci`');
       expect(content).toContain('Resolve `delivery.mode`, `delivery.default_branch`, signing requirements');
       expect(content).toContain('Resolve `remotes.tracker_actor` for tracker mutations');
+      expect(content).toContain('MCP/app tools for the configured tracker');
+      expect(content).toContain('tracker HTTP API with configured');
+      expect(content).toContain('Git SSH remote access is sufficient for repo');
+      expect(content).toContain('Do not file on a mirror or secondary remote');
       expect(content).toContain('stop and');
       expect(content).toContain('instead of guessing a provider');
     }

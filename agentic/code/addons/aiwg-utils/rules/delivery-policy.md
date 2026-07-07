@@ -81,7 +81,10 @@ preparing release tags, the agent MUST run a project-config preflight:
    and `delivery.committer` when present.
 4. Resolve `remotes.tracker_actor` for tracker mutations and reject any route
    that would write as a login listed in `remotes.tracker_actor.forbid_actors`.
-5. If the config file is missing, unreadable, invalid, or ambiguous, stop and
+5. Resolve tracker access for `remotes.issue_tracker` in this order:
+   MCP/app tools for the configured tracker, tracker HTTP API with configured
+   credentials, then the tracker CLI after confirming authentication.
+6. If the config file is missing, unreadable, invalid, or ambiguous, stop and
    report the exact missing/ambiguous field instead of guessing a provider,
    remote, branch lifecycle, or commit identity.
 
@@ -89,6 +92,14 @@ This preflight is required for both issue workflows and commit/PR workflows.
 Read-only issue inspection may use any available credential, but tracker
 mutations and git delivery actions must follow the configured topology and
 identity.
+
+Do not infer tracker authority from whichever CLI is installed or authenticated.
+An unauthenticated tracker CLI is one failed access path, not proof that the
+configured tracker is unavailable. Git SSH remote access is sufficient for repo
+sync, pushes, and tags only; it is not issue, PR, release, label, milestone, or
+CI API access. If no MCP/app/API/CLI path can operate on the configured tracker,
+stop and report a blocker. Do not file on a mirror or secondary remote just
+because its CLI is authenticated unless the user explicitly asks for that.
 
 ### Rule 1: Read the Delivery Block Before Any Git Workflow Action
 
@@ -164,6 +175,9 @@ Always resolve remote names through `aiwg.config.remotes`:
 - Tag pushes → `remotes.primary` (and `remotes.secondary[].push_on_release` if applicable)
 
 Do not assume `origin` is the issue tracker. Do not assume GitHub. Read the config.
+Prefer MCP/app/API access for the configured tracker before CLI access. Use a
+tracker CLI only after confirming it targets the configured tracker and is
+authenticated as an allowed actor.
 
 Treat issue location as project topology, not as a separate provider-design
 decision. If `remotes.issue_tracker` resolves to a git remote, derive the

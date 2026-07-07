@@ -104,6 +104,8 @@ Place post images under `docs/.public/blog/` and reference them by their **serve
 
 `docs/.public/` is pagenary's static-asset directory; its contents are copied under `/assets/` in the built site (`docs/.public/blog/x.png` → `docs.aiwg.io/assets/blog/x.png`). **Co-located `docs/blog/images/` files are NOT copied** by the build — use `.public/blog/`. Keep heroes 16:9 with descriptive alt text.
 
+Reports, retrospectives, release announcements, and other public-facing posts must ship with a generated 16:9 hero image. Generate the image through the approved ChatGPT image workflow, save the final PNG under `docs/.public/blog/`, and verify the rendered page or preview with Playwright before publishing.
+
 ## Tools & transparency disclosure (required)
 
 Every post **must end** with a `## Tools & transparency` section that honestly discloses how the content was produced. AIWG publishes how its own content is made; readers should never have to guess. Be truthful, not flattering — most AIWG posts are **mostly AI-generated and then human-fact-checked**, and the disclosure should say exactly that rather than overstate human authorship.
@@ -168,7 +170,7 @@ There is **no status filter**: pagenary publishes *every* `.md` in `docs/blog/` 
 ## Adding a post
 
 1. **Author/migrate** a reviewed draft to `docs/blog/<slug>.md` with the frontmatter above and a leading `# Title`.
-2. **Add the hero** to `docs/.public/blog/<file>.png`; set frontmatter `hero` to the absolute `/assets/blog/…` URL and embed it in the body with `![alt](/assets/blog/<file>.png)`.
+2. **Add the generated hero** to `docs/.public/blog/<file>.png`; set frontmatter `hero` to the absolute `/assets/blog/…` URL, embed it in the body with `![alt](/assets/blog/<file>.png)`, and verify the rendered image with Playwright.
 3. **Register nav**: add `<slug>` to `docs/blog/_manifest.json` `order`, and `blog/<slug>` to the top-level `docs/_manifest.json` `order` (+ a page-definition entry).
 4. **Build-check locally:**
    ```bash

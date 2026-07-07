@@ -19,6 +19,8 @@ import {
   loadEmbeddingManifest,
   detectEmbeddingChanges,
   checkEmbeddingDeps,
+  embeddingTextForEntry,
+  embeddingTextsForEntry,
 } from '../../../src/artifacts/embedding-index.js';
 import type { EmbeddingManifest, MetadataEntry } from '../../../src/artifacts/embedding-index.js';
 
@@ -166,5 +168,91 @@ describe('detectEmbeddingChanges', () => {
     expect(result.changed).toEqual(['A']);
     expect(result.added).toEqual(['D']);
     expect(result.removed).toEqual(['C']);
+  });
+});
+
+describe('embeddingTextForEntry', () => {
+  it('uses compact metadata text by default', () => {
+    expect(
+      embeddingTextForEntry(
+        makeEntry({
+          title: 'Semantic Dedup',
+          summary: 'Summary-only duplicate signal.',
+        }),
+      ),
+    ).toBe('Semantic Dedup Summary-only duplicate signal.');
+  });
+
+  it('includes source body text when body granularity is requested', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-embed-body-'));
+    const rel = '.aiwg/notes/body.md';
+    const full = path.join(tmpDir, rel);
+    fs.mkdirSync(path.dirname(full), { recursive: true });
+    fs.writeFileSync(
+      full,
+      '---\ntitle: Body Note\n---\n# Body Note\n\nBody-only phrase for semantic dedup granularity.\n',
+    );
+
+    const text = embeddingTextForEntry(
+      makeEntry({
+        path: rel,
+        title: 'Body Note',
+        summary: 'Metadata summary.',
+      }),
+      { granularity: 'body', cwd: tmpDir },
+    );
+
+    expect(text).toContain('Body Note Metadata summary.');
+    expect(text).toContain('Body-only phrase for semantic dedup granularity.');
+    expect(text).not.toContain('---');
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('falls back to metadata text when body content is unavailable', () => {
+    expect(
+      embeddingTextForEntry(
+        makeEntry({
+          path: 'missing.md',
+          title: 'Missing',
+          summary: 'Still embeddable.',
+        }),
+        { granularity: 'body', cwd: '/definitely/not/a/workspace' },
+      ),
+    ).toBe('Missing Still embeddable.');
+  });
+
+  it('splits body granularity text into bounded source chunks', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-embed-body-chunks-'));
+    const rel = 'chunked.md';
+    const full = path.join(tmpDir, rel);
+    fs.writeFileSync(
+      full,
+      [
+        '---',
+        'title: Chunked Note',
+        '---',
+        Array.from({ length: 80 }, (_, i) => `semantic-token-${i}`).join(' '),
+      ].join('\n'),
+    );
+
+    const chunks = embeddingTextsForEntry(
+      makeEntry({
+        path: rel,
+        title: 'Chunked Note',
+        summary: 'Metadata summary.',
+      }),
+      {
+        granularity: 'body',
+        cwd: tmpDir,
+        bodyChunkChars: 200,
+        bodyChunkOverlapChars: 0,
+        maxBodyChunks: 3,
+      },
+    );
+
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks.length).toBeLessThanOrEqual(3);
+    expect(chunks.every(chunk => chunk.startsWith('Chunked Note Metadata summary.'))).toBe(true);
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 });

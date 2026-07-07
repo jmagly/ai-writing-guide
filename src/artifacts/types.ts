@@ -380,6 +380,18 @@ export interface GraphConfig {
   /** Whether to include in default `aiwg index build` (no --graph flag) */
   defaultBuild: boolean;
 
+  /**
+   * Build tier used to order multi-graph build/sync runs. Lightweight corpus
+   * graphs become queryable before standard/heavy graphs backfill (#1720).
+   */
+  buildTier?: 'lightweight' | 'standard' | 'heavy';
+
+  /**
+   * Optional numeric ordering within/across tiers. Lower values build/sync
+   * first. Use this for refs → citations → bibliography ordering (#1720).
+   */
+  buildOrder?: number;
+
   /** Optional edge extraction configuration */
   edgeExtraction?: EdgeExtractionConfig;
 
@@ -469,6 +481,7 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
     // by the explicit post-deploy rebuild in `useHandler` (#1212/#1214)
     // and by `aiwg index build --graph framework` for manual rebuilds.
     defaultBuild: false,
+    buildTier: 'standard',
   },
   project: {
     type: 'project',
@@ -476,6 +489,7 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
     extensions: ['.md', '.yaml', '.json'],
     shared: false,
     defaultBuild: true,
+    buildTier: 'standard',
   },
   codebase: {
     type: 'codebase',
@@ -483,6 +497,7 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
     extensions: ['.ts', '.mts', '.js', '.mjs', '.json', '.yaml'],
     shared: false,
     defaultBuild: true,
+    buildTier: 'heavy',
   },
   source: {
     type: 'source',
@@ -490,6 +505,7 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
     extensions: ['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs'],
     shared: false,
     defaultBuild: false,
+    buildTier: 'heavy',
   },
   user: {
     type: 'user',
@@ -504,6 +520,7 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
     extensions: ['.md', '.yaml', '.json'],
     shared: true,
     defaultBuild: false,
+    buildTier: 'standard',
   },
 };
 
@@ -568,6 +585,13 @@ function parseGraphDef(name: string, graphDef: Record<string, unknown>): GraphCo
     extensions: Array.isArray(graphDef.extensions) ? graphDef.extensions as string[] : ['.md', '.yaml', '.json'],
     shared: graphDef.shared === true,
     defaultBuild: graphDef.defaultBuild !== false,
+    buildTier:
+      graphDef.buildTier === 'lightweight' || graphDef.buildTier === 'standard' || graphDef.buildTier === 'heavy'
+        ? graphDef.buildTier
+        : undefined,
+    buildOrder: typeof graphDef.buildOrder === 'number' && Number.isFinite(graphDef.buildOrder)
+      ? graphDef.buildOrder
+      : undefined,
     edgeExtraction: graphDef.edgeExtraction as EdgeExtractionConfig | undefined,
     nodeStrategy: graphDef.nodeStrategy as GraphConfig['nodeStrategy'],
     filenamePattern: typeof graphDef.filenamePattern === 'string' ? graphDef.filenamePattern : undefined,
@@ -578,6 +602,40 @@ function parseGraphDef(name: string, graphDef: Record<string, unknown>): GraphCo
       ? graphDef.graphBackend as GraphConfig['graphBackend']
       : undefined,
   };
+}
+
+const BUILD_TIER_ORDER: Record<NonNullable<GraphConfig['buildTier']>, number> = {
+  lightweight: 10,
+  standard: 50,
+  heavy: 90,
+};
+
+function inferredGraphBuildOrder(name: string): number {
+  const normalized = name.toLowerCase();
+  if (/(^|[-_])(refs?|references?)([-_]|$)/.test(normalized)) return 10;
+  if (/(citation|citations|cites|citation-network)/.test(normalized)) return 20;
+  if (/(bib|bibliography)/.test(normalized)) return 30;
+  if (/(summary|summaries)/.test(normalized)) return 40;
+  if (/(paper|papers|source|codebase|embedding|full)/.test(normalized)) return 90;
+  return 50;
+}
+
+export function graphBuildOrder(name: string, config: GraphConfig): number {
+  if (typeof config.buildOrder === 'number' && Number.isFinite(config.buildOrder)) {
+    return config.buildOrder;
+  }
+  if (config.buildTier) return BUILD_TIER_ORDER[config.buildTier];
+  return inferredGraphBuildOrder(name);
+}
+
+export function orderedGraphEntries(
+  entries: Array<[string, GraphConfig]>,
+): Array<[string, GraphConfig]> {
+  return [...entries].sort(([leftName, leftConfig], [rightName, rightConfig]) => {
+    const orderCmp = graphBuildOrder(leftName, leftConfig) - graphBuildOrder(rightName, rightConfig);
+    if (orderCmp !== 0) return orderCmp;
+    return leftName.localeCompare(rightName);
+  });
 }
 
 /**

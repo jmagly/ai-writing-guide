@@ -18,7 +18,7 @@
  */
 
 import type { GraphType } from './types.js';
-import { GRAPH_CONFIGS, loadUserGraphConfigs, loadGlobalGraphConfigs } from './types.js';
+import { GRAPH_CONFIGS, loadUserGraphConfigs, loadGlobalGraphConfigs, orderedGraphEntries } from './types.js';
 import { SUPPORTED_VIEWS } from './corpus-views/renderers.js';
 
 /** Parse --graph flag from args, returns undefined for "all graphs" */
@@ -263,6 +263,7 @@ function printIndexUsage(): void {
   console.log('  aiwg index query "authentication" --type use-case');
   console.log('  aiwg index query "security rules" --graph framework --json');
   console.log('  aiwg index query "mixture of experts" --fulltext --graph papers   # body text, BM25');
+  console.log('  aiwg index embed --graph papers --embed-body                       # body-granularity vectors');
   console.log('  aiwg index deps .aiwg/requirements/UC-001.md');
   console.log('  aiwg index stats --json');
   console.log('  aiwg index stats --graph project');
@@ -377,6 +378,7 @@ async function handleBuild(args: string[]): Promise<void> {
     console.log('User-defined graphs: configure under index.graphs in .aiwg/aiwg.config');
     console.log('');
     console.log('Default behavior (no --graph): builds all graphs with defaultBuild: true');
+    console.log('Multi-graph builds run by buildOrder/buildTier (refs → citations → bibliography before heavy graphs)');
     console.log('  Built-in defaults: project (always), codebase (skipped if src/test/tools absent)');
     console.log('');
     console.log('Examples:');
@@ -388,6 +390,7 @@ async function handleBuild(args: string[]): Promise<void> {
     console.log('  aiwg index build --graph references            # user-defined graph');
     console.log('  aiwg index build --scope documentation/references');
     console.log('  aiwg index build --all');
+    console.log('  aiwg index sync --all');
     return;
   }
 
@@ -423,13 +426,13 @@ async function handleBuild(args: string[]): Promise<void> {
     }
   } else if (all) {
     // Build all known graphs — user asked for everything, but don't hard-error on missing dirs
-    for (const name of Object.keys(GRAPH_CONFIGS)) {
+    for (const [name] of orderedGraphEntries(Object.entries(GRAPH_CONFIGS))) {
       await buildIndex(cwd, { force, verbose, graph: name, explicit: false });
     }
     jsonBuilt = true;
   } else {
     // Default: build graphs with defaultBuild=true; skip gracefully if their dirs don't exist
-    for (const [name, config] of Object.entries(GRAPH_CONFIGS)) {
+    for (const [name, config] of orderedGraphEntries(Object.entries(GRAPH_CONFIGS))) {
       if (config.defaultBuild) {
         await buildIndex(cwd, { force, verbose, scope: name === Object.keys(GRAPH_CONFIGS)[0] ? scope : undefined, graph: name, explicit: false });
       }
@@ -656,11 +659,12 @@ async function runSemanticQuery(
 
   const dir = await requireEmbeddingIndex(cwd, graph);
   if (!dir) process.exit(1);
-  const { semanticQuery } = await import('./embedding-index.js');
+  const { semanticQuery, loadEmbeddingManifest } = await import('./embedding-index.js');
   const { loadGraphIndexFile } = await import('./index-reader.js');
   const index = loadGraphIndexFile<{
     entries: Record<string, { type: string; phase: string; title: string; summary: string }>;
   }>(cwd, 'metadata.json', graph);
+  const manifest = loadEmbeddingManifest(dir!);
   const results = await semanticQuery(text, dir!, topK);
   if (json) {
     console.log(
@@ -669,6 +673,10 @@ async function runSemanticQuery(
           query: { text },
           mode: 'semantic',
           graph: graph ?? null,
+          embedding: {
+            granularity: manifest?.granularity ?? 'title-summary',
+            model: manifest?.model ?? null,
+          },
           results: results.map((r) => ({
             path: r.nodeId,
             score: Math.round(r.score * 100) / 100,
@@ -683,7 +691,7 @@ async function runSemanticQuery(
     );
     return;
   }
-  console.log(`Semantic results for "${text}" (${results.length}):`);
+  console.log(`Semantic results for "${text}" (${results.length}, granularity: ${manifest?.granularity ?? 'title-summary'}):`);
   console.log('');
   for (let i = 0; i < results.length; i++) {
     const r = results[i];
@@ -763,11 +771,19 @@ async function runHybridQuery(
   }
 }
 
-/** `aiwg index embed [--graph X] [--model M]` — build the embedding index for a graph's metadata. */
+/** `aiwg index embed [--graph X] [--model M] [--granularity title-summary|body]` — build the embedding index. */
 async function handleEmbed(args: string[]): Promise<void> {
   const cwd = process.cwd();
   const graph = parseGraphFlag(args);
   const model = args.indexOf('--model') !== -1 ? args[args.indexOf('--model') + 1] : undefined;
+  const requestedGranularity = args.includes('--embed-body')
+    ? 'body'
+    : parseFlagValue(args, '--granularity', 'Error: --granularity requires title-summary, metadata, or body') ?? 'title-summary';
+  if (!['title-summary', 'metadata', 'body'].includes(requestedGranularity)) {
+    console.error('Error: --granularity must be title-summary, metadata, or body');
+    process.exit(1);
+  }
+  const granularity = requestedGranularity === 'metadata' ? 'title-summary' : requestedGranularity;
   const { checkEmbeddingDeps, buildEmbeddingIndex, DEFAULT_EMBEDDING_MODEL } = await import('./embedding-index.js');
   const { resolveIndexDir, loadGraphIndexFile } = await import('./index-reader.js');
   const deps = await checkEmbeddingDeps();
@@ -782,9 +798,12 @@ async function handleEmbed(args: string[]): Promise<void> {
     process.exit(1);
   }
   const dir = resolveIndexDir(cwd, graph);
-  console.log(`Embedding ${Object.keys(index.entries).length} nodes (model: ${model ?? DEFAULT_EMBEDDING_MODEL})…`);
+  console.log(`Embedding ${Object.keys(index.entries).length} nodes (model: ${model ?? DEFAULT_EMBEDDING_MODEL}, granularity: ${granularity})…`);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const n = await buildEmbeddingIndex(index.entries as any, dir, model);
+  const n = await buildEmbeddingIndex(index.entries as any, dir, model, {
+    granularity: granularity as 'title-summary' | 'body',
+    cwd,
+  });
   console.log(`Embedded ${n} nodes → ${dir}/embeddings/`);
 }
 
@@ -822,15 +841,24 @@ async function handleDedup(args: string[]): Promise<void> {
   const json = args.includes('--json');
   const dir = await requireEmbeddingIndex(cwd, graph);
   if (!dir) process.exit(1);
-  const { dedupReport } = await import('./embedding-index.js');
+  const { dedupReport, loadEmbeddingManifest } = await import('./embedding-index.js');
   const { loadGraphIndexFile } = await import('./index-reader.js');
   const index = loadGraphIndexFile<{ entries: Record<string, { title: string }> }>(cwd, 'metadata.json', graph);
+  const manifest = loadEmbeddingManifest(dir!);
   const pairs = await dedupReport(dir!, threshold);
   if (json) {
-    console.log(JSON.stringify({ graph: graph ?? null, threshold, pairs: pairs.map((p) => ({ ...p, score: Math.round(p.score * 1000) / 1000 })) }, null, 2));
+    console.log(JSON.stringify({
+      graph: graph ?? null,
+      threshold,
+      embedding: {
+        granularity: manifest?.granularity ?? 'title-summary',
+        model: manifest?.model ?? null,
+      },
+      pairs: pairs.map((p) => ({ ...p, score: Math.round(p.score * 1000) / 1000 })),
+    }, null, 2));
     return;
   }
-  console.log(`Near-duplicate pairs (cosine ≥ ${threshold}): ${pairs.length}`);
+  console.log(`Near-duplicate pairs (cosine ≥ ${threshold}, granularity: ${manifest?.granularity ?? 'title-summary'}): ${pairs.length}`);
   console.log('');
   for (const p of pairs) {
     const ta = index?.entries[p.a]?.title ?? '';
@@ -909,6 +937,7 @@ async function handleSync(args: string[]): Promise<void> {
     console.log('Options:');
     console.log('  --backend fortemi-core  Materialize the Fortemi Core static index cache (default)');
     console.log('  --graph <name>          Graph to sync (default: project)');
+    console.log('  --all                   Sync all built graph caches in build-order');
     console.log('  --repo <name>           Source repository label (default: cwd basename)');
     console.log('  --privacy <level>       private, sanitized, or public (default: private)');
     console.log('  --generated-at <iso>    Override generated timestamp for deterministic fixtures');
@@ -923,6 +952,11 @@ async function handleSync(args: string[]): Promise<void> {
   }
 
   const graph = parseGraphFlag(args);
+  const all = args.includes('--all');
+  if (graph && all) {
+    console.error('Error: pass either --graph or --all, not both');
+    process.exit(1);
+  }
   const repo = parseFlagValue(args, '--repo', 'Error: --repo requires a value');
   const privacy = parseFlagValue(args, '--privacy', 'Error: --privacy must be private, sanitized, or public');
   if (privacy && !['private', 'sanitized', 'public'].includes(privacy)) {
@@ -934,11 +968,34 @@ async function handleSync(args: string[]): Promise<void> {
 
   const { syncFortemiCoreIndex } = await import('./fortemi-core-sync.js');
   try {
-    const manifest = syncFortemiCoreIndex(process.cwd(), {
-      graph,
+    const cwd = process.cwd();
+    loadUserGraphConfigs(cwd);
+    loadGlobalGraphConfigs();
+    const options = {
       repo,
       privacy: privacy as 'private' | 'sanitized' | 'public' | undefined,
       generatedAt,
+    };
+    if (all) {
+      const { loadGraphIndexFile } = await import('./index-reader.js');
+      const manifests = [];
+      for (const [name] of orderedGraphEntries(Object.entries(GRAPH_CONFIGS))) {
+        if (!loadGraphIndexFile(cwd, 'metadata.json', name)) continue;
+        manifests.push(syncFortemiCoreIndex(cwd, { ...options, graph: name }));
+      }
+      if (json) {
+        console.log(JSON.stringify({ manifests }, null, 2));
+        return;
+      }
+      console.log(`Fortemi Core sync: ${manifests.length} graph(s)`);
+      for (const manifest of manifests) {
+        console.log(`  ${manifest.graph}: ${manifest.status}, ${manifest.item_count} item(s) → ${manifest.export_path}`);
+      }
+      return;
+    }
+    const manifest = syncFortemiCoreIndex(cwd, {
+      ...options,
+      graph,
     });
     if (json) {
       console.log(JSON.stringify(manifest, null, 2));

@@ -384,7 +384,29 @@ describe("AIWG Fortemi browser index export", () => {
     fs.mkdirSync(path.dirname(skillSourcePath), { recursive: true });
     fs.writeFileSync(
       skillSourcePath,
-      "---\ntitle: AIWG Doctor\n---\n# AIWG Doctor\n\nSource-only body phrase for Fortemi chunks.\n",
+      [
+        "---",
+        "title: AIWG Doctor",
+        "skos:",
+        "  concepts:",
+        "    - id: aiwg-concept:diagnostics",
+        "      prefLabel: Diagnostics",
+        "      definition: Workspace health checks and repair guidance.",
+        "      scheme: aiwg-capabilities",
+        "      altLabels:",
+        "        - doctor",
+        "  relations:",
+        "    - type: broader",
+        "      source_id: aiwg-concept:diagnostics",
+        "      target_id: aiwg-concept:operations",
+        "      metadata:",
+        "        source: fixture",
+        "---",
+        "# AIWG Doctor",
+        "",
+        "Source-only body phrase for Fortemi chunks.",
+        "",
+      ].join("\n"),
     );
 
     const exported = buildAiwgFortemiIndexExport(tmpDir, {
@@ -460,6 +482,39 @@ describe("AIWG Fortemi browser index export", () => {
     );
     expect(skill?.chunks?.[0].text).toBe(skill?.search?.body);
     expect(skill?.chunks?.[0].checksum).not.toBe("abcdef1234567890");
+    expect(skill?.skos_concepts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "aiwg-concept:diagnostics",
+          prefLabel: "Diagnostics",
+          scheme: "aiwg-capabilities",
+          altLabels: ["doctor"],
+        }),
+        expect.objectContaining({
+          id: "aiwg-tags:crm",
+          prefLabel: "crm",
+          scheme: "aiwg-tags",
+        }),
+      ]),
+    );
+    expect(skill?.concepts).toEqual(
+      expect.arrayContaining([
+        "aiwg-concept:diagnostics",
+        "aiwg-tags:crm",
+      ]),
+    );
+    expect(skill?.skos_relations).toEqual([
+      {
+        type: "broader",
+        source_id: "aiwg-concept:diagnostics",
+        target_id: "aiwg-concept:operations",
+        source_path:
+          "agentic/code/addons/aiwg-utils/skills/aiwg-doctor/SKILL.md",
+        metadata: {
+          source: "fixture",
+        },
+      },
+    ]);
     expect(synthesis?.relationships[0]).toMatchObject({
       type: "cites",
       target_id: ref?.id,

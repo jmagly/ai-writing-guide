@@ -167,4 +167,132 @@ index:
     consoleSpy.mockRestore();
     warnSpy.mockRestore();
   });
+
+  it('builds lightweight corpus graphs before heavy defaultBuild graphs (#1720)', async () => {
+    const aiwgDir = path.join(tmpDir, '.aiwg');
+    fs.mkdirSync(aiwgDir, { recursive: true });
+
+    for (const dir of [
+      'documentation/full',
+      'documentation/bibliography',
+      'documentation/citations',
+      'documentation/references',
+    ]) {
+      fs.mkdirSync(path.join(tmpDir, dir), { recursive: true });
+      fs.writeFileSync(path.join(tmpDir, dir, 'item.md'), `# ${dir}\n`);
+    }
+
+    fs.writeFileSync(path.join(aiwgDir, 'config.yaml'), `
+index:
+  graphs:
+    full-content:
+      scanDirs: [documentation/full]
+      extensions: [.md]
+      defaultBuild: true
+      buildTier: heavy
+    bibliography:
+      scanDirs: [documentation/bibliography]
+      extensions: [.md]
+      defaultBuild: true
+    citation-network:
+      scanDirs: [documentation/citations]
+      extensions: [.md]
+      defaultBuild: true
+    references:
+      scanDirs: [documentation/references]
+      extensions: [.md]
+      defaultBuild: true
+`);
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const logCalls: string[] = [];
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation((message?: unknown) => {
+      logCalls.push(String(message ?? ''));
+    });
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('process.exit');
+    });
+
+    await expect(main(['build'])).resolves.toBeUndefined();
+
+    const outputLines = logCalls.filter((line) => line.includes('Output:'));
+    const pos = (graph: string) => outputLines.findIndex((line) => line.includes(`${path.sep}${graph}`));
+
+    expect(pos('references')).toBeGreaterThanOrEqual(0);
+    expect(pos('citation-network')).toBeGreaterThan(pos('references'));
+    expect(pos('bibliography')).toBeGreaterThan(pos('citation-network'));
+    expect(pos('full-content')).toBeGreaterThan(pos('bibliography'));
+
+    exitSpy.mockRestore();
+    consoleSpy.mockRestore();
+    warnSpy.mockRestore();
+  });
+
+  it('syncs built graph caches in lightweight-first order (#1720)', async () => {
+    const aiwgDir = path.join(tmpDir, '.aiwg');
+    fs.mkdirSync(aiwgDir, { recursive: true });
+    fs.writeFileSync(path.join(aiwgDir, 'config.yaml'), `
+index:
+  graphs:
+    full-content:
+      scanDirs: [documentation/full]
+      defaultBuild: true
+      buildTier: heavy
+    references:
+      scanDirs: [documentation/references]
+      defaultBuild: true
+    citation-network:
+      scanDirs: [documentation/citations]
+      defaultBuild: true
+`);
+
+    for (const graph of ['full-content', 'references', 'citation-network']) {
+      const dir = path.join(tmpDir, '.aiwg', '.index', graph);
+      fs.mkdirSync(dir, { recursive: true });
+      const entryPath = `${graph}/item.md`;
+      fs.writeFileSync(
+        path.join(dir, 'metadata.json'),
+        JSON.stringify({
+          version: '1.0.0',
+          builtAt: '2026-01-01T00:00:00.000Z',
+          buildTimeMs: 1,
+          entries: {
+            [entryPath]: {
+              path: entryPath,
+              type: 'document',
+              phase: 'research',
+              title: graph,
+              tags: [graph],
+              created: '2026-01-01T00:00:00.000Z',
+              updated: '2026-01-01T00:00:00.000Z',
+              checksum: graph,
+              summary: graph,
+              dependencies: [],
+              dependents: [],
+            },
+          },
+        }),
+      );
+      fs.writeFileSync(path.join(dir, 'dependencies.json'), JSON.stringify({ [entryPath]: { upstream: [], downstream: [] } }));
+    }
+
+    const logCalls: string[] = [];
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation((message?: unknown) => {
+      logCalls.push(String(message ?? ''));
+    });
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('process.exit');
+    });
+
+    await expect(main(['sync', '--all', '--json', '--generated-at', '2026-01-02T00:00:00.000Z'])).resolves.toBeUndefined();
+
+    const parsed = JSON.parse(logCalls.join('\n'));
+    const graphs = parsed.manifests.map((m: { graph: string }) => m.graph);
+    expect(graphs.indexOf('references')).toBeGreaterThanOrEqual(0);
+    expect(graphs.indexOf('citation-network')).toBeGreaterThan(graphs.indexOf('references'));
+    expect(graphs.indexOf('full-content')).toBeGreaterThan(graphs.indexOf('citation-network'));
+
+    exitSpy.mockRestore();
+    consoleSpy.mockRestore();
+  });
 });

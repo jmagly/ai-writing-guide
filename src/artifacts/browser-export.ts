@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { createHash } from "crypto";
+import { load as loadYaml } from "js-yaml";
 import type {
   ArtifactIndex,
   DependencyGraph,
@@ -265,6 +266,14 @@ function uniqueSorted(values: Array<string | undefined>): string[] {
   ].sort((a, b) => a.localeCompare(b));
 }
 
+function slug(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function textForEntry(entry: MetadataEntry): string {
   return uniqueSorted([
     entry.title,
@@ -310,6 +319,187 @@ function sourceBodyForEntry(
   } catch {
     return "";
   }
+}
+
+function sourceFrontmatterForEntry(
+  cwd: string,
+  entry: MetadataEntry,
+  maxBytes: number,
+): Record<string, unknown> {
+  const sourcePath = path.isAbsolute(entry.path)
+    ? entry.path
+    : path.join(cwd, entry.path);
+  try {
+    const stat = fs.statSync(sourcePath);
+    if (!stat.isFile() || stat.size > maxBytes) return {};
+    if (BINARY_SOURCE_EXTENSIONS.has(path.extname(sourcePath).toLowerCase()))
+      return {};
+    const buffer = fs.readFileSync(sourcePath);
+    if (looksBinary(buffer)) return {};
+    const text = buffer.toString("utf-8");
+    const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+    if (!match) return {};
+    const parsed = loadYaml(match[1]);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function asObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function stringArray(value: unknown): string[] {
+  return asArray(value)
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter((item) => item.length > 0);
+}
+
+function skosConceptFromValue(
+  value: unknown,
+  fallbackScheme: string,
+): AiwgFortemiSkosConcept | null {
+  if (typeof value === "string") {
+    const label = value.trim();
+    if (!label) return null;
+    return {
+      id: `${fallbackScheme}:${slug(label)}`,
+      prefLabel: label,
+      scheme: fallbackScheme,
+    };
+  }
+  const obj = asObject(value);
+  const prefLabel =
+    typeof obj.prefLabel === "string"
+      ? obj.prefLabel.trim()
+      : typeof obj.label === "string"
+        ? obj.label.trim()
+        : typeof obj.name === "string"
+          ? obj.name.trim()
+          : "";
+  const id =
+    typeof obj.id === "string" && obj.id.trim()
+      ? obj.id.trim()
+      : prefLabel
+        ? `${fallbackScheme}:${slug(prefLabel)}`
+        : "";
+  if (!id || !prefLabel) return null;
+  const concept: AiwgFortemiSkosConcept = {
+    id,
+    prefLabel,
+    ...(typeof obj.definition === "string" ? { definition: obj.definition } : {}),
+    ...(typeof obj.scheme === "string" ? { scheme: obj.scheme } : { scheme: fallbackScheme }),
+    ...(typeof obj.notation === "string" ? { notation: obj.notation } : {}),
+    ...(typeof obj.uri === "string" ? { uri: obj.uri } : {}),
+    ...(Array.isArray(obj.altLabels) ? { altLabels: stringArray(obj.altLabels) } : {}),
+  };
+  const metadata = asObject(obj.metadata);
+  if (Object.keys(metadata).length > 0) concept.metadata = metadata;
+  return concept;
+}
+
+function skosRelationFromValue(
+  value: unknown,
+  sourcePath: string,
+): AiwgFortemiSkosRelation | null {
+  const obj = asObject(value);
+  const type = typeof obj.type === "string" ? obj.type.trim() : "";
+  const sourceId =
+    typeof obj.source_id === "string"
+      ? obj.source_id.trim()
+      : typeof obj.source === "string"
+        ? obj.source.trim()
+        : "";
+  const targetId =
+    typeof obj.target_id === "string"
+      ? obj.target_id.trim()
+      : typeof obj.target === "string"
+        ? obj.target.trim()
+        : "";
+  if (!type || !sourceId || !targetId) return null;
+  const relation: AiwgFortemiSkosRelation = {
+    type,
+    source_id: sourceId,
+    target_id: targetId,
+    source_path: sourcePath,
+  };
+  const metadata = asObject(obj.metadata);
+  if (Object.keys(metadata).length > 0) relation.metadata = metadata;
+  return relation;
+}
+
+function skosForEntry(
+  cwd: string,
+  entry: MetadataEntry,
+  maxBytes: number,
+): {
+  concepts: AiwgFortemiSkosConcept[];
+  relations: AiwgFortemiSkosRelation[];
+} {
+  const frontmatter = sourceFrontmatterForEntry(cwd, entry, maxBytes);
+  const skos = asObject(frontmatter.skos);
+  const explicitConceptValues = [
+    ...asArray(frontmatter.skos_concepts),
+    ...asArray(skos.concepts),
+  ];
+  const explicitRelationValues = [
+    ...asArray(frontmatter.skos_relations),
+    ...asArray(skos.relations),
+  ];
+  const derivedConcepts: AiwgFortemiSkosConcept[] = [
+    { value: entry.type, scheme: "aiwg-types", source: "aiwg-index-type" },
+    { value: entry.phase, scheme: "aiwg-phases", source: "aiwg-index-phase" },
+    ...(entry.name
+      ? [{ value: entry.name, scheme: "aiwg-names", source: "aiwg-index-name" }]
+      : []),
+    ...entry.tags.map((tag) => ({
+      value: tag,
+      scheme: "aiwg-tags",
+      source: "aiwg-index-tags",
+    })),
+  ]
+    .filter((item) => item.value.length > 0)
+    .map((item) => ({
+      id: `${item.scheme}:${slug(item.value)}`,
+      prefLabel: item.value,
+      scheme: item.scheme,
+      metadata: {
+        source: item.source,
+        path: entry.path,
+      },
+    }));
+  const conceptsById = new Map<string, AiwgFortemiSkosConcept>();
+  for (const concept of [
+    ...explicitConceptValues
+      .map((value) => skosConceptFromValue(value, "aiwg-skos"))
+      .filter((value): value is AiwgFortemiSkosConcept => value !== null),
+    ...derivedConcepts,
+  ]) {
+    conceptsById.set(concept.id, concept);
+  }
+  const relations = explicitRelationValues
+    .map((value) => skosRelationFromValue(value, entry.path))
+    .filter((value): value is AiwgFortemiSkosRelation => value !== null)
+    .sort((left, right) =>
+      `${left.type}:${left.source_id}:${left.target_id}`.localeCompare(
+        `${right.type}:${right.source_id}:${right.target_id}`,
+      ),
+    );
+  return {
+    concepts: [...conceptsById.values()].sort((left, right) =>
+      left.id.localeCompare(right.id),
+    ),
+    relations,
+  };
 }
 
 function textForRecord(
@@ -461,6 +651,7 @@ function localityForPath(
 }
 
 function recordForEntry(
+  cwd: string,
   entry: MetadataEntry,
   graphName: string,
   dependencyGraph: DependencyGraph | null,
@@ -468,9 +659,11 @@ function recordForEntry(
   schemaVersion: AiwgFortemiExportSchemaVersion,
   recordTypesByPath: Map<string, AiwgFortemiRecordType>,
   sourceBody: string,
+  maxSourceBodyBytes: number,
 ): AiwgFortemiRecord {
   const recordType = recordTypeForEntry(entry, schemaVersion);
   const text = textForRecord(entry, schemaVersion, sourceBody);
+  const skos = schemaVersion === "v2" ? skosForEntry(cwd, entry, maxSourceBodyBytes) : null;
   const recordSchemaVersion: AiwgFortemiRecordSchemaVersion =
     schemaVersion === "v2"
       ? "aiwg.fortemi.index.record.v2"
@@ -528,6 +721,7 @@ function recordForEntry(
       entry.phase,
       entry.name,
       ...(entry.triggers ?? []),
+      ...(skos?.concepts.map((concept) => concept.id) ?? []),
     ]),
     relationships: relationshipsForEntry(
       entry,
@@ -565,6 +759,8 @@ function recordForEntry(
             vector_ref?: string;
             input_hash: string;
           }>,
+          skos_concepts: skos?.concepts ?? [],
+          skos_relations: skos?.relations ?? [],
         }
       : {}),
     updated_at: entry.updated,
@@ -612,6 +808,7 @@ export function buildAiwgFortemiIndexExport(
   const items = entries
     .map((entry) =>
       recordForEntry(
+        cwd,
         entry,
         graphName,
         dependencyGraph,
@@ -621,6 +818,7 @@ export function buildAiwgFortemiIndexExport(
         options.includeSourceBody === false
           ? ""
           : sourceBodyForEntry(cwd, entry, maxSourceBodyBytes),
+        maxSourceBodyBytes,
       ),
     )
     .sort((left, right) => left.id.localeCompare(right.id));

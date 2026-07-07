@@ -461,6 +461,16 @@ describe('context finalization emission', () => {
           },
         },
         scripts: {},
+        remotes: {
+          primary: 'origin',
+          issue_tracker: 'origin',
+          ci: 'origin',
+          secondary: [{ name: 'github', purpose: 'backup-mirror' }],
+        },
+        delivery: {
+          mode: 'pr-required',
+          issue_storage: 'gitea-only',
+        },
       }, null, 2));
 
       const result = await generate({
@@ -484,7 +494,65 @@ describe('context finalization emission', () => {
         expect(content).toContain('new directive');
         expect(content).toContain('address-issues');
         expect(content).toContain('show command');
+        expect(content).toContain('.aiwg/aiwg.config');
+        expect(content).toContain('Tracker Authority Protocol');
+        expect(content).toContain('Canonical tracker: `origin` (gitea;');
+        expect(content).toContain('MCP/app tools for the configured tracker');
+        expect(content).toContain('Git SSH remote access is repository sync, not issue-tracker API access');
       }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('preserves operator override files while refreshing generated tracker protocol (#1735)', async () => {
+    const dir = makeTmpDir();
+    const overridePath = join(dir, 'AGENTS.override.md');
+    const configPath = join(dir, '.aiwg', 'aiwg.config');
+    try {
+      mkdirSync(join(dir, '.aiwg'), { recursive: true });
+      writeFileSync(overridePath, '# AGENTS.override.md\n\nOperator tracker notes stay here.\n', 'utf8');
+      writeFileSync(configPath, JSON.stringify({
+        version: '1',
+        providers: ['codex'],
+        installed: {},
+        scripts: {},
+        remotes: {
+          primary: 'origin',
+          issue_tracker: 'origin',
+          ci: 'origin',
+        },
+        delivery: {
+          mode: 'pr-required',
+          issue_storage: 'gitea-only',
+        },
+      }, null, 2));
+
+      await generate({ provider: 'codex', projectPath: dir, sections: [], detectExistingFiles: true });
+      writeFileSync(configPath, JSON.stringify({
+        version: '1',
+        providers: ['codex'],
+        installed: {},
+        scripts: {},
+        remotes: {
+          primary: 'origin',
+          issue_tracker: 'github',
+          ci: 'origin',
+          secondary: [{ name: 'origin', purpose: 'primary-repo' }],
+        },
+        delivery: {
+          mode: 'pr-required',
+          issue_storage: 'github-only',
+        },
+      }, null, 2));
+
+      await generate({ provider: 'codex', projectPath: dir, sections: [], detectExistingFiles: true });
+
+      expect(readFileSync(overridePath, 'utf8')).toBe('# AGENTS.override.md\n\nOperator tracker notes stay here.\n');
+      const normalized = readFileSync(join(dir, '.aiwg', 'AIWG.md'), 'utf8');
+      expect(normalized).toContain('Tracker Authority Protocol');
+      expect(normalized).toContain('Canonical tracker: `github` (github;');
+      expect(normalized).toContain('Issue storage mode: github-only');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

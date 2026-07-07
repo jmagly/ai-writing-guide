@@ -38,6 +38,7 @@ export function buildClaudeHookBlock(): string {
     '# AIWG',
     '',
     '@AIWG.md',
+    '@.aiwg/aiwg.config',
     '',
     '<!--',
     '  This block is managed by `aiwg regenerate` and `aiwg use`.',

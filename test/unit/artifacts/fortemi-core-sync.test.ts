@@ -96,11 +96,17 @@ describe("Fortemi Core static index sync (#1687)", () => {
     expect(first.status).toBe("created");
     expect(second.status).toBe("unchanged");
     expect(second.export_checksum).toBe(first.export_checksum);
+    expect(second.skos_coverage).toEqual({
+      records_with_concepts: 1,
+      total_records: 1,
+      ratio: 1,
+    });
     const exported = JSON.parse(
       fs.readFileSync(path.join(tmp, second.export_path), "utf-8"),
     );
     expect(exported.schema_version).toBe("aiwg.fortemi.index.export.v2");
     expect(exported.items[0].type).toBe("aiwg.skill");
+    expect(exported.items[0].skos_concepts.length).toBeGreaterThan(0);
   });
 
   it("reports unchanged for normal re-syncs when only the generated timestamp would differ", () => {

@@ -27,7 +27,7 @@ import { curatorRows, curatorOrphans, renderCuratorStatus, scaffoldCurator } fro
 import { logDiscovery } from './discovery-log.js';
 import { computeMetrics, renderMetrics } from './profile-metrics.js';
 import { computeTrajectory, renderTrajectory } from './profile-temporal.js';
-import { detectCommunities, renderCommunities } from './profile-communities.js';
+import { detectCommunities, detectSkosCommunities, renderCommunities, renderSkosCommunities } from './profile-communities.js';
 import { funderRows, cofundingClusters, renderFunderNetwork } from './funder-network.js';
 import { lintSidecars, renderLint, findOrphans, renderOrphans } from './sidecar-lint.js';
 import { repairAuthors, normalizeAffiliations, renderRepair } from './sidecar-repair.js';
@@ -62,7 +62,7 @@ Usage:
   aiwg corpus discovery-log --ref REF-XXX --surface SURFACE [--via "..."] [--curator PROF-S-x] [--date D] [--batch B] [--by A] [--write]
   aiwg corpus profile-metrics [--papers] [--out PATH]
   aiwg corpus profile-temporal --entity PROF-P-x [--out PATH]
-  aiwg corpus profile-communities [--out PATH]
+  aiwg corpus profile-communities [--skos-export PATH] [--out PATH]
   aiwg corpus funder-network [--scan-acks] [--out PATH]
   aiwg corpus sidecar-lint [--orphans] [--out PATH]
   aiwg corpus sidecar-repair [--authors-only | --affiliations-only] [--write] [--out PATH]
@@ -87,7 +87,7 @@ curator-init scaffolds a PROF-S source/curator profile from a handle.
 discovery-log records the discovery block on a citation sidecar.
 profile-metrics computes h-index / CD-index / PageRank / centrality per profile (--papers for paper-level).
 profile-temporal computes publication trajectory + hot-streak for one profile.
-profile-communities detects co-author communities + modularity + bridge authors.
+profile-communities detects co-author communities + modularity + bridge authors; --skos-export groups Fortemi v2 records by extracted SKOS concepts.
 funder-network reports per-funder yield (A-grade, mean CD, novelty bias) + co-funding clusters.
 sidecar-lint reports citation-sidecar structural issues (missing sections/frontmatter, duplicate table headers); --orphans lists zero-edge sidecars.
 sidecar-repair backfills (see REF doc) authors from the analysis citation block + normalizes affiliation-primary to PROF-O slugs (dry-run unless --write).
@@ -261,6 +261,11 @@ export async function corpusMain(args: string[], cwd: string = process.cwd()): P
     case 'profile-temporal':
       return profileTemporal(root, rest);
     case 'profile-communities':
+      if (flagValue(rest, '--skos-export')) {
+        const exportPath = path.resolve(root, flagValue(rest, '--skos-export')!);
+        const exported = JSON.parse(fs.readFileSync(exportPath, 'utf-8'));
+        return emit(renderSkosCommunities(detectSkosCommunities(exported)), flagValue(rest, '--out'), root);
+      }
       return emit(renderCommunities(detectCommunities(root)), flagValue(rest, '--out'), root);
     case 'funder-network':
       return emit(renderFunderNetwork(funderRows(root, { scanAcks: hasFlag(rest, '--scan-acks') }), cofundingClusters(root)), flagValue(rest, '--out'), root);

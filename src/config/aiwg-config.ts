@@ -323,6 +323,8 @@ export interface SigningConfig {
  */
 export interface DeliveryConfig {
   mode?: DeliveryMode;
+  /** Canonical issue storage mode (for example gitea-only, github-only, or local-only). */
+  issue_storage?: string;
   default_branch?: string;
   branch_naming?: BranchNaming;
   merge_style?: MergeStyle;
@@ -539,6 +541,8 @@ export interface IndexGraphDef {
   extensions?: string[];
   shared?: boolean;
   defaultBuild?: boolean;
+  buildTier?: 'lightweight' | 'standard' | 'heavy';
+  buildOrder?: number;
   nodeStrategy?: 'default' | 'filename-metadata';
   filenamePattern?: string;
   graphBackend?: 'json' | 'graphology' | 'sqlite';
@@ -561,6 +565,7 @@ export interface IndexMarkdownIndices {
 
 const GRAPH_BACKENDS = ['json', 'graphology', 'sqlite'];
 const NODE_STRATEGIES = ['default', 'filename-metadata'];
+const BUILD_TIERS = ['lightweight', 'standard', 'heavy'];
 
 /**
  * Validate an `index` config block, returning a list of human-readable error
@@ -633,6 +638,12 @@ export function validateIndexConfig(index: unknown): string[] {
     }
     if (def.graphBackend !== undefined && !GRAPH_BACKENDS.includes(def.graphBackend as string)) {
       errors.push(`${where}.graphBackend: must be one of ${GRAPH_BACKENDS.join(' | ')}`);
+    }
+    if (def.buildTier !== undefined && !BUILD_TIERS.includes(def.buildTier as string)) {
+      errors.push(`${where}.buildTier: must be one of ${BUILD_TIERS.join(' | ')}`);
+    }
+    if (def.buildOrder !== undefined && (typeof def.buildOrder !== 'number' || !Number.isFinite(def.buildOrder))) {
+      errors.push(`${where}.buildOrder: must be a finite number`);
     }
     if (def.nodeStrategy === 'filename-metadata') {
       if (typeof def.filenamePattern !== 'string' || def.filenamePattern.trim() === '') {

@@ -232,6 +232,7 @@ describe('ensureClaudeMdHook (#1437)', () => {
     expect(content).toContain(CLAUDE_HOOK_START);
     expect(content).toContain(CLAUDE_HOOK_END);
     expect(content).toContain('@AIWG.md');
+    expect(content).toContain('@.aiwg/aiwg.config');
   });
 
   it('appends the hook block when CLAUDE.md exists without the markers', async () => {
@@ -245,6 +246,7 @@ describe('ensureClaudeMdHook (#1437)', () => {
     expect(content).toContain(CLAUDE_HOOK_START);
     expect(content).toContain(CLAUDE_HOOK_END);
     expect(content).toContain('@AIWG.md');
+    expect(content).toContain('@.aiwg/aiwg.config');
     // Operator content appears before the block
     const operatorIdx = content.indexOf('Some operator content.');
     const blockIdx = content.indexOf(CLAUDE_HOOK_START);

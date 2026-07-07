@@ -67,6 +67,37 @@ index:
       graphBackend: graphology
 ```
 
+### Staged Build Order
+
+Multi-graph builds and syncs run in deterministic order. This lets lightweight
+corpus graphs come online before heavier full-content, source, or embedding
+work backfills.
+
+```yaml
+index:
+  graphs:
+    references:
+      scanDirs: [documentation/references]
+      buildTier: lightweight
+      buildOrder: 10
+    citation-network:
+      scanDirs: [documentation/citations]
+      buildTier: lightweight
+      buildOrder: 20
+    bibliography:
+      scanDirs: [documentation/bibliography]
+      buildTier: lightweight
+      buildOrder: 30
+    papers:
+      scanDirs: [pdfs/full]
+      buildTier: heavy
+```
+
+`aiwg index build`, `aiwg index build --all`, and `aiwg index sync --all` use
+that order. When `buildOrder` is absent, AIWG infers common corpus names so
+refs/references build first, citations/citation-network second, bibliography
+third, summaries before standard graphs, and full/source/papers later.
+
 ### What you get
 
 - **Typed edge attributes** native to graphology's data model
@@ -190,10 +221,20 @@ aiwg index query "dense retrieval for question answering" \
   --semantic --graph citation-network
 # Returns corpus papers ranked by semantic similarity to the query
 
+# Body-level embedding for finer semantic dedup granularity (#1551)
+aiwg index embed --graph citation-network --embed-body
+aiwg index dedup-report --graph citation-network --threshold 0.85
+# The embedding manifest records granularity: title-summary or body
+
 # Semantic neighbors of a specific node
 aiwg index neighbors --node REF-008 --semantic --top-k 5
 # Returns 5 papers most similar to REF-008's abstract
 ```
+
+Body granularity reads each node's source file, strips YAML frontmatter, embeds
+bounded overlapping body chunks with the configured transformer model, and stores
+one normalized mean vector per node. If the source body is missing, oversized, or
+binary-like, AIWG falls back to the node's title and summary text.
 
 ### Corpus size guidance
 

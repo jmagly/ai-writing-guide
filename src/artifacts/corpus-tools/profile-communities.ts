@@ -10,6 +10,7 @@
 
 import { loadCorpus } from '../corpus-views/ref-parser.js';
 import { buildCoauthorGraph, betweenness } from './corpus-graph.js';
+import type { AiwgFortemiIndexExport } from '../browser-export.js';
 
 export interface Community {
   label: string;
@@ -19,6 +20,14 @@ export interface CommunityResult {
   communities: Community[];
   modularity: number;
   bridges: { node: string; betweenness: number }[];
+}
+export interface SkosCommunityResult {
+  communities: Community[];
+  coverage: {
+    recordsWithConcepts: number;
+    totalRecords: number;
+    ratio: number;
+  };
 }
 
 type Graph = Map<string, Map<string, number>>;
@@ -119,5 +128,56 @@ export function renderCommunities(r: CommunityResult & { warning?: string }): st
   }
   lines.push('', '## Bridge authors (top betweenness)', '', '| Author | Betweenness |', '|---|---:|');
   for (const b of r.bridges) lines.push(`| ${b.node} | ${b.betweenness} |`);
+  return lines.join('\n') + '\n';
+}
+
+/** Group Fortemi v2 records by extracted SKOS concept id/prefLabel (#1720). */
+export function detectSkosCommunities(exported: AiwgFortemiIndexExport): SkosCommunityResult {
+  const labels = new Map<string, string>();
+  const membersByConcept = new Map<string, Set<string>>();
+  let recordsWithConcepts = 0;
+
+  for (const item of exported.items) {
+    const concepts = item.skos_concepts ?? [];
+    if (concepts.length > 0) recordsWithConcepts++;
+    const member = item.title || item.name || item.source.path;
+    for (const concept of concepts) {
+      labels.set(concept.id, concept.prefLabel);
+      if (!membersByConcept.has(concept.id)) membersByConcept.set(concept.id, new Set());
+      membersByConcept.get(concept.id)!.add(member);
+    }
+  }
+
+  const communities = [...membersByConcept.entries()]
+    .map(([id, members]) => ({
+      label: labels.get(id) ?? id,
+      members: [...members].sort(),
+    }))
+    .sort((a, b) => b.members.length - a.members.length || a.label.localeCompare(b.label));
+  return {
+    communities,
+    coverage: {
+      recordsWithConcepts,
+      totalRecords: exported.items.length,
+      ratio:
+        exported.items.length === 0
+          ? 1
+          : Math.round((recordsWithConcepts / exported.items.length) * 10000) / 10000,
+    },
+  };
+}
+
+export function renderSkosCommunities(r: SkosCommunityResult): string {
+  const lines = [
+    '# SKOS concept communities',
+    '',
+    `${r.communities.length} concepts · SKOS coverage ${r.coverage.recordsWithConcepts}/${r.coverage.totalRecords} (${r.coverage.ratio})`,
+    '',
+    '| Concept | Size | Records (top 8) |',
+    '|---|---:|---|',
+  ];
+  for (const c of r.communities) {
+    lines.push(`| ${c.label} | ${c.members.length} | ${c.members.slice(0, 8).join(', ')}${c.members.length > 8 ? ' …' : ''} |`);
+  }
   return lines.join('\n') + '\n';
 }

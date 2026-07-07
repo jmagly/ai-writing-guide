@@ -8,11 +8,15 @@
 
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { readAiwgConfig, type AiwgConfig } from '../../config/aiwg-config.js';
+import { renderTrackerProtocol, resolveTrackerAuthority } from '../../tracker/capability-protocol.js';
 
 export const FINALIZATION_START = '<!-- aiwg-context-finalization:START -->';
 export const FINALIZATION_END = '<!-- aiwg-context-finalization:END -->';
 const AIWG_SIGNATURE_COMMENT = '<!-- aiwg-managed -->';
+const execFileAsync = promisify(execFile);
 
 function formatList(values: readonly string[]): string {
   return values.length > 0 ? values.join(', ') : 'none recorded';
@@ -26,8 +30,27 @@ async function readConfig(projectPath: string): Promise<AiwgConfig | null> {
   }
 }
 
+async function readGitRemoteUrls(projectPath: string): Promise<Record<string, string>> {
+  try {
+    const { stdout } = await execFileAsync('git', ['-C', projectPath, 'remote', '-v'], {
+      maxBuffer: 1024 * 1024,
+    });
+    const urls: Record<string, string> = {};
+    for (const line of stdout.split(/\r?\n/)) {
+      const match = line.match(/^(\S+)\s+(\S+)\s+\((fetch|push)\)$/);
+      if (!match) continue;
+      const [, name, url, direction] = match;
+      if (direction === 'fetch' || !urls[name]) urls[name] = url;
+    }
+    return urls;
+  } catch {
+    return {};
+  }
+}
+
 export async function buildContextFinalizationBlock(projectPath: string): Promise<string> {
   const config = await readConfig(projectPath);
+  const remoteUrls = await readGitRemoteUrls(projectPath);
   const providers = config?.providers ?? [];
   const installed = Object.entries(config?.installed ?? {});
   const installedNames = installed.map(([name]) => name);
@@ -61,6 +84,8 @@ export async function buildContextFinalizationBlock(projectPath: string): Promis
     '### Engagement Verification',
     '',
     'When a user asks whether AIWG is active or engaged in this project, run or read `aiwg status --probe --json` and report the result plainly: engaged state, project root, deployed provider files, installed frameworks/addons, and the next action from the probe. Do not add AIWG attribution, signatures, generated-by text, or passive footers to user files, commits, PRs, comments, code headers, or docs.',
+    '',
+    renderTrackerProtocol(resolveTrackerAuthority(config, remoteUrls)),
     '',
     '### Source Model',
     '',

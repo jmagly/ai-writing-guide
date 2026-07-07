@@ -2,8 +2,9 @@
  * Semantic Embedding Index
  *
  * Optional ANN (approximate nearest neighbor) layer on top of the artifact
- * index. Embeds node summaries/titles into dense vectors using a small local
- * model and stores them in an HNSW index for fast similarity queries.
+ * index. Embeds node summaries/titles, or opt-in chunked source bodies, into
+ * dense vectors using a small local model and stores them in an HNSW index for
+ * fast similarity queries.
  *
  * Install: npm install @xenova/transformers hnswlib-node
  *
@@ -36,6 +37,8 @@ export interface EmbeddingManifest {
   builtAt: string;
   /** Checksums at build time for incremental detection */
   checksums: Record<string, string>;
+  /** Text granularity embedded for each node. */
+  granularity?: EmbeddingGranularity;
 }
 
 /**
@@ -62,6 +65,157 @@ export interface SemanticResult {
   score: number;
 }
 
+export type EmbeddingGranularity = 'title-summary' | 'metadata' | 'body';
+
+export interface BuildEmbeddingIndexOptions {
+  /** Embedding input scope: compact metadata, or source body when available. */
+  granularity?: EmbeddingGranularity;
+  /** Project root used to resolve entry.path for body-level embeddings. */
+  cwd?: string;
+  /** Maximum source body size to read for body-level embeddings. */
+  maxSourceBodyBytes?: number;
+  /** Approximate character length for each body chunk before mean pooling. */
+  bodyChunkChars?: number;
+  /** Approximate character overlap between adjacent body chunks. */
+  bodyChunkOverlapChars?: number;
+  /** Maximum body chunks to embed per artifact. */
+  maxBodyChunks?: number;
+}
+
+const DEFAULT_MAX_EMBEDDING_BODY_BYTES = 256 * 1024;
+const DEFAULT_BODY_CHUNK_CHARS = 1400;
+const DEFAULT_BODY_CHUNK_OVERLAP_CHARS = 200;
+const DEFAULT_MAX_BODY_CHUNKS = 48;
+const BINARY_SOURCE_EXTENSIONS = new Set([
+  '.7z', '.a', '.avi', '.bin', '.bmp', '.bz2', '.class', '.dll', '.doc',
+  '.docx', '.dylib', '.exe', '.gif', '.gz', '.ico', '.jar', '.jpeg', '.jpg',
+  '.mov', '.mp3', '.mp4', '.o', '.odt', '.pdf', '.png', '.ppt', '.pptx',
+  '.so', '.tar', '.tgz', '.war', '.webp', '.xls', '.xlsx', '.zip',
+]);
+
+function stripFrontmatter(text: string): string {
+  if (!text.startsWith('---')) return text;
+  const match = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+  return match ? text.slice(match[0].length) : text;
+}
+
+function looksBinary(buffer: Buffer): boolean {
+  if (buffer.includes(0)) return true;
+  const sample = buffer.subarray(0, Math.min(buffer.length, 4096)).toString('utf-8');
+  if (sample.length === 0) return false;
+  const replacementCount = (sample.match(/\uFFFD/g) ?? []).length;
+  return replacementCount / sample.length > 0.01;
+}
+
+function metadataTextForEntry(entry: MetadataEntry): string {
+  return `${entry.title} ${entry.summary}`.trim();
+}
+
+function chunkText(text: string, chunkChars: number, overlapChars: number, maxChunks: number): string[] {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  if (!normalized) return [];
+
+  const size = Math.max(200, chunkChars);
+  const overlap = Math.max(0, Math.min(overlapChars, size - 1));
+  const chunks: string[] = [];
+  let start = 0;
+
+  while (start < normalized.length && chunks.length < maxChunks) {
+    let end = Math.min(start + size, normalized.length);
+    if (end < normalized.length) {
+      const boundary = normalized.lastIndexOf(' ', end);
+      if (boundary > start + Math.floor(size * 0.6)) end = boundary;
+    }
+
+    chunks.push(normalized.slice(start, end).trim());
+    if (end >= normalized.length) break;
+    start = Math.max(end - overlap, start + 1);
+  }
+
+  return chunks.filter(Boolean);
+}
+
+function sourceBodyForEntry(
+  cwd: string,
+  entry: MetadataEntry,
+  maxBytes: number,
+): string {
+  const sourcePath = path.isAbsolute(entry.path) ? entry.path : path.join(cwd, entry.path);
+  try {
+    const stat = fs.statSync(sourcePath);
+    if (!stat.isFile() || stat.size > maxBytes) return '';
+    if (BINARY_SOURCE_EXTENSIONS.has(path.extname(sourcePath).toLowerCase())) return '';
+    const buffer = fs.readFileSync(sourcePath);
+    if (looksBinary(buffer)) return '';
+    return stripFrontmatter(buffer.toString('utf-8')).trim();
+  } catch {
+    return '';
+  }
+}
+
+export function embeddingTextForEntry(
+  entry: MetadataEntry,
+  options: BuildEmbeddingIndexOptions = {},
+): string {
+  return embeddingTextsForEntry(entry, options).join('\n\n');
+}
+
+export function embeddingTextsForEntry(
+  entry: MetadataEntry,
+  options: BuildEmbeddingIndexOptions = {},
+): string[] {
+  const metadataText = metadataTextForEntry(entry);
+  if (options.granularity !== 'body') return [metadataText];
+  const bodyText = options.cwd
+    ? sourceBodyForEntry(
+        options.cwd,
+        entry,
+        options.maxSourceBodyBytes ?? DEFAULT_MAX_EMBEDDING_BODY_BYTES,
+      )
+    : '';
+  if (!bodyText) return [metadataText];
+
+  const chunks = chunkText(
+    bodyText,
+    options.bodyChunkChars ?? DEFAULT_BODY_CHUNK_CHARS,
+    options.bodyChunkOverlapChars ?? DEFAULT_BODY_CHUNK_OVERLAP_CHARS,
+    options.maxBodyChunks ?? DEFAULT_MAX_BODY_CHUNKS,
+  );
+
+  return chunks.length > 0 ? chunks.map(chunk => [metadataText, chunk].join('\n\n')) : [metadataText];
+}
+
+function normalizeVector(vector: number[]): number[] {
+  const norm = Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0));
+  if (norm === 0) return vector;
+  return vector.map(value => value / norm);
+}
+
+async function embedEntryVector(
+  embed: (text: string, options: { pooling: string; normalize: boolean }) => Promise<{ data: Float32Array }>,
+  entry: MetadataEntry,
+  options: BuildEmbeddingIndexOptions,
+): Promise<number[]> {
+  const texts = embeddingTextsForEntry(entry, options);
+  const vectors: number[][] = [];
+
+  for (const text of texts) {
+    const result = await embed(text, { pooling: 'mean', normalize: true });
+    vectors.push(Array.from(result.data as Float32Array));
+  }
+
+  if (vectors.length === 1) return vectors[0];
+
+  const mean = new Array(vectors[0].length).fill(0);
+  for (const vector of vectors) {
+    for (let i = 0; i < vector.length; i++) {
+      mean[i] += vector[i];
+    }
+  }
+
+  return normalizeVector(mean.map(value => value / vectors.length));
+}
+
 /**
  * Check if embedding dependencies are available.
  */
@@ -86,8 +240,10 @@ export async function checkEmbeddingDeps(): Promise<{ available: boolean; missin
 /**
  * Build an embedding index from artifact metadata entries.
  *
- * Embeds each entry's title + summary into a dense vector and stores
- * them in an HNSW index for fast approximate nearest-neighbor queries.
+ * Embeds each entry into a dense vector and stores it in an HNSW index for
+ * fast approximate nearest-neighbor queries. Body granularity reads the source
+ * file, strips frontmatter, embeds bounded overlapping chunks, and stores the
+ * normalized mean vector for the node.
  *
  * @param entries - Map of node ID → MetadataEntry
  * @param outputDir - Directory to write embeddings/ subfolder
@@ -97,7 +253,8 @@ export async function checkEmbeddingDeps(): Promise<{ available: boolean; missin
 export async function buildEmbeddingIndex(
   entries: Record<string, MetadataEntry>,
   outputDir: string,
-  model: string = DEFAULT_EMBEDDING_MODEL
+  model: string = DEFAULT_EMBEDDING_MODEL,
+  options: BuildEmbeddingIndexOptions = {},
 ): Promise<number> {
   const transformersMod = await (new Function('m', 'return import(m)'))('@xenova/transformers');
   const { pipeline } = transformersMod;
@@ -124,9 +281,8 @@ export async function buildEmbeddingIndex(
 
   for (let i = 0; i < ids.length; i++) {
     const entry = entries[ids[i]];
-    const text = `${entry.title} ${entry.summary}`.trim();
-    const result = await embed(text, { pooling: 'mean', normalize: true });
-    index.addPoint(Array.from(result.data as Float32Array), i);
+    const vector = await embedEntryVector(embed, entry, options);
+    index.addPoint(vector, i);
     checksums[ids[i]] = entry.checksum;
   }
 
@@ -142,6 +298,7 @@ export async function buildEmbeddingIndex(
     nodeIds: ids,
     builtAt: new Date().toISOString(),
     checksums,
+    granularity: options.granularity === 'body' ? 'body' : 'title-summary',
   };
 
   fs.writeFileSync(

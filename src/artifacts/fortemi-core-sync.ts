@@ -27,6 +27,11 @@ export interface FortemiCoreSyncManifest {
   export_schema_version: "aiwg.fortemi.index.export.v2";
   export_checksum: string;
   item_count: number;
+  skos_coverage?: {
+    records_with_concepts: number;
+    total_records: number;
+    ratio: number;
+  };
   status: "created" | "updated" | "unchanged";
   source_index_built_at: string | null;
 }
@@ -118,7 +123,13 @@ export function syncFortemiCoreIndex(
   const previous = readManifest(manifestPath);
   const sourceBuiltAt = sourceIndexBuiltAt(cwd, graph);
 
-  const buildExport = (generatedAt: string): { generatedAt: string; json: string; checksum: string; itemCount: number } => {
+  const buildExport = (generatedAt: string): {
+    generatedAt: string;
+    json: string;
+    checksum: string;
+    itemCount: number;
+    skosCoverage: FortemiCoreSyncManifest["skos_coverage"];
+  } => {
     const exported = buildAiwgFortemiIndexExport(cwd, {
       graph,
       repo: options.repo,
@@ -127,11 +138,23 @@ export function syncFortemiCoreIndex(
       schemaVersion: "v2",
     });
     const json = JSON.stringify(exported, null, 2) + "\n";
+    const recordsWithConcepts = exported.items.filter(
+      (item) => (item.skos_concepts?.length ?? 0) > 0,
+    ).length;
     return {
       generatedAt,
       json,
       checksum: sha256(json),
       itemCount: exported.items.length,
+      skosCoverage: {
+        records_with_concepts: recordsWithConcepts,
+        total_records: exported.items.length,
+        ratio:
+          exported.items.length === 0
+            ? 1
+            : Math.round((recordsWithConcepts / exported.items.length) * 10000) /
+              10000,
+      },
     };
   };
 
@@ -161,6 +184,7 @@ export function syncFortemiCoreIndex(
     export_schema_version: "aiwg.fortemi.index.export.v2",
     export_checksum: built.checksum,
     item_count: built.itemCount,
+    skos_coverage: built.skosCoverage,
     status,
     source_index_built_at: sourceBuiltAt,
   };

@@ -3,6 +3,7 @@ title: "What's been happening with AIWG since 2026.3.x"
 slug: "2026-5-where-things-are"
 date: "2026-05-11"
 summary: "A retrospective on the quiet stretch since March: what the 2026.5.x line actually means — project-local artifacts, the kernel pivot, discover-first, the Hermes audit — and the work behind it."
+hero: "https://docs.aiwg.io/assets/blog/2026-5-where-things-are.png"
 reading_time: 6
 status: "published"
 canonical: "https://aiwg.io/blog/2026-5-where-things-are"
@@ -12,6 +13,8 @@ tags: ["ai-coding", "open-source", "retrospective", "release"]
 ---
 
 # What's been happening with AIWG since 2026.3.x
+
+![An AIWG operations timeline with abstract release markers, agent capability panels, documentation cards, and integration nodes arranged across a clean technical control surface.](/assets/blog/2026-5-where-things-are.png)
 
 The last big public post about AIWG was around the `2026.3.x` line in March. The `2026.5.x` line shipped today. People in the Discord and Telegram rooms have watched the whole thing happen in flight, but if you've been following from outside those rooms, the gap probably looks like silence.
 
@@ -71,7 +74,7 @@ AIWG is open about how its content is made.
 
 - **Words:** mostly AI-generated, then fact-checked and edited by a human.
 - **Facts and claims:** every detail reflects the actual 2026.5.x work — human-verified, nothing model-invented left unchecked.
-- **Imagery:** none.
+- **Imagery:** hero image AI-generated with ChatGPT from a post-specific prompt; no readable text or brand logos are AI-rendered.
 - **Final pass:** human.
 
 Net: AI-drafted, human-fact-checked.

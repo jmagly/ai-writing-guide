@@ -86,7 +86,13 @@ Each v2 item can include:
 - typed relationships with `target_path` and `direction` so dependency,
   citation, profile, and KB graph traversal can be reconstructed;
 - source-body chunks and embedding metadata slots for the Fortemi chunk/body
-  embedding path.
+  embedding path;
+- SKOS concept and relation extraction from source frontmatter
+  (`skos.concepts`, `skos.relations`, `skos_concepts`, `skos_relations`) plus
+  a tag-to-SKOS projection in the `aiwg-tags` scheme so every tagged record has
+  concept coverage for Fortemi community and graph tooling. The Fortemi Core
+  sync manifest records `skos_coverage.records_with_concepts`,
+  `skos_coverage.total_records`, and `skos_coverage.ratio` for verification.
 
 ### Source Graph Export Boundary
 

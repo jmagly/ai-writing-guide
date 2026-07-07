@@ -12,7 +12,8 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { computeMetrics } from '../../../src/artifacts/corpus-tools/profile-metrics.js';
 import { computeTrajectory } from '../../../src/artifacts/corpus-tools/profile-temporal.js';
-import { detectCommunities } from '../../../src/artifacts/corpus-tools/profile-communities.js';
+import { detectCommunities, detectSkosCommunities } from '../../../src/artifacts/corpus-tools/profile-communities.js';
+import type { AiwgFortemiIndexExport } from '../../../src/artifacts/browser-export.js';
 
 let root: string;
 
@@ -91,5 +92,63 @@ describe('detectCommunities', () => {
     const withBoth = r.communities.find((c) => c.members.includes('Lee, Sam') && c.members.includes('Ng, Pat'));
     expect(withBoth).toBeDefined(); // Lee & Ng co-authored REF-101
     expect(typeof r.modularity).toBe('number');
+  });
+
+  it('groups Fortemi export records by full SKOS concept set (#1720)', () => {
+    const exported: AiwgFortemiIndexExport = {
+      schema_version: 'aiwg.fortemi.index.export.v2',
+      generated_at: '2026-01-01T00:00:00.000Z',
+      source: { repo: 'test', privacy: 'sanitized', graph: 'citation-network' },
+      items: [
+        {
+          schema_version: 'aiwg.fortemi.index.record.v2',
+          id: 'aiwg:ref:a',
+          type: 'aiwg.research.ref',
+          source: { path: 'REF-A.md', repo_relative_path: 'REF-A.md', locator: 'REF-A' },
+          title: 'REF-A',
+          text: 'A',
+          facets: {},
+          tags: [],
+          concepts: ['skos:rag', 'skos:evals'],
+          relationships: [],
+          provenance: [],
+          privacy: { classification: 'sanitized', pii: false },
+          skos_concepts: [
+            { id: 'skos:rag', prefLabel: 'Retrieval' },
+            { id: 'skos:evals', prefLabel: 'Evaluation' },
+          ],
+          skos_relations: [],
+          updated_at: '2026-01-01T00:00:00.000Z',
+        },
+        {
+          schema_version: 'aiwg.fortemi.index.record.v2',
+          id: 'aiwg:ref:b',
+          type: 'aiwg.research.ref',
+          source: { path: 'REF-B.md', repo_relative_path: 'REF-B.md', locator: 'REF-B' },
+          title: 'REF-B',
+          text: 'B',
+          facets: {},
+          tags: [],
+          concepts: ['skos:rag'],
+          relationships: [],
+          provenance: [],
+          privacy: { classification: 'sanitized', pii: false },
+          skos_concepts: [{ id: 'skos:rag', prefLabel: 'Retrieval' }],
+          skos_relations: [],
+          updated_at: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    };
+
+    const result = detectSkosCommunities(exported);
+    expect(result.coverage).toEqual({ recordsWithConcepts: 2, totalRecords: 2, ratio: 1 });
+    expect(result.communities[0]).toEqual({
+      label: 'Retrieval',
+      members: ['REF-A', 'REF-B'],
+    });
+    expect(result.communities).toContainEqual({
+      label: 'Evaluation',
+      members: ['REF-A'],
+    });
   });
 });
