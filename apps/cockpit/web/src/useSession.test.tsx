@@ -123,20 +123,23 @@ describe('useSession — retry through the PTY-readiness window (#1669)', () => 
     expect(MockWS.instances.length).toBeLessThanOrEqual(7);
   });
 
-  it('ignores stale socket messages after switching sessions', () => {
+  it('keeps a backgrounded session alive on switch; the active session drives UI state (#1749)', () => {
     const { result } = renderHook(() => useSession());
     act(() => { result.current.attach('ws://x/agents/i/sessions/old/attach', false, 'controller'); });
     const old = MockWS.instances[0];
     act(() => { result.current.attach('ws://x/agents/i/sessions/new/attach', false, 'observer'); });
     const current = MockWS.instances[1];
 
+    // The previous session is NOT torn down when we switch — it keeps its own
+    // socket and joins/streams in the background so its scrollback survives.
     act(() => {
       old.emit('open');
       old.emit('message', { data: JSON.stringify({ op: 'binding_hello' }) });
       old.emit('message', { data: JSON.stringify({ op: 'role_assigned', payload: { role: 'controller' } }) });
-      old.emit('close');
     });
-    expect(old.sent).toEqual([]);
+    expect(JSON.parse(old.sent[0])).toEqual({ op: 'pty.join_session', payload: { role: 'controller', replay_from: 0 } });
+    // ...but the active (foreground) session is the new one; the backgrounded
+    // session's role does not leak into the UI state.
     expect(result.current.state.url).toBe('ws://x/agents/i/sessions/new/attach');
     expect(result.current.state.role).toBeNull();
 
@@ -147,6 +150,28 @@ describe('useSession — retry through the PTY-readiness window (#1669)', () => 
     });
     expect(JSON.parse(current.sent[0])).toEqual({ op: 'pty.join_session', payload: { role: 'observer', replay_from: 0 } });
     expect(result.current.state.role).toBe('observer');
+  });
+
+  it('switching back to an already-attached session does not reconnect it (#1749)', () => {
+    const { result } = renderHook(() => useSession());
+    act(() => { result.current.attach('ws://x/agents/i/sessions/a/attach', false, 'controller'); });
+    act(() => {
+      MockWS.instances[0].emit('open');
+      MockWS.instances[0].emit('message', { data: JSON.stringify({ op: 'role_assigned', payload: { role: 'controller' } }) });
+    });
+    act(() => { result.current.attach('ws://x/agents/i/sessions/b/attach', false, 'controller'); });
+    act(() => {
+      MockWS.instances[1].emit('open');
+      MockWS.instances[1].emit('message', { data: JSON.stringify({ op: 'role_assigned', payload: { role: 'controller' } }) });
+    });
+    expect(MockWS.instances).toHaveLength(2);
+
+    // Switch back to A (same role, not a replay) — it should just re-show, using
+    // the socket that's still open. No third WebSocket, no terminal reset.
+    act(() => { result.current.attach('ws://x/agents/i/sessions/a/attach', false, 'controller'); });
+    expect(MockWS.instances).toHaveLength(2);
+    expect(result.current.state.url).toBe('ws://x/agents/i/sessions/a/attach');
+    expect(result.current.state.role).toBe('controller');
   });
 
   it('requests a bounded ring replay on fresh attach joins (#1744)', () => {

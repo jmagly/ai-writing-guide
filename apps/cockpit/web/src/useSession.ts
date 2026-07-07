@@ -3,16 +3,20 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import type { Role } from './types';
 
-// The pty session connection, lifted to App so the Sessions tab renders it and the
-// Actions tab can inject into it. Data plane is browser→executor (the attach_url the
-// Bridge issues); control plane stays on the Bridge.
+// The pty session connections, lifted to App so the Sessions tab renders them and the
+// Actions tab can inject into the active one. Data plane is browser→executor (the
+// attach_url the Bridge issues); control plane stays on the Bridge.
 //
-// Output is rendered through an xterm.js terminal so ANSI/VT/OSC sequences — colors,
-// tmux redraws, window titles, bracketed paste, shell-integration markers — are
-// *interpreted*, not dumped as raw escape bytes (the bug a plain <pre>{output} showed).
-// This mirrors the agentic-sandbox dashboard's pty-ws.v1 client: write decoded bytes to
-// the terminal, forward keystrokes as pty.session_input, and keep the PTY (tmux) sized
-// to the terminal via pty.session_resize.
+// Each (instance, session) keeps its OWN persistent xterm Terminal + WebSocket, mounted
+// once and hidden (not torn down) when another session is shown. Switching sessions is a
+// show/hide — the socket stays connected and the terminal keeps its scrollback — so
+// history is preserved and the current screen is already painted (no reset, no re-attach,
+// no "press enter to repaint"). This is the per-session-terminal model (#1749) that
+// replaced the earlier single-terminal-reset-on-switch design.
+//
+// Output is rendered through xterm.js so ANSI/VT/OSC sequences — colors, tmux redraws,
+// window titles, bracketed paste, shell-integration markers — are *interpreted*, not
+// dumped as raw escape bytes.
 type WsMsg = { op: string; seq?: number; payload?: { role?: Role; data?: string; code?: string; frames?: { seq: number; payload: { data: string } }[] } };
 
 export interface SessionTarget { instanceId: string; sessionId: string }
@@ -35,8 +39,7 @@ const textEnc = new TextEncoder();
 const textDec = new TextDecoder();
 
 // base64 → raw bytes. xterm does its own UTF-8 decoding and escape-sequence parsing, so
-// it must receive bytes (Uint8Array) — handing it a Latin-1 string is exactly what made
-// the escape sequences render as literal text.
+// it must receive bytes (Uint8Array) — a Latin-1 string renders escapes as literal text.
 const b64ToBytes = (b64: string): Uint8Array => {
   try {
     const bin = atob(b64);
@@ -97,277 +100,365 @@ function interactivePromptFrom(output: string): string {
   return lines.slice(-10).join('\n').slice(0, 900);
 }
 
-export function useSession() {
-  const wsRef = useRef<WebSocket | null>(null);
-  const lastSeq = useRef(0);
-  const termRef = useRef<Terminal | null>(null);
-  const fitRef = useRef<FitAddon | null>(null);
-  const roRef = useRef<ResizeObserver | null>(null);
-  const roleRef = useRef<Role>(null); // current role, read by term.onData without re-subscribing
-  const targetRef = useRef<SessionTarget | null>(null);
-  const outputTailRef = useRef('');
-  const connectionIdRef = useRef(0);
-  // Retry-through-readiness state (#1669): a freshly-launched VM/container can
-  // accept the pty-ws attach, send 0 frames, and close within ~2s because the
-  // agent's PTY/tmux isn't streamable yet. Rather than show a hard
-  // [connection error], reconnect a few times until the first frame arrives.
-  const gotFrameRef = useRef(false);   // any output/keyframe seen on the current attach
-  const retryRef = useRef(0);          // reconnect attempts since the last user-initiated attach
-  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const firstFrameNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const firstFrameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const closedByUserRef = useRef(false); // detach()/new attach — suppress reconnect
-  const [state, setState] = useState<SessionState>({ attached: false, role: null, url: null, target: null });
-  const [responseNeeded, setResponseNeeded] = useState<ResponseNeededState>({ needed: false, prompt: '', since: null, source: 'pty' });
+function targetKey(t: SessionTarget | null, url: string): string {
+  return t ? `${t.instanceId}:${t.sessionId}` : `url:${url}`;
+}
 
-  const fit = () => { try { fitRef.current?.fit(); } catch { /* container hidden / zero-sized */ } };
-  const noteOutput = (bytes: Uint8Array) => {
+type PromptSink = (r: ResponseNeededState | null) => void;
+
+// One persistent PTY connection: its own Terminal, wrapper element, and WebSocket, with
+// the readiness-retry lifecycle (#1669/#1746). Created once per session and kept alive —
+// hidden, not disposed — when another session is shown, so scrollback and the live stream
+// survive session switches.
+class PtyConnection {
+  readonly term: Terminal;
+  readonly fit: FitAddon;
+  readonly wrapper: HTMLDivElement;
+  url: string;
+  target: SessionTarget | null;
+  role: Role = null;
+  attached = false;
+  private ws: WebSocket | null = null;
+  private lastSeq = 0;
+  private connId = 0;
+  private closedByUser = false;
+  private gotFrame = false;
+  private retries = 0;
+  private outputTail = '';
+  private ro: ResizeObserver | null = null;
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private noticeTimer: ReturnType<typeof setTimeout> | null = null;
+  private deadlineTimer: ReturnType<typeof setTimeout> | null = null;
+  disposed = false;
+
+  constructor(
+    url: string,
+    target: SessionTarget | null,
+    private readonly onChange: () => void,
+    private readonly onPrompt: PromptSink,
+    private readonly isActive: () => boolean,
+  ) {
+    this.url = url;
+    this.target = target;
+    this.term = new Terminal({
+      convertEol: false,
+      scrollback: 5000,
+      cursorBlink: false,
+      disableStdin: true, // read-only until role_assigned grants control
+      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+      fontSize: 13,
+      theme: { background: '#0a0c10', foreground: '#cdd3de' },
+    });
+    this.fit = new FitAddon();
+    this.term.loadAddon(this.fit);
+    this.wrapper = document.createElement('div');
+    this.wrapper.className = 'pty-surface';
+    this.wrapper.style.width = '100%';
+    this.wrapper.style.height = '100%';
+    try { this.term.open(this.wrapper); } catch { /* jsdom */ }
+    this.term.onData((data) => {
+      if (this.role !== 'controller') return;
+      const userData = stripTerminalAutoResponses(data);
+      if (!userData) return;
+      if (this.isActive()) this.onPrompt(null);
+      this.send('pty.session_input', { data: toB64(userData) });
+    });
+    this.term.onResize(({ cols, rows }) => {
+      if (this.role !== 'controller') return;
+      if (cols < RESIZE_FLOOR_COLS || rows < RESIZE_FLOOR_ROWS) return;
+      this.send('pty.session_resize', { cols, rows });
+    });
+  }
+
+  private fitSafe() { try { this.fit.fit(); } catch { /* hidden / zero-sized */ } }
+
+  private write(bytes: Uint8Array) {
     const text = textDec.decode(bytes, { stream: true });
-    if (!text) return;
-    outputTailRef.current = (outputTailRef.current + text).slice(-6000);
-    const prompt = interactivePromptFrom(outputTailRef.current);
-    if (prompt) {
-      setResponseNeeded((prev) => (
-        prev.needed && prev.prompt === prompt
-          ? prev
-          : { needed: true, prompt, since: new Date().toISOString(), source: 'pty' }
-      ));
+    if (text) {
+      this.outputTail = (this.outputTail + text).slice(-6000);
+      const prompt = interactivePromptFrom(this.outputTail);
+      if (prompt && this.isActive()) {
+        this.onPrompt({ needed: true, prompt, since: new Date().toISOString(), source: 'pty' });
+      }
     }
-  };
-  const write = (bytes: Uint8Array) => {
-    noteOutput(bytes);
-    try { termRef.current?.write(bytes); } catch { /* term not open */ }
-  };
-  const encodeOp = (op: string, payload?: unknown) => JSON.stringify(payload === undefined ? { op } : { op, payload });
-  const sendOp = (op: string, payload?: unknown) => { try { wsRef.current?.send(encodeOp(op, payload)); } catch { /* socket closed */ } };
-  const sendOn = (ws: WebSocket, op: string, payload?: unknown) => { try { ws.send(encodeOp(op, payload)); } catch { /* socket closed */ } };
-  const clearResponseNeeded = () => setResponseNeeded({ needed: false, prompt: '', since: null, source: 'pty' });
-  const clearFirstFrameTimer = () => {
-    if (firstFrameNoticeTimerRef.current) {
-      clearTimeout(firstFrameNoticeTimerRef.current);
-      firstFrameNoticeTimerRef.current = null;
+    try { this.term.write(bytes); } catch { /* term not open */ }
+  }
+
+  private send(op: string, payload?: unknown) {
+    try { this.ws?.send(JSON.stringify(payload === undefined ? { op } : { op, payload })); } catch { /* closed */ }
+  }
+  private sendOn(ws: WebSocket, op: string, payload?: unknown) {
+    try { ws.send(JSON.stringify(payload === undefined ? { op } : { op, payload })); } catch { /* closed */ }
+  }
+
+  private clearTimers() {
+    if (this.retryTimer) { clearTimeout(this.retryTimer); this.retryTimer = null; }
+    if (this.noticeTimer) { clearTimeout(this.noticeTimer); this.noticeTimer = null; }
+    if (this.deadlineTimer) { clearTimeout(this.deadlineTimer); this.deadlineTimer = null; }
+  }
+  private clearFrameTimers() {
+    if (this.noticeTimer) { clearTimeout(this.noticeTimer); this.noticeTimer = null; }
+    if (this.deadlineTimer) { clearTimeout(this.deadlineTimer); this.deadlineTimer = null; }
+  }
+
+  // Reflect visibility. Only the shown surface gets laid out + refit.
+  setVisible(visible: boolean) {
+    this.wrapper.style.display = visible ? 'block' : 'none';
+    if (visible) {
+      this.fitSafe();
+      requestAnimationFrame(() => this.fitSafe());
     }
-    if (firstFrameTimerRef.current) {
-      clearTimeout(firstFrameTimerRef.current);
-      firstFrameTimerRef.current = null;
-    }
-  };
+  }
 
-  // Mount the terminal into the host element (ref callback from the Sessions tab).
-  // Idempotent: the Terminal is created once and reused across attaches. A ResizeObserver
-  // re-fits when the host gains size (the tab starts hidden/zero-sized, then becomes
-  // visible) and on any later layout change, keeping the PTY dimensions honest.
-  const openTerminal = useCallback((el: HTMLDivElement | null) => {
-    if (!el) return;
-    if (!termRef.current) {
-      const term = new Terminal({
-        convertEol: false, // the PTY/tmux emits its own CR/LF
-        scrollback: 2000,
-        cursorBlink: false,
-        // Read-only until control is granted: observe must not capture keystrokes
-        // at all (not just drop them on send). Flipped to false on controller.
-        disableStdin: true,
-        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-        fontSize: 13,
-        theme: { background: '#0a0c10', foreground: '#cdd3de' },
-      });
-      const fitAddon = new FitAddon();
-      term.loadAddon(fitAddon);
-      termRef.current = term;
-      fitRef.current = fitAddon;
-      // Forward keystrokes to the PTY only while driving.
-      term.onData((data) => {
-        if (roleRef.current !== 'controller') return;
-        const userData = stripTerminalAutoResponses(data);
-        if (!userData) return;
-        clearResponseNeeded();
-        sendOp('pty.session_input', { data: toB64(userData) });
-      });
-      // Keep tmux sized to the terminal so redraws don't wrap/overflow.
-      term.onResize(({ cols, rows }) => {
-        if (roleRef.current !== 'controller') return;
-        if (cols < RESIZE_FLOOR_COLS || rows < RESIZE_FLOOR_ROWS) return;
-        sendOp('pty.session_resize', { cols, rows });
-      });
-    }
-    try {
-      if (!el.querySelector('.xterm')) termRef.current.open(el);
-    } catch { /* jsdom / detached node */ }
-    if (!roRef.current && typeof ResizeObserver !== 'undefined') {
-      roRef.current = new ResizeObserver(() => fit());
-      roRef.current.observe(el);
-    }
-    fit();
-    requestAnimationFrame(() => fit());
-  }, []);
+  onContainerResize() { if (this.wrapper.style.display !== 'none') this.fitSafe(); }
 
-  // Refit on window resize (ResizeObserver covers container changes; this covers the rest).
-  useEffect(() => {
-    const onResize = () => fit();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+  // Connect (or re-join, e.g. observer→controller upgrade or a manual replay). Idempotent
+  // enough to call again on the same live connection to re-request role/replay.
+  connect(requestedRole: Exclude<Role, null>, replay: boolean, replayFromOverride?: number) {
+    this.clearTimers();
+    const connId = ++this.connId;
+    this.closedByUser = false;
+    this.retries = 0;
+    this.gotFrame = false;
+    this.ws?.close();
+    if (!replay) { this.lastSeq = 0; this.outputTail = ''; try { this.term.reset(); } catch { /* */ } }
+    this.role = null;
+    this.term.options.disableStdin = true;
+    this.attached = false;
+    if (this.isActive()) this.onPrompt(null);
+    this.onChange();
 
-  // Dispose on unmount.
-  useEffect(() => () => {
-    try { roRef.current?.disconnect(); } catch { /* */ }
-    try { termRef.current?.dispose(); } catch { /* */ }
-    closedByUserRef.current = true;
-    if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
-    clearFirstFrameTimer();
-    connectionIdRef.current += 1;
-    wsRef.current?.close();
-  }, []);
-
-  const attach = useCallback((url: string, replay = false, requestedRole: Exclude<Role, null> = 'observer', target?: SessionTarget | null) => {
-    if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
-    clearFirstFrameTimer();
-    const connectionId = connectionIdRef.current + 1;
-    connectionIdRef.current = connectionId;
-    closedByUserRef.current = false;
-    retryRef.current = 0;
-    gotFrameRef.current = false;
-    wsRef.current?.close();
-    if (!replay) lastSeq.current = 0;
-    roleRef.current = null;
-    targetRef.current = target ?? sessionTargetFromAttachUrl(url);
-    if (termRef.current) termRef.current.options.disableStdin = true; // read-only until role_assigned grants control
-    clearResponseNeeded();
-    outputTailRef.current = '';
-    setState({ attached: false, role: null, url, target: targetRef.current });
-    if (!replay) { try { termRef.current?.reset(); } catch { /* */ } }
-
-    // Open (or re-open, on a readiness retry) the data-plane socket.
-    const connect = (replayFromOverride?: number) => {
-      if (connectionIdRef.current !== connectionId || closedByUserRef.current) return;
-      // Replay is requested in pty.join_session below. Duplicating replay_from
-      // in the pty-ws URL makes the gateway emit replay.out_of_range even when
-      // the join succeeds and frames stream, so keep the socket URL stable.
-      const ws = new WebSocket(url);
-      wsRef.current = ws;
-      let gone = false; // a failing socket fires BOTH 'error' and 'close' — handle once
+    const open = () => {
+      if (this.connId !== connId || this.closedByUser || this.disposed) return;
+      const ws = new WebSocket(this.url);
+      this.ws = ws;
+      let gone = false;
       ws.addEventListener('open', () => {
-        if (connectionIdRef.current !== connectionId || wsRef.current !== ws) return;
-        setState((s) => ({ ...s, attached: true, url, target: targetRef.current }));
-        clearFirstFrameTimer();
-        firstFrameNoticeTimerRef.current = setTimeout(() => {
-          if (connectionIdRef.current !== connectionId || wsRef.current !== ws || closedByUserRef.current || gotFrameRef.current) return;
-          write(textEnc.encode('\r\n[attached — no output yet]\r\n'));
+        if (this.connId !== connId || this.ws !== ws) return;
+        this.attached = true;
+        this.onChange();
+        this.clearFrameTimers();
+        this.noticeTimer = setTimeout(() => {
+          if (this.connId !== connId || this.ws !== ws || this.closedByUser || this.gotFrame) return;
+          this.write(textEnc.encode('\r\n[attached — no output yet]\r\n'));
         }, FIRST_FRAME_NOTICE_MS);
-        firstFrameTimerRef.current = setTimeout(() => {
-          if (connectionIdRef.current !== connectionId || wsRef.current !== ws || closedByUserRef.current || gotFrameRef.current) return;
-          if (roleRef.current === 'controller') {
-            write(textEnc.encode(`\r\n[attached — no output after ${Math.round(FIRST_FRAME_DEADLINE_MS / 1000)}s; requesting repaint]\r\n`));
-            sendOn(ws, 'pty.request_keyframe');
+        this.deadlineTimer = setTimeout(() => {
+          if (this.connId !== connId || this.ws !== ws || this.closedByUser || this.gotFrame) return;
+          if (this.role === 'controller') {
+            this.write(textEnc.encode(`\r\n[attached — no output after ${Math.round(FIRST_FRAME_DEADLINE_MS / 1000)}s; requesting repaint]\r\n`));
+            this.sendOn(ws, 'pty.request_keyframe');
             return;
           }
-          if (retryRef.current >= MAX_READY_RETRIES) {
-            write(textEnc.encode(`\r\n[attached — no output after ${Math.round(FIRST_FRAME_DEADLINE_MS / 1000)}s]\r\n`));
+          if (this.retries >= MAX_READY_RETRIES) {
+            this.write(textEnc.encode(`\r\n[attached — no output after ${Math.round(FIRST_FRAME_DEADLINE_MS / 1000)}s]\r\n`));
             return;
           }
-          retryRef.current += 1;
-          write(textEnc.encode(`\r\n[attached — no output after ${Math.round(FIRST_FRAME_DEADLINE_MS / 1000)}s; requesting repaint]\r\n`));
-          try { ws.close(); } catch { /* socket may already be closed */ }
-          connect(0);
+          this.retries += 1;
+          this.write(textEnc.encode(`\r\n[attached — no output after ${Math.round(FIRST_FRAME_DEADLINE_MS / 1000)}s; requesting repaint]\r\n`));
+          try { ws.close(); } catch { /* */ }
+          open();
         }, FIRST_FRAME_DEADLINE_MS);
       });
-      const onGone = (kind: 'close' | 'error') => {
-        if (connectionIdRef.current !== connectionId || wsRef.current !== ws) return;
-        if (gone) return;
+      const onGone = () => {
+        if (this.connId !== connId || this.ws !== ws || gone) return;
         gone = true;
-        clearFirstFrameTimer();
-        roleRef.current = null;
-        setState((s) => ({ ...s, attached: false, role: null }));
-        // Clean detach, or we were already streaming → leave it (a real end/drop).
-        if (closedByUserRef.current || gotFrameRef.current) return;
-        // Early empty close/error before the first frame → the agent's PTY isn't
-        // streamable yet. Reconnect through the readiness window rather than error.
-        if (retryRef.current < MAX_READY_RETRIES) {
-          retryRef.current += 1;
-          if (retryRef.current === 1) write(textEnc.encode('\r\n[waiting for session…]\r\n'));
-          retryTimerRef.current = setTimeout(connect, READY_RETRY_MS);
+        this.clearFrameTimers();
+        this.role = null;
+        this.attached = false;
+        this.onChange();
+        if (this.closedByUser || this.gotFrame) return;
+        if (this.retries < MAX_READY_RETRIES) {
+          this.retries += 1;
+          if (this.retries === 1) this.write(textEnc.encode('\r\n[waiting for session…]\r\n'));
+          this.retryTimer = setTimeout(open, READY_RETRY_MS);
           return;
         }
-        void kind;
-        write(textEnc.encode('\r\n[connection error — session did not become ready]\r\n'));
+        this.write(textEnc.encode('\r\n[connection error — session did not become ready]\r\n'));
       };
-      ws.addEventListener('close', () => onGone('close'));
-      ws.addEventListener('error', () => onGone('error'));
+      ws.addEventListener('close', onGone);
+      ws.addEventListener('error', onGone);
       ws.addEventListener('message', (ev) => {
-        if (connectionIdRef.current !== connectionId || wsRef.current !== ws) return;
+        if (this.connId !== connId || this.ws !== ws) return;
         let m: WsMsg;
-        try { m = JSON.parse(ev.data as string); } catch { return; }
+        try { m = JSON.parse((ev as MessageEvent).data as string); } catch { return; }
         switch (m.op) {
           case 'binding_hello': {
-            const replayFrom = replayFromOverride ?? (replay ? lastSeq.current : 0);
-            sendOn(ws, 'pty.join_session', { role: requestedRole, replay_from: replayFrom });
-            // Tell the PTY our current dimensions up front so the first tmux redraw fits.
-            const t = termRef.current;
-            if (requestedRole === 'controller' && t && t.cols >= RESIZE_FLOOR_COLS && t.rows >= RESIZE_FLOOR_ROWS) sendOn(ws, 'pty.session_resize', { cols: t.cols, rows: t.rows });
+            const replayFrom = replayFromOverride ?? (replay ? this.lastSeq : 0);
+            this.sendOn(ws, 'pty.join_session', { role: requestedRole, replay_from: replayFrom });
+            if (requestedRole === 'controller' && this.term.cols >= RESIZE_FLOOR_COLS && this.term.rows >= RESIZE_FLOOR_ROWS) {
+              this.sendOn(ws, 'pty.session_resize', { cols: this.term.cols, rows: this.term.rows });
+            }
             break;
           }
           case 'role_assigned': {
             const role = m.payload?.role ?? null;
-            roleRef.current = role;
-            setState((s) => ({ ...s, role }));
-            // Only a controller may type into the terminal; observers are read-only.
-            if (termRef.current) termRef.current.options.disableStdin = role !== 'controller';
-            // The gateway owns replay/keyframe delivery for joined sessions.
-            // Avoid probing here: on some backends keyframe requests are
-            // controller-gated and create noisy permission errors for observers.
-            requestAnimationFrame(() => fit());
+            this.role = role;
+            this.term.options.disableStdin = role !== 'controller';
+            this.onChange();
+            requestAnimationFrame(() => this.fitSafe());
             break;
           }
           case 'output':
-            clearFirstFrameTimer();
-            gotFrameRef.current = true; retryRef.current = 0; // first frame → readiness reached
-            if (m.seq) lastSeq.current = Math.max(lastSeq.current, m.seq);
-            write(b64ToBytes(m.payload?.data ?? ''));
+            this.clearFrameTimers();
+            this.gotFrame = true; this.retries = 0;
+            if (m.seq) this.lastSeq = Math.max(this.lastSeq, m.seq);
+            this.write(b64ToBytes(m.payload?.data ?? ''));
             break;
           case 'keyframe':
-            clearFirstFrameTimer();
-            gotFrameRef.current = true; retryRef.current = 0;
-            for (const f of m.payload?.frames ?? []) { if (f.seq) lastSeq.current = Math.max(lastSeq.current, f.seq); write(b64ToBytes(f.payload.data)); }
+            this.clearFrameTimers();
+            this.gotFrame = true; this.retries = 0;
+            for (const f of m.payload?.frames ?? []) { if (f.seq) this.lastSeq = Math.max(this.lastSeq, f.seq); this.write(b64ToBytes(f.payload.data)); }
             break;
           case 'error':
-            write(textEnc.encode(`\r\n[${m.payload?.code ?? 'error'}]\r\n`));
+            this.write(textEnc.encode(`\r\n[${m.payload?.code ?? 'error'}]\r\n`));
             break;
         }
       });
     };
-    connect();
+    open();
+  }
+
+  requestKeyframe() { this.send('pty.request_keyframe'); }
+
+  sendInput(text: string): boolean {
+    if (!this.ws || this.role !== 'controller' || !text) return false;
+    if (this.isActive()) this.onPrompt(null);
+    this.send('pty.session_input', { data: toB64(text + '\r\n') });
+    return true;
+  }
+
+  // Detach the live socket but keep the terminal buffer (used when the whole session ends).
+  close() {
+    this.closedByUser = true;
+    this.connId += 1;
+    this.role = null;
+    this.attached = false;
+    this.term.options.disableStdin = true;
+    this.clearTimers();
+    this.ws?.close();
+    this.ws = null;
+    this.onChange();
+  }
+
+  dispose() {
+    this.disposed = true;
+    this.close();
+    try { this.ro?.disconnect(); } catch { /* */ }
+    try { this.term.dispose(); } catch { /* */ }
+    try { this.wrapper.remove(); } catch { /* */ }
+  }
+
+  observe(container: HTMLElement) {
+    if (this.ro || typeof ResizeObserver === 'undefined') return;
+    this.ro = new ResizeObserver(() => this.onContainerResize());
+    this.ro.observe(container);
+  }
+}
+
+export function useSession() {
+  const connsRef = useRef<Map<string, PtyConnection>>(new Map());
+  const activeKeyRef = useRef<string>('');
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [state, setState] = useState<SessionState>({ attached: false, role: null, url: null, target: null });
+  const [responseNeeded, setResponseNeeded] = useState<ResponseNeededState>({ needed: false, prompt: '', since: null, source: 'pty' });
+
+  const active = () => connsRef.current.get(activeKeyRef.current) ?? null;
+
+  const syncState = useCallback(() => {
+    const c = connsRef.current.get(activeKeyRef.current);
+    if (!c) { setState({ attached: false, role: null, url: null, target: null }); return; }
+    setState({ attached: c.attached, role: c.role, url: c.url, target: c.target });
   }, []);
 
-  const detach = useCallback(() => {
-    closedByUserRef.current = true;
-    connectionIdRef.current += 1;
-    roleRef.current = null;
-    targetRef.current = null;
-    if (termRef.current) termRef.current.options.disableStdin = true; // detached → read-only
-    if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
-    clearFirstFrameTimer();
-    wsRef.current?.close();
-    wsRef.current = null;
+  const setPrompt = useCallback((r: ResponseNeededState | null) => {
+    setResponseNeeded(r ?? { needed: false, prompt: '', since: null, source: 'pty' });
   }, []);
-  const replay = useCallback((url: string, requestedRole?: Exclude<Role, null>, target?: SessionTarget | null) => {
-    const role = requestedRole ?? roleRef.current ?? 'observer';
-    attach(url, true, role, target);
-  }, [attach]);
-  const requestKeyframe = useCallback(() => sendOp('pty.request_keyframe'), []);
-  // Composer line-input (the input row + Actions inject). Raw keystrokes go via term.onData.
-  const sendInput = useCallback((text: string, target?: SessionTarget | null): boolean => {
-    if (!wsRef.current || roleRef.current !== 'controller' || !text) return false;
-    if (target) {
-      const active = targetRef.current;
-      if (!active || active.instanceId !== target.instanceId || active.sessionId !== target.sessionId) {
-        try { termRef.current?.write(textEnc.encode(`\r\n[inject refused: target ${target.instanceId}:${target.sessionId} does not match attached session ${active ? `${active.instanceId}:${active.sessionId}` : 'none'}]\r\n`)); } catch { /* term not open */ }
-        return false;
+
+  const showOnly = useCallback((key: string) => {
+    activeKeyRef.current = key;
+    for (const [k, c] of connsRef.current) c.setVisible(k === key);
+    setPrompt(null);
+    syncState();
+  }, [setPrompt, syncState]);
+
+  const attach = useCallback((url: string, replay = false, requestedRole: Exclude<Role, null> = 'observer', target?: SessionTarget | null) => {
+    const tgt = target ?? sessionTargetFromAttachUrl(url);
+    const key = targetKey(tgt, url);
+    let conn = connsRef.current.get(key);
+    if (!conn) {
+      conn = new PtyConnection(url, tgt, syncState, setPrompt, () => activeKeyRef.current === key);
+      connsRef.current.set(key, conn);
+      if (containerRef.current) {
+        containerRef.current.appendChild(conn.wrapper);
+        conn.observe(containerRef.current);
+      }
+      conn.connect(requestedRole, replay);
+    } else {
+      // Existing session: keep it alive. Re-join only when this is an explicit
+      // replay (repaint) or a role upgrade — otherwise just re-show it, preserving
+      // its scrollback and live stream.
+      conn.url = url;
+      if (replay || (requestedRole === 'controller' && conn.role !== 'controller')) {
+        conn.connect(requestedRole, replay);
       }
     }
-    clearResponseNeeded();
-    sendOp('pty.session_input', { data: toB64(text + '\r\n') });
-    return true;
+    showOnly(key);
+  }, [showOnly, setPrompt, syncState]);
+
+  const detach = useCallback(() => {
+    const c = active();
+    if (!c) return;
+    const key = activeKeyRef.current;
+    c.dispose();
+    connsRef.current.delete(key);
+    // Fall back to any other live session, else nothing.
+    const next = connsRef.current.keys().next();
+    if (!next.done) showOnly(next.value);
+    else { activeKeyRef.current = ''; setPrompt(null); syncState(); }
+  }, [showOnly, setPrompt, syncState]);
+
+  const replay = useCallback((url: string, requestedRole?: Exclude<Role, null>, target?: SessionTarget | null) => {
+    const tgt = target ?? sessionTargetFromAttachUrl(url);
+    const existing = connsRef.current.get(targetKey(tgt, url));
+    const role = requestedRole ?? existing?.role ?? 'observer';
+    attach(url, true, role, tgt);
+  }, [attach]);
+
+  const requestKeyframe = useCallback(() => { active()?.requestKeyframe(); }, []);
+
+  const sendInput = useCallback((text: string, target?: SessionTarget | null): boolean => {
+    const c = active();
+    if (!c) return false;
+    if (target && (!c.target || c.target.instanceId !== target.instanceId || c.target.sessionId !== target.sessionId)) {
+      try { c.term.write(textEnc.encode(`\r\n[inject refused: target ${target.instanceId}:${target.sessionId} does not match attached session ${c.target ? `${c.target.instanceId}:${c.target.sessionId}` : 'none'}]\r\n`)); } catch { /* */ }
+      return false;
+    }
+    return c.sendInput(text);
   }, []);
+
+  // Container ref from the Sessions tab. Per-session terminals are appended here; only the
+  // active one is shown. Reparents any connections created before the container mounted.
+  const openTerminal = useCallback((el: HTMLDivElement | null) => {
+    if (!el) { containerRef.current = null; return; }
+    containerRef.current = el;
+    for (const [k, c] of connsRef.current) {
+      if (c.wrapper.parentElement !== el) el.appendChild(c.wrapper);
+      c.observe(el);
+      c.setVisible(k === activeKeyRef.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onResize = () => { for (const c of connsRef.current.values()) c.onContainerResize(); };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const conns = connsRef.current;
+  useEffect(() => () => {
+    for (const c of conns.values()) c.dispose();
+    conns.clear();
+  }, [conns]);
 
   return { state, responseNeeded, attach, detach, replay, requestKeyframe, sendInput, openTerminal, isController: state.role === 'controller' };
 }
