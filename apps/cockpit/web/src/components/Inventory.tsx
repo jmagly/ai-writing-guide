@@ -5,7 +5,7 @@ import type { Instance } from '../types';
 
 interface Inv { count: number; fetched_at: string; instances: Instance[] }
 
-export function Inventory({ onStartSession, onLaunchInstance }: { onStartSession?: (instanceId?: string) => void; onLaunchInstance?: () => void }) {
+export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, refreshMs = 5_000 }: { onStartSession?: (instanceId?: string) => void; onLaunchInstance?: () => void; refreshTick?: number; refreshMs?: number }) {
   const [data, setData] = useState<Inv | null>(null);
   const [err, setErr] = useState('');
   const [actionErr, setActionErr] = useState('');
@@ -14,7 +14,13 @@ export function Inventory({ onStartSession, onLaunchInstance }: { onStartSession
   const load = useCallback(() => {
     api<Inv>('/api/inventory').then((d) => { setData(d); setErr(''); }).catch((e) => setErr((e as Error).message));
   }, []);
-  useEffect(() => { load(); }, [load]);
+  // Poll (and react to the app-wide refreshTick) so instances launched after this
+  // tab first mounted appear without a manual reload — matches the other data tabs.
+  useEffect(() => {
+    load();
+    const timer = window.setInterval(load, refreshMs);
+    return () => window.clearInterval(timer);
+  }, [load, refreshMs, refreshTick]);
 
   const control = (path: string, method: string) =>
     api<{ already_gone?: boolean; message?: string }>(path, { method })

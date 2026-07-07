@@ -173,7 +173,7 @@ export function App() {
       </div>
       <main>
         <Panel id="welcome" tab={tab}><Welcome onStartSession={() => requestStart()} onLaunchInstance={() => setLaunchOpen(true)} goTo={(t) => setTab(t as TabId)} /></Panel>
-        <Panel id="inventory" tab={tab}><Inventory onStartSession={requestStart} onLaunchInstance={() => setLaunchOpen(true)} /></Panel>
+        <Panel id="inventory" tab={tab}><Inventory onStartSession={requestStart} onLaunchInstance={() => setLaunchOpen(true)} refreshTick={refreshTick} /></Panel>
         <Panel id="running" tab={tab}><Running refreshTick={refreshTick} /></Panel>
         <Panel id="missions" tab={tab}><Missions refreshTick={refreshTick} /></Panel>
         {/* Sessions stays mounted so the WebSocket survives tab switches */}
@@ -242,6 +242,20 @@ export async function waitForSessionReady(instanceId?: string, operationId?: str
       }
     }
     const inv = await api<{ instances: Instance[] }>('/api/inventory');
+    // Fast-fail: if the instance is visible but has settled into a terminal,
+    // non-running state (e.g. a container whose agent never enrolled → 'stopped'),
+    // its session will never come up. Abort instead of blocking the launch modal
+    // for the full readiness window. A short grace (>3s) avoids tripping on the
+    // transient 'provisioning'/'created' states a healthy instance passes through.
+    const TERMINAL = new Set(['stopped', 'failed', 'error', 'terminated', 'destroyed', 'exited', 'dead']);
+    const present = instanceId ? inv.instances.find((inst) => inst.id === instanceId) : null;
+    if (present && i > 3 && TERMINAL.has(String(present.state).toLowerCase())) {
+      throw new Error(
+        `Instance ${present.id} did not come online — it settled to '${present.state}' instead of running`
+        + (operationDetail ? ` (${operationDetail})` : '')
+        + '. Its agent likely failed to register; check the runtime and try again.',
+      );
+    }
     const candidates = inv.instances.filter((inst) => String(inst.state).toLowerCase() === 'running');
     const selected = instanceId ? candidates.find((inst) => inst.id === instanceId) : null;
     if (selected) {
