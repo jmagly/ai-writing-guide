@@ -304,10 +304,9 @@ describe('OpenHuman native harness stubs (#1559)', () => {
     ]);
   });
 
-  it('resolves curated OpenHuman harness defaults unless disabled or explicitly selected', () => {
+  it('keeps native harness emission opt-in unless explicitly selected', () => {
     const defaults = resolveOpenHumanHarnessAgentSelectors(['--provider', 'openhuman']);
-    expect(defaults).toContain('software-implementer');
-    expect(defaults).toContain('test-engineer');
+    expect(defaults).toEqual([]);
     expect(resolveOpenHumanHarnessAgentSelectors(['--provider', 'openhuman', '--no-harness-agents'])).toEqual([]);
     expect(resolveOpenHumanHarnessAgentSelectors(['--harness-agents=security-auditor'])).toEqual(['security-auditor']);
   });

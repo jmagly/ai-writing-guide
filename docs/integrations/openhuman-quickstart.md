@@ -22,15 +22,15 @@ kernel skills to `~/.openhuman/skills/`. Standard skills stay in AIWG's
 index/discovery system and are reached through `aiwg discover` / `aiwg show`;
 they are not copied into the OpenHuman UI scan root.
 
-**Tier 2 — native harness agents (default curated set).** OpenHuman's own agent harness
+**Tier 2 — native harness agents (opt-in curated set).** OpenHuman's own agent harness
 (`spawn_subagent`) loads TOML specialists from `~/.openhuman/agents/*.toml`.
-AIWG registers a curated set of rich native TOML worker agents there by default.
-Use `--harness-agents=...` to replace the default set, or
-`--no-harness-agents` for a kernel-skills-only deploy.
+AIWG can register a curated set of rich native TOML worker agents there when
+you pass `--harness-agents=...`. The default deploy emits no native harness
+stubs.
 
 | Artifact | Where it lands | Notes |
 |----------|----------------|-------|
-| Agents | `~/.openhuman/agents/aiwg_*.toml` | Curated native TOML worker agents; rich definitions rendered from AIWG markdown and the OpenHuman TOML template |
+| Agents | `~/.openhuman/agents/aiwg_*.toml` | Optional curated native TOML worker agents; rich definitions rendered from AIWG markdown and the OpenHuman TOML template |
 | Skills (kernel) | `~/.openhuman/skills/` | **Global/home-dir like OpenClaw** — ungated user-scope native scan root (`ops_discover.rs`, one-level); exactly what the app's Skills library surfaces |
 | Skills (standard) | AIWG index/discovery | Not copied into OpenHuman scan roots |
 | Commands | skills/index only | OpenHuman has no native command directory |
@@ -52,7 +52,7 @@ aiwg use sdlc --provider openhuman
 This deploys:
 
 - Kernel skills to `~/.openhuman/skills/` so they appear in OpenHuman's Skills UI
-- Curated native harness TOMLs to `~/.openhuman/agents/` for OpenHuman `spawn_subagent`
+- No native harness TOMLs unless `--harness-agents` is provided
 - Standard skills remain available through AIWG index/discovery; they are not copied into OpenHuman scan roots
 - Rules to `~/.openhuman/.aiwg/rules/`
 
@@ -60,15 +60,15 @@ Verify:
 
 ```bash
 ls ~/.openhuman/skills/        # kernel skills visible to OpenHuman
-ls ~/.openhuman/agents/        # AIWG native harness TOMLs
+ls ~/.openhuman/agents/        # AIWG native harness TOMLs only after --harness-agents
 ```
 
 Nothing is written to project-level OpenHuman directories.
 
 ## Native Harness Agent Selection
 
-The default deploy writes a curated set of AIWG specialists through OpenHuman's
-`spawn_subagent` registry. Override the set with `--harness-agents`:
+Native harness agents are opt-in. Select the curated specialists that should be
+visible through OpenHuman's `spawn_subagent` registry with `--harness-agents`:
 
 ```bash
 aiwg use sdlc --provider openhuman --harness-agents=test-engineer,security-auditor
@@ -81,7 +81,7 @@ and includes OpenHuman-native model hints, worker tier, runtime caps, sandbox
 mode, TokenJuice profile, and context omission settings.
 
 Re-run `aiwg doctor --provider openhuman` to validate the optional Tier-2
-definitions. Use `--no-harness-agents` when you want only kernel skills and
+definitions. Omit `--harness-agents` when you want only kernel skills and
 rules.
 
 ## Why skills install globally (no trust marker needed)

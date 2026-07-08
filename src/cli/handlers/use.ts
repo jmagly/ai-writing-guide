@@ -1164,7 +1164,7 @@ function hasFlag(args: string[], name: string): boolean {
 export function resolveOpenHumanHarnessAgentSelectors(args: string[]): string[] {
   if (args.includes('--no-harness-agents')) return [];
   if (hasFlag(args, '--harness-agents')) return parseOpenHumanHarnessAgentSelector(args);
-  return [...OPENHUMAN_DEFAULT_HARNESS_AGENTS];
+  return [];
 }
 
 function slugifyAgentName(value: string): string {
