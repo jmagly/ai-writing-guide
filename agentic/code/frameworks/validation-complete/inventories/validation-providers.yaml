@@ -1,0 +1,57 @@
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowInventory
+metadata:
+  name: validation-providers
+spec:
+  groups:
+    all-providers:
+      members: [claude-code, codex, copilot, cursor, warp, factory, opencode, windsurf, openclaw, hermes, omnius]
+    programmatic:
+      members: [claude-code, codex, opencode, hermes, omnius]
+    gated:
+      members: [copilot, cursor, warp, factory, windsurf, openclaw]
+  hosts:
+    claude-code:
+      address: local-session
+      groups: [all-providers, programmatic]
+      vars: { provider: claude-code, access_mode: programmatic }
+    codex:
+      address: local-session
+      groups: [all-providers, programmatic]
+      vars: { provider: codex, access_mode: programmatic }
+    copilot:
+      address: paid-tier-session
+      groups: [all-providers, gated]
+      vars: { provider: copilot, access_mode: gated }
+    cursor:
+      address: paid-tier-session
+      groups: [all-providers, gated]
+      vars: { provider: cursor, access_mode: gated }
+    warp:
+      address: paid-tier-session
+      groups: [all-providers, gated]
+      vars: { provider: warp, access_mode: gated }
+    factory:
+      address: paid-tier-session
+      groups: [all-providers, gated]
+      vars: { provider: factory, access_mode: gated }
+    opencode:
+      address: local-session
+      groups: [all-providers, programmatic]
+      vars: { provider: opencode, access_mode: programmatic }
+    windsurf:
+      address: paid-tier-session
+      groups: [all-providers, gated]
+      vars: { provider: windsurf, access_mode: gated }
+    openclaw:
+      address: paid-tier-session
+      groups: [all-providers, gated]
+      vars: { provider: openclaw, access_mode: gated }
+    hermes:
+      address: local-session
+      groups: [all-providers, programmatic]
+      vars: { provider: hermes, access_mode: programmatic }
+    omnius:
+      address: local-session
+      groups: [all-providers, programmatic]
+      vars: { provider: omnius, access_mode: programmatic }

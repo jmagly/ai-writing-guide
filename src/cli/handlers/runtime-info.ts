@@ -13,6 +13,10 @@ import path from 'path';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { AiwgError, EXIT_CODES, handlerResultFromError } from '../errors.js';
 
+function isMissingRuntimeCatalogError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes('No catalog found');
+}
+
 /**
  * Runtime info command handler
  */
@@ -30,7 +34,7 @@ export const runtimeInfoHandler: CommandHandler = {
     } catch (error) {
       const err = error as Error;
 
-      if (err.message.includes('No catalog found')) {
+      if (isMissingRuntimeCatalogError(err)) {
         console.log(`\nNo runtime catalog found.`);
         console.log(`Run 'aiwg runtime-info --discover' to create one.`);
         return { exitCode: 0 };
@@ -207,7 +211,17 @@ async function handleRuntimeInfo(args: string[]): Promise<void> {
     }
   } else {
     // Show summary (default)
-    const summary = await discovery.getSummary();
+    let summary;
+    try {
+      summary = await discovery.getSummary();
+    } catch (error) {
+      if (!isMissingRuntimeCatalogError(error)) throw error;
+      if (!hasJson) {
+        console.log(`\nNo runtime catalog found; bootstrapping catalog...`);
+      }
+      await discovery.discover();
+      summary = await discovery.getSummary();
+    }
 
     if (hasJson) {
       console.log(JSON.stringify(summary, null, 2));

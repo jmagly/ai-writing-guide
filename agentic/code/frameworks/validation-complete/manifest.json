@@ -1,0 +1,20 @@
+{
+  "name": "Validation Complete",
+  "id": "validation-complete",
+  "modeAliases": ["validation"],
+  "path": "agentic/code/frameworks/validation-complete",
+  "files": [
+    "README.md"
+  ],
+  "ignore": [
+    "manifest.json"
+  ],
+  "contextContributions": {
+    "priority": 25,
+    "description": "Live release-validation flows for provider normalization checks"
+  },
+  "consolidation": {
+    "strategy": "index-with-links",
+    "deployIndexOnly": true
+  }
+}

@@ -322,18 +322,64 @@ describe('Runtime Info Command Handler', () => {
 
       consoleSpy.mockRestore();
     });
-  });
 
-  describe('error handling', () => {
-    it('should handle "No catalog found" error gracefully', async () => {
+    it('should bootstrap a missing runtime catalog before displaying summary', async () => {
       const { runtimeInfoHandler } = await import('../../../../src/cli/handlers/runtime-info.js');
 
-      mockDiscovery.getSummary.mockRejectedValue(new Error('No catalog found'));
+      mockDiscovery.getSummary
+        .mockRejectedValueOnce(new Error('No catalog found. Run discovery first.'))
+        .mockResolvedValueOnce({
+          environment: {
+            os: 'Linux',
+            osVersion: '6.14.0-37-generic',
+            arch: 'x64',
+            shell: '/bin/bash',
+          },
+          resources: {
+            memoryAvailableGb: 16.5,
+            memoryTotalGb: 32.0,
+            diskFreeGb: 250.5,
+            cpuCores: 8,
+          },
+          toolCounts: {
+            core: 5,
+            languages: 3,
+            utilities: 7,
+            custom: 2,
+          },
+          totalTools: 17,
+          lastDiscovery: '2026-01-22T09:00:00Z',
+          catalogPath: '/mock/.aiwg/smiths/toolsmith/runtime.json',
+        });
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       const result = await runtimeInfoHandler.execute(mockContext);
 
+      expect(mockDiscovery.getSummary).toHaveBeenCalledTimes(2);
+      expect(mockDiscovery.discover).toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '\nNo runtime catalog found; bootstrapping catalog...'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith('\nRuntime Environment Summary');
+      expect(result.exitCode).toBe(0);
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('error handling', () => {
+    it('should handle "No catalog found" errors outside the default summary gracefully', async () => {
+      const { runtimeInfoHandler } = await import('../../../../src/cli/handlers/runtime-info.js');
+
+      mockContext.args = ['--verify'];
+      mockDiscovery.verify.mockRejectedValue(new Error('No catalog found'));
+
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const result = await runtimeInfoHandler.execute(mockContext);
+
+      expect(mockDiscovery.discover).not.toHaveBeenCalled();
       expect(consoleSpy).toHaveBeenCalledWith('\nNo runtime catalog found.');
       expect(consoleSpy).toHaveBeenCalledWith(
         "Run 'aiwg runtime-info --discover' to create one."
