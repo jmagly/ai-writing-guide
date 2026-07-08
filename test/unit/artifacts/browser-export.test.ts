@@ -158,8 +158,12 @@ describe("AIWG Fortemi browser index export", () => {
       privacy: "sanitized",
       generatedAt: "2026-01-05T00:00:00.000Z",
     });
+    const validate = loadFortemiExportSchemaValidator();
 
     expect(exported.schema_version).toBe("aiwg.fortemi.index.export.v1");
+    expect(validate(exported), JSON.stringify(validate.errors, null, 2)).toBe(
+      true,
+    );
     expect(exported.source).toEqual({
       repo: "roctinam/crm",
       privacy: "sanitized",
@@ -189,6 +193,9 @@ describe("AIWG Fortemi browser index export", () => {
       type: "depends-on",
       source_path: ".aiwg/design/ADR-001.md",
     });
+    expect(requirement?.relationships[0]).not.toHaveProperty("target_path");
+    expect(requirement?.relationships[0]).not.toHaveProperty("direction");
+    expect(requirement?.relationships[0]).not.toHaveProperty("metadata");
     expect(requirement?.provenance[0]).toMatchObject({
       source: "aiwg-index",
       confidence: "source",

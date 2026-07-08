@@ -516,24 +516,30 @@ function relationshipsForEntry(
   entry: MetadataEntry,
   graph: DependencyGraph | null,
   recordTypesByPath: Map<string, AiwgFortemiRecordType>,
+  schemaVersion: AiwgFortemiExportSchemaVersion,
 ): AiwgFortemiRelationship[] {
   const edges = graph?.[entry.path];
   if (!edges) return [];
 
   const relationships: AiwgFortemiRelationship[] = [];
   const append = (prefix: "upstream" | "downstream", edge: TypedEdge) => {
+    if (schemaVersion === "v1" && prefix === "downstream") return;
+
     const targetRecordType =
       recordTypesByPath.get(edge.path) ?? "aiwg.artifact";
-    relationships.push({
+    const relationship: AiwgFortemiRelationship = {
       type: edge.type,
       target_id: stableRecordId(targetRecordType, edge.path),
       source_path: edge.path,
-      target_path: edge.path,
-      direction: prefix,
-      metadata: Object.fromEntries(
+    };
+    if (schemaVersion === "v2") {
+      relationship.target_path = edge.path;
+      relationship.direction = prefix;
+      relationship.metadata = Object.fromEntries(
         Object.entries(edge).filter(([key]) => key !== "path" && key !== "type"),
-      ),
-    });
+      );
+    }
+    relationships.push(relationship);
   };
 
   for (const edge of edges.upstream) append("upstream", edge);
@@ -727,6 +733,7 @@ function recordForEntry(
       entry,
       dependencyGraph,
       recordTypesByPath,
+      schemaVersion,
     ),
     provenance: [
       {
