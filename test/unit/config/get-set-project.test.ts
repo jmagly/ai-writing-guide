@@ -134,6 +134,22 @@ describe('aiwg config get|set --project (#1006)', () => {
         message: expect.stringContaining('remotes.tracker_actor.via'),
       });
     });
+
+    it('round-trips repo-maintainer local tier override and validates known tier values', async () => {
+      await main(['set', '--project', 'repo_maintainer.tiers.local', 'maintainer', '--target', tmp]);
+
+      const cfg = readConfig(tmp) as {
+        repo_maintainer?: { tiers?: Record<string, string> };
+      };
+      expect(cfg.repo_maintainer?.tiers?.local).toBe('maintainer');
+
+      await expect(
+        main(['set', '--project', 'repo_maintainer.tiers.local', 'owner', '--target', tmp]),
+      ).rejects.toMatchObject({
+        code: 'ERR_INVALID_VALUE',
+        message: expect.stringContaining('repo_maintainer.tiers.local'),
+      });
+    });
   });
 
   describe('get --project', () => {

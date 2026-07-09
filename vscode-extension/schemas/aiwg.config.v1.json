@@ -87,6 +87,28 @@
         }
       }
     },
+    "repo_maintainer": {
+      "type": "object",
+      "description": "Role-aware repository maintenance overrides. Forge permission detection is attempted first; these tiers pin or narrow behavior when detection is denied or policy requires a fixed posture (#1755).",
+      "additionalProperties": false,
+      "properties": {
+        "tiers": {
+          "type": "object",
+          "description": "Map remote URLs, owner/repo slugs, remote names, or 'local' to collaborator, maintainer, or admin.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["collaborator", "maintainer", "admin"]
+          },
+          "examples": [
+            {
+              "git@git.integrolabs.net:roctinam/aiwg.git": "maintainer",
+              "elder-plinius/T3MP3ST": "collaborator",
+              "local": "maintainer"
+            }
+          ]
+        }
+      }
+    },
     "delivery": {
       "type": "object",
       "description": "Repo control / delivery policy — how AIWG agents are expected to ship code (#995)",

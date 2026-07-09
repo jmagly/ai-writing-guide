@@ -1,6 +1,6 @@
 # ops-complete Overview
 
-ops-complete is the operational infrastructure layer for AIWG — a framework for AI agents working inside ops repositories (sysops, itops, devops, streamops). It formalizes patterns for executable runbooks, fleet inventory, and structured operational workflows, then extends them through four domain-specific extensions.
+ops-complete is the operational infrastructure layer for AIWG — a framework for AI agents working inside ops repositories (sysops, itops, devops, streamops, and repository maintenance). It formalizes patterns for executable runbooks, fleet inventory, and structured operational workflows, then extends them through domain-specific extensions.
 
 ## What It Is
 

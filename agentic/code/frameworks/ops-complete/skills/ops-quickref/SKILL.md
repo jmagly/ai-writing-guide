@@ -47,6 +47,7 @@ Operational infrastructure scaffolding. Provides shared agents, schemas, templat
 | **IT / CMDB** | Asset management, service deployments, DR runbooks | `it` extension |
 | **CI/CD** | Pipelines, build automation, fleet-wide tooling | `dev` extension |
 | **Streaming infra** | Transcoders, platform integrations, key safety | `stream` extension |
+| **Repository maintenance** | Role-aware issue triage, labels, closures, merges, releases, governance handoff | `repo-maintainer` extension |
 
 ## Curated discovery phrases
 
@@ -82,6 +83,10 @@ aiwg discover "pipeline safety"                # → dev extension skills
 # After --ext stream
 aiwg discover "stream service deployment"      # → stream extension skills
 aiwg discover "transcoder health"              # → stream extension skills
+
+# After --ext repo-maintainer
+aiwg discover "repo maintainer role-aware"      # → repo-maintainer
+aiwg discover "triage issues with collaborator handoff"
 ```
 
 ## Schemas

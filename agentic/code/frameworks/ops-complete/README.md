@@ -28,6 +28,7 @@ Extensions require ops-complete and cannot run standalone:
 | `it` | Asset management, CMDB, service deployments, DR | DR runbooks, provisioning, network state management |
 | `dev` | CI/CD pipelines, build automation, fleet-wide tooling | CI builder patterns, pipeline safety, workflow templates |
 | `stream` | Streaming infrastructure, transcoders, platform integrations | Stream service deployment, key safety, pipeline health |
+| `repo-maintainer` | Role-aware repository maintenance | Permission-aware triage, PR review, labels, closures, merges, releases, threat-assessed handoff |
 
 ## Installation
 
@@ -39,6 +40,7 @@ aiwg use ops
 aiwg use ops --ext sys          # + SysOps
 aiwg use ops --ext sys,it,dev   # Classic trio
 aiwg use ops --ext sys,it,dev,stream  # Full stack
+aiwg use ops --ext repo-maintainer    # Role-aware repo maintenance
 ```
 
 ## YAML Metalanguage Design
