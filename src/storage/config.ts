@@ -293,6 +293,26 @@ export function resolveSubsystemRoot(
   return resolve(projectRoot, DEFAULT_AIWG_DIR, DEFAULT_SUBSYSTEM_ROOTS[subsystem]);
 }
 
+/**
+ * Async variant used by runtime adapter creation. For memory only, it can
+ * resolve a user-level private project memory root from ~/.aiwg/projects when
+ * no project-local `.aiwg` exists. Explicit storage.config roots still win.
+ */
+export async function resolveSubsystemRootRuntime(
+  subsystem: SubsystemKey,
+  projectRoot: string,
+  config: StorageConfig | null
+): Promise<string> {
+  const override = config?.roots?.[subsystem];
+  if (override) return expandPath(override, projectRoot);
+  if (subsystem === 'memory') {
+    const { resolveProjectMemoryRoot } = await import('../memory/project-registry.js');
+    const resolved = await resolveProjectMemoryRoot(projectRoot);
+    return resolved.root;
+  }
+  return resolve(projectRoot, DEFAULT_AIWG_DIR, DEFAULT_SUBSYSTEM_ROOTS[subsystem]);
+}
+
 function expandPath(p: string, projectRoot: string): string {
   if (p.startsWith('~/')) return resolve(homedir(), p.slice(2));
   if (p === '~') return homedir();

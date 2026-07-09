@@ -11,7 +11,7 @@
  * @issue #953
  */
 
-import { loadStorageConfig, resolveSubsystemRoot } from './config.js';
+import { loadStorageConfig, resolveSubsystemRootRuntime } from './config.js';
 import { FilesystemAdapter } from './backends/fs.js';
 import { ObsidianAdapter } from './backends/obsidian.js';
 import { LogseqAdapter } from './backends/logseq.js';
@@ -39,6 +39,7 @@ export {
   storageConfigPath,
   validateStorageConfig,
   resolveSubsystemRoot,
+  resolveSubsystemRootRuntime,
   walkRejectingCredentials,
   FORBIDDEN_CREDENTIAL_KEYS,
   DEFAULT_SUBSYSTEM_ROOTS,
@@ -91,7 +92,7 @@ export async function resolveStorage(subsystem: SubsystemKey): Promise<StorageAd
   const cached = s.adapters.get(subsystem);
   if (cached) return cached;
 
-  const adapter = createAdapter(subsystem, s);
+  const adapter = await createAdapter(subsystem, s);
   s.adapters.set(subsystem, adapter);
   return adapter;
 }
@@ -114,13 +115,13 @@ export async function getLoadedConfig(
  * Pure factory — no I/O beyond the path resolution the backend itself
  * performs in its constructor.
  */
-function createAdapter(subsystem: SubsystemKey, s: RegistryState): StorageAdapter {
+async function createAdapter(subsystem: SubsystemKey, s: RegistryState): Promise<StorageAdapter> {
   const backend: BackendConfig =
     s.config?.backends?.[subsystem] ?? { type: 'fs' };
 
   switch (backend.type) {
     case 'fs': {
-      const root = resolveSubsystemRoot(subsystem, s.projectRoot, s.config);
+      const root = await resolveSubsystemRootRuntime(subsystem, s.projectRoot, s.config);
       return new FilesystemAdapter(root);
     }
     case 'obsidian':
