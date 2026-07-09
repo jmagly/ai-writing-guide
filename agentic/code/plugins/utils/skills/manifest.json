@@ -79,6 +79,16 @@
       "triggers": ["what's new", "what changed", "how do I", "help with aiwg", "explain feature", "what is", "aiwg guide"]
     },
     {
+      "name": "aiwg-steward-routing-reference",
+      "description": "Tier-3 steward routing reference lookup for CLI tables, deploy paths, issue/project-local routing, orchestration routes, diagnostics, and provider capability examples",
+      "triggers": ["aiwg-steward routing reference", "steward routing reference", "steward tier 3 routing", "steward full routing tables"]
+    },
+    {
+      "name": "aiwg-steward-worked-examples",
+      "description": "Tier-3 steward worked examples, report scaffolds, session reload guidance, deploy errata, Hermes composition notes, and AIWG badge helper reference",
+      "triggers": ["aiwg-steward worked examples", "steward worked examples", "steward report scaffold", "steward badge helper", "built with aiwg badge"]
+    },
+    {
       "name": "new-project",
       "description": "Scaffold a new AIWG-managed project with .aiwg/ directory structure, starter CLAUDE.md, and framework registry",
       "triggers": ["new project", "create project", "start a new project", "set up aiwg for my project", "bootstrap project", "create aiwg project", "scaffold project"]

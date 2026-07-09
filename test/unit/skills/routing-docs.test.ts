@@ -52,11 +52,17 @@ describe('routing documentation regressions', () => {
     expect(existsSync(resolve(repo, '.aiwg/research/provider-workflow-integration.md'))).toBe(true);
   });
 
-  it('steward persona surfaces orchestration/loop routing incl. cross-stack Missions (#1538/#1546)', () => {
+  it('steward Tier-3 reference surfaces orchestration/loop routing incl. cross-stack Missions (#1538/#1546)', () => {
     const addon = read('agentic/code/addons/aiwg-utils/agents/aiwg-steward.md');
     const persona = read('agentic/code/agents/personas/aiwg-steward.md');
+    const reference = read('agentic/code/addons/aiwg-utils/docs/agent-examples/aiwg-steward-routing-reference.md');
     for (const doc of [addon, persona]) {
-      expect(doc).toContain('Orchestration & loop routing');
+      expect(doc).toContain('Tier Loading Contract');
+      expect(doc).toContain('aiwg discover "agent-loop"');
+      expect(doc).toContain('[[aiwg-steward routing reference]]');
+    }
+    for (const doc of [reference]) {
+      expect(doc).toContain('Orchestration & Loop Routing');
       // External/background stays AIWG-native (native primitives are session-scoped)
       expect(doc).toContain('AIWG-native external route');
       // AIWG-owned Codex Mission entry, not the plugin /workflow
@@ -71,10 +77,11 @@ describe('routing documentation regressions', () => {
     }
   });
 
-  it('steward routes project-local authoring through AIWG creation commands and docs', () => {
+  it('steward routes project-local authoring through Tier-1 pointers and Tier-3 details', () => {
     const steward = read('agentic/code/addons/aiwg-utils/skills/steward/SKILL.md');
     const persona = read('agentic/code/agents/personas/aiwg-steward.md');
-    for (const doc of [steward, persona]) {
+    const reference = read('agentic/code/addons/aiwg-utils/docs/agent-examples/aiwg-steward-routing-reference.md');
+    for (const doc of [steward, reference]) {
       expect(doc).toContain('Project-Local Authoring Routing');
       expect(doc).toContain('aiwg new-bundle <name> --starter skill');
       expect(doc).toContain('aiwg new-provider <name>');
@@ -83,8 +90,35 @@ describe('routing documentation regressions', () => {
       expect(doc).toContain('docs/customization/project-local-lifecycle.md');
       expect(doc).not.toContain('docs/project-local/overview.md');
     }
+    expect(persona).toContain('aiwg discover "project-local customization"');
+    expect(persona).toContain('[[steward-quickref]]');
+    expect(persona).toContain('[[aiwg-steward routing reference]]');
     const quickref = read('agentic/code/addons/aiwg-utils/skills/aiwg-utils-quickref/SKILL.md');
     expect(quickref).toContain('aiwg discover "project-local customization"');
+  });
+
+  it('steward Tier-1 definitions stay small and point at Tier-2/Tier-3 routes (#1661)', () => {
+    const docs = [
+      'agentic/code/addons/aiwg-utils/agents/aiwg-steward.md',
+      'agentic/code/plugins/utils/agents/aiwg-steward.md',
+      'agentic/code/agents/personas/aiwg-steward.md',
+    ];
+    for (const docPath of docs) {
+      const doc = read(docPath);
+      expect(Buffer.byteLength(doc, 'utf8')).toBeLessThanOrEqual(12 * 1024);
+      expect(doc).toContain('Tier Loading Contract');
+      expect(doc).toContain('[[steward-quickref]]');
+      expect(doc).toContain('[[aiwg-steward routing reference]]');
+      expect(doc).toContain('ask **one** clarifying question');
+      expect(doc).toContain('file a detailed AIWG correction issue');
+    }
+
+    const reference = read('agentic/code/addons/aiwg-utils/docs/agent-examples/aiwg-steward-routing-reference.md');
+    const examples = read('agentic/code/addons/aiwg-utils/docs/agent-examples/aiwg-steward-examples.md');
+    expect(reference).toContain('Issue Workflow Routing');
+    expect(reference).toContain('Project-Local Authoring Routing');
+    expect(examples).toContain('Badge Helper');
+    expect(reference).toContain('aiwg discover "aiwg-steward routing reference"');
   });
 
   it('Claude Code docs cover the managed 1M-context default and opt-in path', () => {
