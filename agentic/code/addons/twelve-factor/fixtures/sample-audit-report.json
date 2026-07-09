@@ -1,0 +1,107 @@
+{
+  "application": "checkout-api",
+  "scope": "Repository, deployment manifests, CI, API contract, and runbook evidence",
+  "overallStatus": "partial",
+  "auditedAt": "2026-07-09T00:00:00.000Z",
+  "evidenceSources": [
+    {
+      "type": "code",
+      "reference": "services/checkout",
+      "summary": "Application source tree"
+    },
+    {
+      "type": "contract",
+      "reference": "openapi/checkout.yaml",
+      "summary": "Versioned HTTP API contract"
+    },
+    {
+      "type": "deployment",
+      "reference": "deploy/checkout/deployment.yaml",
+      "summary": "Kubernetes deployment manifest"
+    }
+  ],
+  "factors": [
+    {
+      "id": "codebase",
+      "title": "Codebase",
+      "status": "pass",
+      "summary": "One service codebase maps to one deployable application.",
+      "evidence": [
+        {
+          "type": "code",
+          "reference": "services/checkout",
+          "summary": "Single application source root"
+        }
+      ],
+      "traceability": [
+        {
+          "type": "requirement",
+          "reference": "REQ-CHECKOUT-001",
+          "relationship": "implements"
+        }
+      ]
+    },
+    {
+      "id": "telemetry",
+      "title": "Telemetry",
+      "status": "partial",
+      "summary": "Structured logs are present, but trace and SLO evidence is missing.",
+      "evidence": [
+        {
+          "type": "runtime",
+          "reference": "dashboards/checkout-logs.json",
+          "summary": "Log dashboard exists"
+        },
+        {
+          "type": "missing",
+          "reference": "trace and SLO evidence",
+          "summary": "No trace dashboard or SLO definition found"
+        }
+      ],
+      "risks": [
+        {
+          "severity": "medium",
+          "description": "Incidents may lack enough trace context for dependency failures.",
+          "impact": "Longer mean time to diagnose checkout latency"
+        }
+      ],
+      "remediation": [
+        {
+          "priority": "P1",
+          "task": "Add OpenTelemetry trace propagation and define checkout latency SLO evidence.",
+          "owner": "platform",
+          "acceptanceEvidence": "Trace dashboard and SLO document linked from the service runbook"
+        }
+      ],
+      "traceability": [
+        {
+          "type": "runbook",
+          "reference": "docs/runbooks/checkout.md",
+          "relationship": "operates"
+        }
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "severity": "medium",
+      "description": "Trace and SLO evidence is incomplete.",
+      "impact": "Operational diagnostics are weaker during cross-service incidents"
+    }
+  ],
+  "remediation": [
+    {
+      "priority": "P1",
+      "task": "Add trace and SLO evidence to checkout service readiness artifacts.",
+      "owner": "platform",
+      "acceptanceEvidence": "Audit status for telemetry changes from partial to pass"
+    }
+  ],
+  "traceability": [
+    {
+      "type": "issue",
+      "reference": "checkout-platform#42",
+      "relationship": "tracks telemetry remediation"
+    }
+  ]
+}

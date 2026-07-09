@@ -145,6 +145,15 @@
       "expected_path": "agentic/code/addons/aiwg-utils/skills/steward-quickref/SKILL.md",
       "expected_type": "skill",
       "max_rank": 5
+    },
+    {
+      "id": "twelve-factor-audit",
+      "domain": "architecture",
+      "phrase": "twelve factor audit evidence",
+      "expected_path": "agentic/code/addons/twelve-factor/skills/twelve-factor-audit/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 5,
+      "expected_top_path": "agentic/code/addons/twelve-factor/skills/twelve-factor-audit/SKILL.md"
     }
   ]
 }

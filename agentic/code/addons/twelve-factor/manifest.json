@@ -1,0 +1,91 @@
+{
+  "id": "twelve-factor",
+  "type": "addon",
+  "name": "Twelve-Factor Application Design and Audit",
+  "version": "2026.7.0",
+  "description": "Design-time and audit-time workflows for Twelve-Factor and modern 12+ Factor cloud-native application practices.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "twelve-factor",
+    "12-factor",
+    "12+ factor",
+    "cloud-native",
+    "architecture",
+    "audit",
+    "observability",
+    "supply-chain",
+    "configuration",
+    "runtime"
+  ],
+  "entry": {
+    "agents": "agents/",
+    "skills": "skills/",
+    "rules": "rules/",
+    "prompts": "prompts/",
+    "checklists": "checklists/",
+    "templates": "templates/",
+    "schemas": "schemas/",
+    "fixtures": "fixtures/"
+  },
+  "agents": [
+    "twelve-factor-reviewer"
+  ],
+  "skills": [
+    "twelve-factor-design",
+    "twelve-factor-audit"
+  ],
+  "rules": [
+    "twelve-factor-evidence"
+  ],
+  "prompts": [
+    "architecture-review",
+    "audit-evidence"
+  ],
+  "checklists": [
+    "design-checklist",
+    "audit-checklist"
+  ],
+  "templates": [
+    "audit-report",
+    "remediation-backlog"
+  ],
+  "schemas": [
+    "audit-report.schema"
+  ],
+  "fixtures": [
+    "sample-audit-report"
+  ],
+  "dependencies": {
+    "required": [],
+    "optional": [
+      "sdlc-complete",
+      "security-engineering",
+      "ops-complete",
+      "testing-quality",
+      "aiwg-evals"
+    ]
+  },
+  "configuration": {
+    "defaults": {
+      "minimumEvidencePerFactor": 1,
+      "statusValues": [
+        "pass",
+        "partial",
+        "fail",
+        "not_applicable"
+      ],
+      "requiredModernFactors": [
+        "api_first",
+        "telemetry",
+        "security_by_default",
+        "supply_chain_provenance",
+        "dependency_hygiene",
+        "platform_portability"
+      ]
+    }
+  }
+}
