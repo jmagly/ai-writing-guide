@@ -1,0 +1,20 @@
+# Resolve release-plan sidecars before release actions (#1731).
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: release-plan-resolve
+  labels: { domain: release }
+spec:
+  description: Discover .aiwg/releases/<plan-id>.json|yaml sidecars, select the intended plan, report the active plan, and expose its delivery override before release gates run.
+  version: "1.0.0"
+  inputs:
+    - { name: release_plan_dir, type: string, required: false, default: ".aiwg/releases" }
+    - { name: selected_plan_id, type: string, required: false }
+    - { name: project_delivery_mode, type: string, required: false }
+  outputs:
+    - { name: active_plan_id, type: string }
+    - { name: active_plan_path, type: string }
+    - { name: effective_delivery_mode, type: string }
+    - { name: report, type: string }
+  agent: workflow-executor
+  idempotent: true

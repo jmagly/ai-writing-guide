@@ -504,7 +504,7 @@ describe("Fortemi Core no-regression parity fixtures (#1691)", () => {
         name: "flow-release",
         tags: ["release"],
         summary:
-          "Config-driven release orchestration reads release config and walks gates for local build, CI green, changelog, package artifacts, and post-release housekeeping.",
+          "Config-driven release orchestration reads release config plus optional release-plan sidecars and walks the selected release plan's gates.",
         triggers: ["run the release", "release prep", "cut a release"],
         capability: "Config-driven release orchestration for native releases.",
       }),

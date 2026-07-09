@@ -2,7 +2,7 @@
 namespace: aiwg
 name: flow-release
 platforms: [all]
-description: Config-driven release orchestration — reads .aiwg/release.config and walks the project's declared gates (local build, CI green, doc-sync, changelog/announcement, README, release entry, post-release housekeeping)
+description: Config-driven release orchestration — reads .aiwg/release.config plus optional .aiwg/releases/<plan-id> sidecars and walks the selected release plan's gates
 triggers:
   - "help with CI builds or deployment"
   - "help me make the build or deployment path safer"
@@ -41,13 +41,21 @@ You walk the gates declared in `.aiwg/release.config`, in order, enforcing `hard
 When the user requests a release:
 
 1. **Read `.aiwg/release.config`** (or the path passed via `--config`). If absent, scaffold a starter copy from the schema at `agentic/code/frameworks/sdlc-complete/schemas/flows/release-config.yaml` and ask the operator to review before continuing.
-2. **Resolve the target channel** from `--channel` (default: `stable`).
-3. **Validate the version** against `version_policy.format` and the `versioning` rule (CalVer no-leading-zeros, semver, etc.).
-4. **Walk the `gates` array in order.** For each gate:
+2. **Discover release-plan sidecars** under `.aiwg/releases/*.json`, `.aiwg/releases/*.yaml`, and `.aiwg/releases/*.yml`.
+   - If `--plan <id>` is passed, select that plan.
+   - If exactly one sidecar exists and no `--plan` is passed, select it.
+   - If multiple plans exist and no plan is selected, halt with an actionable error listing available plan ids.
+   - If duplicate plan ids exist, halt and require unique ids.
+   - If no sidecar exists, continue with `.aiwg/release.config` as the legacy project-wide plan.
+3. **Report the active release plan before actions.** Print the selected plan id, sidecar path, target, and effective delivery mode before executing build, validation, publish, tag, or post-release steps.
+4. **Apply sidecar precedence.** When a release plan is active, its `delivery.mode` is authoritative for this release and overrides broad project defaults such as `direct`, `pr`, or `pr-required` where they conflict.
+5. **Resolve the target channel** from `--channel` (default: `stable`).
+6. **Validate the version** against `version_policy.format` and the `versioning` rule (CalVer no-leading-zeros, semver, etc.).
+7. **Walk the selected plan's gates in order.** For a sidecar plan, use its `build.commands`, `validation_gates`, publish target policy, and `post_release_verification` commands. Without a sidecar, walk `.aiwg/release.config`'s `gates` array. For each gate:
    - Skip if `required_for_channels` is present and the target channel isn't in it.
    - Execute the gate's body (steps, invoke_skill, artifacts, review_diff, actions).
    - On failure: if `hard_stop: true`, **halt and report**. If false, log a warning and continue.
-5. **Report** with the release tag URL, CI run URL, and tracker actions taken.
+8. **Report** with the release tag URL, CI run URL, and tracker actions taken.
 
 ## Natural language triggers
 
@@ -60,6 +68,37 @@ When the user requests a release:
 - "promote to stable"
 - "ship it"
 - "tag a nightly"
+
+## Release plan sidecars
+
+Release plan sidecars are optional per-target release configs stored beside the
+main project config:
+
+```text
+.aiwg/aiwg.config
+.aiwg/release.config
+.aiwg/releases/<plan-id>.json
+.aiwg/releases/<plan-id>.yaml
+```
+
+Use sidecars when one repository has independent release tracks, such as an npm
+package, documentation site, plugin bundle, container image, or customer-specific
+distribution. The schema lives at
+`agentic/code/frameworks/sdlc-complete/schemas/flows/release-plan.schema.yaml`.
+
+Each sidecar can declare:
+
+- release identity: `id`, `name`, and `target`
+- build commands and validation gates
+- publish targets and registry/remote details
+- artifact, signing, SBOM, and provenance requirements
+- docs, changelog, and release-note expectations
+- post-release verification commands
+- `delivery.mode`, which overrides broad project delivery defaults while that plan is active
+
+Agents must fail closed on missing, ambiguous, or conflicting sidecars. Do not
+fall back silently to `.aiwg/release.config` when the user requested a specific
+plan and that plan cannot be resolved.
 
 ## Config-driven gate semantics
 
@@ -246,7 +285,9 @@ That config IS the AIWG release checklist — what was previously prose in CLAUD
 ## Related
 
 - Schema: `agentic/code/frameworks/sdlc-complete/schemas/flows/release-config.yaml`
+- Release plan schema: `agentic/code/frameworks/sdlc-complete/schemas/flows/release-plan.schema.yaml`
 - Config: `.aiwg/release.config` (per project)
+- Release plan sidecars: `.aiwg/releases/<plan-id>.yaml` or `.json`
 - Rules: `versioning`, `no-attribution`, `ci-green-before-done`, `delivery-policy`, `anti-laziness`
 - Skills: `doc-sync` (called by gate 3), `release-publication-verify` (post-tag proof before closing release issues), `aiwg-pr` (when delivery.mode is pr-required for release prep), `aiwg-issue` (filing release-blocker issues)
 - Doc: CLAUDE.md "Release Documentation Requirements" + "Release Checklist"

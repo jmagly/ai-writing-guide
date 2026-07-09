@@ -1013,14 +1013,19 @@ export const newBundleHandler: CommandHandler = {
         // .gitignore management is best-effort; don't fail the scaffold
       }
 
-      // #1235 — auto-rebuild project graph so the new bundle is immediately
-      // discoverable via `aiwg discover`. Best-effort: don't fail the scaffold
-      // if the index build hiccups.
+      // #1235 / #1758 — auto-rebuild the project graph and refresh the
+      // Fortemi Core static cache so the new bundle is immediately
+      // discoverable via top-level `aiwg discover` / `aiwg show`.
+      // Best-effort: don't fail the scaffold if indexing hiccups.
       let indexedOk = false;
+      let fortemiSyncedOk = false;
       try {
         const { buildIndex } = await import('../../artifacts/index-builder.js');
         await buildIndex(ctx.cwd, { graph: 'project', force: false, explicit: true });
         indexedOk = true;
+        const { syncFortemiCoreIndex } = await import('../../artifacts/fortemi-core-sync.js');
+        syncFortemiCoreIndex(ctx.cwd, { graph: 'project' });
+        fortemiSyncedOk = true;
       } catch {
         // ignore — surface via next-steps hint instead
       }
@@ -1029,10 +1034,14 @@ export const newBundleHandler: CommandHandler = {
       console.log('Next steps:');
       console.log(`  1. Edit manifest.json (description, version, keywords)`);
       console.log(`  2. Customize the starter artifact under ${result.bundlePath}/`);
-      if (indexedOk) {
+      if (indexedOk && fortemiSyncedOk) {
         console.log(`  3. Discoverable now via:  aiwg discover "${positional}"`);
+      } else if (indexedOk) {
+        console.log(`  3. Sync project search cache: aiwg index sync --graph project`);
+        console.log(`     then:                       aiwg discover "${positional}"`);
       } else {
         console.log(`  3. Rebuild project index:  aiwg index build --graph project`);
+        console.log(`     then sync search cache: aiwg index sync --graph project`);
         console.log(`     then:                   aiwg discover "${positional}"`);
       }
       console.log(`  4. Deploy:  aiwg use ${positional}`);

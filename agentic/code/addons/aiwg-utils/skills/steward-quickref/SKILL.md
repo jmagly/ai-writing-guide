@@ -28,6 +28,16 @@ see `src/artifacts/discover-facets.ts`).
 > selected artifact with `aiwg show <type> <name>`. Do not browse the
 > filesystem (`skill-discovery` rule).
 
+## Steward Tiering
+
+`aiwg-steward.md` is the Tier-1 dispatch core. This quickref is Tier 2. When
+the steward needs detailed lookup tables, route to Tier 3 with
+`aiwg discover "aiwg-steward routing reference"` or
+`aiwg discover "aiwg-steward worked examples"`. If a route is ambiguous, ask
+one clarifying question; if a target is stale or missing, file a correction
+issue through the AIWG issue-filing flow with the broken target and observed
+command output.
+
 ## Domain 1 — Expansion authoring (extension / addon / framework)
 
 "How do I *build* an AIWG expansion?" — extensions, addons, and frameworks.

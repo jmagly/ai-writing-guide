@@ -1,0 +1,117 @@
+# Release Plan Sidecar Schema
+#
+# Sidecars live next to the main project config:
+#
+#   .aiwg/releases/<plan-id>.json
+#   .aiwg/releases/<plan-id>.yaml
+#
+# A selected sidecar is authoritative for release/publish behavior and overrides
+# broad project delivery defaults where they conflict.
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/release-plan/v1"
+title: "AIWG Release Plan Sidecar"
+type: object
+required: [version, id, target, delivery]
+additionalProperties: true
+properties:
+  version:
+    type: integer
+    const: 1
+  id:
+    type: string
+    pattern: "^[a-z0-9][a-z0-9._-]*$"
+    description: Stable release-plan id. Must be unique across .aiwg/releases/.
+  name:
+    type: string
+  target:
+    type: object
+    required: [name]
+    additionalProperties: true
+    properties:
+      type:
+        type: string
+        enum: [package, site, plugin, product, container, docs, custom]
+      name:
+        type: string
+      package:
+        type: string
+      site:
+        type: string
+      plugin:
+        type: string
+      product:
+        type: string
+  delivery:
+    type: object
+    required: [mode]
+    additionalProperties: true
+    properties:
+      mode:
+        type: string
+        enum: [direct, pr, pr-required, tag-only, dispatch-only, manual, custom]
+      overrides_project_default:
+        type: boolean
+        default: true
+      notes:
+        type: string
+  build:
+    type: object
+    additionalProperties: true
+    properties:
+      commands:
+        type: array
+        items:
+          $ref: "#/$defs/command"
+  validation_gates:
+    type: array
+    items:
+      $ref: "#/$defs/command"
+  publish_targets:
+    type: array
+    items:
+      type: object
+      additionalProperties: true
+  artifacts:
+    type: object
+    additionalProperties: true
+  signing:
+    type: object
+    additionalProperties: true
+  sbom:
+    type: object
+    additionalProperties: true
+  provenance:
+    type: object
+    additionalProperties: true
+  docs:
+    type: object
+    additionalProperties: true
+  post_release_verification:
+    type: array
+    items:
+      $ref: "#/$defs/command"
+
+$defs:
+  command:
+    type: object
+    required: [run]
+    additionalProperties: true
+    properties:
+      id:
+        type: string
+      run:
+        type: string
+      expect_exit:
+        type: integer
+        default: 0
+      required_for_channels:
+        type: array
+        items:
+          type: string
+      skip_when_flag:
+        type: string
+      depends_on_channel:
+        type: object
+        additionalProperties:
+          type: string

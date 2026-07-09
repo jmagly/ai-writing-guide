@@ -2,17 +2,17 @@
 
 Externalized from the agent definition per the few-shot-examples rule (#1587, #1600).
 
-These are **reference-grade lookup tables** — large, mostly-static data the steward
-*consults on demand* when answering a specific question. They are NOT the steward's
-decision logic. The steward definition keeps its decision logic, the #1600-protected
-routing tables (Issue Workflow Routing, Project-Local Authoring Routing), the
-guardrails/gates, and the badge helper inline. What lives here is the bulk lookup data
-that does not need to occupy the dispatch budget.
+These are **Tier-3 reference-grade lookup tables** — large, mostly-static data the
+steward consults on demand when answering a specific question. They are not the
+steward's Tier-1 decision loop. The steward definition keeps role, guardrails, context
+discipline, and exact next-hop routes inline; detailed routing tables live here or in
+Tier-2 quickrefs such as `steward-quickref` and `aiwg-utils-quickref`.
 
 The steward keeps the *ability* to route — it knows what each table covers and where the
 live source of truth is (`aiwg steward capabilities`, `aiwg --help`, the agent-loop
-Step 0 table, `agentic/code/providers/capability-matrix.yaml`). It reads this file when
-it needs the full enumerated lookup.
+Step 0 table, `steward-quickref`, `aiwg-utils-quickref`,
+`agentic/code/providers/capability-matrix.yaml`). It reads this file when it needs the
+full enumerated lookup.
 
 Reach this file with:
 
@@ -20,6 +20,66 @@ Reach this file with:
 aiwg discover "aiwg-steward routing reference"
 # or read docs/agent-examples/aiwg-steward-routing-reference.md directly
 ```
+
+---
+
+## Tier-2 / Tier-3 Loading Protocol
+
+The steward default dispatch is Tier 1. Follow this path for detail:
+
+1. Start from the inline Tier-2 Routing Map in `aiwg-steward.md`.
+2. For quick anchors, load `steward-quickref` or `aiwg-utils-quickref` with
+   `aiwg show skill <name>`.
+3. For enumerated tables, load this reference with
+   `aiwg discover "aiwg-steward routing reference"` and then `aiwg show`.
+4. If a route is ambiguous, ask one clarifying question.
+5. If a route is broken or stale, file an AIWG correction issue through
+   `aiwg-issue` / `steward-prep-delivery` with the broken target, expected target,
+   observed command output, and reproduction command.
+
+---
+
+## Issue Workflow Routing
+
+When a user asks to start using issues themselves, set up a project issue workflow, use
+local issues, audit a backlog, or work through issues, do not route them to the AIWG
+product issue filing skill by default.
+
+| User intent | Route |
+|---|---|
+| File a bug or feature request against AIWG itself | `aiwg-issue` |
+| Start tracking project work locally | `aiwg discover "start using local issues"` -> `issue-workflow-guide` |
+| Choose between local, Gitea, GitHub, Jira, or Linear issue tracking | `aiwg discover "choose issue tracking backend"` -> `issue-workflow-guide` |
+| Audit existing issues | `aiwg discover "audit open issues"` -> `issue-audit` / `audit-issues` |
+| Implement or process issues | `aiwg discover "address issues"` -> `address-issues` |
+| Sync local issues to an external tracker | local issue sync/import-export workflow |
+
+For local issue tracking, explain the model as project-configured prefixes, markdown
+issue bodies, metadata/state JSONL events, rebuildable indexes, and bounded issue slices
+for agent workflows. If the installed version lacks local provider commands, say so and
+recommend Gitea/GitHub or markdown notes as the temporary fallback.
+
+---
+
+## Project-Local Authoring Routing
+
+Steward capability routing is broader than the provider matrix when the user asks how to
+create AIWG artifacts for their own project. For project-local authoring intents, do not
+answer only with `aiwg steward capabilities`.
+
+| User intent | Primary route | Notes |
+|---|---|---|
+| Create a repo/project-level skill | `aiwg new-bundle <name> --starter skill` or `aiwg new-extension <name> --starter skill` | Creates content source under `.aiwg/{extensions,addons,frameworks}/<name>/`; deploy with `aiwg use <name>`. |
+| Create a project-level agent | `aiwg new-bundle <name> --starter agent` or SkillSmith/AgentSmith when generating from a prompt | Use project-local bundle layout so the artifact is versioned with the repo. |
+| Create a custom provider selector | `aiwg new-provider <name>` or `aiwg new-bundle <name> --type provider` | Creates `.aiwg/providers/<name>/` with `providerConfig.extends`; select it with `aiwg use <framework> --provider <name>`. |
+| Choose extension/addon/framework/plugin/provider shape | `aiwg discover "project-local customization"` and docs/customization quickstart | Extensions are the usual smallest local customization; addons/frameworks are heavier. Plugins are marketplace delivery wrappers. Providers are metadata selectors. |
+| Make an agent invoke a custom skill | Create the skill in a project-local bundle, run `aiwg use <name>`, then reload the provider session | Session reload rules still apply. |
+
+Canonical docs: `docs/customization/project-local-quickstart.md`,
+`docs/customization/project-local-lifecycle.md`, and
+`docs/customization/extensions-vs-addons-vs-frameworks-vs-plugins.md`. Mention that
+project-local artifacts and provider definitions are trusted repo code and should be
+reviewed before deploy.
 
 ---
 
@@ -165,6 +225,28 @@ aiwg steward find --capability mcp    # Routing advice for MCP on current provid
 
 ---
 
+## Orchestration & Loop Routing
+
+For "iterate until done" / multi-agent orchestration / Mission requests, the canonical
+routing surface is the **agent-loop Step 0 table**
+(`agentic/code/addons/agent-loop/skills/agent-loop/SKILL.md`), backed by
+`.aiwg/architecture/adr-workflow-routing.md`.
+
+| User Request | Provider | Correct Answer |
+|-------------|----------|----------------|
+| "iterate on this until tests pass" (in-session) | claude-code / codex | Native `/goal "<task>; completion: <criterion>"` (#1451/#1469) — in-session loop |
+| "fan out multiple agents in-session" | claude-code | MAY delegate the mechanism to the native Workflow tool; AIWG retains audit/gates/best-output/durability |
+| "fan out multiple agents in-session" | codex | No core `/workflow` (it's plugin-provided, #1535); use the AIWG-owned `/aiwg-mission` or `aiwg mc dispatch` |
+| "launch a Mission" / dynamic orchestration | any | `/aiwg-mission` (Codex) or `aiwg mc dispatch`; AIWG-owned durable conductor |
+| "run detached/background/crash-resilient" | any | AIWG-native external route (`agent-loop-ext` / `ralph-external`) — native primitives are session-scoped |
+| "coordinate Codex AND Claude agents" (cross-stack) | any | Cross-stack Mission (#1546) — one AIWG conductor dispatches workers to executors advertising the target `runtime:<name>` (for example `runtime:codex`) via the `serve` registry (`routeMission`) |
+
+Invariant: whatever drives the worker mechanism, AIWG owns activity-log, gates,
+best-output selection, checkpoint/resume durability, reproducibility, and cost. Native
+primitives are in-stack workers; a Mission is the cross-stack conductor.
+
+---
+
 ## Invocation Patterns
 
 Worked "user says → steward action" lookups. The decision logic for these lives inline in
@@ -194,6 +276,7 @@ the definition; this is the enumerated quick-reference.
 - `few-shot-examples` rule — the inline ≤1 + catalog requirement and size ceiling
 - #1587 — debloat oversized agent definitions
 - #1600 — aiwg-steward reconcile + debloat (dual-source byte-identity)
+- #1661 — steward Tier-1/2/3 split for sub-12 KB dispatch
 - `agentic/code/providers/capability-matrix.yaml` — canonical live capability data
 - `agentic/code/addons/agent-loop/skills/agent-loop/SKILL.md` — canonical agent-loop Step 0 routing table
 - `docs/agent-examples/aiwg-steward-examples.md` — worked transcripts and report scaffolds
