@@ -4,6 +4,10 @@ AIWG supports shared user-level index sidecars for capabilities and other
 personal or organization-wide corpora. These indices live outside any project
 checkout and can be queried from any AIWG workspace.
 
+Private project memory can also live under `~/.aiwg/projects/`; see
+[`user-level-project-memory.md`](./user-level-project-memory.md) for the
+manifest, index, and resolution order.
+
 ## Built-In User Capability Graph
 
 Place custom user capabilities under `~/.aiwg`:

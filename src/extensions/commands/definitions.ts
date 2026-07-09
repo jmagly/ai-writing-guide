@@ -2894,10 +2894,10 @@ export const memoryCommand: Extension = {
   id: 'memory',
   type: 'skill',
   name: 'Memory',
-  description: 'Storage operations on the AIWG memory subsystem — resolve paths, list, get, put, delete, append JSONL events through the configured backend',
+  description: 'Storage operations on the AIWG memory subsystem, plus user-level project memory registry commands under ~/.aiwg/projects',
   version: '1.0.0',
-  capabilities: ['cli', 'memory', 'semantic-memory', 'storage', 'pkm'],
-  keywords: ['memory', 'semantic-memory', 'reflections', 'pages'],
+  capabilities: ['cli', 'memory', 'semantic-memory', 'storage', 'pkm', 'project-memory', 'user-registry'],
+  keywords: ['memory', 'semantic-memory', 'project-memory', 'registry', 'reflections', 'pages'],
   category: 'utility',
   platforms: {
     claude: 'full',
@@ -2909,15 +2909,15 @@ export const memoryCommand: Extension = {
   },
   metadata: {
     type: 'skill',
-    triggerPhrases: ['where is memory', 'memory path', 'list memory', 'aiwg memory'],
+    triggerPhrases: ['where is memory', 'memory path', 'list memory', 'project memory', 'aiwg memory'],
     commandHint: {
       template: 'utility',
-      argumentHint: '<path|list|get|put|delete|append-log> [options]',
+      argumentHint: '<path|list|get|put|delete|append-log|project> [options]',
       allowedTools: ['Bash', 'Read'],
       executionSteps: [
         'Parse subcommand and arguments',
         'Resolve storage adapter for memory subsystem',
-        'Read/write/list/delete/append-log via the adapter',
+        'Read/write/list/delete/append-log via the adapter or manage project-memory mappings',
         'Print result',
       ],
     },

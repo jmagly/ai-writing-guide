@@ -75,6 +75,7 @@
     "cli-reference",
     "fortemi-core-prebuilt-indices",
     "user-level-indices",
+    "user-level-project-memory",
     "local-issues",
     "ralph-guide",
     "simple-language-translations",
@@ -740,6 +741,13 @@
       "title": "User-Level Indices",
       "summary": "Shared user-level capability and corpus indices",
       "file": "user-level-indices.md",
+      "parent": "reference"
+    },
+    {
+      "id": "user-level-project-memory",
+      "title": "User-Level Project Memory",
+      "summary": "Private per-project AIWG memory registry under ~/.aiwg/projects",
+      "file": "user-level-project-memory.md",
       "parent": "reference"
     },
     {

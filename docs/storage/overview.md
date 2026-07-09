@@ -14,6 +14,11 @@ Each subsystem is configured independently. You can keep the activity log on loc
 
 If you do nothing, AIWG works exactly like before — every subsystem persists under `.aiwg/`.
 
+For private per-project memory that should not be committed, AIWG can resolve
+the `memory` subsystem from a user-level project registry under
+`~/.aiwg/projects/` when no project-local `.aiwg` directory is present. See
+[`docs/user-level-project-memory.md`](../user-level-project-memory.md).
+
 To change behavior, create `.aiwg/storage.config`:
 
 ```json

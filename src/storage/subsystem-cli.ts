@@ -20,7 +20,7 @@
  */
 
 import { getLoadedConfig, resolveStorage, type SubsystemKey } from './index.js';
-import { resolveSubsystemRoot } from './config.js';
+import { resolveSubsystemRootRuntime } from './config.js';
 
 /**
  * Display name for the subsystem when printed in `aiwg <subsystem> path`
@@ -93,7 +93,7 @@ async function handlePath(subsystem: SubsystemKey, display: string, args: string
     return;
   }
 
-  const root = resolveSubsystemRoot(subsystem, projectRoot, config);
+  const root = await resolveSubsystemRootRuntime(subsystem, projectRoot, config);
   const fullPath = subpath ? `${root}/${subpath}` : root;
   if (json) {
     console.log(JSON.stringify({ backend, root, path: fullPath }, null, 2));
