@@ -402,6 +402,17 @@ Known state as of the 2026-06-19 host live run:
   `v2026.6.34`: VM matrix PASS — provision → vsock enroll → boot-ready → provider
   workload → clean destroy. Evidence:
   `.aiwg/testing/cockpit-vm-vsock-2026-06-27.md/.json`.
+- Instance **transport posture + host-daemon** now surface from the sandbox side
+  (`dd97529 fix(admin-v2): expose instance transport posture`, plus `#611`
+  host-runtime session listing). Re-validated Cockpit-side against `v2026.7.4`
+  (2026-07-09): Inventory renders real posture per instance — Host + Container
+  `Secure transport · mtls` (Host daemon `available`), enrolled VM `Local
+  transport · vsock`, a mid-bootstrap VM correctly `bootstrap-pending` (the
+  prior dead "Unknown transport / unknown" is resolved). Session-list returns
+  cleanly (no 502 — the `#140`/`#611` endpoints are live). Runtime coverage
+  banner `host ✓ · docker ✓ · vm ✓`. Evidence:
+  `.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md` +
+  `.aiwg/testing/cockpit-7.4-inventory-2026-07-09.png`.
 - Remaining upstream follow-ups are Claude auth-state propagation
   (roctinam/agentic-sandbox#499) and agent-scoped PTY sessions not appearing in
   the formal/global session registry (roctinam/agentic-sandbox#500).

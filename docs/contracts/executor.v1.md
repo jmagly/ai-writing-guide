@@ -294,7 +294,7 @@ Conformance is run via `npm run test:conformance -- --executor <id>`. The record
 ## Compatibility notes
 
 - **MC queue file** (`.aiwg/ralph-external/mc/sessions/<id>/session.json`) is **not** part of this spec. It is AIWG's plumbing format for local mission queueing and will continue to evolve independently. Executors do not read this file directly.
-- **Sandbox-registry** (`POST /api/v1/sandboxes/register`) coexists with executor-registry. A conforming sandbox executor MAY register via both routes during transition; v1.x deprecates the sandbox-only path once all production users have migrated.
+- **Sandbox-registry** (`POST /api/sandboxes/register`) coexists with executor-registry. A conforming sandbox executor MAY register via both routes during transition; v1.x deprecates the sandbox-only path once all production users have migrated.
 - **`agent-router`** continues to operate at the agent-inventory level (an agent inside a VM). Mission routing operates at the executor level. They share auth and identity-store machinery but operate on different shapes.
 
 ## Open questions for v1.x

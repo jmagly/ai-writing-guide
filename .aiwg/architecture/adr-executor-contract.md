@@ -18,6 +18,23 @@ The AIWG runtime stack today consists of three layers that each work in isolatio
 
 Verification (2026-05-08, this session): the local `agentic-mgmt` (PID 1771375) is running but `AIWG_SERVE_ENDPOINT` is unset, so it has never registered with `aiwg serve`. `aiwg mc dispatch` was called three times (#1171, #1172, #1173 missions) — all wrote JSON to disk and zero workers picked them up. No errors, no crashes; just missing wiring.
 
+> **Update — 2026-07-09 (milestone: agentic-sandbox v2026.7.4).** The seam this
+> ADR defines is now **live and verified end-to-end** — the missing wiring above
+> is closed, superseding (not replacing) the 2026-05-08 observation. Confirmed:
+> executor registration (`POST /api/v1/executors/register`) and dispatch
+> (`POST /api/v1/sessions/:id/dispatch`) are implemented in `src/serve/executor-registry.ts`
+> (the #715 `{ status: "queued" }` stub is retired); the session-listing proxies
+> (`/api/sandboxes/:id/agents/:aid/sessions`, #140/#611) return `200` rather than
+> `502`; and instance **transport posture** + **host-daemon** status surface
+> through the Cockpit bridge (mtls / vsock / bootstrap-pending). This is the
+> best-functioning integration state to date. Evidence:
+> `.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md`,
+> `src/cli/handlers/serve.ts:1510-1560`. Residuals still open (do not treat as
+> closed): agentic-sandbox #499 (Claude auth-state propagation), #500
+> (agent-scoped PTY sessions in the global registry), #501 (controller
+> exclusivity), and the exit-code / in-memory-`MissionStore` / resumability gaps
+> tracked in `docs/serve-guide.md`.
+
 The four gaps observed are all on one architectural seam: **there is no agreed-upon contract between a dispatch surface and the thing that executes a mission**. Today every layer assumes someone else is doing the work.
 
 The right fix is not to wire the existing components tightly together. AIWG's design principle is composable, opt-in layers where each layer can stand alone or compose with neighbors via stable contracts — modeled on git's plumbing-and-porcelain split, where the data formats are fixed and any number of UIs/transports can read or write them. Tight coupling between MC, `aiwg serve`, and a single execution backend would produce the opposite outcome: each component would force adoption of its peers, and an external contributor (e.g., someone bringing their own runtime, or running on hardware that can't host KVM) would have nowhere to plug in.

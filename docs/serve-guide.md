@@ -209,8 +209,38 @@ Returns `{ "ok": true }` on success. Returns `401` if the token does not match.
 | `POST` | `/api/sandboxes/:id/provision` | Proxy: provision a new agent |
 | `POST` | `/api/sandboxes/:id/agents/:aid/{action}` | Proxy: agent lifecycle (`start`, `stop`, `destroy`, `reprovision`) |
 | `DELETE` | `/api/sandboxes/:id/agents/:aid` | Proxy: delete an agent |
+| `GET` | `/api/sandboxes/:id/agents/:aid/sessions` | Proxy: list an agent's terminal sessions |
+| `POST` | `/api/sandboxes/:id/agents/:aid/sessions` | Proxy: create an agent session |
+| `DELETE` | `/api/sandboxes/:id/agents/:aid/sessions/:session` | Proxy: terminate a named session |
+| `GET` | `/api/sandboxes/:id/sessions/:sessionId/screen` | Proxy: read a session's current screen buffer |
 
 Proxied endpoints forward requests to the sandbox's own HTTP API.
+
+> **Session listing is live (v2026.7.4+).** The agent-session proxies above are
+> backed by agentic-sandbox's sessions API (`#140`) and host-runtime session
+> listing (`#611`). Before those endpoints shipped, `aiwg serve` returned `502`
+> as a placeholder; that path is now only a genuine-unreachability fallback. A
+> `200` with an empty list means "no sessions yet" — not a wiring gap.
+
+### Instance transport posture
+
+Each instance the sandbox reports carries **transport-trust posture** and
+**host-daemon status**, which `aiwg serve` passes through verbatim from the
+sandbox's v2 admin inventory (they are sandbox-sourced fields — `aiwg serve` does
+not compute them):
+
+| Field | Meaning | Example values |
+|-------|---------|----------------|
+| `transport` / `transport_posture` | How the client reaches the instance | `Secure transport · mtls` (Host/Container), `Local transport · vsock` (enrolled VM) |
+| `security_posture` | Trust classification of that transport | `mtls`, `vsock`, `bootstrap-pending` |
+| `host_daemon` | Host-daemon availability for host-tier instances | `available`, n/a (non-host tiers) |
+
+A VM still enrolling reports `bootstrap-pending` (the transitional
+`AgentTransportPosture::bootstrap_pending()` state) rather than a dead
+`unknown`. This posture drives the Cockpit Inventory tab's per-instance
+Transport / Host-daemon columns and the `host ✓ · docker ✓ · vm ✓` runtime
+coverage banner. Verified end-to-end against agentic-sandbox v2026.7.4
+(`.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md`).
 
 ## WebSocket: Sandbox Event Push
 

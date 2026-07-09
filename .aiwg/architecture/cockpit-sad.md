@@ -1,7 +1,7 @@
 # Software Architecture Document — AIWG Cockpit
 
 **Phase**: Elaboration
-**Status**: Draft (Architecture Baseline candidate)
+**Status**: Draft (Architecture Baseline candidate) — instance-control substrate integration **validated against agentic-sandbox `v2026.7.4`** (2026-07-09; best-functioning Cockpit ↔ sandbox integration to date, see §11)
 **Related**: @.aiwg/management/cockpit-vision.md, @.aiwg/requirements/ (UC-COCKPIT-001..012), @.aiwg/requirements/nfr-modules/cockpit-nfrs.md, @.aiwg/security/cockpit-threat-model.md, @.aiwg/risks/cockpit-risk-register.md
 **ADRs**: adr-cockpit-overlay-integration-model, adr-cockpit-coordination-bus, adr-cockpit-session-attach-model, adr-cockpit-ui-stack, adr-cockpit-marketplace-ux-agent-sourcing, adr-cockpit-distribution-packaging
 **Posture**: UX-first front door, CLI-always (see @.aiwg/management/cockpit-vision.md §Strategic Posture) — the UI is the default surface; the CLI stays at full capability underneath.
@@ -86,6 +86,7 @@ graph TD
 - **Overlay isolation** (NFR-01/D1): registry owns persistence; Bridge is fire-and-track, holds no exclusive locks; idempotent reattach from CLI/MCP/daemon after a Cockpit crash.
 - **Non-nerf parity** (NFR-02/P1): per-provider capability-parity checklist is an ABM gate; drive only where provably safe, else observe-only.
 - **Auditability** (NFR-08): every Bridge action → append-only activity-log with provenance tag (`operator`/`agent:<name>@<hash>`/`cli`/`mcp`/`daemon`).
+- **Transport-trust posture** (verified 2026-07-09): the Bridge surfaces each instance's transport posture (`transport`/`transport_posture`/`security_posture`) and `host_daemon` status — `mtls` (Host/Container), `vsock` (enrolled VM), `bootstrap-pending` (VM enrolling) — passed through verbatim from the sandbox v2 admin inventory (the Bridge classifies nothing itself). This makes the isolation-tier choice (NFR-01/NFR-07) *visible and audited* in the Inventory view, resolving the prior "Unknown transport" gap. Live end-to-end against agentic-sandbox v2026.7.4.
 - **Accessibility** (NFR-05): WCAG 2.1 AA on the core flows.
 
 ## 7. Key flows (sequence)
@@ -118,7 +119,7 @@ sequenceDiagram
 8. **UI extensibility / contribution model** — extensions contribute screens/actions/workflows/event hooks; actions still resolve via the registry. → `adr-cockpit-ui-extensibility-contribution-model`
 9. **Package topology** — monorepo, separately-published `@aiwg/cockpit`, base npm stays lean, opt-in. → `adr-cockpit-package-topology`
 10. **Runtime home + launch context** — global `~/` install, operator-set launch cwd, home-scope runtime docs. → `adr-cockpit-runtime-home-and-launch-context`
-11. **Instance-control substrate** — normalize on the **agentic-sandbox** interface (backends: screen/zellij/tmux/native; direct+managed); **daemon decoupled + UI-managed**. Two planes: agentic-sandbox = instance control, serve/#1546 = coordination. → `adr-cockpit-instance-control-substrate`
+11. **Instance-control substrate** — normalize on the **agentic-sandbox** interface (backends: screen/zellij/tmux/native; direct+managed); **daemon decoupled + UI-managed**. Two planes: agentic-sandbox = instance control, serve/#1546 = coordination. → `adr-cockpit-instance-control-substrate` (**Accepted** — predicted extensions landed in agentic-sandbox `v2026.7.4`, validated 2026-07-09; see §11)
 
 ## 9. Risks retired / to retire at ABM
 
@@ -127,3 +128,43 @@ sequenceDiagram
 ## 10. Open items for ABM gate
 
 - UI-stack ADR decision finalized; provider attach-capability tier matrix populated; #1546 seam maturity confirmed or scoped to supported stacks.
+
+## 11. Validated integration — agentic-sandbox v2026.7.4 (2026-07-09)
+
+The instance-control substrate (§8.11, `adr-cockpit-instance-control-substrate`)
+is validated end-to-end against **agentic-sandbox `v2026.7.4`** — the
+best-functioning Cockpit ↔ sandbox integration to date. The Cockpit Bridge is a
+client of the sandbox **v2 admin surfaces**; the executor is the source of truth
+for instance state and posture, and the Bridge normalizes (snake_case/camelCase)
+without owning lifecycle.
+
+### Executor contract consumed (via `AIWG_COCKPIT_EXECUTOR_URL`, default `:8122`)
+
+| Surface | Purpose | Bridge consumer |
+|---|---|---|
+| `GET /api/v2/admin/instances` | inventory + per-instance **transport posture** (`transport`, `transport_posture`, `security_posture`, `host_daemon`) | `server.mjs` `normalizeTransport` / `normalizeHostDaemon` (`:698-785`) → Inventory columns |
+| `GET /api/v2/admin/running` | running fleet board | Running view |
+| `POST /api/v2/admin/instances` | additive launch (host / Docker / VM) | top-bar **Launch instance** |
+| `GET/POST /api/v1/agents/{id}/sessions`, `DELETE …/sessions/{name}` | direct + managed session listing/create/close (#140/#611) | `serve.ts` session proxy (`:1515-1557`); Sessions view |
+| PTY WS (`pty_ws_url`) + controller/observer leases (7.2) | attach I/O, Observe/Drive | session-attach (`adr-cockpit-session-attach-model`) |
+
+### Verified posture per isolation tier
+
+- **Host / full host access** → `Secure transport · mtls`, host daemon `available`.
+- **Container (Docker)** → `Secure transport · mtls`.
+- **VM (enrolled)** → `Local transport · vsock`; **VM mid-bootstrap** → `bootstrap-pending`
+  (the correct transitional state; the prior dead "Unknown transport / unknown" is
+  resolved).
+- Runtime target coverage: **`host ✓ · docker ✓ · vm ✓`**.
+
+### Notes
+
+- No Cockpit-side code change was required for transport posture — the Bridge
+  already mapped these fields; the sandbox `dd97529` fix supplied them.
+- **Residuals** (non-blocking): host `host_daemon` reports `available` without a
+  detailed status payload; screen/zellij session-host backends beyond tmux not yet
+  exercised. Deferred adoption: structured agent-output SSE stream
+  (`/api/v1/agent-output/stream`, #600) for Chat, and Observe/Drive controller-lease
+  wiring.
+- Evidence: `.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md` +
+  `.aiwg/testing/cockpit-7.4-inventory-2026-07-09.png`.
