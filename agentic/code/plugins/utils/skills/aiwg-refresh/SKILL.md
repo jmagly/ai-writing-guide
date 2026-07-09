@@ -11,12 +11,16 @@ script:
   argsHint: '[--update-cli] [--all] [--provider <name>] [--dry-run] [--channel <name>]'
 ---
 
-> **Deterministic execution (#1267)**: this skill has a `script:` entrypoint.
-> Prefer `aiwg run skill aiwg-refresh -- <flags>` over agent-mediated invocation.
-> When invoked as a slash command on platforms without a deployed command stub
-> (e.g. hermes), the agent MUST run only `aiwg refresh <flags>` and report its
-> output — no exploratory permission requests, no multi-step planning. The
-> deterministic CLI is the source of truth.
+> **Deterministic execution (#1267)**: this skill has a `script:` entrypoint
+> that shells out to `aiwg refresh "$@"`. Prefer
+> `aiwg run skill aiwg-refresh -- <flags>` when a platform supports it; on
+> platforms without a deployed command stub (e.g. hermes) invoke the CLI
+> directly. The CLI owns the deterministic execution step: version/channel
+> resolution, CLI update, framework redeploy, provider detection, and exit
+> codes. The skill owns the agentic layer around that step: intent alignment,
+> output formatting, workspace-state reconciliation, summary, next actions,
+> gates, and recovery. Do not reimplement the refresh manually or add
+> redundant permission prompts before calling the CLI for execution.
 
 # Refresh AIWG Deployment
 
