@@ -10,7 +10,7 @@ session-listing APIs (#140 sessions, #611 host-runtime listing) live end-to-end
 mtls / vsock / bootstrap-pending) surface per instance (prior "Unknown transport"
 resolved).
 **Evidence:** `.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md`,
-`.aiwg/testing/cockpit-7.4-inventory-2026-07-09.png`,
+`.aiwg/working/cockpit-7.4-inventory-2026-07-09.png`,
 `src/cli/handlers/serve.ts:1510-1560`.
 **Auditor evidence:** `.aiwg/working/doc-sync/user-docs-audit.md`,
 `.aiwg/working/doc-sync/arch-docs-audit.md`.

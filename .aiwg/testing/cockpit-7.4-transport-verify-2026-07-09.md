@@ -4,7 +4,7 @@
 **Executor:** agentic-sandbox `v2026.7.4` (`agentic-mgmt` on 127.0.0.1:8122, built from the 7.4 checkout)
 **Cockpit:** repo bridge `apps/cockpit/bridge/src/server.mjs` on 127.0.0.1:8141, `AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:8122`, real `web/dist` UI
 **Surface driven:** browser (playwright-secure) → Inventory + Sessions tabs
-**Screenshot:** `.aiwg/testing/cockpit-7.4-inventory-2026-07-09.png`
+**Screenshot:** `.aiwg/working/cockpit-7.4-inventory-2026-07-09.png` (local, untracked — binary blobs are not committed under `.aiwg/` per the no-binary-blobs policy; this Markdown verification is the tracked, authoritative evidence)
 
 ## What was blocked (pre-7.x)
 

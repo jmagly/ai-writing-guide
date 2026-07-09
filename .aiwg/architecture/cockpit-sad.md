@@ -142,7 +142,7 @@ without owning lifecycle.
 
 | Surface | Purpose | Bridge consumer |
 |---|---|---|
-| `GET /api/v2/admin/instances` | inventory + per-instance **transport posture** (`transport`, `transport_posture`, `security_posture`, `host_daemon`) | `server.mjs` `normalizeTransport` / `normalizeHostDaemon` (`:698-785`) → Inventory columns |
+| `GET /api/v2/admin/instances` | inventory + per-instance **transport posture** (`transport`, `transport_posture`, `security_posture`, `host_daemon`) | `server.mjs` `normalizeTransport` / `normalizeHostDaemon` (`:687-785`) → Inventory columns |
 | `GET /api/v2/admin/running` | running fleet board | Running view |
 | `POST /api/v2/admin/instances` | additive launch (host / Docker / VM) | top-bar **Launch instance** |
 | `GET/POST /api/v1/agents/{id}/sessions`, `DELETE …/sessions/{name}` | direct + managed session listing/create/close (#140/#611) | `serve.ts` session proxy (`:1515-1557`); Sessions view |
@@ -152,9 +152,9 @@ without owning lifecycle.
 
 - **Host / full host access** → `Secure transport · mtls`, host daemon `available`.
 - **Container (Docker)** → `Secure transport · mtls`.
-- **VM (enrolled)** → `Local transport · vsock`; **VM mid-bootstrap** → `bootstrap-pending`
-  (the correct transitional state; the prior dead "Unknown transport / unknown" is
-  resolved).
+- **VM (enrolled)** → `Local transport · vsock`; **VM mid-bootstrap** → transport
+  label `Unknown` with the informative posture sub-value `bootstrap-pending` (vs
+  the old dead `unknown`). Every enrolled instance now renders real posture.
 - Runtime target coverage: **`host ✓ · docker ✓ · vm ✓`**.
 
 ### Notes
@@ -167,4 +167,4 @@ without owning lifecycle.
   (`/api/v1/agent-output/stream`, #600) for Chat, and Observe/Drive controller-lease
   wiring.
 - Evidence: `.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md` +
-  `.aiwg/testing/cockpit-7.4-inventory-2026-07-09.png`.
+  `.aiwg/working/cockpit-7.4-inventory-2026-07-09.png`.

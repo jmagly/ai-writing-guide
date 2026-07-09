@@ -196,6 +196,17 @@ binary before serving Cockpit. Override `AIWG_COCKPIT_EXECUTOR_URL` (default
 `http://127.0.0.1:8122`) or `PORT` (default `8140`). Set
 `AIWG_COCKPIT_EXECUTOR_COMMAND` to pin the autostart command, or
 `AIWG_COCKPIT_AUTOSTART_EXECUTOR=0` to require an already-running executor.
+
+**Bring up both halves at once (#1634).** `npm run cockpit:up` (→
+`apps/cockpit/scripts/cockpit-up.sh`) guarantees a real, current executor is
+listening *before* the Bridge starts: it launches the agentic-sandbox executor
+via its own `management/dev.sh` when one isn't already healthy on
+`AIWG_COCKPIT_EXECUTOR_URL` (default `http://127.0.0.1:8122`), then delegates to
+`cockpit-dev.sh` for the Bridge + UI. Set `AIWG_COCKPIT_ENSURE_EXECUTOR=0` to
+skip the executor-ensure step when a sandbox is already running, or
+`AIWG_COCKPIT_START_HOST_DAEMON=1` to also start the optional host-runtime
+daemon. `cockpit-dev.sh` stays the Cockpit-only launcher.
+
 Equivalent manual steps:
 
 ```bash
@@ -407,12 +418,13 @@ Known state as of the 2026-06-19 host live run:
   host-runtime session listing). Re-validated Cockpit-side against `v2026.7.4`
   (2026-07-09): Inventory renders real posture per instance — Host + Container
   `Secure transport · mtls` (Host daemon `available`), enrolled VM `Local
-  transport · vsock`, a mid-bootstrap VM correctly `bootstrap-pending` (the
-  prior dead "Unknown transport / unknown" is resolved). Session-list returns
+  transport · vsock`, a mid-bootstrap VM showing transport `Unknown` with the
+  informative posture `bootstrap-pending` (vs the old dead `unknown`; every
+  enrolled instance now renders real posture). Session-list returns
   cleanly (no 502 — the `#140`/`#611` endpoints are live). Runtime coverage
   banner `host ✓ · docker ✓ · vm ✓`. Evidence:
   `.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md` +
-  `.aiwg/testing/cockpit-7.4-inventory-2026-07-09.png`.
+  `.aiwg/working/cockpit-7.4-inventory-2026-07-09.png`.
 - Remaining upstream follow-ups are Claude auth-state propagation
   (roctinam/agentic-sandbox#499) and agent-scoped PTY sessions not appearing in
   the formal/global session registry (roctinam/agentic-sandbox#500).
@@ -429,9 +441,11 @@ agentic-sandbox executor through `AIWG_COCKPIT_EXECUTOR_URL`. The host target
 (agentic-sandbox#460) and direct/managed multiplexer sessions
 (agentic-sandbox#461) have landed upstream; the Bridge seam is now the
 AIWG-side integration point for #1589. Runtime-tier provisioning and
-host-daemon UX are tracked in roctinam/aiwg#1615, direct/managed PTY negotiation
-in #1616, the live real-sandbox gate in #1617, and transport-trust visibility in
-#1618. Secure transport details map back to agentic-sandbox#409/#410/#412; local
+host-daemon surfacing (roctinam/aiwg#1615) and transport-trust visibility (#1618)
+**landed and are verified against `v2026.7.4`** — transport posture and
+host-daemon now render per instance (a host-daemon *detail-status* payload
+remains a residual under #1615). Direct/managed PTY negotiation (#1616) and the
+live real-sandbox gate (#1617) continue. Secure transport details map back to agentic-sandbox#409/#410/#412; local
 Browser/Tauri/VS Code-to-Bridge auth remains roctinam/aiwg#1595.
 
 ### Operator-wall review modes (#1622)

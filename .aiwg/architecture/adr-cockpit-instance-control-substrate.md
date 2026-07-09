@@ -78,12 +78,12 @@ date. Verified end-to-end through the Cockpit UI against a real executor
 | Predicted dependency (this ADR) | Landed in agentic-sandbox | Verified in Cockpit |
 |---|---|---|
 | §2 axis-1: add a **local host target** (AIWG base tier) | host-runtime mTLS enrollment (#609), host runtime session listing (#611) | Inventory shows a **Host / full host access** instance, `Secure transport · mtls`, host daemon `available` |
-| §2: normalized interface exposes **transport posture** per tier | `dd97529 fix(admin-v2): expose instance transport posture` (+ `b03cb43`) | Host/Container `Secure · mtls`, enrolled VM `Local · vsock`, booting VM `bootstrap-pending` (prior dead "Unknown transport / unknown" resolved) |
-| §3: **direct + managed sessions** through one interface | host-runtime PTY sessions in the formal session API (#611); tmux session adoption (#613); attach metadata + controller/observer leases (7.2) | Session-list returns cleanly (HTTP 200, no 502); Observe/Drive controller model present |
+| §2: normalized interface exposes **transport posture** per tier | `dd97529 fix(admin-v2): expose instance transport posture` (+ `b03cb43`) | Host/Container `Secure · mtls`, enrolled VM `Local · vsock`; a mid-bootstrap VM shows transport `Unknown` with the informative posture `bootstrap-pending` (vs the old dead `unknown`) — every enrolled instance now shows real posture |
+| §3: **direct + managed sessions** through one interface | host-runtime PTY sessions in the formal session API (#611); tmux session adoption (#613); attach metadata + controller/observer leases (7.2) | Session-list returns cleanly (HTTP 200, no 502); controller/observer lease model available upstream (7.2), Cockpit Observe/Drive wiring deferred |
 | §2: full isolation spectrum **host → Docker → VM** | all three runtime families provisioned | Runtime coverage banner `host ✓ · docker ✓ · vm ✓` |
 
 **Evidence:** `.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md` +
-`.aiwg/testing/cockpit-7.4-inventory-2026-07-09.png`.
+`.aiwg/working/cockpit-7.4-inventory-2026-07-09.png`.
 
 **Residual upstream follow-ups** (do not block acceptance): screen/zellij session-host
 backends beyond tmux are not yet exercised; host `host_daemon` reports `available`
