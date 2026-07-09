@@ -4373,7 +4373,7 @@ aiwg ops <subcommand>
 | `--workspace <name>` | Workspace name (default: `default`) |
 | `--home <path>` | Parent directory for repos |
 | `--mode <mode>` | `single-repo` or `multi-repo` (default: `multi-repo`) |
-| `--ext <list>` | Comma-separated extensions: `sys,it,dev,stream` |
+| `--ext <list>` | Comma-separated extensions: `sys,it,dev,stream,repo-maintainer` |
 | `--prefix <name>` | Repo naming prefix (e.g., `myorg`) |
 | `--provider <name>` | Remote provider for auto-push (`github`, `gitea`, or URL) |
 | `--from <git-url>` | Clone the URL into the target repo instead of init (#936) |

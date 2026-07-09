@@ -775,7 +775,7 @@ describe('discover — native-release vs plugin packaging routing (#1598)', () =
     writeSkill(
       'flow-release',
       'sdlc-complete',
-      `---\nname: flow-release\ndescription: Config-driven release orchestration — reads .aiwg/release.config and walks the project's declared gates (local build, CI green, doc-sync, changelog, README, release entry, post-release housekeeping)\n---\n\n## Triggers\n\n- "run the release"\n- "release prep"\n- "cut a release"\n`,
+      `---\nname: flow-release\ndescription: Config-driven release orchestration — reads .aiwg/release.config plus optional .aiwg/releases/<plan-id> sidecars and walks the selected release plan's gates\n---\n\n## Triggers\n\n- "run the release"\n- "release prep"\n- "cut a release"\n`,
     );
     const s = vi.spyOn(console, 'log').mockImplementation(() => {});
     const e = vi.spyOn(console, 'error').mockImplementation(() => {});

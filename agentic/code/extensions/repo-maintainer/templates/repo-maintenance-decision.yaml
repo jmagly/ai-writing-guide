@@ -1,0 +1,26 @@
+apiVersion: repo-maintainer.ops.aiwg.io/v1
+kind: RepoMaintenanceDecision
+metadata:
+  name: "{decision-id}"
+spec:
+  target:
+    provider: github
+    repository: "{owner}/{repo}"
+    remote: "{remote-name-or-local}"
+  actor:
+    login: "{actor-login}"
+    detectedTier: collaborator
+    overrideSource: "none"
+  intent:
+    action: close
+    minimumTier: maintainer
+  threatAssessment:
+    surface: issue
+    verdict: safe
+    signals: []
+  outcome:
+    mode: degraded
+    effectiveAction: recommendation-comment
+    reason: "{policy-or-permission-reason}"
+  evidence:
+    references: []

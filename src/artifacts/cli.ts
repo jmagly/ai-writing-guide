@@ -417,17 +417,20 @@ async function handleBuild(args: string[]): Promise<void> {
   loadGlobalGraphConfigs();
 
   let jsonBuilt = false;
+  let projectGraphBuilt = false;
   if (graph) {
     // --graph X: build the JSON graph if X is one; otherwise X may be a
     // research-corpus markdown view, rendered below.
     if (graph in GRAPH_CONFIGS) {
       await buildIndex(cwd, { force, verbose, scope, graph, explicit: true });
       jsonBuilt = true;
+      projectGraphBuilt = graph === 'project';
     }
   } else if (all) {
     // Build all known graphs — user asked for everything, but don't hard-error on missing dirs
     for (const [name] of orderedGraphEntries(Object.entries(GRAPH_CONFIGS))) {
       await buildIndex(cwd, { force, verbose, graph: name, explicit: false });
+      if (name === 'project') projectGraphBuilt = true;
     }
     jsonBuilt = true;
   } else {
@@ -435,6 +438,7 @@ async function handleBuild(args: string[]): Promise<void> {
     for (const [name, config] of orderedGraphEntries(Object.entries(GRAPH_CONFIGS))) {
       if (config.defaultBuild) {
         await buildIndex(cwd, { force, verbose, scope: name === Object.keys(GRAPH_CONFIGS)[0] ? scope : undefined, graph: name, explicit: false });
+        if (name === 'project') projectGraphBuilt = true;
       }
     }
     jsonBuilt = true;
@@ -467,6 +471,23 @@ async function handleBuild(args: string[]): Promise<void> {
   // Mirror build.py: an unsupported view name in the manifest fails the build.
   if (viewResults.some((r) => r.status === 'unsupported')) {
     process.exit(1);
+  }
+
+  if (projectGraphBuilt) {
+    await syncProjectFortemiCoreCacheAfterBuild(cwd, verbose);
+  }
+}
+
+async function syncProjectFortemiCoreCacheAfterBuild(cwd: string, verbose: boolean): Promise<void> {
+  try {
+    const { syncFortemiCoreIndex } = await import('./fortemi-core-sync.js');
+    const manifest = syncFortemiCoreIndex(cwd, { graph: 'project' });
+    if (verbose) {
+      console.log(`Fortemi Core project sync: ${manifest.status}, ${manifest.item_count} item(s) → ${manifest.export_path}`);
+    }
+  } catch (err) {
+    console.error(`Warning: Fortemi Core project sync failed: ${err instanceof Error ? err.message : String(err)}`);
+    console.error('Run `aiwg index sync --graph project` before using Fortemi-backed `aiwg discover` or `aiwg show` for project-local artifacts.');
   }
 }
 

@@ -3,7 +3,8 @@
 # thin wrapper that points here; this playbook is the source of truth for the
 # release gate sequence. Detailed per-gate config still lives in the project's
 # `.aiwg/release.config` (which flow-release already reads) — this playbook
-# encodes the gate SEQUENCE, dependencies, hard-stops, and the human gate.
+# encodes the release-plan resolution point, gate SEQUENCE, dependencies,
+# hard-stops, and the human gate.
 #
 # Schema-fit note (#1539): `inventory`/`targets` are now optional for
 # non-iterating Flows. SDLC flows act on a single project context rather than
@@ -19,9 +20,21 @@ metadata:
 spec:
   vars:
     config_path: .aiwg/release.config
+    release_plan_dir: .aiwg/releases
   steps:
+    - id: resolve-release-plan
+      capability: release-plan-resolve
+      inputs:
+        - name: release_plan_dir
+          value: .aiwg/releases
+        - name: selected_plan_id
+          value: "{plan}"
+        - name: project_delivery_mode
+          value: "{project_delivery_mode}"
+
     - id: local-build-test
       capability: release-build-gate
+      depends_on: [resolve-release-plan]
       inputs:
         - name: gate
           value: local-build-test
@@ -34,7 +47,7 @@ spec:
 
     - id: ci-green
       capability: release-ci-poll
-      depends_on: [local-build-test]
+      depends_on: [resolve-release-plan, local-build-test]
       inputs:
         - name: hard_stop
           value: true

@@ -1,0 +1,22 @@
+{
+  "id": "repo-maintainer",
+  "type": "addon",
+  "name": "Repo Maintainer Extension",
+  "version": "1.0.0",
+  "description": "Role-aware repository maintenance for triage, labeling, closure, merge, and release workflows",
+  "core": false,
+  "autoInstall": false,
+  "requires": ["ops-complete"],
+  "entry": {
+    "rules": "rules/",
+    "templates": "templates/",
+    "skills": "skills/",
+    "schemas": "schemas/"
+  },
+  "provides": {
+    "rules": ["repo-maintainer-role-gating"],
+    "templates": ["repo-maintenance-handoff", "repo-maintenance-decision"],
+    "skills": ["repo-maintainer"],
+    "schemas": ["repo-maintenance-decision.schema"]
+  }
+}

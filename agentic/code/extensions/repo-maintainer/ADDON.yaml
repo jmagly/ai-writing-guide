@@ -1,0 +1,14 @@
+apiVersion: ops.aiwg.io/v1
+kind: OpsExtension
+metadata:
+  name: repo-maintainer
+  labels:
+    domain: repository-operations
+spec:
+  extends: ops-complete
+  description: "Role-aware repository maintenance across GitHub, Gitea, and local issue stores"
+  version: "1.0.0"
+  capabilities: auto-discover
+  kinds:
+    - name: RepoMaintenanceDecision
+      schema: schemas/repo-maintenance-decision.schema.json

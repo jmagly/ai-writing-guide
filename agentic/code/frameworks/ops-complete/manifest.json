@@ -52,6 +52,11 @@
       "path": "agentic/code/extensions/sec",
       "type": "extension",
       "requires": ["ops-complete"]
+    },
+    "repo-maintainer": {
+      "path": "agentic/code/extensions/repo-maintainer",
+      "type": "extension",
+      "requires": ["ops-complete"]
     }
   }
 }

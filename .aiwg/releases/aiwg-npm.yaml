@@ -1,0 +1,63 @@
+version: 1
+id: aiwg-npm
+name: AIWG npm package release
+target:
+  type: package
+  name: aiwg
+  package: aiwg
+delivery:
+  mode: tag-only
+  overrides_project_default: true
+  notes: Release publication is driven by signed tags and release workflows, not by the repository's PR-required delivery default.
+build:
+  commands:
+    - id: typecheck
+      run: npm run typecheck
+      expect_exit: 0
+    - id: unit-tests
+      run: npm test
+      expect_exit: 0
+    - id: cli-build
+      run: npm run build:cli
+      expect_exit: 0
+validation_gates:
+  - id: metadata
+    run: npm run validate-metadata
+    expect_exit: 0
+  - id: fortemi-index
+    run: npm run ci:fortemi-index
+    expect_exit: 0
+publish_targets:
+  - type: npm
+    package: aiwg
+    dist_tags:
+      stable: latest
+      rc: next
+      beta: next
+      alpha: next
+      nightly: nightly
+  - type: gitea-release
+    remote: origin
+    owner: roctinam
+    repo: aiwg
+artifacts:
+  required:
+    - CHANGELOG.md
+    - docs/releases/v{version}-announcement.md
+signing:
+  tags:
+    required: true
+    key: FE9272F0BC5781E1DE77FAAA719AB63879E84CE8
+  release_assets:
+    required: true
+sbom:
+  required: true
+provenance:
+  required: true
+docs:
+  changelog_required: true
+  release_notes_required: true
+post_release_verification:
+  - id: publication-proof
+    run: aiwg show skill release-publication-verify
+    expect_exit: 0

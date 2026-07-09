@@ -169,6 +169,7 @@ const ENUM_RULES: Record<string, readonly string[]> = {
   'delivery.signing.format': ['openpgp', 'ssh', 'x509'],
   'delivery.signing.enforce': ['commits', 'tags', 'all'],
   'remotes.tracker_actor.via': ['tea', 'gh', 'mcp', 'api'],
+  'repo_maintainer.tiers.local': ['collaborator', 'maintainer', 'admin'],
 };
 
 const BOOLEAN_FIELDS = new Set([

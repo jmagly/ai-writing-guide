@@ -155,6 +155,48 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     return createHash("sha256").update(text).digest("hex");
   }
 
+  it("refreshes the project Fortemi Core cache after index build", async () => {
+    const skillDir = path.join(tmp, ".aiwg", "addons", "schema-registry", "skills", "schema-registry");
+    fs.mkdirSync(skillDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(skillDir, "SKILL.md"),
+      [
+        "---",
+        "name: schema-registry",
+        "description: Maintain schema registry artifacts",
+        "---",
+        "# Schema Registry",
+        "",
+        "Maintain schema registry artifacts for project-local bundles.",
+        "",
+      ].join("\n"),
+    );
+
+    const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(tmp);
+    try {
+      await indexCliMain(["build", "--graph", "project"]);
+    } finally {
+      cwdSpy.mockRestore();
+    }
+
+    const status = getFortemiCoreSyncStatus(tmp, "project");
+    expect(status.built).toBe(true);
+    expect(status.stale).toBe(false);
+    expect(status.itemCount).toBeGreaterThan(0);
+    consoleSpy.mockClear();
+
+    await showArtifact(tmp, {
+      typeFilter: ["skill"],
+      name: "schema-registry",
+      json: true,
+      graph: "project",
+      backend: "fortemi-core",
+    });
+    const shown = readConsoleJson();
+    expect(shown.path).toContain("schema-registry");
+    expect(shown.content).toContain("# Schema Registry");
+  });
+
   it("returns parity-ranked discover results from the Fortemi Core cache", async () => {
     const entries = [
       entry({}),

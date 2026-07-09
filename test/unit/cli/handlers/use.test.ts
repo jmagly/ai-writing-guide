@@ -3,6 +3,7 @@
  *
  * Tests the three exported utility functions:
  *   - getAllAddons()  — discovers addon dirs, applies disallow list
+ *   - getAllExtensions() — discovers deployable extension dirs
  *   - isValidAddon() — validates a name against fs + disallow list
  *   - addonPath()    — constructs source path, handles ring alias
  */
@@ -14,8 +15,10 @@ import path from 'path';
 import os from 'os';
 import {
   getAllAddons,
+  getAllExtensions,
   isValidAddon,
   addonPath,
+  extensionPath,
   USE_ALL_DISALLOW,
   useHandler,
   nextStepsFor,
@@ -35,6 +38,17 @@ async function createFakeAddonTree(root: string, addonNames: string[]) {
     await mkdir(path.join(addonsDir, name), { recursive: true });
   }
   return addonsDir;
+}
+
+async function createFakeExtensionTree(root: string, extensionNames: string[]) {
+  const extensionsDir = path.join(root, 'agentic', 'code', 'extensions');
+  await mkdir(extensionsDir, { recursive: true });
+  for (const name of extensionNames) {
+    const dir = path.join(extensionsDir, name);
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, 'manifest.json'), JSON.stringify({ id: name }));
+  }
+  return extensionsDir;
 }
 
 // ---------------------------------------------------------------------------
@@ -104,6 +118,13 @@ describe('addonPath()', () => {
     for (const name of names) {
       expect(addonPath('/root', name)).toBe(`/root/agentic/code/addons/${name}`);
     }
+  });
+});
+
+describe('extensionPath()', () => {
+  it('constructs path from framework root and extension name', () => {
+    const result = extensionPath('/some/root', 'repo-maintainer');
+    expect(result).toBe('/some/root/agentic/code/extensions/repo-maintainer');
   });
 });
 
@@ -179,6 +200,41 @@ describe('getAllAddons()', () => {
 
     // Must find more than the old hardcoded 4
     expect(addons.length).toBeGreaterThan(4);
+  });
+});
+
+describe('getAllExtensions()', () => {
+  let tmpDir: string;
+
+  beforeEach(async () => {
+    tmpDir = path.join(os.tmpdir(), `aiwg-use-ext-test-${Date.now()}`);
+    await mkdir(tmpDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    if (existsSync(tmpDir)) await rm(tmpDir, { recursive: true, force: true });
+  });
+
+  it('returns deployable extension directories that have a manifest', async () => {
+    await createFakeExtensionTree(tmpDir, ['sys', 'repo-maintainer']);
+    const extensions = await getAllExtensions(tmpDir);
+    expect(extensions).toContain('sys');
+    expect(extensions).toContain('repo-maintainer');
+  });
+
+  it('skips extension directories without a manifest', async () => {
+    const extensionsDir = await createFakeExtensionTree(tmpDir, ['repo-maintainer']);
+    await mkdir(path.join(extensionsDir, 'scratch'), { recursive: true });
+
+    const extensions = await getAllExtensions(tmpDir);
+    expect(extensions).toContain('repo-maintainer');
+    expect(extensions).not.toContain('scratch');
+  });
+
+  it('discovers repo-maintainer from the real agentic tree', async () => {
+    const repoRoot = path.resolve(__dirname, '../../../..');
+    const extensions = await getAllExtensions(repoRoot);
+    expect(extensions).toContain('repo-maintainer');
   });
 });
 

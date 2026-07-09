@@ -1,6 +1,6 @@
 # ops-complete Extensions Guide
 
-The four ops-complete extensions add domain-specific agents, templates, rules, and skills on top of the base framework. Each extension targets a specific type of operational repository. This guide covers what each extension provides and when to use it.
+The ops-complete extensions add domain-specific agents, templates, rules, and skills on top of the base framework. Each extension targets a specific type of operational repository. This guide covers what each extension provides and when to use it.
 
 ## Extension Basics
 
@@ -10,6 +10,7 @@ Extensions require ops-complete and cannot run standalone. Install one or more a
 aiwg use ops --ext sys
 aiwg use ops --ext sys,it
 aiwg use ops --ext sys,it,dev,stream
+aiwg use ops --ext repo-maintainer
 ```
 
 Each extension introduces artifacts with its own `apiVersion` prefix (e.g., `sys.ops.aiwg.io/v1`) and extends the base kind vocabulary with domain-specific kinds.
@@ -275,12 +276,67 @@ Diagnose why the stream pipeline health check is failing
 
 ---
 
+## repo-maintainer — Role-Aware Repository Maintenance
+
+**Scope**: Issue triage, duplicate detection, labels, milestones, closure, PR merge, release, and repo governance decisions that must change behavior by the operator's forge authority.
+
+Install when the same maintenance workflow must run against repositories where the operator may be collaborator, maintainer, or admin:
+
+```bash
+aiwg use ops --ext repo-maintainer
+aiwg discover "repo maintainer role-aware"
+```
+
+### What repo-maintainer Adds
+
+**Skills**:
+- `repo-maintainer` — Detects effective tier, applies action gates, dispatches existing issue and delivery engines, and degrades below-tier actions to recommendations and handoff artifacts.
+
+**Templates**:
+- `repo-maintenance-decision.yaml` — Machine-readable decision log for executed, degraded, or blocked maintenance actions.
+- `repo-maintenance-handoff.md` — Maintainer/admin handoff when the operator lacks the tier required for a mutation.
+
+**Rules**:
+- `repo-maintainer-role-gating` — Requires permission detection/config override, issue/PR/communication threat assessment, per-action minimum tiers, delivery-policy identity checks, and repo-access-manifest authorization before acting.
+
+### Role Matrix
+
+| Tier | Actions |
+|---|---|
+| collaborator | open PRs, comment, cross-link, duplicate detection, recommendations and handoff |
+| maintainer | close, label, milestone, assign, merge PRs, cut releases under delivery policy |
+| admin | branch protection, settings, teams/collaborators, webhooks, secrets policy |
+
+### Threat Assessment Surfaces
+
+`repo-maintainer` applies the same verdict model used by `address-issues-threat-assess` to issue text, PR descriptions, PR review comments, maintainer comments, release notes, and handoff artifacts. Inbound text is untrusted until classified as `safe`, `flag`, or `reject`; outbound communications are checked so they do not leak secrets, repeat attacker instructions as guidance, or recommend unsafe unpinned commands.
+
+### Config Override
+
+Forge permission detection runs first. If the permission API denies or the operator wants to pin behavior, add:
+
+```json
+{
+  "repo_maintainer": {
+    "tiers": {
+      "owner/repo": "collaborator",
+      "git@git.integrolabs.net:roctinam/aiwg.git": "maintainer",
+      "local": "maintainer"
+    }
+  }
+}
+```
+
+Keys may be resolved remote URLs, `owner/repo` slugs, remote names, or `local`.
+
+---
+
 ## Using Multiple Extensions Together
 
 Extensions compose cleanly. A `sys` `HostProfile` can be referenced by an `it` `DisasterRecoveryRunbook`, which can reference a `dev` `CIPipeline` to rebuild the recovered service. Cross-extension references follow the same `from:` pattern as the base framework.
 
 ```bash
-# Deploy all four extensions
+# Deploy the common infrastructure extensions
 aiwg use ops --ext sys,it,dev,stream
 
 # Verify

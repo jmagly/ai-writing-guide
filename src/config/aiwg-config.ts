@@ -140,6 +140,17 @@ export interface ResolvedRemotes {
   secondary: SecondaryRemote[];
 }
 
+export type RepoMaintainerTier = 'collaborator' | 'maintainer' | 'admin';
+
+/**
+ * Role-aware repository maintenance overrides. Keys may be remote URLs,
+ * owner/repo slugs, remote names, or `local`; values pin the effective tier
+ * when forge permission detection is unavailable or intentionally narrowed.
+ */
+export interface RepoMaintainerConfig {
+  tiers?: Record<string, RepoMaintainerTier>;
+}
+
 /**
  * Top-level shape of .aiwg/aiwg.config
  */
@@ -170,6 +181,13 @@ export interface AiwgConfig {
    * @implements #994
    */
   remotes?: RemotesConfig;
+
+  /**
+   * Role-aware repository maintenance configuration. Optional — when absent,
+   * repo-maintainer probes forge permissions and falls back to collaborator.
+   * @implements #1755
+   */
+  repo_maintainer?: RepoMaintainerConfig;
 
   /**
    * Repo control / delivery policy — how AIWG agents are expected to ship code.

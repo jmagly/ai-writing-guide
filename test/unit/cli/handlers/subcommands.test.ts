@@ -335,6 +335,11 @@ describe("Subcommand Handlers", () => {
         const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
         expect(manifest.type).toBe("provider");
         expect(manifest.providerConfig).toEqual({ extends: "claude", displayName: "custom-provider" });
+        const fortemiManifestPath = path.join(tmpDir, ".aiwg", ".index", "fortemi-core", "project", "manifest.json");
+        const fortemiManifest = JSON.parse(fs.readFileSync(fortemiManifestPath, "utf-8"));
+        expect(fortemiManifest.backend).toBe("fortemi-core");
+        expect(fortemiManifest.graph).toBe("project");
+        expect(fortemiManifest.item_count).toBeGreaterThan(0);
       } finally {
         logSpy.mockRestore();
         fs.rmSync(tmpDir, { recursive: true, force: true });
