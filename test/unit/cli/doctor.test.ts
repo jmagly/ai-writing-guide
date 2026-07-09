@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -473,6 +473,16 @@ describe('tools/cli/doctor.mjs — agent-def size ceiling (#1587)', () => {
     const ci = readFileSync(resolve(__dirname, '../../../.gitea/workflows/ci.yml'), 'utf-8');
     expect(pkg.scripts['lint:agent-sizes']).toBe('node tools/lint/agent-def-sizes.mjs');
     expect(ci).toContain('npm run lint:agent-sizes');
+  });
+
+  it('guards aiwg-steward as a 12 KB Tier-1 routing core (#1661)', () => {
+    const lint = readFileSync(resolve(__dirname, '../../../tools/lint/agent-def-sizes.mjs'), 'utf-8');
+    expect(lint).toContain('STEWARD_AGENT_TARGET_BYTES = 12 * 1024');
+    expect(lint).toContain('STEWARD_AGENT_TARGET_PATHS');
+    expect(lint).toContain('agentic/code/addons/aiwg-utils/agents/aiwg-steward.md');
+    expect(lint).toContain('agentic/code/agents/personas/aiwg-steward.md');
+    expect(lint).toContain('stewardTargetViolations');
+    expect(lint).toContain('Tier-1 routing core');
   });
 });
 

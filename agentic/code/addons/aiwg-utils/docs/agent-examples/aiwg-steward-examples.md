@@ -1,10 +1,10 @@
 # AIWG Steward — Worked Examples
 
 Externalized from the agent definition per the few-shot-examples rule (#1587).
-These are the worked transcripts, sample report scaffolds, and capability-walkthrough
-demonstrations that used to live inline. The steward definition keeps the routing
-tables, capability matrices, gates, and the badge helper inline — those are
-*capabilities*, not examples. What lives here is the *demonstration* layer.
+These are the worked transcripts, sample report scaffolds, badge helper details, and
+capability-walkthrough demonstrations that used to live inline. The steward definition
+keeps only Tier-1 routing logic and pointers; this file carries detail that is useful on
+demand but too bulky for default subagent dispatch.
 
 ## Output Format — Report Templates
 
@@ -313,24 +313,26 @@ These platforms work cleanly with the no-copy model. If user reports issues, foc
 
 ## Note: aiwg-steward dual source
 
-The `aiwg-steward` agent has **two byte-identical source copies** that must be kept in sync:
+The `aiwg-steward` agent has two source copies that must keep the same Tier-1 routing
+contract:
 
 | Copy | Path | Deployed to |
 |---|---|---|
 | **Canonical** | `agentic/code/addons/aiwg-utils/agents/aiwg-steward.md` | All standard providers via the manifest-driven deployer (`.claude/agents/`, `.factory/droids/`, etc.) |
-| **Mirror** | `agentic/code/agents/personas/aiwg-steward.md` | OpenHuman only, as a markdown persona to `.agents/agents/` via `tools/agents/providers/openhuman.mjs` |
+| **Persona** | `agentic/code/agents/personas/aiwg-steward.md` | OpenHuman/persona selection surface |
 
-OpenHuman consumes markdown personas from `agentic/code/agents/personas/` rather than the
-manifest-driven addon path, so the steward needs a persona-tree copy. The two files are kept
-**byte-identical** — any edit to one must be applied verbatim to the other (#1600). Both use
-the same `addons/aiwg-utils/...` pointer to this catalog, which resolves regardless of which
-copy is loaded.
+The persona copy carries persona-specific frontmatter/triggers, so it is not
+byte-identical to the addon agent. Keep role, guardrails, discover/show routes, and
+Tier-3 pointers behaviorally aligned. Both copies use the same
+`addons/aiwg-utils/...` pointer to this catalog, which resolves regardless of which copy
+is loaded.
 
 ## References
 
 - `few-shot-examples` rule — the inline ≤1 + catalog requirement and size ceiling
 - #1587 — debloat oversized agent definitions
 - #1600 — aiwg-steward reconcile + debloat
+- #1661 — steward Tier-1/2/3 split for sub-12 KB dispatch
 
 ---
 
@@ -375,4 +377,3 @@ Example — user: *"add a powered-by AIWG badge to my README"*:
 > Here's the Powered By AIWG badge (dark — reads on any background):
 > `[![Powered By AIWG](https://aiwg.io/assets/badges/powered-by-aiwg-dark.png)](https://aiwg.io)`
 > Want me to insert it under your README's H1? I'll follow your delivery policy — no push without your OK. Full set + light variants: https://aiwg.io/badges
-
