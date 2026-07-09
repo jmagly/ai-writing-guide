@@ -642,6 +642,51 @@ describe("Subcommand Handlers", () => {
     });
   });
 
+  describe("newBundleHandler", () => {
+    it("syncs the Fortemi Core project cache before claiming immediate discovery", async () => {
+      const fs = require("node:fs");
+      const path = require("node:path");
+      const os = require("node:os");
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "aiwg-new-bundle-"));
+      const originalXdgDataHome = process.env.XDG_DATA_HOME;
+      process.env.XDG_DATA_HOME = path.join(tmpDir, "xdg-data");
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+      try {
+        mockContext = {
+          ...mockContext,
+          cwd: tmpDir,
+          args: ["fortemi-rulepack", "--starter", "rule"],
+          rawArgs: ["new-bundle", "fortemi-rulepack", "--starter", "rule"],
+        };
+
+        const result = await newBundleHandler.execute(mockContext);
+
+        expect(result.exitCode).toBe(0);
+        expect(
+          fs.existsSync(
+            path.join(
+              tmpDir,
+              ".aiwg",
+              ".index",
+              "fortemi-core",
+              "project",
+              "manifest.json",
+            ),
+          ),
+        ).toBe(true);
+        expect(logSpy.mock.calls.flat().join("\n")).toContain(
+          'Discoverable now via:  aiwg discover "fortemi-rulepack"',
+        );
+      } finally {
+        logSpy.mockRestore();
+        if (originalXdgDataHome === undefined) delete process.env.XDG_DATA_HOME;
+        else process.env.XDG_DATA_HOME = originalXdgDataHome;
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      }
+    });
+  });
+
   describe("subcommandHandlers array", () => {
     it("should export all subcommand handlers with correct IDs", () => {
       expect(subcommandHandlers).toHaveLength(33);
