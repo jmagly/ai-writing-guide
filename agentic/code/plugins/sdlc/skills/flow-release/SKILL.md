@@ -14,7 +14,7 @@ triggers:
   - "run the release flow"
   - "run release flow"
 commandHint:
-  argumentHint: '<version> [--channel <stable|rc|beta|alpha|nightly>] [--dry-run] [--skip-uat] [--no-mirror] [--config <path>] [--guidance "text"]'
+  argumentHint: '<version> [--plan <id>] [--channel <stable|rc|beta|alpha|nightly>] [--dry-run] [--skip-uat] [--no-mirror] [--config <path>] [--guidance "text"]'
   allowedTools: 'Task, Read, Write, Edit, Bash, Glob, Grep, mcp__git-gitea__*'
   model: opus
   category: sdlc-orchestration
@@ -79,6 +79,7 @@ main project config:
 .aiwg/release.config
 .aiwg/releases/<plan-id>.json
 .aiwg/releases/<plan-id>.yaml
+.aiwg/releases/<plan-id>.yml
 ```
 
 Use sidecars when one repository has independent release tracks, such as an npm
@@ -287,7 +288,7 @@ That config IS the AIWG release checklist — what was previously prose in CLAUD
 - Schema: `agentic/code/frameworks/sdlc-complete/schemas/flows/release-config.yaml`
 - Release plan schema: `agentic/code/frameworks/sdlc-complete/schemas/flows/release-plan.schema.yaml`
 - Config: `.aiwg/release.config` (per project)
-- Release plan sidecars: `.aiwg/releases/<plan-id>.yaml` or `.json`
+- Release plan sidecars: `.aiwg/releases/<plan-id>.yaml`, `.yml`, or `.json`
 - Rules: `versioning`, `no-attribution`, `ci-green-before-done`, `delivery-policy`, `anti-laziness`
 - Skills: `doc-sync` (called by gate 3), `release-publication-verify` (post-tag proof before closing release issues), `aiwg-pr` (when delivery.mode is pr-required for release prep), `aiwg-issue` (filing release-blocker issues)
 - Doc: CLAUDE.md "Release Documentation Requirements" + "Release Checklist"

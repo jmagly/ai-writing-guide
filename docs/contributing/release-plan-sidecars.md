@@ -12,6 +12,7 @@ Store plans beside the main AIWG project config:
 .aiwg/release.config
 .aiwg/releases/<plan-id>.json
 .aiwg/releases/<plan-id>.yaml
+.aiwg/releases/<plan-id>.yml
 ```
 
 The schema is

@@ -4,6 +4,7 @@
 #
 #   .aiwg/releases/<plan-id>.json
 #   .aiwg/releases/<plan-id>.yaml
+#   .aiwg/releases/<plan-id>.yml
 #
 # A selected sidecar is authoritative for release/publish behavior and overrides
 # broad project delivery defaults where they conflict.
