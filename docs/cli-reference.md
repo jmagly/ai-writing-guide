@@ -4240,6 +4240,72 @@ aiwg command-log --scope global --limit 50
 
 ---
 
+### skill-usage
+
+Report the optional local skill, agent, and command usage stream. This is off by
+default and records CLI-derived utilization such as `aiwg run skill <name>`,
+`aiwg run agent <name>`, `aiwg show skill|agent <name>`, `discover`, and
+top-level commands. It can also ingest a targeted Claude Code JSONL transcript
+when the operator points it at a specific file.
+
+```bash
+aiwg skill-usage [--json] [--scope project|global|all] [--limit N] [--suggest-for "query"]
+aiwg skill-usage ingest-transcript <path> --provider claude-code [--project-root <path>] [--dry-run] [--json]
+```
+
+**Enable logging:**
+
+```bash
+# Project-local store only
+aiwg config set --project telemetry.skill_usage.enabled true
+aiwg config set --project telemetry.skill_usage.scopes project
+
+# Project + operator-global stores
+aiwg config set --project telemetry.skill_usage.scopes project,global
+
+# One invocation or shell session override
+AIWG_SKILL_USAGE=project aiwg run skill issue-audit
+AIWG_SKILL_USAGE=global aiwg show agent security-auditor
+AIWG_SKILL_USAGE=both aiwg discover "issue triage"
+AIWG_SKILL_USAGE=off aiwg doctor
+```
+
+**Compatibility:** `telemetry.skill_usage.*` is the preferred switch. Existing
+`command_log.*` opt-ins also enable skill-usage events until the command-log
+compatibility path is retired.
+
+**Stores:**
+
+- Project: `.aiwg/telemetry/skill-usage.jsonl`
+- Global: `$XDG_STATE_HOME/aiwg/skill-usage.jsonl` or `~/.local/state/aiwg/skill-usage.jsonl`
+
+**Report model:** JSON output includes `summary`, `heatmap`, `cold_spots`, and
+`suggestions`. The heatmap buckets each artifact by frequency and recency.
+Cold spots are local bundled skills with no usage events. Suggestions are
+deterministic under-used skill matches for `--suggest-for`.
+
+**Privacy model:** events include artifact kind/id, action, timestamp, duration,
+outcome, AIWG version, scope, hashed cwd, and hashed project root plus
+project-relative cwd when available. Reports derive counts from those events
+and local skill metadata. Events do not store prompts, stdout/stderr, file
+contents, secrets, full raw argv, chat content, or absolute local paths.
+
+**Bounds:** stores rotate to `.1` when `telemetry.skill_usage.max_bytes`,
+`command_log.max_bytes`, or `AIWG_SKILL_USAGE_MAX_BYTES` is exceeded. The
+default bound is 1 MiB per store.
+
+**Examples:**
+
+```bash
+aiwg skill-usage
+aiwg skill-usage --json
+aiwg skill-usage --scope project --limit 50
+aiwg skill-usage --suggest-for "issue audit"
+aiwg skill-usage ingest-transcript ~/.claude/projects/example/session.jsonl --provider claude-code --project-root .
+```
+
+---
+
 ### memory
 
 Storage operations on the AIWG memory subsystem. Routes through `resolveStorage('memory')`. Used by `memory-ingest` / `memory-lint` / `memory-log-append` / `memory-query-capture` skills (#966).

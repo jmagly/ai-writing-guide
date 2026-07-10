@@ -125,6 +125,7 @@ import { repoAccessHandler, repoAccessHandlers } from './repo-access.js';
 import { issueHandler, issueAuditHandler } from './issues.js';
 import { cockpitHandler } from './cockpit.js';
 import { commandLogHandler } from './command-log.js';
+import { skillUsageHandler } from './skill-usage.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -176,6 +177,7 @@ export {
   storageHandler,
   activityLogHandler,
   commandLogHandler,
+  skillUsageHandler,
   kbHandler,
   memoryHandler,
   reflectionsHandler,
@@ -383,6 +385,9 @@ export const allHandlers: CommandHandler[] = [
 
   // Command invocation log (#1614)
   commandLogHandler,
+
+  // Skill usage telemetry (#1649)
+  skillUsageHandler,
 
   // Knowledge Base (#934, #965)
   kbHandler,

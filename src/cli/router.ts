@@ -22,6 +22,7 @@ import { tryExecuteCliExtension } from './cli-extension-loader.js';
 import * as ui from './ui.js';
 import { maybeCelebrateMilestone } from '../community/milestones.js';
 import { maybeAppendCommandLog } from './command-log.js';
+import { maybeAppendSkillUsage } from './skill-usage.js';
 
 // Cached loaded registry
 let cachedRegistry: LoadedRegistry | null = null;
@@ -279,8 +280,8 @@ async function logCommandInvocation(input: {
   started: bigint;
   exitStatus: number;
 }): Promise<void> {
+  const durationMs = Number(process.hrtime.bigint() - input.started) / 1_000_000;
   try {
-    const durationMs = Number(process.hrtime.bigint() - input.started) / 1_000_000;
     await maybeAppendCommandLog({
       command: input.command,
       args: input.args,
@@ -292,6 +293,20 @@ async function logCommandInvocation(input: {
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     ui.warn(`command-log append failed: ${msg}`);
+  }
+
+  try {
+    await maybeAppendSkillUsage({
+      command: input.command,
+      args: input.args,
+      cwd: input.cwd,
+      frameworkRoot: input.frameworkRoot,
+      durationMs,
+      exitStatus: input.exitStatus,
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    ui.warn(`skill-usage append failed: ${msg}`);
   }
 }
 

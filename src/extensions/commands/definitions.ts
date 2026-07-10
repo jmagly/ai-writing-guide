@@ -3029,6 +3029,41 @@ export const commandLogCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const skillUsageCommand: Extension = {
+  id: 'skill-usage',
+  type: 'skill',
+  name: 'Skill Usage',
+  description: 'Report opt-in local skill, agent, and command utilization with project/global scope summaries and JSON output',
+  version: '1.0.0',
+  capabilities: ['cli', 'skill-usage', 'telemetry', 'analysis', 'self-maintenance'],
+  keywords: ['skill', 'agent', 'usage', 'telemetry', 'analysis', 'heatmap', 'invocation'],
+  category: 'utility',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['skill usage', 'show skill usage', 'agent usage analysis', 'which aiwg skills are used'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '[--json] [--scope project|global|all] [--limit N] [--suggest-for "query"] | ingest-transcript <path> --provider claude-code [--project-root <path>] [--dry-run] [--json]',
+      allowedTools: ['Bash', 'Read'],
+      executionSteps: [
+        'Read project and/or global skill-usage JSONL stores',
+        'Optionally parse a targeted Claude Code JSONL transcript for structural skill/agent invocations',
+        'Summarize artifact frequency, recency heatmap, cold spots, failures, actions, and recent usage',
+        'Suggest relevant under-used skills when --suggest-for is provided',
+        'Print a human report or JSON for automation',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Storage Commands
 
 export const storageCommand: Extension = {
@@ -3440,6 +3475,7 @@ export const commandDefinitions: Extension[] = [
   // Activity Log (1)
   activityLogCommand,
   commandLogCommand,
+  skillUsageCommand,
 
   // Knowledge Base (1)
   kbCommand,

@@ -235,6 +235,12 @@ export interface AiwgConfig {
   command_log?: CommandLogConfig;
 
   /**
+   * Local-first telemetry controls. Off by default.
+   * @implements #1649
+   */
+  telemetry?: TelemetryConfig;
+
+  /**
    * Project build policy. Large build workflows consult this before expensive
    * package installs, TypeScript compilation, or web bundle generation.
    * @implements #1692
@@ -253,6 +259,22 @@ export interface CommandLogConfig {
   /** Enable command logging for this project. Defaults to false. */
   enabled?: boolean;
   /** Stores to write. Project store is `.aiwg/telemetry/cli-commands.jsonl`; global is XDG state. */
+  scopes?: Array<'project' | 'global'>;
+  /** Maximum bytes per JSONL store before rotation to `.1`. */
+  max_bytes?: number;
+}
+
+/** Local-first telemetry settings (#1649). */
+export interface TelemetryConfig {
+  /** Skill/agent/command usage tracking. Defaults to disabled. */
+  skill_usage?: SkillUsageConfig;
+}
+
+/** Skill usage telemetry settings (#1649). */
+export interface SkillUsageConfig {
+  /** Enable skill usage tracking for this project. Defaults to false. */
+  enabled?: boolean;
+  /** Stores to write. Project store is `.aiwg/telemetry/skill-usage.jsonl`; global is XDG state. */
   scopes?: Array<'project' | 'global'>;
   /** Maximum bytes per JSONL store before rotation to `.1`. */
   max_bytes?: number;
