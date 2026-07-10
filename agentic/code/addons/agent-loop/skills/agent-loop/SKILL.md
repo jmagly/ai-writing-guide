@@ -69,9 +69,27 @@ Use the internal loop when the user says `agent-loop`, `al`, `ralph`, `loop`, `i
 Run the work visibly in the current assistant session:
 
 1. Establish completion criteria.
-2. Act on the next bounded slice of work.
-3. Verify with the relevant checks.
-4. Adapt and continue until completion, blocker, or the requested iteration cap.
+2. Declare any loop controls required by task criticality: budget ceilings,
+   eval/holdout split, and exploration quota.
+3. Record a hypothesis, expected failure mode, and distinguishing diagnostic
+   before each material change.
+4. Act on the next bounded slice of work.
+5. Verify with the relevant checks.
+6. Adapt with structural variation after flat cycles, then continue until
+   completion, blocker, budget stop, or the requested iteration cap.
+
+For long-running, high-criticality, budgeted, adversarial, or eval-driven loops,
+AIWG treats mechanical evidence as load-bearing and self-report as secondary.
+Relevant controls:
+
+- **Budget stop**: declared wall-clock/token/spend/tool ceilings stop the loop
+  and require a best-output report.
+- **Dosed entropy**: non-improving cycles cannot repeat the same tactic; every
+  declared `K` cycles requires a structural variant or stop.
+- **Holdout isolation**: hidden fixtures or answer keys produce aggregate-only
+  feedback to the optimizer; detailed diagnostics stay in private audit logs.
+- **Experiment log**: hypothesis, expected failure mode, diagnostic, result,
+  and probe/generalization signal survive compaction.
 
 Do not launch detached processes, background sessions, or the Ralph external daemon for generic loop requests.
 

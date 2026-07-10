@@ -61,6 +61,27 @@ You MUST use these CLI commands for all Mission Control operations.
 8. CLEANUP   → Stop session when all missions done or user requests stop
 ```
 
+## LFD Loop Controls
+
+Mission Control missions inherit the AIWG LFD loop contract for long-running,
+budgeted, or eval-driven work:
+
+1. Before dispatch, each mission needs a measurable completion criterion, a
+   mechanical verifier, and declared limits for iterations plus observable
+   wall-clock/token/tool/spend budgets.
+2. Each retry cycle records a hypothesis, expected failure mode,
+   distinguishing diagnostic, and whether the next attempt is a structural
+   variant rather than a repeated local adjustment.
+3. Flat or non-improving cycles consume the exploration quota. Once the quota
+   is exhausted, require a structurally different approach or stop with the
+   current best output.
+4. Budget exhaustion is a terminal condition. Stop the mission, preserve the
+   best output, and report quality-per-1K-token and quality-per-minute when
+   analytics are available.
+5. Eval/holdout missions expose only aggregate score/probe/status or VOID to
+   workers. Holdout answers, detailed lint findings, and private diagnostics
+   stay outside optimizer-readable output.
+
 ## Invocation Patterns
 
 | User Says | You Do |

@@ -1,0 +1,41 @@
+# Issue #1585: LFD loop controls expressed as a declarative Flow playbook.
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: flow-agentloop-lfd-controls
+  labels:
+    category: sdlc-orchestration
+    domain: agent-loop
+spec:
+  vars:
+    task: ""
+    completion_criteria: ""
+    criticality: medium
+    exploration_quota_k: 3
+  steps:
+    - id: declare-loop-controls
+      capability: agentloop-lfd-controls
+      inputs:
+        - { name: task, from: "vars.task" }
+        - { name: completion_criteria, from: "vars.completion_criteria" }
+        - { name: criticality, from: "vars.criticality" }
+        - { name: exploration_quota_k, from: "vars.exploration_quota_k" }
+      outputs:
+        - name: loop_control_plan
+        - name: iteration_experiment_record
+        - name: budget_stop_report
+        - name: baseline_comparison
+        - name: best_output_report
+
+    - id: declare-eval-harness-contract
+      capability: eval-harness-lfd-contract
+      depends_on: [declare-loop-controls]
+      inputs:
+        - { name: harness_manifest, value: {} }
+        - { name: candidate_artifacts, value: [] }
+        - { name: optimizer_visible_context, value: {} }
+        - { name: private_diagnostics_root, value: ".aiwg/private/eval-diagnostics" }
+      outputs:
+        - name: eval_harness_result
+        - name: leakage_audit_report
+        - name: harness_status

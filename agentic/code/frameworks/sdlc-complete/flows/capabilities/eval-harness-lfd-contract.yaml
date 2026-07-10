@@ -1,0 +1,38 @@
+# Issue #1585 capability flow: declare an LFD-style eval harness contract.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: eval-harness-lfd-contract
+  labels:
+    domain: agent-loop
+    issue: "1585"
+    control-model: lfd
+spec:
+  description: >
+    Provide the optional score/lint/probe/status convention for eval-driven
+    autonomous loops. The convention makes the harness a versioned control
+    surface, keeps holdout and lint diagnostics out of optimizer-readable
+    context, and returns only aggregate or VOID-safe feedback to the agent.
+  version: "1.0.0"
+  inputs:
+    - name: harness_manifest
+      type: object
+      required: true
+    - name: candidate_artifacts
+      type: array
+      required: true
+    - name: optimizer_visible_context
+      type: object
+      required: false
+    - name: private_diagnostics_root
+      type: string
+      required: true
+  outputs:
+    - name: eval_harness_result
+      type: object
+    - name: leakage_audit_report
+      type: object
+    - name: harness_status
+      type: object
+  agent: ralph-loop
+  idempotent: false

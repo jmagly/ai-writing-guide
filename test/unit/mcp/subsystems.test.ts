@@ -5,11 +5,24 @@
  * @implements #1322-#1332
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+const { runAiwgCliMock } = vi.hoisted(() => ({
+  runAiwgCliMock: vi.fn(async () => ({ stdout: '{"ok":true}', stderr: "", code: 0 })),
+}));
+
+vi.mock("../../../src/mcp/helpers.mjs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../src/mcp/helpers.mjs")>();
+  return {
+    ...actual,
+    runAiwgCli: runAiwgCliMock,
+  };
+});
+
 // @ts-expect-error — .mjs untyped
 import * as subsystems from "../../../src/mcp/tools/subsystems.mjs";
 
-const { parseToolsets, KNOWN_TOOLSETS } = subsystems as any;
+const { parseToolsets, KNOWN_TOOLSETS, registerOptInToolsets } = subsystems as any;
 
 describe("MCP subsystems — toolset parsing", () => {
   it("empty string returns empty set", () => {
@@ -55,5 +68,52 @@ describe("MCP subsystems — toolset parsing", () => {
     const all = parseToolsets("all");
     expect(all.has("flows")).toBe(true);
     expect(all.has("missions")).toBe(true);
+  });
+
+  it("mc-dispatch forwards LFD budget controls to the CLI", async () => {
+    const tools = new Map<string, any>();
+    const server = {
+      registerTool: vi.fn((name: string, config: any, handler: any) => {
+        tools.set(name, { config, handler });
+      }),
+    };
+
+    registerOptInToolsets(server, new Set(["mc"]));
+
+    await tools.get("mc-dispatch").handler({
+      session_id: "mc-123",
+      objective: "tighten loop controls",
+      completion: "budget-stop report emitted",
+      max_iterations: 7,
+      max_total_tokens: 50_000,
+      max_output_tokens: 12_000,
+      max_tool_calls: 80,
+      max_total_cost: 4.5,
+      max_wall_clock_minutes: 30,
+      exploration_quota: 3,
+    });
+
+    expect(runAiwgCliMock).toHaveBeenCalledWith([
+      "mc",
+      "dispatch",
+      "mc-123",
+      "tighten loop controls",
+      "--completion",
+      "budget-stop report emitted",
+      "--max-iterations",
+      "7",
+      "--max-total-tokens",
+      "50000",
+      "--max-output-tokens",
+      "12000",
+      "--max-tool-calls",
+      "80",
+      "--max-total-cost",
+      "4.5",
+      "--max-wall-clock-minutes",
+      "30",
+      "--exploration-quota",
+      "3",
+    ], { input: undefined });
   });
 });

@@ -101,6 +101,8 @@ export class StateManager {
       config: {
         model: config.model || 'opus',
         budgetPerIteration: config.budgetPerIteration || 2.0,
+        budgetLimits: config.budgetLimits || {},
+        explorationQuota: config.explorationQuota || { enabled: true, k: 3 },
         timeoutMinutes: config.timeoutMinutes || 60,
         mcpConfig: config.mcpConfig || null,
         workingDir: config.workingDir || this.projectRoot,

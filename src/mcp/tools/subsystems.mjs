@@ -412,10 +412,35 @@ function registerMcToolset(server) {
       session_id: z.string().describe('Session id'),
       objective: z.string().describe('Mission objective'),
       completion: z.string().optional().describe('Completion criteria'),
+      max_iterations: z.number().int().positive().optional().describe('Ralph iteration cap'),
+      max_total_tokens: z.number().int().positive().optional().describe('Hard cumulative token ceiling'),
+      max_output_tokens: z.number().int().positive().optional().describe('Hard cumulative output-token ceiling'),
+      max_tool_calls: z.number().int().positive().optional().describe('Hard cumulative tool-call ceiling'),
+      max_total_cost: z.number().positive().optional().describe('Hard cumulative provider-reported spend ceiling'),
+      max_wall_clock_minutes: z.number().positive().optional().describe('Hard cumulative runtime ceiling'),
+      exploration_quota: z.number().int().positive().optional().describe('Require structural variant after this many flat cycles'),
     },
-    buildArgs: ({ session_id, objective, completion }) => {
+    buildArgs: ({
+      session_id,
+      objective,
+      completion,
+      max_iterations,
+      max_total_tokens,
+      max_output_tokens,
+      max_tool_calls,
+      max_total_cost,
+      max_wall_clock_minutes,
+      exploration_quota,
+    }) => {
       const args = [session_id, objective];
       if (completion) args.push('--completion', completion);
+      if (max_iterations) args.push('--max-iterations', String(max_iterations));
+      if (max_total_tokens) args.push('--max-total-tokens', String(max_total_tokens));
+      if (max_output_tokens) args.push('--max-output-tokens', String(max_output_tokens));
+      if (max_tool_calls) args.push('--max-tool-calls', String(max_tool_calls));
+      if (max_total_cost) args.push('--max-total-cost', String(max_total_cost));
+      if (max_wall_clock_minutes) args.push('--max-wall-clock-minutes', String(max_wall_clock_minutes));
+      if (exploration_quota) args.push('--exploration-quota', String(exploration_quota));
       return args;
     },
   });

@@ -346,6 +346,14 @@ For multi-task orchestrations exceeding a single session:
 - Monitor: `aiwg mc watch` or `aiwg mc status`
 - Finish: `aiwg mc stop <id>`
 
+LFD controls apply to long-running Mission Control work: every dispatched
+mission needs a measurable verifier, declared iteration/time/token/tool/spend
+limits where observable, hypothesis-before-change retry notes, structural
+variation after flat cycles, and a budget-exhausted best-output report instead
+of random-walk continuation. Eval/holdout missions expose only aggregate
+score/probe/status or VOID to workers; private answers and lint details stay
+out of optimizer-readable output.
+
 ### Orchestrator Pre-Flight (Long Sessions)
 
 Before starting any orchestration session > 30 minutes:

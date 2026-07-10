@@ -6,8 +6,8 @@ enforcement: medium
 
 **Enforcement Level**: MEDIUM
 **Scope**: Agent loops and iterative refinement
-**Research Basis**: REF-015 Self-Refine
-**Issue**: #168
+**Research Basis**: REF-015 Self-Refine; REF-1398 through REF-1406 LFD control-pattern cluster
+**Issue**: #168, #1585
 
 ## Overview
 
@@ -155,6 +155,52 @@ manual_override:
     require_reason: true
 ```
 
+### Rule 6: Record Hypothesis Before Change
+
+**REQUIRED for autonomous loops with more than one iteration**:
+Before making a new change, record a falsifiable experiment entry. This prevents
+random-walk refinement and makes compaction-safe audit trails possible.
+
+```yaml
+iteration_experiment:
+  iteration: 4
+  hypothesis: "The failing integration test is caused by stale fixture setup, not the API handler."
+  expected_failure_mode: "If wrong, unit tests pass but integration still fails with the same fixture error."
+  distinguishing_diagnostic: "Run the single failing integration test after only fixture setup changes."
+  structural_variant: "fixture-isolation"
+```
+
+The fields MUST be captured before the action they justify. A later summary may
+compress wording, but it must preserve the hypothesis, expected failure mode,
+diagnostic, and result for every material strategy change.
+
+### Rule 7: Stop on Budget Exhaustion With Best-Output Report
+
+When a loop exhausts a declared wall-clock, token, spend, tool-call, or
+iteration budget, it MUST stop and emit a best-output report. Budget exhaustion
+is not a reason to use the final iteration if an earlier iteration scored
+higher.
+
+```yaml
+budget_stop_report:
+  stop_reason: "total_tokens_exhausted"
+  budgets:
+    tokens: { limit: 200000, observed: 199240 }
+    wall_clock_minutes: { limit: 90, observed: 84 }
+    spend_usd: { limit: 15.00, observed: 12.70 }
+  selected_iteration: 5
+  final_iteration: 7
+  best_score: 0.88
+  final_score: 0.81
+  hypothesis_outcomes:
+    - iteration: 5
+      result: "accepted_best"
+  next_recommended_action: "Raise budget only if holdout score remains below threshold after human review."
+```
+
+Rate caps throttle activity; hard budget stops end the loop. The completion
+report must clearly identify which one occurred.
+
 ## Quality Scoring
 
 ### Scoring Dimensions
@@ -168,6 +214,32 @@ Quality score MUST incorporate multiple dimensions:
 | Correctness | 0.25 | Accurate information/behavior |
 | Readability | 0.10 | Clear, well-structured |
 | Efficiency | 0.10 | Appropriate length/complexity |
+
+Eval-driven loops MAY replace these weights with a declared loss function, but
+the declaration must include the target, constraints, instruments, stop
+conditions, and any hidden holdout policy. Self-reported quality is secondary
+to mechanical evidence when both exist.
+
+When an eval harness is declared, score/lint/probe/status results MUST be
+captured as part of the iteration evidence. `score` may influence
+`quality_score`; `lint` may force `VOID`; `probe` records the generalization or
+integrity signal; `status` records budget, burn-rate, and best-iteration
+context. Detailed holdout or lint diagnostics remain outside
+optimizer-readable output and cannot be used as iteration hints.
+
+When a loop declares a random, chance, or random-tool-shortlist baseline, the
+best-output report SHOULD include lift over that baseline. Raw quality,
+quality-per-1K-token, and quality-per-minute are not enough to show progress
+over random-walk behavior when a baseline is available.
+
+```yaml
+baseline_comparison:
+  baseline_type: "random_walk"
+  baseline_quality_score: 0.50
+  quality_lift: 0.30
+  token_efficiency_lift: 0.55
+  speed_efficiency_lift: 0.55
+```
 
 ### Score Calculation
 
@@ -210,6 +282,16 @@ After each iteration, Al MUST:
    ```yaml
    if quality_score > best_tracker.quality_score:
      best_tracker.update(iteration_N)
+   ```
+
+4. **Persist experiment record**
+   ```yaml
+   experiment_record:
+     hypothesis: "<recorded before change>"
+     expected_failure_mode: "<recorded before change>"
+     distinguishing_diagnostic: "<recorded before change>"
+     result: "<observation after validation>"
+     probe_or_generalization_signal: "<dev/probe/holdout aggregate if available>"
    ```
 
 ### Loop Completion
@@ -290,6 +372,10 @@ Before completing an agent loop:
 - [ ] Quality score calculated for each iteration
 - [ ] Best tracker maintained throughout
 - [ ] Selection based on quality, not recency
+- [ ] Hypothesis-before-change fields captured before material changes
+- [ ] Eval harness result captured when score/lint/probe/status instruments are declared
+- [ ] VOID results excluded from best-output selection unless a human override explicitly accepts them
+- [ ] Budget exhaustion, if any, stopped the loop and produced a best-output report
 - [ ] Selection decision logged with rationale
 - [ ] Override option available if needed
 - [ ] Degradation patterns detected
@@ -299,7 +385,10 @@ Before completing an agent loop:
 - @$AIWG_ROOT/agentic/code/addons/ralph/schemas/iteration-analytics.yaml - Iteration tracking
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/research/quality-dimensions.yaml - Quality scoring
 - @.aiwg/research/findings/REF-015-self-refine.md - Research foundation
+- @.aiwg/research/reports/issue-1585-lfd-control-patterns-research-brief.md - LFD control-pattern synthesis
+- @.aiwg/architecture/adr-lfd-control-patterns-for-agent-loops.md - Tiered loop-control ADR
 - #168 - Implementation issue
+- #1585 - LFD control patterns for agent loops
 
 ---
 

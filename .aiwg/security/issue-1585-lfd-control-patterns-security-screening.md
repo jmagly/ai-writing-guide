@@ -2,7 +2,8 @@
 
 **Document Type**: Security Screening / Threat Note  
 **Issue**: `roctinam/aiwg#1585`  
-**Status**: Draft for pre-construction review  
+**Status**: Construction-pass screening recorded; concrete eval-harness helper
+security remains future work
 **Date**: 2026-06-17  
 
 ## Scope
@@ -12,8 +13,9 @@ loops: holdout isolation, VOID-on-violation, budget stop conditions,
 hypothesis-before-change logs, exploration quotas, and mechanical-vs-cooperative
 rule tiering.
 
-It does not approve construction. It identifies security-sensitive constraints
-that implementation must preserve if construction proceeds.
+It records the security-sensitive constraints that the construction pass must
+preserve. This pass implements policy/schema/runtime budget controls and an
+eval-harness contract, but does not build a concrete holdout scorer helper.
 
 ## Assets
 
@@ -97,13 +99,21 @@ test output, checksums, holdout score, or other mechanical evidence.
 
 ## Security Requirements for Construction
 
-- [ ] No holdout answer is stored in optimizer-readable locations.
-- [ ] VOID/lint output does not reveal matching hidden data.
-- [ ] Human-only diagnostic path is documented.
-- [ ] Harness/eval integrity is protected or checked.
-- [ ] Budget observations report uncertainty honestly.
-- [ ] Mechanical gates are explicitly marked as load-bearing under adversarial
+- [x] No holdout answer is stored in optimizer-readable locations by this pass.
+- [x] VOID/lint output requirements avoid revealing matching hidden data in the
+  documented contract.
+- [x] Human-only diagnostic path requirements are documented in the
+  eval-harness contract.
+- [ ] Harness/eval integrity is protected or checked by a concrete runtime
+  helper.
+- [x] Budget observations report uncertainty honestly.
+- [x] Mechanical gates are explicitly marked as load-bearing under adversarial
   or high-criticality conditions.
+
+The remaining unchecked item requires a future eval-harness helper with
+checksum/read-only enforcement. The current pass supplies the contract and loop
+rules, plus runtime budget-stop controls for Ralph external and Mission Control
+dispatch.
 
 ## Open Security Questions
 

@@ -39,6 +39,22 @@ When triggered:
 
 2. **For new background orchestration** — Mission Control has a four-step lifecycle: start → dispatch → **run** → status. Missions stay `queued` until `mc run` launches them as ralph loops; status syncs back to mc.session.json automatically when `mc status` or `mc watch` is called.
 
+   Apply the LFD loop-control contract before dispatching long-running or
+   eval-driven missions:
+
+   - Give each mission a measurable completion criterion and at least one
+     mechanical verifier; self-report is secondary evidence.
+   - Declare hard limits for iterations, wall-clock, token/tool/spend budgets
+     where the surface can observe them. Budget exhaustion stops the mission
+     and emits a best-output report instead of continuing randomly.
+   - Record the pre-change hypothesis, expected failure mode, distinguishing
+     diagnostic, and structural variant for each retry cycle.
+   - After flat/non-improving cycles, require a structurally different approach
+     within the configured exploration quota.
+   - For eval/holdout missions, expose only aggregate score/probe/status or
+     VOID to workers; keep holdout answers and detailed lint diagnostics outside
+     optimizer-readable mission output.
+
    ```bash
    # 1. Start a named session (creates the state file)
    aiwg mc start --name "Sprint 4 Construction"
@@ -46,7 +62,10 @@ When triggered:
    # 2. Dispatch missions (queues them — does NOT execute)
    #    --completion is REQUIRED; `mc run` will skip missions without one.
    #    --max-iterations N caps ralph iterations per mission (default: 10).
-   aiwg mc dispatch <session-id> "Fix auth service" --completion "npm test passes" --priority high --max-iterations 50
+   #    Optional LFD hard stops: --max-total-tokens, --max-output-tokens,
+   #    --max-tool-calls, --max-total-cost, --max-wall-clock-minutes,
+   #    --exploration-quota.
+   aiwg mc dispatch <session-id> "Fix auth service" --completion "npm test passes" --priority high --max-iterations 50 --max-total-tokens 50000 --exploration-quota 3
    aiwg mc dispatch <session-id> "Add pagination" --completion "all list endpoints paginated"
    aiwg mc dispatch <session-id> "Write integration tests" --completion "coverage > 80%" --max-iterations 25
 

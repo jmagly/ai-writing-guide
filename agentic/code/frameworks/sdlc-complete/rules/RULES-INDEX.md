@@ -91,7 +91,7 @@ SDLC rules enforce workflow quality when the SDLC framework is deployed via `aiw
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/provenance-tracking.md
 
 #### tao-loop
-**Summary**: Standardizes Thought > Action > Observation loop across all iterative execution.
+**Summary**: Standardizes Thought > Action > Observation loop across all iterative execution, including LFD-style structural variation after flat cycles.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/tao-loop.md
 
 #### reproducibility-validation
@@ -141,11 +141,11 @@ SDLC rules enforce workflow quality when the SDLC framework is deployed via `aiw
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/few-shot-examples.md
 
 #### best-output-selection
-**Summary**: Non-monotonic output selection — track highest quality across iterations rather than accepting final result.
+**Summary**: Non-monotonic output selection — track highest quality across iterations rather than accepting final result; includes hypothesis-before-change, eval-harness evidence, VOID exclusion, and budget-stop reports for autonomous loops.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/best-output-selection.md
 
 #### reproducibility
-**Summary**: Reproducibility practices for workflows: strict mode (temperature=0, fixed seed), checkpoints at phase boundaries, configuration snapshots.
+**Summary**: Reproducibility practices for workflows: strict mode (temperature=0, fixed seed), checkpoints at phase boundaries, configuration snapshots, holdout isolation, and score/lint/probe/status feedback-channel separation for eval-driven loops.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/reproducibility.md
 
 #### progressive-disclosure
@@ -236,7 +236,7 @@ Rules contributed by installed addons. Load the component index for full rule su
 | **Running tests** | executable-feedback, anti-laziness, reproducibility, reproducibility-validation |
 | **Creating artifacts** | mention-wiring, provenance-tracking, qualified-references, progressive-disclosure, artifact-discovery |
 | **Phase transitions** | hitl-gates, sdlc-orchestration, human-gate-display |
-| **Agent loops** | tao-loop, actionable-feedback, best-output-selection, anti-laziness |
+| **Agent loops** | tao-loop, actionable-feedback, best-output-selection, anti-laziness, reproducibility, eval-harness-lfd-contract |
 | **Agent design** | few-shot-examples, conversable-agent-interface, agent-fallback, thought-protocol |
 | **Documentation** | citation-policy, no-attribution, reasoning-sections, research-metadata |
 | **Security review** | token-security, failure-mitigation |

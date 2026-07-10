@@ -41,6 +41,12 @@ export interface RalphLaunchOptions {
   maxIterations?: number;
   model?: string;
   budget?: number;
+  maxTotalTokens?: number;
+  maxOutputTokens?: number;
+  maxToolCalls?: number;
+  maxTotalCost?: number;
+  maxWallClockMinutes?: number;
+  explorationQuota?: number;
   timeout?: number;
   mcpConfig?: string;
   giteaIssue?: boolean;
@@ -143,6 +149,24 @@ export function buildArgs(options: RalphLaunchOptions): string[] {
   }
   if (options.budget) {
     args.push('--budget', String(options.budget));
+  }
+  if (options.maxTotalTokens) {
+    args.push('--max-total-tokens', String(options.maxTotalTokens));
+  }
+  if (options.maxOutputTokens) {
+    args.push('--max-output-tokens', String(options.maxOutputTokens));
+  }
+  if (options.maxToolCalls) {
+    args.push('--max-tool-calls', String(options.maxToolCalls));
+  }
+  if (options.maxTotalCost) {
+    args.push('--max-total-cost', String(options.maxTotalCost));
+  }
+  if (options.maxWallClockMinutes) {
+    args.push('--max-wall-clock-minutes', String(options.maxWallClockMinutes));
+  }
+  if (options.explorationQuota) {
+    args.push('--exploration-quota', String(options.explorationQuota));
   }
   if (options.timeout) {
     args.push('--timeout', String(options.timeout));

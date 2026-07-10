@@ -281,8 +281,58 @@ test('generateReport() produces markdown', () => {
   assert.ok(report.includes('test-loop-008'));
   assert.ok(report.includes('## Summary'));
   assert.ok(report.includes('## Iteration History'));
+  assert.ok(report.includes('Quality / 1K Tokens'));
+  assert.ok(report.includes('Quality / Minute'));
+  assert.ok(report.includes('Lift vs Random'));
   assert.ok(report.includes('## Quality Trajectory'));
   assert.ok(report.includes('## Recommendations'));
+});
+
+test('baseline comparison records lift over random walk', () => {
+  setup();
+  const analytics = new IterationAnalytics(
+    'test-loop-baseline',
+    'Test task',
+    { storagePath: TEST_DIR }
+  );
+
+  const record = analytics.recordIteration({
+    iteration_number: 1,
+    quality_score: 80,
+    tokens_used: 1000,
+    token_cost_usd: 0.01,
+    tool_calls: 2,
+    execution_time_ms: 60000,
+    verification_status: 'passed',
+    output_snapshot_path: '/path/1',
+    random_walk_baseline: {
+      quality_score: 50,
+      tokens_used: 2000,
+      tool_calls: 5,
+      execution_time_ms: 120000,
+      source: 'synthetic-fixture',
+    },
+  });
+
+  assert.strictEqual(record.baseline_comparison.baseline_type, 'random_walk');
+  assert.strictEqual(record.baseline_comparison.source, 'synthetic-fixture');
+  assert.strictEqual(record.baseline_comparison.quality_lift, 30);
+  assert.strictEqual(record.baseline_comparison.quality_lift_pct, 0.6);
+  assert.strictEqual(record.baseline_comparison.token_efficiency_lift, 55);
+  assert.strictEqual(record.baseline_comparison.speed_efficiency_lift, 55);
+  assert.strictEqual(record.baseline_comparison.tool_call_savings, 3);
+
+  const summary = analytics.generateSummary();
+  assert.strictEqual(summary.baseline_comparison.count, 1);
+  assert.strictEqual(summary.baseline_comparison.best_quality_lift, 30);
+
+  const report = analytics.generateReport();
+  assert.ok(report.includes('Best Lift Over Random Baseline'));
+  assert.ok(report.includes('Best Token-Efficiency Lift Over Random Baseline'));
+  assert.ok(report.includes('Best Speed-Efficiency Lift Over Random Baseline'));
+  assert.ok(report.includes('Token Lift vs Random'));
+  assert.ok(report.includes('Speed Lift vs Random'));
+  assert.ok(report.includes('| 1 | 80.0 | +0.0 | 1000 | 80.00 | 80.00 | 30.00 | 55.00 | 55.00 |'));
 });
 
 // Test: Export
@@ -577,6 +627,8 @@ try {
     assert.ok(report.includes('# Ralph Loop Analytics'));
     assert.ok(report.includes('test-loop-008'));
     assert.ok(report.includes('## Summary'));
+    assert.ok(report.includes('Quality / 1K Tokens'));
+    assert.ok(report.includes('Quality / Minute'));
   });
 
   test('export() creates both JSON and Markdown files', () => {
@@ -626,6 +678,129 @@ try {
 
     assert.strictEqual(loaded.loopId, 'test-loop-010');
     assert.strictEqual(loaded.iterations.length, 1);
+  });
+
+  test('checkBudgetLimits() detects hard total token exhaustion', () => {
+    setup();
+    const analytics = new IterationAnalytics(
+      'test-loop-011',
+      'Budgeted task',
+      {
+        storagePath: TEST_DIR,
+        budgetLimits: { total_tokens: 1500 },
+      }
+    );
+
+    analytics.recordIteration({
+      iteration_number: 1,
+      quality_score: 70,
+      tokens_used: 1000,
+      token_cost_usd: 0.01,
+      execution_time_ms: 5000,
+      verification_status: 'passed',
+      output_snapshot_path: '/path/1',
+    });
+    analytics.recordIteration({
+      iteration_number: 2,
+      quality_score: 80,
+      tokens_used: 600,
+      token_cost_usd: 0.01,
+      execution_time_ms: 5000,
+      verification_status: 'passed',
+      output_snapshot_path: '/path/2',
+    });
+
+    const decision = analytics.checkBudgetLimits();
+    assert.strictEqual(decision.exhausted, true);
+    assert.strictEqual(decision.trigger, 'total_tokens_exhausted');
+
+    const report = analytics.generateBudgetStopReport(decision.trigger);
+    assert.strictEqual(report.stop_reason, 'total_tokens_exhausted');
+    assert.strictEqual(report.selected_iteration, 2);
+    assert.strictEqual(report.budgets.observed.total_tokens, 1600);
+  });
+
+  test('checkBudgetLimits() uses schema stop reason names', () => {
+    setup();
+    const spendAnalytics = new IterationAnalytics(
+      'test-loop-011b',
+      'Spend task',
+      {
+        storagePath: TEST_DIR,
+        budgetLimits: { spend_usd: 0.01 },
+      }
+    );
+
+    spendAnalytics.recordIteration({
+      iteration_number: 1,
+      quality_score: 70,
+      tokens_used: 1000,
+      token_cost_usd: 0.02,
+      execution_time_ms: 5000,
+      verification_status: 'failed',
+      output_snapshot_path: '/path/1',
+    });
+
+    assert.strictEqual(spendAnalytics.checkBudgetLimits().trigger, 'spend_exhausted');
+
+    const timeAnalytics = new IterationAnalytics(
+      'test-loop-011c',
+      'Time task',
+      {
+        storagePath: TEST_DIR,
+        budgetLimits: { wall_clock_minutes: 0.01 },
+      }
+    );
+
+    timeAnalytics.recordIteration({
+      iteration_number: 1,
+      quality_score: 70,
+      tokens_used: 1000,
+      token_cost_usd: 0.01,
+      execution_time_ms: 1000,
+      verification_status: 'failed',
+      output_snapshot_path: '/path/1',
+    });
+
+    assert.strictEqual(timeAnalytics.checkBudgetLimits().trigger, 'wall_clock_exhausted');
+  });
+
+  test('checkExplorationQuota() requires structural variant after flat cycles', () => {
+    setup();
+    const analytics = new IterationAnalytics(
+      'test-loop-012',
+      'Flat task',
+      {
+        storagePath: TEST_DIR,
+        diminishingReturnsThreshold: 0.05,
+        explorationQuota: { enabled: true, k: 2 },
+      }
+    );
+
+    [70, 71, 71.5].forEach((score, index) => {
+      analytics.recordIteration({
+        iteration_number: index + 1,
+        quality_score: score,
+        tokens_used: 1000,
+        token_cost_usd: 0.01,
+        execution_time_ms: 5000,
+        verification_status: 'failed',
+        output_snapshot_path: `/path/${index + 1}`,
+        experiment: {
+          hypothesis: `hypothesis ${index + 1}`,
+          expected_failure_mode: 'same failure',
+          distinguishing_diagnostic: 'run verifier',
+        },
+      });
+    });
+
+    const decision = analytics.checkExplorationQuota();
+    assert.strictEqual(decision.required, true);
+    assert.strictEqual(decision.flat_cycle_count, 2);
+
+    const summary = analytics.generateSummary();
+    assert.strictEqual(summary.structural_variant_required, true);
+    assert.strictEqual(summary.flat_cycle_count, 2);
   });
 
   console.log('\n=== All Tests Passed ===\n');

@@ -2,7 +2,7 @@
 
 **Document Type**: Test Strategy  
 **Issue**: `roctinam/aiwg#1585`  
-**Status**: Draft for pre-construction review  
+**Status**: Construction-pass verification recorded; ADR governance review pending
 **Date**: 2026-06-17  
 **Related Docs**:
 
@@ -39,6 +39,10 @@ workflows, or substituting self-report for mechanical evidence.
 - reproducibility / holdout isolation guidance
 - progress-file / best-output / thought-protocol guidance
 - loop entropy guidance
+- Mission Control and `/aiwg-mission` dispatch guidance
+- Mission Control CLI/runtime pass-through for Ralph external LFD controls
+- MCP `mc-dispatch` pass-through for the same controls
+- first-class MCP `mission-dispatch` pass-through for the same controls
 
 **Verification**:
 
@@ -48,6 +52,8 @@ workflows, or substituting self-report for mechanical evidence.
   - aggregate-only holdout feedback
   - hypothesis-before-change fields
   - stall rule and exploration quota
+  - Mission dispatch budget stops, verifier requirements, and best-output
+    reports
 - Existing routing/docs tests updated where command/skill mirrors include these
   files.
 - Manual review confirms construction docs cite REF-1398 through REF-1406 and
@@ -76,6 +82,14 @@ workflows, or substituting self-report for mechanical evidence.
   stop report.
 - Existing loop without budget configuration behaves as before.
 - Configured budget is carried through compaction/progress files.
+- Declared random/chance baseline is recorded and reported as quality lift,
+  token-efficiency lift, tool-call savings, and speed-efficiency lift.
+- Mission Control stores configured budget/exploration controls on dispatch
+  and forwards them to the Ralph external launcher on run.
+- MCP `mc-dispatch` forwards budget/exploration controls to the CLI argv.
+- MCP `mission-dispatch` forwards budget/exploration controls to the durable
+  Mission Control substrate while preserving the `/aiwg-mission` completion
+  contract.
 
 ### Wave 3: Eval Harness Conventions
 
@@ -85,6 +99,8 @@ workflows, or substituting self-report for mechanical evidence.
 - VOID semantics
 - private diagnostics
 - holdout scoring limits
+- `eval-harness-lfd-contract.yaml` capability flow
+- `EvalHarnessContract` / `EvalHarnessResult` schema definitions
 
 **Required adversarial tests**:
 
@@ -115,16 +131,78 @@ test leakage behavior and control flow, not benchmark model quality.
 
 ## Acceptance Criteria
 
-Construction for issue #1585 should not be considered complete until:
+Construction for issue #1585 should not be considered ready for maintainer
+acceptance until:
 
 - [ ] The ADR is accepted or explicitly superseded.
-- [ ] The implemented docs/rules cross-link the research brief or core REFs.
-- [ ] Tests cover every new parser/schema/helper introduced by runtime support.
+- [x] The implemented docs/rules cross-link the research brief or core REFs.
+- [x] Tests cover every new parser/schema/helper introduced by runtime support.
 - [ ] If VOID semantics are implemented, tests prove optimizer output does not
   reveal the matching holdout/lint detail.
-- [ ] If budget stops are implemented, tests prove stop report generation and
+- [x] If budget stops are implemented, tests prove stop report generation and
   best-output preservation.
-- [ ] Existing test suites relevant to touched files pass.
+- [x] Existing test suites relevant to touched files pass.
+
+The unchecked ADR item is a governance decision, not an implementation failure
+in the current port. The VOID item remains unchecked because this pass defines
+VOID behavior in rules, schema, and capability-flow contracts, but does not add
+a concrete eval-harness runtime helper.
+
+## Current Runtime Verification
+
+The first runtime pass adds deterministic coverage for the external loop's
+observable control points:
+
+- `node tools/ralph-external/iteration-analytics.test.mjs`
+  - verifies hard cumulative token budget detection
+  - verifies budget stop report generation
+  - verifies exploration quota / flat-cycle structural-variant signaling
+  - verifies analytics report visibility for quality per 1K tokens and quality
+    per minute
+  - verifies optional lift over random-walk baseline for quality,
+    quality-per-1K-token, quality-per-minute, and tool-call savings
+- `node tools/ralph-external/session-launcher-usage.test.mjs`
+  - verifies stream-event token and cost extraction
+  - verifies explicit total-token accounting takes precedence
+  - verifies missing accounting data degrades to zero observable usage
+- `node tools/ralph-external/status-output.test.mjs`
+  - verifies `ralph-external --status` prints LFD budget utilization
+  - verifies status output surfaces best quality per 1K tokens and best quality
+    per minute
+  - verifies status output surfaces quality, token-efficiency, and
+    speed-efficiency lift over random-walk baselines when present
+- `node tools/ralph-external/early-stopping.test.mjs`
+  - guards existing early-stop behavior after the LFD analytics extension
+- `npx vitest run test/unit/cli/handlers/mc.test.ts test/unit/cli/handlers/ralph-launcher-buildargs.test.ts test/unit/mcp/subsystems.test.ts`
+  - verifies `aiwg mc dispatch` persists LFD budget controls
+  - verifies `aiwg mc run` passes persisted controls to the Ralph external
+    launcher
+  - verifies launcher argv construction emits every LFD budget flag
+  - verifies MCP `mc-dispatch` forwards the same flags to the CLI
+- `npx vitest run test/unit/mcp/orchestration.test.ts`
+  - verifies first-class MCP `mission-dispatch` forwards the same LFD budget
+    flags to `aiwg mc dispatch`
+
+Broader `npm run test:node` currently still fails in pre-existing Ralph
+registry concurrency tests unrelated to the LFD runtime changes. The affected
+external-loop analytics/early-stopping/parser tests pass inside that run.
+
+Latest validation run, 2026-07-10:
+
+- `git diff --check`: pass
+- `npm run lint:schemas`: pass
+- YAML parse for `iteration-analytics.yaml`, `agentloop-lfd-controls.yaml`, and
+  `eval-harness-lfd-contract.yaml`: pass
+- `npm run docs:collect:dry`: pass
+- `npm run typecheck`: pass
+- focused Ralph external runtime/status checks: pass
+- focused Mission Control CLI/MCP pass-through checks: pass
+- focused first-class Mission MCP pass-through check: pass
+- `npm run test:node`: 158 pass / 12 fail; failures are only in the existing
+  `test/unit/ralph/registry*.test.mjs` and
+  `test/unit/ralph/state-manager.test.mjs` async/concurrency cases; touched
+  external-loop tests, including `status-output.test.mjs`, pass inside the
+  suite.
 
 ## Residual Test Gaps
 

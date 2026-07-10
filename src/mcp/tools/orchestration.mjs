@@ -235,11 +235,31 @@ export function registerMissionToolset(server) {
       session_id: z.string().describe('Existing Mission Control session id from mc-start / mc-list'),
       objective: z.string().describe('Mission objective'),
       completion: z.string().describe('Measurable completion criterion'),
+      max_iterations: z.number().int().positive().optional().describe('Ralph iteration cap'),
+      max_total_tokens: z.number().int().positive().optional().describe('Hard cumulative token ceiling'),
+      max_output_tokens: z.number().int().positive().optional().describe('Hard cumulative output-token ceiling'),
+      max_tool_calls: z.number().int().positive().optional().describe('Hard cumulative tool-call ceiling'),
+      max_total_cost: z.number().positive().optional().describe('Hard cumulative provider-reported spend ceiling'),
+      max_wall_clock_minutes: z.number().positive().optional().describe('Hard cumulative runtime ceiling'),
+      exploration_quota: z.number().int().positive().optional().describe('Require structural variant after this many flat cycles'),
       project_dir: z.string().optional().describe('Project directory for CLI dispatch'),
       confirmed: z.boolean().default(false).describe('Required for durable/long-running mission dispatch'),
     },
     annotations: { destructiveHint: true, openWorldHint: true },
-  }, async ({ session_id, objective, completion, project_dir, confirmed }) => {
+  }, async ({
+    session_id,
+    objective,
+    completion,
+    max_iterations,
+    max_total_tokens,
+    max_output_tokens,
+    max_tool_calls,
+    max_total_cost,
+    max_wall_clock_minutes,
+    exploration_quota,
+    project_dir,
+    confirmed,
+  }) => {
     if (!confirmed) {
       return mcpError(
         'mission-dispatch requires confirmed=true because Missions can launch long-running worker cycles.',
@@ -247,8 +267,16 @@ export function registerMissionToolset(server) {
       );
     }
     try {
+      const cliArgs = ['mc', 'dispatch', session_id, objective, '--completion', completion];
+      if (max_iterations) cliArgs.push('--max-iterations', String(max_iterations));
+      if (max_total_tokens) cliArgs.push('--max-total-tokens', String(max_total_tokens));
+      if (max_output_tokens) cliArgs.push('--max-output-tokens', String(max_output_tokens));
+      if (max_tool_calls) cliArgs.push('--max-tool-calls', String(max_tool_calls));
+      if (max_total_cost) cliArgs.push('--max-total-cost', String(max_total_cost));
+      if (max_wall_clock_minutes) cliArgs.push('--max-wall-clock-minutes', String(max_wall_clock_minutes));
+      if (exploration_quota) cliArgs.push('--exploration-quota', String(exploration_quota));
       const { stdout, stderr, code } = await runAiwgCli(
-        ['mc', 'dispatch', session_id, objective, '--completion', completion],
+        cliArgs,
         { cwd: project_dir, timeoutMs: 30_000 },
       );
       return mcpJson({

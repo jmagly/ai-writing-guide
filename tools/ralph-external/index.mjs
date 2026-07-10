@@ -15,8 +15,8 @@
  * @implements @.aiwg/requirements/design-ralph-external.md
  */
 
-import { resolve } from 'path';
-import { createWriteStream } from 'fs';
+import { resolve, join } from 'path';
+import { createWriteStream, existsSync, readFileSync } from 'fs';
 import { Orchestrator } from './orchestrator.mjs';
 import { StateManager } from './state-manager.mjs';
 import { isClaudeAvailable, getClaudeVersion } from './session-launcher.mjs';
@@ -47,6 +47,8 @@ function parseArgs(args) {
     // is ~$1.60 sonnet / ~$3.90 opus. $2.0 per-iter was smaller than the cache
     // creation itself, causing every mission to abort at iteration 1.
     budgetPerIteration: 5.0,
+    budgetLimits: {},
+    explorationQuota: { enabled: true, k: 3 },
     timeoutMinutes: 60,
     mcpConfig: null,
     giteaIssue: false,
@@ -85,6 +87,18 @@ function parseArgs(args) {
       options.model = args[++i];
     } else if (arg === '--budget') {
       options.budgetPerIteration = parseFloat(args[++i]);
+    } else if (arg === '--max-total-tokens') {
+      options.budgetLimits.total_tokens = parseInt(args[++i], 10);
+    } else if (arg === '--max-output-tokens') {
+      options.budgetLimits.output_tokens = parseInt(args[++i], 10);
+    } else if (arg === '--max-tool-calls') {
+      options.budgetLimits.tool_calls = parseInt(args[++i], 10);
+    } else if (arg === '--max-total-cost') {
+      options.budgetLimits.spend_usd = parseFloat(args[++i]);
+    } else if (arg === '--max-wall-clock-minutes') {
+      options.budgetLimits.wall_clock_minutes = parseFloat(args[++i]);
+    } else if (arg === '--exploration-quota') {
+      options.explorationQuota = { enabled: true, k: parseInt(args[++i], 10) };
     } else if (arg === '--timeout') {
       options.timeoutMinutes = parseInt(args[++i], 10);
     } else if (arg === '--mcp-config') {
@@ -192,6 +206,15 @@ OPTIONS:
                           Cache-creation cost alone is ~$1.60 sonnet, ~$3.90 opus
                           per fresh headless session — set higher for non-trivial
                           tasks or expect first-iteration budget aborts.
+  --max-total-tokens <n>  Hard cumulative token ceiling. Stops with best-output
+                          report when observable token use reaches the limit.
+  --max-output-tokens <n> Hard cumulative output-token ceiling when observable.
+  --max-tool-calls <n>    Hard cumulative tool-call ceiling.
+  --max-total-cost <usd>  Hard cumulative cost ceiling when provider reports cost.
+  --max-wall-clock-minutes <n>
+                          Hard cumulative session-runtime ceiling in minutes.
+  --exploration-quota <n> Require a structural strategy variant after n flat
+                          non-terminal cycles (default: 3).
   --timeout <min>         Timeout per iteration in minutes (default: 60)
   --mcp-config <json>     MCP server configuration JSON
   --gitea-issue           Create/link Gitea issue for tracking
@@ -234,6 +257,123 @@ EXAMPLES:
 `);
 }
 
+function formatLimitUsage(observed, limit, formatter = value => String(value)) {
+  if (typeof observed !== 'number' || !Number.isFinite(observed)) {
+    return 'unknown';
+  }
+
+  if (typeof limit !== 'number' || !Number.isFinite(limit) || limit <= 0) {
+    return formatter(observed);
+  }
+
+  const percent = Math.min(999, (observed / limit) * 100);
+  return `${formatter(observed)} / ${formatter(limit)} (${percent.toFixed(1)}%)`;
+}
+
+function formatNumber(value, digits = 2) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value.toFixed(digits)
+    : 'N/A';
+}
+
+function formatTokenCount(value) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.round(value).toLocaleString()
+    : 'N/A';
+}
+
+function formatUsd(value) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? `$${value.toFixed(4)}`
+    : 'N/A';
+}
+
+function loadStatusAnalytics(stateManager, loopId) {
+  const analyticsPath = join(stateManager.getStateDir(), 'analytics', `${loopId}.json`);
+
+  if (!existsSync(analyticsPath)) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(readFileSync(analyticsPath, 'utf8'));
+  } catch (error) {
+    return { error: error.message, path: analyticsPath };
+  }
+}
+
+function formatLfdStatus(state, analytics) {
+  const limits = state.config?.budgetLimits || {};
+  const limitEntries = Object.entries(limits)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '' && Number(value) > 0);
+
+  if (!analytics) {
+    const limitText = limitEntries.length > 0
+      ? limitEntries.map(([name, value]) => `${name}=${value}`).join(', ')
+      : 'none configured';
+    const controls = state.lfdControls
+      ? `\nStructural Variant: ${state.lfdControls.structuralVariantRequired ? 'required' : 'not required'} (${state.lfdControls.flatCycleCount || 0}/${state.lfdControls.explorationQuotaK || 'N/A'} flat cycles)`
+      : '';
+
+    return `LFD Controls:
+  Budget Limits: ${limitText}
+  Budget Usage:  No analytics recorded yet${controls}`;
+  }
+
+  if (analytics.error) {
+    return `LFD Controls:
+  Analytics:      unreadable (${analytics.path}: ${analytics.error})`;
+  }
+
+  const usage = analytics.budget_usage || {};
+  const exhausted = Array.isArray(analytics.budget_stop_report?.budgets?.exhausted)
+    ? analytics.budget_stop_report.budgets.exhausted
+    : [];
+  const bestByToken = (analytics.iterations || [])
+    .filter(it => typeof it.quality_per_1k_tokens === 'number' && Number.isFinite(it.quality_per_1k_tokens))
+    .reduce((best, curr) =>
+      !best || curr.quality_per_1k_tokens > best.quality_per_1k_tokens ? curr : best,
+    null);
+  const bestByMinute = (analytics.iterations || [])
+    .filter(it => typeof it.quality_per_minute === 'number' && Number.isFinite(it.quality_per_minute))
+    .reduce((best, curr) =>
+      !best || curr.quality_per_minute > best.quality_per_minute ? curr : best,
+    null);
+  const bestRandomLift = (analytics.iterations || [])
+    .filter(it => it.baseline_comparison && typeof it.baseline_comparison.quality_lift === 'number')
+    .reduce((best, curr) =>
+      !best || curr.baseline_comparison.quality_lift > best.baseline_comparison.quality_lift ? curr : best,
+    null);
+  const bestRandomTokenLift = (analytics.iterations || [])
+    .filter(it => it.baseline_comparison && typeof it.baseline_comparison.token_efficiency_lift === 'number')
+    .reduce((best, curr) =>
+      !best || curr.baseline_comparison.token_efficiency_lift > best.baseline_comparison.token_efficiency_lift ? curr : best,
+    null);
+  const bestRandomSpeedLift = (analytics.iterations || [])
+    .filter(it => it.baseline_comparison && typeof it.baseline_comparison.speed_efficiency_lift === 'number')
+    .reduce((best, curr) =>
+      !best || curr.baseline_comparison.speed_efficiency_lift > best.baseline_comparison.speed_efficiency_lift ? curr : best,
+    null);
+
+  const structuralVariant = analytics.structural_variant_required || state.lfdControls?.structuralVariantRequired;
+  const flatCycleCount = analytics.flat_cycle_count ?? state.lfdControls?.flatCycleCount ?? 0;
+  const quotaK = state.lfdControls?.explorationQuotaK || state.config?.explorationQuota?.k || 'N/A';
+
+  return `LFD Controls:
+  Total Tokens:   ${formatLimitUsage(usage.total_tokens, Number(limits.total_tokens), formatTokenCount)}
+  Output Tokens:  ${formatLimitUsage(usage.output_tokens, Number(limits.output_tokens), formatTokenCount)}
+  Tool Calls:     ${formatLimitUsage(usage.tool_calls, Number(limits.tool_calls), formatTokenCount)}
+  Spend:          ${formatLimitUsage(usage.spend_usd, Number(limits.spend_usd), formatUsd)}
+  Runtime:        ${formatLimitUsage(usage.wall_clock_minutes, Number(limits.wall_clock_minutes), value => `${formatNumber(value, 2)} min`)}
+  Budget Stop:    ${analytics.budget_exhausted ? 'exhausted' : 'not exhausted'}${exhausted.length ? ` (${exhausted.map(item => item.name).join(', ')})` : ''}
+  Best / 1K Tok:  ${bestByToken ? `iteration ${bestByToken.iteration_number} (${formatNumber(bestByToken.quality_per_1k_tokens)})` : 'N/A'}
+  Best / Minute:  ${bestByMinute ? `iteration ${bestByMinute.iteration_number} (${formatNumber(bestByMinute.quality_per_minute)})` : 'N/A'}
+  Random Lift:    ${bestRandomLift ? `iteration ${bestRandomLift.iteration_number} (+${formatNumber(bestRandomLift.baseline_comparison.quality_lift)})` : 'N/A'}
+  Random TokLift: ${bestRandomTokenLift ? `iteration ${bestRandomTokenLift.iteration_number} (+${formatNumber(bestRandomTokenLift.baseline_comparison.token_efficiency_lift)})` : 'N/A'}
+  Random SpdLift: ${bestRandomSpeedLift ? `iteration ${bestRandomSpeedLift.iteration_number} (+${formatNumber(bestRandomSpeedLift.baseline_comparison.speed_efficiency_lift)})` : 'N/A'}
+  Structural Var: ${structuralVariant ? 'required' : 'not required'} (${flatCycleCount}/${quotaK} flat cycles)`;
+}
+
 /**
  * Print status
  * @param {string} projectRoot
@@ -247,6 +387,8 @@ function printStatus(projectRoot) {
     return;
   }
 
+  const analytics = loadStatusAnalytics(stateManager, state.loopId);
+
   console.log(`
 External Ralph Loop Status
 ==========================
@@ -259,6 +401,8 @@ Criteria:       ${state.completionCriteria}
 Progress:       ${state.currentIteration}/${state.maxIterations} iterations
 Start Time:     ${state.startTime}
 Last Update:    ${state.lastUpdate}
+
+${formatLfdStatus(state, analytics)}
 
 Iterations:
 ${state.iterations.map((iter, idx) => {
@@ -368,6 +512,8 @@ async function main() {
       result = await orchestrator.resume({
         maxIterations: options.maxIterations,
         budgetPerIteration: options.budgetPerIteration,
+        budgetLimits: options.budgetLimits,
+        explorationQuota: options.explorationQuota,
       });
     } else {
       // Start new loop
@@ -388,6 +534,8 @@ async function main() {
         model: options.model,
         budgetPerIteration: options.budgetPerIteration,
         timeoutMinutes: options.timeoutMinutes,
+        budgetLimits: options.budgetLimits,
+        explorationQuota: options.explorationQuota,
         mcpConfig: options.mcpConfig,
         giteaIntegration: options.giteaIssue ? { enabled: true } : null,
         provider: options.provider,

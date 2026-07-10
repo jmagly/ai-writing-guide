@@ -6,8 +6,8 @@ enforcement: medium
 
 **Enforcement Level**: MEDIUM
 **Scope**: All workflow execution
-**Research Basis**: REF-058 R-LAM (Reproducible LLM Agent Workflows)
-**Issues**: #112, #113, #114, #115
+**Research Basis**: REF-058 R-LAM (Reproducible LLM Agent Workflows); REF-1398 through REF-1406 LFD control-pattern cluster
+**Issues**: #112, #113, #114, #115, #1585
 
 ## Overview
 
@@ -100,6 +100,71 @@ Before releasing artifacts from Construction:
 3. Verify outputs match (exact or semantic)
 4. Document any non-deterministic components
 
+### Rule 6: Eval-Driven Loops MUST Isolate Holdouts
+
+Agent loops that optimize against an eval set, benchmark, fixture corpus, or
+scored task suite MUST separate optimizer-readable development feedback from
+acceptance feedback.
+
+**REQUIRED for eval-driven or high-criticality loops**:
+
+```yaml
+eval_fixture_split:
+  dev:
+    readable_by_optimizer: true
+    feedback: "specific failures and diagnostics allowed"
+  holdout:
+    readable_by_optimizer: false
+    feedback: "aggregate score/status only"
+  leakage_audit:
+    required: true
+    checks:
+      - no_holdout_answers_in_prompts
+      - no_holdout_case_ids_in_optimizer_logs
+      - no_detailed_holdout_lint_findings_to_optimizer
+```
+
+Holdout answers, case labels, oracle traces, detailed lint findings, and
+fixture membership MUST NOT appear in prompts, progress files, issue comments,
+or logs that the optimizing agent can read. If a holdout-touching instrument
+detects leakage risk, the optimizer-readable result is `VOID`; detailed
+diagnostics go only to a human/private audit log.
+
+**Aggregate-only examples**:
+
+```text
+Allowed: holdout_score=0.82, pass_count=41/50, status=failed_threshold
+Forbidden: case H-017 expected "x"; edit src/foo.ts line 42 to pass H-017
+```
+
+When benchmark or fixture corpora are small, duplicated, public, or repeatedly
+optimized against, add canaries or capacity caps and document the residual
+contamination risk in the completion report.
+
+### Rule 7: Eval Harness Instruments MUST Separate Feedback Channels
+
+Eval-driven loops that declare `score`, `lint`, `probe`, or `status`
+instruments MUST define which outputs are optimizer-readable and which outputs
+are private-human diagnostics before execution starts.
+
+**Required convention**:
+
+| Instrument | Optimizer-readable output | Private-human output |
+|---|---|---|
+| `score` | aggregate score/status only | case-level failures, oracle traces, holdout details |
+| `lint` | `VOID` or aggregate count only | detailed lint findings and matching evidence |
+| `probe` | aggregate gap/status only | probe cases, canary matches, memorization indicators |
+| `status` | budgets, score history, best iteration, harness version | sensitive leakage audit details |
+
+If any instrument detects holdout leakage, fixture disclosure, harness
+tampering, or forbidden diagnostic exposure, the optimizer-readable result MUST
+be `VOID`. The detailed reason MUST be written only to a private diagnostics
+path or human-only channel.
+
+Harness manifests SHOULD be locked for comparable runs. If the harness changes,
+record the harness version as an experimental factor rather than comparing the
+new score directly with earlier locked-harness scores.
+
 ## Execution Modes
 
 | Mode | Temperature | Seed | Reproducibility | Use Case |
@@ -108,6 +173,7 @@ Before releasing artifacts from Construction:
 | `seeded` | Normal | Fixed | High | Development, A/B testing |
 | `logged` | Normal | Logged | Auditable | Regulatory compliance |
 | `default` | Normal | None | None | Interactive, creative |
+| `holdout-isolated` | 0 or fixed | Fixed | Auditable acceptance | Eval-driven agent loops with hidden holdout feedback |
 
 ### Mode Selection Flow
 
@@ -206,6 +272,11 @@ Before workflow completion:
 - [ ] Configuration snapshot captured
 - [ ] Provenance record includes mode
 - [ ] Critical workflows used strict mode
+- [ ] Eval-driven loops documented dev/holdout split
+- [ ] Holdout feedback exposed only aggregate status/score to the optimizer
+- [ ] Leakage audit completed for prompts, logs, progress files, and issue comments
+- [ ] Eval harness instruments, if used, declared optimizer-readable and private-human channels
+- [ ] VOID semantics used for holdout leakage, fixture disclosure, or harness tampering
 - [ ] Recovery tested (for production workflows)
 
 ## References
@@ -215,7 +286,10 @@ Before workflow completion:
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/flows/execution-mode.yaml - Mode schema
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/flows/execution-snapshot.yaml - Snapshot schema
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/flows/error-handling.yaml - Error recovery
+- @.aiwg/research/reports/issue-1585-lfd-control-patterns-research-brief.md - LFD control-pattern synthesis
+- @.aiwg/architecture/adr-lfd-control-patterns-for-agent-loops.md - Tiered loop-control ADR
 - #112, #113, #114, #115 - Implementation issues
+- #1585 - LFD control patterns for agent loops
 
 ---
 

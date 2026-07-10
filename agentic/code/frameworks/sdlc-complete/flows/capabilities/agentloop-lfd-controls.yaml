@@ -1,0 +1,57 @@
+# Issue #1585 capability flow: apply LFD-style controls to autonomous loops.
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: agentloop-lfd-controls
+  labels:
+    domain: agent-loop
+    issue: "1585"
+    control-model: lfd
+spec:
+  description: >
+    Configure tiered loop controls for long-running, high-criticality, budgeted,
+    adversarial, or eval-driven agent loops: mechanical evidence tiering,
+    dev/holdout isolation, hypothesis-before-change records, bounded entropy,
+    and hard budget stop reports.
+  version: "1.0.0"
+  inputs:
+    - name: task
+      type: string
+      required: true
+    - name: completion_criteria
+      type: string
+      required: true
+    - name: criticality
+      type: string
+      required: false
+    - name: eval_fixture_split
+      type: object
+      required: false
+    - name: budgets
+      type: object
+      required: false
+    - name: eval_harness_contract
+      type: object
+      required: false
+    - name: exploration_quota_k
+      type: integer
+      required: false
+      default: 3
+    - name: random_walk_baseline
+      type: object
+      required: false
+  outputs:
+    - name: loop_control_plan
+      type: object
+    - name: iteration_experiment_record
+      type: object
+    - name: budget_stop_report
+      type: object
+    - name: eval_harness_result
+      type: object
+    - name: baseline_comparison
+      type: object
+    - name: best_output_report
+      type: object
+  agent: ralph-loop
+  idempotent: false

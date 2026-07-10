@@ -7,7 +7,8 @@ $id: "https://aiwg.io/schemas/iteration-analytics/v1"
 title: "Iteration Analytics Schema"
 description: |
   Iteration quality tracking and adaptive stopping criteria to prevent
-  unnecessary refinement cycles per REF-015 Self-Refine.
+  unnecessary refinement cycles per REF-015 Self-Refine and to carry
+  LFD-style loop controls for issue #1585.
 
 type: object
 required:
@@ -52,6 +53,8 @@ $defs:
         properties:
           iteration: { type: integer }
           timestamp: { type: string, format: "date-time" }
+          experiment:
+            $ref: "#/$defs/ExperimentRecord"
           scores:
             type: object
             properties:
@@ -70,6 +73,26 @@ $defs:
           quality:
             type: number
             description: "Weighted aggregate quality score"
+          tokens_used:
+            type: integer
+            minimum: 0
+            description: "Observable total token count for this iteration."
+          execution_time_ms:
+            type: integer
+            minimum: 0
+            description: "Observable wall-clock duration for this iteration."
+          tool_calls:
+            type: integer
+            minimum: 0
+            description: "Observable tool-call count for this iteration."
+          quality_per_1k_tokens:
+            type: number
+            description: "Quality score divided by thousands of tokens used."
+          quality_per_minute:
+            type: number
+            description: "Quality score divided by wall-clock minutes."
+          baseline_comparison:
+            $ref: "#/$defs/BaselineComparison"
           delta:
             type: object
             properties:
@@ -84,6 +107,7 @@ $defs:
               total_improvement: { type: number }
               plateau_count: { type: integer }
               regression_count: { type: integer }
+              flat_cycle_count: { type: integer }
 
       quality_weights:
         type: object
@@ -149,17 +173,285 @@ $defs:
           max_regressions: { type: integer, default: 2 }
           enabled: { type: boolean, default: true }
 
+      budget_limits:
+        type: object
+        description: "Hard stop ceilings. Unobservable dimensions may be omitted, but declared dimensions stop the loop when exhausted."
+        properties:
+          wall_clock_minutes:
+            type: integer
+            minimum: 1
+          output_tokens:
+            type: integer
+            minimum: 1
+          total_tokens:
+            type: integer
+            minimum: 1
+          spend_usd:
+            type: number
+            minimum: 0
+          tool_calls:
+            type: integer
+            minimum: 1
+          rate_caps_are_hard_stops:
+            type: boolean
+            default: false
+
+      exploration_quota:
+        type: object
+        description: "Bounded entropy control for non-improving loops."
+        properties:
+          enabled: { type: boolean, default: true }
+          k:
+            type: integer
+            minimum: 1
+            default: 3
+            description: "Maximum non-terminal cycles before a structural variant or stop is required."
+          flat_cycle_action:
+            type: string
+            enum: ["structural_variant", "stop_with_best_output", "human_review"]
+            default: "structural_variant"
+
       stopping_decision_flow:
         type: string
         default: |
           1. Check hard iteration limits
-          2. If min_iterations not met → continue
-          3. If max_iterations reached → stop
-          4. Check quality threshold → stop if exceeded
-          5. Check improvement threshold → stop if below
-          6. Check plateau detection → stop if plateaued
-          7. Check regression protection → stop if exceeded
-          8. Continue iterating
+          2. Check declared budget limits → stop with best-output report if exhausted
+          3. If min_iterations not met → continue
+          4. If max_iterations reached → stop with best-output report
+          5. Check quality threshold → stop if exceeded
+          6. Check improvement threshold → require structural variant or stop
+          7. Check plateau detection → require structural variant or stop
+          8. Check regression protection → stop if exceeded
+          9. Continue iterating
+
+  ExperimentRecord:
+    type: object
+    description: "Falsifiable hypothesis captured before a material loop action."
+    required:
+      - hypothesis
+      - expected_failure_mode
+      - distinguishing_diagnostic
+    properties:
+      hypothesis:
+        type: string
+      expected_failure_mode:
+        type: string
+      distinguishing_diagnostic:
+        type: string
+      structural_variant:
+        type: string
+        description: "How this iteration differs from the last non-improving attempt."
+      result:
+        type: string
+        description: "Observed outcome after validation."
+      probe_or_generalization_signal:
+        type: string
+        description: "Probe, dev/holdout aggregate, or other generalization signal."
+
+  BudgetStopReport:
+    type: object
+    description: "Report emitted when a hard loop budget stops execution."
+    required:
+      - stop_reason
+      - selected_iteration
+      - final_iteration
+      - best_score
+    properties:
+      stop_reason:
+        type: string
+        enum:
+          - wall_clock_exhausted
+          - output_tokens_exhausted
+          - total_tokens_exhausted
+          - spend_exhausted
+          - tool_calls_exhausted
+          - max_iterations_reached
+          - plateau_threshold_reached
+      budgets:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            limit: {}
+            observed: {}
+      selected_iteration:
+        type: integer
+      final_iteration:
+        type: integer
+      best_score:
+        type: number
+      final_score:
+        type: number
+      hypothesis_outcomes:
+        type: array
+        items:
+          $ref: "#/$defs/ExperimentRecord"
+      next_recommended_action:
+        type: string
+
+  BaselineComparison:
+    type: object
+    description: "Optional chance/random-walk baseline comparison for token-utilization and speed-of-accuracy reporting."
+    required:
+      - baseline_type
+      - baseline_quality_score
+      - quality_lift
+    properties:
+      baseline_type:
+        type: string
+        enum: ["random_walk", "chance", "tool_shortlist_random", "declared_control"]
+        default: "random_walk"
+      source:
+        type: string
+        description: "Harness, fixture, or issue/reference that produced the baseline."
+      baseline_quality_score:
+        type: number
+      quality_lift:
+        type: number
+        description: "Iteration quality minus baseline quality."
+      quality_lift_pct:
+        type: number
+        description: "Quality lift divided by absolute baseline quality, when defined."
+      baseline_tokens_used:
+        type: integer
+        minimum: 0
+      token_efficiency_lift:
+        type: number
+        description: "Quality-per-1K-token lift over the baseline, when token counts are observable."
+      baseline_execution_time_ms:
+        type: integer
+        minimum: 0
+      speed_efficiency_lift:
+        type: number
+        description: "Quality-per-minute lift over the baseline, when wall-clock time is observable."
+      baseline_tool_calls:
+        type: integer
+        minimum: 0
+      tool_call_savings:
+        type: integer
+        description: "Baseline tool calls minus iteration tool calls, when tool-call counts are observable."
+
+  EvalHarnessContract:
+    type: object
+    description: "Optional LFD-style score/lint/probe/status harness contract for eval-driven loops."
+    required:
+      - score
+      - lint
+      - probe
+      - status
+      - diagnostics_policy
+    properties:
+      manifest_path:
+        type: string
+        description: "Versioned harness manifest or config path."
+      locked_harness:
+        type: boolean
+        default: true
+        description: "Whether the harness implementation is fixed for comparable runs."
+      score:
+        type: object
+        required: [command, optimizer_visible_output]
+        properties:
+          command: { type: string }
+          accepts_dev_feedback: { type: boolean, default: true }
+          accepts_holdout_feedback: { type: boolean, default: false }
+          optimizer_visible_output:
+            type: string
+            enum: ["aggregate_only", "void_only", "none"]
+            default: "aggregate_only"
+      lint:
+        type: object
+        required: [command, void_on_violation]
+        properties:
+          command: { type: string }
+          void_on_violation: { type: boolean, default: true }
+          optimizer_visible_output:
+            type: string
+            enum: ["aggregate_only", "void_only", "none"]
+            default: "void_only"
+          private_diagnostics_path: { type: string }
+      probe:
+        type: object
+        required: [command, purpose]
+        properties:
+          command: { type: string }
+          purpose:
+            type: string
+            enum: ["memorization_gap", "generalization_gap", "harness_integrity", "policy_boundary"]
+          optimizer_visible_output:
+            type: string
+            enum: ["aggregate_only", "void_only", "none"]
+            default: "aggregate_only"
+      status:
+        type: object
+        required: [command]
+        properties:
+          command: { type: string }
+          reports:
+            type: array
+            items:
+              type: string
+              enum:
+                - score_history
+                - budget_usage
+                - burn_rate
+                - best_iteration
+                - harness_version
+                - leakage_audit
+                - structural_variant
+                - baseline_comparison
+      diagnostics_policy:
+        type: object
+        required:
+          - optimizer_visible
+          - private_human
+        properties:
+          optimizer_visible:
+            type: string
+            enum: ["aggregate_only", "void_only", "none"]
+          private_human:
+            type: string
+            description: "Path or channel for detailed diagnostics unavailable to the optimizing agent."
+          forbidden_optimizer_fields:
+            type: array
+            items:
+              type: string
+            default:
+              - holdout_case_ids
+              - holdout_answers
+              - oracle_traces
+              - detailed_lint_findings
+              - fixture_membership
+
+  EvalHarnessResult:
+    type: object
+    description: "Result shape returned by an LFD-style eval harness instrument."
+    required:
+      - status
+      - optimizer_feedback
+    properties:
+      status:
+        type: string
+        enum: ["pass", "fail", "void", "error"]
+      optimizer_feedback:
+        type: object
+        description: "Aggregate-only or VOID-safe feedback visible to the optimizing agent."
+        properties:
+          score: { type: number }
+          pass_count: { type: integer }
+          total_count: { type: integer }
+          status: { type: string }
+          void_reason: { type: string }
+      private_diagnostics_ref:
+        type: string
+        description: "Private diagnostics path or identifier, not optimizer-readable."
+      leakage_audit:
+        type: object
+        properties:
+          checked: { type: boolean }
+          result:
+            type: string
+            enum: ["pass", "fail", "not_applicable"]
 
   RalphIntegration:
     type: object
@@ -191,6 +483,7 @@ $defs:
         properties:
           iteration_history: { type: string, default: ".aiwg/ralph/tasks/{task_id}/analytics.json" }
           quality_chart: { type: string, default: ".aiwg/ralph/tasks/{task_id}/quality-chart.txt" }
+          eval_harness_result: { type: string, default: ".aiwg/ralph/tasks/{task_id}/eval-harness-result.json" }
 
 # Analytics result schema
 analytics_result:
@@ -202,10 +495,27 @@ analytics_result:
       type: integer
     stopping_reason:
       type: string
+    budget_stop_report:
+      $ref: "#/$defs/BudgetStopReport"
+    eval_harness:
+      $ref: "#/$defs/EvalHarnessContract"
+    eval_harness_result:
+      $ref: "#/$defs/EvalHarnessResult"
     final_quality:
       type: number
     total_improvement:
       type: number
+    baseline_comparison:
+      type: object
+      properties:
+        count:
+          type: integer
+        best_quality_lift:
+          type: number
+        best_token_efficiency_lift:
+          type: number
+        best_speed_efficiency_lift:
+          type: number
     history:
       type: array
       items:
@@ -243,22 +553,37 @@ agent_protocol:
       - collect_lint_results
       - collect_coverage_results
       - analyze_complexity
+      - attach_pre_change_experiment_record
       - compute_weighted_quality
       - compute_delta_from_previous
       - update_cumulative_stats
       - return_iteration_metrics
 
+  eval_harness_iteration:
+    description: "Run optional LFD-style score/lint/probe/status instruments."
+    steps:
+      - load_eval_harness_contract
+      - run_dev_score_or_visible_score
+      - run_lint_with_void_semantics
+      - run_probe_for_generalization_or_integrity_gap
+      - run_status_for_budget_and_burn_rate
+      - write_private_diagnostics_outside_optimizer_context
+      - return_aggregate_or_void_feedback_only
+
   check_stopping:
     description: "Evaluate stopping criteria"
     steps:
       - check_iteration_limits
+      - check_declared_budget_limits
       - if_min_not_met:
           - continue
       - if_max_reached:
-          - stop_with_reason
+          - stop_with_best_output_report
       - check_quality_threshold
       - check_improvement_threshold
       - check_plateau_detection
+      - if_flat_cycle_quota_reached:
+          - require_structural_variant_or_stop
       - check_regression_protection
       - return_decision
 

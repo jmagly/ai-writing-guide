@@ -35,6 +35,12 @@ interface Mission {
   status: MissionStatus;
   loop: number;
   maxIterations: number;
+  maxTotalTokens?: number;
+  maxOutputTokens?: number;
+  maxToolCalls?: number;
+  maxTotalCost?: number;
+  maxWallClockMinutes?: number;
+  explorationQuota?: number;
   priority: string;
   mode: MissionMode;
   targetAgent?: string;
@@ -128,6 +134,13 @@ function hasFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
 }
 
+function parseNumberFlag(args: string[], flag: string): number | undefined {
+  const raw = parseFlag(args, flag);
+  if (raw === undefined) return undefined;
+  const value = Number(raw);
+  return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
 function wantsHelp(args: string[]): boolean {
   return args.includes('--help') || args.includes('-h');
 }
@@ -157,6 +170,12 @@ Queue a mission onto a session. Does NOT execute — use 'aiwg mc run' to launch
   --completion "<criteria>"     Verifiable completion criteria (required for 'mc run')
   --priority <level>            Priority hint (default: normal)
   --max-iterations N            Ralph iteration cap when launched (default: 10)
+  --max-total-tokens N          Hard cumulative token ceiling when observable
+  --max-output-tokens N         Hard cumulative output-token ceiling
+  --max-tool-calls N            Hard cumulative tool-call ceiling
+  --max-total-cost USD          Hard cumulative provider-reported spend ceiling
+  --max-wall-clock-minutes N    Hard cumulative runtime ceiling
+  --exploration-quota N         Require structural variant after N flat cycles
   --mode pty-orchestrator       PTY-orchestrator mode (requires --target-agent)
   --target-agent <id>           Required for --mode pty-orchestrator`,
 
@@ -277,6 +296,12 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
   const completion = parseFlag(ctx.args, '--completion');
   const priority = parseFlag(ctx.args, '--priority') || 'normal';
   const maxIterations = parseInt(parseFlag(ctx.args, '--max-iterations') || '10', 10);
+  const maxTotalTokens = parseNumberFlag(ctx.args, '--max-total-tokens');
+  const maxOutputTokens = parseNumberFlag(ctx.args, '--max-output-tokens');
+  const maxToolCalls = parseNumberFlag(ctx.args, '--max-tool-calls');
+  const maxTotalCost = parseNumberFlag(ctx.args, '--max-total-cost');
+  const maxWallClockMinutes = parseNumberFlag(ctx.args, '--max-wall-clock-minutes');
+  const explorationQuota = parseNumberFlag(ctx.args, '--exploration-quota');
   const modeRaw = parseFlag(ctx.args, '--mode') || 'direct';
   const mode: MissionMode = modeRaw === 'pty-orchestrator' ? 'pty-orchestrator' : 'direct';
   const targetAgent = parseFlag(ctx.args, '--target-agent');
@@ -331,6 +356,12 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
     status: 'queued',
     loop: 0,
     maxIterations,
+    maxTotalTokens,
+    maxOutputTokens,
+    maxToolCalls,
+    maxTotalCost,
+    maxWallClockMinutes,
+    explorationQuota,
     priority,
     mode,
     targetAgent: targetAgent || undefined,
@@ -338,12 +369,38 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
 
   session.missions.push(mission);
   await writeSession(session);
-  await appendLog(session.id, { event: 'mission_dispatched', missionId: mission.id, objective, priority, mode, targetAgent });
+  await appendLog(session.id, {
+    event: 'mission_dispatched',
+    missionId: mission.id,
+    objective,
+    priority,
+    mode,
+    targetAgent,
+    lfdBudgets: {
+      maxTotalTokens,
+      maxOutputTokens,
+      maxToolCalls,
+      maxTotalCost,
+      maxWallClockMinutes,
+      explorationQuota,
+    },
+  });
 
   if (capWarning) ui.warn(capWarning);
   ui.success(`Dispatched mission ${mission.id}: ${objective}`);
   const modeLabel = mode === 'pty-orchestrator' ? ` | Mode: PTY orchestrator → ${targetAgent}` : '';
   ui.info(`Priority: ${priority} | Max iterations: ${maxIterations}${modeLabel}`);
+  const lfdLimits = [
+    maxTotalTokens ? `total tokens ${maxTotalTokens}` : null,
+    maxOutputTokens ? `output tokens ${maxOutputTokens}` : null,
+    maxToolCalls ? `tool calls ${maxToolCalls}` : null,
+    maxTotalCost ? `total cost $${maxTotalCost}` : null,
+    maxWallClockMinutes ? `wall clock ${maxWallClockMinutes}m` : null,
+    explorationQuota ? `exploration quota ${explorationQuota}` : null,
+  ].filter(Boolean);
+  if (lfdLimits.length > 0) {
+    ui.info(`LFD limits: ${lfdLimits.join(' | ')}`);
+  }
 
   // #1439: dispatch alone does NOT execute the mission. Surface the next step
   // so the user knows the queue won't drain on its own.
@@ -450,6 +507,12 @@ async function mcRun(ctx: HandlerContext): Promise<HandlerResult> {
         objective: mission.objective,
         completionCriteria: mission.completion,
         maxIterations: mission.maxIterations,
+        maxTotalTokens: mission.maxTotalTokens,
+        maxOutputTokens: mission.maxOutputTokens,
+        maxToolCalls: mission.maxToolCalls,
+        maxTotalCost: mission.maxTotalCost,
+        maxWallClockMinutes: mission.maxWallClockMinutes,
+        explorationQuota: mission.explorationQuota,
         // Defaults for cycle 1; advanced options can be added per-mission later.
         verbose: false,
       });
@@ -963,6 +1026,9 @@ function showMcHelp(): void {
     start                         Start a new Mission Control session
     dispatch <id> "<objective>"   Queue a mission on the session (does NOT execute)
                                   [--completion "<criteria>"] [--max-iterations N]
+                                  [--max-total-tokens N] [--max-output-tokens N]
+                                  [--max-tool-calls N] [--max-total-cost USD]
+                                  [--max-wall-clock-minutes N] [--exploration-quota N]
                                   [--mode pty-orchestrator] [--target-agent <id>]
     run <id> [--accept-cost]      Launch queued missions as ralph loops (#1439)
                                   Cost gate warns/refuses above ~$5 estimate
@@ -977,6 +1043,7 @@ function showMcHelp(): void {
   ${ui.bold('Examples:')}
     aiwg mc start --name "Sprint 4"
     aiwg mc dispatch mc-abc123 "Fix auth" --completion "tests pass"
+    aiwg mc dispatch mc-abc123 "Fix auth" --completion "tests pass" --max-total-tokens 5000 --exploration-quota 2
     aiwg mc dispatch mc-abc123 "Refactor users" --completion "npm test passes"
     aiwg mc run mc-abc123                     # launches queued missions
     aiwg mc status mc-abc123                  # syncs progress from ralph loops

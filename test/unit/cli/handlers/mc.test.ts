@@ -87,6 +87,7 @@ vi.mock('../../../../src/cli/handlers/ralph-launcher.js', () => ({
 }));
 
 import { mcHandler } from '../../../../src/cli/handlers/mc.js';
+import { launchExternalRalph } from '../../../../src/cli/handlers/ralph-launcher.js';
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -175,6 +176,47 @@ describe('mc dispatch', () => {
     );
     expect(dispatchResult.exitCode).toBe(0);
     expect(dispatchResult.message).toMatch(/^m-/);
+    consoleSpy.mockRestore();
+  });
+
+  it('persists LFD budget controls on dispatched missions', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const startResult = await mcHandler.execute(makeCtx(['start']));
+    const sessionId = startResult.message!;
+    await mcHandler.execute(
+      makeCtx([
+        'dispatch',
+        sessionId,
+        'Budgeted mission',
+        '--completion',
+        'tests pass',
+        '--max-total-tokens',
+        '5000',
+        '--max-output-tokens',
+        '1200',
+        '--max-tool-calls',
+        '20',
+        '--max-total-cost',
+        '3.50',
+        '--max-wall-clock-minutes',
+        '45',
+        '--exploration-quota',
+        '2',
+      ]),
+    );
+
+    const jsonCalls: string[] = [];
+    consoleSpy.mockImplementation((arg) => { jsonCalls.push(String(arg)); });
+    await mcHandler.execute(makeCtx(['status', sessionId, '--json']));
+    const jsonOutput = jsonCalls.find(s => { try { JSON.parse(s); return true; } catch { return false; } });
+    const session = JSON.parse(jsonOutput!);
+    const mission = session.missions[0];
+    expect(mission.maxTotalTokens).toBe(5000);
+    expect(mission.maxOutputTokens).toBe(1200);
+    expect(mission.maxToolCalls).toBe(20);
+    expect(mission.maxTotalCost).toBe(3.5);
+    expect(mission.maxWallClockMinutes).toBe(45);
+    expect(mission.explorationQuota).toBe(2);
     consoleSpy.mockRestore();
   });
 
@@ -403,6 +445,52 @@ describe('mc run (#1439)', () => {
     expect(mission.ralphLoopId).toMatch(/^ralph-mock-/);
     expect(mission.ralphPid).toBe(99999);
     expect(mission.startedAt).toBeDefined();
+    consoleSpy.mockRestore();
+  });
+
+  it('passes LFD budget controls through to ralph external launcher', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const startResult = await mcHandler.execute(makeCtx(['start']));
+    const sessionId = startResult.message!;
+
+    await mcHandler.execute(
+      makeCtx([
+        'dispatch',
+        sessionId,
+        'Budgeted run',
+        '--completion',
+        'tests pass',
+        '--max-total-tokens',
+        '5000',
+        '--max-output-tokens',
+        '1200',
+        '--max-tool-calls',
+        '20',
+        '--max-total-cost',
+        '3.50',
+        '--max-wall-clock-minutes',
+        '45',
+        '--exploration-quota',
+        '2',
+      ]),
+    );
+
+    const runResult = await mcHandler.execute(makeCtx(['run', sessionId, '--accept-cost']));
+    expect(runResult.exitCode).toBe(0);
+    expect(vi.mocked(launchExternalRalph)).toHaveBeenCalledWith(
+      '/mock/framework/root',
+      '/mock/cwd',
+      expect.objectContaining({
+        objective: 'Budgeted run',
+        completionCriteria: 'tests pass',
+        maxTotalTokens: 5000,
+        maxOutputTokens: 1200,
+        maxToolCalls: 20,
+        maxTotalCost: 3.5,
+        maxWallClockMinutes: 45,
+        explorationQuota: 2,
+      }),
+    );
     consoleSpy.mockRestore();
   });
 
