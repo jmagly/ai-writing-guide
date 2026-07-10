@@ -56,3 +56,36 @@ resolved).
 - Endpoint paths cross-checked against `src/cli/handlers/serve.ts` route table.
 - No behavioral/API claims added beyond what the transport-verify artifact and
   route table confirm.
+
+---
+
+## Addendum — refinement pass (cockpit README + design lane)
+
+A second, scope-first `doc-sync code-to-docs` pass (2 bounded auditors:
+`.aiwg/working/doc-sync/readme-lane.md`, `docs-lane.md`) ran over
+`apps/cockpit/README.md` + the ADR/SAD/evidence consistency. Result: **no
+milestone-critical drift.** Refinements applied on top of the committed
+milestone (`d5e283750`):
+
+- `apps/cockpit/README.md` — documented the both-halves launcher
+  `npm run cockpit:up` / `cockpit-up.sh` + `AIWG_COCKPIT_ENSURE_EXECUTOR` /
+  `AIWG_COCKPIT_START_HOST_DAEMON` (was undocumented); reworded the Status
+  paragraph so host-daemon surfacing (#1615) + transport-trust visibility (#1618)
+  read as **landed/verified at v2026.7.4** (they previously read "tracked",
+  contradicting the 7.4 bullet); precise `bootstrap-pending` = posture sub-value.
+- `adr-cockpit-instance-control-substrate.md` — validation-table precision
+  (transport label vs posture sub-value; "controller/observer lease model
+  available upstream (7.2), Cockpit Observe/Drive wiring deferred" instead of
+  "present").
+- `cockpit-sad.md` — line-range `:687-785`; `bootstrap-pending` precision.
+- `src/cli/handlers/serve.ts` — comment corrected to the real DELETE route
+  `/api/v1/agents/:aid/sessions/:session`.
+
+**Reconciliation of the Status-flip note above:** the "Deferred to operator"
+section reflected this report's original conservative stance. The operator's
+`/goal` directive ("properly update documentation adrs/design … capture this
+setup fully") authorized recording `adr-cockpit-instance-control-substrate` as
+**Accepted** with the v2026.7.4 validation basis, which is the committed state.
+Draft→baseline flips for `cockpit-sad.md` and
+`cockpit-instance-control-interface.md` remain deferred pending explicit
+operator sign-off.
