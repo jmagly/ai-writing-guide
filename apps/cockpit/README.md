@@ -58,7 +58,7 @@ AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:8122 aiwg cockpit
 - **Home** — connected-state overview, first-run flow, and a session-first entry point.
 - **Inventory** — host, container, Docker, and VM runtime targets with lifecycle controls.
 - **Running** — active work across stacks, spend posture, and task stop controls.
-- **Sessions** — observe-first terminal attach, explicit drive/control, and replay posture.
+- **Sessions** — observe-first terminal attach, explicit drive/control, replay posture, and stale-agent recovery.
 - **Approvals** — unified human-in-the-loop decision inbox.
 - **Explore** — live index status/query/rebuild plus read-only AIWG capability catalog.
 - **Library** — user-owned assets cloned/imported under `~/.aiwg/cockpit/library`.
@@ -138,7 +138,7 @@ operator / CLI:  aiwg cockpit
 | **Home** | Guided first-run: what-is-this, live status, the **Start a session** primary verb, first-run tour. |
 | **Inventory** | Instances + lifecycle (Start/Stop/Destroy). |
 | **Running** | Running work across stacks + cross-stack spend + per-task Stop. |
-| **Sessions** | Live pty terminal — observe/drive, keyframe, non-destructive replay; inline **＋ capability picker**. |
+| **Sessions** | Live pty terminal — observe/drive, keyframe, non-destructive replay, stale-agent recovery; inline **＋ capability picker**. |
 | **Approvals** | Unified HITL inbox (`hitl-prompt/v1`); decisions = operator authorization. |
 | **Explore** | Live artifact-index status/query/rebuild plus read-only AIWG catalog search. |
 | **Library** | Your own assets — clone from the catalog / import / remove. AIWG files never overwritten. |
@@ -240,6 +240,32 @@ through the real executor (`POST /api/v2/admin/instances`) for host, Docker, and
 QEMU/VM launches. Cockpit does not replace attached sessions when provisioning;
 it refreshes inventory and leaves concurrency and resource admission to
 agentic-sandbox.
+
+### Recover stale agents
+
+When a container or Docker runtime is still running but its agent registration
+has disappeared, Cockpit keeps the row visible instead of hiding it. Inventory
+and Sessions show `agent unreachable` and expose **Reconnect** for stale
+container/Docker rows. Use this when an instance is alive but session attach,
+running projections, or actions cannot resolve an agent id.
+
+The Bridge handles recovery through:
+
+1. executor-owned reconnect endpoints when the sandbox exposes one, then
+2. local Docker fallback: `docker exec <container> agent-reconnect`.
+
+The Docker fallback requires sandbox images that include the `agent-reconnect`
+helper (agentic-sandbox v2026.7.5+ images). If **Reconnect** reports that no
+reconnect path is available, rebuild or repull the sandbox image, then start the
+instance again. For host targets, prefer starting Cockpit with the host daemon:
+
+```bash
+AIWG_COCKPIT_START_HOST_DAEMON=1 npm run cockpit:up
+```
+
+After a successful reconnect, refresh Inventory, then attach from Sessions. A
+Reconnect action never creates a replacement instance and never destroys the
+running container; it only attempts to restore the missing agent registration.
 
 `aiwg cockpit` (the operator command) will wrap this; the Bridge serves the built
 React app token-injected, falling back to a legacy page when no build is present.
@@ -425,6 +451,13 @@ Known state as of the 2026-06-19 host live run:
   banner `host ✓ · docker ✓ · vm ✓`. Evidence:
   `.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md` +
   `.aiwg/working/cockpit-7.4-inventory-2026-07-09.png`.
+- Stale Docker/container agent recovery is wired through the Bridge and UI
+  (2026-07-11): stale running instances remain visible as `agent unreachable`,
+  Inventory and Sessions expose **Reconnect**, and the Bridge tries executor
+  reconnect before Docker `agent-reconnect`. Host-daemon scoped live UAT passed
+  against the real executor with `AIWG_COCKPIT_LIVE_PROVISION=1`,
+  `AIWG_COCKPIT_LIVE_MATRIX_TARGETS=host`, and Codex provider workload evidence
+  at `test-results/cockpit-live-host-daemon-2026-07-11.md/.json`.
 - Remaining upstream follow-ups are Claude auth-state propagation
   (roctinam/agentic-sandbox#499) and agent-scoped PTY sessions not appearing in
   the formal/global session registry (roctinam/agentic-sandbox#500).

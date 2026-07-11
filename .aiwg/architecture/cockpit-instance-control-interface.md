@@ -16,6 +16,35 @@
 
 Cockpit's Bridge is a **client of all three**. It talks to agentic-sandbox **directly** for instance control + I/O; it uses **serve/#1546 only** for cross-stack Mission coordination (the two-plane model).
 
+### 1.1. Recovery extension for stale container agents (2026-07-11)
+
+Cockpit now treats "runtime running, agent missing" as a first-class degraded
+state instead of collapsing the row out of the operator surface. For
+Docker/container instances the Bridge exposes:
+
+```
+POST /api/instances/:id/reconnect
+```
+
+Contract:
+
+- input: instance id from the admin inventory;
+- success: the sandbox or container has been asked to re-register its agent;
+- failure: returns an explanatory error when no executor route, local Docker
+  container, or `agent-reconnect` helper is available;
+- non-goal: never destroys, replaces, or reprovisions the runtime.
+
+Resolution order:
+
+1. Call executor-owned reconnect routes when advertised by the sandbox.
+2. Fall back to `docker exec <container> agent-reconnect` for local
+   Docker/container instances that carry the helper.
+
+The UI derives `agent unreachable` when the instance is still running but no
+agent id can be resolved from the agent registry/running projection. Inventory
+and Sessions both expose **Reconnect** for that state, preserving operator
+context until the agent returns.
+
 ## 2. Extension usage (per-instance A2A)
 
 - **`runtime/v1`** (required, data-only): every AgentCard declares `params{ runtime: vm|container|host, loadout, image_ref?, instance_id }`; every Task carries `metadata{ runtime.instance_id, runtime.kind, runtime.host? }`. Cockpit reads these for the inventory/running views + the isolation-tier badge. The upstream `host` target landed in agentic-sandbox#460; Cockpit still treats unknown future `runtime.kind` values as opaque.
@@ -45,6 +74,7 @@ Security carried over (threat model): observers see everything incl. secrets (no
 
 A typed TS client `@aiwg/cockpit` instance-control module exposing (thin over the wire — no invented abstraction):
 - `provision({ runtimeKind, loadout, tenantId }) → instanceId` (admin) · `list/get/start/stop/restart/destroy` · `pollOperation`
+- `reconnect(instanceId) → recoveryResult` (Bridge recovery extension; stale Docker/container agents only)
 - `discover(instanceId) → AgentCard` · `sendMessage`/`getTask`/`listTasks`/`subscribeToTask`/`cancelTask` (A2A, tenant_id + idempotency-key on every send)
 - `attach(instanceId, { role, replayFrom }) → PtySession` with events `output`/`resize`/`membership`/`keyframe`/`roleAssigned`/`closed` and methods `input()/resize()/requestKeyframe()/leave()`
 - `approvals()` stream (hitl-prompt) → relay decisions to AIWG core

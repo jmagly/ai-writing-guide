@@ -242,6 +242,34 @@ Transport / Host-daemon columns and the `host ✓ · docker ✓ · vm ✓` runti
 coverage banner. Verified end-to-end against agentic-sandbox v2026.7.4
 (`.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md`).
 
+### Stale agent recovery
+
+Cockpit distinguishes a stopped runtime from a running runtime whose agent has
+fallen out of the registry. Running Docker/container rows with no resolvable
+agent stay visible as `agent unreachable`; Inventory and Sessions expose
+**Reconnect** instead of asking the operator to destroy or recreate the
+instance.
+
+The Cockpit Bridge recovery endpoint is:
+
+```
+POST /api/instances/:id/reconnect
+```
+
+The Bridge first tries executor-owned reconnect routes when the sandbox exposes
+them. If none are available and the instance maps to a local Docker container,
+it falls back to:
+
+```bash
+docker exec <container> agent-reconnect
+```
+
+Use this path after transient agent crashes, bridge restarts, or container
+agents that stopped reporting while the container kept running. The fallback
+requires an image with the `agent-reconnect` helper (agentic-sandbox v2026.7.5+
+images). A successful reconnect restores the agent registration; it does not
+replace or destroy the runtime.
+
 ## WebSocket: Sandbox Event Push
 
 After registration, the sandbox maintains a persistent WebSocket connection to push real-time events:

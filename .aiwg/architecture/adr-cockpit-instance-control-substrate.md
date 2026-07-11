@@ -89,3 +89,26 @@ date. Verified end-to-end through the Cockpit UI against a real executor
 backends beyond tmux are not yet exercised; host `host_daemon` reports `available`
 without a detailed status payload. Tracked as future backend extensions, not
 gaps in the substrate decision.
+
+## Recovery Update — stale Docker/container agents (2026-07-11)
+
+The normalized instance-control model now includes an AIWG-side recovery
+extension for the common degraded state where a Docker/container runtime is
+still running but its agent has disappeared from the registry. The Bridge owns a
+thin recovery endpoint, `POST /api/instances/:id/reconnect`, while
+agentic-sandbox remains the authority for the runtime and agent lifecycle.
+
+This preserves the ADR boundary:
+
+- Cockpit does not manage tmux/screen/zellij directly and does not replace the
+  instance.
+- The Bridge tries sandbox/executor reconnect routes first.
+- Local Docker fallback is limited to invoking the container-provided
+  `agent-reconnect` helper.
+- The UI reports the state as `agent unreachable` and keeps Inventory/Sessions
+  controls visible so the operator can recover the original runtime.
+
+Host-daemon scoped live UAT passed on 2026-07-11 with real executor provisioning
+and Codex workload evidence at
+`test-results/cockpit-live-host-daemon-2026-07-11.md/.json`; full
+host/container/VM matrix evidence remains the release gate before tagging.

@@ -7,6 +7,49 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.12] - 2026-07-11 - "Cockpit recovery and LFD controls"
+
+This release prepares the next stable cut after the Cockpit session
+stabilization release. It focuses on stale-agent recovery in Cockpit and the
+post-audit hardening of the external agent-loop LFD controls.
+
+### Added
+
+- **Cockpit stale-agent recovery** — Inventory and Sessions now keep running
+  container/Docker instances visible even when their agent registration is stale,
+  mark them as `agent unreachable`, and expose a **Reconnect** action that asks
+  the Bridge to recover the agent through the executor or the sandbox
+  `agent-reconnect` helper.
+- **LFD external-loop control surface** — the external Ralph/agent-loop path now
+  carries the repaired LFD budget, plateau, exploration-quota, stall-rule,
+  hypothesis, holdout-isolated, eval-harness, and VOID-runtime controls across
+  CLI, runtime, schema, and CI surfaces.
+- **Manual provider verification path** — adds the `ralph:manual-test` runbook
+  for bounded live-provider checks against real CLIs, with dry-run, scenario,
+  and scratch-workspace guidance.
+
+### Changed
+
+- **Cockpit operator documentation** — updates the Cockpit README, serve guide,
+  and internal instance-control ADRs so operators know how to launch the host
+  daemon, interpret stale-agent states, recover agents, and attach to recovered
+  sessions.
+- **Agent-loop governance evidence** — records the LFD remediation status,
+  accepted ADR posture, and CI coverage for `tools/ralph-external` node tests.
+
+### Fixed
+
+- **Container agent recovery path** — the Bridge now exposes
+  `POST /api/instances/:id/reconnect`, tries executor-owned reconnect endpoints
+  first, and falls back to `docker exec <container> agent-reconnect` for
+  sandbox images that ship the helper.
+- **LFD resume and budget correctness** — resume now restores analytics counters,
+  budget-exhausted loops stay guarded, unobservable token/spend limits are
+  surfaced instead of silently treated as zero, and completion-vs-budget stop
+  semantics are explicit.
+- **Ralph CLI drift** — `aiwg ralph` now forwards the six documented LFD flags,
+  rejects invalid values, and aligns documented defaults with runtime behavior.
+
 ## [2026.7.11] - 2026-07-06 - "Cockpit session stabilization"
 
 This release supersedes `2026.7.10` so the stable tag includes the Cockpit

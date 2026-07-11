@@ -1,67 +1,70 @@
 {
-  "timestamp": "2026-06-22T14:20:05Z",
+  "timestamp": "2026-07-11T20:01:33Z",
   "direction": "code-to-docs",
-  "scope": "agentic/code/** plus repository Markdown files",
-  "guidance": "include all of agentic/code and repository Markdown; AIWG capability lives in skills, agents, commands, templates, behaviors, rules, manifests, and generated guidance",
+  "scope": "post-v2026.7.11 release delta; internal .aiwg design docs; external Cockpit, serve, agent-loop, changelog, and release docs",
+  "guidance": "sync Cockpit stale-agent recovery and LFD control remediation from code to docs; prepare next release artifacts without tagging or publishing",
   "phases": [
     {
       "phase": "audit",
-      "auditors_run": [
-        "release-config",
-        "doc-sync-skill-resolution",
-        "component-doc-collector",
-        "media-curator-docs",
-        "research-complete-media-docs",
-        "release-docs",
-        "readme-freshness",
-        "issue-follow-up-discovery"
+      "inputs": [
+        "git describe --tags --abbrev=0",
+        "git log --oneline --max-count=18",
+        "git diff --name-only v2026.7.11..HEAD",
+        "aiwg discover \"doc sync code to docs release documentation\"",
+        "aiwg show skill doc-sync"
       ],
       "findings_total": 5,
-      "findings_high": 1,
-      "findings_medium": 3,
-      "findings_low": 1
+      "findings": [
+        "Cockpit stale Docker/container agents gained a Bridge/UI reconnect path that was not yet documented for operators.",
+        "Internal Cockpit instance-control ADRs did not describe the new recovery extension or stale-agent state.",
+        "The next release artifact set was still at 2026.7.11 and lacked a 2026.7.12 announcement.",
+        "The Cockpit package lock still carried 2026.7.10 while package.json was already 2026.7.11.",
+        "The LFD control remediation was implemented and documented in CLI/manual-provider docs, but needed release-note coverage."
+      ]
     },
     {
       "phase": "auto-fix",
-      "fixes_applied": 5,
       "files_modified": [
         "CHANGELOG.md",
-        "docs/_manifest.json",
-        "docs/docs-sources.json",
-        "docs/frameworks/media-curator/overview.md",
+        "package.json",
+        "package-lock.json",
+        ".claude-plugin/marketplace.json",
+        "apps/cockpit/package.json",
+        "apps/cockpit/package-lock.json",
+        "apps/cockpit/README.md",
+        "docs/serve-guide.md",
         "docs/releases/_manifest.json",
-        ".aiwg/.last-doc-sync",
+        ".aiwg/architecture/cockpit-instance-control-interface.md",
+        ".aiwg/architecture/adr-cockpit-session-attach-model.md",
+        ".aiwg/architecture/adr-cockpit-instance-control-substrate.md",
         ".aiwg/reports/doc-sync-last-run.json"
       ],
       "files_created": [
-        ".aiwg/reports/doc-sync-20260622T142005Z.md",
-        "docs/frameworks/media-curator/type-flexible-curation.md",
-        "docs/releases/v2026.6.9-announcement.md"
+        "docs/releases/v2026.7.12-announcement.md",
+        ".aiwg/reports/doc-sync-20260711T200133Z.md"
       ]
     }
   ],
   "totals": {
     "fixes_applied": 5,
     "fixes_remaining": 0,
-    "files_modified": 7,
-    "files_created": 3
+    "files_modified": 13,
+    "files_created": 2
   },
   "validation": {
     "passed": [
-      "node tools/manifest/collect-component-docs.mjs --dry-run",
-      "npx vitest run test/unit/artifacts/source-types.test.ts test/unit/artifacts/time-based-media-contract.test.ts --config config/vitest.config.js",
-      "skill frontmatter parse for changed media/research/citation skills",
-      "node bin/aiwg.mjs discover \"induct media\" --limit 5",
-      "node bin/aiwg.mjs discover \"type flexible media curation\" --limit 5",
       "npm run check:versions",
-      "npx tsc --noEmit",
-      "npm run build:cli",
-      "npm test",
-      "npm run uat"
+      "npm run docs:collect:dry",
+      "npm --prefix apps/cockpit run test:web",
+      "git diff --check"
+    ],
+    "notes": [
+      "Cockpit web tests still emit the known jsdom HTMLCanvasElement.getContext warning from xterm import; the suite passes."
     ]
   },
-  "report": ".aiwg/reports/doc-sync-20260622T142005Z.md",
+  "report": ".aiwg/reports/doc-sync-20260711T200133Z.md",
   "open_follow_up": [
-    "#1650"
+    "Complete full host/container/VM Cockpit live matrix before tagging.",
+    "Do not cut release tag or publish npm artifacts until UAT sign-off."
   ]
 }
