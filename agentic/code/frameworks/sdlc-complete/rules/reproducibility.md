@@ -6,7 +6,7 @@ enforcement: medium
 
 **Enforcement Level**: MEDIUM
 **Scope**: All workflow execution
-**Research Basis**: REF-058 R-LAM (Reproducible LLM Agent Workflows); REF-1398 through REF-1406 LFD control-pattern cluster
+**Research Basis**: REF-058 R-LAM (Reproducible LLM Agent Workflows); the LFD control-pattern research cluster (external corpus: section9/research-papers REF-1398–REF-1406 / REF-1500–REF-1542, pending local induction)
 **Issues**: #112, #113, #114, #115, #1585
 
 ## Overview
@@ -178,16 +178,25 @@ new score directly with earlier locked-harness scores.
 ### Mode Selection Flow
 
 ```
-Is this testing/validation?
-├── Yes → strict
+Is this an eval-driven agent loop with a hidden holdout / private answers?
+├── Yes → holdout-isolated
 └── No
-    └── Need audit trail?
-        ├── Yes → logged
+    └── Is this testing/validation?
+        ├── Yes → strict
         └── No
-            └── Need reproducibility?
-                ├── Yes → seeded
-                └── No → default
+            └── Need audit trail?
+                ├── Yes → logged
+                └── No
+                    └── Need reproducibility?
+                        ├── Yes → seeded
+                        └── No → default
 ```
+
+`holdout-isolated` is a superset of `strict` (temperature 0, fixed seed,
+external calls blocked, versions pinned) plus eval/holdout isolation: the
+optimizer never sees the private answers or lint details, and acceptance is
+measured on a withheld holdout split. Set via
+`aiwg execution-mode holdout-isolated`.
 
 ## Checkpoint Management
 
@@ -227,7 +236,7 @@ Is this testing/validation?
 
 All reproducibility data MUST conform to:
 
-- `agentic/code/addons/ralph/schemas/checkpoint.yaml` - Checkpoint format
+- `agentic/code/addons/agent-loop/schemas/checkpoint.yaml` - Checkpoint format
 - `agentic/code/frameworks/sdlc-complete/schemas/flows/execution-mode.yaml` - Mode configuration
 - `agentic/code/frameworks/sdlc-complete/schemas/flows/execution-snapshot.yaml` - Snapshot format
 
@@ -282,7 +291,7 @@ Before workflow completion:
 ## References
 
 - @.aiwg/research/findings/REF-058-r-lam.md - R-LAM research
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/checkpoint.yaml - Checkpoint schema
+- @$AIWG_ROOT/agentic/code/addons/agent-loop/schemas/checkpoint.yaml - Checkpoint schema
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/flows/execution-mode.yaml - Mode schema
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/flows/execution-snapshot.yaml - Snapshot schema
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/flows/error-handling.yaml - Error recovery

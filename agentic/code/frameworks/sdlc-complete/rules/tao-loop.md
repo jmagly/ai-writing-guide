@@ -6,7 +6,7 @@ enforcement: high
 
 **Enforcement Level**: HIGH
 **Scope**: All iterative agent execution (agent loops, agent tasks)
-**Research Basis**: REF-018 ReAct (Yao et al., 2022 — interleaving thought+action +34% performance; explicit TAO cut hallucination 56%→0%); REF-1398 through REF-1406 LFD control-pattern cluster
+**Research Basis**: REF-018 ReAct (Yao et al., 2022 — interleaving thought+action +34% performance; explicit TAO cut hallucination 56%→0%); the LFD control-pattern research cluster (external corpus: section9/research-papers REF-1398–REF-1406 / REF-1500–REF-1542, pending local induction)
 **Issue**: #162, #1585
 
 ## Overview
@@ -93,7 +93,7 @@ trigger structural variation or stop; error handling followed.
 ## References
 
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/thought-protocol.md — six thought types
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/iteration-analytics.yaml — iteration tracking
+- @$AIWG_ROOT/agentic/code/addons/agent-loop/schemas/iteration-analytics.yaml — iteration tracking
 - @.aiwg/research/reports/issue-1585-lfd-control-patterns-research-brief.md — LFD control-pattern synthesis
 - @.aiwg/architecture/adr-lfd-control-patterns-for-agent-loops.md — tiered loop-control ADR
 - #162

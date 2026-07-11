@@ -407,8 +407,8 @@ User: "actually, abort that and just fix the login bug"
 - `ralph-status` skill - check loop progress
 - `ralph-resume` skill - continue interrupted loops
 - `ralph-abort` skill - abort active loops
-- `@$AIWG_ROOT/agentic/code/addons/ralph/schemas/loop-registry.yaml` - Registry schema
-- `@$AIWG_ROOT/agentic/code/addons/ralph/schemas/loop-state.yaml` - Loop state schema
+- `@$AIWG_ROOT/agentic/code/addons/agent-loop/schemas/loop-registry.yaml` - Registry schema
+- `@$AIWG_ROOT/agentic/code/addons/agent-loop/schemas/loop-state.yaml` - Loop state schema
 - `@.aiwg/research/findings/REF-086-cognitive-load-limits.md` - Concurrency research
 
 ## Version History
@@ -420,8 +420,8 @@ User: "actually, abort that and just fix the login bug"
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/ralph/README.md — Ralph addon overview and loop executor documentation
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/loop-registry.yaml — Registry schema for multi-loop tracking
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/loop-state.yaml — Loop state schema
+- @$AIWG_ROOT/agentic/code/addons/agent-loop/README.md — Ralph addon overview and loop executor documentation
+- @$AIWG_ROOT/agentic/code/addons/agent-loop/schemas/loop-registry.yaml — Registry schema for multi-loop tracking
+- @$AIWG_ROOT/agentic/code/addons/agent-loop/schemas/loop-state.yaml — Loop state schema
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/vague-discretion.md — Loop termination and completion criteria rules
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference for ralph commands

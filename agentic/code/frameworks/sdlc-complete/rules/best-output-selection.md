@@ -6,7 +6,7 @@ enforcement: medium
 
 **Enforcement Level**: MEDIUM
 **Scope**: Agent loops and iterative refinement
-**Research Basis**: REF-015 Self-Refine; REF-1398 through REF-1406 LFD control-pattern cluster
+**Research Basis**: REF-015 Self-Refine; the LFD control-pattern research cluster (external corpus: section9/research-papers REF-1398–REF-1406 / REF-1500–REF-1542, pending local induction)
 **Issue**: #168, #1585
 
 ## Overview
@@ -227,6 +227,14 @@ integrity signal; `status` records budget, burn-rate, and best-iteration
 context. Detailed holdout or lint diagnostics remain outside
 optimizer-readable output and cannot be used as iteration hints.
 
+> **Status (#1772)**: the eval-harness contract, the `VOID` iteration status,
+> and the holdout-leakage adversarial tests are **spec-only / not yet
+> implemented** in the runtime (`tools/ralph-external/` has no `VOID` status;
+> `verification_status` is `passed|failed|skipped`). The MUSTs in this
+> paragraph apply **only when an eval harness is present**; until the harness is
+> built they are the target contract, not an active runtime gate. Build tracked
+> in #1772.
+
 When a loop declares a random, chance, or random-tool-shortlist baseline, the
 best-output report SHOULD include lift over that baseline. Raw quality,
 quality-per-1K-token, and quality-per-minute are not enough to show progress
@@ -374,7 +382,7 @@ Before completing an agent loop:
 - [ ] Selection based on quality, not recency
 - [ ] Hypothesis-before-change fields captured before material changes
 - [ ] Eval harness result captured when score/lint/probe/status instruments are declared
-- [ ] VOID results excluded from best-output selection unless a human override explicitly accepts them
+- [ ] VOID results excluded from best-output selection unless a human override explicitly accepts them *(applies only when an eval harness is declared; VOID is spec-only until the harness is built — #1772)*
 - [ ] Budget exhaustion, if any, stopped the loop and produced a best-output report
 - [ ] Selection decision logged with rationale
 - [ ] Override option available if needed
@@ -382,7 +390,7 @@ Before completing an agent loop:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/iteration-analytics.yaml - Iteration tracking
+- @$AIWG_ROOT/agentic/code/addons/agent-loop/schemas/iteration-analytics.yaml - Iteration tracking
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/schemas/research/quality-dimensions.yaml - Quality scoring
 - @.aiwg/research/findings/REF-015-self-refine.md - Research foundation
 - @.aiwg/research/reports/issue-1585-lfd-control-patterns-research-brief.md - LFD control-pattern synthesis

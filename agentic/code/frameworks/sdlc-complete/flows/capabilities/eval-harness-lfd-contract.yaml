@@ -35,4 +35,8 @@ spec:
     - name: harness_status
       type: object
   agent: ralph-loop
+  # Dependency: the ralph-loop agent ships with the agent-loop addon, not
+  # sdlc-complete. Deploy `aiwg use agent-loop` alongside sdlc for this
+  # capability to resolve its agent (audit C1 / #1772).
+  requires_addon: agent-loop
   idempotent: false

@@ -9,7 +9,7 @@ import { randomInt } from 'crypto';
 import { join } from 'path';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 
-type ExecutionMode = 'standard' | 'seeded' | 'strict' | 'audit';
+type ExecutionMode = 'standard' | 'seeded' | 'strict' | 'audit' | 'holdout-isolated';
 
 interface ExecutionModeConfig {
   version: '1';
@@ -18,20 +18,26 @@ interface ExecutionModeConfig {
   externalCalls: 'allowed' | 'blocked';
   pinnedVersions: boolean;
   decisionLog: boolean;
+  // holdout-isolated only: answers/lint details are withheld from the
+  // optimizer; acceptance is measured on a hidden holdout split (#1772).
+  holdoutIsolation: boolean;
   updatedAt: string;
 }
 
-const MODES = new Set<ExecutionMode>(['standard', 'seeded', 'strict', 'audit']);
+const MODES = new Set<ExecutionMode>(['standard', 'seeded', 'strict', 'audit', 'holdout-isolated']);
 
 function usage(): string {
   return [
-    'Usage: aiwg execution-mode [standard|seeded|strict|audit] [--seed <value>]',
+    'Usage: aiwg execution-mode [standard|seeded|strict|audit|holdout-isolated] [--seed <value>]',
     '',
     'Modes:',
-    '  standard  No reproducibility constraints',
-    '  seeded    Fixed random seed; external calls allowed',
-    '  strict    Seeded, external calls blocked, versions pinned',
-    '  audit     Strict mode plus decision logging',
+    '  standard          No reproducibility constraints',
+    '  seeded            Fixed random seed; external calls allowed',
+    '  strict            Seeded, external calls blocked, versions pinned',
+    '  audit             Strict mode plus decision logging',
+    '  holdout-isolated  Strict + eval/holdout isolation: private answers and',
+    '                    lint details withheld from the optimizer; acceptance',
+    '                    measured on a hidden holdout split (eval-driven loops)',
   ].join('\n');
 }
 
@@ -40,7 +46,8 @@ function configPath(cwd: string): string {
 }
 
 function buildConfig(mode: ExecutionMode, seed: string | null): ExecutionModeConfig {
-  const constrained = mode === 'strict' || mode === 'audit';
+  // holdout-isolated inherits the strict determinism constraints.
+  const constrained = mode === 'strict' || mode === 'audit' || mode === 'holdout-isolated';
   return {
     version: '1',
     mode,
@@ -48,6 +55,7 @@ function buildConfig(mode: ExecutionMode, seed: string | null): ExecutionModeCon
     externalCalls: constrained ? 'blocked' : 'allowed',
     pinnedVersions: constrained,
     decisionLog: mode === 'audit',
+    holdoutIsolation: mode === 'holdout-isolated',
     updatedAt: new Date().toISOString(),
   };
 }

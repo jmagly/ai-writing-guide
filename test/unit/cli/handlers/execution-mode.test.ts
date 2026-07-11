@@ -70,6 +70,29 @@ describe('executionModeHandler', () => {
     });
   });
 
+  it('writes holdout-isolated mode with strict constraints + isolation flag (#1772)', async () => {
+    const { executionModeHandler } = await import('../../../../src/cli/handlers/execution-mode.js');
+
+    const result = await executionModeHandler.execute(makeCtx(tmpDir, ['holdout-isolated', '--seed', '7']));
+    const config = JSON.parse(readFileSync(join(tmpDir, '.aiwg', 'execution-mode.json'), 'utf-8'));
+
+    expect(result.exitCode).toBe(0);
+    expect(config).toMatchObject({
+      mode: 'holdout-isolated',
+      seed: '7',
+      externalCalls: 'blocked',
+      pinnedVersions: true,
+      holdoutIsolation: true,
+    });
+  });
+
+  it('lists holdout-isolated in usage/help (#1772)', async () => {
+    const { executionModeHandler } = await import('../../../../src/cli/handlers/execution-mode.js');
+
+    const result = await executionModeHandler.execute(makeCtx(tmpDir, ['--help']));
+    expect(result.message).toContain('holdout-isolated');
+  });
+
   it('resets to standard mode without a seed', async () => {
     const { executionModeHandler } = await import('../../../../src/cli/handlers/execution-mode.js');
 

@@ -54,7 +54,7 @@ Before returning code: tests generated for new code; tests executed (not skipped
 ## References
 
 - @.aiwg/research/findings/REF-013-metagpt.md
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/debug-memory.yaml — debug memory schema
+- @$AIWG_ROOT/agentic/code/addons/agent-loop/schemas/debug-memory.yaml — debug memory schema
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/agents/test-engineer.md
 - #101
 

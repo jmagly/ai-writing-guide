@@ -18,10 +18,13 @@ properties:
   mode:
     type: string
     enum:
-      - strict    # Full determinism: temperature=0, fixed seed
-      - seeded    # Fixed seed with normal temperature
-      - logged    # Captures all randomness sources
-      - default   # Standard non-deterministic execution
+      - strict            # Full determinism: temperature=0, fixed seed
+      - seeded            # Fixed seed with normal temperature
+      - logged            # Captures all randomness sources
+      - default           # Standard non-deterministic execution
+      - holdout-isolated  # Strict + eval/holdout isolation: private answers and
+                          # lint details withheld from the optimizer; acceptance
+                          # measured on a hidden holdout split (#1772)
     description: "Execution mode controlling reproducibility"
 
   strict:
