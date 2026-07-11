@@ -101,6 +101,30 @@ Verified clean: plugin/addon `aiwg-mission` SKILL copies byte-identical; three t
 - **Skill-usage telemetry (`9a9dd62b2`, #1649)**: implementation matches the ADR's privacy contract — off-by-default enforced before any writes, env precedence correct, bounded stores with rotation, args used only for identity classification and never persisted raw.
 - **CI/tests**: HEAD CI green; unit suite 7,536 pass / 28 skipped; UAT 97/97.
 
+## 8. Remediation status (2026-07-11, post-audit)
+
+All findings were filed as tracker issues #1765–#1775 and resolved the same day
+(delivery.mode: direct; each landed on main with CI green). Operator governance
+decisions recorded in `.aiwg/planning/issue-1585-operator-approval-record.md`.
+
+| Issue | Finding(s) | Resolution |
+|---|---|---|
+| #1765 | R-C1 (critical) | resume() initializes + `load()`s analytics; budget flags enforced on resume; budget_exhausted resume guarded; persisted config no longer clobbered |
+| #1766 | R-H4, G5 | unknown≠zero semantics; `getObservableDimensions()`; unobservable ceilings surfaced+warned; `message.usage` read (timeout usage); session timeout bounded by remaining wall-clock |
+| #1767 | R-H1, R-H2, R-M1, R-M6 | `--budget-stop-policy` (completion-wins default); plateau → `plateau` status (never success); delta off-by-one fixed; zero-baseline flat-cycle fixed |
+| #1768 | R-H3 | stall rule built (mechanical detect + prompt directive, all providers) |
+| #1769 | R-M2, R-M3, R-M5(R-LFD-005) | real pre-change hypothesis records from StrategyPlanner; mechanical/cooperative rule-tier table (`rules/lfd-control-tiers.md`) |
+| #1770 | S-F1, S-F2, S-F5, R-L1/L2 | six LFD flags wired into `aiwg ralph`; invalid values refuse launch; declared-K quota policy (no default) |
+| #1771 | D-F1..F4, F6..F11 | canonical output schema + Ajv validation test; flows BudgetStopReport synced; eval-harness marked spec-only |
+| #1772 | D-R1..R7, C1, I1 | holdout-isolated mode built (CLI+schema+flow); dead @-mentions repointed; REFs marked external-pending; VOID scoped spec-only; capability `requires_addon` declared |
+| #1773 | S-F7 | six flags + resume semantics documented in cli-reference; ralph doc-default drift reconciled |
+| #1774 | R-L3/L4, S-T1 | ralph-external node suite gated in CI; buildArgs↔parseArgs contract test; `main()` import-guarded |
+| #1775 | G1–G6 | governance reconciled (approval record dated, PASS row → WAIVED, risk register updated, ADR Accepted, traceability comment); stale dates fixed; REF spot-check recorded |
+
+Split-out follow-ups (operator BUILD directive / orthogonal rot): **#1776**
+eval-harness + VOID runtime build; **#1777** async-rotted `registry*.test.mjs`
+re-added to the CI node step.
+
 ## 7. Suggested remediation priorities (pending operator authorization — none actioned)
 
 1. **R-C1**: initialize + `load()` analytics on resume; block resume of `budget_exhausted` loops without explicit override. (Also fixes S-F3/R-M4 via correct config merge.)
