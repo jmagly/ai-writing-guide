@@ -2387,6 +2387,7 @@ aiwg mission-control <subcommand> [options]
 |------------|-------------|
 | `start` | Start a new Mission Control session |
 | `dispatch <id> "<objective>"` | Add a background mission to session |
+| `run [<id>] [--accept-cost]` | Drain the queue — launch queued missions as ralph loops |
 | `status [<id>] [--json]` | View mission status dashboard |
 | `watch [<id>]` | Live monitor (streaming) |
 | `abort <session> <mission>` | Abort a specific mission |
@@ -2394,6 +2395,19 @@ aiwg mission-control <subcommand> [options]
 | `resume [<id>]` | Resume paused session |
 | `stop [<id>] [--drain]` | Shut down session |
 | `list [--json]` | List all sessions |
+
+**`mc dispatch` options** (the LFD ceilings mirror `aiwg ralph`; same names/units, #1585):
+
+- `--completion "<criteria>"` - Verifiable completion criteria (required for `mc run`)
+- `--priority <level>` - Priority hint (default: normal)
+- `--max-iterations <n>` - Ralph iteration cap when launched (default: 10)
+- `--max-total-tokens <n>` / `--max-output-tokens <n>` / `--max-tool-calls <n>` - Hard cumulative usage ceilings (when observable)
+- `--max-total-cost <usd>` - Hard cumulative spend ceiling (when observable)
+- `--max-wall-clock-minutes <m>` - Hard cumulative wall-clock ceiling (always observable)
+- `--exploration-quota <k>` - Structural variant after `k` flat cycles (off unless declared; no default `k`)
+- `--budget-stop-policy <p>` - `completion-wins` (default) | `budget-wins`
+
+> Invalid numeric budget values are a hard usage error — `mc dispatch` refuses rather than dispatching an unbounded mission (#1770). `--flag=value` syntax is accepted.
 
 **Examples:**
 
@@ -2404,6 +2418,10 @@ aiwg mc start --name "Construction Sprint 4"
 # Dispatch missions
 aiwg mc dispatch mc-abc123 "Fix auth service" --completion "tests pass" --priority high
 aiwg mc dispatch mc-abc123 "Add pagination" --completion "paginated responses"
+
+# Dispatch with LFD ceilings (wall-clock is the provider-independent hard stop)
+aiwg mc dispatch mc-abc123 "Refactor auth" --completion "tests pass" \
+  --max-wall-clock-minutes 30 --max-total-cost 5 --exploration-quota 3
 
 # Monitor
 aiwg mc status mc-abc123
@@ -2555,18 +2573,34 @@ aiwg ralph "<task-description>"
 **Core Options:**
 
 - `--completion "<criteria>"` - Success criteria (e.g., "npm test passes")
-- `--max-iterations <n>` - Maximum iterations (default: 10)
-- `--timeout <seconds>` - Per-iteration timeout (default: 300)
-- `--provider <name>` - CLI provider: `claude` (default), `codex`, `opencode`, `local`
-- `--budget <usd>` - Budget per iteration in USD (default: 2.0)
+- `--max-iterations <n>` - Maximum iterations (default: 5)
+- `--timeout <minutes>` - Per-iteration timeout in minutes (default: 60)
+- `--provider <name>` - CLI provider: `claude` (default), `codex`, `opencode`, `factory`
+- `--budget <usd>` - Budget per iteration in USD (default: 5.0)
 - `--gitea-issue` - Create/link Gitea issue for tracking
 - `--mcp-config <json>` - MCP server configuration JSON
+
+**LFD Loop Controls (#1585):**
+
+Hard cumulative ceilings that stop the loop and emit a best-output report.
+Invalid values or unknown flags cause `aiwg ralph` to refuse to launch (#1770).
+
+- `--max-total-tokens <n>` - Hard cumulative total-token ceiling (when the provider reports usage)
+- `--max-output-tokens <n>` - Hard cumulative output-token ceiling (when the provider reports usage)
+- `--max-tool-calls <n>` - Hard cumulative tool-call ceiling (when the provider reports usage)
+- `--max-total-cost <usd>` - Hard cumulative spend ceiling (when the provider reports cost)
+- `--max-wall-clock-minutes <m>` - Hard cumulative wall-clock ceiling (always observable; the provider-independent hard stop)
+- `--exploration-quota <k>` - Require a structural strategy variant after `k` flat (non-improving) cycles. **OFF unless declared** — there is no default `k`; each loop declares its own (#1770)
+- `--budget-stop-policy <p>` - `completion-wins` (default): a task completing on the ceiling-crossing iteration reports success with the crossing annotated; `budget-wins`: exhaustion always terminates as `budget_exhausted` (#1767)
+- `--allow-exhausted-resume` - Permit `--resume` of a loop whose declared ceilings are already exhausted (pair with raised `--max-*` limits) (#1765)
+
+> Token/spend ceilings are **unobservable** on providers that report no usage (a one-time warning is printed); use `--max-wall-clock-minutes` for a provider-independent hard stop (#1766). These flags are also accepted by `aiwg mc dispatch` and the MCP `ralph-dispatch` / `mission-dispatch` tools with the same names and units.
 
 **Research-Backed Options (REF-015, REF-021):**
 
 - `-m, --memory <n|preset>` - Memory capacity Ω: 1-10 or preset (simple, moderate, complex, maximum). Default: 3
 - `--cross-task` / `--no-cross-task` - Enable/disable cross-task learning (default: enabled)
-- `--no-analytics` - Disable iteration analytics
+- `--no-analytics` - Disable iteration analytics. **Note:** this also disables the LFD budget stops and exploration quota, which live in the analytics subsystem (#1766)
 - `--no-best-output` - Disable best output selection (use final iteration)
 - `--no-early-stopping` - Disable early stopping on high confidence
 
@@ -2775,9 +2809,15 @@ aiwg ralph-resume
 - Loads last saved state (including Epic #26 control layers)
 - Restores PID controller state
 - Reloads semantic memory context
+- **Restores the LFD analytics counters** — cumulative token/spend/wall-clock usage survives resume, so declared budget ceilings are re-enforced across a crash/restart (#1765)
 - Continues from last iteration
 - Applies same completion criteria
 - Respects remaining iteration budget
+
+**LFD resume semantics (#1765):**
+
+- Persisted budget/quota/policy config is preserved; only explicitly passed flags override it.
+- Resuming a loop whose declared ceilings are already exhausted is **refused** unless `--allow-exhausted-resume` is passed (pair with raised `--max-*` limits).
 
 ---
 
