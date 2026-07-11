@@ -25,7 +25,7 @@ import { join } from 'path';
  * @property {number} [output_tokens] - Output token count
  * @property {number} [tool_calls] - Tool-call count
  * @property {number} execution_time_ms - Execution time in milliseconds
- * @property {string} verification_status - passed|failed|skipped
+ * @property {string} verification_status - passed|failed|skipped|void
  * @property {string} output_snapshot_path - Path to snapshot
  * @property {string[]} reflections - Reflection notes
  * @property {Object} [experiment] - Hypothesis-before-change record
@@ -115,7 +115,7 @@ export class IterationAnalytics {
    * @param {number} metrics.tokens_used - Token count
    * @param {number} metrics.token_cost_usd - Cost in USD
    * @param {number} metrics.execution_time_ms - Execution time
-   * @param {string} metrics.verification_status - passed|failed|skipped
+   * @param {string} metrics.verification_status - passed|failed|skipped|void
    * @param {string} metrics.output_snapshot_path - Path to snapshot
    * @param {string[]} [metrics.reflections] - Reflection notes
    * @returns {IterationMetrics} Complete iteration record
@@ -151,6 +151,10 @@ export class IterationAnalytics {
       output_snapshot_path: metrics.output_snapshot_path,
       reflections: metrics.reflections || [],
       experiment: metrics.experiment || null,
+      // Eval-harness result + VOID handling (#1776). eval_human_override lets a
+      // human accept a VOID iteration as a best-output candidate.
+      eval_harness_result: metrics.eval_harness_result || null,
+      eval_human_override: metrics.eval_human_override === true,
       quality_per_1k_tokens: metrics.tokens_used > 0
         ? metrics.quality_score / (metrics.tokens_used / 1000)
         : null,  // null when tokens unknown or zero
@@ -543,7 +547,15 @@ export class IterationAnalytics {
       return null;
     }
 
-    let candidates = [...this.iterations];
+    // VOID iterations (eval-harness voided — e.g. a lint violation) are never
+    // valid best-output candidates unless a human override accepted them
+    // (#1776). Even the fallback must not return a VOID iteration.
+    const selectable = this.iterations.filter(
+      it => it.verification_status !== 'void' || it.eval_human_override === true
+    );
+    const pool = selectable.length > 0 ? selectable : this.iterations;
+
+    let candidates = [...pool];
 
     // Filter by verification status if requested
     if (verifiedOnly) {
@@ -554,8 +566,8 @@ export class IterationAnalytics {
     candidates = candidates.filter(it => it.quality_score >= this.config.qualityThreshold);
 
     if (candidates.length === 0) {
-      // Fallback: return highest quality regardless of verification/threshold
-      return this.iterations.reduce((best, curr) =>
+      // Fallback: highest quality among selectable (non-VOID) iterations.
+      return pool.reduce((best, curr) =>
         curr.quality_score > best.quality_score ? curr : best
       );
     }
@@ -675,6 +687,14 @@ export class IterationAnalytics {
         : null,
       flat_cycle_count: explorationQuota.flat_cycle_count,
       structural_variant_required: explorationQuota.required,
+      // Eval-harness result of the final iteration + count of VOID iterations
+      // (LFD Track 3, #1776). null when no harness was declared.
+      eval_harness_result: this.iterations.length > 0
+        ? (this.iterations[this.iterations.length - 1].eval_harness_result || null)
+        : null,
+      void_iteration_count: this.iterations.filter(
+        it => it.verification_status === 'void'
+      ).length,
       baseline_comparison: baselineComparisons.length > 0
         ? {
             count: baselineComparisons.length,

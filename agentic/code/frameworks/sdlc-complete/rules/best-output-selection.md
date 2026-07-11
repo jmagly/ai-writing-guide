@@ -227,13 +227,15 @@ integrity signal; `status` records budget, burn-rate, and best-iteration
 context. Detailed holdout or lint diagnostics remain outside
 optimizer-readable output and cannot be used as iteration hints.
 
-> **Status (#1772)**: the eval-harness contract, the `VOID` iteration status,
-> and the holdout-leakage adversarial tests are **spec-only / not yet
-> implemented** in the runtime (`tools/ralph-external/` has no `VOID` status;
-> `verification_status` is `passed|failed|skipped`). The MUSTs in this
-> paragraph apply **only when an eval harness is present**; until the harness is
-> built they are the target contract, not an active runtime gate. Build tracked
-> in #1772.
+> **Status (#1776, implemented)**: the eval-harness contract, the `VOID`
+> iteration status, and the holdout-leakage adversarial tests are **implemented**
+> in the runtime — `tools/ralph-external/eval-harness.mjs` runs the
+> score/lint/probe/status instruments, VOIDs an iteration on a lint violation,
+> surfaces only VOID-safe aggregate feedback (forbidden holdout fields are
+> stripped by `buildOptimizerFeedback()`), and fences VOID iterations out of
+> best-output selection unless a human override accepts them. The harness is
+> **opt-in**: the MUSTs in this paragraph apply only when a loop declares an
+> `evalHarness` contract; loops without one are unaffected.
 
 When a loop declares a random, chance, or random-tool-shortlist baseline, the
 best-output report SHOULD include lift over that baseline. Raw quality,
@@ -382,7 +384,7 @@ Before completing an agent loop:
 - [ ] Selection based on quality, not recency
 - [ ] Hypothesis-before-change fields captured before material changes
 - [ ] Eval harness result captured when score/lint/probe/status instruments are declared
-- [ ] VOID results excluded from best-output selection unless a human override explicitly accepts them *(applies only when an eval harness is declared; VOID is spec-only until the harness is built — #1772)*
+- [ ] VOID results excluded from best-output selection unless a human override explicitly accepts them *(implemented #1776; applies when a loop declares an eval-harness contract)*
 - [ ] Budget exhaustion, if any, stopped the loop and produced a best-output report
 - [ ] Selection decision logged with rationale
 - [ ] Override option available if needed

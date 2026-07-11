@@ -33,6 +33,7 @@ import { BestOutputTracker } from './best-output-tracker.mjs';
 import { MemoryManager } from './memory-manager.mjs';
 import { EarlyStopping } from './early-stopping.mjs';
 import { IterationAnalytics } from './iteration-analytics.mjs';
+import { EvalHarness, statusToVerification } from './eval-harness.mjs';
 import { CrossTaskLearner } from './cross-task-learner.mjs';
 // Multi-loop coordination (REF-086, REF-088)
 import { ExternalMultiLoopStateManager } from './external-multi-loop-state-manager.mjs';
@@ -127,6 +128,7 @@ export class Orchestrator {
     this.memoryManager = null;
     this.earlyStopping = null;
     this.iterationAnalytics = null;
+    this.evalHarness = null;
     this.crossTaskLearner = null;
     this.crossTaskLearnings = null;
 
@@ -250,6 +252,8 @@ export class Orchestrator {
       budgetLimits: config.budgetLimits || {},
       explorationQuota: config.explorationQuota || { enabled: false },
       budgetStopPolicy: config.budgetStopPolicy || 'completion-wins',
+      evalHarness: config.evalHarness || null,
+      executionMode: config.executionMode || 'default',
       timeoutMinutes: config.timeoutMinutes || 60,
       mcpConfig: config.mcpConfig,
       workingDir: config.workingDir || this.projectRoot,
@@ -340,6 +344,18 @@ export class Orchestrator {
         requireVerification: true,
       });
       console.log('[External Ralph] Early stopping: ENABLED');
+    }
+
+    // Eval Harness (LFD Track 3, #1776) — opt-in. When a loop declares an
+    // eval-harness contract, each iteration is scored by the harness; a lint
+    // violation VOIDs the iteration and only VOID-safe aggregate feedback
+    // reaches the agent. Holdout isolation is strict under holdout-isolated mode.
+    if (state.config.evalHarness) {
+      this.evalHarness = new EvalHarness(state.config.evalHarness, {
+        workingDir: state.config.workingDir || this.projectRoot,
+        executionMode: state.config.executionMode || 'default',
+      });
+      console.log(`[External Ralph] Eval harness: ENABLED (execution-mode: ${state.config.executionMode || 'default'})`);
     }
 
     // Iteration Analytics — cumulative budget counters MUST survive resume,
@@ -1152,9 +1168,33 @@ export class Orchestrator {
 
         console.log(`[External Ralph] Analysis: completed=${analysis.completed}, success=${analysis.success}, progress=${analysis.completionPercentage}%`);
 
+        // ========== EVAL HARNESS (LFD Track 3, #1776) ==========
+        // Run the declared harness for this iteration BEFORE recording, so a
+        // VOID (e.g. lint violation) overrides the verification status and the
+        // iteration is fenced out of best-output selection. Only VOID-safe
+        // aggregate feedback is surfaced to the agent; detailed diagnostics are
+        // written to a private, non-optimizer-readable path.
+        let evalResult = null;
+        if (this.evalHarness) {
+          try {
+            evalResult = this.evalHarness.run({ iterationDir });
+            const resultPath = join(iterationDir, 'eval-harness-result.json');
+            writeFileSync(resultPath, JSON.stringify(evalResult, null, 2));
+            console.log(`[External Ralph] Eval harness: status=${evalResult.status}, leakage_audit=${evalResult.leakage_audit.result}`);
+          } catch (error) {
+            console.warn(`[External Ralph] Eval harness run failed: ${error.message}`);
+          }
+        }
+
         // ========== RECORD TO RESEARCH MODULES ==========
         const qualityScore = (analysis.completionPercentage || 0) / 100;
-        const verificationPassed = analysis.completed && analysis.success;
+        // The eval harness, when present, is authoritative for verification:
+        // a VOID/pass/fail from the harness overrides the analyzer's heuristic.
+        const analyzerPassed = analysis.completed && analysis.success;
+        const evalVerification = evalResult ? statusToVerification(evalResult.status) : null;
+        const verificationStatus = evalVerification || (analyzerPassed ? 'passed' : 'failed');
+        const verificationPassed = verificationStatus === 'passed';
+        const evalHumanOverride = evalResult?.human_override === true;
 
         // Best Output Tracker (REF-015)
         if (this.bestOutputTracker) {
@@ -1171,7 +1211,8 @@ export class Orchestrator {
             tokens_used: sessionResult.totalTokens || 0,
             token_cost_usd: sessionResult.costUsd || 0,
             execution_time_ms: duration,
-            verification_status: verificationPassed ? 'passed' : 'failed',
+            verification_status: verificationStatus,
+            eval_human_override: evalHumanOverride,
             reflections: analysis.learnings ? [analysis.learnings] : [],
           });
         }
@@ -1206,7 +1247,9 @@ export class Orchestrator {
             tool_calls: sessionResult.toolCallCount || 0,
             token_cost_usd: costObserved ? (sessionResult.costUsd || 0) : null,
             execution_time_ms: duration,
-            verification_status: verificationPassed ? 'passed' : 'failed',
+            verification_status: verificationStatus,
+            eval_harness_result: evalResult,
+            eval_human_override: evalHumanOverride,
             output_snapshot_path: outputPaths.stdout,
             reflections: analysis.learnings ? [analysis.learnings] : [],
             // Hypothesis-before-change (#1769): captured pre-session from the

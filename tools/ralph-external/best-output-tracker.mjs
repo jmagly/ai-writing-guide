@@ -34,7 +34,7 @@ import { join, dirname } from 'path';
  * @property {number} tokens_used - Tokens consumed
  * @property {number} token_cost_usd - Cost in USD
  * @property {number} execution_time_ms - Duration in milliseconds
- * @property {string} verification_status - passed|failed|skipped
+ * @property {string} verification_status - passed|failed|skipped|void
  * @property {string} snapshot_path - Path to artifact snapshot
  * @property {string[]} artifacts - Artifact file paths
  * @property {string[]} reflections - Self-reflection notes
@@ -192,6 +192,9 @@ export class BestOutputTracker {
       snapshot_path: snapshotDir,
       artifacts: snapshotArtifacts,
       reflections: params.reflections || [],
+      // VOID iterations are excluded from selection unless a human accepted
+      // them (#1776).
+      eval_human_override: params.eval_human_override === true,
     };
 
     this.iterations.push(record);
@@ -210,6 +213,13 @@ export class BestOutputTracker {
    * @param {IterationRecord} newRecord
    */
   updateBest(newRecord) {
+    // A VOID iteration is never the running best unless a human accepted it (#1776).
+    const isSelectable = (rec) =>
+      rec.verification_status !== 'void' || rec.eval_human_override === true;
+    if (!isSelectable(newRecord)) {
+      return;
+    }
+
     if (this.bestIterationNumber === null) {
       this.bestIterationNumber = newRecord.iteration_number;
       return;
@@ -253,8 +263,16 @@ export class BestOutputTracker {
     const criteria = this.config.selection;
     const finalIteration = this.iterations[this.iterations.length - 1];
 
+    // VOID iterations (an eval harness voided them — e.g. a lint violation)
+    // are never valid best-output candidates unless a human override accepted
+    // that specific iteration (#1776). This is the mechanical fence that stops
+    // the optimizer from being rewarded for a metric-gaming iteration.
+    const selectable = this.iterations.filter(
+      (it) => it.verification_status !== 'void' || it.eval_human_override === true
+    );
+
     // Filter by threshold
-    let candidates = this.iterations.filter(
+    let candidates = selectable.filter(
       (it) => it.quality_score >= criteria.threshold
     );
 
@@ -265,9 +283,10 @@ export class BestOutputTracker {
       );
     }
 
-    // If no candidates meet criteria, fall back to all iterations
+    // If no candidates meet criteria, fall back to all non-VOID iterations
+    // (never fall back to a VOID iteration).
     if (candidates.length === 0) {
-      candidates = [...this.iterations];
+      candidates = selectable.length > 0 ? [...selectable] : [...this.iterations];
     }
 
     let selected;

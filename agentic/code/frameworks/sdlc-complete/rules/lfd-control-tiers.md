@@ -28,6 +28,8 @@ honor — useful for a cooperative agent, but substitutable by agent self-report
 | Exploration quota (flat-cycle → structural variant) | Quality-delta over K cycles (quality signal is analyzer-scored) | Prompt directive requiring a variant | **Partially** — trigger depends on the quality signal; enforcement is a directive | Hybrid |
 | Stall rule (no-repeat adjustment) | Adjustment fingerprint + non-improving quality delta | Prompt directive forbidding the prior adjustment | **Partially** — same caveat as the quota | Hybrid |
 | Hypothesis-before-change record | Planner-derived pre-change, injected + recorded | Prompt directive to state/refine before acting | **Yes** (the agent authors the confirmation) | Cooperative |
+| Eval-harness VOID (lint violation → VOID) | Harness lint instrument exit/violation (#1776) | Harness sets `void`; VOID fenced out of best-output selection (mechanical) | **No** for the fence; the lint instrument itself is harness-owned | Mechanical |
+| Holdout isolation (VOID-safe optimizer feedback) | Allowlist strip of forbidden fields (#1776) | Only aggregate/VOID feedback reaches the agent; diagnostics kept private | **No** | Mechanical |
 | Plateau ≠ success | Quality-delta plateau over N cycles | Harness assigns `plateau` status (never success) | **No** for the *status*; the quality signal is analyzer-scored | Hybrid |
 
 ## Rules

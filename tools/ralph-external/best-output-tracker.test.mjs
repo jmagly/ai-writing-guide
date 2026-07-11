@@ -152,6 +152,46 @@ describe('BestOutputTracker', () => {
       assert.equal(best.iteration_number, 2); // Should be iteration 2, not final
       assert.ok(best.quality_score >= 80);
     });
+
+    it('excludes a VOID iteration from best-output even at peak quality (#1776)', () => {
+      // Iteration 1: 70%, verified
+      tracker.recordIteration({
+        iteration_number: 1,
+        dimensions: { validation: 0.7, completeness: 0.7, correctness: 0.7, readability: 0.7, efficiency: 0.7 },
+        artifacts: [testArtifactPath],
+        verification_status: 'passed',
+      });
+      // Iteration 2: 95%, but VOID (eval harness voided it — e.g. lint violation)
+      tracker.recordIteration({
+        iteration_number: 2,
+        dimensions: { validation: 1, completeness: 0.95, correctness: 0.95, readability: 0.9, efficiency: 0.9 },
+        artifacts: [testArtifactPath],
+        verification_status: 'void',
+      });
+
+      // The higher-scoring iteration 2 is VOID → best stays iteration 1.
+      const best = tracker.getBest();
+      assert.equal(best.iteration_number, 1);
+    });
+
+    it('accepts a VOID iteration as best when human-overridden (#1776)', () => {
+      tracker.recordIteration({
+        iteration_number: 1,
+        dimensions: { validation: 0.7, completeness: 0.7, correctness: 0.7, readability: 0.7, efficiency: 0.7 },
+        artifacts: [testArtifactPath],
+        verification_status: 'passed',
+      });
+      tracker.recordIteration({
+        iteration_number: 2,
+        dimensions: { validation: 1, completeness: 0.95, correctness: 0.95, readability: 0.9, efficiency: 0.9 },
+        artifacts: [testArtifactPath],
+        verification_status: 'void',
+        eval_human_override: true,
+      });
+
+      const best = tracker.getBest();
+      assert.equal(best.iteration_number, 2);
+    });
   });
 
   describe('selectOutput', () => {

@@ -339,13 +339,14 @@ $defs:
 
   EvalHarnessContract:
     type: object
-    # STATUS: SPEC-ONLY / NOT YET IMPLEMENTED (#1771/#1772). No runtime code
-    # under tools/ralph-external/ or src/ reads or writes this contract, the
-    # eval_harness_result path, or the VOID status yet. It documents the
-    # intended eval/holdout harness surface (#1585 Track 3 build, tracked in
-    # #1771/#1772). Rules that reference it MUST condition their MUSTs on the
-    # harness being present.
-    description: "SPEC-ONLY (unimplemented): LFD-style score/lint/probe/status harness contract for eval-driven loops."
+    # STATUS: IMPLEMENTED (#1776). The runtime lives at
+    # tools/ralph-external/eval-harness.mjs (EvalHarness); the orchestrator runs
+    # it per iteration when a loop declares `evalHarness`, folds VOID into the
+    # iteration verification_status, writes eval-harness-result.json, and fences
+    # VOID iterations out of best-output selection. Holdout isolation (VOID-safe
+    # optimizer feedback + private diagnostics) is enforced by
+    # buildOptimizerFeedback(). Opt-in: loops without a contract are unaffected.
+    description: "LFD-style score/lint/probe/status harness contract for eval-driven loops (implemented — #1776)."
     required:
       - score
       - lint

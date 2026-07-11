@@ -105,6 +105,9 @@ export class StateManager {
         budgetLimits: config.budgetLimits || {},
         explorationQuota: config.explorationQuota || { enabled: false },
         budgetStopPolicy: config.budgetStopPolicy || 'completion-wins',
+        // Eval-harness contract + execution mode (LFD Track 3, #1776)
+        evalHarness: config.evalHarness || null,
+        executionMode: config.executionMode || 'default',
         timeoutMinutes: config.timeoutMinutes || 60,
         mcpConfig: config.mcpConfig || null,
         workingDir: config.workingDir || this.projectRoot,

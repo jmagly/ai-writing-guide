@@ -963,6 +963,27 @@ try {
       verification_status: 'failed',
       output_snapshot_path: '/p/2',
     });
+    // VOID iteration with an eval-harness result — the new eval fields must
+    // validate against the extended output schema (#1776)
+    analytics.recordIteration({
+      iteration_number: 3,
+      quality_score: 88,
+      tokens_used: 700,
+      tool_calls: 2,
+      token_cost_usd: 0.2,
+      execution_time_ms: 3000,
+      verification_status: 'void',
+      output_snapshot_path: '/p/3',
+      eval_human_override: false,
+      eval_harness_result: {
+        status: 'void',
+        optimizer_feedback: { score: 88, pass_count: 8, total_count: 10, status: 'void', void_reason: 'lint violation' },
+        private_diagnostics_ref: '/p/3/eval-harness-private.json',
+        leakage_audit: { checked: true, result: 'pass' },
+        human_override: false,
+        _forbidden_fields_seen: ['holdout_answers'],
+      },
+    });
 
     const summary = analytics.generateSummary();
     const summaryValid = validate(summary);

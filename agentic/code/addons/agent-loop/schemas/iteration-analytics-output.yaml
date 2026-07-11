@@ -68,6 +68,13 @@ properties:
     type: integer
   structural_variant_required:
     type: boolean
+  # Eval-harness (LFD Track 3, #1776). null when no harness declared.
+  eval_harness_result:
+    oneOf:
+      - { type: "null" }
+      - $ref: "#/$defs/EvalHarnessResult"
+  void_iteration_count:
+    type: integer
   baseline_comparison:
     # null when no baseline yet; aggregate object once baselines accumulate
     type: [object, "null"]
@@ -110,7 +117,14 @@ $defs:
         type: number
       verification_status:
         type: string
-        enum: [passed, failed, skipped]
+        # void = an eval harness voided the iteration (e.g. lint violation), #1776
+        enum: [passed, failed, skipped, void]
+      eval_harness_result:
+        oneOf:
+          - { type: "null" }
+          - $ref: "#/$defs/EvalHarnessResult"
+      eval_human_override:
+        type: boolean
       output_snapshot_path:
         type: [string, "null"]
       reflections:
@@ -200,3 +214,40 @@ $defs:
         type: array
       next_recommended_action:
         type: string
+
+  EvalHarnessResult:
+    type: object
+    description: "Output of EvalHarness.run() (tools/ralph-external/eval-harness.mjs, #1776)"
+    required:
+      - status
+      - optimizer_feedback
+    properties:
+      status:
+        type: string
+        enum: [pass, fail, void, error]
+      optimizer_feedback:
+        # VOID-safe, aggregate-only feedback visible to the optimizing agent —
+        # NEVER the forbidden holdout fields. Allowlisted keys only.
+        type: object
+        additionalProperties: false
+        properties:
+          score: { type: number }
+          pass_count: { type: integer }
+          total_count: { type: integer }
+          status: { type: string }
+          void_reason: { type: string }
+      private_diagnostics_ref:
+        type: [string, "null"]
+      leakage_audit:
+        type: object
+        required: [checked, result]
+        properties:
+          checked: { type: boolean }
+          result:
+            type: string
+            enum: [pass, fail, not_applicable]
+      human_override:
+        type: boolean
+      _forbidden_fields_seen:
+        type: array
+        items: { type: string }

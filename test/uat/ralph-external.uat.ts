@@ -376,6 +376,85 @@ describe('UAT: Orchestrator — LFD loop controls', () => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════
+// Suite: Eval-harness + VOID (#1776)
+// ═════════════════════════════════════════════════════════════════════════
+
+describe('UAT: Orchestrator — eval-harness + VOID (#1776)', () => {
+  it('VOIDs an iteration on a lint violation and keeps holdout details private', async () => {
+    process.env.UAT_STUB_OUTPUT = 'Ralph iteration still incomplete.';
+    const orc = new Orchestrator(testDir);
+
+    // Real shell-command harness: lint exits 1 with a violation (→ VOID); score
+    // emits an aggregate that also tries to leak a holdout answer (must be
+    // stripped from optimizer feedback).
+    const result = await orc.execute({
+      ...BASE_CONFIG,
+      objective: 'Eval-harness VOID UAT',
+      completionCriteria: 'never met by stub',
+      maxIterations: 1,
+      enableAnalytics: true,
+      enableBestOutput: true,
+      executionMode: 'holdout-isolated',
+      evalHarness: {
+        lint: {
+          command: `node -e "console.log(JSON.stringify({violation:true,void_reason:'banned import'})); process.exit(1)"`,
+          void_on_violation: true,
+        },
+        score: {
+          command: `node -e "console.log(JSON.stringify({score:95,pass_count:19,total_count:20,holdout_answers:{1:'A'},oracle_traces:'CANARY-XYZ'}))"`,
+        },
+        diagnostics_policy: { private_human: '', optimizer_visible: 'aggregate_only' },
+      },
+    });
+
+    const state = orc.stateManager.load();
+    const analytics = JSON.parse(
+      readFileSync(join(orc.stateManager.getStateDir(), 'analytics', `${state.loopId}.json`), 'utf-8'),
+    );
+    const iter = analytics.iterations[0];
+
+    // Iteration is VOID; only VOID-safe aggregate feedback reached the record.
+    expect(iter.verification_status).toBe('void');
+    expect(iter.eval_harness_result.status).toBe('void');
+    expect(iter.eval_harness_result.leakage_audit.result).toBe('pass');
+    const feedbackStr = JSON.stringify(iter.eval_harness_result.optimizer_feedback);
+    expect(feedbackStr).not.toContain('CANARY-XYZ');
+    expect(feedbackStr).not.toContain('holdout_answers');
+    expect(analytics.void_iteration_count).toBe(1);
+    expect(result.loopId).toBeDefined();
+
+    // The eval-harness result artifact is written per iteration.
+    const iterDirs = join(orc.stateManager.getStateDir(), 'iterations');
+    const found = existsSync(iterDirs);
+    expect(found).toBe(true);
+  });
+
+  it('passes a clean iteration through the harness (no VOID)', async () => {
+    process.env.UAT_STUB_OUTPUT = 'Ralph iteration still incomplete.';
+    const orc = new Orchestrator(testDir);
+    const result = await orc.execute({
+      ...BASE_CONFIG,
+      objective: 'Eval-harness pass UAT',
+      completionCriteria: 'never met by stub',
+      maxIterations: 1,
+      enableAnalytics: true,
+      evalHarness: {
+        lint: { command: `node -e "console.log('{}')"`, void_on_violation: true },
+        score: { command: `node -e "console.log(JSON.stringify({score:100,pass_count:10,total_count:10}))"` },
+      },
+    });
+    const state = orc.stateManager.load();
+    const analytics = JSON.parse(
+      readFileSync(join(orc.stateManager.getStateDir(), 'analytics', `${state.loopId}.json`), 'utf-8'),
+    );
+    expect(analytics.iterations[0].eval_harness_result.status).toBe('pass');
+    expect(analytics.iterations[0].verification_status).toBe('passed');
+    expect(analytics.void_iteration_count).toBe(0);
+    expect(result.loopId).toBeDefined();
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════
 // Suite: Resume path carries the LFD control surface (#1765)
 // ═════════════════════════════════════════════════════════════════════════
 

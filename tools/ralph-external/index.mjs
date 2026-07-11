@@ -56,6 +56,8 @@ function parseArgs(args) {
     // when the completing iteration also crosses a budget ceiling;
     // budget-wins keeps the strict exhaustion-terminates ordering.
     budgetStopPolicy: 'completion-wins',
+    // Eval harness (LFD Track 3, #1776): opt-in via --eval-harness <path>.
+    evalHarness: null,
     timeoutMinutes: 60,
     mcpConfig: null,
     giteaIssue: false,
@@ -134,6 +136,15 @@ function parseArgs(args) {
       }
       options.budgetStopPolicy = policy;
       options._explicit.add('budgetStopPolicy');
+    } else if (arg === '--eval-harness') {
+      // Path to an EvalHarnessContract JSON (LFD Track 3, #1776).
+      const harnessPath = args[++i];
+      try {
+        options.evalHarness = JSON.parse(readFileSync(harnessPath, 'utf8'));
+      } catch (err) {
+        console.error(`Error: --eval-harness could not read/parse '${harnessPath}': ${err.message}`);
+        process.exit(1);
+      }
     } else if (arg === '--timeout') {
       options.timeoutMinutes = positiveNumber('--timeout', args[++i], { integer: true });
     } else if (arg === '--mcp-config') {
@@ -251,6 +262,12 @@ OPTIONS:
   --exploration-quota <k> Require a structural strategy variant after k flat
                           non-terminal cycles. OFF unless declared — there is
                           no default k; each loop declares its own (#1770).
+  --eval-harness <path>   Path to an eval-harness contract JSON (score/lint/
+                          probe/status). Each iteration is scored by the
+                          harness; a lint violation VOIDs the iteration and only
+                          VOID-safe aggregate feedback reaches the agent. Under
+                          execution-mode holdout-isolated, holdout isolation is
+                          strict (#1776).
   --timeout <min>         Timeout per iteration in minutes (default: 60)
   --mcp-config <json>     MCP server configuration JSON
   --gitea-issue           Create/link Gitea issue for tracking
@@ -458,6 +475,22 @@ ${state.accumulatedLearnings ? state.accumulatedLearnings.slice(0, 500) + '...' 
 }
 
 /**
+ * Read the reproducibility execution mode from .aiwg/execution-mode.json.
+ * Under `holdout-isolated` the eval harness enforces strict holdout isolation
+ * (#1776). Defaults to 'default' when unset/unreadable.
+ * @param {string} projectRoot
+ * @returns {string}
+ */
+function readExecutionMode(projectRoot) {
+  try {
+    const cfg = JSON.parse(readFileSync(join(projectRoot, '.aiwg', 'execution-mode.json'), 'utf8'));
+    return cfg.mode || 'default';
+  } catch {
+    return 'default';
+  }
+}
+
+/**
  * Main entry point
  */
 async function main() {
@@ -593,6 +626,8 @@ async function main() {
         budgetLimits: options.budgetLimits,
         explorationQuota: options.explorationQuota,
         budgetStopPolicy: options.budgetStopPolicy,
+        evalHarness: options.evalHarness,
+        executionMode: readExecutionMode(projectRoot),
         mcpConfig: options.mcpConfig,
         giteaIntegration: options.giteaIssue ? { enabled: true } : null,
         provider: options.provider,
