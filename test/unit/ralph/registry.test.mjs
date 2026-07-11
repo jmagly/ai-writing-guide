@@ -14,7 +14,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const TEST_DIR = path.join(__dirname, '.tmp-registry');
-const TEST_REGISTRY_PATH = path.join(TEST_DIR, 'registry.json');
+// LoopRegistry writes under <baseDir>/.aiwg/ralph/ (path restructured; the
+// test was stale because it was excluded from CI — fixed under #1774).
+const TEST_REGISTRY_PATH = path.join(TEST_DIR, '.aiwg', 'ralph', 'registry.json');
 
 describe('LoopRegistry', () => {
   let registry;

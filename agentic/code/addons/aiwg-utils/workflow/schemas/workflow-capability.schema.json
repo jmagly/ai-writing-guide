@@ -103,6 +103,10 @@
           "type": "string",
           "description": "Agent responsible for executing this capability."
         },
+        "requires_addon": {
+          "type": "string",
+          "description": "Addon that must be deployed for this capability's agent to resolve (e.g. 'agent-loop' when the agent ships with that addon rather than the host framework). Declared so a capability whose agent lives in an addon does not dangle when the framework is deployed alone (#1772)."
+        },
         "idempotent": {
           "type": "boolean",
           "description": "Whether this capability is safe to run multiple times.",

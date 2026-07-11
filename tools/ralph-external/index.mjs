@@ -617,8 +617,14 @@ async function main() {
   }
 }
 
-// Run if executed directly
-main().catch(console.error);
+// Run main() only when executed directly (node index.mjs …), NOT when imported
+// as a module. Without this guard, importing index.mjs to reach its exports
+// (e.g. parseArgs in the buildArgs↔parseArgs contract test, #1774) would run
+// main(), fail the no-objective check, and process.exit(1) — killing the caller.
+const invokedDirectly = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+if (invokedDirectly) {
+  main().catch(console.error);
+}
 
 // Import process reliability modules
 import { ProcessMonitor } from './process-monitor.mjs';

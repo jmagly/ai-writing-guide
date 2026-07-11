@@ -33,6 +33,7 @@
     "test:ui": "vitest --config config/vitest.config.js --ui",
     "test:watch": "vitest --config config/vitest.config.js",
     "test:node": "node --test tools/ralph-external/*.test.mjs test/unit/ralph/*.test.mjs",
+    "test:node:ralph-external": "node --test tools/ralph-external/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "clean": "npm run clean:build",
     "clean:build": "rm -rf dist build coverage",
