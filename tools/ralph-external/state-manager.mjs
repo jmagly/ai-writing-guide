@@ -99,6 +99,7 @@ export class StateManager {
       filesModified: [],
       giteaIntegration: config.giteaIntegration || null,
       config: {
+        provider: config.provider || 'claude',
         model: config.model || 'opus',
         budgetPerIteration: config.budgetPerIteration || 2.0,
         budgetLimits: config.budgetLimits || {},

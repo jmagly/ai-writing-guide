@@ -244,6 +244,7 @@ export class Orchestrator {
       objective: config.objective,
       completionCriteria: config.completionCriteria,
       maxIterations: config.maxIterations || 5,
+      provider: providerName,
       model: config.model || 'opus',
       budgetPerIteration: config.budgetPerIteration || 2.0,
       budgetLimits: config.budgetLimits || {},
@@ -282,7 +283,39 @@ export class Orchestrator {
       console.log(`[External Ralph] Periodic checkpoints: ENABLED (${state.config.checkpointIntervalMinutes} min)`);
     }
 
-    // ========== INITIALIZE RESEARCH MODULES ==========
+    // ========== INITIALIZE RESEARCH + CONTROL MODULES ==========
+    this.initializeModules(state, providerName);
+
+    // ========== PROCESS MONITOR (Phase 4) ==========
+    this.processMonitor = new ProcessMonitor({
+      projectRoot: this.projectRoot,
+      heartbeatIntervalMs: 30000, // 30 seconds
+      staleThresholdMs: 120000, // 2 minutes
+    });
+
+    // Record initial heartbeat
+    this.processMonitor.recordHeartbeat(state.loopId, {
+      iteration: 0,
+      status: 'starting',
+    });
+    console.log('[External Ralph] Process monitoring: ENABLED');
+
+    return this.runLoop(state);
+  }
+
+  /**
+   * Initialize research, control, intelligence, memory, and overseer modules.
+   *
+   * Shared by execute() and resume() so resumed loops carry the same control
+   * surface — LFD budget stops, exploration quota, analytics, best-output
+   * selection, early stopping — as fresh loops. Before #1765 resume() skipped
+   * this entirely, silently disabling every LFD control on the recovery path.
+   *
+   * @param {Object} state - Loop state
+   * @param {string} providerName - Active provider name
+   * @param {{resume?: boolean}} [opts] - resume=true restores persisted analytics counters
+   */
+  initializeModules(state, providerName, { resume = false } = {}) {
     const stateDir = this.stateManager.getStateDir();
 
     // Best Output Tracker (REF-015 Self-Refine)
@@ -308,18 +341,40 @@ export class Orchestrator {
       console.log('[External Ralph] Early stopping: ENABLED');
     }
 
-    // Iteration Analytics
+    // Iteration Analytics — cumulative budget counters MUST survive resume,
+    // otherwise any crash/restart resets declared ceilings to zero (#1765).
     if (state.config.enableAnalytics) {
-      this.iterationAnalytics = new IterationAnalytics(
-        state.loopId,
-        config.objective,
-        {
-          storagePath: join(stateDir, 'analytics'),
-          budgetLimits: state.config.budgetLimits || {},
-          explorationQuota: state.config.explorationQuota || { enabled: true, k: 3 },
+      const analyticsDir = join(stateDir, 'analytics');
+      const analyticsFile = join(analyticsDir, `${state.loopId}.json`);
+      let restored = false;
+
+      if (resume && existsSync(analyticsFile)) {
+        try {
+          this.iterationAnalytics = IterationAnalytics.load(analyticsFile);
+          this.iterationAnalytics.config.storagePath = analyticsDir;
+          this.iterationAnalytics.config.budgetLimits = state.config.budgetLimits || {};
+          this.iterationAnalytics.config.explorationQuota =
+            state.config.explorationQuota || { enabled: true, k: 3 };
+          restored = true;
+          console.log(`[External Ralph] Iteration analytics: RESTORED (${this.iterationAnalytics.iterations.length} prior iterations)`);
+        } catch (error) {
+          console.warn(`[External Ralph] Analytics restore failed (${error.message}); starting fresh counters`);
         }
-      );
-      console.log('[External Ralph] Iteration analytics: ENABLED');
+      }
+
+      if (!restored) {
+        this.iterationAnalytics = new IterationAnalytics(
+          state.loopId,
+          state.objective,
+          {
+            storagePath: analyticsDir,
+            budgetLimits: state.config.budgetLimits || {},
+            explorationQuota: state.config.explorationQuota || { enabled: true, k: 3 },
+          }
+        );
+        console.log('[External Ralph] Iteration analytics: ENABLED');
+      }
+
       if (Object.keys(state.config.budgetLimits || {}).length > 0) {
         console.log(`[External Ralph] LFD hard budgets: ${JSON.stringify(state.config.budgetLimits)}`);
       }
@@ -331,7 +386,7 @@ export class Orchestrator {
         memory_path: join(this.projectRoot, '.aiwg', 'ralph', 'memory'),
       });
       // Get relevant learnings before starting
-      this.crossTaskLearnings = this.crossTaskLearner.getRelevantLearnings(config.objective);
+      this.crossTaskLearnings = this.crossTaskLearner.getRelevantLearnings(state.objective);
       if (this.crossTaskLearnings.similar_tasks.length > 0) {
         console.log(`[External Ralph] Cross-task learning: Found ${this.crossTaskLearnings.similar_tasks.length} similar tasks`);
       } else {
@@ -433,27 +488,13 @@ export class Orchestrator {
 
       console.log('[External Ralph] Overseer monitoring: ENABLED (#25)');
     }
-
-    // ========== PROCESS MONITOR (Phase 4) ==========
-    this.processMonitor = new ProcessMonitor({
-      projectRoot: this.projectRoot,
-      heartbeatIntervalMs: 30000, // 30 seconds
-      staleThresholdMs: 120000, // 2 minutes
-    });
-
-    // Record initial heartbeat
-    this.processMonitor.recordHeartbeat(state.loopId, {
-      iteration: 0,
-      status: 'starting',
-    });
-    console.log('[External Ralph] Process monitoring: ENABLED');
-
-    return this.runLoop(state);
   }
 
   /**
    * Resume an interrupted loop
    * @param {Object} [overrides] - Configuration overrides
+   * @param {boolean} [overrides.allowExhaustedResume=false] - Explicitly permit
+   *   resuming a loop whose declared budget ceilings are already exhausted
    * @returns {Promise<OrchestratorResult>}
    */
   async resume(overrides = {}) {
@@ -462,8 +503,27 @@ export class Orchestrator {
       throw new Error('No external Ralph loop to resume');
     }
 
+    // A budget-exhausted loop must not silently regain a fresh budget (#1765)
+    if (state.status === 'budget_exhausted' && !overrides.allowExhaustedResume) {
+      throw new Error(
+        'Loop ended with status budget_exhausted; resuming would bypass its declared ceilings. ' +
+        'Raise the relevant --max-* limits and pass --allow-exhausted-resume to continue.'
+      );
+    }
+
     console.log(`[External Ralph] Resuming loop ${state.loopId}`);
     console.log(`[External Ralph] Current iteration: ${state.currentIteration}`);
+
+    // Re-establish the provider adapter — before #1765 resumed loops ran with
+    // no adapter wiring at all.
+    await ensureProvidersRegistered();
+    const providerName = state.config.provider || 'claude';
+    this.providerAdapter = createProvider(providerName);
+    this.sessionLauncher.setProviderAdapter(this.providerAdapter);
+    this.outputAnalyzer.setProviderAdapter(this.providerAdapter);
+    this.stateAssessor.setProviderAdapter(this.providerAdapter);
+    this._verbose = state.config.verbose || false;
+    console.log(`[External Ralph] Provider: ${providerName}`);
 
     // ========== CRASH RECOVERY (Phase 4) ==========
     const crashState = this.recoveryEngine.detectCrash();
@@ -522,6 +582,25 @@ export class Orchestrator {
       iteration: state.currentIteration,
       status: 'resumed',
     });
+
+    // ========== INITIALIZE RESEARCH + CONTROL MODULES (#1765) ==========
+    this.initializeModules(state, providerName, { resume: true });
+
+    // Never continue when restored counters already exceed a declared ceiling
+    if (this.iterationAnalytics && !overrides.allowExhaustedResume) {
+      const budgetDecision = this.iterationAnalytics.checkBudgetLimits();
+      if (budgetDecision.exhausted) {
+        state.status = 'budget_exhausted';
+        this.stateManager.save(state);
+        const detail = budgetDecision.exhausted_limits
+          .map((l) => `${l.name} ${l.observed} >= ${l.limit}`)
+          .join(', ');
+        throw new Error(
+          `Cannot resume: restored usage already exceeds declared budget ceiling(s): ${detail}. ` +
+          'Raise the limit or pass --allow-exhausted-resume.'
+        );
+      }
+    }
 
     return this.runLoop(state);
   }

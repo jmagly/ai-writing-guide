@@ -65,6 +65,10 @@ function parseArgs(args) {
     provider: 'claude',           // CLI provider (claude, codex, opencode, factory)
     verbose: false,               // Verbose per-iteration detail
     logFile: null,                // Optional log file path
+    allowExhaustedResume: false,  // Explicitly permit resuming a budget-exhausted loop (#1765)
+    // Flags the user actually typed — resume must only override persisted
+    // loop config for values that were explicitly provided (#1765)
+    _explicit: new Set(),
   };
 
   let i = 0;
@@ -83,10 +87,14 @@ function parseArgs(args) {
       options.completionCriteria = args[++i];
     } else if (arg === '--max-iterations') {
       options.maxIterations = parseInt(args[++i], 10);
+      options._explicit.add('maxIterations');
     } else if (arg === '--model') {
       options.model = args[++i];
     } else if (arg === '--budget') {
       options.budgetPerIteration = parseFloat(args[++i]);
+      options._explicit.add('budgetPerIteration');
+    } else if (arg === '--allow-exhausted-resume') {
+      options.allowExhaustedResume = true;
     } else if (arg === '--max-total-tokens') {
       options.budgetLimits.total_tokens = parseInt(args[++i], 10);
     } else if (arg === '--max-output-tokens') {
@@ -99,6 +107,7 @@ function parseArgs(args) {
       options.budgetLimits.wall_clock_minutes = parseFloat(args[++i]);
     } else if (arg === '--exploration-quota') {
       options.explorationQuota = { enabled: true, k: parseInt(args[++i], 10) };
+      options._explicit.add('explorationQuota');
     } else if (arg === '--timeout') {
       options.timeoutMinutes = parseInt(args[++i], 10);
     } else if (arg === '--mcp-config') {
@@ -234,7 +243,12 @@ RESEARCH-BACKED OPTIONS (REF-015, REF-021):
   --log-file <path>       Write timestamped log to file (in addition to stdout)
 
 COMMANDS:
-  -r, --resume            Resume interrupted loop
+  -r, --resume            Resume interrupted loop. Persisted budget/quota config
+                          is preserved; only explicitly passed flags override it.
+                          Restored usage counters still count against ceilings.
+  --allow-exhausted-resume  Explicitly permit resuming a loop whose declared
+                          budget ceilings are already exhausted (pair with
+                          raised --max-* limits)
   -s, --status            Show current loop status
   --abort                 Abort current loop
   -h, --help              Show this help message
@@ -508,13 +522,25 @@ async function main() {
     let result;
 
     if (options.resume) {
-      // Resume existing loop
-      result = await orchestrator.resume({
-        maxIterations: options.maxIterations,
-        budgetPerIteration: options.budgetPerIteration,
-        budgetLimits: options.budgetLimits,
-        explorationQuota: options.explorationQuota,
-      });
+      // Resume existing loop. Only pass overrides the user explicitly typed —
+      // passing parse-time defaults here used to silently clobber the loop's
+      // persisted budget/quota configuration on every resume (#1765).
+      const resumeOverrides = {
+        allowExhaustedResume: options.allowExhaustedResume,
+      };
+      if (options._explicit.has('maxIterations')) {
+        resumeOverrides.maxIterations = options.maxIterations;
+      }
+      if (options._explicit.has('budgetPerIteration')) {
+        resumeOverrides.budgetPerIteration = options.budgetPerIteration;
+      }
+      if (Object.keys(options.budgetLimits).length > 0) {
+        resumeOverrides.budgetLimits = options.budgetLimits;
+      }
+      if (options._explicit.has('explorationQuota')) {
+        resumeOverrides.explorationQuota = options.explorationQuota;
+      }
+      result = await orchestrator.resume(resumeOverrides);
     } else {
       // Start new loop
       if (!options.objective) {

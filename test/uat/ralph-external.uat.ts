@@ -240,6 +240,98 @@ describe('UAT: Orchestrator — LFD loop controls', () => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════
+// Suite: Resume path carries the LFD control surface (#1765)
+// ═════════════════════════════════════════════════════════════════════════
+
+describe('UAT: Orchestrator — resume LFD controls (#1765)', () => {
+  let originalStubOutput: string | undefined;
+
+  beforeEach(() => {
+    originalStubOutput = process.env.UAT_STUB_OUTPUT;
+  });
+
+  afterEach(() => {
+    if (originalStubOutput === undefined) {
+      delete process.env.UAT_STUB_OUTPUT;
+    } else {
+      process.env.UAT_STUB_OUTPUT = originalStubOutput;
+    }
+  });
+
+  it('restores analytics counters on resume (controls active, history preserved)', async () => {
+    process.env.UAT_STUB_OUTPUT = 'Ralph iteration still incomplete.';
+
+    const orc = new Orchestrator(testDir);
+    const first = await orc.execute({
+      ...BASE_CONFIG,
+      objective: 'Resume analytics UAT',
+      completionCriteria: 'Never met by stub',
+      maxIterations: 1,
+      enableAnalytics: true,
+    });
+    expect(first.iterations).toBe(1);
+
+    const stateDir = orc.stateManager.getStateDir();
+    const orc2 = new Orchestrator(testDir);
+    orc2.stateManager.setStateDir(stateDir);
+
+    const second = await orc2.resume({ maxIterations: 2 });
+
+    // Before #1765 iterationAnalytics stayed null on resume — every LFD
+    // control was silently dead on the recovery path.
+    expect(orc2.iterationAnalytics).not.toBeNull();
+    expect(second.iterations).toBe(2);
+    // 1 restored iteration + 1 new one: cumulative counters survived resume
+    expect(orc2.iterationAnalytics.iterations.length).toBe(2);
+    expect(orc2.iterationAnalytics.iterations[0].iteration_number).toBe(1);
+  });
+
+  it('refuses to resume when restored usage already exceeds an overridden ceiling', async () => {
+    process.env.UAT_STUB_OUTPUT = 'Ralph iteration still incomplete.';
+
+    const orc = new Orchestrator(testDir);
+    await orc.execute({
+      ...BASE_CONFIG,
+      objective: 'Resume ceiling UAT',
+      completionCriteria: 'Never met by stub',
+      maxIterations: 1,
+      enableAnalytics: true,
+    });
+
+    const orc2 = new Orchestrator(testDir);
+    orc2.stateManager.setStateDir(orc.stateManager.getStateDir());
+
+    await expect(
+      orc2.resume({
+        maxIterations: 3,
+        budgetLimits: { wall_clock_minutes: 0.0000001 },
+      })
+    ).rejects.toThrow(/already exceeds declared budget ceiling/);
+  });
+
+  it('refuses to resume a budget_exhausted loop without --allow-exhausted-resume', async () => {
+    const orc = new Orchestrator(testDir);
+    const result = await orc.execute({
+      ...BASE_CONFIG,
+      objective: 'Exhausted-resume UAT',
+      completionCriteria: 'Stub succeeds, then hard budget check stops the loop',
+      maxIterations: 3,
+      enableAnalytics: true,
+      enableBestOutput: true,
+      budgetLimits: {
+        wall_clock_minutes: 0.000001,
+      },
+    });
+    expect(result.success).toBe(false);
+
+    const orc2 = new Orchestrator(testDir);
+    orc2.stateManager.setStateDir(orc.stateManager.getStateDir());
+
+    await expect(orc2.resume({})).rejects.toThrow(/budget_exhausted/);
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════
 // Suite 2: Verbose mode
 // ═════════════════════════════════════════════════════════════════════════
 
