@@ -44,6 +44,7 @@
     "check:versions": "node tools/workspace/check-marketplace-version.mjs",
     "uat": "vitest run --config config/vitest.uat.config.js",
     "uat:watch": "vitest --config config/vitest.uat.config.js",
+    "ralph:manual-test": "tools/ralph-external/manual-provider-test.sh",
     "uat:live": "vitest run --config config/vitest.uat-live.config.js",
     "uat:claude": "vitest run --config config/vitest.uat-live.config.js --reporter=verbose ralph-live-claude",
     "uat:codex": "vitest run --config config/vitest.uat-live.config.js --reporter=verbose ralph-live-codex",
