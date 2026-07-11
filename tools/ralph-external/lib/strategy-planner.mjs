@@ -55,6 +55,8 @@ export class StrategyPlanner {
     const strategy = this._selectStrategy(situation, normalizedHistory, metrics);
     const priorities = this._buildPriorities(situation, normalizedHistory, metrics);
     const confidence = this._calculateConfidence(strategy, situation);
+    const experiment = this._deriveHypothesis(situation, strategy, priorities);
+    const adjustmentKey = this._adjustmentKey(strategy);
 
     if (this.verbose) {
       console.log('Strategy Plan:', { approach: strategy.approach, confidence, situation });
@@ -66,12 +68,84 @@ export class StrategyPlanner {
       priorities,
       adjustments: strategy.adjustments || {},
       confidence,
+      // Pre-change hypothesis-before-change fields (#1769). Derived from the
+      // detected situation BEFORE the session runs, injected into the prompt,
+      // and recorded as the iteration's pre-change experiment — replacing the
+      // post-hoc canned defaults the audit flagged (M3/D-F12).
+      hypothesis: experiment.hypothesis,
+      expectedFailureMode: experiment.expectedFailureMode,
+      diagnostic: experiment.diagnostic,
+      // Stable fingerprint of this iteration's tactic, for the stall rule (#1768).
+      adjustmentKey,
       metadata: {
         situation,
         iterationCount: normalizedHistory.length,
         timestamp: Date.now(),
       },
     };
+  }
+
+  /**
+   * Derive a falsifiable pre-change experiment from the situation + strategy.
+   * @private
+   * @returns {{hypothesis: string, expectedFailureMode: string, diagnostic: string}}
+   */
+  _deriveHypothesis(situation, strategy, priorities) {
+    const topPriority = Array.isArray(priorities) && priorities.length > 0 ? priorities[0] : null;
+    const focus = strategy.adjustments?.focus || topPriority || strategy.approach;
+
+    if (situation.hasBlockers) {
+      return {
+        hypothesis: `Resolving the identified blocker (${focus}) will unblock progress toward the completion criteria.`,
+        expectedFailureMode: 'The blocker persists or a new blocker surfaces with the same symptom.',
+        diagnostic: 'Re-run the completion/verification check; a changed blocker signature distinguishes progress from a repeat failure.',
+      };
+    }
+    if (situation.stuck) {
+      return {
+        hypothesis: `A structurally different approach (${focus}) will move the quality metric where repeating the prior tactic did not.`,
+        expectedFailureMode: 'Quality stays flat because the new approach reduces to the same tactic.',
+        diagnostic: 'Compare the quality delta and the changed-files set against the previous cycle; no change means the pivot was cosmetic.',
+      };
+    }
+    if (situation.oscillating) {
+      return {
+        hypothesis: 'Constraining scope and committing incremental progress will break the oscillation and yield a net quality gain.',
+        expectedFailureMode: 'The metric swings back, indicating the change re-touched the oscillating surface.',
+        diagnostic: 'Check whether the quality delta sign matches the prior cycle; a reversed sign confirms continued oscillation.',
+      };
+    }
+    if (situation.regressing) {
+      return {
+        hypothesis: 'Reviewing and correcting the most recent change will recover the lost quality.',
+        expectedFailureMode: 'Quality continues to drop, indicating the regression source was misidentified.',
+        diagnostic: 'Verify the quality score recovers above the pre-regression value; otherwise the cause is elsewhere.',
+      };
+    }
+    if (situation.nearCompletion) {
+      return {
+        hypothesis: 'Persisting on the current approach and validating thoroughly will satisfy the completion criteria this cycle.',
+        expectedFailureMode: 'Verification fails on an edge the current approach does not cover.',
+        diagnostic: 'Run the completion/verification command; the specific failing assertion identifies the uncovered edge.',
+      };
+    }
+    return {
+      hypothesis: 'Continuing the current approach will advance quality toward the completion criteria.',
+      expectedFailureMode: 'Progress stalls with the same symptom as the prior cycle.',
+      diagnostic: 'Compare this cycle\'s quality delta against the last; a non-positive delta signals the approach is exhausted.',
+    };
+  }
+
+  /**
+   * Stable fingerprint of a strategy's tactic for stall-rule comparison (#1768).
+   * @private
+   * @returns {string}
+   */
+  _adjustmentKey(strategy) {
+    const adjustments = strategy.adjustments || {};
+    const keys = Object.keys(adjustments).sort();
+    const detail = keys.map((k) => `${k}=${JSON.stringify(adjustments[k])}`).join(',');
+    return `${strategy.approach}:${detail}`;
   }
 
   /**

@@ -367,6 +367,37 @@ export class IterationAnalytics {
   }
 
   /**
+   * Stall rule (#1768): after a non-improving cycle, the same adjustment must
+   * not be repeated. Mechanically detects (a) whether the last recorded cycle
+   * failed to improve quality, and (b) the adjustment fingerprint of that
+   * cycle, so the orchestrator can forbid repeating it in the next prompt. This
+   * fires immediately on ONE non-improving cycle — earlier than the exploration
+   * quota, which needs K consecutive flat cycles.
+   *
+   * @returns {{active: boolean, lastNonImproving: boolean, forbiddenAdjustment: string|null, lastQualityDelta: number|null}}
+   */
+  checkStallRule() {
+    if (this.iterations.length < 1) {
+      return { active: false, lastNonImproving: false, forbiddenAdjustment: null, lastQualityDelta: null };
+    }
+    const last = this.iterations[this.iterations.length - 1];
+    const delta = typeof last.quality_delta === 'number' ? last.quality_delta : 0;
+    // Non-improving = quality did not increase. The first iteration has delta 0
+    // (no prior) — treat as improving so we don't fence the second iteration
+    // before any tactic has actually been shown to fail.
+    const lastNonImproving = this.iterations.length >= 2 && delta <= 0;
+    const forbiddenAdjustment = last.experiment?.adjustment_key
+      || last.experiment?.structural_variant
+      || null;
+    return {
+      active: lastNonImproving && !!forbiddenAdjustment,
+      lastNonImproving,
+      forbiddenAdjustment,
+      lastQualityDelta: delta,
+    };
+  }
+
+  /**
    * Determine whether the next iteration must use a structural variant.
    * @returns {Object} Structural-variation decision
    */

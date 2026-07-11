@@ -280,6 +280,57 @@ describe('UAT: Orchestrator — LFD loop controls', () => {
     expect(state.lfdControls?.structuralVariantRequired).toBe(true);
   });
 
+  it('records a real pre-change hypothesis and injects it into the prompt (#1769)', async () => {
+    process.env.UAT_STUB_OUTPUT = 'Ralph iteration still incomplete.';
+    const orc = new Orchestrator(testDir);
+
+    await orc.execute({
+      ...BASE_CONFIG,
+      objective: 'Hypothesis UAT',
+      completionCriteria: 'Never met by stub',
+      maxIterations: 2,
+      enableAnalytics: true,
+      // Intelligence layer on so StrategyPlanner produces the hypothesis fields
+      enableClaudeIntelligence: true,
+    });
+
+    const state = orc.stateManager.load();
+    const analytics = JSON.parse(
+      readFileSync(join(orc.stateManager.getStateDir(), 'analytics', `${state.loopId}.json`), 'utf-8'),
+    );
+    const exp = analytics.iterations[0].experiment;
+    expect(exp.recorded_before_change).toBe(true);
+    expect(typeof exp.hypothesis).toBe('string');
+    expect(exp.hypothesis.length).toBeGreaterThan(0);
+    expect(typeof exp.expected_failure_mode).toBe('string');
+    expect(typeof exp.distinguishing_diagnostic).toBe('string');
+
+    // The hypothesis directive is injected into the prompt (provider-agnostic)
+    const prompt1 = readFileSync(orc.stateManager.getPromptPath(1), 'utf-8');
+    expect(prompt1).toContain('LFD CONTROL — hypothesis before change');
+  });
+
+  it('injects a stall-rule directive after a non-improving cycle (#1768)', async () => {
+    process.env.UAT_STUB_OUTPUT = 'Ralph iteration still incomplete.';
+    const orc = new Orchestrator(testDir);
+
+    await orc.execute({
+      ...BASE_CONFIG,
+      objective: 'Stall-rule UAT',
+      completionCriteria: 'Never met by stub',
+      maxIterations: 3,
+      enableAnalytics: true,
+      enableClaudeIntelligence: true,
+    });
+
+    // Detecting non-improvement needs two recorded cycles, so the stall
+    // directive appears from iteration 3 onward (iteration 2's delta vs 1 was
+    // non-positive under the flat stub output).
+    const prompt3 = readFileSync(orc.stateManager.getPromptPath(3), 'utf-8');
+    expect(prompt3).toContain('LFD CONTROL — stall rule');
+    expect(prompt3).toContain('Do NOT repeat the previous adjustment');
+  });
+
   it('requires a structural variant after the configured flat-cycle quota', async () => {
     process.env.UAT_STUB_OUTPUT = [
       'Ralph iteration still incomplete.',
@@ -315,7 +366,8 @@ describe('UAT: Orchestrator — LFD loop controls', () => {
     const prompt3 = readFileSync(orc.stateManager.getPromptPath(3), 'utf-8');
     expect(prompt3).toContain('LFD CONTROL: The prior cycles are flat.');
     expect(prompt3).toContain('This iteration must use a structural variant.');
-    expect(prompt3).toContain('Before changing files, state the new hypothesis');
+    // The hypothesis-before-change directive is now its own injected block (#1769)
+    expect(prompt3).toContain('LFD CONTROL — hypothesis before change');
 
     const analytics = JSON.parse(readFileSync(join(orc.stateManager.getStateDir(), 'analytics', `${state.loopId}.json`), 'utf-8'));
     expect(analytics.structural_variant_required).toBe(true);

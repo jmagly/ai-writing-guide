@@ -144,6 +144,10 @@ SDLC rules enforce workflow quality when the SDLC framework is deployed via `aiw
 **Summary**: Non-monotonic output selection — track highest quality across iterations rather than accepting final result; includes hypothesis-before-change, eval-harness evidence, VOID exclusion, and budget-stop reports for autonomous loops.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/best-output-selection.md
 
+#### lfd-control-tiers
+**Summary**: Classifies LFD agent-loop controls as mechanical (budget stops, resume guard — not substitutable by self-report), hybrid (exploration quota, stall rule, plateau — depend on the analyzer quality signal), or cooperative (hypothesis records). Mechanical tier stays load-bearing under adversarial/high-criticality conditions.
+**Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/lfd-control-tiers.md
+
 #### reproducibility
 **Summary**: Reproducibility practices for workflows: strict mode (temperature=0, fixed seed), checkpoints at phase boundaries, configuration snapshots, holdout isolation, and score/lint/probe/status feedback-channel separation for eval-driven loops.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/reproducibility.md
@@ -236,7 +240,7 @@ Rules contributed by installed addons. Load the component index for full rule su
 | **Running tests** | executable-feedback, anti-laziness, reproducibility, reproducibility-validation |
 | **Creating artifacts** | mention-wiring, provenance-tracking, qualified-references, progressive-disclosure, artifact-discovery |
 | **Phase transitions** | hitl-gates, sdlc-orchestration, human-gate-display |
-| **Agent loops** | tao-loop, actionable-feedback, best-output-selection, anti-laziness, reproducibility, eval-harness-lfd-contract |
+| **Agent loops** | tao-loop, actionable-feedback, best-output-selection, lfd-control-tiers, anti-laziness, reproducibility |
 | **Agent design** | few-shot-examples, conversable-agent-interface, agent-fallback, thought-protocol |
 | **Documentation** | citation-policy, no-attribution, reasoning-sections, research-metadata |
 | **Security review** | token-security, failure-mitigation |

@@ -709,6 +709,20 @@ export class Orchestrator {
           this.verboseLog('Strategy:', strategy);
         }
 
+        // Pre-change hypothesis-before-change (#1769): derived from the planner
+        // BEFORE the session runs. This is the record's pre-change experiment
+        // AND is injected into the prompt so the agent states/tests it before
+        // changing files. Falls back to a grounded default when planning is off.
+        const plannedExperiment = {
+          hypothesis: strategy?.hypothesis
+            || lastIteration?.analysis?.nextApproach
+            || 'Advance quality toward the completion criteria with the selected approach.',
+          expectedFailureMode: strategy?.expectedFailureMode
+            || 'Progress stalls with the same symptom as the prior cycle.',
+          diagnostic: strategy?.diagnostic
+            || `Re-run the completion check (${state.completionCriteria}); an unchanged result signals the approach is exhausted.`,
+        };
+
         // PID Controller: Compute control signals
         let controlSignals = null;
         if (this.pidController && this.metricsCollector && state.currentIteration > 1) {
@@ -834,14 +848,51 @@ export class Orchestrator {
           }
         }
 
+        // ========== LFD PROMPT-INJECTED CONTROLS (all providers) ==========
+        // These directives are appended to the prompt, so they apply to every
+        // provider that accepts an injected prompt (all command-injection
+        // providers), not only Claude (#1768/#1769).
+        const lfdDirectives = [];
+
+        // Hypothesis-before-change (#1769): the agent must state/refine the
+        // pre-change experiment before touching files.
+        lfdDirectives.push(
+          '',
+          'LFD CONTROL — hypothesis before change: Before modifying any files, state:',
+          `  1. Hypothesis: ${plannedExperiment.hypothesis}`,
+          `  2. Expected failure mode: ${plannedExperiment.expectedFailureMode}`,
+          `  3. Distinguishing diagnostic: ${plannedExperiment.diagnostic}`,
+          'Refine these to fit what you actually observe, then act on them.',
+        );
+
+        // Stall rule (#1768): after a non-improving cycle, forbid repeating the
+        // previous tactic. Fires on a single non-improving cycle.
+        if (this.iterationAnalytics) {
+          const stall = this.iterationAnalytics.checkStallRule();
+          if (stall.active) {
+            state.stallRule = { forbiddenAdjustment: stall.forbiddenAdjustment, lastQualityDelta: stall.lastQualityDelta };
+            lfdDirectives.push(
+              '',
+              'LFD CONTROL — stall rule: The previous cycle did not improve quality.',
+              `Do NOT repeat the previous adjustment (${stall.forbiddenAdjustment}). Change the approach materially.`,
+            );
+          } else {
+            state.stallRule = null;
+          }
+        }
+
+        // Structural variant (exploration quota, #1585): stronger requirement
+        // after K consecutive flat cycles.
         if (state.lfdControls?.structuralVariantRequired) {
-          const directive = [
+          lfdDirectives.push(
             '',
             'LFD CONTROL: The prior cycles are flat. This iteration must use a structural variant.',
             `Do not repeat the same tactic. Required reason: ${state.lfdControls.reason}`,
-            'Before changing files, state the new hypothesis, expected failure mode, and distinguishing diagnostic.',
-          ].join('\n');
-          prompt += directive;
+          );
+        }
+
+        if (lfdDirectives.length > 0) {
+          prompt += lfdDirectives.join('\n');
         }
 
         // Save prompt for debugging
@@ -1158,11 +1209,16 @@ export class Orchestrator {
             verification_status: verificationPassed ? 'passed' : 'failed',
             output_snapshot_path: outputPaths.stdout,
             reflections: analysis.learnings ? [analysis.learnings] : [],
+            // Hypothesis-before-change (#1769): captured pre-session from the
+            // strategy planner (see planned* below), recorded here alongside
+            // the observed result. Falls back only if planning was unavailable.
             experiment: {
-              hypothesis: strategy?.hypothesis || analysis.nextApproach || 'Continue toward completion criteria with the selected strategy.',
-              expected_failure_mode: strategy?.expectedFailureMode || analysis.failureClass || 'Validation remains incomplete or fails with the same symptom.',
-              distinguishing_diagnostic: strategy?.diagnostic || state.completionCriteria,
+              hypothesis: plannedExperiment.hypothesis,
+              expected_failure_mode: plannedExperiment.expectedFailureMode,
+              distinguishing_diagnostic: plannedExperiment.diagnostic,
               structural_variant: strategy?.approach || strategy?.name || null,
+              adjustment_key: strategy?.adjustmentKey || null,
+              recorded_before_change: true,
               result: verificationPassed ? 'passed' : 'failed',
               probe_or_generalization_signal: analysis.completed ? 'completion-criteria' : 'iteration-analysis',
             },
