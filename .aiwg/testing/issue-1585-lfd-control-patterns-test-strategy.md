@@ -182,6 +182,28 @@ observable control points:
 - `npx vitest run test/unit/mcp/orchestration.test.ts`
   - verifies first-class MCP `mission-dispatch` forwards the same LFD budget
     flags to `aiwg mc dispatch`
+- `npx vitest run --config config/vitest.uat.config.js test/uat/ralph-external.uat.ts`
+  - verifies the real external Ralph orchestrator halts on a hard wall-clock
+    budget ceiling
+  - verifies `budget-stop-report.json`, `completion-report.md`, and
+    `iteration-analytics-report.md` are emitted from the UAT run
+  - verifies the completion report embeds the `LFD Controls` budget-stop
+    evidence instead of relying on self-report
+  - verifies flat cycles trigger the configured exploration quota and inject a
+    structural-variant directive into the next real prompt
+
+## Coverage Audit: Loop-Control Capability Quantification
+
+| Capability | Quantified Signal | Mechanical Coverage | Residual Gap |
+|---|---|---|---|
+| Hard cumulative budgets | observed `wall_clock_minutes`, token, output-token, tool-call, and spend counters against declared limits | `iteration-analytics.test.mjs`, `ralph-external.uat.ts`, CLI/MCP pass-through tests | real provider accounting remains adapter-dependent |
+| Best-output preservation on stop | selected iteration, final iteration, best score, hypothesis outcomes | `iteration-analytics.test.mjs`, `ralph-external.uat.ts` | artifact restoration is still recorded selection, not automatic rollback |
+| Loss-function efficiency | quality per 1K tokens, quality per minute, total tokens/cost/time | `iteration-analytics.test.mjs`, `status-output.test.mjs`, UAT analytics report assertion | quality score remains harness-defined completion percentage for Ralph external |
+| Random/chance baseline lift | quality lift, token-efficiency lift, speed-efficiency lift, tool-call savings | `iteration-analytics.test.mjs`, `status-output.test.mjs` | no live benchmark baseline runner is implemented |
+| Exploration quota / anti-random-walk control | flat-cycle count, quota `k`, structural-variant-required state, next-prompt directive | `iteration-analytics.test.mjs`, `ralph-external.uat.ts` | UAT proves enforcement of prompt constraint, not agent creativity quality |
+| Mission Control dispatch controls | persisted budget/exploration fields and launcher argv forwarding | `mc.test.ts`, `ralph-launcher-buildargs.test.ts` | daemon provider execution is covered by Ralph UAT, not every provider |
+| MCP dispatch parity | `mc-dispatch` and `mission-dispatch` argv forwarding | `subsystems.test.ts`, `orchestration.test.ts` | MCP tests stop at tool-command construction, not remote session execution |
+| Eval-harness VOID semantics | contract schema and capability-flow presence | schema lint and capability YAML parse | concrete runtime helper and adversarial VOID tests are not yet implemented |
 
 Broader `npm run test:node` currently still fails in pre-existing Ralph
 registry concurrency tests unrelated to the LFD runtime changes. The affected

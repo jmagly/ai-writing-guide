@@ -22,6 +22,6 @@ if (logFile) {
   }) + '\n');
 }
 
-// Print the completion marker that output-analyzer recognizes
-process.stdout.write('Ralph Loop: SUCCESS\nTask complete.\n');
+const output = process.env.UAT_STUB_OUTPUT || 'Ralph Loop: SUCCESS\nTask complete.\n';
+process.stdout.write(output.endsWith('\n') ? output : `${output}\n`);
 process.exit(0);

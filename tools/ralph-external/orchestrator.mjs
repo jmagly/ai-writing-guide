@@ -20,7 +20,7 @@
  */
 
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, basename } from 'path';
 import { StateManager } from './state-manager.mjs';
 import { SessionLauncher } from './session-launcher.mjs';
 import { OutputAnalyzer } from './output-analyzer.mjs';
@@ -990,10 +990,20 @@ export class Orchestrator {
         // Best Output Tracker (REF-015)
         if (this.bestOutputTracker) {
           this.bestOutputTracker.recordIteration({
-            iteration: state.currentIteration,
+            iteration_number: state.currentIteration,
+            dimensions: {
+              validation: verificationPassed ? 1 : 0,
+              completeness: qualityScore,
+              correctness: analysis.success === false ? 0 : qualityScore,
+              readability: qualityScore,
+              efficiency: qualityScore,
+            },
             artifacts: analysis.artifactsModified || [],
-            qualityScore,
-            validationPassed: verificationPassed,
+            tokens_used: sessionResult.totalTokens || 0,
+            token_cost_usd: sessionResult.costUsd || 0,
+            execution_time_ms: duration,
+            verification_status: verificationPassed ? 'passed' : 'failed',
+            reflections: analysis.learnings ? [analysis.learnings] : [],
           });
         }
 
@@ -1054,7 +1064,7 @@ export class Orchestrator {
             this.stateManager.save(state);
             await this.generateCompletionReport(state, 'budget_exhausted');
             await this.recordTaskCompletion(state, 'partial');
-            await this.completeMultiLoop('limit_reached');
+            await this.completeMultiLoop('budget_exhausted');
 
             return {
               success: false,
@@ -1403,8 +1413,8 @@ ${state.filesModified.length > 0 ? state.filesModified.map(f => `- ${f}`).join('
     if (this.bestOutputTracker) {
       try {
         const bestOutput = this.bestOutputTracker.selectOutput();
-        if (bestOutput && bestOutput.iteration !== state.currentIteration) {
-          bestIteration = bestOutput.iteration;
+        if (bestOutput && bestOutput.selected_iteration !== state.currentIteration) {
+          bestIteration = bestOutput.selected_iteration;
           selectionSource = 'best-output-tracker';
           console.log(`[External Ralph] BestOutputTracker selected iteration ${bestIteration} (score: ${bestOutput.quality_score})`);
         }
@@ -1417,10 +1427,11 @@ ${state.filesModified.length > 0 ? state.filesModified.map(f => `- ${f}`).join('
     if (selectionSource === 'final' && this.iterationAnalytics) {
       try {
         const bestFromAnalytics = this.iterationAnalytics.selectBestIteration();
-        if (bestFromAnalytics && bestFromAnalytics.iteration_number !== state.currentIteration) {
-          bestIteration = bestFromAnalytics.iteration_number;
+        const selected = bestFromAnalytics?.selected || bestFromAnalytics;
+        if (selected && selected.iteration_number !== state.currentIteration) {
+          bestIteration = selected.iteration_number;
           selectionSource = 'iteration-analytics';
-          console.log(`[External Ralph] IterationAnalytics selected iteration ${bestIteration} (quality: ${bestFromAnalytics.quality_score})`);
+          console.log(`[External Ralph] IterationAnalytics selected iteration ${bestIteration} (quality: ${selected.quality_score})`);
         }
       } catch (error) {
         console.warn('[External Ralph] IterationAnalytics selection failed:', error.message);
@@ -1568,6 +1579,11 @@ ${state.filesModified.length > 0 ? state.filesModified.map(f => `- ${f}`).join('
       // the new archive location so load() and getStateDir() remain valid.
       const archiveDir = join(this.projectRoot, '.aiwg', 'ralph-external', 'archive', this.registeredLoopId);
       this.stateManager.setStateDir(archiveDir);
+      const archivedState = this.stateManager.load();
+      if (archivedState?.budgetStopReportPath) {
+        archivedState.budgetStopReportPath = join(archiveDir, basename(archivedState.budgetStopReportPath));
+        this.stateManager.save(archivedState);
+      }
     } catch (error) {
       console.warn(`[External Ralph] Multi-loop completion failed: ${error.message}`);
     }

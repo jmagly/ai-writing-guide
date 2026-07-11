@@ -138,6 +138,108 @@ describe('UAT: Orchestrator — basic loop', () => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════
+// Suite 1b: LFD loop-control verification
+// ═════════════════════════════════════════════════════════════════════════
+
+describe('UAT: Orchestrator — LFD loop controls', () => {
+  const originalStubOutput = process.env.UAT_STUB_OUTPUT;
+
+  afterEach(() => {
+    if (originalStubOutput === undefined) {
+      delete process.env.UAT_STUB_OUTPUT;
+    } else {
+      process.env.UAT_STUB_OUTPUT = originalStubOutput;
+    }
+  });
+
+  it('stops on hard wall-clock budget exhaustion and writes auditable LFD artifacts', async () => {
+    const orc = new Orchestrator(testDir);
+
+    const result = await orc.execute({
+      ...BASE_CONFIG,
+      objective: 'Budget-stop UAT',
+      completionCriteria: 'Stub succeeds, then hard budget check stops the loop',
+      maxIterations: 3,
+      enableAnalytics: true,
+      enableBestOutput: true,
+      budgetLimits: {
+        wall_clock_minutes: 0.000001,
+      },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.reason).toContain('Budget exhausted: wall_clock_exhausted');
+    expect(result.iterations).toBe(1);
+    expect(result.budgetStopReport?.stop_reason).toBe('wall_clock_exhausted');
+    expect(result.budgetStopReport?.budgets.observed.wall_clock_minutes).toBeGreaterThan(0);
+
+    const stateDir = orc.stateManager.getStateDir();
+    const state = orc.stateManager.load();
+    expect(state.status).toBe('budget_exhausted');
+    expect(state.budgetStopReportPath).toBe(join(stateDir, 'budget-stop-report.json'));
+    expect(existsSync(join(stateDir, 'budget-stop-report.json'))).toBe(true);
+    expect(existsSync(join(stateDir, 'completion-report.md'))).toBe(true);
+    expect(existsSync(join(stateDir, 'iteration-analytics-report.md'))).toBe(true);
+
+    const budgetReport = JSON.parse(readFileSync(join(stateDir, 'budget-stop-report.json'), 'utf-8'));
+    expect(budgetReport.selected_iteration).toBe(1);
+    expect(budgetReport.hypothesis_outcomes).toHaveLength(1);
+    expect(budgetReport.next_recommended_action).toContain('Review best output');
+
+    const completionReport = readFileSync(join(stateDir, 'completion-report.md'), 'utf-8');
+    expect(completionReport).toContain('## LFD Controls');
+    expect(completionReport).toContain('Budget stop report:');
+    expect(completionReport).toContain('"stop_reason": "wall_clock_exhausted"');
+
+    const analyticsReport = readFileSync(join(stateDir, 'iteration-analytics-report.md'), 'utf-8');
+    expect(analyticsReport).toContain('Best Quality / 1K Tokens');
+    expect(analyticsReport).toContain('Best Quality / Minute');
+  });
+
+  it('requires a structural variant after the configured flat-cycle quota', async () => {
+    process.env.UAT_STUB_OUTPUT = [
+      'Ralph iteration still incomplete.',
+      'modified: loop-control.md',
+      'Continue with accumulated context.',
+    ].join('\n');
+
+    const orc = new Orchestrator(testDir);
+
+    const result = await orc.execute({
+      ...BASE_CONFIG,
+      objective: 'Exploration-quota UAT',
+      completionCriteria: 'Stay incomplete long enough to trigger structural variant control',
+      maxIterations: 3,
+      enableAnalytics: true,
+      explorationQuota: {
+        enabled: true,
+        k: 1,
+      },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.reason).toBe('Maximum iterations reached');
+    expect(result.iterations).toBe(3);
+
+    const state = orc.stateManager.load();
+    expect(state.lfdControls).toMatchObject({
+      structuralVariantRequired: true,
+      flatCycleCount: 2,
+      explorationQuotaK: 1,
+    });
+
+    const prompt3 = readFileSync(orc.stateManager.getPromptPath(3), 'utf-8');
+    expect(prompt3).toContain('LFD CONTROL: The prior cycles are flat.');
+    expect(prompt3).toContain('This iteration must use a structural variant.');
+    expect(prompt3).toContain('Before changing files, state the new hypothesis');
+
+    const analytics = JSON.parse(readFileSync(join(orc.stateManager.getStateDir(), 'analytics', `${state.loopId}.json`), 'utf-8'));
+    expect(analytics.structural_variant_required).toBe(true);
+    expect(analytics.flat_cycle_count).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════
 // Suite 2: Verbose mode
 // ═════════════════════════════════════════════════════════════════════════
 
