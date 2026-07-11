@@ -52,6 +52,10 @@ function parseArgs(args) {
     // quota is OFF unless a loop explicitly declares its K via
     // --exploration-quota. There is no default K.
     explorationQuota: { enabled: false },
+    // Stop-semantics policy (#1767): completion-wins (default) reports success
+    // when the completing iteration also crosses a budget ceiling;
+    // budget-wins keeps the strict exhaustion-terminates ordering.
+    budgetStopPolicy: 'completion-wins',
     timeoutMinutes: 60,
     mcpConfig: null,
     giteaIssue: false,
@@ -122,6 +126,14 @@ function parseArgs(args) {
     } else if (arg === '--exploration-quota') {
       options.explorationQuota = { enabled: true, k: positiveNumber('--exploration-quota', args[++i], { integer: true }) };
       options._explicit.add('explorationQuota');
+    } else if (arg === '--budget-stop-policy') {
+      const policy = args[++i];
+      if (policy !== 'completion-wins' && policy !== 'budget-wins') {
+        console.error(`Error: --budget-stop-policy must be 'completion-wins' or 'budget-wins' (got '${policy}')`);
+        process.exit(1);
+      }
+      options.budgetStopPolicy = policy;
+      options._explicit.add('budgetStopPolicy');
     } else if (arg === '--timeout') {
       options.timeoutMinutes = positiveNumber('--timeout', args[++i], { integer: true });
     } else if (arg === '--mcp-config') {
@@ -555,6 +567,9 @@ async function main() {
       if (options._explicit.has('explorationQuota')) {
         resumeOverrides.explorationQuota = options.explorationQuota;
       }
+      if (options._explicit.has('budgetStopPolicy')) {
+        resumeOverrides.budgetStopPolicy = options.budgetStopPolicy;
+      }
       result = await orchestrator.resume(resumeOverrides);
     } else {
       // Start new loop
@@ -577,6 +592,7 @@ async function main() {
         timeoutMinutes: options.timeoutMinutes,
         budgetLimits: options.budgetLimits,
         explorationQuota: options.explorationQuota,
+        budgetStopPolicy: options.budgetStopPolicy,
         mcpConfig: options.mcpConfig,
         giteaIntegration: options.giteaIssue ? { enabled: true } : null,
         provider: options.provider,

@@ -241,7 +241,8 @@ export function registerMissionToolset(server) {
       max_tool_calls: z.number().int().positive().optional().describe('Hard cumulative tool-call ceiling'),
       max_total_cost: z.number().positive().optional().describe('Hard cumulative provider-reported spend ceiling'),
       max_wall_clock_minutes: z.number().positive().optional().describe('Hard cumulative runtime ceiling'),
-      exploration_quota: z.number().int().positive().optional().describe('Require structural variant after this many flat cycles'),
+      exploration_quota: z.number().int().positive().optional().describe('Require structural variant after this many flat cycles (off unless declared; no default K)'),
+      budget_stop_policy: z.enum(['completion-wins', 'budget-wins']).optional().describe('Stop semantics when the completing iteration crosses a ceiling (default: completion-wins)'),
       project_dir: z.string().optional().describe('Project directory for CLI dispatch'),
       confirmed: z.boolean().default(false).describe('Required for durable/long-running mission dispatch'),
     },
@@ -257,6 +258,7 @@ export function registerMissionToolset(server) {
     max_total_cost,
     max_wall_clock_minutes,
     exploration_quota,
+    budget_stop_policy,
     project_dir,
     confirmed,
   }) => {
@@ -275,6 +277,7 @@ export function registerMissionToolset(server) {
       if (max_total_cost) cliArgs.push('--max-total-cost', String(max_total_cost));
       if (max_wall_clock_minutes) cliArgs.push('--max-wall-clock-minutes', String(max_wall_clock_minutes));
       if (exploration_quota) cliArgs.push('--exploration-quota', String(exploration_quota));
+      if (budget_stop_policy) cliArgs.push('--budget-stop-policy', budget_stop_policy);
       const { stdout, stderr, code } = await runAiwgCli(
         cliArgs,
         { cwd: project_dir, timeoutMs: 30_000 },

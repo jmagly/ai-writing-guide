@@ -152,7 +152,7 @@ describe('UAT: Orchestrator — LFD loop controls', () => {
     }
   });
 
-  it('stops on hard wall-clock budget exhaustion and writes auditable LFD artifacts', async () => {
+  it('stops on hard wall-clock budget exhaustion and writes auditable LFD artifacts (budget-wins policy)', async () => {
     const orc = new Orchestrator(testDir);
 
     const result = await orc.execute({
@@ -162,6 +162,9 @@ describe('UAT: Orchestrator — LFD loop controls', () => {
       maxIterations: 3,
       enableAnalytics: true,
       enableBestOutput: true,
+      // Explicit budget-wins: this test asserts the strict exhaustion-first
+      // artifacts. The default policy is completion-wins (#1767).
+      budgetStopPolicy: 'budget-wins',
       budgetLimits: {
         wall_clock_minutes: 0.000001,
       },
@@ -194,6 +197,87 @@ describe('UAT: Orchestrator — LFD loop controls', () => {
     const analyticsReport = readFileSync(join(stateDir, 'iteration-analytics-report.md'), 'utf-8');
     expect(analyticsReport).toContain('Best Quality / 1K Tokens');
     expect(analyticsReport).toContain('Best Quality / Minute');
+  });
+
+  it('reports success when the completing iteration crosses a ceiling (completion-wins default, #1767)', async () => {
+    const orc = new Orchestrator(testDir);
+
+    const result = await orc.execute({
+      ...BASE_CONFIG,
+      objective: 'Completion-wins UAT',
+      completionCriteria: 'Stub succeeds on the ceiling-crossing iteration',
+      maxIterations: 3,
+      enableAnalytics: true,
+      enableBestOutput: true,
+      budgetLimits: {
+        wall_clock_minutes: 0.000001,
+      },
+    });
+
+    // The task completed on the iteration that crossed the ceiling: success,
+    // with the crossing annotated — not a budget_exhausted failure.
+    expect(result.success).toBe(true);
+    expect(result.budgetCrossed).toBe('wall_clock_exhausted');
+    expect(result.reason).toContain('budget ceiling crossed');
+
+    const state = orc.stateManager.load();
+    expect(state.status).toBe('completed');
+    expect(state.budgetCrossedAtCompletion).toBe('wall_clock_exhausted');
+    // The budget-stop report is still written as an audit artifact
+    expect(existsSync(join(orc.stateManager.getStateDir(), 'budget-stop-report.json'))).toBe(true);
+  });
+
+  it('stops flat loops as plateau (stagnation), never success (#1767)', async () => {
+    process.env.UAT_STUB_OUTPUT = [
+      'Ralph iteration still incomplete.',
+      'modified: loop-control.md',
+      'Continue with accumulated context.',
+    ].join('\n');
+
+    const orc = new Orchestrator(testDir);
+
+    const result = await orc.execute({
+      ...BASE_CONFIG,
+      objective: 'Plateau UAT',
+      completionCriteria: 'Never met by stub',
+      maxIterations: 5,
+      enableAnalytics: true,
+      enableBestOutput: true,
+      enableEarlyStopping: true,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.reason).toContain('Quality plateau');
+
+    const state = orc.stateManager.load();
+    expect(state.status).toBe('plateau');
+  });
+
+  it('defers plateau stop while a declared exploration quota requires a structural variant (#1767)', async () => {
+    process.env.UAT_STUB_OUTPUT = [
+      'Ralph iteration still incomplete.',
+      'modified: loop-control.md',
+      'Continue with accumulated context.',
+    ].join('\n');
+
+    const orc = new Orchestrator(testDir);
+
+    const result = await orc.execute({
+      ...BASE_CONFIG,
+      objective: 'Plateau-vs-quota UAT',
+      completionCriteria: 'Never met by stub',
+      maxIterations: 4,
+      enableAnalytics: true,
+      enableEarlyStopping: true,
+      explorationQuota: { enabled: true, k: 1 },
+    });
+
+    // The pending structural variant takes precedence over the plateau stop —
+    // the quota exists precisely to break plateaus, so the loop runs on.
+    expect(result.reason).toBe('Maximum iterations reached');
+    const state = orc.stateManager.load();
+    expect(state.status).not.toBe('plateau');
+    expect(state.lfdControls?.structuralVariantRequired).toBe(true);
   });
 
   it('requires a structural variant after the configured flat-cycle quota', async () => {
@@ -318,6 +402,7 @@ describe('UAT: Orchestrator — resume LFD controls (#1765)', () => {
       maxIterations: 3,
       enableAnalytics: true,
       enableBestOutput: true,
+      budgetStopPolicy: 'budget-wins',
       budgetLimits: {
         wall_clock_minutes: 0.000001,
       },

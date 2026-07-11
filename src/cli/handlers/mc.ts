@@ -41,6 +41,7 @@ interface Mission {
   maxTotalCost?: number;
   maxWallClockMinutes?: number;
   explorationQuota?: number;
+  budgetStopPolicy?: 'completion-wins' | 'budget-wins';
   priority: string;
   mode: MissionMode;
   targetAgent?: string;
@@ -195,6 +196,7 @@ Queue a mission onto a session. Does NOT execute — use 'aiwg mc run' to launch
   --max-wall-clock-minutes N    Hard cumulative runtime ceiling
   --exploration-quota K         Require structural variant after K flat cycles
                                 (off unless declared; no default K)
+  --budget-stop-policy P        completion-wins (default) | budget-wins
   --mode pty-orchestrator       PTY-orchestrator mode (requires --target-agent)
   --target-agent <id>           Required for --mode pty-orchestrator`,
 
@@ -331,6 +333,15 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
   const maxTotalCost = parseNumberFlag(ctx.args, '--max-total-cost', invalidFlags);
   const maxWallClockMinutes = parseNumberFlag(ctx.args, '--max-wall-clock-minutes', invalidFlags);
   const explorationQuota = parseNumberFlag(ctx.args, '--exploration-quota', invalidFlags);
+  const budgetStopPolicyRaw = parseFlag(ctx.args, '--budget-stop-policy');
+  let budgetStopPolicy: 'completion-wins' | 'budget-wins' | undefined;
+  if (budgetStopPolicyRaw !== undefined) {
+    if (budgetStopPolicyRaw === 'completion-wins' || budgetStopPolicyRaw === 'budget-wins') {
+      budgetStopPolicy = budgetStopPolicyRaw;
+    } else {
+      invalidFlags.push(`--budget-stop-policy (got '${budgetStopPolicyRaw}', expected completion-wins|budget-wins)`);
+    }
+  }
   const modeRaw = parseFlag(ctx.args, '--mode') || 'direct';
   const mode: MissionMode = modeRaw === 'pty-orchestrator' ? 'pty-orchestrator' : 'direct';
   const targetAgent = parseFlag(ctx.args, '--target-agent');
@@ -396,6 +407,7 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
     maxTotalCost,
     maxWallClockMinutes,
     explorationQuota,
+    budgetStopPolicy,
     priority,
     mode,
     targetAgent: targetAgent || undefined,
@@ -547,6 +559,7 @@ async function mcRun(ctx: HandlerContext): Promise<HandlerResult> {
         maxTotalCost: mission.maxTotalCost,
         maxWallClockMinutes: mission.maxWallClockMinutes,
         explorationQuota: mission.explorationQuota,
+        budgetStopPolicy: mission.budgetStopPolicy,
         // Defaults for cycle 1; advanced options can be added per-mission later.
         verbose: false,
       });

@@ -303,9 +303,11 @@ export class IterationAnalytics {
     for (let i = this.iterations.length - 1; i >= 1; i--) {
       const iteration = this.iterations[i];
       const prevScore = this.iterations[i - 1].quality_score;
+      // A change from a zero-score baseline is unbounded relative improvement,
+      // never a flat cycle — 0 → 90 used to count as flat (#1767 / audit M6)
       const percentageChange = prevScore > 0
         ? Math.abs(iteration.quality_delta) / prevScore
-        : 0;
+        : (Math.abs(iteration.quality_delta) > 0 ? Number.POSITIVE_INFINITY : 0);
 
       if (percentageChange < threshold) {
         flatCount++;
@@ -400,9 +402,10 @@ export class IterationAnalytics {
     for (let i = 1; i < this.iterations.length; i++) {
       const iteration = this.iterations[i];
       const prevScore = this.iterations[i - 1].quality_score;
+      // Zero-baseline improvement is unbounded relative change, never low-delta (#1767)
       const percentageChange = prevScore > 0
         ? Math.abs(iteration.quality_delta) / prevScore
-        : 0;
+        : (Math.abs(iteration.quality_delta) > 0 ? Number.POSITIVE_INFINITY : 0);
 
       if (percentageChange < threshold) {
         consecutiveLowDelta++;

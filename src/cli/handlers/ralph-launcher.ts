@@ -47,6 +47,7 @@ export interface RalphLaunchOptions {
   maxTotalCost?: number;
   maxWallClockMinutes?: number;
   explorationQuota?: number;
+  budgetStopPolicy?: 'completion-wins' | 'budget-wins';
   timeout?: number;
   mcpConfig?: string;
   giteaIssue?: boolean;
@@ -167,6 +168,9 @@ export function buildArgs(options: RalphLaunchOptions): string[] {
   }
   if (options.explorationQuota) {
     args.push('--exploration-quota', String(options.explorationQuota));
+  }
+  if (options.budgetStopPolicy) {
+    args.push('--budget-stop-policy', options.budgetStopPolicy);
   }
   if (options.timeout) {
     args.push('--timeout', String(options.timeout));

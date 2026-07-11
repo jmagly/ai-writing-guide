@@ -418,7 +418,8 @@ function registerMcToolset(server) {
       max_tool_calls: z.number().int().positive().optional().describe('Hard cumulative tool-call ceiling'),
       max_total_cost: z.number().positive().optional().describe('Hard cumulative provider-reported spend ceiling'),
       max_wall_clock_minutes: z.number().positive().optional().describe('Hard cumulative runtime ceiling'),
-      exploration_quota: z.number().int().positive().optional().describe('Require structural variant after this many flat cycles'),
+      exploration_quota: z.number().int().positive().optional().describe('Require structural variant after this many flat cycles (off unless declared; no default K)'),
+      budget_stop_policy: z.enum(['completion-wins', 'budget-wins']).optional().describe('Stop semantics when the completing iteration crosses a ceiling (default: completion-wins)'),
     },
     buildArgs: ({
       session_id,
@@ -431,6 +432,7 @@ function registerMcToolset(server) {
       max_total_cost,
       max_wall_clock_minutes,
       exploration_quota,
+      budget_stop_policy,
     }) => {
       const args = [session_id, objective];
       if (completion) args.push('--completion', completion);
@@ -441,6 +443,7 @@ function registerMcToolset(server) {
       if (max_total_cost) args.push('--max-total-cost', String(max_total_cost));
       if (max_wall_clock_minutes) args.push('--max-wall-clock-minutes', String(max_wall_clock_minutes));
       if (exploration_quota) args.push('--exploration-quota', String(exploration_quota));
+      if (budget_stop_policy) args.push('--budget-stop-policy', budget_stop_policy);
       return args;
     },
   });

@@ -249,6 +249,7 @@ export class Orchestrator {
       budgetPerIteration: config.budgetPerIteration || 2.0,
       budgetLimits: config.budgetLimits || {},
       explorationQuota: config.explorationQuota || { enabled: false },
+      budgetStopPolicy: config.budgetStopPolicy || 'completion-wins',
       timeoutMinutes: config.timeoutMinutes || 60,
       mcpConfig: config.mcpConfig,
       workingDir: config.workingDir || this.projectRoot,
@@ -560,6 +561,9 @@ export class Orchestrator {
     }
     if (overrides.explorationQuota) {
       state.config.explorationQuota = { ...(state.config.explorationQuota || {}), ...overrides.explorationQuota };
+    }
+    if (overrides.budgetStopPolicy) {
+      state.config.budgetStopPolicy = overrides.budgetStopPolicy;
     }
 
     state.status = 'running';
@@ -1096,19 +1100,11 @@ export class Orchestrator {
           });
         }
 
-        // Early Stopping
-        if (this.earlyStopping) {
-          this.earlyStopping.recordIterationResult(state.currentIteration, {
-            quality_score: qualityScore * 100,
-            confidence: Math.max(0, Math.min(1, qualityScore)),
-            verification_status: verificationPassed ? 'passed' : 'failed',
-            quality_delta: this.iterationAnalytics?.iterations?.at(-1)?.quality_delta || 0,
-          });
-        }
-
         // Iteration Analytics
+        const taskComplete = analysis.completed && analysis.success;
+        let analyticsRecord = null;
         if (this.iterationAnalytics) {
-          this.iterationAnalytics.recordIteration({
+          analyticsRecord = this.iterationAnalytics.recordIteration({
             iteration_number: state.currentIteration,
             quality_score: qualityScore * 100,
             tokens_used: sessionResult.totalTokens || 0,
@@ -1135,24 +1131,37 @@ export class Orchestrator {
             const budgetStopReport = this.iterationAnalytics.generateBudgetStopReport(budgetDecision.trigger);
             const budgetStopPath = join(this.stateManager.getStateDir(), 'budget-stop-report.json');
             writeFileSync(budgetStopPath, JSON.stringify(budgetStopReport, null, 2));
-
-            const selection = await this.selectBestOutput(state);
-            state.status = 'budget_exhausted';
             state.budgetStopReport = budgetStopReport;
             state.budgetStopReportPath = budgetStopPath;
-            this.stateManager.save(state);
-            await this.generateCompletionReport(state, 'budget_exhausted');
-            await this.recordTaskCompletion(state, 'partial');
-            await this.completeMultiLoop('budget_exhausted');
 
-            return {
-              success: false,
-              reason: `Budget exhausted: ${budgetDecision.trigger}`,
-              iterations: state.currentIteration,
-              loopId: state.loopId,
-              selectedIteration: selection.bestIteration,
-              budgetStopReport,
-            };
+            // Stop-semantics policy (#1767, operator decision 2026-07-11):
+            // completion-wins (default) — a task that meets its completion
+            // criteria on the ceiling-crossing iteration reports SUCCESS with
+            // the crossing annotated; the budget stop exists to halt ongoing
+            // optimization, not to negate an achieved completion.
+            // budget-wins — the pre-#1767 ordering: exhaustion terminates the
+            // loop as budget_exhausted even on a completing iteration.
+            const budgetStopPolicy = state.config.budgetStopPolicy || 'completion-wins';
+            if (taskComplete && budgetStopPolicy === 'completion-wins') {
+              state.budgetCrossedAtCompletion = budgetDecision.trigger;
+              console.log(`[External Ralph] Budget ceiling crossed on the completing iteration (${budgetDecision.trigger}) — completion wins (policy: completion-wins)`);
+            } else {
+              const selection = await this.selectBestOutput(state);
+              state.status = 'budget_exhausted';
+              this.stateManager.save(state);
+              await this.generateCompletionReport(state, 'budget_exhausted');
+              await this.recordTaskCompletion(state, 'partial');
+              await this.completeMultiLoop('budget_exhausted');
+
+              return {
+                success: false,
+                reason: `Budget exhausted: ${budgetDecision.trigger}`,
+                iterations: state.currentIteration,
+                loopId: state.loopId,
+                selectedIteration: selection.bestIteration,
+                budgetStopReport,
+              };
+            }
           }
 
           const explorationDecision = this.iterationAnalytics.checkExplorationQuota();
@@ -1165,6 +1174,17 @@ export class Orchestrator {
               : null,
           };
           this.stateManager.save(state);
+        }
+
+        // Early Stopping — fed AFTER analytics so it sees the CURRENT
+        // iteration's quality_delta, not the previous one (#1767 off-by-one)
+        if (this.earlyStopping) {
+          this.earlyStopping.recordIterationResult(state.currentIteration, {
+            quality_score: qualityScore * 100,
+            confidence: Math.max(0, Math.min(1, qualityScore)),
+            verification_status: verificationPassed ? 'passed' : 'failed',
+            quality_delta: analyticsRecord?.quality_delta || 0,
+          });
         }
 
         // LearningExtractor & MemoryPromotion
@@ -1186,34 +1206,68 @@ export class Orchestrator {
         }
 
         // ========== CHECK EARLY STOPPING ==========
-        if (this.earlyStopping && state.currentIteration >= 2) {
+        // Skipped when the task just completed — the completion path below is
+        // the correct exit for a completed task (#1767).
+        if (this.earlyStopping && state.currentIteration >= 2 && !taskComplete) {
           const earlyStopResult = this.earlyStopping.shouldStop();
           if (earlyStopResult.stop) {
-            console.log(`[External Ralph] Early stopping triggered: ${earlyStopResult.reason}`);
+            if (earlyStopResult.trigger === 'quality_plateau') {
+              // A quality plateau is STAGNATION, not success (#1767). It must
+              // never be recorded as a successful completion without
+              // verification. When a structural variant is pending from a
+              // declared exploration quota, the variant gets its chance first —
+              // the quota exists precisely to break plateaus.
+              if (state.lfdControls?.structuralVariantRequired) {
+                console.log('[External Ralph] Quality plateau detected, but a structural variant is pending — continuing (exploration quota takes precedence)');
+              } else {
+                console.log(`[External Ralph] Stopping on quality plateau: ${earlyStopResult.reason}`);
 
-            // Select best output before completing
-            const selection = await this.selectBestOutput(state);
-            if (selection.bestIteration !== state.currentIteration) {
-              console.log(`[External Ralph] Selected iteration ${selection.bestIteration} as best output`);
+                const selection = await this.selectBestOutput(state);
+                if (selection.bestIteration !== state.currentIteration) {
+                  console.log(`[External Ralph] Selected iteration ${selection.bestIteration} as best output`);
+                }
+
+                state.status = 'plateau';
+                this.stateManager.save(state);
+                await this.generateCompletionReport(state, 'plateau');
+                await this.recordTaskCompletion(state, 'partial');
+                await this.completeMultiLoop('plateau');
+
+                return {
+                  success: false,
+                  reason: `Quality plateau (stagnation, not success): ${earlyStopResult.reason}`,
+                  iterations: state.currentIteration,
+                  loopId: state.loopId,
+                  selectedIteration: selection.bestIteration,
+                };
+              }
+            } else {
+              // Verified high-confidence stop — a legitimate success exit
+              console.log(`[External Ralph] Early stopping triggered: ${earlyStopResult.reason}`);
+
+              const selection = await this.selectBestOutput(state);
+              if (selection.bestIteration !== state.currentIteration) {
+                console.log(`[External Ralph] Selected iteration ${selection.bestIteration} as best output`);
+              }
+
+              state.status = 'completed';
+              this.stateManager.save(state);
+              await this.generateCompletionReport(state, 'early_stop');
+              await this.recordTaskCompletion(state, 'success');
+              await this.completeMultiLoop('completed');
+
+              return {
+                success: true,
+                reason: `Early stop: ${earlyStopResult.reason}`,
+                iterations: state.currentIteration,
+                loopId: state.loopId,
+              };
             }
-
-            state.status = 'completed';
-            this.stateManager.save(state);
-            await this.generateCompletionReport(state, 'early_stop');
-            await this.recordTaskCompletion(state, 'success');
-            await this.completeMultiLoop('completed');
-
-            return {
-              success: true,
-              reason: `Early stop: ${earlyStopResult.reason}`,
-              iterations: state.currentIteration,
-              loopId: state.loopId,
-            };
           }
         }
 
         // ========== CHECK COMPLETION ==========
-        if (analysis.completed && analysis.success) {
+        if (taskComplete) {
           // Select best output (may not be final iteration per REF-015)
           const selection = await this.selectBestOutput(state);
           if (selection.bestIteration !== state.currentIteration) {
@@ -1228,10 +1282,13 @@ export class Orchestrator {
 
           return {
             success: true,
-            reason: 'Task completed successfully',
+            reason: state.budgetCrossedAtCompletion
+              ? `Task completed successfully (budget ceiling crossed on the completing iteration: ${state.budgetCrossedAtCompletion})`
+              : 'Task completed successfully',
             iterations: state.currentIteration,
             loopId: state.loopId,
             selectedIteration: selection.bestIteration,
+            budgetCrossed: state.budgetCrossedAtCompletion || null,
           };
         }
 

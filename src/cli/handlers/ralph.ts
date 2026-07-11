@@ -38,6 +38,7 @@ function parseRalphArgs(args: string[]): {
   maxTotalCost?: number;
   maxWallClockMinutes?: number;
   explorationQuota?: number;
+  budgetStopPolicy?: 'completion-wins' | 'budget-wins';
   timeout?: number;
   mcpConfig?: string;
   giteaIssue?: boolean;
@@ -101,6 +102,13 @@ function parseRalphArgs(args: string[]): {
       result.maxWallClockMinutes = positiveNumber('--max-wall-clock-minutes', args[++i]);
     } else if (arg === '--exploration-quota') {
       result.explorationQuota = positiveNumber('--exploration-quota', args[++i], true);
+    } else if (arg === '--budget-stop-policy') {
+      const policy = args[++i];
+      if (policy === 'completion-wins' || policy === 'budget-wins') {
+        result.budgetStopPolicy = policy;
+      } else {
+        result.invalidFlags.push(`--budget-stop-policy (got '${policy ?? ''}', expected completion-wins|budget-wins)`);
+      }
     } else if (arg === '--timeout') {
       result.timeout = positiveNumber('--timeout', args[++i], true);
     } else if (arg === '--mcp-config') {
@@ -223,6 +231,7 @@ export class RalphHandler implements CommandHandler {
         maxTotalCost: parsed.maxTotalCost,
         maxWallClockMinutes: parsed.maxWallClockMinutes,
         explorationQuota: parsed.explorationQuota,
+        budgetStopPolicy: parsed.budgetStopPolicy,
         timeout: parsed.timeout,
         mcpConfig: parsed.mcpConfig,
         giteaIssue: parsed.giteaIssue,
@@ -289,6 +298,10 @@ LFD LOOP CONTROLS (hard cumulative ceilings; loop stops with a best-output repor
   --exploration-quota <k>     Require a structural strategy variant after k flat
                               (non-improving) cycles. OFF unless declared — there
                               is no default k; each loop declares its own.
+  --budget-stop-policy <p>    completion-wins (default): a task completing on the
+                              ceiling-crossing iteration reports success with the
+                              crossing annotated. budget-wins: exhaustion always
+                              terminates as budget_exhausted.
   --mcp-config <json>     MCP server configuration JSON
   --gitea-issue           Create/link Gitea issue for tracking
   --loop-id <id>          Use specific loop ID

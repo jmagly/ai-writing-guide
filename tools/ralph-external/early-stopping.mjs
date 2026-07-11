@@ -220,10 +220,11 @@ export class EarlyStopping {
       const prev = recentIterations[i - 1];
       const curr = recentIterations[i];
 
-      // Calculate percentage improvement
+      // Calculate percentage improvement. A change from a zero-score baseline
+      // is unbounded relative improvement — it must never read as plateau (#1767)
       const percentageImprovement = prev.quality_score > 0
         ? Math.abs(curr.quality_delta) / prev.quality_score
-        : 0;
+        : (Math.abs(curr.quality_delta) > 0 ? Number.POSITIVE_INFINITY : 0);
 
       improvements.push({
         iteration: curr.iteration_number,
