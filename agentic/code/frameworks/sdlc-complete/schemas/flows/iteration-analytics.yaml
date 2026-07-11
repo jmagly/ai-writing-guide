@@ -253,35 +253,41 @@ $defs:
     description: "Report emitted when a hard loop budget stops execution."
     required:
       - stop_reason
-      - selected_iteration
-      - final_iteration
-      - best_score
+      - budgets
+    # NOTE: the authoritative RUNTIME shape is
+    # agentic/code/addons/agent-loop/schemas/iteration-analytics-output.yaml
+    # ($defs/BudgetStopReport), validated against the code in
+    # tools/ralph-external/iteration-analytics.test.mjs (#1771). This
+    # framework-level copy is kept in sync with it.
     properties:
       stop_reason:
         type: string
+        # Emitted by getBudgetStopTrigger(): "<dimension>_exhausted".
         enum:
           - wall_clock_exhausted
           - output_tokens_exhausted
           - total_tokens_exhausted
+          - input_tokens_exhausted
           - spend_exhausted
           - tool_calls_exhausted
-          - max_iterations_reached
-          - plateau_threshold_reached
       budgets:
+        # Parallel maps, matching the code (not per-dimension {limit,observed}).
         type: object
-        additionalProperties:
-          type: object
-          properties:
-            limit: {}
-            observed: {}
+        required: [limits, observed, exhausted, unobservable]
+        properties:
+          limits: { type: object }
+          observed: { type: object }
+          exhausted: { type: array }
+          unobservable: { type: array, items: { type: string } }
+      # Nullable when there is no selected/final iteration yet (#1771).
       selected_iteration:
-        type: integer
+        type: [integer, "null"]
       final_iteration:
-        type: integer
+        type: [integer, "null"]
       best_score:
-        type: number
+        type: [number, "null"]
       final_score:
-        type: number
+        type: [number, "null"]
       hypothesis_outcomes:
         type: array
         items:
@@ -333,7 +339,13 @@ $defs:
 
   EvalHarnessContract:
     type: object
-    description: "Optional LFD-style score/lint/probe/status harness contract for eval-driven loops."
+    # STATUS: SPEC-ONLY / NOT YET IMPLEMENTED (#1771/#1772). No runtime code
+    # under tools/ralph-external/ or src/ reads or writes this contract, the
+    # eval_harness_result path, or the VOID status yet. It documents the
+    # intended eval/holdout harness surface (#1585 Track 3 build, tracked in
+    # #1771/#1772). Rules that reference it MUST condition their MUSTs on the
+    # harness being present.
+    description: "SPEC-ONLY (unimplemented): LFD-style score/lint/probe/status harness contract for eval-driven loops."
     required:
       - score
       - lint

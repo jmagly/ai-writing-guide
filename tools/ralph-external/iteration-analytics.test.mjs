@@ -5,9 +5,12 @@
  */
 
 import { IterationAnalytics } from './iteration-analytics.mjs';
-import { existsSync, mkdirSync, rmSync } from 'fs';
-import { join } from 'path';
+import { existsSync, mkdirSync, rmSync, readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import assert from 'assert';
+import Ajv from 'ajv';
+import yaml from 'js-yaml';
 
 const TEST_DIR = '.aiwg/ralph/analytics-test';
 
@@ -903,6 +906,75 @@ try {
     const zeroKDecision = zeroK.checkExplorationQuota();
     assert.strictEqual(zeroKDecision.required, false);
     assert.strictEqual(zeroKDecision.k, null);
+  });
+
+  test('generateSummary + generateBudgetStopReport validate against the output schema (#1771)', () => {
+    setup();
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    const schemaPath = join(
+      __dirname,
+      '../../agentic/code/addons/agent-loop/schemas/iteration-analytics-output.yaml',
+    );
+    const schema = yaml.load(readFileSync(schemaPath, 'utf-8'));
+    // Drop the draft-2020-12 $schema URL — this Ajv build doesn't register that
+    // meta-schema, and the constructs used here are draft-07 compatible.
+    delete schema.$schema;
+    const ajv = new Ajv({ allErrors: true, strict: false });
+    const validate = ajv.compile(schema);
+
+    const analytics = new IterationAnalytics('schema-loop', 'Schema validation task', {
+      storagePath: TEST_DIR,
+      budgetLimits: { total_tokens: 1000 },
+      explorationQuota: { enabled: true, k: 2 },
+    });
+
+    // Iteration with observed usage
+    analytics.recordIteration({
+      iteration_number: 1,
+      quality_score: 40,
+      tokens_used: 500,
+      input_tokens: 400,
+      output_tokens: 100,
+      tool_calls: 2,
+      token_cost_usd: 0.1,
+      execution_time_ms: 5000,
+      verification_status: 'failed',
+      output_snapshot_path: '/p/1',
+      experiment: {
+        hypothesis: 'h',
+        expected_failure_mode: 'e',
+        distinguishing_diagnostic: 'd',
+        adjustment_key: 'pivot:',
+        recorded_before_change: true,
+        result: 'failed',
+        probe_or_generalization_signal: 'iteration-analysis',
+      },
+    });
+    // Iteration with UNKNOWN usage (null token/cost) — must still validate (#1766)
+    analytics.recordIteration({
+      iteration_number: 2,
+      quality_score: 55,
+      tokens_used: null,
+      input_tokens: null,
+      output_tokens: null,
+      tool_calls: 1,
+      token_cost_usd: null,
+      execution_time_ms: 4000,
+      verification_status: 'failed',
+      output_snapshot_path: '/p/2',
+    });
+
+    const summary = analytics.generateSummary();
+    const summaryValid = validate(summary);
+    assert.ok(summaryValid, `Summary failed schema: ${JSON.stringify(validate.errors, null, 2)}`);
+
+    // BudgetStopReport is embedded under $defs — get its validator from the
+    // already-compiled root schema by its $id + JSON-pointer fragment (avoids
+    // recompiling the same $id, which Ajv rejects).
+    const report = analytics.generateBudgetStopReport('total_tokens_exhausted');
+    const validateReport = ajv.getSchema(`${schema.$id}#/$defs/BudgetStopReport`);
+    const reportValid = validateReport(report);
+    assert.ok(reportValid, `BudgetStopReport failed schema: ${JSON.stringify(validateReport.errors, null, 2)}`);
   });
 
   console.log('\n=== All Tests Passed ===\n');

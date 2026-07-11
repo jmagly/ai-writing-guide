@@ -1,0 +1,202 @@
+# Ralph Iteration Analytics — OUTPUT schema
+#
+# Describes exactly what IterationAnalytics.generateSummary() and
+# generateBudgetStopReport() emit at runtime (tools/ralph-external/
+# iteration-analytics.mjs). This is the OUTPUT/record artifact — distinct from
+# the v2 CONFIG schema (iteration-analytics.yaml), which describes how the
+# analytics subsystem is configured. The code @implements both:
+#   - config  → iteration-analytics.yaml (v2)
+#   - output  → this file
+#
+# Naming here matches the code verbatim (iteration_number, quality_score, …).
+# Token/cost fields are nullable because a provider that reports no usage
+# records `null` (unknown), never 0 (#1766). Validated by
+# iteration-analytics.test.mjs.
+#
+# Issues: #1585 (LFD controls), #1771 (schema/code alignment)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/ralph-iteration-analytics-output/v1"
+title: "Ralph Iteration Analytics Output"
+description: "Runtime output of IterationAnalytics.generateSummary()"
+
+type: object
+required:
+  - loop_id
+  - iterations
+  - total_iterations
+properties:
+  loop_id:
+    type: string
+  task_description:
+    type: string
+  start_time:
+    type: string
+  end_time:
+    type: [string, "null"]
+  iterations:
+    type: array
+    items:
+      $ref: "#/$defs/IterationRecord"
+  total_iterations:
+    type: integer
+  optimal_iteration:
+    type: [integer, "null"]
+  final_iteration:
+    type: [integer, "null"]
+  selected_iteration:
+    type: [integer, "null"]
+  selection_reason:
+    type: [string, "null"]
+  total_tokens:
+    type: number
+  total_cost_usd:
+    type: number
+  total_time_ms:
+    type: number
+  budget_usage:
+    $ref: "#/$defs/BudgetUsage"
+  budget_limits:
+    type: object
+  budget_exhausted:
+    type: boolean
+  budget_stop_report:
+    oneOf:
+      - { type: "null" }
+      - $ref: "#/$defs/BudgetStopReport"
+  flat_cycle_count:
+    type: integer
+  structural_variant_required:
+    type: boolean
+  baseline_comparison:
+    # null when no baseline yet; aggregate object once baselines accumulate
+    type: [object, "null"]
+  diminishing_returns_detected:
+    type: boolean
+  diminishing_returns_iteration:
+    type: [integer, "null"]
+  quality_trajectory:
+    # "insufficient_data" string until enough points; array of points otherwise
+    type: [array, string]
+
+$defs:
+  IterationRecord:
+    type: object
+    required:
+      - iteration_number
+      - quality_score
+      - quality_delta
+    properties:
+      iteration_number:
+        type: integer
+      timestamp:
+        type: string
+      quality_score:
+        type: number
+      quality_delta:
+        type: number
+      # Nullable: null = provider reported no usage this iteration (#1766)
+      tokens_used:
+        type: [number, "null"]
+      token_cost_usd:
+        type: [number, "null"]
+      input_tokens:
+        type: [number, "null"]
+      output_tokens:
+        type: [number, "null"]
+      tool_calls:
+        type: number
+      execution_time_ms:
+        type: number
+      verification_status:
+        type: string
+        enum: [passed, failed, skipped]
+      output_snapshot_path:
+        type: [string, "null"]
+      reflections:
+        type: array
+      experiment:
+        oneOf:
+          - { type: "null" }
+          - $ref: "#/$defs/ExperimentRecord"
+      quality_per_1k_tokens:
+        type: [number, "null"]
+      quality_per_minute:
+        type: [number, "null"]
+      baseline_comparison:
+        type: [object, "null"]
+
+  ExperimentRecord:
+    type: object
+    description: "Hypothesis-before-change record (#1769)"
+    properties:
+      hypothesis:
+        type: string
+      expected_failure_mode:
+        type: string
+      distinguishing_diagnostic:
+        type: string
+      structural_variant:
+        type: [string, "null"]
+      adjustment_key:
+        type: [string, "null"]
+      recorded_before_change:
+        type: boolean
+      result:
+        type: string
+        enum: [passed, failed]
+      probe_or_generalization_signal:
+        type: string
+
+  BudgetUsage:
+    type: object
+    properties:
+      total_tokens: { type: number }
+      input_tokens: { type: number }
+      output_tokens: { type: number }
+      spend_usd: { type: number }
+      tool_calls: { type: number }
+      wall_clock_minutes: { type: number }
+
+  BudgetStopReport:
+    type: object
+    description: "Output of generateBudgetStopReport()"
+    required:
+      - stop_reason
+      - budgets
+    properties:
+      stop_reason:
+        type: string
+      budgets:
+        type: object
+        required: [limits, observed, exhausted, unobservable]
+        properties:
+          limits:
+            type: object
+          observed:
+            $ref: "#/$defs/BudgetUsage"
+          exhausted:
+            type: array
+            items:
+              type: object
+              properties:
+                name: { type: string }
+                limit: { type: number }
+                observed: { type: number }
+          unobservable:
+            type: array
+            items:
+              type: string
+      # Nullable when there is no selected/final iteration yet (#1771)
+      selected_iteration:
+        type: [integer, "null"]
+      final_iteration:
+        type: [integer, "null"]
+      best_score:
+        type: [number, "null"]
+      final_score:
+        type: [number, "null"]
+      hypothesis_outcomes:
+        type: array
+      next_recommended_action:
+        type: string
