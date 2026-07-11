@@ -803,6 +803,65 @@ try {
     assert.strictEqual(summary.flat_cycle_count, 2);
   });
 
+  test('unknown token/spend usage is not conflated with zero — unobservable ceilings surface (#1766)', () => {
+    setup();
+    const analytics = new IterationAnalytics('unknown-usage', 'No-usage provider', {
+      storagePath: TEST_DIR,
+      budgetLimits: { total_tokens: 1000, spend_usd: 5, wall_clock_minutes: 10 },
+    });
+
+    // A provider that reports no token/cost usage: record null (unknown), not 0.
+    analytics.recordIteration({
+      iteration_number: 1,
+      quality_score: 40,
+      tokens_used: null,
+      input_tokens: null,
+      output_tokens: null,
+      tool_calls: 3,
+      token_cost_usd: null,
+      execution_time_ms: 30000,
+      verification_status: 'failed',
+      output_snapshot_path: '/path/1',
+    });
+
+    const observable = analytics.getObservableDimensions();
+    assert.strictEqual(observable.total_tokens, false);
+    assert.strictEqual(observable.spend_usd, false);
+    assert.strictEqual(observable.wall_clock_minutes, true);
+    assert.strictEqual(observable.tool_calls, true);
+
+    const decision = analytics.checkBudgetLimits();
+    // token/spend ceilings are unobservable (not silently "under budget");
+    // wall-clock is observable and not yet exhausted.
+    assert.ok(decision.unobservable_limits.includes('total_tokens'));
+    assert.ok(decision.unobservable_limits.includes('spend_usd'));
+    assert.strictEqual(decision.exhausted, false);
+  });
+
+  test('observed token usage still enforces the ceiling (#1766)', () => {
+    setup();
+    const analytics = new IterationAnalytics('observed-usage', 'Reporting provider', {
+      storagePath: TEST_DIR,
+      budgetLimits: { total_tokens: 1000 },
+    });
+    analytics.recordIteration({
+      iteration_number: 1,
+      quality_score: 40,
+      tokens_used: 1200,
+      input_tokens: 1000,
+      output_tokens: 200,
+      tool_calls: 1,
+      token_cost_usd: 0.5,
+      execution_time_ms: 5000,
+      verification_status: 'failed',
+      output_snapshot_path: '/path/1',
+    });
+    const decision = analytics.checkBudgetLimits();
+    assert.strictEqual(decision.exhausted, true);
+    assert.strictEqual(decision.trigger, 'total_tokens_exhausted');
+    assert.ok(!decision.unobservable_limits.includes('total_tokens'));
+  });
+
   test('checkExplorationQuota() is OFF without a declared K — no default is substituted (#1770)', () => {
     setup();
 

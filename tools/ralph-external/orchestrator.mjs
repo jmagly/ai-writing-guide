@@ -871,6 +871,41 @@ export class Orchestrator {
         const startTime = Date.now();
         this.stateManager.setCurrentPid(null);
 
+        // Bound the session timeout by the remaining wall-clock budget (#1766 /
+        // audit M5): with a --max-wall-clock-minutes ceiling, a single session
+        // must not be allowed to overshoot it by up to a full --timeout.
+        // The first iteration always gets the full per-session timeout — one
+        // iteration is the minimum unit and the cumulative ceiling is enforced
+        // by the post-iteration budget check.
+        let sessionTimeoutMs = state.config.timeoutMinutes * 60 * 1000;
+        const wallClockLimit = Number(state.config.budgetLimits?.wall_clock_minutes);
+        const priorIterations = this.iterationAnalytics ? this.iterationAnalytics.iterations.length : 0;
+        if (priorIterations >= 1 && Number.isFinite(wallClockLimit) && wallClockLimit > 0) {
+          const usedMinutes = this.iterationAnalytics.getBudgetUsage().wall_clock_minutes;
+          const remainingMs = Math.max(0, (wallClockLimit - usedMinutes) * 60 * 1000);
+          sessionTimeoutMs = Math.min(sessionTimeoutMs, remainingMs);
+          if (sessionTimeoutMs <= 0) {
+            console.log('[External Ralph] Wall-clock budget already exhausted before session launch — stopping');
+            const budgetStopReport = this.iterationAnalytics.generateBudgetStopReport('wall_clock_exhausted');
+            const budgetStopPath = join(this.stateManager.getStateDir(), 'budget-stop-report.json');
+            writeFileSync(budgetStopPath, JSON.stringify(budgetStopReport, null, 2));
+            state.status = 'budget_exhausted';
+            state.budgetStopReport = budgetStopReport;
+            state.budgetStopReportPath = budgetStopPath;
+            this.stateManager.save(state);
+            await this.generateCompletionReport(state, 'budget_exhausted');
+            await this.recordTaskCompletion(state, 'partial');
+            await this.completeMultiLoop('budget_exhausted');
+            return {
+              success: false,
+              reason: 'Budget exhausted: wall_clock_exhausted',
+              iterations: state.currentIteration - 1,
+              loopId: state.loopId,
+              budgetStopReport,
+            };
+          }
+        }
+
         const sessionResult = await this.sessionLauncher.launch({
           prompt,
           sessionId: state.sessionId,
@@ -882,7 +917,7 @@ export class Orchestrator {
           stdoutPath: outputPaths.stdout,
           stderrPath: outputPaths.stderr,
           outputDir: iterationDir,
-          timeoutMs: state.config.timeoutMinutes * 60 * 1000,
+          timeoutMs: sessionTimeoutMs,
           verbose: state.config.verbose,
         });
 
@@ -1104,14 +1139,21 @@ export class Orchestrator {
         const taskComplete = analysis.completed && analysis.success;
         let analyticsRecord = null;
         if (this.iterationAnalytics) {
+          // Unknown vs zero (#1766): when the provider reported no token/cost
+          // usage this iteration, record null (unknown) rather than 0 so a
+          // declared token/spend ceiling is treated as unobservable instead of
+          // silently never firing. tool_calls and wall-clock are always
+          // observable (counted/measured by the orchestrator).
+          const tokenUsageObserved = sessionResult.tokenUsageObserved === true;
+          const costObserved = sessionResult.costObserved === true;
           analyticsRecord = this.iterationAnalytics.recordIteration({
             iteration_number: state.currentIteration,
             quality_score: qualityScore * 100,
-            tokens_used: sessionResult.totalTokens || 0,
-            input_tokens: sessionResult.inputTokens || 0,
-            output_tokens: sessionResult.outputTokens || 0,
+            tokens_used: tokenUsageObserved ? (sessionResult.totalTokens || 0) : null,
+            input_tokens: tokenUsageObserved ? (sessionResult.inputTokens || 0) : null,
+            output_tokens: tokenUsageObserved ? (sessionResult.outputTokens || 0) : null,
             tool_calls: sessionResult.toolCallCount || 0,
-            token_cost_usd: sessionResult.costUsd || 0,
+            token_cost_usd: costObserved ? (sessionResult.costUsd || 0) : null,
             execution_time_ms: duration,
             verification_status: verificationPassed ? 'passed' : 'failed',
             output_snapshot_path: outputPaths.stdout,

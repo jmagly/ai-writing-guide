@@ -60,6 +60,35 @@ test('returns zero usage for events without accounting data', () => {
   assert.strictEqual(usage.hasUsage, false);
   assert.strictEqual(usage.totalTokens, 0);
   assert.strictEqual(usage.costUsd, 0);
+  assert.strictEqual(usage.hasCostField, false);
+});
+
+test('reads usage nested under message.usage (assistant events) (#1766)', () => {
+  const launcher = new SessionLauncher();
+  // Claude assistant events nest usage under message.usage — reading only the
+  // top-level usage lost all accounting on timed-out sessions whose terminal
+  // result event never arrives.
+  const usage = launcher._extractUsageStats({
+    type: 'assistant',
+    message: {
+      usage: { input_tokens: 200, output_tokens: 50 },
+    },
+  });
+
+  assert.strictEqual(usage.hasUsage, true);
+  assert.strictEqual(usage.inputTokens, 200);
+  assert.strictEqual(usage.outputTokens, 50);
+  assert.strictEqual(usage.totalTokens, 250);
+});
+
+test('distinguishes a present cost field from an absent one (#1766)', () => {
+  const launcher = new SessionLauncher();
+
+  const withCost = launcher._extractUsageStats({ type: 'result', total_cost_usd: 0, usage: { total_tokens: 10 } });
+  assert.strictEqual(withCost.hasCostField, true);
+
+  const withoutCost = launcher._extractUsageStats({ type: 'result', usage: { total_tokens: 10 } });
+  assert.strictEqual(withoutCost.hasCostField, false);
 });
 
 console.log('\nUsage extraction tests passed.\n');

@@ -128,16 +128,22 @@ export class IterationAnalytics {
       ? metrics.quality_score - previousIteration.quality_score
       : 0;
 
+    // Unknown vs zero (#1766): null means "provider did not report this usage
+    // dimension" and must be preserved (not coerced to 0), so a declared
+    // token/spend ceiling on an unobservable provider is flagged rather than
+    // silently never firing.
+    const keepUnknown = (v) => (v === null || v === undefined ? null : v);
+
     /** @type {IterationMetrics} */
     const record = {
       iteration_number: metrics.iteration_number,
       timestamp,
       quality_score: metrics.quality_score,
       quality_delta,
-      tokens_used: metrics.tokens_used,
-      token_cost_usd: metrics.token_cost_usd,
-      input_tokens: metrics.input_tokens || 0,
-      output_tokens: metrics.output_tokens || 0,
+      tokens_used: keepUnknown(metrics.tokens_used),
+      token_cost_usd: keepUnknown(metrics.token_cost_usd),
+      input_tokens: keepUnknown(metrics.input_tokens),
+      output_tokens: keepUnknown(metrics.output_tokens),
       tool_calls: metrics.tool_calls || 0,
       execution_time_ms: metrics.execution_time_ms,
       verification_status: metrics.verification_status,
@@ -146,7 +152,8 @@ export class IterationAnalytics {
       experiment: metrics.experiment || null,
       quality_per_1k_tokens: metrics.tokens_used > 0
         ? metrics.quality_score / (metrics.tokens_used / 1000)
-        : null,
+        : null,  // null when tokens unknown or zero
+
       quality_per_minute: metrics.execution_time_ms > 0
         ? metrics.quality_score / (metrics.execution_time_ms / 60000)
         : null,
@@ -223,13 +230,39 @@ export class IterationAnalytics {
    * @returns {Object} Cumulative counters
    */
   getBudgetUsage() {
+    // Sum over observed (non-null) values only. tool_calls and wall_clock are
+    // always observable (counted/measured by the orchestrator).
+    const sumObserved = (field) =>
+      this.iterations.reduce((sum, it) => sum + (typeof it[field] === 'number' ? it[field] : 0), 0);
+
     return {
-      total_tokens: this.iterations.reduce((sum, it) => sum + (it.tokens_used || 0), 0),
-      input_tokens: this.iterations.reduce((sum, it) => sum + (it.input_tokens || 0), 0),
-      output_tokens: this.iterations.reduce((sum, it) => sum + (it.output_tokens || 0), 0),
-      spend_usd: this.iterations.reduce((sum, it) => sum + (it.token_cost_usd || 0), 0),
-      tool_calls: this.iterations.reduce((sum, it) => sum + (it.tool_calls || 0), 0),
-      wall_clock_minutes: this.iterations.reduce((sum, it) => sum + (it.execution_time_ms || 0), 0) / 60000,
+      total_tokens: sumObserved('tokens_used'),
+      input_tokens: sumObserved('input_tokens'),
+      output_tokens: sumObserved('output_tokens'),
+      spend_usd: sumObserved('token_cost_usd'),
+      tool_calls: sumObserved('tool_calls'),
+      wall_clock_minutes: sumObserved('execution_time_ms') / 60000,
+    };
+  }
+
+  /**
+   * Which budget dimensions were actually observed at least once.
+   * A dimension whose per-iteration field is null/undefined for EVERY recorded
+   * iteration is unobservable on the active provider — a declared ceiling on it
+   * cannot fire and must be surfaced rather than silently passing (#1766).
+   * @returns {Object<string,boolean>}
+   */
+  getObservableDimensions() {
+    const anyObserved = (field) =>
+      this.iterations.some((it) => typeof it[field] === 'number');
+    return {
+      total_tokens: anyObserved('tokens_used'),
+      input_tokens: anyObserved('input_tokens'),
+      output_tokens: anyObserved('output_tokens'),
+      spend_usd: anyObserved('token_cost_usd'),
+      // Always observable — the orchestrator counts/measures these directly.
+      tool_calls: true,
+      wall_clock_minutes: true,
     };
   }
 
@@ -240,6 +273,7 @@ export class IterationAnalytics {
   checkBudgetLimits() {
     const limits = this.config.budgetLimits || {};
     const usage = this.getBudgetUsage();
+    const observable = this.getObservableDimensions();
     const exhausted = [];
     const unobservable = [];
 
@@ -249,8 +283,21 @@ export class IterationAnalytics {
       }
 
       const observed = usage[name];
-      if (typeof observed !== 'number' || !Number.isFinite(observed)) {
+      // Unknown vs zero (#1766): a declared ceiling whose dimension the provider
+      // never reported is UNOBSERVABLE — do not treat the constant-0 sum as
+      // "under budget". Surface it so the operator learns the ceiling is inert
+      // on this provider instead of it silently never firing.
+      if (observable[name] === false || typeof observed !== 'number' || !Number.isFinite(observed)) {
         unobservable.push(name);
+        // Emit the warning once, when the dimension first proves unobservable.
+        if (!this._warnedUnobservable) this._warnedUnobservable = new Set();
+        if (!this._warnedUnobservable.has(name)) {
+          this._warnedUnobservable.add(name);
+          console.warn(
+            `[IterationAnalytics] Declared budget ceiling '${name}=${Number(limit)}' is UNOBSERVABLE on this provider ` +
+            `(no usage reported) — it cannot fire. Use --max-wall-clock-minutes for a provider-independent hard stop.`
+          );
+        }
         continue;
       }
 
@@ -713,7 +760,11 @@ export class IterationAnalytics {
         ? formatNullable(it.baseline_comparison.speed_efficiency_lift)
         : 'N/A';
 
-      return `| ${it.iteration_number} | ${it.quality_score.toFixed(1)} | ${deltaStr} | ${it.tokens_used} | ${formatNullable(it.quality_per_1k_tokens)} | ${formatNullable(it.quality_per_minute)} | ${baselineLift} | ${tokenLift} | ${speedLift} | $${it.token_cost_usd.toFixed(4)} | ${verifiedMark} |`;
+      // tokens_used / token_cost_usd may be null (unknown) on providers that
+      // report no usage (#1766) — render N/A rather than crashing on toFixed.
+      const tokensCell = typeof it.tokens_used === 'number' ? it.tokens_used : 'N/A';
+      const costCell = typeof it.token_cost_usd === 'number' ? `$${it.token_cost_usd.toFixed(4)}` : 'N/A';
+      return `| ${it.iteration_number} | ${it.quality_score.toFixed(1)} | ${deltaStr} | ${tokensCell} | ${formatNullable(it.quality_per_1k_tokens)} | ${formatNullable(it.quality_per_minute)} | ${baselineLift} | ${tokenLift} | ${speedLift} | ${costCell} | ${verifiedMark} |`;
     }).join('\n');
 
     // Diminishing returns note

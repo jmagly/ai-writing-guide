@@ -338,6 +338,11 @@ export class SessionLauncher extends EventEmitter {
         result.outputTokens = stats.outputTokens;
         result.totalTokens = stats.totalTokens;
         result.costUsd = stats.costUsd;
+        // Whether the provider actually reported token/cost usage this session.
+        // Distinguishes "observed 0" from "cannot observe" so token/spend
+        // ceilings aren't silently inert on providers that emit no usage (#1766).
+        result.tokenUsageObserved = stats.usageEvents > 0;
+        result.costObserved = stats.costUsd > 0 || (stats.usageEvents > 0 && stats.costFieldSeen === true);
       }
     } catch (err) {
       // Log but don't fail the session
@@ -423,6 +428,7 @@ export class SessionLauncher extends EventEmitter {
       totalTokens: 0,
       costUsd: 0,
       usageEvents: 0,
+      costFieldSeen: false,
     };
 
     try {
@@ -459,6 +465,9 @@ export class SessionLauncher extends EventEmitter {
           }
 
           const usage = this._extractUsageStats(event);
+          if (usage.hasCostField) {
+            stats.costFieldSeen = true;
+          }
           if (usage.hasUsage) {
             stats.inputTokens += usage.inputTokens;
             stats.outputTokens += usage.outputTokens;
@@ -585,7 +594,13 @@ export class SessionLauncher extends EventEmitter {
    * @returns {Object} Usage counters
    */
   _extractUsageStats(event) {
-    const usage = event?.usage && typeof event.usage === 'object' ? event.usage : {};
+    // Usage can live at event.usage (result events) OR event.message.usage
+    // (assistant events). Reading only the former lost all usage on timed-out
+    // sessions, whose terminal result event never arrives (#1766).
+    const usage =
+      (event?.usage && typeof event.usage === 'object' && event.usage) ||
+      (event?.message?.usage && typeof event.message.usage === 'object' && event.message.usage) ||
+      {};
     const numberFrom = (...values) => {
       for (const value of values) {
         if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -625,14 +640,18 @@ export class SessionLauncher extends EventEmitter {
     );
     const totalTokens = explicitTotal ||
       inputTokens + outputTokens + cacheCreationInputTokens + cacheReadInputTokens;
-    const costUsd = numberFrom(
+    const costCandidates = [
       event.cost_usd,
       event.total_cost_usd,
       event.costUsd,
       event.totalCostUsd,
       usage.cost_usd,
-      usage.costUsd
+      usage.costUsd,
+    ];
+    const hasCostField = costCandidates.some(
+      (v) => typeof v === 'number' && Number.isFinite(v)
     );
+    const costUsd = numberFrom(...costCandidates);
 
     return {
       inputTokens,
@@ -641,6 +660,7 @@ export class SessionLauncher extends EventEmitter {
       cacheReadInputTokens,
       totalTokens,
       costUsd,
+      hasCostField,
       hasUsage: totalTokens > 0 || costUsd > 0,
     };
   }
