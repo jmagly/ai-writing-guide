@@ -4,7 +4,7 @@
 **Issue**: `roctinam/aiwg#1585`  
 **Status**: Construction-pass screening recorded; concrete eval-harness helper
 security remains future work
-**Date**: 2026-06-17  
+**Date**: 2026-06-17 (created) / 2026-07-11 (revised during construction + audit remediation)  
 
 ## Scope
 

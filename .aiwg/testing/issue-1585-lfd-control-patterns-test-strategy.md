@@ -3,7 +3,7 @@
 **Document Type**: Test Strategy  
 **Issue**: `roctinam/aiwg#1585`  
 **Status**: Construction-pass verification recorded; ADR governance review pending
-**Date**: 2026-06-17  
+**Date**: 2026-06-17 (created) / 2026-07-11 (revised during construction + audit remediation)  
 **Related Docs**:
 
 - `.aiwg/research/reports/issue-1585-lfd-control-patterns-research-brief.md`

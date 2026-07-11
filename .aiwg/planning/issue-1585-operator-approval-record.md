@@ -36,7 +36,7 @@ passed. Remediation proceeds via issues `#1765`–`#1775`.
 | Exploration quota policy | require each loop to declare K initially | **REVISED**: require declared K per loop, no default — the shipped on-by-default k=3 is to be reverted (#1770) | REVISED |
 | Issue filing shape | split into seven construction issues across three waves | Superseded: 11 post-audit remediation issues filed instead (#1765–#1775), linked from #1585 | SUPERSEDED |
 | Risk/test/security constraints | accept supporting docs as construction constraints | Accepted; R-LFD-010 marked occurred; R-LFD-003 re-review required (zero-vs-unknown gap, #1766) | APPROVED |
-| Follow-up research handling | cite REF-1398 through REF-1406 as load-bearing; treat #72 as pending | Retroactive acceptance of the expanded evidence base (REF-1398–1406 + REF-1500–1542) conditional on the spot-check in #1775 | CONDITIONAL |
+| Follow-up research handling | cite REF-1398 through REF-1406 as load-bearing; treat #72 as pending | Retroactive acceptance of the expanded evidence base (REF-1398–1406 + REF-1500–1542). **Spot-check performed 2026-07-11 (#1775)**: all 43 REFs REF-1500–REF-1542 are present in the `section9/research-papers` corpus INDEX.md; induction issues #180 and #223 are closed. One bookkeeping nit — REF-1515 is indexed while its induction issue #196 remains open. Claim substantiated at the index level; corpus-local finding files (`.aiwg/research/findings/`) are still pending induction, so the rules cite these as external-corpus pending (#1772). | ACCEPTED (spot-checked) |
 
 ### Additional operator directives (2026-07-11)
 
