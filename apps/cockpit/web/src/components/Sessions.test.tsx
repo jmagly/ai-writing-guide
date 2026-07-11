@@ -36,6 +36,21 @@ const STALE_INSTANCE = {
     reason: 'container is running but the agent has not registered; PTY sessions are not ready',
   }],
 };
+const STALE_VM_INSTANCE = {
+  ...STALE_INSTANCE,
+  id: 'stale-vm',
+  runtime: 'vm',
+  runtime_posture: { kind: 'vm', isolation: 'strong', label: 'VM / hardware boundary' },
+  launch_context: { name: 'stale-vm', loadout: 'agentic-dev' },
+  session_backends: [{
+    mode: 'managed',
+    backend: 'tmux',
+    available: false,
+    drive: true,
+    keyframe: true,
+    reason: 'VM is running but the agent has not registered; PTY sessions are not ready',
+  }],
+};
 
 function stubSession(state: Partial<SessionApi['state']> = {}): SessionApi {
   const nextState = { attached: true, role: 'controller', url: 'ws://x/agents/inst-1/sessions/sess-1/attach', ...state };
@@ -159,6 +174,31 @@ describe('Sessions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reconnect' }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/api/instances/stale-docker/reconnect'),
+      expect.objectContaining({ method: 'POST' }),
+    ));
+  });
+
+  it('keeps a stale running VM visible with reconnect guidance (#1778)', async () => {
+    const session = stubSession({ attached: false, role: null, url: null });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [STALE_VM_INSTANCE] });
+      if (url.includes('/api/sessions?instance=stale-vm')) return jsonResponse({ sessions: [] });
+      if (url.includes('/api/instances/stale-vm/reconnect') && init?.method === 'POST') {
+        return jsonResponse({ state: 'reconnecting' });
+      }
+      return new Response('{}', { status: 404 });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<Sessions session={session} composer="" setComposer={() => {}} onRequestStart={() => {}} refreshMs={60_000} />);
+
+    const nav = screen.getByLabelText('Instances and sessions');
+    expect(await within(nav).findByText('stale-vm')).toBeTruthy();
+    expect(await screen.findByText(/agent is unreachable while the runtime is still running/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Reconnect' }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/instances/stale-vm/reconnect'),
       expect.objectContaining({ method: 'POST' }),
     ));
   });

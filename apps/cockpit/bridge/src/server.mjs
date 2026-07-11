@@ -602,6 +602,36 @@ async function destroyInstance(upstreamUrl, instanceId) {
   };
 }
 
+// #1778: VM-runtime counterpart of `docker exec <ctr> agent-reconnect`. Sandbox
+// VM images bake qemu-guest-agent ("essential for virsh exec") and agent-rs
+// handles SIGHUP as reconnect-in-place on every runtime, so delivering
+// `pkill -HUP -x agent-client` through the libvirt guest-agent channel makes
+// the agent re-register without touching the VM. Detached-tmux sessions are
+// re-adopted on re-register; non-tmux sessions do not survive any reconnect
+// today (agentic-sandbox#634).
+async function signalVmAgentReconnect(domain) {
+  const execRaw = await spawnCollect('virsh', ['qemu-agent-command', domain, JSON.stringify({
+    execute: 'guest-exec',
+    arguments: { path: '/bin/sh', arg: ['-c', 'pkill -HUP -x agent-client'], 'capture-output': true },
+  })]);
+  const pid = JSON.parse(String(execRaw))?.return?.pid;
+  if (!Number.isInteger(pid)) throw new Error(`guest-exec returned no pid: ${String(execRaw).trim()}`);
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const statusRaw = await spawnCollect('virsh', ['qemu-agent-command', domain, JSON.stringify({
+      execute: 'guest-exec-status',
+      arguments: { pid },
+    })]);
+    const status = JSON.parse(String(statusRaw))?.return;
+    if (status?.exited) return status.exitcode ?? 0;
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  // The signal command was handed to the guest; slow exec-status reporting is
+  // not a delivery failure.
+  return 0;
+}
+
+const VM_RUNTIME_KINDS = ['vm', 'qemu', 'kvm'];
+
 async function reconnectInstance(upstreamUrl, instanceId) {
   const inventory = await getInventory(upstreamUrl).catch(() => ({ instances: [] }));
   const inst = inventory.instances.find((i) => String(i.id) === String(instanceId));
@@ -620,44 +650,87 @@ async function reconnectInstance(upstreamUrl, instanceId) {
     // in-image helper, not an HTTP endpoint. Fall through to the local-dev path.
   }
 
-  if (!['docker', 'container'].includes(runtime) || !dockerName) {
-    return {
-      target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/reconnect`,
-      status: 409,
-      body: {
-        error: 'reconnect_unavailable',
-        message: 'Reconnect is currently available only for local Docker/container instances with a resolvable container name.',
-        runtime: runtime || 'unknown',
-      },
-    };
+  if (['docker', 'container'].includes(runtime) && dockerName) {
+    try {
+      const output = await spawnCollect('docker', ['exec', dockerName, 'agent-reconnect']);
+      return {
+        target: `docker exec ${dockerName} agent-reconnect`,
+        status: 202,
+        body: {
+          id: instanceId,
+          runtime,
+          docker_name: dockerName,
+          state: 'reconnecting',
+          message: `Reconnect requested for ${dockerName}; inventory will refresh as the agent re-registers.`,
+          output: String(output).trim(),
+          fallback: 'docker-agent-reconnect',
+        },
+      };
+    } catch (err) {
+      return {
+        target: `docker exec ${dockerName} agent-reconnect`,
+        status: 502,
+        body: {
+          error: 'reconnect_failed',
+          message: `Could not run agent-reconnect in ${dockerName}. Repull/rebuild the agent image if it predates agentic-sandbox v2026.7.5.`,
+          detail: String(err?.message ?? err),
+        },
+      };
+    }
   }
 
-  try {
-    const output = await spawnCollect('docker', ['exec', dockerName, 'agent-reconnect']);
-    return {
-      target: `docker exec ${dockerName} agent-reconnect`,
-      status: 202,
-      body: {
-        id: instanceId,
-        runtime,
-        docker_name: dockerName,
-        state: 'reconnecting',
-        message: `Reconnect requested for ${dockerName}; inventory will refresh as the agent re-registers.`,
-        output: String(output).trim(),
-        fallback: 'docker-agent-reconnect',
-      },
-    };
-  } catch (err) {
-    return {
-      target: `docker exec ${dockerName} agent-reconnect`,
-      status: 502,
-      body: {
-        error: 'reconnect_failed',
-        message: `Could not run agent-reconnect in ${dockerName}. Repull/rebuild the agent image if it predates agentic-sandbox v2026.7.5.`,
-        detail: String(err?.message ?? err),
-      },
-    };
+  if (VM_RUNTIME_KINDS.includes(runtime)) {
+    // For VM instances the agent_id doubles as the libvirt domain name
+    // (agentic-sandbox provision-vm.sh registers agent_id = $vm_name).
+    const domain = dockerName ?? inst?.name ?? String(instanceId);
+    const target = `virsh qemu-agent-command ${domain} guest-exec pkill -HUP -x agent-client`;
+    try {
+      const exitcode = await signalVmAgentReconnect(domain);
+      if (exitcode === 0) {
+        return {
+          target,
+          status: 202,
+          body: {
+            id: instanceId,
+            runtime,
+            vm_domain: domain,
+            state: 'reconnecting',
+            message: `Reconnect requested for VM ${domain}; inventory will refresh as the agent re-registers. Detached tmux sessions are re-adopted; other session types do not survive reconnect (agentic-sandbox#634).`,
+            fallback: 'virsh-guest-agent-sighup',
+          },
+        };
+      }
+      return {
+        target,
+        status: 502,
+        body: {
+          error: 'reconnect_failed',
+          message: `No running agent-client process found inside VM ${domain}. Restart the agent service in the guest (systemctl restart agent-client) or reprovision the VM.`,
+          exitcode,
+        },
+      };
+    } catch (err) {
+      return {
+        target,
+        status: 502,
+        body: {
+          error: 'reconnect_failed',
+          message: `Could not signal agent-client in VM ${domain} via qemu-guest-agent. The bridge host needs virsh access to the libvirt domain and the guest-agent channel must be up (agentic-sandbox#633).`,
+          detail: String(err?.message ?? err),
+        },
+      };
+    }
   }
+
+  return {
+    target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/reconnect`,
+    status: 409,
+    body: {
+      error: 'reconnect_unavailable',
+      message: 'Reconnect is available for Docker/container instances (docker exec) and VM instances (qemu-guest-agent). For host-runtime agents, signal the agent directly: pkill -HUP -x agent-client.',
+      runtime: runtime || 'unknown',
+    },
+  };
 }
 
 function asArrayFromEnvelope(body, keys) {

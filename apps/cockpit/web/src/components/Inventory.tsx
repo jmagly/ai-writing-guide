@@ -127,7 +127,7 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
                 {reconnectable && (
                   <button
                     aria-label={`Reconnect agent for ${fmtId(i.id)}`}
-                    title={unavailableReason ?? 'Ask the running container agent to re-register without restarting it.'}
+                    title={unavailableReason ?? 'Ask the running agent to re-register without restarting the instance.'}
                     onClick={() => control(`/api/instances/${encodeURIComponent(i.id)}/reconnect`, 'POST', 'Reconnect requested; inventory will refresh shortly.')}
                   >
                     Reconnect
@@ -155,11 +155,15 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
   );
 }
 
+// VM runtimes included per #1778 — the bridge signals the in-guest agent via
+// qemu-guest-agent, the container/docker path via docker exec.
+const RECONNECTABLE_RUNTIMES = ['docker', 'container', 'vm', 'qemu', 'kvm'];
+
 function isReconnectable(i: Instance): boolean {
   const runtime = String(i.runtime_posture?.kind ?? i.runtime).toLowerCase();
   const running = String(i.state).toLowerCase() === 'running';
   const agentMissing = i.agent_ready === false || i.session_backends?.some((b) => b.available === false);
-  return running && ['docker', 'container'].includes(runtime) && agentMissing;
+  return running && RECONNECTABLE_RUNTIMES.includes(runtime) && Boolean(agentMissing);
 }
 
 function instanceHealth(i: Instance): { kind: 'healthy' | 'stale-agent'; label: string; detail?: string } {

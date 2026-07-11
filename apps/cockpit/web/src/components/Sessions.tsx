@@ -346,7 +346,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
               {current.runtime_posture.label} · {current.transport.label} ({current.transport.mode}) · attach starts as observe unless control is explicitly granted.
               {attached && session.state.role === 'observer' ? ' Click Take Control to re-attach with write access.' : ''}
               {selectedBackend && !selectedBackend.available ? ` ${selectedBackend.reason ?? 'Selected backend is unavailable.'}` : ''}
-              {currentReconnectable ? ` Agent is unreachable while the runtime is still running. ${currentUnavailableReason ?? 'Reconnect can re-register the agent without restarting the container.'}` : ''}
+              {currentReconnectable ? ` Agent is unreachable while the runtime is still running. ${currentUnavailableReason ?? 'Reconnect can re-register the agent without restarting the instance.'}` : ''}
             </p>
           )}
           <div className="terminal" ref={session.openTerminal} role="log" aria-label="Session output" />
@@ -425,9 +425,13 @@ function dedupeInstances(instances: Instance[]) {
   });
 }
 
+// VM runtimes included per #1778 — the bridge signals the in-guest agent via
+// qemu-guest-agent, the container/docker path via docker exec.
+const RECONNECTABLE_RUNTIMES = ['docker', 'container', 'vm', 'qemu', 'kvm'];
+
 function isReconnectable(i: Instance): boolean {
   const runtime = String(i.runtime_posture?.kind ?? i.runtime).toLowerCase();
   const running = String(i.state).toLowerCase() === 'running';
   const agentMissing = i.agent_ready === false || i.session_backends?.some((b) => b.available === false);
-  return running && ['docker', 'container'].includes(runtime) && agentMissing;
+  return running && RECONNECTABLE_RUNTIMES.includes(runtime) && Boolean(agentMissing);
 }
