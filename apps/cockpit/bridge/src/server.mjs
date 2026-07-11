@@ -602,6 +602,64 @@ async function destroyInstance(upstreamUrl, instanceId) {
   };
 }
 
+async function reconnectInstance(upstreamUrl, instanceId) {
+  const inventory = await getInventory(upstreamUrl).catch(() => ({ instances: [] }));
+  const inst = inventory.instances.find((i) => String(i.id) === String(instanceId));
+  const runtime = String(inst?.runtime ?? inst?.runtime_posture?.kind ?? '').toLowerCase();
+  const dockerName = inst?.launch_context?.name;
+  const candidates = [
+    { target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/reconnect`, method: 'POST' },
+    { target: `${upstreamUrl}/admin/instances/${encodeURIComponent(instanceId)}/reconnect`, method: 'POST' },
+    { target: `${upstreamUrl}/api/v1/instances/${encodeURIComponent(instanceId)}/reconnect`, method: 'POST' },
+  ];
+  try {
+    const result = await fetchJsonFirst(candidates, { timeoutMs: 5_000 });
+    if (result.status < 400) return result;
+  } catch {
+    // agentic-sandbox v2026.7.6 still exposes the container reconnect as an
+    // in-image helper, not an HTTP endpoint. Fall through to the local-dev path.
+  }
+
+  if (!['docker', 'container'].includes(runtime) || !dockerName) {
+    return {
+      target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/reconnect`,
+      status: 409,
+      body: {
+        error: 'reconnect_unavailable',
+        message: 'Reconnect is currently available only for local Docker/container instances with a resolvable container name.',
+        runtime: runtime || 'unknown',
+      },
+    };
+  }
+
+  try {
+    const output = await spawnCollect('docker', ['exec', dockerName, 'agent-reconnect']);
+    return {
+      target: `docker exec ${dockerName} agent-reconnect`,
+      status: 202,
+      body: {
+        id: instanceId,
+        runtime,
+        docker_name: dockerName,
+        state: 'reconnecting',
+        message: `Reconnect requested for ${dockerName}; inventory will refresh as the agent re-registers.`,
+        output: String(output).trim(),
+        fallback: 'docker-agent-reconnect',
+      },
+    };
+  } catch (err) {
+    return {
+      target: `docker exec ${dockerName} agent-reconnect`,
+      status: 502,
+      body: {
+        error: 'reconnect_failed',
+        message: `Could not run agent-reconnect in ${dockerName}. Repull/rebuild the agent image if it predates agentic-sandbox v2026.7.5.`,
+        detail: String(err?.message ?? err),
+      },
+    };
+  }
+}
+
 function asArrayFromEnvelope(body, keys) {
   if (Array.isArray(body)) return body;
   if (!body || typeof body !== 'object') return [];
@@ -1871,6 +1929,11 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         ], { method: 'POST' }).catch((err) => ({ status: 502, body: { error: 'bridge_upstream_error', message: String(err?.message ?? err) } }));
         await appendAudit('instance.lifecycle.requested', { instance_id: decodeURIComponent(m[1]), action: m[2], status: result.status, result: result.body });
         return json(res, result.status, result.body);
+      }
+      if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/reconnect$/)) && req.method === 'POST') {
+        const { status, body } = await reconnectInstance(upstreamUrl, decodeURIComponent(m[1]));
+        await appendAudit('instance.reconnect.requested', { instance_id: decodeURIComponent(m[1]), status, result: body });
+        return json(res, status, body);
       }
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)$/)) && req.method === 'DELETE') {
         const { status, body } = await destroyInstance(upstreamUrl, decodeURIComponent(m[1]));

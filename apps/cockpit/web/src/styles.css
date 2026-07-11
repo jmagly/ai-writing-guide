@@ -54,7 +54,7 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .runtime-cell .cell-note, .daemon-cell .cell-note { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
 .state { display:inline-flex; align-items:center; gap:7px; }
 .dot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; background:var(--idle); }
-.state.running .dot, .state.working .dot { background:var(--ok); } .state.provisioning .dot { background:var(--warn); }
+.state.running .dot, .state.working .dot { background:var(--ok); } .state.provisioning .dot, .state.degraded .dot { background:var(--warn); }
 .empty { color:var(--muted); padding:22px; } .err { color:var(--err); padding:12px 0; }
 .controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
 .controls label { color:var(--muted); font-size:13px; }

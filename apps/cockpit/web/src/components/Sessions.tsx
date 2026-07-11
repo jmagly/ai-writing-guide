@@ -15,6 +15,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
   const [backendKey, setBackendKey] = useState('');
   const [showPicker, setShowPicker] = useState(false);
   const [endingSession, setEndingSession] = useState('');
+  const [reconnectingInstance, setReconnectingInstance] = useState('');
   const [sessionErr, setSessionErr] = useState('');
   const [attachedInstanceId, setAttachedInstanceId] = useState('');
   const [attachedSessionId, setAttachedSessionId] = useState('');
@@ -44,7 +45,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
     inventorySeqRef.current = seq;
     const d = await api<{ instances: Instance[] }>('/api/inventory');
     if (seq !== inventorySeqRef.current) return;
-    const sessionable = dedupeInstances(d.instances).filter((i) => i.state === 'running' && i.session_backends?.some((b) => b.available));
+    const sessionable = dedupeInstances(d.instances).filter((i) => i.state === 'running' && i.session_backends?.length);
     setInstances(sessionable);
     const currentId = instIdRef.current;
     let nextId = sessionable[0]?.id ?? '';
@@ -54,9 +55,9 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
     setInstId(nextId);
     setBackendKey((currentBackend) => {
       const selectedInstance = sessionable.find((i) => i.id === nextId) ?? sessionable[0];
-      if (currentBackend && selectedInstance?.session_backends.some((b) => `${b.mode}:${b.backend}` === currentBackend && b.available)) return currentBackend;
+      if (currentBackend && selectedInstance?.session_backends.some((b) => `${b.mode}:${b.backend}` === currentBackend && b.available !== false)) return currentBackend;
       if (attachedRef.current && currentBackend) return currentBackend;
-      const firstBackend = selectedInstance?.session_backends.find((b) => b.available) ?? selectedInstance?.session_backends[0];
+      const firstBackend = selectedInstance?.session_backends.find((b) => b.available !== false) ?? selectedInstance?.session_backends[0];
       return firstBackend ? `${firstBackend.mode}:${firstBackend.backend}` : '';
     });
   }, []);
@@ -126,7 +127,9 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
   const requestedReplayRole = session.state.role === 'controller' ? 'controller' : 'observer';
   const current = instances.find((i) => i.id === instId);
   const backends = current?.session_backends ?? [];
-  const selectedBackend = backends.find((b) => `${b.mode}:${b.backend}` === backendKey) ?? backends.find((b) => b.available) ?? backends[0];
+  const selectedBackend = backends.find((b) => `${b.mode}:${b.backend}` === backendKey) ?? backends.find((b) => b.available !== false) ?? backends[0];
+  const currentUnavailableReason = backends.find((b) => b.available === false)?.reason;
+  const currentReconnectable = current ? isReconnectable(current) : false;
   const selectedSession = sessions.find((s) => sessionKey(s) === selectedSessionKey);
   const attachedOwner = attachedInstanceId || instanceIdFromAttachUrl(session.state.url);
   const attachedKey = attachedOwner && attachedSessionId ? `${attachedOwner}:${attachedSessionId}` : sessionKeyFromAttachUrl(session.state.url);
@@ -211,6 +214,20 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
       setEndingSession('');
     }
   };
+  const reconnectCurrent = async () => {
+    if (!current) return;
+    setReconnectingInstance(current.id);
+    setSessionErr('');
+    try {
+      await api(`/api/instances/${encodeURIComponent(current.id)}/reconnect`, { method: 'POST' });
+      await refreshInventory();
+      await loadSessions(current.id);
+    } catch (e) {
+      setSessionErr((e as Error).message);
+    } finally {
+      setReconnectingInstance('');
+    }
+  };
 
   return (
     <>
@@ -225,7 +242,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
             <h2>Instances</h2>
             <span className="hint">{instances.length}</span>
           </div>
-          {!instances.length && <p className="empty">No session-capable running instances.</p>}
+          {!instances.length && <p className="empty">No running instances with session metadata.</p>}
           <ul className="nav-list">
             {instances.map((i) => {
               const isSel = i.id === instId;
@@ -239,7 +256,11 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
                   </button>
                   {isSel && (
                     <div className="nav-sessions">
-                      {displaySessions.length === 0 && <p className="empty nav-empty">No sessions yet.</p>}
+                      {displaySessions.length === 0 && (
+                        <p className="empty nav-empty">
+                          {isReconnectable(i) ? 'Agent unreachable; reconnect to recover existing sessions.' : 'No sessions yet.'}
+                        </p>
+                      )}
                       <ul>
                         {displaySessions.map((s) => {
                           const key = sessionKey(s);
@@ -285,7 +306,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
                           );
                         })}
                       </ul>
-                      <button className="cta-sm nav-new-session" disabled={backends.length > 0 && !selectedBackend?.available} onClick={() => onRequestStart(i.id)}>＋ New session</button>
+                      <button className="cta-sm nav-new-session" disabled={backends.length > 0 && selectedBackend?.available === false} onClick={() => onRequestStart(i.id)}>＋ New session</button>
                     </div>
                   )}
                 </li>
@@ -312,6 +333,11 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
             <button disabled={!attached || selectedBackend?.keyframe === false} onClick={session.requestKeyframe}>Keyframe</button>
             <button disabled={!attached} onClick={() => selectedSession && replaySession(selectedSession, requestedReplayRole)}>Reattach + replay</button>
             <button disabled={!attached} onClick={detachSession}>Detach</button>
+            {currentReconnectable && (
+              <button disabled={reconnectingInstance === current?.id} onClick={reconnectCurrent}>
+                {reconnectingInstance === current?.id ? 'Reconnecting…' : 'Reconnect'}
+              </button>
+            )}
             {session.state.role && <span className={`badge ${session.state.role}`}>{session.state.role}</span>}
           </div>
           {sessionErr && <p className="err">Session action failed: {sessionErr}</p>}
@@ -320,6 +346,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
               {current.runtime_posture.label} · {current.transport.label} ({current.transport.mode}) · attach starts as observe unless control is explicitly granted.
               {attached && session.state.role === 'observer' ? ' Click Take Control to re-attach with write access.' : ''}
               {selectedBackend && !selectedBackend.available ? ` ${selectedBackend.reason ?? 'Selected backend is unavailable.'}` : ''}
+              {currentReconnectable ? ` Agent is unreachable while the runtime is still running. ${currentUnavailableReason ?? 'Reconnect can re-register the agent without restarting the container.'}` : ''}
             </p>
           )}
           <div className="terminal" ref={session.openTerminal} role="log" aria-label="Session output" />
@@ -396,4 +423,11 @@ function dedupeInstances(instances: Instance[]) {
     seen.add(instance.id);
     return true;
   });
+}
+
+function isReconnectable(i: Instance): boolean {
+  const runtime = String(i.runtime_posture?.kind ?? i.runtime).toLowerCase();
+  const running = String(i.state).toLowerCase() === 'running';
+  const agentMissing = i.agent_ready === false || i.session_backends?.some((b) => b.available === false);
+  return running && ['docker', 'container'].includes(runtime) && agentMissing;
 }

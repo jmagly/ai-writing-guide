@@ -404,6 +404,46 @@ describe('App shell (rendered DOM)', () => {
     expect((destroy as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it('offers Reconnect for a running Docker row whose agent is not registered', async () => {
+    const stale = {
+      ...instance('stale-dkr-2', 'docker', 'full-suite'),
+      agent_ready: false,
+      session_backends: [{
+        mode: 'managed',
+        backend: 'tmux',
+        available: false,
+        observe: true,
+        drive: true,
+        reason: 'container is running but the agent has not registered; PTY sessions are not ready',
+      }],
+    };
+    const inventory = { instances: [stale], count: 1, fetched_at: new Date().toISOString() };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+      if (url.includes('/api/inventory')) return jsonResponse(inventory);
+      if (url.includes('/api/running')) return jsonResponse({ count: 0, running: [] });
+      if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
+      if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 0, output_tokens: 0, usd: 0 }, per_instance: [] });
+      if (url.includes('/api/instances/stale-dkr-2/reconnect') && init?.method === 'POST') {
+        return jsonResponse({ state: 'reconnecting', message: 'Reconnect requested for stale-dkr-2; inventory will refresh as the agent re-registers.' });
+      }
+      return jsonResponse({});
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Inventory' }));
+    expect(await screen.findByText('agent unreachable')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: /reconnect agent for stale-dkr-2/i }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/instances/stale-dkr-2/reconnect'),
+      expect.objectContaining({ method: 'POST' }),
+    ));
+    expect((await screen.findByRole('status')).textContent).toMatch(/reconnect requested/i);
+  });
+
   it('each tab has a matching labelled tabpanel (controls/labelledby pairing)', () => {
     render(<App />);
     for (const tab of screen.getAllByRole('tab')) {

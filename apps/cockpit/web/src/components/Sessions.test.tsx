@@ -22,6 +22,20 @@ const INSTANCE_NEXT = {
   id: 'inst-2',
   launch_context: { name: 'docker-two', loadout: 'agentic-dev' },
 };
+const STALE_INSTANCE = {
+  ...INSTANCE,
+  id: 'stale-docker',
+  agent_ready: false,
+  launch_context: { name: 'stale-docker', loadout: 'agentic-dev' },
+  session_backends: [{
+    mode: 'managed',
+    backend: 'tmux',
+    available: false,
+    drive: true,
+    keyframe: true,
+    reason: 'container is running but the agent has not registered; PTY sessions are not ready',
+  }],
+};
 
 function stubSession(state: Partial<SessionApi['state']> = {}): SessionApi {
   const nextState = { attached: true, role: 'controller', url: 'ws://x/agents/inst-1/sessions/sess-1/attach', ...state };
@@ -122,6 +136,31 @@ describe('Sessions', () => {
     // Scope to the nav (the active-session indicator also carries the id by title).
     const nav = screen.getByLabelText('Instances and sessions');
     expect(await within(nav).findByTitle('sess-new')).toBeTruthy();
+  });
+
+  it('keeps a stale running container visible with reconnect guidance', async () => {
+    const session = stubSession({ attached: false, role: null, url: null });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [STALE_INSTANCE] });
+      if (url.includes('/api/sessions?instance=stale-docker')) return jsonResponse({ sessions: [] });
+      if (url.includes('/api/instances/stale-docker/reconnect') && init?.method === 'POST') {
+        return jsonResponse({ state: 'reconnecting' });
+      }
+      return new Response('{}', { status: 404 });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<Sessions session={session} composer="" setComposer={() => {}} onRequestStart={() => {}} refreshMs={60_000} />);
+
+    const nav = screen.getByLabelText('Instances and sessions');
+    expect(await within(nav).findByText('stale-docker')).toBeTruthy();
+    expect(await screen.findByText(/agent is unreachable while the runtime is still running/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Reconnect' }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/instances/stale-docker/reconnect'),
+      expect.objectContaining({ method: 'POST' }),
+    ));
   });
 
   it('keeps controller posture when a different session is selected while driving (#1670)', async () => {

@@ -22,11 +22,11 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
     return () => window.clearInterval(timer);
   }, [load, refreshMs, refreshTick]);
 
-  const control = (path: string, method: string) =>
+  const control = (path: string, method: string, fallbackMessage = '') =>
     api<{ already_gone?: boolean; message?: string }>(path, { method })
       .then((result) => {
         setActionErr('');
-        setActionMsg(result.already_gone ? (result.message ?? 'Instance already removed; inventory refreshed.') : '');
+        setActionMsg(result.message ?? (result.already_gone ? 'Instance already removed; inventory refreshed.' : fallbackMessage));
         load();
       })
       .catch((e) => {
@@ -75,6 +75,8 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
               {(() => {
                 const sessionReady = i.session_backends?.some((b) => b.available);
                 const unavailableReason = i.session_backends?.find((b) => !b.available)?.reason;
+                const reconnectable = isReconnectable(i);
+                const health = instanceHealth(i);
                 return (
             <>
               <td className="instance-cell">
@@ -103,7 +105,12 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
                 {i.host_daemon.detail && <div className="cell-note">{i.host_daemon.detail}</div>}
                 {i.host_daemon.operator_command && <code title="Operator start command">{i.host_daemon.operator_command}</code>}
               </td>
-              <td><span className={`state ${i.state}`}><span className="dot" aria-hidden="true" />{i.state}</span></td>
+              <td>
+                <span className={`state ${health.kind === 'stale-agent' ? 'degraded' : i.state}`} title={health.detail}>
+                  <span className="dot" aria-hidden="true" />{health.label}
+                </span>
+                {health.detail && health.kind !== 'healthy' && <div className="cell-note">{health.detail}</div>}
+              </td>
               <td>{i.tenant}</td>
               <td className="manage-actions">
                 {i.state === 'running' && onStartSession && (
@@ -115,6 +122,15 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
                     onClick={() => onStartSession(i.id)}
                   >
                     Session
+                  </button>
+                )}{' '}
+                {reconnectable && (
+                  <button
+                    aria-label={`Reconnect agent for ${fmtId(i.id)}`}
+                    title={unavailableReason ?? 'Ask the running container agent to re-register without restarting it.'}
+                    onClick={() => control(`/api/instances/${encodeURIComponent(i.id)}/reconnect`, 'POST', 'Reconnect requested; inventory will refresh shortly.')}
+                  >
+                    Reconnect
                   </button>
                 )}{' '}
                 {i.state === 'running'
@@ -137,4 +153,25 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
       </table>
     </>
   );
+}
+
+function isReconnectable(i: Instance): boolean {
+  const runtime = String(i.runtime_posture?.kind ?? i.runtime).toLowerCase();
+  const running = String(i.state).toLowerCase() === 'running';
+  const agentMissing = i.agent_ready === false || i.session_backends?.some((b) => b.available === false);
+  return running && ['docker', 'container'].includes(runtime) && agentMissing;
+}
+
+function instanceHealth(i: Instance): { kind: 'healthy' | 'stale-agent'; label: string; detail?: string } {
+  const running = String(i.state).toLowerCase() === 'running';
+  const unavailableReason = i.session_backends?.find((b) => b.available === false)?.reason;
+  const agentMissing = i.agent_ready === false || Boolean(unavailableReason);
+  if (running && agentMissing) {
+    return {
+      kind: 'stale-agent',
+      label: 'agent unreachable',
+      detail: unavailableReason ?? 'Runtime is still running, but the agent is not registered.',
+    };
+  }
+  return { kind: 'healthy', label: i.state };
 }
