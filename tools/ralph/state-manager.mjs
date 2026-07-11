@@ -82,21 +82,40 @@ export class MultiLoopStateManager {
    * @param {object} options - Options (e.g., { force: true })
    * @returns {object} { loopId, state }
    */
-  createLoop(config, options = {}) {
+  async createLoop(config, options = {}) {
     // Generate loop ID
     const loopId =
       config.loopId ||
       this.registry.generateLoopId(config.task || 'unnamed-task');
 
-    // Create loop directory
     const loopDir = path.join(this.loopsDir, loopId);
     if (fs.existsSync(loopDir)) {
       throw new Error(`Loop directory already exists: ${loopId}`);
     }
 
-    fs.mkdirSync(loopDir, { recursive: true });
+    // Register in the registry FIRST (#1777): register() is lock-guarded/async
+    // and enforces MAX_CONCURRENT_LOOPS. Awaiting it up front means a
+    // rejection (over the limit) propagates out of createLoop without leaving
+    // an orphaned loop directory behind. Previously this was called without
+    // await, so the MAX rejection was an unhandled promise and the loop was
+    // still created — a latent production bug the out-of-CI tests masked.
+    await this.registry.register(
+      loopId,
+      {
+        task_summary: config.task,
+        status: 'running',
+        owner: config.owner,
+        iteration: 0,
+        max_iterations: config.maxIterations || 10,
+        completion: config.completion,
+        priority: config.priority,
+        tags: config.tags,
+      },
+      options
+    );
 
-    // Create subdirectories
+    // Create loop directory + subdirectories
+    fs.mkdirSync(loopDir, { recursive: true });
     const subdirs = ['iterations', 'checkpoints', 'debug-memory'];
     for (const subdir of subdirs) {
       fs.mkdirSync(path.join(loopDir, subdir), { recursive: true });
@@ -125,22 +144,6 @@ export class MultiLoopStateManager {
 
     // Save state
     this.saveLoopState(loopId, state);
-
-    // Register in registry
-    this.registry.register(
-      loopId,
-      {
-        task_summary: config.task,
-        status: 'running',
-        owner: config.owner,
-        iteration: 0,
-        max_iterations: config.maxIterations || 10,
-        completion: config.completion,
-        priority: config.priority,
-        tags: config.tags,
-      },
-      options
-    );
 
     return { loopId, state };
   }
@@ -228,7 +231,7 @@ export class MultiLoopStateManager {
    *
    * @param {string} loopId - Loop to archive
    */
-  archiveLoop(loopId) {
+  async archiveLoop(loopId) {
     const srcDir = this.getLoopDir(loopId);
     const destDir = path.join(this.archiveDir, loopId);
 
@@ -239,8 +242,8 @@ export class MultiLoopStateManager {
     // Move directory
     fs.renameSync(srcDir, destDir);
 
-    // Unregister
-    this.registry.unregister(loopId);
+    // Unregister — lock-guarded/async, must be awaited (#1777)
+    await this.registry.unregister(loopId);
   }
 
   /**

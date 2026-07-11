@@ -54,7 +54,7 @@ describe('LoopRegistry', () => {
   });
 
   describe('loop registration', () => {
-    it('should register a new loop', () => {
+    it('should register a new loop', async () => {
       const loopId = 'ralph-test-loop-abc123';
       const config = {
         task_summary: 'Test task',
@@ -62,7 +62,8 @@ describe('LoopRegistry', () => {
         owner: 'test-agent',
       };
 
-      registry.register(loopId, config);
+      // register()/unregister() are lock-guarded/async — await them (#1777)
+      await registry.register(loopId, config);
 
       const data = registry.load();
       assert.strictEqual(data.active_loops.length, 1);
@@ -70,38 +71,39 @@ describe('LoopRegistry', () => {
       assert.strictEqual(data.active_loops[0].task_summary, 'Test task');
     });
 
-    it('should track multiple loops', () => {
-      registry.register('ralph-loop-1-abc', { task_summary: 'Task 1' });
-      registry.register('ralph-loop-2-def', { task_summary: 'Task 2' });
-      registry.register('ralph-loop-3-ghi', { task_summary: 'Task 3' });
+    it('should track multiple loops', async () => {
+      await registry.register('ralph-loop-1-abc', { task_summary: 'Task 1' });
+      await registry.register('ralph-loop-2-def', { task_summary: 'Task 2' });
+      await registry.register('ralph-loop-3-ghi', { task_summary: 'Task 3' });
 
       const data = registry.load();
       assert.strictEqual(data.active_loops.length, 3);
       assert.strictEqual(data.total_active, 3);
     });
 
-    it('should enforce MAX_CONCURRENT_LOOPS limit', () => {
+    it('should enforce MAX_CONCURRENT_LOOPS limit', async () => {
       // Register 4 loops (at limit)
-      registry.register('ralph-loop-1-abc', { task_summary: 'Task 1' });
-      registry.register('ralph-loop-2-def', { task_summary: 'Task 2' });
-      registry.register('ralph-loop-3-ghi', { task_summary: 'Task 3' });
-      registry.register('ralph-loop-4-jkl', { task_summary: 'Task 4' });
+      await registry.register('ralph-loop-1-abc', { task_summary: 'Task 1' });
+      await registry.register('ralph-loop-2-def', { task_summary: 'Task 2' });
+      await registry.register('ralph-loop-3-ghi', { task_summary: 'Task 3' });
+      await registry.register('ralph-loop-4-jkl', { task_summary: 'Task 4' });
 
-      // 5th should throw
-      assert.throws(() => {
-        registry.register('ralph-loop-5-mno', { task_summary: 'Task 5' });
-      }, /Cannot create loop.*max: 4/);
+      // 5th rejects — register() throws asynchronously (#1777)
+      await assert.rejects(
+        () => registry.register('ralph-loop-5-mno', { task_summary: 'Task 5' }),
+        /Cannot create loop.*max: 4/,
+      );
     });
 
-    it('should allow override with force flag', () => {
+    it('should allow override with force flag', async () => {
       // Register 4 loops
-      registry.register('ralph-loop-1-abc', { task_summary: 'Task 1' });
-      registry.register('ralph-loop-2-def', { task_summary: 'Task 2' });
-      registry.register('ralph-loop-3-ghi', { task_summary: 'Task 3' });
-      registry.register('ralph-loop-4-jkl', { task_summary: 'Task 4' });
+      await registry.register('ralph-loop-1-abc', { task_summary: 'Task 1' });
+      await registry.register('ralph-loop-2-def', { task_summary: 'Task 2' });
+      await registry.register('ralph-loop-3-ghi', { task_summary: 'Task 3' });
+      await registry.register('ralph-loop-4-jkl', { task_summary: 'Task 4' });
 
       // 5th with force should succeed
-      registry.register('ralph-loop-5-mno', { task_summary: 'Task 5' }, { force: true });
+      await registry.register('ralph-loop-5-mno', { task_summary: 'Task 5' }, { force: true });
 
       const data = registry.load();
       assert.strictEqual(data.active_loops.length, 5);
@@ -109,20 +111,20 @@ describe('LoopRegistry', () => {
   });
 
   describe('loop unregistration', () => {
-    it('should unregister a loop', () => {
-      registry.register('ralph-loop-1-abc', { task_summary: 'Task 1' });
-      registry.register('ralph-loop-2-def', { task_summary: 'Task 2' });
+    it('should unregister a loop', async () => {
+      await registry.register('ralph-loop-1-abc', { task_summary: 'Task 1' });
+      await registry.register('ralph-loop-2-def', { task_summary: 'Task 2' });
 
-      registry.unregister('ralph-loop-1-abc');
+      await registry.unregister('ralph-loop-1-abc');
 
       const data = registry.load();
       assert.strictEqual(data.active_loops.length, 1);
       assert.strictEqual(data.active_loops[0].loop_id, 'ralph-loop-2-def');
     });
 
-    it('should increment completed count on unregister', () => {
-      registry.register('ralph-loop-1-abc', { task_summary: 'Task 1' });
-      registry.unregister('ralph-loop-1-abc');
+    it('should increment completed count on unregister', async () => {
+      await registry.register('ralph-loop-1-abc', { task_summary: 'Task 1' });
+      await registry.unregister('ralph-loop-1-abc');
 
       const data = registry.load();
       assert.strictEqual(data.total_completed, 1);
@@ -130,12 +132,12 @@ describe('LoopRegistry', () => {
   });
 
   describe('loop queries', () => {
-    beforeEach(() => {
-      registry.register('ralph-loop-1-abc', {
+    beforeEach(async () => {
+      await registry.register('ralph-loop-1-abc', {
         task_summary: 'Task 1',
         status: 'running',
       });
-      registry.register('ralph-loop-2-def', {
+      await registry.register('ralph-loop-2-def', {
         task_summary: 'Task 2',
         status: 'paused',
       });

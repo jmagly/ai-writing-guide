@@ -15,7 +15,7 @@ const __dirname = path.dirname(__filename);
 
 const TEST_DIR = path.join(__dirname, '.tmp-state');
 
-describe('MultiLoopStateManager', () => {
+describe('MultiLoopStateManager', async () => {
   let manager;
 
   beforeEach(() => {
@@ -35,9 +35,9 @@ describe('MultiLoopStateManager', () => {
     }
   });
 
-  describe('loop creation', () => {
-    it('should create loop with generated ID', () => {
-      const result = manager.createLoop({
+  describe('loop creation', async () => {
+    it('should create loop with generated ID', async () => {
+      const result = await manager.createLoop({
         task: 'Fix tests',
         completion: 'npm test passes',
         maxIterations: 10,
@@ -49,8 +49,8 @@ describe('MultiLoopStateManager', () => {
       assert.strictEqual(result.state.task, 'Fix tests');
     });
 
-    it('should create isolated loop directory', () => {
-      const result = manager.createLoop({
+    it('should create isolated loop directory', async () => {
+      const result = await manager.createLoop({
         task: 'Test task',
         completion: 'done',
       });
@@ -60,8 +60,8 @@ describe('MultiLoopStateManager', () => {
       assert.ok(fs.existsSync(path.join(loopDir, 'state.json')));
     });
 
-    it('should create subdirectories for loop artifacts', () => {
-      const result = manager.createLoop({
+    it('should create subdirectories for loop artifacts', async () => {
+      const result = await manager.createLoop({
         task: 'Test task',
         completion: 'done',
       });
@@ -72,27 +72,28 @@ describe('MultiLoopStateManager', () => {
       assert.ok(fs.existsSync(path.join(loopDir, 'debug-memory')));
     });
 
-    it('should enforce MAX_CONCURRENT_LOOPS', () => {
+    it('should enforce MAX_CONCURRENT_LOOPS', async () => {
       // Create 4 loops
-      manager.createLoop({ task: 'Task 1', completion: 'done' });
-      manager.createLoop({ task: 'Task 2', completion: 'done' });
-      manager.createLoop({ task: 'Task 3', completion: 'done' });
-      manager.createLoop({ task: 'Task 4', completion: 'done' });
+      await manager.createLoop({ task: 'Task 1', completion: 'done' });
+      await manager.createLoop({ task: 'Task 2', completion: 'done' });
+      await manager.createLoop({ task: 'Task 3', completion: 'done' });
+      await manager.createLoop({ task: 'Task 4', completion: 'done' });
 
-      // 5th should throw
-      assert.throws(() => {
-        manager.createLoop({ task: 'Task 5', completion: 'done' });
-      }, /Cannot create loop.*max: 4/);
+      // 5th rejects — createLoop awaits the async registry MAX check (#1777)
+      await assert.rejects(
+        () => manager.createLoop({ task: 'Task 5', completion: 'done' }),
+        /Cannot create loop.*max: 4/,
+      );
     });
   });
 
-  describe('state isolation', () => {
-    it('should maintain separate state files per loop', () => {
-      const loop1 = manager.createLoop({
+  describe('state isolation', async () => {
+    it('should maintain separate state files per loop', async () => {
+      const loop1 = await manager.createLoop({
         task: 'Task 1',
         completion: 'done',
       });
-      const loop2 = manager.createLoop({
+      const loop2 = await manager.createLoop({
         task: 'Task 2',
         completion: 'done',
       });
@@ -108,9 +109,9 @@ describe('MultiLoopStateManager', () => {
       assert.strictEqual(state2.currentIteration, 0);
     });
 
-    it('should handle iteration artifacts separately', () => {
-      const loop1 = manager.createLoop({ task: 'Task 1', completion: 'done' });
-      const loop2 = manager.createLoop({ task: 'Task 2', completion: 'done' });
+    it('should handle iteration artifacts separately', async () => {
+      const loop1 = await manager.createLoop({ task: 'Task 1', completion: 'done' });
+      const loop2 = await manager.createLoop({ task: 'Task 2', completion: 'done' });
 
       const iter1Path = path.join(
         TEST_DIR,
@@ -144,17 +145,17 @@ describe('MultiLoopStateManager', () => {
     });
   });
 
-  describe('loop management', () => {
-    it('should list all active loops', () => {
-      manager.createLoop({ task: 'Task 1', completion: 'done' });
-      manager.createLoop({ task: 'Task 2', completion: 'done' });
+  describe('loop management', async () => {
+    it('should list all active loops', async () => {
+      await manager.createLoop({ task: 'Task 1', completion: 'done' });
+      await manager.createLoop({ task: 'Task 2', completion: 'done' });
 
       const loops = manager.listActiveLoops();
       assert.strictEqual(loops.length, 2);
     });
 
-    it('should get specific loop state', () => {
-      const result = manager.createLoop({
+    it('should get specific loop state', async () => {
+      const result = await manager.createLoop({
         task: 'Test task',
         completion: 'test passes',
       });
@@ -164,8 +165,8 @@ describe('MultiLoopStateManager', () => {
       assert.strictEqual(state.completion, 'test passes');
     });
 
-    it('should update loop state', () => {
-      const result = manager.createLoop({
+    it('should update loop state', async () => {
+      const result = await manager.createLoop({
         task: 'Test task',
         completion: 'done',
       });
@@ -181,14 +182,14 @@ describe('MultiLoopStateManager', () => {
     });
   });
 
-  describe('loop archival', () => {
-    it('should archive completed loop', () => {
-      const result = manager.createLoop({
+  describe('loop archival', async () => {
+    it('should archive completed loop', async () => {
+      const result = await manager.createLoop({
         task: 'Test task',
         completion: 'done',
       });
 
-      manager.archiveLoop(result.loopId);
+      await manager.archiveLoop(result.loopId);
 
       // Should exist in archive
       const archiveDir = path.join(
@@ -211,22 +212,22 @@ describe('MultiLoopStateManager', () => {
       assert.ok(!fs.existsSync(loopDir));
     });
 
-    it('should unregister loop on archive', () => {
-      const result = manager.createLoop({
+    it('should unregister loop on archive', async () => {
+      const result = await manager.createLoop({
         task: 'Test task',
         completion: 'done',
       });
 
-      manager.archiveLoop(result.loopId);
+      await manager.archiveLoop(result.loopId);
 
       const loops = manager.listActiveLoops();
       assert.strictEqual(loops.length, 0);
     });
   });
 
-  describe('backward compatibility', () => {
-    it('should detect single loop scenario', () => {
-      const result = manager.createLoop({
+  describe('backward compatibility', async () => {
+    it('should detect single loop scenario', async () => {
+      const result = await manager.createLoop({
         task: 'Only loop',
         completion: 'done',
       });
@@ -236,26 +237,29 @@ describe('MultiLoopStateManager', () => {
       assert.strictEqual(detected.loopId, result.loopId);
     });
 
-    it('should return null when multiple loops exist', () => {
-      manager.createLoop({ task: 'Task 1', completion: 'done' });
-      manager.createLoop({ task: 'Task 2', completion: 'done' });
+    it('should return null when multiple loops exist', async () => {
+      await manager.createLoop({ task: 'Task 1', completion: 'done' });
+      await manager.createLoop({ task: 'Task 2', completion: 'done' });
 
       const detected = manager.detectSingleLoop();
       assert.strictEqual(detected, null);
     });
   });
 
-  describe('error handling', () => {
-    it('should throw on invalid loop ID', () => {
+  describe('error handling', async () => {
+    it('should throw on invalid loop ID', async () => {
       assert.throws(() => {
         manager.getLoopState('nonexistent-loop');
       }, /Loop not found/);
     });
 
-    it('should throw on archive non-existent loop', () => {
-      assert.throws(() => {
-        manager.archiveLoop('nonexistent-loop');
-      }, /Loop not found/);
+    it('should throw on archive non-existent loop', async () => {
+      // archiveLoop is async now — a synchronous throw inside surfaces as a
+      // rejection (#1777)
+      await assert.rejects(
+        () => manager.archiveLoop('nonexistent-loop'),
+        /Loop not found/,
+      );
     });
   });
 });

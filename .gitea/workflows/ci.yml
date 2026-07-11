@@ -96,20 +96,15 @@ jobs:
         # CI budget intact. Zero network I/O — fully deterministic. (#1183)
         run: npm run test:conformance
 
-      - name: Run node test suite (ralph-external LFD controls)
-        # The tools/ralph-external/*.test.mjs suite is excluded from the vitest
-        # config and only runs via node --test. Before #1774 it ran nowhere in
-        # CI, so the LFD analytics/budget/usage/stall/schema-validation coverage
-        # was unenforced — this step closes that gap. Deterministic, no network.
-        #
-        # NOTE: the older test/unit/ralph/registry*.test.mjs suite is NOT
-        # included here — it rotted against an async registry API while it was
-        # out of CI (register()/unregister() became lock-guarded/async; the
-        # tests still call them synchronously). Fixing that suite is tracked
-        # separately so this step can gate the LFD contract now rather than
-        # blocking on an orthogonal rewrite. Run the full set locally with
-        # `npm run test:node`.
-        run: npm run test:node:ralph-external
+      - name: Run node test suite (ralph-external + ralph)
+        # The tools/ralph-external/*.test.mjs and test/unit/ralph/*.test.mjs
+        # suites are excluded from the vitest config and only run via node
+        # --test. Before #1774 they ran nowhere in CI, so the LFD analytics/
+        # budget/usage/stall/schema-validation coverage — and the multi-loop
+        # registry/state-manager suites — were unenforced. The registry/
+        # state-manager suites' async rot (#1777) is now fixed, so the full
+        # `test:node` set is gated here. Deterministic, no network.
+        run: npm run test:node
 
       - name: Run tests
         env:

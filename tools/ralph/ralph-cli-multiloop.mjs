@@ -274,7 +274,7 @@ async function main() {
   const manager = new MultiLoopStateManager(process.cwd());
 
   try {
-    const result = manager.createLoop(
+    const result = await manager.createLoop(
       {
         loopId: config.loopId,
         task: config.task,

@@ -47,7 +47,7 @@ describe('LoopRegistry', () => {
     assert.strictEqual(data.active_loops.length, 0);
   });
 
-  it('should register a new loop', () => {
+  it('should register a new loop', async () => {
     const loopId = 'ralph-test-loop-abc123';
     const config = {
       task_summary: 'Test task',
@@ -55,23 +55,25 @@ describe('LoopRegistry', () => {
       owner: 'test-agent',
     };
 
-    registry.register(loopId, config);
+    // register() is lock-guarded/async — await it (#1777)
+    await registry.register(loopId, config);
 
     const data = registry.load();
     assert.strictEqual(data.active_loops.length, 1);
     assert.strictEqual(data.active_loops[0].loop_id, loopId);
   });
 
-  it('should enforce MAX_CONCURRENT_LOOPS limit', () => {
-    registry.register('ralph-loop-1-abc', { task_summary: 'Task 1' });
-    registry.register('ralph-loop-2-def', { task_summary: 'Task 2' });
-    registry.register('ralph-loop-3-ghi', { task_summary: 'Task 3' });
-    registry.register('ralph-loop-4-jkl', { task_summary: 'Task 4' });
+  it('should enforce MAX_CONCURRENT_LOOPS limit', async () => {
+    await registry.register('ralph-loop-1-abc', { task_summary: 'Task 1' });
+    await registry.register('ralph-loop-2-def', { task_summary: 'Task 2' });
+    await registry.register('ralph-loop-3-ghi', { task_summary: 'Task 3' });
+    await registry.register('ralph-loop-4-jkl', { task_summary: 'Task 4' });
 
-    // 5th should throw
-    assert.throws(() => {
-      registry.register('ralph-loop-5-mno', { task_summary: 'Task 5' });
-    }, /Cannot create loop.*max: 4/);
+    // 5th rejects — register() throws asynchronously (#1777)
+    await assert.rejects(
+      () => registry.register('ralph-loop-5-mno', { task_summary: 'Task 5' }),
+      /Cannot create loop.*max: 4/,
+    );
   });
 
   it('should calculate communication paths correctly', () => {
