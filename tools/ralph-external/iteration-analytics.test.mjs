@@ -803,6 +803,49 @@ try {
     assert.strictEqual(summary.flat_cycle_count, 2);
   });
 
+  test('checkExplorationQuota() is OFF without a declared K — no default is substituted (#1770)', () => {
+    setup();
+
+    const recordFlat = (analytics) => {
+      [70, 70, 70, 70, 70].forEach((score, index) => {
+        analytics.recordIteration({
+          iteration_number: index + 1,
+          quality_score: score,
+          tokens_used: 1000,
+          token_cost_usd: 0.01,
+          execution_time_ms: 5000,
+          verification_status: 'failed',
+          output_snapshot_path: `/path/${index + 1}`,
+        });
+      });
+    };
+
+    // Default config: quota off entirely
+    const defaults = new IterationAnalytics('quota-default', 'Flat task', { storagePath: TEST_DIR });
+    recordFlat(defaults);
+    assert.strictEqual(defaults.checkExplorationQuota().required, false);
+
+    // enabled but no K declared: off, and k reported as null (not 3)
+    const noK = new IterationAnalytics('quota-no-k', 'Flat task', {
+      storagePath: TEST_DIR,
+      explorationQuota: { enabled: true },
+    });
+    recordFlat(noK);
+    const noKDecision = noK.checkExplorationQuota();
+    assert.strictEqual(noKDecision.required, false);
+    assert.strictEqual(noKDecision.k, null);
+
+    // k: 0 means off — must never coerce to a default K
+    const zeroK = new IterationAnalytics('quota-zero-k', 'Flat task', {
+      storagePath: TEST_DIR,
+      explorationQuota: { enabled: true, k: 0 },
+    });
+    recordFlat(zeroK);
+    const zeroKDecision = zeroK.checkExplorationQuota();
+    assert.strictEqual(zeroKDecision.required, false);
+    assert.strictEqual(zeroKDecision.k, null);
+  });
+
   console.log('\n=== All Tests Passed ===\n');
   cleanup();
 } catch (error) {

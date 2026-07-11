@@ -216,7 +216,7 @@ export class Orchestrator {
           model: config.model || 'opus',
           budgetPerIteration: config.budgetPerIteration || 2.0,
           budgetLimits: config.budgetLimits || {},
-          explorationQuota: config.explorationQuota || { enabled: true, k: 3 },
+          explorationQuota: config.explorationQuota || { enabled: false },
           timeoutMinutes: config.timeoutMinutes || 60,
           mcpConfig: config.mcpConfig,
           workingDir: config.workingDir || this.projectRoot,
@@ -248,7 +248,7 @@ export class Orchestrator {
       model: config.model || 'opus',
       budgetPerIteration: config.budgetPerIteration || 2.0,
       budgetLimits: config.budgetLimits || {},
-      explorationQuota: config.explorationQuota || { enabled: true, k: 3 },
+      explorationQuota: config.explorationQuota || { enabled: false },
       timeoutMinutes: config.timeoutMinutes || 60,
       mcpConfig: config.mcpConfig,
       workingDir: config.workingDir || this.projectRoot,
@@ -354,7 +354,7 @@ export class Orchestrator {
           this.iterationAnalytics.config.storagePath = analyticsDir;
           this.iterationAnalytics.config.budgetLimits = state.config.budgetLimits || {};
           this.iterationAnalytics.config.explorationQuota =
-            state.config.explorationQuota || { enabled: true, k: 3 };
+            state.config.explorationQuota || { enabled: false };
           restored = true;
           console.log(`[External Ralph] Iteration analytics: RESTORED (${this.iterationAnalytics.iterations.length} prior iterations)`);
         } catch (error) {
@@ -369,7 +369,7 @@ export class Orchestrator {
           {
             storagePath: analyticsDir,
             budgetLimits: state.config.budgetLimits || {},
-            explorationQuota: state.config.explorationQuota || { enabled: true, k: 3 },
+            explorationQuota: state.config.explorationQuota || { enabled: false },
           }
         );
         console.log('[External Ralph] Iteration analytics: ENABLED');

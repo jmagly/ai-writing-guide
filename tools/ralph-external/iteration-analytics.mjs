@@ -72,9 +72,10 @@ const DEFAULT_CONFIG = {
   qualityThreshold: 70,
   selectionCriteria: 'highest_quality_verified',
   budgetLimits: {},
+  // Declared-K policy (#1770): the exploration quota is OFF unless the loop
+  // explicitly declares a K. There is no default K.
   explorationQuota: {
-    enabled: true,
-    k: 3,
+    enabled: false,
   },
 };
 
@@ -322,11 +323,20 @@ export class IterationAnalytics {
    */
   checkExplorationQuota() {
     const quota = this.config.explorationQuota || {};
-    if (quota.enabled === false) {
-      return { required: false, flat_cycle_count: 0, k: quota.k || null };
+    const k = Number(quota.k);
+
+    // Declared-K policy (#1770): the quota is active only when explicitly
+    // enabled WITH a valid declared K >= 1. No default K is substituted —
+    // `k: 0`/missing/invalid means the control is off, never silently 3.
+    if (quota.enabled !== true || !Number.isFinite(k) || k < 1) {
+      return {
+        required: false,
+        flat_cycle_count: 0,
+        k: Number.isFinite(k) && k >= 1 ? k : null,
+        trigger: 'none',
+      };
     }
 
-    const k = Number(quota.k || 3);
     const flatCycleCount = this.getFlatCycleCount();
 
     return {

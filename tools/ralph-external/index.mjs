@@ -48,7 +48,10 @@ function parseArgs(args) {
     // creation itself, causing every mission to abort at iteration 1.
     budgetPerIteration: 5.0,
     budgetLimits: {},
-    explorationQuota: { enabled: true, k: 3 },
+    // Declared-K policy (#1770, operator decision 2026-07-11): the exploration
+    // quota is OFF unless a loop explicitly declares its K via
+    // --exploration-quota. There is no default K.
+    explorationQuota: { enabled: false },
     timeoutMinutes: 60,
     mcpConfig: null,
     giteaIssue: false,
@@ -71,6 +74,17 @@ function parseArgs(args) {
     _explicit: new Set(),
   };
 
+  // A numeric flag that is present but not a positive number is a hard usage
+  // error — NaN limits used to be accepted and then silently never fire (#1770)
+  const positiveNumber = (flag, raw, { integer = false } = {}) => {
+    const value = integer ? parseInt(raw, 10) : parseFloat(raw);
+    if (!Number.isFinite(value) || value <= 0) {
+      console.error(`Error: ${flag} requires a positive number (got '${raw}')`);
+      process.exit(1);
+    }
+    return value;
+  };
+
   let i = 0;
   while (i < args.length) {
     const arg = args[i];
@@ -86,30 +100,30 @@ function parseArgs(args) {
     } else if (arg === '--completion' || arg === '-c') {
       options.completionCriteria = args[++i];
     } else if (arg === '--max-iterations') {
-      options.maxIterations = parseInt(args[++i], 10);
+      options.maxIterations = positiveNumber('--max-iterations', args[++i], { integer: true });
       options._explicit.add('maxIterations');
     } else if (arg === '--model') {
       options.model = args[++i];
     } else if (arg === '--budget') {
-      options.budgetPerIteration = parseFloat(args[++i]);
+      options.budgetPerIteration = positiveNumber('--budget', args[++i]);
       options._explicit.add('budgetPerIteration');
     } else if (arg === '--allow-exhausted-resume') {
       options.allowExhaustedResume = true;
     } else if (arg === '--max-total-tokens') {
-      options.budgetLimits.total_tokens = parseInt(args[++i], 10);
+      options.budgetLimits.total_tokens = positiveNumber('--max-total-tokens', args[++i], { integer: true });
     } else if (arg === '--max-output-tokens') {
-      options.budgetLimits.output_tokens = parseInt(args[++i], 10);
+      options.budgetLimits.output_tokens = positiveNumber('--max-output-tokens', args[++i], { integer: true });
     } else if (arg === '--max-tool-calls') {
-      options.budgetLimits.tool_calls = parseInt(args[++i], 10);
+      options.budgetLimits.tool_calls = positiveNumber('--max-tool-calls', args[++i], { integer: true });
     } else if (arg === '--max-total-cost') {
-      options.budgetLimits.spend_usd = parseFloat(args[++i]);
+      options.budgetLimits.spend_usd = positiveNumber('--max-total-cost', args[++i]);
     } else if (arg === '--max-wall-clock-minutes') {
-      options.budgetLimits.wall_clock_minutes = parseFloat(args[++i]);
+      options.budgetLimits.wall_clock_minutes = positiveNumber('--max-wall-clock-minutes', args[++i]);
     } else if (arg === '--exploration-quota') {
-      options.explorationQuota = { enabled: true, k: parseInt(args[++i], 10) };
+      options.explorationQuota = { enabled: true, k: positiveNumber('--exploration-quota', args[++i], { integer: true }) };
       options._explicit.add('explorationQuota');
     } else if (arg === '--timeout') {
-      options.timeoutMinutes = parseInt(args[++i], 10);
+      options.timeoutMinutes = positiveNumber('--timeout', args[++i], { integer: true });
     } else if (arg === '--mcp-config') {
       options.mcpConfig = JSON.parse(args[++i]);
     } else if (arg === '--gitea-issue') {
@@ -222,8 +236,9 @@ OPTIONS:
   --max-total-cost <usd>  Hard cumulative cost ceiling when provider reports cost.
   --max-wall-clock-minutes <n>
                           Hard cumulative session-runtime ceiling in minutes.
-  --exploration-quota <n> Require a structural strategy variant after n flat
-                          non-terminal cycles (default: 3).
+  --exploration-quota <k> Require a structural strategy variant after k flat
+                          non-terminal cycles. OFF unless declared — there is
+                          no default k; each loop declares its own (#1770).
   --timeout <min>         Timeout per iteration in minutes (default: 60)
   --mcp-config <json>     MCP server configuration JSON
   --gitea-issue           Create/link Gitea issue for tracking

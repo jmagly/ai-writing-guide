@@ -33,10 +33,11 @@ spec:
     - name: eval_harness_contract
       type: object
       required: false
+    # Declared-K policy (#1770, operator decision 2026-07-11): the exploration
+    # quota is off unless the loop declares its own K. No default is substituted.
     - name: exploration_quota_k
       type: integer
       required: false
-      default: 3
     - name: random_walk_baseline
       type: object
       required: false

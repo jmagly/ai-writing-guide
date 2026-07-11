@@ -32,6 +32,12 @@ function parseRalphArgs(args: string[]): {
   maxIterations?: number;
   model?: string;
   budget?: number;
+  maxTotalTokens?: number;
+  maxOutputTokens?: number;
+  maxToolCalls?: number;
+  maxTotalCost?: number;
+  maxWallClockMinutes?: number;
+  explorationQuota?: number;
   timeout?: number;
   mcpConfig?: string;
   giteaIssue?: boolean;
@@ -49,9 +55,24 @@ function parseRalphArgs(args: string[]): {
   attach?: boolean;
   verbose?: boolean;
   logFile?: string;
+  /** Numeric flags present but not a positive number — dispatch must refuse (#1770) */
+  invalidFlags: string[];
+  /** Unrecognized --flags — refused so budget typos can't silently launch an unbounded loop (#1770) */
+  unknownFlags: string[];
 } {
-  const result: ReturnType<typeof parseRalphArgs> = {};
+  const result: ReturnType<typeof parseRalphArgs> = { invalidFlags: [], unknownFlags: [] };
   let i = 0;
+
+  // Present-but-invalid numeric values are a hard usage error: an operator who
+  // typed --max-total-cost expects a ceiling to exist (#1770).
+  const positiveNumber = (flag: string, raw: string | undefined, integer = false): number | undefined => {
+    const value = integer ? parseInt(raw ?? '', 10) : parseFloat(raw ?? '');
+    if (!Number.isFinite(value) || value <= 0) {
+      result.invalidFlags.push(`${flag} (got '${raw ?? ''}')`);
+      return undefined;
+    }
+    return value;
+  };
 
   while (i < args.length) {
     const arg = args[i];
@@ -63,13 +84,25 @@ function parseRalphArgs(args: string[]): {
     } else if (arg === '--completion' || arg === '-c') {
       result.completionCriteria = args[++i];
     } else if (arg === '--max-iterations') {
-      result.maxIterations = parseInt(args[++i], 10);
+      result.maxIterations = positiveNumber('--max-iterations', args[++i], true);
     } else if (arg === '--model') {
       result.model = args[++i];
     } else if (arg === '--budget') {
-      result.budget = parseFloat(args[++i]);
+      result.budget = positiveNumber('--budget', args[++i]);
+    } else if (arg === '--max-total-tokens') {
+      result.maxTotalTokens = positiveNumber('--max-total-tokens', args[++i], true);
+    } else if (arg === '--max-output-tokens') {
+      result.maxOutputTokens = positiveNumber('--max-output-tokens', args[++i], true);
+    } else if (arg === '--max-tool-calls') {
+      result.maxToolCalls = positiveNumber('--max-tool-calls', args[++i], true);
+    } else if (arg === '--max-total-cost') {
+      result.maxTotalCost = positiveNumber('--max-total-cost', args[++i]);
+    } else if (arg === '--max-wall-clock-minutes') {
+      result.maxWallClockMinutes = positiveNumber('--max-wall-clock-minutes', args[++i]);
+    } else if (arg === '--exploration-quota') {
+      result.explorationQuota = positiveNumber('--exploration-quota', args[++i], true);
     } else if (arg === '--timeout') {
-      result.timeout = parseInt(args[++i], 10);
+      result.timeout = positiveNumber('--timeout', args[++i], true);
     } else if (arg === '--mcp-config') {
       result.mcpConfig = args[++i];
     } else if (arg === '--gitea-issue') {
@@ -103,6 +136,10 @@ function parseRalphArgs(args: string[]): {
       result.logFile = args[++i];
     } else if (!arg.startsWith('-') && !result.objective) {
       result.objective = arg;
+    } else if (arg.startsWith('--')) {
+      // Unknown flags were previously dropped silently — an operator typo on a
+      // budget flag launched a detached loop with NO ceiling at all (#1770).
+      result.unknownFlags.push(arg);
     }
 
     i++;
@@ -157,6 +194,21 @@ export class RalphHandler implements CommandHandler {
       };
     }
 
+    // Refuse rather than launch a loop that is missing controls the operator
+    // believes are active (#1770)
+    if (parsed.invalidFlags.length > 0) {
+      return {
+        exitCode: 1,
+        message: `Error: Invalid numeric flag value(s): ${parsed.invalidFlags.join(', ')}. Budget/quota flags require positive numbers. Loop not launched.`,
+      };
+    }
+    if (parsed.unknownFlags.length > 0) {
+      return {
+        exitCode: 1,
+        message: `Error: Unknown flag(s): ${parsed.unknownFlags.join(', ')}. See 'aiwg ralph --help'. Loop not launched.`,
+      };
+    }
+
     // Launch external Ralph as detached background process
     try {
       const options: RalphLaunchOptions = {
@@ -165,6 +217,12 @@ export class RalphHandler implements CommandHandler {
         maxIterations: parsed.maxIterations,
         model: parsed.model,
         budget: parsed.budget,
+        maxTotalTokens: parsed.maxTotalTokens,
+        maxOutputTokens: parsed.maxOutputTokens,
+        maxToolCalls: parsed.maxToolCalls,
+        maxTotalCost: parsed.maxTotalCost,
+        maxWallClockMinutes: parsed.maxWallClockMinutes,
+        explorationQuota: parsed.explorationQuota,
         timeout: parsed.timeout,
         mcpConfig: parsed.mcpConfig,
         giteaIssue: parsed.giteaIssue,
@@ -218,9 +276,19 @@ ARGUMENTS:
 OPTIONS:
   -c, --completion <str>  Completion criteria (required)
   --max-iterations <n>    Maximum iterations (default: 5)
-  --model <model>         Claude model (default: opus)
-  --budget <usd>          Budget per iteration in USD (default: 2.0)
+  --model <model>         Claude model (default: claude-sonnet-4-6)
+  --budget <usd>          Budget per iteration in USD (default: 5.0)
   --timeout <min>         Timeout per iteration in minutes (default: 60)
+
+LFD LOOP CONTROLS (hard cumulative ceilings; loop stops with a best-output report):
+  --max-total-tokens <n>      Hard total-token ceiling (when provider reports usage)
+  --max-output-tokens <n>     Hard output-token ceiling (when provider reports usage)
+  --max-tool-calls <n>        Hard tool-call ceiling (when provider reports usage)
+  --max-total-cost <usd>      Hard cumulative spend ceiling (when provider reports cost)
+  --max-wall-clock-minutes <m>  Hard cumulative wall-clock ceiling (always observable)
+  --exploration-quota <k>     Require a structural strategy variant after k flat
+                              (non-improving) cycles. OFF unless declared — there
+                              is no default k; each loop declares its own.
   --mcp-config <json>     MCP server configuration JSON
   --gitea-issue           Create/link Gitea issue for tracking
   --loop-id <id>          Use specific loop ID

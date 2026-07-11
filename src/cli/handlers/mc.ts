@@ -125,20 +125,38 @@ async function findActiveSession(sessionIdArg?: string): Promise<Session | null>
 }
 
 function parseFlag(args: string[], flag: string): string | undefined {
-  const idx = args.indexOf(flag);
-  if (idx === -1 || idx + 1 >= args.length) return undefined;
-  return args[idx + 1];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === flag) {
+      return i + 1 < args.length ? args[i + 1] : undefined;
+    }
+    // Support --flag=value — previously silently ignored, which for budget
+    // flags meant an unbounded loop the operator believed was capped (#1770)
+    if (args[i].startsWith(`${flag}=`)) {
+      return args[i].slice(flag.length + 1);
+    }
+  }
+  return undefined;
 }
 
 function hasFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
 }
 
-function parseNumberFlag(args: string[], flag: string): number | undefined {
+/**
+ * Parse a numeric flag. A flag that is PRESENT but not a positive number is a
+ * usage error collected into `invalidSink` — silently dropping it used to
+ * dispatch missions with no ceiling while the operator believed one applied
+ * (#1770).
+ */
+function parseNumberFlag(args: string[], flag: string, invalidSink?: string[]): number | undefined {
   const raw = parseFlag(args, flag);
   if (raw === undefined) return undefined;
   const value = Number(raw);
-  return Number.isFinite(value) && value > 0 ? value : undefined;
+  if (!Number.isFinite(value) || value <= 0) {
+    invalidSink?.push(`${flag} (got '${raw}')`);
+    return undefined;
+  }
+  return value;
 }
 
 function wantsHelp(args: string[]): boolean {
@@ -175,7 +193,8 @@ Queue a mission onto a session. Does NOT execute — use 'aiwg mc run' to launch
   --max-tool-calls N            Hard cumulative tool-call ceiling
   --max-total-cost USD          Hard cumulative provider-reported spend ceiling
   --max-wall-clock-minutes N    Hard cumulative runtime ceiling
-  --exploration-quota N         Require structural variant after N flat cycles
+  --exploration-quota K         Require structural variant after K flat cycles
+                                (off unless declared; no default K)
   --mode pty-orchestrator       PTY-orchestrator mode (requires --target-agent)
   --target-agent <id>           Required for --mode pty-orchestrator`,
 
@@ -295,13 +314,23 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
   const objective = positional.slice(1).join(' ') || parseFlag(ctx.args, '--objective');
   const completion = parseFlag(ctx.args, '--completion');
   const priority = parseFlag(ctx.args, '--priority') || 'normal';
-  const maxIterations = parseInt(parseFlag(ctx.args, '--max-iterations') || '10', 10);
-  const maxTotalTokens = parseNumberFlag(ctx.args, '--max-total-tokens');
-  const maxOutputTokens = parseNumberFlag(ctx.args, '--max-output-tokens');
-  const maxToolCalls = parseNumberFlag(ctx.args, '--max-tool-calls');
-  const maxTotalCost = parseNumberFlag(ctx.args, '--max-total-cost');
-  const maxWallClockMinutes = parseNumberFlag(ctx.args, '--max-wall-clock-minutes');
-  const explorationQuota = parseNumberFlag(ctx.args, '--exploration-quota');
+  const invalidFlags: string[] = [];
+  const maxIterationsRaw = parseFlag(ctx.args, '--max-iterations');
+  let maxIterations = 10;
+  if (maxIterationsRaw !== undefined) {
+    const parsedIterations = parseInt(maxIterationsRaw, 10);
+    if (!Number.isFinite(parsedIterations) || parsedIterations <= 0) {
+      invalidFlags.push(`--max-iterations (got '${maxIterationsRaw}')`);
+    } else {
+      maxIterations = parsedIterations;
+    }
+  }
+  const maxTotalTokens = parseNumberFlag(ctx.args, '--max-total-tokens', invalidFlags);
+  const maxOutputTokens = parseNumberFlag(ctx.args, '--max-output-tokens', invalidFlags);
+  const maxToolCalls = parseNumberFlag(ctx.args, '--max-tool-calls', invalidFlags);
+  const maxTotalCost = parseNumberFlag(ctx.args, '--max-total-cost', invalidFlags);
+  const maxWallClockMinutes = parseNumberFlag(ctx.args, '--max-wall-clock-minutes', invalidFlags);
+  const explorationQuota = parseNumberFlag(ctx.args, '--exploration-quota', invalidFlags);
   const modeRaw = parseFlag(ctx.args, '--mode') || 'direct';
   const mode: MissionMode = modeRaw === 'pty-orchestrator' ? 'pty-orchestrator' : 'direct';
   const targetAgent = parseFlag(ctx.args, '--target-agent');
@@ -310,6 +339,11 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
     // #1438: keep this in sync with subcommandUsage.dispatch above so 'mc
     // dispatch' with bad args and 'mc dispatch --help' agree on flags.
     ui.error('Usage: aiwg mc dispatch <session-id> "<objective>" [--completion "<criteria>"] [--max-iterations N] [--priority <level>] [--mode pty-orchestrator] [--target-agent <agent-id>]');
+    return { exitCode: 1 };
+  }
+
+  if (invalidFlags.length > 0) {
+    ui.error(`Invalid numeric flag value(s): ${invalidFlags.join(', ')}. Budget/quota flags require positive numbers. Mission not dispatched.`);
     return { exitCode: 1 };
   }
 

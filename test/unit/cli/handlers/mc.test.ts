@@ -226,6 +226,50 @@ describe('mc dispatch', () => {
     );
     expect(result.exitCode).toBe(1);
   });
+
+  it('refuses to dispatch on invalid numeric budget values instead of silently dropping them (#1770)', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const startResult = await mcHandler.execute(makeCtx(['start']));
+    const sessionId = startResult.message!;
+
+    for (const badArgs of [
+      ['--max-total-tokens', '5,000'],
+      ['--max-total-cost', '-3.5'],
+      ['--max-total-tokens', '0'],
+      ['--max-iterations', 'abc'],
+    ]) {
+      const result = await mcHandler.execute(
+        makeCtx(['dispatch', sessionId, 'Bad budget mission', '--completion', 'tests pass', ...badArgs]),
+      );
+      expect(result.exitCode).toBe(1);
+    }
+
+    // Nothing was dispatched
+    const jsonCalls: string[] = [];
+    consoleSpy.mockImplementation((arg) => { jsonCalls.push(String(arg)); });
+    await mcHandler.execute(makeCtx(['status', sessionId, '--json']));
+    const jsonOutput = jsonCalls.find(s => { try { JSON.parse(s); return true; } catch { return false; } });
+    const session = JSON.parse(jsonOutput!);
+    expect(session.missions).toHaveLength(0);
+    consoleSpy.mockRestore();
+  });
+
+  it('accepts --flag=value syntax for budget flags (#1770)', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const startResult = await mcHandler.execute(makeCtx(['start']));
+    const sessionId = startResult.message!;
+    await mcHandler.execute(
+      makeCtx(['dispatch', sessionId, 'Equals mission', '--completion', 'tests pass', '--max-total-tokens=8000']),
+    );
+
+    const jsonCalls: string[] = [];
+    consoleSpy.mockImplementation((arg) => { jsonCalls.push(String(arg)); });
+    await mcHandler.execute(makeCtx(['status', sessionId, '--json']));
+    const jsonOutput = jsonCalls.find(s => { try { JSON.parse(s); return true; } catch { return false; } });
+    const session = JSON.parse(jsonOutput!);
+    expect(session.missions[0].maxTotalTokens).toBe(8000);
+    consoleSpy.mockRestore();
+  });
 });
 
 // ── mc status ────────────────────────────────────────────────

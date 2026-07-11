@@ -128,6 +128,63 @@ describe('Ralph Command Handlers', () => {
       expect(result.message).toContain('Loop ID: test-loop-123');
     });
 
+    it('forwards all six LFD loop-control flags to the launcher (#1770)', async () => {
+      const { ralphHandler } = await import('../../../../src/cli/handlers/ralph.js');
+      const launcher = await import('../../../../src/cli/handlers/ralph-launcher.js');
+
+      mockContext.args = [
+        'Fix tests', '--completion', 'all tests pass',
+        '--max-total-tokens', '50000',
+        '--max-output-tokens', '20000',
+        '--max-tool-calls', '200',
+        '--max-total-cost', '7.5',
+        '--max-wall-clock-minutes', '90',
+        '--exploration-quota', '4',
+      ];
+
+      const result = await ralphHandler.execute(mockContext);
+
+      expect(result.exitCode).toBe(0);
+      expect(launcher.launchExternalRalph).toHaveBeenCalledWith(
+        '/mock/framework/root',
+        expect.any(String),
+        expect.objectContaining({
+          maxTotalTokens: 50000,
+          maxOutputTokens: 20000,
+          maxToolCalls: 200,
+          maxTotalCost: 7.5,
+          maxWallClockMinutes: 90,
+          explorationQuota: 4,
+        })
+      );
+    });
+
+    it('refuses to launch on invalid numeric budget values (#1770)', async () => {
+      const { ralphHandler } = await import('../../../../src/cli/handlers/ralph.js');
+      const launcher = await import('../../../../src/cli/handlers/ralph-launcher.js');
+
+      mockContext.args = ['Fix tests', '--completion', 'pass', '--max-total-cost', 'abc'];
+
+      const result = await ralphHandler.execute(mockContext);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.message).toContain('--max-total-cost');
+      expect(launcher.launchExternalRalph).not.toHaveBeenCalled();
+    });
+
+    it('refuses to launch on unknown flags instead of silently dropping them (#1770)', async () => {
+      const { ralphHandler } = await import('../../../../src/cli/handlers/ralph.js');
+      const launcher = await import('../../../../src/cli/handlers/ralph-launcher.js');
+
+      mockContext.args = ['Fix tests', '--completion', 'pass', '--max-total-costt', '5'];
+
+      const result = await ralphHandler.execute(mockContext);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.message).toContain('--max-total-costt');
+      expect(launcher.launchExternalRalph).not.toHaveBeenCalled();
+    });
+
     it('should use internal mode when --internal flag is passed', async () => {
       const { ralphHandler } = await import('../../../../src/cli/handlers/ralph.js');
       const launcher = await import('../../../../src/cli/handlers/ralph-launcher.js');
