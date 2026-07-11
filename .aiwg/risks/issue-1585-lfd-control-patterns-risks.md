@@ -3,9 +3,9 @@
 **Document Type**: Risk Management Artifact  
 **Issue**: `roctinam/aiwg#1585`  
 **Related ADR**: `.aiwg/architecture/adr-lfd-control-patterns-for-agent-loops.md`  
-**Status**: Draft for pre-construction review  
-**Date**: 2026-06-17  
-**Review Cadence**: Before construction, then at each implementation wave
+**Status**: Reviewed post-construction (2026-07-11) — R-LFD-010 occurred, R-LFD-003 partially occurred  
+**Date**: 2026-06-17 (created) / 2026-07-11 (post-construction review)  
+**Review Cadence**: Before construction, then at each implementation wave (not honored for the 2026-07-10 pass — see R-LFD-010)
 
 ## Summary Dashboard
 
@@ -95,11 +95,16 @@ until private diagnostic channels are implemented.
 | Impact | 4 major |
 | Score | 12 high |
 | Owner | Runtime / Mission Control |
-| Status | Open |
+| Status | **PARTIALLY OCCURRED (2026-07-11 audit)** — remediation in #1766 |
 
 **Description**: The proposed budget stop needs wall-clock, token, and spend
 observability. Wall-clock is straightforward, but token and dollar accounting
 may be unavailable or provider-dependent.
+
+**Occurrence note (2026-07-11)**: The shipped implementation dropped the planned
+`unknown` semantics — unobserved usage defaults to `0`, making token/spend
+ceilings silently inert on non-Claude providers and on timed-out sessions
+(audit finding R-H4). Tracked in `roctinam/aiwg#1766`.
 
 **Mitigation**:
 
@@ -252,13 +257,24 @@ with AIWG gates.
 | Impact | 4 major |
 | Score | 8 medium |
 | Owner | Project Lead |
-| Status | Open |
+| Status | **OCCURRED (2026-07-10)** — closed via retroactive approval 2026-07-11 |
 
 **Description**: The operator explicitly requested review before construction.
 Continuing directly into rule/runtime implementation would violate the workflow
 and risk solving the wrong scope.
 
-**Mitigation**:
+**Occurrence (2026-07-10)**: This risk materialized — construction (commits
+`9fe5af09f`, `9acf62206`) landed while the approval record was PENDING, the seven
+planned child issues were never filed, and no tracker comment recorded the cycle.
+The predicted consequence ("solving the wrong scope") partially occurred: several
+delivered choices contradicted the recommended-but-undecided options (Mission
+Control first, default exploration quota k=3, hard token/spend stops). Detected by
+the 2026-07-11 post-construction audit
+(`.aiwg/reports/lfd-cycle-audit-2026-07-11.md`); resolved by retroactive operator
+approval with revisions (`issue-1585-operator-approval-record.md`) and remediation
+issues `#1765`–`#1775`.
+
+**Mitigation** (original, retained for future gates):
 
 - Keep this issue at review gate until the operator approves the ADR, backlog
   split, and first construction wave.

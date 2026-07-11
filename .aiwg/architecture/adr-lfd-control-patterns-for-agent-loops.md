@@ -2,7 +2,12 @@
 
 ## Status
 
-Proposed for review
+Accepted (2026-07-11) — retroactive operator approval with revisions; see
+`.aiwg/planning/issue-1585-operator-approval-record.md` for the recorded
+decisions (declared-K exploration quota, configurable completion-wins stop
+semantics, build directives for stall rule / hypothesis records / eval-harness
++ VOID / holdout-isolated mode, agentically-driven implementation shape, and
+multi-provider loop-control coverage).
 
 ## Context
 
