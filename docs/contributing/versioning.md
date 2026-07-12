@@ -112,22 +112,42 @@ git push github main --tags
 gh release create v2026.1.5 --repo jmagly/aiwg --title "v2026.1.5 - Release Name" --generate-notes
 ```
 
-**Sandboxed agent note**: If release operations run inside a filesystem/network sandbox, request **escalated execution** for signed `git commit`/`git tag` commands so GPG can access the local gpg-agent socket. Also confirm the active GPG home. Some agent runtimes set `HOME` to a role/runtime directory, which makes `gpg` use an empty sandbox keyring even when `/home/<user>/.gnupg` is readable.
+**Signing-key custody note**: AIWG private signing keys are stored in OpenBao,
+not in the host GPG home. CI only pulls repository contents and verifies tags
+against the public key committed under `.gitea/keys/maintainers.asc`; it does
+not need OpenBao access. The operator tag ceremony hydrates the release key into
+a temporary local `GNUPGHOME`, runs the wrapper, verifies the tag, then destroys
+that keyring.
 
-Check before cutting the tag:
+OpenBao source of truth:
+
+- Endpoint: `https://rca-g2.s9.internal:8200`
+- SOP: `/home/roctinam/dev/itops/docs/security/secret-management-sop.md`
+- Commit key: `kv_internal/gpg/commit-signing-key`
+- Release key: `kv_internal/gpg/release-signing-key`
+
+Before cutting a release tag:
 
 ```bash
-gpgconf --list-dirs | grep '^homedir:'
-gpg --list-secret-keys --keyid-format LONG
+set +x
+umask 077
+export BAO_ADDR=https://rca-g2.s9.internal:8200
+export GNUPGHOME="${XDG_RUNTIME_DIR:-/dev/shm}/aiwg-gpg-release.$$"
+mkdir -p "$GNUPGHOME"
+
+# Authenticate to OpenBao first per itops SOP. Then import only the release key
+# into the temporary keyring. If the field name changes, confirm it through the
+# OpenBao catalog metadata rather than reading or printing the secret value.
+bao kv get -field=private_key kv_internal/gpg/release-signing-key \
+  | gpg --batch --import
+
+tools/release/cut-tag.sh 2026.X.Y
+git tag -v v2026.X.Y
+GITHUB_REF=refs/tags/v2026.X.Y bash tools/ci/verify-signed-tag.sh
+
+gpgconf --kill gpg-agent || true
+rm -rf "$GNUPGHOME"
 ```
-
-If `homedir:` is not the operator keyring that contains the AIWG release key, run the wrapper with `GNUPGHOME` set explicitly:
-
-```bash
-GNUPGHOME=/home/<user>/.gnupg tools/release/cut-tag.sh 2026.X.Y
-```
-
-For example, Codex role runtimes may report a homedir like `/home/<user>/.codex/roles-runtime/full/.gnupg`. In that case, escalation alone is not enough; point `GNUPGHOME` at the operator keyring or import the release key into the runtime keyring.
 
 #### Signing your release tag — first-time setup
 
@@ -154,10 +174,15 @@ git add .gitea/keys/maintainers.asc
 git commit -m "security: add maintainer release signing key (refs #1299)"
 git push origin main
 
-# 5. Update SECURITY.md "Maintainer Signing Keys" section with the
+# 5. Induct the PRIVATE key into OpenBao, then delete the working export.
+#    Follow /home/roctinam/dev/itops/docs/security/secret-management-sop.md
+#    and use /home/roctinam/dev/itops/scripts/secret-induct.sh so the key is
+#    streamed from a file and never printed.
+
+# 6. Update SECURITY.md "Maintainer Signing Keys" section with the
 #    fingerprint, then commit + push.
 
-# 6. Make a test signed tag to verify end-to-end:
+# 7. Make a test signed tag to verify end-to-end:
 git tag -s vYYYY.M.PATCH-rc.0 -m "vYYYY.M.PATCH-rc.0 - signing-setup verification"
 git push origin vYYYY.M.PATCH-rc.0
 #    Watch the resulting workflow run. The "Verify signed tag" step should
@@ -192,8 +217,8 @@ Per the convention established in commit `a13dabc5` ("two-key model — personal
 
 | Purpose | Key | UID |
 |---|---|---|
-| **Commit signing** | personal GPG key | maintainer's own identity (e.g. `<1159087+jmagly@users.noreply.github.com>`) |
-| **Tag signing (release)** | AIWG release key | `AIWG Release Signing <release@aiwg.io>` (fingerprint `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`) |
+| **Commit signing** | personal GPG key from OpenBao path `kv_internal/gpg/commit-signing-key` | maintainer's own identity (e.g. `<1159087+jmagly@users.noreply.github.com>`) |
+| **Tag signing (release)** | AIWG release key from OpenBao path `kv_internal/gpg/release-signing-key` | `AIWG Release Signing <release@aiwg.io>` (fingerprint `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`) |
 
 This has one operational gotcha: a typical maintainer git config has `tag.gpgsign=true` AND `user.signingkey=<personal-key>` so commits sign correctly. But `git tag -s` (and even `git tag -a` with `tag.gpgsign=true`) then signs the **tag** with the **personal key** — wrong key for the supply-chain gate.
 
@@ -203,26 +228,36 @@ This has one operational gotcha: a typical maintainer git config has `tag.gpgsig
 tools/release/cut-tag.sh 2026.X.Y
 ```
 
-The wrapper forces `-u <release-key-fingerprint>` via `git tag -s -u …` so the right key signs the tag regardless of the global `user.signingkey`. It also runs 10 pre-tag checks (CalVer, package.json/marketplace.json lockstep, CHANGELOG, announcement, key published in `.gitea/keys/maintainers.asc`) so common drift bugs fail locally rather than in CI.
+The wrapper forces `-u <release-key-fingerprint>` via `git tag -s -u …` so the right key signs the tag regardless of the global `user.signingkey`. It also runs 10 pre-tag checks (CalVer, package.json/marketplace.json lockstep, CHANGELOG, announcement, release key present in the active `GNUPGHOME`, key published in `.gitea/keys/maintainers.asc`) so common drift bugs fail locally rather than in CI.
 
-If the wrapper says the release key is missing but the operator expects it to exist, inspect the active GPG home first:
+If the wrapper says the release key is missing, hydrate a temporary GPG home from
+OpenBao first:
 
 ```bash
-gpgconf --list-dirs | grep '^homedir:'
-GNUPGHOME=/home/<user>/.gnupg gpg --list-secret-keys --keyid-format LONG
+set +x
+umask 077
+export BAO_ADDR=https://rca-g2.s9.internal:8200
+export GNUPGHOME="${XDG_RUNTIME_DIR:-/dev/shm}/aiwg-gpg-release.$$"
+mkdir -p "$GNUPGHOME"
+bao kv get -field=private_key kv_internal/gpg/release-signing-key \
+  | gpg --batch --import
+gpg --list-secret-keys --keyid-format LONG
 ```
 
-When the second command sees `AIWG Release Signing <release@aiwg.io>`, rerun `cut-tag.sh` with the same `GNUPGHOME=...` prefix.
+When the command sees `AIWG Release Signing <release@aiwg.io>`, rerun
+`cut-tag.sh` in the same shell so it uses that temporary `GNUPGHOME`.
 
 **v2026.5.5 incident** (2026-05-14) — for posterity: an agent ran `git tag -a v2026.5.5 -m "…"` directly, which signed with the personal commit-signing key. The supply-chain gate caught it across **three workflows** (Gitea `npm-publish`, Gitea `gitea-release`, GitHub mirror release) and refused to publish any artifacts. No bad release left the gate. Recovery was `git tag -d` + `git push origin :refs/tags/<tag>` + push to remote, then `tools/release/cut-tag.sh <version>`. The wrapper script was added in the same fix commit so the next release ceremony won't repeat the mistake.
 
 #### Rotation and revocation
 
-Rotate maintainer signing keys on a known cadence (suggested: every 2 years) and immediately on any suspected compromise of the maintainer's workstation. To rotate:
+Rotate maintainer signing keys on a known cadence (suggested: every 2 years) and
+immediately on any suspected compromise of the maintainer's workstation or
+OpenBao secret path. To rotate:
 
 1. Generate the new key per the setup procedure above.
 2. Add its public component to the same `.gitea/keys/maintainers.asc` or `.gitea/allowed_signers` file (do not remove the old key yet — it's still trusted for past releases).
-3. Switch local git config to sign with the new key.
+3. Induct the new private key into the relevant OpenBao path and update its KV metadata.
 4. After at least one release with the new key has been verified end-to-end, remove the old key from the public-key file in a documented commit and update SECURITY.md.
 
 #### Historical tags

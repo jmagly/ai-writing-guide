@@ -5,11 +5,8 @@
 
 ## Signing Keys
 
-Use the host GPG home for all signing operations:
-
-```bash
-GNUPGHOME=/home/roctinam/.gnupg
-```
+Signing-key custody has moved to OpenBao. Do not treat the host GPG home as the
+source of truth for private signing keys.
 
 Commit signing and release tag signing use different keys:
 
@@ -18,6 +15,17 @@ Commit signing and release tag signing use different keys:
 
 Do not sign regular commits with the release tag key. Use the release key only for
 annotated release tags such as `v2026.5.9`.
+
+OpenBao source of truth:
+
+- Commit key: `kv_internal/gpg/commit-signing-key`
+- Release key: `kv_internal/gpg/release-signing-key`
+- SOP: `/home/roctinam/dev/itops/docs/security/secret-management-sop.md`
+
+For signing, hydrate only the needed key into a temporary `GNUPGHOME`, run the
+operation, verify, then remove the temporary keyring. CI/CD does not need
+OpenBao access for release verification; it only verifies pushed tags against
+the public keys committed in the repo.
 
 ## Issue Tracking Mode
 

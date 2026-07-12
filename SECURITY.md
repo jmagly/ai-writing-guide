@@ -36,6 +36,10 @@ If your Gitea account can submit a private security advisory against [`roctinam/
 
 Release tags are signed by maintainer keys published in this repo. CI fails to publish any release whose tag does not verify against one of these keys (gate added per [#1299](https://git.integrolabs.net/roctinam/aiwg/issues/1299), enforced by `tools/ci/verify-signed-tag.sh`).
 
+Private signing-key custody is handled outside this repository in OpenBao. The
+repository publishes only public verification material; release CI imports those
+public keys and never reads private key material.
+
 Either format is accepted; both can co-exist:
 
 | Format | Public-key location | Notes |
