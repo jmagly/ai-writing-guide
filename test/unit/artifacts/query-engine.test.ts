@@ -9,8 +9,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { queryIndex, showArtifact } from '../../../src/artifacts/query-engine.js';
-import { INDEX_DIR } from '../../../src/artifacts/types.js';
+import { discoverCapability, queryIndex, showArtifact } from '../../../src/artifacts/query-engine.js';
+import { INDEX_DIR, getGraphIndexDir } from '../../../src/artifacts/types.js';
 import type { ArtifactIndex, MetadataEntry } from '../../../src/artifacts/types.js';
 
 function createMockEntry(overrides: Partial<MetadataEntry> = {}): MetadataEntry {
@@ -237,6 +237,167 @@ describe('Artifact Query Engine', () => {
       if (prevRoot === undefined) delete process.env.AIWG_ROOT;
       else process.env.AIWG_ROOT = prevRoot;
     }
+  });
+
+  it('resolves Windows-style framework index paths under AIWG_ROOT from a project cwd', async () => {
+    const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-project-'));
+    const aiwgRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-root-'));
+    const xdgRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-xdg-'));
+    const indexedPath = 'agentic\\code\\frameworks\\knowledge-base\\skills\\kb-ingest\\SKILL.md';
+    const nativePath = path.join(
+      aiwgRoot,
+      'agentic',
+      'code',
+      'frameworks',
+      'knowledge-base',
+      'skills',
+      'kb-ingest',
+      'SKILL.md',
+    );
+    fs.mkdirSync(path.dirname(nativePath), { recursive: true });
+    fs.writeFileSync(nativePath, '# KB Ingest\n');
+
+    const prevRoot = process.env.AIWG_ROOT;
+    const prevXdg = process.env.XDG_DATA_HOME;
+    process.env.AIWG_ROOT = aiwgRoot;
+    process.env.XDG_DATA_HOME = xdgRoot;
+    try {
+      const frameworkIndexDir = getGraphIndexDir(projectRoot, 'framework');
+      fs.mkdirSync(frameworkIndexDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(frameworkIndexDir, 'metadata.json'),
+        JSON.stringify({
+          version: '1.0.0',
+          builtAt: '2026-07-12T00:00:00Z',
+          buildTimeMs: 1,
+          entries: {
+            [indexedPath]: createMockEntry({
+              path: indexedPath,
+              type: 'skill',
+              name: 'kb-ingest',
+              title: 'KB Ingest',
+              summary: 'Ingest documents into the knowledge base.',
+            }),
+          },
+        } satisfies ArtifactIndex),
+      );
+
+      await showArtifact(projectRoot, {
+        typeFilter: ['skill'],
+        name: 'kb-ingest',
+        graph: 'framework',
+        backend: 'local',
+        json: true,
+      });
+      const parsed = JSON.parse(consoleSpy.mock.calls.map(c => c[0]).join(''));
+      expect(parsed.path).toBe(nativePath);
+      expect(parsed.content).toContain('# KB Ingest');
+    } finally {
+      if (prevRoot === undefined) delete process.env.AIWG_ROOT;
+      else process.env.AIWG_ROOT = prevRoot;
+      if (prevXdg === undefined) delete process.env.XDG_DATA_HOME;
+      else process.env.XDG_DATA_HOME = prevXdg;
+      fs.rmSync(projectRoot, { recursive: true, force: true });
+      fs.rmSync(aiwgRoot, { recursive: true, force: true });
+      fs.rmSync(xdgRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('emits AIWG_ROOT-anchored discover paths for Windows-style framework entries', async () => {
+    const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-project-'));
+    const aiwgRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-root-'));
+    const xdgRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-xdg-'));
+    const indexedPath = 'agentic\\code\\frameworks\\knowledge-base\\skills\\kb-ingest\\SKILL.md';
+
+    const prevRoot = process.env.AIWG_ROOT;
+    const prevXdg = process.env.XDG_DATA_HOME;
+    process.env.AIWG_ROOT = aiwgRoot;
+    process.env.XDG_DATA_HOME = xdgRoot;
+    try {
+      const frameworkIndexDir = getGraphIndexDir(projectRoot, 'framework');
+      fs.mkdirSync(frameworkIndexDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(frameworkIndexDir, 'metadata.json'),
+        JSON.stringify({
+          version: '1.0.0',
+          builtAt: '2026-07-12T00:00:00Z',
+          buildTimeMs: 1,
+          entries: {
+            [indexedPath]: createMockEntry({
+              path: indexedPath,
+              type: 'skill',
+              name: 'kb-ingest',
+              title: 'KB Ingest',
+              summary: 'Ingest documents into the knowledge base.',
+            }),
+          },
+        } satisfies ArtifactIndex),
+      );
+
+      await discoverCapability(projectRoot, {
+        phrase: 'kb-ingest',
+        graph: 'framework',
+        backend: 'local',
+        json: true,
+      });
+      const parsed = JSON.parse(consoleSpy.mock.calls.map(c => c[0]).join(''));
+      expect(parsed.results[0].path).toBe(path.join(
+        aiwgRoot,
+        'agentic',
+        'code',
+        'frameworks',
+        'knowledge-base',
+        'skills',
+        'kb-ingest',
+        'SKILL.md',
+      ));
+    } finally {
+      if (prevRoot === undefined) delete process.env.AIWG_ROOT;
+      else process.env.AIWG_ROOT = prevRoot;
+      if (prevXdg === undefined) delete process.env.XDG_DATA_HOME;
+      else process.env.XDG_DATA_HOME = prevXdg;
+      fs.rmSync(projectRoot, { recursive: true, force: true });
+      fs.rmSync(aiwgRoot, { recursive: true, force: true });
+      fs.rmSync(xdgRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('resolves Windows-style project-local index paths under the project cwd', async () => {
+    const indexedPath = '.aiwg\\skills\\local-status\\SKILL.md';
+    const nativePath = path.join(tmpDir, '.aiwg', 'skills', 'local-status', 'SKILL.md');
+    fs.mkdirSync(path.dirname(nativePath), { recursive: true });
+    fs.writeFileSync(nativePath, '# Local Status\n');
+
+    const projectIndexDir = path.join(tmpDir, '.aiwg', '.index', 'project');
+    fs.mkdirSync(projectIndexDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectIndexDir, 'metadata.json'),
+      JSON.stringify({
+        version: '1.0.0',
+        builtAt: '2026-07-12T00:00:00Z',
+        buildTimeMs: 1,
+        entries: {
+          [indexedPath]: createMockEntry({
+            path: indexedPath,
+            type: 'skill',
+            name: 'local-status',
+            title: 'Local Status',
+            summary: 'Project-local status skill.',
+          }),
+        },
+      } satisfies ArtifactIndex),
+    );
+
+    await showArtifact(tmpDir, {
+      typeFilter: ['skill'],
+      name: 'local-status',
+      graph: 'project',
+      backend: 'local',
+      json: true,
+    });
+    const parsed = JSON.parse(consoleSpy.mock.calls.map(c => c[0]).join(''));
+    expect(parsed.path).toBe(nativePath);
+    expect(parsed.content).toContain('# Local Status');
   });
 
   it('resolves a persona agent via the corpus fallback when not in any index (#1623 U5)', async () => {

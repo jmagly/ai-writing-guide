@@ -24,6 +24,10 @@ import {
   type AiwgFortemiRecord,
 } from './browser-export.js';
 
+function normalizeIndexedPath(entryPath: string): string {
+  return entryPath.replace(/\\/g, '/');
+}
+
 /**
  * Resolve an index entry's source file path and read its body (frontmatter
  * stripped). Entry paths are normally relative to the project; framework-graph
@@ -34,8 +38,9 @@ function readEntryBody(cwd: string, entryPath: string): string | null {
   const candidates: string[] = [];
   if (path.isAbsolute(entryPath)) candidates.push(entryPath);
   else {
-    candidates.push(path.resolve(cwd, entryPath));
-    if (process.env.AIWG_ROOT) candidates.push(path.resolve(process.env.AIWG_ROOT, entryPath));
+    const normalizedPath = normalizeIndexedPath(entryPath);
+    candidates.push(path.resolve(cwd, normalizedPath));
+    if (process.env.AIWG_ROOT) candidates.push(path.resolve(process.env.AIWG_ROOT, normalizedPath));
   }
   for (const p of candidates) {
     try {
@@ -952,10 +957,11 @@ export async function discoverCapability(
    * paths unchanged.
    */
   function resolvePath(entry: MetadataEntry): string {
-    if (!aiwgRoot) return entry.path;
-    if (entry.path.startsWith('/')) return entry.path;
-    if (entry.path.startsWith('agentic/code/')) return `${aiwgRoot}/${entry.path}`;
-    return entry.path;
+    const normalizedPath = normalizeIndexedPath(entry.path);
+    if (!aiwgRoot) return normalizedPath;
+    if (path.isAbsolute(entry.path)) return entry.path;
+    if (normalizedPath.startsWith('agentic/code/')) return path.join(aiwgRoot, normalizedPath);
+    return normalizedPath;
   }
 
   // Build a hint string when the index has entries but no scored matches —
@@ -1071,13 +1077,14 @@ export interface ShowMetadataParams extends ShowParams {}
 
 function resolveMetadataPath(cwd: string, aiwgRoot: string | null, entry: MetadataEntry): string {
   if (path.isAbsolute(entry.path)) return entry.path;
-  if (aiwgRoot && entry.path.startsWith('agentic/code/')) {
-    return path.join(aiwgRoot, entry.path);
+  const normalizedPath = normalizeIndexedPath(entry.path);
+  if (aiwgRoot && normalizedPath.startsWith('agentic/code/')) {
+    return path.join(aiwgRoot, normalizedPath);
   }
-  if ((entry as ProvenancedEntry).indexScope === 'user' && entry.path.startsWith('~/.aiwg/')) {
-    return path.join(process.env.HOME ?? '', entry.path.slice(2));
+  if ((entry as ProvenancedEntry).indexScope === 'user' && normalizedPath.startsWith('~/.aiwg/')) {
+    return path.join(process.env.HOME ?? '', normalizedPath.slice(2));
   }
-  return path.join(cwd, entry.path);
+  return path.join(cwd, normalizedPath);
 }
 
 async function loadShowEntries(
@@ -1125,15 +1132,19 @@ async function loadShowEntries(
 
 function findShowMatches(entries: MetadataEntry[], types: string[], needle: string): MetadataEntry[] {
   const needleLower = needle.toLowerCase();
+  const normalizedNeedle = normalizeIndexedPath(needle);
   const candidates = entries.filter(e => types.includes(e.type));
 
   let matches = candidates.filter(e => discoveryIdForEntry(e) === needle);
-  if (matches.length === 0) matches = candidates.filter(e => e.path === needle);
+  if (matches.length === 0) {
+    matches = candidates.filter(e => e.path === needle || normalizeIndexedPath(e.path) === normalizedNeedle);
+  }
   if (matches.length === 0) {
     matches = candidates.filter(e => {
-      const dirStem = path.basename(path.dirname(e.path));
-      const basename = path.basename(e.path);
-      const fileStem = path.basename(e.path).replace(/\.[^.]+$/, '');
+      const normalizedPath = normalizeIndexedPath(e.path);
+      const dirStem = path.basename(path.dirname(normalizedPath));
+      const basename = path.basename(normalizedPath);
+      const fileStem = basename.replace(/\.[^.]+$/, '');
       return (basename === 'SKILL.md' && dirStem === needle) || fileStem === needle || e.name === needle;
     });
   }
