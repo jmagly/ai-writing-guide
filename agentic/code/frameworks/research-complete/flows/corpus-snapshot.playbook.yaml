@@ -1,0 +1,25 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: corpus-snapshot
+  namespace: research-complete
+  labels:
+    category: research-reporting
+spec:
+  vars:
+    command: aiwg corpus snapshot
+  steps:
+    - id: resolve-corpus
+      capability: corpus-snapshot-resolve-corpus
+    - id: compute-metrics
+      capability: corpus-snapshot-compute-metrics
+      depends_on:
+        - resolve-corpus
+    - id: render-output
+      capability: corpus-snapshot-render-output
+      depends_on:
+        - compute-metrics
+    - id: verify-snapshot
+      capability: corpus-snapshot-verify
+      depends_on:
+        - render-output

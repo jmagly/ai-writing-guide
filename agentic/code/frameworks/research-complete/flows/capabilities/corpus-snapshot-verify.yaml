@@ -1,0 +1,23 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: corpus-snapshot-verify
+  namespace: research-complete
+  labels:
+    category: research-reporting
+    idempotent: "true"
+spec:
+  description: Verify the snapshot command exposes programmatic JSON metrics and can no-op cleanly outside a research corpus.
+  version: 1.0.0
+  inputs:
+    - name: report
+      type: string
+      required: false
+  outputs:
+    - name: verification
+      type: object
+  agent: workflow-agent
+  idempotent: true
+  verification:
+    command: aiwg corpus snapshot --format json
+    expect: "\"flow\""

@@ -37,6 +37,7 @@ import { loadSourceTypeRegistry, renderSourceTypes } from './source-types.js';
 import { auditInductions, renderAudit, backfillFrontmatter, renderBackfill as renderBackfillFm } from './induction-audit.js';
 import { buildProfileEdges, renderProfileEdges } from './profile-edges.js';
 import { extractPages, renderExtract, resolveAdapter, rasterizePdf } from './vision-extract.js';
+import { runSnapshot, type SnapshotOptions } from './snapshot.js';
 
 function flagValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -71,6 +72,7 @@ Usage:
   aiwg corpus integrity-scan [--ref REF-XXX] [--quarantine] [--fail-on review|quarantine] [--out PATH]
   aiwg corpus source-types [--json] [--out PATH]
   aiwg corpus induction-audit [--start N --end N | --ref REF-XXX] [--out PATH]
+  aiwg corpus snapshot [--compute-only] [--delta-only] [--template PATH] [--format full|summary|json] [--out PATH] [--date YYYY-MM-DD] [--write] [--notes TEXT]
   aiwg corpus frontmatter-backfill [--write] [--out PATH]
   aiwg corpus profile-edges [--out PATH]
   aiwg corpus profile-similar --entity PROF-P-x [--top K] | --predict-collabs [--threshold T] [--out PATH]
@@ -96,6 +98,7 @@ citation-backfill computes the inverse citation map + injects missing incoming e
 integrity-scan flags LLM residue / placeholders / submission risks per REF (pass/review/quarantine); --quarantine writes per-REF reports; --fail-on exits non-zero at threshold.
 source-types lists the canonical source-type registry (paper/preprint/blog/repo/…) that normalizes the type/source_type/Source-Type vocabularies; override per-corpus at documentation/source-types.yaml.
 induction-audit checks induction depth-bands + structural integrity + per-source-type required sections (a blog isn't flagged for missing Benchmark Results).
+snapshot computes one-shot corpus snapshot metrics and renders full markdown, terminal summary, or JSON; --write emits .aiwg/reports/corpus-snapshot-YYYY-MM-DD.md.
 frontmatter-backfill adds minimal ref_id/title/year/pdf_hash frontmatter to legacy analysis docs lacking it (dry-run unless --write; additive, skips docs that already have frontmatter).
 profile-edges builds the profile→REF edge graph (first-class adjacency; reconciled against the citation graph so only edges to existing REFs are kept).
 profile-similar embeds person profiles (text-embedding; opt-in @xenova/transformers) → nearest researchers (--entity) or collaboration link-prediction (--predict-collabs).
@@ -218,6 +221,28 @@ function sidecarRepair(root: string, args: string[]): void {
   emit(renderRepair(authors, affil, write), flagValue(args, '--out'), root);
 }
 
+function snapshot(root: string, args: string[]): void {
+  const format = (flagValue(args, '--format') ?? 'full') as SnapshotOptions['format'];
+  if (!['full', 'summary', 'json'].includes(format ?? '')) {
+    throw new Error(`snapshot: invalid --format '${format}' (full|summary|json)`);
+  }
+  const result = runSnapshot(root, {
+    computeOnly: hasFlag(args, '--compute-only'),
+    deltaOnly: hasFlag(args, '--delta-only'),
+    write: hasFlag(args, '--write'),
+    template: flagValue(args, '--template'),
+    format,
+    out: flagValue(args, '--out'),
+    date: flagValue(args, '--date'),
+    notes: flagValue(args, '--notes'),
+  });
+  if (result.outPath) {
+    console.log(`Wrote ${path.relative(root, result.outPath)}`);
+    return;
+  }
+  process.stdout.write(result.content);
+}
+
 /** Write to --out (resolved against the corpus root) or print to stdout. */
 function emit(content: string, out: string | undefined, root: string): void {
   if (!out) {
@@ -318,6 +343,8 @@ export async function corpusMain(args: string[], cwd: string = process.cwd()): P
       });
       return emit(renderAudit(results), flagValue(rest, '--out'), root);
     }
+    case 'snapshot':
+      return snapshot(root, rest);
     case 'frontmatter-backfill': {
       const write = hasFlag(rest, '--write');
       return emit(renderBackfillFm(backfillFrontmatter(root, { write }), write), flagValue(rest, '--out'), root);

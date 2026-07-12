@@ -14,6 +14,17 @@ commandHint:
 
 Generate a point-in-time snapshot of the research corpus with computed metrics and analysis. Reads a snapshot template, fills `[COMPUTE]` sections with data, assists with `[ANALYZE]` sections, and writes the completed report.
 
+Use the native CLI first:
+
+```bash
+aiwg corpus snapshot [--compute-only] [--delta-only] [--template <path>] \
+  [--format full|summary|json] [--out <path>] [--date <YYYY-MM-DD>] [--write]
+```
+
+The command is backed by the declarative Flow playbook at
+`agentic/code/frameworks/research-complete/flows/corpus-snapshot.playbook.yaml`.
+The skill remains the orchestration wrapper for narrative `[ANALYZE]` sections.
+
 ## Triggers
 
 - "take a corpus snapshot"
@@ -210,20 +221,20 @@ profile, radar, discovery, and quality metrics.
 ## Examples
 
 ```bash
-# Full snapshot with analysis
-/corpus-snapshot
+# Full snapshot
+aiwg corpus snapshot --write
 
 # Just data, no analysis sections
-/corpus-snapshot --compute-only
+aiwg corpus snapshot --compute-only --write
 
 # Delta from previous snapshot only
-/corpus-snapshot --delta-only
+aiwg corpus snapshot --delta-only
 
 # Custom template
-/corpus-snapshot --template .aiwg/reports/custom-template.md
+aiwg corpus snapshot --template .aiwg/reports/custom-template.md --write
 
 # JSON metrics for dashboards
-/corpus-snapshot --format json
+aiwg corpus snapshot --format json
 ```
 
 ## References

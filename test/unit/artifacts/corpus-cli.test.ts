@@ -63,6 +63,63 @@ describe('corpusMain', () => {
     await expect(corpusMain(['radar-init'], root)).rejects.toThrow(/--ref|--all-missing/);
   });
 
+  it('snapshot --format json exposes computed metrics', async () => {
+    await corpusMain(['radar-init', '--ref', 'REF-600', '--write'], root);
+    write('documentation/radar/REF-600-radar.md', `---\nref: REF-600\ntitle: PID\ntype: radar\ngrade-current: A-\n---\n`);
+    write('pdfs/full/REF-600.pdf', 'pdf');
+    write('sources/pdfs/full/legacy.pdf', 'legacy');
+    const writes: string[] = [];
+    const oldWrite = process.stdout.write;
+    process.stdout.write = ((chunk: string | Uint8Array) => {
+      writes.push(String(chunk));
+      return true;
+    }) as typeof process.stdout.write;
+    try {
+      await corpusMain(['snapshot', '--format', 'json', '--date', '2026-07-12'], root);
+    } finally {
+      process.stdout.write = oldWrite;
+    }
+    const parsed = JSON.parse(writes.join(''));
+    expect(parsed.dimensions.papers).toBe(1);
+    expect(parsed.dimensions.pdfsFull).toBe(1);
+    expect(parsed.gradeOffVocabulary).toBe(0);
+    expect(parsed.flow).toBe('agentic/code/frameworks/research-complete/flows/corpus-snapshot.playbook.yaml');
+  });
+
+  it('snapshot --write emits a markdown report with computed sections', async () => {
+    await corpusMain(['radar-init', '--ref', 'REF-600', '--write'], root);
+    write('documentation/radar/REF-600-radar.md', `---\nref: REF-600\ntitle: PID\ntype: radar\ngrade-current: A\n---\n`);
+    await corpusMain(['snapshot', '--write', '--date', '2026-07-12'], root);
+    const out = readFileSync(join(root, '.aiwg/reports/corpus-snapshot-2026-07-12.md'), 'utf-8');
+    expect(out).toContain('type: corpus-snapshot');
+    expect(out).toContain('| Papers | 1 |');
+    expect(out).toContain('Off-vocabulary GRADE values: 0');
+    expect(out).toContain('agentic/code/frameworks/research-complete/flows/corpus-snapshot.playbook.yaml');
+  });
+
+  it('snapshot extracts the markdown output block from instruction templates', async () => {
+    write('.aiwg/reports/corpus-snapshot-template.md', `# Corpus Snapshot Template\n\n## Instructions\nFill the output format and replace placeholders.\n\n## Output Format\n\n\`\`\`markdown\n---\ntype: corpus-snapshot\ndate: {{date}}\n---\n\n# Corpus Snapshot - {{date}}\n\nOwner: {{Owner}}\n\n## Corpus Dimensions  [COMPUTE]\n\n[COMPUTE]\n\`\`\`\n`);
+    await corpusMain(['snapshot', '--write', '--date', '2026-07-12'], root);
+    const out = readFileSync(join(root, '.aiwg/reports/corpus-snapshot-2026-07-12.md'), 'utf-8');
+    expect(out).toContain('type: corpus-snapshot');
+    expect(out).toContain('## Corpus Dimensions');
+    expect(out).toContain('| summaries (analysis docs) | 1 | 0 |');
+    expect(out).toContain('1 reference entries');
+    expect(out).toContain('[ANALYZE: Owner]');
+    expect(out).not.toContain('Corpus Snapshot Template');
+    expect(out).not.toContain('## Instructions');
+    expect(out).not.toContain('```markdown');
+    expect(out).not.toContain('{{');
+  });
+
+  it('snapshot computes delta against the previous report', async () => {
+    write('.aiwg/reports/corpus-snapshot-2026-07-01.md', `---\ntype: corpus-snapshot\ndate: 2026-07-01\npapers: 0\nedges: 0\ndensity: 0\nisolatedNodes: 0\norphanCount: 0\n---\n`);
+    await corpusMain(['snapshot', '--delta-only', '--date', '2026-07-12', '--out', 'delta.md'], root);
+    const out = readFileSync(join(root, 'delta.md'), 'utf-8');
+    expect(out).toContain('Previous snapshot: .aiwg/reports/corpus-snapshot-2026-07-01.md');
+    expect(out).toContain('| papers | 0 | 1 | +1 |');
+  });
+
   it('rejects an unknown subcommand', async () => {
     await expect(corpusMain(['frobnicate'], root)).rejects.toThrow(/unknown corpus subcommand/);
   });

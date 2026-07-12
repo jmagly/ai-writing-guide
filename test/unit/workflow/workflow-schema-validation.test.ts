@@ -130,6 +130,7 @@ describe('pilot Flow conversion validates against the schema (#1539)', () => {
 
 describe('bulk Flow conversion: every flow-* is a conformant declarative Flow (#1539, #1534)', () => {
   const FLOWS_DIR = path.join(REPO_ROOT, 'agentic/code/frameworks/sdlc-complete/flows');
+  const RESEARCH_FLOWS_DIR = path.join(REPO_ROOT, 'agentic/code/frameworks/research-complete/flows');
   const CAP_DIR = path.join(FLOWS_DIR, 'capabilities');
   const SKILLS_DIR = path.join(REPO_ROOT, 'agentic/code/frameworks/sdlc-complete/skills');
 
@@ -179,6 +180,23 @@ describe('bulk Flow conversion: every flow-* is a conformant declarative Flow (#
     for (const f of capFiles) {
       const doc = yaml.load(fs.readFileSync(path.join(CAP_DIR, f), 'utf8'));
       expect(validate(doc), `${f}: ${JSON.stringify(validate.errors, null, 2)}`).toBe(true);
+    }
+  });
+
+  it('research corpus-snapshot Flow validates and references existing capabilities (#1647)', () => {
+    const ajv = makeAjv();
+    const validatePlaybook = ajv.compile(loadSchema('workflow-playbook.schema.json'));
+    const validateCapability = ajv.compile(loadSchema('workflow-capability.schema.json'));
+    const playbook = yaml.load(
+      fs.readFileSync(path.join(RESEARCH_FLOWS_DIR, 'corpus-snapshot.playbook.yaml'), 'utf8'),
+    ) as { spec: { steps: Array<{ capability?: string }> } };
+    expect(validatePlaybook(playbook), JSON.stringify(validatePlaybook.errors, null, 2)).toBe(true);
+    for (const step of playbook.spec.steps) {
+      if (!step.capability) continue;
+      const file = path.join(RESEARCH_FLOWS_DIR, 'capabilities', `${step.capability}.yaml`);
+      expect(fs.existsSync(file), `${step.capability} exists`).toBe(true);
+      const cap = yaml.load(fs.readFileSync(file, 'utf8'));
+      expect(validateCapability(cap), `${step.capability}: ${JSON.stringify(validateCapability.errors, null, 2)}`).toBe(true);
     }
   });
 

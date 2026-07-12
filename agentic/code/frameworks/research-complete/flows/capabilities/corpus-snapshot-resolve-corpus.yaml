@@ -1,0 +1,20 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: corpus-snapshot-resolve-corpus
+  namespace: research-complete
+  labels:
+    category: research-reporting
+    idempotent: "true"
+spec:
+  description: Resolve the active research corpus root using AIWG_CORPUS_ROOT, research.corpusRoot, or the project root.
+  version: 1.0.0
+  inputs: []
+  outputs:
+    - name: corpusRoot
+      type: string
+  agent: workflow-agent
+  idempotent: true
+  verification:
+    command: aiwg corpus snapshot --format summary
+    expect: "Corpus Snapshot|No research corpus found"

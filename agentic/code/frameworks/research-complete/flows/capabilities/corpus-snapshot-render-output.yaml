@@ -1,0 +1,27 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: corpus-snapshot-render-output
+  namespace: research-complete
+  labels:
+    category: research-reporting
+    idempotent: "true"
+spec:
+  description: Render computed snapshot metrics as full markdown, summary text, or JSON, optionally writing .aiwg/reports/corpus-snapshot-YYYY-MM-DD.md.
+  version: 1.0.0
+  inputs:
+    - name: metrics
+      type: object
+      required: true
+    - name: format
+      type: string
+      required: false
+      default: full
+  outputs:
+    - name: report
+      type: string
+  agent: workflow-agent
+  idempotent: true
+  verification:
+    command: aiwg corpus snapshot --format summary
+    expect: "Flow: agentic/code/frameworks/research-complete/flows/corpus-snapshot.playbook.yaml"
