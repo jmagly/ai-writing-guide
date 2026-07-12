@@ -24,9 +24,8 @@
 #   token in GitHub would push the wrong direction.
 # - Releases on github.com/jmagly/aiwg are public, so the deterministic
 #   release asset URLs can be downloaded without GitHub authentication.
-# - The Gitea side reuses the existing NPM_TOKEN (gta_…) which already
-#   has write:repository scope per the A10 secret-rotation runbook —
-#   no new token required.
+# - The Gitea side fetches the release-asset upload token from OpenBao.
+#   Gitea stores only the BAO_CI_ROLE_ID / BAO_CI_SECRET_ID bootstrap pair.
 # - The operator-side one-command ritual after each release is
 #   documented in docs/contributing/versioning.md (the release runbook).
 #
@@ -56,6 +55,7 @@ concurrency:
 jobs:
   mirror-signed-assets:
     name: Mirror four signed assets to Gitea release
+    if: ${{ secrets.BAO_CI_ROLE_ID != '' && secrets.BAO_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     # Same pinned container as the Gitea publish leg (see ci/digests.txt).
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2
@@ -98,6 +98,12 @@ jobs:
           echo "manifest_sig=release-manifest.json.sigstore" >> "$GITHUB_OUTPUT"
           echo "sbom=aiwg-${VERSION}.cdx.json" >> "$GITHUB_OUTPUT"
           echo "sbom_sig=aiwg-${VERSION}.cdx.json.sigstore" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch Gitea release token from OpenBao
+        env:
+          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
+          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
+        run: bash ci/openbao-fetch.sh --spec ci/openbao-fetch.upload-release-sigs.spec
 
       - name: Download signed assets from GitHub release
         # github.com/jmagly/aiwg releases are public; use the deterministic
@@ -145,8 +151,6 @@ jobs:
 
       - name: Look up Gitea release ID
         id: gitea_release
-        env:
-          GITEA_TOKEN: ${{ secrets.NPM_TOKEN }}
         # The Gitea release API requires the numeric release ID, not the
         # tag name. Look it up via the tag-resolver endpoint.
         run: |
@@ -175,8 +179,6 @@ jobs:
           echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
 
       - name: Upload signed assets to Gitea release
-        env:
-          GITEA_TOKEN: ${{ secrets.NPM_TOKEN }}
         # Gitea API: POST multipart/form-data to
         #   /api/v1/repos/{owner}/{repo}/releases/{id}/assets?name={filename}
         # Idempotency: the API rejects duplicate names with 409. The
@@ -237,8 +239,6 @@ jobs:
           upload_asset '${{ steps.tag.outputs.sbom_sig }}'
 
       - name: Verify all six assets land on Gitea release
-        env:
-          GITEA_TOKEN: ${{ secrets.NPM_TOKEN }}
         # Independent post-upload check. Re-fetch the release JSON and
         # confirm each of the six expected filenames is in .assets[].name.
         run: |

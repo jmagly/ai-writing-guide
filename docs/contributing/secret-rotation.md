@@ -1,148 +1,131 @@
-# Secret Rotation — Gitea Release Tokens
+# Secret Rotation
 
-Audit finding F6 (Wave 4 of #1278) flagged that the Gitea release-bearing
-secrets had no documented rotation cadence. The compensating-controls bundle
-for the Gitea publish leg (#1286 / A10) treats periodic rotation as one of
-the three controls that substitute for the missing `environment:`-scoped
-secrets + deployment-protection-rules surface that GitHub Actions provides
-and Gitea Actions currently does not. The other two are signed-tag verify
-(#1299 / A9, already in place — that's the hard gate) and the manual-approval
-record injected into the Gitea release body.
+AIWG's Gitea CI/CD secrets are stored in OpenBao. Gitea Actions keeps only the
+OpenBao bootstrap pair: `BAO_CI_ROLE_ID` and `BAO_CI_SECRET_ID`.
 
-This document is the operator procedure for rotating `secrets.NPM_TOKEN`
-on the Gitea repo. It applies to the Gitea API token (`gta_…` format) that
-drives both `gitea-release.yml` and the Gitea-registry leg of
-`npm-publish.yml` — despite its name, this is not an npmjs.org token. The
-npmjs.org token (`NPMJS_TOKEN`) is being phased out in favor of the GitHub
-Actions OIDC trusted-publishing path (#1283 / A5); rotate it on the same
-cadence until A5's first verified release lands and the operator removes
-it from the Gitea repo entirely.
+This procedure covers the OpenBao leaves used by Gitea CI/CD:
 
-## When to rotate
+| Leaf | Purpose |
+|---|---|
+| `kv_internal/ci/aiwg/gitea-npm-token` | Gitea npm registry publish and release API token. |
+| `kv_internal/ci/aiwg/github-mirror-token` | GitHub mirror push and release token. |
+| `kv_internal/ci/aiwg/aiwg-io-dispatch-token` | aiwg.io deploy dispatch token. |
+| `kv_internal/ci/shared/docs-deploy` | Docs host SSH private key. |
+
+The signed-tag verify gate remains the hard release gate. Rotation limits blast
+radius if a token or runner is exposed.
+
+## When to Rotate
 
 | Trigger | Cadence |
 |---|---|
-| Scheduled rotation | Every 90 days (quarterly) |
-| Maintainer offboarding | Immediately, on the same day |
+| Scheduled rotation | Every 90 days |
+| Maintainer offboarding | Immediately |
 | Suspected runner compromise | Immediately |
-| Gitea audit-log anomaly | Within 24 hours of detection |
-| Token believed to have been logged or echoed | Immediately |
-| First successful release after the **previous** rotation | Confirms the rotation worked; record the date as the start of the next 90-day window |
+| Gitea audit-log anomaly | Within 24 hours |
+| Token or key believed to have been logged | Immediately |
+| First successful release after the previous rotation | Record as the start of the next 90-day window |
 
-Calendar reminders are owner-driven, not automation-driven — there is no
-external service watching token age right now. The recommended pattern is
-a recurring calendar entry on the 1st of each quarter (Jan/Apr/Jul/Oct).
-Pair the rotation with the per-quarter security review on #1278's
-follow-up tracker.
+## Rotation Procedure
 
-## How to rotate
+### 1. Generate the Replacement Value
 
-The procedure is single-operator, runs in under 10 minutes, and never
-echoes the token to logs or shell history. Do not paste the token into
-a chat client, an issue body, or a commit message — see
-`.claude/rules/token-security.md` for the full handling rules.
+For `kv_internal/ci/aiwg/gitea-npm-token`, log in to Gitea as the AIWG
+release-bearing account and generate a date-stamped access token, such as
+`aiwg-publish-2026Q3`.
 
-### Step 1 — Generate a new Gitea token
+Minimum viable scopes:
 
-1. Log in to Gitea (`git.integrolabs.net`) as the AIWG release-bearing
-   account.
-2. **User Settings → Applications → Manage Access Tokens**.
-3. Click **Generate New Token**.
-4. Token name: use a date-stamped pattern, e.g. `aiwg-publish-2026Q2`.
-   The date stamp makes it trivial to read the token-list page and
-   confirm the right token is in service.
-5. Scopes (minimum viable set):
-   - `write:package` — required by both publish legs to push to the
-     Gitea npm registry.
-   - `write:repository` — required by `gitea-release.yml` to create
-     release records on the AIWG repo.
-   - **Do not** grant `admin:*`, `write:user`, or `write:organization`.
-     If the token leaks, the scopes above limit the blast radius to the
-     AIWG repository and its package registry — they do not authorize
-     account or organization mutations.
-6. **Generate Token**. Copy the value once — Gitea will not show it again.
+- `write:package` for the Gitea npm registry.
+- `write:repository` for release records and release assets.
 
-### Step 2 — Update the repo secret
+Do not grant `admin:*`, `write:user`, or `write:organization`.
 
-1. Repo → **Settings → Secrets and Variables → Actions**.
-2. Find `NPM_TOKEN`. Click **Edit**.
-3. Paste the new token value.
-4. Save.
+For the other leaves, generate or obtain the replacement value from the owning
+service. Do not paste values into chat, issues, shell history, or commit
+messages.
 
-Do not delete the old token from Gitea yet — keep it parked for the
-post-rotation verification step below.
+### 2. Write the Value to OpenBao
 
-### Step 3 — Verify the rotation worked
-
-The cheapest verification path is a tag-push using the next available
-pre-release version. This exercises both publish legs and the release-
-creation workflow against the new token without affecting the stable
-channel.
+Use the itops OpenBao tooling and pass secret values by file only. Example for
+the Gitea npm/release token:
 
 ```bash
-# Choose the next pre-release version, e.g. v2026.6.0-rc.1
-# Sign and push the tag — verify-signed-tag.sh (A9) gates it.
-git tag -s v2026.6.0-rc.1 -m "rc.1 — NPM_TOKEN rotation verification"
+scripts/secret-induct.sh \
+  --mount kv_internal \
+  --path ci/aiwg/gitea-npm-token \
+  --file /path/on/approved/media/gitea-npm-token.txt \
+  --field token \
+  --type api-token \
+  --service ci/aiwg \
+  --owner roctibot \
+  --tenant internal \
+  --purpose "Gitea package publish and release API token for AIWG" \
+  --consumers gitea-actions:aiwg \
+  --sensitivity high \
+  --rotation quarterly \
+  --scope repo \
+  --sop aiwg/docs/contributing/secret-rotation.md
+```
+
+Adjust `--path`, `--field`, and `--purpose` for the other leaves.
+
+### 3. Verify
+
+The cheapest verification path is a signed pre-release tag. It exercises the
+OpenBao fetch path, Gitea package publish, and release API without affecting the
+stable channel.
+
+```bash
+git tag -s v2026.6.0-rc.1 -m "rc.1 - CI secret rotation verification"
 git push origin main --tags
 ```
 
-Watch the run on Gitea Actions:
+Watch Gitea Actions:
 
-- `Publish to npm registries` — both pre-release jobs should reach
-  `Affirm dist-tag on Gitea` and exit clean.
-- `Create Gitea Release` — should reach `Create or reuse Gitea release`
-  and produce a release entry with the new approval record line.
+- `Publish to Gitea npm registry` should reach `Affirm dist-tag on Gitea`.
+- `Create Gitea Release` should reach `Create or reuse Gitea release`.
+- `Mirror signed release assets to Gitea release` should fetch the Gitea token
+  from OpenBao during manual asset mirroring.
 
-Then `npm install -g aiwg@2026.6.0-rc.1 --registry=https://git.integrolabs.net/api/packages/roctinam/npm/`
-on a clean host as a smoke test.
+Then smoke-test installation from the Gitea registry on a clean host:
 
-### Step 4 — Revoke the old token
+```bash
+npm install -g aiwg@2026.6.0-rc.1 --registry=https://git.integrolabs.net/api/packages/roctinam/npm/
+```
 
-Only after the verification run is green:
+### 4. Revoke the Old Source Credential
 
-1. Gitea → **User Settings → Applications → Manage Access Tokens**.
-2. Locate the previous-quarter token (e.g. `aiwg-publish-2026Q1`).
-3. **Delete**.
+Only after verification is green, revoke the previous token or key at the
+source service. For Gitea tokens, remove the previous date-stamped access token
+from **User Settings -> Applications -> Manage Access Tokens**.
 
-### Step 5 — Record the rotation
+### 5. Record the Rotation
 
-Append a rotation-record entry to this file, under "Rotation history"
-below. The record proves the cadence is being honored and feeds the
-quarterly security review.
+Append a rotation record below. The record proves the cadence is being honored.
 
-## Rotation history
+## Rotation History
 
-| Date | Performed by | Token name | Trigger | Verification |
+| Date | Performed by | Leaf | Trigger | Verification |
 |---|---|---|---|---|
-| _(seed entry — first rotation will be the next quarter after Wave 4 lands)_ | | | | |
+| _(seed entry - first OpenBao-backed rotation is pending)_ | | | | |
 
-## What if rotation breaks the publish
+## If Rotation Breaks Publish
 
-If the post-rotation test tag fails on either publish leg or on release
-creation:
+1. Restore the previous OpenBao leaf value if it is still valid.
+2. Check token scope, AppRole policy, and whether the Gitea repo bootstrap pair
+   points at a current `ci-aiwg` secret ID.
+3. Re-run the relevant fetch spec in dry-run mode:
 
-1. **Do not roll forward.** Revert the repo secret to the previous token
-   value (you have not yet revoked it in step 4, so it is still valid).
-2. Inspect the failed run's output. Common causes:
-   - New token's scopes are insufficient — re-generate with the full
-     `write:package` + `write:repository` pair.
-   - Token name conflicts with an existing token (Gitea normally allows
-     this but some setups reject duplicates).
-   - Copy/paste error — regenerate, do not edit by hand.
-3. File a `#1278`-tagged follow-up issue if the failure surfaces a
-   workflow bug rather than a token issue.
+```bash
+bash ci/openbao-fetch.sh --spec ci/openbao-fetch.npm-publish.spec --dry-run
+```
 
-## Related rules and procedures
+4. File a follow-up issue if the failure is in workflow logic rather than token
+   material or OpenBao policy.
 
-- `.claude/rules/token-security.md` — base token-handling rules (heredoc
-  scoping, no echo, file permissions). Applies to every token in the
-  AIWG project, not just `NPM_TOKEN`.
-- `.claude/rules/dev-secret-hygiene.md` — secret rotation procedure
-  required per-project. This file is AIWG's instance.
-- `.gitea/workflows/README.md` — release-secret policy section, points
-  back here for the rotation cadence.
-- `.aiwg/architecture/adr-gitea-release-compensating-controls.md` — why
-  rotation is in the compensating bundle in the first place.
-- `tools/ci/verify-signed-tag.sh` — the signed-tag gate that runs ahead
-  of any token-driven publish. Tag signature is the hard gate; token
-  rotation is one of the soft gates.
+## Related Procedures
+
+- [`ci-cd-secrets.md`](ci-cd-secrets.md) - current Gitea CI/CD secret model.
+- `itops/docs/security/ci-secret-migration.md` - OpenBao CI migration runbook.
+- `tools/ci/verify-signed-tag.sh` - signed-tag release gate.

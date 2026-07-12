@@ -2,6 +2,9 @@
 #
 # Automatically creates (or reuses) a Gitea release when a version tag is pushed.
 # Keeps GitHub release management manual via `gh release ...`.
+#
+# Required tracker secrets: BAO_CI_ROLE_ID, BAO_CI_SECRET_ID.
+# OpenBao fetch spec: ci/openbao-fetch.gitea-release.spec -> GITEA_TOKEN.
 
 name: Create Gitea Release
 
@@ -17,6 +20,7 @@ concurrency:
 jobs:
   create-release:
     name: Create Release
+    if: ${{ secrets.BAO_CI_ROLE_ID != '' && secrets.BAO_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 5
@@ -51,12 +55,6 @@ jobs:
         # and docs/contributing/versioning.md.
         run: bash tools/ci/verify-signed-tag.sh
 
-      - name: Install jq (node:20 image does not ship it by default)
-        run: |
-          if ! command -v jq >/dev/null 2>&1; then
-            apt-get update && apt-get install -y --no-install-recommends jq
-          fi
-
       - name: Extract version from package.json
         id: version
         run: |
@@ -69,13 +67,17 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version verified: $VERSION"
 
-      # Authentication note (#1246, #1247):
-      # `secrets.NPM_TOKEN` is a **Gitea API token** (gta_... format) —
-      # NOT an npmjs.org token. Same token is used by npm-publish.yml to
-      # auth against Gitea's bundled npm registry. The name is historical
-      # and was kept in rc.38 by operator preference to avoid a secret-
-      # rotation cycle. The npmjs.org public-registry token lives at
-      # `secrets.NPMJS_TOKEN` and is referenced only by npm-publish.yml.
+      - name: Install OpenBao fetch dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends curl jq
+
+      - name: Fetch Gitea release token from OpenBao
+        env:
+          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
+          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
+        run: bash ci/openbao-fetch.sh --spec ci/openbao-fetch.gitea-release.spec
+
       - name: Create or reuse Gitea release
         run: |
           set -euo pipefail
@@ -119,7 +121,7 @@ jobs:
           # distinguish "created" (201) from "already exists" (409) from
           # real failures (4xx/5xx without a 409). pipefail-safe.
           HTTP_CODE=$(curl -s -o /tmp/release-response.json -w "%{http_code}" -X POST \
-            -H "Authorization: token ${{ secrets.NPM_TOKEN }}" \
+            -H "Authorization: token ${GITEA_TOKEN}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
             "$URL")

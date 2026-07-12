@@ -2,6 +2,9 @@
 #
 # When a version tag is pushed, trigger a deploy of the aiwg.io marketing site
 # so it picks up the latest release info (changelog, version refs).
+#
+# Required tracker secrets: BAO_CI_ROLE_ID, BAO_CI_SECRET_ID.
+# OpenBao fetch spec: ci/openbao-fetch.notify-site.spec -> AIWG_IO_DISPATCH_TOKEN.
 
 name: Notify aiwg.io
 
@@ -17,6 +20,7 @@ concurrency:
 jobs:
   trigger-deploy:
     name: Trigger aiwg.io deploy
+    if: ${{ secrets.BAO_CI_ROLE_ID != '' && secrets.BAO_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     defaults:
@@ -24,9 +28,22 @@ jobs:
         shell: bash
 
     steps:
+      - name: Checkout AIWG
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Install OpenBao fetch dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends curl jq
+
+      - name: Fetch aiwg.io dispatch token from OpenBao
+        env:
+          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
+          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
+        run: bash ci/openbao-fetch.sh --spec ci/openbao-fetch.notify-site.spec
+
       - name: Dispatch aiwg.io deploy
         env:
-          AIWG_IO_DISPATCH_TOKEN: ${{ secrets.AIWG_IO_DISPATCH_TOKEN }}
           REF_NAME: ${{ gitea.ref_name }}
         run: |
           set -euo pipefail

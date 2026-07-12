@@ -9,15 +9,11 @@
 # npmjs.org supply-chain distribution and verification; this Gitea workflow
 # owns the Gitea npm registry (local package management) only.
 #
-# REQUIRED SECRETS:
-#   NPM_TOKEN    - **Gitea API token** (gta_...) with package:write scope on
-#                  Gitea's bundled npm registry, plus repository:write so the
-#                  same token can also drive gitea-release.yml. Despite the
-#                  name, this is NOT an npmjs.org token — the legacy name is
-#                  preserved by operator preference.
-#   (NPMJS_TOKEN is no longer used by this workflow — the npmjs.org publish runs
-#    from .github/workflows via OIDC and needs no token. The Gitea secret can be
-#    revoked.)
+# REQUIRED TRACKER SECRETS:
+#   BAO_CI_ROLE_ID, BAO_CI_SECRET_ID - OpenBao AppRole bootstrap pair.
+#
+# OpenBao fetch spec:
+#   ci/openbao-fetch.npm-publish.spec -> NODE_AUTH_TOKEN
 #
 # To publish a new version:
 #   1. Update version in package.json
@@ -55,7 +51,7 @@ jobs:
   build-and-publish-prerelease:
     name: Build and Publish Pre-release
     # Publish pre-release tags (nightly, alpha, beta) — nightly → --tag nightly, others → --tag next
-    if: ${{ contains(github.ref, '-') && github.event_name == 'push' }}
+    if: ${{ contains(github.ref, '-') && github.event_name == 'push' && secrets.BAO_CI_ROLE_ID != '' && secrets.BAO_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 15
@@ -154,6 +150,17 @@ jobs:
           echo "npm_tag=$NPM_TAG" >> $GITHUB_OUTPUT
           echo "Pre-release version: $NPM_VERSION (tag: $NPM_TAG)"
 
+      - name: Install OpenBao fetch dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends curl jq
+
+      - name: Fetch Gitea npm token from OpenBao
+        env:
+          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
+          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
+        run: bash ci/openbao-fetch.sh --spec ci/openbao-fetch.npm-publish.spec
+
       - name: Publish pre-release to Gitea npm registry
         run: |
           # set -o pipefail (#1247): without it, `npm publish ... | tee` returns
@@ -172,9 +179,6 @@ jobs:
               cat publish-output.txt; exit 1
             fi
           }
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish Cockpit pre-release to Gitea npm registry
         run: |
           set -o pipefail
@@ -189,9 +193,6 @@ jobs:
               cat cockpit-publish-output.txt; exit 1
             fi
           }
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Affirm dist-tag on Gitea (idempotent)
         # Always re-write the dist-tag, even when publish was skipped as
         # "already exists". This makes re-runs self-healing if the original
@@ -234,9 +235,6 @@ jobs:
             fi
           done
           npm dist-tag ls @aiwg/cockpit --registry=${{ env.GITEA_NPM_REGISTRY }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       # npmjs.org publishing is owned by .github/workflows/npm-publish.yml
       # (OIDC trusted publishing + provenance). This Gitea workflow owns the
       # Gitea npm registry only. The formerly-disabled Gitea npmjs.org legs
@@ -246,7 +244,7 @@ jobs:
   build-and-publish:
     name: Build and Publish
     # Only publish final tags (no pre-release suffix)
-    if: ${{ !contains(github.ref, '-') }}
+    if: ${{ !contains(github.ref, '-') && secrets.BAO_CI_ROLE_ID != '' && secrets.BAO_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 15
@@ -388,6 +386,17 @@ jobs:
       - name: Check Cockpit package contents
         run: npm pack ./apps/cockpit --dry-run
 
+      - name: Install OpenBao fetch dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends curl jq
+
+      - name: Fetch Gitea npm token from OpenBao
+        env:
+          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
+          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
+        run: bash ci/openbao-fetch.sh --spec ci/openbao-fetch.npm-publish.spec
+
       - name: Publish to Gitea npm registry
         if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
@@ -411,9 +420,6 @@ jobs:
               exit 1
             fi
           }
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish Cockpit to Gitea npm registry
         if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
@@ -430,9 +436,6 @@ jobs:
               exit 1
             fi
           }
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Promote to latest on Gitea (idempotent)
         # Explicit dist-tag write. Runs even when publish was skipped as
         # "already exists" — this is the safety net that the user-reported
@@ -475,9 +478,6 @@ jobs:
             fi
           done
           npm dist-tag ls @aiwg/cockpit --registry=${{ env.GITEA_NPM_REGISTRY }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       # npmjs.org publishing is owned by .github/workflows/npm-publish.yml
       # (OIDC + provenance); the formerly-disabled Gitea npmjs.org legs were
       # removed now that the OIDC path is proven in production (#1283 / A5).

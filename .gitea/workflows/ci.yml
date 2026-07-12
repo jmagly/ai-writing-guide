@@ -90,6 +90,12 @@ jobs:
         # coverage, and test results out of git unless explicitly allowlisted.
         run: npm run lint:generated-artifacts
 
+      - name: Verify OpenBao CI migration
+        # Local-only gate: validates workflow secret references, OpenBao fetch
+        # specs, the AppRole policy, and migration docs without reading live
+        # secret values. Live metadata is checked separately after induction.
+        run: npm run lint:openbao-migration
+
       - name: Run conformance suite (fixture mode)
         # Exercises the executor-contract v1 dispatch path via fixture replay.
         # Runs as a separate step (not folded into test:ci) to keep the existing

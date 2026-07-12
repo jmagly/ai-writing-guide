@@ -8,7 +8,9 @@
 #      between releases (no new version, no announcement, no tag)
 #   3. workflow_dispatch — manual operator-initiated deploy
 #
-# Required secrets: DEPLOY_SSH_KEY, DEPLOY_HOST, DEPLOY_PORT, DEPLOY_USER, DEPLOY_PATH
+# Required tracker secrets: BAO_CI_ROLE_ID, BAO_CI_SECRET_ID.
+# Required tracker variables: DEPLOY_HOST, DEPLOY_PORT, DEPLOY_USER, DEPLOY_PATH.
+# OpenBao fetch spec: ci/openbao-fetch.docsite-deploy.spec -> DEPLOY_SSH_KEY_FILE.
 # (GT_ACCESS_TOKEN no longer required — publisher comes from npm, not a clone; #1484)
 
 name: Docsite Deploy
@@ -38,6 +40,7 @@ concurrency:
 jobs:
   deploy-docs:
     name: Build & Deploy Documentation
+    if: ${{ secrets.BAO_CI_ROLE_ID != '' && secrets.BAO_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 30
@@ -131,20 +134,26 @@ jobs:
           ls -lah "$OUT/"
 
       - name: Install SSH tools
-        run: apt-get update && apt-get install -y --no-install-recommends openssh-client rsync
+        run: apt-get update && apt-get install -y --no-install-recommends curl jq openssh-client rsync
+
+      - name: Fetch docs deploy key from OpenBao
+        env:
+          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
+          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
+        run: bash ci/openbao-fetch.sh --spec ci/openbao-fetch.docsite-deploy.spec
 
       - name: Configure SSH key
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' '${{ secrets.DEPLOY_SSH_KEY }}' > ~/.ssh/deploy_key
+          cp "${DEPLOY_SSH_KEY_FILE}" ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
       - name: Deploy to docs server
         env:
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
         run: |
           set -euo pipefail
           SSH_OPTS=(
@@ -226,10 +235,10 @@ jobs:
 
       - name: Verify deployment
         env:
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
           GITEA_REF: ${{ gitea.ref }}
           GITEA_REF_NAME: ${{ gitea.ref_name }}
           GITEA_EVENT_NAME: ${{ gitea.event_name }}
@@ -319,7 +328,9 @@ jobs:
 
       - name: Cleanup SSH key
         if: always()
-        run: rm -f ~/.ssh/deploy_key
+        run: |
+          rm -f ~/.ssh/deploy_key
+          bash ci/openbao-fetch.sh --cleanup
 
       - name: Log deployment result
         if: success()
