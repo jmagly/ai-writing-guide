@@ -58,6 +58,7 @@ AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:8122 aiwg cockpit
 - **Home** — connected-state overview, first-run flow, and a session-first entry point.
 - **Inventory** — host, container, Docker, and VM runtime targets with lifecycle controls.
 - **Running** — active work across stacks, spend posture, and task stop controls.
+- **Missions** — read-only Mission Control projection: sessions, per-mission status, audit tail.
 - **Sessions** — observe-first terminal attach, explicit drive/control, replay posture, and stale-agent recovery.
 - **Approvals** — unified human-in-the-loop decision inbox.
 - **Explore** — live index status/query/rebuild plus read-only AIWG capability catalog.
@@ -138,6 +139,7 @@ operator / CLI:  aiwg cockpit
 | **Home** | Guided first-run: what-is-this, live status, the **Start a session** primary verb, first-run tour. |
 | **Inventory** | Instances + lifecycle (Start/Stop/Destroy). |
 | **Running** | Running work across stacks + cross-stack spend + per-task Stop. |
+| **Missions** | Read-only Mission Control projection — durable `aiwg mc` sessions merged with the live executor task session. |
 | **Sessions** | Live pty terminal — observe/drive, keyframe, non-destructive replay, stale-agent recovery; inline **＋ capability picker**. |
 | **Approvals** | Unified HITL inbox (`hitl-prompt/v1`); decisions = operator authorization. |
 | **Explore** | Live artifact-index status/query/rebuild plus read-only AIWG catalog search. |
@@ -177,9 +179,10 @@ Set `AIWG_COCKPIT_KEYCHAIN_STRICT=1` when shells must refuse plaintext runtime
 tokens. In strict mode the Bridge exits if it cannot persist the per-launch token
 to the OS keychain, and shell-core refuses runtime files that only contain a
 plaintext token. Operator intent is also recorded in a local redacted audit log
-under `~/.aiwg/cockpit/audit/events.jsonl` for lifecycle, session, action-inject,
-and approval-response decisions; bearer material and provider credentials are
-redacted before write.
+under `~/.aiwg/cockpit/audit/events.jsonl` for lifecycle, session, and
+approval-response decisions (the web UI additionally records action injections
+as operator intents); bearer material and provider credentials are redacted
+before write.
 
 ## Run (dev/test, against a real agentic-sandbox executor)
 
@@ -228,10 +231,10 @@ agentic-sandbox executor. The bundled mock is reserved for automated tests and
 PoCs; if a mock-like executor is detected, the Bridge refuses it unless
 `AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR=1` is set by an automated harness.
 
-The Bridge keeps legacy admin-surface compatibility (`/admin/instances`,
-`/admin/running`) for automated coverage, but dev/test launches should target
-real agentic-sandbox v2 admin surfaces (`/api/v2/admin/instances`,
-`/api/v2/admin/running`). Field normalization covers snake_case and camelCase
+The Bridge probes legacy (`/admin/instances`) and v2 (`/api/v2/admin/instances`)
+admin surfaces as fallback candidates for inventory and lifecycle; running work
+and approvals are derived from per-instance A2A task lists rather than any
+admin `/running` route. Field normalization covers snake_case and camelCase
 payloads so live sandboxes can evolve without breaking the operator UI; unknown
 fields degrade to opaque posture rather than failing the screen.
 
@@ -243,19 +246,26 @@ agentic-sandbox.
 
 ### Recover stale agents
 
-When a container or Docker runtime is still running but its agent registration
-has disappeared, Cockpit keeps the row visible instead of hiding it. Inventory
-and Sessions show `agent unreachable` and expose **Reconnect** for stale
-container/Docker rows. Use this when an instance is alive but session attach,
-running projections, or actions cannot resolve an agent id.
+When a container, Docker, or VM runtime is still running but its agent
+registration has disappeared, Cockpit keeps the row visible instead of hiding
+it. Inventory and Sessions show `agent unreachable` and expose **Reconnect**
+for stale container/Docker **and vm/qemu/kvm** rows (#1778). Use this when an
+instance is alive but session attach, running projections, or actions cannot
+resolve an agent id.
 
 The Bridge handles recovery through:
 
 1. executor-owned reconnect endpoints when the sandbox exposes one, then
-2. local Docker fallback: `docker exec <container> agent-reconnect`.
+2. local Docker fallback: `docker exec <container> agent-reconnect`, or
+3. VM fallback (#1778): the same reconnect SIGHUP delivered through the libvirt
+   qemu-guest-agent channel (`virsh qemu-agent-command <domain> guest-exec
+   pkill -HUP -x agent-client`). Detached tmux sessions are re-adopted on
+   re-register; non-tmux sessions do not survive a reconnect today
+   (agentic-sandbox#634).
 
 The Docker fallback requires sandbox images that include the `agent-reconnect`
-helper (agentic-sandbox v2026.7.5+ images). If **Reconnect** reports that no
+helper (agentic-sandbox v2026.7.5+ images); the VM fallback requires virsh
+access to the domain from the Bridge host. If **Reconnect** reports that no
 reconnect path is available, rebuild or repull the sandbox image, then start the
 instance again. For host targets, prefer starting Cockpit with the host daemon:
 

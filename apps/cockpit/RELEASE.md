@@ -18,7 +18,7 @@ pipeline as the base package:
 
 Pre-release tags are internal pipeline checkpoints — no CHANGELOG/announcement
 per pre-release. `apps/cockpit/package.json` `version` tracks the base version in
-lockstep (currently `2026.6.2`).
+lockstep.
 
 ## Publish leg
 
@@ -50,9 +50,8 @@ Before a cockpit release tag:
 
 2. **Default dev bring-up works** — the documented default invocation (Bridge on
    its off-range default `8140`, executor on canonical `8122`; see README "Ports")
-   yields a connected Bridge against a real executor. The one-command bring-up
-   script is tracked in #1634; until it lands, run the documented two-step launch
-   from the README and confirm the UI binds inventory.
+   yields a connected Bridge against a real executor. Use the one-command
+   bring-up (`npm run cockpit:up`, #1634) and confirm the UI binds inventory.
 
 3. **Host-tier live smoke** — against a reachable real `agentic-sandbox`:
 

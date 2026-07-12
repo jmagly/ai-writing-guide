@@ -34,14 +34,18 @@ The dashboard opens at `http://127.0.0.1:7337` by default.
 
 ## Web Dashboard
 
-The maintained operator dashboard is Cockpit, a React SPA served by the local Bridge:
+The maintained operator dashboard is **Cockpit**, a React SPA served by its own
+local Bridge (default `:8140`). Cockpit has a dedicated documentation section —
+**[docs/cockpit/](./cockpit/README.md)** — covering installation, architecture,
+all eleven surfaces, the session model, the Bridge API, trust posture,
+stale-agent recovery, and the dev/test/mock/release patterns. The quick map:
 
 | Tab | Purpose |
 |-----|---------|
 | **Home** | Live stack overview, first-run flow, and session-first entry point |
 | **Inventory** | Host, container, Docker, and VM runtime targets with lifecycle controls |
 | **Running** | Active work across stacks and task stop controls |
-| **Missions** | Dispatch, monitor, pause, resume, and abort Mission Control tasks |
+| **Missions** | Read-only Mission Control projection (sessions, missions, audit tail) |
 | **Sessions** | Observe-first terminal attach, explicit drive/control, and replay posture |
 | **Approvals** | Unified human-in-the-loop decision inbox |
 | **Explore** | Live artifact-index status/query/rebuild and capability catalog search |
@@ -245,9 +249,9 @@ coverage banner. Verified end-to-end against agentic-sandbox v2026.7.4
 ### Stale agent recovery
 
 Cockpit distinguishes a stopped runtime from a running runtime whose agent has
-fallen out of the registry. Running Docker/container rows with no resolvable
-agent stay visible as `agent unreachable`; Inventory and Sessions expose
-**Reconnect** instead of asking the operator to destroy or recreate the
+fallen out of the registry. Running Docker/container **and VM** rows with no
+resolvable agent stay visible as `agent unreachable`; Inventory and Sessions
+expose **Reconnect** instead of asking the operator to destroy or recreate the
 instance.
 
 The Cockpit Bridge recovery endpoint is:
@@ -256,19 +260,11 @@ The Cockpit Bridge recovery endpoint is:
 POST /api/instances/:id/reconnect
 ```
 
-The Bridge first tries executor-owned reconnect routes when the sandbox exposes
-them. If none are available and the instance maps to a local Docker container,
-it falls back to:
-
-```bash
-docker exec <container> agent-reconnect
-```
-
-Use this path after transient agent crashes, bridge restarts, or container
-agents that stopped reporting while the container kept running. The fallback
-requires an image with the `agent-reconnect` helper (agentic-sandbox v2026.7.5+
-images). A successful reconnect restores the agent registration; it does not
-replace or destroy the runtime.
+The Bridge tries executor-owned reconnect routes first, then falls back to
+`docker exec <container> agent-reconnect` for container rows, or delivering the
+same reconnect signal through the libvirt qemu-guest-agent channel for VM rows
+(#1778). Full semantics, session-survival caveats, and host-runtime guidance:
+[docs/cockpit/recovery.md](./cockpit/recovery.md).
 
 ## WebSocket: Sandbox Event Push
 

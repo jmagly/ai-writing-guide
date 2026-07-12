@@ -419,6 +419,7 @@ aiwg reproducibility-validate  # Validate workflow reproducibility
 | **Research Complete** | `@agentic/code/frameworks/research-complete/README.md` |
 | **Security Engineering** | `@agentic/code/frameworks/security-engineering/README.md` |
 | **RLM Addon** | `@agentic/code/addons/rlm/README.md` |
+| **Cockpit (operator console)** | `@docs/cockpit/README.md` |
 | **Daemon Mode** | `@docs/daemon-guide.md` |
 | **Messaging Integration** | `@docs/messaging-guide.md` |
 | **Voice Profiles** | `@agentic/code/addons/voice-framework/voices/templates/` |
