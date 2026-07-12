@@ -103,9 +103,6 @@ if [[ -z "$SPEC_FILE" ]]; then
 fi
 [[ -r "$SPEC_FILE" ]] || die "cannot read spec: $SPEC_FILE"
 
-if ! command -v curl >/dev/null 2>&1; then die "curl is required"; fi
-if ! command -v jq >/dev/null 2>&1; then die "jq is required"; fi
-
 if [[ "$DRY_RUN" == 1 ]]; then
   awk '
     /^[[:space:]]*($|#)/ { next }
@@ -118,6 +115,11 @@ if [[ "$DRY_RUN" == 1 ]]; then
   printf 'openbao-fetch: dry-run OK for %s\n' "$SPEC_FILE"
   exit 0
 fi
+
+# Dependency checks live below the dry-run branch on purpose: dry-run is pure
+# spec validation (awk only) and must work in containers without curl/jq.
+if ! command -v curl >/dev/null 2>&1; then die "curl is required"; fi
+if ! command -v jq >/dev/null 2>&1; then die "jq is required"; fi
 
 [[ -n "${BAO_CI_ROLE_ID:-}" ]] || die "BAO_CI_ROLE_ID is required"
 [[ -n "${BAO_CI_SECRET_ID:-}" ]] || die "BAO_CI_SECRET_ID is required"
@@ -171,7 +173,10 @@ while read -r kind name path field extra; do
     printf 'openbao-fetch: exported %s from %s:%s\n' "$name" "$path" "$field" >&2
   else
     file="$(mktemp "$tmp_dir/openbao-${name}.XXXXXX")"
-    printf '%s' "$value" >"$file"
+    # Trailing newline is load-bearing: command substitution strips it from the
+    # fetched value, and OpenSSH rejects a private key file that does not end
+    # with one ("error in libcrypto").
+    printf '%s\n' "$value" >"$file"
     chmod 600 "$file"
     printf '%s\n' "$file" >>"$cleanup_list"
     printf '%s=%s\n' "$name" "$file" >>"$ENV_FILE"
