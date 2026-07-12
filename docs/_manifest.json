@@ -256,6 +256,17 @@
     "addons/voice-framework",
     "addons/voice-framework/overview",
     "addons/voice-framework/quickstart",
+    "cockpit",
+    "cockpit/README",
+    "cockpit/installation",
+    "cockpit/architecture",
+    "cockpit/surfaces",
+    "cockpit/sessions",
+    "cockpit/bridge-api",
+    "cockpit/trust-and-security",
+    "cockpit/recovery",
+    "cockpit/development",
+    "cockpit/releases",
     "serve-guide",
     "concierge-guide",
     "customization",
@@ -2006,6 +2017,81 @@
       "summary": "Apply your first voice profile to content in about 2 minutes.",
       "file": "addons/voice-framework/quickstart.md",
       "parent": "addons/voice-framework"
+    },
+    {
+      "id": "cockpit",
+      "title": "Cockpit",
+      "summary": "Local operator console for agentic sessions"
+    },
+    {
+      "id": "cockpit/README",
+      "title": "Cockpit Overview",
+      "summary": "What Cockpit is, the operating model, and the section map",
+      "file": "cockpit/README.md",
+      "parent": "cockpit"
+    },
+    {
+      "id": "cockpit/installation",
+      "title": "Installation & Launch",
+      "summary": "Install paths, shells, version pinning, troubleshooting",
+      "file": "cockpit/installation.md",
+      "parent": "cockpit"
+    },
+    {
+      "id": "cockpit/architecture",
+      "title": "Architecture",
+      "summary": "Shells, Bridge, executor — control vs data plane, ports, components",
+      "file": "cockpit/architecture.md",
+      "parent": "cockpit"
+    },
+    {
+      "id": "cockpit/surfaces",
+      "title": "Surfaces",
+      "summary": "All eleven tabs and the launch/start modals",
+      "file": "cockpit/surfaces.md",
+      "parent": "cockpit"
+    },
+    {
+      "id": "cockpit/sessions",
+      "title": "Sessions",
+      "summary": "Observe-first attach, take control, replay, persistent terminals",
+      "file": "cockpit/sessions.md",
+      "parent": "cockpit"
+    },
+    {
+      "id": "cockpit/bridge-api",
+      "title": "Bridge API",
+      "summary": "Endpoint reference, request gating, environment variables, audit events",
+      "file": "cockpit/bridge-api.md",
+      "parent": "cockpit"
+    },
+    {
+      "id": "cockpit/trust-and-security",
+      "title": "Trust & Security",
+      "summary": "Token custody, posture badges, audit log, library boundary",
+      "file": "cockpit/trust-and-security.md",
+      "parent": "cockpit"
+    },
+    {
+      "id": "cockpit/recovery",
+      "title": "Recovery",
+      "summary": "Stale-agent reconnect for Docker and VM runtimes, destroy semantics",
+      "file": "cockpit/recovery.md",
+      "parent": "cockpit"
+    },
+    {
+      "id": "cockpit/development",
+      "title": "Development & Testing",
+      "summary": "One-command bring-up, mock boundary, verification tiers",
+      "file": "cockpit/development.md",
+      "parent": "cockpit"
+    },
+    {
+      "id": "cockpit/releases",
+      "title": "Releases",
+      "summary": "Channels, publish leg, pre-tag gates for @aiwg/cockpit",
+      "file": "cockpit/releases.md",
+      "parent": "cockpit"
     },
     {
       "id": "serve-guide",
