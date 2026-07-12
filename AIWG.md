@@ -12,7 +12,7 @@ This project uses the **AIWG SDLC framework** for software development lifecycle
 
 AIWG is a comprehensive SDLC framework providing:
 
-- **195 specialized agents** covering all lifecycle phases (Inception → Elaboration → Construction → Transition → Production)
+- **196 specialized agents** covering all lifecycle phases (Inception → Elaboration → Construction → Transition → Production)
 - **21 skills** for project management, security, testing, deployment, and traceability
 - **100+ templates** for requirements, architecture, testing, security, deployment artifacts
 - **Phase-based workflows** with gate criteria and milestone tracking
@@ -31,7 +31,7 @@ AIWG is a comprehensive SDLC framework providing:
 ls {AIWG_ROOT}/agentic/code/frameworks/sdlc-complete/
 
 # Available resources:
-# - agents/     → 195 agents
+# - agents/     → 196 agents
 # - skills/     → 21 skills
 # - templates/  → 100+ artifact templates
 # - flows/      → Phase workflow documentation
@@ -355,6 +355,14 @@ For multi-task orchestrations exceeding a single session:
 - Monitor: `aiwg mc watch` or `aiwg mc status`
 - Finish: `aiwg mc stop <id>`
 
+LFD controls apply to long-running Mission Control work: every dispatched
+mission needs a measurable verifier, declared iteration/time/token/tool/spend
+limits where observable, hypothesis-before-change retry notes, structural
+variation after flat cycles, and a budget-exhausted best-output report instead
+of random-walk continuation. Eval/holdout missions expose only aggregate
+score/probe/status or VOID to workers; private answers and lint details stay
+out of optimizer-readable output.
+
 ### Orchestrator Pre-Flight (Long Sessions)
 
 Before starting any orchestration session > 30 minutes:
@@ -377,7 +385,7 @@ aiwg new-bundle <name> --type extension --starter rule
 aiwg new-extension <name>      # alias: --type extension
 aiwg new-addon <name>          # alias: --type addon
 aiwg new-framework <name>      # alias: --type framework
-aiwg new-plugin <name>         # alias: --type plugin; marketplace delivery wrapper
+aiwg new-plugin <name>         # alias: --type plugin
 
 # Deploy / inspect
 aiwg use <name>                # deploy a single project-local bundle
