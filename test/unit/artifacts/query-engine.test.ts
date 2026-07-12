@@ -239,6 +239,60 @@ describe('Artifact Query Engine', () => {
     }
   });
 
+  it('resolves Windows-style framework paths against AIWG_ROOT (#128)', async () => {
+    const corpusRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-corpus-'));
+    const indexedPath = 'agentic\\code\\frameworks\\knowledge-base\\skills\\kb-ingest\\SKILL.md';
+    const artifactPath = path.join(
+      corpusRoot,
+      'agentic',
+      'code',
+      'frameworks',
+      'knowledge-base',
+      'skills',
+      'kb-ingest',
+      'SKILL.md',
+    );
+    fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
+    fs.writeFileSync(artifactPath, '# KB Ingest\n');
+
+    const projectIndexDir = path.join(tmpDir, INDEX_DIR, 'project');
+    fs.mkdirSync(projectIndexDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectIndexDir, 'metadata.json'),
+      JSON.stringify({
+        version: '1.0.0',
+        builtAt: '2026-07-12T00:00:00Z',
+        buildTimeMs: 1,
+        entries: {
+          [indexedPath]: createMockEntry({
+            path: indexedPath,
+            type: 'skill',
+            name: 'kb-ingest',
+            title: 'KB Ingest',
+          }),
+        },
+      }),
+    );
+
+    const prevRoot = process.env.AIWG_ROOT;
+    process.env.AIWG_ROOT = corpusRoot;
+    try {
+      await showArtifact(tmpDir, {
+        typeFilter: ['skill'],
+        name: 'kb-ingest',
+        graph: 'project',
+        json: true,
+      });
+      const parsed = JSON.parse(consoleSpy.mock.calls.map(c => c[0]).join(''));
+      expect(parsed.path).toBe(artifactPath);
+      expect(parsed.content).toContain('# KB Ingest');
+    } finally {
+      if (prevRoot === undefined) delete process.env.AIWG_ROOT;
+      else process.env.AIWG_ROOT = prevRoot;
+      fs.rmSync(corpusRoot, { recursive: true, force: true });
+    }
+  });
+
   it('resolves a persona agent via the corpus fallback when not in any index (#1623 U5)', async () => {
     // An index exists (so showArtifact does not early-exit) but does NOT
     // contain the persona agent — the exact "un-indexed / stale framework

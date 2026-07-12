@@ -1071,8 +1071,9 @@ export interface ShowMetadataParams extends ShowParams {}
 
 function resolveMetadataPath(cwd: string, aiwgRoot: string | null, entry: MetadataEntry): string {
   if (path.isAbsolute(entry.path)) return entry.path;
-  if (aiwgRoot && entry.path.startsWith('agentic/code/')) {
-    return path.join(aiwgRoot, entry.path);
+  const normalizedEntryPath = entry.path.replace(/\\/g, '/');
+  if (aiwgRoot && normalizedEntryPath.startsWith('agentic/code/')) {
+    return path.join(aiwgRoot, normalizedEntryPath);
   }
   if ((entry as ProvenancedEntry).indexScope === 'user' && entry.path.startsWith('~/.aiwg/')) {
     return path.join(process.env.HOME ?? '', entry.path.slice(2));
