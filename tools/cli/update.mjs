@@ -80,10 +80,10 @@ async function runUpdate() {
       default:
         console.log('Updating aiwg on stable channel...');
         try {
-          execSync('npm update -g aiwg', { stdio: 'inherit' });
+          execSync('npm install -g aiwg@latest', { stdio: 'inherit' });
           console.log('Update complete.');
         } catch {
-          console.error('Update failed. Try: npm update -g aiwg');
+          console.error('Update failed. Try: npm install -g aiwg@latest');
           process.exit(1);
         }
         break;

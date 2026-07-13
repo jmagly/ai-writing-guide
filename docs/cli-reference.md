@@ -195,7 +195,7 @@ aiwg -update
 - Checks npm registry for newer version
 - Shows changelog highlights
 - Prompts for update confirmation
-- Runs `npm update -g aiwg`
+- Runs `npm install -g aiwg@latest`
 - Verifies successful update
 
 **Channel switching:**

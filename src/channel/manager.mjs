@@ -386,7 +386,7 @@ export async function switchToStable() {
   console.log('Switched to stable channel.');
   console.log('You are now using the npm-installed package.');
   console.log('');
-  console.log('To update: npm update -g aiwg');
+  console.log('To update: npm install -g aiwg@latest');
   console.log('To switch to edge: aiwg --use-main');
 }
 
@@ -480,7 +480,7 @@ export async function updateEdge() {
   const config = await loadConfig();
 
   if (config.channel !== 'edge') {
-    console.log('Not in edge channel. Use npm update -g aiwg for stable channel.');
+    console.log('Not in edge channel. Use npm install -g aiwg@latest for stable channel.');
     return;
   }
 

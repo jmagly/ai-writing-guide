@@ -212,13 +212,13 @@ async function checkStableUpdates(config) {
         console.log('');
         console.log('Updating aiwg...');
         try {
-          execSync('npm update -g aiwg', { stdio: 'inherit' });
+          execSync('npm install -g aiwg@latest', { stdio: 'inherit' });
           console.log('Update complete! Please restart your terminal.');
         } catch (error) {
-          console.error('Update failed. Run manually: npm update -g aiwg');
+          console.error('Update failed. Run manually: npm install -g aiwg@latest');
         }
       } else {
-        console.log('Update skipped. Run `npm update -g aiwg` when ready.');
+        console.log('Update skipped. Run `npm install -g aiwg@latest` when ready.');
       }
       console.log('');
     }
@@ -381,14 +381,14 @@ export async function forceUpdateCheck() {
     const latestVersion = await fetchLatestNpmVersion();
 
     if (!latestVersion) {
-      console.log('Could not check npm registry. Try: npm update -g aiwg');
+      console.log('Could not check npm registry. Try: npm install -g aiwg@latest');
       return;
     }
 
     if (isNewerVersion(currentVersion, latestVersion)) {
       console.log(`Update available: ${currentVersion} → ${latestVersion}`);
       console.log('');
-      console.log('Run: npm update -g aiwg');
+      console.log('Run: npm install -g aiwg@latest');
     } else {
       console.log(`You are on the latest version: ${currentVersion}`);
     }
