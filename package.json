@@ -309,7 +309,7 @@
     }
   },
   "devDependencies": {
-    "@pagenary/publisher": "^2026.7.16",
+    "@pagenary/publisher": "^2026.7.23",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.8.0",
     "@types/semver": "^7.7.1",
