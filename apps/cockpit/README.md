@@ -259,8 +259,8 @@ The Bridge handles recovery through:
 2. local Docker fallback: `docker exec <container> agent-reconnect`, or
 3. VM fallback (#1778): the same reconnect SIGHUP delivered through the libvirt
    qemu-guest-agent channel (`virsh qemu-agent-command <domain> guest-exec
-   pkill -HUP -x agent-client`). Detached tmux sessions are re-adopted on
-   re-register; non-tmux sessions do not survive a reconnect today
+   pkill -HUP -x agent-client`). Sessions survive reconnect on agentic-sandbox
+   2026.7.8+ agents; older agents preserve only detached tmux sessions
    (agentic-sandbox#634).
 
 The Docker fallback requires sandbox images that include the `agent-reconnect`

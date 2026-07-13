@@ -51,19 +51,25 @@ command (`pkill -HUP -x agent-client`).
 
 ## What survives a reconnect
 
-**Session survival depends on the session backend, not on Cockpit.** As of
-agentic-sandbox 2026.7:
+**Session survival depends on the agent version inside the runtime, not on
+Cockpit:**
 
-- Sessions backed by a **detached multiplexer** (managed tmux) survive the
-  agent's reconnect and are re-adopted automatically when it re-registers.
-- **Non-multiplexed sessions** (direct pty, headless tasks) do **not**
-  currently survive an agent reconnect — the agent tears them down as part of
-  its reconnect cycle (tracked upstream as agentic-sandbox#634, with the
-  VM idle-drop root cause in agentic-sandbox#633).
+- **agentic-sandbox 2026.7.8+ agents**: transport reconnect is
+  state-preserving — the agent no longer kills tracked workloads on stream
+  loss, all session types (managed multiplexer *and* direct pty / headless
+  tasks) survive, and output produced while disconnected buffers and flushes
+  after re-register. Server-side reconcile is the sole kill authority.
+- **Older agents** (pre-2026.7.8): only sessions backed by a **detached
+  multiplexer** (managed tmux) survive and are re-adopted; the agent
+  SIGTERMs everything else as part of its reconnect cycle. This was the
+  root cause chain fixed upstream in agentic-sandbox#633 (VM idle drop) and
+  agentic-sandbox#634 (kill-on-reconnect).
 
-Practical guidance: prefer **managed** session backends for long-running work
-on VM targets until the upstream fix lands. The Bridge's VM reconnect
-response repeats this caveat.
+A VM keeps its baked agent binary until the image is rebuilt or the VM is
+reprovisioned — so a running fleet can mix both behaviors. If sessions
+vanish after a reconnect, check the agent version in that runtime before
+suspecting Cockpit. On older agents, prefer **managed** session backends for
+long-running work.
 
 After a successful reconnect: refresh Inventory, then attach from Sessions.
 

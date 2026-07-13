@@ -606,9 +606,10 @@ async function destroyInstance(upstreamUrl, instanceId) {
 // VM images bake qemu-guest-agent ("essential for virsh exec") and agent-rs
 // handles SIGHUP as reconnect-in-place on every runtime, so delivering
 // `pkill -HUP -x agent-client` through the libvirt guest-agent channel makes
-// the agent re-register without touching the VM. Detached-tmux sessions are
-// re-adopted on re-register; non-tmux sessions do not survive any reconnect
-// today (agentic-sandbox#634).
+// the agent re-register without touching the VM. Session survival is
+// version-conditional: agentic-sandbox 2026.7.8+ agents preserve all sessions
+// across reconnect; older agents preserve only detached-tmux sessions
+// (agentic-sandbox#634).
 async function signalVmAgentReconnect(domain) {
   const execRaw = await spawnCollect('virsh', ['qemu-agent-command', domain, JSON.stringify({
     execute: 'guest-exec',
@@ -695,7 +696,7 @@ async function reconnectInstance(upstreamUrl, instanceId) {
             runtime,
             vm_domain: domain,
             state: 'reconnecting',
-            message: `Reconnect requested for VM ${domain}; inventory will refresh as the agent re-registers. Detached tmux sessions are re-adopted; other session types do not survive reconnect (agentic-sandbox#634).`,
+            message: `Reconnect requested for VM ${domain}; inventory will refresh as the agent re-registers. Sessions survive reconnect on agentic-sandbox 2026.7.8+ agents; older agents preserve only detached tmux sessions (agentic-sandbox#634).`,
             fallback: 'virsh-guest-agent-sighup',
           },
         };
