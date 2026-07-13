@@ -15,6 +15,12 @@ aiwg use sdlc
 claude .
 ```
 
+Since this is an existing project, run this once in the tool so AIWG orients its context to your codebase (on a brand-new/empty folder it's optional — `aiwg use` already wired the context):
+
+```
+/aiwg-regenerate
+```
+
 Then:
 
 ```

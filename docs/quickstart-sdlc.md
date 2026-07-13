@@ -53,21 +53,17 @@ cursor .                   # Cursor
 droid .                    # Factory AI
 ```
 
-**2. Integrate with platform context**
+**2. Wire the context to your project (existing projects)**
+
+`aiwg use` already wrote the project context (`CLAUDE.md` + `AIWG.md`), so natural-language command mapping ("run security review" → workflow) works right away via AIWG's Discover-First protocol. On an **existing project**, or to pull in the latest AIWG, run this once in the tool to re-tailor that context to your codebase and preserve any edits you've made (optional on a brand-new project):
 
 ```text
-/aiwg-setup-project
+/aiwg-regenerate
 ```
 
-**3. Regenerate for intelligent integration**
+See the [Regenerate Guide](#regenerate-guide) for details.
 
-```text
-/aiwg-regenerate-claude
-```
-
-This step is critical - it enables natural language command mapping ("run security review" → workflow). Without it, advanced features won't work correctly. See the [Regenerate Guide](#regenerate-guide) for details.
-
-**4. You're ready.** See the [Intake Guide](#intake-guide) for starting projects.
+**3. You're ready.** See the [Intake Guide](#intake-guide) for starting projects.
 
 ---
 

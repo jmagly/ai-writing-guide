@@ -29,10 +29,10 @@ code /path/to/your/project  # or use Windsurf launcher
 **4. Regenerate for intelligent integration**
 
 ```text
-/aiwg-regenerate-windsurfrules
+/aiwg-regenerate
 ```
 
-This step is critical - it aggregates all agents into `AGENTS.md` and updates `.windsurf/rules/` for natural language command mapping ("run security review" → workflow). Without it, advanced features won't work correctly. See the [Regenerate Guide](#regenerate-guide) for details.
+`aiwg use` already wrote the project context, so natural-language command mapping ("run security review" → workflow) works right away via AIWG's Discover-First protocol. On an **existing project**, or to pull in the latest AIWG, run this to re-tailor the context to your codebase — optional on a brand-new project. See the [Regenerate Guide](#regenerate-guide) for details.
 
 **5. You're ready.** See the [Intake Guide](../intake-guide.md) for starting projects.
 
@@ -113,7 +113,7 @@ Windsurf discovers agent definitions exclusively via `AGENTS.md` files (no `.win
 The regenerate command is essential for Windsurf integration:
 
 ```text
-/aiwg-regenerate-windsurfrules
+/aiwg-regenerate
 ```
 
 **What it does**:
@@ -134,7 +134,7 @@ The regenerate command is essential for Windsurf integration:
 
 ```bash
 # Regenerate aggregated files
-/aiwg-regenerate-windsurfrules
+/aiwg-regenerate
 
 # Project setup
 /aiwg-setup-project
@@ -154,7 +154,7 @@ The regenerate command is essential for Windsurf integration:
 Run regenerate to update mappings:
 
 ```text
-/aiwg-regenerate-windsurfrules
+/aiwg-regenerate
 ```
 
 ### AGENTS.md not loading?
@@ -183,7 +183,7 @@ ls .windsurf/workflows/
 Ensure rules are up to date:
 
 ```text
-/aiwg-regenerate-windsurfrules
+/aiwg-regenerate
 ```
 
 Then verify:
@@ -207,7 +207,7 @@ ls .windsurf/workflows/
 
 3. Regenerate if stale:
    ```text
-   /aiwg-regenerate-windsurfrules
+   /aiwg-regenerate
    ```
 
 ### Skills not available?

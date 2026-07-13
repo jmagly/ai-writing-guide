@@ -43,21 +43,15 @@ aiwg use sdlc
 claude .
 ```
 
-**2. Integrate with platform context**
+**2. Wire the context to your project (existing projects)**
+
+`aiwg use` already wrote the project context (`CLAUDE.md` + `AIWG.md`), so natural-language command mapping ("run security review" → workflow) works right away via AIWG's Discover-First protocol. On an **existing project**, or to pull in the latest AIWG, run this once inside Claude Code to re-tailor that context to your codebase and preserve any edits you've made (optional on a brand-new project):
 
 ```text
-/aiwg-setup-project
+/aiwg-regenerate
 ```
 
-**3. Regenerate for natural language support**
-
-```text
-/aiwg-regenerate-claude
-```
-
-This enables natural language command mapping ("run security review" → workflow). Without it, advanced features won't work correctly.
-
-**4. You're ready.** See the [Intake Guide](../intake-guide.md) for starting projects.
+**3. You're ready.** See the [Intake Guide](../intake-guide.md) for starting projects.
 
 ---
 
@@ -128,7 +122,7 @@ Plugins are copied to a cache directory. If you see missing file errors:
 **Natural language not working?**
 
 ```text
-/aiwg-regenerate-claude
+/aiwg-regenerate
 ```
 
 **Commands/agents missing?**

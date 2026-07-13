@@ -84,7 +84,7 @@ cursor .                   # Cursor
 droid .                    # Factory AI
 ```
 
-Then run `/aiwg-regenerate` to enable natural language commands. See the [Regenerate Guide](#regenerate-guide) for details.
+`aiwg use` already wired natural-language commands into the project context. On an **existing project** — or to pull in the latest AIWG on a project you set up earlier — run `/aiwg-regenerate` in the tool to re-tailor that context to your codebase (on a brand-new project it's optional). See the [Regenerate Guide](#regenerate-guide) for details.
 
 **You're ready.** See the [Intake Guide](#intake-guide) for starting projects.
 

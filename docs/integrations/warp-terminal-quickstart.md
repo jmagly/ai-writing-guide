@@ -29,10 +29,10 @@ cd /path/to/your/project
 **4. Regenerate for intelligent integration**
 
 ```text
-/aiwg-regenerate-warp
+/aiwg-regenerate
 ```
 
-This step is critical - it enables natural language command mapping ("run security review" → workflow). Without it, advanced features won't work correctly. See the [Regenerate Guide](#regenerate-guide) for details.
+`aiwg use` already wrote the project context, so natural-language command mapping ("run security review" → workflow) works right away via AIWG's Discover-First protocol. On an **existing project**, or to pull in the latest AIWG, run this to re-tailor the context to your codebase — optional on a brand-new project. See the [Regenerate Guide](#regenerate-guide) for details.
 
 **5. You're ready.** See the [Intake Guide](#intake-guide) for starting projects.
 
@@ -92,7 +92,7 @@ See [Al Guide](../ralph-guide.md) for full documentation including `--provider` 
 
 **Natural language not working?** Run regenerate:
 ```text
-/aiwg-regenerate-warp
+/aiwg-regenerate
 ```
 
 **WARP.md not loading?** Re-index:

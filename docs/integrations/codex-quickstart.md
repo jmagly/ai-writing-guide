@@ -70,10 +70,10 @@ aiwg -deploy-commands --provider codex
 ### 4. Regenerate for intelligent integration
 
 ```text
-/aiwg-regenerate-agents
+/aiwg-regenerate
 ```
 
-This enables natural language command mapping ("run security review" maps to the correct workflow).
+`aiwg use` already wrote the project context, so natural-language command mapping ("run security review" maps to the correct workflow) works right away via AIWG's Discover-First protocol. On an **existing project**, or to pull in the latest AIWG, run this to re-tailor the context to your codebase — optional on a brand-new project.
 
 ---
 
@@ -586,7 +586,7 @@ See [Al Guide](../ralph-guide.md) for full documentation.
 
 **Natural language not working?** Run regenerate:
 ```text
-/aiwg-regenerate-agents
+/aiwg-regenerate
 ```
 
 **Skills not loading?** Check both skill locations:
