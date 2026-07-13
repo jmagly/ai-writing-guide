@@ -37,6 +37,38 @@ async function canRun(cmd) {
   }
 }
 
+async function windowsPowerShell() {
+  if (await canRun('powershell')) return 'powershell';
+  if (await canRun('pwsh')) return 'pwsh';
+  throw new Error('no supported Windows PowerShell command found');
+}
+
+async function storeWindowsCredential(token, account) {
+  const ps = await windowsPowerShell();
+  const script = [
+    '[void][Windows.Security.Credentials.PasswordVault,Windows.Security.Credentials,ContentType=WindowsRuntime]',
+    '$vault = New-Object Windows.Security.Credentials.PasswordVault',
+    'try { $vault.Remove($vault.Retrieve($args[0], $args[1])) } catch {}',
+    '$password = [Console]::In.ReadToEnd()',
+    '$credential = New-Object Windows.Security.Credentials.PasswordCredential -ArgumentList $args[0], $args[1], $password',
+    '$vault.Add($credential)',
+  ].join('; ');
+  await collect(ps, ['-NoProfile', '-NonInteractive', '-Command', script, SERVICE, account], token);
+  return { backend: 'windows-credential-manager', service: SERVICE, account, target: `${SERVICE}:${account}` };
+}
+
+async function readWindowsCredential(ref) {
+  const ps = await windowsPowerShell();
+  const script = [
+    '[void][Windows.Security.Credentials.PasswordVault,Windows.Security.Credentials,ContentType=WindowsRuntime]',
+    '$vault = New-Object Windows.Security.Credentials.PasswordVault',
+    '$credential = $vault.Retrieve($args[0], $args[1])',
+    '$credential.RetrievePassword()',
+    '[Console]::Out.Write($credential.Password)',
+  ].join('; ');
+  return (await collect(ps, ['-NoProfile', '-NonInteractive', '-Command', script, ref.service || SERVICE, ref.account])).trim();
+}
+
 export async function storeCockpitToken(token, account = `bridge-${process.pid}`) {
   if (process.env.AIWG_COCKPIT_KEYCHAIN_DISABLED === '1') {
     throw new Error('OS keychain disabled by AIWG_COCKPIT_KEYCHAIN_DISABLED');
@@ -46,10 +78,8 @@ export async function storeCockpitToken(token, account = `bridge-${process.pid}`
     await collect('security', ['add-generic-password', '-a', account, '-s', SERVICE, '-w', token, '-U']);
     return { backend: 'macos-keychain', service: SERVICE, account };
   }
-  if (os === 'win32' && await canRun('cmdkey')) {
-    const target = `${SERVICE}:${account}`;
-    await collect('cmdkey', [`/generic:${target}`, `/user:${account}`, `/pass:${token}`]);
-    return { backend: 'windows-credential-manager', service: SERVICE, account, target };
+  if (os === 'win32') {
+    return storeWindowsCredential(token, account);
   }
   if (await canRun('secret-tool')) {
     await collect('secret-tool', ['store', '--label', 'AIWG Cockpit Bridge', 'service', SERVICE, 'account', account], token);
@@ -68,7 +98,7 @@ export async function readCockpitToken(ref) {
     return (await collect('security', ['find-generic-password', '-a', ref.account, '-s', ref.service || SERVICE, '-w'])).trim();
   }
   if (ref.backend === 'windows-credential-manager') {
-    throw new Error('Windows Credential Manager read requires the shell-provided runtime token until native shell integration lands');
+    return readWindowsCredential(ref);
   }
   if (ref.backend === 'libsecret') {
     return (await collect('secret-tool', ['lookup', 'service', ref.service || SERVICE, 'account', ref.account])).trim();

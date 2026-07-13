@@ -26,8 +26,9 @@ Every shell (browser, VS Code, Tauri) resolves the Bridge the same way — see
 ## Security
 
 - The per-launch token is written to the OS credential backend when one is available:
-  macOS Keychain (`security`), Windows Credential Manager (`cmdkey`), Linux libsecret
-  (`secret-tool`), or opt-in KDE Wallet (`AIWG_COCKPIT_ENABLE_KWALLET=1`).
+  macOS Keychain (`security`), Windows Credential Manager via PowerShell
+  PasswordVault, Linux libsecret (`secret-tool`), or opt-in KDE Wallet
+  (`AIWG_COCKPIT_ENABLE_KWALLET=1`).
 - `bridge.json` holds **only the overlay's own per-launch token or token reference** —
   never a provider or stack credential (verified by
   `apps/cockpit/poc/security-checks.mjs`, property I1). Set

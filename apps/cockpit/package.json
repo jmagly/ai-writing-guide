@@ -43,7 +43,7 @@
     "build:web": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build",
     "pack:dry": "npm pack --dry-run",
     "publish:dry": "npm publish --dry-run --access public",
-    "smoke": "node mock-executor/src/smoke.mjs && node bridge/src/smoke.mjs && node shell-core/smoke.mjs",
+    "smoke": "node mock-executor/src/smoke.mjs && node bridge/src/smoke.mjs && node shell-core/smoke.mjs && node vscode/smoke.mjs",
     "poc": "node poc/kill-bridge-isolation.mjs && node poc/security-checks.mjs",
     "test:web": "npm --prefix web run typecheck && npm --prefix web run test",
     "test": "npm run smoke && npm run poc",
