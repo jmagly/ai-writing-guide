@@ -1839,3 +1839,132 @@ mark.hl {
     font-size: var(--font-size-xs);
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Pagenary component: Fortemi page-metadata control
+   ──────────────────────────────────────────────────────────────────────────
+   Pagenary injects a per-page "Show page metadata" affordance (a button + a
+   metadata panel) into `.doc-content`. AIWG's custom docs theme replaces
+   Pagenary's own stylesheet, so these components arrive UNSTYLED: the button's
+   icon falls back to a bare "i" rendered inline in the content flow, and the
+   panel would open inline (pushing content down) instead of overlaying it.
+
+   We re-style them for this terminal theme:
+     • the button → a circular info icon anchored to the top-right of content
+     • the panel  → an anchored popover that OVERLAYS content, not inline
+
+   DRIFT NOTE: this is one of several Pagenary components AIWG must re-style
+   because we heavily customize Pagenary's UX. If a Pagenary upgrade renames
+   these `.doc-fortemi-*` classes or adds new components, they will render
+   unstyled until re-adapted here. See docs/overrides/README.md.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Positioning anchor for the Fortemi tools/panel. The per-page DOM varies:
+   article pages wrap content in `.doc-content`, but the home/section pages
+   put the control in the section `<header>` with NO `.doc-content`. The one
+   wrapper present on every doc page is AIWG's own `.log-entry__body` (from
+   terminal.js), so anchor to that — it stays inside the reading box and clear
+   of the right-hand nav rail. `.doc-content` is positioned too so the anchor
+   is the tighter box when that wrapper is present. */
+.log-entry__body { position: relative; }
+.doc-content { position: relative; }
+
+.doc-fortemi-tools {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 6;
+}
+
+.doc-fortemi-button {
+  inline-size: 1.6rem;
+  block-size: 1.6rem;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--grid-line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-style: italic;          /* the aria-hidden "i" reads as an info glyph */
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+}
+
+.doc-fortemi-button:hover,
+.doc-fortemi-button:focus-visible,
+.doc-fortemi-button[aria-expanded="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  opacity: 1;
+  outline: none;
+}
+
+/* Inline variant (rendered next to a doc-meta summary): stay in flow, still an icon. */
+.doc-fortemi-button-inline {
+  position: static;
+  vertical-align: middle;
+  margin-inline-start: 0.4rem;
+}
+
+/* Panel: anchored popover overlay, not inline. */
+.doc-fortemi-panel {
+  position: absolute;
+  top: 2.2rem;
+  right: 0;
+  z-index: 30;
+  inline-size: min(34rem, calc(100vw - 3rem));
+  max-block-size: min(70vh, 34rem);
+  overflow: auto;
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--grid-line);
+  border-radius: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  font-family: var(--font-mono);
+}
+
+.doc-fortemi-panel[hidden] { display: none; }
+
+.doc-fortemi-section { display: grid; gap: 0.5rem; margin-block-end: 1rem; }
+.doc-fortemi-section:last-child { margin-block-end: 0; }
+.doc-fortemi-section h2 {
+  margin: 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.doc-fortemi-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.doc-fortemi-chip {
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--grid-line);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  color: var(--ink);
+}
+
+.doc-fortemi-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
+  gap: 0.75rem;
+  font-size: 0.76rem;
+  color: var(--ink);
+}
+
+.doc-fortemi-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+.doc-fortemi-link {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: start;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+.doc-fortemi-link:hover { text-decoration: underline; }

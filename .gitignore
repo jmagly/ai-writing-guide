@@ -119,3 +119,6 @@ test/**/.tmp-*/
 # RLM working dir — `aiwg rlm-prep` writes per-host chunks/manifests with
 # absolute paths; reproducible from re-running the command.
 .rlm-prep/
+
+# stale docs preview build target (active target is dist/aiwg-docs)
+.docs-preview/
