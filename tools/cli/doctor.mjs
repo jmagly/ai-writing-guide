@@ -39,6 +39,10 @@ const { getFortemiCorePrebuiltStatus, getFortemiCoreSyncStatus } = await importI
   import.meta.url,
   'artifacts/fortemi-core-sync.js'
 );
+const { checkGitignore } = await importImpl(
+  import.meta.url,
+  'config/gitignore.js'
+);
 
 // AIWG_ROOT: env override > channel-manager resolved path > legacy edge path
 // getFrameworkRoot() resolves correctly for npm global installs, edge, and dev channels.
@@ -1576,23 +1580,12 @@ async function runDoctor() {
     // Non-fatal — skip silently.
   }
 
-  // 11. Check .gitignore for AIWG runtime patterns (warning if missing)
-  const AIWG_RUNTIME_PATTERNS = ['.aiwg/working/', '.aiwg/.index/', '.aiwg/ralph/', '.aiwg/ralph-external/', '.aiwg/security-engineering/reviews/disclosures/'];
-  const gitignorePath = path.join(process.cwd(), '.gitignore');
+  // 11. Check .gitignore for AIWG runtime patterns (warning if missing).
+  // Use the shared config helper so doctor and `aiwg config gitignore --fix`
+  // cannot drift on which runtime paths are required.
   try {
-    const gitignoreContent = await fs.readFile(gitignorePath, 'utf-8');
-    const lines = gitignoreContent.split('\n').map(l => l.trim());
-    const isCovered = (pattern) => {
-      if (lines.includes(pattern)) return true;
-      if (lines.includes(pattern.replace(/\/$/, ''))) return true;
-      const parts = pattern.split('/').filter(Boolean);
-      for (let i = 1; i < parts.length; i++) {
-        const parent = parts.slice(0, i).join('/') + '/';
-        if (lines.includes(parent) || lines.includes(parent.replace(/\/$/, ''))) return true;
-      }
-      return false;
-    };
-    const missing = AIWG_RUNTIME_PATTERNS.filter(p => !isCovered(p));
+    const result = await checkGitignore(process.cwd());
+    const missing = result.missingRuntime;
     if (missing.length === 0) {
       check('.gitignore', 'ok', 'AIWG runtime paths covered');
     } else {
