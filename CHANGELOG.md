@@ -7,47 +7,79 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
-## [2026.7.12] - 2026-07-11 - "Cockpit recovery and LFD controls"
+## [2026.7.12] - 2026-07-13 - "Cockpit recovery, VM reconnect, and OpenBao CI"
 
-This release prepares the next stable cut after the Cockpit session
-stabilization release. It focuses on stale-agent recovery in Cockpit and the
+Stale-agent recovery in Cockpit — now extended to VM runtimes — a dedicated
+Cockpit documentation section derived from the code, a native corpus-snapshot
+command, the migration of CI secrets and release signing to OpenBao, and the
 post-audit hardening of the external agent-loop LFD controls.
 
 ### Added
 
-- **Cockpit stale-agent recovery** — Inventory and Sessions now keep running
-  container/Docker instances visible even when their agent registration is stale,
-  mark them as `agent unreachable`, and expose a **Reconnect** action that asks
-  the Bridge to recover the agent through the executor or the sandbox
-  `agent-reconnect` helper.
-- **LFD external-loop control surface** — the external Ralph/agent-loop path now
+- **Cockpit stale-agent recovery** — Inventory and Sessions keep running
+  container/Docker/**VM** instances visible even when their agent registration is
+  stale, mark them as `agent unreachable`, and expose a **Reconnect** action that
+  asks the Bridge to recover the agent.
+- **Cockpit VM-runtime Reconnect** (#1778) — VM/QEMU/KVM instances now have a
+  recovery path: the Bridge delivers the reconnect SIGHUP through the libvirt
+  qemu-guest-agent channel (`virsh qemu-agent-command <domain> guest-exec
+  pkill -HUP -x agent-client`), the VM counterpart of the container
+  `docker exec agent-reconnect` fallback.
+- **Dedicated Cockpit documentation section** — `docs/cockpit/` (overview,
+  installation, architecture, surfaces, sessions, bridge API, trust & security,
+  recovery, development, releases) derived code-to-docs from the Bridge, web UI,
+  and companion components, and wired into the docsite nav.
+- **`aiwg corpus snapshot`** (#1647) — a native, deterministic corpus-snapshot
+  command (full markdown / terminal summary / JSON) backed by a declarative Flow
+  playbook, replacing the hand-assembled computed sections in the skill.
+- **LFD external-loop control surface** — the external Ralph/agent-loop path
   carries the repaired LFD budget, plateau, exploration-quota, stall-rule,
   hypothesis, holdout-isolated, eval-harness, and VOID-runtime controls across
   CLI, runtime, schema, and CI surfaces.
 - **Manual provider verification path** — adds the `ralph:manual-test` runbook
-  for bounded live-provider checks against real CLIs, with dry-run, scenario,
-  and scratch-workspace guidance.
+  for bounded live-provider checks against real CLIs.
 
 ### Changed
 
-- **Cockpit operator documentation** — updates the Cockpit README, serve guide,
-  and internal instance-control ADRs so operators know how to launch the host
-  daemon, interpret stale-agent states, recover agents, and attach to recovered
-  sessions.
-- **Agent-loop governance evidence** — records the LFD remediation status,
-  accepted ADR posture, and CI coverage for `tools/ralph-external` node tests.
+- **CI secrets and release signing moved to OpenBao** — release workflows fetch
+  migrated secrets and the GPG release key from an OpenBao vault at CI time via a
+  least-privilege AppRole, replacing stored Gitea secrets; the signing identity
+  is unchanged for verifiers.
+- **Cockpit VS Code shell consumes shell-core** (#1783) — the extension now
+  imports the shared shell-core handshake instead of reimplementing it, and gains
+  a Windows Credential Manager backend (PasswordVault) that can retrieve tokens
+  (the previous `cmdkey` path was write-only).
+- **Cockpit qemu/kvm runtime coverage** (#1782) — the header matrix, Home
+  coverage banner, and reconnect gating agree on VM-family membership through a
+  shared helper, so qemu/kvm instances light `vm ✓`.
+- **Cockpit operator documentation** — README, serve guide, and instance-control
+  ADRs updated for host-daemon launch, stale-agent states, and recovery; the
+  reconnect session-survival caveat is now version-conditional (all session types
+  survive on agentic-sandbox 2026.7.8+ agents).
+- **Update command** — the CLI and docs now use `npm install -g aiwg@latest`
+  instead of the unreliable `npm update -g aiwg` for stable-channel upgrades.
+- **`aiwg doctor`** shares the `.gitignore` runtime-path check with the config
+  helper so doctor and `aiwg config gitignore --fix` cannot drift.
 
 ### Fixed
 
-- **Container agent recovery path** — the Bridge now exposes
+- **OpenBao CI regressions** — the fetch helper's dry-run no longer requires `jq`
+  (the check moved below the pure-awk dry-run branch), and keyfiles are written
+  with a trailing newline so OpenSSH-consumed deploy keys are valid.
+- **Windows index paths** — the artifact query engine normalizes backslash
+  separators before resolving entry paths, so Windows-authored index entries
+  resolve on POSIX.
+- **`@$AIWG_ROOT/`-prefixed mentions** are now indexed as repo-relative paths, so
+  framework skill→rule edges land in the graph index.
+- **Container/VM agent recovery path** — the Bridge exposes
   `POST /api/instances/:id/reconnect`, tries executor-owned reconnect endpoints
-  first, and falls back to `docker exec <container> agent-reconnect` for
-  sandbox images that ship the helper.
-- **LFD resume and budget correctness** — resume now restores analytics counters,
+  first, then falls back to `docker exec <container> agent-reconnect` (containers)
+  or the qemu-guest-agent SIGHUP (VMs).
+- **LFD resume and budget correctness** — resume restores analytics counters,
   budget-exhausted loops stay guarded, unobservable token/spend limits are
-  surfaced instead of silently treated as zero, and completion-vs-budget stop
-  semantics are explicit.
-- **Ralph CLI drift** — `aiwg ralph` now forwards the six documented LFD flags,
+  surfaced rather than treated as zero, and completion-vs-budget stop semantics
+  are explicit.
+- **Ralph CLI drift** — `aiwg ralph` forwards the six documented LFD flags,
   rejects invalid values, and aligns documented defaults with runtime behavior.
 
 ## [2026.7.11] - 2026-07-06 - "Cockpit session stabilization"
