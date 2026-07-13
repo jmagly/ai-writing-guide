@@ -67,8 +67,10 @@ export function parseFrontmatter(content: string): { data: Record<string, unknow
  */
 export function extractMentions(content: string): string[] {
   const mentions = new Set<string>();
-  // Match @path/to/file.ext and @.aiwg/path patterns
-  const pattern = /@(\.?aiwg\/[\w./-]+|[a-zA-Z][\w./-]+\.\w+)/g;
+  // Match @path/to/file.ext, @.aiwg/path, and framework references rooted at
+  // @$AIWG_ROOT/. The latter must normalize to repo-relative paths so framework
+  // skill references resolve to their rule files in the graph index.
+  const pattern = /@(?:\$AIWG_ROOT\/)?(\.?aiwg\/[\w./-]+|[a-zA-Z][\w./-]+\.\w+)/g;
   let match;
   while ((match = pattern.exec(content)) !== null) {
     mentions.add(match[1]);

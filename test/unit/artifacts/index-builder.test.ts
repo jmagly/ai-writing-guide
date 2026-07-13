@@ -408,6 +408,17 @@ Ref @src/foo.ts and also @src/foo.ts again.
       const mentions = extractMentions(content);
       expect(mentions).toEqual([]);
     });
+
+    it('normalizes $AIWG_ROOT framework references to repo-relative paths', () => {
+      const content = `
+References:
+- @$AIWG_ROOT/agentic/code/frameworks/forensics-complete/rules/evidence-integrity.md
+- @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md
+`;
+      const mentions = extractMentions(content);
+      expect(mentions).toContain('agentic/code/frameworks/forensics-complete/rules/evidence-integrity.md');
+      expect(mentions).toContain('agentic/code/addons/aiwg-utils/rules/human-authorization.md');
+    });
   });
 
   describe('buildIndex', () => {
@@ -490,6 +501,51 @@ New users can register.
       expect(stats.totalArtifacts).toBe(2);
       expect(stats.byPhase.requirements).toBe(2);
       expect(stats.byType['use-case']).toBe(2);
+    });
+
+    it('links framework skills to rules referenced through $AIWG_ROOT', async () => {
+      const skillDir = path.join(tmpDir, 'agentic/code/frameworks/forensics-complete/skills/evidence-preservation');
+      const ruleDir = path.join(tmpDir, 'agentic/code/frameworks/forensics-complete/rules');
+      fs.mkdirSync(skillDir, { recursive: true });
+      fs.mkdirSync(ruleDir, { recursive: true });
+
+      fs.writeFileSync(path.join(ruleDir, 'evidence-integrity.md'), `---
+enforcement: critical
+---
+# Evidence Integrity
+`);
+      fs.writeFileSync(path.join(skillDir, 'SKILL.md'), `---
+name: evidence-preservation
+description: Preserve forensic evidence.
+---
+# evidence-preservation
+
+## References
+
+- @$AIWG_ROOT/agentic/code/frameworks/forensics-complete/rules/evidence-integrity.md
+`);
+
+      const oldXdgData = process.env.XDG_DATA_HOME;
+      process.env.XDG_DATA_HOME = path.join(tmpDir, 'xdg');
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      try {
+        await buildIndex(tmpDir, { graph: 'framework', force: true, explicit: true });
+      } finally {
+        consoleSpy.mockRestore();
+        consoleErrorSpy.mockRestore();
+        if (oldXdgData === undefined) delete process.env.XDG_DATA_HOME;
+        else process.env.XDG_DATA_HOME = oldXdgData;
+      }
+
+      const indexDir = path.join(tmpDir, 'xdg', 'aiwg', 'index', 'framework');
+      const deps = JSON.parse(fs.readFileSync(path.join(indexDir, 'dependencies.json'), 'utf-8')) as DependencyGraph;
+      const skillPath = 'agentic/code/frameworks/forensics-complete/skills/evidence-preservation/SKILL.md';
+      const rulePath = 'agentic/code/frameworks/forensics-complete/rules/evidence-integrity.md';
+
+      expect(deps[skillPath].upstream).toEqual([{ path: rulePath, type: 'depends-on' }]);
+      expect(deps[rulePath].downstream).toEqual([{ path: skillPath, type: 'depends-on' }]);
     });
 
     it('should handle incremental builds', async () => {
