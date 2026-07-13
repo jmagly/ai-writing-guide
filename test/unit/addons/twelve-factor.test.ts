@@ -56,6 +56,12 @@ describe('twelve-factor addon', () => {
     expect(auditSkill).toContain('schemas/audit-report.schema.json');
   });
 
+  it('pins the reviewer to a standard-context Claude model variant', () => {
+    const reviewer = read('agents/twelve-factor-reviewer.md');
+    expect(reviewer).toContain('model: claude-sonnet-4-6');
+    expect(reviewer).not.toContain('model: sonnet');
+  });
+
   it('validates the sample audit artifact against the audit schema', () => {
     const schema = readJson<{
       $defs: { status: { enum: string[] } };
