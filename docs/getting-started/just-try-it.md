@@ -20,6 +20,14 @@ Open Claude Code in that directory:
 claude .
 ```
 
+Then bootstrap AIWG **from inside the tool** — run the regenerate step so it wires AIWG into your project context (`CLAUDE.md` + `AIWG.md`) and loads as the AIWG orchestrator:
+
+```
+/aiwg-regenerate
+```
+
+(No slash command? Just ask it: "run aiwg-regenerate to bootstrap AIWG for this project.")
+
 Now ask it anything about your project:
 
 ```
@@ -53,6 +61,12 @@ aiwg use sdlc
 claude .
 ```
 
+Then, inside the tool, run the bootstrap step once:
+
+```
+/aiwg-regenerate
+```
+
 Then:
 
 ```
@@ -65,7 +79,9 @@ It will answer as one. That's what AIWG does.
 
 ## What you just installed
 
-`aiwg use sdlc` copied agent definitions, slash commands, and behavioral rules into `.claude/` in your project. Claude Code reads those automatically when it starts. You don't need to configure anything — it just works.
+`aiwg use sdlc` copied agent definitions, slash commands, skills, and behavioral rules into `.claude/` in your project. Claude Code reads those automatically when it starts.
+
+Running `/aiwg-regenerate` once inside the tool is the step that ties it together: it generates the project context file (`CLAUDE.md` + `AIWG.md`) that primes the AI as the AIWG orchestrator and loads that knowledge on every start. That's the bootstrap — after it runs, you don't need to configure anything else.
 
 ---
 
