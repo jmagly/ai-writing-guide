@@ -6,6 +6,7 @@
 
 See [AIWG.md](./AIWG.md) for the full AIWG framework context
 (active frameworks, addons, agents, behaviors, rules).
+Tracker and delivery source of truth: [.aiwg/aiwg.config](./.aiwg/aiwg.config).
 
 Deployed artifacts live under your provider's native directory
 (for example `.codex/agents/`, `.warp/agents/`, `.github/agents/`).
@@ -31,7 +32,7 @@ Schema per entry: purpose, when to use, when not to use, curated discovery phras
 - When not to use: A direct CLI command or loaded skill already handles the work.
 - Curated discovery phrases: `aiwg discover "agent for <task>"`; `aiwg discover "<domain> specialist agent"`; `aiwg discover "review <artifact> agent"`
 - Deep-load target: `aiwg show agent <name>` after discovery selects the exact item.
-- Deployed summary: 198 recorded; examples: Accessibility Checker, Accessibility Specialist, Acquisition Manager, AgentSmith, AI/ML Engineer, +193 more.
+- Deployed summary: 195 recorded; examples: Accessibility Checker, Accessibility Specialist, Acquisition Manager, AgentSmith, AI/ML Engineer, +190 more.
 - Verification cue: Selected agent name and scope match the user request before delegation.
 
 ### Rules
@@ -41,7 +42,7 @@ Schema per entry: purpose, when to use, when not to use, curated discovery phras
 - When not to use: The user asks for broad framework discovery rather than a specific guardrail.
 - Curated discovery phrases: `aiwg discover "rule for <constraint>"`; `aiwg discover "<provider> routing rule"`; `aiwg discover "context budget rule"`
 - Deep-load target: `aiwg show rule <name>` after discovery selects the exact item.
-- Deployed summary: 0 recorded; examples: none deployed.
+- Deployed summary: 43 recorded; examples: RULES-INDEX, RULES-ONDEMAND, agent-deployment, api-abi-stability, auto-compact-continue, +38 more.
 - Verification cue: The applied rule is named and the action taken conforms to it.
 
 ### Skills
@@ -61,7 +62,7 @@ Schema per entry: purpose, when to use, when not to use, curated discovery phras
 - When not to use: A static rule or skill directly covers the requested action.
 - Curated discovery phrases: `aiwg discover "behavior for <interaction>"`; `aiwg discover "daemon behavior"`; `aiwg discover "session behavior"`
 - Deep-load target: `aiwg show behavior <name>` after discovery selects the exact item.
-- Deployed summary: 0 recorded; examples: none deployed.
+- Deployed summary: 43 recorded; examples: RULES-INDEX, RULES-ONDEMAND, agent-deployment, api-abi-stability, auto-compact-continue, +38 more.
 - Verification cue: The behavior trigger and expected effect are explicit before relying on it.
 
 
@@ -86,6 +87,25 @@ Also run `aiwg discover` before declining an AIWG request as out of scope or inv
 ### Engagement Verification
 
 When a user asks whether AIWG is active or engaged in this project, run or read `aiwg status --probe --json` and report the result plainly: engaged state, project root, deployed provider files, installed frameworks/addons, and the next action from the probe. Do not add AIWG attribution, signatures, generated-by text, or passive footers to user files, commits, PRs, comments, code headers, or docs.
+
+### Tracker Authority Protocol
+
+- Source of truth: [.aiwg/aiwg.config](./.aiwg/aiwg.config)
+- Canonical tracker: `origin` (unknown; git@git.integrolabs.net:roctinam/aiwg.git)
+- Primary repo remote: `origin`; CI remote: `origin`
+- Secondary/mirror remotes: github (public-mirror)
+- Issue storage mode: not configured
+
+Tracker access order for issue, PR, release, and CI-sensitive tracker operations:
+1. MCP/app tools for the configured tracker.
+2. Tracker HTTP API with configured credentials.
+3. Tracker CLI for the configured tracker, after confirming authentication.
+4. Stop and report a blocker.
+
+- Project config decides tracker authority; installed/authenticated CLIs do not.
+- Git SSH remote access is repository sync, not issue-tracker API access.
+- Do not file on mirror or secondary remotes just because their CLI is authenticated.
+- Treat an unauthenticated tracker CLI as one failed access path, then continue probing MCP/app/API before blocking.
 
 ### Source Model
 
