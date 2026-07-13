@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useSession } from './useSession';
 import { api, TOKEN } from './api';
 import type { Approval, Instance, ResponseNeeded } from './types';
+import { runtimeFamily } from './util';
 import { Welcome } from './components/Welcome';
 import { Inventory } from './components/Inventory';
 import { Running } from './components/Running';
@@ -75,16 +76,16 @@ export function App() {
           api<{ approvals: Approval[] }>('/api/approvals?status=pending').catch(() => ({ approvals: [] as Approval[] })),
         ]);
         if (cancelled) return;
-        const kinds = inv.instances.map((i) => i.runtime_posture.kind);
+        const families = inv.instances.map((i) => runtimeFamily(i.runtime_posture?.kind ?? i.runtime));
         const attachedResponseCount = session.responseNeeded.needed ? 1 : 0;
         setChrome({
           executor: health.executor_url,
           instances: inv.instances.length,
           running: run.count,
           responses: apr.approvals.length + registryResponses.length + attachedResponseCount,
-          host: kinds.includes('host'),
-          container: kinds.includes('container') || kinds.includes('docker'),
-          vm: kinds.includes('vm'),
+          host: families.includes('host'),
+          container: families.includes('container'),
+          vm: families.includes('vm'),
         });
       } catch {
         if (!cancelled) setChrome(null);

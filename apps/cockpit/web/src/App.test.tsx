@@ -45,6 +45,24 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getByText(/start a session automatically/i)).toBeTruthy();
   });
 
+  it('counts qemu and kvm instances as VM runtime coverage in the header (#1782)', async () => {
+    for (const kind of ['qemu', 'kvm']) {
+      cleanup();
+      globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+        if (url.includes('/api/inventory')) return jsonResponse({ instances: [instance(`${kind}-1`, kind, 'full-suite')] });
+        if (url.includes('/api/running')) return jsonResponse({ count: 0, running: [] });
+        if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
+        if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 0, output_tokens: 0, usd: 0 }, per_instance: [] });
+        return jsonResponse({});
+      }) as typeof fetch;
+
+      render(<App />);
+      expect((await screen.findByTitle('Runtime target coverage')).textContent).toContain('vm ✓');
+    }
+  });
+
   it('does not bind launch session creation to the first unrelated running instance (#1743)', async () => {
     vi.useFakeTimers();
     try {

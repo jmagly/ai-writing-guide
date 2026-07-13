@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { api } from '../api';
-import { fmtId } from '../util';
+import { fmtId, runtimeFamily as runtimeTargetFamily } from '../util';
 import type { Instance, Approval, Cost, RunningTask } from '../types';
 
 interface Status {
@@ -82,9 +82,9 @@ export function Welcome({ onStartSession, onLaunchInstance, goTo }: { onStartSes
 
   const runningInstances = st?.instances.filter((i) => i.state === 'running') ?? [];
   const runtimeCoverage = {
-    host: st?.instances.some((i) => i.runtime_posture.kind === 'host') ?? false,
-    container: st?.instances.some((i) => i.runtime_posture.kind === 'container' || i.runtime_posture.kind === 'docker') ?? false,
-    vm: st?.instances.some((i) => i.runtime_posture.kind === 'vm') ?? false,
+    host: st?.instances.some((i) => runtimeTargetFamily(i.runtime_posture?.kind ?? i.runtime) === 'host') ?? false,
+    container: st?.instances.some((i) => runtimeTargetFamily(i.runtime_posture?.kind ?? i.runtime) === 'container') ?? false,
+    vm: st?.instances.some((i) => runtimeTargetFamily(i.runtime_posture?.kind ?? i.runtime) === 'vm') ?? false,
   };
   const copyStartCommand = async () => {
     await navigator.clipboard?.writeText('aiwg cockpit');
@@ -352,8 +352,9 @@ function inventoryWarning(inv: InventoryEnvelope) {
 }
 
 function runtimeFamily(instance: Instance): string {
-  if (instance.runtime_posture.kind === 'host') return 'terminal';
-  if (instance.runtime_posture.kind === 'vm' || instance.runtime_posture.kind === 'container' || instance.runtime_posture.kind === 'docker') return 'cube';
+  const family = runtimeTargetFamily(instance.runtime_posture?.kind ?? instance.runtime);
+  if (family === 'host') return 'terminal';
+  if (family === 'vm' || family === 'container') return 'cube';
   return 'window';
 }
 
@@ -374,12 +375,12 @@ function initialWallMode(): WallReviewMode {
 
 function buildOrbitNodes(st: Status | null): OrbitNode[] {
   const running = st?.instances.filter((i) => i.state === 'running') ?? [];
-  const host = st?.instances.find((i) => i.runtime_posture.kind === 'host');
-  const container = st?.instances.find((i) => i.runtime_posture.kind === 'container' || i.runtime_posture.kind === 'docker');
-  const vm = st?.instances.find((i) => i.runtime_posture.kind === 'vm');
+  const host = st?.instances.find((i) => runtimeTargetFamily(i.runtime_posture?.kind ?? i.runtime) === 'host');
+  const container = st?.instances.find((i) => runtimeTargetFamily(i.runtime_posture?.kind ?? i.runtime) === 'container');
+  const vm = st?.instances.find((i) => runtimeTargetFamily(i.runtime_posture?.kind ?? i.runtime) === 'vm');
   const drive = st?.instances.some((i) => i.session_backends.some((b) => b.available && b.drive)) ?? false;
   const approvals = st?.approvals.length ?? 0;
-  const cost = st?.cost?.total.usd;
+  const cost = st?.cost?.total?.usd;
   const base: Omit<OrbitNode, 'x' | 'y'>[] = [
     {
       key: 'host',
