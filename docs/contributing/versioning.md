@@ -86,68 +86,59 @@ grep '"version"' package.json | grep -E '\.[0-9]{2}\.' && echo "ERROR: Leading z
 
 **Tag signing is mandatory** as of #1299 (A9). CI rejects any release tag whose signature does not verify against a maintainer public key in `.gitea/keys/maintainers.asc` (GPG) or `.gitea/allowed_signers` (SSH). The verify step lives in `.gitea/workflows/npm-publish.yml` and `.gitea/workflows/gitea-release.yml` and is implemented by [`tools/ci/verify-signed-tag.sh`](../../tools/ci/verify-signed-tag.sh).
 
+`tools/release/cut-tag.sh` sources the release-signing key from OpenBao itself
+(no manual keyring hydration): it fetches the key + machine passphrase into an
+ephemeral `GNUPGHOME`, signs the tag with loopback pinentry, verifies, and
+shreds the keyring on exit. The operator only supplies the reader-AppRole creds.
+
 ```bash
-# Create signed release commit (signed by your personal key — GitHub Verified)
-git commit -S -m "release: v2026.1.5 \"Release Name\""
+# Commit the release prep (personal key — GitHub Verified)
+git commit -S -m "docs(release): prepare 2026.X.Y artifacts"
 
-# Create signed annotated tag — explicit -u with the release key fingerprint
-# so the tag is signed by the project's release-only key, not your personal
-# committer key. CI's verify-signed-tag.sh gate validates against the public
-# key at .gitea/keys/maintainers.asc.
-git tag -s -u FE9272F0BC5781E1DE77FAAA719AB63879E84CE8 \
-  -m "v2026.1.5 - Release Name" v2026.1.5
+# Export the ci-aiwg reader creds so cut-tag.sh can fetch the vault key.
+# From the operator TPM credstore (itops env helper):
+source ~/.config/openbao/env
+export BAO_CI_ROLE_ID="$(_openbao_cred ci-aiwg role-id)"
+export BAO_CI_SECRET_ID="$(_openbao_cred ci-aiwg secret-id)"
 
-# Verify locally before push — fast feedback if signing isn't configured
-git tag -v v2026.1.5
+# Cut the signed tag — fetches the vault key, signs with the release-only key,
+# and runs the local verify gate. Never call `git tag` by hand.
+tools/release/cut-tag.sh 2026.X.Y
 
-# Push to Gitea (triggers automatic Gitea release + publish workflows;
-# CI verify-signed-tag step will reject if signature doesn't match a
-# published maintainer key)
+# Push to Gitea (triggers gitea-release + npm-publish; the CI verify-signed-tag
+# gate validates the signature against .gitea/keys/maintainers.asc)
 git push origin main --tags
 
-# Optional: mirror tag/commit to GitHub
+# Mirror the signed tag to GitHub (push it yourself — the mirror workflow
+# peels annotated tags; github-mirror.yml then creates the GitHub release)
 git push github main --tags
 
-# GitHub release remains manual
-gh release create v2026.1.5 --repo jmagly/aiwg --title "v2026.1.5 - Release Name" --generate-notes
+unset BAO_CI_ROLE_ID BAO_CI_SECRET_ID
 ```
 
-**Signing-key custody note**: AIWG private signing keys are stored in OpenBao,
-not in the host GPG home. CI only pulls repository contents and verifies tags
-against the public key committed under `.gitea/keys/maintainers.asc`; it does
-not need OpenBao access. The operator tag ceremony hydrates the release key into
-a temporary local `GNUPGHOME`, runs the wrapper, verifies the tag, then destroys
-that keyring.
+**Signing-key custody note**: the release-signing key is a **dedicated CI key**
+(`9292EFCBB0EA41BECEEFDAFA9C1B8CE0E0E09C33`, ed25519) whose private material and
+machine passphrase live vault-only at `kv_internal/gpg/release-signing-key`.
+It was rekeyed on 2026-07-12 from the retired personal-passphrase key
+`FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`; both public keys are committed under
+`.gitea/keys/maintainers.asc` so historical tags still verify. CI only pulls
+repository contents and verifies tags against those public keys — it does not
+need the private key on the runner for verification.
 
 OpenBao source of truth:
 
 - Endpoint: `https://rca-g2.s9.internal:8200`
 - SOP: `/home/roctinam/dev/itops/docs/security/secret-management-sop.md`
+- Release key: `kv_internal/gpg/release-signing-key` (fields `armored_private_key`, `passphrase`)
+- Reader AppRole: `ci-aiwg` (policy `ci-release-key-read`) — used by both CI
+  (`BAO_CI_ROLE_ID`/`BAO_CI_SECRET_ID` secrets) and the operator workstation
+  (same AppRole, creds sealed to the machine TPM credstore as
+  `openbao-ci-aiwg-{role-id,secret-id}`).
 - Commit key: `kv_internal/gpg/commit-signing-key`
-- Release key: `kv_internal/gpg/release-signing-key`
 
-Before cutting a release tag:
-
-```bash
-set +x
-umask 077
-export BAO_ADDR=https://rca-g2.s9.internal:8200
-export GNUPGHOME="${XDG_RUNTIME_DIR:-/dev/shm}/aiwg-gpg-release.$$"
-mkdir -p "$GNUPGHOME"
-
-# Authenticate to OpenBao first per itops SOP. Then import only the release key
-# into the temporary keyring. If the field name changes, confirm it through the
-# OpenBao catalog metadata rather than reading or printing the secret value.
-bao kv get -field=private_key kv_internal/gpg/release-signing-key \
-  | gpg --batch --import
-
-tools/release/cut-tag.sh 2026.X.Y
-git tag -v v2026.X.Y
-GITHUB_REF=refs/tags/v2026.X.Y bash tools/ci/verify-signed-tag.sh
-
-gpgconf --kill gpg-agent || true
-rm -rf "$GNUPGHOME"
-```
+Fork / offline signing: set `AIWG_RELEASE_SIGN_FROM_VAULT=0` to sign with a key
+already in the local GPG keyring, and `AIWG_RELEASE_KEY_FINGERPRINT=<fpr>` to
+override the key.
 
 #### Signing your release tag — first-time setup
 

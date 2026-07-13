@@ -49,7 +49,17 @@ set -euo pipefail
 # Fingerprint of the AIWG release-signing key, per SECURITY.md and
 # .gitea/keys/maintainers.asc. Override via $AIWG_RELEASE_KEY_FINGERPRINT
 # for forks or migration scenarios.
-RELEASE_KEY_FINGERPRINT="${AIWG_RELEASE_KEY_FINGERPRINT:-FE9272F0BC5781E1DE77FAAA719AB63879E84CE8}"
+#
+# 2026-07-12: rekeyed from the old personal-passphrase key
+# FE9272F0BC5781E1DE77FAAA719AB63879E84CE8 to a dedicated CI key whose
+# private material and machine passphrase live vault-only at
+# kv_internal/gpg/release-signing-key (itops). The old public key is retained
+# in maintainers.asc so historical tags still verify.
+RELEASE_KEY_FINGERPRINT="${AIWG_RELEASE_KEY_FINGERPRINT:-9292EFCBB0EA41BECEEFDAFA9C1B8CE0E0E09C33}"
+
+# Source the key from OpenBao at cut time (default on). Set to 0 to sign with a
+# key already present in the local GPG keyring (fork/offline scenarios).
+AIWG_RELEASE_SIGN_FROM_VAULT="${AIWG_RELEASE_SIGN_FROM_VAULT:-1}"
 
 # ---------------------------------------------------------------------------
 # Argument parsing
@@ -192,6 +202,59 @@ fi
 echo "  [7/12] Announcement file OK"
 
 # ---------------------------------------------------------------------------
+# 7b. Source the signing key from OpenBao into an ephemeral keyring.
+# ---------------------------------------------------------------------------
+# The dedicated CI key and its machine passphrase are vault-only. We fetch both
+# into mode-600 keyfiles, import the key into a throwaway GNUPGHOME, and point
+# git at a loopback-pinentry gpg wrapper so `git tag -s` is non-interactive.
+# Nothing is written to the operator's real keyring; everything is shredded on
+# exit. Requires BAO_CI_ROLE_ID / BAO_CI_SECRET_ID (CI secrets, or exported from
+# the operator TPM credstore — see docs/contributing/versioning.md).
+GIT_TAG_GPG_OPTS=()
+if [ "$AIWG_RELEASE_SIGN_FROM_VAULT" = "1" ]; then
+  if [ -z "${BAO_CI_ROLE_ID:-}" ] || [ -z "${BAO_CI_SECRET_ID:-}" ]; then
+    cat <<EOF >&2
+FAIL: AIWG_RELEASE_SIGN_FROM_VAULT=1 but BAO_CI_ROLE_ID / BAO_CI_SECRET_ID are
+       not set. Export the ci-aiwg AppRole creds before cutting the tag, e.g.
+       from the operator TPM credstore:
+         source ~/.config/openbao/env
+         export BAO_CI_ROLE_ID="\$(_openbao_cred ci-aiwg role-id)"
+         export BAO_CI_SECRET_ID="\$(_openbao_cred ci-aiwg secret-id)"
+       Or set AIWG_RELEASE_SIGN_FROM_VAULT=0 to sign with a locally-held key.
+       See docs/contributing/versioning.md → "Signing your release tag".
+EOF
+    exit 1
+  fi
+  RELEASE_GNUPGHOME="$(mktemp -d)"
+  RELEASE_FETCH_ENV="$(mktemp)"
+  chmod 700 "$RELEASE_GNUPGHOME"; chmod 600 "$RELEASE_FETCH_ENV"
+  cleanup_release_key() {
+    bash ci/openbao-fetch.sh --cleanup >/dev/null 2>&1 || true
+    [ -n "${RELEASE_GNUPGHOME:-}" ] && rm -rf "$RELEASE_GNUPGHOME"
+    [ -n "${RELEASE_FETCH_ENV:-}" ] && rm -f "$RELEASE_FETCH_ENV"
+  }
+  trap cleanup_release_key EXIT
+  if ! bash ci/openbao-fetch.sh --spec ci/openbao-fetch.release-signing.spec \
+       --env-file "$RELEASE_FETCH_ENV"; then
+    echo "FAIL: could not fetch the release-signing key from OpenBao." >&2
+    exit 1
+  fi
+  # shellcheck disable=SC1090
+  set -a; . "$RELEASE_FETCH_ENV"; set +a
+  export GNUPGHOME="$RELEASE_GNUPGHOME"
+  gpg --batch --import "$GPG_SIGNING_KEY_FILE" >/dev/null 2>&1
+  printf 'pinentry-mode loopback\n' > "$GNUPGHOME/gpg.conf"
+  GPG_WRAPPER="$GNUPGHOME/git-gpg.sh"
+  cat > "$GPG_WRAPPER" <<WRAP
+#!/usr/bin/env bash
+exec gpg --batch --pinentry-mode loopback --passphrase-file "$GPG_PASSPHRASE_FILE" "\$@"
+WRAP
+  chmod 700 "$GPG_WRAPPER"
+  GIT_TAG_GPG_OPTS=(-c "gpg.program=$GPG_WRAPPER")
+  echo "  [7b/12] Release-signing key sourced from OpenBao (ephemeral keyring)"
+fi
+
+# ---------------------------------------------------------------------------
 # 8. Release-signing key available locally
 # ---------------------------------------------------------------------------
 if ! gpg --list-secret-keys "$RELEASE_KEY_FINGERPRINT" >/dev/null 2>&1; then
@@ -251,7 +314,7 @@ EOF
   exit 1
 fi
 
-git tag -s -u "$RELEASE_KEY_FINGERPRINT" "$TAG" -m "$TAG_MESSAGE"
+git "${GIT_TAG_GPG_OPTS[@]}" tag -s -u "$RELEASE_KEY_FINGERPRINT" "$TAG" -m "$TAG_MESSAGE"
 echo "  [10/12] Signed tag '$TAG' created with release key"
 
 # ---------------------------------------------------------------------------
