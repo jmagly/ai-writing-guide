@@ -1,5 +1,5 @@
-timestamp: 2026-07-03T20:36:20Z
+timestamp: 2026-07-15T06:43:45Z
 direction: code-to-docs
-scope: Fortemi discovery release alignment 2026.7.4
-files_changed: 2
-report: .aiwg/reports/doc-sync-audit-20260703T203620Z.md
+scope: v2026.7.12 through 2026.7.13 release candidate
+files_changed: 23
+report: .aiwg/reports/doc-sync-20260715T064345Z.md

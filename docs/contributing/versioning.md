@@ -116,15 +116,14 @@ git push github main --tags
 unset VAULT_CI_ROLE_ID VAULT_CI_SECRET_ID
 ```
 
-**Signing-key custody note**: the release-signing key is a **dedicated CI key**
-(`9292EFCBB0EA41BECEEFDAFA9C1B8CE0E0E09C33`, ed25519) whose private material and
-machine passphrase live vault-only. The concrete vault route is supplied by the
-private routing env, not by checked-in docs.
-It was rekeyed on 2026-07-12 from the retired personal-passphrase key
-`FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`; both public keys are committed under
-`.gitea/keys/maintainers.asc` so historical tags still verify. CI only pulls
-repository contents and verifies tags against those public keys — it does not
-need the private key on the runner for verification.
+**Signing-key custody note**: the active release-signing key is
+`FE9272F0BC5781E1DE77FAAA719AB63879E84CE8` (`AIWG Release Signing`). Its private
+material and passphrase live vault-only; the concrete route is supplied by the
+private routing environment, not checked-in docs. The separate
+`9292EFCBB0EA41BECEEFDAFA9C1B8CE0E0E09C33` key signed `v2026.7.12` and remains
+published for historical verification, but it is not the active release key.
+CI only pulls repository contents and verifies tags against committed public
+keys — it does not need private-key access for verification.
 
 Vault source of truth:
 

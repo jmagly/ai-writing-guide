@@ -1,70 +1,35 @@
 {
-  "timestamp": "2026-07-11T20:01:33Z",
+  "timestamp": "2026-07-15T06:43:45Z",
   "direction": "code-to-docs",
-  "scope": "post-v2026.7.11 release delta; internal .aiwg design docs; external Cockpit, serve, agent-loop, changelog, and release docs",
-  "guidance": "sync Cockpit stale-agent recovery and LFD control remediation from code to docs; prepare next release artifacts without tagging or publishing",
+  "scope": "v2026.7.12 through the 2026.7.13 release candidate; provider deployment, onboarding, release signing, and vault routing",
+  "guidance": "synchronize shipped provider and release behavior before cutting 2026.7.13",
   "phases": [
     {
       "phase": "audit",
-      "inputs": [
-        "git describe --tags --abbrev=0",
-        "git log --oneline --max-count=18",
-        "git diff --name-only v2026.7.11..HEAD",
-        "aiwg discover \"doc sync code to docs release documentation\"",
-        "aiwg show skill doc-sync"
-      ],
-      "findings_total": 5,
-      "findings": [
-        "Cockpit stale Docker/container agents gained a Bridge/UI reconnect path that was not yet documented for operators.",
-        "Internal Cockpit instance-control ADRs did not describe the new recovery extension or stale-agent state.",
-        "The next release artifact set was still at 2026.7.11 and lacked a 2026.7.12 announcement.",
-        "The Cockpit package lock still carried 2026.7.10 while package.json was already 2026.7.11.",
-        "The LFD control remediation was implemented and documented in CLI/manual-provider docs, but needed release-note coverage."
+      "findings_total": 8,
+      "auditors": [
+        "provider deployment and OpenHuman surfaces",
+        "release automation and signing surfaces",
+        "onboarding and release documentation surfaces"
       ]
     },
     {
       "phase": "auto-fix",
-      "files_modified": [
-        "CHANGELOG.md",
-        "package.json",
-        "package-lock.json",
-        ".claude-plugin/marketplace.json",
-        "apps/cockpit/package.json",
-        "apps/cockpit/package-lock.json",
-        "apps/cockpit/README.md",
-        "docs/serve-guide.md",
-        "docs/releases/_manifest.json",
-        ".aiwg/architecture/cockpit-instance-control-interface.md",
-        ".aiwg/architecture/adr-cockpit-session-attach-model.md",
-        ".aiwg/architecture/adr-cockpit-instance-control-substrate.md",
-        ".aiwg/reports/doc-sync-last-run.json"
-      ],
-      "files_created": [
-        "docs/releases/v2026.7.12-announcement.md",
-        ".aiwg/reports/doc-sync-20260711T200133Z.md"
-      ]
+      "fixes_applied": 8,
+      "fixes_remaining": 0
     }
   ],
-  "totals": {
-    "fixes_applied": 5,
-    "fixes_remaining": 0,
-    "files_modified": 13,
-    "files_created": 2
-  },
   "validation": {
     "passed": [
-      "npm run check:versions",
-      "npm run docs:collect:dry",
-      "npm --prefix apps/cockpit run test:web",
-      "git diff --check"
+      "git diff --check",
+      "targeted provider unit tests (34/34)"
     ],
-    "notes": [
-      "Cockpit web tests still emit the known jsdom HTMLCanvasElement.getContext warning from xterm import; the suite passes."
+    "pending_release_gates": [
+      "full test and build matrix",
+      "UAT",
+      "publication verification"
     ]
   },
-  "report": ".aiwg/reports/doc-sync-20260711T200133Z.md",
-  "open_follow_up": [
-    "Complete full host/container/VM Cockpit live matrix before tagging.",
-    "Do not cut release tag or publish npm artifacts until UAT sign-off."
-  ]
+  "report": ".aiwg/reports/doc-sync-20260715T064345Z.md",
+  "open_follow_up": []
 }

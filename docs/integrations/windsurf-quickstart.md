@@ -32,7 +32,10 @@ code /path/to/your/project  # or use Windsurf launcher
 /aiwg-regenerate
 ```
 
-`aiwg use` already wrote the project context, so natural-language command mapping ("run security review" → workflow) works right away via AIWG's Discover-First protocol. On an **existing project**, or to pull in the latest AIWG, run this to re-tailor the context to your codebase — optional on a brand-new project. See the [Regenerate Guide](#regenerate-guide) for details.
+`aiwg use` writes a usable project context immediately. Run regeneration for
+every existing project and after upgrades so the context is re-tailored to the
+current codebase. A newly scaffolded project can defer it until project content
+exists. See the [Regenerate Guide](#regenerate-guide) for details.
 
 **5. You're ready.** See the [Intake Guide](../intake-guide.md) for starting projects.
 

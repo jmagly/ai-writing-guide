@@ -461,7 +461,7 @@ aiwg use sdlc --ci-hooks-enabled --dry-run
 | OpenCode | `opencode` | `.opencode/agent/`, `.opencode/commands/`, `.opencode/skill/`, `.opencode/rule/` | — |
 | Hermes | `hermes` | `~/.hermes/skills/`, `AGENTS.md` (lean) | — |
 | OpenClaw | `openclaw` | `~/.openclaw/agents/`, `~/.openclaw/commands/`, `~/.openclaw/skills/`, `~/.openclaw/rules/`, `~/.openclaw/behaviors/` | ✓ |
-| OpenHuman | `openhuman` | `.agents/agents/`, `~/.openhuman/skills/`, `~/.openhuman/.aiwg/{skills,rules}/`, `AGENTS.md` | — |
+| OpenHuman | `openhuman` | `~/.openhuman/skills/`, `~/.openhuman/.aiwg/rules/`, optional `~/.openhuman/agents/aiwg_*.toml`, project `AGENTS.md` | — |
 | Local/Ollama | `local` | Same as `claude` (local model, Claude Code paths) | — |
 
 **Commands → Skills migration:**
@@ -473,6 +473,7 @@ On first run after the commands-to-skills migration, `aiwg use` detects an exist
 - **Codex**: Commands and skills deploy to `~` (user-level) for availability across all projects; the provider ID is `codex`, not `openai`
 - **Windsurf**: Agents aggregated into `AGENTS.md` at project root; no separate agent files
 - **Warp**: Agents and commands also aggregated into `WARP.md` for single-file context loading
+- **OpenHuman**: Kernel skills and rule bodies are user-global; the default deploy emits no markdown persona copies. Project context is rendered into `AGENTS.md`, and curated native TOML agents are opt-in with `--harness-agents`.
 - **Hermes**: Not a spawnable CLI — access via `ollama run hermes3` or MCP sidecar; deploy sets up skills and a lean AGENTS.md
 - **OpenClaw**: Only provider with behaviors support (`~/.openclaw/behaviors/`); all artifacts deploy to home directory
 - **Local/Ollama**: Uses Claude Code path layout; specify `--coding-model ollama/<model>` to route coding tasks to the local model

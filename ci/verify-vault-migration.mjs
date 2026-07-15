@@ -116,7 +116,8 @@ const activeSurface = [
   'docs/contributing/ci-cd-secrets.md',
   'docs/contributing/secret-rotation.md',
   'docs/contributing/versioning.md',
-  'docs/releases/v2026.7.12-announcement.md',
+  'tools/release/cut-tag.sh',
+  '.aiwg/release.config',
   '.github/prompts/flow-release.prompt.md',
   '.github/commands/flow-release.md',
 ];

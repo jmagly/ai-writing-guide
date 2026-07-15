@@ -48,7 +48,7 @@ aiwg remove sdlc --user --provider claude --dry-run
 |----------|-----------------|--------|
 | Claude Code | `~/.claude/{agents,commands,skills,rules}/` | **Verified** ([docs](https://code.claude.com/docs/en/skills)) |
 | OpenClaw | `~/.openclaw/{agents,commands,skills,rules,behaviors}/` | Always user-scope (no `--scope project`) |
-| OpenHuman | `~/.openhuman/skills/` for kernel skills; `~/.openhuman/.aiwg/{skills,rules}/` for AIWG payload; agents remain project `.agents/agents/` | **Verified** against OpenHuman induction ADR; home-dir provider with AGENTS.md command/rule bridge |
+| OpenHuman | `~/.openhuman/skills/` for kernel skills; `~/.openhuman/.aiwg/rules/` for rule bodies; optional native agents in `~/.openhuman/agents/`; project `AGENTS.md` bridge | **Verified** against OpenHuman induction ADR; home-dir payload plus project context bridge |
 | Hermes | `~/.hermes/skills/` | Always user-scope (skills only) |
 | Codex | `~/.agents/skills/` (skills); `~/.codex/prompts/` (commands; deploy-for-visibility, not auto-scanned) | **Verified** ([`codex-rs/core-skills/src/loader.rs`](https://github.com/openai/codex)) |
 | Cursor | `~/.cursor/{agents,skills,commands,rules}/` (harmless mirror; not auto-scanned) | **Non-applicable** — Cursor's "User Rules" feature is in-app settings, not filesystem-discovered; only project-scope `.cursor/rules/*.mdc` is confirmed. See [#1159](https://git.integrolabs.net/roctinam/aiwg/issues/1159) |
@@ -192,8 +192,9 @@ OpenHuman is also home-dir-oriented for skills. `aiwg use ... --provider
 openhuman --scope user` records the OpenHuman home-rooted payload in the
 user registry so `aiwg list --scope user`, `aiwg doctor --scope user`, and
 `aiwg remove --scope user --provider openhuman` can reason about it from
-any cwd. Markdown agents remain workspace-scoped at `.agents/agents/` by
-design, and commands/rules are bridged through `AGENTS.md`.
+any cwd. The default deploy does not copy markdown personas. It writes a
+project-root `AGENTS.md` bridge for commands and indexed rules; optional curated
+native harness agents are TOML files under `~/.openhuman/agents/`.
 
 Hermes is similar (skills-only at user scope by design).
 

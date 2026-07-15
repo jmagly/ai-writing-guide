@@ -14,6 +14,11 @@ import { existsSync, mkdtempSync, rmSync } from 'fs';
 import path from 'path';
 import os from 'os';
 import { execFileSync, spawnSync } from 'child_process';
+// @ts-expect-error — .mjs provider module without type declarations
+import {
+  listOnDemandRuleFiles,
+  onDemandRuleNames,
+} from '../../tools/agents/providers/base.mjs';
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
 const BIN = path.join(REPO_ROOT, 'bin/aiwg.mjs');
@@ -51,6 +56,16 @@ function canInitGit(): boolean {
 }
 
 const GIT_AVAILABLE = canInitGit();
+
+const EXPECTED_ON_DEMAND_RULE_NAMES: string[] = onDemandRuleNames(listOnDemandRuleFiles(REPO_ROOT));
+const ISSUE_1784_MISSING_EXAMPLES = [
+  'activity-log',
+  'context-budget',
+  'diagram-generation',
+  'voice-framework',
+  'prose-bridge',
+  'scoped-reasoning',
+];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -217,6 +232,22 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
 
     for (const file of kernelBootstrapCommands) {
       expect(existsSync(path.join(commandsDir, file)), `${file} should be copied in as a Claude bootstrap command`).toBe(true);
+    }
+  });
+
+  it('writes complete RULES-ONDEMAND indexes for Claude and Codex after real aiwg use all (#1784)', async () => {
+    for (const provider of ['claude', 'codex']) {
+      const result = runAiwg(['use', 'all', '--provider', provider, '--target', projectDir], projectDir);
+      expect(result.exitCode, `aiwg use all --provider ${provider} failed:\nstdout: ${result.stdout}\nstderr: ${result.stderr}`).toBe(0);
+
+      const rulesDir = provider === 'claude'
+        ? path.join(projectDir, '.claude', 'rules')
+        : path.join(projectDir, '.codex', 'rules');
+      const body = await fs.readFile(path.join(rulesDir, 'RULES-ONDEMAND.md'), 'utf8');
+      const actual = [...body.matchAll(/^- `([^`]+)`/gm)].map((match) => match[1]).sort();
+
+      expect(actual).toEqual(EXPECTED_ON_DEMAND_RULE_NAMES);
+      expect(actual).toEqual(expect.arrayContaining(ISSUE_1784_MISSING_EXAMPLES));
     }
   });
 });

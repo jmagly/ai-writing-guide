@@ -499,6 +499,9 @@ aiwg use research          # Research workflow automation (8 agents, 8-stage pip
 aiwg use rlm               # RLM addon (recursive context decomposition)
 aiwg use all               # Everything
 
+# Existing projects: re-analyze and refresh the provider context bridge
+aiwg regenerate
+
 # Or scaffold a new project
 aiwg new my-project
 

@@ -22,6 +22,7 @@ import {
   ensureDir,
   deployFiles,
   deploySkillsWithKernelRouting,
+  createAgentsMdFromTemplate,
   getAddonAgentFiles,
   getAddonCommandFiles,
   getAddonSkillDirs,
@@ -30,6 +31,7 @@ import {
   normalizeDeploymentMode,
   cleanupOldRuleFiles,
   filterCommandsAgainstSkills,
+  resolveAiwgRoot,
 } from './base.mjs';
 
 // ============================================================================
@@ -160,8 +162,18 @@ export function deployRules(ruleFiles, targetDir, opts) {
   return deployFiles(ruleFiles, destDir, opts, transformAgent);
 }
 
+export function createAgentsMd(target, srcRoot, dryRun) {
+  const aiwgRoot = resolveAiwgRoot(srcRoot) || srcRoot;
+  createAgentsMdFromTemplate(target, aiwgRoot, 'openhuman/AGENTS.md.aiwg-template', dryRun);
+}
+
 export async function postDeploy(targetDir, opts) {
-  return;
+  if (
+    opts.createAgentsMd ||
+    (!opts.commandsOnly && !opts.skillsOnly && !opts.rulesOnly)
+  ) {
+    createAgentsMd(targetDir, opts.srcRoot, opts.dryRun);
+  }
 }
 
 export function getFileExtension() {
@@ -267,6 +279,7 @@ export default {
   deployCommands,
   deploySkills,
   deployRules,
+  createAgentsMd,
   transformSkillFrontmatter,
   postDeploy,
   getFileExtension,

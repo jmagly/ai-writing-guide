@@ -7,6 +7,48 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.13] - 2026-07-15 - "Complete provider context and release routing"
+
+This stable release makes aggregated provider context complete across
+framework, addon, and extension deployment passes, restores OpenHuman's project
+bridge, finishes the provider-neutral vault migration, and refreshes onboarding
+and documentation surfaces from the shipped code.
+
+### Added
+
+- **Existing-project regeneration guidance** — onboarding now consistently
+  directs upgraded or existing projects through `aiwg regenerate`, while the
+  in-agent `/aiwg-regenerate` surface remains available.
+- **OpenHuman project bridge coverage** (#1785) — deployment renders the
+  project-root `AGENTS.md` context bridge and verifies it in integration tests.
+- **Complete rule-corpus regression coverage** (#1784) — unit and integration
+  tests prove that framework, addon, and extension passes preserve one complete
+  MEDIUM/LOW on-demand index.
+
+### Changed
+
+- **Provider-neutral vault routing** — CI secret fetch, release signing, docs,
+  and migration verification use the generic `VAULT_CI_*` contract and routed
+  vault variables instead of provider-specific names.
+- **Pagenary publisher 2026.7.23** — documentation rendering preserves entities
+  in inline markdown and the Fortemi control now renders as an icon popover.
+- **OpenHuman deployment documentation** — the quickstart, CLI reference,
+  template, and ADR now describe user-global kernel/rule payloads, optional
+  native TOML workers, and the automatic project `AGENTS.md` bridge.
+
+### Fixed
+
+- **Multi-pass on-demand rule indexes** (#1784) — rule discovery resolves the
+  repository root before enumerating the corpus, preventing addon or extension
+  passes from truncating entries written by an earlier deploy pass.
+- **OpenHuman full deployment** (#1785) — full deploys now use the provider
+  template and render the complete on-demand section into `AGENTS.md`.
+- **Research citation resolution** (#1787) — slugged research citations resolve
+  correctly in the generated documentation graph.
+- **Release tag wrapper drift** — `cut-tag.sh` uses the generic vault fetcher,
+  the current fetch spec, and the release-only signing identity required by the
+  project signing policy.
+
 ## [2026.7.12] - 2026-07-13 - "Cockpit recovery, VM reconnect, and OpenBao CI"
 
 Stale-agent recovery in Cockpit — now extended to VM runtimes — a dedicated

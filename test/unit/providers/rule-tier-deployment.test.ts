@@ -21,6 +21,8 @@ import {
 } from '../../../tools/agents/providers/base.mjs';
 // @ts-expect-error — .mjs provider module without type declarations
 import { generateAgentsMd as hermesAgentsMd } from '../../../tools/agents/providers/hermes.mjs';
+// @ts-expect-error — .mjs provider module without type declarations
+import { createAgentsMd as openhumanAgentsMd } from '../../../tools/agents/providers/openhuman.mjs';
 
 const REPO_ROOT = resolve(__dirname, '../../..');
 const levelOf = (f: string): string | null => ruleEnforcementLevel(readFileSync(f, 'utf8'));
@@ -112,6 +114,27 @@ describe('rule tier deployment (#1673)', () => {
       expect(od.every((f) => ['medium', 'low'].includes(levelOf(f) as string))).toBe(true);
       // a known MEDIUM rule is present
       expect(od.some((f) => f.endsWith('diagram-generation.md'))).toBe(true);
+    });
+
+    it('listOnDemandRuleFiles stays complete when called from bundled addon or extension sources (#1784)', () => {
+      const rootNames = onDemandRuleNames(listOnDemandRuleFiles(REPO_ROOT));
+      const addonNames = onDemandRuleNames(
+        listOnDemandRuleFiles(join(REPO_ROOT, 'agentic/code/addons/aiwg-utils')),
+      );
+      const extensionNames = onDemandRuleNames(
+        listOnDemandRuleFiles(join(REPO_ROOT, 'agentic/code/extensions/sys')),
+      );
+
+      expect(addonNames).toEqual(rootNames);
+      expect(extensionNames).toEqual(rootNames);
+      expect(addonNames).toEqual(expect.arrayContaining([
+        'activity-log',
+        'context-budget',
+        'diagram-generation',
+        'voice-framework',
+        'prose-bridge',
+        'scoped-reasoning',
+      ]));
     });
   });
 });
@@ -216,6 +239,48 @@ describe('on-demand index propagation (#1675)', () => {
         await rm(target, { recursive: true, force: true });
       }, 60_000);
     }
+
+    it('keeps the complete index after an aiwg-use-all-style addon pass (#1784)', async () => {
+      const target = await mkdtemp(join(tmpdir(), 'aiwg-od-multipass-'));
+      const expected = onDemandRuleNames(listOnDemandRuleFiles(REPO_ROOT));
+
+      execFileSync(
+        'node',
+        [
+          'tools/agents/deploy-agents.mjs',
+          '--source', REPO_ROOT,
+          '--target', target,
+          '--rules-only', '--mode', 'all',
+          '--provider', 'codex', '--force',
+        ],
+        { cwd: REPO_ROOT, stdio: 'ignore' },
+      );
+      execFileSync(
+        'node',
+        [
+          'tools/agents/deploy-agents.mjs',
+          '--source', join(REPO_ROOT, 'agentic/code/addons/aiwg-utils'),
+          '--target', target,
+          '--deploy-rules',
+          '--provider', 'codex', '--force',
+        ],
+        { cwd: REPO_ROOT, stdio: 'ignore' },
+      );
+
+      const body = await readFile(join(target, '.codex/rules/RULES-ONDEMAND.md'), 'utf8');
+      const actual = [...body.matchAll(/^- `([^`]+)`/gm)].map((match) => match[1]).sort();
+      expect(actual).toEqual(expected);
+      expect(actual).toEqual(expect.arrayContaining([
+        'activity-log',
+        'context-budget',
+        'diagram-generation',
+        'voice-framework',
+        'prose-bridge',
+        'scoped-reasoning',
+      ]));
+
+      await rm(target, { recursive: true, force: true });
+    }, 60_000);
   });
 
   // Aggregated providers note the tier in their single bridge file.
@@ -229,6 +294,47 @@ describe('on-demand index propagation (#1675)', () => {
       expect(body.length).toBeLessThan(19_000); // Hermes hard cap
       await rm(target, { recursive: true, force: true });
     });
+
+    it('openhuman AGENTS.md substitutes the {{ON_DEMAND_RULES}} token (#1785)', async () => {
+      const target = await mkdtemp(join(tmpdir(), 'aiwg-od-openhuman-'));
+      openhumanAgentsMd(target, REPO_ROOT, false);
+      const body = await readFile(join(target, 'AGENTS.md'), 'utf8');
+      expect(body).toContain('On-Demand Rules');
+      expect(body).toContain('aiwg show rule ');
+      expect(body).toContain('- `activity-log` — `aiwg show rule activity-log`');
+      expect(body).not.toContain('{{ON_DEMAND_RULES}}');
+
+      openhumanAgentsMd(target, join(REPO_ROOT, 'agentic/code/addons/aiwg-utils'), false);
+      const addonPassBody = await readFile(join(target, 'AGENTS.md'), 'utf8');
+      expect(addonPassBody).toContain('On-Demand Rules');
+      expect(addonPassBody).toContain('- `activity-log` — `aiwg show rule activity-log`');
+      expect(addonPassBody).not.toContain('{{ON_DEMAND_RULES}}');
+
+      await rm(target, { recursive: true, force: true });
+    });
+
+    it('openhuman deploy creates the AGENTS.md bridge on a full deploy (#1785)', async () => {
+      const target = await mkdtemp(join(tmpdir(), 'aiwg-od-openhuman-deploy-'));
+      execFileSync(
+        'node',
+        [
+          'tools/agents/deploy-agents.mjs',
+          '--source', REPO_ROOT,
+          '--target', target,
+          '--mode', 'sdlc',
+          '--provider', 'openhuman',
+          '--force',
+          '--quiet',
+        ],
+        { cwd: REPO_ROOT, stdio: 'ignore' },
+      );
+      const body = await readFile(join(target, 'AGENTS.md'), 'utf8');
+      expect(body).toContain('OpenHuman');
+      expect(body).toContain('On-Demand Rules');
+      expect(body).toContain('aiwg show rule ');
+      expect(body).not.toContain('{{ON_DEMAND_RULES}}');
+      await rm(target, { recursive: true, force: true });
+    }, 60_000);
 
     it('warp WARP.md aggregates the on-demand section', async () => {
       const target = await mkdtemp(join(tmpdir(), 'aiwg-od-warp-'));

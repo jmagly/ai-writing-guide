@@ -35,6 +35,7 @@ stubs.
 | Skills (standard) | AIWG index/discovery | Not copied into OpenHuman scan roots |
 | Commands | skills/index only | OpenHuman has no native command directory |
 | Rules | `~/.openhuman/.aiwg/rules/` | Full bodies on disk for `aiwg show rule` |
+| Context bridge | `<project>/AGENTS.md` | Automatically rendered project context, commands, and on-demand rule index |
 
 OpenHuman is a user-global app install target for AIWG, like OpenClaw.
 
@@ -55,15 +56,19 @@ This deploys:
 - No native harness TOMLs unless `--harness-agents` is provided
 - Standard skills remain available through AIWG index/discovery; they are not copied into OpenHuman scan roots
 - Rules to `~/.openhuman/.aiwg/rules/`
+- A project-root `AGENTS.md` bridge with commands and the complete on-demand rule index
 
 Verify:
 
 ```bash
 ls ~/.openhuman/skills/        # kernel skills visible to OpenHuman
 ls ~/.openhuman/agents/        # AIWG native harness TOMLs only after --harness-agents
+rg "AIWG SDLC Framework" AGENTS.md
 ```
 
-Nothing is written to project-level OpenHuman directories.
+OpenHuman payload directories remain user-global. The project-root `AGENTS.md`
+is the context bridge; AIWG does not create project `.openhuman/` payload
+directories or project markdown persona directories.
 
 ## Native Harness Agent Selection
 

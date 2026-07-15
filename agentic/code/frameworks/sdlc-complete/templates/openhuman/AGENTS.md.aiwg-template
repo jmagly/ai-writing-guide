@@ -23,8 +23,8 @@ npm run lint
 ## AIWG SDLC Framework
 
 This project uses [AIWG](https://aiwg.io) for SDLC orchestration. OpenHuman is
-AIWG-convention-aware: agent personas live in `.agents/agents/`, skills in
-`.openhuman/skills/`, and this file is the Discover-First bridge.
+AIWG-convention-aware: kernel skills live in `~/.openhuman/skills/`, rule bodies
+in `~/.openhuman/.aiwg/rules/`, and this file is the Discover-First bridge.
 
 ### Discover-First Protocol
 
@@ -41,17 +41,18 @@ corpus, not just the kernel set surfaced here.
 
 ### Skills
 
-Kernel skills deploy to `.openhuman/skills/` (OpenHuman's project-scope native
-scan root); standard skills are sequestered under `.openhuman/.aiwg/skills/`
-for index-driven discovery. Redeploy or refresh with:
+Kernel skills deploy to `~/.openhuman/skills/` (OpenHuman's user-scope native
+scan root). Standard skills stay in AIWG's index-driven discovery system rather
+than being copied into an OpenHuman scan root. Redeploy or refresh with:
 
 ```bash
 aiwg use sdlc --provider openhuman
 aiwg refresh --provider openhuman
 ```
 
-Project-scope skill discovery requires the workspace trust marker under
-`.openhuman/` — see the quickstart.
+The default deploy emits no markdown persona copies. Curated OpenHuman-native
+TOML workers are optional via `--harness-agents` and land under
+`~/.openhuman/agents/`.
 
 ### Commands & Rules
 
@@ -59,8 +60,8 @@ OpenHuman has no native command surface; AIWG commands surface through this
 `AGENTS.md` bridge and the deployed command-skills. Rule full bodies are on
 disk under `.openhuman/.aiwg/rules/` and reachable via `aiwg show rule <name>`.
 
-CRITICAL/HIGH rules are deployed to disk as always-on bodies. The MEDIUM/LOW
-tier is on-demand only — listed below, fetched via `aiwg show rule <name>`.
+CRITICAL/HIGH rules are rendered into the active context. The MEDIUM/LOW tier
+is on-demand only — listed below, fetched via `aiwg show rule <name>`.
 
 {{ON_DEMAND_RULES}}
 

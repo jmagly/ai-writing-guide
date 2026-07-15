@@ -2142,9 +2142,15 @@ export function isAlwaysOnRule(filePath) {
   }
 }
 
-/** Enumerate MEDIUM/LOW rule files (the on-demand tier) for the index. */
+/**
+ * Enumerate MEDIUM/LOW rule files for the whole installed AIWG corpus.
+ * `srcRoot` may be the repository root or a bundled framework/addon/extension
+ * root during a multi-pass deploy; normalize it before discovery so a later
+ * pass never truncates an index written by an earlier pass.
+ */
 export function listOnDemandRuleFiles(srcRoot, excludeAddons = []) {
   const out = [];
+  const aiwgRoot = resolveAiwgRoot(srcRoot) || srcRoot;
   const consider = (dir) => {
     if (!fs.existsSync(dir)) return;
     for (const f of listMdFiles(dir)) {
@@ -2153,11 +2159,11 @@ export function listOnDemandRuleFiles(srcRoot, excludeAddons = []) {
       if (!isAlwaysOnRule(f)) out.push(f);
     }
   };
-  for (const addon of discoverAddons(srcRoot)) {
+  for (const addon of discoverAddons(aiwgRoot)) {
     if (excludeAddons.includes(addon.name)) continue;
     consider(path.join(addon.path, 'rules'));
   }
-  const codeRoot = path.join(resolveAiwgRoot(srcRoot) || srcRoot, 'agentic', 'code');
+  const codeRoot = path.join(aiwgRoot, 'agentic', 'code');
   for (const fwDir of ['frameworks', 'extensions']) {
     const base = path.join(codeRoot, fwDir);
     if (!fs.existsSync(base)) continue;

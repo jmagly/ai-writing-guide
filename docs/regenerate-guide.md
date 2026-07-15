@@ -1,6 +1,15 @@
 # Context File Integration
 
-After deploying AIWG with `aiwg use sdlc`, you need to integrate it with your platform's context file. This guide explains how regeneration works and how your files are managed.
+After deploying AIWG with `aiwg use sdlc`, run the provider-neutral umbrella
+command to integrate it with your platform's context file:
+
+```bash
+aiwg regenerate
+```
+
+This invokes the same intelligent integration surfaced as `/aiwg-regenerate`
+inside supported agent runtimes. Prefer the CLI form in automation and when you
+are unsure which provider-specific command surface is active.
 
 ---
 
@@ -24,13 +33,15 @@ Fast scaffold - appends AIWG template to your context file.
 
 ---
 
-### Option 2: Intelligent Integration (`/aiwg-regenerate`) - Recommended
+### Option 2: Intelligent Integration (`aiwg regenerate` / `/aiwg-regenerate`) - Recommended
 
 Deep integration - analyzes your project and wires everything together.
 
-```text
-/aiwg-regenerate
+```bash
+aiwg regenerate
 ```
+
+From an agent command palette, use `/aiwg-regenerate` for the same workflow.
 
 **What it does:**
 - Analyzes your project structure, dependencies, conventions

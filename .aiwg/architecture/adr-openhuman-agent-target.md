@@ -129,3 +129,23 @@ Implementation: `tools/agents/providers/openhuman.mjs` (the deploy writer),
 `src/cli/handlers/regenerate.ts`. Absolute home paths flow through the existing
 `isAbsolute ? abs : join(target, …)` handling (deploy-agents.mjs, discovery.ts,
 platform-paths.ts). Trust-marker code from the first #1553 pass reverted.
+
+---
+
+## Addendum (2026-07-15, #1784/#1785): complete corpus and project bridge
+
+The deployed contract is now explicit:
+
+- The default OpenHuman deploy copies no markdown personas.
+- Kernel skills and full rule bodies remain user-global under
+  `~/.openhuman/skills/` and `~/.openhuman/.aiwg/rules/`.
+- Curated native TOML harness agents remain opt-in under
+  `~/.openhuman/agents/` through `--harness-agents`.
+- Every project deploy renders an `AGENTS.md` bridge at the project root.
+- The bridge's on-demand section indexes the complete installed corpus across
+  framework, addon, and extension passes; a later pass must not truncate an
+  earlier pass's entries.
+
+This supersedes the earlier claim that workspace markdown personas remain an
+OpenHuman deployment target. The project bridge, not `.agents/agents/`, is the
+default project-scoped OpenHuman artifact.
