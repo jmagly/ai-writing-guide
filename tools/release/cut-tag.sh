@@ -238,7 +238,6 @@ EOF
   set -a; . "$RELEASE_FETCH_ENV"; set +a
   export GNUPGHOME="$RELEASE_GNUPGHOME"
   gpg --batch --import "$GPG_SIGNING_KEY_FILE" >/dev/null 2>&1
-  printf 'pinentry-mode loopback\n' > "$GNUPGHOME/gpg.conf"
   GPG_WRAPPER="$GNUPGHOME/git-gpg.sh"
   GPG_PROBE="$GNUPGHOME/signing-probe"
   printf 'aiwg release signing probe\n' > "$GPG_PROBE"
@@ -247,9 +246,10 @@ EOF
     rm -f "$GPG_PROBE.sig"
     cat > "$GPG_WRAPPER" <<'WRAP'
 #!/usr/bin/env bash
-exec gpg --batch --pinentry-mode loopback "$@"
+exec gpg "$@"
 WRAP
   else
+    printf 'pinentry-mode loopback\n' > "$GNUPGHOME/gpg.conf"
     cat > "$GPG_WRAPPER" <<WRAP
 #!/usr/bin/env bash
 exec gpg --batch --pinentry-mode loopback --passphrase-file "$GPG_PASSPHRASE_FILE" "\$@"
