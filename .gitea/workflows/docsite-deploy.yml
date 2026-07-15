@@ -8,12 +8,17 @@
 #      between releases (no new version, no announcement, no tag)
 #   3. workflow_dispatch — manual operator-initiated deploy
 #
-# Required tracker secrets: BAO_CI_ROLE_ID, BAO_CI_SECRET_ID.
-# Required tracker variables: DEPLOY_HOST, DEPLOY_PORT, DEPLOY_USER, DEPLOY_PATH.
-# OpenBao fetch spec: ci/openbao-fetch.docsite-deploy.spec -> DEPLOY_SSH_KEY_FILE.
+# Required tracker secrets: VAULT_CI_ROLE_ID, VAULT_CI_SECRET_ID.
+# Required tracker variables: DOCSITE_DEPLOY_HOST, DOCSITE_DEPLOY_PORT, DOCSITE_DEPLOY_USER, DOCSITE_DEPLOY_PATH.
+# vault fetch spec: ci/vault-fetch.docsite-deploy.spec -> DOCSITE_DEPLOY_KEY_FILE.
 # (GT_ACCESS_TOKEN no longer required — publisher comes from npm, not a clone; #1484)
 
 name: Docsite Deploy
+
+env:
+  VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+  DOCSITE_DEPLOY_KEY_VAULT_PATH: ${{ vars.DOCSITE_DEPLOY_KEY_VAULT_PATH }}
+  DOCSITE_DEPLOY_KEY_VAULT_FIELD: ${{ vars.DOCSITE_DEPLOY_KEY_VAULT_FIELD }}
 
 on:
   push:
@@ -40,7 +45,7 @@ concurrency:
 jobs:
   deploy-docs:
     name: Build & Deploy Documentation
-    if: ${{ secrets.BAO_CI_ROLE_ID != '' && secrets.BAO_CI_SECRET_ID != '' }}
+    if: ${{ secrets.VAULT_CI_ROLE_ID != '' && secrets.VAULT_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 30
@@ -136,36 +141,36 @@ jobs:
       - name: Install SSH tools
         run: apt-get update && apt-get install -y --no-install-recommends curl jq openssh-client rsync
 
-      - name: Fetch docs deploy key from OpenBao
+      - name: Fetch docs deploy key from vault
         env:
-          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
-          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
-        run: bash ci/openbao-fetch.sh --spec ci/openbao-fetch.docsite-deploy.spec
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+        run: bash ci/vault-fetch.sh --spec ci/vault-fetch.docsite-deploy.spec
 
       - name: Configure SSH key
         run: |
           mkdir -p ~/.ssh
-          cp "${DEPLOY_SSH_KEY_FILE}" ~/.ssh/deploy_key
+          cp "${DOCSITE_DEPLOY_KEY_FILE}" ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
       - name: Deploy to docs server
         env:
-          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DOCSITE_DEPLOY_PATH: ${{ vars.DOCSITE_DEPLOY_PATH }}
+          DOCSITE_DEPLOY_USER: ${{ vars.DOCSITE_DEPLOY_USER }}
+          DOCSITE_DEPLOY_HOST: ${{ vars.DOCSITE_DEPLOY_HOST }}
+          DOCSITE_DEPLOY_PORT: ${{ vars.DOCSITE_DEPLOY_PORT }}
         run: |
           set -euo pipefail
           SSH_OPTS=(
             -i ~/.ssh/deploy_key
-            -p "${DEPLOY_PORT}"
+            -p "${DOCSITE_DEPLOY_PORT}"
             -o StrictHostKeyChecking=accept-new
             -o BatchMode=yes
             -o ConnectTimeout=20
             -o ServerAliveInterval=15
             -o ServerAliveCountMax=4
           )
-          DEPLOY_ROOT="${DEPLOY_PATH%/}/"
+          DEPLOY_ROOT="${DOCSITE_DEPLOY_PATH%/}/"
           # rsync/ssh do NOT reliably expand `~` — a single-quoted `~/...` reaches
           # the remote `mkdir`/rsync literally and creates a directory named `~`
           # under $HOME (this is what silently froze docs.aiwg.io at v2026.5.10:
@@ -176,7 +181,7 @@ jobs:
           case "$DEPLOY_ROOT" in
             /*) : ;;  # already absolute — use as-is
             *)
-              REMOTE_HOME="$(ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
+              REMOTE_HOME="$(ssh "${SSH_OPTS[@]}" "${DOCSITE_DEPLOY_USER}@${DOCSITE_DEPLOY_HOST}" 'printf %s "$HOME"')"
               # Strip a single leading literal ~ (escaped \~ so the strip pattern is
               # not itself tilde-expanded), then a single leading /, then anchor to
               # the remote $HOME. Handles ~/path, bare ~, and relative path. A quoted
@@ -199,7 +204,7 @@ jobs:
             echo "Protecting shared docs tenant /${clean}/ from rsync deletion"
             RSYNC_PROTECT_ARGS+=(--filter "P /${clean}/***")
           done
-          ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
+          ssh "${SSH_OPTS[@]}" "${DOCSITE_DEPLOY_USER}@${DOCSITE_DEPLOY_HOST}" \
             "mkdir -p '${DEPLOY_ROOT}'"
 
           # Dry-run first so the job fails before mutation if a protected
@@ -207,9 +212,9 @@ jobs:
           # kept on the real sync below.
           rsync -avzn --delete --timeout=60 \
             "${RSYNC_PROTECT_ARGS[@]}" \
-            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DOCSITE_DEPLOY_PORT} -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4" \
             "${{ gitea.workspace }}/dist/aiwg-docs/" \
-            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_ROOT}" | tee /tmp/docsite-rsync-plan.txt
+            "${DOCSITE_DEPLOY_USER}@${DOCSITE_DEPLOY_HOST}:${DEPLOY_ROOT}" | tee /tmp/docsite-rsync-plan.txt
           for subpath in ${PROTECTED_DOCS_SUBPATHS}; do
             clean="${subpath#/}"
             clean="${clean%/}"
@@ -221,10 +226,10 @@ jobs:
 
           rsync -avz --delete --timeout=60 \
             "${RSYNC_PROTECT_ARGS[@]}" \
-            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DOCSITE_DEPLOY_PORT} -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4" \
             "${{ gitea.workspace }}/dist/aiwg-docs/" \
-            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_ROOT}"
-          ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "${DOCSITE_DEPLOY_USER}@${DOCSITE_DEPLOY_HOST}:${DEPLOY_ROOT}"
+          ssh "${SSH_OPTS[@]}" "${DOCSITE_DEPLOY_USER}@${DOCSITE_DEPLOY_HOST}" \
             "set -e
              if [ ! -d '${DEPLOY_ROOT}sections' ]; then
                echo '::error::Rsync completed but sections/ is missing at ${DEPLOY_ROOT}'
@@ -235,10 +240,10 @@ jobs:
 
       - name: Verify deployment
         env:
-          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DOCSITE_DEPLOY_PATH: ${{ vars.DOCSITE_DEPLOY_PATH }}
+          DOCSITE_DEPLOY_USER: ${{ vars.DOCSITE_DEPLOY_USER }}
+          DOCSITE_DEPLOY_HOST: ${{ vars.DOCSITE_DEPLOY_HOST }}
+          DOCSITE_DEPLOY_PORT: ${{ vars.DOCSITE_DEPLOY_PORT }}
           GITEA_REF: ${{ gitea.ref }}
           GITEA_REF_NAME: ${{ gitea.ref_name }}
           GITEA_EVENT_NAME: ${{ gitea.event_name }}
@@ -246,14 +251,14 @@ jobs:
           set -euo pipefail
           SSH_OPTS=(
             -i ~/.ssh/deploy_key
-            -p "${DEPLOY_PORT}"
+            -p "${DOCSITE_DEPLOY_PORT}"
             -o StrictHostKeyChecking=accept-new
             -o BatchMode=yes
             -o ConnectTimeout=20
             -o ServerAliveInterval=15
             -o ServerAliveCountMax=4
           )
-          DEPLOY_ROOT="${DEPLOY_PATH%/}/"
+          DEPLOY_ROOT="${DOCSITE_DEPLOY_PATH%/}/"
           # rsync/ssh do NOT reliably expand `~` — a single-quoted `~/...` reaches
           # the remote `mkdir`/rsync literally and creates a directory named `~`
           # under $HOME (this is what silently froze docs.aiwg.io at v2026.5.10:
@@ -264,7 +269,7 @@ jobs:
           case "$DEPLOY_ROOT" in
             /*) : ;;  # already absolute — use as-is
             *)
-              REMOTE_HOME="$(ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" 'printf %s "$HOME"')"
+              REMOTE_HOME="$(ssh "${SSH_OPTS[@]}" "${DOCSITE_DEPLOY_USER}@${DOCSITE_DEPLOY_HOST}" 'printf %s "$HOME"')"
               # Strip a single leading literal ~ (escaped \~ so the strip pattern is
               # not itself tilde-expanded), then a single leading /, then anchor to
               # the remote $HOME. Handles ~/path, bare ~, and relative path. A quoted
@@ -289,7 +294,7 @@ jobs:
             MODE=tag
             SECTION_FILE="sections/releases--${GITEA_REF_NAME}-announcement.js"
             echo "Verify mode: tag — checking ${SECTION_FILE}"
-            ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            ssh "${SSH_OPTS[@]}" "${DOCSITE_DEPLOY_USER}@${DOCSITE_DEPLOY_HOST}" \
               "if [ -f '${DEPLOY_ROOT}${SECTION_FILE}' ]; then
                  echo 'Deploy verified: ${SECTION_FILE} is on disk for ${GITEA_REF_NAME}'
                else
@@ -308,7 +313,7 @@ jobs:
           else
             MODE=docs-only
             echo "Verify mode: docs-only (ref=${GITEA_REF}, event=${GITEA_EVENT_NAME})"
-            ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            ssh "${SSH_OPTS[@]}" "${DOCSITE_DEPLOY_USER}@${DOCSITE_DEPLOY_HOST}" \
               "set -e
                if [ -f '${DEPLOY_ROOT}index.html' ]; then
                  echo 'index.html present.'
@@ -330,7 +335,7 @@ jobs:
         if: always()
         run: |
           rm -f ~/.ssh/deploy_key
-          bash ci/openbao-fetch.sh --cleanup
+          bash ci/vault-fetch.sh --cleanup
 
       - name: Log deployment result
         if: success()

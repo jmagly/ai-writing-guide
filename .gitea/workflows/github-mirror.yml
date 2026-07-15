@@ -12,12 +12,17 @@
 # get a GitHub Release.
 #
 # REQUIRED TRACKER SECRETS:
-#   BAO_CI_ROLE_ID, BAO_CI_SECRET_ID - OpenBao AppRole bootstrap pair.
+#   VAULT_CI_ROLE_ID, VAULT_CI_SECRET_ID - vault AppRole bootstrap pair.
 #
-# OpenBao fetch spec:
-#   ci/openbao-fetch.github-mirror.spec -> GH_TOKEN
+# vault fetch spec:
+#   ci/vault-fetch.github-mirror.spec -> GH_TOKEN
 
 name: GitHub Mirror
+
+env:
+  VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+  GH_MIRROR_TOKEN_VAULT_PATH: ${{ vars.GH_MIRROR_TOKEN_VAULT_PATH }}
+  GH_MIRROR_TOKEN_VAULT_FIELD: ${{ vars.GH_MIRROR_TOKEN_VAULT_FIELD }}
 
 on:
   push:
@@ -45,7 +50,7 @@ jobs:
         with:
           fetch-depth: 0  # full history so we can push to mirror
 
-      - name: Install gh CLI + OpenBao fetch dependencies
+      - name: Install gh CLI + vault fetch dependencies
         run: |
           set -euo pipefail
           if ! command -v curl >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
@@ -77,25 +82,25 @@ jobs:
             echo "version=${TAG_VERSION}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Check OpenBao bootstrap availability
+      - name: Check vault bootstrap availability
         id: token
         if: ${{ steps.classify.outputs.skip != 'true' }}
         run: |
           set -euo pipefail
-          if [ -z "${{ secrets.BAO_CI_ROLE_ID }}" ] || [ -z "${{ secrets.BAO_CI_SECRET_ID }}" ]; then
-            echo "OpenBao CI bootstrap is not configured. Skipping GitHub fan-out."
+          if [ -z "${{ secrets.VAULT_CI_ROLE_ID }}" ] || [ -z "${{ secrets.VAULT_CI_SECRET_ID }}" ]; then
+            echo "vault CI bootstrap is not configured. Skipping GitHub fan-out."
             echo "skip=true" >> $GITHUB_OUTPUT
           else
-            echo "OpenBao CI bootstrap configured."
+            echo "vault CI bootstrap configured."
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Fetch GitHub mirror token from OpenBao
+      - name: Fetch GitHub mirror token from vault
         if: ${{ steps.classify.outputs.skip != 'true' && steps.token.outputs.skip != 'true' }}
         env:
-          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
-          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
-        run: bash ci/openbao-fetch.sh --spec ci/openbao-fetch.github-mirror.spec
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+        run: bash ci/vault-fetch.sh --spec ci/vault-fetch.github-mirror.spec
 
       - name: Push main to GitHub mirror (best-effort; operator pushes the tag)
         if: ${{ steps.classify.outputs.skip != 'true' && steps.token.outputs.skip != 'true' }}
@@ -166,7 +171,7 @@ jobs:
           if [ "${{ steps.classify.outputs.skip }}" = "true" ]; then
             echo "✓ Pre-release tag — GitHub fan-out skipped by design."
           elif [ "${{ steps.token.outputs.skip }}" = "true" ]; then
-            echo "✓ Stable tag, but OpenBao CI bootstrap is not configured — skipped."
+            echo "✓ Stable tag, but vault CI bootstrap is not configured — skipped."
           else
             echo "✓ Stable tag v${{ steps.classify.outputs.version }} mirrored + released to github.com/jmagly/aiwg."
           fi

@@ -24,8 +24,8 @@
 #   token in GitHub would push the wrong direction.
 # - Releases on github.com/jmagly/aiwg are public, so the deterministic
 #   release asset URLs can be downloaded without GitHub authentication.
-# - The Gitea side fetches the release-asset upload token from OpenBao.
-#   Gitea stores only the BAO_CI_ROLE_ID / BAO_CI_SECRET_ID bootstrap pair.
+# - The Gitea side fetches the release-asset upload token from vault.
+#   Gitea stores only the VAULT_CI_ROLE_ID / VAULT_CI_SECRET_ID bootstrap pair.
 # - The operator-side one-command ritual after each release is
 #   documented in docs/contributing/versioning.md (the release runbook).
 #
@@ -39,6 +39,11 @@
 # - docs/releases/verifying.md — consumer-facing verification docs.
 
 name: Mirror signed release assets to Gitea release
+
+env:
+  VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+  GT_RELEASE_TOKEN_VAULT_PATH: ${{ vars.GT_RELEASE_TOKEN_VAULT_PATH }}
+  GT_RELEASE_TOKEN_VAULT_FIELD: ${{ vars.GT_RELEASE_TOKEN_VAULT_FIELD }}
 
 on:
   workflow_dispatch:
@@ -55,7 +60,7 @@ concurrency:
 jobs:
   mirror-signed-assets:
     name: Mirror four signed assets to Gitea release
-    if: ${{ secrets.BAO_CI_ROLE_ID != '' && secrets.BAO_CI_SECRET_ID != '' }}
+    if: ${{ secrets.VAULT_CI_ROLE_ID != '' && secrets.VAULT_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     # Same pinned container as the Gitea publish leg (see ci/digests.txt).
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2
@@ -99,11 +104,11 @@ jobs:
           echo "sbom=aiwg-${VERSION}.cdx.json" >> "$GITHUB_OUTPUT"
           echo "sbom_sig=aiwg-${VERSION}.cdx.json.sigstore" >> "$GITHUB_OUTPUT"
 
-      - name: Fetch Gitea release token from OpenBao
+      - name: Fetch Gitea release token from vault
         env:
-          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
-          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
-        run: bash ci/openbao-fetch.sh --spec ci/openbao-fetch.upload-release-sigs.spec
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+        run: bash ci/vault-fetch.sh --spec ci/vault-fetch.upload-release-sigs.spec
 
       - name: Download signed assets from GitHub release
         # github.com/jmagly/aiwg releases are public; use the deterministic

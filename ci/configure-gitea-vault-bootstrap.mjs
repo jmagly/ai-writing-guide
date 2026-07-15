@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import process from 'node:process';
 
 const args = process.argv.slice(2);
@@ -14,8 +15,8 @@ function argValue(name, fallback = undefined) {
 
 function usage() {
   console.log(`Usage:
-  node ci/configure-gitea-openbao-bootstrap.mjs \\
-    --bootstrap-env ~/.config/openbao/handoff/aiwg-ci.env \\
+  node ci/configure-gitea-vault-bootstrap.mjs \\
+    --bootstrap-env ~/.config/vault/handoff/aiwg-ci.env \\
     --vars-env /path/to/aiwg-deploy-vars.env \\
     [--repo roctinam/aiwg] [--login <tea-login>] [--apply]
 
@@ -23,14 +24,11 @@ Default mode is dry-run. It validates required names and prints what would be
 set without printing secret or variable values.
 
 bootstrap env keys:
-  BAO_CI_ROLE_ID
-  BAO_CI_SECRET_ID
+  VAULT_CI_ROLE_ID
+  VAULT_CI_SECRET_ID
 
 vars env keys:
-  DEPLOY_HOST
-  DEPLOY_PORT
-  DEPLOY_USER
-  DEPLOY_PATH
+  All names listed in ci/vault-migration-plan.json tracker_variables.
 `);
 }
 
@@ -71,8 +69,9 @@ function parseEnvFile(file) {
 
 const bootstrap = parseEnvFile(bootstrapEnv);
 const vars = parseEnvFile(varsEnv);
-const requiredSecrets = ['BAO_CI_ROLE_ID', 'BAO_CI_SECRET_ID'];
-const requiredVars = ['DEPLOY_HOST', 'DEPLOY_PORT', 'DEPLOY_USER', 'DEPLOY_PATH'];
+const plan = JSON.parse(readFileSync(path.join(process.cwd(), 'ci', 'vault-migration-plan.json'), 'utf8'));
+const requiredSecrets = ['VAULT_CI_ROLE_ID', 'VAULT_CI_SECRET_ID'];
+const requiredVars = plan.tracker_variables ?? [];
 const missing = [
   ...requiredSecrets.filter((key) => !bootstrap.get(key)),
   ...requiredVars.filter((key) => !vars.get(key)),

@@ -68,34 +68,33 @@ The A14 audit ([#1289](https://git.integrolabs.net/roctinam/aiwg/issues/1289)) w
 
 ## Release-secret policy
 
-Gitea Actions stores only the OpenBao CI bootstrap pair:
-`BAO_CI_ROLE_ID` and `BAO_CI_SECRET_ID`. Repository-managed release, mirror,
-dispatch, and deploy-key material lives in OpenBao and is fetched at runtime by
-[`ci/openbao-fetch.sh`](../../ci/openbao-fetch.sh).
+Gitea Actions stores only the vault CI bootstrap pair:
+`VAULT_CI_ROLE_ID` and `VAULT_CI_SECRET_ID`. Repository-managed release, mirror,
+dispatch, and deploy-key material lives in vault and is fetched at runtime by
+[`ci/vault-fetch.sh`](../../ci/vault-fetch.sh).
 
-| Former Gitea secret | Current destination |
+| Former Gitea secret | Current route variables |
 |---|---|
-| `NPM_TOKEN` | `kv_internal/ci/aiwg/gitea-npm-token` field `token` |
-| `GH_ACCESS_TOKEN` | `kv_internal/ci/aiwg/github-mirror-token` field `token` |
-| `AIWG_IO_DISPATCH_TOKEN` | `kv_internal/ci/aiwg/aiwg-io-dispatch-token` field `token` |
-| `DEPLOY_SSH_KEY` | `kv_internal/ci/shared/docs-deploy` field `private_key` |
+| `NPM_TOKEN` | `GITEA_NPM_TOKEN_VAULT_PATH`, `GITEA_NPM_TOKEN_VAULT_FIELD` |
+| `GH_ACCESS_TOKEN` | `GITHUB_MIRROR_TOKEN_VAULT_PATH`, `GITHUB_MIRROR_TOKEN_VAULT_FIELD` |
+| `AIWG_IO_DISPATCH_TOKEN` | `AIWG_IO_DISPATCH_TOKEN_VAULT_PATH`, `AIWG_IO_DISPATCH_TOKEN_VAULT_FIELD` |
+| `DOCSITE_DEPLOY_KEY` | `DOCSITE_DEPLOY_KEY_VAULT_PATH`, `DOCSITE_DEPLOY_KEY_VAULT_FIELD` |
 
-`DEPLOY_HOST`, `DEPLOY_PORT`, `DEPLOY_USER`, and `DEPLOY_PATH` are non-secret
-Gitea Actions variables. `secrets.GITHUB_TOKEN` is CI-issued per run and is not
-stored or migrated.
+Docsite deploy coordinates are Gitea Actions variables. `secrets.GITHUB_TOKEN`
+is CI-issued per run and is not stored or migrated.
 
 Rotation is documented in
 [`docs/contributing/secret-rotation.md`](../../docs/contributing/secret-rotation.md).
 
 ## Shared `docs.aiwg.io` tenants
 
-`docs.aiwg.io` is a shared static host. The AIWG repository owns the root tenant
-served from `DEPLOY_PATH`; sibling repositories may publish isolated subtrees
-under that same host. The first registered sibling tenant is:
+The docs site is a shared static host. The AIWG repository owns the root tenant;
+sibling repositories may publish isolated subtrees under that same host. The
+first registered sibling tenant is:
 
 | Tenant | Owning repo | Public route | Deploy target |
 |---|---|---|---|
-| `agentic-sandbox` | `roctinam/agentic-sandbox` | `https://docs.aiwg.io/agentic-sandbox/` | `${DEPLOY_PATH%/}/agentic-sandbox/` |
+| `agentic-sandbox` | `roctinam/agentic-sandbox` | public subpath | configured sibling deploy path |
 
 AIWG's `docsite-deploy.yml` still runs `rsync --delete` for the root tenant, so
 it must explicitly protect sibling tenant subtrees. The workflow defines
@@ -108,7 +107,7 @@ When adding another shared docs tenant:
 1. Add the route/subpath to the table above.
 2. Add the subpath to `PROTECTED_DOCS_SUBPATHS` in `docsite-deploy.yml`.
 3. Configure the sibling repository to deploy inside its own subtree, never to
-   the root `DEPLOY_PATH`.
+   the root tenant path.
 4. Verify both the root AIWG docs and the sibling route after the next deploy.
 
 Do not solve tenant isolation by weakening `--delete`; stale root docs should
@@ -127,7 +126,7 @@ The mitigation for the missing native gate is a bundle of three controls. Togeth
 |---|---|---|
 | Signed-tag verify (#1299 / A9) | Hard cryptographic gate. Every release tag must verify against a maintainer public key before any publish/release-creation step runs. Catches forged tags, replay, and most workflow-injection vectors. | [`tools/ci/verify-signed-tag.sh`](../../tools/ci/verify-signed-tag.sh) — invoked by `npm-publish.yml` and `gitea-release.yml`. |
 | Manual approval record (#1286 / A10) | The actor and UTC timestamp of the tag push are embedded in the Gitea release body. In direct-mode delivery, the tag push **is** the approval moment; the signed tag is the actor's cryptographic affirmation. | `gitea-release.yml` `Create or reuse Gitea release` step injects `Approved by: ${{ github.actor }}` + ISO-8601 timestamp into the release body. |
-| Scoped + rotated OpenBao CI leaves (#1286 / A10) | Token scopes are limited to their workflow needs and rotated quarterly. Gitea stores only the OpenBao bootstrap pair. | [`docs/contributing/secret-rotation.md`](../../docs/contributing/secret-rotation.md). |
+| Scoped + rotated vault CI leaves (#1286 / A10) | Token scopes are limited to their workflow needs and rotated quarterly. Gitea stores only the vault bootstrap pair. | [`docs/contributing/secret-rotation.md`](../../docs/contributing/secret-rotation.md). |
 
 The bundle does **not** include a dedicated publish runner. That control is operationally desirable (it isolates the publish step from runs that handle untrusted PRs) and was scoped into #1286 but deferred to operator scheduling. Until a dedicated runner is provisioned, the three controls above are the active mitigation.
 
@@ -140,6 +139,6 @@ npm trusted-publishing requires a supported provider and `id-token: write` workf
 The two-leg model holds while the operator verifies the OIDC path:
 
 - **npmjs.org publish** — handled by `.github/workflows/npm-publish.yml` (GitHub mirror).
-- **Gitea-registry publish** — handled by `.gitea/workflows/npm-publish.yml` (Gitea origin). The Gitea API token is fetched from OpenBao at runtime; the bundle of compensating controls above governs it.
+- **Gitea-registry publish** — handled by `.gitea/workflows/npm-publish.yml` (Gitea origin). The Gitea API token is fetched from vault at runtime; the bundle of compensating controls above governs it.
 
 After the first OIDC-verified npmjs.org release: operator removes the npmjs.org publish steps from `.gitea/workflows/npm-publish.yml` and revokes `NPMJS_TOKEN`. Tracked on #1283 close-out.

@@ -1,0 +1,87 @@
+{
+  "repository": "roctinam/aiwg",
+  "reader_approle": "ci-aiwg",
+  "bootstrap_tracker_secrets": [
+    "VAULT_CI_ROLE_ID",
+    "VAULT_CI_SECRET_ID"
+  ],
+  "tracker_variables": [
+    "VAULT_ADDR",
+    "GT_NPM_TOKEN_VAULT_PATH",
+    "GT_NPM_TOKEN_VAULT_FIELD",
+    "GT_RELEASE_TOKEN_VAULT_PATH",
+    "GT_RELEASE_TOKEN_VAULT_FIELD",
+    "GH_MIRROR_TOKEN_VAULT_PATH",
+    "GH_MIRROR_TOKEN_VAULT_FIELD",
+    "AIWG_IO_DISPATCH_TOKEN_VAULT_PATH",
+    "AIWG_IO_DISPATCH_TOKEN_VAULT_FIELD",
+    "DOCSITE_DEPLOY_KEY_VAULT_PATH",
+    "DOCSITE_DEPLOY_KEY_VAULT_FIELD",
+    "RELEASE_SIGNING_KEY_VAULT_PATH",
+    "RELEASE_SIGNING_KEY_VAULT_FIELD",
+    "RELEASE_SIGNING_PASSPHRASE_VAULT_PATH",
+    "RELEASE_SIGNING_PASSPHRASE_VAULT_FIELD",
+    "DOCSITE_DEPLOY_HOST",
+    "DOCSITE_DEPLOY_PORT",
+    "DOCSITE_DEPLOY_USER",
+    "DOCSITE_DEPLOY_PATH"
+  ],
+  "routes": [
+    {
+      "id": "gitea-npm-token",
+      "path_variable": "GT_NPM_TOKEN_VAULT_PATH",
+      "field_variable": "GT_NPM_TOKEN_VAULT_FIELD",
+      "env": "NODE_AUTH_TOKEN",
+      "type": "api-token",
+      "purpose": "Gitea package publish token"
+    },
+    {
+      "id": "gitea-release-token",
+      "path_variable": "GT_RELEASE_TOKEN_VAULT_PATH",
+      "field_variable": "GT_RELEASE_TOKEN_VAULT_FIELD",
+      "env": "GITEA_TOKEN",
+      "type": "api-token",
+      "purpose": "Gitea release and release-asset token"
+    },
+    {
+      "id": "github-mirror-token",
+      "path_variable": "GH_MIRROR_TOKEN_VAULT_PATH",
+      "field_variable": "GH_MIRROR_TOKEN_VAULT_FIELD",
+      "env": "GH_TOKEN",
+      "type": "api-token",
+      "purpose": "GitHub mirror release token"
+    },
+    {
+      "id": "aiwg-io-dispatch-token",
+      "path_variable": "AIWG_IO_DISPATCH_TOKEN_VAULT_PATH",
+      "field_variable": "AIWG_IO_DISPATCH_TOKEN_VAULT_FIELD",
+      "env": "AIWG_IO_DISPATCH_TOKEN",
+      "type": "api-token",
+      "purpose": "Site deploy dispatch token"
+    },
+    {
+      "id": "docsite-deploy-key",
+      "path_variable": "DOCSITE_DEPLOY_KEY_VAULT_PATH",
+      "field_variable": "DOCSITE_DEPLOY_KEY_VAULT_FIELD",
+      "env": "DOCSITE_DEPLOY_KEY_FILE",
+      "type": "ssh-private-key",
+      "purpose": "Docsite deploy SSH key"
+    },
+    {
+      "id": "release-signing-key",
+      "path_variable": "RELEASE_SIGNING_KEY_VAULT_PATH",
+      "field_variable": "RELEASE_SIGNING_KEY_VAULT_FIELD",
+      "env": "GPG_SIGNING_KEY_FILE",
+      "type": "gpg-private-key",
+      "purpose": "Release signing private key"
+    },
+    {
+      "id": "release-signing-passphrase",
+      "path_variable": "RELEASE_SIGNING_PASSPHRASE_VAULT_PATH",
+      "field_variable": "RELEASE_SIGNING_PASSPHRASE_VAULT_FIELD",
+      "env": "GPG_PASSPHRASE_FILE",
+      "type": "passphrase",
+      "purpose": "Release signing passphrase"
+    }
+  ]
+}

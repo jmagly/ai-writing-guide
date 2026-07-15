@@ -86,7 +86,7 @@ grep '"version"' package.json | grep -E '\.[0-9]{2}\.' && echo "ERROR: Leading z
 
 **Tag signing is mandatory** as of #1299 (A9). CI rejects any release tag whose signature does not verify against a maintainer public key in `.gitea/keys/maintainers.asc` (GPG) or `.gitea/allowed_signers` (SSH). The verify step lives in `.gitea/workflows/npm-publish.yml` and `.gitea/workflows/gitea-release.yml` and is implemented by [`tools/ci/verify-signed-tag.sh`](../../tools/ci/verify-signed-tag.sh).
 
-`tools/release/cut-tag.sh` sources the release-signing key from OpenBao itself
+`tools/release/cut-tag.sh` sources the release-signing key from vault itself
 (no manual keyring hydration): it fetches the key + machine passphrase into an
 ephemeral `GNUPGHOME`, signs the tag with loopback pinentry, verifies, and
 shreds the keyring on exit. The operator only supplies the reader-AppRole creds.
@@ -96,10 +96,10 @@ shreds the keyring on exit. The operator only supplies the reader-AppRole creds.
 git commit -S -m "docs(release): prepare 2026.X.Y artifacts"
 
 # Export the ci-aiwg reader creds so cut-tag.sh can fetch the vault key.
-# From the operator TPM credstore (itops env helper):
-source ~/.config/openbao/env
-export BAO_CI_ROLE_ID="$(_openbao_cred ci-aiwg role-id)"
-export BAO_CI_SECRET_ID="$(_openbao_cred ci-aiwg secret-id)"
+# From the operator vault handoff/credstore:
+source ~/.config/vault/env
+export VAULT_CI_ROLE_ID="$(_vault_cred ci-aiwg role-id)"
+export VAULT_CI_SECRET_ID="$(_vault_cred ci-aiwg secret-id)"
 
 # Cut the signed tag — fetches the vault key, signs with the release-only key,
 # and runs the local verify gate. Never call `git tag` by hand.
@@ -113,28 +113,30 @@ git push origin main --tags
 # peels annotated tags; github-mirror.yml then creates the GitHub release)
 git push github main --tags
 
-unset BAO_CI_ROLE_ID BAO_CI_SECRET_ID
+unset VAULT_CI_ROLE_ID VAULT_CI_SECRET_ID
 ```
 
 **Signing-key custody note**: the release-signing key is a **dedicated CI key**
 (`9292EFCBB0EA41BECEEFDAFA9C1B8CE0E0E09C33`, ed25519) whose private material and
-machine passphrase live vault-only at `kv_internal/gpg/release-signing-key`.
+machine passphrase live vault-only. The concrete vault route is supplied by the
+private routing env, not by checked-in docs.
 It was rekeyed on 2026-07-12 from the retired personal-passphrase key
 `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`; both public keys are committed under
 `.gitea/keys/maintainers.asc` so historical tags still verify. CI only pulls
 repository contents and verifies tags against those public keys — it does not
 need the private key on the runner for verification.
 
-OpenBao source of truth:
+Vault source of truth:
 
-- Endpoint: `https://rca-g2.s9.internal:8200`
-- SOP: `/home/roctinam/dev/itops/docs/security/secret-management-sop.md`
-- Release key: `kv_internal/gpg/release-signing-key` (fields `armored_private_key`, `passphrase`)
-- Reader AppRole: `ci-aiwg` (policy `ci-release-key-read`) — used by both CI
-  (`BAO_CI_ROLE_ID`/`BAO_CI_SECRET_ID` secrets) and the operator workstation
-  (same AppRole, creds sealed to the machine TPM credstore as
-  `openbao-ci-aiwg-{role-id,secret-id}`).
-- Commit key: `kv_internal/gpg/commit-signing-key`
+- SOP: private itops secret-management runbook.
+- Release key route: `RELEASE_SIGNING_KEY_VAULT_PATH` and
+  `RELEASE_SIGNING_KEY_VAULT_FIELD`.
+- Release passphrase route: `RELEASE_SIGNING_PASSPHRASE_VAULT_PATH` and
+  `RELEASE_SIGNING_PASSPHRASE_VAULT_FIELD`.
+- Reader AppRole: `ci-aiwg`, provided to CI as `VAULT_CI_ROLE_ID` and
+  `VAULT_CI_SECRET_ID`.
+- Commit signing route: private maintainer vault routing, not stored in this
+  repository.
 
 Fork / offline signing: set `AIWG_RELEASE_SIGN_FROM_VAULT=0` to sign with a key
 already in the local GPG keyring, and `AIWG_RELEASE_KEY_FINGERPRINT=<fpr>` to
@@ -165,7 +167,7 @@ git add .gitea/keys/maintainers.asc
 git commit -m "security: add maintainer release signing key (refs #1299)"
 git push origin main
 
-# 5. Induct the PRIVATE key into OpenBao, then delete the working export.
+# 5. Induct the PRIVATE key into vault, then delete the working export.
 #    Follow /home/roctinam/dev/itops/docs/security/secret-management-sop.md
 #    and use /home/roctinam/dev/itops/scripts/secret-induct.sh so the key is
 #    streamed from a file and never printed.
@@ -208,8 +210,8 @@ Per the convention established in commit `a13dabc5` ("two-key model — personal
 
 | Purpose | Key | UID |
 |---|---|---|
-| **Commit signing** | personal GPG key from OpenBao path `kv_internal/gpg/commit-signing-key` | maintainer's own identity (e.g. `<1159087+jmagly@users.noreply.github.com>`) |
-| **Tag signing (release)** | AIWG release key from OpenBao path `kv_internal/gpg/release-signing-key` | `AIWG Release Signing <release@aiwg.io>` (fingerprint `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`) |
+| **Commit signing** | personal GPG key from the maintainer's private vault route | maintainer's own identity (e.g. `<1159087+jmagly@users.noreply.github.com>`) |
+| **Tag signing (release)** | AIWG release key from the release signing vault route | `AIWG Release Signing <release@aiwg.io>` (fingerprint `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`) |
 
 This has one operational gotcha: a typical maintainer git config has `tag.gpgsign=true` AND `user.signingkey=<personal-key>` so commits sign correctly. But `git tag -s` (and even `git tag -a` with `tag.gpgsign=true`) then signs the **tag** with the **personal key** — wrong key for the supply-chain gate.
 
@@ -222,16 +224,16 @@ tools/release/cut-tag.sh 2026.X.Y
 The wrapper forces `-u <release-key-fingerprint>` via `git tag -s -u …` so the right key signs the tag regardless of the global `user.signingkey`. It also runs 10 pre-tag checks (CalVer, package.json/marketplace.json lockstep, CHANGELOG, announcement, release key present in the active `GNUPGHOME`, key published in `.gitea/keys/maintainers.asc`) so common drift bugs fail locally rather than in CI.
 
 If the wrapper says the release key is missing, hydrate a temporary GPG home from
-OpenBao first:
+the configured vault route first:
 
 ```bash
 set +x
 umask 077
-export BAO_ADDR=https://rca-g2.s9.internal:8200
 export GNUPGHOME="${XDG_RUNTIME_DIR:-/dev/shm}/aiwg-gpg-release.$$"
 mkdir -p "$GNUPGHOME"
-bao kv get -field=private_key kv_internal/gpg/release-signing-key \
-  | gpg --batch --import
+GITHUB_ENV="$(mktemp)" ci/vault-fetch.sh --spec ci/vault-fetch.release-signing.spec
+. "$GITHUB_ENV"
+gpg --batch --import "$GPG_SIGNING_KEY_FILE"
 gpg --list-secret-keys --keyid-format LONG
 ```
 
@@ -244,11 +246,11 @@ When the command sees `AIWG Release Signing <release@aiwg.io>`, rerun
 
 Rotate maintainer signing keys on a known cadence (suggested: every 2 years) and
 immediately on any suspected compromise of the maintainer's workstation or
-OpenBao secret path. To rotate:
+vault secret path. To rotate:
 
 1. Generate the new key per the setup procedure above.
 2. Add its public component to the same `.gitea/keys/maintainers.asc` or `.gitea/allowed_signers` file (do not remove the old key yet — it's still trusted for past releases).
-3. Induct the new private key into the relevant OpenBao path and update its KV metadata.
+3. Induct the new private key into the relevant vault path and update its KV metadata.
 4. After at least one release with the new key has been verified end-to-end, remove the old key from the public-key file in a documented commit and update SECURITY.md.
 
 #### Historical tags

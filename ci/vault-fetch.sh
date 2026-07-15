@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Fetch CI secrets from OpenBao via a least-privilege AppRole.
+# Fetch CI secrets from vault via a least-privilege AppRole.
 #
-# Spec format, one directive per line. Both path forms are accepted:
-#   env <ENV_NAME> <mount/path> <field>
-#   keyfile <ENV_NAME> <mount/data/path> <field>
+# Spec format, one directive per line:
+#   env     <ENV_NAME> <mount/path or ${PATH_VAR}> <field or ${FIELD_VAR}>
+#   keyfile <ENV_NAME> <mount/path or ${PATH_VAR}> <field or ${FIELD_VAR}>
 #
 # Values fetched with `env` are masked and appended to GITHUB_ENV or --env-file.
 # Values fetched with `keyfile` are written to mode-600 temp files; the env var
-# receives the path. Run `openbao-fetch.sh --cleanup` in an always step.
+# receives the path. Run `vault-fetch.sh --cleanup` in an always step.
 set -euo pipefail
 
-BAO_ADDR="${BAO_ADDR:-https://rca-g2.s9.internal:8200}"
+VAULT_ADDR="${VAULT_ADDR:-}"
 SPEC_FILE=""
 ENV_FILE="${GITHUB_ENV:-}"
 CLEANUP=0
@@ -19,26 +19,23 @@ DRY_RUN=0
 usage() {
   cat >&2 <<'EOF'
 Usage:
-  ci/openbao-fetch.sh --spec <file> [--env-file <file>] [--addr <url>] [--dry-run]
-  ci/openbao-fetch.sh [--env-file <file>] [--addr <url>] < spec
-  ci/openbao-fetch.sh --cleanup
+  ci/vault-fetch.sh --spec <file> [--env-file <file>] [--addr <url>] [--dry-run]
+  ci/vault-fetch.sh [--env-file <file>] [--addr <url>] < spec
+  ci/vault-fetch.sh --cleanup
 
 Required environment for fetch:
-  BAO_CI_ROLE_ID
-  BAO_CI_SECRET_ID
+  VAULT_ADDR
+  VAULT_CI_ROLE_ID
+  VAULT_CI_SECRET_ID
 
 Spec directives:
-  env <ENV_NAME> <mount/path> <field>
-  keyfile <ENV_NAME> <mount/data/path> <field>
-
-Example:
-  env GHCR_TOKEN kv_internal/ci/shared/ghcr-token token
-  keyfile DEPLOY_KEY kv_internal/data/ci/my-repo/docsite-deploy private_key
+  env <ENV_NAME> <mount/path or ${PATH_VAR}> <field or ${FIELD_VAR}>
+  keyfile <ENV_NAME> <mount/path or ${PATH_VAR}> <field or ${FIELD_VAR}>
 EOF
 }
 
 die() {
-  printf 'openbao-fetch: %s\n' "$*" >&2
+  printf 'vault-fetch: %s\n' "$*" >&2
   exit 1
 }
 
@@ -51,9 +48,9 @@ mask() {
 
 cleanup_file() {
   if [[ -n "${RUNNER_TEMP:-}" ]]; then
-    printf '%s/openbao-fetch-cleanup\n' "$RUNNER_TEMP"
+    printf '%s/vault-fetch-cleanup\n' "$RUNNER_TEMP"
   else
-    printf '.openbao-fetch-cleanup\n'
+    printf '.vault-fetch-cleanup\n'
   fi
 }
 
@@ -63,13 +60,20 @@ cleanup() {
   [[ -f "$list" ]] || return 0
   while IFS= read -r path; do
     [[ -n "$path" && -f "$path" ]] || continue
-    if command -v shred >/dev/null 2>&1; then
-      shred -u "$path" || rm -f "$path"
-    else
-      rm -f "$path"
-    fi
+    rm -f "$path"
   done <"$list"
   rm -f "$list"
+}
+
+resolve_spec_token() {
+  local value="$1" name
+  if [[ "$value" =~ ^\$\{([A-Z_][A-Z0-9_]*)\}$ ]]; then
+    name="${BASH_REMATCH[1]}"
+    [[ -n "${!name:-}" ]] || die "$name is required"
+    printf '%s\n' "${!name}"
+  else
+    printf '%s\n' "$value"
+  fi
 }
 
 kv_data_path() {
@@ -83,7 +87,7 @@ kv_data_path() {
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --addr) BAO_ADDR="$2"; shift 2 ;;
+    --addr) VAULT_ADDR="$2"; shift 2 ;;
     --spec) SPEC_FILE="$2"; shift 2 ;;
     --env-file) ENV_FILE="$2"; shift 2 ;;
     --cleanup) CLEANUP=1; shift ;;
@@ -109,35 +113,34 @@ if [[ "$DRY_RUN" == 1 ]]; then
     $1 != "env" && $1 != "keyfile" { printf "invalid directive on line %d: %s\n", NR, $0; exit 2 }
     NF != 4 { printf "expected 4 fields on line %d: %s\n", NR, $0; exit 2 }
     $2 !~ /^[A-Z_][A-Z0-9_]*$/ { printf "invalid env var on line %d: %s\n", NR, $2; exit 2 }
-    $3 !~ /^[A-Za-z0-9_.-]+\/.+$/ { printf "invalid KV path on line %d: %s\n", NR, $3; exit 2 }
-    $4 !~ /^[A-Za-z0-9_.-]+$/ { printf "invalid field on line %d: %s\n", NR, $4; exit 2 }
+    $3 !~ /^(\$\{[A-Z_][A-Z0-9_]*\}|[A-Za-z0-9_.-]+\/.+)$/ { printf "invalid KV path on line %d: %s\n", NR, $3; exit 2 }
+    $4 !~ /^(\$\{[A-Z_][A-Z0-9_]*\}|[A-Za-z0-9_.-]+)$/ { printf "invalid field on line %d: %s\n", NR, $4; exit 2 }
   ' "$SPEC_FILE"
-  printf 'openbao-fetch: dry-run OK for %s\n' "$SPEC_FILE"
+  printf 'vault-fetch: dry-run OK for %s\n' "$SPEC_FILE"
   exit 0
 fi
 
-# Dependency checks live below the dry-run branch on purpose: dry-run is pure
-# spec validation (awk only) and must work in containers without curl/jq.
-if ! command -v curl >/dev/null 2>&1; then die "curl is required"; fi
-if ! command -v jq >/dev/null 2>&1; then die "jq is required"; fi
+command -v curl >/dev/null 2>&1 || die "curl is required"
+command -v jq >/dev/null 2>&1 || die "jq is required"
 
-[[ -n "${BAO_CI_ROLE_ID:-}" ]] || die "BAO_CI_ROLE_ID is required"
-[[ -n "${BAO_CI_SECRET_ID:-}" ]] || die "BAO_CI_SECRET_ID is required"
+[[ -n "${VAULT_CI_ROLE_ID:-}" ]] || die "VAULT_CI_ROLE_ID is required"
+[[ -n "${VAULT_CI_SECRET_ID:-}" ]] || die "VAULT_CI_SECRET_ID is required"
+[[ -n "$VAULT_ADDR" ]] || die "VAULT_ADDR is required"
 [[ -n "$ENV_FILE" ]] || die "GITHUB_ENV or --env-file is required; refusing to print secrets"
 
 token="$(
-  jq -n --arg role_id "$BAO_CI_ROLE_ID" --arg secret_id "$BAO_CI_SECRET_ID" \
-    '{role_id:$role_id, secret_id:$secret_id}' |
-  curl -fsS -k --max-time 20 -X POST --data @- \
-    "$BAO_ADDR/v1/auth/approle/login" |
+  jq -nc --arg r "$VAULT_CI_ROLE_ID" --arg s "$VAULT_CI_SECRET_ID" \
+    '{role_id:$r, secret_id:$s}' |
+  curl -fsS -k --max-time 20 -X POST --data @- "$VAULT_ADDR/v1/auth/approle/login" |
   jq -er '.auth.client_token'
 )"
 mask "$token"
+
 revoke_token() {
   [[ -n "${token:-}" ]] || return 0
   curl -fsS -k --max-time 10 \
     -H "X-Vault-Token: $token" \
-    -X POST "$BAO_ADDR/v1/auth/token/revoke-self" >/dev/null 2>&1 || true
+    -X POST "$VAULT_ADDR/v1/auth/token/revoke-self" >/dev/null 2>&1 || true
   token=""
 }
 trap revoke_token EXIT
@@ -154,32 +157,32 @@ while read -r kind name path field extra; do
   [[ -z "${extra:-}" ]] || die "too many fields for $name"
   [[ "$kind" == "env" || "$kind" == "keyfile" ]] || die "invalid directive: $kind"
   [[ "$name" =~ ^[A-Z_][A-Z0-9_]*$ ]] || die "invalid env var: $name"
-  [[ "$path" == */* ]] || die "path must be mount/path: $path"
+  path="$(resolve_spec_token "$path")"
+  field="$(resolve_spec_token "$field")"
+  [[ "$path" == */* ]] || die "path must be mount/path"
   api_path="$(kv_data_path "$path")"
+
   value="$(
     curl -fsS -k --max-time 20 \
       -H "X-Vault-Token: $token" \
-      "$BAO_ADDR/v1/$api_path" |
+      "$VAULT_ADDR/v1/$api_path" |
     jq -er --arg field "$field" '.data.data[$field]'
   )"
 
   if [[ "$kind" == "env" ]]; then
     mask "$value"
     {
-      printf '%s<<__OPENBAO_%s__\n' "$name" "$name"
+      printf '%s<<__VAULT_%s__\n' "$name" "$name"
       printf '%s\n' "$value"
-      printf '__OPENBAO_%s__\n' "$name"
+      printf '__VAULT_%s__\n' "$name"
     } >>"$ENV_FILE"
-    printf 'openbao-fetch: exported %s from %s:%s\n' "$name" "$path" "$field" >&2
+    printf 'vault-fetch: exported %s\n' "$name" >&2
   else
-    file="$(mktemp "$tmp_dir/openbao-${name}.XXXXXX")"
-    # Trailing newline is load-bearing: command substitution strips it from the
-    # fetched value, and OpenSSH rejects a private key file that does not end
-    # with one ("error in libcrypto").
+    file="$(mktemp "$tmp_dir/vault-${name}.XXXXXX")"
     printf '%s\n' "$value" >"$file"
     chmod 600 "$file"
     printf '%s\n' "$file" >>"$cleanup_list"
     printf '%s=%s\n' "$name" "$file" >>"$ENV_FILE"
-    printf 'openbao-fetch: wrote keyfile %s from %s:%s\n' "$name" "$path" "$field" >&2
+    printf 'vault-fetch: wrote keyfile %s\n' "$name" >&2
   fi
 done <"$SPEC_FILE"

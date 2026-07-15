@@ -3,10 +3,15 @@
 # Automatically creates (or reuses) a Gitea release when a version tag is pushed.
 # Keeps GitHub release management manual via `gh release ...`.
 #
-# Required tracker secrets: BAO_CI_ROLE_ID, BAO_CI_SECRET_ID.
-# OpenBao fetch spec: ci/openbao-fetch.gitea-release.spec -> GITEA_TOKEN.
+# Required tracker secrets: VAULT_CI_ROLE_ID, VAULT_CI_SECRET_ID.
+# vault fetch spec: ci/vault-fetch.gitea-release.spec -> GITEA_TOKEN.
 
 name: Create Gitea Release
+
+env:
+  VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+  GT_RELEASE_TOKEN_VAULT_PATH: ${{ vars.GT_RELEASE_TOKEN_VAULT_PATH }}
+  GT_RELEASE_TOKEN_VAULT_FIELD: ${{ vars.GT_RELEASE_TOKEN_VAULT_FIELD }}
 
 on:
   push:
@@ -20,7 +25,7 @@ concurrency:
 jobs:
   create-release:
     name: Create Release
-    if: ${{ secrets.BAO_CI_ROLE_ID != '' && secrets.BAO_CI_SECRET_ID != '' }}
+    if: ${{ secrets.VAULT_CI_ROLE_ID != '' && secrets.VAULT_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 5
@@ -67,16 +72,16 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version verified: $VERSION"
 
-      - name: Install OpenBao fetch dependencies
+      - name: Install vault fetch dependencies
         run: |
           apt-get update
           apt-get install -y --no-install-recommends curl jq
 
-      - name: Fetch Gitea release token from OpenBao
+      - name: Fetch Gitea release token from vault
         env:
-          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
-          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
-        run: bash ci/openbao-fetch.sh --spec ci/openbao-fetch.gitea-release.spec
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+        run: bash ci/vault-fetch.sh --spec ci/vault-fetch.gitea-release.spec
 
       - name: Create or reuse Gitea release
         run: |

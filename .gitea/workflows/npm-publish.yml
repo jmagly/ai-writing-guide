@@ -10,10 +10,10 @@
 # owns the Gitea npm registry (local package management) only.
 #
 # REQUIRED TRACKER SECRETS:
-#   BAO_CI_ROLE_ID, BAO_CI_SECRET_ID - OpenBao AppRole bootstrap pair.
+#   VAULT_CI_ROLE_ID, VAULT_CI_SECRET_ID - vault AppRole bootstrap pair.
 #
-# OpenBao fetch spec:
-#   ci/openbao-fetch.npm-publish.spec -> NODE_AUTH_TOKEN
+# vault fetch spec:
+#   ci/vault-fetch.npm-publish.spec -> NODE_AUTH_TOKEN
 #
 # To publish a new version:
 #   1. Update version in package.json
@@ -46,12 +46,15 @@ concurrency:
 env:
   GITEA_NPM_REGISTRY: https://git.integrolabs.net/api/packages/roctinam/npm/
   NODE_VERSION: '20'
+  VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+  GT_NPM_TOKEN_VAULT_PATH: ${{ vars.GT_NPM_TOKEN_VAULT_PATH }}
+  GT_NPM_TOKEN_VAULT_FIELD: ${{ vars.GT_NPM_TOKEN_VAULT_FIELD }}
 
 jobs:
   build-and-publish-prerelease:
     name: Build and Publish Pre-release
     # Publish pre-release tags (nightly, alpha, beta) — nightly → --tag nightly, others → --tag next
-    if: ${{ contains(github.ref, '-') && github.event_name == 'push' && secrets.BAO_CI_ROLE_ID != '' && secrets.BAO_CI_SECRET_ID != '' }}
+    if: ${{ contains(github.ref, '-') && github.event_name == 'push' && secrets.VAULT_CI_ROLE_ID != '' && secrets.VAULT_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 15
@@ -150,16 +153,16 @@ jobs:
           echo "npm_tag=$NPM_TAG" >> $GITHUB_OUTPUT
           echo "Pre-release version: $NPM_VERSION (tag: $NPM_TAG)"
 
-      - name: Install OpenBao fetch dependencies
+      - name: Install vault fetch dependencies
         run: |
           apt-get update
           apt-get install -y --no-install-recommends curl jq
 
-      - name: Fetch Gitea npm token from OpenBao
+      - name: Fetch Gitea npm token from vault
         env:
-          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
-          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
-        run: bash ci/openbao-fetch.sh --spec ci/openbao-fetch.npm-publish.spec
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+        run: bash ci/vault-fetch.sh --spec ci/vault-fetch.npm-publish.spec
 
       - name: Publish pre-release to Gitea npm registry
         run: |
@@ -244,7 +247,7 @@ jobs:
   build-and-publish:
     name: Build and Publish
     # Only publish final tags (no pre-release suffix)
-    if: ${{ !contains(github.ref, '-') && secrets.BAO_CI_ROLE_ID != '' && secrets.BAO_CI_SECRET_ID != '' }}
+    if: ${{ !contains(github.ref, '-') && secrets.VAULT_CI_ROLE_ID != '' && secrets.VAULT_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 15
@@ -386,16 +389,16 @@ jobs:
       - name: Check Cockpit package contents
         run: npm pack ./apps/cockpit --dry-run
 
-      - name: Install OpenBao fetch dependencies
+      - name: Install vault fetch dependencies
         run: |
           apt-get update
           apt-get install -y --no-install-recommends curl jq
 
-      - name: Fetch Gitea npm token from OpenBao
+      - name: Fetch Gitea npm token from vault
         env:
-          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
-          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
-        run: bash ci/openbao-fetch.sh --spec ci/openbao-fetch.npm-publish.spec
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+        run: bash ci/vault-fetch.sh --spec ci/vault-fetch.npm-publish.spec
 
       - name: Publish to Gitea npm registry
         if: ${{ github.event.inputs.dry_run != 'true' }}
