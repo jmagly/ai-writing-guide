@@ -209,6 +209,72 @@ title: Slugged
   });
 });
 
+describe('reference-resolves check', () => {
+  function referenceRuleset(): LintRuleset {
+    return makeRuleset([{
+      id: 'test/citation-resolves',
+      name: 'Citation Resolves',
+      description: 'Test',
+      severity: 'error',
+      appliesTo: { glob: '**/*.md' },
+      checks: [{ type: 'reference-resolves' }],
+    }]);
+  }
+
+  it('resolves canonical slugged reference filenames', async () => {
+    writeFileSync(join(TEST_DIR, 'findings', 'REF-089-recursive-language-models.md'), '# Paper\n');
+    writeFileSync(join(TEST_DIR, 'findings', 'REF-090-synthesis.md'), 'See REF-089.\n');
+
+    const result = await runLint(TEST_DIR, [referenceRuleset()]);
+
+    expect(result.diagnostics).toHaveLength(0);
+  });
+
+  it('matches and resolves complete four-digit reference IDs', async () => {
+    writeFileSync(join(TEST_DIR, 'findings', 'REF-1713-research-paper.md'), '# Paper\n');
+    writeFileSync(join(TEST_DIR, 'findings', 'REF-1714-synthesis.md'), 'See REF-1713.\n');
+
+    const result = await runLint(TEST_DIR, [referenceRuleset()]);
+
+    expect(result.diagnostics).toHaveLength(0);
+  });
+
+  it('resolves references in non-findings layouts', async () => {
+    const referencesDir = join(TEST_DIR, 'documentation', 'references');
+    mkdirSync(referencesDir, { recursive: true });
+    writeFileSync(join(referencesDir, 'REF-1000-grammar-specification.md'), '# Paper\n');
+    writeFileSync(join(referencesDir, 'REF-1001-parser.md'), 'Builds on REF-1000.\n');
+
+    const result = await runLint(TEST_DIR, [referenceRuleset()]);
+
+    expect(result.diagnostics).toHaveLength(0);
+  });
+
+  it('still reports a complete unresolved four-digit reference ID', async () => {
+    writeFileSync(join(TEST_DIR, 'findings', 'REF-1001-synthesis.md'), 'Missing REF-1713.\n');
+
+    const result = await runLint(TEST_DIR, [referenceRuleset()]);
+
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0].message).toContain("Reference 'REF-1713'");
+  });
+
+  it('does not treat citation or radar sidecars as reference documents', async () => {
+    const citationsDir = join(TEST_DIR, 'documentation', 'citations');
+    const radarDir = join(TEST_DIR, 'documentation', 'radar');
+    mkdirSync(citationsDir, { recursive: true });
+    mkdirSync(radarDir, { recursive: true });
+    writeFileSync(join(citationsDir, 'REF-1713-citations.md'), '# Citation sidecar\n');
+    writeFileSync(join(radarDir, 'REF-1713-radar.md'), '# Radar sidecar\n');
+    writeFileSync(join(TEST_DIR, 'findings', 'REF-1001-synthesis.md'), 'Missing REF-1713.\n');
+
+    const result = await runLint(TEST_DIR, [referenceRuleset()]);
+
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0].message).toContain("Reference 'REF-1713'");
+  });
+});
+
 describe('summary and pass/fail', () => {
   it('reports passed when no errors', async () => {
     writeFileSync(join(TEST_DIR, 'findings', 'REF-050.md'), `---

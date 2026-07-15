@@ -21,6 +21,7 @@ import { formatResult } from '../../src/lint/reporters.js';
 // ── Fixture corpus ───────────────────────────────────────────────────
 const FIXTURE_DIR = join(tmpdir(), `aiwg-lint-integration-${Date.now()}`);
 const FINDINGS_DIR = join(FIXTURE_DIR, 'findings');
+const REFERENCES_DIR = join(FIXTURE_DIR, 'documentation', 'references');
 
 // Resolve the actual research-complete lint dir from this repo
 const PROJECT_ROOT = resolve(import.meta.dirname || __dirname, '../..');
@@ -28,6 +29,7 @@ const RESEARCH_LINT_DIR = join(PROJECT_ROOT, 'agentic/code/frameworks/research-c
 
 beforeAll(() => {
   mkdirSync(FINDINGS_DIR, { recursive: true });
+  mkdirSync(REFERENCES_DIR, { recursive: true });
 
   // Good REF note — all frontmatter present
   writeFileSync(join(FINDINGS_DIR, 'REF-001.md'), `---
@@ -128,6 +130,10 @@ acquisition_method: automated
 
 # Invalid Status Paper
 `);
+
+  // Canonical warehouse layout — slugged filenames and four-digit IDs
+  writeFileSync(join(REFERENCES_DIR, 'REF-1000-grammar-specification.md'), '# Grammar\n');
+  writeFileSync(join(REFERENCES_DIR, 'REF-1001-parser.md'), 'Builds on REF-1000.\n');
 });
 
 afterAll(() => {
@@ -193,6 +199,16 @@ describe('end-to-end lint run against fixture corpus', () => {
     );
     expect(refDiags.length).toBeGreaterThanOrEqual(1);
     expect(refDiags[0].message).toContain('REF-999');
+  });
+
+  it('resolves slugged four-digit references in a non-findings layout', async () => {
+    const ruleset = await loadRuleset(RESEARCH_LINT_DIR, 'research-complete');
+    const result = await runLint(FIXTURE_DIR, [ruleset!]);
+
+    const refDiags = result.diagnostics.filter(
+      d => d.file.includes('REF-1001-parser') && d.ruleId === 'research/citation-resolves'
+    );
+    expect(refDiags).toHaveLength(0);
   });
 
   it('detects invalid status value in REF-006', async () => {

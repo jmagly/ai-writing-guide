@@ -1,10 +1,9 @@
 id: research/citation-resolves
 name: Citation reference integrity
-description: Every REF-XXX reference in body text points to an existing note in findings/
+description: Every REF reference in body text points to an existing note in the lint target
 severity: error
 applies-to:
   glob: "**/*.md"
 checks:
   - type: reference-resolves
-    referencePattern: "REF-\\d{3}"
-    basePath: findings
+    referencePattern: "\\bREF-\\d{3,}\\b"

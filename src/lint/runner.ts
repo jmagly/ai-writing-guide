@@ -39,6 +39,56 @@ function parseFrontmatter(content: string): Record<string, string> {
   return result;
 }
 
+const DEFAULT_REFERENCE_PATTERN = '\\bREF-\\d{3,}\\b';
+
+/**
+ * Build a target-wide artifact ID index once per lint run.
+ *
+ * Reference documents may use either an exact filename (`REF-001.md`) or the
+ * canonical slugged form (`REF-001-some-title.md`). Indexing the ID prefix also
+ * makes resolution independent of a particular corpus directory layout.
+ */
+function buildReferenceIndex(allFiles: string[]): Set<string> {
+  const references = new Set<string>();
+
+  for (const file of allFiles) {
+    if (path.extname(file).toLowerCase() !== '.md') continue;
+
+    const basename = path.basename(file, '.md');
+    if (/^REF-\d+-(?:citations|radar)$/.test(basename)) continue;
+    references.add(basename);
+
+    const artifactId = basename.match(/^(.+?-\d+)(?:-|$)/);
+    if (artifactId) references.add(artifactId[1]);
+  }
+
+  return references;
+}
+
+/**
+ * Preserve support for references stored outside the lint target when a rule
+ * explicitly supplies basePath. Accept both exact and slugged filenames.
+ */
+function resolvesFromBasePath(refId: string, targetDir: string, basePath: string): boolean {
+  const candidateDirs = new Set([
+    path.resolve(targetDir, basePath),
+    path.resolve(process.cwd(), basePath),
+  ]);
+
+  for (const dir of candidateDirs) {
+    try {
+      if (fs.existsSync(path.join(dir, `${refId}.md`))) return true;
+      if (fs.readdirSync(dir).some(file => file.startsWith(`${refId}-`) && file.endsWith('.md'))) {
+        return true;
+      }
+    } catch {
+      // Missing or unreadable candidate directories do not resolve the ID.
+    }
+  }
+
+  return false;
+}
+
 /**
  * Run a single check against a file's content and frontmatter
  */
@@ -48,7 +98,8 @@ function runCheck(
   frontmatter: Record<string, string>,
   filePath: string,
   targetDir: string,
-  allFiles: string[]
+  allFiles: string[],
+  referenceIndex: Set<string>
 ): LintDiagnostic[] {
   const diagnostics: LintDiagnostic[] = [];
 
@@ -87,7 +138,7 @@ function runCheck(
     }
 
     case 'reference-resolves': {
-      const refPattern = check.referencePattern || 'REF-\\d{3}';
+      const refPattern = check.referencePattern || DEFAULT_REFERENCE_PATTERN;
       const regex = new RegExp(refPattern, 'g');
       const lines = content.split('\n');
 
@@ -96,21 +147,16 @@ function runCheck(
         while ((match = regex.exec(lines[i])) !== null) {
           const refId = match[0];
           const basePath = check.basePath || '.aiwg/research/findings';
-          const refFile = path.join(targetDir, basePath, `${refId}.md`);
 
-          if (!fs.existsSync(refFile)) {
-            // Also check relative to cwd
-            const altPath = path.join(process.cwd(), basePath, `${refId}.md`);
-            if (!fs.existsSync(altPath)) {
-              diagnostics.push({
-                ruleId: '',
-                ruleName: '',
-                severity: 'error',
-                file: filePath,
-                message: `Reference '${refId}' does not resolve to an existing file`,
-                line: i + 1,
-              });
-            }
+          if (!referenceIndex.has(refId) && !resolvesFromBasePath(refId, targetDir, basePath)) {
+            diagnostics.push({
+              ruleId: '',
+              ruleName: '',
+              severity: 'error',
+              file: filePath,
+              message: `Reference '${refId}' does not resolve to an existing file`,
+              line: i + 1,
+            });
           }
         }
       }
@@ -172,7 +218,7 @@ function runCheck(
     }
 
     case 'cross-ref-bidirectional': {
-      const refPattern = check.referencePattern || 'REF-\\d{3}';
+      const refPattern = check.referencePattern || DEFAULT_REFERENCE_PATTERN;
       const regex = new RegExp(refPattern, 'g');
       const currentBasename = path.basename(filePath, '.md');
       const matches = content.match(regex) || [];
@@ -212,7 +258,8 @@ function runCheck(
 async function runRule(
   rule: LintRule,
   targetDir: string,
-  allFiles: string[]
+  allFiles: string[],
+  referenceIndex: Set<string>
 ): Promise<LintDiagnostic[]> {
   const diagnostics: LintDiagnostic[] = [];
 
@@ -257,7 +304,15 @@ async function runRule(
     for (const check of rule.checks) {
       if (check.type === 'id-unique') continue; // Already handled
 
-      const checkDiagnostics = runCheck(check, content, frontmatter, file, targetDir, allFiles);
+      const checkDiagnostics = runCheck(
+        check,
+        content,
+        frontmatter,
+        file,
+        targetDir,
+        allFiles,
+        referenceIndex
+      );
       for (const d of checkDiagnostics) {
         d.ruleId = rule.id;
         d.ruleName = rule.name;
@@ -327,11 +382,12 @@ export async function runLint(
 ): Promise<LintResult> {
   const recursive = options.recursive ?? true;
   const allFiles = await collectFiles(targetDir, recursive);
+  const referenceIndex = buildReferenceIndex(allFiles);
   const allDiagnostics: LintDiagnostic[] = [];
 
   for (const ruleset of rulesets) {
     for (const rule of ruleset.rules) {
-      const diagnostics = await runRule(rule, targetDir, allFiles);
+      const diagnostics = await runRule(rule, targetDir, allFiles, referenceIndex);
       allDiagnostics.push(...diagnostics);
     }
   }
