@@ -62,6 +62,8 @@ function displayHelp(): void {
     ['new <name>', 'Create new project with SDLC templates'],
     ['init', 'Create the baseline .aiwg/aiwg.config file'],
     ['setup project', 'CLI helper used by agents for repo/tracker/delivery/signing policy'],
+    ['quickref generate --project', 'Generate the canonical project quickref skill (--dry-run previews deterministic output)'],
+    ['quickref deploy --project', 'Deploy the project quickref to configured provider kernel surfaces'],
   ]);
 
   helpGroup('WORKSPACE', [

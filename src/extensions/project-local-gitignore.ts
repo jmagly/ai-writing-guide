@@ -42,6 +42,7 @@ export const AIWG_GITIGNORE_BLOCK = [
   '',
   AIWG_GITIGNORE_SENTINEL,
   '!.aiwg/aiwg.config',
+  '!.aiwg/quickref.json',
   '!.aiwg/addons/',
   '!.aiwg/extensions/',
   '!.aiwg/frameworks/',
@@ -164,6 +165,13 @@ export async function appendAiwgSourceTrackBlock(
   // so the existing-negation check would otherwise mis-fire on subsequent
   // runs.
   if (report.hasManagedBlock) {
+    const path = join(projectDir, '.gitignore');
+    const existing = await readFile(path, 'utf8');
+    if (!existing.split(/\r?\n/).some(line => line.trim() === '!.aiwg/quickref.json')) {
+      const sep = existing.endsWith('\n') ? '' : '\n';
+      await writeFile(path, `${existing}${sep}!.aiwg/quickref.json\n`, 'utf8');
+      return { added: true, reason: 'updated managed block to track .aiwg/quickref.json' };
+    }
     return { added: false, reason: 'block already present — no change' };
   }
   if (report.hasExistingNegation) {
@@ -174,7 +182,7 @@ export async function appendAiwgSourceTrackBlock(
   const existing = await readFile(path, 'utf8');
   const sep = existing.endsWith('\n') ? '' : '\n';
   await writeFile(path, existing + sep + AIWG_GITIGNORE_BLOCK, 'utf8');
-  return { added: true, reason: 'appended .aiwg/{addons,extensions,frameworks,plugins,providers} un-ignore block' };
+  return { added: true, reason: 'appended project-local source un-ignore block (bundles, config, and quickref)' };
 }
 
 /**

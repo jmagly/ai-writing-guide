@@ -7,6 +7,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Project-local quickrefs** (#1788) — projects can commit
+  `.aiwg/quickref.json`, preview deterministic generation with
+  `aiwg quickref generate --project --dry-run`, and deploy the resulting
+  always-visible orientation skill through provider kernel or emulation paths.
+  `aiwg use` refreshes it, ownership markers make stale pruning safe, and
+  `aiwg doctor --project-local` validates source and deployment drift.
+
 ## [2026.7.13] - 2026-07-15 - "Complete provider context and release routing"
 
 This stable release makes aggregated provider context complete across

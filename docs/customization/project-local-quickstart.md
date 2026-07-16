@@ -112,13 +112,14 @@ when you ask for it explicitly.
 
 ### A note on `.gitignore`
 
-AIWG-managed projects historically `.gitignore` the whole `.aiwg/` tree because most of its content is generated state (working scratch, ralph state, research corpora, etc.). Project-local bundle source under `.aiwg/{addons,extensions,frameworks,plugins,providers}/` is the exception — it's operator-authored, and it should travel with the project.
+AIWG-managed projects historically `.gitignore` the whole `.aiwg/` tree because most of its content is generated state (working scratch, ralph state, research corpora, etc.). Project-local bundle source under `.aiwg/{addons,extensions,frameworks,plugins,providers}/` and `.aiwg/quickref.json` are exceptions — they are operator-authored, and they should travel with the project.
 
 `aiwg new-bundle` detects this and self-heals: when it finds a blanket `.aiwg/` ignore rule and no existing source-directory negation, it appends a sentinel-marked block:
 
 ```gitignore
 # AIWG project-local bundle source — track these (managed by AIWG)
 !.aiwg/aiwg.config
+!.aiwg/quickref.json
 !.aiwg/addons/
 !.aiwg/extensions/
 !.aiwg/frameworks/

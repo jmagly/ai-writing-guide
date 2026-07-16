@@ -66,6 +66,7 @@ import {
   removeHandler,
   promoteHandler,
   newBundleHandler,
+  quickrefHandler,
   newProjectHandler,
   installPluginHandler,
   uninstallPluginHandler,
@@ -155,6 +156,7 @@ export {
 
   // Project
   newBundleHandler,
+  quickrefHandler,
   newProjectHandler,
 
   // Workspace
@@ -310,6 +312,7 @@ export const allHandlers: CommandHandler[] = [
 
   // Project setup
   newBundleHandler,
+  quickrefHandler,
   newProjectHandler,
   initHandler,
   setupHandler,

@@ -130,6 +130,7 @@ describe('project-local-gitignore', () => {
       const content = readFileSync(join(tmpDir, '.gitignore'), 'utf8');
       expect(content).toContain(AIWG_GITIGNORE_SENTINEL);
       expect(content).toContain('!.aiwg/aiwg.config');
+      expect(content).toContain('!.aiwg/quickref.json');
       expect(content).toContain('!.aiwg/addons/');
       expect(content).toContain('!.aiwg/extensions/');
       expect(content).toContain('!.aiwg/frameworks/');
@@ -146,6 +147,17 @@ describe('project-local-gitignore', () => {
       const content = readFileSync(join(tmpDir, '.gitignore'), 'utf8');
       const sentinelCount = content.split(AIWG_GITIGNORE_SENTINEL).length - 1;
       expect(sentinelCount).toBe(1);
+    });
+
+    it('repairs an older managed block to track the canonical quickref source', async () => {
+      writeFileSync(
+        join(tmpDir, '.gitignore'),
+        `.aiwg/\n${AIWG_GITIGNORE_SENTINEL}\n!.aiwg/aiwg.config\n!.aiwg/addons/\n`,
+      );
+      const result = await appendAiwgSourceTrackBlock(tmpDir);
+      expect(result.added).toBe(true);
+      expect(result.reason).toMatch(/quickref\.json/);
+      expect(readFileSync(join(tmpDir, '.gitignore'), 'utf8')).toContain('!.aiwg/quickref.json');
     });
 
     it('appends a trailing newline when .gitignore lacks one', async () => {

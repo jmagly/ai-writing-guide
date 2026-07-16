@@ -273,6 +273,7 @@
     "customization/README",
     "customization/project-local-quickstart",
     "customization/project-local-lifecycle",
+    "customization/project-quickrefs",
     "customization/project-local-troubleshooting",
     "customization/from-fork-to-project-local",
     "customization/extensions-vs-addons-vs-frameworks-vs-plugins",
@@ -2129,6 +2130,13 @@
       "title": "Project-Local Lifecycle",
       "summary": "Bundle lifecycle and graduation",
       "file": "customization/project-local-lifecycle.md",
+      "parent": "customization"
+    },
+    {
+      "id": "customization/project-quickrefs",
+      "title": "Project Quickrefs",
+      "summary": "Always-visible project orientation",
+      "file": "customization/project-quickrefs.md",
       "parent": "customization"
     },
     {

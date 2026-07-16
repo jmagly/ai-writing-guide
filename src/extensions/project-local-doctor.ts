@@ -22,6 +22,7 @@ import { checkBundleManifestIgnored } from './project-local-gitignore.js';
 import { sha256OfFileRawAndNormalized } from './managed-marker.js';
 import type { ProjectLocalType } from './manifest.js';
 import type { AiwgConfig } from '../config/aiwg-config.js';
+import { auditProjectQuickref } from './project-quickref.js';
 
 export interface DoctorSectionResult {
   /** Pre-formatted multi-line section (empty string when no project-local content). */
@@ -97,9 +98,17 @@ export async function buildProjectLocalDoctorSection(
   const { projectDir, frameworkRoot, config, quiet = false } = opts;
 
   const discovery = await discoverProjectLocalBundles(projectDir);
+  const quickrefAudit = await auditProjectQuickref(projectDir, config?.providers ?? []);
+  const quickrefErrors = [...quickrefAudit.errors];
+  if (quickrefAudit.exists) {
+    const ignored = await checkBundleManifestIgnored(projectDir, '.aiwg/quickref.json');
+    if (ignored === true) {
+      quickrefErrors.push('.aiwg/quickref.json is ignored by git; canonical project quickref source must be committed');
+    }
+  }
 
   // No project-local content → no section at all
-  if (discovery.isEmpty && discovery.errors.length === 0) {
+  if (discovery.isEmpty && discovery.errors.length === 0 && !quickrefAudit.exists && quickrefErrors.length === 0) {
     return { output: '', validationErrors: 0, denylistViolations: 0, driftCount: 0, hasFailures: false };
   }
 
@@ -116,16 +125,23 @@ export async function buildProjectLocalDoctorSection(
       lines.push(`    ${dirName.padEnd(11)} ${ofType.length}${idList}`);
     }
     lines.push('');
+    if (quickrefAudit.exists) {
+      lines.push(`  Project quickref: ${quickrefAudit.skillName ?? 'invalid source'}`);
+      lines.push('');
+    }
   }
 
   // Validation
-  const validationErrors = discovery.errors.length;
+  const validationErrors = discovery.errors.length + quickrefErrors.length;
   if (validationErrors === 0) {
-    if (!quiet) lines.push('  Validation: ✓ all manifests valid');
+    if (!quiet) lines.push(`  Validation: ✓ all manifests${quickrefAudit.exists ? ' and project quickref source' : ''} valid`);
   } else {
     lines.push(`  Validation: ✗ ${validationErrors} error${validationErrors === 1 ? '' : 's'}`);
     for (const e of discovery.errors.slice(0, 10)) {
       lines.push(`    ✗ ${e.path}: ${e.field} — ${e.actual}`);
+    }
+    for (const error of quickrefErrors.slice(0, Math.max(0, 10 - discovery.errors.length))) {
+      lines.push(`    ✗ ${error}`);
     }
     if (validationErrors > 10) {
       lines.push(`    + ${validationErrors - 10} more (run 'aiwg list --project-local' for full list)`);
@@ -175,8 +191,8 @@ export async function buildProjectLocalDoctorSection(
   }
 
   // Drift detection (requires config and artifactHashes)
-  let driftCount = 0;
-  const driftLines: string[] = [];
+  let driftCount = quickrefAudit.drift.length;
+  const driftLines: string[] = quickrefAudit.drift.map(message => `    ✗ project quickref :: ${message}`);
   let unhashedSeen = false;
   if (config) {
     for (const bundle of discovery.bundles) {
@@ -266,6 +282,7 @@ export async function buildProjectLocalDoctorSection(
         lines.push(`    + ${ignored.length - 5} more`);
       }
       lines.push('    Project-local bundle source should be tracked. Add to .gitignore:');
+      lines.push('      !.aiwg/quickref.json');
       lines.push('      !.aiwg/addons/');
       lines.push('      !.aiwg/extensions/');
       lines.push('      !.aiwg/frameworks/');

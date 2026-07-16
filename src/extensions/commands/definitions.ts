@@ -371,6 +371,28 @@ export const newBundleCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const quickrefCommand: Extension = {
+  id: 'quickref',
+  type: 'skill',
+  name: 'Project Quickref',
+  description: 'Generate and deploy an always-visible project quickref from .aiwg/quickref.json',
+  version: '1.0.0',
+  capabilities: ['cli', 'project-local', 'quickref', 'kernel'],
+  keywords: ['project', 'quickref', 'orientation', 'kernel', 'generate', 'deploy'],
+  category: 'project',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['generate project quickref', 'deploy project quickref'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: 'generate|deploy --project [--provider <id>] [--dry-run]',
+      allowedTools: ['Read', 'Write', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 export const promoteCommand: Extension = {
   id: 'promote',
   type: 'skill',
@@ -3346,6 +3368,7 @@ export const commandDefinitions: Extension[] = [
   removeCommand,
   promoteCommand,
   newBundleCommand,
+  quickrefCommand,
   installCommand,
   packagesCommand,
   marketplaceCommand,

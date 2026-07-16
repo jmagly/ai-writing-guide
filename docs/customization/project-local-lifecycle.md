@@ -12,7 +12,8 @@ types over their full lifetime: discovery → deploy or provider selection
 ├── addons/<id>/        # Focused feature packs
 ├── frameworks/<id>/    # Complete workflow domains
 ├── plugins/<id>/       # Marketplace-packaged bundles
-└── providers/<id>/     # Custom provider definitions
+├── providers/<id>/     # Custom provider definitions
+└── quickref.json       # Canonical project orientation definition (optional)
 ```
 
 Each `<id>/` contains a `manifest.json`. Artifact-bearing bundles also
@@ -39,6 +40,8 @@ copy, not a migration.
 | `aiwg remove <name>` | Revert deployed files; preserves source under `.aiwg/` |
 | `aiwg promote <name>` | Graduate a bundle to upstream or a corpus path |
 | `aiwg activity-log show` | Audit the lifecycle event log |
+| `aiwg quickref generate --project` | Render the deterministic project quickref skill |
+| `aiwg quickref deploy --project` | Deploy the quickref to configured provider kernel surfaces |
 
 ## Discovery
 
@@ -111,6 +114,11 @@ Per-bundle deploy:
 5. Emit `deploy` (or `deploy-failed`) to the activity log
 
 `--dry-run` and `--no-project-local` are supported.
+
+When `.aiwg/quickref.json` exists, each project-local deploy also regenerates
+and refreshes that provider's project quickref. The generated skill stays short:
+it states local precedence and points to indexed assets rather than embedding
+their full bodies. See [Project Quickrefs](project-quickrefs.md).
 
 ## Conflict resolution (shadow policy)
 

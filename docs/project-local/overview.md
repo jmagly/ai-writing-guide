@@ -17,6 +17,7 @@ The authoritative documentation now lives under `docs/customization/`:
 |-----|----------------|
 | [Quickstart](../customization/project-local-quickstart.md) | Author your first project-local bundle in 5 minutes |
 | [Lifecycle reference](../customization/project-local-lifecycle.md) | Discovery, deploy, conflict resolution, doctor, remove, promote, activity log |
+| [Project quickrefs](../customization/project-quickrefs.md) | Always-visible project orientation, precedence, generation, and provider deployment |
 | [Type disambiguation](../customization/extensions-vs-addons-vs-frameworks-vs-plugins.md) | Which bundle type to author |
 | [Customization README](../customization/README.md) | Path A (project-local) / Path B (fork) / Path C (corpus) |
 | [Troubleshooting](../customization/project-local-troubleshooting.md) | Common failures and fixes |
@@ -31,6 +32,8 @@ aiwg doctor --project-local   # health check
 aiwg remove <name>            # revert deployed files (source preserved)
 aiwg promote <name>           # graduate to upstream or corpus
 aiwg activity-log show        # audit trail
+aiwg quickref generate --project --dry-run  # preview project orientation
+aiwg quickref deploy --project              # deploy to provider kernel surfaces
 ```
 
 The load-bearing invariant: a project-local bundle is **byte-identical**

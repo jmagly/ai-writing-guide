@@ -12,6 +12,10 @@ Starting in 2026.5.0, AIWG splits its skill surface into two tiers, with discove
 
 - **Kernel skills** — always-loaded into the platform's flat skill listing. ~21 skills total: 9 quickrefs (one per installed framework + utils), the `aiwg-language-map` for addons + extensions, the `steward-quickref` feature-domain routing anchor (expansion/persona/project, #1623), and 10 self-maintenance ops.
 - **Standard skills** — the other ~460 skills. Stay at `$AIWG_ROOT` and are **not copied per-project** by default (#1217). Reachable via `aiwg discover` (find) and `aiwg show` (fetch).
+- **Project quickref** — an optional, generated kernel skill from committed
+  `.aiwg/quickref.json`. It makes a small set of repository-specific precedence
+  and retrieval hints visible without promoting every project skill into the
+  kernel. See [Project Quickrefs](customization/project-quickrefs.md).
 
 This document is the operator's guide to using the new model effectively, plus verification steps so you can confirm it's actually working.
 

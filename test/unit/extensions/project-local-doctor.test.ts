@@ -11,6 +11,7 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { createHash } from 'crypto';
 import { buildProjectLocalDoctorSection } from '../../../src/extensions/project-local-doctor.js';
+import { deployProjectQuickref } from '../../../src/extensions/project-quickref.js';
 import type { AiwgConfig } from '../../../src/config/aiwg-config.js';
 
 function tmp(): string {
@@ -66,6 +67,16 @@ function deployRule(projectDir: string, body = 'rule body'): void {
   writeFileSync(join(projectDir, '.claude', 'rules', 'r1.md'), body);
 }
 
+function writeQuickref(projectDir: string): void {
+  mkdirSync(join(projectDir, '.aiwg'), { recursive: true });
+  writeFileSync(join(projectDir, '.aiwg', 'quickref.json'), JSON.stringify({
+    version: '1',
+    project: { id: 'doctor-test', name: 'Doctor Test', description: 'Doctor quickref fixture.' },
+    precedence: 'Use local workflows before generic workflows.',
+    entries: [{ title: 'Local flow', summary: 'Retrieve the local flow.', discover: ['local flow'], show: [] }],
+  }, null, 2));
+}
+
 function makeConfig(bundleId: string, hashes: Record<string, string>): AiwgConfig {
   return {
     version: '1', providers: ['claude'],
@@ -104,6 +115,22 @@ describe('project-local-doctor (DC-1)', () => {
     });
     expect(r.output).toBe('');
     expect(r.hasFailures).toBe(false);
+  });
+
+  it('validates project quickref generation and configured-provider deployment', async () => {
+    writeQuickref(projectDir);
+    const config: AiwgConfig = { version: '1', providers: ['claude'], installed: {}, scripts: {} };
+
+    const stale = await buildProjectLocalDoctorSection({ projectDir, frameworkRoot, config });
+    expect(stale.output).toContain('Project quickref: aiwg-project-doctor-test-quickref');
+    expect(stale.driftCount).toBe(2);
+    expect(stale.hasFailures).toBe(true);
+
+    await deployProjectQuickref(projectDir, 'claude');
+    const current = await buildProjectLocalDoctorSection({ projectDir, frameworkRoot, config });
+    expect(current.validationErrors).toBe(0);
+    expect(current.driftCount).toBe(0);
+    expect(current.hasFailures).toBe(false);
   });
 
   it('reports per-type counts and bundle ids when content exists', async () => {
