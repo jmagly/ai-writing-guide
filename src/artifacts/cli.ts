@@ -894,12 +894,13 @@ async function handleDedup(args: string[]): Promise<void> {
  */
 async function handleExport(args: string[]): Promise<void> {
   if (args.includes('--help') || args.includes('-h')) {
-    console.log('Usage: aiwg index export --format fortemi [options]');
+    console.log('Usage: aiwg index export --format fortemi|fortemi-shard [options]');
     console.log('');
     console.log('Options:');
     console.log('  --format fortemi       Export the AIWG/Fortemi browser contract (required)');
+    console.log('  --format fortemi-shard Export a portable Fortemi Knowledge Shard');
     console.log('  --graph <name>         Graph to export (default: project)');
-    console.log('  --out <path>           Write JSON to a file instead of stdout');
+    console.log('  --out <path>           Write JSON or .shard output to a file');
     console.log('  --repo <name>          Source repository label (default: cwd basename)');
     console.log('  --privacy <level>      private, sanitized, or public (default: private)');
     console.log('  --schema-version <v>   Export contract version: v1 or v2 (default: v1)');
@@ -907,13 +908,14 @@ async function handleExport(args: string[]): Promise<void> {
     console.log('');
     console.log('Examples:');
     console.log('  aiwg index export --format fortemi --graph project --out aiwg-fortemi-index.json');
+    console.log('  aiwg index export --format fortemi-shard --graph project --out aiwg-index.shard');
     console.log('  aiwg index export --format fortemi --privacy sanitized --generated-at 2026-01-01T00:00:00.000Z');
     return;
   }
 
-  const format = parseFlagValue(args, '--format', 'Error: index export requires --format fortemi');
-  if (format !== 'fortemi') {
-    console.error('Error: index export requires --format fortemi');
+  const format = parseFlagValue(args, '--format', 'Error: index export requires --format fortemi or fortemi-shard');
+  if (format !== 'fortemi' && format !== 'fortemi-shard') {
+    console.error('Error: index export requires --format fortemi or fortemi-shard');
     process.exit(1);
   }
 
@@ -931,9 +933,28 @@ async function handleExport(args: string[]): Promise<void> {
     console.error('Error: --schema-version must be v1 or v2');
     process.exit(1);
   }
+  if (format === 'fortemi-shard' && schemaVersion && schemaVersion !== 'v2') {
+    console.error('Error: --format fortemi-shard requires --schema-version v2');
+    process.exit(1);
+  }
+  if (format === 'fortemi-shard' && !out) {
+    console.error('Error: --format fortemi-shard requires --out <path>');
+    process.exit(1);
+  }
 
-  const { buildAiwgFortemiIndexExport, writeAiwgFortemiIndexExport } = await import('./browser-export.js');
   try {
+    if (format === 'fortemi-shard') {
+      const { writeAiwgFortemiKnowledgeShard } = await import('./fortemi-shard-export.js');
+      const result = await writeAiwgFortemiKnowledgeShard(process.cwd(), out!, {
+        graph,
+        repo,
+        privacy: privacy as 'private' | 'sanitized' | 'public' | undefined,
+        generatedAt,
+      });
+      console.log(`Exported ${result.items} AIWG records to ${result.outPath} (${result.bytes} bytes)`);
+      return;
+    }
+    const { buildAiwgFortemiIndexExport, writeAiwgFortemiIndexExport } = await import('./browser-export.js');
     const exported = buildAiwgFortemiIndexExport(process.cwd(), {
       graph,
       repo,

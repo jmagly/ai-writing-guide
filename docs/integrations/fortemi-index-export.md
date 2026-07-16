@@ -19,6 +19,20 @@ aiwg index build --graph user
 aiwg index sync --graph user
 ```
 
+For a portable archive that can be imported into a Fortemi React archive or a
+Fortemi server, export a Knowledge Shard:
+
+```bash
+aiwg index export --format fortemi-shard --graph project --out aiwg-project.shard
+```
+
+`fortemi-shard` always builds the v2 contract and passes it to the canonical
+`@fortemi/core/aiwg-index` converter. The shard uses deterministic note/link
+identities and preserves the complete v2 envelope and every source record in
+note metadata, so import/export remains reversible. The common profile declares
+notes, tags, and links; SKOS, provenance, chunks, privacy fields, checksums, and
+other rich AIWG data remain intact inside the embedded source records.
+
 The sync command materializes:
 
 ```text
@@ -220,8 +234,9 @@ for fixture data after removing private names, addresses, tokens, account
 identifiers, and operational notes. Use `--privacy public` only for
 already-public source material.
 
-Fortemi React consumes the JSON locally; `aiwg index export` and
-`aiwg index sync` do not require a hosted backend.
+Fortemi React consumes `--format fortemi` JSON locally. The
+`--format fortemi-shard` archive is the portable storage/server transport.
+Neither export mode requires a hosted backend.
 
 For user/global capability sidecars under `~/.aiwg`, see
 [`docs/user-level-indices.md`](../user-level-indices.md).
