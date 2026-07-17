@@ -44,6 +44,12 @@ search text. `issue-audit --provider local` and `address-issues --provider
 local` consume bounded slices from the same provider instead of reading the
 whole backlog.
 
+Label filters and workflow mutations should use stable roles from
+`.aiwg/aiwg.config` `issues.labels`; see
+[Issue Label Taxonomy](issue-label-taxonomy.md). A role may map to a
+local-specific string through `provider_names.local`, while retaining the same
+semantics used by Gitea and GitHub.
+
 ## Fortemi Core Migration Note
 
 Local issue search remains served by the local issue provider in the Fortemi

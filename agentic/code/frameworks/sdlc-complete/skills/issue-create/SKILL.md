@@ -25,6 +25,15 @@ commandHint:
 
 # Issue Create
 
+## Semantic Label Contract (#1789)
+
+Resolve `.aiwg/aiwg.config` `remotes.issue_tracker` and `issues.labels` before
+translating any semantic label role into a tracker-native string. Validate the
+resolved label against the target tracker catalog. Preserve caller-supplied
+unrelated labels, report unavailable roles, and never provision a missing label
+implicitly. If `issues.labels` is absent, retain legacy behavior with an
+explicit fallback warning rather than silently guessing project semantics.
+
 ## Purpose
 
 Create a new ticket/issue for tracking work items, bugs, features, or tasks. Automatically uses the configured ticketing provider (Gitea, GitHub, Jira, Linear) or falls back to local file-based tracking.

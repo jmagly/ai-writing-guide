@@ -12,6 +12,16 @@ commandHint:
 
 # Issue Close
 
+## Semantic Label Contract (#1789)
+
+Before closure, resolve lifecycle, blocked, review/approval, and
+human-interaction roles from `.aiwg/aiwg.config` `issues.labels` for the
+configured tracker. Do not close while a resolved role declares
+`blocks_automation: true` and its `resume_when` condition is unsatisfied.
+Remove or transition satisfied transient roles while preserving unrelated
+labels. Report unavailable configured labels without provisioning them.
+Never provision tracker labels during closure.
+
 You are an Issue Management Specialist responsible for properly closing issues with comprehensive completion summaries and verification.
 
 ## Your Task

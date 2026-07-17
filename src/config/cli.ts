@@ -62,7 +62,7 @@ export async function main(args: string[]): Promise<void> {
       break;
 
     case 'validate':
-      await handleValidate(config);
+      await handleValidate(config, subArgs);
       break;
 
     case 'reset':
@@ -334,7 +334,11 @@ async function handleList(config: UserConfig): Promise<void> {
   }
 }
 
-async function handleValidate(config: UserConfig): Promise<void> {
+async function handleValidate(config: UserConfig, args: string[]): Promise<void> {
+  if (args.includes('--project')) {
+    await handleProjectValidate(args);
+    return;
+  }
   const issues = await config.validate();
 
   console.log(`Config directory: ${config.getPath()}\n`);
@@ -361,6 +365,79 @@ async function handleValidate(config: UserConfig): Promise<void> {
       code: 'ERR_CONFIG_VALIDATION',
       message: `Config validation failed with ${errors.length} error(s)`,
       hint: 'Fix the errors listed above, or run: aiwg config edit',
+      exitCode: EXIT_CODES.CONFIG,
+    });
+  }
+}
+
+async function handleProjectValidate(args: string[]): Promise<void> {
+  const {
+    getProjectDir,
+    readAiwgConfig,
+    resolveIssueLabels,
+    validateIndexConfig,
+    validateIssueLabels,
+  } = await import('./aiwg-config.js');
+  const projectDir = getProjectDir(undefined, args);
+  const cfg = await readAiwgConfig(projectDir);
+  if (!cfg) {
+    throw new AiwgError({
+      code: 'ERR_NO_PROJECT_CONFIG',
+      message: 'No .aiwg/aiwg.config in this project.',
+      hint: 'Run `aiwg init`, then configure project policy.',
+      exitCode: EXIT_CODES.CONFIG,
+    });
+  }
+
+  const providerIndex = args.indexOf('--provider');
+  const providerArg = providerIndex >= 0 ? args[providerIndex + 1] : undefined;
+  const allowedProviders = ['gitea', 'github', 'local'] as const;
+  if (providerArg && !allowedProviders.includes(providerArg as typeof allowedProviders[number])) {
+    throw new AiwgError({
+      code: 'ERR_INVALID_VALUE',
+      message: `Unsupported issue label provider '${providerArg}'.`,
+      hint: 'Use --provider gitea, --provider github, or --provider local.',
+      exitCode: EXIT_CODES.USAGE,
+    });
+  }
+  const provider = providerArg as typeof allowedProviders[number] | undefined;
+  const availableLabels: string[] = [];
+  for (let i = 0; i < args.length; i += 1) {
+    if (args[i] === '--available-label' && args[i + 1]) availableLabels.push(args[++i]);
+  }
+
+  const indexErrors = validateIndexConfig(cfg.index).map((message) => ({
+    severity: 'error' as const,
+    code: 'index',
+    message,
+  }));
+  const labelDiagnostics = provider
+    ? validateIssueLabels(cfg.issues, {
+        provider,
+        ...(availableLabels.length ? { availableLabels } : {}),
+      })
+    : cfg.issues?.labels
+      ? validateIssueLabels(cfg.issues)
+      : resolveIssueLabels(undefined, 'local').diagnostics;
+  const diagnostics = [...indexErrors, ...labelDiagnostics];
+
+  console.log(`Project config: ${projectDir}/.aiwg/aiwg.config\n`);
+  if (diagnostics.length === 0) {
+    console.log('✓ Project config valid');
+    return;
+  }
+  for (const diagnostic of diagnostics) {
+    const icon = diagnostic.severity === 'error' ? '✗' : '!';
+    console.log(`  ${icon} [${diagnostic.code}] ${diagnostic.message}`);
+  }
+  const errors = diagnostics.filter((diagnostic) => diagnostic.severity === 'error');
+  const warnings = diagnostics.filter((diagnostic) => diagnostic.severity === 'warning');
+  console.log(`\n${errors.length} error(s), ${warnings.length} warning(s)`);
+  if (errors.length) {
+    throw new AiwgError({
+      code: 'ERR_CONFIG_VALIDATION',
+      message: `Project config validation failed with ${errors.length} error(s)`,
+      hint: 'Fix the reported taxonomy or index configuration. Missing tracker labels must be provisioned explicitly.',
       exitCode: EXIT_CODES.CONFIG,
     });
   }
@@ -621,7 +698,9 @@ Subcommands:
   set --project <key> <value>     Write a project config value (validates enums)
   list                Show all user config
   show --project      Show resolved project config (.aiwg/aiwg.config)
-  validate            Validate all config files
+  validate            Validate user config files
+  validate --project  Validate .aiwg/aiwg.config taxonomy/index semantics
+    [--provider gitea|github|local] [--available-label NAME ...]
   reset [<key>]       Reset key or all config to defaults
   path                Print config directory path
   edit                Open config in $EDITOR

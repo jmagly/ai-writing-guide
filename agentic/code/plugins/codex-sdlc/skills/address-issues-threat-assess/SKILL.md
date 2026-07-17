@@ -6,7 +6,8 @@ description: Preflight issue bodies for prompt-injection and supply-chain risk b
 requires:
   - issue-body: title, body, labels, author, and comments for each issue selected by address-issues
 ensures:
-  - verdict: safe, flag, or reject with scored evidence
+  - verdict: safe, flag, or reject with scored, paragraph-level evidence
+  - actionable-detail: JSON includes why_verdict, threshold_explanation, operator_next_steps, policy_context, and comment_markdown
   - gate: high-risk issue bodies cannot be processed autonomously without human authorization
 errors:
   - invalid-input: issue JSON cannot be parsed
@@ -99,6 +100,12 @@ Signals:
 
 No code or agent-instruction changes were made.
 ```
+
+Use the script's `comment_markdown` field verbatim as the detailed portion of
+the cycle comment. It includes the verdict rationale, the exact threshold rule,
+paragraph-level evidence, operator remediation, and a reminder that the
+deterministic scanner applies conservative generic policy without inferring
+repository-domain authorization.
 
 ## Composition
 

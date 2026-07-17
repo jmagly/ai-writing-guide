@@ -128,8 +128,10 @@ function textFromIssue(issue) {
 function evidenceFor(pattern, text) {
   const match = pattern.exec(text);
   if (!match) return null;
-  const start = Math.max(0, match.index - 60);
-  const end = Math.min(text.length, match.index + match[0].length + 60);
+  const paragraphStart = text.lastIndexOf('\n\n', match.index);
+  const paragraphEnd = text.indexOf('\n\n', match.index + match[0].length);
+  const start = paragraphStart < 0 ? 0 : paragraphStart + 2;
+  const end = paragraphEnd < 0 ? text.length : paragraphEnd;
   return text.slice(start, end).replace(/\s+/g, ' ').trim();
 }
 
@@ -161,15 +163,45 @@ export function assessIssue(issue) {
 
   let verdict = 'safe';
   let action = 'proceed';
+  let thresholdExplanation = 'No signal combination crossed the flag or reject threshold.';
+  let whyVerdict = 'No meaningful prompt-injection or supply-chain risk was detected.';
   if (hasExfiltrationRisk || (hasAutonomousSupplyChainRisk && score >= 10)) {
     verdict = 'reject';
     action = 'stop-and-reject';
+    if (hasExfiltrationRisk) {
+      thresholdExplanation =
+        'Reject rule crossed: credential-or-env-probing combined with instruction override, third-party execution, or sensitive-file targeting.';
+    } else {
+      thresholdExplanation =
+        `Reject rule crossed: autonomous supply-chain risk combined with score ${score} (reject threshold: 10).`;
+    }
+    whyVerdict =
+      'This is reject rather than flag because multiple high-confidence signals combine a sensitive execution surface with credential or supply-chain risk.';
   } else if (score >= 5 || hasAutonomousSupplyChainRisk || ids.has('instruction-override')) {
     verdict = 'flag';
     action = 'require-human-authorization';
+    thresholdExplanation = ids.has('instruction-override')
+      ? 'Flag rule crossed: an instruction-override signal requires explicit operator review.'
+      : `Flag rule crossed: score ${score} meets the flag threshold of 5, or an autonomous supply-chain combination is present.`;
+    whyVerdict =
+      'The signals require explicit human authorization, but they do not meet a reject combination.';
   }
 
-  return {
+  const operatorNextSteps = verdict === 'reject'
+    ? [
+        'Split documentation-only work from CI, agent-instruction, credential, or secret-provisioning changes.',
+        'Route secret and credential operations through the project-approved, human-controlled security workflow.',
+        'Re-file or re-scope the request so autonomous work does not combine sensitive-file changes with credential or unpinned execution.',
+      ]
+    : verdict === 'flag'
+      ? [
+          'Review the quoted evidence and repository context.',
+          'Explicitly authorize this issue and run if the requested sensitive work is legitimate.',
+          'Otherwise re-scope the issue to remove the flagged operation.',
+        ]
+      : [];
+
+  const report = {
     verdict,
     action,
     score,
@@ -180,19 +212,54 @@ export function assessIssue(issue) {
       labels: issue.labels,
     },
     signals,
+    why_verdict: whyVerdict,
+    why_reject: verdict === 'reject' ? whyVerdict : null,
+    threshold_explanation: thresholdExplanation,
+    operator_next_steps: operatorNextSteps,
+    policy_context:
+      'This deterministic preflight applies a conservative generic policy and does not infer that a repository is authorized to manage secrets, CI, or agent instructions.',
   };
+  report.comment_markdown = formatCommentMarkdown(report);
+  return report;
+}
+
+function formatCommentMarkdown(report) {
+  const evidence = report.signals.flatMap((signal) =>
+    signal.evidence.map((item) => `  - \`${signal.id}\`: ${item}`));
+  const nextSteps = report.operator_next_steps.map((step) => `- ${step}`);
+  return [
+    `Threat-assessment verdict: **${report.verdict}** (score ${report.score})`,
+    '',
+    report.why_verdict,
+    '',
+    `**Threshold:** ${report.threshold_explanation}`,
+    '',
+    '**Evidence:**',
+    ...(evidence.length ? evidence : ['- No risk signals detected.']),
+    '',
+    '**Operator next steps:**',
+    ...(nextSteps.length ? nextSteps : ['- No special action required.']),
+    '',
+    `_${report.policy_context}_`,
+  ].join('\n');
 }
 
 function printText(report) {
   console.log(`verdict: ${report.verdict}`);
   console.log(`action: ${report.action}`);
   console.log(`score: ${report.score}`);
+  console.log(`why: ${report.why_verdict}`);
+  console.log(`threshold: ${report.threshold_explanation}`);
   if (report.signals.length) {
     console.log('signals:');
     for (const signal of report.signals) {
       console.log(`- ${signal.id} (${signal.severity})`);
       for (const item of signal.evidence) console.log(`  evidence: ${item}`);
     }
+  }
+  if (report.operator_next_steps.length) {
+    console.log('operator next steps:');
+    for (const step of report.operator_next_steps) console.log(`- ${step}`);
   }
 }
 

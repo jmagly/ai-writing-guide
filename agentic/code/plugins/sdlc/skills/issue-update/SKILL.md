@@ -25,6 +25,16 @@ commandHint:
 
 # Issue Update
 
+## Semantic Label Contract (#1789)
+
+Resolve label mutations through `.aiwg/aiwg.config` `issues.labels` for the
+provider selected by `remotes.issue_tracker`. Add a role only when its declared
+condition is true. When `resume_when` is satisfied, remove the transient role
+or replace it with `transition_to` in one read-modify-write operation that
+preserves unrelated labels. Never provision missing configured labels
+implicitly; report them as diagnostics. Warn explicitly before legacy name
+fallback.
+
 ## Purpose
 
 Update an existing ticket/issue with status transitions, progress comments, assignee changes, or metadata updates. Automatically uses the configured ticketing provider (Gitea, GitHub, Jira, Linear) or local file-based tracking.

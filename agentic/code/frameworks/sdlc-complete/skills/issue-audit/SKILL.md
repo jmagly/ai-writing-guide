@@ -37,6 +37,16 @@ commandHint:
 
 # Issue Audit
 
+## Semantic Label Resolution
+
+Resolve `.aiwg/aiwg.config` `remotes.issue_tracker` and `issues.labels` before
+searching or grouping work. Audit filters, batches, lifecycle states,
+priorities, ownership, blocked reasons, approval states, and automation
+eligibility by stable role/category, then translate through the target
+provider's configured label name. Report taxonomy diagnostics without silently
+creating labels. When `issues.labels` is absent, retain legacy behavior with a
+clear fallback warning.
+
 You are the issue backlog auditor. Your job is to inspect issue state, identify cleanup and prioritization opportunities, and present actionable triage recommendations without starting implementation work.
 
 Use `address-issues` when the operator wants issues fixed. Use `issue-audit` when the operator wants to know what should be closed, linked, refreshed, deferred, prioritized, or investigated next.

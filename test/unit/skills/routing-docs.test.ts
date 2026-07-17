@@ -22,7 +22,7 @@ describe('routing documentation regressions', () => {
     expect(existsSync(resolve(repo, '.aiwg/architecture/adr-codex-goal-routing.md'))).toBe(true);
   });
 
-  it('address-issues maintains question labels for unresolved workflow questions (#1726)', () => {
+  it('address-issues resolves semantic human-interaction labels and preserves their lifecycle (#1726, #1789)', () => {
     const docs = [
       'agentic/code/frameworks/sdlc-complete/skills/address-issues/SKILL.md',
       'agentic/code/plugins/sdlc/skills/address-issues/SKILL.md',
@@ -32,15 +32,32 @@ describe('routing documentation regressions', () => {
     for (const docPath of docs) {
       const doc = read(docPath);
       expect(doc).toContain('question-label-lifecycle');
-      expect(doc).toContain('Audit stale `question` labels');
-      expect(doc).toContain('If the tracker lacks a `question` label, create it once');
-      expect(doc).toContain('Add the label after posting the question-bearing comment');
-      expect(doc).toContain('remove the `question` label only if no other unresolved `Open Questions` remain');
+      expect(doc).toContain('Audit stale human-question labels');
+      expect(doc).toContain('never silently provision it');
+      expect(doc).toContain('Add the resolved label after posting the question-bearing comment');
+      expect(doc).toContain('Preserve unrelated labels');
       expect(doc).toContain('Question labels are active-state labels');
     }
 
     const template = read('agentic/code/frameworks/sdlc-complete/templates/issue-comments/feedback-needed.md');
-    expect(template).toContain('Apply the `question` label while any specific question above is unanswered');
+    expect(template).toContain('Apply the configured human-interaction semantic label');
+  });
+
+  it('all issue mutation workflows use the semantic label contract (#1789)', () => {
+    const docs = [
+      'issue-create',
+      'issue-update',
+      'issue-close',
+      'issue-comment',
+      'issue-sync',
+    ];
+    for (const name of docs) {
+      const doc = read(`agentic/code/frameworks/sdlc-complete/skills/${name}/SKILL.md`);
+      expect(doc).toContain('Semantic Label Contract (#1789)');
+      expect(doc).toContain('issues.labels');
+      expect(doc).toMatch(/preserv/i);
+      expect(doc).toMatch(/never (provision|create)/i);
+    }
   });
 
   it('agent-loop documents external-route /workflow handling (verified against codex 0.135.0)', () => {
@@ -369,7 +386,7 @@ describe('routing documentation regressions', () => {
     const proposal = read('.aiwg/planning/fortemi-core-index-migration/fortemi-package-boundary-workflow-proposal.md');
 
     expect(proposal).toContain('npm Release-Age Override Record');
-    expect(proposal).toContain('@fortemi/core@2026.7.1');
+    expect(proposal).toContain('@fortemi/core@2026.7.7');
     expect(proposal).toContain('--min-release-age=0');
     expect(proposal).toContain('explicit human approval');
     expect(proposal).toContain('Approval record to fill before copying');
@@ -635,7 +652,7 @@ describe('routing documentation regressions', () => {
 
     for (const doc of [audit, traceability]) {
       expect(doc).toContain(
-        'npm view @fortemi/core@2026.7.1 version dist-tags exports',
+        'npm view @fortemi/core@2026.7.7 version dist-tags exports',
       );
       expect(doc).toContain('--min-release-age=0');
       expect(doc).toMatch(/confirmed the\s+published (package still exports|exports still include)\s+`\.\/aiwg-index`/);
@@ -662,7 +679,7 @@ describe('routing documentation regressions', () => {
     expect(adr).toContain('aiwg issue list --search');
     expect(adr).toContain('.aiwg/issues/index/issues.index.json');
     expect(adr).toContain('local issue CLI contract');
-    expect(adr).toContain('@fortemi/core@2026.7.1');
+    expect(adr).toContain('@fortemi/core@2026.7.7');
     expect(adr).toContain('--min-release-age=0');
     expect(adr).toContain('--ignore-scripts');
     expect(adr).toContain('AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1');

@@ -87,6 +87,20 @@
         }
       }
     },
+    "issues": {
+      "type": "object",
+      "description": "Issue-tracker workflow semantics associated with remotes.issue_tracker (#1789). Ordinary issue processing validates but never implicitly provisions labels.",
+      "additionalProperties": false,
+      "properties": {
+        "labels": {
+          "type": "object",
+          "description": "Tracker labels keyed by stable semantic role.",
+          "additionalProperties": {
+            "$ref": "#/definitions/IssueLabelDefinition"
+          }
+        }
+      }
+    },
     "repo_maintainer": {
       "type": "object",
       "description": "Role-aware repository maintenance overrides. Forge permission detection is attempted first; these tiers pin or narrow behavior when detection is denied or policy requires a fixed posture (#1755).",
@@ -346,6 +360,66 @@
     }
   },
   "definitions": {
+    "IssueLabelDefinition": {
+      "type": "object",
+      "description": "Provider-neutral workflow semantics for one tracker-native label.",
+      "additionalProperties": false,
+      "required": ["name", "category", "description", "requires_human", "blocks_automation"],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "blocks_automation": { "const": true } },
+            "required": ["blocks_automation"]
+          },
+          "then": { "required": ["resume_when"] }
+        }
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Default tracker-native label name."
+        },
+        "provider_names": {
+          "type": "object",
+          "description": "Optional provider-specific strings that preserve this semantic role.",
+          "additionalProperties": false,
+          "properties": {
+            "gitea": { "type": "string", "minLength": 1 },
+            "github": { "type": "string", "minLength": 1 },
+            "local": { "type": "string", "minLength": 1 }
+          }
+        },
+        "category": {
+          "type": "string",
+          "enum": ["type", "area", "priority", "lifecycle", "blocked-reason", "review-approval", "ownership", "automation-eligibility", "human-interaction"],
+          "description": "Informative role family used for search, audit, batching, and work selection."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Purpose and application condition."
+        },
+        "requires_human": {
+          "type": "boolean",
+          "description": "Whether satisfying this state requires human action."
+        },
+        "blocks_automation": {
+          "type": "boolean",
+          "description": "Whether autonomous issue work must pause while this label applies."
+        },
+        "resume_when": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Condition that permits removal or transition of a transient label; required by runtime validation when blocks_automation is true."
+        },
+        "transition_to": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional semantic role to apply after resume_when is satisfied."
+        }
+      }
+    },
     "TrackerActor": {
       "type": "object",
       "additionalProperties": false,

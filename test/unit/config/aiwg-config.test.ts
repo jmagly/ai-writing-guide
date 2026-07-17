@@ -20,6 +20,8 @@ import {
   resolveRemoteProvider,
   resolveDelivery,
   resolveParallelism,
+  resolveIssueLabels,
+  validateIssueLabels,
   getProviderParallelismDefaults,
   PROVIDER_PARALLELISM_DEFAULTS,
 } from '../../../src/config/aiwg-config.js';
@@ -537,6 +539,69 @@ describe('aiwg-config', () => {
       const read = await readAiwgConfig(tmpDir);
       expect(read?.remotes?.primary).toBe('origin');
       expect(read?.remotes?.secondary?.[0]?.name).toBe('github');
+    });
+  });
+
+  describe('issue label taxonomy (#1789)', () => {
+    const issues = {
+      labels: {
+        human_required: {
+          name: 'hitl',
+          provider_names: { github: 'human-required', local: 'needs-human' },
+          category: 'human-interaction' as const,
+          description: 'Work cannot continue until a human responds',
+          requires_human: true,
+          blocks_automation: true,
+          resume_when: 'requested human input is recorded',
+        },
+        feature: {
+          name: 'feature',
+          category: 'type' as const,
+          description: 'Feature work',
+          requires_human: false,
+          blocks_automation: false,
+        },
+      },
+    };
+
+    it('maps one semantic role to Gitea, GitHub, and local label strings', () => {
+      expect(resolveIssueLabels(issues, 'gitea').labels.human_required.resolved_name).toBe('hitl');
+      expect(resolveIssueLabels(issues, 'github').labels.human_required.resolved_name).toBe('human-required');
+      expect(resolveIssueLabels(issues, 'local').labels.human_required.resolved_name).toBe('needs-human');
+    });
+
+    it('warns clearly when existing projects use legacy fallback behavior', () => {
+      const result = resolveIssueLabels(undefined, 'gitea');
+      expect(result.labels).toEqual({});
+      expect(result.diagnostics).toEqual(expect.arrayContaining([
+        expect.objectContaining({ code: 'fallback', severity: 'warning' }),
+      ]));
+    });
+
+    it('reports missing, duplicate, conflicting, and unavailable labels without provisioning', () => {
+      const diagnostics = validateIssueLabels({
+        labels: {
+          blocked: {
+            name: 'workflow',
+            category: 'blocked-reason',
+            description: 'Blocked',
+            requires_human: false,
+            blocks_automation: true,
+          },
+          duplicate: {
+            name: 'workflow',
+            category: 'lifecycle',
+            description: 'Duplicate native name',
+            requires_human: false,
+            blocks_automation: false,
+            transition_to: 'missing-role',
+          },
+        },
+      }, { provider: 'gitea', availableLabels: ['other'] });
+
+      expect(diagnostics.map((item) => item.code)).toEqual(expect.arrayContaining([
+        'missing', 'duplicate', 'conflict', 'unavailable',
+      ]));
     });
   });
 

@@ -45,6 +45,9 @@ Given optional filter parameters:
   - Default: `open` (only show open tickets)
   - Use `all` to show all tickets regardless of status
 - **`--label LABEL`** (optional): Filter by label (can specify multiple: `--label bug --label high-priority`)
+- **`--label-role ROLE`** (optional): Resolve a stable semantic role from
+  `.aiwg/aiwg.config` `issues.labels` for the target tracker, then filter by its
+  provider-native name
 - **`--assignee USER`** (optional): Filter by assignee (use `unassigned` for unassigned tickets)
 - **`--limit NUM`** (optional): Limit results to NUM tickets (default: 50)
 - **`--sort FIELD`** (optional): Sort by field (created|updated|priority|id)
@@ -202,6 +205,9 @@ Same resolution rules as `issue-create` (preferred path):
 
 1. **`--provider` flag** — explicit override always wins.
 2. **`.aiwg/aiwg.config` `remotes.issue_tracker`** (#994) — derive provider via `resolveRemotes()` + `resolveRemoteProvider()` from `src/config/aiwg-config.ts`.
+   Resolve any `--label-role` through `resolveIssueLabels()` for that provider.
+   Report missing, duplicate, conflicting, or unavailable taxonomy entries;
+   never provision tracker labels during a list operation.
 3. **Legacy `.aiwg/config.yaml`** (`ticketing` block) — back-compat.
 4. **`CLAUDE.md` "Issueing Configuration"** — fallback.
 5. **`local`** — default.

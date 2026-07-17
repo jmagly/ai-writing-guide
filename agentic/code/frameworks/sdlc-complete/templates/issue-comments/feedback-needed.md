@@ -48,9 +48,11 @@
 
 ## Label State
 
-Apply the `question` label while any specific question above is unanswered. Remove
-the label only after all tracked questions in this comment have been answered to
-the workflow's satisfaction.
+Apply the configured human-interaction semantic label while any specific
+question above is unanswered. If `issues.labels` is absent, warn before using an
+existing legacy `question` label and never provision it implicitly. Remove or
+transition the label only after all tracked questions in this comment satisfy
+the configured resume condition.
 
 ## Blocking Items
 

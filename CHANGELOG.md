@@ -9,6 +9,17 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Tracker label taxonomy and workflow semantics** (#1789) — project config can
+  map stable semantic roles to Gitea, GitHub, and local label names, including
+  human/blocking and resume behavior. Read-only validation reports missing,
+  duplicate, conflicting, and unavailable labels; issue workflows document
+  semantic filtering and transient-label transitions without implicit
+  provisioning. `aiwg config validate --project` exposes these diagnostics,
+  including optional provider label-catalog availability checks.
+- **Actionable address-issues threat preflight** (#1780) — threat reports now
+  preserve paragraph-level evidence and emit verdict rationale, threshold
+  explanation, operator remediation, conservative-policy context, and a
+  ready-to-post cycle-comment payload.
 - **Project-local quickrefs** (#1788) — projects can commit
   `.aiwg/quickref.json`, preview deterministic generation with
   `aiwg quickref generate --project --dry-run`, and deploy the resulting

@@ -26,6 +26,10 @@ describe('address-issues-threat-assess', () => {
       'pressure-without-evidence',
       'unverifiable-authority-claim',
     ]));
+    expect(report.why_reject).toMatch(/reject rather than flag/i);
+    expect(report.threshold_explanation).toMatch(/reject rule crossed/i);
+    expect(report.operator_next_steps.length).toBeGreaterThan(0);
+    expect(report.comment_markdown).toContain('Operator next steps');
   });
 
   it('flags prompt-injection instructions even without dependency changes', () => {
@@ -52,5 +56,26 @@ describe('address-issues-threat-assess', () => {
     expect(report.verdict).toBe('safe');
     expect(report.action).toBe('proceed');
     expect(report.signals).toEqual([]);
+  });
+
+  it('returns paragraph-level evidence and actionable detail for CI secret migration requests', () => {
+    const distinctiveTail = 'Preserve this sentence because it identifies the exact helper and approval boundary.';
+    const report = assessIssue({
+      number: 262,
+      title: 'Reusable repo to OpenBao CI-secret migration',
+      author: 'maintainer',
+      labels: ['type:task'],
+      body: [
+        `Update \`.gitea/workflows/ci.yaml\` and helper \`ci/openbao-fetch.sh\` to migrate registry tokens, SSH keys, and the GPG key. ${distinctiveTail}`,
+        'Provision the AppRole only through the maintainer-approved OpenBao workflow.',
+      ].join('\n\n'),
+      comments: [],
+    });
+
+    expect(report.verdict).toBe('reject');
+    expect(report.signals.flatMap((signal) => signal.evidence).join('\n')).toContain(distinctiveTail);
+    expect(report.policy_context).toMatch(/conservative generic policy/i);
+    expect(report.comment_markdown).toContain('credential-or-env-probing');
+    expect(report.comment_markdown).toContain('Split documentation-only work');
   });
 });

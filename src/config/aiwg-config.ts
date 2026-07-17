@@ -151,6 +151,52 @@ export interface RepoMaintainerConfig {
   tiers?: Record<string, RepoMaintainerTier>;
 }
 
+export type IssueLabelCategory =
+  | 'type'
+  | 'area'
+  | 'priority'
+  | 'lifecycle'
+  | 'blocked-reason'
+  | 'review-approval'
+  | 'ownership'
+  | 'automation-eligibility'
+  | 'human-interaction';
+
+/** A stable semantic role mapped to a tracker-native label. */
+export interface IssueLabelDefinition {
+  /** Default tracker-native label name. */
+  name: string;
+  /** Optional provider-specific names for equivalent semantics. */
+  provider_names?: Partial<Record<'gitea' | 'github' | 'local', string>>;
+  /** Informative grouping used by search, audit, batching, and selection. */
+  category: IssueLabelCategory;
+  description: string;
+  requires_human: boolean;
+  blocks_automation: boolean;
+  /** Human-readable condition that removes or transitions this transient label. */
+  resume_when?: string;
+  /** Optional semantic role to apply after the resume condition is satisfied. */
+  transition_to?: string;
+}
+
+export interface IssuesConfig {
+  /** Label definitions keyed by stable, project-owned semantic roles. */
+  labels?: Record<string, IssueLabelDefinition>;
+}
+
+export interface ResolvedIssueLabel extends IssueLabelDefinition {
+  role: string;
+  resolved_name: string;
+  provider: 'gitea' | 'github' | 'local';
+}
+
+export interface IssueLabelDiagnostic {
+  severity: 'warning' | 'error';
+  code: 'fallback' | 'missing' | 'duplicate' | 'conflict' | 'unavailable';
+  role?: string;
+  message: string;
+}
+
 /**
  * Top-level shape of .aiwg/aiwg.config
  */
@@ -181,6 +227,14 @@ export interface AiwgConfig {
    * @implements #994
    */
   remotes?: RemotesConfig;
+
+  /**
+   * Issue workflow semantics associated with `remotes.issue_tracker`.
+   * Absent configurations retain legacy label behavior with an explicit
+   * fallback diagnostic.
+   * @implements #1789
+   */
+  issues?: IssuesConfig;
 
   /**
    * Role-aware repository maintenance configuration. Optional — when absent,
@@ -823,6 +877,139 @@ export function resolveRemotes(remotes: RemotesConfig | undefined): ResolvedRemo
     tracker_actor: remotes?.tracker_actor,
     secondary: remotes?.secondary ?? [],
   };
+}
+
+/**
+ * Resolve stable semantic label roles to provider-native label strings.
+ * The same role therefore drives Gitea, GitHub, and local issue-store flows.
+ */
+export function resolveIssueLabels(
+  issues: IssuesConfig | undefined,
+  provider: 'gitea' | 'github' | 'local',
+): { labels: Record<string, ResolvedIssueLabel>; diagnostics: IssueLabelDiagnostic[] } {
+  const diagnostics = validateIssueLabels(issues, { provider });
+  if (!issues?.labels) {
+    return {
+      labels: {},
+      diagnostics: [{
+        severity: 'warning',
+        code: 'fallback',
+        message: 'issues.labels is not configured; issue workflows retain legacy label-name behavior and must warn before guessing or provisioning labels.',
+      }],
+    };
+  }
+
+  const labels = Object.fromEntries(Object.entries(issues.labels).map(([role, definition]) => [
+    role,
+    {
+      ...definition,
+      role,
+      provider,
+      resolved_name: definition.provider_names?.[provider] ?? definition.name,
+    },
+  ]));
+  return { labels, diagnostics };
+}
+
+/**
+ * Validate taxonomy structure and, when supplied, tracker availability.
+ * This function is read-only: ordinary issue processing never provisions
+ * missing labels implicitly.
+ */
+export function validateIssueLabels(
+  issues: IssuesConfig | undefined,
+  options: {
+    provider?: 'gitea' | 'github' | 'local';
+    availableLabels?: Iterable<string>;
+  } = {},
+): IssueLabelDiagnostic[] {
+  if (!issues?.labels) return [];
+  const diagnostics: IssueLabelDiagnostic[] = [];
+  const seenNames = new Map<string, string>();
+  const roles = new Set(Object.keys(issues.labels));
+  const available = options.availableLabels ? new Set(options.availableLabels) : undefined;
+  const categories = new Set<IssueLabelCategory>([
+    'type', 'area', 'priority', 'lifecycle', 'blocked-reason',
+    'review-approval', 'ownership', 'automation-eligibility', 'human-interaction',
+  ]);
+
+  for (const [role, definition] of Object.entries(issues.labels)) {
+    const where = `issues.labels.${role}`;
+    if (!definition.name?.trim() || !definition.description?.trim() || !definition.category) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'missing',
+        role,
+        message: `${where} must define non-empty name, description, and category fields.`,
+      });
+      continue;
+    }
+    if (!categories.has(definition.category)) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'conflict',
+        role,
+        message: `${where}.category '${definition.category}' is not a supported semantic category.`,
+      });
+    }
+    if (typeof definition.requires_human !== 'boolean' || typeof definition.blocks_automation !== 'boolean') {
+      diagnostics.push({
+        severity: 'error',
+        code: 'missing',
+        role,
+        message: `${where} must explicitly define requires_human and blocks_automation booleans.`,
+      });
+    }
+    if (definition.blocks_automation && !definition.requires_human && !definition.resume_when) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'conflict',
+        role,
+        message: `${where} blocks automation but declares neither human action nor a resume condition.`,
+      });
+    }
+    if (definition.blocks_automation && !definition.resume_when?.trim()) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'missing',
+        role,
+        message: `${where}.resume_when is required when blocks_automation is true.`,
+      });
+    }
+    if (definition.transition_to && !roles.has(definition.transition_to)) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'conflict',
+        role,
+        message: `${where}.transition_to references unknown semantic role '${definition.transition_to}'.`,
+      });
+    }
+
+    const resolvedName = options.provider
+      ? definition.provider_names?.[options.provider] ?? definition.name
+      : definition.name;
+    const normalized = resolvedName.trim().toLocaleLowerCase();
+    const previousRole = seenNames.get(normalized);
+    if (previousRole) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'duplicate',
+        role,
+        message: `${where} resolves to '${resolvedName}', already used by role '${previousRole}'.`,
+      });
+    } else {
+      seenNames.set(normalized, role);
+    }
+    if (available && !available.has(resolvedName)) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'unavailable',
+        role,
+        message: `${where} resolves to unavailable tracker label '${resolvedName}'; provision it explicitly before issue processing.`,
+      });
+    }
+  }
+  return diagnostics;
 }
 
 export const VALID_PROVIDERS = PROVIDER_IDS.filter((provider) => provider !== 'generic');
