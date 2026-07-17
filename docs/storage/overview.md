@@ -10,6 +10,21 @@ AIWG persists artifacts (memory pages, knowledge-base entries, activity log, ref
 
 Each subsystem is configured independently. You can keep the activity log on local disk for compliance while routing memory pages into Obsidian and the research corpus to a network share.
 
+## Fortemi Integration Planes
+
+Do not conflate storage configuration with AIWG's two file-based Fortemi
+integrations:
+
+| Plane | Configuration / command | Semantics |
+| --- | --- | --- |
+| Static index | `aiwg index sync`, `aiwg index query` | Rebuildable local AIWG v2 search and graph cache consumed through Fortemi Core |
+| Portable shard conversion | `aiwg index export --format fortemi-shard` | Explicit v2 index-to-shard conversion; server compatibility is profile-scoped and requires published-package plus real server-import evidence |
+| Live MCP persistence | `"type": "fortemi"` in `.aiwg/storage.config` | Reads and writes configured subsystems through a running Fortemi service |
+
+Success in one plane is not evidence for another. In particular,
+`aiwg storage test` exercises live MCP persistence only; it does not validate
+the static index contract or a Knowledge Shard.
+
 ## Quick start
 
 If you do nothing, AIWG works exactly like before — every subsystem persists under `.aiwg/`.

@@ -38,6 +38,20 @@ capability discovery fallback. See
 [`docs/fortemi-core-prebuilt-indices.md`](../../fortemi-core-prebuilt-indices.md)
 for the cache contract and release matrix maintenance workflow.
 
+There is also a separate, explicit conversion command:
+
+```bash
+aiwg index export --format fortemi-shard --graph project --out aiwg-project.shard
+```
+
+That command maps an AIWG v2 static index through the installed
+`@fortemi/core/aiwg-index` converter. It does not use this MCP adapter.
+Conversely, a successful `aiwg storage test` does not prove that a generated
+shard is accepted by a Fortemi server. Shard compatibility must name a profile
+and pass the published-package, server-owned-schema, and real server
+import/re-export gates documented in
+[`docs/integrations/fortemi-index-export.md`](../../integrations/fortemi-index-export.md).
+
 ## Configuration
 
 ```jsonc

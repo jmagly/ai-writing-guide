@@ -40,6 +40,26 @@ decision. Agents should not guess or introduce extra issue-provider complexity.
 If a project config points issue tracking at a local issue store instead, use the
 AIWG issue CLI for local issue operations.
 
+## Fortemi Integration Contract
+
+Keep the three Fortemi integration planes separate:
+
+- Static AIWG v1/v2 index files are rebuildable discovery/search artifacts.
+- `--format fortemi-shard` is an explicit v2 index-to-shard conversion.
+- The `fortemi` storage backend is a separate alpha live MCP persistence
+  adapter.
+
+The converter exists in AIWG source and `@fortemi/core@2026.7.8` publishes it,
+but agents must not claim verified server portability until AIWG CI exercises
+that pinned package and a generated fixture passes the server-owned
+schema/profile plus a real Fortemi import/re-export check. Source-unit tests and
+self round trips are not substitutes.
+
+Use only named shard profiles (`full-v1`, `core-v1`,
+`record-v1`). Treat `record-v1` as a declared subset with explicit loss
+reporting. Never use unqualified "full", "100%", "server compatible", or
+"backup" language for cross-repository data movement.
+
 <!-- spillover-from-AGENTS.md:START -->
 <!-- AIWG-managed spillover. Operator content lives outside this block. -->
 
