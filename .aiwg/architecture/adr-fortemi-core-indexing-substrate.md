@@ -82,6 +82,54 @@ selection. The current AIWG local index remains available through
 | Local issue provider/search                           | AIWG issue subsystem         | `aiwg issue list --search` stays on the local issue provider and local issue index. Exported `aiwg.issue` records do not alter issue CLI behavior without a later ADR.                                                        |
 | Browser/static consumption                            | Fortemi Core + Fortemi React | Static export/chunk manifests, browser/PGlite mode, and bridge-friendly query helpers are Fortemi-side contracts consumed by Fortemi React/Cockpit surfaces.                                                                 |
 
+## Three-Plane Integration Model
+
+AIWG integrates with Fortemi through three separate planes. Sharing a product
+name or record content does not make their contracts interchangeable.
+
+| Plane | Purpose | Authority | Current status |
+| --- | --- | --- | --- |
+| Static index | Local discovery, query, graph traversal, research selection, and packaged fallback | AIWG owns `aiwg.fortemi.index.export.v1/v2`; `@fortemi/core` consumes the pinned contract | Implemented and covered by local parity fixtures; direct released-package verification remains a release gate |
+| Portable shard conversion | Convert an AIWG v2 index into a profile-scoped Knowledge Shard | AIWG owns source-record meaning; `@fortemi/core` owns the converter; Fortemi server owns the shard schema/profile | Converter call exists in AIWG source and npm package `@fortemi/core@2026.7.8` exports it. AIWG still needs a pinned real-package CI receipt, named-profile/schema validation, and real server import/re-export |
+| Live MCP persistence | Route configured AIWG subsystems to a running Fortemi service | Fortemi MCP tool contract, consumed by AIWG's alpha storage adapter | Independent alpha adapter with no static-index or shard compatibility implication |
+
+The static index remains AIWG's rebuildable search cache. Shard conversion is
+an explicit export operation, not a background sync. Live MCP persistence is
+mutable service integration and does not validate either file format.
+
+The shard plane uses named profiles:
+
+- `full-v1` is lossless server/PGlite interchange for every component
+  declared by that profile.
+- `core-v1` is an explicitly reduced interoperable component set and is
+  the intended initial AIWG converter target.
+- `record-v1` is the Fortemi Core RecordStore subset and must report loss or
+  unsupported fields; it is never evidence of full parity.
+
+AIWG must preserve the complete v2 source record in the conversion mapping, but
+that reversibility claim applies to the AIWG mapping only. It does not prove
+that a destination accepted the shard or preserved server-native identities,
+relationships, attachments, nulls, tombstones, or timestamps.
+
+### Release Gates
+
+`--format fortemi-shard` is release-ready only when all of these pass:
+
+1. The AIWG v2 export validates against the AIWG-owned schema.
+2. AIWG source tests exercise the converter with deterministic fixtures.
+3. The actually published `@fortemi/core/aiwg-index` package exports the
+   converter and accepts the current AIWG v2 contract.
+4. The produced archive validates against a revision-and-digest-pinned receipt
+   of the server-owned shard schema and declares a supported profile.
+5. A real Fortemi server imports the archive before mutation, re-exports it,
+   and the declared-profile comparison reports no silent loss.
+
+The published `2026.7.8` artifact satisfies package symbol availability, but
+AIWG has not yet recorded gates 3-5 in its own CI. Until those receipts exist,
+documentation and CLI output may describe the
+artifact as an AIWG-to-Knowledge-Shard conversion candidate, but not as a
+verified server-importable backup or interchange path.
+
 ## Canonical AIWG Record Domains
 
 #1686 must extend the current v1 export beyond `aiwg.artifact` and CRM records.
