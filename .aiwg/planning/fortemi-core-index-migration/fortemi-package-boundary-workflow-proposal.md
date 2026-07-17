@@ -17,7 +17,7 @@ YAML body into:
 
 The workflow is intentionally separate from required CI. It verifies AIWG's
 direct v2 export validation and query behavior against the published
-`@fortemi/core@2026.7.1` AIWG index validator without changing `package.json` or
+`@fortemi/core@2026.7.7` AIWG index validator without changing `package.json` or
 `package-lock.json`.
 
 Passing this optional package-boundary workflow does not switch defaults. It is
@@ -28,12 +28,12 @@ behavior before any default changes.
 ## npm Release-Age Override Record
 
 The workflow uses a one-command `--min-release-age=0` override because
-`@fortemi/core@2026.7.1` was freshly released during the migration and the
+`@fortemi/core@2026.7.7` was freshly released during the migration and the
 package boundary itself is the subject under test.
 
 Override details:
 
-- Package and version: `@fortemi/core@2026.7.1`.
+- Package and version: `@fortemi/core@2026.7.7`.
 - Reason waiting is not acceptable: the #1664 migration needs current-package
   evidence before maintainers can rely on direct v2 package validation as the
   active package boundary.
@@ -64,7 +64,7 @@ Override details:
 - The job does not reference `secrets.*`; the fresh-package install is
   dependency-manifest-neutral and lifecycle-script-disabled.
 - The only release-age bypass is the single documented
-  `npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.1`
+  `npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.7`
   command.
 
 ## Proposed Workflow
@@ -91,7 +91,7 @@ concurrency:
 
 jobs:
   fortemi-package-boundary:
-    name: "@fortemi/core@2026.7.1 AIWG Index Contract"
+    name: "@fortemi/core@2026.7.7 AIWG Index Contract"
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5 # node 20.20.2 (see ci/digests.txt)
     timeout-minutes: 10
@@ -116,10 +116,10 @@ jobs:
 
       - name: Install Fortemi package boundary dependency
         # This is a narrow, documented override for the freshly released
-        # @fortemi/core@2026.7.1 package. It does not update package.json or
+        # @fortemi/core@2026.7.7 package. It does not update package.json or
         # package-lock.json, and lifecycle scripts are disabled for this
         # package-boundary smoke test.
-        run: npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.1
+        run: npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.7
 
       - name: Validate AIWG Fortemi direct v2 package contract
         env:
@@ -129,10 +129,10 @@ jobs:
 
 ## Local Validation
 
-The workflow command sequence was validated locally on 2026-07-02:
+The workflow command sequence was updated for the current package boundary on 2026-07-17:
 
 ```bash
-npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.1
+npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.7
 AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1 npm test -- --run test/unit/artifacts/browser-export.test.ts
 npm ci
 ```

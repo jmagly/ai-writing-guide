@@ -219,7 +219,7 @@ The Fortemi issues were readable on 2026-07-02 and showed closed tracker state.
 Closed state is not enough for AIWG adoption; #1686-#1691 must validate the
 actual package/API behavior against AIWG fixtures.
 
-`@fortemi/core@2026.7.1` was verified from npm on 2026-07-03. It publishes the
+`@fortemi/core@2026.7.7` was verified from npm on 2026-07-17. It publishes the
 `@fortemi/core/aiwg-index` subpath with direct
 `aiwg.fortemi.index.export.v2` validation, v2 record validation, static query,
 chunked index helpers, relationship traversal, static semantic/hybrid helpers,
@@ -236,7 +236,7 @@ SKOS metadata, provenance events, source origin/checksum, privacy locality, and
 downstream reverse edges). This is a legacy compatibility bridge, not the
 primary package boundary.
 
-Package-boundary evidence for `@fortemi/core@2026.7.1` is optional and separate
+Package-boundary evidence for `@fortemi/core@2026.7.7` is optional and separate
 from required CI until maintainers explicitly approve it. The proposed
 package-boundary workflow must remain label-gated, use the documented one-off
 `--min-release-age=0` override only for this freshly released package, disable
@@ -296,7 +296,7 @@ pass:
 - #1687 sync/ingest tests pass without live Fortemi infrastructure.
 - #1688/#1689/#1690 parity tests pass for their public surfaces.
 - #1691 parity suite is green in CI.
-- Any optional package-boundary workflow for `@fortemi/core@2026.7.1` is
+- Any optional package-boundary workflow for `@fortemi/core@2026.7.7` is
   explicitly human-approved before installation, remains separate from required
   CI, and follows the documented release-age override safeguards.
 - `npm run build:cli`, `npm test`, `aiwg index build --all`,

@@ -35,7 +35,7 @@ Blocking reasons:
   `Docsite Deploy / Build & Deploy Documentation (push)`.
 - Current branch state verified on 2026-07-02: local `main` tracks
   `origin/main` at `52f468e9ffc195bec18eb793b888e77992bafd01`.
-- Direct `@fortemi/core@2026.7.1` v2 export acceptance is available and tested
+- Direct `@fortemi/core@2026.7.7` v2 export acceptance is available and tested
   locally; AIWG keeps the v2-to-v1 projection only for legacy compatibility.
 - No legacy-backend removal issue has been filed and completed after gates.
   Public Gitea issue search on 2026-07-02 for `default backend`,
@@ -77,7 +77,7 @@ Blocking reasons:
 | #1691 parity fixtures green in CI                      | Latest local `npm run test:ci` pass after review-scope hardening: main suite `425` test files passed, `2` skipped; `7367` tests passed, `28` skipped; UAT suite `5` files and `95` tests passed. Remote commit `52f468e9ffc195bec18eb793b888e77992bafd01` is green for CI/Test, CI/Build, Docsite Build, and Docsite Deploy. | Met         | Use this evidence for child closeout; do not remove legacy fallback yet.                           |
 | Fortemi Core backend fallback/rollback documented      | `docs/integrations/fortemi-index-export.md` documents opt-in cache, local fallback, stale/cache behavior, and rollback by omitting `--backend local` for legacy fallback and preserving `.aiwg/.index/<graph>/`. ADR includes rollback window requirements.                                  | Locally met | Keep through review; verify docs render and remain accurate after final code review.               |
 | Docs and ADRs updated                                  | Local files exist: `.aiwg/architecture/adr-fortemi-core-indexing-substrate.md`, `.aiwg/planning/fortemi-core-index-migration/current-surface-inventory.md`, `docs/integrations/fortemi-index-export.md`.                                                                        | Locally met | Link from tracker/PR and close #1684/#1685 only after acceptance.                                  |
-| Release notes or migration notes exist                 | `CHANGELOG.md` has a `2026.7.1` Fortemi Core migration preview section; `docs/releases/v2026.7.1-announcement.md` exists and release manifest is updated locally. Release-facing docs include the valid empty-cache behavior and storage/issue boundaries.                         | Locally met | Review release note scope before finalizing version/date.                                          |
+| Release notes or migration notes exist                 | `CHANGELOG.md` has a Fortemi Core migration preview section; `docs/releases/v2026.7.1-announcement.md` exists and release manifest is updated locally. Release-facing docs include the valid empty-cache behavior and storage/issue boundaries.                         | Locally met | Review release note scope before finalizing version/date.                                          |
 | Legacy local removal completed only after gates        | ADR and docs keep the local backend available through `--backend local` while Fortemi Core is the default. Historical Gitea issue search evidence remains in the planning archive. | Not met     | File a legacy-removal issue only after #1691 is green in CI and upstream/package boundary is agreed. |
 | No live Fortemi dependency in required CI              | `test/unit/artifacts/fortemi-core-parity.test.ts` gates live integration behind `AIWG_FORTEMI_CORE_LIVE`; static fixtures run without external service. `.gitea/workflows/ci.yml` runs `npm run test:ci` with only perf-budget env vars and does not set `AIWG_FORTEMI_CORE_LIVE` or `AIWG_FORTEMI_CORE_PACKAGE_REQUIRED`. `.aiwg/security/working/ci-workflow-audit.md` also confirms the optional package-boundary workflow is not installed. Remote CI/Test is green for the pushed commit. | Met | Reconfirm after any workflow change.                                                              |
 | No hardcoded credentials or direct REST import pattern | New local sync/export paths write static cache files and do not add credentials or Fortemi REST import code. `test/unit/artifacts/fortemi-core-security.test.ts` statically guards the required static backend files against direct network clients and credential hooks.       | Locally met | Reconfirm in review/security scan before merge.                                                    |
@@ -88,7 +88,7 @@ Blocking reasons:
 | Issue | Scope                         | Local evidence                                                                                                                                                                                                                                                                                                                                                                                    | Closure readiness |
 | ----- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
 | #1685 | Current surface inventory     | `.aiwg/planning/fortemi-core-index-migration/current-surface-inventory.md` covers discovery/show, index CLI, research, KB/memory, Cockpit, storage/Fortemi bridge, local issue/search, #1551, and #1508. Status comment: issuecomment-77466.                                                                                                                                                      | Ready to close    |
-| #1684 | ADR                           | `.aiwg/architecture/adr-fortemi-core-indexing-substrate.md` defines ownership boundary, data model, command compatibility, fallback, gates, rollback, and `@fortemi/core@2026.7.1` baseline. It now explicitly locks the Fortemi MCP storage vs Fortemi Core search boundary, the local issue search boundary, and optional package-boundary release-age safeguards. Status comment: issuecomment-77469. | Ready to close    |
+| #1684 | ADR                           | `.aiwg/architecture/adr-fortemi-core-indexing-substrate.md` defines ownership boundary, data model, command compatibility, fallback, gates, rollback, and `@fortemi/core@2026.7.7` baseline. It now explicitly locks the Fortemi MCP storage vs Fortemi Core search boundary, the local issue search boundary, and optional package-boundary release-age safeguards. Status comment: issuecomment-77469. | Ready to close    |
 | #1686 | v2 export contract            | `schemas/aiwg-fortemi-index-export.json` and `src/artifacts/browser-export.ts` add v2 all-domain records plus v2-to-v1 compatibility projection. The schema fixture now exercises every v2 AIWG record domain, including behavior/provider/bundle/research-view/synthesis/memory/issue records. Status comment: issuecomment-77471. Upstream direct v2 support remains Fortemi/fortemi-react#219. | Partially gated   |
 | #1687 | Sync/ingest pipeline          | `src/artifacts/fortemi-core-sync.ts`, `aiwg index sync`, manifest/status behavior, stale-source, checksum-drift, unreadable-manifest, unreadable-export, and schema-drift detection tests exist. Final local status shows Fortemi cache built, fresh, and non-orphaned. Status comments: issuecomment-77473, issuecomment-77484.                                                                 | Ready to close    |
 | #1688 | Discover/show parity          | `--backend local` for legacy fallback paths for discover/show use materialized static cache; tests cover ranking, exact fetch, title fallback, canonical agent duplicate preference, ambiguity, missing cache, schema mismatch, and corrupt cache. Status comment: issuecomment-77474.                                                                                                                                                                               | Ready to close    |
@@ -257,7 +257,7 @@ Latest package-boundary contract evidence:
   fields. The browser export regression validates the clean projection and
   negative drift cases.
 - The optional package validator loader now uses a Vitest-compatible dynamic
-  import and accepts the current `@fortemi/core@2026.7.1` validator result shape
+  import and accepts the current `@fortemi/core@2026.7.7` validator result shape
   (`valid: true`) as well as the earlier `ok: true` shape.
 - The v2 export fixture includes a synthesis-to-REF citation relationship so
   cross-domain relationship IDs are checked against the exported target record.
@@ -268,14 +268,14 @@ Latest package-boundary contract evidence:
   installed because AIWG CI safety rules require explicit human authorization
   before adding files under `.gitea/workflows/`.
 - The package-boundary proposal now includes an npm release-age override record
-  for `@fortemi/core@2026.7.1`: package/version, rationale for not waiting,
+  for `@fortemi/core@2026.7.7`: package/version, rationale for not waiting,
   explicit human approval requirement, label gate, disabled lifecycle scripts,
   no manifest mutation, mandatory package validation, and post-smoke `npm ci`.
 - Local static export test passes without requiring the package (`5` tests
   passed).
 - Local package-boundary smoke validation also passes after a transient
   no-lockfile install:
-  `npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.1`
+  `npm install --no-save --package-lock=false --ignore-scripts --min-release-age=0 @fortemi/core@2026.7.7`
   followed by
   `AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1 npm test -- --run test/unit/artifacts/browser-export.test.ts`
   (`5` tests passed). The transient install was not committed to `package.json`
@@ -379,7 +379,7 @@ Latest index CLI compatibility evidence:
   tests (`4` files, `44` tests passed).
 - The ADR has been hardened to match the latest boundary docs: `"type":
   "fortemi"` remains Fortemi MCP persistence, `aiwg issue list --search`
-  remains local-provider search, and optional `@fortemi/core@2026.7.1`
+  remains local-provider search, and optional `@fortemi/core@2026.7.7`
   package-boundary evidence requires the documented release-age override
   safeguards.
 - Latest package-boundary proposal verification passed: routing docs, browser
@@ -580,12 +580,12 @@ Latest read-only tracker check on 2026-07-02:
 
 ## Upstream / Cross-Repo State
 
-- `@fortemi/core@2026.7.1` is the verified released baseline.
-- Latest `npm view @fortemi/core@2026.7.1 version dist-tags exports --json
-  --min-release-age=0` recheck on 2026-07-03 reported `2026.7.1` as the
-  `latest` dist-tag and confirmed the published package still exports
-  `./aiwg-index`. This is PASS evidence for package availability and direct v2
-  package-contract adoption.
+- `@fortemi/core@2026.7.7` is the verified released baseline.
+- Latest `npm view @fortemi/core@2026.7.7 version dist-tags exports --json
+  --min-release-age=0` recheck on 2026-07-17 confirmed the
+  published package still exports `./aiwg-index`; the registry's `latest`
+  dist-tag had advanced to `2026.7.8`. This is PASS evidence for
+  package availability and direct v2 package-contract adoption.
 - Published package exposes `@fortemi/core/aiwg-index`, direct v2 AIWG export
   validation, v2 relationship fields, relationship traversal, chunked-index
   helpers, and static semantic/hybrid helper contracts.
@@ -597,9 +597,9 @@ Latest read-only tracker check on 2026-07-02:
   (`1` file, `37` tests passed).
 - Published AIWG export/record validation accepts v1 and v2.
 - Fortemi/fortemi-react#219 can be treated as satisfied or superseded by the
-  2026.7.1 direct v2 package contract after maintainer tracker closeout.
+  2026.7.7 direct v2 package contract after maintainer tracker closeout.
 - Fortemi/fortemi-react#220 can be treated as satisfied or superseded by the
-  2026.7.1 v2 relationship-field contract after maintainer tracker closeout.
+  2026.7.7 v2 relationship-field contract after maintainer tracker closeout.
 - Read-only Fortemi React issue filing decision:
   `.aiwg/planning/fortemi-core-index-migration/fortemi-react-issue-audit.md`.
 - Package-boundary decision record:
@@ -617,7 +617,7 @@ Latest read-only tracker check on 2026-07-02:
 2. Configure/verify the compliant Gitea tracker write path (`tea` as
    `roctinam`) before any further issue comments, closures, labels, milestones,
    or PR delivery mutations.
-3. Capture maintainer tracker closeout noting that `@fortemi/core@2026.7.1`
+3. Capture maintainer tracker closeout noting that `@fortemi/core@2026.7.7`
    satisfies the direct v2 package boundary.
 4. Push for CI and use CI evidence to close or explicitly supersede #1684-#1691.
 5. Execute the post-CI tracker closeout plan only through `tea` as `roctinam`.
