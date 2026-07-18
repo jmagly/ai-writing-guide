@@ -125,6 +125,34 @@ describe('aiwg config show --project (#999)', () => {
     expect(parsed.remotes.secondary[0]).toMatchObject({ name: 'mirror', url: null });
   });
 
+  it('surfaces multiple configured external links in JSON and human output', async () => {
+    writeConfig(tmp, {
+      externalLinks: {
+        project_docs: {
+          label: 'Project documentation',
+          url: 'https://example.com/docs',
+          category: 'docs',
+        },
+        status_page: {
+          label: 'Service status',
+          url: 'https://status.example.com',
+        },
+      },
+    });
+
+    await main(['show', '--project', '--json', '--target', tmp]);
+    const parsed = JSON.parse(logs.join('\n'));
+    expect(parsed.externalLinks).toHaveProperty('project_docs.url', 'https://example.com/docs');
+    expect(parsed.externalLinks).toHaveProperty('status_page.label', 'Service status');
+
+    logs.length = 0;
+    await main(['show', '--project', '--target', tmp]);
+    const human = logs.join('\n');
+    expect(human).toContain('External links:');
+    expect(human).toContain('project_docs: Project documentation');
+    expect(human).toContain('https://status.example.com');
+  });
+
   it('reports url:null in JSON when remote name does not exist in git', async () => {
     writeConfig(tmp, { remotes: { primary: 'nonexistent' } });
     await main(['show', '--project', '--json', '--target', tmp]);

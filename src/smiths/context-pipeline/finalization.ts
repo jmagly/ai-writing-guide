@@ -12,6 +12,10 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { readAiwgConfig, type AiwgConfig } from '../../config/aiwg-config.js';
 import { renderTrackerProtocol, resolveTrackerAuthority } from '../../tracker/capability-protocol.js';
+import {
+  buildExternalLinksSection,
+  replaceOrAppendExternalLinksBlock,
+} from './external-links-section.js';
 
 export const FINALIZATION_START = '<!-- aiwg-context-finalization:START -->';
 export const FINALIZATION_END = '<!-- aiwg-context-finalization:END -->';
@@ -114,6 +118,7 @@ export function replaceOrAppendFinalizationBlock(content: string, block: string)
 
 export async function buildNormalizedAiwgMd(projectPath: string, existing = ''): Promise<string> {
   const block = await buildContextFinalizationBlock(projectPath);
+  const externalLinksSection = await buildExternalLinksSection(projectPath);
   const base = existing.trim().length > 0
     ? existing
     : [
@@ -129,7 +134,8 @@ export async function buildNormalizedAiwgMd(projectPath: string, existing = ''):
     ? base
     : base.replace(/^([^\n]*)(\n|$)/, `$1\n${AIWG_SIGNATURE_COMMENT}\n`);
 
-  return replaceOrAppendFinalizationBlock(signed, block);
+  const withFinalization = replaceOrAppendFinalizationBlock(signed, block);
+  return replaceOrAppendExternalLinksBlock(withFinalization, externalLinksSection);
 }
 
 export async function writeNormalizedAiwgMd(projectPath: string): Promise<string> {

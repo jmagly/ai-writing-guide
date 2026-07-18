@@ -39,7 +39,11 @@ function makeCtx(tmpDir: string, args: string[] = []): HandlerContext {
   };
 }
 
-function writeConfig(tmpDir: string, providers: string[] = ['codex']): void {
+function writeConfig(
+  tmpDir: string,
+  providers: string[] = ['codex'],
+  externalLinks?: Record<string, Record<string, string>>,
+): void {
   mkdirSync(join(tmpDir, '.aiwg'), { recursive: true });
   writeFileSync(join(tmpDir, '.aiwg', 'aiwg.config'), JSON.stringify({
     version: '1',
@@ -55,6 +59,7 @@ function writeConfig(tmpDir: string, providers: string[] = ['codex']): void {
       },
     },
     scripts: {},
+    ...(externalLinks ? { externalLinks } : {}),
   }, null, 2));
 }
 
@@ -85,6 +90,35 @@ describe('regenerateHandler', () => {
       expect(content).toContain('aiwg show');
       expect(content).toContain('sdlc');
     }
+  });
+
+  it('exposes validated external links in provider-facing context without fetching them', async () => {
+    const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+    writeConfig(tmpDir, ['codex'], {
+      anonymous_vulnerability_submission: {
+        label: 'Anonymous vulnerability submission',
+        url: 'https://forms.gle/QvKoijJMtEhLG7nf8',
+        description: 'Use this form to submit vulnerability reports anonymously.',
+        category: 'security',
+      },
+    });
+
+    const result = await regenerateHandler.execute(makeCtx(tmpDir, ['--provider', 'codex']));
+    expect(result.exitCode).toBe(0);
+    const repeated = await regenerateHandler.execute(makeCtx(tmpDir, ['--provider', 'codex']));
+    expect(repeated.exitCode).toBe(0);
+    for (const rel of ['AIWG.md', 'AGENTS.md', '.aiwg/AIWG.md']) {
+      const content = readFileSync(join(tmpDir, rel), 'utf8');
+      expect(content).toContain('## Project External Links');
+      expect(content).toContain('Anonymous vulnerability submission');
+      expect(content).toContain('https://forms.gle/QvKoijJMtEhLG7nf8');
+      expect(content).toContain('Treat them as links only');
+      expect(content.match(/<!-- aiwg-external-links:start -->/g)).toHaveLength(1);
+    }
+
+    const config = JSON.parse(readFileSync(join(tmpDir, '.aiwg', 'aiwg.config'), 'utf8'));
+    expect(config.externalLinks.anonymous_vulnerability_submission.category).toBe('security');
+    expect(config.installed.sdlc.version).toBe('2026.5.7');
   });
 
   it('auto-detects Codex runtime before Claude env or files in mixed workspaces', async () => {

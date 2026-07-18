@@ -154,6 +154,40 @@ describe('aiwg config get|set --project (#1006)', () => {
       expect((cfg as { remotes?: { primary?: string } }).remotes?.primary).toBe('gitea');
     });
 
+    it('writes one complete external link path and preserves unrelated config', async () => {
+      await main(['set', '--project', 'delivery.mode', 'direct', '--target', tmp]);
+      await main([
+        'set',
+        '--project',
+        'externalLinks.project_docs',
+        '{"label":"Project documentation","url":"https://example.com/docs","category":"docs"}',
+        '--target',
+        tmp,
+      ]);
+
+      const cfg = readConfig(tmp) as {
+        delivery?: { mode?: string };
+        externalLinks?: Record<string, { label: string; url: string }>;
+      };
+      expect(cfg.delivery?.mode).toBe('direct');
+      expect(cfg.externalLinks?.project_docs).toMatchObject({
+        label: 'Project documentation',
+        url: 'https://example.com/docs',
+      });
+    });
+
+    it('rejects malformed external link JSON and URLs without writing them', async () => {
+      await main(['set', '--project', 'delivery.mode', 'direct', '--target', tmp]);
+      await expect(main([
+        'set', '--project', 'externalLinks.bad', '{"label":"Bad","url":"javascript:alert(1)"}',
+        '--target', tmp,
+      ])).rejects.toMatchObject({
+        code: 'ERR_INVALID_VALUE',
+        message: expect.stringContaining('protocol must be http or https'),
+      });
+      expect((readConfig(tmp) as { externalLinks?: unknown }).externalLinks).toBeUndefined();
+    });
+
     it('round-trips delivery identity and signing keys', async () => {
       await main(['set', '--project', 'delivery.committer.name', 'Joseph Magly', '--target', tmp]);
       await main(['set', '--project', 'delivery.committer.email', '1159087+jmagly@users.noreply.github.com', '--target', tmp]);
@@ -246,6 +280,23 @@ describe('aiwg config get|set --project (#1006)', () => {
       const out = logs.join('\n');
       const parsed = JSON.parse(out);
       expect(parsed).toMatchObject({ mode: 'pr-required' });
+    });
+
+    it('reads a configured external link path as JSON', async () => {
+      await main([
+        'set',
+        '--project',
+        'externalLinks.status_page',
+        '{"label":"Status","url":"https://status.example.com"}',
+        '--target',
+        tmp,
+      ]);
+      logs.length = 0;
+      await main(['get', '--project', 'externalLinks.status_page', '--target', tmp]);
+      expect(JSON.parse(logs.join('\n'))).toEqual({
+        label: 'Status',
+        url: 'https://status.example.com',
+      });
     });
   });
 });

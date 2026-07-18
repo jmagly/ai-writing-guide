@@ -198,6 +198,25 @@ export interface IssueLabelDiagnostic {
 }
 
 /**
+ * A named public resource exposed as part of project operating context.
+ *
+ * External links are metadata only. AIWG renders and reports them but never
+ * fetches the URL or submits data to it.
+ */
+export interface ExternalLinkConfig {
+  /** Human-readable link text. */
+  label: string;
+  /** Absolute public HTTP(S) URL with no embedded credentials. */
+  url: string;
+  /** Optional explanation of when or why to use the resource. */
+  description?: string;
+  /** Optional project-defined grouping such as security, status, or docs. */
+  category?: string;
+  /** Optional intended audience such as contributors or maintainers. */
+  audience?: string;
+}
+
+/**
  * Top-level shape of .aiwg/aiwg.config
  */
 export interface AiwgConfig {
@@ -221,6 +240,13 @@ export interface AiwgConfig {
    * Executed with `sh -c "<command>"` (or `cmd /c` on Windows).
    */
   scripts: Record<string, string>;
+
+  /**
+   * Named public resources that travel with the project configuration.
+   * Keys are stable identifiers; values are metadata only.
+   * @implements #1796
+   */
+  externalLinks?: Record<string, ExternalLinkConfig>;
 
   /**
    * Repo origin topology. Optional — when absent, agents treat `origin` as primary.
@@ -790,6 +816,71 @@ export function validateIndexConfig(index: unknown): string[] {
   return errors;
 }
 
+const EXTERNAL_LINK_KEY_PATTERN = /^[a-z][a-z0-9_-]*$/;
+
+/**
+ * Validate project-defined external links without performing network access.
+ */
+export function validateExternalLinks(externalLinks: unknown): string[] {
+  if (externalLinks === undefined || externalLinks === null) return [];
+  if (typeof externalLinks !== 'object' || Array.isArray(externalLinks)) {
+    return ['externalLinks: must be an object mapping stable identifiers to link definitions'];
+  }
+
+  const errors: string[] = [];
+  for (const [key, rawLink] of Object.entries(externalLinks as Record<string, unknown>)) {
+    const where = `externalLinks.${key}`;
+    if (!EXTERNAL_LINK_KEY_PATTERN.test(key)) {
+      errors.push(`${where}: key must start with a lowercase letter and contain only lowercase letters, numbers, underscores, or hyphens`);
+    }
+    if (!rawLink || typeof rawLink !== 'object' || Array.isArray(rawLink)) {
+      errors.push(`${where}: must be an object`);
+      continue;
+    }
+
+    const link = rawLink as Record<string, unknown>;
+    const allowedFields = new Set(['label', 'url', 'description', 'category', 'audience']);
+    for (const field of Object.keys(link)) {
+      if (!allowedFields.has(field)) {
+        errors.push(`${where}.${field}: unknown field`);
+      }
+    }
+
+    if (typeof link.label !== 'string' || link.label.trim() === '') {
+      errors.push(`${where}.label: required, must be a non-empty string`);
+    } else if (link.label.length > 200) {
+      errors.push(`${where}.label: must be at most 200 characters`);
+    }
+
+    if (typeof link.url !== 'string' || link.url.trim() === '') {
+      errors.push(`${where}.url: required, must be an absolute HTTP(S) URL`);
+    } else {
+      try {
+        const parsed = new URL(link.url);
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+          errors.push(`${where}.url: protocol must be http or https`);
+        }
+        if (parsed.username || parsed.password) {
+          errors.push(`${where}.url: embedded credentials are not allowed`);
+        }
+      } catch {
+        errors.push(`${where}.url: must be a valid absolute URL`);
+      }
+    }
+
+    for (const field of ['description', 'category', 'audience'] as const) {
+      const value = link[field];
+      if (value !== undefined && (typeof value !== 'string' || value.trim() === '')) {
+        errors.push(`${where}.${field}: must be a non-empty string when provided`);
+      } else if (typeof value === 'string' && value.length > 500) {
+        errors.push(`${where}.${field}: must be at most 500 characters`);
+      }
+    }
+  }
+
+  return errors;
+}
+
 /**
  * Read the `index` block, preferring `.aiwg/aiwg.config` (the consolidated
  * home, #1491) and falling back to the legacy `.aiwg/config.yaml` `index:`
@@ -1099,6 +1190,11 @@ export async function readAiwgConfig(projectDir: string): Promise<AiwgConfig | n
   if (!parsed.providers) parsed.providers = ['claude'];
   if (!parsed.installed) parsed.installed = {};
   if (!parsed.scripts) parsed.scripts = {};
+
+  const externalLinkErrors = validateExternalLinks(parsed.externalLinks);
+  if (externalLinkErrors.length > 0) {
+    throw new Error(`Invalid .aiwg/aiwg.config:\n${externalLinkErrors.join('\n')}`);
+  }
 
   return parsed;
 }

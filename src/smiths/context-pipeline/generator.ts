@@ -27,6 +27,7 @@ import { checkPathAllowed } from './allowlist.js';
 import { generateAiwgMd } from './aiwg-md.js';
 import { injectSpilloverBlock } from './overflow.js';
 import { buildParallelismSection } from './parallelism-section.js';
+import { buildExternalLinksSection } from './external-links-section.js';
 import { buildContextFinalizationBlock, writeNormalizedAiwgMd } from './finalization.js';
 import { shouldEmitAgentsMd, shouldEmitAiwgMd, shouldEmitClaudeMdHook } from './provider-policy.js';
 import { ensureClaudeMdHook } from './claude-hook.js';
@@ -289,6 +290,12 @@ export async function buildAgentsMd(opts: ContextPipelineOptions): Promise<{
   const parallelismSection = await buildParallelismSection(opts.projectPath);
   if (parallelismSection) {
     parts.push(parallelismSection);
+  }
+
+  const externalLinksSection = await buildExternalLinksSection(opts.projectPath);
+  if (externalLinksSection) {
+    parts.push(externalLinksSection);
+    parts.push('');
   }
 
   parts.push('---');

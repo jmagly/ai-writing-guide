@@ -41,12 +41,62 @@ Writes are atomic: the loader writes to a randomly-suffixed temp sibling, then
 | `providers` | `string[]`                       | yes      | AI provider toolchains this project targets. `aiwg use <framework>` with no `--provider` deploys to all of these. Defaults to `["claude"]` if absent. |
 | `installed` | `Record<string, InstalledEntry>` | yes      | Frameworks and addons currently deployed, keyed by the name passed to `aiwg use`. Defaults to `{}`.                                                   |
 | `scripts`   | `Record<string, string>`         | yes      | User-defined scripts, run via `aiwg run <name>`. Executed with `sh -c "<command>"` (or `cmd /c` on Windows). Defaults to `{}`.                        |
+| `externalLinks` | `Record<string, ExternalLink>` | optional | Named public resources that travel with the project and appear in provider-facing context. See [External Links](#external-links).                    |
 | `remotes`   | `RemotesConfig`                  | optional | Repo origin topology. When absent, agents treat `origin` as primary. See [Remotes Block](#remotes-block).                                             |
 | `delivery`  | `DeliveryConfig`                 | optional | Repo control / delivery policy. When absent, runtime defaults apply. See [Delivery Block](#delivery-block).                                           |
 | `build`     | `BuildConfig`                    | optional | Project build policy, including large-build host resource preflight. See [Build Block](#build-block).                                                 |
 
 Valid `providers` values: `claude`, `factory`, `codex`, `opencode`, `copilot`, `cursor`,
 `warp`, `windsurf`, `hermes`, `openclaw`.
+
+## External Links
+
+`externalLinks` is an object map of named public project resources. Keys are stable
+identifiers that start with a lowercase letter and contain only lowercase letters,
+numbers, underscores, or hyphens. Each link requires:
+
+| Field         | Type   | Required | Description |
+| ------------- | ------ | -------- | ----------- |
+| `label`       | string | yes      | Human-readable link text. |
+| `url`         | string | yes      | Absolute HTTP(S) URL without embedded credentials. |
+| `description` | string | no       | Explanation of when or why to use the resource. |
+| `category`    | string | no       | Project-defined grouping such as `security`, `status`, or `docs`. |
+| `audience`    | string | no       | Intended audience such as `contributors` or `maintainers`. |
+
+AIWG treats these entries as metadata. `aiwg config show --project`, project
+`get`/`set`, and regenerated provider context can surface them, but AIWG does not
+fetch the URLs or submit data to them. Credentials, bearer tokens, and private keys
+do not belong in this block; URLs containing embedded credentials are rejected.
+
+The T3MP3ST anonymous vulnerability-submission resource from
+`elder-plinius/T3MP3ST#84` can be represented as:
+
+```json
+{
+  "externalLinks": {
+    "anonymous_vulnerability_submission": {
+      "label": "Anonymous vulnerability submission",
+      "url": "https://forms.gle/QvKoijJMtEhLG7nf8",
+      "description": "Use this form to submit vulnerability reports anonymously.",
+      "category": "security",
+      "audience": "security reporters"
+    }
+  }
+}
+```
+
+Set or replace one complete entry with:
+
+```bash
+aiwg config set --project externalLinks.project_docs \
+  '{"label":"Project documentation","url":"https://example.com/docs","category":"docs"}'
+```
+
+Read it back with:
+
+```bash
+aiwg config get --project externalLinks.project_docs
+```
 
 ### `installed` entry shape
 

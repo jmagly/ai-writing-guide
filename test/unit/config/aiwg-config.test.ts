@@ -21,6 +21,7 @@ import {
   resolveDelivery,
   resolveParallelism,
   resolveIssueLabels,
+  validateExternalLinks,
   validateIssueLabels,
   getProviderParallelismDefaults,
   PROVIDER_PARALLELISM_DEFAULTS,
@@ -149,6 +150,61 @@ describe('aiwg-config', () => {
 
       const read = await readAiwgConfig(tmpDir);
       expect(read!.scripts).toEqual({ deploy: 'aiwg use all', doctor: 'aiwg doctor' });
+    });
+
+    it('round-trips multiple validated external links', async () => {
+      const cfg = emptyConfig();
+      cfg.externalLinks = {
+        project_docs: {
+          label: 'Project documentation',
+          url: 'https://example.com/docs',
+          category: 'docs',
+        },
+        status_page: {
+          label: 'Service status',
+          url: 'https://status.example.com/',
+          audience: 'operators',
+        },
+      };
+      await writeAiwgConfig(tmpDir, cfg);
+
+      const read = await readAiwgConfig(tmpDir);
+      expect(read?.externalLinks).toEqual(cfg.externalLinks);
+    });
+
+    it('clearly rejects malformed external links while preserving unrelated fields on disk', async () => {
+      const dir = join(tmpDir, '.aiwg');
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, 'aiwg.config'), JSON.stringify({
+        version: '1',
+        providers: ['codex'],
+        installed: {},
+        scripts: { verify: 'npm test' },
+        externalLinks: {
+          broken: { label: 'Broken', url: 'not a url' },
+        },
+      }));
+
+      await expect(readAiwgConfig(tmpDir)).rejects.toThrow(
+        'externalLinks.broken.url: must be a valid absolute URL',
+      );
+      expect(JSON.parse(readFileSync(join(dir, 'aiwg.config'), 'utf8')).scripts)
+        .toEqual({ verify: 'npm test' });
+    });
+  });
+
+  describe('validateExternalLinks', () => {
+    it('rejects missing fields, unsupported protocols, embedded credentials, and unstable keys', () => {
+      expect(validateExternalLinks({
+        'Bad.Key': { url: 'ftp://user:pass@example.com/file' },
+        missing_url: { label: 'Missing URL' },
+      })).toEqual(expect.arrayContaining([
+        expect.stringContaining('key must start with a lowercase letter'),
+        expect.stringContaining('.label: required'),
+        expect.stringContaining('protocol must be http or https'),
+        expect.stringContaining('embedded credentials are not allowed'),
+        expect.stringContaining('externalLinks.missing_url.url: required'),
+      ]));
     });
   });
 

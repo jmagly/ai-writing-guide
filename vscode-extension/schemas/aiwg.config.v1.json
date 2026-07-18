@@ -52,6 +52,16 @@
         "type": "string"
       }
     },
+    "externalLinks": {
+      "type": "object",
+      "description": "Named public external resources exposed as project metadata. AIWG renders these links but does not fetch them or submit data.",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_-]*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/ExternalLink"
+      }
+    },
     "settings": {
       "type": "object",
       "description": "Framework-specific settings",
@@ -360,6 +370,44 @@
     }
   },
   "definitions": {
+    "ExternalLink": {
+      "type": "object",
+      "description": "A named public HTTP(S) resource. Credentials embedded in URLs are rejected by runtime validation.",
+      "additionalProperties": false,
+      "required": ["label", "url"],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Human-readable link text."
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://",
+          "description": "Absolute public HTTP(S) URL without embedded credentials."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Optional explanation of when or why to use this resource."
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Optional project-defined grouping, such as security, status, or docs."
+        },
+        "audience": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Optional intended audience, such as contributors or maintainers."
+        }
+      }
+    },
     "IssueLabelDefinition": {
       "type": "object",
       "description": "Provider-neutral workflow semantics for one tracker-native label.",
