@@ -41,6 +41,8 @@ Writes are atomic: the loader writes to a randomly-suffixed temp sibling, then
 | `providers` | `string[]`                       | yes      | AI provider toolchains this project targets. `aiwg use <framework>` with no `--provider` deploys to all of these. Defaults to `["claude"]` if absent. |
 | `installed` | `Record<string, InstalledEntry>` | yes      | Frameworks and addons currently deployed, keyed by the name passed to `aiwg use`. Defaults to `{}`.                                                   |
 | `scripts`   | `Record<string, string>`         | yes      | User-defined scripts, run via `aiwg run <name>`. Executed with `sh -c "<command>"` (or `cmd /c` on Windows). Defaults to `{}`.                        |
+| `workspace` | `WorkspaceConfig`                | optional | General workspace metadata or an external-member back-reference. See [Workspace Repositories](#workspace-repositories).                            |
+| `repos`     | `WorkspaceRepoConfig[]`          | optional | Canonical member list and per-member allowed operations. Requires `workspace.name`.                                                                  |
 | `externalLinks` | `Record<string, ExternalLink>` | optional | Named public resources that travel with the project and appear in provider-facing context. See [External Links](#external-links).                    |
 | `remotes`   | `RemotesConfig`                  | optional | Repo origin topology. When absent, agents treat `origin` as primary. See [Remotes Block](#remotes-block).                                             |
 | `delivery`  | `DeliveryConfig`                 | optional | Repo control / delivery policy. When absent, runtime defaults apply. See [Delivery Block](#delivery-block).                                           |
@@ -48,6 +50,91 @@ Writes are atomic: the loader writes to a randomly-suffixed temp sibling, then
 
 Valid `providers` values: `claude`, `factory`, `codex`, `opencode`, `copilot`, `cursor`,
 `warp`, `windsurf`, `hermes`, `openclaw`.
+
+## Workspace Repositories
+
+A root config can declare any number of child or absolute/external repository
+members:
+
+```json
+{
+  "workspace": {
+    "name": "home",
+    "root": "~/dev"
+  },
+  "repos": [
+    {
+      "name": "strategy",
+      "path": "./strategy",
+      "allowed": ["read", "write", "commit", "push"]
+    },
+    {
+      "name": "sysops",
+      "path": "/srv/ops/sysops",
+      "provider": "gitea",
+      "allowed": ["read", "issue-comment"]
+    }
+  ]
+}
+```
+
+`workspace.root` defaults to the repository containing the root config.
+Relative member paths resolve from that base; absolute paths remain absolute.
+Member names and paths must be unique.
+
+Each member repository keeps its own `.aiwg/aiwg.config`. AIWG resolves the
+target member first, then loads that member config for `delivery`, `remotes`,
+`tracker_actor`, signing, and issue policy. It does not inherit those fields
+from the workspace root. Git remote URLs in the member clone determine each
+route's provider and domain. `repos[].provider` is an optional fallback hint
+only for ambiguous self-hosted URLs.
+
+`repos[].allowed` uses this closed vocabulary:
+
+`read`, `write`, `commit`, `push`, `issue-comment`, `service-action`,
+`destructive`.
+
+The workspace list is deny-by-default: a target must be a listed member and its
+requested operation must be present. Repo-local policy may narrow that
+authorization but cannot expand it.
+
+External members that need to discover the workspace when invoked directly can
+add this to their own config:
+
+```json
+{
+  "workspace": {
+    "member_of": "/home/me/dev/workspace-root"
+  }
+}
+```
+
+The `AIWG_WORKSPACE` environment variable is the explicit alternative.
+`workspace.member_of` and root `repos` cannot coexist in the same config.
+
+Inspect resolution and drift with:
+
+```bash
+aiwg repo-access status
+aiwg repo-access check --path /srv/ops/sysops --action issue-comment
+```
+
+### Migration
+
+Single-repo configs require no change and preserve their current behavior.
+
+For an existing YAML repo-access manifest, add `workspace.name` and `repos` to
+the root `.aiwg/aiwg.config`, copy each member, and rename `actions` to
+`allowed`. The config form takes precedence; remove the YAML after status and
+authorization checks pass.
+
+Existing `aiwg ops --mode multi-repo` registries remain readable. The ops layer
+adapts its repo entries to this general model; adding the canonical root config
+activates per-member config routing and push authorization without duplicating
+the ops inventory.
+
+See [Workspace Repository Access](../security/repo-access-manifest.md) for the
+full enforcement and compatibility contract.
 
 ## External Links
 

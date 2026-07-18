@@ -10,9 +10,15 @@
 import { readFile, writeFile, mkdir, readdir } from 'fs/promises';
 import { resolve, dirname, basename, sep } from 'path';
 import { homedir } from 'os';
-import { existsSync, readdirSync, statSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { execSync } from 'child_process';
 import { resolveConfigDir } from '../config/user-config.js';
+import { resolveWorkspace, type ResolvedWorkspace } from '../config/workspace.js';
+import type {
+  WorkspaceConfig,
+  WorkspaceRepoAction,
+  WorkspaceRepoConfig,
+} from '../config/aiwg-config.js';
 
 /**
  * Extension type abbreviations
@@ -50,6 +56,34 @@ export interface OpsRegistryData {
   kind: string;
   defaultWorkspace: string;
   workspaces: Record<string, OpsWorkspace>;
+}
+
+/**
+ * Adapt an existing ops workspace to the canonical general workspace shape.
+ *
+ * The adapter is intentionally side-effect free: `.aiwg/aiwg.config` is the
+ * canonical persisted manifest, while the user-level ops registry remains a
+ * specialization/compatibility source rather than a second authorization
+ * format.
+ *
+ * @implements #1764
+ */
+export function opsWorkspaceToWorkspaceConfig(
+  name: string,
+  workspace: OpsWorkspace,
+  allowed: WorkspaceRepoAction[] = ['read', 'write', 'commit', 'push', 'issue-comment'],
+): { workspace: WorkspaceConfig; repos: WorkspaceRepoConfig[] } {
+  return {
+    workspace: {
+      name,
+      root: workspace.home,
+    },
+    repos: Object.entries(workspace.repos).map(([repoName, repo]) => ({
+      name: repoName,
+      path: repo.path,
+      allowed: [...allowed],
+    })),
+  };
 }
 
 /**
@@ -585,16 +619,60 @@ export class OpsRegistry {
       throw new Error(`Workspace "${name}" not found`);
     }
 
+    let canonical: ResolvedWorkspace | null = null;
+    const canonicalConfigPath = resolve(workspace.home, '.aiwg', 'aiwg.config');
+    let canonicalDeclared = false;
+    if (existsSync(canonicalConfigPath)) {
+      try {
+        const raw = JSON.parse(readFileSync(canonicalConfigPath, 'utf8')) as Record<string, unknown>;
+        canonicalDeclared = Array.isArray(raw.repos);
+      } catch (error) {
+        console.log(
+          `  Refusing workspace push — invalid canonical config: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+        return;
+      }
+    }
+    if (canonicalDeclared) {
+      try {
+        canonical = await resolveWorkspace(workspace.home, workspace.home);
+      } catch (error) {
+        console.log(
+          `  Refusing workspace push — canonical workspace resolution failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+        return;
+      }
+    }
+
     for (const [repoName, repo] of Object.entries(workspace.repos)) {
       if (!existsSync(repo.path)) {
         console.log(`  Skipping ${repoName} — path does not exist`);
         continue;
       }
 
-      if (repo.remote) {
-        console.log(`  Pushing ${repoName} to ${repo.remote}...`);
+      const member = canonical?.members.find((candidate) => resolve(candidate.path) === resolve(repo.path));
+      if (canonical && !member) {
+        console.log(`  Skipping ${repoName} — denied: path is not listed in workspace config`);
+        continue;
+      }
+      if (member && !member.allowed.includes('push')) {
+        console.log(`  Skipping ${repoName} — denied: workspace member does not allow push`);
+        continue;
+      }
+
+      const remote = member?.remotes.primary ?? (repo.remote ? 'origin' : undefined);
+      const branch = member?.delivery.default_branch ?? 'main';
+      if (remote) {
+        console.log(`  Pushing ${repoName} to ${remote}/${branch}...`);
         try {
-          execSync(`git push origin main`, { cwd: repo.path, stdio: 'pipe' });
+          execSync(`git push ${shellEscape(remote)} ${shellEscape(branch)}`, {
+            cwd: repo.path,
+            stdio: 'pipe',
+          });
           console.log(`  ${repoName}: pushed`);
         } catch (err) {
           console.log(`  ${repoName}: push failed — ${err instanceof Error ? err.message : String(err)}`);

@@ -6,6 +6,7 @@ import {
   loadRepoAccessManifest,
   type RepoAccessAction,
 } from '../../policy/repo-access.js';
+import { resolveWorkspace } from '../../config/workspace.js';
 
 function valueAfter(args: string[], flag: string): string | null {
   const index = args.indexOf(flag);
@@ -19,10 +20,12 @@ function printHelp(): void {
 
   Usage:
     aiwg repo-access list
+    aiwg repo-access status
     aiwg repo-access explain --path <repo-or-file>
     aiwg repo-access check --path <repo-or-file> --action <read|write|commit|push|issue-comment|service-action|destructive>
 
   Manifest:
+    .aiwg/aiwg.config workspace + repos blocks (preferred)
     .aiwg/ops/security/repo-access.manifest.yaml
     .aiwg/security/repo-access.manifest.yaml (fallback)
 `);
@@ -38,11 +41,30 @@ async function handleRepoAccess(ctx: HandlerContext): Promise<HandlerResult> {
   try {
     const manifest = loadRepoAccessManifest(ctx.cwd);
 
-    if (subcommand === 'list') {
+    if (subcommand === 'list' || subcommand === 'status') {
       console.log(`Repo access manifest: ${manifest.path}`);
+      console.log(`Source: ${manifest.source}`);
+      if (manifest.workspaceName) console.log(`Workspace: ${manifest.workspaceName}`);
       console.log(`Default policy: ${manifest.defaultPolicy}`);
-      for (const repo of manifest.repos) {
-        console.log(`- ${formatRepoAccessEntry(repo)}`);
+      if (manifest.source === 'workspace-config') {
+        const workspace = await resolveWorkspace(
+          manifest.workspaceProjectRoot,
+          manifest.workspaceProjectRoot,
+        );
+        for (const member of workspace.members) {
+          const route = `${member.primary.provider}@${member.primary.domain ?? 'unknown-domain'}`;
+          const tracker = `${member.issueTracker.provider}@${member.issueTracker.domain ?? 'unknown-domain'}`;
+          const drift = member.drift.length > 0 ? ` DRIFT: ${member.drift.join('; ')}` : ' OK';
+          console.log(`- ${member.name}: ${member.path} [${member.allowed.join(', ')}]`);
+          console.log(`  config: ${member.configPath}${member.config ? '' : ' (missing)'}`);
+          console.log(`  delivery: ${member.delivery.mode} -> ${member.remotes.primary} (${route})`);
+          console.log(`  tracker: ${member.remotes.issue_tracker} (${tracker})`);
+          console.log(`  status:${drift}`);
+        }
+      } else {
+        for (const repo of manifest.repos) {
+          console.log(`- ${formatRepoAccessEntry(repo)}`);
+        }
       }
       return { exitCode: 0 };
     }

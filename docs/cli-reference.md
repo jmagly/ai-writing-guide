@@ -4454,6 +4454,24 @@ aiwg research-store get sources/paper-123.md
 
 Manage AIWG ops ecosystem workspaces (sysops, devops, itops, streamops). See `agentic/code/frameworks/ops-complete/`.
 
+### repo-access
+
+Resolve members from the canonical `.aiwg/aiwg.config` `workspace` + `repos`
+manifest and apply deny-by-default operation authorization. Legacy YAML
+repo-access manifests remain a fallback.
+
+```bash
+aiwg repo-access list
+aiwg repo-access status
+aiwg repo-access explain --path <repo-or-file>
+aiwg repo-access check --path <repo-or-file> \
+  --action <read|write|commit|push|issue-comment|service-action|destructive>
+```
+
+`list` and `status` include the member config path, provider/domain, delivery
+mode, tracker route, and drift. `check` exits `0` for allow, `1` for deny, and
+`2` for invalid input/config.
+
 ### ops
 
 ```bash
@@ -4510,6 +4528,11 @@ aiwg ops list
 aiwg ops use client-acme
 aiwg ops push --workspace personal
 ```
+
+When the ops workspace home contains a canonical workspace config, `ops push`
+uses each member's configured primary remote/default branch and skips members
+that do not allow `push`. The ops registry remains a specialization and
+compatibility source, not a parallel authorization manifest.
 
 **`adopt` flags:**
 

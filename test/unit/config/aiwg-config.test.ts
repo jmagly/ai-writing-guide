@@ -23,6 +23,7 @@ import {
   resolveIssueLabels,
   validateExternalLinks,
   validateIssueLabels,
+  validateWorkspaceConfig,
   getProviderParallelismDefaults,
   PROVIDER_PARALLELISM_DEFAULTS,
 } from '../../../src/config/aiwg-config.js';
@@ -204,6 +205,34 @@ describe('aiwg-config', () => {
         expect.stringContaining('protocol must be http or https'),
         expect.stringContaining('embedded credentials are not allowed'),
         expect.stringContaining('externalLinks.missing_url.url: required'),
+      ]));
+    });
+  });
+
+  describe('validateWorkspaceConfig', () => {
+    it('accepts mixed relative and absolute members with explicit capabilities', () => {
+      expect(validateWorkspaceConfig(
+        { name: 'home', root: '~/dev' },
+        [
+          { name: 'child', path: './child', allowed: ['read', 'write'] },
+          { name: 'external', path: '/srv/external', allowed: ['read'], provider: 'gitea' },
+        ],
+      )).toEqual([]);
+    });
+
+    it('rejects malformed authorization, duplicates, and ambiguous back-references', () => {
+      expect(validateWorkspaceConfig(
+        { name: 'home', member_of: '..' },
+        [
+          { name: 'same', path: '.', allowed: ['read', 'teleport'] },
+          { name: 'same', path: '.', allowed: [] },
+        ],
+      )).toEqual(expect.arrayContaining([
+        expect.stringContaining('must not also declare repos'),
+        expect.stringContaining("invalid operation 'teleport'"),
+        expect.stringContaining('duplicate member name'),
+        expect.stringContaining('duplicate member path'),
+        expect.stringContaining('must be a non-empty array'),
       ]));
     });
   });

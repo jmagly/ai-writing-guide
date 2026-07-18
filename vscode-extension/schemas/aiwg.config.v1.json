@@ -52,6 +52,18 @@
         "type": "string"
       }
     },
+    "workspace": {
+      "$ref": "#/definitions/Workspace",
+      "description": "General multi-repository workspace metadata. Root manifests pair this with repos; external members may use member_of to discover their workspace."
+    },
+    "repos": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Workspace member repositories. Each member's own .aiwg/aiwg.config remains authoritative for remotes, delivery, tracker actor, and signing.",
+      "items": {
+        "$ref": "#/definitions/WorkspaceRepo"
+      }
+    },
     "externalLinks": {
       "type": "object",
       "description": "Named public external resources exposed as project metadata. AIWG renders these links but does not fetch them or submit data.",
@@ -370,6 +382,63 @@
     }
   },
   "definitions": {
+    "Workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable workspace name. Required by runtime validation when repos is present."
+        },
+        "root": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Base directory for relative member paths. Relative values resolve from the repo containing this config; defaults to that repo."
+        },
+        "member_of": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional member-to-workspace back-reference. External repos can use this to discover workspace authorization when invoked directly; must not coexist with repos."
+        }
+      }
+    },
+    "WorkspaceRepo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "path", "allowed"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique member name."
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path relative to workspace.root, or an absolute system path."
+        },
+        "allowed": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Explicit member capabilities. Unlisted actions and unlisted paths are denied regardless of filesystem writability.",
+          "items": {
+            "type": "string",
+            "enum": ["read", "write", "commit", "push", "issue-comment", "service-action", "destructive"]
+          }
+        },
+        "provider": {
+          "type": "string",
+          "enum": ["gitea", "github", "gitlab"],
+          "description": "Optional hint for self-hosted domains that cannot be classified from their remote URL. Detectable remotes take precedence."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Human-readable member authorization note."
+        }
+      }
+    },
     "ExternalLink": {
       "type": "object",
       "description": "A named public HTTP(S) resource. Credentials embedded in URLs are rejected by runtime validation.",

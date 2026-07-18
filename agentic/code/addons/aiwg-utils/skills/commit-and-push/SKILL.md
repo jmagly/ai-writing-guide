@@ -135,7 +135,11 @@ EOF
 
 ### Delivery policy resolution (before staging)
 
-Before staging or committing, consult `.aiwg/aiwg.config` `delivery` (#995) via `resolveDelivery()` — the resolved policy controls **how** this commit gets shipped:
+Before staging or committing, resolve the target workspace member and check
+`commit` (and later `push`) with `aiwg repo-access check`. Consult the **target
+member's** `.aiwg/aiwg.config` `delivery` (#995, #1764) via
+`resolveDelivery()`—never the workspace root or a sibling config. The resolved
+policy controls **how** this commit gets shipped:
 
 | Field | Effect on this skill |
 |-------|----------------------|
@@ -152,7 +156,11 @@ When the project has no `delivery` block, `resolveDelivery(undefined)` returns t
 
 ### Step 4: Push
 
-Default to `git push` (uses the branch's tracked upstream). When the project declares a `remotes` block in `.aiwg/aiwg.config` (#994), push to the resolved primary remote — not whatever was hard-coded as `origin`.
+Default to `git push` (uses the branch's tracked upstream). When the target
+member declares a `remotes` block in `.aiwg/aiwg.config` (#994), push to that
+member's resolved primary remote—not a workspace-root remote and not whatever
+was hard-coded as `origin`. Workspace `push` authorization is an additional
+required gate.
 
 **Resolution rule** (consult `.aiwg/aiwg.config`):
 

@@ -1,48 +1,70 @@
-# Repo Access Manifest
+# Workspace Repository Access
 
-AIWG can enforce a project-local repo authorization manifest before agents work across repository boundaries. The manifest makes repo ownership explicit: filesystem access and tool availability are not permission.
+AIWG treats filesystem/tool capability and repository authorization as separate
+things. A writable clone is not automatically authorized for edits, commits,
+pushes, tracker comments, service actions, or destructive work.
 
-## Location
+## Canonical manifest
 
-Preferred:
+The preferred manifest is the workspace root's `.aiwg/aiwg.config`:
 
-```text
-.aiwg/ops/security/repo-access.manifest.yaml
+```json
+{
+  "version": "1",
+  "providers": ["codex"],
+  "installed": {},
+  "scripts": {},
+  "workspace": {
+    "name": "home",
+    "root": "~/dev"
+  },
+  "repos": [
+    {
+      "name": "aiwg",
+      "path": "./aiwg",
+      "allowed": ["read", "write", "commit", "push", "issue-comment"]
+    },
+    {
+      "name": "sysops",
+      "path": "/srv/ops/sysops",
+      "provider": "gitea",
+      "allowed": ["read", "issue-comment"],
+      "notes": "handoff-only"
+    }
+  ]
+}
 ```
 
-Fallback:
+Relative member paths resolve from `workspace.root`, or from the repository
+containing the workspace config when `workspace.root` is absent. Absolute paths
+may point anywhere on the system.
 
-```text
-.aiwg/security/repo-access.manifest.yaml
-```
+Each member has its own `<member>/.aiwg/aiwg.config`. That member config—not the
+workspace root config—controls:
 
-## Schema
+- `delivery`, including branch mode, default branch, committer, and signing;
+- `remotes.primary`, `remotes.issue_tracker`, and `remotes.ci`;
+- `remotes.tracker_actor`, including `forbid_actors`;
+- issue taxonomy and other repo-local policy.
 
-```yaml
-version: "1"
-default_policy: deny
-repos:
-  - name: aiwg
-    path: .
-    actions: [read, write, commit, push, issue-comment]
-  - name: research-papers
-    path: ../research-papers
-    actions: [read, issue-comment]
-    notes: handoff-only; no file edits
-```
+Remote URLs are read from the member clone, so provider and domain routing is
+per member. The optional `repos[].provider` field is only a hint for self-hosted
+domains whose forge type cannot be identified from the URL; a detectable URL
+takes precedence.
 
-Fields:
+## Authorization semantics
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `version` | No | Manifest version. Defaults to `"1"`. |
-| `default_policy` | No | Must be `deny`. Unlisted repos are denied. |
-| `repos[].name` | Yes | Stable repo label for explanations. |
-| `repos[].path` | Yes | Absolute path or path relative to the project root. |
-| `repos[].actions` | Yes | Allowed actions. |
-| `repos[].notes` | No | Human-readable restrictions or handoff context. |
+The effective permission is an intersection:
 
-Allowed actions:
+1. the target must resolve to a listed workspace member;
+2. `repos[].allowed` must contain the operation;
+3. the member's own config must permit and correctly route the workflow;
+4. repo-local instructions may narrow access further.
+
+Unlisted paths and unlisted actions deny by default, regardless of filesystem
+writability or which tools are available.
+
+Allowed operations:
 
 - `read`
 - `write`
@@ -52,25 +74,68 @@ Allowed actions:
 - `service-action`
 - `destructive`
 
+## External member discovery
+
+An absolute member can be resolved when a command starts from the workspace root
+or receives that root explicitly. If commands also start directly inside the
+external member, add a back-reference to the member config:
+
+```json
+{
+  "workspace": {
+    "member_of": "/home/me/dev/workspace-root"
+  }
+}
+```
+
+`AIWG_WORKSPACE=/home/me/dev/workspace-root` is the explicit process-level
+alternative. A `member_of` config cannot also declare `repos`.
+
 ## CLI
 
 ```bash
 aiwg repo-access list
-aiwg repo-access explain --path ../research-papers
-aiwg repo-access check --path ../research-papers --action issue-comment
-aiwg repo-access check --path ../research-papers --action write
+aiwg repo-access status
+aiwg repo-access explain --path /srv/ops/sysops
+aiwg repo-access check --path /srv/ops/sysops --action issue-comment
+aiwg repo-access check --path /srv/ops/sysops --action write
 ```
 
-`check` exits `0` for allowed and `1` for denied. Invalid manifests or usage errors exit `2`.
+`list` and `status` show each member's resolved provider/domain, delivery mode,
+tracker route, config path, and drift. `check` exits `0` for allowed, `1` for
+denied, and `2` for invalid manifests or usage.
 
-## Policy Semantics
+## Legacy manifest compatibility
 
-- Tool capability is not authorization.
-- Unlisted repos deny by default.
-- Repo-local instructions can narrow access but cannot expand beyond the manifest.
-- Adjacent repos can be handoff-only by allowing `read` and `issue-comment` while denying `write`, `commit`, and `push`.
-- Accidental adjacent-repo modifications should not be reverted automatically unless the operator explicitly directs rollback.
+Existing YAML manifests remain supported when the nearest workspace config does
+not declare `repos`:
 
-## Provider Guidance
+```text
+.aiwg/ops/security/repo-access.manifest.yaml
+.aiwg/security/repo-access.manifest.yaml
+```
 
-The `aiwg-utils` rule `respect-repo-access-manifest` deploys to provider rule surfaces. It instructs agents to run `aiwg repo-access check` before non-trivial cross-repo work.
+```yaml
+version: "1"
+default_policy: deny
+repos:
+  - name: project
+    path: .
+    actions: [read, write, commit, push, issue-comment]
+```
+
+When both formats exist, `.aiwg/aiwg.config` is authoritative. Migrate by
+copying each YAML `repos[]` entry into the root config, renaming `actions` to
+`allowed`, adding `workspace.name`, and then removing the YAML file after
+`aiwg repo-access status` reports the expected members.
+
+## Ops workspace compatibility
+
+`aiwg ops` remains an ops-framework specialization. Its registry adapts to the
+same `workspace`/`repos` shape; when a canonical workspace config is present,
+ops pushes use each member's configured primary remote/default branch and honor
+the member's `push` capability. The user-level ops registry is not a second
+authorization source.
+
+The `respect-repo-access-manifest` rule requires this preflight for all
+cross-repository operations and mutations.

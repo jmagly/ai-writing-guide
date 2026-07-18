@@ -5,7 +5,10 @@ enforcement: high
 # Respect Repo Access Manifest
 
 **Enforcement Level**: HIGH
-Agents must treat tool capability as separate from authorization. If a workspace has `.aiwg/ops/security/repo-access.manifest.yaml` or `.aiwg/security/repo-access.manifest.yaml`, check it before doing non-trivial work in any repository path.
+Agents must treat tool capability as separate from authorization. The canonical
+workspace manifest is `.aiwg/aiwg.config` `workspace` + `repos`. Legacy
+`.aiwg/ops/security/repo-access.manifest.yaml` and
+`.aiwg/security/repo-access.manifest.yaml` remain compatibility fallbacks.
 
 ## Rule
 
@@ -15,18 +18,44 @@ Before reading deeply, editing, committing, pushing, commenting on issues, or ta
 aiwg repo-access check --path <repo-or-file> --action <read|write|commit|push|issue-comment|service-action|destructive>
 ```
 
-If the repo/path is unlisted, deny by default. Ask the operator to add or update the manifest before proceeding.
+If the repo/path is unlisted, deny by default. Ask the operator to add or update
+the manifest before proceeding. For every listed member, load that member's own
+`.aiwg/aiwg.config`; never reuse the workspace root's delivery, remotes, tracker
+actor, or signing policy.
 
 ## Semantics
 
 - Tool access is not authorization.
 - Unlisted repos are denied for write, commit, push, issue-comment, service-action, and destructive work.
+- The effective permission is the intersection of workspace `allowed`, the member config, and narrower repo-local instructions.
+- Resolve providers/domains from each member's configured git remotes. Sibling repositories may route to different forges.
+- Reject tracker writes by logins in the target member's `remotes.tracker_actor.forbid_actors`.
 - Repo-local instructions may narrow access, but they cannot expand beyond the manifest.
 - Newer operator instructions may narrow permissions immediately and should be reflected in the manifest.
 - Adjacent repos may be handoff-only: for example `read` and `issue-comment` allowed, `write` denied.
 - Accidental adjacent-repo modifications should not be reverted automatically unless the operator explicitly directs rollback.
 
-## Manifest Shape
+## Canonical Manifest Shape
+
+```json
+{
+  "workspace": { "name": "home", "root": "~/dev" },
+  "repos": [
+    {
+      "name": "aiwg",
+      "path": "./aiwg",
+      "allowed": ["read", "write", "commit", "push", "issue-comment"]
+    },
+    {
+      "name": "research-papers",
+      "path": "/srv/research-papers",
+      "allowed": ["read", "issue-comment"]
+    }
+  ]
+}
+```
+
+## Legacy Manifest Shape
 
 ```yaml
 version: "1"
@@ -52,7 +81,8 @@ If asked to edit an adjacent repo that is not listed:
 If asked to comment on an issue in a handoff-only repo:
 
 1. Check `issue-comment`.
-2. Proceed only if the manifest allows it.
+2. Load that member's `remotes.issue_tracker` and `tracker_actor`.
+3. Proceed only if the manifest, route, and actor all allow it.
 
 ## Incorrect Behavior
 

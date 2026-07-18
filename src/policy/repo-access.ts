@@ -1,6 +1,11 @@
 import { existsSync, readFileSync } from 'fs';
+import { homedir } from 'os';
 import { dirname, isAbsolute, relative, resolve } from 'path';
 import { load as loadYaml } from 'js-yaml';
+import {
+  WORKSPACE_REPO_ACTIONS,
+  type WorkspaceRepoAction,
+} from '../config/aiwg-config.js';
 
 export const REPO_ACCESS_MANIFEST_PATHS = [
   '.aiwg/ops/security/repo-access.manifest.yaml',
@@ -8,14 +13,8 @@ export const REPO_ACCESS_MANIFEST_PATHS = [
 ] as const;
 
 export const REPO_ACCESS_ACTIONS = [
-  'read',
-  'write',
-  'commit',
-  'push',
-  'issue-comment',
-  'service-action',
-  'destructive',
-] as const;
+  ...WORKSPACE_REPO_ACTIONS,
+] as const satisfies readonly WorkspaceRepoAction[];
 
 export type RepoAccessAction = typeof REPO_ACCESS_ACTIONS[number];
 
@@ -23,13 +22,18 @@ export interface RepoAccessEntry {
   name: string;
   path: string;
   actions: RepoAccessAction[];
+  provider?: 'gitea' | 'github' | 'gitlab';
   notes?: string;
 }
 
 export interface RepoAccessManifest {
   version: string;
   path: string;
+  source: 'workspace-config' | 'legacy-manifest';
+  /** Repository containing the workspace config (before workspace.root). */
+  workspaceProjectRoot: string;
   projectRoot: string;
+  workspaceName?: string;
   defaultPolicy: 'deny';
   repos: RepoAccessEntry[];
 }
@@ -50,6 +54,9 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 function findProjectRootFromManifest(manifestPath: string): string {
   const normalized = manifestPath.replace(/\\/g, '/');
+  if (normalized.endsWith('/.aiwg/aiwg.config')) {
+    return resolve(dirname(manifestPath), '..');
+  }
   if (normalized.endsWith('/.aiwg/ops/security/repo-access.manifest.yaml')) {
     return resolve(dirname(manifestPath), '..', '..', '..');
   }
@@ -60,8 +67,49 @@ function findProjectRootFromManifest(manifestPath: string): string {
 }
 
 export function findRepoAccessManifest(startDir = process.cwd()): string | null {
+  const explicitWorkspace = process.env.AIWG_WORKSPACE;
+  if (explicitWorkspace) {
+    const expanded = explicitWorkspace === '~'
+      ? homedir()
+      : explicitWorkspace.startsWith('~/') || explicitWorkspace.startsWith('~\\')
+        ? resolve(homedir(), explicitWorkspace.slice(2))
+        : explicitWorkspace;
+    const explicitConfig = resolve(expanded, '.aiwg', 'aiwg.config');
+    if (existsSync(explicitConfig)) {
+      const parsed = JSON.parse(readFileSync(explicitConfig, 'utf8')) as Record<string, unknown>;
+      if (Array.isArray(parsed.repos)) return explicitConfig;
+    }
+  }
+
   let current = resolve(startDir);
   while (true) {
+    const workspaceConfig = resolve(current, '.aiwg', 'aiwg.config');
+    if (existsSync(workspaceConfig)) {
+      try {
+        const parsed = JSON.parse(readFileSync(workspaceConfig, 'utf8')) as Record<string, unknown>;
+        if (Array.isArray(parsed.repos)) return workspaceConfig;
+        if (isObject(parsed.workspace) && typeof parsed.workspace.member_of === 'string') {
+          const memberOf = parsed.workspace.member_of;
+          const expanded = memberOf === '~'
+            ? homedir()
+            : memberOf.startsWith('~/') || memberOf.startsWith('~\\')
+              ? resolve(homedir(), memberOf.slice(2))
+              : memberOf;
+          const workspaceRoot = isAbsolute(expanded)
+            ? resolve(expanded)
+            : resolve(current, expanded);
+          const parentConfig = resolve(workspaceRoot, '.aiwg', 'aiwg.config');
+          if (existsSync(parentConfig)) {
+            const parent = JSON.parse(readFileSync(parentConfig, 'utf8')) as Record<string, unknown>;
+            if (Array.isArray(parent.repos)) return parentConfig;
+          }
+        }
+      } catch {
+        // Fail closed: a malformed nearer config must not silently fall through
+        // to a broader legacy authorization manifest.
+        return workspaceConfig;
+      }
+    }
     for (const manifestRel of REPO_ACCESS_MANIFEST_PATHS) {
       const candidate = resolve(current, manifestRel);
       if (existsSync(candidate)) return candidate;
@@ -83,7 +131,7 @@ function normalizeRepoEntry(entry: unknown, index: number, projectRoot: string):
   if (!isObject(entry)) throw new Error(`repos[${index}] must be an object`);
   const name = entry.name;
   const repoPath = entry.path;
-  const rawActions = entry.actions ?? entry.permissions;
+  const rawActions = entry.allowed ?? entry.actions ?? entry.permissions;
   if (typeof name !== 'string' || !name.trim()) {
     throw new Error(`repos[${index}].name is required`);
   }
@@ -100,6 +148,9 @@ function normalizeRepoEntry(entry: unknown, index: number, projectRoot: string):
     name: name.trim(),
     path: resolvedPath,
     actions: rawActions.map(normalizeAction),
+    provider: ['gitea', 'github', 'gitlab'].includes(String(entry.provider))
+      ? entry.provider as RepoAccessEntry['provider']
+      : undefined,
     notes: typeof entry.notes === 'string' ? entry.notes : undefined,
   };
 }
@@ -111,19 +162,42 @@ export function loadRepoAccessManifest(startDir = process.cwd()): RepoAccessMani
       `Repo access manifest not found. Expected ${REPO_ACCESS_MANIFEST_PATHS.join(' or ')}`
     );
   }
-  const projectRoot = findProjectRootFromManifest(manifestPath);
-  const raw = loadYaml(readFileSync(manifestPath, 'utf8'));
-  if (!isObject(raw)) throw new Error('Repo access manifest must be a YAML object');
+  const workspaceProjectRoot = findProjectRootFromManifest(manifestPath);
+  const isWorkspaceConfig = manifestPath.endsWith('/.aiwg/aiwg.config')
+    || manifestPath.endsWith('\\.aiwg\\aiwg.config');
+  const raw = isWorkspaceConfig
+    ? JSON.parse(readFileSync(manifestPath, 'utf8'))
+    : loadYaml(readFileSync(manifestPath, 'utf8'));
+  if (!isObject(raw)) throw new Error('Repo access manifest must be an object');
   const repos = raw.repos;
   if (!Array.isArray(repos)) throw new Error('repo access manifest requires repos: []');
   const defaultPolicy = raw.defaultPolicy ?? raw.default_policy ?? 'deny';
   if (defaultPolicy !== 'deny') {
     throw new Error('repo access manifest default policy must be deny');
   }
+  const workspace = isObject(raw.workspace) ? raw.workspace : undefined;
+  const configuredRoot = workspace && typeof workspace.root === 'string'
+    ? workspace.root
+    : undefined;
+  const expandedRoot = configuredRoot === '~'
+    ? homedir()
+    : configuredRoot?.startsWith('~/') || configuredRoot?.startsWith('~\\')
+      ? resolve(homedir(), configuredRoot.slice(2))
+      : configuredRoot;
+  const projectRoot = expandedRoot
+    ? isAbsolute(expandedRoot)
+      ? resolve(expandedRoot)
+      : resolve(workspaceProjectRoot, expandedRoot)
+    : workspaceProjectRoot;
   return {
     version: typeof raw.version === 'string' ? raw.version : '1',
     path: manifestPath,
+    source: isWorkspaceConfig ? 'workspace-config' : 'legacy-manifest',
+    workspaceProjectRoot,
     projectRoot,
+    workspaceName: workspace && typeof workspace.name === 'string'
+      ? workspace.name
+      : undefined,
     defaultPolicy: 'deny',
     repos: repos.map((entry, index) => normalizeRepoEntry(entry, index, projectRoot)),
   };

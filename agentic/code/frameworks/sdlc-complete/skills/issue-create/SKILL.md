@@ -27,12 +27,16 @@ commandHint:
 
 ## Semantic Label Contract (#1789)
 
-Resolve `.aiwg/aiwg.config` `remotes.issue_tracker` and `issues.labels` before
+Resolve the target workspace member first and check its `issue-comment`
+capability. Then resolve that member's `.aiwg/aiwg.config`
+`remotes.issue_tracker`, `remotes.tracker_actor`, and `issues.labels` before
 translating any semantic label role into a tracker-native string. Validate the
 resolved label against the target tracker catalog. Preserve caller-supplied
 unrelated labels, report unavailable roles, and never provision a missing label
 implicitly. If `issues.labels` is absent, retain legacy behavior with an
 explicit fallback warning rather than silently guessing project semantics.
+Reject any write route whose authenticated login is listed in the target
+member's `forbid_actors`.
 
 ## Purpose
 
@@ -42,7 +46,7 @@ Create a new ticket/issue for tracking work items, bugs, features, or tasks. Aut
 
 Given a ticket title and optional description:
 
-1. **Load configuration** from `.aiwg/config.yaml` or project `CLAUDE.md`
+1. **Resolve the target member and authorization**, then load its `.aiwg/aiwg.config`
 2. **Validate configuration** and authenticate with provider
 3. **Check for regressions** (if bug report with `--check-regression`)
 4. **Create ticket** using appropriate backend (MCP, CLI, or local file)
@@ -143,23 +147,21 @@ Extract from command invocation:
 **Resolution precedence** (highest first):
 
 1. **`--provider` flag** — explicit override always wins.
-2. **`.aiwg/aiwg.config` `remotes.issue_tracker`** (#994) — derive provider from the remote's URL.
+2. **Target member `.aiwg/aiwg.config` `remotes.issue_tracker`** (#994, #1764) — derive provider from that member remote's URL.
 3. **Legacy `.aiwg/config.yaml`** (`ticketing` block) — back-compat for older projects.
 4. **`CLAUDE.md` "Issueing Configuration" block** — fallback for projects pre-dating either.
 5. **`local`** — default if nothing is configured.
 
-**Resolving from `.aiwg/aiwg.config`** (the preferred path):
+**Resolving from a workspace member** (the preferred path):
 
 ```ts
-import { readAiwgConfig, resolveRemotes, resolveRemoteProvider } from 'aiwg/config';
+import { authorizeWorkspaceOperation } from 'aiwg/config/workspace';
 
-const cfg = await readAiwgConfig(projectDir);
-const resolved = resolveRemotes(cfg?.remotes);
-// resolved.issue_tracker is a git remote name (defaults to "origin")
-
-// Resolve the URL via `git remote get-url <name>`
-const url = exec(`git remote get-url ${resolved.issue_tracker}`).trim();
-const provider = resolveRemoteProvider(url); // 'gitea' | 'github' | 'gitlab' | 'unknown'
+const decision = await authorizeWorkspaceOperation(workspaceDir, targetRepo, 'issue-comment');
+if (!decision.allowed || !decision.member) throw new Error(decision.reason);
+const provider = decision.member.issueTracker.provider;
+const url = decision.member.issueTracker.url;
+const actor = decision.member.remotes.tracker_actor;
 ```
 
 When `provider === 'unknown'` (self-hosted instances we can't classify by URL), the operator must pass `--provider` explicitly. Don't guess.

@@ -109,4 +109,41 @@ describe('repo access manifest policy', () => {
 
     expect(() => loadRepoAccessManifest(projectDir)).toThrow(/Invalid repo access action/);
   });
+
+  it('prefers canonical aiwg.config workspace members over the legacy YAML manifest', async () => {
+    await fs.mkdir(path.join(projectDir, '.aiwg'), { recursive: true });
+    await fs.writeFile(
+      path.join(projectDir, '.aiwg', 'aiwg.config'),
+      JSON.stringify({
+        version: '1',
+        providers: ['codex'],
+        installed: {},
+        scripts: {},
+        workspace: { name: 'canonical' },
+        repos: [
+          {
+            name: 'project',
+            path: '.',
+            allowed: ['read', 'issue-comment'],
+          },
+        ],
+      }),
+    );
+
+    const manifest = loadRepoAccessManifest(projectDir);
+    const decision = checkRepoAccess(manifest, projectDir, 'write', projectDir);
+
+    expect(manifest.source).toBe('workspace-config');
+    expect(manifest.workspaceName).toBe('canonical');
+    expect(decision.allowed).toBe(false);
+  });
+
+  it('fails closed on a malformed canonical config instead of falling back to YAML', async () => {
+    await fs.writeFile(
+      path.join(projectDir, '.aiwg', 'aiwg.config'),
+      '{ malformed',
+    );
+
+    expect(() => loadRepoAccessManifest(projectDir)).toThrow();
+  });
 });

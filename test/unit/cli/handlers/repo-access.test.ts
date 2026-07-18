@@ -93,4 +93,33 @@ describe('repoAccessHandler', () => {
     expect(result.exitCode).toBe(2);
     expect(result.message).toContain('--action');
   });
+
+  it('shows resolved member policy and drift from the canonical workspace config', async () => {
+    await fs.writeFile(
+      path.join(projectDir, '.aiwg', 'aiwg.config'),
+      JSON.stringify({
+        version: '1',
+        providers: ['codex'],
+        installed: {},
+        scripts: {},
+        workspace: { name: 'home' },
+        repos: [{
+          name: 'project',
+          path: '.',
+          allowed: ['read', 'write'],
+        }],
+        delivery: { mode: 'direct', default_branch: 'trunk' },
+      }),
+    );
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const result = await repoAccessHandler.execute(makeCtx(['status']));
+
+    expect(result.exitCode).toBe(0);
+    const output = log.mock.calls.map(([line]) => String(line)).join('\n');
+    expect(output).toContain('Source: workspace-config');
+    expect(output).toContain('Workspace: home');
+    expect(output).toContain('delivery: direct');
+    expect(output).toContain('DRIFT:');
+  });
 });

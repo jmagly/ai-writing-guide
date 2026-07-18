@@ -184,6 +184,57 @@ export interface IssuesConfig {
   labels?: Record<string, IssueLabelDefinition>;
 }
 
+/**
+ * Operations that a workspace may authorize for one member repository.
+ * Filesystem/tool capability never implies authorization; unlisted members
+ * and actions are denied by the workspace resolver.
+ *
+ * @implements #1764
+ */
+export const WORKSPACE_REPO_ACTIONS = [
+  'read',
+  'write',
+  'commit',
+  'push',
+  'issue-comment',
+  'service-action',
+  'destructive',
+] as const;
+
+export type WorkspaceRepoAction = typeof WORKSPACE_REPO_ACTIONS[number];
+
+/** Root workspace metadata or an optional member-to-workspace back-reference. */
+export interface WorkspaceConfig {
+  /** Stable human-readable workspace name. Required on a root manifest. */
+  name?: string;
+  /**
+   * Base directory for relative member paths. Relative values are resolved
+   * from the repository containing this config; defaults to that repository.
+   */
+  root?: string;
+  /**
+   * Optional path from a member repo to its workspace root. This lets an
+   * absolute/external member discover workspace authorization when invoked
+   * directly. A member_of config must not also declare repos.
+   */
+  member_of?: string;
+}
+
+/** One member declared by a workspace root `.aiwg/aiwg.config`. */
+export interface WorkspaceRepoConfig {
+  name: string;
+  /** Relative to workspace.root (or the workspace repo) or an absolute path. */
+  path: string;
+  /** Explicit workspace capabilities. Missing actions are denied. */
+  allowed: WorkspaceRepoAction[];
+  /**
+   * Optional provider hint for self-hosted domains that cannot be identified
+   * from a remote URL alone. Detectable remotes always take precedence.
+   */
+  provider?: 'gitea' | 'github' | 'gitlab';
+  notes?: string;
+}
+
 export interface ResolvedIssueLabel extends IssueLabelDefinition {
   role: string;
   resolved_name: string;
@@ -240,6 +291,20 @@ export interface AiwgConfig {
    * Executed with `sh -c "<command>"` (or `cmd /c` on Windows).
    */
   scripts: Record<string, string>;
+
+  /**
+   * General multi-repository workspace metadata. Root manifests pair this
+   * block with `repos`; external members may use `member_of` as a back-reference.
+   * @implements #1764
+   */
+  workspace?: WorkspaceConfig;
+
+  /**
+   * Workspace members. Each member keeps its own `.aiwg/aiwg.config`, which is
+   * authoritative for delivery, remotes, tracker actor, and signing.
+   * @implements #1764
+   */
+  repos?: WorkspaceRepoConfig[];
 
   /**
    * Named public resources that travel with the project configuration.
@@ -882,6 +947,89 @@ export function validateExternalLinks(externalLinks: unknown): string[] {
 }
 
 /**
+ * Validate the general workspace-of-repositories blocks.
+ *
+ * This is intentionally runtime validation as well as schema documentation:
+ * CLI callers may not have editor/schema support, and authorization data must
+ * fail closed when malformed.
+ *
+ * @implements #1764
+ */
+export function validateWorkspaceConfig(
+  workspace: unknown,
+  repos: unknown,
+): string[] {
+  const errors: string[] = [];
+  if (workspace === undefined && repos === undefined) return errors;
+  if (!workspace || typeof workspace !== 'object' || Array.isArray(workspace)) {
+    return ['workspace: must be an object when workspace or repos is configured'];
+  }
+
+  const metadata = workspace as Record<string, unknown>;
+  for (const field of ['name', 'root', 'member_of'] as const) {
+    if (metadata[field] !== undefined && (
+      typeof metadata[field] !== 'string' || !(metadata[field] as string).trim()
+    )) {
+      errors.push(`workspace.${field}: must be a non-empty string`);
+    }
+  }
+
+  if (metadata.member_of !== undefined && repos !== undefined) {
+    errors.push('workspace.member_of: member back-references must not also declare repos');
+  }
+  if (repos === undefined) return errors;
+  if (typeof metadata.name !== 'string' || !metadata.name.trim()) {
+    errors.push('workspace.name: required when repos is configured');
+  }
+  if (!Array.isArray(repos) || repos.length === 0) {
+    errors.push('repos: must be a non-empty array');
+    return errors;
+  }
+
+  const names = new Set<string>();
+  const paths = new Set<string>();
+  const allowedActions = new Set<string>(WORKSPACE_REPO_ACTIONS);
+  repos.forEach((raw, index) => {
+    const where = `repos[${index}]`;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      errors.push(`${where}: must be an object`);
+      return;
+    }
+    const repo = raw as Record<string, unknown>;
+    if (typeof repo.name !== 'string' || !repo.name.trim()) {
+      errors.push(`${where}.name: required and must be a non-empty string`);
+    } else if (names.has(repo.name.trim())) {
+      errors.push(`${where}.name: duplicate member name '${repo.name.trim()}'`);
+    } else {
+      names.add(repo.name.trim());
+    }
+    if (typeof repo.path !== 'string' || !repo.path.trim()) {
+      errors.push(`${where}.path: required and must be a non-empty string`);
+    } else if (paths.has(repo.path.trim())) {
+      errors.push(`${where}.path: duplicate member path '${repo.path.trim()}'`);
+    } else {
+      paths.add(repo.path.trim());
+    }
+    if (!Array.isArray(repo.allowed) || repo.allowed.length === 0) {
+      errors.push(`${where}.allowed: must be a non-empty array`);
+    } else {
+      for (const action of repo.allowed) {
+        if (typeof action !== 'string' || !allowedActions.has(action)) {
+          errors.push(`${where}.allowed: invalid operation '${String(action)}'`);
+        }
+      }
+    }
+    if (repo.provider !== undefined && !['gitea', 'github', 'gitlab'].includes(String(repo.provider))) {
+      errors.push(`${where}.provider: must be gitea, github, or gitlab`);
+    }
+    if (repo.notes !== undefined && typeof repo.notes !== 'string') {
+      errors.push(`${where}.notes: must be a string`);
+    }
+  });
+  return errors;
+}
+
+/**
  * Read the `index` block, preferring `.aiwg/aiwg.config` (the consolidated
  * home, #1491) and falling back to the legacy `.aiwg/config.yaml` `index:`
  * block. Returns `{ index, source }` where source is 'aiwg.config',
@@ -1194,6 +1342,11 @@ export async function readAiwgConfig(projectDir: string): Promise<AiwgConfig | n
   const externalLinkErrors = validateExternalLinks(parsed.externalLinks);
   if (externalLinkErrors.length > 0) {
     throw new Error(`Invalid .aiwg/aiwg.config:\n${externalLinkErrors.join('\n')}`);
+  }
+
+  const workspaceErrors = validateWorkspaceConfig(parsed.workspace, parsed.repos);
+  if (workspaceErrors.length > 0) {
+    throw new Error(`Invalid .aiwg/aiwg.config:\n${workspaceErrors.join('\n')}`);
   }
 
   return parsed;

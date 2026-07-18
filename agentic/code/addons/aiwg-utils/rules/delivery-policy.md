@@ -75,7 +75,11 @@ Before filing an issue, commenting on an issue, closing an issue, changing
 labels or milestones, creating a branch, committing, pushing, opening a PR, or
 preparing release tags, the agent MUST run a project-config preflight:
 
-1. Read `.aiwg/aiwg.config` from the repository root.
+1. Resolve the target repository through the workspace `repos` list when one
+   exists, check the requested operation with `aiwg repo-access check`, and read
+   `.aiwg/aiwg.config` from the **target member repository**. Never apply the
+   workspace root config or a sibling config to the target. In a single-repo
+   project: Read `.aiwg/aiwg.config` from the repository root.
 2. Resolve `remotes.primary`, `remotes.issue_tracker`, and `remotes.ci`.
 3. Resolve `delivery.mode`, `delivery.default_branch`, signing requirements,
    and `delivery.committer` when present.
@@ -92,6 +96,12 @@ This preflight is required for both issue workflows and commit/PR workflows.
 Read-only issue inspection may use any available credential, but tracker
 mutations and git delivery actions must follow the configured topology and
 identity.
+
+In a workspace, authorization and repo policy compose: the workspace member
+must allow the operation and the target member config must provide the route
+and workflow. An allowed `push` does not override
+`delivery.force_push_policy`; a valid tracker route does not override a missing
+`issue-comment` capability.
 
 Do not infer tracker authority from whichever CLI is installed or authenticated.
 An unauthenticated tracker CLI is one failed access path, not proof that the
