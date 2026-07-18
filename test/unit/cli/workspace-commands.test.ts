@@ -323,6 +323,30 @@ describe('Workspace CLI Commands', () => {
         console.log = originalLog;
       }
     });
+
+    it('should restore a manifestless legacy internal backup', async () => {
+      const migrationId = 'migration-123-legacy';
+      const backupDir = path.join(aiwgDir, 'backups', migrationId);
+      await fs.mkdir(path.join(backupDir, 'intake'), { recursive: true });
+      await fs.writeFile(path.join(backupDir, 'intake', 'test.md'), '# Original');
+      await fs.mkdir(path.join(aiwgDir, 'intake'), { recursive: true });
+      await fs.writeFile(path.join(aiwgDir, 'intake', 'test.md'), '# Modified');
+
+      const { rollbackWorkspace } = await import('../../../tools/cli/workspace-rollback.mjs');
+      const logs: string[] = [];
+      const originalLog = console.log;
+      console.log = (...args) => logs.push(args.join(' '));
+
+      try {
+        await rollbackWorkspace(['--yes', testDir]);
+        expect(await fs.readFile(path.join(aiwgDir, 'intake', 'test.md'), 'utf8'))
+          .toBe('# Original');
+        expect(logs.join('\n')).toContain('Rollback complete');
+        await expect(fs.access(path.join(aiwgDir, 'backups'))).rejects.toThrow();
+      } finally {
+        console.log = originalLog;
+      }
+    });
   });
 
   describe('deploy-agents framework initialization', () => {

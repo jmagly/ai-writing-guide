@@ -15,6 +15,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { WorkspaceMigrator } from '../../../src/plugin/workspace-migrator.ts';
 import { FilesystemSandbox } from '../../../agentic/code/frameworks/sdlc-complete/src/testing/mocks/filesystem-sandbox.ts';
+import * as fs from 'fs/promises';
 import * as path from 'path';
 
 describe('WorkspaceMigrator', () => {
@@ -425,11 +426,12 @@ describe('WorkspaceMigrator', () => {
       });
 
       expect(result.backupPath).toBeDefined();
-      expect(result.backupPath).toContain('backups');
+      expect(result.backupPath).toContain('.aiwg.backup.');
 
       // Verify backup exists
-      const backupExists = await sandbox.directoryExists(result.backupPath!.replace(projectRoot + '/', ''));
-      expect(backupExists).toBe(true);
+      await expect(fs.access(result.backupPath!)).resolves.toBeUndefined();
+      await expect(fs.access(path.join(result.backupPath!, 'migration-manifest.json')))
+        .resolves.toBeUndefined();
     });
 
     it('should handle overwrite option correctly', async () => {
@@ -531,6 +533,66 @@ describe('WorkspaceMigrator', () => {
       expect(registryExists).toBe(false);
     });
 
+    it('keeps backups out of the migrated tree and updates a mixed-shape registry', async () => {
+      await sandbox.createDirectory('.aiwg/intake');
+      await sandbox.writeFile('.aiwg/intake/test.md', '# Test');
+      await sandbox.createDirectory('.aiwg/backups/migration-legacy');
+      await sandbox.writeFile('.aiwg/backups/migration-legacy/old.md', '# Old backup');
+      await sandbox.createDirectory('.aiwg/frameworks');
+      await sandbox.writeFile('.aiwg/frameworks/registry.json', JSON.stringify({
+        version: '2.0.0',
+        frameworks: { existing: { enabled: true } }
+      }));
+
+      const migrator = new WorkspaceMigrator(projectRoot);
+      await migrator.initialize();
+      const result = await migrator.migrate({
+        source: sandbox.getPath('.aiwg'),
+        target: sandbox.getPath('.aiwg/frameworks/sdlc-complete/projects/default'),
+        framework: 'sdlc-complete',
+        backup: true,
+        dryRun: false,
+        overwrite: false
+      });
+
+      expect(result.success).toBe(true);
+      expect(await sandbox.directoryExists(
+        '.aiwg/frameworks/sdlc-complete/projects/default/backups'
+      )).toBe(false);
+      const registry = JSON.parse(await sandbox.readFile('.aiwg/frameworks/registry.json'));
+      expect(registry.frameworks.existing.enabled).toBe(true);
+      expect(registry.plugins).toHaveLength(1);
+      expect(registry.plugins[0].id).toBe('sdlc-complete');
+    });
+
+    it('automatically restores the original workspace when registry validation fails', async () => {
+      await sandbox.createDirectory('.aiwg/intake');
+      await sandbox.writeFile('.aiwg/intake/test.md', '# Original');
+      await sandbox.createDirectory('.aiwg/frameworks');
+      await sandbox.writeFile('.aiwg/frameworks/registry.json', JSON.stringify({
+        plugins: {}
+      }));
+
+      const migrator = new WorkspaceMigrator(projectRoot);
+      await migrator.initialize();
+      const result = await migrator.migrate({
+        source: sandbox.getPath('.aiwg'),
+        target: sandbox.getPath('.aiwg/frameworks/sdlc-complete/projects/default'),
+        framework: 'sdlc-complete',
+        backup: true,
+        dryRun: false,
+        overwrite: false
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.errors.some(error => error.error.includes('registry.plugins'))).toBe(true);
+      expect(await sandbox.readFile('.aiwg/intake/test.md')).toBe('# Original');
+      expect(await sandbox.directoryExists(
+        '.aiwg/frameworks/sdlc-complete/projects/default'
+      )).toBe(false);
+      await expect(fs.access(result.backupPath!)).resolves.toBeUndefined();
+    });
+
     it('should generate unique migration ID', async () => {
       await sandbox.createDirectory('.aiwg/intake');
       await sandbox.writeFile('.aiwg/intake/test.md', '# Test');
@@ -621,6 +683,28 @@ describe('WorkspaceMigrator', () => {
       // Verify original content restored
       const content = await sandbox.readFile('.aiwg/intake/test.md');
       expect(content).toBe('# Original Content');
+      expect(await sandbox.directoryExists(
+        '.aiwg/frameworks/sdlc-complete/projects/default'
+      )).toBe(false);
+    });
+
+    it('preserves and restores legacy internal backups', async () => {
+      const migrationId = 'migration-123-legacy';
+      await sandbox.createDirectory(`.aiwg/backups/${migrationId}/intake`);
+      await sandbox.writeFile(
+        `.aiwg/backups/${migrationId}/intake/test.md`,
+        '# Original Content'
+      );
+      await sandbox.createDirectory('.aiwg/intake');
+      await sandbox.writeFile('.aiwg/intake/test.md', '# Modified Content');
+
+      const migrator = new WorkspaceMigrator(projectRoot);
+      await migrator.initialize();
+      await migrator.rollback(migrationId);
+
+      expect(await sandbox.readFile('.aiwg/intake/test.md')).toBe('# Original Content');
+      await expect(fs.access(`${sandbox.getPath('.aiwg')}.backup.${migrationId}`))
+        .resolves.toBeUndefined();
     });
   });
 

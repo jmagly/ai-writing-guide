@@ -494,10 +494,13 @@ export class WorkspaceMigrator {
       const sourceFiles = await this.listFilesRecursive(options.source);
 
       // Filter out framework and registry directories (shouldn't be in legacy workspace)
-      const filesToMigrate = sourceFiles.filter(f =>
-        !f.startsWith('frameworks/') && f !== 'frameworks' &&
-        !f.startsWith('frameworks/registry.json')
-      );
+      const filesToMigrate = sourceFiles.filter((filePath) => {
+        const normalizedPath = filePath.replace(/\\/g, '/');
+        return !normalizedPath.startsWith('frameworks/') &&
+          normalizedPath !== 'frameworks' &&
+          !normalizedPath.startsWith('backups/') &&
+          normalizedPath !== 'backups';
+      });
 
       // Dry-run mode: simulate without actual changes
       if (options.dryRun) {
@@ -560,7 +563,13 @@ export class WorkspaceMigrator {
           }
         }
 
-        // Update registry
+        const copyErrors = errors.filter(error => error.severity === 'error');
+        if (copyErrors.length > 0) {
+          throw new Error(`Failed to copy ${copyErrors.length} migration file(s)`);
+        }
+
+        // Update registry. A registry failure is fatal because a copied
+        // workspace without matching registry state is only partially migrated.
         await this.updateRegistry(options.framework, migrationId);
       }
 
@@ -568,7 +577,7 @@ export class WorkspaceMigrator {
 
       return {
         id: migrationId,
-        success: errors.filter(e => e.severity === 'critical').length === 0,
+        success: !errors.some(e => e.severity === 'error' || e.severity === 'critical'),
         filesMovedCount,
         filesCopiedCount,
         filesSkippedCount,
@@ -579,17 +588,32 @@ export class WorkspaceMigrator {
     } catch (error: any) {
       const duration = Date.now() - startTime;
 
+      if (backupPath) {
+        try {
+          await this.restoreBackup(backupPath);
+        } catch (rollbackError: any) {
+          errors.push({
+            path: backupPath,
+            error: `Automatic rollback failed: ${rollbackError.message}`,
+            severity: 'critical'
+          });
+        }
+      }
+
       return {
         id: migrationId,
         success: false,
         filesMovedCount,
         filesCopiedCount,
         filesSkippedCount,
-        errors: [{
-          path: options.source,
-          error: error.message,
-          severity: 'critical'
-        }],
+        errors: [
+          ...errors,
+          {
+            path: options.source,
+            error: error.message,
+            severity: 'critical'
+          }
+        ],
         duration,
         backupPath
       };
@@ -604,28 +628,26 @@ export class WorkspaceMigrator {
    * @param migrationId - Migration ID to rollback
    */
   async rollback(migrationId: string): Promise<void> {
-    const backupPath = path.join(this.sandboxPath, 'backups', migrationId);
+    const externalBackupPath = `${this.sandboxPath}.backup.${migrationId}`;
+    const legacyInternalBackupPath = path.join(this.sandboxPath, 'backups', migrationId);
+    let backupPath = externalBackupPath;
 
     try {
       await fs.access(backupPath);
     } catch {
-      throw new Error(`Backup not found for migration ID: ${migrationId}`);
+      try {
+        await fs.access(legacyInternalBackupPath);
+        // Preserve legacy internal backups outside .aiwg before replacing the
+        // workspace that currently contains them.
+        await fs.rm(externalBackupPath, { recursive: true, force: true });
+        await fs.cp(legacyInternalBackupPath, externalBackupPath, { recursive: true });
+        backupPath = externalBackupPath;
+      } catch {
+        throw new Error(`Backup not found for migration ID: ${migrationId}`);
+      }
     }
 
-    // Restore from backup
-    const files = await this.listFilesRecursive(backupPath);
-
-    for (const relPath of files) {
-      const sourcePath = path.join(backupPath, relPath);
-      const targetPath = path.join(this.sandboxPath, relPath);
-
-      // Create target directory
-      const targetDir = path.dirname(targetPath);
-      await fs.mkdir(targetDir, { recursive: true });
-
-      // Copy file
-      await fs.copyFile(sourcePath, targetPath);
-    }
+    await this.restoreBackup(backupPath);
   }
 
   // ===========================
@@ -786,13 +808,9 @@ export class WorkspaceMigrator {
    * Create backup of workspace
    */
   private async createBackup(sourcePath: string, migrationId: string): Promise<string> {
-    const backupDir = path.join(this.sandboxPath, 'backups');
-    const backupPath = path.join(backupDir, migrationId);
-
-    await fs.mkdir(backupPath, { recursive: true });
-
-    // Copy all files
+    const backupPath = `${sourcePath}.backup.${migrationId}`;
     const files = await this.listFilesRecursive(sourcePath);
+    await fs.mkdir(backupPath, { recursive: true });
 
     for (const relPath of files) {
       const source = path.join(sourcePath, relPath);
@@ -806,7 +824,56 @@ export class WorkspaceMigrator {
       await fs.copyFile(source, target);
     }
 
+    const sourceInfo = await this.getDirectoryInfo(sourcePath);
+    const manifest = {
+      timestamp: new Date().toISOString(),
+      sourcePath,
+      backupPath,
+      checksum: await this.computeDirectoryChecksum(backupPath),
+      fileCount: files.length,
+      totalSize: sourceInfo.size,
+      migrationId
+    };
+    await fs.writeFile(
+      path.join(backupPath, 'migration-manifest.json'),
+      JSON.stringify(manifest, null, 2)
+    );
+
     return backupPath;
+  }
+
+  /**
+   * Replace the current workspace with a preserved backup.
+   */
+  private async restoreBackup(backupPath: string): Promise<void> {
+    const files = (await this.listFilesRecursive(backupPath))
+      .filter(relPath => relPath.replace(/\\/g, '/') !== 'migration-manifest.json');
+
+    await fs.rm(this.sandboxPath, { recursive: true, force: true });
+    await fs.mkdir(this.sandboxPath, { recursive: true });
+
+    for (const relPath of files) {
+      const sourcePath = path.join(backupPath, relPath);
+      const targetPath = path.join(this.sandboxPath, relPath);
+      await fs.mkdir(path.dirname(targetPath), { recursive: true });
+      await fs.copyFile(sourcePath, targetPath);
+    }
+  }
+
+  /**
+   * Compute a stable content checksum, excluding backup metadata.
+   */
+  private async computeDirectoryChecksum(directory: string): Promise<string> {
+    const files = (await this.listFilesRecursive(directory))
+      .filter(relPath => relPath.replace(/\\/g, '/') !== 'migration-manifest.json')
+      .sort();
+    const hash = crypto.createHash('sha256');
+
+    for (const relPath of files) {
+      hash.update(await fs.readFile(path.join(directory, relPath)));
+    }
+
+    return hash.digest('hex');
   }
 
   /**
@@ -815,46 +882,62 @@ export class WorkspaceMigrator {
   private async updateRegistry(frameworkId: string, migrationId: string): Promise<void> {
     const registryPath = path.join(this.sandboxPath, 'frameworks', 'registry.json');
 
-    try {
-      // Load or create registry
-      let registry: {
+    // Load or create registry. Malformed existing state must fail the
+    // migration so the caller can restore the backup atomically.
+    let registry: {
+      version: string;
+      lastModified: string;
+      plugins: Array<{
+        id: string;
+        type: string;
+        name: string;
         version: string;
-        lastModified: string;
-        plugins: Array<{
-          id: string;
-          type: string;
-          name: string;
-          version: string;
-          path: string;
-          installedAt: string;
-          projects?: string[];
-          health?: {
-            status: string;
-            lastCheck: string;
-          };
-          metadata?: {
-            migrationId?: string;
-            migratedAt?: string;
-          };
-        }>;
-      };
-
-      try {
-        const content = await fs.readFile(registryPath, 'utf-8');
-        registry = JSON.parse(content);
-      } catch (error: any) {
-        // Create new registry if it doesn't exist
-        registry = {
-          version: '1.0.0',
-          lastModified: new Date().toISOString(),
-          plugins: []
+        path: string;
+        installedAt: string;
+        projects?: string[];
+        health?: {
+          status: string;
+          lastCheck: string;
         };
+        metadata?: {
+          migrationId?: string;
+          migratedAt?: string;
+        };
+      }>;
+      [key: string]: unknown;
+    };
+
+    try {
+      const content = await fs.readFile(registryPath, 'utf-8');
+      const parsed = JSON.parse(content);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('registry root must be an object');
       }
+      registry = parsed;
+      if (registry.plugins === undefined) {
+        registry.plugins = [];
+      } else if (!Array.isArray(registry.plugins)) {
+        throw new Error('registry.plugins must be an array');
+      }
+      registry.version = typeof registry.version === 'string' ? registry.version : '1.0.0';
+      registry.lastModified = typeof registry.lastModified === 'string'
+        ? registry.lastModified
+        : new Date().toISOString();
+    } catch (error: any) {
+      if (error?.code !== 'ENOENT') {
+        throw new Error(`Failed to load registry: ${error.message}`);
+      }
+      registry = {
+        version: '1.0.0',
+        lastModified: new Date().toISOString(),
+        plugins: []
+      };
+    }
 
-      // Check if framework already exists
-      const existingIndex = registry.plugins.findIndex(p => p.id === frameworkId);
+    // Check if framework already exists
+    const existingIndex = registry.plugins.findIndex(p => p.id === frameworkId);
 
-      const pluginEntry = {
+    const pluginEntry = {
         id: frameworkId,
         type: 'framework' as const,
         name: frameworkId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
@@ -872,31 +955,27 @@ export class WorkspaceMigrator {
         }
       };
 
-      if (existingIndex >= 0) {
+    if (existingIndex >= 0) {
         // Update existing entry
         registry.plugins[existingIndex] = {
           ...registry.plugins[existingIndex],
           ...pluginEntry,
           installedAt: registry.plugins[existingIndex].installedAt // Preserve original install date
         };
-      } else {
+    } else {
         // Add new entry
         registry.plugins.push(pluginEntry);
       }
 
-      registry.lastModified = new Date().toISOString();
+    registry.lastModified = new Date().toISOString();
 
-      // Ensure directory exists
-      await fs.mkdir(path.dirname(registryPath), { recursive: true });
+    // Ensure directory exists
+    await fs.mkdir(path.dirname(registryPath), { recursive: true });
 
-      // Write registry
-      await fs.writeFile(registryPath, JSON.stringify(registry, null, 2));
+    // Write registry
+    await fs.writeFile(registryPath, JSON.stringify(registry, null, 2));
 
-      console.debug(`[WorkspaceMigrator] Registry updated for framework: ${frameworkId}, migration: ${migrationId}`);
-    } catch (error: any) {
-      console.warn(`[WorkspaceMigrator] Failed to update registry: ${error.message}`);
-      // Non-fatal error - migration still succeeded
-    }
+    console.debug(`[WorkspaceMigrator] Registry updated for framework: ${frameworkId}, migration: ${migrationId}`);
   }
 
   /**

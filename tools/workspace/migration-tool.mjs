@@ -469,39 +469,50 @@ export class MigrationTool {
    * @returns {Promise<{restoredFrom: string, checksum: string, timestamp: string}>}
    * @throws {RollbackError} If rollback fails
    */
-  async rollback() {
+  async rollback(backupPath = null) {
     const backups = await this.listBackups();
 
-    if (backups.length === 0) {
+    if (!backupPath && backups.length === 0) {
       throw new RollbackError('No backups found. Cannot rollback.');
     }
 
-    const latestBackup = backups[0];
-
-    // Verify backup integrity
-    const manifestPath = path.join(latestBackup, 'migration-manifest.json');
-    const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
-
-    const currentChecksum = await this.computeChecksum(latestBackup);
-    if (currentChecksum !== manifest.checksum) {
-      throw new RollbackError('Backup corrupted. Checksum mismatch.');
+    let latestBackup = backupPath || backups[0];
+    const relativeToWorkspace = path.relative(this.basePath, latestBackup);
+    if (relativeToWorkspace && !relativeToWorkspace.startsWith('..') && !path.isAbsolute(relativeToWorkspace)) {
+      const preservedBackup = `${this.basePath}.backup.${path.basename(latestBackup)}`;
+      await fs.rm(preservedBackup, { recursive: true, force: true });
+      await this._copyDirectory(latestBackup, preservedBackup);
+      latestBackup = preservedBackup;
     }
 
-    // Remove migration manifest from backup (not part of original structure)
-    await fs.unlink(manifestPath).catch(() => {});
+    // Verify backup integrity when a manifest is available. Legacy internal
+    // WorkspaceMigrator backups predate manifests but remain recoverable.
+    const manifestPath = path.join(latestBackup, 'migration-manifest.json');
+    let manifest = null;
+    try {
+      manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+    } catch {
+      manifest = null;
+    }
+
+    const currentChecksum = await this.computeChecksum(latestBackup);
+    if (manifest?.checksum && currentChecksum !== manifest.checksum) {
+      throw new RollbackError('Backup corrupted. Checksum mismatch.');
+    }
 
     // Remove current .aiwg/
     await fs.rm(this.basePath, { recursive: true, force: true });
 
     // Restore from backup
     await this._copyDirectory(latestBackup, this.basePath);
+    await fs.unlink(path.join(this.basePath, 'migration-manifest.json')).catch(() => {});
 
     console.log(`✓ Restored from ${latestBackup}`);
 
     return {
       restoredFrom: latestBackup,
       checksum: currentChecksum,
-      timestamp: manifest.timestamp
+      timestamp: manifest?.timestamp || new Date().toISOString()
     };
   }
 
@@ -512,17 +523,30 @@ export class MigrationTool {
   async listBackups() {
     const parentDir = path.dirname(this.basePath);
     const baseName = path.basename(this.basePath);
-    const pattern = `${baseName}.backup.*`;
 
     try {
       const entries = await fs.readdir(parentDir);
-      const backups = entries
+      const externalBackups = entries
         .filter(name => name.startsWith(`${baseName}.backup.`))
-        .map(name => path.join(parentDir, name))
-        .sort()
-        .reverse(); // Newest first
+        .map(name => path.join(parentDir, name));
+      const internalBackupsDir = path.join(this.basePath, 'backups');
+      let internalBackups = [];
+      try {
+        internalBackups = (await fs.readdir(internalBackupsDir))
+          .filter(name => name.startsWith('migration-'))
+          .map(name => path.join(internalBackupsDir, name));
+      } catch {
+        // Legacy internal backup directory does not exist.
+      }
+      const backups = [...externalBackups, ...internalBackups];
+      const withMtime = await Promise.all(backups.map(async backup => ({
+        backup,
+        mtimeMs: (await fs.stat(backup)).mtimeMs
+      })));
 
-      return backups;
+      return withMtime
+        .sort((a, b) => b.mtimeMs - a.mtimeMs)
+        .map(entry => entry.backup);
     } catch {
       return [];
     }
@@ -675,7 +699,8 @@ export class MigrationTool {
    * @returns {Promise<string>} Hex checksum
    */
   async computeChecksum(directory) {
-    const files = await glob(`${directory}/**/*`, { nodir: true });
+    const files = (await glob(`${directory}/**/*`, { nodir: true }))
+      .filter(file => path.basename(file) !== 'migration-manifest.json');
     const hash = crypto.createHash('sha256');
 
     // Sort files for consistent checksum

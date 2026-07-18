@@ -176,22 +176,7 @@ async function rollbackWorkspace(args) {
       console.log('Available backups:');
       console.log('');
 
-      // Check both backup locations:
-      // 1. MigrationTool pattern: .aiwg.backup.* (in parent directory)
-      // 2. WorkspaceMigrator pattern: .aiwg/backups/* (inside .aiwg)
-      let backups = await migrationTool.listBackups();
-
-      // Also check .aiwg/backups/ directory
-      const internalBackupsDir = path.join(aiwgPath, 'backups');
-      try {
-        const entries = await fs.readdir(internalBackupsDir);
-        const internalBackups = entries
-          .filter(name => name.startsWith('migration-'))
-          .map(name => path.join(internalBackupsDir, name));
-        backups = [...backups, ...internalBackups];
-      } catch {
-        // Directory doesn't exist
-      }
+      const backups = await migrationTool.listBackups();
 
       if (backups.length === 0) {
         console.log('  No backups found.');
@@ -290,22 +275,25 @@ async function rollbackWorkspace(args) {
     }
 
     // Read backup manifest
-    let manifest;
+    let manifest = null;
     try {
       const manifestPath = path.join(targetBackup, 'migration-manifest.json');
       manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
-    } catch (error) {
-      console.error(`Error: Could not read backup manifest: ${error.message}`);
-      process.exit(1);
+    } catch {
+      // Legacy WorkspaceMigrator backups did not include a manifest.
     }
 
     console.log('');
     console.log('Backup Details:');
     console.log(`  Path: ${targetBackup}`);
-    console.log(`  Created: ${manifest.timestamp}`);
-    console.log(`  Files: ${manifest.fileCount}`);
-    console.log(`  Size: ${formatBytes(manifest.totalSize)}`);
-    console.log(`  Checksum: ${manifest.checksum.slice(0, 16)}...`);
+    if (manifest) {
+      console.log(`  Created: ${manifest.timestamp}`);
+      console.log(`  Files: ${manifest.fileCount}`);
+      console.log(`  Size: ${formatBytes(manifest.totalSize)}`);
+      console.log(`  Checksum: ${manifest.checksum.slice(0, 16)}...`);
+    } else {
+      console.log('  Manifest: legacy backup (integrity metadata unavailable)');
+    }
     console.log('');
 
     // Warning
@@ -326,7 +314,7 @@ async function rollbackWorkspace(args) {
     // Perform rollback
     console.log('Performing rollback...');
 
-    const result = await migrationTool.rollback();
+    const result = await migrationTool.rollback(targetBackup);
 
     console.log('');
     console.log('✓ Rollback complete');
