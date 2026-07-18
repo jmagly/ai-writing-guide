@@ -25,18 +25,22 @@ To convert an AIWG v2 index into a Knowledge Shard candidate, use:
 aiwg index export --format fortemi-shard --graph project --out aiwg-project.shard
 ```
 
-`fortemi-shard` always builds the v2 contract and passes it to
-`@fortemi/core/aiwg-index`. The AIWG source integration and deterministic
-mapping exist. npm package `@fortemi/core@2026.7.8` exports
+`fortemi-shard` always builds the v2 contract and passes it to the canonical
+`@fortemi/core/aiwg-index` converter. The shard uses deterministic note/link
+identities and preserves the complete v2 envelope and every source record as a
+JSON attachment projection on the note. Fortemi server shard validation rejects
+arbitrary top-level note metadata, so AIWG normalizes the converter output into
+the schema-allowed attachment slot and restamps the shard manifest checksums.
+The common profile declares notes, tags, and links; SKOS, provenance, chunks,
+privacy fields, checksums, and other rich AIWG data remain intact inside the
+embedded source records.
+
+npm package `@fortemi/core@2026.7.8` exports
 `aiwgFortemiIndexToKnowledgeShard`; AIWG still requires a pinned real-package
 CI test because source tests with an injected converter do not exercise the
-installed package boundary.
-
-The mapping uses deterministic note/link identities and embeds the complete v2
-envelope and source records in note metadata, making the AIWG projection
-reversible for a compatible consumer. That does **not** yet establish verified
-Fortemi server portability. The initial target is the reduced
-`core-v1` profile (notes, tags, and links). A release must not describe
+installed package boundary. The reversible AIWG projection does **not** yet
+establish verified Fortemi server portability. The initial target is the
+reduced `core-v1` profile (notes, tags, and links). A release must not describe
 the output as server-importable until the archive also validates against a
 pinned receipt of the server-owned shard schema and passes a real server
 import/re-export loss check.
@@ -262,7 +266,7 @@ The default backend is Fortemi Core. The legacy local backend must remain
 available until:
 
 - #1691 parity fixtures run green in CI;
-- the Fortemi 2026.7.1 package contract remains green against AIWG v2 export,
+- the Fortemi 2026.7.7 package contract remains green against AIWG v2 export,
   query, and relationship traversal fixtures;
 - semantic/hybrid behavior keeps the static-cache CI fixture green, with any
   direct Fortemi package integration gated and skipped cleanly without
@@ -287,7 +291,7 @@ metadata fields, and provenance-event fields. AIWG tests direct v2 validation
 and query behavior against that contract when the package is installed. The
 proposed package-boundary workflow in
 `.aiwg/planning/fortemi-core-index-migration/fortemi-package-boundary-workflow-proposal.md`
-installs `@fortemi/core@2026.7.1` without changing the lockfile and sets
+installs `@fortemi/core@2026.7.7` without changing the lockfile and sets
 `AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1` so a reviewed CI copy would fail if
 `@fortemi/core/aiwg-index` is unavailable or rejects the direct v2 export.
 
@@ -295,6 +299,9 @@ For shard conversion, the minimum published evidence is `@fortemi/core@2026.7.8`
 whose npm artifact exports the converter. That observation does not replace the
 AIWG package-boundary test, named-profile validation, or real server round trip.
 
-The default static fixture path does not require a live service and says
-nothing about shard import. Removing the legacy local backend remains gated by
+The default static fixture path does not require a live service. The portable
+shard package-boundary fixture validates the archive with Fortemi Core's shard
+schema and opens it through the read-only shard reader, but does not require a
+running Fortemi server and says nothing about real server import. Removing the
+legacy local backend remains gated by
 deprecation, fallback, and rollback evidence.
