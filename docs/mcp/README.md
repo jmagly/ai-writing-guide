@@ -22,7 +22,7 @@ aiwg mcp info
 
 | Tool | Description |
 |------|-------------|
-| `discover` | Search AIWG skills, agents, commands, and rules |
+| `discover` | Search AIWG skills, agents, commands, rules, flows, templates, and behaviors |
 | `skill-list` / `skill-show` | List skills and fetch full SKILL.md bodies |
 | `command-list` / `command-show` | List CLI commands and fetch command definitions |
 | `rule-list` / `rule-show` | List rules and fetch rule bodies |

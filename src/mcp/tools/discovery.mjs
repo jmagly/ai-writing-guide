@@ -37,10 +37,10 @@ export function registerDiscoveryTools(server) {
   // ============================================================
   server.registerTool('discover', {
     title: 'Discover AIWG Capabilities',
-    description: 'Semantic search across AIWG skills, agents, commands, and rules. Returns ranked candidates with capability summaries. Mirrors `aiwg discover --json`.',
+    description: 'Semantic search across AIWG operational assets: skills, agents, commands, rules, flows, templates, and behaviors. Returns ranked candidates with capability summaries. Mirrors `aiwg discover --json`.',
     inputSchema: {
       phrase: z.string().describe('Natural-language capability description (e.g. "create intake form")'),
-      type: z.enum(['skill', 'agent', 'command', 'rule']).optional().describe('Restrict to one artifact type'),
+      type: z.enum(['skill', 'agent', 'command', 'rule', 'flow', 'template', 'behavior']).optional().describe('Restrict to one artifact type'),
       limit: z.number().int().min(1).max(50).default(5).describe('Maximum results (default 5)'),
     },
     annotations: { readOnlyHint: true, openWorldHint: false },

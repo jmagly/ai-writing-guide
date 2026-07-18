@@ -1233,7 +1233,7 @@ export const discoverCommand: Extension = {
   id: 'discover',
   type: 'skill',
   name: 'Discover',
-  description: 'Find AIWG skills, agents, commands, and rules by capability — index-driven on-demand discovery',
+  description: 'Find AIWG operational assets by capability — index-driven on-demand discovery',
   version: '1.0.0',
   capabilities: ['cli', 'discovery', 'search', 'capability', 'skills'],
   keywords: ['discover', 'find skill', 'capability', 'search skills', 'what skill does', 'skill for'],

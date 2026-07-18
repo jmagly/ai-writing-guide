@@ -2374,7 +2374,7 @@ export class UseHandler implements CommandHandler {
         // style message and capture the noisy stat lines.
         ui.blank();
         ui.info('Building capability index…');
-        ui.dim('  Indexing skills, agents, commands, and rules for agent-side lookup.');
+        ui.dim('  Indexing operational assets for agent-side lookup.');
 
         const indexStart = Date.now();
         // Capture buildIndex's own console.log noise unless verbose

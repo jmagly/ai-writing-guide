@@ -122,6 +122,62 @@ export interface SkillScriptSpec {
 }
 
 /**
+ * Operational artifact kinds that belong on the broad capability-discovery
+ * surface. This is intentionally narrower than every indexed artifact type:
+ * `query` remains the general document/artifact search surface, while
+ * `discover` is for assets agents can act on or route to.
+ */
+export const OPERATIONAL_DISCOVERY_TYPES = [
+  'skill',
+  'agent',
+  'command',
+  'rule',
+  'flow',
+  'template',
+  'behavior',
+] as const;
+
+/**
+ * Operational artifact kinds that `aiwg show <type> <name>` can fetch. Hooks
+ * are operational but low-level, so they are showable and focus-searchable
+ * without being part of broad discovery defaults.
+ */
+export const OPERATIONAL_SHOW_TYPES = [
+  ...OPERATIONAL_DISCOVERY_TYPES,
+  'hook',
+] as const;
+
+export type OperationalDiscoveryType = typeof OPERATIONAL_DISCOVERY_TYPES[number];
+export type OperationalShowType = typeof OPERATIONAL_SHOW_TYPES[number];
+
+export function isOperationalShowType(value: string): value is OperationalShowType {
+  return (OPERATIONAL_SHOW_TYPES as readonly string[]).includes(value);
+}
+
+export const DEFAULT_INDEX_EXTENSIONS = ['.md', '.yaml', '.yml', '.json'] as const;
+
+/**
+ * Template assets are often provider-native files (`config.toml`,
+ * `AGENTS.md.aiwg-template`, GitHub workflow `.yml`, JSONC snippets, etc.).
+ * These extensions are only meaningful as operational templates when the file
+ * is under a `templates/` directory; type inference enforces that boundary.
+ */
+export const TEMPLATE_INDEX_EXTENSIONS = [
+  '.aiwg-template',
+  '.aiwg-base',
+  '.jsonc',
+  '.tmpl',
+  '.j2',
+  '.csv',
+  '.toml',
+] as const;
+
+export const FRAMEWORK_INDEX_EXTENSIONS = [
+  ...DEFAULT_INDEX_EXTENSIONS,
+  ...TEMPLATE_INDEX_EXTENSIONS,
+] as const;
+
+/**
  * The master artifact index stored at .aiwg/.index/metadata.json
  */
 export interface ArtifactIndex {
@@ -474,7 +530,7 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
       'agentic/code/behaviors',
       'docs',
     ],
-    extensions: ['.md', '.yaml', '.json'],
+    extensions: [...FRAMEWORK_INDEX_EXTENSIONS],
     shared: true,
     // Not built by `aiwg index build` (no flag) — that would write to
     // the shared XDG location from any project. Freshness is guaranteed
@@ -486,7 +542,7 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
   project: {
     type: 'project',
     scanDirs: ['.aiwg'],
-    extensions: ['.md', '.yaml', '.json'],
+    extensions: [...DEFAULT_INDEX_EXTENSIONS],
     shared: false,
     defaultBuild: true,
     buildTier: 'standard',
@@ -494,7 +550,7 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
   codebase: {
     type: 'codebase',
     scanDirs: ['src', 'test', 'tools'],
-    extensions: ['.ts', '.mts', '.js', '.mjs', '.json', '.yaml'],
+    extensions: ['.ts', '.mts', '.js', '.mjs', '.json', '.yaml', '.yml'],
     shared: false,
     defaultBuild: true,
     buildTier: 'heavy',
@@ -517,7 +573,7 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
       '~/.aiwg/flows',
       '~/.aiwg/frameworks',
     ],
-    extensions: ['.md', '.yaml', '.json'],
+    extensions: [...DEFAULT_INDEX_EXTENSIONS],
     shared: true,
     defaultBuild: false,
     buildTier: 'standard',
@@ -582,7 +638,7 @@ function parseGraphDef(name: string, graphDef: Record<string, unknown>): GraphCo
   return {
     type: name,
     scanDirs: graphDef.scanDirs as string[],
-    extensions: Array.isArray(graphDef.extensions) ? graphDef.extensions as string[] : ['.md', '.yaml', '.json'],
+    extensions: Array.isArray(graphDef.extensions) ? graphDef.extensions as string[] : [...DEFAULT_INDEX_EXTENSIONS],
     shared: graphDef.shared === true,
     defaultBuild: graphDef.defaultBuild !== false,
     buildTier:

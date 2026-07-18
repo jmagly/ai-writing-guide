@@ -1325,7 +1325,7 @@ export const discoverHandler: CommandHandler = {
   id: "discover",
   name: "Discover",
   description:
-    "Find AIWG skills, agents, commands, and rules by capability — index-driven on-demand discovery",
+    "Find AIWG operational assets by capability — index-driven on-demand discovery",
   category: "index",
   aliases: [],
 

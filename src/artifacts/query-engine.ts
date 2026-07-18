@@ -13,7 +13,12 @@ import { minimatch } from 'minimatch';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { QueryParams, QueryResult, MetadataEntry, GraphType, ArtifactIndex } from './types.js';
-import { loadGlobalGraphConfigs } from './types.js';
+import {
+  OPERATIONAL_DISCOVERY_TYPES,
+  OPERATIONAL_SHOW_TYPES,
+  isOperationalShowType,
+  loadGlobalGraphConfigs,
+} from './types.js';
 import { loadMetadataIndex, loadGraphIndexFile } from './index-reader.js';
 import { bm25Rank, type FullTextDoc } from './fulltext.js';
 import { parseFrontmatter } from './index-builder.js';
@@ -63,7 +68,7 @@ export interface QueryOptions {
 const DEFAULT_ARTIFACT_SEARCH_BACKEND: 'fortemi-core' = 'fortemi-core';
 
 const DISCOVER_TYPE_ORDER = new Map(
-  ['skill', 'agent', 'command', 'rule', 'flow', 'behavior', 'template', 'doc'].map((type, index) => [type, index]),
+  [...OPERATIONAL_DISCOVERY_TYPES, 'hook', 'doc'].map((type, index) => [type, index]),
 );
 
 function canonicalLocalityRank(entryPath: string): number {
@@ -620,8 +625,8 @@ export async function queryIndex(
 /**
  * Discovery query — capability search across AIWG artifact kinds.
  *
- * Tuned for "agent looking for the right skill / agent / command / rule"
- * use case. Defaults the type filter to AIWG artifact kinds, prefers the
+ * Tuned for "agent looking for the right operational asset" use case.
+ * Defaults the type filter to AIWG operational artifact kinds, prefers the
  * `framework` graph (where deployed source lives), and outputs in a
  * token-tight format that names the top trigger phrase responsible for
  * each match.
@@ -631,7 +636,7 @@ export async function queryIndex(
 export interface DiscoverParams {
   /** Search phrase (the user's capability description) */
   phrase: string;
-  /** Restrict to specific types — defaults to skill/agent/command/rule/flow */
+  /** Restrict to specific types — defaults to the operational discovery surface */
   typeFilter?: string[];
   /** Max results (default 10) */
   limit?: number;
@@ -651,12 +656,7 @@ export interface DiscoverParams {
   includePaths?: boolean;
 }
 
-// `flow` is included so discoverable YAML Flow documents (flow.aiwg.io/v1 /
-// workflow.aiwg.io/v1, classified by parseFlowDoc) rank alongside the
-// capability artifacts in a bare `aiwg discover` (#1540). Flows ARE agentic
-// capabilities — a "deploy to production" Flow should surface next to the
-// flow-deploy-to-production skill.
-const DEFAULT_DISCOVER_TYPES = ['skill', 'agent', 'command', 'rule', 'flow'];
+const DEFAULT_DISCOVER_TYPES = [...OPERATIONAL_DISCOVERY_TYPES];
 
 const DEFAULT_CAPABILITY_GRAPHS: GraphType[] = ['project', 'user', 'framework'];
 
@@ -711,7 +711,7 @@ function buildRunHint(entry: MetadataEntry): string {
 }
 
 function showHintForDiscoverResult(entry: MetadataEntry, id: string): string {
-  if (['skill', 'agent', 'command', 'rule'].includes(entry.type)) {
+  if (isOperationalShowType(entry.type)) {
     return `aiwg show ${entry.type} ${id}`;
   }
   return `aiwg show ${id}`;
@@ -843,9 +843,9 @@ export async function discoverCapability(
       }
     }
     const includeUser = projectAllowsUserIndices(cwd);
-    // Project-local capability artifacts (skills/agents/commands/rules authored
-    // in this project). The DEFAULT_DISCOVER_TYPES filter keeps non-capability
-    // project artifacts (requirements, ADRs, …) out of results.
+    // Project-local operational artifacts authored in this project. The
+    // DEFAULT_DISCOVER_TYPES filter keeps non-capability project artifacts
+    // (requirements, ADRs, …) out of results.
     const projIdx = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', 'project');
     if (projIdx) entries.push(...Object.values(projIdx.entries).map((entry) => withIndexProvenance(entry, 'project')));
     if (includeUser) {
@@ -1061,7 +1061,7 @@ export async function discoverCapability(
 export interface ShowParams {
   /** Skill name (e.g. `intake-wizard`), title, or artifact path */
   name: string;
-  /** Restrict to specific types — defaults to skill/agent/command/rule/flow */
+  /** Restrict to specific types — defaults to showable operational types */
   typeFilter?: string[];
   /** Emit a JSON envelope (path + content) instead of raw file text */
   json?: boolean;
@@ -1145,7 +1145,11 @@ function findShowMatches(entries: MetadataEntry[], types: string[], needle: stri
       const dirStem = path.basename(path.dirname(normalizedPath));
       const basename = path.basename(normalizedPath);
       const fileStem = basename.replace(/\.[^.]+$/, '');
-      return (basename === 'SKILL.md' && dirStem === needle) || fileStem === needle || e.name === needle;
+      const slugLayoutMatch =
+        ((basename === 'SKILL.md' && e.type === 'skill') ||
+          (basename === 'BEHAVIOR.md' && e.type === 'behavior')) &&
+        dirStem === needle;
+      return slugLayoutMatch || fileStem === needle || e.name === needle;
     });
   }
   if (matches.length === 0) {
@@ -1206,7 +1210,7 @@ async function fortemiRecordForEntry(
  * Scan the AIWG_ROOT corpus for an artifact matching `name` (#1221).
  *
  * Walks the well-known artifact layouts under
- * `agentic/code/{frameworks,addons,extensions,plugins}/<bundle>/{skills,agents,commands,rules,templates}/`
+ * `agentic/code/{frameworks,addons,extensions,plugins}/<bundle>/{skills,agents,commands,rules,templates,behaviors,flows}/`
  * and returns the first match. Used as a fallback in `aiwg show` when an
  * artifact isn't in any built index — either because the workspace hasn't
  * been deployed to yet, or because the bundle hasn't been installed.
@@ -1243,6 +1247,8 @@ async function findCorpusArtifact(
     { sub: 'commands', type: 'command', layout: 'flat' },
     { sub: 'rules', type: 'rule', layout: 'flat' },
     { sub: 'templates', type: 'template', layout: 'flat' },
+    { sub: 'behaviors', type: 'behavior', layout: 'flat' },
+    { sub: 'flows', type: 'flow', layout: 'flat' },
   ];
 
   for (const group of groups) {
@@ -1284,6 +1290,31 @@ async function findCorpusArtifact(
     );
     if (agentMatch) {
       return { path: agentMatch, type: 'agent', bundleKind: null, bundleId: null };
+    }
+  }
+
+  // Behaviors commonly use a slug layout: `behaviors/<name>/BEHAVIOR.md`.
+  if (typeFilter.length === 0 || typeFilter.includes('behavior')) {
+    for (const group of groups) {
+      let bundles: string[];
+      try {
+        bundles = (await fsp.readdir(group.dir, { withFileTypes: true }))
+          .filter(d => d.isDirectory())
+          .map(d => d.name);
+      } catch {
+        continue;
+      }
+      for (const bundle of bundles) {
+        const candidate = path.join(group.dir, bundle, 'behaviors', name, 'BEHAVIOR.md');
+        try {
+          const stat = await fsp.stat(candidate);
+          if (stat.isFile()) {
+            return { path: candidate, type: 'behavior', bundleKind: group.kind, bundleId: bundle };
+          }
+        } catch {
+          // not present — continue
+        }
+      }
     }
   }
 
@@ -1357,7 +1388,7 @@ export async function showArtifact(
   const { promises: fs } = await import('node:fs');
   const types = params.typeFilter && params.typeFilter.length > 0
     ? params.typeFilter
-    : DEFAULT_DISCOVER_TYPES;
+    : [...OPERATIONAL_SHOW_TYPES];
   const { entries, aiwgRoot } = await loadShowEntries(cwd, params);
 
   if (entries.length === 0 && params.backend !== 'fortemi-core') {
@@ -1508,7 +1539,7 @@ export async function showMetadata(
   loadGlobalGraphConfigs();
   const types = params.typeFilter && params.typeFilter.length > 0
     ? params.typeFilter
-    : DEFAULT_DISCOVER_TYPES;
+    : [...OPERATIONAL_SHOW_TYPES];
   const { entries, aiwgRoot } = await loadShowEntries(cwd, params);
 
   if (entries.length === 0 && params.backend !== 'fortemi-core') {

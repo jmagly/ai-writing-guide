@@ -15,6 +15,7 @@ import {
   getProviderDefinition,
   normalizeProviderDefinitionId,
 } from '../providers/provider-definitions.js';
+import { OPERATIONAL_SHOW_TYPES } from '../artifacts/types.js';
 import { appendAiwgSourceTrackBlock } from './project-local-gitignore.js';
 
 const SOURCE_RELATIVE_PATH = '.aiwg/quickref.json';
@@ -22,7 +23,7 @@ const GENERATED_RELATIVE_ROOT = '.aiwg/generated/project-quickref';
 const OWNERSHIP_MARKER = '.aiwg-project-quickref.json';
 
 const ShowHintSchema = z.object({
-  type: z.enum(['skill', 'agent', 'command', 'rule']),
+  type: z.enum(OPERATIONAL_SHOW_TYPES),
   name: z.string().min(1).max(128),
 }).strict();
 

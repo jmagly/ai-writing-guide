@@ -2,7 +2,7 @@
  * Capability discovery — `aiwg index discover` subcommand tests.
  *
  * Covers #1214:
- *   - Type inference for skill/agent/command/rule from source paths
+ *   - Type inference for operational asset types from source paths
  *   - Trigger extraction from `## Triggers` section
  *   - Capability extraction from frontmatter description / body fallback
  *   - Scorer trigger boost + multi-token matching
@@ -676,6 +676,109 @@ describe('discoverCapability — Flow documents surface in default discover (#15
     );
     expect(flowHit, 'Flow doc should appear in default discover results').toBeTruthy();
     expect(flowHit.type).toBe('flow');
+  });
+});
+
+describe('discoverCapability — operational assets beyond skills/rules (#1792)', () => {
+  it('surfaces behaviors and templates in broad default discovery and focused filters', async () => {
+    const prevXdg = process.env.XDG_DATA_HOME;
+    const prevRoot = process.env.AIWG_ROOT;
+    process.env.XDG_DATA_HOME = path.join(tmpRoot, 'xdg-operational-assets');
+    process.env.AIWG_ROOT = cwd;
+    try {
+      const behaviorDir = path.join(
+        cwd,
+        'agentic',
+        'code',
+        'addons',
+        'fleet',
+        'behaviors',
+        'quiet-bot',
+      );
+      fs.mkdirSync(behaviorDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(behaviorDir, 'BEHAVIOR.md'),
+        [
+          '---',
+          'name: quiet-bot',
+          'title: Quiet Bot',
+          'description: Mention-only group chat behavior for budget-sensitive bot fleets.',
+          '---',
+          '# Quiet Bot',
+          '',
+          'Respond only when mentioned in shared bot channels.',
+          '',
+        ].join('\n'),
+        'utf8',
+      );
+
+      const templateDir = path.join(
+        cwd,
+        'agentic',
+        'code',
+        'frameworks',
+        'sdlc-complete',
+        'templates',
+        'codex',
+      );
+      fs.mkdirSync(templateDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(templateDir, 'config.toml.aiwg-template'),
+        [
+          '# Codex Config Template',
+          '',
+          'codex config toml provider template for agent runtime setup.',
+          '',
+        ].join('\n'),
+        'utf8',
+      );
+
+      const buildSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const buildErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+      buildSpy.mockRestore();
+      buildErrSpy.mockRestore();
+
+      async function runDiscover(phrase: string, typeFilter?: string[]) {
+        const captured: string[] = [];
+        const logSpy = vi.spyOn(console, 'log').mockImplementation((...a) => captured.push(a.join(' ')));
+        const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        await discoverCapability(cwd, {
+          phrase,
+          typeFilter,
+          graph: 'framework',
+          json: true,
+          backend: 'local',
+          limit: 10,
+        });
+        logSpy.mockRestore();
+        errSpy.mockRestore();
+        return JSON.parse(captured.join('\n'));
+      }
+
+      const broadBehavior = await runDiscover('quiet bot mention only');
+      const behaviorHit = broadBehavior.results.find((r: { type: string; name?: string; path: string }) =>
+        r.type === 'behavior' && r.name === 'quiet-bot' && r.path.endsWith('quiet-bot/BEHAVIOR.md'),
+      );
+      expect(behaviorHit, 'behavior should be in default broad discover').toBeTruthy();
+
+      const broadTemplate = await runDiscover('codex config toml provider');
+      const templateHit = broadTemplate.results.find((r: { type: string; name?: string; path: string }) =>
+        r.type === 'template' && r.name === 'config.toml' && r.path.endsWith('config.toml.aiwg-template'),
+      );
+      expect(templateHit, 'template should be in default broad discover').toBeTruthy();
+
+      const focusedBehavior = await runDiscover('quiet bot', ['behavior']);
+      expect(focusedBehavior.results[0].type).toBe('behavior');
+
+      const focusedTemplate = await runDiscover('config toml', ['template']);
+      expect(focusedTemplate.results[0].type).toBe('template');
+    } finally {
+      if (prevXdg === undefined) delete process.env.XDG_DATA_HOME;
+      else process.env.XDG_DATA_HOME = prevXdg;
+      if (prevRoot === undefined) delete process.env.AIWG_ROOT;
+      else process.env.AIWG_ROOT = prevRoot;
+    }
   });
 });
 

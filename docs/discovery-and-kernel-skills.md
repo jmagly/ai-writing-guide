@@ -25,11 +25,14 @@ This document is the operator's guide to using the new model effectively, plus v
 # Find what skill handles your need
 aiwg discover "<the user's need, paraphrased>" --limit 3
 
-# Fetch the full body of a specific skill / agent / command / rule
+# Fetch the full body of a specific operational asset
 aiwg show skill <name>
 aiwg show agent <name>
 aiwg show command <name>
 aiwg show rule <name>
+aiwg show flow <name>
+aiwg show template <name>
+aiwg show behavior <name>
 
 # Health check
 aiwg doctor
@@ -390,7 +393,7 @@ aiwg discover "deploy to production" --type skill     # the workflow
 aiwg discover "no unauthenticated"   --type rule      # which rule enforces it
 ```
 
-The default `--type` is `skill,agent,command,rule`. Narrowing helps when you specifically want one kind.
+The default `--type` is `skill,agent,command,rule,flow,template,behavior`. Narrowing helps when you specifically want one kind.
 
 ### JSON for sub-agent consumption
 

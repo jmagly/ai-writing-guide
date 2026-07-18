@@ -397,6 +397,98 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     }
   });
 
+  it("discovers and shows operational behavior, template, and flow assets from Fortemi Core", async () => {
+    const behavior = entry({
+      path: ".aiwg/addons/fleet/behaviors/quiet-bot/BEHAVIOR.md",
+      type: "behavior",
+      title: "Quiet Bot",
+      name: "quiet-bot",
+      tags: ["chat", "fleet"],
+      summary: "Mention-only group chat behavior for budget-sensitive bot fleets.",
+      triggers: ["quiet bot", "mention only bot"],
+      capability: "Respond only when mentioned in shared bot channels.",
+    });
+    const template = entry({
+      path: ".aiwg/templates/codex/config.toml.aiwg-template",
+      type: "template",
+      title: "Codex Config Template",
+      name: "config.toml",
+      tags: ["codex", "template"],
+      summary: "Codex config toml provider template for agent runtime setup.",
+      triggers: ["codex config toml"],
+      capability: "Seed Codex runtime config from a project template.",
+    });
+    const flow = entry({
+      path: ".aiwg/flows/flow-release.playbook.yaml",
+      type: "flow",
+      title: "Release Flow",
+      name: "flow-release",
+      tags: ["release"],
+      summary: "Run the release gate sequence and publish artifacts.",
+      triggers: ["release flow"],
+      capability: "Coordinate release verification and publishing.",
+    });
+    writeProjectGraph(tmp, [behavior, template, flow], undefined, "project");
+    syncFortemiCoreIndex(tmp, {
+      graph: "project",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
+
+    await discoverCapability(tmp, {
+      phrase: "quiet bot mention only",
+      graph: "project",
+      json: true,
+      limit: 5,
+      backend: "fortemi-core",
+    });
+    const broad = readConsoleJson();
+    consoleSpy.mockClear();
+    const behaviorHit = broad.results.find((result: any) => result.type === "behavior");
+    expect(behaviorHit?.name).toBe("quiet-bot");
+
+    await discoverCapability(tmp, {
+      phrase: "codex config toml",
+      typeFilter: ["template"],
+      graph: "project",
+      json: true,
+      limit: 5,
+      backend: "fortemi-core",
+    });
+    const focused = readConsoleJson();
+    consoleSpy.mockClear();
+    expect(focused.results[0].type).toBe("template");
+    expect(focused.results[0].name).toBe("config.toml");
+
+    await discoverCapability(tmp, {
+      phrase: "quiet bot",
+      graph: "project",
+      limit: 1,
+      backend: "fortemi-core",
+      includePaths: false,
+    });
+    const text = consoleSpy.mock.calls.map((call) => call[0]).join("\n");
+    consoleSpy.mockClear();
+    expect(text).toContain("show: aiwg show behavior");
+
+    for (const [type, name, expected] of [
+      ["behavior", "quiet-bot", "Mention-only group chat behavior"],
+      ["template", "config.toml", "Codex config toml provider template"],
+      ["flow", "flow-release", "Run the release gate sequence"],
+    ] as const) {
+      await showArtifact(tmp, {
+        typeFilter: [type],
+        name,
+        json: true,
+        graph: "project",
+        backend: "fortemi-core",
+      });
+      const shown = readConsoleJson();
+      consoleSpy.mockClear();
+      expect(shown.type).toBe(type);
+      expect(shown.content).toContain(expected);
+    }
+  });
+
   it("deduplicates plugin mirror copies from discover results before limiting", async () => {
     const sourceSkill = entry({
       path: "agentic/code/frameworks/sdlc-complete/skills/artifact-lookup/SKILL.md",

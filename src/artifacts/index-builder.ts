@@ -15,7 +15,17 @@ import path from 'path';
 import { createHash } from 'crypto';
 import { load as loadYaml } from 'js-yaml';
 import type { MetadataEntry, ArtifactIndex, TagIndex, DependencyGraph, GraphType, TypedEdge, MetadataSupplementConfig } from './types.js';
-import { INDEX_VERSION, INDEX_DIR, PHASE_DIRECTORIES, GRAPH_CONFIGS, loadUserGraphConfigs, loadGlobalGraphConfigs } from './types.js';
+import {
+  DEFAULT_INDEX_EXTENSIONS,
+  INDEX_VERSION,
+  INDEX_DIR,
+  OPERATIONAL_DISCOVERY_TYPES,
+  PHASE_DIRECTORIES,
+  GRAPH_CONFIGS,
+  TEMPLATE_INDEX_EXTENSIONS,
+  loadUserGraphConfigs,
+  loadGlobalGraphConfigs,
+} from './types.js';
 import { parseCitationSidecar, citationResultToEdges, buildRefToPathMap } from './citation-parser.js';
 import { writeIndexFile, resolveIndexDir, loadGraphIndexFile } from './index-reader.js';
 import { loadManifest, writeManifest, statMatches, makeEntry, type ChecksumManifest, type ManifestStats } from './checksum-manifest.js';
@@ -105,12 +115,12 @@ function extractCanonicalName(data: Record<string, unknown>, relativePath: strin
     return data.name.trim();
   }
   const filename = path.basename(relativePath);
-  // For skill/agent/command/rule layouts: <type>s/<name>/<TYPE>.md
-  const isCanonicalLayout = /^(SKILL|AGENT|COMMAND|RULE)\.md$/i.test(filename);
+  // For slug layouts: <type>s/<name>/<TYPE>.md
+  const isCanonicalLayout = /^(SKILL|AGENT|COMMAND|RULE|BEHAVIOR)\.md$/i.test(filename);
   if (isCanonicalLayout) {
     return path.basename(path.dirname(relativePath));
   }
-  return filename.replace(/\.md$/i, '');
+  return path.basename(filename, path.extname(filename));
 }
 
 /**
@@ -169,7 +179,9 @@ function inferType(data: Record<string, unknown>, filePath: string): string {
   // nested layout uniformly.
   const segments = normalized.split('/');
   const skipBasenames = new Set(['readme', 'rules-index', 'index']);
-  if (!skipBasenames.has(basename) && filePath.match(/\.md$/i)) {
+  const isMarkdown = /\.md$/i.test(filePath);
+  const isTemplateAsset = TEMPLATE_INDEX_EXTENSIONS.some(ext => normalized.endsWith(ext));
+  if (!skipBasenames.has(basename) && (isMarkdown || isTemplateAsset)) {
     // Look at directory segments only (exclude the file itself).
     for (let i = segments.length - 2; i >= 0; i--) {
       const seg = segments[i];
@@ -190,19 +202,24 @@ function inferType(data: Record<string, unknown>, filePath: string): string {
           break;
         }
         case 'agents':
-          return 'agent';
+          if (isMarkdown) return 'agent';
+          break;
         case 'commands':
-          return 'command';
+          if (isMarkdown) return 'command';
+          break;
         case 'rules':
           // Rules/RULES-INDEX.md is a curated index file, not a rule.
           if (basename === 'rules-index' || basename === 'index') break;
-          return 'rule';
+          if (isMarkdown) return 'rule';
+          break;
         case 'templates':
           return 'template';
         case 'behaviors':
-          return 'behavior';
+          if (isMarkdown) return 'behavior';
+          break;
         case 'hooks':
-          return 'hook';
+          if (isMarkdown) return 'hook';
+          break;
       }
     }
   }
@@ -472,7 +489,7 @@ function applyMetadataSupplements(
 /**
  * Recursively find all indexable files under a directory
  */
-function findArtifactFiles(dir: string, extensions: string[] = ['.md', '.yaml', '.json']): string[] {
+function findArtifactFiles(dir: string, extensions: string[] = [...DEFAULT_INDEX_EXTENSIONS]): string[] {
   const results: string[] = [];
   if (!fs.existsSync(dir)) return results;
 
@@ -557,14 +574,14 @@ export async function buildIndex(
   if (scope) {
     // Explicit scope overrides graph config
     scanDirs = [path.join(cwd, scope)];
-    fileExtensions = ['.md', '.yaml', '.json'];
+    fileExtensions = [...DEFAULT_INDEX_EXTENSIONS];
   } else if (graphConfig) {
     scanDirs = graphConfig.scanDirs.map(d => expandScanDir(cwd, d));
     fileExtensions = graphConfig.extensions;
   } else {
     // Default: scan .aiwg/ (backward compatible)
     scanDirs = [path.join(cwd, '.aiwg')];
-    fileExtensions = ['.md', '.yaml', '.json'];
+    fileExtensions = [...DEFAULT_INDEX_EXTENSIONS];
   }
 
   // Verify at least one scan directory exists
@@ -729,11 +746,12 @@ export async function buildIndex(
       const summary = flow?.description ?? extractSummary(data, body);
       const dependencies = extractMentions(content);
 
-      // Discovery metadata (#1214, #1540) — meaningful for AIWG artifact
-      // kinds + Flow documents. Kept undefined on other types so the index
-      // file stays small for the common case.
-      const isDiscoverable =
-        type === 'skill' || type === 'agent' || type === 'command' || type === 'rule' || type === 'flow';
+      // Discovery metadata (#1214, #1540, #1792) — meaningful for operational
+      // AIWG artifact kinds. Kept undefined on document types so the index file
+      // stays small for the common case.
+      const isDiscoverable = OPERATIONAL_DISCOVERY_TYPES.includes(
+        type as typeof OPERATIONAL_DISCOVERY_TYPES[number],
+      );
       // Flows have no trigger phrases — they rely on the capability description.
       const triggers = isDiscoverable && !flow ? extractTriggers(body, data) : undefined;
       const capability = flow ? flow.description : (isDiscoverable ? extractCapability(data, body) : undefined);

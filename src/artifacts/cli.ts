@@ -18,7 +18,15 @@
  */
 
 import type { GraphType } from './types.js';
-import { GRAPH_CONFIGS, loadUserGraphConfigs, loadGlobalGraphConfigs, orderedGraphEntries } from './types.js';
+import {
+  GRAPH_CONFIGS,
+  OPERATIONAL_DISCOVERY_TYPES,
+  OPERATIONAL_SHOW_TYPES,
+  isOperationalShowType,
+  loadUserGraphConfigs,
+  loadGlobalGraphConfigs,
+  orderedGraphEntries,
+} from './types.js';
 import { SUPPORTED_VIEWS } from './corpus-views/renderers.js';
 
 /** Parse --graph flag from args, returns undefined for "all graphs" */
@@ -228,8 +236,8 @@ function printIndexUsage(): void {
   console.log('Available subcommands:');
   console.log('  build      Build/rebuild the artifact index');
   console.log('  query      Search artifacts by keyword, type, phase, tags');
-  console.log('  discover   Capability search across skills/agents/commands/rules (#1214)');
-  console.log('  show       Print the full text of a specific skill/agent/command/rule');
+  console.log('  discover   Capability search across operational asset types (#1214)');
+  console.log('  show       Print the full text of a specific operational asset');
   console.log('  export     Export a browser-consumable index contract');
   console.log('  sync       Materialize the Fortemi Core static index cache');
   console.log('  migrate-legacy  Move legacy root indexes into graph sidecar indexes');
@@ -1366,12 +1374,12 @@ async function handleSetQuery(args: string[]): Promise<void> {
 }
 
 /**
- * Handle 'index discover' command — capability-search for AIWG skills,
- * agents, commands, and rules.
+ * Handle 'index discover' command — capability-search for AIWG operational
+ * assets.
  *
  * Like `query` but tuned for capability lookups: ranks by trigger
  * phrase + capability description first, falls back to title/tag/path
- * matches. Defaults to AIWG artifact kinds (skill/agent/command/rule),
+ * matches. Defaults to the operational discovery surface,
  * narrowable via `--type`.
  *
  * Returns a token-tight format intended for in-context agent
@@ -1404,7 +1412,7 @@ async function handleDiscover(args: string[]): Promise<void> {
     console.log('Examples:');
     console.log('  aiwg index discover "create intake"');
     console.log('  aiwg index discover "deploy production" --limit 5');
-    console.log('  aiwg index discover "audit security" --type skill,agent');
+    console.log(`  aiwg index discover "audit security" --type ${OPERATIONAL_DISCOVERY_TYPES.join(',')}`);
     console.log('  aiwg index discover "intake" --format json --pretty');
     process.exit(1);
   }
@@ -1451,7 +1459,7 @@ async function handleDiscover(args: string[]): Promise<void> {
  *   aiwg show <type> <name> [--json] [--first] [--graph <name>] [--backend local|fortemi-core]
  *
  * Type is positional (not a flag) so the verb reads as
- * "show <kind> <name>". `<type>` is one of: skill, agent, command, rule.
+ * "show <kind> <name>". `<type>` is one of the operational show types.
  *
  * Companion to `discover`: where discover ranks candidates, show fetches
  * the artifact body so consumers don't need to navigate the filesystem.
@@ -1469,18 +1477,20 @@ async function handleShow(args: string[]): Promise<void> {
     else positional.push(arg);
   }
 
-  const ALLOWED_TYPES = ['skill', 'agent', 'command', 'rule'];
   const HELP_TEXT = [
     '',
     'Usage: aiwg show <type> <name> [--json] [--first] [--graph <name>] [--backend local|fortemi-core]',
     '       aiwg show metadata <id-or-name-or-path> [--json] [--first] [--graph <name>] [--backend local|fortemi-core]',
     '       aiwg index show <type> <name> ...',
     '',
-    'Types: skill | agent | command | rule',
+    `Types: ${OPERATIONAL_SHOW_TYPES.join(' | ')}`,
     '',
     'Examples:',
     '  aiwg show skill intake-wizard',
     '  aiwg show skill flow-deploy-to-production --json',
+    '  aiwg show flow flow-release --json',
+    '  aiwg show behavior quiet-bot --json',
+    '  aiwg show template config.toml --json',
     '  aiwg show metadata aiwg:skill:4840fa441622f676 --json',
     '  aiwg show agent aiwg-steward',
     '  aiwg show command discover',
@@ -1514,7 +1524,7 @@ async function handleShow(args: string[]): Promise<void> {
       console.error(HELP_TEXT);
       process.exit(1);
     }
-  } else if (ALLOWED_TYPES.includes(firstLower)) {
+  } else if (isOperationalShowType(firstLower)) {
     type = firstLower;
     name = positional.slice(1).join(' ').trim();
     if (!name) {

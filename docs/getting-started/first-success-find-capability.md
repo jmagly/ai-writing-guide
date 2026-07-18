@@ -33,7 +33,7 @@ candidates, then recommend one first action and one fallback.
 
 You do not type these. They are the agent's job:
 
-- `aiwg discover "<phrase>"` — search the installed capability index for skills, agents, commands, and rules that match the goal.
+- `aiwg discover "<phrase>"` — search the installed capability index for skills, agents, commands, rules, flows, templates, and behaviors that match the goal.
 - `aiwg show skill <name>` or `aiwg show agent <name>` — fetch the body of the top match so the agent can read its capabilities before recommending it.
 
 If the agent prints these commands and tells *you* to run them, ask it to run them itself.

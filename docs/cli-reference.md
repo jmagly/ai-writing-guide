@@ -3457,11 +3457,11 @@ Transform a high-level objective into a fully researched, SDLC-gated issue backl
 
 ## Discovery
 
-Top-level capability search across AIWG skills, agents, commands, and rules. **Reach for `aiwg discover` early and often** — it is the first-class operator surface for finding the right AIWG capability for a need, and the kernel skill set deliberately deploys only a small directory of quickrefs to your platform's flat skill listing. Everything else lives at `<provider-dir>/.aiwg/skills/` and is reachable only through this command.
+Top-level capability search across AIWG operational assets: skills, agents, commands, rules, flows, templates, and behaviors. **Reach for `aiwg discover` early and often** — it is the first-class operator surface for finding the right AIWG capability for a need, and the kernel skill set deliberately deploys only a small directory of quickrefs to your platform's flat skill listing. Everything else lives at `<provider-dir>/.aiwg/skills/` and is reachable only through this command.
 
 ### discover
 
-Find AIWG skills, agents, commands, and rules by capability — index-driven on-demand discovery (#1212).
+Find AIWG operational assets by capability — index-driven on-demand discovery (#1212).
 
 ```bash
 aiwg discover "<phrase>" [options]
@@ -3470,7 +3470,7 @@ aiwg discover "<phrase>" [options]
 **Options:**
 
 - `--limit <N>` — Max ranked results (default: 5)
-- `--type <kinds>` — Comma-separated filter; defaults to `skill,agent,command,rule,flow`. Examples: `--type skill`, `--type skill,agent`
+- `--type <kinds>` — Comma-separated filter; defaults to `skill,agent,command,rule,flow,template,behavior`. Examples: `--type skill`, `--type template`, `--type skill,agent`
 - `--json` / `--format json` — Emit a stable JSON schema (`id`, `type`, `name`, `title`, `score`, `triggers`, `capability`, `kernel`, `provenance`) for programmatic agent consumption. Paths are intentionally omitted from discover output; use `aiwg show metadata <id>` when path/debug metadata is required.
 - `--format text` — Emit readable text output (default).
 - `--pretty` — Pretty-print JSON output with indentation (default for compatibility).
@@ -3501,12 +3501,12 @@ Readable format optimized for agent follow-up — names the stable id, type, sco
 Discovery results for "deploy production" (3 matches, 16ms):
 
 1. Flow Deploy To Production
-   type: skill  score: 0.51
-   id: aiwg:skill:6f1477d99813ca8d
+   type: flow  score: 0.51
+   id: aiwg:flow:6f1477d99813ca8d
    name: flow-deploy-to-production
    capability: Orchestrate production deployment with strategy selection, validation,
    trigger: "deploy production"
-   show: aiwg show skill aiwg:skill:6f1477d99813ca8d
+   show: aiwg show flow aiwg:flow:6f1477d99813ca8d
 
 Use `--format json` for machine-readable output. Use `aiwg show metadata <id>` for paths and full metadata.
 ```

@@ -70,7 +70,7 @@ The full list of user-side commands is short: `aiwg use`, `aiwg wizard`, `aiwg n
 
 The steward is a guide agent. You ask the steward what AIWG can do for your situation and which path to try first.
 
-Discover is the agent's capability search. When you describe a goal, the agent searches AIWG's installed capabilities for matching skills, agents, commands, and rules, inspects the best match, and recommends one. You do not need to learn the search syntax or memorize phrases — you say the goal in plain language, the agent does the lookup.
+Discover is the agent's capability search. When you describe a goal, the agent searches AIWG's installed operational assets for matching skills, agents, commands, rules, flows, templates, and behaviors, inspects the best match, and recommends one. You do not need to learn the search syntax or memorize phrases — you say the goal in plain language, the agent does the lookup.
 
 The pattern in chat:
 
