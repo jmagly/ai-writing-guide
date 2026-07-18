@@ -73,6 +73,8 @@
     "reference",
     "CLI_USAGE",
     "cli-reference",
+    "configuration/aiwg-config",
+    "security/repo-access-manifest",
     "fortemi-core-prebuilt-indices",
     "user-level-indices",
     "user-level-project-memory",
@@ -803,6 +805,20 @@
       "title": "Model Configuration",
       "summary": "Configure AI model settings",
       "file": "configuration/model-configuration.md",
+      "parent": "reference"
+    },
+    {
+      "id": "configuration/aiwg-config",
+      "title": "AIWG Project Config",
+      "summary": "Project and multi-repository workspace configuration reference",
+      "file": "configuration/aiwg-config.md",
+      "parent": "reference"
+    },
+    {
+      "id": "security/repo-access-manifest",
+      "title": "Workspace Repository Access",
+      "summary": "Deny-by-default multi-repository authorization and member policy resolution",
+      "file": "security/repo-access-manifest.md",
       "parent": "reference"
     },
     {
