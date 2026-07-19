@@ -16,12 +16,11 @@ function argValue(name, fallback = undefined) {
 function usage() {
   console.log(`Usage:
   node ci/provision-vault-approle.mjs --policy-file <private-policy.hcl> \\
-    [--addr "$VAULT_ADDR"] [--handoff ~/.config/vault/handoff/aiwg-ci.env] [--apply]
+    [--role ci-aiwg] [--addr "$VAULT_ADDR"] [--handoff ~/.config/vault/handoff/aiwg-ci.env] [--apply]
 
 Default mode is dry-run. Apply mode requires VAULT_ADMIN_TOKEN and writes:
-  - policy ci-aiwg from the private policy file
-  - AppRole auth/approle/role/ci-aiwg
-  - handoff env file containing VAULT_CI_ROLE_ID and VAULT_CI_SECRET_ID
+  - a policy and AppRole named by --role
+  - a handoff env file containing VAULT_ROLE_ID and VAULT_SECRET_ID
 
 The generated secret ID is written only to the handoff file, never stdout.
 `);
@@ -33,7 +32,11 @@ if (help) {
 }
 
 const addr = argValue('--addr', process.env.VAULT_ADDR || '').replace(/\/+$/, '');
-const role = 'ci-aiwg';
+const role = argValue('--role', 'ci-aiwg');
+if (!/^[a-z0-9][a-z0-9-]{1,62}$/.test(role)) {
+  console.error('--role must be a lowercase kebab-case identifier');
+  process.exit(2);
+}
 const policyFile = argValue('--policy-file');
 
 if (['1', 'true', 'yes'].includes(String(process.env.VAULT_SKIP_VERIFY ?? '').toLowerCase())) {
@@ -58,10 +61,14 @@ if (!policyFile || !existsSync(policyFile)) {
   process.exit(2);
 }
 
-const policy = readFileSync(policyFile, 'utf8');
+const policy = readFileSync(policyFile, 'utf8').replace(/\$\{([A-Z][A-Z0-9_]*)\}/g, (_match, name) => {
+  const value = process.env[name];
+  if (!value) throw new Error(`policy requires environment variable ${name}`);
+  return value;
+});
 
 if (!apply) {
-  console.log('Dry-run: would provision ci-aiwg vault AppRole from private policy file.');
+  console.log(`Dry-run: would provision ${role} vault AppRole from private policy file.`);
   console.log(`policy source: ${policyFile}`);
   console.log(`handoff file: ${handoff}`);
   console.log('\nRun again with --apply and VAULT_ADMIN_TOKEN set to execute.');
@@ -102,7 +109,10 @@ try {
       token_policies: role,
       token_ttl: '5m',
       token_max_ttl: '15m',
-      secret_id_ttl: '0',
+      // Preserve the established renewable CI bootstrap by default. Discrete
+      // roles should pass bounded values (the commit-signer docs do).
+      secret_id_ttl: argValue('--secret-id-ttl', role === 'ci-aiwg' ? '0' : '24h'),
+      secret_id_num_uses: Number(argValue('--secret-id-num-uses', role === 'ci-aiwg' ? '0' : '1')),
     }),
   });
 
@@ -116,7 +126,9 @@ try {
   }
 
   mkdirSync(path.dirname(handoff), { recursive: true, mode: 0o700 });
-  writeFileSync(handoff, `VAULT_CI_ROLE_ID=${roleIdValue}\nVAULT_CI_SECRET_ID=${secretIdValue}\n`, {
+  const roleIdName = role === 'ci-aiwg' ? 'VAULT_CI_ROLE_ID' : 'VAULT_ROLE_ID';
+  const secretIdName = role === 'ci-aiwg' ? 'VAULT_CI_SECRET_ID' : 'VAULT_SECRET_ID';
+  writeFileSync(handoff, `${roleIdName}=${roleIdValue}\n${secretIdName}=${secretIdValue}\n`, {
     mode: 0o600,
   });
   console.log(`vault AppRole ${role} provisioned. Handoff written to ${handoff}.`);

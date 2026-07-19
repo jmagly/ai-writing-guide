@@ -43,6 +43,14 @@ const { checkGitignore } = await importImpl(
   import.meta.url,
   'config/gitignore.js'
 );
+const { auditLegacyPermissions } = await importImpl(
+  import.meta.url,
+  'policy/authorization.js'
+);
+const { readAiwgConfig } = await importImpl(
+  import.meta.url,
+  'config/aiwg-config.js'
+);
 
 // AIWG_ROOT: env override > channel-manager resolved path > legacy edge path
 // getFrameworkRoot() resolves correctly for npm global installs, edge, and dev channels.
@@ -1491,6 +1499,30 @@ async function runDoctor() {
     }
   } catch {
     // Non-fatal — skip silently
+  }
+
+  // Permission normalization health (#1800). Errors fail closed in the
+  // evaluator; doctor makes legacy sources and remediation visible.
+  try {
+    const permissionProjectDir = process.cwd();
+    const permissionConfig = await readAiwgConfig(permissionProjectDir);
+    if (permissionConfig) {
+      const diagnostics = await auditLegacyPermissions(permissionProjectDir, permissionConfig);
+      if (!diagnostics.length) {
+        check('Permissions', 'ok', 'normalized authorization model valid');
+      } else {
+        const errors = diagnostics.filter(item => item.severity === 'error');
+        const legacy = diagnostics.filter(item => item.code.startsWith('legacy-'));
+        const status = errors.length ? 'error' : 'warn';
+        check(
+          'Permissions',
+          status,
+          `${errors.length} error(s), ${legacy.length} legacy source(s) — run "aiwg steward permissions audit"`,
+        );
+      }
+    }
+  } catch (err) {
+    check('Permissions', 'error', `authorization audit failed: ${err.message}`);
   }
 
   // 10b. Check deployed agent/skill frontmatter for unpinned model aliases (#1442).

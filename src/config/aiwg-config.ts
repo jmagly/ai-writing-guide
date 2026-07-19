@@ -20,6 +20,10 @@ import {
   resolveProviderPathValue,
 } from '../providers/provider-definitions.js';
 import type { Platform } from '../agents/types.js';
+import {
+  validateAuthorization,
+  type AuthorizationConfig,
+} from '../policy/authorization.js';
 
 const CONFIG_FILENAME = 'aiwg.config';
 const AIWG_DIR = '.aiwg';
@@ -291,6 +295,9 @@ export interface AiwgConfig {
    * Executed with `sh -c "<command>"` (or `cmd /c` on Windows).
    */
   scripts: Record<string, string>;
+
+  /** Provider-neutral, deny-by-default permissions, roles, and assignments. */
+  authorization?: AuthorizationConfig;
 
   /**
    * General multi-repository workspace metadata. Root manifests pair this
@@ -1347,6 +1354,13 @@ export async function readAiwgConfig(projectDir: string): Promise<AiwgConfig | n
   const workspaceErrors = validateWorkspaceConfig(parsed.workspace, parsed.repos);
   if (workspaceErrors.length > 0) {
     throw new Error(`Invalid .aiwg/aiwg.config:\n${workspaceErrors.join('\n')}`);
+  }
+
+  const authorizationErrors = parsed.authorization
+    ? validateAuthorization(parsed.authorization).filter(item => item.severity === 'error')
+    : [];
+  if (authorizationErrors.length > 0) {
+    throw new Error(`Invalid .aiwg/aiwg.config:\n${authorizationErrors.map(item => item.message).join('\n')}`);
   }
 
   return parsed;

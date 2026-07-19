@@ -25,7 +25,13 @@ import {
   type ProviderCapabilities,
   type FeatureKey,
 } from '../../providers/capability-matrix.js';
-import { getProjectDir } from '../../config/aiwg-config.js';
+import { getProjectDir, readAiwgConfig, writeAiwgConfig } from '../../config/aiwg-config.js';
+import {
+  auditLegacyPermissions,
+  archiveLegacyPermissionManifests,
+  backupConfig,
+  normalizeProjectPermissions,
+} from '../../policy/authorization.js';
 import { capabilityProviderId, normalizeProviderId, resolveActiveProvider } from '../provider-resolution.js';
 import {
   discoverProjectLocalBundles,
@@ -216,6 +222,9 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
     aiwg steward capabilities --feature <name>    Provider support matrix for a feature
     aiwg steward capabilities --all               Full matrix (all providers x features)
     aiwg steward find --capability <name>         Routing advice for your current provider
+    aiwg steward permissions audit                Find normalized-model errors and legacy grants
+    aiwg steward permissions migrate --dry-run    Preview legacy permission normalization
+    aiwg steward permissions migrate --apply      Back up and atomically normalize config
 
   Providers:
     claude-code, codex, copilot, cursor, factory, opencode, warp, windsurf, hermes, openclaw
@@ -225,6 +234,60 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
     (hyphens accepted: agent-teams → agent_teams)
 `);
     return;
+  }
+
+  if (subcommand === 'permissions') {
+    const operation = args[1];
+    const projectDir = ctx ? getProjectDir(ctx, args) : process.cwd();
+    const config = await readAiwgConfig(projectDir);
+    if (!config) throw new AiwgError({
+      code: 'ERR_CONFIG_NOT_FOUND',
+      message: `No .aiwg/aiwg.config found in ${projectDir}`,
+      exitCode: EXIT_CODES.CONFIG,
+    });
+    if (operation === 'audit') {
+      const diagnostics = await auditLegacyPermissions(projectDir, config);
+      if (!diagnostics.length) console.log('  ✓ Permission model is normalized and valid.');
+      for (const item of diagnostics) console.log(`  ${item.severity === 'error' ? '✗' : item.severity === 'warning' ? '⚠' : '·'} [${item.code}] ${item.message}${item.source ? ` (${item.source})` : ''}`);
+      if (diagnostics.some(item => item.severity === 'error')) throw new AiwgError({
+        code: 'ERR_AUTHORIZATION_INVALID',
+        message: 'Normalized permission model has errors.',
+        hint: 'Correct the reported references; authorization remains fail-closed.',
+        exitCode: EXIT_CODES.CONFIG,
+      });
+      return;
+    }
+    if (operation === 'migrate') {
+      const apply = args.includes('--apply');
+      const dryRun = args.includes('--dry-run');
+      if (apply === dryRun) throw new AiwgError({
+        code: 'ERR_USAGE_PERMISSION_MIGRATION_MODE',
+        message: 'Choose exactly one of --dry-run or --apply.',
+        exitCode: EXIT_CODES.USAGE,
+      });
+      const normalized = await normalizeProjectPermissions(projectDir, config);
+      if (normalized === config) {
+        console.log('  ✓ Permission model is already normalized; no changes needed.');
+        return;
+      }
+      const diagnostics = await auditLegacyPermissions(projectDir, config);
+      console.log(`  ${dryRun ? 'Would normalize' : 'Normalizing'} ${diagnostics.filter(d => d.code.startsWith('legacy-')).length} legacy permission source(s).`);
+      console.log(`  Result: ${Object.keys(normalized.authorization?.permissions ?? {}).length} permissions, ${Object.keys(normalized.authorization?.roles ?? {}).length} roles, ${normalized.authorization?.assignments.length ?? 0} assignments; default deny.`);
+      if (apply) {
+        const backup = await backupConfig(projectDir);
+        await writeAiwgConfig(projectDir, normalized);
+        const archived = await archiveLegacyPermissionManifests(projectDir);
+        console.log(`  ✓ Migration applied atomically. Backup: ${backup}`);
+        if (archived.length) console.log(`  ✓ Archived legacy manifests: ${archived.join(', ')}`);
+      }
+      return;
+    }
+    throw new AiwgError({
+      code: 'ERR_USAGE_UNKNOWN_PERMISSION_OPERATION',
+      message: `Unknown permissions operation: ${operation ?? '(missing)'}`,
+      hint: 'Use audit or migrate --dry-run|--apply.',
+      exitCode: EXIT_CODES.USAGE,
+    });
   }
 
   const matrix = loadCapabilityMatrix();
@@ -392,7 +455,7 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
 export const stewardHandler: CommandHandler = {
   id: 'steward',
   name: 'Steward',
-  description: 'Provider capability awareness and command routing (capabilities, find)',
+  description: 'Provider capability routing and permission normalization',
   category: 'maintenance',
   aliases: [],
 
