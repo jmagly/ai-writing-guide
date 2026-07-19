@@ -311,7 +311,15 @@ export function pruneLegacyCodexSkills(opts = {}, legacyDir = legacyHomeSkillsDi
   for (const ent of entries) {
     if (!ent.isDirectory()) continue;
     const skillDir = path.join(legacyDir, ent.name);
-    if (!fs.existsSync(path.join(skillDir, '.aiwg-managed'))) continue; // leave user skills alone
+    // `aiwg-mcp` was deployed before marker files existed and its malformed
+    // pre-fix SKILL.md is rejected by Codex before AIWG can self-heal. The
+    // exact retired name is safe to claim; all other unmarked skills remain
+    // user-owned.
+    const isKnownPreMarkerLegacySkill = ent.name === 'aiwg-mcp';
+    if (
+      !isKnownPreMarkerLegacySkill &&
+      !fs.existsSync(path.join(skillDir, '.aiwg-managed'))
+    ) continue; // leave user skills alone
     if (opts.dryRun) {
       console.log(`[dry-run] would prune legacy AIWG skill ${skillDir}`);
     } else {

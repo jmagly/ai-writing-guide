@@ -63,6 +63,18 @@ describe('pruneLegacyCodexSkills (#766 self-heal)', () => {
     expect(fs.existsSync(userOwned)).toBe(true); // user skill untouched
   });
 
+  it('removes the exact pre-marker aiwg-mcp legacy skill with malformed frontmatter', async () => {
+    const { pruneLegacyCodexSkills } = await importCodexProvider();
+    const malformedLegacy = makeSkill('aiwg-mcp', false);
+    const similarlyNamedUserSkill = makeSkill('aiwg-mcp-custom', false);
+
+    const pruned = pruneLegacyCodexSkills({ dryRun: false }, tmpDir);
+
+    expect(pruned).toBe(1);
+    expect(fs.existsSync(malformedLegacy)).toBe(false);
+    expect(fs.existsSync(similarlyNamedUserSkill)).toBe(true);
+  });
+
   it('dry-run reports but removes nothing', async () => {
     const { pruneLegacyCodexSkills } = await importCodexProvider();
     const managed = makeSkill('aiwg-doctor', true);

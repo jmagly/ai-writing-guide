@@ -42,6 +42,7 @@ import { getFrameworksForMode, normalizeDeploymentMode, skillMatchesProvider, is
 const CODEX_SKILLS_DIR = path.join(os.homedir(), '.codex', 'skills');
 const MAX_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
+const LEGACY_RENAMED_SKILLS = new Set(['aiwg-mcp']);
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -452,7 +453,10 @@ function getSkillDirectories(srcRoot, mode) {
       const name = entry.name;
       if (desiredNames.has(name)) continue;
 
-      let isAiwgManaged = allManagedNames.has(name);
+      // Known renamed AIWG skills may predate both the current source name and
+      // the .aiwg-managed marker. Treat only the exact historical names as
+      // managed so malformed legacy frontmatter cannot survive an upgrade.
+      let isAiwgManaged = allManagedNames.has(name) || LEGACY_RENAMED_SKILLS.has(name);
       if (!isAiwgManaged) {
         // Check for the .aiwg-managed marker file (preferred — survives
         // frontmatter transforms) or fall back to namespace check.

@@ -251,6 +251,46 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Codex Integration', () => {
       expect(skillMd).toMatch(/\n---\n/);
     });
 
+    it('replaces the malformed pre-fix aiwg-mcp deployment with aiwg-mcp-server', async () => {
+      const skillsDir = path.join(TEST_CODEX_DIR, 'skills');
+      const legacyDir = path.join(skillsDir, 'aiwg-mcp');
+      await fs.mkdir(legacyDir, { recursive: true });
+      await fs.writeFile(
+        path.join(legacyDir, 'SKILL.md'),
+        '---\nnamespace: aiwg\nname: aiwg-mcp\nplatforms: [all]\n\n---\n\n# AIWG MCP Server\n'
+      );
+
+      const output = runScript('tools/skills/deploy-skills-codex.mjs', [
+        '--target', skillsDir
+      ]);
+
+      await expect(fs.access(legacyDir)).rejects.toThrow();
+      const canonical = await fs.readFile(
+        path.join(skillsDir, 'aiwg-mcp-server', 'SKILL.md'),
+        'utf-8'
+      );
+      expect(canonical).toMatch(/name: "aiwg-mcp-server"/);
+      expect(canonical).toMatch(/description: ".+"/);
+      expect(output).toContain('1 pruned');
+    });
+
+    it('ships only described aiwg-mcp-server skills in source and plugin inventories', async () => {
+      const inventories = [
+        path.join(REPO_ROOT, 'agentic/code/addons/aiwg-utils/skills'),
+        path.join(REPO_ROOT, 'agentic/code/plugins/utils/skills')
+      ];
+
+      for (const inventory of inventories) {
+        await expect(fs.access(path.join(inventory, 'aiwg-mcp'))).rejects.toThrow();
+        const canonical = await fs.readFile(
+          path.join(inventory, 'aiwg-mcp-server', 'SKILL.md'),
+          'utf-8'
+        );
+        expect(canonical).toMatch(/^---\n[\s\S]*^name:\s+aiwg-mcp-server\s*$/m);
+        expect(canonical).toMatch(/^description:\s+\S.+$/m);
+      }
+    });
+
     it('truncates description to 500 chars', async () => {
       runScript('tools/skills/deploy-skills-codex.mjs', [
         '--target', path.join(TEST_CODEX_DIR, 'skills')
