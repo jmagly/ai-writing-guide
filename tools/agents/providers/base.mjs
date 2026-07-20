@@ -288,6 +288,7 @@ export function loadModelConfig(srcRoot) {
  * `aiwg models refresh`; deployment itself never performs network access.
  */
 export function loadRuntimeModelCatalog(staticCatalog, options = {}) {
+  if (process.env.VITEST && !options.cacheFile && !options.homeDir) return staticCatalog;
   const homeDir = options.homeDir || os.homedir();
   const cacheFile = options.cacheFile || path.join(homeDir, '.cache', 'aiwg', 'model-catalog.v1.json');
   const ttlMs = options.ttlMs ?? 24 * 60 * 60 * 1000;

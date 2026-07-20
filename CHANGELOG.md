@@ -9,6 +9,14 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Additional native model discovery decisions** (#1815) — OpenCode and
+  OpenClaw now join Codex with documented non-interactive discovery adapters,
+  runtime provenance, normalized results, and classified failure handling.
+  Every provider has an executable implemented-or-unsupported decision.
+- **Public model-feed decision record** (#1816) — AIWG will not operate a
+  hosted/nightly catalog until authoritative entitlement-neutral sources and
+  publication safety gates exist; remote feeds remain explicit operator
+  configuration and never become a deployment dependency.
 - **Provider inventory and dynamic model sources** (#1812, #1813) —
   `aiwg runtime-info --providers` distinguishes configured, deployed,
   detected, available, and active providers with scoped evidence.

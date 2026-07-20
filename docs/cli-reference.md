@@ -3596,7 +3596,7 @@ being silently advertised as launchable.
 aiwg models sources --json
 aiwg models refresh --json
 aiwg models refresh --drift --json
-aiwg models refresh --url https://docs.aiwg.io/data/model-catalog.v1.json --json
+aiwg models refresh --url https://catalog.example/model-catalog.v1.json --json
 ```
 
 `models sources` is offline: it reads a fresh user cache when present and
@@ -3617,6 +3617,11 @@ optional, not a runtime dependency. Account-specific native results are marked
 `local-account` and are never represented as globally available.
 `--drift` compares resolved role mappings with the committed catalog and emits
 a reviewable, non-mutating provider/role before-and-after report.
+
+AIWG does not currently operate a built-in public feed. See
+[the feed decision record](architecture/adr-optional-model-catalog-feed.md)
+and the
+[provider discovery matrix](models/model-discovery-provider-decisions.md).
 
 **Errors:**
 

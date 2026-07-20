@@ -2,10 +2,98 @@ import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { homedir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import type { ProviderInventory } from '../providers/provider-inventory.js';
 
 export type ModelCatalogSource = 'native' | 'remote' | 'cache' | 'static';
+
+export interface ProviderDiscoveryDecision {
+  provider: string;
+  status: 'native' | 'unsupported';
+  interface: string | null;
+  reason: string;
+  documentation: string;
+}
+
+export const PROVIDER_DISCOVERY_DECISIONS: Record<string, ProviderDiscoveryDecision> = {
+  claude: {
+    provider: 'claude',
+    status: 'unsupported',
+    interface: null,
+    reason: 'Claude Code documents model selection but no non-interactive model-list command; API enumeration would require separate credentials and would not prove Claude Code subscription entitlement.',
+    documentation: 'https://docs.anthropic.com/en/docs/claude-code/cli-usage',
+  },
+  codex: {
+    provider: 'codex',
+    status: 'native',
+    interface: 'codex app-server model/list',
+    reason: 'The app-server JSON-RPC model/list method returns models available to the current Codex account without running a model turn.',
+    documentation: 'https://developers.openai.com/codex/app-server/',
+  },
+  copilot: {
+    provider: 'copilot',
+    status: 'unsupported',
+    interface: null,
+    reason: 'Copilot CLI documents model strings in help and interactive /models, but no machine-readable account model-list command.',
+    documentation: 'https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-programmatic-reference',
+  },
+  cursor: {
+    provider: 'cursor',
+    status: 'unsupported',
+    interface: null,
+    reason: 'Cursor CLI exposes editor and agent launch controls but no documented machine-readable model enumeration surface.',
+    documentation: 'https://docs.cursor.com/en/cli/reference/parameters',
+  },
+  factory: {
+    provider: 'factory',
+    status: 'unsupported',
+    interface: null,
+    reason: 'Droid exposes model selection through policy and interactive surfaces, but no documented non-interactive model-list command.',
+    documentation: 'https://docs.factory.ai/cli/configuration/models',
+  },
+  hermes: {
+    provider: 'hermes',
+    status: 'unsupported',
+    interface: null,
+    reason: 'hermes model is interactive; the optional API server /v1/models endpoint requires a separately running service and represents that service rather than local CLI entitlement.',
+    documentation: 'https://hermes-agent.nousresearch.com/docs/reference/cli-commands',
+  },
+  opencode: {
+    provider: 'opencode',
+    status: 'native',
+    interface: 'opencode models --pure',
+    reason: 'The documented non-interactive models command lists normalized provider/model identifiers from configured providers.',
+    documentation: 'https://opencode.ai/docs/cli/#models',
+  },
+  openclaw: {
+    provider: 'openclaw',
+    status: 'native',
+    interface: 'openclaw models list --json',
+    reason: 'The documented read-only JSON command reports configured catalog rows without probing provider APIs or consuming model tokens.',
+    documentation: 'https://docs.openclaw.ai/cli/models#list',
+  },
+  openhuman: {
+    provider: 'openhuman',
+    status: 'unsupported',
+    interface: null,
+    reason: 'OpenHuman profiles accept semantic model hints but expose no standardized local model-list command.',
+    documentation: 'https://github.com/roctinam/openhuman',
+  },
+  warp: {
+    provider: 'warp',
+    status: 'unsupported',
+    interface: null,
+    reason: 'Warp model choice is profile-managed and no documented CLI command enumerates account-available models.',
+    documentation: 'https://docs.warp.dev/agent-platform/agent/using-agents',
+  },
+  windsurf: {
+    provider: 'windsurf',
+    status: 'unsupported',
+    interface: null,
+    reason: 'The Windsurf/Devin desktop CLI exposes editor controls but no documented machine-readable model-list command.',
+    documentation: 'https://docs.windsurf.com/windsurf/getting-started',
+  },
+};
 
 export interface DiscoveredModel {
   id: string;
@@ -20,10 +108,23 @@ export interface ProviderModelDiscovery {
   source: ModelCatalogSource;
   observedAt: string;
   runtimeVersion?: string;
-  accountScope: 'local-account' | 'public-feed' | 'static';
+  accountScope: 'local-account' | 'local-runtime' | 'public-feed' | 'static';
   models: DiscoveredModel[];
+  errorKind?: 'authentication' | 'rate-limit' | 'timeout' | 'unsupported' | 'invalid-output' | 'command';
   error?: string;
 }
+
+export interface CommandResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
+
+export type ModelDiscoveryCommandRunner = (
+  command: string,
+  args: string[],
+  options?: { cwd?: string; timeoutMs?: number },
+) => Promise<CommandResult>;
 
 export interface DynamicModelCatalog {
   version: string;
@@ -68,6 +169,156 @@ export interface ModelCatalogDrift {
 }
 
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
+
+export function classifyDiscoveryError(
+  message: string,
+): ProviderModelDiscovery['errorKind'] {
+  if (/(?:401|403|unauth|forbidden|credential|login|required auth)/i.test(message)) {
+    return 'authentication';
+  }
+  if (/(?:429|rate.?limit|too many requests|quota)/i.test(message)) return 'rate-limit';
+  if (/(?:timed? out|timeout)/i.test(message)) return 'timeout';
+  return 'command';
+}
+
+export const runModelDiscoveryCommand: ModelDiscoveryCommandRunner = (
+  command,
+  args,
+  options = {},
+) => new Promise(resolveCommand => {
+  const child = spawn(command, args, {
+    cwd: options.cwd,
+    env: process.env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let stdout = '';
+  let stderr = '';
+  let settled = false;
+  const finish = (exitCode: number) => {
+    if (settled) return;
+    settled = true;
+    clearTimeout(timer);
+    resolveCommand({ stdout, stderr, exitCode });
+  };
+  child.stdout.on('data', chunk => { stdout += String(chunk); });
+  child.stderr.on('data', chunk => { stderr += String(chunk); });
+  child.on('error', error => {
+    stderr = `${stderr}${stderr ? '\n' : ''}${error.message}`;
+    finish(127);
+  });
+  child.on('close', code => finish(code ?? 1));
+  const timer = setTimeout(() => {
+    stderr = `${stderr}${stderr ? '\n' : ''}${command} timed out`;
+    child.kill();
+    finish(124);
+  }, options.timeoutMs ?? 10_000);
+});
+
+async function runtimeVersion(
+  command: string,
+  runner: ModelDiscoveryCommandRunner,
+): Promise<string | undefined> {
+  const result = await runner(command, ['--version'], { timeoutMs: 5_000 });
+  return result.exitCode === 0 ? result.stdout.trim().split(/\r?\n/, 1)[0] || undefined : undefined;
+}
+
+export async function discoverOpenCodeModels(
+  command = 'opencode',
+  runner: ModelDiscoveryCommandRunner = runModelDiscoveryCommand,
+): Promise<ProviderModelDiscovery> {
+  const observedAt = new Date().toISOString();
+  const [version, result] = await Promise.all([
+    runtimeVersion(command, runner),
+    runner(command, ['models', '--pure'], { cwd: tmpdir(), timeoutMs: 15_000 }),
+  ]);
+  if (result.exitCode !== 0) {
+    const error = result.stderr.trim() || `OpenCode models exited ${result.exitCode}`;
+    return {
+      provider: 'opencode',
+      source: 'native',
+      observedAt,
+      ...(version ? { runtimeVersion: version } : {}),
+      accountScope: 'local-runtime',
+      models: [],
+      errorKind: classifyDiscoveryError(error),
+      error,
+    };
+  }
+  const models = [...new Set(result.stdout.split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => /^[a-z0-9][a-z0-9._-]*\/\S+$/i.test(line)))]
+    .map(id => ({ id }));
+  return {
+    provider: 'opencode',
+    source: 'native',
+    observedAt,
+    ...(version ? { runtimeVersion: version } : {}),
+    accountScope: 'local-runtime',
+    models,
+    ...(models.length === 0
+      ? { errorKind: 'invalid-output' as const, error: 'OpenCode returned no normalized provider/model rows.' }
+      : {}),
+  };
+}
+
+export async function discoverOpenClawModels(
+  command = 'openclaw',
+  runner: ModelDiscoveryCommandRunner = runModelDiscoveryCommand,
+): Promise<ProviderModelDiscovery> {
+  const observedAt = new Date().toISOString();
+  const [version, result] = await Promise.all([
+    runtimeVersion(command, runner),
+    runner(command, ['models', 'list', '--json'], { timeoutMs: 15_000 }),
+  ]);
+  if (result.exitCode !== 0) {
+    const error = result.stderr.trim() || `OpenClaw models list exited ${result.exitCode}`;
+    return {
+      provider: 'openclaw',
+      source: 'native',
+      observedAt,
+      ...(version ? { runtimeVersion: version } : {}),
+      accountScope: 'local-runtime',
+      models: [],
+      errorKind: classifyDiscoveryError(error),
+      error,
+    };
+  }
+  try {
+    const payload = JSON.parse(result.stdout) as {
+      models?: Array<{ key?: unknown; name?: unknown; tags?: unknown; available?: unknown }>;
+    };
+    const models = (payload.models ?? []).flatMap(model =>
+      typeof model.key === 'string' && model.key.includes('/') && model.available !== false
+        ? [{
+          id: model.key,
+          ...(typeof model.name === 'string' ? { displayName: model.name } : {}),
+          isDefault: Array.isArray(model.tags) && model.tags.includes('default'),
+        }]
+        : []);
+    return {
+      provider: 'openclaw',
+      source: 'native',
+      observedAt,
+      ...(version ? { runtimeVersion: version } : {}),
+      accountScope: 'local-runtime',
+      models,
+      ...(models.length === 0
+        ? { errorKind: 'invalid-output' as const, error: 'OpenClaw returned no normalized model keys.' }
+        : {}),
+    };
+  } catch (error) {
+    return {
+      provider: 'openclaw',
+      source: 'native',
+      observedAt,
+      ...(version ? { runtimeVersion: version } : {}),
+      accountScope: 'local-runtime',
+      models: [],
+      errorKind: 'invalid-output',
+      error: `Invalid OpenClaw model JSON: ${(error as Error).message}`,
+    };
+  }
+}
 
 async function atomicWrite(file: string, content: string): Promise<void> {
   await mkdir(dirname(file), { recursive: true });
@@ -121,12 +372,17 @@ export function selectRoleModels(models: DiscoveredModel[]): {
 } {
   const visible = models.filter(model => !model.hidden);
   if (visible.length === 0) return {};
-  const coding = visible.find(model => model.isDefault) ?? visible[0];
+  const coding = visible.find(model => model.isDefault)
+    ?? visible.find(model => /(?:codex|code|sonnet|gpt)/i.test(model.id))
+    ?? visible[0];
   const efficiency = visible.find(model => /(?:mini|spark|haiku|light|flash)/i.test(model.id))
     ?? [...visible].sort(
       (a, b) => (a.reasoningEfforts?.length ?? 0) - (b.reasoningEfforts?.length ?? 0),
     )[0];
-  const reasoning = [...visible].sort((a, b) => {
+  const reasoningCandidates = visible.filter(model =>
+    /(?:opus|reason|ultra|max|pro(?:[-_/]|$))/i.test(model.id)
+  );
+  const reasoning = [...(reasoningCandidates.length > 0 ? reasoningCandidates : visible)].sort((a, b) => {
     const effortDelta = (b.reasoningEfforts?.length ?? 0) - (a.reasoningEfforts?.length ?? 0);
     if (effortDelta !== 0) return effortDelta;
     return Number(Boolean(b.isDefault)) - Number(Boolean(a.isDefault));
@@ -159,8 +415,10 @@ export function diffModelCatalog(
 export async function discoverCodexModels(
   command = 'codex',
   timeoutMs = 10_000,
+  runner: ModelDiscoveryCommandRunner = runModelDiscoveryCommand,
 ): Promise<ProviderModelDiscovery> {
   const observedAt = new Date().toISOString();
+  const version = await runtimeVersion(command, runner);
   return new Promise((resolveDiscovery) => {
     const child = spawn(command, ['app-server', '--stdio'], {
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -169,6 +427,7 @@ export async function discoverCodexModels(
     const lines = createInterface({ input: child.stdout });
     let settled = false;
     let stderr = '';
+    let detectedRuntimeVersion = version;
     let timer: NodeJS.Timeout;
     const finish = (result: ProviderModelDiscovery) => {
       if (settled) return;
@@ -185,12 +444,16 @@ export async function discoverCodexModels(
       observedAt,
       accountScope: 'local-account',
       models: [],
+      errorKind: classifyDiscoveryError(error.message),
       error: error.message,
     }));
     lines.on('line', line => {
       let message: any;
       try { message = JSON.parse(line); } catch { return; }
       if (message.id === 1 && message.result) {
+        detectedRuntimeVersion = typeof message.result.serverInfo?.version === 'string'
+          ? message.result.serverInfo.version
+          : detectedRuntimeVersion;
         child.stdin.write(`${JSON.stringify({
           jsonrpc: '2.0',
           method: 'initialized',
@@ -221,6 +484,7 @@ export async function discoverCodexModels(
           provider: 'codex',
           source: 'native',
           observedAt,
+          ...(detectedRuntimeVersion ? { runtimeVersion: detectedRuntimeVersion } : {}),
           accountScope: 'local-account',
           models,
           ...(message.error ? { error: JSON.stringify(message.error) } : {}),
@@ -242,6 +506,7 @@ export async function discoverCodexModels(
       observedAt,
       accountScope: 'local-account',
       models: [],
+      errorKind: 'timeout',
       error: `Codex app-server model/list timed out${stderr ? `: ${stderr.trim()}` : ''}`,
     }), timeoutMs);
   });
@@ -257,7 +522,8 @@ export async function resolveDynamicModelCatalog(
   const signature = inventorySignature(options.inventory);
   const staticCatalog = await readCatalog(staticFile);
   if (!staticCatalog) throw new Error(`Invalid or missing static model catalog: ${staticFile}`);
-  const cached = await readCatalog(cacheFile);
+  const useCache = !process.env.VITEST || options.cacheFile !== undefined || options.homeDir !== undefined;
+  const cached = useCache ? await readCatalog(cacheFile) : null;
   if (
     !options.forceRefresh
     && cached
@@ -315,6 +581,8 @@ export async function resolveDynamicModelCatalog(
   );
   const nativeDiscoverers = options.nativeDiscoverers ?? {
     codex: () => discoverCodexModels(),
+    opencode: () => discoverOpenCodeModels(),
+    openclaw: () => discoverOpenClawModels(),
   };
   const providerDiscovery: Record<string, ProviderModelDiscovery> = {};
   for (const provider of available) {
@@ -343,17 +611,21 @@ export async function resolveDynamicModelCatalog(
           observedAt: now.toISOString(),
           accountScope: 'local-account',
           models: [],
+          errorKind: classifyDiscoveryError((error as Error).message),
           error: (error as Error).message,
         };
       }
     } else {
+      const decision = PROVIDER_DISCOVERY_DECISIONS[provider];
       providerDiscovery[provider] = {
         provider,
         source,
         observedAt: now.toISOString(),
         accountScope: source === 'remote' ? 'public-feed' : 'static',
         models: Object.values(catalog.providers[provider]?.roles ?? {}).map(role => ({ id: role.id })),
-        error: 'Provider exposes no supported machine-readable local model enumeration interface.',
+        errorKind: 'unsupported',
+        error: decision?.reason
+          ?? 'Provider exposes no supported machine-readable local model enumeration interface.',
       };
     }
   }
