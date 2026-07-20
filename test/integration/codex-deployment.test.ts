@@ -356,6 +356,25 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Codex Integration', () => {
         }
       }
     });
+
+    it('preserves skill model intent as explicit unsupported policy, not a native pin', async () => {
+      runScript('tools/agents/deploy-agents.mjs', [
+        '--provider', 'codex',
+        '--mode', 'sdlc',
+        '--deploy-skills',
+        '--target', TEST_PROJECT_DIR,
+      ]);
+      const content = await fs.readFile(
+        path.join(TEST_PROJECT_DIR, '.agents', 'skills', 'flow-deploy-to-production', 'SKILL.md'),
+        'utf8',
+      );
+      expect(content).toContain(
+        '<!-- aiwg:model-policy role=reasoning tier=premium outcome=unsupported -->',
+      );
+      const frontmatter = content.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
+      expect(frontmatter).not.toMatch(/^model:/m);
+      expect(frontmatter).not.toMatch(/^effort:/m);
+    });
   });
 
   describe('MCP Configuration', () => {

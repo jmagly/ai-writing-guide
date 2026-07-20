@@ -118,6 +118,35 @@ its per-agent result is `unsupported`.
 surface separately. It does not describe skills as pinned when the provider
 cannot enforce skill-local model selection.
 
+## Model management CLI
+
+Use the typed `aiwg models` command family to inspect effective policy before
+changing canonical files:
+
+```bash
+aiwg models audit --provider codex --json
+aiwg models resolve --skill address-issues --provider claude
+aiwg models set --agent test-engineer --tier economy --dry-run --json
+aiwg models set --glob '*-reviewer' --tier standard
+aiwg models set-default economy --scope project
+aiwg models validate
+aiwg models migrate --all --dry-run
+```
+
+Selectors support exact agents/skills, globs, role, current tier, framework,
+provider compilation, and `--all`. Project configuration resolves under
+`--target/models.json`; user defaults resolve under
+`~/.config/aiwg/models.json`. Writes use
+same-directory temporary files and atomic rename, preserve unrelated JSON or
+frontmatter content, and validate the full requested change set before writing.
+
+Skill policy lives under `commandHint` as `modelRole`, `modelTier`, and optional
+`modelEffort`. During migration, legacy `commandHint.model` remains readable:
+`opus` maps to reasoning/premium, `sonnet` to coding/standard, and `haiku` to
+efficiency/economy. Claude deployment compiles requested skill intent to its
+native turn-scoped fields. Other providers retain canonical intent but only
+report the capability outcome; they do not receive a fabricated native pin.
+
 ### Reasoning (opus)
 **Use for:** Complex analysis, critical decisions, strategic planning
 

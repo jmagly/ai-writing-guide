@@ -92,6 +92,25 @@ function yamlDoubleQuoted(value) {
     .trim();
 }
 
+function resolveSkillModelPolicy(frontmatter) {
+  const block = frontmatter.match(/^commandHint:\s*\n((?:[ \t]+[^\n]*\n?)*)/m)?.[1] || '';
+  const hint = {};
+  for (const line of block.split('\n')) {
+    const match = line.trim().match(/^(model|modelRole|modelTier|modelEffort):\s*(.+)$/);
+    if (match) hint[match[1]] = stripWrappingQuotes(match[2]);
+  }
+  const legacy = String(hint.model || '').toLowerCase();
+  const role = hint.modelRole || (legacy === 'opus' ? 'reasoning'
+    : legacy === 'haiku' ? 'efficiency' : legacy ? 'coding' : null);
+  if (!role) return null;
+  return {
+    role,
+    tier: hint.modelTier || (role === 'reasoning' ? 'premium'
+      : role === 'efficiency' ? 'economy' : 'standard'),
+    effort: hint.modelEffort,
+  };
+}
+
 /**
  * Find skill directories containing SKILL.md
  */
@@ -133,7 +152,7 @@ function parseSkillContent(content, skillName) {
       }
     }
 
-    return { metadata, body };
+    return { metadata, body, modelPolicy: resolveSkillModelPolicy(frontmatter) };
   }
 
   // Fallback: Parse non-frontmatter format (# skill-name header)
@@ -212,7 +231,7 @@ function transformToCodexSkill(skillDir) {
     return null;
   }
 
-  const { metadata, body } = parsed;
+  const { metadata, body, modelPolicy } = parsed;
 
   // Validate and truncate
   const name = (metadata.name || path.basename(skillDir)).slice(0, MAX_NAME_LENGTH);
@@ -260,14 +279,17 @@ description: "${quotedDescription}"
 platforms: [codex]
 ---
 
-${body.trim()}
+${modelPolicy
+    ? `<!-- aiwg:model-policy role=${modelPolicy.role} tier=${modelPolicy.tier}${modelPolicy.effort ? ` effort=${modelPolicy.effort}` : ''} outcome=unsupported -->\n\n`
+    : ''}${body.trim()}
 `;
 
   return {
     name,
     description,
     content: codexContent,
-    sourcePath: skillPath
+    sourcePath: skillPath,
+    modelPolicy,
   };
 }
 
@@ -290,6 +312,11 @@ function deploySkill(skill, targetDir, opts) {
 
   if (dryRun) {
     console.log(`  [dry-run] deploy: ${skill.name}`);
+    if (skill.modelPolicy) {
+      console.log(
+        `    model policy: unsupported (${skill.modelPolicy.role}/${skill.modelPolicy.tier}); no native field emitted`
+      );
+    }
     return { action: 'deploy', reason: 'dry-run' };
   }
 

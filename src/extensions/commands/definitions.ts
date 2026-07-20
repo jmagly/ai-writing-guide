@@ -253,6 +253,25 @@ export const useCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const modelsCommand: Extension = {
+  id: 'models',
+  type: 'command',
+  name: 'Models',
+  description: 'Audit, resolve, validate, migrate, and safely update model policy',
+  version: '1.0.0',
+  capabilities: ['cli', 'models', 'audit', 'configuration'],
+  keywords: ['models', 'model policy', 'tier', 'audit', 'resolve', 'migrate'],
+  category: 'catalog',
+  platforms: { generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '<audit|list|resolve|set-default|set|validate|migrate> [options]',
+    allowedTools: ['Read', 'Write', 'Glob'],
+  } satisfies CommandMetadata,
+};
+
 export const cockpitCommand: Extension = {
   id: 'cockpit',
   type: 'command',
@@ -3364,6 +3383,7 @@ export const commandDefinitions: Extension[] = [
 
   // Framework (6)
   useCommand,
+  modelsCommand,
   cockpitCommand,
   listCommand,
   removeCommand,

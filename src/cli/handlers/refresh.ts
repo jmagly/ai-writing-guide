@@ -131,6 +131,22 @@ function hasFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
 }
 
+const MODEL_DEPLOY_VALUE_FLAGS = new Set([
+  '--model', '--reasoning-model', '--coding-model', '--efficiency-model',
+  '--filter', '--filter-role', '--model-tier',
+]);
+const MODEL_DEPLOY_BOOLEAN_FLAGS = new Set(['--save', '--save-user']);
+export function collectModelDeployArgs(args: string[]): string[] {
+  const forwarded: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    if (MODEL_DEPLOY_BOOLEAN_FLAGS.has(args[i])) forwarded.push(args[i]);
+    else if (MODEL_DEPLOY_VALUE_FLAGS.has(args[i]) && args[i + 1]) {
+      forwarded.push(args[i], args[++i]);
+    }
+  }
+  return forwarded;
+}
+
 /**
  * Refresh command handler (formerly sync)
  */
@@ -149,6 +165,7 @@ export const refreshHandler: CommandHandler = {
     const provider = parseFlag(ctx.args, '--provider');
     const channel = parseFlag(ctx.args, '--channel');
     const frameworksArg = parseFlag(ctx.args, '--frameworks');
+    const modelDeployArgs = collectModelDeployArgs(ctx.args);
 
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);
@@ -227,7 +244,7 @@ export const refreshHandler: CommandHandler = {
     if (!dryRun) {
       const deployTarget = frameworks || ['all'];
       for (const fw of deployTarget) {
-        const providerArgs = ['--provider', detectedProvider];
+        const providerArgs = ['--provider', detectedProvider, ...modelDeployArgs];
         const useResult = await runner.run(
           'tools/cli/deploy.mjs',
           [fw, ...providerArgs],

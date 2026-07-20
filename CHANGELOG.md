@@ -9,6 +9,14 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Safe model-management command family** (#1804) — `aiwg models` now supports
+  audit, list, resolve, set-default, selected/bulk set, validate, and legacy
+  migration operations with typed selectors, JSON/dry-run output, atomic
+  writes, provider compilation results, and target-relative project config.
+- **Provider-neutral skill model policy** (#1803) — skill `commandHint` now
+  carries role/tier/effort intent through both command-generation paths,
+  deterministically migrates legacy hints, compiles requested Claude skill
+  controls natively, and reports degraded targets without pretend fields.
 - **Provider model capability registry and schemas** (#1802, #1805) — a dated
   11-provider registry now records agent, skill, and global child controls,
   identifier syntax, inheritance, fallback, configuration targets, and

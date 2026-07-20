@@ -4,7 +4,7 @@
   "title": "AIWG model configuration compatibility input",
   "description": "Accepted project/user inputs during migration from legacy model aliases and max-quality.",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "properties": {
     "defaults": {
       "type": "object",

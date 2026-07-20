@@ -127,6 +127,7 @@ import { issueHandler, issueAuditHandler } from './issues.js';
 import { cockpitHandler } from './cockpit.js';
 import { commandLogHandler } from './command-log.js';
 import { skillUsageHandler } from './skill-usage.js';
+import { modelsHandler } from './models.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -168,6 +169,7 @@ export {
   // Subcommands
   mcpHandler,
   catalogHandler,
+  modelsHandler,
   indexHandler,
   corpusHandler,
   discoverHandler,
@@ -326,6 +328,7 @@ export const allHandlers: CommandHandler[] = [
   // Subcommand handlers (MCP, catalog, index, skills)
   mcpHandler,
   catalogHandler,
+  modelsHandler,
   indexHandler,
   corpusHandler,
   discoverHandler,

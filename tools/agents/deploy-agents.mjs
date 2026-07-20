@@ -25,6 +25,7 @@
  *   --reasoning-model <name> Override model for reasoning tasks
  *   --coding-model <name>    Override model for coding tasks
  *   --efficiency-model <name> Override model for efficiency tasks
+ *   --model-tier <tier>      Override all artifacts with economy|standard|premium
  *   --as-agents-md               Aggregate to single AGENTS.md (OpenAI/Codex)
  *   --create-agents-md           Create/update AGENTS.md template
  *   --skip-commands-migration    Skip deleting the commands directory (warns about duplicate TUI entries) (Factory/Codex/OpenCode/Cursor)
@@ -60,6 +61,7 @@
 import realFs from 'fs';
 import { createRequire } from 'module';
 const _require = createRequire(import.meta.url);
+const modelCatalog = _require('../../agentic/code/providers/model-catalog.v1.json');
 let fs;
 try { const gfs = _require('graceful-fs'); gfs.gracefulify(realFs); fs = realFs; } catch { fs = realFs; }
 import path from 'path';
@@ -221,14 +223,48 @@ function commandFileExtensionForProvider(provider) {
   return '.md';
 }
 
+function resolveSkillCommandPolicy(commandHint = {}) {
+  const legacy = String(commandHint.model || '').trim().toLowerCase();
+  const legacyRole = legacy === 'opus' ? 'reasoning'
+    : legacy === 'haiku' ? 'efficiency'
+      : legacy ? 'coding' : null;
+  const modelRole = commandHint.modelRole || legacyRole;
+  if (!modelRole) return null;
+  const modelTier = commandHint.modelTier
+    || (modelRole === 'reasoning' ? 'premium'
+      : modelRole === 'efficiency' ? 'economy' : 'standard');
+  return {
+    modelRole,
+    modelTier,
+    modelEffort: commandHint.modelEffort,
+  };
+}
+
+function parseSkillCommandHint(raw) {
+  const { frontmatter } = parseFrontmatter(raw);
+  const block = frontmatter?.match(/^commandHint:\s*\n((?:[ \t]+[^\n]*\n?)*)/m)?.[1] || '';
+  const hint = {};
+  for (const line of block.split('\n')) {
+    const match = line.trim().match(/^(model|modelRole|modelTier|modelEffort):\s*(.+)$/);
+    if (match) hint[match[1]] = match[2].trim().replace(/^['"]|['"]$/g, '');
+  }
+  return hint;
+}
+
 function skillToCommandContent(skillDir) {
   const skillName = path.basename(skillDir);
   const skillPath = path.join(skillDir, 'SKILL.md');
   const raw = fs.readFileSync(skillPath, 'utf8');
   const { metadata, body } = parseFrontmatter(raw);
   const description = metadata.description || `Run AIWG skill ${skillName}`;
+  const policy = resolveSkillCommandPolicy(parseSkillCommandHint(raw));
+  const policyLines = policy ? [
+    `aiwg-model-role: ${policy.modelRole}`,
+    `aiwg-model-tier: ${policy.modelTier}`,
+    ...(policy.modelEffort ? [`aiwg-model-effort: ${policy.modelEffort}`] : []),
+  ] : [];
 
-  return `---\nname: ${skillName}\ndescription: ${description}\n---\n\n${body.trim()}\n`;
+  return `---\nname: ${skillName}\ndescription: ${description}\n${policyLines.join('\n')}${policyLines.length ? '\n' : ''}---\n\n${body.trim()}\n`;
 }
 
 function mirrorSkillsAsCommands(provider, target, srcRoot, opts) {
@@ -256,6 +292,13 @@ function mirrorSkillsAsCommands(provider, target, srcRoot, opts) {
     const dest = path.join(targetDir, `${skillName}${ext}`);
     if (opts.dryRun) {
       if (opts.verbose) console.log(`[dry-run] mirror skill command ${skillName} -> ${dest}`);
+      const raw = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf8');
+      const policy = resolveSkillCommandPolicy(parseSkillCommandHint(raw));
+      if (policy && opts.verbose) {
+        const outcome = provider.name === 'claude' ? 'native'
+          : provider.name === 'factory' ? 'informational' : 'unsupported';
+        console.log(`[dry-run] skill model policy ${skillName}: ${outcome} (${policy.modelRole}/${policy.modelTier})`);
+      }
     } else {
       fs.writeFileSync(dest, content, 'utf8');
     }
@@ -344,6 +387,7 @@ function parseArgs() {
     force: false,
     provider: 'claude',
     model: null,             // Blanket override for all tiers
+    modelTier: null,         // Blanket canonical tier override
     reasoningModel: null,
     codingModel: null,
     efficiencyModel: null,
@@ -375,6 +419,7 @@ function parseArgs() {
     else if (a === '--force') cfg.force = true;
     else if ((a === '--provider' || a === '--platform') && args[i + 1]) cfg.provider = String(args[++i]).toLowerCase();
     else if (a === '--model' && args[i + 1]) cfg.model = args[++i];
+    else if (a === '--model-tier' && args[i + 1]) cfg.modelTier = String(args[++i]).toLowerCase();
     else if ((a === '--reasoning-model' || a === '--reasoning') && args[i + 1]) cfg.reasoningModel = args[++i];
     else if ((a === '--coding-model' || a === '--coding') && args[i + 1]) cfg.codingModel = args[++i];
     else if ((a === '--efficiency-model' || a === '--efficiency') && args[i + 1]) cfg.efficiencyModel = args[++i];
@@ -430,6 +475,7 @@ Options:
   --reasoning-model <name> Override model for reasoning tasks (alias: --reasoning)
   --coding-model <name>    Override model for coding tasks (alias: --coding)
   --efficiency-model <name> Override model for efficiency tasks (alias: --efficiency)
+  --model-tier <tier>      Override all artifacts with economy|standard|premium
   --filter <pattern>       Only deploy agents matching pattern (glob)
   --filter-role <role>     Only deploy agents of role: reasoning|coding|efficiency
   --save                   Save model config to project models.json
@@ -603,6 +649,9 @@ function resolveShorthand(value, shorthandMap, modelsConfig, provider, tier) {
 async function saveModelConfig(cfg, providerName) {
   // Build config object with only the provided overrides
   const modelConfig = {};
+  if (cfg.modelTier) {
+    modelConfig.defaults = { tier: cfg.modelTier };
+  }
 
   // Provider-specific tier configuration
   if (cfg.reasoningModel || cfg.codingModel || cfg.efficiencyModel) {
@@ -756,6 +805,16 @@ async function promptCommandsMigration(cfg, provider, targetDir) {
   if (cfg.mode === 'mmk') cfg.mode = 'marketing';
 
   // Apply --model blanket override: sets all three tiers unless individually overridden
+  if (cfg.modelTier) {
+    const tierRole = cfg.modelTier === 'economy' ? 'efficiency'
+      : cfg.modelTier === 'premium' || cfg.modelTier === 'max-quality' ? 'reasoning'
+        : cfg.modelTier === 'standard' ? 'coding' : null;
+    if (!tierRole) throw new Error(`Invalid --model-tier: ${cfg.modelTier}`);
+    const catalogProvider = cfg.provider === 'openai' ? 'codex' : cfg.provider;
+    const providerCatalog = modelCatalog.providers[catalogProvider];
+    if (!providerCatalog) throw new Error(`No model catalog entry for --model-tier provider ${cfg.provider}`);
+    cfg.model = providerCatalog.roles[tierRole].id;
+  }
   if (cfg.model) {
     if (!cfg.reasoningModel) cfg.reasoningModel = cfg.model;
     if (!cfg.codingModel) cfg.codingModel = cfg.model;
@@ -785,6 +844,7 @@ async function promptCommandsMigration(cfg, provider, targetDir) {
     if (cfg.filter) console.log(`Filter: ${cfg.filter}`);
     if (cfg.filterRole) console.log(`Filter role: ${cfg.filterRole}`);
     if (cfg.model) console.log(`Model (all tiers): ${cfg.model}`);
+    if (cfg.modelTier) console.log(`Canonical tier override: ${cfg.modelTier}`);
     if (cfg.reasoningModel) console.log(`Reasoning model: ${cfg.reasoningModel}`);
     if (cfg.codingModel) console.log(`Coding model: ${cfg.codingModel}`);
     if (cfg.efficiencyModel) console.log(`Efficiency model: ${cfg.efficiencyModel}`);

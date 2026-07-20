@@ -85,6 +85,9 @@ interface SkillFrontmatter {
     allowedTools?: string | string[];
     template?: string;
     model?: string;
+    modelRole?: 'reasoning' | 'coding' | 'efficiency';
+    modelTier?: 'economy' | 'standard' | 'premium';
+    modelEffort?: 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
     category?: string;
     orchestration?: boolean;
     executionSteps?: string[];
@@ -243,6 +246,15 @@ export function parseFrontmatter(content: string): { frontmatter: SkillFrontmatt
         const modMatch = hintLine.match(/^model:\s*(.+)/);
         if (modMatch) { hint.model = modMatch[1].trim(); i++; continue; }
 
+        const roleMatch = hintLine.match(/^modelRole:\s*(reasoning|coding|efficiency)\s*$/);
+        if (roleMatch) { hint.modelRole = roleMatch[1] as NonNullable<typeof hint.modelRole>; i++; continue; }
+
+        const tierMatch = hintLine.match(/^modelTier:\s*(economy|standard|premium)\s*$/);
+        if (tierMatch) { hint.modelTier = tierMatch[1] as NonNullable<typeof hint.modelTier>; i++; continue; }
+
+        const effortMatch = hintLine.match(/^modelEffort:\s*(minimal|low|medium|high|xhigh)\s*$/);
+        if (effortMatch) { hint.modelEffort = effortMatch[1] as NonNullable<typeof hint.modelEffort>; i++; continue; }
+
         const catMatch = hintLine.match(/^category:\s*(.+)/);
         if (catMatch) { hint.category = catMatch[1].trim(); i++; continue; }
 
@@ -280,6 +292,7 @@ export function generateCommandContent(
   _skillName: string,
   frontmatter: SkillFrontmatter,
   body: string,
+  provider?: string,
 ): string {
   const lines: string[] = ['---'];
 
@@ -300,6 +313,21 @@ export function generateCommandContent(
   if (tools) {
     const toolStr = Array.isArray(tools) ? tools.join(', ') : tools;
     lines.push(`allowed-tools: ${toolStr}`);
+  }
+
+  const modelPolicy = resolveSkillModelPolicy(hint);
+  if (modelPolicy) {
+    lines.push(`aiwg-model-role: ${modelPolicy.modelRole}`);
+    lines.push(`aiwg-model-tier: ${modelPolicy.modelTier}`);
+    if (modelPolicy.modelEffort) lines.push(`aiwg-model-effort: ${modelPolicy.modelEffort}`);
+    if (provider === 'claude') {
+      lines.push(`model: ${modelPolicy.legacyModel}`);
+      if (modelPolicy.modelEffort) {
+        const effort = modelPolicy.modelEffort === 'medium' ? 2
+          : modelPolicy.modelEffort === 'high' || modelPolicy.modelEffort === 'xhigh' ? 3 : 1;
+        lines.push(`effort: ${effort}`);
+      }
+    }
   }
 
   lines.push('---');
@@ -390,7 +418,9 @@ export async function translateSkillsToCommands(
       }
 
       // Generate command content
-      const commandContent = generateCommandContent(skillName, frontmatter, body);
+      const commandContent = generateCommandContent(
+        skillName, frontmatter, body, options.provider,
+      );
       const commandFilename = `${skillName}.md`;
 
       const translated: TranslatedCommand = {
@@ -454,6 +484,7 @@ export async function translateSkillsToCommands(
 export function translateSingleSkill(
   skillName: string,
   skillContent: string,
+  provider?: string,
 ): string | null {
   const { frontmatter, body } = parseFrontmatter(skillContent);
 
@@ -462,5 +493,37 @@ export function translateSingleSkill(
     return null;
   }
 
-  return generateCommandContent(skillName, frontmatter, body);
+  return generateCommandContent(skillName, frontmatter, body, provider);
+}
+
+export interface ResolvedSkillModelPolicy {
+  modelRole: 'reasoning' | 'coding' | 'efficiency';
+  modelTier: 'economy' | 'standard' | 'premium';
+  modelEffort?: 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
+  legacyModel: 'opus' | 'sonnet' | 'haiku';
+  source: 'canonical' | 'legacy';
+}
+
+/** Deterministically migrate legacy commandHint.model into portable intent. */
+export function resolveSkillModelPolicy(
+  hint: SkillFrontmatter['commandHint'],
+): ResolvedSkillModelPolicy | null {
+  if (!hint) return null;
+  const legacy = hint.model?.trim().toLowerCase();
+  const legacyRole = legacy === 'opus' ? 'reasoning'
+    : legacy === 'haiku' ? 'efficiency'
+      : legacy ? 'coding' : undefined;
+  const modelRole = hint.modelRole ?? legacyRole;
+  if (!modelRole) return null;
+  const modelTier = hint.modelTier
+    ?? (modelRole === 'reasoning' ? 'premium'
+      : modelRole === 'efficiency' ? 'economy' : 'standard');
+  return {
+    modelRole,
+    modelTier,
+    modelEffort: hint.modelEffort,
+    legacyModel: modelRole === 'reasoning' ? 'opus'
+      : modelRole === 'efficiency' ? 'haiku' : 'sonnet',
+    source: hint.modelRole || hint.modelTier ? 'canonical' : 'legacy',
+  };
 }

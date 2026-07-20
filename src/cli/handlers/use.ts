@@ -102,6 +102,22 @@ const MODE_MAP: Record<Framework, string> = {
   all: 'all',
 };
 
+const MODEL_DEPLOY_VALUE_FLAGS = new Set([
+  '--model', '--reasoning-model', '--coding-model', '--efficiency-model',
+  '--model-tier', '--filter', '--filter-role',
+]);
+const MODEL_DEPLOY_BOOLEAN_FLAGS = new Set(['--save', '--save-user']);
+export function collectUseModelDeployArgs(args: string[]): string[] {
+  const forwarded: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    if (MODEL_DEPLOY_BOOLEAN_FLAGS.has(args[i])) forwarded.push(args[i]);
+    else if (MODEL_DEPLOY_VALUE_FLAGS.has(args[i]) && args[i + 1]) {
+      forwarded.push(args[i], args[++i]);
+    }
+  }
+  return forwarded;
+}
+
 /**
  * Framework name to actual directory name under agentic/code/frameworks/.
  * Used for path construction in collision checks, CI hooks, and version tracking.
@@ -752,8 +768,9 @@ async function deployOneProjectLocalBundle(opts: {
   dryRun: boolean;
   verbose: boolean;
   quiet: boolean;
+  modelArgs: string[];
 }): Promise<{ exitCode: number; counts: { agents: number; commands: number; skills: number; rules: number } }> {
-  const { bundle, ctx, frameworkRoot, provider, target, dryRun, verbose, quiet } = opts;
+  const { bundle, ctx, frameworkRoot, provider, target, dryRun, verbose, quiet, modelArgs } = opts;
 
   const runner = createScriptRunner(frameworkRoot);
   const args: string[] = [
@@ -770,6 +787,7 @@ async function deployOneProjectLocalBundle(opts: {
     // never reach <provider>/.aiwg/skills/, leaving them invisible to
     // both the platform and the index.
     '--copy-all',
+    ...modelArgs,
   ];
   if (dryRun) args.push('--dry-run');
   if (verbose) args.push('--verbose');
@@ -817,10 +835,14 @@ async function deployProjectLocalBundles(opts: {
   dryRun: boolean;
   verbose: boolean;
   quiet: boolean;
+  modelArgs?: string[];
   /** When set, restrict to the bundle whose id matches. */
   onlyBundleId?: string;
 }): Promise<{ deployed: number; failed: number; bundles: ProjectLocalBundle[] }> {
-  const { ctx, frameworkRoot, projectDir, provider, target, dryRun, verbose, quiet, onlyBundleId } = opts;
+  const {
+    ctx, frameworkRoot, projectDir, provider, target, dryRun, verbose, quiet,
+    onlyBundleId, modelArgs = [],
+  } = opts;
 
   const discovery = await discoverProjectLocalBundles(projectDir);
 
@@ -902,7 +924,7 @@ async function deployProjectLocalBundles(opts: {
     }
 
     const result = await deployOneProjectLocalBundle({
-      bundle, ctx, frameworkRoot, provider, target, dryRun, verbose, quiet,
+      bundle, ctx, frameworkRoot, provider, target, dryRun, verbose, quiet, modelArgs,
     });
 
     if (result.exitCode !== 0) {
@@ -1433,6 +1455,7 @@ async function deploySourceDirectory(opts: {
   force: boolean;
   copyAll: boolean;
   quiet: boolean;
+  modelArgs: string[];
 }): Promise<HandlerResult> {
   const args = [
     '--source', opts.source,
@@ -1441,6 +1464,7 @@ async function deploySourceDirectory(opts: {
     '--deploy-rules',
     '--provider', opts.provider,
     '--target', opts.target,
+    ...opts.modelArgs,
   ];
   if (opts.dryRun) args.push('--dry-run');
   if (opts.verbose) args.push('--verbose');
@@ -1492,6 +1516,7 @@ export class UseHandler implements CommandHandler {
       framework = 'all';
       remainingArgs = ctx.args;
     }
+    const modelDeployArgs = collectUseModelDeployArgs(remainingArgs);
     if (framework === 'cockpit') {
       return installCockpit(ctx, remainingArgs);
     }
@@ -1663,6 +1688,7 @@ export class UseHandler implements CommandHandler {
             force,
             copyAll,
             quiet,
+            modelArgs: modelDeployArgs,
           });
           if (result.exitCode !== 0) return result;
         }
@@ -1679,6 +1705,7 @@ export class UseHandler implements CommandHandler {
             force,
             copyAll,
             quiet,
+            modelArgs: modelDeployArgs,
           });
           if (result.exitCode !== 0) return result;
         }
@@ -1695,6 +1722,7 @@ export class UseHandler implements CommandHandler {
             force,
             copyAll,
             quiet,
+            modelArgs: modelDeployArgs,
           });
           if (result.exitCode !== 0) return result;
         }
@@ -1709,6 +1737,7 @@ export class UseHandler implements CommandHandler {
             dryRun,
             verbose,
             quiet: !verbose && !dryRun,
+            modelArgs: modelDeployArgs,
           });
           if (plResult.failed > 0) {
             ui.warn(`${plResult.failed} project-local bundle(s) failed to deploy`);
@@ -1796,6 +1825,7 @@ export class UseHandler implements CommandHandler {
             ctx, frameworkRoot, projectDir, provider: p, target: targetSingle,
             dryRun: dryRunSingle, verbose: verboseSingle, quiet: !verboseSingle && !dryRunSingle,
             onlyBundleId: framework,
+            modelArgs: modelDeployArgs,
           });
           totalDeployed += r.deployed;
           totalFailed += r.failed;
@@ -1828,6 +1858,7 @@ export class UseHandler implements CommandHandler {
 
       const runner = createScriptRunner(ctx.frameworkRoot);
       const addonBaseArgs = ['--deploy-commands', '--deploy-skills', '--deploy-rules'];
+      addonBaseArgs.push(...modelDeployArgs);
       if (provider) addonBaseArgs.push('--provider', provider);
       if (target) addonBaseArgs.push('--target', target);
       // Forward --copy-all (#1219) so addon-only deploys also honor it.
@@ -2170,6 +2201,7 @@ export class UseHandler implements CommandHandler {
 
     // Build common args for addon deployments (inherit provider and target)
     const addonBaseArgs = ['--deploy-commands', '--deploy-skills', '--deploy-rules'];
+    addonBaseArgs.push(...modelDeployArgs);
     if (provider) addonBaseArgs.push('--provider', provider);
     if (target) addonBaseArgs.push('--target', target);
     if (verbose) addonBaseArgs.push('--verbose');
@@ -2232,6 +2264,7 @@ export class UseHandler implements CommandHandler {
         dryRun,
         verbose,
         quiet,
+        modelArgs: modelDeployArgs,
       });
       if (plResult.deployed > 0 && quiet) {
         ui.dim(`  + ${plResult.deployed} project-local bundle(s)`);

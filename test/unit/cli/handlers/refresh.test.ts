@@ -53,11 +53,32 @@ vi.mock('../../../../src/cli/ui.js', () => ({
   channelLabel: vi.fn((s: string) => `[${s}]`),
 }));
 
-import { refreshHandler, pruneStaleManagedAgentFiles } from '../../../../src/cli/handlers/refresh.js';
+import {
+  collectModelDeployArgs, refreshHandler, pruneStaleManagedAgentFiles,
+} from '../../../../src/cli/handlers/refresh.js';
 // Backward-compat alias for existing test references
 const syncHandler = refreshHandler;
 
 const savedProcessProvider = process.env.AIWG_TEST_PROCESS_PROVIDER;
+
+describe('refresh model option parity', () => {
+  it('forwards model, filter, tier, and save options unchanged', () => {
+    expect(collectModelDeployArgs([
+      '--model-tier', 'economy',
+      '--filter', '*-reviewer',
+      '--filter-role', 'coding',
+      '--coding-model', 'provider/model',
+      '--save',
+      '--quiet',
+    ])).toEqual([
+      '--model-tier', 'economy',
+      '--filter', '*-reviewer',
+      '--filter-role', 'coding',
+      '--coding-model', 'provider/model',
+      '--save',
+    ]);
+  });
+});
 
 // ── Helpers ───────────────────────────────────────────────────
 

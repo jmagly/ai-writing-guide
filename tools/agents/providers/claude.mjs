@@ -282,9 +282,51 @@ export function deploySkills(skillDirs, targetDir, opts) {
   // index-driven discovery. The deploySkillsWithKernelRouting helper
   // does the actual partition + cleanup.
   // does the same priority resolution centrally.
-  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, opts);
+  deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, {
+    ...opts,
+    transformSkillMd: transformSkillModelPolicy,
+  });
   // Remove legacy bare-named skills superseded by their aiwg- prefixed replacements
   cleanupLegacyBuiltinCollisions(standardDestDir, opts);
+}
+
+function resolveSkillModelPolicy(commandHint = {}) {
+  const legacy = String(commandHint.model || '').trim().toLowerCase();
+  const legacyRole = legacy === 'opus' ? 'reasoning'
+    : legacy === 'haiku' ? 'efficiency'
+      : legacy ? 'coding' : null;
+  const role = commandHint.modelRole || legacyRole;
+  if (!role) return null;
+  return {
+    model: role === 'reasoning' ? 'opus' : role === 'efficiency' ? 'haiku' : 'sonnet',
+    effort: commandHint.modelEffort,
+  };
+}
+
+/** Compile portable commandHint policy to Claude's native skill fields. */
+export function transformSkillModelPolicy(content) {
+  const { frontmatter: rawFrontmatter } = parseFrontmatter(content);
+  if (!rawFrontmatter) return content;
+  const hintBlock = rawFrontmatter.match(/^commandHint:\s*\n((?:[ \t]+[^\n]*\n?)*)/m)?.[1] || '';
+  const commandHint = {};
+  for (const line of hintBlock.split('\n')) {
+    const match = line.trim().match(/^(model|modelRole|modelTier|modelEffort):\s*(.+)$/);
+    if (match) commandHint[match[1]] = match[2].trim().replace(/^['"]|['"]$/g, '');
+  }
+  const policy = resolveSkillModelPolicy(commandHint);
+  if (!policy) return content;
+  const match = content.match(/^([\s\S]*?---\n)([\s\S]*?)(\n---\n[\s\S]*)$/);
+  if (!match) return content;
+  let frontmatter = match[2]
+    .replace(/^model:\s*.*\n?/m, '')
+    .replace(/^effort:\s*.*\n?/m, '');
+  frontmatter += `\nmodel: ${policy.model}`;
+  if (policy.effort) {
+    const effort = policy.effort === 'medium' ? 2
+      : policy.effort === 'high' || policy.effort === 'xhigh' ? 3 : 1;
+    frontmatter += `\neffort: ${effort}`;
+  }
+  return `${match[1]}${frontmatter}${match[3]}`;
 }
 
 /**

@@ -4,11 +4,14 @@
  * @implements #1805
  */
 import { z } from 'zod';
-import capabilityData from '../../agentic/code/providers/model-capabilities.v1.json';
-import catalogData from '../../agentic/code/providers/model-catalog.v1.json';
+import { createRequire } from 'node:module';
 import type {
   CanonicalModelPolicy, ModelCompilationOutcome, ModelEffort, ModelRole, Provider,
 } from './types.js';
+
+const require = createRequire(import.meta.url);
+const capabilityData: unknown = require('../../agentic/code/providers/model-capabilities.v1.json');
+const catalogData: unknown = require('../../agentic/code/providers/model-catalog.v1.json');
 
 const ProviderSchema = z.enum([
   'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
@@ -83,7 +86,7 @@ const UserProjectModelConfigSchema = z.object({
     }).strict(),
   }).strict()).optional(),
   rationale: z.string().optional(),
-}).strict();
+}).passthrough();
 
 export type ProviderModelCapability = z.infer<typeof CapabilityEntrySchema>;
 export type ProviderModelCapabilityRegistry = z.infer<typeof CapabilityRegistrySchema>;

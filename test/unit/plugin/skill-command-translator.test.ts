@@ -84,6 +84,9 @@ commandHint:
   allowedTools: Read, Write, Bash
   template: orchestration
   model: sonnet
+  modelRole: coding
+  modelTier: standard
+  modelEffort: medium
 ---
 
 Body content`;
@@ -93,6 +96,9 @@ Body content`;
     expect(frontmatter.commandHint!.allowedTools).toBe('Read, Write, Bash');
     expect(frontmatter.commandHint!.template).toBe('orchestration');
     expect(frontmatter.commandHint!.model).toBe('sonnet');
+    expect(frontmatter.commandHint!.modelRole).toBe('coding');
+    expect(frontmatter.commandHint!.modelTier).toBe('standard');
+    expect(frontmatter.commandHint!.modelEffort).toBe('medium');
   });
 
   it('should parse userInvocable: false', () => {
@@ -166,6 +172,36 @@ Body content here.`;
 // ============================================
 
 describe('generateCommandContent', () => {
+  it('migrates legacy skill model hints to portable command policy', () => {
+    const output = generateCommandContent(
+      'review',
+      { description: 'Review', commandHint: { model: 'opus' } },
+      'Review the change.',
+      'codex',
+    );
+    expect(output).toContain('aiwg-model-role: reasoning');
+    expect(output).toContain('aiwg-model-tier: premium');
+    expect(output).not.toMatch(/^model:/m);
+  });
+
+  it('emits Claude native skill model and effort only when requested', () => {
+    const output = generateCommandContent(
+      'review',
+      {
+        description: 'Review',
+        commandHint: {
+          modelRole: 'coding',
+          modelTier: 'standard',
+          modelEffort: 'high',
+        },
+      },
+      'Review the change.',
+      'claude',
+    );
+    expect(output).toContain('aiwg-model-role: coding');
+    expect(output).toContain('model: sonnet');
+    expect(output).toContain('effort: 3');
+  });
   it('should generate minimal command with description only', () => {
     const content = generateCommandContent('my-skill', { description: 'A simple skill' }, '# My Skill\n\nBody');
     expect(content).toContain('---');
