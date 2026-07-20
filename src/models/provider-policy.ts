@@ -10,8 +10,20 @@ import type {
 } from './types.js';
 
 const require = createRequire(import.meta.url);
-const capabilityData: unknown = require('../../agentic/code/providers/model-capabilities.v1.json');
-const catalogData: unknown = require('../../agentic/code/providers/model-catalog.v1.json');
+function requireModelResource(filename: string): unknown {
+  const candidates = [
+    `../../agentic/code/providers/${filename}`,
+    `../../../agentic/code/providers/${filename}`,
+  ];
+  for (const candidate of candidates) {
+    try { return require(candidate); } catch (error: any) {
+      if (error?.code !== 'MODULE_NOT_FOUND') throw error;
+    }
+  }
+  throw new Error(`Model policy resource is missing: ${filename}`);
+}
+const capabilityData = requireModelResource('model-capabilities.v1.json');
+const catalogData = requireModelResource('model-catalog.v1.json');
 
 const ProviderSchema = z.enum([
   'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
