@@ -21,6 +21,7 @@
 import realFs from 'fs';
 import { createRequire } from 'module';
 const _require = createRequire(import.meta.url);
+const staticModelCatalog = _require('../../../agentic/code/providers/model-catalog.v1.json');
 let fs;
 try { const gfs = _require('graceful-fs'); gfs.gracefulify(realFs); fs = realFs; } catch { fs = realFs; }
 import path from 'path';
@@ -49,8 +50,10 @@ import {
   writeOnDemandRuleIndex,
   cleanupOldRuleFiles,
   filterCommandsAgainstSkills,
-  deploySoulCompanions
+  deploySoulCompanions,
+  loadRuntimeModelCatalog
 } from './base.mjs';
+const modelCatalog = loadRuntimeModelCatalog(staticModelCatalog);
 
 // ============================================================================
 // Provider Configuration
@@ -95,7 +98,15 @@ export const capabilities = {
  * Cursor uses conventional deployment - minimal transformation needed
  */
 export function transformAgent(srcPath, content, opts) {
-  return content;
+  const model = content.match(/^model:\s*(.+)$/m)?.[1]?.trim().replace(/['"]/g, '');
+  if (!model) return content;
+  const roles = modelCatalog.providers.cursor.roles;
+  const mapped = /opus/i.test(model)
+    ? roles.reasoning.id
+    : /haiku/i.test(model)
+      ? roles.efficiency.id
+      : roles.coding.id;
+  return content.replace(/^model:\s*.+$/m, `model: ${mapped}`);
 }
 
 /**

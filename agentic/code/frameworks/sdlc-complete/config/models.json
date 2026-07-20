@@ -23,19 +23,19 @@
 
   "factory": {
     "reasoning": {
-      "model": "claude-opus-4-6",
+      "model": "heavy",
       "reasoningEffort": "high",
-      "description": "Factory AI uses bare Claude model identifiers (no anthropic/ prefix)"
+      "description": "Factory Heavy policy lets the provider select its current high-reasoning model"
     },
     "coding": {
-      "model": "claude-sonnet-4-6",
+      "model": "medium",
       "reasoningEffort": "medium",
-      "description": "Factory AI uses bare Claude model identifiers (no anthropic/ prefix)"
+      "description": "Factory Medium policy lets the provider select its current coding model"
     },
     "efficiency": {
-      "model": "claude-haiku-4-5-20251001",
+      "model": "light",
       "reasoningEffort": "low",
-      "description": "Factory AI uses bare Claude model identifiers (no anthropic/ prefix)"
+      "description": "Factory Light policy lets the provider select its current low-cost model"
     }
   },
 

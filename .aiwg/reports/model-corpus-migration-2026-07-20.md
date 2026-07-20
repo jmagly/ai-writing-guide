@@ -48,16 +48,18 @@ This is fixture evidence, not a claim of live provider portability; live
 resolved-model smoke is tracked by #1807.
 
 A clean controlled Codex deployment compiled 195 agents into three distinct
-models:
+models and three aligned effort levels:
 
-| Compiled model | Count |
-| --- | ---: |
-| `gpt-5.1-codex-mini` | 156 |
-| `gpt-5.3-codex` | 29 |
-| `gpt-5.4` | 10 |
+| Tier | Compiled model | Effort | Count |
+| --- | --- | --- | ---: |
+| Economy | `gpt-5.4-mini` | `low` | 156 |
+| Standard | `gpt-5.5` | `medium` | 29 |
+| Premium | `gpt-5.4` | `high` | 10 |
 
 The deployed economy share was 80.0%, above the 60% gate, with no role
-collapse.
+collapse. Bounded Codex CLI probes and an actual AIWG-generated project-scoped
+subagent load are recorded in
+`.aiwg/reports/model-live-codex-2026-07-20.json`.
 
 ## Enforcement
 

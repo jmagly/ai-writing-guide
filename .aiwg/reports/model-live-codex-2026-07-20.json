@@ -1,0 +1,90 @@
+{
+  "version": "1.0.0",
+  "provider": "codex",
+  "observedAt": "2026-07-20T17:07:00Z",
+  "cliVersion": "codex-cli 0.144.6",
+  "authentication": "ChatGPT account",
+  "probes": [
+    {
+      "tier": "economy",
+      "requestedModel": "gpt-5.4-mini",
+      "requestedEffort": "low",
+      "threadId": "019f80a2-0ccf-7423-b6c2-48e0a83b7013",
+      "result": "SMOKE_ECONOMY_OK",
+      "exitCode": 0,
+      "usage": {
+        "inputTokens": 16298,
+        "cachedInputTokens": 4480,
+        "outputTokens": 25,
+        "reasoningOutputTokens": 12
+      }
+    },
+    {
+      "tier": "standard",
+      "requestedModel": "gpt-5.5",
+      "requestedEffort": "medium",
+      "threadId": "019f80a2-0cde-7b30-8b81-d0275ba2ee62",
+      "result": "SMOKE_STANDARD_OK",
+      "exitCode": 0,
+      "usage": {
+        "inputTokens": 18032,
+        "cachedInputTokens": 9600,
+        "outputTokens": 8,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "tier": "premium",
+      "requestedModel": "gpt-5.4",
+      "requestedEffort": "high",
+      "threadId": "019f80a1-9c23-7022-b5df-a0a163fb5e2e",
+      "result": "SMOKE_PREMIUM_OK",
+      "exitCode": 0,
+      "usage": {
+        "inputTokens": 16649,
+        "cachedInputTokens": 1920,
+        "outputTokens": 48,
+        "reasoningOutputTokens": 36
+      }
+    },
+    {
+      "tier": "invalid",
+      "requestedModel": "aiwg-invalid-model-pin",
+      "requestedEffort": "low",
+      "threadId": "019f80a1-9c14-7a40-9e3-6155a7e64bf1",
+      "exitCode": 1,
+      "fallback": null,
+      "accountConstraint": "HTTP 400: model is not supported when using Codex with a ChatGPT account"
+    },
+    {
+      "tier": "economy-deployed-subagent",
+      "sourceAgent": "technical-writer",
+      "compiledArtifact": {
+        "format": "standalone TOML",
+        "model": "gpt-5.4-mini",
+        "modelReasoningEffort": "low"
+      },
+      "parentThreadId": "019f80a3-d207-7bd3-a66e-8002dade443f",
+      "childThreadId": "019f80a3-f2dc-7ea3-8085-8d2e9fa48405",
+      "result": "DEPLOYED_ECONOMY_OK",
+      "exitCode": 0,
+      "verification": "Codex loaded the project-scoped AIWG-generated custom agent and completed a bounded child turn"
+    }
+  ],
+  "rejectedPreviousMappings": [
+    {
+      "model": "gpt-5.1-codex-mini",
+      "tier": "economy",
+      "exitCode": 1,
+      "fallback": null,
+      "accountConstraint": "HTTP 400: model is not supported when using Codex with a ChatGPT account"
+    },
+    {
+      "model": "gpt-5.3-codex",
+      "tier": "standard",
+      "exitCode": 1,
+      "fallback": null,
+      "accountConstraint": "HTTP 400: model is not supported when using Codex with a ChatGPT account"
+    }
+  ]
+}

@@ -22,6 +22,7 @@
 import realFs from 'fs';
 import { createRequire } from 'module';
 const _require = createRequire(import.meta.url);
+const staticModelCatalog = _require('../../../agentic/code/providers/model-catalog.v1.json');
 let fs;
 try { const gfs = _require('graceful-fs'); gfs.gracefulify(realFs); fs = realFs; } catch { fs = realFs; }
 import path from 'path';
@@ -49,8 +50,10 @@ import {
   writeOnDemandRuleIndex,
   cleanupOldRuleFiles,
   filterCommandsAgainstSkills,
-  deploySoulCompanions
+  deploySoulCompanions,
+  loadRuntimeModelCatalog
 } from './base.mjs';
+const modelCatalog = loadRuntimeModelCatalog(staticModelCatalog);
 
 // ============================================================================
 // Provider Configuration
@@ -90,14 +93,13 @@ export const capabilities = {
 
 /**
  * Map model shorthand to GitHub Copilot format.
- * Copilot now supports Claude models (claude-opus-4-5, claude-sonnet-4-5)
- * alongside GPT models (gpt-4o, gpt-4o-mini).
+ * Resolve semantic AIWG roles through the current provider catalog.
  */
 export function mapModel(originalModel, modelCfg, modelsConfig) {
   const copilotModels = {
-    'opus': 'claude-opus-4-5',
-    'sonnet': 'gpt-4o',
-    'haiku': 'gpt-4o-mini'
+    'opus': modelCatalog.providers.copilot.roles.reasoning.id,
+    'sonnet': modelCatalog.providers.copilot.roles.coding.id,
+    'haiku': modelCatalog.providers.copilot.roles.efficiency.id
   };
 
   // Handle override models first

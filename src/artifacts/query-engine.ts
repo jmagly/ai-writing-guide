@@ -28,6 +28,7 @@ import {
   stableRecordId,
   type AiwgFortemiRecord,
 } from './browser-export.js';
+import { loadProviderModelMetadata } from '../models/provider-models.js';
 
 function normalizeIndexedPath(entryPath: string): string {
   return entryPath.replace(/\\/g, '/');
@@ -1498,6 +1499,7 @@ export async function showArtifact(
   }
 
   if (params.json) {
+    const providerModels = await loadProviderModelMetadata(cwd, aiwgRoot);
     console.log(JSON.stringify({
       id: discoveryIdForEntry(entry),
       path: filePath,
@@ -1515,6 +1517,7 @@ export async function showArtifact(
       ...(entry.script
         ? { executable: true, run_hint: buildRunHint(entry) }
         : {}),
+      ...(providerModels ? { providerModels } : {}),
       content,
     }, null, 2));
     return;
@@ -1606,6 +1609,7 @@ export async function showMetadata(
       scope: (entry as ProvenancedEntry).indexScope ?? null,
     },
     metadata: record ?? entry,
+    providerModels: await loadProviderModelMetadata(cwd, aiwgRoot),
   };
 
   if (params.json) {
@@ -1620,6 +1624,15 @@ export async function showMetadata(
   console.log(`  scope: ${payload.provenance.scope ?? 'unknown'}`);
   console.log(`  path: ${payload.paths.absolute}`);
   console.log(`  indexed_path: ${payload.paths.indexed}`);
+  if (payload.providerModels) {
+    console.log('  provider_models:');
+    for (const [provider, hints] of Object.entries(payload.providerModels.providers)) {
+      console.log(`    ${provider}:`);
+      for (const hint of hints) {
+        console.log(`      ${hint.role}: ${hint.model} (wrapper: ${hint.wrapper}, status: ${hint.status})`);
+      }
+    }
+  }
   console.log('');
   console.log(JSON.stringify(payload.metadata, null, 2));
 }

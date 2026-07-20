@@ -61,7 +61,7 @@
 import realFs from 'fs';
 import { createRequire } from 'module';
 const _require = createRequire(import.meta.url);
-const modelCatalog = _require('../../agentic/code/providers/model-catalog.v1.json');
+const staticModelCatalog = _require('../../agentic/code/providers/model-catalog.v1.json');
 let fs;
 try { const gfs = _require('graceful-fs'); gfs.gracefulify(realFs); fs = realFs; } catch { fs = realFs; }
 import path from 'path';
@@ -76,11 +76,13 @@ import {
   getAddonSkillDirs,
   listSkillDirs,
   loadModelConfig,
+  loadRuntimeModelCatalog,
   migrateCommandsDirectory,
   parseFrontmatter,
   pruneStaleAiwgFiles,
   resolveAiwgRoot,
 } from './providers/base.mjs';
+const modelCatalog = loadRuntimeModelCatalog(staticModelCatalog);
 
 /**
  * Read version from package.json at the source root.

@@ -202,7 +202,29 @@ async function execute(ctx: HandlerContext): Promise<HandlerResult> {
   const provider = flagString(parsed, 'provider') ?? 'claude';
   if (!PROVIDERS.has(provider)) return { exitCode: 2, message: `Unknown provider: ${provider}` };
   if (parsed.subcommand === 'help' || parsed.flags.has('help')) {
-    print('Usage: aiwg models <audit|list|resolve|set-default|set|validate|migrate> [selectors] [--provider P] [--dry-run] [--json]', json);
+    print('Usage: aiwg models <audit|list|resolve|sources|refresh|set-default|set|validate|migrate> [selectors] [--provider P] [--dry-run] [--json]', json);
+    return { exitCode: 0 };
+  }
+  if (parsed.subcommand === 'sources' || parsed.subcommand === 'refresh') {
+    const { collectProviderInventory } = await import('../../providers/provider-inventory.js');
+    const { diffModelCatalog, resolveDynamicModelCatalog } = await import('../../models/model-discovery.js');
+    const inventory = await collectProviderInventory(target);
+    const catalog = await resolveDynamicModelCatalog({
+      aiwgRoot: ctx.frameworkRoot,
+      inventory,
+      allowNetwork: parsed.subcommand === 'refresh',
+      forceRefresh: parsed.subcommand === 'refresh',
+      ...(flagString(parsed, 'url') ? { remoteUrl: flagString(parsed, 'url') } : {}),
+    });
+    if (parsed.flags.has('drift')) {
+      const staticCatalog = JSON.parse(await fs.readFile(
+        path.join(ctx.frameworkRoot, 'agentic/code/providers/model-catalog.v1.json'),
+        'utf8',
+      ));
+      print({ catalog, drift: diffModelCatalog(staticCatalog, catalog) }, json);
+    } else {
+      print(catalog, json);
+    }
     return { exitCode: 0 };
   }
   if (parsed.subcommand === 'set-default') {

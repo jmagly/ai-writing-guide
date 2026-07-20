@@ -24,8 +24,8 @@ export const CLAUDE_MODELS = {
 
 export const OPENAI_MODELS = {
   reasoning: 'gpt-5.4',
-  coding: 'gpt-5.3-codex',
-  efficiency: 'gpt-5.1-codex-mini',
+  coding: 'gpt-5.5',
+  efficiency: 'gpt-5.4-mini',
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -49,9 +49,9 @@ export const FACTORY_ADAPTER_MODELS = {
 // ---------------------------------------------------------------------------
 
 export const FACTORY_DEPLOY_MODELS = {
-  reasoning: 'claude-opus-4-6',
-  coding: 'claude-sonnet-4-6',
-  efficiency: 'claude-haiku-4-5-20251001',
+  reasoning: 'heavy',
+  coding: 'medium',
+  efficiency: 'light',
 } as const;
 
 export const DEFAULT_SHORTHAND = {
@@ -129,6 +129,12 @@ export function buildFactoryModelsConfig() {
       reasoning: { model: FACTORY_DEPLOY_MODELS.reasoning },
       coding: { model: FACTORY_DEPLOY_MODELS.coding },
       efficiency: { model: FACTORY_DEPLOY_MODELS.efficiency },
+    },
+    factory_shorthand: {
+      opus: FACTORY_DEPLOY_MODELS.reasoning,
+      sonnet: FACTORY_DEPLOY_MODELS.coding,
+      haiku: FACTORY_DEPLOY_MODELS.efficiency,
+      inherit: 'inherit',
     },
     shorthand: { ...DEFAULT_SHORTHAND },
   };

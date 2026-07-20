@@ -129,11 +129,11 @@ export const capabilities = {
 };
 
 // ============================================================================
-// Model Mapping (passthrough — OpenClaw uses its own model config)
+// Model Mapping (global inheritance)
 // ============================================================================
 
 export function mapModel(shorthand, modelCfg, modelsConfig) {
-  return shorthand;
+  return undefined;
 }
 
 // ============================================================================
@@ -141,7 +141,11 @@ export function mapModel(shorthand, modelCfg, modelsConfig) {
 // ============================================================================
 
 export function transformAgent(srcPath, content, opts) {
-  return content;
+  // AIWG's catalog intentionally records configured/<role> placeholders for
+  // OpenClaw because the exact provider/model namespace is installation
+  // specific. Omit the portable Markdown pin and inherit the configured
+  // OpenClaw subagent model rather than emitting a misleading Claude alias.
+  return content.replace(/^model:\s*.+\n/m, '');
 }
 
 export function transformCommand(srcPath, content, opts) {

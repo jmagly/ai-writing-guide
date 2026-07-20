@@ -179,7 +179,7 @@ describe('loadModelConfig', () => {
     expect(config.claude.coding.model).toBe('sonnet');
     expect(config.claude_shorthand.sonnet).toBe('sonnet');
     expect(config.claude_shorthand['sonnet-1m']).toBe('sonnet[1m]');
-    expect(config.shorthand.sonnet).toBe(FACTORY_DEPLOY_MODELS.coding);
+    expect(config.shorthand.sonnet).toBe('claude-sonnet-4-6');
   });
 
   it('should tag config with _source', () => {

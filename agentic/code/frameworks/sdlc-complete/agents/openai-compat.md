@@ -13,8 +13,8 @@ primary difference is the `model` value in the YAML frontmatter.
   - efficiency: `sonnet`
 - Defaults (OpenAI/Codex):
   - reasoning: `gpt-5.4`
-  - coding: `gpt-5.3-codex`
-  - efficiency: `gpt-5.1-codex-mini`
+  - coding: `gpt-5.5`
+  - efficiency: `gpt-5.4-mini`
 
 Use the CLI to deploy agents for your target provider while overriding model names if needed:
 
@@ -31,8 +31,8 @@ aiwg -deploy-agents --provider openai --as-agents-md
 # Custom model mapping (example)
 aiwg -deploy-agents --provider openai \
   --reasoning-model gpt-5.4 \
-  --coding-model gpt-5.3-codex \
-  --efficiency-model gpt-5.1-codex-mini
+  --coding-model gpt-5.5 \
+  --efficiency-model gpt-5.4-mini
 ```
 
 ## Paths

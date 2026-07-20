@@ -11,6 +11,7 @@
   },
   "agents": {
     "architecture-designer": "Cross-system architecture tradeoffs have a high downstream rework cost.",
+    "aiwg-model-reasoning-worker": "Cross-domain architecture and synthesis assignments have high downstream rework cost.",
     "cloud-architect": "Infrastructure topology decisions carry material reliability and security risk.",
     "forensics-orchestrator": "Evidence-preserving investigation plans require high-confidence sequencing.",
     "incident-responder": "Active incident containment decisions can cause irreversible operational impact.",

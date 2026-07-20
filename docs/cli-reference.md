@@ -3539,7 +3539,7 @@ aiwg index show <type> <name> [options]      # equivalent
 
 **Options:**
 
-- `--json` — For body lookup, emit `{ id, path, type, name, title, kernel, content }`. For `show metadata`, emit `{ id, backend, type, name, title, paths, provenance, metadata }`. Default body mode streams the file unmodified.
+- `--json` — For body lookup, emit `{ id, path, type, name, title, kernel, providerModels, content }`. For `show metadata`, emit `{ id, backend, type, name, title, paths, provenance, providerModels, metadata }`. `providerModels` lists the reasoning, coding, and efficiency model names plus their model-pinned worker wrapper for providers installed in `.aiwg/aiwg.config`. Default body mode streams the file unmodified.
 - `--first` — On ambiguity, pick the top match instead of erroring with the disambiguation list.
 - `--graph <name>` — Override the default graph (defaults to `framework` then `project`).
 - `--backend <fortemi-core|local>` — Lookup backend. Default is
@@ -3563,7 +3563,60 @@ aiwg show agent aiwg-steward                        # agent definition
 aiwg show command discover                          # CLI command spec
 aiwg show rule no-attribution                       # rule body
 aiwg show skill research-query --json
+aiwg show agent aiwg-model-coding-worker --json | jq '.providerModels'
 ```
+
+AIWG deploys three provider-native subagent wrappers:
+`aiwg-model-reasoning-worker`, `aiwg-model-coding-worker`, and
+`aiwg-model-efficiency-worker`. Their provider output pins the current catalog
+model for that role. Give a wrapper any bounded assignment; it discovers and
+loads the required AIWG agent, skill, rule, or workflow before executing it.
+Use the `providerModels` mapping rather than hard-coding model identifiers.
+
+### Provider inventory
+
+Provider configuration is not proof that a provider is installed. Use the
+runtime inventory before selecting a launcher or refreshing models:
+
+```bash
+aiwg runtime-info --providers
+aiwg runtime-info --providers --json
+```
+
+Each provider reports independent `configured`, `deployed`, `detected`,
+`available`, and `active` states. Evidence identifies project/user/runtime
+scope and the exact signal: configuration, deployment record, runtime
+environment, process ancestry, executable, or provider configuration file.
+An unavailable configured provider includes an actionable reason rather than
+being silently advertised as launchable.
+
+### Dynamic model sources
+
+```bash
+aiwg models sources --json
+aiwg models refresh --json
+aiwg models refresh --drift --json
+aiwg models refresh --url https://docs.aiwg.io/data/model-catalog.v1.json --json
+```
+
+`models sources` is offline: it reads a fresh user cache when present and
+otherwise returns the committed catalog. `models refresh` consults a public
+JSON feed only when `--url` or `AIWG_MODEL_CATALOG_URL` configures one, then
+runs supported native discovery only for
+providers marked available by the provider inventory. Codex uses the
+machine-readable app-server `model/list` protocol; Claude Code currently has
+no supported local model-list command, so its stable aliases or public/static
+catalog remain the fallback.
+
+The cache lives at `~/.cache/aiwg/model-catalog.v1.json` and expires after 24
+hours. Each result records source (`native`, `remote`, `cache`, or `static`),
+observation time, and account scope. Deployment never accesses the network: it
+uses a fresh cache or the committed catalog deterministically. Override the
+feed with `AIWG_MODEL_CATALOG_URL`. A hosted or nightly catalog is therefore
+optional, not a runtime dependency. Account-specific native results are marked
+`local-account` and are never represented as globally available.
+`--drift` compares resolved role mappings with the committed catalog and emits
+a reviewable, non-mutating provider/role before-and-after report.
 
 **Errors:**
 

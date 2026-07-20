@@ -29,7 +29,7 @@ export const runtimeInfoHandler: CommandHandler = {
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
     try {
-      await handleRuntimeInfo(ctx.args);
+      await handleRuntimeInfo(ctx.args, ctx.cwd);
       return { exitCode: 0 };
     } catch (error) {
       const err = error as Error;
@@ -50,17 +50,44 @@ export const runtimeInfoHandler: CommandHandler = {
 /**
  * Handle runtime info command logic
  */
-async function handleRuntimeInfo(args: string[]): Promise<void> {
+async function handleRuntimeInfo(args: string[], cwd = process.cwd()): Promise<void> {
   const hasDiscover = args.includes('--discover');
   const hasVerify = args.includes('--verify');
   const hasJson = args.includes('--json');
   const checkIndex = args.indexOf('--check');
   const hasCheck = checkIndex >= 0;
   const hasCapabilities = args.includes('--capabilities');
+  const hasProviders = args.includes('--providers');
   const featureIndex = args.indexOf('--feature');
   const hasFeature = featureIndex >= 0;
 
   // --- Capability matrix queries (no RuntimeDiscovery needed) ---
+  if (hasProviders) {
+    const { collectProviderInventory } = await import('../../providers/provider-inventory.js');
+    const inventory = await collectProviderInventory(cwd);
+    if (hasJson) {
+      console.log(JSON.stringify(inventory, null, 2));
+    } else {
+      console.log('\nProvider Inventory');
+      console.log('==================');
+      for (const provider of inventory.providers) {
+        const states = [
+          provider.configured ? 'configured' : null,
+          provider.deployed ? 'deployed' : null,
+          provider.detected ? 'detected' : null,
+          provider.available ? 'available' : 'unavailable',
+          provider.active ? 'active' : null,
+        ].filter(Boolean).join(', ');
+        console.log(`\n${provider.displayName} (${provider.id}): ${states}`);
+        for (const evidence of provider.evidence) {
+          console.log(`  evidence: ${evidence.kind}/${evidence.scope} — ${evidence.value}`);
+        }
+        for (const reason of provider.reasons) console.log(`  note: ${reason}`);
+      }
+    }
+    return;
+  }
+
   if (hasCapabilities || hasFeature) {
     const {
       loadCapabilityMatrix,

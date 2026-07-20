@@ -15,8 +15,8 @@
     "codex": {
       "roles": {
         "reasoning": { "id": "gpt-5.4", "status": "active", "observed": true },
-        "coding": { "id": "gpt-5.3-codex", "status": "active", "observed": true },
-        "efficiency": { "id": "gpt-5.1-codex-mini", "status": "active", "observed": true }
+        "coding": { "id": "gpt-5.5", "status": "active", "observed": true },
+        "efficiency": { "id": "gpt-5.4-mini", "status": "active", "observed": true }
       },
       "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/subagents", "verifiedAt": "2026-07-20"
     },

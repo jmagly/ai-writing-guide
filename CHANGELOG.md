@@ -9,6 +9,16 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Provider inventory and dynamic model sources** (#1812, #1813) —
+  `aiwg runtime-info --providers` distinguishes configured, deployed,
+  detected, available, and active providers with scoped evidence.
+  `aiwg models sources|refresh` adds provenance-aware native/public/cache/static
+  resolution; Codex uses app-server `model/list`, while deployment remains
+  offline and consumes only a fresh cache or committed fallback.
+- **Cross-provider model worker wrappers** (#1814) — reasoning, coding, and
+  efficiency workers now have exact native, semantic-hint, inherited/global,
+  or unsupported output assertions across all eleven providers without
+  launching provider sessions.
 - **Safe model-management command family** (#1804) — `aiwg models` now supports
   audit, list, resolve, set-default, selected/bulk set, validate, and legacy
   migration operations with typed selectors, JSON/dry-run output, atomic
@@ -49,6 +59,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Changed
 
+- **Observed Codex model routing** (#1185) — bounded live Codex CLI probes
+  replaced ChatGPT-incompatible `gpt-5.3-codex` and
+  `gpt-5.1-codex-mini` defaults with observed `gpt-5.5` standard and
+  `gpt-5.4-mini` economy mappings. Deployed custom agents now receive
+  high/medium/low default reasoning effort by semantic role when no explicit
+  effort is present; invalid and unavailable pins fail without silent fallback.
 - **Provider model conformance matrix** (#1807) — shared semantic fixtures and
   eleven-provider goldens now assert native/degraded output, targets, formats,
   field names, unsupported-key omission, unknown/blocked pins, and skill

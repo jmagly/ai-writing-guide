@@ -1061,7 +1061,7 @@ export const OPENHUMAN_DEFAULT_HARNESS_AGENTS = [
 ] as const;
 
 interface OpenHumanHarnessProfile {
-  modelHint: 'agentic' | 'coding' | 'reasoning';
+  modelHint: 'agentic' | 'coding' | 'reasoning' | 'efficiency';
   temperature: number;
   maxIterations: number;
   iterationPolicy: 'strict' | 'extended';
@@ -1085,6 +1085,15 @@ const OPENHUMAN_DEFAULT_HARNESS_PROFILE: OpenHumanHarnessProfile = {
 };
 
 const OPENHUMAN_HARNESS_PROFILES: Record<string, Partial<OpenHumanHarnessProfile>> = {
+  'aiwg-model-reasoning-worker': {
+    modelHint: 'reasoning',
+  },
+  'aiwg-model-coding-worker': {
+    modelHint: 'coding',
+  },
+  'aiwg-model-efficiency-worker': {
+    modelHint: 'efficiency',
+  },
   'architecture-designer': {
     modelHint: 'reasoning',
     maxIterations: 14,
@@ -1361,6 +1370,7 @@ async function writeManagedFile(filePath: string, content: string, dryRun: boole
 async function readSourceAgent(frameworkRoot: string, slug: string): Promise<ParsedAgentMarkdown> {
   const candidates = [
     path.join(frameworkRoot, 'agentic/code/frameworks/sdlc-complete/agents', `${slug}.md`),
+    path.join(frameworkRoot, 'agentic/code/addons/aiwg-utils/agents', `${slug}.md`),
     path.join(frameworkRoot, 'agentic/code/agents/personas', `${slug}.md`),
   ];
   for (const candidate of candidates) {

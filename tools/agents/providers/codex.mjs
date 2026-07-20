@@ -20,7 +20,7 @@
  *   `.agents/skills/` only and prune the stale legacy home dir on deploy.
  *
  * Special features:
- *   - Model replacement (opus/sonnet/haiku -> gpt-5.4/gpt-5.3-codex/gpt-5.1-codex-mini)
+ *   - Model replacement (opus/sonnet/haiku -> gpt-5.4/gpt-5.5/gpt-5.4-mini)
  *   - --as-agents-md aggregation option
  *   - Delegates commands to deploy-prompts-codex.mjs (deploys to ~/.codex/prompts/)
  *   - Delegates skills to deploy-skills-codex.mjs (deploys to .agents/skills/)
@@ -31,7 +31,7 @@ import { createRequire } from 'module';
 const _require = createRequire(import.meta.url);
 let fs;
 try { const gfs = _require('graceful-fs'); gfs.gracefulify(realFs); fs = realFs; } catch { fs = realFs; }
-const modelCatalog = _require('../../../agentic/code/providers/model-catalog.v1.json');
+const staticModelCatalog = _require('../../../agentic/code/providers/model-catalog.v1.json');
 import path from 'path';
 import os from 'os';
 import { spawn } from 'child_process';
@@ -50,6 +50,7 @@ import {
   getAddonSkillDirs,
   getAddonRuleFiles,
   listSkillDirs,
+  loadRuntimeModelCatalog,
   deploySkillDir,
   deploySkillsWithKernelRouting,
   getFrameworksForMode,
@@ -63,6 +64,7 @@ import {
   deploySoulCompanions,
   parseFrontmatter
 } from './base.mjs';
+const modelCatalog = loadRuntimeModelCatalog(staticModelCatalog);
 
 // ============================================================================
 // Provider Configuration
@@ -171,7 +173,9 @@ export function renderAgentToml(srcPath, content, models) {
   const role = classifyModelRole(metadata.model, { defaultRole: 'coding' });
   const model = role === 'unknown' ? cleanYamlScalar(metadata.model) : models[role];
   const effortMatch = frontmatter.match(/^model-effort:\s*([^\n]+)$/m);
-  const effort = effortMatch ? cleanYamlScalar(effortMatch[1]) : null;
+  const effort = effortMatch
+    ? cleanYamlScalar(effortMatch[1])
+    : { reasoning: 'high', coding: 'medium', efficiency: 'low' }[role];
 
   const lines = [
     `name = ${tomlString(name)}`,

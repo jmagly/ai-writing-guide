@@ -19,6 +19,25 @@ model and effort keys for all eleven providers.
 | Corpus distribution and rationale | `test/unit/models/corpus-policy.test.ts` |
 | Dry-run mutation equivalence | `test/unit/cli/handlers/models.test.ts` |
 | Live gate safety | `test/unit/models/live-smoke.test.ts` |
+| Provider inventory | `test/unit/providers/provider-inventory.test.ts` |
+| Dynamic source/cache provenance | `test/unit/models/model-discovery.test.ts` |
+| Model-worker output across all providers | `test/integration/model-worker-provider-matrix.test.ts` |
+
+Provider inventory separates configured, deployed, detected, available, and
+active evidence, including project/user scope and configured-only failure
+guidance. Dynamic discovery records offline static behavior, public-feed
+refresh, available-provider-only native probes, cache freshness, and
+provenance.
+
+Codex native discovery uses app-server `model/list` and does not start an agent
+turn. Claude local enumeration is explicitly unsupported until Claude Code
+exposes a stable machine-readable interface.
+
+The model-worker provider matrix deploys only generated files into temporary
+workspaces. It validates exact native model fields for Claude, Codex, Copilot,
+Cursor, Factory, and OpenCode; semantic OpenHuman hints; and honest
+inherited/global/unsupported degradation for OpenClaw, Warp, Windsurf, and
+Hermes. It never launches a provider or spends model tokens.
 
 ## Opt-in live smoke
 
@@ -38,7 +57,7 @@ created with no-overwrite semantics.
 
 ```bash
 AIWG_MODEL_LIVE_SMOKE=1 \
-AIWG_MODEL_SMOKE_RESOLVED_MODEL=gpt-5.1-codex-mini \
+AIWG_MODEL_SMOKE_RESOLVED_MODEL=gpt-5.4-mini \
 node tools/models/live-smoke.mjs \
   --provider codex \
   --budget-usd 0.05 \

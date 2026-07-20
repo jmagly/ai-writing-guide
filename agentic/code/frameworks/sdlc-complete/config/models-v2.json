@@ -90,34 +90,31 @@
           "default": "gpt-5.4",
           "aliases": ["gpt5.4", "openai-reasoning", "gpt-5.3-codex"],
           "capabilities": ["reasoning", "code-generation", "vision", "tool-use"],
-          "contextWindow": 256000,
-          "costPer1kTokens": { "input": 0.01, "output": 0.04 }
+          "contextWindow": 272000
         },
         "coding": {
-          "default": "gpt-5.3-codex",
-          "aliases": ["codex", "openai-coding", "gpt5.3-codex"],
+          "default": "gpt-5.5",
+          "aliases": ["codex", "openai-coding", "gpt5.5", "gpt5.3-codex"],
           "capabilities": ["code-generation", "reasoning", "tool-use"],
-          "contextWindow": 192000,
-          "costPer1kTokens": { "input": 0.01, "output": 0.04 }
+          "contextWindow": 272000
         },
         "efficiency": {
-          "default": "gpt-5.1-codex-mini",
-          "aliases": ["gpt5.1-codex-mini", "openai-fast", "codex-mini"],
+          "default": "gpt-5.4-mini",
+          "aliases": ["gpt5.4-mini", "gpt5.1-codex-mini", "openai-fast", "codex-mini"],
           "capabilities": ["fast-response", "code-generation"],
-          "contextWindow": 192000,
-          "costPer1kTokens": { "input": 0.001, "output": 0.004 }
+          "contextWindow": 272000
         }
       },
       "tierOverrides": {
         "max-quality": {
           "reasoning": "gpt-5.4",
           "coding": "gpt-5.4",
-          "efficiency": "gpt-5.3-codex"
+          "efficiency": "gpt-5.5"
         },
         "premium": {
           "reasoning": "gpt-5.4",
-          "coding": "gpt-5.3-codex",
-          "efficiency": "gpt-5.1-codex-mini"
+          "coding": "gpt-5.5",
+          "efficiency": "gpt-5.4-mini"
         }
       }
     },

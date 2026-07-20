@@ -69,7 +69,10 @@
     "consortium-coordinator",
     "self-debug",
     "aiwg-steward",
-    "aiwg-finder"
+    "aiwg-finder",
+    "aiwg-model-reasoning-worker",
+    "aiwg-model-coding-worker",
+    "aiwg-model-efficiency-worker"
   ],
   "skills": [
     "project-awareness",

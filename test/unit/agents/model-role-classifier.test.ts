@@ -93,8 +93,8 @@ describe('shared deployment role classification', () => {
 
     expect(new Set(deployedModels)).toEqual(new Set([
       'gpt-5.4',
-      'gpt-5.3-codex',
-      'gpt-5.1-codex-mini',
+      'gpt-5.5',
+      'gpt-5.4-mini',
     ]));
   });
 });

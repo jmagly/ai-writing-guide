@@ -19,6 +19,7 @@
 import realFs from 'fs';
 import { createRequire } from 'module';
 const _require = createRequire(import.meta.url);
+const staticModelCatalog = _require('../../../agentic/code/providers/model-catalog.v1.json');
 let fs;
 try { const gfs = _require('graceful-fs'); gfs.gracefulify(realFs); fs = realFs; } catch { fs = realFs; }
 import path from 'path';
@@ -45,9 +46,11 @@ import {
   listOnDemandRuleFiles,
   writeOnDemandRuleIndex,
   cleanupOldRuleFiles,
+  loadRuntimeModelCatalog,
   filterCommandsAgainstSkills,
   deploySoulCompanions
 } from './base.mjs';
+const modelCatalog = loadRuntimeModelCatalog(staticModelCatalog);
 
 // ============================================================================
 // Provider Configuration
@@ -116,9 +119,9 @@ export const capabilities = {
  */
 export function mapModel(originalModel, modelCfg, modelsConfig) {
   const opencodeModels = {
-    'opus': 'anthropic/claude-opus-4-6',
-    'sonnet': 'anthropic/claude-sonnet-4-6',
-    'haiku': 'anthropic/claude-haiku-4-5-20251001'
+    'opus': modelCatalog.providers.opencode.roles.reasoning.id,
+    'sonnet': modelCatalog.providers.opencode.roles.coding.id,
+    'haiku': modelCatalog.providers.opencode.roles.efficiency.id
   };
 
   // Handle override models first
