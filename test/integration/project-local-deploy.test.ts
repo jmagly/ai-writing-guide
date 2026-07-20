@@ -174,7 +174,7 @@ describe('project-local deploy integration (#1046)', () => {
     const result = runDeploy(env, 'codex');
     expect(result.status, result.stdout).toBe(0);
 
-    const agentFile = path.join(env.projectDir, '.codex', 'agents', 'pl-agent.md');
+    const agentFile = path.join(env.projectDir, '.codex', 'agents', 'pl-agent.toml');
     const ruleFile = path.join(env.projectDir, '.codex', 'rules', 'pl-rule.md');
     expect(existsSync(agentFile), `codex agent should exist at ${agentFile}`).toBe(true);
     expect(existsSync(ruleFile), `codex rule should exist at ${ruleFile}`).toBe(true);

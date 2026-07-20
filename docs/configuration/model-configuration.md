@@ -4,6 +4,23 @@
 
 AIWG uses a configurable model mapping system that allows users to specify which AI models to use for different agent roles without modifying deployment scripts or documentation.
 
+The current provider-aware contract separates three concerns:
+
+- canonical policy: `model-role`, `model-tier`, optional `model-effort`, and an
+  exceptional exact `model-override`;
+- provider capabilities:
+  `agentic/code/providers/model-capabilities.v1.json`; and
+- volatile exact identifiers:
+  `agentic/code/providers/model-catalog.v1.json`.
+
+Provider compilation reports one of `native`, `compiled`, `inherited`,
+`global-only`, `informational`, or `unsupported`. An unsupported field is
+omitted rather than copied into an artifact that ignores it.
+
+The versioned schemas are under `schemas/models/`. Project/user compatibility
+input still accepts `max-quality` for one migration window, but canonical
+policy uses `premium`.
+
 ## Configuration File Location
 
 Models are defined in `models.json` files with the following priority:
@@ -83,6 +100,23 @@ An explicit identifier outside a recognized family remains `unknown`. Role
 filters do not silently include it in the coding population, and provider
 transforms preserve it instead of rewriting it as a coding model. Omitted model
 metadata retains the legacy coding default during deployment.
+
+## Provider compilation examples
+
+Codex agents compile to standalone `.codex/agents/*.toml` files. Every file has
+the required `name`, `description`, and `developer_instructions` fields; native
+model controls use `model` and `model_reasoning_effort`. Codex skills have no
+documented per-skill model field, so AIWG reports that policy as `unsupported`
+and does not emit a pretend pin.
+
+Warp and Hermes can apply run-wide or global delegation policy but cannot
+enforce heterogeneous per-agent files. Their per-agent result is
+`global-only`. Windsurf currently has no supported portable child selector, so
+its per-agent result is `unsupported`.
+
+`aiwg doctor --provider <name>` reports canonical agent counts and the target
+surface separately. It does not describe skills as pinned when the provider
+cannot enforce skill-local model selection.
 
 ### Reasoning (opus)
 **Use for:** Complex analysis, critical decisions, strategic planning

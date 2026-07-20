@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/models/model-policy.v1.schema.json",
+  "title": "AIWG canonical model policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["role", "tier"],
+  "properties": {
+    "role": { "enum": ["efficiency", "coding", "reasoning"] },
+    "tier": { "enum": ["economy", "standard", "premium"] },
+    "effort": { "enum": ["minimal", "low", "medium", "high", "xhigh"] },
+    "override": { "type": "string", "minLength": 1 }
+  }
+}

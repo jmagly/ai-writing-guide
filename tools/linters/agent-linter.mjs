@@ -25,6 +25,7 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join, basename, dirname, relative } from 'path';
 import { fileURLToPath } from 'url';
+import { classifyModelRole } from '../agents/providers/model-role.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -309,13 +310,14 @@ function checkRecovery(frontmatter, body, filepath) {
 function checkModelTier(frontmatter, body, filepath) {
   const findings = [];
   const model = (frontmatter.model || '').toLowerCase();
+  const explicitTier = (frontmatter['model-tier'] || '').toLowerCase();
+  const role = classifyModelRole(model);
   const description = (frontmatter.description || '').toLowerCase();
-  const tools = (frontmatter.tools || '').toLowerCase();
 
-  if (!model) {
+  if (!model && !explicitTier) {
     findings.push({
-      message: 'No model tier specified',
-      suggestion: 'Add model: haiku|sonnet|opus based on task complexity'
+      message: 'No model policy specified',
+      suggestion: 'Add provider-neutral model-role and model-tier metadata'
     });
     return findings;
   }
@@ -327,25 +329,17 @@ function checkModelTier(frontmatter, body, filepath) {
   const isComplex = complexTerms.some(t => description.includes(t));
   const isSimple = simpleTerms.some(t => description.includes(t));
 
-  if (model === 'opus' && isSimple && !isComplex) {
+  if ((role === 'reasoning' || explicitTier === 'premium') && isSimple && !isComplex) {
     findings.push({
-      message: 'Using opus for potentially simple task',
-      suggestion: 'Consider haiku or sonnet for validation/formatting tasks'
+      message: 'Using premium/reasoning policy for potentially simple task',
+      suggestion: 'Consider model-tier: economy or standard for bounded validation/formatting tasks'
     });
   }
 
-  if (model === 'haiku' && isComplex) {
+  if ((role === 'efficiency' || explicitTier === 'economy') && isComplex) {
     findings.push({
-      message: 'Using haiku for potentially complex task',
-      suggestion: 'Consider sonnet or opus for architecture/security analysis'
-    });
-  }
-
-  // Check if Task tool used (orchestrator) should be opus
-  if (tools.includes('task') && model !== 'opus') {
-    findings.push({
-      message: 'Orchestrator agents (using Task tool) typically need opus tier',
-      suggestion: 'Consider model: opus for multi-agent coordination'
+      message: 'Using economy/efficiency policy for potentially complex task',
+      suggestion: 'Consider model-tier: standard or premium with a quality/risk rationale'
     });
   }
 

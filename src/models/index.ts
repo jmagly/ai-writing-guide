@@ -41,6 +41,9 @@ export type {
   ValidationResult,
   ModelRouteRequest,
   ModelRouteDecision,
+  CanonicalModelPolicy,
+  ModelCompilationOutcome,
+  ModelEffort,
 } from './types.js';
 
 // Export ConfigLoader
@@ -52,3 +55,24 @@ export { ModelResolver } from './resolver.js';
 
 // Export provider-neutral runtime tier routing primitive
 export { routeModelTier } from './router.js';
+
+export {
+  compileModelPolicy,
+  loadProviderModelCapabilities,
+  loadProviderModelCatalog,
+  renderCodexAgentToml,
+  resetModelPolicyCachesForTests,
+  validateCanonicalModelPolicy,
+  validateUserProjectModelConfig,
+} from './provider-policy.js';
+export type {
+  CodexAgentDefinition,
+  CompiledModelPolicy,
+  CompileModelPolicyInput,
+  ModelDiagnostic,
+  ModelDiagnosticSeverity,
+  ModelPolicyProvider,
+  ProviderModelCapability,
+  ProviderModelCapabilityRegistry,
+  ProviderModelCatalog,
+} from './provider-policy.js';

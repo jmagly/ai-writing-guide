@@ -9,6 +9,18 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Provider model capability registry and schemas** (#1802, #1805) — a dated
+  11-provider registry now records agent, skill, and global child controls,
+  identifier syntax, inheritance, fallback, configuration targets, and
+  verification methods. Exact model IDs live in a separately refreshable
+  catalog with status, observation, and staleness metadata. Versioned schemas
+  cover canonical policy, capabilities, catalog mappings, and compatibility
+  input.
+- **Typed model-policy compiler diagnostics** (#1802, #1805) — provider
+  compilation reports `native`, `compiled`, `inherited`, `global-only`,
+  `informational`, or `unsupported`, omits unenforceable fields, and emits
+  stable diagnostic codes for unsupported surfaces, effort degradation,
+  unverified/deprecated overrides, and stale catalogs.
 - **Tracker label taxonomy and workflow semantics** (#1789) — project config can
   map stable semantic roles to Gitea, GitHub, and local label names, including
   human/blocking and resume behavior. Read-only validation reports missing,
@@ -38,6 +50,16 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Fixed
 
+- **Native Codex custom-agent output** (#1802) — Codex deployment emits valid
+  standalone `.codex/agents/*.toml` definitions with required identity and
+  instruction fields plus native `model` and `model_reasoning_effort` controls,
+  sourced from the refreshable model catalog.
+- **Provider-aware model doctor and lint** (#1805) — doctor distinguishes
+  enforceable agent policy from unsupported skill policy, counts Codex TOML
+  agents, and the agent linter recognizes pinned family IDs without prescribing
+  premium solely because an agent can delegate.
+- **Numeric model-tier mapping** (#1185, #1805) — runtime Tier 1 maps to
+  `economy`, Tier 2 to `standard`, and Tier 3 to `premium`.
 - **Pinned model role classification** (#1801) — Codex, Claude Code, and Warp
   deployment transforms plus role-filtered deployment now share one classifier
   for aliases, pinned Claude-family IDs, and provider-qualified IDs. Explicit

@@ -18,9 +18,9 @@ import type {
 
 const RUNTIME_TO_MODEL_TIER: Record<RuntimeModelTier, ModelTier | null> = {
   0: null,
-  1: 'standard',
-  2: 'premium',
-  3: 'max-quality',
+  1: 'economy',
+  2: 'standard',
+  3: 'premium',
 };
 
 function clampRuntimeTier(tier: RuntimeModelTier | undefined, fallback: RuntimeModelTier): RuntimeModelTier {

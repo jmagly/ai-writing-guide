@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/models/provider-model-capabilities.v1.schema.json",
+  "title": "AIWG provider model capability registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "verifiedAt", "providers"],
+  "properties": {
+    "version": { "const": "1.0.0" },
+    "verifiedAt": { "type": "string", "format": "date" },
+    "providers": {
+      "type": "object",
+      "minProperties": 11,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["agent", "skill", "globalChild", "identifierSyntax", "inheritance", "invalidPinFallback", "configTarget", "artifactFormat", "verification", "sourceUrl", "verifiedAt"],
+        "properties": {
+          "agent": { "$ref": "#/$defs/control" },
+          "skill": { "$ref": "#/$defs/control" },
+          "globalChild": { "$ref": "#/$defs/control" },
+          "identifierSyntax": { "type": "string", "minLength": 1 },
+          "effortValues": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "inheritance": { "type": "string", "minLength": 1 },
+          "invalidPinFallback": { "type": "string", "minLength": 1 },
+          "configTarget": { "type": "string", "minLength": 1 },
+          "artifactFormat": { "type": "string", "minLength": 1 },
+          "verification": { "type": "string", "minLength": 1 },
+          "sourceUrl": { "type": "string", "format": "uri" },
+          "verifiedAt": { "type": "string", "format": "date" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "control": {
+      "enum": ["native", "compiled", "inherited", "global-only", "informational", "unsupported"]
+    }
+  }
+}

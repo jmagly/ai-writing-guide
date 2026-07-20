@@ -15,7 +15,7 @@ const targetModels = {
 };
 
 function agent(model: string): string {
-  return `---\nname: fixture\nmodel: ${model}\n---\n\nFixture\n`;
+  return `---\nname: fixture\ndescription: Fixture agent\nmodel: ${model}\n---\n\nFixture instructions\n`;
 }
 
 describe('classifyModelRole', () => {
@@ -72,10 +72,13 @@ describe('shared deployment role classification', () => {
     ['claude', (content: string) => claudeTransform(content, targetModels)],
     ['warp', (content: string) => warpTransform(content, targetModels)],
   ])('%s transforms pinned families distinctly and preserves unknown IDs', (_provider, transform) => {
-    expect(transform(agent('claude-opus-4-7'))).toContain('model: reasoning-target');
-    expect(transform(agent('claude-sonnet-4-6'))).toContain('model: coding-target');
-    expect(transform(agent('claude-haiku-4-5'))).toContain('model: efficiency-target');
-    expect(transform(agent('vendor/new-model'))).toContain('model: vendor/new-model');
+    const expectedModel = (value: string) => _provider === 'codex'
+      ? `model = "${value}"`
+      : `model: ${value}`;
+    expect(transform(agent('claude-opus-4-7'))).toContain(expectedModel('reasoning-target'));
+    expect(transform(agent('claude-sonnet-4-6'))).toContain(expectedModel('coding-target'));
+    expect(transform(agent('claude-haiku-4-5'))).toContain(expectedModel('efficiency-target'));
+    expect(transform(agent('vendor/new-model'))).toContain(expectedModel('vendor/new-model'));
   });
 
   it('keeps the Codex fixture distribution split across all three roles', () => {
@@ -85,7 +88,7 @@ describe('shared deployment role classification', () => {
       'claude-haiku-4-5',
     ].map(model => {
       const transformed = codexTransform('fixture.md', agent(model), {});
-      return transformed.match(/^model:\s*(.+)$/m)?.[1];
+      return transformed.match(/^model\s*[=:]\s*\"?([^\"\n]+)\"?$/m)?.[1];
     });
 
     expect(new Set(deployedModels)).toEqual(new Set([

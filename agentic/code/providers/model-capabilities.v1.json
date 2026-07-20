@@ -1,0 +1,120 @@
+{
+  "$schema": "../../../schemas/models/provider-model-capabilities.v1.schema.json",
+  "version": "1.0.0",
+  "verifiedAt": "2026-07-20",
+  "providers": {
+    "claude": {
+      "agent": "native", "skill": "native", "globalChild": "inherited",
+      "identifierSyntax": "Claude alias or accepted Anthropic model ID",
+      "effortValues": ["low", "medium", "high"],
+      "inheritance": "Omitted agent or skill fields inherit the invoking session",
+      "invalidPinFallback": "Provider validation/error; never assume fallback",
+      "configTarget": ".claude/agents/*.md and skill SKILL.md frontmatter",
+      "artifactFormat": "YAML frontmatter plus Markdown",
+      "verification": "Inspect deployed frontmatter and bounded invocation metadata",
+      "sourceUrl": "https://code.claude.com/docs/en/sub-agents", "verifiedAt": "2026-07-20"
+    },
+    "codex": {
+      "agent": "native", "skill": "unsupported", "globalChild": "inherited",
+      "identifierSyntax": "Codex model slug accepted by config.toml",
+      "effortValues": ["minimal", "low", "medium", "high", "xhigh"],
+      "inheritance": "Omitted model and model_reasoning_effort inherit the parent session",
+      "invalidPinFallback": "Strict config or runtime validation; never assume fallback",
+      "configTarget": ".codex/agents/*.toml",
+      "artifactFormat": "Standalone TOML custom-agent configuration",
+      "verification": "Parse TOML and load in Codex custom-agent registry",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/subagents", "verifiedAt": "2026-07-20"
+    },
+    "copilot": {
+      "agent": "native", "skill": "unsupported", "globalChild": "inherited",
+      "identifierSyntax": "Current Copilot custom-agent model identifier",
+      "inheritance": "Omitted model uses session or Auto selection",
+      "invalidPinFallback": "Plan/admin/catalog dependent; report unresolved",
+      "configTarget": ".github/agents/*.agent.md",
+      "artifactFormat": "YAML frontmatter plus Markdown",
+      "verification": "Schema fixture and entitled Copilot invocation",
+      "sourceUrl": "https://docs.github.com/en/copilot/reference/custom-agents-configuration", "verifiedAt": "2026-07-20"
+    },
+    "cursor": {
+      "agent": "native", "skill": "unsupported", "globalChild": "inherited",
+      "identifierSyntax": "Cursor-supported exact model ID",
+      "inheritance": "Omitted model inherits parent selection",
+      "invalidPinFallback": "Plan/admin fallback may apply; record observed result",
+      "configTarget": ".cursor/agents/*.md",
+      "artifactFormat": "YAML frontmatter plus Markdown",
+      "verification": "Schema fixture and entitled Cursor invocation",
+      "sourceUrl": "https://cursor.com/docs/subagents", "verifiedAt": "2026-07-20"
+    },
+    "factory": {
+      "agent": "native", "skill": "informational", "globalChild": "native",
+      "identifierSyntax": "Factory model ID or Light/Medium/Heavy complexity",
+      "effortValues": ["low", "medium", "high"],
+      "inheritance": "Droid may inherit org/session model policy",
+      "invalidPinFallback": "Organization policy may substitute; record observed result",
+      "configTarget": ".factory/droids/*.md and Factory settings",
+      "artifactFormat": "YAML frontmatter plus Markdown",
+      "verification": "Fixture validation and Factory CLI model report",
+      "sourceUrl": "https://docs.factory.ai/cli/configuration/custom-droids", "verifiedAt": "2026-07-20"
+    },
+    "opencode": {
+      "agent": "native", "skill": "unsupported", "globalChild": "inherited",
+      "identifierSyntax": "provider/model-id",
+      "inheritance": "Omitted agent model inherits global primary model",
+      "invalidPinFallback": "Installed provider catalog determines error/fallback",
+      "configTarget": ".opencode/agent/*.md",
+      "artifactFormat": "YAML frontmatter plus Markdown",
+      "verification": "Inspect artifact and OpenCode model registry",
+      "sourceUrl": "https://opencode.ai/docs/agents", "verifiedAt": "2026-07-20"
+    },
+    "warp": {
+      "agent": "global-only", "skill": "unsupported", "globalChild": "native",
+      "identifierSyntax": "Warp saved-profile or run model identifier",
+      "inheritance": "All delegated work uses run/profile selection",
+      "invalidPinFallback": "Profile availability dependent",
+      "configTarget": "Warp agent profile or run configuration",
+      "artifactFormat": "Saved profile / run control plane",
+      "verification": "Inspect active profile and run metadata",
+      "sourceUrl": "https://docs.warp.dev/agent-platform/capabilities/agent-profiles-permissions", "verifiedAt": "2026-07-20"
+    },
+    "windsurf": {
+      "agent": "unsupported", "skill": "unsupported", "globalChild": "inherited",
+      "identifierSyntax": "UI-selected provider model",
+      "inheritance": "Child behavior follows the main UI session",
+      "invalidPinFallback": "No portable custom-child selector",
+      "configTarget": "No supported portable artifact field",
+      "artifactFormat": "Informational policy only",
+      "verification": "Assert unsupported fields are omitted",
+      "sourceUrl": "https://docs.devin.ai/desktop/cascade/skills", "verifiedAt": "2026-07-20"
+    },
+    "openclaw": {
+      "agent": "native", "skill": "unsupported", "globalChild": "native",
+      "identifierSyntax": "Configured provider/model identifier",
+      "inheritance": "Per-agent or per-spawn override falls back to global subagent model",
+      "invalidPinFallback": "Provider/account fallback must be observed",
+      "configTarget": "OpenClaw subagent configuration",
+      "artifactFormat": "JSON/JSONC runtime configuration",
+      "verification": "Inspect resolved subagent metadata",
+      "sourceUrl": "https://docs.openclaw.ai/tools/subagents", "verifiedAt": "2026-07-20"
+    },
+    "hermes": {
+      "agent": "global-only", "skill": "unsupported", "globalChild": "native",
+      "identifierSyntax": "Hermes delegation provider and model",
+      "inheritance": "All delegated workers share one configured model",
+      "invalidPinFallback": "Provider resolution is global; report actual model",
+      "configTarget": "Hermes delegation configuration",
+      "artifactFormat": "Global CLI/config setting",
+      "verification": "Inspect Hermes delegation configuration",
+      "sourceUrl": "https://hermes-agent.nousresearch.com/docs/user-guide/features/delegation", "verifiedAt": "2026-07-20"
+    },
+    "openhuman": {
+      "agent": "compiled", "skill": "unsupported", "globalChild": "inherited",
+      "identifierSyntax": "Inherit, Exact(model), or semantic Hint",
+      "inheritance": "Inherit delegates selection to router/provider defaults",
+      "invalidPinFallback": "Exact pins validate; semantic hints route dynamically",
+      "configTarget": "OpenHuman agent TOML",
+      "artifactFormat": "Standalone TOML agent definition",
+      "verification": "Parse against OpenHuman definition schema",
+      "sourceUrl": "https://github.com/tinyhumansai/openhuman/blob/main/src/openhuman/agent/harness/definition.rs", "verifiedAt": "2026-07-20"
+    }
+  }
+}

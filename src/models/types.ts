@@ -56,7 +56,36 @@ export type ModelRole = 'reasoning' | 'coding' | 'efficiency';
 /**
  * AI provider identifier
  */
-export type Provider = 'claude' | 'openai' | 'factory' | 'copilot' | 'windsurf' | 'opencode';
+export type Provider =
+  | 'claude'
+  | 'codex'
+  | 'copilot'
+  | 'cursor'
+  | 'factory'
+  | 'hermes'
+  | 'opencode'
+  | 'openclaw'
+  | 'openhuman'
+  | 'openai'
+  | 'warp'
+  | 'windsurf';
+
+export type ModelEffort = 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
+
+export interface CanonicalModelPolicy {
+  role: ModelRole;
+  tier: ModelTier;
+  effort?: ModelEffort;
+  override?: string;
+}
+
+export type ModelCompilationOutcome =
+  | 'native'
+  | 'compiled'
+  | 'inherited'
+  | 'global-only'
+  | 'informational'
+  | 'unsupported';
 
 /**
  * Model capability flags

@@ -10,6 +10,7 @@ import { readFile } from 'fs/promises';
 import { resolve } from 'path';
 import { homedir } from 'os';
 import { existsSync } from 'fs';
+import { validateUserProjectModelConfig } from './provider-policy.js';
 import type {
   ModelConfig,
   ModelConfigV1,
@@ -96,10 +97,14 @@ export class ConfigLoader {
 
     try {
       const content = await readFile(this.locations.userConfig, 'utf-8');
-      return JSON.parse(content) as UserProjectConfig;
+      const parsed: unknown = JSON.parse(content);
+      const validation = validateUserProjectModelConfig(parsed);
+      if (!validation.valid) {
+        throw new Error(validation.diagnostics.map(item => `${item.code}: ${item.message}`).join('; '));
+      }
+      return parsed as UserProjectConfig;
     } catch (error) {
-      console.warn(`Warning: Failed to load user config: ${error}`);
-      return null;
+      throw new Error(`Invalid user model config ${this.locations.userConfig}: ${error}`);
     }
   }
 
@@ -113,10 +118,14 @@ export class ConfigLoader {
 
     try {
       const content = await readFile(this.locations.projectConfig, 'utf-8');
-      return JSON.parse(content) as UserProjectConfig;
+      const parsed: unknown = JSON.parse(content);
+      const validation = validateUserProjectModelConfig(parsed);
+      if (!validation.valid) {
+        throw new Error(validation.diagnostics.map(item => `${item.code}: ${item.message}`).join('; '));
+      }
+      return parsed as UserProjectConfig;
     } catch (error) {
-      console.warn(`Warning: Failed to load project config: ${error}`);
-      return null;
+      throw new Error(`Invalid project model config ${this.locations.projectConfig}: ${error}`);
     }
   }
 

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/models/model-catalog.v1.schema.json",
+  "title": "AIWG refreshable provider model catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "refreshedAt", "staleAfterDays", "providers"],
+  "properties": {
+    "version": { "const": "1.0.0" },
+    "refreshedAt": { "type": "string", "format": "date" },
+    "staleAfterDays": { "type": "integer", "minimum": 1 },
+    "providers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["roles", "sourceUrl", "verifiedAt"],
+        "properties": {
+          "roles": {
+            "type": "object",
+            "required": ["reasoning", "coding", "efficiency"],
+            "properties": {
+              "reasoning": { "$ref": "#/$defs/model" },
+              "coding": { "$ref": "#/$defs/model" },
+              "efficiency": { "$ref": "#/$defs/model" }
+            }
+          },
+          "sourceUrl": { "type": "string", "format": "uri" },
+          "verifiedAt": { "type": "string", "format": "date" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["active", "deprecated", "unverified"] },
+        "fallback": { "type": "string", "minLength": 1 },
+        "observed": { "type": "boolean" }
+      }
+    }
+  }
+}

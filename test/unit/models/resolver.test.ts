@@ -428,6 +428,20 @@ describe('ModelResolver', () => {
       expect(result).toBeDefined();
     });
   });
+
+  describe('semantic config validation', () => {
+    it('fails invalid project policy before resolution', async () => {
+      await writeFile(
+        resolve(testDir, 'models.json'),
+        JSON.stringify({ defaults: { provider: 'unknown-provider', tier: 'free' } }),
+        'utf-8',
+      );
+      resolver = new ModelResolver({}, testDir);
+      await expect(resolver.resolve('software-implementer')).rejects.toThrow(
+        /MODEL_POLICY_INVALID/,
+      );
+    });
+  });
 });
 
 describe('routeModelTier', () => {
@@ -443,11 +457,17 @@ describe('routeModelTier', () => {
   it('routes complex work to Tier 2 with an escalation summary requirement', () => {
     expect(routeModelTier({ defaultTier: 1, complex: true })).toMatchObject({
       tier: 2,
-      modelTier: 'premium',
+      modelTier: 'standard',
       summaryRequired: true,
       requiresConfirmation: false,
       source: 'complexity',
     });
+  });
+
+  it('maps numeric tiers to the public deterministic/economy/standard/premium taxonomy', () => {
+    expect(routeModelTier({ defaultTier: 1 }).modelTier).toBe('economy');
+    expect(routeModelTier({ defaultTier: 2 }).modelTier).toBe('standard');
+    expect(routeModelTier({ defaultTier: 3 }).modelTier).toBe('premium');
   });
 
   it('requires confirmation for high-impact or premium routing', () => {

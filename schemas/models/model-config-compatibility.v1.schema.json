@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/models/model-config-compatibility.v1.schema.json",
+  "title": "AIWG model configuration compatibility input",
+  "description": "Accepted project/user inputs during migration from legacy model aliases and max-quality.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tier": { "enum": ["economy", "standard", "premium", "max-quality"] },
+        "provider": {
+          "enum": ["claude", "codex", "copilot", "cursor", "factory", "hermes", "opencode", "openclaw", "openhuman", "warp", "windsurf"]
+        }
+      }
+    },
+    "agentOverrides": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "model-tier": { "enum": ["economy", "standard", "premium", "max-quality"] },
+          "model-override": { "type": "string", "minLength": 1 },
+          "rationale": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "customTiers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description", "costMultiplier", "roleMapping"],
+        "properties": {
+          "description": { "type": "string", "minLength": 1 },
+          "costMultiplier": { "type": "number", "minimum": 0 },
+          "roleMapping": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["reasoning", "coding", "efficiency"],
+            "properties": {
+              "reasoning": { "enum": ["reasoning", "coding", "efficiency"] },
+              "coding": { "enum": ["reasoning", "coding", "efficiency"] },
+              "efficiency": { "enum": ["reasoning", "coding", "efficiency"] }
+            }
+          }
+        }
+      }
+    },
+    "rationale": { "type": "string" }
+  }
+}
