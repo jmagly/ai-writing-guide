@@ -27,6 +27,7 @@ let fs;
 try { const gfs = _require('graceful-fs'); gfs.gracefulify(realFs); fs = realFs; } catch { fs = realFs; }
 import path from 'path';
 import { tmpdir } from 'os';
+import { classifyModelRole, modelForRole } from './model-role.mjs';
 import {
   ensureDir,
   listMdFiles,
@@ -120,14 +121,11 @@ export function replaceModelFrontmatter(content, models) {
 
   if (modelMatch) {
     const orig = modelMatch[1].trim();
-    const clean = orig.replace(/['"]/g, '');
-    let role = 'coding';
-    if (/^opus$/i.test(clean)) role = 'reasoning';
-    else if (/^haiku$/i.test(clean)) role = 'efficiency';
+    const role = classifyModelRole(orig);
 
     if (role === 'reasoning') newModel = models.reasoning;
     else if (role === 'efficiency') newModel = models.efficiency;
-    else newModel = models.coding;
+    else if (role === 'coding') newModel = models.coding;
   }
 
   if (!newModel) return content;
@@ -142,10 +140,11 @@ export function replaceModelFrontmatter(content, models) {
 export function mapModel(shorthand, modelCfg, modelsConfig) {
   // If overrides specified, use them
   if (modelCfg.reasoningModel || modelCfg.codingModel || modelCfg.efficiencyModel) {
-    const clean = (shorthand || 'sonnet').toLowerCase().replace(/['"]/g, '');
-    if (/opus/i.test(clean)) return modelCfg.reasoningModel || 'opus';
-    if (/haiku/i.test(clean)) return modelCfg.efficiencyModel || 'haiku';
-    return modelCfg.codingModel || 'sonnet';
+    return modelForRole(shorthand, {
+      reasoning: modelCfg.reasoningModel || 'opus',
+      coding: modelCfg.codingModel || 'sonnet',
+      efficiency: modelCfg.efficiencyModel || 'haiku',
+    }, { defaultRole: 'coding' }) ?? shorthand;
   }
 
   // No transformation needed for Claude - keep shorthand

@@ -36,6 +36,14 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   plan. Historical model-selection documents now identify unimplemented
   commands and stale assumptions.
 
+### Fixed
+
+- **Pinned model role classification** (#1801) — Codex, Claude Code, and Warp
+  deployment transforms plus role-filtered deployment now share one classifier
+  for aliases, pinned Claude-family IDs, and provider-qualified IDs. Explicit
+  unknown identifiers remain unknown instead of silently collapsing into the
+  coding population.
+
 ## [2026.7.13] - 2026-07-15 - "Complete provider context and release routing"
 
 This stable release makes aggregated provider context complete across

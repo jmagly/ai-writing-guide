@@ -34,6 +34,7 @@ try { const gfs = _require('graceful-fs'); gfs.gracefulify(realFs); fs = realFs;
 import path from 'path';
 import os from 'os';
 import { spawn } from 'child_process';
+import { classifyModelRole, modelForRole } from './model-role.mjs';
 import {
   ensureDir,
   listMdFiles,
@@ -119,19 +120,19 @@ export function mapModel(originalModel, modelCfg, modelsConfig) {
 
   // Handle override models first
   if (modelCfg.reasoningModel || modelCfg.codingModel || modelCfg.efficiencyModel) {
-    const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
-    if (/opus/i.test(clean)) return modelCfg.reasoningModel || gptModels.opus;
-    if (/haiku/i.test(clean)) return modelCfg.efficiencyModel || gptModels.haiku;
-    return modelCfg.codingModel || gptModels.sonnet;
+    const mapped = modelForRole(originalModel, {
+      reasoning: modelCfg.reasoningModel || gptModels.opus,
+      coding: modelCfg.codingModel || gptModels.sonnet,
+      efficiency: modelCfg.efficiencyModel || gptModels.haiku,
+    }, { defaultRole: 'coding' });
+    return mapped ?? originalModel;
   }
 
-  const clean = (originalModel || 'sonnet').toLowerCase().replace(/['"]/g, '');
-
-  for (const [key, value] of Object.entries(gptModels)) {
-    if (clean.includes(key)) return value;
-  }
-
-  return gptModels.sonnet; // default
+  return modelForRole(originalModel, {
+    reasoning: gptModels.opus,
+    coding: gptModels.sonnet,
+    efficiency: gptModels.haiku,
+  }, { defaultRole: 'coding' }) ?? originalModel;
 }
 
 /**
@@ -151,14 +152,11 @@ function replaceModelFrontmatter(content, models) {
 
   if (modelMatch) {
     const orig = modelMatch[1].trim();
-    const clean = orig.replace(/['"]/g, '');
-    let role = 'coding';
-    if (/^opus$/i.test(clean)) role = 'reasoning';
-    else if (/^haiku$/i.test(clean)) role = 'efficiency';
+    const role = classifyModelRole(orig);
 
     if (role === 'reasoning') newModel = models.reasoning;
     else if (role === 'efficiency') newModel = models.efficiency;
-    else newModel = models.coding;
+    else if (role === 'coding') newModel = models.coding;
   }
 
   if (!newModel) return content;

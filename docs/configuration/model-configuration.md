@@ -70,6 +70,20 @@ Models are defined in `models.json` files with the following priority:
 
 ## Model Roles
 
+AIWG classifies both the legacy aliases and pinned or provider-qualified
+Claude-family identifiers consistently:
+
+| Canonical family | Role | Recognized examples |
+|---|---|---|
+| Opus | reasoning | `opus`, `claude-opus-4-7`, `anthropic/claude-opus-4-6` |
+| Sonnet | coding | `sonnet`, `claude-sonnet-4-6`, `anthropic/claude-sonnet-4-6` |
+| Haiku | efficiency | `haiku`, `claude-haiku-4-5`, `anthropic/claude-haiku-4-5` |
+
+An explicit identifier outside a recognized family remains `unknown`. Role
+filters do not silently include it in the coding population, and provider
+transforms preserve it instead of rewriting it as a coding model. Omitted model
+metadata retains the legacy coding default during deployment.
+
 ### Reasoning (opus)
 **Use for:** Complex analysis, critical decisions, strategic planning
 

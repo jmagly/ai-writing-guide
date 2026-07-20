@@ -10,6 +10,7 @@
 
 import realFs from 'fs';
 import path from 'path';
+import { classifyModelRole } from './model-role.mjs';
 import { createHash } from 'crypto';
 import { createRequire } from 'module';
 import { execSync as nodeExecSync } from 'child_process';
@@ -1704,15 +1705,6 @@ export function createAgentsMdFromTemplate(target, srcRoot, templateSubpath, dry
 // ============================================================================
 
 /**
- * Role mapping from model shorthand to role name
- */
-const MODEL_TO_ROLE = {
-  'opus': 'reasoning',
-  'sonnet': 'coding',
-  'haiku': 'efficiency'
-};
-
-/**
  * Check if an agent should be deployed based on filter options
  * @param {string} agentPath - Path to agent file
  * @param {object} metadata - Parsed frontmatter metadata
@@ -1727,8 +1719,7 @@ export function shouldDeployAgent(agentPath, metadata, opts) {
 
   // Filter by role (model tier)
   if (filterRole) {
-    const model = (metadata.model || 'sonnet').toLowerCase();
-    const role = MODEL_TO_ROLE[model] || 'coding';
+    const role = classifyModelRole(metadata.model, { defaultRole: 'coding' });
     if (role !== filterRole.toLowerCase()) {
       return false;
     }
