@@ -1408,7 +1408,7 @@ If you want the old hard-error-on-missing-completion behavior, pass `--no-infer-
 
 ### Companion: research-papers corpus
 
-The AIWG research corpus at `git@git.integrolabs.net:roctinam/research-papers.git` gained REF-909 and REF-910 as the load-bearing citations for the new `auto-compact-continue` rule. Both are GRADE LOW (vendor documentation) but authoritative for Claude-specific patterns and reflect production experience from the Claude Code team.
+The AIWG research corpus at `git@git.integrolabs.net:section9/research-papers.git` gained REF-909 and REF-910 as the load-bearing citations for the new `auto-compact-continue` rule. Both are GRADE LOW (vendor documentation) but authoritative for Claude-specific patterns and reflect production experience from the Claude Code team.
 
 ### Links
 
