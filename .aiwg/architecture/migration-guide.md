@@ -1,8 +1,15 @@
 # Migration Guide: Enhanced Model Selection System
 
 **Version**: 1.0.0
-**Status**: Proposed
+**Status**: Historical draft — commands below are not implemented
 **Date**: 2025-12-12
+
+> **2026-07-20 audit note:** Do not run this document as an operational
+> migration procedure. `aiwg models`, `--model-tier`, and `migrate-agents` are
+> not implemented in the production deploy path. The supported migration is
+> being replanned under Gitea #1185; see
+> [ADR-015](ADR-015-enhanced-model-selection.md) and the
+> [remediation plan](../planning/model-routing-remediation-plan.md).
 
 ## Overview
 

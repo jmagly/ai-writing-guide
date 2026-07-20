@@ -27,6 +27,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   `aiwg use` refreshes it, ownership markers make stale pruning safe, and
   `aiwg doctor --project-local` validates source and deployment drift.
 
+### Changed
+
+- **Provider-aware cheap-first model-routing plan** (#1185, #1801–#1807) —
+  ADR-015 now separates stable role/tier/effort intent from volatile provider
+  model IDs, defines explicit native/degraded compilation semantics, and pairs
+  the cross-provider audit with a staged implementation and conformance-test
+  plan. Historical model-selection documents now identify unimplemented
+  commands and stale assumptions.
+
 ## [2026.7.13] - 2026-07-15 - "Complete provider context and release routing"
 
 This stable release makes aggregated provider context complete across

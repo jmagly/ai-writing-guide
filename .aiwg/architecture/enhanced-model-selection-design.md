@@ -1,9 +1,18 @@
 # Enhanced Model Selection System - Architectural Design
 
 **Version**: 1.0.0
-**Status**: Proposed
+**Status**: Historical draft — superseded by the revised ADR-015
 **Author**: Architecture Designer Agent
 **Date**: 2025-12-12
+
+> **2026-07-20 audit note:** This document describes an uncompleted design.
+> `aiwg models`, `--model-tier`, provider-wide v2 resolution, and the migration
+> commands shown below are not production features. Its provider mappings and
+> exact model IDs are stale. Use
+> [ADR-015](ADR-015-enhanced-model-selection.md), the
+> [audit](../reports/model-routing-audit-2026-07-20.md), and the
+> [remediation plan](../planning/model-routing-remediation-plan.md) as the
+> current decision and implementation baseline.
 
 ## Table of Contents
 

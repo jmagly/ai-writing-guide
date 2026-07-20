@@ -11,6 +11,11 @@ This document consolidates the implementation plans for three major features tha
 | **Enhanced Model Selection** | Flexible model tier system | Medium |
 | **Model Catalog** | Living database of AI models with auto-refresh | Medium |
 
+> **Model-selection status (2026-07-20):** The resolver/router foundation is
+> partial and disconnected from deployment. The commands and tier flags listed
+> in this roadmap are planned, not available. Current work is tracked by Gitea
+> #1185 and [the provider-aware remediation plan](model-routing-remediation-plan.md).
+
 ## Architecture Documents
 
 | Feature | ADR | Design Doc |
