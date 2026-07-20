@@ -65,6 +65,8 @@
     "models/gpt-optimization",
     "models/local-models",
     "models/hybrid-architectures",
+    "models/model-discovery-provider-decisions",
+    "architecture/adr-optional-model-catalog-feed",
     "prompting",
     "prompting/chain-of-thought",
     "prompting/context-optimization",
@@ -681,6 +683,20 @@
       "title": "Hybrid Architectures",
       "summary": "Multi-model routing strategies",
       "file": "models/hybrid-architectures.md",
+      "parent": "models"
+    },
+    {
+      "id": "models/model-discovery-provider-decisions",
+      "title": "Provider Model Discovery",
+      "summary": "Native model-list interfaces, scopes, and unsupported-provider decisions",
+      "file": "models/model-discovery-provider-decisions.md",
+      "parent": "models"
+    },
+    {
+      "id": "architecture/adr-optional-model-catalog-feed",
+      "title": "Public Model Feed Decision",
+      "summary": "Why AIWG does not currently operate a hosted nightly model catalog",
+      "file": "architecture/adr-optional-model-catalog-feed.md",
       "parent": "models"
     },
     {
