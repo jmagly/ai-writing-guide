@@ -49,6 +49,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Changed
 
+- **Cheap-first canonical model policy** (#1806) — 358 unique agent and
+  isolated-skill artifacts are now inventoried once across 741 source/mirror
+  files. Governed defaults are 77.2% economy, 18.9% standard, and 3.9%
+  allowlisted premium; every premium default has a reviewed risk rationale.
+  CI enforces metadata, duplicate consistency, distribution, exact-ID,
+  rationale, and representative-evaluation gates.
 - **Provider-aware cheap-first model-routing plan** (#1185, #1801–#1807) —
   ADR-015 now separates stable role/tier/effort intent from volatile provider
   model IDs, defines explicit native/degraded compilation semantics, and pairs

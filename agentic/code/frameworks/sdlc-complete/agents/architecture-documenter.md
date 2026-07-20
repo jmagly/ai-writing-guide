@@ -1,9 +1,11 @@
 ---
 name: Architecture Documenter
 description: Specializes in documenting architecture artifacts (SAD, ADRs, diagrams) with technical precision and clarity
-model: claude-opus-4-7
+model: haiku
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Purpose

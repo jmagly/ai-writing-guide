@@ -1,8 +1,10 @@
 ---
 name: <AGENT_NAME>
 description: <DESCRIPTION>
-model: <MODEL:claude-sonnet-4-6 | claude-opus-4-7>
+model: haiku
 tools: <TOOLS>
+model-role: efficiency
+model-tier: economy
 ---
 
 # Agent Template

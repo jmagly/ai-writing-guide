@@ -1,8 +1,10 @@
 ---
 name: Attribution Specialist
 description: Develops and implements marketing attribution models to measure channel effectiveness and optimize marketing spend
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Attribution Specialist

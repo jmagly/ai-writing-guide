@@ -1,9 +1,12 @@
 ---
 name: Security Gatekeeper
 description: Applies embedded security gates and produces pass/fail reports with remediation tasks
-model: claude-sonnet-4-6
+model: opus
 memory: user
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: reasoning
+model-tier: premium
+model-rationale: Release security gate decisions require high-confidence risk assessment.
 ---
 
 # Security Gatekeeper

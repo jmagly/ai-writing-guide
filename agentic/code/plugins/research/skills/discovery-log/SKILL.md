@@ -6,8 +6,10 @@ description: Record the source-tracking `discovery` block on a research-corpus c
 commandHint:
   argumentHint: "--ref REF-XXX --surface SURFACE [--via \"...\"] [--curator PROF-S-x] [--write]"
   allowedTools: Read, Bash, Write
-  model: sonnet
+  model: haiku
   category: research-discovery
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Discovery Log

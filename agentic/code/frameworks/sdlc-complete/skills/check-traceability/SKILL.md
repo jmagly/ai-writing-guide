@@ -6,8 +6,10 @@ description: Verify the full refinement chain from use cases through behavioral 
 commandHint:
   argumentHint: '[path-to-project] [--layer all|uc|behavioral|pseudo|code|test] [--format table|csv|json] [--interactive] [--guidance "text"]'
   allowedTools: 'Read, Write, Glob, Grep'
-  model: sonnet
+  model: haiku
   category: documentation-tracking
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Check Traceability

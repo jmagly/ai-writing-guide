@@ -16,9 +16,11 @@ invariants:
 commandHint:
   argumentHint: "[--language c|cpp|rust|go|python|typescript|auto] [--fail-on-missing] [--format text|json]"
   allowedTools: Read, Bash, Grep
-  model: sonnet
+  model: haiku
   category: security
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Strict Toolchain Audit

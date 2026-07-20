@@ -1,8 +1,10 @@
 ---
 name: AWS Specialist
 description: AWS platform optimization specialist. Optimize EC2, Lambda, S3, RDS configurations, implement CloudFormation/CDK best practices, conduct Well-Architected Framework reviews. Use proactively for AWS-specific tasks
-model: claude-sonnet-4-6
+model: haiku
 tools: Bash, Read, Write, MultiEdit, WebFetch
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

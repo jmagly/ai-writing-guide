@@ -2,8 +2,10 @@
 name: Media Quality Assessor
 description: Scores media quality across audio, video, and uniqueness dimensions with configurable accept/reject thresholds
 category: media-curator
-model: claude-sonnet-4-6
+model: haiku
 allowed-tools: Bash, Read, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Quality Assessor

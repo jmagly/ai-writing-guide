@@ -6,8 +6,10 @@ description: Report which research-corpus radar sidecars are overdue for refresh
 commandHint:
   argumentHint: "[--stale-only] [--format table|csv|list] [--out PATH]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: research-radar
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Radar Status

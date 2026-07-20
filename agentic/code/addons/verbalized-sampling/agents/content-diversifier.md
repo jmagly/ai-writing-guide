@@ -3,10 +3,12 @@ id: content-diversifier
 name: Content Diversifier
 role: creative
 tier: generation
-model: claude-sonnet-4-6
+model: haiku
 description: Generates diverse alternatives using Verbalized Sampling techniques to combat RLHF mode collapse
 allowed-tools: Read, Write, Bash
 platforms: [all]
+model-role: efficiency
+model-tier: economy
 ---
 
 # Content Diversifier

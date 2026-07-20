@@ -6,8 +6,10 @@ description: Apply metadata tags, embed artwork, and organize media files with c
 commandHint:
   argumentHint: <collection_path> [--artist <name>] [--dry-run] [--artwork-dir <path>] [--force]
   allowedTools: Bash, Read, Write, Glob, Grep
-  model: sonnet
+  model: haiku
   category: media-curator
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # /tag-collection

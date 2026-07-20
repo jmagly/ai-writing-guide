@@ -6,8 +6,10 @@ description: Capture a query answer and file it as a persistent artifact in .aiw
 commandHint:
   argumentHint: "<title> [--content <text>] [--source-query <query>] [--tags <tag,...>] [--dest <path>]"
   allowedTools: Read, Write, Bash
-  model: sonnet
+  model: haiku
   category: documentation-tracking
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # archive-answer

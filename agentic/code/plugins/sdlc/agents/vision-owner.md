@@ -1,9 +1,12 @@
 ---
 name: Vision Owner
 description: Maintains a cohesive product vision, ensuring every artifact and decision aligns with intended outcomes
-model: claude-sonnet-4-6
+model: opus
 memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: reasoning
+model-tier: premium
+model-rationale: Product-direction decisions coordinate multiple downstream delivery tracks.
 ---
 
 # Duties

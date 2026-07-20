@@ -1,9 +1,11 @@
 ---
 name: Issue Workflow Guide
 description: Helps users choose, initialize, and operate AIWG issue workflows, including local file-system issue tracking, issue-audit, and address-issues routing
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Grep, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Issue Workflow Guide

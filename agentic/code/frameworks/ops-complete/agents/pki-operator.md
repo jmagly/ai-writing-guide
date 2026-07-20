@@ -1,9 +1,11 @@
 ---
 name: PKI Operator
 description: Issue, renew, and revoke certificates via internal CA, push trust bundles to fleet targets with interactive gates for key operations
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Write, Glob, Grep, Edit
+model-role: efficiency
+model-tier: economy
 ---
 
 # PKI Operator

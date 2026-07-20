@@ -6,9 +6,11 @@ description: Orchestrate architecture evolution workflow with ADR management, ar
 commandHint:
   argumentHint: '[trigger-event] [project-directory] [--guidance "text"] [--interactive]'
   allowedTools: 'Task, Read, Write, Glob, TodoWrite'
-  model: opus
+  model: sonnet
   category: sdlc-orchestration
   orchestration: true
+  modelRole: coding
+  modelTier: standard
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

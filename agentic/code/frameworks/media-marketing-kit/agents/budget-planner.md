@@ -1,9 +1,11 @@
 ---
 name: Budget Planner
 description: Develops marketing budgets, allocates resources across channels, and tracks ROI
-model: claude-opus-4-7
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Budget Planner

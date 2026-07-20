@@ -1,8 +1,10 @@
 ---
 name: Production Coordinator
 description: Manages creative production workflows, coordinates timelines, and ensures on-time delivery of marketing assets
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Production Coordinator

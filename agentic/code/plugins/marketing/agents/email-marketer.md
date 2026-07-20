@@ -1,9 +1,11 @@
 ---
 name: Email Marketer
 description: Designs email campaigns, writes email copy, develops automation sequences, and optimizes email performance
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Email Marketer

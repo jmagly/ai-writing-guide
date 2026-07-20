@@ -24,9 +24,11 @@ script:
 commandHint:
   argumentHint: "[--language c|cpp|rust|go|python|node|auto] [--ci gitea|github|gitlab|auto] [--seconds-per-target N] [--coverage] [--oss-fuzz]"
   allowedTools: Read, Write, Bash, Glob, Grep
-  model: sonnet
+  model: haiku
   category: security
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Fuzzing in CI

@@ -8,6 +8,8 @@ commandHint:
   allowedTools: Read, Write, Edit, Bash, Glob
   model: sonnet
   category: context-regeneration
+  modelRole: coding
+  modelTier: standard
 ---
 
 # Regenerate Codex Context

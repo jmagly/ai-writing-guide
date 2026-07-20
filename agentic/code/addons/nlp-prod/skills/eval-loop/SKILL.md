@@ -6,9 +6,11 @@ description: Configure and run the isolated eval loop pattern — generate, eval
 commandHint:
   argumentHint: "<pipeline-dir> [--threshold 0.85] [--max-attempts 3] [--interactive]"
   allowedTools: Read, Write, Bash
-  model: sonnet
+  model: haiku
   category: nlp-prod
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Eval Loop

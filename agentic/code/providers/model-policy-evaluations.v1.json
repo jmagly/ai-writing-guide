@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "evaluatedAt": "2026-07-20",
+  "method": "Deterministic representative-fixture rubric: required instructions, bounded scope, tool contract, output contract, and risk controls are scored from canonical artifacts. Provider live resolution is tracked separately by #1807.",
+  "threshold": 0.8,
+  "cases": [
+    {
+      "tier": "economy",
+      "kind": "agent",
+      "artifact": "technical-writer",
+      "checks": ["instructions", "bounded-scope", "tool-contract", "output-contract"],
+      "score": 1
+    },
+    {
+      "tier": "economy",
+      "kind": "skill",
+      "artifact": "radar-status",
+      "checks": ["instructions", "bounded-scope", "tool-contract", "output-contract"],
+      "score": 1
+    },
+    {
+      "tier": "standard",
+      "kind": "agent",
+      "artifact": "software-implementer",
+      "checks": ["instructions", "multi-step-work", "tool-contract", "verification"],
+      "score": 1
+    },
+    {
+      "tier": "standard",
+      "kind": "skill",
+      "artifact": "uat-execute",
+      "checks": ["instructions", "multi-step-work", "tool-contract", "verification"],
+      "score": 1
+    },
+    {
+      "tier": "premium",
+      "kind": "agent",
+      "artifact": "security-architect",
+      "checks": ["instructions", "risk-controls", "tool-contract", "decision-rationale"],
+      "score": 1
+    },
+    {
+      "tier": "premium",
+      "kind": "skill",
+      "artifact": "security-gate",
+      "checks": ["instructions", "risk-controls", "tool-contract", "decision-rationale"],
+      "score": 1
+    }
+  ]
+}

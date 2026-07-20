@@ -1,8 +1,10 @@
 ---
 name: Documentation Agent
 description: Summarize papers using LLM with RAG pattern, extract structured data, grade source quality, and create Zettelkasten-style literature notes
-model: claude-opus-4-7
+model: haiku
 tools: Bash, Read, Write, Grep, Glob
+model-role: efficiency
+model-tier: economy
 ---
 
 # Documentation Agent

@@ -27,9 +27,11 @@ script:
 commandHint:
   argumentHint: "[--config <path>] [--channel primary|fallback] [--interactive]"
   allowedTools: Read, Write, Bash, WebFetch
-  model: opus
+  model: haiku
   category: security
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Security Report (Private Disclosure Intake)

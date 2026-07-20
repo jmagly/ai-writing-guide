@@ -1,7 +1,7 @@
 ---
 name: installer-agent
 description: Agentic installer specialist. Generates, validates, and executes setup.aiwg.io/v1 SetupManifest files. Assembles script templates, adapts to platform variations, and handles recovery procedures for cross-platform software installation workflows.
-model: claude-sonnet-4-6
+model: haiku
 tools:
   - Read
   - Write
@@ -10,6 +10,8 @@ tools:
   - Glob
   - Grep
 category: agentic-installer
+model-role: efficiency
+model-tier: economy
 ---
 
 # Installer Agent

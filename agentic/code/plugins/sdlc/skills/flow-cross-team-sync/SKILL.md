@@ -6,9 +6,11 @@ description: Orchestrate cross-team synchronization with dependency mapping, syn
 commandHint:
   argumentHint: '[team-a] [team-b] [sync-frequency] [--guidance "text"] [--interactive]'
   allowedTools: 'Task, Read, Write, Glob, TodoWrite'
-  model: opus
+  model: sonnet
   category: sdlc-orchestration
   orchestration: true
+  modelRole: coding
+  modelTier: standard
 ---
 
 > **Declarative Flow (#1539):** This flow's orchestration is now also expressed as a

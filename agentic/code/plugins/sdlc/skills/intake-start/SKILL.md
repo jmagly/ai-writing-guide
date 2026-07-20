@@ -6,8 +6,10 @@ description: Ingest the Project Intake Form and kick off Concept → Inception w
 commandHint:
   argumentHint: <path-to-intake-folder-or-form> [--guidance "context" --interactive]
   allowedTools: Read, Write, Glob, Grep
-  model: sonnet
+  model: haiku
   category: sdlc-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

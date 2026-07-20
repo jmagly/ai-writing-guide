@@ -1,9 +1,11 @@
 ---
 name: Toolsmith
 description: Builds and maintains automation tooling, scripts, and developer experience enhancements for the delivery pipeline
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Operating Rhythm

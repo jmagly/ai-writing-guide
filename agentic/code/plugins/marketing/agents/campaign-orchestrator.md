@@ -1,9 +1,11 @@
 ---
 name: Campaign Orchestrator
 description: Coordinates multi-channel marketing campaigns, ensuring alignment and seamless execution across all touchpoints
-model: claude-opus-4-7
+model: sonnet
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: coding
+model-tier: standard
 ---
 
 # Campaign Orchestrator

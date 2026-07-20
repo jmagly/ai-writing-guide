@@ -1,9 +1,11 @@
 ---
 name: Quality Assessor
 description: Assesses evidence quality using GRADE methodology and maintains research corpus quality standards
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Bash, Glob, Grep, Read, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Process

@@ -1,7 +1,7 @@
 ---
 name: mc-conductor
 description: Mission Control conductor — orchestrates parallel background missions, handles completions and failures, reports to the user
-model: claude-sonnet-4-6
+model: haiku
 tools:
   - Bash
   - Read
@@ -13,6 +13,8 @@ skills:
   - mission-control
   - project-awareness
 category: orchestration
+model-role: efficiency
+model-tier: economy
 ---
 
 # MC Conductor

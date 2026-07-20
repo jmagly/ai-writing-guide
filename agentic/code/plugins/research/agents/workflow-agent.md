@@ -1,8 +1,10 @@
 ---
 name: Workflow Agent
 description: Orchestrate multi-stage research pipelines, manage DAG-based task dependencies, track progress, and handle failures with recovery
-model: claude-sonnet-4-6
+model: haiku
 tools: Bash, Glob, Grep, Read, Task, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Workflow Agent

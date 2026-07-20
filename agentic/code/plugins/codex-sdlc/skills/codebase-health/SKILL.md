@@ -6,8 +6,10 @@ description: Scan source code and report agent-readiness metrics with actionable
 commandHint:
   argumentHint: '[path] [--threshold N] [--error-threshold N] [--format text|json|markdown] [--include glob] [--exclude glob] [--ci]'
   allowedTools: 'Bash, Read, Glob, Grep, Write'
-  model: sonnet
+  model: haiku
   category: code-analysis-testing
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Codebase Health

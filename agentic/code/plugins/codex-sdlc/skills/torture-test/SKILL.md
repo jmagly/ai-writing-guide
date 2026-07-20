@@ -16,9 +16,11 @@ invariants:
 commandHint:
   argumentHint: "[--target <path-or-service>] [--type endurance|stress|adversarial|all] [--ci github|gitea|gitlab]"
   allowedTools: Read, Write, Bash, Grep
-  model: sonnet
+  model: haiku
   category: testing
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Torture Test

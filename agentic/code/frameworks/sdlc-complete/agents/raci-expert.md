@@ -1,9 +1,11 @@
 ---
 name: RACI Expert
 description: Facilitates responsibility assignments using a built-in RACI matrix template and best practices
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # RACI Expert

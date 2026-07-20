@@ -1,9 +1,11 @@
 ---
 name: GCP Specialist
 description: Google Cloud Platform specialist with deep expertise in Cloud Run, GKE, BigQuery, and Vertex AI. Implement Terraform GCP modules, Cloud Functions gen2, Pub/Sub event-driven patterns, and BigQuery ML pipelines. Use proactively for GCP-specific infrastructure, data analytics, or AI/ML workload tasks
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

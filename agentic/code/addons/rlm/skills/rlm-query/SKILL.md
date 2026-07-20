@@ -6,8 +6,10 @@ description: Spawn sub-agent to process focused context and return structured re
 commandHint:
   argumentHint: '"<context-file> <sub-prompt>" [--model <model>] [--output <file>] [--depth <n>] [--neighbors-of <id>] [--direction <in|out|both>] [--graph <name>] [--no-cache] [--cache-only]'
   allowedTools: 'Read, Write, Grep, Glob, Bash'
-  model: sonnet
+  model: haiku
   category: rlm
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # RLM Query

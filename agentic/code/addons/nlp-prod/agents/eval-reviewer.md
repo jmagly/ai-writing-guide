@@ -3,10 +3,12 @@ id: eval-reviewer
 name: Eval Reviewer
 role: reviewer
 tier: reasoning
-model: claude-haiku-4-5
+model: sonnet
 description: Isolated evaluator in the eval loop — scores generator outputs with strict isolation; never sees generator context or chain-of-thought
 allowed-tools: Read
 category: nlp-prod
+model-role: coding
+model-tier: standard
 ---
 
 # Eval Reviewer

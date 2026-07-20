@@ -6,8 +6,10 @@ description: Show SOUL.md enforcement state across all installed providers with 
 commandHint:
   argumentHint: "[--provider <name>] [--verbose]"
   allowedTools: Read, Bash, Glob
-  model: sonnet
+  model: haiku
   category: soul-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Soul Status

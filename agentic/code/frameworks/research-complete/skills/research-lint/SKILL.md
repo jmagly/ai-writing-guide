@@ -8,6 +8,8 @@ commandHint:
   allowedTools: Read, Write, Bash, Glob, Grep
   model: sonnet
   category: research-validation
+  modelRole: coding
+  modelTier: standard
 ---
 
 # Research Lint

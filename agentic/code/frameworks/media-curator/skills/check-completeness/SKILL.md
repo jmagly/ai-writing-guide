@@ -6,8 +6,10 @@ description: Analyze collection completeness against canonical discography and g
 commandHint:
   argumentHint: '"<artist>" [--collection <path>] [--gaps-only] [--priority high|medium|low|all] [--output report.yaml]'
   allowedTools: 'Bash, Read, Write, Glob, Grep, WebSearch, WebFetch'
-  model: sonnet
+  model: haiku
   category: media-curator
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # check-completeness

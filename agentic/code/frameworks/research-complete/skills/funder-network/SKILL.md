@@ -6,8 +6,10 @@ description: Build the bipartite funder↔paper analytics — per-funder paper/A
 commandHint:
   argumentHint: "[--scan-acks] [--out PATH]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: research-analytics
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Funder Network

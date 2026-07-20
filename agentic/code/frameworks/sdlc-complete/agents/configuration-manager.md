@@ -1,9 +1,11 @@
 ---
 name: Configuration Manager
 description: Governs version control, baselines, and change processes to maintain traceable artifacts
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Scope of Work

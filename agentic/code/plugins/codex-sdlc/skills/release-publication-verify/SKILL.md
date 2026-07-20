@@ -13,9 +13,11 @@ triggers:
 commandHint:
   argumentHint: '<tag> [--repo <owner/name>] [--mirror <owner/name>] [--config <path>] [--json]'
   allowedTools: 'Read, Write, Edit, Bash, Glob, Grep, mcp__git-gitea__*'
-  model: opus
+  model: haiku
   category: sdlc-orchestration
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Release Publication Verifier (post-tag)

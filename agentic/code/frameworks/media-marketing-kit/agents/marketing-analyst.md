@@ -1,9 +1,11 @@
 ---
 name: Marketing Analyst
 description: Analyzes marketing performance data, identifies trends, and provides actionable insights to optimize campaigns
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Marketing Analyst

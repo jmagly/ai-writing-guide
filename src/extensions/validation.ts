@@ -212,6 +212,7 @@ export const CommandMetadataSchema = z.object({
   modelRole: z.enum(['reasoning', 'coding', 'efficiency']).optional(),
   modelTier: z.enum(['economy', 'standard', 'premium']).optional(),
   modelEffort: z.enum(['minimal', 'low', 'medium', 'high', 'xhigh']).optional(),
+  modelRationale: z.string().min(1).optional(),
   executionSteps: z.array(z.string()).optional(),
   successCriteria: z.array(z.string()).optional(),
   cliDisabled: z.boolean().optional(),

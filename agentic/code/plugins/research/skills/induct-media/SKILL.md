@@ -16,6 +16,8 @@ commandHint:
   allowedTools: Read, Write, Glob, Grep, Bash
   model: sonnet
   category: research
+  modelRole: coding
+  modelTier: standard
 ---
 
 # Induct Media

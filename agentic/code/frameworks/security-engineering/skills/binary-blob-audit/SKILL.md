@@ -18,9 +18,11 @@ invariants:
 commandHint:
   argumentHint: "[--fail-on-violation] [--max-fixture-bytes N] [--format text|json]"
   allowedTools: Read, Bash, Grep
-  model: sonnet
+  model: haiku
   category: security
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Binary Blob Audit

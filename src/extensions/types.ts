@@ -738,6 +738,7 @@ export interface CommandMetadata {
   modelRole?: 'reasoning' | 'coding' | 'efficiency';
   modelTier?: 'economy' | 'standard' | 'premium';
   modelEffort?: 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
+  modelRationale?: string;
 
   /**
    * Execution steps

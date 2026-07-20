@@ -3,6 +3,10 @@ namespace: aiwg
 name: data-pipeline
 platforms: [all]
 description: Orchestrate marketing data collection, transformation, aggregation, and reporting workflows across platforms
+commandHint:
+  model: haiku
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # data-pipeline

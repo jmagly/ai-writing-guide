@@ -1,9 +1,11 @@
 ---
 name: Deployment Manager
 description: Orchestrates release planning, deployment execution, and operational readiness activities
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Operating Procedure

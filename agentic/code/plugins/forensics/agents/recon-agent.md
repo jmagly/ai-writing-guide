@@ -1,9 +1,11 @@
 ---
 name: Recon Agent
 description: Target reconnaissance and system profiling agent. Discovers system topology, services, users, and network baselines through SSH or cloud API enumeration to produce a target-profile artifact before investigation begins.
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Bash, Read, Write, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

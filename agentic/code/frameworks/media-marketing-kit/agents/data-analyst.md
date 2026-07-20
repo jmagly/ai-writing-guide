@@ -1,9 +1,11 @@
 ---
 name: Data Analyst
 description: Collects, processes, and analyzes marketing data to support decision-making and campaign optimization
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Data Analyst

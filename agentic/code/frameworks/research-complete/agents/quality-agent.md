@@ -1,8 +1,10 @@
 ---
 name: Quality Agent
 description: Assess source quality using GRADE framework, validate FAIR compliance, generate quality reports, and enforce quality gates
-model: claude-sonnet-4-6
+model: haiku
 tools: Bash, Glob, Grep, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Quality Agent

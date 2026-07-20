@@ -6,8 +6,10 @@ description: Ingest a source (URL, file, or freeform note) into the knowledge ba
 commandHint:
   argumentHint: "<source> [--topic <tag>] [--kb <path>] [--dry-run]"
   allowedTools: Read, Write, Glob, Grep, Bash, WebFetch, WebSearch
-  model: sonnet
+  model: haiku
   category: knowledge-base
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # KB Ingest

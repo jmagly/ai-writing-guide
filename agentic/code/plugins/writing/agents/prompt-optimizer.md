@@ -1,8 +1,10 @@
 ---
 name: Prompt Optimizer
 description: Optimizes prompts for better AI output quality, incorporating AIWG principles and advanced prompting techniques
-model: claude-opus-4-7
+model: haiku
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Process

@@ -6,8 +6,10 @@ description: Scaffold a PROF-S source/curator profile for a research-corpus disc
 commandHint:
   argumentHint: "--handle @account [--platform x] [--name \"N\"] [--cadence weekly] [--write]"
   allowedTools: Read, Bash, Write
-  model: sonnet
+  model: haiku
   category: research-discovery
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Curator Init

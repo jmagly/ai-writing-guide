@@ -7,10 +7,12 @@ description: Crash-resilient external agent loop with state persistence and CI/C
 commandHint:
   argumentHint: "\"<objective>\" [--completion \"<criteria>\"] [--max-iterations N] [--timeout M] [--provider <p>] [--no-commit] [--branch <name>] [--quiet] [--auto-criteria | --no-infer-completion]"
   allowedTools: Bash, Read, Write
-  model: sonnet
+  model: haiku
   category: automation
   orchestration: true
   platforms: [claude-code, hermes, openclaw]
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

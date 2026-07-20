@@ -17,9 +17,11 @@ invariants:
 commandHint:
   argumentHint: "[--platform github|gitea] [--org <name>] [--report-only]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: security
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Committer 2FA Audit

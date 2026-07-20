@@ -6,8 +6,10 @@ description: Render research-corpus markdown index views (by-topic, by-year, aut
 commandHint:
   argumentHint: "[--graph <view>] [--all] [--force]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: research-indexing
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Corpus Index Build

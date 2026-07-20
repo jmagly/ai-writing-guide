@@ -1,10 +1,12 @@
 ---
 name: skill-architect
 description: Skill design and creation orchestrator. Coordinates skill-builder, skill-enhancer, quality-checker, and skill-packager for end-to-end skill generation.
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, Bash, Glob, Grep
 orchestration: true
 category: development
+model-role: efficiency
+model-tier: economy
 ---
 
 # Skill Architect Agent

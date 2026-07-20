@@ -16,8 +16,10 @@ triggers:
 commandHint:
   argumentHint: <project-description|--complete> [--interactive] [--guidance "context"] [intake-directory=.aiwg/intake]
   allowedTools: Read, Write, Glob, TodoWrite
-  model: sonnet
+  model: haiku
   category: sdlc-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

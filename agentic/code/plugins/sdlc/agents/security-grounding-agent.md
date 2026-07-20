@@ -3,10 +3,12 @@ id: security-grounding-agent
 name: Security Grounding Agent
 role: grounding
 tier: validation
-model: claude-sonnet-4-6
+model: haiku
 description: Verifies security claims and injects OWASP/CWE knowledge into conversations to improve accuracy and reduce hallucination
 allowed-tools: Read, Grep, Glob
 platforms: [all]
+model-role: efficiency
+model-tier: economy
 ---
 
 # Security Grounding Agent

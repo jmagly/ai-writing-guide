@@ -1,8 +1,10 @@
 ---
 name: Graphic Designer
 description: Creates visual assets including ads, social graphics, infographics, and presentation designs
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Graphic Designer

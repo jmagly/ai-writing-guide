@@ -1,9 +1,12 @@
 ---
 name: Legal Liaison
 description: Ensures product decisions comply with legal, regulatory, and contractual obligations
-model: claude-sonnet-4-6
+model: opus
 memory: user
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: reasoning
+model-tier: premium
+model-rationale: Legal and regulatory interpretation has material compliance consequences.
 ---
 
 # Engagement Points

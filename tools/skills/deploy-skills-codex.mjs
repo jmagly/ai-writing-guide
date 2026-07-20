@@ -96,7 +96,7 @@ function resolveSkillModelPolicy(frontmatter) {
   const block = frontmatter.match(/^commandHint:\s*\n((?:[ \t]+[^\n]*\n?)*)/m)?.[1] || '';
   const hint = {};
   for (const line of block.split('\n')) {
-    const match = line.trim().match(/^(model|modelRole|modelTier|modelEffort):\s*(.+)$/);
+    const match = line.trim().match(/^(model|modelRole|modelTier|modelEffort|modelRationale):\s*(.+)$/);
     if (match) hint[match[1]] = stripWrappingQuotes(match[2]);
   }
   const legacy = String(hint.model || '').toLowerCase();
@@ -108,6 +108,7 @@ function resolveSkillModelPolicy(frontmatter) {
     tier: hint.modelTier || (role === 'reasoning' ? 'premium'
       : role === 'efficiency' ? 'economy' : 'standard'),
     effort: hint.modelEffort,
+    rationale: hint.modelRationale,
   };
 }
 
@@ -280,7 +281,7 @@ platforms: [codex]
 ---
 
 ${modelPolicy
-    ? `<!-- aiwg:model-policy role=${modelPolicy.role} tier=${modelPolicy.tier}${modelPolicy.effort ? ` effort=${modelPolicy.effort}` : ''} outcome=unsupported -->\n\n`
+    ? `<!-- aiwg:model-policy role=${modelPolicy.role} tier=${modelPolicy.tier}${modelPolicy.effort ? ` effort=${modelPolicy.effort}` : ''} outcome=unsupported${modelPolicy.rationale ? ` rationale=${yamlDoubleQuoted(modelPolicy.rationale)}` : ''} -->\n\n`
     : ''}${body.trim()}
 `;
 

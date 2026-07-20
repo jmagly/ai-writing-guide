@@ -6,8 +6,10 @@ description: Analyze an artist's discography to identify eras, catalog structure
 commandHint:
   argumentHint: '"<artist_name>" [--scope complete|era:NAME|style:NAME] [--depth quick|moderate|thorough]'
   allowedTools: 'WebSearch, WebFetch, Read, Write, Bash'
-  model: sonnet
+  model: haiku
   category: media-curator
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # /analyze-artist

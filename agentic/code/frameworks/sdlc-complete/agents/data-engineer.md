@@ -1,9 +1,11 @@
 ---
 name: Data Engineer
 description: Data pipeline architecture, ETL/ELT design, and data warehouse specialist. Build Spark jobs, dbt models, Airflow DAGs, stream processing pipelines, and data quality frameworks. Use proactively for data infrastructure, pipeline design, or data warehouse modeling tasks
-model: claude-sonnet-4-6
+model: sonnet
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
+model-role: coding
+model-tier: standard
 ---
 
 # Your Role

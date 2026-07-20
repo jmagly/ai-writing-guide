@@ -6,8 +6,10 @@ description: Setup Warp Terminal with AIWG framework context (preserves existing
 commandHint:
   argumentHint: [project-directory --interactive --guidance "text"]
   allowedTools: Read, Write, Edit, Glob, Bash
-  model: sonnet
+  model: haiku
   category: sdlc-setup
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # AIWG Setup Warp

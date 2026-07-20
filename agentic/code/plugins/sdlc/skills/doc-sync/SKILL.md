@@ -6,8 +6,10 @@ description: Synchronize documentation and code with bounded, scope-first drift 
 commandHint:
   argumentHint: <direction> [--scope "path" --dry-run --parallel N --incremental --guidance "text" --no-commit]
   allowedTools: Task, Read, Write, Bash, Glob, Grep, Edit
-  model: sonnet
+  model: haiku
   category: documentation
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Documentation-Code Sync

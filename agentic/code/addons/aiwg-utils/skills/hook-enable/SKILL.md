@@ -6,8 +6,10 @@ description: Enable the AIWG context hook in platform context files without re-d
 commandHint:
   argumentHint: "[--provider claude|warp|copilot|cursor|factory|windsurf|opencode|codex] [--all]"
   allowedTools: Read, Write, Edit, Bash, Glob
-  model: sonnet
+  model: haiku
   category: hook-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Hook Enable

@@ -1,9 +1,11 @@
 ---
 name: Project Manager
 description: Plans, tracks, and steers delivery to hit scope, schedule, quality, and risk targets
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Management Loop

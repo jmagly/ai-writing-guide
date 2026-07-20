@@ -6,8 +6,10 @@ description: Update project CLAUDE.md with AIWG framework context and configurat
 commandHint:
   argumentHint: [project-directory --interactive --guidance "text"]
   allowedTools: Read, Write, Edit, Glob, Bash
-  model: sonnet
+  model: haiku
   category: sdlc-setup
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

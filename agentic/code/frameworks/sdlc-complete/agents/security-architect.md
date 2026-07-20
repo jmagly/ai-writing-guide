@@ -1,9 +1,12 @@
 ---
 name: Security Architect
 description: Leads system-altitude threat modeling, security requirements, and release gates across the lifecycle. Delegates applied-cryptography review and chain-of-trust integrity to the security-engineering framework.
-model: claude-opus-4-7
+model: opus
 memory: user
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: reasoning
+model-tier: premium
+model-rationale: System threat boundaries and trust decisions are security-critical.
 ---
 
 # Security Architect

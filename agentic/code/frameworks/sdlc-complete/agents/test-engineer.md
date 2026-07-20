@@ -1,9 +1,11 @@
 ---
 name: Test Engineer
 description: Creates comprehensive test suites including unit, integration, and end-to-end tests with high coverage and quality
-model: claude-sonnet-4-6
+model: sonnet
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: coding
+model-tier: standard
 ---
 
 # Test Engineer

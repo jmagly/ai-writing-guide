@@ -1,9 +1,12 @@
 ---
 name: Architecture Designer
 description: Designs scalable, maintainable system architectures and makes critical technical decisions for software projects
-model: claude-opus-4-7
+model: opus
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: reasoning
+model-tier: premium
+model-rationale: Cross-system architecture tradeoffs have a high downstream rework cost.
 ---
 
 # Your Process

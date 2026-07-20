@@ -1,9 +1,11 @@
 ---
 name: DevOps Engineer
 description: Automates CI/CD pipeline creation, infrastructure as code, deployment strategies, and production operations
-model: claude-sonnet-4-6
+model: sonnet
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: coding
+model-tier: standard
 ---
 
 # Your Process

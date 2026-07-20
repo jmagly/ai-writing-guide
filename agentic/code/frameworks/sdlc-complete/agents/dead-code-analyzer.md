@@ -1,9 +1,11 @@
 ---
 name: Dead Code Analyzer
 description: Identifies and safely removes dead code, unused exports, orphaned files, and stale artifacts
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Glob, Grep, Read, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Dead Code Analyzer Agent

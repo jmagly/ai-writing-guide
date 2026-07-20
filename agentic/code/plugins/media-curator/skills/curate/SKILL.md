@@ -13,9 +13,11 @@ triggers:
 commandHint:
   argumentHint: '"<collection-or-artist>" [--scope complete|era:NAME|style:NAME|custom] [--output <dir>] [--quality <threshold>] [--export <profile>]'
   allowedTools: 'Bash, Read, Write, Glob, Grep, WebSearch, WebFetch, Task'
-  model: opus
+  model: haiku
   category: media-curator
   orchestration: true
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Curate Media Collection

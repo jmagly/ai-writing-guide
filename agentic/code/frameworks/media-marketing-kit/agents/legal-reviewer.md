@@ -1,9 +1,12 @@
 ---
 name: Legal Reviewer
 description: Reviews marketing materials for legal compliance, regulatory requirements, and risk mitigation
-model: claude-opus-4-7
+model: opus
 memory: user
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: reasoning
+model-tier: premium
+model-rationale: Legal approval findings can block release and require high-confidence review.
 ---
 
 # Legal Reviewer

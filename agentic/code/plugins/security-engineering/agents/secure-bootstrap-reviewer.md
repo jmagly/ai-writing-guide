@@ -1,10 +1,12 @@
 ---
 name: Secure Bootstrap Reviewer
 description: Narrow-scope reviewer for chain-of-trust integrity. Traces the boot/bootstrap chain from first byte executed to first secret derived, identifies trust anchors, flags circular trust, and validates signing key custody.
-model: claude-opus-4-7
+model: sonnet
 memory: user
 tools: Bash, Glob, Grep, Read, WebFetch, Write
 category: security-engineering
+model-role: coding
+model-tier: standard
 ---
 
 # Secure Bootstrap Reviewer

@@ -1,9 +1,11 @@
 ---
 name: Crisis Communications Specialist
 description: Develops crisis response strategies, manages reputational issues, and creates crisis communication materials
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Crisis Communications Specialist

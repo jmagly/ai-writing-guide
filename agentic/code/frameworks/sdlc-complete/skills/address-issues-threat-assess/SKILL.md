@@ -21,9 +21,11 @@ script:
 commandHint:
   argumentHint: "[--issue-json <file>] [--text <body>] [--format text|json]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: security
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Address-Issues Threat Assessment

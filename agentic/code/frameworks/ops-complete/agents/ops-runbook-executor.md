@@ -1,9 +1,11 @@
 ---
 name: Ops Runbook Executor
 description: Executes operational runbooks step-by-step with verification at each step, safety gates for destructive operations, and audit trail generation
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Write, Glob, Grep, Edit
+model-role: efficiency
+model-tier: economy
 ---
 
 # Ops Runbook Executor

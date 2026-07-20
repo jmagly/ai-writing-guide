@@ -8,6 +8,9 @@ commandHint:
   allowedTools: Read, Write, Glob, Grep, Bash, WebFetch, WebSearch
   model: opus
   category: research-validation
+  modelRole: reasoning
+  modelTier: premium
+  modelRationale: External evidence synthesis can change high-impact technical policy.
 ---
 
 # Best-Practices Audit

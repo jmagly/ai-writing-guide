@@ -1,9 +1,11 @@
 ---
 name: Stream Health Monitor
 description: Check transcoder health, stream output status, and service availability for media streaming infrastructure — read-only
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Stream Health Monitor

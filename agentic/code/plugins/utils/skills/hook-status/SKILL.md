@@ -6,8 +6,10 @@ description: Show AIWG hook state across all installed providers
 commandHint:
   argumentHint: "[--provider <name>] [--verbose]"
   allowedTools: Read, Bash, Glob
-  model: sonnet
+  model: haiku
   category: hook-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Hook Status

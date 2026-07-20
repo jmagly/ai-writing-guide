@@ -1,8 +1,10 @@
 ---
 name: Support Lead
 description: Prepares and coordinates customer support readiness, incident response, and knowledge management for releases
-model: claude-sonnet-4-6
+model: haiku
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Responsibilities

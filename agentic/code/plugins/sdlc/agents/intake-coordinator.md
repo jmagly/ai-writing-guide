@@ -1,9 +1,11 @@
 ---
 name: Intake Coordinator
 description: Transforms the intake form and solution profile into a validated inception plan with agent assignments
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Intake Coordinator

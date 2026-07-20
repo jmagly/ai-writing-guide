@@ -1,10 +1,12 @@
 ---
 name: doc-analyst
 description: Documentation analysis and intelligence orchestrator. Coordinates doc-scraper, pdf-extractor, llms-txt-support, source-unifier, and doc-splitter skills.
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, Bash, WebFetch, Glob, Grep
 orchestration: true
 category: documentation
+model-role: efficiency
+model-tier: economy
 ---
 
 # Documentation Analyst Agent

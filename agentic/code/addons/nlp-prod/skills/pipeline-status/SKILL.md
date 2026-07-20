@@ -9,6 +9,8 @@ commandHint:
   model: haiku
   category: nlp-prod
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Pipeline Status

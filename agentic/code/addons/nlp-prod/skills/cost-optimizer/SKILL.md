@@ -6,9 +6,11 @@ description: Analyze LLM pipeline costs and generate concrete optimization recom
 commandHint:
   argumentHint: "<pipeline-dir> [--volume N]"
   allowedTools: Read, Write, WebFetch
-  model: sonnet
+  model: haiku
   category: nlp-prod
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Cost Optimizer

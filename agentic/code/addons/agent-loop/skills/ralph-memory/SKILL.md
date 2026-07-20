@@ -9,6 +9,8 @@ commandHint:
   model: haiku
   category: automation
   platforms: [claude-code, hermes, openclaw]
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

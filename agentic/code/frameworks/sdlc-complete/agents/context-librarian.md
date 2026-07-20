@@ -1,9 +1,11 @@
 ---
 name: Context Librarian
 description: Builds artifact index and digests so agents retrieve only relevant context
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Context Librarian

@@ -1,8 +1,10 @@
 ---
 name: Writing Validator
 description: Validates content against AIWG principles, detecting AI patterns and ensuring authentic writing
-model: claude-sonnet-4-6
+model: haiku
 tools: Bash, Grep, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Writing Validator Agent

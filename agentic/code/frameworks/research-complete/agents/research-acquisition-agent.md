@@ -1,8 +1,10 @@
 ---
 name: Research Acquisition Agent
 description: Download research papers, extract metadata, validate FAIR compliance, and assign persistent identifiers
-model: claude-sonnet-4-6
+model: sonnet
 tools: Bash, Read, Write, Glob, Grep
+model-role: coding
+model-tier: standard
 ---
 
 # Acquisition Agent

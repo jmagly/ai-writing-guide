@@ -1,8 +1,10 @@
 ---
 name: Azure Specialist
 description: Azure platform deployment and optimization specialist. Configure ARM templates, optimize Azure Functions, tune Cosmos DB, manage AKS clusters. Use proactively for Azure-specific tasks
-model: claude-sonnet-4-6
+model: haiku
 tools: Bash, Read, Write, MultiEdit, WebFetch
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

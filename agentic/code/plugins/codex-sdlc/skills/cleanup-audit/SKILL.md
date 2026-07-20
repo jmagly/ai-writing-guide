@@ -6,8 +6,10 @@ description: Audit codebase for dead code, unused exports, orphaned files, and s
 commandHint:
   argumentHint: '[--scope <path>] [--type <exports|files|deps|manifests>] [--json] [--fix] [--dry-run]'
   allowedTools: 'Bash(git *, npm *, npx *), Read, Write, Glob, Grep'
-  model: sonnet
+  model: haiku
   category: maintenance
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Cleanup Audit

@@ -6,8 +6,10 @@ description: Update existing ticket/issue with status changes, comments, or fiel
 commandHint:
   argumentHint: <ticket-id> [--status STATUS --comment "text" --assignee USER --labels "label1,label2" --priority LEVEL]
   allowedTools: Read, Write, Glob, Bash, mcp__gitea__edit_issue, mcp__gitea__create_issue_comment
-  model: sonnet
+  model: haiku
   category: project-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

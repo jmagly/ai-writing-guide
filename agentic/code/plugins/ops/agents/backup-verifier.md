@@ -1,9 +1,11 @@
 ---
 name: Backup Verifier
 description: Test backup restore path, verify hash integrity, and confirm RPO/RTO targets are met for documented backup jobs
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Write, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Backup Verifier

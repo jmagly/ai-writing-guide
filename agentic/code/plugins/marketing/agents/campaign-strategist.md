@@ -1,9 +1,11 @@
 ---
 name: Campaign Strategist
 description: Designs comprehensive campaign architectures, channel strategies, and measurement frameworks for marketing initiatives
-model: claude-opus-4-7
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Campaign Strategist

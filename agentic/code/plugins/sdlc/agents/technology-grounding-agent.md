@@ -3,10 +3,12 @@ id: technology-grounding-agent
 name: Technology Grounding Agent
 role: grounding
 tier: validation
-model: claude-sonnet-4-6
+model: haiku
 description: Verifies API usage, framework patterns, and technology claims against current documentation to prevent hallucinated APIs
 allowed-tools: Read, Grep, Glob, WebFetch
 platforms: [all]
+model-role: efficiency
+model-tier: economy
 ---
 
 # Technology Grounding Agent

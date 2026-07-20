@@ -6,8 +6,10 @@ description: Assemble media into thematic compilations, concert films, era playl
 commandHint:
   argumentHint: --type <narrative|concert|era|documentary|playlist> --name "<name>" --collection <path> [--output <path>]
   allowedTools: Bash, Read, Write, Glob, Grep
-  model: sonnet
+  model: haiku
   category: media-curator
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Assemble Command

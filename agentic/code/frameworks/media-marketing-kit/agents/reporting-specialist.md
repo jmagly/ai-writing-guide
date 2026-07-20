@@ -1,9 +1,11 @@
 ---
 name: Reporting Specialist
 description: Creates comprehensive marketing reports, dashboards, and data visualizations for stakeholders
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Reporting Specialist

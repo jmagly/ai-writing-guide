@@ -6,8 +6,10 @@ description: Execute a UAT plan against live MCP connections, tracking pass/fail
 commandHint:
   argumentHint: <plan_path> [--mode mcp] [--execution-mode quick|standard|full] [--dry-run] [--no-issues] [--resume-from <phase>]
   allowedTools: Read, Write, Bash, Glob, Grep, Edit, Task, mcp__gitea__*
-  model: opus
+  model: sonnet
   category: uat-mcp
+  modelRole: coding
+  modelTier: standard
 ---
 
 # UAT Execute

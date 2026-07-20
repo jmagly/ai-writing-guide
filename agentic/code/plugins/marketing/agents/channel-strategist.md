@@ -1,9 +1,11 @@
 ---
 name: Channel Strategist
 description: Optimizes marketing channel mix, platform selection, and cross-channel integration strategies
-model: claude-opus-4-7
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Channel Strategist

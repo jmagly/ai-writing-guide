@@ -1,7 +1,7 @@
 ---
 name: aiwg-steward
 description: Self-maintenance agent that uses AIWG CLI to keep the installation healthy, current, and correctly configured. Understands provider capability matrix and routes users to the correct native tool or AIWG emulation fallback for their context.
-model: claude-sonnet-4-6
+model: haiku
 tools:
   - Bash
   - Read
@@ -12,6 +12,8 @@ tools:
 skills:
   - project-awareness
 category: maintenance
+model-role: efficiency
+model-tier: economy
 ---
 
 # AIWG Steward

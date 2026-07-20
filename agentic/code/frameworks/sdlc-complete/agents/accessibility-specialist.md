@@ -1,9 +1,11 @@
 ---
 name: Accessibility Specialist
 description: Web accessibility compliance expert. Ensure WCAG 2.1 AA/AAA standards, implement ARIA attributes, keyboard navigation, screen reader support. Use proactively when building UI components or reviewing accessibility compliance
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Bash, Read, Write, MultiEdit, WebFetch
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

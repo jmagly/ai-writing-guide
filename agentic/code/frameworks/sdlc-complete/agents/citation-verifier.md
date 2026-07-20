@@ -1,9 +1,11 @@
 ---
 name: Citation Verifier
 description: Validates citations against research corpus, detects hallucinated references, and enforces GRADE-appropriate hedging
-model: claude-haiku-4-5
+model: haiku
 memory: user
 tools: Bash, Glob, Grep, Read
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Process

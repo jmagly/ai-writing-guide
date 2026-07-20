@@ -6,8 +6,10 @@ description: Generate a corpus snapshot report — computes dimensions, topology
 commandHint:
   argumentHint: "[--compute-only] [--delta-only] [--template <path>] [--format full|summary|json]"
   allowedTools: Read, Write, Glob, Grep, Bash
-  model: sonnet
+  model: haiku
   category: research-reporting
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Corpus Snapshot

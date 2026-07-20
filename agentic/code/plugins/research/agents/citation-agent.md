@@ -1,8 +1,10 @@
 ---
 name: Citation Agent
 description: Format citations in 9,000+ styles, build citation networks, back claims with references, and manage bibliographies
-model: claude-sonnet-4-6
+model: haiku
 tools: Bash, Glob, Grep, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Citation Agent

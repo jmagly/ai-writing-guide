@@ -6,8 +6,10 @@ description: Aggregate research-corpus radar sidecars into a corpus or per-clust
 commandHint:
   argumentHint: "[--cluster TAG] [--out PATH]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: research-radar
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Radar Report

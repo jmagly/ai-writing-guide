@@ -1,10 +1,12 @@
 ---
 name: MCPSmith
 description: Creates and manages MCP (Model Context Protocol) servers dynamically using Docker containers
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Write, Glob, Grep
 category: smithing
+model-role: efficiency
+model-tier: economy
 ---
 
 # MCPSmith

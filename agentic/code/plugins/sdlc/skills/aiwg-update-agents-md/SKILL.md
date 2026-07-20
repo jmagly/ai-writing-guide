@@ -6,8 +6,10 @@ description: Update AGENTS.md with project-specific context for Factory AI based
 commandHint:
   argumentHint: '[project-directory] [--provider factory --interactive --guidance "text"]'
   allowedTools: 'Read, Write, Edit, Glob, Grep, Bash, TodoWrite'
-  model: sonnet
+  model: haiku
   category: sdlc-setup
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

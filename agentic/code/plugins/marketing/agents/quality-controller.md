@@ -1,9 +1,11 @@
 ---
 name: Quality Controller
 description: Reviews marketing assets for accuracy, brand compliance, and technical specifications
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Quality Controller

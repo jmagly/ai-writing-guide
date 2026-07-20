@@ -1,7 +1,7 @@
 ---
 name: consortium-coordinator
 description: Coordinates multi-agent consensus decisions for complex technical choices
-model: claude-opus-4-7
+model: haiku
 tools:
   - Task
   - Read
@@ -9,6 +9,8 @@ tools:
 researchFoundation:
   - "REF-001: BP-5 - Multi-agent consensus"
   - "REF-002: Archetype 2 - Multiple perspectives"
+model-role: efficiency
+model-tier: economy
 ---
 
 # Consortium Coordinator

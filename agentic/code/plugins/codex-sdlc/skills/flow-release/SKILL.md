@@ -16,9 +16,11 @@ triggers:
 commandHint:
   argumentHint: '<version> [--plan <id>] [--channel <stable|rc|beta|alpha|nightly>] [--dry-run] [--skip-uat] [--no-mirror] [--config <path>] [--guidance "text"]'
   allowedTools: 'Task, Read, Write, Edit, Bash, Glob, Grep, mcp__git-gitea__*'
-  model: opus
+  model: sonnet
   category: sdlc-orchestration
   orchestration: true
+  modelRole: coding
+  modelTier: standard
 ---
 
 # Release Orchestration Flow (config-driven)

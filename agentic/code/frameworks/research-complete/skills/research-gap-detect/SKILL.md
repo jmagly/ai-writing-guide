@@ -8,6 +8,8 @@ commandHint:
   allowedTools: Read, Write, Glob, Grep, Bash, Agent, WebSearch
   model: sonnet
   category: research-analysis
+  modelRole: coding
+  modelTier: standard
 ---
 
 # Research Gap Detect

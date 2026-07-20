@@ -1,9 +1,11 @@
 ---
 name: Identity Auditor
 description: Audit IdP realms, client configurations, certificate expiry, and stale user accounts across identity infrastructure — read-only
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Identity Auditor

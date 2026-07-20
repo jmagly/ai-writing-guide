@@ -1,8 +1,10 @@
 ---
 name: Traffic Manager
 description: Routes work assignments, balances workloads, and optimizes creative team productivity
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Traffic Manager

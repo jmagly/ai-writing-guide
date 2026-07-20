@@ -1,9 +1,11 @@
 ---
 name: Migration Planner
 description: Technology migration planning and execution specialist. Plan framework upgrades, language transitions, and infrastructure moves with rollback strategies. Use proactively for migration planning tasks
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

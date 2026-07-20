@@ -9,6 +9,9 @@ commandHint:
   model: opus
   category: sdlc-orchestration
   orchestration: true
+  modelRole: reasoning
+  modelTier: premium
+  modelRationale: Incident orchestration must preserve containment and evidence integrity.
 ---
 
 > **Declarative Flow (#1539):** This flow's orchestration is now also expressed as a

@@ -2,8 +2,10 @@
 name: Acquisition Manager
 description: Orchestrates media downloads with format selection, parallel execution, progress tracking, and error recovery
 category: media-curator
-model: claude-sonnet-4-6
+model: haiku
 allowed-tools: Bash, Read, Write, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Acquisition Manager

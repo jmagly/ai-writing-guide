@@ -1,9 +1,11 @@
 ---
 name: Creative Director
 description: Leads creative vision, develops campaign concepts, and ensures creative excellence across all marketing materials
-model: claude-opus-4-7
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Creative Director

@@ -1,9 +1,11 @@
 ---
 name: Media Relations Specialist
 description: Manages journalist relationships, coordinates interviews, and handles media inquiries
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Media Relations Specialist

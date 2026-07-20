@@ -1,9 +1,11 @@
 ---
 name: Content Strategist
 description: Plans content ecosystems, editorial calendars, and content distribution strategies across channels
-model: claude-opus-4-7
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Content Strategist

@@ -8,6 +8,8 @@ commandHint:
   allowedTools: Read, Write, Glob, Grep, Bash
   model: sonnet
   category: research-retrieval
+  modelRole: coding
+  modelTier: standard
 ---
 
 # Research Query

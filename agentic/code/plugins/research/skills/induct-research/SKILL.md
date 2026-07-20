@@ -8,6 +8,8 @@ commandHint:
   allowedTools: Read, Write, Glob, Grep, Bash, Agent, WebFetch, WebSearch, mcp__gitea__issue_write, mcp__gitea__issue_read, mcp__gitea__list_issues, mcp__hound__authenticate
   model: sonnet
   category: research
+  modelRole: coding
+  modelTier: standard
 ---
 
 # Induct Research

@@ -1,9 +1,11 @@
 ---
 name: ToolSmith (Dynamic)
 description: Creates and manages shell/OS tools dynamically based on system capabilities
-model: claude-sonnet-4-6
+model: haiku
 tools: Bash, Read, Write, Glob, Grep
 category: smithing
+model-role: efficiency
+model-tier: economy
 ---
 
 # ToolSmith (Dynamic)

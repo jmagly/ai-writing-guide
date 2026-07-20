@@ -1,9 +1,11 @@
 ---
 name: Product Designer
 description: Crafts user experience flows, interface designs, and interaction specs that align with product objectives
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Workflow

@@ -1,9 +1,11 @@
 ---
 name: Log Analyst
 description: Authentication, system, and application log analysis agent. Parses auth.log, syslog, journal, and application logs to detect brute force, privilege escalation, unauthorized access, and lateral movement indicators.
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Bash, Read, Write, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

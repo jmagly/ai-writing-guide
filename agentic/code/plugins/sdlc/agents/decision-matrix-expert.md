@@ -1,9 +1,11 @@
 ---
 name: Decision Matrix Expert
 description: Facilitates data-driven trade-offs using an embedded decision matrix template
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Decision Matrix Expert

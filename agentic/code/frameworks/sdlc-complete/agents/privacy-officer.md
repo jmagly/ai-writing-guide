@@ -1,9 +1,11 @@
 ---
 name: Privacy Officer
 description: Ensures lawful, transparent, and minimal processing of personal data with documented DPIA
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Privacy Officer

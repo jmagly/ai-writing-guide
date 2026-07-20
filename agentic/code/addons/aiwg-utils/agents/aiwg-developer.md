@@ -1,8 +1,10 @@
 ---
 name: aiwg-developer
 description: AIWG development expert specializing in creating and extending addons, frameworks, and extensions
-model: claude-sonnet-4-6
+model: sonnet
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: coding
+model-tier: standard
 ---
 
 # AIWG Developer Agent

@@ -1,9 +1,11 @@
 ---
 name: Triage Agent
 description: Quick triage and volatile data capture agent. Follows RFC 3227 volatility order to capture network state, processes, memory maps, deleted binaries, and kernel modules before any disk operations.
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Bash, Read, Write, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

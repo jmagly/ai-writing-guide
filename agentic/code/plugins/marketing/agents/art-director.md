@@ -1,8 +1,10 @@
 ---
 name: Art Director
 description: Develops visual concepts, designs layouts, and ensures visual brand consistency across creative assets
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Art Director

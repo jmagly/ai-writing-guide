@@ -22,9 +22,11 @@ script:
 commandHint:
   argumentHint: "<case-id> [--stage triage|fix|cve|publish|close] [--embargo-days N]"
   allowedTools: Read, Write, Bash
-  model: sonnet
+  model: haiku
   category: security
   orchestration: true
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Security Disclosure Track

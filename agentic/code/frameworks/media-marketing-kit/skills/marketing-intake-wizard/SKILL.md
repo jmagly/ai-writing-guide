@@ -6,8 +6,10 @@ description: Generate or complete marketing intake forms (campaign-intake, brand
 commandHint:
   argumentHint: <campaign-description|--complete> [--interactive] [--guidance "context"] [intake-directory=.aiwg/marketing/intake]
   allowedTools: Read, Write, Glob, TodoWrite
-  model: sonnet
+  model: haiku
   category: marketing-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Marketing Intake Wizard

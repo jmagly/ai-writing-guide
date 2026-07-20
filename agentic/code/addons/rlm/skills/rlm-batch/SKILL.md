@@ -6,9 +6,11 @@ description: Parallel fan-out processing - spawn multiple sub-agents for chunked
 commandHint:
   argumentHint: '"<glob-pattern> <sub-prompt>" [--model <model>] [--output-dir <dir>] [--aggregate <strategy>] [--max-parallel <n>] [--force] [--neighbors-of <id>] [--direction <in|out|both>] [--graph <name>] [--depth <n>] [--no-cache] [--cache-only] [--require-citations]'
   allowedTools: 'Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit'
-  model: opus
+  model: haiku
   category: automation
   orchestration: true
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # RLM Batch Processing

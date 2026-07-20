@@ -1,9 +1,11 @@
 ---
 name: Business Process Analyst
 description: Models current and target-state business processes, stakeholders, and value flows to ground product requirements
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Workflow

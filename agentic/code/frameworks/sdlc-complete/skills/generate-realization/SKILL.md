@@ -6,9 +6,11 @@ description: Generate behavioral specifications (Layer 3) from use cases and arc
 commandHint:
   argumentHint: <UC-NNN> [--all] [--guidance "text"] [--interactive]
   allowedTools: Task, Read, Write, Glob, TodoWrite
-  model: opus
+  model: sonnet
   category: sdlc-orchestration
   orchestration: true
+  modelRole: coding
+  modelTier: standard
 ---
 
 # Generate Use Case Realization

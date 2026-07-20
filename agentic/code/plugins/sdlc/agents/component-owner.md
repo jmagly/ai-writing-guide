@@ -1,9 +1,11 @@
 ---
 name: Component Owner
 description: Maintains health, roadmap, and quality of a specific product component or service
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Responsibilities

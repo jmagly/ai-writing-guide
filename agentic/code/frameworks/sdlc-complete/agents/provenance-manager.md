@@ -1,8 +1,10 @@
 ---
 name: Provenance Manager
 description: Manages W3C PROV-compliant provenance tracking, validation, and query for all AIWG artifacts
-model: claude-haiku-4-5
+model: haiku
 tools: Bash, Glob, Grep, Read, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Process

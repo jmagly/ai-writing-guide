@@ -1,9 +1,11 @@
 ---
 name: Metrics Analyst
 description: Defines, collects, and interprets delivery and product metrics to guide decisions and continuous improvement
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Measurement Cycle

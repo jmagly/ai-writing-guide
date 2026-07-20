@@ -6,8 +6,10 @@ description: Discover MCP tools and generate a phased UAT plan with agent-execut
 commandHint:
   argumentHint: '[--mode mcp] [--server <name>] [--output <path>] [--execution-mode quick|standard|full] [--interactive]'
   allowedTools: 'Read, Write, Glob, Grep, Bash, Task'
-  model: opus
+  model: sonnet
   category: uat-mcp
+  modelRole: coding
+  modelTier: standard
 ---
 
 # UAT Generate

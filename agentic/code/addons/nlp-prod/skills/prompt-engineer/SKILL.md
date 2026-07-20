@@ -6,9 +6,11 @@ description: Production prompt engineering — write, iterate, and refine prompt
 commandHint:
   argumentHint: "<prompt-path-or-description> [--eval-with <cases-path>] [--interactive]"
   allowedTools: Read, Write, Bash
-  model: sonnet
+  model: haiku
   category: nlp-prod
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Prompt Engineer

@@ -1,9 +1,11 @@
 ---
 name: Product Strategist
 description: Shapes product vision, positioning, and outcome goals from raw ideas or market opportunities
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Strategic Flow

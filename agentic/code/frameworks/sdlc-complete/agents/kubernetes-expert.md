@@ -1,9 +1,11 @@
 ---
 name: Kubernetes Expert
 description: Kubernetes orchestration and operations specialist. Design cluster architecture, write production-grade manifests, implement GitOps workflows, configure service mesh and observability. Use proactively for Kubernetes deployment or operations tasks
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

@@ -6,8 +6,10 @@ description: Update existing project CLAUDE.md with latest AIWG orchestration gu
 commandHint:
   argumentHint: [project-directory --interactive --guidance "text"]
   allowedTools: Read, Write, Edit, Bash
-  model: sonnet
+  model: haiku
   category: sdlc-setup
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

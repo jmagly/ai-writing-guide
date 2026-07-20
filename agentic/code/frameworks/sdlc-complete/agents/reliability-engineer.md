@@ -1,9 +1,11 @@
 ---
 name: Reliability Engineer
 description: Establishes SLO/SLI, runs capacity and failure testing, and enforces ORR
-model: claude-sonnet-4-6
+model: sonnet
 memory: user
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: coding
+model-tier: standard
 ---
 
 # Reliability Engineer

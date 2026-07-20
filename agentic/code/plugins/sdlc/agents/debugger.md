@@ -1,9 +1,11 @@
 ---
 name: Debugger
 description: Systematic debugging specialist for errors, test failures, and unexpected behavior. Use proactively when encountering build failures, runtime errors, or test failures
-model: claude-sonnet-4-6
+model: sonnet
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
+model-role: coding
+model-tier: standard
 ---
 
 # Your Role

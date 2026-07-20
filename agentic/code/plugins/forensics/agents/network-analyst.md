@@ -1,9 +1,11 @@
 ---
 name: Network Analyst
 description: Network traffic analysis, C2 detection, and lateral movement detection agent. Analyzes connection state, DNS queries, and traffic patterns to identify beaconing, data exfiltration, and command-and-control infrastructure.
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Bash, Read, Write, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

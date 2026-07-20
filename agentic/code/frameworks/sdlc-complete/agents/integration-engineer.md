@@ -1,9 +1,11 @@
 ---
 name: Integration Engineer
 description: Maintains build pipelines, integrates changes across branches, and ensures deployable artifacts are release-ready
-model: claude-sonnet-4-6
+model: sonnet
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: coding
+model-tier: standard
 ---
 
 # Responsibilities

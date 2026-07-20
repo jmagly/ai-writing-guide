@@ -6,8 +6,10 @@ description: Lint and health-check the knowledge base. Finds orphan pages, missi
 commandHint:
   argumentHint: "[--path <subtree>] [--kb <path>] [--fix] [--index-only]"
   allowedTools: Read, Write, Glob, Grep, Bash
-  model: sonnet
+  model: haiku
   category: knowledge-base
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # KB Health

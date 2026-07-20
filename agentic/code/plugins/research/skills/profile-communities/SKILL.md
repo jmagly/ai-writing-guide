@@ -6,8 +6,10 @@ description: Detect co-author communities (label propagation), report modularity
 commandHint:
   argumentHint: "[--out PATH]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: research-analytics
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Profile Communities

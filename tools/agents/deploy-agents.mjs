@@ -237,6 +237,7 @@ function resolveSkillCommandPolicy(commandHint = {}) {
     modelRole,
     modelTier,
     modelEffort: commandHint.modelEffort,
+    modelRationale: commandHint.modelRationale,
   };
 }
 
@@ -245,7 +246,7 @@ function parseSkillCommandHint(raw) {
   const block = frontmatter?.match(/^commandHint:\s*\n((?:[ \t]+[^\n]*\n?)*)/m)?.[1] || '';
   const hint = {};
   for (const line of block.split('\n')) {
-    const match = line.trim().match(/^(model|modelRole|modelTier|modelEffort):\s*(.+)$/);
+    const match = line.trim().match(/^(model|modelRole|modelTier|modelEffort|modelRationale):\s*(.+)$/);
     if (match) hint[match[1]] = match[2].trim().replace(/^['"]|['"]$/g, '');
   }
   return hint;
@@ -262,6 +263,7 @@ function skillToCommandContent(skillDir) {
     `aiwg-model-role: ${policy.modelRole}`,
     `aiwg-model-tier: ${policy.modelTier}`,
     ...(policy.modelEffort ? [`aiwg-model-effort: ${policy.modelEffort}`] : []),
+    ...(policy.modelRationale ? [`aiwg-model-rationale: ${policy.modelRationale}`] : []),
   ] : [];
 
   return `---\nname: ${skillName}\ndescription: ${description}\n${policyLines.join('\n')}${policyLines.length ? '\n' : ''}---\n\n${body.trim()}\n`;

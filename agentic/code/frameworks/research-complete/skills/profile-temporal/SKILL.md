@@ -6,8 +6,10 @@ description: Compute an entity's publication trajectory — per-year paper count
 commandHint:
   argumentHint: "--entity PROF-P-x [--out PATH]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: research-analytics
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Profile Temporal

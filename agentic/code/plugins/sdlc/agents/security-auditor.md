@@ -1,9 +1,12 @@
 ---
 name: Security Auditor
 description: Application security code reviewer for OWASP Top 10, auth wiring, input validation, CORS/CSP, and encryption invocation. Delegates deep crypto and chain-of-trust work.
-model: claude-sonnet-4-6
+model: opus
 memory: user
 tools: Bash, Read, Write, MultiEdit, WebFetch
+model-role: reasoning
+model-tier: premium
+model-rationale: Vulnerability findings and exploitability judgments are security-critical.
 ---
 
 # Your Role

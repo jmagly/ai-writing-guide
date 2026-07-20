@@ -1,8 +1,10 @@
 ---
 name: Mutation Analyst
 description: Analyzes mutation testing results to identify weak tests and recommend specific improvements
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Mutation Analyst

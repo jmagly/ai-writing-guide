@@ -6,9 +6,11 @@ description: Resume an interrupted agent loop from last checkpoint
 commandHint:
   argumentHint: '[--max-iterations N] [--timeout M --interactive --guidance "text"]'
   allowedTools: "Task, Read, Write, Bash, Glob, Grep, TodoWrite, Edit"
-  model: opus
+  model: haiku
   category: automation
   orchestration: true
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

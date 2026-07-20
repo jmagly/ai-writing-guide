@@ -6,8 +6,10 @@ description: Validate manually-created campaign intake forms and kick off Strate
 commandHint:
   argumentHint: <intake-directory> [--guidance "context" --interactive]
   allowedTools: Read, Write, Glob, TodoWrite, Task
-  model: sonnet
+  model: haiku
   category: marketing-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Intake Start Campaign

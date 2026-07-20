@@ -6,8 +6,10 @@ description: Lint and repair citation sidecars in a research corpus — structur
 commandHint:
   argumentHint: "sidecar-lint [--orphans] | sidecar-repair [--authors-only|--affiliations-only] [--write]"
   allowedTools: Read, Bash, Write
-  model: sonnet
+  model: haiku
   category: research-validation
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Sidecar Lint & Repair

@@ -6,8 +6,10 @@ description: The canonical, extensible source-type registry for a research corpu
 commandHint:
   argumentHint: "source-types [--json]"
   allowedTools: Read, Bash, Write
-  model: sonnet
+  model: haiku
   category: research-foundation
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Source-Type Registry

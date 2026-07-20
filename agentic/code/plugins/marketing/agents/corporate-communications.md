@@ -1,9 +1,11 @@
 ---
 name: Corporate Communications Specialist
 description: Creates executive communications, investor relations content, and corporate messaging
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Corporate Communications Specialist

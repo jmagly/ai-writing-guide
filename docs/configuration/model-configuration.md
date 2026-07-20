@@ -141,11 +141,18 @@ same-directory temporary files and atomic rename, preserve unrelated JSON or
 frontmatter content, and validate the full requested change set before writing.
 
 Skill policy lives under `commandHint` as `modelRole`, `modelTier`, and optional
-`modelEffort`. During migration, legacy `commandHint.model` remains readable:
+`modelEffort`; premium policy also requires `modelRationale`. During migration,
+legacy `commandHint.model` remains readable:
 `opus` maps to reasoning/premium, `sonnet` to coding/standard, and `haiku` to
 efficiency/economy. Claude deployment compiles requested skill intent to its
 native turn-scoped fields. Other providers retain canonical intent but only
 report the capability outcome; they do not receive a fabricated native pin.
+
+Canonical agents use `model-role`, `model-tier`, and, for premium defaults,
+`model-rationale`. Economy is the corpus default. Premium is an allowlisted
+exception whose rationale names the quality or risk reason. The compatibility
+`model` aliases remain for one migration window and must not contain pinned
+provider IDs.
 
 ### Reasoning (opus)
 **Use for:** Complex analysis, critical decisions, strategic planning

@@ -6,9 +6,11 @@ description: Recommends the right LLM pipeline pattern for a use case — simple
 commandHint:
   argumentHint: "<use-case-description>"
   allowedTools: Read
-  model: sonnet
+  model: haiku
   category: nlp-prod
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Pattern Selector

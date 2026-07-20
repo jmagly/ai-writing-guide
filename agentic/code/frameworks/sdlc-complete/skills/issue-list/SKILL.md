@@ -6,8 +6,10 @@ description: List and filter tickets/issues from configured backend
 commandHint:
   argumentHint: [--status STATE --label LABEL --assignee USER --limit NUM --format table|json|markdown]
   allowedTools: Read, Write, Glob, Bash
-  model: sonnet
+  model: haiku
   category: project-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

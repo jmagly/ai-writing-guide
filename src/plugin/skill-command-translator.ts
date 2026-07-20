@@ -88,6 +88,7 @@ interface SkillFrontmatter {
     modelRole?: 'reasoning' | 'coding' | 'efficiency';
     modelTier?: 'economy' | 'standard' | 'premium';
     modelEffort?: 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
+    modelRationale?: string;
     category?: string;
     orchestration?: boolean;
     executionSteps?: string[];
@@ -255,6 +256,9 @@ export function parseFrontmatter(content: string): { frontmatter: SkillFrontmatt
         const effortMatch = hintLine.match(/^modelEffort:\s*(minimal|low|medium|high|xhigh)\s*$/);
         if (effortMatch) { hint.modelEffort = effortMatch[1] as NonNullable<typeof hint.modelEffort>; i++; continue; }
 
+        const rationaleMatch = hintLine.match(/^modelRationale:\s*(.+)$/);
+        if (rationaleMatch) { hint.modelRationale = rationaleMatch[1].trim(); i++; continue; }
+
         const catMatch = hintLine.match(/^category:\s*(.+)/);
         if (catMatch) { hint.category = catMatch[1].trim(); i++; continue; }
 
@@ -320,6 +324,7 @@ export function generateCommandContent(
     lines.push(`aiwg-model-role: ${modelPolicy.modelRole}`);
     lines.push(`aiwg-model-tier: ${modelPolicy.modelTier}`);
     if (modelPolicy.modelEffort) lines.push(`aiwg-model-effort: ${modelPolicy.modelEffort}`);
+    if (hint?.modelRationale) lines.push(`aiwg-model-rationale: ${hint.modelRationale}`);
     if (provider === 'claude') {
       lines.push(`model: ${modelPolicy.legacyModel}`);
       if (modelPolicy.modelEffort) {

@@ -1,7 +1,7 @@
 ---
 name: self-debug
 description: Diagnoses and recovers from agent failures using structured recovery protocol
-model: claude-haiku-4-5
+model: sonnet
 tools:
   - Read
   - Grep
@@ -9,6 +9,8 @@ tools:
 researchFoundation:
   - "REF-002: Recovery capability is dominant success predictor"
   - "REF-002: DeepSeek V3.1 achieves 92.2% via recovery training"
+model-role: coding
+model-tier: standard
 ---
 
 # Self-Debug Agent

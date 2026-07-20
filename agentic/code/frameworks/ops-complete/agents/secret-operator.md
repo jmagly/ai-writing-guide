@@ -1,9 +1,11 @@
 ---
 name: Secret Operator
 description: Manage OpenBao/Vault operations — unseal, backup, key rotation, and audit log review — with interactive gates for all sensitive operations
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Write, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Secret Operator

@@ -11,8 +11,10 @@ triggers:
 commandHint:
   argumentHint: "[project-directory=.] [--json] [--guidance \"text\"]"
   allowedTools: Read, Glob, Grep, Bash
-  model: sonnet
+  model: haiku
   category: aiwg-utility
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

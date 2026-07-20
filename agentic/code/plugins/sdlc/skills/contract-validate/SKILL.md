@@ -21,8 +21,10 @@ invariants:
 commandHint:
   argumentHint: "<skill1> <skill2> ... | --workflow <file.yaml> [--external input1,input2] [--strict]"
   allowedTools: Read, Glob, Grep
-  model: sonnet
+  model: haiku
   category: planning
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Contract Validate Skill

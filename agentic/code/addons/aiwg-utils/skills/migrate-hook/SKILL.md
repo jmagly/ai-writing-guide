@@ -6,8 +6,10 @@ description: Migrate existing CLAUDE.md full-injection to the AIWG.md hook file 
 commandHint:
   argumentHint: "[--provider <name>] [--all] [--dry-run] [--no-backup] [--force]"
   allowedTools: Read, Write, Edit, Bash, Glob
-  model: sonnet
+  model: haiku
   category: hook-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Migrate Hook

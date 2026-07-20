@@ -8,6 +8,8 @@ commandHint:
   allowedTools: Read, Bash, Write
   model: sonnet
   category: research-profiles
+  modelRole: coding
+  modelTier: standard
 ---
 
 # Profile Generate

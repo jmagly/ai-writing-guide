@@ -6,8 +6,10 @@ description: Create, update, list, or run scheduled remote agents (triggers) tha
 commandHint:
   argumentHint: "create|list|delete [--name <name>] [--cron <expr>] [--task <prompt>] [--provider <provider>]"
   allowedTools: Bash, Read, Write, CronCreate, CronDelete, CronList
-  model: sonnet
+  model: haiku
   category: scheduling
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Schedule

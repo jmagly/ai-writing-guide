@@ -6,8 +6,10 @@ description: Disable soul enforcement without deleting SOUL.md or soul files
 commandHint:
   argumentHint: "[--provider claude|warp|copilot|cursor|factory|windsurf|opencode|codex] [--all]"
   allowedTools: Read, Write, Edit, Bash, Glob
-  model: sonnet
+  model: haiku
   category: soul-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Soul Disable

@@ -1,12 +1,14 @@
 ---
 name: aiwg-finder
 description: Capability discovery and tool-selection specialist — the finder for AIWG's operational assets. Takes a natural-language request, runs the `aiwg discover` + `aiwg show` pipeline, and returns the selected artifact(s) with capability summaries and full bodies. Companion to aiwg-steward.
-model: claude-sonnet-4-6
+model: haiku
 tools:
   - Bash
   - Read
   - Grep
 category: maintenance
+model-role: efficiency
+model-tier: economy
 ---
 
 # AIWG Finder

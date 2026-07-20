@@ -1,10 +1,12 @@
 ---
 name: github-integration-lead
 description: GitHub operations orchestrator. Coordinates repo-analyzer, pr-reviewer, actions-checker, and release-manager for comprehensive GitHub integration.
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, Bash, Glob, Grep
 orchestration: true
 category: integration
+model-role: efficiency
+model-tier: economy
 ---
 
 # GitHub Integration Lead Agent

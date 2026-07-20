@@ -6,8 +6,10 @@ description: Triage research-corpus artifacts for LLM residue, placeholder/templ
 commandHint:
   argumentHint: "[--ref REF-XXX] [--quarantine] [--fail-on review|quarantine] [--out PATH]"
   allowedTools: Read, Bash, Write
-  model: sonnet
+  model: haiku
   category: research-validation
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Integrity / Submission-Risk Scan

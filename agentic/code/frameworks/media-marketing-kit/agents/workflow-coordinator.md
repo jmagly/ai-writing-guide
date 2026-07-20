@@ -1,8 +1,10 @@
 ---
 name: Workflow Coordinator
 description: Designs and optimizes marketing workflows, processes, and operations for team efficiency
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Workflow Coordinator

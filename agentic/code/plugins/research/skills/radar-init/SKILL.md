@@ -6,8 +6,10 @@ description: Scaffold radar/freshness sidecars for research-corpus REFs. Pulls t
 commandHint:
   argumentHint: "--ref REF-XXX | --all-missing [--cadence C] [--cluster T] [--write]"
   allowedTools: Read, Bash, Write
-  model: sonnet
+  model: haiku
   category: research-radar
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Radar Init

@@ -6,8 +6,10 @@ description: End-to-end SDLC ramp-up from idea to construction-ready with automa
 commandHint:
   argumentHint: <description> [--from-codebase <path> --interactive --guidance "text" --auto --dry-run --skip-to <phase> --resume]
   allowedTools: Task, Read, Write, Glob, TodoWrite
-  model: opus
+  model: haiku
   category: sdlc-orchestration
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

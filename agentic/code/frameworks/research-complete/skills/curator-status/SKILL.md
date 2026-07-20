@@ -6,8 +6,10 @@ description: Report research-corpus discovery curators (PROF-S) ranked by yield 
 commandHint:
   argumentHint: "[--out PATH]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: research-discovery
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Curator Status

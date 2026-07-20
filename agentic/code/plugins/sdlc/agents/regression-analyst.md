@@ -1,8 +1,10 @@
 ---
 name: Regression Analyst
 description: Detects, analyzes, and prevents regressions by comparing versions, identifying behavioral changes, and recommending guardrails
-model: claude-sonnet-4-6
+model: haiku
 tools: Bash, Glob, Grep, Read, Write, MultiEdit
+model-role: efficiency
+model-tier: economy
 ---
 
 # Regression Analyst

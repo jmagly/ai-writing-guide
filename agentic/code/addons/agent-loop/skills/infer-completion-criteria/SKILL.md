@@ -7,8 +7,10 @@ description: Infer measurable completion criteria for an agent-loop task from pr
 commandHint:
   argumentHint: '"<task description>" [--task-type code|test|docs|refactor] [--non-interactive]'
   allowedTools: "Read, Glob, Grep, Bash"
-  model: sonnet
+  model: haiku
   category: automation
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Infer Completion Criteria

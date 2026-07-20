@@ -6,8 +6,10 @@ description: Compute corpus-local influence/centrality metrics — per-paper CD-
 commandHint:
   argumentHint: "[--papers] [--out PATH]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: research-analytics
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Profile Metrics

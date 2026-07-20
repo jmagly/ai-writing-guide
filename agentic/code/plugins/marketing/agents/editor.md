@@ -1,9 +1,11 @@
 ---
 name: Editor
 description: Reviews and refines marketing content for quality, clarity, accuracy, and brand consistency
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Editor

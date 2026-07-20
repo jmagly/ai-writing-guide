@@ -1,9 +1,12 @@
 ---
 name: Incident Responder
 description: Production incident management specialist. Handle outages with urgency and precision. Use IMMEDIATELY when production issues occur. Coordinates debugging, implements fixes, documents post-mortems
-model: claude-sonnet-4-6
+model: opus
 memory: user
 tools: Bash, Read, Write, MultiEdit, WebFetch
+model-role: reasoning
+model-tier: premium
+model-rationale: Active incident containment decisions can cause irreversible operational impact.
 ---
 
 # Your Role

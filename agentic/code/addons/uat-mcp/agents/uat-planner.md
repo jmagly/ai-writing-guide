@@ -3,9 +3,11 @@ id: uat-planner
 name: UAT Planner
 role: specialist
 tier: reasoning
-model: claude-opus-4-7
+model: haiku
 description: Designs phased UAT plans from MCP tool manifests and domain context, producing agent-executable test specifications
 allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+model-role: efficiency
+model-tier: economy
 ---
 
 # UAT Planner

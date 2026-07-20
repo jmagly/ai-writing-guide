@@ -6,9 +6,11 @@ description: Production readiness review — strip prototype scaffolding, harden
 commandHint:
   argumentHint: "<pipeline-dir> [--dry-run]"
   allowedTools: Read, Write, Bash
-  model: sonnet
+  model: haiku
   category: nlp-prod
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Productionize

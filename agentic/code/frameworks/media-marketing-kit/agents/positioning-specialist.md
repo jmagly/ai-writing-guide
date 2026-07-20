@@ -1,9 +1,11 @@
 ---
 name: Positioning Specialist
 description: Develops brand positioning, value propositions, and competitive differentiation strategies
-model: claude-opus-4-7
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Positioning Specialist

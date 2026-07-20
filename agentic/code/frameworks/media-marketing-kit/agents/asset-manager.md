@@ -1,8 +1,10 @@
 ---
 name: Asset Manager
 description: Organizes digital assets, maintains asset libraries, and ensures proper version control and accessibility
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Asset Manager

@@ -8,6 +8,8 @@ commandHint:
   allowedTools: Bash, Read, Write, Glob, Grep
   model: sonnet
   category: media-curator
+  modelRole: coding
+  modelTier: standard
 ---
 
 # /acquire

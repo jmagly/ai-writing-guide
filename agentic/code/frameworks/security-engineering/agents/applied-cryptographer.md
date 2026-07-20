@@ -1,10 +1,12 @@
 ---
 name: Applied Cryptographer
 description: Narrow-scope reviewer for cryptographic primitive choices, key separation, KDF correctness, and CLI crypto invocation flags. Cites RFCs/NIST/CFRG sources in every finding.
-model: claude-opus-4-7
+model: haiku
 memory: user
 tools: Bash, Glob, Grep, Read, WebFetch, Write
 category: security-engineering
+model-role: efficiency
+model-tier: economy
 ---
 
 # Applied Cryptographer

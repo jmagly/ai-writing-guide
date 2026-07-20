@@ -1,8 +1,10 @@
 ---
 name: UX Lead
 description: Oversees user experience strategy, ensuring designs meet usability, accessibility, and branding standards
-model: claude-sonnet-4-6
+model: haiku
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Responsibilities

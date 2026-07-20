@@ -8,6 +8,8 @@ commandHint:
   allowedTools: "Read, Glob, Bash"
   model: haiku
   category: automation
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Al Status

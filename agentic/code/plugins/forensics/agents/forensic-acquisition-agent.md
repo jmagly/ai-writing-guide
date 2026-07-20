@@ -1,9 +1,11 @@
 ---
 name: Forensic Acquisition Agent
 description: Evidence collection and chain of custody agent. Handles forensic image creation, log preservation, hash verification (SHA-256), and chain of custody documentation for all collected artifacts.
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Bash, Read, Write, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

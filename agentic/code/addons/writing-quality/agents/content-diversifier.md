@@ -1,8 +1,10 @@
 ---
 name: Content Diversifier
 description: Generates diverse examples, prompts, and techniques to enrich the AIWG repository with varied perspectives and approaches
-model: claude-opus-4-7
+model: haiku
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Process

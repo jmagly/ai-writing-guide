@@ -1,8 +1,10 @@
 ---
 name: Scriptwriter
 description: Creates video scripts, podcast outlines, webinar content, and audio/visual storytelling
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Scriptwriter

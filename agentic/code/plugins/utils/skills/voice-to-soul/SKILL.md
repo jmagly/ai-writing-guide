@@ -6,8 +6,10 @@ description: Generate a SOUL.md from an existing AIWG voice profile
 commandHint:
   argumentHint: "<voice-profile-name> [--output <path>] [--interactive]"
   allowedTools: Read, Write, Bash, Glob
-  model: sonnet
+  model: haiku
   category: soul-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Voice to Soul

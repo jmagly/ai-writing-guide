@@ -6,8 +6,10 @@ description: Rebuild bidirectional citation edges in a research corpus. Scans ou
 commandHint:
   argumentHint: "[--dry-run] [--scope REF-XXX] [--format full|summary|json]"
   allowedTools: Read, Write, Glob, Grep, Bash
-  model: sonnet
+  model: haiku
   category: research-maintenance
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Citation Backfill

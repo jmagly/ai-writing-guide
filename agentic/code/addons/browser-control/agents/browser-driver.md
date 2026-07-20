@@ -31,6 +31,9 @@ denied_tools:
   - mcp__playwright__browser_file_upload
   - mcp__playwright__browser_drag
   - mcp__playwright__browser_drop
+model: haiku
+model-role: efficiency
+model-tier: economy
 ---
 
 # Browser Driver Agent (DRAFT)

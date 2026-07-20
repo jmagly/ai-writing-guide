@@ -1,9 +1,11 @@
 ---
 name: Software Implementer
 description: Delivers production-quality code changes with accompanying tests, documentation, and deployment notes
-model: claude-sonnet-4-6
+model: sonnet
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: coding
+model-tier: standard
 ---
 
 # Software Implementer

@@ -8,6 +8,8 @@ commandHint:
   allowedTools: Read, Write, Glob, Grep, Bash, Agent
   model: sonnet
   category: research-validation
+  modelRole: coding
+  modelTier: standard
 ---
 
 # Research Quality Audit

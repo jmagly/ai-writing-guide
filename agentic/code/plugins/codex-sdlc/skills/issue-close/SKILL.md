@@ -6,8 +6,10 @@ description: Mark an issue as complete with comprehensive summary and verificati
 commandHint:
   argumentHint: <issue_number> [--reason <text>] [--no-verify] [--link-artifacts]
   allowedTools: Bash(git *, gh *), Read, Glob, mcp__gitea__*
-  model: sonnet
+  model: haiku
   category: project-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Issue Close

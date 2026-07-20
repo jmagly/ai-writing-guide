@@ -1,9 +1,11 @@
 ---
 name: Internal Communications Specialist
 description: Creates employee communications, internal announcements, and company-wide messaging
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Internal Communications Specialist

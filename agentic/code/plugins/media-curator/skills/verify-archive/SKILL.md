@@ -6,8 +6,10 @@ description: Verify archive integrity with self-verifying SHA-256 checksums, gen
 commandHint:
   argumentHint: <archive_path> [--generate] [--verify] [--provenance] [--fix]
   allowedTools: Bash, Read, Write, Glob, Grep
-  model: sonnet
+  model: haiku
   category: media-curator
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # verify-archive

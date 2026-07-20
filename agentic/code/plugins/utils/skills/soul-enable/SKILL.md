@@ -6,8 +6,10 @@ description: Enable soul enforcement by wiring SOUL.md into platform context fil
 commandHint:
   argumentHint: "[--provider claude|warp|copilot|cursor|factory|windsurf|opencode|codex] [--all] [--agents]"
   allowedTools: Read, Write, Edit, Bash, Glob
-  model: sonnet
+  model: haiku
   category: soul-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Soul Enable

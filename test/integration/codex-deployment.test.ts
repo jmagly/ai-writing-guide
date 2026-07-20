@@ -369,7 +369,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Codex Integration', () => {
         'utf8',
       );
       expect(content).toContain(
-        '<!-- aiwg:model-policy role=reasoning tier=premium outcome=unsupported -->',
+        '<!-- aiwg:model-policy role=reasoning tier=premium outcome=unsupported rationale=',
       );
       const frontmatter = content.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
       expect(frontmatter).not.toMatch(/^model:/m);

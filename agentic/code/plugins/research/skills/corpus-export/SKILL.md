@@ -6,8 +6,10 @@ description: Package corpus subsets as distribution archives. Filter by cluster,
 commandHint:
   argumentHint: "[--cluster <name>] [--refs <range>] [--topic <name>] [--filter <expr>] [--output <path>] [--format tar.gz|zip]"
   allowedTools: Read, Write, Glob, Grep, Bash
-  model: sonnet
+  model: haiku
   category: research-distribution
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Corpus Export

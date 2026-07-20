@@ -6,8 +6,10 @@ description: Transcribe scanned page images into per-page + combined Markdown so
 commandHint:
   argumentHint: "--slug SLUG [--rasterize PDF [--dpi N]] [--provider codex|command] [--command TMPL] [--start N --end N] [--model M] [--retries N] [--force]"
   allowedTools: Read, Bash, Write
-  model: sonnet
+  model: haiku
   category: research-acquisition
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Scanned-Page Vision Extraction

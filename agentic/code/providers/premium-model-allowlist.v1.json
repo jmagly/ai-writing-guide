@@ -1,0 +1,35 @@
+{
+  "version": "1.0.0",
+  "reviewedAt": "2026-07-20",
+  "exemptions": {
+    "agents": {
+      "factory-compat": "Compatibility documentation is not a deployable agent definition and has no YAML frontmatter.",
+      "openai-compat": "Compatibility documentation is not a deployable agent definition and has no YAML frontmatter.",
+      "windsurf-compat": "Compatibility documentation is not a deployable agent definition and has no YAML frontmatter."
+    },
+    "skills": {}
+  },
+  "agents": {
+    "architecture-designer": "Cross-system architecture tradeoffs have a high downstream rework cost.",
+    "cloud-architect": "Infrastructure topology decisions carry material reliability and security risk.",
+    "forensics-orchestrator": "Evidence-preserving investigation plans require high-confidence sequencing.",
+    "incident-responder": "Active incident containment decisions can cause irreversible operational impact.",
+    "legal-liaison": "Legal and regulatory interpretation has material compliance consequences.",
+    "legal-reviewer": "Legal approval findings can block release and require high-confidence review.",
+    "security-architect": "System threat boundaries and trust decisions are security-critical.",
+    "security-auditor": "Vulnerability findings and exploitability judgments are security-critical.",
+    "security-gatekeeper": "Release security gate decisions require high-confidence risk assessment.",
+    "vision-owner": "Product-direction decisions coordinate multiple downstream delivery tracks."
+  },
+  "skills": {
+    "best-practices-audit": "External evidence synthesis can change high-impact technical policy.",
+    "crisis-response": "Public crisis decisions carry material legal and reputational risk.",
+    "flow-deploy-to-production": "Production release and rollback decisions have high operational impact.",
+    "flow-incident-response": "Incident orchestration must preserve containment and evidence integrity.",
+    "legal-compliance": "Legal and regulatory compliance conclusions require high confidence.",
+    "physical-threat-modeling": "Physical safety and asset protection decisions are high impact.",
+    "security-assessment": "Security posture findings influence remediation and release decisions.",
+    "security-audit": "Security audit conclusions require high-confidence vulnerability analysis.",
+    "security-gate": "The skill makes a release-blocking security decision."
+  }
+}

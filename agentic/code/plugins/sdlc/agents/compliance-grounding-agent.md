@@ -3,10 +3,12 @@ id: compliance-grounding-agent
 name: Compliance Grounding Agent
 role: grounding
 tier: validation
-model: claude-sonnet-4-6
+model: haiku
 description: Verifies compliance claims against GDPR, HIPAA, SOC2, and PCI-DSS requirements to prevent regulatory gaps
 allowed-tools: Read, Grep, Glob
 platforms: [all]
+model-role: efficiency
+model-tier: economy
 ---
 
 # Compliance Grounding Agent

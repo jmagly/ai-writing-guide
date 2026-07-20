@@ -1,9 +1,11 @@
 ---
 name: Database Optimizer
 description: Database performance and schema optimization specialist. Optimize queries, design indexes, handle migrations, solve N+1 problems. Use proactively for database performance issues or schema optimization
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

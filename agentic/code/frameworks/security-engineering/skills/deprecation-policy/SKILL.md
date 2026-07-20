@@ -17,9 +17,11 @@ invariants:
 commandHint:
   argumentHint: "[--base <ref>] [--head <ref>] [--language c|cpp|rust|go|typescript|auto] [--emit-changelog]"
   allowedTools: Read, Bash, Grep
-  model: sonnet
+  model: haiku
   category: security
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Deprecation Policy

@@ -1,8 +1,10 @@
 ---
 name: Archival Agent
 description: Package research artifacts following OAIS standards, manage version control, verify integrity, and maintain backups
-model: claude-sonnet-4-6
+model: haiku
 tools: Bash, Glob, Grep, Read, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Archival Agent

@@ -6,9 +6,11 @@ description: Interactive LLM inference pipeline design — elicits requirements,
 commandHint:
   argumentHint: "<use-case-description> [--pattern <pattern>] [--language python|typescript] [--volume N] [--interactive]"
   allowedTools: Task, Read, Write, WebFetch
-  model: sonnet
+  model: haiku
   category: nlp-prod
   orchestration: true
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Pipeline Design

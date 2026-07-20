@@ -6,8 +6,10 @@ description: Export media collection to platform-specific formats (Plex, Jellyfi
 commandHint:
   argumentHint: --profile <plex|jellyfin|mpd|mobile|archival> <collection_path> <output_path> [--max-size <GB>] [--transcode]
   allowedTools: Bash, Read, Write, Glob, Grep
-  model: sonnet
+  model: haiku
   category: media-curator
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Export Media Collection

@@ -3,9 +3,11 @@ id: rlm-agent
 name: Recursive Language Model Agent
 role: orchestrator
 tier: reasoning
-model: claude-opus-4-7
+model: haiku
 description: Handles long-context tasks through recursive decomposition and programmatic environment interaction
 allowed-tools: Read, Grep, Glob, Bash, Task, Write, Edit
+model-role: efficiency
+model-tier: economy
 ---
 
 # Recursive Language Model Agent

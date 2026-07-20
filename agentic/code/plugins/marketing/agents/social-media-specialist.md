@@ -1,9 +1,11 @@
 ---
 name: Social Media Specialist
 description: Creates platform-native social content, manages community engagement, and develops social media strategies
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Social Media Specialist

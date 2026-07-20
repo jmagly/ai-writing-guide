@@ -6,8 +6,10 @@ description: Automatically detect and update linked issues based on commits, art
 commandHint:
   argumentHint: '[--commit <sha>] [--scan-recent <count>] [--artifact <path>] [--dry-run]'
   allowedTools: 'Bash(git *, gh *), Read, Glob, mcp__gitea__*'
-  model: sonnet
+  model: haiku
   category: project-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Issue Sync

@@ -1,9 +1,11 @@
 ---
 name: DR Planner
 description: Build ordered disaster recovery runbooks from service topology, generate recovery sequences with dependency-aware ordering and RTO budgets
-model: claude-opus-4-7
+model: haiku
 memory: project
 tools: Bash, Read, Write, Glob, Grep, Edit
+model-role: efficiency
+model-tier: economy
 ---
 
 # DR Planner

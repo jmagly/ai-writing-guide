@@ -6,9 +6,11 @@ description: Orchestrate compliance validation workflow with requirements mappin
 commandHint:
   argumentHint: <compliance-framework> [project-directory] [--guidance "text"] [--interactive]
   allowedTools: Task, Read, Write, Glob, TodoWrite
-  model: opus
+  model: sonnet
   category: sdlc-orchestration
   orchestration: true
+  modelRole: coding
+  modelTier: standard
 ---
 
 > **Declarative Flow (#1539):** This flow's orchestration is now also expressed as a

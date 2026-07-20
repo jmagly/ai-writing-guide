@@ -1,9 +1,11 @@
 ---
 name: Ops Inventory
 description: Collects, reconciles, and maintains fleet inventory across hosts, services, and network resources
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Write, Glob, Grep, Edit
+model-role: efficiency
+model-tier: economy
 ---
 
 # Ops Inventory

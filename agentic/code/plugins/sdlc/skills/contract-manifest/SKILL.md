@@ -20,8 +20,10 @@ invariants:
 commandHint:
   argumentHint: "<skill1> <skill2> ... | --workflow <file.yaml> [--mermaid] [--json]"
   allowedTools: Read, Glob, Grep
-  model: sonnet
+  model: haiku
   category: planning
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Contract Manifest Skill

@@ -1,9 +1,11 @@
 ---
 name: Environment Engineer
 description: Tailors process assets, tooling, and guidelines to support consistent, automated delivery
-model: claude-sonnet-4-6
+model: sonnet
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: coding
+model-tier: standard
 ---
 
 # Responsibilities

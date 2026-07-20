@@ -1,12 +1,14 @@
 ---
 name: twelve-factor-reviewer
 description: Reviews application architecture and implementation evidence against Twelve-Factor and modern 12+ Factor criteria.
-model: claude-sonnet-4-6
+model: sonnet
 tools:
   - Read
   - Grep
   - Glob
   - Bash
+model-role: coding
+model-tier: standard
 ---
 
 # Twelve-Factor Reviewer

@@ -11,8 +11,10 @@ triggers:
 commandHint:
   argumentHint: <docs/sdlc/artifacts/project> [--interactive] [--guidance "text"]
   allowedTools: Read, Write, Grep, Glob
-  model: opus
+  model: sonnet
   category: sdlc-management
+  modelRole: coding
+  modelTier: standard
 ---
 
 # Orchestrator Command (SDLC)

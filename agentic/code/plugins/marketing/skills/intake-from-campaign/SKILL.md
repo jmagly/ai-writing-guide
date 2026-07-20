@@ -6,8 +6,10 @@ description: Scan existing campaign materials, media kit, or marketing assets an
 commandHint:
   argumentHint: <campaign-directory> [--interactive] [--output .aiwg/marketing/intake/] [--guidance "context"]
   allowedTools: Read, Write, Glob, Grep, Bash, TodoWrite
-  model: sonnet
+  model: haiku
   category: marketing-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Intake From Campaign

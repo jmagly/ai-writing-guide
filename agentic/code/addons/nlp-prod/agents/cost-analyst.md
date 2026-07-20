@@ -3,10 +3,12 @@ id: cost-analyst
 name: Cost Analyst
 role: analyst
 tier: fast
-model: claude-sonnet-4-6
+model: haiku
 description: TCO analysis, model selection recommendations, caching strategy, and parallelization opportunities for LLM inference pipelines
 allowed-tools: Read, WebFetch
 category: nlp-prod
+model-role: efficiency
+model-tier: economy
 ---
 
 # Cost Analyst

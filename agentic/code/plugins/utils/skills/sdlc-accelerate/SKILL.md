@@ -5,9 +5,11 @@ description: End-to-end SDLC ramp-up from idea to construction-ready with automa
 commandHint:
   argumentHint: "<description> [--from-codebase <path>] [--resume] [--dry-run]"
   allowedTools: Task, Read, Write, Glob, TodoWrite
-  model: opus
+  model: haiku
   category: orchestration
   orchestration: true
+  modelRole: efficiency
+  modelTier: economy
 platforms: [all]
 
 ---

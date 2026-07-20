@@ -1,9 +1,11 @@
 ---
 name: PR Specialist
 description: Develops public relations strategies, writes press releases, and manages media relations
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # PR Specialist

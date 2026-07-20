@@ -6,8 +6,10 @@ description: Create a new ticket/issue with configurable backend (Gitea, GitHub,
 commandHint:
   argumentHint: <title> [description] [--provider NAME --labels "label1,label2" --assignee USER --check-regression]
   allowedTools: Read, Write, Glob, Bash, mcp__gitea__create_issue
-  model: sonnet
+  model: haiku
   category: project-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

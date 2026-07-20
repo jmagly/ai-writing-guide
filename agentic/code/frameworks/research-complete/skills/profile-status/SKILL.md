@@ -6,8 +6,10 @@ description: Report research-corpus entity profiles (PROF-P/O/G/F) past their re
 commandHint:
   argumentHint: "[--stale-only] [--format table|csv|list] [--out PATH]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: research-profiles
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Profile Status

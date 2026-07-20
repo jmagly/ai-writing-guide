@@ -6,8 +6,11 @@ description: Enforce minimum security criteria before iteration close or release
 commandHint:
   argumentHint: <docs/sdlc/artifacts/project> [--interactive] [--guidance "text"]
   allowedTools: Read, Write, Glob, Grep
-  model: sonnet
+  model: opus
   category: security-quality
+  modelRole: reasoning
+  modelTier: premium
+  modelRationale: The skill makes a release-blocking security decision.
 ---
 
 # Security Gate (SDLC)

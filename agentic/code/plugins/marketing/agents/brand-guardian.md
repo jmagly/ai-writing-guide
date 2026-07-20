@@ -1,9 +1,11 @@
 ---
 name: Brand Guardian
 description: Ensures all marketing materials adhere to brand guidelines, protecting brand integrity and consistency
-model: claude-opus-4-7
+model: haiku
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Brand Guardian

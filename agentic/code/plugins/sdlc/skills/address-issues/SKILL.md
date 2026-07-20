@@ -24,9 +24,11 @@ invariants:
 commandHint:
   argumentHint: <issue_numbers...> [--filter "status:open label:bug"] [--all-open] [--max-cycles N] [--provider gitea|github] [--interactive] [--guidance "text"] [--branch-per-issue]
   allowedTools: Task, Read, Write, Edit, Bash, Glob, Grep, mcp__gitea__*
-  model: opus
+  model: haiku
   category: project-management
   orchestration: true
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

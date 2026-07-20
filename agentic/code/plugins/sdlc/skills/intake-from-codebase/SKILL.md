@@ -6,8 +6,10 @@ description: Scan existing codebase and generate intake documents by analyzing c
 commandHint:
   argumentHint: <codebase-directory> [--interactive] [--output .aiwg/intake/] [--guidance "context"]
   allowedTools: Read, Write, Glob, Grep, Bash, TodoWrite
-  model: sonnet
+  model: haiku
   category: sdlc-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

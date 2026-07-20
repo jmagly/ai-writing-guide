@@ -3,10 +3,12 @@ id: pipeline-architect
 name: Pipeline Architect
 role: designer
 tier: reasoning
-model: claude-sonnet-4-6
+model: haiku
 description: Designs optimal LLM inference pipeline structure for requirements; selects the right pattern; estimates cost at target volume
 allowed-tools: Read, Write, WebSearch, WebFetch
 category: nlp-prod
+model-role: efficiency
+model-tier: economy
 ---
 
 # Pipeline Architect

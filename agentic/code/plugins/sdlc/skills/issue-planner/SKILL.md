@@ -23,8 +23,10 @@ invariants:
 commandHint:
   argumentHint: "<objective> [--interactive] [--dry-run] [--guidance \"text\"] [--provider gitea|github|local] [--induct-research <target>]"
   allowedTools: Read, Write, Glob, Grep, Bash, Agent, mcp__gitea__issue_write, mcp__gitea__issue_read, mcp__gitea__list_issues, WebSearch, WebFetch
-  model: sonnet
+  model: haiku
   category: planning
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Issue Planner

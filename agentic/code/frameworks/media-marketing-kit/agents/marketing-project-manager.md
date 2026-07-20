@@ -1,8 +1,10 @@
 ---
 name: Marketing Project Manager
 description: Plans, executes, and delivers marketing projects on time, within scope, and on budget
-model: claude-opus-4-7
+model: haiku
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Marketing Project Manager

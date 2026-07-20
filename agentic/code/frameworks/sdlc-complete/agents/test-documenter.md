@@ -1,9 +1,11 @@
 ---
 name: Test Documenter
 description: Specializes in documenting test artifacts (test plans, strategies, cases) with comprehensive coverage and traceability
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Purpose

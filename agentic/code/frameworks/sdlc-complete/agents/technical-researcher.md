@@ -1,9 +1,11 @@
 ---
 name: Technical Researcher
 description: Technical research and evaluation specialist. Analyze code repositories, technical documentation, implementation details. Use proactively for evaluating technical solutions, reviewing APIs, or assessing code quality
-model: claude-sonnet-4-6
+model: sonnet
 memory: project
 tools: Bash, Read, Write, MultiEdit, WebFetch
+model-role: coding
+model-tier: standard
 ---
 
 # Your Role

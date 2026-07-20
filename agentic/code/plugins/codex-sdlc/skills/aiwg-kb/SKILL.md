@@ -8,6 +8,8 @@ commandHint:
   allowedTools: 'Read, Glob, Grep'
   model: haiku
   category: sdlc-help
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # AIWG Knowledge Base

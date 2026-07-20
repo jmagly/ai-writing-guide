@@ -6,10 +6,12 @@ description: Crash-resilient external loop with state persistence and CI/CD inte
 commandHint:
   argumentHint: "\"<objective>\" --completion \"<criteria>\" [--max-iterations N] [--timeout M] [--provider <p>] [--no-commit] [--branch <name>] [--quiet]"
   allowedTools: Bash, Read, Write
-  model: sonnet
+  model: haiku
   category: automation
   orchestration: true
   platforms: [claude-code, hermes, openclaw]
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

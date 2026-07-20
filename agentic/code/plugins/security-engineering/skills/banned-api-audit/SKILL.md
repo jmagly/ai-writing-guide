@@ -24,9 +24,11 @@ script:
 commandHint:
   argumentHint: "[--starter c|cpp|python|node|go|rust] [--fail-on-violation] [--paths <glob>...] [--format text|json|both|sarif] [--sarif]"
   allowedTools: Read, Write, Bash, Glob, Grep
-  model: sonnet
+  model: haiku
   category: security
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Banned API Audit

@@ -2,8 +2,10 @@
 name: Source Discoverer
 description: Discovers and ranks media sources across YouTube, Internet Archive, Bandcamp, and other platforms
 category: media-curator
-model: claude-sonnet-4-6
+model: haiku
 allowed-tools: Bash, Read, Write, WebSearch, WebFetch
+model-role: efficiency
+model-tier: economy
 ---
 
 # Source Discoverer

@@ -24,9 +24,11 @@ script:
 commandHint:
   argumentHint: "[--language c|cpp|rust|go|python|node|auto] [--ci gitea|github|gitlab|auto] [--sanitizers asan,ubsan,msan,tsan,race,faulthandler] [--coverage]"
   allowedTools: Read, Write, Bash, Glob, Grep
-  model: sonnet
+  model: haiku
   category: security
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Sanitizer in CI

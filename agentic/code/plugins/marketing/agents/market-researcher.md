@@ -1,9 +1,11 @@
 ---
 name: Market Researcher
 description: Conducts market analysis, competitive intelligence, and audience research to inform marketing strategy
-model: claude-opus-4-7
+model: sonnet
 memory: project
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: coding
+model-tier: standard
 ---
 
 # Market Researcher

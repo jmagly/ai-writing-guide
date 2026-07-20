@@ -1,9 +1,11 @@
 ---
 name: Cloud Analyst
 description: AWS/Azure/GCP forensic artifact collection and analysis agent covering audit logs, IAM review, network flow analysis, and API activity anomaly detection
-model: claude-sonnet-4-6
+model: haiku
 memory: user
 tools: Bash, Read, Write, Glob, Grep, WebFetch
+model-role: efficiency
+model-tier: economy
 ---
 
 # Your Role

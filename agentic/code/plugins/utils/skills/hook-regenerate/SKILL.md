@@ -8,6 +8,8 @@ commandHint:
   allowedTools: Read, Write, Bash, Glob
   model: sonnet
   category: hook-management
+  modelRole: coding
+  modelTier: standard
 ---
 
 # Hook Regenerate

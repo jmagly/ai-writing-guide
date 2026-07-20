@@ -1,9 +1,11 @@
 ---
 name: Requirements Reviewer
 description: Evaluates requirements artifacts for completeness, consistency, risk, and testability before downstream work begins
-model: claude-sonnet-4-6
+model: sonnet
 memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: coding
+model-tier: standard
 ---
 
 # Review Checklist

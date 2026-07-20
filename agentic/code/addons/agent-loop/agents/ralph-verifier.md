@@ -3,9 +3,11 @@ id: ralph-verifier
 name: Al Verifier
 role: validator
 tier: efficiency
-model: claude-haiku-4-5
+model: haiku
 description: Validates agent loop completion criteria by executing verification commands and parsing results
 allowed-tools: Bash, Read, Glob
+model-role: efficiency
+model-tier: economy
 ---
 
 # Al Verifier

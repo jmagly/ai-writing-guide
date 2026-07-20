@@ -1,10 +1,12 @@
 ---
 name: AgentSmith
 description: Creates agent definitions on-demand and deploys them to platform directories for immediate use
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Read, Write, Glob, Grep
 category: smithing
+model-role: efficiency
+model-tier: economy
 ---
 
 # AgentSmith

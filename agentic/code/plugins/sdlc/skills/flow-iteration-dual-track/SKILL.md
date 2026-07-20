@@ -6,9 +6,11 @@ description: Orchestrate dual-track iteration with synchronized Discovery (next)
 commandHint:
   argumentHint: <iteration-number> [project-directory] [--guidance "text"] [--interactive]
   allowedTools: Task, Read, Write, Glob, TodoWrite
-  model: opus
+  model: sonnet
   category: sdlc-orchestration
   orchestration: true
+  modelRole: coding
+  modelTier: standard
 ---
 
 > **Declarative Flow (#1539):** This flow's orchestration is now also expressed as a

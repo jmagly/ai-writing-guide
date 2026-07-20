@@ -6,8 +6,10 @@ description: Add structured comments to issues using templates for progress, fee
 commandHint:
   argumentHint: <issue_number> --type <progress|feedback|blocker|custom> [--content <text>]
   allowedTools: Bash(git *, gh *), Read, Write, mcp__gitea__*
-  model: sonnet
+  model: haiku
   category: project-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Issue Comment

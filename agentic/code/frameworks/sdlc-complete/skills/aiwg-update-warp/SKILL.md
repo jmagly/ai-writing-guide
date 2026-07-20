@@ -6,8 +6,10 @@ description: Update existing project WARP.md with latest AIWG orchestration guid
 commandHint:
   argumentHint: [project-directory --interactive --guidance "text"]
   allowedTools: Read, Write, Edit, Bash
-  model: sonnet
+  model: haiku
   category: sdlc-setup
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # AIWG Update WARP.md

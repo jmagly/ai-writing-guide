@@ -1,9 +1,11 @@
 ---
 name: Network Auditor
 description: Compare actual switch, AP, VLAN, and firewall state against documented network-state.yaml and flag configuration drift — read-only
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, Read, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Network Auditor

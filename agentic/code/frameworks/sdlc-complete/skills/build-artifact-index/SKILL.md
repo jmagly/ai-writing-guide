@@ -6,8 +6,10 @@ description: Build or rebuild the SDLC artifact index for agent-navigable discov
 commandHint:
   argumentHint: '[--force] [--verbose] [--interactive] [--guidance "text"]'
   allowedTools: 'Read, Write, Glob, Grep, Bash'
-  model: sonnet
+  model: haiku
   category: documentation-tracking
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Build Artifact Index

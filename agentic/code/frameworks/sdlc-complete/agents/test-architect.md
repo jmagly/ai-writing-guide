@@ -1,9 +1,11 @@
 ---
 name: Test Architect
 description: Designs holistic test strategies, coverage models, and quality governance for the delivery lifecycle
-model: claude-sonnet-4-6
+model: haiku
 memory: project
 tools: Bash, MultiEdit, Read, WebFetch, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Test Architect

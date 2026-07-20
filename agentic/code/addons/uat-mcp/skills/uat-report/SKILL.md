@@ -6,8 +6,10 @@ description: Generate UAT completion report with tool coverage matrix, pass/fail
 commandHint:
   argumentHint: <results_path> [--format markdown|json|table] [--compare <previous_results>] [--output <path>]
   allowedTools: Read, Write, Glob, Grep, Bash
-  model: sonnet
+  model: haiku
   category: uat-mcp
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # UAT Report

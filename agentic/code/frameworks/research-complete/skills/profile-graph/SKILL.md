@@ -6,8 +6,10 @@ description: Entity-profile graph edges + embedding similarity for a research co
 commandHint:
   argumentHint: "profile-edges  |  profile-similar --entity PROF-P-x [--top K] | --predict-collabs [--threshold T]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: research-analytics
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Profile Graph: Edges & Similarity

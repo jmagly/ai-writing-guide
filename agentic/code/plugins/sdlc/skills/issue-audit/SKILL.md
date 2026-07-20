@@ -19,8 +19,10 @@ invariants:
 commandHint:
   argumentHint: "[--all-open] [--filter \"status:open label:bug\"] [--provider gitea|github|local] [--interactive] [--guidance \"text\"] [--dry-run] [--apply]"
   allowedTools: Read, Bash, Grep, Glob, mcp__gitea__*
-  model: sonnet
+  model: haiku
   category: project-management
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

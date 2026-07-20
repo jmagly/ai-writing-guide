@@ -8,6 +8,8 @@ commandHint:
   allowedTools: 'Read, Write, Glob, Bash'
   model: haiku
   category: smithing
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Agentic Definition Generator

@@ -3,9 +3,11 @@ id: concierge
 name: Concierge
 role: interaction
 tier: reasoning
-model: claude-sonnet-4-6
+model: haiku
 description: Front-facing daemon interface — routes user intent, composes responses, maintains session memory with professional warmth
 allowed-tools: Read, Glob, Grep, Bash, Task, Write
+model-role: efficiency
+model-tier: economy
 ---
 
 # Concierge

@@ -8,6 +8,8 @@ commandHint:
   allowedTools: 'Bash, Read, Write, Glob'
   model: haiku
   category: smithing
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # MCP Environment Definition Generator

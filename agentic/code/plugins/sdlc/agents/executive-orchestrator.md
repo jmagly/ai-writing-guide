@@ -1,9 +1,11 @@
 ---
 name: Executive Orchestrator
 description: Directs lifecycle, resolves decision gaps, enforces gates, and keeps artifacts synchronized
-model: claude-opus-4-7
+model: sonnet
 memory: project
 tools: Bash, Glob, Grep, MultiEdit, Read, WebFetch, Write
+model-role: coding
+model-tier: standard
 ---
 
 # Executive Orchestrator

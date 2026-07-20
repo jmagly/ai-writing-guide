@@ -6,8 +6,10 @@ description: Build a Proof of Concept (PoC) to validate technical feasibility an
 commandHint:
   argumentHint: <feature-or-risk-to-validate> [--scope minimal|standard|comprehensive --interactive --guidance "text"]
   allowedTools: Read, Write, Bash, Grep, Glob, TodoWrite
-  model: sonnet
+  model: haiku
   category: development
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 <!-- AIWG-SKILL-CALLOUT -->

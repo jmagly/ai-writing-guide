@@ -18,9 +18,11 @@ invariants:
 commandHint:
   argumentHint: "[--fail-on-drift] [--default-branch <name>] [--format text|json]"
   allowedTools: Read, Bash
-  model: sonnet
+  model: haiku
   category: maintenance
   orchestration: false
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Git Mirror Audit

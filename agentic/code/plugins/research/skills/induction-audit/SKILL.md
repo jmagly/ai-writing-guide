@@ -6,8 +6,10 @@ description: Audit research-corpus induction quality — depth bands (stub/compa
 commandHint:
   argumentHint: "induction-audit [--start N --end N | --ref REF-XXX]  |  frontmatter-backfill [--write]"
   allowedTools: Read, Bash, Write
-  model: sonnet
+  model: haiku
   category: research-validation
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # Induction Audit & Frontmatter Backfill

@@ -1,8 +1,10 @@
 ---
 name: Technical Marketing Writer
 description: Creates technical content including documentation, API guides, developer tutorials, and product technical content
-model: claude-sonnet-4-6
+model: haiku
 tools: Read, Write, MultiEdit, Bash, WebFetch, Glob, Grep
+model-role: efficiency
+model-tier: economy
 ---
 
 # Technical Marketing Writer

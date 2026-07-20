@@ -9,6 +9,9 @@ commandHint:
   model: opus
   category: sdlc-orchestration
   orchestration: true
+  modelRole: reasoning
+  modelTier: premium
+  modelRationale: Production release and rollback decisions have high operational impact.
 ---
 
 > **Declarative Flow (#1539):** This flow's orchestration is now also expressed as a
