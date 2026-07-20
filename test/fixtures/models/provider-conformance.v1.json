@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "policies": [
+    { "id": "reasoning-premium", "policy": { "role": "reasoning", "tier": "premium", "effort": "high" } },
+    { "id": "coding-standard", "policy": { "role": "coding", "tier": "standard", "effort": "medium" } },
+    { "id": "efficiency-economy", "policy": { "role": "efficiency", "tier": "economy", "effort": "low" } },
+    { "id": "unknown-exact-id", "policy": { "role": "coding", "tier": "standard", "override": "provider/unknown-preview" }, "diagnostic": "MODEL_OVERRIDE_UNVERIFIED" },
+    { "id": "invalid-blocked-pin", "policy": { "role": "coding", "tier": "blocked" }, "diagnostic": "MODEL_POLICY_INVALID" }
+  ],
+  "providers": {
+    "claude": { "agent": "native", "skill": "native", "target": ".claude/agents/*.md and skill SKILL.md frontmatter", "format": "YAML frontmatter plus Markdown", "modelField": "model", "effortField": "effort" },
+    "codex": { "agent": "native", "skill": "unsupported", "target": ".codex/agents/*.toml", "format": "Standalone TOML custom-agent configuration", "modelField": "model", "effortField": "model_reasoning_effort" },
+    "copilot": { "agent": "native", "skill": "unsupported", "target": ".github/agents/*.agent.md", "format": "YAML frontmatter plus Markdown", "modelField": "model" },
+    "cursor": { "agent": "native", "skill": "unsupported", "target": ".cursor/agents/*.md", "format": "YAML frontmatter plus Markdown", "modelField": "model" },
+    "factory": { "agent": "native", "skill": "informational", "target": ".factory/droids/*.md and Factory settings", "format": "YAML frontmatter plus Markdown", "modelField": "model", "effortField": "reasoningEffort" },
+    "hermes": { "agent": "global-only", "skill": "unsupported", "target": "Hermes delegation configuration", "format": "Global CLI/config setting" },
+    "openclaw": { "agent": "native", "skill": "unsupported", "target": "OpenClaw subagent configuration", "format": "JSON/JSONC runtime configuration", "modelField": "subagents.model" },
+    "opencode": { "agent": "native", "skill": "unsupported", "target": ".opencode/agent/*.md", "format": "YAML frontmatter plus Markdown", "modelField": "model" },
+    "openhuman": { "agent": "compiled", "skill": "unsupported", "target": "OpenHuman agent TOML", "format": "Standalone TOML agent definition", "modelField": "model_hint" },
+    "warp": { "agent": "global-only", "skill": "unsupported", "target": "Warp agent profile or run configuration", "format": "Saved profile / run control plane" },
+    "windsurf": { "agent": "unsupported", "skill": "unsupported", "target": "No supported portable artifact field", "format": "Informational policy only" }
+  }
+}

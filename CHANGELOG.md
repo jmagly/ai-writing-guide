@@ -49,6 +49,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Changed
 
+- **Provider model conformance matrix** (#1807) — shared semantic fixtures and
+  eleven-provider goldens now assert native/degraded output, targets, formats,
+  field names, unsupported-key omission, unknown/blocked pins, and skill
+  behavior. Normal CI stays fixture-first and cost-free; an explicit,
+  no-overwrite live-smoke recorder caps each operator-authorized run at $0.25.
 - **Cheap-first canonical model policy** (#1806) — 358 unique agent and
   isolated-skill artifacts are now inventoried once across 741 source/mirror
   files. Governed defaults are 77.2% economy, 18.9% standard, and 3.9%
