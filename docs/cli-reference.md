@@ -3962,9 +3962,18 @@ Build the semantic embedding index for a graph (so `--semantic`, `index similar`
 ```bash
 aiwg index embed --graph papers              # embed the papers graph's metadata (title + summary)
 aiwg index embed --graph papers --model Xenova/all-MiniLM-L6-v2   # explicit model
+aiwg index embed --graph papers --embed-body # embed title + summary + chunked source body
+aiwg index embed --graph papers --granularity body # explicit body-granularity form
 ```
 
 Embeddings are written to `<graph index dir>/embeddings/` (regenerable; gitignored with the rest of `.aiwg/.index/`). Re-run after `aiwg index build` to refresh.
+
+By default, AIWG embeds each node's title and summary. `--embed-body` (equivalent
+to `--granularity body`) strips source frontmatter, embeds bounded overlapping
+body chunks, and mean-pools them into one normalized vector per node. The
+manifest records the canonical granularity (`title-summary` or `body`), and
+local semantic-query and dedup-report output identify the granularity and model
+they loaded.
 
 ### index similar
 
@@ -3985,7 +3994,11 @@ aiwg index dedup-report --graph papers --threshold 0.85   # looser; more candida
 aiwg index dedup-report --graph papers --json
 ```
 
-Each pair lists both node ids + their titles, most-similar-first. Embeddings are over title + summary, so this catches title/abstract-level duplicates; lower the threshold to surface looser matches.
+Each pair lists both node ids + their titles, most-similar-first. With the
+default `title-summary` granularity this catches title/abstract-level
+duplicates; build the index with `--embed-body` to detect content-level
+duplicates whose summaries differ. Lower the threshold to surface looser
+matches.
 
 ---
 
