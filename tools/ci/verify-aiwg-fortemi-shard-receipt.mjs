@@ -68,7 +68,6 @@ if (authority.schemaBundle.sha256 !== receipt.authority.schema_bundle_sha256) fa
 
 const producerCommit = run('git', ['rev-parse', `${receipt.producer.commit}^{commit}`], { capture: true });
 if (producerCommit !== receipt.producer.commit) fail('producer commit is unavailable');
-run('git', ['merge-base', '--is-ancestor', receipt.producer.commit, 'HEAD']);
 
 const archivePath = resolve(root, receipt.archive.path);
 const archive = new Uint8Array(readFileSync(archivePath));

@@ -44,6 +44,9 @@ jobs:
           git fetch --quiet --no-tags --depth=1 origin "${GITHUB_SHA:?GITHUB_SHA is required}"
           git checkout --quiet --detach FETCH_HEAD
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          PRODUCER_COMMIT="$(node -p "require('./test/fixtures/fortemi-shard/aiwg-core-v1.receipt.json').producer.commit")"
+          git fetch --quiet --no-tags --depth=1 origin "$PRODUCER_COMMIT"
+          test "$(git rev-parse "$PRODUCER_COMMIT^{commit}")" = "$PRODUCER_COMMIT"
 
       - name: Install locked published package graph
         run: npm ci
