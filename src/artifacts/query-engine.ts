@@ -332,6 +332,9 @@ function scoreEntry(entry: MetadataEntry, text: string, opts: { relaxOverlap?: b
   const capabilityLower = entry.capability ? entry.capability.toLowerCase() : '';
   const tagsLower = entry.tags.map(t => t.toLowerCase());
   const triggersLower = (entry.triggers ?? []).map(trigger => trigger.toLowerCase());
+  const searchTermsLower = (entry.searchTerms ?? []).join(' ').toLowerCase();
+  const kindLower = entry.kind?.toLowerCase() ?? '';
+  const sourceTypeLower = entry.sourceType?.toLowerCase() ?? '';
 
   // For multi-token queries, require ≥50% token overlap to count
   // partial matches. This keeps gibberish queries (e.g.,
@@ -396,6 +399,21 @@ function scoreEntry(entry: MetadataEntry, text: string, opts: { relaxOverlap?: b
       if (overlapOK(hits)) score += 0.05 * 2 * (hits / tokens.length);
     }
   }
+
+  // Structure-aware language terms (1.5x weight). These are deliberately
+  // below declared triggers/capabilities but above generic body summaries.
+  if (searchTermsLower.includes(lower)) {
+    score += 0.18 * 1.5;
+  } else if (useMultiToken) {
+    const hits = tokens.filter(t => searchTermsLower.includes(t)).length;
+    if (overlapOK(hits)) score += 0.06 * 1.5 * (hits / tokens.length);
+  }
+
+  // Exact declarative kind and physical source classification are compact,
+  // useful routing signals (e.g. FlowPlaybook vs OpsInventory; runbook that
+  // originated under templates/).
+  if (kindLower.includes(lower)) score += 0.15;
+  if (sourceTypeLower.includes(lower)) score += 0.08;
 
   // Summary (1x weight)
   if (summaryLower.includes(lower)) {
@@ -1250,6 +1268,7 @@ async function findCorpusArtifact(
     { sub: 'templates', type: 'template', layout: 'flat' },
     { sub: 'behaviors', type: 'behavior', layout: 'flat' },
     { sub: 'flows', type: 'flow', layout: 'flat' },
+    { sub: 'runbooks', type: 'runbook', layout: 'flat' },
   ];
 
   for (const group of groups) {

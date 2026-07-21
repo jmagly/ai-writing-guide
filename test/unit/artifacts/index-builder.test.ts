@@ -519,6 +519,7 @@ New users can register.
       // Check metadata content
       const metadata = JSON.parse(fs.readFileSync(path.join(indexDir, 'metadata.json'), 'utf-8'));
       expect(metadata.version).toBe('1.0.0');
+      expect(metadata.extractorVersion).toBe('2026.07.21.1');
       expect(Object.keys(metadata.entries)).toHaveLength(2);
 
       const uc001 = metadata.entries['.aiwg/requirements/UC-001.md'];
@@ -539,6 +540,98 @@ New users can register.
       expect(stats.totalArtifacts).toBe(2);
       expect(stats.byPhase.requirements).toBe(2);
       expect(stats.byType['use-case']).toBe(2);
+    });
+
+    it('indexes every operational asset type from project-local bundle layouts', async () => {
+      const assets: Array<[string, string]> = [
+        ['.aiwg/extensions/local-review/skills/local-review/SKILL.md', [
+          '---', 'name: local-review', 'description: Run a local review.', '---',
+          '# Local Review',
+        ].join('\n')],
+        ['.aiwg/extensions/local-review/rules/local-review.md', '# Local Review Rule\n'],
+        ['.aiwg/addons/local-ops/agents/local-operator.md', '# Local Operator\n'],
+        ['.aiwg/addons/local-ops/commands/local-check.md', '# Local Check\n'],
+        ['.aiwg/frameworks/local-delivery/behaviors/local-safety.md', '# Local Safety\n'],
+        // Provider-native project templates were the gap: the project graph
+        // previously omitted non-Markdown/YAML extensions accepted upstream.
+        ['.aiwg/frameworks/local-delivery/templates/provider/config.toml', 'mode = "local"\n'],
+        ['.aiwg/frameworks/local-delivery/runbooks/recovery-runbook.md', [
+          '---', 'type: runbook', 'description: Recover the local delivery service.', '---',
+          '# Recovery Runbook', '', '## Procedure', '', 'Restart the service.', '',
+          '## Verification', '', 'Confirm service health.',
+        ].join('\n')],
+        ['.aiwg/frameworks/local-delivery/flows/release.yaml', [
+          'apiVersion: flow.aiwg.io/v1', 'kind: FlowPlaybook', 'metadata:',
+          '  name: local-release', 'spec:', '  description: Release the local project.',
+          '  steps:', '    - id: verify', '      action: run-tests',
+        ].join('\n')],
+        ['.aiwg/plugins/local-tools/hooks/preflight.md', '# Local Preflight Hook\n'],
+      ];
+      for (const [relativePath, content] of assets) {
+        const fullPath = path.join(tmpDir, relativePath);
+        fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+        fs.writeFileSync(fullPath, content);
+      }
+
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        await buildIndex(tmpDir, { graph: 'project', force: true, explicit: true });
+      } finally {
+        consoleSpy.mockRestore();
+        consoleErrorSpy.mockRestore();
+      }
+
+      const metadata = JSON.parse(fs.readFileSync(
+        path.join(tmpDir, INDEX_DIR, 'project', 'metadata.json'),
+        'utf-8',
+      ));
+      const byPath = metadata.entries as Record<string, { type: string; kind?: string }>;
+      expect(Object.fromEntries(
+        assets.map(([relativePath]) => [relativePath, byPath[relativePath]?.type]),
+      )).toEqual({
+        '.aiwg/extensions/local-review/skills/local-review/SKILL.md': 'skill',
+        '.aiwg/extensions/local-review/rules/local-review.md': 'rule',
+        '.aiwg/addons/local-ops/agents/local-operator.md': 'agent',
+        '.aiwg/addons/local-ops/commands/local-check.md': 'command',
+        '.aiwg/frameworks/local-delivery/behaviors/local-safety.md': 'behavior',
+        '.aiwg/frameworks/local-delivery/templates/provider/config.toml': 'template',
+        '.aiwg/frameworks/local-delivery/runbooks/recovery-runbook.md': 'runbook',
+        '.aiwg/frameworks/local-delivery/flows/release.yaml': 'flow',
+        '.aiwg/plugins/local-tools/hooks/preflight.md': 'hook',
+      });
+      expect(byPath['.aiwg/frameworks/local-delivery/flows/release.yaml']?.kind).toBe('FlowPlaybook');
+    });
+
+    it('re-extracts unchanged files when the index format version changes', async () => {
+      const templateDir = path.join(tmpDir, 'agentic', 'code', 'addons', 'ops', 'templates');
+      fs.mkdirSync(templateDir, { recursive: true });
+      const runbookPath = path.join(templateDir, 'rotation-runbook.md');
+      fs.writeFileSync(runbookPath, [
+        '# Rotation Runbook', '',
+        '## Purpose', '', 'Rotate credentials safely.', '',
+        '## Procedure', '', 'Install the replacement.', '',
+        '## Verification', '', 'Confirm clients authenticate.', '',
+        '## Rollback', '', 'Restore the prior credential.', '',
+      ].join('\n'));
+
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      await buildIndex(tmpDir, { scope: 'agentic', outputDir: tmpDir, force: true });
+      const metadataPath = path.join(tmpDir, INDEX_DIR, 'metadata.json');
+      const stale = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+      const entryPath = Object.keys(stale.entries)[0];
+      stale.extractorVersion = '2026.07.17.1';
+      stale.entries[entryPath].type = 'template';
+      delete stale.entries[entryPath].kind;
+      fs.writeFileSync(metadataPath, JSON.stringify(stale));
+
+      await buildIndex(tmpDir, { scope: 'agentic', outputDir: tmpDir });
+      logSpy.mockRestore();
+      const rebuilt = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+      expect(rebuilt.version).toBe('1.0.0');
+      expect(rebuilt.extractorVersion).toBe('2026.07.21.1');
+      expect(rebuilt.entries[entryPath].type).toBe('runbook');
+      expect(rebuilt.entries[entryPath].kind).toBe('Runbook');
     });
 
     it('links framework skills to rules referenced through $AIWG_ROOT', async () => {

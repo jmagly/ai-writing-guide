@@ -415,9 +415,10 @@ Don't translate to AIWG vocabulary first — discovery is tuned for natural-lang
 aiwg discover "review code"          --type agent     # who handles code review
 aiwg discover "deploy to production" --type skill     # the workflow
 aiwg discover "no unauthenticated"   --type rule      # which rule enforces it
+aiwg discover "rotate certificates"  --type runbook   # the operational procedure
 ```
 
-The default `--type` is `skill,agent,command,rule,flow,template,behavior`. Narrowing helps when you specifically want one kind.
+The default `--type` is `skill,agent,command,rule,flow,runbook,template,behavior`. Narrowing helps when you specifically want one kind. Flow and runbook records also carry structure-aware terms: declarative kinds and step identifiers for YAML flows, and procedure/verification/rollback language for runbooks.
 
 ### JSON for sub-agent consumption
 

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import ts from 'typescript';
 import type { ArtifactIndex, DependencyGraph, IndexStats, MetadataEntry, TagIndex, TypedEdge } from './types.js';
-import { INDEX_VERSION } from './types.js';
+import { INDEX_EXTRACTOR_VERSION, INDEX_VERSION } from './types.js';
 import { writeIndexFile } from './index-reader.js';
 
 export interface SourceGraphBuildOptions {
@@ -445,6 +445,7 @@ function buildStats(index: ArtifactIndex, graph: DependencyGraph): IndexStats {
     .sort((a, b) => b.count - a.count || a.path.localeCompare(b.path))[0] ?? null;
   return {
     version: INDEX_VERSION,
+    extractorVersion: INDEX_EXTRACTOR_VERSION,
     builtAt: index.builtAt,
     buildTimeMs: index.buildTimeMs,
     totalArtifacts: Object.keys(index.entries).length,
@@ -577,6 +578,7 @@ export async function buildSourceGraphIndex(options: SourceGraphBuildOptions): P
 
   const index: ArtifactIndex = {
     version: INDEX_VERSION,
+    extractorVersion: INDEX_EXTRACTOR_VERSION,
     builtAt: new Date().toISOString(),
     buildTimeMs: Date.now() - started,
     entries,

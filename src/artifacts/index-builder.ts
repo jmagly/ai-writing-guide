@@ -17,6 +17,7 @@ import { load as loadYaml } from 'js-yaml';
 import type { MetadataEntry, ArtifactIndex, TagIndex, DependencyGraph, GraphType, TypedEdge, MetadataSupplementConfig } from './types.js';
 import {
   DEFAULT_INDEX_EXTENSIONS,
+  INDEX_EXTRACTOR_VERSION,
   INDEX_VERSION,
   INDEX_DIR,
   OPERATIONAL_DISCOVERY_TYPES,
@@ -235,6 +236,103 @@ function inferType(data: Record<string, unknown>, filePath: string): string {
   if (basename.includes('risk')) return 'risk';
   if (basename.includes('deploy')) return 'deployment';
   return 'document';
+}
+
+interface RunbookDocMetadata {
+  kind: 'Runbook';
+  capability?: string;
+  searchTerms: string[];
+}
+
+interface MarkdownSection {
+  heading: string;
+  body: string;
+}
+
+const RUNBOOK_ACTION_HEADING = /\b(procedure|steps?|recovery steps?|installation|setup|start|stop|containment|remediation|response actions?|execution)\b/i;
+const RUNBOOK_CONTROL_HEADING = /\b(prerequisites?|verification|validation|rollback|health check|troubleshooting|monitoring|escalation|post-recovery|evidence|postmortem|diagnosis)\b/i;
+
+function markdownSections(body: string): MarkdownSection[] {
+  const matches = [...body.matchAll(/^#{2,4}\s+(.+)$/gm)];
+  return matches.map((match, index) => ({
+    heading: match[1].replace(/\s+#+\s*$/, '').trim(),
+    body: body.slice(
+      (match.index ?? 0) + match[0].length,
+      matches[index + 1]?.index ?? body.length,
+    ).trim(),
+  }));
+}
+
+function compactSectionText(text: string, maxLength = 240): string | undefined {
+  const blocks = text
+    .replace(/```[\s\S]*?```/g, ' ')
+    .split(/\n\s*\n/)
+    .map(block => block
+      .replace(/^\s*[-*+]\s+/gm, '')
+      .replace(/^\s*\|.*\|\s*$/gm, '')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\s+/g, ' ')
+      .trim())
+    .filter(Boolean);
+  const first = blocks.find(block => !block.startsWith('#'));
+  return first ? first.slice(0, maxLength) : undefined;
+}
+
+/**
+ * Detect procedural Markdown runbooks without promoting every runbook-shaped
+ * template. Explicit `type: runbook` is authoritative; otherwise a runbook
+ * marker must be accompanied by both an action section and a control/validation
+ * section. The extracted terms favor the operational sections people search
+ * for (procedure, verification, rollback, diagnosis, remediation, and so on).
+ */
+export function parseRunbookDoc(
+  data: Record<string, unknown>,
+  body: string,
+  filePath: string,
+): RunbookDocMetadata | null {
+  if (!/\.md$/i.test(filePath)) return null;
+  const title = extractTitle(data, body);
+  const explicit = typeof data.type === 'string' && data.type.toLowerCase() === 'runbook';
+  const hasMarker = /\brun[- ]?book\b/i.test(`${filePath} ${title}`);
+  const sections = markdownSections(body);
+  const headings = sections.map(section => section.heading);
+  const hasAction = headings.some(heading => RUNBOOK_ACTION_HEADING.test(heading));
+  const hasControl = headings.some(heading => RUNBOOK_CONTROL_HEADING.test(heading));
+  if (!explicit && !(hasMarker && hasAction && hasControl)) return null;
+
+  const preferredCapability = sections.find(section =>
+    /\b(purpose|overview|objective|intent|scope)\b/i.test(section.heading),
+  );
+  const lifecycleHeadings = sections
+    .map(section => section.heading)
+    .filter(heading => RUNBOOK_ACTION_HEADING.test(heading) || RUNBOOK_CONTROL_HEADING.test(heading));
+  const lifecycleCapability = lifecycleHeadings.length > 0
+    ? `${title}: ${lifecycleHeadings.slice(0, 8).join('; ')}`.slice(0, 240)
+    : undefined;
+  const capability =
+    (typeof data.description === 'string' ? data.description.trim().slice(0, 240) : undefined)
+    ?? (preferredCapability ? compactSectionText(preferredCapability.body) : undefined)
+    ?? lifecycleCapability
+    ?? extractCapability(data, body);
+
+  const terms = new Set<string>(['runbook']);
+  const relevantHeading = new RegExp(
+    `${RUNBOOK_ACTION_HEADING.source}|${RUNBOOK_CONTROL_HEADING.source}|\\b(purpose|overview|objective|intent|scope|incident classification|communication|monitoring|symptoms?)\\b`,
+    'i',
+  );
+  for (const section of sections) {
+    if (!relevantHeading.test(section.heading)) continue;
+    terms.add(section.heading);
+    const compact = compactSectionText(section.body, 320);
+    if (compact) terms.add(compact);
+    if (terms.size >= 40) break;
+  }
+
+  return {
+    kind: 'Runbook',
+    capability,
+    searchTerms: [...terms],
+  };
 }
 
 /**
@@ -526,7 +624,15 @@ function findArtifactFiles(dir: string, extensions: string[] = [...DEFAULT_INDEX
 export function parseFlowDoc(
   content: string,
   filePath: string
-): { name?: string; description?: string; tags: string[] } | null {
+): {
+  type: 'flow' | 'runbook';
+  kind: string;
+  name?: string;
+  description?: string;
+  capability?: string;
+  tags: string[];
+  searchTerms: string[];
+} | null {
   if (!/\.ya?ml$/i.test(filePath)) return null;
   let doc: unknown;
   try {
@@ -542,16 +648,59 @@ export function parseFlowDoc(
   // namespace ending in one of those.
   const isFlow = /(^|\.)(workflow|flow|ops)\.aiwg\.io\/v1$/.test(api);
   if (!isFlow) return null;
+  const kind = typeof d.kind === 'string' ? d.kind.trim() : '';
+  // The namespace alone is insufficient: other domain schemas may end in an
+  // `ops.aiwg.io` suffix. Accept only the workflow metalanguage resource
+  // families and their Workflow/Flow/Ops aliases.
+  const isFlowKind = /^(?:(?:Workflow|Flow|Ops)?(?:Capability|Playbook|Inventory|Target|Gate|Role|Extension|Runbook))$/.test(kind);
+  if (!isFlowKind) return null;
   const meta = (d.metadata && typeof d.metadata === 'object' ? d.metadata : {}) as Record<string, unknown>;
   const spec = (d.spec && typeof d.spec === 'object' ? d.spec : {}) as Record<string, unknown>;
-  const labels =
-    meta.labels && typeof meta.labels === 'object'
-      ? Object.values(meta.labels as Record<string, unknown>).map(String)
-      : [];
+  const labelMap = meta.labels && typeof meta.labels === 'object'
+    ? meta.labels as Record<string, unknown>
+    : {};
+  const labels = Object.values(labelMap).map(String);
+  const name = typeof meta.name === 'string' ? meta.name : undefined;
+  const description = typeof spec.description === 'string' ? spec.description : undefined;
+  const searchTerms = new Set<string>([kind, ...Object.keys(labelMap), ...labels]);
+  const excludedKeys = new Set(['body', 'content', 'script', 'source', 'template']);
+  const collectTerms = (value: unknown, key = '', depth = 0): void => {
+    if (depth > 7 || searchTerms.size >= 80) return;
+    if (typeof value === 'string') {
+      const compact = value.replace(/\s+/g, ' ').trim();
+      if (compact && compact.length <= 320) searchTerms.add(compact);
+      return;
+    }
+    if (Array.isArray(value)) {
+      for (const item of value) collectTerms(item, key, depth + 1);
+      return;
+    }
+    if (!value || typeof value !== 'object') return;
+    for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
+      if (excludedKeys.has(childKey.toLowerCase())) continue;
+      if (/^(id|name|kind|agent|capability|command|action|expect|description|role|inventory|target|group|schema|rollback[_-]?capability)$/i.test(childKey)) {
+        searchTerms.add(childKey.replace(/[_-]+/g, ' '));
+      }
+      collectTerms(childValue, childKey, depth + 1);
+    }
+  };
+  collectTerms(spec);
+  const fallbackTerms = [...searchTerms]
+    .filter(term => term !== kind && term !== name)
+    .slice(0, 4);
+  const capability = description
+    ?? `${kind.replace(/([a-z])([A-Z])/g, '$1 $2')} ${name ?? ''}${fallbackTerms.length > 0 ? `: ${fallbackTerms.join('; ')}` : ''}`
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 240);
   return {
-    name: typeof meta.name === 'string' ? meta.name : undefined,
-    description: typeof spec.description === 'string' ? spec.description : undefined,
+    type: /Runbook$/.test(kind) ? 'runbook' : 'flow',
+    kind,
+    name,
+    description,
+    capability,
     tags: labels,
+    searchTerms: [...searchTerms],
   };
 }
 
@@ -632,11 +781,13 @@ export async function buildIndex(
 
   // Load existing index for incremental updates
   const existingIndex = force ? null : loadGraphIndexFile<ArtifactIndex>(effectiveOutputCwd, 'metadata.json', graph);
-  const existingEntries = existingIndex?.entries ?? {};
+  const canReuseExisting = existingIndex?.version === INDEX_VERSION
+    && existingIndex.extractorVersion === INDEX_EXTRACTOR_VERSION;
+  const existingEntries = canReuseExisting ? existingIndex.entries : {};
 
   // Load checksum manifest for fast stat-based change detection (#794).
   // When --force is set we skip the manifest entirely and rebuild everything.
-  const manifest: ChecksumManifest = force
+  const manifest: ChecksumManifest = force || !canReuseExisting
     ? { version: 1, generated: '', entries: {} }
     : loadManifest(indexOutputDir);
   const nextManifestEntries: Record<string, import('./checksum-manifest.js').ManifestEntry> = {};
@@ -739,11 +890,14 @@ export async function buildIndex(
       // markdown+frontmatter — detect them up front so they classify and
       // become discoverable (#1540).
       const flow = parseFlowDoc(content, relativePath);
+      const inferredType = inferType(data, relativePath);
+      const physicalType = inferType({ ...data, type: undefined }, relativePath);
+      const runbook = flow ? null : parseRunbookDoc(data, body, relativePath);
       const title = flow?.name ?? extractTitle(data, body);
       const phase = typeof data.phase === 'string' ? data.phase : inferPhase(relativePath);
-      const type = flow ? 'flow' : inferType(data, relativePath);
+      const type = flow?.type ?? (runbook ? 'runbook' : inferredType);
       const tags = flow ? flow.tags : (Array.isArray(data.tags) ? data.tags.map(String) : []);
-      const summary = flow?.description ?? extractSummary(data, body);
+      const summary = flow?.description ?? runbook?.capability ?? extractSummary(data, body);
       const dependencies = extractMentions(content);
 
       // Discovery metadata (#1214, #1540, #1792) — meaningful for operational
@@ -752,9 +906,13 @@ export async function buildIndex(
       const isDiscoverable = OPERATIONAL_DISCOVERY_TYPES.includes(
         type as typeof OPERATIONAL_DISCOVERY_TYPES[number],
       );
-      // Flows have no trigger phrases — they rely on the capability description.
+      // Declarative processes have no trigger phrases — they rely on their
+      // capability and structure-aware search terms.
       const triggers = isDiscoverable && !flow ? extractTriggers(body, data) : undefined;
-      const capability = flow ? flow.description : (isDiscoverable ? extractCapability(data, body) : undefined);
+      const capability = flow?.capability ?? runbook?.capability ?? (isDiscoverable ? extractCapability(data, body) : undefined);
+      const kind = flow?.kind ?? runbook?.kind;
+      const sourceType = runbook && physicalType !== 'runbook' ? physicalType : undefined;
+      const searchTerms = flow?.searchTerms ?? runbook?.searchTerms;
       const kernel =
         data.kernel === true || data.kernel === 'true' ? true : undefined;
       // Script entrypoint metadata is meaningful for skills only (#1227).
@@ -767,6 +925,8 @@ export async function buildIndex(
       entry = {
         path: relativePath,
         type,
+        ...(kind ? { kind } : {}),
+        ...(sourceType ? { sourceType } : {}),
         phase,
         title,
         tags,
@@ -779,6 +939,7 @@ export async function buildIndex(
         ...(name ? { name } : {}),
         ...(triggers && triggers.length > 0 ? { triggers } : {}),
         ...(capability ? { capability } : {}),
+        ...(searchTerms && searchTerms.length > 0 ? { searchTerms } : {}),
         ...(kernel ? { kernel } : {}),
         ...(script ? { script } : {}),
       };
@@ -905,6 +1066,7 @@ export async function buildIndex(
   // Write index files
   const index: ArtifactIndex = {
     version: INDEX_VERSION,
+    extractorVersion: INDEX_EXTRACTOR_VERSION,
     builtAt: new Date().toISOString(),
     buildTimeMs,
     entries,
@@ -952,6 +1114,7 @@ export async function buildIndex(
 
   writeIndexFile(effectiveOutputCwd, 'stats.json', {
     version: INDEX_VERSION,
+    extractorVersion: INDEX_EXTRACTOR_VERSION,
     builtAt: new Date().toISOString(),
     buildTimeMs,
     totalArtifacts: Object.keys(entries).length,

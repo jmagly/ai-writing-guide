@@ -93,7 +93,7 @@ MCP adds value when the host can call tools directly:
 The CLI + `AGENTS.md` bridge already covers:
 
 - Capability discovery through `aiwg discover`.
-- Full body fetches through `aiwg show skill|agent|command|rule|flow|template|behavior`.
+- Full body fetches through `aiwg show skill|agent|command|rule|flow|runbook|template|behavior`.
 - Rule delivery for providers that load generated context files.
 - Operator-driven command execution from a shell.
 

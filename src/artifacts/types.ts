@@ -24,6 +24,20 @@ export interface MetadataEntry {
   /** Artifact type (use-case, adr, test-plan, nfr, threat-model, etc.) */
   type: string;
 
+  /**
+   * Exact declarative/process kind when the source format defines one.
+   * Examples: `FlowPlaybook`, `OpsInventory`, and `Runbook`. This preserves
+   * distinctions that are intentionally coarser in the top-level `type`.
+   */
+  kind?: string;
+
+  /**
+   * Physical/original artifact classification when semantic classification
+   * changes the top-level type. A Markdown runbook under `templates/`, for
+   * example, has `type: runbook` and `sourceType: template`.
+   */
+  sourceType?: string;
+
   /** SDLC phase (requirements, architecture, testing, security, deployment, etc.) */
   phase: string;
 
@@ -75,6 +89,13 @@ export interface MetadataEntry {
    * generic body summary.
    */
   capability?: string;
+
+  /**
+   * Compact, structure-aware language lookup terms. Process artifacts use
+   * this for headings, step/capability identifiers, validation language, and
+   * other signals that do not belong in a one-line summary.
+   */
+  searchTerms?: string[];
 
   /**
    * `kernel: true` from frontmatter. Marks always-loaded skills the
@@ -135,6 +156,7 @@ export const OPERATIONAL_DISCOVERY_TYPES = [
   'command',
   'rule',
   'flow',
+  'runbook',
   'template',
   'behavior',
 ] as const;
@@ -185,6 +207,9 @@ export const FRAMEWORK_INDEX_EXTENSIONS = [
 export interface ArtifactIndex {
   /** Index format version */
   version: string;
+
+  /** Metadata extractor revision used to build the entries. */
+  extractorVersion?: string;
 
   /** ISO timestamp of last build */
   builtAt: string;
@@ -253,6 +278,9 @@ export interface DependencyGraph {
 export interface IndexStats {
   /** Index format version */
   version: string;
+
+  /** Metadata extractor revision used for the corresponding index. */
+  extractorVersion?: string;
 
   /** ISO timestamp of last build */
   builtAt: string;
@@ -348,6 +376,13 @@ export const INDEX_DIR = '.aiwg/.index';
  * Current index format version
  */
 export const INDEX_VERSION = '1.0.0';
+
+/**
+ * Metadata extraction revision. Unlike INDEX_VERSION, this can change without
+ * making the serialized index schema incompatible; a mismatch simply forces a
+ * one-time content re-extraction during the next incremental build.
+ */
+export const INDEX_EXTRACTOR_VERSION = '2026.07.21.1';
 
 /**
  * Built-in graph type identifiers
@@ -544,7 +579,12 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
   project: {
     type: 'project',
     scanDirs: ['.aiwg'],
-    extensions: [...DEFAULT_INDEX_EXTENSIONS],
+    // Project-local bundles are byte-compatible pilots of upstream
+    // extensions/addons/frameworks/plugins. Scan the same provider-native
+    // template extensions as the framework graph so local assets do not
+    // disappear from discover/show merely because they have not been
+    // promoted upstream yet.
+    extensions: [...FRAMEWORK_INDEX_EXTENSIONS],
     shared: false,
     defaultBuild: true,
     buildTier: 'standard',
@@ -573,6 +613,7 @@ export const BUILTIN_GRAPH_CONFIGS: Record<BuiltinGraphType, GraphConfig> = {
       '~/.aiwg/commands',
       '~/.aiwg/rules',
       '~/.aiwg/flows',
+      '~/.aiwg/runbooks',
       '~/.aiwg/frameworks',
     ],
     extensions: [...DEFAULT_INDEX_EXTENSIONS],

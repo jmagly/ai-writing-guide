@@ -108,7 +108,18 @@ function looksBinary(buffer: Buffer): boolean {
 }
 
 function metadataTextForEntry(entry: MetadataEntry): string {
-  return `${entry.title} ${entry.summary}`.trim();
+  return [
+    `title: ${entry.title}`,
+    entry.name ? `name: ${entry.name}` : '',
+    `type: ${entry.type}`,
+    entry.kind ? `kind: ${entry.kind}` : '',
+    entry.sourceType ? `source type: ${entry.sourceType}` : '',
+    entry.capability ? `capability: ${entry.capability}` : '',
+    entry.summary ? `summary: ${entry.summary}` : '',
+    entry.tags.length > 0 ? `tags: ${entry.tags.join(', ')}` : '',
+    entry.triggers?.length ? `triggers: ${entry.triggers.join('; ')}` : '',
+    entry.searchTerms?.length ? `search terms: ${entry.searchTerms.join('; ')}` : '',
+  ].filter(Boolean).join('\n');
 }
 
 function chunkText(text: string, chunkChars: number, overlapChars: number, maxChunks: number): string[] {

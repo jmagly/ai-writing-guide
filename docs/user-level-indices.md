@@ -18,6 +18,7 @@ Place custom user capabilities under `~/.aiwg`:
 ~/.aiwg/commands/<name>.md
 ~/.aiwg/rules/<name>.md
 ~/.aiwg/flows/<name>.yaml
+~/.aiwg/runbooks/<name>.md
 ~/.aiwg/frameworks/<bundle>/...
 ```
 

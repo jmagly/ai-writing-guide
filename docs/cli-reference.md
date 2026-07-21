@@ -3457,7 +3457,7 @@ Transform a high-level objective into a fully researched, SDLC-gated issue backl
 
 ## Discovery
 
-Top-level capability search across AIWG operational assets: skills, agents, commands, rules, flows, templates, and behaviors. **Reach for `aiwg discover` early and often** — it is the first-class operator surface for finding the right AIWG capability for a need, and the kernel skill set deliberately deploys only a small directory of quickrefs to your platform's flat skill listing. Everything else lives at `<provider-dir>/.aiwg/skills/` and is reachable only through this command.
+Top-level capability search across AIWG operational assets: skills, agents, commands, rules, flows, runbooks, templates, and behaviors. **Reach for `aiwg discover` early and often** — it is the first-class operator surface for finding the right AIWG capability for a need, and the kernel skill set deliberately deploys only a small directory of quickrefs to your platform's flat skill listing. Everything else lives at `<provider-dir>/.aiwg/skills/` and is reachable only through this command.
 
 ### discover
 
@@ -3470,7 +3470,7 @@ aiwg discover "<phrase>" [options]
 **Options:**
 
 - `--limit <N>` — Max ranked results (default: 5)
-- `--type <kinds>` — Comma-separated filter; defaults to `skill,agent,command,rule,flow,template,behavior`. Examples: `--type skill`, `--type template`, `--type skill,agent`
+- `--type <kinds>` — Comma-separated filter; defaults to `skill,agent,command,rule,flow,runbook,template,behavior`. Examples: `--type skill`, `--type runbook`, `--type skill,agent`
 - `--json` / `--format json` — Emit a stable JSON schema (`id`, `type`, `name`, `title`, `score`, `triggers`, `capability`, `kernel`, `provenance`) for programmatic agent consumption. Paths are intentionally omitted from discover output; use `aiwg show metadata <id>` when path/debug metadata is required.
 - `--format text` — Emit readable text output (default).
 - `--pretty` — Pretty-print JSON output with indentation (default for compatibility).
@@ -3489,6 +3489,7 @@ aiwg discover "<phrase>" [options]
 aiwg discover "create intake"                       # ranks intake-* skills + intake-coordinator agent
 aiwg discover "deploy production" --limit 3         # flow-deploy-to-production tops at score 0.51
 aiwg discover "audit security" --type skill         # narrow to skills only
+aiwg discover "rotate service certificates" --type runbook # procedural runbooks only
 aiwg discover "review code" --type agent --format json --compact # JSON for sub-agent consumption
 aiwg discover "static retrieval" --json                # legacy JSON alias
 ```
@@ -3520,8 +3521,17 @@ Use `--format json` for machine-readable output. Use `aiwg show metadata <id>` f
 | Capability description | 2× | Frontmatter `description` (or first body paragraph fallback) |
 | Title | 3× | Boost for exact title match |
 | Tags | 2× | Per-tag |
+| Structured search terms | 1.5× | Process headings, step/capability identifiers, and verification/rollback language |
 | Summary | 1× | Body summary |
 | Path | 0.5× | Filename / path substring |
+
+YAML workflow-metalanguage resources remain `type: flow` and retain their exact
+declarative `kind` (for example, `FlowPlaybook` or `OpsInventory`). Markdown or
+YAML runbooks use the separate `type: runbook`; Markdown runbooks also retain
+their physical `sourceType` (`template` or `document`). Runbook extraction is
+section-aware and indexes procedure, verification, rollback, diagnosis,
+remediation, monitoring, and escalation language rather than flattening the
+file to its first paragraph.
 
 Multi-token queries require ≥50% token overlap to surface partial matches — gibberish queries return zero results rather than incidental hits.
 

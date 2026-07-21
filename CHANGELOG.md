@@ -7,6 +7,27 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Process-aware runbook discovery** — procedural Markdown and declarative
+  runbooks are indexed as a discrete `runbook` type alongside YAML flows,
+  retain their original document/template source type, and participate in
+  local, static Fortemi, MCP, fallback, user-graph, and finder discovery.
+
+### Changed
+
+- **Structured operational search metadata** — flows retain their exact
+  workflow kind and contribute bounded action, verification, rollback,
+  inventory, target, and step language to lexical and embedding inputs.
+  Extractor revisions now invalidate stale incremental entries independently
+  of the stable index schema version.
+
+### Fixed
+
+- **Flow namespace false positives** — workflow indexing now accepts only the
+  declared Flow/Workflow/Ops resource families instead of treating every YAML
+  document under an `ops.aiwg.io` namespace as a flow.
+
 ## [2026.7.15] - 2026-07-20 - "Windows portability fixes"
 
 ### Fixed

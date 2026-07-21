@@ -215,9 +215,19 @@ function artifactTypeFromRecord(record: AiwgFortemiRecord): string {
 }
 
 function entryFromRecord(record: AiwgFortemiRecord): MetadataEntry {
+  const indexedFrontmatter = record.search?.frontmatter ?? {};
+  const indexedSearchTerms = indexedFrontmatter.aiwg_search_terms;
   return {
     path: record.source.path,
     type: artifactTypeFromRecord(record),
+    kind:
+      typeof indexedFrontmatter.aiwg_kind === "string"
+        ? indexedFrontmatter.aiwg_kind
+        : undefined,
+    sourceType:
+      typeof indexedFrontmatter.aiwg_source_type === "string"
+        ? indexedFrontmatter.aiwg_source_type
+        : undefined,
     phase: record.search?.phase ?? record.facets.phase?.[0] ?? "",
     title: record.title,
     name: record.name ?? record.search?.name,
@@ -244,6 +254,9 @@ function entryFromRecord(record: AiwgFortemiRecord): MetadataEntry {
       ),
     triggers: record.search?.triggers,
     capability: record.search?.capability,
+    searchTerms: Array.isArray(indexedSearchTerms)
+      ? indexedSearchTerms.filter((term): term is string => typeof term === "string")
+      : undefined,
     kernel:
       typeof record.search?.frontmatter?.kernel === "boolean"
         ? record.search.frontmatter.kernel
@@ -279,10 +292,23 @@ export async function queryFortemiCoreAiwgDiscovery(
   const typeSet = options.types && options.types.length > 0
     ? new Set(options.types)
     : null;
-  const fortemiTypes = options.types?.map((type) => `aiwg.${type}`);
+  const dedicatedRecordTypes = new Set([
+    "skill", "agent", "command", "rule", "behavior", "flow", "workflow",
+  ]);
+  const fortemiTypes = options.types
+    ? [...new Set(options.types.map((type) =>
+        dedicatedRecordTypes.has(type) ? `aiwg.${type === "workflow" ? "flow" : type}` : "aiwg.artifact",
+      ))]
+    : undefined;
+  const requestedLimit = options.limit ?? 10;
+  const includesGenericRecordType = fortemiTypes?.includes("aiwg.artifact") ?? false;
   const { queryAiwgFortemiIndex } = await import("@fortemi/core/aiwg-index");
   const queried = queryAiwgFortemiIndex(loaded.exported as any, options.text, {
-    limit: options.limit ?? 10,
+    // `template`, `runbook`, and `hook` are intentionally represented by the
+    // server-owned generic aiwg.artifact record type. Overfetch before the
+    // exact artifact-type post-filter so unrelated generic artifacts cannot
+    // crowd the requested operational type out of the candidate window.
+    limit: includesGenericRecordType ? loaded.exported.items.length : requestedLimit,
     rank: true,
     includeMatches: false,
     searchProfile: "aiwg-discovery",
@@ -311,7 +337,8 @@ export async function queryFortemiCoreAiwgDiscovery(
           : (rankedItems.length - index) / rankedItems.length,
       };
     })
-    .filter((result) => !typeSet || typeSet.has(result.entry.type));
+    .filter((result) => !typeSet || typeSet.has(result.entry.type))
+    .slice(0, requestedLimit);
 
   return { results };
 }

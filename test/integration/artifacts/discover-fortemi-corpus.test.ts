@@ -77,6 +77,45 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
         '',
       ].join('\n'),
     );
+    const projectLocalAssets: Array<[string, string]> = [
+      ['.aiwg/extensions/local-governance/rules/local-governance.md', [
+        '---', 'description: Enforce nebula project governance.', '---',
+        '# Local Governance', '', 'Apply nebula project governance.',
+      ].join('\n')],
+      ['.aiwg/addons/local-operations/agents/local-operator.md', [
+        '---', 'description: Coordinate zephyr project operations.', '---',
+        '# Local Operator',
+      ].join('\n')],
+      ['.aiwg/addons/local-operations/commands/local-inspect.md', [
+        '---', 'description: Inspect quasar project readiness.', '---',
+        '# Local Inspect',
+      ].join('\n')],
+      ['.aiwg/frameworks/local-delivery/behaviors/local-safety.md', [
+        '---', 'description: Preserve aurora project safety.', '---',
+        '# Local Safety',
+      ].join('\n')],
+      ['.aiwg/frameworks/local-delivery/templates/provider/config.toml',
+        '# Configure pulsar project provider template\nmode = "local"\n'],
+      ['.aiwg/frameworks/local-delivery/runbooks/recovery-runbook.md', [
+        '---', 'type: runbook', 'description: Recover the comet project service.', '---',
+        '# Recovery Runbook', '', '## Procedure', '', 'Restart the service.', '',
+        '## Verification', '', 'Confirm service health.',
+      ].join('\n')],
+      ['.aiwg/frameworks/local-delivery/flows/meteor-route.yaml', [
+        'apiVersion: flow.aiwg.io/v1', 'kind: FlowPlaybook', 'metadata:',
+        '  name: meteor-route', 'spec:', '  description: Orchestrate the meteor project.',
+        '  steps:', '    - id: verify', '      action: run-tests',
+      ].join('\n')],
+      ['.aiwg/plugins/local-tools/hooks/preflight.md', [
+        '---', 'description: Check eclipse project preflight.', '---',
+        '# Local Preflight Hook',
+      ].join('\n')],
+    ];
+    for (const [relativePath, content] of projectLocalAssets) {
+      const fullPath = path.join(corpusRoot, relativePath);
+      fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+      fs.writeFileSync(fullPath, content);
+    }
 
     originalXdgDataHome = process.env.XDG_DATA_HOME;
     originalAiwgRoot = process.env.AIWG_ROOT;
@@ -118,6 +157,7 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
     phrase: string,
     backend: 'local' | 'fortemi-core',
     useDefaultGraph = false,
+    typeFilter?: string[],
   ): Promise<DiscoverResult> {
     const captured: string[] = [];
     const original = console.log;
@@ -128,7 +168,7 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
         ...(useDefaultGraph ? {} : { graph: 'framework' as const }),
         json: true,
         limit: 5,
-        typeFilter: MATRIX.cases.find((testCase) => testCase.phrase === phrase)?.type_filter,
+        typeFilter: typeFilter ?? MATRIX.cases.find((testCase) => testCase.phrase === phrase)?.type_filter,
         backend,
       });
     } finally {
@@ -221,6 +261,32 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
     expect(shown.path).toContain('.aiwg/skills/project-custom-review/SKILL.md');
     expect(shown.content).toContain('name: project-custom-review');
   });
+
+  it('discovers and shows every project-local operational asset type on the default graph', async () => {
+    const cases = [
+      ['nebula project governance', 'rule', '.aiwg/extensions/local-governance/rules/local-governance.md'],
+      ['zephyr project operations', 'agent', '.aiwg/addons/local-operations/agents/local-operator.md'],
+      ['quasar project readiness', 'command', '.aiwg/addons/local-operations/commands/local-inspect.md'],
+      ['aurora project safety', 'behavior', '.aiwg/frameworks/local-delivery/behaviors/local-safety.md'],
+      ['pulsar project provider template', 'template', '.aiwg/frameworks/local-delivery/templates/provider/config.toml'],
+      ['comet project service', 'runbook', '.aiwg/frameworks/local-delivery/runbooks/recovery-runbook.md'],
+      ['meteor project', 'flow', '.aiwg/frameworks/local-delivery/flows/meteor-route.yaml'],
+      // Hooks are intentionally opt-in rather than part of broad discovery.
+      ['eclipse project preflight', 'hook', '.aiwg/plugins/local-tools/hooks/preflight.md'],
+    ] as const;
+
+    for (const [phrase, type, expectedPath] of cases) {
+      const local = await captureDiscover(phrase, 'local', true, [type]);
+      const fortemi = await captureDiscover(phrase, 'fortemi-core', true, [type]);
+      expect(local.results[0]?.path, `${type} local discovery`).toContain(expectedPath);
+      expect(fortemi.results[0]?.path, `${type} Fortemi discovery`).toContain(expectedPath);
+      expect(fortemi.results[0]?.type).toBe(type);
+      expect(normalizedPaths(fortemi)).toEqual(normalizedPaths(local));
+
+      const shown = await captureShow(path.basename(expectedPath).replace(/\.[^.]+$/, ''), [type]);
+      expect(shown.path, `${type} Fortemi show`).toContain(expectedPath);
+    }
+  }, 120_000);
 });
 
 function viSpyConsole(method: 'log' | 'error'): { restore: () => void } {

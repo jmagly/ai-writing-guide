@@ -280,9 +280,12 @@ function textForEntry(entry: MetadataEntry): string {
     entry.summary,
     entry.capability,
     entry.name,
+    entry.kind,
+    entry.sourceType,
     entry.path,
     ...entry.tags,
     ...(entry.triggers ?? []),
+    ...(entry.searchTerms ?? []),
   ]).join("\n");
 }
 
@@ -458,6 +461,12 @@ function skosForEntry(
   const derivedConcepts: AiwgFortemiSkosConcept[] = [
     { value: entry.type, scheme: "aiwg-types", source: "aiwg-index-type" },
     { value: entry.phase, scheme: "aiwg-phases", source: "aiwg-index-phase" },
+    ...(entry.kind
+      ? [{ value: entry.kind, scheme: "aiwg-kinds", source: "aiwg-index-kind" }]
+      : []),
+    ...(entry.sourceType
+      ? [{ value: entry.sourceType, scheme: "aiwg-source-types", source: "aiwg-index-source-type" }]
+      : []),
     ...(entry.name
       ? [{ value: entry.name, scheme: "aiwg-names", source: "aiwg-index-name" }]
       : []),
@@ -709,6 +718,11 @@ function recordForEntry(
             type: entry.type,
             frontmatter: {
               ...(entry.kernel === undefined ? {} : { kernel: entry.kernel }),
+              ...(entry.kind ? { aiwg_kind: entry.kind } : {}),
+              ...(entry.sourceType ? { aiwg_source_type: entry.sourceType } : {}),
+              ...(entry.searchTerms?.length
+                ? { aiwg_search_terms: uniqueSorted(entry.searchTerms) }
+                : {}),
             },
           },
         }
@@ -720,12 +734,16 @@ function recordForEntry(
       phase: uniqueSorted([entry.phase]),
       graph: uniqueSorted([graphName]),
       privacy: uniqueSorted([privacy]),
+      ...(entry.kind ? { process_kind: uniqueSorted([entry.kind]) } : {}),
+      ...(entry.sourceType ? { source_type: uniqueSorted([entry.sourceType]) } : {}),
     },
     tags: uniqueSorted(entry.tags),
     concepts: uniqueSorted([
       entry.type,
       entry.phase,
       entry.name,
+      entry.kind,
+      entry.sourceType,
       ...(entry.triggers ?? []),
       ...(skos?.concepts.map((concept) => concept.id) ?? []),
     ]),

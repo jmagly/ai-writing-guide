@@ -16,6 +16,7 @@ import {
   getFortemiCoreSyncStatus,
   syncFortemiCoreIndex,
 } from "../../../src/artifacts/fortemi-core-sync.js";
+import { loadFortemiCoreMetadataEntries } from "../../../src/artifacts/fortemi-core-query-adapter.js";
 import type {
   ArtifactIndex,
   DependencyGraph,
@@ -397,7 +398,7 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     }
   });
 
-  it("discovers and shows operational behavior, template, and flow assets from Fortemi Core", async () => {
+  it("discovers and shows operational behavior, template, flow, and runbook assets from Fortemi Core", async () => {
     const behavior = entry({
       path: ".aiwg/addons/fleet/behaviors/quiet-bot/BEHAVIOR.md",
       type: "behavior",
@@ -428,7 +429,19 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
       triggers: ["release flow"],
       capability: "Coordinate release verification and publishing.",
     });
-    writeProjectGraph(tmp, [behavior, template, flow], undefined, "project");
+    const runbook = entry({
+      path: ".aiwg/runbooks/certificate-rotation.md",
+      type: "runbook",
+      kind: "Runbook",
+      sourceType: "template",
+      title: "Certificate Rotation Runbook",
+      name: "certificate-rotation",
+      tags: ["pki", "operations"],
+      summary: "Rotate expiring service certificates without interrupting clients.",
+      capability: "Rotate and verify service certificates with a tested rollback.",
+      searchTerms: ["issue replacement certificate", "verify served serial", "restore prior certificate"],
+    });
+    writeProjectGraph(tmp, [behavior, template, flow, runbook], undefined, "project");
     syncFortemiCoreIndex(tmp, {
       graph: "project",
       generatedAt: "2026-01-05T00:00:00.000Z",
@@ -460,6 +473,37 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     expect(focused.results[0].name).toBe("config.toml");
 
     await discoverCapability(tmp, {
+      phrase: "restore prior certificate",
+      typeFilter: ["runbook"],
+      graph: "project",
+      json: true,
+      limit: 5,
+      backend: "fortemi-core",
+    });
+    const runbookFocused = readConsoleJson();
+    consoleSpy.mockClear();
+    expect(runbookFocused.results[0].type).toBe("runbook");
+    expect(runbookFocused.results[0].name).toBe("certificate-rotation");
+    const roundTrippedRunbook = loadFortemiCoreMetadataEntries(tmp, "project").entries
+      .find((item) => item.type === "runbook");
+    expect(roundTrippedRunbook).toMatchObject({
+      kind: "Runbook",
+      sourceType: "template",
+      searchTerms: expect.arrayContaining(["restore prior certificate"]),
+    });
+
+    await discoverCapability(tmp, {
+      phrase: "restore prior certificate",
+      graph: "project",
+      json: true,
+      limit: 5,
+      backend: "fortemi-core",
+    });
+    const broadRunbook = readConsoleJson();
+    consoleSpy.mockClear();
+    expect(broadRunbook.results.some((result: any) => result.type === "runbook")).toBe(true);
+
+    await discoverCapability(tmp, {
       phrase: "quiet bot",
       graph: "project",
       limit: 1,
@@ -474,6 +518,7 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
       ["behavior", "quiet-bot", "Mention-only group chat behavior"],
       ["template", "config.toml", "Codex config toml provider template"],
       ["flow", "flow-release", "Run the release gate sequence"],
+      ["runbook", "certificate-rotation", "Rotate expiring service certificates"],
     ] as const) {
       await showArtifact(tmp, {
         typeFilter: [type],

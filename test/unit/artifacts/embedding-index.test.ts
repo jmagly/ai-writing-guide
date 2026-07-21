@@ -180,7 +180,7 @@ describe('embeddingTextForEntry', () => {
           summary: 'Summary-only duplicate signal.',
         }),
       ),
-    ).toBe('Semantic Dedup Summary-only duplicate signal.');
+    ).toBe('title: Semantic Dedup\ntype: document\nsummary: Summary-only duplicate signal.');
   });
 
   it('includes source body text when body granularity is requested', () => {
@@ -202,7 +202,7 @@ describe('embeddingTextForEntry', () => {
       { granularity: 'body', cwd: tmpDir },
     );
 
-    expect(text).toContain('Body Note Metadata summary.');
+    expect(text).toContain('title: Body Note\ntype: document\nsummary: Metadata summary.');
     expect(text).toContain('Body-only phrase for semantic dedup granularity.');
     expect(text).not.toContain('---');
     fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -218,7 +218,7 @@ describe('embeddingTextForEntry', () => {
         }),
         { granularity: 'body', cwd: '/definitely/not/a/workspace' },
       ),
-    ).toBe('Missing Still embeddable.');
+    ).toBe('title: Missing\ntype: document\nsummary: Still embeddable.');
   });
 
   it('splits body granularity text into bounded source chunks', () => {
@@ -252,7 +252,7 @@ describe('embeddingTextForEntry', () => {
 
     expect(chunks.length).toBeGreaterThan(1);
     expect(chunks.length).toBeLessThanOrEqual(3);
-    expect(chunks.every(chunk => chunk.startsWith('Chunked Note Metadata summary.'))).toBe(true);
+    expect(chunks.every(chunk => chunk.startsWith('title: Chunked Note\ntype: document\nsummary: Metadata summary.'))).toBe(true);
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 });
