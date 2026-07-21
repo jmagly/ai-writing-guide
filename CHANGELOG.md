@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.15] - 2026-07-20 - "Windows portability fixes"
+
 ### Fixed
 
 - **Windows Claude Code hook execution**
