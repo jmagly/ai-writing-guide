@@ -17,8 +17,9 @@ is allowed only for harness development.
 
 ## Evidence Rules
 
-- Store generated markdown and JSON reports under `.aiwg/testing/`.
-- Store selected release screenshots under `.aiwg/testing/` only after review.
+- Store generated markdown and JSON reports under `.aiwg/testing/outputs/`.
+- Store generated release screenshots under `.aiwg/testing/outputs/`; attach
+  selected evidence through the release workflow after review.
 - Do not copy provider auth material, bearer tokens, private keys, CSRs,
   bootstrap tokens, certificate private keys, or raw secret values into reports.
 - Record exact blocker reasons instead of silently skipping unavailable runtime
@@ -109,7 +110,7 @@ Purpose: prove the Bridge can reach a real executor and normalize real inventory
 AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:<real-executor-port> \
 AIWG_COCKPIT_LIVE_REQUIRED=1 \
 AIWG_COCKPIT_EXECUTOR_VERSION=<agentic-sandbox-tag-or-commit> \
-AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/cockpit-real-uat-<date> \
+AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/outputs/cockpit-real-uat-<date> \
 npm run uat:cockpit-live
 ```
 
@@ -132,7 +133,7 @@ AIWG_COCKPIT_LIVE_MATRIX_REQUIRED=1 \
 AIWG_COCKPIT_LIVE_PROVIDER=codex \
 AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT=issue-audit \
 AIWG_COCKPIT_EXECUTOR_VERSION=<agentic-sandbox-tag-or-commit> \
-AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/cockpit-real-codex-matrix-<date> \
+AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/outputs/cockpit-real-codex-matrix-<date> \
 npm run uat:cockpit-live:matrix
 ```
 
@@ -156,7 +157,7 @@ AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT=issue-audit \
 AIWG_COCKPIT_EXECUTOR_VERSION=<agentic-sandbox-tag-or-commit> \
 AIWG_COCKPIT_LIVE_MUTATION_FILE=/absolute/path/to/safe-test-artifact.txt \
 AIWG_COCKPIT_LIVE_MUTATION_TEXT='cockpit mutation proof <date> codex host pty' \
-AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/cockpit-real-codex-mutation-<date> \
+AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/outputs/cockpit-real-codex-mutation-<date> \
 npm run uat:cockpit-live:matrix
 ```
 
@@ -188,7 +189,7 @@ AIWG_COCKPIT_LIVE_PROVISION=1 \
 AIWG_COCKPIT_LIVE_PROVIDER=codex \
 AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT=issue-audit \
 AIWG_COCKPIT_EXECUTOR_VERSION=<agentic-sandbox-tag-or-commit> \
-AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/cockpit-provision-host-codex-<date> \
+AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/outputs/cockpit-provision-host-codex-<date> \
 npm run uat:cockpit-live:matrix
 ```
 
@@ -216,7 +217,7 @@ AIWG_COCKPIT_LIVE_MATRIX_REQUIRED=1 \
 AIWG_COCKPIT_LIVE_PROVIDER=claude \
 AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT=issue-audit \
 AIWG_COCKPIT_EXECUTOR_VERSION=<agentic-sandbox-tag-or-commit> \
-AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/cockpit-real-claude-matrix-<date> \
+AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/outputs/cockpit-real-claude-matrix-<date> \
 npm run uat:cockpit-live:matrix
 ```
 
@@ -267,27 +268,27 @@ Use these names unless the release operator supplies a dated successor:
 
 | Tier | Markdown/JSON base |
 | --- | --- |
-| Real smoke | `.aiwg/testing/cockpit-real-uat-<date>` |
-| Codex smoke | `.aiwg/testing/cockpit-real-codex-smoke-<date>` |
-| Codex matrix/status | `.aiwg/testing/cockpit-real-codex-matrix-<date>` |
-| Codex host PTY mutation | `.aiwg/testing/cockpit-real-codex-mutation-<date>` |
-| Claude smoke | `.aiwg/testing/cockpit-real-claude-smoke-<date>` |
-| Claude matrix/status | `.aiwg/testing/cockpit-real-claude-matrix-<date>` |
-| Strict matrix | `.aiwg/testing/cockpit-real-matrix-uat-<date>` |
+| Real smoke | `.aiwg/testing/outputs/cockpit-real-uat-<date>` |
+| Codex smoke | `.aiwg/testing/outputs/cockpit-real-codex-smoke-<date>` |
+| Codex matrix/status | `.aiwg/testing/outputs/cockpit-real-codex-matrix-<date>` |
+| Codex host PTY mutation | `.aiwg/testing/outputs/cockpit-real-codex-mutation-<date>` |
+| Claude smoke | `.aiwg/testing/outputs/cockpit-real-claude-smoke-<date>` |
+| Claude matrix/status | `.aiwg/testing/outputs/cockpit-real-claude-matrix-<date>` |
+| Strict matrix | `.aiwg/testing/outputs/cockpit-real-matrix-uat-<date>` |
 
 ## Current 2026-06-19 State
 
-- Host Codex proof exists from `.aiwg/testing/cockpit-real-codex-matrix-2026-06-19.*`:
+- Host Codex proof exists from `.aiwg/testing/outputs/cockpit-real-codex-matrix-2026-06-19.*`:
   a real host agent registered over mTLS, opened a managed `tmux` session,
   launched Codex inside that session, and returned `AIWG_COCKPIT_LIVE_OK` plus
   `issue-audit`.
 - Host PTY mutation proof exists from
-  `.aiwg/testing/cockpit-real-codex-mutation-2026-06-19.*`: Cockpit used a real
+  `.aiwg/testing/outputs/cockpit-real-codex-mutation-2026-06-19.*`: Cockpit used a real
   host managed session for Codex prompt injection, then used a fresh host
   managed PTY session to inject a command and verify
-  `.aiwg/testing/cockpit-pty-mutation-2026-06-19.txt` contained
+  `.aiwg/testing/outputs/cockpit-pty-mutation-2026-06-19.txt` contained
   `cockpit mutation proof 2026-06-19 codex host pty`.
-- Host Claude proof exists from `.aiwg/testing/cockpit-real-claude-matrix-2026-06-19.*`:
+- Host Claude proof exists from `.aiwg/testing/outputs/cockpit-real-claude-matrix-2026-06-19.*`:
   the same real host/mTLS/session path launched Claude inside the managed
   session and returned `AIWG_COCKPIT_LIVE_OK` plus `issue-audit`.
 - Docker/container is still blocked by secure transport provisioning,

@@ -95,7 +95,7 @@ export default defineConfig({
       exclude: [
         'node_modules/**',
         '.aiwg/testing/fixtures/**',
-        '.aiwg/testing/sandbox/**',
+        '.aiwg/testing/outputs/sandbox/**',
         '**/*.test.mjs',
         '**/*.spec.mjs'
       ],
@@ -2144,7 +2144,7 @@ import path from 'path';
  */
 export class PerformanceProfiler {
   constructor(config = {}) {
-    this.baselineDir = config.baselineDir || '.aiwg/testing/performance/baselines';
+    this.baselineDir = config.baselineDir || '.aiwg/testing/fixtures/performance-baselines';
     this.measurements = [];
     this.baselines = new Map();
   }
@@ -2497,7 +2497,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-logs
-          path: .aiwg/testing/logs/
+          path: .aiwg/testing/outputs/logs/
 
   e2e-tests:
     runs-on: ubuntu-latest
@@ -2547,7 +2547,7 @@ jobs:
 
       - name: Load baseline performance data
         run: |
-          if [ -f .aiwg/testing/performance/baselines.json ]; then
+          if [ -d .aiwg/testing/fixtures/performance-baselines ]; then
             echo "Baseline found, will compare for regression"
           else
             echo "No baseline found, saving current as baseline"
@@ -2560,7 +2560,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: performance-report
-          path: .aiwg/testing/performance/report.json
+          path: .aiwg/testing/outputs/performance/report.json
 ```
 
 ### 9.2 npm Scripts Configuration
@@ -2616,25 +2616,22 @@ jobs:
 │   │   ├── retrospective-typical.md
 │   │   ├── retrospective-minimal.md
 │   │   └── retrospective-overload.md
-│   └── repos/                                 # Git repository fixtures
-│       ├── git-repo-clean.tar.gz
-│       ├── git-repo-dirty.tar.gz
-│       └── git-repo-conflict.tar.gz
+│   ├── repos/                                 # Git repository fixtures
+│   │   ├── git-repo-clean.tar.gz
+│   │   ├── git-repo-dirty.tar.gz
+│   │   └── git-repo-conflict.tar.gz
+│   └── performance-baselines/                 # Tracked benchmark reference data
 ├── utilities/                                 # Test utilities
 │   ├── performance-profiler.mjs               # Performance measurement infrastructure
 │   └── test-helpers.mjs                       # Common test helper functions
 ├── benchmarks/                                # Performance benchmarks
 │   ├── performance-benchmarks.mjs             # Benchmark.js NFR validation
 │   └── compare-baselines.mjs                  # Baseline comparison script
-├── performance/                               # Performance data
-│   ├── baselines/                             # Baseline measurements (per NFR)
-│   │   ├── NFR-PERF-001.json
-│   │   ├── NFR-PERF-002.json
-│   │   └── ...
-│   └── report.json                            # Latest performance report
-├── sandbox/                                   # Temporary test directories (gitignored)
-├── logs/                                      # Test execution logs (gitignored)
-├── nfr-measurements/                          # NFR validation results
+├── outputs/                                   # Generated execution artifacts (gitignored)
+│   ├── performance/report.json                # Latest performance report
+│   ├── sandbox/                               # Temporary test directories
+│   ├── logs/                                  # Test execution logs
+│   └── nfr-measurements/                      # NFR validation results
 ├── test-infrastructure-specification.md       # This document
 └── test-data-catalog.md                       # Test data fixture catalog (BLOCKER-003 resolution)
 ```

@@ -28,7 +28,7 @@ Verification (2026-05-08, this session): the local `agentic-mgmt` (PID 1771375) 
 > `502`; and instance **transport posture** + **host-daemon** status surface
 > through the Cockpit bridge (mtls / vsock / bootstrap-pending). This is the
 > best-functioning integration state to date. Evidence:
-> `.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md`,
+> `.aiwg/testing/outputs/cockpit-7.4-transport-verify-2026-07-09.md`,
 > `src/cli/handlers/serve.ts:1510-1560`. Residuals still open (do not treat as
 > closed): agentic-sandbox #499 (Claude auth-state propagation), #500
 > (agent-scoped PTY sessions in the global registry), #501 (controller
