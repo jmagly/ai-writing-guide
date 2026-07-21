@@ -315,6 +315,7 @@ Tests run **at stages** — committed harnesses, never `/tmp` rigs (#1635):
 |---|---|---|---|
 | **Unit / integration** | `npm --prefix apps/cockpit run check` · `npx vitest run test/integration/cockpit-bridge.test.js` | **mock** (automated-test-only) | always |
 | **Dev e2e** (full control-plane chain: health→inventory→create session→attach) | `npm run e2e:cockpit-dev` | **real**, safe-skip when absent | non-blocking |
+| **Daily Linux operator gate** (protected auth + host/container + recovery + upgrade/rollback, #1842) | `npm run uat:cockpit-daily` | **real**, required/fail-closed | operator-scheduled |
 | **Release matrix** (host/docker/vm + provider workload, #1621) | `npm run uat:cockpit-live:matrix` | **real**, all three families | release gate |
 
 ```bash
@@ -323,8 +324,16 @@ npx vitest run test/integration/cockpit-bridge.test.js   # Bridge contract + moc
 npx vitest run test/smoke/cockpit-base-footprint.test.js # base-npm guard (CI)
 npm run e2e:cockpit-dev                                  # dev full-system e2e — real executor, skips cleanly
 npm run uat:cockpit-live                                  # opt-in real sandbox posture gate
+npm run uat:cockpit-daily                                 # required Linux daily gate (#1842)
 npm run uat:cockpit-live:matrix                           # required host/docker/vm live matrix (#1621)
 ```
+
+The daily gate's approvals, immutable-version inputs, operator hook contract,
+host/container working-directory expectations, cleanup boundary, and report
+schema are documented in
+[Cockpit Daily Linux Operator Gate](../../docs/cockpit/daily-operator-gate.md).
+VM and Apple remain reported preview tiers and do not block the first Linux
+supported result.
 
 The React UI is also browser-verified per surface (see `.playwright-mcp/cockpit-*.png`).
 Conformance (`agentic-sandbox-conformance`) was 33 pass / 0 fail / 17 skip; the
@@ -389,6 +398,9 @@ than only proving shell plumbing or provider login. Set
 `AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT=<capability-name>` to validate a different
 discovered framework capability, or `AIWG_COCKPIT_LIVE_WORKLOAD=<prompt>` to
 replace the full prompt while still satisfying the marker and discovery checks.
+Custom prompts must request the `AIWG_COCKPIT` and `_LIVE_OK` fragments without
+containing the concatenated marker literally; this prevents terminal command
+echo from being mistaken for provider output.
 Set `AIWG_COCKPIT_LIVE_MATRIX_TARGETS=host` only for scoped rehearsal/evidence
 when Docker/container or VM are intentionally out of scope; the default remains
 `host,container,vm` for the release matrix. To prove controller-side PTY command

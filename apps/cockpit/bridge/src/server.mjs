@@ -53,13 +53,13 @@ async function resolveExecutorBearer(tokenFile) {
   try {
     metadata = await stat(path);
   } catch (cause) {
-    throw executorAuthError('executor_credential_unavailable', `executor credential file is unavailable: ${path}`, cause);
+    throw executorAuthError('executor_credential_unavailable', 'executor credential file is unavailable', cause);
   }
   if (!metadata.isFile()) {
-    throw executorAuthError('executor_credential_invalid', `executor credential path is not a regular file: ${path}`);
+    throw executorAuthError('executor_credential_invalid', 'executor credential path is not a regular file');
   }
   if (process.platform !== 'win32' && (metadata.mode & 0o077) !== 0) {
-    throw executorAuthError('executor_credential_permissions', `executor credential file must not be accessible by group or other users: ${path}`);
+    throw executorAuthError('executor_credential_permissions', 'executor credential file must not be accessible by group or other users');
   }
   const token = String(await readFile(path, 'utf8')).trim();
   if (!token || /[\r\n]/.test(token)) {

@@ -9,6 +9,14 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Cockpit daily Linux operator gate** (#1842) — a single fail-closed command
+  now composes protected-executor host/container UAT, explicit authorization
+  failures, managed-PTY working-directory and scratch-mutation proof, transient
+  and restart recovery, previous-stable/candidate upgrade and rollback hooks,
+  scoped cleanup, immutable version evidence, and secret-scanned deterministic
+  JSON/Markdown reports. Executor credential-file paths are also removed from
+  Bridge error responses. VM and Apple remain visible non-blocking preview tiers.
+
 - **Existing-project context extraction** (#1830) —
   `aiwg regenerate --existing-project` previews or atomically applies a bounded,
   source-attributed project snapshot inside `WORKSPACE.md`, migrates active
