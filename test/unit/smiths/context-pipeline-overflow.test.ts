@@ -223,7 +223,7 @@ describe('twin-file emission per ADR-1 §4', () => {
     const warp = await fs.readFile(path.join(tmpDir, 'WARP.md'), 'utf8');
     const agents = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf8');
     expect(warp).toBe(agents);
-    expect(warp).toContain('## Context Finalization');
+    expect(warp.indexOf('WORKSPACE.md')).toBeLessThan(warp.indexOf('AIWG.md'));
     expect(warp).toContain('aiwg discover');
     expect(warp).toContain('aiwg show');
   });
@@ -239,8 +239,8 @@ describe('twin-file emission per ADR-1 §4', () => {
     const copilot = await fs.readFile(twinPath, 'utf8');
     const agents = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf8');
     expect(copilot).toBe(agents);
-    expect(copilot).toContain('## Context Finalization');
-    expect(copilot).toContain('decline-without-search');
+    expect(copilot.indexOf('@WORKSPACE.md')).toBeLessThan(copilot.indexOf('@AIWG.md'));
+    expect(copilot).not.toContain('## Context Finalization');
   });
 
   it('does not write twin files for codex', async () => {
@@ -252,7 +252,7 @@ describe('twin-file emission per ADR-1 §4', () => {
     expect(result.twinPaths).toEqual([]);
   });
 
-  it('additively installs the @AIWG.md hook into an operator-owned twin, never full-overwriting (#1597/#1579)', async () => {
+  it('additively installs the canonical prose hook into an operator-owned twin, never full-overwriting (#1597/#1579)', async () => {
     // Pre-existing operator-claimed .hermes.md (no AIWG signature).
     await fs.writeFile(path.join(tmpDir, '.hermes.md'), '# Operator content\n', 'utf8');
     const result = await generate({
@@ -266,7 +266,7 @@ describe('twin-file emission per ADR-1 §4', () => {
     expect(result.twinPaths).toContain(path.join(tmpDir, '.hermes.md'));
     const hermes = await fs.readFile(path.join(tmpDir, '.hermes.md'), 'utf8');
     expect(hermes).toContain('# Operator content'); // preserved
-    expect(hermes).toContain('@AIWG.md');            // hook installed
+    expect(hermes.indexOf('WORKSPACE.md')).toBeLessThan(hermes.indexOf('AIWG.md'));
     expect(hermes).toContain('<!-- AIWG:context-hook:start -->');
     expect(result.warnings.some((w) => w.includes('.hermes.md') && w.includes('additively'))).toBe(true);
   });
@@ -291,7 +291,8 @@ describe('generate end-to-end thin-pointer (#1239)', () => {
 
     const agentsContent = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf8');
     expect(Buffer.byteLength(agentsContent, 'utf8')).toBeLessThan(8 * 1024);
-    expect(agentsContent).toContain('examples: auto-entry-000, auto-entry-001, auto-entry-002, auto-entry-003, auto-entry-004, +295 more.');
+    expect(agentsContent).toContain('WORKSPACE.md');
+    expect(agentsContent).not.toContain('auto-entry-000');
     expect(agentsContent).not.toContain('auto-entry-299');
     expect(agentsContent).not.toContain('Path: `.codex/agents/auto-entry-000.md`');
 

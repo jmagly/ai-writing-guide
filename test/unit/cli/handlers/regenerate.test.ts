@@ -83,13 +83,16 @@ describe('regenerateHandler', () => {
     const result = await regenerateHandler.execute(makeCtx(tmpDir, ['--provider', 'codex']));
     expect(result.exitCode).toBe(0);
 
-    for (const rel of ['AIWG.md', 'AGENTS.md', '.aiwg/AIWG.md']) {
+    for (const rel of ['AIWG.md', '.aiwg/AIWG.md']) {
       const content = readFileSync(join(tmpDir, rel), 'utf8');
       expect(content).toContain('## Context Finalization');
       expect(content).toContain('aiwg discover');
       expect(content).toContain('aiwg show');
       expect(content).toContain('sdlc');
     }
+    const adapter = readFileSync(join(tmpDir, 'AGENTS.md'), 'utf8');
+    expect(adapter.indexOf('WORKSPACE.md')).toBeLessThan(adapter.indexOf('AIWG.md'));
+    expect(adapter).not.toContain('## Context Finalization');
   });
 
   it('exposes validated external links in provider-facing context without fetching them', async () => {
@@ -107,7 +110,7 @@ describe('regenerateHandler', () => {
     expect(result.exitCode).toBe(0);
     const repeated = await regenerateHandler.execute(makeCtx(tmpDir, ['--provider', 'codex']));
     expect(repeated.exitCode).toBe(0);
-    for (const rel of ['AIWG.md', 'AGENTS.md', '.aiwg/AIWG.md']) {
+    for (const rel of ['AIWG.md', '.aiwg/AIWG.md']) {
       const content = readFileSync(join(tmpDir, rel), 'utf8');
       expect(content).toContain('## Project External Links');
       expect(content).toContain('Anonymous vulnerability submission');
@@ -115,6 +118,7 @@ describe('regenerateHandler', () => {
       expect(content).toContain('Treat them as links only');
       expect(content.match(/<!-- aiwg-external-links:start -->/g)).toHaveLength(1);
     }
+    expect(readFileSync(join(tmpDir, 'AGENTS.md'), 'utf8')).not.toContain('Anonymous vulnerability submission');
 
     const config = JSON.parse(readFileSync(join(tmpDir, '.aiwg', 'aiwg.config'), 'utf8'));
     expect(config.externalLinks.anonymous_vulnerability_submission.category).toBe('security');
@@ -133,7 +137,7 @@ describe('regenerateHandler', () => {
     expect(result.exitCode).toBe(0);
 
     expect(existsSync(join(tmpDir, 'AGENTS.md'))).toBe(true);
-    expect(readFileSync(join(tmpDir, 'AGENTS.md'), 'utf8')).toContain('## Context Finalization');
+    expect(readFileSync(join(tmpDir, 'AGENTS.md'), 'utf8')).toContain('WORKSPACE.md');
     expect(readFileSync(join(tmpDir, 'CLAUDE.md'), 'utf8')).toBe('# Team Claude Notes\n\nPreserve this file.\n');
   });
 
@@ -147,9 +151,8 @@ describe('regenerateHandler', () => {
     const copilotPath = join(tmpDir, '.github', 'copilot-instructions.md');
     expect(existsSync(copilotPath)).toBe(true);
     const content = readFileSync(copilotPath, 'utf8');
-    expect(content).toContain('## Context Finalization');
-    expect(content).toContain('decline-without-search');
-    expect(content).toContain('Configured providers: copilot');
+    expect(content.indexOf('@WORKSPACE.md')).toBeLessThan(content.indexOf('@AIWG.md'));
+    expect(content).not.toContain('## Context Finalization');
   });
 
   it('dry-run reports normalized and provider twin targets without writing', async () => {

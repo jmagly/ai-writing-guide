@@ -30,6 +30,7 @@ import {
 import { parseCitationSidecar, citationResultToEdges, buildRefToPathMap } from './citation-parser.js';
 import { writeIndexFile, resolveIndexDir, loadGraphIndexFile } from './index-reader.js';
 import { loadManifest, writeManifest, statMatches, makeEntry, type ChecksumManifest, type ManifestStats } from './checksum-manifest.js';
+import { workspaceLinkedFiles } from '../smiths/context-pipeline/workspace-context.js';
 
 export interface BuildOptions {
   force?: boolean;
@@ -803,6 +804,20 @@ export async function buildIndex(
   const files: string[] = [];
   for (const dir of existingDirs) {
     files.push(...findArtifactFiles(dir, fileExtensions));
+  }
+  // WORKSPACE.md is the root of the project context graph. Index it and its
+  // local Markdown-linked nodes without copying them into provider trees.
+  if (!scope && (!graph || graph === 'project')) {
+    const workspacePath = path.join(cwd, 'WORKSPACE.md');
+    const contextFiles = [
+      ...(fs.existsSync(workspacePath) ? [workspacePath] : []),
+      ...await workspaceLinkedFiles(cwd),
+    ];
+    for (const contextFile of contextFiles) {
+      if (fileExtensions.some((extension) => contextFile.endsWith(extension)) && !files.includes(contextFile)) {
+        files.push(contextFile);
+      }
+    }
   }
   const entries: Record<string, MetadataEntry> = {};
   const tagIndex: TagIndex = {};

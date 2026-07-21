@@ -27,6 +27,7 @@ import {
 import * as ui from '../ui.js';
 import { askString as sharedAskString, askYesNo as sharedAskYesNo } from '../prompt-utils.js';
 import { writeNormalizedAiwgMd } from '../../smiths/context-pipeline/finalization.js';
+import { ensureWorkspaceContext } from '../../smiths/context-pipeline/workspace-context.js';
 
 const PROVIDER_LABELS: Record<string, string> = {
   claude:    'Claude Code       .claude/',
@@ -187,10 +188,12 @@ export const initHandler: CommandHandler = {
     // Write
     await writeAiwgConfig(projectDir, config);
     await writeNormalizedAiwgMd(projectDir);
+    const workspace = await ensureWorkspaceContext(projectDir);
 
     ui.blank();
     ui.success(`Created ${getConfigPath(projectDir)}`);
     ui.success('Created .aiwg/AIWG.md');
+    ui.success(`${workspace.action === 'created' ? 'Created' : 'Preserved'} WORKSPACE.md`);
     ui.success(`Providers: ${providers.join(', ')}`);
     if (Object.keys(scripts).length > 0) {
       ui.success(`Scripts: ${Object.keys(scripts).join(', ')}`);

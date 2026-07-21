@@ -1,0 +1,129 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import {
+  WORKSPACE_MANAGED_END,
+  WORKSPACE_MANAGED_START,
+  WORKSPACE_OPERATOR_END,
+  WORKSPACE_OPERATOR_START,
+  auditWorkspaceContext,
+  buildProviderBootstrapBlock,
+  diagnoseWorkspaceContext,
+  ensureWorkspaceContext,
+  migrateWorkspaceContext,
+  providerContextContract,
+  rollbackWorkspaceContext,
+  workspaceLinkedFiles,
+} from '../../../src/smiths/context-pipeline/workspace-context.js';
+import { listProviderDefinitions } from '../../../src/providers/provider-definitions.js';
+import { buildIndex } from '../../../src/artifacts/index-builder.js';
+
+const roots: string[] = [];
+async function project(): Promise<string> {
+  const root = await mkdtemp(join(tmpdir(), 'aiwg-workspace-context-'));
+  roots.push(root);
+  await mkdir(join(root, '.aiwg'), { recursive: true });
+  return root;
+}
+afterEach(async () => Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true }))));
+
+describe('WORKSPACE.md canonical context graph (#1811)', () => {
+  it('creates a managed graph and refreshes only the managed region', async () => {
+    const root = await project();
+    const created = await ensureWorkspaceContext(root);
+    expect(created.action).toBe('created');
+    let content = await readFile(join(root, 'WORKSPACE.md'), 'utf8');
+    expect(content).toContain(WORKSPACE_MANAGED_START);
+    expect(content).toContain(WORKSPACE_OPERATOR_START);
+    content = content.replace(WORKSPACE_OPERATOR_END, 'Operator convention: use fixtures.\n\n' + WORKSPACE_OPERATOR_END);
+    await writeFile(join(root, 'WORKSPACE.md'), content);
+    const refreshed = await ensureWorkspaceContext(root);
+    expect(refreshed.action).toBe('unchanged');
+    expect(await readFile(join(root, 'WORKSPACE.md'), 'utf8')).toContain('Operator convention: use fixtures.');
+  });
+
+  it('has an explicit, honest bootstrap contract for every registered provider', () => {
+    for (const provider of listProviderDefinitions()) {
+      const contract = providerContextContract(provider.id);
+      expect(contract).toBeDefined();
+      expect(contract?.verification.source).toBeTruthy();
+      const bootstrap = buildProviderBootstrapBlock(provider.id);
+      if (contract?.loadMode === 'native-include') {
+        expect(bootstrap.indexOf('@WORKSPACE.md')).toBeLessThan(bootstrap.indexOf('@AIWG.md'));
+      } else if (contract?.loadMode === 'unsupported') {
+        expect(bootstrap).toContain('no verified project-local automatic context loader');
+      } else {
+        expect(bootstrap.indexOf('WORKSPACE.md')).toBeLessThan(bootstrap.indexOf('AIWG.md'));
+      }
+    }
+    for (const surface of ['claude', 'codex', 'copilot', 'cursor', 'factory', 'opencode', 'warp', 'windsurf', 'devin-desktop', 'hermes', 'openclaw', 'openhuman']) {
+      expect(buildProviderBootstrapBlock(surface)).toContain('Provider workspace bootstrap');
+    }
+  });
+
+  it('classifies identical directives, polarity conflicts, possible secrets, and nested scope', async () => {
+    const root = await project();
+    await writeFile(join(root, 'AGENTS.md'), 'Always use fixtures.\nUse tabs for indentation.\n');
+    await writeFile(join(root, 'CLAUDE.md'), 'Always use fixtures.\nNever use tabs for indentation.\ntoken=abcdefghijklmnopqrstuvwxyz\n');
+    await mkdir(join(root, 'packages', 'one'), { recursive: true });
+    await writeFile(join(root, 'packages', 'one', 'AGENTS.md'), 'Use package-local tests.\n');
+    const audit = await auditWorkspaceContext(root);
+    expect(audit.identical.some((item) => item.directives.includes('Always use fixtures.'))).toBe(true);
+    expect(audit.conflicts.some((item) => item.key.includes('tabs'))).toBe(true);
+    expect(audit.sensitiveFindings).toHaveLength(1);
+    expect(audit.plan.nestedSources).toContain('packages/one/AGENTS.md');
+  });
+
+  it('supports deterministic dry-run, apply, idempotence, attribution, and rollback', async () => {
+    const root = await project();
+    await writeFile(join(root, '.aiwg', 'aiwg.config'), JSON.stringify({ providers: ['claude', 'opencode'] }));
+    await writeFile(join(root, 'AGENTS.md'), 'Use provider-specific Codex checks.\n');
+    const dryRun = await migrateWorkspaceContext(root, { dryRun: true });
+    expect(dryRun.dryRun).toBe(true);
+    expect(dryRun.written).toContain('WORKSPACE.md');
+    const applied = await migrateWorkspaceContext(root, { apply: true });
+    expect(applied.transactionId).toBeTruthy();
+    const providerPath = join(root, '.aiwg', 'context', 'providers', 'AGENTS.md');
+    expect(await readFile(providerPath, 'utf8')).toContain('Source attribution: migrated from `AGENTS.md`');
+    const second = await migrateWorkspaceContext(root, { apply: true });
+    expect(second.changed).toBe(false);
+    expect(JSON.parse(await readFile(join(root, 'opencode.json'), 'utf8')).instructions).toEqual(['WORKSPACE.md', 'AIWG.md']);
+    await rollbackWorkspaceContext(root, applied.transactionId);
+    expect(await readFile(join(root, 'AGENTS.md'), 'utf8')).toBe('Use provider-specific Codex checks.\n');
+  });
+
+  it('refuses rollback when post-migration work would be overwritten', async () => {
+    const root = await project();
+    await writeFile(join(root, '.aiwg', 'aiwg.config'), JSON.stringify({ providers: ['codex'] }));
+    await writeFile(join(root, 'AGENTS.md'), 'Use local checks.\n');
+    const applied = await migrateWorkspaceContext(root, { apply: true });
+    await writeFile(join(root, 'WORKSPACE.md'), 'operator changed this after migration\n');
+    await expect(rollbackWorkspaceContext(root, applied.transactionId)).rejects.toThrow('changed after migration');
+  });
+
+  it('discovers linked files and diagnoses drift without copying content', async () => {
+    const root = await project();
+    await ensureWorkspaceContext(root);
+    await writeFile(join(root, 'AIWG.md'), '# AIWG\n');
+    await writeFile(join(root, 'AGENTS.md'), '<!-- aiwg-managed -->\n# drifted\n');
+    await writeFile(join(root, '.aiwg', 'aiwg.config'), JSON.stringify({ providers: ['codex'] }));
+    const linked = await workspaceLinkedFiles(root);
+    expect(linked).toContain(join(root, 'AIWG.md'));
+    const diagnostics = await diagnoseWorkspaceContext(root);
+    expect(diagnostics.some((item) => item.code === 'bootstrap-drift')).toBe(true);
+    const workspace = await readFile(join(root, 'WORKSPACE.md'), 'utf8');
+    expect(workspace).toContain(WORKSPACE_MANAGED_END);
+    expect(workspace).not.toContain('# AIWG\n');
+  });
+
+  it('indexes WORKSPACE.md and its linked project files as graph nodes', async () => {
+    const root = await project();
+    await ensureWorkspaceContext(root);
+    await writeFile(join(root, 'AIWG.md'), '# Linked AIWG context\n');
+    await buildIndex(root, { force: true });
+    const index = JSON.parse(await readFile(join(root, '.aiwg', '.index', 'metadata.json'), 'utf8')) as { entries: Record<string, unknown> };
+    expect(index.entries).toHaveProperty('WORKSPACE.md');
+    expect(index.entries).toHaveProperty('AIWG.md');
+  });
+});

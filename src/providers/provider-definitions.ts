@@ -54,6 +54,37 @@ export type ProviderContextFiles = {
   contextFile: string | null;
 };
 
+export type ProviderContextLoadMode =
+  | 'native-include'
+  | 'prose-directive'
+  | 'config-registration'
+  | 'unsupported';
+
+/**
+ * Provider startup/context contract used by the shared workspace-context graph.
+ *
+ * A Markdown link is never represented as a native include. Providers that do
+ * not document an include or configuration mechanism receive a compact prose
+ * directive and an explicit degraded status instead.
+ */
+export type ProviderContextContract = {
+  startupFiles: string[];
+  precedence: string[];
+  loadMode: ProviderContextLoadMode;
+  includeSyntax: string | null;
+  configRegistration: { file: string; key: string } | null;
+  bootstrapTargets: string[];
+  maxContextBytes: number | null;
+  recommendedMaxLines: number | null;
+  nestedContext: boolean;
+  support: 'supported' | 'degraded' | 'unsupported';
+  verification: {
+    method: string;
+    source: string;
+    lastVerified: string;
+  };
+};
+
 export type ProviderPaths = {
   deployTarget: DeployTarget;
   artifacts: ProviderArtifactPaths;
@@ -100,6 +131,7 @@ export interface ProviderDefinition {
   surfaces: ProviderSurface;
   detection: ProviderDetection;
   paths: ProviderPaths;
+  context: ProviderContextContract;
   smithPaths: ProviderSmithPaths;
   skillNamespace: ProviderSkillNamespace;
   adapters: ProviderAdapters;
@@ -181,6 +213,23 @@ const ProviderDefinitionSchema = z.object({
       contextFile: z.string().nullable(),
     }),
   }),
+  context: z.object({
+    startupFiles: z.array(z.string().min(1)),
+    precedence: z.array(z.string().min(1)),
+    loadMode: z.enum(['native-include', 'prose-directive', 'config-registration', 'unsupported']),
+    includeSyntax: z.string().nullable(),
+    configRegistration: z.object({ file: z.string().min(1), key: z.string().min(1) }).nullable(),
+    bootstrapTargets: z.array(z.string().min(1)),
+    maxContextBytes: z.number().int().positive().nullable(),
+    recommendedMaxLines: z.number().int().positive().nullable(),
+    nestedContext: z.boolean(),
+    support: z.enum(['supported', 'degraded', 'unsupported']),
+    verification: z.object({
+      method: z.string().min(1),
+      source: z.string().min(1),
+      lastVerified: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    }),
+  }),
   smithPaths: z.object({
     agents: z.string().nullable(),
     commands: z.string().nullable(),
@@ -228,7 +277,7 @@ export const PROVIDER_IDS: readonly Platform[] = [
   'generic',
 ];
 
-type BuiltInSeed = Omit<ProviderDefinition, 'displayName' | 'status' | 'paths' | 'capabilities'> & {
+type BuiltInSeed = Omit<ProviderDefinition, 'displayName' | 'status' | 'paths' | 'context' | 'capabilities'> & {
   displayName?: string;
   status?: ProviderStatus;
   paths: Omit<ProviderPaths, 'deployTarget' | 'contextDiscovery'> & {
@@ -236,6 +285,82 @@ type BuiltInSeed = Omit<ProviderDefinition, 'displayName' | 'status' | 'paths' |
     contextDiscovery?: ProviderContextDiscoveryPaths;
   };
   matrixRef: string | null;
+};
+
+const VERIFIED_ON = '2026-07-21';
+
+const CONTEXT_CONTRACTS: Record<Platform, ProviderContextContract> = {
+  claude: {
+    startupFiles: ['CLAUDE.md', '.claude/CLAUDE.md'], precedence: ['provider/system', 'nested CLAUDE.md', 'root CLAUDE.md'],
+    loadMode: 'native-include', includeSyntax: '@WORKSPACE.md\n@AIWG.md', configRegistration: null,
+    bootstrapTargets: ['CLAUDE.md'], maxContextBytes: null, recommendedMaxLines: 200, nestedContext: true, support: 'supported',
+    verification: { method: 'official documentation: CLAUDE.md imports and InstructionsLoaded hook', source: 'https://code.claude.com/docs/en/memory', lastVerified: VERIFIED_ON },
+  },
+  codex: {
+    startupFiles: ['AGENTS.override.md', 'AGENTS.md'], precedence: ['provider/system', 'root-to-cwd AGENTS chain', 'nearest file'],
+    loadMode: 'prose-directive', includeSyntax: null, configRegistration: null,
+    bootstrapTargets: ['AGENTS.md'], maxContextBytes: 32 * 1024, recommendedMaxLines: null, nestedContext: true, support: 'supported',
+    verification: { method: 'official AGENTS.md discovery chain; no Markdown include claimed', source: 'https://developers.openai.com/codex/guides/agents-md', lastVerified: VERIFIED_ON },
+  },
+  copilot: {
+    startupFiles: ['.github/copilot-instructions.md', 'AGENTS.md', 'CLAUDE.md'], precedence: ['personal', 'repository', 'organization; CLI combines applicable files'],
+    loadMode: 'native-include', includeSyntax: '@WORKSPACE.md\n@AIWG.md', configRegistration: null,
+    bootstrapTargets: ['.github/copilot-instructions.md', 'AGENTS.md'], maxContextBytes: null, recommendedMaxLines: null, nestedContext: true, support: 'supported',
+    verification: { method: 'official Copilot CLI custom-instruction imports', source: 'https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions', lastVerified: VERIFIED_ON },
+  },
+  cursor: {
+    startupFiles: ['AGENTS.md', 'CLAUDE.md', '.cursor/rules/*.mdc'], precedence: ['provider/system', 'project rules', 'root AGENTS.md'],
+    loadMode: 'prose-directive', includeSyntax: null, configRegistration: null,
+    bootstrapTargets: ['AGENTS.md'], maxContextBytes: null, recommendedMaxLines: 500, nestedContext: false, support: 'supported',
+    verification: { method: 'official Cursor rules and CLI documentation', source: 'https://docs.cursor.com/context/rules-for-ai', lastVerified: VERIFIED_ON },
+  },
+  factory: {
+    startupFiles: ['AGENTS.md', '~/.factory/AGENTS.md'], precedence: ['provider/system', 'nearest AGENTS.md', 'root AGENTS.md', 'personal override'],
+    loadMode: 'prose-directive', includeSyntax: null, configRegistration: null,
+    bootstrapTargets: ['AGENTS.md'], maxContextBytes: null, recommendedMaxLines: 150, nestedContext: true, support: 'supported',
+    verification: { method: 'official Factory AGENTS.md discovery hierarchy', source: 'https://docs.factory.ai/cli/configuration/agents-md', lastVerified: VERIFIED_ON },
+  },
+  hermes: {
+    startupFiles: ['.hermes.md', 'AGENTS.md'], precedence: ['provider/system', '.hermes.md', 'AGENTS.md'],
+    loadMode: 'prose-directive', includeSyntax: null, configRegistration: null,
+    bootstrapTargets: ['.hermes.md', 'AGENTS.md'], maxContextBytes: null, recommendedMaxLines: 30, nestedContext: false, support: 'degraded',
+    verification: { method: 'AIWG Hermes adapter contract; on-demand artifact-read required', source: 'agentic/code/providers/capability-matrix.yaml', lastVerified: VERIFIED_ON },
+  },
+  opencode: {
+    startupFiles: ['AGENTS.md', 'CLAUDE.md', 'opencode.json#instructions'], precedence: ['provider/system', 'nearest AGENTS.md', 'CLAUDE compatibility', 'registered instructions'],
+    loadMode: 'config-registration', includeSyntax: null, configRegistration: { file: 'opencode.json', key: 'instructions' },
+    bootstrapTargets: ['AGENTS.md'], maxContextBytes: null, recommendedMaxLines: null, nestedContext: true, support: 'supported',
+    verification: { method: 'official OpenCode rules documentation and instructions array', source: 'https://opencode.ai/docs/rules/', lastVerified: VERIFIED_ON },
+  },
+  openclaw: {
+    startupFiles: ['~/.openclaw/config.yaml'], precedence: ['provider/system', 'home configuration'],
+    loadMode: 'unsupported', includeSyntax: null, configRegistration: null,
+    bootstrapTargets: [], maxContextBytes: null, recommendedMaxLines: null, nestedContext: false, support: 'degraded',
+    verification: { method: 'AIWG home-scope adapter contract; no verified project startup file', source: 'agentic/code/providers/capability-matrix.yaml', lastVerified: VERIFIED_ON },
+  },
+  openhuman: {
+    startupFiles: ['AGENTS.md'], precedence: ['provider/system', 'project AGENTS.md when host exposes it'],
+    loadMode: 'prose-directive', includeSyntax: null, configRegistration: null,
+    bootstrapTargets: ['AGENTS.md'], maxContextBytes: null, recommendedMaxLines: null, nestedContext: false, support: 'degraded',
+    verification: { method: 'AIWG mixed-scope adapter contract; host loading remains capability-dependent', source: 'agentic/code/providers/capability-matrix.yaml', lastVerified: VERIFIED_ON },
+  },
+  warp: {
+    startupFiles: ['WARP.md', 'AGENTS.md'], precedence: ['provider/system', 'subdirectory rule', 'root rule', 'global rule'],
+    loadMode: 'prose-directive', includeSyntax: null, configRegistration: null,
+    bootstrapTargets: ['WARP.md', 'AGENTS.md'], maxContextBytes: null, recommendedMaxLines: null, nestedContext: true, support: 'supported',
+    verification: { method: 'official Warp project rules documentation', source: 'https://docs.warp.dev/agent-platform/capabilities/rules/', lastVerified: VERIFIED_ON },
+  },
+  windsurf: {
+    startupFiles: ['AGENTS.md', '.windsurf/rules/*.md', '.devin/rules/*.md'], precedence: ['provider/system', 'Devin rules', 'Windsurf rules', 'AGENTS.md'],
+    loadMode: 'prose-directive', includeSyntax: null, configRegistration: null,
+    bootstrapTargets: ['AGENTS.md'], maxContextBytes: null, recommendedMaxLines: null, nestedContext: true, support: 'degraded',
+    verification: { method: 'AIWG Windsurf/Devin topology contract; provider-native rules retained', source: 'src/providers/provider-definitions.ts', lastVerified: VERIFIED_ON },
+  },
+  generic: {
+    startupFiles: [], precedence: ['host policy'], loadMode: 'unsupported', includeSyntax: null, configRegistration: null,
+    bootstrapTargets: [], maxContextBytes: null, recommendedMaxLines: null, nestedContext: false, support: 'unsupported',
+    verification: { method: 'No provider selected; no startup-file claim', source: 'src/providers/provider-definitions.ts', lastVerified: VERIFIED_ON },
+  },
 };
 
 const BUILT_IN_SEEDS: BuiltInSeed[] = [
@@ -904,6 +1029,7 @@ function buildDefinition(seed: BuiltInSeed): ProviderDefinition {
       deployTarget: seed.paths.deployTarget ?? capabilities?.deploy_target ?? 'project',
       contextDiscovery,
     },
+    context: CONTEXT_CONTRACTS[seed.id],
     capabilities: {
       matrixRef: seed.matrixRef,
       nativeFeatures: capabilities?.native_features ?? {},

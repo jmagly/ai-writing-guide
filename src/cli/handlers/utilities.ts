@@ -576,6 +576,21 @@ export const doctorHandler: CommandHandler = {
       // Project-local section is non-fatal for doctor
     }
 
+    // Canonical workspace-context graph diagnostics (#1811). Legacy projects
+    // remain valid; drift, loops, conflicts, and possible credentials fail.
+    try {
+      const { diagnoseWorkspaceContext } = await import('../../smiths/context-pipeline/workspace-context.js');
+      const diagnostics = await diagnoseWorkspaceContext(ctx.cwd || process.cwd());
+      console.log('\n── Workspace context graph ──');
+      for (const diagnostic of diagnostics) {
+        const mark = diagnostic.severity === 'error' ? '✗' : diagnostic.severity === 'warning' ? '⚠' : '✓';
+        console.log(`  ${mark} ${diagnostic.message}`);
+      }
+      if (diagnostics.some((item) => item.severity === 'error')) return { exitCode: 1, message: '' };
+    } catch (error) {
+      console.log(`\n── Workspace context graph ──\n  ⚠ unable to audit: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
     return result;
   },
 };

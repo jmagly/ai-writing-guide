@@ -4,7 +4,7 @@
  * Per ADR-1 §0.5: AIWG.md at project root has the same content shape as
  * CLAUDE.md. Both files `@`-reference the project's `.aiwg/AIWG.md` (the
  * source of truth). Non-Claude providers reach AIWG.md transitively via the
- * AGENTS.md `## Framework Context` link. The two project-root files contain
+ * provider startup adapters. WORKSPACE.md and AIWG.md contain
  * identical framework prose; they exist as two named files because Claude
  * Code looks for `CLAUDE.md` and the seven AGENTS.md providers reach
  * AIWG.md via the AGENTS.md hook-up.

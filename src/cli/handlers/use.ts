@@ -65,13 +65,12 @@ import {
 // execute() per framework/provider) don't re-emit the warning each pass.
 // Reset is not needed: a single CLI process is one user invocation.
 let projectIsolationChecked = false;
-// Context-pipeline: emits AIWG.md + AGENTS.md as the last step of `aiwg use`
+// Context-pipeline: emits WORKSPACE.md + AIWG.md + provider adapters last.
 // for non-Claude providers per ADR-1 (.aiwg/architecture/adr-agents-md-aggregation.md).
 // Distinct from agentsmith (which creates subagent personas).
 import {
   generate as generateContextFiles,
   discoverDeployedArtifacts,
-  shouldEmitContextFiles,
 } from '../../smiths/context-pipeline/index.js';
 import type { Platform } from '../../agents/types.js';
 
@@ -2657,14 +2656,15 @@ export class UseHandler implements CommandHandler {
     // Context-pipeline emission (ADR-1 §0 + §0.5 + §7).
     //
     // For AGENTS.md providers (codex/copilot/cursor/windsurf/hermes/warp/factory/
-    // opencode), emit AIWG.md + AGENTS.md at project root as the last filesystem
+    // opencode), emit WORKSPACE.md + AIWG.md + provider adapters as the last filesystem
     // step before activity-log close. The generator-runs-after-deploy invariant
     // (ADR-1 §7) means the link index can only cite files we observe on disk:
     // failed deploys produce shorter indexes, never broken links.
     //
     // Operators opt out via --no-context-files / --no-aiwg-md / --no-agents-md.
-    if (!dryRun && shouldEmitContextFiles(provider as Platform)) {
+    if (!dryRun) {
       const skipContext = remainingArgs.includes('--no-context-files');
+      const skipWorkspaceMd = skipContext || remainingArgs.includes('--no-workspace-md');
       const skipAiwgMd = skipContext || remainingArgs.includes('--no-aiwg-md');
       const skipAgentsMd = skipContext || remainingArgs.includes('--no-agents-md');
       const forceContext = remainingArgs.includes('--force-context-files');
@@ -2684,8 +2684,12 @@ export class UseHandler implements CommandHandler {
           sections,
           detectExistingFiles: true,
           force: forceContext,
-          skip: { aiwgMd: skipAiwgMd, agentsMd: skipAgentsMd },
+          skip: { workspaceMd: skipWorkspaceMd, aiwgMd: skipAiwgMd, agentsMd: skipAgentsMd },
         });
+
+        if (verbose && ctxResult.workspaceMdPath) {
+          ui.dim(`  ${ctxResult.workspaceMdAction === 'created' ? 'Created' : 'Refreshed'} WORKSPACE.md`);
+        }
 
         if (verbose && ctxResult.agentsMdPath) {
           ui.dim(`  Wrote AGENTS.md (${ctxResult.agentsMdBytes} bytes)`);
@@ -2703,7 +2707,7 @@ export class UseHandler implements CommandHandler {
             ctxResult.claudeMdHookAction === 'inserted' ? 'Inserted hook into' :
             ctxResult.claudeMdHookAction === 'updated' ? 'Updated hook in' :
             'Touched';
-          ui.dim(`  ${verb} CLAUDE.md (@AIWG.md block)`);
+          ui.dim(`  ${verb} CLAUDE.md (@WORKSPACE.md then @AIWG.md block)`);
         }
         for (const w of ctxResult.warnings) {
           // #1579: loud warnings (non-managed twin/bridge left untouched) are

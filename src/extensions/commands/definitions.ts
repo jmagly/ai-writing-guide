@@ -174,16 +174,16 @@ export const refreshCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
-// #1266 — Regenerate cross-provider context files (AIWG.md + AGENTS.md) without
+// #1266/#1811 — Regenerate the canonical graph and provider adapters without
 // redeploying frameworks. Narrower than refresh; faster for context-drift fixes.
 export const regenerateCommand: Extension = {
   id: 'regenerate',
   type: 'skill',
   name: 'Regenerate Context Files',
-  description: 'Regenerate AIWG.md + AGENTS.md without redeploying frameworks (context-only)',
+  description: 'Regenerate WORKSPACE.md, AIWG.md, and provider adapters without redeploying frameworks',
   version: '1.0.0',
   capabilities: ['cli', 'regenerate', 'context', 'maintenance', 'self-maintenance'],
-  keywords: ['regenerate', 'context', 'aiwg.md', 'agents.md', 'redeploy-context'],
+  keywords: ['regenerate', 'context', 'workspace.md', 'aiwg.md', 'agents.md', 'redeploy-context'],
   category: 'maintenance',
   platforms: {
     claude: 'full',
@@ -195,17 +195,45 @@ export const regenerateCommand: Extension = {
   },
   metadata: {
     type: 'skill',
-    triggerPhrases: ['regenerate context', 'rewrite AIWG.md', 'rewrite AGENTS.md', 'fix context files'],
+    triggerPhrases: ['regenerate context', 'refresh WORKSPACE.md', 'rewrite AIWG.md', 'fix context files'],
     commandHint: {
       template: 'utility',
       allowedTools: ['Bash', 'Read', 'Write'],
-      argumentHint: '[--provider <name>] [--dry-run] [--force] [--no-aiwg-md] [--no-agents-md]',
+      argumentHint: '[--provider <name>] [--dry-run] [--force] [--no-workspace-md] [--no-aiwg-md] [--no-agents-md]',
       executionSteps: [
         'Detect active provider (or accept --provider override)',
         'Discover deployed artifacts under provider paths',
-        'Regenerate AIWG.md from CLAUDE.md template (or stub if absent)',
-        'Regenerate AGENTS.md link-index sections',
+        'Refresh the managed WORKSPACE.md graph while preserving its operator region',
+        'Regenerate AIWG.md and minimal provider startup adapters',
         'Report which files were written, skipped, or backed up',
+      ],
+    },
+  } satisfies SkillMetadata,
+};
+
+export const workspaceContextCommand: Extension = {
+  id: 'workspace-context',
+  type: 'skill',
+  name: 'Workspace Context',
+  description: 'Audit, migrate, diagnose, and roll back canonical WORKSPACE.md context',
+  version: '1.0.0',
+  capabilities: ['cli', 'context', 'audit', 'migration', 'rollback'],
+  keywords: ['workspace.md', 'context', 'migration', 'provider', 'doctor'],
+  category: 'maintenance',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['audit workspace context', 'migrate context to WORKSPACE.md', 'rollback context migration'],
+    commandHint: {
+      template: 'utility',
+      allowedTools: ['Read', 'Write', 'Bash'],
+      argumentHint: 'audit|migrate|rollback|doctor [--dry-run] [--apply] [--json]',
+      executionSteps: [
+        'Audit provider and nested context sources',
+        'Preview deterministic migration output',
+        'Apply only when explicitly requested and retain transaction preimages',
+        'Run context graph diagnostics or rollback a transaction',
       ],
     },
   } satisfies SkillMetadata,
@@ -3373,13 +3401,14 @@ export const rlmCacheCommand: Extension = {
  * - Agentic Tools (5): chunk, fanout, rlm-prep, rlm-search, rlm-status
  */
 export const commandDefinitions: Extension[] = [
-  // Maintenance (6)
+  // Maintenance (7)
   helpCommand,
   versionCommand,
   doctorCommand,
   updateCommand,
   refreshCommand,
   regenerateCommand,
+  workspaceContextCommand,
 
   // Framework (6)
   useCommand,

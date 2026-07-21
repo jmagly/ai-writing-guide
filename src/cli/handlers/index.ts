@@ -104,6 +104,7 @@ import { bestPracticesAuditHandler } from './best-practices-audit.js';
 // (primary) and 'sync' (deprecated alias) to preserve backward compatibility.
 import { refreshHandler } from './refresh.js';
 import { regenerateHandler, regenerateHandlers } from './regenerate.js';
+import { workspaceContextHandler, workspaceContextHandlers } from './workspace-context.js';
 import { mcHandler, mcHandlers } from './mc.js';
 import { sdlcAccelerateHandler } from './sdlc-accelerate.js';
 import { teamHandler, teamHandlers } from './team.js';
@@ -140,6 +141,7 @@ export {
   updateHandler,
   refreshHandler,
   regenerateHandler,
+  workspaceContextHandler,
 
   // Framework management
   useHandler,
@@ -284,6 +286,7 @@ export {
   teamHandlers,
   stewardHandlers,
   regenerateHandlers,
+  workspaceContextHandlers,
   daemonHandlers,
   sandboxHandlers,
   repoAccessHandlers,
@@ -302,6 +305,7 @@ export const allHandlers: CommandHandler[] = [
   updateHandler,
   refreshHandler,
   regenerateHandler,
+  workspaceContextHandler,
 
   // Framework management
   useHandler,

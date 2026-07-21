@@ -1,10 +1,8 @@
 /**
- * AIWG.md and AGENTS.md generator.
+ * Canonical WORKSPACE.md context graph and provider adapter generator.
  *
- * Per ADR-1: this module assembles the two project-root context files at the end of
- * `aiwg use`. AIWG.md is CLAUDE.md-shaped framework context for non-Claude providers;
- * AGENTS.md is a link-indexed bridge that points to AIWG.md and to deployed artifact
- * files. See `.aiwg/architecture/adr-agents-md-aggregation.md` for the full spec.
+ * WORKSPACE.md owns provider-neutral project/operator context; AIWG.md owns
+ * generated discovery detail; provider startup files are minimal adapters.
  *
  * This file contains the public generator API. Callers are expected to have already
  * deployed artifacts and to pass pre-aggregated `AgentsMdSection[]` describing what
@@ -26,12 +24,15 @@ import { sanitizeDescription, sanitizeTags } from './sanitizer.js';
 import { checkPathAllowed } from './allowlist.js';
 import { generateAiwgMd } from './aiwg-md.js';
 import { injectSpilloverBlock } from './overflow.js';
-import { buildParallelismSection } from './parallelism-section.js';
-import { buildExternalLinksSection } from './external-links-section.js';
-import { buildContextFinalizationBlock, writeNormalizedAiwgMd } from './finalization.js';
+import { writeNormalizedAiwgMd } from './finalization.js';
 import { shouldEmitAgentsMd, shouldEmitAiwgMd, shouldEmitClaudeMdHook } from './provider-policy.js';
 import { ensureClaudeMdHook } from './claude-hook.js';
 import { ensureManagedHook } from './managed-hook.js';
+import {
+  buildProviderBootstrapBlock,
+  ensureWorkspaceContext,
+  registerProviderContext,
+} from './workspace-context.js';
 
 const SECTION_TITLES: Record<IndexedArtifactType, string> = {
   agents: 'Agents',
@@ -41,92 +42,6 @@ const SECTION_TITLES: Record<IndexedArtifactType, string> = {
 };
 
 const AIWG_SIGNATURE_COMMENT = '<!-- aiwg-managed -->';
-const TIER2_SAMPLE_LIMIT = 5;
-
-const TIER2_KIND_GUIDANCE: Record<IndexedArtifactType, {
-  purpose: string;
-  useWhen: string;
-  avoidWhen: string;
-  discover: string[];
-  deepLoadType: string;
-  verification: string;
-}> = {
-  agents: {
-    purpose: 'Route specialized work to deployed agent personas without loading their full bodies.',
-    useWhen: 'The task names a role, asks for domain review, or needs focused delegation.',
-    avoidWhen: 'A direct CLI command or loaded skill already handles the work.',
-    discover: ['agent for <task>', '<domain> specialist agent', 'review <artifact> agent'],
-    deepLoadType: 'agent',
-    verification: 'Selected agent name and scope match the user request before delegation.',
-  },
-  rules: {
-    purpose: 'Expose policy and behavioral constraints as compact routing anchors.',
-    useWhen: 'The task involves safety, provider behavior, workflow discipline, or repo policy.',
-    avoidWhen: 'The user asks for broad framework discovery rather than a specific guardrail.',
-    discover: ['rule for <constraint>', '<provider> routing rule', 'context budget rule'],
-    deepLoadType: 'rule',
-    verification: 'The applied rule is named and the action taken conforms to it.',
-  },
-  skills: {
-    purpose: 'Route operator intents to executable AIWG workflows and procedural guidance.',
-    useWhen: 'The user names an AIWG capability, workflow, issue action, or framework task.',
-    avoidWhen: 'The task is ordinary code editing with no AIWG-specific workflow needed.',
-    discover: ['skill for <workflow>', 'address issues', 'regenerate context'],
-    deepLoadType: 'skill',
-    verification: 'The selected skill was read before invoking its workflow.',
-  },
-  behaviors: {
-    purpose: 'Summarize reactive behavior packs without carrying long interaction detail.',
-    useWhen: 'The task depends on session behavior, daemon interaction, or event-driven agent conduct.',
-    avoidWhen: 'A static rule or skill directly covers the requested action.',
-    discover: ['behavior for <interaction>', 'daemon behavior', 'session behavior'],
-    deepLoadType: 'behavior',
-    verification: 'The behavior trigger and expected effect are explicit before relying on it.',
-  },
-};
-
-function sampleIds(entries: readonly IndexEntry[]): string {
-  if (entries.length === 0) return 'none deployed';
-  const ids = entries.slice(0, TIER2_SAMPLE_LIMIT).map((entry) => {
-    const sanitized = sanitizeDescription(entry.id.slice(0, 120));
-    return sanitized.ok ? sanitized.value : '(redacted id)';
-  });
-  const suffix = entries.length > ids.length ? `, +${entries.length - ids.length} more` : '';
-  return `${ids.join(', ')}${suffix}`;
-}
-
-function renderTier2CapabilityMap(sections: readonly AgentsMdSection[]): string {
-  const byType = new Map<IndexedArtifactType, AgentsMdSection>();
-  for (const section of sections) {
-    byType.set(section.type, section);
-  }
-
-  const lines: string[] = [
-    '## Tier 2 Capability Map',
-    '',
-    'This is a quickref-style routing layer. Keep it in default context; load Tier 3 detail only through `aiwg discover` and `aiwg show`, not by traversing provider directories.',
-    '',
-    'Schema per entry: purpose, when to use, when not to use, curated discovery phrases, deep-load target, verification cue.',
-    '',
-  ];
-
-  for (const type of Object.keys(SECTION_TITLES) as IndexedArtifactType[]) {
-    const guidance = TIER2_KIND_GUIDANCE[type];
-    const entries = byType.get(type)?.entries ?? [];
-    lines.push(`### ${SECTION_TITLES[type]}`);
-    lines.push('');
-    lines.push(`- Purpose: ${guidance.purpose}`);
-    lines.push(`- When to use: ${guidance.useWhen}`);
-    lines.push(`- When not to use: ${guidance.avoidWhen}`);
-    lines.push(`- Curated discovery phrases: ${guidance.discover.map((phrase) => `\`aiwg discover "${phrase}"\``).join('; ')}`);
-    lines.push(`- Deep-load target: \`aiwg show ${guidance.deepLoadType} <name>\` after discovery selects the exact item.`);
-    lines.push(`- Deployed summary: ${entries.length} recorded; examples: ${sampleIds(entries)}.`);
-    lines.push(`- Verification cue: ${guidance.verification}`);
-    lines.push('');
-  }
-
-  return lines.join('\n');
-}
 
 /**
  * Build the loud warning emitted when a pre-existing, non-AIWG-managed twin or
@@ -249,6 +164,8 @@ export async function buildAgentsMd(opts: ContextPipelineOptions): Promise<{
   parts.push(`${AIWG_SIGNATURE_COMMENT}`);
   parts.push('<!-- Generated by AIWG. Edit AGENTS.override.md for operator additions. -->');
   parts.push('');
+  parts.push(buildProviderBootstrapBlock(opts.provider));
+  parts.push('');
   parts.push('## Framework Context');
   parts.push('');
   parts.push('See [AIWG.md](./AIWG.md) for the full AIWG framework context');
@@ -261,41 +178,8 @@ export async function buildAgentsMd(opts: ContextPipelineOptions): Promise<{
   parts.push('skills, agents, rules, and commands across the installation.');
   parts.push('');
 
-  parts.push('## Tier 1 / Tier 2 / Tier 3 Loading Model');
-  parts.push('');
-  parts.push('- Tier 1: this bridge plus the finalization block; always-loaded orientation only.');
-  parts.push('- Tier 2: compact quickref routing summaries; enough to choose a next lookup.');
-  parts.push('- Tier 3: full skill, rule, agent, behavior, docs, and examples; load only through `aiwg discover` / `aiwg show` or an explicit skill invocation.');
-  parts.push('');
-  parts.push(renderTier2CapabilityMap(opts.sections));
-  parts.push('');
-
-  parts.push(await buildContextFinalizationBlock(opts.projectPath));
-
   if (opts.projectContext && opts.projectContext.trim().length > 0) {
-    const desc = sanitizeDescription(opts.projectContext.slice(0, 1000));
-    if (desc.ok) {
-      parts.push('## Project Context');
-      parts.push('');
-      parts.push(desc.value);
-      parts.push('');
-    } else {
-      warnings.push(`dropped Project Context section: ${desc.rejectedFor}`);
-    }
-  }
-
-  // #1362: surface the parallelism cap when one is configured. Injected
-  // before the divider so agents see it as part of the framework context,
-  // not as a trailing afterthought.
-  const parallelismSection = await buildParallelismSection(opts.projectPath);
-  if (parallelismSection) {
-    parts.push(parallelismSection);
-  }
-
-  const externalLinksSection = await buildExternalLinksSection(opts.projectPath);
-  if (externalLinksSection) {
-    parts.push(externalLinksSection);
-    parts.push('');
+    warnings.push('projectContext is no longer inlined in provider startup files; place it in the protected WORKSPACE.md operator section.');
   }
 
   parts.push('---');
@@ -394,12 +278,11 @@ const HERMES_TWIN_SUFFIX = [
   '',
   '## For Hermes Sessions',
   '',
-  'From inside a Hermes turn, the AIWG.md link above is a CLI-side reference — Hermes does',
-  'not auto-load AIWG.md. To browse AIWG capabilities live, use one of:',
+  'Hermes does not auto-load AIWG.md. Browse AIWG capabilities with:',
   '',
-  '- `artifact-read AIWG.md` via the AIWG MCP server (loads on demand, costs tokens once).',
-  '- `aiwg discover "<intent>"` and `aiwg show <type> <name>` from the CLI sidecar.',
-  '- `delegate_task` to the AIWG-orchestrate skill for structured artifact workflows.',
+  '- `artifact-read AIWG.md` through AIWG MCP.',
+  '- `aiwg discover "<intent>"` and `aiwg show <type> <name>`.',
+  '- `delegate_task` through the AIWG-orchestrate skill.',
   '',
 ].join('\n');
 
@@ -440,12 +323,12 @@ async function writeTwinFiles(
       const safe = await isOverwriteSafe(twinPath);
       if (!safe) {
         // #1579: don't skip an operator-owned twin — additively install the
-        // @AIWG.md hook so discover-first isn't buried (preserve their content).
-        const hook = await ensureManagedHook(twinPath);
+        // canonical graph hook so discover-first isn't buried (preserve content).
+        const hook = await ensureManagedHook(twinPath, { provider });
         result.warnings.push(
           hook.action === 'unchanged'
-            ? `${twinName} is operator-owned and already loads @AIWG.md — left as-is.`
-            : `${twinName} is operator-owned; ${hook.action} the @AIWG.md hook additively (existing content preserved). Pass --force to replace the whole file.`,
+            ? `${twinName} is operator-owned and already loads WORKSPACE.md then AIWG.md — left as-is.`
+            : `${twinName} is operator-owned; ${hook.action} the WORKSPACE.md → AIWG.md hook additively (existing content preserved). Pass --force to replace the whole file.`,
         );
         result.twinPaths.push(twinPath);
         continue;
@@ -502,7 +385,7 @@ async function writeSpilloverBlock(
 }
 
 /**
- * Generate AIWG.md and AGENTS.md at the project root.
+ * Generate the canonical graph and provider startup adapters.
  *
  * Skeleton implementation: emits AGENTS.md with link-index sections; AIWG.md
  * generation is wired in commit 3 alongside the first issue closure (#1104).
@@ -511,14 +394,24 @@ async function writeSpilloverBlock(
  */
 export async function generate(opts: ContextPipelineOptions): Promise<ContextPipelineResult> {
   const result: ContextPipelineResult = {
+    workspaceMdPath: '',
     aiwgMdPath: '',
     normalizedAiwgMdPath: '',
     agentsMdPath: '',
     twinPaths: [],
+    contextRegistrationPaths: [],
     backupPaths: [],
     agentsMdBytes: 0,
     warnings: [],
   };
+
+  if (!opts.skip?.workspaceMd) {
+    const workspace = await ensureWorkspaceContext(opts.projectPath);
+    result.workspaceMdAction = workspace.action;
+    result.warnings.push(...workspace.warnings);
+    if (workspace.action !== 'preserved') result.workspaceMdPath = workspace.path;
+    if (workspace.backupPath) result.backupPaths.push(workspace.backupPath);
+  }
 
   const normalizedAiwgPath = await writeNormalizedAiwgMd(opts.projectPath);
   result.normalizedAiwgMdPath = normalizedAiwgPath;
@@ -562,14 +455,14 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
       }
     } else {
       // #1597: AGENTS.md is operator-owned — don't skip it. Additively install the
-      // @AIWG.md hook (preserve operator content; no --force needed) so Codex/
+      // canonical graph hook (preserve operator content; no --force needed) so Codex/
       // fallback consumers load the generated AIWG.md.
-      const hook = await ensureManagedHook(agentsMdPath);
+      const hook = await ensureManagedHook(agentsMdPath, { provider: opts.provider });
       result.agentsMdPath = agentsMdPath;
       result.warnings.push(
         hook.action === 'unchanged'
-          ? `AGENTS.md is operator-owned and already loads @AIWG.md — left as-is.`
-          : `AGENTS.md is operator-owned; ${hook.action} the @AIWG.md hook additively (existing content preserved). Pass --force to replace the whole file.`,
+          ? `AGENTS.md is operator-owned and already loads WORKSPACE.md then AIWG.md — left as-is.`
+          : `AGENTS.md is operator-owned; ${hook.action} the WORKSPACE.md → AIWG.md hook additively (existing content preserved). Pass --force to replace the whole file.`,
       );
     }
     // Per-provider twin emission per ADR-1 §4 (Hermes .hermes.md, Warp WARP.md);
@@ -627,6 +520,14 @@ export async function generate(opts: ContextPipelineOptions): Promise<ContextPip
       result.backupPaths.push(hookResult.backupPath);
     }
     result.warnings.push(...hookResult.warnings);
+  }
+
+  if (!opts.skip?.workspaceMd) {
+    const registration = await registerProviderContext(opts.provider, opts.projectPath);
+    if (registration) {
+      if (registration.changed) result.contextRegistrationPaths.push(registration.path);
+      if (registration.warning) result.warnings.push(registration.warning);
+    }
   }
 
   return result;

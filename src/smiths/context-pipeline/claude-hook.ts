@@ -1,6 +1,6 @@
 /**
  * CLAUDE.md hook injector — ensures CLAUDE.md contains an AIWG-managed
- * marker block with an `@AIWG.md` include.
+ * marker block with canonical `@WORKSPACE.md` then `@AIWG.md` includes.
  *
  * For provider=claude, AIWG.md still gets generated at project root the
  * same way as for other providers. The difference: claude reads CLAUDE.md
@@ -22,6 +22,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { buildProviderBootstrapBlock } from './workspace-context.js';
 
 export const CLAUDE_HOOK_START = '<!-- AIWG:claude-md-hook:start -->';
 export const CLAUDE_HOOK_END = '<!-- AIWG:claude-md-hook:end -->';
@@ -35,9 +36,7 @@ export function buildClaudeHookBlock(): string {
   return [
     CLAUDE_HOOK_START,
     '',
-    '# AIWG',
-    '',
-    '@AIWG.md',
+    buildProviderBootstrapBlock('claude'),
     '@.aiwg/aiwg.config',
     '',
     '<!--',

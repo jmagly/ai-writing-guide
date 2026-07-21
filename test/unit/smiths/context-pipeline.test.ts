@@ -281,17 +281,14 @@ describe('buildAgentsMd', () => {
     expect(spilloverContent).toBe('');
   });
 
-  it('emits a quickref-style Tier 2 map with discover phrases and deep-load targets', async () => {
+  it('emits a minimal canonical graph bootstrap instead of duplicating quickref detail', async () => {
     const { content } = await buildAgentsMd(baseOpts);
-    expect(content).toContain('## Tier 1 / Tier 2 / Tier 3 Loading Model');
-    expect(content).toContain('## Tier 2 Capability Map');
-    expect(content).toContain('Schema per entry: purpose, when to use, when not to use');
-    expect(content).toContain('`aiwg discover "agent for <task>"`');
-    expect(content).toContain('`aiwg show agent <name>`');
-    expect(content).toContain('Deployed summary: 1 recorded; examples: api-designer.');
+    expect(content.indexOf('WORKSPACE.md')).toBeLessThan(content.indexOf('AIWG.md'));
+    expect(content).not.toContain('## Tier 2 Capability Map');
+    expect(content).not.toContain('api-designer');
   });
 
-  it('keeps Tier 2 bounded for a large deployed corpus', async () => {
+  it('keeps the startup adapter constant-size for a large deployed corpus', async () => {
     const huge: ContextPipelineOptions = {
       ...baseOpts,
       sections: [
@@ -314,14 +311,14 @@ describe('buildAgentsMd', () => {
       ],
     };
     const { content } = await buildAgentsMd(huge);
-    expect(content).toContain('examples: agent-0, agent-1, agent-2, agent-3, agent-4, +495 more.');
-    expect(content).toContain('examples: skill-0, skill-1, skill-2, skill-3, skill-4, +495 more.');
+    expect(content).not.toContain('agent-0');
+    expect(content).not.toContain('skill-0');
     expect(content).not.toContain('agent-499');
     expect(content).not.toContain('skill-499');
-    expect(Buffer.byteLength(content, 'utf8')).toBeLessThan(8 * 1024);
+    expect(Buffer.byteLength(content, 'utf8')).toBeLessThan(2 * 1024);
   });
 
-  it('sanitizes Tier 2 sample IDs before emission', async () => {
+  it('does not inspect or inline deployed artifact IDs', async () => {
     const opts: ContextPipelineOptions = {
       ...baseOpts,
       sections: [
@@ -338,7 +335,6 @@ describe('buildAgentsMd', () => {
       ],
     };
     const { content } = await buildAgentsMd(opts);
-    expect(content).toContain('examples: (redacted id).');
     expect(content).not.toContain('bad`id');
   });
 
@@ -346,8 +342,7 @@ describe('buildAgentsMd', () => {
     const { content } = await buildAgentsMd(baseOpts);
     expect(content).toContain('aiwg discover');
     expect(content).toContain('aiwg show');
-    expect(content).toContain('## Context Finalization');
-    expect(content).toContain('decline-without-search');
+    expect(content).not.toContain('## Context Finalization');
   });
 
   it('stays well under the 30KB soft threshold', async () => {
@@ -365,27 +360,27 @@ describe('buildAgentsMd', () => {
       ],
     };
     const { content } = await buildAgentsMd(huge);
-    expect(Buffer.byteLength(content, 'utf8')).toBeLessThan(8 * 1024);
+    expect(Buffer.byteLength(content, 'utf8')).toBeLessThan(2 * 1024);
   });
 
-  it('includes Project Context when provided', async () => {
+  it('routes project context to WORKSPACE.md instead of inlining it', async () => {
     const opts: ContextPipelineOptions = {
       ...baseOpts,
       projectContext: 'A short project description.',
     };
-    const { content } = await buildAgentsMd(opts);
-    expect(content).toContain('## Project Context');
-    expect(content).toContain('A short project description.');
+    const { content, warnings } = await buildAgentsMd(opts);
+    expect(content).not.toContain('A short project description.');
+    expect(warnings.some((warning) => warning.includes('WORKSPACE.md'))).toBe(true);
   });
 
-  it('skips Project Context with sanitization warning when content is rejected', async () => {
+  it('routes even legacy projectContext input to WORKSPACE.md', async () => {
     const opts: ContextPipelineOptions = {
       ...baseOpts,
       projectContext: 'Has `backticks` everywhere',
     };
     const { content, warnings } = await buildAgentsMd(opts);
     expect(content).not.toContain('## Project Context');
-    expect(warnings.some((w) => w.includes('Project Context'))).toBe(true);
+    expect(warnings.some((w) => w.includes('WORKSPACE.md'))).toBe(true);
   });
 
   it('emits the AGENTS.override.md trailer', async () => {
@@ -485,7 +480,7 @@ describe('context finalization emission', () => {
       expect(result.normalizedAiwgMdPath).toBe(join(dir, '.aiwg', 'AIWG.md'));
       expect(result.twinPaths).toContain(join(dir, '.github', 'copilot-instructions.md'));
 
-      for (const file of [result.aiwgMdPath, result.agentsMdPath, result.normalizedAiwgMdPath, ...result.twinPaths]) {
+      for (const file of [result.aiwgMdPath, result.normalizedAiwgMdPath]) {
         const content = readFileSync(file, 'utf8');
         expect(content).toContain('aiwg discover');
         expect(content).toContain('aiwg show');
@@ -499,6 +494,13 @@ describe('context finalization emission', () => {
         expect(content).toContain('Canonical tracker: `origin` (gitea;');
         expect(content).toContain('MCP/app tools for the configured tracker');
         expect(content).toContain('Git SSH remote access is repository sync, not issue-tracker API access');
+      }
+      for (const file of [result.agentsMdPath, ...result.twinPaths]) {
+        const content = readFileSync(file, 'utf8');
+        expect(content.indexOf('WORKSPACE.md')).toBeLessThan(content.indexOf('AIWG.md'));
+        expect(content).toContain('aiwg discover');
+        expect(content).toContain('.aiwg/aiwg.config');
+        expect(content).not.toContain('Tracker Authority Protocol');
       }
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -561,7 +563,7 @@ describe('context finalization emission', () => {
   // #1597/#1579: an operator-owned provider twin must not be skipped — the @AIWG.md
   // hook is installed ADDITIVELY (content preserved, no --force) so discover-first
   // isn't buried. (Supersedes the old warn-and-skip behavior.)
-  it('additively installs the @AIWG.md hook into an operator-owned twin, preserving content (#1579/#1597)', async () => {
+  it('additively installs the canonical graph hook into an operator-owned twin, preserving content (#1579/#1597)', async () => {
     const dir = makeTmpDir();
     try {
       mkdirSync(join(dir, '.aiwg'), { recursive: true });
@@ -575,13 +577,13 @@ describe('context finalization emission', () => {
       expect(after.startsWith(staleWarp.replace(/\n+$/, '\n'))).toBe(true);
       expect(after).toContain('# My hand-rolled WARP context');
       expect(after).toContain('Nothing AIWG here.');
-      // ... and the additive @AIWG.md hook is now present.
+      // ... and the additive canonical graph hook is now present.
       expect(after).toContain('<!-- AIWG:context-hook:start -->');
-      expect(after).toContain('@AIWG.md');
+      expect(after.indexOf('WORKSPACE.md')).toBeLessThan(after.indexOf('AIWG.md'));
       expect(result.twinPaths).toContain(join(dir, 'WARP.md'));
       const msg = result.warnings.find((w) => w.includes('WARP.md'));
       expect(msg).toBeDefined();
-      expect(msg).toContain('@AIWG.md hook additively');
+      expect(msg).toContain('WORKSPACE.md → AIWG.md hook additively');
 
       // idempotent: a second regenerate leaves it byte-identical, message says so.
       const result2 = await generate({ provider: 'warp', projectPath: dir, sections: [], detectExistingFiles: true });
@@ -592,7 +594,7 @@ describe('context finalization emission', () => {
     }
   });
 
-  it('additively installs the @AIWG.md hook into an operator-owned AGENTS.md without --force (#1597)', async () => {
+  it('additively installs the canonical graph hook into operator-owned AGENTS.md without --force (#1597)', async () => {
     const dir = makeTmpDir();
     try {
       mkdirSync(join(dir, '.aiwg'), { recursive: true });
@@ -603,7 +605,7 @@ describe('context finalization emission', () => {
 
       const after = readFileSync(join(dir, 'AGENTS.md'), 'utf8');
       expect(after).toContain('Older inline content, no hook.'); // preserved
-      expect(after).toContain('@AIWG.md');                         // hook installed
+      expect(after.indexOf('WORKSPACE.md')).toBeLessThan(after.indexOf('AIWG.md'));
       expect(after).toContain('<!-- AIWG:context-hook:start -->');
       expect(result.agentsMdPath).toBe(join(dir, 'AGENTS.md'));
     } finally {

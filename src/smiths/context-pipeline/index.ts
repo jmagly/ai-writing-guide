@@ -1,11 +1,12 @@
 /**
- * context-pipeline — AIWG.md and AGENTS.md generator.
+ * context-pipeline — canonical workspace graph and provider adapter generator.
  *
  * Implements the cross-platform context delivery pipeline defined in
- * `.aiwg/architecture/adr-agents-md-aggregation.md`. Emits two project-root files:
+ * `.aiwg/architecture/adr-workspace-context-graph.md`. Emits a project graph:
  *
- * - AIWG.md  — CLAUDE.md-shaped framework context for non-Claude providers
- * - AGENTS.md — link-indexed bridge file pointing at AIWG.md and at deployed artifacts
+ * - WORKSPACE.md — protected provider-neutral project/operator context
+ * - AIWG.md — generated framework/discovery context
+ * - provider startup files — minimal WORKSPACE.md then AIWG.md adapters
  *
  * Distinct from `agentsmith/`, which creates subagent personas. The two modules
  * answer different questions: agentsmith asks "what should this agent persona look
@@ -16,6 +17,7 @@
  */
 
 export * from './types.js';
+export * from './workspace-context.js';
 export {
   generate,
   buildAgentsMd,

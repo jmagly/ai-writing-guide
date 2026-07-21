@@ -2,7 +2,7 @@
  * Regenerate Context Files Handler (#1266)
  *
  * `aiwg regenerate` — regenerates the cross-provider context files
- * (AIWG.md + AGENTS.md) without redeploying frameworks, agents, skills, or
+ * (WORKSPACE.md + AIWG.md + provider adapters) without redeploying frameworks, agents, skills, or
  * commands. Use when context drifts (e.g., editing CLAUDE.md, adding a
  * framework manifest entry) and you want a fast, focused refresh.
  *
@@ -35,13 +35,13 @@ import { getProviderContextDiscoveryPathStrings } from '../../providers/provider
 async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
-  aiwg regenerate — Regenerate cross-provider context files (AIWG.md + AGENTS.md)
+  aiwg regenerate — Regenerate canonical workspace context and provider adapters
 
   Usage:
     aiwg regenerate [options]
 
   Scope:
-    Context-only. Regenerates AIWG.md and AGENTS.md at project root using the
+    Context-only. Refreshes WORKSPACE.md, AIWG.md, and provider adapters using the
     canonical context pipeline. Does NOT redeploy frameworks, agents, skills,
     or commands — use 'aiwg refresh' for that.
 
@@ -51,6 +51,7 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
     --force                 Overwrite operator-modified files (backs up first)
     --no-aiwg-md            Skip AIWG.md emission
     --no-agents-md          Skip AGENTS.md emission
+    --no-workspace-md       Skip WORKSPACE.md emission
     --help, -h              Show this help
 
   Examples:
@@ -66,6 +67,7 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   const force = args.includes('--force');
   const skipAiwgMd = args.includes('--no-aiwg-md');
   const skipAgentsMd = args.includes('--no-agents-md');
+  const skipWorkspaceMd = args.includes('--no-workspace-md');
 
   const providerFlag = args.indexOf('--provider');
   const explicitProvider = providerFlag >= 0 ? args[providerFlag + 1] : undefined;
@@ -89,8 +91,7 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   console.log(`  Target:   ${target}`);
 
   if (!shouldEmitContextFiles(provider as Platform)) {
-    console.log(`  Skip:     context files are not emitted for provider '${provider}' (openclaw is home-dir-only).`);
-    return;
+    console.log(`  Adapter:  provider '${provider}' has no verified project startup loader; WORKSPACE.md is still maintained.`);
   }
 
   if (dryRun) {
@@ -99,10 +100,11 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
     const claudeMd = path.join(target, 'CLAUDE.md');
     console.log('');
     console.log(`  Would regenerate:`);
+    if (!skipWorkspaceMd) console.log(`    - ${path.join(target, 'WORKSPACE.md')} (managed graph; operator section preserved)`);
     console.log(`    - ${path.join(target, '.aiwg', 'AIWG.md')}`);
     if (!skipAiwgMd) console.log(`    - ${aiwgMd}`);
     if (provider === 'claude') {
-      console.log(`    - ${claudeMd} (AIWG-managed @AIWG.md hook block; operator content preserved)`);
+      console.log(`    - ${claudeMd} (managed @WORKSPACE.md then @AIWG.md hook; operator content preserved)`);
     } else {
       if (!skipAgentsMd) console.log(`    - ${agentsMd}`);
       if (provider === 'copilot' && !skipAgentsMd) console.log(`    - ${path.join(target, '.github', 'copilot-instructions.md')}`);
@@ -128,8 +130,12 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
     sections,
     detectExistingFiles: true,
     force,
-    skip: { aiwgMd: skipAiwgMd, agentsMd: skipAgentsMd },
+    skip: { workspaceMd: skipWorkspaceMd, aiwgMd: skipAiwgMd, agentsMd: skipAgentsMd },
   });
+
+  if (result.workspaceMdPath) {
+    console.log(`  OK ${result.workspaceMdAction === 'created' ? 'Created' : 'Refreshed'} WORKSPACE.md`);
+  }
 
   if (result.agentsMdPath) {
     console.log(`  OK Wrote AGENTS.md (${result.agentsMdBytes} bytes)`);
@@ -145,7 +151,7 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
       result.claudeMdHookAction === 'created' ? 'Created' :
       result.claudeMdHookAction === 'inserted' ? 'Inserted hook into' :
       'Updated hook in';
-    console.log(`  OK ${verb} CLAUDE.md (@AIWG.md block managed by AIWG)`);
+    console.log(`  OK ${verb} CLAUDE.md (@WORKSPACE.md then @AIWG.md block managed by AIWG)`);
   } else if (result.claudeMdHookPath && result.claudeMdHookAction === 'unchanged') {
     console.log(`  OK CLAUDE.md hook already up to date`);
   }
@@ -162,6 +168,9 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   for (const b of result.backupPaths) {
     console.log(`  Backup created: ${b}`);
   }
+  for (const registration of result.contextRegistrationPaths) {
+    console.log(`  OK Registered context graph in ${path.relative(target, registration)}`);
+  }
   if (!result.agentsMdPath && !result.aiwgMdPath && !result.claudeMdHookPath) {
     console.log(`  No files regenerated (all skipped or refused without --force).`);
   } else {
@@ -172,7 +181,7 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
 export const regenerateHandler: CommandHandler = {
   id: 'regenerate',
   name: 'Regenerate Context Files',
-  description: 'Regenerate AIWG.md + AGENTS.md without redeploying frameworks (#1266)',
+  description: 'Regenerate WORKSPACE.md, AIWG.md, and provider adapters without redeploying',
   category: 'maintenance',
   aliases: [],
 

@@ -1134,6 +1134,18 @@ export const newProjectHandler: CommandHandler = {
       cwd: ctx.cwd,
     });
     if (result.exitCode === 0) {
+      // The real scaffolder always runs in an existing target directory. Keep
+      // mocked/script-runner-only calls side-effect free when their synthetic
+      // cwd does not exist.
+      const { access } = await import('node:fs/promises');
+      const { constants } = await import('node:fs');
+      try {
+        await access(ctx.cwd, constants.W_OK);
+        const { ensureWorkspaceContext } = await import('../../smiths/context-pipeline/workspace-context.js');
+        await ensureWorkspaceContext(ctx.cwd);
+      } catch (error) {
+        if (!['ENOENT', 'EACCES'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error;
+      }
       const { formatStarNudge } = await import("../../community/links.js");
       const { markNudgeShown, shouldShowNudge } = await import("../../community/nudge-policy.js");
       if (shouldShowNudge('intake')) {

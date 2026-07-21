@@ -1,10 +1,11 @@
 /**
  * Type definitions for the context-pipeline module.
  *
- * The context-pipeline emits two project-root files at the end of `aiwg use`:
+ * The context-pipeline emits a canonical graph and provider adapters at the end of `aiwg use`:
  *
- * - AIWG.md  — CLAUDE.md-shaped framework context for non-Claude providers
- * - AGENTS.md — link-indexed bridge file pointing at AIWG.md and at deployed artifacts
+ * - WORKSPACE.md — provider-neutral project/operator context
+ * - AIWG.md      — generated framework context
+ * - provider startup files — minimal adapters that load WORKSPACE.md, then AIWG.md
  *
  * Per ADR-1 (.aiwg/architecture/adr-agents-md-aggregation.md). NOT part of agentsmith;
  * agentsmith creates subagent personas, this module assembles cross-platform context.
@@ -79,8 +80,8 @@ export interface ContextPipelineOptions {
   /** Force overwrite (with backup-before-overwrite per ADR-1 R1 mitigation) */
   force?: boolean;
 
-  /** Skip emission of either file (corresponds to --no-aiwg-md / --no-agents-md / --no-context-files) */
-  skip?: { aiwgMd?: boolean; agentsMd?: boolean };
+  /** Skip individual graph nodes (all are skipped by --no-context-files). */
+  skip?: { workspaceMd?: boolean; aiwgMd?: boolean; agentsMd?: boolean };
 
   // NOTE: OpenHuman trust-marker option removed (#1553 follow-up). Kernel skills
   // now deploy to user scope (~/.openhuman/skills/), which is ungated — the
@@ -103,6 +104,12 @@ export interface ContextPipelineOptions {
  * Result of a context-pipeline emission.
  */
 export interface ContextPipelineResult {
+  /** Path of WORKSPACE.md emission (empty if skipped or operator-owned) */
+  workspaceMdPath: string;
+
+  /** Whether WORKSPACE.md was created, refreshed, preserved, or skipped */
+  workspaceMdAction?: 'created' | 'updated' | 'unchanged' | 'preserved';
+
   /** Path of AIWG.md emission (empty if skipped) */
   aiwgMdPath: string;
 
@@ -114,6 +121,9 @@ export interface ContextPipelineResult {
 
   /** Twin-file emissions (.hermes.md, WARP.md) when applicable */
   twinPaths: string[];
+
+  /** Provider configuration files updated to register graph nodes */
+  contextRegistrationPaths: string[];
 
   /** Backup paths created when --force overwrote existing operator content */
   backupPaths: string[];

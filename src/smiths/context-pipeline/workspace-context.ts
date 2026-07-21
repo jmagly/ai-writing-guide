@@ -1,0 +1,807 @@
+/**
+ * Canonical cross-provider workspace context graph (#1811).
+ *
+ * WORKSPACE.md owns provider-neutral project/operator context. Provider startup
+ * files are compiled adapters that load or explicitly direct the harness to
+ * WORKSPACE.md first and AIWG.md second. Existing layouts remain readable until
+ * an operator runs the explicit migration workflow.
+ */
+
+import { createHash } from 'node:crypto';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
+import type { Platform } from '../../agents/types.js';
+import {
+  getProviderDefinition,
+  listProviderDefinitions,
+  type ProviderContextContract,
+} from '../../providers/provider-definitions.js';
+
+export const WORKSPACE_MANAGED_START = '<!-- AIWG:workspace-context:start -->';
+export const WORKSPACE_MANAGED_END = '<!-- AIWG:workspace-context:end -->';
+export const WORKSPACE_OPERATOR_START = '<!-- AIWG:workspace-operator:start -->';
+export const WORKSPACE_OPERATOR_END = '<!-- AIWG:workspace-operator:end -->';
+export const PROVIDER_BOOTSTRAP_START = '<!-- AIWG:provider-bootstrap:start -->';
+export const PROVIDER_BOOTSTRAP_END = '<!-- AIWG:provider-bootstrap:end -->';
+export const WORKSPACE_SIGNATURE = '<!-- aiwg-managed -->';
+
+const LEGACY_ROOT_FILES = [
+  'CLAUDE.md',
+  'AGENTS.md',
+  'WARP.md',
+  '.hermes.md',
+  '.github/copilot-instructions.md',
+  'AIWG.md',
+] as const;
+
+const GENERATED_BLOCKS: Array<[string, string]> = [
+  [PROVIDER_BOOTSTRAP_START, PROVIDER_BOOTSTRAP_END],
+  ['<!-- AIWG:context-hook:start -->', '<!-- AIWG:context-hook:end -->'],
+  ['<!-- AIWG:claude-md-hook:start -->', '<!-- AIWG:claude-md-hook:end -->'],
+  [WORKSPACE_MANAGED_START, WORKSPACE_MANAGED_END],
+];
+
+export interface WorkspaceContextEnsureResult {
+  path: string;
+  action: 'created' | 'updated' | 'unchanged' | 'preserved';
+  backupPath?: string;
+  warnings: string[];
+}
+
+export interface WorkspaceContextSource {
+  path: string;
+  provider: string | null;
+  scope: 'root' | 'nested';
+  managed: boolean;
+  operatorContent: string;
+  checksum: string;
+}
+
+export interface WorkspaceDirectiveOverlap {
+  sources: string[];
+  directives: string[];
+}
+
+export interface WorkspaceDirectiveConflict {
+  key: string;
+  sources: Array<{ path: string; directive: string }>;
+}
+
+export interface WorkspaceContextAudit {
+  version: 1;
+  projectPath: string;
+  workspaceExists: boolean;
+  legacyCompatible: boolean;
+  sources: WorkspaceContextSource[];
+  identical: WorkspaceDirectiveOverlap[];
+  overlaps: WorkspaceDirectiveOverlap[];
+  conflicts: WorkspaceDirectiveConflict[];
+  sensitiveFindings: Array<{ path: string; evidence: string }>;
+  plan: {
+    neutralSources: string[];
+    providerSources: string[];
+    nestedSources: string[];
+    outputs: string[];
+  };
+}
+
+export interface WorkspaceMigrationManifest {
+  version: 1;
+  id: string;
+  createdAt: string;
+  projectPath: string;
+  status: 'prepared' | 'applied' | 'rolled-back';
+  files: Array<{
+    path: string;
+    existed: boolean;
+    preimage: string | null;
+    outputChecksum: string;
+  }>;
+}
+
+export interface WorkspaceMigrationResult {
+  audit: WorkspaceContextAudit;
+  dryRun: boolean;
+  changed: boolean;
+  transactionId?: string;
+  written: string[];
+  backups: string[];
+}
+
+export interface WorkspaceContextDiagnostic {
+  severity: 'info' | 'warning' | 'error';
+  code: string;
+  message: string;
+  path?: string;
+}
+
+function sha256(content: string): string {
+  return createHash('sha256').update(content).digest('hex');
+}
+
+async function readOptional(filePath: string): Promise<string | null> {
+  try {
+    return await fs.readFile(filePath, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw error;
+  }
+}
+
+async function atomicWrite(filePath: string, content: string): Promise<void> {
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  const temporary = path.join(path.dirname(filePath), `.${path.basename(filePath)}.tmp.${process.pid}`);
+  await fs.writeFile(temporary, content, 'utf8');
+  try {
+    await fs.rename(temporary, filePath);
+  } catch (error) {
+    await fs.rm(temporary, { force: true }).catch(() => undefined);
+    throw error;
+  }
+}
+
+function resolveProjectRelative(projectPath: string, relativePath: string): string {
+  if (path.isAbsolute(relativePath)) throw new Error(`Unsafe absolute migration path: ${relativePath}`);
+  const root = path.resolve(projectPath);
+  const resolved = path.resolve(root, relativePath);
+  if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) {
+    throw new Error(`Unsafe migration path outside project: ${relativePath}`);
+  }
+  return resolved;
+}
+
+function replaceBlock(content: string, start: string, end: string, block: string): string | null {
+  const startIndex = content.indexOf(start);
+  const endIndex = content.indexOf(end);
+  if (startIndex < 0 && endIndex < 0) return null;
+  if (startIndex < 0 || endIndex < startIndex) throw new Error(`Malformed managed block: ${start} / ${end}`);
+  return content.slice(0, startIndex) + block + content.slice(endIndex + end.length);
+}
+
+function stripGeneratedBlocks(content: string): string {
+  let stripped = content;
+  for (const [start, end] of GENERATED_BLOCKS) {
+    while (stripped.includes(start) || stripped.includes(end)) {
+      const replaced = replaceBlock(stripped, start, end, '');
+      if (replaced === null) break;
+      stripped = replaced;
+    }
+  }
+  return stripped
+    .replace(/^<!-- aiwg-managed -->\s*$/gm, '')
+    .replace(/^<!-- Generated by AIWG[^\n]*-->\s*$/gm, '')
+    .trim();
+}
+
+function providerForPath(relativePath: string): string | null {
+  for (const definition of listProviderDefinitions()) {
+    if (definition.context.startupFiles.includes(relativePath) || definition.context.bootstrapTargets.includes(relativePath)) {
+      return definition.id;
+    }
+  }
+  return null;
+}
+
+function workspaceLinks(projectPath: string, providerFiles: string[] = []): string[] {
+  const links = new Set<string>(['[AIWG framework context](./AIWG.md)', '[AIWG project configuration](./.aiwg/aiwg.config)']);
+  if (providerFiles.length > 0) {
+    for (const file of providerFiles) links.add(`[Provider-specific context](./${file.replace(/\\/g, '/')})`);
+  }
+  // The quickref source is linked, not copied into each provider directory.
+  void projectPath;
+  links.add('[Project-local quickref](./.aiwg/quickref.json) (when configured)');
+  return [...links];
+}
+
+export function buildWorkspaceManagedBlock(projectPath: string, providerFiles: string[] = []): string {
+  const links = workspaceLinks(projectPath, providerFiles);
+  return [
+    WORKSPACE_MANAGED_START,
+    '',
+    '## AIWG Context Graph',
+    '',
+    'This file is the canonical provider-neutral home for project and operator context.',
+    'Provider startup files are generated adapters: they direct the harness here first,',
+    'then to AIWG.md for framework discovery and routing.',
+    '',
+    '### Precedence',
+    '',
+    '1. Provider, system, and organization instructions retain their native authority.',
+    '2. Root WORKSPACE.md supplies shared project/operator context.',
+    '3. AIWG.md supplies generated framework/discovery context.',
+    '4. Narrower linked files and provider-native subtree instructions govern their declared scope.',
+    '',
+    '### Ownership',
+    '',
+    '- Edit project-neutral notes only inside the protected Project Context section below.',
+    '- Keep detailed policies, runbooks, hooks, and quickrefs in linked files.',
+    '- Keep provider-only directives in `.aiwg/context/providers/`.',
+    '- Never store secrets, tokens, credentials, or machine-local sensitive values here.',
+    '',
+    '### Linked Context',
+    '',
+    ...links.map((link) => `- ${link}`),
+    '',
+    WORKSPACE_MANAGED_END,
+  ].join('\n');
+}
+
+export function buildWorkspaceDocument(projectPath: string, operatorContent = '', providerFiles: string[] = []): string {
+  const content = operatorContent.trim() || [
+    '## Project Context',
+    '',
+    'Add project conventions, local hook/context pointers, and links to deeper project documents here.',
+  ].join('\n');
+  return [
+    '# WORKSPACE.md',
+    WORKSPACE_SIGNATURE,
+    '<!-- Generated structure by AIWG; operator content is protected by markers. -->',
+    '',
+    buildWorkspaceManagedBlock(projectPath, providerFiles),
+    '',
+    WORKSPACE_OPERATOR_START,
+    '',
+    content,
+    '',
+    WORKSPACE_OPERATOR_END,
+    '',
+  ].join('\n');
+}
+
+export async function ensureWorkspaceContext(
+  projectPath: string,
+  options: { force?: boolean; providerFiles?: string[] } = {},
+): Promise<WorkspaceContextEnsureResult> {
+  const workspacePath = path.join(projectPath, 'WORKSPACE.md');
+  const warnings: string[] = [];
+  const existing = await readOptional(workspacePath);
+  if (existing === null) {
+    await atomicWrite(workspacePath, buildWorkspaceDocument(projectPath, '', options.providerFiles));
+    return { path: workspacePath, action: 'created', warnings };
+  }
+
+  const block = buildWorkspaceManagedBlock(projectPath, options.providerFiles);
+  if (existing.includes(WORKSPACE_MANAGED_START) || existing.includes(WORKSPACE_MANAGED_END)) {
+    const updated = replaceBlock(existing, WORKSPACE_MANAGED_START, WORKSPACE_MANAGED_END, block);
+    if (updated === existing) return { path: workspacePath, action: 'unchanged', warnings };
+    await atomicWrite(workspacePath, updated as string);
+    return { path: workspacePath, action: 'updated', warnings };
+  }
+
+  if (!options.force) {
+    warnings.push('WORKSPACE.md is operator-owned and has no AIWG markers; left untouched. Use workspace-context migrate to adopt it safely.');
+    return { path: workspacePath, action: 'preserved', warnings };
+  }
+
+  const backupPath = `${workspacePath}.bak.${new Date().toISOString().replace(/[:.]/g, '-')}`;
+  await fs.writeFile(backupPath, existing, 'utf8');
+  await atomicWrite(workspacePath, buildWorkspaceDocument(projectPath, existing, options.providerFiles));
+  return { path: workspacePath, action: 'updated', backupPath, warnings };
+}
+
+export function buildProviderBootstrapBlock(provider: Platform | string): string {
+  const definition = getProviderDefinition(provider);
+  const contract = definition?.context;
+  if (!definition || !contract || contract.loadMode === 'unsupported') {
+    return [
+      PROVIDER_BOOTSTRAP_START,
+      '',
+      '# Provider workspace bootstrap',
+      '',
+      'This provider has no verified project-local automatic context loader.',
+      'If the harness exposes file-reading tools, read WORKSPACE.md first and AIWG.md second.',
+      '',
+      PROVIDER_BOOTSTRAP_END,
+    ].join('\n');
+  }
+
+  const loading = contract.loadMode === 'native-include'
+    ? [
+        'Load the canonical project context first, then the generated AIWG framework context:',
+        '',
+        '@WORKSPACE.md',
+        '@AIWG.md',
+      ]
+    : contract.loadMode === 'config-registration'
+      ? [
+          'WORKSPACE.md and AIWG.md are registered through the provider configuration.',
+          'Read and follow WORKSPACE.md first; use AIWG.md second for AIWG discovery and routing.',
+        ]
+      : [
+          'Read and follow [WORKSPACE.md](./WORKSPACE.md) first.',
+          'Then read [AIWG.md](./AIWG.md) for AIWG discovery, quickrefs, and framework routing.',
+          '',
+          'These are explicit reading instructions. Plain Markdown links are not claimed to auto-load.',
+        ];
+
+  return [
+    PROVIDER_BOOTSTRAP_START,
+    '',
+    '# Provider workspace bootstrap',
+    '',
+    ...loading,
+    '',
+    PROVIDER_BOOTSTRAP_END,
+  ].join('\n');
+}
+
+export function buildProviderBootstrapFile(provider: Platform | string): string {
+  return [
+    '# Provider workspace bootstrap',
+    WORKSPACE_SIGNATURE,
+    '<!-- Generated by AIWG. Project/operator context belongs in WORKSPACE.md. -->',
+    '',
+    buildProviderBootstrapBlock(provider),
+    '',
+  ].join('\n');
+}
+
+export async function registerProviderContext(
+  provider: Platform | string,
+  projectPath: string,
+): Promise<{ path: string; changed: boolean; warning?: string } | null> {
+  const contract = getProviderDefinition(provider)?.context;
+  if (!contract?.configRegistration) return null;
+  const configPath = path.join(projectPath, contract.configRegistration.file);
+  const existing = await readOptional(configPath);
+  let config: Record<string, unknown> = {};
+  if (existing !== null) {
+    try {
+      config = JSON.parse(existing) as Record<string, unknown>;
+    } catch {
+      return { path: configPath, changed: false, warning: `${contract.configRegistration.file} is not valid JSON; context registration was not changed.` };
+    }
+  }
+  const key = contract.configRegistration.key;
+  const current = Array.isArray(config[key]) ? (config[key] as unknown[]).filter((item): item is string => typeof item === 'string') : [];
+  const next = [...new Set([...current, 'WORKSPACE.md', 'AIWG.md'])];
+  if (JSON.stringify(current) === JSON.stringify(next)) return { path: configPath, changed: false };
+  config[key] = next;
+  if (!('$schema' in config) && path.basename(configPath) === 'opencode.json') {
+    config = { $schema: 'https://opencode.ai/config.json', ...config };
+  }
+  await atomicWrite(configPath, `${JSON.stringify(config, null, 2)}\n`);
+  return { path: configPath, changed: true };
+}
+
+function directives(content: string): string[] {
+  return [...new Set(content
+    .split('\n')
+    .map((line) => line.replace(/^\s*[-*+]\s+/, '').replace(/^#+\s+/, '').trim())
+    .filter((line) => line.length >= 8 && !line.startsWith('<!--') && !/^https?:\/\//i.test(line)))];
+}
+
+function directiveKey(directive: string): string | null {
+  if (!/^(always|never|must|do not|don't|required|prefer|use|avoid|keep|preserve)\b/i.test(directive)) return null;
+  return directive.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/^(?:always|never|must|required|prefer|avoid|keep|preserve|do not|dont)\s+/, '')
+    .replace(/^use\s+/, '')
+    .split(/\s+/).slice(0, 5).join(' ');
+}
+
+function directivePolarity(directive: string): 'positive' | 'negative' {
+  return /^(?:never|do not|don't|avoid)\b/i.test(directive) ? 'negative' : 'positive';
+}
+
+function sensitiveEvidence(content: string): string[] {
+  const findings: string[] = [];
+  for (const line of content.split('\n')) {
+    if (/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(line)) findings.push(line.trim());
+    if (/\b(?:api[_-]?key|token|secret|password)\s*[:=]\s*(?!<|\$\{|\*{3}|example|placeholder)["']?[A-Za-z0-9_\-/.+=]{12,}/i.test(line)) {
+      findings.push(line.trim().slice(0, 160));
+    }
+  }
+  return findings;
+}
+
+async function nestedInstructionFiles(projectPath: string): Promise<string[]> {
+  const found: string[] = [];
+  const ignored = new Set(['.git', 'node_modules', 'dist', 'build', 'coverage', '.aiwg']);
+  async function walk(directory: string): Promise<void> {
+    let entries;
+    try { entries = await fs.readdir(directory, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        if (!ignored.has(entry.name) && !entry.name.startsWith('.context-migration-')) await walk(path.join(directory, entry.name));
+      } else if (['AGENTS.md', 'CLAUDE.md', 'WARP.md'].includes(entry.name)) {
+        const relative = path.relative(projectPath, path.join(directory, entry.name)).replace(/\\/g, '/');
+        if (!LEGACY_ROOT_FILES.includes(relative as typeof LEGACY_ROOT_FILES[number])) found.push(relative);
+      }
+    }
+  }
+  await walk(projectPath);
+  return found.sort((a, b) => a.localeCompare(b));
+}
+
+async function migratedProviderFiles(projectPath: string): Promise<string[]> {
+  const directory = path.join(projectPath, '.aiwg', 'context', 'providers');
+  try {
+    return (await fs.readdir(directory, { withFileTypes: true }))
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+      .map((entry) => `.aiwg/context/providers/${entry.name}`)
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+export async function auditWorkspaceContext(projectPath: string): Promise<WorkspaceContextAudit> {
+  const candidates = new Set<string>([
+    'WORKSPACE.md',
+    ...LEGACY_ROOT_FILES,
+    ...await nestedInstructionFiles(projectPath),
+    ...await migratedProviderFiles(projectPath),
+  ]);
+  const sources: WorkspaceContextSource[] = [];
+  const sensitiveFindings: Array<{ path: string; evidence: string }> = [];
+  for (const relativePath of [...candidates].sort((a, b) => a.localeCompare(b))) {
+    const content = await readOptional(path.join(projectPath, relativePath));
+    if (content === null) continue;
+    const operatorContent = relativePath === 'WORKSPACE.md'
+      ? (() => {
+          const start = content.indexOf(WORKSPACE_OPERATOR_START);
+          const end = content.indexOf(WORKSPACE_OPERATOR_END);
+          return start >= 0 && end > start
+            ? content.slice(start + WORKSPACE_OPERATOR_START.length, end).trim()
+            : stripGeneratedBlocks(content);
+        })()
+      : content.includes(WORKSPACE_SIGNATURE)
+        ? ''
+        : stripGeneratedBlocks(content);
+    for (const evidence of sensitiveEvidence(operatorContent)) sensitiveFindings.push({ path: relativePath, evidence });
+    sources.push({
+      path: relativePath,
+      provider: providerForPath(relativePath),
+      scope: LEGACY_ROOT_FILES.includes(relativePath as typeof LEGACY_ROOT_FILES[number]) || relativePath === 'WORKSPACE.md' ? 'root' : 'nested',
+      managed: content.includes(WORKSPACE_SIGNATURE) || content.includes('AIWG:context-hook:start') || content.includes('AIWG:claude-md-hook:start'),
+      operatorContent,
+      checksum: sha256(content),
+    });
+  }
+
+  const byDirective = new Map<string, string[]>();
+  for (const source of sources) {
+    for (const directive of directives(source.operatorContent)) {
+      const paths = byDirective.get(directive) ?? [];
+      paths.push(source.path);
+      byDirective.set(directive, paths);
+    }
+  }
+  const identical = [...byDirective]
+    .filter(([, paths]) => paths.length > 1)
+    .map(([directive, paths]) => ({ sources: [...paths].sort(), directives: [directive] }));
+
+  const overlaps: WorkspaceDirectiveOverlap[] = [];
+  for (let index = 0; index < sources.length; index += 1) {
+    const left = new Set(directives(sources[index].operatorContent));
+    for (let rightIndex = index + 1; rightIndex < sources.length; rightIndex += 1) {
+      const common = directives(sources[rightIndex].operatorContent).filter((item) => left.has(item));
+      if (common.length > 0) overlaps.push({ sources: [sources[index].path, sources[rightIndex].path], directives: common.sort() });
+    }
+  }
+
+  const conflictMap = new Map<string, Array<{ path: string; directive: string; polarity: 'positive' | 'negative' }>>();
+  for (const source of sources) {
+    for (const directive of directives(source.operatorContent)) {
+      const key = directiveKey(directive);
+      if (!key) continue;
+      const values = conflictMap.get(key) ?? [];
+      values.push({ path: source.path, directive, polarity: directivePolarity(directive) });
+      conflictMap.set(key, values);
+    }
+  }
+  const conflicts = [...conflictMap]
+    .filter(([, values]) => new Set(values.map((value) => value.polarity)).size > 1)
+    .map(([key, values]) => ({ key, sources: values.map(({ path: sourcePath, directive }) => ({ path: sourcePath, directive })).sort((a, b) => a.path.localeCompare(b.path)) }));
+
+  const rootOperator = sources.filter((source) => source.scope === 'root' && source.operatorContent.trim());
+  const duplicatePaths = new Set(identical.flatMap((group) => group.sources));
+  const neutralSources = rootOperator.filter((source) => source.path === 'WORKSPACE.md' || duplicatePaths.has(source.path)).map((source) => source.path);
+  const providerSources = rootOperator.filter((source) => source.path !== 'WORKSPACE.md' && !neutralSources.includes(source.path)).map((source) => source.path);
+  const providerOutputs = providerSources.map((source) => `.aiwg/context/providers/${source.replace(/[^A-Za-z0-9.-]+/g, '-').replace(/^-+/, '')}`);
+  const workspaceExists = sources.some((source) => source.path === 'WORKSPACE.md');
+
+  return {
+    version: 1,
+    projectPath,
+    workspaceExists,
+    legacyCompatible: !workspaceExists && sources.some((source) => LEGACY_ROOT_FILES.includes(source.path as typeof LEGACY_ROOT_FILES[number])),
+    sources,
+    identical,
+    overlaps,
+    conflicts,
+    sensitiveFindings,
+    plan: {
+      neutralSources,
+      providerSources,
+      nestedSources: sources.filter((source) => source.scope === 'nested').map((source) => source.path),
+      outputs: ['WORKSPACE.md', ...providerOutputs, ...listProviderDefinitions().flatMap((definition) => definition.context.bootstrapTargets)].filter((value, index, all) => all.indexOf(value) === index).sort(),
+    },
+  };
+}
+
+function providerContextOutput(sourcePath: string): string {
+  return `.aiwg/context/providers/${sourcePath.replace(/[^A-Za-z0-9.-]+/g, '-').replace(/^-+/, '')}`;
+}
+
+function neutralMigrationContent(audit: WorkspaceContextAudit): string {
+  const selected = audit.sources.filter((source) => audit.plan.neutralSources.includes(source.path));
+  const seen = new Set<string>();
+  const lines: string[] = ['## Project Context', ''];
+  for (const source of selected) {
+    const unique = directives(source.operatorContent).filter((directive) => !seen.has(directive));
+    for (const directive of unique) seen.add(directive);
+    if (unique.length === 0) continue;
+    lines.push(`### From ${source.path}`, '', ...unique.map((directive) => `- ${directive}`), '');
+  }
+  if (lines.length === 2) lines.push('Add provider-neutral project conventions and links here.');
+  return lines.join('\n').trim();
+}
+
+function providerMigrationContent(source: WorkspaceContextSource): string {
+  return [
+    `# Provider-specific context from ${source.path}`,
+    '',
+    `Source attribution: migrated from \`${source.path}\`; checksum \`${source.checksum}\`.`,
+    '',
+    source.operatorContent.trim() || '(No operator-authored content remained after managed blocks were removed.)',
+    '',
+  ].join('\n');
+}
+
+async function configuredProviders(projectPath: string): Promise<string[]> {
+  const config = await readOptional(path.join(projectPath, '.aiwg', 'aiwg.config'));
+  if (config) {
+    try {
+      const parsed = JSON.parse(config) as { providers?: unknown };
+      if (Array.isArray(parsed.providers)) return parsed.providers.filter((provider): provider is string => typeof provider === 'string');
+    } catch {
+      // Audit/migration reports malformed provider config through the normal CLI path.
+    }
+  }
+  return ['claude'];
+}
+
+async function stageMigrationWrites(projectPath: string, audit: WorkspaceContextAudit): Promise<Map<string, string>> {
+  const writes = new Map<string, string>();
+  for (const source of audit.sources.filter((item) => audit.plan.providerSources.includes(item.path))) {
+    writes.set(providerContextOutput(source.path), providerMigrationContent(source));
+  }
+  const providerFiles = [...new Set([
+    ...audit.sources.filter((source) => source.path.startsWith('.aiwg/context/providers/')).map((source) => source.path),
+    ...writes.keys(),
+  ])].sort();
+  const existingWorkspace = audit.sources.find((source) => source.path === 'WORKSPACE.md');
+  const workspaceOperatorContent = existingWorkspace?.managed
+    ? existingWorkspace.operatorContent
+    : neutralMigrationContent(audit);
+  writes.set('WORKSPACE.md', buildWorkspaceDocument(projectPath, workspaceOperatorContent, providerFiles));
+
+  const providers = await configuredProviders(projectPath);
+  const targetProviders = new Map<string, string[]>();
+  for (const provider of providers) {
+    const definition = getProviderDefinition(provider);
+    if (!definition) continue;
+    for (const target of definition.context.bootstrapTargets) {
+      const values = targetProviders.get(target) ?? [];
+      values.push(provider);
+      targetProviders.set(target, values);
+    }
+  }
+  for (const [target, targetProviderIds] of targetProviders) {
+    // Shared AGENTS.md is deliberately provider-neutral prose so sequential
+    // multi-provider deployment cannot make the last provider win.
+    const provider = targetProviderIds.length === 1 ? targetProviderIds[0] : 'generic';
+    const content = provider === 'generic'
+      ? [
+          '# Provider workspace bootstrap', WORKSPACE_SIGNATURE,
+          '<!-- Generated by AIWG. Project/operator context belongs in WORKSPACE.md. -->', '',
+          PROVIDER_BOOTSTRAP_START, '',
+          'Read and follow [WORKSPACE.md](./WORKSPACE.md) first.',
+          'Then read [AIWG.md](./AIWG.md) for AIWG discovery and framework routing.',
+          'These are explicit reading instructions; a plain Markdown link is not claimed to auto-load.', '',
+          PROVIDER_BOOTSTRAP_END, '',
+        ].join('\n')
+      : buildProviderBootstrapFile(provider);
+    writes.set(target, content);
+  }
+
+  for (const provider of providers) {
+    const contract = getProviderDefinition(provider)?.context;
+    if (!contract?.configRegistration) continue;
+    const configPath = contract.configRegistration.file;
+    const existing = await readOptional(path.join(projectPath, configPath));
+    let config: Record<string, unknown> = {};
+    if (existing !== null) config = JSON.parse(existing) as Record<string, unknown>;
+    const key = contract.configRegistration.key;
+    const current = Array.isArray(config[key]) ? (config[key] as unknown[]).filter((item): item is string => typeof item === 'string') : [];
+    config[key] = [...new Set([...current, 'WORKSPACE.md', 'AIWG.md'])];
+    if (!('$schema' in config) && path.basename(configPath) === 'opencode.json') config = { $schema: 'https://opencode.ai/config.json', ...config };
+    writes.set(configPath, `${JSON.stringify(config, null, 2)}\n`);
+  }
+  return writes;
+}
+
+function safePreimageName(relativePath: string): string {
+  return `${sha256(relativePath).slice(0, 16)}-${path.basename(relativePath)}`;
+}
+
+export async function migrateWorkspaceContext(
+  projectPath: string,
+  options: { dryRun?: boolean; apply?: boolean; allowConflicts?: boolean } = {},
+): Promise<WorkspaceMigrationResult> {
+  const audit = await auditWorkspaceContext(projectPath);
+  if (audit.sensitiveFindings.length > 0) {
+    throw new Error(`Migration refused: ${audit.sensitiveFindings.length} possible secret/credential value(s) found. Remove them before migration.`);
+  }
+  if (audit.conflicts.length > 0 && !options.allowConflicts) {
+    throw new Error(`Migration refused: ${audit.conflicts.length} ambiguous directive conflict(s). Review the deterministic audit or pass --allow-conflicts to preserve each source separately.`);
+  }
+  const writes = await stageMigrationWrites(projectPath, audit);
+  const changedEntries: Array<[string, string]> = [];
+  for (const [relativePath, content] of writes) {
+    if (await readOptional(path.join(projectPath, relativePath)) !== content) changedEntries.push([relativePath, content]);
+  }
+  if (options.dryRun || !options.apply) {
+    return { audit, dryRun: true, changed: changedEntries.length > 0, written: changedEntries.map(([relative]) => relative), backups: [] };
+  }
+  if (changedEntries.length === 0) return { audit, dryRun: false, changed: false, written: [], backups: [] };
+
+  const createdAt = new Date().toISOString();
+  const id = `${createdAt.replace(/[:.]/g, '-')}-${sha256(JSON.stringify(audit.plan)).slice(0, 8)}`;
+  const transactionDir = path.join(projectPath, '.aiwg', 'context-migrations', id);
+  const preimageDir = path.join(transactionDir, 'preimages');
+  await fs.mkdir(preimageDir, { recursive: true });
+  const manifest: WorkspaceMigrationManifest = { version: 1, id, createdAt, projectPath, status: 'prepared', files: [] };
+  const backups: string[] = [];
+  for (const [relativePath, content] of changedEntries) {
+    const target = path.join(projectPath, relativePath);
+    const existing = await readOptional(target);
+    let preimage: string | null = null;
+    if (existing !== null) {
+      preimage = path.relative(projectPath, path.join(preimageDir, safePreimageName(relativePath))).replace(/\\/g, '/');
+      await fs.writeFile(path.join(projectPath, preimage), existing, 'utf8');
+      backups.push(preimage);
+    }
+    manifest.files.push({ path: relativePath, existed: existing !== null, preimage, outputChecksum: sha256(content) });
+  }
+  const manifestPath = path.join(transactionDir, 'manifest.json');
+  await atomicWrite(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  try {
+    for (const [relativePath, content] of changedEntries.sort(([left], [right]) => left.localeCompare(right))) {
+      await atomicWrite(path.join(projectPath, relativePath), content);
+    }
+    manifest.status = 'applied';
+    await atomicWrite(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  } catch (error) {
+    await restoreMigrationManifest(projectPath, manifest);
+    throw error;
+  }
+  return { audit, dryRun: false, changed: true, transactionId: id, written: changedEntries.map(([relative]) => relative).sort(), backups };
+}
+
+async function restoreMigrationManifest(projectPath: string, manifest: WorkspaceMigrationManifest): Promise<void> {
+  for (const file of [...manifest.files].reverse()) {
+    const target = resolveProjectRelative(projectPath, file.path);
+    if (file.existed && file.preimage) {
+      const preimage = await fs.readFile(resolveProjectRelative(projectPath, file.preimage), 'utf8');
+      await atomicWrite(target, preimage);
+    } else {
+      await fs.rm(target, { force: true });
+    }
+  }
+}
+
+export async function rollbackWorkspaceContext(projectPath: string, requestedId?: string): Promise<{ id: string; restored: string[] }> {
+  const root = path.join(projectPath, '.aiwg', 'context-migrations');
+  let ids: string[];
+  try { ids = (await fs.readdir(root)).sort().reverse(); } catch { throw new Error('No workspace-context migration transactions found.'); }
+  const id = requestedId ?? ids[0];
+  if (!id || id.includes('/') || id.includes('\\')) throw new Error('Invalid workspace-context migration id.');
+  const manifestPath = path.join(root, id, 'manifest.json');
+  const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8')) as WorkspaceMigrationManifest;
+  if (manifest.status === 'rolled-back') return { id, restored: [] };
+  for (const file of manifest.files) {
+    const current = await readOptional(resolveProjectRelative(projectPath, file.path));
+    if (current === null || sha256(current) !== file.outputChecksum) {
+      throw new Error(`Rollback refused: ${file.path} changed after migration. Preserve or reconcile that work before restoring transaction ${id}.`);
+    }
+  }
+  await restoreMigrationManifest(projectPath, manifest);
+  manifest.status = 'rolled-back';
+  await atomicWrite(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  return { id, restored: manifest.files.map((file) => file.path) };
+}
+
+function markdownLinks(content: string): string[] {
+  return [...content.matchAll(/\[[^\]]+\]\((\.\/?[^)#]+)(?:#[^)]+)?\)/g)].map((match) => match[1]);
+}
+
+export async function workspaceLinkedFiles(projectPath: string): Promise<string[]> {
+  const content = await readOptional(path.join(projectPath, 'WORKSPACE.md'));
+  if (!content) return [];
+  const files: string[] = [];
+  for (const link of markdownLinks(content)) {
+    const normalized = link.replace(/^\.\//, '');
+    const resolved = path.resolve(projectPath, normalized);
+    if (resolved !== projectPath && !resolved.startsWith(`${path.resolve(projectPath)}${path.sep}`)) continue;
+    try {
+      const stat = await fs.stat(resolved);
+      if (stat.isFile()) files.push(resolved);
+    } catch {
+      // Missing optional linked files are reported by doctor, not index builds.
+    }
+  }
+  return [...new Set(files)].sort();
+}
+
+export async function diagnoseWorkspaceContext(projectPath: string): Promise<WorkspaceContextDiagnostic[]> {
+  const diagnostics: WorkspaceContextDiagnostic[] = [];
+  const audit = await auditWorkspaceContext(projectPath);
+  const workspacePath = path.join(projectPath, 'WORKSPACE.md');
+  const workspace = await readOptional(workspacePath);
+  if (!workspace) {
+    diagnostics.push({ severity: 'info', code: 'legacy-layout', message: 'Legacy provider context layout is supported; run `aiwg workspace-context migrate --dry-run` for opt-in conversion.' });
+    return diagnostics;
+  }
+  if (!workspace.includes(WORKSPACE_MANAGED_START) || !workspace.includes(WORKSPACE_OPERATOR_START)) {
+    diagnostics.push({ severity: 'warning', code: 'workspace-unmanaged', message: 'WORKSPACE.md lacks complete AIWG ownership markers.', path: 'WORKSPACE.md' });
+  }
+  if (workspace.includes(PROVIDER_BOOTSTRAP_START)) {
+    diagnostics.push({ severity: 'error', code: 'include-loop', message: 'WORKSPACE.md contains a provider bootstrap marker and could create a self-referential context loop.', path: 'WORKSPACE.md' });
+  }
+  for (const link of markdownLinks(workspace)) {
+    const normalized = link.replace(/^\.\//, '');
+    if (normalized.includes('WORKSPACE.md')) continue;
+    let linkedPath: string;
+    try {
+      linkedPath = resolveProjectRelative(projectPath, normalized);
+    } catch {
+      diagnostics.push({ severity: 'error', code: 'unsafe-link', message: `Linked context path escapes the project: ${normalized}`, path: 'WORKSPACE.md' });
+      continue;
+    }
+    if (await readOptional(linkedPath) === null && !normalized.endsWith('.aiwg/quickref.json')) {
+      diagnostics.push({ severity: 'warning', code: 'missing-link', message: `Linked context file is missing: ${normalized}`, path: 'WORKSPACE.md' });
+    }
+  }
+  for (const conflict of audit.conflicts) {
+    diagnostics.push({ severity: 'error', code: 'directive-conflict', message: `Conflicting duplicate directive group '${conflict.key}' appears in ${conflict.sources.map((source) => source.path).join(', ')}.` });
+  }
+  for (const overlap of audit.identical) {
+    diagnostics.push({ severity: 'warning', code: 'duplicate-directive', message: `Identical directive is duplicated across ${overlap.sources.join(', ')}.` });
+  }
+  for (const finding of audit.sensitiveFindings) {
+    diagnostics.push({ severity: 'error', code: 'possible-secret', message: 'Possible credential value found in context; remove it.', path: finding.path });
+  }
+  const providers = await configuredProviders(projectPath);
+  for (const provider of providers) {
+    const definition = getProviderDefinition(provider);
+    if (!definition) continue;
+    for (const target of definition.context.bootstrapTargets) {
+      const targetContent = await readOptional(path.join(projectPath, target));
+      if (targetContent?.includes(WORKSPACE_SIGNATURE) && !targetContent.includes('WORKSPACE.md')) {
+        diagnostics.push({ severity: 'error', code: 'bootstrap-drift', message: `${target} is AIWG-managed but no longer points to WORKSPACE.md first.`, path: target });
+      }
+    }
+    if (definition.context.configRegistration) {
+      const registration = definition.context.configRegistration;
+      const config = await readOptional(path.join(projectPath, registration.file));
+      if (config) {
+        try {
+          const parsed = JSON.parse(config) as Record<string, unknown>;
+          const values = Array.isArray(parsed[registration.key]) ? parsed[registration.key] as unknown[] : [];
+          if (!values.includes('WORKSPACE.md')) diagnostics.push({ severity: 'error', code: 'registration-drift', message: `${registration.file} does not register WORKSPACE.md.`, path: registration.file });
+        } catch {
+          diagnostics.push({ severity: 'error', code: 'registration-invalid', message: `${registration.file} is invalid JSON.`, path: registration.file });
+        }
+      }
+    }
+  }
+  if (diagnostics.length === 0) diagnostics.push({ severity: 'info', code: 'healthy', message: 'Workspace context graph is healthy.' });
+  return diagnostics;
+}
+
+export function providerContextContract(provider: Platform | string): ProviderContextContract | undefined {
+  return getProviderDefinition(provider)?.context;
+}

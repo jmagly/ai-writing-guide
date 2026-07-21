@@ -9,6 +9,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Canonical cross-provider workspace context** (#1811) — new projects create
+  a protected `WORKSPACE.md` graph; provider definitions now declare verified
+  loader contracts; `workspace-context audit|migrate|rollback|doctor` provides
+  conflict-aware, credential-gated, atomic and reversible legacy migration;
+  regeneration, deployment, doctor, and indexing share the same implementation.
+
 - **Process-aware runbook discovery** — procedural Markdown and declarative
   runbooks are indexed as a discrete `runbook` type alongside YAML flows,
   retain their original document/template source type, and participate in
