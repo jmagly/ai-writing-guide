@@ -9,6 +9,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Live-state provenance for operational memory** (#1827) — Fortemi v2
+  records can preserve allowlisted tracker/repository observations, classify
+  them as fresh, historical, superseded, contradicted, or needs-source, expose
+  currentness and live-recheck requirements in query output, and carry the
+  contract losslessly through portable Knowledge Shards without serializing
+  credentials or URL query material.
+
 - **Existing-project context extraction** (#1830) —
   `aiwg regenerate --existing-project` previews or atomically applies a bounded,
   source-attributed project snapshot inside `WORKSPACE.md`, migrates active

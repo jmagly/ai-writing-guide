@@ -136,6 +136,53 @@ Each v2 item can include:
   sync manifest records `skos_coverage.records_with_concepts`,
   `skos_coverage.total_records`, and `skos_coverage.ratio` for verification.
 
+### Operational live-state provenance
+
+Tracker- and repository-derived memory can declare an allowlisted
+`operational_state` block in YAML frontmatter. AIWG carries the normalized
+block into the Fortemi v2 record and the embedded Knowledge Shard source
+record:
+
+```yaml
+operational_state:
+  source_repo: roctinam/agentic-sandbox
+  source_kind: issue
+  source_id: agentic-sandbox#656
+  observed_state: open
+  observed_at: 2026-07-21T10:00:00Z
+  source_updated_at: 2026-07-21T09:00:00Z
+  evidence_url: https://git.example.test/roctinam/agentic-sandbox/issues/656
+  observer: gitea-mcp
+  stale_after: 2026-07-22T10:00:00Z
+  classification: fresh
+  confidence: source
+  current_action_selector: true
+```
+
+The classifications are `fresh`, `historical`, `superseded`,
+`contradicted`, and `needs-source`:
+
+- `fresh` means supplied authoritative evidence matches the remembered state;
+- `historical` preserves chronology but must not drive current action;
+- `superseded` means newer authoritative evidence exists for the same source;
+- `contradicted` means remembered and live states disagree;
+- `needs-source` means the record lacks complete source identity or observation
+  metadata.
+
+Fortemi-backed JSON query output includes an `operational_state` projection
+with `classification`, `current`, and `requires_live_check`. `current` is true
+only for an explicitly fresh `current_action_selector`. It does not make the
+cache authoritative: action selection must re-check a time-bound record or any
+record with a live source against its named provider before acting. The query
+projection therefore keeps `requires_live_check: true` even for a cached fresh
+assertion.
+
+Only documented fields are serialized. Evidence URLs are limited to HTTP(S)
+and have user information, query parameters, and fragments removed. Arbitrary
+headers, tokens, cookies, provider payloads, and unknown frontmatter keys are
+discarded. Use `evidence_path` for a local audit artifact and never put live
+credentials in operational memory.
+
 ### Source Graph Export Boundary
 
 The `source` graph is built locally by AIWG from the filesystem with the

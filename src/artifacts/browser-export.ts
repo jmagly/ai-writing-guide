@@ -10,6 +10,7 @@ import type {
   TypedEdge,
 } from "./types.js";
 import { loadGraphIndexFile } from "./index-reader.js";
+import type { OperationalStateProvenance } from "./operational-state.js";
 
 export type AiwgFortemiRecordType =
   | "crm.contact"
@@ -166,6 +167,7 @@ export interface AiwgFortemiRecord {
   skos_relations?: AiwgFortemiSkosRelation[];
   provenance_events?: AiwgFortemiProvenanceEvent[];
   compatibility?: Record<string, unknown>;
+  operational_state?: OperationalStateProvenance;
   updated_at: string;
 }
 
@@ -786,6 +788,9 @@ function recordForEntry(
           }>,
           skos_concepts: skos?.concepts ?? [],
           skos_relations: skos?.relations ?? [],
+          ...(entry.operationalState
+            ? { operational_state: entry.operationalState }
+            : {}),
         }
       : {}),
     updated_at: entry.updated,
