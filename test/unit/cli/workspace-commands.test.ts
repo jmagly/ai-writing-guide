@@ -7,7 +7,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs/promises';
 import http from 'node:http';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -350,19 +351,21 @@ describe('Workspace CLI Commands', () => {
   });
 
   describe('deploy-agents framework initialization', () => {
-    it('should create framework-scoped directories for sdlc mode', async () => {
-      // Import the function dynamically
-      const deployAgents = await import('../../../tools/agents/deploy-agents.mjs');
+    it('should be import-safe without executing a deployment', async () => {
+      const deployScript = path.resolve(__dirname, '../../../tools/agents/deploy-agents.mjs');
+      const moduleUrl = pathToFileURL(deployScript).href;
+      const probe = [
+        `const deployed = await import(${JSON.stringify(moduleUrl)});`,
+        "if (typeof deployed.main !== 'function') process.exit(2);",
+        'await new Promise(resolve => setTimeout(resolve, 750));',
+      ].join('\n');
 
-      // Check if the aiwg directory gets created
-      // This tests the initializeFrameworkWorkspace function indirectly
-      const aiwgPath = path.join(testDir, '.aiwg');
-      const frameworksPath = path.join(aiwgPath, 'frameworks');
-      const sdlcPath = path.join(frameworksPath, 'sdlc-complete');
+      execFileSync(process.execPath, ['--input-type=module', '--eval', probe], {
+        cwd: testDir,
+        stdio: 'pipe',
+      });
 
-      // Run deploy with dry-run to see what would be created
-      // Note: Full integration test would require mocking more of the filesystem
-      expect(true).toBe(true); // Placeholder - full test requires integration setup
+      await expect(fs.access(path.join(testDir, 'AIWG.md'))).rejects.toThrow();
     });
 
     it('should create marketing directories for marketing mode', async () => {

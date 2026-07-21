@@ -784,7 +784,7 @@ async function promptCommandsMigration(cfg, provider, targetDir) {
 // Main Entry Point
 // ============================================================================
 
-(async () => {
+export async function main() {
   const cfg = parseArgs();
 
   // Resolve source directory (default to repo root relative to this script)
@@ -954,4 +954,9 @@ async function promptCommandsMigration(cfg, provider, targetDir) {
     }
     process.exit(1);
   }
-})();
+}
+
+const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : null;
+if (invokedPath === fileURLToPath(import.meta.url)) {
+  await main();
+}
