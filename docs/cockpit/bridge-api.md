@@ -13,7 +13,9 @@ model.
 | Real-executor assertion (mock refused unless explicitly allowed) | 502 `mock_executor_refused` |
 
 `GET /healthz` is the one unauthenticated route (shell liveness probe).
-Unhandled upstream failures return 502 `bridge_upstream_error`.
+Unhandled upstream failures return 502 `bridge_upstream_error`. Protected
+executor failures preserve 401 `executor_unauthenticated` and 403
+`executor_forbidden` instead of degrading to an empty inventory.
 
 ## Endpoints
 
@@ -22,14 +24,14 @@ Unhandled upstream failures return 502 `bridge_upstream_error`.
 | Method & path | Purpose |
 |---|---|
 | `GET /healthz` | Unauthenticated liveness (`{status:'ok'}`) |
-| `GET /api/health` | Bridge health + config echo (`executor_url`, `mock_executor_allowed`) |
+| `GET /api/health` | Bridge health + config echo (`executor_url`, `mock_executor_allowed`, boolean `executor_auth_configured`) |
 | `GET /api/executor/capabilities` | Deep-probe the executor (`host_runtime_enabled`, raw status; `unreachable` on failure) |
 
 ### Events & telemetry
 
 | Method & path | Purpose |
 |---|---|
-| `GET /api/events` | **Server-Sent Events** stream — `cockpit.refresh` on connect, heartbeat every 5s. (The Bridge serves no WebSocket; pty streams go browser→executor.) |
+| `GET /api/events` | **Server-Sent Events** stream — `cockpit.refresh` on connect, heartbeat every 5s. |
 | `GET /api/events/snapshot` | Unified event model v1 — typed events aggregated from inventory, running, approvals, missions, sessions |
 | `GET /api/running` | Running board, derived from per-instance A2A task lists (not an executor admin route) |
 | `GET /api/missions` | Mission Control projection — merges durable `aiwg mc` disk state with the live executor task session |
@@ -51,7 +53,7 @@ Unhandled upstream failures return 502 `bridge_upstream_error`.
 
 | Method & path | Purpose |
 |---|---|
-| `GET /api/sessions?instance=` | List sessions; each row carries a normalized `attach_url` for the direct browser→executor pty WebSocket |
+| `GET /api/sessions?instance=` | List sessions; each row carries a Bridge-owned `attach_url`. The Bridge authenticates the upstream PTY upgrade without exposing the executor bearer to the browser. |
 | `POST /api/instances/:id/sessions` | Create a session (`mode`, `backend`, `loadout` query params). Recovers an in-flight create by name on timeout; 409 `agent_not_registered` when no agent |
 | `DELETE /api/instances/:id/sessions/:sessionId` | End a session |
 | `GET /api/instances/:id/sessions/:sessionId/screen` | Screen snapshot (404 `session_screen_unavailable` when the backend has no screen) |
@@ -111,6 +113,7 @@ The Bridge is configured entirely by environment (no CLI flags):
 | Variable | Default | Effect |
 |---|---|---|
 | `AIWG_COCKPIT_EXECUTOR_URL` (alias `EXECUTOR_URL`) | `http://127.0.0.1:8122` | Upstream executor |
+| `AIWG_COCKPIT_EXECUTOR_TOKEN_FILE` | — | Mode-600 file containing one executor bearer token. The Bridge reloads it per upstream request and keeps it out of browser state, URLs, logs, and audit records. |
 | `PORT` / `AIWG_COCKPIT_BRIDGE_PORT` | `8140` | Listen port; **refuses** the executor-reserved 8120–8122 |
 | `AIWG_COCKPIT_AUTOSTART_EXECUTOR` | on | `0` disables best-effort executor autostart |
 | `AIWG_COCKPIT_EXECUTOR_COMMAND` | — | Pin the autostart command (otherwise an installed `agentic-mgmt` is tried) |
@@ -149,3 +152,12 @@ Upstream calls use candidate-list fallbacks to tolerate executor version skew
 [Architecture](./architecture.md#executor-discovery-and-admin-surfaces)).
 Snake_case and camelCase payloads are both normalized; unknown fields render
 as opaque posture rather than errors.
+
+When `AIWG_COCKPIT_EXECUTOR_TOKEN_FILE` is set, every REST/A2A request uses the
+same centralized authenticated fetch path. PTY `attach_url` values are replaced
+with an opaque Bridge route. The browser proves possession of the per-launch
+Cockpit token through a private WebSocket subprotocol; the Bridge strips that
+subprotocol, adds the executor `Authorization` header to the upstream upgrade,
+and forwards only the public `pty-ws.v1` protocol. Group/world-accessible token
+files fail closed. Replacing the file rotates the upstream identity without a
+Bridge restart.

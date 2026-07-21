@@ -2,10 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import type { Role } from './types';
+import { TOKEN } from './api';
 
 // The pty session connections, lifted to App so the Sessions tab renders them and the
-// Actions tab can inject into the active one. Data plane is browser→executor (the
-// attach_url the Bridge issues); control plane stays on the Bridge.
+// Actions tab can inject into the active one. Both planes terminate at the Bridge:
+// the Bridge proxies PTY upgrades so the browser never receives executor credentials.
 //
 // Each (instance, session) keeps its OWN persistent xterm Terminal + WebSocket, mounted
 // once and hidden (not torn down) when another session is shown. Switching sessions is a
@@ -37,6 +38,15 @@ const FIRST_FRAME_DEADLINE_MS = 4000;
 
 const textEnc = new TextEncoder();
 const textDec = new TextDecoder();
+
+function websocketProtocols(url: string): string[] | undefined {
+  if (!TOKEN || !/\/api\/pty\/agents\//.test(url)) return undefined;
+  const bytes = textEnc.encode(TOKEN);
+  let raw = '';
+  for (let index = 0; index < bytes.length; index += 1) raw += String.fromCharCode(bytes[index]);
+  const encoded = btoa(raw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  return ['pty-ws.v1', `cockpit.${encoded}`];
+}
 
 // base64 → raw bytes. xterm does its own UTF-8 decoding and escape-sequence parsing, so
 // it must receive bytes (Uint8Array) — a Latin-1 string renders escapes as literal text.
@@ -230,7 +240,7 @@ class PtyConnection {
 
     const open = () => {
       if (this.connId !== connId || this.closedByUser || this.disposed) return;
-      const ws = new WebSocket(this.url);
+      const ws = new WebSocket(this.url, websocketProtocols(this.url));
       this.ws = ws;
       let gone = false;
       ws.addEventListener('open', () => {

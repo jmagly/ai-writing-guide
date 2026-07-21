@@ -44,13 +44,13 @@ try {
   for (const k of ['runtime_posture', 'transport']) assert.ok(k in run.running[0], `running posture field ${k}`);
   assert.equal(run.running[0].state, 'working', 'running task is working');
 
-  // sessions: the demo pty session is listed with a direct ws attach_url
+  // sessions: the demo pty session is listed with a Bridge-owned ws attach_url
   const sr = await f("/api/sessions?instance=550e8400-e29b-41d4-a716-446655440000");
   assert.equal(sr.status, 200, 'sessions 200');
   const sess = await sr.json();
   const demo = sess.sessions.find((s) => s.id === 'demo-shell');
   assert.ok(demo, 'demo-shell session present');
-  assert.match(demo.attach_url, /^ws:\/\/.*\/agents\/.*\/sessions\/demo-shell\/attach$/, 'ws attach_url shape');
+  assert.match(demo.attach_url, /^ws:\/\/.*\/api\/pty\/agents\/.*\/sessions\/demo-shell\/attach\/[A-Za-z0-9_-]+$/, 'ws attach_url shape');
   assert.ok(demo.liveness.replay_newest_seq >= 3, 'demo session has a seeded transcript');
   assert.equal(demo.session_class, 'direct', 'demo session class');
   assert.equal(demo.session_backend, 'native', 'demo session backend');
@@ -168,7 +168,7 @@ try {
   // start a session (onboarding primary verb): create + issue a ws attach_url
   const started = await (await f('/api/instances/550e8400-e29b-41d4-a716-446655440000/sessions', { method: 'POST' })).json();
   assert.match(started.id ?? '', /^sess-/, 'start-session returns a new session id');
-  assert.match(started.attach_url ?? '', /\/sessions\/sess-[^/]+\/attach$/, 'start-session issues a ws attach_url');
+  assert.match(started.attach_url ?? '', /\/sessions\/sess-[^/]+\/attach\/[A-Za-z0-9_-]+$/, 'start-session issues a proxied ws attach_url');
 
   // app shell served with the per-launch token injected (React build if present, else
   // the legacy fallback — both carry the title + token)

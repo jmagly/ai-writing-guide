@@ -52,6 +52,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Fixed
 
+- **Cockpit protected-executor authentication** (#1841) — the Bridge now reads
+  a mode-restricted token file for centralized authenticated REST/A2A calls,
+  preserves upstream 401/403 failures, reloads rotations without restart, and
+  proxies PTY WebSocket upgrades so long-lived executor credentials never enter
+  browser state or attach URLs.
+
 - **Canonical SDLC orchestration routing** (#1839) — the orchestration rule,
   kernel/project context templates, core prompt, architecture guidance, and
   new-project output now treat skills and referenced playbooks as authoritative,

@@ -25,6 +25,24 @@ The UI receives the token by injection into the served page
 (`window.__COCKPIT_TOKEN__`); shells receive it through the runtime handshake
 below.
 
+## Executor identity and PTY custody
+
+A protected agentic-sandbox executor uses a distinct upstream operator bearer.
+Set `AIWG_COCKPIT_EXECUTOR_TOKEN_FILE` to a regular file that contains exactly
+one token and is inaccessible to group/other users (mode 600 on POSIX). The
+Bridge reads that file for each upstream operation, so an atomic replacement
+rotates the credential without a restart. Missing, malformed, or over-broad
+files fail closed; upstream 401/403 responses remain explicit authorization
+errors.
+
+The executor bearer never enters HTML, browser state, WebSocket URLs, Cockpit
+audit JSON, or process arguments. REST/A2A calls receive the header inside the
+Bridge. PTY sockets also terminate at the Bridge: the browser presents only the
+per-launch Cockpit token as a private WebSocket subprotocol, which the Bridge
+removes before adding the executor bearer to the upstream upgrade. Attach
+targets are opaque, in-memory, same-executor mappings restricted to the formal
+`/agents/:id/sessions/:id/attach` shape.
+
 ## Token custody
 
 `aiwg cockpit` writes `~/.aiwg/cockpit/runtime/bridge.json` (file mode 600,
@@ -64,8 +82,8 @@ A separate badge for the instance↔executor link:
 the concrete mode string and a staleness flag. Legacy paths deliberately
 render as compatibility/degraded — never default-green. Agentic-sandbox owns
 transport provisioning and peer identity; Cockpit owns visibility and audit
-presentation, and stores no tokens, keys, CSRs, or bearer material in UI
-state, logs, or activity payloads.
+presentation, and stores no executor tokens, keys, CSRs, or bearer material in
+UI state, logs, or activity payloads.
 
 ### Host daemon
 
