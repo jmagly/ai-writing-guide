@@ -109,8 +109,9 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   falling through to the repository's intentionally separate commit-signing
   program. Signing probes and tag creation always use batch loopback pinentry
   with the vault-supplied mode-600 passphrase file, so no passphrase dialog can
-  appear. Operator instructions use the TPM-backed OpenBao AppRole handoff and
-  injected private routing environment.
+  appear. The public-key verification gate likewise ignores repository-local
+  private-key adapters. Operator instructions use the TPM-backed OpenBao
+  AppRole handoff and injected private routing environment.
 - **Native Codex custom-agent output** (#1802) — Codex deployment emits valid
   standalone `.codex/agents/*.toml` definitions with required identity and
   instruction fields plus native `model` and `model_reasoning_effort` controls,

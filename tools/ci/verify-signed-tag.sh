@@ -134,7 +134,15 @@ fi
 # ---------------------------------------------------------------------------
 echo "→ Verifying signature on tag: $TAG"
 
-if VERIFY_OUTPUT="$(git tag -v "$TAG" 2>&1)"; then
+VERIFY_GIT_ARGS=()
+if git cat-file tag "$TAG" | grep -q -- '-----BEGIN PGP SIGNATURE-----'; then
+  # Ignore any repository-local commit-signing adapter. Verification uses the
+  # public-only keyring imported above and must never fetch a private key or
+  # invoke a pinentry program.
+  VERIFY_GIT_ARGS=(-c gpg.format=openpgp -c gpg.program=gpg)
+fi
+
+if VERIFY_OUTPUT="$(git "${VERIFY_GIT_ARGS[@]}" tag -v "$TAG" 2>&1)"; then
   echo "✓ Tag $TAG verified successfully."
   echo "$VERIFY_OUTPUT" | grep -E '^(gpg|Good signature|Signature made|Signer|Signer email)' || true
   exit 0
