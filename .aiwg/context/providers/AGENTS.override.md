@@ -55,7 +55,7 @@ Keep the three Fortemi integration planes separate:
   adapter.
 
 The converter exists in AIWG source and the locked
-`@fortemi/core@2026.7.9` package publishes it. AIWG's immutable `core-v1`
+`@fortemi/core@2026.7.11` package publishes it. AIWG's immutable `core-v1`
 receipt and blocking shard-conformance CI exercise that published package,
 validate the server-owned schema/profile, and pass clean PGlite and Fortemi
 server import/re-export checks. This evidence is profile-scoped; source-unit
