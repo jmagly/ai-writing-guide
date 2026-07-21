@@ -103,7 +103,8 @@ describe('installAiwgHooks', () => {
           expect(h._aiwg_managed).toBe(true);
           expect(typeof h._aiwg_id).toBe('string');
           expect(h.type).toBe('command');
-          expect(h.command).toMatch(/^node \.claude[/\\]hooks[/\\]aiwg-/);
+          expect(h.command).toMatch(/^node \.claude\/hooks\/aiwg-/);
+          expect(h.command).not.toContain('\\');
         }
       }
       void event;
@@ -256,6 +257,42 @@ describe('installAiwgHooks', () => {
     // And it should surface the refresh in warnings so refresh CLI users
     // see what changed.
     expect(result?.warnings.some((w) => w.includes('Refreshed stale'))).toBe(true);
+  });
+
+  it('refreshes Windows backslash hook commands to shell-safe forward slashes (#133)', async () => {
+    const claudeDir = path.join(projectPath, '.claude');
+    await fs.mkdir(claudeDir, { recursive: true });
+    await fs.writeFile(
+      path.join(claudeDir, 'settings.json'),
+      JSON.stringify({
+        hooks: {
+          SessionStart: [
+            {
+              hooks: [
+                {
+                  type: 'command',
+                  command: 'node .claude\\hooks\\aiwg-session.cjs',
+                  _aiwg_managed: true,
+                  _aiwg_id: 'aiwg-session',
+                },
+              ],
+            },
+          ],
+        },
+      }),
+      'utf8',
+    );
+
+    const result = await installAiwgHooks({ projectPath, frameworkRoot });
+    const settings = await readSettings();
+    const sessionEntry = (settings.hooks?.SessionStart ?? [])
+      .flatMap((group) => group.hooks)
+      .find((hook) => hook._aiwg_id === 'aiwg-session');
+
+    expect(sessionEntry?.command).toBe('node .claude/hooks/aiwg-session.cjs');
+    expect(result?.warnings).toContain(
+      'Refreshed stale SessionStart → aiwg-session command path',
+    );
   });
 
   it('dry-run does not write files', async () => {

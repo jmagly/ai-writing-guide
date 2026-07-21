@@ -7,6 +7,20 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Fixed
+
+- **Windows Claude Code hook execution**
+  ([jmagly/aiwg#133](https://github.com/jmagly/aiwg/issues/133)) —
+  generated hook commands now use forward-slash script paths on every host,
+  preventing Claude Code's Windows shell parser from collapsing backslashes
+  into invalid `MODULE_NOT_FOUND` paths. Redeployment also repairs existing
+  AIWG-managed backslash commands.
+- **Windows shared graph index location**
+  ([jmagly/aiwg#132](https://github.com/jmagly/aiwg/issues/132)) — shared index
+  paths now fall back to Node's cross-platform home-directory resolver when
+  `XDG_DATA_HOME` is unset, instead of creating a literal
+  `undefined/.local/share` tree inside the project.
+
 ## [2026.7.14] - 2026-07-20 - "Provider-aware model routing and Fortemi conformance"
 
 ### Added

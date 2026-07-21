@@ -10,6 +10,8 @@
  */
 
 import fs from 'fs';
+import os from 'node:os';
+import path from 'node:path';
 import { load as loadYaml } from 'js-yaml';
 
 /**
@@ -977,10 +979,10 @@ export function getGraphIndexDir(cwd: string, graphType: GraphType): string {
   const config = GRAPH_CONFIGS[graphType];
   if (graphType === 'framework' || config?.shared) {
     // Shared across projects — XDG data directory
-    const xdgData = process.env.XDG_DATA_HOME ?? `${process.env.HOME}/.local/share`;
-    return `${xdgData}/aiwg/index/${graphType}`;
+    const xdgData = process.env.XDG_DATA_HOME ?? path.join(os.homedir(), '.local', 'share');
+    return path.join(xdgData, 'aiwg', 'index', graphType);
   }
-  return `${cwd}/.aiwg/.index/${graphType}`;
+  return path.join(cwd, '.aiwg', '.index', graphType);
 }
 
 /**

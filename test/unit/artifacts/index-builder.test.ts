@@ -336,6 +336,44 @@ describe('loadGlobalGraphConfigs', () => {
   });
 });
 
+describe('getGraphIndexDir', () => {
+  let tmpDir: string;
+  let prevHome: string | undefined;
+  let prevXdg: string | undefined;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-graph-index-dir-test-'));
+    prevHome = process.env.HOME;
+    prevXdg = process.env.XDG_DATA_HOME;
+  });
+
+  afterEach(() => {
+    if (prevHome === undefined) delete process.env.HOME;
+    else process.env.HOME = prevHome;
+    if (prevXdg === undefined) delete process.env.XDG_DATA_HOME;
+    else process.env.XDG_DATA_HOME = prevXdg;
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('uses os.homedir when HOME and XDG_DATA_HOME are unset (#132)', () => {
+    delete process.env.HOME;
+    delete process.env.XDG_DATA_HOME;
+
+    expect(getGraphIndexDir(tmpDir, 'framework')).toBe(
+      path.join(os.homedir(), '.local', 'share', 'aiwg', 'index', 'framework'),
+    );
+    expect(getGraphIndexDir(tmpDir, 'framework')).not.toContain('undefined');
+  });
+
+  it('preserves an explicit XDG_DATA_HOME', () => {
+    process.env.XDG_DATA_HOME = path.join(tmpDir, 'xdg-data');
+
+    expect(getGraphIndexDir(tmpDir, 'framework')).toBe(
+      path.join(tmpDir, 'xdg-data', 'aiwg', 'index', 'framework'),
+    );
+  });
+});
+
 describe('Artifact Index Builder', () => {
   describe('parseFrontmatter', () => {
     it('should parse valid YAML frontmatter', () => {

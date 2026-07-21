@@ -247,7 +247,11 @@ export async function installAiwgHooks(opts: InstallOptions): Promise<InstallRes
 
   for (const { file, events } of HOOK_SCRIPTS) {
     if (!sourceFiles.includes(file)) continue;
-    const command = `node ${path.join('.claude', 'hooks', file)}`;
+    // Claude Code parses hook commands as shell command strings. Keep the
+    // embedded script path POSIX-style on every host: native Windows
+    // backslashes are interpreted as escapes and collapse into a nonexistent
+    // path such as `.claudehooksaiwg-session.cjs` (#133).
+    const command = `node ${path.posix.join('.claude', 'hooks', file)}`;
     const hookId = file.replace(/\.(cjs|js)$/, '');
 
     for (const event of events) {
