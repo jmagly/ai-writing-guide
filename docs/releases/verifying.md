@@ -109,9 +109,9 @@ cd aiwg
 
 # Import the published maintainer key.
 gpg --import .gitea/keys/maintainers.asc
-gpg --fingerprint release@aiwg.io
+gpg --fingerprint 401584AAA3376B898FB34427839584D0E25E5126
 # Confirm the fingerprint matches SECURITY.md:
-# FE9272F0BC5781E1DE77FAAA719AB63879E84CE8
+# 401584AAA3376B898FB34427839584D0E25E5126
 
 # Verify a specific tag.
 git tag -v v2026.5.3

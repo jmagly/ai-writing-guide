@@ -47,7 +47,7 @@ artifacts:
 signing:
   tags:
     required: true
-    key: FE9272F0BC5781E1DE77FAAA719AB63879E84CE8
+    key: 401584AAA3376B898FB34427839584D0E25E5126
   release_assets:
     required: true
 sbom:

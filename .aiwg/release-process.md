@@ -14,8 +14,9 @@ OpenBao source of truth:
 
 - Endpoint: `https://rca-g2.s9.internal:8200`
 - SOP: `/home/roctinam/dev/itops/docs/security/secret-management-sop.md`
-- Commit key path: `kv_internal/gpg/commit-signing-key`
-- Release key path: `kv_internal/gpg/release-signing-key`
+- Commit key route: `AIWG_COMMIT_SIGNING_KEY_VAULT_PATH`
+- Release key route: `RELEASE_SIGNING_KEY_VAULT_PATH`
+- Git transport route: `AIWG_GIT_SSH_KEY_VAULT_PATH`
 - Catalog/discovery: `/home/roctinam/dev/itops/scripts/secret-catalog.sh`
 
 CI/CD note: the release workflows still only pull repository contents and verify
@@ -25,48 +26,26 @@ verification.
 
 Expected commit signing key, used for regular commits:
 
-- Fingerprint: `62297562B1C7053088F405DB0117DAAA677A5BF2`
-- Short key ID: `0117DAAA677A5BF2`
-- UID: `roctinam (grissom) <1159087+jmagly@users.noreply.github.com>`
+- Fingerprint: `25BEE160811F66FD6F7B1BF0454C68C4A2174CE9`
+- Short key ID: `454C68C4A2174CE9`
+- UID: `AIWG Commit Signing <1159087+jmagly@users.noreply.github.com>`
 
 Expected release tag signing key, used only for annotated release tags:
 
-- Fingerprint: `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`
-- Short key ID: `719AB63879E84CE8`
-- UIDs:
-  - `jmagly <1159087+jmagly@users.noreply.github.com>`
-  - `AIWG Release Signing <release@aiwg.io>`
+- Fingerprint: `401584AAA3376B898FB34427839584D0E25E5126`
+- Short key ID: `839584D0E25E5126`
+- UID: `AIWG Release Signing <1159087+jmagly@users.noreply.github.com>`
 
-Hydrate the commit key only when a regular signed commit is required:
+Regular commits use the repository-local vault-backed adapter:
 
 ```bash
-set +x
-umask 077
-export BAO_ADDR=https://rca-g2.s9.internal:8200
-export GNUPGHOME="${XDG_RUNTIME_DIR:-/dev/shm}/aiwg-gpg-commit.$$"
-mkdir -p "$GNUPGHOME"
-bao kv get -field=private_key kv_internal/gpg/commit-signing-key \
-  | gpg --batch --import
-
-git -c user.signingkey=62297562B1C7053088F405DB0117DAAA677A5BF2 \
-  commit -S
-
-gpgconf --kill gpg-agent || true
-rm -rf "$GNUPGHOME"
+git commit -S
 ```
 
-Hydrate the release key only for release tags. Prefer the wrapper so preflight
-checks run before any tag is created:
+Release tags use the separate `ci-aiwg` reader route. Prefer the wrapper so
+preflight checks run before any tag is created:
 
 ```bash
-set +x
-umask 077
-export BAO_ADDR=https://rca-g2.s9.internal:8200
-export GNUPGHOME="${XDG_RUNTIME_DIR:-/dev/shm}/aiwg-gpg-release.$$"
-mkdir -p "$GNUPGHOME"
-bao kv get -field=private_key kv_internal/gpg/release-signing-key \
-  | gpg --batch --import
-
 tools/release/cut-tag.sh YYYY.M.P
 ```
 
@@ -96,7 +75,7 @@ rm -rf "$GNUPGHOME"
 7. Push the tag to both remotes:
 
 ```bash
-git push origin vYYYY.M.P
+tools/git/push-origin-as-roctinam.sh vYYYY.M.P
 git push github vYYYY.M.P
 ```
 

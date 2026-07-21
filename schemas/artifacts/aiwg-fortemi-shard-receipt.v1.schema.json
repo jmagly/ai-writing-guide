@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/artifacts/aiwg-fortemi-shard-receipt.v1.schema.json",
+  "title": "AIWG Fortemi Knowledge Shard producer/consumer receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "producer",
+    "converter",
+    "authority",
+    "archive",
+    "capability_loss_report",
+    "consumers",
+    "negative_cases"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "aiwg.fortemi.shard-receipt.v1"
+    },
+    "producer": {
+      "$ref": "#/$defs/producer"
+    },
+    "converter": {
+      "$ref": "#/$defs/converter"
+    },
+    "authority": {
+      "$ref": "#/$defs/authority"
+    },
+    "archive": {
+      "$ref": "#/$defs/archive"
+    },
+    "capability_loss_report": {
+      "$ref": "#/$defs/capabilityLossReport"
+    },
+    "consumers": {
+      "$ref": "#/$defs/consumers"
+    },
+    "negative_cases": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["case", "consumer", "result", "persistent_mutation"],
+        "properties": {
+          "case": { "type": "string", "minLength": 1 },
+          "consumer": { "type": "string", "minLength": 1 },
+          "result": { "const": "rejected" },
+          "persistent_mutation": { "const": 0 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "integrity": { "type": "string", "pattern": "^sha512-[A-Za-z0-9+/]+={0,2}$" }
+      }
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "package"],
+      "properties": {
+        "repository": { "const": "https://git.integrolabs.net/roctinam/aiwg.git" },
+        "commit": { "$ref": "#/$defs/commit" },
+        "package": { "$ref": "#/$defs/package" }
+      }
+    },
+    "converter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "package"],
+      "properties": {
+        "repository": { "const": "https://git.integrolabs.net/Fortemi/fortemi-react.git" },
+        "commit": { "$ref": "#/$defs/commit" },
+        "package": {
+          "allOf": [
+            { "$ref": "#/$defs/package" },
+            { "type": "object", "required": ["integrity"] }
+          ]
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "commit",
+        "contract_revision",
+        "contract_sha256",
+        "schema_version",
+        "schema_bundle_sha256"
+      ],
+      "properties": {
+        "repository": { "const": "https://git.integrolabs.net/Fortemi/fortemi.git" },
+        "commit": { "$ref": "#/$defs/commit" },
+        "contract_revision": { "type": "string", "minLength": 1 },
+        "contract_sha256": { "$ref": "#/$defs/sha256" },
+        "schema_version": { "type": "string", "minLength": 1 },
+        "schema_bundle_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "archive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "bytes", "manifest"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^test/fixtures/fortemi-shard/.+\\.shard$" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "manifest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["format", "version", "profile", "components", "counts"],
+          "properties": {
+            "format": { "const": "matric-shard" },
+            "version": { "const": "1.2.0" },
+            "profile": { "const": "core-v1" },
+            "components": {
+              "type": "array",
+              "items": { "enum": ["notes", "collections", "tags", "templates", "links"] },
+              "uniqueItems": true
+            },
+            "counts": { "type": "object" }
+          }
+        }
+      }
+    },
+    "capabilityLossReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "portable", "source_carrier", "supported_components", "absent_source_components", "losses"],
+      "properties": {
+        "profile": { "const": "core-v1" },
+        "portable": { "const": true },
+        "source_carrier": { "const": "metadata.aiwg_fortemi_index" },
+        "supported_components": {
+          "type": "array",
+          "const": ["notes", "collections", "tags", "templates", "links"]
+        },
+        "absent_source_components": {
+          "type": "array",
+          "items": { "enum": ["collections", "templates"] },
+          "uniqueItems": true
+        },
+        "losses": { "type": "array", "maxItems": 0 }
+      }
+    },
+    "consumers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pglite", "fortemi"],
+      "properties": {
+        "pglite": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["package", "clean_destination", "semantic_reexport", "portable", "losses"],
+          "properties": {
+            "package": { "$ref": "#/$defs/package" },
+            "clean_destination": { "const": true },
+            "semantic_reexport": { "const": true },
+            "portable": { "const": true },
+            "losses": { "type": "array", "maxItems": 0 }
+          }
+        },
+        "fortemi": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repository", "commit", "clean_destination", "semantic_reexport", "harness"],
+          "properties": {
+            "repository": { "const": "https://git.integrolabs.net/Fortemi/fortemi.git" },
+            "commit": { "$ref": "#/$defs/commit" },
+            "clean_destination": { "const": true },
+            "semantic_reexport": { "const": true },
+            "harness": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "sha256", "test"],
+              "properties": {
+                "path": { "type": "string", "pattern": "\\.patch$" },
+                "sha256": { "$ref": "#/$defs/sha256" },
+                "test": { "const": "aiwg_core_v1_external_fixture_clean_import_reexport" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

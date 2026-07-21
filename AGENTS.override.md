@@ -10,16 +10,17 @@ source of truth for private signing keys.
 
 Commit signing and release tag signing use different keys:
 
-- Commits: `62297562B1C7053088F405DB0117DAAA677A5BF2` (`roctinam (grissom)`)
-- Release tags: `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8` (`AIWG Release Signing`)
+- Commits: `25BEE160811F66FD6F7B1BF0454C68C4A2174CE9` (`AIWG Commit Signing`)
+- Release tags: `401584AAA3376B898FB34427839584D0E25E5126` (`AIWG Release Signing`)
 
 Do not sign regular commits with the release tag key. Use the release key only for
 annotated release tags such as `v2026.5.9`.
 
 OpenBao source of truth:
 
-- Commit key: `kv_internal/gpg/commit-signing-key`
-- Release key: `kv_internal/gpg/release-signing-key`
+- Commit key: injected by `AIWG_COMMIT_SIGNING_KEY_VAULT_PATH`
+- Release key: injected by `RELEASE_SIGNING_KEY_VAULT_PATH`
+- Git transport key: injected by `AIWG_GIT_SSH_KEY_VAULT_PATH`
 - SOP: `/home/roctinam/dev/itops/docs/security/secret-management-sop.md`
 
 For signing, hydrate only the needed key into a temporary `GNUPGHOME`, run the

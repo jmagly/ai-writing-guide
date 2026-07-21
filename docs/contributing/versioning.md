@@ -117,7 +117,7 @@ unset VAULT_CI_ROLE_ID VAULT_CI_SECRET_ID
 ```
 
 **Signing-key custody note**: the active release-signing key is
-`FE9272F0BC5781E1DE77FAAA719AB63879E84CE8` (`AIWG Release Signing`). Its private
+`401584AAA3376B898FB34427839584D0E25E5126` (`AIWG Release Signing`). Its private
 material and passphrase live vault-only; the concrete route is supplied by the
 private routing environment, not checked-in docs. The separate
 `9292EFCBB0EA41BECEEFDAFA9C1B8CE0E0E09C33` key signed `v2026.7.12` and remains
@@ -209,8 +209,8 @@ Per the convention established in commit `a13dabc5` ("two-key model — personal
 
 | Purpose | Key | UID |
 |---|---|---|
-| **Commit signing** | personal GPG key from the maintainer's private vault route | maintainer's own identity (e.g. `<1159087+jmagly@users.noreply.github.com>`) |
-| **Tag signing (release)** | AIWG release key from the release signing vault route | `AIWG Release Signing <release@aiwg.io>` (fingerprint `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`) |
+| **Commit signing** | project-dedicated AIWG commit key from the maintainer vault route | `AIWG Commit Signing <1159087+jmagly@users.noreply.github.com>` |
+| **Tag signing (release)** | project-dedicated AIWG release key from the release signing vault route | `AIWG Release Signing <1159087+jmagly@users.noreply.github.com>` (fingerprint `401584AAA3376B898FB34427839584D0E25E5126`) |
 
 This has one operational gotcha: a typical maintainer git config has `tag.gpgsign=true` AND `user.signingkey=<personal-key>` so commits sign correctly. But `git tag -s` (and even `git tag -a` with `tag.gpgsign=true`) then signs the **tag** with the **personal key** — wrong key for the supply-chain gate.
 

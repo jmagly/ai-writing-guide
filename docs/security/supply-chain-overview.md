@@ -54,7 +54,9 @@ The cosign `.sigstore` bundles embed a full Sigstore verification record: the ke
 
 **Anchored in**: The published maintainer-key fingerprint in [`SECURITY.md`](https://github.com/jmagly/aiwg/blob/main/SECURITY.md) and the public key at [`.gitea/keys/maintainers.asc`](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/.gitea/keys/maintainers.asc). Trust root: whatever transport you used to fetch the fingerprint (TLS to git.integrolabs.net, the published key in the maintainer's social-media bio, the value embedded in a previous AIWG release you already trusted, etc.).
 
-**Active key as of v2026.5.3**: ed25519, fingerprint `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`, expires 2031-05-11.
+**Active key for the next release after the 2026-07-20 project-key migration**:
+ed25519, fingerprint `401584AAA3376B898FB34427839584D0E25E5126`, expires 2028-07-20.
+Older public keys remain published for historical tag verification.
 
 ### Cosign tarball signature
 

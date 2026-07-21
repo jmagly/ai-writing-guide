@@ -9,6 +9,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Published Fortemi shard conformance receipt** (#1797) — exact
+  `@fortemi/core@2026.7.9` output is preserved unchanged and exercised through
+  clean PGlite and Fortemi server import/re-export paths. A digest-pinned
+  `core-v1` fixture, strict capability/loss receipt, five zero-mutation failure
+  cases, and blocking clean-checkout CI establish the profile-scoped boundary.
 - **Additional native model discovery decisions** (#1815) — OpenCode and
   OpenClaw now join Codex with documented non-interactive discovery adapters,
   runtime provenance, normalized results, and classified failure handling.
@@ -67,6 +72,10 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Changed
 
+- **Project-dedicated repository authority** — AIWG ordinary commits, release
+  tags, and Gitea transport now use three separate project credentials held in
+  OpenBao. Repository-local identity is `roctinam`; vault-backed commit and push
+  adapters fail closed on fingerprint or authenticated-account mismatch.
 - **Observed Codex model routing** (#1185) — bounded live Codex CLI probes
   replaced ChatGPT-incompatible `gpt-5.3-codex` and
   `gpt-5.1-codex-mini` defaults with observed `gpt-5.5` standard and

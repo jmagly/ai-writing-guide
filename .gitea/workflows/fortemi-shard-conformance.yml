@@ -1,0 +1,107 @@
+name: Fortemi Shard Conformance
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src/artifacts/fortemi-shard-export.ts'
+      - 'test/unit/artifacts/fortemi-shard-export.test.ts'
+      - 'test/fixtures/fortemi-shard/**'
+      - 'schemas/artifacts/aiwg-fortemi-shard-receipt.v1.schema.json'
+      - 'tools/ci/verify-aiwg-fortemi-shard-receipt.mjs'
+      - '.gitea/workflows/fortemi-shard-conformance.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src/artifacts/fortemi-shard-export.ts'
+      - 'test/unit/artifacts/fortemi-shard-export.test.ts'
+      - 'test/fixtures/fortemi-shard/**'
+      - 'schemas/artifacts/aiwg-fortemi-shard-receipt.v1.schema.json'
+      - 'tools/ci/verify-aiwg-fortemi-shard-receipt.mjs'
+      - '.gitea/workflows/fortemi-shard-conformance.yml'
+
+concurrency:
+  group: fortemi-shard-${{ gitea.head_ref || gitea.ref }}
+  cancel-in-progress: true
+
+jobs:
+  producer-consumer-receipt:
+    name: Published Core → PGlite → clean Fortemi
+    runs-on: matric-builder
+    timeout-minutes: 30
+
+    steps:
+      - name: Clean checkout AIWG exact revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q .
+          git remote add origin "https://git.integrolabs.net/${GITHUB_REPOSITORY}.git"
+          git fetch --quiet --no-tags --depth=1 origin "${GITHUB_SHA:?GITHUB_SHA is required}"
+          git checkout --quiet --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Install locked published package graph
+        run: npm ci
+
+      - name: Verify AIWG producer and PGlite consumer
+        run: |
+          npx vitest run test/unit/artifacts/fortemi-shard-export.test.ts
+          node tools/ci/verify-aiwg-fortemi-shard-receipt.mjs
+
+      - name: Clean checkout pinned Fortemi consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          FORTEMI_COMMIT="$(node -p "require('./test/fixtures/fortemi-shard/aiwg-core-v1.receipt.json').consumers.fortemi.commit")"
+          rm -rf /tmp/aiwg-fortemi-consumer
+          git init -q /tmp/aiwg-fortemi-consumer
+          git -C /tmp/aiwg-fortemi-consumer remote add origin https://git.integrolabs.net/Fortemi/fortemi.git
+          git -C /tmp/aiwg-fortemi-consumer fetch --quiet --no-tags --depth=1 origin "$FORTEMI_COMMIT"
+          git -C /tmp/aiwg-fortemi-consumer checkout --quiet --detach FETCH_HEAD
+          test "$(git -C /tmp/aiwg-fortemi-consumer rev-parse HEAD)" = "$FORTEMI_COMMIT"
+          test -z "$(git -C /tmp/aiwg-fortemi-consumer status --porcelain)"
+
+      - name: Build pinned Fortemi test database
+        run: docker build -f /tmp/aiwg-fortemi-consumer/build/Dockerfile.testdb -t aiwg-fortemi-testdb:local /tmp/aiwg-fortemi-consumer
+
+      - name: Start isolated Fortemi test database
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_CONTAINER="aiwg-fortemi-${GITHUB_RUN_ID}"
+          DB_PORT=$((17332 + (GITHUB_RUN_ID % 1000)))
+          DB_USER=matric
+          DB_PASSWORD="aiwg-fortemi-${GITHUB_RUN_ID}-${DB_PORT}"
+          DB_NAME=matric_test
+          echo "DB_CONTAINER=${DB_CONTAINER}" >> "$GITHUB_ENV"
+          echo "DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}" >> "$GITHUB_ENV"
+          docker run -d --name "$DB_CONTAINER" \
+            -p "${DB_PORT}:5432" \
+            -e POSTGRES_USER="$DB_USER" \
+            -e POSTGRES_PASSWORD="$DB_PASSWORD" \
+            -e POSTGRES_DB="$DB_NAME" \
+            aiwg-fortemi-testdb:local
+          for attempt in {1..30}; do
+            if docker exec "$DB_CONTAINER" pg_isready -U "$DB_USER" >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'Fortemi test database did not become ready' >&2
+          exit 1
+
+      - name: Verify clean Fortemi import and semantic re-export
+        run: node tools/ci/verify-aiwg-fortemi-shard-receipt.mjs --server-checkout /tmp/aiwg-fortemi-consumer
+
+      - name: Remove isolated database
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "${DB_CONTAINER:-}" ]; then
+            docker rm -f "$DB_CONTAINER" >/dev/null 2>&1 || true
+          fi

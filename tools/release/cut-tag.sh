@@ -53,7 +53,7 @@ set -euo pipefail
 # Release tags use the release-only identity; ordinary commits use the
 # maintainer commit key. Public keys for historical tags remain in the
 # repository keyring for verification.
-RELEASE_KEY_FINGERPRINT="${AIWG_RELEASE_KEY_FINGERPRINT:-FE9272F0BC5781E1DE77FAAA719AB63879E84CE8}"
+RELEASE_KEY_FINGERPRINT="${AIWG_RELEASE_KEY_FINGERPRINT:-401584AAA3376B898FB34427839584D0E25E5126}"
 
 # Source the key from the configured vault at cut time (default on). Set to 0 to sign with a
 # key already present in the local GPG keyring (fork/offline scenarios).
