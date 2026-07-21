@@ -1,0 +1,79 @@
+name: Scheduled Docs Release
+
+on:
+  schedule:
+    - cron: '17 14 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Preview due posts without committing'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: scheduled-docs-release
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Promote due docs posts
+    runs-on: ubuntu-latest
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout AIWG
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Promote due scheduled posts
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            node tools/docs/promote-scheduled-posts.mjs --dry-run
+          else
+            node tools/docs/promote-scheduled-posts.mjs
+          fi
+
+      - name: Detect changes
+        id: changes
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- docs scheduled-docs; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate promoted docs
+        if: steps.changes.outputs.changed == 'true' && github.event.inputs.dry_run != 'true'
+        run: |
+          set -euo pipefail
+          npm ci
+          cat > "${{ gitea.workspace }}/tenants.json" <<'TENANTS'
+          {
+            "tenants": [
+              {
+                "id": "aiwg-docs",
+                "enabled": true,
+                "source": { "type": "local", "path": "./docs" },
+                "target": { "type": "local", "path": "./dist/aiwg-docs" },
+                "domains": ["docs.aiwg.io"],
+                "strictLinks": true
+              }
+            ]
+          }
+          TENANTS
+          npx pagenary build:tenants aiwg-docs
+
+      - name: Commit promotion
+        if: steps.changes.outputs.changed == 'true' && github.event.inputs.dry_run != 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "docs-scheduler"
+          git config user.email "docs-scheduler@integrolabs.net"
+          git add docs scheduled-docs
+          git commit -m "Publish scheduled docs posts"
+          git push origin HEAD:main

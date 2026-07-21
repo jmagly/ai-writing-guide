@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">AIWG no-name discovery routing visual</title>
+  <desc id="desc">Polished terminal-style AIWG visual showing a plain-language query routing to a capability.</desc>
+  <defs>
+    <style>
+      .ui{font-family:Inter,Arial,sans-serif}
+      .mono{font-family:"SFMono-Regular","Cascadia Mono",Consolas,monospace}
+      .muted{fill:#9fb3c8;font-size:22px}
+      .cmd{fill:#67e8f9;font-size:25px}
+      .label{fill:#f8fafc;font-size:25px;font-weight:800}
+      .body{fill:#9fb3c8;font-size:20px}
+      .call-title{fill:#e0f2fe;font-size:31px;font-weight:850}
+      .call-body{fill:#bae6fd;font-size:22px}
+    </style>
+    <radialGradient id="bg" cx="78%" cy="18%" r="86%">
+      <stop offset="0%" stop-color="#164e63"/>
+      <stop offset="50%" stop-color="#081827"/>
+      <stop offset="100%" stop-color="#050b14"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="22" stdDeviation="18" flood-color="#000" flood-opacity=".38"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <rect x="104" y="108" width="1392" height="684" rx="34" fill="#0b1424" stroke="#304965" stroke-width="2"/>
+    <rect x="104" y="108" width="1392" height="74" rx="34" fill="#14243a"/>
+  </g>
+  <circle cx="150" cy="145" r="12" fill="#ef4444"/>
+  <circle cx="188" cy="145" r="12" fill="#f59e0b"/>
+  <circle cx="226" cy="145" r="12" fill="#10b981"/>
+  <text x="268" y="145" class="mono muted" dominant-baseline="middle">no-name test — operator language as interface</text>
+
+  <g class="mono">
+    <text x="148" y="242" class="cmd">$ aiwg discover "fact-check launch copy" --limit 5</text>
+
+    <rect x="148" y="304" width="850" height="142" rx="20" fill="#07111f" stroke="#1e81a8" stroke-width="2"/>
+    <text x="186" y="350" class="label">1. claim-proof-verification</text>
+    <text x="226" y="390" class="body">type: skill   score: 0.71</text>
+    <text x="226" y="420" class="body">verify marketing claims and fact-check launch copy</text>
+
+    <rect x="148" y="506" width="850" height="142" rx="20" fill="#07111f" stroke="#223550"/>
+    <text x="186" y="552" class="label">2. neuroframing-ready-assets</text>
+    <text x="226" y="592" class="body">type: skill   score: 0.48</text>
+    <text x="226" y="622" class="body">find ready marketing outputs by NF asset ID</text>
+  </g>
+
+  <path d="M998 375 H1138" stroke="#22d3ee" stroke-width="4"/>
+  <path d="M998 577 H1138" stroke="#22d3ee" stroke-width="4" opacity=".38"/>
+  <rect x="1138" y="304" width="276" height="344" rx="26" fill="#102f4d" stroke="#38bdf8" stroke-width="2"/>
+  <text x="1276" y="374" class="ui call-title" text-anchor="middle">Routing pattern</text>
+  <text x="1276" y="444" class="ui call-body" text-anchor="middle">
+    <tspan x="1276">If this ranked wrong,</tspan>
+    <tspan x="1276" dy="34">the fix would be</tspan>
+    <tspan x="1276" dy="34">metadata and ranking,</tspan>
+    <tspan x="1276" dy="34">not memorization.</tspan>
+  </text>
+  <rect x="1190" y="566" width="172" height="46" rx="12" fill="#0c2740" stroke="#7dd3fc"/>
+  <text x="1276" y="589" class="mono" fill="#e0f2fe" font-size="19" text-anchor="middle" dominant-baseline="middle">plain language</text>
+</svg>

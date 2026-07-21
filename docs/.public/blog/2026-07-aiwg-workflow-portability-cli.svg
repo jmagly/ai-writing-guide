@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">AIWG workflow discovery terminal visual</title>
+  <desc id="desc">Polished terminal-style AIWG discovery visual showing a release-notes workflow query returning reusable capabilities.</desc>
+  <defs>
+    <style>
+      .ui{font-family:Inter,Arial,sans-serif}
+      .mono{font-family:"SFMono-Regular","Cascadia Mono",Consolas,monospace}
+      .muted{fill:#9fb3c8;font-size:22px}
+      .cmd{fill:#67e8f9;font-size:24px}
+      .label{fill:#f8fafc;font-size:25px;font-weight:800}
+      .body{fill:#9fb3c8;font-size:20px}
+      .call-title{fill:#ccfbf1;font-size:31px;font-weight:850}
+      .call-body{fill:#a7f3d0;font-size:22px}
+    </style>
+    <radialGradient id="bg" cx="22%" cy="14%" r="86%">
+      <stop offset="0%" stop-color="#153d66"/>
+      <stop offset="48%" stop-color="#081827"/>
+      <stop offset="100%" stop-color="#050b14"/>
+    </radialGradient>
+    <linearGradient id="term" x1="0" x2="1">
+      <stop offset="0%" stop-color="#0d1b2e"/>
+      <stop offset="100%" stop-color="#08111f"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="22" stdDeviation="18" flood-color="#000" flood-opacity=".38"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <path d="M116 740 C322 650 410 750 620 610 C800 490 980 342 1230 370 C1360 384 1450 448 1510 420" fill="none" stroke="#164e63" stroke-width="2" opacity=".5"/>
+  <g filter="url(#shadow)">
+    <rect x="96" y="94" width="1408" height="700" rx="34" fill="url(#term)" stroke="#2b425f" stroke-width="2"/>
+    <rect x="96" y="94" width="1408" height="74" rx="34" fill="#14243a"/>
+  </g>
+  <circle cx="142" cy="131" r="12" fill="#ff6b6b"/>
+  <circle cx="180" cy="131" r="12" fill="#ffd166"/>
+  <circle cx="218" cy="131" r="12" fill="#06d6a0"/>
+  <text x="260" y="131" class="mono muted" dominant-baseline="middle">project terminal — workflow portability test</text>
+
+  <g class="mono">
+    <text x="146" y="220" class="cmd">$ aiwg discover</text>
+    <text x="186" y="258" class="cmd">"release notes workflow portability provider command" --limit 5</text>
+    <text x="146" y="334" fill="#cbd5e1" font-size="26" font-weight="800">Discovery results</text>
+
+    <rect x="146" y="372" width="840" height="110" rx="18" fill="#07111f" stroke="#223550"/>
+    <text x="184" y="408" class="label">1. steward</text>
+    <text x="224" y="444" class="body">type: skill   trigger: "aiwg steward"</text>
+    <text x="224" y="472" class="body">routes provider-native vs AIWG-emulated capability</text>
+
+    <rect x="146" y="512" width="840" height="110" rx="18" fill="#07111f" stroke="#223550"/>
+    <text x="184" y="548" class="label">3. delivery-release-notes</text>
+    <text x="224" y="584" class="body">type: flow</text>
+    <text x="224" y="612" class="body">generate release notes with traceable iteration context</text>
+
+    <rect x="146" y="652" width="840" height="110" rx="18" fill="#07111f" stroke="#223550"/>
+    <text x="184" y="688" class="label">4. release-notes-template</text>
+    <text x="224" y="724" class="body">type: template</text>
+    <text x="224" y="752" class="body">communicate fixes, features, and operational notes</text>
+  </g>
+
+  <rect x="1072" y="372" width="326" height="390" rx="26" fill="#053b38" stroke="#2dd4bf" stroke-width="2"/>
+  <text x="1235" y="448" class="ui call-title" text-anchor="middle">What to inspect</text>
+  <text x="1235" y="516" class="ui call-body" text-anchor="middle">
+    <tspan x="1235">Can the workflow be</tspan>
+    <tspan x="1235" dy="34">found from the job,</tspan>
+    <tspan x="1235" dy="34">without a remembered</tspan>
+    <tspan x="1235" dy="34">private prompt?</tspan>
+  </text>
+  <rect x="1114" y="668" width="242" height="52" rx="14" fill="#092f2e" stroke="#5eead4"/>
+  <text x="1235" y="694" class="mono" fill="#e6fffb" font-size="19" text-anchor="middle" dominant-baseline="middle">discover → show → run</text>
+</svg>
