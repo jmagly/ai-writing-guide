@@ -83,6 +83,9 @@ name: ${kebab}
 description: ${options.description}
 version: 1.0.0
 priority: medium
+commandHint:
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # ${title} Skill

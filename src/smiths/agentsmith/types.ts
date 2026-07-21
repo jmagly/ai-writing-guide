@@ -6,6 +6,7 @@
  */
 
 import type { Platform } from '../../agents/types.js';
+import type { CanonicalModelPolicy } from '../../models/types.js';
 
 /**
  * Agent template categories
@@ -78,6 +79,9 @@ export interface GeneratedAgent {
 
   /** Model tier assigned */
   model: ModelTier;
+
+  /** Provider-neutral model policy used for compilation */
+  modelPolicy: CanonicalModelPolicy;
 
   /** Tools assigned */
   tools: string[];

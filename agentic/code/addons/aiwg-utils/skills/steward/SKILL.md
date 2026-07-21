@@ -23,6 +23,8 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 - "is X supported here" → feature check for current provider
 - "how do I do X" (in provider context) → routing advice
 - "what command handles Y" → find subcommand
+- "which model should this use" → model policy route
+- "model catalog or routing" → `aiwg steward models`
 
 ## Trigger Patterns Reference
 
@@ -33,6 +35,7 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | All providers | "show the full capability matrix" | `aiwg steward capabilities --all` |
 | Feature check | "does my provider support agent teams" | `aiwg steward capabilities --feature agent_teams` |
 | Routing lookup | "which providers support cron" | `aiwg steward find --capability cron` |
+| Model routing | "which model should this use" | `aiwg steward models`; then `aiwg models audit` or `aiwg models resolve` |
 
 ## Behavior
 
@@ -65,6 +68,11 @@ When triggered:
 
    # Find providers that support a capability
    aiwg steward find --capability cron
+
+   # Model policy and dynamic catalog routing
+   aiwg steward models
+   aiwg models sources --json
+   aiwg models audit --provider codex
    ```
 
 4. **Interpret and surface routing advice**:
@@ -88,6 +96,10 @@ Route these intents directly:
 
 Canonical docs: `docs/customization/project-local-quickstart.md`, `docs/customization/project-local-lifecycle.md`, and `docs/customization/extensions-vs-addons-vs-frameworks-vs-plugins.md`. Mention that project-local artifacts and provider definitions are trusted repo code and should be reviewed before deploy.
 
+Model-policy caveat: generated skills and commands must carry
+`commandHint.modelRole` and `commandHint.modelTier`; generated agents must carry
+`model-role` and `model-tier`. Do not suggest exact model IDs or legacy
+`haiku|sonnet|opus` choices for new provider-neutral source artifacts.
 
 ## Feature-Domain Routing (proactive)
 

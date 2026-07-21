@@ -37,6 +37,7 @@ import {
   discoverProjectLocalBundles,
   type ProjectLocalBundle,
 } from '../../extensions/project-local-discovery.js';
+import { routeModelTier } from '../../models/router.js';
 
 const BASELINE_PROVIDER = 'claude-code';
 
@@ -222,6 +223,7 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
     aiwg steward capabilities --feature <name>    Provider support matrix for a feature
     aiwg steward capabilities --all               Full matrix (all providers x features)
     aiwg steward find --capability <name>         Routing advice for your current provider
+    aiwg steward models [--complex|--high-impact] Model policy/discovery routing advice
     aiwg steward permissions audit                Find normalized-model errors and legacy grants
     aiwg steward permissions migrate --dry-run    Preview legacy permission normalization
     aiwg steward permissions migrate --apply      Back up and atomically normalize config
@@ -232,6 +234,11 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
   Features:
     cron, agent_teams, tasks, mcp, behaviors, mission_control, daemon
     (hyphens accepted: agent-teams → agent_teams)
+
+  Models:
+    Use aiwg models sources|refresh for effective catalogs, audit|resolve for
+    provider-compiled role/tier policy, and cheap-first defaults unless policy
+    or human rationale escalates.
 `);
     return;
   }
@@ -439,6 +446,30 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
         console.log(`  Available strategies in matrix: ${available.join(', ')}`);
       }
     }
+    return;
+  }
+
+  if (subcommand === 'models' || subcommand === 'model-routing') {
+    const decision = routeModelTier({
+      complex: args.includes('--complex'),
+      highImpact: args.includes('--high-impact'),
+      requestedPremium: args.includes('--premium'),
+      unattended: args.includes('--unattended'),
+    });
+    console.log('\n  Model policy routing');
+    console.log(`  Default stance: cheap-first role/tier intent, compiled per provider from the effective catalog.`);
+    console.log(`  Suggested tier: ${decision.tier}${decision.modelTier ? ` (${decision.modelTier})` : ' (no model call)'}`);
+    console.log(`  Confirmation: ${decision.requiresConfirmation ? 'required' : 'not required'}`);
+    console.log(`  Summary before escalation: ${decision.summaryRequired ? 'required' : 'not required'}`);
+    console.log(`  Rationale: ${decision.rationale.join('; ')}`);
+    console.log('\n  Commands:');
+    console.log('    aiwg models sources --json        # inspect effective cache/static/remote catalog provenance');
+    console.log('    aiwg models refresh --json        # refresh dynamic provider catalog where supported');
+    console.log('    aiwg models audit --provider P    # compile artifact policy and diagnostics');
+    console.log('    aiwg models resolve --provider P  # show selected provider model for matching artifacts');
+    console.log('\n  Authoring:');
+    console.log('    Agents: use model-role/model-tier; avoid exact provider IDs in source scaffolds.');
+    console.log('    Skills/commands: use commandHint.modelRole and commandHint.modelTier.');
     return;
   }
 

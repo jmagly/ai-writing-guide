@@ -11,7 +11,9 @@ export function generateFrontmatter(
   name: string,
   description: string,
   args: CommandArg[] = [],
-  options: CommandOption[] = []
+  options: CommandOption[] = [],
+  modelRole: 'reasoning' | 'coding' | 'efficiency' = 'efficiency',
+  modelTier: 'economy' | 'standard' | 'premium' = 'economy'
 ): string {
   // Build args string
   const argParts: string[] = [];
@@ -41,10 +43,13 @@ export function generateFrontmatter(
 
   const argsString = argParts.join(' ');
 
-  return `---
+return `---
 name: ${name}
 description: ${description}
 args: ${argsString}
+commandHint:
+  modelRole: ${modelRole}
+  modelTier: ${modelTier}
 ---`;
 }
 
@@ -100,9 +105,11 @@ export function generateUtilityTemplate(
   description: string,
   args: CommandArg[] = [],
   options: CommandOption[] = [],
-  guidance?: string
+  guidance?: string,
+  modelRole: 'reasoning' | 'coding' | 'efficiency' = 'efficiency',
+  modelTier: 'economy' | 'standard' | 'premium' = 'economy'
 ): string {
-  const frontmatter = generateFrontmatter(name, description, args, options);
+  const frontmatter = generateFrontmatter(name, description, args, options, modelRole, modelTier);
   const argsSection = generateArgumentsSection(args);
   const optionsSection = generateOptionsSection(options);
 
@@ -163,9 +170,11 @@ export function generateTransformationTemplate(
   description: string,
   args: CommandArg[] = [],
   options: CommandOption[] = [],
-  guidance?: string
+  guidance?: string,
+  modelRole: 'reasoning' | 'coding' | 'efficiency' = 'efficiency',
+  modelTier: 'economy' | 'standard' | 'premium' = 'economy'
 ): string {
-  const frontmatter = generateFrontmatter(name, description, args, options);
+  const frontmatter = generateFrontmatter(name, description, args, options, modelRole, modelTier);
   const argsSection = generateArgumentsSection(args);
   const optionsSection = generateOptionsSection(options);
 
@@ -234,9 +243,11 @@ export function generateOrchestrationTemplate(
   description: string,
   args: CommandArg[] = [],
   options: CommandOption[] = [],
-  guidance?: string
+  guidance?: string,
+  modelRole: 'reasoning' | 'coding' | 'efficiency' = 'coding',
+  modelTier: 'economy' | 'standard' | 'premium' = 'standard'
 ): string {
-  const frontmatter = generateFrontmatter(name, description, args, options);
+  const frontmatter = generateFrontmatter(name, description, args, options, modelRole, modelTier);
   const argsSection = generateArgumentsSection(args);
   const optionsSection = generateOptionsSection(options);
 
@@ -334,15 +345,17 @@ export function generateCommandContent(
   description: string,
   args: CommandArg[] = [],
   options: CommandOption[] = [],
-  guidance?: string
+  guidance?: string,
+  modelRole?: 'reasoning' | 'coding' | 'efficiency',
+  modelTier?: 'economy' | 'standard' | 'premium'
 ): string {
   switch (template) {
     case 'utility':
-      return generateUtilityTemplate(name, description, args, options, guidance);
+      return generateUtilityTemplate(name, description, args, options, guidance, modelRole, modelTier);
     case 'transformation':
-      return generateTransformationTemplate(name, description, args, options, guidance);
+      return generateTransformationTemplate(name, description, args, options, guidance, modelRole, modelTier);
     case 'orchestration':
-      return generateOrchestrationTemplate(name, description, args, options, guidance);
+      return generateOrchestrationTemplate(name, description, args, options, guidance, modelRole, modelTier);
     default:
       throw new Error(`Unknown template type: ${template}`);
   }

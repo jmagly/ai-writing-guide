@@ -17,8 +17,18 @@ import type {
 import type { Platform } from '../../agents/types.js';
 import { AgentPackager } from '../../agents/agent-packager.js';
 import { getProviderDefinition } from '../../providers/provider-definitions.js';
+import {
+  compileModelPolicy,
+  renderCodexAgentToml,
+  type ProviderModelCatalog,
+} from '../../models/provider-policy.js';
+import type { CanonicalModelPolicy, Provider } from '../../models/types.js';
+import { collectProviderInventory } from '../../providers/provider-inventory.js';
+import { resolveDynamicModelCatalog } from '../../models/model-discovery.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { existsSync } from 'fs';
+import { fileURLToPath } from 'url';
 
 /**
  * Template configurations following 10 Golden Rules
@@ -81,6 +91,7 @@ export class AgentGenerator {
 
     // Step 3: Select model tier
     const modelTier = options.model || templateConfig.modelTier;
+    const modelPolicy = this.modelPolicyForTier(modelTier);
 
     // Step 4: Select tools
     const tools = this.selectTools(options.tools, templateConfig);
@@ -89,14 +100,23 @@ export class AgentGenerator {
     const structure = await this.buildAgentStructure(options, templateConfig);
 
     // Step 6: Generate agent content
-    const content = this.generateContent(structure, modelTier, tools);
+    const content = this.generateContent(structure, modelPolicy, tools);
 
     // Step 7: Transform for platform
+    const compiled = compileModelPolicy({
+      provider: this.modelProvider(options.platform),
+      artifact: 'agent',
+      policy: modelPolicy,
+      catalog: await this.loadEffectiveCatalog(options.projectPath),
+    });
+
     const platformContent = await this.transformForPlatform(
       content,
       options.name,
       options.description,
-      modelTier,
+      compiled.fields.model ?? modelTier,
+      modelPolicy,
+      compiled.effectiveEffort,
       tools,
       options.platform,
       options.category,
@@ -116,6 +136,7 @@ export class AgentGenerator {
       content: platformContent,
       platform: options.platform,
       model: modelTier,
+      modelPolicy,
       tools,
       category: options.category,
       version: options.version,
@@ -395,7 +416,7 @@ export class AgentGenerator {
    */
   private generateContent(
     structure: AgentStructure,
-    model: ModelTier,
+    model: CanonicalModelPolicy,
     tools: string[]
   ): string {
     const lines: string[] = [];
@@ -468,7 +489,7 @@ export class AgentGenerator {
     lines.push('5. **Uncertainty** - Escalates ambiguity');
     lines.push('6. **Context Scope** - Filters distractors');
     lines.push('7. **Recovery** - Handles errors gracefully');
-    lines.push(`8. **Model Tier** - ${model} tier for task complexity`);
+    lines.push(`8. **Model Tier** - ${model.role}/${model.tier} canonical policy for task complexity`);
     lines.push('9. **Parallel Ready** - Safe for concurrent execution');
     lines.push('10. **Observable** - Traceable output');
 
@@ -482,18 +503,39 @@ export class AgentGenerator {
     content: string,
     name: string,
     description: string,
-    model: ModelTier,
+    model: string,
+    modelPolicy: CanonicalModelPolicy,
+    effort: CanonicalModelPolicy['effort'] | undefined,
     tools: string[],
     platform: Platform,
     category?: string,
     version?: string
   ): Promise<string> {
+    if (platform === 'codex') {
+      return renderCodexAgentToml({
+        name,
+        description,
+        developerInstructions: [
+          content,
+          '',
+          '## Canonical Model Policy',
+          '',
+          `- model-role: ${modelPolicy.role}`,
+          `- model-tier: ${modelPolicy.tier}`,
+        ].join('\n'),
+        model,
+        ...(effort ? { modelReasoningEffort: effort } : {}),
+      });
+    }
+
     // Create AgentInfo-like structure for packager
     const agentInfo = {
       metadata: {
         name,
         description,
         model,
+        modelRole: modelPolicy.role,
+        modelTier: modelPolicy.tier,
         tools,
         category: category as any,
         version,
@@ -511,9 +553,41 @@ export class AgentGenerator {
    * Get deployment path for platform
    */
   private getDeploymentPath(projectPath: string, platform: Platform, name: string): string {
+    if (platform === 'codex') return path.join(projectPath, '.codex/agents', `${name}.toml`);
     const platformDir = getProviderDefinition(platform)?.paths.artifacts.agents ?? '';
     const ext = this.packager.getFileExtension(platform);
     return path.join(projectPath, platformDir, `${name}${ext}`);
+  }
+
+  private modelProvider(platform: Platform): Exclude<Provider, 'openai'> {
+    return (platform === 'generic' ? 'claude' : platform) as Exclude<Provider, 'openai'>;
+  }
+
+  private modelPolicyForTier(tier: ModelTier): CanonicalModelPolicy {
+    if (tier === 'haiku') return { role: 'efficiency', tier: 'economy', effort: 'low' };
+    if (tier === 'opus') return { role: 'reasoning', tier: 'premium', effort: 'high' };
+    return { role: 'coding', tier: 'standard', effort: 'medium' };
+  }
+
+  private async loadEffectiveCatalog(projectPath: string): Promise<ProviderModelCatalog> {
+    const aiwgRoot = this.findAiwgRoot();
+    const inventory = await collectProviderInventory(projectPath, { detectProcess: false });
+    return resolveDynamicModelCatalog({
+      aiwgRoot,
+      inventory,
+      allowNetwork: false,
+    }) as Promise<ProviderModelCatalog>;
+  }
+
+  private findAiwgRoot(): string {
+    let cursor = path.dirname(fileURLToPath(import.meta.url));
+    for (let i = 0; i < 8; i++) {
+      if (existsSync(path.join(cursor, 'agentic/code/providers/model-catalog.v1.json'))) return cursor;
+      const next = path.dirname(cursor);
+      if (next === cursor) break;
+      cursor = next;
+    }
+    return process.cwd();
   }
 
   /**

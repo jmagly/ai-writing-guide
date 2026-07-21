@@ -464,11 +464,42 @@ ${options.phases.map(p => `### ${formatName(p).title}
 
 function generateModelsConfig(name) {
   return {
-    default: 'sonnet',
-    reasoning: 'opus',
-    efficiency: 'haiku',
-    agents: {},
-    commands: {},
+    version: '2.0.0',
+    defaults: {
+      tier: 'economy',
+      provider: 'claude',
+    },
+    tiers: {
+      economy: {
+        description: 'Cheap-first default for generated artifacts',
+        costMultiplier: 1,
+        roleMapping: {
+          reasoning: 'efficiency',
+          coding: 'efficiency',
+          efficiency: 'efficiency',
+        },
+      },
+      standard: {
+        description: 'Balanced work tier for justified code and analysis tasks',
+        costMultiplier: 3,
+        roleMapping: {
+          reasoning: 'coding',
+          coding: 'coding',
+          efficiency: 'efficiency',
+        },
+      },
+      premium: {
+        description: 'Explicitly justified high-impact reasoning tier',
+        costMultiplier: 10,
+        roleMapping: {
+          reasoning: 'reasoning',
+          coding: 'coding',
+          efficiency: 'efficiency',
+        },
+      },
+    },
+    providers: {},
+    agentOverrides: {},
   };
 }
 

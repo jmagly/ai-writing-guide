@@ -81,7 +81,8 @@ function generateAgentSimple(name, options) {
   return `---
 name: ${kebab}
 description: ${options.description}
-model: sonnet
+model-role: efficiency
+model-tier: economy
 tools: ${options.tools}
 ---
 
@@ -123,7 +124,8 @@ function generateAgentComplex(name, options) {
   return `---
 name: ${kebab}
 description: ${options.description}
-model: sonnet
+model-role: coding
+model-tier: economy
 tools: ${options.tools}
 ---
 
@@ -215,7 +217,9 @@ function generateAgentOrchestrator(name, options) {
   return `---
 name: ${kebab}
 description: ${options.description}
-model: opus
+model-role: reasoning
+model-tier: premium
+model-rationale: Orchestrator templates coordinate multi-agent work and synthesize delegated results.
 tools: ${options.tools}, Task
 ---
 

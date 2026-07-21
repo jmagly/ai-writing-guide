@@ -9,9 +9,11 @@ import { glob } from 'glob';
 import { load as loadYaml } from 'js-yaml';
 import {
   compileModelPolicy, validateCanonicalModelPolicy, validateUserProjectModelConfig,
+  type ProviderModelCatalog,
 } from '../../models/provider-policy.js';
 import type { CanonicalModelPolicy, ModelTier } from '../../models/types.js';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
+import type { DynamicModelCatalog } from '../../models/model-discovery.js';
 
 type ArtifactKind = 'agent' | 'skill';
 interface Artifact {
@@ -126,7 +128,7 @@ function select(artifacts: Artifact[], parsed: ParsedArgs, useTierSelector = tru
 function normalizedTier(tier: ModelTier | undefined): CanonicalModelPolicy['tier'] {
   return tier === 'max-quality' ? 'premium' : tier ?? 'standard';
 }
-function resolved(item: Artifact, provider: string) {
+function resolved(item: Artifact, provider: string, catalog?: ProviderModelCatalog) {
   const policy: CanonicalModelPolicy = {
     role: item.role ?? 'coding',
     tier: normalizedTier(item.tier),
@@ -136,6 +138,7 @@ function resolved(item: Artifact, provider: string) {
     provider: provider as Parameters<typeof compileModelPolicy>[0]['provider'],
     artifact: item.kind,
     policy,
+    ...(catalog ? { catalog } : {}),
   }) };
 }
 function print(value: unknown, json: boolean): void {
@@ -170,6 +173,26 @@ async function updateJson(file: string, mutate: (value: Record<string, any>) => 
   const content = `${JSON.stringify(value, null, 2)}\n`;
   if (!dryRun) await atomicWrite(file, content);
   return { file, beforeWrite: value, dryRun };
+}
+async function effectiveCatalog(
+  ctx: HandlerContext,
+  target: string,
+  allowNetwork: boolean,
+  parsed: ParsedArgs,
+): Promise<DynamicModelCatalog> {
+  const { collectProviderInventory } = await import('../../providers/provider-inventory.js');
+  const { resolveDynamicModelCatalog } = await import('../../models/model-discovery.js');
+  const inventory = await collectProviderInventory(target);
+  const aiwgRoot = await fs.access(path.join(ctx.frameworkRoot, 'agentic/code/providers/model-catalog.v1.json'))
+    .then(() => ctx.frameworkRoot)
+    .catch(() => process.cwd());
+  return resolveDynamicModelCatalog({
+    aiwgRoot,
+    inventory,
+    allowNetwork,
+    forceRefresh: allowNetwork,
+    ...(flagString(parsed, 'url') ? { remoteUrl: flagString(parsed, 'url') } : {}),
+  });
 }
 function replaceFrontmatter(raw: string, item: Artifact, tier: string): string {
   const match = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
@@ -206,16 +229,8 @@ async function execute(ctx: HandlerContext): Promise<HandlerResult> {
     return { exitCode: 0 };
   }
   if (parsed.subcommand === 'sources' || parsed.subcommand === 'refresh') {
-    const { collectProviderInventory } = await import('../../providers/provider-inventory.js');
-    const { diffModelCatalog, resolveDynamicModelCatalog } = await import('../../models/model-discovery.js');
-    const inventory = await collectProviderInventory(target);
-    const catalog = await resolveDynamicModelCatalog({
-      aiwgRoot: ctx.frameworkRoot,
-      inventory,
-      allowNetwork: parsed.subcommand === 'refresh',
-      forceRefresh: parsed.subcommand === 'refresh',
-      ...(flagString(parsed, 'url') ? { remoteUrl: flagString(parsed, 'url') } : {}),
-    });
+    const { diffModelCatalog } = await import('../../models/model-discovery.js');
+    const catalog = await effectiveCatalog(ctx, target, parsed.subcommand === 'refresh', parsed);
     if (parsed.flags.has('drift')) {
       const staticCatalog = JSON.parse(await fs.readFile(
         path.join(ctx.frameworkRoot, 'agentic/code/providers/model-catalog.v1.json'),
@@ -244,7 +259,13 @@ async function execute(ctx: HandlerContext): Promise<HandlerResult> {
   const artifacts = select(discovered, parsed, parsed.subcommand !== 'set');
   if (parsed.subcommand === 'list') { print(artifacts, json); return { exitCode: 0 }; }
   if (parsed.subcommand === 'audit' || parsed.subcommand === 'resolve') {
-    const output = artifacts.map(item => resolved(item, provider));
+    const catalog = await effectiveCatalog(ctx, target, false, parsed);
+    const catalogSource = catalog.discovery?.source ?? 'static';
+    const output = artifacts.map(item => ({
+      ...resolved(item, provider, catalog as ProviderModelCatalog),
+      catalogSource,
+      catalogFetchedAt: catalog.discovery?.fetchedAt ?? null,
+    }));
     print(output, json);
     return { exitCode: output.some(item => item.compiled.diagnostics.some(d => d.severity === 'error')) ? 2 : 0 };
   }

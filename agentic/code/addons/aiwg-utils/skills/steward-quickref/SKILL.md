@@ -10,6 +10,9 @@ triggers:
   - select a persona
   - scaffold a project
   - steward routing
+  - steward model routing
+  - model catalog routing
+  - cheap first model policy
   - which aiwg feature do i use
   - expansion persona or project
 ---
@@ -80,8 +83,21 @@ skills.
 the steward, which reads `capability-matrix.yaml`.
 
 | You want to… | Discover phrase / route |
-|---|---|
+| --- | --- |
 | Check provider support for a capability | `aiwg discover "provider capability"` → `steward` |
+
+## Domain 5 — Model policy and catalog routing
+
+"Which model should this use?" Route through `aiwg steward models` and the
+`aiwg models` command family. Do not recommend exact provider IDs from memory.
+
+| You want to… | Discover phrase / route |
+|---|---|
+| Explain cheap-first routing | `aiwg steward models` |
+| Inspect effective catalog provenance | `aiwg models sources --json` |
+| Refresh provider/account catalog | `aiwg models refresh --json` |
+| Compile/audit artifacts for a provider | `aiwg models audit --provider <provider>` |
+| Resolve selected model IDs | `aiwg models resolve --provider <provider>` |
 
 ## Steward routing protocol
 

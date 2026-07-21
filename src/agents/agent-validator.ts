@@ -10,6 +10,7 @@ import type {
   ValidationIssue,
   AgentMetadata,
 } from './types.js';
+import { validateCanonicalModelPolicy } from '../models/provider-policy.js';
 
 const VALID_TOOLS = [
   'Read',
@@ -106,28 +107,31 @@ export class AgentValidator {
       }
     }
 
-    // Validate model if present
+    if (metadata.modelRole || metadata.modelTier) {
+      const policy = validateCanonicalModelPolicy({
+        role: metadata.modelRole ?? 'coding',
+        tier: metadata.modelTier ?? 'standard',
+      });
+      if (!policy.valid) {
+        issues.push(...policy.diagnostics.map(diagnostic => ({
+          type: diagnostic.severity === 'error' ? 'error' as const : 'warning' as const,
+          field: 'model-policy',
+          message: diagnostic.message,
+          suggestion: 'Use canonical model-role/model-tier values from the shared model policy schema',
+        })));
+      }
+    }
+
+    // Legacy exact model aliases remain readable, but new scaffolds should use
+    // canonical model-role/model-tier intent so providers compile the final ID.
     if (metadata.model) {
-      // Bare aliases retained for backwards compatibility, but pinned
-      // variants are preferred — see #1442. A bare alias inherits the
-      // parent session's variant; under a 1M-context parent
-      // (`claude-opus-4-7[1m]`) this triggers the usage-credit gate on
-      // subagent dispatch. Pinned 4.x Claude variants and legacy GPT IDs
-      // are both accepted.
-      const validModels = [
-        // Bare aliases (legacy; emit a separate warning eventually)
-        'sonnet', 'opus', 'haiku',
-        // Pinned Claude 4.x variants (preferred)
-        'claude-sonnet-4-6', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-haiku-4-5',
-        // Legacy GPT
-        'gpt-4', 'gpt-3.5-turbo',
-      ];
-      if (!validModels.includes(metadata.model)) {
+      const compatibilityAliases = new Set(['sonnet', 'opus', 'haiku', 'gpt-4', 'gpt-3.5-turbo']);
+      if (!compatibilityAliases.has(metadata.model)) {
         issues.push({
           type: 'warning',
           field: 'model',
-          message: `Unrecognized model: ${metadata.model}`,
-          suggestion: `Consider using: ${validModels.join(', ')}`,
+          message: `Legacy exact model field is provider-specific: ${metadata.model}`,
+          suggestion: 'Prefer model-role and model-tier; exact IDs should be compiled from the effective provider catalog',
         });
       }
     }

@@ -184,6 +184,11 @@ function generateFrontmatter(options: SkillOptions): string {
     name: options.name,
     description: options.description.trim(),
     version: options.version || '1.0.0',
+    commandHint: {
+      modelRole: options.modelRole ?? 'efficiency',
+      modelTier: options.modelTier ?? 'economy',
+      ...(options.modelRationale ? { modelRationale: options.modelRationale } : {}),
+    },
   };
 
   if (options.tools && options.tools.length > 0) {
@@ -197,6 +202,12 @@ function generateFrontmatter(options: SkillOptions): string {
   lines.push(`version: ${fm.version}`);
   if (fm.tools) {
     lines.push(`tools: ${fm.tools}`);
+  }
+  lines.push('commandHint:');
+  lines.push(`  modelRole: ${fm.commandHint.modelRole}`);
+  lines.push(`  modelTier: ${fm.commandHint.modelTier}`);
+  if (fm.commandHint.modelRationale) {
+    lines.push(`  modelRationale: ${fm.commandHint.modelRationale}`);
   }
   lines.push('---');
 

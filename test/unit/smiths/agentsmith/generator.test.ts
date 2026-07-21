@@ -366,7 +366,7 @@ describe('AgentGenerator', () => {
       expect(parsed.tools).toEqual(['read', 'write']); // Lowercase
     });
 
-    it('should transform to Codex format with agent_name', async () => {
+    it('should transform to Codex standalone TOML with compiled model policy', async () => {
       const options: AgentOptions = {
         name: 'codex-agent',
         description: 'Codex format test',
@@ -376,9 +376,12 @@ describe('AgentGenerator', () => {
 
       const agent = await generator.generateAgent(options);
 
-      expect(agent.content).toContain('agent_name: codex-agent');
-      expect(agent.content).toContain('capabilities:');
-      expect(agent.content).toContain('# System Instructions');
+      expect(agent.path).toBe(path.join(tempDir, '.codex/agents/codex-agent.toml'));
+      expect(agent.modelPolicy).toMatchObject({ role: 'efficiency', tier: 'economy' });
+      expect(agent.content).toContain('name = "codex-agent"');
+      expect(agent.content).toContain('model = "gpt-5.4-mini"');
+      expect(agent.content).toContain('model_reasoning_effort = "low"');
+      expect(agent.content).toContain('Canonical Model Policy');
     });
 
     it('should transform to Windsurf format without YAML', async () => {

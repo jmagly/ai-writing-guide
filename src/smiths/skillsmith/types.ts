@@ -47,6 +47,15 @@ export interface SkillOptions {
   /** Tools this skill uses */
   tools?: string[];
 
+  /** Provider-neutral model role; defaults to efficiency for cheap-first skills */
+  modelRole?: 'reasoning' | 'coding' | 'efficiency';
+
+  /** Provider-neutral model tier; defaults to economy for cheap-first skills */
+  modelTier?: 'economy' | 'standard' | 'premium';
+
+  /** Required rationale when callers intentionally elevate a generated skill */
+  modelRationale?: string;
+
   /** Whether to create references directory */
   createReferences?: boolean;
 }
@@ -107,6 +116,13 @@ export interface SkillFrontmatter {
 
   /** Tools this skill uses (optional) */
   tools?: string;
+
+  /** Canonical skill-to-command model policy */
+  commandHint: {
+    modelRole: 'reasoning' | 'coding' | 'efficiency';
+    modelTier: 'economy' | 'standard' | 'premium';
+    modelRationale?: string;
+  };
 }
 
 /**

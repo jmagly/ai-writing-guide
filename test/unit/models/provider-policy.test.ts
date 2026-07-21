@@ -68,6 +68,18 @@ describe('provider-aware compilation', () => {
       model_reasoning_effort: 'low',
     });
   });
+  it('honors an effective dynamic catalog supplied by callers', () => {
+    const catalog = JSON.parse(JSON.stringify(loadProviderModelCatalog()));
+    catalog.providers.codex.roles.efficiency.id = 'gpt-dynamic-cheap';
+    catalog.providers.codex.roles.efficiency.status = 'active';
+    const result = compileModelPolicy({
+      provider: 'codex',
+      artifact: 'agent',
+      policy,
+      catalog,
+    });
+    expect(result.fields.model).toBe('gpt-dynamic-cheap');
+  });
   it('omits pretend per-agent fields for global-only Warp', () => {
     const result = compileModelPolicy({ provider: 'warp', artifact: 'agent', policy });
     expect(result.outcome).toBe('global-only');

@@ -113,7 +113,9 @@ AgentSmith automatically transforms agents for each platform:
 ---
 name: agent-name
 description: Agent description
-model: sonnet
+model: haiku
+model-role: efficiency
+model-tier: economy
 tools: Read, Write
 ---
 
@@ -130,25 +132,20 @@ tools: Read, Write
   "description": "Agent description",
   "prompt": "[Content]",
   "tools": ["read", "write"],
-  "model": "sonnet"
+  "model": "auto",
+  "modelRole": "efficiency",
+  "modelTier": "economy"
 }
 ```
 
-### Codex (YAML with specific structure)
+### Codex (standalone TOML custom agent)
 
-```yaml
----
-agent_name: agent-name
-description: Agent description
-capabilities:
-  - read
-  - write
-preferred_model: sonnet
----
-
-# System Instructions
-
-[Content]
+```toml
+name = "agent-name"
+description = "Agent description"
+developer_instructions = "[Content]"
+model = "gpt-5.4-mini"
+model_reasoning_effort = "low"
 ```
 
 ### Windsurf (Plain markdown)

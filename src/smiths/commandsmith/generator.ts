@@ -138,6 +138,10 @@ function transformForCursor(
         'Report status',
       ],
     },
+    commandHint: {
+      modelRole: options.modelRole ?? 'efficiency',
+      modelTier: options.modelTier ?? 'economy',
+    },
   };
 
   return JSON.stringify(spec, null, 2);
@@ -164,6 +168,9 @@ export async function generateCommand(options: CommandOptions): Promise<Generate
 
   // Build file path
   const filePath = join(targetDir, `${options.name}${ext}`);
+  const skillPath = join(options.projectPath, '.agents/skills', options.name, 'SKILL.md');
+  const modelRole = options.modelRole ?? (template === 'orchestration' ? 'coding' : 'efficiency');
+  const modelTier = options.modelTier ?? (template === 'orchestration' ? 'standard' : 'economy');
 
   // Generate content based on platform
   let content: string;
@@ -178,14 +185,35 @@ export async function generateCommand(options: CommandOptions): Promise<Generate
       options.description,
       options.args,
       options.options,
-      options.guidance
+      options.guidance,
+      modelRole,
+      modelTier
     );
   }
+  const skillContent = `---
+name: ${options.name}
+namespace: aiwg
+description: ${options.description}
+commandHint:
+  modelRole: ${modelRole}
+  modelTier: ${modelTier}
+---
+
+# ${options.name}
+
+${options.description}
+
+## Execution
+
+Use the generated provider command artifact for slash-command UX, but treat this SKILL.md as the canonical source for model policy and deployment translation.
+`;
 
   return {
     name: options.name,
     path: filePath,
     content,
+    skillContent,
+    skillPath,
     platform: options.platform,
     template,
   };
@@ -257,8 +285,10 @@ export async function deployCommand(
     // Ensure directory exists
     const dir = dirname(command.path);
     await mkdir(dir, { recursive: true });
+    await mkdir(dirname(command.skillPath), { recursive: true });
 
     // Write command file
+    await writeFile(command.skillPath, command.skillContent, 'utf-8');
     await writeFile(command.path, command.content, 'utf-8');
 
     return {

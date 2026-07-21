@@ -120,6 +120,7 @@ export interface CompileModelPolicyInput {
   provider: ModelPolicyProvider;
   artifact: 'agent' | 'skill';
   policy: CanonicalModelPolicy;
+  catalog?: ProviderModelCatalog;
   now?: Date;
 }
 export interface CompiledModelPolicy {
@@ -204,7 +205,7 @@ function fieldNames(provider: Provider): { model?: string; effort?: string } {
 }
 export function compileModelPolicy(input: CompileModelPolicyInput): CompiledModelPolicy {
   const registry = loadProviderModelCapabilities();
-  const catalog = loadProviderModelCatalog();
+  const catalog = input.catalog ?? loadProviderModelCatalog();
   const capability = registry.providers[input.provider];
   if (!capability) throw new Error(`Unknown provider model capability: ${input.provider}`);
   const surface = capability[input.artifact];

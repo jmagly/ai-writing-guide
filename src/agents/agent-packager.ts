@@ -59,6 +59,12 @@ export class AgentPackager {
     if (metadata.model) {
       lines.push(`model: ${metadata.model}`);
     }
+    if (metadata.modelRole) {
+      lines.push(`model-role: ${metadata.modelRole}`);
+    }
+    if (metadata.modelTier) {
+      lines.push(`model-tier: ${metadata.modelTier}`);
+    }
 
     if (metadata.tools && metadata.tools.length > 0) {
       lines.push(`tools: ${metadata.tools.join(', ')}`);
@@ -100,6 +106,8 @@ export class AgentPackager {
       prompt: content,
       tools,
       ...(metadata.model && { model: metadata.model }),
+      ...(metadata.modelRole && { modelRole: metadata.modelRole }),
+      ...(metadata.modelTier && { modelTier: metadata.modelTier }),
       ...(metadata.category && { category: metadata.category }),
       ...(metadata.version && { version: metadata.version }),
       ...(metadata.dependencies && { dependencies: metadata.dependencies }),
@@ -129,6 +137,12 @@ export class AgentPackager {
 
     if (metadata.model) {
       lines.push(`preferred_model: ${metadata.model}`);
+    }
+    if (metadata.modelRole) {
+      lines.push(`model-role: ${metadata.modelRole}`);
+    }
+    if (metadata.modelTier) {
+      lines.push(`model-tier: ${metadata.modelTier}`);
     }
 
     if (metadata.category) {
@@ -176,6 +190,12 @@ export class AgentPackager {
     }
     if (metadata.model) {
       lines.push(`Preferred Model: ${metadata.model}`);
+    }
+    if (metadata.modelRole) {
+      lines.push(`Model Role: ${metadata.modelRole}`);
+    }
+    if (metadata.modelTier) {
+      lines.push(`Model Tier: ${metadata.modelTier}`);
     }
     if (metadata.tools && metadata.tools.length > 0) {
       lines.push(`Tools: ${metadata.tools.join(', ')}`);
@@ -225,6 +245,10 @@ export class AgentPackager {
     // Add model info if present
     if (metadata.model) {
       lines.push(`**Model**: ${metadata.model}`);
+      lines.push('');
+    }
+    if (metadata.modelRole || metadata.modelTier) {
+      lines.push(`**Model Policy**: ${metadata.modelRole ?? 'coding'}/${metadata.modelTier ?? 'standard'}`);
       lines.push('');
     }
 

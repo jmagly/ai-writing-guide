@@ -159,6 +159,9 @@ Keep this directory shaped like upstream so \`aiwg promote\` works.
 const STARTER_SKILL = (name: string) => `---
 name: ${name}-skill
 description: Starter skill for the ${name} project-local bundle. Customize this.
+commandHint:
+  modelRole: efficiency
+  modelTier: economy
 ---
 
 # ${name}-skill
@@ -199,7 +202,8 @@ State when this rule fires and what action it requires.
 const STARTER_AGENT = (name: string) => `---
 name: ${name}-agent
 description: Starter agent for the ${name} project-local bundle.
-model: claude-sonnet-4-6
+model-role: efficiency
+model-tier: economy
 ---
 
 # ${name}-agent

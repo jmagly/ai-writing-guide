@@ -57,6 +57,10 @@ export interface CommandOptions {
   dryRun?: boolean;
   /** Custom target directory */
   targetDir?: string;
+  /** Provider-neutral model role; defaults to efficiency for cheap-first commands */
+  modelRole?: 'reasoning' | 'coding' | 'efficiency';
+  /** Provider-neutral model tier; defaults to economy for cheap-first commands */
+  modelTier?: 'economy' | 'standard' | 'premium';
 }
 
 /**
@@ -69,6 +73,10 @@ export interface GeneratedCommand {
   path: string;
   /** Command file content */
   content: string;
+  /** Canonical SKILL.md source content for policy-preserving command generation */
+  skillContent: string;
+  /** Path for the canonical skill source */
+  skillPath: string;
   /** Target platform */
   platform: Platform;
   /** Template used */
@@ -105,6 +113,10 @@ export interface CursorCommandSpec {
   }>;
   execution: {
     steps: string[];
+  };
+  commandHint: {
+    modelRole: 'reasoning' | 'coding' | 'efficiency';
+    modelTier: 'economy' | 'standard' | 'premium';
   };
 }
 

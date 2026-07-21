@@ -317,6 +317,19 @@ describe('steward find --capability', () => {
   });
 });
 
+describe('steward models', () => {
+  it('routes to model policy and catalog commands', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const result = await stewardHandler.execute(makeCtx(['models', '--complex']));
+    expect(result.exitCode).toBe(0);
+    const output = consoleSpy.mock.calls.map(call => String(call[0])).join('\n');
+    expect(output).toContain('Model policy routing');
+    expect(output).toContain('aiwg models sources --json');
+    expect(output).toContain('aiwg models audit --provider P');
+    consoleSpy.mockRestore();
+  });
+});
+
 describe('steward unknown subcommand', () => {
   beforeEach(() => { vi.clearAllMocks(); });
 

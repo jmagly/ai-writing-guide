@@ -24,6 +24,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Fixed
 
+- **Provider-aware model compilation and authoring** (#1821, #1822, #1823,
+  #1824, #1825, #1826) — model audit and resolution now consume the effective
+  dynamic catalog; AgentSmith emits compiled Codex TOML; agent, skill, and
+  command generators use canonical cheap-first role/tier policy; and Steward
+  routes model catalog and escalation questions through the supported CLI.
 - **Flow namespace false positives** — workflow indexing now accepts only the
   declared Flow/Workflow/Ops resource families instead of treating every YAML
   document under an `ops.aiwg.io` namespace as a flow.

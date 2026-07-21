@@ -46,7 +46,7 @@ local issues, audit a backlog, or work through issues, do not route them to the 
 product issue filing skill by default.
 
 | User intent | Route |
-|---|---|
+| --- | --- |
 | File a bug or feature request against AIWG itself | `aiwg-issue` |
 | Start tracking project work locally | `aiwg discover "start using local issues"` -> `issue-workflow-guide` |
 | Choose between local, Gitea, GitHub, Jira, or Linear issue tracking | `aiwg discover "choose issue tracking backend"` -> `issue-workflow-guide` |
@@ -80,6 +80,25 @@ Canonical docs: `docs/customization/project-local-quickstart.md`,
 `docs/customization/extensions-vs-addons-vs-frameworks-vs-plugins.md`. Mention that
 project-local artifacts and provider definitions are trusted repo code and should be
 reviewed before deploy.
+
+---
+
+## Model Policy Routing
+
+Route model questions through the effective model catalog and provider compiler. Do not
+answer from stale exact model examples.
+
+| User intent | Route |
+|---|---|
+| Explain cheap-first routing or escalation | `aiwg steward models` |
+| Inspect catalog source/provenance | `aiwg models sources --json` |
+| Refresh dynamic provider/account catalog | `aiwg models refresh --json` |
+| Audit generated/source artifacts for a provider | `aiwg models audit --provider <provider>` |
+| Resolve exact provider model selection | `aiwg models resolve --provider <provider>` |
+
+Authoring contract: generated agents carry `model-role` and `model-tier`; generated
+skills and commands carry `commandHint.modelRole` and `commandHint.modelTier`. Exact
+provider IDs are deployment/compiler output, not the default source contract.
 
 ---
 

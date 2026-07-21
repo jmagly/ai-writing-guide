@@ -57,6 +57,8 @@ export interface AgentMetadata {
   description: string;
   category?: AgentCategory;
   model?: string;
+  modelRole?: 'reasoning' | 'coding' | 'efficiency';
+  modelTier?: 'economy' | 'standard' | 'premium' | 'max-quality';
   tools?: string[];
   dependencies?: string[];
   version?: string;
