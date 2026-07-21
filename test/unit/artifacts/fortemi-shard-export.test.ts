@@ -147,9 +147,15 @@ describe("AIWG portable Fortemi shard export", () => {
       privacy: "sanitized",
       generatedAt: "2026-07-16T00:00:00.000Z",
     });
+    const repeated = await buildAiwgFortemiKnowledgeShard(tmpDir, {
+      repo: "Fortemi/fortemi-react",
+      privacy: "sanitized",
+      generatedAt: "2026-07-16T00:00:00.000Z",
+    });
 
     const validation = validateShardArchive(shard);
     expect(validation).toEqual({ valid: true, errors: [] });
+    expect(repeated).toEqual(shard);
 
     const reader = await openShard(shard);
     try {

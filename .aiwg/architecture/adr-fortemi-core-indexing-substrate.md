@@ -90,7 +90,7 @@ name or record content does not make their contracts interchangeable.
 | Plane | Purpose | Authority | Current status |
 | --- | --- | --- | --- |
 | Static index | Local discovery, query, graph traversal, research selection, and packaged fallback | AIWG owns `aiwg.fortemi.index.export.v1/v2`; `@fortemi/core` consumes the pinned contract | Implemented and covered by local parity fixtures; direct released-package verification remains a release gate |
-| Portable shard conversion | Convert an AIWG v2 index into a profile-scoped Knowledge Shard | AIWG owns source-record meaning; `@fortemi/core` owns the converter; Fortemi server owns the shard schema/profile | Verified for named profile `core-v1` with locked `@fortemi/core@2026.7.9`, a revision-and-digest-pinned schema receipt, clean PGlite import/re-export, and clean Fortemi server import/re-export in blocking CI. This does not advertise `full-v1` or broader suite-matrix completion. |
+| Portable shard conversion | Convert an AIWG v2 index into a profile-scoped Knowledge Shard | AIWG owns source-record meaning; `@fortemi/core` owns the converter; Fortemi server owns the shard schema/profile | Verified for named profile `core-v1` with locked `@fortemi/core@2026.7.11`, a revision-and-digest-pinned schema receipt, clean PGlite import/re-export, and clean Fortemi server import/re-export in blocking CI. This does not advertise `full-v1` or broader suite-matrix completion. |
 | Live MCP persistence | Route configured AIWG subsystems to a running Fortemi service | Fortemi MCP tool contract, consumed by AIWG's alpha storage adapter | Independent alpha adapter with no static-index or shard compatibility implication |
 
 The static index remains AIWG's rebuildable search cache. Shard conversion is
@@ -239,7 +239,7 @@ downstream reverse edges). This is a legacy compatibility bridge, not the
 primary package boundary.
 
 The historical optional package-boundary evidence used
-`@fortemi/core@2026.7.7`. AIWG now locks `@fortemi/core@2026.7.9` in
+`@fortemi/core@2026.7.7`. AIWG now locks `@fortemi/core@2026.7.11` in
 `package.json` and `package-lock.json`; blocking shard conformance CI installs
 that exact package graph with `npm ci` and verifies the immutable receipt.
 Future package upgrades must regenerate and restamp the receipt and pass the

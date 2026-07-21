@@ -44,6 +44,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   Extractor revisions now invalidate stale incremental entries independently
   of the stable index schema version.
 
+- **Deterministic Fortemi shard conformance refresh** (#1797) — AIWG now pins
+  the published `@fortemi/core@2026.7.11` converter. The representative
+  `core-v1` fixture is byte-reproducible across independent exports, while the
+  immutable receipt continues to prove clean PGlite and Fortemi server
+  import/re-export with zero undeclared loss.
+
 ### Fixed
 
 - **Strict Steward route option parsing** (#1834) — value-bearing routing flags

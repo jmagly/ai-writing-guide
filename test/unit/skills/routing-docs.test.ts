@@ -679,7 +679,7 @@ describe('routing documentation regressions', () => {
     expect(adr).toContain('aiwg issue list --search');
     expect(adr).toContain('.aiwg/issues/index/issues.index.json');
     expect(adr).toContain('local issue CLI contract');
-    expect(adr).toContain('@fortemi/core@2026.7.9');
+    expect(adr).toContain('@fortemi/core@2026.7.11');
     expect(adr).toContain('blocking shard conformance CI');
     expect(adr).toContain('clean PGlite import/re-export');
     expect(adr).toContain('clean Fortemi server import/re-export');

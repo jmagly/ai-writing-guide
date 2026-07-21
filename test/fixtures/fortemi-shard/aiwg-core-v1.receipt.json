@@ -2,19 +2,19 @@
   "schema_version": "aiwg.fortemi.shard-receipt.v1",
   "producer": {
     "repository": "https://git.integrolabs.net/roctinam/aiwg.git",
-    "commit": "177cff5ace277d673b86ec5bd6a86fe6fcd50ffa",
+    "commit": "9c58f437d82a347dc2c979e04bfe716384037975",
     "package": {
       "name": "aiwg",
-      "version": "2026.7.14"
+      "version": "2026.7.15"
     }
   },
   "converter": {
     "repository": "https://git.integrolabs.net/Fortemi/fortemi-react.git",
-    "commit": "95e87770e257afe9913c9cfced050648c52e1e97",
+    "commit": "f45ca77c9af835d40673b357f523808d07f6597b",
     "package": {
       "name": "@fortemi/core",
-      "version": "2026.7.9",
-      "integrity": "sha512-fl8tO6XdSX1EOd4ZT8yhEeVA/xbsYgfqjotWgMkGnta+da/6WY78oGBskZ/Ff9ewZtqSMpLQLJY80gCswcSu0g=="
+      "version": "2026.7.11",
+      "integrity": "sha512-0X+3KLhCwD19xASvxUbfeIbnq7lc/GqvQH66l8S1r+lBjz59WjkWiN/IjrZLeCSMe1B0ipOA3XoJQlzpYFLnLw=="
     }
   },
   "authority": {
@@ -27,8 +27,8 @@
   },
   "archive": {
     "path": "test/fixtures/fortemi-shard/aiwg-core-v1.shard",
-    "sha256": "2abcc996b3d84bd723274f6bdf8c5f1fdbe56af45f8a25218f32f95e8575582b",
-    "bytes": 2038,
+    "sha256": "b0127d2b7446bff5d2c7cc772224b9cf8fd295ab74493d76adf6b321c4e226ab",
+    "bytes": 2029,
     "manifest": {
       "format": "matric-shard",
       "version": "1.2.0",
@@ -65,7 +65,7 @@
     "pglite": {
       "package": {
         "name": "@fortemi/core",
-        "version": "2026.7.9"
+        "version": "2026.7.11"
       },
       "clean_destination": true,
       "semantic_reexport": true,
