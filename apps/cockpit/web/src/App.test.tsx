@@ -235,6 +235,8 @@ describe('App shell (rendered DOM)', () => {
       await act(async () => { await Promise.resolve(); await Promise.resolve(); });
       expect(screen.getByText('Bridge live')).toBeTruthy();
       expect(screen.getByText('1 stacks')).toBeTruthy();
+      const sessionCallsBeforeDrop = vi.mocked(globalThis.fetch).mock.calls
+        .filter(([input]) => String(input).includes('/api/sessions?instance=')).length;
 
       executorAvailable = false;
       await act(async () => { await vi.advanceTimersByTimeAsync(15_000); });
@@ -247,6 +249,8 @@ describe('App shell (rendered DOM)', () => {
       expect(screen.getByText('Bridge live')).toBeTruthy();
       expect(screen.queryByText('Reconnecting…')).toBeNull();
       expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining('/api/running'), expect.anything());
+      expect(vi.mocked(globalThis.fetch).mock.calls
+        .filter(([input]) => String(input).includes('/api/sessions?instance=')).length).toBeGreaterThan(sessionCallsBeforeDrop);
     } finally {
       vi.useRealTimers();
     }

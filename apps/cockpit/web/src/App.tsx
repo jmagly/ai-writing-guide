@@ -239,7 +239,7 @@ export function App() {
         <Panel id="missions" tab={tab}><Missions refreshTick={refreshTick} /></Panel>
         {/* Sessions stays mounted so the WebSocket survives tab switches */}
         <section id="panel-sessions" role="tabpanel" aria-labelledby="tab-sessions" hidden={tab !== 'sessions'}>
-          <Sessions session={session} composer={composer} setComposer={setComposer} onRequestStart={requestStart} />
+          <Sessions session={session} composer={composer} setComposer={setComposer} onRequestStart={requestStart} refreshTick={refreshTick} />
         </section>
         <Panel id="approvals" tab={tab}><Approvals refreshTick={refreshTick} responses={[...registryResponses, ...(session.responseNeeded.needed ? [sessionResponse(session)] : [])]} goSessions={() => setTab('sessions')} /></Panel>
         <Panel id="explore" tab={tab}><Explore /></Panel>

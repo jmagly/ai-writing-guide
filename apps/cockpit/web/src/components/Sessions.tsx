@@ -7,7 +7,14 @@ import type { SessionApi } from '../useSession';
 import { markRegistrySessionViewed, sessionRegistryKeyFor, setRegistryActiveSession, upsertRegistrySessions, useSessionRegistry } from '../sessionRegistry';
 import { useSessionSnapshotMonitor } from '../sessionMonitor';
 
-export function Sessions({ session, composer, setComposer, onRequestStart, refreshMs = 5_000 }: { session: SessionApi; composer: string; setComposer: (v: string) => void; onRequestStart: (instanceId?: string) => void; refreshMs?: number }) {
+export function Sessions({ session, composer, setComposer, onRequestStart, refreshMs = 5_000, refreshTick = 0 }: {
+  session: SessionApi;
+  composer: string;
+  setComposer: (v: string) => void;
+  onRequestStart: (instanceId?: string) => void;
+  refreshMs?: number;
+  refreshTick?: number;
+}) {
   const [instances, setInstances] = useState<Instance[]>([]);
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [instId, setInstId] = useState('');
@@ -112,7 +119,7 @@ export function Sessions({ session, composer, setComposer, onRequestStart, refre
       cancelled = true;
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [endingSession, loadSessions, refreshInventory, refreshMs]);
+  }, [endingSession, loadSessions, refreshInventory, refreshMs, refreshTick]);
 
   useEffect(() => {
     if (!instId) return;
