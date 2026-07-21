@@ -168,7 +168,10 @@ const ENUM_RULES: Record<string, readonly string[]> = {
   'delivery.force_push_policy': ['never', 'own-branch-only', 'allowed'],
   'delivery.signing.format': ['openpgp', 'ssh', 'x509'],
   'delivery.signing.enforce': ['commits', 'tags', 'all'],
+  'delivery.release_signing.format': ['openpgp', 'ssh', 'x509'],
+  'delivery.release_signing.enforce': ['commits', 'tags', 'all'],
   'remotes.tracker_actor.via': ['tea', 'gh', 'mcp', 'api'],
+  'remotes.transport.protocol': ['ssh', 'https'],
   'repo_maintainer.tiers.local': ['collaborator', 'maintainer', 'admin'],
 };
 

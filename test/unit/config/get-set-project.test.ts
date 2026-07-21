@@ -194,11 +194,15 @@ describe('aiwg config get|set --project (#1006)', () => {
       await main(['set', '--project', 'delivery.signing.format', 'openpgp', '--target', tmp]);
       await main(['set', '--project', 'delivery.signing.key', '0117DAAA677A5BF2', '--target', tmp]);
       await main(['set', '--project', 'delivery.signing.enforce', 'commits', '--target', tmp]);
+      await main(['set', '--project', 'delivery.release_signing.format', 'openpgp', '--target', tmp]);
+      await main(['set', '--project', 'delivery.release_signing.key', 'DEF456', '--target', tmp]);
+      await main(['set', '--project', 'delivery.release_signing.enforce', 'tags', '--target', tmp]);
 
       const cfg = readConfig(tmp) as {
         delivery?: {
           committer?: { name?: string; email?: string };
           signing?: { format?: string; key?: string; enforce?: string };
+          release_signing?: { format?: string; key?: string; enforce?: string };
         };
       };
       expect(cfg.delivery?.committer).toEqual({
@@ -209,6 +213,11 @@ describe('aiwg config get|set --project (#1006)', () => {
         format: 'openpgp',
         key: '0117DAAA677A5BF2',
         enforce: 'commits',
+      });
+      expect(cfg.delivery?.release_signing).toMatchObject({
+        format: 'openpgp',
+        key: 'DEF456',
+        enforce: 'tags',
       });
     });
 
@@ -232,6 +241,25 @@ describe('aiwg config get|set --project (#1006)', () => {
         code: 'ERR_INVALID_VALUE',
         message: expect.stringContaining('remotes.tracker_actor.via'),
       });
+    });
+
+    it('round-trips primary remote transport identity and validates protocol', async () => {
+      await main(['set', '--project', 'remotes.transport.login', 'roctinam', '--target', tmp]);
+      await main(['set', '--project', 'remotes.transport.protocol', 'ssh', '--target', tmp]);
+      await main(['set', '--project', 'remotes.transport.helper', 'tools/git/push-origin-as-roctinam.sh', '--target', tmp]);
+      await main(['set', '--project', 'remotes.transport.key_fingerprint', 'SHA256:project-key', '--target', tmp]);
+
+      const cfg = readConfig(tmp) as { remotes?: { transport?: Record<string, string> } };
+      expect(cfg.remotes?.transport).toEqual({
+        login: 'roctinam',
+        protocol: 'ssh',
+        helper: 'tools/git/push-origin-as-roctinam.sh',
+        key_fingerprint: 'SHA256:project-key',
+      });
+
+      await expect(
+        main(['set', '--project', 'remotes.transport.protocol', 'ftp', '--target', tmp]),
+      ).rejects.toMatchObject({ code: 'ERR_INVALID_VALUE' });
     });
 
     it('round-trips repo-maintainer local tier override and validates known tier values', async () => {

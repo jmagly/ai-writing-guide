@@ -42,9 +42,12 @@ may point anywhere on the system.
 Each member has its own `<member>/.aiwg/aiwg.config`. That member config—not the
 workspace root config—controls:
 
-- `delivery`, including branch mode, default branch, committer, and signing;
+- `delivery`, including branch mode, default branch, committer, commit signing,
+  and distinct release-tag signing;
 - `remotes.primary`, `remotes.issue_tracker`, and `remotes.ci`;
 - `remotes.tracker_actor`, including `forbid_actors`;
+- `remotes.transport`, including the authenticated forge login, protocol,
+  project helper, and public SSH key fingerprint;
 - issue taxonomy and other repo-local policy.
 
 Remote URLs are read from the member clone, so provider and domain routing is

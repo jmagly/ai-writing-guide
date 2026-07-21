@@ -113,6 +113,18 @@ export interface TrackerActorConfig {
   forbid_actors?: string[];
 }
 
+/** Git transport identity and the project-local helper that enforces it. */
+export interface RemoteTransportConfig {
+  /** Forge login expected to authenticate git pushes. */
+  login?: string;
+  /** Transport used by the primary remote. */
+  protocol?: 'ssh' | 'https';
+  /** Project-relative command used for authenticated push/check operations. */
+  helper?: string;
+  /** Public SSH host/account key fingerprint expected by the helper. */
+  key_fingerprint?: string;
+}
+
 /**
  * Repo origin topology — declares which remote is primary (CI / issues / PRs)
  * and which are secondary (mirrors, publishing targets).
@@ -128,6 +140,8 @@ export interface RemotesConfig {
   ci?: string;
   /** Which forge account/tool performs delivery writes. */
   tracker_actor?: TrackerActorConfig;
+  /** Identity and helper used for git transport to the primary remote. */
+  transport?: RemoteTransportConfig;
   /** Mirrors, fork bases, publishing targets. */
   secondary?: SecondaryRemote[];
 }
@@ -141,6 +155,7 @@ export interface ResolvedRemotes {
   issue_tracker: string;
   ci: string;
   tracker_actor?: TrackerActorConfig;
+  transport?: RemoteTransportConfig;
   secondary: SecondaryRemote[];
 }
 
@@ -528,6 +543,8 @@ export interface DeliveryConfig {
   committer?: CommitterIdentity;
   /** Signing key/material metadata for delivery commits/tags. */
   signing?: SigningConfig;
+  /** Distinct signing metadata for annotated release tags. */
+  release_signing?: SigningConfig;
   force_push_policy?: ForcePushPolicy;
   /** Include "Closes #N" / "Fixes #N" in PR body when an issue is referenced. */
   auto_close_issues?: boolean;
@@ -549,6 +566,7 @@ export interface ResolvedDelivery {
   require_signed_commits: boolean;
   committer?: CommitterIdentity;
   signing?: SigningConfig;
+  release_signing?: SigningConfig;
   force_push_policy: ForcePushPolicy;
   auto_close_issues: boolean;
   issue_comment_on_cycle: boolean;
@@ -589,6 +607,7 @@ export function resolveDelivery(delivery: DeliveryConfig | undefined): ResolvedD
     require_signed_commits: delivery?.require_signed_commits ?? false,
     committer: delivery?.committer,
     signing: delivery?.signing,
+    release_signing: delivery?.release_signing,
     force_push_policy: delivery?.force_push_policy ?? 'never',
     auto_close_issues: delivery?.auto_close_issues ?? true,
     issue_comment_on_cycle: delivery?.issue_comment_on_cycle ?? true,
@@ -1121,6 +1140,7 @@ export function resolveRemotes(remotes: RemotesConfig | undefined): ResolvedRemo
     issue_tracker: remotes?.issue_tracker ?? primary,
     ci: remotes?.ci ?? primary,
     tracker_actor: remotes?.tracker_actor,
+    transport: remotes?.transport,
     secondary: remotes?.secondary ?? [],
   };
 }

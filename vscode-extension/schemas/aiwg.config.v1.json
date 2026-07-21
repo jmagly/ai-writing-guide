@@ -104,6 +104,10 @@
           "$ref": "#/definitions/TrackerActor",
           "description": "Forge account/tool that must author delivery writes such as issue comments, PRs, labels, and closures (#1601)."
         },
+        "transport": {
+          "$ref": "#/definitions/RemoteTransport",
+          "description": "Git transport identity and project-local helper for the primary remote."
+        },
         "secondary": {
           "type": "array",
           "description": "Mirrors, fork bases, and publishing targets",
@@ -201,6 +205,10 @@
         "signing": {
           "$ref": "#/definitions/SigningConfig",
           "description": "Signing metadata for delivery commits/tags (#1601)."
+        },
+        "release_signing": {
+          "$ref": "#/definitions/SigningConfig",
+          "description": "Distinct signing metadata for annotated release tags."
         },
         "force_push_policy": {
           "type": "string",
@@ -680,6 +688,29 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "Forge logins that must not author delivery mutations."
+        }
+      }
+    },
+    "RemoteTransport": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "login": {
+          "type": "string",
+          "description": "Forge login expected to authenticate git pushes."
+        },
+        "protocol": {
+          "type": "string",
+          "enum": ["ssh", "https"],
+          "description": "Transport used by the primary remote."
+        },
+        "helper": {
+          "type": "string",
+          "description": "Project-relative command used for authenticated push/check operations."
+        },
+        "key_fingerprint": {
+          "type": "string",
+          "description": "Public SSH key fingerprint expected by the helper."
         }
       }
     },

@@ -84,9 +84,9 @@ Member names and paths must be unique.
 
 Each member repository keeps its own `.aiwg/aiwg.config`. AIWG resolves the
 target member first, then loads that member config for `delivery`, `remotes`,
-`tracker_actor`, signing, and issue policy. It does not inherit those fields
-from the workspace root. Git remote URLs in the member clone determine each
-route's provider and domain. `repos[].provider` is an optional fallback hint
+`tracker_actor`, git transport identity, signing, and issue policy. It does not
+inherit those fields from the workspace root. Git remote URLs in the member
+clone determine each route's provider and domain. `repos[].provider` is an optional fallback hint
 only for ambiguous self-hosted URLs.
 
 `repos[].allowed` uses this closed vocabulary:

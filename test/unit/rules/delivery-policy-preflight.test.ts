@@ -17,7 +17,8 @@ describe('delivery-policy project config preflight', () => {
       expect(content).toContain('creating a branch, committing, pushing, opening a PR');
       expect(content).toContain('Read `.aiwg/aiwg.config` from the repository root');
       expect(content).toContain('Resolve `remotes.primary`, `remotes.issue_tracker`, and `remotes.ci`');
-      expect(content).toContain('Resolve `delivery.mode`, `delivery.default_branch`, signing requirements');
+      expect(content).toContain('Resolve `delivery.mode`, `delivery.default_branch`, commit and release-tag');
+      expect(content).toContain('Resolve `remotes.transport` for git pushes');
       expect(content).toContain('Resolve `remotes.tracker_actor` for tracker mutations');
       expect(content).toContain('MCP/app tools for the configured tracker');
       expect(content).toContain('tracker HTTP API with configured');

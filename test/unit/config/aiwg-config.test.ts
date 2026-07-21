@@ -426,6 +426,7 @@ describe('aiwg-config', () => {
         issue_tracker: 'origin',
         ci: 'origin',
         tracker_actor: undefined,
+        transport: undefined,
         secondary: [],
       });
     });
@@ -436,6 +437,7 @@ describe('aiwg-config', () => {
       expect(r.issue_tracker).toBe('origin');
       expect(r.ci).toBe('origin');
       expect(r.tracker_actor).toBeUndefined();
+      expect(r.transport).toBeUndefined();
       expect(r.secondary).toEqual([]);
     });
 
@@ -469,6 +471,23 @@ describe('aiwg-config', () => {
         login: 'roctinam',
         via: 'tea',
         forbid_actors: ['roctibot'],
+      });
+    });
+
+    it('preserves primary remote transport identity metadata', () => {
+      const r = resolveRemotes({
+        transport: {
+          login: 'roctinam',
+          protocol: 'ssh',
+          helper: 'tools/git/push-origin-as-roctinam.sh',
+          key_fingerprint: 'SHA256:project-key',
+        },
+      });
+      expect(r.transport).toEqual({
+        login: 'roctinam',
+        protocol: 'ssh',
+        helper: 'tools/git/push-origin-as-roctinam.sh',
+        key_fingerprint: 'SHA256:project-key',
       });
     });
 
@@ -538,6 +557,7 @@ describe('aiwg-config', () => {
       expect(r.require_signed_commits).toBe(false);
       expect(r.committer).toBeUndefined();
       expect(r.signing).toBeUndefined();
+      expect(r.release_signing).toBeUndefined();
       expect(r.force_push_policy).toBe('never');
       expect(r.auto_close_issues).toBe(true);
       expect(r.issue_comment_on_cycle).toBe(true);
@@ -551,6 +571,7 @@ describe('aiwg-config', () => {
         require_signed_commits: true,
         committer: { name: 'AIWG Bot', email: 'aiwg@example.test' },
         signing: { format: 'openpgp', key: 'ABC123', enforce: 'commits' },
+        release_signing: { format: 'openpgp', key: 'DEF456', enforce: 'tags' },
         force_push_policy: 'own-branch-only',
       });
       expect(r.mode).toBe('direct');
@@ -559,6 +580,7 @@ describe('aiwg-config', () => {
       expect(r.require_signed_commits).toBe(true);
       expect(r.committer).toEqual({ name: 'AIWG Bot', email: 'aiwg@example.test' });
       expect(r.signing).toEqual({ format: 'openpgp', key: 'ABC123', enforce: 'commits' });
+      expect(r.release_signing).toEqual({ format: 'openpgp', key: 'DEF456', enforce: 'tags' });
       expect(r.force_push_policy).toBe('own-branch-only');
     });
 
