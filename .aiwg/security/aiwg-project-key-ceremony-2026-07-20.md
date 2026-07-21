@@ -16,6 +16,9 @@ contains public and operational facts only.
   the Gitea `roctinam` account.
 - Reader boundary: the operator role can read the AIWG commit and SSH leaves;
   a live read of the adjacent AIWG release leaf returned HTTP 403.
+- Release boundary: `ci-aiwg` can read the AIWG release leaf; live reads of
+  the AIWG commit and SSH leaves returned HTTP 403. Protected release-routing
+  variables were repointed to the project release leaf.
 - Historical decision: shared public keys remain committed so existing commits
   and tags continue to verify; their private authority is no longer selected
   for new AIWG operations.
