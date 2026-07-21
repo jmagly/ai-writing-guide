@@ -277,8 +277,8 @@ The default backend is Fortemi Core. The legacy local backend must remain
 available until:
 
 - #1691 parity fixtures run green in CI;
-- the Fortemi 2026.7.7 package contract remains green against AIWG v2 export,
-  query, and relationship traversal fixtures;
+- the locked Fortemi 2026.7.9 package contract remains green against AIWG v2
+  export, query, and relationship traversal fixtures;
 - semantic/hybrid behavior keeps the static-cache CI fixture green, with any
   direct Fortemi package integration gated and skipped cleanly without
   credentials or optional dependencies;
@@ -300,19 +300,23 @@ migration. It includes `@fortemi/core/aiwg-index`, direct
 index helpers, relationship traversal, static semantic/hybrid helpers, SKOS
 metadata fields, and provenance-event fields. AIWG tests direct v2 validation
 and query behavior against that contract when the package is installed. The
-proposed package-boundary workflow in
+archived package-boundary workflow proposal in
 `.aiwg/planning/fortemi-core-index-migration/fortemi-package-boundary-workflow-proposal.md`
 installs `@fortemi/core@2026.7.7` without changing the lockfile and sets
 `AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1` so a reviewed CI copy would fail if
 `@fortemi/core/aiwg-index` is unavailable or rejects the direct v2 export.
+That proposal records the earlier static-index gate; the current shard gate
+instead uses the locked `@fortemi/core@2026.7.9` dependency and `npm ci`.
 
-For shard conversion, the minimum published evidence is `@fortemi/core@2026.7.8`,
-whose npm artifact exports the converter. That observation does not replace the
-AIWG package-boundary test, named-profile validation, or real server round trip.
+For shard conversion, AIWG now pins `@fortemi/core@2026.7.9`. The immutable
+`core-v1` receipt records the registry integrity, Core authority and schema
+bundle digests, archive SHA-256, producer/consumer revisions, and capability
+loss report. Blocking CI verifies the actual published converter, a clean
+PGlite import/re-export, and a clean Fortemi server import/re-export.
 
-The default static fixture path does not require a live service. The portable
-shard package-boundary fixture validates the archive with Fortemi Core's shard
-schema and opens it through the read-only shard reader, but does not require a
-running Fortemi server and says nothing about real server import. Removing the
-legacy local backend remains gated by
-deprecation, fallback, and rollback evidence.
+The default static-index fixture path still does not require a live service.
+The separate portable-shard conformance workflow starts an isolated Fortemi
+test database, applies the pinned server harness to an exact clean checkout,
+and proves clean import/re-export plus atomic rejection behavior. This evidence
+is limited to named profile `core-v1`; removing the legacy local backend remains
+gated by deprecation, fallback, and rollback evidence.

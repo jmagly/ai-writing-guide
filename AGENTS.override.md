@@ -50,11 +50,13 @@ Keep the three Fortemi integration planes separate:
 - The `fortemi` storage backend is a separate alpha live MCP persistence
   adapter.
 
-The converter exists in AIWG source and `@fortemi/core@2026.7.8` publishes it,
-but agents must not claim verified server portability until AIWG CI exercises
-that pinned package and a generated fixture passes the server-owned
-schema/profile plus a real Fortemi import/re-export check. Source-unit tests and
-self round trips are not substitutes.
+The converter exists in AIWG source and the locked
+`@fortemi/core@2026.7.9` package publishes it. AIWG's immutable `core-v1`
+receipt and blocking shard-conformance CI exercise that published package,
+validate the server-owned schema/profile, and pass clean PGlite and Fortemi
+server import/re-export checks. This evidence is profile-scoped; source-unit
+tests and self round trips alone remain insufficient for new profiles or
+package revisions.
 
 Use only named shard profiles (`full-v1`, `core-v1`,
 `record-v1`). Treat `record-v1` as a declared subset with explicit loss
