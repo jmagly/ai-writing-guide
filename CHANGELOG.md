@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.14] - 2026-07-20 - "Provider-aware model routing and Fortemi conformance"
+
 ### Added
 
 - **Published Fortemi shard conformance receipt** (#1797) — exact
@@ -176,7 +178,7 @@ post-audit hardening of the external agent-loop LFD controls.
 - **Cockpit VM-runtime Reconnect** (#1778) — VM/QEMU/KVM instances now have a
   recovery path: the Bridge delivers the reconnect SIGHUP through the libvirt
   qemu-guest-agent channel (`virsh qemu-agent-command <domain> guest-exec
-  pkill -HUP -x agent-client`), the VM counterpart of the container
+pkill -HUP -x agent-client`), the VM counterpart of the container
   `docker exec agent-reconnect` fallback.
 - **Dedicated Cockpit documentation section** — `docs/cockpit/` (overview,
   installation, architecture, surfaces, sessions, bridge API, trust & security,
@@ -440,11 +442,11 @@ required runtime dependency for normal discovery/search commands.
 ### Added
 
 - **Fortemi v2 export contract** — `aiwg index export --format fortemi
-  --schema-version v2` emits AIWG domain records with search projections, typed
+--schema-version v2` emits AIWG domain records with search projections, typed
   relationships, privacy locality, source-body chunks, and embedding metadata
   slots for the shared Fortemi semantic path.
 - **Fortemi Core static cache preview** — `aiwg index sync --backend
-  fortemi-core` materializes `.aiwg/.index/fortemi-core/<graph>/` cache files
+fortemi-core` materializes `.aiwg/.index/fortemi-core/<graph>/` cache files
   that opt-in commands can read explicitly with `--backend fortemi-core`.
 - **Valid empty-cache semantics** — a synced Fortemi Core cache with zero items
   is treated as a valid empty index: queries return empty result sets,
@@ -550,7 +552,7 @@ navigation, and hardens executor enrollment.
 - **Claude startup-context budget in `aiwg doctor` (#1672)** — doctor reports
   the aggregate context Claude Code inlines at session start versus the standard
   Sonnet window with an OK/WARN/OVER verdict. `npm run lint:claude-context --
-  --startup [--strict]` enforces the budget in CI.
+--startup [--strict]` enforces the budget in CI.
 - **Cockpit read-only observe terminal** — observe a running session's terminal
   output read-only, with auto-observe when a session is selected.
 - **Cockpit persistent instances + sessions navigation (#1670)** — a persistent
@@ -748,7 +750,7 @@ trusted-publishing path was validated.
   operator-focused feature summary before the existing architecture and
   validation details.
 - **Install guidance points at the supported AIWG path first** — `aiwg use
-  cockpit` is documented as the recommended install because it keeps
+cockpit` is documented as the recommended install because it keeps
   `@aiwg/cockpit` outside the base footprint while version-locking it to the base
   `aiwg` CLI. Direct `npm i -g @aiwg/cockpit` remains documented for package
   testing.
@@ -818,7 +820,7 @@ releases publish cleanly and the GitHub mirror actually creates Release pages.
 - **`cut-tag.sh` now gates `package-lock.json` version lockstep** (new pre-tag
   check 5/12). The 2026.6.4 prep bumped `package.json`, `marketplace.json`, and
   `apps/cockpit` but not the lockfile, so CI's `check:versions` / `npm ci`
-  failed *after* the tag was pushed and the npm publish never ran. The wrapper
+  failed _after_ the tag was pushed and the npm publish never ran. The wrapper
   now catches a stale lockfile before tagging.
 - **GitHub mirror creates Release pages again** — `github-mirror.yml` checked
   `secrets.GH_TOKEN`, but the configured Gitea Actions secret is
@@ -841,12 +843,12 @@ hardened so a single failing step no longer strands the `@next` channel.
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
-| **Project-local bundles deploy to Factory & Codex** | A `.aiwg/extensions/<id>/` bundle with `agents/` or `rules/` now lands in `.factory/droids` + `.factory/rules` and `.codex/agents` + `.codex/rules`, not just `.claude/`. Previously Factory and Codex silently deployed 0 agents and 0 rules from project-local bundles. (#124) |
-| **`AIWG_ROOT` is no longer required for project-local agent bundles** | Deploying an agent-shadowing bundle without `AIWG_ROOT` set no longer empties your provider's kernel skill directory (e.g. `.claude/skills/`). The CLI injects the root automatically, and the prune now skips rather than deleting everything when the root can't be resolved. (#123) |
-| **`aiwg remove` fails cleanly** | `aiwg remove all --provider X` and `aiwg remove <unknown-id>` no longer crash with a `path argument must be of type string` TypeError. Unknown flags on the upstream path are rejected with a clear message (exit 2); an unknown id reports `Plugin '<id>' is not installed` (exit 1). (#118) |
-| **`@next` channel can't be stranded by one bad step** | The npm-publish workflow advances `@next` even when an earlier publish step fails, so a partial failure no longer leaves the prerelease channel behind. |
+| What changed                                                          | What it gives you                                                                                                                                                                                                                                                                             |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Project-local bundles deploy to Factory & Codex**                   | A `.aiwg/extensions/<id>/` bundle with `agents/` or `rules/` now lands in `.factory/droids` + `.factory/rules` and `.codex/agents` + `.codex/rules`, not just `.claude/`. Previously Factory and Codex silently deployed 0 agents and 0 rules from project-local bundles. (#124)              |
+| **`AIWG_ROOT` is no longer required for project-local agent bundles** | Deploying an agent-shadowing bundle without `AIWG_ROOT` set no longer empties your provider's kernel skill directory (e.g. `.claude/skills/`). The CLI injects the root automatically, and the prune now skips rather than deleting everything when the root can't be resolved. (#123)        |
+| **`aiwg remove` fails cleanly**                                       | `aiwg remove all --provider X` and `aiwg remove <unknown-id>` no longer crash with a `path argument must be of type string` TypeError. Unknown flags on the upstream path are rejected with a clear message (exit 2); an unknown id reports `Plugin '<id>' is not installed` (exit 1). (#118) |
+| **`@next` channel can't be stranded by one bad step**                 | The npm-publish workflow advances `@next` even when an earlier publish step fails, so a partial failure no longer leaves the prerelease channel behind.                                                                                                                                       |
 
 ### Fixed
 
@@ -878,13 +880,13 @@ footprint — Cockpit remains the opt-in `@aiwg/cockpit` package.
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
-| **Cockpit is usable against real executors** | The running board derives from real A2A tasks (#1639); Home stays usable against a real v2 executor and degrades the running/approvals panes instead of collapsing to "No stack connected" (#1638). The Bridge defaults off the executor port range and refuses reserved-port collisions. |
+| What changed                                  | What it gives you                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cockpit is usable against real executors**  | The running board derives from real A2A tasks (#1639); Home stays usable against a real v2 executor and degrades the running/approvals panes instead of collapsing to "No stack connected" (#1638). The Bridge defaults off the executor port range and refuses reserved-port collisions.                                                                                                                  |
 | **Starting a session is one explicit picker** | A session-start modal (#1640, #1641) is the single home for both the dashboard verb and the Sessions tab: pick instance · runtime · loadout · backend · posture, confirm, attach. It surfaces the **full** loadout catalog via a new Bridge `/api/loadouts` passthrough, guards against silently replacing an attached session, and shows failures inline — no more param-less start that read as a no-op. |
-| **The attach view is a real terminal** | The Sessions pane renders the PTY through xterm.js, so ANSI/VT/tmux redraws are interpreted, not dumped as raw escape bytes. |
-| **One command brings up the whole stack** | A canonical one-command dev bring-up harness replaces the ad-hoc `/tmp` rigs, with documented test stages and a contract guard that pins the mock's admin surface to the real v2 divergence. |
-| **Capability injection + lookup are correct** | Picking a skill injects its plain name (discover-first resolves it), not a `/`-prefixed pseudo-command (#1642); `/api/show` resolves by the discovered path so same-named artifacts (e.g. two `aiwg-steward`) no longer 502 — ambiguity is a 4xx now (#1643). |
+| **The attach view is a real terminal**        | The Sessions pane renders the PTY through xterm.js, so ANSI/VT/tmux redraws are interpreted, not dumped as raw escape bytes.                                                                                                                                                                                                                                                                               |
+| **One command brings up the whole stack**     | A canonical one-command dev bring-up harness replaces the ad-hoc `/tmp` rigs, with documented test stages and a contract guard that pins the mock's admin surface to the real v2 divergence.                                                                                                                                                                                                               |
+| **Capability injection + lookup are correct** | Picking a skill injects its plain name (discover-first resolves it), not a `/`-prefixed pseudo-command (#1642); `/api/show` resolves by the discovered path so same-named artifacts (e.g. two `aiwg-steward`) no longer 502 — ambiguity is a 4xx now (#1643).                                                                                                                                              |
 
 ### Added
 
@@ -955,13 +957,13 @@ A consolidation release on top of 2026.6.0. The headline is the **AIWG Cockpit**
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
-| **AIWG Cockpit — beta groundwork** | The foundation of a UX-first control plane is in place behind an opt-in `@aiwg/cockpit` package: a data-driven core bound to the extension/discover/index registry, instance control over the agentic-sandbox interface, parallel **Tauri desktop + VS Code** shells over one shared core, a declarative **UI contribution model** (screens/actions/workflows/hooks), local control-surface auth (`127.0.0.1` + per-launch token + OS-keychain), and live capability/index refresh without restart. The full operator UX is still in construction (epic #1588) — this release ships the substrate, not the finished surface. |
-| **Declarative Flows + cross-stack Missions are complete** | The bulk `flow-*` → `flow.aiwg.io/v1` migration (#1539) and the cross-stack **Mission conductor** with per-stack executor adapters (#1546) — previewed in 2026.6.0 — are now fully landed. One Mission conductor fans heterogeneous workers across stacks over the `runtime:<name>` convention. |
-| **Leaner agents — every definition under the dispatch ceiling** | A repo-wide debloat (#1587, #1600) externalizes worked examples and restated rule boilerplate out of agent definitions and adds a hard 16 KB size ceiling enforced by `aiwg doctor`. Oversized definitions were silently failing subagent dispatch with `Prompt is too long` at 0 tokens; every shipped agent is now under the ceiling. |
-| **Docs match the code** | A `doc-sync code-to-docs` pass reconciled every skill/agent count across the docs against on-disk source — kernel skills 16/19→**20**, addons 27/28→**29**, per-framework skill/agent counts corrected (research 20→39, security-engineering 7→27, sdlc agents 90/220→93), and three doc-to-doc contradictions resolved. |
-| **Safer context-file regeneration** | `aiwg regenerate` now additively installs the `@AIWG.md` hook into operator-owned provider files without clobbering them (#1597, #1579), and `aiwg doctor` flags drift on non-managed twin files. |
+| What changed                                                    | What it gives you                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AIWG Cockpit — beta groundwork**                              | The foundation of a UX-first control plane is in place behind an opt-in `@aiwg/cockpit` package: a data-driven core bound to the extension/discover/index registry, instance control over the agentic-sandbox interface, parallel **Tauri desktop + VS Code** shells over one shared core, a declarative **UI contribution model** (screens/actions/workflows/hooks), local control-surface auth (`127.0.0.1` + per-launch token + OS-keychain), and live capability/index refresh without restart. The full operator UX is still in construction (epic #1588) — this release ships the substrate, not the finished surface. |
+| **Declarative Flows + cross-stack Missions are complete**       | The bulk `flow-*` → `flow.aiwg.io/v1` migration (#1539) and the cross-stack **Mission conductor** with per-stack executor adapters (#1546) — previewed in 2026.6.0 — are now fully landed. One Mission conductor fans heterogeneous workers across stacks over the `runtime:<name>` convention.                                                                                                                                                                                                                                                                                                                              |
+| **Leaner agents — every definition under the dispatch ceiling** | A repo-wide debloat (#1587, #1600) externalizes worked examples and restated rule boilerplate out of agent definitions and adds a hard 16 KB size ceiling enforced by `aiwg doctor`. Oversized definitions were silently failing subagent dispatch with `Prompt is too long` at 0 tokens; every shipped agent is now under the ceiling.                                                                                                                                                                                                                                                                                      |
+| **Docs match the code**                                         | A `doc-sync code-to-docs` pass reconciled every skill/agent count across the docs against on-disk source — kernel skills 16/19→**20**, addons 27/28→**29**, per-framework skill/agent counts corrected (research 20→39, security-engineering 7→27, sdlc agents 90/220→93), and three doc-to-doc contradictions resolved.                                                                                                                                                                                                                                                                                                     |
+| **Safer context-file regeneration**                             | `aiwg regenerate` now additively installs the `@AIWG.md` hook into operator-owned provider files without clobbering them (#1597, #1579), and `aiwg doctor` flags drift on non-managed twin files.                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 ### Added
 
@@ -999,14 +1001,14 @@ The June line opens with the biggest surface-area expansion in a while: AIWG ind
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
-| **OpenHuman is a first-class provider** | `aiwg use <framework> --provider openhuman` deploys AIWG to [tinyhumansai/openhuman](https://github.com/tinyhumansai/openhuman) — an OSS personal-AI runtime. Kernel skills install **globally** to `~/.openhuman/skills/` (ungated user scope, the same root OpenHuman's own installer writes to), personas to the workspace `.agents/agents/` for the coding hosts OpenHuman drives, and commands/rules aggregate into an `AGENTS.md` bridge. Verified live: OpenHuman's agent harness scans the deployed `SKILL.md` bundles and event-bus-wires the triggered ones. |
-| **Releases and CLI run on declarative Flows** | `flow-release` (and `flow-architecture-evolution`) are now YAML Flows (`flow.aiwg.io/v1`) with an executor fan-out contract — discoverable directly via `aiwg discover`, runnable as orchestration with intra-step multi-agent panels + synthesis. The release gate sequence lives in `.aiwg/release.config`, so the skill body is portable across CalVer/SemVer projects. |
-| **Cross-stack Missions** | One Mission conductor fans heterogeneous workers across stacks (e.g. a Claude session dispatching Codex subagents) over the `runtime:<name>` executor convention. `/aiwg-mission` ships AIWG-owned on Codex with no plugin dependency. |
-| **Research corpus became searchable + auditable** | `aiwg index query --semantic` / `--fulltext` (BM25), `aiwg corpus integrity-scan` / `sidecar-lint` / `citation-backfill` / `extract-crossrefs`, provider-neutral scanned-page vision extraction, profile-graph edges + embedding similarity, and a by-source-type registry. |
-| **Discovery matches how you actually ask** | Full natural-language questions ("help me choose the right AIWG framework") now normalize to keyword phrases and match; single-content-token queries no longer dead-end; `discover` is the exclusive agentic-capability surface and induces discover-first on new directives, not just on decline. |
-| **Public-facing output points at the public repo** | The `aiwg use` version stamp, `aiwg diagnose` bug link, and the entrypoint packaging-bug message now read `github.com/jmagly/aiwg`, sourced from `package.json` (single source of truth) rather than the internal build origin. |
+| What changed                                       | What it gives you                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **OpenHuman is a first-class provider**            | `aiwg use <framework> --provider openhuman` deploys AIWG to [tinyhumansai/openhuman](https://github.com/tinyhumansai/openhuman) — an OSS personal-AI runtime. Kernel skills install **globally** to `~/.openhuman/skills/` (ungated user scope, the same root OpenHuman's own installer writes to), personas to the workspace `.agents/agents/` for the coding hosts OpenHuman drives, and commands/rules aggregate into an `AGENTS.md` bridge. Verified live: OpenHuman's agent harness scans the deployed `SKILL.md` bundles and event-bus-wires the triggered ones. |
+| **Releases and CLI run on declarative Flows**      | `flow-release` (and `flow-architecture-evolution`) are now YAML Flows (`flow.aiwg.io/v1`) with an executor fan-out contract — discoverable directly via `aiwg discover`, runnable as orchestration with intra-step multi-agent panels + synthesis. The release gate sequence lives in `.aiwg/release.config`, so the skill body is portable across CalVer/SemVer projects.                                                                                                                                                                                             |
+| **Cross-stack Missions**                           | One Mission conductor fans heterogeneous workers across stacks (e.g. a Claude session dispatching Codex subagents) over the `runtime:<name>` executor convention. `/aiwg-mission` ships AIWG-owned on Codex with no plugin dependency.                                                                                                                                                                                                                                                                                                                                 |
+| **Research corpus became searchable + auditable**  | `aiwg index query --semantic` / `--fulltext` (BM25), `aiwg corpus integrity-scan` / `sidecar-lint` / `citation-backfill` / `extract-crossrefs`, provider-neutral scanned-page vision extraction, profile-graph edges + embedding similarity, and a by-source-type registry.                                                                                                                                                                                                                                                                                            |
+| **Discovery matches how you actually ask**         | Full natural-language questions ("help me choose the right AIWG framework") now normalize to keyword phrases and match; single-content-token queries no longer dead-end; `discover` is the exclusive agentic-capability surface and induces discover-first on new directives, not just on decline.                                                                                                                                                                                                                                                                     |
+| **Public-facing output points at the public repo** | The `aiwg use` version stamp, `aiwg diagnose` bug link, and the entrypoint packaging-bug message now read `github.com/jmagly/aiwg`, sourced from `package.json` (single source of truth) rather than the internal build origin.                                                                                                                                                                                                                                                                                                                                        |
 
 ### Added
 
@@ -1049,11 +1051,11 @@ Two deploy-path regressions surfaced after the 2026.5.x stable line: every `aiwg
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
-| **Fresh `aiwg use` no longer reports `migration: partial`** | The six non-SDLC framework manifests (`forensics-complete`, `knowledge-base`, `media-curator`, `media-marketing-kit`, `research-complete`, `security-engineering`) now declare their `memory.creates` scaffolding under the scoped `.aiwg/frameworks/<id>/...` location instead of a parallel top-level `.aiwg/<name>/...` tree. SDLC's documented top-level artifact dirs (`.aiwg/requirements/`, `.aiwg/architecture/`, …) are unchanged. The two divergent `isLegacy` detectors converge on one definition: SDLC top-level + `.aiwg/frameworks/` = intended SDLC layout (not partial); orphan non-SDLC top-level dirs left over from pre-#1516 installs still register so the migration prompt fires once. (Closes #1516.) |
-| **`aiwg refresh` heals stale `.js` hook paths in `.claude/settings.json`** | The Claude hooks installer's idempotency check matched by `_aiwg_id` only, so once `aiwg-{session,trace,permissions}.js` was registered in `settings.json` (pre-`be3ee551`, May 10), later refreshes skipped the upgrade and left Claude Code invoking `node .claude/hooks/aiwg-session.js` against a file that no longer exists. The installer now rewrites the `command`, `type`, and `_aiwg_managed` fields on existing AIWG-managed entries when they're out of date and surfaces the rewrite in `result.warnings` so refresh CLI users see what changed. Eliminates the `SessionStart:startup hook error → MODULE_NOT_FOUND at node:internal/modules/cjs/loader:1459` reported on Claude Code 2.1.157. |
-| **`@pagenary/publisher` bumped `^2026.5.3` → `^2026.5.4`** | Picks up the page-renderer frontmatter strip (pagenary#19) — collection blog posts no longer render their YAML frontmatter as visible text above the title on docs.aiwg.io. The collection manifest is unchanged. Adopted via the documented `npm install --min-release-age=0` first-party override per `docs/contributing/versioning.md`. `docs/contributing/publishing-blog-posts.md` updated to drop the now-stale frontmatter-leak caveat. |
+| What changed                                                               | What it gives you                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fresh `aiwg use` no longer reports `migration: partial`**                | The six non-SDLC framework manifests (`forensics-complete`, `knowledge-base`, `media-curator`, `media-marketing-kit`, `research-complete`, `security-engineering`) now declare their `memory.creates` scaffolding under the scoped `.aiwg/frameworks/<id>/...` location instead of a parallel top-level `.aiwg/<name>/...` tree. SDLC's documented top-level artifact dirs (`.aiwg/requirements/`, `.aiwg/architecture/`, …) are unchanged. The two divergent `isLegacy` detectors converge on one definition: SDLC top-level + `.aiwg/frameworks/` = intended SDLC layout (not partial); orphan non-SDLC top-level dirs left over from pre-#1516 installs still register so the migration prompt fires once. (Closes #1516.) |
+| **`aiwg refresh` heals stale `.js` hook paths in `.claude/settings.json`** | The Claude hooks installer's idempotency check matched by `_aiwg_id` only, so once `aiwg-{session,trace,permissions}.js` was registered in `settings.json` (pre-`be3ee551`, May 10), later refreshes skipped the upgrade and left Claude Code invoking `node .claude/hooks/aiwg-session.js` against a file that no longer exists. The installer now rewrites the `command`, `type`, and `_aiwg_managed` fields on existing AIWG-managed entries when they're out of date and surfaces the rewrite in `result.warnings` so refresh CLI users see what changed. Eliminates the `SessionStart:startup hook error → MODULE_NOT_FOUND at node:internal/modules/cjs/loader:1459` reported on Claude Code 2.1.157.                   |
+| **`@pagenary/publisher` bumped `^2026.5.3` → `^2026.5.4`**                 | Picks up the page-renderer frontmatter strip (pagenary#19) — collection blog posts no longer render their YAML frontmatter as visible text above the title on docs.aiwg.io. The collection manifest is unchanged. Adopted via the documented `npm install --min-release-age=0` first-party override per `docs/contributing/versioning.md`. `docs/contributing/publishing-blog-posts.md` updated to drop the now-stale frontmatter-leak caveat.                                                                                                                                                                                                                                                                                |
 
 ### Fixed
 
@@ -1062,7 +1064,7 @@ Two deploy-path regressions surfaced after the 2026.5.x stable line: every `aiwg
 
 ### Changed
 
-- **`@pagenary/publisher` bumped `^2026.5.3` → `^2026.5.4`** (carried from Unreleased — see *Why this matters to users* above).
+- **`@pagenary/publisher` bumped `^2026.5.3` → `^2026.5.4`** (carried from Unreleased — see _Why this matters to users_ above).
 
 ### Upgrade notes
 
@@ -1075,14 +1077,14 @@ This release lands the bulk of the section9/research-papers tooling merge into t
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
+| What changed                                                     | What it gives you                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Research corpus tooling merged from section9/research-papers** | A radar/freshness subsystem (radar-init/status/report), profile generation (profile-generate, profile-status, `--fm` variant), entity-profile graph analytics (centrality, communities, temporal), funder-network analytics, and discovery-logging + PROF-S curator tooling — all native under `aiwg corpus` / `aiwg index` instead of 26 path-hardcoded scripts. One configurable corpus root + shared parser library. |
-| **`aiwg index build` renders corpus markdown views natively** | by-year/topic/venue/authors/method/model-size/training-pipeline/citation-network plus radar/discovery/funder views are derived from the index in-process — no separate `regenerate_indices.py` step. |
-| **Index config consolidated into `aiwg.config`** | `index.graphs` is now a validated schema field under `.aiwg/aiwg.config`. `.aiwg/.index/` is gitignored by default and `aiwg doctor` checks its freshness. |
-| **Engineering blog source-of-truth at `docs/blog/`** | One markdown file per post; pagenary 2026.5.3 collection support auto-generates `docs.aiwg.io/blog/index.json` (envelope schema `{title, route, count, generated, posts[]}`) plus `feed.xml` from frontmatter. First post: "How AIWG builds your customized system prompt." Publishing process documented at `docs/contributing/publishing-blog-posts.md`. |
-| **Doc-site CI builds via npm, not a git clone** | `docsite-build.yml` / `docsite-deploy.yml` now install `@pagenary/publisher` as a devDependency and run `npx pagenary build:tenants aiwg-docs`; the `GT_ACCESS_TOKEN` clone path is retired and revokable after one clean deploy. |
-| **Release-workflow topology clarified** | `npm-publish.yml` header + dry-run text now state Gitea-only registry; npmjs.org publishes from GitHub Actions via OIDC. `NPM_TOKEN` documented as a Gitea API token in both Gitea workflows. Operator-rotated the underlying token; first-class fix for #1481. |
+| **`aiwg index build` renders corpus markdown views natively**    | by-year/topic/venue/authors/method/model-size/training-pipeline/citation-network plus radar/discovery/funder views are derived from the index in-process — no separate `regenerate_indices.py` step.                                                                                                                                                                                                                    |
+| **Index config consolidated into `aiwg.config`**                 | `index.graphs` is now a validated schema field under `.aiwg/aiwg.config`. `.aiwg/.index/` is gitignored by default and `aiwg doctor` checks its freshness.                                                                                                                                                                                                                                                              |
+| **Engineering blog source-of-truth at `docs/blog/`**             | One markdown file per post; pagenary 2026.5.3 collection support auto-generates `docs.aiwg.io/blog/index.json` (envelope schema `{title, route, count, generated, posts[]}`) plus `feed.xml` from frontmatter. First post: "How AIWG builds your customized system prompt." Publishing process documented at `docs/contributing/publishing-blog-posts.md`.                                                              |
+| **Doc-site CI builds via npm, not a git clone**                  | `docsite-build.yml` / `docsite-deploy.yml` now install `@pagenary/publisher` as a devDependency and run `npx pagenary build:tenants aiwg-docs`; the `GT_ACCESS_TOKEN` clone path is retired and revokable after one clean deploy.                                                                                                                                                                                       |
+| **Release-workflow topology clarified**                          | `npm-publish.yml` header + dry-run text now state Gitea-only registry; npmjs.org publishes from GitHub Actions via OIDC. `NPM_TOKEN` documented as a Gitea API token in both Gitea workflows. Operator-rotated the underlying token; first-class fix for #1481.                                                                                                                                                         |
 
 ### Added
 
@@ -1109,7 +1111,7 @@ This release lands the bulk of the section9/research-papers tooling merge into t
 
 ### Fixed
 
-- **`dist/` build hygiene (#1512):** rebuilt the CLI's `dist/` on a checkout where it had been cleaned/absent; documented the root cause (`.mjs`/JSON/YAML files are *copied* into `dist/src/` by `build:copy-mjs`, separate from `tsc`). Filed #1513 for a `doctor` guard so a missing build fails loud + actionable next time.
+- **`dist/` build hygiene (#1512):** rebuilt the CLI's `dist/` on a checkout where it had been cleaned/absent; documented the root cause (`.mjs`/JSON/YAML files are _copied_ into `dist/src/` by `build:copy-mjs`, separate from `tsc`). Filed #1513 for a `doctor` guard so a missing build fails loud + actionable next time.
 - **`.aiwg/.index/`** is now gitignored by default and excluded from accidental commits; doctor surfaces freshness.
 
 ### Known follow-up
@@ -1137,7 +1139,7 @@ npm run uat
 No breaking changes.
 
 - If you forked AIWG and kept a hand-maintained `docs/blog/index.json`, remove it before building — pagenary 2026.5.3 generates the file into the build output now, and a committed source copy is redundant/stale.
-- Co-located post images (`docs/blog/images/*.png`) are *not* served by pagenary; place blog images under `docs/.public/blog/<file>.png` and reference them via the absolute `/assets/blog/<file>.png` URL. The publishing-process doc covers this.
+- Co-located post images (`docs/blog/images/*.png`) are _not_ served by pagenary; place blog images under `docs/.public/blog/<file>.png` and reference them via the absolute `/assets/blog/<file>.png` URL. The publishing-process doc covers this.
 - Pagenary advanced from `2026.5.1` to `^2026.5.3`. The `min-release-age=7` supply-chain gate was bypassed for the bump per the documented `--min-release-age=0` override since pagenary is first-party (`roctinam/pagenary`).
 
 ## [2026.5.11] - 2026-05-25 — "Provider detection, local issue sync, and media transcript prep"
@@ -1146,13 +1148,13 @@ This patch release hardens AIWG's cross-provider workflow plumbing, adds local i
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
-| **Codex-aware provider detection** | Mixed Claude/Codex workspaces now prefer the active Codex runtime where appropriate, so refresh and regenerate flows target the right provider files. |
-| **Local issue sync workflows** | Projects can import/export local issue stores, run live tracker sync, and document conflict handling without guessing which issue backend is active. |
-| **Media transcript sidecars** | Media-curator can now surface a transcript sidecar workflow for acquired audio/video, including source metadata, hashes, timestamps, and degraded plans when local STT tooling is missing. |
-| **Security and supply-chain scaffolding** | Security-engineering gained CI emitters, banned-API scaffolds, DFIR readiness routing, and supply-chain audit documentation. |
-| **Release and docs hygiene** | Release config now records the broad doc-sync scope for all agentic/code sources plus repository Markdown, and release tags are routed through the dedicated signing wrapper. |
+| What changed                              | What it gives you                                                                                                                                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Codex-aware provider detection**        | Mixed Claude/Codex workspaces now prefer the active Codex runtime where appropriate, so refresh and regenerate flows target the right provider files.                                      |
+| **Local issue sync workflows**            | Projects can import/export local issue stores, run live tracker sync, and document conflict handling without guessing which issue backend is active.                                       |
+| **Media transcript sidecars**             | Media-curator can now surface a transcript sidecar workflow for acquired audio/video, including source metadata, hashes, timestamps, and degraded plans when local STT tooling is missing. |
+| **Security and supply-chain scaffolding** | Security-engineering gained CI emitters, banned-API scaffolds, DFIR readiness routing, and supply-chain audit documentation.                                                               |
+| **Release and docs hygiene**              | Release config now records the broad doc-sync scope for all agentic/code sources plus repository Markdown, and release tags are routed through the dedicated signing wrapper.              |
 
 ### Added
 
@@ -1207,13 +1209,13 @@ This patch release adds a guided first-run path for new users and restores the l
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
-| **`aiwg wizard` walks first-time setup** | Provider choice, profile selection, execution mode, and verification in a single guided flow. JSON output stays plan-only for automation; unattended execution requires `--non-interactive`. |
-| **`aiwg use all` deploys the full surface again** | The literal meaning is restored. Workspace-aware filtering moves to `aiwg use --workspace-signals` (preview) and `aiwg use --profile <name>` (deploy filtered). |
-| **`aiwg status --probe --json` reports engagement deterministically** | Distinguishes configured, partially configured, and repair-needed workspaces. Malformed local config returns repair guidance instead of raw parse failures. |
-| **Full deploy summary separates native vs discoverable skills** | The capability index build prints a discoverable-skill count alongside the platform-native count so the budget story is legible. |
-| **Beginner docs refreshed** | Provider handoff, scope and recovery, onboarding validation, share/demo workflows, and current onboarding research. |
+| What changed                                                          | What it gives you                                                                                                                                                                            |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`aiwg wizard` walks first-time setup**                              | Provider choice, profile selection, execution mode, and verification in a single guided flow. JSON output stays plan-only for automation; unattended execution requires `--non-interactive`. |
+| **`aiwg use all` deploys the full surface again**                     | The literal meaning is restored. Workspace-aware filtering moves to `aiwg use --workspace-signals` (preview) and `aiwg use --profile <name>` (deploy filtered).                              |
+| **`aiwg status --probe --json` reports engagement deterministically** | Distinguishes configured, partially configured, and repair-needed workspaces. Malformed local config returns repair guidance instead of raw parse failures.                                  |
+| **Full deploy summary separates native vs discoverable skills**       | The capability index build prints a discoverable-skill count alongside the platform-native count so the budget story is legible.                                                             |
+| **Beginner docs refreshed**                                           | Provider handoff, scope and recovery, onboarding validation, share/demo workflows, and current onboarding research.                                                                          |
 
 ### Added
 
@@ -1253,12 +1255,12 @@ This patch release fixes the workspace-aware `aiwg use all` deployment flow and 
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
-| **`aiwg use all` deploys the workspace-aware plan once** | The auto-selected framework/addon plan no longer re-enters the full post-deploy flow for every selected framework. Users avoid repeated capability-index builds, repeated reload messages, and duplicate hook backup lines. |
-| **Operator skills are mirrored as provider commands** | Workflows such as `aiwg-setup-project`, `aiwg-update-claude`, and `aiwg-update-agents-md` are copied to each provider's command surface where possible, so slash/command workflows remain locatable even when the canonical artifact is a skill. |
-| **Provider command paths were normalized** | OpenCode and Warp now have explicit command directories in the provider deployment map, and fallback command mirroring places command assets in the closest reasonable provider location. |
-| **Doctor guidance points at workspace-aware deploy** | `aiwg doctor` and listing guidance steer high-skill-count workspaces toward workspace-aware deployment when provider listing budgets are likely to be exceeded. |
+| What changed                                             | What it gives you                                                                                                                                                                                                                                |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`aiwg use all` deploys the workspace-aware plan once** | The auto-selected framework/addon plan no longer re-enters the full post-deploy flow for every selected framework. Users avoid repeated capability-index builds, repeated reload messages, and duplicate hook backup lines.                      |
+| **Operator skills are mirrored as provider commands**    | Workflows such as `aiwg-setup-project`, `aiwg-update-claude`, and `aiwg-update-agents-md` are copied to each provider's command surface where possible, so slash/command workflows remain locatable even when the canonical artifact is a skill. |
+| **Provider command paths were normalized**               | OpenCode and Warp now have explicit command directories in the provider deployment map, and fallback command mirroring places command assets in the closest reasonable provider location.                                                        |
+| **Doctor guidance points at workspace-aware deploy**     | `aiwg doctor` and listing guidance steer high-skill-count workspaces toward workspace-aware deployment when provider listing budgets are likely to be exceeded.                                                                                  |
 
 ### Changed
 
@@ -1296,16 +1298,16 @@ This release collects the post-2026.5.7 operational hardening work: fleet behavi
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
+| What changed                             | What it gives you                                                                                                                                                                             |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Fleet discipline rules and behaviors** | `aiwg-fleet` adds quiet-bot and quiet-business-bot behavior bundles; `aiwg-utils` adds escalation discipline, tool quota, quiet mode, and repo-access rules for small-budget unattended bots. |
-| **Fleet status export** | `aiwg status --export json|ndjson` and the documented schema give cockpit tools a stable, pull-based machine/workspace health payload. |
-| **Repo-access preflight** | `aiwg repo-access` and the `respect-repo-access-manifest` rule make repository read-scope assumptions explicit before agents rely on paths they may not be able to inspect. |
-| **Model-tier routing primitive** | New provider-neutral model routing types/helpers support Tier 0-3 decisions, escalation rationale, and premium confirmation requirements. |
-| **Context parallelism caps** | `.aiwg/aiwg.config` can declare provider-scoped max parallel subagent limits; generated `AIWG.md` / `AGENTS.md` surfaces those caps and the RLM CLI respects them. |
-| **Serve/daemon reliability** | A2A terminal task observation, PTY bridge resilience coverage, sandbox transport fixtures, and daemon tier-1 tests harden the execution stack without requiring a live sandbox in default CI. |
-| **Install hygiene** | `better-sqlite3` and `@xenova/transformers` are optional peers instead of default install dependencies; SQLite implementation tests now skip cleanly when the optional peer is absent. |
-| **Docsite release checks** | Notify/deploy workflows now fail on silent release-doc issues and verify the generated SPA section artifact rather than grepping the shell HTML. |
+| **Fleet status export**                  | `aiwg status --export json                                                                                                                                                                    | ndjson` and the documented schema give cockpit tools a stable, pull-based machine/workspace health payload. |
+| **Repo-access preflight**                | `aiwg repo-access` and the `respect-repo-access-manifest` rule make repository read-scope assumptions explicit before agents rely on paths they may not be able to inspect.                   |
+| **Model-tier routing primitive**         | New provider-neutral model routing types/helpers support Tier 0-3 decisions, escalation rationale, and premium confirmation requirements.                                                     |
+| **Context parallelism caps**             | `.aiwg/aiwg.config` can declare provider-scoped max parallel subagent limits; generated `AIWG.md` / `AGENTS.md` surfaces those caps and the RLM CLI respects them.                            |
+| **Serve/daemon reliability**             | A2A terminal task observation, PTY bridge resilience coverage, sandbox transport fixtures, and daemon tier-1 tests harden the execution stack without requiring a live sandbox in default CI. |
+| **Install hygiene**                      | `better-sqlite3` and `@xenova/transformers` are optional peers instead of default install dependencies; SQLite implementation tests now skip cleanly when the optional peer is absent.        |
+| **Docsite release checks**               | Notify/deploy workflows now fail on silent release-doc issues and verify the generated SPA section artifact rather than grepping the shell HTML.                                              |
 
 ### Added
 
@@ -1361,13 +1363,13 @@ This release tightens two recently updated automation paths: RLM search now pres
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
+| What changed                                           | What it gives you                                                                                                                                                                                                                                                |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`rlm-search --max-parallel` is parsed as an option** | `aiwg rlm-search "find all references to loop structures" --source docs --max-parallel 4` now keeps the full query instead of treating `4` as the query. Unknown flags now fail fast rather than allowing nearby positional values to overwrite the search text. |
-| **RLM prep indexes single-chunk files** | Small docs and source files are included in the prep manifest and search plan. A source tree with only short files no longer produces an empty or partial RLM search. |
-| **Prep reuse is coverage-checked** | Existing prep indexes are validated for source, file, manifest, and chunk coverage before reuse. Incomplete or stale prep from older runs is rebuilt automatically. |
-| **`agent-loop` defaults to the internal loop** | Normal `agent-loop` requests stay in the current session. External daemon routing is still available through explicit external-loop commands or explicit user intent. |
-| **Build-time version lockstep check** | `npm run build:cli` now fails if `package.json`, `package-lock.json`, or `.claude-plugin/marketplace.json` disagree on the release version. |
+| **RLM prep indexes single-chunk files**                | Small docs and source files are included in the prep manifest and search plan. A source tree with only short files no longer produces an empty or partial RLM search.                                                                                            |
+| **Prep reuse is coverage-checked**                     | Existing prep indexes are validated for source, file, manifest, and chunk coverage before reuse. Incomplete or stale prep from older runs is rebuilt automatically.                                                                                              |
+| **`agent-loop` defaults to the internal loop**         | Normal `agent-loop` requests stay in the current session. External daemon routing is still available through explicit external-loop commands or explicit user intent.                                                                                            |
+| **Build-time version lockstep check**                  | `npm run build:cli` now fails if `package.json`, `package-lock.json`, or `.claude-plugin/marketplace.json` disagree on the release version.                                                                                                                      |
 
 ### Changed
 
@@ -1405,19 +1407,19 @@ Two behavioral upgrades to make long-running and iterative work survive context 
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
+| What changed                                              | What it gives you                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`agent-loop` infers `--completion` from project state** | Run `agent-loop "fix the failing tests"` without `--completion`. A new `infer-completion-criteria` skill walks five evidence layers — task verb → `CLAUDE.md`/`AGENTS.md`/`AIWG.md` Development sections → package manifests (`package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, `pom.xml`, …) → CI config (`.github/workflows/`, `.gitea/workflows/`, GitLab/CircleCI/Jenkins) → `.aiwg/` artifacts (test-strategy, related use cases by ID match, prior progress files) — and proposes a measurable criterion with rationale and confidence level. High-confidence proposals auto-adopt with `--auto-criteria`; otherwise the proposal is surfaced for confirm/edit/abort. Refusal path is explicit: tasks like "make it better" with no derivable measurable gate get a refusal with concrete rephrasing suggestions. |
-| **New `auto-compact-continue` rule (HIGH)** | The answer to "should I keep working?" is always YES — until measurable completion criteria are met or the user redirects. Context pressure, long tool output, and crossing iteration N are not scope questions. The rule codifies the auto-compact-and-continue discipline backed by Anthropic's [Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) and the [Compaction docs](https://platform.claude.com/docs/en/build-with-claude/compaction): write progress files at `.aiwg/working/<task>-progress.md` every 10–15 tool calls (REF-122 aggressive vs passive: 22.7% vs 6% savings), let the platform auto-compact, recover via the AIWG durable substrate (activity log, progress file, git, memory, `CLAUDE.md`/`AGENTS.md`/`AIWG.md`). |
-| **CI: build before tests in `npm-publish.yml`** | The v2026.5.5 stable publish failed because tests ran before build, and several tests assert on `dist/` output (regression test for #1001). The Gitea workflow now matches `ci.yml`: typecheck → build → test → publish. Without this, the next stable publish would have hit the same failure mode. |
+| **New `auto-compact-continue` rule (HIGH)**               | The answer to "should I keep working?" is always YES — until measurable completion criteria are met or the user redirects. Context pressure, long tool output, and crossing iteration N are not scope questions. The rule codifies the auto-compact-and-continue discipline backed by Anthropic's [Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) and the [Compaction docs](https://platform.claude.com/docs/en/build-with-claude/compaction): write progress files at `.aiwg/working/<task>-progress.md` every 10–15 tool calls (REF-122 aggressive vs passive: 22.7% vs 6% savings), let the platform auto-compact, recover via the AIWG durable substrate (activity log, progress file, git, memory, `CLAUDE.md`/`AGENTS.md`/`AIWG.md`).    |
+| **CI: build before tests in `npm-publish.yml`**           | The v2026.5.5 stable publish failed because tests ran before build, and several tests assert on `dist/` output (regression test for #1001). The Gitea workflow now matches `ci.yml`: typecheck → build → test → publish. Without this, the next stable publish would have hit the same failure mode.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 ### Added
 
 - `agentic/code/addons/agent-loop/skills/infer-completion-criteria/` — new skill (~280 lines). Deterministic 5-layer inference pipeline with structured YAML output (criterion, verification command, rationale, confidence, alternatives, max-iterations suggestion). Documents edge cases for monorepos, multi-language projects, broken-test suites, use-case acceptance criteria, and the refusal path. Wired into `agent-loop/manifest.json` skills array.
 - `agentic/code/addons/aiwg-utils/rules/auto-compact-continue.md` — new HIGH rule (~250 lines). Codifies the auto-compact-and-continue discipline with 8 mandatory rules, interaction with `vague-discretion`/`anti-laziness`/`human-authorization`/`instruction-comprehension`/`skill-discovery`/`activity-log`/`context-budget`, recovery protocol after compaction, named exceptions, and platform applicability across all 10 supported providers. (Landed in v2026.5.5's incident-fix commit f87ba48c; called out in this release for visibility since the user-facing impact is felt now that the agent-loop changes pair with it.)
 - Two new research references in companion `research-papers` repo:
-  - **REF-909** — Anthropic, *Effective Harnesses for Long-Running Agents* (Nov 2025). Initializer-agent / coding-agent pattern, `claude-progress.txt`, "failed approaches" as load-bearing artifact across context resets.
-  - **REF-910** — Anthropic, *Compaction* (Claude API Documentation, 2026). Auto-compact mechanics, `## Compact Instructions`, what survives compaction.
+  - **REF-909** — Anthropic, _Effective Harnesses for Long-Running Agents_ (Nov 2025). Initializer-agent / coding-agent pattern, `claude-progress.txt`, "failed approaches" as load-bearing artifact across context resets.
+  - **REF-910** — Anthropic, _Compaction_ (Claude API Documentation, 2026). Auto-compact mechanics, `## Compact Instructions`, what survives compaction.
 
 ### Changed
 
@@ -1447,7 +1449,7 @@ The AIWG research corpus at `git@git.integrolabs.net:section9/research-papers.gi
 
 - [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — Anthropic Engineering, Nov 2025
 - [Compaction — Claude API Docs](https://platform.claude.com/docs/en/build-with-claude/compaction) — Anthropic, 2026
-- REF-122 *Active Context Compression* (Verma, 2026) — already in corpus; the empirical basis for aggressive in-session compression
+- REF-122 _Active Context Compression_ (Verma, 2026) — already in corpus; the empirical basis for aggressive in-session compression
 - Release announcement: [docs/releases/v2026.5.6-announcement.md](docs/releases/v2026.5.6-announcement.md)
 
 ## [2026.5.5] - 2026-05-14 — "Cross-provider discover-first parity"
@@ -1459,11 +1461,11 @@ discover-first protocol reach all 10 supported providers on every fresh
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
+| What changed                                                  | What it gives you                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`aiwg use` warns when invoked from `$HOME` / `/` / `/tmp`** | First-run protection. When `aiwg use sdlc` runs from a directory with no project signals (`.git`, `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `pom.xml`, `Gemfile`, `build.gradle`, `*.csproj`), AIWG emits a 3-second cancellable warning naming the target directory and pointing at recovery. `AIWG_GLOBAL_INSTALL=1` suppresses the delay; non-cancelled emissions write `warn:no-project-signal` to `.aiwg/activity.log`. Stat-only walk completes in <50ms (CI-enforced). |
-| **Discover-first protocol now reaches every provider** | Before this release, the `skill-discovery` rule (mandates `aiwg discover` before declining a request or improvising a workflow) was deployed only to Claude Code and Cursor. Eight other providers had stale leftover copies or no copy at all. After this release, every provider's `aiwg use` invocation deploys the current rule body to its native rules directory, or — for Warp and Hermes — inlines it into the appropriate aggregation surface (WARP.md and AGENTS.md priming). |
-| **Documented scope-model trade-off (REF-720)** | `docs/cli-reference.md` and `README.md` now document the project-scope (default) vs user-scope (global install) trade-off side-by-side, citing the REF-720 cross-context-bleed evidence (39% capability drop). ADR-NUA-001 formalizes global install as a first-class supported flow with project-scope remaining the recommended default. |
+| **Discover-first protocol now reaches every provider**        | Before this release, the `skill-discovery` rule (mandates `aiwg discover` before declining a request or improvising a workflow) was deployed only to Claude Code and Cursor. Eight other providers had stale leftover copies or no copy at all. After this release, every provider's `aiwg use` invocation deploys the current rule body to its native rules directory, or — for Warp and Hermes — inlines it into the appropriate aggregation surface (WARP.md and AGENTS.md priming).       |
+| **Documented scope-model trade-off (REF-720)**                | `docs/cli-reference.md` and `README.md` now document the project-scope (default) vs user-scope (global install) trade-off side-by-side, citing the REF-720 cross-context-bleed evidence (39% capability drop). ADR-NUA-001 formalizes global install as a first-class supported flow with project-scope remaining the recommended default.                                                                                                                                                    |
 
 ### Added
 
@@ -1526,19 +1528,19 @@ inlined into AGENTS.md priming.
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
-| **Standard skills (~385) now reachable from Hermes** | Earlier AIWG versions deployed standard skills to `~/.hermes/.aiwg/skills/` — a sibling of Hermes's scanned root, invisible to Hermes's `os.walk()`. Moved to `~/.hermes/skills/.aiwg/` (child of scanned root; recursively discovered). Verified against Hermes v0.13.0 `agent/skill_utils.py:478-489`. |
-| **MCP `discover` + `*-list`/`*-show` tool pairs** | The post-#1212 discoverability surface (skills, commands, rules, agents, templates) is now reachable over MCP. Hermes can semantic-search AIWG capabilities and fetch full bodies on demand without project-context preload. |
-| **`mcp_aiwg_command_run`** | One tool dispatches to any of the ~94 allow-listed AIWG CLI commands. Replaces the `workflow-run` stub (which returned parsed metadata but never executed). `shell: false` spawn, destructive ops gated behind `confirmed: true`. |
-| **8 opt-in subsystem toolsets** | `AIWG_MCP_TOOLSETS=memory,kb,research,activity-log,index,ralph,mc,ops` (or `=all`) exposes 45+ additional tools. Default surface stays lean (~2.5K tokens schema) for small-context local Ollama; toolsets scale on demand. |
-| **Top-6 CRITICAL rule priming in AGENTS.md** | The highest-enforcement AIWG rules (no-attribution, anti-laziness, citation-policy, token-security, versioning, ops-safety) are inlined into the generated AGENTS.md as a ~3K-char priming block. The remaining 23 rules reachable on demand via `mcp_aiwg_rule_show`. AGENTS.md stays well under Hermes's 20K cap. |
-| **`.hermes.md` thin pointer emitted at project root** | Hermes loads `.hermes.md` first (priority over AGENTS.md per `agent/prompt_builder.py:1417-1456`). The pointer keeps the actual content in AGENTS.md so it stays usable by other providers (Claude Code, Codex, Cursor). Resolves #1239 doc-debt. |
-| **Curator-protection for AIWG kernel skills** | Hermes v0.12.0+ Curator archives stale skills on a 7-day cycle. AIWG-deployed kernel skills are now registered in `~/.hermes/skills/.bundled_manifest` so the Curator excludes them (verified at `tools/skill_usage.py:155-176`). Standard skills under `.aiwg/` are already protected by the dot-prefix rule. |
-| **`delegate_task` API hotfix** | Earlier versions of the deployer shipped `delegate_task(skip_context_files=True, skip_memory=True)` in the generated AGENTS.md. Those parameters do not exist on Hermes's actual signature — they're hardcoded internally. Replaced with the correct `delegate_task(goal="...", context="...")` form. |
-| **Idempotent skill-path migration helper** | Existing operators with skills at the legacy path get them automatically cleaned up on the next `aiwg refresh --provider hermes`. Hash-matches before removal so user-authored files are never touched. |
-| **Hermes-quickstart refreshed against v0.13.0** | All `agent/`, `hermes_cli/`, `tools/mcp_tool.py` file:line references in the quickstart re-verified against the current Hermes release (commit `942adf6`). Previous docs targeted v0.4.0; refs were drifted by hundreds of lines. |
-| **CI drift verifier** | `tools/verify-hermes-citations.mjs` walks every Hermes citation in AIWG docs and verifies it against the pinned Hermes version. CI runs on every PR touching Hermes docs. Pin: `HERMES_VERIFIED_VERSION = '0.13.0'`. |
+| What changed                                          | What it gives you                                                                                                                                                                                                                                                                                                   |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Standard skills (~385) now reachable from Hermes**  | Earlier AIWG versions deployed standard skills to `~/.hermes/.aiwg/skills/` — a sibling of Hermes's scanned root, invisible to Hermes's `os.walk()`. Moved to `~/.hermes/skills/.aiwg/` (child of scanned root; recursively discovered). Verified against Hermes v0.13.0 `agent/skill_utils.py:478-489`.            |
+| **MCP `discover` + `*-list`/`*-show` tool pairs**     | The post-#1212 discoverability surface (skills, commands, rules, agents, templates) is now reachable over MCP. Hermes can semantic-search AIWG capabilities and fetch full bodies on demand without project-context preload.                                                                                        |
+| **`mcp_aiwg_command_run`**                            | One tool dispatches to any of the ~94 allow-listed AIWG CLI commands. Replaces the `workflow-run` stub (which returned parsed metadata but never executed). `shell: false` spawn, destructive ops gated behind `confirmed: true`.                                                                                   |
+| **8 opt-in subsystem toolsets**                       | `AIWG_MCP_TOOLSETS=memory,kb,research,activity-log,index,ralph,mc,ops` (or `=all`) exposes 45+ additional tools. Default surface stays lean (~2.5K tokens schema) for small-context local Ollama; toolsets scale on demand.                                                                                         |
+| **Top-6 CRITICAL rule priming in AGENTS.md**          | The highest-enforcement AIWG rules (no-attribution, anti-laziness, citation-policy, token-security, versioning, ops-safety) are inlined into the generated AGENTS.md as a ~3K-char priming block. The remaining 23 rules reachable on demand via `mcp_aiwg_rule_show`. AGENTS.md stays well under Hermes's 20K cap. |
+| **`.hermes.md` thin pointer emitted at project root** | Hermes loads `.hermes.md` first (priority over AGENTS.md per `agent/prompt_builder.py:1417-1456`). The pointer keeps the actual content in AGENTS.md so it stays usable by other providers (Claude Code, Codex, Cursor). Resolves #1239 doc-debt.                                                                   |
+| **Curator-protection for AIWG kernel skills**         | Hermes v0.12.0+ Curator archives stale skills on a 7-day cycle. AIWG-deployed kernel skills are now registered in `~/.hermes/skills/.bundled_manifest` so the Curator excludes them (verified at `tools/skill_usage.py:155-176`). Standard skills under `.aiwg/` are already protected by the dot-prefix rule.      |
+| **`delegate_task` API hotfix**                        | Earlier versions of the deployer shipped `delegate_task(skip_context_files=True, skip_memory=True)` in the generated AGENTS.md. Those parameters do not exist on Hermes's actual signature — they're hardcoded internally. Replaced with the correct `delegate_task(goal="...", context="...")` form.               |
+| **Idempotent skill-path migration helper**            | Existing operators with skills at the legacy path get them automatically cleaned up on the next `aiwg refresh --provider hermes`. Hash-matches before removal so user-authored files are never touched.                                                                                                             |
+| **Hermes-quickstart refreshed against v0.13.0**       | All `agent/`, `hermes_cli/`, `tools/mcp_tool.py` file:line references in the quickstart re-verified against the current Hermes release (commit `942adf6`). Previous docs targeted v0.4.0; refs were drifted by hundreds of lines.                                                                                   |
+| **CI drift verifier**                                 | `tools/verify-hermes-citations.mjs` walks every Hermes citation in AIWG docs and verifies it against the pinned Hermes version. CI runs on every PR touching Hermes docs. Pin: `HERMES_VERIFIED_VERSION = '0.13.0'`.                                                                                                |
 
 ### Added
 
@@ -1580,18 +1582,18 @@ The full v2026.5.3 release. Every signed-release control modeled in the Mini Sha
 
 ### Why this matters to users
 
-| What changed | What it gives you |
-|---|---|
-| **npmjs.org provenance attestation** | Every published tarball carries a Sigstore-anchored attestation linking it to a specific GitHub Actions workflow run and source commit. Verify with `npm view aiwg@2026.5.3 --json \| jq .dist.attestations` or `npm audit signatures`. |
-| **Cosign keyless tarball signature** | Registry-independent signature over the tarball bytes. Works whether you pulled from npmjs.org, Gitea bundled npm, or any mirror. Verify with `cosign verify-blob`. |
-| **CycloneDX SBOM (signed)** | Full direct + transitive dep inventory shipped as a release asset and signed with the same Sigstore identity. Feed into Grype/Trivy/Dependency-Track for vulnerability scans. |
-| **Signed maintainer git tag** | Tag is gpg-signed by `AIWG Release Signing <release@aiwg.io>` (fingerprint `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`, ed25519, expires 2031-05-11). CI refuses to publish any release whose tag does not verify. |
-| **6 signed assets on both GitHub and Gitea releases** | Tarball + .sigstore, release manifest + .sigstore, SBOM + .sigstore — mirrored across both registries so verification works regardless of where you got AIWG. |
-| **Tarball top-level allowlist** | Every release lints what gets included in the published tarball. No surprise files. |
-| **`npm audit signatures` gate at publish time** | The publish step itself runs `npm audit signatures` against the dep tree. If a dep's registry signature is invalid, the publish blocks. |
-| **7-day release-age gate** | `npm install`/`npm update` against AIWG (and any project that opts in to the same pattern) refuses to resolve dependency versions younger than 7 days. Newly-published malicious versions can no longer enter your lockfile. **Requires npm 11.5+ on your dev machine** — `npm install -g npm@^11.5`. |
-| **Dep-source policy lint** | `npm run lint:dep-sources` blocks `git+`, `github:`, tarball-URL, `file:`, `link:` dep sources in `package.json` and `package-lock.json`. Runs every CI build. |
-| **Pinned CI containers + actions** | Every CI workflow pins containers by sha256 digest and actions by 40-char commit SHA. The pin manifest lives in `ci/digests.txt`. No `:latest` anywhere in production paths. |
+| What changed                                          | What it gives you                                                                                                                                                                                                                                                                                     |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **npmjs.org provenance attestation**                  | Every published tarball carries a Sigstore-anchored attestation linking it to a specific GitHub Actions workflow run and source commit. Verify with `npm view aiwg@2026.5.3 --json \| jq .dist.attestations` or `npm audit signatures`.                                                               |
+| **Cosign keyless tarball signature**                  | Registry-independent signature over the tarball bytes. Works whether you pulled from npmjs.org, Gitea bundled npm, or any mirror. Verify with `cosign verify-blob`.                                                                                                                                   |
+| **CycloneDX SBOM (signed)**                           | Full direct + transitive dep inventory shipped as a release asset and signed with the same Sigstore identity. Feed into Grype/Trivy/Dependency-Track for vulnerability scans.                                                                                                                         |
+| **Signed maintainer git tag**                         | Tag is gpg-signed by `AIWG Release Signing <release@aiwg.io>` (fingerprint `FE9272F0BC5781E1DE77FAAA719AB63879E84CE8`, ed25519, expires 2031-05-11). CI refuses to publish any release whose tag does not verify.                                                                                     |
+| **6 signed assets on both GitHub and Gitea releases** | Tarball + .sigstore, release manifest + .sigstore, SBOM + .sigstore — mirrored across both registries so verification works regardless of where you got AIWG.                                                                                                                                         |
+| **Tarball top-level allowlist**                       | Every release lints what gets included in the published tarball. No surprise files.                                                                                                                                                                                                                   |
+| **`npm audit signatures` gate at publish time**       | The publish step itself runs `npm audit signatures` against the dep tree. If a dep's registry signature is invalid, the publish blocks.                                                                                                                                                               |
+| **7-day release-age gate**                            | `npm install`/`npm update` against AIWG (and any project that opts in to the same pattern) refuses to resolve dependency versions younger than 7 days. Newly-published malicious versions can no longer enter your lockfile. **Requires npm 11.5+ on your dev machine** — `npm install -g npm@^11.5`. |
+| **Dep-source policy lint**                            | `npm run lint:dep-sources` blocks `git+`, `github:`, tarball-URL, `file:`, `link:` dep sources in `package.json` and `package-lock.json`. Runs every CI build.                                                                                                                                        |
+| **Pinned CI containers + actions**                    | Every CI workflow pins containers by sha256 digest and actions by 40-char commit SHA. The pin manifest lives in `ci/digests.txt`. No `:latest` anywhere in production paths.                                                                                                                          |
 
 ### Adopting the same pattern in your projects
 
@@ -1650,14 +1652,14 @@ This rc.0 is the first AIWG release published under the new flow: cryptographica
 
 ### Highlights
 
-| What changed | Why you care |
-|---|---|
-| **Signed tags + cosign tarball signatures** | Every release artifact is verifiable offline against a maintainer key + Sigstore transparency log. Consumers verify with `cosign verify-blob` per `docs/releases/verifying.md`. |
-| **npm provenance attestation** | npmjs.org publishes carry a provenance attestation linking the tarball to the GitHub Actions workflow run + source commit SHA. Verify with `npm view aiwg@<v> --json \| jq .dist.attestations`. |
-| **6 signed release assets per release** | Tarball, tarball .sigstore, release-manifest.json, manifest .sigstore, CycloneDX SBOM, SBOM .sigstore — present on both GitHub and Gitea releases. |
-| **Release-age gate** | npm refuses to resolve any dependency version published less than 7 days ago. Newly-published malicious versions can no longer enter the lockfile during contributor `npm install`/`npm update`. Requires npm 11.5+ — `npm install -g npm@^11.5` once on every dev machine. |
-| **Dep-source lint** | `npm run lint:dep-sources` blocks `git+`, `github:`, tarball-URL, `file:`, `link:` dependency sources in `package.json` and `package-lock.json` — every CI run, not just at publish time. |
-| **Removed postinstall lifecycle hook** | The script was benign, but the *capability* was the Shai-Hulud propagation primitive. `aiwg doctor` now handles the PATH-check UX. |
+| What changed                                | Why you care                                                                                                                                                                                                                                                                |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Signed tags + cosign tarball signatures** | Every release artifact is verifiable offline against a maintainer key + Sigstore transparency log. Consumers verify with `cosign verify-blob` per `docs/releases/verifying.md`.                                                                                             |
+| **npm provenance attestation**              | npmjs.org publishes carry a provenance attestation linking the tarball to the GitHub Actions workflow run + source commit SHA. Verify with `npm view aiwg@<v> --json \| jq .dist.attestations`.                                                                             |
+| **6 signed release assets per release**     | Tarball, tarball .sigstore, release-manifest.json, manifest .sigstore, CycloneDX SBOM, SBOM .sigstore — present on both GitHub and Gitea releases.                                                                                                                          |
+| **Release-age gate**                        | npm refuses to resolve any dependency version published less than 7 days ago. Newly-published malicious versions can no longer enter the lockfile during contributor `npm install`/`npm update`. Requires npm 11.5+ — `npm install -g npm@^11.5` once on every dev machine. |
+| **Dep-source lint**                         | `npm run lint:dep-sources` blocks `git+`, `github:`, tarball-URL, `file:`, `link:` dependency sources in `package.json` and `package-lock.json` — every CI run, not just at publish time.                                                                                   |
+| **Removed postinstall lifecycle hook**      | The script was benign, but the _capability_ was the Shai-Hulud propagation primitive. `aiwg doctor` now handles the PATH-check UX.                                                                                                                                          |
 
 ### Security
 
@@ -1670,7 +1672,7 @@ This rc.0 is the first AIWG release published under the new flow: cryptographica
 - **Signed-tag verification gate on release-bearing workflows** (#1299 — Wave 3 of #1278). Every release-tag push must now cryptographically verify against a maintainer public key published in the repo before any publish/release-creation step runs. The gate is implemented as `tools/ci/verify-signed-tag.sh` and wired into `.gitea/workflows/npm-publish.yml` (both pre-release and stable publish jobs) and `.gitea/workflows/gitea-release.yml`. Supports both GPG (`.gitea/keys/maintainers.asc`) and SSH allowed-signers (`.gitea/allowed_signers`) — operator picks; both can co-exist. Closes scenario S2 (workflow injection) and provides the cryptographic anchor that #1286 (A10 — compensating controls) and #1283 (A5 — trusted publishing) build on in Wave 4. Operator-side setup (key generation + publication + first signed-tag verification end-to-end) is documented in `docs/contributing/versioning.md` and tracked as the remaining open item on #1299 until the first signed-tag release lands. ADR at `.aiwg/architecture/adr-signed-tag-verify.md`. Historical tags (`v2026.5.2` and earlier) are not retroactively signed — the gate is forward-going only.
 - **Dependency source policy lints unexpected git/tarball/exotic deps** (#1300 — Wave 2 of #1278). New CI step (`npm run lint:dep-sources`, wired into `.gitea/workflows/ci.yml` after `npm ci`) scans `package.json` (direct + dev + optional + peer deps) and `package-lock.json` (transitive `resolved` URLs) for six forbidden source patterns — `git+*`, `git://`, `github:owner/repo`, `file:`, `link:`, and non-registry tarball URLs — and fails the build on any match unless the source is on an explicit committed allowlist at `ci/dep-source-allowlist.yaml`. Closes the Mini Shai-Hulud dep-injection vector (control C22, threat-model scenario S5 dep-injection variant) where a single `optionalDependencies` `git+` entry triggers arbitrary `prepare`-script execution at install time with secrets in scope. Implementation is a 250-line standalone Node script (`tools/lint/dep-source.mjs`) with one dep — adding a third-party validator framework to a control whose purpose is reducing dep surface would be self-defeating. Initial allowlist is empty (the survey at implementation time confirmed AIWG has zero exotic dep sources). ADR at `.aiwg/architecture/adr-dep-source-policy.md`; contributor doc at `docs/contributing/dependency-sources.md`. If/when #1301 (A21 pnpm spike) lands, the lockfile scan re-points at `pnpm-lock.yaml` and the lint stays in place as defense-in-depth alongside pnpm's native `blockExoticSubdeps`.
 - **Pinned CI containers and actions by immutable digest/SHA** (#1281, #1282 — Wave 2 of #1278). Every `container:` and `uses:` reference in `.gitea/workflows/` now uses `@sha256:<digest>` or `@<40-char-commit-SHA>` with a trailing version comment, eliminating the tag-repointing attack surface (audit findings F3 + F5; threat-model scenario S5 — builder image hijack / action-repo compromise → CI RCE with secrets in scope). Pin manifest at `ci/digests.txt` tracks resolved version, pin date, and update rationale per row; policy + bump procedure documented at `.gitea/workflows/README.md`. Current pins: `node:20@sha256:8f693eaa…` (resolves to 20.20.2), `actions/checkout@34e11487…` (v4.3.1), `actions/upload-artifact@ea165f8d…` (v4.6.2). Closes the `dev-idempotent-builds.md` rule 2 + rule 4 violations.
-- **Removed `scripts.postinstall` lifecycle hook from `package.json`** (#1279). The postinstall script body was benign — it printed PATH-setup guidance after `npm install -g aiwg` — but the *capability* is the highest-residual-risk supply-chain primitive in the audit (finding F1, threat scenario S3, Aikido report 2026-05-12). Had AIWG ever been compromised, the hook would have executed arbitrary attacker code on every install machine before any operator interaction, matching the worm-propagation profile that Shai-Hulud used in March 2026. `bin/postinstall.mjs` has been deleted from the published tarball. The PATH-guidance UX migrated to two surfaces: `aiwg doctor` now runs a PATH sub-step on every invocation and prints the same shell-specific `export PATH` guidance when the binary isn't reachable, and `README.md` gains an "Installation Troubleshooting" section near the top documenting `which aiwg`, the `npm config get prefix` line, and the `npx aiwg` fallback. ADR at `.aiwg/architecture/adr-postinstall-removal.md`.
+- **Removed `scripts.postinstall` lifecycle hook from `package.json`** (#1279). The postinstall script body was benign — it printed PATH-setup guidance after `npm install -g aiwg` — but the _capability_ is the highest-residual-risk supply-chain primitive in the audit (finding F1, threat scenario S3, Aikido report 2026-05-12). Had AIWG ever been compromised, the hook would have executed arbitrary attacker code on every install machine before any operator interaction, matching the worm-propagation profile that Shai-Hulud used in March 2026. `bin/postinstall.mjs` has been deleted from the published tarball. The PATH-guidance UX migrated to two surfaces: `aiwg doctor` now runs a PATH sub-step on every invocation and prints the same shell-specific `export PATH` guidance when the binary isn't reachable, and `README.md` gains an "Installation Troubleshooting" section near the top documenting `which aiwg`, the `npm config get prefix` line, and the `npx aiwg` fallback. ADR at `.aiwg/architecture/adr-postinstall-removal.md`.
 - **Added `SECURITY.md`** with a documented private reporting channel (`security@integrolabs.net`), Gitea-advisory fallback, response SLA (24h ack / 7d assessment / 90d coordinated disclosure), in-scope / out-of-scope clarification, and safe-harbor language for good-faith researchers. Closes a long-standing operational gap surfaced by the May 2026 Mini Shai-Hulud supply-chain hardening audit (#1285). The project-scoped PGP/age key is queued for follow-up — until it's published under `.github/keys/`, reports are accepted in plain text from a maintainer-controlled address that can negotiate encrypted follow-up.
 - **Removed `continue-on-error: true` from stable-publish test step** (#1280). Test failures now block stable publish — previously a regression that broke tests would still ship to npmjs.org. Surfaced a real CLI cold-start drift (`aiwg --version` 134ms → 245ms isolated since 2026-04-22) which has been the masked failure under the now-removed suppression; perf budgets in `test/integration/cli-perf.test.ts` raised to accommodate parallel-load measurements (`--version` 150→800ms, `help` 300→750ms) with #1302 tracking the underlying optimization work.
 - **Removed `GT_ACCESS_TOKEN`-in-URL antipattern from `docsite-build.yml` and `docsite-deploy.yml`** (#1284). The previous `git clone https://token:${GT_ACCESS_TOKEN}@...` pattern exposed the token in process arguments visible to `ps`, core dumps, and error output. Replaced with the credential-helper pattern — token lives in a transient `mktemp` file (mode 600, `trap`-cleaned on exit) consumed by `git credential.helper=store`. Added defense-in-depth: `docsite-build.yml` skips the dbbuilder clone for fork-PR events, since Gitea's secret-exposure semantics for fork pull_requests are version-dependent and not currently verified for the running instance (#1289 / A14 will close that question).
@@ -1681,15 +1683,15 @@ A multi-commit fix sweep driven by an external tester report (sebuh-infsol via j
 
 ### Highlights
 
-| What changed | Why you care |
-|---|---|
-| **`aiwg steward` works end-to-end** | Both the path resolution bug (#1261) and the schema mismatch (#1262) are fixed. Capability routing is finally usable. |
-| **Kernel skills get Claude command stubs** | `/aiwg-refresh`, `/aiwg-regenerate`, `/aiwg-doctor`, `/aiwg-status`, `/aiwg-help` deploy as `.claude/commands/` entries (#1263). The slash-form is now deterministic instead of churning through agent dialog. |
-| **`aiwg regenerate` is a real CLI command** | Context-only regen of `AIWG.md` + `AGENTS.md` without redeploying frameworks. Faster than `aiwg refresh` when you just need to fix context drift (#1266). |
-| **`aiwg-issue` + `aiwg-pr` kernel skills** | Filing guidance is always-loaded in your agent context. Templates land in `.gitea/ISSUE_TEMPLATE/` + `.github/ISSUE_TEMPLATE/`. (#1269) |
-| **`flow-release` orchestration** | Config-driven release flow consumes `.aiwg/release.config`. Six gates: build/test, CI green, doc-sync, CHANGELOG, README freshness, tag/push, post-release. AIWG itself dogfoods this on 2026.5.2. |
-| **Doctor discovery-availability gate** | `aiwg doctor` now smoke-probes `discover`, `show`, `index`, `runtime-info` and warns when any is broken (#1264(g)). |
-| **Six other CLI fixes** | `runtime-info --discover` ENOENT, `aiwg new --help` no longer scaffolds as a side effect, `aiwg catalog` JSON files now ship in `dist/`, three import-path fixes across `workspace-migrate`/`optimize-prompt`/`diversify-content`, doctor doesn't recommend the unimplemented `install-skill-seekers` (#1264). |
+| What changed                                | Why you care                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`aiwg steward` works end-to-end**         | Both the path resolution bug (#1261) and the schema mismatch (#1262) are fixed. Capability routing is finally usable.                                                                                                                                                                                          |
+| **Kernel skills get Claude command stubs**  | `/aiwg-refresh`, `/aiwg-regenerate`, `/aiwg-doctor`, `/aiwg-status`, `/aiwg-help` deploy as `.claude/commands/` entries (#1263). The slash-form is now deterministic instead of churning through agent dialog.                                                                                                 |
+| **`aiwg regenerate` is a real CLI command** | Context-only regen of `AIWG.md` + `AGENTS.md` without redeploying frameworks. Faster than `aiwg refresh` when you just need to fix context drift (#1266).                                                                                                                                                      |
+| **`aiwg-issue` + `aiwg-pr` kernel skills**  | Filing guidance is always-loaded in your agent context. Templates land in `.gitea/ISSUE_TEMPLATE/` + `.github/ISSUE_TEMPLATE/`. (#1269)                                                                                                                                                                        |
+| **`flow-release` orchestration**            | Config-driven release flow consumes `.aiwg/release.config`. Six gates: build/test, CI green, doc-sync, CHANGELOG, README freshness, tag/push, post-release. AIWG itself dogfoods this on 2026.5.2.                                                                                                             |
+| **Doctor discovery-availability gate**      | `aiwg doctor` now smoke-probes `discover`, `show`, `index`, `runtime-info` and warns when any is broken (#1264(g)).                                                                                                                                                                                            |
+| **Six other CLI fixes**                     | `runtime-info --discover` ENOENT, `aiwg new --help` no longer scaffolds as a side effect, `aiwg catalog` JSON files now ship in `dist/`, three import-path fixes across `workspace-migrate`/`optimize-prompt`/`diversify-content`, doctor doesn't recommend the unimplemented `install-skill-seekers` (#1264). |
 
 ### Added
 
@@ -1772,86 +1774,86 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 
 ### Highlights
 
-| What changed | Why you care |
-|--------------|--------------|
-| **Discover-first protocol enforcement** (#1249) — Rule 1.5 in `skill-discovery.md` mandates `aiwg discover` BEFORE filesystem search for any AIWG-keyword query. Top-banner Discover-First Protocol on every provider's deployed `RULES-INDEX.md`. All 9 framework quickref descriptions rewritten with explicit `AUTO-INVOKE when user mentions: <triggers>` phrasing. `aiwg-finder` subagent documented as preferred routing when delegation is available. | The discoverability system stops being an "available option" agents skip in favor of fast grep. Driven by real Factory-droid user feedback. |
-| **Hermes integration audit complete** (#1239-#1244, source-verified against Hermes Agent v0.4.0+ at HEAD) — AGENTS.md → 579-byte thin pointer (down from 30 KB+), `.hermes.md` twin gets MCP-specific suffix, `aiwg-orchestrate` skill auto-installs on first deploy, `hermes mcp add` (not `install`), first-match-wins context loading documented, `/reload-skills` / `/reload-mcp` slash commands replace restart guidance, 20K-char `CONTEXT_FILE_MAX_CHARS` cap surfaced. Hermes Capabilities Reference catalogs `/kanban`, `/handoff`, ACP adapter, `/agents`, `/goal`, `/cron`, `/snapshot`, `/background`, gateway platforms, plugins. | Hermes users get an integration that actually matches the upstream code, with every claim citing a Hermes source file/line. |
-| **Per-platform session reload notice** (#1240) — Every `aiwg use` ends with a "Session reload required:" section naming action + rationale + symptom per provider. Steward agent's Post-Deploy Session Reload table covers all 10 platforms. | The "Agent type 'X' not found" symptom when a session predates the deploy is now diagnosed at the source — no more chasing imaginary subagent-isolation bugs. |
-| **AGENTS.md becomes a thin pointer to AIWG.md** (#1239) — `buildAgentsMd` no longer inlines a 192-entry link-index of every deployed agent. Replaced with a 579-byte thin pointer that references AIWG.md and `aiwg discover` / `aiwg show`. Eliminates four warning classes across all 10 AGENTS.md providers. | Codex's 32 KB AGENTS.md cap stops being a constraint; auto-split and per-entry sanitizer warnings go to zero. |
-| **`aiwg-regenerate` promoted to kernel skill** (#1245) — kernel set grows from 9 to 10 self-maintenance ops. Natural-language invocation works for "regenerate my CLAUDE.md" without `aiwg discover` round-trip. | Operational maintenance task gets first-class always-loaded surface, matching the precedent set for `steward`, `aiwg-doctor`, `aiwg-refresh`, etc. |
-| **Publish pipeline fixes** (#1246, #1247) — `.gitea/workflows/gitea-release.yml` rewritten with `jq -n` JSON construction + explicit HTTP-code handling (replaces a silently-failing inline-escaped curl that hadn't created a Gitea Release object since rc.27). `.gitea/workflows/npm-publish.yml` gets `set -o pipefail` + `defaults.run.shell: bash` + refined error-pattern allowlist (replaces a silently-failing pipeline that hadn't pushed to npmjs.org since rc.27). Operator's `NPMJS_TOKEN` rotation closed the loop. | Every future rc tag actually creates a Gitea Release and publishes to public npmjs.org. CI no longer reports green for silent failures. |
-| **Architecture overview docs with 8 mermaid diagrams** (#1248) — new canonical `docs/architecture-overview.md` (visual entry point), cross-referenced from `docs/how-it-works.md`, `docs/discovery-and-kernel-skills.md`, `docs/integrations/hermes-quickstart.md`, and README. Image placeholders at `docs/architecture-overview/images/` ready for polished Gemini-generated illustrations (three prompt-set aesthetics: illustrated computing iconography, monospace/terminal, editorial). | Visual mental model for AIWG's architecture, deploy flow, kernel-vs-standard model, and discovery system finally exists in the docs. |
-| **Index includes `agentic/code/extensions` + nearest-ancestor type detection** (#1221) — `aiwg discover` and `aiwg show` now surface skills/rules/templates from `agentic/code/extensions/{sys,net,it,sec,stream,dev}` alongside frameworks and addons. `inferType()` reclassified ~380 mistyped artifacts (templates 27→393, +14 commands, +9 hooks, +6 behaviors). Top-level `agentic/code/behaviors/` added to scanDirs. | Discovery is honest about what exists. Templates, behaviors, hooks, and the elaboration-stage docs in research-complete are no longer silent `document` entries. |
-| **`aiwg use all` deploys frameworks + addons + extensions** (#1222) — extensions are deployed alongside addons; single-extension installs work via `aiwg use <name>`; advisory and unknown-target text honestly describe what `all` does. | Operators get every capability bundle the corpus ships, not just frameworks + addons. |
-| **`aiwg discover` / `aiwg show` UX hints on empty results** (#1221) — JSON envelope includes a `hint` field when the framework index is missing or the phrase scores nothing; `aiwg show` falls back to a corpus scan with an "uninstalled" banner. | Agents stop concluding "AIWG doesn't have a skill for that" when the real problem is an unbuilt index. |
-| **Test cleanup: ralph→agent-loop module-resolution drift** (#1210) — 2 stranded vitest `.mjs` files renamed to `.ts` (28 tests now run under `npm test`); `npm run test:node` runs the 14 node:test files in `tools/ralph-external/` and `test/unit/ralph/`. | `npx vitest run` no longer trips on misplaced `.mjs` files. Test runners are explicit and contributor-discoverable. |
-| **4 colliding agent renames at framework source** (#1211) — forensics+research `acquisition-agent`, ops `deployment-manager`, marketing `project-manager`, media-curator `quality-assessor` — renamed with framework prefixes; SDLC keeps the canonical names. Cross-references, manifests, READMEs, plugin packager output all updated. | Operators with multiple frameworks installed no longer hit "first-installed wins" silent muting. Both forks of `acquisition-agent` coexist. |
-| **Sandbox tab tmux cheatsheet** (#1166) — collapsible cheatsheet panel in the `aiwg serve` Sandbox tab's PaneStack with localStorage-persisted toggle. Detach row visually highlighted. | Operators dropped into a tmux session via the sandbox attach flow stop reaching for Ctrl-C when they want to detach. |
-| **Cross-provider parity Phase 2 verifications** (#1089, #1159, #1160, #1162, #1163, #1164) — Cursor/Copilot/Warp/Windsurf user-scope deploys documented as **Non-applicable** (in-app settings or cloud-sync mechanisms, not filesystem discovery); Factory verified inline. | Operators get clear disposition per provider: harmless mirror at the documented paths but use the provider-native customization mechanism for cross-project work. |
-| **3 closed sweeps: skill listing budget, no-copy standard skills, v2026.4.0 release gap** (#1147, #1217, #1142) — kernel pivot resolved the 425-truncation budget issue (`aiwg doctor` now reports 0.10× budget); no-copy default verified; CHANGELOG honest about 2026.4.0 never cutting as stable. | Loose ends from the kernel-pivot epic tied off. |
-| **Claude Code plugin parity for all 8 frameworks** (#1152) — 6 new plugins: `forensics`, `security-engineering`, `research`, `media-curator`, `ops`, `knowledge-base`. Marketplace grew from 7 to 13. | Every framework now installs via `/plugin install <name>@aiwg`, not just `sdlc` and `marketing`. Closes the framework→plugin distribution gap. |
-| **Project-local artifact lifecycle (epic #1033)** — full `new-bundle` → `use` → `doctor` → `remove` → `promote` chain | Customize AIWG per project without forking. Bundles graduate to upstream by hash-verified copy (no rewrite) thanks to the identical-form portability invariant ([ADR #1038](.aiwg/architecture/adr-identical-form-portability.md)). |
-| **`aiwg new-bundle` scaffolding** (#1050) | One command produces a valid manifest + starter artifact + README under `.aiwg/{type}/{name}/`. Aliases: `new-extension`, `new-addon`, `new-framework`, `new-plugin`. |
-| **`aiwg promote` graduation** (#1037) | Move a project-local bundle to upstream or a private corpus path. SHA-256 verified copy with rollback on mismatch. `--dry-run`, `--cleanup`, `--force`. |
-| **`aiwg remove` is project-local-aware** (#1037) | Reverts deployed files using artifact-hash detection (pristine / mutated / missing / replaced). Source under `.aiwg/<type>/<name>/` is **never** deleted — `--force` only overrides the case-2 mutation prompt. |
-| **`aiwg doctor --project-local`** (#1037) | Per-type counts, validation errors, shadows (informational vs blocking), drift detection, provider deployment matrix. |
-| **Activity log for project-local lifecycle** (#1037) | 12 design events emitted across deploy/shadow/remove/promote paths to `.aiwg/activity.log` for post-hoc audit. |
-| **Comprehensive customization docs** (#1051, #1052) | New Path A/B/C structure (project-local / fork / corpus), quickstart, lifecycle reference, troubleshooting, from-fork migration, type disambiguation. Old `.aiwg/.project/` docs replaced with redirects. |
-| **Corpus architecture & `@$AIWG_ROOT/`** | Skills link into the corpus rather than restating it. Token resolves correctly in dev, npm, and custom installs. 1,400+ broken refs fixed. |
-| **Composite skills** | Thin skills = links + minimal framing. Agent follows refs as deep as the task requires. Context efficiency by design. |
-| **aiwg-dev addon** | `link-check`, `validate-component`, `dev-doctor` section 4, and `devkit-*` scaffolding skills. |
-| **Skills as canonical type** | SKILL.md is the source. Commands generated at deploy time. `aiwg add-command` deprecated. |
-| **Daemon — fully operational** | Web UI, YAML profiles, scheduled tasks, Telegram multi-room, autonomous engine, cross-session memory, Docker. |
-| **Mission Control** | Parallel agent loops as background missions with live dashboard. |
-| **Behaviors — 5th artifact type** | Subscribe to system events, react automatically. Deployed to OpenClaw. |
-| **Provider-watcher** | Scheduled provider update detection with automatic PR creation. |
-| **SOUL.md agent identity** | Persistent character for agents: worldview, opinions, reasoning traits. |
-| **Remote install system** | Install frameworks without cloning the repo. |
-| **Project-level `aiwg.config`** | Per-project provider registry, deployment manifest, run scripts. |
-| **`aiwg sync`** | Update + redeploy + health check in one command. |
-| **OpenClaw (10th platform)** | First with native behaviors support. |
-| **Hermes as first-class platform** | Full deployment target, 96 skills, token-optimized templates. |
-| **Copilot & Windsurf overhauls** | Copilot: `.agent.md`/`.prompt.md`/`.instructions.md`. Windsurf: `.windsurf/rules/` with `trigger: always_on`. |
-| **ops-complete framework** | YAML-native ops framework with `sys`, `it`, `dev`, `stream` extensions. |
-| **RLM enhancements** | `quality_gate`, `preferred_model`, `chunking_strategy`, `batch_size`. Three new examples. |
-| **Composable RULES-INDEX** | Components own their rules indexes. CLI assembles at deploy time. |
-| **15-article getting-started series** | Scenario-based guides in user vocabulary. |
-| **aiwg-guide contextual help skill** | Auto-activates when users ask how to use AIWG. |
-| **AIWG.md hook file** | AIWG context decoupled from CLAUDE.md. Toggleable without reinstalling. |
-| **CLI UI modernization** | Shared display module, brand mark `◆`, quiet/JSON mode. Consistent across all 53 commands. |
-| **Quality & metrics modules** | Token tracking, budget management, quality scoring, A/B feedback testing — 4 modules, full unit test coverage. |
-| **Model evaluation suite** | Evaluate local/cloud models across 6 dimensions. Backed by `@matric/eval-client`. |
-| **`aiwg ralph --attach` / `ralph-attach`** | Stay attached to or re-attach to any running agent loop's output from any terminal. |
-| **MCP sidecar docs (all 8 providers)** | Full integration guides, minimal + full config templates, quickstart sections for every provider. |
-| **VS Code extension** | `@aiwg` Copilot chat participant, MCP auto-config, status bar, sidebar tree. Phase 1 + 2. (#623) |
-| **Daemon platform tiers** | Tier 1 (native headless), Tier 2 (PTY adapter), Tier 3 (unsupported). In capability matrix. |
-| **PTY adapter** | `aiwg daemon pty start/list/stop` — bridge Tier 1 TUIs over pseudo-terminal. `node-pty` optional. (#656) |
-| **Contract syntax for skills** | `requires:`/`ensures:`/`errors:`/`invariants:` + `contract-manifest` + `contract-validate`. (#644) |
-| **`issue-planner` + `induct-research` skills** | Research-grounded backlog generation. Human approval gate. Research routing to Gitea/GitHub/Jira. |
-| **`human-authorization` rule** | Recommendation ≠ authorization. Agents confirm before high-stakes implied actions. HIGH. (#655) |
-| **5 OpenProse antipattern rules** | `god-session`, `vague-discretion`, `context-bloat`, `parallel-then-synthesize`, `implicit-dependencies`. aiwg-utils: 7 → 13 rules. (#648) |
-| **prose-integration addon complete** | `prose-detect` + `prose-install` + `prose-resolution`. 7-skill count. Centralized detection. (#649) |
-| **`[all]` platforms token** | `platforms: [all]` replaced at deploy time. No more hardcoded provider lists. (#651–#653) |
-| **agentic-installer addon** | `setup.aiwg.io/v1` SetupManifest YAML language. Script-first installation: 11 cross-platform templates, 3 skills, 1 agent, 2 rules. (#663–#667) |
-| **`aiwg-ci-safety` rule (aiwg-dev)** | Agents may not touch `.gitea/workflows/` without human authorization. CI templates for users live in `agentic/code/frameworks/*/ci/`, never in forge dirs. HIGH. |
-| **Skill namespace strategy** | `aiwg-{name}` slug prefix + `aiwg/` subdirectory + `namespace: aiwg` frontmatter — three-layer collision prevention. Collision detection in `use`, `doctor`, `validate-metadata`. All 10 platforms covered. |
-| **`aiwg serve`** | Local HTTP server for the AIWG web dashboard. WebSocket PTY bridge streams live terminal output directly to the browser. |
-| **Mission Control Web UI** | React app with xterm.js terminal viewer, telemetry dashboard, and fortemi-react panel. |
-| **Artifact index: typed edges & filename-metadata** | Cross-graph set queries (`union`/`intersection`/`difference`), citation sidecar parser, typed edge extraction. Filename-metadata node strategy derives metadata from filename regex without reading file content. |
-| **`no-time-estimates` rule** | Agent-oriented estimation: scope count, agent count, parallelism map, pass estimate. No wall-clock figures. HIGH. |
-| **Graph backends guide** | Documentation for pluggable graph storage backends in `docs/development/`. |
-| **Specification-complete layer (Layer 3 + 4)** | Elaboration now produces behavioral specs (sequence diagrams, state machines, decision tables, interface contracts) and pseudo-code specs — making construction-phase code generation a translation task, not a design task. 6 new templates, deepened gate criteria, new `/flow-use-case-realization` orchestration, 6-layer traceability enforcement. |
-| **Semantic memory kernel** | New `semantic-memory` addon (`core: true, autoInstall: true`) with 5 kernel skills (`memory-ingest`, `memory-lint`, `memory-query-capture`, `memory-log-append`, `memory-log-render`) and a JSON Lines event schema. Any consumer declaring a `memory.topology` contract gets durable ingest/lint/log/query-capture for free. Replaces domain-scoped implementations across 4 frameworks. Per ADR-021. |
-| **`MemoryTopology` contract** | New `memory.topology` field in `manifest.json` with TypeScript types in `src/extensions/types.ts`. Four `crossRefStyle` values supported: `at-mention`, `wikilink`, `markdown-link`, `yaml-ref`. Declared in sdlc-complete, research-complete, forensics-complete, media-curator. Validated by `aiwg doctor`. |
-| **Kernel delegation pattern** | Five existing skills (`induct-research`, `intake-from-codebase`, `workspace-health`, `corpus-health`, `cleanup-audit`) now delegate mechanical work to `memory-ingest`/`memory-lint`. No UX change; adds provenance logging, contradiction detection, graph-native cross-references. Per ADR-021 D5. |
-| **`llm-wiki` addon** | Thin topology on top of the semantic memory kernel. 5 page templates (book-companion, personal, research-deep-dive, business-team, generic), Obsidian integration docs, `crossRefStyle: wikilink`. Pick a profile during `aiwg use llm-wiki` via interactive picker or `--profile <name>`. |
-| **`aiwg doctor` topology validation** | New `MetadataValidator.validateMemoryTopology()` method validates 6 required fields, `crossRefStyle` enum, `.aiwg/` namespace convention, `derivedPages` shape, and array types for `lintRules`/`ingestRequires`. Flags common addon-author mistakes before deploy. |
-| **Training framework → marketplace plugin** | The `training-complete` framework moved out of main aiwg into a standalone repo at [`jmagly/aiwg-training`](https://github.com/jmagly/aiwg-training). Install via `/plugin install training@aiwg` or `aiwg use training`. Optional Python runtime (`aiwg-training` CLI) for batch operations — post-install hook prompts on Python 3.10+ detection. Main aiwg shrinks by ~20K lines. |
-| **ADR-021 & ADR-022** | Two architectural decisions accepted: ADR-021 locks the semantic memory kernel architecture (6 decisions), ADR-022 locks the training framework architecture (10 decisions). Open questions resolved on both. |
-| **`aiwg session`** | One command launches a fully-prepared agentic session: version check, doctor, auto-repair, deployment verification, optional MCP injection, then provider launch or IDE instructions. Self-healing by default. |
-| **`aiwg feedback`** | File GitHub issues from the CLI without leaving the terminal. System context collected automatically. Routes through `gh` CLI → browser URL → stdout. |
-| **`aiwg serve` WebSocket fix** | Sandbox connections were silently 404-ing. Fixed with native Node.js upgrade router + `ws` package. `ws` now auto-installs on first use. |
-| **ADR template: 5 new sections** | Source verification & claim tracking, implementation sketch, concurrency/shared state model, testing strategy, multi-level Definition of Done. |
+| What changed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Why you care                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Discover-first protocol enforcement** (#1249) — Rule 1.5 in `skill-discovery.md` mandates `aiwg discover` BEFORE filesystem search for any AIWG-keyword query. Top-banner Discover-First Protocol on every provider's deployed `RULES-INDEX.md`. All 9 framework quickref descriptions rewritten with explicit `AUTO-INVOKE when user mentions: <triggers>` phrasing. `aiwg-finder` subagent documented as preferred routing when delegation is available.                                                                                                                                                                                   | The discoverability system stops being an "available option" agents skip in favor of fast grep. Driven by real Factory-droid user feedback.                                                                                                                                                                                                                                                            |
+| **Hermes integration audit complete** (#1239-#1244, source-verified against Hermes Agent v0.4.0+ at HEAD) — AGENTS.md → 579-byte thin pointer (down from 30 KB+), `.hermes.md` twin gets MCP-specific suffix, `aiwg-orchestrate` skill auto-installs on first deploy, `hermes mcp add` (not `install`), first-match-wins context loading documented, `/reload-skills` / `/reload-mcp` slash commands replace restart guidance, 20K-char `CONTEXT_FILE_MAX_CHARS` cap surfaced. Hermes Capabilities Reference catalogs `/kanban`, `/handoff`, ACP adapter, `/agents`, `/goal`, `/cron`, `/snapshot`, `/background`, gateway platforms, plugins. | Hermes users get an integration that actually matches the upstream code, with every claim citing a Hermes source file/line.                                                                                                                                                                                                                                                                            |
+| **Per-platform session reload notice** (#1240) — Every `aiwg use` ends with a "Session reload required:" section naming action + rationale + symptom per provider. Steward agent's Post-Deploy Session Reload table covers all 10 platforms.                                                                                                                                                                                                                                                                                                                                                                                                   | The "Agent type 'X' not found" symptom when a session predates the deploy is now diagnosed at the source — no more chasing imaginary subagent-isolation bugs.                                                                                                                                                                                                                                          |
+| **AGENTS.md becomes a thin pointer to AIWG.md** (#1239) — `buildAgentsMd` no longer inlines a 192-entry link-index of every deployed agent. Replaced with a 579-byte thin pointer that references AIWG.md and `aiwg discover` / `aiwg show`. Eliminates four warning classes across all 10 AGENTS.md providers.                                                                                                                                                                                                                                                                                                                                | Codex's 32 KB AGENTS.md cap stops being a constraint; auto-split and per-entry sanitizer warnings go to zero.                                                                                                                                                                                                                                                                                          |
+| **`aiwg-regenerate` promoted to kernel skill** (#1245) — kernel set grows from 9 to 10 self-maintenance ops. Natural-language invocation works for "regenerate my CLAUDE.md" without `aiwg discover` round-trip.                                                                                                                                                                                                                                                                                                                                                                                                                               | Operational maintenance task gets first-class always-loaded surface, matching the precedent set for `steward`, `aiwg-doctor`, `aiwg-refresh`, etc.                                                                                                                                                                                                                                                     |
+| **Publish pipeline fixes** (#1246, #1247) — `.gitea/workflows/gitea-release.yml` rewritten with `jq -n` JSON construction + explicit HTTP-code handling (replaces a silently-failing inline-escaped curl that hadn't created a Gitea Release object since rc.27). `.gitea/workflows/npm-publish.yml` gets `set -o pipefail` + `defaults.run.shell: bash` + refined error-pattern allowlist (replaces a silently-failing pipeline that hadn't pushed to npmjs.org since rc.27). Operator's `NPMJS_TOKEN` rotation closed the loop.                                                                                                              | Every future rc tag actually creates a Gitea Release and publishes to public npmjs.org. CI no longer reports green for silent failures.                                                                                                                                                                                                                                                                |
+| **Architecture overview docs with 8 mermaid diagrams** (#1248) — new canonical `docs/architecture-overview.md` (visual entry point), cross-referenced from `docs/how-it-works.md`, `docs/discovery-and-kernel-skills.md`, `docs/integrations/hermes-quickstart.md`, and README. Image placeholders at `docs/architecture-overview/images/` ready for polished Gemini-generated illustrations (three prompt-set aesthetics: illustrated computing iconography, monospace/terminal, editorial).                                                                                                                                                  | Visual mental model for AIWG's architecture, deploy flow, kernel-vs-standard model, and discovery system finally exists in the docs.                                                                                                                                                                                                                                                                   |
+| **Index includes `agentic/code/extensions` + nearest-ancestor type detection** (#1221) — `aiwg discover` and `aiwg show` now surface skills/rules/templates from `agentic/code/extensions/{sys,net,it,sec,stream,dev}` alongside frameworks and addons. `inferType()` reclassified ~380 mistyped artifacts (templates 27→393, +14 commands, +9 hooks, +6 behaviors). Top-level `agentic/code/behaviors/` added to scanDirs.                                                                                                                                                                                                                    | Discovery is honest about what exists. Templates, behaviors, hooks, and the elaboration-stage docs in research-complete are no longer silent `document` entries.                                                                                                                                                                                                                                       |
+| **`aiwg use all` deploys frameworks + addons + extensions** (#1222) — extensions are deployed alongside addons; single-extension installs work via `aiwg use <name>`; advisory and unknown-target text honestly describe what `all` does.                                                                                                                                                                                                                                                                                                                                                                                                      | Operators get every capability bundle the corpus ships, not just frameworks + addons.                                                                                                                                                                                                                                                                                                                  |
+| **`aiwg discover` / `aiwg show` UX hints on empty results** (#1221) — JSON envelope includes a `hint` field when the framework index is missing or the phrase scores nothing; `aiwg show` falls back to a corpus scan with an "uninstalled" banner.                                                                                                                                                                                                                                                                                                                                                                                            | Agents stop concluding "AIWG doesn't have a skill for that" when the real problem is an unbuilt index.                                                                                                                                                                                                                                                                                                 |
+| **Test cleanup: ralph→agent-loop module-resolution drift** (#1210) — 2 stranded vitest `.mjs` files renamed to `.ts` (28 tests now run under `npm test`); `npm run test:node` runs the 14 node:test files in `tools/ralph-external/` and `test/unit/ralph/`.                                                                                                                                                                                                                                                                                                                                                                                   | `npx vitest run` no longer trips on misplaced `.mjs` files. Test runners are explicit and contributor-discoverable.                                                                                                                                                                                                                                                                                    |
+| **4 colliding agent renames at framework source** (#1211) — forensics+research `acquisition-agent`, ops `deployment-manager`, marketing `project-manager`, media-curator `quality-assessor` — renamed with framework prefixes; SDLC keeps the canonical names. Cross-references, manifests, READMEs, plugin packager output all updated.                                                                                                                                                                                                                                                                                                       | Operators with multiple frameworks installed no longer hit "first-installed wins" silent muting. Both forks of `acquisition-agent` coexist.                                                                                                                                                                                                                                                            |
+| **Sandbox tab tmux cheatsheet** (#1166) — collapsible cheatsheet panel in the `aiwg serve` Sandbox tab's PaneStack with localStorage-persisted toggle. Detach row visually highlighted.                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Operators dropped into a tmux session via the sandbox attach flow stop reaching for Ctrl-C when they want to detach.                                                                                                                                                                                                                                                                                   |
+| **Cross-provider parity Phase 2 verifications** (#1089, #1159, #1160, #1162, #1163, #1164) — Cursor/Copilot/Warp/Windsurf user-scope deploys documented as **Non-applicable** (in-app settings or cloud-sync mechanisms, not filesystem discovery); Factory verified inline.                                                                                                                                                                                                                                                                                                                                                                   | Operators get clear disposition per provider: harmless mirror at the documented paths but use the provider-native customization mechanism for cross-project work.                                                                                                                                                                                                                                      |
+| **3 closed sweeps: skill listing budget, no-copy standard skills, v2026.4.0 release gap** (#1147, #1217, #1142) — kernel pivot resolved the 425-truncation budget issue (`aiwg doctor` now reports 0.10× budget); no-copy default verified; CHANGELOG honest about 2026.4.0 never cutting as stable.                                                                                                                                                                                                                                                                                                                                           | Loose ends from the kernel-pivot epic tied off.                                                                                                                                                                                                                                                                                                                                                        |
+| **Claude Code plugin parity for all 8 frameworks** (#1152) — 6 new plugins: `forensics`, `security-engineering`, `research`, `media-curator`, `ops`, `knowledge-base`. Marketplace grew from 7 to 13.                                                                                                                                                                                                                                                                                                                                                                                                                                          | Every framework now installs via `/plugin install <name>@aiwg`, not just `sdlc` and `marketing`. Closes the framework→plugin distribution gap.                                                                                                                                                                                                                                                         |
+| **Project-local artifact lifecycle (epic #1033)** — full `new-bundle` → `use` → `doctor` → `remove` → `promote` chain                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Customize AIWG per project without forking. Bundles graduate to upstream by hash-verified copy (no rewrite) thanks to the identical-form portability invariant ([ADR #1038](.aiwg/architecture/adr-identical-form-portability.md)).                                                                                                                                                                    |
+| **`aiwg new-bundle` scaffolding** (#1050)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | One command produces a valid manifest + starter artifact + README under `.aiwg/{type}/{name}/`. Aliases: `new-extension`, `new-addon`, `new-framework`, `new-plugin`.                                                                                                                                                                                                                                  |
+| **`aiwg promote` graduation** (#1037)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Move a project-local bundle to upstream or a private corpus path. SHA-256 verified copy with rollback on mismatch. `--dry-run`, `--cleanup`, `--force`.                                                                                                                                                                                                                                                |
+| **`aiwg remove` is project-local-aware** (#1037)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Reverts deployed files using artifact-hash detection (pristine / mutated / missing / replaced). Source under `.aiwg/<type>/<name>/` is **never** deleted — `--force` only overrides the case-2 mutation prompt.                                                                                                                                                                                        |
+| **`aiwg doctor --project-local`** (#1037)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Per-type counts, validation errors, shadows (informational vs blocking), drift detection, provider deployment matrix.                                                                                                                                                                                                                                                                                  |
+| **Activity log for project-local lifecycle** (#1037)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | 12 design events emitted across deploy/shadow/remove/promote paths to `.aiwg/activity.log` for post-hoc audit.                                                                                                                                                                                                                                                                                         |
+| **Comprehensive customization docs** (#1051, #1052)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | New Path A/B/C structure (project-local / fork / corpus), quickstart, lifecycle reference, troubleshooting, from-fork migration, type disambiguation. Old `.aiwg/.project/` docs replaced with redirects.                                                                                                                                                                                              |
+| **Corpus architecture & `@$AIWG_ROOT/`**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Skills link into the corpus rather than restating it. Token resolves correctly in dev, npm, and custom installs. 1,400+ broken refs fixed.                                                                                                                                                                                                                                                             |
+| **Composite skills**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Thin skills = links + minimal framing. Agent follows refs as deep as the task requires. Context efficiency by design.                                                                                                                                                                                                                                                                                  |
+| **aiwg-dev addon**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `link-check`, `validate-component`, `dev-doctor` section 4, and `devkit-*` scaffolding skills.                                                                                                                                                                                                                                                                                                         |
+| **Skills as canonical type**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | SKILL.md is the source. Commands generated at deploy time. `aiwg add-command` deprecated.                                                                                                                                                                                                                                                                                                              |
+| **Daemon — fully operational**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Web UI, YAML profiles, scheduled tasks, Telegram multi-room, autonomous engine, cross-session memory, Docker.                                                                                                                                                                                                                                                                                          |
+| **Mission Control**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Parallel agent loops as background missions with live dashboard.                                                                                                                                                                                                                                                                                                                                       |
+| **Behaviors — 5th artifact type**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Subscribe to system events, react automatically. Deployed to OpenClaw.                                                                                                                                                                                                                                                                                                                                 |
+| **Provider-watcher**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Scheduled provider update detection with automatic PR creation.                                                                                                                                                                                                                                                                                                                                        |
+| **SOUL.md agent identity**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Persistent character for agents: worldview, opinions, reasoning traits.                                                                                                                                                                                                                                                                                                                                |
+| **Remote install system**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Install frameworks without cloning the repo.                                                                                                                                                                                                                                                                                                                                                           |
+| **Project-level `aiwg.config`**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Per-project provider registry, deployment manifest, run scripts.                                                                                                                                                                                                                                                                                                                                       |
+| **`aiwg sync`**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Update + redeploy + health check in one command.                                                                                                                                                                                                                                                                                                                                                       |
+| **OpenClaw (10th platform)**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | First with native behaviors support.                                                                                                                                                                                                                                                                                                                                                                   |
+| **Hermes as first-class platform**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Full deployment target, 96 skills, token-optimized templates.                                                                                                                                                                                                                                                                                                                                          |
+| **Copilot & Windsurf overhauls**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Copilot: `.agent.md`/`.prompt.md`/`.instructions.md`. Windsurf: `.windsurf/rules/` with `trigger: always_on`.                                                                                                                                                                                                                                                                                          |
+| **ops-complete framework**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | YAML-native ops framework with `sys`, `it`, `dev`, `stream` extensions.                                                                                                                                                                                                                                                                                                                                |
+| **RLM enhancements**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `quality_gate`, `preferred_model`, `chunking_strategy`, `batch_size`. Three new examples.                                                                                                                                                                                                                                                                                                              |
+| **Composable RULES-INDEX**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Components own their rules indexes. CLI assembles at deploy time.                                                                                                                                                                                                                                                                                                                                      |
+| **15-article getting-started series**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Scenario-based guides in user vocabulary.                                                                                                                                                                                                                                                                                                                                                              |
+| **aiwg-guide contextual help skill**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Auto-activates when users ask how to use AIWG.                                                                                                                                                                                                                                                                                                                                                         |
+| **AIWG.md hook file**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | AIWG context decoupled from CLAUDE.md. Toggleable without reinstalling.                                                                                                                                                                                                                                                                                                                                |
+| **CLI UI modernization**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Shared display module, brand mark `◆`, quiet/JSON mode. Consistent across all 53 commands.                                                                                                                                                                                                                                                                                                             |
+| **Quality & metrics modules**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Token tracking, budget management, quality scoring, A/B feedback testing — 4 modules, full unit test coverage.                                                                                                                                                                                                                                                                                         |
+| **Model evaluation suite**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Evaluate local/cloud models across 6 dimensions. Backed by `@matric/eval-client`.                                                                                                                                                                                                                                                                                                                      |
+| **`aiwg ralph --attach` / `ralph-attach`**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Stay attached to or re-attach to any running agent loop's output from any terminal.                                                                                                                                                                                                                                                                                                                    |
+| **MCP sidecar docs (all 8 providers)**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Full integration guides, minimal + full config templates, quickstart sections for every provider.                                                                                                                                                                                                                                                                                                      |
+| **VS Code extension**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `@aiwg` Copilot chat participant, MCP auto-config, status bar, sidebar tree. Phase 1 + 2. (#623)                                                                                                                                                                                                                                                                                                       |
+| **Daemon platform tiers**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Tier 1 (native headless), Tier 2 (PTY adapter), Tier 3 (unsupported). In capability matrix.                                                                                                                                                                                                                                                                                                            |
+| **PTY adapter**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `aiwg daemon pty start/list/stop` — bridge Tier 1 TUIs over pseudo-terminal. `node-pty` optional. (#656)                                                                                                                                                                                                                                                                                               |
+| **Contract syntax for skills**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `requires:`/`ensures:`/`errors:`/`invariants:` + `contract-manifest` + `contract-validate`. (#644)                                                                                                                                                                                                                                                                                                     |
+| **`issue-planner` + `induct-research` skills**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Research-grounded backlog generation. Human approval gate. Research routing to Gitea/GitHub/Jira.                                                                                                                                                                                                                                                                                                      |
+| **`human-authorization` rule**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Recommendation ≠ authorization. Agents confirm before high-stakes implied actions. HIGH. (#655)                                                                                                                                                                                                                                                                                                        |
+| **5 OpenProse antipattern rules**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `god-session`, `vague-discretion`, `context-bloat`, `parallel-then-synthesize`, `implicit-dependencies`. aiwg-utils: 7 → 13 rules. (#648)                                                                                                                                                                                                                                                              |
+| **prose-integration addon complete**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `prose-detect` + `prose-install` + `prose-resolution`. 7-skill count. Centralized detection. (#649)                                                                                                                                                                                                                                                                                                    |
+| **`[all]` platforms token**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `platforms: [all]` replaced at deploy time. No more hardcoded provider lists. (#651–#653)                                                                                                                                                                                                                                                                                                              |
+| **agentic-installer addon**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `setup.aiwg.io/v1` SetupManifest YAML language. Script-first installation: 11 cross-platform templates, 3 skills, 1 agent, 2 rules. (#663–#667)                                                                                                                                                                                                                                                        |
+| **`aiwg-ci-safety` rule (aiwg-dev)**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Agents may not touch `.gitea/workflows/` without human authorization. CI templates for users live in `agentic/code/frameworks/*/ci/`, never in forge dirs. HIGH.                                                                                                                                                                                                                                       |
+| **Skill namespace strategy**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `aiwg-{name}` slug prefix + `aiwg/` subdirectory + `namespace: aiwg` frontmatter — three-layer collision prevention. Collision detection in `use`, `doctor`, `validate-metadata`. All 10 platforms covered.                                                                                                                                                                                            |
+| **`aiwg serve`**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Local HTTP server for the AIWG web dashboard. WebSocket PTY bridge streams live terminal output directly to the browser.                                                                                                                                                                                                                                                                               |
+| **Mission Control Web UI**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | React app with xterm.js terminal viewer, telemetry dashboard, and fortemi-react panel.                                                                                                                                                                                                                                                                                                                 |
+| **Artifact index: typed edges & filename-metadata**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Cross-graph set queries (`union`/`intersection`/`difference`), citation sidecar parser, typed edge extraction. Filename-metadata node strategy derives metadata from filename regex without reading file content.                                                                                                                                                                                      |
+| **`no-time-estimates` rule**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Agent-oriented estimation: scope count, agent count, parallelism map, pass estimate. No wall-clock figures. HIGH.                                                                                                                                                                                                                                                                                      |
+| **Graph backends guide**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Documentation for pluggable graph storage backends in `docs/development/`.                                                                                                                                                                                                                                                                                                                             |
+| **Specification-complete layer (Layer 3 + 4)**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Elaboration now produces behavioral specs (sequence diagrams, state machines, decision tables, interface contracts) and pseudo-code specs — making construction-phase code generation a translation task, not a design task. 6 new templates, deepened gate criteria, new `/flow-use-case-realization` orchestration, 6-layer traceability enforcement.                                                |
+| **Semantic memory kernel**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | New `semantic-memory` addon (`core: true, autoInstall: true`) with 5 kernel skills (`memory-ingest`, `memory-lint`, `memory-query-capture`, `memory-log-append`, `memory-log-render`) and a JSON Lines event schema. Any consumer declaring a `memory.topology` contract gets durable ingest/lint/log/query-capture for free. Replaces domain-scoped implementations across 4 frameworks. Per ADR-021. |
+| **`MemoryTopology` contract**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | New `memory.topology` field in `manifest.json` with TypeScript types in `src/extensions/types.ts`. Four `crossRefStyle` values supported: `at-mention`, `wikilink`, `markdown-link`, `yaml-ref`. Declared in sdlc-complete, research-complete, forensics-complete, media-curator. Validated by `aiwg doctor`.                                                                                          |
+| **Kernel delegation pattern**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Five existing skills (`induct-research`, `intake-from-codebase`, `workspace-health`, `corpus-health`, `cleanup-audit`) now delegate mechanical work to `memory-ingest`/`memory-lint`. No UX change; adds provenance logging, contradiction detection, graph-native cross-references. Per ADR-021 D5.                                                                                                   |
+| **`llm-wiki` addon**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Thin topology on top of the semantic memory kernel. 5 page templates (book-companion, personal, research-deep-dive, business-team, generic), Obsidian integration docs, `crossRefStyle: wikilink`. Pick a profile during `aiwg use llm-wiki` via interactive picker or `--profile <name>`.                                                                                                             |
+| **`aiwg doctor` topology validation**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | New `MetadataValidator.validateMemoryTopology()` method validates 6 required fields, `crossRefStyle` enum, `.aiwg/` namespace convention, `derivedPages` shape, and array types for `lintRules`/`ingestRequires`. Flags common addon-author mistakes before deploy.                                                                                                                                    |
+| **Training framework → marketplace plugin**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | The `training-complete` framework moved out of main aiwg into a standalone repo at [`jmagly/aiwg-training`](https://github.com/jmagly/aiwg-training). Install via `/plugin install training@aiwg` or `aiwg use training`. Optional Python runtime (`aiwg-training` CLI) for batch operations — post-install hook prompts on Python 3.10+ detection. Main aiwg shrinks by ~20K lines.                   |
+| **ADR-021 & ADR-022**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Two architectural decisions accepted: ADR-021 locks the semantic memory kernel architecture (6 decisions), ADR-022 locks the training framework architecture (10 decisions). Open questions resolved on both.                                                                                                                                                                                          |
+| **`aiwg session`**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | One command launches a fully-prepared agentic session: version check, doctor, auto-repair, deployment verification, optional MCP injection, then provider launch or IDE instructions. Self-healing by default.                                                                                                                                                                                         |
+| **`aiwg feedback`**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | File GitHub issues from the CLI without leaving the terminal. System context collected automatically. Routes through `gh` CLI → browser URL → stdout.                                                                                                                                                                                                                                                  |
+| **`aiwg serve` WebSocket fix**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Sandbox connections were silently 404-ing. Fixed with native Node.js upgrade router + `ws` package. `ws` now auto-installs on first use.                                                                                                                                                                                                                                                               |
+| **ADR template: 5 new sections**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Source verification & claim tracking, implementation sketch, concurrency/shared state model, testing strategy, multi-level Definition of Done.                                                                                                                                                                                                                                                         |
 
 ### Added
 
@@ -1864,35 +1866,39 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
   3. **Mental model + artifact directory layout**
   4. **Anti-pattern guard**: explicit "do not enumerate skills from memory; run `aiwg discover --type skill --limit 20 \"<area>\"` instead"
 
-  This flips the quickrefs' role from skill-table reference to discovery primer. The agent learns which phrasings work — phrases curated and validated by AIWG maintainers, encoded directly into the kernel layer. Rather than enumerating ever-growing skill catalogs, the kernel teaches *how to find* them. Phrases were validated against the live discovery scorer; failed phrases were iterated until they surface the correct top result, or omitted when the underlying skill needs richer trigger declarations downstream.
+  This flips the quickrefs' role from skill-table reference to discovery primer. The agent learns which phrasings work — phrases curated and validated by AIWG maintainers, encoded directly into the kernel layer. Rather than enumerating ever-growing skill catalogs, the kernel teaches _how to find_ them. Phrases were validated against the live discovery scorer; failed phrases were iterated until they surface the correct top result, or omitted when the underlying skill needs richer trigger declarations downstream.
 
   Net effect: each quickref stays tight even as frameworks grow (no list maintenance), and discovery becomes habit rather than fallback. The pattern induces every agent loop through the index instead of going from memory.
+
 - **`aiwg discover` promoted to a first-class top-level command**. Previously `aiwg index discover` (subcommand of `aiwg index`); the new surface is `aiwg discover "<phrase>" [--limit N] [--type skill,agent,...] [--json]`. Discovery is the operator surface for finding AIWG skills, agents, commands, and rules by capability — it leverages the artifact index machinery but exists as its own verb so agents don't conflate it with the project's general-purpose graph indices (project / codebase / framework / user-defined). Same scoring (4× trigger boost, 2× capability) and same JSON schema as before. The legacy `aiwg index discover` path still works; the kernel quickrefs and the `skill-discovery` rule have been updated to use `aiwg discover`.
 - **Skill-only `.aiwg/` path move ported to all 9 remaining providers** (#1216). Kernel-vs-standard skill routing now applies uniformly across the AIWG fleet:
 
-  | Provider | Standard skills | Kernel skills |
-  |---|---|---|
-  | Claude Code | `.claude/.aiwg/skills/` | `.claude/skills/` |
-  | Cursor | `.cursor/.aiwg/skills/` | `.cursor/skills/` |
-  | Factory AI | `.factory/.aiwg/skills/` | `.factory/skills/` |
-  | GitHub Copilot | `.github/.aiwg/skills/` | `.github/skills/` |
-  | OpenCode | `.opencode/.aiwg/skill/` | `.opencode/skill/` |
-  | Warp | `.warp/.aiwg/skills/` | `.warp/skills/` |
-  | Windsurf | `.windsurf/.aiwg/skills/` | `.windsurf/skills/` |
-  | OpenClaw | `~/.openclaw/.aiwg/skills/` | `~/.openclaw/skills/aiwg/` |
-  | Hermes | `~/.hermes/.aiwg/skills/` | `~/.hermes/skills/` |
-  | Codex | `.codex/.aiwg/skills/` | `.codex/skills/` |
+  | Provider       | Standard skills             | Kernel skills              |
+  | -------------- | --------------------------- | -------------------------- |
+  | Claude Code    | `.claude/.aiwg/skills/`     | `.claude/skills/`          |
+  | Cursor         | `.cursor/.aiwg/skills/`     | `.cursor/skills/`          |
+  | Factory AI     | `.factory/.aiwg/skills/`    | `.factory/skills/`         |
+  | GitHub Copilot | `.github/.aiwg/skills/`     | `.github/skills/`          |
+  | OpenCode       | `.opencode/.aiwg/skill/`    | `.opencode/skill/`         |
+  | Warp           | `.warp/.aiwg/skills/`       | `.warp/skills/`            |
+  | Windsurf       | `.windsurf/.aiwg/skills/`   | `.windsurf/skills/`        |
+  | OpenClaw       | `~/.openclaw/.aiwg/skills/` | `~/.openclaw/skills/aiwg/` |
+  | Hermes         | `~/.hermes/.aiwg/skills/`   | `~/.hermes/skills/`        |
+  | Codex          | `.codex/.aiwg/skills/`      | `.codex/skills/`           |
 
   All 6 standard providers verified live: each ships **9 kernel skills + 391 standard skills** (vs the prior flat 400). OpenClaw's 150-skill hard cap is comfortably cleared regardless of how many frameworks are installed. New `deploySkillsWithKernelRouting()` helper in `base.mjs` factors the partition logic so each provider's `deploySkills` is now ~3 lines. PROVIDER_PATHS in `use.ts` and PROVIDER_DEPLOY_DIRS in `aiwg-config.ts` updated to mirror. 7 integration test files re-pointed at the new layout. Codex's home-dir script-delegated path (per #766) preserves its existing `~/.codex/skills/` deploy unchanged — kernel routing for that surface waits for #766.
+
 - **`skill-discovery` HIGH framing rule** (#1215). Closes the kernel-pivot loop: tells agents that most AIWG skills are NOT in their context (they live at `<provider-dir>/.aiwg/skills/`, reachable only through the artifact index) and **mandates** an `aiwg index discover "<paraphrased need>"` query before declining "AIWG can't do that" or improvising a custom workflow. Names exceptions (user named a specific skill, capability is clearly out of scope, query already done in session) and requires the agent to surface the top match (or top-3) to the user so the discovery is auditable. Layers cleanly with `research-before-decision` (technical research) and `instruction-comprehension` (parsing the actual need). aiwg-utils rule count 19 → 20. Deploys via the standard rules-index pipeline.
 - **Kernel quickrefs for the remaining 7 frameworks** (#1213). Each shipped framework now has a `kernel: true` directory skill: `forensics-quickref`, `research-quickref`, `media-curator-quickref`, `marketing-quickref`, `ops-quickref`, `security-engineering-quickref`, `knowledge-base-quickref`. Each lists the framework's high-traffic skills with one-liners, names the artifact-directory layout, sketches the workflow phase model, and ends with a "don't enumerate from memory — query the index" guard. Total kernel-resident skill count after this lands: **9** (8 framework quickrefs + `aiwg-utils-quickref`), well under OpenClaw's 150-skill floor and Claude Code's 25%-of-context budget regardless of how many frameworks are installed. Previously-flat 393-skill listing is now 9 visible kernel skills + 392 index-discoverable skills hidden under `.claude/.aiwg/skills/`.
 
   Side effects: `forensics-complete/manifest.json` `total_skills` bumped 19 → 20 (the new quickref counts in the framework's metadata). Use-handler's post-deploy `buildIndex` call now pre-flights for `agentic/code/frameworks/` existence so test fixtures and npm-install deploys (no source tree present) don't trip on the index-builder's hard-exit on missing scan dirs.
+
 - **`aiwg index discover` capability-search subcommand** (#1214). Token-tight ranked lookup over the framework artifact index. Default surface targets AIWG kinds (`skill`/`agent`/`command`/`rule`); `--type` narrows it. Output names the top trigger phrase responsible for each match plus the entry's capability description. JSON mode (`--json`) emits a stable schema (path/type/title/score/triggers/capability/kernel) for programmatic agent consumption. Examples: `aiwg index discover "create intake"` → ranks the marketing intake variants and `intake-from-codebase`; `aiwg index discover "deploy production"` → ranks `flow-deploy-to-production` first (score 0.51).
 
   Wiring: `extractTriggers()` parses the `## Triggers` section into structured phrases; `extractCapability()` pulls the frontmatter `description` (falling back to the first body paragraph); both are filled in for skills/agents/commands/rules during `buildIndex`. `inferType()` now classifies these four AIWG kinds from source path layout, so artifacts under `agentic/code/{frameworks,addons}/<name>/{skills,agents,commands,rules}/` always land with the right type. The scorer adds a 4× weight on trigger phrase matches and 2× on capability matches; multi-token queries require ≥50% token overlap to surface partial matches (gibberish queries return zero results).
 
   `aiwg use` runs `buildIndex({ graph: 'framework' })` post-deploy as a best-effort rebuild so `discover` always queries fresh data without the operator running anything explicit. Pre-existing query/stats/deps subcommands unchanged. 10 new tests in `test/unit/artifacts/discover.test.ts`.
+
 - **Kernel-skill routing & first two quickrefs** (epic [#1212](https://git.integrolabs.net/roctinam/aiwg/issues/1212)). Pivot from bulk skill deploy to kernel + index-driven discovery, side-stepping the agentic platforms' flat-namespace skill-listing budgets (Claude Code: 25% of context; OpenClaw: 150-skill hard cap; etc.). Skills now route to one of two destinations on `aiwg use --provider claude`:
   - **Standard skills** → `.claude/.aiwg/skills/` (sequestered, discoverable through the artifact index, not the platform's flat listing)
   - **Kernel skills** (`kernel: true` frontmatter) → `.claude/skills/` (platform-native, always-loaded). Reserved for the small set of always-on framing/reference skills.
@@ -1900,6 +1906,7 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
   Two kernel quickrefs ship in this cut: `sdlc-quickref` (in `sdlc-complete`) and `aiwg-utils-quickref` (in `aiwg-utils` addon). Each acts as a directory + usage quick reference: lists the framework's most-reached-for skills with one-liners, points at the index for the rest, includes anti-pattern guards against enumerating from memory. Remaining 7 framework quickrefs tracked as #1213; `aiwg index discover` capability-search subcommand as #1214; `skill-discovery` framing rule as #1215; port to other 9 providers as #1216.
 
   New helper `isKernelSkill()` in `tools/agents/providers/base.mjs`. Claude provider's `deploySkills()` partitions and routes via `kernelSkillsPath`. Research backing the design at `.aiwg/research/findings/skill-budget-landscape-2026-05.md` (provider survey), `.aiwg/research/findings/zero-server-index-tech-2026-05.md` (FTS5 / sqlite-vec / hnswlib trade-off table), `.aiwg/architecture/audit-index-subsystem-2026-05.md` (existing index subsystem audit, 450-LOC implementation path).
+
 - **`PROF-*` node IDs in citation-sidecar parser** (#105). `src/artifacts/citation-parser.ts` accepts `PROF-[POFG]-[a-z0-9-]+` (`PROF-P-` people, `PROF-O-` orgs, `PROF-F-` funders, `PROF-G-` groups) alongside `REF-\d+` at all three call sites: `extractRefsFromTable`, `parseCitationSidecar` (frontmatter `ref` validation), and `buildRefToPathMap` (indexer node-id mapping). Centralized into module-level `NODE_ID_PATTERN` (anywhere-match `/g`) and `NODE_ID_FULL` (anchored validator) so the regex can't drift across sites; new `isNodeId(value)` typed predicate exported for downstream consumers. Purely additive — both ID spaces are unambiguous and prefixed, so no fixture or codepath collides. Unblocks research-corpus projects building entity-profile graphs (`profile→REF` edges natively traversable via `aiwg index neighbors`). 7 new unit + integration tests covering all four type codes, malformed-shape rejection, and a `buildIndex` round-trip with a `PROF-P-marks-samuel-edges.md` sidecar producing `cites` edges to `REF-803` / `REF-779`.
 - **Claude Code plugin builds for the 6 missing frameworks** (#1152). New plugins: `forensics` (13 agents, 19 skills from `forensics-complete`), `security-engineering` (2 agents, 7 skills), `research` (8 agents, 20 skills from `research-complete`), `media-curator` (6 agents, 18 skills), `ops` (12 agents, 2 flat skills from `ops-complete`), `knowledge-base` (2 skills). Each plugin gets a `PLUGIN_CONFIGS` entry in `tools/plugin/package-plugins.mjs`, a generated `plugins/<name>/` directory with `.claude-plugin/plugin.json` (CalVer `2026.5.0`) and `README.md`, plus a `marketplace.json` entry. Marketplace coverage went from 7 plugins to 13. Plugin name `security-engineering` chosen over `security` to avoid collision with the `addons/security/` addon. Source-to-plugin payload verified 1:1 against `agentic/code/frameworks/<src>/{agents,skills}`.
 - **Project-local lifecycle — Phase 1: Activity log** (#1037 Phase 1). New `src/extensions/project-local-activity.ts` emits inline lifecycle events at per-bundle, per-provider granularity that the generic post-command hook can't capture. Wraps the storage adapter; non-blocking writes (failures logged to stderr, never break the underlying op). Encodes 12 design events (`discover`, `deploy`, `deploy-failed`, `conflict`, `shadow-acknowledged`, `shadow-refused`, `remove`, `remove-mutated`, `remove-conflict`, `remove-force`, `promote`, `promote-failed`) using the frozen `ACTIVITY_OPERATIONS` enum (`deploy`/`delete`/`promote`/`query`) with the design event name as the summary prefix — no breaking change to the rule. `emitDiscoverEventsDeduped()` provides noise control for read-only operations: dedupe by `(name, type)` against the recent log tail. Wired into `deployProjectLocalBundles` for shadow resolutions and per-provider deploy success/failure events. 6 new unit tests.
@@ -2072,7 +2079,7 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 - **`aiwg doctor` no longer false-positives on framework workspace dirs** (#1058). `src/extensions/project-local-discovery.ts` treated every directory under `.aiwg/{extensions,addons,frameworks,plugins}/` as a candidate bundle and emitted a "manifest.json absent" error for any directory without one. That tripped on the 7 framework workspace dirs (`archive/`/`projects/`/`repo/`/`working/`) created by `initializeFrameworkWorkspace()` under the same path namespace, producing `Validation: ✗ 7 errors` on every clean project. The scanner now silently skips directories without `manifest.json` — same "absent = not a bundle" semantics already applied to non-directory entries. `loadAndValidateManifest()` keeps its strict semantics for direct callers.
 - **Factory provider now transforms SKILL.md frontmatter on deploy** (#1056). `tools/agents/providers/factory.mjs` previously copied `SKILL.md` verbatim, so deployed `.factory/skills/*/SKILL.md` retained Claude-native tool names (`Bash`, `Write`, `MultiEdit`) and bare model shorthand (`opus`/`sonnet`/`haiku`) inside `commandHint`. New `transformSkillFrontmatter()` rewrites indented `commandHint.allowedTools` and `commandHint.model`; new `mapAllowedToolsString()` tokenizer respects allowlist parens (`Bash(git *, gh *)` → `Execute(git *, gh *)`). `deploySkillDir()` in `base.mjs` now accepts an optional `transformSkillMd` callback so other providers can adopt the same pattern. 3 new regression tests in `test/integration/factory-deployment.test.ts`.
 - **`aiwg doctor` is now provider-aware** (#1057). Doctor previously hardcoded `.claude/agents` and `.claude/commands`, so projects deployed to Factory/Codex/Cursor/Copilot/etc. saw "No agents deployed" even when their provider directories were fully populated. New `--provider <name>` and `--all-providers` flags; auto-detection scans `.factory/droids`, `.codex/agents`, `.cursor/agents`, `.github/agents`, `.opencode/agent`, `.warp/agents`, `.windsurf/agents`, plus root `AGENTS.md`. Per-provider checks resolve paths from each provider module's exported `paths.{agents,commands}` instead of literal `.claude/*` strings; output now reads "Factory Agents", "Codex Agents", etc. 3 new regression tests in `test/unit/cli/doctor.test.ts`; CLI reference updated.
-- **`Test` and `Build` jobs in `ci.yml` no longer fail on sharp native build** (#1018). Both jobs used `npm ci --omit=optional` with a comment claiming the flag skipped sharp. It didn't. Sharp is a hard dep of `@xenova/transformers` (devDep); the flag actually skipped sharp's *own* `optionalDependency` on the prebuilt `@img/sharp-libvips-linux-x64` binary, forcing a from-source gyp build that needed `libvips-dev` headers. Plain `npm ci` resolves sharp's prebuilt cleanly. Other workflows already used plain `npm ci`; only `ci.yml` carried the inherited workaround.
+- **`Test` and `Build` jobs in `ci.yml` no longer fail on sharp native build** (#1018). Both jobs used `npm ci --omit=optional` with a comment claiming the flag skipped sharp. It didn't. Sharp is a hard dep of `@xenova/transformers` (devDep); the flag actually skipped sharp's _own_ `optionalDependency` on the prebuilt `@img/sharp-libvips-linux-x64` binary, forcing a from-source gyp build that needed `libvips-dev` headers. Plain `npm ci` resolves sharp's prebuilt cleanly. Other workflows already used plain `npm ci`; only `ci.yml` carried the inherited workaround.
 - **Five broken SKILL.md frontmatter files** (#1013). `argumentHint` values in 4 ralph skills (`ralph`, `ralph-status`, `ralph-abort`, `ralph-resume`) contained unquoted brackets and trailing tokens that failed strict YAML parse. Quoted as single-quoted scalars. `eval-report/SKILL.md` was missing the required `name:` field — added.
 - **All 59 invalid YAML frontmatter files across SKILL.md corpus** (#1015 Phase A.1). Same bug class as #1013, found by a corpus-wide audit using the new linter. Fixed in three per-component PRs across uat-mcp, prose-integration, rlm, media-curator (9 files), media-marketing-kit (19 files), and sdlc-complete (31 files).
 - **All 308 SKILL.md files missing `name:` field** (#1015 Phase A.2). Mechanical backfill from parent directory name across aiwg-utils, aiwg-dev, aiwg-evals, forensics-complete, guided-implementation, nlp-prod, research-complete, voice-framework, and the components from A.1. Source corpus (`agentic/code/`) is now 410/410 clean against the linter.
@@ -2119,11 +2126,11 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 
 ## [2026.3.2] - 2026-03-04 – Service Release
 
-| What changed | Why you care |
-|--------------|--------------|
+| What changed                       | Why you care                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | **`--use-dev` delegates full CLI** | `aiwg` commands now run from local build — not just framework content, but all subcommands including `aiwg index` |
-| **`aiwg index` multi-graph fixes** | `stats`, `query`, `deps` without `--graph` now work correctly across project + codebase graphs |
-| **`--graph` flag documented** | CLI reference updated with multi-graph architecture, `framework` graph usage, and new output format |
+| **`aiwg index` multi-graph fixes** | `stats`, `query`, `deps` without `--graph` now work correctly across project + codebase graphs                    |
+| **`--graph` flag documented**      | CLI reference updated with multi-graph architecture, `framework` graph usage, and new output format               |
 
 ### Fixed
 
@@ -2149,16 +2156,16 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 
 ## [2026.3.1] - 2026-03-03 – "Discovery & Durability" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **`aiwg index` subsystem** | Agents can search, query deps, and inspect stats across `.aiwg/` artifacts |
-| **Forensics agent gap-fills** | 6 agents and 3 commands rewritten with full operational detail; 660-line integration test suite |
-| **Color Palette addon** | Standalone addon for accessible color palette generation with WCAG contrast checking |
-| **Ralph external crash resilience** | SnapshotManager API fixed, state cleanup, e2e tests with real process spawning |
-| **`.aiwg/` tracked in git** | Project artifacts version-controlled, excluded from npm/edge deploys |
-| **Documentation accuracy sweep** | 7 drift items fixed: agent counts, command totals, skill manifest gaps, Copilot path mismatch |
-| **`--model` blanket override** | `aiwg use sdlc --model sonnet` overrides all agent model selections |
-| **`--use-dev` testing flag** | Point CLI at local repo checkout for framework development |
+| What changed                        | Why you care                                                                                    |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **`aiwg index` subsystem**          | Agents can search, query deps, and inspect stats across `.aiwg/` artifacts                      |
+| **Forensics agent gap-fills**       | 6 agents and 3 commands rewritten with full operational detail; 660-line integration test suite |
+| **Color Palette addon**             | Standalone addon for accessible color palette generation with WCAG contrast checking            |
+| **Ralph external crash resilience** | SnapshotManager API fixed, state cleanup, e2e tests with real process spawning                  |
+| **`.aiwg/` tracked in git**         | Project artifacts version-controlled, excluded from npm/edge deploys                            |
+| **Documentation accuracy sweep**    | 7 drift items fixed: agent counts, command totals, skill manifest gaps, Copilot path mismatch   |
+| **`--model` blanket override**      | `aiwg use sdlc --model sonnet` overrides all agent model selections                             |
+| **`--use-dev` testing flag**        | Point CLI at local repo checkout for framework development                                      |
 
 ### Added
 
@@ -2200,11 +2207,11 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 
 ## [2026.3.0] - 2026-03-01 – "Model Sync" Service Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **Factory provider model IDs fixed** | `aiwg use sdlc --provider factory` now deploys valid model IDs that Factory can resolve |
+| What changed                                  | Why you care                                                                                                                        |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Factory provider model IDs fixed**          | `aiwg use sdlc --provider factory` now deploys valid model IDs that Factory can resolve                                             |
 | **All provider model configs updated to 4.6** | Claude, Factory, Windsurf, and shorthand mappings now reference `claude-opus-4-6`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` |
-| **Factory shorthand decoupled** | `mapModel()` prefers `factory_shorthand` over shared `shorthand`, preventing future cross-provider drift |
+| **Factory shorthand decoupled**               | `mapModel()` prefers `factory_shorthand` over shared `shorthand`, preventing future cross-provider drift                            |
 
 ### Fixed
 
@@ -2222,12 +2229,12 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 
 ## [2026.2.15] - 2026-02-28 – "Doc Site" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **docs.aiwg.io CI/CD pipeline** | Doc site builds and deploys automatically on every release tag via Gitea Actions |
-| **Doc site build validation** | PRs and pushes that touch `docs/` trigger build checks to catch broken links early |
-| **Broken link remediation** | 25 doc files fixed — relative links to source files replaced with absolute URLs that resolve on the published site |
-| **Welcome page refresh** | Landing page now showcases all 5 frameworks, 5 addons, and 8 platform targets |
+| What changed                    | Why you care                                                                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **docs.aiwg.io CI/CD pipeline** | Doc site builds and deploys automatically on every release tag via Gitea Actions                                   |
+| **Doc site build validation**   | PRs and pushes that touch `docs/` trigger build checks to catch broken links early                                 |
+| **Broken link remediation**     | 25 doc files fixed — relative links to source files replaced with absolute URLs that resolve on the published site |
+| **Welcome page refresh**        | Landing page now showcases all 5 frameworks, 5 addons, and 8 platform targets                                      |
 
 ### Added
 
@@ -2253,13 +2260,13 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 
 ## [2026.2.14] - 2026-02-28 – "Forensics & Manageability" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **Forensics-complete DFIR framework** | Full digital forensics lifecycle — 13 agents, 9 commands, 10 skills, Sigma hunting, evidence chain-of-custody |
-| **Codebase manageability tooling (#402-#407)** | Rules, commands, and skills to keep agent-generated code within context window limits |
-| **17 specialist agents + team compositions** | Cloud platform experts (AWS/Azure/GCP), framework specialists (React, Django, Spring Boot), and 7 pre-built team configs |
-| **UAT-MCP toolkit addon** | MCP-powered user acceptance testing with coverage tracking and structured test plans |
-| **Model optimization & prompting guides** | 8 new documentation guides covering Claude, GPT, local models, hybrid architectures, and prompting techniques |
+| What changed                                   | Why you care                                                                                                             |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Forensics-complete DFIR framework**          | Full digital forensics lifecycle — 13 agents, 9 commands, 10 skills, Sigma hunting, evidence chain-of-custody            |
+| **Codebase manageability tooling (#402-#407)** | Rules, commands, and skills to keep agent-generated code within context window limits                                    |
+| **17 specialist agents + team compositions**   | Cloud platform experts (AWS/Azure/GCP), framework specialists (React, Django, Spring Boot), and 7 pre-built team configs |
+| **UAT-MCP toolkit addon**                      | MCP-powered user acceptance testing with coverage tracking and structured test plans                                     |
+| **Model optimization & prompting guides**      | 8 new documentation guides covering Claude, GPT, local models, hybrid architectures, and prompting techniques            |
 
 ### Added
 
@@ -2291,9 +2298,9 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 
 ## [2026.2.13] - 2026-02-26
 
-| What changed | Why you care |
-|--------------|--------------|
-| **Site deploy on tag push (#355)** | Pushing a version tag now auto-triggers an aiwg.io rebuild so the marketing site stays current |
+| What changed                         | Why you care                                                                                   |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| **Site deploy on tag push (#355)**   | Pushing a version tag now auto-triggers an aiwg.io rebuild so the marketing site stays current |
 | **Skill/command name collision fix** | Providers now prefer skills over commands when both share a name, preventing silent overwrites |
 
 ### Added
@@ -2308,18 +2315,18 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 
 ## [2026.2.12] - 2026-02-26 – "Doc Sync & Accelerate" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **`aiwg doc-sync` command (#41)** | Detect and fix documentation-code drift with 8 parallel auditors, cross-reference checks, and auto-fix patterns |
-| **`aiwg sdlc-accelerate` command (#42)** | End-to-end SDLC ramp-up from idea to construction-ready with state machine pipeline and resume support |
-| **2 new skills** | `doc-sync` and `sdlc-accelerate` registered in skills manifest with trigger phrases |
-| **Accelerate state schema** | YAML-defined state machine for pipeline phase tracking with gate results |
-| **Construction Ready Brief template** | Handoff artifact template for construction-ready projects |
-| **Doc-sync auditor templates** | Task definitions for 8 domain auditors and 4 cross-reference checks |
-| **Auto-fix patterns** | Concrete fix patterns for 5 auto-fixable drift categories with safety checks |
-| **24 integration tests** | Full test coverage for sdlc-accelerate entry points, phase resume, gate handling, state management, dry-run |
-| **HashiCorp references removed** | All vendor-specific HashiCorp/Terraform/Vault references replaced with generic equivalents across 16 files |
-| **CLI reference accuracy** | Command counts, categories, and totals corrected to match actual 42-command inventory |
+| What changed                             | Why you care                                                                                                    |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **`aiwg doc-sync` command (#41)**        | Detect and fix documentation-code drift with 8 parallel auditors, cross-reference checks, and auto-fix patterns |
+| **`aiwg sdlc-accelerate` command (#42)** | End-to-end SDLC ramp-up from idea to construction-ready with state machine pipeline and resume support          |
+| **2 new skills**                         | `doc-sync` and `sdlc-accelerate` registered in skills manifest with trigger phrases                             |
+| **Accelerate state schema**              | YAML-defined state machine for pipeline phase tracking with gate results                                        |
+| **Construction Ready Brief template**    | Handoff artifact template for construction-ready projects                                                       |
+| **Doc-sync auditor templates**           | Task definitions for 8 domain auditors and 4 cross-reference checks                                             |
+| **Auto-fix patterns**                    | Concrete fix patterns for 5 auto-fixable drift categories with safety checks                                    |
+| **24 integration tests**                 | Full test coverage for sdlc-accelerate entry points, phase resume, gate handling, state management, dry-run     |
+| **HashiCorp references removed**         | All vendor-specific HashiCorp/Terraform/Vault references replaced with generic equivalents across 16 files      |
+| **CLI reference accuracy**               | Command counts, categories, and totals corrected to match actual 42-command inventory                           |
 
 ### Added
 
@@ -2362,12 +2369,12 @@ Maintenance release: tracked agent sources for CI, alternative platform service 
 
 ## [2026.2.9] - 2026-02-15 – "Manifest Native" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **Provider normalization complete** | All 8 providers now discover framework artifacts via manifests rather than provider-specific hardcoding |
+| What changed                                  | Why you care                                                                                                               |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Provider normalization complete**           | All 8 providers now discover framework artifacts via manifests rather than provider-specific hardcoding                    |
 | **Codex parity for research + media-curator** | Codex prompt and skill deployment now includes new framework components through the same discovery path as other providers |
-| **Automatic framework onboarding** | Adding a framework with a valid `manifest.json` is now enough for CLI discovery/deployment in provider flows |
-| **Less manual curation** | Provider modules were simplified and centralized around shared manifest-aware utilities |
+| **Automatic framework onboarding**            | Adding a framework with a valid `manifest.json` is now enough for CLI discovery/deployment in provider flows               |
+| **Less manual curation**                      | Provider modules were simplified and centralized around shared manifest-aware utilities                                    |
 
 ### Added
 
@@ -2389,12 +2396,12 @@ Maintenance release: tracked agent sources for CI, alternative platform service 
 
 ## [2026.2.8] - 2026-02-14 – "Full Catalog" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **`aiwg use media-curator`** | Media Curator framework now deployable as a standalone CLI target across all 8 providers |
-| **`aiwg use research`** | Research Complete framework now deployable as a standalone CLI target across all 8 providers |
+| What changed                       | Why you care                                                                                             |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **`aiwg use media-curator`**       | Media Curator framework now deployable as a standalone CLI target across all 8 providers                 |
+| **`aiwg use research`**            | Research Complete framework now deployable as a standalone CLI target across all 8 providers             |
 | **Complete provider list in help** | All 8 providers (claude, copilot, factory, codex, cursor, opencode, warp, windsurf) shown in `aiwg help` |
-| **Documentation audit** | Stale agent counts, deprecated CLI syntax, missing framework references all fixed |
+| **Documentation audit**            | Stale agent counts, deprecated CLI syntax, missing framework references all fixed                        |
 
 ### Added
 
@@ -2425,12 +2432,12 @@ Maintenance release: tracked agent sources for CI, alternative platform service 
 
 ## [2026.2.7] - 2026-02-14 – "Media Curator" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **New media-curator framework** | Complete framework for AI-powered media archive management — 31 files across agents, commands, and skills |
-| **6 specialized agents** | Discography analysis, source discovery, acquisition, quality assessment, metadata curation, completeness tracking |
-| **9 commands + 9 skills** | Full pipeline from artist analysis through multi-platform export |
-| **Field-tested patterns** | GAP-NOTE.md, opustags preference, production-context classification — proven on 94GB prototype |
+| What changed                    | Why you care                                                                                                      |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **New media-curator framework** | Complete framework for AI-powered media archive management — 31 files across agents, commands, and skills         |
+| **6 specialized agents**        | Discography analysis, source discovery, acquisition, quality assessment, metadata curation, completeness tracking |
+| **9 commands + 9 skills**       | Full pipeline from artist analysis through multi-platform export                                                  |
+| **Field-tested patterns**       | GAP-NOTE.md, opustags preference, production-context classification — proven on 94GB prototype                    |
 
 ### Added
 
@@ -2443,6 +2450,7 @@ Maintenance release: tracked agent sources for CI, alternative platform service 
 - **Docs**: overview, standards reference, user guide
 
 Key capabilities:
+
 - Multi-source acquisition (YouTube, Internet Archive, Bandcamp)
 - Quality filtering with configurable accept/reject criteria
 - MusicBrainz/Discogs metadata integration with opustags
@@ -2467,11 +2475,11 @@ Closes #75, #76, #77, #78, #79, #80, #81, #82, #83, #253
 
 ## [2026.2.5] - 2026-02-14 – "Lean Rules" Release
 
-| What changed | Why you care |
-|--------------|--------------|
+| What changed                      | Why you care                                                                       |
+| --------------------------------- | ---------------------------------------------------------------------------------- |
 | **Consolidated rules deployment** | Single `RULES-INDEX.md` replaces 31 individual rule files — ~95% context reduction |
-| **Automatic cleanup** | Old individually-deployed rule files removed on redeploy |
-| **All 8 providers** | Claude, Codex, Factory, Copilot, Cursor, OpenCode, Warp, Windsurf all updated |
+| **Automatic cleanup**             | Old individually-deployed rule files removed on redeploy                           |
+| **All 8 providers**               | Claude, Codex, Factory, Copilot, Cursor, OpenCode, Warp, Windsurf all updated      |
 
 ### Changed
 
@@ -2500,11 +2508,11 @@ Closes #75, #76, #77, #78, #79, #80, #81, #82, #83, #253
 
 ## [2026.2.4] - 2026-02-09 – "Issue Thread" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **`/address-issues` command** | Issue-thread-driven agent loops with 2-way human-AI collaboration via issue comments |
-| **Context window budget** | Configure `AIWG_CONTEXT_WINDOW` to control parallel subagent limits on local/GPU systems |
-| **`--interactive` and `--guidance`** | Standard AIWG parameters for discovery prompts and upfront direction |
+| What changed                         | Why you care                                                                             |
+| ------------------------------------ | ---------------------------------------------------------------------------------------- |
+| **`/address-issues` command**        | Issue-thread-driven agent loops with 2-way human-AI collaboration via issue comments     |
+| **Context window budget**            | Configure `AIWG_CONTEXT_WINDOW` to control parallel subagent limits on local/GPU systems |
+| **`--interactive` and `--guidance`** | Standard AIWG parameters for discovery prompts and upfront direction                     |
 
 ### Added
 
@@ -2538,13 +2546,13 @@ Closes #75, #76, #77, #78, #79, #80, #81, #82, #83, #253
 
 ## [2026.2.3] - 2026-02-09 – "Deep Context" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **RLM addon** | Process 10M+ tokens through recursive sub-agent decomposition |
-| **Daemon mode** | Background file watching, cron scheduling, IPC, tmux management |
-| **Messaging subsystem** | Bidirectional Slack, Discord, and Telegram bot integration |
-| **CLI addon support** | `aiwg use rlm` — addons are now first-class CLI targets |
-| **Copilot RLM artifacts** | RLM agents, skills, and rules deploy to GitHub Copilot |
+| What changed              | Why you care                                                    |
+| ------------------------- | --------------------------------------------------------------- |
+| **RLM addon**             | Process 10M+ tokens through recursive sub-agent decomposition   |
+| **Daemon mode**           | Background file watching, cron scheduling, IPC, tmux management |
+| **Messaging subsystem**   | Bidirectional Slack, Discord, and Telegram bot integration      |
+| **CLI addon support**     | `aiwg use rlm` — addons are now first-class CLI targets         |
+| **Copilot RLM artifacts** | RLM agents, skills, and rules deploy to GitHub Copilot          |
 
 ### Added
 
@@ -2604,18 +2612,18 @@ Closes #75, #76, #77, #78, #79, #80, #81, #82, #83, #253
 
 ## [2026.2.0] - 2026-02-08 – "Universal Deploy" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **Universal deployment** | All 8 providers now receive all 4 artifact types (agents, commands, skills, rules) |
-| **External agent loop** | Crash-resilient iterative task execution across sessions (6-8 hours) |
-| **Research framework** | 8 specialized research agents, 10 commands, 8 templates |
-| **Rules as artifact type** | Deployable enforcement rules propagate to all platforms |
-| **Agent persistence** | Anti-laziness detection, HITL gates, cross-loop learning |
-| **Regression testing** | Automated regression detection integrated across SDLC |
-| **Unified extension system** | Complete Phase 4 with hooks, dynamic discovery, registry |
-| **GitHub Copilot full support** | Rules and skills deploy alongside agents and commands |
-| **Test consolidation** | 31.7% test reduction (3,837 → 2,619) with zero coverage loss |
-| **Research-first rules** | Agents must research before decisions, parse instructions before acting |
+| What changed                    | Why you care                                                                       |
+| ------------------------------- | ---------------------------------------------------------------------------------- |
+| **Universal deployment**        | All 8 providers now receive all 4 artifact types (agents, commands, skills, rules) |
+| **External agent loop**         | Crash-resilient iterative task execution across sessions (6-8 hours)               |
+| **Research framework**          | 8 specialized research agents, 10 commands, 8 templates                            |
+| **Rules as artifact type**      | Deployable enforcement rules propagate to all platforms                            |
+| **Agent persistence**           | Anti-laziness detection, HITL gates, cross-loop learning                           |
+| **Regression testing**          | Automated regression detection integrated across SDLC                              |
+| **Unified extension system**    | Complete Phase 4 with hooks, dynamic discovery, registry                           |
+| **GitHub Copilot full support** | Rules and skills deploy alongside agents and commands                              |
+| **Test consolidation**          | 31.7% test reduction (3,837 → 2,619) with zero coverage loss                       |
+| **Research-first rules**        | Agents must research before decisions, parse instructions before acting            |
 
 ### Added
 
@@ -2778,10 +2786,10 @@ Closes #75, #76, #77, #78, #79, #80, #81, #82, #83, #253
 
 ## [2026.1.7] - 2026-01-14 – "Deploy All Commands" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **Removed priority filtering** | ALL commands now deploy (not just a curated subset) |
-| **aiwg-utils commands work** | `aiwg-regenerate*`, `devkit-*`, `mention-*` commands now deploy to Codex/Cursor |
+| What changed                   | Why you care                                                                    |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| **Removed priority filtering** | ALL commands now deploy (not just a curated subset)                             |
+| **aiwg-utils commands work**   | `aiwg-regenerate*`, `devkit-*`, `mention-*` commands now deploy to Codex/Cursor |
 
 ### Fixed
 
@@ -2800,13 +2808,13 @@ Closes #75, #76, #77, #78, #79, #80, #81, #82, #83, #253
 
 ## [2026.1.6] - 2026-01-14 – "Complete Addon Discovery" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **Complete addon discovery** | ALL deployment scripts now discover addons dynamically |
-| **Codex commands fixed** | `~/.codex/prompts/` now includes Ralph and all addon commands |
-| **Cursor rules fixed** | `.cursor/rules/` now includes addon commands |
-| **Warp/Windsurf fixed** | WARP.md and standalone scripts include all addons |
-| **Versioning docs** | Clear CalVer documentation prevents npm update failures |
+| What changed                 | Why you care                                                  |
+| ---------------------------- | ------------------------------------------------------------- |
+| **Complete addon discovery** | ALL deployment scripts now discover addons dynamically        |
+| **Codex commands fixed**     | `~/.codex/prompts/` now includes Ralph and all addon commands |
+| **Cursor rules fixed**       | `.cursor/rules/` now includes addon commands                  |
+| **Warp/Windsurf fixed**      | WARP.md and standalone scripts include all addons             |
+| **Versioning docs**          | Clear CalVer documentation prevents npm update failures       |
 
 ### Fixed
 
@@ -2826,6 +2834,7 @@ Closes #75, #76, #77, #78, #79, #80, #81, #82, #83, #253
 - Updated CLAUDE.md with correct version format examples
 
 **CalVer Format**: `YYYY.M.PATCH` (no leading zeros!)
+
 - Correct: `2026.1.6`, `2026.12.0`
 - Wrong: `2026.01.6` (npm rejects leading zeros)
 
@@ -2833,11 +2842,11 @@ Closes #75, #76, #77, #78, #79, #80, #81, #82, #83, #253
 
 ## [2026.1.5] - 2026-01-14 – "Dynamic Addon Discovery" Release
 
-| What changed | Why you care |
-|--------------|--------------|
+| What changed                | Why you care                                                  |
+| --------------------------- | ------------------------------------------------------------- |
 | **Dynamic addon discovery** | All providers now automatically pick up new addons like Ralph |
-| **No more hardcoded paths** | New addons work across all 8 providers without code changes |
-| **Ralph addon support** | Agent loop agents, commands, and skills now deploy everywhere |
+| **No more hardcoded paths** | New addons work across all 8 providers without code changes   |
+| **Ralph addon support**     | Agent loop agents, commands, and skills now deploy everywhere |
 
 ### Fixed
 
@@ -2869,6 +2878,7 @@ Closes #75, #76, #77, #78, #79, #80, #81, #82, #83, #253
 ### Addons Now Auto-Discovered
 
 All addons in `agentic/code/addons/` are now automatically deployed:
+
 - aiwg-evals, aiwg-hooks, aiwg-utils
 - context-curator, testing-quality, voice-framework, writing-quality
 - guided-implementation, ralph, droid-bridge, star-prompt
@@ -2877,14 +2887,14 @@ All addons in `agentic/code/addons/` are now automatically deployed:
 
 ## [2026.01.4] - 2026-01-14 – "Provider File Locations Fix" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **Provider deployment fixes** | `aiwg use --provider X` now correctly places files in provider-specific directories |
-| **Codex home directory paths** | Codex prompts/skills deploy to `~/.codex/` (home) not project directory |
-| **Cursor rules location** | Cursor rules now deploy to `.cursor/rules/` not project root |
-| **CLI addon provider pass-through** | `--provider` flag now correctly propagates to addon deployments |
-| **Dead code removal** | Removed 115 lines of unreachable Windsurf code from deploy-agents.mjs |
-| **Comprehensive test suite** | New `provider-file-locations.test.ts` validates all 8 providers |
+| What changed                        | Why you care                                                                        |
+| ----------------------------------- | ----------------------------------------------------------------------------------- |
+| **Provider deployment fixes**       | `aiwg use --provider X` now correctly places files in provider-specific directories |
+| **Codex home directory paths**      | Codex prompts/skills deploy to `~/.codex/` (home) not project directory             |
+| **Cursor rules location**           | Cursor rules now deploy to `.cursor/rules/` not project root                        |
+| **CLI addon provider pass-through** | `--provider` flag now correctly propagates to addon deployments                     |
+| **Dead code removal**               | Removed 115 lines of unreachable Windsurf code from deploy-agents.mjs               |
+| **Comprehensive test suite**        | New `provider-file-locations.test.ts` validates all 8 providers                     |
 
 ### Fixed
 
@@ -2921,30 +2931,30 @@ All addons in `agentic/code/addons/` are now automatically deployed:
 
 ### Provider File Locations Reference
 
-| Provider | Project Directories | Home Directories | Root Files |
-|----------|---------------------|------------------|------------|
-| Claude | `.claude/agents/`, `.claude/commands/`, `.claude/skills/` | - | - |
-| Codex | `.codex/agents/` | `~/.codex/prompts/`, `~/.codex/skills/` | - |
-| Factory | `.factory/droids/`, `.factory/commands/` | - | - |
-| Copilot | `.github/agents/` | - | - |
-| Cursor | `.cursor/rules/` | - | - |
-| OpenCode | `.opencode/agent/`, `.opencode/command/` | - | - |
-| Warp | - | - | `WARP.md` |
-| Windsurf | `.windsurf/workflows/` | - | `AGENTS.md`, `.windsurfrules` |
+| Provider | Project Directories                                       | Home Directories                        | Root Files                    |
+| -------- | --------------------------------------------------------- | --------------------------------------- | ----------------------------- |
+| Claude   | `.claude/agents/`, `.claude/commands/`, `.claude/skills/` | -                                       | -                             |
+| Codex    | `.codex/agents/`                                          | `~/.codex/prompts/`, `~/.codex/skills/` | -                             |
+| Factory  | `.factory/droids/`, `.factory/commands/`                  | -                                       | -                             |
+| Copilot  | `.github/agents/`                                         | -                                       | -                             |
+| Cursor   | `.cursor/rules/`                                          | -                                       | -                             |
+| OpenCode | `.opencode/agent/`, `.opencode/command/`                  | -                                       | -                             |
+| Warp     | -                                                         | -                                       | `WARP.md`                     |
+| Windsurf | `.windsurf/workflows/`                                    | -                                       | `AGENTS.md`, `.windsurfrules` |
 
 ---
 
 ## [2026.01.3] - 2026-01-13 – "Agent Loop & Issue Management" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| **Agent Loop** | Iterative AI task execution - "iteration beats perfection" methodology |
-| **--interactive & --guidance** | All commands now support interactive mode and custom guidance |
-| Unified issue management | Create, update, list, sync issues across Gitea/GitHub/Jira/Linear or local files |
-| Issue auto-sync | Commits with "Fixes #X" automatically update and close issues |
-| Token security patterns | Secure token loading via env vars and files, never direct access |
-| Vendor-specific regenerate | 30-40% smaller context files, only loads relevant platform commands |
-| Man page support | `man aiwg` works after npm global install |
+| What changed                   | Why you care                                                                     |
+| ------------------------------ | -------------------------------------------------------------------------------- |
+| **Agent Loop**                 | Iterative AI task execution - "iteration beats perfection" methodology           |
+| **--interactive & --guidance** | All commands now support interactive mode and custom guidance                    |
+| Unified issue management       | Create, update, list, sync issues across Gitea/GitHub/Jira/Linear or local files |
+| Issue auto-sync                | Commits with "Fixes #X" automatically update and close issues                    |
+| Token security patterns        | Secure token loading via env vars and files, never direct access                 |
+| Vendor-specific regenerate     | 30-40% smaller context files, only loads relevant platform commands              |
+| Man page support               | `man aiwg` works after npm global install                                        |
 
 ### Added
 
@@ -3061,9 +3071,9 @@ All addons in `agentic/code/addons/` are now automatically deployed:
 
 ## [2026.01.0] - 2026-01-07 – "CalVer Migration" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| CalVer versioning | Version now reflects release date (YYYY.M.PATCH) |
+| What changed        | Why you care                                              |
+| ------------------- | --------------------------------------------------------- |
+| CalVer versioning   | Version now reflects release date (YYYY.M.PATCH)          |
 | Addon directory fix | Claude provider correctly handles addon-style directories |
 
 ### Changed
@@ -3079,14 +3089,14 @@ All addons in `agentic/code/addons/` are now automatically deployed:
 
 ## [2024.12.5] - 2025-12-13 – "Flexible Models & Terminal Docs" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| Terminal docs site | CLI-style documentation with full-text search and themes |
-| Smithing Framework | Create agents, skills, commands, and MCP servers dynamically |
-| Windsurf provider | Deploy to Windsurf IDE |
-| Flexible model selection | Override models per tier when deploying agents |
-| Filter-based deployment | Deploy only specific agents by pattern or role |
-| Persistent model config | Save model preferences for future deployments |
+| What changed             | Why you care                                                 |
+| ------------------------ | ------------------------------------------------------------ |
+| Terminal docs site       | CLI-style documentation with full-text search and themes     |
+| Smithing Framework       | Create agents, skills, commands, and MCP servers dynamically |
+| Windsurf provider        | Deploy to Windsurf IDE                                       |
+| Flexible model selection | Override models per tier when deploying agents               |
+| Filter-based deployment  | Deploy only specific agents by pattern or role               |
+| Persistent model config  | Save model preferences for future deployments                |
 
 ### Added
 
@@ -3156,13 +3166,13 @@ All addons in `agentic/code/addons/` are now automatically deployed:
 
 ## [2024.12.4] - 2025-12-12 – "Universal Providers" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| 5 new providers | Deploy to Claude, Factory, OpenAI, Cursor, Copilot, OpenCode |
-| `/aiwg-refresh` command | Update frameworks in-session without leaving Claude Code |
-| Testing-quality addon | TDD enforcement, mutation testing, flaky detection (6 skills) |
-| Live provider tests | All providers validated with real CLI integration tests |
-| Testing requirements docs | Clear guidance on when full regression testing is required |
+| What changed              | Why you care                                                  |
+| ------------------------- | ------------------------------------------------------------- |
+| 5 new providers           | Deploy to Claude, Factory, OpenAI, Cursor, Copilot, OpenCode  |
+| `/aiwg-refresh` command   | Update frameworks in-session without leaving Claude Code      |
+| Testing-quality addon     | TDD enforcement, mutation testing, flaky detection (6 skills) |
+| Live provider tests       | All providers validated with real CLI integration tests       |
+| Testing requirements docs | Clear guidance on when full regression testing is required    |
 
 ### Added
 
@@ -3222,17 +3232,17 @@ All addons in `agentic/code/addons/` are now automatically deployed:
 
 ## [2024.12.3] - 2025-12-11 – "It Just Works" Release
 
-| What changed | Why you care |
-|--------------|--------------|
-| `aiwg doctor` command | Diagnose installation issues instantly |
-| npm discoverability + badges | Actually shows up when you search npm |
-| MCP server works from any folder | No more ".aiwg not found" errors |
-| PATH warning on install | Know immediately if setup needs fixing |
-| Windows + cross-platform fixes | Works on Windows out of the box |
-| Team directives preserved | No more lost custom rules on regenerate |
-| GitHub Pages docs | Temporary landing page while aiwg.io loads |
-| @-mention traceability wiring | Agents navigate codebase via logical paths |
-| Workspace cleanup commands | Prune stale files, archive completed plans |
+| What changed                     | Why you care                               |
+| -------------------------------- | ------------------------------------------ |
+| `aiwg doctor` command            | Diagnose installation issues instantly     |
+| npm discoverability + badges     | Actually shows up when you search npm      |
+| MCP server works from any folder | No more ".aiwg not found" errors           |
+| PATH warning on install          | Know immediately if setup needs fixing     |
+| Windows + cross-platform fixes   | Works on Windows out of the box            |
+| Team directives preserved        | No more lost custom rules on regenerate    |
+| GitHub Pages docs                | Temporary landing page while aiwg.io loads |
+| @-mention traceability wiring    | Agents navigate codebase via logical paths |
+| Workspace cleanup commands       | Prune stale files, archive completed plans |
 
 ### Added
 
@@ -3267,6 +3277,7 @@ This release adds **Skill Seekers community integration** with two new addons, *
 #### Added
 
 **Skill Seekers Integration** (PRs #206, #207, #208 to Skill Seekers repo):
+
 - **doc-intelligence addon** (`agentic/code/addons/doc-intelligence/`):
   - Intelligent documentation analysis and generation
   - Cross-repository knowledge synthesis
@@ -3283,6 +3294,7 @@ This release adds **Skill Seekers community integration** with two new addons, *
 - Attribution added to README.md and addon.json files
 
 **Workspace Health Skill** (`aiwg-utils/skills/workspace-health/`):
+
 - Natural language triggers: "check workspace health", "workspace status", "is my workspace aligned"
 - Assesses `.aiwg/working/` directory health (stale files, large artifacts)
 - Validates documentation alignment with codebase
@@ -3291,6 +3303,7 @@ This release adds **Skill Seekers community integration** with two new addons, *
 - Designed for use at phase transitions and after intensive processes
 
 **Post-Completion Guidance**:
+
 - Added "Post-Completion" section to 9 major flow commands:
   - `flow-concept-to-inception`
   - `flow-inception-to-elaboration`
@@ -3308,6 +3321,7 @@ This release adds **Skill Seekers community integration** with two new addons, *
 #### Changed
 
 **Command Usability Standardization**:
+
 - Added `--interactive` and `--guidance` parameters to 28 commands:
   - All intake commands (intake-wizard, intake-start, intake-from-codebase, etc.)
   - All flow commands (phase transitions, reviews, deployments)
@@ -3317,6 +3331,7 @@ This release adds **Skill Seekers community integration** with two new addons, *
 - Added "Optional Parameters" section to command bodies
 
 **Multi-Provider Skill Deployment**:
+
 - Skills now deploy successfully to Factory AI (previously Claude-only)
 - Updated smoke tests to verify Factory skill deployment
 - `--deploy-skills` works with `--provider factory`
@@ -3324,6 +3339,7 @@ This release adds **Skill Seekers community integration** with two new addons, *
 #### Fixed
 
 **Test Suite**:
+
 - Fixed `cli-install.test.ts` smoke test for multi-provider skill deployment
 - Test now verifies successful Factory deployment instead of expecting warning
 
@@ -3338,6 +3354,7 @@ This is a major release introducing **production-grade reliability patterns** ba
 #### Added
 
 **Research Integration** (REF-001, REF-002, REF-003):
+
 - **REF-001**: Bandara et al. (2025) "Production-Grade Agentic AI Workflows" - 9 best practices:
   - BP-1: Direct tool calls over MCP for determinism
   - BP-3: One agent, one responsibility principle
@@ -3354,6 +3371,7 @@ This is a major release introducing **production-grade reliability patterns** ba
 - Research references in `docs/references/` for traceable guidance
 
 **AIWG Development Kit** (PR #57, #58):
+
 - Three-tier plugin taxonomy: Frameworks (50+ agents) → Extensions (5-20 agents) → Addons (1-10 agents)
 - CLI scaffolding commands:
   - `aiwg scaffold-addon <name>` - Create new addon package
@@ -3370,6 +3388,7 @@ This is a major release introducing **production-grade reliability patterns** ba
 - Comprehensive documentation: `docs/development/devkit-overview.md`
 
 **Production-Grade Reliability Patterns**:
+
 - **Reliability prompts** in `aiwg-utils/prompts/reliability/`:
   - `decomposition.md` - Task breakdown using 7±2 cognitive rule
   - `parallel-hints.md` - Concurrent execution patterns
@@ -3385,6 +3404,7 @@ This is a major release introducing **production-grade reliability patterns** ba
   - `context-curator` - Pre-filters context, removes distractors (Archetype 3)
 
 **New Addons**:
+
 - **aiwg-hooks** - Claude Code hook templates for workflow tracing:
   - `aiwg-trace.js` - Captures SubagentStart/SubagentStop events
   - JSONL trace format for debugging, performance analysis, audit
@@ -3401,6 +3421,7 @@ This is a major release introducing **production-grade reliability patterns** ba
   - `.claude/rules/` deployment for runtime guidance
 
 **@-Mention Conventions & Wiring**:
+
 - 5 new commands for artifact traceability:
   - `/mention-wire` - Analyze codebase and inject @-mentions
   - `/mention-validate` - Validate all @-mentions resolve to existing files
@@ -3415,6 +3436,7 @@ This is a major release introducing **production-grade reliability patterns** ba
 - Guidelines: `docs/guides/mention-conventions.md`
 
 **Workspace Maintenance Commands** in aiwg-utils:
+
 - `/workspace-realign` - Sync `.aiwg/` docs with code changes:
   - Analyzes git history since last alignment
   - Archives stale documents, flags missing docs
@@ -3427,6 +3449,7 @@ This is a major release introducing **production-grade reliability patterns** ba
   - Requires confirmation (`RESET`) or `--force`
 
 **Framework-Scoped Workspace Structure** (PR #54):
+
 - Multi-framework coexistence in same project:
   - Marketing can read SDLC artifacts (feature specs) for launch content
   - Each framework maintains isolated write scope
@@ -3442,6 +3465,7 @@ This is a major release introducing **production-grade reliability patterns** ba
 - Assessment reports and working artifacts
 
 **Skills System Expansion**:
+
 - 6 new skills in aiwg-utils:
   - `claims-validator` - Validates factual claims in content
   - `config-validator` - Validates AIWG configuration files
@@ -3452,6 +3476,7 @@ This is a major release introducing **production-grade reliability patterns** ba
   - `artifact-metadata` - Artifact metadata extraction
 
 **npm Package Distribution** (PR #55):
+
 - Published to npm as `aiwg` package
 - Global installation: `npm install -g aiwg`
 - Package includes: bin/, src/, tools/, agentic/, docs/, core/
@@ -3459,6 +3484,7 @@ This is a major release introducing **production-grade reliability patterns** ba
 - Automated publish workflow via GitHub Actions
 
 **MCP Server Implementation** (Phase 1):
+
 - Complete MCP server following 2025-11-25 specification (`src/mcp/server.mjs`)
 - 5 MCP tools:
   - `workflow-run` - Execute AIWG workflows with automatic prompt integration
@@ -3481,6 +3507,7 @@ This is a major release introducing **production-grade reliability patterns** ba
 - Test fixture project (`test/fixtures/mcp-test-project/`) for validation
 
 **CLAUDE.md Modernization**:
+
 - New modular CLAUDE.md structure (134 lines vs 1,018 - **87% reduction**)
 - Path-scoped rules in `.claude/rules/`:
   - `sdlc-orchestration.md` - Loaded when working in `.aiwg/**`
@@ -3492,6 +3519,7 @@ This is a major release introducing **production-grade reliability patterns** ba
 - Context loading follows Anthropic best practices for token efficiency
 
 **Centralized Registry**:
+
 - `agentic/code/config/registry.json` - Single source of truth for:
   - AIWG path resolution (eliminates duplication across 20+ commands)
   - Natural language pattern mappings (70+ phrases → flow commands)
@@ -3500,12 +3528,14 @@ This is a major release introducing **production-grade reliability patterns** ba
   - @-mention patterns for traceability
 
 **MCP Research & Documentation**:
+
 - `docs/references/REF-003-mcp-specification-2025.md` - MCP 2025-11-25 research
 - Updated platform adapter specification with MCP-first architecture
 
 #### Changed
 
 **Agent Design Philosophy** (from research):
+
 - Agents now follow "10 Golden Rules" from Agent Design Bible:
   - Rule 1: Ground before acting (Archetype 1 prevention)
   - Rule 2: Escalate uncertainty (Archetype 2 prevention)
@@ -3515,12 +3545,14 @@ This is a major release introducing **production-grade reliability patterns** ba
 - Agent linter validates rules compliance
 
 **Command Updates**:
+
 - `/aiwg-regenerate-claude` now generates modular structure by default
   - `--legacy` flag available for old monolithic format
   - Reports context reduction metrics in output
   - Generates `.claude/rules/` files based on detected frameworks
 
 **Context Loading Strategy**:
+
 - Base context: 134 lines (always loaded)
 - SDLC context: +180 lines (loaded only when working in `.aiwg/`)
 - Voice context: +75 lines (loaded only when working in `**/*.md`)
@@ -3528,21 +3560,25 @@ This is a major release introducing **production-grade reliability patterns** ba
 - Detailed docs: On-demand via `@docs/reference/` mentions
 
 **Addon Structure Migration** (PR #50):
+
 - Writing Quality migrated to addon structure (`agentic/code/addons/writing-quality/`)
 - Clear addon taxonomy established (Frameworks, Addons, Extensions)
 - Plugin management CLI commands added
 
 **Dependencies**:
+
 - Added `@modelcontextprotocol/sdk` ^1.24.0 (MCP server)
 - Added `zod` ^3.25.0 (schema validation)
 
 #### Fixed
 
 **MCP Server**:
+
 - Prompt argsSchema type handling (MCP passes all args as strings)
 - `mcp install --dry-run` flag parsing
 
 **Documentation**:
+
 - Updated CLAUDE.md to follow 100-200 line best practice
 - Removed redundant orchestration guidance from multiple locations
 - Consolidated natural language translations into registry
@@ -3550,12 +3586,14 @@ This is a major release introducing **production-grade reliability patterns** ba
 - Removed internal project status and roadmap from public README
 
 **CLI Tooling**:
+
 - `aiwg -update` now refreshes shell aliases properly
 - Rollback CLI finds backups in both workspace and project locations
 - Fixed skills not deploying for voice-framework, SDLC, and MMK frameworks
 - Fixed metadata-validation workflow to skip gitignored directories
 
 **Tests**:
+
 - Comprehensive test remediation for SDLC framework and writing modules
 - TypeScript unused variable errors resolved across codebase
 - Added CLI installation smoke tests
@@ -3574,11 +3612,13 @@ The new modular CLAUDE.md structure is opt-in. Existing monolithic CLAUDE.md fil
 **For Production-Grade Patterns:**
 
 1. Update AIWG installation:
+
    ```bash
    aiwg -update  # Or: aiwg -reinstall for clean install
    ```
 
 2. Deploy new addons:
+
    ```bash
    aiwg use all  # Deploys all frameworks + new addons
    ```
@@ -3591,12 +3631,14 @@ The new modular CLAUDE.md structure is opt-in. Existing monolithic CLAUDE.md fil
 **For Development Kit:**
 
 Use scaffolding commands to create new packages:
+
 ```bash
 aiwg scaffold-addon my-utils --description "My custom utilities"
 aiwg add-agent code-helper --to my-utils --template simple
 ```
 
 Or in-session with AI guidance:
+
 ```bash
 /devkit-create-addon my-utils --interactive
 ```
@@ -3618,6 +3660,7 @@ aiwg mcp info
 **For @-Mention Traceability:**
 
 1. Wire mentions into existing artifacts:
+
    ```bash
    /mention-wire --target .aiwg/requirements/
    ```
@@ -3638,6 +3681,7 @@ This release introduces the **Voice Framework** addon and comprehensive **Skills
 #### Added
 
 **Voice Framework Addon** (PR #52):
+
 - 4 built-in voice profiles for consistent, authentic writing:
   - `technical-authority` - Direct, precise, confident (API docs, architecture)
   - `friendly-explainer` - Approachable, encouraging (tutorials, onboarding)
@@ -3652,6 +3696,7 @@ This release introduces the **Voice Framework** addon and comprehensive **Skills
 - Project-specific voice profiles via `.aiwg/voices/`
 
 **Skills System** (PR #51):
+
 - Claude Code Skills support across all frameworks (SKILL.md format)
 - 29 total skills deployed with `aiwg use all`:
   - 1 writing-quality skill (ai-pattern-detection)
@@ -3662,12 +3707,14 @@ This release introduces the **Voice Framework** addon and comprehensive **Skills
 - Skills auto-deploy with `aiwg use <framework>`
 
 **CLI Improvements**:
+
 - New `aiwg use writing` command for Writing Quality + Voice Framework
 - `--deploy-skills` flag for explicit skill deployment
 - Skills deployment by mode: general, writing, sdlc, marketing, both, all
 - Dry-run support for skill deployment testing
 
 **Test Coverage**:
+
 - `test/unit/cli/skill-deployer.test.ts` - 20 tests for skill deployment
 - `test/unit/writing/voice-profile.test.ts` - 16 tests for voice profiles
 - Integration tests for deploy-agents.mjs skill deployment
@@ -3675,18 +3722,21 @@ This release introduces the **Voice Framework** addon and comprehensive **Skills
 #### Changed
 
 **Documentation Updates**:
+
 - Updated all quickstart guides with Voice Framework sections
 - Added voice profile usage to CLI_USAGE.md
 - Updated integration quickstarts (Claude Code, Warp Terminal)
 - Added Voice Framework integration to writing-quality addon README
 
 **Deprecations**:
+
 - `validation/banned-patterns.md` deprecated in favor of voice profiles
 - Pattern-avoidance approach replaced by positive voice definition
 
 #### Fixed
 
 **CLI Tooling**:
+
 - Fixed skills not deploying for voice-framework, SDLC, and MMK frameworks
 - Fixed mode filtering for skill deployment
 - Added provider restriction messaging (skills Claude-only currently)
@@ -3696,11 +3746,13 @@ This release introduces the **Voice Framework** addon and comprehensive **Skills
 **From banned-patterns to Voice Framework:**
 
 1. Deploy the writing framework:
+
    ```bash
    aiwg use writing
    ```
 
 2. Replace pattern avoidance with voice profiles:
+
    ```text
    # Before (pattern avoidance)
    "Write this avoiding AI patterns like 'delve into', 'it's important to note'"
