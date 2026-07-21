@@ -16,7 +16,7 @@ AIWG is a comprehensive SDLC framework providing:
 
 **AIWG Installation Path**: `{AIWG_ROOT}`
 
-**Agent Access**: Claude Code agents have read access to AIWG templates and documentation via allowed-tools configuration.
+**Provider Access**: Supported providers load AIWG context through their generated bootstrap and use the kernel/discovery surface to fetch canonical skills on demand.
 
 **Verify Installation**:
 

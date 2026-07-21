@@ -52,6 +52,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Fixed
 
+- **Canonical SDLC orchestration routing** (#1839) — the orchestration rule,
+  kernel/project context templates, core prompt, architecture guidance, and
+  new-project output now treat skills and referenced playbooks as authoritative,
+  route through `sdlc-quickref` and `aiwg discover` → `aiwg show skill`, and
+  describe slash commands as provider adapters rather than Claude-specific
+  workflow definitions. Regression coverage prevents command-first guidance
+  from returning to the packaged rule and assembled context.
 - **Strict Steward route option parsing** (#1834) — value-bearing routing flags
   now reject end-of-input and a following option token with usage status instead
   of consuming another flag as data or emitting a misleading launch envelope.

@@ -269,29 +269,24 @@ function createOrUpdateSettings(aiwgPath, provider) {
       `- \`.aiwg/intake/project-intake.md\` - Project overview, stakeholders, constraints\n` +
       `- \`.aiwg/intake/solution-profile.md\` - Technical requirements, architecture preferences\n` +
       `- \`.aiwg/intake/option-matrix.md\` - Solution alternatives and evaluation criteria\n\n` +
-      `### 2. Agents and Commands\n\n` +
-      `SDLC agents and commands are automatically deployed to \`.claude/agents/\` and \`.claude/commands/\`.\n\n` +
-      `Access to SDLC framework documentation is configured in \`.claude/settings.json\`.\n\n` +
+      `### 2. Skills and Provider Adapters\n\n` +
+      `Canonical SDLC skills are discovered through the AIWG kernel/index surface. Provider-specific commands, when deployed, are compatibility adapters rather than workflow definitions.\n\n` +
       `### 3. Start SDLC Flow\n\n` +
       `Once intake forms are complete, kick off the Concept → Inception flow:\n\n` +
-      '```bash\n# Start Inception phase with automated validation\n/flow-concept-to-inception .\n\n# Or use the intake-start command\n/intake-start .aiwg/intake/\n\n# Check available flow commands\nls .claude/commands/flow-*.md\n```\n\n' +
+      '```bash\n# Find and inspect the canonical workflow\naiwg discover "SDLC concept to inception"\naiwg show skill flow-concept-to-inception\n\n# Find project intake guidance\naiwg discover "create or complete project intake"\n```\n\n' +
       `### 4. SDLC Framework Documentation\n\n` +
-      `Claude Code agents have read access to the complete SDLC framework documentation at:\n\n` +
+      `Supported providers can discover the complete SDLC framework documentation at:\n\n` +
       `\`${aiwgPath}/agentic/code/frameworks/sdlc-complete/\`\n\n` +
       `This includes templates, flows, add-ons, and artifacts for all SDLC phases.\n\n` +
       `## Framework Components\n\n` +
       `- **Agents** (51): Specialized SDLC role agents (Requirements Analyst, Security Gatekeeper, etc.)\n` +
-      `- **Commands** (24+): Flow orchestration and workflow commands\n` +
+      `- **Skills**: Canonical flow orchestration and workflow contracts\n` +
+      `- **Provider adapters**: Optional generated command/invocation surfaces\n` +
       `- **Templates**: Intake, requirements, architecture, test, security, deployment\n` +
       `- **Flows**: Phase-based workflows (Inception → Elaboration → Construction → Transition)\n` +
       `- **Add-ons**: GDPR compliance, legal frameworks\n\n` +
-      `## Key Commands\n\n` +
-      `- \`/flow-concept-to-inception\` - Execute Inception phase\n` +
-      `- \`/flow-discovery-track\` - Continuous requirements refinement\n` +
-      `- \`/flow-delivery-track\` - Test-driven implementation\n` +
-      `- \`/flow-iteration-dual-track\` - Synchronize Discovery and Delivery\n` +
-      `- \`/flow-gate-check\` - Validate phase gates\n` +
-      `- \`/flow-handoff-checklist\` - Phase transition validation\n\n` +
+      `## Key Skills\n\n` +
+      `Use \`aiwg discover "<need>"\` and \`aiwg show skill <name>\` to select current behavior. Common canonical skills include \`flow-concept-to-inception\`, \`flow-discovery-track\`, \`flow-delivery-track\`, \`flow-iteration-dual-track\`, \`flow-gate-check\`, and \`flow-handoff-checklist\`.\n\n` +
       `For more information, see the [SDLC Complete Framework documentation](${aiwgPath}/agentic/code/frameworks/sdlc-complete/README.md).\n`;
     fs.writeFileSync(readmePath, readme, 'utf8');
     console.log(`created README.md`);

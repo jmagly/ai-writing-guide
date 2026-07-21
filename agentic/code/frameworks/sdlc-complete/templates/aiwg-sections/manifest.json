@@ -11,9 +11,9 @@
     {
       "id": "orchestrator-role",
       "file": "02-orchestrator-role.md",
-      "title": "Core Platform Orchestrator Role",
+      "title": "Provider-Neutral SDLC Orchestrator Role",
       "required": true,
-      "description": "Orchestration responsibilities, multi-agent workflow pattern, NL translations, available commands"
+      "description": "Kernel/discovery routing, canonical skills, provider-neutral orchestration, and command-adapter compatibility"
     },
     {
       "id": "discover-first",

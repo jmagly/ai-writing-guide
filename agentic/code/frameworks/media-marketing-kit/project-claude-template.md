@@ -78,16 +78,18 @@ Map user requests to marketing workflows:
 - "How did the campaign perform?" → `campaign-analytics`
 - "Create a PR launch plan" → `pr-launch`
 
-#### 2. Read Commands as Orchestration Templates
+#### 2. Resolve Canonical Skills Through Discovery
 
-Commands are orchestration guides containing:
+Use `marketing-quickref`, then `aiwg discover "<marketing need>"` and `aiwg show skill <name>`. Canonical marketing skills define:
 
 - **Artifacts to generate**: What documents/deliverables
 - **Agent assignments**: Who creates, who reviews
 - **Quality criteria**: What makes a document complete
 - **Multi-agent workflow**: Review cycles, consensus process
 
-#### 3. Launch Multi-Agent Workflows via Task Tool
+Generated commands are provider adapters or compatibility shims, not authoritative workflow definitions.
+
+#### 3. Launch Multi-Agent Workflows via Provider-Native Delegation
 
 **Follow this pattern for marketing artifacts**:
 
@@ -98,6 +100,8 @@ Primary Author → Parallel Reviewers → Synthesizer → Archive
 ```
 
 **Example orchestration**:
+
+The following `Task` calls are Claude-specific pseudocode; other providers use their native delegation mechanism:
 
 ```python
 # Step 1: Primary Author creates draft

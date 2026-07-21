@@ -103,7 +103,7 @@
     {
       "name": "anti-laziness",
       "file": "anti-laziness.md",
-      "enforcement": "high",
+      "enforcement": "medium",
       "tier": "core",
       "description": "Prevent test deletion, feature removal, and premature task abandonment",
       "issue": "#264"
@@ -297,8 +297,8 @@
       "file": "sdlc-orchestration.md",
       "enforcement": "high",
       "tier": "sdlc",
-      "description": "SDLC workflow orchestration patterns and natural language command translation",
-      "issue": null
+      "description": "Canonical-skill SDLC orchestration, kernel discovery, natural-language routing, and provider-adapter compatibility",
+      "issue": "#1839"
     },
     {
       "name": "agent-friendly-code",

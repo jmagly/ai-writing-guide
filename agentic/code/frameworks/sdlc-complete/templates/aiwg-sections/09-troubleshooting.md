@@ -18,11 +18,12 @@ export AIWG_ROOT=/custom/path/to/ai-writing-guide
 **Command Not Found**:
 
 ```bash
-# Deploy commands to project
+# Deploy the framework and provider adapters to the project
 aiwg use sdlc
 
-# Verify deployment
-ls .claude/commands/flow-*.md
+# Verify canonical discovery
+aiwg discover "SDLC project orchestration"
+aiwg show skill orchestrate-project
 ```
 
 **Disable AIWG context**:

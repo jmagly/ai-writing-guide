@@ -1,33 +1,28 @@
 ## Quick Start
 
-1. **Initialize Project**:
+1. **Find the right workflow**:
 
    ```bash
-   # Generate intake forms
-   /intake-wizard "Your project description" --interactive
+   aiwg discover "create or complete project intake"
+   aiwg show skill intake-wizard
    ```
 
-2. **Start Inception**:
+2. **Start the selected lifecycle work**:
 
    ```bash
-   # Validate intake and kick off Inception
-   /intake-start .aiwg/intake/
-
-   # Execute Concept → Inception workflow
-   /flow-concept-to-inception .
+   aiwg discover "SDLC concept to inception"
+   aiwg show skill flow-concept-to-inception
    ```
 
-3. **Check Status**:
+   Follow the fetched skill with the project's `.aiwg/intake/` artifacts. If the provider exposes a slash-command adapter, it may invoke the same skill but is not the source of workflow behavior.
+
+3. **Check project progress**:
 
    ```bash
-   # View current phase and next steps
-   /project-status
+   aiwg discover "project status"
+   aiwg show skill project-status
    ```
 
-4. **Progress Through Phases**:
+4. **Progress through phases**:
 
-   ```bash
-   # When Inception complete, transition to Elaboration
-   /flow-gate-check inception  # Validate gate criteria
-   /flow-inception-to-elaboration  # Transition phase
-   ```
+   Discover and fetch the relevant gate and transition skills, then follow their declared criteria. For example, search for `SDLC Inception gate` and `SDLC transition to Elaboration` rather than assuming provider-specific command paths.

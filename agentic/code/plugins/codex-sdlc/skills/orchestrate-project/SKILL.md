@@ -4,6 +4,8 @@ name: orchestrate-project
 platforms: [all]
 description: Plan iterations, delegate to SDLC agents, and compile iteration status
 triggers:
+  - "SDLC project orchestration"
+  - "project orchestration"
   - "help make this less chaotic"
   - "help me impose a simple operating rhythm on this work"
   - "pick one planning or status workflow"
@@ -17,7 +19,7 @@ commandHint:
   modelTier: standard
 ---
 
-# Orchestrator Command (SDLC)
+# Orchestrate Project (SDLC)
 
 ## Task
 
@@ -39,6 +41,8 @@ Coordinate lifecycle work for the current phase/iteration:
 ## Notes
 
 - Escalate blockers; log decisions and owners
+- This skill is the canonical workflow source. Generated slash commands are provider adapters or compatibility shims.
+- Use provider-native delegation mechanics and configured parallelism caps; do not assume a specific agent tool.
 
 ## References
 

@@ -31,7 +31,7 @@ When the user requests this flow (via natural language or explicit command):
 1. **Interpret the request** and confirm understanding
 2. **Read this template** as your orchestration guide
 3. **Extract agent assignments** and workflow steps
-4. **Launch agents via Task tool** in correct sequence
+4. **Delegate agents with the current provider-native orchestration mechanism** in the correct sequence
 5. **Synthesize results** and maintain baseline integrity
 6. **Report completion** with requirements health metrics
 

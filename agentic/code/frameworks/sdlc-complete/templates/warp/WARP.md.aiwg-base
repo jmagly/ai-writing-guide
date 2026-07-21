@@ -79,9 +79,9 @@ Map user requests to flow templates:
 
 See full translation table in `{AIWG_ROOT}/agentic/code/frameworks/sdlc-complete/docs/simple-language-translations.md`
 
-#### 2. Read Flow Commands as Orchestration Templates
+#### 2. Resolve Canonical Skills Through Discovery
 
-**NOT bash scripts to execute**, but orchestration guides containing:
+Use the SDLC kernel quickref, then `aiwg discover "<need>"` and `aiwg show skill <name>`. Canonical skills and their referenced playbooks define:
 
 - **Artifacts to generate**: What documents/deliverables
 - **Agent assignments**: Who is Primary Author, who reviews
@@ -89,9 +89,9 @@ See full translation table in `{AIWG_ROOT}/agentic/code/frameworks/sdlc-complete
 - **Multi-agent workflow**: Review cycles, consensus process
 - **Archive instructions**: Where to save final artifacts
 
-Flow commands are located in the SDLC Commands section below.
+Warp slash commands, when available, are invocation adapters for those skills rather than canonical workflow definitions.
 
-#### 3. Launch Multi-Agent Workflows via Subagent Invocation
+#### 3. Launch Multi-Agent Workflows via Provider-Native Subagent Invocation
 
 **Follow this pattern for every artifact**:
 
