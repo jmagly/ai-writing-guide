@@ -22,8 +22,29 @@ const MATRIX_PATH = path.join(REPO_ROOT, 'test/fixtures/artifacts/release-discov
 
 interface DiscoverResult {
   query: { backend?: string; graph?: string };
-  results: Array<{ path: string; type: string; title: string }>;
+  results: Array<{
+    path: string;
+    type: string;
+    name?: string;
+    title: string;
+    ranking?: {
+      matches: Array<{
+        field: string;
+        match: string;
+        value?: string;
+        query_token_coverage?: number;
+      }>;
+      tie_breakers: { scope: string; scope_rank: number };
+    };
+  }>;
   total: number;
+  diagnostics?: {
+    facet_activations: Array<{
+      facet: string;
+      status: string;
+      reason?: string;
+    }>;
+  };
 }
 
 interface DiscoveryMatrixCase {
@@ -34,6 +55,7 @@ interface DiscoveryMatrixCase {
   type_filter?: string[];
   max_rank?: number;
   expected_top_path?: string;
+  use_default_graph?: boolean;
 }
 
 const MATRIX = JSON.parse(fs.readFileSync(MATRIX_PATH, 'utf-8')) as {
@@ -74,6 +96,43 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
         '# Project Custom Review',
         '',
         'Run the local custom review workflow for this project.',
+        '',
+      ].join('\n'),
+    );
+    fs.mkdirSync(
+      path.join(
+        corpusRoot,
+        '.aiwg',
+        'addons',
+        'neuroframing-marketing',
+        'skills',
+        'custom-marketing-execution',
+      ),
+      { recursive: true },
+    );
+    fs.writeFileSync(
+      path.join(
+        corpusRoot,
+        '.aiwg',
+        'addons',
+        'neuroframing-marketing',
+        'skills',
+        'custom-marketing-execution',
+        'SKILL.md',
+      ),
+      [
+        '---',
+        'name: custom-marketing-execution',
+        'description: Convert a custom marketing execution request, buyer persona, audience persona, creative brief, or content assignment into a routed execution brief.',
+        'triggers:',
+        '  - "custom marketing execution"',
+        '  - "buyer persona marketing execution"',
+        '  - "audience persona content brief"',
+        '---',
+        '',
+        '# Custom Marketing Execution',
+        '',
+        'Route supplied buyer and audience context into marketing content execution.',
         '',
       ].join('\n'),
     );
@@ -200,7 +259,8 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
 
   for (const testCase of MATRIX.cases) {
     it(`matches local discovery for "${testCase.phrase}"`, async () => {
-      const local = await captureDiscover(testCase.phrase, 'local');
+      const useDefaultGraph = testCase.use_default_graph ?? false;
+      const local = await captureDiscover(testCase.phrase, 'local', useDefaultGraph);
       const fortemi = await captureDiscover(testCase.phrase, 'fortemi-core', true);
 
       expect(local.total, `${testCase.phrase} local result count`).toBeGreaterThan(0);
@@ -237,6 +297,47 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
       }
     });
   }
+
+  it('explains exact marketing-trigger dominance over generic persona identity routing (#1828)', async () => {
+    const result = await captureDiscover(
+      'custom marketing execution from buyer persona',
+      'fortemi-core',
+      true,
+    );
+    const top = result.results[0];
+
+    expect(top.path).toContain(
+      '.aiwg/addons/neuroframing-marketing/skills/custom-marketing-execution/SKILL.md',
+    );
+    expect(top.ranking?.matches).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        field: 'trigger',
+        match: 'contained-phrase',
+        value: 'custom marketing execution',
+        query_token_coverage: 0.6,
+      }),
+    ]));
+    expect(top.ranking?.tie_breakers).toMatchObject({
+      scope: 'project',
+      scope_rank: 0,
+    });
+    expect(result.diagnostics?.facet_activations).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        facet: 'persona-identity',
+        status: 'suppressed',
+        reason: expect.stringContaining('marketing audience context'),
+      }),
+    ]));
+    const customRank = result.results.findIndex(
+      (item) => item.name === 'custom-marketing-execution',
+    );
+    const genericPersonaRanks = result.results
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => item.type === 'agent' && item.name?.startsWith('aiwg-'))
+      .map(({ index }) => index);
+    expect(customRank).toBe(0);
+    expect(genericPersonaRanks.every((rank) => rank > customRank)).toBe(true);
+  });
 
   it('shows canonical framework skills from bare names on the Fortemi Core default graph', async () => {
     const docSync = await captureShow('doc-sync', ['skill']);

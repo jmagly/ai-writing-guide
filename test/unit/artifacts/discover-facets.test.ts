@@ -5,7 +5,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { applyFacetFusion, DISCOVER_FACETS } from '../../../src/artifacts/discover-facets.js';
+import {
+  applyFacetFusion,
+  diagnoseFacetActivations,
+  DISCOVER_FACETS,
+} from '../../../src/artifacts/discover-facets.js';
 import type { MetadataEntry } from '../../../src/artifacts/types.js';
 
 function entry(overrides: Partial<MetadataEntry> & { path: string }): MetadataEntry {
@@ -152,5 +156,47 @@ describe('applyFacetFusion (#1623 U3)', async () => {
       facets: { 'persona-identity': 5 },
     });
     expect(fused2.some((r) => r.entry.name === 'aiwg-writer')).toBe(true);
+  });
+
+  it('does not let a lower facet floor perturb a stronger lexical score (#1828)', async () => {
+    const scored = [
+      { entry: candidates[2], score: 1.0 },
+      { entry: candidates[0], score: 1.0 },
+    ];
+    const fused = await applyFacetFusion(scored, candidates, 'custom marketing execution from buyer persona');
+    const writer = fused.find((r) => r.entry.name === 'aiwg-writer')!;
+
+    expect(writer.score).toBe(1.0);
+    expect(writer.facetDiagnostics ?? []).toHaveLength(0);
+  });
+
+  it.each([
+    'custom marketing execution from buyer persona',
+    'content brief using an audience persona',
+    'campaign copy based on a marketing persona',
+  ])('suppresses persona identity routing for marketing audience context: %s (#1828)', async (phrase) => {
+    const fused = await applyFacetFusion([], candidates, phrase);
+    expect(fused.some((r) => r.entry.name === 'aiwg-writer')).toBe(false);
+    expect(fused.some((r) => r.entry.name === 'soul-create')).toBe(false);
+
+    const diagnostic = diagnoseFacetActivations(phrase).find(
+      (item) => item.facet === 'persona-identity',
+    );
+    expect(diagnostic).toMatchObject({
+      status: 'suppressed',
+      floor: 0,
+    });
+    expect(diagnostic?.reason).toContain('marketing audience context');
+  });
+
+  it('keeps explicit AIWG persona selection active even with adjacent marketing terms (#1828)', async () => {
+    const phrase = 'select an AIWG persona for the marketing campaign';
+    const fused = await applyFacetFusion([], candidates, phrase);
+    expect(fused.some((r) => r.entry.name === 'aiwg-writer')).toBe(true);
+    expect(
+      diagnoseFacetActivations(phrase).find((item) => item.facet === 'persona-identity'),
+    ).toMatchObject({
+      status: 'active',
+    });
   });
 });
