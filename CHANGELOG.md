@@ -107,7 +107,9 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 - **Vault-backed release tag verification** — the release wrapper now verifies
   with the same ephemeral release-key adapter used to create the tag instead of
   falling through to the repository's intentionally separate commit-signing
-  program. Operator instructions use the TPM-backed OpenBao AppRole handoff and
+  program. Signing probes and tag creation always use batch loopback pinentry
+  with the vault-supplied mode-600 passphrase file, so no passphrase dialog can
+  appear. Operator instructions use the TPM-backed OpenBao AppRole handoff and
   injected private routing environment.
 - **Native Codex custom-agent output** (#1802) — Codex deployment emits valid
   standalone `.codex/agents/*.toml` definitions with required identity and

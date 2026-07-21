@@ -105,7 +105,8 @@ export VAULT_CI_SECRET_ID="$(_openbao_cred ci-aiwg secret-id)"
 source /path/to/private/aiwg-release-routing.env
 
 # Cut the signed tag — fetches the vault key, signs with the release-only key,
-# and runs the local verify gate. Never call `git tag` by hand.
+# supplies its passphrase through batch loopback pinentry (no dialog), and runs
+# the local verify gate. Never call `git tag` by hand.
 tools/release/cut-tag.sh 2026.X.Y
 
 # Push to Gitea (triggers gitea-release + npm-publish; the CI verify-signed-tag

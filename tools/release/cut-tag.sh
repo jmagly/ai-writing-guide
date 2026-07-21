@@ -240,23 +240,19 @@ EOF
   gpg --batch --import "$GPG_SIGNING_KEY_FILE" >/dev/null 2>&1
   GPG_WRAPPER="$GNUPGHOME/git-gpg.sh"
   GPG_PROBE="$GNUPGHOME/signing-probe"
-  printf 'aiwg release signing probe\n' > "$GPG_PROBE"
-  if gpg --batch --yes --local-user "$RELEASE_KEY_FINGERPRINT" \
-       --detach-sign "$GPG_PROBE" >/dev/null 2>&1; then
-    rm -f "$GPG_PROBE.sig"
-    cat > "$GPG_WRAPPER" <<'WRAP'
-#!/usr/bin/env bash
-exec gpg "$@"
-WRAP
-  else
-    printf 'pinentry-mode loopback\n' > "$GNUPGHOME/gpg.conf"
-    cat > "$GPG_WRAPPER" <<WRAP
+  printf 'pinentry-mode loopback\n' > "$GNUPGHOME/gpg.conf"
+  cat > "$GPG_WRAPPER" <<WRAP
 #!/usr/bin/env bash
 exec gpg --batch --pinentry-mode loopback --passphrase-file "$GPG_PASSPHRASE_FILE" "\$@"
 WRAP
-  fi
-  rm -f "$GPG_PROBE"
   chmod 700 "$GPG_WRAPPER"
+  printf 'aiwg release signing probe\n' > "$GPG_PROBE"
+  if ! "$GPG_WRAPPER" --yes --local-user "$RELEASE_KEY_FINGERPRINT" \
+       --detach-sign "$GPG_PROBE" >/dev/null 2>&1; then
+    echo 'FAIL: release-signing probe failed with the vault-supplied passphrase.' >&2
+    exit 1
+  fi
+  rm -f "$GPG_PROBE" "$GPG_PROBE.sig"
   GIT_TAG_GPG_OPTS=(-c "gpg.program=$GPG_WRAPPER")
   echo "  [7b/12] Release-signing key sourced from vault (ephemeral keyring)"
 fi
