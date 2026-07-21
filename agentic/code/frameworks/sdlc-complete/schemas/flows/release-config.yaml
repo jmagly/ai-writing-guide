@@ -108,7 +108,9 @@ properties:
           description: Shell commands to run sequentially.
           items:
             type: object
-            required: [run]
+            anyOf:
+              - required: [run]
+              - required: [depends_on_channel]
             properties:
               id:
                 type: string

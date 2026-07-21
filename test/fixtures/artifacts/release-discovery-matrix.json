@@ -13,6 +13,36 @@
       "max_rank": 5
     },
     {
+      "id": "marketing-custom-execution-buyer-persona-preposition",
+      "domain": "marketing",
+      "phrase": "custom marketing execution from buyer persona",
+      "expected_path": ".aiwg/addons/neuroframing-marketing/skills/custom-marketing-execution/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": ".aiwg/addons/neuroframing-marketing/skills/custom-marketing-execution/SKILL.md",
+      "use_default_graph": true
+    },
+    {
+      "id": "marketing-custom-execution-buyer-persona-noise",
+      "domain": "marketing",
+      "phrase": "custom marketing execution using the supplied buyer persona",
+      "expected_path": ".aiwg/addons/neuroframing-marketing/skills/custom-marketing-execution/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": ".aiwg/addons/neuroframing-marketing/skills/custom-marketing-execution/SKILL.md",
+      "use_default_graph": true
+    },
+    {
+      "id": "marketing-custom-execution-audience-persona-noise",
+      "domain": "marketing",
+      "phrase": "custom marketing execution based on audience persona",
+      "expected_path": ".aiwg/addons/neuroframing-marketing/skills/custom-marketing-execution/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": ".aiwg/addons/neuroframing-marketing/skills/custom-marketing-execution/SKILL.md",
+      "use_default_graph": true
+    },
+    {
       "id": "forensics-timeline",
       "domain": "forensics",
       "phrase": "forensic timeline",

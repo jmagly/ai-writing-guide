@@ -1,6 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
 
+// Watch-service tests use polling so host-wide inotify quotas cannot make the
+// suite nondeterministic on shared development and CI machines.
+process.env.CHOKIDAR_USEPOLLING ??= '1';
+
 export default defineConfig({
   root: path.resolve(__dirname, '..'),
   test: {
@@ -116,6 +120,8 @@ export default defineConfig({
         useAtomics: true
       }
     },
+    maxWorkers: 8,
+    minWorkers: 1,
 
     // Reporter configuration
     reporters: ['default'],

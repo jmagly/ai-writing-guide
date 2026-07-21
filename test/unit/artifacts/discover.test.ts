@@ -304,6 +304,29 @@ describe('discoverCapability — JSON output', () => {
       expect(top).toHaveProperty('type');
       expect(top).toHaveProperty('triggers');
       expect(top).toHaveProperty('capability');
+      expect(top).toHaveProperty('ranking');
+      expect(top.ranking).toMatchObject({
+        lexical_score: expect.any(Number),
+        final_score: expect.any(Number),
+        matches: expect.any(Array),
+        tie_breakers: {
+          scope: expect.any(String),
+          scope_rank: expect.any(Number),
+        },
+      });
+      expect(top.ranking.matches).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          field: 'trigger',
+          match: 'exact',
+          value: 'create intake',
+          query_token_coverage: 1,
+        }),
+      ]));
+      expect(parsed.diagnostics).toMatchObject({
+        content_tokens: ['create', 'intake'],
+        facet_activations: expect.any(Array),
+        score_tie_break_order: ['score', 'scope', 'type', 'name', 'path'],
+      });
     }
   });
 

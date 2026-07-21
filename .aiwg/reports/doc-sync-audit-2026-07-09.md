@@ -9,7 +9,7 @@ session-listing APIs (#140 sessions, #611 host-runtime listing) live end-to-end
 `transport_posture`, `security_posture`) + **host-daemon status** (`host_daemon`,
 mtls / vsock / bootstrap-pending) surface per instance (prior "Unknown transport"
 resolved).
-**Evidence:** `.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md`,
+**Evidence:** `.aiwg/testing/outputs/cockpit-7.4-transport-verify-2026-07-09.md`,
 `.aiwg/working/cockpit-7.4-inventory-2026-07-09.png`,
 `src/cli/handlers/serve.ts:1510-1560`.
 **Auditor evidence:** `.aiwg/working/doc-sync/user-docs-audit.md`,

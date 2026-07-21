@@ -1,39 +1,36 @@
 {
-  "timestamp": "2026-07-21T01:13:54Z",
+  "timestamp": "2026-07-21T22:11:19Z",
   "direction": "code-to-docs",
-  "scope": "v2026.7.13 through b5f814e6761198f30cc3357487d848051b6911c8; agentic/code, repository Markdown, config/schema, release, model-provider, Fortemi, and signing surfaces",
-  "guidance": "release-flow bounded code-to-docs synchronization before 2026.7.14",
+  "scope": "bounded current changed-file audit; NFR dashboard CLI, testing artifact layout, Cockpit architecture and evidence references",
+  "guidance": "doc-sync code2doc",
   "phases": [
     {
       "phase": "audit",
-      "findings_total": 4,
+      "findings_total": 2,
       "auditors": [
-        "provider and model routing surfaces",
-        "Fortemi static index and portable shard surfaces",
-        "repository transport and signing surfaces",
-        "project config reference"
+        "NFR dashboard CLI documentation",
+        "testing artifact layout and Cockpit evidence references"
       ]
     },
     {
       "phase": "auto-fix",
-      "fixes_applied": 1,
+      "fixes_applied": 2,
       "fixes_remaining": 0
     }
   ],
   "validation": {
     "passed": [
-      "Prettier project config reference",
-      "targeted config, delivery-policy, and routing-doc tests (120/120)",
-      "TypeScript typecheck",
+      "NFR dashboard status against relocated state",
+      "stale Cockpit evidence reference scan",
+      "referenced output file existence checks",
       "git diff --check"
     ],
-    "pending_release_gates": [
-      "signed doc-sync delivery and exact-head CI",
-      "2026.7.14 changelog and announcement",
-      "full release build/test/UAT",
-      "signed tag publication verification"
+    "warnings": [
+      "five legacy Markdown files retain pre-existing Prettier differences"
     ]
   },
-  "report": ".aiwg/reports/doc-sync-20260721T011354Z.md",
-  "open_follow_up": []
+  "report": ".aiwg/reports/doc-sync-20260721T221119Z.md",
+  "open_follow_up": [
+    "optional isolated formatting cleanup for five legacy Markdown files"
+  ]
 }

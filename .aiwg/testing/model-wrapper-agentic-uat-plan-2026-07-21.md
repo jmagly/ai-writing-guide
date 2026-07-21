@@ -137,5 +137,5 @@ authentication material.
 ## Execution Record
 
 Results will be written to
-`.aiwg/testing/model-wrapper-agentic-uat-report-2026-07-21.md` and will reference
+`.aiwg/testing/outputs/model-wrapper-agentic-uat-report-2026-07-21.md` and will reference
 this plan by case id.

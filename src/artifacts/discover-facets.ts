@@ -57,6 +57,31 @@ export interface FacetEntry {
   capabilities: string[];
 }
 
+export interface FacetActivationDiagnostic {
+  facet: FacetKind;
+  label: string;
+  status: 'active' | 'suppressed';
+  floor: number;
+  matchedIntent?: string;
+  reason?: string;
+}
+
+export interface FacetScoreDiagnostic {
+  facet: FacetKind;
+  label: string;
+  matched_intent?: string;
+  activation_floor: number;
+  base_score: number;
+  floor_applied: boolean;
+  rrf_tiebreak: number;
+}
+
+export interface FacetFusionResult {
+  entry: MetadataEntry;
+  score: number;
+  facetDiagnostics?: FacetScoreDiagnostic[];
+}
+
 /**
  * The curated facet table. Kept deliberately small and legible — it is a
  * routing index, not a knowledge base. Guarded by the discover acceptance
@@ -156,6 +181,42 @@ function norm(s: string): string {
   return s.toLowerCase().replace(/[\s_-]+/g, ' ').trim();
 }
 
+const PERSONA_MARKETING_CONTEXT = new Set([
+  'audience',
+  'brand',
+  'brief',
+  'buyer',
+  'campaign',
+  'content',
+  'copy',
+  'customer',
+  'email',
+  'execution',
+  'landing',
+  'market',
+  'marketing',
+  'product',
+  'sales',
+  'social',
+]);
+
+function suppressPersonaIdentityFacet(phrase: string): string | null {
+  const p = norm(phrase);
+  if (!/\bpersona(s)?\b/.test(p)) return null;
+
+  const explicitIdentityIntent =
+    /\b(soul|identity)\b/.test(p) ||
+    /\b(select|choose|switch|pick|apply|enable|author|generate)\s+(?:an?\s+)?(?:aiwg\s+)?persona\b/.test(p);
+  if (explicitIdentityIntent) return null;
+
+  const contextTerms = new Set(
+    p.split(' ').filter((token) => PERSONA_MARKETING_CONTEXT.has(token)),
+  );
+  if (contextTerms.size < 2) return null;
+
+  return 'persona-identity facet suppressed because persona is used as marketing audience context, not AIWG persona/SOUL identity intent';
+}
+
 /** The score floor a facet activation guarantees for its capabilities. */
 const FLOOR_EXACT = 1.0005; // above generic capped-1.0, below exact-name 1.001
 const FLOOR_STRONG = 0.9; // substring either direction
@@ -163,30 +224,72 @@ const FLOOR_OVERLAP = 0.6; // majority token overlap on a multi-word intent
 
 /**
  * Compute the strongest activation floor for `phrase` against a facet entry.
- * Returns 0 when the entry does not activate.
+ * Returns null when the entry does not activate.
  */
-function activationFloor(phrase: string, entry: FacetEntry): number {
+function facetActivation(
+  phrase: string,
+  entry: FacetEntry,
+): FacetActivationDiagnostic | null {
   const p = norm(phrase);
-  if (!p) return 0;
+  if (!p) return null;
+  if (entry.facet === 'persona-identity') {
+    const reason = suppressPersonaIdentityFacet(p);
+    if (reason) {
+      return {
+        facet: entry.facet,
+        label: entry.label,
+        status: 'suppressed',
+        floor: 0,
+        reason,
+      };
+    }
+  }
+
   const pTokens = p.split(' ').filter(Boolean);
   let best = 0;
+  let matchedIntent: string | undefined;
   for (const raw of entry.intents) {
     const intent = norm(raw);
     if (!intent) continue;
-    if (p === intent) return FLOOR_EXACT; // can't beat exact
+    if (p === intent) {
+      return {
+        facet: entry.facet,
+        label: entry.label,
+        status: 'active',
+        floor: FLOOR_EXACT,
+        matchedIntent: raw,
+      };
+    }
     if (p.includes(intent) || intent.includes(p)) {
-      best = Math.max(best, FLOOR_STRONG);
+      if (FLOOR_STRONG > best) {
+        best = FLOOR_STRONG;
+        matchedIntent = raw;
+      }
       continue;
     }
     const iTokens = intent.split(' ').filter(Boolean);
     if (iTokens.length > 1 && pTokens.length > 0) {
       const hits = iTokens.filter((t) => pTokens.includes(t)).length;
-      if (hits >= Math.ceil(iTokens.length / 2)) {
-        best = Math.max(best, FLOOR_OVERLAP);
+      if (hits >= Math.ceil(iTokens.length / 2) && FLOOR_OVERLAP > best) {
+        best = FLOOR_OVERLAP;
+        matchedIntent = raw;
       }
     }
   }
-  return best;
+  if (best <= 0) return null;
+  return {
+    facet: entry.facet,
+    label: entry.label,
+    status: 'active',
+    floor: best,
+    matchedIntent,
+  };
+}
+
+export function diagnoseFacetActivations(phrase: string): FacetActivationDiagnostic[] {
+  return DISCOVER_FACETS
+    .map((entry) => facetActivation(phrase, entry))
+    .filter((item): item is FacetActivationDiagnostic => item !== null);
 }
 
 /** Does a candidate entry correspond to a mapped capability name? */
@@ -239,7 +342,7 @@ const RRF_TIEBREAK_SCALE = 1e-5;
 
 interface FacetVector {
   facet: FacetEntry;
-  floor: number;
+  activation: FacetActivationDiagnostic;
   /** Mapped capabilities present in the corpus, ranked best-first. */
   ranked: MetadataEntry[];
 }
@@ -258,8 +361,8 @@ async function rankFacetVector(
   candidates: MetadataEntry[],
   baseScoreOf: (e: MetadataEntry) => number,
 ): Promise<FacetVector | null> {
-  const floor = activationFloor(phrase, facet);
-  if (floor <= 0) return null;
+  const activation = facetActivation(phrase, facet);
+  if (!activation || activation.status !== 'active' || activation.floor <= 0) return null;
   const matched: MetadataEntry[] = [];
   const seen = new Set<string>();
   for (const cap of facet.capabilities) {
@@ -273,7 +376,7 @@ async function rankFacetVector(
   // Within the vector, the most lexically-relevant owning capability leads —
   // this is the per-vector ranking RRF consumes.
   matched.sort((a, b) => baseScoreOf(b) - baseScoreOf(a));
-  return { facet, floor, ranked: matched };
+  return { facet, activation, ranked: matched };
 }
 
 /**
@@ -298,7 +401,7 @@ export async function applyFacetFusion(
   candidates: MetadataEntry[],
   phrase: string,
   weights: FacetWeights = DEFAULT_FACET_WEIGHTS,
-): Promise<Array<{ entry: MetadataEntry; score: number }>> {
+): Promise<FacetFusionResult[]> {
   const baseScore = new Map<string, number>();
   for (const r of scored) baseScore.set(keyOf(r.entry), r.score);
   const baseScoreOf = (e: MetadataEntry): number => baseScore.get(keyOf(e)) ?? 0;
@@ -314,6 +417,7 @@ export async function applyFacetFusion(
   const rrf = new Map<string, number>();
   const bestFloor = new Map<string, number>();
   const matchedEntry = new Map<string, MetadataEntry>();
+  const activationsByEntry = new Map<string, FacetActivationDiagnostic[]>();
 
   scored.forEach((r, i) => {
     const k = keyOf(r.entry);
@@ -324,20 +428,41 @@ export async function applyFacetFusion(
     v.ranked.forEach((e, i) => {
       const k = keyOf(e);
       rrf.set(k, (rrf.get(k) ?? 0) + w / (RRF_K + i + 1));
-      bestFloor.set(k, Math.max(bestFloor.get(k) ?? 0, v.floor));
+      bestFloor.set(k, Math.max(bestFloor.get(k) ?? 0, v.activation.floor));
       matchedEntry.set(k, e);
+      const activations = activationsByEntry.get(k) ?? [];
+      activations.push(v.activation);
+      activationsByEntry.set(k, activations);
     });
   }
 
-  const out = new Map<string, { entry: MetadataEntry; score: number }>();
+  const out = new Map<string, FacetFusionResult>();
   for (const r of scored) out.set(keyOf(r.entry), { entry: r.entry, score: r.score });
   for (const [k, floor] of bestFloor) {
     const entry = matchedEntry.get(k)!;
-    const tiebreak = (rrf.get(k) ?? 0) * RRF_TIEBREAK_SCALE;
-    const lifted = Math.max(baseScoreOf(entry), floor) + tiebreak;
+    const base = baseScoreOf(entry);
+    const floorApplied = floor > base;
+    // RRF only orders entries inside a floor-lifted tier. Applying it when the
+    // lexical score already exceeds the floor silently boosts a generic facet
+    // match above an equally-scored exact project trigger (#1828).
+    const tiebreak = floorApplied ? (rrf.get(k) ?? 0) * RRF_TIEBREAK_SCALE : 0;
+    const lifted = floorApplied ? floor + tiebreak : base;
+    const facetDiagnostics = (activationsByEntry.get(k) ?? []).map((activation) => ({
+      facet: activation.facet,
+      label: activation.label,
+      matched_intent: activation.matchedIntent,
+      activation_floor: activation.floor,
+      base_score: base,
+      floor_applied: activation.floor > base,
+      rrf_tiebreak: activation.floor === floor ? tiebreak : 0,
+    }));
     const existing = out.get(k);
-    if (existing) existing.score = Math.max(existing.score, lifted);
-    else out.set(k, { entry, score: lifted });
+    if (existing) {
+      existing.score = Math.max(existing.score, lifted);
+      existing.facetDiagnostics = facetDiagnostics;
+    } else {
+      out.set(k, { entry, score: lifted, facetDiagnostics });
+    }
   }
 
   return Array.from(out.values()).sort((a, b) => b.score - a.score);
