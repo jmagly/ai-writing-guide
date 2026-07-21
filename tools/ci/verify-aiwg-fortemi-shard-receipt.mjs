@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 
-import { unpackTarGz, validateShardArchive } from '@fortemi/core';
+import { getKnowledgeShardContractReceipt, unpackTarGz, validateShardArchive } from '@fortemi/core';
 
 const require = createRequire(import.meta.url);
 const root = resolve(import.meta.dirname, '..', '..');
@@ -38,6 +38,12 @@ function run(command, args, options = {}) {
   return result.stdout?.trim() ?? '';
 }
 
+function runBytes(command, args, options = {}) {
+  const result = spawnSync(command, args, { cwd: options.cwd ?? root, encoding: null });
+  if (result.status !== 0) fail(`${command} ${args.join(' ')} failed with exit ${result.status ?? 'unknown'}`);
+  return result.stdout;
+}
+
 if (receipt.schema_version !== 'aiwg.fortemi.shard-receipt.v1') {
   fail(`unsupported receipt schema ${receipt.schema_version}`);
 }
@@ -54,10 +60,22 @@ if (lockedCore?.version !== receipt.converter.package.version) {
 if (lockedCore?.integrity !== receipt.converter.package.integrity) {
   fail('locked Core registry integrity does not match receipt');
 }
+const authority = getKnowledgeShardContractReceipt();
+if (authority.source.commit !== receipt.authority.commit) fail('Core authority commit does not match receipt');
+if (authority.source.contractSha256 !== receipt.authority.contract_sha256) fail('Core contract digest does not match receipt');
+if (authority.knowledgeShard.schemaVersion !== receipt.authority.schema_version) fail('Core schema version does not match receipt');
+if (authority.schemaBundle.sha256 !== receipt.authority.schema_bundle_sha256) fail('Core schema bundle digest does not match receipt');
+
+const producerCommit = run('git', ['rev-parse', `${receipt.producer.commit}^{commit}`], { capture: true });
+if (producerCommit !== receipt.producer.commit) fail('producer commit is unavailable');
+run('git', ['merge-base', '--is-ancestor', receipt.producer.commit, 'HEAD']);
 
 const archivePath = resolve(root, receipt.archive.path);
 const archive = new Uint8Array(readFileSync(archivePath));
 if (sha256(archive) !== receipt.archive.sha256) fail('archive SHA-256 mismatch');
+if (sha256(runBytes('git', ['show', `${receipt.producer.commit}:${receipt.archive.path}`])) !== receipt.archive.sha256) {
+  fail('archive digest does not match immutable producer commit');
+}
 if (archive.byteLength !== receipt.archive.bytes) fail('archive byte count mismatch');
 const validation = validateShardArchive(archive);
 if (!validation.valid) fail(`archive validation failed: ${validation.errors.join('; ')}`);
@@ -82,7 +100,7 @@ if (serverFlag >= 0) {
   if (run('git', ['status', '--porcelain'], { cwd: checkout, capture: true })) {
     fail('Fortemi checkout is not clean before applying the receipt harness');
   }
-  const patchPath = resolve(fixtureRoot, receipt.consumers.fortemi.harness.path);
+  const patchPath = resolve(root, receipt.consumers.fortemi.harness.path);
   if (sha256(readFileSync(patchPath)) !== receipt.consumers.fortemi.harness.sha256) {
     fail('Fortemi consumer harness SHA-256 mismatch');
   }

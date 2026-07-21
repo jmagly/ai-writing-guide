@@ -182,12 +182,13 @@
         "fortemi": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["repository", "commit", "clean_destination", "semantic_reexport", "harness"],
+          "required": ["repository", "commit", "clean_destination", "semantic_reexport", "harness", "atomic_rejection_test"],
           "properties": {
             "repository": { "const": "https://git.integrolabs.net/Fortemi/fortemi.git" },
             "commit": { "$ref": "#/$defs/commit" },
             "clean_destination": { "const": true },
             "semantic_reexport": { "const": true },
+            "atomic_rejection_test": { "const": "shard_core_v1_server_export_clean_import_preserves_semantic_state" },
             "harness": {
               "type": "object",
               "additionalProperties": false,

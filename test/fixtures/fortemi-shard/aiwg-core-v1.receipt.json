@@ -1,0 +1,90 @@
+{
+  "schema_version": "aiwg.fortemi.shard-receipt.v1",
+  "producer": {
+    "repository": "https://git.integrolabs.net/roctinam/aiwg.git",
+    "commit": "27a4f87711f387da4a10339c2a5ea35bc5800e77",
+    "package": {
+      "name": "aiwg",
+      "version": "2026.7.13"
+    }
+  },
+  "converter": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi-react.git",
+    "commit": "95e87770e257afe9913c9cfced050648c52e1e97",
+    "package": {
+      "name": "@fortemi/core",
+      "version": "2026.7.9",
+      "integrity": "sha512-fl8tO6XdSX1EOd4ZT8yhEeVA/xbsYgfqjotWgMkGnta+da/6WY78oGBskZ/Ff9ewZtqSMpLQLJY80gCswcSu0g=="
+    }
+  },
+  "authority": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi.git",
+    "commit": "81fbeaf065df3818edd046ed8a744f10eeb00e6f",
+    "contract_revision": "19",
+    "contract_sha256": "5debc14e0bc7eef403a75e8e063a10f53019e1d74857485d6eda3abaec9397e2",
+    "schema_version": "1.2.0",
+    "schema_bundle_sha256": "deec0cb66dc09865667256e29340d096c02dd9b0e55bdc1ae60b7effb68ac595"
+  },
+  "archive": {
+    "path": "test/fixtures/fortemi-shard/aiwg-core-v1.shard",
+    "sha256": "8ff55c00c9611b2ee505db99459f49b8315686fda41defd4fab80011b24779b7",
+    "bytes": 2039,
+    "manifest": {
+      "format": "matric-shard",
+      "version": "1.2.0",
+      "profile": "core-v1",
+      "components": ["notes", "tags", "links"],
+      "counts": {
+        "notes": 2,
+        "collections": 0,
+        "tags": 1,
+        "templates": 0,
+        "links": 2,
+        "embedding_sets": 0,
+        "embedding_set_members": 0,
+        "embeddings": 0,
+        "embedding_configs": 0
+      }
+    }
+  },
+  "capability_loss_report": {
+    "profile": "core-v1",
+    "portable": true,
+    "source_carrier": "metadata.aiwg_fortemi_index",
+    "supported_components": ["notes", "collections", "tags", "templates", "links"],
+    "absent_source_components": ["collections", "templates"],
+    "losses": []
+  },
+  "consumers": {
+    "pglite": {
+      "package": {
+        "name": "@fortemi/core",
+        "version": "2026.7.9"
+      },
+      "clean_destination": true,
+      "semantic_reexport": true,
+      "portable": true,
+      "losses": []
+    },
+    "fortemi": {
+      "repository": "https://git.integrolabs.net/Fortemi/fortemi.git",
+      "commit": "1cf174afe8143eab4bfa53d3d0e1a538b4e63711",
+      "clean_destination": true,
+      "semantic_reexport": true,
+      "atomic_rejection_test": "shard_core_v1_server_export_clean_import_preserves_semantic_state",
+      "harness": {
+        "path": "test/fixtures/fortemi-shard/fortemi-server-aiwg-receipt.patch",
+        "sha256": "b273bf9bfb80193f80e561a6425b0d46da1623c38f1b3495da241aa3bbad77e0",
+        "test": "aiwg_core_v1_external_fixture_clean_import_reexport"
+      }
+    }
+  },
+  "negative_cases": [
+    { "case": "malformed-gzip", "consumer": "@fortemi/core PGlite", "result": "rejected", "persistent_mutation": 0 },
+    { "case": "component-checksum-drift", "consumer": "@fortemi/core PGlite", "result": "rejected", "persistent_mutation": 0 },
+    { "case": "unsupported-profile", "consumer": "@fortemi/core PGlite", "result": "rejected", "persistent_mutation": 0 },
+    { "case": "future-schema-version", "consumer": "@fortemi/core PGlite", "result": "rejected", "persistent_mutation": 0 },
+    { "case": "declared-size-resource-limit", "consumer": "@fortemi/core PGlite", "result": "rejected", "persistent_mutation": 0 },
+    { "case": "checksum-and-semantic-import-atomicity", "consumer": "Fortemi server", "result": "rejected", "persistent_mutation": 0 }
+  ]
+}
