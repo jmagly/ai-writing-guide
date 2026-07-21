@@ -322,7 +322,7 @@ reason when no live sandbox is reachable so ordinary CI stays deterministic. Set
 `AIWG_COCKPIT_LIVE_REQUIRED=1` for release/local validation where the live gate
 must be green. The command writes `test-results/cockpit-live-uat.json` and
 `test-results/cockpit-live-uat.md` by default; set
-`AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/cockpit-live-uat-<date>` when the report
+`AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/outputs/cockpit-live-uat-<date>` when the report
 should be kept as a project artifact. If the upstream
 `agentic-sandbox-conformance` harness is also run, set
 `AIWG_SANDBOX_CONFORMANCE_REPORT=<path>` so the Cockpit live report links the
@@ -427,16 +427,16 @@ Known state as of the 2026-06-19 host live run:
   real mTLS-registered host agent and a managed `tmux` session.
 - Codex launched inside that managed host session and returned
   `AIWG_COCKPIT_LIVE_OK` plus `issue-audit`; evidence lives at
-  `.aiwg/testing/cockpit-real-codex-matrix-2026-06-19.md/.json`.
+  `.aiwg/testing/outputs/cockpit-real-codex-matrix-2026-06-19.md/.json`.
 - Cockpit also proved direct PTY command injection and mutation on the same real
   host path with `AIWG_COCKPIT_LIVE_MATRIX_TARGETS=host` and
   `AIWG_COCKPIT_LIVE_MUTATION_FILE`; evidence lives at
-  `.aiwg/testing/cockpit-real-codex-mutation-2026-06-19.md/.json`, and the
+  `.aiwg/testing/outputs/cockpit-real-codex-mutation-2026-06-19.md/.json`, and the
   verified mutation artifact is
-  `.aiwg/testing/cockpit-pty-mutation-2026-06-19.txt`.
+  `.aiwg/testing/outputs/cockpit-pty-mutation-2026-06-19.txt`.
 - Claude launched inside the same real host-session path and also returned
   `AIWG_COCKPIT_LIVE_OK` plus `issue-audit`; evidence lives at
-  `.aiwg/testing/cockpit-real-claude-matrix-2026-06-19.md/.json`.
+  `.aiwg/testing/outputs/cockpit-real-claude-matrix-2026-06-19.md/.json`.
 - The previous Claude login-required blocker remains linked as
   roctinam/agentic-sandbox#499 for upstream regression tracking, but it was not
   reproduced by this isolated host proof.
@@ -448,7 +448,7 @@ Known state as of the 2026-06-19 host live run:
   the #561 transport regression are closed. Re-validated Cockpit-side against
   `v2026.6.34`: VM matrix PASS — provision → vsock enroll → boot-ready → provider
   workload → clean destroy. Evidence:
-  `.aiwg/testing/cockpit-vm-vsock-2026-06-27.md/.json`.
+  `.aiwg/testing/outputs/cockpit-vm-vsock-2026-06-27.md/.json`.
 - Instance **transport posture + host-daemon** now surface from the sandbox side
   (`dd97529 fix(admin-v2): expose instance transport posture`, plus `#611`
   host-runtime session listing). Re-validated Cockpit-side against `v2026.7.4`
@@ -459,7 +459,7 @@ Known state as of the 2026-06-19 host live run:
   enrolled instance now renders real posture). Session-list returns
   cleanly (no 502 — the `#140`/`#611` endpoints are live). Runtime coverage
   banner `host ✓ · docker ✓ · vm ✓`. Evidence:
-  `.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md` +
+  `.aiwg/testing/outputs/cockpit-7.4-transport-verify-2026-07-09.md` +
   `.aiwg/working/cockpit-7.4-inventory-2026-07-09.png`.
 - Stale Docker/container agent recovery is wired through the Bridge and UI
   (2026-07-11): stale running instances remain visible as `agent unreachable`,

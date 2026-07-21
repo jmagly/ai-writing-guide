@@ -166,5 +166,5 @@ without owning lifecycle.
   exercised. Deferred adoption: structured agent-output SSE stream
   (`/api/v1/agent-output/stream`, #600) for Chat, and Observe/Drive controller-lease
   wiring.
-- Evidence: `.aiwg/testing/cockpit-7.4-transport-verify-2026-07-09.md` +
+- Evidence: `.aiwg/testing/outputs/cockpit-7.4-transport-verify-2026-07-09.md` +
   `.aiwg/working/cockpit-7.4-inventory-2026-07-09.png`.
