@@ -2,10 +2,10 @@
   "schema_version": "aiwg.fortemi.shard-receipt.v1",
   "producer": {
     "repository": "https://git.integrolabs.net/roctinam/aiwg.git",
-    "commit": "27a4f87711f387da4a10339c2a5ea35bc5800e77",
+    "commit": "177cff5ace277d673b86ec5bd6a86fe6fcd50ffa",
     "package": {
       "name": "aiwg",
-      "version": "2026.7.13"
+      "version": "2026.7.14"
     }
   },
   "converter": {
@@ -27,8 +27,8 @@
   },
   "archive": {
     "path": "test/fixtures/fortemi-shard/aiwg-core-v1.shard",
-    "sha256": "8ff55c00c9611b2ee505db99459f49b8315686fda41defd4fab80011b24779b7",
-    "bytes": 2039,
+    "sha256": "2abcc996b3d84bd723274f6bdf8c5f1fdbe56af45f8a25218f32f95e8575582b",
+    "bytes": 2038,
     "manifest": {
       "format": "matric-shard",
       "version": "1.2.0",
@@ -51,7 +51,13 @@
     "profile": "core-v1",
     "portable": true,
     "source_carrier": "metadata.aiwg_fortemi_index",
-    "supported_components": ["notes", "collections", "tags", "templates", "links"],
+    "supported_components": [
+      "notes",
+      "collections",
+      "tags",
+      "templates",
+      "links"
+    ],
     "absent_source_components": ["collections", "templates"],
     "losses": []
   },
@@ -80,11 +86,41 @@
     }
   },
   "negative_cases": [
-    { "case": "malformed-gzip", "consumer": "@fortemi/core PGlite", "result": "rejected", "persistent_mutation": 0 },
-    { "case": "component-checksum-drift", "consumer": "@fortemi/core PGlite", "result": "rejected", "persistent_mutation": 0 },
-    { "case": "unsupported-profile", "consumer": "@fortemi/core PGlite", "result": "rejected", "persistent_mutation": 0 },
-    { "case": "future-schema-version", "consumer": "@fortemi/core PGlite", "result": "rejected", "persistent_mutation": 0 },
-    { "case": "declared-size-resource-limit", "consumer": "@fortemi/core PGlite", "result": "rejected", "persistent_mutation": 0 },
-    { "case": "checksum-and-semantic-import-atomicity", "consumer": "Fortemi server", "result": "rejected", "persistent_mutation": 0 }
+    {
+      "case": "malformed-gzip",
+      "consumer": "@fortemi/core PGlite",
+      "result": "rejected",
+      "persistent_mutation": 0
+    },
+    {
+      "case": "component-checksum-drift",
+      "consumer": "@fortemi/core PGlite",
+      "result": "rejected",
+      "persistent_mutation": 0
+    },
+    {
+      "case": "unsupported-profile",
+      "consumer": "@fortemi/core PGlite",
+      "result": "rejected",
+      "persistent_mutation": 0
+    },
+    {
+      "case": "future-schema-version",
+      "consumer": "@fortemi/core PGlite",
+      "result": "rejected",
+      "persistent_mutation": 0
+    },
+    {
+      "case": "declared-size-resource-limit",
+      "consumer": "@fortemi/core PGlite",
+      "result": "rejected",
+      "persistent_mutation": 0
+    },
+    {
+      "case": "checksum-and-semantic-import-atomicity",
+      "consumer": "Fortemi server",
+      "result": "rejected",
+      "persistent_mutation": 0
+    }
   ]
 }
