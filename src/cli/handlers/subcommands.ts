@@ -1347,15 +1347,14 @@ export const discoverHandler: CommandHandler = {
 /**
  * Features command handler — manage AIWG's optional runtime features (#1219).
  *
- * Subcommands: status / info / install / remove. Cycle 1 ships
- * status + info; install + remove arrive in Cycle 3 once install-mode
- * detection is designed.
+ * Subcommands: status / info / install / remove. Native feature installs use
+ * a user-owned package root with explicit package-level script approval.
  */
 export const featuresHandler: CommandHandler = {
   id: "features",
   name: "Features",
   description:
-    "List, inspect, and (eventually) install AIWG's optional runtime features",
+    "List, inspect, and install AIWG's optional runtime features",
   category: "maintenance",
   aliases: [],
 

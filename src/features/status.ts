@@ -10,8 +10,10 @@
  */
 
 import { promises as fs } from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import { FEATURE_CATALOG, type FeatureDefinition } from './catalog.js';
+import { FEATURE_CATALOG, NATIVE_FEATURE_PACKAGES, type FeatureDefinition } from './catalog.js';
+import { getFeaturesRoot } from './paths.js';
 
 export interface PackageStatus {
   /** Package name as published on npm */
@@ -22,6 +24,10 @@ export interface PackageStatus {
   version: string | null;
   /** Absolute path to the resolved package.json (for diagnostics) */
   path: string | null;
+  /** Native entry point loaded successfully; always true for non-native packages. */
+  loadable: boolean;
+  /** Sanitized load failure for doctor output. */
+  error: string | null;
 }
 
 export interface FeatureStatus {
@@ -69,19 +75,36 @@ async function resolveAiwgRoot(): Promise<string> {
  * `<aiwgRoot>/node_modules/<name>/package.json`.
  */
 async function probePackage(aiwgRoot: string, name: string): Promise<PackageStatus> {
-  const candidate = path.join(aiwgRoot, 'node_modules', name, 'package.json');
-  try {
-    const raw = await fs.readFile(candidate, 'utf8');
-    const meta = JSON.parse(raw) as { version?: string };
-    return {
-      name,
-      installed: true,
-      version: meta.version ?? null,
-      path: candidate,
-    };
-  } catch {
-    return { name, installed: false, version: null, path: null };
+  const roots = [getFeaturesRoot(), aiwgRoot];
+  for (const root of roots) {
+    const candidate = path.join(root, 'node_modules', name, 'package.json');
+    try {
+      const raw = await fs.readFile(candidate, 'utf8');
+      const meta = JSON.parse(raw) as { version?: string };
+      let loadable = true;
+      let error: string | null = null;
+      if (NATIVE_FEATURE_PACKAGES.has(name)) {
+        try {
+          createRequire(candidate)(name);
+        } catch (cause) {
+          loadable = false;
+          const message = cause instanceof Error ? cause.message : String(cause);
+          error = message.split('\n')[0] || 'native module could not be loaded';
+        }
+      }
+      return {
+        name,
+        installed: true,
+        version: meta.version ?? null,
+        path: candidate,
+        loadable,
+        error,
+      };
+    } catch {
+      // Try the base AIWG install after the user feature root.
+    }
   }
+  return { name, installed: false, version: null, path: null, loadable: false, error: null };
 }
 
 /** Status of a single named feature. Returns null if the name is unknown. */
@@ -92,7 +115,7 @@ export async function getFeatureStatus(name: string): Promise<FeatureStatus | nu
   const pkgStatuses = await Promise.all(
     feature.packages.map(p => probePackage(aiwgRoot, p)),
   );
-  const missing = pkgStatuses.filter(p => !p.installed).map(p => p.name);
+  const missing = pkgStatuses.filter(p => !p.installed || !p.loadable).map(p => p.name);
   return {
     feature,
     packages: pkgStatuses,
@@ -109,7 +132,7 @@ export async function getAllFeatureStatuses(): Promise<FeatureStatus[]> {
       const pkgStatuses = await Promise.all(
         feature.packages.map(p => probePackage(aiwgRoot, p)),
       );
-      const missing = pkgStatuses.filter(p => !p.installed).map(p => p.name);
+      const missing = pkgStatuses.filter(p => !p.installed || !p.loadable).map(p => p.name);
       return {
         feature,
         packages: pkgStatuses,
@@ -132,6 +155,11 @@ export function formatStatusLine(status: FeatureStatus, indent = '  '): string {
       .map(p => `${p.name} ${p.version ?? '?'}`)
       .join(', ');
     return `${indent}OK ${name} installed (${versions})`;
+  }
+  const broken = status.packages.filter(p => p.installed && !p.loadable);
+  if (broken.length > 0) {
+    return `${indent}!  ${name} installed but native build is unusable (${broken.map(p => p.name).join(', ')}) — ` +
+      `run \`aiwg features install ${status.feature.name}\` to rebuild with scoped script approval`;
   }
   return `${indent}-  ${name} not installed — \`aiwg features install ${status.feature.name}\` to enable`;
 }

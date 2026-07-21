@@ -55,6 +55,8 @@
  * @see #711 — HTTP server scaffold
  */
 
+import { loadFeaturePackage } from '../features/runtime.js';
+
 // ============================================================
 // Types
 // ============================================================
@@ -291,9 +293,10 @@ export async function spawnPty(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let ptyMod: any;
   try {
-    ptyMod = await (new Function('m', 'return import(m)'))('node-pty');
+    const loaded = await loadFeaturePackage('node-pty');
+    ptyMod = loaded.default ?? loaded;
   } catch {
-    throw new Error('node-pty is required for PTY sessions. Install it: npm install node-pty');
+    throw new Error('node-pty is required for local PTY sessions. Install it with scoped approval: aiwg features install pty');
   }
 
   const pty: PtyLike = ptyMod.spawn(command, args, {

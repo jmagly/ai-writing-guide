@@ -22,6 +22,10 @@ export interface FeatureDefinition {
   description: string;
   /** npm packages this feature requires (all must resolve for `available=true`) */
   packages: string[];
+  /** npm dependency specs used by the scoped feature installer */
+  packageSpecs: Record<string, string>;
+  /** Packages whose lifecycle scripts are explicitly approved for this feature */
+  scriptPackages?: string[];
   /** Concrete capabilities this feature unlocks */
   enables: string[];
   /** Install cost / size estimate for operator awareness */
@@ -33,6 +37,11 @@ export const FEATURE_CATALOG: FeatureDefinition[] = [
     name: 'embeddings',
     description: 'Vector embeddings for `aiwg discover` (semantic search beyond the keyword scorer)',
     packages: ['@xenova/transformers', 'hnswlib-node'],
+    packageSpecs: {
+      '@xenova/transformers': '2.17.2',
+      'hnswlib-node': '3.0.0',
+    },
+    scriptPackages: ['hnswlib-node'],
     enables: [
       'higher hit@K on natural-language queries that don\'t match trigger phrases',
       'optional dense-rerank layer when sparse top-1 is ambiguous',
@@ -43,6 +52,8 @@ export const FEATURE_CATALOG: FeatureDefinition[] = [
     name: 'sqlite',
     description: 'SQLite storage backend for memory / activity-log / kb subsystems',
     packages: ['better-sqlite3'],
+    packageSpecs: { 'better-sqlite3': '12.8.0' },
+    scriptPackages: ['better-sqlite3'],
     enables: [
       'storage.config: backend=sqlite for any subsystem',
       'transactional reads/writes against `.aiwg/storage/`',
@@ -53,6 +64,8 @@ export const FEATURE_CATALOG: FeatureDefinition[] = [
     name: 'pty',
     description: 'PTY bridge for daemon — pass-through interactive TUIs (Claude Code, Codex, etc.)',
     packages: ['node-pty'],
+    packageSpecs: { 'node-pty': '1.1.0' },
+    scriptPackages: ['node-pty'],
     enables: [
       'aiwg daemon pty start / list / stop',
       'daemon web UI for interactive Claude/Codex/etc sessions over WebSocket',
@@ -63,6 +76,11 @@ export const FEATURE_CATALOG: FeatureDefinition[] = [
     name: 'webserver',
     description: 'HTTP/WebSocket server for the daemon web UI and ralph-external bridge',
     packages: ['hono', '@hono/node-server', 'ws'],
+    packageSpecs: {
+      hono: '4.12.18',
+      '@hono/node-server': '1.19.14',
+      ws: '8.20.0',
+    },
     enables: [
       'aiwg daemon serve',
       'browser-based daemon UI',
@@ -71,6 +89,11 @@ export const FEATURE_CATALOG: FeatureDefinition[] = [
     cost: '~3 MB — pure JS, no native deps',
   },
 ];
+
+/** Native packages require a successful runtime load, not just package files. */
+export const NATIVE_FEATURE_PACKAGES = new Set(
+  FEATURE_CATALOG.flatMap(feature => feature.scriptPackages ?? []),
+);
 
 /** Quick lookup by feature name. */
 export function getFeature(name: string): FeatureDefinition | null {

@@ -33,6 +33,7 @@ import path from 'path';
 import { EventEmitter } from 'events';
 import { createHash, randomBytes } from 'crypto';
 import { SandboxTransport } from './sandbox-transport.mjs';
+import { importImpl } from '../_resolve-impl.mjs';
 
 const SESSION_DIR = '.aiwg/daemon/pty';
 
@@ -102,11 +103,13 @@ export class PTYAdapter extends EventEmitter {
   async start() {
     let nodePty;
     try {
-      nodePty = await import('node-pty');
+      const { loadFeaturePackage } = await importImpl(import.meta.url, 'features/runtime.js');
+      const loaded = await loadFeaturePackage('node-pty');
+      nodePty = loaded.default ?? loaded;
     } catch {
       throw new Error(
         'node-pty is required for PTY adapter support.\n' +
-        "Install it with: npm install node-pty\n" +
+        'Install it with scoped approval: aiwg features install pty\n' +
         'node-pty requires native compilation — you need node-gyp and C++ build tools.\n' +
         'See: https://github.com/microsoft/node-pty#installation'
       );

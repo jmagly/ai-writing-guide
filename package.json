@@ -291,9 +291,7 @@
   },
   "optionalDependencies": {
     "@hono/node-server": "^1.19.14",
-    "hnswlib-node": "^3.0.0",
     "hono": "^4.12.18",
-    "node-pty": "^1.0.0",
     "ws": "^8.20.0"
   },
   "peerDependencies": {

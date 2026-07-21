@@ -1,14 +1,14 @@
 /**
  * `aiwg features` CLI subcommands
  *
- * Cycle 1 scope (#1219): status / info only. Install / remove deferred
- * to Cycle 3 because the install path needs install-mode detection
- * (repo dev vs global npm vs plugin marketplace) which has its own
- * design surface.
+ * Native packages are installed into a user-owned feature root. Its generated
+ * package manifest contains exact package-level allowScripts approvals, so the
+ * operator does not need to weaken npm policy globally.
  */
 
 import { FEATURE_CATALOG } from './catalog.js';
 import { getFeatureStatus, getAllFeatureStatuses, formatStatusLine, type FeatureStatus } from './status.js';
+import { installFeature } from './installer.js';
 
 export async function main(args: string[]): Promise<void> {
   // If the first arg is a flag (e.g. `--json`), treat the implicit
@@ -29,6 +29,9 @@ export async function main(args: string[]): Promise<void> {
       break;
 
     case 'install':
+      await handleInstall(subArgs);
+      break;
+
     case 'remove':
       console.error(`Error: \`aiwg features ${subcommand}\` not yet implemented (#1219 Cycle 3).`);
       console.error('');
@@ -58,7 +61,7 @@ function printHelp(): void {
   console.log('Subcommands:');
   console.log('  status        Show install status of every optional feature (default)');
   console.log('  info <name>   Show detailed info on one feature');
-  console.log('  install       Not yet implemented (#1219 Cycle 3)');
+  console.log('  install <name> Install a feature with scoped lifecycle-script approval');
   console.log('  remove        Not yet implemented (#1219 Cycle 3)');
   console.log('  help          Show this help');
   console.log('');
@@ -69,6 +72,7 @@ function printHelp(): void {
   console.log('  aiwg features                       # status table');
   console.log('  aiwg features --json                # JSON status');
   console.log('  aiwg features info embeddings       # what does this feature enable');
+  console.log('  aiwg features install pty            # explicitly build node-pty');
   console.log('');
   console.log('Available features:');
   for (const f of FEATURE_CATALOG) {
@@ -90,6 +94,8 @@ async function handleStatus(args: string[]): Promise<void> {
           name: p.name,
           installed: p.installed,
           version: p.version,
+          loadable: p.loadable,
+          error: p.error,
         })),
       })),
       total: statuses.length,
@@ -150,6 +156,8 @@ async function handleInfo(args: string[]): Promise<void> {
         name: p.name,
         installed: p.installed,
         version: p.version,
+        loadable: p.loadable,
+        error: p.error,
       })),
     }, null, 2));
     return;
@@ -174,17 +182,33 @@ function printFeatureInfo(status: FeatureStatus): void {
   console.log('');
   console.log('Packages:');
   for (const p of status.packages) {
-    const mark = p.installed ? 'OK' : '-';
+    const mark = p.installed && p.loadable ? 'OK' : (p.installed ? '!' : '-');
     const version = p.version ? ` ${p.version}` : '';
-    console.log(`  ${mark} ${p.name}${version}`);
+    const error = p.error ? ` — ${p.error}` : '';
+    console.log(`  ${mark} ${p.name}${version}${error}`);
   }
   console.log('');
   if (!status.available) {
     console.log('To install:');
-    console.log(`  aiwg features install ${f.name}    # not yet implemented (#1219 Cycle 3)`);
-    console.log('');
-    console.log('Manual install:');
-    const pkgList = f.packages.join(' ');
-    console.log(`  cd <aiwg install root> && npm install ${pkgList}`);
+    console.log(`  aiwg features install ${f.name}`);
   }
+}
+
+async function handleInstall(args: string[]): Promise<void> {
+  const name = args.find(arg => !arg.startsWith('--'));
+  if (!name) throw new Error('Feature name required. Run `aiwg features` to list features.');
+  const feature = FEATURE_CATALOG.find(candidate => candidate.name === name);
+  if (!feature) throw new Error(`Unknown feature '${name}'.`);
+
+  console.log(`Installing optional feature: ${name}`);
+  if ((feature.scriptPackages?.length ?? 0) > 0) {
+    console.log(`Approved lifecycle scripts: ${feature.scriptPackages!.join(', ')}`);
+    console.log('Approval is stored only in the AIWG user feature manifest.');
+  }
+  const root = await installFeature(name);
+  const status = await getFeatureStatus(name);
+  if (!status?.available) {
+    throw new Error(`Feature ${name} was installed but failed its runtime load check. Run \`aiwg doctor\` for details.`);
+  }
+  console.log(`Feature ${name} is ready (${root}).`);
 }

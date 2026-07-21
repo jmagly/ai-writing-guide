@@ -44,6 +44,24 @@ Agents and stewards setting up AIWG end-to-end should use the
 
 ## Installation Troubleshooting
 
+### Optional native features
+
+The base global install intentionally excludes native packages whose lifecycle
+scripts require explicit trust. Core deployment, discovery, and provider tooling
+work without them. Enable only the capability you need:
+
+```bash
+aiwg features install pty         # builds node-pty for local interactive terminals
+aiwg features install embeddings  # builds hnswlib-node for dense semantic search
+aiwg doctor                       # verifies the native entry points actually load
+```
+
+The feature installer writes a private manifest and lockfile under the AIWG user
+data directory and approves scripts only for that feature. Do not set a broad
+user-level npm `allow-scripts` policy. If an older install left native package
+files present but unbuilt, `aiwg doctor` reports the broken capability and the
+same scoped rebuild command.
+
 ### macOS npm `EACCES`
 
 If `npm install -g aiwg` fails with `EACCES` while writing to

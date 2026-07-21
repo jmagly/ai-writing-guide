@@ -8,6 +8,13 @@
 npm install -g aiwg
 ```
 
+Native PTY and dense-embedding support is optional and is not installed by the
+base package. Opt in with `aiwg features install pty` or
+`aiwg features install embeddings`; each command uses an isolated user-owned
+manifest with a package-specific lifecycle-script allowlist. Run `aiwg doctor`
+to distinguish a missing feature from native package files whose build was
+blocked or failed.
+
 ## Quick Start
 
 ```bash
@@ -43,6 +50,18 @@ Checks:
 - Node.js version
 - MCP server availability
 - Skill Seekers (optional)
+- Optional feature availability and native-module loadability
+
+### features
+
+Inspect and install optional runtime capabilities without changing global npm
+script policy.
+
+```bash
+aiwg features
+aiwg features info pty
+aiwg features install pty
+```
 
 ### use
 

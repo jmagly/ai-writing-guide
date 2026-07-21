@@ -995,7 +995,13 @@ async function runDoctor() {
         const versions = s.packages.map(p => `${p.name} ${p.version ?? '?'}`).join(', ');
         check(label, 'ok', `installed (${versions})`);
       } else {
-        check(label, 'info', `not installed — \`aiwg features install ${s.feature.name}\` to enable`);
+        const broken = s.packages.filter(p => p.installed && !p.loadable);
+        if (broken.length > 0) {
+          const detail = broken.map(p => `${p.name}: ${p.error || 'native entry point failed to load'}`).join('; ');
+          check(label, 'warn', `native build unavailable (${detail}) — run \`aiwg features install ${s.feature.name}\` to rebuild with scoped lifecycle-script approval`);
+        } else {
+          check(label, 'info', `not installed — \`aiwg features install ${s.feature.name}\` to enable`);
+        }
       }
     }
   } catch (err) {

@@ -204,6 +204,17 @@ describe('doctor: deployed skill budget warning', () => {
   });
 });
 
+describe('doctor: optional native feature builds', () => {
+  it('warns on installed-but-unloadable native modules with a scoped rebuild command', () => {
+    const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+
+    expect(content).toContain('p.installed && !p.loadable');
+    expect(content).toContain('native build unavailable');
+    expect(content).toContain('features install ${s.feature.name}');
+    expect(content).toContain('scoped lifecycle-script approval');
+  });
+});
+
 // ── Node.js version check logic ────────────────────────────────
 
 describe('doctor: Node.js version check', () => {
