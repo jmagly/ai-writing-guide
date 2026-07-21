@@ -34,19 +34,19 @@ Writes are atomic: the loader writes to a randomly-suffixed temp sibling, then
 
 ## Top-Level Structure
 
-| Field       | Type                             | Required | Description                                                                                                                                           |
-| ----------- | -------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `$schema`   | string                           | optional | Schema URL hint for editors. Default: `https://aiwg.io/schemas/aiwg.config.v1.json`.                                                                  |
-| `version`   | `"1"`                            | yes      | Schema version literal.                                                                                                                               |
-| `providers` | `string[]`                       | yes      | AI provider toolchains this project targets. `aiwg use <framework>` with no `--provider` deploys to all of these. Defaults to `["claude"]` if absent. |
-| `installed` | `Record<string, InstalledEntry>` | yes      | Frameworks and addons currently deployed, keyed by the name passed to `aiwg use`. Defaults to `{}`.                                                   |
-| `scripts`   | `Record<string, string>`         | yes      | User-defined scripts, run via `aiwg run <name>`. Executed with `sh -c "<command>"` (or `cmd /c` on Windows). Defaults to `{}`.                        |
-| `workspace` | `WorkspaceConfig`                | optional | General workspace metadata or an external-member back-reference. See [Workspace Repositories](#workspace-repositories).                            |
-| `repos`     | `WorkspaceRepoConfig[]`          | optional | Canonical member list and per-member allowed operations. Requires `workspace.name`.                                                                  |
-| `externalLinks` | `Record<string, ExternalLink>` | optional | Named public resources that travel with the project and appear in provider-facing context. See [External Links](#external-links).                    |
-| `remotes`   | `RemotesConfig`                  | optional | Repo origin topology. When absent, agents treat `origin` as primary. See [Remotes Block](#remotes-block).                                             |
-| `delivery`  | `DeliveryConfig`                 | optional | Repo control / delivery policy. When absent, runtime defaults apply. See [Delivery Block](#delivery-block).                                           |
-| `build`     | `BuildConfig`                    | optional | Project build policy, including large-build host resource preflight. See [Build Block](#build-block).                                                 |
+| Field           | Type                             | Required | Description                                                                                                                                           |
+| --------------- | -------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$schema`       | string                           | optional | Schema URL hint for editors. Default: `https://aiwg.io/schemas/aiwg.config.v1.json`.                                                                  |
+| `version`       | `"1"`                            | yes      | Schema version literal.                                                                                                                               |
+| `providers`     | `string[]`                       | yes      | AI provider toolchains this project targets. `aiwg use <framework>` with no `--provider` deploys to all of these. Defaults to `["claude"]` if absent. |
+| `installed`     | `Record<string, InstalledEntry>` | yes      | Frameworks and addons currently deployed, keyed by the name passed to `aiwg use`. Defaults to `{}`.                                                   |
+| `scripts`       | `Record<string, string>`         | yes      | User-defined scripts, run via `aiwg run <name>`. Executed with `sh -c "<command>"` (or `cmd /c` on Windows). Defaults to `{}`.                        |
+| `workspace`     | `WorkspaceConfig`                | optional | General workspace metadata or an external-member back-reference. See [Workspace Repositories](#workspace-repositories).                               |
+| `repos`         | `WorkspaceRepoConfig[]`          | optional | Canonical member list and per-member allowed operations. Requires `workspace.name`.                                                                   |
+| `externalLinks` | `Record<string, ExternalLink>`   | optional | Named public resources that travel with the project and appear in provider-facing context. See [External Links](#external-links).                     |
+| `remotes`       | `RemotesConfig`                  | optional | Repo origin topology. When absent, agents treat `origin` as primary. See [Remotes Block](#remotes-block).                                             |
+| `delivery`      | `DeliveryConfig`                 | optional | Repo control / delivery policy. When absent, runtime defaults apply. See [Delivery Block](#delivery-block).                                           |
+| `build`         | `BuildConfig`                    | optional | Project build policy, including large-build host resource preflight. See [Build Block](#build-block).                                                 |
 
 Valid `providers` values: `claude`, `factory`, `codex`, `opencode`, `copilot`, `cursor`,
 `warp`, `windsurf`, `hermes`, `openclaw`.
@@ -142,13 +142,13 @@ full enforcement and compatibility contract.
 identifiers that start with a lowercase letter and contain only lowercase letters,
 numbers, underscores, or hyphens. Each link requires:
 
-| Field         | Type   | Required | Description |
-| ------------- | ------ | -------- | ----------- |
-| `label`       | string | yes      | Human-readable link text. |
-| `url`         | string | yes      | Absolute HTTP(S) URL without embedded credentials. |
-| `description` | string | no       | Explanation of when or why to use the resource. |
+| Field         | Type   | Required | Description                                                       |
+| ------------- | ------ | -------- | ----------------------------------------------------------------- |
+| `label`       | string | yes      | Human-readable link text.                                         |
+| `url`         | string | yes      | Absolute HTTP(S) URL without embedded credentials.                |
+| `description` | string | no       | Explanation of when or why to use the resource.                   |
 | `category`    | string | no       | Project-defined grouping such as `security`, `status`, or `docs`. |
-| `audience`    | string | no       | Intended audience such as `contributors` or `maintainers`. |
+| `audience`    | string | no       | Intended audience such as `contributors` or `maintainers`.        |
 
 AIWG treats these entries as metadata. `aiwg config show --project`, project
 `get`/`set`, and regenerated provider context can surface them, but AIWG does not
@@ -223,18 +223,21 @@ with the per-field defaults below.
 
 ### Fields
 
-| Field                    | Type           | Default        | Description                                                                                |
-| ------------------------ | -------------- | -------------- | ------------------------------------------------------------------------------------------ |
-| `mode`                   | enum (below)   | `pr-required`  | Delivery workflow. See mode values below.                                                  |
-| `default_branch`         | string         | `main`         | Branch agents merge into and treat as the trunk.                                           |
-| `branch_naming`          | `BranchNaming` | see below      | Per-type branch prefix templates with `{issue}` and `{slug}` interpolation.                |
-| `merge_style`            | enum (below)   | `rebase-merge` | Preferred merge strategy. Matches Gitea/GitHub/GitLab API values.                          |
-| `delete_branch_on_merge` | bool           | `true`         | Delete feature branch after merge.                                                         |
-| `require_ci_green`       | bool           | `true`         | Agents must wait for CI green on `remotes.ci` before declaring done.                       |
-| `require_signed_commits` | bool           | `false`        | Require GPG/SSH-signed commits.                                                            |
-| `force_push_policy`      | enum (below)   | `never`        | When force-pushes are permitted.                                                           |
-| `auto_close_issues`      | bool           | `true`         | Include `Closes #N` / `Fixes #N` in PR body or commit message when an issue is referenced. |
-| `issue_comment_on_cycle` | bool           | `true`         | Post AL CYCLE status comments to issue threads from `address-issues` loops.                |
+| Field                    | Type            | Default        | Description                                                                                |
+| ------------------------ | --------------- | -------------- | ------------------------------------------------------------------------------------------ |
+| `mode`                   | enum (below)    | `pr-required`  | Delivery workflow. See mode values below.                                                  |
+| `default_branch`         | string          | `main`         | Branch agents merge into and treat as the trunk.                                           |
+| `branch_naming`          | `BranchNaming`  | see below      | Per-type branch prefix templates with `{issue}` and `{slug}` interpolation.                |
+| `merge_style`            | enum (below)    | `rebase-merge` | Preferred merge strategy. Matches Gitea/GitHub/GitLab API values.                          |
+| `delete_branch_on_merge` | bool            | `true`         | Delete feature branch after merge.                                                         |
+| `require_ci_green`       | bool            | `true`         | Agents must wait for CI green on `remotes.ci` before declaring done.                       |
+| `require_signed_commits` | bool            | `false`        | Require GPG/SSH-signed commits.                                                            |
+| `committer`              | object          | unset          | Git `name` and `email` identity agents must use for delivery commits.                      |
+| `signing`                | `SigningConfig` | unset          | Commit-signing format, public key identifier, optional key file/program, and enforcement.  |
+| `release_signing`        | `SigningConfig` | unset          | Distinct annotated release-tag signing identity; do not substitute the commit key.         |
+| `force_push_policy`      | enum (below)    | `never`        | When force-pushes are permitted.                                                           |
+| `auto_close_issues`      | bool            | `true`         | Include `Closes #N` / `Fixes #N` in PR body or commit message when an issue is referenced. |
+| `issue_comment_on_cycle` | bool            | `true`         | Post AL CYCLE status comments to issue threads from `address-issues` loops.                |
 
 #### `mode` values
 
@@ -260,17 +263,48 @@ with the per-field defaults below.
 ```json
 {
   "prefix_by_type": {
-    "feat":     "feat/{issue}-{slug}",
-    "fix":      "fix/{issue}-{slug}",
-    "docs":     "docs/{slug}",
-    "chore":    "chore/{slug}",
+    "feat": "feat/{issue}-{slug}",
+    "fix": "fix/{issue}-{slug}",
+    "docs": "docs/{slug}",
+    "chore": "chore/{slug}",
     "refactor": "refactor/{slug}",
-    "test":     "test/{slug}"
+    "test": "test/{slug}"
   }
 }
 ```
 
 Per-type prefixes you provide are merged into these defaults (your values win).
+
+### Commit and release signing
+
+Commit and release-tag identities are separate so a project can enforce
+least-privilege key custody:
+
+```json
+{
+  "committer": {
+    "name": "release-maintainer",
+    "email": "maintainer@example.org"
+  },
+  "signing": {
+    "format": "openpgp",
+    "key": "COMMIT_KEY_FINGERPRINT",
+    "program": "tools/git/gpg-from-vault.sh",
+    "enforce": "commits"
+  },
+  "release_signing": {
+    "format": "openpgp",
+    "key": "RELEASE_KEY_FINGERPRINT",
+    "program": "tools/release/cut-tag.sh",
+    "enforce": "tags"
+  }
+}
+```
+
+`SigningConfig.format` accepts `openpgp`, `ssh`, or `x509`; `enforce` accepts
+`commits`, `tags`, or `all`. Key identifiers and SSH fingerprints are public
+metadata. Never place private key material or secret-store leaf paths in the
+project config.
 
 ### Semantic rules
 
@@ -296,11 +330,11 @@ When the block is absent or `enabled` is not `true`, the preflight is skipped.
 
 ### `resource_preflight` fields
 
-| Field          | Type                   | Default      | Description                                                                                  |
-| -------------- | ---------------------- | ------------ | -------------------------------------------------------------------------------------------- |
-| `enabled`      | bool                   | `false`      | Enables host resource checks before large build commands.                                    |
-| `mode`         | enum                   | `configured` | `configured` checks only explicit thresholds; `auto_detect` fills omitted thresholds first.  |
-| `requirements` | `ResourceRequirements` | `{}`         | Minimum host resources. Any omitted threshold is ignored in `configured` mode.               |
+| Field          | Type                   | Default      | Description                                                                                 |
+| -------------- | ---------------------- | ------------ | ------------------------------------------------------------------------------------------- |
+| `enabled`      | bool                   | `false`      | Enables host resource checks before large build commands.                                   |
+| `mode`         | enum                   | `configured` | `configured` checks only explicit thresholds; `auto_detect` fills omitted thresholds first. |
+| `requirements` | `ResourceRequirements` | `{}`         | Minimum host resources. Any omitted threshold is ignored in `configured` mode.              |
 
 #### `mode` values
 
@@ -312,12 +346,12 @@ When the block is absent or `enabled` is not `true`, the preflight is skipped.
 
 #### `requirements` fields
 
-| Field              | Unit | Description                                      |
-| ------------------ | ---- | ------------------------------------------------ |
-| `min_memory_gb`    | GB   | Minimum total system memory.                     |
-| `min_free_disk_gb` | GB   | Minimum free disk at the project directory.      |
-| `min_cpus`         | count | Minimum logical CPU cores.                      |
-| `min_swap_gb`      | GB   | Minimum configured swap. Set `0` to ignore swap. |
+| Field              | Unit  | Description                                      |
+| ------------------ | ----- | ------------------------------------------------ |
+| `min_memory_gb`    | GB    | Minimum total system memory.                     |
+| `min_free_disk_gb` | GB    | Minimum free disk at the project directory.      |
+| `min_cpus`         | count | Minimum logical CPU cores.                       |
+| `min_swap_gb`      | GB    | Minimum configured swap. Set `0` to ignore swap. |
 
 Example, explicit config-only thresholds:
 
@@ -363,12 +397,39 @@ targets. Defaults: `primary: origin`, `issue_tracker: primary`, `ci: primary`,
 
 ### Fields
 
-| Field           | Type                | Default   | Description                                                                         |
-| --------------- | ------------------- | --------- | ----------------------------------------------------------------------------------- |
-| `primary`       | string              | `origin`  | Git remote name driving CI and PRs by default. Must match a name from `git remote`. |
-| `issue_tracker` | string              | `primary` | Where issues live.                                                                  |
-| `ci`            | string              | `primary` | Where CI runs.                                                                      |
-| `secondary`     | `SecondaryRemote[]` | `[]`      | Mirrors, fork bases, publishing targets.                                            |
+| Field           | Type                    | Default   | Description                                                                         |
+| --------------- | ----------------------- | --------- | ----------------------------------------------------------------------------------- |
+| `primary`       | string                  | `origin`  | Git remote name driving CI and PRs by default. Must match a name from `git remote`. |
+| `issue_tracker` | string                  | `primary` | Where issues live.                                                                  |
+| `ci`            | string                  | `primary` | Where CI runs.                                                                      |
+| `tracker_actor` | `TrackerActorConfig`    | unset     | Forge login and tool route for issue, PR, comment, label, and closure writes.       |
+| `transport`     | `RemoteTransportConfig` | unset     | Login, protocol, helper, and public SSH fingerprint used for Git pushes.            |
+| `secondary`     | `SecondaryRemote[]`     | `[]`      | Mirrors, fork bases, publishing targets.                                            |
+
+### Delivery actor and Git transport
+
+`tracker_actor` and `transport` are intentionally distinct: API/CLI tracker
+writes and Git pushes may authenticate through different mechanisms.
+
+```json
+{
+  "tracker_actor": {
+    "login": "release-maintainer",
+    "via": "tea",
+    "forbid_actors": ["automation-bot"]
+  },
+  "transport": {
+    "login": "release-maintainer",
+    "protocol": "ssh",
+    "helper": "tools/git/push-origin-as-maintainer.sh",
+    "key_fingerprint": "SHA256:PUBLIC_KEY_FINGERPRINT"
+  }
+}
+```
+
+`tracker_actor.via` accepts `tea`, `gh`, `mcp`, or `api`.
+`transport.protocol` accepts `ssh` or `https`. A configured helper should fail
+closed when the authenticated account or public key fingerprint does not match.
 
 ### `SecondaryRemote` shape
 

@@ -1,35 +1,39 @@
 {
-  "timestamp": "2026-07-15T06:43:45Z",
+  "timestamp": "2026-07-21T01:13:54Z",
   "direction": "code-to-docs",
-  "scope": "v2026.7.12 through the 2026.7.13 release candidate; provider deployment, onboarding, release signing, and vault routing",
-  "guidance": "synchronize shipped provider and release behavior before cutting 2026.7.13",
+  "scope": "v2026.7.13 through b5f814e6761198f30cc3357487d848051b6911c8; agentic/code, repository Markdown, config/schema, release, model-provider, Fortemi, and signing surfaces",
+  "guidance": "release-flow bounded code-to-docs synchronization before 2026.7.14",
   "phases": [
     {
       "phase": "audit",
-      "findings_total": 8,
+      "findings_total": 4,
       "auditors": [
-        "provider deployment and OpenHuman surfaces",
-        "release automation and signing surfaces",
-        "onboarding and release documentation surfaces"
+        "provider and model routing surfaces",
+        "Fortemi static index and portable shard surfaces",
+        "repository transport and signing surfaces",
+        "project config reference"
       ]
     },
     {
       "phase": "auto-fix",
-      "fixes_applied": 8,
+      "fixes_applied": 1,
       "fixes_remaining": 0
     }
   ],
   "validation": {
     "passed": [
-      "git diff --check",
-      "targeted provider unit tests (34/34)"
+      "Prettier project config reference",
+      "targeted config, delivery-policy, and routing-doc tests (120/120)",
+      "TypeScript typecheck",
+      "git diff --check"
     ],
     "pending_release_gates": [
-      "full test and build matrix",
-      "UAT",
-      "publication verification"
+      "signed doc-sync delivery and exact-head CI",
+      "2026.7.14 changelog and announcement",
+      "full release build/test/UAT",
+      "signed tag publication verification"
     ]
   },
-  "report": ".aiwg/reports/doc-sync-20260715T064345Z.md",
+  "report": ".aiwg/reports/doc-sync-20260721T011354Z.md",
   "open_follow_up": []
 }
