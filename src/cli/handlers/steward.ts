@@ -18,6 +18,8 @@
  */
 
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
+import { access } from 'node:fs/promises';
+import { join } from 'node:path';
 import { AiwgError, EXIT_CODES, handlerResultFromError } from '../errors.js';
 import {
   loadCapabilityMatrix,
@@ -38,6 +40,15 @@ import {
   type ProjectLocalBundle,
 } from '../../extensions/project-local-discovery.js';
 import { routeModelTier } from '../../models/router.js';
+import { buildWrapperRouteEnvelope, type RoutedCapabilityType } from '../../models/wrapper-route.js';
+import {
+  loadProviderModelCatalog,
+  type ProviderModelCatalog,
+} from '../../models/provider-policy.js';
+import {
+  CapabilityResolutionError,
+  resolveRoutableCapability,
+} from '../../artifacts/capability-resolver.js';
 
 const BASELINE_PROVIDER = 'claude-code';
 
@@ -224,6 +235,9 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
     aiwg steward capabilities --all               Full matrix (all providers x features)
     aiwg steward find --capability <name>         Routing advice for your current provider
     aiwg steward models [--complex|--high-impact] Model policy/discovery routing advice
+    aiwg steward models --route --capability-type <agent|skill|rule|workflow>
+      --capability <id> --assignment <text> [--provider <name>] [--json]
+                                                  Emit a capability-bound wrapper launch envelope
     aiwg steward permissions audit                Find normalized-model errors and legacy grants
     aiwg steward permissions migrate --dry-run    Preview legacy permission normalization
     aiwg steward permissions migrate --apply      Back up and atomically normalize config
@@ -450,11 +464,116 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
   }
 
   if (subcommand === 'models' || subcommand === 'model-routing') {
+    const flagValue = (name: string): string | undefined => {
+      const index = args.indexOf(name);
+      return index >= 0 ? args[index + 1] : undefined;
+    };
+    if (args.includes('--route')) {
+      const rawProvider = flagValue('--provider') ?? await resolveActiveProvider({
+        cwd: ctx ? getProjectDir(ctx, ctx.args) : process.cwd(),
+        detectProcess: true,
+      }).then(result => result.provider ?? undefined);
+      const provider = normalizeProviderId(rawProvider);
+      if (!provider || provider === 'generic') throw new AiwgError({
+        code: 'ERR_USAGE_UNKNOWN_PROVIDER',
+        message: `Cannot compile a wrapper route for provider: ${rawProvider ?? '(undetected)'}`,
+        hint: 'Pass --provider with a supported provider id.',
+        exitCode: EXIT_CODES.USAGE,
+      });
+      const capabilityType = flagValue('--capability-type') as RoutedCapabilityType | undefined;
+      const capability = flagValue('--capability');
+      const assignment = flagValue('--assignment');
+      if (!capabilityType || !['agent', 'skill', 'rule', 'workflow'].includes(capabilityType)) throw new AiwgError({
+        code: 'ERR_USAGE_MISSING_VALUE',
+        message: '--capability-type requires agent, skill, rule, or workflow.',
+        exitCode: EXIT_CODES.USAGE,
+      });
+      if (!capability || !assignment) throw new AiwgError({
+        code: 'ERR_USAGE_MISSING_VALUE',
+        message: '--route requires both --capability <id> and --assignment <bounded text>.',
+        exitCode: EXIT_CODES.USAGE,
+      });
+      const capabilityProvider = capabilityProviderId(provider);
+      const providerCapabilities = capabilityProvider ? matrix.providers[capabilityProvider] : undefined;
+      const launchMechanism = providerCapabilities?.native_features.tasks
+        ? 'native-subagent'
+        : providerCapabilities?.emulation.tasks === 'aiwg-mc' ? 'aiwg-mc' : 'manual';
+      const premiumAuthorized = args.includes('--allow-premium');
+      const { collectProviderInventory } = await import('../../providers/provider-inventory.js');
+      const { resolveDynamicModelCatalog } = await import('../../models/model-discovery.js');
+      const projectDir = ctx ? getProjectDir(ctx, ctx.args) : process.cwd();
+      const requestedAiwgRoot = ctx?.frameworkRoot ?? process.cwd();
+      const aiwgRoot = await access(join(
+        requestedAiwgRoot,
+        'agentic/code/providers/model-catalog.v1.json',
+      )).then(() => requestedAiwgRoot).catch(() => process.cwd());
+      const resolvedCapability = await resolveRoutableCapability(
+        aiwgRoot,
+        capabilityType,
+        capability,
+      ).catch(error => {
+        if (!(error instanceof CapabilityResolutionError)) throw error;
+        throw new AiwgError({
+          code: error.kind === 'ambiguous'
+            ? 'ERR_USAGE_AMBIGUOUS_CAPABILITY'
+            : 'ERR_USAGE_UNKNOWN_CAPABILITY',
+          message: error.message,
+          hint: 'Run aiwg discover "<capability>" --json and pass an exact name or stable id.',
+          exitCode: EXIT_CODES.USAGE,
+        });
+      });
+      const catalog = await resolveDynamicModelCatalog({
+        aiwgRoot,
+        inventory: await collectProviderInventory(projectDir),
+        allowNetwork: false,
+      });
+      const baselineCatalog = loadProviderModelCatalog();
+      const effectiveCatalog = {
+        ...baselineCatalog,
+        ...catalog,
+        refreshedAt: catalog.refreshedAt ?? baselineCatalog.refreshedAt,
+        staleAfterDays: baselineCatalog.staleAfterDays,
+        providers: { ...baselineCatalog.providers, ...catalog.providers },
+      } as ProviderModelCatalog;
+      const envelope = buildWrapperRouteEnvelope({
+        provider,
+        capability: resolvedCapability,
+        assignment,
+        launchMechanism,
+        deterministic: args.includes('--deterministic'),
+        routine: args.includes('--routine'),
+        complex: args.includes('--complex'),
+        highImpact: args.includes('--high-impact'),
+        requestedPremium: args.includes('--premium'),
+        unattended: args.includes('--unattended'),
+        premiumAuthorized,
+        maxAutoTier: premiumAuthorized ? 3 : undefined,
+        catalog: effectiveCatalog,
+      });
+      if (args.includes('--json')) console.log(JSON.stringify(envelope, null, 2));
+      else {
+        console.log('\n  Model wrapper route');
+        console.log(`  Provider:   ${envelope.provider}`);
+        console.log(`  Capability: ${envelope.capability.type} ${envelope.capability.name} (${envelope.capability.id})`);
+        console.log(`  Tier/role:  ${envelope.tier ?? 'deterministic'}/${envelope.role ?? 'none'}`);
+        console.log(`  Wrapper:    ${envelope.wrapper ?? 'none'}`);
+        console.log(`  Model:      ${envelope.model?.effectiveModel ?? 'inherited or no model call'} (${envelope.model?.outcome ?? 'deterministic'})`);
+        console.log(`  Launch:     ${envelope.launch.mechanism}`);
+        console.log(`  Confirmation: ${envelope.decision.requiresConfirmation ? 'required' : 'not required'}`);
+        console.log('\n  Wrapper prompt:\n');
+        console.log(envelope.launch.prompt);
+      }
+      return;
+    }
     const decision = routeModelTier({
+      deterministic: args.includes('--deterministic'),
+      routine: args.includes('--routine'),
       complex: args.includes('--complex'),
       highImpact: args.includes('--high-impact'),
       requestedPremium: args.includes('--premium'),
       unattended: args.includes('--unattended'),
+      premiumAuthorized: args.includes('--allow-premium'),
+      maxAutoTier: args.includes('--allow-premium') ? 3 : undefined,
     });
     console.log('\n  Model policy routing');
     console.log(`  Default stance: cheap-first role/tier intent, compiled per provider from the effective catalog.`);

@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { execSync, spawn, ChildProcess } from 'child_process';
 import { resolve, join } from 'path';
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 
 const PROJECT_ROOT = resolve(__dirname, '../..');
@@ -57,10 +57,27 @@ describe('CLI Router Characterization Tests', () => {
 
     describe('project setup aliases', () => {
       it('new command should be accessible via --new', () => {
-        const result = runCli(['--new', '--help']);
+        const workspacePath = join(PROJECT_ROOT, 'WORKSPACE.md');
+        const workspaceBefore = existsSync(workspacePath)
+          ? readFileSync(workspacePath, 'utf-8')
+          : null;
+        const tempDir = join(tmpdir(), `aiwg-new-alias-${Date.now()}`);
+        mkdirSync(tempDir, { recursive: true });
+
+        let result: ReturnType<typeof runCli>;
+        try {
+          result = runCli(['--new', '--help'], { cwd: tempDir });
+        } finally {
+          rmSync(tempDir, { recursive: true, force: true });
+        }
+
         // Should either succeed or fail with a known error (not crash)
         expect(result.exitCode).toBeDefined();
         expect(typeof result.exitCode).toBe('number');
+        expect(existsSync(workspacePath)).toBe(workspaceBefore !== null);
+        if (workspaceBefore !== null) {
+          expect(readFileSync(workspacePath, 'utf-8')).toBe(workspaceBefore);
+        }
       });
     });
 

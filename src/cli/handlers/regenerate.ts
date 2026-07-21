@@ -20,6 +20,7 @@
  */
 
 import * as path from 'path';
+import { promises as fs } from 'node:fs';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { AiwgError, EXIT_CODES, handlerResultFromError } from '../errors.js';
 import * as ui from '../ui.js';
@@ -27,6 +28,9 @@ import {
   generate as generateContextFiles,
   discoverDeployedArtifacts,
   shouldEmitContextFiles,
+  buildNormalizedAiwgMd,
+  writeNormalizedAiwgMd,
+  injectLegacyContext,
 } from '../../smiths/context-pipeline/index.js';
 import type { Platform } from '../../agents/types.js';
 import { resolveActiveProvider } from '../provider-resolution.js';
@@ -46,6 +50,8 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
     or commands — use 'aiwg refresh' for that.
 
   Options:
+    --workspace             Canonical WORKSPACE.md → AIWG.md graph (default)
+    --legacy, --full-inject Legacy inline compatibility branch
     --dry-run               Print what would change; no writes
     --provider <name>       Target provider (default: auto-detect from env)
     --force                 Overwrite operator-modified files (backs up first)
@@ -56,6 +62,8 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
 
   Examples:
     aiwg regenerate
+    aiwg regenerate --workspace
+    aiwg regenerate --full-inject
     aiwg regenerate --dry-run
     aiwg regenerate --provider codex
     aiwg regenerate --force --no-agents-md
@@ -68,6 +76,33 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   const skipAiwgMd = args.includes('--no-aiwg-md');
   const skipAgentsMd = args.includes('--no-agents-md');
   const skipWorkspaceMd = args.includes('--no-workspace-md');
+  const legacy = args.includes('--legacy') || args.includes('--full-inject');
+  const workspace = args.includes('--workspace');
+
+  const valueFlags = new Set(['--provider']);
+  const booleanFlags = new Set([
+    '--help', '-h', '--dry-run', '--force', '--no-aiwg-md', '--no-agents-md',
+    '--no-workspace-md', '--legacy', '--full-inject', '--workspace',
+  ]);
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (valueFlags.has(arg)) {
+      if (!args[index + 1] || args[index + 1].startsWith('-')) throw new AiwgError({
+        code: 'ERR_USAGE_MISSING_VALUE', message: `${arg} requires a value`, exitCode: EXIT_CODES.USAGE,
+      });
+      index += 1;
+    } else if (!booleanFlags.has(arg)) {
+      throw new AiwgError({
+        code: 'ERR_USAGE_UNKNOWN_FLAG', message: `Unknown regenerate option: ${arg}`,
+        hint: 'Run aiwg regenerate --help for supported branches and flags.', exitCode: EXIT_CODES.USAGE,
+      });
+    }
+  }
+  if (legacy && workspace) throw new AiwgError({
+    code: 'ERR_USAGE_CONFLICTING_FLAGS',
+    message: 'Choose exactly one regenerate branch: --workspace or --full-inject.',
+    exitCode: EXIT_CODES.USAGE,
+  });
 
   const providerFlag = args.indexOf('--provider');
   const explicitProvider = providerFlag >= 0 ? args[providerFlag + 1] : undefined;
@@ -89,6 +124,35 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   console.log(`${ui.brandMark()} aiwg regenerate${dryRun ? '  (dry run)' : ''}`);
   console.log(`  Provider: ${provider}`);
   console.log(`  Target:   ${target}`);
+  console.log(`  Branch:   ${legacy ? 'legacy full injection' : 'canonical workspace graph'}`);
+
+  if (legacy) {
+    if (skipWorkspaceMd) console.log('  Note: --no-workspace-md is implicit in legacy mode.');
+    const normalizedPath = path.join(target, '.aiwg', 'AIWG.md');
+    let existing = '';
+    try { existing = await fs.readFile(normalizedPath, 'utf8'); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+    const normalizedContent = await buildNormalizedAiwgMd(target, existing);
+    const result = skipAgentsMd
+      ? { targets: [], backups: [], changed: [], dryRun, warnings: [] }
+      : await injectLegacyContext(provider as Platform, target, normalizedContent, { dryRun });
+    if (dryRun) {
+      console.log('');
+      console.log('  Would regenerate:');
+      if (!skipAiwgMd) console.log(`    - ${normalizedPath} (normalized framework source)`);
+      for (const changed of result.changed) console.log(`    - ${changed} (legacy inline markers)`);
+      for (const warning of result.warnings) console.log(`  WARNING: ${warning}`);
+      console.log('');
+      console.log('  Dry run complete — no changes made');
+      return;
+    }
+    if (!skipAiwgMd) await writeNormalizedAiwgMd(target);
+    for (const changed of result.changed) console.log(`  OK Injected AIWG context into ${path.relative(target, changed)}`);
+    for (const backup of result.backups) console.log(`  Backup created: ${backup}`);
+    for (const warning of result.warnings) console.log(`  WARNING: ${warning}`);
+    console.log('  Legacy regenerate complete');
+    return;
+  }
 
   if (!shouldEmitContextFiles(provider as Platform)) {
     console.log(`  Adapter:  provider '${provider}' has no verified project startup loader; WORKSPACE.md is still maintained.`);

@@ -312,12 +312,16 @@ Provider capability awareness — answer "what does my provider support?" and "w
 ```bash
 aiwg steward capabilities [--provider <name>] [--feature <name>] [--all]
 aiwg steward find --capability <name>
+aiwg steward models --route --capability-type <agent|skill|rule|workflow> \
+  --capability <id> --assignment "<bounded work>" [--complex|--high-impact] \
+  [--provider <name>] [--allow-premium] [--json]
 ```
 
 **Subcommands:**
 
 - `capabilities` - Show provider/feature capability matrix entries
 - `find` - Routing advice for the current provider
+- `models --route` - Bind a selected capability and bounded assignment to the economy, standard, or premium wrapper selected by policy
 
 **Options:**
 
@@ -341,7 +345,18 @@ normalizes to the capability-matrix id `claude-code`; `openai` normalizes to
 aiwg steward capabilities --provider claude
 aiwg steward capabilities --feature cron
 aiwg steward find --capability cron
+aiwg steward models --route --provider codex --complex \
+  --capability-type agent --capability software-implementer \
+  --assignment "Implement and verify one bounded change" --json
 ```
+
+The route envelope reports the canonical tier/role, wrapper agent, provider-compiled
+model and enforcement outcome, native versus emulated launch mechanism, selected
+capability stable id and packaged source provenance, and wrapper prompt. The
+capability must resolve at the requested agent, skill, rule, or workflow type;
+missing, ambiguous, and type-mismatched values fail before an envelope is emitted.
+Premium routes remain confirmation-gated unless the
+invocation or project policy explicitly grants them with `--allow-premium`.
 
 ---
 
@@ -368,6 +383,15 @@ aiwg use <framework|addon>
 - `--coding-model <name>` - Override coding tier model (alias: `--coding`)
 - `--efficiency-model <name>` - Override efficiency tier model (alias: `--efficiency`)
 - `--save` - Save model overrides to project `models.json`
+
+For providers with a native agent directory, deployment validates the content of
+all three model worker wrappers: `aiwg-model-efficiency-worker`,
+`aiwg-model-coding-worker`, and `aiwg-model-reasoning-worker`. Validation rejects
+missing, empty, malformed, stale, or policy-mismatched artifacts; Codex pins are
+compared to the effective offline catalog and Claude aliases to their semantic
+role/tier contract. Agent-less providers
+are reported as inherited, global-only, informational, or unsupported rather than
+being falsely described as pinned.
 - `--save-user` - Save model overrides to `~/.config/aiwg/models.json`
 - `--no-utils` - Skip aiwg-utils addon installation (frameworks only)
 - `--force` - Overwrite existing deployments

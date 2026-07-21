@@ -25,9 +25,9 @@ Current AIWG context generation has three layers:
 
 ```
 .aiwg/AIWG.md      ← Normalized project-local AIWG context and stable skill/rule reference
-CLAUDE.md          ← Provider-owned or operator-owned project notes
+WORKSPACE.md       ← Canonical provider-neutral project/operator context
 AIWG.md            ← Generated cross-provider companion, finalized from workspace state
-AGENTS.md          ← Thin bridge for AGENTS.md providers, points to AIWG.md
+CLAUDE.md/AGENTS.md← Minimal provider adapters, read WORKSPACE.md then AIWG.md
 WARP.md/.hermes.md/.github/copilot-instructions.md
                    ← Provider-facing twins when that provider needs a distinct context file
 ```
@@ -44,6 +44,13 @@ WARP.md/.hermes.md/.github/copilot-instructions.md
 
 `.aiwg/AIWG.md` is created by `aiwg init` and refreshed by `aiwg use` / `aiwg regenerate`. Root `AIWG.md` is generated from provider context plus a context-finalization pass that reads `.aiwg/aiwg.config`, records installed frameworks/addons and provider deployments, and inlines the discover-first protocol (`aiwg discover` then `aiwg show`). It is safe to delete generated bridge files; regeneration recreates them.
 
+`aiwg regenerate` now has two explicit branches. `--workspace` (the default)
+maintains `WORKSPACE.md` first, `AIWG.md` second, and provider adapters last.
+`--full-inject` (alias `--legacy`) embeds normalized AIWG context between legacy
+markers for compatibility and does not create `WORKSPACE.md`. The deployed
+`aiwg-regenerate` selector links to the separate `aiwg-regenerate-workspace` and
+`aiwg-regenerate-legacy` branch skills.
+
 ## Hook File Map
 
 Each platform has a context file you own and a generated hook file managed by AIWG:
@@ -57,9 +64,12 @@ Each platform has a context file you own and a generated hook file managed by AI
 | Cursor | `.cursorrules` | `AIWG-cursor.md` | `@AIWG-cursor.md` |
 | Factory AI | `AGENTS.md` | `AIWG-factory.md` | `@AIWG-factory.md` |
 | OpenCode | `.opencode/context.md` | `AIWG-opencode.md` | `@AIWG-opencode.md` |
-| Codex | `CODEX.md` | `AIWG-codex.md` | Full injection between `<!-- BEGIN AIWG -->` markers |
+| Codex | `WORKSPACE.md` | `AGENTS.md` + `AIWG.md` | Explicit prose instruction; no native Markdown include claim |
 
-Codex does not support `@`-link directives, so its hook file content is injected inline and marked with begin/end comments.
+Codex discovers `AGENTS.md` but does not treat a Markdown link as a native include.
+The canonical adapter therefore explicitly instructs the agent to read
+`WORKSPACE.md` and then `AIWG.md`. Inline markers are emitted only by the opt-in
+legacy `aiwg regenerate --full-inject` branch.
 
 ## Commands
 

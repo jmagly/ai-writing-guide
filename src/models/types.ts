@@ -37,6 +37,8 @@ export interface ModelRouteRequest {
   unattended?: boolean;
   /** Highest tier allowed without confirmation. Defaults to 2 for supervised, 1 for unattended. */
   maxAutoTier?: RuntimeModelTier;
+  /** Invocation or project policy has already authorized premium routing. */
+  premiumAuthorized?: boolean;
 }
 
 export interface ModelRouteDecision {

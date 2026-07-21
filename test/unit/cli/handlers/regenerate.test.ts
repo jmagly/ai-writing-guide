@@ -167,4 +167,53 @@ describe('regenerateHandler', () => {
     expect(existsSync(join(tmpDir, '.aiwg', 'AIWG.md'))).toBe(false);
     expect(existsSync(join(tmpDir, '.github', 'copilot-instructions.md'))).toBe(false);
   });
+
+  it('executes the legacy full-injection branch without creating WORKSPACE.md', async () => {
+    const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+    writeConfig(tmpDir, ['codex']);
+
+    const result = await regenerateHandler.execute(makeCtx(tmpDir, ['--provider', 'codex', '--full-inject']));
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(join(tmpDir, 'WORKSPACE.md'))).toBe(false);
+    const adapter = readFileSync(join(tmpDir, 'AGENTS.md'), 'utf8');
+    expect(adapter).toContain('<!-- BEGIN AIWG -->');
+    expect(adapter).toContain('<!-- END AIWG -->');
+    expect(adapter).not.toContain('@WORKSPACE.md');
+    expect(existsSync(join(tmpDir, '.aiwg', 'AIWG.md'))).toBe(true);
+  });
+
+  it('legacy dry-run is non-mutating', async () => {
+    const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+    writeConfig(tmpDir, ['codex']);
+    const result = await regenerateHandler.execute(makeCtx(tmpDir, ['--provider', 'codex', '--legacy', '--dry-run']));
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(join(tmpDir, 'AGENTS.md'))).toBe(false);
+    expect(existsSync(join(tmpDir, '.aiwg', 'AIWG.md'))).toBe(false);
+  });
+
+  it('legacy mode honors granular AIWG and adapter skips', async () => {
+    const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+    writeConfig(tmpDir, ['codex']);
+    const result = await regenerateHandler.execute(makeCtx(tmpDir, [
+      '--provider', 'codex', '--legacy', '--no-aiwg-md', '--no-agents-md',
+    ]));
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(join(tmpDir, 'AGENTS.md'))).toBe(false);
+    expect(existsSync(join(tmpDir, '.aiwg', 'AIWG.md'))).toBe(false);
+  });
+
+  it('rejects unknown options instead of silently ignoring them', async () => {
+    const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+    writeConfig(tmpDir, ['codex']);
+    const result = await regenerateHandler.execute(makeCtx(tmpDir, ['--provider', 'codex', '--not-a-mode']));
+    expect(result.exitCode).toBe(2);
+    expect(result.message).toMatch(/Unknown regenerate option/);
+  });
+
+  it('rejects conflicting regenerate branches', async () => {
+    const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+    writeConfig(tmpDir, ['codex']);
+    const result = await regenerateHandler.execute(makeCtx(tmpDir, ['--workspace', '--full-inject']));
+    expect(result.exitCode).toBe(2);
+  });
 });

@@ -18,6 +18,7 @@
 
 export * from './types.js';
 export * from './workspace-context.js';
+export * from './legacy-inject.js';
 export {
   generate,
   buildAgentsMd,

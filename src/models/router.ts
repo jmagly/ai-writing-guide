@@ -62,7 +62,7 @@ export function routeModelTier(request: ModelRouteRequest = {}): ModelRouteDecis
     rationale.push('no escalation signal present');
   }
 
-  const requiresConfirmation = tier === 3 || tier > maxAutoTier;
+  const requiresConfirmation = (tier === 3 && !request.premiumAuthorized) || tier > maxAutoTier;
   if (requiresConfirmation) {
     rationale.push(
       tier === 3

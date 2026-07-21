@@ -73,6 +73,7 @@ import {
   discoverDeployedArtifacts,
 } from '../../smiths/context-pipeline/index.js';
 import type { Platform } from '../../agents/types.js';
+import { verifyModelWrapperDeployment } from '../../models/wrapper-deployment.js';
 
 /**
  * Valid framework identifiers
@@ -105,6 +106,9 @@ const MODEL_DEPLOY_VALUE_FLAGS = new Set([
   '--model', '--reasoning-model', '--coding-model', '--efficiency-model',
   '--model-tier', '--filter', '--filter-role',
 ]);
+const MODEL_OVERRIDE_VALUE_FLAGS = new Set([
+  '--model', '--reasoning-model', '--coding-model', '--efficiency-model', '--model-tier',
+]);
 const MODEL_DEPLOY_BOOLEAN_FLAGS = new Set(['--save', '--save-user']);
 export function collectUseModelDeployArgs(args: string[]): string[] {
   const forwarded: string[] = [];
@@ -115,6 +119,82 @@ export function collectUseModelDeployArgs(args: string[]): string[] {
     }
   }
   return forwarded;
+}
+
+export function collectModelOverrideDeployArgs(args: string[]): string[] {
+  const forwarded: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    if (MODEL_OVERRIDE_VALUE_FLAGS.has(args[i]) && args[i + 1]) {
+      forwarded.push(args[i], args[++i]);
+    }
+  }
+  return forwarded;
+}
+
+type WrapperRole = 'reasoning' | 'coding' | 'efficiency';
+type DeployModelsConfig = Record<string, any>;
+
+async function loadDeployModelsConfig(frameworkRoot: string): Promise<DeployModelsConfig> {
+  const candidates = [
+    path.join(process.cwd(), 'models.json'),
+    path.join(os.homedir(), '.config', 'aiwg', 'models.json'),
+    path.join(frameworkRoot, 'agentic/code/frameworks/sdlc-complete/config/models.json'),
+  ];
+  for (const file of candidates) {
+    try { return JSON.parse(await fs.readFile(file, 'utf8')) as DeployModelsConfig; }
+    catch { /* try the next deployment-precedence location */ }
+  }
+  return {
+    shorthand: {
+      opus: 'claude-opus-4-6',
+      sonnet: 'claude-sonnet-4-6',
+      haiku: 'claude-haiku-4-5-20251001',
+      inherit: 'inherit',
+    },
+    claude_shorthand: { opus: 'opus', sonnet: 'sonnet', haiku: 'haiku', inherit: 'inherit' },
+  };
+}
+
+function deployArgValue(args: string[], flag: string): string | undefined {
+  const index = args.indexOf(flag);
+  return index >= 0 ? args[index + 1] : undefined;
+}
+
+function resolveDeployModelAlias(
+  value: string,
+  provider: string,
+  role: WrapperRole,
+  config: DeployModelsConfig,
+): string {
+  const clean = value.toLowerCase().replace(/['"]/g, '');
+  const shorthand = config[`${provider}_shorthand`] ?? config.shorthand ?? {};
+  if (typeof shorthand[clean] === 'string') return shorthand[clean];
+  const tierModel = config[provider]?.[role]?.model;
+  if (clean === role && typeof tierModel === 'string') return tierModel;
+  return value;
+}
+
+export function resolveUseWrapperModelExpectations(options: {
+  provider: string;
+  modelDeployArgs: string[];
+  catalogModels: Record<WrapperRole, string>;
+  modelsConfig: DeployModelsConfig;
+}): Record<WrapperRole, string> {
+  const roles: WrapperRole[] = ['reasoning', 'coding', 'efficiency'];
+  let blanket = deployArgValue(options.modelDeployArgs, '--model');
+  const tier = deployArgValue(options.modelDeployArgs, '--model-tier');
+  if (tier) {
+    const tierRole: WrapperRole | null = tier === 'economy' ? 'efficiency'
+      : tier === 'standard' ? 'coding'
+        : tier === 'premium' || tier === 'max-quality' ? 'reasoning' : null;
+    if (tierRole) blanket = options.catalogModels[tierRole];
+  }
+  return Object.fromEntries(roles.map(role => {
+    const override = deployArgValue(options.modelDeployArgs, `--${role}-model`) ?? blanket;
+    return [role, override
+      ? resolveDeployModelAlias(override, options.provider, role, options.modelsConfig)
+      : options.catalogModels[role]];
+  })) as Record<WrapperRole, string>;
 }
 
 /**
@@ -295,6 +375,59 @@ function shouldMirrorKernelCommandSkill(skillName: string): boolean {
 
 function resolveProviderPath(target: string, providerPath: string): string {
   return path.isAbsolute(providerPath) ? providerPath : path.join(target, providerPath);
+}
+
+async function validateDeployedModelWrappers(options: {
+  provider: string;
+  target: string;
+  frameworkRoot: string;
+  modelDeployArgs: string[];
+  filtered: boolean;
+  verbose: boolean;
+}): Promise<HandlerResult | null> {
+  const paths = getProviderPaths(options.provider);
+  const agentsPath = paths.agents ? resolveProviderPath(options.target, paths.agents) : null;
+  const { collectProviderInventory } = await import('../../providers/provider-inventory.js');
+  const { resolveDynamicModelCatalog } = await import('../../models/model-discovery.js');
+  const catalog = await resolveDynamicModelCatalog({
+    aiwgRoot: options.frameworkRoot,
+    inventory: await collectProviderInventory(options.target, { detectProcess: false }),
+    allowNetwork: false,
+  });
+  const catalogEntries = catalog.providers[options.provider]?.roles as
+    | Record<WrapperRole, { id: string }>
+    | undefined;
+  const catalogModels = catalogEntries
+    ? Object.fromEntries(Object.entries(catalogEntries).map(([role, entry]) => [role, entry.id])) as Record<WrapperRole, string>
+    : undefined;
+  const expectedModels = catalogModels
+    ? resolveUseWrapperModelExpectations({
+      provider: options.provider,
+      modelDeployArgs: collectModelOverrideDeployArgs(options.modelDeployArgs),
+      catalogModels,
+      modelsConfig: await loadDeployModelsConfig(options.frameworkRoot),
+    })
+    : undefined;
+  const wrappers = await verifyModelWrapperDeployment(agentsPath, {
+    provider: options.provider,
+    ...(expectedModels ? {
+      models: expectedModels,
+    } : {}),
+  });
+  if (wrappers.supported && !wrappers.valid) {
+    const details = [
+      ...(wrappers.missing.length > 0 ? [`missing ${wrappers.missing.join(', ')}`] : []),
+      ...wrappers.mismatches.map(item => `${item.wrapper}.${item.field}: ${item.reason}`),
+    ];
+    const message = `Model wrapper deployment invalid for ${options.provider}: ${details.join('; ')}`;
+    if (!options.filtered) return { exitCode: 1, message };
+    ui.warn(`${message} (filtered deployment)`);
+  } else if (options.verbose && wrappers.supported) {
+    ui.dim(`  Model wrappers verified: ${wrappers.found.join(', ')}`);
+  } else if (options.verbose) {
+    ui.dim(`  Model wrappers: ${options.provider} has no provider-native agent directory; model policy remains ${options.provider === 'hermes' || options.provider === 'openhuman' ? 'inherited/global' : 'informational'}.`);
+  }
+  return null;
 }
 
 /**
@@ -2016,6 +2149,18 @@ export class UseHandler implements CommandHandler {
         // Profile selection is optional — don't fail deployment
       }
 
+      if (framework === 'aiwg-utils' && !remainingArgs.includes('--dry-run')) {
+        const wrapperValidation = await validateDeployedModelWrappers({
+          provider: normalizeProviderDefinitionId(provider) ?? provider,
+          target,
+          frameworkRoot,
+          modelDeployArgs,
+          filtered: remainingArgs.includes('--filter') || remainingArgs.includes('--filter-role'),
+          verbose: remainingArgs.includes('--verbose') || remainingArgs.includes('-v'),
+        });
+        if (wrapperValidation) return wrapperValidation;
+      }
+
       ui.blank();
       ui.success(`${framework} addon deployed`);
       return {
@@ -2284,6 +2429,17 @@ export class UseHandler implements CommandHandler {
     }
 
     const paths = getProviderPaths(provider);
+    if (!dryRun && !skipUtils) {
+      const wrapperValidation = await validateDeployedModelWrappers({
+        provider,
+        target,
+        frameworkRoot,
+        modelDeployArgs,
+        filtered: remainingArgs.includes('--filter') || remainingArgs.includes('--filter-role'),
+        verbose,
+      });
+      if (wrapperValidation) return wrapperValidation;
+    }
     const targetSkillsDir = resolveProviderPath(target, paths.skills);
     const targetCommandsDir = paths.commands ? resolveProviderPath(target, paths.commands) : '';
     const kernelSkillsPath = getProviderKernelSkillsPath(provider);

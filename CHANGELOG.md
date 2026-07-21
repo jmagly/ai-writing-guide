@@ -9,6 +9,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Agentic model-wrapper routing and UAT** (#1831) — Steward emits a
+  capability-bound, provider-compiled launch envelope for deterministic,
+  economy, standard, and premium work; exact capability resolution contributes
+  a stable id and packaged provenance; and a repeatable agentic UAT plan covers
+  routing, deployment, live subagents, regeneration, and defect handling.
+- **Explicit regeneration branches** (#1829) — `aiwg regenerate --workspace`
+  maintains the canonical context graph while `--full-inject` provides the
+  legacy inline compatibility path. The selector skill links to dedicated
+  branch skills and conflicting or unknown options fail closed.
 - **Canonical cross-provider workspace context** (#1811) — new projects create
   a protected `WORKSPACE.md` graph; provider definitions now declare verified
   loader contracts; `workspace-context audit|migrate|rollback|doctor` provides
@@ -30,6 +39,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Fixed
 
+- **Characterization test isolation** (#1835) — the mutating `--new` alias
+  now runs in a disposable project and explicitly verifies that the repository
+  `WORKSPACE.md` state is unchanged.
+- **Model-wrapper deployment verification** (#1832, #1833) — `aiwg use`
+  validates wrapper identity, role/tier metadata, Codex model/effort pins, and
+  Claude semantic aliases instead of accepting filenames alone; Steward now
+  rejects missing or type-mismatched capabilities before creating a route.
 - **Provider-aware model compilation and authoring** (#1821, #1822, #1823,
   #1824, #1825, #1826) — model audit and resolution now consume the effective
   dynamic catalog; AgentSmith emits compiled Codex TOML; agent, skill, and
