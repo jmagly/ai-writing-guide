@@ -327,11 +327,15 @@ echo "  [10/12] Signed tag '$TAG' created with release key"
 # ---------------------------------------------------------------------------
 # 11. Local verify (mirror of the CI gate logic)
 # ---------------------------------------------------------------------------
-if ! git tag -v "$TAG" >/dev/null 2>&1; then
+# Verification must use the same ephemeral release-key adapter as signing.
+# The repository-level gpg.program intentionally points at the distinct
+# commit-signing key, so plain `git tag -v` would invoke the wrong AppRole and
+# reject a tag that was correctly signed with the release key.
+if ! git "${GIT_TAG_GPG_OPTS[@]}" tag -v "$TAG" >/dev/null 2>&1; then
   cat <<EOF >&2
-FAIL: Local 'git tag -v $TAG' verification did not succeed.
-       This means even the local GPG can't verify what it just signed —
-       check that the release key is not expired or revoked.
+FAIL: Ephemeral release-key verification of '$TAG' did not succeed.
+       Check that the release key is not expired or revoked and that the
+       injected release-key route resolves to the expected fingerprint.
        Deleting the bad tag for cleanup:
 EOF
   git tag -d "$TAG" >/dev/null 2>&1 || true
