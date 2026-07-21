@@ -52,6 +52,10 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Fixed
 
+- **Cockpit transient auto-recovery** (#1763) — the global status now shows
+  `Reconnecting…` during Bridge/executor or SSE gaps, retains explicitly marked
+  last-known counts, retries with bounded backoff, and refreshes all mounted
+  live-data views when the connection returns without a page reload.
 - **Canonical SDLC orchestration routing** (#1839) — the orchestration rule,
   kernel/project context templates, core prompt, architecture guidance, and
   new-project output now treat skills and referenced playbooks as authoritative,

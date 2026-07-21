@@ -71,7 +71,13 @@ vanish after a reconnect, check the agent version in that runtime before
 suspecting Cockpit. On older agents, prefer **managed** session backends for
 long-running work.
 
-After a successful reconnect: refresh Inventory, then attach from Sessions.
+Cockpit does not require a page refresh after a transient Bridge or executor
+drop. The global status changes to **Reconnecting…**, retains last-known counts
+with an explicit stale-state tooltip, retries the Bridge/executor path with
+bounded backoff, and pulses every mounted live-data view when both REST and the
+SSE event stream recover. Inventory continues its own polling, Sessions uses
+bounded retry, and terminal WebSockets reconnect independently. After the
+status returns to **Bridge live**, attach from Sessions as usual.
 
 ## Host runtimes
 

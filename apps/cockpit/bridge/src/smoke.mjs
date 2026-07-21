@@ -7,7 +7,8 @@ import { createBridge, normalizeSessionRows } from './server.mjs';
 
 const mock = createExecutor();
 await new Promise((r) => mock.listen(0, '127.0.0.1', r));
-const executorUrl = `http://127.0.0.1:${mock.address().port}`;
+const executorPort = mock.address().port;
+const executorUrl = `http://127.0.0.1:${executorPort}`;
 
 const bridge = createBridge({ executorUrl, allowMockExecutor: true });
 await new Promise((r) => bridge.listen(0, '127.0.0.1', r));
@@ -34,6 +35,16 @@ try {
   const i0 = inv.instances[0];
   for (const k of ['id', 'runtime', 'loadout', 'state', 'tenant', 'card_url', 'runtime_posture', 'host_daemon', 'transport', 'launch_context', 'session_backends']) assert.ok(k in i0, `field ${k}`);
   assert.ok(['vm', 'container', 'host', 'wasm-edge'].includes(i0.runtime), 'runtime kind');
+
+  // A transient executor outage must not poison Bridge state or require a
+  // Bridge restart. Every poll is a fresh upstream request, so the same Bridge
+  // reports the gap and resumes inventory as soon as the executor returns.
+  await new Promise((resolve) => mock.close(resolve));
+  assert.equal((await f('/api/inventory')).status, 502, 'transient executor drop -> 502');
+  await new Promise((resolve) => mock.listen(executorPort, '127.0.0.1', resolve));
+  const recoveredInventory = await f('/api/inventory');
+  assert.equal(recoveredInventory.status, 200, 'same Bridge resumes after executor returns');
+  assert.equal((await recoveredInventory.json()).count, 4, 'recovered inventory is complete');
 
   // running board: seeded working tasks on the running instances
   const rr = await f("/api/running");
