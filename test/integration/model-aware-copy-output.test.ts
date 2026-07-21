@@ -25,6 +25,20 @@ function deploy(target: string, home: string, copyAll: boolean): void {
   });
 }
 
+function useAiwgUtils(target: string, home: string): string {
+  return execFileSync(process.execPath, [
+    join(REPO_ROOT, 'bin/aiwg.mjs'),
+    'use', 'aiwg-utils',
+    '--provider', 'codex',
+    '--target', target,
+    '--verbose',
+  ], {
+    cwd: REPO_ROOT,
+    env: { ...process.env, AIWG_ROOT: REPO_ROOT, HOME: home, USERPROFILE: home },
+    encoding: 'utf8',
+  });
+}
+
 async function workspace(provider = 'codex') {
   const root = mkdtempSync(join(tmpdir(), 'aiwg-copy-output-'));
   roots.push(root);
@@ -47,6 +61,21 @@ afterEach(async () => {
 });
 
 describe('model-aware copy output', () => {
+  it('aiwg use deploys and verifies the kernel model wrappers', async () => {
+    const { project, home } = await workspace();
+    const output = useAiwgUtils(project, home);
+
+    expect(output).toContain(
+      'Model wrappers verified: aiwg-model-reasoning-worker, aiwg-model-coding-worker, aiwg-model-efficiency-worker',
+    );
+    for (const role of ['reasoning', 'coding', 'efficiency']) {
+      await expect(access(join(
+        project,
+        `.codex/agents/aiwg-model-${role}-worker.toml`,
+      ))).resolves.toBeUndefined();
+    }
+  });
+
   it('full-copy mode writes standard skills and model-pinned provider wrappers', async () => {
     const { project, home } = await workspace();
     deploy(project, home, true);

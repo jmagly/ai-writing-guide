@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.16] - 2026-07-21 - "Workspace context and provider orchestration"
+
 ### Added
 
 - **Existing-project context extraction** (#1830) —
@@ -21,6 +23,9 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   economy, standard, and premium work; exact capability resolution contributes
   a stable id and packaged provenance; and a repeatable agentic UAT plan covers
   routing, deployment, live subagents, regeneration, and defect handling.
+- **External research incorporation audit** — three independently routed model
+  wrappers evaluated 1,901 local research records and produced a deduplicated,
+  evidence-graded portfolio of 155 candidates for future AIWG work.
 - **Explicit regeneration branches** (#1829) — `aiwg regenerate --workspace`
   maintains the canonical context graph while `--full-inject` provides the
   legacy inline compatibility path. The selector skill links to dedicated
@@ -43,6 +48,9 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   inventory, target, and step language to lexical and embedding inputs.
   Extractor revisions now invalidate stale incremental entries independently
   of the stable index schema version.
+- **Testing artifact layout** — durable plans, protocols, and deterministic
+  fixtures remain tracked while generated reports, logs, and dashboard state
+  move under the ignored `.aiwg/testing/outputs/` directory.
 
 - **Deterministic Fortemi shard conformance refresh** (#1797) — AIWG now pins
   the published `@fortemi/core@2026.7.11` converter. The representative
@@ -58,6 +66,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   proxies PTY WebSocket upgrades so long-lived executor credentials never enter
   browser state or attach URLs.
 
+- **Release config schema parity** — release steps may now use a
+  channel-dependent command without also declaring an unused plain `run`
+  command, matching the stable npm dist-tag configuration.
+- **Clean-checkout release validation** — release plans now build the CLI
+  before integration tests invoke it, avoiding false failures when `dist/` is
+  absent from a fresh checkout.
+- **Deterministic test resource use** — Vitest now bounds worker concurrency
+  and exercises file watching through polling so shared-host inotify limits and
+  aggregate database contention do not create false release failures.
 - **Canonical SDLC orchestration routing** (#1839) — the orchestration rule,
   kernel/project context templates, core prompt, architecture guidance, and
   new-project output now treat skills and referenced playbooks as authoritative,
@@ -721,8 +738,8 @@ artifact-index edge cases.
   Cockpit live matrix against the agentic-sandbox vsock transport line
   (`v2026.6.31`–`v2026.6.34`). The VM target now provisions, enrolls over vsock,
   reaches boot-ready, runs the provider workload, and tears down cleanly — the
-  path that previously hung at `bootstrap-pending`. Evidence:
-  `.aiwg/testing/cockpit-vm-vsock-2026-06-27.md/.json`.
+  path that previously hung at `bootstrap-pending`. Local evidence output:
+  `.aiwg/testing/outputs/cockpit-vm-vsock-2026-06-27.md/.json`.
 - **Cockpit treats a stale destroy 404 as already-gone (#1660)** — destroying an
   instance the executor has already reaped no longer surfaces a raw 404; the
   Bridge maps it to an `already_gone` result and refreshes inventory.

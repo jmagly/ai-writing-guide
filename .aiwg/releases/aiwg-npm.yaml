@@ -14,11 +14,11 @@ build:
     - id: typecheck
       run: npm run typecheck
       expect_exit: 0
-    - id: unit-tests
-      run: npm test
-      expect_exit: 0
     - id: cli-build
       run: npm run build:cli
+      expect_exit: 0
+    - id: unit-tests
+      run: npm test
       expect_exit: 0
 validation_gates:
   - id: metadata

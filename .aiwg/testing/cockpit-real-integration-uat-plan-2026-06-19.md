@@ -34,7 +34,7 @@ it does not satisfy release UAT for Cockpit control, session, or runtime behavio
 | Executor | Real `agentic-sandbox`, not bundled `apps/cockpit/mock-executor` |
 | Executor URL | `AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:<real-executor-port>` |
 | Provider | Start with `codex`; add `claude` after auth propagation is proven |
-| Report base | `.aiwg/testing/cockpit-real-uat-2026-06-19` or dated successor |
+| Report base | `.aiwg/testing/outputs/cockpit-real-uat-2026-06-19` or dated successor |
 | Executor version | `AIWG_COCKPIT_EXECUTOR_VERSION=<agentic-sandbox tag-or-commit>` when not exposed by API |
 
 ## Data Set
@@ -80,7 +80,7 @@ Command:
 AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:<real-executor-port> \
 AIWG_COCKPIT_LIVE_REQUIRED=1 \
 AIWG_COCKPIT_EXECUTOR_VERSION=<agentic-sandbox-tag-or-commit> \
-AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/cockpit-real-uat-2026-06-19 \
+AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/outputs/cockpit-real-uat-2026-06-19 \
 npm run uat:cockpit-live
 ```
 
@@ -106,7 +106,7 @@ AIWG_COCKPIT_LIVE_MATRIX_REQUIRED=1 \
 AIWG_COCKPIT_LIVE_PROVIDER=codex \
 AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT=issue-audit \
 AIWG_COCKPIT_EXECUTOR_VERSION=<agentic-sandbox-tag-or-commit> \
-AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/cockpit-real-host-uat-2026-06-19 \
+AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/outputs/cockpit-real-host-uat-2026-06-19 \
 npm run uat:cockpit-live:matrix
 ```
 
@@ -147,7 +147,7 @@ AIWG_COCKPIT_LIVE_MATRIX_REQUIRED=1 \
 AIWG_COCKPIT_LIVE_PROVIDER=codex \
 AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT=issue-audit \
 AIWG_COCKPIT_EXECUTOR_VERSION=<agentic-sandbox-tag-or-commit> \
-AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/cockpit-real-matrix-uat-2026-06-19 \
+AIWG_COCKPIT_LIVE_REPORT=.aiwg/testing/outputs/cockpit-real-matrix-uat-2026-06-19 \
 npm run uat:cockpit-live:matrix
 ```
 
@@ -197,10 +197,11 @@ Exit criteria:
 
 Each UAT run should preserve:
 
-- Markdown report: `.aiwg/testing/<run-name>.md`
-- JSON report: `.aiwg/testing/<run-name>.json`
+- Markdown report: `.aiwg/testing/outputs/<run-name>.md`
+- JSON report: `.aiwg/testing/outputs/<run-name>.json`
 - Browser screenshots for selected operator workflows, stored under `/tmp` during
-  rehearsal and copied into `.aiwg/testing/` only when selected as release evidence.
+  rehearsal and written into `.aiwg/testing/outputs/`; attach selected release
+  evidence through the release workflow.
 - Optional upstream conformance report path via `AIWG_SANDBOX_CONFORMANCE_REPORT`.
 
 Do not preserve secrets or raw provider auth material.
