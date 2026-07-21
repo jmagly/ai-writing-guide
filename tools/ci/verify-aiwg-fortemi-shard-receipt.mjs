@@ -13,7 +13,6 @@ const root = resolve(import.meta.dirname, '..', '..');
 const fixtureRoot = resolve(root, 'test', 'fixtures', 'fortemi-shard');
 const receiptPath = resolve(fixtureRoot, 'aiwg-core-v1.receipt.json');
 const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'));
-const packageJson = require(resolve(root, 'package.json'));
 const packageLock = require(resolve(root, 'package-lock.json'));
 const corePackage = require('@fortemi/core/package.json');
 
@@ -47,9 +46,6 @@ function runBytes(command, args, options = {}) {
 if (receipt.schema_version !== 'aiwg.fortemi.shard-receipt.v1') {
   fail(`unsupported receipt schema ${receipt.schema_version}`);
 }
-if (packageJson.version !== receipt.producer.package.version) {
-  fail(`AIWG package version ${packageJson.version} does not match receipt`);
-}
 if (corePackage.version !== receipt.converter.package.version) {
   fail(`installed Core ${corePackage.version} does not match receipt`);
 }
@@ -68,6 +64,16 @@ if (authority.schemaBundle.sha256 !== receipt.authority.schema_bundle_sha256) fa
 
 const producerCommit = run('git', ['rev-parse', `${receipt.producer.commit}^{commit}`], { capture: true });
 if (producerCommit !== receipt.producer.commit) fail('producer commit is unavailable');
+// The receipt describes the immutable producer revision, not whichever later
+// AIWG release happens to verify it. Resolve package identity from that commit
+// so routine version bumps cannot invalidate otherwise unchanged provenance.
+const producerPackage = JSON.parse(run('git', ['show', `${producerCommit}:package.json`], { capture: true }));
+if (producerPackage.name !== receipt.producer.package.name) {
+  fail(`producer package name ${producerPackage.name ?? 'missing'} does not match receipt`);
+}
+if (producerPackage.version !== receipt.producer.package.version) {
+  fail(`producer package version ${producerPackage.version ?? 'missing'} does not match receipt`);
+}
 
 const archivePath = resolve(root, receipt.archive.path);
 const archive = new Uint8Array(readFileSync(archivePath));
