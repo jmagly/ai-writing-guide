@@ -37,11 +37,26 @@ echo ""
 echo "## Local AIWG index (aiwg discover)"
 echo ""
 if command -v aiwg >/dev/null 2>&1; then
-  if aiwg discover "${QUERY}" --limit 5 --json >/tmp/.steward-prep-discover.json 2>/dev/null; then
-    python3 -c "
-import json, sys
+  DISCOVER_TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/steward-prep-discover.XXXXXX")"
+  DISCOVER_JSON="${DISCOVER_TMP_DIR}/discover.json"
+  cleanup_discover_tmp() {
+    if [ -n "${DISCOVER_TMP_DIR:-}" ] && [ -d "${DISCOVER_TMP_DIR}" ]; then
+      rm -rf -- "${DISCOVER_TMP_DIR}"
+    fi
+  }
+  trap cleanup_discover_tmp EXIT
+  trap 'cleanup_discover_tmp; exit 129' HUP
+  trap 'cleanup_discover_tmp; exit 130' INT
+  trap 'cleanup_discover_tmp; exit 143' TERM
+
+  if aiwg discover "${QUERY}" --limit 5 --json >"${DISCOVER_JSON}" 2>/dev/null; then
+    python3 - "${DISCOVER_JSON}" <<'PY' 2>/dev/null || echo "  (python3 not available to parse output)"
+import json
+import sys
+
 try:
-    data = json.load(open('/tmp/.steward-prep-discover.json'))
+    with open(sys.argv[1], encoding='utf-8') as handle:
+        data = json.load(handle)
     results = data.get('results', [])
     if not results:
         print('  (no matching artifacts)')
@@ -56,11 +71,10 @@ try:
                 print(f'              {capability}')
 except Exception as e:
     print(f'  (parse error: {e})')
-" 2>/dev/null || echo "  (python3 not available to parse output)"
+PY
   else
     echo "  (aiwg discover failed — local index may not be built)"
   fi
-  rm -f /tmp/.steward-prep-discover.json
 else
   echo "  (aiwg CLI not found in PATH)"
 fi
