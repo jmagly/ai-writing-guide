@@ -51,6 +51,10 @@ const { readAiwgConfig } = await importImpl(
   import.meta.url,
   'config/aiwg-config.js'
 );
+const { collectPackagedAgentInventory, diagnoseOversizedAgent } = await importImpl(
+  import.meta.url,
+  'agents/packaged-agent-inventory.js'
+);
 
 // AIWG_ROOT: env override > channel-manager resolved path > legacy edge path
 // getFrameworkRoot() resolves correctly for npm global installs, edge, and dev channels.
@@ -713,6 +717,11 @@ async function runDoctor() {
     if (!providersToCheck.includes('claude')) providersToCheck.unshift('claude');
   }
 
+  // Compare deployed agent findings with the package that this Doctor process
+  // is actually running. Deployment size alone cannot establish an upstream
+  // package defect: a non-target provider may still contain older managed bytes.
+  const packagedAgentInventory = await collectPackagedAgentInventory(AIWG_ROOT);
+
   for (const provName of providersToCheck) {
     const provider = await loadProvider(provName);
     const label = PROVIDER_LABELS[provName] || provName;
@@ -748,7 +757,17 @@ async function runDoctor() {
             try {
               const fstat = await fs.stat(path.join(agentsPath, f));
               if (fstat.isFile() && fstat.size > AGENT_DEF_CEILING) {
-                oversized.push({ name: f, size: fstat.size });
+                const content = await fs.readFile(path.join(agentsPath, f), 'utf8');
+                oversized.push({
+                  name: f,
+                  size: fstat.size,
+                  diagnosis: diagnoseOversizedAgent(
+                    f,
+                    content,
+                    packagedAgentInventory,
+                    AGENT_DEF_CEILING,
+                  ),
+                });
               }
             } catch {
               /* unreadable file — skip */
@@ -760,10 +779,30 @@ async function runDoctor() {
               .slice(0, 3)
               .map(o => `${o.name} (${(o.size / 1024).toFixed(1)} KB)`)
               .join(', ');
+            const currentPackage = oversized.filter(o => o.diagnosis === 'current-package').length;
+            const staleDeployment = oversized.filter(o => o.diagnosis === 'stale-deployment').length;
+            const unmanagedLocal = oversized.filter(o => o.diagnosis === 'unmanaged-local').length;
+            const diagnoses = [];
+            if (currentPackage > 0) {
+              diagnoses.push(
+                `${currentPackage} also exceed the ceiling in current packaged sources (current upstream packaging issue; externalize examples to the catalog)`,
+              );
+            }
+            if (staleDeployment > 0) {
+              diagnoses.push(
+                `${staleDeployment} are stale managed deployment bytes while current packaged sources are within the ceiling (run aiwg refresh --provider ${provName})`,
+              );
+            }
+            if (unmanagedLocal > 0) {
+              diagnoses.push(
+                `${unmanagedLocal} are unmanaged or project-local and cannot be attributed to the current package`,
+              );
+            }
             check(
               `${label} Agent def sizes`,
               'warn',
-              `${oversized.length} agent def(s) over the 16 KB subagent-dispatch ceiling: ${worst}${oversized.length > 3 ? ', …' : ''}. Oversized defs can fail Task dispatch with "Prompt is too long". Externalize examples to the catalog (see few-shot-examples rule) and re-deploy.`,
+              `${oversized.length} agent def(s) over the 16 KB subagent-dispatch ceiling: ${worst}${oversized.length > 3 ? ', …' : ''}. ` +
+              `${diagnoses.join('; ')}. Oversized defs can fail Task dispatch with "Prompt is too long".`,
             );
           } else if (agentFiles.length > 0) {
             check(`${label} Agent def sizes`, 'ok', `All ${agentFiles.length} agent defs ≤ 16 KB`);

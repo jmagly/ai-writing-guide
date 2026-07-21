@@ -27,6 +27,11 @@ import {
   getProviderParallelismDefaults,
 } from '../../config/aiwg-config.js';
 import { discoverProjectLocalBundles } from '../../extensions/project-local-discovery.js';
+import {
+  collectPackagedAgentInventory,
+  normalizeAgentArtifactName,
+  parseManagedArtifactMarker,
+} from '../../agents/packaged-agent-inventory.js';
 import * as ui from '../ui.js';
 
 const PROVIDER_AGENT_DIRS: Record<string, string> = {
@@ -40,53 +45,60 @@ const PROVIDER_AGENT_DIRS: Record<string, string> = {
   windsurf: '.windsurf/agents',
 };
 
-async function collectAgentBasenames(rootDir: string, names: Set<string>): Promise<void> {
-  let entries;
-  try {
-    entries = await fs.readdir(rootDir, { withFileTypes: true });
-  } catch {
-    return;
-  }
+export async function currentBundledAgentBasenames(frameworkRoot: string): Promise<Set<string>> {
+  return new Set((await collectPackagedAgentInventory(frameworkRoot)).keys());
+}
 
-  if (path.basename(rootDir) === 'agents') {
-    for (const entry of entries) {
-      if (entry.isFile() && entry.name.endsWith('.md')) names.add(path.basename(entry.name, '.md'));
+export interface ProviderStaleAgentRemoval {
+  provider: string;
+  paths: string[];
+}
+
+async function readFrameworkVersion(frameworkRoot: string): Promise<string | null> {
+  try {
+    const pkg = JSON.parse(await fs.readFile(path.join(frameworkRoot, 'package.json'), 'utf8')) as {
+      version?: unknown;
+    };
+    return typeof pkg.version === 'string' && pkg.version.length > 0 ? pkg.version : null;
+  } catch {
+    return null;
+  }
+}
+
+function isOlderManagedVersion(deployedVersion: string, currentVersion: string): boolean {
+  const parse = (version: string): { core: number[]; prerelease: string | null } | null => {
+    const match = /^(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/.exec(version);
+    return match
+      ? { core: [Number(match[1]), Number(match[2]), Number(match[3])], prerelease: match[4] ?? null }
+      : null;
+  };
+  const deployed = parse(deployedVersion);
+  const current = parse(currentVersion);
+  if (!deployed || !current) return deployedVersion !== currentVersion;
+  for (let index = 0; index < deployed.core.length; index += 1) {
+    if (deployed.core[index] !== current.core[index]) {
+      return deployed.core[index] < current.core[index];
     }
   }
-
-  await Promise.all(
-    entries
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => collectAgentBasenames(path.join(rootDir, entry.name), names)),
-  );
-}
-
-export async function currentBundledAgentBasenames(frameworkRoot: string): Promise<Set<string>> {
-  const names = new Set<string>();
-  await Promise.all([
-    collectAgentBasenames(path.join(frameworkRoot, 'agentic', 'code', 'frameworks'), names),
-    collectAgentBasenames(path.join(frameworkRoot, 'agentic', 'code', 'addons'), names),
-  ]);
-  return names;
-}
-
-function isBundledManagedArtifact(content: string): boolean {
-  return /(?:^|\n)(?:#|<!--)\s*aiwg:managed\s+\S+\s+bundled(?:\s*-->)?/.test(content);
+  if (deployed.prerelease === current.prerelease) return false;
+  if (deployed.prerelease === null) return false;
+  if (current.prerelease === null) return true;
+  return deployed.prerelease.localeCompare(current.prerelease, undefined, { numeric: true }) < 0;
 }
 
 export async function pruneStaleManagedAgentFiles(options: {
   projectRoot: string;
   frameworkRoot: string;
+  /** @deprecated Cleanup is intentionally global; provider only scopes redeployment. */
   provider?: string;
+  currentVersion?: string;
   dryRun?: boolean;
-}): Promise<string[]> {
+}): Promise<ProviderStaleAgentRemoval[]> {
   const desired = await currentBundledAgentBasenames(options.frameworkRoot);
-  const providerDirs = options.provider
-    ? [PROVIDER_AGENT_DIRS[options.provider]].filter((dir): dir is string => Boolean(dir))
-    : Object.values(PROVIDER_AGENT_DIRS);
-  const removed: string[] = [];
+  const currentVersion = options.currentVersion ?? await readFrameworkVersion(options.frameworkRoot);
+  const removals: ProviderStaleAgentRemoval[] = [];
 
-  for (const relDir of providerDirs) {
+  for (const [provider, relDir] of Object.entries(PROVIDER_AGENT_DIRS)) {
     const dir = path.join(options.projectRoot, relDir);
     let entries;
     try {
@@ -97,9 +109,6 @@ export async function pruneStaleManagedAgentFiles(options: {
 
     for (const entry of entries) {
       if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
-      const basename = path.basename(entry.name, '.md');
-      if (desired.has(basename)) continue;
-
       const file = path.join(dir, entry.name);
       let content;
       try {
@@ -107,15 +116,27 @@ export async function pruneStaleManagedAgentFiles(options: {
       } catch {
         continue;
       }
-      if (!isBundledManagedArtifact(content)) continue;
+      const marker = parseManagedArtifactMarker(content);
+      if (marker?.source !== 'bundled') continue;
+
+      const artifactName = normalizeAgentArtifactName(entry.name);
+      const missingFromCurrentPackage = !desired.has(artifactName);
+      const fromOlderPackage = currentVersion !== null && isOlderManagedVersion(marker.version, currentVersion);
+      if (!missingFromCurrentPackage && !fromOlderPackage) continue;
 
       const relFile = path.relative(options.projectRoot, file);
       if (!options.dryRun) await fs.rm(file, { force: true });
-      removed.push(relFile);
+      let providerRemoval = removals.find((item) => item.provider === provider);
+      if (!providerRemoval) {
+        providerRemoval = { provider, paths: [] };
+        removals.push(providerRemoval);
+      }
+      providerRemoval.paths.push(relFile);
     }
   }
 
-  return removed;
+  for (const removal of removals) removal.paths.sort((a, b) => a.localeCompare(b));
+  return removals;
 }
 
 /**
@@ -291,19 +312,28 @@ export const refreshHandler: CommandHandler = {
       // Non-fatal — refresh continues
     }
 
-    // Step 4.5: Stale deployment check (#621, #1460)
+    // Step 4.5: Stale deployment check (#621, #1460, #1799)
     if (!quiet) ui.info('Checking for stale deployments...');
+    let staleAgentRemovals: ProviderStaleAgentRemoval[] = [];
     if (!dryRun) {
       try {
-        const removedAgents = await pruneStaleManagedAgentFiles({
-          projectRoot: process.cwd(),
+        staleAgentRemovals = await pruneStaleManagedAgentFiles({
+          projectRoot: ctx.cwd,
           frameworkRoot,
-          provider: detectedProvider,
         });
-        if (removedAgents.length > 0 && !quiet) {
-          ui.success(`Removed ${removedAgents.length} stale AIWG-managed agent file${removedAgents.length === 1 ? '' : 's'}`);
-          for (const file of removedAgents.slice(0, 5)) ui.dim(`    ${file}`);
-          if (removedAgents.length > 5) ui.dim(`    ...and ${removedAgents.length - 5} more`);
+        if (staleAgentRemovals.length > 0 && !quiet) {
+          const total = staleAgentRemovals.reduce((sum, item) => sum + item.paths.length, 0);
+          ui.success(
+            `Removed ${total} stale AIWG-managed agent file${total === 1 ? '' : 's'} ` +
+            `across ${staleAgentRemovals.length} provider${staleAgentRemovals.length === 1 ? '' : 's'}`,
+          );
+          for (const removal of staleAgentRemovals) {
+            const shown = removal.paths.slice(0, 3).join(', ');
+            const remainder = removal.paths.length - 3;
+            ui.dim(
+              `    ${removal.provider}: ${removal.paths.length} (${shown}${remainder > 0 ? `, ...and ${remainder} more` : ''})`,
+            );
+          }
         }
       } catch {
         if (!quiet) ui.dim('  Agent orphan cleanup skipped (non-critical)');
@@ -404,6 +434,7 @@ export const refreshHandler: CommandHandler = {
         frameworks: frameworks || ['all'],
         skipUpdate,
         channel: channel || undefined,
+        staleAgentRemovals,
       });
       console.log(output);
     }

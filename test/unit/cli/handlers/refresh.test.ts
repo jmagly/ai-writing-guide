@@ -373,7 +373,10 @@ describe('refreshHandler stale AIWG-managed agent cleanup (#1460)', () => {
 
       const removed = await pruneStaleManagedAgentFiles({ projectRoot, frameworkRoot, provider: 'claude' });
 
-      expect(removed).toEqual(['.claude/agents/acquisition-agent.md']);
+      expect(removed).toEqual([{
+        provider: 'claude',
+        paths: ['.claude/agents/acquisition-agent.md'],
+      }]);
       expect(existsSync(join(projectRoot, '.claude/agents/acquisition-agent.md'))).toBe(false);
       expect(existsSync(join(projectRoot, '.claude/agents/forensic-acquisition-agent.md'))).toBe(true);
       expect(existsSync(join(projectRoot, '.claude/agents/operator-agent.md'))).toBe(true);
@@ -397,8 +400,69 @@ describe('refreshHandler stale AIWG-managed agent cleanup (#1460)', () => {
 
       const removed = await pruneStaleManagedAgentFiles({ projectRoot, frameworkRoot, provider: 'claude', dryRun: true });
 
-      expect(removed).toEqual(['.claude/agents/old-agent.md']);
+      expect(removed).toEqual([{
+        provider: 'claude',
+        paths: ['.claude/agents/old-agent.md'],
+      }]);
       expect(existsSync(join(projectRoot, '.claude/agents/old-agent.md'))).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('globally removes 47 old managed Codex agents during Claude refresh and preserves non-package ownership', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'aiwg-refresh-cross-provider-'));
+    try {
+      const frameworkRoot = join(root, 'framework-root');
+      const projectRoot = join(root, 'project');
+      const packagedAgents = join(frameworkRoot, 'agentic/code/frameworks/sdlc-complete/agents');
+      const claudeAgents = join(projectRoot, '.claude/agents');
+      const codexAgents = join(projectRoot, '.codex/agents');
+      mkdirSync(packagedAgents, { recursive: true });
+      mkdirSync(claudeAgents, { recursive: true });
+      mkdirSync(codexAgents, { recursive: true });
+      writeFileSync(join(frameworkRoot, 'package.json'), '{"version":"2026.7.15"}\n');
+
+      for (let index = 1; index <= 47; index += 1) {
+        const name = `stale-agent-${String(index).padStart(2, '0')}`;
+        writeFileSync(join(packagedAgents, `${name}.md`), `---\nname: ${name}\n---\nCurrent lean body.\n`);
+        writeFileSync(
+          join(codexAgents, `${name}.md`),
+          `---\n# aiwg:managed v2026.7.13 bundled\nname: ${name}\n---\n${'old oversized example\n'.repeat(900)}`,
+        );
+      }
+
+      writeFileSync(join(packagedAgents, 'current-claude-agent.md'), '---\nname: current-claude-agent\n---\n');
+      writeFileSync(join(packagedAgents, 'newer-channel-agent.md'), '---\nname: newer-channel-agent\n---\n');
+      writeFileSync(
+        join(claudeAgents, 'current-claude-agent.md'),
+        '---\n# aiwg:managed v2026.7.15 bundled\nname: current-claude-agent\n---\n',
+      );
+      writeFileSync(join(codexAgents, 'operator-agent.md'), '# operator owned\n');
+      writeFileSync(
+        join(codexAgents, 'newer-channel-agent.md'),
+        '---\n# aiwg:managed v2026.8.0-rc.1 bundled\nname: newer-channel-agent\n---\n',
+      );
+      writeFileSync(
+        join(codexAgents, 'project-agent.md'),
+        '---\n# aiwg:managed v2026.7.13 project-local\nname: project-agent\n---\n',
+      );
+
+      const removed = await pruneStaleManagedAgentFiles({
+        projectRoot,
+        frameworkRoot,
+        provider: 'claude',
+      });
+
+      expect(removed).toHaveLength(1);
+      expect(removed[0].provider).toBe('codex');
+      expect(removed[0].paths).toHaveLength(47);
+      expect(existsSync(join(codexAgents, 'stale-agent-01.md'))).toBe(false);
+      expect(existsSync(join(codexAgents, 'stale-agent-47.md'))).toBe(false);
+      expect(existsSync(join(claudeAgents, 'current-claude-agent.md'))).toBe(true);
+      expect(existsSync(join(codexAgents, 'operator-agent.md'))).toBe(true);
+      expect(existsSync(join(codexAgents, 'newer-channel-agent.md'))).toBe(true);
+      expect(existsSync(join(codexAgents, 'project-agent.md'))).toBe(true);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

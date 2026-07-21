@@ -472,6 +472,14 @@ describe('tools/cli/doctor.mjs — agent-def size ceiling (#1587)', () => {
     expect(content.toLowerCase()).toContain('externalize examples');
   });
 
+  it('compares deployed findings with current packaged agent sources before diagnosis', () => {
+    expect(content).toContain('collectPackagedAgentInventory');
+    expect(content).toContain('diagnoseOversizedAgent');
+    expect(content).toContain('current packaged sources');
+    expect(content).toContain('stale managed deployment bytes');
+    expect(content).toContain('unmanaged or project-local');
+  });
+
   it('scans the deployed agent definition file types', () => {
     // .md, .agent.md (Copilot), .soul.md (Windsurf)
     expect(content).toContain('.soul.md');
