@@ -10,6 +10,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { WebSocket } from 'ws';
 import { createExecutor } from '../../apps/cockpit/mock-executor/src/server.mjs';
 import { createBridge, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, fetchJsonFirst } from '../../apps/cockpit/bridge/src/server.mjs';
 
