@@ -70,7 +70,7 @@ function parseDuration(durationStr) {
 /**
  * Load dashboard state from file
  */
-async function loadDashboardState(statePath = '.aiwg/testing/dashboard-state.json') {
+async function loadDashboardState(statePath = '.aiwg/testing/outputs/dashboard-state.json') {
   try {
     const data = await readFile(statePath, 'utf-8');
     return JSON.parse(data);

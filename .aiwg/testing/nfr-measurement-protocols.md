@@ -207,7 +207,7 @@ async function benchmarkContentValidation() {
 
 #### Data Collection
 
-- **Raw measurements**: Store all raw measurements in `.aiwg/testing/nfr-measurements/`
+- **Raw measurements**: Store all raw measurements in `.aiwg/testing/outputs/nfr-measurements/`
 - **Format**: CSV files with columns: `Test Run, Timestamp, Input Size, Measurement Value, Pass/Fail, Notes`
 - **Retention**: Keep raw measurements for 12 months (support regression analysis)
 
@@ -260,7 +260,7 @@ async function benchmarkContentValidation() {
   const csv = measurements.map((m, i) =>
     `${i+1},${new Date().toISOString()},2000 words,${m.toFixed(3)} seconds,${m <= 60 ? 'PASS' : 'FAIL'},`
   ).join('\n');
-  fs.writeFileSync('.aiwg/testing/nfr-measurements/perf-001-validation-time.csv',
+  fs.writeFileSync('.aiwg/testing/outputs/nfr-measurements/perf-001-validation-time.csv',
     'Test Run,Timestamp,Input Size,Measurement Value,Pass/Fail,Notes\n' + csv);
 
   // Assert p95
@@ -271,7 +271,7 @@ async function benchmarkContentValidation() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/perf-001-validation-time.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/perf-001-validation-time.csv`
 
 ---
 
@@ -321,7 +321,7 @@ p95=$(sort -t',' -k4 -n perf-002-deployment-time.csv | tail -n +2 | tail -n 5 | 
 echo "NFR-PERF-002: p95 = $p95 (target: <10s)"
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/perf-002-deployment-time.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/perf-002-deployment-time.csv`
 
 ---
 
@@ -368,7 +368,7 @@ async function benchmarkCodebaseAnalysis() {
   const csv = measurements.map((m, i) =>
     `${i+1},${new Date().toISOString()},1000 files,${m.toFixed(3)} seconds,${m <= 300 ? 'PASS' : 'FAIL'},`
   ).join('\n');
-  fs.writeFileSync('.aiwg/testing/nfr-measurements/perf-003-analysis-time.csv',
+  fs.writeFileSync('.aiwg/testing/outputs/nfr-measurements/perf-003-analysis-time.csv',
     'Test Run,Timestamp,Input Size,Measurement Value,Pass/Fail,Notes\n' + csv);
 
   // Assert p95
@@ -379,7 +379,7 @@ async function benchmarkCodebaseAnalysis() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/perf-003-analysis-time.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/perf-003-analysis-time.csv`
 
 ---
 
@@ -396,7 +396,7 @@ async function benchmarkCodebaseAnalysis() {
 
 **Test Implementation**: Uses mock agents to avoid Claude API costs
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/perf-004-workflow-time.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/perf-004-workflow-time.csv`
 
 ---
 
@@ -413,7 +413,7 @@ async function benchmarkCodebaseAnalysis() {
 
 **Test Implementation**: Deferred to FID-001 (Traceability Automation) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/perf-005-traceability-time.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/perf-005-traceability-time.csv`
 
 ---
 
@@ -436,7 +436,7 @@ Pass: Overhead < 5%
 
 **Test Implementation**: Deferred to FID-002 (Metrics Collection) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/perf-006-metrics-overhead.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/perf-006-metrics-overhead.csv`
 
 ---
 
@@ -453,7 +453,7 @@ Pass: Overhead < 5%
 
 **Test Implementation**: Deferred to FID-003 (Template Selection Guides) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/perf-007-template-selection-time.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/perf-007-template-selection-time.csv`
 
 ---
 
@@ -470,7 +470,7 @@ Pass: Overhead < 5%
 
 **Test Implementation**: Deferred to FID-004 (Test Template Generation) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/perf-008-test-generation-time.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/perf-008-test-generation-time.csv`
 
 ---
 
@@ -487,7 +487,7 @@ Pass: Overhead < 5%
 
 **Test Implementation**: Deferred to FID-005 (Plugin Rollback) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/perf-009-rollback-time.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/perf-009-rollback-time.csv`
 
 ---
 
@@ -504,7 +504,7 @@ Pass: Overhead < 5%
 
 **Test Implementation**: Deferred to FID-006 Phase 3 (Plugin Security Validation) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/perf-010-security-scan-time.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/perf-010-security-scan-time.csv`
 
 ---
 
@@ -529,7 +529,7 @@ Example: 10 files in 55 seconds = (10 * 60) / 55 = 10.9 files/minute PASS
 
 **Test Implementation**: Deferred to batch operations feature implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/thru-001-batch-throughput.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/thru-001-batch-throughput.csv`
 
 ---
 
@@ -552,7 +552,7 @@ top -b -n 1 | grep 'node.*validate' | wc -l  # Count concurrent Node processes
 
 **Test Implementation**: Deferred to batch operations feature implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/thru-002-parallel-concurrency.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/thru-002-parallel-concurrency.csv`
 
 ---
 
@@ -576,7 +576,7 @@ Iteration,Start Date,End Date,Duration (days),Pass/Fail
 
 **Test Implementation**: Manual process observation (not automated)
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/thru-003-iteration-velocity.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/thru-003-iteration-velocity.csv`
 
 ---
 
@@ -646,7 +646,7 @@ async function benchmarkPatternAccuracy() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/acc-001-false-positives.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/acc-001-false-positives.csv`
 
 ---
 
@@ -672,7 +672,7 @@ Example: 5 fields edited out of 25 total = 1 - (5/25) = 80% accuracy PASS
 
 **Test Implementation**: Manual user acceptance testing (UAT) deferred to Transition phase
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/acc-002-intake-accuracy.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/acc-002-intake-accuracy.csv`
 
 ---
 
@@ -699,7 +699,7 @@ Example: 495 matching links out of 500 total = 99% accuracy PASS
 
 **Test Implementation**: Deferred to FID-001 (Traceability Automation) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/acc-003-traceability-accuracy.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/acc-003-traceability-accuracy.csv`
 
 ---
 
@@ -725,7 +725,7 @@ Example: 87 users accept recommendation out of 100 total = 87% acceptance PASS
 
 **Test Implementation**: Manual user acceptance testing (UAT) deferred to Transition phase
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/acc-004-recommendation-acceptance.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/acc-004-recommendation-acceptance.csv`
 
 ---
 
@@ -776,7 +776,7 @@ async function benchmarkAttackDetection() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/acc-005-attack-detection.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/acc-005-attack-detection.csv`
 
 ---
 
@@ -799,7 +799,7 @@ async function benchmarkAttackDetection() {
 
 **Test Implementation**: Deferred to FID-006 Phase 3 (Plugin Security Validation) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/acc-006-security-false-positives.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/acc-006-security-false-positives.csv`
 
 ---
 
@@ -853,7 +853,7 @@ async function benchmarkReviewSignOffs() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/qual-001-reviewer-sign-offs.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/qual-001-reviewer-sign-offs.csv`
 
 ---
 
@@ -877,7 +877,7 @@ const orphanedRequirements = requirements.filter(req =>
 
 **Test Implementation**: Deferred to FID-001 (Traceability Automation) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/qual-002-traceability-coverage.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/qual-002-traceability-coverage.csv`
 
 ---
 
@@ -905,7 +905,7 @@ cat coverage/coverage-summary.json | jq '.total.lines.pct'
 
 **Test Implementation**: CI/CD integration with coverage enforcement
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/qual-003-test-coverage.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/qual-003-test-coverage.csv`
 
 ---
 
@@ -936,7 +936,7 @@ test -f templates/test/performance-test-template.md && echo "Performance: PASS" 
 test -f templates/test/security-test-template.md && echo "Security: PASS" || echo "Security: FAIL"
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/qual-004-template-completeness.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/qual-004-template-completeness.csv`
 
 ---
 
@@ -960,7 +960,7 @@ grep -c '^- Pattern:' validation/banned-patterns.md
 
 **Test Implementation**: Automated pattern count validation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/comp-001-pattern-count.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/comp-001-pattern-count.csv`
 
 ---
 
@@ -1013,7 +1013,7 @@ async function benchmarkIntakeCompleteness() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/comp-002-critical-field-coverage.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/comp-002-critical-field-coverage.csv`
 
 ---
 
@@ -1066,7 +1066,7 @@ async function benchmarkArtifactCompleteness() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/comp-003-artifact-completeness.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/comp-003-artifact-completeness.csv`
 
 ---
 
@@ -1087,7 +1087,7 @@ async function benchmarkArtifactCompleteness() {
 
 **Test Implementation**: Deferred to FID-001 (Traceability Automation) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/comp-004-orphan-detection.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/comp-004-orphan-detection.csv`
 
 ---
 
@@ -1128,7 +1128,7 @@ fi
 
 **Test Implementation**: Deferred to FID-005 (Plugin Rollback) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/comp-005-orphan-files.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/comp-005-orphan-files.csv`
 
 ---
 
@@ -1184,7 +1184,7 @@ async function benchmarkContentPrivacy() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/sec-001-network-trace.log`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/sec-001-network-trace.log`
 
 ---
 
@@ -1233,7 +1233,7 @@ async function benchmarkDatabaseIntegrity() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/sec-002-database-checksums.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/sec-002-database-checksums.csv`
 
 ---
 
@@ -1287,7 +1287,7 @@ async function benchmarkFilePermissions() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/sec-003-file-permissions.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/sec-003-file-permissions.csv`
 
 ---
 
@@ -1303,7 +1303,7 @@ async function benchmarkFilePermissions() {
 
 **Test Implementation**: Similar to NFR-SEC-002 (database integrity), deferred to FID-005 (Plugin Rollback) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/sec-004-backup-checksums.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/sec-004-backup-checksums.csv`
 
 ---
 
@@ -1353,7 +1353,7 @@ async function benchmarkDeploymentSuccess() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/rel-001-deployment-success.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/rel-001-deployment-success.csv`
 
 ---
 
@@ -1402,7 +1402,7 @@ async function benchmarkDataPreservation() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/rel-002-data-preservation.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/rel-002-data-preservation.csv`
 
 ---
 
@@ -1418,7 +1418,7 @@ async function benchmarkDataPreservation() {
 
 **Test Implementation**: Similar to NFR-REL-001 (deployment success), deferred to FID-005 (Plugin Rollback) implementation
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/rel-003-rollback-restoration.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/rel-003-rollback-restoration.csv`
 
 ---
 
@@ -1440,7 +1440,7 @@ async function benchmarkDataPreservation() {
 
 **Test Implementation**: Manual user acceptance testing (UAT) deferred to Transition phase
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/use-001-learning-curve.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/use-001-learning-curve.csv`
 
 ---
 
@@ -1490,7 +1490,7 @@ async function benchmarkFeedbackClarity() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/use-002-feedback-clarity.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/use-002-feedback-clarity.csv`
 
 ---
 
@@ -1506,7 +1506,7 @@ async function benchmarkFeedbackClarity() {
 
 **Test Implementation**: Manual UI inspection (requires UI testing framework), deferred to Construction phase (when UI implemented)
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/use-003-progress-visibility.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/use-003-progress-visibility.csv`
 
 ---
 
@@ -1522,7 +1522,7 @@ async function benchmarkFeedbackClarity() {
 
 **Test Implementation**: Manual user acceptance testing (UAT) deferred to Transition phase
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/use-004-setup-friction.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/use-004-setup-friction.csv`
 
 ---
 
@@ -1575,7 +1575,7 @@ async function benchmarkErrorClarity() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/use-005-error-clarity.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/use-005-error-clarity.csv`
 
 ---
 
@@ -1597,7 +1597,7 @@ Example: AIWG 7 minutes, Manual 15 minutes = 1 - (7/15) = 53% savings PASS
 
 **Test Implementation**: Manual user acceptance testing (UAT) deferred to Transition phase
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/use-006-onboarding-reduction.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/use-006-onboarding-reduction.csv`
 
 ---
 
@@ -1616,7 +1616,7 @@ Example: AIWG 7 minutes, Manual 15 minutes = 1 - (7/15) = 53% savings PASS
 **Test Implementation**:
 ```bash
 # Check oldest validation history file
-oldest_file=$(ls -t .aiwg/testing/nfr-measurements/perf-001-validation-time.csv | tail -1)
+oldest_file=$(ls -t .aiwg/testing/outputs/nfr-measurements/perf-001-validation-time.csv | tail -1)
 file_age_days=$(( ($(date +%s) - $(stat -c %Y $oldest_file)) / 86400 ))
 
 if [ $file_age_days -ge 30 ]; then
@@ -1626,7 +1626,7 @@ else
 fi
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/data-001-retention-validation.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/data-001-retention-validation.csv`
 
 ---
 
@@ -1647,7 +1647,7 @@ review_count=$(find .aiwg/working/*/reviews/ -name '*.md' | wc -l)
 echo "Review History Files: $review_count (permanent retention)"
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/data-002-audit-trail.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/data-002-audit-trail.csv`
 
 ---
 
@@ -1663,7 +1663,7 @@ echo "Review History Files: $review_count (permanent retention)"
 
 **Test Implementation**: Similar to NFR-DATA-001 (validation history retention)
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/data-003-metrics-retention.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/data-003-metrics-retention.csv`
 
 ---
 
@@ -1711,7 +1711,7 @@ async function benchmarkMetricsFreshness() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/fresh-001-metrics-freshness.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/fresh-001-metrics-freshness.csv`
 
 ---
 
@@ -1757,7 +1757,7 @@ async function benchmarkMaxContentSize() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/scal-001-max-content-size.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/scal-001-max-content-size.csv`
 
 ---
 
@@ -1811,7 +1811,7 @@ async function benchmarkMinContentSize() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/scal-002-min-content-size.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/scal-002-min-content-size.csv`
 
 ---
 
@@ -1865,7 +1865,7 @@ async function benchmarkMaxConcurrentAgents() {
 }
 ```
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/scal-003-max-concurrent-agents.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/scal-003-max-concurrent-agents.csv`
 
 ---
 
@@ -1887,7 +1887,7 @@ REMEDIATION: Chunk artifact into smaller sections or reduce scope
 
 **Test Implementation**: Similar to NFR-SCAL-001 (max content size)
 
-**Data Storage**: `.aiwg/testing/nfr-measurements/scal-004-max-artifact-size.csv`
+**Data Storage**: `.aiwg/testing/outputs/nfr-measurements/scal-004-max-artifact-size.csv`
 
 ---
 
@@ -1985,10 +1985,10 @@ The following 12 P0 NFRs are "make-or-break" for MVP and require immediate imple
 
 ### 5.1 Directory Structure
 
-All NFR measurements are stored in `.aiwg/testing/nfr-measurements/`:
+All NFR measurements are stored in `.aiwg/testing/outputs/nfr-measurements/`:
 
 ```
-.aiwg/testing/nfr-measurements/
+.aiwg/testing/outputs/nfr-measurements/
 ├── perf-001-validation-time.csv
 ├── perf-002-deployment-time.csv
 ├── perf-003-analysis-time.csv
@@ -2071,7 +2071,7 @@ Consolidated NFR report generated weekly:
   "confidence-interval": "[57.2s, 59.8s]",
   "baseline": "45 seconds",
   "regression": "30% increase from baseline (still within target)",
-  "raw-data": ".aiwg/testing/nfr-measurements/perf-001-validation-time.csv",
+  "raw-data": ".aiwg/testing/outputs/nfr-measurements/perf-001-validation-time.csv",
   "trend": "stable (within 10% variance over 4 weeks)"
 }
 ```
@@ -2082,10 +2082,10 @@ Generate consolidated summary report:
 
 ```bash
 # Generate NFR summary report
-node tools/testing/generate-nfr-report.mjs --target .aiwg/testing/nfr-measurements/ --output .aiwg/testing/nfr-summary.json
+node tools/testing/generate-nfr-report.mjs --target .aiwg/testing/outputs/nfr-measurements/ --output .aiwg/testing/outputs/nfr-summary.json
 
 # Generate HTML dashboard
-node tools/testing/generate-nfr-dashboard.mjs --input .aiwg/testing/nfr-summary.json --output .aiwg/testing/nfr-dashboard.html
+node tools/testing/generate-nfr-dashboard.mjs --input .aiwg/testing/outputs/nfr-summary.json --output .aiwg/testing/outputs/nfr-dashboard.html
 ```
 
 ---
@@ -2127,7 +2127,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: performance-benchmarks
-          path: .aiwg/testing/nfr-measurements/perf-*.csv
+          path: .aiwg/testing/outputs/nfr-measurements/perf-*.csv
 
   security-benchmarks:
     runs-on: ubuntu-latest
@@ -2149,7 +2149,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: security-benchmarks
-          path: .aiwg/testing/nfr-measurements/{sec,acc}-*.csv
+          path: .aiwg/testing/outputs/nfr-measurements/{sec,acc}-*.csv
 ```
 
 ### 6.2 Regression Detection
@@ -2160,7 +2160,7 @@ Alert if 95th percentile increases >10% from baseline:
 // tools/testing/detect-regressions.mjs
 async function detectRegressions() {
   const baselines = loadBaselines('tests/performance/baselines.json');
-  const current = loadCurrentMeasurements('.aiwg/testing/nfr-measurements/');
+  const current = loadCurrentMeasurements('.aiwg/testing/outputs/nfr-measurements/');
 
   const regressions = [];
 
@@ -2195,7 +2195,7 @@ Track 95th percentile over time (detect performance degradation):
 ```javascript
 // tools/testing/track-performance-trend.mjs
 async function trackPerformanceTrend(nfrId) {
-  const history = loadMeasurementHistory(`.aiwg/testing/nfr-measurements/history/${nfrId}.csv`);
+  const history = loadMeasurementHistory(`.aiwg/testing/outputs/nfr-measurements/history/${nfrId}.csv`);
 
   // Calculate trend (linear regression)
   const trend = calculateTrend(history.map(h => h.p95));
@@ -2210,10 +2210,10 @@ async function trackPerformanceTrend(nfrId) {
 }
 ```
 
-Store historical measurements in `.aiwg/testing/nfr-measurements/history/`:
+Store historical measurements in `.aiwg/testing/outputs/nfr-measurements/history/`:
 
 ```
-.aiwg/testing/nfr-measurements/history/
+.aiwg/testing/outputs/nfr-measurements/history/
 ├── perf-001-validation-time.csv
 ├── perf-002-deployment-time.csv
 ├── perf-003-analysis-time.csv
