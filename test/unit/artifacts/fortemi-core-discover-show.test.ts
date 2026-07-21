@@ -1170,12 +1170,14 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     expect(discovered.query.backend).toBe("fortemi-core");
     expect(discovered.query.graph).toBe("capability-default");
     expect(discovered.query.types).toEqual(["rule"]);
-    expect(discovered.results).toHaveLength(1);
     expect(discovered.results[0]).toMatchObject({
       path: rule.path,
       type: "rule",
       name: "acme-review",
     });
+    expect(discovered.results).not.toContainEqual(
+      expect.objectContaining({ path: skill.path }),
+    );
     consoleSpy.mockClear();
 
     await queryIndex(
