@@ -670,7 +670,7 @@ describe('routing documentation regressions', () => {
     expect(decision).toContain('Fortemi Core is the default backend');
   });
 
-  it('Fortemi Core ADR locks storage, issue-search, and package-boundary limits', () => {
+  it('Fortemi Core ADR locks storage, issue-search, and verified package-boundary limits', () => {
     const adr = read('.aiwg/architecture/adr-fortemi-core-indexing-substrate.md');
 
     expect(adr).toContain('"type": "fortemi"');
@@ -679,11 +679,11 @@ describe('routing documentation regressions', () => {
     expect(adr).toContain('aiwg issue list --search');
     expect(adr).toContain('.aiwg/issues/index/issues.index.json');
     expect(adr).toContain('local issue CLI contract');
-    expect(adr).toContain('@fortemi/core@2026.7.7');
-    expect(adr).toContain('--min-release-age=0');
-    expect(adr).toContain('--ignore-scripts');
-    expect(adr).toContain('AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1');
-    expect(adr).toContain('explicitly human-approved');
+    expect(adr).toContain('@fortemi/core@2026.7.9');
+    expect(adr).toContain('blocking shard conformance CI');
+    expect(adr).toContain('clean PGlite import/re-export');
+    expect(adr).toContain('clean Fortemi server import/re-export');
+    expect(adr).toContain('not `full-v1`');
     expect(adr).toContain('source-body chunk export');
     expect(adr).toContain('vector embedding ownership');
   });
