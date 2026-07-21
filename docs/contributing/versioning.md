@@ -89,19 +89,19 @@ grep '"version"' package.json | grep -E '\.[0-9]{2}\.' && echo "ERROR: Leading z
 `tools/release/cut-tag.sh` sources the release-signing key from vault itself
 (no manual keyring hydration): it fetches the key + machine passphrase into an
 ephemeral `GNUPGHOME`, signs the tag with loopback pinentry, verifies, and
-shreds the keyring on exit. The operator only supplies the reader-AppRole creds.
+removes the temporary keyring on exit. The operator only supplies the
+reader-AppRole credentials.
 
 ```bash
 # Commit the release prep (personal key — GitHub Verified)
 git commit -S -m "docs(release): prepare 2026.X.Y artifacts"
 
-# Export the ci-aiwg reader bootstrap from the TPM-backed OpenBao handoff.
+# Export the ci-aiwg reader bootstrap from the TPM-backed credential handoff.
 # The concrete release-key routes come from the operator's private routing
 # environment or protected forge variables; never commit them here.
-source ~/.config/openbao/env
-export VAULT_ADDR="$BAO_ADDR"
-export VAULT_CI_ROLE_ID="$(_openbao_cred ci-aiwg role-id)"
-export VAULT_CI_SECRET_ID="$(_openbao_cred ci-aiwg secret-id)"
+source /path/to/private/vault-runtime.env
+export VAULT_CI_ROLE_ID="$(_vault_cred ci-aiwg role-id)"
+export VAULT_CI_SECRET_ID="$(_vault_cred ci-aiwg secret-id)"
 source /path/to/private/aiwg-release-routing.env
 
 # Cut the signed tag — fetches the vault key, signs with the release-only key,
@@ -130,6 +130,11 @@ private routing environment, not checked-in docs. The separate
 published for historical verification, but it is not the active release key.
 CI only pulls repository contents and verifies tags against committed public
 keys — it does not need private-key access for verification.
+
+The encrypted recovery copy governed by the private itops runbook contains the
+`ci-aiwg` AppRole bootstrap pair only. It does not contain the release key or
+passphrase. Never restore those bootstrap values into project configuration or
+commit the recovery-medium path or manifest here.
 
 Vault source of truth:
 

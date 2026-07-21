@@ -1,15 +1,15 @@
 # CI/CD Secrets Configuration
 
 **Version:** 3.0
-**Last Updated:** 2026-07-15
+**Last Updated:** 2026-07-20
 **Target Audience:** Repository maintainers and administrators
 
 AIWG's Gitea CI/CD workflows use vault for repository-managed secrets. Gitea
 Actions stores only the vault bootstrap pair:
 
-| Tracker secret | Purpose |
-|---|---|
-| `VAULT_CI_ROLE_ID` | AppRole role ID for the `ci-aiwg` reader. |
+| Tracker secret       | Purpose                                     |
+| -------------------- | ------------------------------------------- |
+| `VAULT_CI_ROLE_ID`   | AppRole role ID for the `ci-aiwg` reader.   |
 | `VAULT_CI_SECRET_ID` | AppRole secret ID for the `ci-aiwg` reader. |
 
 Do not recreate legacy Gitea secrets such as `NPM_TOKEN`, `GH_ACCESS_TOKEN`,
@@ -21,14 +21,14 @@ issued by the CI system and is still used by PR-comment workflows.
 
 ## Vault Fetch Specs
 
-| Workflow | Spec | Exported value |
-|---|---|---|
-| `.gitea/workflows/npm-publish.yml` | `ci/vault-fetch.npm-publish.spec` | `NODE_AUTH_TOKEN` |
-| `.gitea/workflows/gitea-release.yml` | `ci/vault-fetch.gitea-release.spec` | `GITEA_TOKEN` |
-| `.gitea/workflows/upload-release-sigs.yml` | `ci/vault-fetch.upload-release-sigs.spec` | `GITEA_TOKEN` |
-| `.gitea/workflows/github-mirror.yml` | `ci/vault-fetch.github-mirror.spec` | `GH_TOKEN` |
-| `.gitea/workflows/notify-site.yml` | `ci/vault-fetch.notify-site.spec` | `AIWG_IO_DISPATCH_TOKEN` |
-| `.gitea/workflows/docsite-deploy.yml` | `ci/vault-fetch.docsite-deploy.spec` | `DOCSITE_DEPLOY_KEY_FILE` |
+| Workflow                                   | Spec                                      | Exported value            |
+| ------------------------------------------ | ----------------------------------------- | ------------------------- |
+| `.gitea/workflows/npm-publish.yml`         | `ci/vault-fetch.npm-publish.spec`         | `NODE_AUTH_TOKEN`         |
+| `.gitea/workflows/gitea-release.yml`       | `ci/vault-fetch.gitea-release.spec`       | `GITEA_TOKEN`             |
+| `.gitea/workflows/upload-release-sigs.yml` | `ci/vault-fetch.upload-release-sigs.spec` | `GITEA_TOKEN`             |
+| `.gitea/workflows/github-mirror.yml`       | `ci/vault-fetch.github-mirror.spec`       | `GH_TOKEN`                |
+| `.gitea/workflows/notify-site.yml`         | `ci/vault-fetch.notify-site.spec`         | `AIWG_IO_DISPATCH_TOKEN`  |
+| `.gitea/workflows/docsite-deploy.yml`      | `ci/vault-fetch.docsite-deploy.spec`      | `DOCSITE_DEPLOY_KEY_FILE` |
 
 The specs contain only `*_VAULT_PATH` and `*_VAULT_FIELD` placeholders. Concrete
 vault paths, metadata paths, hostnames, and fields are stored as private Gitea
@@ -50,20 +50,20 @@ npm run lint:vault-migration
 
 ## Classification
 
-| Name | Class | Destination |
-|---|---|---|
-| `VAULT_CI_ROLE_ID` | `BOOTSTRAP` | Gitea Actions secret |
-| `VAULT_CI_SECRET_ID` | `BOOTSTRAP` | Gitea Actions secret |
-| `GITHUB_TOKEN` | CI-issued token | No storage; issued per run |
-| `GT_NPM_TOKEN_VAULT_PATH`, `GT_NPM_TOKEN_VAULT_FIELD` | `ROUTE` | Gitea Actions variables |
-| `GT_RELEASE_TOKEN_VAULT_PATH`, `GT_RELEASE_TOKEN_VAULT_FIELD` | `ROUTE` | Gitea Actions variables |
-| `GH_MIRROR_TOKEN_VAULT_PATH`, `GH_MIRROR_TOKEN_VAULT_FIELD` | `ROUTE` | Gitea Actions variables |
-| `AIWG_IO_DISPATCH_TOKEN_VAULT_PATH`, `AIWG_IO_DISPATCH_TOKEN_VAULT_FIELD` | `ROUTE` | Gitea Actions variables |
-| `DOCSITE_DEPLOY_KEY_VAULT_PATH`, `DOCSITE_DEPLOY_KEY_VAULT_FIELD` | `ROUTE` | Gitea Actions variables |
-| `RELEASE_SIGNING_KEY_VAULT_PATH`, `RELEASE_SIGNING_KEY_VAULT_FIELD` | `ROUTE` | Gitea Actions variables |
-| `RELEASE_SIGNING_PASSPHRASE_VAULT_PATH`, `RELEASE_SIGNING_PASSPHRASE_VAULT_FIELD` | `ROUTE` | Gitea Actions variables |
-| `VAULT_ADDR` | `ROUTE` | Gitea Actions variable |
-| `DOCSITE_DEPLOY_HOST`, `DOCSITE_DEPLOY_PORT`, `DOCSITE_DEPLOY_USER`, `DOCSITE_DEPLOY_PATH` | `CONFIG` | Gitea Actions variables |
+| Name                                                                                       | Class           | Destination                |
+| ------------------------------------------------------------------------------------------ | --------------- | -------------------------- |
+| `VAULT_CI_ROLE_ID`                                                                         | `BOOTSTRAP`     | Gitea Actions secret       |
+| `VAULT_CI_SECRET_ID`                                                                       | `BOOTSTRAP`     | Gitea Actions secret       |
+| `GITHUB_TOKEN`                                                                             | CI-issued token | No storage; issued per run |
+| `GT_NPM_TOKEN_VAULT_PATH`, `GT_NPM_TOKEN_VAULT_FIELD`                                      | `ROUTE`         | Gitea Actions variables    |
+| `GT_RELEASE_TOKEN_VAULT_PATH`, `GT_RELEASE_TOKEN_VAULT_FIELD`                              | `ROUTE`         | Gitea Actions variables    |
+| `GH_MIRROR_TOKEN_VAULT_PATH`, `GH_MIRROR_TOKEN_VAULT_FIELD`                                | `ROUTE`         | Gitea Actions variables    |
+| `AIWG_IO_DISPATCH_TOKEN_VAULT_PATH`, `AIWG_IO_DISPATCH_TOKEN_VAULT_FIELD`                  | `ROUTE`         | Gitea Actions variables    |
+| `DOCSITE_DEPLOY_KEY_VAULT_PATH`, `DOCSITE_DEPLOY_KEY_VAULT_FIELD`                          | `ROUTE`         | Gitea Actions variables    |
+| `RELEASE_SIGNING_KEY_VAULT_PATH`, `RELEASE_SIGNING_KEY_VAULT_FIELD`                        | `ROUTE`         | Gitea Actions variables    |
+| `RELEASE_SIGNING_PASSPHRASE_VAULT_PATH`, `RELEASE_SIGNING_PASSPHRASE_VAULT_FIELD`          | `ROUTE`         | Gitea Actions variables    |
+| `VAULT_ADDR`                                                                               | `ROUTE`         | Gitea Actions variable     |
+| `DOCSITE_DEPLOY_HOST`, `DOCSITE_DEPLOY_PORT`, `DOCSITE_DEPLOY_USER`, `DOCSITE_DEPLOY_PATH` | `CONFIG`        | Gitea Actions variables    |
 
 The machine-readable variable manifest is
 [`../../ci/vault-migration-plan.json`](../../ci/vault-migration-plan.json).
@@ -122,6 +122,20 @@ npm run configure:gitea-vault -- \
   --vars-env /path/to/private-routing-and-deploy.env \
   --apply
 ```
+
+## AppRole Recovery Custody
+
+The `ci-aiwg` handoff contains only the AppRole bootstrap pair. It is not a
+backup of the GPG release key, its passphrase, the Git SSH key, or any other
+vault-held project secret. Those private values remain solely under the secret
+store's custody and its backup and disaster-recovery controls.
+
+The private itops repository defines the approved encrypted recovery medium,
+copy verification, manifest, recovery-login test, and source-removal procedure
+for newly generated handoffs. Do not commit that medium's path, a role ID, a
+SecretID, or a secret-derived digest to this repository. Combined CI handoff
+files use exactly `VAULT_CI_ROLE_ID` and `VAULT_CI_SECRET_ID`; rewrite any
+legacy provider-specific names when an older handoff is touched.
 
 ## Docsite Deployment Config
 
