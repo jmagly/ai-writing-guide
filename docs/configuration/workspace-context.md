@@ -19,7 +19,7 @@ registration errors, and managed-bootstrap drift.
 
 ## Existing projects
 
-Legacy `CLAUDE.md`, `AGENTS.md`, `WARP.md`, `.hermes.md`, and Copilot layouts
+Legacy `CLAUDE.md`, `AGENTS.md`, `AGENTS.override.md`, `WARP.md`, `.hermes.md`, and Copilot layouts
 remain supported. Migration is explicit:
 
 ```sh
@@ -28,6 +28,20 @@ aiwg workspace-context migrate --dry-run
 aiwg workspace-context migrate --apply
 aiwg workspace-context rollback [transaction-id]
 ```
+
+The linked regenerate branch combines that adoption with deterministic project
+extraction and generated context in one transaction:
+
+```sh
+aiwg regenerate --existing-project --dry-run
+aiwg regenerate --existing-project --apply
+aiwg workspace-context doctor
+```
+
+It extracts only stable local evidence (package metadata, README purpose,
+toolchain files, standard commands, test/architecture paths, and CI workflow
+names) into a replaceable managed block inside the protected operator region.
+Manual content around that block is preserved.
 
 Audit reports exact duplicates separately from ambiguous positive/negative
 conflicts and identifies root versus nested scope. Apply refuses possible

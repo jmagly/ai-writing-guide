@@ -2,6 +2,7 @@
 namespace: aiwg
 name: aiwg-regenerate-workspace
 platforms: [all]
+kernel: true
 description: Regenerate the canonical WORKSPACE.md-first context graph and provider adapters
 commandHint:
   argumentHint: "[--provider <name>] [--dry-run] [--force]"

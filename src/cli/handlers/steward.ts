@@ -466,7 +466,14 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
   if (subcommand === 'models' || subcommand === 'model-routing') {
     const flagValue = (name: string): string | undefined => {
       const index = args.indexOf(name);
-      return index >= 0 ? args[index + 1] : undefined;
+      if (index < 0) return undefined;
+      const value = args[index + 1];
+      if (!value || value.startsWith('--')) throw new AiwgError({
+        code: 'ERR_USAGE_MISSING_VALUE',
+        message: `${name} requires a value.`,
+        exitCode: EXIT_CODES.USAGE,
+      });
+      return value;
     };
     if (args.includes('--route')) {
       const rawProvider = flagValue('--provider') ?? await resolveActiveProvider({

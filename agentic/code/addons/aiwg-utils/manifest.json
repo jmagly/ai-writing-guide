@@ -92,6 +92,7 @@
     "aiwg-refresh",
     "aiwg-regenerate",
     "aiwg-regenerate-workspace",
+    "aiwg-regenerate-existing-project",
     "aiwg-regenerate-legacy",
     "aiwg-regenerate-claude",
     "aiwg-regenerate-warp",

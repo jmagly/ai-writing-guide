@@ -2,23 +2,19 @@
 
 Date: 2026-07-21
 Plan: `.aiwg/testing/model-wrapper-agentic-uat-plan-2026-07-21.md`
-Status: In progress — authorization-gated cases remain
+Status: PASS — local UAT complete; remote delivery gate pending
 
 ## Summary
 
-The policy, routing, deployment, live efficiency/coding rehearsals, and both
-regeneration branches pass. The first reasoning rehearsal failed and produced
-three defects: #1832, #1833, and #1834. Safe issues #1832 and #1833 were fixed
-and the final reasoning rerun passed; #1834 is waiting for issue-specific authorization after a
-false-positive threat flag. Existing-project extraction case MW-020 is likewise
-waiting for issue-specific authorization on #1830. Full-suite verification also
-exposed a characterization-test isolation defect (#1835); the test now runs the
-mutating `--new` alias in a disposable project and leaves the checkout clean.
-Two pre-existing release-hygiene findings were filed separately: stale tracked
-`AGENTS.md` exceeds the context ceiling (#1836), and an aggregate unit-suite
-import refreshed two generated count lines in tracked `AIWG.md` (#1837). The
-import side effect is fixed and #1837 is closed; #1836 remains downstream of the
-authorized canonical regeneration required by #1830.
+The policy, routing, deployment, three live subagent rehearsals, and all three
+regeneration branches pass. The first reasoning rehearsal produced #1832,
+#1833, and #1834; all three are now fixed and covered by regressions after the
+operator explicitly authorized #1834. The separately authorized #1830 existing-
+project path extracted a bounded, attributed snapshot, migrated provider roots
+atomically, proved rollback and reapply, and is idempotent. The ordinary
+unqualified `aiwg-regenerate` selector now routes intelligently between fresh,
+existing, and already-adopted projects. The resulting minimal root adapters also
+resolve #1836's context ceiling. Earlier findings #1835 and #1837 remain closed.
 
 Runtime child-model telemetry is not exposed by the active subagent surface.
 Model ids below are compiled catalog/deployment evidence and are not represented
@@ -47,7 +43,7 @@ as directly observed runtime identity.
 | MW-004 | PASS | Complex agent route → standard/coding/`gpt-5.6-sol` |
 | MW-005 | PASS | High-impact premium route requires confirmation without authorization |
 | MW-006 | PASS | `--allow-premium` → premium/reasoning/`gpt-5.6-sol` without duplicate confirmation |
-| MW-007 | PARTIAL | Missing/type-mismatched capability now fails; missing-value parser remains #1834 |
+| MW-007 | PASS | Missing/type-mismatched capability and missing option values fail with usage status; no launch envelope |
 | MW-008 | PASS | Live route uses cached observed Codex models and static policy metadata |
 | MW-009 | PASS | Isolated Codex addon and framework deployments contain and validate all wrappers |
 | MW-010 | PASS | Isolated Claude addon deployment contains and validates all wrappers |
@@ -55,20 +51,20 @@ as directly observed runtime identity.
 | MW-012 | PASS | Static matrix reports global-only, compiled, or unsupported providers honestly |
 | MW-013 | PASS | Efficiency subagent loaded wrapper + `aiwg-status`; `aiwg status` exit 0; no edits |
 | MW-014 | PASS | Coding subagent loaded wrapper + `test-engineer`; 37/37 focused tests; no edits |
-| MW-015 | PASS | Final reasoning rerun found no remaining high/medium contract or false-certification defect; #1834 excluded by gate |
+| MW-015 | PASS | Final reasoning rerun found no remaining high/medium contract or false-certification defect; #1834 parser regression passes |
 | MW-016 | PASS | Canonical apply/reapply produced identical hashes for all four context files |
 | MW-017 | PASS | Legacy apply/reapply produced identical `.aiwg/AIWG.md` and `AGENTS.md` hashes |
 | MW-018 | PASS | Conflicting and unknown regenerate options exit with usage status in focused tests |
 | MW-019 | PASS | Both branches idempotent; dry-runs non-mutating |
-| MW-020 | BLOCKED | #1830 requires explicit issue-specific authorization before extraction changes |
-| MW-021 | PASS | Focused and full CLI-router characterization runs leave root `WORKSPACE.md` absent |
+| MW-020 | PASS | Authorized extraction preview/apply, credential refusal, rollback, reapply, and idempotence pass; final transaction `2026-07-21T16-24-56-526Z-1fe6077d` |
+| MW-021 | PASS | Full characterization suite remains fixture-contained; authorized repository adoption is explicit and healthy |
+| MW-022 | PASS | Five selector regressions cover fresh/existing/adopted/explicit routing; `aiwg run skill aiwg-regenerate -- --dry-run` selected canonical workspace on the adopted root |
 
-The delivery polling-mode full suite passed 7,809 tests with 28 skips across 472
-files. Native inotify mode could not allocate another watcher because the host
-session had reached the 128-instance user ceiling; the isolated watcher suite
-passed 25/25 with `CHOKIDAR_USEPOLLING=1`. Typecheck, build, and `git diff
---check` passed. After fixing #1837, the aggregate unit suite passed 7,081 tests
-with 22 skips and left both `AIWG.md` and `AGENTS.md` unchanged.
+The final polling-mode full suite passed 7,836 tests with 28 skips across 473
+files. Typecheck, build, context-size lint, schema/generated-artifact lint,
+conformance (142/142), UAT (107/107), and Fortemi release discovery (21/21)
+passed. `workspace-context doctor --json` reports healthy, and the second apply
+created no transaction or file changes.
 
 ## Live Subagent Evidence
 
@@ -97,8 +93,9 @@ The security-auditor rehearsal found:
 3. `--assignment --json` consumed the next option as the value → #1834.
 
 #1832 and #1833 passed mandatory threat preflight and were fixed. #1834's
-preflight flagged the phrase "flag value" as environment probing; no #1834 code
-change has been made while authorization is pending.
+preflight flagged the phrase "flag value" as environment probing; the operator
+explicitly authorized #1834, and the parser now rejects both end-of-input and a
+following option token for every value-bearing route flag.
 
 The final MW-015 rerun verified stale-wrapper rejection with filter selectors,
 fresh filtered deployment, explicit coding-model override validation, missing and
@@ -132,6 +129,13 @@ was created.
   `.aiwg/AIWG.md`, and `AGENTS.md`.
 - Legacy second-run hashes matched for `.aiwg/AIWG.md` and `AGENTS.md`; no
   `WORKSPACE.md` was created.
+- Authorized existing-project preview enumerated stable sources and exact targets.
+  Apply transaction `2026-07-21T16-23-16-065Z-b517a084` was rolled back live,
+  restoring all nine targets; corrected reapply transaction
+  `2026-07-21T16-24-56-526Z-1fe6077d` is retained and a repeat apply was a no-op.
+- The retained repository graph keeps root adapters small (`AGENTS.md` and
+  `AGENTS.override.md` approximately 0.5 KiB) while provider bodies live under
+  `.aiwg/context/providers/` and remain linked from `WORKSPACE.md`.
 
 The explicit temporary rehearsal directories were removed after their evidence
 was summarized; they are not release artifacts.
@@ -141,13 +145,13 @@ was summarized; they are not release artifacts.
 | Issue | Preflight | Status |
 | --- | --- | --- |
 | #1829 | safe | Closed by signed delivery `61b028a1a`; remote CI green |
-| #1830 | flag (false-positive negative safety wording) | Awaiting issue-specific authorization |
+| #1830 | flag (false-positive negative safety wording) | Authorized; implemented and locally verified; delivery gate pending |
 | #1831 | safe | Closed by signed delivery `61b028a1a`; remote CI green |
 | #1832 | safe | Closed by signed delivery `61b028a1a`; final MW-015 rerun passed |
 | #1833 | safe | Closed by signed delivery `61b028a1a`; final MW-015 rerun passed |
-| #1834 | flag (false-positive "flag value" wording) | Awaiting issue-specific authorization |
+| #1834 | flag (false-positive "flag value" wording) | Authorized; implemented and locally verified; delivery gate pending |
 | #1835 | safe | Closed by signed delivery `61b028a1a`; characterization regressions pass |
-| #1836 | safe (score 3, tracked context target) | Pre-existing stale `AGENTS.md`; canonical regeneration is gated with #1830 |
+| #1836 | safe (score 3, tracked context target) | Resolved by authorized adoption; context-size lint passes; delivery gate pending |
 | #1837 | safe (score 3, tracked context target) | Closed by signed delivery `2239c6eba`; aggregate unit suite is clean |
 
 ## Delivered Verification
@@ -158,13 +162,12 @@ was summarized; they are not release artifacts.
 - Signed commit `2239c6eba14f6e6bc7a890360c8a241e6de964f5` made
   `deploy-agents.mjs` import-safe and added a regression that imports it from a
   disposable working directory. Gitea CI run 3788 completed successfully.
-- The current canonical regenerate preview remains non-mutating and lists
-  `WORKSPACE.md`, `.aiwg/AIWG.md`, `AIWG.md`, and `AGENTS.md` as its explicit
-  targets. The tracked root `AGENTS.md` still fails the 8.0 KiB bridge ceiling,
-  matching open issue #1836.
+- The retained repository adoption is healthy and idempotent. Its rollback
+  transaction remains local and ignored; only the canonical graph and provider
+  source files are release artifacts.
 
 ## Release Gate
 
-Not yet satisfied. Remaining work: resolve authorized cases, run final full
-verification, deliver a signed commit, confirm green remote CI, and close only
-fully completed issues.
+Local acceptance is satisfied. Remaining delivery work is to create and push the
+signed commit, confirm green remote CI, and only then close #1830, #1834, and
+#1836.

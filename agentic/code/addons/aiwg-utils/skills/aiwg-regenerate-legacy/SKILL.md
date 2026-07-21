@@ -2,6 +2,7 @@
 namespace: aiwg
 name: aiwg-regenerate-legacy
 platforms: [all]
+kernel: true
 description: Regenerate provider startup context using the legacy inline compatibility branch
 commandHint:
   argumentHint: "[--provider <name>] [--dry-run]"

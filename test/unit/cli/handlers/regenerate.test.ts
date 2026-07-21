@@ -202,6 +202,63 @@ describe('regenerateHandler', () => {
     expect(existsSync(join(tmpDir, '.aiwg', 'AIWG.md'))).toBe(false);
   });
 
+  it('previews existing-project extraction without writes and requires explicit apply', async () => {
+    const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+    writeConfig(tmpDir, ['codex']);
+    writeFileSync(join(tmpDir, 'package.json'), JSON.stringify({
+      name: 'existing-fixture', scripts: { build: 'tsc', test: 'vitest' },
+    }));
+    writeFileSync(join(tmpDir, 'README.md'), '# Fixture\n\nAn established fixture project for regeneration tests.\n');
+    writeFileSync(join(tmpDir, 'AGENTS.override.md'), 'Always run fixture tests.\n');
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const result = await regenerateHandler.execute(makeCtx(tmpDir, ['--provider', 'codex', '--existing-project']));
+
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(join(tmpDir, 'WORKSPACE.md'))).toBe(false);
+    expect(existsSync(join(tmpDir, '.aiwg', 'context-migrations'))).toBe(false);
+    const output = consoleSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    expect(output).toContain('canonical existing-project extraction');
+    expect(output).toContain('Re-run with --apply');
+    consoleSpy.mockRestore();
+  });
+
+  it('applies existing-project extraction as one rollback-capable transaction', async () => {
+    const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+    writeConfig(tmpDir, ['codex']);
+    writeFileSync(join(tmpDir, 'package.json'), JSON.stringify({ name: 'existing-fixture' }));
+    writeFileSync(join(tmpDir, 'README.md'), '# Fixture\n\nAn established fixture project for transactional regeneration.\n');
+    writeFileSync(join(tmpDir, 'AGENTS.override.md'), 'Always run fixture tests.\n');
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const result = await regenerateHandler.execute(makeCtx(tmpDir, [
+      '--provider', 'codex', '--existing-project', '--apply',
+    ]));
+
+    expect(result.exitCode).toBe(0);
+    expect(readFileSync(join(tmpDir, 'WORKSPACE.md'), 'utf8')).toContain('## Existing Project Snapshot');
+    expect(readFileSync(join(tmpDir, 'AGENTS.override.md'), 'utf8')).toContain('WORKSPACE.md');
+    const output = consoleSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    expect(output).toContain('Transaction:');
+    expect(output).toContain('aiwg workspace-context rollback');
+    consoleSpy.mockRestore();
+  });
+
+  it('leaves a fresh project unchanged in existing-project mode', async () => {
+    const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+    writeConfig(tmpDir, ['codex']);
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const result = await regenerateHandler.execute(makeCtx(tmpDir, [
+      '--provider', 'codex', '--existing-project', '--apply',
+    ]));
+
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(join(tmpDir, 'WORKSPACE.md'))).toBe(false);
+    expect(consoleSpy.mock.calls.map((call) => String(call[0])).join('\n')).toContain('No stable existing-project signals');
+    consoleSpy.mockRestore();
+  });
+
   it('rejects unknown options instead of silently ignoring them', async () => {
     const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
     writeConfig(tmpDir, ['codex']);
@@ -214,6 +271,20 @@ describe('regenerateHandler', () => {
     const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
     writeConfig(tmpDir, ['codex']);
     const result = await regenerateHandler.execute(makeCtx(tmpDir, ['--workspace', '--full-inject']));
+    expect(result.exitCode).toBe(2);
+  });
+
+  it.each([
+    ['--existing-project', '--workspace'],
+    ['--existing-project', '--full-inject'],
+    ['--existing-project', '--dry-run', '--apply'],
+    ['--workspace', '--apply'],
+    ['--existing-project', '--force'],
+    ['--existing-project', '--no-aiwg-md'],
+  ])('rejects invalid branch/control combination %s %s', async (...flags) => {
+    const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+    writeConfig(tmpDir, ['codex']);
+    const result = await regenerateHandler.execute(makeCtx(tmpDir, flags));
     expect(result.exitCode).toBe(2);
   });
 });

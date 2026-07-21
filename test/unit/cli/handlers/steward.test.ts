@@ -360,6 +360,60 @@ describe('steward models', () => {
     expect(result.exitCode).toBe(2);
     consoleSpy.mockRestore();
   });
+
+  it.each([
+    ['--provider', [
+      'models', '--route', '--provider', '--capability-type', 'agent',
+      '--capability', 'software-implementer', '--assignment', 'Bounded work.', '--json',
+    ]],
+    ['--capability-type', [
+      'models', '--route', '--provider', 'codex', '--capability-type', '--capability',
+      'software-implementer', '--assignment', 'Bounded work.', '--json',
+    ]],
+    ['--capability', [
+      'models', '--route', '--provider', 'codex', '--capability-type', 'agent',
+      '--capability', '--assignment', 'Bounded work.', '--json',
+    ]],
+    ['--assignment', [
+      'models', '--route', '--provider', 'codex', '--capability-type', 'agent',
+      '--capability', 'software-implementer', '--assignment', '--json',
+    ]],
+  ] as const)('rejects %s when the next token is another option', async (_flag, args) => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const result = await stewardHandler.execute(makeCtx([...args]));
+
+    expect(result.exitCode).toBe(2);
+    expect(consoleSpy.mock.calls.map(call => String(call[0])).join('\n')).not.toContain('schemaVersion');
+    consoleSpy.mockRestore();
+  });
+
+  it.each([
+    ['--provider', [
+      'models', '--route', '--capability-type', 'agent', '--capability',
+      'software-implementer', '--assignment', 'Bounded work.', '--provider',
+    ]],
+    ['--capability-type', [
+      'models', '--route', '--provider', 'codex', '--capability',
+      'software-implementer', '--assignment', 'Bounded work.', '--capability-type',
+    ]],
+    ['--capability', [
+      'models', '--route', '--provider', 'codex', '--capability-type', 'agent',
+      '--assignment', 'Bounded work.', '--capability',
+    ]],
+    ['--assignment', [
+      'models', '--route', '--provider', 'codex', '--capability-type', 'agent',
+      '--capability', 'software-implementer', '--assignment',
+    ]],
+  ] as const)('rejects %s at end of input', async (_flag, args) => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const result = await stewardHandler.execute(makeCtx([...args]));
+
+    expect(result.exitCode).toBe(2);
+    expect(consoleSpy.mock.calls.map(call => String(call[0])).join('\n')).not.toContain('schemaVersion');
+    consoleSpy.mockRestore();
+  });
 });
 
 describe('steward unknown subcommand', () => {

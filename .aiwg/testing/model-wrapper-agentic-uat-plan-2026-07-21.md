@@ -1,7 +1,7 @@
 # Model Wrapper Agentic UAT Plan
 
 Date: 2026-07-21
-Status: In progress
+Status: Executed — local acceptance complete; remote delivery gate pending
 Issues: #1829, #1830, #1831, #1832, #1833, #1834, #1835, #1836, #1837
 System under test: Steward model routing, provider wrapper deployment, and regenerate branch selection
 
@@ -10,8 +10,9 @@ System under test: Steward model routing, provider wrapper deployment, and regen
 Prove that AIWG can classify work, select an economy, standard, or premium model
 role, bind an agent/skill/rule/workflow to the corresponding wrapper, deploy every
 required wrapper for configured providers, and execute bounded subagent work with
-traceable evidence. Also prove that canonical and legacy regeneration remain
-explicit, isolated, idempotent, and non-destructive.
+traceable evidence. Also prove that canonical, legacy, and existing-project
+regeneration remain explicit, isolated, idempotent, and non-destructive, while
+the unqualified `aiwg-regenerate` skill intelligently selects the right branch.
 
 ## Acceptance Criteria
 
@@ -35,7 +36,10 @@ explicit, isolated, idempotent, and non-destructive.
 8. Existing-project extraction into `WORKSPACE.md` runs only after the issue-specific
    authorization gate for #1830 is satisfied, and then preserves attribution,
    backups, conflict checks, and the no-credential migration gate.
-9. Every defect found during execution receives a tracker issue, threat preflight,
+9. The normal unqualified `aiwg-regenerate` entry point detects stable existing
+   project signals and routes to preview/apply extraction; adopted and fresh
+   workspaces route to canonical regeneration. Explicit branch flags take precedence.
+10. Every defect found during execution receives a tracker issue, threat preflight,
    address-issues cycle evidence, a verified fix, and closure only after delivery.
 
 ## Evidence Contract
@@ -70,7 +74,8 @@ authentication material.
 | MW-018 | Regenerate | Conflicting/unknown flags | Exit 2; no writes |
 | MW-019 | Regenerate | Repeat each branch | Idempotent output; operator content preserved |
 | MW-020 | Migration | Existing-project extraction | Gated on #1830 authorization; attributed project context only |
-| MW-021 | Isolation | Full CLI-router characterization suite | Checkout remains unchanged; no root `WORKSPACE.md` leak |
+| MW-021 | Isolation | Full CLI-router characterization suite | Fixture-contained mutations; repository context changes only through the authorized migration |
+| MW-022 | Selector | Invoke unqualified `aiwg-regenerate` across fresh, existing, and adopted fixtures | Intelligent branch selection; explicit flags remain authoritative |
 
 ## Execution Phases
 
@@ -111,6 +116,8 @@ authentication material.
 - Exercise canonical and legacy branches in disposable fixtures.
 - Confirm linked skill files describe the same CLI contract.
 - Run MW-020 only after #1830 receives explicit issue-specific authorization.
+- Exercise MW-022 through the selector source and the installed executable-skill
+  surface so ordinary user invocation, not only direct CLI flags, is covered.
 
 ### Phase 5 — Defect Loop and Release Gate
 

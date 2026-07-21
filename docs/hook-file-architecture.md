@@ -44,12 +44,13 @@ WARP.md/.hermes.md/.github/copilot-instructions.md
 
 `.aiwg/AIWG.md` is created by `aiwg init` and refreshed by `aiwg use` / `aiwg regenerate`. Root `AIWG.md` is generated from provider context plus a context-finalization pass that reads `.aiwg/aiwg.config`, records installed frameworks/addons and provider deployments, and inlines the discover-first protocol (`aiwg discover` then `aiwg show`). It is safe to delete generated bridge files; regeneration recreates them.
 
-`aiwg regenerate` now has two explicit branches. `--workspace` (the default)
-maintains `WORKSPACE.md` first, `AIWG.md` second, and provider adapters last.
+`aiwg regenerate` has three explicit branches. `--workspace` (the default)
+refreshes `WORKSPACE.md`, `AIWG.md`, and provider adapters without inferring
+project facts. `--existing-project` previews or transactionally applies a
+bounded, source-attributed project snapshot and provider-context migration.
 `--full-inject` (alias `--legacy`) embeds normalized AIWG context between legacy
 markers for compatibility and does not create `WORKSPACE.md`. The deployed
-`aiwg-regenerate` selector links to the separate `aiwg-regenerate-workspace` and
-`aiwg-regenerate-legacy` branch skills.
+selector links to a separate skill for each branch.
 
 ## Hook File Map
 

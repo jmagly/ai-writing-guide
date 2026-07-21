@@ -9,6 +9,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Existing-project context extraction** (#1830) —
+  `aiwg regenerate --existing-project` previews or atomically applies a bounded,
+  source-attributed project snapshot inside `WORKSPACE.md`, migrates active
+  provider roots (including `AGENTS.override.md`), excludes generated framework
+  and spillover content, refuses credential/conflict hazards, and emits an exact
+  rollback command. A third linked branch skill documents the workflow.
+
 - **Agentic model-wrapper routing and UAT** (#1831) — Steward emits a
   capability-bound, provider-compiled launch envelope for deterministic,
   economy, standard, and premium work; exact capability resolution contributes
@@ -39,6 +46,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Fixed
 
+- **Strict Steward route option parsing** (#1834) — value-bearing routing flags
+  now reject end-of-input and a following option token with usage status instead
+  of consuming another flag as data or emitting a misleading launch envelope.
+- **Root context ceiling after workspace adoption** (#1836) — authorized
+  existing-project regeneration replaces stale oversized provider roots with
+  minimal linked adapters while preserving their bodies under
+  `.aiwg/context/providers/`.
 - **Characterization test isolation** (#1835) — the mutating `--new` alias
   now runs in a disposable project and explicitly verifies that the repository
   `WORKSPACE.md` state is unchanged.

@@ -14,3 +14,11 @@ under `.aiwg/context/providers/`. Transaction preimages under
 If an existing `WORKSPACE.md` has no AIWG ownership markers, routine generation
 leaves it untouched. The explicit migration command adopts it into the protected
 operator region and records a transaction before replacing provider adapters.
+
+For a complete existing-project adoption, use
+`aiwg regenerate --existing-project --dry-run`, review the exact synthesized
+project block and target list, then rerun with `--apply`. This branch includes
+the generated root and normalized AIWG context in the same manifest, migrates an
+active `AGENTS.override.md` before replacing it with a WORKSPACE-first bootstrap,
+and prints the exact rollback command. It rejects partial-write flags, possible
+credentials, and unresolved directive conflicts.

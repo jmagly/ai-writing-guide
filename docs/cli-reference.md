@@ -75,6 +75,31 @@ Complete reference for all `aiwg` CLI commands.
 
 ## Maintenance Commands
 
+### regenerate
+
+Refresh or adopt the project context graph without redeploying frameworks.
+
+```bash
+# Fresh or already-migrated project (default branch)
+aiwg regenerate --workspace [--provider <name>] [--dry-run] [--force]
+
+# Established project: preview is default, apply is explicit
+aiwg regenerate --existing-project [--provider <name>] [--dry-run|--apply]
+
+# Compatibility-only inline branch
+aiwg regenerate --full-inject [--provider <name>] [--dry-run]
+```
+
+`--existing-project` synthesizes an exact, bounded project snapshot, migrates
+provider-only roots to attributed linked files, and commits context outputs in
+one rollback-capable transaction. It refuses possible credentials, directive
+conflicts, `--force`, and partial `--no-*-md` writes. A successful apply prints
+`aiwg workspace-context rollback <transaction-id>`.
+
+`--legacy` aliases `--full-inject`. Omitting a branch selects `--workspace`.
+The CLI rejects unknown flags, missing values, and conflicting branches with
+usage status.
+
 ### help
 
 Display comprehensive CLI help information.

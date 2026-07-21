@@ -517,9 +517,12 @@ aiwg use research          # Research workflow automation (8 agents, 8-stage pip
 aiwg use rlm               # RLM addon (recursive context decomposition)
 aiwg use all               # Everything
 
-# Existing projects: use the canonical WORKSPACE.md-first context graph
-aiwg workspace-context migrate --dry-run
-aiwg workspace-context migrate --apply
+# Existing projects: preview, then transactionally extract the canonical graph
+aiwg regenerate --existing-project --dry-run
+aiwg regenerate --existing-project --apply
+aiwg workspace-context doctor
+
+# Fresh or already-migrated projects: ordinary canonical refresh
 aiwg regenerate --workspace
 
 # Legacy compatibility only: inline AIWG context in provider startup files

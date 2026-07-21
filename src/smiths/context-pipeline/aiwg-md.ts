@@ -38,14 +38,20 @@ const AIWG_SIGNATURE_COMMENT = '<!-- aiwg-managed -->';
  * Returns the rendered content as a string. Caller is responsible for the
  * atomic-write emission and the operator-claimed-file detection.
  */
-export async function buildAiwgMdContent(projectPath: string): Promise<string> {
-  const claudeMdPath = path.join(projectPath, 'CLAUDE.md');
-  let claudeMdContent: string | null = null;
-  try {
-    claudeMdContent = await fs.readFile(claudeMdPath, 'utf8');
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
-      throw err;
+export async function buildAiwgMdContent(
+  projectPath: string,
+  stagedClaudeMdContent?: string | null,
+): Promise<string> {
+  let claudeMdContent = stagedClaudeMdContent;
+  if (stagedClaudeMdContent === undefined) {
+    const claudeMdPath = path.join(projectPath, 'CLAUDE.md');
+    try {
+      claudeMdContent = await fs.readFile(claudeMdPath, 'utf8');
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw err;
+      }
+      claudeMdContent = null;
     }
   }
 

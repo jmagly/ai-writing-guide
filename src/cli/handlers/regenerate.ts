@@ -31,6 +31,8 @@ import {
   buildNormalizedAiwgMd,
   writeNormalizedAiwgMd,
   injectLegacyContext,
+  migrateWorkspaceContext,
+  extractExistingProjectContext,
 } from '../../smiths/context-pipeline/index.js';
 import type { Platform } from '../../agents/types.js';
 import { resolveActiveProvider } from '../provider-resolution.js';
@@ -51,7 +53,9 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
 
   Options:
     --workspace             Canonical WORKSPACE.md → AIWG.md graph (default)
+    --existing-project      Transactionally extract an established project into WORKSPACE.md
     --legacy, --full-inject Legacy inline compatibility branch
+    --apply                 Apply --existing-project after its mandatory preflight
     --dry-run               Print what would change; no writes
     --provider <name>       Target provider (default: auto-detect from env)
     --force                 Overwrite operator-modified files (backs up first)
@@ -63,6 +67,8 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   Examples:
     aiwg regenerate
     aiwg regenerate --workspace
+    aiwg regenerate --existing-project --dry-run
+    aiwg regenerate --existing-project --apply
     aiwg regenerate --full-inject
     aiwg regenerate --dry-run
     aiwg regenerate --provider codex
@@ -78,11 +84,14 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   const skipWorkspaceMd = args.includes('--no-workspace-md');
   const legacy = args.includes('--legacy') || args.includes('--full-inject');
   const workspace = args.includes('--workspace');
+  const existingProject = args.includes('--existing-project');
+  const apply = args.includes('--apply');
 
   const valueFlags = new Set(['--provider']);
   const booleanFlags = new Set([
     '--help', '-h', '--dry-run', '--force', '--no-aiwg-md', '--no-agents-md',
     '--no-workspace-md', '--legacy', '--full-inject', '--workspace',
+    '--existing-project', '--apply',
   ]);
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -98,9 +107,25 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
       });
     }
   }
-  if (legacy && workspace) throw new AiwgError({
+  const selectedBranches = Number(legacy) + Number(workspace) + Number(existingProject);
+  if (selectedBranches > 1) throw new AiwgError({
     code: 'ERR_USAGE_CONFLICTING_FLAGS',
-    message: 'Choose exactly one regenerate branch: --workspace or --full-inject.',
+    message: 'Choose exactly one regenerate branch: --workspace, --existing-project, or --full-inject.',
+    exitCode: EXIT_CODES.USAGE,
+  });
+  if (apply && !existingProject) throw new AiwgError({
+    code: 'ERR_USAGE_CONFLICTING_FLAGS',
+    message: '--apply is only valid with --existing-project.',
+    exitCode: EXIT_CODES.USAGE,
+  });
+  if (existingProject && dryRun && apply) throw new AiwgError({
+    code: 'ERR_USAGE_CONFLICTING_FLAGS',
+    message: 'Choose either --dry-run or --apply for --existing-project.',
+    exitCode: EXIT_CODES.USAGE,
+  });
+  if (existingProject && (force || skipAiwgMd || skipAgentsMd || skipWorkspaceMd)) throw new AiwgError({
+    code: 'ERR_USAGE_CONFLICTING_FLAGS',
+    message: '--existing-project is a complete transaction and cannot be combined with --force or --no-*-md flags.',
     exitCode: EXIT_CODES.USAGE,
   });
 
@@ -121,10 +146,52 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
 
   const target = cwd;
 
-  console.log(`${ui.brandMark()} aiwg regenerate${dryRun ? '  (dry run)' : ''}`);
+  const effectiveDryRun = dryRun || (existingProject && !apply);
+  console.log(`${ui.brandMark()} aiwg regenerate${effectiveDryRun ? '  (dry run)' : ''}`);
   console.log(`  Provider: ${provider}`);
   console.log(`  Target:   ${target}`);
-  console.log(`  Branch:   ${legacy ? 'legacy full injection' : 'canonical workspace graph'}`);
+  console.log(`  Branch:   ${legacy ? 'legacy full injection' : existingProject ? 'canonical existing-project extraction' : 'canonical workspace graph'}`);
+
+  if (existingProject) {
+    const preflight = await migrateWorkspaceContext(target, {
+      dryRun: true,
+      extractProject: true,
+      includeGeneratedContext: true,
+    });
+    const hasExistingSignals = preflight.audit.plan.projectSources.length > 0
+      || preflight.audit.sources.some((source) => source.path !== 'WORKSPACE.md' && source.operatorContent.trim().length > 0);
+    console.log('');
+    console.log(`  Stable project sources: ${preflight.audit.plan.projectSources.length}`);
+    for (const source of preflight.audit.plan.projectSources) console.log(`    - ${source}`);
+    if (!hasExistingSignals) {
+      console.log('  No stable existing-project signals found; no files changed.');
+      console.log('  Use `aiwg regenerate --workspace` to initialize a fresh project.');
+      return;
+    }
+    const extractedProject = await extractExistingProjectContext(target);
+    console.log('  Synthesized WORKSPACE project block:');
+    for (const line of extractedProject.content.split('\n')) console.log(`    ${line}`);
+    console.log('  Transaction plan:');
+    for (const file of preflight.written) console.log(`    - ${file}`);
+    if (!apply) {
+      console.log('');
+      console.log('  Dry run complete — no changes made. Re-run with --apply to commit this transaction.');
+      return;
+    }
+    const migration = await migrateWorkspaceContext(target, {
+      apply: true,
+      extractProject: true,
+      includeGeneratedContext: true,
+    });
+    for (const file of migration.written) console.log(`  OK Wrote ${file}`);
+    if (migration.transactionId) {
+      console.log(`  Transaction: ${migration.transactionId}`);
+      console.log(`  Rollback: aiwg workspace-context rollback ${migration.transactionId}`);
+    }
+    if (!migration.changed) console.log('  Existing-project context is already current.');
+    console.log('  Existing-project regenerate complete');
+    return;
+  }
 
   if (legacy) {
     if (skipWorkspaceMd) console.log('  Note: --no-workspace-md is implicit in legacy mode.');

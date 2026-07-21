@@ -93,6 +93,7 @@ opencode.json
 .aiwg/working/
 .aiwg/.index/
 .aiwg/.storage-cache/
+.aiwg/context-migrations/
 .aiwg/security-engineering/reviews/disclosures/
 .aiwg/ralph/archive/
 .aiwg/ralph-external/loops/

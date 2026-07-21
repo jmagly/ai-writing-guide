@@ -180,10 +180,10 @@ export const regenerateCommand: Extension = {
   id: 'regenerate',
   type: 'skill',
   name: 'Regenerate Context Files',
-  description: 'Regenerate WORKSPACE.md, AIWG.md, and provider adapters without redeploying frameworks',
+  description: 'Regenerate or transactionally adopt WORKSPACE.md, AIWG.md, and provider adapters without redeploying frameworks',
   version: '1.0.0',
   capabilities: ['cli', 'regenerate', 'context', 'maintenance', 'self-maintenance'],
-  keywords: ['regenerate', 'context', 'workspace.md', 'aiwg.md', 'agents.md', 'redeploy-context'],
+  keywords: ['regenerate', 'context', 'workspace.md', 'aiwg.md', 'agents.md', 'existing-project', 'redeploy-context'],
   category: 'maintenance',
   platforms: {
     claude: 'full',
@@ -195,13 +195,14 @@ export const regenerateCommand: Extension = {
   },
   metadata: {
     type: 'skill',
-    triggerPhrases: ['regenerate context', 'refresh WORKSPACE.md', 'rewrite AIWG.md', 'fix context files'],
+    triggerPhrases: ['regenerate context', 'extract existing project context', 'refresh WORKSPACE.md', 'rewrite AIWG.md', 'fix context files'],
     commandHint: {
       template: 'utility',
       allowedTools: ['Bash', 'Read', 'Write'],
-      argumentHint: '[--provider <name>] [--dry-run] [--force] [--no-workspace-md] [--no-aiwg-md] [--no-agents-md]',
+      argumentHint: '[--workspace|--existing-project|--full-inject] [--provider <name>] [--dry-run|--apply] [--force]',
       executionSteps: [
         'Detect active provider (or accept --provider override)',
+        'Select canonical refresh, transactional existing-project extraction, or legacy inline compatibility',
         'Discover deployed artifacts under provider paths',
         'Refresh the managed WORKSPACE.md graph while preserving its operator region',
         'Regenerate AIWG.md and minimal provider startup adapters',

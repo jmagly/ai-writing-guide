@@ -27,6 +27,7 @@ import type {
 } from '../../../src/artifacts/types.js';
 import { GRAPH_CONFIGS, getGraphIndexDir } from '../../../src/artifacts/types.js';
 import { loadGraphIndexFile } from '../../../src/artifacts/index-reader.js';
+import { workspaceLinkedFiles } from '../../../src/smiths/context-pipeline/workspace-context.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
 const AIWG_DIR = path.join(REPO_ROOT, '.aiwg');
@@ -231,11 +232,14 @@ describe('Multi-Graph Index Architecture (integration)', () => {
       }
     });
 
-    it('should index .aiwg/ artifacts only', () => {
+    it('should index .aiwg/ artifacts plus only the canonical WORKSPACE graph', async () => {
       const md = graphData.project.metadata;
       if (!md) return;
+      const linked = new Set((await workspaceLinkedFiles(REPO_ROOT))
+        .map(file => path.relative(REPO_ROOT, file).replace(/\\/g, '/')));
       for (const entryPath of Object.keys(md.entries)) {
-        expect(entryPath.startsWith('.aiwg/'), `${entryPath} should be in .aiwg/`).toBe(true);
+        const allowed = entryPath.startsWith('.aiwg/') || entryPath === 'WORKSPACE.md' || linked.has(entryPath);
+        expect(allowed, `${entryPath} should be in .aiwg/ or explicitly linked by WORKSPACE.md`).toBe(true);
       }
     });
 
@@ -257,15 +261,17 @@ describe('Multi-Graph Index Architecture (integration)', () => {
       expect(hasRequirements || hasArchitecture).toBe(true);
     });
 
-    it('should have valid dependency graph for project artifacts', () => {
+    it('should have valid dependency graph for project artifacts', async () => {
       const deps = graphData.project.deps;
       if (!deps) return;
       const entryCount = Object.keys(deps).length;
       expect(entryCount).toBeGreaterThan(0);
 
-      // All deps entries should be .aiwg/ paths
+      const linked = new Set((await workspaceLinkedFiles(REPO_ROOT))
+        .map(file => path.relative(REPO_ROOT, file).replace(/\\/g, '/')));
       for (const depPath of Object.keys(deps)) {
-        expect(depPath.startsWith('.aiwg/'), `dep ${depPath} should be .aiwg/ path`).toBe(true);
+        const allowed = depPath.startsWith('.aiwg/') || depPath === 'WORKSPACE.md' || linked.has(depPath);
+        expect(allowed, `dep ${depPath} should be .aiwg/ or canonical WORKSPACE graph path`).toBe(true);
       }
     });
   });
