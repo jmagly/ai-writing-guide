@@ -15,9 +15,10 @@ waiting for issue-specific authorization on #1830. Full-suite verification also
 exposed a characterization-test isolation defect (#1835); the test now runs the
 mutating `--new` alias in a disposable project and leaves the checkout clean.
 Two pre-existing release-hygiene findings were filed separately: stale tracked
-`AGENTS.md` exceeds the context ceiling (#1836), and the aggregate parallel unit
-suite refreshes two generated count lines in tracked `AIWG.md` even though every
-isolated unit partition is clean (#1837).
+`AGENTS.md` exceeds the context ceiling (#1836), and an aggregate unit-suite
+import refreshed two generated count lines in tracked `AIWG.md` (#1837). The
+import side effect is fixed and #1837 is closed; #1836 remains downstream of the
+authorized canonical regeneration required by #1830.
 
 Runtime child-model telemetry is not exposed by the active subagent surface.
 Model ids below are compiled catalog/deployment evidence and are not represented
@@ -62,12 +63,12 @@ as directly observed runtime identity.
 | MW-020 | BLOCKED | #1830 requires explicit issue-specific authorization before extraction changes |
 | MW-021 | PASS | Focused and full CLI-router characterization runs leave root `WORKSPACE.md` absent |
 
-The final polling-mode full suite passed 7,809 tests with 28 skips across 472
+The delivery polling-mode full suite passed 7,809 tests with 28 skips across 472
 files. Native inotify mode could not allocate another watcher because the host
 session had reached the 128-instance user ceiling; the isolated watcher suite
 passed 25/25 with `CHOKIDAR_USEPOLLING=1`. Typecheck, build, and `git diff
---check` passed. The aggregate suite's separate tracked `AIWG.md` count side
-effect is recorded in #1837 and was restored before delivery.
+--check` passed. After fixing #1837, the aggregate unit suite passed 7,081 tests
+with 22 skips and left both `AIWG.md` and `AGENTS.md` unchanged.
 
 ## Live Subagent Evidence
 
@@ -139,15 +140,28 @@ was summarized; they are not release artifacts.
 
 | Issue | Preflight | Status |
 | --- | --- | --- |
-| #1829 | safe | Explicit legacy/canonical regenerate branches implemented; final delivery pending |
+| #1829 | safe | Closed by signed delivery `61b028a1a`; remote CI green |
 | #1830 | flag (false-positive negative safety wording) | Awaiting issue-specific authorization |
-| #1831 | safe | Capability-bound wrapper route and installer verification implemented |
-| #1832 | safe | Fixed; final MW-015 rerun passed |
-| #1833 | safe | Fixed; final MW-015 rerun passed |
+| #1831 | safe | Closed by signed delivery `61b028a1a`; remote CI green |
+| #1832 | safe | Closed by signed delivery `61b028a1a`; final MW-015 rerun passed |
+| #1833 | safe | Closed by signed delivery `61b028a1a`; final MW-015 rerun passed |
 | #1834 | flag (false-positive "flag value" wording) | Awaiting issue-specific authorization |
-| #1835 | safe | Characterization alias isolated in disposable cwd; focused and full regression pass |
+| #1835 | safe | Closed by signed delivery `61b028a1a`; characterization regressions pass |
 | #1836 | safe (score 3, tracked context target) | Pre-existing stale `AGENTS.md`; canonical regeneration is gated with #1830 |
-| #1837 | safe (score 3, tracked context target) | Parallel aggregate unit-suite side effect filed; isolated partitions are clean |
+| #1837 | safe (score 3, tracked context target) | Closed by signed delivery `2239c6eba`; aggregate unit suite is clean |
+
+## Delivered Verification
+
+- Signed commit `61b028a1a5855162ac5d4c1d8587c662406d3568` delivered the
+  regenerate branches, capability-bound routing, wrapper verification, and UAT
+  fixes. Gitea CI run 3784 completed successfully.
+- Signed commit `2239c6eba14f6e6bc7a890360c8a241e6de964f5` made
+  `deploy-agents.mjs` import-safe and added a regression that imports it from a
+  disposable working directory. Gitea CI run 3788 completed successfully.
+- The current canonical regenerate preview remains non-mutating and lists
+  `WORKSPACE.md`, `.aiwg/AIWG.md`, `AIWG.md`, and `AGENTS.md` as its explicit
+  targets. The tracked root `AGENTS.md` still fails the 8.0 KiB bridge ceiling,
+  matching open issue #1836.
 
 ## Release Gate
 
