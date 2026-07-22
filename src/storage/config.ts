@@ -17,8 +17,9 @@
 
 import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
-import { resolve, isAbsolute } from 'path';
+import { resolve, isAbsolute, join } from 'path';
 import { homedir } from 'os';
+import { projectAiwgPath, resolveProjectAiwgDir } from '../config/project-artifacts.js';
 import {
   type BackendConfig,
   type StorageConfig,
@@ -47,8 +48,6 @@ export const FORBIDDEN_CREDENTIAL_KEYS: readonly string[] = [
 
 const STORAGE_CONFIG_FILENAME = 'storage.config';
 
-const DEFAULT_AIWG_DIR = '.aiwg';
-
 /** Default subsystem-to-relative-path mapping for the `fs` backend. */
 export const DEFAULT_SUBSYSTEM_ROOTS: Record<SubsystemKey, string> = {
   memory: 'memory',
@@ -66,7 +65,7 @@ export const DEFAULT_SUBSYSTEM_ROOTS: Record<SubsystemKey, string> = {
  * project root. Does not check existence.
  */
 export function storageConfigPath(projectRoot: string): string {
-  return resolve(projectRoot, DEFAULT_AIWG_DIR, STORAGE_CONFIG_FILENAME);
+  return projectAiwgPath(projectRoot, STORAGE_CONFIG_FILENAME);
 }
 
 /**
@@ -281,7 +280,7 @@ export function walkRejectingCredentials(
  *
  * Resolution order:
  *   1. `roots[subsystem]` if set, expanding `~` and accepting absolute paths
- *   2. `<projectRoot>/.aiwg/<DEFAULT_SUBSYSTEM_ROOTS[subsystem]>`
+ *   2. `<resolved-aiwg-artifact-dir>/<DEFAULT_SUBSYSTEM_ROOTS[subsystem]>`
  */
 export function resolveSubsystemRoot(
   subsystem: SubsystemKey,
@@ -290,7 +289,7 @@ export function resolveSubsystemRoot(
 ): string {
   const override = config?.roots?.[subsystem];
   if (override) return expandPath(override, projectRoot);
-  return resolve(projectRoot, DEFAULT_AIWG_DIR, DEFAULT_SUBSYSTEM_ROOTS[subsystem]);
+  return join(resolveProjectAiwgDir(projectRoot), DEFAULT_SUBSYSTEM_ROOTS[subsystem]);
 }
 
 /**
@@ -310,7 +309,7 @@ export async function resolveSubsystemRootRuntime(
     const resolved = await resolveProjectMemoryRoot(projectRoot);
     return resolved.root;
   }
-  return resolve(projectRoot, DEFAULT_AIWG_DIR, DEFAULT_SUBSYSTEM_ROOTS[subsystem]);
+  return join(resolveProjectAiwgDir(projectRoot), DEFAULT_SUBSYSTEM_ROOTS[subsystem]);
 }
 
 function expandPath(p: string, projectRoot: string): string {

@@ -92,6 +92,36 @@ describe('initHandler', () => {
       expect(normalized).toContain('aiwg discover');
     });
 
+    it('honors AIWG_ARTIFACTS_PATH for config and normalized context output', async () => {
+      const { initHandler } = await import('../../../../src/cli/handlers/init.js');
+      const previousArtifactsPath = process.env['AIWG_ARTIFACTS_PATH'];
+      const externalRoot = makeTmpDir();
+      const artifactDir = join(externalRoot, 'corpus', '.aiwg');
+
+      process.env['AIWG_ARTIFACTS_PATH'] = artifactDir;
+      try {
+        const result = await initHandler.execute(makeCtx(tmpDir, ['--non-interactive']));
+        expect(result.exitCode).toBe(0);
+
+        const { readAiwgConfig } = await import('../../../../src/config/aiwg-config.js');
+        const cfg = await readAiwgConfig(tmpDir);
+        expect(cfg).not.toBeNull();
+        expect(cfg!.providers).toEqual(['claude']);
+
+        expect(existsSync(join(artifactDir, 'aiwg.config'))).toBe(true);
+        const normalizedPath = join(artifactDir, 'AIWG.md');
+        expect(existsSync(normalizedPath)).toBe(true);
+        expect(readFileSync(normalizedPath, 'utf8')).toContain(`Normalized project context: \`${normalizedPath}\``);
+
+        expect(existsSync(join(tmpDir, '.aiwg', 'aiwg.config'))).toBe(false);
+        expect(existsSync(join(tmpDir, '.aiwg', 'AIWG.md'))).toBe(false);
+      } finally {
+        if (previousArtifactsPath === undefined) delete process.env['AIWG_ARTIFACTS_PATH'];
+        else process.env['AIWG_ARTIFACTS_PATH'] = previousArtifactsPath;
+        rmSync(externalRoot, { recursive: true, force: true });
+      }
+    });
+
     it('--yes is an alias for --non-interactive', async () => {
       const { initHandler } = await import('../../../../src/cli/handlers/init.js');
       const ctx = makeCtx(tmpDir, ['--yes']);

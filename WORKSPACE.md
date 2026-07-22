@@ -21,17 +21,16 @@ then to AIWG.md for framework discovery and routing.
 
 - Edit project-neutral notes only inside the protected Project Context section below.
 - Keep detailed policies, runbooks, hooks, and quickrefs in linked files.
-- Keep provider-only directives in `.aiwg/context/providers/`.
+- Keep provider-only directives in the configured AIWG artifact root's
+  `context/providers/` directory.
 - Never store secrets, tokens, credentials, or machine-local sensitive values here.
 
 ### Linked Context
 
 - [AIWG framework context](./AIWG.md)
-- [AIWG project configuration](./.aiwg/aiwg.config)
-- [Provider-specific context](./.aiwg/context/providers/.hermes.md)
-- [Provider-specific context](./.aiwg/context/providers/AGENTS.override.md)
-- [Provider-specific context](./.aiwg/context/providers/CLAUDE.md)
-- [Project-local quickref](./.aiwg/quickref.json) (when configured)
+- [Private AIWG corpus setup](./docs/development/private-aiwg-corpus.md)
+- AIWG's own project artifacts are resolved from the private corpus when
+  `AIWG_ARTIFACTS_PATH` points at `../aiwg-web-release-ops/corpus/.aiwg`.
 
 <!-- AIWG:workspace-context:end -->
 

@@ -37,7 +37,7 @@ This section is synthesized after template emission from the current workspace s
 - Configured providers: claude, codex
 - Installed frameworks/addons: sdlc, media-marketing, all, security-engineering
 - Recorded deployments: claude, codex, copilot, cursor, factory, hermes, openclaw, opencode, openhuman, warp, windsurf
-- Normalized project context: `.aiwg/AIWG.md`
+- Normalized project context: private corpus via `AIWG_ARTIFACTS_PATH`, normally `../aiwg-web-release-ops/corpus/.aiwg/AIWG.md` for adjacent maintainer checkouts.
 
 ### Discover-First Protocol
 
@@ -51,7 +51,7 @@ When a user asks whether AIWG is active or engaged in this project, run or read 
 
 ### Tracker Authority Protocol
 
-- Source of truth: [.aiwg/aiwg.config](./.aiwg/aiwg.config)
+- Source of truth: private corpus `aiwg.config` when `AIWG_ARTIFACTS_PATH` is set; otherwise the public repo has no tracked project-local AIWG config.
 - Canonical tracker: `origin` (unknown; git@git.integrolabs.net:roctinam/aiwg.git)
 - Primary repo remote: `origin`; CI remote: `origin`
 - Secondary/mirror remotes: github (public-mirror)
@@ -70,7 +70,8 @@ Tracker access order for issue, PR, release, and CI-sensitive tracker operations
 
 ### Source Model
 
-- `.aiwg/AIWG.md` is the normalized project-local context entry point.
+- AIWG's own `.aiwg` corpus lives in the private `roctinam/aiwg-web-release-ops` repo under `corpus/.aiwg/`.
+- Maintainer sessions should set `AIWG_ARTIFACTS_PATH=../aiwg-web-release-ops/corpus/.aiwg` before running AIWG SDLC workflows.
 - Root `AIWG.md` is the generated cross-provider companion loaded through `AGENTS.md` and provider twins.
-- `AGENTS.md`, `WARP.md`, `.hermes.md`, and `.github/copilot-instructions.md` are provider-facing bridges, not replacements for `.aiwg/AIWG.md`.
+- `AGENTS.md`, `WARP.md`, `.hermes.md`, and `.github/copilot-instructions.md` are provider-facing bridges, not replacements for the configured private corpus context.
 <!-- aiwg-context-finalization:END -->
