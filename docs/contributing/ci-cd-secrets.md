@@ -29,6 +29,7 @@ issued by the CI system and is still used by PR-comment workflows.
 | `.gitea/workflows/github-mirror.yml`       | `ci/vault-fetch.github-mirror.spec`       | `GH_TOKEN`                |
 | `.gitea/workflows/notify-site.yml`         | `ci/vault-fetch.notify-site.spec`         | `AIWG_IO_DISPATCH_TOKEN`  |
 | `.gitea/workflows/docsite-deploy.yml`      | `ci/vault-fetch.docsite-deploy.spec`      | `DOCSITE_DEPLOY_KEY_FILE` |
+| `.gitea/workflows/docsite-deploy.yml`      | `ci/vault-fetch.docsite-cloudflare.spec`  | `CLOUDFLARE_API_TOKEN`   |
 
 The specs contain only `*_VAULT_PATH` and `*_VAULT_FIELD` placeholders. Concrete
 vault paths, metadata paths, hostnames, and fields are stored as private Gitea
@@ -60,6 +61,7 @@ npm run lint:vault-migration
 | `GH_MIRROR_TOKEN_VAULT_PATH`, `GH_MIRROR_TOKEN_VAULT_FIELD`                                | `ROUTE`         | Gitea Actions variables    |
 | `AIWG_IO_DISPATCH_TOKEN_VAULT_PATH`, `AIWG_IO_DISPATCH_TOKEN_VAULT_FIELD`                  | `ROUTE`         | Gitea Actions variables    |
 | `DOCSITE_DEPLOY_KEY_VAULT_PATH`, `DOCSITE_DEPLOY_KEY_VAULT_FIELD`                          | `ROUTE`         | Gitea Actions variables    |
+| `CLOUDFLARE_API_TOKEN_VAULT_PATH`, `CLOUDFLARE_API_TOKEN_VAULT_FIELD`                      | `ROUTE`         | Gitea Actions variables    |
 | `RELEASE_SIGNING_KEY_VAULT_PATH`, `RELEASE_SIGNING_KEY_VAULT_FIELD`                        | `ROUTE`         | Gitea Actions variables    |
 | `RELEASE_SIGNING_PASSPHRASE_VAULT_PATH`, `RELEASE_SIGNING_PASSPHRASE_VAULT_FIELD`          | `ROUTE`         | Gitea Actions variables    |
 | `VAULT_ADDR`                                                                               | `ROUTE`         | Gitea Actions variable     |
@@ -89,6 +91,7 @@ gitea-release-token.value
 github-mirror-token.value
 aiwg-io-dispatch-token.value
 docsite-deploy-key.value
+cloudflare-api-token.value
 release-signing-key.value
 release-signing-passphrase.value
 ```

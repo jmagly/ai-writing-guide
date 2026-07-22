@@ -17,6 +17,8 @@
     "AIWG_IO_DISPATCH_TOKEN_VAULT_FIELD",
     "DOCSITE_DEPLOY_KEY_VAULT_PATH",
     "DOCSITE_DEPLOY_KEY_VAULT_FIELD",
+    "CLOUDFLARE_API_TOKEN_VAULT_PATH",
+    "CLOUDFLARE_API_TOKEN_VAULT_FIELD",
     "RELEASE_SIGNING_KEY_VAULT_PATH",
     "RELEASE_SIGNING_KEY_VAULT_FIELD",
     "RELEASE_SIGNING_PASSPHRASE_VAULT_PATH",
@@ -66,6 +68,14 @@
       "env": "DOCSITE_DEPLOY_KEY_FILE",
       "type": "ssh-private-key",
       "purpose": "Docsite deploy SSH key"
+    },
+    {
+      "id": "cloudflare-api-token",
+      "path_variable": "CLOUDFLARE_API_TOKEN_VAULT_PATH",
+      "field_variable": "CLOUDFLARE_API_TOKEN_VAULT_FIELD",
+      "env": "CLOUDFLARE_API_TOKEN",
+      "type": "api-token",
+      "purpose": "Cloudflare cache purge token"
     },
     {
       "id": "release-signing-key",
