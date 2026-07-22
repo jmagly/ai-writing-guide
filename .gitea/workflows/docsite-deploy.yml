@@ -128,7 +128,9 @@ jobs:
           echo "✓ Version substitution complete"
 
       - name: Build doc site
-        run: npx pagenary build:tenants aiwg-docs
+        run: |
+          npx pagenary build:tenants aiwg-docs
+          node tools/docs/write-blog-static-pages.mjs dist/aiwg-docs
 
       - name: Verify build output
         run: |
@@ -136,6 +138,7 @@ jobs:
           OUT="${{ gitea.workspace }}/dist/aiwg-docs"
           test -d "$OUT" || { echo "::error::Missing build output directory $OUT"; exit 1; }
           test -f "$OUT/index.html" || { echo "::error::Missing index.html"; exit 1; }
+          test -f "$OUT/blog/index.html" || { echo "::error::Missing blog/index.html"; exit 1; }
           test -d "$OUT/sections" || { echo "::error::Missing sections/ — refusing to deploy (would rsync --delete an incomplete site)"; exit 1; }
           echo "Build verification passed"
           ls -lah "$OUT/"

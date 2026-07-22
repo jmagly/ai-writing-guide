@@ -64,12 +64,15 @@ jobs:
           TENANTS
 
       - name: Build doc site
-        run: npx pagenary build:tenants aiwg-docs
+        run: |
+          npx pagenary build:tenants aiwg-docs
+          node tools/docs/write-blog-static-pages.mjs dist/aiwg-docs
 
       - name: Verify build output
         run: |
           set -euo pipefail
           OUT="${{ gitea.workspace }}/dist/aiwg-docs"
           test -f "$OUT/index.html" || { echo "::error::doc-site build produced no index.html"; exit 1; }
+          test -f "$OUT/blog/index.html" || { echo "::error::doc-site build produced no blog/index.html"; exit 1; }
           test -d "$OUT/sections"   || { echo "::error::doc-site build produced no sections/"; exit 1; }
           echo "Build OK: $(ls "$OUT/sections" | wc -l) section files"
