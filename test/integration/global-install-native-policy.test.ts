@@ -12,6 +12,7 @@ import {
   TEST_SKILL_BODY,
   TEST_VERSION,
 } from '../fixtures/web-resource-release.js';
+import { acquireDirectoryLock } from '../../src/artifacts/prebuilt-build-lock.js';
 
 const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 let tempRoot = '';
@@ -99,17 +100,25 @@ function runInstalledApi(cwd: string, args: string[]): Promise<CliResult> {
 }
 
 function expectCliSuccess(result: CliResult): void {
-  expect(result.code, result.stderr).toBe(0);
+  expect(result.code, [result.stderr, result.stdout].filter(Boolean).join('\n')).toBe(0);
 }
 
 describe('global install native lifecycle-script policy', () => {
   beforeAll(async () => {
     tempRoot = await mkdtemp(path.join(os.tmpdir(), 'aiwg-global-install-'));
-    const pack = spawnSync(
-      process.platform === 'win32' ? 'npm.cmd' : 'npm',
-      ['pack', '--ignore-scripts', '--json', '--pack-destination', tempRoot],
-      { cwd: PROJECT_ROOT, encoding: 'utf8' },
+    const releasePackLock = await acquireDirectoryLock(
+      path.join(PROJECT_ROOT, 'prebuilt', 'fortemi-core', '.framework-build.lock'),
     );
+    let pack: ReturnType<typeof spawnSync>;
+    try {
+      pack = spawnSync(
+        process.platform === 'win32' ? 'npm.cmd' : 'npm',
+        ['pack', '--ignore-scripts', '--json', '--pack-destination', tempRoot],
+        { cwd: PROJECT_ROOT, encoding: 'utf8' },
+      );
+    } finally {
+      await releasePackLock();
+    }
     if (pack.status !== 0) throw new Error(pack.stderr || pack.stdout);
     const packed = JSON.parse(pack.stdout) as Array<{ filename: string }>;
     const tarball = path.join(tempRoot, packed[0]!.filename);

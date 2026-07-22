@@ -39,6 +39,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   lightweight context/bootstrap files in the current project. The existing
   `--scope user` behavior remains an additive project-plus-user mirror.
 
+### Fixed
+
+- **Concurrent package index generation** — Fortemi prebuilt builds now use a
+  cross-process lock and publish complete generations through a staged swap,
+  preventing concurrent npm packaging from capturing a missing or partial
+  framework index.
+
 ## [2026.7.16] - 2026-07-21 - "Workspace context and provider orchestration"
 
 ### Added
