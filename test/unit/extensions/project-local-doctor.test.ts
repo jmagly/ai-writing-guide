@@ -13,6 +13,16 @@ import { createHash } from 'crypto';
 import { buildProjectLocalDoctorSection } from '../../../src/extensions/project-local-doctor.js';
 import { deployProjectQuickref } from '../../../src/extensions/project-quickref.js';
 import type { AiwgConfig } from '../../../src/config/aiwg-config.js';
+import { PROJECT_LOCAL_SEARCH_PATHS_ENV } from '../../../src/extensions/project-local-paths.js';
+
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+  PROJECT_LOCAL_SEARCH_PATHS_ENV,
+] as const;
+
+let originalEnv: Partial<Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined>> = {};
 
 function tmp(): string {
   return mkdtempSync(join(tmpdir(), 'aiwg-pld-'));
@@ -101,10 +111,20 @@ describe('project-local-doctor (DC-1)', () => {
   let frameworkRoot: string;
 
   beforeEach(() => {
+    originalEnv = {};
+    for (const key of ARTIFACT_ENV_KEYS) {
+      originalEnv[key] = process.env[key];
+      delete process.env[key];
+    }
     projectDir = tmp();
     frameworkRoot = tmp();
   });
   afterEach(() => {
+    for (const key of ARTIFACT_ENV_KEYS) {
+      const value = originalEnv[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
     rmSync(projectDir, { recursive: true, force: true });
     rmSync(frameworkRoot, { recursive: true, force: true });
   });

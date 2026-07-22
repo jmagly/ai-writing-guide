@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
 import yaml from 'js-yaml';
@@ -10,23 +10,44 @@ import {
   discoverReleasePlans,
   selectReleasePlan,
 } from '../../../src/release/plan.js';
+import { PROJECT_AIWG_LOCATION_FILE, projectAiwgPath } from '../../../src/config/project-artifacts.js';
 
 let tempDir: string | undefined;
 const REPO_ROOT = resolve(__dirname, '../../..');
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+] as const;
+let previousArtifactEnv: Record<(typeof ARTIFACT_ENV_KEYS)[number], string | undefined>;
+
+beforeEach(() => {
+  previousArtifactEnv = {
+    AIWG_ARTIFACTS_PATH: process.env.AIWG_ARTIFACTS_PATH,
+    AIWG_PROJECT_ARTIFACTS_PATH: process.env.AIWG_PROJECT_ARTIFACTS_PATH,
+    AIWG_PROJECT_AIWG_DIR: process.env.AIWG_PROJECT_AIWG_DIR,
+  };
+  for (const key of ARTIFACT_ENV_KEYS) delete process.env[key];
+});
 
 afterEach(() => {
   if (tempDir) rmSync(tempDir, { recursive: true, force: true });
   tempDir = undefined;
+  for (const key of ARTIFACT_ENV_KEYS) {
+    const value = previousArtifactEnv[key];
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
 });
 
 function makeProject(): string {
   tempDir = mkdtempSync(join(tmpdir(), 'aiwg-release-plan-'));
-  mkdirSync(join(tempDir, '.aiwg', 'releases'), { recursive: true });
+  mkdirSync(projectAiwgPath(tempDir, 'releases'), { recursive: true });
   return tempDir;
 }
 
 function writePlan(root: string, name: string, body: string): void {
-  writeFileSync(join(root, '.aiwg', 'releases', name), body, 'utf8');
+  writeFileSync(projectAiwgPath(root, 'releases', name), body, 'utf8');
 }
 
 describe('release plan sidecars', () => {
@@ -43,6 +64,19 @@ describe('release plan sidecars', () => {
     const plans = await discoverReleasePlans(root);
 
     expect(plans.map(({ plan }) => plan.id)).toEqual(['docs-site', 'aiwg-npm']);
+  });
+
+  it('discovers plans from a configured artifact root pointer', async () => {
+    const root = makeProject();
+    const artifactRoot = join(root, 'private-artifacts', 'renamed-aiwg');
+    mkdirSync(join(artifactRoot, 'releases'), { recursive: true });
+    writeFileSync(join(root, PROJECT_AIWG_LOCATION_FILE), 'private-artifacts/renamed-aiwg\n', 'utf8');
+    writeFileSync(join(artifactRoot, 'releases', 'npm.yaml'), validPlan('aiwg-npm'), 'utf8');
+
+    const plans = await discoverReleasePlans(root);
+
+    expect(plans.map(({ plan }) => plan.id)).toEqual(['aiwg-npm']);
+    expect(plans[0].path).toBe(join(artifactRoot, 'releases', 'npm.yaml'));
   });
 
   it('selects an explicit plan and reports it before release actions', async () => {
@@ -119,7 +153,9 @@ describe('release plan sidecars', () => {
       join(REPO_ROOT, 'agentic/code/frameworks/sdlc-complete/schemas/flows/release-plan.schema.yaml'),
       'utf8',
     ));
-    const plan = yaml.load(readFileSync(join(REPO_ROOT, '.aiwg/releases/aiwg-npm.yaml'), 'utf8'));
+    const planPath = projectAiwgPath(REPO_ROOT, 'releases', 'aiwg-npm.yaml');
+    if (!existsSync(planPath)) return;
+    const plan = yaml.load(readFileSync(planPath, 'utf8'));
     const ajv = new Ajv2020({ allErrors: true, strict: false });
     const validate = ajv.compile(schema as Record<string, unknown>);
 
@@ -131,7 +167,9 @@ describe('release plan sidecars', () => {
       join(REPO_ROOT, 'agentic/code/frameworks/sdlc-complete/schemas/flows/release-config.yaml'),
       'utf8',
     ));
-    const config = yaml.load(readFileSync(join(REPO_ROOT, '.aiwg/release.config'), 'utf8'));
+    const configPath = projectAiwgPath(REPO_ROOT, 'release.config');
+    if (!existsSync(configPath)) return;
+    const config = yaml.load(readFileSync(configPath, 'utf8'));
     const ajv = new Ajv2020({ allErrors: true, strict: false });
     const validate = ajv.compile(schema as Record<string, unknown>);
 

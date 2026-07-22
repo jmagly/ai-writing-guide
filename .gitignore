@@ -99,6 +99,7 @@ opencode.json
 # Maintainer checkouts should set AIWG_ARTIFACTS_PATH to that directory.
 # Public clones can build and test without private corpus access.
 .aiwg/
+.aiwg-location
 
 # Agent temporary files
 _agent-temp/

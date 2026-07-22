@@ -477,7 +477,7 @@ function formatProjectLocalOnly(
 
   if (total === 0 && result.errors.length === 0) {
     output += '\nNo project-local bundles found.\n';
-    output += '\nTip: place a manifest.json under .aiwg/{extensions,addons,frameworks,plugins,providers}/<name>/ to author a project-local artifact.\n';
+    output += '\nTip: place a manifest.json under the configured AIWG artifact root at {extensions,addons,frameworks,plugins,providers}/<name>/ to author a project-local artifact.\n';
     return { exitCode: 0, message: output };
   }
 
@@ -963,8 +963,8 @@ export const promoteHandler: CommandHandler = {
 };
 
 /**
- * New bundle handler — scaffolds a project-local bundle under
- * `.aiwg/{type}/{name}/` with a valid manifest, starter artifact, and a
+ * New bundle handler — scaffolds a project-local bundle under the configured
+ * AIWG artifact root with a valid manifest, starter artifact, and a
  * README that includes the identical-form portability reminder.
  *
  * Usage:
@@ -978,7 +978,7 @@ export const promoteHandler: CommandHandler = {
 export const newBundleHandler: CommandHandler = {
   id: 'new-bundle',
   name: 'New Bundle',
-  description: 'Scaffold a project-local bundle under .aiwg/{type}/{name}/',
+  description: 'Scaffold a project-local bundle under the configured AIWG artifact root',
   category: 'scaffolding',
   aliases: ['new-extension', 'new-addon', 'new-framework', 'new-plugin', 'new-provider'],
 

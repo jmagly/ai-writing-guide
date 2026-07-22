@@ -12,7 +12,10 @@ and `aiwg show`. It does not copy full workflow bodies into startup context.
 
 ## Canonical source
 
-Commit one `.aiwg/quickref.json` file:
+Commit one `.aiwg/quickref.json` file. If the project artifact root has been
+moved with `.aiwg-location` or `AIWG_ARTIFACTS_PATH`, place `quickref.json` in
+that configured root; AIWG still treats it as the logical `.aiwg/quickref.json`
+source.
 
 ```json
 {
@@ -53,7 +56,8 @@ aiwg quickref deploy --project --provider warp
 ```
 
 Generation writes
-`.aiwg/generated/project-quickref/<skill-name>/SKILL.md`. Repeated generation is
+`generated/project-quickref/<skill-name>/SKILL.md` under the configured artifact
+root. Repeated generation is
 byte-identical for unchanged source. `aiwg use <project-local-bundle>` and
 normal framework deployment also refresh the quickref when the canonical source
 exists.
@@ -81,4 +85,3 @@ Keep the quickref small. Its job is to make important local processes visible,
 state explicit precedence, and point to indexed assets. Put detailed steps in
 project-local skills or rules so startup context grows with the number of
 critical routing decisions, not with the size of every workflow.
-

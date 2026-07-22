@@ -20,6 +20,7 @@ import { spawn } from 'child_process';
 import { existsSync } from 'fs';
 import path from 'path';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 import {
   parseAgentSpawnFlags,
   buildAgentArgs,
@@ -147,7 +148,7 @@ function computeOutputPath(target: string, override: string | undefined, project
       .replace(/^-+|-+$/g, '')
       .slice(0, 60) || 'audit';
 
-  return path.join(projectRoot, '.aiwg', 'reports', `best-practices-audit-${slug}-${date}.md`);
+  return projectAiwgPath(projectRoot, 'reports', `best-practices-audit-${slug}-${date}.md`);
 }
 
 export class BestPracticesAuditHandler implements CommandHandler {

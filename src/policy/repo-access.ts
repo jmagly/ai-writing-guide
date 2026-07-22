@@ -1,11 +1,12 @@
 import { existsSync, readFileSync } from 'fs';
 import { homedir } from 'os';
-import { dirname, isAbsolute, relative, resolve } from 'path';
+import { dirname, isAbsolute, join, relative, resolve } from 'path';
 import { load as loadYaml } from 'js-yaml';
 import {
   WORKSPACE_REPO_ACTIONS,
   type WorkspaceRepoAction,
 } from '../config/aiwg-config.js';
+import { resolveProjectAiwgDir } from '../config/project-artifacts.js';
 
 export const REPO_ACCESS_MANIFEST_PATHS = [
   '.aiwg/ops/security/repo-access.manifest.yaml',
@@ -74,7 +75,7 @@ export function findRepoAccessManifest(startDir = process.cwd()): string | null 
       : explicitWorkspace.startsWith('~/') || explicitWorkspace.startsWith('~\\')
         ? resolve(homedir(), explicitWorkspace.slice(2))
         : explicitWorkspace;
-    const explicitConfig = resolve(expanded, '.aiwg', 'aiwg.config');
+    const explicitConfig = join(resolveProjectAiwgDir(expanded), 'aiwg.config');
     if (existsSync(explicitConfig)) {
       const parsed = JSON.parse(readFileSync(explicitConfig, 'utf8')) as Record<string, unknown>;
       if (Array.isArray(parsed.repos)) return explicitConfig;
@@ -83,7 +84,7 @@ export function findRepoAccessManifest(startDir = process.cwd()): string | null 
 
   let current = resolve(startDir);
   while (true) {
-    const workspaceConfig = resolve(current, '.aiwg', 'aiwg.config');
+    const workspaceConfig = join(resolveProjectAiwgDir(current), 'aiwg.config');
     if (existsSync(workspaceConfig)) {
       try {
         const parsed = JSON.parse(readFileSync(workspaceConfig, 'utf8')) as Record<string, unknown>;
@@ -98,7 +99,7 @@ export function findRepoAccessManifest(startDir = process.cwd()): string | null 
           const workspaceRoot = isAbsolute(expanded)
             ? resolve(expanded)
             : resolve(current, expanded);
-          const parentConfig = resolve(workspaceRoot, '.aiwg', 'aiwg.config');
+          const parentConfig = join(resolveProjectAiwgDir(workspaceRoot), 'aiwg.config');
           if (existsSync(parentConfig)) {
             const parent = JSON.parse(readFileSync(parentConfig, 'utf8')) as Record<string, unknown>;
             if (Array.isArray(parent.repos)) return parentConfig;

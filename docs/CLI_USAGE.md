@@ -234,11 +234,17 @@ This feature is not implemented yet. See
 operator contract, version selectors, and safety model.
 
 Maintainer checkouts can already relocate the project AIWG artifact directory
-with `AIWG_ARTIFACTS_PATH`, for example:
+with the project pointer file written by the CLI:
 
 ```bash
-export AIWG_ARTIFACTS_PATH=../aiwg-web-release-ops/corpus/.aiwg
+aiwg artifacts move --to ../aiwg-web-release-ops/corpus/.aiwg
 ```
+
+The command moves the configured artifact root, writes `.aiwg-location`,
+updates `.gitignore` for the local pointer, rebuilds the project index, and
+syncs the Fortemi Core static cache. For one-off sessions,
+`AIWG_ARTIFACTS_PATH` can still point at an absolute, project-relative, or
+`~/`-relative artifact directory and takes precedence over `.aiwg-location`.
 
 For AIWG's own repository, this is the supported bridge to the private SDLC
 corpus. See [Private AIWG Corpus](./development/private-aiwg-corpus.md).

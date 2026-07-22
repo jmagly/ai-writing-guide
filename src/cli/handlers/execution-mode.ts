@@ -6,8 +6,8 @@
 
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { randomInt } from 'crypto';
-import { join } from 'path';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
+import { projectAiwgPath, resolveProjectAiwgDir } from '../../config/project-artifacts.js';
 
 type ExecutionMode = 'standard' | 'seeded' | 'strict' | 'audit' | 'holdout-isolated';
 
@@ -42,7 +42,7 @@ function usage(): string {
 }
 
 function configPath(cwd: string): string {
-  return join(cwd, '.aiwg', 'execution-mode.json');
+  return projectAiwgPath(cwd, 'execution-mode.json');
 }
 
 function buildConfig(mode: ExecutionMode, seed: string | null): ExecutionModeConfig {
@@ -74,7 +74,7 @@ async function readConfig(cwd: string): Promise<ExecutionModeConfig> {
 }
 
 async function writeConfig(cwd: string, config: ExecutionModeConfig): Promise<void> {
-  await mkdir(join(cwd, '.aiwg'), { recursive: true });
+  await mkdir(resolveProjectAiwgDir(cwd), { recursive: true });
   await writeFile(configPath(cwd), JSON.stringify(config, null, 2) + '\n', 'utf-8');
 }
 

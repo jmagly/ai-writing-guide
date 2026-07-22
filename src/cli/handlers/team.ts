@@ -15,6 +15,7 @@ import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import * as ui from '../ui.js';
 import { promises as fs } from 'node:fs';
 import { join, basename } from 'node:path';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -89,7 +90,7 @@ function getPositionalArgs(args: string[]): string[] {
 
 async function loadTeam(slug: string, frameworkRoot: string, cwd: string): Promise<TeamDefinition | null> {
   const searchPaths = [
-    join(cwd, '.aiwg', 'teams', `${slug}.json`),
+    projectAiwgPath(cwd, 'teams', `${slug}.json`),
     join(frameworkRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'teams', `${slug}.json`),
   ];
 
@@ -110,7 +111,7 @@ async function listAllTeams(frameworkRoot: string, cwd: string): Promise<TeamDef
   const seen = new Set<string>();
 
   const searchDirs = [
-    join(cwd, '.aiwg', 'teams'),
+    projectAiwgPath(cwd, 'teams'),
     join(frameworkRoot, 'agentic', 'code', 'frameworks', 'sdlc-complete', 'teams'),
   ];
 

@@ -19,6 +19,7 @@ import { randomUUID } from 'crypto';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, renameSync, unlinkSync } from 'fs';
 import { homedir } from 'os';
 import { dirname, isAbsolute, join, resolve as resolvePath } from 'path';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 
 // ============================================================
 // Types
@@ -195,7 +196,7 @@ export function resolveIdentityStorePath(projectRootOverride?: string): string {
 
   // Try storage.config — sync read of project-local file
   const projectRoot = projectRootOverride ?? process.cwd();
-  const configPath = join(projectRoot, '.aiwg', 'storage.config');
+  const configPath = projectAiwgPath(projectRoot, 'storage.config');
   if (!existsSync(configPath)) return DEFAULT_IDENTITY_STORE_PATH;
 
   try {

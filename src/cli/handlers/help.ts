@@ -94,6 +94,7 @@ function displayHelp(): void {
     ['discover "<phrase>"', 'Find skills/agents/commands/rules by capability'],
     ['show <type> <name>', 'Stream the body of an indexed artifact'],
     ['index <subcommand>', 'Manage the artifact index (build/query/discover/deps/stats)'],
+    ['artifacts move --to <path>', 'Move/rename the project AIWG artifact root and reindex'],
   ]);
 
   helpGroup('DISPATCH', [

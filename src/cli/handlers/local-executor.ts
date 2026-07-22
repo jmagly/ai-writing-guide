@@ -21,11 +21,11 @@ import path from 'path';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { randomUUID } from 'crypto';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 
 const DEFAULT_PORT         = 8200;
 const DEFAULT_BIND         = '127.0.0.1';
 const DEFAULT_AIWG_SERVE   = 'http://127.0.0.1:7337';
-const IDENTITY_FILE        = path.join('.aiwg', 'local-executor', 'identity.json');
 
 interface LocalExecutorArgs {
   port:          number;
@@ -48,7 +48,7 @@ interface ExecutorIdentity {
 function resolveExecutorId(override?: string): string {
   if (override) return override;
 
-  const abs = path.resolve(IDENTITY_FILE);
+  const abs = projectAiwgPath(process.cwd(), 'local-executor', 'identity.json');
   if (existsSync(abs)) {
     try {
       const raw = readFileSync(abs, 'utf-8');

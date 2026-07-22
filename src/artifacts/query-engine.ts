@@ -37,6 +37,7 @@ import {
   operationalStateQueryProjection,
   type OperationalStateQueryProjection,
 } from './operational-state.js';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 
 function normalizeIndexedPath(entryPath: string): string {
   return entryPath.replace(/\\/g, '/');
@@ -53,6 +54,9 @@ function readEntryBody(cwd: string, entryPath: string): string | null {
   if (path.isAbsolute(entryPath)) candidates.push(entryPath);
   else {
     const normalizedPath = normalizeIndexedPath(entryPath);
+    if (normalizedPath.startsWith('.aiwg/')) {
+      candidates.push(projectAiwgPath(cwd, normalizedPath.slice('.aiwg/'.length)));
+    }
     candidates.push(path.resolve(cwd, normalizedPath));
     if (process.env.AIWG_ROOT) candidates.push(path.resolve(process.env.AIWG_ROOT, normalizedPath));
   }
@@ -872,7 +876,7 @@ const DEFAULT_CAPABILITY_GRAPHS: GraphType[] = ['project', 'user', 'framework'];
 
 function projectAllowsUserIndices(cwd: string): boolean {
   try {
-    const configPath = path.join(cwd, '.aiwg', 'aiwg.config');
+    const configPath = projectAiwgPath(cwd, 'aiwg.config');
     if (!fs.existsSync(configPath)) return true;
     const parsed = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as Record<string, unknown>;
     const index = parsed.index as Record<string, unknown> | undefined;
@@ -1367,6 +1371,9 @@ function resolveMetadataPath(cwd: string, aiwgRoot: string | null, entry: Metada
   }
   if ((entry as ProvenancedEntry).indexScope === 'user' && normalizedPath.startsWith('~/.aiwg/')) {
     return path.join(process.env.HOME ?? '', normalizedPath.slice(2));
+  }
+  if (normalizedPath.startsWith('.aiwg/')) {
+    return projectAiwgPath(cwd, normalizedPath.slice('.aiwg/'.length));
   }
   return path.join(cwd, normalizedPath);
 }

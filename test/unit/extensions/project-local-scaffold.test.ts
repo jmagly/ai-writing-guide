@@ -5,11 +5,22 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, readFileSync, existsSync } from 'fs';
+import { mkdtempSync, rmSync, readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { PROJECT_AIWG_LOCATION_FILE } from '../../../src/config/project-artifacts.js';
 import { scaffoldProjectLocalBundle } from '../../../src/extensions/project-local-scaffold.js';
 import { BundleManifestSchema } from '../../../src/extensions/manifest.js';
+import { PROJECT_LOCAL_SEARCH_PATHS_ENV } from '../../../src/extensions/project-local-paths.js';
+
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+  PROJECT_LOCAL_SEARCH_PATHS_ENV,
+] as const;
+
+let originalEnv: Partial<Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined>> = {};
 
 function tmp(): string {
   return mkdtempSync(join(tmpdir(), 'aiwg-pls-'));
@@ -18,8 +29,22 @@ function tmp(): string {
 describe('scaffoldProjectLocalBundle (#1050)', () => {
   let projectDir: string;
 
-  beforeEach(() => { projectDir = tmp(); });
-  afterEach(() => { rmSync(projectDir, { recursive: true, force: true }); });
+  beforeEach(() => {
+    originalEnv = {};
+    for (const key of ARTIFACT_ENV_KEYS) {
+      originalEnv[key] = process.env[key];
+      delete process.env[key];
+    }
+    projectDir = tmp();
+  });
+  afterEach(() => {
+    for (const key of ARTIFACT_ENV_KEYS) {
+      const value = originalEnv[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    rmSync(projectDir, { recursive: true, force: true });
+  });
 
   it('rejects invalid kebab-case names', async () => {
     await expect(
@@ -43,6 +68,18 @@ describe('scaffoldProjectLocalBundle (#1050)', () => {
     // Manifest must validate against the canonical schema
     const validated = BundleManifestSchema.safeParse(manifest);
     expect(validated.success).toBe(true);
+  });
+
+  it('creates bundles under the configured artifact root when .aiwg is relocated', async () => {
+    const relocatedRoot = join(projectDir, 'private-artifacts', 'renamed-aiwg');
+    mkdirSync(join(projectDir, 'private-artifacts'), { recursive: true });
+    writeFileSync(join(projectDir, PROJECT_AIWG_LOCATION_FILE), 'private-artifacts/renamed-aiwg\n', 'utf-8');
+
+    const result = await scaffoldProjectLocalBundle({ type: 'extension', name: 'relocated', projectDir });
+
+    expect(result.bundlePath).toBe(join(relocatedRoot, 'extensions', 'relocated'));
+    expect(existsSync(join(result.bundlePath, 'manifest.json'))).toBe(true);
+    expect(existsSync(join(projectDir, '.aiwg', 'extensions', 'relocated'))).toBe(false);
   });
 
   it('creates addon bundle with addonConfig', async () => {

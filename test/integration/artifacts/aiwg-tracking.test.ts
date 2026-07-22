@@ -1,8 +1,8 @@
 /**
- * .aiwg/ Tracking and Distribution Integration Tests
+ * AIWG artifact root tracking and distribution integration tests
  *
- * Validates that .aiwg/ is properly tracked in git (except ephemeral content),
- * excluded from npm, and that the edge sparse checkout configuration works.
+ * Validates that AIWG's project artifact root can be private/configured while
+ * public git, npm packages, and edge checkouts exclude repo-local `.aiwg/`.
  *
  * @integration
  * @implements #423
@@ -12,40 +12,30 @@ import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
+import { resolveProjectAiwgDir } from '../../../src/config/project-artifacts.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
-const AIWG_DIR = path.join(REPO_ROOT, '.aiwg');
+const AIWG_DIR = resolveProjectAiwgDir(REPO_ROOT);
 
-describe('.aiwg/ Tracking and Distribution (integration)', () => {
+describe('AIWG artifact root tracking and distribution (integration)', () => {
 
   // ─────────────────────────────────────────────────────
   // .gitignore Configuration
   // ─────────────────────────────────────────────────────
 
   describe('.gitignore configuration', () => {
-    it('should NOT have a blanket .aiwg/ ignore rule', () => {
+    it('should ignore the public repo-local .aiwg/ directory', () => {
       const gitignore = fs.readFileSync(path.join(REPO_ROOT, '.gitignore'), 'utf-8');
       const lines = gitignore.split('\n').map(l => l.trim());
-      // Should not have ".aiwg/" or ".aiwg" as a standalone ignore line
-      const blanketIgnore = lines.filter(l =>
+      const blanketIgnore = lines.some(l =>
         l === '.aiwg/' || l === '.aiwg' || l === '/.aiwg/' || l === '/.aiwg'
       );
-      expect(blanketIgnore.length, '.aiwg/ should not be blanket-ignored').toBe(0);
+      expect(blanketIgnore, '.aiwg/ should be blanket-ignored in the public product repo').toBe(true);
     });
 
-    it('should exclude .aiwg/working/ (ephemeral)', () => {
+    it('should ignore the local artifact-root pointer file', () => {
       const gitignore = fs.readFileSync(path.join(REPO_ROOT, '.gitignore'), 'utf-8');
-      expect(gitignore).toContain('.aiwg/working/');
-    });
-
-    it('should exclude .aiwg/.index/ (generated)', () => {
-      const gitignore = fs.readFileSync(path.join(REPO_ROOT, '.gitignore'), 'utf-8');
-      expect(gitignore).toContain('.aiwg/.index/');
-    });
-
-    it('should exclude .aiwg/ralph/archive/ (session logs)', () => {
-      const gitignore = fs.readFileSync(path.join(REPO_ROOT, '.gitignore'), 'utf-8');
-      expect(gitignore).toContain('.aiwg/ralph/archive/');
+      expect(gitignore).toContain('.aiwg-location');
     });
 
     it('should still gitignore .claude/ (deployment target)', () => {
@@ -137,12 +127,13 @@ describe('.aiwg/ Tracking and Distribution (integration)', () => {
   });
 
   // ─────────────────────────────────────────────────────
-  // .aiwg/ Content Verification
+  // Configured artifact root content verification
   // ─────────────────────────────────────────────────────
 
-  describe('.aiwg/ content verification', () => {
-    it('should have .aiwg/ directory present on disk', () => {
-      expect(fs.existsSync(AIWG_DIR)).toBe(true);
+  describe('configured artifact root content verification', () => {
+    it('should allow public checkouts without a local artifact root', () => {
+      if (!fs.existsSync(AIWG_DIR)) return;
+      expect(fs.statSync(AIWG_DIR).isDirectory(), `${AIWG_DIR} should be a directory`).toBe(true);
     });
 
     it('should have key SDLC subdirectories', () => {
@@ -200,20 +191,17 @@ describe('.aiwg/ Tracking and Distribution (integration)', () => {
       }
 
       const issues = walkDir(AIWG_DIR);
-      expect(issues, `Found potential secrets in .aiwg/: ${issues.join(', ')}`).toHaveLength(0);
+      expect(issues, `Found potential secrets in configured AIWG artifact root: ${issues.join(', ')}`).toHaveLength(0);
     });
 
-    it('should not contain binary files', () => {
-      // Scope to git-tracked files only. This suite validates content
-      // "tracked in git" (see file header); the no-binary-blobs rule targets
-      // committed blobs. Untracked local scratch (e.g. .aiwg/working/*.png)
-      // is out of scope and must not fail the test on a dev working tree. #1629.
+    it('should not track .aiwg/ or .aiwg-location files in the public repository', () => {
       const binaryExts = ['.exe', '.dll', '.so', '.dylib', '.bin', '.zip', '.tar', '.gz', '.png', '.jpg', '.jpeg'];
-      const tracked = execSync('git ls-files -z .aiwg', { cwd: REPO_ROOT })
+      const trackedAiwg = execSync('git ls-files -z .aiwg .aiwg-location', { cwd: REPO_ROOT })
         .toString('utf-8')
         .split('\0')
         .filter(Boolean);
-      const binaries = tracked.filter((p) => binaryExts.includes(path.extname(p).toLowerCase()));
+      expect(trackedAiwg, 'public git should not track repo-local .aiwg or .aiwg-location').toHaveLength(0);
+      const binaries = trackedAiwg.filter((p) => binaryExts.includes(path.extname(p).toLowerCase()));
       expect(binaries, `Found tracked binary files: ${binaries.join(', ')}`).toHaveLength(0);
     });
   });

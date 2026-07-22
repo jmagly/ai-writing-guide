@@ -286,6 +286,18 @@ export interface ExternalLinkConfig {
   audience?: string;
 }
 
+/** Project-local bundle discovery configuration. */
+export interface ProjectLocalConfig {
+  /**
+   * Additional roots to scan for project-local bundle directories.
+   *
+   * Each root may be absolute, project-relative, or `~/`-relative and should
+   * contain any of: extensions/, addons/, frameworks/, plugins/, providers/.
+   * The configured project AIWG artifact root is always scanned first.
+   */
+  searchPaths?: string[];
+}
+
 /**
  * Top-level shape of .aiwg/aiwg.config
  */
@@ -334,6 +346,12 @@ export interface AiwgConfig {
    * @implements #1796
    */
   externalLinks?: Record<string, ExternalLinkConfig>;
+
+  /**
+   * Project-local bundle discovery settings. Optional — when absent, AIWG only
+   * scans the configured project artifact root.
+   */
+  projectLocal?: ProjectLocalConfig;
 
   /**
    * Repo origin topology. Optional — when absent, agents treat `origin` as primary.

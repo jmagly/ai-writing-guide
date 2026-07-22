@@ -18,7 +18,7 @@ import type {
   IndexStats,
   GraphType,
 } from './types.js';
-import { INDEX_DIR, getGraphIndexDir } from './types.js';
+import { getGraphIndexDir, getProjectIndexRoot } from './types.js';
 
 /**
  * Load a JSON file from the index directory
@@ -28,7 +28,7 @@ import { INDEX_DIR, getGraphIndexDir } from './types.js';
  * @returns Parsed JSON or null if file doesn't exist or is corrupt
  */
 export function loadIndexFile<T>(cwd: string, filename: string): T | null {
-  const filePath = path.join(cwd, INDEX_DIR, filename);
+  const filePath = path.join(getProjectIndexRoot(cwd), filename);
 
   if (!fs.existsSync(filePath)) {
     return null;
@@ -74,7 +74,7 @@ export function loadIndexStats(cwd: string): IndexStats | null {
  * Check if an index exists
  */
 export function indexExists(cwd: string): boolean {
-  const metadataPath = path.join(cwd, INDEX_DIR, 'metadata.json');
+  const metadataPath = path.join(getProjectIndexRoot(cwd), 'metadata.json');
   return fs.existsSync(metadataPath);
 }
 
@@ -89,7 +89,7 @@ export function indexExists(cwd: string): boolean {
  * @param indexDir - Override index directory (for multi-graph support)
  */
 export function writeIndexFile(cwd: string, filename: string, data: unknown, indexDir?: string): void {
-  const dirPath = indexDir ?? path.join(cwd, INDEX_DIR);
+  const dirPath = indexDir ?? getProjectIndexRoot(cwd);
   const filePath = path.join(dirPath, filename);
   const tmpPath = `${filePath}.tmp`;
 
@@ -110,7 +110,7 @@ export function writeIndexFile(cwd: string, filename: string, data: unknown, ind
  */
 export function resolveIndexDir(cwd: string, graph?: GraphType): string {
   if (graph) return getGraphIndexDir(cwd, graph);
-  return path.join(cwd, INDEX_DIR);
+  return getProjectIndexRoot(cwd);
 }
 
 /**

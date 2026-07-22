@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { PROJECT_AIWG_LOCATION_FILE, projectAiwgPath } from '../../../src/config/project-artifacts.js';
 import {
   deployProjectQuickref,
   generateProjectQuickref,
@@ -10,15 +11,23 @@ import {
   renderProjectQuickref,
   type ProjectQuickref,
 } from '../../../src/extensions/project-quickref.js';
+import { PROJECT_LOCAL_SEARCH_PATHS_ENV } from '../../../src/extensions/project-local-paths.js';
 
 const roots: string[] = [];
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+  PROJECT_LOCAL_SEARCH_PATHS_ENV,
+] as const;
+let originalEnv: Partial<Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined>> = {};
 
 async function fixture(): Promise<{ projectDir: string; homeDir: string; definition: ProjectQuickref }> {
   const root = await mkdtemp(join(tmpdir(), 'aiwg-project-quickref-'));
   roots.push(root);
   const projectDir = join(root, 'project');
   const homeDir = join(root, 'home');
-  await mkdir(join(projectDir, '.aiwg'), { recursive: true });
+  await mkdir(projectAiwgPath(projectDir), { recursive: true });
   await mkdir(homeDir, { recursive: true });
   const definition: ProjectQuickref = {
     version: '1',
@@ -35,11 +44,24 @@ async function fixture(): Promise<{ projectDir: string; homeDir: string; definit
       show: [{ type: 'skill', name: 'project-issue-workflow' }],
     }],
   };
-  await writeFile(join(projectDir, '.aiwg', 'quickref.json'), JSON.stringify(definition, null, 2) + '\n');
+  await writeFile(projectAiwgPath(projectDir, 'quickref.json'), JSON.stringify(definition, null, 2) + '\n');
   return { projectDir, homeDir, definition };
 }
 
+beforeEach(() => {
+  originalEnv = {};
+  for (const key of ARTIFACT_ENV_KEYS) {
+    originalEnv[key] = process.env[key];
+    delete process.env[key];
+  }
+});
+
 afterEach(async () => {
+  for (const key of ARTIFACT_ENV_KEYS) {
+    const value = originalEnv[key];
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
   await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true })));
 });
 
@@ -69,12 +91,50 @@ describe('project quickref generation and deployment (#1788)', () => {
 
   it('prunes obsolete output beneath the generated quickref root', async () => {
     const { projectDir } = await fixture();
-    const obsolete = join(projectDir, '.aiwg', 'generated', 'project-quickref', 'old-project-quickref');
+    const obsolete = projectAiwgPath(projectDir, 'generated', 'project-quickref', 'old-project-quickref');
     await mkdir(obsolete, { recursive: true });
     await writeFile(join(obsolete, 'SKILL.md'), '# stale generated output\n');
 
     await generateProjectQuickref(projectDir);
     expect(existsSync(obsolete)).toBe(false);
+  });
+
+  it('loads and generates quickrefs from a relocated artifact root', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-project-quickref-relocated-'));
+    roots.push(root);
+    const projectDir = join(root, 'project');
+    const artifactRoot = join(root, 'private', 'renamed-aiwg');
+    const definition: ProjectQuickref = {
+      version: '1',
+      project: {
+        id: 'relocated-console',
+        name: 'Relocated Console',
+        description: 'Quickref in a relocated project artifact root.',
+      },
+      precedence: 'Use relocated project instructions first.',
+      entries: [{
+        title: 'Relocated flow',
+        summary: 'Read the relocated source.',
+        discover: ['relocated flow'],
+        show: [],
+      }],
+    };
+    await mkdir(projectDir, { recursive: true });
+    await writeFile(join(projectDir, PROJECT_AIWG_LOCATION_FILE), '../private/renamed-aiwg\n');
+    await mkdir(artifactRoot, { recursive: true });
+    await writeFile(projectAiwgPath(projectDir, 'quickref.json'), JSON.stringify(definition, null, 2) + '\n');
+
+    const generated = await generateProjectQuickref(projectDir);
+
+    expect(generated.sourcePath).toBe(join(artifactRoot, 'quickref.json'));
+    expect(generated.outputPath).toBe(join(
+      artifactRoot,
+      'generated',
+      'project-quickref',
+      'aiwg-project-relocated-console-quickref',
+      'SKILL.md',
+    ));
+    expect(existsSync(generated.outputPath)).toBe(true);
   });
 
   it('namespaces a user-global provider target by canonical project id', async () => {
@@ -114,7 +174,7 @@ describe('project quickref generation and deployment (#1788)', () => {
       version: 1,
       projectId: 'old-id',
       sourceProject: projectDir,
-      sourcePath: join(projectDir, '.aiwg', 'quickref.json'),
+      sourcePath: projectAiwgPath(projectDir, 'quickref.json'),
       contentHash: 'old',
     }));
     await writeFile(join(operator, 'SKILL.md'), '# operator owned\n');

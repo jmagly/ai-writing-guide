@@ -13,7 +13,7 @@
  * @implements #1037
  */
 
-import { resolve } from 'path';
+import { join, resolve } from 'path';
 import { homedir } from 'os';
 import { discoverProjectLocalBundles } from './project-local-discovery.js';
 import { buildUpstreamRegistry } from './upstream-registry.js';
@@ -22,6 +22,8 @@ import { checkBundleManifestIgnored } from './project-local-gitignore.js';
 import { sha256OfFileRawAndNormalized } from './managed-marker.js';
 import type { ProjectLocalType } from './manifest.js';
 import type { AiwgConfig } from '../config/aiwg-config.js';
+import { projectAiwgPath } from '../config/project-artifacts.js';
+import { projectRelativePathIfInside } from './project-local-paths.js';
 import { auditProjectQuickref } from './project-quickref.js';
 
 export interface DoctorSectionResult {
@@ -101,9 +103,12 @@ export async function buildProjectLocalDoctorSection(
   const quickrefAudit = await auditProjectQuickref(projectDir, config?.providers ?? []);
   const quickrefErrors = [...quickrefAudit.errors];
   if (quickrefAudit.exists) {
-    const ignored = await checkBundleManifestIgnored(projectDir, '.aiwg/quickref.json');
-    if (ignored === true) {
-      quickrefErrors.push('.aiwg/quickref.json is ignored by git; canonical project quickref source must be committed');
+    const quickrefRelPath = projectRelativePathIfInside(projectDir, projectAiwgPath(projectDir, 'quickref.json'));
+    const ignored = quickrefRelPath
+      ? await checkBundleManifestIgnored(projectDir, quickrefRelPath)
+      : null;
+    if (ignored === true && quickrefRelPath) {
+      quickrefErrors.push(`${quickrefRelPath} is ignored by git; canonical project quickref source must be committed`);
     }
   }
 
@@ -269,8 +274,11 @@ export async function buildProjectLocalDoctorSection(
   if (discovery.bundles.length > 0) {
     const ignored: string[] = [];
     for (const b of discovery.bundles) {
-      const isIgnored = await checkBundleManifestIgnored(projectDir, b.manifestPath);
-      if (isIgnored === true) ignored.push(`${b.type}/${b.id} (${b.manifestPath})`);
+      const manifestRelPath = projectRelativePathIfInside(projectDir, join(b.bundlePath, 'manifest.json'));
+      const isIgnored = manifestRelPath
+        ? await checkBundleManifestIgnored(projectDir, manifestRelPath)
+        : null;
+      if (isIgnored === true) ignored.push(`${b.type}/${b.id} (${manifestRelPath})`);
     }
     gitignoredCount = ignored.length;
     if (ignored.length > 0) {

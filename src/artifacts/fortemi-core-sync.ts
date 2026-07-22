@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import type { GraphType } from "./types.js";
-import { GRAPH_CONFIGS, loadGlobalGraphConfigs } from "./types.js";
+import { GRAPH_CONFIGS, getProjectIndexRoot, loadGlobalGraphConfigs } from "./types.js";
 import {
   buildAiwgFortemiIndexExport,
   type AiwgPrivacyClassification,
@@ -59,7 +59,7 @@ function syncDir(cwd: string, graph: string): string {
     const xdgData = process.env.XDG_DATA_HOME ?? path.join(process.env.HOME ?? cwd, ".local", "share");
     return path.join(xdgData, "aiwg", "index", "fortemi-core", graph);
   }
-  return path.join(cwd, ".aiwg", ".index", "fortemi-core", graph);
+  return path.join(getProjectIndexRoot(cwd), "fortemi-core", graph);
 }
 
 function findPackageRoot(startDir: string): string | null {

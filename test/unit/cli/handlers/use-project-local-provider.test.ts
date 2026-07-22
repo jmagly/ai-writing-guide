@@ -8,6 +8,16 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { PROJECT_LOCAL_SEARCH_PATHS_ENV } from '../../../../src/extensions/project-local-paths.js';
+
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+  PROJECT_LOCAL_SEARCH_PATHS_ENV,
+] as const;
+
+let originalEnv: Partial<Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined>> = {};
 
 const state = vi.hoisted(() => ({
   frameworkRoot: '',
@@ -56,6 +66,11 @@ describe('aiwg use project-local provider bundles (#1717)', () => {
   let frameworkRoot: string;
 
   beforeEach(() => {
+    originalEnv = {};
+    for (const key of ARTIFACT_ENV_KEYS) {
+      originalEnv[key] = process.env[key];
+      delete process.env[key];
+    }
     projectDir = tmp();
     frameworkRoot = tmp();
     state.frameworkRoot = frameworkRoot;
@@ -64,6 +79,11 @@ describe('aiwg use project-local provider bundles (#1717)', () => {
   });
 
   afterEach(() => {
+    for (const key of ARTIFACT_ENV_KEYS) {
+      const value = originalEnv[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
     rmSync(projectDir, { recursive: true, force: true });
     rmSync(frameworkRoot, { recursive: true, force: true });
   });

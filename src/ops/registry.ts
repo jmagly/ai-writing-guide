@@ -19,6 +19,7 @@ import type {
   WorkspaceRepoAction,
   WorkspaceRepoConfig,
 } from '../config/aiwg-config.js';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 
 /**
  * Extension type abbreviations
@@ -620,7 +621,7 @@ export class OpsRegistry {
     }
 
     let canonical: ResolvedWorkspace | null = null;
-    const canonicalConfigPath = resolve(workspace.home, '.aiwg', 'aiwg.config');
+    const canonicalConfigPath = projectAiwgPath(workspace.home, 'aiwg.config');
     let canonicalDeclared = false;
     if (existsSync(canonicalConfigPath)) {
       try {

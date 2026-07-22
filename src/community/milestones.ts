@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import path from 'path';
 import { formatMilestoneCelebration } from './links.js';
 import { shouldShowNudge } from './nudge-policy.js';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 
 export type CommunityMilestone =
   | 'first_deploy'
@@ -10,7 +11,7 @@ export type CommunityMilestone =
   | 'first_production_deploy';
 
 export function milestoneStatePath(projectDir: string): string {
-  return path.join(projectDir, '.aiwg', '.milestones.json');
+  return projectAiwgPath(projectDir, '.milestones.json');
 }
 
 function readMilestones(projectDir: string): Record<string, string | null> {

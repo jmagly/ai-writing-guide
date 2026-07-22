@@ -11,6 +11,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { HandlerContext } from "../../../../src/cli/handlers/types.js";
 import { researchQueryCommand } from "../../../../src/extensions/commands/definitions.js";
+import { PROJECT_LOCAL_SEARCH_PATHS_ENV } from "../../../../src/extensions/project-local-paths.js";
+
+const ARTIFACT_ENV_KEYS = [
+  "AIWG_ARTIFACTS_PATH",
+  "AIWG_PROJECT_ARTIFACTS_PATH",
+  "AIWG_PROJECT_AIWG_DIR",
+  PROJECT_LOCAL_SEARCH_PATHS_ENV,
+] as const;
+
+let originalEnv: Partial<Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined>> = {};
 
 // Mock script runner
 const mockRun = vi.fn().mockResolvedValue({ exitCode: 0 });
@@ -81,6 +91,11 @@ describe("Subcommand Handlers", () => {
   let mockContext: HandlerContext;
 
   beforeEach(() => {
+    originalEnv = {};
+    for (const key of ARTIFACT_ENV_KEYS) {
+      originalEnv[key] = process.env[key];
+      delete process.env[key];
+    }
     mockRun.mockResolvedValue({ exitCode: 0 });
     mockContext = {
       args: [],
@@ -89,6 +104,14 @@ describe("Subcommand Handlers", () => {
       frameworkRoot: "/mock/framework/root",
     };
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    for (const key of ARTIFACT_ENV_KEYS) {
+      const value = originalEnv[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   });
 
   describe("mcpHandler", () => {

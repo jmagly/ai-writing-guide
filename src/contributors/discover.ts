@@ -15,6 +15,7 @@ import { readFile } from 'fs/promises';
 import { glob } from 'glob';
 import path from 'path';
 import { parseFrontmatter } from '../artifacts/index-builder.js';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 import { isInUse } from './detect.js';
 import { validateContributor } from './validation.js';
 import type {
@@ -176,7 +177,7 @@ export async function discoverContributors(
 ): Promise<DiscoveryResult> {
   const { frameworkRoot, projectRoot } = options;
   const registryPath =
-    options.registryPath ?? path.join(projectRoot, '.aiwg', 'frameworks', 'registry.json');
+    options.registryPath ?? projectAiwgPath(projectRoot, 'frameworks', 'registry.json');
 
   const sources: ContributorOrigin[] = [];
 
@@ -192,7 +193,7 @@ export async function discoverContributors(
   }
 
   // 2. Project-local contributors.
-  const localDir = path.join(projectRoot, '.aiwg', 'contributors', kind);
+  const localDir = projectAiwgPath(projectRoot, 'contributors', kind);
   if (existsSync(localDir)) {
     const localFiles = await glob('*.md', { cwd: localDir, absolute: true, nodir: true });
     localFiles.sort(); // deterministic ordering

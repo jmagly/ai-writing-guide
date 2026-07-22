@@ -74,6 +74,28 @@ index:
     const loaded = loadUserGraphConfigs(tmpDir);
     expect(loaded).toEqual([]);
   });
+
+  it('should load user-defined graphs from the configured artifact root', () => {
+    const artifactRoot = path.join(tmpDir, 'private-corpus', '.aiwg');
+    fs.mkdirSync(artifactRoot, { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, '.aiwg-location'), 'private-corpus/.aiwg\n');
+    fs.writeFileSync(path.join(artifactRoot, 'aiwg.config'), JSON.stringify({
+      index: {
+        graphs: {
+          references: {
+            scanDirs: ['documentation/references'],
+            extensions: ['.md'],
+            defaultBuild: false,
+          },
+        },
+      },
+    }));
+
+    const loaded = loadUserGraphConfigs(tmpDir);
+
+    expect(loaded).toContain('references');
+    expect(GRAPH_CONFIGS['references'].scanDirs).toEqual(['documentation/references']);
+  });
 });
 
 describe('loadModuleGraphConfigs', () => {
@@ -172,6 +194,33 @@ describe('loadModuleGraphConfigs', () => {
 
     const loaded = loadModuleGraphConfigs(tmpDir);
     expect(loaded).toEqual([]);
+  });
+
+  it('should load module graph declarations from the configured artifact root registry', () => {
+    const artifactRoot = path.join(tmpDir, 'private-corpus', '.aiwg');
+    const registryDir = path.join(artifactRoot, 'frameworks');
+    fs.mkdirSync(registryDir, { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, '.aiwg-location'), 'private-corpus/.aiwg\n');
+    fs.writeFileSync(path.join(registryDir, 'registry.json'), JSON.stringify({
+      version: '1.0.0',
+      frameworks: [{ id: 'relocated-framework' }],
+    }));
+
+    const frameworkDir = path.join(tmpDir, 'agentic', 'code', 'frameworks', 'relocated-framework');
+    fs.mkdirSync(frameworkDir, { recursive: true });
+    fs.writeFileSync(path.join(frameworkDir, 'manifest.json'), JSON.stringify({
+      id: 'relocated-framework',
+      index: {
+        graphs: {
+          'relocated-docs': { scanDirs: ['docs/relocated'], extensions: ['.md'] },
+        },
+      },
+    }));
+
+    const loaded = loadModuleGraphConfigs(tmpDir);
+
+    expect(loaded).toContain('relocated-docs');
+    expect(GRAPH_CONFIGS['relocated-docs'].scanDirs).toEqual(['docs/relocated']);
   });
 
   it('should also check addons directory', () => {

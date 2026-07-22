@@ -1,6 +1,5 @@
 import { spawnSync } from 'child_process';
 import { existsSync } from 'fs';
-import path from 'path';
 import type { Interface as ReadlineInterface } from 'readline';
 import type { AiwgConfig, DeliveryConfig, RemotesConfig, SecondaryRemote } from '../../config/aiwg-config.js';
 import {
@@ -16,6 +15,7 @@ import { AiwgError, EXIT_CODES } from '../errors.js';
 import { askChoice, askString, askYesNo, createPromptInterface } from '../prompt-utils.js';
 import * as ui from '../ui.js';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 
 type IssueProvider = 'gitea' | 'github' | 'local';
 type DeliveryMode = 'direct' | 'feature-branch' | 'pr-required';
@@ -286,7 +286,7 @@ export async function buildSetupProjectPlan(options: SetupProjectOptions): Promi
   const remotes = detectGitRemotes(options.projectDir);
   const primary = options.primary ?? base.remotes?.primary ?? choosePrimary(remotes);
   const primaryRemote = remotes.find(r => r.name === primary);
-  const hasLocalIssues = existsSync(path.join(options.projectDir, '.aiwg', 'issues', 'config.json'));
+  const hasLocalIssues = existsSync(projectAiwgPath(options.projectDir, 'issues', 'config.json'));
   const issueProvider = options.issueProvider ?? chooseIssueProvider(primaryRemote, hasLocalIssues);
   const issueTracker = issueProvider === 'local'
     ? 'local'

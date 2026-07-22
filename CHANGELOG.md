@@ -7,6 +7,19 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Relocatable project artifact root** — the CLI now honors `.aiwg-location`
+  and `AIWG_ARTIFACTS_PATH` across project indexing, project-local bundles,
+  quickrefs, workspace context wiring, local issue state, memory/knowledge
+  stores, serve identity config, and related runtime state. `aiwg artifacts
+  move --to <path>` moves or renames the artifact root, writes the pointer,
+  updates local ignore rules, and reindexes.
+- **Project-local bundle search paths** — `projectLocal.searchPaths` in
+  `aiwg.config` and `AIWG_PROJECT_LOCAL_PATHS` let operators add custom addon,
+  extension, framework, plugin, and provider roots without moving the main
+  project corpus.
+
 ## [2026.7.16] - 2026-07-21 - "Workspace context and provider orchestration"
 
 ### Added

@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 
 export type WorkspaceBundleType = 'framework' | 'addon' | 'extension';
 
@@ -21,8 +22,6 @@ export interface WorkspaceSignalPlan {
   bundles: WorkspaceBundleDecision[];
   notes: string[];
 }
-
-const PLAN_REL_PATH = path.join('.aiwg', 'workspace-skill-plan.json');
 
 const FRAMEWORKS = [
   'sdlc',
@@ -134,7 +133,7 @@ function extractConfigHints(config: Record<string, unknown> | null): {
 }
 
 async function detectIntakeProfiles(projectDir: string): Promise<string[]> {
-  const intakePath = path.join(projectDir, '.aiwg', 'intake', 'solution-profile.md');
+  const intakePath = projectAiwgPath(projectDir, 'intake', 'solution-profile.md');
   try {
     const content = (await fs.readFile(intakePath, 'utf-8')).toLowerCase();
     const profiles: string[] = [];
@@ -166,7 +165,7 @@ export async function resolveWorkspaceSignalPlan(
   let profile = opts.profile;
   let profileSource: WorkspaceSignalPlan['profileSource'] = profile ? 'flag' : 'auto';
 
-  const config = await readJsonIfPresent(path.join(projectDir, '.aiwg', 'aiwg.config'));
+  const config = await readJsonIfPresent(projectAiwgPath(projectDir, 'aiwg.config'));
   const configHints = extractConfigHints(config);
   if (!profile && configHints.profile) {
     profile = configHints.profile;
@@ -198,7 +197,10 @@ export async function resolveWorkspaceSignalPlan(
   ];
 
   for (const [framework, relPath, reasonPath] of domainSignals) {
-    if (await exists(path.join(projectDir, relPath))) {
+    const artifactPath = relPath.startsWith('.aiwg/')
+      ? projectAiwgPath(projectDir, relPath.slice('.aiwg/'.length))
+      : path.join(projectDir, relPath);
+    if (await exists(artifactPath)) {
       signals.push(relPath);
       addReason(included, framework, `matched ${reasonPath} workspace signal`);
     } else {
@@ -274,7 +276,7 @@ export async function resolveWorkspaceSignalPlan(
 }
 
 export async function writeWorkspaceSignalPlan(projectDir: string, plan: WorkspaceSignalPlan): Promise<string> {
-  const planPath = path.join(projectDir, PLAN_REL_PATH);
+  const planPath = projectAiwgPath(projectDir, 'workspace-skill-plan.json');
   await fs.mkdir(path.dirname(planPath), { recursive: true });
   await fs.writeFile(planPath, JSON.stringify(plan, null, 2) + '\n', 'utf-8');
   return planPath;
@@ -282,7 +284,7 @@ export async function writeWorkspaceSignalPlan(projectDir: string, plan: Workspa
 
 export async function readWorkspaceSignalPlan(projectDir: string): Promise<WorkspaceSignalPlan | null> {
   try {
-    const content = await fs.readFile(path.join(projectDir, PLAN_REL_PATH), 'utf-8');
+    const content = await fs.readFile(projectAiwgPath(projectDir, 'workspace-skill-plan.json'), 'utf-8');
     return JSON.parse(content) as WorkspaceSignalPlan;
   } catch {
     return null;

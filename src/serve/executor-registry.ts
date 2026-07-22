@@ -22,6 +22,7 @@ import { homedir } from 'os';
 import { dirname, isAbsolute, join, resolve as resolvePath } from 'path';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 
 // ============================================================
 // Ajv bootstrap (transitive dep — zero new top-level deps)
@@ -267,7 +268,7 @@ export function resolveExecutorIdentityStorePath(projectRootOverride?: string): 
   if (envOverride) return envOverride;
 
   const projectRoot = projectRootOverride ?? process.cwd();
-  const configPath = join(projectRoot, '.aiwg', 'storage.config');
+  const configPath = projectAiwgPath(projectRoot, 'storage.config');
   if (!existsSync(configPath)) return DEFAULT_EXECUTOR_IDENTITY_STORE_PATH;
 
   try {

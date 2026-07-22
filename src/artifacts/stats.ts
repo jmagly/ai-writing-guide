@@ -11,7 +11,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { GraphType, IndexStats } from './types.js';
-import { GRAPH_CONFIGS, loadUserGraphConfigs } from './types.js';
+import { GRAPH_CONFIGS, loadUserGraphConfigs, resolveGraphScanDir } from './types.js';
 import { loadIndexStats, loadGraphIndexFile } from './index-reader.js';
 
 export interface StatsOptions {
@@ -25,8 +25,8 @@ export interface StatsOptions {
 function countArtifactFiles(cwd: string, graphType?: GraphType): number {
   const config = graphType ? GRAPH_CONFIGS[graphType] : undefined;
   const scanDirs = config
-    ? config.scanDirs.map(d => path.join(cwd, d))
-    : [path.join(cwd, '.aiwg')];
+    ? config.scanDirs.map(d => resolveGraphScanDir(cwd, d))
+    : [resolveGraphScanDir(cwd, '.aiwg')];
   const extensions = config?.extensions ?? ['.md', '.yaml', '.json'];
 
   let count = 0;

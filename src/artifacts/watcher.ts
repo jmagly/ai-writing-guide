@@ -20,6 +20,8 @@ import fs from 'fs';
 import path from 'path';
 import chokidar from 'chokidar';
 import { buildIndex, type BuildOptions } from './index-builder.js';
+import { getGraphIndexDir, getProjectIndexRoot } from './types.js';
+import { resolveProjectAiwgDir } from '../config/project-artifacts.js';
 
 export interface WatchOptions {
   /** Paths to watch (default: .aiwg/) */
@@ -39,7 +41,7 @@ export interface WatchOptions {
  * One watcher per project — the PID file prevents conflicts.
  */
 export function getPidFilePath(cwd: string): string {
-  return path.join(cwd, '.aiwg', '.index', 'watcher.pid');
+  return path.join(getProjectIndexRoot(cwd), 'watcher.pid');
 }
 
 /**
@@ -121,7 +123,7 @@ export function stopWatcher(cwd: string): boolean {
  */
 export function startWatcher(options: WatchOptions = {}): () => Promise<void> {
   const cwd = options.cwd ?? process.cwd();
-  const watchPaths = options.paths ?? [path.join(cwd, '.aiwg')];
+  const watchPaths = options.paths ?? [resolveProjectAiwgDir(cwd)];
   const debounceMs = options.debounceMs ?? 500;
   const verbose = options.verbose ?? false;
   const graph = options.graph;
@@ -241,8 +243,8 @@ export function startWatcher(options: WatchOptions = {}): () => Promise<void> {
  */
 export function isIndexStale(cwd: string, maxAgeMs: number, graph?: BuildOptions['graph']): boolean {
   const indexDir = graph
-    ? path.join(cwd, '.aiwg', '.index', graph)
-    : path.join(cwd, '.aiwg', '.index');
+    ? getGraphIndexDir(cwd, graph)
+    : getProjectIndexRoot(cwd);
   const metadataPath = path.join(indexDir, 'metadata.json');
 
   if (!fs.existsSync(metadataPath)) return true; // no index = stale

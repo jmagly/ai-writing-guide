@@ -14,6 +14,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import * as ui from './ui.js';
+import { projectAiwgPath, resolveProjectAiwgDir } from '../config/project-artifacts.js';
 
 /**
  * Shape of a single subcommand entry in cli-extensions.json
@@ -62,7 +63,7 @@ export interface CliCommandResult {
  * Read the cli-extensions registry from the current project
  */
 async function readRegistry(cwd: string): Promise<CliExtensionsRegistry | null> {
-  const registryPath = path.join(cwd, '.aiwg', 'cli-extensions.json');
+  const registryPath = projectAiwgPath(cwd, 'cli-extensions.json');
   try {
     const content = await fs.readFile(registryPath, 'utf-8');
     return JSON.parse(content);
@@ -75,7 +76,7 @@ async function readRegistry(cwd: string): Promise<CliExtensionsRegistry | null> 
  * Write the cli-extensions registry to the current project
  */
 export async function writeRegistry(cwd: string, registry: CliExtensionsRegistry): Promise<void> {
-  const dir = path.join(cwd, '.aiwg');
+  const dir = resolveProjectAiwgDir(cwd);
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(
     path.join(dir, 'cli-extensions.json'),

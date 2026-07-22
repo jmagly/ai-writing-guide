@@ -10,6 +10,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import { resolveProjectAiwgDir } from '../config/project-artifacts.js';
 import type { HybridQuery } from './address-parser.js';
 
 // ============================================================================
@@ -52,7 +53,7 @@ export class ArtifactIndex {
    */
   async build(): Promise<number> {
     this.artifacts = [];
-    const aiwgDir = path.join(this.projectPath, '.aiwg');
+    const aiwgDir = resolveProjectAiwgDir(this.projectPath);
 
     try {
       await this.scanDirectory(aiwgDir, '');

@@ -18,6 +18,7 @@ import {
   listProviderDefinitions,
   type ProviderContextContract,
 } from '../../providers/provider-definitions.js';
+import { projectAiwgPath, resolveProjectAiwgDir } from '../../config/project-artifacts.js';
 
 export const WORKSPACE_MANAGED_START = '<!-- AIWG:workspace-context:start -->';
 export const WORKSPACE_MANAGED_END = '<!-- AIWG:workspace-context:end -->';
@@ -164,7 +165,10 @@ function resolveProjectRelative(projectPath: string, relativePath: string): stri
   if (path.isAbsolute(relativePath)) throw new Error(`Unsafe absolute migration path: ${relativePath}`);
   const root = path.resolve(projectPath);
   const resolved = path.resolve(root, relativePath);
-  if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) {
+  const artifactRoot = path.resolve(resolveProjectAiwgDir(projectPath));
+  const insideProject = resolved === root || resolved.startsWith(`${root}${path.sep}`);
+  const insideArtifactRoot = resolved === artifactRoot || resolved.startsWith(`${artifactRoot}${path.sep}`);
+  if (!insideProject && !insideArtifactRoot) {
     throw new Error(`Unsafe migration path outside project: ${relativePath}`);
   }
   return resolved;
@@ -393,14 +397,22 @@ function providerForPath(relativePath: string): string | null {
   return null;
 }
 
+function projectArtifactMarkdownPath(projectPath: string, ...segments: string[]): string {
+  const rel = path.relative(projectPath, projectAiwgPath(projectPath, ...segments)).replace(/\\/g, '/');
+  if (rel === '') return '.';
+  return rel.startsWith('.') ? rel : `./${rel}`;
+}
+
 function workspaceLinks(projectPath: string, providerFiles: string[] = []): string[] {
-  const links = new Set<string>(['[AIWG framework context](./AIWG.md)', '[AIWG project configuration](./.aiwg/aiwg.config)']);
+  const links = new Set<string>([
+    '[AIWG framework context](./AIWG.md)',
+    `[AIWG project configuration](${projectArtifactMarkdownPath(projectPath, 'aiwg.config')})`,
+  ]);
   if (providerFiles.length > 0) {
     for (const file of providerFiles) links.add(`[Provider-specific context](./${file.replace(/\\/g, '/')})`);
   }
   // The quickref source is linked, not copied into each provider directory.
-  void projectPath;
-  links.add('[Project-local quickref](./.aiwg/quickref.json) (when configured)');
+  links.add(`[Project-local quickref](${projectArtifactMarkdownPath(projectPath, 'quickref.json')}) (when configured)`);
   return [...links];
 }
 
@@ -626,11 +638,11 @@ async function nestedInstructionFiles(projectPath: string): Promise<string[]> {
 }
 
 async function migratedProviderFiles(projectPath: string): Promise<string[]> {
-  const directory = path.join(projectPath, '.aiwg', 'context', 'providers');
+  const directory = projectAiwgPath(projectPath, 'context', 'providers');
   try {
     return (await fs.readdir(directory, { withFileTypes: true }))
       .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-      .map((entry) => `.aiwg/context/providers/${entry.name}`)
+      .map((entry) => projectOutputPath(projectPath, path.join(directory, entry.name)))
       .sort();
   } catch {
     return [];
@@ -714,7 +726,7 @@ export async function auditWorkspaceContext(projectPath: string): Promise<Worksp
   // provider-neutral WORKSPACE.md operator region.
   const neutralSources = rootOperator.filter((source) => source.path === 'WORKSPACE.md').map((source) => source.path);
   const providerSources = rootOperator.filter((source) => source.path !== 'WORKSPACE.md' && !neutralSources.includes(source.path)).map((source) => source.path);
-  const providerOutputs = providerSources.map((source) => `.aiwg/context/providers/${source.replace(/[^A-Za-z0-9.-]+/g, '-').replace(/^-+/, '')}`);
+  const providerOutputs = providerSources.map((source) => providerContextOutput(projectPath, source));
   const workspaceExists = sources.some((source) => source.path === 'WORKSPACE.md');
 
   return {
@@ -737,8 +749,15 @@ export async function auditWorkspaceContext(projectPath: string): Promise<Worksp
   };
 }
 
-function providerContextOutput(sourcePath: string): string {
-  return `.aiwg/context/providers/${sourcePath.replace(/[^A-Za-z0-9.-]+/g, '-').replace(/^-+/, '')}`;
+function projectOutputPath(projectPath: string, absPath: string): string {
+  return path.relative(projectPath, absPath).replace(/\\/g, '/');
+}
+
+function providerContextOutput(projectPath: string, sourcePath: string): string {
+  return projectOutputPath(
+    projectPath,
+    projectAiwgPath(projectPath, 'context', 'providers', sourcePath.replace(/[^A-Za-z0-9.-]+/g, '-').replace(/^-+/, '')),
+  );
 }
 
 function neutralMigrationContent(audit: WorkspaceContextAudit): string {
@@ -767,7 +786,7 @@ function providerMigrationContent(source: WorkspaceContextSource): string {
 }
 
 async function configuredProviders(projectPath: string): Promise<string[]> {
-  const config = await readOptional(path.join(projectPath, '.aiwg', 'aiwg.config'));
+  const config = await readOptional(projectAiwgPath(projectPath, 'aiwg.config'));
   if (config) {
     try {
       const parsed = JSON.parse(config) as { providers?: unknown };
@@ -786,10 +805,10 @@ async function stageMigrationWrites(
 ): Promise<Map<string, string>> {
   const writes = new Map<string, string>();
   for (const source of audit.sources.filter((item) => audit.plan.providerSources.includes(item.path))) {
-    writes.set(providerContextOutput(source.path), providerMigrationContent(source));
+    writes.set(providerContextOutput(projectPath, source.path), providerMigrationContent(source));
   }
   const providerFiles = [...new Set([
-    ...audit.sources.filter((source) => source.path.startsWith('.aiwg/context/providers/')).map((source) => source.path),
+    ...audit.sources.filter((source) => source.path.replace(/\\/g, '/').includes('/context/providers/')).map((source) => source.path),
     ...writes.keys(),
   ])].sort();
   const existingWorkspace = audit.sources.find((source) => source.path === 'WORKSPACE.md');
@@ -861,7 +880,7 @@ async function stageMigrationWrites(
     writes.set(configPath, `${JSON.stringify(config, null, 2)}\n`);
   }
   if (options.includeGeneratedContext) {
-    const normalizedPath = '.aiwg/AIWG.md';
+    const normalizedPath = projectOutputPath(projectPath, projectAiwgPath(projectPath, 'AIWG.md'));
     const existingNormalized = await readOptional(path.join(projectPath, normalizedPath)) ?? '';
     writes.set(normalizedPath, await buildNormalizedAiwgMd(projectPath, existingNormalized));
     const stagedClaude = writes.has('CLAUDE.md')
@@ -909,7 +928,7 @@ export async function migrateWorkspaceContext(
 
   const createdAt = new Date().toISOString();
   const id = `${createdAt.replace(/[:.]/g, '-')}-${sha256(JSON.stringify(audit.plan)).slice(0, 8)}`;
-  const transactionDir = path.join(projectPath, '.aiwg', 'context-migrations', id);
+  const transactionDir = projectAiwgPath(projectPath, 'context-migrations', id);
   const preimageDir = path.join(transactionDir, 'preimages');
   await fs.mkdir(preimageDir, { recursive: true });
   const manifest: WorkspaceMigrationManifest = { version: 1, id, createdAt, projectPath, status: 'prepared', files: [] };
@@ -953,7 +972,7 @@ async function restoreMigrationManifest(projectPath: string, manifest: Workspace
 }
 
 export async function rollbackWorkspaceContext(projectPath: string, requestedId?: string): Promise<{ id: string; restored: string[] }> {
-  const root = path.join(projectPath, '.aiwg', 'context-migrations');
+  const root = projectAiwgPath(projectPath, 'context-migrations');
   let ids: string[];
   try { ids = (await fs.readdir(root)).sort().reverse(); } catch { throw new Error('No workspace-context migration transactions found.'); }
   const id = requestedId ?? ids[0];
@@ -1022,7 +1041,7 @@ export async function diagnoseWorkspaceContext(projectPath: string): Promise<Wor
     }
     let exists = false;
     try { await fs.stat(linkedPath); exists = true; } catch { exists = false; }
-    if (!exists && !normalized.endsWith('.aiwg/quickref.json')) {
+    if (!exists && !normalized.endsWith('quickref.json')) {
       diagnostics.push({ severity: 'warning', code: 'missing-link', message: `Linked context file is missing: ${normalized}`, path: 'WORKSPACE.md' });
     }
   }
