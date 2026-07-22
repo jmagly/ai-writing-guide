@@ -65,6 +65,28 @@ describe('storage/config', () => {
       expect(cfg?.fallback).toBe('block');
     });
 
+    it('loads storage.config from AIWG_ARTIFACTS_PATH', async () => {
+      const externalAiwgDir = join(tempDir, 'private-corpus');
+      const previous = process.env.AIWG_ARTIFACTS_PATH;
+      process.env.AIWG_ARTIFACTS_PATH = externalAiwgDir;
+      try {
+        await mkdir(externalAiwgDir, { recursive: true });
+        await writeFile(
+          storageConfigPath(tempDir),
+          JSON.stringify({ version: '1', roots: { research: 'research-private' } }),
+          'utf-8'
+        );
+        const cfg = await loadStorageConfig(tempDir);
+        expect(cfg?.roots?.research).toBe('research-private');
+      } finally {
+        if (previous === undefined) {
+          delete process.env.AIWG_ARTIFACTS_PATH;
+        } else {
+          process.env.AIWG_ARTIFACTS_PATH = previous;
+        }
+      }
+    });
+
     it('throws on invalid JSON', async () => {
       await mkdir(join(tempDir, '.aiwg'), { recursive: true });
       await writeFile(storageConfigPath(tempDir), '{ not: json', 'utf-8');
@@ -196,6 +218,21 @@ describe('storage/config', () => {
     it('falls back to .aiwg/<default> when no override', () => {
       const root = resolveSubsystemRoot('memory', '/proj', null);
       expect(root).toBe('/proj/.aiwg/memory');
+    });
+
+    it('falls back under AIWG_ARTIFACTS_PATH when the project corpus is relocated', () => {
+      const previous = process.env.AIWG_ARTIFACTS_PATH;
+      process.env.AIWG_ARTIFACTS_PATH = '/private/ops/corpus/.aiwg';
+      try {
+        const root = resolveSubsystemRoot('research', '/proj', null);
+        expect(root).toBe('/private/ops/corpus/.aiwg/research');
+      } finally {
+        if (previous === undefined) {
+          delete process.env.AIWG_ARTIFACTS_PATH;
+        } else {
+          process.env.AIWG_ARTIFACTS_PATH = previous;
+        }
+      }
     });
 
     it('honors absolute root override', () => {

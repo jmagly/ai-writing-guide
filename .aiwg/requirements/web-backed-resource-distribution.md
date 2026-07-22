@@ -7,7 +7,7 @@
 
 ## Goal
 
-Allow operators to install a lightweight AIWG CLI while resolving AIWG resource bundles from local paths or versioned `aiwg.io` web resources through the same CLI abstraction.
+Allow operators to install a lightweight AIWG CLI while resolving AIWG resource bundles from local paths or versioned release-host web resources through the same CLI abstraction.
 
 ## Functional Requirements
 
@@ -23,6 +23,8 @@ Allow operators to install a lightweight AIWG CLI while resolving AIWG resource 
 | WBR-FR-008 | `--offline` uses only verified cached resources and never fetches from the network. |
 | WBR-FR-009 | Existing local installs continue to behave as they do today unless the operator opts into web mode. |
 | WBR-FR-010 | Provider-facing bootstrap artifacts must not depend on absolute npm install paths for AIWG-owned resources. |
+| WBR-FR-011 | Release artifacts are served from a dedicated subdomain, planned as `releases.aiwg.io`, not from public `aiwg.io` paths. |
+| WBR-FR-012 | Local AIWG project artifacts can be relocated or renamed through `AIWG_ARTIFACTS_PATH`, including pointing at a private repo checkout. |
 
 ## Non-Functional Requirements
 
@@ -34,6 +36,8 @@ Allow operators to install a lightweight AIWG CLI while resolving AIWG resource 
 | WBR-NFR-004 | Web mode must preserve local-mode command output semantics unless a command explicitly reports source/version metadata. |
 | WBR-NFR-005 | Default web mode is blocked until rollback/freeze/mix-and-match protection exists. |
 | WBR-NFR-006 | Published immutable release bundles remain available after channel movement. |
+| WBR-NFR-007 | The release-host boundary can later enforce private or paid access without changing the public `aiwg.io` site contract. |
+| WBR-NFR-008 | Public build/test workflows remain usable when the private `.aiwg` corpus is absent. |
 
 ## User Stories
 
@@ -42,6 +46,8 @@ Allow operators to install a lightweight AIWG CLI while resolving AIWG resource 
 - As a release tester, I can run one command against `canary` or an exact historical resource version without changing project config.
 - As an offline operator, I can run against a previously locked and cached resource graph.
 - As a maintainer, I can publish a release once and then move `stable` or `canary` channel manifests without rewriting immutable release artifacts.
+- As a site operator, I can keep `aiwg.io` public while making the release-artifact subdomain private or entitlement-gated later.
+- As a maintainer with private repo access, I can run AIWG SDLC workflows against a private `corpus/.aiwg` path without committing that corpus to the public product repo.
 
 ## Public CLI Contract
 
@@ -70,6 +76,8 @@ AIWG_OFFLINE=1
 - [ ] Per-call flags override config and do not persist unless a mutating command writes the lockfile.
 - [ ] `.aiwg/resources.lock.json` records source, selector, resolved version, manifest URL, and digests.
 - [ ] Web resource fetches verify digests before use.
+- [ ] Default web URLs resolve through the configured release host, with `releases.aiwg.io` as the planned production default.
+- [ ] `AIWG_ARTIFACTS_PATH=/path/to/aiwg-web-release-ops/corpus/.aiwg` resolves project config and storage defaults from that external directory.
 - [ ] Local-vs-web parity tests cover discovery, show, use, regenerate, and provider deployment.
 - [ ] `aiwg doctor` reports resource source mode, selected version, cache status, and lock drift.
 - [ ] Documentation distinguishes CLI binary version from resource bundle version.

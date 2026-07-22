@@ -7,7 +7,7 @@
 
 ## Change Summary
 
-AIWG will add a resolver that can load first-party resources from local package paths or versioned web bundles on `aiwg.io`. Operators can keep local resources, opt into web resources, or run hybrid `auto` mode. Per-call version selectors allow a single command to run against a specific AIWG resource version without reinstalling the CLI.
+AIWG will add a resolver that can load first-party resources from local package paths or versioned web bundles on the dedicated release host, planned as `releases.aiwg.io`. Operators can keep local resources, opt into web resources, or run hybrid `auto` mode. Per-call version selectors allow a single command to run against a specific AIWG resource version without reinstalling the CLI.
 
 ## Affected Components
 
@@ -17,8 +17,8 @@ AIWG will add a resolver that can load first-party resources from local package 
 | Discovery/show/index paths | Resolve resources through CLI resolver | Replace direct package-root path reads |
 | `use`/regenerate/deploy paths | Lock resolved resource graph on mutation | Lockfile writes and parity tests |
 | Package/marketplace cache | Reuse cache behavior for first-party resources | Cache layout, cleanup, lock awareness |
-| Release pipeline | Publish resource manifests/bundles to aiwg.io | Build, sign, upload, and verify |
-| Docs site | Serve immutable release resources and channel manifests | Static artifact layout and retention |
+| Release pipeline | Publish resource manifests/bundles to the release host | Build, sign, upload, and verify |
+| Release artifact host | Serve immutable release resources and channel manifests separately from the public site | Static artifact layout, access policy, retention, and private/paid-readiness |
 | Security docs/tests | Define chain of trust and failure modes | Trust-boundary docs, digest tests |
 
 ## API and Compatibility Impact
@@ -28,10 +28,11 @@ AIWG will add a resolver that can load first-party resources from local package 
 - New optional project file: `.aiwg/resources.lock.json`.
 - Existing commands continue to default to local resources.
 - Provider-facing bootstrap should keep using CLI calls and logical resource references.
+- Local maintainer workflows can relocate the project artifact corpus with `AIWG_ARTIFACTS_PATH`, including a private repository checkout.
 
 ## Data and Persistence Impact
 
-- AIWG user cache stores immutable release bundles and channel manifests.
+- AIWG user cache stores immutable release bundles and channel manifests from the configured release host.
 - Project lockfile records resolved resource versions and digests for mutating commands.
 - Existing `.aiwg/aiwg.config` remains the place for desired default source/version policy.
 
@@ -51,9 +52,10 @@ The web resource path is a supply-chain boundary. Required mitigations:
 2. **Resolver MVP**: add local/web/auto resolver behind opt-in flags.
 3. **Version browse/resolve**: add `aiwg versions` commands and per-call selectors.
 4. **Cache/lock**: add verified cache reads and `.aiwg/resources.lock.json`.
-5. **Publication pipeline**: emit immutable resource bundles and channel manifests to aiwg.io.
+5. **Publication pipeline**: emit immutable resource bundles and channel manifests to the dedicated release host.
 6. **Parity hardening**: run local-vs-web discovery/show/use/regenerate tests.
-7. **Default decision**: only revisit default web mode after trust and offline gates pass.
+7. **Private corpus migration**: move AIWG's own `.aiwg` corpus to the private release-operations repo after public compatibility tests pass.
+8. **Default decision**: only revisit default web mode after trust and offline gates pass.
 
 ## Rollback Strategy
 
@@ -61,6 +63,7 @@ The web resource path is a supply-chain boundary. Required mitigations:
 - Allow `--resource-source local` and project config to force local-only behavior.
 - Cache cleanup must preserve locked versions unless forced.
 - If a published channel manifest is bad, revert the channel manifest to the previous known-good version; immutable release URLs are not rewritten.
+- Keep release artifacts off the main `aiwg.io` public site so future private or paid access controls can be added at the release-host boundary.
 
 ## Acceptance Gate
 

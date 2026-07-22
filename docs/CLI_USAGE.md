@@ -217,7 +217,7 @@ aiwg --use-stable
 
 AIWG is planning an opt-in mode where the npm package can carry only CLI
 tooling while AIWG resource bundles resolve through the CLI from local paths or
-versioned `aiwg.io` web resources.
+versioned release-host web resources such as `releases.aiwg.io`.
 
 ```bash
 aiwg versions list
@@ -232,6 +232,13 @@ aiwg use sdlc --offline
 This feature is not implemented yet. See
 [Web-Backed AIWG Resources](./install/web-backed-resources.md) for the planned
 operator contract, version selectors, and safety model.
+
+Maintainer checkouts can already relocate the project AIWG artifact directory
+with `AIWG_ARTIFACTS_PATH`, for example:
+
+```bash
+export AIWG_ARTIFACTS_PATH=../aiwg-web-release-ops/corpus/.aiwg
+```
 
 ## Maintenance
 

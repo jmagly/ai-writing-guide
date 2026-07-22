@@ -112,6 +112,21 @@ describe('aiwg-config', () => {
       const p = getConfigPath('/some/project');
       expect(p).toBe(resolve('/some/project', '.aiwg', 'aiwg.config'));
     });
+
+    it('honors AIWG_ARTIFACTS_PATH for renamed or external project corpus directories', () => {
+      const previous = process.env.AIWG_ARTIFACTS_PATH;
+      process.env.AIWG_ARTIFACTS_PATH = '../aiwg-web-release-ops/corpus/.aiwg';
+      try {
+        const p = getConfigPath('/some/project');
+        expect(p).toBe(resolve('/some/project', '../aiwg-web-release-ops/corpus/.aiwg', 'aiwg.config'));
+      } finally {
+        if (previous === undefined) {
+          delete process.env.AIWG_ARTIFACTS_PATH;
+        } else {
+          process.env.AIWG_ARTIFACTS_PATH = previous;
+        }
+      }
+    });
   });
 
   // ── readAiwgConfig / writeAiwgConfig ───────────────────────────────────────
@@ -171,6 +186,26 @@ describe('aiwg-config', () => {
 
       const read = await readAiwgConfig(tmpDir);
       expect(read?.externalLinks).toEqual(cfg.externalLinks);
+    });
+
+    it('reads and writes aiwg.config from AIWG_ARTIFACTS_PATH', async () => {
+      const externalAiwgDir = join(tmpDir, 'renamed-aiwg-corpus');
+      const previous = process.env.AIWG_ARTIFACTS_PATH;
+      process.env.AIWG_ARTIFACTS_PATH = externalAiwgDir;
+      try {
+        await writeAiwgConfig(tmpDir, emptyConfig(['codex']));
+        expect(existsSync(join(externalAiwgDir, 'aiwg.config'))).toBe(true);
+        expect(existsSync(join(tmpDir, '.aiwg', 'aiwg.config'))).toBe(false);
+
+        const read = await readAiwgConfig(tmpDir);
+        expect(read?.providers).toEqual(['codex']);
+      } finally {
+        if (previous === undefined) {
+          delete process.env.AIWG_ARTIFACTS_PATH;
+        } else {
+          process.env.AIWG_ARTIFACTS_PATH = previous;
+        }
+      }
     });
 
     it('clearly rejects malformed external links while preserving unrelated fields on disk', async () => {

@@ -11,6 +11,7 @@ import * as path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { readAiwgConfig, type AiwgConfig } from '../../config/aiwg-config.js';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 import { renderTrackerProtocol, resolveTrackerAuthority } from '../../tracker/capability-protocol.js';
 import {
   buildExternalLinksSection,
@@ -52,6 +53,12 @@ async function readGitRemoteUrls(projectPath: string): Promise<Record<string, st
   }
 }
 
+function displayProjectPath(projectPath: string, targetPath: string): string {
+  const relative = path.relative(projectPath, targetPath).replace(/\\/g, '/');
+  if (relative && !relative.startsWith('..') && !path.isAbsolute(relative)) return relative;
+  return targetPath;
+}
+
 export async function buildContextFinalizationBlock(projectPath: string): Promise<string> {
   const config = await readConfig(projectPath);
   const remoteUrls = await readGitRemoteUrls(projectPath);
@@ -59,6 +66,7 @@ export async function buildContextFinalizationBlock(projectPath: string): Promis
   const installed = Object.entries(config?.installed ?? {});
   const installedNames = installed.map(([name]) => name);
   const providerDeployments = new Set<string>();
+  const normalizedAiwgMdPath = displayProjectPath(projectPath, projectAiwgPath(projectPath, 'AIWG.md'));
 
   for (const [, entry] of installed) {
     for (const provider of Object.keys(entry.deployedTo ?? {})) {
@@ -77,7 +85,7 @@ export async function buildContextFinalizationBlock(projectPath: string): Promis
     `- Configured providers: ${formatList(providers)}`,
     `- Installed frameworks/addons: ${formatList(installedNames)}`,
     `- Recorded deployments: ${formatList([...providerDeployments].sort())}`,
-    '- Normalized project context: `.aiwg/AIWG.md`',
+    `- Normalized project context: \`${normalizedAiwgMdPath}\``,
     '',
     '### Discover-First Protocol',
     '',
@@ -139,7 +147,7 @@ export async function buildNormalizedAiwgMd(projectPath: string, existing = ''):
 }
 
 export async function writeNormalizedAiwgMd(projectPath: string): Promise<string> {
-  const targetPath = path.join(projectPath, '.aiwg', 'AIWG.md');
+  const targetPath = projectAiwgPath(projectPath, 'AIWG.md');
   let existing = '';
   try {
     existing = await fs.readFile(targetPath, 'utf8');

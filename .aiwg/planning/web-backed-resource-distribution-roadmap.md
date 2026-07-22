@@ -16,6 +16,7 @@ Ship this as an opt-in major feature in phases. The first implementation proves 
   - `.aiwg/architecture/adr-aiwg-io-resource-publication-trust.md`
 - Land requirements and test strategy.
 - File implementation and research issues.
+- Keep monetization-sensitive release-host operations and private `.aiwg` corpus migration artifacts in the private release-operations repo.
 
 ## Phase 1: Resolver MVP
 
@@ -23,6 +24,7 @@ Ship this as an opt-in major feature in phases. The first implementation proves 
 - Keep existing local behavior as default.
 - Add shared command context parsing for resource flags.
 - Add tests that prevent command handlers from bypassing the resolver for AIWG-owned resources.
+- Preserve the documented `AIWG_ARTIFACTS_PATH` behavior so local maintainers can point project artifacts at the private corpus checkout.
 
 ## Phase 2: Version Browsing and Per-Call Selection
 
@@ -38,12 +40,14 @@ Ship this as an opt-in major feature in phases. The first implementation proves 
 - Add offline behavior and `aiwg doctor` diagnostics.
 - Add lock-aware cache cleanup.
 
-## Phase 4: aiwg.io Publication Pipeline
+## Phase 4: Release Host Publication Pipeline
 
 - Build immutable release resource bundles.
+- Provision the dedicated release-artifact subdomain, planned as `releases.aiwg.io`, separately from the public `aiwg.io` site.
 - Publish release manifests, signatures, bundle digests, and channel manifests.
 - Add release verification job that downloads and resolves a published bundle in a clean workspace.
 - Retain immutable releases indefinitely.
+- Keep the host boundary compatible with future private or paid access controls.
 
 ## Phase 5: Trust Hardening and Default Decision
 
@@ -62,8 +66,10 @@ Issue links are populated after tracker filing.
 | Resolver abstraction | #1848 |
 | Version browse and per-call selection | #1849 |
 | Cache and lockfile | #1850 |
-| aiwg.io publication pipeline | #1851 |
+| Release host publication pipeline | #1851 |
 | Supply-chain trust hardening | #1852 |
 | Parity/offline test suite | #1853 |
 | Operator documentation | #1854 |
 | Research induction | #1855 |
+| Project artifact root relocation regression | #1856 |
+| Remaining project artifact hardcoded path audit | #1857 |
