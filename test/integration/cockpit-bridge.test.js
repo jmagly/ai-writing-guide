@@ -451,6 +451,7 @@ describe('cockpit Bridge — protected executor identity', () => {
         const body = await response.json();
         expect(body.error).toBe(testCase.error);
         expect(JSON.stringify(body)).not.toContain('synthetic-');
+        expect(JSON.stringify(body)).not.toContain(testCase.file);
       } finally {
         candidate.close();
       }
