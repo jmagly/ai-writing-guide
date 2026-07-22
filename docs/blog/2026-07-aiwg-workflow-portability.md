@@ -15,10 +15,6 @@ aiwg_refs: ["aiwg discover", "aiwg show", "AGENTS.md", "AIWG.md"]
 
 # If your agent workflow only lives in chat, you do not have a workflow
 
-![If your agent workflow only lives in chat, you do not have a workflow](/assets/blog/2026-07-aiwg-workflow-portability-hero.png)
-
-*Hero image: AI-generated with ChatGPT from a brand-specified prompt; no product screenshot, live UI state, or rendered text is represented as factual evidence.*
-
 Before adopting another AI coding tool, run a smaller test.
 
 Name one workflow you repeat often enough to notice when it breaks. Release notes. Code review. Research induction. Incident response. Upgrade planning. Customer discovery. Publication QA.
