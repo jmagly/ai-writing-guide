@@ -33,16 +33,16 @@ operator / CLI:  aiwg cockpit
 - **Control plane** — lifecycle, approvals, session create/list, index,
   library, audit — goes through the gated Bridge (`/api/*`, Bearer token +
   CSRF; see [Trust & Security](./trust-and-security.md)).
-- **Data plane** — the live pty byte stream — connects the browser **directly
-  to the executor** over WebSocket, using the `attach_url` the Bridge issues
-  with each session row. The Bridge serves no WebSocket endpoint of its own;
-  its live-update channel to the UI is Server-Sent Events (`/api/events`,
-  a `cockpit.refresh` event plus heartbeat).
+- **Data plane** — the live pty byte stream — connects the browser to a
+  Bridge-owned WebSocket endpoint. The browser proves the per-launch Cockpit
+  token; the Bridge adds the protected executor identity and proxies the
+  upstream upgrade. Its separate live-update channel to the UI is Server-Sent
+  Events (`/api/events`, a `cockpit.refresh` event plus heartbeat).
 
-The attach URL preserves whatever the executor advertises (`attach_url` /
-`pty_ws_url`, with `{host}` substitution and `http→ws` scheme mapping) and
-falls back to `{ws-base}/agents/{instance-id}/sessions/{session-id}/attach`.
-The path segment is the **instance id**, not the resolved agent name.
+The Bridge validates whatever the executor advertises (`attach_url` /
+`pty_ws_url`, with `{host}` substitution and `http→ws` scheme mapping), stores
+the allowed target in memory, and returns an opaque local proxy URL. The
+upstream path segment remains the **instance id**, not the resolved agent name.
 
 ## Component map
 

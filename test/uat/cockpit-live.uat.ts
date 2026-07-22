@@ -5,8 +5,9 @@
  * Strict local/release mode: set AIWG_COCKPIT_LIVE_REQUIRED=1 to fail instead.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - .mjs without bundled types
@@ -17,6 +18,7 @@ const EXECUTOR_URL =
   process.env.AIWG_SANDBOX_ENDPOINT ||
   'http://127.0.0.1:8122';
 const REQUIRED = process.env.AIWG_COCKPIT_LIVE_REQUIRED === '1';
+const EXECUTOR_TOKEN_FILE = process.env.AIWG_COCKPIT_EXECUTOR_TOKEN_FILE || '';
 const MATRIX_REQUIRED = process.env.AIWG_COCKPIT_LIVE_MATRIX_REQUIRED === '1';
 const MATRIX_TARGETS = (process.env.AIWG_COCKPIT_LIVE_MATRIX_TARGETS || 'host,container,vm')
   .split(',')
@@ -57,6 +59,28 @@ interface Evidence {
 const evidence: Evidence[] = [];
 let executorIdentity: Record<string, unknown> = {};
 const provisionedInstances = new Map<string, string>();
+let executorAuthorization = '';
+
+async function loadExecutorAuthorization() {
+  if (!EXECUTOR_TOKEN_FILE) return;
+  const path = EXECUTOR_TOKEN_FILE === '~'
+    ? homedir()
+    : EXECUTOR_TOKEN_FILE.startsWith('~/')
+      ? join(homedir(), EXECUTOR_TOKEN_FILE.slice(2))
+      : EXECUTOR_TOKEN_FILE;
+  const metadata = await stat(path);
+  if (!metadata.isFile()) throw new Error('AIWG_COCKPIT_EXECUTOR_TOKEN_FILE is not a regular file');
+  if (process.platform !== 'win32' && (metadata.mode & 0o077) !== 0) {
+    throw new Error('AIWG_COCKPIT_EXECUTOR_TOKEN_FILE must not be accessible by group or other users');
+  }
+  const token = String(await readFile(path, 'utf8')).trim();
+  if (!token || /[\r\n]/.test(token)) throw new Error('AIWG_COCKPIT_EXECUTOR_TOKEN_FILE must contain exactly one token');
+  executorAuthorization = `Bearer ${token}`;
+}
+
+function executorHeaders(): Record<string, string> {
+  return executorAuthorization ? { authorization: executorAuthorization } : {};
+}
 
 function record(name: string, status: Evidence['status'], detail: string) {
   evidence.push({ name, status, detail });
@@ -65,7 +89,7 @@ function record(name: string, status: Evidence['status'], detail: string) {
 async function probe(): Promise<{ ok: boolean; reason?: string }> {
   for (const path of ['/admin/instances', '/api/v2/admin/instances', '/health', '/api/v1/aiwg/status']) {
     try {
-      const r = await fetch(`${EXECUTOR_URL}${path}`, { signal: AbortSignal.timeout(2_000) });
+      const r = await fetch(`${EXECUTOR_URL}${path}`, { headers: executorHeaders(), signal: AbortSignal.timeout(2_000) });
       if (r.ok) return { ok: true };
     } catch (err) {
       if (path === '/api/v1/aiwg/status') return { ok: false, reason: String((err as Error).message || err) };
@@ -80,12 +104,12 @@ async function bridgeJson(base: string, token: string, path: string, init: Reque
 }
 
 async function executorJson(path: string) {
-  const r = await fetch(`${EXECUTOR_URL}${path}`, { signal: AbortSignal.timeout(3_000) });
+  const r = await fetch(`${EXECUTOR_URL}${path}`, { headers: executorHeaders(), signal: AbortSignal.timeout(3_000) });
   return { status: r.status, body: await r.json().catch(() => ({})) };
 }
 
 async function executorJsonWithTimeout(path: string, timeoutMs = 5_000) {
-  const r = await fetch(`${EXECUTOR_URL}${path}`, { signal: AbortSignal.timeout(timeoutMs) });
+  const r = await fetch(`${EXECUTOR_URL}${path}`, { headers: executorHeaders(), signal: AbortSignal.timeout(timeoutMs) });
   return { status: r.status, body: await r.json().catch(() => ({})) };
 }
 
@@ -107,7 +131,7 @@ async function collectExecutorIdentity(): Promise<Record<string, unknown>> {
   if (EXECUTOR_VERSION_HINT) identity.version_hint = EXECUTOR_VERSION_HINT;
   for (const path of ['/health', '/version', '/api/version', '/api/v2/version']) {
     try {
-      const r = await fetch(`${EXECUTOR_URL}${path}`, { signal: AbortSignal.timeout(2_000) });
+      const r = await fetch(`${EXECUTOR_URL}${path}`, { headers: executorHeaders(), signal: AbortSignal.timeout(2_000) });
       if (!r.ok) continue;
       const body = identityFields(await r.json().catch(() => ({})));
       if (Object.keys(body).length > 0) identity[path] = body;
@@ -374,6 +398,7 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
   const payload = {
     issue: MATRIX_REQUIRED ? 1621 : 1617,
     executor_url: EXECUTOR_URL,
+    executor_auth_configured: Boolean(EXECUTOR_TOKEN_FILE),
     required: REQUIRED,
     matrix_required: MATRIX_REQUIRED,
     matrix_targets: MATRIX_TARGETS,
@@ -407,6 +432,7 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     '',
     `- Issue: #${MATRIX_REQUIRED ? 1621 : 1617}`,
     `- Executor: ${EXECUTOR_URL}`,
+    `- Executor auth configured: ${EXECUTOR_TOKEN_FILE ? 'yes' : 'no'}`,
     `- Required: ${REQUIRED ? 'yes' : 'no'}`,
     `- Matrix required: ${MATRIX_REQUIRED ? 'yes' : 'no'}`,
     `- Matrix targets: ${MATRIX_TARGETS.join(', ')}`,
@@ -442,6 +468,7 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
   let token = '';
 
   beforeAll(async () => {
+    await loadExecutorAuthorization();
     const p = await probe();
     reachable = p.ok;
     reason = p.reason || '';
@@ -459,7 +486,7 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
       Object.keys(executorIdentity).length ? 'pass' : 'skip',
       Object.keys(executorIdentity).length ? JSON.stringify(executorIdentity) : 'no version/commit endpoint or hint available',
     );
-    bridge = createBridge({ executorUrl: EXECUTOR_URL });
+    bridge = createBridge({ executorUrl: EXECUTOR_URL, executorTokenFile: EXECUTOR_TOKEN_FILE });
     await new Promise((resolve) => bridge.listen(0, '127.0.0.1', resolve));
     base = `http://127.0.0.1:${bridge.address().port}`;
     token = bridge.cockpitToken;

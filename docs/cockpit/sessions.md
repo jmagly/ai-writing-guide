@@ -82,5 +82,5 @@ executes the command** — Cockpit is the control surface, not the runner.
 
 - [Surfaces → Sessions tab](./surfaces.md#sessions)
 - [Recovery](./recovery.md) — stale agents and session survival
-- [Architecture](./architecture.md#control-plane-vs-data-plane) — why the pty
-  stream connects browser→executor directly
+- [Architecture](./architecture.md#control-plane-vs-data-plane) — how the PTY
+  stream stays Bridge-mediated without exposing executor credentials

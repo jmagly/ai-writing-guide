@@ -121,7 +121,7 @@ operator / CLI:  aiwg cockpit
 │  · user asset library: clone/import/delete (never writes AIWG)│
 │  · serves the built React app (token-injected)               │
 └─────────────────────────────────────────────────────────────┘
-       │ proxies / sources              ▲ loads /?token=…
+       │ authenticated proxy            ▲ loads the token-gated shell
        ▼                                │
   agentic-sandbox executor       ┌──────┴──────┬───────────────┐
                                  browser     VS Code webview   Tauri window
@@ -129,8 +129,10 @@ operator / CLI:  aiwg cockpit
 ```
 
 - **Control plane** (lifecycle, approvals, actions) goes through the gated Bridge.
-- **Data plane** (the pty session stream) connects browser→executor directly via the
-  `attach_url` the Bridge issues (WS masking differs per direction).
+- **Data plane** (the PTY session stream) also goes through a Bridge-owned
+  `attach_url`. The browser presents only its per-launch Cockpit token; the
+  Bridge keeps the long-lived executor credential and authenticates the upstream
+  WebSocket upgrade.
 
 ## Surfaces (tabs)
 
@@ -183,6 +185,19 @@ under `~/.aiwg/cockpit/audit/events.jsonl` for lifecycle, session, and
 approval-response decisions (the web UI additionally records action injections
 as operator intents); bearer material and provider credentials are redacted
 before write.
+
+For an executor with operator bearer authentication enabled, store the selected
+least-privilege token in a mode-600 file and point the Bridge at the file:
+
+```bash
+AIWG_COCKPIT_EXECUTOR_TOKEN_FILE=/protected/path/cockpit-executor.token \
+AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:8122 \
+aiwg cockpit
+```
+
+The file contains one token. It is re-read for rotation, never copied into the
+browser, argv, URLs, reports, or audit records, and fails closed when its POSIX
+permissions allow group/other access.
 
 ## Run (dev/test, against a real agentic-sandbox executor)
 
@@ -346,9 +361,16 @@ The stricter matrix gate for #1621 is intentionally separate from the mock lane:
 
 ```bash
 AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:<real-executor-port> \
+AIWG_COCKPIT_EXECUTOR_TOKEN_FILE=/protected/path/cockpit-executor.token \
 AIWG_COCKPIT_LIVE_PROVIDER=codex \
 npm run uat:cockpit-live:matrix
 ```
+
+The token-file line is required when the executor has operator bearer auth
+enabled and may be omitted only for an explicitly unauthenticated local
+compatibility executor. The UAT uses the file for its direct readiness probes
+and passes the same reference to the Bridge; report output records only whether
+auth was configured, never the path or credential.
 
 Use `AIWG_COCKPIT_LIVE_PROVIDER=claude` instead when the live workload should
 exercise the pre-authenticated Claude session.

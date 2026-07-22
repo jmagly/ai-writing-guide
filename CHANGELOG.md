@@ -67,6 +67,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Fixed
 
+- **Cockpit protected-executor authentication** (#1841) — the Bridge now reads
+  a mode-restricted token file for centralized authenticated REST/A2A calls,
+  preserves upstream 401/403 failures, reloads rotations without restart, and
+  proxies PTY WebSocket upgrades so long-lived executor credentials never enter
+  browser state or attach URLs.
+
 - **Release config schema parity** — release steps may now use a
   channel-dependent command without also declaring an unused plain `run`
   command, matching the stable npm dist-tag configuration.
