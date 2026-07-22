@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
 
 const ROOT = resolve(new URL('../..', import.meta.url).pathname);
@@ -71,6 +71,35 @@ function writeJson(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function publishedSource(src) {
+  const match = /^(---\n)([\s\S]*?)(\n---\n?)([\s\S]*)$/.exec(src);
+  if (!match) return src;
+  const publishedDate = now.toISOString().slice(0, 10);
+  const lines = [];
+  let sawStatus = false;
+  let sawDate = false;
+
+  for (const line of match[2].split('\n')) {
+    const key = /^([A-Za-z0-9_-]+):/.exec(line)?.[1];
+    if (key === 'publish_at' || key === 'scheduled_assets') continue;
+    if (key === 'date') {
+      lines.push(`date: "${publishedDate}"`);
+      sawDate = true;
+      continue;
+    }
+    if (key === 'status') {
+      lines.push('status: "published"');
+      sawStatus = true;
+      continue;
+    }
+    lines.push(line);
+  }
+
+  if (!sawDate) lines.push(`date: "${publishedDate}"`);
+  if (!sawStatus) lines.push('status: "published"');
+  return `${match[1]}${lines.join('\n')}${match[3]}${match[4]}`;
+}
+
 function addToManifest(slug, meta) {
   const blog = JSON.parse(readFileSync(BLOG_MANIFEST, 'utf8'));
   blog.order = [slug, ...(blog.order || []).filter((item) => item !== slug)];
@@ -120,7 +149,8 @@ for (const post of due) {
   promoteAssets(post);
   if (!dryRun) {
     mkdirSync(dirname(target), { recursive: true });
-    renameSync(post.path, target);
+    writeFileSync(target, publishedSource(readFileSync(post.path, 'utf8')));
+    unlinkSync(post.path);
     addToManifest(post.slug, post.meta);
   }
 }
