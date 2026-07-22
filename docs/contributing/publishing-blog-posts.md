@@ -173,15 +173,17 @@ Future posts that should release on a schedule live outside the live docs tree:
 
 ```text
 scheduled-docs/blog/<slug>.md
+scheduled-docs/assets/blog/<asset>
 ```
 
 The scheduled-release workflow ignores posts unless frontmatter includes a valid ISO-8601 `publish_at` timestamp:
 
 ```yaml
 publish_at: "2026-07-28T14:00:00Z"
+scheduled_assets: ["blog/example-hero.png", "blog/example-diagram.svg"]
 ```
 
-Blank, missing, or invalid `publish_at` values are treated as queued-but-not-scheduled. The daily `.gitea/workflows/scheduled-docs-release.yml` job runs `tools/docs/promote-scheduled-posts.mjs`, moves due posts into `docs/blog/`, updates `docs/blog/_manifest.json` and `docs/_manifest.json`, validates the docsite build, commits the promotion, and pushes to `main`. The existing docsite deploy workflow then publishes through the normal docs route.
+Blank, missing, or invalid `publish_at` values are treated as queued-but-not-scheduled. The `.gitea/workflows/scheduled-docs-release.yml` job runs `tools/docs/promote-scheduled-posts.mjs`, moves due posts into `docs/blog/`, moves declared assets into `docs/.public/`, updates `docs/blog/_manifest.json` and `docs/_manifest.json`, validates the docsite build, commits the promotion, and pushes to `main`. If nothing is due, the job exits successfully without committing. The existing docsite deploy workflow then publishes through the normal docs route.
 
 ## Adding a post
 

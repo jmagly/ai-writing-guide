@@ -3,6 +3,7 @@ title: "Your agent should search the toolbox before pretending it knows every to
 slug: "2026-07-aiwg-discovery-first"
 date: "2026-07-21"
 publish_at: ""
+scheduled_assets: ["blog/2026-07-aiwg-discovery-first-hero.png", "blog/2026-07-aiwg-discovery-first-cli.svg"]
 summary: "Discovery-first agent tooling turns a giant prompt menu into a debuggable routing layer: ask by intent, inspect the match, then run the right capability."
 hero: "https://docs.aiwg.io/assets/blog/2026-07-aiwg-discovery-first-hero.png"
 reading_time: 6

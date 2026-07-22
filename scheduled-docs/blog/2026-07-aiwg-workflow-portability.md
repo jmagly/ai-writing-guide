@@ -2,7 +2,8 @@
 title: "If your agent workflow only lives in chat, you do not have a workflow"
 slug: "2026-07-aiwg-workflow-portability"
 date: "2026-07-21"
-publish_at: ""
+publish_at: "2026-07-22T00:08:36Z"
+scheduled_assets: ["blog/2026-07-aiwg-workflow-portability-hero.png", "blog/2026-07-aiwg-workflow-portability-cli.svg"]
 summary: "A practical test for whether an agent workflow is portable: can the project carry the capability, can another operator discover it, and can a handoff survive without private prompt memory?"
 hero: "https://docs.aiwg.io/assets/blog/2026-07-aiwg-workflow-portability-hero.png"
 reading_time: 7

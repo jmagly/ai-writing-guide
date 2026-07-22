@@ -2,7 +2,7 @@ name: Scheduled Docs Release
 
 on:
   schedule:
-    - cron: '17 14 * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       dry_run:
