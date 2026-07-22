@@ -156,6 +156,7 @@ function displayHelp(): void {
   ui.blank();
   console.log(`  ${ui.dimText('Examples:')}`);
   console.log(`    aiwg use sdlc                   ${ui.dimText('Install SDLC framework')}`);
+  console.log(`    aiwg use sdlc --global          ${ui.dimText('Install user assets + lightweight project wiring')}`);
   console.log(`    aiwg use cockpit                ${ui.dimText('Install opt-in Cockpit package')}`);
   console.log(`    aiwg cockpit                    ${ui.dimText('Launch Cockpit after install')}`);
   console.log(`    aiwg discover "deploy"          ${ui.dimText('Find skills by capability')}`);

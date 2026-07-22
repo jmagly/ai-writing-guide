@@ -42,6 +42,34 @@ aiwg remove sdlc --scope user
 aiwg remove sdlc --user --provider claude --dry-run
 ```
 
+## Global Bootstrap Without Project Artifacts
+
+Use `--global` when the provider supports native user-level discovery and you
+do not want each project to carry its own deployed agents, commands, skills,
+and rules:
+
+```bash
+cd /path/to/project
+aiwg use sdlc --provider claude --global
+```
+
+AIWG stages the normal deployment temporarily, mirrors framework and kernel
+skills into the provider's user-level paths, records them in
+`~/.aiwg/installed.json`, and removes the stage. The current project receives
+only the lightweight context graph and provider bootstrap files, such as
+`WORKSPACE.md`, `AIWG.md`, `CLAUDE.md`, or `AGENTS.md`. It does not retain a
+project `.claude/`, `.codex/`, or equivalent artifact deployment.
+
+Run `aiwg regenerate --provider <name>` in another project to generate or
+refresh those context-only hooks against the existing user-level installation.
+Providers without a verified filesystem-based user loader still require their
+documented project adapter; `--global` does not make an unsupported global
+loader appear.
+
+`--scope user` remains the additive compatibility mode described below: it
+keeps the project deployment and mirrors it to user scope. `--global` is the
+explicit no-project-artifact contract.
+
 ## Supported Providers
 
 | Provider | User-scope path | Status |
@@ -74,7 +102,7 @@ commands. Same applies at project scope (`.codex/prompts/`).
 
 ## How It Works
 
-A user-scope deploy is **additive**: it doesn't replace the project
+A `--scope user` deploy is **additive**: it doesn't replace the project
 deploy, it copies alongside it.
 
 1. `aiwg use sdlc --provider claude --scope user` runs the normal
