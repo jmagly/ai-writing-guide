@@ -331,6 +331,23 @@ jobs:
           fi
           echo "Verify completed (mode: ${MODE})"
 
+      - name: Purge Cloudflare cache
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CLOUDFLARE_ZONE_ID:-}" ] || [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "Cloudflare purge skipped: CLOUDFLARE_ZONE_ID or CLOUDFLARE_API_TOKEN is not configured"
+            exit 0
+          fi
+          curl --fail --show-error --silent \
+            -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}'
+          echo "Cloudflare cache purge requested"
+
       - name: Cleanup SSH key
         if: always()
         run: |
