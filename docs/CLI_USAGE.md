@@ -240,6 +240,9 @@ with `AIWG_ARTIFACTS_PATH`, for example:
 export AIWG_ARTIFACTS_PATH=../aiwg-web-release-ops/corpus/.aiwg
 ```
 
+For AIWG's own repository, this is the supported bridge to the private SDLC
+corpus. See [Private AIWG Corpus](./development/private-aiwg-corpus.md).
+
 ## Maintenance
 
 ### -version

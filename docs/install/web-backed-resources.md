@@ -17,7 +17,7 @@ export AIWG_ARTIFACTS_PATH=../aiwg-web-release-ops/corpus/.aiwg
 aiwg config show --project
 ```
 
-This is the planned local bridge for moving AIWG's own SDLC corpus into the private release-operations repository while keeping the public product repository buildable without that private corpus.
+This is the local bridge for AIWG's own private SDLC corpus. See [Private AIWG Corpus](../development/private-aiwg-corpus.md) for maintainer setup.
 
 ## Planned Modes
 
@@ -46,7 +46,7 @@ aiwg use sdlc --resource-source auto --aiwg-version '^2026.7.0'
 aiwg use sdlc --offline
 ```
 
-Per-call overrides do not change project defaults. Mutating commands record the exact resolved version and digest in `.aiwg/resources.lock.json`.
+Per-call overrides do not change project defaults. Mutating commands record the exact resolved version and digest in the configured project artifact root, for example `.aiwg/resources.lock.json` in ordinary projects.
 
 ## Safety Model
 
@@ -55,10 +55,5 @@ Per-call overrides do not change project defaults. Mutating commands record the 
 - Offline mode uses only verified cached bytes.
 - Default web mode is blocked until rollback/freeze/mix-and-match protection exists.
 
-Architecture and planning details:
-
-- `.aiwg/architecture/adr-web-backed-resource-addressing.md`
-- `.aiwg/architecture/adr-aiwg-resource-version-resolution.md`
-- `.aiwg/architecture/adr-aiwg-resource-cache-and-lockfile.md`
-- `.aiwg/architecture/adr-aiwg-io-resource-publication-trust.md`
-- `.aiwg/requirements/web-backed-resource-distribution.md`
+Architecture and planning details for AIWG maintainers now live in the private
+`roctinam/aiwg-web-release-ops` corpus under `corpus/.aiwg/`.

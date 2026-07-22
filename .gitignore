@@ -89,24 +89,16 @@ opencode.json
 .hermes.md
 .devin/
 
-# AIWG project artifacts — tracked in git (except ephemeral content)
-# .aiwg/ is NOT gitignored — it contains SDLC artifacts (ADRs, use cases, etc.)
-# The following subdirectories are ephemeral and excluded:
-.aiwg/aiwg.config
-.aiwg/working/
-.aiwg/.index/
-.aiwg/.storage-cache/
-.aiwg/context-migrations/
-.aiwg/security-engineering/reviews/disclosures/
-.aiwg/ralph/archive/
-.aiwg/ralph-external/loops/
-.aiwg/.milestones.json
-.aiwg/browser-allowlist.yaml
-.aiwg/marketing/
-.aiwg/issues/
-.aiwg/forensics/
-.aiwg/research/synthesis/
-.aiwg/frameworks/*/
+# AIWG project artifacts
+#
+# AIWG's own SDLC corpus moved out of the public product repository into the
+# private release-ops repository at:
+#
+#   ../aiwg-web-release-ops/corpus/.aiwg
+#
+# Maintainer checkouts should set AIWG_ARTIFACTS_PATH to that directory.
+# Public clones can build and test without private corpus access.
+.aiwg/
 
 # Agent temporary files
 _agent-temp/
@@ -116,9 +108,7 @@ docs/references/pdfs/*.pdf
 test-temp-watch-*/
 test/**/.tmp-*/
 
-# AIWG — ignore only high-churn runtime subdirs, NOT .aiwg/ itself
-.aiwg/ralph/
-.aiwg/ralph-external/
+# AIWG high-churn runtime state is covered by the top-level .aiwg/ ignore.
 
 # RLM working dir — `aiwg rlm-prep` writes per-host chunks/manifests with
 # absolute paths; reproducible from re-running the command.
