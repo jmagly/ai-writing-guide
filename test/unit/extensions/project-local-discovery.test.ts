@@ -167,6 +167,35 @@ describe('project-local-discovery', () => {
       expect(result.bundles[0].localPath).toBe('team-bundles/extensions/team-flow/');
     });
 
+    it('reads projectLocal.searchPaths from a relocated artifact root config', async () => {
+      const relocatedRoot = join(tmpDir, 'private-artifacts', 'renamed-aiwg');
+      const teamRoot = join(tmpDir, 'team-bundles');
+      writeFileSync(join(tmpDir, PROJECT_AIWG_LOCATION_FILE), 'private-artifacts/renamed-aiwg\n', 'utf-8');
+      mkdirSync(relocatedRoot, { recursive: true });
+      writeFileSync(
+        projectAiwgPath(tmpDir, 'aiwg.config'),
+        JSON.stringify({
+          version: '1',
+          providers: ['claude'],
+          installed: {},
+          scripts: {},
+          projectLocal: { searchPaths: ['team-bundles'] },
+        }, null, 2),
+      );
+      writeBundleAtRoot(teamRoot, 'frameworks', 'team-framework', validManifest({
+        id: 'team-framework',
+        type: 'framework',
+        addonConfig: undefined,
+        frameworkConfig: { path: 'framework/' },
+      }));
+
+      const result = await discoverProjectLocalBundles(tmpDir);
+
+      expect(result.errors).toEqual([]);
+      expect(result.bundles.map(bundle => `${bundle.type}:${bundle.id}`)).toEqual(['framework:team-framework']);
+      expect(result.bundles[0].manifestPath).toBe('team-bundles/frameworks/team-framework/manifest.json');
+    });
+
     it('discovers additional bundle roots from AIWG_PROJECT_LOCAL_PATHS', async () => {
       const envRoot = join(tmpDir, 'env-bundles');
       process.env[PROJECT_LOCAL_SEARCH_PATHS_ENV] = envRoot;

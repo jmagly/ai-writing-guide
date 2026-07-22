@@ -42,6 +42,45 @@ describe('moveProjectArtifacts', () => {
     }
   });
 
+  it('moves an already pointer-configured renamed store without requiring --from', async () => {
+    const projectDir = mkdtempSync(join(tmpdir(), 'aiwg-artifacts-move-pointer-'));
+    const source = join(projectDir, 'private-artifacts', 'old-aiwg-store');
+    const destination = join(projectDir, 'private-artifacts', 'new-aiwg-store');
+    try {
+      mkdirSync(join(source, 'architecture'), { recursive: true });
+      writeFileSync(join(projectDir, PROJECT_AIWG_LOCATION_FILE), 'private-artifacts/old-aiwg-store\n', 'utf-8');
+      writeFileSync(
+        join(source, 'architecture', 'ADR-PORTABLE.md'),
+        ['---', 'title: Portable Store ADR', 'type: adr', 'phase: architecture', '---', '', '# Portable Store ADR', ''].join('\n'),
+        'utf-8',
+      );
+
+      const result = await moveProjectArtifacts({
+        projectDir,
+        to: 'private-artifacts/new-aiwg-store',
+        syncFortemi: false,
+      });
+
+      expect(result.from).toBe(source);
+      expect(result.to).toBe(destination);
+      expect(result.pointerValue).toBe('private-artifacts/new-aiwg-store');
+      expect(result.moved).toBe(true);
+      expect(result.reindexed).toBe(true);
+      expect(existsSync(join(source, 'architecture', 'ADR-PORTABLE.md'))).toBe(false);
+      expect(existsSync(join(destination, 'architecture', 'ADR-PORTABLE.md'))).toBe(true);
+      expect(readFileSync(join(projectDir, PROJECT_AIWG_LOCATION_FILE), 'utf-8')).toContain('private-artifacts/new-aiwg-store');
+      expect(resolveProjectAiwgDir(projectDir, {})).toBe(destination);
+
+      const metadata = JSON.parse(
+        readFileSync(join(destination, '.index', 'project', 'metadata.json'), 'utf-8'),
+      ) as { entries: Record<string, { path: string; title: string }> };
+      expect(metadata.entries['.aiwg/architecture/ADR-PORTABLE.md']?.path).toBe('.aiwg/architecture/ADR-PORTABLE.md');
+      expect(metadata.entries['.aiwg/architecture/ADR-PORTABLE.md']?.title).toBe('Portable Store ADR');
+    } finally {
+      rmSync(projectDir, { recursive: true, force: true });
+    }
+  });
+
   it('dry-runs without moving or writing the pointer', async () => {
     const projectDir = mkdtempSync(join(tmpdir(), 'aiwg-artifacts-move-dry-'));
     const destination = join(projectDir, '..', `${basename(projectDir)}-private`, '.aiwg');

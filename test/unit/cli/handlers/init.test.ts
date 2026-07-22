@@ -10,6 +10,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import type { HandlerContext } from '../../../../src/cli/handlers/types.js';
+import { PROJECT_AIWG_LOCATION_FILE } from '../../../../src/config/project-artifacts.js';
 
 vi.mock('../../../../src/cli/ui.js', () => ({
   blank: vi.fn(),
@@ -46,6 +47,28 @@ function makeCtx(tmpDir: string, args: string[] = []): HandlerContext {
     cwd: tmpDir,
     frameworkRoot: tmpDir,
   };
+}
+
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+] as const;
+
+function clearArtifactEnv(): Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined> {
+  const previous = Object.fromEntries(
+    ARTIFACT_ENV_KEYS.map((key) => [key, process.env[key]]),
+  ) as Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined>;
+  for (const key of ARTIFACT_ENV_KEYS) delete process.env[key];
+  return previous;
+}
+
+function restoreArtifactEnv(previous: Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined>): void {
+  for (const key of ARTIFACT_ENV_KEYS) {
+    const value = previous[key];
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
 }
 
 describe('initHandler', () => {
@@ -118,6 +141,35 @@ describe('initHandler', () => {
       } finally {
         if (previousArtifactsPath === undefined) delete process.env['AIWG_ARTIFACTS_PATH'];
         else process.env['AIWG_ARTIFACTS_PATH'] = previousArtifactsPath;
+        rmSync(externalRoot, { recursive: true, force: true });
+      }
+    });
+
+    it('honors .aiwg-location for config and normalized context output', async () => {
+      const { initHandler } = await import('../../../../src/cli/handlers/init.js');
+      const previousEnv = clearArtifactEnv();
+      const externalRoot = makeTmpDir();
+      const artifactDir = join(externalRoot, 'corpus', 'renamed-aiwg-store');
+
+      writeFileSync(join(tmpDir, PROJECT_AIWG_LOCATION_FILE), `${artifactDir}\n`, 'utf-8');
+      try {
+        const result = await initHandler.execute(makeCtx(tmpDir, ['--non-interactive']));
+        expect(result.exitCode).toBe(0);
+
+        const { readAiwgConfig } = await import('../../../../src/config/aiwg-config.js');
+        const cfg = await readAiwgConfig(tmpDir);
+        expect(cfg).not.toBeNull();
+        expect(cfg!.providers).toEqual(['claude']);
+
+        expect(existsSync(join(artifactDir, 'aiwg.config'))).toBe(true);
+        const normalizedPath = join(artifactDir, 'AIWG.md');
+        expect(existsSync(normalizedPath)).toBe(true);
+        expect(readFileSync(normalizedPath, 'utf8')).toContain(`Normalized project context: \`${normalizedPath}\``);
+
+        expect(existsSync(join(tmpDir, '.aiwg', 'aiwg.config'))).toBe(false);
+        expect(existsSync(join(tmpDir, '.aiwg', 'AIWG.md'))).toBe(false);
+      } finally {
+        restoreArtifactEnv(previousEnv);
         rmSync(externalRoot, { recursive: true, force: true });
       }
     });
