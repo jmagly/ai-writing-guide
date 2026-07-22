@@ -8,16 +8,24 @@ prebuilt/fortemi-core/framework/aiwg-fortemi-index-v2.json
 prebuilt/fortemi-core/framework/manifest.json
 ```
 
-The manifest records the graph, schema, generated timestamp, item count, privacy
-classification, and SHA-256 checksum. The packaged export is a compact
-metadata/capability projection: it is meant to keep framework discovery working
-from the npm distro without shipping the full framework source body corpus.
-`aiwg index discover ... --graph framework` first uses a
-valid local cache under `.aiwg/.index/fortemi-core/`. If no compatible local
-framework cache exists, it falls back to the packaged prebuilt framework index.
+The manifest records the graph, schema, generated timestamp, item count,
+privacy classification, and SHA-256 checksum.
 
-This is the supported Fortemi path for AIWG index/search packaging. The older
-`fortemi` storage backend in `.aiwg/storage.config` remains an alpha MCP
+This prebuilt export is the compact metadata/capability projection used so
+framework discovery can work from the npm distribution without shipping the full
+framework source body corpus.
+
+`aiwg index discover ... --graph framework` first uses a valid local cache under
+`.aiwg/.index/fortemi-core/`. If no compatible local framework cache exists, it
+falls back to the packaged prebuilt framework index.
+
+The experimental web-backed `discover` flow downloads the signed release
+`prebuilt/fortemi-core/framework/manifest.json` and
+`prebuilt/fortemi-core/framework/aiwg-fortemi-index-v2.json` artifacts, verifies
+signatures, and caches the result using the manifest digest key used by that web
+slice.
+
+The older `fortemi` storage backend in `.aiwg/storage.config` remains an alpha MCP
 persistence adapter and is deprecated for discovery/search routing.
 
 Regenerate the release artifact before packing:
@@ -47,21 +55,21 @@ CI runs the same release gate through:
 npm run ci:fortemi-index
 ```
 
-That command validates the query matrix against local and Fortemi Core
-backends, runs `npm pack` through `prepack`, verifies the prebuilt export and
-manifest are included in the npm tarball, checks the manifest checksum/schema
-and size ceiling, and confirms Fortemi-backed discovery can answer from the
-packaged fallback with an empty local cache.
+That command validates the query matrix against local and Fortemi Core backends,
+runs `npm pack` through `prepack`, verifies the prebuilt export and manifest are
+included in the npm tarball, checks manifest checksum/schema and size ceiling,
+and confirms Fortemi-backed discovery can answer from the packaged fallback with
+an empty local cache.
 
 The npm tarball allowlist includes the top-level `prebuilt/` directory, and the
 publish workflows run the Fortemi package verification before publishing. That
-keeps the generated index, manifest checksum, and fallback query behavior part
-of the distro package gate instead of a local-only smoke test.
+keeps the generated index, manifest checksum, and fallback query behavior part of
+the release package gate instead of a local-only smoke test.
 
 The general install-size budget includes this intentional distro payload because
 operators previously paid the same cost by building the framework index locally.
-The Fortemi package gate still enforces a separate prebuilt export size ceiling
-so unrelated corpus growth does not silently bloat releases.
+The Fortemi package gate still enforces a separate prebuilt export size ceiling so
+unrelated corpus growth does not silently bloat releases.
 
 Discovery tie-breaks are deterministic. Equal-score default framework results
 prefer canonical `frameworks/`, `addons/`, and `extensions/` source paths over

@@ -1334,7 +1334,7 @@ export const discoverCommand: Extension = {
     ],
     commandHint: {
       template: 'utility',
-      argumentHint: '"<phrase>" [--limit N] [--type skill,agent,...] [--json]',
+      argumentHint: '"<phrase>" [--limit N] [--type skill,agent,...] [--json] [--resource-source local|web|auto] [--aiwg-version <exact-or-channel>] [--offline]',
       allowedTools: ['Read'],
     },
   } satisfies SkillMetadata,
@@ -1372,7 +1372,7 @@ export const showCommand: Extension = {
     ],
     commandHint: {
       template: 'utility',
-      argumentHint: '<type> <name> [--json] [--first]   # type: skill | agent | command | rule',
+      argumentHint: '<type> <name> [--json] [--first] [--resource-source local|web|auto] [--aiwg-version <exact-or-channel>] [--offline]   # type: skill | agent | command | rule',
       allowedTools: ['Read'],
     },
   } satisfies SkillMetadata,

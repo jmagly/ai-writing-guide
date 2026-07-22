@@ -18,6 +18,7 @@
  */
 
 import type { GraphType } from './types.js';
+import path from 'node:path';
 import {
   GRAPH_CONFIGS,
   OPERATIONAL_DISCOVERY_TYPES,
@@ -28,6 +29,43 @@ import {
   orderedGraphEntries,
 } from './types.js';
 import { SUPPORTED_VIEWS } from './corpus-views/renderers.js';
+import {
+  parseResourceSelector,
+  readVerifiedRegularFile,
+  type ResourceSource,
+  type WebReleaseOptions,
+} from '../resources/web-release.js';
+
+const MAX_RESOURCE_TRUST_ROOT_BYTES = 64 * 1024;
+
+function webReleaseOptionsFromEnvironment(): Omit<WebReleaseOptions, 'selector' | 'offline'> {
+  const baseUrl = process.env.AIWG_RESOURCE_BASE_URL;
+  const cacheRoot = process.env.AIWG_RESOURCE_CACHE_ROOT;
+  const trustRootFile = process.env.AIWG_RESOURCE_TRUST_ROOT_FILE;
+  let publicKeyPem: Buffer | undefined;
+
+  if (trustRootFile !== undefined) {
+    if (trustRootFile.trim().length === 0) {
+      throw new Error('AIWG_RESOURCE_TRUST_ROOT_FILE must name a non-empty public PEM file');
+    }
+    publicKeyPem = readVerifiedRegularFile(path.resolve(trustRootFile), {
+      label: 'AIWG_RESOURCE_TRUST_ROOT_FILE public PEM',
+      maxBytes: MAX_RESOURCE_TRUST_ROOT_BYTES,
+    });
+    if (publicKeyPem.toString('utf8').trim().length === 0) {
+      throw new Error('AIWG_RESOURCE_TRUST_ROOT_FILE public PEM is empty');
+    }
+  }
+
+  return {
+    ...(baseUrl === undefined ? {} : { baseUrl }),
+    ...(cacheRoot === undefined ? {} : { cacheRoot }),
+    ...(publicKeyPem === undefined ? {} : { publicKeyPem }),
+    ...(process.env.AIWG_RESOURCE_ALLOW_INSECURE_LOOPBACK_HTTP === '1'
+      ? { allowInsecureLoopbackHttp: true }
+      : {}),
+  };
+}
 
 /** Parse --graph flag from args, returns undefined for "all graphs" */
 function parseGraphFlag(args: string[]): GraphType | undefined {
@@ -60,6 +98,44 @@ function parseBackendFlag(args: string[]): 'local' | 'fortemi-core' | undefined 
 
 function parseSearchBackendFlag(args: string[]): 'local' | 'fortemi-core' {
   return parseBackendFlag(args) ?? 'fortemi-core';
+}
+
+function parseResourceSourceFlag(args: string[]): ResourceSource {
+  const indices = args
+    .map((arg, index) => arg === '--resource-source' ? index : -1)
+    .filter((index) => index >= 0);
+  if (indices.length > 1) {
+    console.error('Error: --resource-source may be specified only once');
+    process.exit(1);
+  }
+  if (indices.length === 0) return 'local';
+  const value = args[indices[0] + 1];
+  if (value === 'local' || value === 'web' || value === 'auto') return value;
+  console.error('Error: --resource-source must be local, web, or auto');
+  process.exit(1);
+}
+
+function parseAiwgVersionFlag(args: string[]): string | undefined {
+  const indices = args
+    .map((arg, index) => arg === '--aiwg-version' ? index : -1)
+    .filter((index) => index >= 0);
+  if (indices.length > 1) {
+    console.error('Error: --aiwg-version may be specified only once');
+    process.exit(1);
+  }
+  if (indices.length === 0) return undefined;
+  const value = args[indices[0] + 1];
+  if (!value || value.startsWith('--')) {
+    console.error('Error: --aiwg-version requires an exact calendar-semver version or channel name');
+    process.exit(1);
+  }
+  try {
+    parseResourceSelector(value);
+  } catch (error) {
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
+  return value;
 }
 
 function firstPositionalArg(args: string[], valueFlags: string[]): string | undefined {
@@ -1406,7 +1482,7 @@ async function handleDiscover(args: string[]): Promise<void> {
     console.error('Error: aiwg index discover requires a search phrase');
     console.log('');
     console.log(
-      'Usage: aiwg index discover "<phrase>" [--type <kinds>] [--limit N] [--json|--format json|text] [--pretty|--compact] [--graph <name>] [--backend local|fortemi-core]',
+      'Usage: aiwg index discover "<phrase>" [--type <kinds>] [--limit N] [--json|--format json|text] [--pretty|--compact] [--graph <name>] [--backend local|fortemi-core] [--resource-source local|web|auto] [--aiwg-version <exact-or-channel>] [--offline]',
     );
     console.log('');
     console.log('Examples:');
@@ -1414,6 +1490,7 @@ async function handleDiscover(args: string[]): Promise<void> {
     console.log('  aiwg index discover "deploy production" --limit 5');
     console.log(`  aiwg index discover "audit security" --type ${OPERATIONAL_DISCOVERY_TYPES.join(',')}`);
     console.log('  aiwg index discover "intake" --format json --pretty');
+    console.log('  aiwg discover "intake" --resource-source web --aiwg-version stable');
     process.exit(1);
   }
 
@@ -1438,6 +1515,12 @@ async function handleDiscover(args: string[]): Promise<void> {
 
   const graph = parseGraphFlag(flags);
   const backend = parseSearchBackendFlag(flags);
+  const resourceSource = parseResourceSourceFlag(flags);
+  const aiwgVersion = parseAiwgVersionFlag(flags);
+  const offline = flags.includes('--offline');
+  const webReleaseOptions = resourceSource === 'local'
+    ? undefined
+    : webReleaseOptionsFromEnvironment();
 
   await discoverCapability(cwd, {
     phrase,
@@ -1447,6 +1530,10 @@ async function handleDiscover(args: string[]): Promise<void> {
     jsonPretty,
     graph,
     backend,
+    resourceSource,
+    aiwgVersion,
+    offline,
+    webReleaseOptions,
     includePaths: false,
   });
 }
@@ -1479,8 +1566,8 @@ async function handleShow(args: string[]): Promise<void> {
 
   const HELP_TEXT = [
     '',
-    'Usage: aiwg show <type> <name> [--json] [--first] [--graph <name>] [--backend local|fortemi-core]',
-    '       aiwg show metadata <id-or-name-or-path> [--json] [--first] [--graph <name>] [--backend local|fortemi-core]',
+    'Usage: aiwg show <type> <name> [--json] [--first] [--graph <name>] [--backend local|fortemi-core] [--resource-source local|web|auto] [--aiwg-version <exact-or-channel>] [--offline]',
+    '       aiwg show metadata <id-or-name-or-path> [--json] [--first] [--graph <name>] [--backend local|fortemi-core] [--resource-source local|web|auto] [--aiwg-version <exact-or-channel>] [--offline]',
     '       aiwg index show <type> <name> ...',
     '',
     `Types: ${OPERATIONAL_SHOW_TYPES.join(' | ')}`,
@@ -1494,6 +1581,7 @@ async function handleShow(args: string[]): Promise<void> {
     '  aiwg show metadata aiwg:skill:4840fa441622f676 --json',
     '  aiwg show agent aiwg-steward',
     '  aiwg show command discover',
+    '  aiwg show skill intake-wizard --resource-source web --aiwg-version stable',
     '',
     'Tip: use `aiwg discover "<phrase>" --json` first to find the stable id.',
   ].join('\n');
@@ -1553,6 +1641,12 @@ async function handleShow(args: string[]): Promise<void> {
 
   const graph = parseGraphFlag(flags);
   const backend = parseSearchBackendFlag(flags);
+  const resourceSource = parseResourceSourceFlag(flags);
+  const aiwgVersion = parseAiwgVersionFlag(flags);
+  const offline = flags.includes('--offline');
+  const webReleaseOptions = resourceSource === 'local'
+    ? undefined
+    : webReleaseOptionsFromEnvironment();
 
   const params = {
     name,
@@ -1561,6 +1655,10 @@ async function handleShow(args: string[]): Promise<void> {
     first,
     graph,
     backend,
+    resourceSource,
+    aiwgVersion,
+    offline,
+    webReleaseOptions,
   };
 
   if (metadataMode) await showMetadata(cwd, params);

@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import type {
   ArtifactIndex,
   DependencyGraph,
@@ -65,6 +66,17 @@ export interface FortemiCoreAiwgDiscoveryOptions {
   text: string;
   limit?: number;
   types?: string[];
+  sourcePaths?: FortemiCoreVerifiedSourcePaths;
+}
+
+/** Explicit paths produced by the signed web-release resolver. */
+export interface FortemiCoreVerifiedSourcePaths {
+  manifestPath: string;
+  exportPath: string;
+  manifestSha256: string;
+  manifestSize: number;
+  exportSha256: string;
+  exportSize: number;
 }
 
 export interface FortemiCoreAiwgDiscoveryResult {
@@ -174,10 +186,112 @@ function matchesPath(recordPath: string, pattern: string): boolean {
   return recordPath.includes(pattern);
 }
 
+function readVerifiedRegularFile(
+  pathname: string,
+  expectedSize: number,
+  expectedSha256: string,
+  label: string,
+): Buffer {
+  if (!Number.isSafeInteger(expectedSize) || expectedSize < 0) {
+    throw new Error(`${label} has an invalid signed size`);
+  }
+  const pathStat = fs.lstatSync(pathname);
+  if (pathStat.isSymbolicLink() || !pathStat.isFile()) {
+    throw new Error(`${label} must be a regular file and may not be a symlink`);
+  }
+  if (pathStat.size !== expectedSize) {
+    throw new Error(`${label} size does not match the signed release descriptor`);
+  }
+
+  const noFollow = typeof fs.constants.O_NOFOLLOW === "number"
+    ? fs.constants.O_NOFOLLOW
+    : 0;
+  const fd = fs.openSync(
+    pathname,
+    fs.constants.O_RDONLY | fs.constants.O_NONBLOCK | noFollow,
+  );
+  try {
+    const openedStat = fs.fstatSync(fd);
+    if (!openedStat.isFile() || openedStat.size !== expectedSize) {
+      throw new Error(`${label} changed before it could be read safely`);
+    }
+    const bytes = Buffer.alloc(expectedSize + 1);
+    let offset = 0;
+    while (offset < bytes.length) {
+      const count = fs.readSync(fd, bytes, offset, bytes.length - offset, null);
+      if (count === 0) break;
+      offset += count;
+    }
+    if (offset !== expectedSize) {
+      throw new Error(`${label} changed size while being read`);
+    }
+    const verified = bytes.subarray(0, expectedSize);
+    const digest = createHash("sha256").update(verified).digest("hex");
+    if (digest !== expectedSha256) {
+      throw new Error(`${label} does not match the signed release descriptor`);
+    }
+    return verified;
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
 export function loadFortemiCoreExport(
   cwd: string,
   graph: GraphType = "project",
+  sourcePaths?: FortemiCoreVerifiedSourcePaths,
 ): FortemiCoreExportLoadResult {
+  if (sourcePaths) {
+    try {
+      const manifestBytes = readVerifiedRegularFile(
+        sourcePaths.manifestPath,
+        sourcePaths.manifestSize,
+        sourcePaths.manifestSha256,
+        "Verified Fortemi Core manifest",
+      );
+      const exportBytes = readVerifiedRegularFile(
+        sourcePaths.exportPath,
+        sourcePaths.exportSize,
+        sourcePaths.exportSha256,
+        "Verified Fortemi Core export",
+      );
+      const manifestSha256 = createHash("sha256").update(manifestBytes).digest("hex");
+      const exportSha256 = createHash("sha256").update(exportBytes).digest("hex");
+      if (
+        manifestSha256 !== sourcePaths.manifestSha256 ||
+        exportSha256 !== sourcePaths.exportSha256
+      ) {
+        return { reason: "Verified Fortemi Core source bytes do not match the signed release descriptor." };
+      }
+      const manifest = JSON.parse(
+        manifestBytes.toString("utf-8"),
+      ) as Record<string, unknown>;
+      const exported = JSON.parse(exportBytes.toString("utf-8")) as AiwgFortemiIndexExport;
+      if (
+        manifest.schema_version !== "aiwg.fortemi.prebuilt.v1" ||
+        manifest.backend !== "fortemi-core" ||
+        manifest.graph !== graph ||
+        manifest.export_path !== "aiwg-fortemi-index-v2.json" ||
+        manifest.export_schema_version !== "aiwg.fortemi.index.export.v2"
+      ) {
+        return { reason: "Verified Fortemi Core source manifest is incompatible with the requested graph." };
+      }
+      if (
+        manifest.export_checksum !== exportSha256 ||
+        exported.schema_version !== "aiwg.fortemi.index.export.v2" ||
+        exported.source?.graph !== graph ||
+        !Array.isArray(exported.items) ||
+        manifest.item_count !== exported.items.length
+      ) {
+        return { reason: "Verified Fortemi Core source export does not match its manifest." };
+      }
+      return { exported };
+    } catch (err) {
+      return {
+        reason: `Verified Fortemi Core source could not be read: ${err instanceof Error ? err.message : String(err)}`,
+      };
+    }
+  }
   let status = getFortemiCoreSyncStatus(cwd, graph);
   if ((!status.optedIn || !status.built || status.stale) && graph === "framework") {
     const prebuilt = getFortemiCorePrebuiltStatus(graph);
@@ -276,8 +390,9 @@ function entryFromRecord(record: AiwgFortemiRecord): MetadataEntry {
 export function loadFortemiCoreMetadataEntries(
   cwd: string,
   graph: GraphType = "project",
+  sourcePaths?: FortemiCoreVerifiedSourcePaths,
 ): FortemiCoreLoadResult {
-  const loaded = loadFortemiCoreExport(cwd, graph);
+  const loaded = loadFortemiCoreExport(cwd, graph, sourcePaths);
   if (!loaded.exported) return { entries: [], reason: loaded.reason };
   return { entries: loaded.exported.items.map(entryFromRecord) };
 }
@@ -290,7 +405,11 @@ export async function queryFortemiCoreAiwgDiscovery(
     | { results: FortemiCoreAiwgDiscoveryResult[]; reason?: undefined }
     | { results: []; reason: string }
   > {
-  const loaded = loadFortemiCoreExport(cwd, options.graph ?? "framework");
+  const loaded = loadFortemiCoreExport(
+    cwd,
+    options.graph ?? "framework",
+    options.sourcePaths,
+  );
   if (!loaded.exported) {
     return {
       results: [],

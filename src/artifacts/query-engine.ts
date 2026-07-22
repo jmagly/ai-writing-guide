@@ -38,6 +38,11 @@ import {
   type OperationalStateQueryProjection,
 } from './operational-state.js';
 import { projectAiwgPath } from '../config/project-artifacts.js';
+import type {
+  ResourceSource,
+  VerifiedWebRelease,
+  WebReleaseOptions,
+} from '../resources/web-release.js';
 
 function normalizeIndexedPath(entryPath: string): string {
   return entryPath.replace(/\\/g, '/');
@@ -862,6 +867,14 @@ export interface DiscoverParams {
   graph?: GraphType;
   /** Query backend. Defaults to Fortemi Core; use local for the legacy path. */
   backend?: 'local' | 'fortemi-core';
+  /** Physical source of AIWG-owned resources. Defaults to local. */
+  resourceSource?: ResourceSource;
+  /** Exact calendar-semver version or signed channel selector for web mode. */
+  aiwgVersion?: string;
+  /** Prohibit network requests and require a fully verified warm cache. */
+  offline?: boolean;
+  /** Dependency injection for release-host tests and development. */
+  webReleaseOptions?: Omit<WebReleaseOptions, 'selector' | 'offline'>;
   /**
    * Include filesystem paths in public discovery output. Default is true for
    * direct API compatibility; CLI callers set false so discover stays
@@ -970,16 +983,63 @@ export async function discoverCapability(
   let entries: MetadataEntry[] = [];
   const backend = params.backend ?? DEFAULT_ARTIFACT_SEARCH_BACKEND;
   let fortemiCoreDiscoveryScores: Map<string, number> | null = null;
+  let resourceSource: ResourceSource = params.resourceSource ?? 'local';
+  let resolvedWebRelease: VerifiedWebRelease | undefined;
+  let verifiedSourcePaths:
+    | import('./fortemi-core-query-adapter.js').FortemiCoreVerifiedSourcePaths
+    | undefined;
+
+  if (resourceSource === 'auto') {
+    const { loadFortemiCoreMetadataEntries } = await import('./fortemi-core-query-adapter.js');
+    const localGraphs = params.graph ? [params.graph] : defaultCapabilityGraphs(cwd);
+    const localAvailable = localGraphs.some(
+      (graph) => loadFortemiCoreMetadataEntries(cwd, graph).entries.length > 0,
+    );
+    resourceSource = localAvailable ? 'local' : 'web';
+  }
+
+  if (resourceSource === 'web') {
+    if (backend !== 'fortemi-core') {
+      console.error('Error: --resource-source web requires the Fortemi Core query backend; --backend local remains available with local resources.');
+      process.exit(1);
+    }
+    if (params.graph && params.graph !== 'framework') {
+      console.error("Error: web-backed capability discovery currently supports only the 'framework' graph.");
+      process.exit(1);
+    }
+    try {
+      const { resolveWebRelease } = await import('../resources/web-release.js');
+      const release = await resolveWebRelease({
+        ...params.webReleaseOptions,
+        selector: params.aiwgVersion ?? 'stable',
+        offline: params.offline,
+      });
+      resolvedWebRelease = release;
+      verifiedSourcePaths = {
+        manifestPath: release.fortemiManifestPath,
+        exportPath: release.fortemiExportPath,
+        manifestSha256: release.fortemiManifestSha256,
+        manifestSize: release.fortemiManifestSize,
+        exportSha256: release.fortemiExportSha256,
+        exportSize: release.fortemiExportSize,
+      };
+    } catch (error) {
+      console.error(`Error: AIWG web resource resolution failed: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  }
 
   if (backend === 'fortemi-core') {
-    const graphs = params.graph ? [params.graph] : defaultCapabilityGraphs(cwd);
+    const graphs = resourceSource === 'web'
+      ? ['framework' as GraphType]
+      : params.graph ? [params.graph] : defaultCapabilityGraphs(cwd);
     const {
       loadFortemiCoreMetadataEntries,
       queryFortemiCoreAiwgDiscovery,
     } = await import('./fortemi-core-query-adapter.js');
     let unavailableReason: string | undefined;
     for (const graph of graphs) {
-      const loaded = loadFortemiCoreMetadataEntries(cwd, graph);
+      const loaded = loadFortemiCoreMetadataEntries(cwd, graph, verifiedSourcePaths);
       if (loaded.reason) unavailableReason ??= loaded.reason;
       entries.push(...loaded.entries.map((entry) => withIndexProvenance(entry, graph)));
       const discovered = await queryFortemiCoreAiwgDiscovery(cwd, {
@@ -987,6 +1047,7 @@ export async function discoverCapability(
         text: params.phrase,
         limit: Math.max(limit * 10, 50),
         types,
+        sourcePaths: verifiedSourcePaths,
       });
       if (!discovered.reason) {
         fortemiCoreDiscoveryScores ??= new Map();
@@ -1002,7 +1063,22 @@ export async function discoverCapability(
     if (entries.length === 0 && unavailableReason) {
       if (params.json) {
         console.log(JSON.stringify({
-          query: { phrase: params.phrase, types, limit, backend: 'fortemi-core', graph: params.graph ?? 'capability-default' },
+          query: {
+            phrase: params.phrase,
+            types,
+            limit,
+            backend: 'fortemi-core',
+            graph: resourceSource === 'web' ? 'framework' : params.graph ?? 'capability-default',
+            ...(resourceSource === 'web'
+              ? {
+                  resource_source: 'web',
+                  aiwg_selector: resolvedWebRelease?.selector,
+                  aiwg_version: resolvedWebRelease?.version,
+                  manifest_sha256: resolvedWebRelease?.manifestDigest,
+                  manifest_url: resolvedWebRelease?.manifestUrl,
+                }
+              : {}),
+          },
           results: [],
           total: 0,
           hint: unavailableReason,
@@ -1243,7 +1319,25 @@ export async function discoverCapability(
   if (params.json) {
     const jsonIndent = params.jsonPretty === false ? undefined : 2;
     console.log(JSON.stringify({
-      query: { phrase: params.phrase, types, limit, aiwg_root: aiwgRoot ?? null, backend, graph: backend === 'fortemi-core' ? params.graph ?? 'capability-default' : params.graph },
+      query: {
+        phrase: params.phrase,
+        types,
+        limit,
+        aiwg_root: aiwgRoot ?? null,
+        backend,
+        graph: backend === 'fortemi-core'
+          ? resourceSource === 'web' ? 'framework' : params.graph ?? 'capability-default'
+          : params.graph,
+        ...(resourceSource === 'web'
+          ? {
+              resource_source: 'web',
+              aiwg_selector: resolvedWebRelease?.selector,
+              aiwg_version: resolvedWebRelease?.version,
+              manifest_sha256: resolvedWebRelease?.manifestDigest,
+              manifest_url: resolvedWebRelease?.manifestUrl,
+            }
+          : {}),
+      },
       results: scored.map(r => ({
         id: discoveryIdForEntry(r.entry),
         ...(includePaths ? { path: resolvePath(r.entry) } : {}),
@@ -1359,6 +1453,14 @@ export interface ShowParams {
   first?: boolean;
   /** Query backend. Defaults to Fortemi Core; use local for the legacy path. */
   backend?: 'local' | 'fortemi-core';
+  /** Physical source of AIWG-owned resources. Defaults to local. */
+  resourceSource?: ResourceSource;
+  /** Exact calendar-semver version or signed channel selector for web mode. */
+  aiwgVersion?: string;
+  /** Prohibit network requests and require verified cached metadata and body bytes. */
+  offline?: boolean;
+  /** Dependency injection for release-host tests and development. */
+  webReleaseOptions?: Omit<WebReleaseOptions, 'selector' | 'offline'>;
 }
 
 export interface ShowMetadataParams extends ShowParams {}
@@ -1380,11 +1482,71 @@ function resolveMetadataPath(cwd: string, aiwgRoot: string | null, entry: Metada
 
 async function loadShowEntries(
   cwd: string,
-  params: Pick<ShowParams, 'backend' | 'graph' | 'json' | 'name'>,
-): Promise<{ entries: MetadataEntry[]; aiwgRoot: string | null }> {
+  params: Pick<
+    ShowParams,
+    'backend' | 'graph' | 'json' | 'name' | 'resourceSource' | 'aiwgVersion' | 'offline' | 'webReleaseOptions'
+  >,
+): Promise<{
+  entries: MetadataEntry[];
+  aiwgRoot: string | null;
+  resourceSource: 'local' | 'web';
+  webRelease?: VerifiedWebRelease;
+  sourcePaths?: import('./fortemi-core-query-adapter.js').FortemiCoreVerifiedSourcePaths;
+}> {
   const aiwgRoot = await getAiwgRootForDiscover();
+  const backend = params.backend ?? DEFAULT_ARTIFACT_SEARCH_BACKEND;
+  let resourceSource: ResourceSource = params.resourceSource ?? 'local';
   let entries: MetadataEntry[] = [];
-  if (params.backend === 'fortemi-core') {
+
+  if (resourceSource === 'auto' && backend === 'fortemi-core') {
+    const { loadFortemiCoreMetadataEntries } = await import('./fortemi-core-query-adapter.js');
+    const localGraphs = params.graph ? [params.graph] : defaultCapabilityGraphs(cwd);
+    resourceSource = localGraphs.some(
+      (graph) => loadFortemiCoreMetadataEntries(cwd, graph).entries.length > 0,
+    ) ? 'local' : 'web';
+  } else if (resourceSource === 'auto') {
+    resourceSource = 'local';
+  }
+
+  if (resourceSource === 'web') {
+    if (backend !== 'fortemi-core') {
+      console.error('Error: --resource-source web requires the Fortemi Core query backend; --backend local remains available with local resources.');
+      process.exit(1);
+    }
+    if (params.graph && params.graph !== 'framework') {
+      console.error("Error: web-backed show currently supports only the 'framework' graph.");
+      process.exit(1);
+    }
+    try {
+      const { resolveWebRelease } = await import('../resources/web-release.js');
+      const webRelease = await resolveWebRelease({
+        ...params.webReleaseOptions,
+        selector: params.aiwgVersion ?? 'stable',
+        offline: params.offline,
+      });
+      const sourcePaths = {
+        manifestPath: webRelease.fortemiManifestPath,
+        exportPath: webRelease.fortemiExportPath,
+        manifestSha256: webRelease.fortemiManifestSha256,
+        manifestSize: webRelease.fortemiManifestSize,
+        exportSha256: webRelease.fortemiExportSha256,
+        exportSize: webRelease.fortemiExportSize,
+      };
+      const { loadFortemiCoreMetadataEntries } = await import('./fortemi-core-query-adapter.js');
+      const loaded = loadFortemiCoreMetadataEntries(cwd, 'framework', sourcePaths);
+      if (loaded.reason) throw new Error(loaded.reason);
+      entries = loaded.entries.map((entry) => withIndexProvenance(entry, 'framework'));
+      return { entries, aiwgRoot, resourceSource: 'web', webRelease, sourcePaths };
+    } catch (error) {
+      console.error(`Error: AIWG web resource resolution failed: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  }
+
+  // Preserve the direct API's historical local-index behavior when callers
+  // omit `backend`. The CLI always passes its explicit Fortemi default, while
+  // an explicit `auto` source also opts into Fortemi-backed availability.
+  if (params.backend === 'fortemi-core' || params.resourceSource === 'auto') {
     const { loadFortemiCoreMetadataEntries } = await import('./fortemi-core-query-adapter.js');
     const graphs = params.graph ? [params.graph] : defaultCapabilityGraphs(cwd);
     let unavailableReason: string | undefined;
@@ -1418,7 +1580,7 @@ async function loadShowEntries(
       if (legacy) entries.push(...Object.values(legacy.entries));
     }
   }
-  return { entries, aiwgRoot };
+  return { entries, aiwgRoot, resourceSource: 'local' };
 }
 
 function findShowMatches(entries: MetadataEntry[], types: string[], needle: string): MetadataEntry[] {
@@ -1488,10 +1650,11 @@ function findShowMatches(entries: MetadataEntry[], types: string[], needle: stri
 async function fortemiRecordForEntry(
   cwd: string,
   entry: MetadataEntry,
+  sourcePaths?: import('./fortemi-core-query-adapter.js').FortemiCoreVerifiedSourcePaths,
 ): Promise<AiwgFortemiRecord | null> {
   const graph = ((entry as ProvenancedEntry).indexGraph ?? 'project') as GraphType;
   const { loadFortemiCoreExport } = await import('./fortemi-core-query-adapter.js');
-  const loaded = loadFortemiCoreExport(cwd, graph);
+  const loaded = loadFortemiCoreExport(cwd, graph, sourcePaths);
   if (!loaded.exported) return null;
   const id = discoveryIdForEntry(entry);
   return loaded.exported.items.find((record) => record.id === id || record.source.path === entry.path) ?? null;
@@ -1681,7 +1844,12 @@ export async function showArtifact(
   const types = params.typeFilter && params.typeFilter.length > 0
     ? params.typeFilter
     : [...OPERATIONAL_SHOW_TYPES];
-  const { entries, aiwgRoot } = await loadShowEntries(cwd, params);
+  const {
+    entries,
+    aiwgRoot,
+    resourceSource,
+    webRelease,
+  } = await loadShowEntries(cwd, params);
 
   if (entries.length === 0 && params.backend !== 'fortemi-core') {
     console.error('Error: No artifact index found.');
@@ -1698,7 +1866,7 @@ export async function showArtifact(
     // "(uninstalled)" banner. This keeps `aiwg show` useful in workspaces
     // where the operator hasn't run `aiwg use` yet, or where the framework
     // index is stale, rather than exiting with a misleading "not found".
-    if (aiwgRoot && params.backend !== 'fortemi-core') {
+    if (resourceSource === 'local' && aiwgRoot && params.backend !== 'fortemi-core') {
       const corpusMatch = await findCorpusArtifact(aiwgRoot, needle, types);
       if (corpusMatch) {
         let content: string;
@@ -1747,7 +1915,9 @@ export async function showArtifact(
   // Resolve relative framework-graph paths to absolute paths.
   // Kernel entries are anchored the same way as non-kernel framework entries
   // (#1230) — show reads the source corpus, not platform deploy mirrors.
-  const resolvePath = (entry: MetadataEntry) => resolveMetadataPath(cwd, aiwgRoot, entry);
+  const resolvePath = (entry: MetadataEntry) => resourceSource === 'web'
+    ? `raw/${normalizeIndexedPath(entry.path)}`
+    : resolveMetadataPath(cwd, aiwgRoot, entry);
 
   if (matches.length > 1 && !params.first) {
     if (params.json) {
@@ -1764,6 +1934,15 @@ export async function showArtifact(
           provenance: {
             graph: (e as ProvenancedEntry).indexGraph ?? null,
             scope: (e as ProvenancedEntry).indexScope ?? null,
+            ...(webRelease
+              ? {
+                  resource_source: 'web',
+                  aiwg_selector: webRelease.selector,
+                  aiwg_version: webRelease.version,
+                  manifest_sha256: webRelease.manifestDigest,
+                  manifest_url: webRelease.manifestUrl,
+                }
+              : {}),
           },
         })),
       }, null, 2));
@@ -1781,16 +1960,35 @@ export async function showArtifact(
   const entry = matches[0];
   const filePath = resolvePath(entry);
   let content: string;
-  try {
-    content = await fs.readFile(filePath, 'utf8');
-  } catch (err) {
-    const e = err as NodeJS.ErrnoException;
-    console.error(`Error reading ${filePath}: ${e.message ?? String(err)}`);
-    process.exit(1);
+  if (resourceSource === 'web') {
+    try {
+      if (!webRelease) throw new Error('verified web release context is unavailable');
+      const { fetchVerifiedRawResource } = await import('../resources/web-release.js');
+      const bytes = await fetchVerifiedRawResource(webRelease, filePath, {
+        baseUrl: params.webReleaseOptions?.baseUrl,
+        fetcher: params.webReleaseOptions?.fetcher,
+        allowInsecureLoopbackHttp: params.webReleaseOptions?.allowInsecureLoopbackHttp,
+        offline: params.offline,
+      });
+      content = bytes.toString('utf8');
+    } catch (error) {
+      console.error(`Error: AIWG web resource show failed: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  } else {
+    try {
+      content = await fs.readFile(filePath, 'utf8');
+    } catch (err) {
+      const e = err as NodeJS.ErrnoException;
+      console.error(`Error reading ${filePath}: ${e.message ?? String(err)}`);
+      process.exit(1);
+    }
   }
 
   if (params.json) {
-    const providerModels = await loadProviderModelMetadata(cwd, aiwgRoot);
+    const providerModels = resourceSource === 'local'
+      ? await loadProviderModelMetadata(cwd, aiwgRoot)
+      : null;
     console.log(JSON.stringify({
       id: discoveryIdForEntry(entry),
       path: filePath,
@@ -1801,6 +1999,15 @@ export async function showArtifact(
       provenance: {
         graph: (entry as ProvenancedEntry).indexGraph ?? null,
         scope: (entry as ProvenancedEntry).indexScope ?? null,
+        ...(webRelease
+          ? {
+              resource_source: 'web',
+              aiwg_selector: webRelease.selector,
+              aiwg_version: webRelease.version,
+              manifest_sha256: webRelease.manifestDigest,
+              manifest_url: webRelease.manifestUrl,
+            }
+          : {}),
       },
       // #1227 — surface script-bearing skills so callers can route to
       // `aiwg run skill <name>` instead of treating SKILL.md as
@@ -1834,7 +2041,13 @@ export async function showMetadata(
   const types = params.typeFilter && params.typeFilter.length > 0
     ? params.typeFilter
     : [...OPERATIONAL_SHOW_TYPES];
-  const { entries, aiwgRoot } = await loadShowEntries(cwd, params);
+  const {
+    entries,
+    aiwgRoot,
+    resourceSource,
+    webRelease,
+    sourcePaths,
+  } = await loadShowEntries(cwd, params);
 
   if (entries.length === 0 && params.backend !== 'fortemi-core') {
     console.error('Error: No artifact index found.');
@@ -1851,7 +2064,9 @@ export async function showMetadata(
     process.exit(1);
   }
 
-  const resolvePath = (entry: MetadataEntry) => resolveMetadataPath(cwd, aiwgRoot, entry);
+  const resolvePath = (entry: MetadataEntry) => resourceSource === 'web'
+    ? `raw/${normalizeIndexedPath(entry.path)}`
+    : resolveMetadataPath(cwd, aiwgRoot, entry);
 
   if (matches.length > 1 && !params.first) {
     if (params.json) {
@@ -1866,6 +2081,15 @@ export async function showMetadata(
           provenance: {
             graph: (entry as ProvenancedEntry).indexGraph ?? null,
             scope: (entry as ProvenancedEntry).indexScope ?? null,
+            ...(webRelease
+              ? {
+                  resource_source: 'web',
+                  aiwg_selector: webRelease.selector,
+                  aiwg_version: webRelease.version,
+                  manifest_sha256: webRelease.manifestDigest,
+                  manifest_url: webRelease.manifestUrl,
+                }
+              : {}),
           },
         })),
       }, null, 2));
@@ -1880,12 +2104,13 @@ export async function showMetadata(
 
   const entry = matches[0];
   const absolutePath = resolvePath(entry);
-  const record = params.backend === 'fortemi-core'
-    ? await fortemiRecordForEntry(cwd, entry)
+  const backend = params.backend ?? DEFAULT_ARTIFACT_SEARCH_BACKEND;
+  const record = backend === 'fortemi-core'
+    ? await fortemiRecordForEntry(cwd, entry, sourcePaths)
     : null;
   const payload = {
     id: discoveryIdForEntry(entry),
-    backend: params.backend ?? DEFAULT_ARTIFACT_SEARCH_BACKEND,
+    backend,
     type: entry.type,
     name: entry.name,
     title: entry.title,
@@ -1898,9 +2123,20 @@ export async function showMetadata(
     provenance: {
       graph: (entry as ProvenancedEntry).indexGraph ?? null,
       scope: (entry as ProvenancedEntry).indexScope ?? null,
+      ...(webRelease
+        ? {
+            resource_source: 'web',
+            aiwg_selector: webRelease.selector,
+            aiwg_version: webRelease.version,
+            manifest_sha256: webRelease.manifestDigest,
+            manifest_url: webRelease.manifestUrl,
+          }
+        : {}),
     },
     metadata: record ?? entry,
-    providerModels: await loadProviderModelMetadata(cwd, aiwgRoot),
+    providerModels: resourceSource === 'local'
+      ? await loadProviderModelMetadata(cwd, aiwgRoot)
+      : null,
   };
 
   if (params.json) {

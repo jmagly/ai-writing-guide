@@ -1332,6 +1332,7 @@ export const corpusHandler: CommandHandler = {
  * with the project's general-purpose artifact graph indices.
  *
  *   aiwg discover "<phrase>" [--limit N] [--type skill,agent,...] [--json]
+ *     [--resource-source local|web|auto] [--aiwg-version <exact-or-channel>] [--offline]
  */
 export const discoverHandler: CommandHandler = {
   id: "discover",
@@ -1390,6 +1391,7 @@ export const featuresHandler: CommandHandler = {
  * so consumers don't need to navigate AIWG's storage paths themselves.
  *
  *   aiwg show <name> [--type skill,agent,...] [--json] [--first]
+ *     [--resource-source local|web|auto] [--aiwg-version <exact-or-channel>] [--offline]
  */
 export const showHandler: CommandHandler = {
   id: "show",

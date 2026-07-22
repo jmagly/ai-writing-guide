@@ -19,6 +19,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   `aiwg.config` and `AIWG_PROJECT_LOCAL_PATHS` let operators add custom addon,
   extension, framework, plugin, and provider roots without moving the main
   project corpus.
+- **Experimental web-backed `discover`/`show` slice**
+  ([#1848](https://github.com/jmagly/aiwg/pull/1848),
+  [#1849](https://github.com/jmagly/aiwg/pull/1849),
+  [#1850](https://github.com/jmagly/aiwg/pull/1850),
+  [#1853](https://github.com/jmagly/aiwg/pull/1853)) —
+  `aiwg discover` and `aiwg show` now support `--resource-source` (`local|web|auto`),
+  exact-or-channel `--aiwg-version`, and `--offline`; web mode uses signed
+  release manifests plus `@fortemi/core` query against the v2 export, while `show`
+  caches verified resource bodies for warm offline reads.
 
 ## [2026.7.16] - 2026-07-21 - "Workspace context and provider orchestration"
 

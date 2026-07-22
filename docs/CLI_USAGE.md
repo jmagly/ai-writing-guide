@@ -213,25 +213,26 @@ Switch back to stable (npm releases).
 aiwg --use-stable
 ```
 
-## Planned: Web-Backed Resources
+## Web-Backed Resources (Experimental Partial Implementation)
 
-AIWG is planning an opt-in mode where the npm package can carry only CLI
-tooling while AIWG resource bundles resolve through the CLI from local paths or
-versioned release-host web resources such as `releases.aiwg.io`.
+AIWG ships an experimental partial implementation for web-backed resource
+resolution for `aiwg discover` and `aiwg show`.
 
 ```bash
-aiwg versions list
-aiwg versions show stable
-aiwg versions resolve '^2026.7.0'
-
+aiwg discover "architecture evolution" --resource-source local --aiwg-version 2026.7.16
 aiwg discover "architecture evolution" --resource-source web --aiwg-version stable
-aiwg use sdlc --resource-source auto --aiwg-version 2026.7.15
-aiwg use sdlc --offline
+aiwg discover "architecture evolution" --resource-source auto --aiwg-version 2026.7.16
+aiwg discover "architecture evolution" --offline
+
+aiwg show skill architecture-evolution --resource-source web --aiwg-version 2026.7.16
+aiwg show framework sdlc --resource-source web --aiwg-version candidate --offline
 ```
 
-This feature is not implemented yet. See
+This partial implementation is active only for `discover`/`show` and does not yet
+apply to `aiwg versions`, `aiwg use`, or `aiwg regenerate` rollout-wide web
+defaults. See
 [Web-Backed AIWG Resources](./install/web-backed-resources.md) for the planned
-operator contract, version selectors, and safety model.
+operator contract and safety model.
 
 Maintainer checkouts can already relocate the project AIWG artifact directory
 with the project pointer file written by the CLI:
