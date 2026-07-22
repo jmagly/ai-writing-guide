@@ -171,7 +171,7 @@ export async function promoteProjectLocalBundle(
   const discovery = await discoverProjectLocalBundles(projectDir);
   const bundle = discovery.bundles.find(b => b.id === bundleId);
   if (!bundle) {
-    return { ok: false, failureReason: 'bundle-not-found', message: `No project-local bundle '${bundleId}' under .aiwg/{extensions,addons,frameworks,plugins,providers}/` };
+    return { ok: false, failureReason: 'bundle-not-found', message: `No project-local bundle '${bundleId}' under configured project-local roots` };
   }
 
   // Pre-flight 2: corpus path required for --to corpus

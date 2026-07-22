@@ -111,7 +111,7 @@ Around that core, AIWG ships agent-facing utilities for things the base platform
 
 ### Project scope (recommended) vs user scope (global)
 
-`aiwg use` writes artifacts at one of two scopes. Both are first-class supported (see ADR-NUA-001 in `.aiwg/studies/novice-user-adoption/`):
+`aiwg use` writes artifacts at one of two scopes. Both are first-class supported:
 
 - **Project scope** — default. Run `aiwg use sdlc` from a project root and the artifacts land in `./.claude/agents/`, `./.claude/skills/`, etc. One project's agent set never bleeds into another's session. **This is the recommended default for most use cases.**
 - **User scope (global install)** — `aiwg use sdlc --scope user` writes to `~/.claude/agents/`, `~/.claude/skills/`, etc. Same artifact set loads into every session, regardless of project. Fits "AIWG in every conversation" workflows and is the canonical mode for OpenClaw and Hermes (whose primary discovery is user-scope).

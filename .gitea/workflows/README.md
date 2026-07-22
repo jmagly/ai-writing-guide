@@ -79,6 +79,7 @@ dispatch, and deploy-key material lives in vault and is fetched at runtime by
 | `GH_ACCESS_TOKEN` | `GH_MIRROR_TOKEN_VAULT_PATH`, `GH_MIRROR_TOKEN_VAULT_FIELD` |
 | `AIWG_IO_DISPATCH_TOKEN` | `AIWG_IO_DISPATCH_TOKEN_VAULT_PATH`, `AIWG_IO_DISPATCH_TOKEN_VAULT_FIELD` |
 | `DOCSITE_DEPLOY_KEY` | `DOCSITE_DEPLOY_KEY_VAULT_PATH`, `DOCSITE_DEPLOY_KEY_VAULT_FIELD` |
+| `CLOUDFLARE_API_TOKEN` | `CLOUDFLARE_API_TOKEN_VAULT_PATH`, `CLOUDFLARE_API_TOKEN_VAULT_FIELD` |
 
 Docsite deploy coordinates are Gitea Actions variables. `secrets.GITHUB_TOKEN`
 is CI-issued per run and is not stored or migrated.

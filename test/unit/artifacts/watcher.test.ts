@@ -22,12 +22,29 @@ import {
 } from '../../../src/artifacts/watcher.js';
 
 const TEST_DIR = join(tmpdir(), `aiwg-watcher-test-${Date.now()}`);
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+] as const;
+let previousArtifactEnv: Record<(typeof ARTIFACT_ENV_KEYS)[number], string | undefined>;
 
 beforeEach(() => {
+  previousArtifactEnv = {
+    AIWG_ARTIFACTS_PATH: process.env.AIWG_ARTIFACTS_PATH,
+    AIWG_PROJECT_ARTIFACTS_PATH: process.env.AIWG_PROJECT_ARTIFACTS_PATH,
+    AIWG_PROJECT_AIWG_DIR: process.env.AIWG_PROJECT_AIWG_DIR,
+  };
+  for (const key of ARTIFACT_ENV_KEYS) delete process.env[key];
   mkdirSync(TEST_DIR, { recursive: true });
 });
 
 afterEach(() => {
+  for (const key of ARTIFACT_ENV_KEYS) {
+    const value = previousArtifactEnv[key];
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
   rmSync(TEST_DIR, { recursive: true, force: true });
 });
 

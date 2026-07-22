@@ -12,6 +12,16 @@ import { tmpdir } from 'os';
 import { promoteProjectLocalBundle } from '../../../src/extensions/project-local-promote.js';
 import { resetStorage, initStorage } from '../../../src/storage/index.js';
 import type { AiwgConfig } from '../../../src/config/aiwg-config.js';
+import { PROJECT_LOCAL_SEARCH_PATHS_ENV } from '../../../src/extensions/project-local-paths.js';
+
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+  PROJECT_LOCAL_SEARCH_PATHS_ENV,
+] as const;
+
+let originalEnv: Partial<Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined>> = {};
 
 function tmp(): string {
   return mkdtempSync(join(tmpdir(), 'aiwg-plp-'));
@@ -83,12 +93,22 @@ describe('promoteProjectLocalBundle (#1037)', () => {
   let frameworkRoot: string;
 
   beforeEach(async () => {
+    originalEnv = {};
+    for (const key of ARTIFACT_ENV_KEYS) {
+      originalEnv[key] = process.env[key];
+      delete process.env[key];
+    }
     projectDir = tmp();
     frameworkRoot = tmp();
     resetStorage();
     await initStorage(projectDir);
   });
   afterEach(async () => {
+    for (const key of ARTIFACT_ENV_KEYS) {
+      const value = originalEnv[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
     resetStorage();
     rmSync(projectDir, { recursive: true, force: true });
     rmSync(frameworkRoot, { recursive: true, force: true });

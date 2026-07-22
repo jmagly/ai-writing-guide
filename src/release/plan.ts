@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { parse as parseYaml } from 'yaml';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 
 export const RELEASE_PLAN_DIR = path.join('.aiwg', 'releases');
 export const RELEASE_PLAN_EXTENSIONS = new Set(['.json', '.yaml', '.yml']);
@@ -75,7 +76,7 @@ export class ReleasePlanError extends Error {
 }
 
 export async function discoverReleasePlans(projectRoot: string): Promise<DiscoveredReleasePlan[]> {
-  const releaseDir = path.join(projectRoot, RELEASE_PLAN_DIR);
+  const releaseDir = projectAiwgPath(projectRoot, 'releases');
   let entries;
   try {
     entries = await fs.readdir(releaseDir, { withFileTypes: true });

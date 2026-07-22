@@ -11,6 +11,7 @@ import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { projectAiwgPath, resolveProjectAiwgDir } from '../config/project-artifacts.js';
 
 export interface ProjectMemoryMetadata {
   owner?: string;
@@ -191,9 +192,9 @@ export async function lookupProjectMemory(opts: {
 }
 
 export async function resolveProjectMemoryRoot(projectRoot = process.cwd()): Promise<MemoryRootResolution> {
-  const localAiwg = path.resolve(projectRoot, '.aiwg');
+  const localAiwg = resolveProjectAiwgDir(projectRoot);
   if (existsSync(localAiwg)) {
-    return { source: 'project-local', root: path.join(localAiwg, 'memory'), reason: 'project-local .aiwg exists' };
+    return { source: 'project-local', root: path.join(localAiwg, 'memory'), reason: 'configured project AIWG artifact root exists' };
   }
 
   const byPath = await lookupProjectMemory({ workspaceRoot: projectRoot });
@@ -201,7 +202,7 @@ export async function resolveProjectMemoryRoot(projectRoot = process.cwd()): Pro
     return { source: 'user', root: path.join(byPath.entry.memoryRoot, 'memory'), entry: byPath.entry, reason: 'matched workspace path' };
   }
   if (byPath.status === 'ambiguous') {
-    return { source: 'default', root: path.resolve(projectRoot, '.aiwg', 'memory'), reason: byPath.reason };
+    return { source: 'default', root: projectAiwgPath(projectRoot, 'memory'), reason: byPath.reason };
   }
 
   for (const remote of discoverGitRemotes(projectRoot)) {
@@ -210,11 +211,11 @@ export async function resolveProjectMemoryRoot(projectRoot = process.cwd()): Pro
       return { source: 'user', root: path.join(byRemote.entry.memoryRoot, 'memory'), entry: byRemote.entry, reason: 'matched git remote' };
     }
     if (byRemote.status === 'ambiguous') {
-      return { source: 'default', root: path.resolve(projectRoot, '.aiwg', 'memory'), reason: byRemote.reason };
+      return { source: 'default', root: projectAiwgPath(projectRoot, 'memory'), reason: byRemote.reason };
     }
   }
 
-  return { source: 'default', root: path.resolve(projectRoot, '.aiwg', 'memory'), reason: 'no registered user-level project memory entry' };
+  return { source: 'default', root: projectAiwgPath(projectRoot, 'memory'), reason: 'no registered user-level project memory entry' };
 }
 
 export async function relocateProjectMemory(id: string, newMemoryRoot: string): Promise<ProjectMemoryEntry> {

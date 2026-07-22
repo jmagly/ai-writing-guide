@@ -23,9 +23,9 @@ Cockpit is a **session-control surface, not a CLI runner**. Agents run the CLI;
 you direct the agents. An action button injects a command into an agentic
 session, and the agent in that session runs it. Control-plane requests
 (lifecycle, approvals, session create) go through a local token-gated Bridge;
-the terminal data plane connects your browser directly to the executor via a
-Bridge-issued attach URL. Cockpit is opt-in and separately published — nothing
-here ships in the base `aiwg` npm package.
+the terminal data plane uses a Bridge-owned attach URL so executor credentials
+remain outside browser state. Cockpit is opt-in and separately published —
+nothing here ships in the base `aiwg` npm package.
 
 ## Section contents
 

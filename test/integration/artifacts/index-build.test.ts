@@ -14,9 +14,16 @@ import path from 'path';
 import os from 'os';
 import { buildIndex } from '../../../src/artifacts/index-builder.js';
 import type { ArtifactIndex, TagIndex, DependencyGraph, IndexStats } from '../../../src/artifacts/types.js';
+import { resolveProjectAiwgDir } from '../../../src/config/project-artifacts.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
-const AIWG_DIR = path.join(REPO_ROOT, '.aiwg');
+const AIWG_DIR = resolveProjectAiwgDir(REPO_ROOT);
+const PROJECT_CORPUS_AVAILABLE = fs.existsSync(AIWG_DIR) && [
+  'requirements',
+  'architecture',
+  'planning',
+  'security',
+].some(dir => fs.existsSync(path.join(AIWG_DIR, dir)));
 const INDEX_BUILD_BUDGET_MS = parseIntEnv('AIWG_INDEX_BUILD_BUDGET_MS', 15_000);
 
 function parseIntEnv(name: string, def: number): number {
@@ -33,8 +40,8 @@ describe('Artifact Index Build (integration)', () => {
   let stats: IndexStats;
 
   beforeAll(async () => {
-    // Skip if .aiwg/ doesn't exist (e.g. fresh clone without tracked artifacts)
-    if (!fs.existsSync(AIWG_DIR)) {
+    // Skip if the configured project corpus doesn't exist (e.g. public clone).
+    if (!PROJECT_CORPUS_AVAILABLE) {
       return;
     }
 

@@ -12,6 +12,7 @@ import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
 import type { LintRule, LintRuleset } from './types.js';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 
 /**
  * Parse YAML frontmatter-style content (simple key: value parser)
@@ -212,7 +213,7 @@ export async function discoverRulesets(cwd: string, frameworkRoot: string): Prom
   }
 
   // Also check .aiwg/frameworks/ for deployed rulesets
-  const deployedDir = path.join(cwd, '.aiwg', 'frameworks');
+  const deployedDir = projectAiwgPath(cwd, 'frameworks');
   if (fs.existsSync(deployedDir)) {
     try {
       const frameworks = await fsp.readdir(deployedDir);

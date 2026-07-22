@@ -23,6 +23,7 @@ import {
   GRAPH_CONFIGS,
   BUILTIN_GRAPH_CONFIGS,
   getGraphIndexDir,
+  getProjectIndexRoot,
   loadGlobalGraphConfigs,
   loadUserGraphConfigs,
   type GraphConfigWarning,
@@ -146,7 +147,7 @@ export function collectIndexStatus(
   const reservedIndexDirs = new Set(['fortemi-core']);
   const registeredNames = new Set(Object.keys(GRAPH_CONFIGS));
   const orphanIndexDirs: string[] = [];
-  const projectIndexRoot = path.join(cwd, '.aiwg', '.index');
+  const projectIndexRoot = getProjectIndexRoot(cwd);
   try {
     for (const d of fs.readdirSync(projectIndexRoot, { withFileTypes: true })) {
       if (

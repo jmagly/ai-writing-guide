@@ -22,6 +22,7 @@ Knobs:
 |---|---|
 | `AIWG_COCKPIT_ENSURE_EXECUTOR=0` | Skip the executor-ensure step (one is already running) |
 | `AIWG_COCKPIT_START_HOST_DAEMON=1` | Also start the optional host-runtime daemon |
+| `AIWG_COCKPIT_EXECUTOR_TOKEN_FILE=/mode-600/path` | Authenticate Bridge and live-UAT executor calls without placing the bearer in argv, URLs, or browser state |
 
 Cockpit-only launcher (assumes/starts an executor best-effort):
 

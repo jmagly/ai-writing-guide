@@ -219,6 +219,62 @@ describe("AIWG Fortemi browser index export", () => {
     );
   });
 
+  it("preserves operational live-state provenance in v2 and drops it from v1 compatibility", async () => {
+    const issuePath = ".aiwg/issues/AIWG-1827.md";
+    writeIndex(
+      {
+        [issuePath]: entry({
+          path: issuePath,
+          type: "issue",
+          phase: "planning",
+          title: "Operational provenance",
+          summary: "Track live-state provenance in operational memory.",
+          operationalState: {
+            source_repo: "roctinam/aiwg",
+            source_kind: "issue",
+            source_id: "aiwg#1827",
+            observed_state: "open",
+            observed_at: "2026-07-21T10:00:00.000Z",
+            source_updated_at: "2026-07-21T09:00:00.000Z",
+            evidence_url: "https://git.integrolabs.net/roctinam/aiwg/issues/1827",
+            observer: "gitea-mcp",
+            classification: "fresh",
+            confidence: "source",
+            current_action_selector: true,
+          },
+        }),
+      },
+      { [issuePath]: { upstream: [], downstream: [] } },
+    );
+
+    const exported = buildAiwgFortemiIndexExport(tmpDir, {
+      repo: "roctinam/aiwg",
+      privacy: "sanitized",
+      generatedAt: "2026-07-21T10:00:00.000Z",
+      schemaVersion: "v2",
+    });
+    const validate = loadFortemiExportSchemaValidator();
+    expect(validate(exported), JSON.stringify(validate.errors, null, 2)).toBe(true);
+    expect(exported.items[0]?.operational_state).toMatchObject({
+      source_id: "aiwg#1827",
+      observed_state: "open",
+      classification: "fresh",
+      current_action_selector: true,
+    });
+    const fortemi = await loadOptionalFortemiAiwgIndex();
+    if (fortemi?.validateAiwgFortemiIndexExport) {
+      const result = fortemi.validateAiwgFortemiIndexExport(exported);
+      expect(
+        fortemiValidationPassed(result),
+        JSON.stringify(result.errors, null, 2),
+      ).toBe(true);
+    }
+
+    const compat = buildAiwgFortemiV1CompatibilityExport(exported);
+    expect(validate(compat), JSON.stringify(validate.errors, null, 2)).toBe(true);
+    expect(compat.items[0]).not.toHaveProperty("operational_state");
+  });
+
   it("emits deterministic v2 all-domain records validated by the latest Fortemi Core contract", async () => {
     writeIndex(
       {

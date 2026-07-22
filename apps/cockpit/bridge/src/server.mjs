@@ -6,10 +6,12 @@
 // Real Bridge grows: registry/discover/index binding, per-instance A2A, pty I/O,
 // per-launch token + OS-keychain (roctinam/aiwg#1595).
 import http from 'node:http';
+import https from 'node:https';
 import { spawn } from 'node:child_process';
 import { readFile, mkdir, writeFile, chmod, readdir, cp, rm, stat, appendFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, basename, extname, resolve, sep } from 'node:path';
@@ -26,6 +28,7 @@ const EXECUTOR_URL =
 const ALLOW_MOCK_EXECUTOR = process.env.AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR === '1';
 const AUTOSTART_EXECUTOR = process.env.AIWG_COCKPIT_AUTOSTART_EXECUTOR !== '0';
 const EXECUTOR_COMMAND = process.env.AIWG_COCKPIT_EXECUTOR_COMMAND ?? '';
+const EXECUTOR_TOKEN_FILE = process.env.AIWG_COCKPIT_EXECUTOR_TOKEN_FILE ?? '';
 const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
 const auditDir = () => process.env.AIWG_COCKPIT_AUDIT_DIR || join(homedir(), '.aiwg', 'cockpit', 'audit');
 const auditLog = () => join(auditDir(), 'events.jsonl');
@@ -35,6 +38,45 @@ const WEB_DIST = fileURLToPath(new URL('../../web/dist', import.meta.url));
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png', '.woff2': 'font/woff2', '.map': 'application/json' };
 const CAPABILITY_TYPES = new Set(['skill', 'agent', 'command', 'rule', 'flow']);
 const mcSessionsDir = () => join(process.cwd(), '.aiwg', 'ralph-external', 'mc', 'sessions');
+const executorRequestContext = new AsyncLocalStorage();
+
+function executorAuthError(code, message, cause) {
+  const err = new Error(message, cause ? { cause } : undefined);
+  err.code = code;
+  return err;
+}
+
+async function resolveExecutorBearer(tokenFile) {
+  if (!tokenFile) return '';
+  const path = expandHome(String(tokenFile));
+  let metadata;
+  try {
+    metadata = await stat(path);
+  } catch (cause) {
+    throw executorAuthError('executor_credential_unavailable', 'executor credential file is unavailable', cause);
+  }
+  if (!metadata.isFile()) {
+    throw executorAuthError('executor_credential_invalid', 'executor credential path is not a regular file');
+  }
+  if (process.platform !== 'win32' && (metadata.mode & 0o077) !== 0) {
+    throw executorAuthError('executor_credential_permissions', 'executor credential file must not be accessible by group or other users');
+  }
+  const token = String(await readFile(path, 'utf8')).trim();
+  if (!token || /[\r\n]/.test(token)) {
+    throw executorAuthError('executor_credential_invalid', 'executor credential file must contain exactly one non-empty bearer token');
+  }
+  return token;
+}
+
+async function executorFetch(target, init = {}) {
+  const context = executorRequestContext.getStore();
+  const headers = new Headers(init.headers);
+  if (context && new URL(target).origin === context.executorOrigin && !headers.has('authorization')) {
+    const token = await resolveExecutorBearer(context.executorTokenFile);
+    if (token) headers.set('authorization', `Bearer ${token}`);
+  }
+  return fetch(target, { ...init, headers });
+}
 
 /** Serve a static file from the built web app, sandboxed to WEB_DIST. Returns true if served. */
 async function serveDistFile(res, relPath) {
@@ -352,8 +394,14 @@ async function readJsonBody(req) {
 
 /** Forward a control-plane call to the executor admin surface, relaying status + body. */
 async function proxy(res, method, target) {
-  const r = await fetch(target, { method });
+  const r = await executorFetch(target, { method });
   const body = await r.json().catch(() => ({}));
+  if (r.status === 401 || r.status === 403) {
+    const err = new Error(`executor ${r.status === 401 ? 'authentication' : 'authorization'} failed at ${new URL(target).pathname}`);
+    err.code = r.status === 401 ? 'executor_unauthenticated' : 'executor_forbidden';
+    err.upstreamStatus = r.status;
+    throw err;
+  }
   return json(res, r.status, body);
 }
 
@@ -373,6 +421,10 @@ function isConnectionRefusedError(err) {
   return /ECONNREFUSED|connection refused/i.test(text);
 }
 
+function rethrowExecutorSecurityError(err) {
+  if ([401, 403].includes(Number(err?.upstreamStatus)) || String(err?.code ?? '').startsWith('executor_credential_')) throw err;
+}
+
 export async function fetchJsonFirst(candidates, { method = 'GET', headers, body: requestBodyOption, timeoutMs = 0 } = {}) {
   const failures = [];
   for (const candidate of candidates) {
@@ -384,8 +436,9 @@ export async function fetchJsonFirst(candidates, { method = 'GET', headers, body
     const timeout = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
     let r;
     try {
-      r = await fetch(target, { method: requestMethod, headers: requestHeaders, body: requestBody, ...(controller ? { signal: controller.signal } : {}) });
+      r = await executorFetch(target, { method: requestMethod, headers: requestHeaders, body: requestBody, ...(controller ? { signal: controller.signal } : {}) });
     } catch (err) {
+      if (String(err?.code ?? '').startsWith('executor_credential_')) throw err;
       const failure = isAbortError(err) && timeoutMs > 0
         ? `${target} -> timeout after ${timeoutMs}ms`
         : `${target} -> ${String(err?.message ?? err)}`;
@@ -398,6 +451,12 @@ export async function fetchJsonFirst(candidates, { method = 'GET', headers, body
       if (timeout) clearTimeout(timeout);
     }
     const responseBody = await r.json().catch(() => ({}));
+    if (r.status === 401 || r.status === 403) {
+      const err = new Error(`executor ${r.status === 401 ? 'authentication' : 'authorization'} failed at ${new URL(target).pathname}`);
+      err.code = r.status === 401 ? 'executor_unauthenticated' : 'executor_forbidden';
+      err.upstreamStatus = r.status;
+      throw err;
+    }
     if (r.ok) return { target, status: r.status, body: responseBody };
     failures.push(`${target} -> ${r.status}`);
     if (r.status !== 404 && r.status !== 405) return { target, status: r.status, body: responseBody, failures };
@@ -435,7 +494,7 @@ async function assertRealExecutor(executorUrl, allowMockExecutor) {
 async function probeExecutor(executorUrl) {
   for (const path of ['/healthz/http', '/healthz', '/health']) {
     try {
-      const r = await fetch(`${executorUrl}${path}`, { signal: AbortSignal.timeout(1_500) });
+      const r = await executorFetch(`${executorUrl}${path}`, { signal: AbortSignal.timeout(1_500) });
       if (r.ok) return true;
     } catch {
       // Try the next health endpoint.
@@ -455,6 +514,7 @@ async function getExecutorCapabilities(executorUrl) {
       raw_status: body.status ?? body.state ?? 'unknown',
     };
   } catch (err) {
+    rethrowExecutorSecurityError(err);
     return {
       status: 'unreachable',
       source: null,
@@ -498,6 +558,10 @@ async function proxyFirst(res, candidates, options) {
     const { status, body } = await fetchJsonFirst(candidates, options);
     return json(res, status, body);
   } catch (err) {
+    if ([401, 403].includes(Number(err?.upstreamStatus))) {
+      return json(res, Number(err.upstreamStatus), { error: err.code, message: String(err.message) });
+    }
+    if (String(err?.code ?? '').startsWith('executor_credential_')) throw err;
     const message = String(err?.message ?? err);
     const notFound = / -> 404(?:;|$)/.test(message);
     const methodNotAllowed = / -> 405(?:;|$)/.test(message);
@@ -509,7 +573,9 @@ async function proxyFirst(res, candidates, options) {
 }
 
 async function destroyInstance(upstreamUrl, instanceId) {
-  const inventory = await getInventory(upstreamUrl).catch(() => ({ instances: [] }));
+  let inventory;
+  try { inventory = await getInventory(upstreamUrl); }
+  catch (err) { rethrowExecutorSecurityError(err); inventory = { instances: [] }; }
   const inst = inventory.instances.find((i) => String(i.id) === String(instanceId));
   const runtime = String(inst?.runtime ?? inst?.runtime_posture?.kind ?? '').toLowerCase();
   const dockerName = inst?.launch_context?.name;
@@ -540,6 +606,7 @@ async function destroyInstance(upstreamUrl, instanceId) {
       return result;
     }
   } catch (err) {
+    rethrowExecutorSecurityError(err);
     const message = String(err?.message ?? err);
     // A docker/container row with a resolvable name is still physically
     // removable even when admin-v2 has no instance record (404): fall through
@@ -634,7 +701,9 @@ async function signalVmAgentReconnect(domain) {
 const VM_RUNTIME_KINDS = ['vm', 'qemu', 'kvm'];
 
 async function reconnectInstance(upstreamUrl, instanceId) {
-  const inventory = await getInventory(upstreamUrl).catch(() => ({ instances: [] }));
+  let inventory;
+  try { inventory = await getInventory(upstreamUrl); }
+  catch (err) { rethrowExecutorSecurityError(err); inventory = { instances: [] }; }
   const inst = inventory.instances.find((i) => String(i.id) === String(instanceId));
   const runtime = String(inst?.runtime ?? inst?.runtime_posture?.kind ?? '').toLowerCase();
   const dockerName = inst?.launch_context?.name;
@@ -646,7 +715,8 @@ async function reconnectInstance(upstreamUrl, instanceId) {
   try {
     const result = await fetchJsonFirst(candidates, { timeoutMs: 5_000 });
     if (result.status < 400) return result;
-  } catch {
+  } catch (err) {
+    rethrowExecutorSecurityError(err);
     // agentic-sandbox v2026.7.6 still exposes the container reconnect as an
     // in-image helper, not an HTTP endpoint. Fall through to the local-dev path.
   }
@@ -766,7 +836,8 @@ async function resolveSessionAgentId(executorUrl, instanceId) {
     const agents = await getAgentList(executorUrl);
     const agent = agents.find((a) => String(a.instance_id ?? a.instanceId ?? '') === String(instanceId));
     return agent?.id ?? agent?.agent_id ?? agent?.agentId ?? instanceId;
-  } catch {
+  } catch (err) {
+    rethrowExecutorSecurityError(err);
     return instanceId;
   }
 }
@@ -1001,7 +1072,8 @@ async function enrichInstanceFromAgentCard(executorUrl, instance) {
       loadout: instance.loadout ?? runtimeExtension.loadout,
       image_ref: instance.image_ref ?? runtimeExtension.image_ref,
     };
-  } catch {
+  } catch (err) {
+    rethrowExecutorSecurityError(err);
     return instance;
   }
 }
@@ -1009,7 +1081,8 @@ async function enrichInstanceFromAgentCard(executorUrl, instance) {
 async function getRegisteredAgents(executorUrl) {
   try {
     return await getAgentList(executorUrl);
-  } catch {
+  } catch (err) {
+    rethrowExecutorSecurityError(err);
     return [];
   }
 }
@@ -1170,7 +1243,7 @@ async function getRunning(executorUrl) {
   await Promise.all(
     instances.filter((i) => i.state === 'running').map(async (inst) => {
       let tasks;
-      try { tasks = await listInstanceTasks(executorUrl, inst.id); } catch { return; }
+      try { tasks = await listInstanceTasks(executorUrl, inst.id); } catch (err) { rethrowExecutorSecurityError(err); return; }
       for (const t of tasks) {
         const state = taskState(t);
         if (!ACTIVE_TASK_STATES.has(state)) continue;
@@ -1250,7 +1323,7 @@ async function getApprovals(executorUrl, status) {
   await Promise.all(
     instances.filter((i) => i.state === 'running').map(async (inst) => {
       let tasks;
-      try { tasks = await listInstanceTasks(executorUrl, inst.id); } catch { return; }
+      try { tasks = await listInstanceTasks(executorUrl, inst.id); } catch (err) { rethrowExecutorSecurityError(err); return; }
       for (const t of tasks) {
         const approval = approvalFromTask(inst, t);
         if (!approval) continue;
@@ -1402,7 +1475,7 @@ async function getSessionEventRows(executorUrl, instances) {
   const rows = [];
   await Promise.all((instances ?? []).map(async (inst) => {
     let sessions;
-    try { sessions = (await getSessions(executorUrl, inst.id)).sessions; } catch { return; }
+    try { sessions = (await getSessions(executorUrl, inst.id)).sessions; } catch (err) { rethrowExecutorSecurityError(err); return; }
     for (const session of sessions) {
       rows.push({
         id: session.id,
@@ -1492,16 +1565,13 @@ async function respondApproval(executorUrl, approvalId, decision) {
     const { status, body } = await fetchJsonFirst(candidates);
     return { status, body };
   } catch (e) {
+    rethrowExecutorSecurityError(e);
     return { status: 409, body: { error: 'approval_response_failed', detail: String(e?.message ?? e) } };
   }
 }
 
-/**
- * Sessions for one instance, each with a direct attach_url. Control plane (this
- * list) goes through the Bridge; the data plane (the pty stream) connects direct
- * to the executor — masking differs per WS direction, so the Bridge issues the
- * URL rather than proxying frames.
- */
+/** Sessions for one instance. Executor attach targets are normalized here and
+ * replaced with Bridge-owned proxy URLs at the request boundary. */
 async function getSessions(executorUrl, instanceId) {
   const sessionAgentId = await resolveSessionAgentId(executorUrl, instanceId);
   const agentIds = unique([instanceId, sessionAgentId]);
@@ -1546,6 +1616,7 @@ async function getSessionScreen(executorUrl, instanceId, sessionId) {
     const { body, target, status } = await fetchJsonFirst(paths);
     return { status, body: normalizeScreenSnapshot(body, { instanceId, sessionId, source: target }) };
   } catch (e) {
+    rethrowExecutorSecurityError(e);
     return {
       status: 404,
       body: {
@@ -1663,7 +1734,8 @@ async function endSession(executorUrl, instanceId, sessionId) {
   let sessions = [];
   try {
     sessions = (await getSessions(executorUrl, instanceId)).sessions;
-  } catch {
+  } catch (err) {
+    rethrowExecutorSecurityError(err);
     // Fall back to using the supplied id directly; older executors may not list
     // before delete, and delete should remain useful during recovery cleanup.
   }
@@ -1702,10 +1774,98 @@ function sessionResponseFromRow(row) {
   };
 }
 
-export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = ALLOW_MOCK_EXECUTOR, token } = {}) {
+function websocketCockpitToken(req) {
+  const protocols = String(req.headers['sec-websocket-protocol'] ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const encoded = protocols.find((value) => value.startsWith('cockpit.'))?.slice('cockpit.'.length) ?? '';
+  try { return Buffer.from(encoded, 'base64url').toString('utf8'); } catch { return ''; }
+}
+
+function websocketAuthed(req, expected) {
+  const presented = websocketCockpitToken(req);
+  if (presented.length !== expected.length) return false;
+  try { return timingSafeEqual(Buffer.from(presented), Buffer.from(expected)); } catch { return false; }
+}
+
+function writeUpgradeHead(socket, response) {
+  socket.write(`HTTP/1.1 ${response.statusCode} ${response.statusMessage ?? 'Switching Protocols'}\r\n`);
+  for (let index = 0; index < response.rawHeaders.length; index += 2) {
+    socket.write(`${response.rawHeaders[index]}: ${response.rawHeaders[index + 1]}\r\n`);
+  }
+  socket.write('\r\n');
+}
+
+async function proxyExecutorWebsocket({ req, socket, head, target, executorTokenFile }) {
+  const token = await resolveExecutorBearer(executorTokenFile);
+  const requestedProtocols = String(req.headers['sec-websocket-protocol'] ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => value && !value.startsWith('cockpit.'));
+  const headers = {
+    connection: 'Upgrade',
+    upgrade: 'websocket',
+    host: target.host,
+    'sec-websocket-key': req.headers['sec-websocket-key'],
+    'sec-websocket-version': req.headers['sec-websocket-version'],
+    ...(req.headers['sec-websocket-extensions'] ? { 'sec-websocket-extensions': req.headers['sec-websocket-extensions'] } : {}),
+    ...(requestedProtocols.length ? { 'sec-websocket-protocol': requestedProtocols.join(', ') } : {}),
+    ...(token ? { authorization: `Bearer ${token}` } : {}),
+  };
+  const transport = target.protocol === 'wss:' ? https : http;
+  const requestTarget = new URL(target);
+  requestTarget.protocol = target.protocol === 'wss:' ? 'https:' : 'http:';
+  const upstreamRequest = transport.request(requestTarget, { method: 'GET', headers });
+  upstreamRequest.on('upgrade', (response, upstreamSocket, upstreamHead) => {
+    writeUpgradeHead(socket, response);
+    if (head.length) upstreamSocket.write(head);
+    if (upstreamHead.length) socket.write(upstreamHead);
+    socket.pipe(upstreamSocket);
+    upstreamSocket.pipe(socket);
+    const closeBoth = () => {
+      if (!socket.destroyed) socket.destroy();
+      if (!upstreamSocket.destroyed) upstreamSocket.destroy();
+    };
+    socket.on('error', closeBoth);
+    upstreamSocket.on('error', closeBoth);
+  });
+  upstreamRequest.on('response', (response) => {
+    socket.write(`HTTP/1.1 ${response.statusCode ?? 502} ${response.statusMessage ?? 'Upstream Error'}\r\nConnection: close\r\n\r\n`);
+    socket.destroy();
+    response.resume();
+  });
+  upstreamRequest.on('error', () => {
+    if (!socket.destroyed) socket.end('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n');
+  });
+  upstreamRequest.end();
+}
+
+export function createBridge({
+  executorUrl = EXECUTOR_URL,
+  allowMockExecutor = ALLOW_MOCK_EXECUTOR,
+  token,
+  executorTokenFile = EXECUTOR_TOKEN_FILE,
+} = {}) {
   const upstreamUrl = executorUrl;
   const TOKEN = token ?? randomBytes(24).toString('hex');
-  const server = http.createServer(async (req, res) => {
+  const executorOrigin = new URL(upstreamUrl).origin;
+  const executorAddress = new URL(upstreamUrl);
+  const attachTargets = new Map();
+  const issueAttachUrl = (req, value) => {
+    const target = new URL(String(value));
+    const sameHost = target.hostname === executorAddress.hostname ||
+      (isLocalHostName(target.hostname) && isLocalHostName(executorAddress.hostname));
+    if (!['ws:', 'wss:'].includes(target.protocol) || !sameHost || !/^\/agents\/[^/]+\/sessions\/[^/]+\/attach$/.test(target.pathname)) {
+      throw executorAuthError('executor_attach_target_refused', 'executor returned an attach URL outside the allowed PTY endpoint');
+    }
+    const id = randomBytes(18).toString('base64url');
+    attachTargets.set(id, target);
+    if (attachTargets.size > 1024) attachTargets.delete(attachTargets.keys().next().value);
+    const wsProtocol = req.socket.encrypted ? 'wss:' : 'ws:';
+    return `${wsProtocol}//${req.headers.host}/api/pty${target.pathname}/${id}`;
+  };
+  const handleRequest = async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
     try {
       // unauthenticated liveness probe (no /api/ prefix) — for the shell to wait on
@@ -1818,7 +1978,12 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
       if (url.pathname === '/api/sessions') {
         const inst = url.searchParams.get('instance');
         if (!inst) return json(res, 400, { error: 'instance_required' });
-        return json(res, 200, await getSessions(upstreamUrl, inst));
+        const result = await getSessions(upstreamUrl, inst);
+        result.sessions = result.sessions.map((session) => ({
+          ...session,
+          attach_url: issueAttachUrl(req, session.attach_url),
+        }));
+        return json(res, 200, result);
       }
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/sessions\/([^/]+)$/)) && req.method === 'DELETE') {
         const { status, body } = await endSession(upstreamUrl, decodeURIComponent(m[1]), decodeURIComponent(m[2]));
@@ -1992,7 +2157,13 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
         // Same as the list path (#1671): the attach segment must be the instance
         // id the executor's pty-ws route accepts, not the resolved agent name.
         await appendAudit('session.start.requested', { instance_id: id, mode: mode || 'managed', backend: backend || 'tmux', loadout, status, session_id: sessionId, session_name: sessionName });
-        return json(res, status, { ...body, id: sessionId, session_name: body.session_name ?? body.sessionName ?? sessionName, attach_url: attachUrl ?? `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(sessionId)}/attach` });
+        const executorAttachUrl = attachUrl ?? `${wsBase}/agents/${encodeURIComponent(id)}/sessions/${encodeURIComponent(sessionId)}/attach`;
+        return json(res, status, {
+          ...body,
+          id: sessionId,
+          session_name: body.session_name ?? body.sessionName ?? sessionName,
+          attach_url: issueAttachUrl(req, executorAttachUrl),
+        });
       }
 
       // --- management surface (UC-012): lifecycle + task cancel ---
@@ -2032,7 +2203,12 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
       if (url.pathname === '/api/cost' && req.method === 'GET')
         return proxy(res, 'GET', `${upstreamUrl}/admin/cost`);
 
-      if (url.pathname === '/api/health') return json(res, 200, { status: 'ok', executor_url: upstreamUrl, mock_executor_allowed: allowMockExecutor });
+      if (url.pathname === '/api/health') return json(res, 200, {
+        status: 'ok',
+        executor_url: upstreamUrl,
+        mock_executor_allowed: allowMockExecutor,
+        executor_auth_configured: Boolean(executorTokenFile),
+      });
       if (url.pathname === '/' || url.pathname === '/index.html') {
         const distIndex = join(WEB_DIST, 'index.html');
         const src = existsSync(distIndex) ? distIndex : join(__dir, 'public', 'index.html');
@@ -2053,9 +2229,39 @@ export function createBridge({ executorUrl = EXECUTOR_URL, allowMockExecutor = A
       }
       json(res, 404, { error: 'not_found', path: url.pathname });
     } catch (err) {
-      json(res, 502, { error: 'bridge_upstream_error', message: String(err?.message ?? err) });
+      const status = Number(err?.upstreamStatus) || 502;
+      json(res, status, { error: err?.code ?? 'bridge_upstream_error', message: String(err?.message ?? err) });
     }
-  });
+  };
+  const server = http.createServer((req, res) => executorRequestContext.run(
+    { executorOrigin, executorTokenFile },
+    () => handleRequest(req, res),
+  ));
+  server.on('upgrade', (req, socket, head) => executorRequestContext.run(
+    { executorOrigin, executorTokenFile },
+    async () => {
+      try {
+        const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+        const match = url.pathname.match(/^\/api\/pty\/agents\/[^/]+\/sessions\/[^/]+\/attach\/([^/]+)$/);
+        if (!match || !validBrowserOrigin(req)) {
+          socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
+          return;
+        }
+        if (!websocketAuthed(req, TOKEN)) {
+          socket.end('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
+          return;
+        }
+        const target = attachTargets.get(match[1]);
+        if (!target || url.pathname !== `/api/pty${target.pathname}/${match[1]}`) {
+          socket.end('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n');
+          return;
+        }
+        await proxyExecutorWebsocket({ req, socket, head, target, executorTokenFile });
+      } catch {
+        if (!socket.destroyed) socket.end('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n');
+      }
+    },
+  ));
   server.cockpitToken = TOKEN; // exposed for shells/tests
   return server;
 }

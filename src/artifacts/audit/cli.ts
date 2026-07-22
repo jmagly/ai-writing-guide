@@ -28,6 +28,7 @@ import {
   get as getEnrichment,
 } from '../enrichment/store.js';
 import { validateEnrichmentOutput } from '../enrichment/prompt.js';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 import { detectDrift } from './drift.js';
 import { DEFAULT_THRESHOLDS, type AuditReport, type DriftRow, type DriftThresholds } from './types.js';
 import type { SemanticFields } from '../enrichment/types.js';
@@ -130,7 +131,7 @@ export async function main(args: string[]): Promise<void> {
 
 function loadThresholds(): DriftThresholds {
   // Try .aiwg/index/audit.config.yaml → fall back to defaults
-  const path = join(process.cwd(), '.aiwg', 'index', 'audit.config.yaml');
+  const path = projectAiwgPath(process.cwd(), 'index', 'audit.config.yaml');
   if (!existsSync(path)) return DEFAULT_THRESHOLDS;
   try {
     const yamlMod = require('js-yaml');

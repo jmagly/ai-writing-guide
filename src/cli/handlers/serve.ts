@@ -37,6 +37,7 @@ import {
   PushSecretRegistry,
 } from '../../a2a/webhook.js';
 import { AiwgError, EXIT_CODES } from '../errors.js';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 
 // A2A push-notification state — module-scoped so the test harness can
 // monkey-patch them in if needed. One process serves one set of secrets.
@@ -638,7 +639,7 @@ export async function startServer(opts: {
     let ralphStatus: 'active' | 'idle' | 'unknown' = 'unknown';
     let activeLoops = 0;
     try {
-      const ralphPath = path.join(process.cwd(), '.aiwg', 'ralph', 'registry.json');
+      const ralphPath = projectAiwgPath(process.cwd(), 'ralph', 'registry.json');
       if (existsSync(ralphPath)) {
         const data = JSON.parse(readFileSync(ralphPath, 'utf-8')) as {
           active_loops?: Array<{ status: string }>;
@@ -652,7 +653,7 @@ export async function startServer(opts: {
     let missionsStatus = 'unknown';
     let missionsCount = 0;
     try {
-      const mcPath = path.join(process.cwd(), '.aiwg', 'mc');
+      const mcPath = projectAiwgPath(process.cwd(), 'mc');
       if (existsSync(mcPath)) {
         missionsStatus = 'idle';
         const registryPath = path.join(mcPath, 'registry.json');
@@ -670,21 +671,21 @@ export async function startServer(opts: {
     // Daemon subsystem — check for daemon PID file
     let daemonStatus = 'unknown';
     try {
-      const daemonPid = path.join(process.cwd(), '.aiwg', 'daemon', 'daemon.pid');
+      const daemonPid = projectAiwgPath(process.cwd(), 'daemon', 'daemon.pid');
       daemonStatus = existsSync(daemonPid) ? 'running' : 'stopped';
     } catch { /* ignore */ }
 
     // RLM subsystem — check for rlm state
     let rlmStatus = 'unknown';
     try {
-      const rlmPath = path.join(process.cwd(), '.aiwg', 'rlm');
+      const rlmPath = projectAiwgPath(process.cwd(), 'rlm');
       rlmStatus = existsSync(rlmPath) ? 'idle' : 'stopped';
     } catch { /* ignore */ }
 
     // Semantic memory — check for memory index
     let memoryStatus = 'unknown';
     try {
-      const memPath = path.join(process.cwd(), '.aiwg', 'memory');
+      const memPath = projectAiwgPath(process.cwd(), 'memory');
       memoryStatus = existsSync(memPath) ? 'active' : 'stopped';
     } catch { /* ignore */ }
 

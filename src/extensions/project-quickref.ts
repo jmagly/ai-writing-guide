@@ -16,10 +16,9 @@ import {
   normalizeProviderDefinitionId,
 } from '../providers/provider-definitions.js';
 import { OPERATIONAL_SHOW_TYPES } from '../artifacts/types.js';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 import { appendAiwgSourceTrackBlock } from './project-local-gitignore.js';
 
-const SOURCE_RELATIVE_PATH = '.aiwg/quickref.json';
-const GENERATED_RELATIVE_ROOT = '.aiwg/generated/project-quickref';
 const OWNERSHIP_MARKER = '.aiwg-project-quickref.json';
 
 const ShowHintSchema = z.object({
@@ -101,7 +100,7 @@ export function projectQuickrefSkillName(projectId: string): string {
 }
 
 export async function loadProjectQuickref(projectDir: string): Promise<ProjectQuickrefLoadResult> {
-  const sourcePath = resolve(projectDir, SOURCE_RELATIVE_PATH);
+  const sourcePath = projectAiwgPath(projectDir, 'quickref.json');
   let raw: string;
   try {
     raw = await readFile(sourcePath, 'utf8');
@@ -180,7 +179,7 @@ export async function generateProjectQuickref(
   if (!options.dryRun) await appendAiwgSourceTrackBlock(projectDir);
 
   const skillName = projectQuickrefSkillName(loaded.definition.project.id);
-  const outputPath = resolve(projectDir, GENERATED_RELATIVE_ROOT, skillName, 'SKILL.md');
+  const outputPath = projectAiwgPath(projectDir, 'generated', 'project-quickref', skillName, 'SKILL.md');
   const content = renderProjectQuickref(loaded.definition);
   const current = await readIfPresent(outputPath);
   const changed = current !== content;
@@ -190,7 +189,7 @@ export async function generateProjectQuickref(
     await writeFile(outputPath, content, 'utf8');
   }
   if (!options.dryRun) {
-    const generatedRoot = resolve(projectDir, GENERATED_RELATIVE_ROOT);
+    const generatedRoot = projectAiwgPath(projectDir, 'generated', 'project-quickref');
     try {
       const entries = await readdir(generatedRoot, { withFileTypes: true });
       for (const entry of entries) {
@@ -343,7 +342,7 @@ export async function auditProjectQuickref(
 
   const content = renderProjectQuickref(loaded.definition);
   const skillName = projectQuickrefSkillName(loaded.definition.project.id);
-  const generatedPath = resolve(projectDir, GENERATED_RELATIVE_ROOT, skillName, 'SKILL.md');
+  const generatedPath = projectAiwgPath(projectDir, 'generated', 'project-quickref', skillName, 'SKILL.md');
   const drift: string[] = [];
   if (await readIfPresent(generatedPath) !== content) {
     drift.push(`generated quickref is missing or stale: ${generatedPath}`);
@@ -364,5 +363,5 @@ export async function auditProjectQuickref(
 }
 
 export function projectQuickrefSourcePath(projectDir: string): string {
-  return resolve(projectDir, SOURCE_RELATIVE_PATH);
+  return projectAiwgPath(projectDir, 'quickref.json');
 }

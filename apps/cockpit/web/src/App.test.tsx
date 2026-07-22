@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, fireEvent, act } from '@testing-library/react';
 import { App, waitForSessionReady } from './App';
 
 // Rendered-DOM coverage (the a11y assertions deferred from T2, and a guard against the
@@ -211,6 +211,49 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getByText('2 running')).toBeTruthy();
     expect(screen.getByText('1 responses needed')).toBeTruthy();
     expect(screen.getByText(/host ✓ · docker - · vm -/)).toBeTruthy();
+  });
+
+  it('shows reconnecting and restores all live views after a transient drop without a page refresh (#1763)', async () => {
+    vi.useFakeTimers();
+    try {
+      let executorAvailable = true;
+      globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+        if (url.includes('/api/inventory')) {
+          return executorAvailable
+            ? jsonResponse({ count: 1, fetched_at: new Date().toISOString(), instances: [instance('host-1', 'host', 'Codex host')] })
+            : errorResponse(502);
+        }
+        if (url.includes('/api/running')) return executorAvailable ? jsonResponse({ count: 1, running: [] }) : errorResponse(502);
+        if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
+        if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 0, output_tokens: 0, usd: 0 }, per_instance: [] });
+        return jsonResponse({});
+      }) as typeof fetch;
+
+      render(<App />);
+      await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+      expect(screen.getByText('Bridge live')).toBeTruthy();
+      expect(screen.getByText('1 stacks')).toBeTruthy();
+      const sessionCallsBeforeDrop = vi.mocked(globalThis.fetch).mock.calls
+        .filter(([input]) => String(input).includes('/api/sessions?instance=')).length;
+
+      executorAvailable = false;
+      await act(async () => { await vi.advanceTimersByTimeAsync(15_000); });
+      expect(screen.getByText('Reconnecting…')).toBeTruthy();
+      expect(screen.getByTitle(/showing last-known status/i)).toBeTruthy();
+      expect(screen.getByText('1 stacks')).toBeTruthy();
+
+      executorAvailable = true;
+      await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
+      expect(screen.getByText('Bridge live')).toBeTruthy();
+      expect(screen.queryByText('Reconnecting…')).toBeNull();
+      expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining('/api/running'), expect.anything());
+      expect(vi.mocked(globalThis.fetch).mock.calls
+        .filter(([input]) => String(input).includes('/api/sessions?instance=')).length).toBeGreaterThan(sessionCallsBeforeDrop);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('stays connected when the executor exposes no running/approvals admin surface (#1638)', async () => {

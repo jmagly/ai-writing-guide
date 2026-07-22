@@ -11,7 +11,7 @@
  */
 
 import { readFile, readdir, lstat, stat, access } from 'fs/promises';
-import { resolve, join } from 'path';
+import { join } from 'path';
 import {
   BundleManifestSchema,
   type BundleManifest,
@@ -21,18 +21,14 @@ import {
   MANIFEST_MAX_BYTES,
   MAX_BUNDLES_PER_PROJECT,
 } from './manifest.js';
-
-const AIWG_DIR = '.aiwg';
-/** Directory name → singular type */
-const DIR_TO_TYPE: Record<string, ProjectLocalType> = {
-  extensions: 'extension',
-  addons: 'addon',
-  frameworks: 'framework',
-  plugins: 'plugin',
-  providers: 'provider',
-};
-
-const SCAN_DIRS = Object.keys(DIR_TO_TYPE);
+import {
+  ensureTrailingSlash,
+  projectLocalDisplayPath,
+  PROJECT_LOCAL_DIR_TO_TYPE,
+  PROJECT_LOCAL_SCAN_DIRS,
+  resolveProjectLocalSearchRoots,
+  type ProjectLocalSearchRoot,
+} from './project-local-paths.js';
 
 export interface ProjectLocalBundle {
   /** Bundle id from manifest */
@@ -43,9 +39,9 @@ export interface ProjectLocalBundle {
   manifest: BundleManifest;
   /** Absolute path to the bundle directory */
   bundlePath: string;
-  /** Path of the bundle directory relative to project root (e.g., ".aiwg/extensions/foo/") */
+  /** Stable display path for the bundle directory (e.g., ".aiwg/extensions/foo/"). */
   localPath: string;
-  /** Path of the manifest.json relative to project root */
+  /** Stable display path for manifest.json. */
   manifestPath: string;
 }
 
@@ -84,82 +80,86 @@ export async function discoverProjectLocalBundles(
 
   let totalScanned = 0;
 
-  for (const dirName of SCAN_DIRS) {
-    const type = DIR_TO_TYPE[dirName];
-    const dirPath = resolve(projectDir, AIWG_DIR, dirName);
+  const searchRoots = resolveProjectLocalSearchRoots(projectDir);
 
-    let bundleNames: string[];
-    try {
-      bundleNames = await readdir(dirPath);
-    } catch {
-      // Directory absent — silently skip (no-op when absent per UC-PL-6)
-      continue;
-    }
+  for (const searchRoot of searchRoots) {
+    for (const dirName of PROJECT_LOCAL_SCAN_DIRS) {
+      const type = PROJECT_LOCAL_DIR_TO_TYPE[dirName];
+      const dirPath = join(searchRoot.rootPath, dirName);
 
-    for (const bundleName of bundleNames) {
-      const bundlePath = join(dirPath, bundleName);
-
-      // Skip non-directory entries (e.g., the legacy registry.json file)
-      let isDir: boolean;
+      let bundleNames: string[];
       try {
-        const st = await lstat(bundlePath);
-        if (st.isSymbolicLink()) {
-          if (!options.allowSymlinks) {
-            errors.push({
-              path: bundlePath,
-              field: '(bundle directory)',
-              expected: 'regular directory',
-              actual: 'symlink',
-              hint: 'Pass --allow-symlinks to opt in (per #1042 threat model T3)',
-              severity: 'error',
-            });
-            continue;
+        bundleNames = await readdir(dirPath);
+      } catch {
+        // Directory absent — silently skip (no-op when absent per UC-PL-6)
+        continue;
+      }
+
+      for (const bundleName of bundleNames) {
+        const bundlePath = join(dirPath, bundleName);
+
+        // Skip non-directory entries (e.g., the legacy registry.json file)
+        let isDir: boolean;
+        try {
+          const st = await lstat(bundlePath);
+          if (st.isSymbolicLink()) {
+            if (!options.allowSymlinks) {
+              errors.push({
+                path: bundlePath,
+                field: '(bundle directory)',
+                expected: 'regular directory',
+                actual: 'symlink',
+                hint: 'Pass --allow-symlinks to opt in (per #1042 threat model T3)',
+                severity: 'error',
+              });
+              continue;
+            }
+            // Resolve the symlink and check the target is a directory
+            const target = await stat(bundlePath);
+            isDir = target.isDirectory();
+          } else {
+            isDir = st.isDirectory();
           }
-          // Resolve the symlink and check the target is a directory
-          const target = await stat(bundlePath);
-          isDir = target.isDirectory();
-        } else {
-          isDir = st.isDirectory();
+        } catch {
+          continue;
         }
-      } catch {
-        continue;
+        if (!isDir) continue;
+
+        const manifestPath = join(bundlePath, 'manifest.json');
+
+        // Silently skip directories without manifest.json — these are not
+        // project-local bundles. Most commonly, .aiwg/frameworks/<id>/ holds
+        // workspace state from initializeFrameworkWorkspace() (archive/,
+        // projects/, repo/, working/), not a bundle. Issue #1058.
+        try {
+          await access(manifestPath);
+        } catch {
+          continue;
+        }
+
+        totalScanned++;
+
+        // Enforce per-project bundle count cap (#1042 D2 / NFR-PL-12)
+        if (totalScanned > MAX_BUNDLES_PER_PROJECT) {
+          errors.push({
+            path: dirPath,
+            field: '(bundle count)',
+            expected: `<= ${MAX_BUNDLES_PER_PROJECT} bundles per project`,
+            actual: `>${MAX_BUNDLES_PER_PROJECT}`,
+            hint: 'Refusing to scan further bundles. Reduce project-local artifact count.',
+            severity: 'error',
+          });
+          const isEmpty = bundles.length === 0;
+          return { bundles, errors, isEmpty, counts };
+        }
+
+        const result = await loadAndValidateManifest(manifestPath, type, projectDir, searchRoot);
+        if (result.bundle) {
+          bundles.push(result.bundle);
+          counts[result.bundle.type]++;
+        }
+        errors.push(...result.errors);
       }
-      if (!isDir) continue;
-
-      const manifestPath = join(bundlePath, 'manifest.json');
-
-      // Silently skip directories without manifest.json — these are not
-      // project-local bundles. Most commonly, .aiwg/frameworks/<id>/ holds
-      // workspace state from initializeFrameworkWorkspace() (archive/,
-      // projects/, repo/, working/), not a bundle. Issue #1058.
-      try {
-        await access(manifestPath);
-      } catch {
-        continue;
-      }
-
-      totalScanned++;
-
-      // Enforce per-project bundle count cap (#1042 D2 / NFR-PL-12)
-      if (totalScanned > MAX_BUNDLES_PER_PROJECT) {
-        errors.push({
-          path: dirPath,
-          field: '(bundle count)',
-          expected: `<= ${MAX_BUNDLES_PER_PROJECT} bundles per project`,
-          actual: `>${MAX_BUNDLES_PER_PROJECT}`,
-          hint: 'Refusing to scan further bundles. Reduce project-local artifact count.',
-          severity: 'error',
-        });
-        const isEmpty = bundles.length === 0;
-        return { bundles, errors, isEmpty, counts };
-      }
-
-      const result = await loadAndValidateManifest(manifestPath, type, projectDir);
-      if (result.bundle) {
-        bundles.push(result.bundle);
-        counts[result.bundle.type]++;
-      }
-      errors.push(...result.errors);
     }
   }
 
@@ -210,7 +210,8 @@ export async function discoverProjectLocalBundles(
 export async function loadAndValidateManifest(
   manifestPath: string,
   expectedType: ProjectLocalType,
-  projectDir: string
+  projectDir: string,
+  searchRoot?: ProjectLocalSearchRoot,
 ): Promise<{ bundle?: ProjectLocalBundle; errors: ManifestValidationError[] }> {
   // Size cap (#1042 D1 / NFR-PL-11): refuse before parse
   let st;
@@ -310,9 +311,7 @@ export async function loadAndValidateManifest(
   }
 
   const bundlePath = manifestPath.slice(0, -'/manifest.json'.length);
-  const localPath = bundlePath.startsWith(projectDir + '/')
-    ? bundlePath.slice(projectDir.length + 1) + '/'
-    : bundlePath + '/';
+  const localPath = ensureTrailingSlash(projectLocalDisplayPath(projectDir, bundlePath, searchRoot));
 
   return {
     bundle: {
@@ -321,9 +320,7 @@ export async function loadAndValidateManifest(
       manifest,
       bundlePath,
       localPath,
-      manifestPath: manifestPath.startsWith(projectDir + '/')
-        ? manifestPath.slice(projectDir.length + 1)
-        : manifestPath,
+      manifestPath: projectLocalDisplayPath(projectDir, manifestPath, searchRoot),
     },
     errors: [],
   };

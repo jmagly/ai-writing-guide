@@ -1,0 +1,9 @@
+{
+  "title": "Install",
+  "summary": "Installation and deployment modes",
+  "collapsed": true,
+  "order": [
+    "web-backed-resources",
+    "non-interactive"
+  ]
+}

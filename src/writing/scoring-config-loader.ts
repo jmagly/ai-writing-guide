@@ -11,6 +11,7 @@ import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -94,7 +95,7 @@ function getConfigPaths(): string[] {
   return [
     // Project-level override
     join(process.cwd(), 'scoring-config.json'),
-    join(process.cwd(), '.aiwg', 'scoring-config.json'),
+    projectAiwgPath(process.cwd(), 'scoring-config.json'),
     // Writing-quality addon location (relative to this file when installed)
     join(__dirname, '..', '..', 'agentic', 'code', 'addons', 'writing-quality', 'validation', 'scoring-config.json'),
     // Writing-quality addon location (from repo root)

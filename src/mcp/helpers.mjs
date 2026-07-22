@@ -15,26 +15,81 @@ import path from 'node:path';
 export const AIWG_ROOT = process.env.AIWG_ROOT ||
   path.join(process.env.HOME || '', '.local/share/ai-writing-guide');
 
+const PROJECT_AIWG_LOCATION_FILE = '.aiwg-location';
+const ARTIFACT_PATH_ENV_ALIASES = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+];
+
+function expandProjectArtifactPath(pathValue, projectDir) {
+  const trimmed = pathValue.trim();
+  if (trimmed === '~') return process.env.HOME || trimmed;
+  if (trimmed.startsWith('~/')) return path.resolve(process.env.HOME || '', trimmed.slice(2));
+  if (path.isAbsolute(trimmed)) return trimmed;
+  return path.resolve(projectDir, trimmed);
+}
+
+function parseProjectArtifactLocation(contents) {
+  for (const rawLine of contents.split(/\r?\n/)) {
+    let line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    if (line.startsWith('export ')) line = line.slice('export '.length).trim();
+    const assignment = line.match(/^AIWG_ARTIFACTS_PATH\s*=\s*(.+)$/);
+    if (assignment) line = assignment[1].trim();
+    if (
+      (line.startsWith('"') && line.endsWith('"')) ||
+      (line.startsWith("'") && line.endsWith("'"))
+    ) {
+      line = line.slice(1, -1);
+    }
+    return line || null;
+  }
+  return null;
+}
+
+export async function resolveProjectAiwgDir(projectDir) {
+  for (const key of ARTIFACT_PATH_ENV_ALIASES) {
+    const value = process.env[key];
+    if (typeof value === 'string' && value.trim()) return expandProjectArtifactPath(value, projectDir);
+  }
+  try {
+    const pointer = await fs.readFile(path.join(projectDir, PROJECT_AIWG_LOCATION_FILE), 'utf-8');
+    const configured = parseProjectArtifactLocation(pointer);
+    if (configured) return expandProjectArtifactPath(configured, projectDir);
+  } catch {
+    // no pointer
+  }
+  return path.resolve(projectDir, '.aiwg');
+}
+
 /**
- * Walk up the directory tree looking for `.aiwg/`.
+ * Walk up the directory tree looking for `.aiwg/` or `.aiwg-location`.
  *
  * @param {string} startDir
  * @returns {Promise<string>}
- * @throws {Error} when no .aiwg directory found
+ * @throws {Error} when no .aiwg directory or .aiwg-location pointer is found
  */
 export async function findProjectRoot(startDir = process.cwd()) {
   let currentDir = startDir;
   while (currentDir !== path.dirname(currentDir)) {
     const aiwgPath = path.join(currentDir, '.aiwg');
+    const pointerPath = path.join(currentDir, PROJECT_AIWG_LOCATION_FILE);
     try {
       const stat = await fs.stat(aiwgPath);
       if (stat.isDirectory()) return currentDir;
+    } catch {
+      // continue to pointer check
+    }
+    try {
+      const stat = await fs.stat(pointerPath);
+      if (stat.isFile()) return currentDir;
     } catch {
       // continue up
     }
     currentDir = path.dirname(currentDir);
   }
-  throw new Error('No .aiwg directory found. Run from an AIWG project or `aiwg new` first.');
+  throw new Error('No .aiwg directory or .aiwg-location pointer found. Run from an AIWG project or `aiwg new` first.');
 }
 
 /**

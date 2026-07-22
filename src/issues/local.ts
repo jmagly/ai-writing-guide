@@ -3,6 +3,7 @@ import { mkdir, open, readFile, readdir, rename, unlink, writeFile } from 'fs/pr
 import { basename, dirname, join, relative, resolve, sep } from 'path';
 import { hostname } from 'os';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 import type {
   CreateLocalIssueInput,
   GetLocalIssueOptions,
@@ -721,7 +722,7 @@ function prefixFromName(name: string | undefined): string | null {
 }
 
 export function localIssueRoot(projectRoot: string): string {
-  return join(resolve(projectRoot), '.aiwg', 'issues');
+  return projectAiwgPath(resolve(projectRoot), 'issues');
 }
 
 export function localIssueRelativePath(projectRoot: string, absPath: string): string {

@@ -14,20 +14,50 @@ import path from 'path';
 import os from 'os';
 import { buildIndex } from '../../../src/artifacts/index-builder.js';
 import { queryIndex } from '../../../src/artifacts/query-engine.js';
+import { resolveProjectAiwgDir } from '../../../src/config/project-artifacts.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
-const AIWG_DIR = path.join(REPO_ROOT, '.aiwg');
+const AIWG_DIR = resolveProjectAiwgDir(REPO_ROOT);
+const PROJECT_CORPUS_AVAILABLE = fs.existsSync(AIWG_DIR) && [
+  'requirements',
+  'architecture',
+  'planning',
+  'security',
+].some(dir => fs.existsSync(path.join(AIWG_DIR, dir)));
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+] as const;
+
+async function withArtifactEnvCleared<T>(callback: () => Promise<T>): Promise<T> {
+  const previous = Object.fromEntries(
+    ARTIFACT_ENV_KEYS.map((key) => [key, process.env[key]]),
+  ) as Record<(typeof ARTIFACT_ENV_KEYS)[number], string | undefined>;
+  for (const key of ARTIFACT_ENV_KEYS) delete process.env[key];
+  try {
+    return await callback();
+  } finally {
+    for (const key of ARTIFACT_ENV_KEYS) {
+      const value = previous[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+}
 
 describe('Artifact Query Engine (integration)', () => {
   let tmpDir: string;
 
   beforeAll(async () => {
-    if (!fs.existsSync(AIWG_DIR)) return;
+    if (!PROJECT_CORPUS_AVAILABLE) return;
 
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-query-'));
-    fs.mkdirSync(path.join(tmpDir, '.aiwg', '.index'), { recursive: true });
+    fs.cpSync(AIWG_DIR, path.join(tmpDir, '.aiwg'), { recursive: true });
 
-    await buildIndex(REPO_ROOT, { force: true, outputDir: tmpDir });
+    await withArtifactEnvCleared(async () => {
+      await buildIndex(tmpDir, { force: true });
+    });
   }, 30_000);
 
   afterAll(() => {
@@ -47,7 +77,9 @@ describe('Artifact Query Engine (integration)', () => {
     const origLog = console.log;
     console.log = (...args: unknown[]) => logs.push(args.map(String).join(' '));
     try {
-      await queryIndex(tmpDir, params, { json: true, backend: 'local' });
+      await withArtifactEnvCleared(async () => {
+        await queryIndex(tmpDir, params, { json: true, backend: 'local' });
+      });
     } finally {
       console.log = origLog;
     }

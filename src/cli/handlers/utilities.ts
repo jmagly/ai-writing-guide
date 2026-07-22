@@ -18,6 +18,7 @@ import { createScriptRunner } from './script-runner.js';
 import { getFrameworkRoot } from '../../channel/manager.mjs';
 import { forceUpdateCheck } from '../../update/checker.mjs';
 import { useHandler as useFrameworkHandler } from './use.js';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 import {
   checkCollisions,
 } from '../../smiths/skillsmith/collision-detector.js';
@@ -47,7 +48,7 @@ interface FrameworkRegistry {
  * Read the installed frameworks from the on-disk registry.
  */
 function readFrameworkRegistry(cwd: string): FrameworkRegistry | null {
-  const registryPath = path.join(cwd, '.aiwg', 'frameworks', 'registry.json');
+  const registryPath = projectAiwgPath(cwd, 'frameworks', 'registry.json');
   if (!fs.existsSync(registryPath)) {
     return null;
   }

@@ -24,9 +24,9 @@ import {
   validateAuthorization,
   type AuthorizationConfig,
 } from '../policy/authorization.js';
+import { projectAiwgPath, resolveProjectAiwgDir } from './project-artifacts.js';
 
 const CONFIG_FILENAME = 'aiwg.config';
-const AIWG_DIR = '.aiwg';
 
 /**
  * Artifact counts for one provider deployment
@@ -286,6 +286,18 @@ export interface ExternalLinkConfig {
   audience?: string;
 }
 
+/** Project-local bundle discovery configuration. */
+export interface ProjectLocalConfig {
+  /**
+   * Additional roots to scan for project-local bundle directories.
+   *
+   * Each root may be absolute, project-relative, or `~/`-relative and should
+   * contain any of: extensions/, addons/, frameworks/, plugins/, providers/.
+   * The configured project AIWG artifact root is always scanned first.
+   */
+  searchPaths?: string[];
+}
+
 /**
  * Top-level shape of .aiwg/aiwg.config
  */
@@ -334,6 +346,12 @@ export interface AiwgConfig {
    * @implements #1796
    */
   externalLinks?: Record<string, ExternalLinkConfig>;
+
+  /**
+   * Project-local bundle discovery settings. Optional — when absent, AIWG only
+   * scans the configured project artifact root.
+   */
+  projectLocal?: ProjectLocalConfig;
 
   /**
    * Repo origin topology. Optional — when absent, agents treat `origin` as primary.
@@ -1071,8 +1089,8 @@ export async function readIndexConfig(
   if (cfg?.index && typeof cfg.index === 'object') {
     return { index: cfg.index, source: 'aiwg.config' };
   }
-  // Fallback: legacy .aiwg/config.yaml (deprecated).
-  const yamlPath = resolve(projectDir, AIWG_DIR, 'config.yaml');
+  // Fallback: legacy config.yaml in the resolved AIWG artifact directory (deprecated).
+  const yamlPath = projectAiwgPath(projectDir, 'config.yaml');
   try {
     await access(yamlPath);
     const { load: loadYaml } = await import('js-yaml');
@@ -1320,10 +1338,13 @@ export function emptyConfig(providers: string[] = ['claude']): AiwgConfig {
 }
 
 /**
- * Resolve path to .aiwg/aiwg.config for a project directory
+ * Resolve path to the project-level AIWG config.
+ *
+ * Defaults to `<project>/.aiwg/aiwg.config`; honors `AIWG_ARTIFACTS_PATH` so
+ * projects can rename or relocate the AIWG artifact directory.
  */
 export function getConfigPath(projectDir: string): string {
-  return resolve(projectDir, AIWG_DIR, CONFIG_FILENAME);
+  return projectAiwgPath(projectDir, CONFIG_FILENAME);
 }
 
 /**
@@ -1387,10 +1408,10 @@ export async function readAiwgConfig(projectDir: string): Promise<AiwgConfig | n
 }
 
 /**
- * Write .aiwg/aiwg.config, creating .aiwg/ if needed.
+ * Write aiwg.config, creating the resolved AIWG artifact directory if needed.
  */
 export async function writeAiwgConfig(projectDir: string, config: AiwgConfig): Promise<void> {
-  const dir = resolve(projectDir, AIWG_DIR);
+  const dir = resolveProjectAiwgDir(projectDir);
   await mkdir(dir, { recursive: true });
   const filePath = join(dir, CONFIG_FILENAME);
   // Atomic write: emit to a temp sibling, fsync-ish via rename. Prevents a

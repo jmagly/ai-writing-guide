@@ -121,7 +121,7 @@ operator / CLI:  aiwg cockpit
 │  · user asset library: clone/import/delete (never writes AIWG)│
 │  · serves the built React app (token-injected)               │
 └─────────────────────────────────────────────────────────────┘
-       │ proxies / sources              ▲ loads /?token=…
+       │ authenticated proxy            ▲ loads the token-gated shell
        ▼                                │
   agentic-sandbox executor       ┌──────┴──────┬───────────────┐
                                  browser     VS Code webview   Tauri window
@@ -129,8 +129,10 @@ operator / CLI:  aiwg cockpit
 ```
 
 - **Control plane** (lifecycle, approvals, actions) goes through the gated Bridge.
-- **Data plane** (the pty session stream) connects browser→executor directly via the
-  `attach_url` the Bridge issues (WS masking differs per direction).
+- **Data plane** (the PTY session stream) also goes through a Bridge-owned
+  `attach_url`. The browser presents only its per-launch Cockpit token; the
+  Bridge keeps the long-lived executor credential and authenticates the upstream
+  WebSocket upgrade.
 
 ## Surfaces (tabs)
 
@@ -183,6 +185,19 @@ under `~/.aiwg/cockpit/audit/events.jsonl` for lifecycle, session, and
 approval-response decisions (the web UI additionally records action injections
 as operator intents); bearer material and provider credentials are redacted
 before write.
+
+For an executor with operator bearer authentication enabled, store the selected
+least-privilege token in a mode-600 file and point the Bridge at the file:
+
+```bash
+AIWG_COCKPIT_EXECUTOR_TOKEN_FILE=/protected/path/cockpit-executor.token \
+AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:8122 \
+aiwg cockpit
+```
+
+The file contains one token. It is re-read for rotation, never copied into the
+browser, argv, URLs, reports, or audit records, and fails closed when its POSIX
+permissions allow group/other access.
 
 ## Run (dev/test, against a real agentic-sandbox executor)
 
@@ -300,6 +315,7 @@ Tests run **at stages** — committed harnesses, never `/tmp` rigs (#1635):
 |---|---|---|---|
 | **Unit / integration** | `npm --prefix apps/cockpit run check` · `npx vitest run test/integration/cockpit-bridge.test.js` | **mock** (automated-test-only) | always |
 | **Dev e2e** (full control-plane chain: health→inventory→create session→attach) | `npm run e2e:cockpit-dev` | **real**, safe-skip when absent | non-blocking |
+| **Daily Linux operator gate** (protected auth + host/container + recovery + upgrade/rollback, #1842) | `npm run uat:cockpit-daily` | **real**, required/fail-closed | operator-scheduled |
 | **Release matrix** (host/docker/vm + provider workload, #1621) | `npm run uat:cockpit-live:matrix` | **real**, all three families | release gate |
 
 ```bash
@@ -308,8 +324,16 @@ npx vitest run test/integration/cockpit-bridge.test.js   # Bridge contract + moc
 npx vitest run test/smoke/cockpit-base-footprint.test.js # base-npm guard (CI)
 npm run e2e:cockpit-dev                                  # dev full-system e2e — real executor, skips cleanly
 npm run uat:cockpit-live                                  # opt-in real sandbox posture gate
+npm run uat:cockpit-daily                                 # required Linux daily gate (#1842)
 npm run uat:cockpit-live:matrix                           # required host/docker/vm live matrix (#1621)
 ```
+
+The daily gate's approvals, immutable-version inputs, operator hook contract,
+host/container working-directory expectations, cleanup boundary, and report
+schema are documented in
+[Cockpit Daily Linux Operator Gate](../../docs/cockpit/daily-operator-gate.md).
+VM and Apple remain reported preview tiers and do not block the first Linux
+supported result.
 
 The React UI is also browser-verified per surface (see `.playwright-mcp/cockpit-*.png`).
 Conformance (`agentic-sandbox-conformance`) was 33 pass / 0 fail / 17 skip; the
@@ -346,9 +370,16 @@ The stricter matrix gate for #1621 is intentionally separate from the mock lane:
 
 ```bash
 AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:<real-executor-port> \
+AIWG_COCKPIT_EXECUTOR_TOKEN_FILE=/protected/path/cockpit-executor.token \
 AIWG_COCKPIT_LIVE_PROVIDER=codex \
 npm run uat:cockpit-live:matrix
 ```
+
+The token-file line is required when the executor has operator bearer auth
+enabled and may be omitted only for an explicitly unauthenticated local
+compatibility executor. The UAT uses the file for its direct readiness probes
+and passes the same reference to the Bridge; report output records only whether
+auth was configured, never the path or credential.
 
 Use `AIWG_COCKPIT_LIVE_PROVIDER=claude` instead when the live workload should
 exercise the pre-authenticated Claude session.
@@ -367,6 +398,9 @@ than only proving shell plumbing or provider login. Set
 `AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT=<capability-name>` to validate a different
 discovered framework capability, or `AIWG_COCKPIT_LIVE_WORKLOAD=<prompt>` to
 replace the full prompt while still satisfying the marker and discovery checks.
+Custom prompts must request the `AIWG_COCKPIT` and `_LIVE_OK` fragments without
+containing the concatenated marker literally; this prevents terminal command
+echo from being mistaken for provider output.
 Set `AIWG_COCKPIT_LIVE_MATRIX_TARGETS=host` only for scoped rehearsal/evidence
 when Docker/container or VM are intentionally out of scope; the default remains
 `host,container,vm` for the release matrix. To prove controller-side PTY command

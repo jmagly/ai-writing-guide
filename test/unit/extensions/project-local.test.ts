@@ -20,6 +20,16 @@ import { BundleManifestSchema } from '../../../src/extensions/manifest.js';
 import { discoverProjectLocalBundles } from '../../../src/extensions/project-local-discovery.js';
 import { resolveShadows } from '../../../src/extensions/shadow-resolver.js';
 import { buildUpstreamRegistry } from '../../../src/extensions/upstream-registry.js';
+import { PROJECT_LOCAL_SEARCH_PATHS_ENV } from '../../../src/extensions/project-local-paths.js';
+
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+  PROJECT_LOCAL_SEARCH_PATHS_ENV,
+] as const;
+
+let originalEnv: Partial<Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined>> = {};
 
 function makeTmpDir(prefix = 'aiwg-pl-matrix'): string {
   const dir = join(tmpdir(), `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
@@ -65,10 +75,20 @@ describe('project-local matrix (#1046)', () => {
   let tmpDir: string;
 
   beforeEach(() => {
+    originalEnv = {};
+    for (const key of ARTIFACT_ENV_KEYS) {
+      originalEnv[key] = process.env[key];
+      delete process.env[key];
+    }
     tmpDir = makeTmpDir();
   });
 
   afterEach(() => {
+    for (const key of ARTIFACT_ENV_KEYS) {
+      const value = originalEnv[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
     rmSync(tmpDir, { recursive: true, force: true });
   });
 

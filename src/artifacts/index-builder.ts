@@ -24,6 +24,7 @@ import {
   PHASE_DIRECTORIES,
   GRAPH_CONFIGS,
   TEMPLATE_INDEX_EXTENSIONS,
+  resolveGraphScanDir,
   loadUserGraphConfigs,
   loadGlobalGraphConfigs,
 } from './types.js';
@@ -31,6 +32,11 @@ import { parseCitationSidecar, citationResultToEdges, buildRefToPathMap } from '
 import { writeIndexFile, resolveIndexDir, loadGraphIndexFile } from './index-reader.js';
 import { loadManifest, writeManifest, statMatches, makeEntry, type ChecksumManifest, type ManifestStats } from './checksum-manifest.js';
 import { workspaceLinkedFiles } from '../smiths/context-pipeline/workspace-context.js';
+import { normalizeOperationalState } from './operational-state.js';
+import {
+  DEFAULT_PROJECT_AIWG_DIR,
+  resolveProjectAiwgDir,
+} from '../config/project-artifacts.js';
 
 export interface BuildOptions {
   force?: boolean;
@@ -41,23 +47,43 @@ export interface BuildOptions {
   explicit?: boolean; // true when graph was requested via --graph flag; false for auto-selected defaultBuild graphs
 }
 
-function expandScanDir(cwd: string, scanDir: string): string {
-  if (scanDir === '~') return process.env.HOME ?? scanDir;
-  if (scanDir.startsWith('~/')) {
-    return path.join(process.env.HOME ?? '', scanDir.slice(2));
-  }
-  if (path.isAbsolute(scanDir)) return scanDir;
-  return path.join(cwd, scanDir);
+function pathContains(parent: string, child: string): boolean {
+  const relative = path.relative(parent, child);
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
 }
 
-function indexPathFor(cwd: string, fullPath: string): string {
+function toPosixPath(value: string): string {
+  return value.split(path.sep).join('/');
+}
+
+function indexPathFor(cwd: string, fullPath: string, graph?: GraphType): string {
+  if (!graph || graph === 'project') {
+    const artifactRoot = resolveProjectAiwgDir(cwd);
+    if (pathContains(artifactRoot, fullPath)) {
+      const relative = toPosixPath(path.relative(artifactRoot, fullPath));
+      return relative ? `${DEFAULT_PROJECT_AIWG_DIR}/${relative}` : DEFAULT_PROJECT_AIWG_DIR;
+    }
+  }
   const rel = path.relative(cwd, fullPath);
-  if (!rel.startsWith('..') && !path.isAbsolute(rel)) return rel;
+  if (!rel.startsWith('..') && !path.isAbsolute(rel)) return toPosixPath(rel);
   return fullPath;
 }
 
-function absoluteEntryPath(cwd: string, entryPath: string): string {
+function absoluteEntryPath(cwd: string, entryPath: string, graph?: GraphType): string {
+  if ((!graph || graph === 'project') && entryPath.startsWith(`${DEFAULT_PROJECT_AIWG_DIR}/`)) {
+    return path.join(resolveProjectAiwgDir(cwd), entryPath.slice(DEFAULT_PROJECT_AIWG_DIR.length + 1));
+  }
   return path.isAbsolute(entryPath) ? entryPath : path.join(cwd, entryPath);
+}
+
+function loadIndexFromDir<T>(indexDir: string, filename: string): T | null {
+  const filePath = path.join(indexDir, filename);
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as T;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -726,11 +752,11 @@ export async function buildIndex(
     scanDirs = [path.join(cwd, scope)];
     fileExtensions = [...DEFAULT_INDEX_EXTENSIONS];
   } else if (graphConfig) {
-    scanDirs = graphConfig.scanDirs.map(d => expandScanDir(cwd, d));
+    scanDirs = graphConfig.scanDirs.map(d => resolveGraphScanDir(cwd, d));
     fileExtensions = graphConfig.extensions;
   } else {
     // Default: scan .aiwg/ (backward compatible)
-    scanDirs = [path.join(cwd, '.aiwg')];
+    scanDirs = [resolveProjectAiwgDir(cwd)];
     fileExtensions = [...DEFAULT_INDEX_EXTENSIONS];
   }
 
@@ -760,7 +786,7 @@ export async function buildIndex(
   } else if (graph) {
     indexOutputDir = resolveIndexDir(cwd, graph);
   } else {
-    indexOutputDir = path.join(cwd, INDEX_DIR);
+    indexOutputDir = resolveIndexDir(cwd);
   }
   fs.mkdirSync(indexOutputDir, { recursive: true });
   // effectiveOutputCwd is used for backward-compat loadMetadataIndex calls
@@ -781,7 +807,11 @@ export async function buildIndex(
   }
 
   // Load existing index for incremental updates
-  const existingIndex = force ? null : loadGraphIndexFile<ArtifactIndex>(effectiveOutputCwd, 'metadata.json', graph);
+  const existingIndex = force
+    ? null
+    : outputDir
+      ? loadIndexFromDir<ArtifactIndex>(indexOutputDir, 'metadata.json')
+      : loadGraphIndexFile<ArtifactIndex>(effectiveOutputCwd, 'metadata.json', graph);
   const canReuseExisting = existingIndex?.version === INDEX_VERSION
     && existingIndex.extractorVersion === INDEX_EXTRACTOR_VERSION;
   const existingEntries = canReuseExisting ? existingIndex.entries : {};
@@ -830,7 +860,7 @@ export async function buildIndex(
   const useFilenameMetadata = graphConfig?.nodeStrategy === 'filename-metadata';
 
   for (const fullPath of files) {
-    const relativePath = indexPathFor(cwd, fullPath);
+    const relativePath = indexPathFor(cwd, fullPath, graph);
 
     let entry: MetadataEntry;
 
@@ -932,6 +962,7 @@ export async function buildIndex(
         data.kernel === true || data.kernel === 'true' ? true : undefined;
       // Script entrypoint metadata is meaningful for skills only (#1227).
       const script = type === 'skill' ? extractSkillScript(data) : undefined;
+      const operationalState = normalizeOperationalState(data.operational_state);
       // Canonical short name (#1233) — used by the scorer to floor exact-name
       // queries to 1.0 so hyphenated kernel-skill names like `aiwg-doctor`
       // remain searchable even when the rendered title strips the hyphen.
@@ -957,6 +988,7 @@ export async function buildIndex(
         ...(searchTerms && searchTerms.length > 0 ? { searchTerms } : {}),
         ...(kernel ? { kernel } : {}),
         ...(script ? { script } : {}),
+        ...(operationalState ? { operationalState } : {}),
       };
     }
 
@@ -1018,7 +1050,7 @@ export async function buildIndex(
     // Build REF-XXX → path map from all entries with ref frontmatter
     const entryFrontmatter = new Map<string, Record<string, unknown>>();
     for (const entryPath of Object.keys(entries)) {
-      const fullPath = absoluteEntryPath(cwd, entryPath);
+      const fullPath = absoluteEntryPath(cwd, entryPath, graph);
       if (fs.existsSync(fullPath)) {
         const content = fs.readFileSync(fullPath, 'utf-8');
         const { data } = parseFrontmatter(content);
@@ -1030,7 +1062,7 @@ export async function buildIndex(
     // Parse each entry as a citation sidecar and extract edges
     let citationEdgeCount = 0;
     for (const entryPath of Object.keys(entries)) {
-      const fullPath = absoluteEntryPath(cwd, entryPath);
+      const fullPath = absoluteEntryPath(cwd, entryPath, graph);
       if (!fs.existsSync(fullPath)) continue;
 
       const content = fs.readFileSync(fullPath, 'utf-8');

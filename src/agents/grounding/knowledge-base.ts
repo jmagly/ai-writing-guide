@@ -7,6 +7,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 import type { KnowledgeBase, KnowledgeEntry, KnowledgeFragment, VerificationResult } from './types.js';
 
 // ============================================================================
@@ -26,7 +27,7 @@ export class KnowledgeStore {
    * Load knowledge bases from .aiwg/knowledge/
    */
   async load(): Promise<void> {
-    const knowledgeDir = path.join(this.projectPath, '.aiwg/knowledge');
+    const knowledgeDir = projectAiwgPath(this.projectPath, 'knowledge');
 
     try {
       const domains = await fs.readdir(knowledgeDir);
@@ -82,7 +83,7 @@ export class KnowledgeStore {
     this.bases.set(domain, existing);
 
     // Persist
-    const domainDir = path.join(this.projectPath, '.aiwg/knowledge', domain);
+    const domainDir = projectAiwgPath(this.projectPath, 'knowledge', domain);
     await fs.mkdir(domainDir, { recursive: true });
     const outFile = path.join(domainDir, path.basename(filePath));
     await fs.copyFile(filePath, outFile);

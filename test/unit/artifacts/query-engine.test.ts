@@ -9,9 +9,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { buildIndex } from '../../../src/artifacts/index-builder.js';
 import { discoverCapability, queryIndex, showArtifact } from '../../../src/artifacts/query-engine.js';
 import { INDEX_DIR, getGraphIndexDir } from '../../../src/artifacts/types.js';
 import type { ArtifactIndex, MetadataEntry } from '../../../src/artifacts/types.js';
+import { PROJECT_AIWG_LOCATION_FILE } from '../../../src/config/project-artifacts.js';
 
 function createMockEntry(overrides: Partial<MetadataEntry> = {}): MetadataEntry {
   return {
@@ -28,6 +30,28 @@ function createMockEntry(overrides: Partial<MetadataEntry> = {}): MetadataEntry 
     dependents: [],
     ...overrides,
   };
+}
+
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+] as const;
+
+function clearArtifactEnv(): Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined> {
+  const previous = Object.fromEntries(
+    ARTIFACT_ENV_KEYS.map((key) => [key, process.env[key]]),
+  ) as Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined>;
+  for (const key of ARTIFACT_ENV_KEYS) delete process.env[key];
+  return previous;
+}
+
+function restoreArtifactEnv(previous: Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined>): void {
+  for (const key of ARTIFACT_ENV_KEYS) {
+    const value = previous[key];
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
 }
 
 describe('Artifact Query Engine', () => {
@@ -398,6 +422,67 @@ describe('Artifact Query Engine', () => {
     const parsed = JSON.parse(consoleSpy.mock.calls.map(c => c[0]).join(''));
     expect(parsed.path).toBe(nativePath);
     expect(parsed.content).toContain('# Local Status');
+  });
+
+  it('builds, queries, and shows virtual .aiwg entries from a pointer-configured external store', async () => {
+    const previousEnv = clearArtifactEnv();
+    const externalRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-relocated-store-'));
+    const artifactRoot = path.join(externalRoot, 'renamed-aiwg-store');
+    const virtualPath = '.aiwg/skills/portable-status/SKILL.md';
+    const nativePath = path.join(artifactRoot, 'skills', 'portable-status', 'SKILL.md');
+
+    fs.writeFileSync(path.join(tmpDir, PROJECT_AIWG_LOCATION_FILE), `${artifactRoot}\n`, 'utf-8');
+    fs.mkdirSync(path.dirname(nativePath), { recursive: true });
+    fs.writeFileSync(
+      nativePath,
+      [
+        '---',
+        'name: portable-status',
+        'description: Verify relocated AIWG store portability.',
+        '---',
+        '',
+        '# Portable Status',
+        '',
+        'heliotrope portability marker proves full-text reads use configured storage.',
+        '',
+      ].join('\n'),
+      'utf-8',
+    );
+
+    try {
+      await buildIndex(tmpDir, { force: true, graph: 'project' });
+
+      const indexPath = path.join(artifactRoot, '.index', 'project', 'metadata.json');
+      expect(fs.existsSync(indexPath)).toBe(true);
+      const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8')) as ArtifactIndex;
+      expect(index.entries[virtualPath]?.path).toBe(virtualPath);
+      expect(fs.existsSync(path.join(tmpDir, '.aiwg', 'skills', 'portable-status', 'SKILL.md'))).toBe(false);
+
+      consoleSpy.mockClear();
+      await queryIndex(
+        tmpDir,
+        { text: 'heliotrope portability marker', fulltext: true },
+        { json: true, graph: 'project', backend: 'local' },
+      );
+      const queryOutput = JSON.parse(consoleSpy.mock.calls.map(c => c[0]).join(''));
+      expect(queryOutput.results[0].path).toBe(virtualPath);
+      expect(queryOutput.results[0].matched).toContain('heliotrope');
+
+      consoleSpy.mockClear();
+      await showArtifact(tmpDir, {
+        typeFilter: ['skill'],
+        name: 'portable-status',
+        graph: 'project',
+        backend: 'local',
+        json: true,
+      });
+      const showOutput = JSON.parse(consoleSpy.mock.calls.map(c => c[0]).join(''));
+      expect(showOutput.path).toBe(nativePath);
+      expect(showOutput.content).toContain('# Portable Status');
+    } finally {
+      restoreArtifactEnv(previousEnv);
+      fs.rmSync(externalRoot, { recursive: true, force: true });
+    }
   });
 
   it('resolves a persona agent via the corpus fallback when not in any index (#1623 U5)', async () => {

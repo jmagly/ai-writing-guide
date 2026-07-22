@@ -7,9 +7,36 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Relocatable project artifact root** — the CLI now honors `.aiwg-location`
+  and `AIWG_ARTIFACTS_PATH` across project indexing, project-local bundles,
+  quickrefs, workspace context wiring, local issue state, memory/knowledge
+  stores, serve identity config, and related runtime state. `aiwg artifacts
+  move --to <path>` moves or renames the artifact root, writes the pointer,
+  updates local ignore rules, and reindexes.
+- **Project-local bundle search paths** — `projectLocal.searchPaths` in
+  `aiwg.config` and `AIWG_PROJECT_LOCAL_PATHS` let operators add custom addon,
+  extension, framework, plugin, and provider roots without moving the main
+  project corpus.
+
 ## [2026.7.16] - 2026-07-21 - "Workspace context and provider orchestration"
 
 ### Added
+
+- **Live-state provenance for operational memory** (#1827) — Fortemi v2
+  records can preserve allowlisted tracker/repository observations, classify
+  them as fresh, historical, superseded, contradicted, or needs-source, expose
+  currentness and live-recheck requirements in query output, and carry the
+  contract losslessly through portable Knowledge Shards without serializing
+  credentials or URL query material.
+- **Cockpit daily Linux operator gate** (#1842) — a single fail-closed command
+  now composes protected-executor host/container UAT, explicit authorization
+  failures, managed-PTY working-directory and scratch-mutation proof, transient
+  and restart recovery, previous-stable/candidate upgrade and rollback hooks,
+  scoped cleanup, immutable version evidence, and secret-scanned deterministic
+  JSON/Markdown reports. Executor credential-file paths are also removed from
+  Bridge error responses. VM and Apple remain visible non-blocking preview tiers.
 
 - **Existing-project context extraction** (#1830) —
   `aiwg regenerate --existing-project` previews or atomically applies a bounded,
@@ -59,6 +86,16 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   import/re-export with zero undeclared loss.
 
 ### Fixed
+
+- **Cockpit protected-executor authentication** (#1841) — the Bridge now reads
+  a mode-restricted token file for centralized authenticated REST/A2A calls,
+  preserves upstream 401/403 failures, reloads rotations without restart, and
+  proxies PTY WebSocket upgrades so long-lived executor credentials never enter
+  browser state or attach URLs.
+- **Cockpit transient auto-recovery** (#1763) — the global status now shows
+  `Reconnecting…` during Bridge/executor or SSE gaps, retains explicitly marked
+  last-known counts, retries with bounded backoff, and refreshes all mounted
+  live-data views when the connection returns without a page reload.
 
 - **Release config schema parity** — release steps may now use a
   channel-dependent command without also declaring an unused plain `run`

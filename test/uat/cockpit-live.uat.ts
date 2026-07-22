@@ -5,8 +5,11 @@
  * Strict local/release mode: set AIWG_COCKPIT_LIVE_REQUIRED=1 to fail instead.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { spawn } from 'node:child_process';
+import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
+import { WebSocket } from 'ws';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - .mjs without bundled types
@@ -17,6 +20,7 @@ const EXECUTOR_URL =
   process.env.AIWG_SANDBOX_ENDPOINT ||
   'http://127.0.0.1:8122';
 const REQUIRED = process.env.AIWG_COCKPIT_LIVE_REQUIRED === '1';
+const EXECUTOR_TOKEN_FILE = process.env.AIWG_COCKPIT_EXECUTOR_TOKEN_FILE || '';
 const MATRIX_REQUIRED = process.env.AIWG_COCKPIT_LIVE_MATRIX_REQUIRED === '1';
 const MATRIX_TARGETS = (process.env.AIWG_COCKPIT_LIVE_MATRIX_TARGETS || 'host,container,vm')
   .split(',')
@@ -40,13 +44,23 @@ const MUTATION_TEXT = process.env.AIWG_COCKPIT_LIVE_MUTATION_TEXT ||
 const WORKLOAD_TEXT = process.env.AIWG_COCKPIT_LIVE_WORKLOAD ||
   [
     'AIWG Cockpit live matrix check: use AIWG skill discovery from this running agent session.',
-    `Find the best capability for auditing open issue state and release blockers, then final-answer with ${WORKLOAD_MARKER}`,
+    'Find the best capability for auditing open issue state and release blockers, then final-answer by concatenating',
+    'these fragments without spaces: AIWG_COCKPIT and _LIVE_OK.',
     `and the discovered capability name ${DISCOVERY_EXPECT}. Do not just echo this prompt.`,
   ].join(' ');
 const EXECUTOR_VERSION_HINT = process.env.AIWG_COCKPIT_EXECUTOR_VERSION || '';
 const REPORT_BASE = resolve(process.env.AIWG_COCKPIT_LIVE_REPORT ?? 'test-results/cockpit-live-uat');
 const JSON_REPORT = `${REPORT_BASE}.json`;
 const MD_REPORT = `${REPORT_BASE}.md`;
+const DAILY_MODE = process.env.AIWG_COCKPIT_DAILY_MODE === '1';
+const DAILY_PHASE = process.env.AIWG_COCKPIT_DAILY_PHASE || '';
+const DAILY_TRANSIENT_HOOK = process.env.AIWG_COCKPIT_DAILY_TRANSIENT_HOOK || '';
+const DAILY_EXECUTOR_RESTART_HOOK = process.env.AIWG_COCKPIT_DAILY_EXECUTOR_RESTART_HOOK || '';
+const EXPECT_CWD: Record<string, string> = {
+  host: process.env.AIWG_COCKPIT_LIVE_EXPECT_CWD_HOST || '',
+  container: process.env.AIWG_COCKPIT_LIVE_EXPECT_CWD_CONTAINER || '',
+  vm: process.env.AIWG_COCKPIT_LIVE_EXPECT_CWD_VM || '',
+};
 
 interface Evidence {
   name: string;
@@ -57,15 +71,82 @@ interface Evidence {
 const evidence: Evidence[] = [];
 let executorIdentity: Record<string, unknown> = {};
 const provisionedInstances = new Map<string, string>();
+const createdSessions: Array<{ target: string; instanceId: string; sessionId: string }> = [];
+let executorAuthorization = '';
+
+async function loadExecutorAuthorization() {
+  if (!EXECUTOR_TOKEN_FILE) return;
+  const path = EXECUTOR_TOKEN_FILE === '~'
+    ? homedir()
+    : EXECUTOR_TOKEN_FILE.startsWith('~/')
+      ? join(homedir(), EXECUTOR_TOKEN_FILE.slice(2))
+      : EXECUTOR_TOKEN_FILE;
+  let metadata;
+  try { metadata = await stat(path); }
+  catch { throw new Error('AIWG_COCKPIT_EXECUTOR_TOKEN_FILE is unavailable'); }
+  if (!metadata.isFile()) throw new Error('AIWG_COCKPIT_EXECUTOR_TOKEN_FILE is not a regular file');
+  if (process.platform !== 'win32' && (metadata.mode & 0o077) !== 0) {
+    throw new Error('AIWG_COCKPIT_EXECUTOR_TOKEN_FILE must not be accessible by group or other users');
+  }
+  const token = String(await readFile(path, 'utf8')).trim();
+  if (!token || /[\r\n]/.test(token)) throw new Error('AIWG_COCKPIT_EXECUTOR_TOKEN_FILE must contain exactly one token');
+  executorAuthorization = `Bearer ${token}`;
+}
+
+function executorHeaders(): Record<string, string> {
+  return executorAuthorization ? { authorization: executorAuthorization } : {};
+}
 
 function record(name: string, status: Evidence['status'], detail: string) {
   evidence.push({ name, status, detail });
 }
 
+async function runDailyHook(path: string, action: string) {
+  if (!path) throw new Error(`daily ${action} hook is required`);
+  const metadata = await stat(path);
+  if (!metadata.isFile()) throw new Error(`daily ${action} hook is not a regular file`);
+  const started = Date.now();
+  await new Promise<void>((resolveHook, rejectHook) => {
+    const child = spawn(path, [], {
+      env: {
+        PATH: process.env.PATH,
+        HOME: process.env.HOME,
+        TMPDIR: process.env.TMPDIR,
+        AIWG_COCKPIT_DAILY_ACTION: action,
+        AIWG_COCKPIT_EXECUTOR_URL: EXECUTOR_URL,
+        AIWG_COCKPIT_EXECUTOR_TOKEN_FILE: EXECUTOR_TOKEN_FILE,
+      },
+      stdio: 'ignore',
+      timeout: 60_000,
+    });
+    child.once('error', rejectHook);
+    child.once('close', (code, signal) => {
+      if (code === 0) resolveHook();
+      else rejectHook(new Error(`daily ${action} hook failed (${signal ? `signal ${signal}` : `exit ${code}`})`));
+    });
+  });
+  return Date.now() - started;
+}
+
+async function waitForBridgeRecovery(base: string, token: string, timeoutMs = 30_000) {
+  const deadline = Date.now() + timeoutMs;
+  let last = '';
+  while (Date.now() < deadline) {
+    const results = await Promise.all([
+      bridgeJson(base, token, '/api/inventory'),
+      bridgeJson(base, token, '/api/running'),
+    ]).catch((err) => [{ status: 0, body: { error: String((err as Error).message || err) } }]);
+    last = JSON.stringify(results);
+    if (results.length === 2 && results.every((result) => result.status === 200)) return results;
+    await new Promise((resolveWait) => setTimeout(resolveWait, 500));
+  }
+  throw new Error(`Bridge projections did not recover within ${timeoutMs}ms; last=${last}`);
+}
+
 async function probe(): Promise<{ ok: boolean; reason?: string }> {
   for (const path of ['/admin/instances', '/api/v2/admin/instances', '/health', '/api/v1/aiwg/status']) {
     try {
-      const r = await fetch(`${EXECUTOR_URL}${path}`, { signal: AbortSignal.timeout(2_000) });
+      const r = await fetch(`${EXECUTOR_URL}${path}`, { headers: executorHeaders(), signal: AbortSignal.timeout(2_000) });
       if (r.ok) return { ok: true };
     } catch (err) {
       if (path === '/api/v1/aiwg/status') return { ok: false, reason: String((err as Error).message || err) };
@@ -80,12 +161,12 @@ async function bridgeJson(base: string, token: string, path: string, init: Reque
 }
 
 async function executorJson(path: string) {
-  const r = await fetch(`${EXECUTOR_URL}${path}`, { signal: AbortSignal.timeout(3_000) });
+  const r = await fetch(`${EXECUTOR_URL}${path}`, { headers: executorHeaders(), signal: AbortSignal.timeout(3_000) });
   return { status: r.status, body: await r.json().catch(() => ({})) };
 }
 
 async function executorJsonWithTimeout(path: string, timeoutMs = 5_000) {
-  const r = await fetch(`${EXECUTOR_URL}${path}`, { signal: AbortSignal.timeout(timeoutMs) });
+  const r = await fetch(`${EXECUTOR_URL}${path}`, { headers: executorHeaders(), signal: AbortSignal.timeout(timeoutMs) });
   return { status: r.status, body: await r.json().catch(() => ({})) };
 }
 
@@ -107,7 +188,7 @@ async function collectExecutorIdentity(): Promise<Record<string, unknown>> {
   if (EXECUTOR_VERSION_HINT) identity.version_hint = EXECUTOR_VERSION_HINT;
   for (const path of ['/health', '/version', '/api/version', '/api/v2/version']) {
     try {
-      const r = await fetch(`${EXECUTOR_URL}${path}`, { signal: AbortSignal.timeout(2_000) });
+      const r = await fetch(`${EXECUTOR_URL}${path}`, { headers: executorHeaders(), signal: AbortSignal.timeout(2_000) });
       if (!r.ok) continue;
       const body = identityFields(await r.json().catch(() => ({})));
       if (Object.keys(body).length > 0) identity[path] = body;
@@ -269,12 +350,19 @@ function mutationCommand(): string {
   ].join(' && ');
 }
 
-async function websocketSessionProbe(attachUrl: string, role: 'observer' | 'controller', workload?: string): Promise<{
+async function websocketSessionProbe(
+  attachUrl: string,
+  role: 'observer' | 'controller',
+  cockpitToken: string,
+  workload?: string,
+  expectedMarkers: string[] = [],
+): Promise<{
   roleAssigned: boolean;
   output: string;
   sawMutationMarker: boolean;
 }> {
-  const ws = new WebSocket(attachUrl, 'pty-ws.v1');
+  const cockpitProtocol = `cockpit.${Buffer.from(cockpitToken).toString('base64url')}`;
+  const ws = new WebSocket(attachUrl, ['pty-ws.v1', cockpitProtocol]);
   let roleAssigned = false;
   let output = '';
   let sawMutationMarker = false;
@@ -314,7 +402,8 @@ async function websocketSessionProbe(attachUrl: string, role: 'observer' | 'cont
           ws.close();
           resolve({ roleAssigned, output, sawMutationMarker });
         }
-        if (workload && output.includes(WORKLOAD_MARKER) && output.includes(DISCOVERY_EXPECT)) {
+        const markers = expectedMarkers.length > 0 ? expectedMarkers : [WORKLOAD_MARKER, DISCOVERY_EXPECT];
+        if (workload && markers.every((marker) => output.includes(marker))) {
           clearTimeout(timeout);
           ws.close();
           resolve({ roleAssigned, output, sawMutationMarker });
@@ -330,6 +419,12 @@ async function websocketSessionProbe(attachUrl: string, role: 'observer' | 'cont
           ws.close();
           resolve({ roleAssigned, output, sawMutationMarker });
         }
+        const markers = expectedMarkers.length > 0 ? expectedMarkers : [WORKLOAD_MARKER, DISCOVERY_EXPECT];
+        if (workload && markers.every((marker) => output.includes(marker))) {
+          clearTimeout(timeout);
+          ws.close();
+          resolve({ roleAssigned, output, sawMutationMarker });
+        }
       }
       if (msg.op === 'error' && role === 'controller') {
         clearTimeout(timeout);
@@ -341,9 +436,9 @@ async function websocketSessionProbe(attachUrl: string, role: 'observer' | 'cont
   return done;
 }
 
-async function verifyPtyMutation(attachUrl: string, targetDetail: string): Promise<string> {
+async function verifyPtyMutation(attachUrl: string, targetDetail: string, cockpitToken: string): Promise<string> {
   await rm(MUTATION_FILE, { force: true });
-  const mutated = await websocketSessionProbe(attachUrl, 'controller', mutationCommand());
+  const mutated = await websocketSessionProbe(attachUrl, 'controller', cockpitToken, mutationCommand());
   if (!mutated.roleAssigned) throw new Error(`${targetDetail}; mutation drive attach not granted`);
   if (!mutated.sawMutationMarker) {
     throw new Error(`${targetDetail}; mutation command did not emit ${MUTATION_MARKER}`);
@@ -374,6 +469,7 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
   const payload = {
     issue: MATRIX_REQUIRED ? 1621 : 1617,
     executor_url: EXECUTOR_URL,
+    executor_auth_configured: Boolean(EXECUTOR_TOKEN_FILE),
     required: REQUIRED,
     matrix_required: MATRIX_REQUIRED,
     matrix_targets: MATRIX_TARGETS,
@@ -407,6 +503,7 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     '',
     `- Issue: #${MATRIX_REQUIRED ? 1621 : 1617}`,
     `- Executor: ${EXECUTOR_URL}`,
+    `- Executor auth configured: ${EXECUTOR_TOKEN_FILE ? 'yes' : 'no'}`,
     `- Required: ${REQUIRED ? 'yes' : 'no'}`,
     `- Matrix required: ${MATRIX_REQUIRED ? 'yes' : 'no'}`,
     `- Matrix targets: ${MATRIX_TARGETS.join(', ')}`,
@@ -441,7 +538,62 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
   let base = '';
   let token = '';
 
+  async function openBridge() {
+    bridge = createBridge({ executorUrl: EXECUTOR_URL, executorTokenFile: EXECUTOR_TOKEN_FILE });
+    await new Promise((resolve) => bridge.listen(0, '127.0.0.1', resolve));
+    base = `http://127.0.0.1:${bridge.address().port}`;
+    token = bridge.cockpitToken;
+  }
+
+  async function closeBridge() {
+    if (!bridge) return;
+    await new Promise<void>((resolveClose) => bridge.close(() => resolveClose()));
+    bridge = undefined;
+  }
+
+  async function cleanupDailyResources() {
+    if (!DAILY_MODE || !bridge) return;
+    const cleanupErrors: string[] = [];
+    for (const session of [...createdSessions].reverse()) {
+      try {
+        const result = await bridgeJson(
+          base,
+          token,
+          `/api/instances/${encodeURIComponent(session.instanceId)}/sessions/${encodeURIComponent(session.sessionId)}`,
+          { method: 'DELETE' },
+        );
+        if (![200, 204, 404].includes(result.status)) {
+          cleanupErrors.push(`session ${session.sessionId} returned ${result.status}`);
+        }
+      } catch (err) {
+        cleanupErrors.push(`session ${session.sessionId}: ${String((err as Error).message || err)}`);
+      }
+    }
+    for (const [target, instanceId] of [...provisionedInstances.entries()].reverse()) {
+      try {
+        const result = await bridgeJson(base, token, `/api/instances/${encodeURIComponent(instanceId)}`, { method: 'DELETE' });
+        if (![200, 202, 204, 404].includes(result.status)) {
+          cleanupErrors.push(`${target} instance ${instanceId} returned ${result.status}`);
+        }
+      } catch (err) {
+        cleanupErrors.push(`${target} instance ${instanceId}: ${String((err as Error).message || err)}`);
+      }
+    }
+    if (MUTATION_FILE) {
+      try { await rm(MUTATION_FILE, { force: true }); }
+      catch (err) { cleanupErrors.push(`mutation scratch: ${String((err as Error).message || err)}`); }
+    }
+    record(
+      'daily scoped cleanup',
+      cleanupErrors.length ? 'fail' : 'pass',
+      cleanupErrors.length
+        ? cleanupErrors.join(' | ')
+        : `removed only ${createdSessions.length} created session(s), ${provisionedInstances.size} created instance(s), and gate mutation scratch`,
+    );
+  }
+
   beforeAll(async () => {
+    await loadExecutorAuthorization();
     const p = await probe();
     reachable = p.ok;
     reason = p.reason || '';
@@ -459,14 +611,12 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
       Object.keys(executorIdentity).length ? 'pass' : 'skip',
       Object.keys(executorIdentity).length ? JSON.stringify(executorIdentity) : 'no version/commit endpoint or hint available',
     );
-    bridge = createBridge({ executorUrl: EXECUTOR_URL });
-    await new Promise((resolve) => bridge.listen(0, '127.0.0.1', resolve));
-    base = `http://127.0.0.1:${bridge.address().port}`;
-    token = bridge.cockpitToken;
+    await openBridge();
   });
 
   afterAll(async () => {
-    bridge?.close();
+    await cleanupDailyResources();
+    await closeBridge();
     await writeReport({ reachable, reason });
   });
 
@@ -508,6 +658,26 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
     }
   });
 
+  liveIt('protected executor authorization failures remain explicit', async () => {
+    if (!DAILY_MODE) {
+      record('protected executor authorization boundary', 'skip', 'AIWG_COCKPIT_DAILY_MODE not set');
+      return;
+    }
+    if (!EXECUTOR_TOKEN_FILE) throw new Error('daily mode requires AIWG_COCKPIT_EXECUTOR_TOKEN_FILE');
+    const unauthenticatedBridge = createBridge({ executorUrl: EXECUTOR_URL, executorTokenFile: '' });
+    await new Promise((resolveListen) => unauthenticatedBridge.listen(0, '127.0.0.1', resolveListen));
+    try {
+      const unauthenticatedBase = `http://127.0.0.1:${unauthenticatedBridge.address().port}`;
+      const result = await bridgeJson(unauthenticatedBase, unauthenticatedBridge.cockpitToken, '/api/inventory');
+      expect([401, 403]).toContain(result.status);
+      expect(['executor_unauthenticated', 'executor_forbidden']).toContain(result.body.error);
+      expect(result.body.instances).toBeUndefined();
+      record('protected executor authorization boundary', 'pass', `unauthenticated upstream access remained explicit HTTP ${result.status}/${result.body.error}`);
+    } finally {
+      await new Promise<void>((resolveClose) => unauthenticatedBridge.close(() => resolveClose()));
+    }
+  });
+
   liveIt('session list, attach metadata, and task projection are explicit or skipped with evidence', async () => {
     const inv = await bridgeJson(base, token, '/api/inventory');
     if (inv.status !== 200 || !inv.body.instances?.length) {
@@ -544,6 +714,9 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
     }
     if (!['claude', 'codex'].includes(WORKLOAD_PROVIDER)) {
       throw new Error('AIWG_COCKPIT_LIVE_PROVIDER must be claude or codex in matrix-required mode');
+    }
+    if (WORKLOAD_TEXT.includes(WORKLOAD_MARKER)) {
+      throw new Error(`AIWG_COCKPIT_LIVE_WORKLOAD must not contain the literal ${WORKLOAD_MARKER}; request its fragments so terminal command echo cannot satisfy the workload gate`);
     }
 
     const health = await executorJson('/health').catch(() => ({ status: 0, body: {} }));
@@ -587,7 +760,14 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
           ? latestInstances.find((i: any) => String(i.id) === provisionedId)
           : latestInstances.find((i: any) => runtimeFamily(i) === target);
         if (!instance) throw new Error(`missing required live target: ${target}`);
-        const backend = chooseBackend(instance);
+        const backend = DAILY_MODE
+          ? (Array.isArray(instance.session_backends)
+              ? instance.session_backends.find((candidate: any) => (
+                  candidate.available !== false && candidate.drive !== false &&
+                  (candidate.mode === 'managed' || candidate.backend === 'tmux')
+                ))
+              : undefined)
+          : chooseBackend(instance);
         if (!backend) throw new Error(`target ${target} has no session backend evidence`);
         const backendDetail = `${backend.mode ?? 'unknown'}/${backend.backend ?? 'unknown'}`;
         const targetDetail = `target=${target}; instance=${instance.id}; runtime=${runtimeFamily(instance)}; backend=${backendDetail}; provider=${WORKLOAD_PROVIDER}`;
@@ -618,8 +798,9 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
         }
         const projectedForTarget = projected.body.running.filter((t: any) => String(t.instance_id) === String(instance.id));
 
-        const observed = await websocketSessionProbe(start.body.attach_url, 'observer');
+        const observed = await websocketSessionProbe(start.body.attach_url, 'observer', token);
         if (!observed.roleAssigned) throw new Error(`${targetDetail}; observe attach not granted`);
+        createdSessions.push({ target, instanceId: String(instance.id), sessionId: String(start.body.id) });
 
         if (backend.drive === false) {
           record(`matrix ${target}`, 'skip', `${targetDetail}; observe-only target with capability evidence: ${backend.reason ?? 'drive=false'}`);
@@ -638,7 +819,7 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
           throw new Error(`${targetDetail}; drive session create returned no attach_url`);
         }
         const providerCommand = providerWorkloadCommand(WORKLOAD_PROVIDER, WORKLOAD_TEXT);
-        const driven = await websocketSessionProbe(driveStart.body.attach_url, 'controller', providerCommand);
+        const driven = await websocketSessionProbe(driveStart.body.attach_url, 'controller', token, providerCommand);
         if (!driven.roleAssigned) throw new Error(`${targetDetail}; drive attach not granted`);
         if (!driven.output.trim()) throw new Error(`${targetDetail}; no terminal output for provider workload`);
         if (!driven.output.includes(WORKLOAD_MARKER)) {
@@ -646,6 +827,34 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
         }
         if (!driven.output.includes(DISCOVERY_EXPECT)) {
           throw new Error(`${targetDetail}; provider workload did not prove AIWG discovery result ${DISCOVERY_EXPECT}`);
+        }
+        createdSessions.push({ target, instanceId: String(instance.id), sessionId: String(driveStart.body.id) });
+        if (DAILY_MODE) {
+          const expectedCwd = EXPECT_CWD[target];
+          if (!expectedCwd) throw new Error(`${targetDetail}; AIWG_COCKPIT_LIVE_EXPECT_CWD_${target.toUpperCase()} is required in daily mode`);
+          const cwdMarker = 'AIWG_COCKPIT_CWD=';
+          const cwdStart = await bridgeJson(
+            base,
+            token,
+            `/api/instances/${encodeURIComponent(instance.id)}/sessions?mode=${encodeURIComponent(backend.mode ?? 'direct')}&backend=${encodeURIComponent(backend.backend ?? 'native')}`,
+            { method: 'POST' },
+          );
+          if (![200, 201].includes(cwdStart.status) || !cwdStart.body.attach_url) {
+            throw new Error(`${targetDetail}; working-directory session could not be created`);
+          }
+          createdSessions.push({ target, instanceId: String(instance.id), sessionId: String(cwdStart.body.id) });
+          const cwdProbe = await websocketSessionProbe(
+            cwdStart.body.attach_url,
+            'controller',
+            token,
+            `printf 'AIWG_COCKPIT_%s=%s\\n' CWD "$PWD"`,
+            [cwdMarker],
+          );
+          const actualCwd = cwdProbe.output.match(/AIWG_COCKPIT_CWD=([^\r\n]+)/)?.[1]?.trim() ?? '';
+          if (actualCwd !== expectedCwd) {
+            throw new Error(`${targetDetail}; managed PTY cwd mismatch: expected ${expectedCwd}, received ${actualCwd || 'no marker'}`);
+          }
+          record(`managed PTY working directory ${target}`, 'pass', `${targetDetail}; cwd=${actualCwd}`);
         }
         let mutationDetail = '';
         if (MUTATION_FILE) {
@@ -661,11 +870,12 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
           if (!mutationStart.body.attach_url) {
             throw new Error(`${targetDetail}; mutation session create returned no attach_url`);
           }
-          const mutationObserved = await websocketSessionProbe(mutationStart.body.attach_url, 'observer');
+          const mutationObserved = await websocketSessionProbe(mutationStart.body.attach_url, 'observer', token);
           if (!mutationObserved.roleAssigned) {
             throw new Error(`${targetDetail}; mutation observe attach not granted`);
           }
-          mutationDetail = await verifyPtyMutation(mutationStart.body.attach_url, targetDetail);
+          createdSessions.push({ target, instanceId: String(instance.id), sessionId: String(mutationStart.body.id) });
+          mutationDetail = await verifyPtyMutation(mutationStart.body.attach_url, targetDetail, token);
         }
         record(
           `matrix ${target}`,
@@ -682,4 +892,103 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
       throw new Error(`required live matrix failed for ${targetErrors.length}/${requiredTargets.length} target(s): ${targetErrors.join(' | ')}`);
     }
   }, PROVISION_TARGETS ? Math.max(240_000, PROVISION_TIMEOUT_MS + 120_000) : 240_000);
+
+  liveIt('daily transient executor interruption recovers REST, SSE, and projections without a Bridge restart', async () => {
+    if (!DAILY_MODE || DAILY_PHASE !== 'candidate') {
+      record('daily transient recovery', 'skip', 'candidate daily phase not selected');
+      return;
+    }
+    const beforeInventory = await bridgeJson(base, token, '/api/inventory');
+    const beforeSessions = await Promise.all(createdSessions.map((session) => (
+      bridgeJson(base, token, `/api/sessions?instance=${encodeURIComponent(session.instanceId)}`)
+    )));
+    expect(beforeInventory.status).toBe(200);
+    expect(beforeSessions.every((result) => result.status === 200)).toBe(true);
+    const eventsResponse = await fetch(`${base}/api/events`, { headers: { authorization: `Bearer ${token}` } });
+    expect(eventsResponse.status).toBe(200);
+    const eventsReader = eventsResponse.body?.getReader();
+    if (!eventsReader) throw new Error('SSE response did not provide a readable stream');
+    const firstEvent = await eventsReader.read();
+    expect(new TextDecoder().decode(firstEvent.value)).toContain('cockpit.refresh');
+
+    let disconnectDuration = 0;
+    let restoreDuration = 0;
+    let degraded = false;
+    try {
+      disconnectDuration = await runDailyHook(DAILY_TRANSIENT_HOOK, 'disconnect');
+      const deadline = Date.now() + 15_000;
+      while (Date.now() < deadline) {
+        const result = await bridgeJson(base, token, '/api/inventory')
+          .catch(() => ({ status: 0, body: {} }));
+        if (result.status !== 200 || !Array.isArray(result.body.instances) || result.body.instances.length === 0) {
+          degraded = true;
+          break;
+        }
+        await new Promise((resolveWait) => setTimeout(resolveWait, 250));
+      }
+      if (!degraded) throw new Error('transient hook did not produce an observable executor interruption');
+    } finally {
+      restoreDuration = await runDailyHook(DAILY_TRANSIENT_HOOK, 'restore');
+    }
+    const recovered = await waitForBridgeRecovery(base, token);
+    const recoveredInventory = recovered[0];
+    const recoveredIds = new Set((recoveredInventory.body.instances ?? []).map((instance: any) => String(instance.id)));
+    for (const session of createdSessions) {
+      if (!recoveredIds.has(session.instanceId)) throw new Error(`recovery lost instance ${session.instanceId}`);
+      const sessions = await bridgeJson(base, token, `/api/sessions?instance=${encodeURIComponent(session.instanceId)}`);
+      if (sessions.status !== 200 || !sessions.body.sessions?.some((row: any) => String(row.id) === session.sessionId)) {
+        throw new Error(`recovery lost session ${session.sessionId}`);
+      }
+    }
+    const nextEvent = await Promise.race([
+      eventsReader.read(),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('SSE did not continue after executor recovery')), 7_000)),
+    ]);
+    await eventsReader.cancel();
+    if (nextEvent.done || !nextEvent.value) throw new Error('SSE stream ended during executor recovery');
+    expect(new TextDecoder().decode(nextEvent.value)).toContain('cockpit.refresh');
+    record(
+      'daily transient recovery',
+      'pass',
+      `same Bridge token recovered inventory/running/sessions and SSE; disconnect_ms=${disconnectDuration}; restore_ms=${restoreDuration}`,
+    );
+  }, 90_000);
+
+  liveIt('daily Bridge restart re-adopts managed sessions', async () => {
+    if (!DAILY_MODE || DAILY_PHASE !== 'candidate') {
+      record('daily Bridge restart continuity', 'skip', 'candidate daily phase not selected');
+      return;
+    }
+    if (createdSessions.length === 0) throw new Error('no created sessions available for Bridge restart continuity');
+    const started = Date.now();
+    await closeBridge();
+    await openBridge();
+    await waitForBridgeRecovery(base, token);
+    for (const session of createdSessions) {
+      const sessions = await bridgeJson(base, token, `/api/sessions?instance=${encodeURIComponent(session.instanceId)}`);
+      const adopted = sessions.body.sessions?.find((row: any) => String(row.id) === session.sessionId);
+      if (sessions.status !== 200 || !adopted?.attach_url) throw new Error(`Bridge restart did not re-adopt session ${session.sessionId}`);
+      const attached = await websocketSessionProbe(adopted.attach_url, 'observer', token);
+      if (!attached.roleAssigned) throw new Error(`Bridge restart could not reattach session ${session.sessionId}`);
+    }
+    record('daily Bridge restart continuity', 'pass', `re-adopted and reattached ${createdSessions.length} created session(s) in ${Date.now() - started}ms`);
+  }, 90_000);
+
+  liveIt('daily executor restart preserves or re-adopts managed sessions', async () => {
+    if (!DAILY_MODE || DAILY_PHASE !== 'candidate') {
+      record('daily executor restart continuity', 'skip', 'candidate daily phase not selected');
+      return;
+    }
+    if (createdSessions.length === 0) throw new Error('no created sessions available for executor restart continuity');
+    const restartDuration = await runDailyHook(DAILY_EXECUTOR_RESTART_HOOK, 'restart');
+    await waitForBridgeRecovery(base, token, 60_000);
+    for (const session of createdSessions) {
+      const sessions = await bridgeJson(base, token, `/api/sessions?instance=${encodeURIComponent(session.instanceId)}`);
+      const adopted = sessions.body.sessions?.find((row: any) => String(row.id) === session.sessionId);
+      if (sessions.status !== 200 || !adopted?.attach_url) throw new Error(`executor restart did not re-adopt session ${session.sessionId}`);
+      const attached = await websocketSessionProbe(adopted.attach_url, 'observer', token);
+      if (!attached.roleAssigned) throw new Error(`executor restart could not reattach session ${session.sessionId}`);
+    }
+    record('daily executor restart continuity', 'pass', `re-adopted and reattached ${createdSessions.length} created session(s); restart_hook_ms=${restartDuration}`);
+  }, 120_000);
 });

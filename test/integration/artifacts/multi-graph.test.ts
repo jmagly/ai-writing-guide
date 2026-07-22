@@ -28,11 +28,39 @@ import type {
 import { GRAPH_CONFIGS, getGraphIndexDir } from '../../../src/artifacts/types.js';
 import { loadGraphIndexFile } from '../../../src/artifacts/index-reader.js';
 import { workspaceLinkedFiles } from '../../../src/smiths/context-pipeline/workspace-context.js';
+import { resolveProjectAiwgDir } from '../../../src/config/project-artifacts.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
-const AIWG_DIR = path.join(REPO_ROOT, '.aiwg');
+const AIWG_DIR = resolveProjectAiwgDir(REPO_ROOT);
 const SRC_DIR = path.join(REPO_ROOT, 'src');
 const AGENTIC_DIR = path.join(REPO_ROOT, 'agentic');
+const PROJECT_CORPUS_AVAILABLE = fs.existsSync(AIWG_DIR) && [
+  'requirements',
+  'architecture',
+  'planning',
+  'security',
+].some(dir => fs.existsSync(path.join(AIWG_DIR, dir)));
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+] as const;
+
+function withArtifactEnvCleared<T>(callback: () => T): T {
+  const previous = Object.fromEntries(
+    ARTIFACT_ENV_KEYS.map((key) => [key, process.env[key]]),
+  ) as Record<(typeof ARTIFACT_ENV_KEYS)[number], string | undefined>;
+  for (const key of ARTIFACT_ENV_KEYS) delete process.env[key];
+  try {
+    return callback();
+  } finally {
+    for (const key of ARTIFACT_ENV_KEYS) {
+      const value = previous[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+}
 
 describe('Multi-Graph Index Architecture (integration)', () => {
   let tmpDir: string;
@@ -53,7 +81,7 @@ describe('Multi-Graph Index Architecture (integration)', () => {
 
   beforeAll(async () => {
     // Skip if required directories don't exist
-    if (!fs.existsSync(AIWG_DIR) || !fs.existsSync(SRC_DIR)) return;
+    if (!fs.existsSync(SRC_DIR)) return;
 
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-multigraph-'));
 
@@ -63,8 +91,14 @@ describe('Multi-Graph Index Architecture (integration)', () => {
     originalXdgDataHome = process.env.XDG_DATA_HOME;
     process.env.XDG_DATA_HOME = xdgDataDir;
 
-    // Build all three graphs
-    for (const graphType of ['project', 'codebase', 'framework'] as GraphType[]) {
+    const graphTypes = [
+      ...(PROJECT_CORPUS_AVAILABLE ? ['project'] : []),
+      'codebase',
+      'framework',
+    ] as GraphType[];
+
+    // Build available graphs
+    for (const graphType of graphTypes) {
       await buildIndex(REPO_ROOT, {
         force: true,
         outputDir: tmpDir,
@@ -74,7 +108,7 @@ describe('Multi-Graph Index Architecture (integration)', () => {
 
     // Load index data for each graph
     // When outputDir is set, all graphs write to outputDir/.aiwg/.index/<graph>/
-    for (const graphType of ['project', 'codebase', 'framework'] as GraphType[]) {
+    for (const graphType of graphTypes) {
       const indexDir = path.join(tmpDir, '.aiwg', '.index', graphType);
 
       if (fs.existsSync(path.join(indexDir, 'metadata.json'))) {
@@ -149,14 +183,14 @@ describe('Multi-Graph Index Architecture (integration)', () => {
       expect(fwDir).toContain('aiwg/index/framework');
     });
 
-    it('should resolve project graph to .aiwg/.index/project', () => {
+    it('should resolve project graph to the configured artifact-root index', () => {
       const projDir = getGraphIndexDir(REPO_ROOT, 'project');
-      expect(projDir).toContain('.aiwg/.index/project');
+      expect(projDir).toBe(path.join(AIWG_DIR, '.index', 'project'));
     });
 
-    it('should resolve codebase graph to .aiwg/.index/codebase', () => {
+    it('should resolve codebase graph to the configured artifact-root index', () => {
       const cbDir = getGraphIndexDir(REPO_ROOT, 'codebase');
-      expect(cbDir).toContain('.aiwg/.index/codebase');
+      expect(cbDir).toBe(path.join(AIWG_DIR, '.index', 'codebase'));
     });
   });
 
@@ -343,7 +377,7 @@ describe('Multi-Graph Index Architecture (integration)', () => {
   // ─────────────────────────────────────────────────────
 
   describe('Graph Isolation', () => {
-    it('should have no overlapping paths between graphs', () => {
+    it('should have no overlapping paths between graphs except canonical workspace context', async () => {
       const projectPaths = new Set(
         Object.keys(graphData.project.metadata?.entries ?? {})
       );
@@ -354,8 +388,16 @@ describe('Multi-Graph Index Architecture (integration)', () => {
         Object.keys(graphData.framework.metadata?.entries ?? {})
       );
 
-      // No path should appear in more than one graph
+      const projectContextPaths = new Set([
+        'WORKSPACE.md',
+        ...(await workspaceLinkedFiles(REPO_ROOT))
+          .map(file => path.relative(REPO_ROOT, file).replace(/\\/g, '/')),
+      ]);
+
+      // No path should appear in more than one graph except canonical
+      // WORKSPACE-linked context intentionally included in the project graph.
       for (const p of projectPaths) {
+        if (projectContextPaths.has(p)) continue;
         expect(codebasePaths.has(p), `${p} should not be in both project and codebase`).toBe(false);
         expect(frameworkPaths.has(p), `${p} should not be in both project and framework`).toBe(false);
       }
@@ -379,6 +421,7 @@ describe('Multi-Graph Index Architecture (integration)', () => {
       const projCount = graphData.project.stats?.totalArtifacts ?? 0;
       const cbCount = graphData.codebase.stats?.totalArtifacts ?? 0;
       const fwCount = graphData.framework.stats?.totalArtifacts ?? 0;
+      if (!graphData.project.stats || !graphData.codebase.stats || !graphData.framework.stats) return;
 
       // Each graph should have indexed something
       expect(projCount).toBeGreaterThan(0);
@@ -506,7 +549,7 @@ describe('Multi-Graph Index Architecture (integration)', () => {
     it('should load project graph metadata from correct directory', () => {
       if (!graphData.project.metadata) return;
       // loadGraphIndexFile should resolve to .aiwg/.index/project/
-      const loaded = loadGraphIndexFile<ArtifactIndex>(tmpDir, 'metadata.json', 'project');
+      const loaded = withArtifactEnvCleared(() => loadGraphIndexFile<ArtifactIndex>(tmpDir, 'metadata.json', 'project'));
       expect(loaded).not.toBeNull();
       expect(loaded!.version).toBe('1.0.0');
       expect(Object.keys(loaded!.entries).length).toBeGreaterThan(0);
@@ -514,7 +557,7 @@ describe('Multi-Graph Index Architecture (integration)', () => {
 
     it('should load codebase graph metadata from correct directory', () => {
       if (!graphData.codebase.metadata) return;
-      const loaded = loadGraphIndexFile<ArtifactIndex>(tmpDir, 'metadata.json', 'codebase');
+      const loaded = withArtifactEnvCleared(() => loadGraphIndexFile<ArtifactIndex>(tmpDir, 'metadata.json', 'codebase'));
       expect(loaded).not.toBeNull();
       expect(Object.keys(loaded!.entries).length).toBeGreaterThan(0);
     });

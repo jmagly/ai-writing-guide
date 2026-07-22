@@ -13,6 +13,12 @@ import fs from 'fs';
 import os from 'node:os';
 import path from 'node:path';
 import { load as loadYaml } from 'js-yaml';
+import type { OperationalStateProvenance } from './operational-state.js';
+import {
+  DEFAULT_PROJECT_AIWG_DIR,
+  projectAiwgPath,
+  resolveProjectAiwgDir,
+} from '../config/project-artifacts.js';
 
 /**
  * A single indexed artifact entry
@@ -116,6 +122,12 @@ export interface MetadataEntry {
    * themselves.
    */
   script?: SkillScriptSpec;
+
+  /**
+   * Optional live-state provenance for tracker/repository observations. This
+   * is exported only through the Fortemi v2 contract; v1 remains unchanged.
+   */
+  operationalState?: OperationalStateProvenance;
 }
 
 /**
@@ -382,7 +394,7 @@ export const INDEX_VERSION = '1.0.0';
  * making the serialized index schema incompatible; a mismatch simply forces a
  * one-time content re-extraction during the next incremental build.
  */
-export const INDEX_EXTRACTOR_VERSION = '2026.07.21.1';
+export const INDEX_EXTRACTOR_VERSION = '2026.07.21.2';
 
 /**
  * Built-in graph type identifiers
@@ -753,7 +765,7 @@ export function orderedGraphEntries(
  * @implements #726
  */
 export function loadModuleGraphConfigs(cwd: string, diagnostics?: GraphConfigWarning[]): string[] {
-  const registryPath = `${cwd}/.aiwg/frameworks/registry.json`;
+  const registryPath = projectAiwgPath(cwd, 'frameworks', 'registry.json');
   const loaded: string[] = [];
 
   try {
@@ -850,14 +862,15 @@ export function loadUserGraphConfigs(cwd: string, diagnostics?: GraphConfigWarni
   const loaded: string[] = [...moduleLoaded];
 
   // Resolve the operator's index.graphs source. Canonical home is
-  // .aiwg/aiwg.config (JSON, #1491); the legacy .aiwg/config.yaml is a
+  // the configured artifact root's aiwg.config (JSON, #1491); the legacy
+  // config.yaml is a
   // deprecated fallback so un-migrated corpora keep working.
   let graphs: Record<string, unknown> | undefined;
   let fromDeprecatedYaml = false;
 
   // (a) Canonical: .aiwg/aiwg.config (JSON).
   try {
-    const aiwgConfigPath = `${cwd}/.aiwg/aiwg.config`;
+    const aiwgConfigPath = projectAiwgPath(cwd, 'aiwg.config');
     if (fs.existsSync(aiwgConfigPath)) {
       const parsed = JSON.parse(fs.readFileSync(aiwgConfigPath, 'utf-8')) as Record<string, unknown>;
       const idx = parsed.index as Record<string, unknown> | undefined;
@@ -877,7 +890,7 @@ export function loadUserGraphConfigs(cwd: string, diagnostics?: GraphConfigWarni
   // (b) Fallback: legacy .aiwg/config.yaml.
   if (!graphs) {
     try {
-      const configPath = `${cwd}/.aiwg/config.yaml`;
+      const configPath = projectAiwgPath(cwd, 'config.yaml');
       if (fs.existsSync(configPath)) {
         const config = loadYaml(fs.readFileSync(configPath, 'utf-8')) as Record<string, unknown> | null;
         const idx = config?.index as Record<string, unknown> | undefined;
@@ -1023,7 +1036,32 @@ export function getGraphIndexDir(cwd: string, graphType: GraphType): string {
     const xdgData = process.env.XDG_DATA_HOME ?? path.join(os.homedir(), '.local', 'share');
     return path.join(xdgData, 'aiwg', 'index', graphType);
   }
-  return path.join(cwd, '.aiwg', '.index', graphType);
+  return path.join(getProjectIndexRoot(cwd), graphType);
+}
+
+/**
+ * Resolve the project-local index root for the configured AIWG artifact dir.
+ */
+export function getProjectIndexRoot(cwd: string): string {
+  return path.join(resolveProjectAiwgDir(cwd), '.index');
+}
+
+/**
+ * Resolve graph scan directories using the same AIWG artifact root contract as
+ * runtime config/storage. This keeps built-in project graph paths virtualized
+ * as `.aiwg/...` while allowing the physical directory to be renamed or moved.
+ */
+export function resolveGraphScanDir(cwd: string, scanDir: string): string {
+  if (scanDir === '~') return process.env.HOME ?? scanDir;
+  if (scanDir.startsWith('~/')) {
+    return path.join(process.env.HOME ?? '', scanDir.slice(2));
+  }
+  if (path.isAbsolute(scanDir)) return scanDir;
+  if (scanDir === DEFAULT_PROJECT_AIWG_DIR) return resolveProjectAiwgDir(cwd);
+  if (scanDir.startsWith(`${DEFAULT_PROJECT_AIWG_DIR}/`)) {
+    return path.join(resolveProjectAiwgDir(cwd), scanDir.slice(DEFAULT_PROJECT_AIWG_DIR.length + 1));
+  }
+  return path.join(cwd, scanDir);
 }
 
 /**

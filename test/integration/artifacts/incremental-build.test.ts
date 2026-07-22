@@ -14,15 +14,22 @@ import path from 'path';
 import os from 'os';
 import { buildIndex } from '../../../src/artifacts/index-builder.js';
 import type { ArtifactIndex, IndexStats } from '../../../src/artifacts/types.js';
+import { resolveProjectAiwgDir } from '../../../src/config/project-artifacts.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
-const AIWG_DIR = path.join(REPO_ROOT, '.aiwg');
+const AIWG_DIR = resolveProjectAiwgDir(REPO_ROOT);
+const PROJECT_CORPUS_AVAILABLE = fs.existsSync(AIWG_DIR) && [
+  'requirements',
+  'architecture',
+  'planning',
+  'security',
+].some(dir => fs.existsSync(path.join(AIWG_DIR, dir)));
 
 describe('Artifact Incremental Build (integration)', () => {
   let tmpDir: string;
 
   beforeAll(() => {
-    if (!fs.existsSync(AIWG_DIR)) return;
+    if (!PROJECT_CORPUS_AVAILABLE) return;
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-incremental-'));
     fs.mkdirSync(path.join(tmpDir, '.aiwg', '.index'), { recursive: true });
   });

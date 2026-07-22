@@ -37,6 +37,7 @@ import {
 import type { Platform } from '../../agents/types.js';
 import { resolveActiveProvider } from '../provider-resolution.js';
 import { getProviderContextDiscoveryPathStrings } from '../../providers/provider-definitions.js';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 
 async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   if (args.includes('--help') || args.includes('-h')) {
@@ -195,7 +196,7 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
 
   if (legacy) {
     if (skipWorkspaceMd) console.log('  Note: --no-workspace-md is implicit in legacy mode.');
-    const normalizedPath = path.join(target, '.aiwg', 'AIWG.md');
+    const normalizedPath = projectAiwgPath(target, 'AIWG.md');
     let existing = '';
     try { existing = await fs.readFile(normalizedPath, 'utf8'); }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
@@ -232,7 +233,7 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
     console.log('');
     console.log(`  Would regenerate:`);
     if (!skipWorkspaceMd) console.log(`    - ${path.join(target, 'WORKSPACE.md')} (managed graph; operator section preserved)`);
-    console.log(`    - ${path.join(target, '.aiwg', 'AIWG.md')}`);
+    console.log(`    - ${projectAiwgPath(target, 'AIWG.md')}`);
     if (!skipAiwgMd) console.log(`    - ${aiwgMd}`);
     if (provider === 'claude') {
       console.log(`    - ${claudeMd} (managed @WORKSPACE.md then @AIWG.md hook; operator content preserved)`);
@@ -275,7 +276,7 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
     console.log(`  OK Wrote AIWG.md`);
   }
   if (result.normalizedAiwgMdPath) {
-    console.log(`  OK Wrote .aiwg/AIWG.md`);
+    console.log(`  OK Wrote ${path.relative(target, result.normalizedAiwgMdPath) || result.normalizedAiwgMdPath}`);
   }
   if (result.claudeMdHookPath && result.claudeMdHookAction && result.claudeMdHookAction !== 'unchanged' && result.claudeMdHookAction !== 'skipped') {
     const verb =

@@ -681,7 +681,7 @@ aiwg promote my-team-rules --cleanup                 # remove .aiwg source after
 
 ### new-bundle
 
-Scaffold a project-local bundle under `.aiwg/{type}/{name}/` with a valid manifest, a starter artifact, and a README that includes the identical-form portability reminder.
+Scaffold a project-local bundle under the configured AIWG artifact root (`.aiwg/{type}/{name}/` by default) with a valid manifest, a starter artifact, and a README that includes the identical-form portability reminder.
 
 ```bash
 aiwg new-bundle <name> [--type extension|addon|framework|plugin|provider] [--starter skill|rule|agent|minimal] [--description "..."]
@@ -3731,10 +3731,15 @@ The index uses a **multi-graph architecture** with three built-in graph types pl
 
 | Graph | Scans | Storage | Built by default |
 |-------|-------|---------|-----------------|
-| `project` | `.aiwg/` artifacts | `.aiwg/.index/project/` | Yes |
-| `codebase` | `src/`, `test/`, `tools/` | `.aiwg/.index/codebase/` | Yes (skipped if dirs absent) |
+| `project` | configured AIWG artifact root (virtualized as `.aiwg/`) | `<artifact-root>/.index/project/` | Yes |
+| `codebase` | `src/`, `test/`, `tools/` | `<artifact-root>/.index/codebase/` | Yes (skipped if dirs absent) |
 | `framework` | `agentic/code/`, `docs/` | `.aiwg/.index/framework/` | No (use `--graph framework`) |
-| *(user-defined)* | configured in `.aiwg/aiwg.config` (#1491) | `.aiwg/.index/<name>/` | Configurable |
+| *(user-defined)* | configured in the artifact root's `aiwg.config` (#1491) | `<artifact-root>/.index/<name>/` | Configurable |
+
+The artifact root defaults to `<project>/.aiwg`, but `AIWG_ARTIFACTS_PATH` or
+`.aiwg-location` may point it elsewhere or rename it. Index entries for project
+artifacts keep stable virtual paths like `.aiwg/requirements/UC-001.md`, while
+file reads, graph config, and writes resolve through the configured root.
 
 **`defaultBuild` behavior**: When you run `aiwg index build` with no `--graph` flag, every graph with `defaultBuild: true` is built. If a defaultBuild graph's scan directories do not exist (e.g. `codebase` in a docs-only repo), it is skipped with a warning rather than erroring. To require a graph's directories to exist, request it explicitly: `aiwg index build --graph codebase`.
 
@@ -3766,6 +3771,20 @@ aiwg index <subcommand> [options]
 **Global option (all subcommands):**
 
 - `--graph <name>` - Target a specific graph: built-in (`project`, `codebase`, `framework`) or user-defined
+
+### artifacts
+
+Manage the configured project AIWG artifact root.
+
+```bash
+aiwg artifacts move --to <path> [--from <path>] [--dry-run] [--no-reindex] [--no-sync]
+```
+
+`move` relocates or renames the current artifact root, writes `.aiwg-location`
+in the project root, updates `.gitignore` so the pointer remains local,
+rebuilds the project index, and syncs the Fortemi Core cache. `--from` overrides
+the source root; otherwise AIWG resolves it the same way runtime config does.
+`AIWG_ARTIFACTS_PATH` still has highest precedence for per-call overrides.
 
 **Capabilities:** cli, index, artifacts, search, dependencies
 **Platforms:** All

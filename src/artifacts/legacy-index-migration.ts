@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import type { ArtifactIndex, GraphType } from './types.js';
-import { INDEX_VERSION, getGraphIndexDir } from './types.js';
+import { INDEX_VERSION, getGraphIndexDir, getProjectIndexRoot } from './types.js';
 import { syncFortemiCoreIndex } from './fortemi-core-sync.js';
 
 export type LegacyIndexMigrationScope = 'project' | 'user' | 'global';
@@ -80,7 +80,7 @@ function scopePaths(
   switch (scope) {
     case 'project':
       return {
-        sourceDir: path.join(cwd, '.aiwg', '.index'),
+        sourceDir: getProjectIndexRoot(cwd),
         destinationDir: getGraphIndexDir(cwd, 'project'),
         syncRoot: cwd,
         graph: 'project',
@@ -210,7 +210,7 @@ function migrateOneScope(
 }
 
 function defaultReportPath(cwd: string): string {
-  return path.join(cwd, '.aiwg', '.index', 'migrations', 'legacy-index-migration.json');
+  return path.join(getProjectIndexRoot(cwd), 'migrations', 'legacy-index-migration.json');
 }
 
 export function migrateLegacyIndex(

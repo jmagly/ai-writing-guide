@@ -105,6 +105,7 @@ import { bestPracticesAuditHandler } from './best-practices-audit.js';
 import { refreshHandler } from './refresh.js';
 import { regenerateHandler, regenerateHandlers } from './regenerate.js';
 import { workspaceContextHandler, workspaceContextHandlers } from './workspace-context.js';
+import { artifactsHandler, artifactsHandlers } from './artifacts.js';
 import { mcHandler, mcHandlers } from './mc.js';
 import { sdlcAccelerateHandler } from './sdlc-accelerate.js';
 import { teamHandler, teamHandlers } from './team.js';
@@ -173,6 +174,7 @@ export {
   catalogHandler,
   modelsHandler,
   indexHandler,
+  artifactsHandler,
   corpusHandler,
   discoverHandler,
   showHandler,
@@ -287,6 +289,7 @@ export {
   stewardHandlers,
   regenerateHandlers,
   workspaceContextHandlers,
+  artifactsHandlers,
   daemonHandlers,
   sandboxHandlers,
   repoAccessHandlers,
@@ -334,6 +337,7 @@ export const allHandlers: CommandHandler[] = [
   catalogHandler,
   modelsHandler,
   indexHandler,
+  artifactsHandler,
   corpusHandler,
   discoverHandler,
   showHandler,

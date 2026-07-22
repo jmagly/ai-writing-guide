@@ -33,6 +33,11 @@ import {
   type AiwgFortemiRecord,
 } from './browser-export.js';
 import { loadProviderModelMetadata } from '../models/provider-models.js';
+import {
+  operationalStateQueryProjection,
+  type OperationalStateQueryProjection,
+} from './operational-state.js';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 
 function normalizeIndexedPath(entryPath: string): string {
   return entryPath.replace(/\\/g, '/');
@@ -49,6 +54,9 @@ function readEntryBody(cwd: string, entryPath: string): string | null {
   if (path.isAbsolute(entryPath)) candidates.push(entryPath);
   else {
     const normalizedPath = normalizeIndexedPath(entryPath);
+    if (normalizedPath.startsWith('.aiwg/')) {
+      candidates.push(projectAiwgPath(cwd, normalizedPath.slice('.aiwg/'.length)));
+    }
     candidates.push(path.resolve(cwd, normalizedPath));
     if (process.env.AIWG_ROOT) candidates.push(path.resolve(process.env.AIWG_ROOT, normalizedPath));
   }
@@ -703,6 +711,7 @@ export async function queryIndex(
   // Score and rank
   let results: QueryResult[];
   const matchedById = new Map<string, string[]>();
+  const operationalStateById = new Map<string, OperationalStateQueryProjection>();
   if (params.text && params.fulltext && backend === 'fortemi-core') {
     const { queryFortemiCoreStaticFulltextIndex } = await import('./fortemi-core-query-adapter.js');
     const queried = queryFortemiCoreStaticFulltextIndex(cwd, {
@@ -743,6 +752,9 @@ export async function queryIndex(
         dependents: [],
       };
       matchedById.set(result.path, result.matched);
+      if (result.operational_state) {
+        operationalStateById.set(result.path, result.operational_state);
+      }
       return { entry, score: result.score };
     });
   } else if (params.text && params.fulltext) {
@@ -792,6 +804,11 @@ export async function queryIndex(
         title: r.entry.title,
         score: Math.round(r.score * 100) / 100,
         summary: r.entry.summary,
+        ...(operationalStateById.has(r.entry.path)
+          ? { operational_state: operationalStateById.get(r.entry.path) }
+          : r.entry.operationalState
+            ? { operational_state: operationalStateQueryProjection(r.entry.operationalState) }
+            : {}),
         ...(params.fulltext ? { matched: matchedById.get(r.entry.path) ?? [] } : {}),
       })),
       total: results.length,
@@ -859,7 +876,7 @@ const DEFAULT_CAPABILITY_GRAPHS: GraphType[] = ['project', 'user', 'framework'];
 
 function projectAllowsUserIndices(cwd: string): boolean {
   try {
-    const configPath = path.join(cwd, '.aiwg', 'aiwg.config');
+    const configPath = projectAiwgPath(cwd, 'aiwg.config');
     if (!fs.existsSync(configPath)) return true;
     const parsed = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as Record<string, unknown>;
     const index = parsed.index as Record<string, unknown> | undefined;
@@ -1354,6 +1371,9 @@ function resolveMetadataPath(cwd: string, aiwgRoot: string | null, entry: Metada
   }
   if ((entry as ProvenancedEntry).indexScope === 'user' && normalizedPath.startsWith('~/.aiwg/')) {
     return path.join(process.env.HOME ?? '', normalizedPath.slice(2));
+  }
+  if (normalizedPath.startsWith('.aiwg/')) {
+    return projectAiwgPath(cwd, normalizedPath.slice('.aiwg/'.length));
   }
   return path.join(cwd, normalizedPath);
 }

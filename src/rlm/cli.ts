@@ -19,6 +19,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { projectAiwgPath } from '../config/project-artifacts.js';
 
 /**
  * Resolve the effective `--parallel` / `--max-parallel` value for RLM CLI
@@ -573,7 +574,7 @@ async function handleRlmStatus(args: string[]): Promise<void> {
 
   // Look for RLM state files
   const statePaths = [
-    path.join(process.cwd(), '.aiwg', 'ralph', 'rlm-state.json'),
+    projectAiwgPath(process.cwd(), 'ralph', 'rlm-state.json'),
     path.join(process.cwd(), '.rlm-prep', 'index.json'),
   ];
 
@@ -620,7 +621,7 @@ async function handleRlmStatus(args: string[]): Promise<void> {
   }
 
   if (showCost) {
-    const costFile = path.join(process.cwd(), '.aiwg', 'ralph', 'rlm-cost.json');
+    const costFile = projectAiwgPath(process.cwd(), 'ralph', 'rlm-cost.json');
     if (fs.existsSync(costFile)) {
       const cost = JSON.parse(fs.readFileSync(costFile, 'utf-8'));
       console.log('');

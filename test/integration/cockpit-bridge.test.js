@@ -6,9 +6,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { WebSocket } from 'ws';
 import { createExecutor } from '../../apps/cockpit/mock-executor/src/server.mjs';
 import { createBridge, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, fetchJsonFirst } from '../../apps/cockpit/bridge/src/server.mjs';
 
@@ -105,7 +107,7 @@ describe('cockpit Bridge — control surface', () => {
     expect(run.running[0]).toHaveProperty('runtime_posture');
     expect(run.running[0]).toHaveProperty('transport');
     const s = await (await f('/api/sessions?instance=550e8400-e29b-41d4-a716-446655440000')).json();
-    expect(s.sessions.find((x) => x.id === 'demo-shell')?.attach_url).toMatch(/^ws:\/\/.*\/attach$/);
+    expect(s.sessions.find((x) => x.id === 'demo-shell')?.attach_url).toMatch(/^ws:\/\/.*\/api\/pty\/agents\/.*\/attach\/[A-Za-z0-9_-]+$/);
     expect(s.sessions.find((x) => x.id === 'demo-shell')).toMatchObject({ session_class: 'direct', session_backend: 'native', role_policy: 'observe-default' });
   });
 
@@ -123,7 +125,7 @@ describe('cockpit Bridge — control surface', () => {
   it('creates sessions with sandbox-advertised direct or managed backend selection', async () => {
     const id = '550e8400-e29b-41d4-a716-446655440000';
     const created = await (await f(`/api/instances/${id}/sessions?mode=managed&backend=tmux`, { method: 'POST' })).json();
-    expect(created.attach_url).toMatch(/^ws:\/\/.*\/attach$/);
+    expect(created.attach_url).toMatch(/^ws:\/\/.*\/api\/pty\/agents\/.*\/attach\/[A-Za-z0-9_-]+$/);
     expect(created.session_name).toMatch(/^cockpit-/);
     // Multi-session per instance: a second create is a NEW session (unique
     // per-request name), never a silent reuse of the first (#1749 follow-up to
@@ -311,6 +313,152 @@ describe('cockpit Bridge — mock executor guard', () => {
   });
 });
 
+describe('cockpit Bridge — protected executor identity', () => {
+  const authDir = join(process.cwd(), '.aiwg', 'tmp-cockpit-executor-auth-test');
+  const adminTokenFile = join(authDir, 'admin.token');
+  const operatorTokenFile = join(authDir, 'operator.token');
+  const wrongTokenFile = join(authDir, 'wrong.token');
+  const invalidTokenFile = join(authDir, 'invalid.token');
+  const missingTokenFile = join(authDir, 'missing.token');
+  const looseTokenFile = join(authDir, 'loose.token');
+  let upstream, protectedBridge, protectedBase, protectedToken;
+  let attachAuthorization = '';
+  let expectedAdminToken = 'synthetic-admin-v1';
+
+  beforeAll(async () => {
+    await rm(authDir, { recursive: true, force: true });
+    await mkdir(authDir, { recursive: true, mode: 0o700 });
+    await writeFile(adminTokenFile, `${expectedAdminToken}\n`, { mode: 0o600 });
+    await writeFile(operatorTokenFile, 'synthetic-operator\n', { mode: 0o600 });
+    await writeFile(wrongTokenFile, 'synthetic-wrong\n', { mode: 0o600 });
+    await writeFile(invalidTokenFile, 'synthetic-one\nsynthetic-two\n', { mode: 0o600 });
+    await writeFile(looseTokenFile, 'synthetic-loose\n', { mode: 0o644 });
+    upstream = http.createServer((req, res) => {
+      const url = new URL(req.url, 'http://127.0.0.1');
+      const send = (status, body) => {
+        res.writeHead(status, { 'content-type': 'application/json' });
+        res.end(JSON.stringify(body));
+      };
+      if (url.pathname === '/health') return send(200, { status: 'ok', name: 'protected-executor' });
+      const bearer = String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
+      if (!bearer || ![expectedAdminToken, 'synthetic-operator'].includes(bearer)) {
+        return send(401, { error: 'missing_or_invalid_operator_token' });
+      }
+      if (bearer === 'synthetic-operator' && url.pathname.includes('/admin/')) {
+        return send(403, { error: 'admin_role_required' });
+      }
+      if (url.pathname === '/admin/instances') {
+        return send(200, { instances: [{ id: 'protected-host', runtime: 'host', state: 'running', agent_ready: true }] });
+      }
+      if (url.pathname === '/api/v1/agents') {
+        return send(200, { agents: [{ id: 'protected-agent', instance_id: 'protected-host', status: 'Ready' }] });
+      }
+      if (url.pathname === '/agents/protected-host/sessions' || url.pathname === '/api/v1/agents/protected-agent/sessions') {
+        return send(200, { sessions: [{
+          id: 'protected-session',
+          instance_id: 'protected-host',
+          attach_url: `ws://127.0.0.1:${upstream.address().port}/agents/protected-host/sessions/protected-session/attach`,
+        }] });
+      }
+      return send(404, { error: 'not_found' });
+    });
+    upstream.on('upgrade', (req, socket) => {
+      attachAuthorization = String(req.headers.authorization ?? '');
+      if (attachAuthorization !== `Bearer ${expectedAdminToken}`) {
+        socket.end('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
+        return;
+      }
+      const accept = createHash('sha1')
+        .update(`${req.headers['sec-websocket-key']}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`)
+        .digest('base64');
+      socket.write([
+        'HTTP/1.1 101 Switching Protocols',
+        'Upgrade: websocket',
+        'Connection: Upgrade',
+        `Sec-WebSocket-Accept: ${accept}`,
+        'Sec-WebSocket-Protocol: pty-ws.v1',
+        '',
+        '',
+      ].join('\r\n'));
+    });
+    await new Promise((resolve) => upstream.listen(0, '127.0.0.1', resolve));
+    protectedBridge = createBridge({
+      executorUrl: `http://127.0.0.1:${upstream.address().port}`,
+      executorTokenFile: adminTokenFile,
+    });
+    await new Promise((resolve) => protectedBridge.listen(0, '127.0.0.1', resolve));
+    protectedBase = `http://127.0.0.1:${protectedBridge.address().port}`;
+    protectedToken = protectedBridge.cockpitToken;
+  });
+
+  afterAll(async () => {
+    protectedBridge?.close();
+    upstream?.close();
+    await rm(authDir, { recursive: true, force: true });
+  });
+
+  const protectedFetch = (path, options = {}) => fetch(protectedBase + path, {
+    ...options,
+    headers: { ...(options.headers || {}), authorization: `Bearer ${protectedToken}` },
+  });
+
+  it('keeps the executor bearer in the Bridge for REST and PTY requests', async () => {
+    const inventory = await protectedFetch('/api/inventory');
+    expect(inventory.status).toBe(200);
+    expect(await inventory.json()).toMatchObject({ count: 1, instances: [expect.objectContaining({ id: 'protected-host' })] });
+
+    const sessions = await (await protectedFetch('/api/sessions?instance=protected-host')).json();
+    expect(sessions.sessions[0].attach_url).toMatch(new RegExp(`^ws://127\\.0\\.0\\.1:${protectedBridge.address().port}/api/pty/agents/`));
+    expect(sessions.sessions[0].attach_url).not.toContain(expectedAdminToken);
+
+    const cockpitProtocol = `cockpit.${Buffer.from(protectedToken).toString('base64url')}`;
+    const ws = new WebSocket(sessions.sessions[0].attach_url, ['pty-ws.v1', cockpitProtocol]);
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('protected PTY proxy did not open')), 3_000);
+      ws.addEventListener('open', () => { clearTimeout(timer); resolve(); }, { once: true });
+      ws.addEventListener('error', () => { clearTimeout(timer); reject(new Error('protected PTY proxy failed')); }, { once: true });
+    });
+    expect(attachAuthorization).toBe(`Bearer ${expectedAdminToken}`);
+    ws.close();
+  });
+
+  it('reloads a rotated file token without restarting the Bridge', async () => {
+    expectedAdminToken = 'synthetic-admin-v2';
+    await writeFile(adminTokenFile, `${expectedAdminToken}\n`, { mode: 0o600 });
+    const inventory = await protectedFetch('/api/inventory');
+    expect(inventory.status).toBe(200);
+  });
+
+  it('preserves upstream 401/403 and rejects an over-broad credential file', async () => {
+    const cases = [
+      { file: wrongTokenFile, status: 401, error: 'executor_unauthenticated' },
+      { file: operatorTokenFile, status: 403, error: 'executor_forbidden' },
+      { file: missingTokenFile, status: 502, error: 'executor_credential_unavailable' },
+      { file: invalidTokenFile, status: 502, error: 'executor_credential_invalid' },
+      { file: looseTokenFile, status: 502, error: 'executor_credential_permissions' },
+    ];
+    for (const testCase of cases) {
+      const candidate = createBridge({
+        executorUrl: `http://127.0.0.1:${upstream.address().port}`,
+        executorTokenFile: testCase.file,
+      });
+      await new Promise((resolve) => candidate.listen(0, '127.0.0.1', resolve));
+      try {
+        const response = await fetch(`http://127.0.0.1:${candidate.address().port}/api/inventory`, {
+          headers: { authorization: `Bearer ${candidate.cockpitToken}` },
+        });
+        expect(response.status).toBe(testCase.status);
+        const body = await response.json();
+        expect(body.error).toBe(testCase.error);
+        expect(JSON.stringify(body)).not.toContain('synthetic-');
+        expect(JSON.stringify(body)).not.toContain(testCase.file);
+      } finally {
+        candidate.close();
+      }
+    }
+  });
+});
+
 describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
   let upstream, compatBridge, compatBase, compatToken;
   beforeAll(async () => {
@@ -474,7 +622,7 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     expect(sessions.sessions[0].session_class).toBe('managed');
     // #1671: the fallback-built attach_url keys the agent segment by the instance
     // id, never the resolved agent name (agent-v2-host-1), which the route rejects.
-    expect(sessions.sessions[0].attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-v2\/attach$/);
+    expect(sessions.sessions[0].attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/api\/pty\/agents\/v2-host-1\/sessions\/sess-v2\/attach\/[A-Za-z0-9_-]+$/);
     expect(sessions.sessions[0].attach_url).not.toContain('agent-v2-host-1');
 
     const screen = await (await cf('/api/instances/v2-host-1/sessions/sess-v2/screen')).json();
@@ -491,7 +639,7 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     });
     // Deterministic prefix + per-request nonce (multi-session per instance).
     expect(created.requested.session_name).toMatch(/^cockpit-v2-host-1-managed-tmux-[0-9a-f]{6}$/);
-    expect(created.attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/agents\/v2-host-1\/sessions\/sess-created-v1\/attach$/);
+    expect(created.attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/api\/pty\/agents\/v2-host-1\/sessions\/sess-created-v1\/attach\/[A-Za-z0-9_-]+$/);
   });
 
   it('caches agent-list resolution across session polls (#1747)', async () => {

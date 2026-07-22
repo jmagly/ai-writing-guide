@@ -20,6 +20,12 @@ import { execFileSync } from 'child_process';
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
 const DEPLOY_SCRIPT = path.join(REPO_ROOT, 'tools/agents/deploy-agents.mjs');
+const ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+  'AIWG_PROJECT_LOCAL_PATHS',
+] as const;
 
 interface Env {
   projectDir: string;
@@ -87,7 +93,7 @@ function runDeploy(env: Env, provider: string, extra: string[] = []): { stdout: 
   try {
     const stdout = execFileSync(process.execPath, args, {
       cwd: REPO_ROOT,
-      env: { ...process.env, HOME: env.homeDir, USERPROFILE: env.homeDir },
+      env: projectLocalTestEnv(env),
       encoding: 'utf-8',
       timeout: 120_000,
     });
@@ -95,6 +101,12 @@ function runDeploy(env: Env, provider: string, extra: string[] = []): { stdout: 
   } catch (e: any) {
     return { stdout: (e.stdout || '') + (e.stderr || ''), status: e.status ?? 1 };
   }
+}
+
+function projectLocalTestEnv(env: Env): NodeJS.ProcessEnv {
+  const childEnv: NodeJS.ProcessEnv = { ...process.env, HOME: env.homeDir, USERPROFILE: env.homeDir };
+  for (const key of ARTIFACT_ENV_KEYS) delete childEnv[key];
+  return childEnv;
 }
 
 function cleanup(env: Env): void {
@@ -211,7 +223,7 @@ describe('project-local deploy integration (#1046)', () => {
       // AIWG_ROOT unset + --source under the project's .aiwg/ tree means
       // computeAllKernelNames walks up from the bundle path, finds no
       // agentic/code/{frameworks,addons}, and returns null → prune skipped.
-      const cleanEnv: NodeJS.ProcessEnv = { ...process.env, HOME: env.homeDir, USERPROFILE: env.homeDir };
+      const cleanEnv = projectLocalTestEnv(env);
       delete cleanEnv.AIWG_ROOT;
       out = execFileSync(process.execPath, args, {
         cwd: REPO_ROOT,
@@ -298,10 +310,8 @@ describe('project-local deploy integration (#1046)', () => {
         {
           cwd: env.projectDir,
           env: {
-            ...process.env,
+            ...projectLocalTestEnv(env),
             AIWG_ROOT: REPO_ROOT,
-            HOME: env.homeDir,
-            USERPROFILE: env.homeDir,
           },
           encoding: 'utf-8',
           timeout: 180_000,

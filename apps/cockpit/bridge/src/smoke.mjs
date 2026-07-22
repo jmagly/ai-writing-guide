@@ -7,7 +7,8 @@ import { createBridge, normalizeSessionRows } from './server.mjs';
 
 const mock = createExecutor();
 await new Promise((r) => mock.listen(0, '127.0.0.1', r));
-const executorUrl = `http://127.0.0.1:${mock.address().port}`;
+const executorPort = mock.address().port;
+const executorUrl = `http://127.0.0.1:${executorPort}`;
 
 const bridge = createBridge({ executorUrl, allowMockExecutor: true });
 await new Promise((r) => bridge.listen(0, '127.0.0.1', r));
@@ -35,6 +36,16 @@ try {
   for (const k of ['id', 'runtime', 'loadout', 'state', 'tenant', 'card_url', 'runtime_posture', 'host_daemon', 'transport', 'launch_context', 'session_backends']) assert.ok(k in i0, `field ${k}`);
   assert.ok(['vm', 'container', 'host', 'wasm-edge'].includes(i0.runtime), 'runtime kind');
 
+  // A transient executor outage must not poison Bridge state or require a
+  // Bridge restart. Every poll is a fresh upstream request, so the same Bridge
+  // reports the gap and resumes inventory as soon as the executor returns.
+  await new Promise((resolve) => mock.close(resolve));
+  assert.equal((await f('/api/inventory')).status, 502, 'transient executor drop -> 502');
+  await new Promise((resolve) => mock.listen(executorPort, '127.0.0.1', resolve));
+  const recoveredInventory = await f('/api/inventory');
+  assert.equal(recoveredInventory.status, 200, 'same Bridge resumes after executor returns');
+  assert.equal((await recoveredInventory.json()).count, 4, 'recovered inventory is complete');
+
   // running board: seeded working tasks on the running instances
   const rr = await f("/api/running");
   assert.equal(rr.status, 200, 'running 200');
@@ -44,13 +55,13 @@ try {
   for (const k of ['runtime_posture', 'transport']) assert.ok(k in run.running[0], `running posture field ${k}`);
   assert.equal(run.running[0].state, 'working', 'running task is working');
 
-  // sessions: the demo pty session is listed with a direct ws attach_url
+  // sessions: the demo pty session is listed with a Bridge-owned ws attach_url
   const sr = await f("/api/sessions?instance=550e8400-e29b-41d4-a716-446655440000");
   assert.equal(sr.status, 200, 'sessions 200');
   const sess = await sr.json();
   const demo = sess.sessions.find((s) => s.id === 'demo-shell');
   assert.ok(demo, 'demo-shell session present');
-  assert.match(demo.attach_url, /^ws:\/\/.*\/agents\/.*\/sessions\/demo-shell\/attach$/, 'ws attach_url shape');
+  assert.match(demo.attach_url, /^ws:\/\/.*\/api\/pty\/agents\/.*\/sessions\/demo-shell\/attach\/[A-Za-z0-9_-]+$/, 'ws attach_url shape');
   assert.ok(demo.liveness.replay_newest_seq >= 3, 'demo session has a seeded transcript');
   assert.equal(demo.session_class, 'direct', 'demo session class');
   assert.equal(demo.session_backend, 'native', 'demo session backend');
@@ -168,7 +179,7 @@ try {
   // start a session (onboarding primary verb): create + issue a ws attach_url
   const started = await (await f('/api/instances/550e8400-e29b-41d4-a716-446655440000/sessions', { method: 'POST' })).json();
   assert.match(started.id ?? '', /^sess-/, 'start-session returns a new session id');
-  assert.match(started.attach_url ?? '', /\/sessions\/sess-[^/]+\/attach$/, 'start-session issues a ws attach_url');
+  assert.match(started.attach_url ?? '', /\/sessions\/sess-[^/]+\/attach\/[A-Za-z0-9_-]+$/, 'start-session issues a proxied ws attach_url');
 
   // app shell served with the per-launch token injected (React build if present, else
   // the legacy fallback — both carry the title + token)

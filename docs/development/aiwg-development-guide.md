@@ -195,16 +195,27 @@ Do not place framework components (schemas, templates, agent definitions) in `.a
 
 ### `.aiwg/` Tracking and Distribution
 
-`.aiwg/` is tracked in git for version history and CI availability, but excluded from distribution channels:
+User projects still use `.aiwg/` as project-local AIWG memory. AIWG's own
+public product repository no longer tracks its full `.aiwg` corpus directly;
+that corpus lives in the private `roctinam/aiwg-web-release-ops` repo at
+`corpus/.aiwg/`.
 
 | Channel | `.aiwg/` included? | Mechanism |
 |---------|-------------------|-----------|
-| **git** | Yes (tracked) | Removed from `.gitignore` |
+| **public git** | No | `.gitignore` ignores `.aiwg/` and `.aiwg-location` |
+| **private git** | Yes | `roctinam/aiwg-web-release-ops/corpus/.aiwg` |
 | **npm** | No | `package.json` `files` allowlist + `.npmignore` |
 | **edge** (`aiwg --use-main`) | No | Git sparse checkout excludes `.aiwg/` |
-| **dev** (`aiwg --use-dev`) | Yes | Full local repo |
+| **dev** (`aiwg --use-dev`) | Optional | Use `aiwg artifacts move --to ../aiwg-web-release-ops/corpus/.aiwg` for durable local relocation, or `AIWG_ARTIFACTS_PATH=...` for one shell |
 
-**Ephemeral subdirectories** (not tracked in git):
+See [Private AIWG Corpus](./private-aiwg-corpus.md) for maintainer setup.
+
+`aiwg artifacts move --to <path>` writes `.aiwg-location`, updates local
+bindings, rebuilds the project index, and syncs the Fortemi Core static cache.
+`AIWG_ARTIFACTS_PATH` still wins over the pointer file for per-call or per-shell
+overrides.
+
+**Ephemeral subdirectories** in ordinary project `.aiwg` roots:
 - `.aiwg/working/` — temporary files
 - `.aiwg/.index/` — generated index (rebuilt by `aiwg index build`)
 - `.aiwg/ralph/archive/` — session logs

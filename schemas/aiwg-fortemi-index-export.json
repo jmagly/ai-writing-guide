@@ -166,6 +166,9 @@
           },
           {
             "required": ["provenance_events"]
+          },
+          {
+            "required": ["operational_state"]
           }
         ]
       },
@@ -621,10 +624,39 @@
             }
           }
         },
+        "operational_state": {
+          "$ref": "#/$defs/operationalState"
+        },
         "updated_at": {
           "type": "string",
           "format": "date-time"
         }
+      }
+    },
+    "operationalState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification"],
+      "properties": {
+        "source_repo": { "type": "string", "minLength": 1 },
+        "source_kind": { "type": "string", "minLength": 1 },
+        "source_id": { "type": "string", "minLength": 1 },
+        "observed_state": { "type": "string", "minLength": 1 },
+        "observed_at": { "type": "string", "format": "date-time" },
+        "source_updated_at": { "type": "string", "format": "date-time" },
+        "evidence_url": { "type": "string", "format": "uri" },
+        "evidence_path": { "type": "string", "minLength": 1 },
+        "observer": { "type": "string", "minLength": 1 },
+        "supersedes": { "$ref": "#/$defs/stringArray" },
+        "contradicts": { "$ref": "#/$defs/stringArray" },
+        "stale_after": { "type": "string", "format": "date-time" },
+        "classification": {
+          "enum": ["fresh", "historical", "superseded", "contradicted", "needs-source"]
+        },
+        "confidence": {
+          "enum": ["source", "candidate", "reviewed", "rejected"]
+        },
+        "current_action_selector": { "type": "boolean" }
       }
     }
   }

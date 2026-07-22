@@ -39,7 +39,10 @@
     "overview/what-is-aiwg",
     "overview/executive-brief",
     "getting-started/prerequisites",
+    "install",
     "security/supply-chain-hardening",
+    "install/web-backed-resources",
+    "install/non-interactive",
     "quickstart",
     "intake-guide",
     "regenerate-guide",
@@ -512,6 +515,27 @@
       "summary": "System requirements and setup",
       "file": "getting-started/prerequisites.md",
       "parent": "getting-started"
+    },
+    {
+      "id": "install",
+      "title": "Install",
+      "summary": "Installation and deployment modes",
+      "collapsed": true,
+      "parent": "getting-started"
+    },
+    {
+      "id": "install/web-backed-resources",
+      "title": "Web-Backed Resources",
+      "summary": "Planned release-host resource mode for AIWG bundles",
+      "file": "install/web-backed-resources.md",
+      "parent": "install"
+    },
+    {
+      "id": "install/non-interactive",
+      "title": "Non-Interactive Installation",
+      "summary": "Deploy AIWG frameworks from CI, cloud-init, and provisioning scripts",
+      "file": "install/non-interactive.md",
+      "parent": "install"
     },
     {
       "id": "security/supply-chain-hardening",

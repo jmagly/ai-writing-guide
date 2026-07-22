@@ -213,6 +213,42 @@ Switch back to stable (npm releases).
 aiwg --use-stable
 ```
 
+## Planned: Web-Backed Resources
+
+AIWG is planning an opt-in mode where the npm package can carry only CLI
+tooling while AIWG resource bundles resolve through the CLI from local paths or
+versioned release-host web resources such as `releases.aiwg.io`.
+
+```bash
+aiwg versions list
+aiwg versions show stable
+aiwg versions resolve '^2026.7.0'
+
+aiwg discover "architecture evolution" --resource-source web --aiwg-version stable
+aiwg use sdlc --resource-source auto --aiwg-version 2026.7.15
+aiwg use sdlc --offline
+```
+
+This feature is not implemented yet. See
+[Web-Backed AIWG Resources](./install/web-backed-resources.md) for the planned
+operator contract, version selectors, and safety model.
+
+Maintainer checkouts can already relocate the project AIWG artifact directory
+with the project pointer file written by the CLI:
+
+```bash
+aiwg artifacts move --to ../aiwg-web-release-ops/corpus/.aiwg
+```
+
+The command moves the configured artifact root, writes `.aiwg-location`,
+updates `.gitignore` for the local pointer, rebuilds the project index, and
+syncs the Fortemi Core static cache. For one-off sessions,
+`AIWG_ARTIFACTS_PATH` can still point at an absolute, project-relative, or
+`~/`-relative artifact directory and takes precedence over `.aiwg-location`.
+
+For AIWG's own repository, this is the supported bridge to the private SDLC
+corpus. See [Private AIWG Corpus](./development/private-aiwg-corpus.md).
+
 ## Maintenance
 
 ### -version

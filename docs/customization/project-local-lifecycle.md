@@ -16,6 +16,31 @@ types over their full lifetime: discovery → deploy or provider selection
 └── quickref.json       # Canonical project orientation definition (optional)
 ```
 
+The logical `.aiwg/` root is resolved through the same project artifact
+configuration as the rest of AIWG. If the project has `.aiwg-location` or
+`AIWG_ARTIFACTS_PATH`, discovery, scaffolding, quickref generation, registry
+bindings, and reindexing follow that configured directory instead of assuming
+`<project>/.aiwg`.
+
+Operators can add extra bundle roots for team/private extensions without
+moving the main project corpus:
+
+```json
+{
+  "version": "1",
+  "providers": ["claude"],
+  "installed": {},
+  "scripts": {},
+  "projectLocal": {
+    "searchPaths": ["../team-aiwg-bundles", "~/aiwg-private-bundles"]
+  }
+}
+```
+
+Each additional search root uses the same child layout (`addons/`,
+`extensions/`, `frameworks/`, `plugins/`, `providers/`). For one-off operator
+sessions, set `AIWG_PROJECT_LOCAL_PATHS` to a platform-delimited list of roots.
+
 Each `<id>/` contains a `manifest.json`. Artifact-bearing bundles also
 contain artifacts (skills/, rules/, agents/, commands/). Provider bundles
 are metadata-only in phase 0: `providerConfig.extends` selects an existing
@@ -46,9 +71,10 @@ copy, not a migration.
 ## Discovery
 
 `aiwg use`, `aiwg doctor`, and `aiwg list --project-local` all run the
-same discovery scanner. It walks `.aiwg/{extensions,addons,frameworks}/`
-for content bundles, `.aiwg/plugins/` for marketplace delivery wrappers,
-and `.aiwg/providers/` for custom provider definitions. It validates each
+same discovery scanner. It walks the configured artifact root plus any
+`projectLocal.searchPaths` / `AIWG_PROJECT_LOCAL_PATHS` roots for
+`{extensions,addons,frameworks,plugins,providers}/<id>/manifest.json`.
+It validates each
 `manifest.json` against the canonical Zod schema and returns structured
 results.
 

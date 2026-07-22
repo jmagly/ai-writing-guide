@@ -31,6 +31,7 @@ import {
 } from 'fs';
 import { getProviderConfig } from '../agent-spawn.js';
 import { AiwgError, EXIT_CODES } from '../errors.js';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 
 /**
  * Options for launching an external agent loop
@@ -111,7 +112,7 @@ export function getOrchestratorPath(frameworkRoot: string): string {
  * Get the registry directory path
  */
 export function getRegistryDir(projectRoot: string): string {
-  return join(projectRoot, '.aiwg', 'ralph-external');
+  return projectAiwgPath(projectRoot, 'ralph-external');
 }
 
 /**
@@ -704,7 +705,7 @@ export function cleanupInternalRalph(projectRoot: string): {
   cleaned: string[];
   preserved: string[];
 } {
-  const ralphDir = join(projectRoot, '.aiwg', 'ralph');
+  const ralphDir = projectAiwgPath(projectRoot, 'ralph');
   const cleaned: string[] = [];
   const preserved: string[] = [];
 
