@@ -14,6 +14,7 @@ import {
   USER_SCOPE_PATHS,
   mirrorSkillsToUserScope,
   mirrorToUserScope,
+  mirrorSkillDirsToUserScope,
   rejectOpenClawProjectScope,
 } from '../../../src/cli/scope-resolver.js';
 
@@ -223,6 +224,64 @@ describe('mirrorToUserScope (#1156)', () => {
     expect(r.commands.count).toBe(1);
     expect(r.agents.entries).toEqual([]);
     expect(r.rules.entries).toEqual([]);
+  });
+});
+
+describe('mirrorSkillDirsToUserScope', () => {
+  let tmpRoot: string;
+
+  beforeEach(async () => {
+    tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-scope-kernel-mirror-'));
+  });
+
+  afterEach(async () => {
+    await fs.rm(tmpRoot, { recursive: true, force: true });
+  });
+
+  it('makes kernel skills available when the standard skill mirror is empty', async () => {
+    const standard = path.join(tmpRoot, 'project', '.claude', '.aiwg', 'skills');
+    const kernel = path.join(tmpRoot, 'project', '.claude', 'skills');
+    const target = path.join(tmpRoot, 'home', '.claude', 'skills');
+    await fs.mkdir(standard, { recursive: true });
+    await fs.mkdir(path.join(kernel, 'aiwg-status'), { recursive: true });
+    await fs.writeFile(path.join(kernel, 'aiwg-status', 'SKILL.md'), '# status\n', 'utf-8');
+
+    const result = await mirrorSkillDirsToUserScope([standard, kernel], target);
+
+    expect(result).toEqual({
+      count: 1,
+      targetDir: target,
+      entries: ['aiwg-status'],
+    });
+    expect(await fs.readFile(path.join(target, 'aiwg-status', 'SKILL.md'), 'utf-8')).toBe('# status\n');
+  });
+
+  it('merges standard and kernel skills and counts duplicate names once', async () => {
+    const standard = path.join(tmpRoot, 'standard');
+    const kernel = path.join(tmpRoot, 'kernel');
+    const target = path.join(tmpRoot, 'user-skills');
+    await fs.mkdir(path.join(standard, 'shared'), { recursive: true });
+    await fs.mkdir(path.join(standard, 'standard-only'), { recursive: true });
+    await fs.mkdir(path.join(kernel, 'shared'), { recursive: true });
+    await fs.mkdir(path.join(kernel, 'kernel-only'), { recursive: true });
+    await fs.writeFile(path.join(standard, 'shared', 'SKILL.md'), 'standard\n', 'utf-8');
+    await fs.writeFile(path.join(kernel, 'shared', 'SKILL.md'), 'kernel\n', 'utf-8');
+
+    const result = await mirrorSkillDirsToUserScope([standard, kernel], target);
+
+    expect(result.count).toBe(3);
+    expect(result.entries.sort()).toEqual(['kernel-only', 'shared', 'standard-only']);
+    expect(await fs.readFile(path.join(target, 'shared', 'SKILL.md'), 'utf-8')).toBe('kernel\n');
+  });
+
+  it('inventories providers whose kernel source is already the user target', async () => {
+    const target = path.join(tmpRoot, 'home', '.hermes', 'skills');
+    await fs.mkdir(path.join(target, 'aiwg-status'), { recursive: true });
+
+    const result = await mirrorSkillDirsToUserScope([target], target);
+
+    expect(result.count).toBe(1);
+    expect(result.entries).toEqual(['aiwg-status']);
   });
 });
 

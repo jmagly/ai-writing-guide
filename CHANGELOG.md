@@ -28,6 +28,23 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   exact-or-channel `--aiwg-version`, and `--offline`; web mode uses signed
   release manifests plus `@fortemi/core` query against the v2 export, while `show`
   caches verified resource bodies for warm offline reads.
+- **Supported installed-package API and conformance gate** (#1853) — package
+  consumers can import the CLI router and signed resource helpers from `aiwg`
+  or `aiwg/resources`. The packed-install regression exercises that public API,
+  the real installed CLI, legacy configuration, local packaged resources,
+  signed web search/show, and warm offline cache behavior.
+- **No-project global bootstrap** (#1872) —
+  `aiwg use <framework> --provider <name> --global` installs framework and
+  kernel assets into verified provider user paths while generating only
+  lightweight context/bootstrap files in the current project. The existing
+  `--scope user` behavior remains an additive project-plus-user mirror.
+
+### Fixed
+
+- **Concurrent package index generation** — Fortemi prebuilt builds now use a
+  cross-process lock and publish complete generations through a staged swap,
+  preventing concurrent npm packaging from capturing a missing or partial
+  framework index.
 
 ## [2026.7.16] - 2026-07-21 - "Workspace context and provider orchestration"
 

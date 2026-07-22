@@ -46,7 +46,12 @@ import {
 } from '../../extensions/project-local-activity.js';
 import { hashBundleArtifacts } from '../../extensions/project-local-remove.js';
 import { installAiwgHooks } from '../../extensions/claude-hooks-installer.js';
-import { detectScope, mirrorToUserScope, rejectOpenClawProjectScope } from '../scope-resolver.js';
+import {
+  detectScope,
+  mirrorToUserScope,
+  rejectOpenClawProjectScope,
+  USER_SCOPE_PATHS,
+} from '../scope-resolver.js';
 import { maybeWarnProjectIsolation } from '../project-isolation/index.js';
 import {
   formatWorkspaceSignalPlan,
@@ -1586,6 +1591,69 @@ function removeFirstPositional(args: string[]): string[] {
   return result;
 }
 
+function removeGlobalBootstrapFlags(args: string[]): string[] {
+  const result: string[] = [];
+  const valueFlags = new Set(['--provider', '--platform', '--providers', '--scope', '--target', '--prefix']);
+  const booleanFlags = new Set([
+    '--global', '--user', '--ci-hooks-enabled', '--no-project-local',
+    '--no-context-files', '--no-hooks', '--no-workspace-signals',
+  ]);
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (valueFlags.has(arg)) {
+      i += 1;
+      continue;
+    }
+    if (booleanFlags.has(arg)) continue;
+    result.push(arg);
+  }
+  return result;
+}
+
+function configuredGlobalProviders(
+  args: string[],
+  config: Awaited<ReturnType<typeof readAiwgConfig>>,
+): string[] {
+  const providerIdx = args.findIndex((arg) => arg === '--provider' || arg === '--platform');
+  if (providerIdx >= 0 && args[providerIdx + 1]) return [args[providerIdx + 1]];
+  const providersIdx = args.indexOf('--providers');
+  if (providersIdx >= 0 && args[providersIdx + 1]) {
+    const value = args[providersIdx + 1];
+    return value === 'default'
+      ? ['claude']
+      : [...new Set(value.split(',').map((provider) => provider.trim()).filter(Boolean))];
+  }
+  return config?.providers?.length ? [...new Set(config.providers)] : ['claude'];
+}
+
+async function generateGlobalProjectContext(opts: {
+  provider: string;
+  projectPath: string;
+  args: string[];
+}): Promise<void> {
+  const userPaths = USER_SCOPE_PATHS[opts.provider];
+  if (!userPaths) return;
+  const skipContext = opts.args.includes('--no-context-files');
+  const sections = await discoverDeployedArtifacts(opts.projectPath, {
+    agents: userPaths.agents,
+    rules: userPaths.rules,
+    skills: userPaths.skills,
+    behaviors: userPaths.behaviors,
+  });
+  await generateContextFiles({
+    provider: opts.provider as Platform,
+    projectPath: opts.projectPath,
+    sections,
+    detectExistingFiles: true,
+    force: opts.args.includes('--force-context-files'),
+    skip: {
+      workspaceMd: skipContext || opts.args.includes('--no-workspace-md'),
+      aiwgMd: skipContext || opts.args.includes('--no-aiwg-md'),
+      agentsMd: skipContext || opts.args.includes('--no-agents-md'),
+    },
+  });
+}
+
 async function deploySourceDirectory(opts: {
   ctx: HandlerContext;
   frameworkRoot: string;
@@ -1627,7 +1695,7 @@ async function deploySourceDirectory(opts: {
 export class UseHandler implements CommandHandler {
   id = 'use';
   name = 'Use Framework';
-  description = 'Deploy AIWG framework to current project';
+  description = 'Deploy AIWG framework to project or user scope';
   category = 'framework' as const;
   aliases: string[] = [];
 
@@ -1675,6 +1743,73 @@ export class UseHandler implements CommandHandler {
     if (prefixIdx >= 0 && remainingArgs[prefixIdx + 1]) {
       // Rewrite --prefix to --target for downstream compatibility
       remainingArgs[prefixIdx] = '--target';
+    }
+
+    // Global bootstrap deliberately avoids a persistent project artifact
+    // deployment. Build the normal provider output in an isolated staging
+    // directory, let the established user-scope mirror/registry path consume
+    // it, then discard the stage and emit only lightweight project context.
+    // `--scope user` remains additive for compatibility; `--global` is the
+    // explicit no-project-deploy contract.
+    if (remainingArgs.includes('--global')) {
+      const scopeIdx = remainingArgs.indexOf('--scope');
+      if (scopeIdx >= 0 && remainingArgs[scopeIdx + 1] === 'project') {
+        return { exitCode: 1, message: 'Error: --global conflicts with --scope project' };
+      }
+      if (!framework || !VALID_FRAMEWORKS.includes(framework as Framework)) {
+        return {
+          exitCode: 1,
+          message: 'Error: --global currently supports framework targets; addons and project-local bundles require project deployment',
+        };
+      }
+
+      const contextTargetIdx = remainingArgs.indexOf('--target');
+      const contextTarget = path.resolve(
+        contextTargetIdx >= 0 && remainingArgs[contextTargetIdx + 1]
+          ? remainingArgs[contextTargetIdx + 1]
+          : (ctx.cwd || process.cwd()),
+      );
+      const originalConfig = await readAiwgConfig(contextTarget);
+      const providers = configuredGlobalProviders(remainingArgs, originalConfig);
+      const dryRun = remainingArgs.includes('--dry-run');
+      const stageRoot = dryRun
+        ? path.join(os.tmpdir(), 'aiwg-global-bootstrap-dry-run')
+        : await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-global-bootstrap-'));
+
+      try {
+        for (const provider of providers) {
+          const innerArgs = [
+            framework,
+            ...removeGlobalBootstrapFlags(remainingArgs),
+            '--provider', provider,
+            '--scope', 'user',
+            '--target', stageRoot,
+            '--no-project-local',
+            '--no-context-files',
+            '--no-hooks',
+            '--no-workspace-signals',
+          ];
+          const result = await this.execute({ ...ctx, cwd: stageRoot, args: innerArgs });
+          if (result.exitCode !== 0) return result;
+          if (!dryRun) {
+            await fs.mkdir(contextTarget, { recursive: true });
+            await generateGlobalProjectContext({
+              provider: normalizeProviderDefinitionId(provider) ?? provider,
+              projectPath: contextTarget,
+              args: remainingArgs,
+            });
+          }
+        }
+      } finally {
+        if (!dryRun) await fs.rm(stageRoot, { recursive: true, force: true });
+      }
+
+      return {
+        exitCode: 0,
+        message: dryRun
+          ? `Global bootstrap preview complete; project context target: ${contextTarget}`
+          : `Global bootstrap complete; user assets installed and lightweight project context generated at ${contextTarget}`,
+      };
     }
 
     // Project-isolation warning (UC-NUA-002 / SAD §5.1). Fires once per CLI
@@ -2654,6 +2789,7 @@ export class UseHandler implements CommandHandler {
         const projectPaths = {
           agents: resolveProjectPath(paths.agents),
           skills: resolveProjectPath(paths.skills),
+          kernelSkills: resolveProjectPath(getProviderKernelSkillsPath(provider)),
           commands: resolveProjectPath(paths.commands),
           rules: resolveProjectPath(paths.rules),
           behaviors: resolveProjectPath(paths.behaviors),

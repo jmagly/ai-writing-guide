@@ -37,6 +37,7 @@ Complete reference for all `aiwg` CLI commands.
 ## Table of Contents
 
 - [Maintenance Commands](#maintenance-commands)
+- [Programmatic API](#programmatic-api)
 - [Framework Management](#framework-management)
 - [Project Setup](#project-setup)
 - [Workspace Management](#workspace-management)
@@ -70,6 +71,26 @@ Complete reference for all `aiwg` CLI commands.
 > - `aiwg memory` / `aiwg reflections` / `aiwg kb` / `aiwg activity-log` /
 >   `aiwg provenance` / `aiwg research-store` — per-subsystem
 >   `path` / `list` / `get` / `put` / `delete` / `append-log`
+
+---
+
+## Programmatic API
+
+The installed package exports the same router used by the `aiwg` executable,
+plus the signed web-resource helpers. Callers do not need to import private
+paths under `dist/`.
+
+```js
+import { run, resolveWebRelease } from 'aiwg';
+// Resource-only consumers may instead import from 'aiwg/resources'.
+
+await run(['discover', 'requirements'], { cwd: process.cwd() });
+const release = await resolveWebRelease({ version: 'latest' });
+```
+
+`run()` preserves CLI behavior, including terminal output and command exit
+semantics. Use the resource helpers when embedding resolution without CLI
+output.
 
 ---
 
@@ -403,6 +424,12 @@ aiwg use <framework|addon>
 **Options:**
 
 - `--provider <name>` - Target platform (claude, copilot, factory, cursor, windsurf, warp, codex, opencode, hermes, openclaw, openhuman, local)
+- `--scope user` / `--user` - Additively deploy to the project and mirror the
+  artifacts into the provider's user-level discovery paths.
+- `--global` - Install framework and kernel assets into provider user-level
+  discovery paths without retaining a project artifact deployment. The target
+  project receives only lightweight `WORKSPACE.md`, `AIWG.md`, and provider
+  bootstrap files.
 - `--model <name>` - Override model for all tiers (blanket)
 - `--reasoning-model <name>` - Override reasoning tier model (alias: `--reasoning`)
 - `--coding-model <name>` - Override coding tier model (alias: `--coding`)
@@ -436,6 +463,9 @@ being falsely described as pinned.
 ```bash
 # Deploy SDLC framework for Claude Code (default)
 aiwg use sdlc
+
+# Install user-level assets and generate only lightweight project wiring
+aiwg use sdlc --provider claude --global
 
 # Deploy to GitHub Copilot
 aiwg use sdlc --provider copilot
@@ -534,7 +564,8 @@ On first run after the commands-to-skills migration, `aiwg use` detects an exist
 | Scope | How to invoke | Artifact location example (Claude Code) | When it fits |
 |---|---|---|---|
 | **Project (default, recommended)** | `aiwg use sdlc` from a project root | `./.claude/agents/`, `./.claude/skills/` | A specific codebase or project. Per-project agent set; no bleed across unrelated work. |
-| **User / global** | `aiwg use sdlc --scope user` (or in `$HOME`/`/tmp` with no project signals) | `~/.claude/agents/`, `~/.claude/skills/` | "AIWG in every session" preference. Powers users, ad-hoc work, or providers whose primary discovery is user-scope (OpenClaw, Hermes). |
+| **User mirror (additive)** | `aiwg use sdlc --scope user` | Project paths plus `~/.claude/agents/`, `~/.claude/skills/` | Keep a full project deployment while also making the same assets available to other sessions. |
+| **Global bootstrap** | `aiwg use sdlc --provider claude --global` | User paths plus lightweight project bootstrap files | Use native user-level assets without managing a framework deployment in each project. |
 
 **Trade-off (REF-720 cross-bleed).** The same `~/.claude/agents/` directory loads into every Claude Code session, regardless of project. Research from MSR/Salesforce (REF-720, *Lost in Multi-Turn Conversation*, 2025) measured a 39% capability drop when context bleeds across unrelated tasks. Project-scope keeps each project's artifact set isolated; user-scope intentionally trades that isolation for ubiquity. Choose the scope that fits the workflow; neither is wrong, and the project-isolation warning from `aiwg use` surfaces the trade-off at deploy time.
 

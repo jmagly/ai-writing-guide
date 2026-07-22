@@ -111,10 +111,18 @@ Around that core, AIWG ships agent-facing utilities for things the base platform
 
 ### Project scope (recommended) vs user scope (global)
 
-`aiwg use` writes artifacts at one of two scopes. Both are first-class supported:
+`aiwg use` supports project deployments, additive user mirrors, and a
+user-global bootstrap:
 
 - **Project scope** — default. Run `aiwg use sdlc` from a project root and the artifacts land in `./.claude/agents/`, `./.claude/skills/`, etc. One project's agent set never bleeds into another's session. **This is the recommended default for most use cases.**
-- **User scope (global install)** — `aiwg use sdlc --scope user` writes to `~/.claude/agents/`, `~/.claude/skills/`, etc. Same artifact set loads into every session, regardless of project. Fits "AIWG in every conversation" workflows and is the canonical mode for OpenClaw and Hermes (whose primary discovery is user-scope).
+- **User scope (additive mirror)** — `aiwg use sdlc --scope user` keeps the
+  project deployment and mirrors it to `~/.claude/agents/`,
+  `~/.claude/skills/`, etc.
+- **Global bootstrap** — `aiwg use sdlc --provider claude --global` installs
+  framework and kernel assets in native user-level paths while leaving only
+  lightweight context and provider bootstrap files in the current project.
+  Use `aiwg regenerate --provider <name>` to wire additional projects without
+  deploying their own skill copies.
 
 The trade-off is real: when the same agent set loads into every session, context from one project can bleed into reasoning about another. Research (REF-720, *Lost in Multi-Turn Conversation*, MSR/Salesforce 2025) measured a 39% capability drop when this happens. The non-blocking project-isolation warning surfaces the trade-off at deploy time so the scope choice is informed. Neither scope is wrong; pick the one that fits the workflow.
 

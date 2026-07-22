@@ -135,10 +135,9 @@ describe('steward-prep-delivery duplicate helper', () => {
         await delay(20);
       }
 
-      process.kill(-child.pid!, 'SIGTERM');
-
       const exit = await new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve) => {
         child.once('close', (code, signal) => resolve({ code, signal }));
+        process.kill(-child.pid!, 'SIGTERM');
       });
 
       expect(exit.code === 143 || exit.signal === 'SIGTERM').toBe(true);

@@ -7,7 +7,21 @@
     "aiwg": "bin/aiwg.mjs"
   },
   "man": "./man/aiwg.1",
-  "main": "src/cli/index.mjs",
+  "main": "./dist/src/api/index.js",
+  "types": "./dist/src/api/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/api/index.d.ts",
+      "import": "./dist/src/api/index.js",
+      "default": "./dist/src/api/index.js"
+    },
+    "./resources": {
+      "types": "./dist/src/resources/index.d.ts",
+      "import": "./dist/src/resources/index.js",
+      "default": "./dist/src/resources/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "engines": {
     "node": ">=20.0.0"
   },
@@ -84,6 +98,9 @@
     "dist/src/",
     "!dist/**/*.d.ts",
     "!dist/**/*.map",
+    "dist/src/api/index.d.ts",
+    "dist/src/resources/index.d.ts",
+    "dist/src/resources/web-release.d.ts",
     "tools/",
     "!tools/ci/",
     "!tools/contrib/",

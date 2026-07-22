@@ -106,6 +106,7 @@ export function generateHelp(registry: ExtensionRegistry): string {
   // Examples
   lines.push('Examples:');
   lines.push('  aiwg use sdlc                    Install SDLC framework');
+  lines.push('  aiwg use sdlc --global           Install user assets + lightweight project wiring');
   lines.push('  aiwg -new                        Create new project');
   lines.push('  aiwg doctor                      Check installation health');
   lines.push('');

@@ -91,15 +91,28 @@ aiwg status --probe --json
 
 ## Global Or User-Scope Setup
 
-Use user scope only when the user explicitly wants AIWG available across many
-workspaces or the provider guide recommends it:
+Use `--global` when the user wants provider-native AIWG assets across many
+workspaces without a full deployment in every project:
+
+```bash
+cd /path/to/current/project
+aiwg use sdlc --provider claude --global
+aiwg doctor --scope user
+```
+
+This installs framework and base kernel assets at user scope, then writes only
+the lightweight `WORKSPACE.md`/`AIWG.md`/provider bootstrap files in the
+current project. In additional projects, run
+`aiwg regenerate --provider <name>` to create those context-only hooks.
+
+Use `--scope user` instead when an additive project deployment is intentional:
 
 ```bash
 aiwg use sdlc --provider claude --scope user
-aiwg use sdlc --provider codex --scope user
-aiwg use sdlc --provider warp --scope user
-aiwg doctor --scope user
 ```
+
+Consult the provider matrix before using `--global`; providers without a
+filesystem-discovered user scope still need their documented project adapter.
 
 For non-interactive provisioning, target a project directory explicitly:
 

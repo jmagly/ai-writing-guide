@@ -309,7 +309,14 @@ export interface ArtifactMirrorResult {
  */
 export async function mirrorToUserScope(
   provider: string,
-  projectPaths: { agents: string; skills: string; commands: string; rules: string; behaviors: string },
+  projectPaths: {
+    agents: string;
+    skills: string;
+    kernelSkills?: string;
+    commands: string;
+    rules: string;
+    behaviors: string;
+  },
 ): Promise<{
   agents: ArtifactMirrorResult;
   skills: ArtifactMirrorResult;
@@ -324,12 +331,39 @@ export async function mirrorToUserScope(
   }
   const [agents, skills, commands, rules, behaviors] = await Promise.all([
     userPaths.agents ? mirrorArtifactDir(projectPaths.agents, userPaths.agents) : Promise.resolve(empty),
-    userPaths.skills ? mirrorArtifactDir(projectPaths.skills, userPaths.skills) : Promise.resolve(empty),
+    userPaths.skills
+      ? mirrorSkillDirsToUserScope(
+        [projectPaths.skills, projectPaths.kernelSkills ?? ''],
+        userPaths.skills,
+      )
+      : Promise.resolve(empty),
     userPaths.commands ? mirrorArtifactDir(projectPaths.commands, userPaths.commands) : Promise.resolve(empty),
     userPaths.rules ? mirrorArtifactDir(projectPaths.rules, userPaths.rules) : Promise.resolve(empty),
     userPaths.behaviors ? mirrorArtifactDir(projectPaths.behaviors, userPaths.behaviors) : Promise.resolve(empty),
   ]);
   return { agents, skills, commands, rules, behaviors };
+}
+
+/**
+ * Merge standard and kernel skill directories into one user-discoverable
+ * target. Provider deployments intentionally keep those source surfaces
+ * separate, while user scope exposes one native skill root. Duplicate skill
+ * names are overwritten by the later source and counted once.
+ */
+export async function mirrorSkillDirsToUserScope(
+  sourceDirs: ReadonlyArray<string>,
+  targetDir: string,
+): Promise<ArtifactMirrorResult> {
+  const entries = new Set<string>();
+  for (const sourceDir of sourceDirs) {
+    const result = await mirrorArtifactDir(sourceDir, targetDir);
+    for (const entry of result.entries) entries.add(entry);
+  }
+  return {
+    count: entries.size,
+    targetDir,
+    entries: [...entries],
+  };
 }
 
 /**
@@ -353,6 +387,16 @@ async function mirrorArtifactDir(src: string, dst: string): Promise<ArtifactMirr
     dirents = await fs.readdir(src, { withFileTypes: true });
   } catch {
     return { count: 0, targetDir: dst, entries: [] };
+  }
+
+  // Some providers already deploy kernel skills to an absolute user-level
+  // path. Inventory that source for registry accounting instead of trying to
+  // recursively copy each entry onto itself.
+  if (path.resolve(src) === path.resolve(dst)) {
+    const entries = dirents
+      .filter((entry) => entry.isDirectory() || entry.isFile())
+      .map((entry) => entry.name);
+    return { count: entries.length, targetDir: dst, entries };
   }
 
   await fs.mkdir(dst, { recursive: true });
