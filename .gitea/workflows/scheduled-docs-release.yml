@@ -72,6 +72,7 @@ jobs:
           }
           TENANTS
           npx pagenary build:tenants aiwg-docs
+          node tools/docs/write-blog-static-pages.mjs dist/aiwg-docs
 
       - name: Commit promotion
         if: steps.changes.outputs.changed == 'true' && github.event.inputs.dry_run != 'true'
