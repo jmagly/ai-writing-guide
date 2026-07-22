@@ -275,3 +275,36 @@ jobs:
           echo ""
           echo "✓ All six signed assets mirrored to Gitea release $TAG"
           echo "  Consumer verification: docs/releases/verifying.md"
+
+      - name: Dispatch private web release pipeline
+        # This is the only public-to-private coupling. The public workflow
+        # supplies an immutable version after all signed assets are present;
+        # verification, repackaging, signing, deployment, and entitlement
+        # details remain owned by the private release-operations repository.
+        #
+        # The vault-provided Gitea token must have Actions write permission on
+        # roctinam/aiwg-web-release-ops. A missing permission fails the release
+        # handoff rather than silently leaving the web release unpublished.
+        run: |
+          set -euo pipefail
+          set +x
+          VERSION='${{ steps.tag.outputs.version }}'
+          API="${{ github.server_url }}/api/v1/repos/roctinam/aiwg-web-release-ops/actions/workflows/web-release.yml/dispatches"
+          PAYLOAD=$(jq -n --arg ref "refs/heads/main" --arg version "$VERSION" \
+            '{ref: $ref, inputs: {version: $version}}')
+          RESPONSE_FILE=$(mktemp)
+          trap 'rm -f "$RESPONSE_FILE"' EXIT INT TERM
+          HTTP_CODE=$(env -u GITEA_TOKEN curl --config /dev/fd/3 \
+            -sS -o "$RESPONSE_FILE" -w "%{http_code}" \
+            -X POST \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$API" \
+            3<<<"header = \"Authorization: token ${GITEA_TOKEN}\"")
+          if [ "$HTTP_CODE" != "204" ]; then
+            echo "✗ Private web release dispatch failed (HTTP $HTTP_CODE)" >&2
+            cat "$RESPONSE_FILE" >&2
+            exit 1
+          fi
+          echo "✓ Dispatched private web release pipeline for AIWG $VERSION"
