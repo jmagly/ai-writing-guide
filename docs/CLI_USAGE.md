@@ -213,6 +213,26 @@ Switch back to stable (npm releases).
 aiwg --use-stable
 ```
 
+## Planned: Web-Backed Resources
+
+AIWG is planning an opt-in mode where the npm package can carry only CLI
+tooling while AIWG resource bundles resolve through the CLI from local paths or
+versioned `aiwg.io` web resources.
+
+```bash
+aiwg versions list
+aiwg versions show stable
+aiwg versions resolve '^2026.7.0'
+
+aiwg discover "architecture evolution" --resource-source web --aiwg-version stable
+aiwg use sdlc --resource-source auto --aiwg-version 2026.7.15
+aiwg use sdlc --offline
+```
+
+This feature is not implemented yet. See
+[Web-Backed AIWG Resources](./install/web-backed-resources.md) for the planned
+operator contract, version selectors, and safety model.
+
 ## Maintenance
 
 ### -version

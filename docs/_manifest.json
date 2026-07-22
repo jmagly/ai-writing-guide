@@ -40,6 +40,7 @@
     "overview/executive-brief",
     "getting-started/prerequisites",
     "security/supply-chain-hardening",
+    "install/web-backed-resources",
     "quickstart",
     "intake-guide",
     "regenerate-guide",
