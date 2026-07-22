@@ -33,6 +33,10 @@ import {
   type AiwgFortemiRecord,
 } from './browser-export.js';
 import { loadProviderModelMetadata } from '../models/provider-models.js';
+import {
+  operationalStateQueryProjection,
+  type OperationalStateQueryProjection,
+} from './operational-state.js';
 
 function normalizeIndexedPath(entryPath: string): string {
   return entryPath.replace(/\\/g, '/');
@@ -703,6 +707,7 @@ export async function queryIndex(
   // Score and rank
   let results: QueryResult[];
   const matchedById = new Map<string, string[]>();
+  const operationalStateById = new Map<string, OperationalStateQueryProjection>();
   if (params.text && params.fulltext && backend === 'fortemi-core') {
     const { queryFortemiCoreStaticFulltextIndex } = await import('./fortemi-core-query-adapter.js');
     const queried = queryFortemiCoreStaticFulltextIndex(cwd, {
@@ -743,6 +748,9 @@ export async function queryIndex(
         dependents: [],
       };
       matchedById.set(result.path, result.matched);
+      if (result.operational_state) {
+        operationalStateById.set(result.path, result.operational_state);
+      }
       return { entry, score: result.score };
     });
   } else if (params.text && params.fulltext) {
@@ -792,6 +800,11 @@ export async function queryIndex(
         title: r.entry.title,
         score: Math.round(r.score * 100) / 100,
         summary: r.entry.summary,
+        ...(operationalStateById.has(r.entry.path)
+          ? { operational_state: operationalStateById.get(r.entry.path) }
+          : r.entry.operationalState
+            ? { operational_state: operationalStateQueryProjection(r.entry.operationalState) }
+            : {}),
         ...(params.fulltext ? { matched: matchedById.get(r.entry.path) ?? [] } : {}),
       })),
       total: results.length,

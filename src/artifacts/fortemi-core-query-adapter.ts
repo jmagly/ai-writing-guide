@@ -11,6 +11,10 @@ import type {
 } from "./browser-export.js";
 import { bm25Rank, type FullTextDoc } from "./fulltext.js";
 import { getFortemiCorePrebuiltStatus, getFortemiCoreSyncStatus } from "./fortemi-core-sync.js";
+import {
+  operationalStateQueryProjection,
+  type OperationalStateQueryProjection,
+} from "./operational-state.js";
 
 export interface FortemiCoreLoadResult {
   entries: MetadataEntry[];
@@ -47,6 +51,7 @@ export interface FortemiCoreStaticSearchResult {
   summary?: string;
   score: number;
   matched: string[];
+  operational_state?: OperationalStateQueryProjection;
 }
 
 export interface FortemiCoreStaticFulltextResult extends FortemiCoreStaticSearchResult {
@@ -135,6 +140,9 @@ function recordToStaticResult(
     summary: record.summary ?? record.search?.summary,
     score: Math.round(score * 1000) / 1000,
     matched,
+    ...(record.operational_state
+      ? { operational_state: operationalStateQueryProjection(record.operational_state) }
+      : {}),
   };
 }
 
@@ -261,6 +269,7 @@ function entryFromRecord(record: AiwgFortemiRecord): MetadataEntry {
       typeof record.search?.frontmatter?.kernel === "boolean"
         ? record.search.frontmatter.kernel
         : undefined,
+    operationalState: record.operational_state,
   };
 }
 
@@ -476,6 +485,9 @@ export function queryFortemiCoreStaticFulltextIndex(
         summary: record.summary ?? record.search?.summary ?? record.text,
         score: Math.round(hit.score * 1000) / 1000,
         matched: hit.matchedTerms,
+        ...(record.operational_state
+          ? { operational_state: operationalStateQueryProjection(record.operational_state) }
+          : {}),
       };
     }),
   };

@@ -31,6 +31,7 @@ import { parseCitationSidecar, citationResultToEdges, buildRefToPathMap } from '
 import { writeIndexFile, resolveIndexDir, loadGraphIndexFile } from './index-reader.js';
 import { loadManifest, writeManifest, statMatches, makeEntry, type ChecksumManifest, type ManifestStats } from './checksum-manifest.js';
 import { workspaceLinkedFiles } from '../smiths/context-pipeline/workspace-context.js';
+import { normalizeOperationalState } from './operational-state.js';
 
 export interface BuildOptions {
   force?: boolean;
@@ -932,6 +933,7 @@ export async function buildIndex(
         data.kernel === true || data.kernel === 'true' ? true : undefined;
       // Script entrypoint metadata is meaningful for skills only (#1227).
       const script = type === 'skill' ? extractSkillScript(data) : undefined;
+      const operationalState = normalizeOperationalState(data.operational_state);
       // Canonical short name (#1233) — used by the scorer to floor exact-name
       // queries to 1.0 so hyphenated kernel-skill names like `aiwg-doctor`
       // remain searchable even when the rendered title strips the hyphen.
@@ -957,6 +959,7 @@ export async function buildIndex(
         ...(searchTerms && searchTerms.length > 0 ? { searchTerms } : {}),
         ...(kernel ? { kernel } : {}),
         ...(script ? { script } : {}),
+        ...(operationalState ? { operationalState } : {}),
       };
     }
 

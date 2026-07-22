@@ -36,6 +36,11 @@ interface EmbeddedAiwgRecord {
     relationships: Array<{ type: string }>;
     chunks?: Array<{ text?: string }>;
     provenance: Array<{ source: string }>;
+    operational_state?: {
+      source_id: string;
+      observed_state: string;
+      classification: string;
+    };
     skos_concepts?: Array<{ id: string }>;
   };
 }
@@ -62,6 +67,19 @@ describe("AIWG portable Fortemi shard export", () => {
       summary: "Preserve the complete AIWG record in a Knowledge Shard.",
       dependencies: [targetPath],
       dependents: [],
+      operationalState: {
+        source_repo: "roctinam/aiwg",
+        source_kind: "issue",
+        source_id: "aiwg#1827",
+        observed_state: "open",
+        observed_at: "2026-07-16T00:00:00.000Z",
+        source_updated_at: "2026-07-16T00:00:00.000Z",
+        evidence_url: "https://git.integrolabs.net/roctinam/aiwg/issues/1827",
+        observer: "gitea-mcp",
+        classification: "fresh",
+        confidence: "source",
+        current_action_selector: true,
+      },
     };
     const target: MetadataEntry = {
       path: targetPath,
@@ -199,6 +217,11 @@ describe("AIWG portable Fortemi shard export", () => {
           expect.objectContaining({ source: "aiwg-index" }),
         ]),
       );
+      expect(sourceRecord.record.operational_state).toMatchObject({
+        source_id: "aiwg#1827",
+        observed_state: "open",
+        classification: "fresh",
+      });
       expect(sourceRecord.record.skos_concepts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ id: "aiwg-tags:fortemi" }),
@@ -253,6 +276,11 @@ describe("AIWG portable Fortemi shard export", () => {
             relationships: expect.arrayContaining([
               expect.objectContaining({ type: "depends-on" }),
             ]),
+            operational_state: expect.objectContaining({
+              source_id: "aiwg#1827",
+              observed_state: "open",
+              classification: "fresh",
+            }),
           }),
         ]),
       );

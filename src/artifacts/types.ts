@@ -13,6 +13,7 @@ import fs from 'fs';
 import os from 'node:os';
 import path from 'node:path';
 import { load as loadYaml } from 'js-yaml';
+import type { OperationalStateProvenance } from './operational-state.js';
 
 /**
  * A single indexed artifact entry
@@ -116,6 +117,12 @@ export interface MetadataEntry {
    * themselves.
    */
   script?: SkillScriptSpec;
+
+  /**
+   * Optional live-state provenance for tracker/repository observations. This
+   * is exported only through the Fortemi v2 contract; v1 remains unchanged.
+   */
+  operationalState?: OperationalStateProvenance;
 }
 
 /**
@@ -382,7 +389,7 @@ export const INDEX_VERSION = '1.0.0';
  * making the serialized index schema incompatible; a mismatch simply forces a
  * one-time content re-extraction during the next incremental build.
  */
-export const INDEX_EXTRACTOR_VERSION = '2026.07.21.1';
+export const INDEX_EXTRACTOR_VERSION = '2026.07.21.2';
 
 /**
  * Built-in graph type identifiers
