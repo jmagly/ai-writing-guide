@@ -72,6 +72,10 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   preserves upstream 401/403 failures, reloads rotations without restart, and
   proxies PTY WebSocket upgrades so long-lived executor credentials never enter
   browser state or attach URLs.
+- **Cockpit transient auto-recovery** (#1763) — the global status now shows
+  `Reconnecting…` during Bridge/executor or SSE gaps, retains explicitly marked
+  last-known counts, retries with bounded backoff, and refreshes all mounted
+  live-data views when the connection returns without a page reload.
 
 - **Release config schema parity** — release steps may now use a
   channel-dependent command without also declaring an unused plain `run`
