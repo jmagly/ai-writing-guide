@@ -338,28 +338,40 @@ jobs:
           VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
           VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
           CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
+          DIRECT_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          DIRECT_CF_CACHE_PURGE: ${{ secrets.CF_CACHE_PURGE }}
         run: |
           set -euo pipefail
+          if [ -n "${DIRECT_CLOUDFLARE_API_TOKEN:-}" ] || [ -n "${DIRECT_CF_CACHE_PURGE:-}" ]; then
+            echo "Cloudflare token fetch skipped: direct purge secret is configured"
+            exit 0
+          fi
           if [ -z "${CLOUDFLARE_ZONE_ID:-}" ] || \
              [ -z "${CLOUDFLARE_API_TOKEN_VAULT_PATH:-}" ] || \
              [ -z "${CLOUDFLARE_API_TOKEN_VAULT_FIELD:-}" ]; then
             echo "Cloudflare token fetch skipped: zone id or vault route is not configured"
             exit 0
           fi
-          bash ci/vault-fetch.sh --spec ci/vault-fetch.docsite-cloudflare.spec
+          if ! bash ci/vault-fetch.sh --spec ci/vault-fetch.docsite-cloudflare.spec; then
+            echo "::warning::Cloudflare token fetch failed; cache purge will be skipped"
+            exit 0
+          fi
 
       - name: Purge Cloudflare cache
         env:
           CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
+          DIRECT_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          DIRECT_CF_CACHE_PURGE: ${{ secrets.CF_CACHE_PURGE }}
         run: |
           set -euo pipefail
-          if [ -z "${CLOUDFLARE_ZONE_ID:-}" ] || [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
-            echo "Cloudflare purge skipped: CLOUDFLARE_ZONE_ID or CLOUDFLARE_API_TOKEN is not configured"
+          token="${CLOUDFLARE_API_TOKEN:-${DIRECT_CLOUDFLARE_API_TOKEN:-${DIRECT_CF_CACHE_PURGE:-}}}"
+          if [ -z "${CLOUDFLARE_ZONE_ID:-}" ] || [ -z "${token:-}" ]; then
+            echo "Cloudflare purge skipped: CLOUDFLARE_ZONE_ID or Cloudflare API token is not configured"
             exit 0
           fi
           curl --fail --show-error --silent \
             -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Authorization: Bearer ${token}" \
             -H "Content-Type: application/json" \
             --data '{"purge_everything":true}'
           echo "Cloudflare cache purge requested"
