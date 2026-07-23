@@ -18,14 +18,13 @@ release host:
 
 ```bash
 npm i -g @aiwg/cli
-aiwg discover "architecture evolution" \
-  --resource-source web \
-  --aiwg-version stable
+aiwg discover "architecture evolution"
+aiwg show skill architecture-evolution
 ```
 
 See [Web-Backed AIWG Resources](docs/install/web-backed-resources.md) for source
-selection, cache verification, offline use, and the current framework-graph
-constraints.
+selection, exact-version overrides, cache verification, offline use, and the
+current framework-graph constraints.
 
 Then ask your AI assistant to set up the project for AIWG. The agent-led setup
 conversation should establish remotes, issue storage, delivery behavior,

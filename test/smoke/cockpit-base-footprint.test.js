@@ -48,6 +48,7 @@ describe('cockpit base-npm footprint guard (#1593)', () => {
     expect(cockpit.publishConfig?.access).toBe('public');
     expect(cockpit.files).toContain('bridge/');
     expect(cockpit.files).toContain('web/dist/');
+    expect(cockpit.files).toContain('LICENSE');
   });
 
   it('the cockpit tarball dry-run names @aiwg/cockpit and excludes node_modules', () => {
@@ -65,5 +66,8 @@ describe('cockpit base-npm footprint guard (#1593)', () => {
     expect(pack?.name).toBe('@aiwg/cockpit');
     expect(files.some((f) => f.startsWith('node_modules/')), 'cockpit tarball must not contain node_modules').toBe(false);
     expect(files).toContain('bridge/src/server.mjs');
+    expect(files).toContain('LICENSE');
+    expect(files).toContain('web/dist/index.html');
+    expect(files.some((f) => /^web\/dist\/assets\/.+\.js$/.test(f)), 'cockpit tarball must contain the compiled web bundle').toBe(true);
   }, 120000);
 });

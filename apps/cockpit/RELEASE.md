@@ -6,8 +6,7 @@ This document formalizes how the cockpit release leg works alongside the base
 AIWG release pipeline. It is the cockpit-specific companion to the base release
 checklist in the repo root `CLAUDE.md`.
 
-> Tracking: roctinam/aiwg#1637 (this doc + gate) · #1586 (release validation) ·
-> #1628 (cockpit npm publish token).
+> Tracking: roctinam/aiwg#1637 (this doc + gate) · #1586 (release validation).
 
 ## Channels
 
@@ -24,9 +23,9 @@ lockstep.
 
 The base tag flow (`tools/release/cut-tag.sh <X.Y.Z>` → signed tag → Gitea/GitHub
 release) also drives the cockpit publish. `@aiwg/cockpit` publishes via its own
-npm leg with `publishConfig.access: public`. The npm-token gap that blocked this
-leg is tracked in **#1628** and MUST be resolved (token with publish scope for
-the `@aiwg` org) before a cockpit stable tag is cut.
+npm leg with `publishConfig.access: public`. GitHub Actions publishes through
+the package's npm trusted-publisher binding; no long-lived npm publish token is
+required.
 
 Dry-run the cockpit package before tagging:
 
@@ -34,6 +33,11 @@ Dry-run the cockpit package before tagging:
 npm --prefix apps/cockpit run pack:dry      # tarball contents (files allowlist)
 npm --prefix apps/cockpit run publish:dry   # publish dry-run, public access
 ```
+
+`prepack` performs a clean production web build. The packed artifact must
+contain `LICENSE`, `web/dist/index.html`, and its hashed production assets; the
+CLI entry point must start correctly when npm links it through a global
+`node_modules/.bin` symlink.
 
 ## Pre-tag gate (config-defaults are tested, #1634)
 
@@ -70,10 +74,11 @@ Before a cockpit release tag:
 - [ ] `apps/cockpit/package.json` version in lockstep with base CalVer.
 - [ ] `npm --prefix apps/cockpit run check` green.
 - [ ] base-footprint guard green (cockpit absent from base `aiwg` tarball).
-- [ ] `pack:dry` / `publish:dry` reviewed.
+- [ ] `pack:dry` / `publish:dry` reviewed; LICENSE and compiled `web/dist` present.
+- [ ] installed npm bin starts through a symlink and serves `/healthz` plus the compiled UI.
 - [ ] default dev bring-up verified (README "Ports" defaults).
 - [ ] host-tier live smoke green (or recorded blocker).
-- [ ] #1628 publish-token resolved before stable publish.
+- [ ] npm trusted publisher is bound to `.github/workflows/npm-publish.yml`.
 - [ ] release evidence linked from #1586.
 
 ## See also

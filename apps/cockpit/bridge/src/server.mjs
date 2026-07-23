@@ -9,7 +9,7 @@ import http from 'node:http';
 import https from 'node:https';
 import { spawn } from 'node:child_process';
 import { readFile, mkdir, writeFile, chmod, readdir, cp, rm, stat, appendFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { homedir } from 'node:os';
@@ -537,19 +537,27 @@ function defaultExecutorCommand() {
   return [];
 }
 
-async function ensureExecutor(executorUrl) {
-  if (!AUTOSTART_EXECUTOR || await probeExecutor(executorUrl)) return;
-  const cmd = defaultExecutorCommand();
+export async function ensureExecutor(
+  executorUrl,
+  { command, probe = probeExecutor, autostart = AUTOSTART_EXECUTOR } = {},
+) {
+  if (!autostart || await probe(executorUrl)) return;
+  const cmd = command ?? defaultExecutorCommand();
   if (!cmd.length) return;
   const child = spawn(cmd[0], cmd.slice(1), {
     detached: true,
     stdio: 'ignore',
     env: { ...process.env },
   });
+  const started = await new Promise((resolve) => {
+    child.once('spawn', () => resolve(true));
+    child.once('error', () => resolve(false));
+  });
+  if (!started) return;
   child.unref();
   for (let i = 0; i < 30; i += 1) {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    if (await probeExecutor(executorUrl)) return;
+    if (await probe(executorUrl)) return;
   }
 }
 
@@ -2273,6 +2281,20 @@ export function createBridge({
 export const EXECUTOR_RESERVED_PORTS = [8120, 8121, 8122];
 export const DEFAULT_BRIDGE_PORT = 8140;
 
+/**
+ * npm exposes package binaries through symlinks. Node preserves that symlink
+ * in process.argv[1] while import.meta.url names the real module, so comparing
+ * the two strings makes an installed `aiwg-cockpit` silently skip startup.
+ */
+export function isDirectExecution(metaUrl = import.meta.url, argv1 = process.argv[1]) {
+  if (!argv1) return false;
+  try {
+    return realpathSync(fileURLToPath(metaUrl)) === realpathSync(argv1);
+  } catch {
+    return fileURLToPath(metaUrl) === resolve(argv1);
+  }
+}
+
 /** Resolve the Bridge listen port from the environment with a sane, off-range
  *  default. Throws on an invalid port or a collision with the executor range. */
 export function resolveBridgePort(env = process.env) {
@@ -2291,7 +2313,7 @@ export function resolveBridgePort(env = process.env) {
   return port;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isDirectExecution()) {
   const port = resolveBridgePort();
   await ensureExecutor(EXECUTOR_URL);
   const server = createBridge();

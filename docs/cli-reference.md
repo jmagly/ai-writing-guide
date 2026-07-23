@@ -3571,9 +3571,10 @@ aiwg discover "<phrase>" [options]
   fall back to the packaged prebuilt index described in
   [`docs/fortemi-core-prebuilt-indices.md`](fortemi-core-prebuilt-indices.md).
 - `--resource-source <local|web|auto>` — Select installed resources, signed
-  web resources, or local-first fallback for this call. `local` is the default.
-  The current `web` slice requires the `framework` graph and the `fortemi-core`
-  backend.
+  web resources, or local-first fallback for this call. The full `aiwg`
+  distribution defaults to `local`; the lightweight `@aiwg/cli` distribution
+  defaults to `web`. The current `web` slice requires the `framework` graph and
+  the `fortemi-core` backend.
 - `--aiwg-version <version-or-channel>` — Select the exact signed resource
   release or channel (`stable`, `candidate`, `nightly`) for web resolution.
 - `--offline` — For web resolution, use only previously verified cached release
@@ -3588,6 +3589,7 @@ aiwg discover "audit security" --type skill         # narrow to skills only
 aiwg discover "rotate service certificates" --type runbook # procedural runbooks only
 aiwg discover "review code" --type agent --format json --compact # JSON for sub-agent consumption
 aiwg discover "static retrieval" --json                # legacy JSON alias
+aiwg discover "architecture evolution"                 # @aiwg/cli selects signed stable web resources
 aiwg discover "architecture evolution" --resource-source web --aiwg-version stable
 aiwg discover "architecture evolution" --resource-source web --offline
 ```
@@ -3654,9 +3656,10 @@ aiwg index show <type> <name> [options]      # equivalent
   `fortemi-core`; `local` selects the legacy local fallback. The Fortemi Core
   backend reads the static cache created by `aiwg index sync`.
 - `--resource-source <local|web|auto>` — Select installed resources, signed
-  web resources, or local-first fallback for this call. `local` is the default.
-  The current `web` slice requires the `framework` graph and the `fortemi-core`
-  backend.
+  web resources, or local-first fallback for this call. The full `aiwg`
+  distribution defaults to `local`; the lightweight `@aiwg/cli` distribution
+  defaults to `web`. The current `web` slice requires the `framework` graph and
+  the `fortemi-core` backend.
 - `--aiwg-version <version-or-channel>` — Select the exact signed resource
   release or channel (`stable`, `candidate`, `nightly`) for web resolution.
 - `--offline` — For web resolution, use only previously verified cached release
@@ -3674,6 +3677,7 @@ aiwg index show <type> <name> [options]      # equivalent
 ```bash
 aiwg show skill aiwg:skill:6f1477d99813ca8d         # streams SKILL.md to stdout
 aiwg show skill flow-deploy-to-production --json    # id + path + content envelope
+aiwg show skill architecture-evolution              # @aiwg/cli selects signed stable web resources
 aiwg show skill architecture-evolution --resource-source web --aiwg-version stable
 aiwg show metadata aiwg:skill:6f1477d99813ca8d --json # full Fortemi metadata + paths
 aiwg show agent aiwg-steward                        # agent definition

@@ -7,12 +7,13 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocket } from 'ws';
 import { createExecutor } from '../../apps/cockpit/mock-executor/src/server.mjs';
-import { createBridge, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, fetchJsonFirst } from '../../apps/cockpit/bridge/src/server.mjs';
+import { createBridge, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, ensureExecutor, fetchJsonFirst, isDirectExecution } from '../../apps/cockpit/bridge/src/server.mjs';
 
 let mock, bridge, base, token;
 const testMcSessionId = `mc-cockpit-test-${Date.now()}`;
@@ -789,6 +790,25 @@ describe('cockpit mock — admin-surface contract guard (#1636)', () => {
 });
 
 describe('cockpit Bridge — port defaults off the executor range (#1634)', () => {
+  it('recognizes an npm-style symlink as direct binary execution', async () => {
+    const temp = await mkdtemp(join(tmpdir(), 'aiwg-cockpit-bin-'));
+    const targetUrl = new URL('../../apps/cockpit/bridge/src/server.mjs', import.meta.url);
+    const link = join(temp, 'aiwg-cockpit');
+    try {
+      await symlink(fileURLToPath(targetUrl), link);
+      expect(isDirectExecution(targetUrl.href, link)).toBe(true);
+    } finally {
+      await rm(temp, { recursive: true, force: true });
+    }
+  });
+
+  it('continues without crashing when an optional executor binary is not installed', async () => {
+    await expect(ensureExecutor('http://127.0.0.1:1', {
+      command: ['/definitely/not/an/installed/agentic-mgmt'],
+      probe: async () => false,
+    })).resolves.toBeUndefined();
+  });
+
   it('defaults to an off-range port and never into the agentic-sandbox 8120-8122 range', () => {
     expect(DEFAULT_BRIDGE_PORT).toBe(8140);
     expect(EXECUTOR_RESERVED_PORTS).toEqual([8120, 8121, 8122]);

@@ -123,7 +123,8 @@ describe('@aiwg/cli packaged web distribution', () => {
 
     fixture = createWebResourceReleaseFixture();
     await fixture.start();
-    fixture.publishRelease();
+    const release = fixture.publishRelease();
+    fixture.publishChannel('stable', 1, release);
     trustRootFile = path.join(home, 'release-root.pem');
     await writeFile(trustRootFile, fixture.publicKeyPem, { mode: 0o600 });
   }, 180_000);
@@ -148,6 +149,7 @@ describe('@aiwg/cli packaged web distribution', () => {
       expect(paths.some((entry) => entry.startsWith(prefix)), `${prefix} must not ship in @aiwg/cli`).toBe(false);
     }
     expect(paths).toContain('bin/aiwg.mjs');
+    expect(paths).toContain('LICENSE');
     expect(paths).toContain('dist/src/api/index.js');
     expect(paths).toContain('dist/src/api/index.d.ts');
     expect(paths).toContain('dist/src/resources/index.js');
@@ -156,21 +158,22 @@ describe('@aiwg/cli packaged web distribution', () => {
     expect(paths).toContain('dist/src/models/model-catalog.v1.json');
   });
 
-  it('runs signed web discover and show without a bundled corpus', async () => {
+  it('defaults to signed stable web discover and show without flags or a bundled corpus', async () => {
     const discovered = await runCli([
       'discover', 'signed web regression',
-      '--resource-source', 'web',
-      '--aiwg-version', TEST_VERSION,
       '--json', '--compact',
     ]);
     expect(discovered.code, discovered.stderr).toBe(0);
     const payload = JSON.parse(discovered.stdout);
+    expect(payload.query).toMatchObject({
+      resource_source: 'web',
+      aiwg_selector: 'stable',
+      aiwg_version: TEST_VERSION,
+    });
     expect(payload.results[0]).toMatchObject({ name: 'web-regression', type: 'skill' });
 
     const shown = await runCli([
       'show', 'skill', payload.results[0].id,
-      '--resource-source', 'web',
-      '--aiwg-version', TEST_VERSION,
     ]);
     expect(shown.code, shown.stderr).toBe(0);
     expect(Buffer.from(shown.stdout)).toEqual(TEST_SKILL_BODY);
@@ -179,12 +182,16 @@ describe('@aiwg/cli packaged web distribution', () => {
   it('routes signed web discovery through the installed public API', async () => {
     const discovered = await runApi([
       'discover', 'signed web regression',
-      '--resource-source', 'web',
-      '--aiwg-version', TEST_VERSION,
       '--json', '--compact',
     ]);
     expect(discovered.code, discovered.stderr).toBe(0);
-    expect(JSON.parse(discovered.stdout).results[0]).toMatchObject({
+    const payload = JSON.parse(discovered.stdout);
+    expect(payload.query).toMatchObject({
+      resource_source: 'web',
+      aiwg_selector: 'stable',
+      aiwg_version: TEST_VERSION,
+    });
+    expect(payload.results[0]).toMatchObject({
       name: 'web-regression',
       type: 'skill',
     });

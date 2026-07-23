@@ -7,6 +7,33 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.18] - 2026-07-23 - "Web-first CLI and packaged Cockpit"
+
+### Changed
+
+- **Zero-configuration lightweight CLI** — installed `@aiwg/cli` binaries and
+  its exported CLI API now select the signed `stable` web resource channel for
+  `discover` and `show` when no source flags are supplied. The full `aiwg`
+  package retains its legacy local-corpus default, and explicit
+  `--resource-source` / `--aiwg-version` choices continue to override either
+  package default.
+- **Bounded cold web fetches** — the total signed release-resource request
+  timeout is 60 seconds, accommodating first-run manifest and Fortemi index
+  downloads while retaining a finite failure bound.
+
+### Fixed
+
+- **Self-contained Cockpit package** — `@aiwg/cockpit` now builds and includes
+  its production React UI during `prepack`, includes its MIT license, starts
+  correctly through npm's global binary symlink, and handles a missing optional
+  `agentic-mgmt` executor without crashing.
+- **Complete lightweight CLI package metadata** — `@aiwg/cli` now includes the
+  repository MIT license and its README documents the no-flag web workflow.
+- **Installed-package regressions** — package tests exercise configuration-free
+  CLI binary/API web discovery and lookup, legacy full-package local behavior,
+  Cockpit symlink launch and compiled UI serving, missing-executor startup, and
+  package allowlists.
+
 ## [2026.7.17] - 2026-07-22 - "Portable resources and lightweight CLI"
 
 ### Added

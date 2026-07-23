@@ -25,7 +25,11 @@ const MAX_SIGNATURE_BYTES = 64 * 1024;
 const MAX_COMPLETION_MARKER_BYTES = 4 * 1024;
 const MAX_CHANNEL_CACHE_CANDIDATES = 128;
 const MAX_RELEASE_CACHE_CANDIDATES = 32;
-const RESOURCE_FETCH_TIMEOUT_MS = 15_000;
+// A cold lightweight-CLI install downloads the signed release manifest
+// (~2 MiB) and Fortemi export (~11 MiB today). Fifteen seconds proved too
+// aggressive on otherwise healthy container and remote-network paths. Keep a
+// finite total-request bound, but allow normal first-run transfer variance.
+const RESOURCE_FETCH_TIMEOUT_MS = 60_000;
 
 type JsonRecord = Record<string, unknown>;
 

@@ -1,11 +1,14 @@
 # Web-Backed AIWG Resources
 
-**Status**: Experimental / partially implemented
+**Status**: Beta / framework discovery and lookup
 
-AIWG has an experimental implementation for web-backed resource loading. The
-`local` source remains the default and continues to work as the stable path.
+AIWG has a beta implementation for web-backed resource loading. The
+full `aiwg` distribution continues to default to its bundled local corpus. The
+lightweight `@aiwg/cli` distribution defaults to the signed `stable` web
+channel because it intentionally does not bundle that corpus.
 
-Operator workflows should remain command-driven and unchanged; source selection is controlled by per-call flags.
+Operator workflows remain command-driven and unchanged. Source selection is
+automatic for the normal package choice and can be overridden per call.
 
 Release artifacts are hosted at `releases.aiwg.io` (not `aiwg.io/resources`),
 and the public AIWG website remains separate.
@@ -16,14 +19,17 @@ Web-backed use does not require the full npm corpus package. Install the
 CalVer-locked CLI package instead:
 
 ```bash
-npm install --global @aiwg/cli@next
-aiwg discover "architecture evolution" --resource-source web --aiwg-version stable
+npm install --global @aiwg/cli@latest
+aiwg discover "architecture evolution"
+aiwg show skill architecture-evolution
 ```
 
 `@aiwg/cli` and `aiwg` always publish with the exact same AIWG CalVer. The npm
 package version selects CLI behavior; `--aiwg-version` independently selects
 the signed resource release for a call. The CLI package contains executable
-and API code only. It does not contain the default framework/addon corpus.
+and API code only. It does not contain the default framework/addon corpus. Both
+the installed executable and the package's exported CLI API apply the same
+default, without project configuration.
 
 ## Relocating Project AIWG Artifacts
 
@@ -43,9 +49,13 @@ setup.
 
 | Mode    | Behavior                                                                                       |
 | ------- | ---------------------------------------------------------------------------------------------- |
-| `local` | Use installed/project-local resources only. This is the default for all commands.              |
+| `local` | Use installed/project-local resources only. This is the default for the full `aiwg` package.    |
 | `web`   | Resolve resources from versioned, signed release-host bundles with cache and integrity checks. |
 | `auto`  | Prefer local resources when present; otherwise fall back to web-backed resources.              |
+
+For `discover` and `show`, `@aiwg/cli` selects `web` and the signed `stable`
+channel when no source/version flags are supplied. Explicit
+`--resource-source local|web|auto` and `--aiwg-version` values always win.
 
 ## Current Implemented Commands and Flags
 
@@ -58,12 +68,14 @@ setup.
 Examples:
 
 ```bash
-aiwg discover "architecture evolution" --resource-source local --aiwg-version 2026.7.16
+aiwg discover "architecture evolution"
+aiwg discover "architecture evolution" --resource-source local
 aiwg discover "architecture evolution" --resource-source web --aiwg-version stable
-aiwg discover "architecture evolution" --resource-source auto --aiwg-version 2026.7.16
+aiwg discover "architecture evolution" --resource-source auto --aiwg-version 2026.7.18
 aiwg discover "architecture evolution" --resource-source web --offline
 
-aiwg show skill architecture-evolution --resource-source web --aiwg-version 2026.7.16
+aiwg show skill architecture-evolution
+aiwg show skill architecture-evolution --resource-source web --aiwg-version 2026.7.18
 aiwg show framework sdlc --resource-source web --aiwg-version candidate
 aiwg show framework sdlc --resource-source web --offline
 ```
@@ -123,4 +135,4 @@ AIWG corpus.
 - `aiwg versions` command family.
 - Web behavior for `aiwg use`/`aiwg regenerate`.
 - Lockfile persistence for resolved web versions.
-- Repository-wide default-web mode decisions.
+- Web parity for project/codebase graph operations.

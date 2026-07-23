@@ -18,7 +18,7 @@
 # To publish a new version:
 #   1. Update version in package.json
 #   2. Commit: git commit -am "release: vYYYY.M.PATCH"
-#   3. Tag: git tag vYYYY.M.PATCH
+#   3. Tag: tools/release/cut-tag.sh YYYY.M.PATCH
 #   4. Push: git push origin main --tags
 #
 # Note:

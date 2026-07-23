@@ -19,6 +19,8 @@
 
 import type { GraphType } from './types.js';
 import path from 'node:path';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import {
   GRAPH_CONFIGS,
   OPERATIONAL_DISCOVERY_TYPES,
@@ -35,6 +37,7 @@ import {
   type ResourceSource,
   type WebReleaseOptions,
 } from '../resources/web-release.js';
+import { findPackageRoot } from '../cli/find-package-root.js';
 
 const MAX_RESOURCE_TRUST_ROOT_BYTES = 64 * 1024;
 
@@ -100,6 +103,26 @@ function parseSearchBackendFlag(args: string[]): 'local' | 'fortemi-core' {
   return parseBackendFlag(args) ?? 'fortemi-core';
 }
 
+/**
+ * The full `aiwg` package owns a local corpus, while `@aiwg/cli` intentionally
+ * ships only executable code and embedded runtime metadata. Select web
+ * resources automatically for the lightweight distribution so a normal
+ * `aiwg discover` / `aiwg show` invocation works immediately after install.
+ *
+ * Resolve from this module rather than process.argv so the exported API gets
+ * the same package-aware default as the npm binary.
+ */
+function defaultResourceSource(): ResourceSource {
+  const packageRoot = findPackageRoot(path.dirname(fileURLToPath(import.meta.url)));
+  if (!packageRoot) return 'local';
+  try {
+    const manifest = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
+    return manifest.name === '@aiwg/cli' ? 'web' : 'local';
+  } catch {
+    return 'local';
+  }
+}
+
 function parseResourceSourceFlag(args: string[]): ResourceSource {
   const indices = args
     .map((arg, index) => arg === '--resource-source' ? index : -1)
@@ -108,7 +131,7 @@ function parseResourceSourceFlag(args: string[]): ResourceSource {
     console.error('Error: --resource-source may be specified only once');
     process.exit(1);
   }
-  if (indices.length === 0) return 'local';
+  if (indices.length === 0) return defaultResourceSource();
   const value = args[indices[0] + 1];
   if (value === 'local' || value === 'web' || value === 'auto') return value;
   console.error('Error: --resource-source must be local, web, or auto');

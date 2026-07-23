@@ -66,7 +66,8 @@
 #
 # To publish:
 # 1. Bump version in package.json
-# 2. Sign and push tag: git tag -s vYYYY.M.PATCH -m "..." && git push github main --tags
+# 2. Sign with the dedicated release key: tools/release/cut-tag.sh YYYY.M.PATCH
+#    Then push the verified tag: git push github main --tags
 # 3. Watch this workflow on the GitHub mirror. The post-publish step verifies
 #    that the provenance attestation landed on npmjs.org, then cosign-signs
 #    the tarball + manifest and uploads all four signed assets to the GitHub
