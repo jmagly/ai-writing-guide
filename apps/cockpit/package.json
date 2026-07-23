@@ -42,7 +42,7 @@
     "dev": "bash scripts/cockpit-dev.sh",
     "up": "bash scripts/cockpit-up.sh",
     "build:web": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build",
-    "build:web:release": "npm --prefix web ci --include=dev --no-audit --no-fund && npm --prefix web run build",
+    "build:web:release": "node scripts/build-web-release.mjs",
     "prepack": "npm run build:web:release",
     "pack:dry": "npm pack --dry-run",
     "publish:dry": "npm publish --dry-run --access public",

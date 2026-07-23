@@ -24,9 +24,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 ### Fixed
 
 - **Self-contained Cockpit package** — `@aiwg/cockpit` now builds and includes
-  its production React UI during `prepack`, includes its MIT license, starts
-  correctly through npm's global binary symlink, and handles a missing optional
-  `agentic-mgmt` executor without crashing.
+  its production React UI during `prepack` from an isolated temporary workspace,
+  clears inherited npm dry-run flags before installing build dependencies,
+  atomically stages the result under a cross-process lock, includes its MIT
+  license, starts correctly through npm's global binary symlink, and handles a
+  missing optional `agentic-mgmt` executor without crashing.
 - **Complete lightweight CLI package metadata** — `@aiwg/cli` now includes the
   repository MIT license and its README documents the no-flag web workflow.
 - **Installed-package regressions** — package tests exercise configuration-free

@@ -49,6 +49,8 @@ describe('cockpit base-npm footprint guard (#1593)', () => {
     expect(cockpit.files).toContain('bridge/');
     expect(cockpit.files).toContain('web/dist/');
     expect(cockpit.files).toContain('LICENSE');
+    expect(cockpit.scripts?.['build:web:release']).toBe('node scripts/build-web-release.mjs');
+    expect(cockpit.scripts?.prepack).toBe('npm run build:web:release');
   });
 
   it('the cockpit tarball dry-run names @aiwg/cockpit and excludes node_modules', () => {

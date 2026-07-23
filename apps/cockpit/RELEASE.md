@@ -34,10 +34,16 @@ npm --prefix apps/cockpit run pack:dry      # tarball contents (files allowlist)
 npm --prefix apps/cockpit run publish:dry   # publish dry-run, public access
 ```
 
-`prepack` performs a clean production web build. The packed artifact must
-contain `LICENSE`, `web/dist/index.html`, and its hashed production assets; the
-CLI entry point must start correctly when npm links it through a global
-`node_modules/.bin` symlink.
+`prepack` performs a clean production web build in an isolated temporary
+workspace with its own npm cache. The builder clears npm lifecycle flags such as
+the `npm_config_dry_run` value inherited from `npm pack --dry-run`; otherwise a
+nested `npm ci` can report success without installing the build dependencies.
+It then stages the completed `web/dist` generation under a cross-process lock,
+so concurrent package checks cannot mutate `web/node_modules` or capture a
+partial UI build. The packed artifact must contain `LICENSE`,
+`web/dist/index.html`, and its hashed production assets; the CLI entry point
+must start correctly when npm links it through a global `node_modules/.bin`
+symlink.
 
 ## Pre-tag gate (config-defaults are tested, #1634)
 
