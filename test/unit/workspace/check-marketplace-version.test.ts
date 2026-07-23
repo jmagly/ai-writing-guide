@@ -16,14 +16,17 @@ function makeRepo({
   lockVersion = packageVersion,
   lockRootVersion = packageVersion,
   marketplaceVersion = packageVersion,
+  cliVersion = packageVersion,
 }: {
   packageVersion?: string;
   lockVersion?: string;
   lockRootVersion?: string;
   marketplaceVersion?: string;
+  cliVersion?: string;
 } = {}) {
   tempRoot = mkdtempSync(join(tmpdir(), 'aiwg-version-lockstep-'));
   mkdirSync(join(tempRoot, '.claude-plugin'), { recursive: true });
+  mkdirSync(join(tempRoot, 'packages', 'cli'), { recursive: true });
 
   writeJson(join(tempRoot, 'package.json'), {
     name: 'aiwg',
@@ -44,6 +47,10 @@ function makeRepo({
     metadata: {
       version: marketplaceVersion,
     },
+  });
+  writeJson(join(tempRoot, 'packages', 'cli', 'package.json'), {
+    name: '@aiwg/cli',
+    version: cliVersion,
   });
 
   return tempRoot;
@@ -93,6 +100,16 @@ describe('checkVersionLockstep', () => {
 
     expect(result.ok).toBe(false);
     expect(result.message).toContain('marketplace metadata.version');
+    expect(result.message).toContain('2026.5.6');
+  });
+
+  it('fails when @aiwg/cli CalVer drifts from the main package', () => {
+    const root = makeRepo({ cliVersion: '2026.5.6' });
+
+    const result = checkVersionLockstep(root);
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('@aiwg/cli version');
     expect(result.message).toContain('2026.5.6');
   });
 

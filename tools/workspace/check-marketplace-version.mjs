@@ -2,10 +2,10 @@
 /**
  * Verify release version metadata matches package.json version.
  *
- * PUW-038 (#1139): package-lock.json and the marketplace manifest's top-level
- * metadata.version must move in lockstep with package.json on every release;
- * otherwise installs and plugin surfaces can report stale versions while npm
- * ships the new one.
+ * PUW-038 (#1139): package-lock.json, separately published packages, and the
+ * marketplace manifest's top-level metadata.version must move in lockstep
+ * with package.json on every release; otherwise installs and plugin surfaces
+ * can report stale versions while npm ships the new one.
  *
  * Exits 0 when versions match. For marketplace metadata only, pre-release
  * suffixes may differ when `--allow-prerelease-mismatch` is passed; package
@@ -38,6 +38,7 @@ export function checkVersionLockstep(
 ) {
   const pkg = readJson(root, 'package.json');
   const lock = readJson(root, 'package-lock.json');
+  const cli = readJson(root, 'packages/cli/package.json');
   const marketplace = JSON.parse(
     readFileSync(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'),
   );
@@ -46,6 +47,7 @@ export function checkVersionLockstep(
   const lockVersion = lock.version;
   const lockRootVersion = lock?.packages?.['']?.version;
   const marketplaceVersion = marketplace?.metadata?.version;
+  const cliVersion = cli?.version;
 
   if (!pkgVersion) {
     return {
@@ -69,6 +71,22 @@ export function checkVersionLockstep(
     return {
       ok: false,
       message: 'FAIL: .claude-plugin/marketplace.json metadata.version missing',
+    };
+  }
+  if (!cliVersion) {
+    return {
+      ok: false,
+      message: 'FAIL: packages/cli/package.json has no version field',
+    };
+  }
+
+  if (cliVersion !== pkgVersion) {
+    return {
+      ok: false,
+      message:
+        `FAIL: @aiwg/cli version (${cliVersion}) does not match ` +
+        `package.json (${pkgVersion}).`,
+      fix: `Fix: update packages/cli/package.json version to ${pkgVersion}.`,
     };
   }
 
@@ -99,8 +117,8 @@ export function checkVersionLockstep(
     return {
       ok: true,
       message:
-        `OK package-lock.json and marketplace metadata.version (${marketplaceVersion}) ` +
-        `match package.json (${pkgVersion})`,
+        `OK package-lock.json, @aiwg/cli, and marketplace metadata.version ` +
+        `(${marketplaceVersion}) match package.json (${pkgVersion})`,
     };
   }
 

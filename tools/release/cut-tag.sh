@@ -29,14 +29,15 @@
 #   2. Verifies package.json version matches <version>
 #   3. Verifies .claude-plugin/marketplace.json metadata.version matches (PUW-038 lockstep)
 #   4. Verifies apps/cockpit/package.json version matches (@aiwg/cockpit lockstep)
-#   5. Verifies package-lock.json version matches (CI check:versions / npm ci gate)
-#   6. Verifies CHANGELOG.md has an entry for [<version>]
-#   7. Verifies docs/releases/v<version>-announcement.md exists
-#   8. Verifies the AIWG release-signing key is available locally
-#   9. Verifies the release-signing key is published in .gitea/keys/maintainers.asc
-#  10. Creates the signed tag with `git tag -s -u <release-key-fingerprint>`
-#  11. Verifies the tag's signature locally before any push (`git tag -v`)
-#  12. Reports next-step push commands; does NOT push automatically
+#   5. Verifies packages/cli/package.json version matches (@aiwg/cli lockstep)
+#   6. Verifies package-lock.json version matches (CI check:versions / npm ci gate)
+#   7. Verifies CHANGELOG.md has an entry for [<version>]
+#   8. Verifies docs/releases/v<version>-announcement.md exists
+#   9. Verifies the AIWG release-signing key is available locally
+#  10. Verifies the release-signing key is published in .gitea/keys/maintainers.asc
+#  11. Creates the signed tag with `git tag -s -u <release-key-fingerprint>`
+#  12. Verifies the tag's signature locally before any push (`git tag -v`)
+#  13. Reports next-step push commands; does NOT push automatically
 #
 # The push step is intentionally left to the operator so this script can
 # also be run as a sanity check before a release ceremony.
@@ -112,7 +113,7 @@ FAIL: '$VERSION' does not match CalVer 'YYYY.M.PATCH'.
 EOF
   exit 1
 fi
-echo "  [1/12] CalVer shape OK: $VERSION"
+echo "  [1/13] CalVer shape OK: $VERSION"
 
 # ---------------------------------------------------------------------------
 # 2. package.json lockstep
@@ -126,7 +127,7 @@ FAIL: package.json version is '$PKG_VERSION', expected '$VERSION'.
 EOF
   exit 1
 fi
-echo "  [2/12] package.json lockstep OK"
+echo "  [2/13] package.json lockstep OK"
 
 # ---------------------------------------------------------------------------
 # 3. .claude-plugin/marketplace.json metadata.version lockstep (PUW-038 #1139)
@@ -140,7 +141,7 @@ FAIL: .claude-plugin/marketplace.json metadata.version is '$MP_VERSION',
 EOF
   exit 1
 fi
-echo "  [3/12] marketplace.json lockstep OK"
+echo "  [3/13] marketplace.json lockstep OK"
 
 # ---------------------------------------------------------------------------
 # 4. @aiwg/cockpit package lockstep
@@ -154,10 +155,24 @@ FAIL: apps/cockpit/package.json version is '$COCKPIT_VERSION',
 EOF
   exit 1
 fi
-echo "  [4/12] @aiwg/cockpit package lockstep OK"
+echo "  [4/13] @aiwg/cockpit package lockstep OK"
 
 # ---------------------------------------------------------------------------
-# 5. package-lock.json lockstep
+# 5. @aiwg/cli package lockstep
+# ---------------------------------------------------------------------------
+CLI_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('packages/cli/package.json','utf8')).version)")
+if [ "$CLI_VERSION" != "$VERSION" ]; then
+  cat <<EOF >&2
+FAIL: packages/cli/package.json version is '$CLI_VERSION',
+       expected '$VERSION' so @aiwg/cli stays compatible with aiwg.
+       Update the file and commit.
+EOF
+  exit 1
+fi
+echo "  [5/13] @aiwg/cli package lockstep OK"
+
+# ---------------------------------------------------------------------------
+# 6. package-lock.json lockstep
 #    CI's `check:versions` / `npm ci` reject a lockfile whose version drifts
 #    from package.json, which fails the build gate and blocks npm publish.
 #    Catch it here instead of after the tag is already pushed.
@@ -171,10 +186,10 @@ FAIL: package-lock.json version is '$LOCK_VERSION', expected '$VERSION'.
 EOF
   exit 1
 fi
-echo "  [5/12] package-lock.json lockstep OK"
+echo "  [6/13] package-lock.json lockstep OK"
 
 # ---------------------------------------------------------------------------
-# 6. CHANGELOG.md entry exists
+# 7. CHANGELOG.md entry exists
 # ---------------------------------------------------------------------------
 if ! grep -q "^## \[${VERSION}\]" CHANGELOG.md; then
   cat <<EOF >&2
@@ -183,10 +198,10 @@ FAIL: CHANGELOG.md does not contain '## [${VERSION}]'.
 EOF
   exit 1
 fi
-echo "  [6/12] CHANGELOG.md entry OK"
+echo "  [7/13] CHANGELOG.md entry OK"
 
 # ---------------------------------------------------------------------------
-# 7. Release announcement file exists
+# 8. Release announcement file exists
 # ---------------------------------------------------------------------------
 ANNOUNCEMENT="docs/releases/v${VERSION}-announcement.md"
 if [ ! -f "$ANNOUNCEMENT" ]; then
@@ -197,7 +212,7 @@ FAIL: $ANNOUNCEMENT does not exist.
 EOF
   exit 1
 fi
-echo "  [7/12] Announcement file OK"
+echo "  [8/13] Announcement file OK"
 
 # ---------------------------------------------------------------------------
 # 7b. Source the signing key from the configured vault into an ephemeral keyring.
@@ -258,7 +273,7 @@ WRAP
 fi
 
 # ---------------------------------------------------------------------------
-# 8. Release-signing key available locally
+# 9. Release-signing key available locally
 # ---------------------------------------------------------------------------
 if ! gpg --list-secret-keys "$RELEASE_KEY_FINGERPRINT" >/dev/null 2>&1; then
   cat <<EOF >&2
@@ -274,10 +289,10 @@ FAIL: Release-signing key $RELEASE_KEY_FINGERPRINT not found in local
 EOF
   exit 1
 fi
-echo "  [8/12] Release-signing key present locally"
+echo "  [9/13] Release-signing key present locally"
 
 # ---------------------------------------------------------------------------
-# 9. Release-signing key published in maintainers.asc
+# 10. Release-signing key published in maintainers.asc
 # ---------------------------------------------------------------------------
 # Extract fingerprints from the committed keyring and check ours is among
 # them. We use `gpg --show-keys --with-colons` so the output is parseable
@@ -294,10 +309,10 @@ FAIL: Release-signing key $RELEASE_KEY_FINGERPRINT is NOT published in
 EOF
   exit 1
 fi
-echo "  [9/12] Release-signing key published in maintainers.asc"
+echo "  [10/13] Release-signing key published in maintainers.asc"
 
 # ---------------------------------------------------------------------------
-# 10. Create signed tag with explicit release key (-u override)
+# 11. Create signed tag with explicit release key (-u override)
 # ---------------------------------------------------------------------------
 if [ -z "$TAG_MESSAGE" ]; then
   TODAY=$(date -u '+%Y-%m-%d')
@@ -318,10 +333,10 @@ EOF
 fi
 
 git "${GIT_TAG_GPG_OPTS[@]}" tag -s -u "$RELEASE_KEY_FINGERPRINT" "$TAG" -m "$TAG_MESSAGE"
-echo "  [10/12] Signed tag '$TAG' created with release key"
+echo "  [11/13] Signed tag '$TAG' created with release key"
 
 # ---------------------------------------------------------------------------
-# 11. Local verify (mirror of the CI gate logic)
+# 12. Local verify (mirror of the CI gate logic)
 # ---------------------------------------------------------------------------
 # Verification must use the same ephemeral release-key adapter as signing.
 # The repository-level gpg.program intentionally points at the distinct
@@ -337,14 +352,14 @@ EOF
   git tag -d "$TAG" >/dev/null 2>&1 || true
   exit 1
 fi
-echo "  [11/12] Local 'git tag -v' verification passed"
+echo "  [12/13] Local 'git tag -v' verification passed"
 
 # ---------------------------------------------------------------------------
-# 12. Report next steps; do NOT auto-push
+# 13. Report next steps; do NOT auto-push
 # ---------------------------------------------------------------------------
 cat <<EOF
 
-  [12/12] Ready to push. The push step is left manual on purpose —
+  [13/13] Ready to push. The push step is left manual on purpose —
   inspect the tag once more with 'git tag -v $TAG' if you want, then:
 
     git push origin main --tags

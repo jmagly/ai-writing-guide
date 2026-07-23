@@ -109,6 +109,9 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
+      - name: Assemble lightweight CLI package
+        run: npm run package:cli
+
       - name: Audit dep-graph signatures (#1288 / A12)
         # Hard gate: `npm audit signatures` verifies every package in the
         # dep graph against npmjs.org's signing keys. Time-bounded waivers
@@ -139,6 +142,9 @@ jobs:
       - name: Check Cockpit package contents
         run: npm pack ./apps/cockpit --dry-run
 
+      - name: Check lightweight CLI package contents
+        run: npm pack ./dist/packages/cli --dry-run
+
       - name: Set pre-release version in package.json
         id: rcversion
         run: |
@@ -168,7 +174,7 @@ jobs:
         run: |
           # set -o pipefail (#1247): without it, `npm publish ... | tee` returns
           # tee's exit code (always 0) and the || block below never fires, so
-          # publish failures silently report success. Same fix in all four
+          # publish failures silently report success. Same fix in all
           # publish steps.
           set -o pipefail
           cat > .npmrc << 'NPMRC'
@@ -194,6 +200,20 @@ jobs:
             else
               echo "✗ @aiwg/cockpit Gitea pre-release publish failed"
               cat cockpit-publish-output.txt; exit 1
+            fi
+          }
+      - name: Publish lightweight CLI pre-release to Gitea npm registry
+        run: |
+          set -o pipefail
+          cat > .npmrc << 'NPMRC'
+          //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
+          NPMRC
+          npm publish ./dist/packages/cli --registry=${{ env.GITEA_NPM_REGISTRY }} --tag ${{ steps.rcversion.outputs.npm_tag }} 2>&1 | tee cli-publish-output.txt || {
+            if grep -qE "package version already exists|EPUBLISHCONFLICT|409" cli-publish-output.txt; then
+              echo "✓ @aiwg/cli pre-release already published to Gitea"
+            else
+              echo "✗ @aiwg/cli Gitea pre-release publish failed"
+              cat cli-publish-output.txt; exit 1
             fi
           }
       - name: Affirm dist-tag on Gitea (idempotent)
@@ -238,6 +258,21 @@ jobs:
             fi
           done
           npm dist-tag ls @aiwg/cockpit --registry=${{ env.GITEA_NPM_REGISTRY }}
+          for i in 1 2 3 4 5; do
+            if npm dist-tag add "@aiwg/cli@${VERSION}" "${TAG}" --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee cli-dist-tag-output.txt; then
+              break
+            fi
+            if grep -qiE "is not in the npm registry|not found|404" cli-dist-tag-output.txt; then
+              echo "Attempt $i: @aiwg/cli version not yet visible on Gitea, retrying in 10s..."
+              sleep 10
+            else
+              echo "✗ @aiwg/cli Gitea dist-tag promotion failed"; cat cli-dist-tag-output.txt; exit 1
+            fi
+            if [ "$i" = "5" ]; then
+              echo "✗ @aiwg/cli Gitea dist-tag promotion exhausted retries"; exit 1
+            fi
+          done
+          npm dist-tag ls @aiwg/cli --registry=${{ env.GITEA_NPM_REGISTRY }}
       # npmjs.org publishing is owned by .github/workflows/npm-publish.yml
       # (OIDC trusted publishing + provenance). This Gitea workflow owns the
       # Gitea npm registry only. The formerly-disabled Gitea npmjs.org legs
@@ -296,6 +331,9 @@ jobs:
         # — regression test for #1001). The v2026.5.5 publish failed
         # because tests ran before build; this ordering matches ci.yml.
         run: npm run build
+
+      - name: Assemble lightweight CLI package
+        run: npm run package:cli
 
       - name: Run tests
         # Test failures must block stable publish. `continue-on-error: true`
@@ -389,6 +427,9 @@ jobs:
       - name: Check Cockpit package contents
         run: npm pack ./apps/cockpit --dry-run
 
+      - name: Check lightweight CLI package contents
+        run: npm pack ./dist/packages/cli --dry-run
+
       - name: Install vault fetch dependencies
         run: |
           apt-get update
@@ -439,6 +480,22 @@ jobs:
               exit 1
             fi
           }
+      - name: Publish lightweight CLI to Gitea npm registry
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          set -o pipefail
+          cat > .npmrc << 'NPMRC'
+          //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
+          NPMRC
+          npm publish ./dist/packages/cli --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee cli-publish-output.txt || {
+            if grep -qE "package version already exists|EPUBLISHCONFLICT|409" cli-publish-output.txt; then
+              echo "✓ @aiwg/cli version already published to Gitea - treating as success"
+            else
+              echo "✗ @aiwg/cli Gitea publish failed"
+              cat cli-publish-output.txt
+              exit 1
+            fi
+          }
       - name: Promote to latest on Gitea (idempotent)
         # Explicit dist-tag write. Runs even when publish was skipped as
         # "already exists" — this is the safety net that the user-reported
@@ -481,6 +538,21 @@ jobs:
             fi
           done
           npm dist-tag ls @aiwg/cockpit --registry=${{ env.GITEA_NPM_REGISTRY }}
+          for i in 1 2 3 4 5; do
+            if npm dist-tag add "@aiwg/cli@${VERSION}" latest --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee cli-dist-tag-output.txt; then
+              break
+            fi
+            if grep -qiE "is not in the npm registry|not found|404" cli-dist-tag-output.txt; then
+              echo "Attempt $i: @aiwg/cli version not yet visible on Gitea, retrying in 10s..."
+              sleep 10
+            else
+              echo "✗ @aiwg/cli Gitea latest promotion failed"; cat cli-dist-tag-output.txt; exit 1
+            fi
+            if [ "$i" = "5" ]; then
+              echo "✗ @aiwg/cli Gitea latest promotion exhausted retries"; exit 1
+            fi
+          done
+          npm dist-tag ls @aiwg/cli --registry=${{ env.GITEA_NPM_REGISTRY }}
       # npmjs.org publishing is owned by .github/workflows/npm-publish.yml
       # (OIDC + provenance); the formerly-disabled Gitea npmjs.org legs were
       # removed now that the OIDC path is proven in production (#1283 / A5).
@@ -491,6 +563,7 @@ jobs:
           echo "DRY RUN - Would publish version ${{ steps.version.outputs.version }}"
           echo "Registry: Gitea (npmjs.org publishes from GitHub Actions OIDC)"
           npm pack
+          npm pack ./dist/packages/cli
           ls -la *.tgz
 
   verify-install:
@@ -513,6 +586,15 @@ jobs:
             echo "✓ Package aiwg found in Gitea registry"
           else
             echo "⚠ Package not found in Gitea registry (HTTP $HTTP_CODE)"
+          fi
+
+          CLI_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ env.GITEA_NPM_REGISTRY }}%40aiwg%2Fcli")
+          if [ "$CLI_HTTP_CODE" = "200" ]; then
+            echo "✓ Package @aiwg/cli found in Gitea registry"
+          else
+            echo "✗ Package @aiwg/cli not found in Gitea registry (HTTP $CLI_HTTP_CODE)"
+            exit 1
           fi
 
       # npmjs.org publish + verification is owned by .github/workflows/npm-publish.yml

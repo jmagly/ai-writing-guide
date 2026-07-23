@@ -35,6 +35,7 @@
     "validate-metadata": "aiwg validate-metadata",
     "package-plugins": "node tools/plugin/package-plugins.mjs --all",
     "package-plugins:clean": "node tools/plugin/package-plugins.mjs --all --clean",
+    "package:cli": "node tools/release/build-cli-package.mjs",
     "build": "node tools/scripts/resource-preflight.mjs --profile full && AIWG_BUILD_PREFLIGHT_DONE=1 npm run build:cli && npm --prefix apps/web ci && npm --prefix apps/web run build",
     "build:cli": "node tools/scripts/resource-preflight.mjs --profile cli && npm run check:versions && tsc && npm run build:copy-mjs",
     "build:copy-mjs": "node tools/scripts/copy-build-resources.mjs",

@@ -38,6 +38,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   kernel assets into verified provider user paths while generating only
   lightweight context/bootstrap files in the current project. The existing
   `--scope user` behavior remains an additive project-plus-user mirror.
+- **CalVer-locked lightweight CLI package** (#1847) — `@aiwg/cli` now packages
+  the compiled CLI/API runtime without the bundled corpus, documentation,
+  templates, or precomputed local indices. Its version and runtime dependency
+  set must exactly match the main `aiwg` package, and both npm registries build,
+  publish, and verify it alongside the full and Cockpit distributions.
 
 ### Fixed
 

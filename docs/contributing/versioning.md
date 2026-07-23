@@ -231,7 +231,7 @@ This has one operational gotcha: a typical maintainer git config has `tag.gpgsig
 tools/release/cut-tag.sh 2026.X.Y
 ```
 
-The wrapper forces `-u <release-key-fingerprint>` via `git tag -s -u …` so the right key signs the tag regardless of the global `user.signingkey`. It also runs 10 pre-tag checks (CalVer, package.json/marketplace.json lockstep, CHANGELOG, announcement, release key present in the active `GNUPGHOME`, key published in `.gitea/keys/maintainers.asc`) so common drift bugs fail locally rather than in CI.
+The wrapper forces `-u <release-key-fingerprint>` via `git tag -s -u …` so the right key signs the tag regardless of the global `user.signingkey`. It also verifies CalVer and package lockstep (including `@aiwg/cli`), release documentation, signing-key availability, and the resulting tag before reporting the push command, so common drift bugs fail locally rather than in CI.
 
 If the wrapper says the release key is missing, hydrate a temporary GPG home from
 the configured vault route first:
@@ -595,22 +595,23 @@ the benefit; the threat-model effect of either shape is equivalent.
 
 ## Package ownership & npm registries
 
-AIWG ships **two** npm packages with **different ownership models** — this split
+AIWG ships **three** npm packages with **different ownership models** — this split
 is intentional; don't try to "unify" them.
 
-| Package         | Scope / owner                                      | Public install                 | Notes                                                                                                                     |
-| --------------- | -------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| `aiwg`          | **unscoped**, owned by the user account `roctinam` | `npm install -g aiwg`          | The base CLI. Deliberately kept unscoped under the user account — renaming to a scope would break every existing install. |
-| `@aiwg/cockpit` | **scoped**, under the `@aiwg` org                  | `npm install -g @aiwg/cockpit` | Opt-in Cockpit package. Lives under the org.                                                                              |
+| Package         | Scope / owner                                      | Public install                 | Notes                                                                                           |
+| --------------- | -------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `aiwg`          | **unscoped**, owned by the user account `roctinam` | `npm install -g aiwg`          | Full CLI plus the default local corpus; retained for compatibility.                              |
+| `@aiwg/cli`     | **scoped**, under the `@aiwg` org                  | `npm install -g @aiwg/cli`     | Lightweight CLI/API runtime without the corpus; its version is exactly lockstep with `aiwg`.     |
+| `@aiwg/cockpit` | **scoped**, under the `@aiwg` org                  | `npm install -g @aiwg/cockpit` | Opt-in Cockpit package.                                                                         |
 
 ### Where each registry is published from
 
 - **npmjs.org (public) — GitHub Actions only.** `.github/workflows/npm-publish.yml`
-  publishes both packages via **OIDC trusted publishing + provenance** on tag push.
+  publishes all three packages via **OIDC trusted publishing + provenance** on tag push.
   No npm token is involved (OIDC). GitHub Actions is the authority for npmjs.org
   supply-chain distribution and verification.
 - **Gitea npm registry (mirror) — Gitea Actions only.** `.gitea/workflows/npm-publish.yml`
-  publishes both packages to Gitea's bundled registry for local package management.
+  publishes all three packages to Gitea's bundled registry for local package management.
   Uses the `NPM_TOKEN` secret — a **Gitea API token (`gta_…`)** with `package:write`
   (despite the name, it is NOT an npmjs.org token).
 - **Releases:** Gitea release = `.gitea/workflows/gitea-release.yml`; GitHub release
@@ -619,14 +620,18 @@ is intentional; don't try to "unify" them.
 ### OIDC trusted publishers are per-package
 
 Each package needs its **own** OIDC trusted publisher configured on npmjs.org,
-pointed at `jmagly/aiwg`'s `.github/workflows/npm-publish.yml`. `aiwg` has had one
-for a while; `@aiwg/cockpit` was added in June 2026.
+pointed at `jmagly/aiwg`'s `.github/workflows/npm-publish.yml`. Configure the
+same publisher tuple separately for `aiwg`, `@aiwg/cli`, and `@aiwg/cockpit`.
+The `@aiwg/cli@0.0.0-bootstrap.0` reservation is not an AIWG release; real
+publishes begin at the next shared AIWG CalVer.
 
 ### Gotchas (learned the hard way — #1648)
 
-- **Publish a sub-package with the folder spec, never `--prefix`.** Use
-  `npm publish ./apps/cockpit …` and `npm pack ./apps/cockpit`. `npm --prefix
-apps/cockpit publish` does **not** target the subdir — it republishes the root
+- **Publish a sub-package with the folder spec, never `--prefix`.** Cockpit is
+  published from `./apps/cockpit`; the generated CLI staging package is
+  published from `./dist/packages/cli`. Use `npm publish ./apps/cockpit …` or
+  `npm publish ./dist/packages/cli …` as appropriate. `npm --prefix
+  apps/cockpit publish` does **not** target the subdir — it republishes the root
   `aiwg` package, hits `409`, and the error handler swallows it as success, so the
   sub-package silently never publishes. Note the leading `./` — `npm publish
 apps/cockpit` (no `./`) is read as a git spec and fails.

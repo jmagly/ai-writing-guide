@@ -12,6 +12,7 @@ import type {
 const require = createRequire(import.meta.url);
 function requireModelResource(filename: string): unknown {
   const candidates = [
+    `./${filename}`,
     `../../agentic/code/providers/${filename}`,
     `../../../agentic/code/providers/${filename}`,
   ];

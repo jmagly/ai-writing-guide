@@ -19,7 +19,8 @@
 #   `npm view aiwg@<version> --json | jq .dist.attestations`.
 #
 # REQUIREMENTS (one-time, operator-side):
-# 1. npmjs.org → package settings → trusted publishers → add a publisher:
+# 1. npmjs.org → package settings → trusted publishers → add a publisher for
+#    each of `aiwg`, `@aiwg/cli`, and `@aiwg/cockpit`:
 #      Provider:      GitHub Actions
 #      Owner:         jmagly
 #      Repository:    aiwg
@@ -205,6 +206,9 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
+      - name: Assemble lightweight CLI package
+        run: npm run package:cli
+
       - name: Run tests
         # Test failures must block stable publish. `continue-on-error: true`
         # was removed from the Gitea workflow per #1280 (A2); the same
@@ -257,6 +261,12 @@ jobs:
           set -o pipefail
           echo "=== Cockpit package contents ==="
           npm pack ./apps/cockpit --dry-run 2>&1 | tee cockpit-pack-output.txt
+
+      - name: Check lightweight CLI package contents
+        run: |
+          set -o pipefail
+          echo "=== @aiwg/cli package contents ==="
+          npm pack ./dist/packages/cli --dry-run 2>&1 | tee cli-pack-output.txt
 
       - name: Verify .aiwg/ excluded from package
         run: |
@@ -388,6 +398,24 @@ jobs:
             fi
           }
 
+      - name: Publish lightweight CLI to npmjs.org (OIDC + provenance)
+        run: |
+          set -o pipefail
+          NPM_TAG='${{ steps.version.outputs.npm_tag }}'
+          npm publish ./dist/packages/cli --provenance --access public --tag "$NPM_TAG" 2>&1 | tee cli-publish-output.txt || {
+            if grep -qE "cannot publish over|EPUBLISHCONFLICT|409" cli-publish-output.txt; then
+              echo "✓ @aiwg/cli version already published to npmjs.org — treating as success"
+            elif grep -qE "404.*PUT|is not in this registry" cli-publish-output.txt; then
+              echo "✗ @aiwg/cli publish failed: configure its npm trusted publisher for jmagly/aiwg and npm-publish.yml"
+              cat cli-publish-output.txt
+              exit 1
+            else
+              echo "✗ @aiwg/cli npmjs.org publish failed"
+              cat cli-publish-output.txt
+              exit 1
+            fi
+          }
+
       - name: Install jq (node:24 image does not ship it by default)
         # The verify-provenance step and the asset-upload steps below shell
         # out to jq. node:24-bookworm doesn't include it. rc.1 retag #6
@@ -433,6 +461,13 @@ jobs:
           fi
           echo "✓ Provenance attestation present for @aiwg/cockpit@${VERSION}"
 
+          CLI_ATTESTATIONS=$(npm view "@aiwg/cli@${VERSION}" --json 2>/dev/null | jq -r '.dist.attestations // empty')
+          if [ -z "$CLI_ATTESTATIONS" ]; then
+            echo "✗ No provenance attestation found for @aiwg/cli@${VERSION} on npmjs.org"
+            exit 1
+          fi
+          echo "✓ Provenance attestation present for @aiwg/cli@${VERSION}"
+
       - name: Verify dist-tag points at this version
         # Defense-in-depth against the dist-tag drift the Gitea workflow
         # was hardened against (#1247, #1280). Even on first OIDC publish
@@ -468,6 +503,19 @@ jobs:
               exit 1
             fi
           done
+          for i in 1 2 3 4 5; do
+            CURRENT=$(npm view "@aiwg/cli@${NPM_TAG}" version 2>/dev/null || echo "")
+            if [ "$CURRENT" = "$VERSION" ]; then
+              echo "✓ @aiwg/cli@${NPM_TAG} = ${VERSION} on npmjs.org"
+              break
+            fi
+            echo "Attempt $i: @aiwg/cli@${NPM_TAG} = ${CURRENT:-<missing>}, expected ${VERSION}; retrying in 10s..."
+            sleep 10
+            if [ "$i" = "5" ]; then
+              echo "✗ dist-tag verification exhausted retries (@aiwg/cli@${NPM_TAG} did not resolve to ${VERSION})"
+              exit 1
+            fi
+          done
 
       - name: Advance @next dist-tag on stable releases
         # On a stable publish (--tag latest), @next is still pointing at
@@ -478,7 +526,7 @@ jobs:
         # IMPORTANT: OIDC trusted-publishing tokens are publish-scoped only;
         # `npm dist-tag` requires a regular auth token. This step uses a
         # narrowly-scoped automation token (`NPM_DIST_TAG_TOKEN` — package
-        # management scope on the `aiwg` package, NOT the old NPMJS_TOKEN).
+        # management scope on all three AIWG packages, NOT the old NPMJS_TOKEN).
         # When the token is absent the step warns and continues — the
         # tarball + signatures are already published, only the @next
         # channel lags until an operator advances it manually.
@@ -500,29 +548,32 @@ jobs:
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
             echo "⚠ NPM_DIST_TAG_TOKEN not configured — @next will lag @latest."
             echo "  Operator follow-up: issue a granular automation token with"
-            echo "  package management scope on 'aiwg', store as NPM_DIST_TAG_TOKEN,"
+            echo "  package management scope on aiwg, @aiwg/cli, and @aiwg/cockpit,"
+            echo "  store it as NPM_DIST_TAG_TOKEN,"
             echo "  then re-run this workflow OR run manually:"
             echo "    npm dist-tag add aiwg@${VERSION} next"
+            echo "    npm dist-tag add @aiwg/cli@${VERSION} next"
+            echo "    npm dist-tag add @aiwg/cockpit@${VERSION} next"
             exit 0
           fi
-          echo "Advancing aiwg@next → ${VERSION}"
-          npm dist-tag add "aiwg@${VERSION}" next
-          # Cache-bust the verify (npm view caches dist-tags; right after a
-          # mutation the local cache can return the pre-mutation value even
-          # though the registry is updated). Retry against the registry until
-          # the new value propagates, with a hard ceiling.
-          for i in 1 2 3 4 5; do
-            CURRENT_NEXT=$(npm view "aiwg@next" version --prefer-online --no-update-notifier 2>/dev/null || echo "")
-            if [ "$CURRENT_NEXT" = "$VERSION" ]; then
-              echo "✓ aiwg@next = ${VERSION}"
-              break
-            fi
-            echo "Attempt $i: aiwg@next = ${CURRENT_NEXT:-<missing>}, expected ${VERSION}; retrying in 5s..."
-            sleep 5
-            if [ "$i" = "5" ]; then
-              echo "✗ aiwg@next verification exhausted retries"
-              exit 1
-            fi
+          for PACKAGE in aiwg @aiwg/cli @aiwg/cockpit; do
+            echo "Advancing ${PACKAGE}@next → ${VERSION}"
+            npm dist-tag add "${PACKAGE}@${VERSION}" next
+            # Cache-bust the verify (npm view caches dist-tags; right after a
+            # mutation the local cache can return the pre-mutation value).
+            for i in 1 2 3 4 5; do
+              CURRENT_NEXT=$(npm view "${PACKAGE}@next" version --prefer-online --no-update-notifier 2>/dev/null || echo "")
+              if [ "$CURRENT_NEXT" = "$VERSION" ]; then
+                echo "✓ ${PACKAGE}@next = ${VERSION}"
+                break
+              fi
+              echo "Attempt $i: ${PACKAGE}@next = ${CURRENT_NEXT:-<missing>}, expected ${VERSION}; retrying in 5s..."
+              sleep 5
+              if [ "$i" = "5" ]; then
+                echo "✗ ${PACKAGE}@next verification exhausted retries"
+                exit 1
+              fi
+            done
           done
 
       # ============================================================

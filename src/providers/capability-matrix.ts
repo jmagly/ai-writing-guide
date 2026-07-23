@@ -9,7 +9,7 @@
  * @unblocks #597, #598, #599
  */
 
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { load as loadYaml } from 'js-yaml';
@@ -174,8 +174,8 @@ let _cached: CapabilityMatrix | null = null;
 
 /**
  * Resolve the path to capability-matrix.yaml relative to the package root.
- * Works for both compiled (dist/src/providers/) and source (src/providers/)
- * layouts by walking up to find the aiwg package.json.
+ * The lightweight CLI embeds the matrix next to the compiled loader. Full and
+ * source layouts retain the canonical agentic path.
  *
  * @issue #1261
  */
@@ -187,6 +187,9 @@ function resolveMatrixPath(): string {
   const thisDir = typeof __dirname !== 'undefined'
     ? __dirname
     : dirname(fileURLToPath(import.meta.url));
+
+  const embeddedMatrix = resolve(thisDir, 'capability-matrix.yaml');
+  if (existsSync(embeddedMatrix)) return embeddedMatrix;
 
   const packageRoot = findPackageRoot(thisDir);
   if (!packageRoot) {

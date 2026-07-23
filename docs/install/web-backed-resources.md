@@ -10,6 +10,21 @@ Operator workflows should remain command-driven and unchanged; source selection 
 Release artifacts are hosted at `releases.aiwg.io` (not `aiwg.io/resources`),
 and the public AIWG website remains separate.
 
+## Lightweight CLI Distribution
+
+Web-backed use does not require the full npm corpus package. Install the
+CalVer-locked CLI package instead:
+
+```bash
+npm install --global @aiwg/cli@next
+aiwg discover "architecture evolution" --resource-source web --aiwg-version stable
+```
+
+`@aiwg/cli` and `aiwg` always publish with the exact same AIWG CalVer. The npm
+package version selects CLI behavior; `--aiwg-version` independently selects
+the signed resource release for a call. The CLI package contains executable
+and API code only. It does not contain the default framework/addon corpus.
+
 ## Relocating Project AIWG Artifacts
 
 AIWG project artifacts do not have to live at `./.aiwg`. Maintainer checkouts

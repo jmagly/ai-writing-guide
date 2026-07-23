@@ -1,0 +1,76 @@
+{
+  "name": "@aiwg/cli",
+  "version": "2026.7.16",
+  "description": "Lightweight AIWG CLI for signed, versioned web-backed resources.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "aiwg": "bin/aiwg.mjs"
+  },
+  "main": "./dist/src/api/index.js",
+  "types": "./dist/src/api/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/api/index.d.ts",
+      "import": "./dist/src/api/index.js",
+      "default": "./dist/src/api/index.js"
+    },
+    "./resources": {
+      "types": "./dist/src/resources/index.d.ts",
+      "import": "./dist/src/resources/index.js",
+      "default": "./dist/src/resources/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin/",
+    "dist/src/",
+    "!dist/**/*.d.ts",
+    "!dist/**/*.map",
+    "dist/src/api/index.d.ts",
+    "dist/src/resources/index.d.ts",
+    "dist/src/resources/web-release.d.ts",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmagly/aiwg.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://aiwg.io",
+  "bugs": {
+    "url": "https://github.com/jmagly/aiwg/issues"
+  },
+  "keywords": [
+    "aiwg",
+    "agentic-ai",
+    "cli",
+    "context-engineering",
+    "web-resources"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@fortemi/core": "2026.7.11",
+    "@modelcontextprotocol/sdk": "^1.24.0",
+    "chalk": "^4.1.2",
+    "chokidar": "^3.6.0",
+    "commander": "^12.1.0",
+    "glob": "^13.0.1",
+    "graceful-fs": "^4.2.11",
+    "js-yaml": "^4.1.0",
+    "listr2": "^8.2.5",
+    "ora": "^5.4.1",
+    "yaml": "^2.8.1",
+    "zod": "^3.25.0"
+  },
+  "optionalDependencies": {
+    "@hono/node-server": "^1.19.14",
+    "hono": "^4.12.18",
+    "ws": "^8.20.0"
+  }
+}
