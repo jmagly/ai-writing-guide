@@ -580,12 +580,14 @@ jobs:
 
       - name: Verify package on Gitea registry
         run: |
+          set -euo pipefail
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             "${{ env.GITEA_NPM_REGISTRY }}aiwg")
           if [ "$HTTP_CODE" = "200" ]; then
             echo "✓ Package aiwg found in Gitea registry"
           else
-            echo "⚠ Package not found in Gitea registry (HTTP $HTTP_CODE)"
+            echo "✗ Package aiwg not found in Gitea registry (HTTP $HTTP_CODE)"
+            exit 1
           fi
 
           CLI_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
@@ -596,6 +598,41 @@ jobs:
             echo "✗ Package @aiwg/cli not found in Gitea registry (HTTP $CLI_HTTP_CODE)"
             exit 1
           fi
+
+          COCKPIT_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ env.GITEA_NPM_REGISTRY }}%40aiwg%2Fcockpit")
+          if [ "$COCKPIT_HTTP_CODE" = "200" ]; then
+            echo "✓ Package @aiwg/cockpit found in Gitea registry"
+          else
+            echo "✗ Package @aiwg/cockpit not found in Gitea registry (HTTP $COCKPIT_HTTP_CODE)"
+            exit 1
+          fi
+
+      - name: Clean-install Gitea package tarballs
+        # Gitea's bundled npm registry is a package store, not an npmjs proxy.
+        # Resolve each AIWG tarball from Gitea, then install the tarball with
+        # npm's default registry so third-party dependencies remain on npmjs.
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          ROOT_TARBALL=$(npm view "aiwg@${VERSION}" dist.tarball --registry=${{ env.GITEA_NPM_REGISTRY }})
+          CLI_TARBALL=$(npm view "@aiwg/cli@${VERSION}" dist.tarball --registry=${{ env.GITEA_NPM_REGISTRY }})
+          COCKPIT_TARBALL=$(npm view "@aiwg/cockpit@${VERSION}" dist.tarball --registry=${{ env.GITEA_NPM_REGISTRY }})
+
+          ROOT_INSTALL=$(mktemp -d)
+          npm install --prefix "$ROOT_INSTALL" --no-audit --no-fund "$ROOT_TARBALL"
+          "$ROOT_INSTALL/node_modules/.bin/aiwg" --version | grep -F "$VERSION"
+          "$ROOT_INSTALL/node_modules/.bin/aiwg" help >/dev/null
+
+          CLI_INSTALL=$(mktemp -d)
+          npm install --prefix "$CLI_INSTALL" --no-audit --no-fund "$CLI_TARBALL"
+          "$CLI_INSTALL/node_modules/.bin/aiwg" --version | grep -F "$VERSION"
+          "$CLI_INSTALL/node_modules/.bin/aiwg" help >/dev/null
+
+          COCKPIT_INSTALL=$(mktemp -d)
+          npm install --prefix "$COCKPIT_INSTALL" --no-audit --no-fund "$COCKPIT_TARBALL"
+          test -x "$COCKPIT_INSTALL/node_modules/.bin/aiwg-cockpit"
+          test -f "$COCKPIT_INSTALL/node_modules/@aiwg/cockpit/web/dist/index.html"
 
       # npmjs.org publish + verification is owned by .github/workflows/npm-publish.yml
       # (OIDC + provenance). This Gitea workflow verifies the Gitea registry only.

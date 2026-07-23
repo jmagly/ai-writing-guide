@@ -1,7 +1,7 @@
 # Versioning Guide
 
 **Version:** 1.0
-**Last Updated:** 2026-01-14
+**Last Updated:** 2026-07-23
 **Target Audience:** All contributors and AI agents
 
 ## Overview
@@ -637,6 +637,22 @@ is intentional; don't try to "unify" them.
   (despite the name, it is NOT an npmjs.org token).
 - **Releases:** Gitea release = `.gitea/workflows/gitea-release.yml`; GitHub release
   - mirror push = `.gitea/workflows/github-mirror.yml`.
+
+Gitea's bundled npm registry stores AIWG packages but does not proxy packages
+from npmjs.org. A process-wide `--registry=<gitea>` install therefore sends
+third-party dependencies to Gitea and fails when they are not mirrored there.
+For a clean mirror install, resolve or copy the package's `dist.tarball` URL
+from Gitea and install that URL with npm's default registry:
+
+```bash
+VERSION=2026.7.18
+npm install --global \
+  "https://git.integrolabs.net/api/packages/roctinam/npm/aiwg/-/${VERSION}/aiwg-${VERSION}.tgz"
+```
+
+This downloads AIWG from Gitea while resolving its public dependencies from
+npmjs.org. The Gitea release workflow emits the version-specific form of this
+command, and the publish workflow clean-installs all three mirrored tarballs.
 
 ### OIDC trusted publishers are per-package
 

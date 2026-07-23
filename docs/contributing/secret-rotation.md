@@ -67,7 +67,9 @@ Watch Gitea Actions:
 - `Mirror signed release assets to Gitea release` should fetch the Gitea token
   from vault during manual asset mirroring.
 
-Then smoke-test installation from the Gitea registry on a clean host.
+Then smoke-test the versioned Gitea `dist.tarball` URL on a clean host. Do not
+set Gitea as npm's process-wide registry for this test: Gitea stores AIWG
+packages but does not proxy their public npmjs.org dependencies.
 
 ### 4. Revoke the Old Source Credential
 

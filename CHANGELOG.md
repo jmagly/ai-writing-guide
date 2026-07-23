@@ -7,6 +7,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Changed
+
+- **Dependency-safe Gitea mirror verification** — release verification now
+  clean-installs the full, lightweight CLI, and Cockpit tarballs resolved from
+  Gitea while leaving third-party dependency resolution on npmjs.org. Generated
+  Gitea release notes and operator documentation use the same tarball-URL
+  pattern because Gitea's bundled npm registry is a package store, not an
+  npmjs proxy.
+
 ## [2026.7.18] - 2026-07-23 - "Web-first CLI and packaged Cockpit"
 
 ### Changed
