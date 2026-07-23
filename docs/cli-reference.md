@@ -10,7 +10,7 @@ Complete reference for all `aiwg` CLI commands.
 >
 > - **Discovery / status / info commands** (`discover`, `show`, `list`, `status`,
 >   `version`, `runtime-info`, `doctor` read-only, `catalog`, `index query`, …)
->   are **direct-callable** — they are the bridge *into* the skill surface.
+>   are **direct-callable** — they are the bridge _into_ the skill surface.
 > - **Paired action commands** (`use`, `refresh`, `regenerate`, `doctor` repair,
 >   `doc-sync`, `ralph`, `sdlc-accelerate`, `mc`, `init`, `promote`, scaffolding,
 >   storage `migrate`, ops actions, …) have a **paired skill** — route through it
@@ -81,11 +81,11 @@ plus the signed web-resource helpers. Callers do not need to import private
 paths under `dist/`.
 
 ```js
-import { run, resolveWebRelease } from 'aiwg';
+import { run, resolveWebRelease } from "aiwg";
 // Resource-only consumers may instead import from 'aiwg/resources'.
 
-await run(['discover', 'requirements'], { cwd: process.cwd() });
-const release = await resolveWebRelease({ version: 'latest' });
+await run(["discover", "requirements"], { cwd: process.cwd() });
+const release = await resolveWebRelease({ version: "latest" });
 ```
 
 `run()` preserves CLI behavior, including terminal output and command exit
@@ -279,14 +279,14 @@ aiwg --refresh
 
 **Flags:**
 
-| Flag | Description |
-|------|-------------|
-| `--dry-run` | Show what would change without making changes |
-| `--quiet` | Machine-readable JSON output (for orchestration) |
-| `--skip-update` | Skip npm update, only re-deploy frameworks |
-| `--provider <name>` | Target specific provider (default: auto-detect) |
-| `--channel <name>` | Update channel (stable, main) |
-| `--frameworks <list>` | Comma-separated frameworks to re-deploy |
+| Flag                  | Description                                      |
+| --------------------- | ------------------------------------------------ |
+| `--dry-run`           | Show what would change without making changes    |
+| `--quiet`             | Machine-readable JSON output (for orchestration) |
+| `--skip-update`       | Skip npm update, only re-deploy frameworks       |
+| `--provider <name>`   | Target specific provider (default: auto-detect)  |
+| `--channel <name>`    | Update channel (stable, main)                    |
+| `--frameworks <list>` | Comma-separated frameworks to re-deploy          |
 
 **Examples:**
 
@@ -444,6 +444,7 @@ compared to the effective offline catalog and Claude aliases to their semantic
 role/tier contract. Agent-less providers
 are reported as inherited, global-only, informational, or unsupported rather than
 being falsely described as pinned.
+
 - `--save-user` - Save model overrides to `~/.config/aiwg/models.json`
 - `--no-utils` - Skip aiwg-utils addon installation (frameworks only)
 - `--force` - Overwrite existing deployments
@@ -513,35 +514,35 @@ aiwg use sdlc --ci-hooks-enabled --dry-run
 
 **Framework options:**
 
-| Framework | ID | Description |
-|-----------|-----|------------|
-| **SDLC Complete** | `sdlc` | Full software development lifecycle with 93 agents |
-| **Marketing Kit** | `marketing` | Complete marketing campaign management |
-| **Writing Quality** | `writing` | Voice profiles and content validation |
-| **All** | `all` | Deploy all frameworks |
+| Framework           | ID          | Description                                        |
+| ------------------- | ----------- | -------------------------------------------------- |
+| **SDLC Complete**   | `sdlc`      | Full software development lifecycle with 93 agents |
+| **Marketing Kit**   | `marketing` | Complete marketing campaign management             |
+| **Writing Quality** | `writing`   | Voice profiles and content validation              |
+| **All**             | `all`       | Deploy all frameworks                              |
 
 **Addon options:**
 
-| Addon | ID | Description |
-|-------|-----|------------|
+| Addon   | ID    | Description                                                                           |
+| ------- | ----- | ------------------------------------------------------------------------------------- |
 | **RLM** | `rlm` | Recursive Language Models — recursive context decomposition for 10M+ token processing |
 
 **Platform targets:**
 
-| Platform | `--provider` ID | Artifact dirs | Behaviors |
-|----------|-----------------|---------------|-----------|
-| Claude Code | `claude` | `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, `.claude/rules/` | — |
-| GitHub Copilot | `copilot` | `.github/agents/`, `.github/copilot-rules/`, `.github/skills/` | — |
-| Factory AI | `factory` | `.factory/droids/`, `.factory/commands/`, `.factory/skills/`, `.factory/rules/` | — |
-| Cursor | `cursor` | `.cursor/agents/`, `.cursor/commands/`, `.cursor/skills/`, `.cursor/rules/` | — |
-| Windsurf | `windsurf` | `AGENTS.md` (aggregated), `.windsurf/workflows/`, `.windsurf/skills/`, `.windsurf/rules/` | — |
-| Warp Terminal | `warp` | `.warp/agents/`, `.warp/commands/`, `.warp/skills/`, `.warp/rules/`, `WARP.md` (aggregated) | — |
-| OpenAI/Codex | `codex` | `.codex/agents/`, `~/.codex/prompts/`, `~/.codex/skills/`, `.codex/rules/` | — |
-| OpenCode | `opencode` | `.opencode/agent/`, `.opencode/commands/`, `.opencode/skill/`, `.opencode/rule/` | — |
-| Hermes | `hermes` | `~/.hermes/skills/`, `AGENTS.md` (lean) | — |
-| OpenClaw | `openclaw` | `~/.openclaw/agents/`, `~/.openclaw/commands/`, `~/.openclaw/skills/`, `~/.openclaw/rules/`, `~/.openclaw/behaviors/` | ✓ |
-| OpenHuman | `openhuman` | `~/.openhuman/skills/`, `~/.openhuman/.aiwg/rules/`, optional `~/.openhuman/agents/aiwg_*.toml`, project `AGENTS.md` | — |
-| Local/Ollama | `local` | Same as `claude` (local model, Claude Code paths) | — |
+| Platform       | `--provider` ID | Artifact dirs                                                                                                         | Behaviors |
+| -------------- | --------------- | --------------------------------------------------------------------------------------------------------------------- | --------- |
+| Claude Code    | `claude`        | `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, `.claude/rules/`                                           | —         |
+| GitHub Copilot | `copilot`       | `.github/agents/`, `.github/copilot-rules/`, `.github/skills/`                                                        | —         |
+| Factory AI     | `factory`       | `.factory/droids/`, `.factory/commands/`, `.factory/skills/`, `.factory/rules/`                                       | —         |
+| Cursor         | `cursor`        | `.cursor/agents/`, `.cursor/commands/`, `.cursor/skills/`, `.cursor/rules/`                                           | —         |
+| Windsurf       | `windsurf`      | `AGENTS.md` (aggregated), `.windsurf/workflows/`, `.windsurf/skills/`, `.windsurf/rules/`                             | —         |
+| Warp Terminal  | `warp`          | `.warp/agents/`, `.warp/commands/`, `.warp/skills/`, `.warp/rules/`, `WARP.md` (aggregated)                           | —         |
+| OpenAI/Codex   | `codex`         | `.codex/agents/`, `~/.codex/prompts/`, `~/.codex/skills/`, `.codex/rules/`                                            | —         |
+| OpenCode       | `opencode`      | `.opencode/agent/`, `.opencode/commands/`, `.opencode/skill/`, `.opencode/rule/`                                      | —         |
+| Hermes         | `hermes`        | `~/.hermes/skills/`, `AGENTS.md` (lean)                                                                               | —         |
+| OpenClaw       | `openclaw`      | `~/.openclaw/agents/`, `~/.openclaw/commands/`, `~/.openclaw/skills/`, `~/.openclaw/rules/`, `~/.openclaw/behaviors/` | ✓         |
+| OpenHuman      | `openhuman`     | `~/.openhuman/skills/`, `~/.openhuman/.aiwg/rules/`, optional `~/.openhuman/agents/aiwg_*.toml`, project `AGENTS.md`  | —         |
+| Local/Ollama   | `local`         | Same as `claude` (local model, Claude Code paths)                                                                     | —         |
 
 **Commands → Skills migration:**
 
@@ -561,18 +562,18 @@ On first run after the commands-to-skills migration, `aiwg use` detects an exist
 
 `aiwg use` writes artifacts at two possible scopes. Both are supported.
 
-| Scope | How to invoke | Artifact location example (Claude Code) | When it fits |
-|---|---|---|---|
-| **Project (default, recommended)** | `aiwg use sdlc` from a project root | `./.claude/agents/`, `./.claude/skills/` | A specific codebase or project. Per-project agent set; no bleed across unrelated work. |
-| **User mirror (additive)** | `aiwg use sdlc --scope user` | Project paths plus `~/.claude/agents/`, `~/.claude/skills/` | Keep a full project deployment while also making the same assets available to other sessions. |
-| **Global bootstrap** | `aiwg use sdlc --provider claude --global` | User paths plus lightweight project bootstrap files | Use native user-level assets without managing a framework deployment in each project. |
+| Scope                              | How to invoke                              | Artifact location example (Claude Code)                     | When it fits                                                                                  |
+| ---------------------------------- | ------------------------------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| **Project (default, recommended)** | `aiwg use sdlc` from a project root        | `./.claude/agents/`, `./.claude/skills/`                    | A specific codebase or project. Per-project agent set; no bleed across unrelated work.        |
+| **User mirror (additive)**         | `aiwg use sdlc --scope user`               | Project paths plus `~/.claude/agents/`, `~/.claude/skills/` | Keep a full project deployment while also making the same assets available to other sessions. |
+| **Global bootstrap**               | `aiwg use sdlc --provider claude --global` | User paths plus lightweight project bootstrap files         | Use native user-level assets without managing a framework deployment in each project.         |
 
-**Trade-off (REF-720 cross-bleed).** The same `~/.claude/agents/` directory loads into every Claude Code session, regardless of project. Research from MSR/Salesforce (REF-720, *Lost in Multi-Turn Conversation*, 2025) measured a 39% capability drop when context bleeds across unrelated tasks. Project-scope keeps each project's artifact set isolated; user-scope intentionally trades that isolation for ubiquity. Choose the scope that fits the workflow; neither is wrong, and the project-isolation warning from `aiwg use` surfaces the trade-off at deploy time.
+**Trade-off (REF-720 cross-bleed).** The same `~/.claude/agents/` directory loads into every Claude Code session, regardless of project. Research from MSR/Salesforce (REF-720, _Lost in Multi-Turn Conversation_, 2025) measured a 39% capability drop when context bleeds across unrelated tasks. Project-scope keeps each project's artifact set isolated; user-scope intentionally trades that isolation for ubiquity. Choose the scope that fits the workflow; neither is wrong, and the project-isolation warning from `aiwg use` surfaces the trade-off at deploy time.
 
 **Per-provider notes for global install:**
 
 - **Claude Code** — `~/.claude/agents/` and `./.claude/agents/` merge at load time. `aiwg status --scope` (when implemented per the rough-edge inventory) helps disambiguate which artifacts came from which scope.
-- **Codex** — User-scope is the *primary* discovery path; `~/.codex/prompts/` and `~/.codex/skills/` are where Codex actually looks. Project-scope `.codex/commands/` exists for operator visibility but Codex's loader does not scan it. AGENTS.md is the project-scope discovery bridge per the Codex integration ADR.
+- **Codex** — User-scope is the _primary_ discovery path; `~/.codex/prompts/` and `~/.codex/skills/` are where Codex actually looks. Project-scope `.codex/commands/` exists for operator visibility but Codex's loader does not scan it. AGENTS.md is the project-scope discovery bridge per the Codex integration ADR.
 - **OpenClaw** — User-scope is the only supported scope. Project-scope is rejected at the CLI layer.
 - **Hermes** — User-scope is the canonical mode; `~/.hermes/skills/` is the primary loader path.
 - **Copilot / Cursor / Factory / OpenCode / Warp / Windsurf** — Global-install semantics on these providers are pending field validation as part of the Workstream A audit (`.aiwg/studies/novice-user-adoption/working/hookup-matrix.md`).
@@ -1144,20 +1145,20 @@ via `--cwd <path>` for scripted/CI cases. Per-skill manifest can also set
 
 **Env vars exposed to the script:**
 
-| Var | Value |
-|---|---|
-| `AIWG_PROJECT_ROOT` | absolute path to the calling project's root |
-| `AIWG_SKILL_DIR` | absolute path to the skill's source directory |
-| `AIWG_ROOT` | AIWG installation root |
+| Var                 | Value                                         |
+| ------------------- | --------------------------------------------- |
+| `AIWG_PROJECT_ROOT` | absolute path to the calling project's root   |
+| `AIWG_SKILL_DIR`    | absolute path to the skill's source directory |
+| `AIWG_ROOT`         | AIWG installation root                        |
 
 **Manifest schema** (in SKILL.md frontmatter):
 
 ```yaml
 script:
-  entrypoint: scripts/voice_loader.py   # required, relative to skill dir
-  runtime: python3                       # required: node|python3|bash|sh|pwsh|ruby|auto
-  cwd: project-root                      # optional, default
-  argsHint: "--voice <name> --input <path>"  # optional UX hint
+  entrypoint: scripts/voice_loader.py # required, relative to skill dir
+  runtime: python3 # required: node|python3|bash|sh|pwsh|ruby|auto
+  cwd: project-root # optional, default
+  argsHint: "--voice <name> --input <path>" # optional UX hint
 ```
 
 Skills without a `script:` block remain pure-instructional (no behavior change).
@@ -1335,11 +1336,12 @@ aiwg mcp serve --toolsets=all                      # everything (66 tools)
 **Actions:**
 
 - Starts stdio-based MCP server
-- Exposes 15 core tools by default (discover, *-list/*-show pairs, command-run, and artifact-read/write)
+- Exposes 15 core tools by default (discover, _-list/_-show pairs, command-run, and artifact-read/write)
 - Additional 51 tools available via opt-in toolsets
 - Supports Claude Desktop, Cursor, Factory, Hermes (as MCP sidecar)
 
 **Default surface (15 tools; schema cost should be re-measured after tool changes)**:
+
 - `discover` — semantic search across skills/agents/commands/rules
 - `skill-list` / `skill-show`, `command-list` / `command-show`, `rule-list` / `rule-show`, `agent-list` / `agent-show`, `template-list` / `template-render` / `template-show`
 - `command-run` — allow-listed CLI dispatch
@@ -1480,10 +1482,14 @@ aiwg mcp inject --all [--dry-run]
 
 **Options:**
 
-- `--provider <name>` - Target provider (`claude`, `codex`, `cursor`, `copilot`, `windsurf`, `opencode`, `warp`, `factory`, `openclaw`, `hermes`)
+- `--provider <name>` - Target provider: `claude` (`claude-code`),
+  `cursor`, `factory` (`factory-ai`), `codex` (`openai`), `opencode`,
+  `windsurf` (`devin-desktop`), or `warp`
 - `--all` - Inject into all providers that have been configured before
 - `--profile <name>` - Resolve server set from a named MCP profile (see `mcp profile`)
-- `--ephemeral` - Write a standalone temp config without modifying the provider's default config. Supported for: `claude`, `codex`, `openai`. Not supported for: `warp`
+- `--ephemeral` - Write a standalone temp config without modifying the
+  provider's default config. Supported by every listed provider except `warp`;
+  `openai` is accepted as an alias for `codex`
 - `--out <path>` - Explicit output path for ephemeral config (default: auto-generated temp file)
 - `--servers <a,b>` - Comma-separated server name filter (alternative to `--profile`)
 - `--dry-run` - Preview what would be written without modifying any files
@@ -1524,27 +1530,27 @@ aiwg mcp profile <subcommand>
 
 **Subcommands:**
 
-| Subcommand | Description |
-|-----------|-------------|
-| `add <name>` | Create a new profile |
-| `list` | List all profiles |
-| `show <name>` | Show profile details and resolved servers |
-| `edit <name>` | Add/remove servers or update description |
-| `remove <name>` | Delete a profile |
-| `import <file>` | Import profiles from a JSON file |
-| `export [<name>] --out <file>` | Export one or all profiles |
-| `init-presets` | Install built-in preset profiles |
+| Subcommand                     | Description                               |
+| ------------------------------ | ----------------------------------------- |
+| `add <name>`                   | Create a new profile                      |
+| `list`                         | List all profiles                         |
+| `show <name>`                  | Show profile details and resolved servers |
+| `edit <name>`                  | Add/remove servers or update description  |
+| `remove <name>`                | Delete a profile                          |
+| `import <file>`                | Import profiles from a JSON file          |
+| `export [<name>] --out <file>` | Export one or all profiles                |
+| `init-presets`                 | Install built-in preset profiles          |
 
 **Preset Profiles** (installed via `aiwg mcp profile init-presets`):
 
-| Name | Servers | Description |
-|------|---------|-------------|
-| `minimal` | (none) | Minimal toolset for smoke tests |
-| `dev` | git-gitea, codeindex-codehound, memory-fortemi | Code editing + git + memory |
-| `ops` | git-gitea, cmdb-itassets, memory-fortemi | Infra + git + CMDB |
-| `research` | memory-fortemi, google-drive, google-calendar | Documentation + memory + calendar |
-| `incident` | git-gitea, cmdb-itassets, memory-fortemi, codeindex-codehound | Incident response |
-| `full` | `__all__` | All registered servers |
+| Name       | Servers                                                       | Description                       |
+| ---------- | ------------------------------------------------------------- | --------------------------------- |
+| `minimal`  | (none)                                                        | Minimal toolset for smoke tests   |
+| `dev`      | git-gitea, codeindex-codehound, memory-fortemi                | Code editing + git + memory       |
+| `ops`      | git-gitea, cmdb-itassets, memory-fortemi                      | Infra + git + CMDB                |
+| `research` | memory-fortemi, google-drive, google-calendar                 | Documentation + memory + calendar |
+| `incident` | git-gitea, cmdb-itassets, memory-fortemi, codeindex-codehound | Incident response                 |
+| `full`     | `__all__`                                                     | All registered servers            |
 
 `git-gitea` in the built-in presets means "this task profile needs Git/Gitea tools." Provider-specific policies can deny individual high-risk tools, but the server itself is available to all MCP-capable providers.
 
@@ -1615,7 +1621,9 @@ aiwg catalog list
 
 **Options:**
 
-- `--provider <name>` - Filter by provider (anthropic, openai, google)
+- `--provider <name>` - Filter by a provider in the active catalog. The
+  built-in catalog currently includes `anthropic`, `openai`, `google`,
+  `openrouter`, and `ollama`.
 - `--type <type>` - Filter by type (chat, completion, embedding)
 
 #### catalog info
@@ -1762,10 +1770,10 @@ Deletes a scheduled task by name.
 
 ### Backend Detection
 
-| Provider | Backend |
-|----------|---------|
+| Provider    | Backend                                        |
+| ----------- | ---------------------------------------------- |
 | Claude Code | `native-cron` (CronCreate/CronList/CronDelete) |
-| All others | `aiwg-cli` (AIWG daemon) |
+| All others  | `aiwg-cli` (AIWG daemon)                       |
 
 The active backend is reported in `aiwg runtime-info`. Override with `--provider` flag.
 
@@ -1922,15 +1930,15 @@ aiwg feedback --no-context                 # skip attaching system context
 
 **System context collected automatically:**
 
-| Field | Source |
-|-------|--------|
-| aiwg version | `aiwg version` |
-| Node.js | `process.version` |
-| OS | `os.type() + os.release()` |
-| Arch | `os.arch()` |
-| Provider | `.aiwg/aiwg.config` `providers[0]` |
-| Frameworks | `.aiwg/aiwg.config` `installed` keys |
-| Shell | `$SHELL` / `$COMSPEC` |
+| Field        | Source                               |
+| ------------ | ------------------------------------ |
+| aiwg version | `aiwg version`                       |
+| Node.js      | `process.version`                    |
+| OS           | `os.type() + os.release()`           |
+| Arch         | `os.arch()`                          |
+| Provider     | `.aiwg/aiwg.config` `providers[0]`   |
+| Frameworks   | `.aiwg/aiwg.config` `installed` keys |
+| Shell        | `$SHELL` / `$COMSPEC`                |
 
 **Capabilities:** cli, utility
 **Platforms:** All
@@ -2032,21 +2040,21 @@ under the rubric threshold, and an aggregate average across all scanned files.
 
 The AIWG marketplace publishes **13 plugins** at `.claude-plugin/marketplace.json`:
 
-| Plugin | Source | Description |
-|---|---|---|
-| `sdlc` | `frameworks/sdlc-complete` | Full SDLC framework with 93 specialized agents |
-| `marketing` | `frameworks/media-marketing-kit` | Marketing operations framework |
-| `forensics` | `frameworks/forensics-complete` | Digital forensics & incident response (13 agents, 20 skills) |
-| `security-engineering` | `frameworks/security-engineering` | Applied security: crypto, chain-of-trust, factors, supply-chain |
-| `research` | `frameworks/research-complete` | Research workflow automation (8 agents, 39 skills) |
-| `media-curator` | `frameworks/media-curator` | Media archive management (6 agents, 20 skills) |
-| `ops` | `frameworks/ops-complete` | Operational infrastructure: incident, runbooks, troubleshooting |
-| `knowledge-base` | `frameworks/knowledge-base` | Knowledge base / wiki framework |
-| `utils` | `addons/aiwg-utils` | Core AIWG utilities |
-| `voice` | `addons/voice-framework` | Voice profiles for consistent writing |
-| `writing` | `addons/writing-quality` | Writing quality and AI-pattern detection |
-| `training` | `jmagly/aiwg-training` (separate repo) | Fine-tuning dataset curation |
-| `hooks` | `addons/aiwg-hooks` | Workflow tracing and session hooks |
+| Plugin                 | Source                                 | Description                                                     |
+| ---------------------- | -------------------------------------- | --------------------------------------------------------------- |
+| `sdlc`                 | `frameworks/sdlc-complete`             | Full SDLC framework with 93 specialized agents                  |
+| `marketing`            | `frameworks/media-marketing-kit`       | Marketing operations framework                                  |
+| `forensics`            | `frameworks/forensics-complete`        | Digital forensics & incident response (13 agents, 20 skills)    |
+| `security-engineering` | `frameworks/security-engineering`      | Applied security: crypto, chain-of-trust, factors, supply-chain |
+| `research`             | `frameworks/research-complete`         | Research workflow automation (8 agents, 39 skills)              |
+| `media-curator`        | `frameworks/media-curator`             | Media archive management (6 agents, 20 skills)                  |
+| `ops`                  | `frameworks/ops-complete`              | Operational infrastructure: incident, runbooks, troubleshooting |
+| `knowledge-base`       | `frameworks/knowledge-base`            | Knowledge base / wiki framework                                 |
+| `utils`                | `addons/aiwg-utils`                    | Core AIWG utilities                                             |
+| `voice`                | `addons/voice-framework`               | Voice profiles for consistent writing                           |
+| `writing`              | `addons/writing-quality`               | Writing quality and AI-pattern detection                        |
+| `training`             | `jmagly/aiwg-training` (separate repo) | Fine-tuning dataset curation                                    |
+| `hooks`                | `addons/aiwg-hooks`                    | Workflow tracing and session hooks                              |
 
 Install any of them with `/plugin install <name>@aiwg` after running `/plugin marketplace add jmagly/ai-writing-guide` once.
 
@@ -2165,11 +2173,11 @@ Commands for creating new extensions within addons/frameworks.
 
 Skills are the **canonical source type** for agentic workflows. During `aiwg use` deployment:
 
-| Provider support | Behavior |
-|-----------------|---------|
-| **Native skill support** (Claude Code, OpenCode, Warp, etc.) | Skill deployed as-is to `.{platform}/skills/{id}/SKILL.md` |
-| **Generated-command providers** (Copilot, Factory, etc.) | Command file generated from skill source, deployed alongside skill |
-| **Legacy direct commands** | Authored command files still supported; not generated from a skill |
+| Provider support                                             | Behavior                                                           |
+| ------------------------------------------------------------ | ------------------------------------------------------------------ |
+| **Native skill support** (Claude Code, OpenCode, Warp, etc.) | Skill deployed as-is to `.{platform}/skills/{id}/SKILL.md`         |
+| **Generated-command providers** (Copilot, Factory, etc.)     | Command file generated from skill source, deployed alongside skill |
+| **Legacy direct commands**                                   | Authored command files still supported; not generated from a skill |
 
 **Authoring guidance:**
 
@@ -2464,18 +2472,18 @@ aiwg mission-control <subcommand> [options]
 
 **Subcommands:**
 
-| Subcommand | Description |
-|------------|-------------|
-| `start` | Start a new Mission Control session |
-| `dispatch <id> "<objective>"` | Add a background mission to session |
-| `run [<id>] [--accept-cost]` | Drain the queue — launch queued missions as ralph loops |
-| `status [<id>] [--json]` | View mission status dashboard |
-| `watch [<id>]` | Live monitor (streaming) |
-| `abort <session> <mission>` | Abort a specific mission |
-| `pause [<id>]` | Pause active session |
-| `resume [<id>]` | Resume paused session |
-| `stop [<id>] [--drain]` | Shut down session |
-| `list [--json]` | List all sessions |
+| Subcommand                    | Description                                             |
+| ----------------------------- | ------------------------------------------------------- |
+| `start`                       | Start a new Mission Control session                     |
+| `dispatch <id> "<objective>"` | Add a background mission to session                     |
+| `run [<id>] [--accept-cost]`  | Drain the queue — launch queued missions as ralph loops |
+| `status [<id>] [--json]`      | View mission status dashboard                           |
+| `watch [<id>]`                | Live monitor (streaming)                                |
+| `abort <session> <mission>`   | Abort a specific mission                                |
+| `pause [<id>]`                | Pause active session                                    |
+| `resume [<id>]`               | Resume paused session                                   |
+| `stop [<id>] [--drain]`       | Shut down session                                       |
+| `list [--json]`               | List all sessions                                       |
 
 **`mc dispatch` options** (the LFD ceilings mirror `aiwg ralph`; same names/units, #1585):
 
@@ -2549,26 +2557,26 @@ aiwg teams <subcommand> [options]
 
 #### Subcommands
 
-| Subcommand | Description |
-|-----------|-------------|
-| `run <name>` | Execute a team workflow |
-| `list` | List available teams |
+| Subcommand    | Description                     |
+| ------------- | ------------------------------- |
+| `run <name>`  | Execute a team workflow         |
+| `list`        | List available teams            |
 | `info <name>` | Show team definition and roster |
 
 #### Provider Routing
 
-| Provider | Backend | Behavior |
-|----------|---------|----------|
-| Claude Code | Native | @agent-name dispatch instructions |
+| Provider                                                            | Backend             | Behavior                                      |
+| ------------------------------------------------------------------- | ------------------- | --------------------------------------------- |
+| Claude Code                                                         | Native              | @agent-name dispatch instructions             |
 | Warp, Copilot, Cursor, Windsurf, OpenCode, Factory, Codex, OpenClaw | `aiwg mc` emulation | Generates `mc start` + `mc dispatch` commands |
 
 #### Options
 
-| Option | Description |
-|--------|-------------|
-| `--provider <p>` | Override provider detection |
+| Option                 | Description                                   |
+| ---------------------- | --------------------------------------------- |
+| `--provider <p>`       | Override provider detection                   |
 | `--objective "<text>"` | Objective string passed to mc dispatch agents |
-| `--json` | Machine-readable output |
+| `--json`               | Machine-readable output                       |
 
 #### Examples
 
@@ -2595,15 +2603,15 @@ aiwg team info api-development --json
 
 #### Built-in Teams (sdlc-complete framework)
 
-| Team | Agents | Dispatch | Best For |
-|------|--------|----------|----------|
-| `api-development` | 4 | sequential | API design and implementation |
-| `full-stack` | 4 | sequential | Full-stack feature delivery |
-| `greenfield` | 4 | sequential | New project setup |
-| `maintenance` | 4 | sequential | Code review and bug fixing |
-| `migration` | 4 | sequential | Technology migrations |
-| `sdlc-review` | 4 | parallel | Phase gate validation |
-| `security-review` | 3 | sequential | Security audits |
+| Team              | Agents | Dispatch   | Best For                      |
+| ----------------- | ------ | ---------- | ----------------------------- |
+| `api-development` | 4      | sequential | API design and implementation |
+| `full-stack`      | 4      | sequential | Full-stack feature delivery   |
+| `greenfield`      | 4      | sequential | New project setup             |
+| `maintenance`     | 4      | sequential | Code review and bug fixing    |
+| `migration`       | 4      | sequential | Technology migrations         |
+| `sdlc-review`     | 4      | parallel   | Phase gate validation         |
+| `security-review` | 3      | sequential | Security audits               |
 
 #### Team Definition Format
 
@@ -2617,9 +2625,9 @@ Teams are defined as JSON files (with an optional `dispatch` field for `parallel
   "dispatch": "parallel",
   "agents": [
     { "agent": "security-architect", "role": "reviewer" },
-    { "agent": "test-architect",     "role": "reviewer" },
+    { "agent": "test-architect", "role": "reviewer" },
     { "agent": "requirements-analyst", "role": "reviewer" },
-    { "agent": "technical-writer",   "role": "reviewer" }
+    { "agent": "technical-writer", "role": "reviewer" }
   ],
   "use_cases": ["Phase gate validation", "Release readiness review"],
   "sdlc_phases": ["inception", "elaboration", "construction", "transition"]
@@ -3194,11 +3202,11 @@ aiwg ralph-config preset <name>
 
 **Presets:**
 
-| Preset | Use Case | Settings |
-|--------|----------|----------|
-| `conservative` | Security fixes, critical systems | Cautious gains, strict validation, strict oversight |
-| `balanced` | General development (default) | Standard gains, standard validation, balanced oversight |
-| `aggressive` | Documentation, rapid iteration | Aggressive gains, minimal validation, permissive oversight |
+| Preset         | Use Case                         | Settings                                                   |
+| -------------- | -------------------------------- | ---------------------------------------------------------- |
+| `conservative` | Security fixes, critical systems | Cautious gains, strict validation, strict oversight        |
+| `balanced`     | General development (default)    | Standard gains, standard validation, balanced oversight    |
+| `aggressive`   | Documentation, rapid iteration   | Aggressive gains, minimal validation, permissive oversight |
 
 **Example:**
 
@@ -3245,11 +3253,11 @@ aiwg doc-sync <direction> [options]
 
 **Directions:**
 
-| Direction | Description |
-|-----------|-------------|
-| `code-to-docs` | Code is truth, update docs to match |
+| Direction      | Description                                   |
+| -------------- | --------------------------------------------- |
+| `code-to-docs` | Code is truth, update docs to match           |
 | `docs-to-code` | Docs are truth, generate TODOs/fixes for code |
-| `full` | Bidirectional reconciliation |
+| `full`         | Bidirectional reconciliation                  |
 
 **Execution phases:**
 
@@ -3318,23 +3326,23 @@ aiwg sdlc-accelerate <description> [options]
 INTAKE → GATE_LOM → ELABORATION → GATE_ABM → CONSTRUCTION_PREP → BRIEF
 ```
 
-| Phase | Description | Delegates To |
-|-------|-------------|-------------|
-| Intake | Project intake and inception | `/intake-wizard` or `/intake-from-codebase` |
-| LOM Gate | Lifecycle Objective Milestone | `/flow-gate-check inception` |
-| Elaboration | Architecture and requirements | `/flow-inception-to-elaboration` |
-| ABM Gate | Architecture Baseline Milestone | `/flow-gate-check elaboration` |
-| Construction Prep | Iteration planning | `/flow-elaboration-to-construction` |
-| Brief | Construction Ready Brief | Template generation |
+| Phase             | Description                     | Delegates To                                |
+| ----------------- | ------------------------------- | ------------------------------------------- |
+| Intake            | Project intake and inception    | `/intake-wizard` or `/intake-from-codebase` |
+| LOM Gate          | Lifecycle Objective Milestone   | `/flow-gate-check inception`                |
+| Elaboration       | Architecture and requirements   | `/flow-inception-to-elaboration`            |
+| ABM Gate          | Architecture Baseline Milestone | `/flow-gate-check elaboration`              |
+| Construction Prep | Iteration planning              | `/flow-elaboration-to-construction`         |
+| Brief             | Construction Ready Brief        | Template generation                         |
 
 **Entry point detection:**
 
-| Condition | Entry |
-|-----------|-------|
-| No `.aiwg/` + description | `intake-wizard` |
-| No `.aiwg/` + `--from-codebase` | `intake-from-codebase` |
-| `.aiwg/` exists + `--resume` | Detect and resume |
-| `--skip-to` | Jump with prereq validation |
+| Condition                       | Entry                       |
+| ------------------------------- | --------------------------- |
+| No `.aiwg/` + description       | `intake-wizard`             |
+| No `.aiwg/` + `--from-codebase` | `intake-from-codebase`      |
+| `.aiwg/` exists + `--resume`    | Detect and resume           |
+| `--skip-to`                     | Jump with prereq validation |
 
 **Examples:**
 
@@ -3430,13 +3438,13 @@ Audit and triage issue backlogs without starting implementation work. Use this w
 
 **Common workflows:**
 
-| Workflow | Example |
-|---|---|
-| Open backlog audit | `/issue-audit --all-open` |
-| Stale deferred cleanup | `/issue-audit --filter "status:open label:deferred" --guidance "add check dates or close mistakes"` |
-| Epic child-state refresh | `/issue-audit --filter "status:open label:epic" --guidance "find stale child tables"` |
-| Duplicate/overlap audit | `/issue-audit --guidance "find duplicate or overlapping feature tracks"` |
-| Priority/blocker audit | `/issue-audit --guidance "rank next issues for address-issues"` |
+| Workflow                 | Example                                                                                             |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| Open backlog audit       | `/issue-audit --all-open`                                                                           |
+| Stale deferred cleanup   | `/issue-audit --filter "status:open label:deferred" --guidance "add check dates or close mistakes"` |
+| Epic child-state refresh | `/issue-audit --filter "status:open label:epic" --guidance "find stale child tables"`               |
+| Duplicate/overlap audit  | `/issue-audit --guidance "find duplicate or overlapping feature tracks"`                            |
+| Priority/blocker audit   | `/issue-audit --guidance "rank next issues for address-issues"`                                     |
 
 **Output:** a structured report with counts, grouped findings, recommended actions, and a short list of next moves. The command is read-only unless `--apply` is explicitly supplied.
 
@@ -3470,26 +3478,26 @@ Transform a high-level objective into a fully researched, SDLC-gated issue backl
 
 **Capabilities:** planning, research, sdlc, issues, orchestration
 **Platforms:** All
-**Tools:** Read, Write, Glob, Grep, Bash, Agent, mcp__gitea__issue_write, WebSearch, WebFetch
+**Tools:** Read, Write, Glob, Grep, Bash, Agent, mcp**gitea**issue_write, WebSearch, WebFetch
 
 **Phases:**
 
-| Phase | What Happens |
-|-------|-------------|
-| 1. Parallel Research | Three agents in parallel: best practices, prior art, vendor docs |
-| 2. Synthesis | Consolidated brief written to `.aiwg/working/issue-planner/` |
-| 3. SDLC Doc Corpus | Phase-appropriate artifacts generated using sdlc-complete templates |
-| 4. Issue Generation | Issues with type, priority (P0–P3), phase, and dependency mapping |
-| 5. Human Approval | Full plan table presented — no filing until user approves |
-| 6. Filing + Handoff | Issues filed in wave order; `address-issues` invocation output |
+| Phase                | What Happens                                                        |
+| -------------------- | ------------------------------------------------------------------- |
+| 1. Parallel Research | Three agents in parallel: best practices, prior art, vendor docs    |
+| 2. Synthesis         | Consolidated brief written to `.aiwg/working/issue-planner/`        |
+| 3. SDLC Doc Corpus   | Phase-appropriate artifacts generated using sdlc-complete templates |
+| 4. Issue Generation  | Issues with type, priority (P0–P3), phase, and dependency mapping   |
+| 5. Human Approval    | Full plan table presented — no filing until user approves           |
+| 6. Filing + Handoff  | Issues filed in wave order; `address-issues` invocation output      |
 
 **Issue labels generated:**
 
-| Label | Meaning |
-|-------|---------|
-| `feat`, `docs`, `test`, `infra`, `spike`, `security` | Type |
-| `P0`–`P3` | Priority (P0 = gate blockers and security) |
-| `elaboration`, `construction`, etc. | Target SDLC phase |
+| Label                                                | Meaning                                    |
+| ---------------------------------------------------- | ------------------------------------------ |
+| `feat`, `docs`, `test`, `infra`, `spike`, `security` | Type                                       |
+| `P0`–`P3`                                            | Priority (P0 = gate blockers and security) |
+| `elaboration`, `construction`, etc.                  | Target SDLC phase                          |
 
 **Examples:**
 
@@ -3562,6 +3570,14 @@ aiwg discover "<phrase>" [options]
   `framework` graph it can
   fall back to the packaged prebuilt index described in
   [`docs/fortemi-core-prebuilt-indices.md`](fortemi-core-prebuilt-indices.md).
+- `--resource-source <local|web|auto>` — Select installed resources, signed
+  web resources, or local-first fallback for this call. `local` is the default.
+  The current `web` slice requires the `framework` graph and the `fortemi-core`
+  backend.
+- `--aiwg-version <version-or-channel>` — Select the exact signed resource
+  release or channel (`stable`, `candidate`, `nightly`) for web resolution.
+- `--offline` — For web resolution, use only previously verified cached release
+  metadata, index data, and resource bodies; do not make network requests.
 
 **Examples:**
 
@@ -3572,6 +3588,8 @@ aiwg discover "audit security" --type skill         # narrow to skills only
 aiwg discover "rotate service certificates" --type runbook # procedural runbooks only
 aiwg discover "review code" --type agent --format json --compact # JSON for sub-agent consumption
 aiwg discover "static retrieval" --json                # legacy JSON alias
+aiwg discover "architecture evolution" --resource-source web --aiwg-version stable
+aiwg discover "architecture evolution" --resource-source web --offline
 ```
 
 **Output (default):**
@@ -3594,16 +3612,16 @@ Use `--format json` for machine-readable output. Use `aiwg show metadata <id>` f
 
 **How scoring works:**
 
-| Field matched | Weight | Notes |
-|---|---|---|
-| Trigger phrase, exact match | 4× | The strongest signal — hits a skill's declared `## Triggers` line |
-| Trigger phrase, substring | 4× × 0.6 | Partial trigger overlap |
-| Capability description | 2× | Frontmatter `description` (or first body paragraph fallback) |
-| Title | 3× | Boost for exact title match |
-| Tags | 2× | Per-tag |
-| Structured search terms | 1.5× | Process headings, step/capability identifiers, and verification/rollback language |
-| Summary | 1× | Body summary |
-| Path | 0.5× | Filename / path substring |
+| Field matched               | Weight   | Notes                                                                             |
+| --------------------------- | -------- | --------------------------------------------------------------------------------- |
+| Trigger phrase, exact match | 4×       | The strongest signal — hits a skill's declared `## Triggers` line                 |
+| Trigger phrase, substring   | 4× × 0.6 | Partial trigger overlap                                                           |
+| Capability description      | 2×       | Frontmatter `description` (or first body paragraph fallback)                      |
+| Title                       | 3×       | Boost for exact title match                                                       |
+| Tags                        | 2×       | Per-tag                                                                           |
+| Structured search terms     | 1.5×     | Process headings, step/capability identifiers, and verification/rollback language |
+| Summary                     | 1×       | Body summary                                                                      |
+| Path                        | 0.5×     | Filename / path substring                                                         |
 
 YAML workflow-metalanguage resources remain `type: flow` and retain their exact
 declarative `kind` (for example, `FlowPlaybook` or `OpsInventory`). Markdown or
@@ -3635,6 +3653,14 @@ aiwg index show <type> <name> [options]      # equivalent
 - `--backend <fortemi-core|local>` — Lookup backend. Default is
   `fortemi-core`; `local` selects the legacy local fallback. The Fortemi Core
   backend reads the static cache created by `aiwg index sync`.
+- `--resource-source <local|web|auto>` — Select installed resources, signed
+  web resources, or local-first fallback for this call. `local` is the default.
+  The current `web` slice requires the `framework` graph and the `fortemi-core`
+  backend.
+- `--aiwg-version <version-or-channel>` — Select the exact signed resource
+  release or channel (`stable`, `candidate`, `nightly`) for web resolution.
+- `--offline` — For web resolution, use only previously verified cached release
+  metadata, index data, and resource bodies; do not make network requests.
 
 **Lookup order:**
 
@@ -3648,6 +3674,7 @@ aiwg index show <type> <name> [options]      # equivalent
 ```bash
 aiwg show skill aiwg:skill:6f1477d99813ca8d         # streams SKILL.md to stdout
 aiwg show skill flow-deploy-to-production --json    # id + path + content envelope
+aiwg show skill architecture-evolution --resource-source web --aiwg-version stable
 aiwg show metadata aiwg:skill:6f1477d99813ca8d --json # full Fortemi metadata + paths
 aiwg show agent aiwg-steward                        # agent definition
 aiwg show command discover                          # CLI command spec
@@ -3741,6 +3768,7 @@ Then surface the top match (or top-3 candidates) — this makes your reasoning a
 **Read skill bodies via `aiwg show`, not via filesystem paths.** When discovery returns a candidate and you need its full body, call `aiwg show skill <id>` (or the stable name if that is all you have). Don't construct paths or `cat` files directly — the CLI is the access point and works the same regardless of where AIWG is installed. Exact path parameters remain supported for compatibility, but identifier lookup is the primary path.
 
 **Skip discovery only when:**
+
 - The user named a specific skill or command (e.g., `/flow-deploy-to-production`)
 - The capability is clearly outside AIWG's scope
 - You ran the same query in this session and the result is in working memory
@@ -3760,12 +3788,12 @@ Commands for building and querying the artifact index. The index provides struct
 
 The index uses a **multi-graph architecture** with three built-in graph types plus user-defined graphs:
 
-| Graph | Scans | Storage | Built by default |
-|-------|-------|---------|-----------------|
-| `project` | configured AIWG artifact root (virtualized as `.aiwg/`) | `<artifact-root>/.index/project/` | Yes |
-| `codebase` | `src/`, `test/`, `tools/` | `<artifact-root>/.index/codebase/` | Yes (skipped if dirs absent) |
-| `framework` | `agentic/code/`, `docs/` | `.aiwg/.index/framework/` | No (use `--graph framework`) |
-| *(user-defined)* | configured in the artifact root's `aiwg.config` (#1491) | `<artifact-root>/.index/<name>/` | Configurable |
+| Graph            | Scans                                                   | Storage                            | Built by default             |
+| ---------------- | ------------------------------------------------------- | ---------------------------------- | ---------------------------- |
+| `project`        | configured AIWG artifact root (virtualized as `.aiwg/`) | `<artifact-root>/.index/project/`  | Yes                          |
+| `codebase`       | `src/`, `test/`, `tools/`                               | `<artifact-root>/.index/codebase/` | Yes (skipped if dirs absent) |
+| `framework`      | `agentic/code/`, `docs/`                                | `.aiwg/.index/framework/`          | No (use `--graph framework`) |
+| _(user-defined)_ | configured in the artifact root's `aiwg.config` (#1491) | `<artifact-root>/.index/<name>/`   | Configurable                 |
 
 The artifact root defaults to `<project>/.aiwg`, but `AIWG_ARTIFACTS_PATH` or
 `.aiwg-location` may point it elsewhere or rename it. Index entries for project
@@ -3881,17 +3909,17 @@ User-defined graph names cannot override built-in names (`project`, `codebase`, 
 
 **Advanced graph config fields:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `scanDirs` | string[] | Directories to scan (required) |
-| `extensions` | string[] | File extensions (default: `.md`, `.yaml`, `.json`) |
-| `defaultBuild` | boolean | Include in default `aiwg index build` (default: `true`) |
-| `shared` | boolean | Shared across projects (default: `false`) |
-| `graphBackend` | `json` \| `graphology` \| `sqlite` | Graph storage backend (default: `json`) |
-| `nodeStrategy` | `default` \| `filename-metadata` | How node metadata is derived (default: `default`) |
-| `filenamePattern` | string | Regex with named groups for `filename-metadata` strategy |
-| `edgeExtraction.parser` | string | Parser for edge extraction (e.g., `citation-sidecar`) |
-| `edgeExtraction.edges` | array | Edge type declarations for the parser |
+| Field                   | Type                               | Description                                              |
+| ----------------------- | ---------------------------------- | -------------------------------------------------------- |
+| `scanDirs`              | string[]                           | Directories to scan (required)                           |
+| `extensions`            | string[]                           | File extensions (default: `.md`, `.yaml`, `.json`)       |
+| `defaultBuild`          | boolean                            | Include in default `aiwg index build` (default: `true`)  |
+| `shared`                | boolean                            | Shared across projects (default: `false`)                |
+| `graphBackend`          | `json` \| `graphology` \| `sqlite` | Graph storage backend (default: `json`)                  |
+| `nodeStrategy`          | `default` \| `filename-metadata`   | How node metadata is derived (default: `default`)        |
+| `filenamePattern`       | string                             | Regex with named groups for `filename-metadata` strategy |
+| `edgeExtraction.parser` | string                             | Parser for edge extraction (e.g., `citation-sidecar`)    |
+| `edgeExtraction.edges`  | array                              | Edge type declarations for the parser                    |
 
 **Graph backends**: The default `json` backend requires no extra packages. For larger corpora or richer traversal, install an optional backend:
 
@@ -3924,7 +3952,7 @@ npm install @xenova/transformers hnswlib-node
 index:
   embedding:
     enabled: true
-    model: Xenova/all-MiniLM-L6-v2   # ~22MB, cached to ~/.cache/aiwg/models/
+    model: Xenova/all-MiniLM-L6-v2 # ~22MB, cached to ~/.cache/aiwg/models/
     topK: 10
 ```
 
@@ -4025,13 +4053,13 @@ aiwg index query [search-text] [options]
 
 **What `query` searches (per-graph scope):**
 
-| Mode | Scope | Ranking |
-|------|-------|---------|
-| Default (any graph) | **Metadata only** — title (3x), tags (2x), capability/triggers, the 500-char summary (1x), path (0.5x). The index stores a truncated summary, **not** the full body. | Weighted field-match |
-| `--fulltext` (local backend) | **Full artifact body** — reads each candidate node's source file and matches body text (frontmatter stripped). Catches content that never reaches the summary. | BM25 (top hit normalized to 1.0; JSON adds `matched` terms + `mode: "fulltext"`) |
-| `--fulltext` | Fortemi static-cache text/chunks exported by `aiwg index sync`. Preserves type/phase/tag/path filters without rereading source files. Use `--backend local` for legacy body reads. | BM25 over exported static text/chunks |
-| `--semantic` | Fortemi static semantic scoring by default. Use `--backend local` for the legacy embedding index. | Static Fortemi chunk scoring or cosine over local embeddings |
-| `--hybrid` | Fortemi static semantic scoring filtered by path/type/phase/tags. | Static Fortemi score plus filter/facet matches |
+| Mode                         | Scope                                                                                                                                                                              | Ranking                                                                          |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Default (any graph)          | **Metadata only** — title (3x), tags (2x), capability/triggers, the 500-char summary (1x), path (0.5x). The index stores a truncated summary, **not** the full body.               | Weighted field-match                                                             |
+| `--fulltext` (local backend) | **Full artifact body** — reads each candidate node's source file and matches body text (frontmatter stripped). Catches content that never reaches the summary.                     | BM25 (top hit normalized to 1.0; JSON adds `matched` terms + `mode: "fulltext"`) |
+| `--fulltext`                 | Fortemi static-cache text/chunks exported by `aiwg index sync`. Preserves type/phase/tag/path filters without rereading source files. Use `--backend local` for legacy body reads. | BM25 over exported static text/chunks                                            |
+| `--semantic`                 | Fortemi static semantic scoring by default. Use `--backend local` for the legacy embedding index.                                                                                  | Static Fortemi chunk scoring or cosine over local embeddings                     |
+| `--hybrid`                   | Fortemi static semantic scoring filtered by path/type/phase/tags.                                                                                                                  | Static Fortemi score plus filter/facet matches                                   |
 
 Use the default for "find the artifact named/about X"; `--fulltext` for "find the document whose **body** discusses X"; `--semantic` for "find documents conceptually near X"; `--hybrid` for Fortemi static-cache semantic ranking constrained by metadata filters. Pass `--backend local` only when you need the legacy local index path during the phase-out window.
 
@@ -4115,10 +4143,10 @@ aiwg index neighbors --graph kb --node retrieval.md --json
 
 **Typed edge types:**
 
-| Domain | Edge types |
-|--------|-----------|
-| Research / citation | `cites`, `cited-by`, `summarizes`, `discusses` |
-| SDLC | `depends-on` (default), `implements`, `tests`, `supersedes` |
+| Domain              | Edge types                                                  |
+| ------------------- | ----------------------------------------------------------- |
+| Research / citation | `cites`, `cited-by`, `summarizes`, `discusses`              |
+| SDLC                | `depends-on` (default), `implements`, `tests`, `supersedes` |
 
 ---
 
@@ -4317,12 +4345,12 @@ aiwg storage <subcommand>
 
 **Subcommands:**
 
-| Subcommand | Purpose |
-|------------|---------|
-| `show` | Print effective config + resolved physical paths per subsystem |
-| `list-backends` | Inventory of compiled-in adapters with READY/STUB status |
-| `test <subsystem>` | Round-trip write/read/list/delete probe through the configured backend |
-| `migrate <subsystem>` | Copy entries from one backend to another (#955) |
+| Subcommand            | Purpose                                                                |
+| --------------------- | ---------------------------------------------------------------------- |
+| `show`                | Print effective config + resolved physical paths per subsystem         |
+| `list-backends`       | Inventory of compiled-in adapters with READY/STUB status               |
+| `test <subsystem>`    | Round-trip write/read/list/delete probe through the configured backend |
+| `migrate <subsystem>` | Copy entries from one backend to another (#955)                        |
 
 **Examples:**
 
@@ -4367,12 +4395,12 @@ aiwg activity-log <subcommand>
 
 **Subcommands:**
 
-| Subcommand | Purpose |
-|------------|---------|
-| `show [--since YYYY-MM-DD] [--operation OP] [--limit N]` | Display entries newest-first |
-| `append <operation> "<summary>"` | Append a canonical-format entry (atomic via `O_APPEND`) |
-| `stats` | Operation-count breakdown + date range |
-| `rotate [--keep-last <Nd\|N>] [--to <path>]` | Archive entries to a sibling file (#977) |
+| Subcommand                                               | Purpose                                                 |
+| -------------------------------------------------------- | ------------------------------------------------------- |
+| `show [--since YYYY-MM-DD] [--operation OP] [--limit N]` | Display entries newest-first                            |
+| `append <operation> "<summary>"`                         | Append a canonical-format entry (atomic via `O_APPEND`) |
+| `stats`                                                  | Operation-count breakdown + date range                  |
+| `rotate [--keep-last <Nd\|N>] [--to <path>]`             | Archive entries to a sibling file (#977)                |
 
 **Operations** (one per entry): `ingest`, `create`, `update`, `delete`, `query`, `lint`, `deploy`, `archive`, `promote`.
 
@@ -4660,28 +4688,28 @@ aiwg ops <subcommand>
 
 **Subcommands:**
 
-| Subcommand | Purpose |
-|------------|---------|
-| `init` | Bootstrap a new ops workspace |
-| `status [--all]` | Show workspace health |
-| `use <workspace>` | Switch active workspace |
-| `list` (alias `ls`) | List registered workspaces |
-| `push [--workspace <n>]` | Push workspace repos to remote |
-| `discover [root...]` | Scan filesystem for orphaned ops-workspace clones (#937) |
-| `adopt <path>` | Register an existing local clone as a repo entry (#936) |
+| Subcommand               | Purpose                                                  |
+| ------------------------ | -------------------------------------------------------- |
+| `init`                   | Bootstrap a new ops workspace                            |
+| `status [--all]`         | Show workspace health                                    |
+| `use <workspace>`        | Switch active workspace                                  |
+| `list` (alias `ls`)      | List registered workspaces                               |
+| `push [--workspace <n>]` | Push workspace repos to remote                           |
+| `discover [root...]`     | Scan filesystem for orphaned ops-workspace clones (#937) |
+| `adopt <path>`           | Register an existing local clone as a repo entry (#936)  |
 
 **`init` flags:**
 
-| Flag | Description |
-|------|-------------|
-| `--silent` | Skip interactive prompts |
-| `--workspace <name>` | Workspace name (default: `default`) |
-| `--home <path>` | Parent directory for repos |
-| `--mode <mode>` | `single-repo` or `multi-repo` (default: `multi-repo`) |
-| `--ext <list>` | Comma-separated extensions: `sys,it,dev,stream,repo-maintainer` |
-| `--prefix <name>` | Repo naming prefix (e.g., `myorg`) |
-| `--provider <name>` | Remote provider for auto-push (`github`, `gitea`, or URL) |
-| `--from <git-url>` | Clone the URL into the target repo instead of init (#936) |
+| Flag                 | Description                                                     |
+| -------------------- | --------------------------------------------------------------- |
+| `--silent`           | Skip interactive prompts                                        |
+| `--workspace <name>` | Workspace name (default: `default`)                             |
+| `--home <path>`      | Parent directory for repos                                      |
+| `--mode <mode>`      | `single-repo` or `multi-repo` (default: `multi-repo`)           |
+| `--ext <list>`       | Comma-separated extensions: `sys,it,dev,stream,repo-maintainer` |
+| `--prefix <name>`    | Repo naming prefix (e.g., `myorg`)                              |
+| `--provider <name>`  | Remote provider for auto-push (`github`, `gitea`, or URL)       |
+| `--from <git-url>`   | Clone the URL into the target repo instead of init (#936)       |
 
 **Nesting refusal (#935):** `init` walks up from the target home looking for `OpsInventory.yaml`. If an ancestor has one, init refuses with a suggested sibling path — ops workspaces must be siblings, never nested.
 
@@ -4716,21 +4744,21 @@ compatibility source, not a parallel authorization manifest.
 
 **`adopt` flags:**
 
-| Flag | Description |
-|------|-------------|
-| `--workspace <name>` | Workspace bucket (default: `default`) |
-| `--ext <list>` | Comma-separated extensions to record on the repo entry |
-| `--name <name>` | Override repo name (default: basename of path) |
-| `--silent` | Suppress informational logging |
+| Flag                 | Description                                            |
+| -------------------- | ------------------------------------------------------ |
+| `--workspace <name>` | Workspace bucket (default: `default`)                  |
+| `--ext <list>`       | Comma-separated extensions to record on the repo entry |
+| `--name <name>`      | Override repo name (default: basename of path)         |
+| `--silent`           | Suppress informational logging                         |
 
 **`discover` flags:**
 
-| Flag | Description |
-|------|-------------|
-| `--max-depth <n>` | Walk depth from each root (default: 3) |
-| `--register` (alias `--yes`/`-y`) | Write NEW candidates to `ops.json` |
-| `--workspace <name>` | Bucket workspace for registered entries (default: `discovered`) |
-| `--json` | Machine-readable output |
+| Flag                              | Description                                                     |
+| --------------------------------- | --------------------------------------------------------------- |
+| `--max-depth <n>`                 | Walk depth from each root (default: 3)                          |
+| `--register` (alias `--yes`/`-y`) | Write NEW candidates to `ops.json`                              |
+| `--workspace <name>`              | Bucket workspace for registered entries (default: `discovered`) |
+| `--json`                          | Machine-readable output                                         |
 
 ---
 
@@ -4956,57 +4984,61 @@ All commands are registered as extensions in the unified schema. This enables:
 
 ## Command Categories
 
-| Category | Count | Commands |
-|----------|-------|----------|
-| **Maintenance** | 5 | help, version, doctor, update, refresh (alias: `sync`, deprecated) |
-| **Framework** | 3 | use, list, remove |
-| **Project** | 1 | new |
-| **Workspace** | 3 | status, migrate-workspace, rollback-workspace |
-| **MCP** | 1 | mcp (serve, install, info, add, remove, update, list, inject, profile) |
-| **Catalog** | 1 | catalog (3 subcommands) |
-| **Toolsmith** | 1 | runtime-info |
-| **Utility** | 3 | prefill-cards, contribute-start, validate-metadata |
-| **Plugin** | 5 | install-plugin, uninstall-plugin, plugin-status, package-plugin, package-all-plugins |
-| **Scaffolding** | 8 | add-agent, add-command, add-skill, add-behavior, add-template, scaffold-addon, scaffold-extension, scaffold-framework |
-| **Daemon** | 2 | behavior, daemon-init |
-| **Al** | 8 | ralph, ralph-status, ralph-abort, ralph-resume, ralph-attach, agent-loop-ext, ralph-memory, ralph-config |
-| **Mission Control** | 1 | mc (9 subcommands) |
-| **Agent Teams** | 1 | team (3 subcommands) |
-| **Metrics** | 3 | cost-report, cost-history, metrics-tokens |
-| **Documentation** | 1 | doc-sync |
-| **SDLC Orchestration** | 1 | sdlc-accelerate |
-| **Code Analysis** | 1 | cleanup-audit |
-| **Index** | 1 | index (4 subcommands) |
-| **Reproducibility** | 4 | execution-mode, snapshot, checkpoint, reproducibility-validate |
+| Category                | Count | Commands                                                                                                                                                                                              |
+| ----------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Maintenance**         | 12    | help, version, doctor, update, refresh, regenerate, workspace-context, steward, cleanup-audit, features, diagnose, feedback                                                                           |
+| **Framework**           | 7     | use, list, remove, promote, install, packages, marketplace                                                                                                                                            |
+| **Catalog**             | 3     | models, catalog, skills                                                                                                                                                                               |
+| **Utility**             | 17    | cockpit, run, prefill-cards, contribute-start, validate-metadata, skill-lint, repo-access, lint, storage, activity-log, command-log, skill-usage, kb, memory, reflections, provenance, research-store |
+| **Scaffolding**         | 9     | new-bundle, add-agent, add-command, add-skill, add-behavior, add-template, scaffold-addon, scaffold-extension, scaffold-framework                                                                     |
+| **Project**             | 12    | quickref, new, init, setup, issue, issue-audit, address-issues, serve, local-executor, local-executor-serve, sandbox, session                                                                         |
+| **Workspace**           | 4     | status, wizard, migrate-workspace, rollback-workspace                                                                                                                                                 |
+| **MCP**                 | 1     | aiwg-mcp-server                                                                                                                                                                                       |
+| **Toolsmith**           | 2     | runtime-info, agentcard                                                                                                                                                                               |
+| **Plugin**              | 5     | install-plugin, uninstall-plugin, plugin-status, package-plugin, package-all-plugins                                                                                                                  |
+| **Ralph**               | 8     | ralph, ralph-status, ralph-abort, ralph-resume, ralph-attach, agent-loop-ext, ralph-memory, ralph-config                                                                                              |
+| **Orchestration**       | 2     | mc, team                                                                                                                                                                                              |
+| **Metrics**             | 3     | cost-report, cost-history, metrics-tokens                                                                                                                                                             |
+| **Documentation**       | 2     | doc-sync, doc-consolidate                                                                                                                                                                             |
+| **SDLC Orchestration**  | 1     | sdlc-accelerate                                                                                                                                                                                       |
+| **Research Validation** | 1     | best-practices-audit                                                                                                                                                                                  |
+| **Index**               | 6     | index, artifacts, corpus, research-query, discover, show                                                                                                                                              |
+| **Reproducibility**     | 4     | execution-mode, snapshot, checkpoint, reproducibility-validate                                                                                                                                        |
+| **Daemon**              | 2     | behavior, daemon-init                                                                                                                                                                                 |
+| **Configuration**       | 1     | config                                                                                                                                                                                                |
+| **Operations**          | 1     | ops                                                                                                                                                                                                   |
+| **Agentic Tools**       | 6     | chunk, fanout, rlm-prep, rlm-search, rlm-status, rlm-cache                                                                                                                                            |
 
-**Total:** 48 built-in + addon commands (addon commands require `aiwg use <addon>`)
+**Total:** 109 registered command definitions. Run `aiwg help` for the current
+runtime surface and subcommand details; addon commands require their addon to be
+installed with `aiwg use <addon>`.
 
 ---
 
 ## Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | General error |
-| 2 | Invalid arguments |
-| 3 | Missing dependencies |
-| 4 | Configuration error |
-| 5 | Network error |
-| 10 | Validation error |
-| 20 | File system error |
+| Code | Meaning              |
+| ---- | -------------------- |
+| 0    | Success              |
+| 1    | General error        |
+| 2    | Invalid arguments    |
+| 3    | Missing dependencies |
+| 4    | Configuration error  |
+| 5    | Network error        |
+| 10   | Validation error     |
+| 20   | File system error    |
 
 ---
 
 ## Environment Variables
 
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `AIWG_HOME` | AIWG installation directory | Auto-detected |
-| `AIWG_CHANNEL` | Update channel (stable/main) | `stable` |
-| `AIWG_LOG_LEVEL` | Logging level (debug/info/warn/error) | `info` |
-| `AIWG_USE_NEW_ROUTER` | Enable experimental router | `false` |
-| `AIWG_LEGACY_MODE` | Force legacy routing | `false` |
+| Variable              | Purpose                               | Default       |
+| --------------------- | ------------------------------------- | ------------- |
+| `AIWG_HOME`           | AIWG installation directory           | Auto-detected |
+| `AIWG_CHANNEL`        | Update channel (stable/main)          | `stable`      |
+| `AIWG_LOG_LEVEL`      | Logging level (debug/info/warn/error) | `info`        |
+| `AIWG_USE_NEW_ROUTER` | Enable experimental router            | `false`       |
+| `AIWG_LEGACY_MODE`    | Force legacy routing                  | `false`       |
 
 ---
 

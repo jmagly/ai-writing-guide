@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.17] - 2026-07-22 - "Portable resources and lightweight CLI"
+
 ### Added
 
 - **Relocatable project artifact root** — the CLI now honors `.aiwg-location`
@@ -43,6 +45,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   templates, or precomputed local indices. Its version and runtime dependency
   set must exactly match the main `aiwg` package, and both npm registries build,
   publish, and verify it alongside the full and Cockpit distributions.
+
+### Changed
+
+- **Full-package size ceiling** — raised the compressed `aiwg` package budget
+  from 22,000 KB to 23,000 KB for the signed web-resource runtime, portability
+  support, and precomputed release-discovery assets added in this release. The
+  separate file-count, unpacked-size, and Fortemi index budgets remain in place.
 
 ### Fixed
 

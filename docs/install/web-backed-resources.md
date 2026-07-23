@@ -41,11 +41,11 @@ setup.
 
 ## Source Modes
 
-| Mode | Behavior |
-| --- | --- |
-| `local` | Use installed/project-local resources only. This is the default for all commands. |
-| `web` | Resolve resources from versioned, signed release-host bundles with cache and integrity checks. |
-| `auto` | Prefer local resources when present; otherwise fall back to web-backed resources. |
+| Mode    | Behavior                                                                                       |
+| ------- | ---------------------------------------------------------------------------------------------- |
+| `local` | Use installed/project-local resources only. This is the default for all commands.              |
+| `web`   | Resolve resources from versioned, signed release-host bundles with cache and integrity checks. |
+| `auto`  | Prefer local resources when present; otherwise fall back to web-backed resources.              |
 
 ## Current Implemented Commands and Flags
 
@@ -70,9 +70,22 @@ aiwg show framework sdlc --resource-source web --offline
 
 Per-call overrides do not mutate project defaults.
 
+### Current query constraints
+
+Web-backed `discover` and `show` currently operate on the `framework` graph and
+use the `fortemi-core` backend. Combining `--resource-source web` with another
+graph or with `--backend local` fails explicitly. `auto` may use installed
+local resources first, but its web fallback has the same constraints.
+
+These restrictions keep web search behavior aligned with the signed,
+precomputed Fortemi Core framework export. Project and codebase graphs remain
+local because they describe the operator's workspace rather than the published
+AIWG corpus.
+
 ## Web-Backed `discover`
 
 - `discover` currently uses `--resource-source web|auto` in this slice.
+- The web path supports only `--graph framework` and `--backend fortemi-core`.
 - Channel and exact version values are both supported; SemVer ranges are planned
   but not yet implemented.
 - The CLI downloads the signed release raw/prebuilt artifacts
@@ -87,6 +100,8 @@ Per-call overrides do not mutate project defaults.
 ## Web-Backed `show`
 
 - `show` for web mode fetches a signed, manifest-committed raw resource.
+- The web path supports only the framework graph through the Fortemi Core
+  backend.
 - The downloaded payload body is verified and cached as bytes.
 - Offline runs read only the verified cached body bytes.
 

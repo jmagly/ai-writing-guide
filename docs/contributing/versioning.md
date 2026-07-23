@@ -273,7 +273,26 @@ After CI/CD completes:
 
 ```bash
 npm view aiwg version
-# Should show: 2026.1.5
+npm view @aiwg/cockpit version
+npm view @aiwg/cli version
+# All three should show: 2026.1.5
+```
+
+The GitHub trusted-publishing workflow publishes `aiwg`, `@aiwg/cockpit`, and
+`@aiwg/cli` at the same CalVer. It verifies each requested dist-tag and each
+package's provenance attestation before completing.
+
+For stable releases, OIDC sets `latest` during publication. Advancing `next` to
+the same stable version is a separate package-management operation because npm
+trusted-publisher credentials are publish-scoped. The workflow uses the
+narrowly scoped `NPM_DIST_TAG_TOKEN` for all three packages. If that secret is
+not configured, publication still succeeds but the workflow warns that `next`
+must be advanced manually:
+
+```bash
+npm dist-tag add aiwg@2026.1.5 next
+npm dist-tag add @aiwg/cockpit@2026.1.5 next
+npm dist-tag add @aiwg/cli@2026.1.5 next
 ```
 
 ### 5. Mirror signed release assets to the Gitea release
@@ -397,7 +416,9 @@ aiwg refresh --channel latest        # switch back to stable
 - Nightly builds are automated snapshots; alphas/betas are intentional testing milestones
 - **No release announcement** — pre-releases are not public releases
 - **No new CHANGELOG entry** — the stable release CHANGELOG covers everything
-- **No Gitea/GitHub release** — only the stable tag gets a release page
+- **Prerelease-marked release pages** — tag workflows create Gitea and GitHub
+  release records marked as prereleases; only stable releases receive the
+  public announcement and stable release notes
 - CHANGELOG and `docs/releases/` docs are written once, for the stable tag, and cover everything that accumulated across all pre-releases
 
 ### Pre-release → Stable flow
@@ -598,11 +619,11 @@ the benefit; the threat-model effect of either shape is equivalent.
 AIWG ships **three** npm packages with **different ownership models** — this split
 is intentional; don't try to "unify" them.
 
-| Package         | Scope / owner                                      | Public install                 | Notes                                                                                           |
-| --------------- | -------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `aiwg`          | **unscoped**, owned by the user account `roctinam` | `npm install -g aiwg`          | Full CLI plus the default local corpus; retained for compatibility.                              |
-| `@aiwg/cli`     | **scoped**, under the `@aiwg` org                  | `npm install -g @aiwg/cli`     | Lightweight CLI/API runtime without the corpus; its version is exactly lockstep with `aiwg`.     |
-| `@aiwg/cockpit` | **scoped**, under the `@aiwg` org                  | `npm install -g @aiwg/cockpit` | Opt-in Cockpit package.                                                                         |
+| Package         | Scope / owner                                      | Public install                 | Notes                                                                                        |
+| --------------- | -------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------- |
+| `aiwg`          | **unscoped**, owned by the user account `roctinam` | `npm install -g aiwg`          | Full CLI plus the default local corpus; retained for compatibility.                          |
+| `@aiwg/cli`     | **scoped**, under the `@aiwg` org                  | `npm install -g @aiwg/cli`     | Lightweight CLI/API runtime without the corpus; its version is exactly lockstep with `aiwg`. |
+| `@aiwg/cockpit` | **scoped**, under the `@aiwg` org                  | `npm install -g @aiwg/cockpit` | Opt-in Cockpit package.                                                                      |
 
 ### Where each registry is published from
 
@@ -631,7 +652,7 @@ publishes begin at the next shared AIWG CalVer.
   published from `./apps/cockpit`; the generated CLI staging package is
   published from `./dist/packages/cli`. Use `npm publish ./apps/cockpit …` or
   `npm publish ./dist/packages/cli …` as appropriate. `npm --prefix
-  apps/cockpit publish` does **not** target the subdir — it republishes the root
+apps/cockpit publish` does **not** target the subdir — it republishes the root
   `aiwg` package, hits `409`, and the error handler swallows it as success, so the
   sub-package silently never publishes. Note the leading `./` — `npm publish
 apps/cockpit` (no `./`) is read as a git spec and fails.
