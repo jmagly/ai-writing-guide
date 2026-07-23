@@ -6,12 +6,26 @@
 
 **Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 6 more platforms**
 
-200+ agents, 67+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 27 addons, and a training marketplace package. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
+200+ agents, 109+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 27 addons, and a training marketplace package. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
 
 ```bash
-npm i -g aiwg        # install globally
+npm i -g aiwg        # full CLI and local resource corpus
 aiwg use sdlc        # deploy SDLC framework
 ```
+
+For a smaller CLI install that resolves signed, versioned resources from the
+release host:
+
+```bash
+npm i -g @aiwg/cli
+aiwg discover "architecture evolution" \
+  --resource-source web \
+  --aiwg-version stable
+```
+
+See [Web-Backed AIWG Resources](docs/install/web-backed-resources.md) for source
+selection, cache verification, offline use, and the current framework-graph
+constraints.
 
 Then ask your AI assistant to set up the project for AIWG. The agent-led setup
 conversation should establish remotes, issue storage, delivery behavior,
