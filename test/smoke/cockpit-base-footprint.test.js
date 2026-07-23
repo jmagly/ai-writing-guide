@@ -59,7 +59,15 @@ describe('cockpit base-npm footprint guard (#1593)', () => {
     const out = execFileSync('npm', ['pack', '--dry-run', '--json'], {
       encoding: 'utf8',
       cwd: new URL('../../apps/cockpit', import.meta.url),
-      env: { ...process.env, npm_config_cache: npmCache },
+      env: {
+        ...process.env,
+        npm_config_cache: npmCache,
+        // Publish workflows point the outer npm process at a private
+        // non-proxying registry. The release builder must still install its
+        // public build dependencies from npmjs.org.
+        npm_config_registry: 'https://registry.invalid.example/',
+        npm_config_replace_registry_host: 'always',
+      },
       maxBuffer: 64 * 1024 * 1024,
     });
     const pack = parseNpmPackJson(out)[0];

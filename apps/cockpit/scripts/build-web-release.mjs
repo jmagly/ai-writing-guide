@@ -78,11 +78,13 @@ function runNpm(args, cwd, cacheRoot) {
   // into this nested `npm ci` makes it exit successfully without installing
   // Vite or the React plugin. Release builds need their own explicit config.
   for (const key of Object.keys(env)) {
-    if (/^npm_config_(cache|dry_run|production|omit|include|only)$/i.test(key)) {
+    if (/^npm_config_(cache|dry_run|production|omit|include|only|registry|replace_registry_host)$/i.test(key)) {
       delete env[key];
     }
   }
   env.npm_config_cache = cacheRoot;
+  env.npm_config_registry = 'https://registry.npmjs.org/';
+  env.npm_config_replace_registry_host = 'never';
 
   const result = spawnSync(npmCommand, args, {
     cwd,

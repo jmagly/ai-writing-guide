@@ -38,6 +38,9 @@ npm --prefix apps/cockpit run publish:dry   # publish dry-run, public access
 workspace with its own npm cache. The builder clears npm lifecycle flags such as
 the `npm_config_dry_run` value inherited from `npm pack --dry-run`; otherwise a
 nested `npm ci` can report success without installing the build dependencies.
+It also pins that isolated dependency install to npmjs.org instead of inheriting
+the outer publish registry; the Gitea package registry is not a public npm
+proxy.
 It then stages the completed `web/dist` generation under a cross-process lock,
 so concurrent package checks cannot mutate `web/node_modules` or capture a
 partial UI build. The packed artifact must contain `LICENSE`,
