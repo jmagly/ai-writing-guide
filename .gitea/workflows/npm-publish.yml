@@ -185,7 +185,7 @@ jobs:
           //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
           NPMRC
           npm publish --registry=${{ env.GITEA_NPM_REGISTRY }} --tag ${{ steps.rcversion.outputs.npm_tag }} 2>&1 | tee publish-output.txt || {
-            if grep -qE "package version already exists|EPUBLISHCONFLICT|409" publish-output.txt; then
+            if grep -qE "package version already exists|cannot publish over the previously published versions|EPUBLISHCONFLICT|409" publish-output.txt; then
               echo "✓ Pre-release version already published to Gitea"
             else
               echo "✗ Gitea pre-release publish failed (HTTP/npm error above)"
@@ -199,7 +199,7 @@ jobs:
           //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
           NPMRC
           npm publish ./apps/cockpit --registry=${{ env.GITEA_NPM_REGISTRY }} --tag ${{ steps.rcversion.outputs.npm_tag }} 2>&1 | tee cockpit-publish-output.txt || {
-            if grep -qE "package version already exists|EPUBLISHCONFLICT|409" cockpit-publish-output.txt; then
+            if grep -qE "package version already exists|cannot publish over the previously published versions|EPUBLISHCONFLICT|409" cockpit-publish-output.txt; then
               echo "✓ @aiwg/cockpit pre-release already published to Gitea"
             else
               echo "✗ @aiwg/cockpit Gitea pre-release publish failed"
@@ -213,7 +213,7 @@ jobs:
           //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
           NPMRC
           npm publish ./dist/packages/cli --registry=${{ env.GITEA_NPM_REGISTRY }} --tag ${{ steps.rcversion.outputs.npm_tag }} 2>&1 | tee cli-publish-output.txt || {
-            if grep -qE "package version already exists|EPUBLISHCONFLICT|409" cli-publish-output.txt; then
+            if grep -qE "package version already exists|cannot publish over the previously published versions|EPUBLISHCONFLICT|409" cli-publish-output.txt; then
               echo "✓ @aiwg/cli pre-release already published to Gitea"
             else
               echo "✗ @aiwg/cli Gitea pre-release publish failed"
@@ -484,7 +484,7 @@ jobs:
           # mandatory and self-healing on re-runs — do not collapse them.
           # Allow re-runs: treat "version already exists" as success.
           npm publish --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee publish-output.txt || {
-            if grep -qE "package version already exists|EPUBLISHCONFLICT|409" publish-output.txt; then
+            if grep -qE "package version already exists|cannot publish over the previously published versions|EPUBLISHCONFLICT|409" publish-output.txt; then
               echo "✓ Version already published to Gitea - treating as success"
             else
               echo "✗ Gitea publish failed"
@@ -500,7 +500,7 @@ jobs:
           //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
           NPMRC
           npm publish ./apps/cockpit --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee cockpit-publish-output.txt || {
-            if grep -qE "package version already exists|EPUBLISHCONFLICT|409" cockpit-publish-output.txt; then
+            if grep -qE "package version already exists|cannot publish over the previously published versions|EPUBLISHCONFLICT|409" cockpit-publish-output.txt; then
               echo "✓ @aiwg/cockpit version already published to Gitea - treating as success"
             else
               echo "✗ @aiwg/cockpit Gitea publish failed"
@@ -516,7 +516,7 @@ jobs:
           //git.integrolabs.net/api/packages/roctinam/npm/:_authToken=${NODE_AUTH_TOKEN}
           NPMRC
           npm publish ./dist/packages/cli --registry=${{ env.GITEA_NPM_REGISTRY }} 2>&1 | tee cli-publish-output.txt || {
-            if grep -qE "package version already exists|EPUBLISHCONFLICT|409" cli-publish-output.txt; then
+            if grep -qE "package version already exists|cannot publish over the previously published versions|EPUBLISHCONFLICT|409" cli-publish-output.txt; then
               echo "✓ @aiwg/cli version already published to Gitea - treating as success"
             else
               echo "✗ @aiwg/cli Gitea publish failed"

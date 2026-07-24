@@ -34,6 +34,9 @@ describe('@aiwg/cli release workflow wiring', () => {
     );
     expect(workflow).toContain('version: ${{ steps.version.outputs.version }}');
     expect(workflow).toContain('VERSION="${{ needs.build-and-publish.outputs.version }}"');
+    expect(
+      workflow.match(/cannot publish over the previously published versions/g),
+    ).toHaveLength(6);
     expect(workflow).toMatch(
       /verify-install:[\s\S]*?defaults:\s*\n\s*run:\s*\n\s*shell: bash/,
     );
