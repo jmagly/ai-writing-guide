@@ -13,12 +13,12 @@
  * @implements #1037
  */
 
-import { lstat, readdir, stat, unlink } from 'fs/promises';
-import { resolve, join, relative } from 'path';
-import { homedir } from 'os';
+import { lstat, readdir, stat, unlink, rmdir } from 'fs/promises';
+import { resolve, join, relative, dirname, isAbsolute } from 'path';
 import type { AiwgConfig, InstalledEntry } from '../config/aiwg-config.js';
 import { appendProjectLocalActivity } from './project-local-activity.js';
 import { sha256OfFileNormalized } from './managed-marker.js';
+import { getProviderArtifactPathStrings } from '../providers/provider-definitions.js';
 
 export type RemoveCase =
   | 'pristine'      // Case 1
@@ -142,57 +142,36 @@ export async function hashBundleArtifacts(
   return out;
 }
 
-/**
- * Provider-specific deploy-path conventions for the artifact directories
- * we currently emit. Keyed by provider, value is the prefix relative to
- * the project (or HOME for HOME-deploying providers — those are out of
- * scope for revert in this iteration; they are silently skipped with a
- * message).
- */
-// Per PUW-026 (#1127): home-deploying providers get absolute prefixes so
-// `resolve(projectDir, prefix)` correctly produces the home-rooted path.
-// Previously these were `null`, which silently skipped lifecycle ops
-// against home-deployed project-local bundles (OpenClaw, Hermes).
-const PROVIDER_PREFIX: Record<string, string | null> = {
-  claude: '.claude',
-  cursor: '.cursor',
-  factory: '.factory',
-  opencode: '.opencode',
-  windsurf: '.windsurf',
-  warp: '.warp',
-  codex: '.codex',
-  copilot: '.github',     // copilot uses .github/agents, .github/instructions, .github/skills
-  openclaw: resolve(homedir(), '.openclaw'),
-  hermes: resolve(homedir(), '.hermes'),
-};
-
-/**
- * Translate a source-relative artifact path to the provider's deploy path,
- * relative to the project (or HOME) root. Returns null when the provider
- * is HOME-deploying (revert from HOME is out of scope for this iteration).
- *
- * For most providers this is a 1:1 mapping (rules/x.md → .{p}/rules/x.md).
- */
-function deployedPathFor(
+/** Resolve a recorded source-relative artifact through the canonical provider
+ * definition rather than assuming every artifact lives directly under the
+ * provider prefix (#1869). Returned paths are absolute for both project- and
+ * home-deploying providers. */
+export function candidateDeployedPaths(
+  projectDir: string,
   provider: string,
   sourceRel: string,
-): string | null {
-  const prefix = PROVIDER_PREFIX[provider];
-  if (!prefix) return null;
-  // Some providers rename rules to .mdc (cursor); revert checks both.
-  return `${prefix}/${sourceRel}`;
-}
+): string[] {
+  const separator = sourceRel.indexOf('/');
+  if (separator < 1) return [];
+  const artifactType = sourceRel.slice(0, separator);
+  if (!['agents', 'commands', 'skills', 'rules'].includes(artifactType)) return [];
 
-/** Try multiple plausible deployed paths (e.g., .md vs .mdc for rules). */
-function candidateDeployedPaths(provider: string, sourceRel: string): string[] {
-  const paths: string[] = [];
-  const main = deployedPathFor(provider, sourceRel);
-  if (main) paths.push(main);
-  // Cursor rule rename
-  if (provider === 'cursor' && sourceRel.startsWith('rules/') && sourceRel.endsWith('.md')) {
-    paths.push(`.cursor/${sourceRel.slice(0, -3)}.mdc`);
+  const paths = getProviderArtifactPathStrings(provider);
+  const root = paths?.[artifactType as 'agents' | 'commands' | 'skills' | 'rules'];
+  if (!root) return [];
+
+  const tail = sourceRel.slice(separator + 1);
+  const absoluteRoot = isAbsolute(root) ? root : resolve(projectDir, root);
+  const candidates = [join(absoluteRoot, tail)];
+
+  // Provider adapters may translate source extensions.
+  if (provider === 'cursor' && artifactType === 'rules' && tail.endsWith('.md')) {
+    candidates.push(join(absoluteRoot, `${tail.slice(0, -3)}.mdc`));
   }
-  return paths;
+  if (provider === 'codex' && artifactType === 'agents' && tail.endsWith('.md')) {
+    candidates.push(join(absoluteRoot, `${tail.slice(0, -3)}.toml`));
+  }
+  return [...new Set(candidates)];
 }
 
 async function tryUnlink(absPath: string): Promise<{ deleted: boolean; permission?: boolean }> {
@@ -204,6 +183,17 @@ async function tryUnlink(absPath: string): Promise<{ deleted: boolean; permissio
     if (e.code === 'ENOENT') return { deleted: false };
     if (e.code === 'EACCES' || e.code === 'EROFS') return { deleted: false, permission: true };
     throw err;
+  }
+}
+
+async function cleanupManagedSkillDirectory(absPath: string): Promise<void> {
+  if (!absPath.endsWith('/SKILL.md')) return;
+  const skillDir = dirname(absPath);
+  await tryUnlink(join(skillDir, '.aiwg-managed'));
+  try {
+    await rmdir(skillDir);
+  } catch {
+    // Preserve directories containing any operator or provider-created files.
   }
 }
 
@@ -324,28 +314,30 @@ export async function removeProjectLocalBundle(
         continue;
       }
 
-      const candidates = candidateDeployedPaths(provider, sourceRel);
+      const candidates = candidateDeployedPaths(projectDir, provider, sourceRel);
       let resolvedAbs: string | null = null;
       let detectedCase: RemoveCase = 'missing';
       for (const c of candidates) {
-        const abs = resolve(projectDir, c);
-        const k = await classify(artifactHashes[sourceRel], abs);
+        const k = await classify(artifactHashes[sourceRel], c);
         if (k !== 'missing') {
-          resolvedAbs = abs;
+          resolvedAbs = c;
           detectedCase = k;
           break;
         }
       }
       if (!resolvedAbs) {
         // Pick the first candidate just so the outcome carries a path
-        const fallback = candidates[0] ? resolve(projectDir, candidates[0]) : '(unknown)';
+        const fallback = candidates[0] ?? '(unknown)';
+        providerHadSkip = true;
         outcomes.push({
           provider,
           artifactPath: sourceRel,
           deployedAbsPath: fallback,
           case: 'missing',
           reverted: false,
-          message: 'already absent',
+          message: candidates.length === 0
+            ? 'provider artifact path unavailable — registry preserved'
+            : 'recorded artifact not found at canonical provider path — registry preserved for retry',
         });
         continue;
       }
@@ -360,6 +352,7 @@ export async function removeProjectLocalBundle(
             providerHadSkip = true;
             outcomes.push({ provider, artifactPath: sourceRel, deployedAbsPath: resolvedAbs, case: 'permission', reverted: false, message: 'permission denied' });
           } else {
+            if (r.deleted) await cleanupManagedSkillDirectory(resolvedAbs);
             outcomes.push({ provider, artifactPath: sourceRel, deployedAbsPath: resolvedAbs, case: 'pristine', reverted: r.deleted, message: r.deleted ? 'reverted' : 'already absent' });
           }
         }
@@ -390,6 +383,7 @@ export async function removeProjectLocalBundle(
           providerHadSkip = true;
           outcomes.push({ provider, artifactPath: sourceRel, deployedAbsPath: resolvedAbs, case: 'permission', reverted: false, message: 'permission denied' });
         } else {
+          if (r.deleted) await cleanupManagedSkillDirectory(resolvedAbs);
           outcomes.push({ provider, artifactPath: sourceRel, deployedAbsPath: resolvedAbs, case: detectedCase, reverted: r.deleted, message: r.deleted ? 'reverted (mutation overridden)' : 'already absent' });
         }
       }
