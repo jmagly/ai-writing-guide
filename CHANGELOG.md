@@ -7,8 +7,20 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.19] - 2026-07-23 - "Complete package documentation and release verification"
+
 ### Changed
 
+- **Full dedicated lightweight CLI README** — `@aiwg/cli` now ships a
+  standalone npm-quality README covering distribution choice, signed web
+  resources, discovery and lookup, version pinning, caching and offline use,
+  the JavaScript API, security, scope boundaries, migration, troubleshooting,
+  development, and support. A cross-package regression prevents any published
+  AIWG package README from returning to stub-level documentation.
+- **Deprecated npm bootstrap tag cleanup** — the npm trusted-publication
+  workflow now exposes a maintenance-only path that removes the historical
+  `@aiwg/cli@bootstrap` dist-tag using the existing narrowly scoped package
+  management token without republishing release artifacts.
 - **Dependency-safe Gitea mirror verification** — release verification now
   clean-installs the full, lightweight CLI, and Cockpit tarballs resolved from
   Gitea while leaving third-party dependency resolution on npmjs.org. Generated

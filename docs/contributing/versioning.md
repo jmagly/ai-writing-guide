@@ -659,8 +659,29 @@ command, and the publish workflow clean-installs all three mirrored tarballs.
 Each package needs its **own** OIDC trusted publisher configured on npmjs.org,
 pointed at `jmagly/aiwg`'s `.github/workflows/npm-publish.yml`. Configure the
 same publisher tuple separately for `aiwg`, `@aiwg/cli`, and `@aiwg/cockpit`.
-The `@aiwg/cli@0.0.0-bootstrap.0` reservation is not an AIWG release; real
-publishes begin at the next shared AIWG CalVer.
+The historical `@aiwg/cli@0.0.0-bootstrap.0` reservation is not an AIWG
+release. Released packages use the shared AIWG CalVer, and the deprecated
+`bootstrap` dist-tag is intentionally absent.
+
+### Published package README standard
+
+Every npm package must ship a full, dedicated README rather than a short
+registry stub. The source files are:
+
+| Package | README source |
+|---|---|
+| `aiwg` | `README.md` |
+| `@aiwg/cli` | `packages/cli/README.md` |
+| `@aiwg/cockpit` | `apps/cockpit/README.md` |
+
+Each README must stand alone on npm and include package-specific installation,
+quick start, architecture or operating model, troubleshooting, documentation
+links, and an honest statement of package scope. Relative links or images that
+depend on unpublished repository files should use stable public URLs instead.
+`test/smoke/published-package-readmes.test.ts` enforces dedicated identity,
+minimum depth, and required package-level sections; packed-install integration
+tests verify that the dedicated CLI README is copied byte-for-byte into
+`@aiwg/cli`.
 
 ### Gotchas (learned the hard way — #1648)
 
