@@ -47,11 +47,11 @@ setup.
 
 ## Source Modes
 
-| Mode    | Behavior                                                                                       |
-| ------- | ---------------------------------------------------------------------------------------------- |
+| Mode    | Behavior                                                                                        |
+| ------- | ----------------------------------------------------------------------------------------------- |
 | `local` | Use installed/project-local resources only. This is the default for the full `aiwg` package.    |
-| `web`   | Resolve resources from versioned, signed release-host bundles with cache and integrity checks. |
-| `auto`  | Prefer local resources when present; otherwise fall back to web-backed resources.              |
+| `web`   | Resolve resources from versioned, signed release-host bundles with cache and integrity checks.  |
+| `auto`  | Prefer local resources when present; otherwise fall back to web-backed resources.               |
 
 For `discover` and `show`, `@aiwg/cli` selects `web` and the signed `stable`
 channel when no source/version flags are supplied. Explicit
@@ -81,6 +81,34 @@ aiwg show framework sdlc --resource-source web --offline
 ```
 
 Per-call overrides do not mutate project defaults.
+
+### Selector Examples and Status
+
+The current implementation accepts exact AIWG CalVer releases and signed
+channel names:
+
+```bash
+aiwg discover "architecture evolution" --resource-source web --aiwg-version 2026.7.18
+aiwg discover "architecture evolution" --resource-source web --aiwg-version stable
+aiwg discover "architecture evolution" --resource-source web --aiwg-version latest
+aiwg discover "architecture evolution" --resource-source web --aiwg-version canary
+aiwg discover "architecture evolution" --resource-source web --aiwg-version main
+```
+
+The channel name selects a signed channel manifest; the release manifest still
+resolves to an immutable version and manifest digest before the CLI reads any
+resource bytes.
+
+SemVer ranges and digest selectors are part of the larger resource-version
+contract, but are intentionally not accepted by this beta slice:
+
+```bash
+# Planned, currently rejected with "Unsupported AIWG resource selector"
+aiwg discover "architecture evolution" --resource-source web --aiwg-version '>=2026.7.18 <2026.8.0'
+aiwg discover "architecture evolution" --resource-source web --aiwg-version sha256:...
+```
+
+Use an exact CalVer or channel until the `aiwg versions` command family lands.
 
 ### Current query constraints
 
@@ -120,6 +148,16 @@ AIWG corpus.
 ## Trust and Local Override
 
 - The trust root is bundled with the CLI and signature verification is mandatory.
+- Release manifests are fetched from
+  `https://releases.aiwg.io/resources/<version>/manifest.json` and verified
+  against the adjacent detached signature before use.
+- Channel manifests under `https://releases.aiwg.io/resources/channels/` bind a
+  channel name and monotonic sequence to an exact release-manifest digest.
+- Manifest descriptors commit every bundle, prebuilt index, and raw resource by
+  byte size and SHA-256 digest; cache reads re-check those descriptors.
+- `aiwg.resource-manifest/v2` compatibility metadata is required when a v2
+  manifest is published, including the minimum compatible CLI version and known
+  incompatible CLI ranges.
 - Signed test and private hosts can be used with:
   - `AIWG_RESOURCE_BASE_URL`
   - `AIWG_RESOURCE_CACHE_ROOT`
@@ -128,6 +166,32 @@ AIWG corpus.
 - `AIWG_RESOURCE_ALLOW_INSECURE_LOOPBACK_HTTP=1` is loopback-only and must only
   be used for local testing.
 - Signature verification cannot be disabled.
+
+## Troubleshooting
+
+| Symptom | Meaning | Recovery |
+| ------- | ------- | -------- |
+| `fetch failed`, timeout, or HTTP error | The release host or network path was unavailable during an online web lookup. | Retry the command, use `--offline` only after a successful warm-cache run, or switch to `--resource-source local`. |
+| `Unsupported AIWG resource selector` | The selector is not an exact CalVer release or channel name in this beta. | Use an exact version such as `2026.7.18` or a channel such as `stable`, `latest`, `canary`, or `main`. |
+| `payload digest does not match`, `signature verification failed`, or descriptor digest errors | Signed metadata or resource bytes do not match the configured trust root and manifest commitments. | Treat as fail-closed. Do not bypass verification; retry with a fresh cache or use local mode while investigating. |
+| `offline mode fails closed` or cold-cache errors | The requested release, index, or raw resource is missing from the verified cache, or cached bytes are corrupt. | Run the same command once online without `--offline` to warm the cache, then repeat offline. |
+| `compatibility metadata is invalid` or unsupported manifest schema errors | The release manifest is malformed or requires a newer CLI/resource schema contract. | Upgrade the CLI package, then retry. Use local mode if the project must continue before the release-host issue is corrected. |
+
+## Public Contract References
+
+This page is the public operator contract for the web-backed resource beta. The
+current source and test coverage live in:
+
+- `src/resources/web-release.ts`
+- `test/unit/resources/web-release.test.ts`
+- `test/integration/artifacts/web-resource-cli.test.ts`
+- `test/integration/cli-package-webmode.test.ts`
+- `docs/releases/v2026.7.18-announcement.md`
+- `docs/releases/v2026.7.19-announcement.md`
+
+The broader SDLC ADRs and test strategy remain in the project artifact corpus;
+public release notes summarize the supported rollout status and default-local
+behavior.
 
 ## Planned in this Epic but Not Yet Implemented
 

@@ -228,11 +228,31 @@ aiwg show skill architecture-evolution --resource-source web --aiwg-version 2026
 aiwg show framework sdlc --resource-source web --aiwg-version candidate --offline
 ```
 
+Supported `--aiwg-version` values in this beta are exact AIWG CalVer releases
+and signed channel names:
+
+```bash
+aiwg discover "architecture evolution" --resource-source web --aiwg-version 2026.7.18
+aiwg discover "architecture evolution" --resource-source web --aiwg-version stable
+aiwg discover "architecture evolution" --resource-source web --aiwg-version latest
+aiwg discover "architecture evolution" --resource-source web --aiwg-version canary
+aiwg discover "architecture evolution" --resource-source web --aiwg-version main
+```
+
+SemVer ranges and digest selectors are planned for the `aiwg versions` rollout,
+but this partial implementation rejects them explicitly:
+
+```bash
+# Planned, not yet accepted by discover/show web mode.
+aiwg discover "architecture evolution" --resource-source web --aiwg-version '>=2026.7.18 <2026.8.0'
+aiwg discover "architecture evolution" --resource-source web --aiwg-version sha256:...
+```
+
 This partial implementation is active only for `discover`/`show` and does not yet
 apply to `aiwg versions`, `aiwg use`, or `aiwg regenerate` rollout-wide web
 defaults. See
 [Web-Backed AIWG Resources](./install/web-backed-resources.md) for the planned
-operator contract and safety model.
+operator contract, trust anchors, troubleshooting, and safety model.
 
 Maintainer checkouts can already relocate the project AIWG artifact directory
 with the project pointer file written by the CLI:
