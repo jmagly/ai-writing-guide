@@ -218,6 +218,9 @@ describe('project-local-discovery', () => {
       writeBundle(tmpDir, 'addons', 'b', validManifest({ id: 'b' }));
       writeBundle(tmpDir, 'frameworks', 'c', validManifest({ id: 'c', type: 'framework', addonConfig: undefined, frameworkConfig: { path: 'src/' } }));
       writeBundle(tmpDir, 'plugins', 'd', validManifest({ id: 'd', type: 'plugin', addonConfig: undefined, pluginConfig: { payloadType: 'addon', payloadPath: 'payload/' } }));
+      const pluginPayload = join(tmpDir, '.aiwg', 'plugins', 'd', 'payload');
+      mkdirSync(pluginPayload, { recursive: true });
+      writeFileSync(join(pluginPayload, 'manifest.json'), JSON.stringify(validManifest({ id: 'd-payload' }), null, 2));
       writeBundle(tmpDir, 'providers', 'e', validManifest({ id: 'e', type: 'provider', addonConfig: undefined, providerConfig: { extends: 'claude' } }));
 
       const result = await discoverProjectLocalBundles(tmpDir);
@@ -245,6 +248,79 @@ describe('project-local-discovery', () => {
       expect(result.errors).toEqual([]);
       expect(result.bundles).toHaveLength(1);
       expect(result.bundles[0].manifest.providerConfig?.capabilities?.nativeFeatures?.cron).toBe(true);
+    });
+  });
+
+  describe('plugin payload resolution (#1868)', () => {
+    function writePlugin(payloadType: 'addon' | 'extension' | 'framework' = 'addon'): string {
+      writeBundle(tmpDir, 'plugins', 'wrapped', validManifest({
+        id: 'wrapped',
+        type: 'plugin',
+        addonConfig: undefined,
+        pluginConfig: { payloadType, payloadPath: 'payload/' },
+      }));
+      const payloadDir = join(tmpDir, '.aiwg', 'plugins', 'wrapped', 'payload');
+      mkdirSync(payloadDir, { recursive: true });
+      const configKey = `${payloadType}Config`;
+      writeFileSync(join(payloadDir, 'manifest.json'), JSON.stringify(validManifest({
+        id: 'wrapped-payload',
+        type: payloadType,
+        addonConfig: undefined,
+        [configKey]: payloadType === 'extension' ? undefined : {},
+      }), null, 2));
+      return payloadDir;
+    }
+
+    it.each(['addon', 'extension', 'framework'] as const)(
+      'returns a validated %s payload as the artifact source',
+      async (payloadType) => {
+      const payloadDir = writePlugin(payloadType);
+      mkdirSync(join(payloadDir, 'skills', 'wrapped-skill'), { recursive: true });
+      writeFileSync(join(payloadDir, 'skills', 'wrapped-skill', 'SKILL.md'), '# Wrapped');
+
+      const result = await discoverProjectLocalBundles(tmpDir);
+
+      expect(result.errors).toEqual([]);
+      expect(result.bundles).toHaveLength(1);
+      expect(result.bundles[0].bundlePath).toBe(join(tmpDir, '.aiwg', 'plugins', 'wrapped'));
+      expect(result.bundles[0].artifactPath).toBe(payloadDir);
+      },
+    );
+
+    it('rejects a payload manifest whose type disagrees with payloadType', async () => {
+      const payloadDir = writePlugin('addon');
+      const payloadManifest = validManifest({
+        id: 'wrapped-payload',
+        type: 'extension',
+        addonConfig: undefined,
+      });
+      writeFileSync(join(payloadDir, 'manifest.json'), JSON.stringify(payloadManifest, null, 2));
+
+      const result = await discoverProjectLocalBundles(tmpDir);
+
+      expect(result.bundles).toEqual([]);
+      expect(result.errors.some(error =>
+        error.field === 'type' && error.hint?.includes('payloadType')
+      )).toBe(true);
+    });
+
+    it('rejects a symlinked payload directory', async () => {
+      writeBundle(tmpDir, 'plugins', 'wrapped', validManifest({
+        id: 'wrapped',
+        type: 'plugin',
+        addonConfig: undefined,
+        pluginConfig: { payloadType: 'addon', payloadPath: 'payload/' },
+      }));
+      const external = join(tmpDir, 'external-payload');
+      mkdirSync(external, { recursive: true });
+      symlinkSync(external, join(tmpDir, '.aiwg', 'plugins', 'wrapped', 'payload'));
+
+      const result = await discoverProjectLocalBundles(tmpDir);
+
+      expect(result.bundles).toEqual([]);
+      expect(result.errors.some(error =>
+        error.field === 'pluginConfig.payloadPath' && error.actual === 'symlink'
+      )).toBe(true);
     });
   });
 

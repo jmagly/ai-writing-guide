@@ -173,7 +173,9 @@ export async function resolveShadows(
   // Enumerate every artifact in every bundle once.
   const enumerated: { bundle: ProjectLocalBundle; arts: BundleArtifact[] }[] = [];
   for (const bundle of bundles) {
-    const arts = await enumerateBundleArtifacts(bundle.bundlePath);
+    // Preserve compatibility for programmatic callers that constructed the
+    // pre-#1868 ProjectLocalBundle shape; discovery always supplies artifactPath.
+    const arts = await enumerateBundleArtifacts(bundle.artifactPath ?? bundle.bundlePath);
     enumerated.push({ bundle, arts });
     for (const art of arts) {
       const key = `${art.type}:${art.id}`;

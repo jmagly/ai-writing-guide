@@ -10,8 +10,8 @@
  * @architecture .aiwg/architecture/design-manifest-schema.md (#1044)
  */
 
-import { readFile, readdir, lstat, stat, access } from 'fs/promises';
-import { join } from 'path';
+import { readFile, readdir, lstat, stat, access, realpath } from 'fs/promises';
+import { join, relative, resolve, sep } from 'path';
 import {
   BundleManifestSchema,
   type BundleManifest,
@@ -39,6 +39,12 @@ export interface ProjectLocalBundle {
   manifest: BundleManifest;
   /** Absolute path to the bundle directory */
   bundlePath: string;
+  /**
+   * Absolute artifact source consumed by deployment, hashing, shadow checks,
+   * and removal metadata. This equals bundlePath except for plugin wrappers,
+   * where it is the validated pluginConfig.payloadPath.
+   */
+  artifactPath: string;
   /** Stable display path for the bundle directory (e.g., ".aiwg/extensions/foo/"). */
   localPath: string;
   /** Stable display path for manifest.json. */
@@ -312,6 +318,101 @@ export async function loadAndValidateManifest(
 
   const bundlePath = manifestPath.slice(0, -'/manifest.json'.length);
   const localPath = ensureTrailingSlash(projectLocalDisplayPath(projectDir, bundlePath, searchRoot));
+  let artifactPath = bundlePath;
+
+  if (manifest.type === 'plugin') {
+    // BundleManifestSchema's discriminator refinement guarantees this for a
+    // plugin, but Zod refinements do not narrow the inferred TypeScript type.
+    const pluginConfig = manifest.pluginConfig!;
+    const configuredPayload = resolve(bundlePath, pluginConfig.payloadPath);
+    const lexicalRelative = relative(bundlePath, configuredPayload);
+    if (
+      lexicalRelative === ''
+      || lexicalRelative === '..'
+      || lexicalRelative.startsWith(`..${sep}`)
+    ) {
+      return {
+        errors: [{
+          path: manifestPath,
+          field: 'pluginConfig.payloadPath',
+          expected: 'a child directory inside the plugin wrapper',
+          actual: pluginConfig.payloadPath,
+          hint: 'Plugin payloads must not resolve to the wrapper root or escape it',
+          severity: 'error',
+        }],
+      };
+    }
+
+    let wrapperReal: string;
+    let payloadReal: string;
+    try {
+      const payloadStat = await lstat(configuredPayload);
+      if (payloadStat.isSymbolicLink() || !payloadStat.isDirectory()) {
+        return {
+          errors: [{
+            path: configuredPayload,
+            field: 'pluginConfig.payloadPath',
+            expected: 'a regular payload directory',
+            actual: payloadStat.isSymbolicLink() ? 'symlink' : 'non-directory',
+            hint: 'Use a real directory below the plugin wrapper',
+            severity: 'error',
+          }],
+        };
+      }
+      [wrapperReal, payloadReal] = await Promise.all([
+        realpath(bundlePath),
+        realpath(configuredPayload),
+      ]);
+    } catch (err) {
+      return {
+        errors: [{
+          path: configuredPayload,
+          field: 'pluginConfig.payloadPath',
+          expected: 'an existing readable payload directory',
+          actual: (err as Error).message,
+          hint: 'Create the configured payload directory and its manifest.json',
+          severity: 'error',
+        }],
+      };
+    }
+
+    const realRelative = relative(wrapperReal, payloadReal);
+    if (
+      realRelative === ''
+      || realRelative === '..'
+      || realRelative.startsWith(`..${sep}`)
+    ) {
+      return {
+        errors: [{
+          path: configuredPayload,
+          field: 'pluginConfig.payloadPath',
+          expected: 'a non-symlinked child directory inside the plugin wrapper',
+          actual: payloadReal,
+          hint: 'Move the payload below the wrapper and remove symlink indirection',
+          severity: 'error',
+        }],
+      };
+    }
+
+    const payloadManifestPath = join(configuredPayload, 'manifest.json');
+    const payloadResult = await loadAndValidateManifest(
+      payloadManifestPath,
+      pluginConfig.payloadType,
+      projectDir,
+      searchRoot,
+    );
+    if (!payloadResult.bundle) {
+      return {
+        errors: payloadResult.errors.map(error => ({
+          ...error,
+          hint: error.field === 'type'
+            ? `Payload manifest type must match pluginConfig.payloadType: "${pluginConfig.payloadType}"`
+            : error.hint,
+        })),
+      };
+    }
+    artifactPath = payloadResult.bundle.bundlePath;
+  }
 
   return {
     bundle: {
@@ -319,6 +420,7 @@ export async function loadAndValidateManifest(
       type: manifest.type,
       manifest,
       bundlePath,
+      artifactPath,
       localPath,
       manifestPath: projectLocalDisplayPath(projectDir, manifestPath, searchRoot),
     },

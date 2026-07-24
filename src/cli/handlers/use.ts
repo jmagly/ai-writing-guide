@@ -908,10 +908,23 @@ async function deployOneProjectLocalBundle(opts: {
   modelArgs: string[];
 }): Promise<{ exitCode: number; counts: { agents: number; commands: number; skills: number; rules: number } }> {
   const { bundle, ctx, frameworkRoot, provider, target, dryRun, verbose, quiet, modelArgs } = opts;
+  const counts = await countBundleSourceArtifacts(bundle.artifactPath);
+  const artifactTotal = counts.agents + counts.commands + counts.skills + counts.rules;
+  if (verbose || dryRun) {
+    ui.dim(
+      `  Artifacts: agents=${counts.agents} commands=${counts.commands} skills=${counts.skills} rules=${counts.rules}`,
+    );
+  }
+  if (artifactTotal === 0) {
+    ui.warn(
+      `Project-local ${bundle.type} '${bundle.id}' has no deployable agents, commands, skills, or rules at ${bundle.artifactPath}`,
+    );
+    return { exitCode: 1, counts };
+  }
 
   const runner = createScriptRunner(frameworkRoot);
   const args: string[] = [
-    '--source', bundle.bundlePath,
+    '--source', bundle.artifactPath,
     '--deploy-commands', '--deploy-skills', '--deploy-rules',
     '--provider', provider,
     '--target', target,
@@ -947,7 +960,6 @@ async function deployOneProjectLocalBundle(opts: {
 
   // Approximate counts from the bundle's source dirs (deploy-agents.mjs is
   // idempotent and copies file-for-file from these dirs)
-  const counts = await countBundleSourceArtifacts(bundle.bundlePath);
   void ctx;
   return { exitCode: result.exitCode, counts };
 }
@@ -1058,6 +1070,10 @@ async function deployProjectLocalBundles(opts: {
     if (verbose || dryRun) {
       const action = dryRun ? '[dry-run] Would deploy' : 'Deploying';
       console.log(`${action} project-local ${bundle.type} '${bundle.id}' from ${bundle.localPath} → ${provider}`);
+      if (bundle.artifactPath !== bundle.bundlePath) {
+        const payloadDisplay = path.relative(projectDir, bundle.artifactPath) || '.';
+        ui.dim(`  Resolved plugin payload: ${payloadDisplay}`);
+      }
     }
 
     const result = await deployOneProjectLocalBundle({
@@ -1100,7 +1116,7 @@ async function deployProjectLocalBundles(opts: {
         const mHash = await hashManifest(manifestAbsPath);
         // #1037 — record per-artifact source hashes so `aiwg remove` can
         // detect pristine vs mutated vs replaced deployed files.
-        const artifactHashes = await hashBundleArtifacts(bundle.bundlePath);
+        const artifactHashes = await hashBundleArtifacts(bundle.artifactPath);
         const updated = updateInstalled(config, bundle.id, provider, result.counts, {
           version: bundle.manifest.version,
           source: 'project-local',
