@@ -38,6 +38,10 @@ on:
         required: false
         default: 'false'
         type: boolean
+      tag_to_publish:
+        description: 'Existing signed tag to publish or re-verify (for example v2026.7.19)'
+        required: false
+        type: string
 
 concurrency:
   group: release
@@ -289,16 +293,36 @@ jobs:
     defaults:
       run:
         shell: bash
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
+      - name: Resolve release tag
+        id: release_tag
+        env:
+          INPUT_TAG_TO_PUBLISH: ${{ github.event.inputs.tag_to_publish }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            RELEASE_TAG="${INPUT_TAG_TO_PUBLISH:-}"
+          else
+            RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          if ! echo "$RELEASE_TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Stable release tag must match vYYYY.M.PATCH: ${RELEASE_TAG:-<empty>}"
+            exit 1
+          fi
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "Resolved release tag: $RELEASE_TAG"
+
       - name: Fetch tag object for signature verification
         # See prerelease job above for the full post-mortem.
         run: |
           set -o pipefail
-          TAG="${GITHUB_REF#refs/tags/}"
+          TAG="${{ steps.release_tag.outputs.release_tag }}"
           git fetch origin "+refs/tags/${TAG}:refs/tags/${TAG}" --depth=1
 
       - name: Verify signed tag (#1299 / A9 gate)
@@ -306,7 +330,12 @@ jobs:
         # public key published in .gitea/keys/ or .gitea/allowed_signers.
         # See tools/ci/verify-signed-tag.sh for the full procedure and
         # docs/contributing/versioning.md for the operator setup.
+        env:
+          AIWG_VERIFY_TAG_REF: refs/tags/${{ steps.release_tag.outputs.release_tag }}
         run: bash tools/ci/verify-signed-tag.sh
+
+      - name: Checkout release tag
+        run: git checkout --detach "refs/tags/${{ steps.release_tag.outputs.release_tag }}"
 
       - name: Upgrade npm to ^11.5 for release-age gate (#1290 / A15)
         # node:20.20.2 base image ships npm 10.8.2; the `min-release-age`
@@ -347,12 +376,11 @@ jobs:
         id: version
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          if [ "${{ github.event_name }}" = "push" ]; then
-            TAG_VERSION=${GITHUB_REF#refs/tags/v}
-            if [ "$TAG_VERSION" != "$VERSION" ]; then
-              echo "Error: Tag ($TAG_VERSION) does not match package.json ($VERSION)"
-              exit 1
-            fi
+          TAG_VERSION="${{ steps.release_tag.outputs.release_tag }}"
+          TAG_VERSION="${TAG_VERSION#v}"
+          if [ "$TAG_VERSION" != "$VERSION" ]; then
+            echo "Error: Tag ($TAG_VERSION) does not match package.json ($VERSION)"
+            exit 1
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
@@ -573,6 +601,9 @@ jobs:
     needs: build-and-publish
     if: ${{ github.event.inputs.dry_run != 'true' }}
     timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Wait for package propagation
@@ -614,7 +645,11 @@ jobs:
         # npm's default registry so third-party dependencies remain on npmjs.
         run: |
           set -euo pipefail
-          VERSION="${GITHUB_REF#refs/tags/v}"
+          VERSION="${{ needs.build-and-publish.outputs.version }}"
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Invalid or missing published version from build job: ${VERSION:-<empty>}"
+            exit 1
+          fi
           ROOT_TARBALL=$(npm view "aiwg@${VERSION}" dist.tarball --registry=${{ env.GITEA_NPM_REGISTRY }})
           CLI_TARBALL=$(npm view "@aiwg/cli@${VERSION}" dist.tarball --registry=${{ env.GITEA_NPM_REGISTRY }})
           COCKPIT_TARBALL=$(npm view "@aiwg/cockpit@${VERSION}" dist.tarball --registry=${{ env.GITEA_NPM_REGISTRY }})

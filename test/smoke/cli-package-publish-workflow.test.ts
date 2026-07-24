@@ -28,7 +28,15 @@ describe('@aiwg/cli release workflow wiring', () => {
     expect(workflow).toContain('npm view "aiwg@${VERSION}" dist.tarball --registry=');
     expect(workflow).toContain('npm view "@aiwg/cli@${VERSION}" dist.tarball --registry=');
     expect(workflow).toContain('npm view "@aiwg/cockpit@${VERSION}" dist.tarball --registry=');
-    expect(workflow).toContain('VERSION="${GITHUB_REF#refs/tags/v}"');
+    expect(workflow).toContain('tag_to_publish:');
+    expect(workflow).toContain(
+      'AIWG_VERIFY_TAG_REF: refs/tags/${{ steps.release_tag.outputs.release_tag }}',
+    );
+    expect(workflow).toContain('version: ${{ steps.version.outputs.version }}');
+    expect(workflow).toContain('VERSION="${{ needs.build-and-publish.outputs.version }}"');
+    expect(workflow).toMatch(
+      /verify-install:[\s\S]*?defaults:\s*\n\s*run:\s*\n\s*shell: bash/,
+    );
     expect(workflow).toContain('npm install --prefix "$ROOT_INSTALL" --no-audit --no-fund "$ROOT_TARBALL"');
     expect(workflow).toContain('"$CLI_INSTALL/node_modules/.bin/aiwg" help');
     expect(workflow).toContain('"$COCKPIT_INSTALL/node_modules/.bin/aiwg-cockpit"');
