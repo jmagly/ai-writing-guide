@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
 import fs from "fs";
 import os from "os";
 import path from "path";
@@ -15,9 +16,13 @@ import {
   openShard,
   packTarGz,
   unpackTarGz,
+  validateFullV1ShardArchive,
   validateShardArchive,
 } from "@fortemi/core";
-import { aiwgFortemiIndexFromKnowledgeShard } from "@fortemi/core/aiwg-index";
+import {
+  aiwgFortemiIndexFromKnowledgeShard,
+  aiwgFortemiIndexToKnowledgeShardWithReport,
+} from "@fortemi/core/aiwg-index-shard";
 import { INDEX_DIR } from "../../../src/artifacts/types.js";
 import type {
   ArtifactIndex,
@@ -43,6 +48,10 @@ interface EmbeddedAiwgRecord {
     };
     skos_concepts?: Array<{ id: string }>;
   };
+}
+
+function sha256(bytes: Uint8Array): string {
+  return createHash("sha256").update(bytes).digest("hex");
 }
 
 describe("AIWG portable Fortemi shard export", () => {
@@ -232,6 +241,76 @@ describe("AIWG portable Fortemi shard export", () => {
     }
   });
 
+  it("consumes the released public full-v1 converter deterministically without changing the default profile", async () => {
+    const fixtureRoot = path.resolve(
+      process.cwd(),
+      "test/fixtures/fortemi-shard",
+    );
+    const sourceBytes = fs.readFileSync(
+      path.join(fixtureRoot, "aiwg-full-v1-source.json"),
+    );
+    const expectedArchive = new Uint8Array(
+      fs.readFileSync(path.join(fixtureRoot, "aiwg-full-v1.shard")),
+    );
+    const source = JSON.parse(sourceBytes.toString("utf8")) as Parameters<
+      typeof aiwgFortemiIndexToKnowledgeShardWithReport
+    >[0];
+    const options = {
+      createdAt: "2026-07-22T12:00:00.000Z",
+      matricVersion: "2026.7.13-candidate",
+    };
+
+    const first = await aiwgFortemiIndexToKnowledgeShardWithReport(
+      source,
+      options,
+    );
+    const repeated = await aiwgFortemiIndexToKnowledgeShardWithReport(
+      source,
+      options,
+    );
+
+    expect(first.success).toBe(true);
+    expect(first.lossless).toBe(true);
+    expect(first.losses).toEqual([]);
+    expect(first.archive).toEqual(expectedArchive);
+    expect(repeated.archive).toEqual(expectedArchive);
+    expect(repeated.receipt).toEqual(first.receipt);
+    expect(sha256(sourceBytes)).toBe(
+      "4cb6d89768f0ec37851012e3df4aedf09622dce911d76233916f099e10d5cfde",
+    );
+    expect(sha256(expectedArchive)).toBe(
+      "df87edc5725e3f0c8d95d8d4328c64a263e9b021520a127d9df5b7301c2afee5",
+    );
+    expect(await validateFullV1ShardArchive(expectedArchive)).toEqual({
+      valid: true,
+      errors: [],
+    });
+    expect(first.receipt).toMatchObject({
+      schema_version: "fortemi.aiwg-full-v1-conversion-receipt.v1",
+      authority_commit: "6343bd899958445bbc7e7e87b0dc92a8429d5a06",
+      authority_contract_sha256:
+        "5bf8d2fd8147d8df92599b1a3ce6b405ce022c83893f37547aefa7ca659f0783",
+      authority_schema_bundle_sha256:
+        "66dee80876c73fdc8756541c72e96ae189c098113a831c849d619381c4121c02",
+      contract_valid: true,
+      signed: false,
+    });
+
+    const files = unpackTarGz(expectedArchive);
+    const manifest = JSON.parse(
+      new TextDecoder().decode(files.get("manifest.json")!),
+    ) as {
+      version: string;
+      profile: string;
+      components: string[];
+    };
+    expect(manifest).toMatchObject({
+      version: "2.0.0",
+      profile: "full-v1",
+    });
+    expect(manifest.components).toHaveLength(33);
+  });
+
   it("round-trips through a fresh PGlite destination without transforming package bytes", async () => {
     const shard = await buildAiwgFortemiKnowledgeShard(tmpDir, {
       repo: "roctinam/aiwg",
@@ -241,6 +320,15 @@ describe("AIWG portable Fortemi shard export", () => {
     if (process.env.AIWG_FORTEMI_FIXTURE_OUT) {
       fs.writeFileSync(process.env.AIWG_FORTEMI_FIXTURE_OUT, shard);
     }
+    const committedCoreV1 = new Uint8Array(
+      fs.readFileSync(
+        path.resolve(
+          process.cwd(),
+          "test/fixtures/fortemi-shard/aiwg-core-v1.shard",
+        ),
+      ),
+    );
+    expect(shard).toEqual(committedCoreV1);
     const manager = new ArchiveManager("memory");
     try {
       const destination = await manager.create("aiwg-shard-receipt");

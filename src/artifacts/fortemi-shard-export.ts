@@ -31,7 +31,7 @@ async function loadFortemiShardConverter(): Promise<
   let core: FortemiShardCoreModule;
   try {
     core = (await import(
-      /* @vite-ignore */ "@fortemi/core/aiwg-index"
+      /* @vite-ignore */ "@fortemi/core/aiwg-index-shard"
     )) as FortemiShardCoreModule;
   } catch {
     throw new Error(
