@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Generated provider bootstrap guidance now assesses non-trivial work for
+  bounded parallel decomposition, selects the efficiency, coding, or reasoning
+  worker wrapper by task characteristics, enforces the minimum applicable
+  concurrency cap, and qualifies native, compiled, global-only, and unsupported
+  provider behavior. The primary agent remains responsible for integration,
+  validation, and the final response (#1862).
+
+### Changed
+
+- Remaining context, storage, configuration, MCPsmith, and Toolsmith project
+  artifact paths now resolve through the shared artifact-root resolver.
+  Status/help output reports the resolved root, and migration transaction logs
+  honor `AIWG_ARTIFACTS_PATH` (#1857).
+
 All notable changes to AIWG project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

@@ -67,6 +67,7 @@ export async function buildContextFinalizationBlock(projectPath: string): Promis
   const installedNames = installed.map(([name]) => name);
   const providerDeployments = new Set<string>();
   const normalizedAiwgMdPath = displayProjectPath(projectPath, projectAiwgPath(projectPath, 'AIWG.md'));
+  const normalizedAiwgMdLabel = `\`${normalizedAiwgMdPath}\``;
 
   for (const [, entry] of installed) {
     for (const provider of Object.keys(entry.deployedTo ?? {})) {
@@ -101,9 +102,9 @@ export async function buildContextFinalizationBlock(projectPath: string): Promis
     '',
     '### Source Model',
     '',
-    '- `.aiwg/AIWG.md` is the normalized project-local context entry point.',
+    `- ${normalizedAiwgMdLabel} is the normalized project-local context entry point.`,
     '- Root `AIWG.md` is the generated cross-provider companion loaded through `AGENTS.md` and provider twins.',
-    '- `AGENTS.md`, `WARP.md`, `.hermes.md`, and `.github/copilot-instructions.md` are provider-facing bridges, not replacements for `.aiwg/AIWG.md`.',
+    `- \`AGENTS.md\`, \`WARP.md\`, \`.hermes.md\`, and \`.github/copilot-instructions.md\` are provider-facing bridges, not replacements for ${normalizedAiwgMdLabel}.`,
     FINALIZATION_END,
     '',
   ];
@@ -127,6 +128,7 @@ export function replaceOrAppendFinalizationBlock(content: string, block: string)
 export async function buildNormalizedAiwgMd(projectPath: string, existing = ''): Promise<string> {
   const block = await buildContextFinalizationBlock(projectPath);
   const externalLinksSection = await buildExternalLinksSection(projectPath);
+  const normalizedAiwgMdPath = displayProjectPath(projectPath, projectAiwgPath(projectPath, 'AIWG.md'));
   const base = existing.trim().length > 0
     ? existing
     : [
@@ -134,7 +136,7 @@ export async function buildNormalizedAiwgMd(projectPath: string, existing = ''):
         AIWG_SIGNATURE_COMMENT,
         '<!-- Normalized project-local AIWG context. Operator notes may live outside AIWG-managed blocks. -->',
         '',
-        'This file is the stable `.aiwg/AIWG.md` entry point for AIWG skills, rules, and generated provider context.',
+        `This file is the stable \`${normalizedAiwgMdPath}\` entry point for AIWG skills, rules, and generated provider context.`,
         '',
       ].join('\n');
 

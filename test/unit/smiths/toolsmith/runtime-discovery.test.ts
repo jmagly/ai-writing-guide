@@ -114,8 +114,10 @@ async function writeMockCatalog(testDir: string): Promise<void> {
 describe.sequential('RuntimeDiscovery', () => {
   let testDir: string;
   let RuntimeDiscovery: any;
+  let originalArtifactsPath: string | undefined;
 
   beforeEach(async () => {
+    originalArtifactsPath = process.env.AIWG_ARTIFACTS_PATH;
     // Use process.hrtime.bigint() for more unique directories
     testDir = resolve(tmpdir(), `runtime-discovery-test-${Date.now()}-${process.hrtime.bigint()}`);
     await mkdir(testDir, { recursive: true });
@@ -126,6 +128,8 @@ describe.sequential('RuntimeDiscovery', () => {
   });
 
   afterEach(async () => {
+    if (originalArtifactsPath === undefined) delete process.env.AIWG_ARTIFACTS_PATH;
+    else process.env.AIWG_ARTIFACTS_PATH = originalArtifactsPath;
     await cleanupWithRetry(testDir);
   });
 
@@ -142,6 +146,15 @@ describe.sequential('RuntimeDiscovery', () => {
       const discovery = new RuntimeDiscovery(customPath);
 
       expect(discovery.basePath).toBe(customPath);
+    });
+
+    it('honors AIWG_ARTIFACTS_PATH for the default Toolsmith output', () => {
+      const artifactRoot = join(testDir, 'relocated-artifacts');
+      process.env.AIWG_ARTIFACTS_PATH = artifactRoot;
+
+      const discovery = new RuntimeDiscovery();
+
+      expect(discovery.basePath).toBe(join(artifactRoot, 'smiths', 'toolsmith'));
     });
   });
 

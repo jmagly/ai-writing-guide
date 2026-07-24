@@ -41,8 +41,10 @@ describe('aiwg config show --project (#999)', () => {
   let tmp: string;
   let logs: string[];
   let consoleSpy: ReturnType<typeof vi.spyOn>;
+  let originalArtifactsPath: string | undefined;
 
   beforeEach(() => {
+    originalArtifactsPath = process.env.AIWG_ARTIFACTS_PATH;
     tmp = makeTmpRepo();
     logs = [];
     consoleSpy = vi.spyOn(console, 'log').mockImplementation((msg: unknown) => {
@@ -51,6 +53,8 @@ describe('aiwg config show --project (#999)', () => {
   });
 
   afterEach(() => {
+    if (originalArtifactsPath === undefined) delete process.env.AIWG_ARTIFACTS_PATH;
+    else process.env.AIWG_ARTIFACTS_PATH = originalArtifactsPath;
     consoleSpy?.mockRestore();
     rmSync(tmp, { recursive: true, force: true });
   });
@@ -77,6 +81,24 @@ describe('aiwg config show --project (#999)', () => {
     expect(out).toContain('no `remotes` block');
     expect(out).toContain('Primary');
     expect(out).toContain('origin');
+  });
+
+  it('reports the configured artifact-root override', async () => {
+    const artifactRoot = join(tmp, 'private-corpus');
+    process.env.AIWG_ARTIFACTS_PATH = artifactRoot;
+    mkdirSync(artifactRoot, { recursive: true });
+    writeFileSync(join(artifactRoot, 'aiwg.config'), JSON.stringify({
+      version: '1',
+      providers: ['claude'],
+      installed: {},
+      scripts: {},
+    }));
+
+    await main(['show', '--project', '--target', tmp]);
+
+    const out = logs.join('\n');
+    expect(out).toContain(`Project config: ${join(artifactRoot, 'aiwg.config')}`);
+    expect(out).toContain(`Artifact root:  ${artifactRoot}`);
   });
 
   it('shows resolved remote URLs when remotes are present', async () => {

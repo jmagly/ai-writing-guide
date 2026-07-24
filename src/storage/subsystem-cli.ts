@@ -21,6 +21,7 @@
 
 import { getLoadedConfig, resolveStorage, type SubsystemKey } from './index.js';
 import { resolveSubsystemRootRuntime } from './config.js';
+import { projectAiwgPath, resolveProjectAiwgDir } from '../config/project-artifacts.js';
 
 /**
  * Display name for the subsystem when printed in `aiwg <subsystem> path`
@@ -217,6 +218,9 @@ async function readStdin(): Promise<string> {
 }
 
 function printUsage(subsystem: SubsystemKey, display: string): void {
+  const projectRoot = process.cwd();
+  const subsystemPath = projectAiwgPath(projectRoot, subsystem);
+  const configPath = projectAiwgPath(projectRoot, 'storage.config');
   console.log(`Usage: aiwg ${display} <subcommand>
 
 Subcommands:
@@ -235,6 +239,7 @@ Examples:
   echo "# page" | aiwg ${display} put some/page.md
   echo '{"event":"x"}' | aiwg ${display} append-log some/log.jsonl
 
-The ${display} subsystem persists at .aiwg/${subsystem}/ on the default fs backend.
-Configure .aiwg/storage.config to redirect (#934).`);
+The ${display} subsystem persists at ${subsystemPath} on the default fs backend
+(artifact root: ${resolveProjectAiwgDir(projectRoot)}).
+Configure ${configPath} to redirect (#934).`);
 }

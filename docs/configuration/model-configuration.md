@@ -17,6 +17,16 @@ Provider compilation reports one of `native`, `compiled`, `inherited`,
 `global-only`, `informational`, or `unsupported`. An unsupported field is
 omitted rather than copied into an artifact that ignores it.
 
+Generated bootstrap context also presents a bounded delegation rubric. For
+independent work, orchestrators prefer `aiwg-model-efficiency-worker` for
+discovery and focused low-cost tasks, `aiwg-model-coding-worker` for
+implementation and tests, and `aiwg-model-reasoning-worker` for architecture
+or high-consequence analysis. This complements model routing: routing resolves
+the role to provider policy, while the delegation rubric decides whether the
+work should leave the primary context at all. Trivial, tightly coupled, serial,
+or shared-state-sensitive work stays with the primary agent, which always owns
+integration and final validation.
+
 The versioned schemas are under `schemas/models/`. Project/user compatibility
 input still accepts `max-quality` for one migration window, but canonical
 policy uses `premium`.

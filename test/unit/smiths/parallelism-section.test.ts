@@ -110,9 +110,42 @@ describe('buildParallelismSection (#1362)', () => {
   it('includes the MIN-of-caps composition guidance', async () => {
     await writeAiwgConfig(tmpDir, emptyConfig(['claude']));
     const section = await buildParallelismSection(tmpDir);
-    expect(section).toContain('MIN of:');
+    expect(section).toContain('take the MIN of');
     expect(section).toContain('AIWG_CONTEXT_WINDOW');
+    expect(section).toContain('framework-specific caps');
+    expect(section).toContain('natural task decomposition');
     expect(section).toContain('aiwg config set --project');
+  });
+
+  it('emits the wrapper selection rubric and primary-agent responsibilities', async () => {
+    await writeAiwgConfig(tmpDir, emptyConfig(['codex']));
+    const section = await buildParallelismSection(tmpDir);
+    expect(section).toContain('assess whether it contains independent, bounded subtasks');
+    expect(section).toContain('aiwg-model-efficiency-worker');
+    expect(section).toContain('aiwg-model-coding-worker');
+    expect(section).toContain('aiwg-model-reasoning-worker');
+    expect(section).toContain('The primary agent retains orchestration');
+    expect(section).toContain('native custom subagents');
+  });
+
+  it('documents no-delegation edge cases', async () => {
+    await writeAiwgConfig(tmpDir, emptyConfig(['claude']));
+    const section = await buildParallelismSection(tmpDir);
+    expect(section).toContain('trivial work');
+    expect(section).toContain('tightly coupled changes');
+    expect(section).toContain('serial dependencies');
+    expect(section).toContain('collide in shared state');
+    expect(section).toContain('coordination costs');
+  });
+
+  it.each([
+    ['warp', 'model selection is global/run-scoped'],
+    ['hermes', 'model selection is global/run-scoped'],
+    ['windsurf', 'portable subagent model selection is unsupported'],
+    ['openhuman', 'wrapper roles compile to OpenHuman agent definitions'],
+  ])('qualifies provider delegation for %s', async (provider, expected) => {
+    await writeAiwgConfig(tmpDir, emptyConfig([provider]));
+    expect(await buildParallelismSection(tmpDir)).toContain(expected);
   });
 });
 

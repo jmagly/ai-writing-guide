@@ -634,12 +634,18 @@ function sensitiveEvidence(content: string): string[] {
 async function nestedInstructionFiles(projectPath: string): Promise<string[]> {
   const found: string[] = [];
   const ignored = new Set(['.git', 'node_modules', 'dist', 'build', 'coverage', '.aiwg']);
+  const artifactRoot = path.resolve(resolveProjectAiwgDir(projectPath));
   async function walk(directory: string): Promise<void> {
     let entries;
     try { entries = await fs.readdir(directory, { withFileTypes: true }); } catch { return; }
     for (const entry of entries) {
       if (entry.isDirectory()) {
-        if (!ignored.has(entry.name) && !entry.name.startsWith('.context-migration-')) await walk(path.join(directory, entry.name));
+        const child = path.join(directory, entry.name);
+        if (
+          !ignored.has(entry.name)
+          && !entry.name.startsWith('.context-migration-')
+          && path.resolve(child) !== artifactRoot
+        ) await walk(child);
       } else if (['AGENTS.md', 'CLAUDE.md', 'WARP.md'].includes(entry.name)) {
         const relative = path.relative(projectPath, path.join(directory, entry.name)).replace(/\\/g, '/');
         const segments = relative.split('/');

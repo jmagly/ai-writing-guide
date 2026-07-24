@@ -34,6 +34,7 @@ import {
   type StorageAdapter,
   type SubsystemKey,
 } from './index.js';
+import { projectAiwgPath, resolveProjectAiwgDir } from '../config/project-artifacts.js';
 
 export async function main(args: string[]): Promise<void> {
   const subcommand = args[0];
@@ -67,7 +68,7 @@ async function handleShow(projectRoot: string): Promise<void> {
   const cfgPath = storageConfigPath(projectRoot);
 
   if (!config) {
-    console.log(`No storage.config — every subsystem uses the default fs backend under .aiwg/.\n`);
+    console.log(`No storage.config — every subsystem uses the default fs backend under ${resolveProjectAiwgDir(projectRoot)}.\n`);
     console.log(`Expected location (when configured): ${cfgPath}\n`);
   } else {
     console.log(`storage.config: ${cfgPath}`);
@@ -218,12 +219,11 @@ async function handleMigrate(projectRoot: string, args: string[]): Promise<void>
   }
 
   // Resume support: read the per-migration log; skip already-done paths
-  const migrationLogPath = resolvePath(
+  const migrationLogPath = projectAiwgPath(
     projectRoot,
-    '.aiwg',
     '.storage-cache',
     'migrations',
-    `${opts.subsystem}-${specSlug(opts.from)}-to-${specSlug(opts.to)}.jsonl`
+    `${opts.subsystem}-${specSlug(opts.from)}-to-${specSlug(opts.to)}.jsonl`,
   );
   const completed = await readCompletedSet(migrationLogPath);
 

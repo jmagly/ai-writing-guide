@@ -22,6 +22,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import { UserConfig } from './user-config.js';
 import { AiwgError, EXIT_CODES } from '../cli/errors.js';
+import { projectAiwgPath, resolveProjectAiwgDir } from './project-artifacts.js';
 
 const _scriptDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -208,7 +209,7 @@ async function projectConfigGet(key: string, args: string[]): Promise<void> {
   if (!cfg) {
     throw new AiwgError({
       code: 'ERR_NO_PROJECT_CONFIG',
-      message: 'No .aiwg/aiwg.config in this project.',
+      message: 'No project AIWG config found at the resolved artifact root.',
       hint: 'Run `aiwg init`, then ask your AIWG agent to set up repo/tracker/delivery policy.',
       exitCode: EXIT_CODES.CONFIG,
     });
@@ -414,7 +415,7 @@ async function handleProjectValidate(args: string[]): Promise<void> {
   if (!cfg) {
     throw new AiwgError({
       code: 'ERR_NO_PROJECT_CONFIG',
-      message: 'No .aiwg/aiwg.config in this project.',
+      message: 'No project AIWG config found at the resolved artifact root.',
       hint: 'Run `aiwg init`, then configure project policy.',
       exitCode: EXIT_CODES.CONFIG,
     });
@@ -457,7 +458,8 @@ async function handleProjectValidate(args: string[]): Promise<void> {
       : resolveIssueLabels(undefined, 'local').diagnostics;
   const diagnostics = [...indexErrors, ...externalLinkErrors, ...labelDiagnostics];
 
-  console.log(`Project config: ${projectDir}/.aiwg/aiwg.config\n`);
+  console.log(`Project config: ${projectAiwgPath(projectDir, 'aiwg.config')}`);
+  console.log(`Artifact root:  ${resolveProjectAiwgDir(projectDir)}\n`);
   if (diagnostics.length === 0) {
     console.log('✓ Project config valid');
     return;
@@ -528,7 +530,7 @@ async function projectConfigReset(key: string | undefined, args: string[]): Prom
   if (!cfg) {
     throw new AiwgError({
       code: 'ERR_NO_PROJECT_CONFIG',
-      message: 'No .aiwg/aiwg.config in this project.',
+      message: 'No project AIWG config found at the resolved artifact root.',
       hint: 'Run `aiwg init`, then ask your AIWG agent to establish project policy.',
       exitCode: EXIT_CODES.CONFIG,
     });
@@ -629,7 +631,7 @@ For project-level config: aiwg config show --project [--json]
   if (!cfg) {
     throw new AiwgError({
       code: 'ERR_NO_PROJECT_CONFIG',
-      message: 'No .aiwg/aiwg.config in this project.',
+      message: 'No project AIWG config found at the resolved artifact root.',
       hint: 'Run `aiwg init`, then ask your AIWG agent to set up repo/tracker/delivery policy.',
       exitCode: EXIT_CODES.CONFIG,
     });
@@ -673,7 +675,8 @@ For project-level config: aiwg config show --project [--json]
   }
 
   // Human-readable view
-  console.log(`Project config: ${projectDir}/.aiwg/aiwg.config\n`);
+  console.log(`Project config: ${projectAiwgPath(projectDir, 'aiwg.config')}`);
+  console.log(`Artifact root:  ${resolveProjectAiwgDir(projectDir)}\n`);
   console.log(`Schema version: ${cfg.version}`);
   console.log(`Providers:      ${cfg.providers.join(', ') || '(none)'}`);
   console.log('');
@@ -742,13 +745,14 @@ function printUsage(): void {
 
 Subcommands:
   get <key>                       Read a user config value
-  get --project <key>             Read a project config value (.aiwg/aiwg.config)
+  get --project <key>             Read a project config value (default .aiwg/aiwg.config;
+                                  AIWG_ARTIFACTS_PATH may override the artifact root)
   set <key> <value>               Write a user config value
   set --project <key> <value>     Write a project config value (validates enums)
   list                Show all user config
-  show --project      Show resolved project config (.aiwg/aiwg.config)
+  show --project      Show resolved project config and artifact root
   validate            Validate user config files
-  validate --project  Validate .aiwg/aiwg.config taxonomy/index semantics
+  validate --project  Validate resolved project config taxonomy/index semantics
     [--provider gitea|github|local] [--available-label NAME ...]
   reset [<key>]       Reset key or all config to defaults
   path                Print config directory path

@@ -19,6 +19,28 @@ import { readAiwgConfig, resolveParallelism, PROVIDER_PARALLELISM_DEFAULTS } fro
 export const PARALLELISM_BLOCK_START = '<!-- AIWG-PARALLELISM-CAP:START -->';
 export const PARALLELISM_BLOCK_END = '<!-- AIWG-PARALLELISM-CAP:END -->';
 
+function delegationSupport(provider: string | undefined): string {
+  switch (provider) {
+    case 'claude':
+    case 'codex':
+    case 'copilot':
+    case 'cursor':
+    case 'factory':
+    case 'opencode':
+    case 'openclaw':
+      return `**Provider behavior (${provider})**: native custom subagents can select the deployed model-worker wrapper. Verify the resolved model when provider or account policy may substitute it.`;
+    case 'openhuman':
+      return '**Provider behavior (openhuman)**: wrapper roles compile to OpenHuman agent definitions; exact pins validate while semantic hints may be routed dynamically.';
+    case 'warp':
+    case 'hermes':
+      return `**Provider behavior (${provider})**: delegation is available, but model selection is global/run-scoped. Use the wrapper rubric for task selection while reporting that heterogeneous per-worker pinning is not enforced.`;
+    case 'windsurf':
+      return '**Provider behavior (windsurf)**: portable subagent model selection is unsupported. Apply the decomposition rubric in the primary agent and do not claim wrapper pinning or parallel delegation.';
+    default:
+      return '**Provider behavior (unknown)**: delegation and per-worker model selection are unverified. Apply the rubric only where the active provider exposes those capabilities, and state any fallback explicitly.';
+  }
+}
+
 /**
  * Build the parallelism-cap markdown section for injection into context files.
  * Returns `''` when injection should be skipped:
@@ -63,7 +85,19 @@ export async function buildParallelismSection(projectPath: string): Promise<stri
     lines.push(`*Rationale*: ${resolved.rationale}`);
   }
   lines.push('');
-  lines.push('When spawning parallel subagents, take the MIN of: this cap, `AIWG_CONTEXT_WINDOW` budget, the RLM 7-agent hard cap (RLM dispatches only), and the natural task decomposition. Bump via `aiwg config set --project parallelism.max_parallel_subagents N`.');
+  lines.push('### Model-selected delegation rubric');
+  lines.push('');
+  lines.push('For each non-trivial task, assess whether it contains independent, bounded subtasks that can run concurrently. When delegation is supported, prefer the deployed model-pinned wrappers by task characteristics and consequence:');
+  lines.push('');
+  lines.push('- `aiwg-model-efficiency-worker`: discovery, inventory, focused edits, and other bounded low-cost work.');
+  lines.push('- `aiwg-model-coding-worker`: implementation, tests, debugging, and routine technical delivery.');
+  lines.push('- `aiwg-model-reasoning-worker`: architecture, synthesis, difficult analysis, and high-consequence review.');
+  lines.push('');
+  lines.push('Do not delegate trivial work, tightly coupled changes, serial dependencies, or tasks likely to collide in shared state; also keep work local when coordination costs exceed the expected benefit. Parallelize only independent work, and take the MIN of provider limits, `max_parallel_subagents`, `AIWG_CONTEXT_WINDOW` budget, framework-specific caps (including the RLM 7-agent hard cap for RLM dispatches), and natural task decomposition. Bump the project cap via `aiwg config set --project parallelism.max_parallel_subagents N`.');
+  lines.push('');
+  lines.push('The primary agent retains orchestration, final integration, conflict resolution, validation, and user-facing accountability.');
+  lines.push('');
+  lines.push(delegationSupport(primary));
   lines.push('');
   lines.push(PARALLELISM_BLOCK_END);
   lines.push('');

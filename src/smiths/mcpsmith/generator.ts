@@ -18,6 +18,7 @@ import type {
   MCPServerManifest,
   MCPToolDefinition
 } from './types.js';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -224,11 +225,9 @@ async function generateServerCode(
   analyzerResult: any
 ): Promise<string> {
   // Load template
-  const templatePath = path.join(
-    path.dirname(__dirname),
-    '..',
-    '..',
-    '.aiwg',
+  const projectRoot = path.resolve(path.dirname(__dirname), '..', '..');
+  const templatePath = projectAiwgPath(
+    projectRoot,
     'smiths',
     'mcpsmith',
     'templates',

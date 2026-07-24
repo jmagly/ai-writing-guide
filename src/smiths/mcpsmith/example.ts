@@ -13,6 +13,7 @@ import { analyzeCLI } from './analyzers/cli-analyzer.js';
 import { generateServer, updateRegistry } from './generator.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -34,7 +35,8 @@ async function main() {
 
   // Step 2: Generate the MCP server
   console.log('Step 2: Generating MCP server...');
-  const outputDir = path.join(__dirname, '..', '..', '..', '.aiwg', 'smiths', 'mcpsmith', 'servers');
+  const projectRoot = path.resolve(__dirname, '..', '..', '..');
+  const outputDir = projectAiwgPath(projectRoot, 'smiths', 'mcpsmith', 'servers');
 
   const generatedServer = await generateServer({
     serverId: 'git',

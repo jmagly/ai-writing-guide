@@ -13,7 +13,7 @@ enforcement: high
 
 Prevent context overload when delegating to subagents by enforcing focused, single-purpose invocations with minimal context and explicit output boundaries. Overloading causes context overflow/truncation, degraded output, premature termination, and expensive re-runs.
 
-**Core distinction**: These rules limit what goes INTO each subagent — NOT how many subagents an orchestrator spawns. Spawning 50 focused subagents (one per atomic subtask) is correct; giving one subagent 20 tasks is wrong. The anti-pattern is overload per subagent, never count.
+**Core distinction**: These rules primarily limit what goes INTO each subagent, while provider, project, context, framework, and natural-decomposition caps limit concurrent count. Focused delegation is useful only when its coordination cost and shared-state risk are lower than keeping the work local.
 
 ## Mandatory Rules
 
@@ -26,8 +26,17 @@ Include only context directly relevant to the task. **FORBIDDEN**: dumping full 
 ### Rule 3: Task Decomposition Before Delegation
 Decompose complex tasks into atomic units before spawning. **FORBIDDEN**: "Implement the entire user registration flow." **REQUIRED**: split into atomic subagents (validate input, duplicate check, hash password, DB insert, send email, build response) — each succeeds/fails independently.
 
-### Rule 4: Parallel Over Sequential Overload
-When N related tasks exist, spawn N separate subagents in parallel. **FORBIDDEN**: one subagent "write tests for login, logout, refreshToken, validateSession." **REQUIRED**: 4 parallel test-writing subagents, one per function. If decomposition produces 20 atomic tasks, spawn 20 subagents — the limit is per-subagent input, not count.
+### Rule 4: Parallelize Independent Work Only
+When N independent tasks exist and delegation is beneficial, use separate focused subagents up to the effective cap. **FORBIDDEN**: parallel edits with serial dependencies or likely shared-state collisions. **REQUIRED**: keep tightly coupled work serial and retain integration in the primary agent.
+
+### Rule 4a: Select the Model Wrapper by Work Characteristics
+When the provider supports delegation, prefer AIWG's deployed wrappers instead of selecting the most capable model by default:
+
+- `aiwg-model-efficiency-worker` for discovery, inventory, focused edits, and bounded low-cost work.
+- `aiwg-model-coding-worker` for implementation, tests, debugging, and routine technical delivery.
+- `aiwg-model-reasoning-worker` for architecture, synthesis, difficult analysis, and high-consequence review.
+
+The primary agent remains responsible for orchestration, final integration, conflict resolution, validation, and the user-facing result. On global-only, compiled, inherited, or unsupported provider surfaces, describe actual enforcement honestly; never claim a per-worker pin that the provider cannot enforce.
 
 ### Rule 5: Output Scoping
 State exactly what format and scope to return. **FORBIDDEN**: "Analyze the auth system and provide recommendations" (output unspecified). **REQUIRED**: "Identify the top 3 security risks — list of exactly 3, each with name + severity + 1-sentence description, ≤300 words."
@@ -85,7 +94,7 @@ Override for higher-tier plans: `aiwg config set --project parallelism.max_paral
 
 ## Orchestrator Fan-Out
 
-Spawn many subagents when subtasks are independent (large multi-component feature 10-20+; one per file/function/service/endpoint/doc-section). The decision per subtask: atomic? context minimal (<20% of window)? output scoped? — if yes to all, spawn one subagent per subtask and execute in parallel (in sequential waves if `AIWG_CONTEXT_WINDOW` budget requires), then aggregate. Spawning 50 focused subagents beats 5 overloaded ones.
+Consider subagents when non-trivial work decomposes into independent, bounded units. The decision per subtask is: atomic, context minimal (<20% of window), output scoped, independent, collision-safe, and worth the coordination cost? If yes, dispatch up to the effective cap and aggregate in the primary agent. If no—especially for trivial, tightly coupled, inherently serial, or shared-state-sensitive work—keep it local.
 
 ## Integration with Other Rules
 
@@ -104,12 +113,15 @@ Before spawning a subagent:
 - [ ] Context is only what's directly relevant (<20% of window)
 - [ ] Output format/scope explicit
 - [ ] Task is atomic
+- [ ] Task is independent and collision-safe
+- [ ] Delegation benefit exceeds coordination cost
+- [ ] Efficiency, coding, or reasoning wrapper matches the task and consequence
 - [ ] Similar tasks → separate subagents, not bundled
 - [ ] Delegation depth ≤ 2 levels
 - [ ] Budget estimated <50% of window; if `AIWG_CONTEXT_WINDOW` set, parallel count within budget AND provider cap (Rule 8)
 
 Before giving one subagent multiple tasks: **STOP** — can these be separate subagents? Document why only if truly inseparable.
-Before limiting subagent count: **STOP** — the rules limit per-subagent input, not count; if each is atomic, many subagents is correct.
+Before setting concurrency: take the minimum of provider, project, context, framework, and natural-decomposition caps.
 
 ## References
 

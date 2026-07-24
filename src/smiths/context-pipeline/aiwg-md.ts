@@ -17,6 +17,7 @@
 
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
+import { projectAiwgPath } from '../../config/project-artifacts.js';
 import { buildParallelismSection, replaceOrAppendParallelismBlock } from './parallelism-section.js';
 import { buildContextFinalizationBlock, replaceOrAppendFinalizationBlock } from './finalization.js';
 import {
@@ -93,13 +94,16 @@ export async function buildAiwgMdContent(
   }
 
   // Fallback stub.
+  const normalizedPath = projectAiwgPath(projectPath, 'AIWG.md');
+  const normalizedRelative = path.relative(projectPath, normalizedPath).replace(/\\/g, '/');
+  const normalizedLink = normalizedRelative.startsWith('.') ? normalizedRelative : `./${normalizedRelative}`;
   const stub = [
     '# AIWG.md',
     AIWG_SIGNATURE_COMMENT,
     '<!-- CLAUDE.md companion for non-Claude providers. -->',
     '',
     'CLAUDE.md was not found at project root. AIWG.md normally mirrors that content.',
-    'See [.aiwg/AIWG.md](./.aiwg/AIWG.md) for the project framework context.',
+    `See [${normalizedRelative}](${normalizedLink}) for the project framework context.`,
     '',
   ].join('\n');
   const withParallelism = replaceOrAppendParallelismBlock(stub, parallelismSection);

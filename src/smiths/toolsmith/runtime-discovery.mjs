@@ -13,6 +13,7 @@ import { existsSync, constants } from 'fs';
 import { resolve, join, dirname } from 'path';
 import { platform, arch, homedir, tmpdir, cpus, totalmem, freemem } from 'os';
 import { fileURLToPath } from 'url';
+import { projectAiwgPath } from '../../config/project-artifacts-runtime.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,7 +23,7 @@ const __dirname = dirname(__filename);
  */
 export class RuntimeDiscovery {
   constructor(basePath = null) {
-    this.basePath = basePath || resolve(process.cwd(), '.aiwg/smiths/toolsmith');
+    this.basePath = basePath || projectAiwgPath(process.cwd(), 'smiths', 'toolsmith');
     this.knownTools = this.#loadKnownTools();
   }
 
