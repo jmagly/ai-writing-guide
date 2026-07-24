@@ -161,6 +161,21 @@ export const DISCOVER_FACETS: FacetEntry[] = [
     capabilities: ['new-project', 'new-bundle'],
   },
   {
+    facet: 'feature-domain',
+    label: 'Project-local bundle lifecycle',
+    intents: [
+      'project-local bundle',
+      'create project-local bundle',
+      'deploy project-local bundle',
+      'doctor project-local bundle',
+      'promote bundle',
+      'promote project-local',
+      'graduate project-local bundle',
+      'graduate to upstream',
+    ],
+    capabilities: ['new-bundle', 'use', 'aiwg-doctor', 'promote'],
+  },
+  {
     facet: 'provider-capability',
     label: 'Provider capability routing (native vs emulated)',
     intents: [

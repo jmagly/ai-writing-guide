@@ -27,6 +27,7 @@ interface DiscoverResult {
     type: string;
     name?: string;
     title: string;
+    capability?: string;
     ranking?: {
       matches: Array<{
         field: string;
@@ -348,6 +349,31 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
     expect(flowRelease.path).toContain('agentic/code/frameworks/sdlc-complete/skills/flow-release/SKILL.md');
     expect(flowRelease.content).toContain('name: flow-release');
   });
+
+  it('discovers project-local lifecycle commands from the built Fortemi corpus (#1863)', async () => {
+    const exactCases = [
+      ['new-bundle', 'new-bundle'],
+      ['promote bundle', 'promote'],
+    ] as const;
+
+    for (const [phrase, expectedName] of exactCases) {
+      const result = await captureDiscover(phrase, 'fortemi-core', true);
+      const rank = result.results.findIndex((item) => item.name === expectedName) + 1;
+      expect(rank, `${phrase} expected rank`).toBeGreaterThan(0);
+      expect(rank, `${phrase} expected rank`).toBeLessThanOrEqual(3);
+      expect(result.results[rank - 1]?.path).toContain(
+        `agentic/code/addons/aiwg-utils/skills/${expectedName}/SKILL.md`,
+      );
+    }
+
+    const lifecycle = await captureDiscover('project-local bundle', 'fortemi-core', true);
+    const names = lifecycle.results.map((item) => item.name);
+    expect(names).toEqual(expect.arrayContaining(['new-bundle', 'promote']));
+    expect(lifecycle.results.find((item) => item.name === 'new-bundle')?.capability)
+      .toContain('Scaffold a project-local');
+    expect(lifecycle.results.find((item) => item.name === 'promote')?.capability)
+      .toContain('Promote or graduate');
+  }, 20_000);
 
   it('discovers and shows project-local custom skills on the Fortemi Core default graph', async () => {
     const local = await captureDiscover('project custom review', 'local', true);
