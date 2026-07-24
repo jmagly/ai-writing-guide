@@ -9,6 +9,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Changed
 
+- **Released Core 2026.7.13 shard boundary** (#1870) — AIWG now pins the
+  published `@fortemi/core@2026.7.13` package and public
+  `@fortemi/core/aiwg-index-shard` entry point. Blocking receipts cover the
+  regenerated `core-v1` archive and a deterministic, lossless
+  `2.0.0/full-v1` consumer fixture; full-v1 advertisement remains disabled
+  until the independent Fortemi runtime and destination gates close.
 - **Dependency-safe Gitea mirror verification** — release verification now
   clean-installs the full, lightweight CLI, and Cockpit tarballs resolved from
   Gitea while leaving third-party dependency resolution on npmjs.org. Generated
