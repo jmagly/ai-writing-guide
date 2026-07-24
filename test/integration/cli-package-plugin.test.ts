@@ -48,8 +48,11 @@ describe('public package-plugin CLI contract (#1864)', () => {
       type: 'plugin',
       name: 'Team Tools',
       version: '1.0.0',
+      description: 'Standalone team tools wrapper',
       manifestVersion: '1',
       platforms: { claude: 'full', codex: 'full' },
+      keywords: ['team-tools'],
+      deployment: { pathTemplate: '.aiwg/plugins/team-tools' },
       pluginConfig: { payloadType: 'addon', payloadPath: 'payload/' },
     }));
     writeFileSync(path.join(payload, 'manifest.json'), JSON.stringify({
@@ -57,8 +60,11 @@ describe('public package-plugin CLI contract (#1864)', () => {
       type: 'addon',
       name: 'Team Tools Payload',
       version: '1.0.0',
+      description: 'Standalone team tools payload',
       manifestVersion: '1',
       platforms: { claude: 'full', codex: 'full' },
+      keywords: ['team-tools'],
+      deployment: { pathTemplate: '.aiwg/addons/team-tools-payload' },
       addonConfig: { entry: { skills: 'skills/' } },
     }));
 

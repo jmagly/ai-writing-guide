@@ -31,10 +31,11 @@ aiwg package-plugin team-tools \
   --output dist/plugins
 ```
 
-The packager validates wrapper identity, payload type/path/manifest agreement,
-symlink containment, provider selection, and output collisions. It emits
-deterministic `.tar.gz` archives with provider-native metadata. Payload bytes
-are not rewritten.
+The packager applies the canonical bundle schema recursively to the wrapper and
+payload, then validates wrapper identity, payload type/path agreement, symlink
+containment, provider selection, and output collisions. It emits deterministic
+`.tar.gz` archives with provider-native metadata. Payload bytes are not
+rewritten.
 
 ## Install smoke
 
@@ -42,17 +43,19 @@ Extract each archive into a disposable repository before publication:
 
 ```bash
 fixture="$(mktemp -d)"
-tar -xzf dist/plugins/team-tools-1.0.0-claude.tar.gz -C "$fixture"
-test -f "$fixture/team-tools/.claude-plugin/plugin.json"
+mkdir -p "$fixture/claude/.git" "$fixture/claude/.claude/plugins"
+tar -xzf dist/plugins/team-tools-1.0.0-claude.tar.gz -C "$fixture/claude/.claude/plugins"
+test -f "$fixture/claude/.claude/plugins/team-tools/.claude-plugin/plugin.json"
 
-tar -xzf dist/plugins/team-tools-1.0.0-codex.tar.gz -C "$fixture"
-test -f "$fixture/team-tools/.codex-plugin/plugin.json"
-test -f "$fixture/team-tools/marketplace.json"
+mkdir -p "$fixture/codex/.git" "$fixture/codex/.codex/plugins"
+tar -xzf dist/plugins/team-tools-1.0.0-codex.tar.gz -C "$fixture/codex/.codex/plugins"
+test -f "$fixture/codex/.codex/plugins/team-tools/.codex-plugin/plugin.json"
+test -f "$fixture/codex/.codex/plugins/team-tools/marketplace.json"
 ```
 
 Then use the provider's local plugin installation surface from that fixture.
-The integration suite performs the same disposable extraction and byte
-comparison for both formats.
+The integration suite installs into these provider-native repository paths,
+validates both manifests with the canonical loader, and compares payload bytes.
 
 ## Repository and release policy
 

@@ -677,32 +677,15 @@ export const updateHandler: CommandHandler = {
       return { exitCode: 0 };
     }
 
-    // Map registry IDs to framework use-names
-    const installedFrameworks: string[] = [];
-    const unmapped: string[] = [];
-
-    for (const fw of registry.frameworks) {
-      const useName = REGISTRY_ID_TO_USE_NAME[fw.id];
-      if (useName) {
-        installedFrameworks.push(useName);
-      } else {
-        unmapped.push(fw.id);
-      }
-    }
-
-    if (installedFrameworks.length === 0) {
-      console.log('No recognized frameworks in registry');
-      if (unmapped.length > 0) {
-        console.log(`Unrecognized entries: ${unmapped.join(', ')}`);
-      }
-      return { exitCode: 0 };
-    }
+    // Canonical framework IDs need their historical public aliases. Add-ons,
+    // extensions, and project-local bundles are already accepted by `aiwg use`,
+    // so preserve their registry IDs instead of silently skipping them.
+    const installedFrameworks = registry.frameworks.map(
+      item => REGISTRY_ID_TO_USE_NAME[item.id] ?? item.id
+    );
 
     // Report what will be updated
     console.log(`Installed frameworks: ${installedFrameworks.join(', ')}`);
-    if (unmapped.length > 0) {
-      console.log(`Skipping unrecognized: ${unmapped.join(', ')}`);
-    }
     console.log('');
 
     if (dryRun) {

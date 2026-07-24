@@ -70,12 +70,27 @@ export async function updateInstallation(options = {}) {
         message: 'Web-backed AIWG cannot refresh signed resources while offline; verified cached resources remain available.',
       };
     }
+    if (dryRun) {
+      return {
+        ...detected,
+        channel,
+        status: 'dry-run',
+        changed: false,
+        message: `Would refresh the verified signed '${channel}' web resource release; no global package install would be attempted.`,
+      };
+    }
+    const refreshWebResources = options.refreshWebResources ?? (async (selector) => {
+      const { resolveWebRelease } = await import('../resources/web-release.js');
+      return resolveWebRelease({ selector });
+    });
+    const release = await refreshWebResources(channel);
     return {
       ...detected,
       channel,
-      status: dryRun ? 'dry-run' : 'current',
-      changed: false,
-      message: `Web-backed AIWG uses the signed '${npmTag(channel)}' resource channel on demand; no global package install was attempted.`,
+      version: release.version,
+      status: 'updated',
+      changed: true,
+      message: `Refreshed the verified signed '${channel}' web resource release${release.version ? ` (${release.version})` : ''}; no global package install was attempted.`,
     };
   }
 

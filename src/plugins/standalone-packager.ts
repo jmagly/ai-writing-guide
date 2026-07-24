@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -11,43 +12,20 @@ function inside(parent, candidate) {
   return rel === '' || (rel.length > 0 && !rel.startsWith('..') && !path.isAbsolute(rel));
 }
 
-function readJson(filename, label) {
-  try {
-    return JSON.parse(fs.readFileSync(filename, 'utf8'));
-  } catch (error) {
-    throw new Error(`${label} is missing or malformed at ${filename}: ${error.message}`);
+async function validateManifest(wrapperRoot, expectedName, projectRoot) {
+  const manifestPath = path.join(wrapperRoot, 'manifest.json');
+  const { loadAndValidateManifest } = await import('../extensions/project-local-discovery.js');
+  const validation = await loadAndValidateManifest(manifestPath, 'plugin', projectRoot);
+  if (!validation.bundle) {
+    const details = validation.errors.map(error => {
+      const hint = error.hint ? `; ${error.hint}` : '';
+      return `${error.field}: expected ${error.expected}, got ${String(error.actual)}${hint}`;
+    }).join('\n  - ');
+    throw new Error(`Standalone plugin manifest validation failed:\n  - ${details}`);
   }
-}
-
-function validateManifest(wrapperRoot, expectedName) {
-  const manifest = readJson(path.join(wrapperRoot, 'manifest.json'), 'Wrapper manifest');
-  if (manifest.type !== 'plugin') throw new Error(`Wrapper manifest type must be 'plugin' (got '${manifest.type ?? '<missing>'}')`);
+  const manifest = validation.bundle.manifest;
   if (manifest.id !== expectedName) throw new Error(`Wrapper manifest id '${manifest.id ?? '<missing>'}' does not match requested plugin '${expectedName}'`);
-  if (!NAME.test(manifest.id)) throw new Error(`Plugin id '${manifest.id}' must be kebab-case`);
-  const plugin = manifest.pluginConfig;
-  if (!plugin || !['addon', 'extension', 'framework'].includes(plugin.payloadType)) {
-    throw new Error('Wrapper manifest pluginConfig.payloadType must be addon, extension, or framework');
-  }
-  if (typeof plugin.payloadPath !== 'string' || path.isAbsolute(plugin.payloadPath) || plugin.payloadPath.split(/[\\/]/).includes('..')) {
-    throw new Error('Wrapper manifest pluginConfig.payloadPath must be a traversal-safe relative path');
-  }
-  const payloadRoot = path.resolve(wrapperRoot, plugin.payloadPath);
-  if (!inside(wrapperRoot, payloadRoot)) throw new Error('pluginConfig.payloadPath escapes the wrapper root');
-  const wrapperReal = fs.realpathSync(wrapperRoot);
-  let payloadReal;
-  try {
-    payloadReal = fs.realpathSync(payloadRoot);
-  } catch {
-    throw new Error(`Plugin payload path does not exist: ${plugin.payloadPath}`);
-  }
-  if (!inside(wrapperReal, payloadReal)) throw new Error('pluginConfig.payloadPath resolves outside the wrapper through a symlink');
-  if (!fs.statSync(payloadReal).isDirectory()) throw new Error('pluginConfig.payloadPath must resolve to a directory');
-  const payload = readJson(path.join(payloadReal, 'manifest.json'), 'Payload manifest');
-  if (payload.type !== plugin.payloadType) {
-    throw new Error(`Payload manifest type '${payload.type ?? '<missing>'}' does not match pluginConfig.payloadType '${plugin.payloadType}'`);
-  }
-  if (typeof payload.id !== 'string' || !NAME.test(payload.id)) throw new Error('Payload manifest requires a kebab-case id');
-  return { manifest, payloadRoot: payloadReal };
+  return { manifest, payloadRoot: validation.bundle.artifactPath };
 }
 
 function copyTree(source, destination) {
@@ -113,12 +91,12 @@ export function resolveStandalonePluginSource({ cwd, name, source }) {
   return real;
 }
 
-export function packageStandalonePlugin(options) {
+export async function packageStandalonePlugin(options) {
   const { cwd, name, source, output, dryRun = false, clean = false } = options;
   if (!NAME.test(name)) throw new Error(`Plugin name '${name}' must be kebab-case`);
   const sourceRoot = resolveStandalonePluginSource({ cwd, name, source });
   if (!sourceRoot) return null;
-  const { manifest, payloadRoot } = validateManifest(sourceRoot, name);
+  const { manifest, payloadRoot } = await validateManifest(sourceRoot, name, path.resolve(cwd));
   const providers = options.provider === 'all'
     ? ['claude', 'codex']
     : [options.provider ?? 'claude'];

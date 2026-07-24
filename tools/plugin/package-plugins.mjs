@@ -912,8 +912,8 @@ async function main() {
   }
 
   if (options.plugin && !options.all) {
-    const { packageStandalonePlugin } = await importImpl(import.meta.url, 'plugins/standalone-packager.mjs');
-    const standalone = packageStandalonePlugin({
+    const { packageStandalonePlugin } = await importImpl(import.meta.url, 'plugins/standalone-packager.js');
+    const standalone = await packageStandalonePlugin({
       cwd: process.cwd(),
       name: options.plugin,
       source: options.source,

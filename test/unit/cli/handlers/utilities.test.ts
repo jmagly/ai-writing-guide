@@ -54,6 +54,7 @@ vi.mock('fs', async () => {
             frameworks: [
               { id: 'sdlc-complete', installed: '2026-01-13T00:00:00Z', version: '1.0.0' },
               { id: 'media-marketing-kit', installed: '2026-01-13T00:00:00Z', version: '1.0.0' },
+              { id: 'team-tools-addon', installed: '2026-01-13T00:00:00Z', version: '1.0.0' },
             ],
           });
         }
@@ -72,6 +73,7 @@ vi.mock('fs', async () => {
           frameworks: [
             { id: 'sdlc-complete', installed: '2026-01-13T00:00:00Z', version: '1.0.0' },
             { id: 'media-marketing-kit', installed: '2026-01-13T00:00:00Z', version: '1.0.0' },
+            { id: 'team-tools-addon', installed: '2026-01-13T00:00:00Z', version: '1.0.0' },
           ],
         });
       }
@@ -240,8 +242,13 @@ describe('Utility Command Handlers', () => {
       const result = await updateHandler.execute(mockContext);
 
       expect(updateInstallation).toHaveBeenCalled();
-      // Should call UseHandler for each installed framework (sdlc, marketing)
-      expect(mockUseExecute).toHaveBeenCalledTimes(2);
+      // Canonical frameworks use aliases; add-ons preserve their registry ID.
+      expect(mockUseExecute).toHaveBeenCalledTimes(3);
+      expect(mockUseExecute.mock.calls.map(call => call[0].args[0])).toEqual([
+        'sdlc',
+        'marketing',
+        'team-tools-addon',
+      ]);
       expect(result.exitCode).toBe(0);
     });
 
@@ -250,7 +257,7 @@ describe('Utility Command Handlers', () => {
 
       await updateHandler.execute(mockContext);
 
-      // Both calls should include --provider factory
+      // Every installed item should include --provider factory
       for (const call of mockUseExecute.mock.calls) {
         const ctx = call[0] as HandlerContext;
         expect(ctx.args).toContain('--provider');
@@ -303,7 +310,8 @@ describe('Utility Command Handlers', () => {
       mockContext.args = ['--skip-check'];
       mockUseExecute
         .mockResolvedValueOnce({ exitCode: 0 })  // sdlc succeeds
-        .mockResolvedValueOnce({ exitCode: 1 });  // marketing fails
+        .mockResolvedValueOnce({ exitCode: 1 })  // marketing fails
+        .mockResolvedValueOnce({ exitCode: 0 }); // add-on succeeds
 
       const result = await updateHandler.execute(mockContext);
 

@@ -49,23 +49,49 @@ describe('install-aware update service', () => {
     expect(result).toMatchObject({ mode: 'npm', channel, status: 'updated' });
   });
 
-  it('never attempts npm self-install for web-backed mode', async () => {
+  it('refreshes signed resources without npm self-install for web-backed mode', async () => {
     const execute = vi.fn();
+    const refreshWebResources = vi.fn().mockResolvedValue({ version: 'v2026.7.24' });
     const result = await updateInstallation({
       packageRoot: packageRoot('@aiwg/cli'),
       config: { channel: 'stable' },
       execute,
+      refreshWebResources,
     });
     expect(execute).not.toHaveBeenCalled();
-    expect(result).toMatchObject({ mode: 'web', status: 'current', changed: false });
+    expect(refreshWebResources).toHaveBeenCalledWith('stable');
+    expect(result).toMatchObject({
+      mode: 'web',
+      status: 'updated',
+      changed: true,
+      version: 'v2026.7.24',
+    });
+  });
+
+  it('does not fetch or self-install during a web-backed dry run', async () => {
+    const execute = vi.fn();
+    const refreshWebResources = vi.fn();
+    const result = await updateInstallation({
+      packageRoot: packageRoot('@aiwg/cli'),
+      config: { channel: 'next' },
+      dryRun: true,
+      execute,
+      refreshWebResources,
+    });
+    expect(execute).not.toHaveBeenCalled();
+    expect(refreshWebResources).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ mode: 'web', channel: 'next', status: 'dry-run', changed: false });
   });
 
   it('reports explicit offline behavior for web-backed mode', async () => {
+    const refreshWebResources = vi.fn();
     const result = await updateInstallation({
       packageRoot: packageRoot('@aiwg/cli'),
       config: { channel: 'stable' },
       offline: true,
+      refreshWebResources,
     });
+    expect(refreshWebResources).not.toHaveBeenCalled();
     expect(result).toMatchObject({ mode: 'web', status: 'unsupported-offline' });
     expect(result.message).toContain('verified cached resources');
   });

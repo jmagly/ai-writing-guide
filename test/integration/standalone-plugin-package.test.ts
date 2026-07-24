@@ -4,7 +4,8 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { packageStandalonePlugin } from '../../src/plugins/standalone-packager.mjs';
+import { packageStandalonePlugin } from '../../src/plugins/standalone-packager.js';
+import { loadAndValidateManifest } from '../../src/extensions/project-local-discovery.js';
 
 const roots: string[] = [];
 
@@ -23,6 +24,8 @@ function fixture(overrides: { payloadPath?: string; payloadType?: string } = {})
     description: 'Team plugin',
     manifestVersion: '1',
     platforms: { claude: 'full', codex: 'full' },
+    keywords: ['team-tools'],
+    deployment: { pathTemplate: '.aiwg/plugins/team-tools' },
     pluginConfig: { payloadType: overrides.payloadType ?? 'addon', payloadPath },
   }, null, 2)}\n`);
   fs.writeFileSync(path.join(payload, 'manifest.json'), `${JSON.stringify({
@@ -30,8 +33,11 @@ function fixture(overrides: { payloadPath?: string; payloadType?: string } = {})
     type: 'addon',
     name: 'Team Tools Payload',
     version: '1.2.3',
+    description: 'Team tools payload',
     manifestVersion: '1',
     platforms: { claude: 'full', codex: 'full' },
+    keywords: ['team-tools'],
+    deployment: { pathTemplate: '.aiwg/addons/team-tools-payload' },
     addonConfig: { entry: { skills: 'skills/' } },
   }, null, 2)}\n`);
   const bytes = Buffer.from([0, 1, 2, 3, 254, 255]);
@@ -39,23 +45,31 @@ function fixture(overrides: { payloadPath?: string; payloadType?: string } = {})
   return { root, wrapper, bytes };
 }
 
+function installArchive(archive: string, repository: string, provider: 'claude' | 'codex') {
+  fs.mkdirSync(path.join(repository, '.git'), { recursive: true });
+  const pluginRoot = path.join(repository, `.${provider}`, 'plugins');
+  fs.mkdirSync(pluginRoot, { recursive: true });
+  execFileSync('tar', ['-xzf', archive, '-C', pluginRoot]);
+  return path.join(pluginRoot, 'team-tools');
+}
+
 afterEach(() => {
   for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true });
 });
 
 describe('standalone project-local plugin packaging', () => {
-  it('auto-discovers, packages deterministically, and preserves payload bytes', () => {
+  it('auto-discovers, packages deterministically, and preserves payload bytes', async () => {
     const { root, bytes } = fixture();
-    const first = packageStandalonePlugin({
+    const first = (await packageStandalonePlugin({
       cwd: root,
       name: 'team-tools',
       provider: 'all',
-    })!;
+    }))!;
     expect(first.plans.map(plan => plan.provider)).toEqual(['claude', 'codex']);
     const archive = first.plans[0].archivePath;
     const digest = createHash('sha256').update(fs.readFileSync(archive)).digest('hex');
 
-    packageStandalonePlugin({
+    await packageStandalonePlugin({
       cwd: root,
       name: 'team-tools',
       provider: 'all',
@@ -63,87 +77,120 @@ describe('standalone project-local plugin packaging', () => {
     });
     expect(createHash('sha256').update(fs.readFileSync(archive)).digest('hex')).toBe(digest);
 
-    const extracted = path.join(root, 'extracted-claude');
-    fs.mkdirSync(extracted);
-    execFileSync('tar', ['-xzf', archive, '-C', extracted]);
+    const claudeRepository = path.join(root, 'claude-fixture-repository');
+    const claudeInstall = installArchive(archive, claudeRepository, 'claude');
     expect(fs.readFileSync(path.join(
-      extracted,
-      'team-tools',
+      claudeInstall,
       'payload',
       'skills',
       'team-check',
       'asset.bin',
     ))).toEqual(bytes);
-    expect(fs.existsSync(path.join(extracted, 'team-tools', '.claude-plugin', 'plugin.json'))).toBe(true);
+    const claudeMetadata = JSON.parse(fs.readFileSync(path.join(
+      claudeInstall,
+      '.claude-plugin',
+      'plugin.json',
+    ), 'utf8'));
+    expect(claudeMetadata).toMatchObject({ name: 'team-tools', version: '1.2.3' });
+    await expect(loadAndValidateManifest(
+      path.join(claudeInstall, 'manifest.json'),
+      'plugin',
+      claudeRepository,
+    )).resolves.toMatchObject({ errors: [], bundle: { id: 'team-tools', type: 'plugin' } });
 
-    const codexExtracted = path.join(root, 'extracted-codex');
-    fs.mkdirSync(codexExtracted);
-    execFileSync('tar', ['-xzf', first.plans[1].archivePath, '-C', codexExtracted]);
+    const codexRepository = path.join(root, 'codex-fixture-repository');
+    const codexInstall = installArchive(first.plans[1].archivePath, codexRepository, 'codex');
     expect(fs.readFileSync(path.join(
-      codexExtracted,
-      'team-tools',
+      codexInstall,
       'payload',
       'skills',
       'team-check',
       'asset.bin',
     ))).toEqual(bytes);
-    expect(fs.existsSync(path.join(codexExtracted, 'team-tools', '.codex-plugin', 'plugin.json'))).toBe(true);
-    expect(fs.existsSync(path.join(codexExtracted, 'team-tools', 'marketplace.json'))).toBe(true);
+    const codexMetadata = JSON.parse(fs.readFileSync(path.join(
+      codexInstall,
+      '.codex-plugin',
+      'plugin.json',
+    ), 'utf8'));
+    const marketplace = JSON.parse(fs.readFileSync(path.join(codexInstall, 'marketplace.json'), 'utf8'));
+    expect(codexMetadata).toMatchObject({ name: 'team-tools', version: '1.2.3' });
+    expect(marketplace.plugins).toContainEqual({
+      name: 'team-tools',
+      source: { source: 'local', path: '.' },
+    });
+    await expect(loadAndValidateManifest(
+      path.join(codexInstall, 'manifest.json'),
+      'plugin',
+      codexRepository,
+    )).resolves.toMatchObject({ errors: [], bundle: { id: 'team-tools', type: 'plugin' } });
   });
 
-  it('supports an explicit in-project source and output path', () => {
+  it('supports an explicit in-project source and output path', async () => {
     const { root, wrapper } = fixture();
-    const result = packageStandalonePlugin({
+    const result = (await packageStandalonePlugin({
       cwd: root,
       name: 'team-tools',
       source: path.relative(root, wrapper),
       output: 'release',
       provider: 'codex',
-    })!;
+    }))!;
     expect(result.plans[0].archivePath).toBe(path.join(root, 'release', 'team-tools-1.2.3-codex.tar.gz'));
   });
 
-  it('rejects malformed and traversal payload paths', () => {
+  it('rejects malformed and traversal payload paths', async () => {
     const malformed = fixture({ payloadType: 'framework' });
-    expect(() => packageStandalonePlugin({
+    await expect(packageStandalonePlugin({
       cwd: malformed.root,
       name: 'team-tools',
-    })).toThrow(/does not match pluginConfig.payloadType/);
+    })).rejects.toThrow(/Payload manifest type must match|matching directory/);
 
     const traversal = fixture({ payloadPath: '../payload' });
-    expect(() => packageStandalonePlugin({
+    await expect(packageStandalonePlugin({
       cwd: traversal.root,
       name: 'team-tools',
-    })).toThrow(/traversal-safe/);
+    })).rejects.toThrow(/relative path|payloadPath/);
   });
 
-  it('rejects source traversal, unsupported providers, and output collisions', () => {
+  it('rejects source traversal, unsupported providers, and output collisions', async () => {
     const { root } = fixture();
-    expect(() => packageStandalonePlugin({
+    await expect(packageStandalonePlugin({
       cwd: root,
       name: 'team-tools',
       source: '../outside',
-    })).toThrow(/must stay inside/);
-    expect(() => packageStandalonePlugin({
+    })).rejects.toThrow(/must stay inside/);
+    await expect(packageStandalonePlugin({
       cwd: root,
       name: 'team-tools',
       provider: 'cursor',
-    })).toThrow(/not supported/);
-    packageStandalonePlugin({ cwd: root, name: 'team-tools' });
-    expect(() => packageStandalonePlugin({ cwd: root, name: 'team-tools' }))
-      .toThrow(/already exists/);
+    })).rejects.toThrow(/not supported/);
+    await packageStandalonePlugin({ cwd: root, name: 'team-tools' });
+    await expect(packageStandalonePlugin({ cwd: root, name: 'team-tools' }))
+      .rejects.toThrow(/already exists/);
   });
 
-  it('rejects providers not declared compatible by the wrapper', () => {
+  it('rejects providers not declared compatible by the wrapper', async () => {
     const { root, wrapper } = fixture();
     const manifestPath = path.join(wrapper, 'manifest.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     manifest.platforms = { claude: 'full' };
     fs.writeFileSync(manifestPath, JSON.stringify(manifest));
-    expect(() => packageStandalonePlugin({
+    await expect(packageStandalonePlugin({
       cwd: root,
       name: 'team-tools',
       provider: 'codex',
-    })).toThrow(/does not declare compatible 'codex'/);
+    })).rejects.toThrow(/does not declare compatible 'codex'/);
+  });
+
+  it('rejects manifests missing canonical required fields', async () => {
+    const { root, wrapper } = fixture();
+    const manifestPath = path.join(wrapper, 'manifest.json');
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    delete manifest.keywords;
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+
+    await expect(packageStandalonePlugin({
+      cwd: root,
+      name: 'team-tools',
+    })).rejects.toThrow(/keywords/);
   });
 });

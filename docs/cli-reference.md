@@ -242,9 +242,9 @@ aiwg -update
 
 - Checks npm registry for newer version
 - Full `aiwg` npm installs preserve the configured stable, next, or nightly channel
-- Lightweight `@aiwg/cli` installs follow signed web resource channels and are never replaced with the full package
+- Lightweight `@aiwg/cli` installs fetch and verify the selected signed web resource release and are never replaced with the full package
 - Source/dev checkouts receive a non-destructive Git/build workflow
-- Re-deploys installed frameworks after the distribution update step
+- Re-deploys installed frameworks and add-ons after the distribution update step
 
 **Channel switching:**
 

@@ -7,6 +7,7 @@ export interface UpdateResult {
   channel: string;
   status: 'updated' | 'current' | 'manual' | 'dry-run' | 'unsupported-offline';
   changed: boolean;
+  version?: string;
   command?: string;
   message: string;
 }
