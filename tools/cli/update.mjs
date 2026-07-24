@@ -4,24 +4,18 @@
  *
  * Handles channel-aware package updates invoked by `aiwg sync --channel <name>`.
  *
- * Supported channels:
- *   latest   — stable npm release   (npm install -g aiwg)
- *   next     — alpha/beta/RC        (npm install -g aiwg@next)
- *   nightly  — nightly snapshots    (npm install -g aiwg@nightly)
- *   (none)   — stays on current channel, updates in place
+ * Supported channels: latest/stable, next, and nightly. With no explicit
+ * channel, the service preserves the configured channel.
  *
  * @issue #669
  */
 
-import { execSync } from 'child_process';
 import { importImpl } from '../_resolve-impl.mjs';
 
 const {
   loadConfig,
-  switchToNext,
-  switchToNightly,
-  switchToStable,
 } = await importImpl(import.meta.url, 'channel/manager.mjs');
+const { updateInstallation } = await importImpl(import.meta.url, 'update/service.mjs');
 
 // Parse --channel <value> from argv
 function parseChannel(args) {
@@ -33,62 +27,18 @@ function parseChannel(args) {
 async function runUpdate() {
   const channel = parseChannel(process.argv.slice(2));
   const config = await loadConfig();
-  const currentChannel = config.channel || 'stable';
-
-  if (channel) {
-    // Channel switch requested
-    switch (channel) {
-      case 'next':
-        await switchToNext();
-        break;
-      case 'nightly':
-        await switchToNightly();
-        break;
-      case 'latest':
-      case 'stable':
-        await switchToStable();
-        break;
-      default:
-        console.error(`Unknown channel: ${channel}`);
-        console.error('Valid channels: latest, next, nightly');
-        process.exit(1);
-    }
-  } else {
-    // In-place update on current channel
-    switch (currentChannel) {
-      case 'next':
-        console.log('Updating aiwg on next channel...');
-        try {
-          execSync('npm install -g aiwg@next', { stdio: 'inherit' });
-          console.log('Update complete.');
-        } catch {
-          console.error('Update failed. Try: npm install -g aiwg@next');
-          process.exit(1);
-        }
-        break;
-      case 'nightly':
-        console.log('Updating aiwg on nightly channel...');
-        try {
-          execSync('npm install -g aiwg@nightly', { stdio: 'inherit' });
-          console.log('Update complete.');
-        } catch {
-          console.error('Update failed. Try: npm install -g aiwg@nightly');
-          process.exit(1);
-        }
-        break;
-      case 'stable':
-      default:
-        console.log('Updating aiwg on stable channel...');
-        try {
-          execSync('npm install -g aiwg@latest', { stdio: 'inherit' });
-          console.log('Update complete.');
-        } catch {
-          console.error('Update failed. Try: npm install -g aiwg@latest');
-          process.exit(1);
-        }
-        break;
-    }
+  if (channel && !['latest', 'stable', 'next', 'nightly'].includes(channel)) {
+    console.error(`Unknown channel: ${channel}`);
+    console.error('Valid channels: latest, stable, next, nightly');
+    process.exit(1);
   }
+  const result = await updateInstallation({
+    config,
+    channel: channel === 'latest' ? 'stable' : channel ?? config.channel,
+    offline: process.argv.includes('--offline'),
+  });
+  console.log(result.message);
+  if (result.status === 'unsupported-offline') process.exitCode = 2;
 }
 
 runUpdate().catch((err) => {

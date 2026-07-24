@@ -128,6 +128,13 @@ describe('router', () => {
         expect(registry.registry.resolveCommand('-version')).toBe('version');
         expect(registry.registry.resolveCommand('--version')).toBe('version');
       });
+
+      it('resolves upgrade to the canonical update handler (#1871)', async () => {
+        const registry = await initRouter();
+        expect(registry.registry.resolveCommand('upgrade')).toBe('update');
+        expect(registry.handlerMap.get(registry.registry.resolveCommand('upgrade')!))
+          .toBe(registry.handlerMap.get('update'));
+      });
     });
 
     describe('unknown command handling', () => {

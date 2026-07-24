@@ -2,13 +2,13 @@
 namespace: aiwg
 name: update
 platforms: [all]
-description: Update AIWG to the latest stable version and re-deploy all installed frameworks from the registry
+description: Update AIWG through its install-aware updater and re-deploy all installed frameworks from the registry
 
 ---
 
 # AIWG Update
 
-You update AIWG to the latest stable version and re-deploy all installed frameworks from the registry.
+You update AIWG through its canonical install-aware command and re-deploy all installed frameworks from the registry.
 
 ## Triggers
 
@@ -64,7 +64,10 @@ When triggered:
    ```
 
    Execution sequence:
-   1. Check npm/git for a newer version (unless `--skip-check`)
+   1. Detect the active distribution and update safely (unless `--skip-check`)
+      - full `aiwg` npm package: preserve `stable`, `next`, or `nightly`
+      - lightweight `@aiwg/cli`: follow its signed web resource channel without replacing it with the full package
+      - source/dev checkout: print the supported Git/build workflow without overwriting the checkout
    2. Read `.aiwg/frameworks/registry.json` to find installed frameworks
    3. Re-deploy each installed framework via `aiwg use <framework> [--provider <name>]`
    4. Print update summary with per-framework pass/fail status
@@ -77,7 +80,7 @@ When triggered:
 
 | | `aiwg update` | `aiwg sync` |
 |---|---|---|
-| Target channel | Stable only (default) | Follows configured channel |
+| Target channel | Preserves configured channel | Preserves or explicitly switches configured channel |
 | Scope | Installed frameworks only (default) | All deployed frameworks |
 | Typical use | "Get the latest stable release" | "Keep this session current" |
 
@@ -159,5 +162,5 @@ If the request is ambiguous between update and sync:
 ## References
 
 - @$AIWG_ROOT/src/cli/handlers/utilities.ts — Update command handler (updateHandler)
-- @$AIWG_ROOT/src/update/checker.mjs — npm/git update check logic
+- @$AIWG_ROOT/src/update/service.mjs — install-aware update dispatch
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference

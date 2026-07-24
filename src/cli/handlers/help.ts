@@ -140,7 +140,7 @@ function displayHelp(): void {
     ['doctor', 'Check installation health'],
     ['version', 'Show version and channel info'],
     ['refresh', 'Update AIWG and redeploy frameworks (formerly: sync)'],
-    ['update', 'Check for updates'],
+    ['update', 'Update the active installation and re-deploy installed frameworks (alias: upgrade)'],
     ['help', 'Show this help message'],
   ]);
 

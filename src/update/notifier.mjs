@@ -218,7 +218,7 @@ export function maybePrintNotice() {
   const cache = readCache();
   if (!cache?.hasUpdate || !cache.current || !cache.latest) return;
   // One-line, non-intrusive. Users who want to update run `aiwg update`.
-  const msg = `aiwg: update available ${cache.current} → ${cache.latest} (run: npm install -g aiwg)`;
+  const msg = `aiwg: update available ${cache.current} → ${cache.latest} (run: aiwg update)`;
   process.stderr.write(`\n${msg}\n`);
 }
 

@@ -225,7 +225,9 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 
 ### update
 
-Check for and apply updates.
+Detect the active AIWG distribution, apply its supported update strategy, and
+re-deploy installed frameworks. `aiwg upgrade` is an alias; help and notices
+use the canonical `aiwg update` spelling.
 
 ```bash
 aiwg update
@@ -239,10 +241,10 @@ aiwg -update
 **Actions:**
 
 - Checks npm registry for newer version
-- Shows changelog highlights
-- Prompts for update confirmation
-- Runs `npm install -g aiwg@latest`
-- Verifies successful update
+- Full `aiwg` npm installs preserve the configured stable, next, or nightly channel
+- Lightweight `@aiwg/cli` installs follow signed web resource channels and are never replaced with the full package
+- Source/dev checkouts receive a non-destructive Git/build workflow
+- Re-deploys installed frameworks after the distribution update step
 
 **Channel switching:**
 

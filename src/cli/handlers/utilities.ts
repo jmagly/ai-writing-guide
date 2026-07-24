@@ -16,7 +16,7 @@ import path from 'path';
 import { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { createScriptRunner } from './script-runner.js';
 import { getFrameworkRoot } from '../../channel/manager.mjs';
-import { forceUpdateCheck } from '../../update/checker.mjs';
+import { updateInstallation } from '../../update/service.mjs';
 import { useHandler as useFrameworkHandler } from './use.js';
 import { projectAiwgPath } from '../../config/project-artifacts.js';
 import {
@@ -619,7 +619,7 @@ export const updateHandler: CommandHandler = {
   name: 'Update',
   description: 'Update AIWG and re-deploy installed frameworks',
   category: 'maintenance',
-  aliases: ['-update', '--update'],
+  aliases: ['-update', '--update', 'upgrade'],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
     const args = ctx.args;
@@ -636,8 +636,12 @@ export const updateHandler: CommandHandler = {
     // Step 1: Check for package updates (unless --skip-check)
     if (!skipCheck) {
       try {
-        console.log('Checking for AIWG updates...\n');
-        await forceUpdateCheck();
+        console.log('Updating AIWG installation...\n');
+        const update = await updateInstallation({
+          dryRun,
+          offline: args.includes('--offline'),
+        });
+        console.log(`${update.message}\n`);
       } catch (error) {
         console.error(`Warning: Update check failed: ${error instanceof Error ? error.message : String(error)}`);
         console.log('Continuing with re-deployment...\n');

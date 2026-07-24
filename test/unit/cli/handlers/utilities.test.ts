@@ -25,9 +25,14 @@ vi.mock('../../../../src/channel/manager.mjs', () => ({
   getFrameworkRoot: vi.fn().mockResolvedValue('/mock/framework/root'),
 }));
 
-// Mock update checker
-vi.mock('../../../../src/update/checker.mjs', () => ({
-  forceUpdateCheck: vi.fn().mockResolvedValue(undefined),
+// Mock install-aware update service
+vi.mock('../../../../src/update/service.mjs', () => ({
+  updateInstallation: vi.fn().mockResolvedValue({
+    mode: 'npm',
+    status: 'updated',
+    changed: true,
+    message: 'Updated test installation.',
+  }),
 }));
 
 // Mock fs for registry reading
@@ -224,17 +229,17 @@ describe('Utility Command Handlers', () => {
     it('should have correct metadata', () => {
       expect(updateHandler.id).toBe('update');
       expect(updateHandler.category).toBe('maintenance');
-      expect(updateHandler.aliases).toEqual(['-update', '--update']);
+      expect(updateHandler.aliases).toEqual(['-update', '--update', 'upgrade']);
       expect(updateHandler.name).toBe('Update');
       expect(updateHandler.description).toMatch(/update/i);
     });
 
     it('should check for updates and re-deploy installed frameworks', async () => {
-      const { forceUpdateCheck } = await import('../../../../src/update/checker.mjs');
+      const { updateInstallation } = await import('../../../../src/update/service.mjs');
 
       const result = await updateHandler.execute(mockContext);
 
-      expect(forceUpdateCheck).toHaveBeenCalled();
+      expect(updateInstallation).toHaveBeenCalled();
       // Should call UseHandler for each installed framework (sdlc, marketing)
       expect(mockUseExecute).toHaveBeenCalledTimes(2);
       expect(result.exitCode).toBe(0);
@@ -273,9 +278,9 @@ describe('Utility Command Handlers', () => {
       expect(mockUseExecute).not.toHaveBeenCalled();
     });
 
-    it('should handle errors from forceUpdateCheck gracefully', async () => {
-      const { forceUpdateCheck } = await import('../../../../src/update/checker.mjs');
-      (forceUpdateCheck as any).mockRejectedValueOnce(new Error('Network error'));
+    it('should handle errors from the update service gracefully', async () => {
+      const { updateInstallation } = await import('../../../../src/update/service.mjs');
+      (updateInstallation as any).mockRejectedValueOnce(new Error('Network error'));
 
       // Should still proceed with re-deployment
       const result = await updateHandler.execute(mockContext);
@@ -285,12 +290,12 @@ describe('Utility Command Handlers', () => {
     });
 
     it('should skip update check when --skip-check is passed', async () => {
-      const { forceUpdateCheck } = await import('../../../../src/update/checker.mjs');
+      const { updateInstallation } = await import('../../../../src/update/service.mjs');
       mockContext.args = ['--skip-check'];
 
       await updateHandler.execute(mockContext);
 
-      expect(forceUpdateCheck).not.toHaveBeenCalled();
+      expect(updateInstallation).not.toHaveBeenCalled();
       expect(mockUseExecute).toHaveBeenCalled();
     });
 
