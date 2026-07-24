@@ -51,6 +51,7 @@ command output.
 | Create an addon | `aiwg discover "create an addon"` | `scaffold-addon` |
 | Build a framework | `aiwg discover "scaffold a framework"` | `scaffold-framework` |
 | Pilot then graduate a project-local bundle | `aiwg discover "project-local bundle"` | `new-bundle`, `promote` |
+| Package a standalone/community plugin repository | `aiwg discover "standalone plugin repository"` | `package-plugin` |
 
 ## Domain 2 — Persona / SOUL identity (author **and** select)
 

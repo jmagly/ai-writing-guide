@@ -2125,15 +2125,24 @@ aiwg plugin-status
 
 ### package-plugin
 
-Package specific plugin for Claude Code marketplace.
+Package a built-in wrapper or a standalone project-local wrapper. Project-local
+plugins are discovered under `.aiwg/plugins/<name>/` before the built-in
+catalog.
 
 ```bash
 aiwg package-plugin <name>
+aiwg package-plugin <name> --provider all --output dist/plugins
+aiwg package-plugin <name> --source wrappers/<name> --provider codex
 ```
 
 **Arguments:**
 
 - `<name>` - Plugin name to package
+- `--source <path>` - Explicit wrapper source inside the current repository
+- `--output <path>` - Standalone archive directory (default `dist/plugins`)
+- `--provider <claude|codex|all>` - Standalone provider format
+- `--clean` - Replace colliding generated archives
+- `--dry-run` - Validate and preview without writing
 
 **Capabilities:** cli, plugin, packaging
 **Platforms:** Claude Code, Generic
@@ -2141,9 +2150,10 @@ aiwg package-plugin <name>
 
 **Creates:**
 
-- `dist/plugins/<name>.plugin.tar.gz`
-- Manifest validation
-- README and LICENSE inclusion
+- Deterministic `dist/plugins/<name>-<version>-<provider>.tar.gz` archives
+- Wrapper and payload manifest/path validation
+- Provider-native Claude Code or Codex marketplace metadata
+- Byte-identical payload content
 
 ---
 

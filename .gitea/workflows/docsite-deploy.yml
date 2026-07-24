@@ -144,7 +144,12 @@ jobs:
           ls -lah "$OUT/"
 
       - name: Install SSH tools
-        run: apt-get update && apt-get install -y --no-install-recommends curl jq openssh-client rsync
+        run: |
+          # Some runner networks reject Debian's legacy HTTP mirror response
+          # with apt's NOSPLIT error. Use authenticated HTTPS transport.
+          sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources
+          apt-get update
+          apt-get install -y --no-install-recommends curl jq openssh-client rsync
 
       - name: Fetch docs deploy key from vault
         env:

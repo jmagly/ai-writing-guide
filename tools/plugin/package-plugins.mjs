@@ -15,6 +15,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { importImpl } from '../_resolve-impl.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -617,6 +618,12 @@ function parseArgs() {
       case '--provider':
         options.provider = args[++i];
         break;
+      case '--source':
+        options.source = args[++i];
+        break;
+      case '--output':
+        options.output = args[++i];
+        break;
       case '--clean':
       case '-c':
         options.clean = true;
@@ -639,6 +646,8 @@ Options:
   --provider NAME       Package for a specific provider
                         (claude, codex, cursor, factory, openclaw, all)
                         Default: claude
+  --source PATH         Explicit project-local wrapper source
+  --output PATH         Standalone archive output (default: dist/plugins)
   --clean, -c           Clean plugins directory before packaging
   --dry-run, -n         Show what would be done without writing
   --help, -h            Show this help message
@@ -902,6 +911,30 @@ async function main() {
     console.log('   Mode: DRY RUN (no files will be changed)');
   }
 
+  if (options.plugin && !options.all) {
+    const { packageStandalonePlugin } = await importImpl(import.meta.url, 'plugins/standalone-packager.mjs');
+    const standalone = packageStandalonePlugin({
+      cwd: process.cwd(),
+      name: options.plugin,
+      source: options.source,
+      output: options.output,
+      provider: options.provider,
+      clean: options.clean,
+      dryRun: options.dryRun,
+    });
+    if (standalone) {
+      console.log(`   Source: ${standalone.sourceRoot}`);
+      for (const plan of standalone.plans) {
+        console.log(`   ${options.dryRun ? 'Would write' : 'Wrote'} ${plan.provider}: ${plan.archivePath}`);
+      }
+      console.log('\n✨ Done!');
+      return;
+    }
+    if (options.source) {
+      throw new Error(`Standalone plugin source not found: ${options.source}`);
+    }
+  }
+
   // Resolve provider selection
   const PROVIDER_PLUGIN_FORMATS = ['claude', 'codex', 'cursor', 'factory', 'openclaw'];
   const requestedProvider = options.provider || 'claude';
@@ -966,4 +999,7 @@ async function main() {
   console.log('  aiwg use sdlc --provider openclaw         # OpenClaw (ClawHub publish pending)');
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exitCode = 1;
+});

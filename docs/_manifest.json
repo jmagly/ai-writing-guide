@@ -281,6 +281,7 @@
     "customization/README",
     "customization/project-local-quickstart",
     "customization/project-local-lifecycle",
+    "customization/standalone-plugin-repository",
     "customization/project-quickrefs",
     "customization/project-local-troubleshooting",
     "customization/from-fork-to-project-local",
@@ -2195,6 +2196,13 @@
       "title": "Project-Local Lifecycle",
       "summary": "Bundle lifecycle and graduation",
       "file": "customization/project-local-lifecycle.md",
+      "parent": "customization"
+    },
+    {
+      "id": "customization/standalone-plugin-repository",
+      "title": "Standalone Plugin Repository",
+      "summary": "Package community and team plugin wrappers",
+      "file": "customization/standalone-plugin-repository.md",
       "parent": "customization"
     },
     {

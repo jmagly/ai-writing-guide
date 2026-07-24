@@ -2,12 +2,19 @@
 namespace: aiwg
 name: package-plugin
 platforms: [all]
-description: Build one built-in AIWG marketplace wrapper for a selected provider with optional clean and dry-run modes
+description: Package a built-in or standalone project-local AIWG plugin wrapper for marketplace distribution
+triggers:
+  - standalone plugin repository
+  - publish project-local plugin
+  - package project-local plugin
+  - community plugin repository
 ---
 
 # Package Plugin
 
-You build a single built-in marketplace delivery wrapper under AIWG's generated plugin directory. The public CLI accepts a positional wrapper name and normalizes it to the internal packager contract.
+You validate and package either a built-in marketplace wrapper or a standalone
+project-local wrapper. Standalone wrappers are auto-discovered under
+`.aiwg/plugins/<name>/` and emitted as deterministic provider archives.
 
 ## Triggers
 
@@ -16,6 +23,8 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 - "bundle the voice plugin for release" → package voice plugin
 - "prepare the SDLC plugin for distribution" → package sdlc plugin
 - "create the plugin wrapper" → package the generated provider wrapper
+- "publish project-local plugin" → validate and package the repository-local wrapper
+- "standalone plugin repository" → use the community/team repository workflow
 
 ## Trigger Patterns Reference
 
@@ -25,6 +34,8 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | Bundle plugin | "bundle plugin voice" | Run `aiwg package-plugin voice` |
 | Create package | "create plugin package utils" | Run `aiwg package-plugin utils` |
 | Dry run | "validate sdlc plugin before packaging" | Run `aiwg package-plugin sdlc --dry-run` |
+| Standalone wrapper | "package project-local plugin team-tools" | Run `aiwg package-plugin team-tools --dry-run` |
+| Explicit source | "package wrapper from wrappers/team-tools" | Run `aiwg package-plugin team-tools --source wrappers/team-tools` |
 
 ## Behavior
 
@@ -52,6 +63,12 @@ When triggered:
 
    # Clean generated output before rebuilding
    aiwg package-plugin sdlc --clean
+
+   # Standalone/project-local wrapper (auto-discovered)
+   aiwg package-plugin team-tools --provider all --output dist/plugins
+
+   # Explicit in-repository source
+   aiwg package-plugin team-tools --source wrappers/team-tools --provider codex
    ```
 
 3. **Report the result** — confirm generated wrapper path and included file counts.
@@ -135,9 +152,24 @@ aiwg package-plugin utils --clean
 
 **Response**: "Cleaned and regenerated the utils wrapper."
 
+## Standalone repository contract
+
+The wrapper must contain `manifest.json` with `type: plugin` and a
+`pluginConfig` declaring `payloadType` and traversal-safe `payloadPath`. The
+payload requires its own matching manifest. Sources must remain inside the
+current repository; symlink escapes and output collisions are rejected.
+Payload files are copied byte-for-byte into deterministic Claude and/or Codex
+archives.
+
+See `docs/customization/standalone-plugin-repository.md` for the complete
+scaffold, validation, install-smoke, versioning, licensing, and publication
+workflow.
+
 ## Unsupported legacy examples
 
-Earlier skill revisions documented `--publish`, `--bump`, and `--output`, but the public packager never implemented those flags. They are intentionally not accepted. Publish generated wrappers through the repository's release workflow, change versions in their authoritative manifests before packaging, and use the fixed generated plugin directory until a standalone packaging workflow is selected.
+`--publish` and `--bump` remain intentionally unsupported. Publish generated
+archives through the repository's release workflow and change versions in the
+authoritative wrapper/payload manifests before packaging.
 
 ## References
 

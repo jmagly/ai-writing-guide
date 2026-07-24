@@ -1244,19 +1244,21 @@ export const packagePluginHandler: CommandHandler = {
       return {
         exitCode: 0,
         message: [
-          "aiwg package-plugin — package one built-in marketplace wrapper",
+          "aiwg package-plugin — package a project-local or built-in marketplace wrapper",
           "",
           "Usage:",
-          "  aiwg package-plugin <name> [--provider <name>] [--clean] [--dry-run]",
+          "  aiwg package-plugin <name> [--source <path>] [--output <path>] [--provider <name>] [--clean] [--dry-run]",
           "  aiwg package-plugin --plugin <name> [options]  # compatibility form",
           "",
           "Options:",
-          "  --provider <name>  claude, codex, cursor, factory, openclaw, or all",
+          "  --source <path>    explicit project-local wrapper source (must stay inside the project)",
+          "  --output <path>    standalone archive output (default: dist/plugins)",
+          "  --provider <name>  claude, codex, or all for standalone wrappers; built-ins retain all formats",
           "  --clean            clean generated plugin output before packaging",
           "  --dry-run, -n      preview without writing",
           "  --help, -h         show this help",
           "",
-          "Output is written to the AIWG installation's agentic/code/plugins directory.",
+          "Project-local wrappers are discovered under .aiwg/plugins and packaged as deterministic archives.",
         ].join("\n"),
       };
     }

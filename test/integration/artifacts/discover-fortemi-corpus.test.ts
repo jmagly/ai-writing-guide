@@ -375,6 +375,18 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
       .toContain('Promote or graduate');
   }, 20_000);
 
+  it('discovers the standalone plugin repository workflow (#1865)', async () => {
+    for (const phrase of ['standalone plugin repository', 'publish project-local plugin']) {
+      const result = await captureDiscover(phrase, 'fortemi-core', true);
+      const rank = result.results.findIndex((item) => item.name === 'package-plugin') + 1;
+      expect(rank, `${phrase} expected rank`).toBeGreaterThan(0);
+      expect(rank, `${phrase} expected rank`).toBeLessThanOrEqual(3);
+      expect(result.results[rank - 1]?.path).toContain(
+        'agentic/code/addons/aiwg-utils/skills/package-plugin/SKILL.md',
+      );
+    }
+  }, 15_000);
+
   it('discovers and shows project-local custom skills on the Fortemi Core default graph', async () => {
     const local = await captureDiscover('project custom review', 'local', true);
     const fortemi = await captureDiscover('project custom review', 'fortemi-core', true);
