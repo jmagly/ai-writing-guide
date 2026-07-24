@@ -481,9 +481,24 @@ export async function ensureWorkspaceContext(
 
   const block = buildWorkspaceManagedBlock(projectPath, options.providerFiles);
   if (existing.includes(WORKSPACE_MANAGED_START) || existing.includes(WORKSPACE_MANAGED_END)) {
-    const updated = replaceBlock(existing, WORKSPACE_MANAGED_START, WORKSPACE_MANAGED_END, block);
+    let updated = replaceBlock(existing, WORKSPACE_MANAGED_START, WORKSPACE_MANAGED_END, block) as string;
+
+    // A managed project-extraction block explicitly points operators back to
+    // README/package metadata as its source. Refresh that block during normal
+    // regeneration so the documented edit-source-then-regenerate contract is
+    // true (#1866). Workspaces without an extraction remain opt-in.
+    if (updated.includes(PROJECT_EXTRACTION_START) || updated.includes(PROJECT_EXTRACTION_END)) {
+      const extracted = await extractExistingProjectContext(projectPath);
+      updated = replaceBlock(
+        updated,
+        PROJECT_EXTRACTION_START,
+        PROJECT_EXTRACTION_END,
+        extracted.content,
+      ) as string;
+    }
+
     if (updated === existing) return { path: workspacePath, action: 'unchanged', warnings };
-    await atomicWrite(workspacePath, updated as string);
+    await atomicWrite(workspacePath, updated);
     return { path: workspacePath, action: 'updated', warnings };
   }
 

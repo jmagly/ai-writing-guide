@@ -129,6 +129,54 @@ describe('WORKSPACE.md canonical context graph (#1811)', () => {
     expect(first.content).not.toContain('do-not-copy');
   });
 
+  it('refreshes an existing README-derived extraction during normal regeneration (#1866)', async () => {
+    const root = await project();
+    await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'fixture', version: '1.0.0' }));
+    await writeFile(
+      join(root, 'README.md'),
+      '# Fixture\n\nPublic project purpose with reusable tooling maintained for the fixture team.\n',
+    );
+    const extracted = await extractExistingProjectContext(root);
+    const operatorBefore = 'Operator preface: preserve this byte-for-byte.';
+    const operatorAfter = 'Operator suffix: preserve this too.';
+    await writeFile(
+      join(root, 'WORKSPACE.md'),
+      [
+        '# WORKSPACE.md',
+        '<!-- aiwg-managed -->',
+        '<!-- Generated structure by AIWG; operator content is protected by markers. -->',
+        '',
+        WORKSPACE_MANAGED_START,
+        'stale managed content',
+        WORKSPACE_MANAGED_END,
+        '',
+        WORKSPACE_OPERATOR_START,
+        '',
+        operatorBefore,
+        '',
+        extracted.content,
+        '',
+        operatorAfter,
+        '',
+        WORKSPACE_OPERATOR_END,
+        '',
+      ].join('\n'),
+    );
+
+    await writeFile(
+      join(root, 'README.md'),
+      '# Fixture\n\nPrivate project purpose with reusable tooling maintained for the fixture team.\n',
+    );
+    const result = await ensureWorkspaceContext(root);
+    const refreshed = await readFile(join(root, 'WORKSPACE.md'), 'utf8');
+
+    expect(result.action).toBe('updated');
+    expect(refreshed).toContain('Private project purpose');
+    expect(refreshed).not.toContain('Public project purpose');
+    expect(refreshed).toContain(operatorBefore);
+    expect(refreshed).toContain(operatorAfter);
+  });
+
   it('adopts an existing project transactionally while preserving provider context and active Codex startup', async () => {
     const root = await project();
     await writeFile(join(root, '.aiwg', 'aiwg.config'), JSON.stringify({ providers: ['codex', 'claude'] }));
