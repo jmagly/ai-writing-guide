@@ -253,6 +253,64 @@ describe('ensureClaudeMdHook (#1437)', () => {
     expect(operatorIdx).toBeLessThan(blockIdx);
   });
 
+  it('migrates a generated provider bootstrap in place without duplicate includes (#1867)', async () => {
+    const initialized = [
+      '# Provider workspace bootstrap',
+      '<!-- aiwg-managed -->',
+      '<!-- AIWG:provider-bootstrap:start -->',
+      '',
+      '@WORKSPACE.md',
+      '@AIWG.md',
+      '',
+      '<!-- AIWG:provider-bootstrap:end -->',
+      '',
+    ].join('\n');
+    await fs.writeFile(path.join(tmpDir, 'CLAUDE.md'), initialized, 'utf8');
+
+    const result = await ensureClaudeMdHook(tmpDir);
+    const content = await fs.readFile(result.claudeMdPath, 'utf8');
+
+    expect(result.action).toBe('updated');
+    expect((content.match(/AIWG:claude-md-hook:start/g) ?? [])).toHaveLength(1);
+    expect((content.match(/^@WORKSPACE\.md$/gm) ?? [])).toHaveLength(1);
+    expect((content.match(/^@AIWG\.md$/gm) ?? [])).toHaveLength(1);
+    expect((content.match(/^@\.aiwg\/aiwg\.config$/gm) ?? [])).toHaveLength(1);
+
+    const once = content;
+    expect((await ensureClaudeMdHook(tmpDir)).action).toBe('unchanged');
+    expect(await fs.readFile(result.claudeMdPath, 'utf8')).toBe(once);
+  });
+
+  it('byte-preserves operator content surrounding a migrated bootstrap (#1867)', async () => {
+    const before = '# Operator header\r\ncustom: true\r\n';
+    const managed = [
+      '<!-- AIWG:provider-bootstrap:start -->',
+      '@WORKSPACE.md',
+      '@AIWG.md',
+      '<!-- AIWG:provider-bootstrap:end -->',
+    ].join('\n');
+    const after = '\r\n# Operator footer\r\nKeep this exactly.\r\n';
+    await fs.writeFile(path.join(tmpDir, 'CLAUDE.md'), before + managed + after, 'utf8');
+
+    const result = await ensureClaudeMdHook(tmpDir);
+    const content = await fs.readFile(result.claudeMdPath, 'utf8');
+
+    expect(result.action).toBe('updated');
+    expect(content.startsWith(before)).toBe(true);
+    expect(content.endsWith(after)).toBe(true);
+  });
+
+  it('refuses to append when legacy provider-bootstrap markers are malformed', async () => {
+    const malformed = '# Operator content\n<!-- AIWG:provider-bootstrap:start -->\n@WORKSPACE.md\n';
+    await fs.writeFile(path.join(tmpDir, 'CLAUDE.md'), malformed, 'utf8');
+
+    const result = await ensureClaudeMdHook(tmpDir);
+
+    expect(result.action).toBe('skipped');
+    expect(result.warnings.join('\n')).toContain('malformed');
+    expect(await fs.readFile(result.claudeMdPath, 'utf8')).toBe(malformed);
+  });
+
   it('returns unchanged when the hook block is already canonical', async () => {
     await ensureClaudeMdHook(tmpDir); // first call creates
     const result2 = await ensureClaudeMdHook(tmpDir);

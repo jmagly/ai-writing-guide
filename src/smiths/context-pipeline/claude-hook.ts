@@ -22,7 +22,11 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { buildProviderBootstrapBlock } from './workspace-context.js';
+import {
+  buildProviderBootstrapBlock,
+  PROVIDER_BOOTSTRAP_START,
+  PROVIDER_BOOTSTRAP_END,
+} from './workspace-context.js';
 
 export const CLAUDE_HOOK_START = '<!-- AIWG:claude-md-hook:start -->';
 export const CLAUDE_HOOK_END = '<!-- AIWG:claude-md-hook:end -->';
@@ -104,6 +108,32 @@ export async function ensureClaudeMdHook(
 
   // Case 2: marker block does not exist — append the block to end of file.
   if (startIdx === -1 && endIdx === -1) {
+    const bootstrapStarts = existing.split(PROVIDER_BOOTSTRAP_START).length - 1;
+    const bootstrapEnds = existing.split(PROVIDER_BOOTSTRAP_END).length - 1;
+
+    // Current and legacy AIWG initialization may have emitted the provider
+    // bootstrap directly. Migrate that exact managed block in place instead
+    // of appending a hook containing a second copy (#1867).
+    if (bootstrapStarts === 1 && bootstrapEnds === 1) {
+      const bootstrapStartIdx = existing.indexOf(PROVIDER_BOOTSTRAP_START);
+      const bootstrapEndIdx = existing.indexOf(PROVIDER_BOOTSTRAP_END, bootstrapStartIdx)
+        + PROVIDER_BOOTSTRAP_END.length;
+      const updated =
+        existing.substring(0, bootstrapStartIdx)
+        + block
+        + existing.substring(bootstrapEndIdx);
+      await fs.writeFile(claudeMdPath, updated, 'utf8');
+      result.action = 'updated';
+      return result;
+    }
+
+    if (bootstrapStarts !== bootstrapEnds || bootstrapStarts > 1) {
+      result.warnings.push(
+        'CLAUDE.md has malformed or duplicate AIWG provider-bootstrap markers; refusing to append a second managed bootstrap.',
+      );
+      return result;
+    }
+
     // Ensure the file ends with a single newline before appending.
     const trimmed = existing.replace(/\n+$/, '\n');
     const updated = `${trimmed}\n${block}\n`;
