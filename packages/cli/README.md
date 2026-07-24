@@ -4,16 +4,16 @@
 
 # @aiwg/cli
 
-**The lightweight, web-first AIWG command line**
+**The agent-optimized execution layer for AIWG**
 
-Use signed, versioned AIWG skills, agents, commands, rules, and framework
-metadata without installing the full local resource corpus into every project.
+AIWG skills and agents use this CLI to perform common operations with
+predictable, structured calls instead of spending context on shell discovery,
+filesystem traversal, command reconstruction, and repeated tool output.
 
 ```bash
 npm install --global @aiwg/cli
 
-aiwg discover "architecture evolution"
-aiwg show skill architecture-evolution
+aiwg doctor
 ```
 
 [![npm version](https://img.shields.io/npm/v/%40aiwg%2Fcli/latest?label=%40aiwg%2Fcli&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/@aiwg/cli)
@@ -24,7 +24,7 @@ aiwg show skill architecture-evolution
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
 [![Signed Resources](https://img.shields.io/badge/resources-signed-00a67d?style=flat-square)](https://releases.aiwg.io/)
 
-[**Quick Start**](#quick-start) · [**How It Works**](#how-it-works) · [**CLI Guide**](#cli-guide) · [**JavaScript API**](#javascript-api) · [**Security**](#security-model) · [**Troubleshooting**](#installation-troubleshooting)
+[**Quick Start**](#quick-start) · [**Agentic Model**](#the-agentic-use-model) · [**Token Economy**](#why-this-reduces-agent-token-use) · [**How It Works**](#how-it-works) · [**Security**](#security-model) · [**Troubleshooting**](#installation-troubleshooting)
 
 </div>
 
@@ -32,32 +32,167 @@ aiwg show skill architecture-evolution
 
 ## What This Package Is
 
-`@aiwg/cli` is the executable AIWG runtime without the bundled framework
-corpus. It is designed for operators, automation, and web-connected agentic
-systems that need to find and read AIWG resources without copying a large npm
-package or deploying framework files into every project.
+`@aiwg/cli` is the small executable runtime beneath AIWG's skills, agents,
+rules, and workflows. It is primarily an **agent tool**, even though an
+operator can run it from a terminal.
 
-The package includes:
+The important product surface is not a long list of commands. The important
+surface is the AIWG capability graph:
 
-- the `aiwg` executable;
-- the supported JavaScript API used by the executable;
-- signed web-release verification and cache logic;
-- the Fortemi Core query runtime;
-- provider capability and model metadata required by the CLI;
-- command routing, configuration, and runtime support code.
+- skills carry task-specific instructions, gates, preservation logic, and
+  recovery guidance;
+- agents supply roles, judgment, and orchestration;
+- rules supply policy that remains in force across tasks;
+- the CLI supplies deterministic lookup, validation, deployment, health,
+  indexing, configuration, and execution primitives;
+- signed web releases let the runtime reach the capability graph without
+  bundling the complete corpus into this npm package.
 
-The package does **not** include:
+An agent should normally enter through a skill or an AIWG agent and let that
+resource call `aiwg` when an imperative operation is needed. This keeps the
+reasoning layer focused on the user's objective while the CLI handles the
+mechanical work.
 
-- the full `agentic/code` framework corpus;
-- local framework templates and generated documentation;
-- precomputed project deployments;
-- Cockpit, which remains the separate `@aiwg/cockpit` package;
-- a project `.aiwg` directory.
+The package includes the `aiwg` executable, its routing and validation runtime,
+the Fortemi Core query client, signed web-release verification, verified
+caching, and provider metadata needed by agentic integrations. It intentionally
+does not carry the complete `agentic/code` source tree, project artifacts, or
+Cockpit.
 
-After installation, ordinary `discover` and `show` calls automatically use the
-signed `stable` resource channel at
-[`releases.aiwg.io`](https://releases.aiwg.io/). No source flag, project
-initialization, or framework deployment is required.
+In practice, this means an agent can:
+
+1. identify the narrow AIWG capability that matches the request;
+2. retrieve only that skill or agent definition;
+3. follow its gates and call the CLI steps it specifies;
+4. consume stable structured output instead of parsing exploratory shell
+   transcripts;
+5. leave the project with fewer temporary files, copied resources, and
+   provider-specific assumptions.
+
+Signed resources are available from
+[`releases.aiwg.io`](https://releases.aiwg.io/). A clean installation can use
+the published capability graph without first copying the full framework corpus
+into every project.
+
+## The Agentic Use Model
+
+AIWG follows a skills-first hierarchy:
+
+```text
+user intent
+    |
+    v
+AIWG skill or agent
+    |  task knowledge, policy, gates, recovery
+    v
+small CLI operation
+    |  deterministic lookup, validation, mutation, or status
+    v
+structured result
+    |
+    v
+agent judgment and user-facing outcome
+```
+
+The preferred routing order is:
+
+1. **Use an already available AIWG skill or agent.** This is the cheapest and
+   best-primed route. The resource already knows the relevant workflow and
+   calls the CLI only where needed.
+2. **Discover the right AIWG capability.** If the resource is not already in
+   context, the agent performs an indexed lookup and retrieves the single best
+   match. It does not recursively browse provider directories or read the
+   whole corpus.
+3. **Use a raw CLI command only for a basic operator operation, for discovery
+   and status, or as a step inside a skill.** Raw action commands lack the
+   task-specific priming carried by skills.
+
+This distinction matters. Running an action command directly may perform the
+mechanical operation, but the paired skill also explains preconditions,
+preservation requirements, review gates, failure recovery, and what evidence
+must be retained. The skill is the workflow; the CLI is its execution
+substrate.
+
+Examples of the intended pairing:
+
+| Intent | Preferred agentic entry | CLI role |
+|---|---|---|
+| Deploy an AIWG framework | `use` skill | Calls `aiwg use` with validated provider and project context |
+| Diagnose an installation | `aiwg-doctor` skill | Calls `aiwg doctor`, interprets failures, and guides remediation |
+| Refresh an installation | `aiwg-refresh` skill | Previews and invokes refresh safely |
+| Regenerate provider context | `aiwg-regenerate` skill family | Preserves operator content while invoking regeneration |
+| Find a specialized workflow | AIWG capability discovery | Queries the precomputed index and retrieves one matching resource |
+| Run an executable skill | The selected skill | Dispatches its declared script through the runtime registry |
+
+Operators can still use `aiwg use` and `aiwg doctor` directly for basic setup
+and diagnostics. Agentic systems should prefer the paired skills because they
+carry the context that a bare command cannot.
+
+## Why This Reduces Agent Token Use
+
+General-purpose shell access is flexible, but flexibility is expensive for an
+agent. Without a purpose-built interface, a session often has to:
+
+- determine where a package was installed;
+- enumerate directories and guess which provider copy is authoritative;
+- search hundreds or thousands of files;
+- read several near-matching documents before finding the right one;
+- reconstruct command syntax from help text;
+- parse prose-oriented terminal output;
+- rediscover safety checks and recovery steps;
+- repeat the same investigation in every project or new session.
+
+Each step adds tool calls and returns text that competes with the actual task
+for context. Recursive listings and broad text searches are especially costly:
+they describe the storage layout instead of answering the user's intent.
+
+AIWG changes that interaction:
+
+```text
+traditional shell-oriented path
+
+locate install
+  -> list directories
+  -> search filenames
+  -> grep many documents
+  -> read several candidates
+  -> infer the workflow
+  -> reconstruct command flags
+  -> parse terminal output
+
+AIWG agentic path
+
+intent
+  -> indexed capability selection
+  -> one relevant skill or agent
+  -> bounded CLI operation
+  -> structured result
+```
+
+The token advantage comes from reducing irrelevant material, not from hiding
+important instructions:
+
+- **Precomputed indices replace broad filesystem searches.** The agent asks by
+  intent and receives ranked capability metadata.
+- **Selective retrieval replaces corpus loading.** Only the chosen skill,
+  agent, command, or rule enters context.
+- **Skills preserve procedural knowledge.** Sessions do not have to regenerate
+  the same checklist, safety gates, and recovery process from first
+  principles.
+- **Structured output reduces parsing.** Machine-facing operations can return
+  stable fields rather than decorated terminal prose.
+- **Stable identifiers reduce rediscovery.** Agents can pass capability IDs
+  and names between workers without passing installation-specific paths.
+- **Provider abstraction reduces branching.** The runtime handles supported
+  provider paths and configuration so each skill does not need a separate
+  shell recipe for every agentic platform.
+- **Signed web resources reduce setup narration.** An agent does not need to
+  clone or explain a large local corpus before it can retrieve guidance.
+
+No fixed token-saving percentage is promised: savings depend on the task,
+provider, and whether the needed skill is already loaded. The design goal is
+measurable in simpler terms—fewer exploratory calls, less unrelated output,
+smaller context payloads, and less duplicated procedural reasoning.
 
 ## Choose the Right AIWG Distribution
 
@@ -65,14 +200,14 @@ AIWG publishes three packages in exact CalVer lockstep:
 
 | Package | Best for | Resource model | Install |
 |---|---|---|---|
-| `@aiwg/cli` | Web-connected agents, CI, lightweight global use, read-only discovery | Signed release host by default | `npm i -g @aiwg/cli` |
+| `@aiwg/cli` | Agentic runtimes, web-connected sessions, CI, and lightweight global use | Signed release host by default | `npm i -g @aiwg/cli` |
 | `aiwg` | Full local operation, framework deployment, authoring, offline-first projects | Bundled local corpus by default; web mode optional | `npm i -g aiwg` |
 | `@aiwg/cockpit` | Optional local control plane and operator UI | Installed separately or through the full CLI | `npm i -g @aiwg/cockpit` |
 
-Choose `@aiwg/cli` when you primarily need to search, inspect, route, or consume
-AIWG resources. Choose `aiwg` when you need to deploy frameworks into provider
-directories, author against the complete source corpus, or operate without a
-previously warmed web cache.
+Choose `@aiwg/cli` when AIWG skills and agents need a small, globally available
+execution layer and can obtain resources from the signed web release. Choose
+`aiwg` when local authoring, the full bundled corpus, or completely cold
+offline operation is required.
 
 Both CLI packages expose the same `aiwg` executable name. Install one globally
 at a time unless you deliberately manage separate npm prefixes.
@@ -84,6 +219,7 @@ at a time unless you deliberately manage separate npm prefixes.
 ```bash
 npm install --global @aiwg/cli
 aiwg --version
+aiwg doctor
 ```
 
 AIWG uses npm-compatible Calendar Versioning:
@@ -95,76 +231,23 @@ YYYY.M.PATCH
 The lightweight package version always matches the corresponding full `aiwg`
 release exactly.
 
-### Find a capability
+For a basic operator-managed framework deployment, invoke the `use` skill in
+your agentic environment. It validates the target and calls the equivalent
+`aiwg use` operation. If you are intentionally working at a terminal, the
+direct form is:
 
 ```bash
-aiwg discover "architecture evolution"
+aiwg use <framework-or-addon>
 ```
 
-Discovery searches the precomputed Fortemi Core index published with the signed
-AIWG release. Results may include skills, agents, commands, rules, flows,
-templates, and supporting documentation.
+Run `aiwg doctor` after installation or deployment. In an agent session,
+prefer the `aiwg-doctor` skill so the result is interpreted and remediated
+rather than merely printed.
 
-Use structured output for scripts or agent tooling:
-
-```bash
-aiwg discover "release publication verification" \
-  --format json \
-  --pretty
-```
-
-Limit or filter results:
-
-```bash
-aiwg discover "incident response timeline" \
-  --type skill,agent \
-  --limit 5 \
-  --format json
-```
-
-### Read a resource
-
-Take the type and name from discovery, then fetch the full verified body:
-
-```bash
-aiwg show skill architecture-evolution
-```
-
-Other examples:
-
-```bash
-aiwg show agent architecture-designer
-aiwg show command issue-audit
-aiwg show rule ci-green-before-done
-```
-
-The downloaded body is verified against the signed release manifest before it
-is returned or stored in the cache.
-
-### Pin a release for one call
-
-```bash
-aiwg discover "deployment rollback" --aiwg-version 2026.7.19
-aiwg show skill flow-deploy-to-production --aiwg-version 2026.7.19
-```
-
-An exact version does not follow later channel updates. This is useful for
-reproducible automation, audits, and long-running agent sessions.
-
-### Warm the cache, then work offline
-
-```bash
-# Online: verifies and caches signed metadata, index, and the selected body.
-aiwg discover "architecture evolution"
-aiwg show skill architecture-evolution
-
-# Offline: performs no network fetch and fails closed if required bytes are absent.
-aiwg discover "architecture evolution" --offline
-aiwg show skill architecture-evolution --offline
-```
-
-Offline mode is intentionally strict. It never treats an incomplete or corrupt
-cache as trusted data.
+Agents do not need to memorize the remaining command surface. AIWG discovery
+finds the relevant skill, and the skill supplies the right CLI step. Operators
+who need the complete syntax and examples can use the
+[AIWG CLI reference](https://docs.aiwg.io/pages/cli-reference.html).
 
 ## How It Works
 
@@ -232,275 +315,185 @@ This is not a hosted command-execution service. Search and resource delivery
 move to the web; project mutation and provider deployment remain local
 operations.
 
-## CLI Guide
+## How Skills and Agents Use the Runtime
 
-### `aiwg discover`
+The CLI is deliberately narrow at the point where it meets an agent. A skill
+should ask it to do one bounded thing, verify the result, and return control to
+the reasoning layer.
 
-Find resources by intent rather than filename:
+### Capability selection
 
-```bash
-aiwg discover "<phrase>" [options]
+Most AIWG capabilities are not loaded into every prompt. Loading hundreds of
+skills would consume context before the user's task even began. Instead, AIWG
+keeps a small kernel available and retrieves specialized capabilities on
+demand.
+
+The runtime queries a precomputed Fortemi Core index using the user's intent.
+It returns ranked metadata rather than dumping files. The agent selects the
+best candidate and retrieves that resource alone.
+
+This mechanism is exposed through `discover` and `show`, but those names are
+implementation details for most users. The practical behavior is:
+
+```text
+"prepare a production rollback"
+        |
+        v
+ranked AIWG capabilities
+        |
+        v
+one selected deployment skill
+        |
+        v
+skill-directed checks and execution
 ```
 
-Common options:
-
-| Option | Meaning |
-|---|---|
-| `--type <kinds>` | Comma-separated result types such as `skill,agent,command,rule` |
-| `--limit <n>` | Maximum number of results |
-| `--format json\|text` | Machine-readable or human-readable output |
-| `--json` | JSON output shorthand |
-| `--pretty` / `--compact` | JSON presentation |
-| `--resource-source local\|web\|auto` | Override package-aware source selection |
-| `--aiwg-version <selector>` | Signed channel name or exact CalVer |
-| `--offline` | Read only previously verified cache content |
-| `--backend fortemi-core` | Explicitly select the web-compatible query backend |
+Stable IDs make the result portable between a conductor and sub-agents. A
+worker receives the capability identity and body it needs, not a transcript of
+the conductor's directory search.
 
-Examples:
+### Execution through skills
+
+Skills use CLI operations for mechanics such as:
 
-```bash
-aiwg discover "requirements review"
-aiwg discover "forensics evidence preservation" --type skill,agent
-aiwg discover "marketing campaign intake" --limit 3 --json --pretty
-aiwg discover "release flow" --aiwg-version stable
-aiwg discover "release flow" --aiwg-version 2026.7.19
-```
+- validating installation and workspace health;
+- deploying a framework or addon to supported providers;
+- resolving project and user configuration;
+- maintaining indexes and normalized metadata;
+- running a script declared by a skill;
+- generating or refreshing provider adapters;
+- moving or validating the configured AIWG data store;
+- producing structured status and evidence;
+- selecting a signed resource version for reproducible work.
 
-### `aiwg show`
+The skill remains responsible for sequencing and interpretation. For example,
+a deployment skill may:
 
-Stream the full body of a discovered resource:
+1. inspect provider support;
+2. validate the requested framework;
+3. preview changes;
+4. call the deployment primitive;
+5. verify generated files;
+6. explain any provider-specific follow-up.
 
-```bash
-aiwg show <type> <name> [options]
-```
+A bare deployment command would perform only part of that workflow. Keeping the
+orchestration in the skill makes behavior reviewable and lets AIWG improve the
+workflow without teaching every agent a new shell recipe.
 
-Examples:
+### Structured subprocess behavior
 
-```bash
-aiwg show skill release-publication-verify
-aiwg show agent security-architect
-aiwg show command address-issues
-aiwg show rule delivery-policy
-```
+Agent integrations should prefer machine-readable output when they need to
+consume results programmatically. Stable fields are cheaper and safer to parse
+than ANSI-decorated tables or prose intended for a person.
 
-When names are ambiguous, use the stable identifier or exact path returned by
-JSON discovery:
+Good agent-facing calls have these properties:
 
-```bash
-result=$(aiwg discover "deployment" --json --compact)
-echo "$result"
-aiwg show skill flow-deploy-to-production --json
-```
+- explicit working directory;
+- bounded timeout or abort signal;
+- nonzero exit treated as a failure;
+- structured output where available;
+- no shell interpolation of untrusted user text;
+- exact resource version when reproducibility matters;
+- the smallest output needed for the next decision.
 
-`show` will not fetch arbitrary URLs or filesystem paths in web mode. It can
-read only immutable `raw/` resources committed by the verified release
-manifest.
+The CLI's command router is also exported for integrations that need in-process
+execution. That API exists to support agent runtimes and AIWG tooling; this
+README intentionally does not duplicate the full programming reference.
 
-### Resource source behavior
+### Recovery and diagnosis
 
-The default depends on the installed package:
+When an operation fails, the agent should not immediately improvise a sequence
+of destructive shell commands. It should route through the relevant AIWG
+health or recovery skill.
 
-| Installed package | Default source |
-|---|---|
-| `@aiwg/cli` | `web` |
-| `aiwg` | `local` |
+The `aiwg-doctor` skill wraps `aiwg doctor` with interpretation and remediation
+guidance. It can distinguish installation damage, missing package content,
+provider deployment drift, bad configuration, and unavailable optional
+features. That distinction prevents an agent from treating every missing file
+as a reason to reinstall or overwrite project state.
 
-Override the default for one command:
+Similarly, refresh and regeneration skills preserve operator-authored content
+and use dry-run or transactional behavior where the workflow requires it.
+Those safeguards live above the raw command and are a core reason to keep
+agents skill-first.
 
-```bash
-aiwg discover "architecture" --resource-source web
-aiwg discover "architecture" --resource-source local
-aiwg discover "architecture" --resource-source auto
-```
+## When Direct CLI Use Is Appropriate
 
-`auto` may use available project and package context. Use an explicit source
-when reproducibility matters.
+Direct CLI use remains useful in a few bounded situations:
 
-Because `@aiwg/cli` intentionally contains no corpus, forcing `local` requires
-an independently configured local AIWG root. If none exists, use web mode or
-install the full `aiwg` package.
+- an operator is installing AIWG and runs `aiwg doctor`;
+- an operator intentionally deploys a known framework with `aiwg use`;
+- an agent performs capability discovery or retrieves a selected resource;
+- a skill calls its documented CLI step;
+- CI invokes a deterministic validation command;
+- a maintainer is debugging the runtime itself.
 
-### Version and channel selection
+Direct CLI use is usually the wrong starting point when the task is expressed
+as a goal such as "review this architecture," "prepare a release," "investigate
+this incident," or "build a research corpus." Those are capability requests.
+The agent should select the corresponding AIWG skill or agent and let that
+resource decide which CLI operations are needed.
 
-Selectors accept:
+This README therefore documents the operating model, package boundary, trust
+model, and troubleshooting path instead of duplicating every command and flag.
+The complete operator reference is maintained at:
 
-- a signed channel, such as `stable` or `canary`;
-- an exact npm-compatible AIWG CalVer, such as `2026.7.19`.
+**[AIWG CLI Reference — every command and example](https://docs.aiwg.io/pages/cli-reference.html)**
 
-```bash
-aiwg discover "test strategy" --aiwg-version stable
-aiwg discover "test strategy" --aiwg-version 2026.7.19
-```
+Keeping the command catalog in one canonical location prevents package
+documentation from drifting as the runtime grows.
 
-Channel metadata is signed and sequence-numbered. The CLI rejects a channel
-sequence lower than the last verified sequence and rejects conflicting content
-for an already-seen sequence.
+## Agent Integration Guidance
 
-### Help, version, and diagnostics
+An agent harness integrating AIWG should establish a few simple policies.
 
-```bash
-aiwg help
-aiwg --version
-aiwg version
-aiwg doctor
-aiwg runtime-info
-```
+### Prefer semantic intent over filenames
 
-The package contains the shared CLI runtime, so help lists the broader AIWG
-command surface. Commands that require the local framework corpus, templates,
-or deployment source files are not made web-capable merely by installing the
-lightweight package. See [Current Scope](#current-scope-and-limitations).
+Ask for the capability in the user's language. Do not guess that a workflow
+must live under a particular framework directory. The same intent may be
+served by a framework skill, an addon skill, an agent, or a project-local
+extension.
 
-## Search and Output
+### Load the minimum relevant resource
 
-### Human-readable use
+Retrieve the selected skill or agent body, plus any directly referenced rule
+needed to execute it. Avoid loading an entire framework merely because one
+skill belongs to it. This is the primary context-management advantage of the
+web-first package.
 
-```bash
-aiwg discover "risk management"
-```
+### Keep paths out of inter-agent contracts
 
-The text format is suited to interactive shell use. It shows ranked candidates
-and enough identity information to make the next `show` call.
+Pass stable capability IDs, names, release versions, and structured results.
+Do not make one worker depend on another worker's npm prefix, home directory,
+cache location, or provider deployment path.
 
-### JSON use
+### Preserve skill priming
 
-```bash
-aiwg discover "risk management" --format json --pretty
-```
+When forwarding work to a sub-agent, include the selected skill content or let
+that worker retrieve it through AIWG. Passing only the final CLI command loses
+the gates and reasoning instructions that made the operation safe.
 
-JSON output includes query metadata, resolved source, selected release, and
-ranked results. Treat additive fields as forward-compatible. Scripts should
-select the fields they need instead of comparing complete serialized output.
+### Separate judgment from mechanics
 
-Example with `jq`:
+The agent decides what the user means, which capability applies, and whether
+the result satisfies the objective. The CLI resolves paths, validates data,
+executes bounded operations, and reports facts. This separation makes both
+layers easier to test.
 
-```bash
-aiwg discover "risk management" --json --compact \
-  | jq '.results[] | {type, name, path, score}'
-```
+### Fail closed on trust errors
 
-Fetch the first discovered skill:
+Signature failures, digest mismatches, unsafe paths, incompatible release
+metadata, and corrupt offline cache entries are not warnings to bypass. The
+agent should stop, preserve useful evidence, and route through diagnosis or
+security guidance.
 
-```bash
-name=$(
-  aiwg discover "risk management" --type skill --json --compact \
-    | jq -r '.results[0].name'
-)
-aiwg show skill "$name"
-```
+### Avoid help-text ingestion
 
-### Exit behavior
-
-The CLI exits nonzero for invalid selectors, unavailable cold offline data,
-signature failures, digest mismatches, unsafe resource paths, unsupported
-source/backend combinations, and ordinary command errors. Automation should
-check the exit code before consuming output.
-
-## JavaScript API
-
-`@aiwg/cli` exports the supported command router and signed resource helpers.
-Do not import private `dist/` paths.
-
-### Run CLI commands in process
-
-```js
-import { run } from '@aiwg/cli';
-
-await run([
-  'discover',
-  'architecture evolution',
-  '--format',
-  'json',
-  '--pretty',
-]);
-```
-
-Supply a working directory or abort signal:
-
-```js
-import { run } from '@aiwg/cli';
-
-const controller = new AbortController();
-
-await run(
-  ['show', 'skill', 'architecture-evolution'],
-  {
-    cwd: process.cwd(),
-    signal: controller.signal,
-  },
-);
-```
-
-The exported router applies the same package-aware web default as the installed
-binary.
-
-### Resolve a signed release
-
-```js
-import { resolveWebRelease } from '@aiwg/cli/resources';
-
-const release = await resolveWebRelease({
-  selector: 'stable',
-});
-
-console.log({
-  version: release.version,
-  manifestDigest: release.manifestDigest,
-  channelSequence: release.channelSequence,
-});
-```
-
-Pin an exact release:
-
-```js
-const release = await resolveWebRelease({
-  selector: '2026.7.19',
-});
-```
-
-Use a previously cached generation without network access:
-
-```js
-const release = await resolveWebRelease({
-  selector: 'stable',
-  offline: true,
-});
-```
-
-### Fetch a committed raw resource
-
-```js
-import {
-  fetchVerifiedRawResource,
-  resolveWebRelease,
-} from '@aiwg/cli/resources';
-
-const release = await resolveWebRelease({ selector: 'stable' });
-const bytes = await fetchVerifiedRawResource(
-  release,
-  'raw/agentic/code/frameworks/sdlc-complete/skills/architecture-evolution/SKILL.md',
-);
-
-process.stdout.write(bytes);
-```
-
-The raw path must be safe, relative, begin with `raw/`, and exist in the signed
-release descriptor map.
-
-### TypeScript
-
-The package ships declarations for:
-
-- the main `@aiwg/cli` entry point;
-- `@aiwg/cli/resources`;
-- signed web-release descriptors and options.
-
-```ts
-import type {
-  VerifiedWebRelease,
-  WebReleaseOptions,
-} from '@aiwg/cli/resources';
-```
+Do not routinely call `aiwg help` and place the full output in the model
+context. If a skill exists, use it. If a maintainer or operator needs an
+unfamiliar command, link to the canonical
+[CLI reference](https://docs.aiwg.io/pages/cli-reference.html) or retrieve only
+the relevant section.
 
 ## Using AIWG from a Web-Connected Chat
 
@@ -694,97 +687,115 @@ Consumer verification guidance:
 
 ## Current Scope and Limitations
 
-The lightweight package provides production web parity for:
+The lightweight package is an agentic execution and resource-access layer. Its
+web-backed path provides production support for capability selection, resource
+retrieval, signed release selection, verification, caching, and warm offline
+reads.
 
-- `aiwg discover`;
-- `aiwg show`;
-- the corresponding supported JavaScript API;
-- signed release selection, verification, caching, and offline reads.
+It does not turn every AIWG action into a hosted service. Operations that
+modify a project still run locally under the operator's permissions. A skill
+may direct the CLI to write project artifacts or provider adapters, but the
+release host never receives authority to mutate the project.
 
-The package ships the shared command runtime, so `aiwg help` exposes commands
-also used by the full distribution. Commands that need the local corpus or
-project templates—including framework deployment and regeneration workflows—
-are not automatically converted into remote mutation operations.
-
-For these workflows, install the full package:
+Some skills require the full local corpus, source templates, or authoring
+assets. When a selected workflow reports that requirement, install the full
+distribution:
 
 ```bash
 npm uninstall --global @aiwg/cli
 npm install --global aiwg
 
-aiwg use sdlc
-aiwg regenerate
+aiwg doctor
 ```
 
-Web mode is intentionally a resource transport and discovery abstraction. It
-does not grant a remote service permission to modify your project.
+The package exposes the shared runtime, so help output may mention operations
+whose complete inputs exist only in the full distribution. Agents should treat
+an explicit "local corpus required" result as a package-boundary signal, not as
+an invitation to search random filesystem locations.
 
-## Common Recipes
+## Common Agentic Patterns
 
-### Discover and fetch the best matching skill
+### Turn a broad request into one bounded workflow
+
+A user may ask, "Can you prepare this service for production?" The agent should
+not start by enumerating every deployment command. It should:
+
+1. classify the request as an SDLC/deployment capability;
+2. select the relevant AIWG skill;
+3. read the skill's prerequisites and evidence requirements;
+4. invoke only the CLI operations called for by that skill;
+5. return the outcome and unresolved gates to the user.
+
+This pattern keeps the conversation about production readiness rather than
+about command syntax.
+
+### Hand work to a specialized agent
+
+A conductor may discover that an architecture decision requires a security
+review. It can pass the selected security skill and the relevant project
+artifact to a security agent. It does not need to pass a recursive listing of
+AIWG's security framework or explain where npm installed it.
+
+The receiving agent works from the same signed capability identity and can use
+the CLI for any deterministic checks specified by the skill.
+
+### Diagnose before repairing
+
+When AIWG appears broken, invoke the `aiwg-doctor` skill. The skill runs the
+health primitive, classifies the finding, and chooses a remediation path. This
+is less error-prone than having every agent invent an npm reinstall, delete
+provider directories, or rewrite configuration on the first failure.
+
+For a person at a terminal, the basic entry remains:
 
 ```bash
-query="deploy production with rollback gates"
-name=$(
-  aiwg discover "$query" --type skill --limit 1 --json --compact \
-    | jq -r '.results[0].name'
-)
-aiwg show skill "$name"
+aiwg doctor
 ```
 
-### Pin an automation job
+### Deploy through the `use` skill
+
+The `use` skill is the normal agentic entry for framework and addon deployment.
+It knows how to validate the requested bundle and supported provider before
+calling the CLI. A human who already knows the exact target may use:
 
 ```bash
-AIWG_VERSION=2026.7.19
-
-aiwg discover "release verification" \
-  --aiwg-version "$AIWG_VERSION" \
-  --format json \
-  --compact
+aiwg use <framework-or-addon>
 ```
 
-### Prewarm CI for offline execution
+The skill-first route is preferred because deployment can involve provider
+capabilities, project-local customizations, stale-file handling, and
+post-deployment checks that are not conveyed by the command name alone.
 
-```bash
-export AIWG_RESOURCE_CACHE_ROOT="$PWD/.cache/aiwg/resources"
+### Pin a capability graph for reproducible work
 
-aiwg discover "security review" --aiwg-version 2026.7.19
-aiwg show skill security-gate --aiwg-version 2026.7.19
+Long-running missions, release audits, and regulated workflows may bind the
+runtime to an exact AIWG CalVer. Every worker can then retrieve capabilities
+from the same immutable release instead of following a channel that may move
+during the job.
 
-# A later network-isolated step:
-aiwg discover "security review" --aiwg-version 2026.7.19 --offline
-```
+The version belongs in mission or CI configuration. Individual agents should
+inherit it rather than independently selecting different versions.
 
-### Compare stable with an exact release
+### Warm resources before network isolation
 
-```bash
-aiwg discover "architecture evolution" \
-  --aiwg-version stable \
-  --json --pretty > stable.json
+An online preparation step can retrieve the small set of skills, rules, and
+indices needed by a later isolated job. Offline execution then uses only
+previously verified cache generations and fails closed if required bytes are
+missing.
 
-aiwg discover "architecture evolution" \
-  --aiwg-version 2026.7.19 \
-  --json --pretty > pinned.json
+This is preferable to copying the entire framework corpus into every isolated
+worker. It keeps the payload task-specific and leaves a clear record of which
+AIWG release supplied the guidance.
 
-diff -u pinned.json stable.json
-```
+### Use the web surface when the agent cannot run tools
 
-### Use the lightweight API in a Node script
+Browser-only chat agents can navigate the linked release manifests and HTML
+fallback pages at `releases.aiwg.io`. Tool-capable agents should use the CLI
+because it verifies signatures, digests, channel sequence, and cache state
+automatically.
 
-```js
-import { run } from '@aiwg/cli';
-
-await run([
-  'discover',
-  'incident evidence preservation',
-  '--type',
-  'skill,agent',
-  '--limit',
-  '5',
-  '--json',
-  '--pretty',
-]);
-```
+Both paths expose the same capability graph. The difference is the access
+mechanism, not a separate set of AIWG instructions.
 
 ## Installation Troubleshooting
 
@@ -1009,9 +1020,10 @@ Package invariants include:
 
 ## Documentation
 
+- [Complete AIWG CLI reference](https://docs.aiwg.io/pages/cli-reference.html)
+- [AIWG documentation](https://docs.aiwg.io/)
 - [AIWG project README](https://github.com/jmagly/aiwg#readme)
 - [Web-backed resources guide](https://github.com/jmagly/aiwg/blob/main/docs/install/web-backed-resources.md)
-- [CLI reference](https://github.com/jmagly/aiwg/blob/main/docs/cli-reference.md)
 - [Release verification](https://github.com/jmagly/aiwg/blob/main/docs/releases/verifying.md)
 - [Supply-chain overview](https://github.com/jmagly/aiwg/blob/main/docs/security/supply-chain-overview.md)
 - [Agentic install runbook](https://github.com/jmagly/aiwg/blob/main/docs/agentic-install-runbook.md)

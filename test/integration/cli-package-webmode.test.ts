@@ -162,7 +162,11 @@ describe('@aiwg/cli packaged web distribution', () => {
     expect(installedReadme).toBe(sourceReadme);
     expect(Buffer.byteLength(installedReadme)).toBeGreaterThan(25_000);
     expect(installedReadme).toContain('# @aiwg/cli');
-    expect(installedReadme).toContain('## JavaScript API');
+    expect(installedReadme).toContain('## The Agentic Use Model');
+    expect(installedReadme).toContain('## Why This Reduces Agent Token Use');
+    expect(installedReadme).toContain('## How Skills and Agents Use the Runtime');
+    expect(installedReadme).toContain('https://docs.aiwg.io/pages/cli-reference.html');
+    expect(installedReadme).not.toContain('## CLI Guide');
     expect(installedReadme).toContain('## Security Model');
     expect(installedReadme).toContain('## Installation Troubleshooting');
   });
