@@ -1240,10 +1240,45 @@ export const packagePluginHandler: CommandHandler = {
   aliases: ["-package-plugin", "--package-plugin"],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    if (ctx.args.includes("--help") || ctx.args.includes("-h")) {
+      return {
+        exitCode: 0,
+        message: [
+          "aiwg package-plugin — package one built-in marketplace wrapper",
+          "",
+          "Usage:",
+          "  aiwg package-plugin <name> [--provider <name>] [--clean] [--dry-run]",
+          "  aiwg package-plugin --plugin <name> [options]  # compatibility form",
+          "",
+          "Options:",
+          "  --provider <name>  claude, codex, cursor, factory, openclaw, or all",
+          "  --clean            clean generated plugin output before packaging",
+          "  --dry-run, -n      preview without writing",
+          "  --help, -h         show this help",
+          "",
+          "Output is written to the AIWG installation's agentic/code/plugins directory.",
+        ].join("\n"),
+      };
+    }
+
+    const hasExplicitPlugin = ctx.args.includes("--plugin") || ctx.args.includes("-p");
+    const positional = ctx.args[0] && !ctx.args[0].startsWith("-")
+      ? ctx.args[0]
+      : undefined;
+    if (!hasExplicitPlugin && !positional) {
+      return {
+        exitCode: 1,
+        message: "Error: plugin name is required.\n\nRun `aiwg package-plugin --help` for usage.",
+      };
+    }
+    const normalizedArgs = hasExplicitPlugin
+      ? ctx.args
+      : ["--plugin", positional as string, ...ctx.args.slice(1)];
+
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);
 
-    return runner.run("tools/plugin/package-plugins.mjs", ctx.args, {
+    return runner.run("tools/plugin/package-plugins.mjs", normalizedArgs, {
       cwd: ctx.cwd,
     });
   },
@@ -1262,6 +1297,24 @@ export const packageAllPluginsHandler: CommandHandler = {
   aliases: ["-package-all-plugins", "--package-all-plugins"],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    if (ctx.args.includes("--help") || ctx.args.includes("-h")) {
+      return {
+        exitCode: 0,
+        message: [
+          "aiwg package-all-plugins — package every built-in marketplace wrapper",
+          "",
+          "Usage:",
+          "  aiwg package-all-plugins [--provider <name>] [--clean] [--dry-run]",
+          "",
+          "Options:",
+          "  --provider <name>  claude, codex, cursor, factory, openclaw, or all",
+          "  --clean            clean generated plugin output before packaging",
+          "  --dry-run, -n      preview without writing",
+          "  --help, -h         show this help",
+        ].join("\n"),
+      };
+    }
+
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);
 

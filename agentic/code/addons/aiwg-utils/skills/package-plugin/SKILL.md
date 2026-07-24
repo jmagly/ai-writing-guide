@@ -2,12 +2,12 @@
 namespace: aiwg
 name: package-plugin
 platforms: [all]
-description: Bundle a single marketplace delivery wrapper into a distributable archive, validating metadata and optionally publishing
+description: Build one built-in AIWG marketplace wrapper for a selected provider with optional clean and dry-run modes
 ---
 
 # Package Plugin
 
-You bundle a single marketplace delivery wrapper for the AIWG marketplace. In AIWG vocabulary, the plugin layer packages an extension, addon, or framework payload for distribution. You validate metadata, create the package archive, and optionally publish to the registry.
+You build a single built-in marketplace delivery wrapper under AIWG's generated plugin directory. The public CLI accepts a positional wrapper name and normalizes it to the internal packager contract.
 
 ## Triggers
 
@@ -15,8 +15,7 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 
 - "bundle the voice plugin for release" → package voice plugin
 - "prepare the SDLC plugin for distribution" → package sdlc plugin
-- "I want to publish my plugin" → package and optionally publish
-- "create the plugin archive" → package without publishing
+- "create the plugin wrapper" → package the generated provider wrapper
 
 ## Trigger Patterns Reference
 
@@ -24,10 +23,8 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 |---------|---------|--------|
 | Package plugin | "package plugin sdlc" | Run `aiwg package-plugin sdlc` |
 | Bundle plugin | "bundle plugin voice" | Run `aiwg package-plugin voice` |
-| Publish plugin | "publish plugin marketing" | Run `aiwg package-plugin marketing --publish` |
 | Create package | "create plugin package utils" | Run `aiwg package-plugin utils` |
 | Dry run | "validate sdlc plugin before packaging" | Run `aiwg package-plugin sdlc --dry-run` |
-| With version bump | "package voice with new version" | Run `aiwg package-plugin voice --bump patch` |
 
 ## Behavior
 
@@ -35,8 +32,8 @@ When triggered:
 
 1. **Extract intent**:
    - Which delivery wrapper is being packaged?
-   - Should it be published after packaging, or just archived locally?
-   - Is a version bump needed?
+   - Which provider wrapper is needed?
+   - Should existing generated output be cleaned first?
    - Is this a validation dry run?
 
 2. **Run the appropriate command**:
@@ -50,22 +47,18 @@ When triggered:
    # Validate only — no archive created
    aiwg package-plugin sdlc --dry-run
 
-   # Package and publish to marketplace
-   aiwg package-plugin sdlc --publish
+   # Build one provider-specific wrapper
+   aiwg package-plugin sdlc --provider codex
 
-   # Bump version before packaging
-   aiwg package-plugin voice --bump patch
-   aiwg package-plugin voice --bump minor
-
-   # Specify output directory
-   aiwg package-plugin sdlc --output dist/plugins/
+   # Clean generated output before rebuilding
+   aiwg package-plugin sdlc --clean
    ```
 
-3. **Report the result** — confirm archive path, included file count, and publish status.
+3. **Report the result** — confirm generated wrapper path and included file counts.
 
 ## What the Package Contains
 
-A plugin package archive (`.aiwg-plugin.tar.gz`) is a delivery wrapper. It includes the manifest plus the payload files being distributed:
+A generated plugin wrapper includes provider metadata plus the selected payload files:
 
 | Contents | Path in Archive |
 |----------|----------------|
@@ -101,7 +94,7 @@ Packaging fails if any validation step fails.
 aiwg package-plugin voice
 ```
 
-**Response**: "Packaged voice@aiwg v2026.4.0. Archive: dist/plugins/voice-2026.4.0.aiwg-plugin.tar.gz (42 files, 1.2MB). Metadata validation passed. Ready to publish with `aiwg package-plugin voice --publish`."
+**Response**: "Generated the voice marketplace wrapper under `agentic/code/plugins/voice`."
 
 ### Example 2: Validate before packaging
 
@@ -116,34 +109,38 @@ aiwg package-plugin sdlc --dry-run
 
 **Response**: "Dry run: sdlc plugin metadata passed (58 agents, 42 commands, 12 skills, 33 rules validated). Ready to package. 1 warning: CHANGELOG.md not found — package will be created without it."
 
-### Example 3: Package and publish in one step
+### Example 3: Package for Codex
 
-**User**: "Publish the marketing plugin to the marketplace"
+**User**: "Build the marketing plugin for Codex"
 
-**Extraction**: Package and publish marketing plugin
-
-**Action**:
-```bash
-aiwg package-plugin marketing --publish
-```
-
-**Response**: "Packaged and published marketing@aiwg v2026.4.0 to the AIWG marketplace. Archive: dist/plugins/marketing-2026.4.0.aiwg-plugin.tar.gz. Registry updated."
-
-### Example 4: Package with version bump
-
-**User**: "Bump and package the utils plugin with a patch version"
-
-**Extraction**: Bump patch version then package
+**Extraction**: Package marketing for the Codex provider
 
 **Action**:
 ```bash
-aiwg package-plugin utils --bump patch
+aiwg package-plugin marketing --provider codex
 ```
 
-**Response**: "Bumped utils version 2026.3.5 → 2026.4.0. Packaged. Archive: dist/plugins/utils-2026.4.0.aiwg-plugin.tar.gz."
+**Response**: "Generated the Codex marketing wrapper under `agentic/code/plugins/marketing`."
+
+### Example 4: Clean rebuild
+
+**User**: "Clean and rebuild the utils plugin"
+
+**Extraction**: Remove prior generated output, then package
+
+**Action**:
+```bash
+aiwg package-plugin utils --clean
+```
+
+**Response**: "Cleaned and regenerated the utils wrapper."
+
+## Unsupported legacy examples
+
+Earlier skill revisions documented `--publish`, `--bump`, and `--output`, but the public packager never implemented those flags. They are intentionally not accepted. Publish generated wrappers through the repository's release workflow, change versions in their authoritative manifests before packaging, and use the fixed generated plugin directory until a standalone packaging workflow is selected.
 
 ## References
 
-- @$AIWG_ROOT/src/cli/handlers/utilities.ts — Command handler
+- @$AIWG_ROOT/src/cli/handlers/subcommands.ts — Command handler
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference
 - @$AIWG_ROOT/docs/contributing/versioning.md — CalVer versioning rules
