@@ -137,6 +137,8 @@ describe('@aiwg/cli packaged web distribution', () => {
   it('is CalVer-locked and excludes the default corpus', async () => {
     const core = JSON.parse(await readFile(path.join(PROJECT_ROOT, 'package.json'), 'utf8'));
     const installed = JSON.parse(await readFile(path.join(installRoot, 'package.json'), 'utf8'));
+    const sourceReadme = await readFile(path.join(PROJECT_ROOT, 'packages', 'cli', 'README.md'), 'utf8');
+    const installedReadme = await readFile(path.join(installRoot, 'README.md'), 'utf8');
     const paths = packMetadata.files.map((file) => file.path);
 
     expect(packMetadata.name).toBe('@aiwg/cli');
@@ -156,6 +158,13 @@ describe('@aiwg/cli packaged web distribution', () => {
     expect(paths).toContain('dist/src/providers/capability-matrix.yaml');
     expect(paths).toContain('dist/src/models/model-capabilities.v1.json');
     expect(paths).toContain('dist/src/models/model-catalog.v1.json');
+    expect(paths).toContain('README.md');
+    expect(installedReadme).toBe(sourceReadme);
+    expect(Buffer.byteLength(installedReadme)).toBeGreaterThan(25_000);
+    expect(installedReadme).toContain('# @aiwg/cli');
+    expect(installedReadme).toContain('## JavaScript API');
+    expect(installedReadme).toContain('## Security Model');
+    expect(installedReadme).toContain('## Installation Troubleshooting');
   });
 
   it('defaults to signed stable web discover and show without flags or a bundled corpus', async () => {

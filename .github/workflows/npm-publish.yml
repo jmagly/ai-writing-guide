@@ -88,6 +88,11 @@ on:
         description: 'Existing tag to re-attempt publish for (must already exist on this branch)'
         required: false
         type: string
+      remove_cli_bootstrap_tag:
+        description: 'Maintenance only: remove the deprecated @aiwg/cli bootstrap dist-tag without republishing'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: npmjs-publish-${{ github.ref }}
@@ -100,6 +105,7 @@ permissions:
 jobs:
   publish-to-npmjs-org:
     name: Publish to npmjs.org with provenance
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.remove_cli_bootstrap_tag }}
     runs-on: ubuntu-latest
     # Container pinned by digest per .gitea/workflows/README.md ("CI Pinning
     # Policy"). Same discipline as the Gitea workflows — no mutable tags.
@@ -940,3 +946,49 @@ jobs:
           See docs/releases/verifying.md for consumer-facing instructions.
           ============================================================
           EOF
+
+  remove-deprecated-cli-bootstrap-tag:
+    name: Remove deprecated @aiwg/cli bootstrap tag
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.remove_cli_bootstrap_tag }}
+    runs-on: ubuntu-latest
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Configure npmjs.org
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Remove bootstrap dist-tag and verify
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_DIST_TAG_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::error::NPM_DIST_TAG_TOKEN is required for dist-tag maintenance"
+            exit 1
+          fi
+
+          CURRENT=$(npm view @aiwg/cli dist-tags --json --prefer-online --no-update-notifier)
+          if node -e 'const tags=JSON.parse(process.argv[1]); process.exit(Object.hasOwn(tags, "bootstrap") ? 0 : 1)' "$CURRENT"; then
+            npm dist-tag rm @aiwg/cli bootstrap
+          else
+            echo "@aiwg/cli@bootstrap is already absent"
+          fi
+
+          for attempt in 1 2 3 4 5; do
+            CURRENT=$(npm view @aiwg/cli dist-tags --json --prefer-online --no-update-notifier)
+            if node -e 'const tags=JSON.parse(process.argv[1]); process.exit(Object.hasOwn(tags, "bootstrap") ? 1 : 0)' "$CURRENT"; then
+              echo "✓ @aiwg/cli bootstrap dist-tag is absent"
+              exit 0
+            fi
+            echo "Attempt ${attempt}: bootstrap tag still visible; retrying in 5s"
+            sleep 5
+          done
+
+          echo "::error::@aiwg/cli bootstrap dist-tag remained visible after removal"
+          exit 1
