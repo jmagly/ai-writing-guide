@@ -30,7 +30,7 @@ concurrency:
 
 jobs:
   producer-consumer-receipt:
-    name: Published Core → PGlite → clean Fortemi
+    name: Published Core receipts → core-v1 clean Fortemi
     runs-on: matric-builder
     timeout-minutes: 30
 
@@ -51,7 +51,7 @@ jobs:
       - name: Install locked published package graph
         run: npm ci
 
-      - name: Verify AIWG producer and PGlite consumer
+      - name: Verify AIWG core-v1 and full-v1 consumer receipts
         run: |
           npx vitest run test/unit/artifacts/fortemi-shard-export.test.ts
           node tools/ci/verify-aiwg-fortemi-shard-receipt.mjs

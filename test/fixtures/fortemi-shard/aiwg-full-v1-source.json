@@ -1,0 +1,101 @@
+{
+  "schema_version": "aiwg.fortemi.index.export.v2",
+  "generated_at": "2026-07-22T12:00:00.000Z",
+  "source": {
+    "repo": "Fortemi/aiwg",
+    "privacy": "public",
+    "graph": "project"
+  },
+  "compatibility": {
+    "previous_schema_version": "aiwg.fortemi.index.export.v1",
+    "strategy": "supported"
+  },
+  "items": [
+    {
+      "schema_version": "aiwg.fortemi.index.record.v2",
+      "id": "aiwg:a",
+      "type": "aiwg.artifact",
+      "source": {
+        "path": "a.md",
+        "repo_relative_path": "a.md",
+        "locator": "aiwg:a",
+        "updated_at": "2026-07-22T12:00:00.000Z"
+      },
+      "title": "",
+      "text": "",
+      "facets": {},
+      "tags": ["portable"],
+      "concepts": ["concept:portable"],
+      "relationships": [
+        {
+          "type": "uses",
+          "target_id": "aiwg:b",
+          "confidence": 0.75
+        }
+      ],
+      "provenance": [
+        {
+          "field": "text",
+          "source": "a.md",
+          "path": "$.text",
+          "confidence": "source",
+          "privacy": "public"
+        }
+      ],
+      "skos_concepts": [
+        {
+          "id": "concept:portable",
+          "prefLabel": "Portable",
+          "scheme": "aiwg",
+          "definition": "Portable knowledge.",
+          "altLabels": ["Transferable"]
+        }
+      ],
+      "provenance_events": [
+        {
+          "id": "event:a",
+          "activity": "indexed",
+          "agent": "aiwg",
+          "started_at": "2026-07-22T11:00:00.000Z",
+          "attributes": { "pass": true }
+        }
+      ],
+      "privacy": {
+        "classification": "public",
+        "pii": false
+      },
+      "updated_at": "2026-07-22T12:00:00.000Z"
+    },
+    {
+      "schema_version": "aiwg.fortemi.index.record.v2",
+      "id": "aiwg:b",
+      "type": "aiwg.artifact",
+      "source": {
+        "path": "b.md",
+        "repo_relative_path": "b.md",
+        "locator": "aiwg:b",
+        "updated_at": "2026-07-22T12:00:00.000Z"
+      },
+      "title": "Artifact B",
+      "text": "Artifact B body",
+      "facets": {},
+      "tags": ["portable"],
+      "concepts": ["concept:portable"],
+      "relationships": [],
+      "provenance": [
+        {
+          "field": "text",
+          "source": "b.md",
+          "path": "$.text",
+          "confidence": "source",
+          "privacy": "public"
+        }
+      ],
+      "privacy": {
+        "classification": "public",
+        "pii": false
+      },
+      "updated_at": "2026-07-22T12:00:00.000Z"
+    }
+  ]
+}

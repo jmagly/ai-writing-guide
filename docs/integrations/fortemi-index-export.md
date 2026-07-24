@@ -26,7 +26,7 @@ aiwg index export --format fortemi-shard --graph project --out aiwg-project.shar
 ```
 
 `fortemi-shard` always builds the v2 contract and passes it to the canonical
-`@fortemi/core/aiwg-index` converter. The shard uses deterministic note/link
+`@fortemi/core/aiwg-index-shard` converter. The shard uses deterministic note/link
 identities and preserves the complete v2 envelope and every source record in
 the canonical `ai_metadata.aiwg_fortemi_index` carrier. AIWG returns the
 converter's archive bytes unchanged: it does not repair component records or
@@ -34,14 +34,30 @@ restamp the manifest. The `core-v1` output declares notes, tags, and links;
 SKOS, provenance, chunks, privacy fields, checksums, and other rich AIWG data
 remain intact inside the embedded source records.
 
-npm package `@fortemi/core@2026.7.11` is pinned exactly. Its signed-release source
-tag is `v2026.7.11`; the package-embedded contract receipt pins revision 19,
+npm package `@fortemi/core@2026.7.13` is pinned exactly. Its signed-release source
+tag is `v2026.7.13`; the package-embedded core-v1 contract receipt pins revision 19,
 schema 1.2.0, and the `core-v1` authority bytes. The immutable representative
 archive and machine-readable producer/consumer receipt live under
 `test/fixtures/fortemi-shard/`. Blocking CI verifies the locked npm integrity,
 archive digest and manifest, clean PGlite import/re-export, five rejection
 classes with zero mutation, and a clean Fortemi server import/re-export at the
 receipt's exact server commit. The server check consumes the archive unchanged.
+
+The same published package also exposes the report-bearing
+`aiwgFortemiIndexToKnowledgeShardWithReport` entry point. AIWG pins the released
+source fixture and verifies byte-identical `2.0.0/full-v1` conversion against
+Fortemi contract revision 20 in
+`test/fixtures/fortemi-shard/aiwg-full-v1.consumer.receipt.json`. This is a
+published-package consumer receipt, not a capability advertisement: the CLI
+continues to emit only the independently proven `core-v1` path until the
+Fortemi destination and cross-repository advertisement issues close.
+This package adoption succeeds the bounded core-v1 delivery in AIWG
+[#1790](https://git.integrolabs.net/roctinam/aiwg/issues/1790) and
+[#1797](https://git.integrolabs.net/roctinam/aiwg/issues/1797). Native
+full-v1 production remains coordinated through Fortemi React
+[#381](https://git.integrolabs.net/Fortemi/fortemi-react/issues/381), with
+cross-repository advertisement gated by React
+[#382](https://git.integrolabs.net/Fortemi/fortemi-react/issues/382).
 
 The representative v2 graph is deterministic. The committed `.shard` is the
 immutable evidence artifact identified by its receipt digest; canonical zero
@@ -324,7 +340,7 @@ The default backend is Fortemi Core. The legacy local backend must remain
 available until:
 
 - #1691 parity fixtures run green in CI;
-- the locked Fortemi 2026.7.11 package contract remains green against AIWG v2
+- the locked Fortemi 2026.7.13 package contract remains green against AIWG v2
   export, query, and relationship traversal fixtures;
 - semantic/hybrid behavior keeps the static-cache CI fixture green, with any
   direct Fortemi package integration gated and skipped cleanly without
@@ -334,7 +350,7 @@ available until:
 
 Knowledge Shard conversion has additional, independent gates:
 
-- AIWG CI pins published `@fortemi/core@2026.7.11`
+- AIWG CI pins published `@fortemi/core@2026.7.13`
   and executes the real converter against the current AIWG v2 schema;
 - the output declares a supported server-owned profile and validates against a
   revision-and-digest-pinned schema receipt;
@@ -353,13 +369,19 @@ installs `@fortemi/core@2026.7.7` without changing the lockfile and sets
 `AIWG_FORTEMI_CORE_PACKAGE_REQUIRED=1` so a reviewed CI copy would fail if
 `@fortemi/core/aiwg-index` is unavailable or rejects the direct v2 export.
 That proposal records the earlier static-index gate; the current shard gate
-instead uses the locked `@fortemi/core@2026.7.11` dependency and `npm ci`.
+instead uses the locked `@fortemi/core@2026.7.13` dependency and `npm ci`.
 
-For shard conversion, AIWG now pins `@fortemi/core@2026.7.11`. The immutable
+For shard conversion, AIWG now pins `@fortemi/core@2026.7.13`. The immutable
 `core-v1` receipt records the registry integrity, Core authority and schema
 bundle digests, archive SHA-256, producer/consumer revisions, and capability
 loss report. Blocking CI verifies the actual published converter, a clean
 PGlite import/re-export, and a clean Fortemi server import/re-export.
+
+The separate `full-v1` consumer receipt binds the public package entry point,
+release source/tag, registry integrity, schema-2 authority digests, source
+fixture, deterministic 33-component archive, and zero-loss conversion report.
+It deliberately records `advertised: false`: Fortemi schema-2 runtime support
+and the independent destination matrix remain external gates.
 
 The default static-index fixture path still does not require a live service.
 The separate portable-shard conformance workflow starts an isolated Fortemi
