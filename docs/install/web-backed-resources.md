@@ -57,6 +57,14 @@ For `discover` and `show`, `@aiwg/cli` selects `web` and the signed `stable`
 channel when no source/version flags are supplied. Explicit
 `--resource-source local|web|auto` and `--aiwg-version` values always win.
 
+First-party resource reads use logical IDs such as
+`aiwg://frameworks/sdlc-complete/skills/example/SKILL.md`,
+`aiwg://addons/aiwg-utils/skills/address-issues/SKILL.md`, and
+`aiwg://core/agents/personas/root-agent.md`. The resolver maps those IDs to
+installed local paths, signed web raw-resource paths, or local-then-web `auto`
+resolution. Project-local artifacts keep their local precedence unless the
+caller explicitly selects `--resource-source web`.
+
 ## Current Implemented Commands and Flags
 
 `aiwg discover` and `aiwg show` currently support:

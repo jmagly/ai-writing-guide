@@ -1963,14 +1963,17 @@ export async function showArtifact(
   if (resourceSource === 'web') {
     try {
       if (!webRelease) throw new Error('verified web release context is unavailable');
-      const { fetchVerifiedRawResource } = await import('../resources/web-release.js');
-      const bytes = await fetchVerifiedRawResource(webRelease, filePath, {
-        baseUrl: params.webReleaseOptions?.baseUrl,
-        fetcher: params.webReleaseOptions?.fetcher,
-        allowInsecureLoopbackHttp: params.webReleaseOptions?.allowInsecureLoopbackHttp,
+      const { logicalIdFromFirstPartyPath, resolveAiwgResourceBytes } = await import('../resources/resolver.js');
+      const logicalId = logicalIdFromFirstPartyPath(entry.path);
+      if (!logicalId) throw new Error(`indexed path is not a first-party AIWG resource: ${entry.path}`);
+      const resolved = await resolveAiwgResourceBytes(logicalId, {
+        source: 'web',
+        frameworkRoot: aiwgRoot ?? cwd,
+        webRelease,
+        webReleaseOptions: params.webReleaseOptions,
         offline: params.offline,
       });
-      content = bytes.toString('utf8');
+      content = resolved.bytes.toString('utf8');
     } catch (error) {
       console.error(`Error: AIWG web resource show failed: ${error instanceof Error ? error.message : String(error)}`);
       process.exit(1);
