@@ -229,6 +229,23 @@ describe("artifact CLI signed web resources", () => {
       },
     });
     expect(lockfile.resources.framework.fortemiCore.exportSha256).toBe(json.fortemiCore.exportSha256);
+
+    const lockedGeneration = path.join(cacheRoot, "releases", TEST_VERSION, json.manifestSha256);
+    const unlockedGeneration = path.join(cacheRoot, "releases", "2026.7.99", "b".repeat(64));
+    fs.mkdirSync(unlockedGeneration, { recursive: true });
+    expect(fs.existsSync(lockedGeneration)).toBe(true);
+
+    const cleanup = await runCli(["versions", "clean-cache", "--json"]);
+    expectSuccess(cleanup);
+    const cleanupJson = JSON.parse(cleanup.stdout.toString("utf8"));
+    expect(cleanupJson.preserved).toEqual([
+      expect.objectContaining({ version: TEST_VERSION, manifestSha256: json.manifestSha256 }),
+    ]);
+    expect(cleanupJson.removed).toEqual([
+      expect.objectContaining({ version: "2026.7.99", manifestSha256: "b".repeat(64) }),
+    ]);
+    expect(fs.existsSync(lockedGeneration)).toBe(true);
+    expect(fs.existsSync(unlockedGeneration)).toBe(false);
   });
 
   it("rejects unsupported resource ranges and digest selectors for versions resolve", async () => {

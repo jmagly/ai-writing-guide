@@ -7,6 +7,7 @@ import {
   type WebReleaseOptions,
 } from "../../resources/web-release.js";
 import { getProjectDir } from "../../config/aiwg-config.js";
+import { cleanWebResourceCache } from "../../resources/cache-cleanup.js";
 import { writeWebResourceLock } from "../../resources/lockfile.js";
 import type { CommandHandler, HandlerContext, HandlerResult } from "./types.js";
 
@@ -14,12 +15,14 @@ const MAX_RESOURCE_MANIFEST_BYTES = 4 * 1024 * 1024;
 const DEFAULT_CHANNELS = ["stable", "latest", "canary", "main"] as const;
 
 interface ParsedVersionArgs {
-  subcommand: "list" | "resolve" | "show";
+  subcommand: "list" | "resolve" | "show" | "clean-cache";
   selector?: string;
   json: boolean;
   pretty: boolean;
   offline: boolean;
   writeLock: boolean;
+  dryRun: boolean;
+  force: boolean;
   channels: string[];
 }
 
@@ -34,13 +37,14 @@ interface ReleaseManifestSummary {
 
 function usage(): string {
   return [
-    "Usage: aiwg versions <list|resolve|show> [selector] [--json] [--pretty] [--offline]",
+    "Usage: aiwg versions <list|resolve|show|clean-cache> [selector] [--json] [--pretty] [--offline]",
     "",
     "Examples:",
     "  aiwg versions list --json",
     "  aiwg versions resolve stable --json",
     "  aiwg versions resolve stable --write-lock",
     "  aiwg versions show 2026.7.18",
+    "  aiwg versions clean-cache --dry-run",
   ].join("\n");
 }
 
@@ -54,7 +58,12 @@ function flagValue(args: string[], flag: string): string | undefined {
 
 function parseArgs(args: string[]): ParsedVersionArgs {
   const [rawSubcommand = "list", ...rest] = args;
-  if (rawSubcommand !== "list" && rawSubcommand !== "resolve" && rawSubcommand !== "show") {
+  if (
+    rawSubcommand !== "list" &&
+    rawSubcommand !== "resolve" &&
+    rawSubcommand !== "show" &&
+    rawSubcommand !== "clean-cache"
+  ) {
     throw new Error(`Unknown versions subcommand: ${rawSubcommand}\n\n${usage()}`);
   }
 
@@ -74,9 +83,12 @@ function parseArgs(args: string[]): ParsedVersionArgs {
   if (rawSubcommand === "list" && positionals.length > 0) {
     throw new Error(`aiwg versions list does not accept positional selectors\n\n${usage()}`);
   }
+  if (rawSubcommand === "clean-cache" && positionals.length > 0) {
+    throw new Error(`aiwg versions clean-cache does not accept positional selectors\n\n${usage()}`);
+  }
   const writeLock = rest.includes("--write-lock");
-  if (rawSubcommand === "list" && writeLock) {
-    throw new Error(`aiwg versions list cannot write ${"resources.lock.json"}; use resolve or show with --write-lock`);
+  if ((rawSubcommand === "list" || rawSubcommand === "clean-cache") && writeLock) {
+    throw new Error(`aiwg versions ${rawSubcommand} cannot write resources.lock.json; use resolve or show with --write-lock`);
   }
 
   const channelsValue = flagValue(rest, "--channels");
@@ -92,6 +104,8 @@ function parseArgs(args: string[]): ParsedVersionArgs {
     pretty: rest.includes("--pretty"),
     offline: rest.includes("--offline"),
     writeLock,
+    dryRun: rest.includes("--dry-run"),
+    force: rest.includes("--force"),
     channels,
   };
 }
@@ -203,6 +217,26 @@ export const versionsHandler: CommandHandler = {
 
     try {
       const baseOptions = webReleaseOptionsFromEnvironment();
+      if (parsed.subcommand === "clean-cache") {
+        const result = cleanWebResourceCache(getProjectDir(ctx, ctx.args), {
+          cacheRoot: process.env.AIWG_RESOURCE_CACHE_ROOT,
+          dryRun: parsed.dryRun,
+          force: parsed.force,
+        });
+        if (parsed.json) {
+          printJson(result, parsed.pretty);
+        } else {
+          console.log(`cache_root: ${result.cacheRoot}`);
+          console.log(`dry_run: ${result.dryRun}`);
+          console.log(`force: ${result.force}`);
+          console.log(`locked: ${result.locked.length}`);
+          console.log(`preserved: ${result.preserved.length}`);
+          console.log(`removed: ${result.removed.length}`);
+          console.log(`skipped: ${result.skipped.length}`);
+        }
+        return { exitCode: 0 };
+      }
+
       if (parsed.subcommand === "list") {
         const resolved: Array<Record<string, unknown>> = [];
         const unavailable: Array<{ channel: string; error: string }> = [];

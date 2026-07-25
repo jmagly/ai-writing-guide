@@ -90,6 +90,7 @@ aiwg versions resolve stable --json
 aiwg versions resolve stable --write-lock
 aiwg versions show 2026.7.18 --json --pretty
 aiwg versions resolve stable --offline
+aiwg versions clean-cache --dry-run
 ```
 
 Per-call overrides do not mutate project defaults.
@@ -139,6 +140,8 @@ range and digest selection are implemented.
 - `--json`, `--pretty`, and `--offline` are supported.
 - `resolve` and `show` can write `.aiwg/resources.lock.json` with
   `--write-lock`.
+- `clean-cache` removes unlocked release generations from the verified user
+  cache. It preserves lockfile-pinned versions unless `--force` is supplied.
 - The command uses the same trust root, cache root, release host, channel
   rollback protections, and manifest-signature verification as `discover` and
   `show`.
@@ -180,8 +183,27 @@ The lockfile schema is `aiwg.resources-lock/v1`:
 }
 ```
 
-This first lockfile slice records reproducible release identity. Cache cleanup
-and doctor drift diagnostics are still planned in this epic.
+This first lockfile slice records reproducible release identity. Doctor drift
+diagnostics are still planned in this epic.
+
+## Cache Cleanup
+
+`aiwg versions clean-cache` scans the release-generation cache under
+`<cache-root>/releases/<version>/<manifest-sha256>`.
+
+```bash
+aiwg versions clean-cache --dry-run --json
+aiwg versions clean-cache
+aiwg versions clean-cache --force
+```
+
+By default, cleanup preserves any generation pinned by
+`.aiwg/resources.lock.json` and removes only unlocked generations. `--dry-run`
+reports the same `removed` and `preserved` sets without deleting anything.
+`--force` makes cleanup eligible to remove locked generations too; use it only
+when intentionally discarding the project lock's cached release bytes. Cleanup
+does not weaken normal cache reads: every later `discover`, `show`, or
+`versions` resolution still re-verifies signed metadata and descriptor digests.
 
 ### Current query constraints
 
@@ -270,5 +292,5 @@ behavior.
 
 - SemVer range version selectors.
 - Web behavior for `aiwg use`/`aiwg regenerate`.
-- Lock-aware cache cleanup and doctor lock drift diagnostics.
+- Doctor lock drift diagnostics.
 - Web parity for project/codebase graph operations.
