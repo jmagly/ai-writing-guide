@@ -1334,7 +1334,7 @@ export const discoverCommand: Extension = {
     ],
     commandHint: {
       template: 'utility',
-      argumentHint: '"<phrase>" [--limit N] [--type skill,agent,...] [--json] [--resource-source local|web|auto] [--aiwg-version <exact-or-channel>] [--offline]',
+      argumentHint: '"<phrase>" [--limit N] [--type skill,agent,...] [--json] [--resource-source local|web|auto] [--aiwg-version <version|range|digest|channel>] [--offline]',
       allowedTools: ['Read'],
     },
   } satisfies SkillMetadata,
@@ -1372,7 +1372,7 @@ export const showCommand: Extension = {
     ],
     commandHint: {
       template: 'utility',
-      argumentHint: '<type> <name> [--json] [--first] [--resource-source local|web|auto] [--aiwg-version <exact-or-channel>] [--offline]   # type: skill | agent | command | rule',
+      argumentHint: '<type> <name> [--json] [--first] [--resource-source local|web|auto] [--aiwg-version <version|range|digest|channel>] [--offline]   # type: skill | agent | command | rule',
       allowedTools: ['Read'],
     },
   } satisfies SkillMetadata,
@@ -1406,7 +1406,7 @@ export const versionsCommand: Extension = {
     ],
     commandHint: {
       template: 'utility',
-      argumentHint: 'list|resolve|show [exact-version-or-channel] [--json] [--pretty] [--offline] [--channels stable,latest]',
+      argumentHint: 'list|resolve|show [version|range|digest|channel] [--json] [--pretty] [--offline] [--channels stable,latest]',
       allowedTools: ['Read', 'Bash'],
     },
   } satisfies SkillMetadata,

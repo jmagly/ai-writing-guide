@@ -225,6 +225,21 @@ export function createWebResourceReleaseFixture() {
     return bytes;
   };
 
+  const publishVersionIndex = (releases: PublishedRelease[]): Buffer => {
+    const bytes = jsonBytes({
+      schemaVersion: "aiwg.resource-version-index/v1",
+      generatedAt: "2026-07-22T12:00:00.000Z",
+      versions: releases.map((release) => ({
+        version: release.version,
+        releaseManifest: `/resources/${release.version}/manifest.json`,
+        releaseManifestSha256: release.manifestDigest,
+      })),
+    });
+    routes.set("/resources/versions.json", bytes);
+    routes.set("/resources/versions.sig", detachedSignature(bytes));
+    return bytes;
+  };
+
   const start = async (): Promise<string> => {
     if (server) throw new Error("loopback fixture is already running");
     server = createServer((request, response) => {
@@ -265,6 +280,7 @@ export function createWebResourceReleaseFixture() {
     requestPaths,
     publishRelease,
     publishChannel,
+    publishVersionIndex,
     start,
     stop,
     get baseUrl() {

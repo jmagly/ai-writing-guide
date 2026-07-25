@@ -149,7 +149,7 @@ function parseAiwgVersionFlag(args: string[]): string | undefined {
   if (indices.length === 0) return undefined;
   const value = args[indices[0] + 1];
   if (!value || value.startsWith('--')) {
-    console.error('Error: --aiwg-version requires an exact calendar-semver version or channel name');
+    console.error('Error: --aiwg-version requires an exact calendar-semver version, SemVer range, sha256 digest, or channel name');
     process.exit(1);
   }
   try {
@@ -1505,7 +1505,7 @@ async function handleDiscover(args: string[]): Promise<void> {
     console.error('Error: aiwg index discover requires a search phrase');
     console.log('');
     console.log(
-      'Usage: aiwg index discover "<phrase>" [--type <kinds>] [--limit N] [--json|--format json|text] [--pretty|--compact] [--graph <name>] [--backend local|fortemi-core] [--resource-source local|web|auto] [--aiwg-version <exact-or-channel>] [--offline]',
+      'Usage: aiwg index discover "<phrase>" [--type <kinds>] [--limit N] [--json|--format json|text] [--pretty|--compact] [--graph <name>] [--backend local|fortemi-core] [--resource-source local|web|auto] [--aiwg-version <version|range|digest|channel>] [--offline]',
     );
     console.log('');
     console.log('Examples:');
@@ -1589,8 +1589,8 @@ async function handleShow(args: string[]): Promise<void> {
 
   const HELP_TEXT = [
     '',
-    'Usage: aiwg show <type> <name> [--json] [--first] [--graph <name>] [--backend local|fortemi-core] [--resource-source local|web|auto] [--aiwg-version <exact-or-channel>] [--offline]',
-    '       aiwg show metadata <id-or-name-or-path> [--json] [--first] [--graph <name>] [--backend local|fortemi-core] [--resource-source local|web|auto] [--aiwg-version <exact-or-channel>] [--offline]',
+    'Usage: aiwg show <type> <name> [--json] [--first] [--graph <name>] [--backend local|fortemi-core] [--resource-source local|web|auto] [--aiwg-version <version|range|digest|channel>] [--offline]',
+    '       aiwg show metadata <id-or-name-or-path> [--json] [--first] [--graph <name>] [--backend local|fortemi-core] [--resource-source local|web|auto] [--aiwg-version <version|range|digest|channel>] [--offline]',
     '       aiwg index show <type> <name> ...',
     '',
     `Types: ${OPERATIONAL_SHOW_TYPES.join(' | ')}`,

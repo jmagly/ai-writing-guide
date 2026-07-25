@@ -242,30 +242,23 @@ aiwg versions list --json
 aiwg versions resolve stable --json
 aiwg versions resolve stable --write-lock
 aiwg versions show 2026.7.18 --json --pretty
+aiwg versions resolve '>=2026.7.18 <2026.8.0' --json
+aiwg versions resolve sha256:ef5a7112c593d5df90f7940c315a3d4a3d6d6e2a3bd9c063d87de1e811ad80c1
 aiwg versions clean-cache --dry-run --json
 aiwg doctor
 ```
 
-Supported `--aiwg-version` values in this beta are exact AIWG CalVer releases
-and signed channel names:
+Supported `--aiwg-version` values in this beta are exact AIWG CalVer releases,
+SemVer ranges, signed manifest digests, and signed channel names:
 
 ```bash
 aiwg discover "architecture evolution" --resource-source web --aiwg-version 2026.7.18
+aiwg discover "architecture evolution" --resource-source web --aiwg-version '>=2026.7.18 <2026.8.0'
+aiwg discover "architecture evolution" --resource-source web --aiwg-version sha256:ef5a7112c593d5df90f7940c315a3d4a3d6d6e2a3bd9c063d87de1e811ad80c1
 aiwg discover "architecture evolution" --resource-source web --aiwg-version stable
 aiwg discover "architecture evolution" --resource-source web --aiwg-version latest
 aiwg discover "architecture evolution" --resource-source web --aiwg-version canary
 aiwg discover "architecture evolution" --resource-source web --aiwg-version main
-```
-
-SemVer ranges and digest selectors are planned for a later selector-contract
-slice, but this partial implementation rejects them explicitly:
-
-```bash
-# Planned, not yet accepted by discover/show/versions web mode.
-aiwg discover "architecture evolution" --resource-source web --aiwg-version '>=2026.7.18 <2026.8.0'
-aiwg discover "architecture evolution" --resource-source web --aiwg-version sha256:...
-aiwg versions resolve '>=2026.7.18 <2026.8.0'
-aiwg versions resolve sha256:...
 ```
 
 This partial implementation is active only for `discover`/`show` resource

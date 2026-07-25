@@ -49,11 +49,18 @@ describe("signed web release resolver", () => {
     ["2026.7.22-rc.1", { kind: "exact", value: "2026.7.22-rc.1" }],
     ["stable", { kind: "channel", value: "stable" }],
     ["release-candidate", { kind: "channel", value: "release-candidate" }],
+    ["^2026.7.0", { kind: "range", value: "^2026.7.0" }],
+    [">=2026.7.0 <2026.8.0", { kind: "range", value: ">=2026.7.0 <2026.8.0" }],
+    ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", {
+      kind: "digest",
+      value: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      digest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    }],
   ])("parses safe selector %s", (selector, expected) => {
-    expect(parseResourceSelector(selector)).toEqual(expected);
+    expect(parseResourceSelector(selector)).toMatchObject(expected);
   });
 
-  it.each(["", "v2026.7.22", "2026.00.1", "2026.13.1", "2026.7.-1", "../stable", "Stable", "a".repeat(33)])(
+  it.each(["", "v2026.7.22", "2026.00.1", "2026.13.1", "2026.7.-1", "../stable", "Stable", "a".repeat(33), "sha256:bad"])(
     "rejects unsafe selector %j",
     (selector) => expect(() => parseResourceSelector(selector)).toThrow(/Unsupported AIWG resource selector/),
   );
@@ -85,6 +92,24 @@ describe("signed web release resolver", () => {
     expect(release.selectorKind).toBe("channel");
     expect(release.channelSequence).toBe(7);
     expect(release.manifestDigest).toBe(published.manifestDigest);
+  });
+
+  it("resolves SemVer ranges and manifest digest selectors through the signed version index", async () => {
+    const older = fixture.publishRelease({ version: "2026.7.21" });
+    const latest = fixture.publishRelease();
+    fixture.publishVersionIndex([older, latest]);
+
+    const ranged = await resolveWebRelease(options("^2026.7.0"));
+    expect(ranged.selectorKind).toBe("range");
+    expect(ranged.version).toBe(TEST_VERSION);
+    expect(ranged.manifestDigest).toBe(latest.manifestDigest);
+
+    const byDigest = await resolveWebRelease(options(`sha256:${older.manifestDigest}`));
+    expect(byDigest.selectorKind).toBe("digest");
+    expect(byDigest.version).toBe("2026.7.21");
+    expect(byDigest.manifestDigest).toBe(older.manifestDigest);
+    expect(fixture.requestPaths).toContain("/resources/versions.json");
+    expect(fixture.requestPaths).toContain("/resources/versions.sig");
   });
 
   it("rejects a public-key mismatch before accepting signed metadata", async () => {

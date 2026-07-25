@@ -78,7 +78,7 @@ function parseArgs(args: string[]): ParsedVersionArgs {
 
   const positionals = rest.filter((arg, index) => !arg.startsWith("--") && !valueFlagIndexes.has(index));
   if ((rawSubcommand === "resolve" || rawSubcommand === "show") && positionals.length !== 1) {
-    throw new Error(`aiwg versions ${rawSubcommand} requires exactly one exact version or channel selector\n\n${usage()}`);
+    throw new Error(`aiwg versions ${rawSubcommand} requires exactly one version, range, digest, or channel selector\n\n${usage()}`);
   }
   if (rawSubcommand === "list" && positionals.length > 0) {
     throw new Error(`aiwg versions list does not accept positional selectors\n\n${usage()}`);

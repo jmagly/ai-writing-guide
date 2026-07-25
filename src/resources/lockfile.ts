@@ -48,7 +48,12 @@ function validateLockedResource(value: unknown, key: string): LockedWebResource 
   for (const field of ["selector", "selectorKind", "version", "manifestUrl", "baseUrl", "manifestSha256", "lockedAt"]) {
     if (typeof value[field] !== "string") throw new Error(`resource lock entry '${key}' has an invalid ${field}`);
   }
-  if (value.selectorKind !== "exact" && value.selectorKind !== "channel") {
+  if (
+    value.selectorKind !== "exact" &&
+    value.selectorKind !== "channel" &&
+    value.selectorKind !== "range" &&
+    value.selectorKind !== "digest"
+  ) {
     throw new Error(`resource lock entry '${key}' has an invalid selectorKind`);
   }
   if (typeof value.descriptorCount !== "number" || !Number.isSafeInteger(value.descriptorCount) || value.descriptorCount < 0) {

@@ -2,6 +2,7 @@ import { createHash, createPublicKey, randomUUID, verify, type KeyObject } from 
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import semver from "semver";
 
 export const DEFAULT_RESOURCE_BASE_URL = "https://releases.aiwg.io";
 export const AIWG_RELEASE_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
@@ -11,6 +12,7 @@ MCowBQYDK2VwAyEA8BsJ2vjuHBReexz328sknfL7MKUtxynX6MGfqFVMD38=
 const EXACT_VERSION_PATTERN = /^(?:19|20)\d{2}\.(?:[1-9]|1[0-2])\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$/;
 const CHANNEL_PATTERN = /^[a-z][a-z0-9-]{0,31}$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/;
+const DIGEST_SELECTOR_PATTERN = /^sha256:([0-9a-f]{64})$/;
 const SIGNATURE_PATTERN = /^(?:[A-Za-z0-9+/]{4}){21}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)$/;
 const RELEASE_MANIFEST_SCHEMAS = new Set([
   "aiwg.resource-manifest/v1",
@@ -25,6 +27,8 @@ const MAX_SIGNATURE_BYTES = 64 * 1024;
 const MAX_COMPLETION_MARKER_BYTES = 4 * 1024;
 const MAX_CHANNEL_CACHE_CANDIDATES = 128;
 const MAX_RELEASE_CACHE_CANDIDATES = 32;
+const MAX_VERSION_INDEX_BYTES = 4 * 1024 * 1024;
+const MAX_VERSION_INDEX_ENTRIES = 2048;
 // A cold lightweight-CLI install downloads the signed release manifest
 // (~2 MiB) and Fortemi export (~11 MiB today). Fifteen seconds proved too
 // aggressive on otherwise healthy container and remote-network paths. Keep a
@@ -36,7 +40,9 @@ type JsonRecord = Record<string, unknown>;
 export type ResourceSource = "local" | "web" | "auto";
 export type ResourceSelector =
   | { kind: "exact"; value: string }
-  | { kind: "channel"; value: string };
+  | { kind: "channel"; value: string }
+  | { kind: "range"; value: string; normalizedRange: string }
+  | { kind: "digest"; value: string; digest: string };
 
 export interface ResourceFetchResponse {
   ok: boolean;
@@ -119,6 +125,17 @@ interface ChannelManifest {
   releaseManifestSha256: string;
 }
 
+interface VersionIndexEntry {
+  version: string;
+  releaseManifest: string;
+  releaseManifestSha256: string;
+}
+
+interface VersionIndex {
+  schemaVersion: "aiwg.resource-version-index/v1";
+  versions: VersionIndexEntry[];
+}
+
 function isRecord(value: unknown): value is JsonRecord {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -187,12 +204,24 @@ export function verifySignedResourceBytes(
 }
 
 export function parseResourceSelector(selector: string): ResourceSelector {
+  if (selector.trim() !== selector || selector.length === 0 || /^v\d/.test(selector)) {
+    throw new Error(
+      `Unsupported AIWG resource selector '${selector}'. This release supports exact calendar-semver versions, SemVer ranges, sha256 manifest digests, or channel names.`,
+    );
+  }
   if (EXACT_VERSION_PATTERN.test(selector)) return { kind: "exact", value: selector };
+  const digestMatch = DIGEST_SELECTOR_PATTERN.exec(selector);
+  if (digestMatch) return { kind: "digest", value: selector, digest: digestMatch[1] };
   if (CHANNEL_PATTERN.test(selector) && !/^v\d/.test(selector)) {
     return { kind: "channel", value: selector };
   }
+  const normalizedRange = semver.validRange(selector, { includePrerelease: true });
+  const explicitRange = /[<>=~^*xX|\s]/.test(selector);
+  const versionLikeTokens = selector.match(/\b(?:19|20)\d{2}\.\d+\.\d+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?\b/g) ?? [];
+  const calendarVersionTokens = versionLikeTokens.every((token) => EXACT_VERSION_PATTERN.test(token));
+  if (normalizedRange && explicitRange && calendarVersionTokens) return { kind: "range", value: selector, normalizedRange };
   throw new Error(
-    `Unsupported AIWG resource selector '${selector}'. This release supports exact calendar-semver versions or channel names only.`,
+    `Unsupported AIWG resource selector '${selector}'. This release supports exact calendar-semver versions, SemVer ranges, sha256 manifest digests, or channel names.`,
   );
 }
 
@@ -281,6 +310,43 @@ function validateChannelManifest(value: unknown, channel: string): ChannelManife
     throw new Error(`channel ${channel} has an invalid release manifest digest`);
   }
   return value as unknown as ChannelManifest;
+}
+
+function validateVersionIndex(value: unknown): VersionIndex {
+  if (!isRecord(value) || value.schemaVersion !== "aiwg.resource-version-index/v1") {
+    throw new Error("resource version index has an unsupported schemaVersion");
+  }
+  if (!Array.isArray(value.versions) || value.versions.length > MAX_VERSION_INDEX_ENTRIES) {
+    throw new Error("resource version index has an invalid versions list");
+  }
+  const seenVersions = new Set<string>();
+  const seenDigests = new Set<string>();
+  const versions: VersionIndexEntry[] = [];
+  for (const entry of value.versions) {
+    if (!isRecord(entry) || typeof entry.version !== "string" || !EXACT_VERSION_PATTERN.test(entry.version)) {
+      throw new Error("resource version index contains an invalid version");
+    }
+    const expectedPath = `/resources/${entry.version}/manifest.json`;
+    if (entry.releaseManifest !== expectedPath) {
+      throw new Error(`resource version index entry ${entry.version} has an invalid release manifest path`);
+    }
+    if (typeof entry.releaseManifestSha256 !== "string" || !SHA256_PATTERN.test(entry.releaseManifestSha256)) {
+      throw new Error(`resource version index entry ${entry.version} has an invalid release manifest digest`);
+    }
+    if (seenVersions.has(entry.version)) throw new Error(`resource version index contains duplicate version ${entry.version}`);
+    if (seenDigests.has(entry.releaseManifestSha256)) {
+      throw new Error(`resource version index contains duplicate digest ${entry.releaseManifestSha256}`);
+    }
+    seenVersions.add(entry.version);
+    seenDigests.add(entry.releaseManifestSha256);
+    versions.push({
+      version: entry.version,
+      releaseManifest: entry.releaseManifest,
+      releaseManifestSha256: entry.releaseManifestSha256,
+    });
+  }
+  versions.sort((left, right) => semver.rcompare(left.version, right.version));
+  return { schemaVersion: "aiwg.resource-version-index/v1", versions };
 }
 
 function validateFortemiFiles(
@@ -622,6 +688,16 @@ function verifyCachedGeneration(
   };
 }
 
+function cachedReleaseVersions(cacheRoot: string): string[] {
+  const root = path.join(cacheRoot, "releases");
+  if (!fs.existsSync(root)) return [];
+  assertCacheDirectory(root, "cached releases directory");
+  return fs.readdirSync(root, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && EXACT_VERSION_PATTERN.test(entry.name))
+    .map((entry) => entry.name)
+    .sort((left, right) => semver.rcompare(left, right));
+}
+
 function cachedDigests(cacheRoot: string, version: string): string[] {
   const root = path.join(cacheRoot, "releases", version);
   if (!fs.existsSync(root)) return [];
@@ -724,6 +800,103 @@ function readCachedChannel(
   if (valid.length > 0) return valid[0];
   if (corrupt) throw new Error(`cached channel ${channel} is corrupt and cannot be used offline`);
   return null;
+}
+
+function versionIndexCacheDir(cacheRoot: string): string {
+  return path.join(cacheRoot, "versions");
+}
+
+function readCachedVersionIndex(
+  cacheRoot: string,
+  publicKeyPem: string | Buffer,
+): VersionIndex | null {
+  const dir = versionIndexCacheDir(cacheRoot);
+  if (!fs.existsSync(dir)) return null;
+  assertCacheDirectory(dir, "cached resource version index directory");
+  const bytes = readVerifiedRegularFile(path.join(dir, "versions.json"), {
+    label: "cached resource version index",
+    maxBytes: MAX_VERSION_INDEX_BYTES,
+  });
+  const signatureBytes = readVerifiedRegularFile(path.join(dir, "versions.sig"), {
+    label: "cached resource version index signature",
+    maxBytes: MAX_SIGNATURE_BYTES,
+  });
+  verifySignedResourceBytes(bytes, signatureBytes, publicKeyPem, "cached resource version index");
+  return validateVersionIndex(parseJson(bytes, "cached resource version index"));
+}
+
+function cacheVersionIndex(cacheRoot: string, bytes: Uint8Array, signatureBytes: Uint8Array): void {
+  const target = versionIndexCacheDir(cacheRoot);
+  const stagingRoot = path.join(cacheRoot, ".staging", "versions");
+  fs.mkdirSync(stagingRoot, { recursive: true });
+  const stage = fs.mkdtempSync(path.join(stagingRoot, "index-"));
+  try {
+    fs.writeFileSync(path.join(stage, "versions.json"), bytes, { flag: "wx" });
+    fs.writeFileSync(path.join(stage, "versions.sig"), signatureBytes, { flag: "wx" });
+    if (fs.existsSync(target)) fs.rmSync(target, { recursive: true, force: true });
+    installGeneration(stage, target);
+  } catch (error) {
+    fs.rmSync(stage, { recursive: true, force: true });
+    throw error;
+  }
+}
+
+async function fetchAndCacheVersionIndex(
+  base: URL,
+  fetcher: ResourceFetcher,
+  cacheRoot: string,
+  publicKeyPem: string | Buffer,
+): Promise<VersionIndex> {
+  const indexBytes = await fetchBytes(fetcher, resourceUrl(base, "resources/versions.json"), "resource version index", MAX_VERSION_INDEX_BYTES);
+  const signatureBytes = await fetchBytes(fetcher, resourceUrl(base, "resources/versions.sig"), "resource version index signature", MAX_SIGNATURE_BYTES);
+  verifySignedResourceBytes(indexBytes, signatureBytes, publicKeyPem, "resource version index");
+  const index = validateVersionIndex(parseJson(indexBytes, "resource version index"));
+  cacheVersionIndex(cacheRoot, indexBytes, signatureBytes);
+  return index;
+}
+
+async function resolveVersionIndex(
+  base: URL,
+  fetcher: ResourceFetcher | undefined,
+  cacheRoot: string,
+  publicKeyPem: string | Buffer,
+  offline?: boolean,
+): Promise<VersionIndex> {
+  if (offline) {
+    const cached = readCachedVersionIndex(cacheRoot, publicKeyPem);
+    if (cached) return cached;
+    const versions = cachedReleaseVersions(cacheRoot).flatMap((version) =>
+      cachedDigests(cacheRoot, version).map((digest) => ({
+        version,
+        releaseManifest: `/resources/${version}/manifest.json`,
+        releaseManifestSha256: digest,
+      })),
+    );
+    if (versions.length > 0) return validateVersionIndex({ schemaVersion: "aiwg.resource-version-index/v1", versions });
+    throw new Error("AIWG resource version index is not cached; offline mode cannot resolve range or digest selectors");
+  }
+  if (!fetcher) throw new Error("No fetch implementation is available for AIWG web resources");
+  try {
+    return await fetchAndCacheVersionIndex(base, fetcher, cacheRoot, publicKeyPem);
+  } catch (error) {
+    const cached = readCachedVersionIndex(cacheRoot, publicKeyPem);
+    if (cached) return cached;
+    throw error;
+  }
+}
+
+function selectVersionFromIndex(index: VersionIndex, selector: ResourceSelector): VersionIndexEntry {
+  if (selector.kind === "digest") {
+    const found = index.versions.find((entry) => entry.releaseManifestSha256 === selector.digest);
+    if (!found) throw new Error(`AIWG resource manifest digest ${selector.value} is not present in the signed version index`);
+    return found;
+  }
+  if (selector.kind !== "range") throw new Error("version index selection requires a range or digest selector");
+  const found = index.versions.find((entry) =>
+    semver.satisfies(entry.version, selector.normalizedRange, { includePrerelease: true }),
+  );
+  if (!found) throw new Error(`No AIWG resource release satisfies selector '${selector.value}'`);
+  return found;
 }
 
 function installGeneration(stageDir: string, targetDir: string): void {
@@ -958,6 +1131,32 @@ export async function resolveWebRelease(options: WebReleaseOptions = {}): Promis
     const fetcher = options.fetcher ?? (globalThis.fetch as unknown as ResourceFetcher);
     if (!fetcher) throw new Error("No fetch implementation is available for AIWG web resources");
     return fetchAndCacheRelease(base, fetcher, cacheRoot, selector, selector.value, publicKeyPem);
+  }
+
+  if (selector.kind === "range" || selector.kind === "digest") {
+    const fetcher = options.fetcher ?? (globalThis.fetch as unknown as ResourceFetcher);
+    const index = await resolveVersionIndex(base, fetcher, cacheRoot, publicKeyPem, options.offline);
+    const selected = selectVersionFromIndex(index, selector);
+    if (options.offline) {
+      return resolveOfflineExact(
+        cacheRoot,
+        selector,
+        selected.version,
+        publicKeyPem,
+        base,
+        selected.releaseManifestSha256,
+      );
+    }
+    if (!fetcher) throw new Error("No fetch implementation is available for AIWG web resources");
+    return fetchAndCacheRelease(
+      base,
+      fetcher,
+      cacheRoot,
+      selector,
+      selected.version,
+      publicKeyPem,
+      selected.releaseManifestSha256,
+    );
   }
 
   if (options.offline) {

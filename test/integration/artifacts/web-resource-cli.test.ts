@@ -38,6 +38,7 @@ describe("artifact CLI signed web resources", () => {
     await fixture.start();
     const release = fixture.publishRelease();
     fixture.publishChannel("stable", 7, release);
+    fixture.publishVersionIndex([release]);
     trustRootFile = path.join(cwd, "release-root.pem");
     fs.writeFileSync(trustRootFile, fixture.publicKeyPem, { mode: 0o600 });
   });
@@ -248,20 +249,29 @@ describe("artifact CLI signed web resources", () => {
     expect(fs.existsSync(unlockedGeneration)).toBe(false);
   });
 
-  it("rejects unsupported resource ranges and digest selectors for versions resolve", async () => {
+  it("resolves SemVer ranges and digest selectors through the source CLI", async () => {
     const range = await runCli(["versions", "resolve", "^2026.7.0", "--json"]);
-    expect(range.signal).toBeNull();
-    expect(range.code).toBe(1);
-    expect(range.stderr.toString("utf8")).toContain("supports exact calendar-semver versions or channel names only");
+    expectSuccess(range);
+    const rangeJson = JSON.parse(range.stdout.toString("utf8"));
+    expect(rangeJson).toMatchObject({
+      selector: "^2026.7.0",
+      selectorKind: "range",
+      version: TEST_VERSION,
+    });
 
     const digest = await runCli([
       "versions",
       "resolve",
-      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      `sha256:${rangeJson.manifestSha256}`,
       "--json",
     ]);
-    expect(digest.signal).toBeNull();
-    expect(digest.code).toBe(1);
-    expect(digest.stderr.toString("utf8")).toContain("supports exact calendar-semver versions or channel names only");
+    expectSuccess(digest);
+    const digestJson = JSON.parse(digest.stdout.toString("utf8"));
+    expect(digestJson).toMatchObject({
+      selector: `sha256:${rangeJson.manifestSha256}`,
+      selectorKind: "digest",
+      version: TEST_VERSION,
+      manifestSha256: rangeJson.manifestSha256,
+    });
   });
 });
