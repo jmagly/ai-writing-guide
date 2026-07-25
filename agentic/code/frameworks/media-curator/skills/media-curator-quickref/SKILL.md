@@ -72,8 +72,9 @@ aiwg discover "quality filter media"           # → quality-filtering
 
 ```bash
 aiwg discover "transcribe media"               # → transcribe-media
+aiwg discover "speaker diarization audio"      # → diarize-media
 aiwg discover "media research handoff"         # → induct-media (research-complete)
-aiwg discover "video audio research induction" # → transcribe-media / induct-media
+aiwg discover "video audio research induction" # → transcribe-media / diarize-media / induct-media
 ```
 
 ### Metadata & assembly

@@ -29,6 +29,9 @@ aiwg use media-curator
 # Create a research-grade transcript sidecar
 /transcribe-media /path/to/acquired-media.wav --source-url https://example.invalid/source
 
+# Create a diarized transcript sidecar with anonymous speaker clusters
+/diarize-media /path/to/acquired-media.wav --min-speakers 2 --max-speakers 2
+
 # Hand acquired media and transcript metadata to research-complete
 /induct-media metadata.json --transcript media.transcript.json --source-url https://example.invalid/source --storage hash-only
 
@@ -51,6 +54,7 @@ aiwg use media-curator
 | Multi-platform format export | (integrated) | `/export` |
 | SHA-256 integrity verification | (integrated) | `/verify-archive` |
 | Timestamped transcript sidecars | (integrated) | `/transcribe-media` |
+| Speaker diarization sidecars | (integrated) | `/diarize-media` |
 | Research media handoff | (research-complete) | `/induct-media` |
 
 ## Architecture
@@ -88,6 +92,7 @@ media-curator/
 │   ├── cover-art-embedding.md      # Artwork embedding
 │   ├── integrity-verification.md   # SHA-256 manifests
 │   ├── transcribe-media.md         # Transcript sidecars for research handoff
+│   ├── diarize-media.md            # Anonymous speaker-cluster diarization
 │   ├── gap-documentation.md        # GAP-NOTE.md pattern
 │   └── provenance-tracking.md      # W3C PROV-O for media
 ├── config/

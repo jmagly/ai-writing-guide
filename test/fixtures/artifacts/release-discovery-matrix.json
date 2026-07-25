@@ -69,6 +69,15 @@
       "expected_top_path": "agentic/code/frameworks/media-curator/skills/curate/SKILL.md"
     },
     {
+      "id": "media-curator-speaker-diarization",
+      "domain": "media-curator",
+      "phrase": "speaker diarization audio",
+      "expected_path": "agentic/code/frameworks/media-curator/skills/diarize-media/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": "agentic/code/frameworks/media-curator/skills/diarize-media/SKILL.md"
+    },
+    {
       "id": "ops-runbook",
       "domain": "ops",
       "phrase": "ops runbook",
