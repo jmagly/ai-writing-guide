@@ -87,6 +87,7 @@ or printing resource bodies:
 aiwg versions list --json
 aiwg versions list --channels stable,latest --json
 aiwg versions resolve stable --json
+aiwg versions resolve stable --write-lock
 aiwg versions show 2026.7.18 --json --pretty
 aiwg versions resolve stable --offline
 ```
@@ -136,9 +137,51 @@ range and digest selection are implemented.
   manifest summary, including schema, compatibility metadata, bundle count, and
   file count.
 - `--json`, `--pretty`, and `--offline` are supported.
+- `resolve` and `show` can write `.aiwg/resources.lock.json` with
+  `--write-lock`.
 - The command uses the same trust root, cache root, release host, channel
   rollback protections, and manifest-signature verification as `discover` and
   `show`.
+
+## Project Resource Lockfile
+
+`aiwg versions resolve <selector> --write-lock` and
+`aiwg versions show <selector> --write-lock` write the resolved immutable web
+resource state to `.aiwg/resources.lock.json`. The path honors
+`AIWG_ARTIFACTS_PATH` and `.aiwg-location`, so projects with a relocated AIWG
+artifact root keep the lockfile beside `aiwg.config`.
+
+The lockfile schema is `aiwg.resources-lock/v1`:
+
+```json
+{
+  "schemaVersion": "aiwg.resources-lock/v1",
+  "generatedAt": "2026-07-24T12:00:00.000Z",
+  "resources": {
+    "framework": {
+      "source": "web",
+      "selector": "stable",
+      "selectorKind": "channel",
+      "version": "2026.7.18",
+      "manifestUrl": "https://releases.aiwg.io/resources/2026.7.18/manifest.json",
+      "baseUrl": "https://releases.aiwg.io",
+      "manifestSha256": "ef5a7112c593d5df90f7940c315a3d4a3d6d6e2a3bd9c063d87de1e811ad80c1",
+      "channelSequence": 1,
+      "fortemiCore": {
+        "manifestSha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "manifestSize": 512,
+        "exportSha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+        "exportSize": 123456
+      },
+      "descriptorCount": 8067,
+      "lockedAt": "2026-07-24T12:00:00.000Z"
+    }
+  }
+}
+```
+
+This first lockfile slice records reproducible release identity. Cache cleanup
+and doctor drift diagnostics are still planned in this epic.
 
 ### Current query constraints
 
@@ -227,5 +270,5 @@ behavior.
 
 - SemVer range version selectors.
 - Web behavior for `aiwg use`/`aiwg regenerate`.
-- Lockfile persistence for resolved web versions.
+- Lock-aware cache cleanup and doctor lock drift diagnostics.
 - Web parity for project/codebase graph operations.

@@ -240,6 +240,7 @@ aiwg show framework sdlc --resource-source web --aiwg-version candidate --offlin
 
 aiwg versions list --json
 aiwg versions resolve stable --json
+aiwg versions resolve stable --write-lock
 aiwg versions show 2026.7.18 --json --pretty
 ```
 

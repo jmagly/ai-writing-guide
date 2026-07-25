@@ -206,6 +206,31 @@ describe("artifact CLI signed web resources", () => {
     });
   });
 
+  it("writes a project resource lockfile from a signed web version resolution", async () => {
+    const result = await runCli(["versions", "resolve", "stable", "--json", "--write-lock"]);
+    expectSuccess(result);
+    const json = JSON.parse(result.stdout.toString("utf8"));
+    const lockfilePath = path.join(cwd, ".aiwg", "resources.lock.json");
+    expect(json.lockfile).toBe(lockfilePath);
+
+    const lockfile = JSON.parse(fs.readFileSync(lockfilePath, "utf8"));
+    expect(lockfile).toMatchObject({
+      schemaVersion: "aiwg.resources-lock/v1",
+      resources: {
+        framework: {
+          source: "web",
+          selector: "stable",
+          selectorKind: "channel",
+          version: TEST_VERSION,
+          manifestUrl: `${fixture.baseUrl}/resources/${TEST_VERSION}/manifest.json`,
+          manifestSha256: json.manifestSha256,
+          channelSequence: 7,
+        },
+      },
+    });
+    expect(lockfile.resources.framework.fortemiCore.exportSha256).toBe(json.fortemiCore.exportSha256);
+  });
+
   it("rejects unsupported resource ranges and digest selectors for versions resolve", async () => {
     const range = await runCli(["versions", "resolve", "^2026.7.0", "--json"]);
     expect(range.signal).toBeNull();

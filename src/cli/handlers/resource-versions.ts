@@ -6,6 +6,8 @@ import {
   type VerifiedWebRelease,
   type WebReleaseOptions,
 } from "../../resources/web-release.js";
+import { getProjectDir } from "../../config/aiwg-config.js";
+import { writeWebResourceLock } from "../../resources/lockfile.js";
 import type { CommandHandler, HandlerContext, HandlerResult } from "./types.js";
 
 const MAX_RESOURCE_MANIFEST_BYTES = 4 * 1024 * 1024;
@@ -17,6 +19,7 @@ interface ParsedVersionArgs {
   json: boolean;
   pretty: boolean;
   offline: boolean;
+  writeLock: boolean;
   channels: string[];
 }
 
@@ -36,6 +39,7 @@ function usage(): string {
     "Examples:",
     "  aiwg versions list --json",
     "  aiwg versions resolve stable --json",
+    "  aiwg versions resolve stable --write-lock",
     "  aiwg versions show 2026.7.18",
   ].join("\n");
 }
@@ -55,7 +59,7 @@ function parseArgs(args: string[]): ParsedVersionArgs {
   }
 
   const valueFlagIndexes = new Set<number>();
-  for (const flag of ["--channels"]) {
+  for (const flag of ["--channels", "--target", "--prefix"]) {
     const index = rest.indexOf(flag);
     if (index !== -1) {
       valueFlagIndexes.add(index);
@@ -70,6 +74,10 @@ function parseArgs(args: string[]): ParsedVersionArgs {
   if (rawSubcommand === "list" && positionals.length > 0) {
     throw new Error(`aiwg versions list does not accept positional selectors\n\n${usage()}`);
   }
+  const writeLock = rest.includes("--write-lock");
+  if (rawSubcommand === "list" && writeLock) {
+    throw new Error(`aiwg versions list cannot write ${"resources.lock.json"}; use resolve or show with --write-lock`);
+  }
 
   const channelsValue = flagValue(rest, "--channels");
   const channels = channelsValue
@@ -83,6 +91,7 @@ function parseArgs(args: string[]): ParsedVersionArgs {
     json: rest.includes("--json") || rest.includes("--format=json"),
     pretty: rest.includes("--pretty"),
     offline: rest.includes("--offline"),
+    writeLock,
     channels,
   };
 }
@@ -124,7 +133,11 @@ function readManifestSummary(release: VerifiedWebRelease): ReleaseManifestSummar
   };
 }
 
-function releaseJson(release: VerifiedWebRelease, manifest?: ReleaseManifestSummary): Record<string, unknown> {
+function releaseJson(
+  release: VerifiedWebRelease,
+  manifest?: ReleaseManifestSummary,
+  lockfilePath?: string,
+): Record<string, unknown> {
   return {
     selector: release.selector,
     selectorKind: release.selectorKind,
@@ -141,6 +154,7 @@ function releaseJson(release: VerifiedWebRelease, manifest?: ReleaseManifestSumm
       exportSize: release.fortemiExportSize,
     },
     descriptorCount: release.descriptors.size,
+    ...(lockfilePath === undefined ? {} : { lockfile: lockfilePath }),
     ...(manifest === undefined ? {} : { manifest }),
   };
 }
@@ -149,7 +163,7 @@ function printJson(value: unknown, pretty: boolean): void {
   console.log(JSON.stringify(value, null, pretty ? 2 : 0));
 }
 
-function printReleaseText(release: VerifiedWebRelease, manifest?: ReleaseManifestSummary): void {
+function printReleaseText(release: VerifiedWebRelease, manifest?: ReleaseManifestSummary, lockfilePath?: string): void {
   console.log(`selector: ${release.selector} (${release.selectorKind})`);
   console.log(`version: ${release.version}`);
   if (release.channelSequence !== undefined) console.log(`channel_sequence: ${release.channelSequence}`);
@@ -159,6 +173,7 @@ function printReleaseText(release: VerifiedWebRelease, manifest?: ReleaseManifes
   console.log(`fortemi_manifest_sha256: ${release.fortemiManifestSha256}`);
   console.log(`fortemi_export_sha256: ${release.fortemiExportSha256}`);
   console.log(`descriptor_count: ${release.descriptors.size}`);
+  if (lockfilePath !== undefined) console.log(`lockfile: ${lockfilePath}`);
   if (manifest) {
     console.log(`schema_version: ${String(manifest.schemaVersion)}`);
     console.log(`file_count: ${manifest.fileCount}`);
@@ -223,10 +238,13 @@ export const versionsHandler: CommandHandler = {
         offline: parsed.offline,
       });
       const manifest = parsed.subcommand === "show" ? readManifestSummary(release) : undefined;
+      const lockfilePath = parsed.writeLock
+        ? writeWebResourceLock(getProjectDir(ctx, ctx.args), release).path
+        : undefined;
       if (parsed.json) {
-        printJson(releaseJson(release, manifest), parsed.pretty);
+        printJson(releaseJson(release, manifest, lockfilePath), parsed.pretty);
       } else {
-        printReleaseText(release, manifest);
+        printReleaseText(release, manifest, lockfilePath);
       }
       return { exitCode: 0 };
     } catch (error) {
