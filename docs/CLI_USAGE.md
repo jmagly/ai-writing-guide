@@ -1,6 +1,10 @@
 # AIWG CLI Usage Guide
 
-> **Note:** The `aiwg` CLI command is only available when installed via npm (`npm install -g aiwg`). If you installed AIWG using Claude Code plugins (`/plugin install sdlc@aiwg`), you won't have access to the CLI - plugins provide agents, commands, and skills directly within Claude Code without requiring a separate CLI tool.
+> **Note:** The `aiwg` CLI command is only available when installed via npm
+> (`npm install -g aiwg`). If you installed AIWG using Claude Code plugins
+> (`/plugin install sdlc@aiwg`), you won't have access to the CLI. Plugins
+> provide agents, commands, and skills directly within Claude Code without
+> requiring a separate CLI tool.
 
 ## Installation
 
@@ -43,6 +47,7 @@ aiwg doctor
 ```
 
 Checks:
+
 - AIWG installation location
 - Version info
 - Project `.aiwg/` directory
@@ -82,6 +87,7 @@ aiwg use all
 ```
 
 **Options:**
+
 - `--provider <name>`: Target platform (claude, factory, openai, warp)
 - `--no-utils`: Skip aiwg-utils addon
 - `--force`: Overwrite existing deployments
@@ -102,8 +108,11 @@ aiwg wizard --non-interactive --profile beginner --provider codex
 ```
 
 **Options:**
+
 - `--goal <text>`: Plain-language goal used to recommend a framework
-- `--profile <preset>`: Preset for a common path (`beginner`, `sdlc`, `research`, `marketing`, `forensics`, `ops`, `security`, `knowledge-base`, `writing`)
+- `--profile <preset>`: Preset for a common path (`beginner`, `sdlc`,
+  `research`, `marketing`, `forensics`, `ops`, `security`, `knowledge-base`,
+  `writing`)
 - `--provider <name>`: Target provider
 - `--framework <name>`: Framework to deploy first
 - `--non-interactive`: Use selected or inferred defaults without prompting
@@ -130,7 +139,9 @@ aiwg status --probe --json
 
 ### issue
 
-Manage project-local issues under `.aiwg/issues/` and move snapshots to or from Gitea/GitHub. See [Local Issues](./local-issues.md) for sync, backup, and Git conflict guidance.
+Manage project-local issues under `.aiwg/issues/` and move snapshots to or from
+Gitea/GitHub. See [Local Issues](./local-issues.md) for sync, backup, and Git
+conflict guidance.
 
 ```bash
 aiwg issue init --prefix PROJECT
@@ -216,7 +227,7 @@ aiwg --use-stable
 ## Web-Backed Resources (Experimental Partial Implementation)
 
 AIWG ships an experimental partial implementation for web-backed resource
-resolution for `aiwg discover` and `aiwg show`.
+resolution for `aiwg discover`, `aiwg show`, and `aiwg versions`.
 
 ```bash
 aiwg discover "architecture evolution" --resource-source local --aiwg-version 2026.7.16
@@ -226,6 +237,10 @@ aiwg discover "architecture evolution" --offline
 
 aiwg show skill architecture-evolution --resource-source web --aiwg-version 2026.7.16
 aiwg show framework sdlc --resource-source web --aiwg-version candidate --offline
+
+aiwg versions list --json
+aiwg versions resolve stable --json
+aiwg versions show 2026.7.18 --json --pretty
 ```
 
 Supported `--aiwg-version` values in this beta are exact AIWG CalVer releases
@@ -239,18 +254,20 @@ aiwg discover "architecture evolution" --resource-source web --aiwg-version cana
 aiwg discover "architecture evolution" --resource-source web --aiwg-version main
 ```
 
-SemVer ranges and digest selectors are planned for the `aiwg versions` rollout,
-but this partial implementation rejects them explicitly:
+SemVer ranges and digest selectors are planned for a later selector-contract
+slice, but this partial implementation rejects them explicitly:
 
 ```bash
-# Planned, not yet accepted by discover/show web mode.
+# Planned, not yet accepted by discover/show/versions web mode.
 aiwg discover "architecture evolution" --resource-source web --aiwg-version '>=2026.7.18 <2026.8.0'
 aiwg discover "architecture evolution" --resource-source web --aiwg-version sha256:...
+aiwg versions resolve '>=2026.7.18 <2026.8.0'
+aiwg versions resolve sha256:...
 ```
 
-This partial implementation is active only for `discover`/`show` and does not yet
-apply to `aiwg versions`, `aiwg use`, or `aiwg regenerate` rollout-wide web
-defaults. See
+This partial implementation is active only for `discover`/`show` resource
+queries and `versions` release inspection. It does not yet apply to `aiwg use`
+or `aiwg regenerate` rollout-wide web defaults. See
 [Web-Backed AIWG Resources](./install/web-backed-resources.md) for the planned
 operator contract, trust anchors, troubleshooting, and safety model.
 
@@ -298,6 +315,6 @@ aiwg -help
 
 ## Support
 
-- **GitHub Issues**: https://github.com/jmagly/aiwg/issues
-- **Documentation**: https://docs.aiwg.io
+- **GitHub Issues**: <https://github.com/jmagly/aiwg/issues>
+- **Documentation**: <https://docs.aiwg.io>
 - **Examples**: `.aiwgrc.example.json` in repository

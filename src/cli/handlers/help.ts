@@ -93,6 +93,7 @@ function displayHelp(): void {
   helpGroup('DISCOVERY', [
     ['discover "<phrase>"', 'Find skills/agents/commands/rules by capability'],
     ['show <type> <name>', 'Stream the body of an indexed artifact'],
+    ['versions <list|resolve|show>', 'Browse and resolve signed AIWG web resource releases'],
     ['index <subcommand>', 'Manage the artifact index (build/query/discover/deps/stats)'],
     ['artifacts move --to <path>', 'Move/rename the project AIWG artifact root and reindex'],
   ]);

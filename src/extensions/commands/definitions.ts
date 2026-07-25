@@ -1378,6 +1378,40 @@ export const showCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const versionsCommand: Extension = {
+  id: 'versions',
+  type: 'skill',
+  name: 'Resource Versions',
+  description: 'Browse and resolve signed AIWG web resource releases',
+  version: '1.0.0',
+  capabilities: ['cli', 'resources', 'versions', 'release', 'integrity', 'cache'],
+  keywords: ['versions', 'resource versions', 'aiwg version', 'release manifest', 'web resources', 'stable channel'],
+  category: 'index',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: [
+      'aiwg versions',
+      'resource versions',
+      'resolve aiwg version',
+      'show release manifest',
+      'list AIWG resource channels',
+    ],
+    commandHint: {
+      template: 'utility',
+      argumentHint: 'list|resolve|show [exact-version-or-channel] [--json] [--pretty] [--offline] [--channels stable,latest]',
+      allowedTools: ['Read', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Features: list, inspect (and eventually install) AIWG's optional
 // runtime features — embeddings, sqlite, pty, webserver. (#1219)
 export const featuresCommand: Extension = {
@@ -3552,6 +3586,7 @@ export const commandDefinitions: Extension[] = [
   researchQueryCommand,
   discoverCommand,
   showCommand,
+  versionsCommand,
 
   // Optional Features (1)
   featuresCommand,

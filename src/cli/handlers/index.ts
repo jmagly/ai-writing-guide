@@ -130,6 +130,7 @@ import { cockpitHandler } from './cockpit.js';
 import { commandLogHandler } from './command-log.js';
 import { skillUsageHandler } from './skill-usage.js';
 import { modelsHandler } from './models.js';
+import { versionsHandler } from './resource-versions.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -173,6 +174,7 @@ export {
   mcpHandler,
   catalogHandler,
   modelsHandler,
+  versionsHandler,
   indexHandler,
   artifactsHandler,
   corpusHandler,
@@ -336,6 +338,7 @@ export const allHandlers: CommandHandler[] = [
   mcpHandler,
   catalogHandler,
   modelsHandler,
+  versionsHandler,
   indexHandler,
   artifactsHandler,
   corpusHandler,

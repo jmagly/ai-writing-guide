@@ -80,6 +80,17 @@ aiwg show framework sdlc --resource-source web --aiwg-version candidate
 aiwg show framework sdlc --resource-source web --offline
 ```
 
+`aiwg versions` resolves the same signed resource selectors without querying
+or printing resource bodies:
+
+```bash
+aiwg versions list --json
+aiwg versions list --channels stable,latest --json
+aiwg versions resolve stable --json
+aiwg versions show 2026.7.18 --json --pretty
+aiwg versions resolve stable --offline
+```
+
 Per-call overrides do not mutate project defaults.
 
 ### Selector Examples and Status
@@ -106,9 +117,28 @@ contract, but are intentionally not accepted by this beta slice:
 # Planned, currently rejected with "Unsupported AIWG resource selector"
 aiwg discover "architecture evolution" --resource-source web --aiwg-version '>=2026.7.18 <2026.8.0'
 aiwg discover "architecture evolution" --resource-source web --aiwg-version sha256:...
+aiwg versions resolve '>=2026.7.18 <2026.8.0'
+aiwg versions resolve sha256:...
 ```
 
-Use an exact CalVer or channel until the `aiwg versions` command family lands.
+Use an exact CalVer or channel for `discover`, `show`, and `versions` until
+range and digest selection are implemented.
+
+## Web-Backed `versions`
+
+- `versions list` resolves configured signed channels. By default it probes
+  `stable`, `latest`, `canary`, and `main`; `--channels stable,latest` narrows
+  the channel set.
+- `versions resolve <selector>` prints the immutable version, manifest digest,
+  release URL, cache directory, and Fortemi Core descriptor digests for an exact
+  CalVer or channel selector.
+- `versions show <selector>` resolves the selector and adds the verified
+  manifest summary, including schema, compatibility metadata, bundle count, and
+  file count.
+- `--json`, `--pretty`, and `--offline` are supported.
+- The command uses the same trust root, cache root, release host, channel
+  rollback protections, and manifest-signature verification as `discover` and
+  `show`.
 
 ### Current query constraints
 
@@ -196,7 +226,6 @@ behavior.
 ## Planned in this Epic but Not Yet Implemented
 
 - SemVer range version selectors.
-- `aiwg versions` command family.
 - Web behavior for `aiwg use`/`aiwg regenerate`.
 - Lockfile persistence for resolved web versions.
 - Web parity for project/codebase graph operations.

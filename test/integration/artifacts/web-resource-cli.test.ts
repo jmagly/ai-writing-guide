@@ -36,7 +36,8 @@ describe("artifact CLI signed web resources", () => {
     fs.mkdirSync(home, { recursive: true });
     fixture = createWebResourceReleaseFixture();
     await fixture.start();
-    fixture.publishRelease();
+    const release = fixture.publishRelease();
+    fixture.publishChannel("stable", 7, release);
     trustRootFile = path.join(cwd, "release-root.pem");
     fs.writeFileSync(trustRootFile, fixture.publicKeyPem, { mode: 0o600 });
   });
@@ -162,5 +163,63 @@ describe("artifact CLI signed web resources", () => {
     expect(warmShow.stdout).toEqual(TEST_SKILL_BODY);
     expect(warmShow.stdout.toString("utf8")).not.toContain("LOCAL FALLBACK");
     expect(fixture.requestPaths).toHaveLength(requestsBeforeOffline);
+  });
+
+  it("resolves, shows, and lists signed web resource versions through the source CLI", async () => {
+    const resolved = await runCli(["versions", "resolve", "stable", "--json"]);
+    expectSuccess(resolved);
+    const resolvedJson = JSON.parse(resolved.stdout.toString("utf8"));
+    expect(resolvedJson).toMatchObject({
+      selector: "stable",
+      selectorKind: "channel",
+      version: TEST_VERSION,
+      channelSequence: 7,
+      manifestUrl: `${fixture.baseUrl}/resources/${TEST_VERSION}/manifest.json`,
+    });
+    expect(resolvedJson.manifestSha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(resolvedJson.fortemiCore.exportSha256).toMatch(/^[0-9a-f]{64}$/);
+
+    const shown = await runCli(["versions", "show", TEST_VERSION, "--json"]);
+    expectSuccess(shown);
+    const shownJson = JSON.parse(shown.stdout.toString("utf8"));
+    expect(shownJson).toMatchObject({
+      selector: TEST_VERSION,
+      selectorKind: "exact",
+      version: TEST_VERSION,
+      manifest: {
+        schemaVersion: "aiwg.resource-manifest/v2",
+        version: TEST_VERSION,
+        fileCount: 3,
+      },
+    });
+    expect(shownJson.manifest.compatibility.cli.minimumVersion).toBe("2026.1.1");
+
+    const listed = await runCli(["versions", "list", "--channels", "stable", "--json"]);
+    expectSuccess(listed);
+    const listedJson = JSON.parse(listed.stdout.toString("utf8"));
+    expect(listedJson.unavailable).toEqual([]);
+    expect(listedJson.channels).toHaveLength(1);
+    expect(listedJson.channels[0]).toMatchObject({
+      selector: "stable",
+      version: TEST_VERSION,
+      channelSequence: 7,
+    });
+  });
+
+  it("rejects unsupported resource ranges and digest selectors for versions resolve", async () => {
+    const range = await runCli(["versions", "resolve", "^2026.7.0", "--json"]);
+    expect(range.signal).toBeNull();
+    expect(range.code).toBe(1);
+    expect(range.stderr.toString("utf8")).toContain("supports exact calendar-semver versions or channel names only");
+
+    const digest = await runCli([
+      "versions",
+      "resolve",
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "--json",
+    ]);
+    expect(digest.signal).toBeNull();
+    expect(digest.code).toBe(1);
+    expect(digest.stderr.toString("utf8")).toContain("supports exact calendar-semver versions or channel names only");
   });
 });
