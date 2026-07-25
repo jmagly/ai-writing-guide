@@ -243,6 +243,7 @@ aiwg versions resolve stable --json
 aiwg versions resolve stable --write-lock
 aiwg versions show 2026.7.18 --json --pretty
 aiwg versions clean-cache --dry-run --json
+aiwg doctor
 ```
 
 Supported `--aiwg-version` values in this beta are exact AIWG CalVer releases

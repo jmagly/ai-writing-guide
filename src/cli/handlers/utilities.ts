@@ -577,6 +577,19 @@ export const doctorHandler: CommandHandler = {
       // Project-local section is non-fatal for doctor
     }
 
+    // Web-backed resource lock/cache diagnostics (#1850). Report lock source
+    // mode, cold cache, and digest drift without requiring web mode to be in use.
+    try {
+      const { buildWebResourceDoctorSection } = await import('../../resources/doctor.js');
+      const section = buildWebResourceDoctorSection(ctx.cwd || process.cwd(), {
+        cacheRoot: process.env.AIWG_RESOURCE_CACHE_ROOT,
+      });
+      if (section.output) console.log(section.output);
+      if (section.hasFailures) return { exitCode: 1, message: '' };
+    } catch (error) {
+      console.log(`\n── Web resource cache ──\n  ⚠ unable to audit: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
     // Canonical workspace-context graph diagnostics (#1811). Legacy projects
     // remain valid; drift, loops, conflicts, and possible credentials fail.
     try {

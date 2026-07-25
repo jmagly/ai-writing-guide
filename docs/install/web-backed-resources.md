@@ -183,8 +183,10 @@ The lockfile schema is `aiwg.resources-lock/v1`:
 }
 ```
 
-This first lockfile slice records reproducible release identity. Doctor drift
-diagnostics are still planned in this epic.
+This lockfile records reproducible release identity. `aiwg doctor` reports
+whether the project has a resource lockfile, which source/selector is pinned,
+whether the locked cache generation is warm, and whether cached bytes drift
+from the lockfile digests.
 
 ## Cache Cleanup
 
@@ -204,6 +206,19 @@ reports the same `removed` and `preserved` sets without deleting anything.
 when intentionally discarding the project lock's cached release bytes. Cleanup
 does not weaken normal cache reads: every later `discover`, `show`, or
 `versions` resolution still re-verifies signed metadata and descriptor digests.
+
+## Doctor Diagnostics
+
+`aiwg doctor` includes a **Web resource cache** section:
+
+- Projects without `.aiwg/resources.lock.json` report informational source-mode
+  status: web resources are not pinned for that project.
+- Projects with a lockfile report the pinned source, selector, resolved version,
+  and manifest digest.
+- Missing locked cache generations report a warning with the cache root and a
+  warm-cache recovery hint.
+- Locked cache bytes that no longer match the manifest or Fortemi Core digests
+  report an error and make doctor fail.
 
 ### Current query constraints
 
@@ -292,5 +307,4 @@ behavior.
 
 - SemVer range version selectors.
 - Web behavior for `aiwg use`/`aiwg regenerate`.
-- Doctor lock drift diagnostics.
 - Web parity for project/codebase graph operations.
