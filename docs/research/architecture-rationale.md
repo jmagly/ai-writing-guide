@@ -752,4 +752,4 @@ Where research provides directional guidance rather than quantified metrics, we 
 - @docs/research/research-background.md - Full literature review
 - @.aiwg/planning/documentation-professionalization-plan.md - Documentation strategy
 - @.aiwg/research/paper-analysis/INDEX.md - Complete paper analysis index
-- @docs/references/ - Full reference documents (REF-001 through REF-066)
+- @docs/references/ - Full reference documents (REF-001 through REF-075)

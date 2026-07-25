@@ -6,7 +6,17 @@
     "REF-001-production-grade-agentic-workflows",
     "REF-002-llm-failure-modes-agentic",
     "REF-003-agentic-development-antipatterns",
-    "REF-066-mcp-specification-2025"
+    "REF-066-mcp-specification-2025",
+    "REF-067-semver-2",
+    "REF-068-npm-dist-tags-lockfile-integrity",
+    "REF-069-oci-distribution-spec",
+    "REF-070-oci-image-spec",
+    "REF-071-w3c-subresource-integrity",
+    "REF-072-the-update-framework",
+    "REF-073-cryptographic-registry-provenance",
+    "REF-074-signing-is-not-enough-provenance-graph",
+    "REF-075-supply-chain-poisoning-agent-skills",
+    "acquisition-status-web-resource-distribution"
   ],
   "exclude": ["README"]
 }

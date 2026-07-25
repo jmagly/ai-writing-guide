@@ -285,6 +285,29 @@ AIWG corpus.
   be used for local testing.
 - Signature verification cannot be disabled.
 
+## Research Basis
+
+The web-backed resource beta is grounded in public AIWG reference notes:
+
+- [REF-067](../references/REF-067-semver-2.md): exact version and immutability
+  expectations.
+- [REF-068](../references/REF-068-npm-dist-tags-lockfile-integrity.md):
+  channel labels, exact resolution, and lockfile integrity.
+- [REF-069](../references/REF-069-oci-distribution-spec.md) and
+  [REF-070](../references/REF-070-oci-image-spec.md): manifest and descriptor
+  patterns for content-addressed distribution.
+- [REF-071](../references/REF-071-w3c-subresource-integrity.md): fail-closed
+  hash verification for fetched web resources.
+- [REF-072](../references/REF-072-the-update-framework.md): secure-update
+  metadata, rollback checks, and future threshold-signing direction.
+- [REF-073](../references/REF-073-cryptographic-registry-provenance.md),
+  [REF-074](../references/REF-074-signing-is-not-enough-provenance-graph.md),
+  and [REF-075](../references/REF-075-supply-chain-poisoning-agent-skills.md):
+  supply-chain trust boundaries that signatures alone do not close.
+
+The induction tracker for #1855 is
+[Web Resource Distribution Acquisition Status](../references/acquisition-status-web-resource-distribution.md).
+
 ## Troubleshooting
 
 | Symptom | Meaning | Recovery |

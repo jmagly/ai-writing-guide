@@ -19,9 +19,10 @@
 | Tool Use & Acting | 3 | ReAct, Toolformer, SWE-bench |
 | Iteration & Recovery | 4 | Self-Refine, Reflexion, LATS, Constitutional AI |
 | Failure & Production | 3 | Roig, Bandara, AIWG Anti-Patterns |
-| Specifications | 1 | MCP |
+| Specifications & Distribution Standards | 7 | MCP, SemVer, npm, OCI, SRI, TUF |
 | Research Management | 7 | FAIR, OAIS, PROV, GRADE, R-LAM, LitLLM, Agent Lab |
-| **Total** | **34** | |
+| Supply-Chain Trust | 3 | Registry Provenance, Provenance Graphs, Agent Skill Poisoning |
+| **Total** | **43** | |
 
 ## References by Category
 
@@ -81,11 +82,25 @@
 | REF-002 | [LLM Failure Modes in Agentic Scenarios](REF-002-llm-failure-modes-agentic.md) | Roig | 2025 | Failure archetypes, recovery |
 | REF-003 | [Agentic Development Anti-Patterns](REF-003-agentic-development-antipatterns.md) | AIWG | 2025 | Compensatory behaviors, code cruft |
 
-### Tier 2: Specifications
+### Tier 2: Specifications & Distribution Standards
 
 | ID | Title | Authors | Year | AIWG Relevance |
 |----|-------|---------|------|----------------|
 | REF-066 | [MCP Specification](REF-066-mcp-specification-2025.md) | Anthropic | 2025 | Model Context Protocol integration |
+| REF-067 | [Semantic Versioning 2.0.0](REF-067-semver-2.md) | Preston-Werner | 2013 | Immutable version contract, selector precedence |
+| REF-068 | [npm Dist-Tags and Lockfile Integrity](REF-068-npm-dist-tags-lockfile-integrity.md) | npm | 2026 | Channel labels, exact resolution, lockfile integrity |
+| REF-069 | [OCI Distribution Specification](REF-069-oci-distribution-spec.md) | OCI | 2021-2026 | Registry API and manifest distribution model |
+| REF-070 | [OCI Image Specification](REF-070-oci-image-spec.md) | OCI | 2017-2026 | Descriptor digests, size commitments, content addressability |
+| REF-071 | [W3C Subresource Integrity](REF-071-w3c-subresource-integrity.md) | W3C | 2016-2026 | Hash-verifying fetched web resources |
+| REF-072 | [The Update Framework](REF-072-the-update-framework.md) | TUF | 2010-2026 | Secure-update metadata, rollback protection |
+
+### Tier 2: Supply-Chain Trust
+
+| ID | Title | Authors | Year | AIWG Relevance |
+|----|-------|---------|------|----------------|
+| REF-073 | [Cryptographic Registry Provenance](REF-073-cryptographic-registry-provenance.md) | McCann | 2026 | Registry identity, namespace binding, dependency-confusion defense |
+| REF-074 | [Signing Is Not Enough](REF-074-signing-is-not-enough-provenance-graph.md) | Ercan | 2026 | Artifact provenance graphs beyond per-object signatures |
+| REF-075 | [Supply-Chain Poisoning Against Agent Skills](REF-075-supply-chain-poisoning-agent-skills.md) | Qu et al. | 2026 | Agent skill marketplace poisoning and documentation payload threat model |
 
 ### Tier 2: Research Management & Reproducibility
 
@@ -139,8 +154,21 @@
 - REF-002: Roig (2025) - LLM Failure Modes
 - REF-003: AIWG (2025) - Development Anti-Patterns
 
-### Specifications
+### Specifications & Distribution Standards
+
 - REF-066: Anthropic (2025) - MCP Specification
+- REF-067: Preston-Werner (2013) - Semantic Versioning 2.0.0
+- REF-068: npm (2026) - Dist-Tags and Lockfile Integrity
+- REF-069: OCI (2021-2026) - Distribution Specification
+- REF-070: OCI (2017-2026) - Image Specification
+- REF-071: W3C (2016-2026) - Subresource Integrity
+- REF-072: TUF (2010-2026) - The Update Framework
+
+### Supply-Chain Trust
+
+- REF-073: McCann (2026) - Cryptographic Registry Provenance
+- REF-074: Ercan (2026) - Signing Is Not Enough
+- REF-075: Qu et al. (2026) - Supply-Chain Poisoning Against Agent Skills
 
 ### Evaluation & Benchmarks
 - REF-014: Jimenez et al. (2024) - SWE-bench
@@ -173,6 +201,6 @@ When adding a new reference:
 
 ---
 
-*Last updated: 2026-02-28*
-*Issue: #74 Research Acquisition*
-*Total references: 34*
+*Last updated: 2026-07-24*
+*Issue: #1855 Web resource distribution research induction*
+*Total references: 43*

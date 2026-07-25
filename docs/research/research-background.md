@@ -654,6 +654,6 @@ AIWG is transparent about limitations to maintain research credibility:
 
 - @.aiwg/planning/documentation-professionalization-plan.md - Documentation professionalization strategy
 - @.aiwg/research/paper-analysis/INDEX.md - Complete paper analysis index
-- @docs/references/ - Full reference documents (REF-001 through REF-066)
+- @docs/references/ - Full reference documents (REF-001 through REF-075)
 - @docs/glossary.md - Professional terminology mapping (planned)
 - @.aiwg/research/research-gap-analysis.md - Known research gaps (planned)
