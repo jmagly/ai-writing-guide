@@ -15,6 +15,7 @@ W3C. (2016). *Subresource Integrity becomes a W3C Recommendation*.
 | Year | 2016-2026 |
 | Type | Web security specification |
 | Status | SRI 1 Recommendation; SRI 2 active draft |
+| GRADE / Quality | A - W3C standardization track and deployed browser security primitive |
 | AIWG Relevance | High - Direct precedent for hash-verifying fetched web resources |
 
 ## Executive Summary

@@ -16,6 +16,7 @@ The Update Framework. (2026). *Publications*. TUF.
 | Year | 2010-2026 |
 | Type | Secure update framework and specification |
 | Status | Active CNCF graduated project ecosystem |
+| GRADE / Quality | A - mature secure-update specification with production deployments and literature base |
 | AIWG Relevance | High - Canonical model for secure metadata, rollback protection, and key compromise resilience |
 
 ## Executive Summary

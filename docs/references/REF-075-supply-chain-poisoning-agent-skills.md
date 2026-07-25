@@ -15,6 +15,7 @@ Local source corpus: `/home/roctinam/dev/research/research-papers` REF-936.
 | Year | 2026 |
 | Type | arXiv preprint |
 | Source status | Full PDF/text archived in local research corpus |
+| GRADE / Quality | A- - empirical security preprint with multi-framework evaluation and disclosure evidence |
 | AIWG Relevance | Critical - Direct threat model for AIWG skills and addons |
 
 ## Executive Summary

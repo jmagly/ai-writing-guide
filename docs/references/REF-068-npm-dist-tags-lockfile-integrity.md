@@ -18,6 +18,7 @@ npm. (2026). *Adding dist-tags to packages*. npm documentation.
 | Year | 2026 |
 | Type | Package registry and CLI documentation |
 | Status | Active operational standard for JavaScript package distribution |
+| GRADE / Quality | A- - official implementation documentation for a dominant package ecosystem |
 | AIWG Relevance | High - Provides the nearest operator model for channels, exact resolution, and lockfiles |
 
 ## Executive Summary

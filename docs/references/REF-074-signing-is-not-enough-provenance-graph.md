@@ -15,6 +15,7 @@ Local source corpus: `/home/roctinam/dev/research/research-papers` REF-742.
 | Year | 2026 |
 | Type | Engineering blog / vendor position piece |
 | Source status | Web snapshot archived in local research corpus |
+| GRADE / Quality | B - practical standards-grounded article; vendor source and not empirical |
 | AIWG Relevance | Medium - Clear lineage model for signed artifacts with multiple inputs |
 
 ## Executive Summary

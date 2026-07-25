@@ -15,6 +15,7 @@ Local source corpus: `/home/roctinam/dev/research/research-papers` REF-1814.
 | Year | 2026 |
 | Type | arXiv preprint |
 | Source status | Full PDF/text archived in local research corpus |
+| GRADE / Quality | B - technically coherent preprint; not peer reviewed at induction time |
 | AIWG Relevance | High - Direct model for registry identity and namespace binding |
 
 ## Executive Summary

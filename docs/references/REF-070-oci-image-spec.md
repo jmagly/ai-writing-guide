@@ -15,6 +15,7 @@ Descriptor specification:
 | Year | 2017-2026 |
 | Type | Content and descriptor specification |
 | Status | Active OCI standard |
+| GRADE / Quality | A - normative content descriptor specification with broad adoption |
 | AIWG Relevance | Medium - Descriptor and digest model for verifiable resource bundles |
 
 ## Executive Summary

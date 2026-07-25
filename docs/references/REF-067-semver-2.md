@@ -12,6 +12,7 @@ Semantic Versioning. <https://semver.org/>
 | Year | 2013 |
 | Type | Versioning specification |
 | Status | Stable, widely adopted |
+| GRADE / Quality | A - normative specification with broad ecosystem adoption |
 | AIWG Relevance | High - Defines exact version precedence and immutability language for resource selectors |
 
 ## Executive Summary

@@ -14,6 +14,7 @@ Rendered specification: <https://specs.opencontainers.org/distribution-spec/>
 | Year | 2021-2026 |
 | Type | Registry API specification |
 | Status | Active OCI standard |
+| GRADE / Quality | A - normative distribution specification with conformance ecosystem |
 | AIWG Relevance | Medium - Registry model for immutable content distribution and referrers |
 
 ## Executive Summary
