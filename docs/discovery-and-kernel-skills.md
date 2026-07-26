@@ -40,6 +40,38 @@ aiwg doctor
 
 If the kernel quickref or the always-loaded ops skills don't already answer the question, run `aiwg discover`. Surface the top match (or top-3) to the user. Use `aiwg show` to read the file content without navigating storage paths yourself.
 
+## Benchmarking discovery changes
+
+Discovery ranking changes must be measured against the versioned operational
+corpus before they replace the lexical fallback:
+
+```bash
+aiwg index eval-discovery \
+  --queries test/fixtures/artifacts/discovery-relevance.jsonl \
+  --backend local \
+  --strategy lexical
+```
+
+`--backend` accepts `local` or `fortemi-core`. `--strategy` accepts `lexical`,
+`dense`, `hybrid-rrf`, `rerank`, or `chunk-multivector`; the latter four are
+benchmark prototypes, not live storage or discovery backends. Add `--json` for
+machine-readable output or `--out <path>` to retain the full per-query report.
+
+The report includes Hit@1/3/5, MRR, nDCG@10, per-type Hit@3, hard-negative
+intrusion, p50/p95 latency, index bytes, peak resident memory, and the hardware
+record. Adoption requires all of the following:
+
+- no per-type Hit@3 regression against `local:lexical`;
+- a positive aggregate MRR improvement whose paired 95% confidence interval
+  excludes zero;
+- p95 latency at or below 250 ms and storage at or below 2× the local index;
+- a production representation with tests. A Fortemi representation change must
+  be a separate follow-up with a named profile, published-package conformance,
+  and import/re-export evidence.
+
+The current measurements and decision are recorded in
+[`docs/reports/discovery-relevance-decision-2026-07-25.md`](reports/discovery-relevance-decision-2026-07-25.md).
+
 ## ⚠ Discover-First Protocol (rc.41+)
 
 For any user request mentioning **AIWG**, framework names (sdlc, research, forensics, ops, security-engineering, knowledge-base, marketing, media-curator), or capability keywords (skill, agent, rule, command, addon, workflow, template), `aiwg discover` MUST be the first information-gathering tool call.

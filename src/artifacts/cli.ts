@@ -293,6 +293,10 @@ export async function main(args: string[]): Promise<void> {
       await handleDedup(subcommandArgs);
       break;
 
+    case 'eval-discovery':
+      await handleEvalDiscovery(subcommandArgs);
+      break;
+
     case 'watch':
       await handleWatch(subcommandArgs);
       break;
@@ -324,7 +328,7 @@ export async function main(args: string[]): Promise<void> {
 
     default:
       console.error(`Error: Unknown index subcommand '${subcommand}'`);
-      console.log('Available: build, query, discover, show, export, sync, migrate-legacy, deps, stats, status, list, neighbors, set, embed, similar, dedup-report, watch');
+      console.log('Available: build, query, discover, show, export, sync, migrate-legacy, deps, stats, status, list, neighbors, set, embed, similar, dedup-report, eval-discovery, watch');
       process.exit(1);
   }
 }
@@ -348,6 +352,7 @@ function printIndexUsage(): void {
   console.log('  embed      Build the semantic embedding index for a graph (opt-in deps)');
   console.log('  similar    Semantic neighbors of a node (requires embed)');
   console.log('  dedup-report  Near-duplicate node pairs above a similarity threshold');
+  console.log('  eval-discovery  Benchmark operational capability discovery relevance');
   console.log('  watch      Start a filesystem watcher for automatic incremental index updates');
   console.log('');
   console.log('Options:');
@@ -374,8 +379,58 @@ function printIndexUsage(): void {
   console.log('  aiwg index deps .aiwg/requirements/UC-001.md');
   console.log('  aiwg index stats --json');
   console.log('  aiwg index stats --graph project');
+  console.log('  aiwg index eval-discovery --queries test/fixtures/artifacts/discovery-relevance.jsonl --backend local --strategy lexical');
   console.log('  aiwg index neighbors --graph citation-network --node REF-008 --direction in --edge-type cites');
   console.log('  aiwg index set --graph citation-network --op intersection --node-a REF-008 --node-b REF-016 --direction in');
+}
+
+async function handleEvalDiscovery(args: string[]): Promise<void> {
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log('Usage: aiwg index eval-discovery --queries <jsonl> --backend <local|fortemi-core> --strategy <lexical|dense|hybrid-rrf|rerank|chunk-multivector> [options]');
+    console.log('');
+    console.log('Options:');
+    console.log('  --queries <path>   Versioned relevance JSONL fixture (required)');
+    console.log('  --backend <name>   local or fortemi-core (required)');
+    console.log('  --strategy <name>  lexical, dense, hybrid-rrf, rerank, or chunk-multivector');
+    console.log('  --out <path>       Write the JSON report to a file');
+    console.log('  --json             Emit JSON instead of the readable summary');
+    return;
+  }
+  const queries = parseFlagValue(args, '--queries', 'Error: --queries requires a JSONL path');
+  if (!queries) {
+    console.error('Error: --queries is required');
+    process.exit(1);
+  }
+  const backend = parseFlagValue(args, '--backend', 'Error: --backend requires local or fortemi-core');
+  if (backend !== 'local' && backend !== 'fortemi-core') {
+    console.error('Error: --backend must be local or fortemi-core');
+    process.exit(1);
+  }
+  const strategy = parseFlagValue(args, '--strategy', 'Error: --strategy requires a value') ?? 'lexical';
+  const { DISCOVERY_EVAL_STRATEGIES, evaluateDiscovery, formatDiscoveryEvalSummary } = await import('./discovery-eval.js');
+  if (!(DISCOVERY_EVAL_STRATEGIES as readonly string[]).includes(strategy)) {
+    console.error(`Error: --strategy must be ${DISCOVERY_EVAL_STRATEGIES.join(', ')}`);
+    process.exit(1);
+  }
+  try {
+    const report = await evaluateDiscovery({
+      cwd: process.cwd(),
+      fixturePath: path.resolve(queries),
+      backend,
+      strategy: strategy as import('./discovery-eval.js').DiscoveryEvalStrategy,
+    });
+    const serialized = `${JSON.stringify(report, null, 2)}\n`;
+    const out = parseFlagValue(args, '--out', 'Error: --out requires a path');
+    if (out) {
+      const fs = await import('node:fs');
+      fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
+      fs.writeFileSync(path.resolve(out), serialized);
+    }
+    console.log(args.includes('--json') ? serialized.trimEnd() : formatDiscoveryEvalSummary(report));
+  } catch (error) {
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
 }
 
 /**

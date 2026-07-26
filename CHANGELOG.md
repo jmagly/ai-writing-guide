@@ -4,6 +4,14 @@
 
 ### Added
 
+- Operational discovery now has a versioned 80-query relevance corpus and
+  `aiwg index eval-discovery` benchmark covering all eight broad capability
+  types. The runner reports Hit@1/3/5, MRR, nDCG@10, per-type Hit@3,
+  hard-negative intrusion, latency, index size, and resident memory for the
+  current local/Fortemi static paths and four explicitly non-production
+  retrieval prototypes. The checked-in decision retains lexical discovery
+  because no prototype clears the confidence and representation gates (#1819).
+
 - Generated provider bootstrap guidance now assesses non-trivial work for
   bounded parallel decomposition, selects the efficiency, coding, or reasoning
   worker wrapper by task characteristics, enforces the minimum applicable

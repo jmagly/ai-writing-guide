@@ -101,7 +101,7 @@ function includesAny(text: string, terms: string[]): number {
   return matches;
 }
 
-function scoreStaticRecord(
+export function scoreStaticRecord(
   record: AiwgFortemiRecord,
   terms: string[],
 ): { score: number; matched: string[] } {
