@@ -404,8 +404,10 @@ For shard conversion, AIWG now pins `@fortemi/core@2026.7.14`. The immutable
 `core-v1` receipt records the registry integrity, Core authority and schema
 bundle digests, AIWG v2 source-schema authority and digest, archive SHA-256,
 producer/consumer revisions, native consumer receipts, exact CI jobs, and
-capability loss report. Blocking CI verifies the actual published converter, a
-clean PGlite import/re-export, and a clean Fortemi server import/re-export.
+capability loss report. It also binds the canonical matrix coverage vocabulary
+used to promote each consumer cell. Blocking CI verifies the actual published
+converter, a clean PGlite import/re-export, and a clean Fortemi server
+import/re-export.
 
 The separate `full-v1` consumer receipt binds the public package entry point,
 release source/tag, registry integrity, schema-2 authority digests, source

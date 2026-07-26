@@ -207,6 +207,17 @@
       "persistent_mutation": 0
     }
   ],
+  "coverage": [
+    "hierarchy",
+    "metadata",
+    "nulls",
+    "tombstones",
+    "current-minus-two",
+    "current",
+    "next-major-rejection",
+    "malformed-input",
+    "resource-limits"
+  ],
   "claim_boundary": {
     "profile": "core-v1",
     "schema_version": "1.2.0",
