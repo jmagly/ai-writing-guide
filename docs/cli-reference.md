@@ -1667,8 +1667,8 @@ aiwg catalog search <query>
 ### skills
 
 Search third-party registry adapters and manage standard-aware Agent Skills
-imports. agentskills.io defines a directory format; it does not provide an
-official registry API.
+imports and exports. agentskills.io defines a directory format; it does not
+provide an official registry API.
 
 ```bash
 aiwg skills <subcommand> [options]
@@ -1725,6 +1725,7 @@ aiwg skills import \
 aiwg skills deploy portable-complete --target generic --dry-run --json
 aiwg skills deploy portable-complete --target generic
 aiwg skills uninstall portable-complete --target generic
+aiwg skills export aiwg-status --out ./agent-skill-exports --json
 ```
 
 Validation uses `aiwg validate-metadata --profile <profile>`, where the profile

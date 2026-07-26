@@ -1,9 +1,9 @@
 # Agent Skills import and deployment
 
-AIWG can validate, import, inspect, update, deploy, and uninstall skills that
-follow the [Agent Skills](https://agentskills.io/) directory format. Import is a
-local managed workflow: agentskills.io specifies a format and authoring rules,
-but it does not provide an official registry API or registry protocol.
+AIWG can validate, import, inspect, update, deploy, export, and uninstall skills
+that follow the [Agent Skills](https://agentskills.io/) directory format. Import
+is a local managed workflow: agentskills.io specifies a format and authoring
+rules, but it does not provide an official registry API or registry protocol.
 
 AIWG pins its interpretation to
 `agentskills/agentskills@38a2ff82958afee88dadf4831509e6f7e9d8ef4e`
@@ -116,9 +116,8 @@ Use any canonical target ID from the [provider matrix](#provider-matrix), or use
 aiwg skills deploy portable-complete --target all --json
 ```
 
-The all-target command currently exits nonzero because Hermes returns an
-explicit `unsupported`/`blocked` result. Supported targets still report their
-individual results. No Hermes projection is written.
+The all-target command writes every supported managed projection, including the
+Hermes user-global `~/.hermes/skills/<name>` bundle.
 
 ### 7. Update
 
@@ -149,6 +148,22 @@ aiwg skills uninstall portable-complete --target generic
 Uninstall removes only a directory with the exact AIWG ownership marker and a
 valid matching deployment sidecar. It never removes a user-owned collision.
 The managed import remains available for inspection and later redeployment.
+
+### 9. Export an AIWG skill as a strict bundle
+
+Export is separate from publish. It creates a portable Agent Skills directory
+from a local AIWG skill without requiring any registry protocol:
+
+```bash
+aiwg skills export aiwg-status --out ./agent-skill-exports --json
+```
+
+The exported directory is `./agent-skill-exports/aiwg-status/`. Its `SKILL.md`
+contains only strict Agent Skills frontmatter. Recognized AIWG control fields
+are omitted from `SKILL.md` and listed in `.aiwg-agent-skill-export.json` with
+source path, source digest, export digest, exported time, AIWG version, and the
+pinned upstream baseline. Use `--dry-run` to preview and `--force` only after
+reviewing an existing output directory.
 
 ## Portable and AIWG metadata
 
@@ -302,7 +317,7 @@ validated Agent Skills name.
 | `copilot` | `<project>/.github/skills/<name>` | `native` | exact | Recursive native bundle |
 | `cursor` | `<project>/.cursor/skills/<name>` | `native` | exact | Recursive native bundle |
 | `factory` | `<project>/.factory/skills/<name>` | `projected` | exact | Adds Factory description guidance, then strictly reparses |
-| `hermes` | `~/.hermes/skills/<name>` | `unsupported` | no write | Session-loaded global routing remains authoritative |
+| `hermes` | `~/.hermes/skills/<name>` | `native` | exact | User-global recursive bundle with managed ownership sidecars |
 | `opencode` | `<project>/.opencode/skill/<name>` | `native` | exact | Recursive native bundle |
 | `openclaw` | `~/.openclaw/skills/<name>` | `native` | exact | Global recursive native bundle |
 | `openhuman` | `~/.openhuman/skills/<name>` | `projected` | exact | Verified global one-level skill layout |
@@ -332,6 +347,8 @@ silently discard standard data.
 | `AS_DEPLOY_IMPORT_INACTIVE` | Import is not trusted and active | Review and re-import the exact digest with trust and activation |
 | `AS_DEPLOY_IMPORT_DRIFT` | Deployment source no longer matches its digest | Restore or explicitly update the managed import |
 | `AS_DOCTOR_DEPLOYED_DRIFT` | Provider files, sidecar, or resources differ from the desired projection | Review local changes, then redeploy the managed import |
+| `AS_EXPORT_COLLISION` | Export output already exists | Inspect the target directory; rerun with `--force` only after review |
+| `AS_EXPORT_VALIDATION` | The source skill is not compatible with the Agent Skills contract | Fix the source metadata/body/resource diagnostics before exporting |
 | Provider result is `degraded` | Provider cannot represent accepted data without loss | Read `reasons`; change the source or select another provider |
 | Provider result is `unsupported` | No safe managed projection is enabled | Use the provider's documented routing path; no target was written |
 
@@ -362,6 +379,7 @@ content.
 | Provider deployment | #1879; `src/skills/deployer.ts`; provider/lifecycle tests |
 | Complete conformance matrix | #1880; lifecycle fixtures and round-trip test |
 | User workflow and docs smoke | #1881; this guide, CLI reference, and documentation test |
+| Hermes managed projection and strict export | #1894, #1895, #1896; `src/skills/exporter.ts`; deployer/export/docs tests |
 
 Together these rows provide the implementation and documentation evidence for
 parent issue #1569.

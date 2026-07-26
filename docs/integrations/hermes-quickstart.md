@@ -606,7 +606,9 @@ Hermes hosts plugins at `plugins/` (kanban, memory, observability, disk-cleanup,
 
 ## What This Integration Is NOT
 
-- **Not `aiwg use sdlc --provider hermes`** — there is no `hermes.mjs` provider
+- **Not `aiwg use sdlc --provider hermes`** when your goal is only MCP sidecar
+  setup. The Hermes file-deploy provider exists and is used for framework
+  artifacts; MCP sidecar setup is a separate optional integration path.
 - **Not mirroring `.aiwg/` into Hermes memory** — exchange references only
 - **Not a TypeScript-to-Python bridge** — MCP is the seam
 - **Not a replacement for Hermes's built-in tools** — AIWG adds structured workflows on top

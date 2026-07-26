@@ -79,11 +79,10 @@
       "id": "hermes",
       "location": "home",
       "root": ".hermes/skills",
-      "status": "unsupported",
-      "outcome": "blocked",
-      "validator": "not-applicable",
-      "resources": "not-applicable",
-      "allowedReason": "session-loaded global skill set"
+      "status": "native",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
     },
     {
       "id": "opencode",

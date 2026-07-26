@@ -27,9 +27,14 @@ import {
   deployImportedAgentSkill,
   uninstallImportedAgentSkill,
 } from './deployer.js';
+import {
+  AgentSkillExportError,
+  exportAgentSkillDirectory,
+} from './exporter.js';
 import type {
   AgentSkillDeploymentOptions,
   AgentSkillDeploymentResult,
+  AgentSkillExportOptions,
   AgentSkillImportOptions,
   AgentSkillImportSource,
   SkillDetails,
@@ -625,6 +630,142 @@ async function handleDeployment(
   }
 }
 
+interface ParsedExportArgs {
+  name: string;
+  provider: string;
+  outDir: string;
+  dryRun: boolean;
+  force: boolean;
+  json: boolean;
+}
+
+function parseExportArgs(args: string[]): ParsedExportArgs {
+  let provider = 'local';
+  let outDir: string | undefined;
+  let dryRun = false;
+  let force = false;
+  let json = false;
+  const positional: string[] = [];
+  const takeValue = (index: number, flag: string): string => {
+    const value = args[index + 1];
+    if (!value || value.startsWith('--')) {
+      throw new Error(`${flag} requires a value`);
+    }
+    return value;
+  };
+
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+    switch (argument) {
+      case '--provider':
+        provider = takeValue(index, argument);
+        index += 1;
+        break;
+      case '--out':
+        outDir = takeValue(index, argument);
+        index += 1;
+        break;
+      case '--dry-run':
+        dryRun = true;
+        break;
+      case '--force':
+        force = true;
+        break;
+      case '--json':
+        json = true;
+        break;
+      default:
+        if (argument.startsWith('--')) {
+          throw new Error(`unknown export option "${argument}"`);
+        }
+        positional.push(argument);
+    }
+  }
+  if (positional.length !== 1) {
+    throw new Error('export requires exactly one skill name');
+  }
+  if (!outDir) {
+    throw new Error('export requires --out <directory>');
+  }
+  return {
+    name: positional[0],
+    provider,
+    outDir,
+    dryRun,
+    force,
+    json,
+  };
+}
+
+function printExportUsage(): void {
+  console.log('Usage: aiwg skills export <name> --out <directory> [options]');
+  console.log('');
+  console.log('Options:');
+  console.log('  --provider <registry>  Skill registry to read from (default: local)');
+  console.log('  --out <directory>      Parent directory for the exported Agent Skill');
+  console.log('  --dry-run              Validate and plan without writing');
+  console.log('  --force                Replace an existing export directory after review');
+  console.log('  --json                 Emit deterministic structured output');
+}
+
+async function handleExport(args: string[]): Promise<void> {
+  let parsed: ParsedExportArgs;
+  try {
+    parsed = parseExportArgs(args);
+  } catch (error) {
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    printExportUsage();
+    process.exit(1);
+  }
+
+  try {
+    const details = await getSkillInfo(parsed.name, parsed.provider);
+    if (!details?.path) {
+      throw new AgentSkillExportError(
+        'AS_EXPORT_SKILL_NOT_FOUND',
+        `skill '${parsed.name}' was not found in ${parsed.provider} with a local SKILL.md path`,
+      );
+    }
+    const options: AgentSkillExportOptions = {
+      outDir: parsed.outDir,
+      dryRun: parsed.dryRun,
+      force: parsed.force,
+    };
+    const result = exportAgentSkillDirectory(
+      details.path.replace(/(?:^|[/\\])SKILL\.md$/, ''),
+      options,
+    );
+    if (parsed.json) {
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+    console.log('');
+    console.log(`Agent Skill export: ${result.status}`);
+    console.log(`Name:          ${result.name}`);
+    console.log(`Output:        ${result.outputPath}`);
+    console.log(`Source digest: ${result.sourceDigest}`);
+    console.log(`Export digest: ${result.exportDigest}`);
+    console.log(`Files:         ${result.fileCount}`);
+    if (result.omittedAiwgFields.length > 0) {
+      console.log(`Omitted AIWG fields: ${result.omittedAiwgFields.join(', ')}`);
+    }
+    console.log('');
+  } catch (error) {
+    const exportError = error instanceof AgentSkillExportError ? error : undefined;
+    if (parsed.json) {
+      console.log(JSON.stringify({
+        schemaVersion: 1,
+        status: 'error',
+        code: exportError?.code ?? 'AS_EXPORT_FAILED',
+        message: error instanceof Error ? error.message : String(error),
+      }, null, 2));
+    } else {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    process.exit(1);
+  }
+}
+
 /**
  * Handle 'skills publish' command
  */
@@ -772,13 +913,17 @@ export async function main(args: string[]): Promise<void> {
       await handleDeployment('uninstall', subcommandArgs);
       break;
 
+    case 'export':
+      await handleExport(subcommandArgs);
+      break;
+
     case 'publish':
       await handlePublish(subcommandArgs);
       break;
 
     case undefined:
       console.error('Error: Skills subcommand required');
-      console.log('Available: run, search, info, list, install, import, deploy, uninstall, publish');
+      console.log('Available: run, search, info, list, install, import, deploy, uninstall, export, publish');
       console.log('');
       console.log('Examples:');
       console.log('  aiwg skills run workspace-health');
@@ -793,12 +938,13 @@ export async function main(args: string[]): Promise<void> {
       console.log('  aiwg skills import ./my-skill --dry-run');
       console.log('  aiwg skills deploy my-skill --target all --dry-run');
       console.log('  aiwg skills uninstall my-skill --target claude');
+      console.log('  aiwg skills export my-skill --out ./agent-skills');
       process.exit(1);
       break;
 
     default:
       console.error(`Error: Unknown skills subcommand '${subcommand}'`);
-      console.log('Available: run, search, info, list, install, import, deploy, uninstall, publish');
+      console.log('Available: run, search, info, list, install, import, deploy, uninstall, export, publish');
       process.exit(1);
   }
 }

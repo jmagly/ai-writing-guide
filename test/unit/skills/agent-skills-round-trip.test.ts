@@ -313,14 +313,6 @@ describe('Agent Skills import-to-provider round trip', () => {
         outcome: provider.outcome,
       });
 
-      if (provider.status === 'unsupported') {
-        expect(provider.validator).toBe('not-applicable');
-        expect(provider.resources).toBe('not-applicable');
-        expect(fs.existsSync(expectedPath)).toBe(false);
-        expect(result.reasons.join(' ')).toContain(provider.allowedReason);
-        return;
-      }
-
       expect(provider.validator).toBe('pass');
       expect(provider.resources).toBe('exact');
       const projected = validateAgentSkillFile(path.join(expectedPath, 'SKILL.md'), {

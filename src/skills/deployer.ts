@@ -173,10 +173,8 @@ function resolvePolicy(
       reasons.push('applies the Factory description guidance before strict validation');
       break;
     case 'hermes':
-      status = 'unsupported';
-      supported = false;
       reasons.push(
-        'Hermes remains routed through its session-loaded global skill set; managed import projection is not enabled',
+        'uses the user-global ~/.hermes/skills bundle surface with strict managed ownership markers',
       );
       break;
     case 'openhuman':

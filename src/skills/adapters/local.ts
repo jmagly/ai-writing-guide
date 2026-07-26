@@ -17,7 +17,30 @@ import {
 } from '../../providers/provider-definitions.js';
 
 const _scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const AIWG_ROOT = process.env.AIWG_ROOT || path.resolve(_scriptDir, '../../../');
+
+function resolveAiwgRoot(): string {
+  if (process.env.AIWG_ROOT) return process.env.AIWG_ROOT;
+
+  const candidates = [
+    path.resolve(_scriptDir, '../../../'),
+    path.resolve(_scriptDir, '../../../../'),
+  ];
+  const repoRoot = candidates.find((candidate) => (
+    fs.existsSync(path.join(candidate, 'package.json'))
+    && fs.existsSync(path.join(candidate, 'agentic', 'code'))
+  ));
+  if (repoRoot) return repoRoot;
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(path.join(candidate, 'agentic', 'code'))) {
+      return candidate;
+    }
+  }
+
+  return candidates[0];
+}
+
+const AIWG_ROOT = resolveAiwgRoot();
 
 function resolveSkillFallbackPath(target: string, projectDir: string, name: string): string {
   const definition = getProviderDefinition(target);

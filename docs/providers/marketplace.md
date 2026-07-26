@@ -342,6 +342,10 @@ aiwg use sdlc --provider hermes
 - Skills → `~/.hermes/skills/`
 - **No commands or rules** (Hermes doesn't currently support them)
 
+Managed imported Agent Skills use the separate `aiwg skills deploy <name>
+--target hermes` path. That command writes strict portable bundles directly
+under `~/.hermes/skills/<name>` and protects them with AIWG ownership sidecars.
+
 **Current limitations**: Hermes has the narrowest integration surface of any supported provider. As Hermes's capabilities grow, the provider config can be extended.
 
 ---
@@ -430,7 +434,7 @@ All AIWG-bundled plugins are MIT-licensed. Third-party plugins installed via the
 | Windsurf adapter | ✅ File deployment | `tools/agents/providers/windsurf.mjs` |
 | Warp adapter | ✅ File deployment + `WARP.md` | `tools/agents/providers/warp.mjs` |
 | OpenCode adapter | ✅ File deployment | `tools/agents/providers/opencode.mjs` |
-| Hermes adapter | ✅ Limited file deployment | `tools/agents/providers/hermes.mjs` |
+| Hermes adapter | ✅ Limited file deployment plus managed Agent Skills projection | `tools/agents/providers/hermes.mjs`; `src/skills/deployer.ts` |
 | Copilot adapter | ✅ `.agent.md` generation | `tools/agents/providers/copilot.mjs` |
 
 ---
