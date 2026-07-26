@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/skills/agent-skill-sidecar.v1.schema.json",
+  "title": "AIWG Agent Skill sidecar",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "aiwg",
+    "provenance",
+    "validationProfile",
+    "trust"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://aiwg.io/schemas/skills/agent-skill-sidecar.v1.schema.json"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "aiwg": {
+      "$ref": "#/$defs/aiwgMetadata"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "validationProfile": {
+      "enum": [
+        "strict",
+        "compatible",
+        "discovery"
+      ]
+    },
+    "trust": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "activation"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "untrusted",
+            "trusted",
+            "revoked"
+          ]
+        },
+        "activation": {
+          "enum": [
+            "inactive",
+            "active",
+            "blocked"
+          ]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "aiwgMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "namespace": {},
+        "platforms": {},
+        "commandHint": {},
+        "triggers": {},
+        "version": {},
+        "ensures": {},
+        "invariants": {},
+        "requires": {},
+        "tools": {},
+        "errors": {},
+        "kernel": {},
+        "category": {},
+        "script": {},
+        "status": {},
+        "aliases": {},
+        "userInvocable": {},
+        "author": {},
+        "capabilities": {},
+        "deprecated_names": {},
+        "legacyName": {},
+        "triggerPhrases": {},
+        "autoTrigger": {},
+        "autoTriggerConditions": {},
+        "references": {},
+        "inputRequirements": {},
+        "outputFormat": {},
+        "effort": {},
+        "disableModelInvocation": {},
+        "context": {},
+        "allowedTools": {}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceKind",
+        "locator",
+        "sourceDigest",
+        "importedAt",
+        "aiwgVersion"
+      ],
+      "properties": {
+        "sourceKind": {
+          "enum": [
+            "directory",
+            "git"
+          ]
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requestedRevision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolvedRevision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "aiwgVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
