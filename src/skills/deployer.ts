@@ -82,7 +82,8 @@ interface ProjectionPlan {
   desiredEntries: DesiredEntry[];
 }
 
-interface DeploymentSidecar extends AgentSkillSidecarV1 {
+interface DeploymentSidecar {
+  schemaVersion: 1;
   kind: 'aiwg-managed-agent-skill-projection';
   name: string;
   provider: Platform;
@@ -90,6 +91,7 @@ interface DeploymentSidecar extends AgentSkillSidecarV1 {
   sourceDigest: string;
   reasons: string[];
   warnings: string[];
+  portable: AgentSkillSidecarV1;
 }
 
 export interface AgentSkillProjectionInspection {
@@ -386,7 +388,7 @@ function sidecarBytes(
     record.trust,
   );
   return Buffer.from(`${JSON.stringify({
-    ...portableSidecar,
+    schemaVersion: 1,
     kind: 'aiwg-managed-agent-skill-projection',
     name: record.name,
     provider: policy.provider,
@@ -394,6 +396,7 @@ function sidecarBytes(
     sourceDigest: record.digest,
     reasons: policy.reasons,
     warnings: policy.warnings,
+    portable: portableSidecar,
   }, null, 2)}\n`, 'utf8');
 }
 
@@ -408,8 +411,7 @@ function readDeploymentSidecar(
     if (!stat.isFile() || stat.isSymbolicLink()) return undefined;
     const value = JSON.parse(fs.readFileSync(sidecarPath, 'utf8')) as DeploymentSidecar;
     if (
-      value.$schema !== AGENT_SKILLS_SIDECAR_SCHEMA
-      || value.schemaVersion !== 1
+      value.schemaVersion !== 1
       || value.kind !== 'aiwg-managed-agent-skill-projection'
       || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.name)
       || !normalizeProviderDefinitionId(value.provider)
@@ -421,13 +423,21 @@ function readDeploymentSidecar(
       || !value.reasons.every((item) => typeof item === 'string')
       || !Array.isArray(value.warnings)
       || !value.warnings.every((item) => typeof item === 'string')
-      || typeof value.aiwg !== 'object'
-      || value.aiwg === null
-      || Array.isArray(value.aiwg)
-      || value.provenance?.sourceDigest !== value.sourceDigest
-      || !['strict', 'compatible', 'discovery'].includes(value.validationProfile)
-      || !['untrusted', 'trusted', 'revoked'].includes(value.trust?.state)
-      || !['inactive', 'active', 'blocked'].includes(value.trust?.activation)
+      || value.portable?.$schema !== AGENT_SKILLS_SIDECAR_SCHEMA
+      || value.portable.schemaVersion !== 1
+      || typeof value.portable.aiwg !== 'object'
+      || value.portable.aiwg === null
+      || Array.isArray(value.portable.aiwg)
+      || value.portable.provenance?.sourceDigest !== value.sourceDigest
+      || !['strict', 'compatible', 'discovery'].includes(
+        value.portable.validationProfile,
+      )
+      || !['untrusted', 'trusted', 'revoked'].includes(
+        value.portable.trust?.state,
+      )
+      || !['inactive', 'active', 'blocked'].includes(
+        value.portable.trust?.activation,
+      )
       || (expectedName !== undefined && value.name !== expectedName)
       || (expectedProvider !== undefined && value.provider !== expectedProvider)
       || path.basename(targetPath) !== value.name
