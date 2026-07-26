@@ -739,7 +739,7 @@ export function uninstallImportedAgentSkill(
     name,
     policy.provider,
   );
-  if (!plan.sourceDigest && deployedSidecar) {
+  if (deployedSidecar) {
     plan.sourceDigest = deployedSidecar.sourceDigest;
   }
   const dryRun = options.dryRun ?? false;

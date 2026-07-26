@@ -267,6 +267,12 @@ describe('managed Agent Skills deployment lifecycle', () => {
       },
     );
 
+    const oldProjectionRemoval = uninstallImportedAgentSkill(
+      name,
+      deployOptions('generic', true),
+    );
+    expect(oldProjectionRemoval.sourceDigest).toBe(first.sourceDigest);
+
     const updated = deployImportedAgentSkill(name, deployOptions('generic'));
     expect(updated.outcome).toBe('updated');
     expect(updated.sourceDigest).not.toBe(first.sourceDigest);
