@@ -13,7 +13,7 @@
       "referenceValid": true
     },
     {
-      "path": "invalid-metadata/SKILL.md",
+      "path": "invalid-metadata/SKILL.invalid.md",
       "referenceValid": false
     }
   ]

@@ -1,4 +1,6 @@
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { AGENT_SKILLS_BASELINE } from '../../../src/skills/agent-skills.js';
@@ -42,13 +44,20 @@ describe('validate-metadata Agent Skills integration', () => {
   });
 
   it('fails CI for conformance errors and strict warning escalation', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-metadata-invalid-'));
+    const invalidFile = path.join(root, 'invalid-metadata', 'SKILL.md');
+    fs.mkdirSync(path.dirname(invalidFile));
+    fs.copyFileSync(
+      path.join(fixtures, 'invalid-metadata', 'SKILL.invalid.md'),
+      invalidFile,
+    );
     const invalid = run(
       '--ci',
       '--format',
       'json',
       '--profile',
       'strict',
-      path.join(fixtures, 'invalid-metadata', 'SKILL.md'),
+      invalidFile,
     );
     const warning = run(
       '--ci',
@@ -64,6 +73,7 @@ describe('validate-metadata Agent Skills integration', () => {
     expect(invalid.stdout).toContain('AS_METADATA_VALUE_TYPE');
     expect(warning.status).toBe(1);
     expect(warning.stdout).toContain('AS_ALLOWED_TOOLS_EXPERIMENTAL');
+    fs.rmSync(root, { recursive: true, force: true });
   });
 
   it('scans skill directories recursively', () => {
@@ -80,6 +90,6 @@ describe('validate-metadata Agent Skills integration', () => {
       agentSkills: { summary: { scanned: number } };
     };
 
-    expect(report.agentSkills.summary.scanned).toBe(3);
+    expect(report.agentSkills.summary.scanned).toBe(2);
   });
 });

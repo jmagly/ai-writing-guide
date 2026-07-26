@@ -192,9 +192,14 @@ describe('shared Agent Skills validator', () => {
     expect(oracle.referenceValidatorVersion)
       .toBe(AGENT_SKILLS_BASELINE.referenceValidatorVersion);
     for (const fixture of oracle.cases) {
-      const result = validateAgentSkillFile(path.join(fixtureRoot, fixture.path), {
-        profile: 'strict',
-      });
+      const fixturePath = path.join(fixtureRoot, fixture.path);
+      const result = path.basename(fixturePath) === 'SKILL.md'
+        ? validateAgentSkillFile(fixturePath, { profile: 'strict' })
+        : validateAgentSkillContent(fs.readFileSync(fixturePath, 'utf8'), {
+          profile: 'strict',
+          file: fixturePath,
+          directoryName: path.basename(path.dirname(fixturePath)),
+        });
       expect(
         result.valid,
         `${fixture.path}: ${result.diagnostics.map((item) => item.code).join(', ')}`,
