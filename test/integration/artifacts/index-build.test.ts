@@ -24,6 +24,13 @@ const PROJECT_CORPUS_AVAILABLE = fs.existsSync(AIWG_DIR) && [
   'planning',
   'security',
 ].some(dir => fs.existsSync(path.join(AIWG_DIR, dir)));
+const FULL_SDLC_CORPUS_AVAILABLE = [
+  'requirements',
+  'architecture',
+  'planning',
+  'testing',
+  'security',
+].every(dir => fs.existsSync(path.join(AIWG_DIR, dir)));
 const INDEX_BUILD_BUDGET_MS = parseIntEnv('AIWG_INDEX_BUILD_BUDGET_MS', 15_000);
 
 function parseIntEnv(name: string, def: number): number {
@@ -99,6 +106,7 @@ describe('Artifact Index Build (integration)', () => {
 
   it('should cover at least 5 SDLC phases', () => {
     if (!stats) return;
+    if (!FULL_SDLC_CORPUS_AVAILABLE) return;
     const phaseCount = Object.keys(stats.byPhase).length;
     expect(phaseCount).toBeGreaterThanOrEqual(5);
   });

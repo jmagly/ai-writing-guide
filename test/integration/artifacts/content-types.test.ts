@@ -24,6 +24,20 @@ const PROJECT_CORPUS_AVAILABLE = fs.existsSync(AIWG_DIR) && [
   'planning',
   'security',
 ].some(dir => fs.existsSync(path.join(AIWG_DIR, dir)));
+const REQUIREMENT_USE_CASES_AVAILABLE = fs.existsSync(AIWG_DIR)
+  && hasFileMatching(path.join(AIWG_DIR, 'requirements'), file =>
+    path.basename(file).toLowerCase().startsWith('uc-')
+  );
+
+function hasFileMatching(dir: string, predicate: (file: string) => boolean): boolean {
+  if (!fs.existsSync(dir)) return false;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory() && hasFileMatching(fullPath, predicate)) return true;
+    if (entry.isFile() && predicate(fullPath)) return true;
+  }
+  return false;
+}
 
 describe('Artifact Content Type Classification (integration)', () => {
   let entries: Record<string, MetadataEntry>;
@@ -51,6 +65,7 @@ describe('Artifact Content Type Classification (integration)', () => {
   describe('SDLC artifacts (.aiwg/requirements/)', () => {
     it('should type UC-* files as use-case', () => {
       if (!entries) return;
+      if (!REQUIREMENT_USE_CASES_AVAILABLE) return;
       const useCases = Object.entries(entries).filter(
         ([p]) => p.startsWith('.aiwg/requirements/') && path.basename(p).toLowerCase().startsWith('uc-')
       );

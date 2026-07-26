@@ -97,13 +97,14 @@ You may skip the discover query only when: the user named a specific skill (`/fl
 
 ```mermaid
 flowchart TB
-  subgraph KERNEL["Kernel tier — 21 skills, always loaded"]
+  subgraph KERNEL["Kernel tier — 24 skills, always loaded"]
     direction LR
     K1[9 framework quickrefs<br/>sdlc / research / forensics /<br/>marketing / media-curator /<br/>security-eng / knowledge-base /<br/>ops / aiwg-utils-quickref]
-    K2[10 self-maintenance ops<br/>steward / aiwg-doctor / aiwg-refresh /<br/>aiwg-status / aiwg-help / use /<br/>aiwg-regenerate / aiwg-issue /<br/>aiwg-pr / aiwg-mission]
+    K2[2 routing maps<br/>aiwg-language-map / steward-quickref]
+    K3[13 self-maintenance ops<br/>steward / doctor / refresh / status / help / use /<br/>regenerate router + 3 branches / issue / PR / mission]
   end
 
-  subgraph STANDARD["Standard tier — ~460 skills, read from $AIWG_ROOT"]
+  subgraph STANDARD["Standard tier — ~456 skills, read from $AIWG_ROOT"]
     direction LR
     S1[SDLC workflows<br/>intake-wizard, sdlc-accelerate,<br/>flow-deploy-to-production,<br/>address-issues, ...]
     S2[Domain skills<br/>media-curator, research-,<br/>forensics-, marketing-, ...]

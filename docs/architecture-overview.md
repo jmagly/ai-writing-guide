@@ -22,7 +22,7 @@ Deeper guides:
 flowchart LR
   subgraph Source["AIWG framework source"]
     direction TB
-    KERN[20 kernel skills<br/>~15-25k tokens]
+    KERN[24 kernel skills<br/>always visible]
     STD[~460 standard skills<br/>read from $AIWG_ROOT]
     AGENT[200+ agents]
     RULES[60+ rules]
@@ -70,17 +70,18 @@ flowchart LR
 
 ## 2. The two-tier skill model — kernel vs standard
 
-AIWG ships **480+ skills**. Platform context windows can't fit them all. So AIWG splits them: **20 kernel skills** are always loaded into the platform's flat skill listing; the remaining **~460 standard skills** stay at `$AIWG_ROOT` and reach the agent only when queried via the artifact index.
+AIWG ships **480+ skills**. Platform context windows can't fit them all. So AIWG splits them: **24 kernel skills** are always loaded into the platform's flat skill listing; the remaining **~456 standard skills** stay at `$AIWG_ROOT` and reach the agent only when queried via the artifact index.
 
 ```mermaid
 flowchart TB
-  subgraph KERNEL["Kernel tier — 20 skills, always loaded"]
+  subgraph KERNEL["Kernel tier — 24 skills, always loaded"]
     direction LR
     K1[9 framework quickrefs<br/>sdlc / research / forensics /<br/>marketing / media-curator /<br/>security-eng / knowledge-base /<br/>ops / aiwg-utils-quickref]
-    K2[10 self-maintenance ops<br/>steward / aiwg-doctor / aiwg-refresh /<br/>aiwg-status / aiwg-help / use /<br/>aiwg-regenerate / aiwg-issue /<br/>aiwg-pr / aiwg-mission]
+    K2[2 routing maps<br/>aiwg-language-map / steward-quickref]
+    K3[13 self-maintenance ops<br/>steward / doctor / refresh / status / help / use /<br/>regenerate router + 3 branches / issue / PR / mission]
   end
 
-  subgraph STANDARD["Standard tier — ~460 skills, read from $AIWG_ROOT"]
+  subgraph STANDARD["Standard tier — ~456 skills, read from $AIWG_ROOT"]
     direction LR
     S1[SDLC workflows<br/>intake-wizard, sdlc-accelerate,<br/>flow-deploy-to-production,<br/>address-issues, ...]
     S2[Domain skills<br/>media-curator, research-,<br/>forensics-, marketing-, ...]

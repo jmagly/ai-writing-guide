@@ -1,6 +1,6 @@
 # ops-complete Extensions Guide
 
-The ops-complete extensions add domain-specific agents, templates, rules, and skills on top of the base framework. Each extension targets a specific type of operational repository. This guide covers what each extension provides and when to use it.
+The four ops-complete extensions add domain-specific agents, templates, rules, and skills on top of the base framework. Each extension targets a specific type of operational repository. This guide covers what each extension provides and when to use it.
 
 ## Extension Basics
 
@@ -239,40 +239,6 @@ Install when your repository manages live streaming or media pipeline infrastruc
 
 **Rules**:
 - `stream-key-safety` — Stream keys must be stored in vault; never in plaintext in ops documents
-- `stream-pipeline-gates` — Pipeline changes require health verification before traffic shift
-
-### Example: Stream Service
-
-```yaml
-apiVersion: stream.ops.aiwg.io/v1
-kind: StreamService
-metadata:
-  name: live-encoder-primary
-  namespace: production
-spec:
-  role: ingest
-  upstream: rtmp://ingest.example.com/live
-  downstream:
-    - protocol: HLS
-      output: s3://media-bucket/live/
-      segmentDuration: 4
-  redundancy:
-    enabled: true
-    failoverTarget: live-encoder-backup
-  healthCheck:
-    endpoint: http://localhost:9090/metrics
-    interval: 10s
-```
-
-### Example Usage
-
-```
-Create a stream key rotation runbook for the primary live encoder
-```
-
-```
-Diagnose why the stream pipeline health check is failing
-```
 
 ---
 
@@ -328,6 +294,40 @@ Forge permission detection runs first. If the permission API denies or the opera
 ```
 
 Keys may be resolved remote URLs, `owner/repo` slugs, remote names, or `local`.
+- `stream-pipeline-gates` — Pipeline changes require health verification before traffic shift
+
+### Example: Stream Service
+
+```yaml
+apiVersion: stream.ops.aiwg.io/v1
+kind: StreamService
+metadata:
+  name: live-encoder-primary
+  namespace: production
+spec:
+  role: ingest
+  upstream: rtmp://ingest.example.com/live
+  downstream:
+    - protocol: HLS
+      output: s3://media-bucket/live/
+      segmentDuration: 4
+  redundancy:
+    enabled: true
+    failoverTarget: live-encoder-backup
+  healthCheck:
+    endpoint: http://localhost:9090/metrics
+    interval: 10s
+```
+
+### Example Usage
+
+```
+Create a stream key rotation runbook for the primary live encoder
+```
+
+```
+Diagnose why the stream pipeline health check is failing
+```
 
 ---
 
@@ -336,7 +336,7 @@ Keys may be resolved remote URLs, `owner/repo` slugs, remote names, or `local`.
 Extensions compose cleanly. A `sys` `HostProfile` can be referenced by an `it` `DisasterRecoveryRunbook`, which can reference a `dev` `CIPipeline` to rebuild the recovered service. Cross-extension references follow the same `from:` pattern as the base framework.
 
 ```bash
-# Deploy the common infrastructure extensions
+# Deploy all four extensions
 aiwg use ops --ext sys,it,dev,stream
 
 # Verify

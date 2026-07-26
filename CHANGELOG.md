@@ -1,37 +1,56 @@
 # Changelog
 
-## Unreleased
-
-### Added
-
-- Operational discovery now has a versioned 80-query relevance corpus and
-  `aiwg index eval-discovery` benchmark covering all eight broad capability
-  types. The runner reports Hit@1/3/5, MRR, nDCG@10, per-type Hit@3,
-  hard-negative intrusion, latency, index size, and resident memory for the
-  current local/Fortemi static paths and four explicitly non-production
-  retrieval prototypes. The checked-in decision retains lexical discovery
-  because no prototype clears the confidence and representation gates (#1819).
-
-- Generated provider bootstrap guidance now assesses non-trivial work for
-  bounded parallel decomposition, selects the efficiency, coding, or reasoning
-  worker wrapper by task characteristics, enforces the minimum applicable
-  concurrency cap, and qualifies native, compiled, global-only, and unsupported
-  provider behavior. The primary agent remains responsible for integration,
-  validation, and the final response (#1862).
-
-### Changed
-
-- Remaining context, storage, configuration, MCPsmith, and Toolsmith project
-  artifact paths now resolve through the shared artifact-root resolver.
-  Status/help output reports the resolved root, and migration transaction logs
-  honor `AIWG_ARTIFACTS_PATH` (#1857).
-
 All notable changes to AIWG project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with npm-compatible format (`YYYY.M.PATCH`).
 
 ## [Unreleased]
+
+## [2026.7.20] - 2026-07-26 - "Portable project resources and measured discovery"
+
+### Added
+
+- **Measured operational discovery** - a versioned 80-query relevance corpus
+  and `aiwg index eval-discovery` benchmark now cover all eight broad
+  capability types. The benchmark reports ranking quality, hard-negative
+  intrusion, latency, index size, and memory across production and experimental
+  retrieval paths; the recorded decision retains lexical discovery until a
+  candidate clears the confidence and representation gates (#1819).
+- **Provider kernel conformance** - integration coverage now verifies every
+  supported provider deploys the full canonical kernel skill inventory and no
+  standard skills, keeping the always-visible skill surface aligned across
+  Claude, Codex, Copilot, Cursor, Factory, Hermes, OpenClaw, OpenHuman,
+  OpenCode, Warp, and Windsurf.
+- **Project quickref deployment coverage** - unit tests now lock each supported
+  provider to its expected project-local quickref destination.
+- **Local media transcription adapters** - media-curator transcription and
+  diarization skills now document and provide local adapter scripts, with
+  framework, plugin, and quick-reference surfaces kept in sync.
+
+### Changed
+
+- **Portable project artifact resolution** - remaining context, storage,
+  configuration, MCPsmith, Toolsmith, update, and project-local extension paths
+  resolve through the shared artifact-root model. Status and help output expose
+  the resolved root, and migration records honor `AIWG_ARTIFACTS_PATH` (#1857).
+- **Model-aware provider bootstrap** - generated guidance assesses non-trivial
+  work for bounded decomposition, selects the appropriate worker wrapper,
+  enforces provider concurrency caps, and accurately qualifies native,
+  compiled, global-only, and unsupported behavior (#1862).
+- **Kernel inventory documentation** - architecture and discovery docs now
+  report the current 24-skill kernel surface, including routing maps and
+  self-maintenance branches.
+- **Project-local plugin lifecycle** - standalone packaging, promotion,
+  removal, discovery, and update behavior now share validated project-local
+  paths and package contracts.
+- **Project corpus smoke gates** - real-corpus artifact tests now distinguish
+  partial public runtime `.aiwg` state from the full private SDLC corpus, while
+  preserving the full-corpus assertions when requirements, planning, security,
+  and testing assets are present.
+- **Documentation reconciliation** - the release code-to-docs pass refreshed
+  eight managed framework and addon documentation copies from their
+  authoritative component sources.
 
 ## [2026.7.19] - 2026-07-23 - "Complete package documentation and release verification"
 

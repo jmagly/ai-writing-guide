@@ -71,7 +71,6 @@ Every archive includes self-verifying SHA-256 checksums and W3C PROV-compliant p
 | Cover Art Embedding | Artwork embedding |
 | Integrity Verification | SHA-256 manifests |
 | Transcribe Media | Timestamped transcript sidecars |
-| Diarize Media | Anonymous speaker diarization sidecars |
 | Curate | Assess-and-plan for arbitrary or mixed media |
 | Gap Documentation | GAP-NOTE.md pattern |
 | Provenance Tracking | W3C PROV-O for media |

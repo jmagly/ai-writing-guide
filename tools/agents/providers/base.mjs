@@ -824,7 +824,8 @@ export function isKernelSkill(skillDir) {
  * and standard skills.
  *
  * **Kernel skills** copy to `kernelDestDir` (platform-native dir,
- * always-loaded by the platform). Small set, ~9 quickrefs.
+ * always-loaded by the platform). Small set: currently 24 skills spanning
+ * framework quickrefs, routing maps, and self-maintenance operations.
  *
  * **Standard skills** are NOT copied per-project (#1217). They live at
  * `$AIWG_ROOT/agentic/code/.../skills/<name>/` and `aiwg discover`

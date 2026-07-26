@@ -162,6 +162,31 @@ describe('project quickref generation and deployment (#1788)', () => {
     expect(result.targetPath).toBe(join(projectDir, 'skills', result.skillName, 'SKILL.md'));
   });
 
+  it('deploys to the current kernel surface for every supported provider', async () => {
+    const { projectDir, homeDir } = await fixture();
+    const skillName = projectQuickrefSkillName('acme-console');
+    const expectedRoots: Record<string, string> = {
+      claude: join(projectDir, '.claude', 'skills'),
+      codex: join(projectDir, '.agents', 'skills'),
+      copilot: join(projectDir, '.github', 'skills'),
+      cursor: join(projectDir, '.cursor', 'skills'),
+      factory: join(projectDir, '.factory', 'skills'),
+      hermes: join(homeDir, '.hermes', 'skills'),
+      opencode: join(projectDir, '.opencode', 'skill'),
+      openclaw: join(homeDir, '.openclaw', 'skills', 'aiwg'),
+      openhuman: join(homeDir, '.openhuman', 'skills'),
+      warp: join(projectDir, '.warp', 'skills'),
+      windsurf: join(projectDir, '.windsurf', 'skills'),
+      generic: join(projectDir, 'skills'),
+    };
+
+    for (const [provider, root] of Object.entries(expectedRoots)) {
+      const result = await deployProjectQuickref(projectDir, provider, { homeDir });
+      expect(result.targetPath, provider).toBe(join(root, skillName, 'SKILL.md'));
+      expect(existsSync(result.targetPath), provider).toBe(true);
+    }
+  });
+
   it('prunes only stale quickrefs carrying this project ownership marker', async () => {
     const { projectDir } = await fixture();
     const current = await deployProjectQuickref(projectDir, 'claude');
