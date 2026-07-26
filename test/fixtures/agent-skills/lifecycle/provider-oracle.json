@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "upstreamBaseline": {
+    "repository": "agentskills/agentskills",
+    "revision": "38a2ff82958afee88dadf4831509e6f7e9d8ef4e",
+    "referenceValidatorVersion": "0.1.0"
+  },
+  "skill": {
+    "name": "portable-complete",
+    "resourceSha256": {
+      "LICENSE.txt": "0243ad7f109cb1ccd62fb70e46fe2b70fcc8e131210a5700d802e1a947bd40a8",
+      "assets/example.json": "370b587745b2e3f8c4c5865358e1136e0416948e207be2c6e7b3bd80b7ad1033",
+      "references/guide.md": "f3ad4352af7a4a450633805b8c24e4329d3d2daa420f998650c36207dc08a5a2",
+      "scripts/verify.sh": "d80e156ee8acde14ac291273b42059652c2f516c3b6e5e4da0d25ddd6a642e41"
+    },
+    "aiwg": {
+      "namespace": "fixtures",
+      "platforms": [
+        "all"
+      ],
+      "triggers": [
+        "verify the portable Agent Skills lifecycle"
+      ],
+      "commandHint": {
+        "allowedTools": "Read, Grep, Bash",
+        "orchestration": false
+      },
+      "userInvocable": true
+    }
+  },
+  "providers": [
+    {
+      "id": "claude",
+      "location": "project",
+      "root": ".claude/skills",
+      "status": "native",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
+      "id": "codex",
+      "location": "project",
+      "root": ".agents/skills",
+      "status": "projected",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
+      "id": "copilot",
+      "location": "project",
+      "root": ".github/skills",
+      "status": "native",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
+      "id": "cursor",
+      "location": "project",
+      "root": ".cursor/skills",
+      "status": "native",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
+      "id": "factory",
+      "location": "project",
+      "root": ".factory/skills",
+      "status": "projected",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact",
+      "descriptionSuffix": "Use when relevant to the task."
+    },
+    {
+      "id": "hermes",
+      "location": "home",
+      "root": ".hermes/skills",
+      "status": "unsupported",
+      "outcome": "blocked",
+      "validator": "not-applicable",
+      "resources": "not-applicable",
+      "allowedReason": "session-loaded global skill set"
+    },
+    {
+      "id": "opencode",
+      "location": "project",
+      "root": ".opencode/skill",
+      "status": "native",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
+      "id": "openclaw",
+      "location": "home",
+      "root": ".openclaw/skills",
+      "status": "native",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
+      "id": "openhuman",
+      "location": "home",
+      "root": ".openhuman/skills",
+      "status": "projected",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
+      "id": "warp",
+      "location": "project",
+      "root": ".warp/skills",
+      "status": "native",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
+      "id": "windsurf",
+      "location": "project",
+      "root": ".windsurf/skills",
+      "status": "projected",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
+      "id": "generic",
+      "location": "project",
+      "root": "skills",
+      "status": "native",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    }
+  ]
+}

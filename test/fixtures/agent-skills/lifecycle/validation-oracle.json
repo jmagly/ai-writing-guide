@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "upstreamRevision": "38a2ff82958afee88dadf4831509e6f7e9d8ef4e",
+  "cases": [
+    {
+      "id": "ascii-name-max-valid",
+      "directoryName": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "frontmatter": {
+        "name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "description": "Use when checking the 64-character ASCII name boundary."
+      },
+      "body": "Body.\n",
+      "expectedCodes": []
+    },
+    {
+      "id": "frontmatter-required",
+      "directoryName": "demo",
+      "raw": "Body without frontmatter.\n",
+      "expectedCodes": [
+        "AS_FRONTMATTER_REQUIRED"
+      ]
+    },
+    {
+      "id": "yaml-parse",
+      "directoryName": "demo",
+      "raw": "---\nname: demo\nmetadata: [one] [two]\n---\nBody.\n",
+      "expectedCodes": [
+        "AS_YAML_PARSE"
+      ]
+    },
+    {
+      "id": "yaml-mapping-required",
+      "directoryName": "demo",
+      "raw": "---\n- demo\n- invalid\n---\nBody.\n",
+      "expectedCodes": [
+        "AS_YAML_TYPE"
+      ]
+    },
+    {
+      "id": "name-required",
+      "directoryName": "demo",
+      "frontmatter": {
+        "description": "Use when checking required names."
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_NAME_REQUIRED"
+      ]
+    },
+    {
+      "id": "name-format-uppercase",
+      "directoryName": "Demo",
+      "frontmatter": {
+        "name": "Demo",
+        "description": "Use when checking lowercase ASCII names."
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_NAME_FORMAT"
+      ]
+    },
+    {
+      "id": "name-format-unicode",
+      "directoryName": "cafe",
+      "frontmatter": {
+        "name": "caf\u00e9",
+        "description": "Use when checking Unicode name rejection."
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_NAME_DIRECTORY",
+        "AS_NAME_FORMAT"
+      ]
+    },
+    {
+      "id": "name-directory",
+      "directoryName": "right-name",
+      "frontmatter": {
+        "name": "wrong-name",
+        "description": "Use when checking directory-name equality."
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_NAME_DIRECTORY"
+      ]
+    },
+    {
+      "id": "description-required",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo"
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_DESCRIPTION_REQUIRED"
+      ]
+    },
+    {
+      "id": "description-length",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo",
+        "description": {
+          "$repeat": "d",
+          "count": 1025
+        }
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_DESCRIPTION_LENGTH"
+      ]
+    },
+    {
+      "id": "license-type",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo",
+        "description": "Use when checking license types.",
+        "license": 42
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_LICENSE_TYPE"
+      ]
+    },
+    {
+      "id": "compatibility-type",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo",
+        "description": "Use when checking compatibility types.",
+        "compatibility": [
+          "node"
+        ]
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_COMPATIBILITY_TYPE"
+      ]
+    },
+    {
+      "id": "compatibility-length",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo",
+        "description": "Use when checking compatibility length.",
+        "compatibility": {
+          "$repeat": "c",
+          "count": 501
+        }
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_COMPATIBILITY_LENGTH"
+      ]
+    },
+    {
+      "id": "metadata-type",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo",
+        "description": "Use when checking metadata mappings.",
+        "metadata": [
+          "owner"
+        ]
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_METADATA_TYPE"
+      ]
+    },
+    {
+      "id": "metadata-string-values",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo",
+        "description": "Use when checking metadata value types.",
+        "metadata": {
+          "retries": 3
+        }
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_METADATA_VALUE_TYPE"
+      ]
+    },
+    {
+      "id": "allowed-tools-type",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo",
+        "description": "Use when checking experimental tool syntax.",
+        "allowed-tools": [
+          "Read"
+        ]
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_ALLOWED_TOOLS_TYPE"
+      ]
+    },
+    {
+      "id": "unknown-field",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo",
+        "description": "Use when checking strict unknown-field policy.",
+        "external-policy": true
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_FIELD_UNKNOWN"
+      ]
+    },
+    {
+      "id": "body-required",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo",
+        "description": "Use when checking required Markdown bodies."
+      },
+      "body": "",
+      "expectedCodes": [
+        "AS_BODY_REQUIRED"
+      ]
+    },
+    {
+      "id": "allowed-tools-advisory",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo",
+        "description": "Use when checking experimental tool advisories.",
+        "allowed-tools": "Read  Grep"
+      },
+      "body": "Body.\n",
+      "expectedCodes": [
+        "AS_ALLOWED_TOOLS_EXPERIMENTAL",
+        "AS_ALLOWED_TOOLS_FORMAT"
+      ]
+    },
+    {
+      "id": "size-advisory",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo",
+        "description": "Use when checking progressive-disclosure guidance."
+      },
+      "bodyRepeat": {
+        "value": "long line\n",
+        "count": 2501
+      },
+      "expectedCodes": [
+        "AS_ADVISORY_LINES",
+        "AS_ADVISORY_TOKENS"
+      ]
+    },
+    {
+      "id": "resource-advisory",
+      "directoryName": "demo",
+      "frontmatter": {
+        "name": "demo",
+        "description": "Use when checking resource reference guidance."
+      },
+      "body": "[deep](references/nested/guide.md)\n[escape](../outside.md)\n",
+      "expectedCodes": [
+        "AS_ADVISORY_RESOURCE_DEPTH",
+        "AS_RESOURCE_PATH"
+      ]
+    }
+  ]
+}
