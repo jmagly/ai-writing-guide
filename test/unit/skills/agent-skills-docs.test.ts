@@ -98,6 +98,8 @@ describe('Agent Skills user documentation contract', () => {
     const cli = read('docs/cli-reference.md');
     const adr = read('docs/architecture/adr-agent-skills-portability-contract.md');
     const quality = read('docs/skills/quality-rubric.md');
+    const extensionOverview = read('docs/extensions/overview.md');
+    const extensionTypes = read('docs/extensions/extension-types.md');
     const marketplace = read('docs/providers/marketplace.md');
     const readme = read('README.md');
     const executiveBrief = read('docs/overview/executive-brief.md');
@@ -120,6 +122,14 @@ describe('Agent Skills user documentation contract', () => {
     expect(cli).toContain('import --git <url> --rev <revision> --subpath <path>');
     expect(cli).toContain('aiwg skills export aiwg-status --out ./agent-skill-exports --json');
     expect(quality).toContain('(agent-skills.md)');
+    expect(extensionOverview).toContain('../skills/agent-skills.md');
+    expect(extensionTypes).toContain('../skills/agent-skills.md');
+    expect(extensionTypes).toMatch(
+      /Portable Agent\s+Skills require only `name` and `description`/,
+    );
+    expect(extensionTypes).toMatch(
+      /`namespace` and `platforms` are accepted by the compatible profile/,
+    );
     expect(adr).toContain('.aiwg/skills/imported/<name>/source/');
     expect(adr).toContain('.aiwg-agent-skill.json');
     expect(adr).toContain('under `portable`');

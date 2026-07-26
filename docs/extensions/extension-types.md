@@ -256,6 +256,13 @@ Every SKILL.md file MUST include these fields in its YAML frontmatter:
 | `namespace:` | Recommended | `aiwg` for AIWG-owned skills; drives collision avoidance. |
 | `platforms:` | Optional | Target platform list (e.g. `[all]`, `[claude, codex]`). |
 
+This table describes canonical AIWG skill-source conventions. Portable Agent
+Skills require only `name` and `description`; AIWG-only fields such as
+`namespace` and `platforms` are accepted by the compatible profile and moved
+outside strict provider frontmatter. See
+[Agent Skills import and deployment](../skills/agent-skills.md) for the
+complete field mapping and provider lifecycle.
+
 Missing or empty `description:` will cause deployment to fail on Codex and
 degrade discoverability on every platform. The `aiwg add-skill` scaffolder,
 the SkillSmith generator, and the Codex deployer all enforce this at runtime.
