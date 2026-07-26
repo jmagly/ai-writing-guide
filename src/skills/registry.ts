@@ -7,7 +7,16 @@
  * @implements #539
  */
 
-import type { RegistryAdapter, SkillResult, SkillDetails, InstallOptions } from './types.js';
+import type {
+  AgentSkillImportOptions,
+  AgentSkillImportResult,
+  AgentSkillImportSource,
+  RegistryAdapter,
+  SkillResult,
+  SkillDetails,
+  InstallOptions,
+} from './types.js';
+import { AgentSkillsAdapter } from './adapters/agent-skills.js';
 import { LocalAdapter } from './adapters/local.js';
 import { ClawHubAdapter } from './adapters/clawhub.js';
 import { OpenClawAdapter } from './adapters/openclaw.js';
@@ -17,9 +26,32 @@ import { OpenClawAdapter } from './adapters/openclaw.js';
  */
 const ALL_ADAPTERS: RegistryAdapter[] = [
   new LocalAdapter(),
+  new AgentSkillsAdapter(),
   new ClawHubAdapter(),
   new OpenClawAdapter(),
 ];
+
+/**
+ * Import a standard Agent Skills directory or pinned Git source.
+ */
+export async function importSkillSource(
+  source: AgentSkillImportSource,
+  options: AgentSkillImportOptions,
+  providerId = 'agentskills',
+): Promise<AgentSkillImportResult> {
+  const adapter = getAdapter(providerId);
+  if (!adapter) {
+    throw new Error(`Unknown registry: ${providerId}`);
+  }
+  if (!adapter.importSource) {
+    throw new Error(`Registry '${providerId}' does not support source import`);
+  }
+  const available = await adapter.isAvailable();
+  if (!available) {
+    throw new Error(`Registry '${providerId}' is not available`);
+  }
+  return adapter.importSource(source, options);
+}
 
 /**
  * Get adapter by ID

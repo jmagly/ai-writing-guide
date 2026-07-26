@@ -57,6 +57,9 @@ export interface SkillDetails extends SkillResult {
 
   /** Full markdown content */
   content?: string;
+
+  /** Managed import provenance, trust, diagnostics, and location */
+  imported?: AgentSkillImportResult;
 }
 
 /**
@@ -71,6 +74,81 @@ export interface InstallOptions {
 
   /** Artifact type to install (skill, agent, command, rule) */
   artifactType?: 'skill' | 'agent' | 'command' | 'rule';
+}
+
+export type AgentSkillImportSource =
+  | {
+      kind: 'directory';
+      path: string;
+    }
+  | {
+      kind: 'git';
+      url: string;
+      revision: string;
+      subpath: string;
+    };
+
+export interface AgentSkillImportLimits {
+  maxFiles: number;
+  maxFileBytes: number;
+  maxTotalBytes: number;
+  maxDepth: number;
+  maxGitRepositoryBytes: number;
+}
+
+export interface AgentSkillImportOptions {
+  projectDir: string;
+  profile?: 'strict' | 'compatible';
+  dryRun?: boolean;
+  update?: boolean;
+  force?: boolean;
+  trust?: boolean;
+  activate?: boolean;
+  limits?: Partial<AgentSkillImportLimits>;
+  importedAt?: string;
+  aiwgVersion?: string;
+}
+
+export interface AgentSkillImportDiagnostic {
+  code: string;
+  severity: 'error' | 'warning';
+  file: string;
+  yamlPath: string;
+  message: string;
+  upstreamBaseline: string;
+  remediation: string;
+}
+
+export interface AgentSkillImportResult {
+  schemaVersion: 1;
+  status: 'imported' | 'updated' | 'unchanged' | 'planned';
+  dryRun: boolean;
+  name: string;
+  description: string;
+  digest: string;
+  source:
+    | {
+        kind: 'directory';
+        locator: string;
+      }
+    | {
+        kind: 'git';
+        locator: string;
+        subpath: string;
+        requestedRevision: string;
+        resolvedRevision: string;
+      };
+  validationProfile: 'strict' | 'compatible';
+  diagnostics: AgentSkillImportDiagnostic[];
+  trust: {
+    state: 'untrusted' | 'trusted';
+    activation: 'inactive' | 'active';
+  };
+  importedAt: string;
+  aiwgVersion: string;
+  managedLocation: string;
+  fileCount: number;
+  totalBytes: number;
 }
 
 /**
@@ -100,6 +178,12 @@ export interface RegistryAdapter {
 
   /** Install a skill to a target directory with cross-platform translation */
   install?(name: string, options: InstallOptions): Promise<void>;
+
+  /** Import a byte-preserved Agent Skills source into the managed store */
+  importSource?(
+    source: AgentSkillImportSource,
+    options: AgentSkillImportOptions,
+  ): Promise<AgentSkillImportResult>;
 
   /** Publish a skill package to the registry */
   publish?(packageDir: string): Promise<void>;
