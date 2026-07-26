@@ -85,6 +85,8 @@ jobs:
           DB_PASSWORD="aiwg-fortemi-${GITHUB_RUN_ID}-${DB_PORT}"
           DB_NAME=matric_test
           echo "DB_CONTAINER=${DB_CONTAINER}" >> "$GITHUB_ENV"
+          echo "DB_USER=${DB_USER}" >> "$GITHUB_ENV"
+          echo "DB_NAME=${DB_NAME}" >> "$GITHUB_ENV"
           echo "DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}" >> "$GITHUB_ENV"
           docker run -d --name "$DB_CONTAINER" \
             -p "${DB_PORT}:5432" \
@@ -92,14 +94,29 @@ jobs:
             -e POSTGRES_PASSWORD="$DB_PASSWORD" \
             -e POSTGRES_DB="$DB_NAME" \
             aiwg-fortemi-testdb:local
+          # The image entrypoint starts a temporary Unix-socket server while it
+          # initializes extensions. Require the final TCP listener so tests
+          # cannot race the handoff between bootstrap and the production server.
           for attempt in {1..30}; do
-            if docker exec "$DB_CONTAINER" pg_isready -U "$DB_USER" >/dev/null 2>&1; then
+            if docker exec "$DB_CONTAINER" \
+              pg_isready -h localhost -p 5432 -U "$DB_USER" -d "$DB_NAME" \
+                >/dev/null 2>&1; then
               exit 0
             fi
             sleep 2
           done
           echo 'Fortemi test database did not become ready' >&2
           exit 1
+
+      - name: Migrate isolated Fortemi test database
+        shell: bash
+        run: |
+          set -euo pipefail
+          for migration in /tmp/aiwg-fortemi-consumer/migrations/*.sql; do
+            docker exec -i "$DB_CONTAINER" \
+              psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 \
+                < "$migration"
+          done
 
       - name: Verify clean Fortemi import and semantic re-export
         run: node tools/ci/verify-aiwg-fortemi-shard-receipt.mjs --server-checkout /tmp/aiwg-fortemi-consumer
