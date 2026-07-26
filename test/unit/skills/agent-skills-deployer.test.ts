@@ -155,6 +155,19 @@ describe('managed Agent Skills provider matrix', () => {
         provider: result.provider,
         projectionStatus: result.projectionStatus,
         sourceDigest: result.sourceDigest,
+        aiwg: {
+          namespace: 'fixture',
+          platforms: ['all'],
+        },
+        provenance: {
+          sourceKind: 'directory',
+          sourceDigest: result.sourceDigest,
+        },
+        validationProfile: 'compatible',
+        trust: {
+          state: 'trusted',
+          activation: 'active',
+        },
       });
 
       const validation = validateAgentSkillFile(path.join(result.path, 'SKILL.md'), {

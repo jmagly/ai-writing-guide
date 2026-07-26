@@ -18,10 +18,13 @@ import {
   normalizeProviderDefinitionId,
 } from '../providers/provider-definitions.js';
 import {
+  AGENT_SKILLS_SIDECAR_SCHEMA,
   AIWG_SKILL_CONTROL_FIELDS,
+  createAgentSkillSidecar,
   projectStrictAgentSkill,
   type AgentSkillDocument,
   type AgentSkillProjectionStatus,
+  type AgentSkillSidecarV1,
   type AgentSkillsStandardMetadata,
   type AiwgSkillControlMetadata,
 } from './agent-skills.js';
@@ -79,8 +82,7 @@ interface ProjectionPlan {
   desiredEntries: DesiredEntry[];
 }
 
-interface DeploymentSidecar {
-  schemaVersion: 1;
+interface DeploymentSidecar extends AgentSkillSidecarV1 {
   kind: 'aiwg-managed-agent-skill-projection';
   name: string;
   provider: Platform;
@@ -363,9 +365,28 @@ function strictSkillBytes(
 function sidecarBytes(
   record: AgentSkillImportResult,
   policy: ProjectionPolicy,
+  document: AgentSkillDocument,
 ): Buffer {
+  const portableSidecar = createAgentSkillSidecar(
+    document,
+    {
+      sourceKind: record.source.kind,
+      locator: record.source.locator,
+      ...(record.source.kind === 'git'
+        ? {
+            requestedRevision: record.source.requestedRevision,
+            resolvedRevision: record.source.resolvedRevision,
+          }
+        : {}),
+      sourceDigest: record.digest,
+      importedAt: record.importedAt,
+      aiwgVersion: record.aiwgVersion,
+    },
+    record.validationProfile,
+    record.trust,
+  );
   return Buffer.from(`${JSON.stringify({
-    schemaVersion: 1,
+    ...portableSidecar,
     kind: 'aiwg-managed-agent-skill-projection',
     name: record.name,
     provider: policy.provider,
@@ -387,7 +408,8 @@ function readDeploymentSidecar(
     if (!stat.isFile() || stat.isSymbolicLink()) return undefined;
     const value = JSON.parse(fs.readFileSync(sidecarPath, 'utf8')) as DeploymentSidecar;
     if (
-      value.schemaVersion !== 1
+      value.$schema !== AGENT_SKILLS_SIDECAR_SCHEMA
+      || value.schemaVersion !== 1
       || value.kind !== 'aiwg-managed-agent-skill-projection'
       || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.name)
       || !normalizeProviderDefinitionId(value.provider)
@@ -399,6 +421,13 @@ function readDeploymentSidecar(
       || !value.reasons.every((item) => typeof item === 'string')
       || !Array.isArray(value.warnings)
       || !value.warnings.every((item) => typeof item === 'string')
+      || typeof value.aiwg !== 'object'
+      || value.aiwg === null
+      || Array.isArray(value.aiwg)
+      || value.provenance?.sourceDigest !== value.sourceDigest
+      || !['strict', 'compatible', 'discovery'].includes(value.validationProfile)
+      || !['untrusted', 'trusted', 'revoked'].includes(value.trust?.state)
+      || !['inactive', 'active', 'blocked'].includes(value.trust?.activation)
       || (expectedName !== undefined && value.name !== expectedName)
       || (expectedProvider !== undefined && value.provider !== expectedProvider)
       || path.basename(targetPath) !== value.name
@@ -453,7 +482,7 @@ function buildProjectionPlan(
     {
       kind: 'file',
       relativePath: AGENT_SKILL_DEPLOYMENT_SIDECAR,
-      bytes: sidecarBytes(record, policy),
+      bytes: sidecarBytes(record, policy, document),
     },
   );
   desiredEntries.sort((left, right) => (
