@@ -1,7 +1,7 @@
 ---
 namespace: aiwg
 platforms: [all]
-name: Cover Art Embedding
+name: cover-art-embedding
 description: Patterns for finding, processing, and embedding cover artwork into media files
 category: media-curator
 ---

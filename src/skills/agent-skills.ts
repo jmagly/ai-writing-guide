@@ -189,6 +189,16 @@ export interface AgentSkillProjectionResult {
   sourceDigest: string;
 }
 
+export interface AgentSkillDiagnostic {
+  code: string;
+  severity: 'error' | 'warning';
+  file: string;
+  yamlPath: string;
+  message: string;
+  upstreamBaseline: string;
+  remediation: string;
+}
+
 /**
  * Higher values win. This preserves the upstream project-over-user rule while
  * keeping explicitly imported skills ahead of AIWG's packaged defaults.
@@ -212,6 +222,191 @@ export function resolveAgentSkillCollision(
       ? origin
       : winner;
   }, undefined);
+}
+
+const PORTABLE_SKILL_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/**
+ * Validate the metadata invariants needed by the AIWG-compatible corpus gate.
+ * The shared parser/validator extends this diagnostic model in #1878.
+ */
+export function validateCompatibleAgentSkillMetadata(
+  frontmatter: Record<string, unknown>,
+  directoryName: string,
+  file: string,
+  lineCount?: number,
+): AgentSkillDiagnostic[] {
+  const diagnostics: AgentSkillDiagnostic[] = [];
+  const add = (
+    code: string,
+    severity: AgentSkillDiagnostic['severity'],
+    yamlPath: string,
+    message: string,
+    remediation: string,
+  ): void => {
+    diagnostics.push({
+      code,
+      severity,
+      file,
+      yamlPath,
+      message,
+      upstreamBaseline: AGENT_SKILLS_BASELINE.revision,
+      remediation,
+    });
+  };
+
+  const name = frontmatter['name'];
+  if (typeof name !== 'string' || name.length === 0) {
+    add(
+      'AS_NAME_REQUIRED',
+      'error',
+      '$.name',
+      'name must be a non-empty string',
+      'Set name to the lowercase hyphenated skill directory name.',
+    );
+  } else {
+    if (name.length > 64 || !PORTABLE_SKILL_NAME.test(name)) {
+      add(
+        'AS_NAME_FORMAT',
+        'error',
+        '$.name',
+        'name must be 1-64 ASCII lowercase letters, numbers, or single hyphens',
+        'Use the conservative Agent Skills ASCII name rule.',
+      );
+    }
+    if (name !== directoryName) {
+      add(
+        'AS_NAME_DIRECTORY',
+        'error',
+        '$.name',
+        `name "${name}" does not match directory "${directoryName}"`,
+        `Set name to "${directoryName}" and retain old names as AIWG aliases.`,
+      );
+    }
+  }
+
+  const description = frontmatter['description'];
+  if (typeof description !== 'string' || description.length === 0) {
+    add(
+      'AS_DESCRIPTION_REQUIRED',
+      'error',
+      '$.description',
+      'description must be a non-empty string',
+      'Add a description that explains what the skill does and when to use it.',
+    );
+  } else if (description.length > 1024) {
+    add(
+      'AS_DESCRIPTION_LENGTH',
+      'error',
+      '$.description',
+      'description exceeds the 1,024-character limit',
+      'Shorten description without truncating it during deployment.',
+    );
+  }
+
+  const license = frontmatter['license'];
+  if (license !== undefined && typeof license !== 'string') {
+    add(
+      'AS_LICENSE_TYPE',
+      'error',
+      '$.license',
+      'license must be a string',
+      'Use a license name or a relative reference to a bundled license file.',
+    );
+  }
+
+  const compatibility = frontmatter['compatibility'];
+  if (compatibility !== undefined) {
+    if (typeof compatibility !== 'string') {
+      add(
+        'AS_COMPATIBILITY_TYPE',
+        'error',
+        '$.compatibility',
+        'compatibility must be a string',
+        'Describe environment or product requirements in a string.',
+      );
+    } else if (compatibility.length === 0 || compatibility.length > 500) {
+      add(
+        'AS_COMPATIBILITY_LENGTH',
+        'error',
+        '$.compatibility',
+        'compatibility must contain 1-500 characters',
+        'Keep compatibility within the normative limit.',
+      );
+    }
+  }
+
+  const metadata = frontmatter['metadata'];
+  if (metadata !== undefined) {
+    if (
+      typeof metadata !== 'object'
+      || metadata === null
+      || Array.isArray(metadata)
+    ) {
+      add(
+        'AS_METADATA_TYPE',
+        'error',
+        '$.metadata',
+        'metadata must be a string-to-string map',
+        'Replace metadata with an object whose values are all strings.',
+      );
+    } else {
+      for (const key of Object.keys(metadata).sort()) {
+        if (typeof (metadata as Record<string, unknown>)[key] !== 'string') {
+          add(
+            'AS_METADATA_VALUE_TYPE',
+            'error',
+            `$.metadata.${key}`,
+            `metadata value "${key}" must be a string`,
+            'String-encode the value or move AIWG control structure to the sidecar.',
+          );
+        }
+      }
+    }
+  }
+
+  const allowedTools = frontmatter['allowed-tools'];
+  if (allowedTools !== undefined && typeof allowedTools !== 'string') {
+    add(
+      'AS_ALLOWED_TOOLS_TYPE',
+      'error',
+      '$.allowed-tools',
+      'allowed-tools must be a space-delimited string',
+      'Serialize experimental allowed-tools as one string.',
+    );
+  }
+
+  const recognizedFields = new Set<string>([
+    ...STANDARD_SKILL_FIELDS,
+    ...AIWG_SKILL_CONTROL_FIELDS,
+  ]);
+  for (const key of Object.keys(frontmatter).sort()) {
+    if (!recognizedFields.has(key)) {
+      add(
+        'AS_FIELD_UNKNOWN',
+        'error',
+        `$.${key}`,
+        `unrecognized top-level field "${key}"`,
+        'Remove the field or map it explicitly before granting AIWG policy meaning.',
+      );
+    }
+  }
+
+  if (lineCount !== undefined && lineCount > 500) {
+    add(
+      'AS_ADVISORY_LINES',
+      'warning',
+      '$',
+      `SKILL.md has ${lineCount} lines; the recommendation is at most 500`,
+      'Move detailed material to referenced resources as progressive-disclosure debt.',
+    );
+  }
+
+  return diagnostics.sort((left, right) => (
+    left.code.localeCompare(right.code)
+    || left.yamlPath.localeCompare(right.yamlPath)
+    || left.message.localeCompare(right.message)
+  ));
 }
 
 /**

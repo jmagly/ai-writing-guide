@@ -1,8 +1,8 @@
 ---
 namespace: aiwg
-name: al
-aliases: [ralph, agent-loop]
-deprecated_names: [ralph]
+name: ralph
+aliases: [al, agent-loop]
+deprecated_names: [al]
 platforms: [all]
 description: Execute iterative task loop until completion criteria are met - iteration beats perfection
 triggers:

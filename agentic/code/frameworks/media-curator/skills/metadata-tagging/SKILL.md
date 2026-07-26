@@ -1,7 +1,7 @@
 ---
 namespace: aiwg
 platforms: [all]
-name: Metadata Tagging
+name: metadata-tagging
 description: opustags and ffmpeg patterns for applying metadata to audio and video files
 category: media-curator
 ---

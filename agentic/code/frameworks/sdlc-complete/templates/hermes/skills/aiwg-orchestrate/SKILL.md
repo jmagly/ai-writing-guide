@@ -7,8 +7,7 @@ version: 1.1.0
 author: aiwg
 license: MIT
 metadata:
-  hermes:
-    tags: [aiwg, sdlc, artifacts, delegation, mcp]
+  hermes-tags: "aiwg,sdlc,artifacts,delegation,mcp"
 ---
 
 ## When to Use

@@ -365,10 +365,10 @@ export function parseRunbookDoc(
 /**
  * Extract trigger phrases from a SKILL.md / agent body.
  *
- * Skills declare alternate activation phrases under a `## Triggers`
- * heading; the body typically lists them as bullet points. This
- * function pulls each bullet's leading phrase (the part before any
- * `→` arrow or em-dash explanation), lowercased and trimmed.
+ * Skills declare alternate activation phrases in `triggers`, `aliases`,
+ * `deprecated_names`, or under a `## Triggers` heading. This function pulls
+ * those names plus each bullet's leading phrase (the part before any `→`
+ * arrow or em-dash explanation), lowercased and trimmed.
  *
  * Returns an empty array when no `## Triggers` section is found —
  * non-skill artifacts get `triggers: undefined` after this is wired.
@@ -378,15 +378,17 @@ export function parseRunbookDoc(
 export function extractTriggers(body: string, frontmatter?: Record<string, unknown>): string[] {
   const phrases: string[] = [];
 
-  const declaredTriggers = Array.isArray(frontmatter?.triggers)
-    ? frontmatter.triggers
-    : [];
-  for (const trigger of declaredTriggers) {
-    if (typeof trigger !== 'string') continue;
-    const phrase = trigger.trim().toLowerCase();
-    if (phrase.length === 0) continue;
-    if (phrase.length > 200) continue;
-    phrases.push(phrase);
+  for (const field of ['triggers', 'aliases', 'deprecated_names']) {
+    const declaredValues = Array.isArray(frontmatter?.[field])
+      ? frontmatter[field]
+      : [];
+    for (const value of declaredValues) {
+      if (typeof value !== 'string') continue;
+      const phrase = value.trim().toLowerCase();
+      if (phrase.length === 0) continue;
+      if (phrase.length > 200) continue;
+      phrases.push(phrase);
+    }
   }
 
   // Find a triggers heading (case-insensitive). Accepted variants:

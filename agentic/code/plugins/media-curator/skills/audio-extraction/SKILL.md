@@ -1,7 +1,7 @@
 ---
 namespace: aiwg
 platforms: [all]
-name: Audio Extraction
+name: audio-extraction
 description: ffmpeg patterns for extracting audio from video files and transcoding between formats
 category: media-curator
 ---

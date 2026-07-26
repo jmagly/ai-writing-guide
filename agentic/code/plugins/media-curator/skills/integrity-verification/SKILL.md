@@ -1,7 +1,7 @@
 ---
 namespace: aiwg
 platforms: [all]
-name: Integrity Verification
+name: integrity-verification
 description: SHA-256 checksum manifest generation, self-verification, and PREMIS fixity patterns
 category: media-curator
 ---

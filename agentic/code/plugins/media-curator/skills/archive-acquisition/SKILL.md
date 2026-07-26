@@ -1,7 +1,7 @@
 ---
 namespace: aiwg
 platforms: [all]
-name: Archive Acquisition
+name: archive-acquisition
 description: Patterns for acquiring content from Internet Archive and archival sources
 category: media-curator
 ---

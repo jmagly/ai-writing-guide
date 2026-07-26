@@ -1,7 +1,7 @@
 ---
 namespace: aiwg
 platforms: [all]
-name: Transcribe Media
+name: transcribe-media
 description: Produce timestamped transcript sidecars for acquired audio/video with hashes, source metadata, speaker labels when available, and explicit degraded plans when STT tooling is missing
 script:
   entrypoint: scripts/transcribe_media.mjs

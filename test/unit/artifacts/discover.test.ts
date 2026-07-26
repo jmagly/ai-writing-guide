@@ -94,6 +94,14 @@ Should be ignored.
     })).toEqual(['intake wizard', 'help me start a project.', 'start an intake']);
   });
 
+  it('includes compatibility aliases and deprecated names', () => {
+    expect(extractTriggers('# Skill', {
+      triggers: ['Ralph loop'],
+      aliases: ['al', 'agent-loop'],
+      deprecated_names: ['al'],
+    })).toEqual(['ralph loop', 'al', 'agent-loop']);
+  });
+
   it('handles arrow-style explanation separators', () => {
     const body = `## Triggers
 
@@ -264,6 +272,55 @@ describe('buildIndex → type inference', () => {
 });
 
 describe('discoverCapability — JSON output', () => {
+  it('keeps canonical skill aliases discoverable after a rename', async () => {
+    writeSkill(
+      'ralph',
+      'agent-loop',
+      `---
+name: ralph
+description: Execute an iterative task loop until completion
+aliases: [al, agent-loop]
+deprecated_names: [al]
+---
+
+# Agent Loop
+`,
+    );
+
+    const setupSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const setupErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    setupSpy.mockRestore();
+    setupErrSpy.mockRestore();
+
+    for (const phrase of ['agent-loop', 'al']) {
+      const captured: string[] = [];
+      const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
+        captured.push(args.join(' ')),
+      );
+      await discoverCapability(cwd, {
+        phrase,
+        graph: 'framework',
+        json: true,
+        backend: 'local',
+        limit: 3,
+      });
+      logSpy.mockRestore();
+
+      const parsed = JSON.parse(captured.join('\n'));
+      expect(parsed.results[0]?.path, phrase).toContain('/ralph/SKILL.md');
+      expect(parsed.results[0]?.ranking.matches, phrase).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            field: 'trigger',
+            match: 'exact',
+            value: phrase,
+          }),
+        ]),
+      );
+    }
+  });
+
   it('emits a stable schema with path/type/score/triggers/capability', async () => {
     writeSkill(
       'skill-create-intake',
