@@ -12,7 +12,8 @@
     "archive",
     "capability_loss_report",
     "consumers",
-    "negative_cases"
+    "negative_cases",
+    "claim_boundary"
   ],
   "properties": {
     "schema_version": {
@@ -42,14 +43,32 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["case", "consumer", "result", "persistent_mutation"],
+        "required": [
+          "case",
+          "consumer",
+          "result",
+          "persistent_mutation"
+        ],
         "properties": {
-          "case": { "type": "string", "minLength": 1 },
-          "consumer": { "type": "string", "minLength": 1 },
-          "result": { "const": "rejected" },
-          "persistent_mutation": { "const": 0 }
+          "case": {
+            "type": "string",
+            "minLength": 1
+          },
+          "consumer": {
+            "type": "string",
+            "minLength": 1
+          },
+          "result": {
+            "const": "rejected"
+          },
+          "persistent_mutation": {
+            "const": 0
+          }
         }
       }
+    },
+    "claim_boundary": {
+      "$ref": "#/$defs/claimBoundary"
     }
   },
   "$defs": {
@@ -64,35 +83,184 @@
     "package": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version"],
+      "required": [
+        "name",
+        "version"
+      ],
       "properties": {
-        "name": { "type": "string", "minLength": 1 },
-        "version": { "type": "string", "minLength": 1 },
-        "integrity": { "type": "string", "pattern": "^sha512-[A-Za-z0-9+/]+={0,2}$" }
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "integrity": {
+          "type": "string",
+          "pattern": "^sha512-[A-Za-z0-9+/]+={0,2}$"
+        }
+      }
+    },
+    "sourceContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "schema_version",
+        "authority_commit",
+        "schema_sha256"
+      ],
+      "properties": {
+        "path": {
+          "const": "schemas/aiwg-fortemi-index-export.json"
+        },
+        "schema_version": {
+          "const": "aiwg.fortemi.index.export.v2"
+        },
+        "authority_commit": {
+          "$ref": "#/$defs/commit"
+        },
+        "schema_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "producerCi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run",
+        "run_id",
+        "url",
+        "status",
+        "jobs"
+      ],
+      "properties": {
+        "run": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "run_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "status": {
+          "const": "success"
+        },
+        "jobs": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "const": "success"
+              }
+            }
+          }
+        }
       }
     },
     "producer": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["repository", "commit", "package"],
+      "required": [
+        "repository",
+        "commit",
+        "package",
+        "generator",
+        "source_contract",
+        "ci"
+      ],
       "properties": {
-        "repository": { "const": "https://git.integrolabs.net/roctinam/aiwg.git" },
-        "commit": { "$ref": "#/$defs/commit" },
-        "package": { "$ref": "#/$defs/package" }
+        "repository": {
+          "const": "https://git.integrolabs.net/roctinam/aiwg.git"
+        },
+        "commit": {
+          "$ref": "#/$defs/commit"
+        },
+        "package": {
+          "$ref": "#/$defs/package"
+        },
+        "generator": {
+          "const": "src/artifacts/fortemi-shard-export.ts"
+        },
+        "source_contract": {
+          "$ref": "#/$defs/sourceContract"
+        },
+        "ci": {
+          "$ref": "#/$defs/producerCi"
+        }
       }
     },
     "converter": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["repository", "commit", "package"],
+      "required": [
+        "repository",
+        "commit",
+        "package",
+        "provenance"
+      ],
       "properties": {
-        "repository": { "const": "https://git.integrolabs.net/Fortemi/fortemi-react.git" },
-        "commit": { "$ref": "#/$defs/commit" },
+        "repository": {
+          "const": "https://git.integrolabs.net/Fortemi/fortemi-react.git"
+        },
+        "commit": {
+          "$ref": "#/$defs/commit"
+        },
         "package": {
           "allOf": [
-            { "$ref": "#/$defs/package" },
-            { "type": "object", "required": ["integrity"] }
+            {
+              "$ref": "#/$defs/package"
+            },
+            {
+              "type": "object",
+              "required": [
+                "integrity"
+              ]
+            }
           ]
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "provider",
+            "workflow_run",
+            "status"
+          ],
+          "properties": {
+            "provider": {
+              "const": "npm"
+            },
+            "workflow_run": {
+              "type": "string",
+              "pattern": "^https://"
+            },
+            "status": {
+              "const": "success"
+            }
+          }
         }
       }
     },
@@ -108,36 +276,95 @@
         "schema_bundle_sha256"
       ],
       "properties": {
-        "repository": { "const": "https://git.integrolabs.net/Fortemi/fortemi.git" },
-        "commit": { "$ref": "#/$defs/commit" },
-        "contract_revision": { "type": "string", "minLength": 1 },
-        "contract_sha256": { "$ref": "#/$defs/sha256" },
-        "schema_version": { "type": "string", "minLength": 1 },
-        "schema_bundle_sha256": { "$ref": "#/$defs/sha256" }
+        "repository": {
+          "const": "https://git.integrolabs.net/Fortemi/fortemi.git"
+        },
+        "commit": {
+          "$ref": "#/$defs/commit"
+        },
+        "contract_revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contract_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "schema_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_bundle_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
       }
     },
     "archive": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "sha256", "bytes", "manifest"],
+      "required": [
+        "path",
+        "sha256",
+        "bytes",
+        "manifest"
+      ],
       "properties": {
-        "path": { "type": "string", "pattern": "^test/fixtures/fortemi-shard/.+\\.shard$" },
-        "sha256": { "$ref": "#/$defs/sha256" },
-        "bytes": { "type": "integer", "minimum": 1 },
+        "path": {
+          "type": "string",
+          "pattern": "^test/fixtures/fortemi-shard/.+\\.shard$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
         "manifest": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["format", "version", "profile", "components", "counts"],
+          "required": [
+            "format",
+            "version",
+            "profile",
+            "components",
+            "counts",
+            "checksums"
+          ],
           "properties": {
-            "format": { "const": "matric-shard" },
-            "version": { "const": "1.2.0" },
-            "profile": { "const": "core-v1" },
+            "format": {
+              "const": "matric-shard"
+            },
+            "version": {
+              "const": "1.2.0"
+            },
+            "profile": {
+              "const": "core-v1"
+            },
             "components": {
               "type": "array",
-              "items": { "enum": ["notes", "collections", "tags", "templates", "links"] },
+              "items": {
+                "enum": [
+                  "notes",
+                  "collections",
+                  "tags",
+                  "templates",
+                  "links"
+                ]
+              },
               "uniqueItems": true
             },
-            "counts": { "type": "object" }
+            "counts": {
+              "type": "object"
+            },
+            "checksums": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "\\.(json|jsonl)$"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/sha256"
+              }
+            }
           }
         }
       }
@@ -145,61 +372,374 @@
     "capabilityLossReport": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["profile", "portable", "source_carrier", "supported_components", "absent_source_components", "losses"],
+      "required": [
+        "profile",
+        "portable",
+        "source_carrier",
+        "supported_components",
+        "absent_source_components",
+        "losses"
+      ],
       "properties": {
-        "profile": { "const": "core-v1" },
-        "portable": { "const": true },
-        "source_carrier": { "const": "metadata.aiwg_fortemi_index" },
+        "profile": {
+          "const": "core-v1"
+        },
+        "portable": {
+          "const": true
+        },
+        "source_carrier": {
+          "const": "metadata.aiwg_fortemi_index"
+        },
         "supported_components": {
           "type": "array",
-          "const": ["notes", "collections", "tags", "templates", "links"]
+          "const": [
+            "notes",
+            "collections",
+            "tags",
+            "templates",
+            "links"
+          ]
         },
         "absent_source_components": {
           "type": "array",
-          "items": { "enum": ["collections", "templates"] },
+          "items": {
+            "enum": [
+              "collections",
+              "templates"
+            ]
+          },
           "uniqueItems": true
         },
-        "losses": { "type": "array", "maxItems": 0 }
+        "losses": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    },
+    "portableTest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "passed",
+        "failed"
+      ],
+      "properties": {
+        "command": {
+          "const": "npx vitest run test/unit/artifacts/fortemi-shard-export.test.ts"
+        },
+        "passed": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "failed": {
+          "const": 0
+        }
+      }
+    },
+    "compatibilityWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "accepted"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "accepted": {
+          "const": true
+        }
+      }
+    },
+    "nextMajor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "rejected"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "2.0.0"
+        },
+        "rejected": {
+          "const": true
+        }
+      }
+    },
+    "pgliteConsumer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "package",
+        "clean_destination",
+        "semantic_reexport",
+        "reverse_conversion",
+        "portable",
+        "zero_mutation_on_failure",
+        "repeated_imports",
+        "hierarchy_preserved",
+        "embedded_record_preserved",
+        "operational_state_preserved",
+        "tombstone_preserved",
+        "current_minus_two",
+        "next_major",
+        "test",
+        "losses"
+      ],
+      "properties": {
+        "package": {
+          "$ref": "#/$defs/package"
+        },
+        "clean_destination": {
+          "const": true
+        },
+        "semantic_reexport": {
+          "const": true
+        },
+        "reverse_conversion": {
+          "const": true
+        },
+        "portable": {
+          "const": true
+        },
+        "zero_mutation_on_failure": {
+          "const": true
+        },
+        "repeated_imports": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "hierarchy_preserved": {
+          "const": true
+        },
+        "embedded_record_preserved": {
+          "const": true
+        },
+        "operational_state_preserved": {
+          "const": true
+        },
+        "tombstone_preserved": {
+          "const": true
+        },
+        "current_minus_two": {
+          "$ref": "#/$defs/compatibilityWindow"
+        },
+        "next_major": {
+          "$ref": "#/$defs/nextMajor"
+        },
+        "test": {
+          "$ref": "#/$defs/portableTest"
+        },
+        "losses": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    },
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "consumerCi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run",
+        "run_id",
+        "job",
+        "url",
+        "status"
+      ],
+      "properties": {
+        "run": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "run_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "job": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "status": {
+          "const": "success"
+        }
+      }
+    },
+    "fortemiConsumer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "commit",
+        "implementation_commit",
+        "clean_destination",
+        "semantic_reexport",
+        "zero_mutation_on_failure",
+        "repeated_imports",
+        "hierarchy_preserved",
+        "embedded_record_preserved",
+        "operational_state_preserved",
+        "explicit_null_lifecycle_preserved",
+        "tombstone_preserved",
+        "foreign_keys_reconstructed",
+        "fixture",
+        "producer_receipt",
+        "cell_receipt",
+        "tests",
+        "ci"
+      ],
+      "properties": {
+        "repository": {
+          "const": "https://git.integrolabs.net/Fortemi/fortemi.git"
+        },
+        "commit": {
+          "$ref": "#/$defs/commit"
+        },
+        "implementation_commit": {
+          "$ref": "#/$defs/commit"
+        },
+        "clean_destination": {
+          "const": true
+        },
+        "semantic_reexport": {
+          "const": true
+        },
+        "zero_mutation_on_failure": {
+          "const": true
+        },
+        "repeated_imports": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "hierarchy_preserved": {
+          "const": true
+        },
+        "embedded_record_preserved": {
+          "const": true
+        },
+        "operational_state_preserved": {
+          "const": true
+        },
+        "explicit_null_lifecycle_preserved": {
+          "const": true
+        },
+        "tombstone_preserved": {
+          "const": true
+        },
+        "foreign_keys_reconstructed": {
+          "const": true
+        },
+        "fixture": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/artifactReference"
+            },
+            {
+              "type": "object",
+              "required": [
+                "bytes"
+              ]
+            }
+          ]
+        },
+        "producer_receipt": {
+          "$ref": "#/$defs/artifactReference"
+        },
+        "cell_receipt": {
+          "$ref": "#/$defs/artifactReference"
+        },
+        "tests": {
+          "type": "array",
+          "const": [
+            "tests::aiwg_core_v1_current_fixture_clean_import_is_repeatable_and_semantic",
+            "tests::aiwg_core_v1_current_fixture_rejects_invalid_inputs_before_mutation"
+          ]
+        },
+        "ci": {
+          "$ref": "#/$defs/consumerCi"
+        }
       }
     },
     "consumers": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["pglite", "fortemi"],
+      "required": [
+        "pglite",
+        "fortemi"
+      ],
       "properties": {
         "pglite": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["package", "clean_destination", "semantic_reexport", "portable", "losses"],
-          "properties": {
-            "package": { "$ref": "#/$defs/package" },
-            "clean_destination": { "const": true },
-            "semantic_reexport": { "const": true },
-            "portable": { "const": true },
-            "losses": { "type": "array", "maxItems": 0 }
-          }
+          "$ref": "#/$defs/pgliteConsumer"
         },
         "fortemi": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["repository", "commit", "clean_destination", "semantic_reexport", "harness", "atomic_rejection_test"],
-          "properties": {
-            "repository": { "const": "https://git.integrolabs.net/Fortemi/fortemi.git" },
-            "commit": { "$ref": "#/$defs/commit" },
-            "clean_destination": { "const": true },
-            "semantic_reexport": { "const": true },
-            "atomic_rejection_test": { "const": "shard_core_v1_server_export_clean_import_preserves_semantic_state" },
-            "harness": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["path", "sha256", "test"],
-              "properties": {
-                "path": { "type": "string", "pattern": "\\.patch$" },
-                "sha256": { "$ref": "#/$defs/sha256" },
-                "test": { "const": "aiwg_core_v1_external_fixture_clean_import_reexport" }
-              }
-            }
-          }
+          "$ref": "#/$defs/fortemiConsumer"
+        }
+      }
+    },
+    "claimBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "schema_version",
+        "cells",
+        "lossy",
+        "suite_wide",
+        "complete_backup",
+        "persistence_planes_unified"
+      ],
+      "properties": {
+        "profile": {
+          "const": "core-v1"
+        },
+        "schema_version": {
+          "const": "1.2.0"
+        },
+        "cells": {
+          "type": "array",
+          "const": [
+            "aiwg-core-v1-to-pglite",
+            "aiwg-core-v1-to-fortemi"
+          ]
+        },
+        "lossy": {
+          "const": false
+        },
+        "suite_wide": {
+          "const": false
+        },
+        "complete_backup": {
+          "const": false
+        },
+        "persistence_planes_unified": {
+          "const": false
         }
       }
     }

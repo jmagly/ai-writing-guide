@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import Ajv2020 from 'ajv/dist/2020.js';
 
 import {
   getKnowledgeShardContractReceipt,
@@ -19,6 +20,13 @@ const root = resolve(import.meta.dirname, '..', '..');
 const fixtureRoot = resolve(root, 'test', 'fixtures', 'fortemi-shard');
 const receiptPath = resolve(fixtureRoot, 'aiwg-core-v1.receipt.json');
 const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'));
+const receiptSchemaPath = resolve(
+  root,
+  'schemas',
+  'artifacts',
+  'aiwg-fortemi-shard-receipt.v1.schema.json',
+);
+const receiptSchema = JSON.parse(readFileSync(receiptSchemaPath, 'utf8'));
 const fullReceiptPath = resolve(fixtureRoot, 'aiwg-full-v1.consumer.receipt.json');
 const fullReceipt = JSON.parse(readFileSync(fullReceiptPath, 'utf8'));
 const packageLock = require(resolve(root, 'package-lock.json'));
@@ -54,6 +62,11 @@ function runBytes(command, args, options = {}) {
 if (receipt.schema_version !== 'aiwg.fortemi.shard-receipt.v1') {
   fail(`unsupported receipt schema ${receipt.schema_version}`);
 }
+const ajv = new Ajv2020({ allErrors: true, strict: false });
+const validateReceipt = ajv.compile(receiptSchema);
+if (!validateReceipt(receipt)) {
+  fail(`receipt schema validation failed: ${ajv.errorsText(validateReceipt.errors)}`);
+}
 if (corePackage.version !== receipt.converter.package.version) {
   fail(`installed Core ${corePackage.version} does not match receipt`);
 }
@@ -81,6 +94,30 @@ if (producerPackage.name !== receipt.producer.package.name) {
 }
 if (producerPackage.version !== receipt.producer.package.version) {
   fail(`producer package version ${producerPackage.version ?? 'missing'} does not match receipt`);
+}
+const sourceAuthorityCommit = run(
+  'git',
+  ['rev-parse', `${receipt.producer.source_contract.authority_commit}^{commit}`],
+  { capture: true },
+);
+if (sourceAuthorityCommit !== receipt.producer.source_contract.authority_commit) {
+  fail('AIWG source-contract authority commit is unavailable');
+}
+if (
+  sha256(runBytes('git', [
+    'show',
+    `${sourceAuthorityCommit}:${receipt.producer.source_contract.path}`,
+  ])) !== receipt.producer.source_contract.schema_sha256
+) {
+  fail('AIWG source-contract schema does not match its authority commit');
+}
+if (
+  sha256(runBytes('git', [
+    'show',
+    `${producerCommit}:${receipt.producer.source_contract.path}`,
+  ])) !== receipt.producer.source_contract.schema_sha256
+) {
+  fail('AIWG producer does not consume the pinned source-contract schema');
 }
 
 const archivePath = resolve(root, receipt.archive.path);
@@ -235,35 +272,92 @@ if (serverFlag >= 0) {
     fail(`Fortemi checkout ${actualCommit} does not match receipt`);
   }
   if (run('git', ['status', '--porcelain'], { cwd: checkout, capture: true })) {
-    fail('Fortemi checkout is not clean before applying the receipt harness');
+    fail('Fortemi checkout is not clean before native receipt verification');
   }
-  const patchPath = resolve(root, receipt.consumers.fortemi.harness.path);
-  if (sha256(readFileSync(patchPath)) !== receipt.consumers.fortemi.harness.sha256) {
-    fail('Fortemi consumer harness SHA-256 mismatch');
+
+  const implementationCommit = run('git', ['rev-parse', 'HEAD^'], {
+    cwd: checkout,
+    capture: true,
+  });
+  if (implementationCommit !== receipt.consumers.fortemi.implementation_commit) {
+    fail('Fortemi receipt commit is not directly based on the declared implementation commit');
   }
-  run('git', ['apply', '--check', patchPath], { cwd: checkout });
-  run('git', ['apply', patchPath], { cwd: checkout });
+  const verifyConsumerArtifact = (reference, label) => {
+    const artifactPath = resolve(checkout, reference.path);
+    const bytes = readFileSync(artifactPath);
+    if (sha256(bytes) !== reference.sha256) {
+      fail(`${label} SHA-256 mismatch`);
+    }
+    if (reference.bytes !== undefined && bytes.byteLength !== reference.bytes) {
+      fail(`${label} byte count mismatch`);
+    }
+    if (
+      sha256(runBytes('git', ['show', `${actualCommit}:${reference.path}`], { cwd: checkout })) !==
+      reference.sha256
+    ) {
+      fail(`${label} does not match immutable Fortemi consumer commit`);
+    }
+    return bytes;
+  };
+
+  const serverFixture = verifyConsumerArtifact(
+    receipt.consumers.fortemi.fixture,
+    'Fortemi fixture',
+  );
+  if (sha256(serverFixture) !== receipt.archive.sha256) {
+    fail('Fortemi fixture does not match the immutable AIWG producer archive');
+  }
+  const producerReceipt = JSON.parse(
+    verifyConsumerArtifact(
+      receipt.consumers.fortemi.producer_receipt,
+      'Fortemi producer receipt',
+    ).toString('utf8'),
+  );
+  if (
+    producerReceipt.producer?.commit !== receipt.producer.commit ||
+    producerReceipt.converter?.commit !== receipt.converter.commit ||
+    producerReceipt.fixture?.sha256 !== receipt.archive.sha256
+  ) {
+    fail('Fortemi producer receipt does not bind the integrated producer, converter, and archive');
+  }
+  const cellReceipt = JSON.parse(
+    verifyConsumerArtifact(
+      receipt.consumers.fortemi.cell_receipt,
+      'Fortemi cell receipt',
+    ).toString('utf8'),
+  );
+  if (
+    cellReceipt.status !== 'consumer-conformance-passed' ||
+    cellReceipt.cell !== 'aiwg-core-v1-to-fortemi' ||
+    cellReceipt.producer?.commit !== receipt.producer.commit ||
+    cellReceipt.consumer?.baseCommit !== receipt.consumers.fortemi.implementation_commit ||
+    cellReceipt.fixture?.sha256 !== receipt.archive.sha256 ||
+    cellReceipt.claimBoundary?.profile !== receipt.claim_boundary.profile
+  ) {
+    fail('Fortemi cell receipt does not bind the declared core-v1 consumer evidence');
+  }
   run(
     'cargo',
-    ['test', '-p', 'matric-api', 'aiwg_core_v1_external_fixture_clean_import_reexport', '--', '--nocapture'],
+    [
+      'test',
+      '-p',
+      'matric-api',
+      '--bin',
+      'matric-api',
+      'aiwg_core_v1_current_fixture',
+      '--',
+      '--nocapture',
+    ],
     {
       cwd: checkout,
       env: {
-        AIWG_SHARD_FIXTURE: archivePath,
         DATABASE_URL: process.env.DATABASE_URL ?? 'postgres://matric:matric@localhost/matric',
       },
     },
   );
-  run(
-    'cargo',
-    ['test', '-p', 'matric-api', 'shard_core_v1_server_export_clean_import_preserves_semantic_state', '--', '--nocapture'],
-    {
-      cwd: checkout,
-      env: {
-        DATABASE_URL: process.env.DATABASE_URL ?? 'postgres://matric:matric@localhost/matric',
-      },
-    },
-  );
+  if (run('git', ['status', '--porcelain'], { cwd: checkout, capture: true })) {
+    fail('Fortemi checkout is not clean after native receipt verification');
+  }
 }
 
 console.log(JSON.stringify({

@@ -47,6 +47,9 @@ jobs:
           PRODUCER_COMMIT="$(node -p "require('./test/fixtures/fortemi-shard/aiwg-core-v1.receipt.json').producer.commit")"
           git fetch --quiet --no-tags --depth=1 origin "$PRODUCER_COMMIT"
           test "$(git rev-parse "$PRODUCER_COMMIT^{commit}")" = "$PRODUCER_COMMIT"
+          SOURCE_AUTHORITY_COMMIT="$(node -p "require('./test/fixtures/fortemi-shard/aiwg-core-v1.receipt.json').producer.source_contract.authority_commit")"
+          git fetch --quiet --no-tags --depth=1 origin "$SOURCE_AUTHORITY_COMMIT"
+          test "$(git rev-parse "$SOURCE_AUTHORITY_COMMIT^{commit}")" = "$SOURCE_AUTHORITY_COMMIT"
 
       - name: Install locked published package graph
         run: npm ci
@@ -64,7 +67,7 @@ jobs:
           rm -rf /tmp/aiwg-fortemi-consumer
           git init -q /tmp/aiwg-fortemi-consumer
           git -C /tmp/aiwg-fortemi-consumer remote add origin https://git.integrolabs.net/Fortemi/fortemi.git
-          git -C /tmp/aiwg-fortemi-consumer fetch --quiet --no-tags --depth=1 origin "$FORTEMI_COMMIT"
+          git -C /tmp/aiwg-fortemi-consumer fetch --quiet --no-tags --depth=2 origin "$FORTEMI_COMMIT"
           git -C /tmp/aiwg-fortemi-consumer checkout --quiet --detach FETCH_HEAD
           test "$(git -C /tmp/aiwg-fortemi-consumer rev-parse HEAD)" = "$FORTEMI_COMMIT"
           test -z "$(git -C /tmp/aiwg-fortemi-consumer status --porcelain)"

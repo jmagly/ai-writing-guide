@@ -2,22 +2,22 @@
   "schema_version": "aiwg.fortemi.full-v1-consumer-receipt.v1",
   "consumer": {
     "repository": "https://git.integrolabs.net/roctinam/aiwg.git",
-    "commit": "7ebc5c23929650e9cc762b9f5831be113fffbae8",
+    "commit": "9940bf64d4dcdac1486948b72fe67076a4dcec21",
     "package": {
       "name": "aiwg",
-      "version": "2026.7.18"
+      "version": "2026.7.20"
     }
   },
   "converter": {
     "repository": "https://git.integrolabs.net/Fortemi/fortemi-react.git",
-    "commit": "45ee08e99dfb6fa0263aca2992aa6de91e2f1e98",
-    "tag": "v2026.7.13",
+    "commit": "a08df8a6ece098d8bd5b2d27f3fbb7734b39e331",
+    "tag": "v2026.7.14",
     "entrypoint": "@fortemi/core/aiwg-index-shard",
     "package": {
       "name": "@fortemi/core",
-      "version": "2026.7.13",
-      "shasum": "d829b24cca7bf50689b936417ce607b6f75e9966",
-      "integrity": "sha512-bFf77/wQhJ9M9m/0M3TM1S13EkmfrBM/O5sVaTkXJaeo1uyCuvP46T9ZVm3pGae30AkpWI3fDxuwo2AvEOBKOw=="
+      "version": "2026.7.14",
+      "shasum": "9c6ff0e34bacba3faf51d16054928d17ee90c66d",
+      "integrity": "sha512-GytXkWpuG/ygeYy0MbKGpqSKMQ8v+vHW+Btqloaky9fl+5eKRev3zBlQV22IlYWbb2Q7gd7lXrgtRcdFCmg5DQ=="
     },
     "release_signing_fingerprint": "26CB074F65E89E5F4DFD7C71F410C8C763C90CC9",
     "upstream_producer_receipt": {
