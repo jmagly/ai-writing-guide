@@ -125,22 +125,23 @@ The command exits 0 when all files meet the threshold, 1 otherwise.
 
 | Tool | What it does | Speed |
 |---|---|---|
-| `tools/linters/skill-frontmatter-linter.mjs` | Schema-only gate (YAML parse + required fields). | Fastest; no Node build required |
-| `aiwg validate-metadata` | Schema-only via `MetadataValidator` (also handles manifest.md, BEHAVIOR.md). | Fast; needs build |
-| `aiwg skill-lint` | Full rubric (this doc). | Fast; needs build |
+| `tools/linters/skill-frontmatter-linter.mjs` | Canonical AIWG source conventions. | Fastest; no Node build required |
+| `aiwg validate-metadata` | Shared Agent Skills conformance plus component metadata. | Fast; needs build |
+| `aiwg skill-lint` | Shared Agent Skills conformance plus this quality rubric. | Fast; needs build |
 
-The three tools share `SkillFrontmatterSchema` — the Zod schema in
-`src/extensions/validation.ts` — so their schema verdicts agree by
-construction. They diverge only on what *additional* checks they
-perform on top of schema validation.
+Imports, `validate-metadata`, `skill-lint`, and `doctor` share
+`src/skills/validator.ts`. The quality rubric additionally applies AIWG's Zod
+source schema. In particular, `namespace` and `platforms` are AIWG conventions,
+not Agent Skills standard requirements.
 
 ## Authoring checklist
 
 A SKILL.md that scores 100 in `strict` mode:
 
-- [ ] Frontmatter has `name`, `description`, `namespace`, `platforms`
+- [ ] Frontmatter has Agent Skills `name` and `description`; canonical AIWG
+  sources additionally include `namespace` and `platforms`
 - [ ] Description is ≥30 chars, includes "Use when…" or verb-leading clause
-- [ ] If `user-invocable: true`, `triggers:` has ≥2 entries
+- [ ] If `userInvocable: true`, `triggers:` has ≥2 entries
 - [ ] Body has ≥100 words of skill content
 - [ ] No YAML parse errors
 

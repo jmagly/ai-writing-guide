@@ -39,6 +39,11 @@ Profile rules run after parsing. The 500-line and 5,000-token recommendations,
 relative references, and one-level reference depth are advisory diagnostics,
 not compatibility failures.
 
+`namespace` and `platforms` are AIWG control extensions. Canonical AIWG source
+policy may require them, but the Agent Skills standard does not. They are
+accepted by `compatible` and `discovery`, rejected by `strict`, and retained in
+the sidecar rather than projected as portable fields.
+
 ### Typed representation
 
 `src/skills/agent-skills.ts` defines the intermediate representation:

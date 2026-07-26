@@ -16,11 +16,11 @@ import { lintSkillFile, lintSkills } from '../../../../src/cli/handlers/skill-li
 let tmpDir: string;
 
 const PERFECT_SKILL = `---
-name: perfect-skill
+name: perfect
 namespace: aiwg
 description: Use when you need a perfect example. Generates outputs with exemplary quality and traceability.
 platforms: [all]
-user-invocable: true
+userInvocable: true
 triggers:
   - "perfect skill"
   - "exemplar"
@@ -48,11 +48,11 @@ tweaks during test maintenance do not push it under the body floor.
 `;
 
 const STUB_SKILL = `---
-name: stub-skill
+name: stub
 namespace: aiwg
 description: stub
 platforms: [all]
-user-invocable: true
+userInvocable: true
 ---
 
 short body.
@@ -63,7 +63,7 @@ name: needs-triggers
 namespace: aiwg
 description: Use when you need to verify the discoverability dimension fails on user-invocable skills with no triggers.
 platforms: [all]
-user-invocable: true
+userInvocable: true
 ---
 
 # Body
@@ -116,7 +116,7 @@ name: slash-offender
 namespace: aiwg
 description: Use when verifying the post-kernel-pivot lint check catches slash-prefix references to non-kernel skills in the body.
 platforms: [all]
-user-invocable: true
+userInvocable: true
 triggers:
   - "lint slash refs"
 ---
@@ -144,7 +144,7 @@ name: slash-template
 namespace: aiwg
 description: Use when verifying the lint check ignores generated-output slash refs inside Available Slash Commands template blocks.
 platforms: [all]
-user-invocable: true
+userInvocable: true
 triggers:
   - "template block exception"
 ---
@@ -173,7 +173,7 @@ name: companion-cli
 namespace: aiwg
 description: Use when verifying companion CLI inventory keeps commands attached to workflow judgment.
 platforms: [all]
-user-invocable: true
+userInvocable: true
 triggers:
   - "companion cli"
 ---
@@ -190,7 +190,7 @@ name: cli-replacement-risk
 namespace: aiwg
 description: Use when verifying companion CLI inventory catches replacement wording.
 platforms: [all]
-user-invocable: true
+userInvocable: true
 triggers:
   - "replacement risk"
 ---

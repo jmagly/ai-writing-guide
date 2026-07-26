@@ -175,14 +175,11 @@ AIWG currently has three related but divergent paths:
 - `aiwg validate-metadata` validates AIWG extension/component metadata;
 - `aiwg skill-lint` evaluates authoring quality with configurable rubrics.
 
-The documentation is inconsistent with the frontmatter linter about whether
-`namespace` and `platforms` are required. None of these paths implements the
-Agent Skills field allow-list, name-directory invariant, standard length
-limits, string metadata map, or resource-reference checks.
-
-The standard validator should be a shared library with structured diagnostics.
-Both `validate-metadata` and `doctor` should call it rather than shelling out to
-`skills-ref`.
+The shared validator added in #1878 resolves that distinction: `namespace` and
+`platforms` remain canonical AIWG source conventions, but are not Agent Skills
+requirements. They are compatible-profile extensions and strict-profile
+errors. `validate-metadata`, `skill-lint`, imports, and `doctor` now consume one
+structured diagnostic model rather than shelling out to `skills-ref`.
 
 ### Deployment
 

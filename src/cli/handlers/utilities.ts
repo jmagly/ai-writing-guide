@@ -152,8 +152,8 @@ function countSentences(s: string): number {
 }
 
 /**
- * Scan source SKILL.md files in `agentic/code/` for namespace issues:
- * - Missing `namespace: aiwg`
+ * Scan canonical AIWG source SKILL.md files in `agentic/code/` for policy issues:
+ * - Missing the AIWG-only `namespace: aiwg` source convention
  * - Slug (`aiwg-{name}`) that would shadow an AIWG CLI command
  *
  * Returns lines suitable for console output, or empty array if clean.
@@ -291,12 +291,14 @@ export const validateMetadataHandler: CommandHandler = {
       cwd: ctx.cwd,
     });
 
-    // Append namespace validation: scan source SKILL.md files
+    // Append canonical AIWG source policy. `namespace` is an AIWG extension,
+    // not an Agent Skills standard requirement; shared conformance is emitted
+    // by validate-metadata.mjs before this source-only convention.
     try {
       const issues = await scanSourceNamespaceIssues(frameworkRoot);
       if (issues.length > 0) {
-        console.log('\n── Namespace validation ──');
-        console.log(`  ${issues.length} skill(s) missing namespace field:`);
+        console.log('\n── AIWG source conventions ──');
+        console.log(`  ${issues.length} canonical source convention issue(s):`);
         // Show first 20 to avoid flooding output
         issues.slice(0, 20).forEach(l => console.log(l));
         if (issues.length > 20) {
@@ -304,10 +306,10 @@ export const validateMetadataHandler: CommandHandler = {
         }
         // Non-zero exit only in strict mode
         if (ctx.args.includes('--strict') && result.exitCode === 0) {
-          return { exitCode: 1, message: `Namespace validation failed: ${issues.length} skill(s) missing namespace field` };
+          return { exitCode: 1, message: `AIWG source convention validation failed: ${issues.length} issue(s)` };
         }
       } else {
-        console.log('\n── Namespace validation: all skills have namespace field ✓');
+        console.log('\n── AIWG source conventions: all canonical skills include the AIWG namespace extension ✓');
       }
     } catch {
       // Namespace scan is non-fatal
@@ -497,6 +499,16 @@ export const doctorHandler: CommandHandler = {
 
     // Run core doctor diagnostics
     const result = await runner.run('tools/cli/doctor.mjs', ctx.args, { cwd: ctx.cwd });
+    let agentSkillsFailure = false;
+
+    try {
+      const { buildAgentSkillsDoctorSection } = await import('../../skills/doctor.js');
+      const section = buildAgentSkillsDoctorSection(ctx.cwd || process.cwd());
+      console.log(section.output);
+      agentSkillsFailure = section.hasFailures;
+    } catch (error) {
+      console.log(`\n── Agent Skills conformance ──\n  ⚠ unable to audit: ${error instanceof Error ? error.message : String(error)}`);
+    }
 
     // Surface feedback escape hatch when doctor finds issues
     if (result.exitCode !== 0) {
@@ -605,7 +617,9 @@ export const doctorHandler: CommandHandler = {
       console.log(`\n── Workspace context graph ──\n  ⚠ unable to audit: ${error instanceof Error ? error.message : String(error)}`);
     }
 
-    return result;
+    return agentSkillsFailure
+      ? { exitCode: 1, message: '' }
+      : result;
   },
 };
 

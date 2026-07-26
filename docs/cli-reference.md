@@ -201,6 +201,8 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 - Project `.aiwg/` directory structure
 - Framework registry status
 - Deployed agents and commands
+- Managed Agent Skills source conformance, imported-source integrity, active
+  provider degradation, and source/deployed drift
 - MCP server availability
 - System dependencies (git, jq, etc.)
 - `memory.topology` contracts — runs `validateMemoryTopology()` against every installed framework/addon manifest; flags missing required fields, invalid `crossRefStyle` values (must be `at-mention | wikilink | markdown-link | yaml-ref`), namespaces not under `.aiwg/`, empty `derivedPages`, and wrong array shapes for `lintRules`/`ingestRequires` (per ADR-021)
@@ -1876,6 +1878,8 @@ aiwg validate-metadata [options] [path]
 - `--strict` - Treat warnings as errors.
 - `--ci` - CI mode.
 - `--fix` - Auto-fix common metadata issues where supported.
+- `--profile strict|compatible|discovery` - Select Agent Skills conformance
+  policy (default `compatible`).
 
 **Capabilities:** cli, validation, metadata
 **Platforms:** All
@@ -1888,6 +1892,8 @@ aiwg validate-metadata [options] [path]
 - Version format correct
 - Platform compatibility declared
 - Keywords and capabilities present
+- Agent Skills frontmatter, standard limits, field profile, and referenced
+  resources for every discovered `SKILL.md`
 
 **Example:**
 
@@ -2014,7 +2020,7 @@ aiwg lint --list-rulesets
 Score `SKILL.md` files against a quality rubric (schema, description, discoverability, body).
 
 ```bash
-aiwg skill-lint <path> [--rubric strict|standard|lenient] [--json]
+aiwg skill-lint <path> [--rubric strict|standard|lenient] [--profile strict|compatible|discovery] [--json]
 ```
 
 **Arguments:**
@@ -2024,13 +2030,16 @@ aiwg skill-lint <path> [--rubric strict|standard|lenient] [--json]
 **Options:**
 
 - `--rubric strict|standard|lenient` - Threshold profile (default `standard`)
+- `--profile strict|compatible|discovery` - Agent Skills conformance profile
+  (default `compatible`)
 - `--json` - Emit structured JSON report
 
 **Capabilities:** cli, validation, metadata, quality
 **Tools:** Read
 
-Output reports per-file scores with dimension-level notes for any file
-under the rubric threshold, and an aggregate average across all scanned files.
+Output reports the shared Agent Skills conformance result, per-file quality
+scores with dimension-level notes, and an aggregate average. Conformance errors
+fail the file regardless of its quality score.
 
 ---
 

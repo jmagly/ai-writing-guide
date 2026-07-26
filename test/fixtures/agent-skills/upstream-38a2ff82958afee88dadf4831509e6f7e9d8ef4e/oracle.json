@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "repository": "agentskills/agentskills",
+  "revision": "38a2ff82958afee88dadf4831509e6f7e9d8ef4e",
+  "referenceValidatorVersion": "0.1.0",
+  "cases": [
+    {
+      "path": "minimal/SKILL.md",
+      "referenceValid": true
+    },
+    {
+      "path": "flow-syntax/SKILL.md",
+      "referenceValid": true
+    },
+    {
+      "path": "invalid-metadata/SKILL.md",
+      "referenceValid": false
+    }
+  ]
+}

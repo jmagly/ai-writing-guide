@@ -14,7 +14,6 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { parse as parseYaml } from 'yaml';
 import { projectAiwgPath } from '../config/project-artifacts.js';
 import {
   listProviderDefinitions,
@@ -22,9 +21,8 @@ import {
 } from '../providers/provider-definitions.js';
 import {
   AGENT_SKILLS_BASELINE,
-  AIWG_SKILL_CONTROL_FIELDS,
-  validateCompatibleAgentSkillMetadata,
 } from './agent-skills.js';
+import { validateAgentSkillContent } from './validator.js';
 import type {
   AgentSkillImportDiagnostic,
   AgentSkillImportLimits,
@@ -777,62 +775,12 @@ function parseImportedSkill(
       'Encode SKILL.md as UTF-8 without invalid byte sequences.',
     );
   }
-  const match = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(content);
-  if (!match) {
-    fail(
-      'AS_FRONTMATTER_REQUIRED',
-      'SKILL.md must begin with YAML frontmatter',
-      'SKILL.md',
-      'Add a leading YAML frontmatter block delimited by `---`.',
-    );
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = parseYaml(match[1] ?? '');
-  } catch (error) {
-    fail(
-      'AS_YAML_PARSE',
-      `SKILL.md frontmatter is invalid YAML: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-      'SKILL.md',
-      'Correct the YAML syntax before importing.',
-    );
-  }
-  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    fail(
-      'AS_YAML_TYPE',
-      'SKILL.md frontmatter must be a YAML mapping',
-      'SKILL.md',
-      'Use top-level key/value fields.',
-    );
-  }
-  const frontmatter = parsed as Record<string, unknown>;
-  const diagnostics = validateCompatibleAgentSkillMetadata(
-    frontmatter,
+  const validation = validateAgentSkillContent(content, {
+    profile,
+    file: 'SKILL.md',
     directoryName,
-    'SKILL.md',
-    content.split(/\r?\n/).length,
-  );
-  if (profile === 'strict') {
-    for (const field of AIWG_SKILL_CONTROL_FIELDS) {
-      if (!Object.prototype.hasOwnProperty.call(frontmatter, field)) continue;
-      diagnostics.push(diagnostic(
-        'AS_FIELD_UNKNOWN',
-        'SKILL.md',
-        `$.${field}`,
-        `AIWG extension field "${field}" is not allowed by the strict profile`,
-        'Remove the field or import with the compatible profile.',
-      ));
-    }
-  }
-  diagnostics.sort((left, right) => (
-    left.code.localeCompare(right.code)
-    || left.file.localeCompare(right.file)
-    || left.yamlPath.localeCompare(right.yamlPath)
-    || left.message.localeCompare(right.message)
-  ));
+  });
+  const diagnostics = validation.diagnostics;
   const errors = diagnostics.filter((item) => item.severity === 'error');
   if (errors.length > 0) {
     throw new AgentSkillImportError(
@@ -843,8 +791,8 @@ function parseImportedSkill(
   }
 
   return {
-    name: frontmatter['name'] as string,
-    description: frontmatter['description'] as string,
+    name: validation.frontmatter?.['name'] as string,
+    description: validation.frontmatter?.['description'] as string,
     diagnostics,
   };
 }

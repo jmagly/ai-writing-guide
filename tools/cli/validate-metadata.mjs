@@ -9,6 +9,7 @@
  */
 
 import { MetadataValidator } from '../../dist/src/plugin/metadata-validator.js';
+import { scanAgentSkillPaths } from '../../dist/src/skills/validator.js';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import chalk from 'chalk';
@@ -22,6 +23,7 @@ const config = {
   strict: false,
   fix: false,
   ci: false,
+  profile: 'compatible',
   path: null
 };
 
@@ -51,6 +53,12 @@ function parseArgs() {
       config.fix = true;
     } else if (arg === '--ci') {
       config.ci = true;
+    } else if (arg === '--profile') {
+      config.profile = args[++i];
+      if (!['strict', 'compatible', 'discovery'].includes(config.profile)) {
+        console.error(chalk.red('Error: --profile must be "strict", "compatible", or "discovery"'));
+        process.exit(1);
+      }
     } else if (!arg.startsWith('-')) {
       config.path = arg;
     } else {
@@ -84,6 +92,7 @@ ${chalk.bold('Options:')}
   --recursive           Validate all manifests in directory recursively
   --format <type>       Output format: text|json (default: text)
   --strict              Treat warnings as errors
+  --profile <name>      Agent Skills profile: strict|compatible|discovery
   --fix                 Auto-fix common issues (version format, etc.)
   --ci                  CI mode: exit code 1 on errors, 0 on success
   -h, --help            Show this help message
@@ -224,6 +233,22 @@ function displayTextReport(results, targetPath) {
   console.log();
 }
 
+function displayAgentSkillsReport(report) {
+  if (config.format === 'json' || report.summary.scanned === 0) return;
+  console.log(chalk.bold('\nAgent Skills Conformance:'));
+  console.log(
+    `  Profile: ${report.profile}  Scanned: ${report.summary.scanned}  `
+    + `Invalid: ${report.summary.invalid}  Skipped: ${report.summary.skipped}`,
+  );
+  for (const result of report.files) {
+    for (const item of result.diagnostics) {
+      const mark = item.severity === 'error' ? chalk.red('✗') : chalk.yellow('⚠');
+      console.log(`  ${mark} ${item.code} ${formatPath(item.file)} ${item.yamlPath}: ${item.message}`);
+      console.log(chalk.gray(`      Fix: ${item.remediation}`));
+    }
+  }
+}
+
 /**
  * Main execution function
  */
@@ -269,16 +294,34 @@ async function main() {
       }
     }
 
+    const agentSkills = scanAgentSkillPaths(targetPath, {
+      profile: config.profile,
+      recursive: pathType === 'directory' && config.recursive,
+    });
+
     // Generate and display report
     if (config.format === 'json') {
-      const report = validator.generateReport(results, 'json');
-      console.log(report);
+      const metadata = JSON.parse(validator.generateReport(results, 'json'));
+      console.log(JSON.stringify({
+        schemaVersion: 1,
+        metadata,
+        agentSkills,
+      }, null, 2));
     } else {
       displayTextReport(results, targetPath);
+      displayAgentSkillsReport(agentSkills);
     }
 
     // Determine exit code
-    const hasFailures = Array.from(results.values()).some(r => !r.valid);
+    const conformanceFailure = agentSkills.files.some((result) => (
+      !result.valid
+      || (
+        config.strict
+        && result.diagnostics.some((item) => item.severity === 'warning')
+      )
+    ));
+    const hasFailures = Array.from(results.values()).some(r => !r.valid)
+      || conformanceFailure;
     const exitCode = (config.ci && hasFailures) ? 1 : 0;
 
     process.exit(exitCode);

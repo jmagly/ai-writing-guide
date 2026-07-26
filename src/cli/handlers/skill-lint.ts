@@ -12,8 +12,12 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as yaml from 'js-yaml';
 import { validateSkillFrontmatter } from '../../extensions/validation.js';
+import { validateAgentSkillFile } from '../../skills/validator.js';
+import type {
+  AgentSkillDiagnostic,
+  AgentSkillValidationProfile,
+} from '../../skills/agent-skills.js';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 
 /**
@@ -37,6 +41,11 @@ interface DimensionScore {
 
 interface SkillScore {
   file: string;
+  conformance: {
+    profile: AgentSkillValidationProfile;
+    state: 'valid' | 'warning' | 'invalid' | 'skipped';
+    diagnostics: AgentSkillDiagnostic[];
+  };
   /** Weighted total, 0–100. */
   score: number;
   /** Per-dimension breakdown. */
@@ -60,6 +69,7 @@ interface CompanionCliInventoryItem {
 
 interface LintReport {
   rubric: RubricMode;
+  profile: AgentSkillValidationProfile;
   threshold: number;
   files: SkillScore[];
   /** Average score across files (helpful trend metric). */
@@ -94,7 +104,19 @@ function partialDimension(score: number, notes: string[]): DimensionScore {
  * because the cleanup work in #1015 made schema correctness a baseline
  * expectation across the corpus.
  */
-function scoreSchema(frontmatter: unknown): DimensionScore {
+function scoreSchema(
+  frontmatter: unknown,
+  diagnostics: readonly AgentSkillDiagnostic[],
+): DimensionScore {
+  const conformanceErrors = diagnostics.filter((item) => item.severity === 'error');
+  if (conformanceErrors.length > 0) {
+    const notes = conformanceErrors.map((item) => (
+      item.code === 'AS_YAML_PARSE'
+        ? `YAML parse error: ${item.message}`
+        : `${item.yamlPath}: ${item.message} [${item.code}]`
+    ));
+    return scoreDimension(false, notes);
+  }
   const result = validateSkillFrontmatter(frontmatter);
   if (result.success) return scoreDimension(true);
   const notes = result.errors.errors.map(
@@ -268,41 +290,15 @@ function inventoryCompanionCli(filePath: string, body: string): CompanionCliInve
  */
 export async function lintSkillFile(
   filePath: string,
-  rubric: RubricMode = 'standard'
+  rubric: RubricMode = 'standard',
+  profile: AgentSkillValidationProfile = 'compatible',
 ): Promise<SkillScore> {
-  const content = await fs.readFile(filePath, 'utf-8');
-  const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-
-  if (!fmMatch) {
-    return {
-      file: filePath,
-      score: 0,
-      passes: false,
-      dimensions: {
-        schema: scoreDimension(false, ['no YAML frontmatter found']),
-        description: scoreDimension(false, ['no frontmatter to derive description from']),
-        discoverability: scoreDimension(false, ['no frontmatter']),
-        body: scoreBody(content),
-      },
-    };
-  }
-
-  const [, fmText, body = ''] = fmMatch;
-  let frontmatter: Record<string, unknown> = {};
-  let yamlError: string | null = null;
-  try {
-    const parsed = yaml.load(fmText);
-    if (parsed && typeof parsed === 'object') {
-      frontmatter = parsed as Record<string, unknown>;
-    }
-  } catch (e) {
-    yamlError = (e as Error).message.split('\n')[0];
-  }
+  const validation = validateAgentSkillFile(filePath, { profile });
+  const frontmatter = validation.frontmatter ?? {};
+  const body = validation.body;
 
   const dimensions: SkillScore['dimensions'] = {
-    schema: yamlError
-      ? scoreDimension(false, [`YAML parse error: ${yamlError}`])
-      : scoreSchema(frontmatter),
+    schema: scoreSchema(frontmatter, validation.diagnostics),
     description: scoreDescription(frontmatter),
     discoverability: scoreDiscoverability(frontmatter),
     body: scoreBody(body),
@@ -312,7 +308,12 @@ export async function lintSkillFile(
   return {
     file: filePath,
     score,
-    passes: score >= THRESHOLDS[rubric],
+    conformance: {
+      profile,
+      state: validation.state,
+      diagnostics: validation.diagnostics,
+    },
+    passes: validation.valid && score >= THRESHOLDS[rubric],
     dimensions,
   };
 }
@@ -325,7 +326,8 @@ async function* walkSkillFiles(rootPath: string): AsyncGenerator<string> {
   }
   if (!stat.isDirectory()) return;
 
-  const entries = await fs.readdir(rootPath, { withFileTypes: true });
+  const entries = (await fs.readdir(rootPath, { withFileTypes: true }))
+    .sort((left, right) => left.name.localeCompare(right.name));
   for (const e of entries) {
     if (e.name.startsWith('.') || e.name === 'node_modules') continue;
     const p = path.join(rootPath, e.name);
@@ -348,7 +350,8 @@ async function* walkSkillFiles(rootPath: string): AsyncGenerator<string> {
  */
 export async function lintSkills(
   targetPaths: string | string[],
-  rubric: RubricMode = 'standard'
+  rubric: RubricMode = 'standard',
+  profile: AgentSkillValidationProfile = 'compatible',
 ): Promise<LintReport> {
   const targets = Array.isArray(targetPaths) ? targetPaths : [targetPaths];
   const seen = new Set<string>();
@@ -358,7 +361,7 @@ export async function lintSkills(
       const resolved = path.resolve(f);
       if (seen.has(resolved)) continue;
       seen.add(resolved);
-      files.push(await lintSkillFile(f, rubric));
+      files.push(await lintSkillFile(f, rubric, profile));
     }
   }
   const total = files.reduce((sum, f) => sum + f.score, 0);
@@ -371,6 +374,7 @@ export async function lintSkills(
   }
   return {
     rubric,
+    profile,
     threshold: THRESHOLDS[rubric],
     files,
     averageScore: files.length > 0 ? Math.round(total / files.length) : 0,
@@ -386,10 +390,12 @@ export async function lintSkills(
 function parseArgs(args: string[]): {
   targets: string[];
   rubric: RubricMode;
+  profile: AgentSkillValidationProfile;
   json: boolean;
 } {
   const targets: string[] = [];
   let rubric: RubricMode = 'standard';
+  let profile: AgentSkillValidationProfile = 'compatible';
   let json = false;
 
   for (let i = 0; i < args.length; i++) {
@@ -401,28 +407,44 @@ function parseArgs(args: string[]): {
       if (next === 'strict' || next === 'standard' || next === 'lenient') {
         rubric = next;
       }
+    } else if (a === '--profile' && i + 1 < args.length) {
+      const next = args[++i];
+      if (next === 'strict' || next === 'compatible' || next === 'discovery') {
+        profile = next;
+      }
     } else if (!a.startsWith('-')) {
       targets.push(a);
     }
   }
   if (targets.length === 0) targets.push('agentic/code');
-  return { targets, rubric, json };
+  return { targets, rubric, profile, json };
 }
 
 function renderTextReport(report: LintReport): void {
-  const { files, threshold, rubric, averageScore, failedCount } = report;
+  const { files, threshold, rubric, profile, averageScore, failedCount } = report;
 
   for (const f of files) {
-    if (f.passes) continue;
-    console.log(`✗ ${f.file} (${f.score}/100)`);
+    if (f.passes && f.conformance.diagnostics.length === 0) continue;
+    const mark = !f.passes
+      ? '✗'
+      : f.conformance.diagnostics.some((item) => item.severity === 'warning')
+        ? '⚠'
+        : '✓';
+    console.log(`${mark} ${f.file} (${f.score}/100, conformance=${f.conformance.state})`);
+    for (const item of f.conformance.diagnostics) {
+      console.log(
+        `    ${item.severity} ${item.code} ${item.yamlPath}: ${item.message}; `
+        + `fix: ${item.remediation}`,
+      );
+    }
     for (const [name, dim] of Object.entries(f.dimensions)) {
-      if (dim.score < 100) {
+      if (!f.passes && dim.score < 100) {
         console.log(`    ${name} (${dim.score}): ${dim.notes.join('; ')}`);
       }
     }
   }
 
-  console.log(`\nskill-lint (rubric=${rubric}, threshold=${threshold}):`);
+  console.log(`\nskill-lint (rubric=${rubric}, profile=${profile}, threshold=${threshold}):`);
   console.log(`  ${files.length} file(s) scanned`);
   console.log(`  ${failedCount} below threshold`);
   console.log(`  average score: ${averageScore}/100`);
@@ -440,8 +462,8 @@ export const skillLintHandler: CommandHandler = {
   aliases: ['-skill-lint', '--skill-lint'],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
-    const { targets, rubric, json } = parseArgs(ctx.args);
-    const report = await lintSkills(targets, rubric);
+    const { targets, rubric, profile, json } = parseArgs(ctx.args);
+    const report = await lintSkills(targets, rubric, profile);
 
     if (json) {
       console.log(JSON.stringify(report, null, 2));
