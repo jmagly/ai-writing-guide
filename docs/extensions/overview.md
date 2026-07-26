@@ -152,6 +152,12 @@ interface CommandMetadata {
 
 Natural language workflows triggered by phrases or conditions.
 
+For portable third-party `SKILL.md` bundles, see
+[Agent Skills import and deployment](../skills/agent-skills.md). That guide
+covers agentskills.io conformance, managed import, validation, strict provider
+projection, and the mapping between portable fields and AIWG extension
+metadata.
+
 **Metadata:**
 
 ```typescript
