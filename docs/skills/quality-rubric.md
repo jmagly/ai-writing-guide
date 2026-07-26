@@ -147,6 +147,8 @@ A SKILL.md that scores 100 in `strict` mode:
 
 ## See also
 
+- [Agent Skills import and deployment](agent-skills.md): import, validation,
+  trust, sidecar, and provider deployment guide
 - `.aiwg/architecture/adr-skill-md-frontmatter-schema.md` — schema policy ADR
 - `src/extensions/validation.ts` — `SkillFrontmatterSchema` definition
 - `src/cli/handlers/skill-lint.ts` — handler implementation

@@ -143,7 +143,11 @@ codex chat
 # Codex discovers AIWG via .agents/plugins/marketplace.json
 ```
 
-**Note on deployment paths**: Unlike Claude Code where agents/commands/skills deploy to project directories, Codex commands and skills deploy to **home directory** (`~/.codex/prompts/`, `~/.codex/skills/`) for user-level availability. This is a Codex convention, not an AIWG choice.
+**Note on deployment paths**: Codex prompts remain user-level under
+`~/.codex/prompts/`. Current AIWG framework skills and standard-aware managed
+Agent Skills deploy to the project `.agents/skills/` compatibility surface.
+AIWG-owned entries in the legacy `~/.codex/skills/` path are pruned; user-owned
+content is preserved.
 
 ---
 

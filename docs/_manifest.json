@@ -78,6 +78,10 @@
     "reference",
     "CLI_USAGE",
     "cli-reference",
+    "skills/agent-skills",
+    "skills/quality-rubric",
+    "architecture/adr-agent-skills-portability-contract",
+    "reports/agentskills-standard-audit-2026-07-25",
     "configuration/aiwg-config",
     "security/repo-access-manifest",
     "fortemi-core-prebuilt-indices",
@@ -791,6 +795,34 @@
       "title": "All Commands",
       "summary": "Every aiwg command with examples",
       "file": "cli-reference.md",
+      "parent": "reference"
+    },
+    {
+      "id": "skills/agent-skills",
+      "title": "Agent Skills",
+      "summary": "Import, validate, trust, deploy, update, and remove portable Agent Skills",
+      "file": "skills/agent-skills.md",
+      "parent": "reference"
+    },
+    {
+      "id": "skills/quality-rubric",
+      "title": "SKILL.md Quality Rubric",
+      "summary": "Quality scoring and source conventions for SKILL.md",
+      "file": "skills/quality-rubric.md",
+      "parent": "reference"
+    },
+    {
+      "id": "architecture/adr-agent-skills-portability-contract",
+      "title": "Agent Skills Portability Contract",
+      "summary": "Architecture decision for portable metadata, sidecars, trust, and provider projection",
+      "file": "architecture/adr-agent-skills-portability-contract.md",
+      "parent": "reference"
+    },
+    {
+      "id": "reports/agentskills-standard-audit-2026-07-25",
+      "title": "Agent Skills Adoption Audit",
+      "summary": "Pinned upstream format audit and adoption evidence",
+      "file": "reports/agentskills-standard-audit-2026-07-25.md",
       "parent": "reference"
     },
     {

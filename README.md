@@ -118,7 +118,7 @@ You can also invoke AIWG without adjusting `PATH` by using `npx aiwg <command>`.
 
 ## What AIWG Is
 
-AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the specific paths each AI platform looks in — `.claude/agents/`, `~/.codex/skills/`, `.cursor/rules/`, `.github/prompts/`, and six more — so one source of truth works across 10 platforms.
+AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the specific paths each AI platform looks in — `.claude/agents/`, `.agents/skills/`, `.cursor/rules/`, `.github/prompts/`, and six more — so one source of truth works across 10 platforms.
 
 Around that core, AIWG ships agent-facing utilities for things the base platforms do not handle on their own: persistent artifact memory (`.aiwg/`), background orchestration, autonomous loops, artifact indexing, cost telemetry, health diagnostics, and more. These are tools the agent calls when you ask for something AIWG-shaped — you stay in chat. Most are opt-in. The deployment layer works standalone as plain text files the platform reads natively.
 
@@ -1322,7 +1322,7 @@ All 8 platforms receive agents, commands, skills, and rules. Deployment adapts t
 | **Factory AI** | Tested | `.factory/droids/` | `.factory/commands/` | `.factory/skills/` | `.factory/rules/` | `--provider factory` |
 | **Cursor** | Tested | `.cursor/agents/` | `.cursor/commands/` | `.cursor/skills/` | `.cursor/rules/` | `--provider cursor` |
 | **OpenCode** | Tested | `.opencode/agent/` | `.opencode/commands/` | `.opencode/skill/` | `.opencode/rule/` | `--provider opencode` |
-| **OpenAI/Codex** | Tested | `.codex/agents/` | `~/.codex/prompts/` | `~/.codex/skills/` | `.codex/rules/` | `--provider openai` |
+| **OpenAI/Codex** | Tested | `.codex/agents/` | `~/.codex/prompts/` | `.agents/skills/` | `.codex/rules/` | `--provider codex` |
 | **Windsurf** | Experimental | AGENTS.md | `.windsurf/workflows/` | `.windsurf/skills/` | `.windsurf/rules/` | `--provider windsurf` |
 
 ---

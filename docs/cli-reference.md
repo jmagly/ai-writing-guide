@@ -541,7 +541,7 @@ aiwg use sdlc --ci-hooks-enabled --dry-run
 | Cursor         | `cursor`        | `.cursor/agents/`, `.cursor/commands/`, `.cursor/skills/`, `.cursor/rules/`                                           | —         |
 | Windsurf       | `windsurf`      | `AGENTS.md` (aggregated), `.windsurf/workflows/`, `.windsurf/skills/`, `.windsurf/rules/`                             | —         |
 | Warp Terminal  | `warp`          | `.warp/agents/`, `.warp/commands/`, `.warp/skills/`, `.warp/rules/`, `WARP.md` (aggregated)                           | —         |
-| OpenAI/Codex   | `codex`         | `.codex/agents/`, `~/.codex/prompts/`, `~/.codex/skills/`, `.codex/rules/`                                            | —         |
+| OpenAI/Codex   | `codex`         | `.codex/agents/`, `~/.codex/prompts/`, `.agents/skills/`, `.codex/rules/`                                             | —         |
 | OpenCode       | `opencode`      | `.opencode/agent/`, `.opencode/commands/`, `.opencode/skill/`, `.opencode/rule/`                                      | —         |
 | Hermes         | `hermes`        | `~/.hermes/skills/`, `AGENTS.md` (lean)                                                                               | —         |
 | OpenClaw       | `openclaw`      | `~/.openclaw/agents/`, `~/.openclaw/commands/`, `~/.openclaw/skills/`, `~/.openclaw/rules/`, `~/.openclaw/behaviors/` | ✓         |
@@ -554,7 +554,9 @@ On first run after the commands-to-skills migration, `aiwg use` detects an exist
 
 **Notes:**
 
-- **Codex**: Commands and skills deploy to `~` (user-level) for availability across all projects; the provider ID is `codex`, not `openai`
+- **Codex**: Prompts deploy to `~/.codex/prompts/`; skills deploy to the
+  project `.agents/skills/` discovery surface. The provider ID is `codex`, not
+  `openai`.
 - **Windsurf**: Agents aggregated into `AGENTS.md` at project root; no separate agent files
 - **Warp**: Agents and commands also aggregated into `WARP.md` for single-file context loading
 - **OpenHuman**: Kernel skills and rule bodies are user-global; the default deploy emits no markdown persona copies. Project context is rendered into `AGENTS.md`, and curated native TOML agents are opt-in with `--harness-agents`.
@@ -577,7 +579,9 @@ On first run after the commands-to-skills migration, `aiwg use` detects an exist
 **Per-provider notes for global install:**
 
 - **Claude Code** — `~/.claude/agents/` and `./.claude/agents/` merge at load time. `aiwg status --scope` (when implemented per the rough-edge inventory) helps disambiguate which artifacts came from which scope.
-- **Codex** — User-scope is the _primary_ discovery path; `~/.codex/prompts/` and `~/.codex/skills/` are where Codex actually looks. Project-scope `.codex/commands/` exists for operator visibility but Codex's loader does not scan it. AGENTS.md is the project-scope discovery bridge per the Codex integration ADR.
+- **Codex** — Prompts use the user-level `~/.codex/prompts/` surface. Skills
+  use project `.agents/skills/`, and `AGENTS.md` remains the project context
+  bridge. AIWG prunes only its own legacy entries from `~/.codex/skills/`.
 - **OpenClaw** — User-scope is the only supported scope. Project-scope is rejected at the CLI layer.
 - **Hermes** — User-scope is the canonical mode; `~/.hermes/skills/` is the primary loader path.
 - **Copilot / Cursor / Factory / OpenCode / Warp / Windsurf** — Global-install semantics on these providers are pending field validation as part of the Workstream A audit (`.aiwg/studies/novice-user-adoption/working/hookup-matrix.md`).
@@ -1662,7 +1666,9 @@ aiwg catalog search <query>
 
 ### skills
 
-Skill registry operations — search, install, and inspect skills from local sources, ClawHub, and OpenClaw.
+Search third-party registry adapters and manage standard-aware Agent Skills
+imports. agentskills.io defines a directory format; it does not provide an
+official registry API.
 
 ```bash
 aiwg skills <subcommand> [options]
@@ -1670,13 +1676,63 @@ aiwg skills <subcommand> [options]
 
 **Subcommands:**
 
-- `list` - List skills from configured registries
-- `search <query>` - Search the skill registry by keyword
-- `info <id>` - Show metadata for a specific skill
-- `install <id>` - Install a skill from the registry
-- `publish <path>` - Publish a local skill to a registry
+- `list [--provider <registry>]` - List skills from configured adapters,
+  including managed Agent Skills imports
+- `search <query> [--provider <registry>]` - Search configured adapters
+- `info <name> [--provider agentskills]` - Inspect metadata, provenance,
+  digest, trust, activation, and managed path
+- `install <name> [--provider <registry>] [--target <provider>]` - Install from
+  a third-party adapter
+- `import <directory> [options]` - Validate and byte-preserve a local Agent
+  Skills directory
+- `import --git <url> --rev <revision> --subpath <path> [options]` - Import an
+  explicitly pinned Git skill
+- `deploy <name> [--target <provider|all>] [--dry-run] [--json]` - Project a
+  trusted active import to provider paths
+- `uninstall <name> [--target <provider|all>] [--dry-run] [--json]` - Remove
+  only a matching AIWG-managed provider projection
+- `publish <path> --provider <registry>` - Publish through a configured
+  third-party adapter
 
-**Capabilities:** cli, skills, registry, search, install, publish
+**Import options:**
+
+- `--profile strict|compatible` - Validate portable-only or recognized
+  AIWG-extended source (default: `strict`)
+- `--dry-run` - Validate and plan without writing
+- `--update` - Accept changed content from the same source locator
+- `--force` - Replace an imported name from a different reviewed source
+- `--trust --activate` - Trust and activate the exact source digest
+- `--json` - Emit deterministic structured output
+
+**Examples:**
+
+```bash
+# Local compatible source: preview, import, inspect
+aiwg skills import ./portable-complete --profile compatible --dry-run --json
+aiwg skills import ./portable-complete --profile compatible --trust --activate
+aiwg skills info portable-complete --provider agentskills
+
+# Pinned Git source
+aiwg skills import \
+  --git https://example.com/team/skills.git \
+  --rev 0123456789abcdef0123456789abcdef01234567 \
+  --subpath skills/portable-complete \
+  --profile compatible \
+  --trust \
+  --activate
+
+# Provider lifecycle
+aiwg skills deploy portable-complete --target generic --dry-run --json
+aiwg skills deploy portable-complete --target generic
+aiwg skills uninstall portable-complete --target generic
+```
+
+Validation uses `aiwg validate-metadata --profile <profile>`, where the profile
+is `strict`, `compatible`, or `discovery`. Provider projection details, trust
+rules, diagnostics, sidecars, updates, and all 12 target paths are documented
+in [Agent Skills import and deployment](skills/agent-skills.md).
+
+**Capabilities:** cli, skills, registry, import, validation, deployment
 **Tools:** Read, Bash
 
 ---

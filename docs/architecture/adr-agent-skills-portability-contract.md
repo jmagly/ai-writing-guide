@@ -3,7 +3,8 @@
 Status: accepted
 Date: 2026-07-26
 Decision owners: AIWG maintainers
-Related: #539, #546, #547, #1046, #1553, #1569, #1875
+Related: #539, #546, #547, #1046, #1553, #1569, #1875, #1877, #1878,
+#1879, #1880, #1881
 
 ## Context
 
@@ -104,11 +105,15 @@ The versioned sidecar conforms to
 - validation profile;
 - trust and activation state.
 
-Imported source is staged at
-`.aiwg/skills/imports/<name>/<digest>/source/`, with its sidecar outside the
-byte-preserved `source/` directory. Provider deployment may copy the sidecar as
-`.aiwg-skill.json`; ownership markers remain separate from portable
-frontmatter.
+Imported source is stored at `.aiwg/skills/imported/<name>/source/`. Its
+`manifest.json` is the sibling
+`.aiwg/skills/imported/<name>/manifest.json`, outside the byte-preserved source
+directory.
+
+Provider deployment writes `.aiwg-agent-skill.json`. This deployment wrapper
+records provider/path projection state and embeds the portable sidecar contract
+under `portable`. The exact `.aiwg-managed` marker establishes ownership.
+Both files remain separate from portable frontmatter.
 
 ### Import sources and update behavior
 
