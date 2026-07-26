@@ -46,12 +46,27 @@ interface EmbeddedAiwgRecord {
       observed_state: string;
       classification: string;
     };
+    state_transfer?: {
+      deleted_at: string | null;
+    };
     skos_concepts?: Array<{ id: string }>;
   };
 }
 
 function sha256(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+function sortedRecords(
+  bytes: Uint8Array,
+  format: "json" | "jsonl",
+): Array<Record<string, unknown>> {
+  const text = new TextDecoder().decode(bytes);
+  const values = format === "json"
+    ? JSON.parse(text)
+    : text.split("\n").filter(Boolean).map((line) => JSON.parse(line));
+  return (values as Array<Record<string, unknown>>)
+    .sort((left, right) => String(left.id).localeCompare(String(right.id)));
 }
 
 describe("AIWG portable Fortemi shard export", () => {
@@ -89,6 +104,9 @@ describe("AIWG portable Fortemi shard export", () => {
         confidence: "source",
         current_action_selector: true,
       },
+      stateTransfer: {
+        deletedAt: null,
+      },
     };
     const target: MetadataEntry = {
       path: targetPath,
@@ -102,6 +120,9 @@ describe("AIWG portable Fortemi shard export", () => {
       summary: "Import the shard without custom transformation.",
       dependencies: [],
       dependents: [recordPath],
+      stateTransfer: {
+        deletedAt: "2026-07-25T09:30:00.000Z",
+      },
     };
     const index: ArtifactIndex = {
       version: "1.0.0",
@@ -187,7 +208,7 @@ describe("AIWG portable Fortemi shard export", () => {
     const reader = await openShard(shard);
     try {
       const notes = await reader.listNotes();
-      expect(notes.total).toBe(2);
+      expect(notes.total).toBe(1);
       expect(notes.items[0]?.source).toBe("aiwg-index");
       const sourceRecord = notes.items
         .map((note) => note.ai_metadata?.aiwg_fortemi_index as EmbeddedAiwgRecord | undefined)
@@ -230,6 +251,9 @@ describe("AIWG portable Fortemi shard export", () => {
         source_id: "aiwg#1827",
         observed_state: "open",
         classification: "fresh",
+      });
+      expect(sourceRecord.record.state_transfer).toEqual({
+        deleted_at: null,
       });
       expect(sourceRecord.record.skos_concepts).toEqual(
         expect.arrayContaining([
@@ -339,7 +363,58 @@ describe("AIWG portable Fortemi shard export", () => {
 
       const imported = await importShard(destination, shard);
       expect(imported.success).toBe(true);
-      expect(imported.counts).toMatchObject({ notes: 2, tags: 2, links: 2 });
+      expect(imported.counts).toMatchObject({
+        notes: 2,
+        collections: 3,
+        tags: 2,
+        links: 2,
+      });
+      const repeated = await importShard(destination, shard);
+      expect(repeated.success).toBe(true);
+      expect(repeated.counts).toMatchObject({
+        notes: 0,
+        collections: 0,
+        tags: 0,
+        links: 0,
+      });
+
+      const persisted = await destination.query<{
+        title: string;
+        deleted_at: string | null;
+        collection_name: string;
+        parent_name: string;
+      }>(`
+        SELECT
+          n.title,
+          CASE
+            WHEN n.deleted_at IS NULL THEN NULL
+            ELSE to_char(
+              n.deleted_at AT TIME ZONE 'UTC',
+              'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+            )
+          END AS deleted_at,
+          c.name AS collection_name,
+          p.name AS parent_name
+        FROM note n
+        JOIN collection_note cn ON cn.note_id = n.id
+        JOIN collection c ON c.id = cn.collection_id
+        LEFT JOIN collection p ON p.id = c.parent_id
+        ORDER BY n.title
+      `);
+      expect(persisted.rows).toEqual([
+        {
+          title: "Portable Fortemi transport",
+          deleted_at: null,
+          collection_name: "design",
+          parent_name: ".aiwg",
+        },
+        {
+          title: "Shard import compatibility",
+          deleted_at: "2026-07-25T09:30:00.000Z",
+          collection_name: "requirements",
+          parent_name: ".aiwg",
+        },
+      ]);
 
       const reexport = await exportShardWithReport(destination, { profile: "core-v1" });
       expect(reexport.success).toBe(true);
@@ -350,6 +425,14 @@ describe("AIWG portable Fortemi shard export", () => {
         losses: [],
       });
       expect(reexport.archive).not.toBeNull();
+      const sourceFiles = unpackTarGz(shard);
+      const reexportedFiles = unpackTarGz(reexport.archive!);
+      expect(
+        sortedRecords(reexportedFiles.get("collections.json")!, "json"),
+      ).toEqual(sortedRecords(sourceFiles.get("collections.json")!, "json"));
+      expect(
+        sortedRecords(reexportedFiles.get("notes.jsonl")!, "jsonl"),
+      ).toEqual(sortedRecords(sourceFiles.get("notes.jsonl")!, "jsonl"));
       const restored = aiwgFortemiIndexFromKnowledgeShard(reexport.archive!);
       expect(restored.source).toMatchObject({
         repo: "roctinam/aiwg",
@@ -369,9 +452,55 @@ describe("AIWG portable Fortemi shard export", () => {
               observed_state: "open",
               classification: "fresh",
             }),
+            state_transfer: { deleted_at: null },
+          }),
+          expect.objectContaining({
+            source: expect.objectContaining({ checksum: "def456" }),
+            state_transfer: {
+              deleted_at: "2026-07-25T09:30:00.000Z",
+            },
           }),
         ]),
       );
+
+      const oldestDefinedFiles = unpackTarGz(shard);
+      const oldestDefinedNotes = new TextDecoder()
+        .decode(oldestDefinedFiles.get("notes.jsonl")!)
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => {
+          const note = JSON.parse(line);
+          delete note.deleted_at;
+          return JSON.stringify(note);
+        });
+      const oldestDefinedNoteBytes = new TextEncoder().encode(
+        oldestDefinedNotes.join("\n"),
+      );
+      oldestDefinedFiles.set("notes.jsonl", oldestDefinedNoteBytes);
+      const oldestDefinedManifest = JSON.parse(
+        new TextDecoder().decode(oldestDefinedFiles.get("manifest.json")!),
+      );
+      oldestDefinedManifest.version = "1.0.0";
+      oldestDefinedManifest.min_reader_version = "1.0.0";
+      oldestDefinedManifest.checksums["notes.jsonl"] = sha256(
+        oldestDefinedNoteBytes,
+      );
+      oldestDefinedFiles.set(
+        "manifest.json",
+        new TextEncoder().encode(JSON.stringify(oldestDefinedManifest, null, 2)),
+      );
+      const oldestDestination = await manager.create("aiwg-shard-current-minus-two");
+      const oldestImported = await importShard(
+        oldestDestination,
+        packTarGz(oldestDefinedFiles),
+      );
+      expect(oldestImported.success, oldestImported.errors.join("; ")).toBe(true);
+      expect(oldestImported.counts).toMatchObject({
+        notes: 2,
+        collections: 3,
+        tags: 2,
+        links: 2,
+      });
     } finally {
       await manager.close();
     }
