@@ -1,8 +1,8 @@
 /**
  * Tier 1: Full Index Build (smoke test)
  *
- * Runs buildIndex() against the real .aiwg/ directory and validates
- * structural correctness of the output.
+ * Runs buildIndex() against an isolated corpus and validates structural
+ * correctness of the output.
  *
  * @integration
  * @slow
@@ -11,26 +11,12 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
-import { buildIndex } from '../../../src/artifacts/index-builder.js';
 import type { ArtifactIndex, TagIndex, DependencyGraph, IndexStats } from '../../../src/artifacts/types.js';
-import { resolveProjectAiwgDir } from '../../../src/config/project-artifacts.js';
-
-const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
-const AIWG_DIR = resolveProjectAiwgDir(REPO_ROOT);
-const PROJECT_CORPUS_AVAILABLE = fs.existsSync(AIWG_DIR) && [
-  'requirements',
-  'architecture',
-  'planning',
-  'security',
-].some(dir => fs.existsSync(path.join(AIWG_DIR, dir)));
-const FULL_SDLC_CORPUS_AVAILABLE = [
-  'requirements',
-  'architecture',
-  'planning',
-  'testing',
-  'security',
-].every(dir => fs.existsSync(path.join(AIWG_DIR, dir)));
+import {
+  buildFixtureIndex,
+  FIXTURE_ENTRY_PATHS,
+  type BuiltFixtureIndex,
+} from './fixture-corpus.js';
 const INDEX_BUILD_BUDGET_MS = parseIntEnv('AIWG_INDEX_BUILD_BUDGET_MS', 15_000);
 
 function parseIntEnv(name: string, def: number): number {
@@ -40,59 +26,36 @@ function parseIntEnv(name: string, def: number): number {
 }
 
 describe('Artifact Index Build (integration)', () => {
-  let tmpDir: string;
+  let fixture: BuiltFixtureIndex;
   let metadata: ArtifactIndex;
   let tags: TagIndex;
   let deps: DependencyGraph;
   let stats: IndexStats;
 
   beforeAll(async () => {
-    // Skip if the configured project corpus doesn't exist (e.g. public clone).
-    if (!PROJECT_CORPUS_AVAILABLE) {
-      return;
-    }
-
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-index-test-'));
-
-    // Create the .aiwg/.index/ structure in the temp dir so writeIndexFile works
-    fs.mkdirSync(path.join(tmpDir, '.aiwg', '.index'), { recursive: true });
-
-    // Build index: scan real .aiwg/, write output to temp dir
-    await buildIndex(REPO_ROOT, {
-      force: true,
-      outputDir: tmpDir,
-    });
-
-    // Load the output files
-    const indexDir = path.join(tmpDir, '.aiwg', '.index');
-    metadata = JSON.parse(fs.readFileSync(path.join(indexDir, 'metadata.json'), 'utf-8'));
-    tags = JSON.parse(fs.readFileSync(path.join(indexDir, 'tags.json'), 'utf-8'));
-    deps = JSON.parse(fs.readFileSync(path.join(indexDir, 'dependencies.json'), 'utf-8'));
-    stats = JSON.parse(fs.readFileSync(path.join(indexDir, 'stats.json'), 'utf-8'));
+    fixture = await buildFixtureIndex();
+    metadata = fixture.metadata;
+    tags = fixture.tags;
+    deps = fixture.dependencies;
+    stats = fixture.stats;
   }, 30_000);
 
   afterAll(() => {
-    if (tmpDir && fs.existsSync(tmpDir)) {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    }
+    fixture?.cleanup();
   });
 
   it('should produce all 4 output files', () => {
-    if (!tmpDir) return; // skip if .aiwg/ missing
-    const indexDir = path.join(tmpDir, '.aiwg', '.index');
+    const indexDir = fixture.indexDir;
     for (const file of ['metadata.json', 'tags.json', 'dependencies.json', 'stats.json']) {
       expect(fs.existsSync(path.join(indexDir, file)), `${file} should exist`).toBe(true);
     }
   });
 
-  it('should index more than 100 artifacts', () => {
-    if (!metadata) return;
-    const count = Object.keys(metadata.entries).length;
-    expect(count).toBeGreaterThan(100);
+  it('should index exactly the explicit fixture artifacts', () => {
+    expect(Object.keys(metadata.entries).sort()).toEqual(FIXTURE_ENTRY_PATHS);
   });
 
   it('should have required fields on every entry', () => {
-    if (!metadata) return;
     for (const [entryPath, entry] of Object.entries(metadata.entries)) {
       expect(entry.path, `path on ${entryPath}`).toBe(entryPath);
       expect(entry.type, `type on ${entryPath}`).toBeTruthy();
@@ -105,14 +68,11 @@ describe('Artifact Index Build (integration)', () => {
   });
 
   it('should cover at least 5 SDLC phases', () => {
-    if (!stats) return;
-    if (!FULL_SDLC_CORPUS_AVAILABLE) return;
     const phaseCount = Object.keys(stats.byPhase).length;
     expect(phaseCount).toBeGreaterThanOrEqual(5);
   });
 
   it('should have valid index version and timing', () => {
-    if (!metadata) return;
     expect(metadata.version).toBe('1.0.0');
     expect(metadata.builtAt).toBeTruthy();
     expect(metadata.buildTimeMs).toBeGreaterThan(0);
@@ -127,7 +87,6 @@ describe('Artifact Index Build (integration)', () => {
   });
 
   it('should produce consistent stats', () => {
-    if (!stats || !metadata) return;
     expect(stats.totalArtifacts).toBe(Object.keys(metadata.entries).length);
     // Sum of byPhase values should equal totalArtifacts
     const phaseSum = Object.values(stats.byPhase).reduce((a, b) => a + b, 0);
@@ -138,11 +97,20 @@ describe('Artifact Index Build (integration)', () => {
   });
 
   it('should produce a non-empty dependency graph', () => {
-    if (!deps) return;
     const graphEntries = Object.keys(deps).length;
     expect(graphEntries).toBeGreaterThan(0);
     // At least some artifacts should have cross-references
     const withUpstream = Object.values(deps).filter(n => n.upstream.length > 0).length;
     expect(withUpstream).toBeGreaterThan(0);
+  });
+
+  it('builds the same corpus through a relocated artifact root', async () => {
+    const relocated = await buildFixtureIndex(true);
+    try {
+      expect(Object.keys(relocated.metadata.entries).sort()).toEqual(FIXTURE_ENTRY_PATHS);
+      expect(Object.keys(relocated.stats.byPhase).length).toBeGreaterThanOrEqual(5);
+    } finally {
+      relocated.cleanup();
+    }
   });
 });

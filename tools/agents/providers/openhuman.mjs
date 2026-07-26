@@ -50,8 +50,8 @@ export const paths = {
   // files; command-skills are reachable only through the kernel skill copy or
   // AIWG index/discovery.
   commands: '',
-  // Standard (non-kernel) skills are not copied for OpenHuman. This legacy
-  // path is passed to the shared router only so old hidden copies can be pruned.
+  // Standard (non-kernel) skills are not copied by default. `--copy-all`
+  // explicitly opts into this user-scoped mirror for offline/discovery use.
   skills: path.join(os.homedir(), '.openhuman', '.aiwg', 'skills'),
   // Full rule bodies for `aiwg show rule`.
   rules: path.join(os.homedir(), '.openhuman', '.aiwg', 'rules'),
@@ -137,7 +137,8 @@ export function deployCommands(commandFiles, targetDir, opts) {
 /**
  * Kernel-vs-standard skill routing (#1212/#1216):
  *   - kernel   → ~/.openhuman/skills/        (native UI scan root)
- *   - standard → not copied                  (AIWG index/discovery)
+ *   - standard → not copied by default       (AIWG index/discovery)
+ *              → ~/.openhuman/.aiwg/skills/  with explicit --copy-all
  */
 export function deploySkills(skillDirs, targetDir, opts) {
   const standardDestDir = path.isAbsolute(paths.skills)
@@ -148,7 +149,7 @@ export function deploySkills(skillDirs, targetDir, opts) {
     : path.join(targetDir, kernelSkillsPath);
   return deploySkillsWithKernelRouting(skillDirs, standardDestDir, kernelDestDir, {
     ...opts,
-    copyStandardSkills: false,
+    copyStandardSkills: opts.copyStandardSkills === true,
     transformSkillMd: transformSkillFrontmatter,
   });
 }
@@ -247,7 +248,11 @@ export async function deploy(opts) {
   }
 
   if (shouldDeploySkills || skillsOnly) {
-    console.log(`\nDeploying ${skillDirs.length} skills (kernel → ~/.openhuman/skills, standard → index/discovery)...`);
+    console.log(
+      `\nDeploying ${skillDirs.length} skills (kernel → ~/.openhuman/skills, standard → ${
+        opts.copyStandardSkills ? '~/.openhuman/.aiwg/skills via --copy-all' : 'index/discovery'
+      })...`,
+    );
     deploySkills(skillDirs, target, opts);
   }
 

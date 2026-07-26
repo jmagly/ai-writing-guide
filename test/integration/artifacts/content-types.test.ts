@@ -2,75 +2,40 @@
  * Tier 2: Isolated Content-Type Cases
  *
  * Tests that specific artifact categories are correctly typed and phased
- * when indexing real AIWG content.
+ * from an isolated, deterministic corpus.
  *
  * @integration
  * @slow
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import fs from 'fs';
 import path from 'path';
-import os from 'os';
-import { buildIndex } from '../../../src/artifacts/index-builder.js';
-import type { ArtifactIndex, MetadataEntry } from '../../../src/artifacts/types.js';
-import { resolveProjectAiwgDir } from '../../../src/config/project-artifacts.js';
-
-const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
-const AIWG_DIR = resolveProjectAiwgDir(REPO_ROOT);
-const PROJECT_CORPUS_AVAILABLE = fs.existsSync(AIWG_DIR) && [
-  'requirements',
-  'architecture',
-  'planning',
-  'security',
-].some(dir => fs.existsSync(path.join(AIWG_DIR, dir)));
-const REQUIREMENT_USE_CASES_AVAILABLE = fs.existsSync(AIWG_DIR)
-  && hasFileMatching(path.join(AIWG_DIR, 'requirements'), file =>
-    path.basename(file).toLowerCase().startsWith('uc-')
-  );
-
-function hasFileMatching(dir: string, predicate: (file: string) => boolean): boolean {
-  if (!fs.existsSync(dir)) return false;
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory() && hasFileMatching(fullPath, predicate)) return true;
-    if (entry.isFile() && predicate(fullPath)) return true;
-  }
-  return false;
-}
+import type { MetadataEntry } from '../../../src/artifacts/types.js';
+import {
+  buildFixtureIndex,
+  FIXTURE_ENTRY_PATHS,
+  type BuiltFixtureIndex,
+} from './fixture-corpus.js';
 
 describe('Artifact Content Type Classification (integration)', () => {
   let entries: Record<string, MetadataEntry>;
-  let tmpDir: string;
+  let fixture: BuiltFixtureIndex;
 
   beforeAll(async () => {
-    if (!PROJECT_CORPUS_AVAILABLE) return;
-
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-content-types-'));
-    fs.mkdirSync(path.join(tmpDir, '.aiwg', '.index'), { recursive: true });
-
-    await buildIndex(REPO_ROOT, { force: true, outputDir: tmpDir });
-
-    const indexPath = path.join(tmpDir, '.aiwg', '.index', 'metadata.json');
-    const index: ArtifactIndex = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
-    entries = index.entries;
+    fixture = await buildFixtureIndex();
+    entries = fixture.metadata.entries;
   }, 30_000);
 
   afterAll(() => {
-    if (tmpDir && fs.existsSync(tmpDir)) {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    }
+    fixture?.cleanup();
   });
 
   describe('SDLC artifacts (.aiwg/requirements/)', () => {
     it('should type UC-* files as use-case', () => {
-      if (!entries) return;
-      if (!REQUIREMENT_USE_CASES_AVAILABLE) return;
       const useCases = Object.entries(entries).filter(
         ([p]) => p.startsWith('.aiwg/requirements/') && path.basename(p).toLowerCase().startsWith('uc-')
       );
-      // We should have at least some use cases
-      expect(useCases.length).toBeGreaterThan(0);
+      expect(useCases).toHaveLength(1);
       for (const [p, entry] of useCases) {
         expect(entry.type, `${p} should be use-case`).toBe('use-case');
         // Phase may be overridden by frontmatter (e.g. "inception"), but directory-inferred
@@ -80,79 +45,67 @@ describe('Artifact Content Type Classification (integration)', () => {
     });
 
     it('should type NFR-* files as nfr', () => {
-      if (!entries) return;
       const nfrs = Object.entries(entries).filter(
         ([p]) => path.basename(p).toLowerCase().startsWith('nfr-')
       );
-      if (nfrs.length > 0) {
-        for (const [p, entry] of nfrs) {
-          expect(entry.type, `${p} should be nfr`).toBe('nfr');
-        }
+      expect(nfrs).toHaveLength(1);
+      for (const [p, entry] of nfrs) {
+        expect(entry.type, `${p} should be nfr`).toBe('nfr');
       }
     });
   });
 
   describe('Architecture artifacts (.aiwg/architecture/)', () => {
     it('should type ADR-* files as adr', () => {
-      if (!entries) return;
       const adrs = Object.entries(entries).filter(
         ([p]) => p.startsWith('.aiwg/architecture/') && path.basename(p).toLowerCase().startsWith('adr-')
       );
-      if (adrs.length > 0) {
-        for (const [p, entry] of adrs) {
-          expect(entry.type, `${p} should be adr`).toBe('adr');
-          expect(entry.phase, `${p} should be architecture phase`).toBe('architecture');
-        }
+      expect(adrs).toHaveLength(1);
+      for (const [p, entry] of adrs) {
+        expect(entry.type, `${p} should be adr`).toBe('adr');
+        expect(entry.phase, `${p} should be architecture phase`).toBe('architecture');
       }
     });
   });
 
   describe('Testing artifacts (.aiwg/testing/)', () => {
     it('should phase testing artifacts correctly', () => {
-      if (!entries) return;
       const testArtifacts = Object.entries(entries).filter(
         ([p]) => p.startsWith('.aiwg/testing/')
       );
-      if (testArtifacts.length > 0) {
-        for (const [p, entry] of testArtifacts) {
-          expect(entry.phase, `${p} should be testing phase`).toBe('testing');
-        }
+      expect(testArtifacts).toHaveLength(1);
+      for (const [p, entry] of testArtifacts) {
+        expect(entry.phase, `${p} should be testing phase`).toBe('testing');
       }
     });
   });
 
   describe('Security artifacts (.aiwg/security/)', () => {
     it('should phase security artifacts correctly', () => {
-      if (!entries) return;
       const securityArtifacts = Object.entries(entries).filter(
         ([p]) => p.startsWith('.aiwg/security/')
       );
-      if (securityArtifacts.length > 0) {
-        for (const [p, entry] of securityArtifacts) {
-          expect(entry.phase, `${p} should be security phase`).toBe('security');
-        }
+      expect(securityArtifacts).toHaveLength(1);
+      for (const [p, entry] of securityArtifacts) {
+        expect(entry.phase, `${p} should be security phase`).toBe('security');
       }
     });
 
     it('should type threat model files as threat-model', () => {
-      if (!entries) return;
       const threatModels = Object.entries(entries).filter(
         ([p]) => path.basename(p).toLowerCase().includes('threat')
       );
-      if (threatModels.length > 0) {
-        for (const [p, entry] of threatModels) {
-          expect(entry.type, `${p} should be threat-model`).toBe('threat-model');
-        }
+      expect(threatModels).toHaveLength(1);
+      for (const [p, entry] of threatModels) {
+        expect(entry.type, `${p} should be threat-model`).toBe('threat-model');
       }
     });
   });
 
   describe('Files without frontmatter', () => {
     it('should still index files without YAML frontmatter', () => {
-      if (!entries) return;
       // Find entries that have no tags (likely no frontmatter)
       const noTags = Object.entries(entries).filter(([, e]) => e.tags.length === 0);
-      // Many .aiwg/ files don't have frontmatter; they should still be indexed
       expect(noTags.length).toBeGreaterThan(0);
       for (const [p, entry] of noTags) {
         // Title should be inferred from H1 heading or filename
@@ -162,17 +115,18 @@ describe('Artifact Content Type Classification (integration)', () => {
   });
 
   describe('Coverage', () => {
-    it('should index files from at least 8 subdirectories', () => {
-      if (!entries) return;
-      const dirs = new Set<string>();
-      for (const p of Object.keys(entries)) {
-        // Get first-level subdirectory under .aiwg/
-        const parts = p.split('/');
-        if (parts.length >= 2 && parts[0] === '.aiwg') {
-          dirs.add(parts[1]);
-        }
+    it('should read only the explicit fixture corpus', () => {
+      expect(Object.keys(entries).sort()).toEqual(FIXTURE_ENTRY_PATHS);
+    });
+
+    it('should preserve classification when the artifact root is relocated', async () => {
+      const relocated = await buildFixtureIndex(true);
+      try {
+        expect(Object.keys(relocated.metadata.entries).sort()).toEqual(FIXTURE_ENTRY_PATHS);
+        expect(relocated.metadata.entries['.aiwg/requirements/UC-login.md']?.type).toBe('use-case');
+      } finally {
+        relocated.cleanup();
       }
-      expect(dirs.size).toBeGreaterThanOrEqual(8);
     });
   });
 });

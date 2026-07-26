@@ -1,24 +1,37 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
+import {
+  providerNeedsCommands,
+  providerUsesSkillsNatively,
+} from '../../src/plugin/skill-command-translator.js';
 
 const REPO_ROOT = resolve(__dirname, '../..');
 const TEST_ROOT = mkdtempSync(join(tmpdir(), 'aiwg-kernel-conformance-'));
 
 const PROVIDERS = [
-  { id: 'claude', root: (project: string) => join(project, '.claude/skills') },
-  { id: 'codex', root: (project: string) => join(project, '.agents/skills') },
-  { id: 'copilot', root: (project: string) => join(project, '.github/skills') },
-  { id: 'cursor', root: (project: string) => join(project, '.cursor/skills') },
-  { id: 'factory', root: (project: string) => join(project, '.factory/skills') },
-  { id: 'opencode', root: (project: string) => join(project, '.opencode/skill') },
-  { id: 'warp', root: (project: string) => join(project, '.warp/skills') },
-  { id: 'windsurf', root: (project: string) => join(project, '.windsurf/skills') },
-  { id: 'hermes', root: (_project: string, home: string) => join(home, '.hermes/skills') },
-  { id: 'openclaw', root: (_project: string, home: string) => join(home, '.openclaw/skills/aiwg') },
-  { id: 'openhuman', root: (_project: string, home: string) => join(home, '.openhuman/skills') },
+  { id: 'claude', root: (project: string) => join(project, '.claude/skills'), standardRoot: (project: string) => join(project, '.claude/.aiwg/skills') },
+  { id: 'codex', root: (project: string) => join(project, '.agents/skills'), standardRoot: (project: string) => join(project, '.agents/skills') },
+  { id: 'copilot', root: (project: string) => join(project, '.github/skills'), standardRoot: (project: string) => join(project, '.github/.aiwg/skills') },
+  { id: 'cursor', root: (project: string) => join(project, '.cursor/skills'), standardRoot: (project: string) => join(project, '.cursor/.aiwg/skills') },
+  { id: 'factory', root: (project: string) => join(project, '.factory/skills'), standardRoot: (project: string) => join(project, '.factory/.aiwg/skills') },
+  { id: 'opencode', root: (project: string) => join(project, '.opencode/skill'), standardRoot: (project: string) => join(project, '.opencode/.aiwg/skill') },
+  { id: 'warp', root: (project: string) => join(project, '.warp/skills'), standardRoot: (project: string) => join(project, '.warp/.aiwg/skills') },
+  { id: 'windsurf', root: (project: string) => join(project, '.windsurf/skills'), standardRoot: (project: string) => join(project, '.windsurf/.aiwg/skills') },
+  { id: 'hermes', root: (_project: string, home: string) => join(home, '.hermes/skills'), standardRoot: (_project: string, home: string) => join(home, '.hermes/skills/.aiwg') },
+  { id: 'openclaw', root: (_project: string, home: string) => join(home, '.openclaw/skills/aiwg'), standardRoot: (_project: string, home: string) => join(home, '.openclaw/.aiwg/skills') },
+  { id: 'openhuman', root: (_project: string, home: string) => join(home, '.openhuman/skills'), standardRoot: (_project: string, home: string) => join(home, '.openhuman/.aiwg/skills') },
 ] as const;
 
 function skillDirs(parent: string): string[] {
@@ -59,9 +72,13 @@ function canonicalKernelNames(): string[] {
 
 const EXPECTED_KERNEL = canonicalKernelNames();
 
-function deploy(provider: string): { project: string; home: string } {
-  const project = join(TEST_ROOT, `${provider}-project`);
-  const home = join(TEST_ROOT, `${provider}-home`);
+function deploy(
+  provider: string,
+  options: { copyAll?: boolean; dryRun?: boolean; suffix?: string } = {},
+): { project: string; home: string } {
+  const suffix = options.suffix ? `-${options.suffix}` : '';
+  const project = join(TEST_ROOT, `${provider}${suffix}-project`);
+  const home = join(TEST_ROOT, `${provider}${suffix}-home`);
   execFileSync(process.execPath, [
     join(REPO_ROOT, 'tools/agents/deploy-agents.mjs'),
     '--provider', provider,
@@ -71,6 +88,8 @@ function deploy(provider: string): { project: string; home: string } {
     '--skills-only',
     '--skip-commands-migration',
     '--quiet',
+    ...(options.copyAll ? ['--copy-all'] : []),
+    ...(options.dryRun ? ['--dry-run'] : []),
   ], {
     cwd: REPO_ROOT,
     env: { ...process.env, HOME: home, USERPROFILE: home },
@@ -85,7 +104,7 @@ afterAll(() => {
 
 describe('kernel deployment conformance', () => {
   it('has a non-empty, unique canonical kernel inventory', () => {
-    expect(EXPECTED_KERNEL.length).toBeGreaterThan(20);
+    expect(EXPECTED_KERNEL.length).toBe(24);
     expect(new Set(EXPECTED_KERNEL).size).toBe(EXPECTED_KERNEL.length);
   });
 
@@ -110,5 +129,117 @@ describe('kernel deployment conformance', () => {
         expect(content.length, `${provider.id}/${name}`).toBeGreaterThan(100);
       }
     });
+
+    it(`${provider.id} copies the standard tier only with --copy-all`, () => {
+      const defaultDeploy = deploy(provider.id, { suffix: 'no-copy' });
+      const defaultStandardRoot = provider.standardRoot(defaultDeploy.project, defaultDeploy.home);
+      expect(existsSync(join(defaultStandardRoot, 'voice-apply', 'SKILL.md'))).toBe(false);
+
+      const fullDeploy = deploy(provider.id, { copyAll: true, suffix: 'copy-all' });
+      const fullRoot = provider.root(fullDeploy.project, fullDeploy.home);
+      const fullStandardRoot = provider.standardRoot(fullDeploy.project, fullDeploy.home);
+      expect(existsSync(join(fullStandardRoot, 'voice-apply', 'SKILL.md'))).toBe(true);
+      for (const kernelName of EXPECTED_KERNEL) {
+        expect(
+          existsSync(join(fullRoot, kernelName, 'SKILL.md')),
+          `${provider.id}/${kernelName}`,
+        ).toBe(true);
+      }
+    });
   }
+
+  it('repeat deploy prunes stale managed skills while preserving operator-owned skills', () => {
+    const first = deploy('claude', { suffix: 'lifecycle' });
+    const root = PROVIDERS[0].root(first.project, first.home);
+    const stale = join(root, 'renamed-kernel-fixture');
+    const operator = join(root, 'operator-owned-fixture');
+    mkdirSync(stale, { recursive: true });
+    mkdirSync(operator, { recursive: true });
+    writeFileSync(join(stale, 'SKILL.md'), '---\nname: renamed-kernel-fixture\n---\nmanaged\n');
+    writeFileSync(join(stale, '.aiwg-managed'), 'true\n');
+    writeFileSync(join(operator, 'SKILL.md'), '---\nname: operator-owned-fixture\n---\noperator\n');
+
+    deploy('claude', { suffix: 'lifecycle' });
+
+    expect(existsSync(stale)).toBe(false);
+    expect(existsSync(operator)).toBe(true);
+    expect(skillDirs(root).map(dir => dir.split('/').at(-1)!).filter(name =>
+      EXPECTED_KERNEL.includes(name)
+    ).sort()).toEqual(EXPECTED_KERNEL);
+  });
+
+  it('moves managed skills cleanly across kernel and standard tiers', async () => {
+    const root = join(TEST_ROOT, 'tier-transition');
+    const source = join(root, 'source', 'transition-fixture');
+    const kernelRoot = join(root, 'kernel');
+    const standardRoot = join(root, 'standard');
+    mkdirSync(source, { recursive: true });
+    const skillFile = join(source, 'SKILL.md');
+    const { deploySkillsWithKernelRouting } = await import(
+      '../../tools/agents/providers/base.mjs'
+    );
+
+    writeFileSync(skillFile, '---\nname: transition-fixture\nnamespace: aiwg\nkernel: true\n---\nkernel body\n');
+    deploySkillsWithKernelRouting([source], standardRoot, kernelRoot, {
+      copyStandardSkills: true,
+    });
+    expect(existsSync(join(kernelRoot, 'transition-fixture', 'SKILL.md'))).toBe(true);
+    expect(existsSync(join(standardRoot, 'transition-fixture'))).toBe(false);
+
+    writeFileSync(skillFile, '---\nname: transition-fixture\nnamespace: aiwg\n---\nstandard body\n');
+    deploySkillsWithKernelRouting([source], standardRoot, kernelRoot, {
+      copyStandardSkills: true,
+    });
+    expect(existsSync(join(kernelRoot, 'transition-fixture'))).toBe(false);
+    expect(existsSync(join(standardRoot, 'transition-fixture', 'SKILL.md'))).toBe(true);
+
+    writeFileSync(skillFile, '---\nname: transition-fixture\nnamespace: aiwg\nkernel: true\n---\nkernel again\n');
+    deploySkillsWithKernelRouting([source], standardRoot, kernelRoot, {
+      copyStandardSkills: true,
+    });
+    expect(existsSync(join(kernelRoot, 'transition-fixture', 'SKILL.md'))).toBe(true);
+    expect(existsSync(join(standardRoot, 'transition-fixture'))).toBe(false);
+  });
+
+  it('dry-run leaves an existing provider surface unchanged', () => {
+    const first = deploy('openhuman', { suffix: 'dry-run' });
+    const root = PROVIDERS.find(provider => provider.id === 'openhuman')!
+      .root(first.project, first.home);
+    const sentinel = join(root, 'operator-sentinel', 'SKILL.md');
+    mkdirSync(resolve(sentinel, '..'), { recursive: true });
+    writeFileSync(sentinel, 'operator-owned\n');
+    const before = readFileSync(sentinel, 'utf8');
+
+    deploy('openhuman', { copyAll: true, dryRun: true, suffix: 'dry-run' });
+
+    expect(readFileSync(sentinel, 'utf8')).toBe(before);
+    expect(existsSync(join(root, 'voice-apply', 'SKILL.md'))).toBe(false);
+  });
+
+  it('matches the command mirror policy for every deployable provider', () => {
+    const commandProviders = ['factory', 'opencode', 'warp', 'windsurf', 'copilot', 'codex', 'openclaw'];
+    const nativeOnlyProviders = ['claude', 'cursor', 'hermes', 'openhuman'];
+    expect(PROVIDERS.map(provider => provider.id).sort()).toEqual(
+      [...commandProviders, ...nativeOnlyProviders].sort(),
+    );
+    for (const provider of commandProviders) {
+      expect(providerNeedsCommands(provider), provider).toBe(true);
+      expect(providerUsesSkillsNatively(provider), provider).toBe(false);
+    }
+    for (const provider of nativeOnlyProviders) {
+      expect(providerNeedsCommands(provider), provider).toBe(false);
+      expect(providerUsesSkillsNatively(provider), provider).toBe(true);
+    }
+  });
+
+  it('keeps primary architecture documentation aligned with canonical inventory', () => {
+    for (const doc of [
+      'docs/architecture-overview.md',
+      'docs/how-it-works.md',
+      'docs/discovery-and-kernel-skills.md',
+    ]) {
+      const content = readFileSync(join(REPO_ROOT, doc), 'utf8');
+      expect(content, doc).toContain(`${EXPECTED_KERNEL.length} kernel skills`);
+    }
+  });
 });

@@ -851,7 +851,8 @@ export function isKernelSkill(skillDir) {
  *                           the agent's working directory)
  *
  * @returns `{ kernel, standardCopied, prunedFromKernelDir,
- *             prunedFromStandardDir }` deployed/pruned counts
+ *             prunedFromStandardDir, prunedKernelFromStandardDir }`
+ *             deployed/pruned counts
  *
  * Cleanup behavior:
  *   - Kernel dir: prune any AIWG-shaped skill whose name now belongs
@@ -901,6 +902,39 @@ export function deploySkillsWithKernelRouting(
     for (const dir of standard) {
       deploySkillDir(dir, standardDestDir, opts);
       standardCopied++;
+    }
+  }
+
+  // A skill promoted from standard → kernel may still have an older managed
+  // copy in the opt-in standard mirror. Remove that duplicate even when
+  // --copy-all remains enabled; otherwise providers that recursively scan
+  // both tiers can surface the same skill twice after a tier transition.
+  let prunedKernelFromStandardDir = 0;
+  if (
+    standardDestDir &&
+    fs.existsSync(standardDestDir) &&
+    !opts?.dryRun &&
+    kernel.length > 0
+  ) {
+    const kernelNames = new Set(kernel.map(p => path.basename(p)));
+    for (const entry of fs.readdirSync(standardDestDir, { withFileTypes: true })) {
+      if (!entry.isDirectory() || !kernelNames.has(entry.name)) continue;
+      const target = path.join(standardDestDir, entry.name);
+      const skillMd = path.join(target, 'SKILL.md');
+      if (!fs.existsSync(skillMd)) continue;
+      const marker = path.join(target, '.aiwg-managed');
+      let managed = fs.existsSync(marker);
+      if (!managed) {
+        try {
+          managed = /^\s*namespace:\s*["']?aiwg["']?\s*$/m.test(
+            parseFrontmatter(fs.readFileSync(skillMd, 'utf8')).frontmatter ?? '',
+          );
+        } catch { /* preserve unreadable/operator-owned content */ }
+      }
+      if (!managed) continue;
+      fs.rmSync(target, { recursive: true, force: true });
+      prunedKernelFromStandardDir++;
+      if (opts?.verbose) console.log(`pruned promoted kernel from standard dir: ${entry.name}`);
     }
   }
 
@@ -972,6 +1006,7 @@ export function deploySkillsWithKernelRouting(
     standardCopied,
     prunedFromKernelDir,
     prunedFromStandardDir,
+    prunedKernelFromStandardDir,
   };
 }
 
