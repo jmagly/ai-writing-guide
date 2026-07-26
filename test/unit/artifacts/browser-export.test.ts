@@ -275,6 +275,34 @@ describe("AIWG Fortemi browser index export", () => {
     expect(compat.items[0]).not.toHaveProperty("operational_state");
   });
 
+  it("keeps explicit state-transfer lifecycle separate from operational state", () => {
+    const artifactPath = ".aiwg/archive/retired.md";
+    writeIndex(
+      {
+        [artifactPath]: entry({
+          path: artifactPath,
+          stateTransfer: { deletedAt: "2026-07-20T12:30:00.000Z" },
+        }),
+      },
+      { [artifactPath]: { upstream: [], downstream: [] } },
+    );
+
+    const exported = buildAiwgFortemiIndexExport(tmpDir, {
+      generatedAt: "2026-07-21T10:00:00.000Z",
+      schemaVersion: "v2",
+    });
+    const validate = loadFortemiExportSchemaValidator();
+    expect(validate(exported), JSON.stringify(validate.errors, null, 2)).toBe(true);
+    expect(exported.items[0]?.state_transfer).toEqual({
+      deleted_at: "2026-07-20T12:30:00.000Z",
+    });
+    expect(exported.items[0]).not.toHaveProperty("operational_state");
+
+    const compat = buildAiwgFortemiV1CompatibilityExport(exported);
+    expect(validate(compat), JSON.stringify(validate.errors, null, 2)).toBe(true);
+    expect(compat.items[0]).not.toHaveProperty("state_transfer");
+  });
+
   it("emits deterministic v2 all-domain records validated by the latest Fortemi Core contract", async () => {
     writeIndex(
       {

@@ -169,6 +169,9 @@
           },
           {
             "required": ["operational_state"]
+          },
+          {
+            "required": ["state_transfer"]
           }
         ]
       },
@@ -627,6 +630,9 @@
         "operational_state": {
           "$ref": "#/$defs/operationalState"
         },
+        "state_transfer": {
+          "$ref": "#/$defs/stateTransfer"
+        },
         "updated_at": {
           "type": "string",
           "format": "date-time"
@@ -657,6 +663,17 @@
           "enum": ["source", "candidate", "reviewed", "rejected"]
         },
         "current_action_selector": { "type": "boolean" }
+      }
+    },
+    "stateTransfer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deleted_at"],
+      "properties": {
+        "deleted_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        }
       }
     }
   }

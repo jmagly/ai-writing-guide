@@ -168,6 +168,9 @@ export interface AiwgFortemiRecord {
   provenance_events?: AiwgFortemiProvenanceEvent[];
   compatibility?: Record<string, unknown>;
   operational_state?: OperationalStateProvenance;
+  state_transfer?: {
+    deleted_at: string | null;
+  };
   updated_at: string;
 }
 
@@ -790,6 +793,13 @@ function recordForEntry(
           skos_relations: skos?.relations ?? [],
           ...(entry.operationalState
             ? { operational_state: entry.operationalState }
+            : {}),
+          ...(entry.stateTransfer
+            ? {
+                state_transfer: {
+                  deleted_at: entry.stateTransfer.deletedAt,
+                },
+              }
             : {}),
         }
       : {}),

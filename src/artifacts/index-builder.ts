@@ -37,6 +37,7 @@ import {
   DEFAULT_PROJECT_AIWG_DIR,
   resolveProjectAiwgDir,
 } from '../config/project-artifacts.js';
+import { normalizeStateTransferProjection } from './state-transfer.js';
 
 export interface BuildOptions {
   force?: boolean;
@@ -965,6 +966,7 @@ export async function buildIndex(
       // Script entrypoint metadata is meaningful for skills only (#1227).
       const script = type === 'skill' ? extractSkillScript(data) : undefined;
       const operationalState = normalizeOperationalState(data.operational_state);
+      const stateTransfer = normalizeStateTransferProjection(data.state_transfer);
       // Canonical short name (#1233) — used by the scorer to floor exact-name
       // queries to 1.0 so hyphenated kernel-skill names like `aiwg-doctor`
       // remain searchable even when the rendered title strips the hyphen.
@@ -991,6 +993,7 @@ export async function buildIndex(
         ...(kernel ? { kernel } : {}),
         ...(script ? { script } : {}),
         ...(operationalState ? { operationalState } : {}),
+        ...(stateTransfer ? { stateTransfer } : {}),
       };
     }
 

@@ -639,6 +639,36 @@ operational_state:
       expect(JSON.stringify(metadata)).not.toContain('synthetic');
     });
 
+    it('normalizes explicit state-transfer lifecycle without using operational state', async () => {
+      const artifactPath = path.join(tmpDir, '.aiwg', 'archive', 'retired.md');
+      fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
+      fs.writeFileSync(artifactPath, `---
+title: Retired artifact
+state_transfer:
+  deleted_at: 2026-07-20T08:30:00-04:00
+---
+# Retired artifact
+`);
+
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      try {
+        await buildIndex(tmpDir, { force: true });
+      } finally {
+        consoleSpy.mockRestore();
+      }
+
+      const metadata = JSON.parse(fs.readFileSync(
+        path.join(tmpDir, INDEX_DIR, 'metadata.json'),
+        'utf-8',
+      ));
+      expect(metadata.entries['.aiwg/archive/retired.md'].stateTransfer).toEqual({
+        deletedAt: '2026-07-20T12:30:00.000Z',
+      });
+      expect(metadata.entries['.aiwg/archive/retired.md']).not.toHaveProperty(
+        'operationalState',
+      );
+    });
+
     it('indexes every operational asset type from project-local bundle layouts', async () => {
       const assets: Array<[string, string]> = [
         ['.aiwg/extensions/local-review/skills/local-review/SKILL.md', [

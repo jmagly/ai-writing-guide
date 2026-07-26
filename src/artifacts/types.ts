@@ -14,6 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { load as loadYaml } from 'js-yaml';
 import type { OperationalStateProvenance } from './operational-state.js';
+import type { StateTransferProjection } from './state-transfer.js';
 import {
   DEFAULT_PROJECT_AIWG_DIR,
   projectAiwgPath,
@@ -128,6 +129,13 @@ export interface MetadataEntry {
    * is exported only through the Fortemi v2 contract; v1 remains unchanged.
    */
   operationalState?: OperationalStateProvenance;
+
+  /**
+   * Explicit state-transfer projection for bridge consumers. This is distinct
+   * from operationalState, which records observed external state and must not
+   * be interpreted as persistence lifecycle.
+   */
+  stateTransfer?: StateTransferProjection;
 }
 
 /**
