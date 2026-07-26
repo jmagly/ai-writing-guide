@@ -6,14 +6,12 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  listProviderDefinitions,
-  resolveProviderPathValue,
-} from '../providers/provider-definitions.js';
+import { listProviderDefinitions } from '../providers/provider-definitions.js';
 import {
   AGENT_SKILLS_BASELINE,
   type AgentSkillDiagnostic,
 } from './agent-skills.js';
+import { inspectImportedAgentSkillProjection } from './deployer.js';
 import { listImportedAgentSkills } from './importer.js';
 import type { AgentSkillImportResult } from './types.js';
 import { validateAgentSkillFile } from './validator.js';
@@ -22,6 +20,10 @@ export interface AgentSkillsDoctorSection {
   diagnostics: AgentSkillDiagnostic[];
   output: string;
   hasFailures: boolean;
+}
+
+export interface AgentSkillsDoctorOptions {
+  homeDir?: string;
 }
 
 function diagnostic(
@@ -43,16 +45,9 @@ function diagnostic(
   };
 }
 
-function projectionRoot(provider: ReturnType<typeof listProviderDefinitions>[number], projectDir: string): string {
-  const namespace = provider.skillNamespace;
-  const configured = namespace.pathType === 'home-dir'
-    ? `~/${namespace.skillsBaseDir}`
-    : namespace.skillsBaseDir;
-  return resolveProviderPathValue(configured, projectDir);
-}
-
 export function buildAgentSkillsDoctorSection(
   projectDir: string,
+  options: AgentSkillsDoctorOptions = {},
 ): AgentSkillsDoctorSection {
   const diagnostics: AgentSkillDiagnostic[] = [];
   let imported: AgentSkillImportResult[];
@@ -90,37 +85,55 @@ export function buildAgentSkillsDoctorSection(
     }).diagnostics);
 
     if (skill.trust.activation !== 'active') continue;
-    const sourceBytes = fs.readFileSync(sourceFile);
     for (const provider of listProviderDefinitions()
       .sort((left, right) => left.id.localeCompare(right.id))) {
-      const deployedFile = path.join(
-        projectionRoot(provider, projectDir),
-        skill.name,
-        'SKILL.md',
-      );
-      if (!fs.existsSync(deployedFile)) {
+      let inspection;
+      try {
+        inspection = inspectImportedAgentSkillProjection(skill.name, {
+          projectDir,
+          homeDir: options.homeDir,
+          target: provider.id,
+          dryRun: true,
+        });
+      } catch (error) {
+        diagnostics.push(diagnostic(
+          'AS_DOCTOR_PROJECTION_PLAN',
+          'error',
+          sourceFile,
+          '$',
+          `provider "${provider.id}" projection for "${skill.name}" cannot be planned: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+          `Repair the managed import, then redeploy "${skill.name}" to ${provider.id}.`,
+        ));
+        continue;
+      }
+
+      if (!inspection.supported) {
+        diagnostics.push(diagnostic(
+          'AS_DOCTOR_PROVIDER_UNSUPPORTED',
+          'warning',
+          inspection.path,
+          '$',
+          `provider "${provider.id}" cannot project active imported skill "${skill.name}": ${inspection.reasons.join('; ')}`,
+          `Use a supported provider surface or retain "${skill.name}" in the managed import store.`,
+        ));
+      } else if (!inspection.exists) {
         diagnostics.push(diagnostic(
           'AS_DOCTOR_PROVIDER_DEGRADED',
           'warning',
-          deployedFile,
+          inspection.path,
           '$',
           `active imported skill "${skill.name}" is not projected to provider "${provider.id}"`,
           `Deploy or repair the ${provider.id} Agent Skills projection.`,
         ));
-        continue;
-      }
-      const deployedStat = fs.lstatSync(deployedFile);
-      if (
-        deployedStat.isSymbolicLink()
-        || !deployedStat.isFile()
-        || !fs.readFileSync(deployedFile).equals(sourceBytes)
-      ) {
+      } else if (!inspection.managed || !inspection.matches) {
         diagnostics.push(diagnostic(
           'AS_DOCTOR_DEPLOYED_DRIFT',
           'error',
-          deployedFile,
+          inspection.path,
           '$',
-          `provider "${provider.id}" projection for "${skill.name}" differs from its managed source`,
+          `provider "${provider.id}" projection for "${skill.name}" differs from its expected strict managed projection`,
           `Redeploy "${skill.name}" to ${provider.id} from the managed import.`,
         ));
       }

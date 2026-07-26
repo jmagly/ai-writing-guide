@@ -151,6 +151,36 @@ export interface AgentSkillImportResult {
   totalBytes: number;
 }
 
+export interface AgentSkillDeploymentOptions {
+  projectDir: string;
+  target: string;
+  homeDir?: string;
+  dryRun?: boolean;
+}
+
+export type AgentSkillDeploymentOutcome =
+  | 'deployed'
+  | 'updated'
+  | 'unchanged'
+  | 'planned'
+  | 'removed'
+  | 'absent'
+  | 'blocked';
+
+export interface AgentSkillDeploymentResult {
+  schemaVersion: 1;
+  operation: 'deploy' | 'uninstall';
+  outcome: AgentSkillDeploymentOutcome;
+  dryRun: boolean;
+  name: string;
+  provider: string;
+  projectionStatus: 'native' | 'projected' | 'degraded' | 'unsupported';
+  path: string;
+  reasons: string[];
+  warnings: string[];
+  sourceDigest: string;
+}
+
 /**
  * Registry adapter interface
  *

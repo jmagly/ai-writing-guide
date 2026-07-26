@@ -22,12 +22,20 @@ import {
   getAllAdapters,
 } from './registry.js';
 import { AgentSkillImportError } from './importer.js';
+import {
+  AgentSkillDeploymentError,
+  deployImportedAgentSkill,
+  uninstallImportedAgentSkill,
+} from './deployer.js';
 import type {
+  AgentSkillDeploymentOptions,
+  AgentSkillDeploymentResult,
   AgentSkillImportOptions,
   AgentSkillImportSource,
   SkillDetails,
   SkillResult,
 } from './types.js';
+import { PROVIDER_IDS } from '../providers/provider-definitions.js';
 import {
   parseAgentSpawnFlags,
   buildAgentArgs,
@@ -35,10 +43,7 @@ import {
   isSpawnableProvider,
 } from '../cli/agent-spawn.js';
 
-const SUPPORTED_TARGETS = [
-  'claude', 'copilot', 'factory', 'cursor', 'codex', 'opencode',
-  'warp', 'windsurf', 'openclaw', 'openhuman', 'hermes', 'generic',
-];
+const SUPPORTED_TARGETS: readonly string[] = PROVIDER_IDS;
 
 export function importedSkillActivationError(
   details: SkillDetails,
@@ -486,6 +491,140 @@ async function handleImport(args: string[]): Promise<void> {
   }
 }
 
+interface ParsedDeploymentArgs {
+  name: string;
+  targets: string[];
+  dryRun: boolean;
+  json: boolean;
+}
+
+function parseDeploymentArgs(args: string[]): ParsedDeploymentArgs {
+  let target = 'claude';
+  let dryRun = false;
+  let json = false;
+  const positional: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+    switch (argument) {
+      case '--target': {
+        const value = args[index + 1];
+        if (!value || value.startsWith('--')) {
+          throw new Error('--target requires a provider ID or all');
+        }
+        target = value;
+        index += 1;
+        break;
+      }
+      case '--dry-run':
+        dryRun = true;
+        break;
+      case '--json':
+        json = true;
+        break;
+      default:
+        if (argument.startsWith('--')) {
+          throw new Error(`unknown deployment option "${argument}"`);
+        }
+        positional.push(argument);
+    }
+  }
+  if (positional.length !== 1) {
+    throw new Error('deployment requires exactly one imported skill name');
+  }
+  if (target !== 'all' && !SUPPORTED_TARGETS.includes(target)) {
+    throw new Error(`unknown target "${target}"`);
+  }
+  return {
+    name: positional[0],
+    targets: target === 'all' ? [...SUPPORTED_TARGETS] : [target],
+    dryRun,
+    json,
+  };
+}
+
+function printDeploymentUsage(operation: 'deploy' | 'uninstall'): void {
+  console.log(
+    `Usage: aiwg skills ${operation} <name> [--target <provider|all>] [--dry-run] [--json]`,
+  );
+  console.log('');
+  console.log(`Supported targets: ${SUPPORTED_TARGETS.join(', ')}`);
+}
+
+function printDeploymentResults(
+  operation: 'deploy' | 'uninstall',
+  results: AgentSkillDeploymentResult[],
+  json: boolean,
+): void {
+  if (json) {
+    console.log(JSON.stringify({
+      schemaVersion: 1,
+      operation,
+      results,
+    }, null, 2));
+    return;
+  }
+  console.log('');
+  console.log(`Agent Skill ${operation}:`);
+  for (const item of results) {
+    console.log(
+      `  ${item.provider.padEnd(10)} ${item.outcome.padEnd(9)} `
+      + `${item.projectionStatus.padEnd(11)} ${item.path}`,
+    );
+    console.log(`    digest: ${item.sourceDigest || 'unavailable'}`);
+    for (const reason of item.reasons) console.log(`    reason: ${reason}`);
+    for (const warning of item.warnings) console.log(`    warning: ${warning}`);
+  }
+  console.log('');
+}
+
+async function handleDeployment(
+  operation: 'deploy' | 'uninstall',
+  args: string[],
+): Promise<void> {
+  let parsed: ParsedDeploymentArgs;
+  try {
+    parsed = parseDeploymentArgs(args);
+  } catch (error) {
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    printDeploymentUsage(operation);
+    process.exit(1);
+  }
+
+  try {
+    const options = (target: string): AgentSkillDeploymentOptions => ({
+      projectDir: process.cwd(),
+      target,
+      dryRun: parsed.dryRun,
+    });
+    const results = parsed.targets.map((target) => (
+      operation === 'deploy'
+        ? deployImportedAgentSkill(parsed.name, options(target))
+        : uninstallImportedAgentSkill(parsed.name, options(target))
+    ));
+    printDeploymentResults(operation, results, parsed.json);
+    if (results.some((item) => item.outcome === 'blocked')) {
+      process.exitCode = 1;
+    }
+  } catch (error) {
+    const deploymentError = error instanceof AgentSkillDeploymentError
+      ? error
+      : undefined;
+    if (parsed.json) {
+      console.log(JSON.stringify({
+        schemaVersion: 1,
+        operation,
+        status: 'error',
+        code: deploymentError?.code ?? 'AS_DEPLOY_FAILED',
+        message: error instanceof Error ? error.message : String(error),
+        results: [],
+      }, null, 2));
+    } else {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    process.exit(1);
+  }
+}
+
 /**
  * Handle 'skills publish' command
  */
@@ -625,13 +764,21 @@ export async function main(args: string[]): Promise<void> {
       await handleImport(subcommandArgs);
       break;
 
+    case 'deploy':
+      await handleDeployment('deploy', subcommandArgs);
+      break;
+
+    case 'uninstall':
+      await handleDeployment('uninstall', subcommandArgs);
+      break;
+
     case 'publish':
       await handlePublish(subcommandArgs);
       break;
 
     case undefined:
       console.error('Error: Skills subcommand required');
-      console.log('Available: run, search, info, list, install, import, publish');
+      console.log('Available: run, search, info, list, install, import, deploy, uninstall, publish');
       console.log('');
       console.log('Examples:');
       console.log('  aiwg skills run workspace-health');
@@ -644,12 +791,14 @@ export async function main(args: string[]): Promise<void> {
       console.log('  aiwg skills install parallel-dispatch --target copilot');
       console.log('  aiwg skills install my-skill --provider clawhub --target cursor');
       console.log('  aiwg skills import ./my-skill --dry-run');
+      console.log('  aiwg skills deploy my-skill --target all --dry-run');
+      console.log('  aiwg skills uninstall my-skill --target claude');
       process.exit(1);
       break;
 
     default:
       console.error(`Error: Unknown skills subcommand '${subcommand}'`);
-      console.log('Available: run, search, info, list, install, import, publish');
+      console.log('Available: run, search, info, list, install, import, deploy, uninstall, publish');
       process.exit(1);
   }
 }
