@@ -112,11 +112,13 @@ describe('Agent Skills user documentation contract', () => {
       'aiwg skills info portable-complete --provider agentskills',
       'aiwg skills deploy portable-complete --target generic',
       'aiwg skills uninstall portable-complete --target generic',
+      'aiwg skills export aiwg-status --out ./agent-skill-exports --json',
     ]) {
       expect(guide).toContain(command);
     }
     expect(cli).toContain('skills/agent-skills.md');
     expect(cli).toContain('import --git <url> --rev <revision> --subpath <path>');
+    expect(cli).toContain('aiwg skills export aiwg-status --out ./agent-skill-exports --json');
     expect(quality).toContain('(agent-skills.md)');
     expect(adr).toContain('.aiwg/skills/imported/<name>/source/');
     expect(adr).toContain('.aiwg-agent-skill.json');
@@ -124,6 +126,13 @@ describe('Agent Skills user documentation contract', () => {
     expect(marketplace).toContain('project `.agents/skills/`');
     expect(readme).toContain('`.agents/skills/`');
     expect(executiveBrief).toContain('`.agents/skills/`');
+    expect(guide).toContain('`hermes` | `~/.hermes/skills/<name>` | `native` | exact |');
+    expect(read('docs/providers/hermes-skill-fields.md')).toContain(
+      'aiwg skills deploy <name> --target hermes',
+    );
+    expect(read('docs/integrations/hermes-quickstart.md')).not.toContain(
+      'there is no `hermes.mjs` provider',
+    );
     for (const id of [
       'skills/agent-skills',
       'skills/quality-rubric',
@@ -137,7 +146,19 @@ describe('Agent Skills user documentation contract', () => {
 
   it('traces the parent acceptance surface to implementation and evidence', () => {
     const guide = read('docs/skills/agent-skills.md');
-    for (const issue of ['#1569', '#1875', '#1876', '#1877', '#1878', '#1879', '#1880', '#1881']) {
+    for (const issue of [
+      '#1569',
+      '#1875',
+      '#1876',
+      '#1877',
+      '#1878',
+      '#1879',
+      '#1880',
+      '#1881',
+      '#1894',
+      '#1895',
+      '#1896',
+    ]) {
       expect(guide).toContain(issue);
     }
     for (const implementation of [
@@ -284,5 +305,20 @@ describe('documented Agent Skills round-trip smoke', () => {
     expect(fs.existsSync(deployedRoot)).toBe(false);
     expect(fs.existsSync(managedRoot)).toBe(true);
     expect(fs.existsSync(sentinel)).toBe(false);
+
+    await skillsMain([
+      'export',
+      'aiwg-status',
+      '--out',
+      path.join(projectDir, 'agent-skill-exports'),
+      '--json',
+    ]);
+    expect(validateAgentSkillFile(
+      path.join(projectDir, 'agent-skill-exports', 'aiwg-status', 'SKILL.md'),
+      {
+        profile: 'strict',
+        directoryName: 'aiwg-status',
+      },
+    ).valid).toBe(true);
   });
 });

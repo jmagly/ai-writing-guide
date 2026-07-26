@@ -75,7 +75,7 @@ describe('Agent Skills doctor section', () => {
     );
   });
 
-  it('accepts regenerated strict projections and reports explicit unsupported routing', async () => {
+  it('accepts regenerated strict projections for every provider', async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-skill-doctor-'));
     roots.push(root);
     const projectDir = path.join(root, 'project');
@@ -107,7 +107,7 @@ describe('Agent Skills doctor section', () => {
         importedAt: '2026-07-26T12:00:00.000Z',
       },
     );
-    for (const target of PROVIDER_IDS.filter((item) => item !== 'hermes')) {
+    for (const target of PROVIDER_IDS) {
       deployImportedAgentSkill('healthy-skill', {
         projectDir,
         homeDir,
@@ -117,11 +117,6 @@ describe('Agent Skills doctor section', () => {
 
     const section = buildAgentSkillsDoctorSection(projectDir, { homeDir });
     expect(section.hasFailures).toBe(false);
-    expect(section.diagnostics).toEqual([
-      expect.objectContaining({
-        code: 'AS_DOCTOR_PROVIDER_UNSUPPORTED',
-        severity: 'warning',
-      }),
-    ]);
+    expect(section.diagnostics).toEqual([]);
   });
 });

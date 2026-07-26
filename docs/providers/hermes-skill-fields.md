@@ -1,6 +1,8 @@
 # Hermes-Specific Skill Frontmatter Fields
 
-Hermes consumes additional skill frontmatter fields beyond the AIWG canonical set. The AIWG deployer for Hermes (`tools/agents/providers/hermes.mjs`) preserves frontmatter verbatim when copying SKILL.md files, so any of these fields declared on a source skill flow through to the deployed `~/.hermes/skills/<slug>/SKILL.md`.
+Hermes consumes additional skill frontmatter fields beyond the AIWG canonical set. The AIWG framework deployer for Hermes (`tools/agents/providers/hermes.mjs`, invoked by `aiwg use --provider hermes`) preserves frontmatter verbatim when copying SKILL.md files, so any of these fields declared on a source skill flow through to the deployed `~/.hermes/skills/<slug>/SKILL.md`.
+
+Managed Agent Skills imports use a separate path: `aiwg skills deploy <name> --target hermes`. That command writes a strict Agent Skills projection to `~/.hermes/skills/<name>`, moves AIWG-only metadata to sidecars, and preserves resources exactly. Use the managed path for externally imported Agent Skills; use `aiwg use --provider hermes` for AIWG framework/kernel deployment.
 
 This document is the authoritative reference for skill authors who want their AIWG skills to opt into Hermes-specific behavior.
 
@@ -90,6 +92,10 @@ either:
   (`tools/agents/providers/hermes.mjs`) writes/updates the bundled manifest
   on every `aiwg use --provider hermes` (or `aiwg refresh --provider hermes`)
   with one entry per AIWG-managed kernel skill: `<name>:aiwg-managed`.
+- **Managed imported Agent Skills** land at the top level
+  (`~/.hermes/skills/<name>/SKILL.md`) through `aiwg skills deploy --target
+  hermes`, with `.aiwg-managed` and `.aiwg-agent-skill.json` ownership metadata
+  outside portable frontmatter.
 
 The deployer preserves any pre-existing manifest entries (Hermes's own
 bundled skills, Skills Hub installs, other tools' entries) when it

@@ -181,6 +181,31 @@ export interface AgentSkillDeploymentResult {
   sourceDigest: string;
 }
 
+export interface AgentSkillExportOptions {
+  outDir: string;
+  dryRun?: boolean;
+  force?: boolean;
+  exportedAt?: string;
+  aiwgVersion?: string;
+}
+
+export interface AgentSkillExportResult {
+  schemaVersion: 1;
+  status: 'planned' | 'exported' | 'updated' | 'unchanged';
+  dryRun: boolean;
+  name: string;
+  description: string;
+  sourcePath: string;
+  outputPath: string;
+  sourceDigest: string;
+  exportDigest: string;
+  omittedAiwgFields: string[];
+  fileCount: number;
+  totalBytes: number;
+  exportedAt: string;
+  aiwgVersion: string;
+}
+
 /**
  * Registry adapter interface
  *

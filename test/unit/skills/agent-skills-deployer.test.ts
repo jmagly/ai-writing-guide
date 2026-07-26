@@ -123,7 +123,7 @@ describe('managed Agent Skills provider matrix', () => {
       ['copilot', 'native'],
       ['cursor', 'native'],
       ['factory', 'projected'],
-      ['hermes', 'unsupported'],
+      ['hermes', 'native'],
       ['opencode', 'native'],
       ['openclaw', 'native'],
       ['openhuman', 'projected'],
@@ -136,12 +136,6 @@ describe('managed Agent Skills provider matrix', () => {
       expect(result.sourceDigest).toMatch(/^[0-9a-f]{64}$/);
       expect(result.path).toContain(name);
       expect(result.reasons.length).toBeGreaterThan(0);
-      if (result.provider === 'hermes') {
-        expect(result.outcome).toBe('blocked');
-        expect(fs.existsSync(result.path)).toBe(false);
-        continue;
-      }
-
       expect(result.outcome).toBe('deployed');
       expect(fs.readFileSync(path.join(result.path, AGENT_SKILL_MANAGED_MARKER), 'utf8'))
         .toBe('aiwg-agent-skill-v1\n');
@@ -212,7 +206,10 @@ describe('managed Agent Skills provider matrix', () => {
       .toBe(path.join(projectDir, '.agents', 'skills', name));
     expect(results.find((item) => item.provider === 'openhuman')?.path)
       .toBe(path.join(homeDir, '.openhuman', 'skills', name));
+    expect(results.find((item) => item.provider === 'hermes')?.path)
+      .toBe(path.join(homeDir, '.hermes', 'skills', name));
     expect(fs.existsSync(path.join(projectDir, '.openhuman'))).toBe(false);
+    expect(fs.existsSync(path.join(projectDir, '.hermes'))).toBe(false);
   });
 
   it('reports provider incompatibility instead of truncating standard metadata', async () => {
