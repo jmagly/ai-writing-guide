@@ -69,11 +69,21 @@ aiwg wizard
 
 The wizard asks what you are working on, which provider to target, which AIWG path to deploy first, and whether to deploy now. A dry-run preview is available with `aiwg wizard --dry-run --goal "<your goal>"`.
 
-If you want to deploy a specific framework without the wizard:
+If you need to deploy without the wizard, use the preferred complete
+project-scoped setup and name your provider:
 
 ```bash
-aiwg use sdlc
+aiwg use all --provider <provider>
 ```
+
+This installs the complete deployable end-user surface. A narrower command such
+as `aiwg use sdlc --provider <provider>` is an advanced choice for users who
+deliberately want only one framework.
+
+Close and reopen the provider from the project folder, then ask it to run
+`aiwg-regenerate` for this existing project and preserve project-authored
+instructions. After regeneration, ask “Is AIWG active in this project?” so the
+agent reads the status probe and explains the result.
 
 If you want an agent or steward to handle the whole setup from prerequisites to
 provider handoff, use the [Agentic Install Runbook](../agentic-install-runbook.md).

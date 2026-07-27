@@ -13,7 +13,7 @@ Find the scenario that matches where you are right now.
 | Install Node.js/npm without version or permission conflicts | [Install Node.js and npm Safely](install-node.md) |
 | Have an agent or steward install AIWG from zero to running | [Agentic Install Runbook](../agentic-install-runbook.md) |
 | Install AIWG on macOS or fix npm `EACCES` | [macOS Install Guide](macos-install.md) |
-| Walk through provider, project, framework, deployment, and verification choices | [Start Here: guided wizard](start-here.md#minimal-command-path) |
+| Walk through provider, project, deployment, and verification choices | [Start Here: guided recovery](start-here.md#guided-recovery-escape-hatch) |
 | Ask AIWG which path to use first | [Ask The Steward To Route You](first-success-ask-steward.md) |
 | Choose the right AI tool/provider handoff | [Provider Handoff](provider-handoff.md) |
 | Recover after running AIWG in the wrong folder | [Scope And Recovery](scope-and-recovery.md) |

@@ -34,9 +34,11 @@ aiwg doctor
 # Preview the guided first-run path without writing files
 aiwg wizard --dry-run --goal "help me start a project"
 
-# Deploy SDLC framework to your project
+# Deploy the complete end-user surface to your provider
 cd your-project
-aiwg use sdlc
+aiwg use all --provider <provider>
+
+# Restart the provider, then invoke aiwg-regenerate in its agent conversation.
 
 # Verify AIWG is engaged in this project
 aiwg status --probe --json
@@ -88,15 +90,24 @@ aiwg use marketing
 # Writing addon (voice profiles)
 aiwg use writing
 
-# All frameworks
-aiwg use all
+# Complete deployable end-user surface (preferred first-run default)
+aiwg use all --provider codex
 ```
 
 **Options:**
 
-- `--provider <name>`: Target platform (claude, factory, openai, warp)
+- `--provider <name>`: Target platform (`claude`, `codex`, `copilot`, `cursor`,
+  `factory`, `opencode`, `warp`, `windsurf`, `openclaw`, `hermes`, or
+  `openhuman`)
 - `--no-utils`: Skip aiwg-utils addon
 - `--force`: Overwrite existing deployments
+
+`all` includes the complete deployable end-user surface but intentionally
+excludes contributor-only development bundles and non-deployable packages.
+After deployment, restart the provider and invoke `aiwg-regenerate` in the
+agent conversation so its project context hooks into `WORKSPACE.md` and
+`AIWG.md`. Regeneration should preview changes and preserve project-authored
+instructions.
 
 ### wizard
 

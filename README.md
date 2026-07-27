@@ -10,8 +10,19 @@
 
 ```bash
 npm i -g aiwg        # full CLI and local resource corpus
-aiwg use sdlc        # deploy SDLC framework
+cd /path/to/your/project
+aiwg use all --provider <provider>
 ```
+
+Replace `<provider>` with your AI tool's name, such as `claude`, `codex`,
+`copilot`, or `cursor`. Then close and reopen that tool from the project folder
+and ask it to run `aiwg-regenerate` for the existing project. This connects the
+provider files to the tailored `WORKSPACE.md` and `AIWG.md` context without
+silently replacing instructions you wrote. Finally, ask: “Is AIWG active in
+this project?” and have the agent report the status probe.
+
+For the complete beginner path and provider-name table, see
+[Install, Connect, and Verify](docs/getting-started/install-connect-verify.md).
 
 For a smaller CLI install that resolves signed, versioned resources from the
 release host:
@@ -127,11 +138,11 @@ Around that core, AIWG ships agent-facing utilities for things the base platform
 `aiwg use` supports project deployments, additive user mirrors, and a
 user-global bootstrap:
 
-- **Project scope** — default. Run `aiwg use sdlc` from a project root and the artifacts land in `./.claude/agents/`, `./.claude/skills/`, etc. One project's agent set never bleeds into another's session. **This is the recommended default for most use cases.**
-- **User scope (additive mirror)** — `aiwg use sdlc --scope user` keeps the
+- **Project scope** — default. Run `aiwg use all --provider <provider>` from a project root and the artifacts land in that provider's project paths. One project's agent set never bleeds into another's session. **This is the recommended default for new users.**
+- **User scope (additive mirror)** — `aiwg use all --provider <provider> --scope user` keeps the
   project deployment and mirrors it to `~/.claude/agents/`,
   `~/.claude/skills/`, etc.
-- **Global bootstrap** — `aiwg use sdlc --provider claude --global` installs
+- **Global bootstrap** — `aiwg use all --provider claude --global` installs
   framework and kernel assets in native user-level paths while leaving only
   lightweight context and provider bootstrap files in the current project.
   Use `aiwg regenerate --provider <name>` to wire additional projects without
@@ -407,7 +418,7 @@ AIWG adds structure (templates, phases, gates) that slows trivial tasks but scal
 User intent → AIWG CLI → Deploy agents + rules + templates → AI platform
                 │                                                │
                 ▼                                                ▼
-         "aiwg use sdlc"                              Claude Code / Copilot /
+         "aiwg use all --provider X"                  Claude Code / Copilot /
                 │                                     Cursor / Warp / Factory /
                 ▼                                     OpenCode / Codex / Windsurf
          ┌──────────────┐
@@ -441,7 +452,7 @@ flowchart LR
     TPL[100+ templates]
   end
 
-  CLI([aiwg use sdlc<br/>--provider X]) --> DEPLOY
+  CLI([aiwg use all<br/>--provider X]) --> DEPLOY
 
   subgraph DEPLOY["Deploy step (one-shot)"]
     direction TB
@@ -586,15 +597,22 @@ The bundle is **byte-identical** in shape to its upstream form, so
 ### Multi-Platform Deployment
 
 ```bash
-aiwg use sdlc                          # Claude Code (default)
-aiwg use sdlc --provider copilot       # GitHub Copilot
-aiwg use sdlc --provider cursor        # Cursor
-aiwg use sdlc --provider warp          # Warp Terminal
-aiwg use sdlc --provider factory       # Factory AI
-aiwg use sdlc --provider opencode      # OpenCode
-aiwg use sdlc --provider openai        # OpenAI/Codex
-aiwg use sdlc --provider windsurf      # Windsurf
+aiwg use all --provider claude         # Claude Code
+aiwg use all --provider codex          # OpenAI Codex
+aiwg use all --provider copilot        # GitHub Copilot
+aiwg use all --provider cursor         # Cursor
+aiwg use all --provider factory        # Factory AI
+aiwg use all --provider opencode       # OpenCode
+aiwg use all --provider warp           # Warp Terminal
+aiwg use all --provider windsurf       # Windsurf
+aiwg use all --provider openclaw       # OpenClaw
+aiwg use all --provider hermes         # Hermes
+aiwg use all --provider openhuman      # OpenHuman
 ```
+
+`all` means the complete deployable end-user surface. It intentionally omits
+contributor-only development bundles and packages that cannot be deployed
+directly.
 
 ### First-Party Integrators
 
