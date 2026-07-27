@@ -9,7 +9,7 @@ not remove it from the product.
 | Audience | Reader need | Owner | Publication target |
 |---|---|---|---|
 | End user | Goals, conversational asks, choices, approvals, outcomes, verification | Product documentation | `docs.aiwg.io` |
-| Agent/operator | CLI contracts, flags, structured output, automation, diagnostics, recovery | Runtime and capability owners | installed package and `release.aiwg.io` |
+| Agent/operator | CLI contracts, flags, structured output, automation, diagnostics, recovery | Runtime and capability owners | installed package and `releases.aiwg.io` |
 | Contributor/maintainer | Authoring, architecture, testing, and release operations | Maintainers | explicitly classified development/contributor surfaces |
 
 Within every audience, use the Diátaxis task types—tutorial, how-to, reference,

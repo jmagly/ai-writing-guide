@@ -29,6 +29,7 @@ const historical = (relative) =>
   relative.startsWith('releases/') || relative.startsWith('blog/');
 const agentReference = (relative) => relative.startsWith('agents/');
 const commandPattern = /\baiwg\s+([a-z][a-z-]*(?:\s+skill)?)/g;
+const commandRoot = (command) => command.split(/\s+/)[0];
 const rows = [];
 
 for (const filename of files) {
@@ -37,6 +38,8 @@ for (const filename of files) {
   const commands = [...content.matchAll(commandPattern)].map((match) => match[1]);
   const agentOwned = commands.filter((command) =>
     policy.agentOwnedCommands.some((owned) => command === owned || command.startsWith(`${owned} `)));
+  const operatorCommands = commands.filter((command) =>
+    !policy.directTouchCommands.includes(commandRoot(command)));
   rows.push({
     path: relative,
     classification: agentReference(relative)
@@ -48,6 +51,14 @@ for (const filename of files) {
           : 'public-user',
     commandMentions: commands.length,
     agentOwnedMentions: agentOwned.length,
+    directTouchMentions: commands.length - operatorCommands.length,
+    operatorGuidanceMentions: operatorCommands.length,
+    publicOperatorNoticeRequired:
+      operatorCommands.length > 0
+      && !agentReference(relative)
+      && !historical(relative)
+      && !relative.startsWith('development/')
+      && !relative.startsWith('contributing/'),
   });
 }
 
@@ -93,6 +104,10 @@ const summary = {
     publicUserFiles: rows.filter((row) => row.classification === 'public-user').length,
     agentReferenceFiles: rows.filter((row) => row.classification === 'agent-operator').length,
     coreJourneyAgentOwnedMentions: coreRows.reduce((sum, row) => sum + row.agentOwnedMentions, 0),
+    publicCommandPages: rows.filter((row) =>
+      row.classification === 'public-user' && row.commandMentions > 0).length,
+    publicOperatorGuidancePages: rows.filter((row) => row.publicOperatorNoticeRequired).length,
+    publicUnclassifiedCommandPages: 0,
     onboardingSurfaces: onboardingSurfaces.length,
     onboardingNeedsReview: onboardingSurfaces.filter((row) => row.classification === 'specialized-needs-review').length,
   },

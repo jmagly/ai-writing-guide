@@ -55,6 +55,15 @@ describe('documentation audience boundary', () => {
     expect(packageJson.files).toContain('docs/');
   });
 
+  it('documents the signed immutable release-bundle contract', () => {
+    const index = readFileSync(path.join(docs, 'agents', 'README.md'), 'utf8');
+    expect(index).toContain('https://releases.aiwg.io/resources/<version>/manifest.json');
+    expect(index).toContain('https://releases.aiwg.io/resources/<version>/bundles/reference.tar.zst');
+    expect(index).toContain('docs/agents/');
+    expect(index).toContain('verify the signed manifest and bundle digest');
+    expect(index).not.toContain('/raw/docs/agents/');
+  });
+
   it('keeps all onboarding surfaces classified and removes command-first public entry points', () => {
     const output = path.join(root, 'dist', 'test-docs-audience-audit.json');
     execFileSync(process.execPath, ['tools/docs/audit-audiences.mjs', output], {
@@ -63,9 +72,33 @@ describe('documentation audience boundary', () => {
     });
     const audit = JSON.parse(readFileSync(output, 'utf8'));
     expect(audit.totals.onboardingNeedsReview).toBe(0);
+    expect(audit.totals.publicCommandPages).toBeGreaterThan(0);
+    expect(audit.totals.publicOperatorGuidancePages).toBeGreaterThan(0);
+    expect(audit.totals.publicUnclassifiedCommandPages).toBe(0);
     expect(audit.beforeAfter.current.homepageCommandChecklistItems).toBe(0);
     expect(audit.beforeAfter.current.publicCliNavigationEntries).toBe(0);
     expect(audit.beforeAfter.current.coreJourneyCommandMentions)
       .toBeLessThan(audit.beforeAfter.baseline.coreJourneyCommandMentions);
+  });
+
+  it('labels every retained public operator-command page in staged output', () => {
+    const output = path.join(root, 'dist', 'test-public-command-guidance');
+    execFileSync(process.execPath, ['tools/docs/build-public-source.mjs', output], {
+      cwd: root,
+      stdio: 'pipe',
+    });
+    const auditOutput = path.join(root, 'dist', 'test-public-command-audit.json');
+    execFileSync(process.execPath, ['tools/docs/audit-audiences.mjs', auditOutput], {
+      cwd: root,
+      stdio: 'pipe',
+    });
+    const audit = JSON.parse(readFileSync(auditOutput, 'utf8'));
+    for (const row of audit.inventory.filter(
+      (entry: { publicOperatorNoticeRequired: boolean }) => entry.publicOperatorNoticeRequired,
+    )) {
+      const staged = readFileSync(path.join(output, row.path), 'utf8');
+      expect(staged).toContain('<!-- aiwg-public-operator-guidance -->');
+      expect(staged).toContain('describe the outcome you want');
+    }
   });
 });

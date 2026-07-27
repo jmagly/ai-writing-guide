@@ -36,6 +36,16 @@ records whether the page contains the preferred `use all --provider` and
 `aiwg-regenerate` hookup signals; this makes remaining migrations explicit
 without treating every specialized tutorial as a duplicate install guide.
 
+The inventory also records every Markdown page containing an `aiwg` command,
+the number of direct-touch mentions, and the number of agent/operator
+mentions. During public-source staging, any non-historical public page that
+retains a command outside the direct-touch allowlist receives a visible
+execution notice: those commands are agent/operator detail, and conversational
+users should state the outcome they want. This makes retained exceptions
+explicit instead of relying on readers to infer the audience. Historical
+release notes, contributor documentation, and the source files themselves are
+not mechanically rewritten.
+
 ## Before and after
 
 The audit baseline is stored in `docs/public-docs.json` and was calculated from
