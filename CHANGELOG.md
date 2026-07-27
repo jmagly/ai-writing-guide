@@ -7,6 +7,87 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.21] - 2026-07-27 - "Portable skills, session intelligence, and conversational guidance"
+
+### Added
+
+- **Secure Agent Skills lifecycle** - AIWG can validate, import, inspect,
+  activate, update, deploy, export, diagnose, and uninstall portable Agent
+  Skills directories. Local and pinned-Git imports preserve resources without
+  executing scripts, bind trust to the exact source and digest, reject unsafe
+  paths and collisions, and project provider-compatible bundles with retained
+  provenance and AIWG metadata sidecars (#1875-#1881).
+- **Cross-provider session intelligence** - the new `aiwg sessions` catalog
+  imports normalized, redacted session evidence from Claude Code, Codex,
+  Copilot, Cursor, Factory, Hermes, OpenCode, OpenClaw, OpenHuman, Warp,
+  Devin Desktop/Windsurf, and a declared generic interchange. A versioned JSON
+  CLI covers source discovery, import, list/show, scoped FTS5 search, tagging,
+  relocation, reindexing, health, audit, tombstone/restore, and terminal purge
+  workflows (#1898).
+- **Review-gated session memory** - policy-approved extraction produces cited,
+  versioned candidates rather than durable memory. Explicit review, security
+  acknowledgment, consumer selection, preview, confirmation, lineage receipts,
+  conflict handling, supersession, revocation, and idempotency guard the
+  promotion path. Optional semantic backends require a scope-bound preview and
+  approval; local lexical search remains the default (#1898, #1935).
+- **Line Memory addon** - a small plain-text project memory retains bounded,
+  recency-ordered facts with add, list, search, touch, prune, and safe
+  project-local configuration commands. Retrieval is deliberately bounded and
+  the backing file is never injected wholesale into provider startup context
+  (#1922).
+- **Agent/operator documentation corpus** - deterministic CLI, provider,
+  discovery, onboarding, Node/npm setup, diagnostics, and recovery references
+  now have stable IDs under `docs/agents/`, remain in installed and signed
+  release reference artifacts, and are excluded from the public end-user site
+  (#1937).
+
+### Changed
+
+- **Conversational onboarding** - public getting-started, quickstart, provider,
+  and framework journeys now teach the preferred sequence: install AIWG,
+  deploy the complete system with `aiwg use all --provider <provider>`, reopen
+  the provider, invoke `aiwg-regenerate`, and verify the connected project.
+  Agent-owned commands are presented as agent/operator execution detail, with
+  explicit approval, outcome, evidence, and recovery expectations (#1937).
+- **Session conformance and performance gates** - required CI now installs the
+  optional SQLite backend, proves all repository/provider suites ran with zero
+  skips, and preserves production-path import, search, metadata, extraction,
+  bounded-failure, and memory evidence. Provider support is tied to fixtures,
+  limitations, documentation, and executable conformance rather than a
+  capability claim alone (#1932).
+- **Fortemi shard lifecycle projection** - index exports carry lifecycle,
+  mutation, and state-transfer semantics through the current `core-v1`
+  producer/consumer receipts, with AIWG pinned to `@fortemi/core@2026.7.14`
+  (#1892).
+
+### Fixed
+
+- **Citation edge normalization** - citation sidecar parsing accepts shifted
+  and recognized table variants, distinguishes declarations from canonical
+  graph edges, and reports edge statistics without conflating the two
+  (#1939, #1940).
+- **NLP production commands** - the `nlp-prod` addon again ships executable
+  modules for new, status, add-step, eval, estimate-cost, optimize, and
+  productionize operations; manifest wiring, doctor diagnostics, and
+  integration coverage prevent declared commands from disappearing (#1923).
+- **Codex skill context budget** - Codex uses the canonical shared
+  `.agents/skills/` projection and deployment conformance prevents duplicate
+  skill surfaces from exhausting the context budget (#1884).
+
+### Security
+
+- **Hostile session-content containment** - imported transcript content remains
+  inert data through structural and model-backed extraction. Schema, evidence,
+  span, scope, Unicode, active-content, and instruction-like checks reject
+  unsafe candidates; suspicious accepted candidates require explicit risk
+  acknowledgment and are encoded so they cannot alter promoted document
+  structure (#1935).
+- **Authorized lifecycle and deletion** - workspace/provider scope is enforced
+  before session search and snippets. Tombstone is reversible, purge is
+  preview-first and terminal only after explicit confirmation and dependent
+  disposition, and content-free receipts preserve accountability without
+  retaining transcript text or source paths (#1898).
+
 ## [2026.7.20] - 2026-07-26 - "Portable project resources and measured discovery"
 
 ### Added
