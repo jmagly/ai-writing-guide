@@ -71,7 +71,7 @@ describe('session source adapter registry', () => {
       async *discover() { discover(); },
     }));
     expect(() => registry.assertOperation('generic', 'discover'))
-      .toThrowError(expect.objectContaining({ code: 'SOURCE_NOT_AUTHORIZED' }));
+      .toThrowError(expect.objectContaining({ code: 'UNSUPPORTED_OPERATION' }));
     expect(discover).not.toHaveBeenCalled();
   });
 

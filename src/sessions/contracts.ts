@@ -25,7 +25,9 @@ export const SessionErrorCodeSchema = z.enum([
   'UNKNOWN_PROVIDER', 'UNKNOWN_SCHEMA_MAJOR', 'SOURCE_NOT_AUTHORIZED',
   'SOURCE_OUTSIDE_ALLOWED_ROOT', 'SOURCE_SYMLINK', 'SOURCE_NOT_REGULAR_FILE',
   'RESOURCE_LIMIT_EXCEEDED', 'NETWORK_NOT_AUTHORIZED', 'SCHEMA_DRIFT',
-  'IMPORT_CONFLICT', 'IMPORT_INTERRUPTED',
+  'IMPORT_CONFLICT', 'IMPORT_INTERRUPTED', 'MALFORMED_SOURCE',
+  'DUPLICATE_NATIVE_ID', 'AMBIGUOUS_TIMESTAMP', 'TRUNCATED_SOURCE',
+  'UNSUPPORTED_OPERATION',
 ]);
 
 const VersionSchema = z.string().regex(/^\d+\.\d+\.\d+(?:[-+].+)?$/);
@@ -50,7 +52,7 @@ export const SessionSourceSchema = z.object({
   disposition: CapabilityDispositionSchema,
   operationalState: OperationalStateSchema,
   consistency: ConsistencyStateSchema,
-  authorizedAt: z.string().datetime(),
+  authorizedAt: z.string().datetime({ offset: true }),
   extensions: NativeExtensionsSchema.default({}),
 });
 
@@ -64,7 +66,7 @@ export const SessionEventSchema = z.object({
   sequence: z.number().int().nonnegative(),
   kind: z.string().min(1),
   role: z.string().min(1).nullable(),
-  occurredAt: z.string().datetime().nullable(),
+  occurredAt: z.string().datetime({ offset: true }).nullable(),
   searchableText: z.string(),
   digest: DigestSchema,
   rawReference: z.object({
@@ -89,8 +91,8 @@ export const SessionSchema = z.object({
   provider: SessionProviderIdSchema,
   nativeSessionId: z.string().min(1),
   workspaceId: z.string().min(1),
-  startedAt: z.string().datetime().nullable(),
-  updatedAt: z.string().datetime().nullable(),
+  startedAt: z.string().datetime({ offset: true }).nullable(),
+  updatedAt: z.string().datetime({ offset: true }).nullable(),
   consistency: ConsistencyStateSchema,
   lifecycle: z.enum(['active', 'complete', 'tombstoned']),
   sourceDigest: DigestSchema,
@@ -113,8 +115,8 @@ export const ImportRunSchema = z.object({
   consistency: ConsistencyStateSchema,
   status: z.enum(['running', 'committed', 'rolled-back', 'failed']),
   checkpoint: ImportCheckpointSchema,
-  startedAt: z.string().datetime(),
-  completedAt: z.string().datetime().nullable(),
+  startedAt: z.string().datetime({ offset: true }),
+  completedAt: z.string().datetime({ offset: true }).nullable(),
   errorCode: SessionErrorCodeSchema.nullable(),
 });
 
@@ -128,7 +130,7 @@ export const ProvenanceEdgeSchema = z.object({
   fromId: z.string().min(1),
   toId: z.string().min(1),
   importRunId: z.string().min(1),
-  createdAt: z.string().datetime(),
+  createdAt: z.string().datetime({ offset: true }),
 });
 
 export const IntelligenceCandidateSchema = z.object({
@@ -158,7 +160,7 @@ export const PromotionReceiptSchema = z.object({
   candidateVersion: z.number().int().positive(),
   consumer: z.string().min(1),
   reviewer: z.string().min(1),
-  approvedAt: z.string().datetime(),
+  approvedAt: z.string().datetime({ offset: true }),
   beforeHash: DigestSchema.nullable(),
   afterHash: DigestSchema,
   dryRun: z.boolean(),
@@ -173,7 +175,7 @@ export const DeletionReceiptSchema = z.object({
   counts: z.record(z.number().int().nonnegative()),
   survivingDependentIds: z.array(z.string().min(1)),
   outcome: z.enum(['preview', 'committed', 'failed']),
-  occurredAt: z.string().datetime(),
+  occurredAt: z.string().datetime({ offset: true }),
 }).strict();
 
 export type SessionSource = z.infer<typeof SessionSourceSchema>;

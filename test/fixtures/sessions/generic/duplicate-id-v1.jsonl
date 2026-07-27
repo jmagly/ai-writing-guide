@@ -1,0 +1,3 @@
+{"type":"aiwg.session-interchange","schemaVersion":"1.0.0","product":"synthetic-fixture","productVersion":"1.0.0","sourceId":"generic-duplicate-v1","exportedAt":"2026-07-26T12:00:00Z","consistency":"complete","lifecycle":"complete","workspace":{"id":"workspace-fixture"},"provenance":{"exporter":"aiwg-test-fixture","exporterVersion":"1.0.0","sourceClass":"synthetic"}}
+{"type":"event","sessionId":"session-1","eventId":"duplicate","sequence":0,"kind":"message","text":"one","lifecycle":"complete"}
+{"type":"event","sessionId":"session-1","eventId":"duplicate","sequence":1,"kind":"message","text":"two","lifecycle":"complete"}

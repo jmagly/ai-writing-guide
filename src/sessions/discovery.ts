@@ -48,7 +48,7 @@ export class SessionSourceAdapterRegistry {
     const adapter = this.get(providerInput);
     if (!adapter.supportedOperations.includes(operation)) {
       throw new SessionContractError(
-        'SOURCE_NOT_AUTHORIZED',
+        'UNSUPPORTED_OPERATION',
         `${operation} is unsupported for provider ${adapter.provider}`,
       );
     }
