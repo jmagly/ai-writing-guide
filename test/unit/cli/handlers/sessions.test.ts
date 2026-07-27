@@ -294,6 +294,42 @@ describe.runIf(hasBetterSqlite3())('sessions CLI catalog lifecycle', () => {
     expect(jsonOutput(log)).toMatchObject({ status: 'ok', data: { outcome: 'tombstoned' } });
     await sessionsHandler.execute(context(['list', ...dbArgs]));
     expect(jsonOutput(log).data.items).toEqual([]);
+    await sessionsHandler.execute(context(['restore', sessionId, ...dbArgs]));
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'ok',
+      data: { sessionId, outcome: 'restored', providerLogsModified: false },
+    });
+    await sessionsHandler.execute(context(['purge', sessionId, ...dbArgs]));
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'preview',
+      data: {
+        sessionId,
+        counts: { sessions: 1, events: 2, indexes: 2 },
+        providerLogsModified: false,
+        confirmationRequired: true,
+      },
+    });
+    await sessionsHandler.execute(context([
+      'purge', sessionId, '--confirm',
+      '--actor-class', 'operator', '--reason-code', 'user_request', ...dbArgs,
+    ]));
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'ok',
+      data: {
+        providerLogsModified: false,
+        receipt: { outcome: 'committed', orphanCounts: {
+          sessions: 0, events: 0, indexes: 0, candidates: 0,
+        } },
+      },
+    });
+    await sessionsHandler.execute(context([
+      'purge', sessionId, '--confirm',
+      '--actor-class', 'operator', '--reason-code', 'retry', ...dbArgs,
+    ]));
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'ok',
+      data: { duplicate: true, receipt: { outcome: 'committed' } },
+    });
     const missing = await sessionsHandler.execute(context(['show', sessionId, ...dbArgs]));
     expect(missing.exitCode).toBe(4);
     expect(jsonOutput(log).error.code).toBe('SESSION_NOT_FOUND');

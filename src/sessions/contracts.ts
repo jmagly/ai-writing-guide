@@ -221,8 +221,17 @@ export const DeletionReceiptSchema = z.object({
   scopeClass: z.string().min(1),
   counts: z.record(z.number().int().nonnegative()),
   survivingDependentIds: z.array(z.string().min(1)),
+  actorClass: z.string().min(1),
+  reasonCode: z.string().min(1),
+  orphanCounts: z.record(z.number().int().nonnegative()),
   outcome: z.enum(['preview', 'committed', 'failed']),
   occurredAt: z.string().datetime({ offset: true }),
+}).strict();
+
+export const PromotionDependencyDecisionSchema = z.object({
+  dependentId: z.string().min(1),
+  action: z.enum(['revoke', 'supersede', 'retain', 'origin_unavailable']),
+  basis: z.string().min(1),
 }).strict();
 
 export type SessionSource = z.infer<typeof SessionSourceSchema>;
@@ -235,6 +244,7 @@ export type IntelligenceCandidate = z.infer<typeof IntelligenceCandidateSchema>;
 export type CandidateReviewReceipt = z.infer<typeof CandidateReviewReceiptSchema>;
 export type PromotionReceipt = z.infer<typeof PromotionReceiptSchema>;
 export type DeletionReceipt = z.infer<typeof DeletionReceiptSchema>;
+export type PromotionDependencyDecision = z.infer<typeof PromotionDependencyDecisionSchema>;
 
 export interface ProviderRecord {
   nativeSessionId: string;

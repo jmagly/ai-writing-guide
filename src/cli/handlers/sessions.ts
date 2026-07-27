@@ -55,6 +55,8 @@ Commands:
   relocate <source-id> <file>     Update AIWG source-location metadata
   reindex                         Rebuild catalog indexes
   delete <session-id>             Preview deletion; use --confirm to tombstone
+  restore <session-id>            Restore a reversible catalog tombstone
+  purge <session-id>              Preview terminal AIWG-copy purge
   doctor                          Check catalog availability and integrity
 
 Options:
@@ -326,6 +328,51 @@ async function executeCommand(
           sessionId: id, counts, providerLogsModified: false, outcome: 'tombstoned',
         });
       }
+      case 'restore': {
+        const id = requiredPositional(args, 0, 'session-id');
+        if (isDryRun(ctx, args)) return preview(command, { sessionId: id, wouldRestore: true });
+        if (!repository.restoreSession(id)) {
+          throw new CliError('SESSION_NOT_FOUND', `tombstoned session not found: ${id}`, EXIT.unavailable);
+        }
+        return ok(command, { sessionId: id, outcome: 'restored', providerLogsModified: false });
+      }
+      case 'purge': {
+        const id = requiredPositional(args, 0, 'session-id');
+        const completed = repository.getCompletedPurge(id);
+        if (completed) {
+          return ok(command, {
+            receipt: completed,
+            dependentDecisions: repository.listPromotionDependencyDecisions(completed.operationId),
+            duplicate: true,
+            providerLogsModified: false,
+          });
+        }
+        const purgePreview = repository.previewPurge(id);
+        if (!args.flags.has('--confirm') || isDryRun(ctx, args)) {
+          return preview(command, { ...purgePreview, providerLogsModified: false });
+        }
+        const action = purgePreview.promotedDependents.length > 0
+          ? dependentAction(requiredValue(args, '--dependent-action'))
+          : 'origin_unavailable';
+        const basis = purgePreview.promotedDependents.length > 0
+          ? requiredValue(args, '--basis')
+          : (args.values.get('--basis') ?? 'no-promoted-dependents');
+        const receipt = repository.purgeSession({
+          preview: purgePreview,
+          actorClass: requiredValue(args, '--actor-class'),
+          reasonCode: requiredValue(args, '--reason-code'),
+          decisions: purgePreview.promotedDependents.map((item) => ({
+            dependentId: item.dependentId,
+            action,
+            basis,
+          })),
+        });
+        return ok(command, {
+          receipt,
+          dependentDecisions: repository.listPromotionDependencyDecisions(receipt.operationId),
+          providerLogsModified: false,
+        });
+      }
       case 'doctor':
         return ok(command, {
           database: redactSourceLocator(databasePath(ctx, args)),
@@ -479,7 +526,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     '--date-from', '--date-to', '--participant', '--model', '--role', '--tool',
     '--entity', '--sensitivity', '--extraction-state',
     '--state', '--reviewer', '--reason', '--policy-version', '--min-confidence',
-    '--consumer',
+    '--consumer', '--actor-class', '--reason-code', '--dependent-action', '--basis',
   ]);
   let command: string | undefined;
   for (let index = 0; index < argv.length; index += 1) {
@@ -552,6 +599,16 @@ function candidateState(value: string | undefined): CandidateState | undefined {
     throw new CliError('INVALID_ARGUMENT', `invalid candidate state: ${value}`, EXIT.usage);
   }
   return value as CandidateState;
+}
+
+function dependentAction(
+  value: string,
+): 'revoke' | 'supersede' | 'retain' | 'origin_unavailable' {
+  const actions = new Set(['revoke', 'supersede', 'retain', 'origin_unavailable']);
+  if (!actions.has(value)) {
+    throw new CliError('INVALID_ARGUMENT', `invalid dependent action: ${value}`, EXIT.usage);
+  }
+  return value as 'revoke' | 'supersede' | 'retain' | 'origin_unavailable';
 }
 
 function isDryRun(ctx: HandlerContext, args: ParsedArgs): boolean {

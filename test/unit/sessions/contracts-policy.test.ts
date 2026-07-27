@@ -57,6 +57,8 @@ describe('session contracts', () => {
     expect(() => DeletionReceiptSchema.parse({
       contractVersion: '1.0.0', receiptId: 'receipt-1', operationId: 'operation-1',
       scopeClass: 'workspace', counts: { events: 2 }, survivingDependentIds: [],
+      actorClass: 'operator', reasonCode: 'user_request',
+      orphanCounts: { events: 0 },
       outcome: 'committed', occurredAt: '2026-07-26T00:00:00.000Z',
       rawPath: '/sensitive/path',
     })).toThrow();

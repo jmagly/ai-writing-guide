@@ -1,12 +1,14 @@
 import { createRequire } from 'node:module';
 import type {
-  CandidateReviewReceipt, ImportCheckpoint, ImportRun, IntelligenceCandidate,
-  PromotionReceipt,
+  CandidateReviewReceipt, DeletionReceipt, ImportCheckpoint, ImportRun,
+  IntelligenceCandidate, PromotionDependencyDecision, PromotionReceipt,
   Session, SessionEvent, SessionSource,
 } from './contracts.js';
 import {
   CandidateReviewReceiptSchema,
+  DeletionReceiptSchema,
   IntelligenceCandidateSchema,
+  PromotionDependencyDecisionSchema,
   PromotionReceiptSchema,
   SessionContractError,
   sha256,
@@ -55,6 +57,22 @@ export interface SessionCatalogHealth {
   sessions: number;
   events: number;
   stagedImports: number;
+}
+
+export interface SessionPurgePreview {
+  contractVersion: '1.0.0';
+  operationId: string;
+  scopeClass: 'session';
+  sessionId: string;
+  counts: Record<string, number>;
+  promotedDependents: Array<{
+    dependentId: string;
+    candidateId: string;
+    candidateVersion: number;
+    consumer: string;
+    destinationRef: string;
+  }>;
+  confirmationRequired: true;
 }
 
 export interface SessionSearchOptions {
@@ -180,6 +198,14 @@ export class SessionRepository {
         UNIQUE(candidate_id, candidate_version, consumer),
         FOREIGN KEY(candidate_id, candidate_version)
           REFERENCES intelligence_candidates(candidate_id, version)
+      );
+      CREATE TABLE IF NOT EXISTS deletion_receipts (
+        operation_id TEXT PRIMARY KEY, scope_id TEXT NOT NULL, data TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS promotion_dependency_decisions (
+        operation_id TEXT NOT NULL, dependent_id TEXT NOT NULL,
+        action TEXT NOT NULL, basis TEXT NOT NULL,
+        PRIMARY KEY(operation_id, dependent_id)
       );
       CREATE INDEX IF NOT EXISTS idx_session_workspace_provider
         ON sessions(workspace_id, source_id, lifecycle);
@@ -700,8 +726,202 @@ export class SessionRepository {
   }
 
   tombstoneSession(sessionId: string): boolean {
-    return this.db.prepare(`UPDATE sessions SET lifecycle='tombstoned' WHERE session_id=?`)
-      .run(sessionId).changes > 0;
+    const row = this.db.prepare('SELECT data FROM sessions WHERE session_id=?').get(sessionId);
+    if (!row) return false;
+    const session = JSON.parse(String(row.data)) as Session;
+    session.lifecycle = 'tombstoned';
+    return this.db.prepare(
+      `UPDATE sessions SET lifecycle='tombstoned', data=? WHERE session_id=? AND lifecycle!='tombstoned'`,
+    ).run(JSON.stringify(session), sessionId).changes > 0;
+  }
+
+  restoreSession(sessionId: string): boolean {
+    const row = this.db.prepare('SELECT data FROM sessions WHERE session_id=?').get(sessionId);
+    if (!row) return false;
+    const session = JSON.parse(String(row.data)) as Session;
+    session.lifecycle = 'active';
+    return this.db.prepare(
+      `UPDATE sessions SET lifecycle='active', data=? WHERE session_id=? AND lifecycle='tombstoned'`,
+    ).run(JSON.stringify(session), sessionId).changes > 0;
+  }
+
+  previewPurge(sessionId: string): SessionPurgePreview {
+    const session = this.db.prepare('SELECT data FROM sessions WHERE session_id=?').get(sessionId);
+    if (!session) {
+      throw new SessionContractError('MALFORMED_SOURCE', 'session does not exist');
+    }
+    const eventIds = this.db.prepare(
+      'SELECT event_id FROM session_events WHERE session_id=? ORDER BY event_id',
+    ).all(sessionId).map((row) => String(row.event_id));
+    const eventSet = new Set(eventIds);
+    const candidates = this.listCandidates()
+      .filter((item) => item.evidence.some((evidence) => eventSet.has(evidence.eventId)));
+    const candidateKeys = new Set(
+      candidates.map((item) => `${item.candidateId}\0${item.version}`),
+    );
+    const dependents = this.db.prepare(
+      'SELECT data FROM promotion_receipts ORDER BY candidate_id, candidate_version, consumer',
+    ).all()
+      .map((row) => JSON.parse(String(row.data)) as PromotionReceipt)
+      .filter((receipt) => candidateKeys.has(`${receipt.candidateId}\0${receipt.candidateVersion}`))
+      .map((receipt) => ({
+        dependentId: receipt.receiptId,
+        candidateId: receipt.candidateId,
+        candidateVersion: receipt.candidateVersion,
+        consumer: receipt.consumer,
+        destinationRef: receipt.destinationRef,
+      }));
+    const candidateIds = candidates.map((item) => `${item.candidateId}:${item.version}`).sort();
+    const counts = {
+      sessions: 1,
+      events: eventIds.length,
+      indexes: eventIds.length,
+      embeddings: 0,
+      candidates: candidates.length,
+      snapshots: 0,
+      tags: Number(this.db.prepare(
+        'SELECT COUNT(*) AS count FROM session_tags WHERE session_id=?',
+      ).get(sessionId)?.count ?? 0),
+      promotedDependents: dependents.length,
+    };
+    const operationId = sha256(JSON.stringify({
+      scopeClass: 'session',
+      sessionId,
+      eventIds,
+      candidateIds,
+      dependentIds: dependents.map((item) => item.dependentId),
+      counts,
+    }));
+    return {
+      contractVersion: '1.0.0',
+      operationId,
+      scopeClass: 'session',
+      sessionId,
+      counts,
+      promotedDependents: dependents,
+      confirmationRequired: true,
+    };
+  }
+
+  getCompletedPurge(sessionId: string): DeletionReceipt | null {
+    if (this.db.prepare('SELECT 1 AS present FROM sessions WHERE session_id=?').get(sessionId)) {
+      return null;
+    }
+    const row = this.db.prepare(
+      `SELECT data FROM deletion_receipts WHERE scope_id=? ORDER BY rowid DESC LIMIT 1`,
+    ).get(sessionId);
+    return row ? JSON.parse(String(row.data)) as DeletionReceipt : null;
+  }
+
+  listPromotionDependencyDecisions(operationId: string): PromotionDependencyDecision[] {
+    return this.db.prepare(
+      `SELECT dependent_id, action, basis FROM promotion_dependency_decisions
+       WHERE operation_id=? ORDER BY dependent_id`,
+    ).all(operationId).map((row) => PromotionDependencyDecisionSchema.parse({
+      dependentId: String(row.dependent_id),
+      action: String(row.action),
+      basis: String(row.basis),
+    }));
+  }
+
+  purgeSession(input: {
+    preview: SessionPurgePreview;
+    actorClass: string;
+    reasonCode: string;
+    decisions: PromotionDependencyDecision[];
+  }): DeletionReceipt {
+    const existing = this.db.prepare(
+      'SELECT data FROM deletion_receipts WHERE operation_id=?',
+    ).get(input.preview.operationId);
+    if (existing) return JSON.parse(String(existing.data)) as DeletionReceipt;
+    const current = this.previewPurge(input.preview.sessionId);
+    if (current.operationId !== input.preview.operationId) {
+      throw new SessionContractError('IMPORT_CONFLICT', 'purge scope changed after preview');
+    }
+    const validatedDecisions = input.decisions.map(
+      (item) => PromotionDependencyDecisionSchema.parse(item),
+    );
+    const expected = new Set(current.promotedDependents.map((item) => item.dependentId));
+    const decisions = new Map(validatedDecisions.map((item) => [item.dependentId, item]));
+    if (validatedDecisions.length !== expected.size
+      || decisions.size !== expected.size
+      || [...expected].some((dependentId) => !decisions.has(dependentId))) {
+      throw new SessionContractError(
+        'OPERATION_NOT_AUTHORIZED',
+        'every promoted dependent requires one explicit disposition',
+      );
+    }
+    const apply = this.db.transaction((): DeletionReceipt => {
+      for (const decision of validatedDecisions) {
+        this.db.prepare(
+          `INSERT INTO promotion_dependency_decisions
+           (operation_id, dependent_id, action, basis) VALUES (?, ?, ?, ?)`,
+        ).run(input.preview.operationId, decision.dependentId, decision.action, decision.basis);
+      }
+      const eventRows = this.db.prepare(
+        'SELECT event_id FROM session_events WHERE session_id=?',
+      ).all(input.preview.sessionId);
+      for (const row of eventRows) {
+        this.db.prepare('DELETE FROM session_event_fts WHERE event_id=?').run(String(row.event_id));
+      }
+      const eventIds = new Set(eventRows.map((row) => String(row.event_id)));
+      const affectedCandidates = this.listCandidates()
+        .filter((item) => item.evidence.some((evidence) => eventIds.has(evidence.eventId)));
+      for (const candidate of affectedCandidates) {
+        this.db.prepare(
+          'DELETE FROM candidate_review_receipts WHERE candidate_id=? AND candidate_version=?',
+        ).run(candidate.candidateId, candidate.version);
+        this.db.prepare(
+          'DELETE FROM promotion_receipts WHERE candidate_id=? AND candidate_version=?',
+        ).run(candidate.candidateId, candidate.version);
+        this.db.prepare(
+          'DELETE FROM intelligence_candidates WHERE candidate_id=? AND version=?',
+        ).run(candidate.candidateId, candidate.version);
+      }
+      this.db.prepare('DELETE FROM session_tags WHERE session_id=?').run(input.preview.sessionId);
+      this.db.prepare('DELETE FROM session_events WHERE session_id=?').run(input.preview.sessionId);
+      this.db.prepare('DELETE FROM sessions WHERE session_id=?').run(input.preview.sessionId);
+      const orphanCounts = {
+        sessions: Number(this.db.prepare(
+          'SELECT COUNT(*) AS count FROM sessions WHERE session_id=?',
+        ).get(input.preview.sessionId)?.count ?? 0),
+        events: Number(this.db.prepare(
+          'SELECT COUNT(*) AS count FROM session_events WHERE session_id=?',
+        ).get(input.preview.sessionId)?.count ?? 0),
+        indexes: eventRows.reduce((count, row) => count + Number(this.db.prepare(
+          'SELECT COUNT(*) AS count FROM session_event_fts WHERE event_id=?',
+        ).get(String(row.event_id))?.count ?? 0), 0),
+        candidates: affectedCandidates.reduce((count, candidate) => count + Number(
+          this.db.prepare(
+            'SELECT COUNT(*) AS count FROM intelligence_candidates WHERE candidate_id=? AND version=?',
+          ).get(candidate.candidateId, candidate.version)?.count ?? 0,
+        ), 0),
+      };
+      if (Object.values(orphanCounts).some((count) => count !== 0)) {
+        throw new SessionContractError('IMPORT_CONFLICT', 'purge orphan check failed');
+      }
+      const receipt = DeletionReceiptSchema.parse({
+        contractVersion: '1.0.0',
+        receiptId: sha256(`${input.preview.operationId}\0terminal`),
+        operationId: input.preview.operationId,
+        scopeClass: 'session',
+        counts: input.preview.counts,
+        survivingDependentIds: validatedDecisions
+          .filter((item) => item.action !== 'revoke')
+          .map((item) => item.dependentId)
+          .sort(),
+        actorClass: input.actorClass,
+        reasonCode: input.reasonCode,
+        orphanCounts,
+        outcome: 'committed',
+        occurredAt: new Date().toISOString(),
+      });
+      this.db.prepare(
+        'INSERT INTO deletion_receipts(operation_id, scope_id, data) VALUES (?, ?, ?)',
+      ).run(receipt.operationId, input.preview.sessionId, JSON.stringify(receipt));
+      return receipt;
+    });
+    return apply();
   }
 
   reindex(): void {

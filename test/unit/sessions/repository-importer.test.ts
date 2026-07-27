@@ -334,6 +334,75 @@ describe.runIf(hasBetterSqlite3())('transactional session repository and importe
       createdAt: new Date().toISOString(),
     }])).toMatchObject([{ version: 1, reviewState: 'pending' }]);
     expect(repository.listCandidates()).toHaveLength(3);
+    const candidateSessionId = stableSessionId(
+      'generic',
+      candidateSource.sourceId,
+      'candidate-session',
+    );
+    expect(repository.tombstoneSession(candidateSessionId)).toBe(true);
+    expect(repository.search({
+      query: 'evidence', workspaceId: 'workspace-1', limit: 10,
+    }).items).toEqual([]);
+    expect(repository.restoreSession(candidateSessionId)).toBe(true);
+    expect(repository.search({
+      query: 'evidence', workspaceId: 'workspace-1', limit: 10,
+    }).items).toHaveLength(1);
+    const purgePreview = repository.previewPurge(candidateSessionId);
+    expect(purgePreview).toMatchObject({
+      counts: {
+        sessions: 1,
+        events: 1,
+        indexes: 1,
+        candidates: 3,
+        promotedDependents: 1,
+      },
+      promotedDependents: [{
+        candidateId: candidate.candidateId,
+        candidateVersion: 1,
+        consumer: 'memory',
+      }],
+      confirmationRequired: true,
+    });
+    expect(() => repository.purgeSession({
+      preview: purgePreview,
+      actorClass: 'operator',
+      reasonCode: 'user_request',
+      decisions: [],
+    })).toThrow(/every promoted dependent/);
+    const deletion = repository.purgeSession({
+      preview: purgePreview,
+      actorClass: 'operator',
+      reasonCode: 'user_request',
+      decisions: purgePreview.promotedDependents.map((item) => ({
+        dependentId: item.dependentId,
+        action: 'origin_unavailable' as const,
+        basis: 'source copy purged by operator',
+      })),
+    });
+    expect(deletion).toMatchObject({
+      operationId: purgePreview.operationId,
+      counts: purgePreview.counts,
+      survivingDependentIds: [purgePreview.promotedDependents[0].dependentId],
+      actorClass: 'operator',
+      reasonCode: 'user_request',
+      orphanCounts: { sessions: 0, events: 0, indexes: 0, candidates: 0 },
+      outcome: 'committed',
+    });
+    expect(repository.listPromotionDependencyDecisions(deletion.operationId)).toEqual([{
+      dependentId: purgePreview.promotedDependents[0].dependentId,
+      action: 'origin_unavailable',
+      basis: 'source copy purged by operator',
+    }]);
+    expect(repository.purgeSession({
+      preview: purgePreview,
+      actorClass: 'operator',
+      reasonCode: 'retry',
+      decisions: [],
+    })).toEqual(deletion);
+    expect(repository.search({
+      query: 'evidence', workspaceId: 'workspace-1', limit: 10,
+    }).items).toEqual([]);
+    expect(repository.listCandidates()).toEqual([]);
     repository.close();
   });
 

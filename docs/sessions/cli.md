@@ -36,12 +36,38 @@ aiwg sessions tag <session-id> <tag> [--dry-run] [--json]
 aiwg sessions relocate <source-id> <file> [--dry-run] [--json]
 aiwg sessions reindex [--dry-run] [--json]
 aiwg sessions delete <session-id> [--confirm] [--dry-run] [--json]
+aiwg sessions restore <session-id> [--dry-run] [--json]
+aiwg sessions purge <session-id> [--confirm] --actor-class <class>
+                    --reason-code <code>
+                    [--dependent-action revoke|supersede|retain|origin_unavailable]
+                    [--basis <text>] [--dry-run] [--json]
 aiwg sessions doctor [--json]
 ```
 
 Generic imports accept only the declared, versioned AIWG interchange. Provider
 logs are never modified. `delete` previews by default and only tombstones the
 AIWG-owned normalized session after `--confirm`.
+
+## Tombstone and purge
+
+`delete` is reversible: it hides the session from list, search, extraction, and
+health counts without removing provider logs or AIWG event rows. `restore`
+returns that catalog copy to active service.
+
+`purge` is terminal for the selected AIWG-owned session copy and previews by
+default. Its plan counts sessions, events, search-index rows, embeddings,
+candidates, snapshots, tags, and promoted dependents. Confirmation requires an
+actor class and reason code. When promoted dependents exist,
+`--dependent-action` and `--basis` are also mandatory; the explicit disposition
+is recorded as `revoke`, `supersede`, `retain`, or `origin_unavailable`.
+
+The committed transaction removes normalized events, FTS rows, tags,
+candidates, and candidate receipts, then performs orphan checks. The retained
+deletion receipt contains only opaque operation/dependent IDs, layer counts,
+actor/reason classifications, outcome, time, and orphan counts—never transcript
+content, source paths, or stable content hashes. Retrying after completion
+returns the same terminal receipt. Provider-owned logs are never opened or
+modified by tombstone, restore, or purge.
 
 ## Search authorization and citations
 
