@@ -1,0 +1,1 @@
+{"schemaVersion":"1.0.0","type":"message.updated","properties":{"info":{"id":"msg_without_session","sessionID":"missing","role":"user"}}}

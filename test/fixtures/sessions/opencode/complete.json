@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0.0",
+  "info": {
+    "id": "ses_opencode_complete",
+    "projectID": "project-synthetic",
+    "directory": "/synthetic/workspace",
+    "parentID": "ses_parent",
+    "title": "Synthetic OpenCode session",
+    "version": "1.2.3",
+    "time": { "created": 1785150000000, "updated": 1785150100000, "archived": 1785150200000 },
+    "share": { "url": "https://opncd.ai/s/synthetic" },
+    "futureSession": "preserved"
+  },
+  "messages": [
+    {
+      "info": {
+        "id": "msg_user",
+        "sessionID": "ses_opencode_complete",
+        "role": "user",
+        "model": { "providerID": "synthetic", "modelID": "model-a" },
+        "time": { "created": 1785150010000 },
+        "futureMessage": "preserved"
+      },
+      "parts": [
+        {
+          "id": "part_text",
+          "sessionID": "ses_opencode_complete",
+          "messageID": "msg_user",
+          "type": "text",
+          "text": "Synthetic prompt"
+        },
+        {
+          "id": "part_file",
+          "sessionID": "ses_opencode_complete",
+          "messageID": "msg_user",
+          "type": "file",
+          "mime": "text/plain",
+          "filename": "synthetic.txt",
+          "url": "data:text/plain;base64,U3ludGhldGlj"
+        }
+      ]
+    },
+    {
+      "info": {
+        "id": "msg_assistant",
+        "sessionID": "ses_opencode_complete",
+        "role": "assistant",
+        "parentID": "msg_user",
+        "providerID": "synthetic",
+        "modelID": "model-a",
+        "cost": 0.02,
+        "tokens": { "input": 10, "output": 20, "reasoning": 5 },
+        "time": { "created": 1785150020000, "completed": 1785150030000 }
+      },
+      "parts": [
+        {
+          "id": "part_reasoning",
+          "sessionID": "ses_opencode_complete",
+          "messageID": "msg_assistant",
+          "type": "reasoning",
+          "text": "Synthetic reasoning"
+        },
+        {
+          "id": "part_tool",
+          "sessionID": "ses_opencode_complete",
+          "messageID": "msg_assistant",
+          "type": "tool",
+          "tool": "read",
+          "callID": "call-1",
+          "state": { "status": "completed", "input": { "filePath": "synthetic" }, "output": "Synthetic output" }
+        },
+        {
+          "id": "part_future",
+          "sessionID": "ses_opencode_complete",
+          "messageID": "msg_assistant",
+          "type": "future-block",
+          "futurePart": "preserved"
+        }
+      ]
+    }
+  ],
+  "sanitized": true,
+  "sanitization": { "command": "opencode export", "reviewed": true },
+  "shared": true,
+  "futureExport": "preserved"
+}

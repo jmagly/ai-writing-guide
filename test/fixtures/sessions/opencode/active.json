@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0",
+  "info": {
+    "id": "ses_opencode_active",
+    "projectID": "project-synthetic",
+    "directory": "/synthetic/workspace",
+    "time": { "created": 1785150000000, "updated": 1785150100000 }
+  },
+  "messages": [],
+  "sanitized": true,
+  "shared": false
+}

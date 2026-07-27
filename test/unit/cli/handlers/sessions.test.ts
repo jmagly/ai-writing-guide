@@ -83,13 +83,19 @@ describe('sessions CLI contracts', () => {
         supportedOperations: ['inspect', 'stream'],
         acquisitionModes: ['jsonl', 'api', 'sqlite-snapshot'],
       });
+    expect(output.data.providers.find((item: any) => item.provider === 'opencode'))
+      .toMatchObject({
+        disposition: 'implemented',
+        supportedOperations: ['inspect', 'stream'],
+        acquisitionModes: ['manual-export', 'api', 'jsonl'],
+      });
     expect(output.data.providers.filter((item: any) => item.disposition === 'unsupported'))
-      .toHaveLength(5);
+      .toHaveLength(4);
   });
 
   it('uses stable JSON and exit codes for unsupported provider import', async () => {
     const result = await sessionsHandler.execute(context([
-      'import', 'anything.jsonl', '--provider', 'opencode', '--source-id', 'source', '--json',
+      'import', 'anything.jsonl', '--provider', 'openclaw', '--source-id', 'source', '--json',
     ]));
     expect(result.exitCode).toBe(3);
     expect(jsonOutput(log)).toMatchObject({
@@ -236,6 +242,30 @@ describe('sessions CLI contracts', () => {
           provider: 'hermes',
           providerProfile: 'native-schema-23-export',
           locatorClass: 'hermes-export-jsonl',
+          sourceSchemaVersion: '1.0.0',
+          disposition: 'implemented',
+          consistency: 'complete',
+        },
+        wouldInspect: true,
+        wouldPersist: false,
+      },
+    });
+  });
+
+  it('previews a sanitized OpenCode JSON export without persisting it', async () => {
+    const fixture = resolve('test/fixtures/sessions/opencode/complete.json');
+    const result = await sessionsHandler.execute(context([
+      'import', fixture, '--provider', 'opencode', '--source-id', 'opencode-complete',
+      '--workspace', 'workspace-fixture', '--dry-run', '--json',
+    ]));
+    expect(result.exitCode).toBe(0);
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'preview',
+      data: {
+        source: {
+          provider: 'opencode',
+          providerProfile: 'sanitized-json-export',
+          locatorClass: 'opencode-export-json',
           sourceSchemaVersion: '1.0.0',
           disposition: 'implemented',
           consistency: 'complete',

@@ -13,6 +13,8 @@ import {
   FactorySessionAdapter,
   HERMES_ADAPTER_VERSION,
   HermesSessionAdapter,
+  OPENCODE_ADAPTER_VERSION,
+  OpenCodeSessionAdapter,
   CandidateExtractionService,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
@@ -404,7 +406,7 @@ async function importSource(
   assertSessionProviderId(provider);
   if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
     && provider !== 'copilot' && provider !== 'cursor' && provider !== 'factory'
-    && provider !== 'hermes') {
+    && provider !== 'hermes' && provider !== 'opencode') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
@@ -415,6 +417,7 @@ async function importSource(
   const isCursor = provider === 'cursor';
   const isFactory = provider === 'factory';
   const isHermes = provider === 'hermes';
+  const isOpenCode = provider === 'opencode';
   const adapter: SessionSourceAdapter = isClaude
     ? new ClaudeSessionAdapter()
     : isCodex
@@ -425,7 +428,9 @@ async function importSource(
           ? new CursorSessionAdapter()
           : isFactory
             ? new FactorySessionAdapter()
-            : isHermes ? new HermesSessionAdapter() : new GenericSessionInterchangeAdapter();
+            : isHermes
+              ? new HermesSessionAdapter()
+              : isOpenCode ? new OpenCodeSessionAdapter() : new GenericSessionInterchangeAdapter();
   const locatorClass = isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
     : isCodex
@@ -436,7 +441,9 @@ async function importSource(
           ? cursorLocatorClass(input)
           : isFactory
             ? 'factory-droid-jsonl'
-            : isHermes ? 'hermes-export-jsonl' : 'manual-export';
+            : isHermes
+              ? 'hermes-export-jsonl'
+              : isOpenCode ? 'opencode-export-json' : 'manual-export';
   const selectedSource: SelectedSource = {
     provider, locator: input, locatorClass, sourceId,
     authorizedScope: { workspaceId, allowedRoots: [dirname(input)] },
@@ -454,7 +461,9 @@ async function importSource(
             ? cursorProviderProfile(locatorClass)
             : isFactory
               ? 'documented-project-jsonl'
-              : isHermes ? 'native-schema-23-export' : 'manual-interchange',
+              : isHermes
+                ? 'native-schema-23-export'
+                : isOpenCode ? 'sanitized-json-export' : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
     adapterVersion: isClaude
       ? CLAUDE_ADAPTER_VERSION
@@ -466,9 +475,11 @@ async function importSource(
             ? CURSOR_ADAPTER_VERSION
             : isFactory
               ? FACTORY_ADAPTER_VERSION
-              : isHermes ? HERMES_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
+              : isHermes
+                ? HERMES_ADAPTER_VERSION
+                : isOpenCode ? OPENCODE_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
     sourceSchemaVersion: probe.sourceSchemaVersion,
-    disposition: isClaude || isCodex || isCopilot || isCursor || isFactory || isHermes
+    disposition: isClaude || isCodex || isCopilot || isCursor || isFactory || isHermes || isOpenCode
       ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
@@ -482,7 +493,9 @@ async function importSource(
             ? { 'native.cursor': {} }
             : isFactory
               ? { 'native.factory': {} }
-              : isHermes ? { 'native.hermes': {} } : { 'native.generic': {} },
+              : isHermes
+                ? { 'native.hermes': {} }
+                : isOpenCode ? { 'native.opencode': {} } : { 'native.generic': {} },
   });
   if (isDryRun(ctx, args)) {
     return preview('import', { source, wouldInspect: true, wouldPersist: false });
@@ -587,6 +600,20 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
         adapterVersion: HERMES_ADAPTER_VERSION,
         verifiedAt: '2026-07-27',
         documentation: 'https://hermes-agent.nousresearch.com/docs/user-guide/sessions/',
+      },
+    };
+  }
+  if (provider === 'opencode') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['inspect', 'stream'],
+      acquisitionModes: ['manual-export', 'api', 'jsonl'],
+      reasonCode: null,
+      remediation: 'Use `opencode export <sessionID>` or an explicitly authorized negotiated local API/SSE transport.',
+      evidence: {
+        adapterVersion: OPENCODE_ADAPTER_VERSION,
+        verifiedAt: '2026-07-27',
+        documentation: 'https://opencode.ai/docs/cli/',
       },
     };
   }

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "info": {
+    "id": "ses_opencode_redaction",
+    "projectID": "project-synthetic",
+    "time": { "created": 1785150000000, "archived": 1785150100000 }
+  },
+  "messages": [
+    {
+      "info": {
+        "id": "msg_redaction",
+        "sessionID": "ses_opencode_redaction",
+        "role": "user",
+        "time": { "created": 1785150010000, "completed": 1785150020000 }
+      },
+      "parts": [
+        {
+          "id": "part_redaction",
+          "sessionID": "ses_opencode_redaction",
+          "messageID": "msg_redaction",
+          "type": "text",
+          "text": "redaction-canary-456 synthetic-opencode@example.test"
+        }
+      ]
+    }
+  ],
+  "sanitized": true
+}
