@@ -11,6 +11,8 @@ import {
   CursorSessionAdapter,
   FACTORY_ADAPTER_VERSION,
   FactorySessionAdapter,
+  HERMES_ADAPTER_VERSION,
+  HermesSessionAdapter,
   CandidateExtractionService,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
@@ -401,7 +403,8 @@ async function importSource(
   const provider = (args.values.get('--provider') ?? 'generic') as SessionProviderId;
   assertSessionProviderId(provider);
   if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
-    && provider !== 'copilot' && provider !== 'cursor' && provider !== 'factory') {
+    && provider !== 'copilot' && provider !== 'cursor' && provider !== 'factory'
+    && provider !== 'hermes') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
@@ -411,6 +414,7 @@ async function importSource(
   const isCopilot = provider === 'copilot';
   const isCursor = provider === 'cursor';
   const isFactory = provider === 'factory';
+  const isHermes = provider === 'hermes';
   const adapter: SessionSourceAdapter = isClaude
     ? new ClaudeSessionAdapter()
     : isCodex
@@ -419,7 +423,9 @@ async function importSource(
         ? new CopilotSessionAdapter()
         : isCursor
           ? new CursorSessionAdapter()
-          : isFactory ? new FactorySessionAdapter() : new GenericSessionInterchangeAdapter();
+          : isFactory
+            ? new FactorySessionAdapter()
+            : isHermes ? new HermesSessionAdapter() : new GenericSessionInterchangeAdapter();
   const locatorClass = isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
     : isCodex
@@ -428,7 +434,9 @@ async function importSource(
         ? 'copilot-chat-json-export'
         : isCursor
           ? cursorLocatorClass(input)
-          : isFactory ? 'factory-droid-jsonl' : 'manual-export';
+          : isFactory
+            ? 'factory-droid-jsonl'
+            : isHermes ? 'hermes-export-jsonl' : 'manual-export';
   const selectedSource: SelectedSource = {
     provider, locator: input, locatorClass, sourceId,
     authorizedScope: { workspaceId, allowedRoots: [dirname(input)] },
@@ -444,7 +452,9 @@ async function importSource(
           ? 'vscode-chat-json-export'
           : isCursor
             ? cursorProviderProfile(locatorClass)
-            : isFactory ? 'documented-project-jsonl' : 'manual-interchange',
+            : isFactory
+              ? 'documented-project-jsonl'
+              : isHermes ? 'native-schema-23-export' : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
     adapterVersion: isClaude
       ? CLAUDE_ADAPTER_VERSION
@@ -454,9 +464,11 @@ async function importSource(
           ? COPILOT_ADAPTER_VERSION
           : isCursor
             ? CURSOR_ADAPTER_VERSION
-            : isFactory ? FACTORY_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
+            : isFactory
+              ? FACTORY_ADAPTER_VERSION
+              : isHermes ? HERMES_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
     sourceSchemaVersion: probe.sourceSchemaVersion,
-    disposition: isClaude || isCodex || isCopilot || isCursor || isFactory
+    disposition: isClaude || isCodex || isCopilot || isCursor || isFactory || isHermes
       ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
@@ -468,7 +480,9 @@ async function importSource(
           ? { 'native.copilot': {} }
           : isCursor
             ? { 'native.cursor': {} }
-            : isFactory ? { 'native.factory': {} } : { 'native.generic': {} },
+            : isFactory
+              ? { 'native.factory': {} }
+              : isHermes ? { 'native.hermes': {} } : { 'native.generic': {} },
   });
   if (isDryRun(ctx, args)) {
     return preview('import', { source, wouldInspect: true, wouldPersist: false });
@@ -559,6 +573,20 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
         adapterVersion: FACTORY_ADAPTER_VERSION,
         verifiedAt: '2026-07-27',
         documentation: 'https://docs.factory.ai/reference/hooks-reference',
+      },
+    };
+  }
+  if (provider === 'hermes') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['inspect', 'stream'],
+      acquisitionModes: ['jsonl', 'api', 'sqlite-snapshot'],
+      reasonCode: null,
+      remediation: 'Use `hermes sessions export` or an explicitly verified sqlite3.backup() snapshot export.',
+      evidence: {
+        adapterVersion: HERMES_ADAPTER_VERSION,
+        verifiedAt: '2026-07-27',
+        documentation: 'https://hermes-agent.nousresearch.com/docs/user-guide/sessions/',
       },
     };
   }

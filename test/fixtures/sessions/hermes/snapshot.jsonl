@@ -1,0 +1,1 @@
+{"schemaVersion":23,"id":"hermes-snapshot","source":"cli","started_at":1785150000,"ended_at":1785150100,"snapshotConsistency":"sqlite-backup","messages":[{"id":1,"role":"user","content":"Consistent snapshot","timestamp":1785150001}]}

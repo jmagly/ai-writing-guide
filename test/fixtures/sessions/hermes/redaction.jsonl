@@ -1,0 +1,1 @@
+{"schemaVersion":23,"id":"hermes-redaction","source":"cli","started_at":1785150000,"ended_at":1785150100,"messages":[{"id":1,"role":"user","content":"password=redaction-canary-123 synthetic@example.test","timestamp":1785150001}]}

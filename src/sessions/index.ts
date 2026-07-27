@@ -16,3 +16,4 @@ export * from './adapters/codex.js';
 export * from './adapters/copilot.js';
 export * from './adapters/cursor.js';
 export * from './adapters/factory.js';
+export * from './adapters/hermes.js';

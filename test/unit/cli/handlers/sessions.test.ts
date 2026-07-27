@@ -77,13 +77,19 @@ describe('sessions CLI contracts', () => {
         supportedOperations: ['discover', 'inspect', 'stream'],
         acquisitionModes: ['jsonl', 'api'],
       });
+    expect(output.data.providers.find((item: any) => item.provider === 'hermes'))
+      .toMatchObject({
+        disposition: 'implemented',
+        supportedOperations: ['inspect', 'stream'],
+        acquisitionModes: ['jsonl', 'api', 'sqlite-snapshot'],
+      });
     expect(output.data.providers.filter((item: any) => item.disposition === 'unsupported'))
-      .toHaveLength(6);
+      .toHaveLength(5);
   });
 
   it('uses stable JSON and exit codes for unsupported provider import', async () => {
     const result = await sessionsHandler.execute(context([
-      'import', 'anything.jsonl', '--provider', 'hermes', '--source-id', 'source', '--json',
+      'import', 'anything.jsonl', '--provider', 'opencode', '--source-id', 'source', '--json',
     ]));
     expect(result.exitCode).toBe(3);
     expect(jsonOutput(log)).toMatchObject({
@@ -207,6 +213,30 @@ describe('sessions CLI contracts', () => {
           provider: 'factory',
           providerProfile: 'documented-project-jsonl',
           locatorClass: 'factory-droid-jsonl',
+          disposition: 'implemented',
+          consistency: 'complete',
+        },
+        wouldInspect: true,
+        wouldPersist: false,
+      },
+    });
+  });
+
+  it('previews a native Hermes schema-23 export without persisting it', async () => {
+    const fixture = resolve('test/fixtures/sessions/hermes/complete.jsonl');
+    const result = await sessionsHandler.execute(context([
+      'import', fixture, '--provider', 'hermes', '--source-id', 'hermes-complete',
+      '--workspace', 'workspace-fixture', '--dry-run', '--json',
+    ]));
+    expect(result.exitCode).toBe(0);
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'preview',
+      data: {
+        source: {
+          provider: 'hermes',
+          providerProfile: 'native-schema-23-export',
+          locatorClass: 'hermes-export-jsonl',
+          sourceSchemaVersion: '1.0.0',
           disposition: 'implemented',
           consistency: 'complete',
         },
