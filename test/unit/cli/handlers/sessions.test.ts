@@ -101,13 +101,20 @@ describe('sessions CLI contracts', () => {
         supportedOperations: ['inspect', 'stream'],
         acquisitionModes: ['jsonl'],
       });
+    expect(output.data.providers.find((item: any) => item.provider === 'warp'))
+      .toMatchObject({
+        disposition: 'manual-only',
+        supportedOperations: ['inspect', 'stream'],
+        acquisitionModes: ['manual-export'],
+        reasonCode: 'LOSSY_MARKDOWN_ONLY',
+      });
     expect(output.data.providers.filter((item: any) => item.disposition === 'unsupported'))
-      .toHaveLength(2);
+      .toHaveLength(1);
   });
 
   it('uses stable JSON and exit codes for unsupported provider import', async () => {
     const result = await sessionsHandler.execute(context([
-      'import', 'anything.jsonl', '--provider', 'warp', '--source-id', 'source', '--json',
+      'import', 'anything.jsonl', '--provider', 'windsurf', '--source-id', 'source', '--json',
     ]));
     expect(result.exitCode).toBe(3);
     expect(jsonOutput(log)).toMatchObject({
@@ -328,6 +335,30 @@ describe('sessions CLI contracts', () => {
           locatorClass: 'openhuman-enriched-jsonl',
           sourceSchemaVersion: '1.0.0',
           disposition: 'implemented',
+          consistency: 'complete',
+        },
+        wouldInspect: true,
+        wouldPersist: false,
+      },
+    });
+  });
+
+  it('previews a manual lossy Warp Markdown export without persisting it', async () => {
+    const fixture = resolve('test/fixtures/sessions/warp/complete.md');
+    const result = await sessionsHandler.execute(context([
+      'import', fixture, '--provider', 'warp', '--source-id', 'warp-complete',
+      '--workspace', 'workspace-fixture', '--dry-run', '--json',
+    ]));
+    expect(result.exitCode).toBe(0);
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'preview',
+      data: {
+        source: {
+          provider: 'warp',
+          providerProfile: 'manual-lossy-markdown-export',
+          locatorClass: 'warp-markdown-export',
+          sourceSchemaVersion: '1.0.0',
+          disposition: 'manual-only',
           consistency: 'complete',
         },
         wouldInspect: true,

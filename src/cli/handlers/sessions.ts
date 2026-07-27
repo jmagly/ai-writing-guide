@@ -19,6 +19,8 @@ import {
   OpenClawSessionAdapter,
   OPENHUMAN_ADAPTER_VERSION,
   OpenHumanSessionAdapter,
+  WARP_ADAPTER_VERSION,
+  WarpSessionAdapter,
   CandidateExtractionService,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
@@ -411,7 +413,7 @@ async function importSource(
   if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
     && provider !== 'copilot' && provider !== 'cursor' && provider !== 'factory'
     && provider !== 'hermes' && provider !== 'opencode' && provider !== 'openclaw'
-    && provider !== 'openhuman') {
+    && provider !== 'openhuman' && provider !== 'warp') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
@@ -425,6 +427,7 @@ async function importSource(
   const isOpenCode = provider === 'opencode';
   const isOpenClaw = provider === 'openclaw';
   const isOpenHuman = provider === 'openhuman';
+  const isWarp = provider === 'warp';
   const adapter: SessionSourceAdapter = isClaude
     ? new ClaudeSessionAdapter()
     : isCodex
@@ -441,7 +444,9 @@ async function importSource(
                 ? new OpenCodeSessionAdapter()
                 : isOpenClaw
                   ? new OpenClawSessionAdapter()
-                  : isOpenHuman ? new OpenHumanSessionAdapter() : new GenericSessionInterchangeAdapter();
+                  : isOpenHuman
+                    ? new OpenHumanSessionAdapter()
+                    : isWarp ? new WarpSessionAdapter() : new GenericSessionInterchangeAdapter();
   const locatorClass = isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
     : isCodex
@@ -458,7 +463,9 @@ async function importSource(
                 ? 'opencode-export-json'
                 : isOpenClaw
                   ? 'openclaw-consistent-snapshot-jsonl'
-                  : isOpenHuman ? 'openhuman-enriched-jsonl' : 'manual-export';
+                  : isOpenHuman
+                    ? 'openhuman-enriched-jsonl'
+                    : isWarp ? 'warp-markdown-export' : 'manual-export';
   const selectedSource: SelectedSource = {
     provider, locator: input, locatorClass, sourceId,
     authorizedScope: { workspaceId, allowedRoots: [dirname(input)] },
@@ -482,7 +489,9 @@ async function importSource(
                   ? 'sanitized-json-export'
                   : isOpenClaw
                     ? 'schema-16-event-v3-consistent-snapshot'
-                    : isOpenHuman ? 'schema-1-session-raw-enriched' : 'manual-interchange',
+                    : isOpenHuman
+                      ? 'schema-1-session-raw-enriched'
+                      : isWarp ? 'manual-lossy-markdown-export' : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
     adapterVersion: isClaude
       ? CLAUDE_ADAPTER_VERSION
@@ -500,11 +509,15 @@ async function importSource(
                   ? OPENCODE_ADAPTER_VERSION
                   : isOpenClaw
                     ? OPENCLAW_ADAPTER_VERSION
-                    : isOpenHuman ? OPENHUMAN_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
+                    : isOpenHuman
+                      ? OPENHUMAN_ADAPTER_VERSION
+                      : isWarp ? WARP_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
     sourceSchemaVersion: probe.sourceSchemaVersion,
-    disposition: isClaude || isCodex || isCopilot || isCursor || isFactory || isHermes
-      || isOpenCode || isOpenClaw || isOpenHuman
-      ? 'implemented' : 'manual-only',
+    disposition: isWarp
+      ? 'manual-only'
+      : isClaude || isCodex || isCopilot || isCursor || isFactory || isHermes
+        || isOpenCode || isOpenClaw || isOpenHuman
+        ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
     extensions: isClaude
@@ -523,7 +536,9 @@ async function importSource(
                   ? { 'native.opencode': {} }
                   : isOpenClaw
                     ? { 'native.openclaw': {} }
-                    : isOpenHuman ? { 'native.openhuman': {} } : { 'native.generic': {} },
+                    : isOpenHuman
+                      ? { 'native.openhuman': {} }
+                      : isWarp ? { 'native.warp': {} } : { 'native.generic': {} },
   });
   if (isDryRun(ctx, args)) {
     return preview('import', { source, wouldInspect: true, wouldPersist: false });
@@ -670,6 +685,20 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
         adapterVersion: OPENHUMAN_ADAPTER_VERSION,
         verifiedAt: '2026-07-27',
         documentation: 'https://github.com/tinyhumansai/openhuman/releases',
+      },
+    };
+  }
+  if (provider === 'warp') {
+    return {
+      provider, disposition: 'manual-only', operationalState: 'available',
+      supportedOperations: ['inspect', 'stream'],
+      acquisitionModes: ['manual-export'],
+      reasonCode: 'LOSSY_MARKDOWN_ONLY',
+      remediation: 'Run `/export-to-file` in Warp and import the explicitly selected Markdown file.',
+      evidence: {
+        adapterVersion: WARP_ADAPTER_VERSION,
+        verifiedAt: '2026-07-27',
+        documentation: 'https://docs.warp.dev/agent-platform/capabilities/slash-commands',
       },
     };
   }
