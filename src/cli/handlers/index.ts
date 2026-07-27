@@ -120,6 +120,7 @@ import { serveHandler } from './serve.js';
 import { lintHandler } from './lint.js';
 import { feedbackHandler } from './feedback.js';
 import { sessionHandler } from './session.js';
+import { sessionsHandler } from './sessions.js';
 import { sandboxHandler, sandboxHandlers } from './sandbox.js';
 import { diagnoseHandler } from './diagnose.js';
 import { localExecutorHandler, localExecutorServeHandler } from './local-executor.js';
@@ -163,6 +164,8 @@ export {
   newBundleHandler,
   quickrefHandler,
   newProjectHandler,
+  sessionHandler,
+  sessionsHandler,
 
   // Workspace
   statusHandler,
@@ -451,6 +454,7 @@ export const allHandlers: CommandHandler[] = [
 
   // Session (#884)
   sessionHandler,
+  sessionsHandler,
 
   // Repo access policy (#1376)
   ...repoAccessHandlers,

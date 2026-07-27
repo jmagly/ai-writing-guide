@@ -951,6 +951,36 @@ export const sessionCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+// Session Catalog Command (#1903)
+
+export const sessionsCommand: Extension = {
+  id: 'sessions',
+  type: 'skill',
+  name: 'Sessions',
+  description: 'Manage the normalized session catalog with versioned JSON, deterministic pagination, previews, and health checks',
+  version: '1.0.0',
+  capabilities: ['cli', 'session-catalog', 'session-import', 'session-lifecycle', 'doctor'],
+  keywords: ['sessions', 'catalog', 'import', 'source', 'tag', 'reindex', 'delete'],
+  category: 'project',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['list sessions', 'import sessions', 'session catalog', 'sessions doctor'],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '<sources|import|list|show|tag|relocate|reindex|delete|doctor> [--json] [--dry-run]',
+      allowedTools: ['Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 // Sandbox Management Commands (#917)
 
 export const sandboxCommand: Extension = {
@@ -3649,6 +3679,7 @@ export const commandDefinitions: Extension[] = [
 
   // Session (#884)
   sessionCommand,
+  sessionsCommand,
 ];
 
 // ============================================

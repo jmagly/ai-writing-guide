@@ -33,6 +33,22 @@ export interface ImportReceipt {
   checkpoint: ImportCheckpoint;
 }
 
+export interface SessionListOptions {
+  provider?: string;
+  workspaceId?: string;
+  tag?: string;
+  limit: number;
+  offset: number;
+}
+
+export interface SessionCatalogHealth {
+  integrity: 'ok' | 'failed';
+  sources: number;
+  sessions: number;
+  events: number;
+  stagedImports: number;
+}
+
 export class SessionRepository {
   private readonly db: SqliteDatabase;
 
@@ -81,6 +97,11 @@ export class SessionRepository {
         operation_id TEXT PRIMARY KEY, operation TEXT NOT NULL, actor TEXT NOT NULL,
         counts TEXT NOT NULL, adapter_version TEXT NOT NULL, policy_version TEXT NOT NULL,
         outcome TEXT NOT NULL, occurred_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS session_tags (
+        session_id TEXT NOT NULL, tag TEXT NOT NULL,
+        PRIMARY KEY(session_id, tag),
+        FOREIGN KEY(session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
       );
       CREATE INDEX IF NOT EXISTS idx_session_workspace_provider
         ON sessions(workspace_id, source_id, lifecycle);
@@ -206,6 +227,56 @@ export class SessionRepository {
     return row ? JSON.parse(String(row.data)) as Session : null;
   }
 
+  listSources(): SessionSource[] {
+    return this.db.prepare(
+      'SELECT data FROM session_sources ORDER BY provider, source_id',
+    ).all().map((row) => JSON.parse(String(row.data)) as SessionSource);
+  }
+
+  listSessions(options: SessionListOptions): { items: Session[]; total: number } {
+    const where = [`s.lifecycle != 'tombstoned'`, `EXISTS (
+      SELECT 1 FROM session_events e
+      JOIN import_runs r ON r.import_run_id=e.import_run_id
+      WHERE e.session_id=s.session_id AND r.status='committed'
+    )`];
+    const params: unknown[] = [];
+    if (options.provider) {
+      where.push('json_extract(s.data, \'$.provider\') = ?');
+      params.push(options.provider);
+    }
+    if (options.workspaceId) {
+      where.push('s.workspace_id = ?');
+      params.push(options.workspaceId);
+    }
+    if (options.tag) {
+      where.push('EXISTS (SELECT 1 FROM session_tags t WHERE t.session_id=s.session_id AND t.tag=?)');
+      params.push(options.tag);
+    }
+    const clause = where.join(' AND ');
+    const totalRow = this.db.prepare(`SELECT COUNT(*) AS count FROM sessions s WHERE ${clause}`)
+      .get(...params);
+    const items = this.db.prepare(
+      `SELECT s.data FROM sessions s WHERE ${clause}
+       ORDER BY COALESCE(json_extract(s.data, '$.updatedAt'), ''), s.session_id
+       LIMIT ? OFFSET ?`,
+    ).all(...params, options.limit, options.offset)
+      .map((row) => JSON.parse(String(row.data)) as Session);
+    return { items, total: Number(totalRow?.count ?? 0) };
+  }
+
+  listTags(sessionId: string): string[] {
+    return this.db.prepare(
+      'SELECT tag FROM session_tags WHERE session_id=? ORDER BY tag',
+    ).all(sessionId).map((row) => String(row.tag));
+  }
+
+  tagSession(sessionId: string, tag: string): boolean {
+    if (!this.getSession(sessionId)) return false;
+    return this.db.prepare(
+      'INSERT OR IGNORE INTO session_tags(session_id, tag) VALUES (?, ?)',
+    ).run(sessionId, tag).changes > 0;
+  }
+
   listEvents(sessionId: string): SessionEvent[] {
     return this.db.prepare(
       `SELECT e.data FROM session_events e
@@ -233,6 +304,28 @@ export class SessionRepository {
       .run(JSON.stringify(source), sourceId);
   }
 
+  getSource(sourceId: string): SessionSource | null {
+    const row = this.db.prepare('SELECT data FROM session_sources WHERE source_id=?').get(sourceId);
+    return row ? JSON.parse(String(row.data)) as SessionSource : null;
+  }
+
+  deletionPreview(sessionId: string): { sessions: number; events: number; tags: number } {
+    const session = this.db.prepare(
+      `SELECT COUNT(*) AS count FROM sessions WHERE session_id=? AND lifecycle!='tombstoned'`,
+    ).get(sessionId);
+    const events = this.db.prepare(
+      'SELECT COUNT(*) AS count FROM session_events WHERE session_id=?',
+    ).get(sessionId);
+    const tags = this.db.prepare(
+      'SELECT COUNT(*) AS count FROM session_tags WHERE session_id=?',
+    ).get(sessionId);
+    return {
+      sessions: Number(session?.count ?? 0),
+      events: Number(events?.count ?? 0),
+      tags: Number(tags?.count ?? 0),
+    };
+  }
+
   tombstoneSession(sessionId: string): boolean {
     return this.db.prepare(`UPDATE sessions SET lifecycle='tombstoned' WHERE session_id=?`)
       .run(sessionId).changes > 0;
@@ -240,6 +333,21 @@ export class SessionRepository {
 
   reindex(): void {
     this.db.exec('REINDEX');
+  }
+
+  doctor(): SessionCatalogHealth {
+    const integrity = this.db.pragma('integrity_check') as Array<{ integrity_check?: string }>;
+    const count = (table: string, where = ''): number => {
+      const row = this.db.prepare(`SELECT COUNT(*) AS count FROM ${table} ${where}`).get();
+      return Number(row?.count ?? 0);
+    };
+    return {
+      integrity: integrity[0]?.integrity_check === 'ok' ? 'ok' : 'failed',
+      sources: count('session_sources'),
+      sessions: count('sessions', `WHERE lifecycle!='tombstoned'`),
+      events: count('session_events'),
+      stagedImports: count('import_runs', `WHERE status='staged'`),
+    };
   }
 
   close(): void {
