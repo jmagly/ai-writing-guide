@@ -9,7 +9,8 @@
       "operations": ["discover", "inspect", "stream"],
       "fixtures": "test/fixtures/sessions/claude",
       "tests": "test/unit/sessions/claude-adapter.test.ts",
-      "documentation": "docs/providers/claude-code-sessions.md"
+      "documentation": "docs/providers/claude-code-sessions.md",
+      "conformance": {"locatorClass": "claude-transcript-jsonl", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"]}
     },
     {
       "provider": "codex",
@@ -18,7 +19,8 @@
       "operations": ["discover", "inspect", "stream"],
       "fixtures": "test/fixtures/sessions/codex",
       "tests": "test/unit/sessions/codex-adapter.test.ts",
-      "documentation": "docs/providers/codex-sessions.md"
+      "documentation": "docs/providers/codex-sessions.md",
+      "conformance": {"locatorClass": "codex-app-server-jsonl", "malformed": ["malformed.app-server.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.app-server.jsonl", "UNKNOWN_SCHEMA_MAJOR"]}
     },
     {
       "provider": "copilot",
@@ -27,7 +29,8 @@
       "operations": ["inspect", "stream"],
       "fixtures": "test/fixtures/sessions/copilot",
       "tests": "test/unit/sessions/copilot-adapter.test.ts",
-      "documentation": "docs/providers/copilot-sessions.md"
+      "documentation": "docs/providers/copilot-sessions.md",
+      "conformance": {"locatorClass": "copilot-chat-json-export", "malformed": ["malformed.chat.json", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.chat.json", "UNKNOWN_SCHEMA_MAJOR"], "exceptions": {"discovery": "provider exposes authorized manual export only"}}
     },
     {
       "provider": "cursor",
@@ -36,7 +39,8 @@
       "operations": ["inspect", "stream"],
       "fixtures": "test/fixtures/sessions/cursor",
       "tests": "test/unit/sessions/cursor-adapter.test.ts",
-      "documentation": "docs/providers/cursor-sessions.md"
+      "documentation": "docs/providers/cursor-sessions.md",
+      "conformance": {"locatorClass": "cursor-cli-stream-json", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"], "exceptions": {"discovery": "provider exposes authorized export/import only"}}
     },
     {
       "provider": "factory",
@@ -45,7 +49,8 @@
       "operations": ["discover", "inspect", "stream"],
       "fixtures": "test/fixtures/sessions/factory",
       "tests": "test/unit/sessions/factory-adapter.test.ts",
-      "documentation": "docs/providers/factory-sessions.md"
+      "documentation": "docs/providers/factory-sessions.md",
+      "conformance": {"locatorClass": "factory-droid-jsonl", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"]}
     },
     {
       "provider": "hermes",
@@ -54,7 +59,8 @@
       "operations": ["inspect", "stream"],
       "fixtures": "test/fixtures/sessions/hermes",
       "tests": "test/unit/sessions/hermes-adapter.test.ts",
-      "documentation": "docs/providers/hermes-sessions.md"
+      "documentation": "docs/providers/hermes-sessions.md",
+      "conformance": {"locatorClass": "hermes-export-jsonl", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"], "exceptions": {"discovery": "provider requires explicit export or negotiated transport"}}
     },
     {
       "provider": "opencode",
@@ -63,7 +69,8 @@
       "operations": ["inspect", "stream"],
       "fixtures": "test/fixtures/sessions/opencode",
       "tests": "test/unit/sessions/opencode-adapter.test.ts",
-      "documentation": "docs/providers/opencode-sessions.md"
+      "documentation": "docs/providers/opencode-sessions.md",
+      "conformance": {"locatorClass": "opencode-export-json", "malformed": ["malformed.json", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.json", "UNKNOWN_SCHEMA_MAJOR"], "exceptions": {"discovery": "provider requires explicit sanitized export or negotiated transport"}}
     },
     {
       "provider": "openclaw",
@@ -72,7 +79,8 @@
       "operations": ["inspect", "stream"],
       "fixtures": "test/fixtures/sessions/openclaw",
       "tests": "test/unit/sessions/openclaw-adapter.test.ts",
-      "documentation": "docs/providers/openclaw-sessions.md"
+      "documentation": "docs/providers/openclaw-sessions.md",
+      "conformance": {"locatorClass": "openclaw-consistent-snapshot-jsonl", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"], "exceptions": {"discovery": "provider requires explicit snapshot or negotiated Gateway transport"}}
     },
     {
       "provider": "openhuman",
@@ -81,7 +89,8 @@
       "operations": ["inspect", "stream"],
       "fixtures": "test/fixtures/sessions/openhuman",
       "tests": "test/unit/sessions/openhuman-adapter.test.ts",
-      "documentation": "docs/providers/openhuman-sessions.md"
+      "documentation": "docs/providers/openhuman-sessions.md",
+      "conformance": {"locatorClass": "openhuman-enriched-jsonl", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"], "exceptions": {"discovery": "provider requires explicit authorized JSONL export"}}
     },
     {
       "provider": "warp",
@@ -90,7 +99,8 @@
       "operations": ["inspect", "stream"],
       "fixtures": "test/fixtures/sessions/warp",
       "tests": "test/unit/sessions/warp-adapter.test.ts",
-      "documentation": "docs/providers/warp-sessions.md"
+      "documentation": "docs/providers/warp-sessions.md",
+      "conformance": {"locatorClass": "warp-markdown-export", "malformed": ["malformed.md", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.md", "UNKNOWN_SCHEMA_MAJOR"], "exceptions": {"discovery": "manual-only lossy Markdown export"}}
     },
     {
       "provider": "devin-desktop",
@@ -102,7 +112,8 @@
       "documentation": "docs/providers/windsurf-sessions.md",
       "product": "Devin Desktop",
       "compatibilityAliases": ["windsurf"],
-      "compatibilityNote": "devin-desktop is canonical; windsurf remains an accepted deprecated alias through at least 2027-07-27"
+      "compatibilityNote": "devin-desktop is canonical; windsurf remains an accepted deprecated alias through at least 2027-07-27",
+      "conformance": {"locatorClass": "windsurf-cascade-hook-jsonl", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"], "exceptions": {"discovery": "explicit opt-in transcript hook output only"}}
     },
     {
       "provider": "generic",
@@ -111,7 +122,8 @@
       "operations": ["inspect", "stream"],
       "fixtures": "test/fixtures/sessions/generic",
       "tests": "test/unit/sessions/generic-adapter.test.ts",
-      "documentation": "docs/providers/generic-session-interchange.md"
+      "documentation": "docs/providers/generic-session-interchange.md",
+      "conformance": {"locatorClass": "manual-export", "malformed": ["opaque-input.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major-v2.jsonl", "UNKNOWN_SCHEMA_MAJOR"], "exceptions": {"discovery": "manual interchange import only"}}
     }
   ]
 }

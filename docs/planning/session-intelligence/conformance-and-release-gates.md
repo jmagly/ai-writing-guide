@@ -23,10 +23,11 @@ runs through `npm run test:ci`, with typecheck and build/conformance prerequisit
 | Lifecycle | replay, relocation, tombstone, restore, purge, revocation, and deletion receipt tests |
 | Release traceability | `provider-conformance.test.ts`, full typecheck, CLI build, and required Test + Build workflow jobs |
 
-The matrix gate checks that all provider IDs occur exactly once, every referenced path exists, each fixture
-directory is non-empty, provider tests cover drift/malformed behavior, and fixture content uses only
-synthetic reserved identities. This prevents a provider from being declared complete with missing fixtures
-or documentation.
+The matrix gate checks that all provider IDs occur exactly once and then executes the same applicable
+malformed-input, unknown-major schema-evolution, allowed-root/traversal, and unsupported-discovery contract
+against every adapter. Capability-specific exceptions are required matrix data. Adapter operations,
+implementation identity, tests, and acquisition/evidence documentation must agree; the gate does not infer
+behavior from source-text keywords. Fixture content is also scanned for live credential and identity shapes.
 
 ## SQLite maintainer matrix and troubleshooting
 
@@ -42,18 +43,22 @@ SQLite conformance evidence unless the dedicated gate reports every required fil
 ## Performance evidence
 
 `npm run benchmark:sessions` uses the production adapter, `IncrementalSessionImporter`,
-`SessionRepository`, FTS search, metadata listing, and candidate extractor. It writes the complete machine
-profile, generator version/seed, dependency versions, budgets, raw samples, and outcome to
+`SessionRepository`, FTS search, metadata listing, candidate extractor, local deterministic hybrid
+orchestration, bounded failure, and a deliberately slow downstream. It writes the complete machine
+profile, generator version/seed, dependency versions, budgets, raw samples, phase progress, and outcome to
 `test-results/session-performance.json`; required CI preserves that file as an artifact even on failure.
 A missing native dependency, missing artifact, bounded-input failure that does not fail closed, or exceeded
-budget is an explicit non-pass.
+budget is an explicit non-pass. Atomic partial artifacts are written before and between phases; wall
+timeout, SIGINT, and SIGTERM produce a terminal non-pass artifact rather than a missing result.
 
-The 2026-07-27 local 10,000-event reference run on Node 24.12.0 / `better-sqlite3` 12.8.0 measured
-10,419.70 imported records/second, 1,014.81 ms lexical p95, 1.17 ms metadata p95, 21,379,784 bytes peak
-heap growth, and a successful bounded-failure assertion. These figures are measured evidence for that
-recorded machine profile, not universal deployment guarantees. CI uses portable, deliberately conservative
-hard budgets; release-scale one-million-event runs retain their raw artifacts and may tighten budgets only
-through a reviewed requirement change.
+The preserved [2026-07-27 one-million-event release result](evidence/session-production-1m-2026-07-27.json)
+on Node 24.12.0 / `better-sqlite3` 12.8.0 measured 5,566.05 imported records/second,
+60.60 ms lexical p95, 1.50 ms metadata p95, 185.59 ms deterministic-local hybrid p95,
+48,115,544 bytes heap growth, 2,594,516,992 bytes peak RSS, a 500-record maximum
+producer lead under a slow downstream, and successful bounded-failure behavior. All configured gates
+passed. These figures are measured evidence for that recorded machine profile, not universal deployment
+guarantees or evidence of live provider/model latency. CI uses portable, deliberately conservative hard
+budgets; targets may tighten only through a reviewed requirement change.
 
 Metadata listing is structurally bounded by stable cursor pagination and a caller-provided limit. Peak
 memory, import throughput, and latency remain environment-sensitive even though CI now measures and gates

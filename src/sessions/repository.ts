@@ -325,7 +325,33 @@ export class SessionRepository {
       CREATE INDEX IF NOT EXISTS idx_mutation_audit_workspace
       ON mutation_audit(workspace_id, occurred_at, operation_id)
     `);
+    this.alignSessionFtsRowids();
     this.migrateSessionPolicyAndProviderIdentity();
+  }
+
+  private alignSessionFtsRowids(): void {
+    const eventCount = Number(this.db.prepare(
+      'SELECT COUNT(*) AS count FROM session_events',
+    ).get()?.count ?? 0);
+    const ftsCount = Number(this.db.prepare(
+      'SELECT COUNT(*) AS count FROM session_event_fts',
+    ).get()?.count ?? 0);
+    const mismatches = Number(this.db.prepare(
+      `SELECT COUNT(*) AS count
+       FROM session_event_fts f
+       LEFT JOIN session_events e ON e.rowid=f.rowid
+       WHERE e.rowid IS NULL OR e.event_id!=f.event_id`,
+    ).get()?.count ?? 0);
+    if (eventCount === ftsCount && mismatches === 0) return;
+    const rebuild = this.db.transaction(() => {
+      this.db.exec('DELETE FROM session_event_fts');
+      this.db.exec(`
+        INSERT INTO session_event_fts(rowid, event_id, searchable_text)
+        SELECT rowid, event_id, json_extract(data, '$.searchableText')
+        FROM session_events
+      `);
+    });
+    rebuild();
   }
 
   private migrateSessionPolicyAndProviderIdentity(): void {
@@ -358,7 +384,7 @@ export class SessionRepository {
           .run(JSON.stringify(session), String(row.session_id));
       }
       for (const row of this.db.prepare(
-        'SELECT event_id, data FROM session_events',
+        'SELECT rowid AS event_rowid, event_id, data FROM session_events',
       ).all()) {
         const event = JSON.parse(String(row.data)) as SessionEvent;
         const text = redactSessionText(event.searchableText);
@@ -385,8 +411,8 @@ export class SessionRepository {
         this.db.prepare('UPDATE session_events SET data=? WHERE event_id=?')
           .run(JSON.stringify(event), String(row.event_id));
         this.db.prepare(
-          'UPDATE session_event_fts SET searchable_text=? WHERE event_id=?',
-        ).run(event.searchableText, String(row.event_id));
+          'UPDATE session_event_fts SET searchable_text=? WHERE rowid=?',
+        ).run(event.searchableText, Number(row.event_rowid));
       }
       for (const row of this.db.prepare(
         `SELECT m.operation_id, m.operation, m.actor, m.counts,
@@ -683,9 +709,13 @@ export class SessionRepository {
         ).changes;
         eventsInserted += inserted;
         if (inserted > 0) {
+          const eventRowid = Number(this.db.prepare(
+            'SELECT rowid AS value FROM session_events WHERE event_id=?',
+          ).get(event.eventId)?.value);
           this.db.prepare(
-            'INSERT INTO session_event_fts(event_id, searchable_text) VALUES (?, ?)',
-          ).run(event.eventId, event.searchableText);
+            `INSERT INTO session_event_fts(rowid, event_id, searchable_text)
+             VALUES (?, ?, ?)`,
+          ).run(eventRowid, event.eventId, event.searchableText);
         }
       }
       const outcome = publish ? 'committed' : 'staged';
@@ -930,7 +960,6 @@ export class SessionRepository {
     let rows: Array<Record<string, unknown>>;
     try {
       rows = this.db.prepare(`
-      WITH authorized AS (
         SELECT
           e.rowid AS event_rowid, e.event_id, e.session_id, e.source_id,
           e.import_run_id, e.sequence_no, e.data AS event_data,
@@ -939,16 +968,16 @@ export class SessionRepository {
           session_event_fts.rank AS stable_rank,
           snippet(session_event_fts, 1, '⟦', '⟧', ' … ', 32) AS matched_snippet
         FROM session_event_fts
-        JOIN session_events e ON e.event_id=session_event_fts.event_id
-        JOIN sessions s ON s.session_id=e.session_id
-        JOIN import_runs r ON r.import_run_id=e.import_run_id
-        JOIN session_sources src ON src.source_id=e.source_id
+        -- FTS matches must drive this join. SQLite may otherwise scan the
+        -- authorization tables first and execute MATCH once per candidate.
+        CROSS JOIN session_events e ON e.rowid=session_event_fts.rowid
+        CROSS JOIN sessions s ON s.session_id=e.session_id
+        CROSS JOIN import_runs r ON r.import_run_id=e.import_run_id
+        CROSS JOIN session_sources src ON src.source_id=e.source_id
         WHERE ${where.join(' AND ')}
-      )
-      SELECT * FROM authorized
-      ORDER BY stable_rank, event_id
-      LIMIT ?
-    `).all(...params, options.limit + 1);
+        ORDER BY session_event_fts.rank, e.event_id
+        LIMIT ?
+      `).all(...params, options.limit + 1);
     } catch (error) {
       if (error instanceof Error && /fts5|syntax|unterminated|column/i.test(error.message)) {
         throw new SessionContractError(
@@ -1020,9 +1049,12 @@ export class SessionRepository {
         json_extract(e.data, '$.searchableText') AS searchable_text,
         length(json_extract(e.data, '$.searchableText')) AS stable_rank
       FROM session_events e
-      JOIN sessions s ON s.session_id=e.session_id
-      JOIN import_runs r ON r.import_run_id=e.import_run_id
-      JOIN session_sources src ON src.source_id=e.source_id
+      -- Preserve event-id keyset order as the outer loop. Without this planner
+      -- fence SQLite may materialize and sort the entire authorized workspace
+      -- before applying the bounded semantic-candidate limit.
+      CROSS JOIN sessions s ON s.session_id=e.session_id
+      CROSS JOIN import_runs r ON r.import_run_id=e.import_run_id
+      CROSS JOIN session_sources src ON src.source_id=e.source_id
       WHERE ${where.join(' AND ')}
       ORDER BY e.event_id
       LIMIT ?
@@ -1660,10 +1692,11 @@ export class SessionRepository {
         );
       }
       const eventRows = this.db.prepare(
-        'SELECT event_id FROM session_events WHERE session_id=?',
+        'SELECT rowid AS event_rowid, event_id FROM session_events WHERE session_id=?',
       ).all(input.preview.sessionId);
       for (const row of eventRows) {
-        this.db.prepare('DELETE FROM session_event_fts WHERE event_id=?').run(String(row.event_id));
+        this.db.prepare('DELETE FROM session_event_fts WHERE rowid=?')
+          .run(Number(row.event_rowid));
       }
       const eventIds = new Set(eventRows.map((row) => String(row.event_id)));
       const affectedCandidates = this.listCandidates()
@@ -1690,8 +1723,8 @@ export class SessionRepository {
           'SELECT COUNT(*) AS count FROM session_events WHERE session_id=?',
         ).get(input.preview.sessionId)?.count ?? 0),
         indexes: eventRows.reduce((count, row) => count + Number(this.db.prepare(
-          'SELECT COUNT(*) AS count FROM session_event_fts WHERE event_id=?',
-        ).get(String(row.event_id))?.count ?? 0), 0),
+          'SELECT COUNT(*) AS count FROM session_event_fts WHERE rowid=?',
+        ).get(Number(row.event_rowid))?.count ?? 0), 0),
         candidates: affectedCandidates.reduce((count, candidate) => count + Number(
           this.db.prepare(
             'SELECT COUNT(*) AS count FROM intelligence_candidates WHERE candidate_id=? AND version=?',
@@ -1750,23 +1783,23 @@ export class SessionRepository {
         this.db.exec('REINDEX');
         this.db.exec('DELETE FROM session_event_fts');
         this.db.exec(`
-          INSERT INTO session_event_fts(event_id, searchable_text)
-          SELECT event_id, json_extract(data, '$.searchableText') FROM session_events
+          INSERT INTO session_event_fts(rowid, event_id, searchable_text)
+          SELECT rowid, event_id, json_extract(data, '$.searchableText') FROM session_events
         `);
         indexed = Number(this.db.prepare(
           'SELECT COUNT(*) AS count FROM session_events',
         ).get()?.count ?? 0);
       } else {
         this.db.prepare(
-          `DELETE FROM session_event_fts WHERE event_id IN (
-            SELECT e.event_id FROM session_events e
+          `DELETE FROM session_event_fts WHERE rowid IN (
+            SELECT e.rowid FROM session_events e
             JOIN sessions s ON s.session_id=e.session_id
             WHERE s.workspace_id=?
           )`,
         ).run(workspaceId);
         indexed = this.db.prepare(
-          `INSERT INTO session_event_fts(event_id, searchable_text)
-           SELECT e.event_id, json_extract(e.data, '$.searchableText')
+          `INSERT INTO session_event_fts(rowid, event_id, searchable_text)
+           SELECT e.rowid, e.event_id, json_extract(e.data, '$.searchableText')
            FROM session_events e
            JOIN sessions s ON s.session_id=e.session_id
            WHERE s.workspace_id=?`,

@@ -15,8 +15,11 @@ import {
   OpenHumanSessionAdapter,
   SESSION_PROVIDER_IDS,
   WarpSessionAdapter,
+  type SelectedSource,
   type SessionSourceAdapter,
 } from '../../../src/sessions/index.js';
+
+type ErrorCode = 'MALFORMED_SOURCE' | 'UNKNOWN_SCHEMA_MAJOR' | 'SCHEMA_DRIFT';
 
 interface MatrixEntry {
   provider: string;
@@ -26,6 +29,12 @@ interface MatrixEntry {
   fixtures: string;
   tests: string;
   documentation: string;
+  conformance: {
+    locatorClass: string;
+    malformed: [string, ErrorCode];
+    schemaEvolution: [string, ErrorCode];
+    exceptions?: Record<string, string>;
+  };
 }
 
 interface Matrix {
@@ -50,7 +59,60 @@ describe('twelve-provider session release conformance', () => {
     expect(typeof adapter.inspect).toBe('function');
     expect(typeof adapter.stream).toBe('function');
     expect(typeof adapter.discover).toBe('function');
+    const adapterTests = readFileSync(resolve(root, entry.tests), 'utf8');
+    const providerDocs = readFileSync(resolve(root, entry.documentation), 'utf8').toLowerCase();
+    expect(adapterTests, `${entry.provider}: adapter implementation is not exercised`)
+      .toContain(adapter.constructor.name);
+    expect(providerDocs, `${entry.provider}: docs omit acquisition/import behavior`)
+      .toMatch(/acquisition|ingestion|import/);
+    expect(providerDocs, `${entry.provider}: docs omit tested behavior`)
+      .toMatch(/test|verif|evidence/);
+    for (const unsupported of ['discover', 'inspect', 'stream']
+      .filter((operation) => !entry.operations.includes(operation))) {
+      const exception = unsupported === 'discover' ? 'discovery' : unsupported;
+      expect(entry.conformance.exceptions?.[exception],
+        `${entry.provider}: undocumented ${unsupported} exception`).toBeTruthy();
+    }
   });
+
+  it.each(matrix.providers)(
+    '$provider passes the shared malformed, schema-evolution, and authorization contract',
+    async (entry) => {
+      const adapter = adapterFor(entry.provider);
+      for (const [caseName, fixture] of [
+        ['malformed', entry.conformance.malformed],
+        ['schemaEvolution', entry.conformance.schemaEvolution],
+      ] as const) {
+        const [name, code] = fixture;
+        const selected = selectedFixture(entry, name);
+        await expect(collect(adapter.stream(selected)),
+          `${entry.provider}: ${caseName}`).rejects.toMatchObject({ code });
+      }
+
+      const unauthorized = selectedFixture(entry, entry.conformance.malformed[0]);
+      unauthorized.authorizedScope.allowedRoots = [
+        resolve(root, 'test/fixtures/sessions/outside-authorized-scope'),
+      ];
+      await expect(adapter.inspect(unauthorized), `${entry.provider}: traversal boundary`)
+        .rejects.toMatchObject({ code: 'SOURCE_NOT_AUTHORIZED' });
+    },
+  );
+
+  it.each(matrix.providers.filter((entry) => !entry.operations.includes('discover')))(
+    '$provider discovery exception is executable and performs no source selection',
+    async (entry) => {
+      const discovery = collect(adapterFor(entry.provider).discover({
+        workspaceId: 'workspace-fixture',
+        allowedRoots: [resolve(root, entry.fixtures)],
+      }));
+      try {
+        expect(await discovery).toEqual([]);
+      } catch (error) {
+        expect(error).toMatchObject({ code: 'UNSUPPORTED_OPERATION' });
+      }
+      expect(entry.conformance.exceptions?.discovery).toBeTruthy();
+    },
+  );
 
   it('maps every canonical provider exactly once to issue, status, operations, fixtures, tests, and docs', () => {
     expect(matrix.contractVersion).toBe('1.0.0');
@@ -126,4 +188,23 @@ function adapterFor(provider: string): SessionSourceAdapter {
   const create = adapters[provider];
   if (!create) throw new Error(`provider matrix has no executable adapter: ${provider}`);
   return create();
+}
+
+function selectedFixture(entry: MatrixEntry, name: string): SelectedSource {
+  return {
+    provider: entry.provider,
+    locator: resolve(root, entry.fixtures, name),
+    locatorClass: entry.conformance.locatorClass,
+    sourceId: `conformance-${entry.provider}-${name}`,
+    authorizedScope: {
+      workspaceId: 'workspace-fixture',
+      allowedRoots: [resolve(root, entry.fixtures)],
+    },
+  };
+}
+
+async function collect<T>(values: AsyncIterable<T>): Promise<T[]> {
+  const items: T[] = [];
+  for await (const value of values) items.push(value);
+  return items;
 }
