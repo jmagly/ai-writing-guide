@@ -1,0 +1,93 @@
+{
+  "contractVersion": "1.0.0",
+  "benchmark": "session-production-path",
+  "status": "pass",
+  "startedAt": "2026-07-27T21:45:35.903Z",
+  "completedAt": "2026-07-27T21:48:38.279Z",
+  "command": "AIWG_SESSION_BENCH_EVENTS=1000000 npm run benchmark:sessions",
+  "config": {
+    "generatorVersion": "1.0.0",
+    "seed": 1932,
+    "eventCount": 1000000,
+    "iterations": 15,
+    "batchSize": 500,
+    "timeoutMs": 2700000,
+    "budgets": {
+      "lexicalP95Ms": 2000,
+      "metadataP95Ms": 500,
+      "minimumImportRecordsPerSecond": 100,
+      "maximumHeapGrowthBytes": 536870912,
+      "maximumRssBytes": 3221225472,
+      "hybridP95Ms": 2500,
+      "maximumBackpressureLead": 500
+    }
+  },
+  "machine": {
+    "platform": "linux",
+    "release": "7.0.0-28-generic",
+    "node": "v24.12.0",
+    "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
+    "cpuCount": 20,
+    "totalMemoryBytes": 67089063936
+  },
+  "dependencies": {
+    "aiwg": "2026.7.20",
+    "betterSqlite3": "12.8.0"
+  },
+  "metrics": {
+    "import": {
+      "milliseconds": 179660.66,
+      "recordsPerSecond": 5566.05,
+      "batches": 2000
+    },
+    "lexical": {
+      "p50Ms": 58.15,
+      "p95Ms": 60.6,
+      "maxMs": 60.6,
+      "rawMs": [60.6, 58.15, 58.19, 58.47, 58.9, 57.21, 58.43, 57.17, 58.7, 59.07, 58.15, 57.11, 56.59, 56.93, 56.93]
+    },
+    "metadata": {
+      "p50Ms": 0.34,
+      "p95Ms": 1.5,
+      "maxMs": 1.5,
+      "rawMs": [1.5, 0.46, 0.38, 0.35, 0.33, 0.35, 0.33, 0.32, 0.34, 0.39, 0.34, 0.32, 0.34, 0.34, 0.32]
+    },
+    "hybrid": {
+      "backend": "deterministic-local-benchmark",
+      "requiresNetwork": false,
+      "requiresModel": false,
+      "p50Ms": 96.54,
+      "p95Ms": 185.59,
+      "maxMs": 185.59,
+      "rawMs": [101.83, 88.17, 86.04, 185.59, 109.4, 94.37, 92.85, 95.37, 98.38, 101.55, 98.81, 96.51, 105.39, 96.54, 92.77]
+    },
+    "extraction": {
+      "milliseconds": 9.5,
+      "documents": 500,
+      "candidates": 5
+    },
+    "memory": {
+      "baselineHeapBytes": 13541848,
+      "peakHeapBytes": 61657392,
+      "heapGrowthBytes": 48115544,
+      "peakRssBytes": 2594516992
+    },
+    "backpressure": {
+      "milliseconds": 194.91,
+      "records": 1500,
+      "maximumLead": 500,
+      "slowDownstreamDelayMsPerBatch": 1
+    },
+    "boundedFailure": true
+  },
+  "gates": {
+    "lexicalP95": true,
+    "metadataP95": true,
+    "importThroughput": true,
+    "peakMemory": true,
+    "peakRss": true,
+    "hybridP95": true,
+    "backpressure": true,
+    "boundedFailure": true
+  }
+}

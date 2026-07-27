@@ -73,8 +73,12 @@ Every canonical provider must prove:
 ## Performance Validation
 
 Run `npm run benchmark:sessions` against the production adapter/importer/repository paths. Required CI
-uses a reproducible 10,000-event seeded corpus and gates 500 ms metadata p95, 2 second lexical p95,
-minimum import throughput, peak heap growth, and bounded-record failure behavior. It uploads the complete
-JSON profile and raw samples. Release validation raises `AIWG_SESSION_BENCH_EVENTS` to one million on a
-documented reference machine. Environment-specific observations are not portable guarantees; targets may
-be revised only with preserved evidence and an updated requirement decision.
+uses a reproducible 10,000-event seeded corpus and gates metadata and lexical p95, deterministic-local
+hybrid p95, minimum import throughput, peak heap/RSS, slow-downstream producer lead, and bounded-record
+failure behavior. It uploads the complete JSON profile and raw samples even after a budget failure; missing
+dependencies, signals, and wall timeout write explicit non-pass artifacts. Release validation raises
+`AIWG_SESSION_BENCH_EVENTS` to one million on a documented reference machine and preserves the result under
+`docs/planning/session-intelligence/evidence/`. The hybrid backend is local and deterministic, so it measures
+production orchestration and authorization—not live model or provider latency. Environment-specific
+observations are not portable guarantees; targets may be revised only with preserved evidence and an
+updated requirement decision.
