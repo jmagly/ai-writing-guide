@@ -15,6 +15,8 @@ import {
   HermesSessionAdapter,
   OPENCODE_ADAPTER_VERSION,
   OpenCodeSessionAdapter,
+  OPENCLAW_ADAPTER_VERSION,
+  OpenClawSessionAdapter,
   CandidateExtractionService,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
@@ -406,7 +408,7 @@ async function importSource(
   assertSessionProviderId(provider);
   if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
     && provider !== 'copilot' && provider !== 'cursor' && provider !== 'factory'
-    && provider !== 'hermes' && provider !== 'opencode') {
+    && provider !== 'hermes' && provider !== 'opencode' && provider !== 'openclaw') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
@@ -418,6 +420,7 @@ async function importSource(
   const isFactory = provider === 'factory';
   const isHermes = provider === 'hermes';
   const isOpenCode = provider === 'opencode';
+  const isOpenClaw = provider === 'openclaw';
   const adapter: SessionSourceAdapter = isClaude
     ? new ClaudeSessionAdapter()
     : isCodex
@@ -430,7 +433,9 @@ async function importSource(
             ? new FactorySessionAdapter()
             : isHermes
               ? new HermesSessionAdapter()
-              : isOpenCode ? new OpenCodeSessionAdapter() : new GenericSessionInterchangeAdapter();
+              : isOpenCode
+                ? new OpenCodeSessionAdapter()
+                : isOpenClaw ? new OpenClawSessionAdapter() : new GenericSessionInterchangeAdapter();
   const locatorClass = isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
     : isCodex
@@ -443,7 +448,9 @@ async function importSource(
             ? 'factory-droid-jsonl'
             : isHermes
               ? 'hermes-export-jsonl'
-              : isOpenCode ? 'opencode-export-json' : 'manual-export';
+              : isOpenCode
+                ? 'opencode-export-json'
+                : isOpenClaw ? 'openclaw-consistent-snapshot-jsonl' : 'manual-export';
   const selectedSource: SelectedSource = {
     provider, locator: input, locatorClass, sourceId,
     authorizedScope: { workspaceId, allowedRoots: [dirname(input)] },
@@ -463,7 +470,9 @@ async function importSource(
               ? 'documented-project-jsonl'
               : isHermes
                 ? 'native-schema-23-export'
-                : isOpenCode ? 'sanitized-json-export' : 'manual-interchange',
+                : isOpenCode
+                  ? 'sanitized-json-export'
+                  : isOpenClaw ? 'schema-16-event-v3-consistent-snapshot' : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
     adapterVersion: isClaude
       ? CLAUDE_ADAPTER_VERSION
@@ -477,9 +486,12 @@ async function importSource(
               ? FACTORY_ADAPTER_VERSION
               : isHermes
                 ? HERMES_ADAPTER_VERSION
-                : isOpenCode ? OPENCODE_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
+                : isOpenCode
+                  ? OPENCODE_ADAPTER_VERSION
+                  : isOpenClaw ? OPENCLAW_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
     sourceSchemaVersion: probe.sourceSchemaVersion,
-    disposition: isClaude || isCodex || isCopilot || isCursor || isFactory || isHermes || isOpenCode
+    disposition: isClaude || isCodex || isCopilot || isCursor || isFactory || isHermes
+      || isOpenCode || isOpenClaw
       ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
@@ -495,7 +507,9 @@ async function importSource(
               ? { 'native.factory': {} }
               : isHermes
                 ? { 'native.hermes': {} }
-                : isOpenCode ? { 'native.opencode': {} } : { 'native.generic': {} },
+                : isOpenCode
+                  ? { 'native.opencode': {} }
+                  : isOpenClaw ? { 'native.openclaw': {} } : { 'native.generic': {} },
   });
   if (isDryRun(ctx, args)) {
     return preview('import', { source, wouldInspect: true, wouldPersist: false });
@@ -614,6 +628,20 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
         adapterVersion: OPENCODE_ADAPTER_VERSION,
         verifiedAt: '2026-07-27',
         documentation: 'https://opencode.ai/docs/cli/',
+      },
+    };
+  }
+  if (provider === 'openclaw') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['inspect', 'stream'],
+      acquisitionModes: ['api', 'sqlite-snapshot', 'jsonl'],
+      reasonCode: null,
+      remediation: 'Use an authorized read-only Gateway transport or a schema-16/event-v3 sqlite3.backup() projection.',
+      evidence: {
+        adapterVersion: OPENCLAW_ADAPTER_VERSION,
+        verifiedAt: '2026-07-27',
+        documentation: 'https://docs.openclaw.ai/reference/session-management-compaction',
       },
     };
   }

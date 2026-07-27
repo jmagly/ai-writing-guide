@@ -89,13 +89,19 @@ describe('sessions CLI contracts', () => {
         supportedOperations: ['inspect', 'stream'],
         acquisitionModes: ['manual-export', 'api', 'jsonl'],
       });
+    expect(output.data.providers.find((item: any) => item.provider === 'openclaw'))
+      .toMatchObject({
+        disposition: 'implemented',
+        supportedOperations: ['inspect', 'stream'],
+        acquisitionModes: ['api', 'sqlite-snapshot', 'jsonl'],
+      });
     expect(output.data.providers.filter((item: any) => item.disposition === 'unsupported'))
-      .toHaveLength(4);
+      .toHaveLength(3);
   });
 
   it('uses stable JSON and exit codes for unsupported provider import', async () => {
     const result = await sessionsHandler.execute(context([
-      'import', 'anything.jsonl', '--provider', 'openclaw', '--source-id', 'source', '--json',
+      'import', 'anything.jsonl', '--provider', 'openhuman', '--source-id', 'source', '--json',
     ]));
     expect(result.exitCode).toBe(3);
     expect(jsonOutput(log)).toMatchObject({
@@ -269,6 +275,30 @@ describe('sessions CLI contracts', () => {
           sourceSchemaVersion: '1.0.0',
           disposition: 'implemented',
           consistency: 'complete',
+        },
+        wouldInspect: true,
+        wouldPersist: false,
+      },
+    });
+  });
+
+  it('previews an OpenClaw schema-16/event-v3 consistent snapshot without persisting it', async () => {
+    const fixture = resolve('test/fixtures/sessions/openclaw/complete.jsonl');
+    const result = await sessionsHandler.execute(context([
+      'import', fixture, '--provider', 'openclaw', '--source-id', 'openclaw-complete',
+      '--workspace', 'workspace-fixture', '--dry-run', '--json',
+    ]));
+    expect(result.exitCode).toBe(0);
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'preview',
+      data: {
+        source: {
+          provider: 'openclaw',
+          providerProfile: 'schema-16-event-v3-consistent-snapshot',
+          locatorClass: 'openclaw-consistent-snapshot-jsonl',
+          sourceSchemaVersion: '1.0.0',
+          disposition: 'implemented',
+          consistency: 'consistent-snapshot',
         },
         wouldInspect: true,
         wouldPersist: false,

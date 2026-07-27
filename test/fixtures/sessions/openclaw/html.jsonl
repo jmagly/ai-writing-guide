@@ -1,0 +1,1 @@
+{"schemaVersion":16,"eventVersion":3,"projection":{"kind":"html","complete":false,"limitation":"HTML projection omits canonical event relationships"},"sessions":[{"id":"openclaw-html","sessionKey":"agent:main:html","active":false,"events":[{"id":"html-message","type":"message","role":"assistant","text":"Rendered HTML projection"}]}]}

@@ -1,0 +1,1 @@
+{"schemaVersion":16,"eventVersion":3,"projection":{"kind":"trajectory","complete":false,"limitation":"Trajectory sidecar is a derived projection"},"sessions":[{"id":"openclaw-trajectory","sessionKey":"agent:main:trajectory","active":false,"events":[{"id":"trajectory-event","type":"trajectory","opaque":{"step":1,"future":"preserved"}}]}]}

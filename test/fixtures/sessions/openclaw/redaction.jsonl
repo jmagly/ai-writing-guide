@@ -1,0 +1,1 @@
+{"schemaVersion":16,"eventVersion":3,"snapshotConsistency":"sqlite-backup","sessions":[{"id":"openclaw-redaction","sessionKey":"agent:main:redaction","active":false,"events":[{"id":"redaction-message","type":"message","role":"user","text":"redaction-canary-789 openclaw-synthetic@example.test"}]}]}
