@@ -5,6 +5,7 @@ import {
   SESSION_CONTRACT_VERSION,
   SessionContractError,
   sha256,
+  type CandidateSecurityWarning,
   type IntelligenceCandidate,
 } from './contracts.js';
 import type { SessionSearchDocument } from './repository.js';
@@ -86,14 +87,34 @@ export class CandidateExtractionService {
           if (span.start >= span.end || span.end > document.searchableText.length) {
             throw new SessionContractError('MALFORMED_SOURCE', 'candidate evidence span is invalid');
           }
+          const quote = document.searchableText.slice(span.start, span.end);
+          if (!quote.trim()) {
+            throw new SessionContractError(
+              'MALFORMED_SOURCE',
+              'candidate evidence span must contain redacted source text',
+            );
+          }
           return {
             ...span,
-            quoteDigest: sha256(document.searchableText.slice(span.start, span.end)),
+            quoteDigest: sha256(quote),
+            quote,
           };
         });
         const sensitivity = evidence.some(
           (span) => evidenceById.get(span.eventId)?.sensitivity === 'sensitive',
         ) ? 'sensitive' as const : 'none' as const;
+        if (!evidence.some((span) => evidenceSupportsAssertion(draft.assertion, span.quote))) {
+          throw new SessionContractError(
+            'MALFORMED_SOURCE',
+            'candidate assertion is not supported by its cited redacted evidence span',
+          );
+        }
+        const security = classifyCandidateSecurity({
+          assertion: draft.assertion,
+          subject: draft.subject,
+          predicate: draft.predicate,
+          object: draft.object,
+        });
         return IntelligenceCandidateSchema.parse({
           contractVersion: SESSION_CONTRACT_VERSION,
           candidateId: stableCandidateId(draft),
@@ -112,6 +133,7 @@ export class CandidateExtractionService {
           extractionPolicyVersion: input.policy.version,
           model: input.extractor.model,
           sensitivity,
+          security,
           reviewState: 'pending',
           conflictsWith: draft.conflictsWith,
           supersedes: draft.supersedes,
@@ -158,6 +180,55 @@ export class StructuralCandidateExtractor implements CandidateExtractor {
     }
     return drafts;
   }
+}
+
+const SECURITY_POLICY_VERSION = '1.0.0';
+const INSTRUCTION_PATTERN = /\b(?:ignore|override|disregard)\b.{0,40}\b(?:instruction|prompt|policy|rule)s?\b|\b(?:system|developer)\s+(?:message|instruction|prompt)\b|\b(?:execute|invoke|run)\b.{0,30}\b(?:tool|command|shell|script)\b/i;
+const SECRET_PATTERN = /\b(?:api[_-]?key|access[_-]?token|password|passwd|private[_-]?key|authorization|cookie|secret)\b\s*(?:[:=]|\bis\b)/i;
+const STRUCTURE_PATTERN = /(?:^|\n)\s*(?:---|\.\.\.)\s*(?:\n|$)|```|~~~|<[/!?A-Za-z]|!\[[^\]]*\]\(|\[[^\]]+\]\([^)]*\)|\{\{|\{%/;
+const CONTROL_PATTERN = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/;
+const BIDI_PATTERN = /[\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/u;
+const LATIN_PATTERN = /\p{Script=Latin}/u;
+const CONFUSABLE_SCRIPT_PATTERN = /[\p{Script=Cyrillic}\p{Script=Greek}]/u;
+
+export function classifyCandidateSecurity(input: {
+  assertion: string;
+  subject?: string | null;
+  predicate?: string | null;
+  object?: string | null;
+}): IntelligenceCandidate['security'] {
+  const text = [input.assertion, input.subject, input.predicate, input.object]
+    .filter((value): value is string => Boolean(value))
+    .join('\n');
+  const warnings: CandidateSecurityWarning[] = [];
+  if (INSTRUCTION_PATTERN.test(text)) warnings.push('instruction-like');
+  if (STRUCTURE_PATTERN.test(text)) warnings.push('structure-breaking');
+  if (CONTROL_PATTERN.test(text)) warnings.push('control-character');
+  if (BIDI_PATTERN.test(text)) warnings.push('bidi-control');
+  if (LATIN_PATTERN.test(text) && CONFUSABLE_SCRIPT_PATTERN.test(text)) {
+    warnings.push('unicode-confusable');
+  }
+  if (/(?:javascript|data|vbscript):|<\s*(?:script|iframe|object|embed)\b/i.test(text)) {
+    warnings.push('active-content');
+  }
+  if (SECRET_PATTERN.test(text)) warnings.push('secret-bearing');
+  return {
+    disposition: warnings.length === 0 ? 'clear' : 'suspicious',
+    warnings: [...new Set(warnings)],
+    requiresAcknowledgement: warnings.length > 0,
+    acknowledged: false,
+    policyVersion: SECURITY_POLICY_VERSION,
+  };
+}
+
+function evidenceSupportsAssertion(assertion: string, quote: string): boolean {
+  const tokens = (value: string): Set<string> => new Set(
+    value.normalize('NFKC').toLocaleLowerCase('en-US')
+      .match(/[\p{L}\p{N}]{3,}/gu) ?? [],
+  );
+  const assertionTokens = tokens(assertion);
+  const quoteTokens = tokens(quote);
+  return [...assertionTokens].some((token) => quoteTokens.has(token));
 }
 
 const STRUCTURAL_PATTERN = /^(Decision|Requirement|Constraint|Preference|Task|Discovery|Fix|Failed approach|Procedure|Risk|Contradiction|Question|Entity|Relationship):\s*(.+)$/i;

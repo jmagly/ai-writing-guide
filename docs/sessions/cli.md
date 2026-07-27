@@ -29,7 +29,8 @@ aiwg sessions extract [session-id] --workspace <id>
                       [--dry-run] [--json]
 aiwg sessions candidates [--state <state>] [--json]
 aiwg sessions review <candidate-id> <version> <state>
-                     --reviewer <id> --reason <text> [--dry-run] [--json]
+                     --reviewer <id> --reason <text>
+                     [--acknowledge-security-risk] [--dry-run] [--json]
 aiwg sessions promote <candidate-id> <version> --consumer <id>
                       --reviewer <id> [--confirm] [--dry-run] [--json]
 aiwg sessions tag <session-id> <tag> [--dry-run] [--json]
@@ -137,11 +138,14 @@ workspace. The built-in structural extractor recognizes fixed labels such as
 data: it is never evaluated as a command, tool request, URL, template, or
 workflow.
 
-Extractor output is validated with a strict schema. Every candidate includes an
-exact event span and quote digest, extractor and policy versions, confidence,
-sensitivity, project/temporal scope, and conflict/supersession links. Uncited,
-out-of-scope, malformed-span, unknown-field, or relationship-incomplete output
-is rejected before persistence.
+Extractor output is validated with a strict schema and the same hostile-content
+policy is applied to structural and model-based extractors. Every candidate
+separates its proposed assertion from the exact redacted evidence quote, span,
+and digest, and includes extractor/policy versions, confidence, sensitivity,
+project/temporal scope, typed security warnings, and conflict/supersession
+links. Uncited, out-of-scope, unsupported-by-evidence, malformed-span,
+unknown-field, or relationship-incomplete output is rejected before
+persistence.
 
 Candidates begin in `pending`. Supported review transitions are:
 
@@ -158,6 +162,11 @@ destination receipt. Rejected and superseded versions are terminal. Extraction a
 do not write durable memory; `durableMemoryWrites` remains zero. Repeating an
 unchanged extraction returns the existing candidate version, while changed
 content under the same evidence identity creates a new pending version.
+Candidates with instruction-like, structure-breaking, active-content, secret,
+control-character, bidirectional-control, or mixed-script-confusable warnings
+cannot be accepted without `--acknowledge-security-risk`. The receipt records
+only warning categories and the acknowledgment decision, never the hostile
+payload.
 
 `promote` requires an exact accepted candidate version and a named consumer
 whose manifest declares an `.aiwg/` memory topology. It previews by default,
@@ -166,7 +175,10 @@ supersession links, and a confirmation-bound operation ID. `--confirm` writes
 the derived memory page and records the source-event → candidate → destination
 lineage receipt. Repeating the same promotion returns the original receipt as
 a duplicate and does not write again. Unreviewed candidates are never promoted
-automatically.
+automatically. Promotion rechecks suspicious-content acknowledgment and writes
+the assertion as encoded, explicitly untrusted data; transcript frontmatter,
+Markdown, HTML, links, controls, and bidirectional text cannot alter the
+destination document structure.
 
 ## Optional semantic and Fortemi integration
 
