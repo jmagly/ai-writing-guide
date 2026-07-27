@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { open } from 'node:fs/promises';
+import { open, readFile } from 'node:fs/promises';
 import { createInterface } from 'node:readline';
 import { SessionContractError, type ConsistencyStateSchema } from './contracts.js';
 import { authorizeSourceFile, type SourceAuthorization } from './policy.js';
@@ -91,6 +91,27 @@ export async function readBoundedJsonLines(
   };
 }
 
+export async function readBoundedJson(
+  authorization: SourceAuthorization,
+  limitsInput?: Partial<ReaderLimits>,
+): Promise<{ value: unknown; bytesRead: number }> {
+  const allowed = await authorizeSourceFile(authorization);
+  const limits = { ...DEFAULT_READER_LIMITS, ...limitsInput };
+  if (allowed.size > limits.maxTotalBytes || allowed.size > limits.maxRecordBytes) {
+    throw new SessionContractError('RESOURCE_LIMIT_EXCEEDED', 'bounded JSON source limit exceeded');
+  }
+  let value: unknown;
+  try {
+    value = JSON.parse(await readFile(allowed.canonicalPath, 'utf8'));
+  } catch {
+    throw new SessionContractError('SCHEMA_DRIFT', 'malformed JSON source');
+  }
+  if (jsonDepth(value) > limits.maxNestingDepth) {
+    throw new SessionContractError('RESOURCE_LIMIT_EXCEEDED', 'JSON nesting depth exceeds reader limit');
+  }
+  return { value, bytesRead: allowed.size };
+}
+
 export async function fingerprintSourceFile(
   authorization: SourceAuthorization,
 ): Promise<{ digest: string; size: number }> {
@@ -123,4 +144,3 @@ function jsonDepth(value: unknown, depth = 0): number {
   const children = Array.isArray(value) ? value : Object.values(value);
   return children.reduce((max, child) => Math.max(max, jsonDepth(child, depth + 1)), depth);
 }
-

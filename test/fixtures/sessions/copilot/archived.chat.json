@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "sessionId": "copilot-archived-fixture",
+  "creationDate": 1785146400000,
+  "state": "archived",
+  "isArchived": true,
+  "syncStatus": "local-only",
+  "requests": [
+    {
+      "requestId": "request-archived",
+      "message": "Synthetic archived prompt",
+      "response": "Synthetic archived response"
+    }
+  ]
+}

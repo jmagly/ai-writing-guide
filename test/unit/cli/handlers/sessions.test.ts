@@ -59,13 +59,19 @@ describe('sessions CLI contracts', () => {
         supportedOperations: ['discover', 'inspect', 'stream'],
         acquisitionModes: ['api', 'jsonl'],
       });
+    expect(output.data.providers.find((item: any) => item.provider === 'copilot'))
+      .toMatchObject({
+        disposition: 'implemented',
+        supportedOperations: ['inspect', 'stream'],
+        acquisitionModes: ['manual-export'],
+      });
     expect(output.data.providers.filter((item: any) => item.disposition === 'unsupported'))
-      .toHaveLength(9);
+      .toHaveLength(8);
   });
 
   it('uses stable JSON and exit codes for unsupported provider import', async () => {
     const result = await sessionsHandler.execute(context([
-      'import', 'anything.jsonl', '--provider', 'copilot', '--source-id', 'source', '--json',
+      'import', 'anything.jsonl', '--provider', 'cursor', '--source-id', 'source', '--json',
     ]));
     expect(result.exitCode).toBe(3);
     expect(jsonOutput(log)).toMatchObject({
@@ -113,6 +119,29 @@ describe('sessions CLI contracts', () => {
           provider: 'codex',
           providerProfile: 'app-server-v2-rollout-fallback',
           locatorClass: 'codex-app-server-jsonl',
+          disposition: 'implemented',
+          consistency: 'provisional',
+        },
+        wouldInspect: true,
+        wouldPersist: false,
+      },
+    });
+  });
+
+  it('previews a supported Copilot chat JSON export without persisting it', async () => {
+    const fixture = resolve('test/fixtures/sessions/copilot/complete.chat.json');
+    const result = await sessionsHandler.execute(context([
+      'import', fixture, '--provider', 'copilot', '--source-id', 'copilot-export',
+      '--workspace', 'workspace-fixture', '--dry-run', '--json',
+    ]));
+    expect(result.exitCode).toBe(0);
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'preview',
+      data: {
+        source: {
+          provider: 'copilot',
+          providerProfile: 'vscode-chat-json-export',
+          locatorClass: 'copilot-chat-json-export',
           disposition: 'implemented',
           consistency: 'provisional',
         },

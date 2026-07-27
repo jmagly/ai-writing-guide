@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "schemaVersion": "1.0.0",
+  "sessionId": "copilot-session-fixture",
+  "creationDate": "2026-07-27T10:00:00.000Z",
+  "lastMessageDate": "2026-07-27T10:00:02.000Z",
+  "requesterUsername": "synthetic-user",
+  "responderUsername": "copilot",
+  "state": "active",
+  "isArchived": false,
+  "syncStatus": "synced",
+  "workspace": {
+    "id": "workspace-fixture",
+    "repository": "example/synthetic",
+    "futureWorkspaceField": "preserved"
+  },
+  "futureExportField": "preserved",
+  "requests": [
+    {
+      "requestId": "request-1",
+      "timestamp": "2026-07-27T10:00:00.000Z",
+      "modelId": "synthetic-model",
+      "message": {
+        "text": "Decision: keep synthetic fixture evidence",
+        "futureMessageField": "preserved"
+      },
+      "response": [
+        {
+          "kind": "markdownContent",
+          "value": "The synthetic decision is recorded.",
+          "futurePartField": "preserved"
+        },
+        {
+          "kind": "toolInvocation",
+          "value": "Synthetic tool result only",
+          "toolCallId": "synthetic-tool-1"
+        }
+      ],
+      "futureRequestField": "preserved"
+    }
+  ]
+}

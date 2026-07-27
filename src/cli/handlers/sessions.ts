@@ -5,6 +5,8 @@ import {
   ClaudeSessionAdapter,
   CODEX_ADAPTER_VERSION,
   CodexSessionAdapter,
+  COPILOT_ADAPTER_VERSION,
+  CopilotSessionAdapter,
   CandidateExtractionService,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
@@ -394,21 +396,25 @@ async function importSource(
   const input = resolve(ctx.cwd, requiredPositional(args, 0, 'file'));
   const provider = (args.values.get('--provider') ?? 'generic') as SessionProviderId;
   assertSessionProviderId(provider);
-  if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex') {
+  if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
+    && provider !== 'copilot') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
   const workspaceId = args.values.get('--workspace') ?? 'default';
   const isClaude = provider === 'claude';
   const isCodex = provider === 'codex';
+  const isCopilot = provider === 'copilot';
   const adapter: SessionSourceAdapter = isClaude
     ? new ClaudeSessionAdapter()
-    : isCodex ? new CodexSessionAdapter() : new GenericSessionInterchangeAdapter();
+    : isCodex
+      ? new CodexSessionAdapter()
+      : isCopilot ? new CopilotSessionAdapter() : new GenericSessionInterchangeAdapter();
   const locatorClass = isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
     : isCodex
       ? (input.endsWith('.app-server.jsonl') ? 'codex-app-server-jsonl' : 'codex-rollout-jsonl')
-      : 'manual-export';
+      : isCopilot ? 'copilot-chat-json-export' : 'manual-export';
   const selectedSource: SelectedSource = {
     provider, locator: input, locatorClass, sourceId,
     authorizedScope: { workspaceId, allowedRoots: [dirname(input)] },
@@ -418,18 +424,24 @@ async function importSource(
     contractVersion: SESSION_CONTRACT_VERSION, sourceId, provider,
     providerProfile: isClaude
       ? 'documented-local-jsonl'
-      : isCodex ? 'app-server-v2-rollout-fallback' : 'manual-interchange',
+      : isCodex
+        ? 'app-server-v2-rollout-fallback'
+        : isCopilot ? 'vscode-chat-json-export' : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
     adapterVersion: isClaude
       ? CLAUDE_ADAPTER_VERSION
-      : isCodex ? CODEX_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
+      : isCodex
+        ? CODEX_ADAPTER_VERSION
+        : isCopilot ? COPILOT_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
     sourceSchemaVersion: probe.sourceSchemaVersion,
-    disposition: isClaude || isCodex ? 'implemented' : 'manual-only',
+    disposition: isClaude || isCodex || isCopilot ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
     extensions: isClaude
       ? { 'native.claude': {} }
-      : isCodex ? { 'native.codex': {} } : { 'native.generic': {} },
+      : isCodex
+        ? { 'native.codex': {} }
+        : isCopilot ? { 'native.copilot': {} } : { 'native.generic': {} },
   });
   if (isDryRun(ctx, args)) {
     return preview('import', { source, wouldInspect: true, wouldPersist: false });
@@ -478,6 +490,20 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
         adapterVersion: CLAUDE_ADAPTER_VERSION,
         verifiedAt: '2026-07-27',
         documentation: 'https://code.claude.com/docs/en/sessions',
+      },
+    };
+  }
+  if (provider === 'copilot') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['inspect', 'stream'],
+      acquisitionModes: ['manual-export'],
+      reasonCode: null,
+      remediation: 'Use Chat: Export Chat in VS Code, then import the explicitly selected JSON file.',
+      evidence: {
+        adapterVersion: COPILOT_ADAPTER_VERSION,
+        verifiedAt: '2026-07-27',
+        documentation: 'https://code.visualstudio.com/docs/chat/chat-sessions#_export-a-chat-session-as-a-json-file',
       },
     };
   }

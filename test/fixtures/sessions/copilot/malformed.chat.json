@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "sessionId": "copilot-malformed-fixture",
+  "requests": [
+    {
+      "response": "Missing required message"
+    }
+  ]
+}

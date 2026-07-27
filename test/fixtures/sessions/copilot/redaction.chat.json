@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "sessionId": "copilot-redaction-fixture",
+  "state": "active",
+  "requests": [
+    {
+      "requestId": "request-redaction",
+      "message": "password=redaction-canary-123 synthetic@example.test",
+      "response": "Synthetic response"
+    }
+  ]
+}
