@@ -112,10 +112,21 @@ describe.runIf(hasBetterSqlite3())('transactional session repository and importe
     expect(repository.search({
       query: 'opaque', workspaceId: 'other-workspace', limit: 10,
     }).items).toEqual([]);
+    expect(repository.authorizedSearchDocuments({
+      workspaceId: 'workspace-1', providers: ['generic'], role: 'assistant',
+      sensitivity: 'none', limit: 10,
+    })).toMatchObject([{
+      eventId: search.items[0].eventId,
+      searchableText: 'opaque but preserved',
+      citation: search.items[0].citation,
+    }]);
     repository.tombstoneSession(sessionId);
     expect(repository.search({
       query: 'opaque', workspaceId: 'workspace-1', limit: 10,
     }).items).toEqual([]);
+    expect(repository.authorizedSearchDocuments({
+      workspaceId: 'workspace-1', limit: 10,
+    })).toEqual([]);
     repository.close();
   });
 

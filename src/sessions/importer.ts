@@ -7,7 +7,8 @@ import {
   type SessionSourceAdapter,
 } from './contracts.js';
 import { redactSessionText } from './policy.js';
-import { SessionRepository, type ImportReceipt } from './repository.js';
+import type { ImportReceipt } from './repository.js';
+import type { SessionRepositoryPort } from './ports.js';
 
 export interface ImportLimits {
   maxRecords: number;
@@ -32,7 +33,7 @@ const DEFAULT_LIMITS: ImportLimits = {
 };
 
 export class IncrementalSessionImporter {
-  constructor(private readonly repository: SessionRepository) {}
+  constructor(private readonly repository: SessionRepositoryPort) {}
 
   async import(request: ImportRequest): Promise<ImportReceipt[]> {
     assertSupportedSchemaMajor(request.source.sourceSchemaVersion);

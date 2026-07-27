@@ -53,6 +53,35 @@ row for the query, so imports committed between pages do not reorder or insert
 hits into the active traversal. Start a new search without the cursor to
 include newly imported events.
 
+## Optional semantic and Fortemi integration
+
+`SessionSearchService` keeps lexical SQLite/FTS5 search as the standalone
+default. Hybrid retrieval is opt-in and uses a two-step contract:
+
+1. `preview(options, backend)` reports the exact workspace, backend, approved
+   candidate count, text-transfer status, and whether network/model use occurs.
+2. `search(...)` requires approval carrying that preview's operation ID.
+
+The operation ID covers the query digest and every authorized candidate event
+ID. A scope, lifecycle, or candidate-set change invalidates prior approval.
+Only normalized, classified, redacted events that pass workspace and metadata
+filters are offered to a backend. Returned IDs are checked against that
+allowlist before fusion, so stale, deleted, or cross-workspace candidates
+cannot become hits. Omitting the backend or selecting lexical mode performs no
+model/network work.
+
+`FortemiSessionBackend` is capability-gated. It remains unavailable until
+Fortemi provides source-addressed upsert, typed metadata predicates, and
+evidence locators (Fortemi issues 1090–1092); this does not block local search.
+Its injected client boundary supports conformance tests without starting a
+service.
+
+`convertSessionEventsToKnowledgeShard()` exports approved event text and stable
+evidence metadata through the Knowledge Shard v1 boundary. Its conversion
+report includes typed losses for provider-native extensions and raw byte or
+sequence locators that v1 cannot represent. Callers must inspect `lossless` and
+`losses`; a record count match is not a claim of parity.
+
 ## Reference performance
 
 The reproducible FTS5 reference benchmark is:

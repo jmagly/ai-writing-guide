@@ -96,6 +96,10 @@ export interface SessionSearchResult {
   nextCursor: string | null;
 }
 
+export interface SessionSearchDocument extends SessionSearchHit {
+  searchableText: string;
+}
+
 export class SessionRepository {
   private readonly db: SqliteDatabase;
 
@@ -360,54 +364,7 @@ export class SessionRepository {
       `r.status = 'committed'`,
     ];
     const params: unknown[] = [query, snapshotRowid, options.workspaceId];
-    if (options.providers?.length) {
-      where.push(`json_extract(s.data, '$.provider') IN (${options.providers.map(() => '?').join(',')})`);
-      params.push(...options.providers);
-    }
-    if (options.dateFrom) {
-      where.push(`json_extract(e.data, '$.occurredAt') >= ?`);
-      params.push(options.dateFrom);
-    }
-    if (options.dateTo) {
-      where.push(`json_extract(e.data, '$.occurredAt') <= ?`);
-      params.push(options.dateTo);
-    }
-    if (options.role) {
-      where.push(`json_extract(e.data, '$.role') = ?`);
-      params.push(options.role);
-    }
-    if (options.participant) {
-      where.push(`json_extract(e.data, '$.role') = ?`);
-      params.push(options.participant);
-    }
-    if (options.tool) {
-      where.push(`(json_extract(e.data, '$.kind') IN ('tool-call','tool-result')
-        AND json_extract(e.data, '$.searchableText') LIKE ? ESCAPE '\\')`);
-      params.push(`%${escapeLike(options.tool)}%`);
-    }
-    if (options.tag) {
-      where.push(`EXISTS (
-        SELECT 1 FROM session_tags t WHERE t.session_id=s.session_id AND t.tag=?
-      )`);
-      params.push(options.tag);
-    }
-    if (options.sensitivity) {
-      where.push(`json_extract(e.data, '$.sensitivity.classification') = ?`);
-      params.push(options.sensitivity);
-    }
-    for (const [filter, key] of [
-      [options.model, 'model'],
-      [options.entity, 'entity'],
-      [options.extractionState, 'extractionState'],
-    ] as const) {
-      if (filter) {
-        where.push(`EXISTS (
-          SELECT 1 FROM json_tree(e.data)
-          WHERE json_tree.key=? AND CAST(json_tree.value AS TEXT)=?
-        )`);
-        params.push(key, filter);
-      }
-    }
+    appendMetadataFilters(where, params, options);
     if (cursor) {
       where.push(`(
         length(json_extract(e.data, '$.searchableText')) > ?
@@ -450,6 +407,42 @@ export class SessionRepository {
           })
         : null,
     };
+  }
+
+  authorizedSearchDocuments(
+    options: Omit<SessionSearchOptions, 'query' | 'cursor'>,
+  ): SessionSearchDocument[] {
+    if (options.limit < 1 || options.limit > 500) {
+      throw new SessionContractError(
+        'RESOURCE_LIMIT_EXCEEDED',
+        'semantic candidate limit must be between 1 and 500',
+      );
+    }
+    const where = [
+      `s.workspace_id = ?`,
+      `s.lifecycle != 'tombstoned'`,
+      `r.status = 'committed'`,
+    ];
+    const params: unknown[] = [options.workspaceId];
+    appendMetadataFilters(where, params, options);
+    return this.db.prepare(`
+      SELECT
+        e.event_id, e.session_id, e.source_id, e.import_run_id,
+        e.sequence_no, e.data AS event_data, s.workspace_id,
+        s.data AS session_data, src.data AS source_data,
+        json_extract(e.data, '$.searchableText') AS searchable_text,
+        length(json_extract(e.data, '$.searchableText')) AS stable_rank
+      FROM session_events e
+      JOIN sessions s ON s.session_id=e.session_id
+      JOIN import_runs r ON r.import_run_id=e.import_run_id
+      JOIN session_sources src ON src.source_id=e.source_id
+      WHERE ${where.join(' AND ')}
+      ORDER BY e.event_id
+      LIMIT ?
+    `).all(...params, options.limit).map((row) => ({
+      ...searchHit(row),
+      searchableText: String(row.searchable_text),
+    }));
   }
 
   getCheckpoint(sourceId: string, parserVersion: string): ImportCheckpoint | null {
@@ -588,4 +581,59 @@ function decodeSearchCursor(value?: string): SearchCursor | null {
 
 function escapeLike(value: string): string {
   return value.replaceAll('%', '\\%').replaceAll('_', '\\_');
+}
+
+function appendMetadataFilters(
+  where: string[],
+  params: unknown[],
+  options: Omit<SessionSearchOptions, 'query' | 'cursor'>,
+): void {
+  if (options.providers?.length) {
+    where.push(`json_extract(s.data, '$.provider') IN (${options.providers.map(() => '?').join(',')})`);
+    params.push(...options.providers);
+  }
+  if (options.dateFrom) {
+    where.push(`json_extract(e.data, '$.occurredAt') >= ?`);
+    params.push(options.dateFrom);
+  }
+  if (options.dateTo) {
+    where.push(`json_extract(e.data, '$.occurredAt') <= ?`);
+    params.push(options.dateTo);
+  }
+  if (options.role) {
+    where.push(`json_extract(e.data, '$.role') = ?`);
+    params.push(options.role);
+  }
+  if (options.participant) {
+    where.push(`json_extract(e.data, '$.role') = ?`);
+    params.push(options.participant);
+  }
+  if (options.tool) {
+    where.push(`(json_extract(e.data, '$.kind') IN ('tool-call','tool-result')
+      AND json_extract(e.data, '$.searchableText') LIKE ? ESCAPE '\\')`);
+    params.push(`%${escapeLike(options.tool)}%`);
+  }
+  if (options.tag) {
+    where.push(`EXISTS (
+      SELECT 1 FROM session_tags t WHERE t.session_id=s.session_id AND t.tag=?
+    )`);
+    params.push(options.tag);
+  }
+  if (options.sensitivity) {
+    where.push(`json_extract(e.data, '$.sensitivity.classification') = ?`);
+    params.push(options.sensitivity);
+  }
+  for (const [filter, key] of [
+    [options.model, 'model'],
+    [options.entity, 'entity'],
+    [options.extractionState, 'extractionState'],
+  ] as const) {
+    if (filter) {
+      where.push(`EXISTS (
+        SELECT 1 FROM json_tree(e.data)
+        WHERE json_tree.key=? AND CAST(json_tree.value AS TEXT)=?
+      )`);
+      params.push(key, filter);
+    }
+  }
 }
