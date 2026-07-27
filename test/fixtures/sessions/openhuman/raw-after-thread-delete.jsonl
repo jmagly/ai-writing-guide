@@ -1,0 +1,2 @@
+{"schemaVersion":1,"recordType":"thread_state","thread_id":"thread-deleted","state":"deleted","deleted_at":1785150500000}
+{"schemaVersion":1,"recordType":"session_raw","session_id":"openhuman-retained","event_id":"retained-event","thread_id":"thread-deleted","type":"session_end","role":"assistant","content":"Raw transcript retained","timestamp":1785150010000,"active":false,"raw_transcript_deleted_at":null}

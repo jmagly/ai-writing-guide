@@ -1,0 +1,1 @@
+{"schemaVersion":1,"recordType":"session_raw","session_id":"openhuman-active","event_id":"active-user","thread_id":"thread-active","request_id":"request-active","type":"message","role":"user","content":"Active append","timestamp":1785150010000,"metadata":{"provider":"provider-a","model":"model-a"},"active":true}

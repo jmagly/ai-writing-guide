@@ -17,6 +17,8 @@ import {
   OpenCodeSessionAdapter,
   OPENCLAW_ADAPTER_VERSION,
   OpenClawSessionAdapter,
+  OPENHUMAN_ADAPTER_VERSION,
+  OpenHumanSessionAdapter,
   CandidateExtractionService,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
@@ -408,7 +410,8 @@ async function importSource(
   assertSessionProviderId(provider);
   if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
     && provider !== 'copilot' && provider !== 'cursor' && provider !== 'factory'
-    && provider !== 'hermes' && provider !== 'opencode' && provider !== 'openclaw') {
+    && provider !== 'hermes' && provider !== 'opencode' && provider !== 'openclaw'
+    && provider !== 'openhuman') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
@@ -421,6 +424,7 @@ async function importSource(
   const isHermes = provider === 'hermes';
   const isOpenCode = provider === 'opencode';
   const isOpenClaw = provider === 'openclaw';
+  const isOpenHuman = provider === 'openhuman';
   const adapter: SessionSourceAdapter = isClaude
     ? new ClaudeSessionAdapter()
     : isCodex
@@ -435,7 +439,9 @@ async function importSource(
               ? new HermesSessionAdapter()
               : isOpenCode
                 ? new OpenCodeSessionAdapter()
-                : isOpenClaw ? new OpenClawSessionAdapter() : new GenericSessionInterchangeAdapter();
+                : isOpenClaw
+                  ? new OpenClawSessionAdapter()
+                  : isOpenHuman ? new OpenHumanSessionAdapter() : new GenericSessionInterchangeAdapter();
   const locatorClass = isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
     : isCodex
@@ -450,7 +456,9 @@ async function importSource(
               ? 'hermes-export-jsonl'
               : isOpenCode
                 ? 'opencode-export-json'
-                : isOpenClaw ? 'openclaw-consistent-snapshot-jsonl' : 'manual-export';
+                : isOpenClaw
+                  ? 'openclaw-consistent-snapshot-jsonl'
+                  : isOpenHuman ? 'openhuman-enriched-jsonl' : 'manual-export';
   const selectedSource: SelectedSource = {
     provider, locator: input, locatorClass, sourceId,
     authorizedScope: { workspaceId, allowedRoots: [dirname(input)] },
@@ -472,7 +480,9 @@ async function importSource(
                 ? 'native-schema-23-export'
                 : isOpenCode
                   ? 'sanitized-json-export'
-                  : isOpenClaw ? 'schema-16-event-v3-consistent-snapshot' : 'manual-interchange',
+                  : isOpenClaw
+                    ? 'schema-16-event-v3-consistent-snapshot'
+                    : isOpenHuman ? 'schema-1-session-raw-enriched' : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
     adapterVersion: isClaude
       ? CLAUDE_ADAPTER_VERSION
@@ -488,10 +498,12 @@ async function importSource(
                 ? HERMES_ADAPTER_VERSION
                 : isOpenCode
                   ? OPENCODE_ADAPTER_VERSION
-                  : isOpenClaw ? OPENCLAW_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
+                  : isOpenClaw
+                    ? OPENCLAW_ADAPTER_VERSION
+                    : isOpenHuman ? OPENHUMAN_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
     sourceSchemaVersion: probe.sourceSchemaVersion,
     disposition: isClaude || isCodex || isCopilot || isCursor || isFactory || isHermes
-      || isOpenCode || isOpenClaw
+      || isOpenCode || isOpenClaw || isOpenHuman
       ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
@@ -509,7 +521,9 @@ async function importSource(
                 ? { 'native.hermes': {} }
                 : isOpenCode
                   ? { 'native.opencode': {} }
-                  : isOpenClaw ? { 'native.openclaw': {} } : { 'native.generic': {} },
+                  : isOpenClaw
+                    ? { 'native.openclaw': {} }
+                    : isOpenHuman ? { 'native.openhuman': {} } : { 'native.generic': {} },
   });
   if (isDryRun(ctx, args)) {
     return preview('import', { source, wouldInspect: true, wouldPersist: false });
@@ -642,6 +656,20 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
         adapterVersion: OPENCLAW_ADAPTER_VERSION,
         verifiedAt: '2026-07-27',
         documentation: 'https://docs.openclaw.ai/reference/session-management-compaction',
+      },
+    };
+  }
+  if (provider === 'openhuman') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['inspect', 'stream'],
+      acquisitionModes: ['jsonl'],
+      reasonCode: null,
+      remediation: 'Import an explicitly selected schema-1 session_raw JSONL file, optionally bundled with thread/turn enrichment.',
+      evidence: {
+        adapterVersion: OPENHUMAN_ADAPTER_VERSION,
+        verifiedAt: '2026-07-27',
+        documentation: 'https://github.com/tinyhumansai/openhuman/releases',
       },
     };
   }

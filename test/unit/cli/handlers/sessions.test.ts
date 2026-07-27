@@ -95,13 +95,19 @@ describe('sessions CLI contracts', () => {
         supportedOperations: ['inspect', 'stream'],
         acquisitionModes: ['api', 'sqlite-snapshot', 'jsonl'],
       });
+    expect(output.data.providers.find((item: any) => item.provider === 'openhuman'))
+      .toMatchObject({
+        disposition: 'implemented',
+        supportedOperations: ['inspect', 'stream'],
+        acquisitionModes: ['jsonl'],
+      });
     expect(output.data.providers.filter((item: any) => item.disposition === 'unsupported'))
-      .toHaveLength(3);
+      .toHaveLength(2);
   });
 
   it('uses stable JSON and exit codes for unsupported provider import', async () => {
     const result = await sessionsHandler.execute(context([
-      'import', 'anything.jsonl', '--provider', 'openhuman', '--source-id', 'source', '--json',
+      'import', 'anything.jsonl', '--provider', 'warp', '--source-id', 'source', '--json',
     ]));
     expect(result.exitCode).toBe(3);
     expect(jsonOutput(log)).toMatchObject({
@@ -299,6 +305,30 @@ describe('sessions CLI contracts', () => {
           sourceSchemaVersion: '1.0.0',
           disposition: 'implemented',
           consistency: 'consistent-snapshot',
+        },
+        wouldInspect: true,
+        wouldPersist: false,
+      },
+    });
+  });
+
+  it('previews an enriched OpenHuman schema-1 raw transcript without persisting it', async () => {
+    const fixture = resolve('test/fixtures/sessions/openhuman/complete.jsonl');
+    const result = await sessionsHandler.execute(context([
+      'import', fixture, '--provider', 'openhuman', '--source-id', 'openhuman-complete',
+      '--workspace', 'workspace-fixture', '--dry-run', '--json',
+    ]));
+    expect(result.exitCode).toBe(0);
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'preview',
+      data: {
+        source: {
+          provider: 'openhuman',
+          providerProfile: 'schema-1-session-raw-enriched',
+          locatorClass: 'openhuman-enriched-jsonl',
+          sourceSchemaVersion: '1.0.0',
+          disposition: 'implemented',
+          consistency: 'complete',
         },
         wouldInspect: true,
         wouldPersist: false,

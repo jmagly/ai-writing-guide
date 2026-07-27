@@ -1,0 +1,2 @@
+{"schemaVersion":1,"recordType":"session_raw","session_id":"mixed","event_id":"event-1","thread_id":"thread-mixed","type":"message"}
+{"schemaVersion":2,"recordType":"session_raw","session_id":"mixed","event_id":"event-2","thread_id":"thread-mixed","type":"session_end","active":false}
