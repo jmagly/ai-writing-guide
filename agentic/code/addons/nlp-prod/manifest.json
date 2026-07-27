@@ -54,14 +54,15 @@
   "cli_commands": {
     "namespace": "nlp",
     "description": "LLM inference pipeline toolkit",
+    "entry": "commands/",
     "subcommands": {
-      "new":           { "description": "Scaffold a new pipeline (interactive wizard)" },
-      "add-step":      { "description": "Add a step to an existing pipeline" },
-      "eval":          { "description": "Run eval loop against pipeline test cases" },
-      "optimize":      { "description": "Analyze cost and latency optimization opportunities" },
-      "productionize": { "description": "Production readiness review + slim-down generation" },
-      "estimate-cost": { "description": "Estimate inference cost at target volume" },
-      "status":        { "description": "Overview of all pipelines in project" }
+      "new":           { "file": "new.mjs", "description": "Scaffold a new pipeline (interactive wizard)" },
+      "add-step":      { "file": "add-step.mjs", "description": "Add a step to an existing pipeline" },
+      "eval":          { "file": "eval.mjs", "description": "Run eval loop against pipeline test cases" },
+      "optimize":      { "file": "optimize.mjs", "description": "Analyze cost and latency optimization opportunities" },
+      "productionize": { "file": "productionize.mjs", "description": "Production readiness review + slim-down generation" },
+      "estimate-cost": { "file": "estimate-cost.mjs", "description": "Estimate inference cost at target volume" },
+      "status":        { "file": "status.mjs", "description": "Overview of all pipelines in project" }
     }
   },
   "templates": [

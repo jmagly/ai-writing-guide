@@ -71,6 +71,28 @@ function canonicalKernelNames(): string[] {
 }
 
 const EXPECTED_KERNEL = canonicalKernelNames();
+const CODEX_LISTING_CHAR_CAP = 8_000;
+
+function codexListingStats(root: string): { count: number; totalChars: number } {
+  let count = 0;
+  let totalChars = 0;
+
+  for (const dir of skillDirs(root)) {
+    const content = readFileSync(join(dir, 'SKILL.md'), 'utf8');
+    const frontmatter = content.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
+    const name = frontmatter.match(/^name:\s*["']?(.+?)["']?\s*$/m)?.[1];
+    const description = frontmatter.match(/^description:\s*["']?(.+?)["']?\s*$/m)?.[1];
+
+    expect(name, `${dir} name`).toBeTruthy();
+    expect(description, `${dir} description`).toBeTruthy();
+    expect(description!.length, `${dir} description`).toBeGreaterThan(10);
+
+    totalChars += name!.length + description!.length + 5;
+    count += 1;
+  }
+
+  return { count, totalChars };
+}
 
 function deploy(
   provider: string,
@@ -106,6 +128,14 @@ describe('kernel deployment conformance', () => {
   it('has a non-empty, unique canonical kernel inventory', () => {
     expect(EXPECTED_KERNEL.length).toBe(24);
     expect(new Set(EXPECTED_KERNEL).size).toBe(EXPECTED_KERNEL.length);
+  });
+
+  it('keeps the full Codex kernel catalog useful and below its startup listing cap', () => {
+    const { project, home } = deploy('codex', { suffix: 'budget' });
+    const stats = codexListingStats(PROVIDERS[1].root(project, home));
+
+    expect(stats.count).toBe(EXPECTED_KERNEL.length);
+    expect(stats.totalChars).toBeLessThanOrEqual(CODEX_LISTING_CHAR_CAP);
   });
 
   for (const provider of PROVIDERS) {
@@ -166,6 +196,23 @@ describe('kernel deployment conformance', () => {
     expect(skillDirs(root).map(dir => dir.split('/').at(-1)!).filter(name =>
       EXPECTED_KERNEL.includes(name)
     ).sort()).toEqual(EXPECTED_KERNEL);
+  });
+
+  it('repairs an oversized Codex deployment while preserving operator-owned skills', () => {
+    const first = deploy('codex', { copyAll: true, suffix: 'repair' });
+    const root = PROVIDERS[1].root(first.project, first.home);
+    const operator = join(root, 'operator-owned-fixture');
+    mkdirSync(operator, { recursive: true });
+    writeFileSync(join(operator, 'SKILL.md'), '---\nname: operator-owned-fixture\ndescription: operator-owned skill\n---\noperator\n');
+
+    const repaired = deploy('codex', { suffix: 'repair' });
+    const repairedRoot = PROVIDERS[1].root(repaired.project, repaired.home);
+    const stats = codexListingStats(repairedRoot);
+
+    expect(existsSync(join(repairedRoot, 'voice-apply'))).toBe(false);
+    expect(existsSync(operator)).toBe(true);
+    expect(stats.count).toBe(EXPECTED_KERNEL.length + 1);
+    expect(stats.totalChars).toBeLessThanOrEqual(CODEX_LISTING_CHAR_CAP);
   });
 
   it('moves managed skills cleanly across kernel and standard tiers', async () => {

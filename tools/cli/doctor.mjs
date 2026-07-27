@@ -272,7 +272,10 @@ function mergeSkillMeasurements(measurements) {
 async function checkTotalDeployedSkillBudgetForProvider(provName, label, provider) {
   const paths = new Set();
   if (provider?.kernelSkillsPath) paths.add(provider.kernelSkillsPath);
-  if (provider?.paths?.skills) paths.add(provider.paths.skills);
+  // Codex only scans the native kernel directory at startup. Standard-tier
+  // skills remain available through `aiwg discover`/`aiwg show`, but adding
+  // their hidden storage path here produces a false over-budget warning.
+  if (provName !== 'codex' && provider?.paths?.skills) paths.add(provider.paths.skills);
   if (paths.size === 0) return;
 
   const measurements = [];
@@ -305,7 +308,7 @@ async function checkTotalDeployedSkillBudgetForProvider(provName, label, provide
     check(
       `${label} Deployed Skill Count`,
       'warn',
-      `${stats.count} deployed skills estimate ${stats.totalChars.toLocaleString()} chars, above Codex's default listing cap (${CODEX_LISTING_CHAR_CAP.toLocaleString()} chars). Run \`aiwg use all\` for workspace-aware filtering or \`aiwg list --deployed\` to inspect include/exclude reasons.`,
+      `${stats.count} startup-visible skills estimate ${stats.totalChars.toLocaleString()} chars, above Codex's default listing cap (${CODEX_LISTING_CHAR_CAP.toLocaleString()} chars). Run \`aiwg use all --provider codex --force\` to restore the kernel-only deployment, or \`aiwg list --deployed\` to inspect include/exclude reasons.`,
     );
   }
 }
@@ -357,8 +360,8 @@ async function checkSkillBudgetForProvider(provName, label, skillsPathRel) {
     usageUnit = 'chars';
     budgetSource = `${CODEX_LISTING_CHAR_CAP.toLocaleString()}-char built-in cap`;
     if (usage > budget) {
-      recommendations.push('Codex caps the listing at 8 000 chars — trim skill descriptions or remove unused frameworks');
-      recommendations.push('see docs/skills-budget-guide.md');
+      recommendations.push('run `aiwg use all --provider codex --force` to restore the kernel-only deployment');
+      recommendations.push('use `aiwg list --deployed` to inspect include/exclude reasons');
     }
   } else {
     // Other platforms: emit an info-level usage line without a verdict so
