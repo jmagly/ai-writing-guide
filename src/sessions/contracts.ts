@@ -174,6 +174,19 @@ export const IntelligenceCandidateTypeSchema = z.enum([
   'entity', 'relationship',
 ]);
 
+export const CandidateSecurityWarningSchema = z.enum([
+  'instruction-like', 'structure-breaking', 'control-character', 'bidi-control',
+  'unicode-confusable', 'active-content', 'secret-bearing',
+]);
+
+export const CandidateSecuritySchema = z.object({
+  disposition: z.enum(['clear', 'suspicious']),
+  warnings: z.array(CandidateSecurityWarningSchema),
+  requiresAcknowledgement: z.boolean(),
+  acknowledged: z.boolean(),
+  policyVersion: VersionSchema,
+}).strict();
+
 export const IntelligenceCandidateSchema = z.object({
   contractVersion: z.literal(SESSION_CONTRACT_VERSION),
   candidateId: z.string().min(1),
@@ -188,6 +201,7 @@ export const IntelligenceCandidateSchema = z.object({
     start: z.number().int().nonnegative(),
     end: z.number().int().positive(),
     quoteDigest: DigestSchema,
+    quote: z.string().min(1).optional(),
   }).strict()).min(1),
   confidence: z.number().min(0).max(1),
   temporalScope: z.string().min(1),
@@ -197,6 +211,13 @@ export const IntelligenceCandidateSchema = z.object({
   extractionPolicyVersion: VersionSchema,
   model: z.string().min(1).nullable(),
   sensitivity: z.enum(['none', 'sensitive']),
+  security: CandidateSecuritySchema.default({
+    disposition: 'clear',
+    warnings: [],
+    requiresAcknowledgement: false,
+    acknowledged: false,
+    policyVersion: '1.0.0',
+  }),
   reviewState: z.enum([
     'pending', 'accepted', 'rejected', 'deferred', 'promoted', 'superseded',
   ]),
@@ -226,6 +247,8 @@ export const CandidateReviewReceiptSchema = z.object({
   ]),
   reviewer: z.string().min(1),
   reason: z.string().min(1),
+  securityWarnings: z.array(CandidateSecurityWarningSchema).default([]),
+  securityAcknowledged: z.boolean().default(false),
   occurredAt: z.string().datetime({ offset: true }),
 }).strict();
 
@@ -277,6 +300,7 @@ export type ImportCheckpoint = z.infer<typeof ImportCheckpointSchema>;
 export type ImportRun = z.infer<typeof ImportRunSchema>;
 export type ProvenanceEdge = z.infer<typeof ProvenanceEdgeSchema>;
 export type IntelligenceCandidate = z.infer<typeof IntelligenceCandidateSchema>;
+export type CandidateSecurityWarning = z.infer<typeof CandidateSecurityWarningSchema>;
 export type CandidateReviewReceipt = z.infer<typeof CandidateReviewReceiptSchema>;
 export type PromotionReceipt = z.infer<typeof PromotionReceiptSchema>;
 export type DeletionReceipt = z.infer<typeof DeletionReceiptSchema>;

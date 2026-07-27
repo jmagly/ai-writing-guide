@@ -306,6 +306,7 @@ async function executeCommand(
             candidateId, version, toState,
             reviewer: requiredValue(args, '--reviewer'),
             reason: requiredValue(args, '--reason'),
+            securityAcknowledged: args.flags.has('--acknowledge-security-risk'),
           });
         }
         return ok(command, repository.reviewCandidate({
@@ -314,6 +315,7 @@ async function executeCommand(
           toState,
           reviewer: requiredValue(args, '--reviewer'),
           reason: requiredValue(args, '--reason'),
+          securityAcknowledged: args.flags.has('--acknowledge-security-risk'),
           workspaceId,
         }));
       }

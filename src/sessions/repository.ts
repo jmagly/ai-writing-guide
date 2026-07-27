@@ -1125,7 +1125,9 @@ export class SessionRepository {
         ).get(...(workspaceId
           ? [candidateId, version, workspaceId, workspaceId]
           : [candidateId, version]));
-    return row ? JSON.parse(String(row.data)) as IntelligenceCandidate : null;
+    return row
+      ? IntelligenceCandidateSchema.parse(JSON.parse(String(row.data)))
+      : null;
   }
 
   listCandidates(
@@ -1146,7 +1148,8 @@ export class SessionRepository {
            ${workspaceId ? `WHERE ${predicate}` : ''}
            ORDER BY candidate_id, version`,
         ).all(...(workspaceId ? [workspaceId, workspaceId] : []));
-    return rows.map((row) => JSON.parse(String(row.data)) as IntelligenceCandidate);
+    return rows.map((row) =>
+      IntelligenceCandidateSchema.parse(JSON.parse(String(row.data))));
   }
 
   reviewCandidate(input: {
@@ -1155,6 +1158,7 @@ export class SessionRepository {
     toState: CandidateReviewReceipt['toState'];
     reviewer: string;
     reason: string;
+    securityAcknowledged?: boolean;
     workspaceId?: string;
   }): CandidateReviewReceipt {
     const review = this.db.transaction(() => {
@@ -1166,6 +1170,14 @@ export class SessionRepository {
         throw new SessionContractError(
           'UNSUPPORTED_OPERATION',
           `candidate transition ${candidate.reviewState} -> ${input.toState} is not allowed`,
+        );
+      }
+      if (input.toState === 'accepted'
+        && candidate.security.requiresAcknowledgement
+        && !input.securityAcknowledged) {
+        throw new SessionContractError(
+          'OPERATION_NOT_AUTHORIZED',
+          'suspicious candidate acceptance requires explicit security acknowledgment',
         );
       }
       const occurredAt = new Date().toISOString();
@@ -1181,9 +1193,13 @@ export class SessionRepository {
         toState: input.toState,
         reviewer: input.reviewer,
         reason: input.reason,
+        securityWarnings: candidate.security.warnings,
+        securityAcknowledged: Boolean(input.securityAcknowledged),
         occurredAt,
       });
       candidate.reviewState = input.toState;
+      candidate.security.acknowledged = input.toState === 'accepted'
+        && Boolean(input.securityAcknowledged);
       this.db.prepare(
         `UPDATE intelligence_candidates SET review_state=?, data=?
          WHERE candidate_id=? AND version=?`,
@@ -2079,6 +2095,10 @@ function candidateWorkspacePredicate(alias: string): string {
 function candidateContentDigest(candidate: IntelligenceCandidate): string {
   return sha256(JSON.stringify({
     ...candidate,
+    security: {
+      ...candidate.security,
+      acknowledged: false,
+    },
     version: undefined,
     reviewState: undefined,
     createdAt: undefined,
