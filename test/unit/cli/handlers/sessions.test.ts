@@ -179,6 +179,39 @@ describe.runIf(hasBetterSqlite3())('sessions CLI catalog lifecycle', () => {
       },
     });
 
+    await sessionsHandler.execute(context([
+      'extract', sessionId, '--workspace', 'workspace-fixture', '--dry-run', ...dbArgs,
+    ]));
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'preview',
+      data: {
+        count: 1,
+        durableMemoryWrites: 0,
+        items: [{
+          type: 'decision',
+          reviewState: 'pending',
+          evidence: [{ eventId: expect.any(String), quoteDigest: expect.any(String) }],
+        }],
+      },
+    });
+    await sessionsHandler.execute(context([
+      'extract', sessionId, '--workspace', 'workspace-fixture', ...dbArgs,
+    ]));
+    const extracted = jsonOutput(log);
+    const candidateId = extracted.data.items[0].candidateId;
+    await sessionsHandler.execute(context(['candidates', '--state', 'pending', ...dbArgs]));
+    expect(jsonOutput(log).data.items).toHaveLength(1);
+    await sessionsHandler.execute(context([
+      'review', candidateId, '1', 'accepted',
+      '--reviewer', 'fixture-reviewer', '--reason', 'evidence verified', ...dbArgs,
+    ]));
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'ok',
+      data: { candidateId, candidateVersion: 1, fromState: 'pending', toState: 'accepted' },
+    });
+    await sessionsHandler.execute(context(['candidates', '--state', 'accepted', ...dbArgs]));
+    expect(jsonOutput(log).data.items).toHaveLength(1);
+
     await sessionsHandler.execute(context(['tag', sessionId, 'decision', '--dry-run', ...dbArgs]));
     expect(jsonOutput(log).status).toBe('preview');
     await sessionsHandler.execute(context(['tag', sessionId, 'decision', ...dbArgs]));

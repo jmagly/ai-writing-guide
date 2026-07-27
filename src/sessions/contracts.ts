@@ -134,25 +134,66 @@ export const ProvenanceEdgeSchema = z.object({
   createdAt: z.string().datetime({ offset: true }),
 });
 
+export const IntelligenceCandidateTypeSchema = z.enum([
+  'decision', 'requirement', 'constraint', 'preference', 'task', 'discovery',
+  'fix', 'failed-approach', 'procedure', 'risk', 'contradiction', 'question',
+  'entity', 'relationship',
+]);
+
 export const IntelligenceCandidateSchema = z.object({
   contractVersion: z.literal(SESSION_CONTRACT_VERSION),
   candidateId: z.string().min(1),
   version: z.number().int().positive(),
-  type: z.enum([
-    'decision', 'requirement', 'constraint', 'preference', 'task', 'discovery',
-    'fix', 'failed-approach', 'procedure', 'risk', 'contradiction', 'question',
-  ]),
+  type: IntelligenceCandidateTypeSchema,
   assertion: z.string().min(1),
-  evidenceEventIds: z.array(z.string().min(1)).min(1),
+  subject: z.string().min(1).nullable(),
+  predicate: z.string().min(1).nullable(),
+  object: z.string().min(1).nullable(),
+  evidence: z.array(z.object({
+    eventId: z.string().min(1),
+    start: z.number().int().nonnegative(),
+    end: z.number().int().positive(),
+    quoteDigest: DigestSchema,
+  }).strict()).min(1),
   confidence: z.number().min(0).max(1),
   temporalScope: z.string().min(1),
   projectScope: z.string().min(1),
   extractionMethod: z.string().min(1),
   extractionVersion: VersionSchema,
-  reviewState: z.enum(['pending', 'accepted', 'rejected', 'superseded']),
+  extractionPolicyVersion: VersionSchema,
+  model: z.string().min(1).nullable(),
+  sensitivity: z.enum(['none', 'sensitive']),
+  reviewState: z.enum([
+    'pending', 'accepted', 'rejected', 'deferred', 'promoted', 'superseded',
+  ]),
   conflictsWith: z.array(z.string().min(1)).default([]),
   supersedes: z.array(z.string().min(1)).default([]),
+  createdAt: z.string().datetime({ offset: true }),
+}).strict().superRefine((candidate, context) => {
+  if (candidate.type === 'relationship'
+    && (!candidate.subject || !candidate.predicate || !candidate.object)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'relationship candidates require subject, predicate, and object',
+    });
+  }
 });
+
+export const CandidateReviewReceiptSchema = z.object({
+  contractVersion: z.literal(SESSION_CONTRACT_VERSION),
+  receiptId: z.string().min(1),
+  candidateId: z.string().min(1),
+  candidateVersion: z.number().int().positive(),
+  fromState: z.enum([
+    'pending', 'accepted', 'rejected', 'deferred', 'promoted', 'superseded',
+  ]),
+  toState: z.enum([
+    'pending', 'accepted', 'rejected', 'deferred', 'promoted', 'superseded',
+  ]),
+  reviewer: z.string().min(1),
+  reason: z.string().min(1),
+  occurredAt: z.string().datetime({ offset: true }),
+}).strict();
 
 export const PromotionReceiptSchema = z.object({
   contractVersion: z.literal(SESSION_CONTRACT_VERSION),
@@ -186,6 +227,7 @@ export type ImportCheckpoint = z.infer<typeof ImportCheckpointSchema>;
 export type ImportRun = z.infer<typeof ImportRunSchema>;
 export type ProvenanceEdge = z.infer<typeof ProvenanceEdgeSchema>;
 export type IntelligenceCandidate = z.infer<typeof IntelligenceCandidateSchema>;
+export type CandidateReviewReceipt = z.infer<typeof CandidateReviewReceiptSchema>;
 export type PromotionReceipt = z.infer<typeof PromotionReceiptSchema>;
 export type DeletionReceipt = z.infer<typeof DeletionReceiptSchema>;
 

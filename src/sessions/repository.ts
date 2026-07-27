@@ -1,8 +1,14 @@
 import { createRequire } from 'node:module';
 import type {
-  ImportCheckpoint, ImportRun, Session, SessionEvent, SessionSource,
+  CandidateReviewReceipt, ImportCheckpoint, ImportRun, IntelligenceCandidate,
+  Session, SessionEvent, SessionSource,
 } from './contracts.js';
-import { SessionContractError } from './contracts.js';
+import {
+  CandidateReviewReceiptSchema,
+  IntelligenceCandidateSchema,
+  SessionContractError,
+  sha256,
+} from './contracts.js';
 
 const require = createRequire(import.meta.url);
 
@@ -153,6 +159,17 @@ export class SessionRepository {
         session_id TEXT NOT NULL, tag TEXT NOT NULL,
         PRIMARY KEY(session_id, tag),
         FOREIGN KEY(session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS intelligence_candidates (
+        candidate_id TEXT NOT NULL, version INTEGER NOT NULL,
+        review_state TEXT NOT NULL, data TEXT NOT NULL,
+        PRIMARY KEY(candidate_id, version)
+      );
+      CREATE TABLE IF NOT EXISTS candidate_review_receipts (
+        receipt_id TEXT PRIMARY KEY, candidate_id TEXT NOT NULL,
+        candidate_version INTEGER NOT NULL, data TEXT NOT NULL,
+        FOREIGN KEY(candidate_id, candidate_version)
+          REFERENCES intelligence_candidates(candidate_id, version)
       );
       CREATE INDEX IF NOT EXISTS idx_session_workspace_provider
         ON sessions(workspace_id, source_id, lifecycle);
@@ -445,6 +462,140 @@ export class SessionRepository {
     }));
   }
 
+  saveCandidates(candidates: readonly IntelligenceCandidate[]): IntelligenceCandidate[] {
+    const save = this.db.transaction(() => {
+      const incomingIds = new Set(candidates.map((candidate) => candidate.candidateId));
+      for (const candidate of candidates) {
+        for (const linkedId of [...candidate.conflictsWith, ...candidate.supersedes]) {
+          if (!incomingIds.has(linkedId) && !this.getCandidate(linkedId)) {
+            throw new SessionContractError(
+              'MALFORMED_SOURCE',
+              'candidate conflict or supersession link does not resolve',
+            );
+          }
+        }
+      }
+      return candidates.map((input) => {
+        const parsed = IntelligenceCandidateSchema.parse(input);
+        this.assertCandidateEvidence(parsed);
+        const priorRow = this.db.prepare(
+          `SELECT data FROM intelligence_candidates
+           WHERE candidate_id=? ORDER BY version DESC LIMIT 1`,
+        ).get(parsed.candidateId);
+        if (priorRow) {
+          const prior = JSON.parse(String(priorRow.data)) as IntelligenceCandidate;
+          if (candidateContentDigest(prior) === candidateContentDigest(parsed)) return prior;
+          parsed.version = prior.version + 1;
+          parsed.reviewState = 'pending';
+        } else {
+          parsed.version = 1;
+          parsed.reviewState = 'pending';
+        }
+        this.db.prepare(
+          `INSERT INTO intelligence_candidates(candidate_id, version, review_state, data)
+           VALUES (?, ?, ?, ?)`,
+        ).run(parsed.candidateId, parsed.version, parsed.reviewState, JSON.stringify(parsed));
+        return parsed;
+      });
+    });
+    return save();
+  }
+
+  getCandidate(candidateId: string, version?: number): IntelligenceCandidate | null {
+    const row = version === undefined
+      ? this.db.prepare(
+          `SELECT data FROM intelligence_candidates
+           WHERE candidate_id=? ORDER BY version DESC LIMIT 1`,
+        ).get(candidateId)
+      : this.db.prepare(
+          `SELECT data FROM intelligence_candidates WHERE candidate_id=? AND version=?`,
+        ).get(candidateId, version);
+    return row ? JSON.parse(String(row.data)) as IntelligenceCandidate : null;
+  }
+
+  listCandidates(reviewState?: IntelligenceCandidate['reviewState']): IntelligenceCandidate[] {
+    const rows = reviewState
+      ? this.db.prepare(
+          `SELECT data FROM intelligence_candidates WHERE review_state=?
+           ORDER BY candidate_id, version`,
+        ).all(reviewState)
+      : this.db.prepare(
+          'SELECT data FROM intelligence_candidates ORDER BY candidate_id, version',
+        ).all();
+    return rows.map((row) => JSON.parse(String(row.data)) as IntelligenceCandidate);
+  }
+
+  reviewCandidate(input: {
+    candidateId: string;
+    version: number;
+    toState: CandidateReviewReceipt['toState'];
+    reviewer: string;
+    reason: string;
+  }): CandidateReviewReceipt {
+    const review = this.db.transaction(() => {
+      const candidate = this.getCandidate(input.candidateId, input.version);
+      if (!candidate) {
+        throw new SessionContractError('MALFORMED_SOURCE', 'candidate version does not exist');
+      }
+      if (!allowedCandidateTransition(candidate.reviewState, input.toState)) {
+        throw new SessionContractError(
+          'UNSUPPORTED_OPERATION',
+          `candidate transition ${candidate.reviewState} -> ${input.toState} is not allowed`,
+        );
+      }
+      const occurredAt = new Date().toISOString();
+      const receipt = CandidateReviewReceiptSchema.parse({
+        contractVersion: '1.0.0',
+        receiptId: sha256([
+          input.candidateId, input.version, candidate.reviewState,
+          input.toState, input.reviewer, input.reason,
+        ].join('\0')),
+        candidateId: input.candidateId,
+        candidateVersion: input.version,
+        fromState: candidate.reviewState,
+        toState: input.toState,
+        reviewer: input.reviewer,
+        reason: input.reason,
+        occurredAt,
+      });
+      candidate.reviewState = input.toState;
+      this.db.prepare(
+        `UPDATE intelligence_candidates SET review_state=?, data=?
+         WHERE candidate_id=? AND version=?`,
+      ).run(input.toState, JSON.stringify(candidate), input.candidateId, input.version);
+      this.db.prepare(
+        `INSERT OR IGNORE INTO candidate_review_receipts
+         (receipt_id, candidate_id, candidate_version, data) VALUES (?, ?, ?, ?)`,
+      ).run(receipt.receiptId, input.candidateId, input.version, JSON.stringify(receipt));
+      return receipt;
+    });
+    return review();
+  }
+
+  private assertCandidateEvidence(candidate: IntelligenceCandidate): void {
+    for (const evidence of candidate.evidence) {
+      const row = this.db.prepare(
+        `SELECT e.data FROM session_events e
+         JOIN sessions s ON s.session_id=e.session_id
+         JOIN import_runs r ON r.import_run_id=e.import_run_id
+         WHERE e.event_id=? AND s.lifecycle!='tombstoned' AND r.status='committed'`,
+      ).get(evidence.eventId);
+      if (!row) {
+        throw new SessionContractError(
+          'MALFORMED_SOURCE',
+          'candidate evidence does not resolve to a visible committed event',
+        );
+      }
+      const event = JSON.parse(String(row.data)) as SessionEvent;
+      if (evidence.end > event.searchableText.length || evidence.start >= evidence.end) {
+        throw new SessionContractError('MALFORMED_SOURCE', 'candidate evidence span is invalid');
+      }
+      if (sha256(event.searchableText.slice(evidence.start, evidence.end)) !== evidence.quoteDigest) {
+        throw new SessionContractError('IMPORT_CONFLICT', 'candidate evidence digest does not match');
+      }
+    }
+  }
+
   getCheckpoint(sourceId: string, parserVersion: string): ImportCheckpoint | null {
     const row = this.db.prepare(
       `SELECT checkpoint FROM import_runs
@@ -636,4 +787,31 @@ function appendMetadataFilters(
       params.push(key, filter);
     }
   }
+}
+
+function candidateContentDigest(candidate: IntelligenceCandidate): string {
+  return sha256(JSON.stringify({
+    ...candidate,
+    version: undefined,
+    reviewState: undefined,
+    createdAt: undefined,
+  }));
+}
+
+function allowedCandidateTransition(
+  from: IntelligenceCandidate['reviewState'],
+  to: IntelligenceCandidate['reviewState'],
+): boolean {
+  const transitions: Record<
+    IntelligenceCandidate['reviewState'],
+    ReadonlySet<IntelligenceCandidate['reviewState']>
+  > = {
+    pending: new Set(['accepted', 'rejected', 'deferred']),
+    deferred: new Set(['pending', 'accepted', 'rejected']),
+    accepted: new Set(['promoted', 'superseded']),
+    promoted: new Set(['superseded']),
+    rejected: new Set(),
+    superseded: new Set(),
+  };
+  return transitions[from].has(to);
 }

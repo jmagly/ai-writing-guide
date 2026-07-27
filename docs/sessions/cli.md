@@ -24,6 +24,12 @@ aiwg sessions search <query> --workspace <id>
                      [--tool <name>] [--tag <tag>] [--entity <entity>]
                      [--sensitivity <class>] [--extraction-state <state>]
                      [--limit <1..500>] [--cursor <opaque>] [--json]
+aiwg sessions extract [session-id] --workspace <id>
+                      [--policy-version <semver>] [--min-confidence <0..1>]
+                      [--dry-run] [--json]
+aiwg sessions candidates [--state <state>] [--json]
+aiwg sessions review <candidate-id> <version> <state>
+                     --reviewer <id> --reason <text> [--dry-run] [--json]
 aiwg sessions tag <session-id> <tag> [--dry-run] [--json]
 aiwg sessions relocate <source-id> <file> [--dry-run] [--json]
 aiwg sessions reindex [--dry-run] [--json]
@@ -52,6 +58,37 @@ Search cursors are opaque snapshots. A cursor fixes the maximum visible event
 row for the query, so imports committed between pages do not reorder or insert
 hits into the active traversal. Start a new search without the cursor to
 include newly imported events.
+
+## Candidate extraction and review
+
+`extract` consumes only normalized, redacted events from the explicitly named
+workspace. The built-in structural extractor recognizes fixed labels such as
+`Decision:`, `Requirement:`, `Risk:`, `Entity:`, and
+`Relationship: subject | predicate | object`. Transcript text remains inert
+data: it is never evaluated as a command, tool request, URL, template, or
+workflow.
+
+Extractor output is validated with a strict schema. Every candidate includes an
+exact event span and quote digest, extractor and policy versions, confidence,
+sensitivity, project/temporal scope, and conflict/supersession links. Uncited,
+out-of-scope, malformed-span, unknown-field, or relationship-incomplete output
+is rejected before persistence.
+
+Candidates begin in `pending`. Supported review transitions are:
+
+```text
+pending  -> accepted | rejected | deferred
+deferred -> pending | accepted | rejected
+accepted -> promoted | superseded
+promoted -> superseded
+```
+
+Each transition requires a reviewer and reason and creates a content-free
+receipt. Rejected and superseded versions are terminal. Extraction and review
+do not write durable memory; `durableMemoryWrites` remains zero. Repeating an
+unchanged extraction returns the existing candidate version, while changed
+content under the same evidence identity creates a new pending version.
+Promotion is a separate explicit milestone and command contract.
 
 ## Optional semantic and Fortemi integration
 

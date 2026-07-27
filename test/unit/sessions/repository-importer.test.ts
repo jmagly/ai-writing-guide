@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { createRequire } from 'node:module';
 import {
+  CandidateExtractionService,
   IncrementalSessionImporter,
   SESSION_CONTRACT_VERSION,
   SessionRepository,
+  StructuralCandidateExtractor,
   sha256,
   stableSessionId,
   type ProviderRecord,
@@ -166,6 +168,130 @@ describe.runIf(hasBetterSqlite3())('transactional session repository and importe
     expect(secondPage.items).toHaveLength(1);
     expect(secondPage.items[0].sourceId).toBe(source.sourceId);
     expect(secondPage.items[0].eventId).not.toBe(firstPage.items[0].eventId);
+    repository.close();
+  });
+
+  it('persists versioned candidates and enforces the review state machine', async () => {
+    const repository = new SessionRepository();
+    const importer = new IncrementalSessionImporter(repository);
+    const candidateSource = { ...source, sourceId: 'candidate-source' };
+    await importer.import({
+      source: candidateSource,
+      selectedSource: {
+        provider: 'generic', locator: '<fixture>', locatorClass: 'synthetic-fixture',
+        sourceId: candidateSource.sourceId,
+        authorizedScope: { workspaceId: 'workspace-1', allowedRoots: ['/fixture'] },
+      },
+      adapter: adapter([{
+        nativeSessionId: 'candidate-session',
+        nativeEventId: 'candidate-event',
+        sequence: 0,
+        kind: 'message',
+        role: 'assistant',
+        text: 'Decision: retain evidence citations',
+        rawReference: { locatorClass: 'fixture', sequence: 0 },
+      }]),
+      workspaceId: 'workspace-1',
+      policyVersion: '1.0.0',
+    });
+    const documents = repository.authorizedSearchDocuments({
+      workspaceId: 'workspace-1',
+      limit: 10,
+    });
+    const service = new CandidateExtractionService(repository);
+    const extracted = await service.extract({
+      documents,
+      extractor: new StructuralCandidateExtractor(),
+      policy: {
+        version: '1.0.0',
+        projectScope: 'workspace-1',
+        temporalScope: 'source-event',
+        minimumConfidence: 0.5,
+      },
+    });
+    expect(extracted).toHaveLength(1);
+    const candidate = extracted[0];
+    expect(repository.getCandidate(candidate.candidateId, 1)).toEqual(candidate);
+    expect(repository.listCandidates('pending')).toEqual([candidate]);
+
+    const repeated = await service.extract({
+      documents,
+      extractor: new StructuralCandidateExtractor(),
+      policy: {
+        version: '1.0.0',
+        projectScope: 'workspace-1',
+        temporalScope: 'source-event',
+        minimumConfidence: 0.5,
+      },
+    });
+    expect(repeated).toEqual([candidate]);
+    expect(repository.listCandidates()).toHaveLength(1);
+
+    expect(repository.reviewCandidate({
+      candidateId: candidate.candidateId,
+      version: 1,
+      toState: 'accepted',
+      reviewer: 'reviewer-a',
+      reason: 'evidence verified',
+    })).toMatchObject({ fromState: 'pending', toState: 'accepted' });
+    expect(() => repository.reviewCandidate({
+      candidateId: candidate.candidateId,
+      version: 1,
+      toState: 'rejected',
+      reviewer: 'reviewer-a',
+      reason: 'invalid reversal',
+    })).toThrow(/not allowed/);
+    expect(repository.reviewCandidate({
+      candidateId: candidate.candidateId,
+      version: 1,
+      toState: 'promoted',
+      reviewer: 'reviewer-a',
+      reason: 'promotion receipt linked',
+    })).toMatchObject({ fromState: 'accepted', toState: 'promoted' });
+    expect(repository.reviewCandidate({
+      candidateId: candidate.candidateId,
+      version: 1,
+      toState: 'superseded',
+      reviewer: 'reviewer-a',
+      reason: 'replacement accepted',
+    })).toMatchObject({ fromState: 'promoted', toState: 'superseded' });
+
+    const revised = repository.saveCandidates([{
+      ...candidate,
+      assertion: 'retain exact evidence citations',
+      reviewState: 'pending',
+      createdAt: new Date().toISOString(),
+    }]);
+    expect(revised).toMatchObject([{ version: 2, reviewState: 'pending' }]);
+    expect(repository.reviewCandidate({
+      candidateId: candidate.candidateId,
+      version: 2,
+      toState: 'deferred',
+      reviewer: 'reviewer-b',
+      reason: 'needs another source',
+    })).toMatchObject({ fromState: 'pending', toState: 'deferred' });
+    expect(repository.reviewCandidate({
+      candidateId: candidate.candidateId,
+      version: 2,
+      toState: 'pending',
+      reviewer: 'reviewer-b',
+      reason: 'additional source received',
+    })).toMatchObject({ fromState: 'deferred', toState: 'pending' });
+    expect(repository.reviewCandidate({
+      candidateId: candidate.candidateId,
+      version: 2,
+      toState: 'rejected',
+      reviewer: 'reviewer-b',
+      reason: 'replacement unsupported',
+    })).toMatchObject({ fromState: 'pending', toState: 'rejected' });
+    expect(repository.saveCandidates([{
+      ...candidate,
+      candidateId: sha256('alternate-candidate'),
+      version: 99,
+      reviewState: 'promoted',
+      createdAt: new Date().toISOString(),
+    }])).toMatchObject([{ version: 1, reviewState: 'pending' }]);
+    expect(repository.listCandidates()).toHaveLength(3);
     repository.close();
   });
 

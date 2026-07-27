@@ -5,6 +5,7 @@ import {
   ClaudeSessionAdapter,
   CODEX_ADAPTER_VERSION,
   CodexSessionAdapter,
+  CandidateExtractionService,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
   IncrementalSessionImporter,
@@ -13,6 +14,7 @@ import {
   SessionContractError,
   SessionRepository,
   SessionSourceSchema,
+  StructuralCandidateExtractor,
   assertSessionProviderId,
   redactSourceLocator,
   type SessionProviderId,
@@ -42,6 +44,9 @@ Commands:
   list [--limit N] [--cursor N]   List normalized sessions
   show <session-id>               Show a session with events and tags
   search <query> --workspace <id> Search authorized normalized content
+  extract [session-id] --workspace <id> Extract structural candidates
+  candidates [--state <state>]    List the candidate review queue
+  review <id> <version> <state>   Record an explicit review transition
   tag <session-id> <tag>          Add a catalog tag
   relocate <source-id> <file>     Update AIWG source-location metadata
   reindex                         Rebuild catalog indexes
@@ -171,6 +176,76 @@ async function executeCommand(
           page: { limit: boundedInteger(args.values.get('--limit'), 50, 1, 500, '--limit'),
             nextCursor: result.nextCursor },
         });
+      }
+      case 'extract': {
+        const workspaceId = requiredValue(args, '--workspace');
+        const sessionId = args.positionals[0];
+        const documents = repository.authorizedSearchDocuments({
+          workspaceId,
+          limit: 500,
+        }).filter((document) => !sessionId || document.sessionId === sessionId);
+        if (sessionId && documents.length === 0) {
+          throw new CliError(
+            'SESSION_NOT_FOUND',
+            `no authorized evidence found for session: ${sessionId}`,
+            EXIT.unavailable,
+          );
+        }
+        const dryRun = isDryRun(ctx, args);
+        const service = new CandidateExtractionService(dryRun
+          ? { saveCandidates: (candidates) => [...candidates] }
+          : repository);
+        const items = await service.extract({
+          documents,
+          extractor: new StructuralCandidateExtractor(),
+          policy: {
+            version: args.values.get('--policy-version') ?? '1.0.0',
+            projectScope: workspaceId,
+            temporalScope: 'source-event',
+            minimumConfidence: boundedNumber(
+              args.values.get('--min-confidence'),
+              0.5,
+              0,
+              1,
+              '--min-confidence',
+            ),
+          },
+        });
+        return dryRun
+          ? preview(command, { items, count: items.length, durableMemoryWrites: 0 })
+          : ok(command, { items, count: items.length, durableMemoryWrites: 0 });
+      }
+      case 'candidates': {
+        const state = candidateState(args.values.get('--state'));
+        return ok(command, {
+          items: repository.listCandidates(state),
+        });
+      }
+      case 'review': {
+        const candidateId = requiredPositional(args, 0, 'candidate-id');
+        const version = boundedInteger(
+          requiredPositional(args, 1, 'version'),
+          1,
+          1,
+          Number.MAX_SAFE_INTEGER,
+          'version',
+        );
+        const toState = candidateState(requiredPositional(args, 2, 'state'));
+        if (!toState) throw new CliError('INVALID_ARGUMENT', 'review state is required', EXIT.usage);
+        if (isDryRun(ctx, args)) {
+          return preview(command, {
+            candidateId, version, toState,
+            reviewer: requiredValue(args, '--reviewer'),
+            reason: requiredValue(args, '--reason'),
+          });
+        }
+        return ok(command, repository.reviewCandidate({
+          candidateId,
+          version,
+          toState,
+          reviewer: requiredValue(args, '--reviewer'),
+          reason: requiredValue(args, '--reason'),
+        }));
       }
       case 'tag': {
         const id = requiredPositional(args, 0, 'session-id');
@@ -369,6 +444,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     '--db', '--provider', '--workspace', '--tag', '--limit', '--cursor', '--source-id',
     '--date-from', '--date-to', '--participant', '--model', '--role', '--tool',
     '--entity', '--sensitivity', '--extraction-state',
+    '--state', '--reviewer', '--reason', '--policy-version', '--min-confidence',
   ]);
   let command: string | undefined;
   for (let index = 0; index < argv.length; index += 1) {
@@ -413,6 +489,34 @@ function boundedInteger(
     throw new CliError('INVALID_ARGUMENT', `${name} must be between ${min} and ${max}`, EXIT.usage);
   }
   return parsed;
+}
+
+function boundedNumber(
+  value: string | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+  name: string,
+): number {
+  if (value === undefined) return fallback;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < min || parsed > max) {
+    throw new CliError('INVALID_ARGUMENT', `${name} must be between ${min} and ${max}`, EXIT.usage);
+  }
+  return parsed;
+}
+
+type CandidateState = 'pending' | 'accepted' | 'rejected' | 'deferred' | 'promoted' | 'superseded';
+
+function candidateState(value: string | undefined): CandidateState | undefined {
+  if (value === undefined) return undefined;
+  const states = new Set<CandidateState>([
+    'pending', 'accepted', 'rejected', 'deferred', 'promoted', 'superseded',
+  ]);
+  if (!states.has(value as CandidateState)) {
+    throw new CliError('INVALID_ARGUMENT', `invalid candidate state: ${value}`, EXIT.usage);
+  }
+  return value as CandidateState;
 }
 
 function isDryRun(ctx: HandlerContext, args: ParsedArgs): boolean {
