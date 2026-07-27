@@ -8,7 +8,7 @@
  * - **Incoming**: corpus papers that cite this work (column: "REF") → `cited-by` edges
  *
  * Supported node-id forms (#105):
- * - `REF-\d+`                      research-paper IDs (REF-001, REF-029, ...)
+ * - `REF-\d+[a-z]?`                research-paper IDs (REF-001, REF-434a, ...)
  * - `PROF-[POFG]-[a-z0-9-]+`       entity-profile IDs:
  *     - `PROF-P-*` people, `PROF-O-*` orgs, `PROF-F-*` funders, `PROF-G-*` groups
  *
@@ -29,19 +29,45 @@ import { parseFrontmatter } from './index-builder.js';
  * Match a single node identifier (REF-* or PROF-*) anywhere in a string.
  * Used by `extractRefsFromTable` to pull every ID out of a table cell.
  */
-const NODE_ID_PATTERN = /(?:REF-\d+|PROF-[POFG]-[a-z0-9-]+)/g;
+const NODE_ID_PATTERN = /(?:REF-\d+[a-z]?|PROF-[POFG]-[a-z0-9-]+)/g;
 
 /**
  * Validate that a string is a complete node identifier.
  * Used by `parseCitationSidecar` and `buildRefToPathMap` to gate
  * frontmatter `ref` values.
  */
-const NODE_ID_FULL = /^(?:REF-\d+|PROF-[POFG]-[a-z0-9-]+)$/;
+const NODE_ID_FULL = /^(?:REF-\d+[a-z]?|PROF-[POFG]-[a-z0-9-]+)$/;
+
+/** Explicit column aliases used by historical citation-sidecar variants. */
+const CITATION_REF_COLUMNS = [
+  'Inducted REF',
+  'REF',
+  'Corpus REF',
+  'In-corpus REF',
+] as const;
+
+/**
+ * Preserve the corpus snapshot's legacy edge semantics: every node ID on a
+ * pipe-delimited line inside an outgoing/incoming section is a declaration.
+ * Explicit column parsing remains the primary path, while this compatibility
+ * scan covers malformed rows and prose continuations that historical corpus
+ * snapshots already count.
+ */
+function extractSectionNodeIds(section: string): string[] {
+  const refs: string[] = [];
+  for (const line of section.split('\n')) {
+    if (!line.includes('|')) continue;
+    NODE_ID_PATTERN.lastIndex = 0;
+    const matches = line.match(NODE_ID_PATTERN);
+    if (matches) refs.push(...matches);
+  }
+  return [...new Set(refs)];
+}
 
 /**
  * Test whether a string is a valid sidecar node identifier.
  *
- * Accepts `REF-\d+` and `PROF-[POFG]-[a-z0-9-]+`. Returns false for any
+ * Accepts `REF-\d+[a-z]?` and `PROF-[POFG]-[a-z0-9-]+`. Returns false for any
  * other input (including unrelated `PROF-` prefixed strings that don't
  * match the four-letter type code form).
  */
@@ -73,38 +99,77 @@ export interface CitationParseResult {
  * @param columnName - Column header to extract from (e.g., "Inducted REF")
  * @returns Array of node identifiers found
  */
-export function extractRefsFromTable(tableText: string, columnName: string): string[] {
-  const lines = tableText.split('\n').filter(l => l.trim().startsWith('|'));
-  if (lines.length < 3) return []; // Need header + separator + at least one row
+export function extractRefsFromTable(
+  tableText: string,
+  columnName: string | readonly string[],
+): string[] {
+  const aliases = (Array.isArray(columnName) ? columnName : [columnName])
+    .map(name => name.trim().toLowerCase());
+  const tableBlocks: string[][] = [];
+  let currentBlock: string[] = [];
+  for (const line of tableText.split('\n')) {
+    if (line.trim().startsWith('|')) {
+      currentBlock.push(line);
+    } else if (currentBlock.length > 0) {
+      tableBlocks.push(currentBlock);
+      currentBlock = [];
+    }
+  }
+  if (currentBlock.length > 0) tableBlocks.push(currentBlock);
 
-  // Parse header to find column index
-  const headerCells = lines[0].split('|').map(c => c.trim()).filter(Boolean);
-  const colIndex = headerCells.findIndex(
-    h => h.toLowerCase() === columnName.toLowerCase()
-  );
-  if (colIndex === -1) return [];
+  const parseRow = (line: string): string[] => {
+    let row = line.trim();
+    if (row.startsWith('|')) row = row.slice(1);
+    if (row.endsWith('|')) row = row.slice(0, -1);
+    return row.split('|').map(cell => cell.trim());
+  };
 
-  // Skip header (line 0) and separator (line 1), parse data rows
   const refs: string[] = [];
-  for (let i = 2; i < lines.length; i++) {
-    const cells = lines[i].split('|').map(c => c.trim()).filter(Boolean);
-    if (colIndex >= cells.length) continue;
+  for (const lines of tableBlocks) {
+    const headerCells = parseRow(lines[0]);
+    const colIndex = headerCells.findIndex(
+      header => {
+        const normalized = header.toLowerCase().replace(/[`*_]/g, '').trim();
+        return aliases.some(alias =>
+          normalized === alias ||
+          normalized.startsWith(`${alias} /`) ||
+          normalized.startsWith(`${alias} (`),
+        );
+      },
+    );
+    if (lines.length < 3 || colIndex === -1) {
+      // Legacy sidecars sometimes have headerless continuation rows or a
+      // generic table whose rows were extended with a final REF cell. The
+      // corpus snapshot has always treated every in-section table REF as an
+      // outgoing/incoming declaration, so retain that compatibility fallback.
+      const dataLines = lines.length >= 3 ? lines.slice(2) : lines;
+      for (const line of dataLines) {
+        NODE_ID_PATTERN.lastIndex = 0;
+        const refMatches = line.match(NODE_ID_PATTERN);
+        if (refMatches) refs.push(...refMatches);
+      }
+      continue;
+    }
 
-    const value = cells[colIndex].trim();
-    // Skip empty, dash, or em-dash values
-    if (!value || value === '—' || value === '-' || value === '–') continue;
+    // Skip this table's header and separator, preserving all interior cells.
+    for (let i = 2; i < lines.length; i++) {
+      const cells = parseRow(lines[i]);
+      if (colIndex >= cells.length) continue;
 
-    // Extract node-id pattern(s) (REF-* or PROF-*) from the cell.
-    // Reset the lastIndex defensively — NODE_ID_PATTERN is a module-level
-    // /g RegExp shared across calls.
-    NODE_ID_PATTERN.lastIndex = 0;
-    const refMatches = value.match(NODE_ID_PATTERN);
-    if (refMatches) {
-      refs.push(...refMatches);
+      // Historical rows may expand the named REF cell into an issue/REF pair
+      // or append placeholder cells without extending the header. Scan from
+      // the named column through the remainder of the row; columns before the
+      // alias (title/authors/year) remain excluded.
+      const value = cells.slice(colIndex).join(' | ');
+      if (!value || value === '—' || value === '-' || value === '–') continue;
+
+      NODE_ID_PATTERN.lastIndex = 0;
+      const refMatches = value.match(NODE_ID_PATTERN);
+      if (refMatches) refs.push(...refMatches);
     }
   }
 
-  return refs;
+  return [...new Set(refs)];
 }
 
 /**
@@ -130,17 +195,15 @@ export function parseCitationSidecar(content: string): CitationParseResult | nul
     const sectionLower = section.toLowerCase();
 
     if (sectionLower.startsWith('outgoing')) {
-      // Outgoing table: extract from "Inducted REF" column
-      cites = extractRefsFromTable(section, 'Inducted REF');
+      cites.push(...extractRefsFromTable(section, CITATION_REF_COLUMNS));
+      cites.push(...extractSectionNodeIds(section));
     } else if (sectionLower.startsWith('incoming')) {
-      // Incoming table: extract from "REF" column
-      // The incoming section may have subsections (### Corpus Cross-References)
-      // Look for tables anywhere in this section
-      citedBy = extractRefsFromTable(section, 'REF');
+      citedBy.push(...extractRefsFromTable(section, CITATION_REF_COLUMNS));
+      citedBy.push(...extractSectionNodeIds(section));
     }
   }
 
-  return { ref, cites, citedBy };
+  return { ref, cites: [...new Set(cites)], citedBy: [...new Set(citedBy)] };
 }
 
 /**

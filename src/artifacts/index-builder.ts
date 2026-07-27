@@ -1051,6 +1051,13 @@ export async function buildIndex(
   }
 
   // Run citation sidecar edge extraction if configured
+  let citationMetrics: {
+    canonicalEdges: number;
+    outgoingDeclarations: number;
+    incomingDeclarations: number;
+    unmirroredOutgoing: number;
+    unmirroredIncoming: number;
+  } | null = null;
   if (graphConfig?.edgeExtraction?.parser === 'citation-sidecar') {
     // Build REF-XXX → path map from all entries with ref frontmatter
     const entryFrontmatter = new Map<string, Record<string, unknown>>();
@@ -1066,6 +1073,10 @@ export async function buildIndex(
 
     // Parse each entry as a citation sidecar and extract edges
     let citationEdgeCount = 0;
+    let outgoingDeclarations = 0;
+    let incomingDeclarations = 0;
+    const canonicalOutgoing = new Set<string>();
+    const declaredIncoming = new Set<string>();
     for (const entryPath of Object.keys(entries)) {
       const fullPath = absoluteEntryPath(cwd, entryPath, graph);
       if (!fs.existsSync(fullPath)) continue;
@@ -1073,6 +1084,15 @@ export async function buildIndex(
       const content = fs.readFileSync(fullPath, 'utf-8');
       const result = parseCitationSidecar(content);
       if (!result) continue;
+
+      outgoingDeclarations += result.cites.length;
+      incomingDeclarations += result.citedBy.length;
+      for (const targetRef of result.cites) {
+        canonicalOutgoing.add(`${result.ref}\0${targetRef}`);
+      }
+      for (const sourceRef of result.citedBy) {
+        declaredIncoming.add(`${sourceRef}\0${result.ref}`);
+      }
 
       const edges = citationResultToEdges(result, refToPath);
 
@@ -1102,6 +1122,16 @@ export async function buildIndex(
         citationEdgeCount++;
       }
     }
+
+    citationMetrics = {
+      canonicalEdges: canonicalOutgoing.size,
+      outgoingDeclarations,
+      incomingDeclarations,
+      unmirroredOutgoing: [...canonicalOutgoing]
+        .filter(edge => !declaredIncoming.has(edge)).length,
+      unmirroredIncoming: [...declaredIncoming]
+        .filter(edge => !canonicalOutgoing.has(edge)).length,
+    };
 
     if (verbose && citationEdgeCount > 0) {
       console.log(`  citation edges: ${citationEdgeCount}`);
@@ -1142,9 +1172,13 @@ export async function buildIndex(
   writeManifest(indexOutputDir, nextManifest);
 
   // Write stats
-  const totalEdges = Object.values(depGraph).reduce(
+  const downstreamEdges = Object.values(depGraph).reduce(
     (sum, node) => sum + node.downstream.length, 0
   );
+  const adjacencyEntries = Object.values(depGraph).reduce(
+    (sum, node) => sum + node.upstream.length + node.downstream.length, 0
+  );
+  const totalEdges = citationMetrics?.canonicalEdges ?? downstreamEdges;
   const orphaned = Object.entries(depGraph).filter(
     ([, node]) => node.upstream.length === 0 && node.downstream.length === 0
   ).length;
@@ -1175,6 +1209,14 @@ export async function buildIndex(
     tagDistribution: tagDist,
     graphMetrics: {
       totalEdges,
+      ...(citationMetrics ? {
+        canonicalEdges: citationMetrics.canonicalEdges,
+        outgoingDeclarations: citationMetrics.outgoingDeclarations,
+        incomingDeclarations: citationMetrics.incomingDeclarations,
+        adjacencyEntries,
+        unmirroredOutgoing: citationMetrics.unmirroredOutgoing,
+        unmirroredIncoming: citationMetrics.unmirroredIncoming,
+      } : {}),
       orphanedArtifacts: orphaned,
       mostReferenced,
     },

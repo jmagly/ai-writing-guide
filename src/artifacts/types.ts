@@ -322,7 +322,23 @@ export interface IndexStats {
 
   /** Dependency graph metrics */
   graphMetrics: {
+    /**
+     * Unique directed relationships. For citation graphs this is a
+     * compatibility alias for canonicalEdges.
+     */
     totalEdges: number;
+    /** Unique directed source -> target citations declared by outgoing tables. */
+    canonicalEdges?: number;
+    /** Parsed outgoing citation declarations after per-sidecar deduplication. */
+    outgoingDeclarations?: number;
+    /** Parsed incoming/cited-by declarations after per-sidecar deduplication. */
+    incomingDeclarations?: number;
+    /** Stored upstream plus downstream adjacency entries. */
+    adjacencyEntries?: number;
+    /** Canonical outgoing citations without a matching incoming declaration. */
+    unmirroredOutgoing?: number;
+    /** Incoming declarations without a matching canonical outgoing citation. */
+    unmirroredIncoming?: number;
     orphanedArtifacts: number;
     mostReferenced: { path: string; count: number } | null;
   };

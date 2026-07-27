@@ -34,6 +34,51 @@ describe('Citation Sidecar Parser', () => {
       expect(refs).toEqual(['REF-029', 'REF-009']);
     });
 
+    it('preserves interior empty cells when locating the target column (#1939)', () => {
+      const table = `
+| # | Title | Authors | Year | DOI/URL | Inducted REF |
+|---|---|---|---|---|---|
+| 1 | Example |  |  |  | REF-002 |
+`;
+      expect(extractRefsFromTable(table, 'Inducted REF')).toEqual(['REF-002']);
+    });
+
+    it('supports aliases and independently parses variant tables (#1939)', () => {
+      const tables = `
+| Title | Placeholder |
+|---|---|
+| Ignored | — |
+
+| # | Title | Extra | REF |
+|---|---|---|---|
+| 1 | Decorated |  | [\`REF-004\`](../REF-004.md) |
+`;
+      expect(extractRefsFromTable(tables, ['Inducted REF', 'REF'])).toEqual(['REF-004']);
+    });
+
+    it('right-aligns a named final column when historical rows add placeholders (#1939)', () => {
+      const table = `
+| # | Title | Authors | Year | Inducted REF |
+|---|---|---|---|---|
+| 1 | Shifted | — | — | — | — | REF-006 |
+`;
+      expect(extractRefsFromTable(table, ['Inducted REF', 'REF'])).toEqual(['REF-006']);
+    });
+
+    it('handles decorated aliases and legacy headerless continuation rows (#1939)', () => {
+      const tables = `
+| Work | In-corpus REF / issue | Status |
+|---|---|---|
+| Candidate | #249 | REF-007 | exact |
+
+| — | Continued work | REF-008 |
+`;
+      expect(extractRefsFromTable(tables, ['In-corpus REF', 'REF'])).toEqual([
+        'REF-007',
+        'REF-008',
+      ]);
+    });
+
     it('should handle case-insensitive column matching', () => {
       const table = `
 | REF | Title | Relationship |
@@ -221,6 +266,68 @@ title: "Foundational Paper"
       expect(result!.citedBy).toEqual(['REF-010']);
     });
 
+    it('accepts both supported header aliases in outgoing and incoming sections (#1939)', () => {
+      const content = `---
+ref: REF-001
+---
+
+## Outgoing: Papers This Work Cites
+
+| Title | REF |
+|---|---|
+| Outgoing alias | REF-002 |
+
+## Incoming: Papers That Cite This Work
+
+| Title | Inducted REF |
+|---|---|
+| Incoming alias | REF-003 |
+`;
+      expect(parseCitationSidecar(content)).toEqual({
+        ref: 'REF-001',
+        cites: ['REF-002'],
+        citedBy: ['REF-003'],
+      });
+    });
+
+    it('accepts historical corpus REF aliases (#1939)', () => {
+      const content = `---
+ref: REF-001
+---
+
+## Outgoing References
+
+| Title | Corpus REF |
+|---|---|
+| Corpus alias | REF-002 |
+
+## Incoming Connections
+
+| Title | In-corpus REF |
+|---|---|
+| In-corpus alias | REF-003 |
+`;
+      expect(parseCitationSidecar(content)).toEqual({
+        ref: 'REF-001',
+        cites: ['REF-002'],
+        citedBy: ['REF-003'],
+      });
+    });
+
+    it('matches snapshot semantics for malformed rows with IDs before the named column (#1939)', () => {
+      const content = `---
+ref: REF-001
+---
+
+## Outgoing References
+
+| # | Title | Inducted REF |
+|---|---|---|
+| 1 | REDIRECT → REF-002 | REF-003 |
+`;
+      expect(parseCitationSidecar(content)?.cites).toEqual(['REF-003', 'REF-002']);
+    });
+
     it('should parse a profile-edges sidecar with PROF-* source (#105)', () => {
       const content = `---
 ref: PROF-P-marks-samuel
@@ -381,6 +488,7 @@ No citations found.
     it('accepts REF-* and all four PROF-* type codes', () => {
       expect(isNodeId('REF-001')).toBe(true);
       expect(isNodeId('REF-1234')).toBe(true);
+      expect(isNodeId('REF-434a')).toBe(true);
       expect(isNodeId('PROF-P-marks-samuel')).toBe(true);
       expect(isNodeId('PROF-O-anthropic')).toBe(true);
       expect(isNodeId('PROF-F-open-philanthropy')).toBe(true);
@@ -505,6 +613,7 @@ No inducted references.
 | REF | Title | Relationship |
 |-----|-------|-------------|
 | REF-008 | RAG | References memory mechanisms |
+| REF-029 | DPR | Incoming-only declaration |
 `);
 
       fs.writeFileSync(path.join(citationsDir, 'REF-015-citations.md'), `---
@@ -518,6 +627,8 @@ type: citations
 | # | Title | Inducted REF |
 |---|-------|--------------|
 | 1 | RAG | REF-008 |
+| 2 | DPR | REF-029 |
+| 3 | Duplicate DPR | REF-029 |
 
 ## Incoming: Papers That Cite This Work
 
@@ -558,8 +669,21 @@ No corpus citations.
       const ref015 = deps['documentation/citations/REF-015-citations.md'];
       expect(ref015).toBeDefined();
       const ref015Cites = ref015.upstream.filter(e => e.type === 'cites');
-      expect(ref015Cites).toHaveLength(1);
+      expect(ref015Cites).toHaveLength(2);
       expect(ref015Cites[0].path).toBe('documentation/citations/REF-008-citations.md');
+
+      const stats = JSON.parse(
+        fs.readFileSync(path.join(indexDir, 'stats.json'), 'utf-8'),
+      );
+      expect(stats.graphMetrics).toMatchObject({
+        totalEdges: 4,
+        canonicalEdges: 4,
+        outgoingDeclarations: 4,
+        incomingDeclarations: 4,
+        adjacencyEntries: 16,
+        unmirroredOutgoing: 1,
+        unmirroredIncoming: 1,
+      });
     });
 
     it('should extract PROF-* → REF-* edges in citation-network graph (#105)', async () => {

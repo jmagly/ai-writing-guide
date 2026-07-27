@@ -45,6 +45,12 @@ describe('Artifact Index Statistics', () => {
     },
     graphMetrics: {
       totalEdges: 22,
+      canonicalEdges: 22,
+      outgoingDeclarations: 23,
+      incomingDeclarations: 21,
+      adjacencyEntries: 88,
+      unmirroredOutgoing: 2,
+      unmirroredIncoming: 1,
       orphanedArtifacts: 2,
       mostReferenced: {
         path: '.aiwg/requirements/UC-001.md',
@@ -87,6 +93,12 @@ describe('Artifact Index Statistics', () => {
     expect(output).toContain('use-case');
     expect(output).toContain('Total edges:');
     expect(output).toContain('22');
+    expect(output).toContain('Canonical edges:');
+    expect(output).toContain('Outgoing declares:');
+    expect(output).toContain('Incoming declares:');
+    expect(output).toContain('Adjacency entries:');
+    expect(output).toContain('Unmirrored outgoing:');
+    expect(output).toContain('Unmirrored incoming:');
     expect(output).toContain('Orphaned artifacts:');
     expect(output).toContain('2');
     expect(output).toContain('Most referenced:');
