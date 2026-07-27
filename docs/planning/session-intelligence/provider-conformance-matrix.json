@@ -1,0 +1,116 @@
+{
+  "contractVersion": "1.0.0",
+  "canonicalProviderCount": 12,
+  "providers": [
+    {
+      "provider": "claude",
+      "issue": 1910,
+      "status": "implemented",
+      "operations": ["discover", "inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/claude",
+      "tests": "test/unit/sessions/claude-adapter.test.ts",
+      "documentation": "docs/providers/claude-code-sessions.md"
+    },
+    {
+      "provider": "codex",
+      "issue": 1911,
+      "status": "implemented",
+      "operations": ["discover", "inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/codex",
+      "tests": "test/unit/sessions/codex-adapter.test.ts",
+      "documentation": "docs/providers/codex-sessions.md"
+    },
+    {
+      "provider": "copilot",
+      "issue": 1912,
+      "status": "implemented",
+      "operations": ["inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/copilot",
+      "tests": "test/unit/sessions/copilot-adapter.test.ts",
+      "documentation": "docs/providers/copilot-sessions.md"
+    },
+    {
+      "provider": "cursor",
+      "issue": 1913,
+      "status": "implemented",
+      "operations": ["inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/cursor",
+      "tests": "test/unit/sessions/cursor-adapter.test.ts",
+      "documentation": "docs/providers/cursor-sessions.md"
+    },
+    {
+      "provider": "factory",
+      "issue": 1914,
+      "status": "implemented",
+      "operations": ["discover", "inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/factory",
+      "tests": "test/unit/sessions/factory-adapter.test.ts",
+      "documentation": "docs/providers/factory-sessions.md"
+    },
+    {
+      "provider": "hermes",
+      "issue": 1915,
+      "status": "implemented",
+      "operations": ["inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/hermes",
+      "tests": "test/unit/sessions/hermes-adapter.test.ts",
+      "documentation": "docs/providers/hermes-sessions.md"
+    },
+    {
+      "provider": "opencode",
+      "issue": 1916,
+      "status": "implemented",
+      "operations": ["inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/opencode",
+      "tests": "test/unit/sessions/opencode-adapter.test.ts",
+      "documentation": "docs/providers/opencode-sessions.md"
+    },
+    {
+      "provider": "openclaw",
+      "issue": 1917,
+      "status": "implemented",
+      "operations": ["inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/openclaw",
+      "tests": "test/unit/sessions/openclaw-adapter.test.ts",
+      "documentation": "docs/providers/openclaw-sessions.md"
+    },
+    {
+      "provider": "openhuman",
+      "issue": 1918,
+      "status": "implemented",
+      "operations": ["inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/openhuman",
+      "tests": "test/unit/sessions/openhuman-adapter.test.ts",
+      "documentation": "docs/providers/openhuman-sessions.md"
+    },
+    {
+      "provider": "warp",
+      "issue": 1919,
+      "status": "manual-only",
+      "operations": ["inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/warp",
+      "tests": "test/unit/sessions/warp-adapter.test.ts",
+      "documentation": "docs/providers/warp-sessions.md"
+    },
+    {
+      "provider": "windsurf",
+      "issue": 1920,
+      "status": "implemented",
+      "operations": ["inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/windsurf",
+      "tests": "test/unit/sessions/windsurf-adapter.test.ts",
+      "documentation": "docs/providers/windsurf-sessions.md",
+      "product": "Devin Desktop",
+      "compatibilityNote": "windsurf is the stable AIWG provider ID"
+    },
+    {
+      "provider": "generic",
+      "issue": 1921,
+      "status": "manual-only",
+      "operations": ["inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/generic",
+      "tests": "test/unit/sessions/generic-adapter.test.ts",
+      "documentation": "docs/providers/generic-session-interchange.md"
+    }
+  ]
+}
