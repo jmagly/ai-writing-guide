@@ -26,6 +26,14 @@ export interface BoundedReadResult {
   bytesRead: number;
 }
 
+export interface BoundedJsonLineStream extends AsyncIterable<BoundedJsonRecord> {
+  readonly nextCursor: string;
+  readonly consistency: z.infer<typeof ConsistencyStateSchema>;
+  readonly incompleteTail: boolean;
+  readonly bytesRead: number;
+  readonly recordsRead: number;
+}
+
 export const DEFAULT_READER_LIMITS: ReaderLimits = Object.freeze({
   maxRecords: 1_000_000,
   maxRecordBytes: 4 * 1024 * 1024,
@@ -41,53 +49,81 @@ export async function readBoundedJsonLines(
     limits?: Partial<ReaderLimits>;
   },
 ): Promise<BoundedReadResult> {
+  const stream = await streamBoundedJsonLines(authorization, options);
+  const records: BoundedJsonRecord[] = [];
+  for await (const record of stream) records.push(record);
+  return {
+    records,
+    nextCursor: stream.nextCursor,
+    consistency: stream.consistency,
+    incompleteTail: stream.incompleteTail,
+    bytesRead: stream.bytesRead,
+  };
+}
+
+export async function streamBoundedJsonLines(
+  authorization: SourceAuthorization,
+  options: {
+    cursor?: string;
+    consistency: z.infer<typeof ConsistencyStateSchema>;
+    limits?: Partial<ReaderLimits>;
+  },
+): Promise<BoundedJsonLineStream> {
   const allowed = await authorizeSourceFile(authorization);
   const limits = { ...DEFAULT_READER_LIMITS, ...options.limits };
   const start = parseCursor(options.cursor);
   if (start > allowed.size) throw new SessionContractError('SCHEMA_DRIFT', 'reader cursor is beyond source size');
 
-  const records: BoundedJsonRecord[] = [];
   let offset = start;
   let total = 0;
+  let count = 0;
   let incompleteTail = false;
-  const lines = createInterface({
-    input: createReadStream(allowed.canonicalPath, { start, encoding: 'utf8' }),
-    crlfDelay: Infinity,
-  });
-  for await (const line of lines) {
-    const bytes = Buffer.byteLength(line) + 1;
-    if (bytes > limits.maxRecordBytes || total + bytes > limits.maxTotalBytes
-      || records.length + 1 > limits.maxRecords) {
-      throw new SessionContractError('RESOURCE_LIMIT_EXCEEDED', 'bounded session reader limit exceeded');
-    }
-    if (line.trim() === '') {
-      offset += bytes;
-      total += bytes;
-      continue;
-    }
-    let value: unknown;
+  const iterate = async function* (): AsyncGenerator<BoundedJsonRecord> {
+    const input = createReadStream(allowed.canonicalPath, { start, encoding: 'utf8' });
+    const lines = createInterface({ input, crlfDelay: Infinity });
     try {
-      value = JSON.parse(line);
-    } catch {
-      if (options.consistency === 'provisional') {
-        incompleteTail = true;
-        break;
+      for await (const line of lines) {
+        const bytes = Buffer.byteLength(line) + 1;
+        if (bytes > limits.maxRecordBytes || total + bytes > limits.maxTotalBytes
+          || count + 1 > limits.maxRecords) {
+          throw new SessionContractError('RESOURCE_LIMIT_EXCEEDED', 'bounded session reader limit exceeded');
+        }
+        if (line.trim() === '') {
+          offset += bytes;
+          total += bytes;
+          continue;
+        }
+        let value: unknown;
+        try {
+          value = JSON.parse(line);
+        } catch {
+          if (options.consistency === 'provisional') {
+            incompleteTail = true;
+            break;
+          }
+          throw new SessionContractError('SCHEMA_DRIFT', 'malformed JSONL record in consistent source');
+        }
+        if (jsonDepth(value) > limits.maxNestingDepth) {
+          throw new SessionContractError('RESOURCE_LIMIT_EXCEEDED', 'JSON nesting depth exceeds reader limit');
+        }
+        const record = { value, sequence: count, byteOffset: offset, byteLength: bytes };
+        count += 1;
+        offset += bytes;
+        total += bytes;
+        yield record;
       }
-      throw new SessionContractError('SCHEMA_DRIFT', 'malformed JSONL record in consistent source');
+    } finally {
+      lines.close();
+      input.destroy();
     }
-    if (jsonDepth(value) > limits.maxNestingDepth) {
-      throw new SessionContractError('RESOURCE_LIMIT_EXCEEDED', 'JSON nesting depth exceeds reader limit');
-    }
-    records.push({ value, sequence: records.length, byteOffset: offset, byteLength: bytes });
-    offset += bytes;
-    total += bytes;
-  }
+  };
   return {
-    records,
-    nextCursor: String(offset),
+    get nextCursor() { return String(offset); },
     consistency: options.consistency,
-    incompleteTail,
-    bytesRead: total,
+    get incompleteTail() { return incompleteTail; },
+    get bytesRead() { return total; },
+    get recordsRead() { return count; },
+    [Symbol.asyncIterator]: iterate,
   };
 }
 
@@ -146,6 +182,44 @@ export async function fingerprintSourceFile(
     await handle.close();
   }
   return { digest: `sha256:${hash.digest('hex')}`, size: allowed.size };
+}
+
+export async function fingerprintSourcePrefix(
+  authorization: SourceAuthorization,
+  length: number,
+): Promise<{ digest: string; size: number; mtimeMs: number; fileIdentity: string }> {
+  const allowed = await authorizeSourceFile(authorization);
+  if (!Number.isSafeInteger(length) || length < 0 || length > allowed.size) {
+    throw new SessionContractError(
+      'SCHEMA_DRIFT',
+      'checkpoint source position is beyond the current source size',
+    );
+  }
+  const handle = await open(allowed.canonicalPath, 'r');
+  const hash = createHash('sha256');
+  try {
+    const buffer = Buffer.allocUnsafe(64 * 1024);
+    let position = 0;
+    while (position < length) {
+      const result = await handle.read(
+        buffer,
+        0,
+        Math.min(buffer.length, length - position),
+        position,
+      );
+      if (result.bytesRead === 0) break;
+      hash.update(buffer.subarray(0, result.bytesRead));
+      position += result.bytesRead;
+    }
+  } finally {
+    await handle.close();
+  }
+  return {
+    digest: `sha256:${hash.digest('hex')}`,
+    size: allowed.size,
+    mtimeMs: allowed.mtimeMs,
+    fileIdentity: `${allowed.dev}:${allowed.ino}`,
+  };
 }
 
 function parseCursor(cursor?: string): number {

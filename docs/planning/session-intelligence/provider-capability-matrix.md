@@ -18,7 +18,7 @@ baselines, not compatibility promises.
 | `openclaw` | OpenClaw 2026.7.2 schema 16/event v3 | `documented_local_adapter` | Gateway or consistent SQLite/event acquisition; bounded APIs are degraded projections | High |
 | `openhuman` | OpenHuman 0.63.1 transcript schema 1 | `documented_local_adapter` | `session_raw` JSONL plus thread/turn enrichment; preserve compaction and interruption | Medium-high |
 | `warp` | User-initiated Markdown export | `manual_import_only` | Explicit Markdown import; no SQLite/protobuf reverse engineering | High |
-| `windsurf` | Opt-in post-response transcript hook | `documented_local_adapter` | Future transcript-hook JSONL capture; legacy protobuf unsupported | High |
+| `devin-desktop` (`windsurf` alias) | Opt-in post-response transcript hook | `documented_local_adapter` | Current hook JSONL capture; legacy protobuf unsupported | High |
 | `generic` | AIWG-owned declared interchange | `manual_import_only` | Versioned generic envelope only; opaque guessed JSON/JSONL unsupported | High |
 
 ## Provider-Specific Constraints

@@ -41,6 +41,8 @@ aiwg sessions purge <session-id> [--confirm] --actor-class <class>
                     --reason-code <code>
                     [--dependent-action revoke|supersede|retain|origin_unavailable]
                     [--basis <text>] [--dry-run] [--json]
+aiwg sessions audit --workspace <id> [--limit <1..500>] [--cursor <opaque>]
+                    [--otel] [--json]
 aiwg sessions doctor [--json]
 ```
 
@@ -69,6 +71,30 @@ content, source paths, or stable content hashes. Retrying after completion
 returns the same terminal receipt. Provider-owned logs are never opened or
 modified by tombstone, restore, or purge.
 
+## Mutation audit
+
+Every committed catalog mutation emits a versioned, content-free event in the
+same SQLite transaction as its state change. Import event time and observation
+time remain distinct. Events identify only safe workspace/target classes,
+operation and correlation IDs, bounded counts, outcome, schema/policy/adapter
+versions, resource, and instrumentation scope. They never contain transcript
+text, prompts, candidate assertions, review reasons, native payloads, source
+paths, or destination content.
+
+`sessions audit` requires an explicit workspace and uses checksummed keyset
+pagination. Cursors cannot be replayed against another workspace. Integrity
+digests are verified on every read. `--otel` maps the same envelope to the
+OpenTelemetry Logs data-model shape without adding an OpenTelemetry runtime
+dependency.
+
+Transcript content, mutation audit, skill-usage telemetry, and orchestration
+telemetry remain separate physical stores and retention classes. Mutation audit
+uses the catalog lifecycle and is retained until an operator applies the
+catalog retention/disposal policy; transcript purge does not silently remove
+its content-free accountability record. Skill-usage JSONL follows its own
+documented rotation policy, while orchestration telemetry remains governed by
+the service telemetry configuration.
+
 ## Search authorization and citations
 
 Search uses SQLite FTS5 over policy-approved normalized text. `--workspace` is
@@ -86,6 +112,21 @@ Search cursors are opaque snapshots. A cursor fixes the maximum visible event
 row for the query, so imports committed between pages do not reorder or insert
 hits into the active traversal. Start a new search without the cursor to
 include newly imported events.
+
+Terms, quoted phrases, Unicode tokens, prefixes (`term*`), and explicit boolean
+operators use FTS5 query syntax. Malformed syntax returns the stable
+`INVALID_SEARCH_QUERY` contract error without database error text. Results use
+FTS5 relevance with event ID as the deterministic tie-breaker. Bounded snippets
+place `⟦` and `⟧` around matching context.
+
+`--participant` identifies a normalized actor, while `--role` identifies the
+message role. Tool name/call ID, model, entity, and extraction-state filters
+read normalized event fields only; provider-native extension keys cannot
+satisfy them. Citations include native event identity when supplied by the
+provider and never expose unsafe source locators.
+
+Session-list cursors are opaque, checksummed keyset cursors bound to the
+workspace/filter scope and catalog snapshot. They are not numeric offsets.
 
 ## Candidate extraction and review
 
@@ -158,18 +199,17 @@ sequence locators that v1 cannot represent. Callers must inspect `lossless` and
 
 ## Reference performance
 
-The reproducible FTS5 reference benchmark is:
+The reproducible production-path benchmark is:
 
 ```bash
-node tools/benchmarks/session-search.mjs
+npm run benchmark:sessions
 ```
 
-It creates a temporary one-million-event catalog shape, runs 25 authorized
-lexical queries, reports p50/p95/max latency as JSON, enforces the provisional
-2,000 ms p95 target, and removes the temporary database. On the 2026-07-27
-reference maintainer host, p95 was 115.55 ms. This measures indexed query
-latency, not import construction time; operators should rerun it on their
-deployment storage and retain the JSON result with release evidence.
+It uses the real adapter, importer, repository, metadata, lexical search, and
+extraction paths. The command records its generator seed, machine/dependency
+profile, raw samples, throughput, heap/RSS, bounded-failure result, budgets,
+and overall status in `test-results/session-performance.json`. Set
+`AIWG_SESSION_BENCH_EVENTS=1000000` for release-scale evidence.
 
 ## JSON contract
 

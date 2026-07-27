@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -92,7 +91,7 @@ describe('generic session interchange adapter', () => {
   });
 });
 
-describe.runIf(hasBetterSqlite3())('generic interchange repository conformance', () => {
+describe('generic interchange repository conformance', () => {
   it('imports deterministically, redacts content, preserves opaque events, and replays as a no-op', async () => {
     const adapter = new GenericSessionInterchangeAdapter();
     const selectedSource = selected('valid-v1.jsonl', 'generic-fixture-v1');
@@ -165,14 +164,4 @@ async function collect<T>(iterable: AsyncIterable<T>): Promise<T[]> {
   const result: T[] = [];
   for await (const item of iterable) result.push(item);
   return result;
-}
-
-function hasBetterSqlite3(): boolean {
-  const require = createRequire(import.meta.url);
-  try {
-    require.resolve('better-sqlite3');
-    return true;
-  } catch {
-    return false;
-  }
 }

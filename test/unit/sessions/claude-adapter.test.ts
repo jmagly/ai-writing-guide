@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module';
 import { appendFile, cp, mkdir, mkdtemp, stat, truncate } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, resolve } from 'node:path';
@@ -156,7 +155,7 @@ describe('Claude session adapter', () => {
   });
 });
 
-describe.runIf(hasBetterSqlite3())('Claude adapter repository conformance', () => {
+describe('Claude adapter repository conformance', () => {
   it('imports active append incrementally, redacts content, and replays as a no-op', async () => {
     const root = await mkdtemp(resolve(tmpdir(), 'aiwg-claude-append-'));
     temporaryRoots.push(root);
@@ -258,14 +257,4 @@ async function collect<T>(iterable: AsyncIterable<T>): Promise<T[]> {
   const result: T[] = [];
   for await (const item of iterable) result.push(item);
   return result;
-}
-
-function hasBetterSqlite3(): boolean {
-  const require = createRequire(import.meta.url);
-  try {
-    require.resolve('better-sqlite3');
-    return true;
-  } catch {
-    return false;
-  }
 }

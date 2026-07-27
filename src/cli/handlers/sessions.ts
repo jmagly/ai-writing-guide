@@ -21,13 +21,14 @@ import {
   OpenHumanSessionAdapter,
   WARP_ADAPTER_VERSION,
   WarpSessionAdapter,
-  WINDSURF_ADAPTER_VERSION,
-  WindsurfSessionAdapter,
+  DEVIN_DESKTOP_ADAPTER_VERSION,
+  DevinDesktopSessionAdapter,
   CandidateExtractionService,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
   IncrementalSessionImporter,
   FilesystemMemoryDestination,
+  FilesystemPromotionDispositionCoordinator,
   MemoryPromotionGateway,
   SESSION_CONTRACT_VERSION,
   SESSION_PROVIDER_IDS,
@@ -39,6 +40,7 @@ import {
   assertSessionProviderId,
   redactSourceLocator,
   type SessionProviderId,
+  type SessionAuthorizationContext,
   type SessionSourceAdapter,
   type SelectedSource,
 } from '../../sessions/index.js';
@@ -75,6 +77,7 @@ Commands:
   delete <session-id>             Preview deletion; use --confirm to tombstone
   restore <session-id>            Restore a reversible catalog tombstone
   purge <session-id>              Preview terminal AIWG-copy purge
+  audit --workspace <id>          Read content-free mutation events
   doctor                          Check catalog availability and integrity
 
 Options:
@@ -83,7 +86,9 @@ Options:
   --db <path>     Override .aiwg/sessions/catalog.sqlite
   --provider <id> Filter list or select an import adapter
   --consumer <id> Select a named memory consumer for promotion
-  --workspace <id>, --tag <tag>, --limit <n>, --cursor <n>`;
+  --workspace <id>, --tag <tag>, --limit <n>, --cursor <n>
+  --page-size <n>  Extraction scan page size (default 250, maximum 500)
+  --max-documents <n>  Explicit extraction safety limit; returns a partial receipt`;
 
 export const sessionsHandler: CommandHandler = {
   id: 'sessions',
@@ -146,39 +151,45 @@ async function executeCommand(
   try {
     switch (command) {
       case 'list': {
+        const { workspaceId } = authorizationContext(args, command);
         const limit = boundedInteger(args.values.get('--limit'), 50, 1, 500, '--limit');
-        const offset = boundedInteger(args.values.get('--cursor'), 0, 0, Number.MAX_SAFE_INTEGER, '--cursor');
-        const provider = args.values.get('--provider');
-        if (provider) assertSessionProviderId(provider);
+        const cursor = args.values.get('--cursor');
+        const providerInput = args.values.get('--provider');
+        const provider = providerInput ? assertSessionProviderId(providerInput) : undefined;
         const result = repository.listSessions({
           provider,
-          workspaceId: args.values.get('--workspace'),
+          workspaceId,
           tag: args.values.get('--tag'),
           limit,
-          offset,
+          cursor,
         });
-        const nextCursor = offset + result.items.length < result.total
-          ? String(offset + result.items.length) : null;
         return ok(command, {
           items: result.items,
-          page: { limit, cursor: String(offset), nextCursor, total: result.total },
+          page: {
+            limit,
+            cursor: cursor ?? null,
+            nextCursor: result.nextCursor,
+            snapshotRowid: result.snapshotRowid,
+            total: result.total,
+          },
         });
       }
       case 'show': {
         const id = requiredPositional(args, 0, 'session-id');
-        const session = repository.getSession(id);
+        const { workspaceId } = authorizationContext(args, command);
+        const session = repository.getSession(id, workspaceId);
         if (!session) throw new CliError('SESSION_NOT_FOUND', `session not found: ${id}`, EXIT.unavailable);
         return ok(command, {
           session,
-          tags: repository.listTags(id),
-          events: repository.listEvents(id),
+          tags: repository.listTags(id, workspaceId),
+          events: repository.listEvents(id, workspaceId),
         });
       }
       case 'search': {
         const query = requiredPositional(args, 0, 'query');
-        const workspaceId = requiredValue(args, '--workspace');
-        const provider = args.values.get('--provider');
-        if (provider) assertSessionProviderId(provider);
+        const { workspaceId } = authorizationContext(args, command);
+        const providerInput = args.values.get('--provider');
+        const provider = providerInput ? assertSessionProviderId(providerInput) : undefined;
         const result = repository.search({
           query,
           workspaceId,
@@ -203,12 +214,36 @@ async function executeCommand(
         });
       }
       case 'extract': {
-        const workspaceId = requiredValue(args, '--workspace');
+        const { workspaceId } = authorizationContext(args, command);
         const sessionId = args.positionals[0];
-        const documents = repository.authorizedSearchDocuments({
-          workspaceId,
-          limit: 500,
-        }).filter((document) => !sessionId || document.sessionId === sessionId);
+        const pageSize = boundedInteger(args.values.get('--page-size'), 250, 1, 500, '--page-size');
+        const maxDocuments = args.values.has('--max-documents')
+          ? boundedInteger(args.values.get('--max-documents'), pageSize, 1, 1_000_000, '--max-documents')
+          : null;
+        const documents = [];
+        let cursor: string | undefined;
+        let truncated = false;
+        do {
+          const remaining = maxDocuments === null
+            ? pageSize
+            : Math.min(pageSize, maxDocuments - documents.length);
+          if (remaining <= 0) {
+            truncated = true;
+            break;
+          }
+          const page = repository.authorizedSearchDocumentPage({
+            workspaceId,
+            sessionIds: sessionId ? [sessionId] : undefined,
+            limit: remaining,
+            cursor,
+          });
+          documents.push(...page.items);
+          cursor = page.nextCursor ?? undefined;
+          if (maxDocuments !== null && documents.length >= maxDocuments && cursor) {
+            truncated = true;
+            break;
+          }
+        } while (cursor);
         if (sessionId && documents.length === 0) {
           throw new CliError(
             'SESSION_NOT_FOUND',
@@ -236,17 +271,26 @@ async function executeCommand(
             ),
           },
         });
+        const scan = {
+          complete: !truncated,
+          documentsScanned: documents.length,
+          pageSize,
+          nextCursor: truncated ? cursor ?? null : null,
+          limit: maxDocuments,
+        };
         return dryRun
-          ? preview(command, { items, count: items.length, durableMemoryWrites: 0 })
-          : ok(command, { items, count: items.length, durableMemoryWrites: 0 });
+          ? preview(command, { items, count: items.length, durableMemoryWrites: 0, scan })
+          : ok(command, { items, count: items.length, durableMemoryWrites: 0, scan });
       }
       case 'candidates': {
+        const { workspaceId } = authorizationContext(args, command);
         const state = candidateState(args.values.get('--state'));
         return ok(command, {
-          items: repository.listCandidates(state),
+          items: repository.listCandidates(state, workspaceId),
         });
       }
       case 'review': {
+        const { workspaceId } = authorizationContext(args, command);
         const candidateId = requiredPositional(args, 0, 'candidate-id');
         const version = boundedInteger(
           requiredPositional(args, 1, 'version'),
@@ -270,9 +314,11 @@ async function executeCommand(
           toState,
           reviewer: requiredValue(args, '--reviewer'),
           reason: requiredValue(args, '--reason'),
+          workspaceId,
         }));
       }
       case 'promote': {
+        const { workspaceId } = authorizationContext(args, command);
         const candidateId = requiredPositional(args, 0, 'candidate-id');
         const version = boundedInteger(
           requiredPositional(args, 1, 'version'),
@@ -287,7 +333,24 @@ async function executeCommand(
           consumer,
           manifestPath: resolveMemoryConsumerManifest(ctx.cwd, consumer),
         });
-        const gateway = new MemoryPromotionGateway(repository);
+        const scopedPromotionStore = {
+          getCandidate: (id: string, candidateVersion?: number) =>
+            repository.getCandidate(id, candidateVersion, workspaceId),
+          getPromotionReceipt: (id: string, candidateVersion: number, namedConsumer: string) =>
+            repository.getCandidate(id, candidateVersion, workspaceId)
+              ? repository.getPromotionReceipt(id, candidateVersion, namedConsumer)
+              : null,
+          recordPromotion: (receipt: Parameters<typeof repository.recordPromotion>[0]) => {
+            if (!repository.getCandidate(receipt.candidateId, receipt.candidateVersion, workspaceId)) {
+              throw new SessionContractError(
+                'OPERATION_NOT_AUTHORIZED',
+                'candidate version is not available in the authorized workspace',
+              );
+            }
+            return repository.recordPromotion(receipt);
+          },
+        };
+        const gateway = new MemoryPromotionGateway(scopedPromotionStore);
         const promotionPreview = gateway.preview({ candidateId, version, destination });
         if (!args.flags.has('--confirm') || isDryRun(ctx, args)) {
           return preview(command, promotionPreview);
@@ -303,35 +366,58 @@ async function executeCommand(
       }
       case 'tag': {
         const id = requiredPositional(args, 0, 'session-id');
+        const { workspaceId } = authorizationContext(args, command);
         const tag = requiredPositional(args, 1, 'tag');
         if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(tag)) {
           throw new CliError('INVALID_TAG', 'tag must be 1-64 safe identifier characters', EXIT.usage);
         }
         if (isDryRun(ctx, args)) return preview(command, { sessionId: id, tag, wouldAdd: true });
-        if (!repository.tagSession(id, tag)) {
-          if (!repository.getSession(id)) throw new CliError('SESSION_NOT_FOUND', `session not found: ${id}`, EXIT.unavailable);
+        if (!repository.tagSession(id, tag, workspaceId)) {
+          if (!repository.getSession(id, workspaceId)) {
+            throw new CliError('SESSION_NOT_FOUND', `session not found: ${id}`, EXIT.unavailable);
+          }
         }
-        return ok(command, { sessionId: id, tag, tags: repository.listTags(id) });
+        return ok(command, { sessionId: id, tag, tags: repository.listTags(id, workspaceId) });
       }
       case 'relocate': {
         const sourceId = requiredPositional(args, 0, 'source-id');
+        const { workspaceId } = authorizationContext(args, command);
         const locator = requiredPositional(args, 1, 'file');
-        if (!repository.getSource(sourceId)) {
+        if (!repository.getSource(sourceId, workspaceId)) {
           throw new CliError('SOURCE_NOT_FOUND', `source not found: ${sourceId}`, EXIT.unavailable);
         }
         const redactedLocator = redactSourceLocator(locator);
         if (isDryRun(ctx, args)) return preview(command, { sourceId, redactedLocator });
-        repository.relocateSource(sourceId, redactedLocator);
+        repository.relocateSource(sourceId, redactedLocator, workspaceId);
         return ok(command, { sourceId, redactedLocator });
       }
       case 'reindex': {
+        const { workspaceId } = authorizationContext(args, command);
         if (isDryRun(ctx, args)) return preview(command, { operation: 'reindex' });
-        repository.reindex();
+        repository.reindex(workspaceId);
         return ok(command, { operation: 'reindex' });
+      }
+      case 'audit': {
+        const { workspaceId } = authorizationContext(args, command);
+        const limit = boundedInteger(args.values.get('--limit'), 100, 1, 500, '--limit');
+        const cursor = args.values.get('--cursor');
+        if (args.flags.has('--otel')) {
+          return ok(command, repository.exportMutationEventsOtel({
+            workspaceId,
+            limit,
+            cursor,
+          }));
+        }
+        const page = repository.listMutationEvents({ workspaceId, limit, cursor });
+        return ok(command, {
+          items: page.items,
+          page: { limit, nextCursor: page.nextCursor },
+        });
       }
       case 'delete': {
         const id = requiredPositional(args, 0, 'session-id');
-        const counts = repository.deletionPreview(id);
+        const { workspaceId } = authorizationContext(args, command);
+        const counts = repository.deletionPreview(id, workspaceId);
         if (counts.sessions === 0) {
           throw new CliError('SESSION_NOT_FOUND', `session not found: ${id}`, EXIT.unavailable);
         }
@@ -341,22 +427,24 @@ async function executeCommand(
             confirmationRequired: true,
           });
         }
-        repository.tombstoneSession(id);
+        repository.tombstoneSession(id, workspaceId);
         return ok(command, {
           sessionId: id, counts, providerLogsModified: false, outcome: 'tombstoned',
         });
       }
       case 'restore': {
         const id = requiredPositional(args, 0, 'session-id');
+        const { workspaceId } = authorizationContext(args, command);
         if (isDryRun(ctx, args)) return preview(command, { sessionId: id, wouldRestore: true });
-        if (!repository.restoreSession(id)) {
+        if (!repository.restoreSession(id, workspaceId)) {
           throw new CliError('SESSION_NOT_FOUND', `tombstoned session not found: ${id}`, EXIT.unavailable);
         }
         return ok(command, { sessionId: id, outcome: 'restored', providerLogsModified: false });
       }
       case 'purge': {
         const id = requiredPositional(args, 0, 'session-id');
-        const completed = repository.getCompletedPurge(id);
+        const { workspaceId } = authorizationContext(args, command);
+        const completed = repository.getCompletedPurge(id, workspaceId);
         if (completed) {
           return ok(command, {
             receipt: completed,
@@ -365,28 +453,55 @@ async function executeCommand(
             providerLogsModified: false,
           });
         }
-        const purgePreview = repository.previewPurge(id);
-        if (!args.flags.has('--confirm') || isDryRun(ctx, args)) {
-          return preview(command, { ...purgePreview, providerLogsModified: false });
-        }
-        const action = purgePreview.promotedDependents.length > 0
-          ? dependentAction(requiredValue(args, '--dependent-action'))
+        const purgePreview = repository.previewPurge(id, workspaceId);
+        const requestedAction = args.values.get('--dependent-action');
+        const action = purgePreview.promotedDependents.length > 0 && requestedAction
+          ? dependentAction(requestedAction)
           : 'origin_unavailable';
         const basis = purgePreview.promotedDependents.length > 0
-          ? requiredValue(args, '--basis')
+          ? (args.values.get('--basis') ?? 'not-yet-confirmed')
           : (args.values.get('--basis') ?? 'no-promoted-dependents');
+        const decisions = purgePreview.promotedDependents.map((item) => ({
+          dependentId: item.dependentId,
+          action,
+          basis,
+        }));
+        const dispositionCoordinator = new FilesystemPromotionDispositionCoordinator({
+          projectRoot: ctx.cwd,
+          allowedRoots: ['.aiwg'],
+        });
+        if (!args.flags.has('--confirm') || isDryRun(ctx, args)) {
+          return preview(command, {
+            ...purgePreview,
+            artifactEffects: requestedAction
+              ? dispositionCoordinator.preview(purgePreview, decisions)
+              : purgePreview.promotedDependents.map((item) => ({
+                  dependentId: item.dependentId,
+                  destinationRef: item.destinationRef,
+                  allowedActions: [
+                    'origin_unavailable', 'retain', 'revoke',
+                    'supersede', 'delete', 'abort',
+                  ],
+                  confirmationRequired: true,
+                })),
+            providerLogsModified: false,
+          });
+        }
+        if (purgePreview.promotedDependents.length > 0) {
+          dependentAction(requiredValue(args, '--dependent-action'));
+          requiredValue(args, '--basis');
+        }
+        const disposition = dispositionCoordinator.apply(purgePreview, decisions);
         const receipt = repository.purgeSession({
           preview: purgePreview,
           actorClass: requiredValue(args, '--actor-class'),
           reasonCode: requiredValue(args, '--reason-code'),
-          decisions: purgePreview.promotedDependents.map((item) => ({
-            dependentId: item.dependentId,
-            action,
-            basis,
-          })),
+          decisions,
         });
+        dispositionCoordinator.catalogCommitted(receipt.operationId);
         return ok(command, {
           receipt,
+          artifactDisposition: disposition,
           dependentDecisions: repository.listPromotionDependencyDecisions(receipt.operationId),
           providerLogsModified: false,
         });
@@ -410,12 +525,12 @@ async function importSource(
   args: ParsedArgs,
 ): Promise<{ envelope: Envelope; exitCode: number }> {
   const input = resolve(ctx.cwd, requiredPositional(args, 0, 'file'));
-  const provider = (args.values.get('--provider') ?? 'generic') as SessionProviderId;
-  assertSessionProviderId(provider);
+  const providerInput = args.values.get('--provider') ?? 'generic';
+  const provider = assertSessionProviderId(providerInput);
   if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
     && provider !== 'copilot' && provider !== 'cursor' && provider !== 'factory'
     && provider !== 'hermes' && provider !== 'opencode' && provider !== 'openclaw'
-    && provider !== 'openhuman' && provider !== 'warp' && provider !== 'windsurf') {
+    && provider !== 'openhuman' && provider !== 'warp' && provider !== 'devin-desktop') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
@@ -430,7 +545,7 @@ async function importSource(
   const isOpenClaw = provider === 'openclaw';
   const isOpenHuman = provider === 'openhuman';
   const isWarp = provider === 'warp';
-  const isWindsurf = provider === 'windsurf';
+  const isDevinDesktop = provider === 'devin-desktop';
   const adapter: SessionSourceAdapter = isClaude
     ? new ClaudeSessionAdapter()
     : isCodex
@@ -451,8 +566,8 @@ async function importSource(
                     ? new OpenHumanSessionAdapter()
                     : isWarp
                       ? new WarpSessionAdapter()
-                      : isWindsurf
-                        ? new WindsurfSessionAdapter()
+                      : isDevinDesktop
+                        ? new DevinDesktopSessionAdapter()
                         : new GenericSessionInterchangeAdapter();
   const locatorClass = isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
@@ -474,8 +589,8 @@ async function importSource(
                     ? 'openhuman-enriched-jsonl'
                     : isWarp
                       ? 'warp-markdown-export'
-                      : isWindsurf
-                        ? 'windsurf-cascade-hook-jsonl'
+                      : isDevinDesktop
+                        ? 'devin-desktop-cascade-hook-jsonl'
                         : 'manual-export';
   const selectedSource: SelectedSource = {
     provider, locator: input, locatorClass, sourceId,
@@ -504,7 +619,7 @@ async function importSource(
                       ? 'schema-1-session-raw-enriched'
                       : isWarp
                         ? 'manual-lossy-markdown-export'
-                        : isWindsurf
+                        : isDevinDesktop
                           ? 'opt-in-cascade-transcript-hook'
                           : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
@@ -528,14 +643,14 @@ async function importSource(
                       ? OPENHUMAN_ADAPTER_VERSION
                       : isWarp
                         ? WARP_ADAPTER_VERSION
-                        : isWindsurf
-                          ? WINDSURF_ADAPTER_VERSION
+                        : isDevinDesktop
+                          ? DEVIN_DESKTOP_ADAPTER_VERSION
                           : GENERIC_ADAPTER_VERSION,
     sourceSchemaVersion: probe.sourceSchemaVersion,
     disposition: isWarp
       ? 'manual-only'
       : isClaude || isCodex || isCopilot || isCursor || isFactory || isHermes
-        || isOpenCode || isOpenClaw || isOpenHuman || isWindsurf
+        || isOpenCode || isOpenClaw || isOpenHuman || isDevinDesktop
         ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
@@ -559,8 +674,11 @@ async function importSource(
                       ? { 'native.openhuman': {} }
                       : isWarp
                         ? { 'native.warp': {} }
-                        : isWindsurf
-                          ? { 'native.windsurf': { product: 'Devin Desktop' } }
+                        : isDevinDesktop
+                          ? { 'native.devin-desktop': {
+                              product: 'Devin Desktop',
+                              compatibilityProviderId: 'windsurf',
+                            } }
                           : { 'native.generic': {} },
   });
   if (isDryRun(ctx, args)) {
@@ -725,15 +843,19 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
       },
     };
   }
-  if (provider === 'windsurf') {
+  if (provider === 'devin-desktop') {
     return {
-      provider, disposition: 'implemented', operationalState: 'available',
+      provider,
+      product: 'Devin Desktop',
+      compatibilityAliases: ['windsurf'],
+      aliasDeprecatedAfter: '2027-07-27',
+      disposition: 'implemented', operationalState: 'available',
       supportedOperations: ['inspect', 'stream'],
       acquisitionModes: ['hook', 'jsonl'],
       reasonCode: null,
       remediation: 'Enable Devin Desktop post_cascade_response_with_transcript, then explicitly select its JSONL output.',
       evidence: {
-        adapterVersion: WINDSURF_ADAPTER_VERSION,
+        adapterVersion: DEVIN_DESKTOP_ADAPTER_VERSION,
         verifiedAt: '2026-07-27',
         documentation: 'https://docs.devin.ai/desktop/cascade/hooks',
       },
@@ -794,7 +916,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   const valueFlags = new Set([
     '--db', '--provider', '--workspace', '--tag', '--limit', '--cursor', '--source-id',
     '--date-from', '--date-to', '--participant', '--model', '--role', '--tool',
-    '--entity', '--sensitivity', '--extraction-state',
+    '--entity', '--sensitivity', '--extraction-state', '--page-size', '--max-documents',
     '--state', '--reviewer', '--reason', '--policy-version', '--min-confidence',
     '--consumer', '--actor-class', '--reason-code', '--dependent-action', '--basis',
   ]);
@@ -829,6 +951,19 @@ function requiredValue(args: ParsedArgs, flag: string): string {
   const value = args.values.get(flag);
   if (!value) throw new CliError('MISSING_ARGUMENT', `missing required ${flag}`, EXIT.usage);
   return value;
+}
+
+function authorizationContext(
+  args: ParsedArgs,
+  operation: string,
+): SessionAuthorizationContext {
+  return {
+    actorId: 'local-catalog-owner',
+    workspaceId: requiredValue(args, '--workspace'),
+    operation,
+    catalogScope: 'workspace',
+    mode: 'local-owner',
+  };
 }
 
 function boundedInteger(
@@ -873,12 +1008,15 @@ function candidateState(value: string | undefined): CandidateState | undefined {
 
 function dependentAction(
   value: string,
-): 'revoke' | 'supersede' | 'retain' | 'origin_unavailable' {
-  const actions = new Set(['revoke', 'supersede', 'retain', 'origin_unavailable']);
+): 'revoke' | 'supersede' | 'retain' | 'origin_unavailable' | 'delete' | 'abort' {
+  const actions = new Set([
+    'revoke', 'supersede', 'retain', 'origin_unavailable', 'delete', 'abort',
+  ]);
   if (!actions.has(value)) {
     throw new CliError('INVALID_ARGUMENT', `invalid dependent action: ${value}`, EXIT.usage);
   }
-  return value as 'revoke' | 'supersede' | 'retain' | 'origin_unavailable';
+  return value as 'revoke' | 'supersede' | 'retain'
+    | 'origin_unavailable' | 'delete' | 'abort';
 }
 
 function isDryRun(ctx: HandlerContext, args: ParsedArgs): boolean {

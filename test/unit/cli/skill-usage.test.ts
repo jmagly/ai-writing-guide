@@ -114,6 +114,13 @@ describe('skill-usage', () => {
     const active = await readProjectEvents(projectDir);
     await expect(stat(path.join(projectDir, '.aiwg', 'telemetry', 'skill-usage.jsonl.1'))).resolves.toBeDefined();
     expect(active.at(-1)?.artifact).toEqual({ kind: 'agent', id: 'test-engineer' });
+    const report = await readSkillUsageReport({
+      cwd: projectDir,
+      frameworkRoot: process.cwd(),
+      scope: 'project',
+    });
+    expect(report.summary.total).toBe(2);
+    expect(report.window).toEqual({ retained_segments: 2, truncated_before: true });
   });
 
   it('does not store raw positional argument values or secrets', async () => {
@@ -202,6 +209,89 @@ describe('skill-usage', () => {
     expect(events.every(event => event.source === 'transcript')).toBe(true);
     expect(serialized).not.toContain('do not store this');
     expect(serialized).not.toContain('security-audit mention');
+  });
+
+  it('rejects unsupported transcript providers instead of relabeling Claude events', async () => {
+    const projectDir = await tmpProject();
+    const cfg = emptyConfig();
+    cfg.telemetry = { skill_usage: { enabled: true, scopes: ['project'] } };
+    await writeAiwgConfig(projectDir, cfg);
+    const transcript = path.join(projectDir, 'session.jsonl');
+    await writeFile(transcript, JSON.stringify({
+      type: 'assistant',
+      message: { content: [{ type: 'tool_use', name: 'Skill', input: { skill: 'issue-audit' } }] },
+    }), 'utf8');
+
+    await expect(ingestSkillUsageTranscript({
+      transcriptPath: transcript,
+      provider: 'codex',
+      cwd: projectDir,
+      frameworkRoot: process.cwd(),
+      env: {},
+    })).rejects.toThrow('unsupported skill-usage transcript provider: codex');
+  });
+
+  it('preserves source time separately, records receipts, and deduplicates replay', async () => {
+    const projectDir = await tmpProject();
+    const cfg = emptyConfig();
+    cfg.telemetry = { skill_usage: { enabled: true, scopes: ['project'] } };
+    await writeAiwgConfig(projectDir, cfg);
+    const transcript = path.join(projectDir, 'session.jsonl');
+    await writeFile(transcript, JSON.stringify({
+      id: 'native-event-1',
+      timestamp: '2026-07-26T12:34:56.000Z',
+      type: 'assistant',
+      message: { content: [{ type: 'tool_use', name: 'Skill', input: { skill: 'issue-audit' } }] },
+    }), 'utf8');
+    const options = {
+      transcriptPath: transcript,
+      provider: 'claude-code',
+      cwd: projectDir,
+      frameworkRoot: process.cwd(),
+      env: {},
+    };
+    const first = await ingestSkillUsageTranscript(options);
+    const second = await ingestSkillUsageTranscript(options);
+    const [event] = await readProjectEvents(projectDir);
+
+    expect(first.receipt).toMatchObject({
+      provider: 'claude-code',
+      records_read: 1,
+      events_extracted: 1,
+      events_appended: 1,
+      duplicates_skipped: 0,
+    });
+    expect(second.receipt).toMatchObject({
+      events_appended: 0,
+      duplicates_skipped: 1,
+    });
+    expect(second.appended).toBe(0);
+    expect(event).toMatchObject({
+      schema_version: 2,
+      timestamp: '2026-07-26T12:34:56.000Z',
+      native_event_id: 'native-event-1',
+      event_id: expect.stringMatching(/^[a-f0-9]{64}$/),
+      source_generation: expect.stringMatching(/^[a-f0-9]{64}$/),
+      observed_timestamp: expect.any(String),
+    });
+    expect(event.observed_timestamp).not.toBe(event.timestamp);
+  });
+
+  it('rejects an oversized transcript record before parsing it', async () => {
+    const projectDir = await tmpProject();
+    const cfg = emptyConfig();
+    cfg.telemetry = { skill_usage: { enabled: true, scopes: ['project'] } };
+    await writeAiwgConfig(projectDir, cfg);
+    const transcript = path.join(projectDir, 'oversized.jsonl');
+    await writeFile(transcript, JSON.stringify({ padding: 'x'.repeat(1_048_576) }), 'utf8');
+
+    await expect(ingestSkillUsageTranscript({
+      transcriptPath: transcript,
+      provider: 'claude-code',
+      cwd: projectDir,
+      frameworkRoot: process.cwd(),
+      env: {},
+    })).rejects.toThrow('record exceeds bounded line limit');
   });
 
   it('reports heatmap, cold spots, and deterministic under-used suggestions', async () => {

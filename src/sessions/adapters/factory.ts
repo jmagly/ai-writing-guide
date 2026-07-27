@@ -12,7 +12,10 @@ import {
   type SourceDescriptor,
   type SourceProbe,
 } from '../contracts.js';
-import { readBoundedJsonLines, type BoundedJsonRecord, type ReaderLimits } from '../readers.js';
+import {
+  readBoundedJsonLines, streamBoundedJsonLines,
+  type BoundedJsonRecord, type ReaderLimits,
+} from '../readers.js';
 
 export const FACTORY_ADAPTER_VERSION = '1.0.0';
 export const FACTORY_SOURCE_SCHEMA_VERSION = '1.0.0';
@@ -93,6 +96,44 @@ export class FactorySessionAdapter implements SessionSourceAdapter {
   }
 
   async *stream(source: SelectedSource, cursor?: ImportCursor): AsyncIterable<ProviderRecord> {
+    if (source.locatorClass === 'factory-droid-jsonl') {
+      const input = await streamBoundedJsonLines({
+        selectedPath: source.locator,
+        allowedRoots: source.authorizedScope.allowedRoots,
+      }, { consistency: 'provisional', limits: this.limits });
+      const start = parseCursor(cursor?.value);
+      let outputIndex = 0;
+      let establishedId: string | undefined;
+      let schemaVersion: string | null = null;
+      let sawRecord = false;
+      for await (const line of input) {
+        sawRecord = true;
+        const parsed = FactoryRecordSchema.safeParse(line.value);
+        if (!parsed.success) {
+          throw new SessionContractError('MALFORMED_SOURCE', 'Factory session record is malformed');
+        }
+        const value = parsed.data;
+        const currentSchema = value.schemaVersion ?? FACTORY_SOURCE_SCHEMA_VERSION;
+        if (schemaVersion && schemaVersion !== currentSchema) {
+          throw new SessionContractError('SCHEMA_DRIFT', 'mixed Factory source schemas');
+        }
+        schemaVersion = currentSchema;
+        assertSupportedSchemaMajor(schemaVersion);
+        const filenameId = basename(source.locator, extname(source.locator));
+        const currentId = value.sessionId ?? value.session_id ?? establishedId ?? filenameId;
+        if (establishedId && establishedId !== currentId) {
+          throw new SessionContractError('DUPLICATE_NATIVE_ID', 'Factory source changes session identity');
+        }
+        establishedId = currentId;
+        for (const record of normalize([line], source).records) {
+          if (outputIndex++ >= start) yield record;
+        }
+      }
+      if (!sawRecord && !input.incompleteTail) {
+        throw new SessionContractError('MALFORMED_SOURCE', 'Factory session source is empty');
+      }
+      return;
+    }
     const parsed = await this.readSource(source);
     const start = parseCursor(cursor?.value);
     for (const record of parsed.records.slice(start)) yield record;

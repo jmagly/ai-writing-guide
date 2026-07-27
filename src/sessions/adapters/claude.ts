@@ -14,7 +14,10 @@ import {
   type SourceProbe,
 } from '../contracts.js';
 import { redactSourceLocator } from '../discovery.js';
-import { readBoundedJsonLines, type BoundedJsonRecord, type ReaderLimits } from '../readers.js';
+import {
+  readBoundedJsonLines, streamBoundedJsonLines,
+  type BoundedJsonRecord, type ReaderLimits,
+} from '../readers.js';
 
 export const CLAUDE_ADAPTER_VERSION = '1.0.0';
 export const CLAUDE_TRANSCRIPT_SCHEMA_VERSION = '1.0.0';
@@ -102,9 +105,38 @@ export class ClaudeSessionAdapter implements SessionSourceAdapter {
   }
 
   async *stream(source: SelectedSource, cursor?: ImportCursor): AsyncIterable<ProviderRecord> {
-    const parsed = await this.readSource(source);
     const start = parseRecordCursor(cursor?.value);
-    for (const record of parsed.records.slice(start)) yield record;
+    const input = await streamBoundedJsonLines(
+      {
+        selectedPath: source.locator,
+        allowedRoots: source.authorizedScope.allowedRoots,
+      },
+      { consistency: 'provisional', limits: this.limits },
+    );
+    const hookSource = isHookLocator(source.locator);
+    let outputIndex = 0;
+    let sawRecord = false;
+    let schemaVersion: string | null = null;
+    for await (const line of input) {
+      sawRecord = true;
+      const value = line.value as Record<string, unknown>;
+      const currentSchema = typeof value.schemaVersion === 'string'
+        ? value.schemaVersion : CLAUDE_TRANSCRIPT_SCHEMA_VERSION;
+      if (schemaVersion && currentSchema !== schemaVersion) {
+        throw new SessionContractError('SCHEMA_DRIFT', 'Claude source declares mixed schema versions');
+      }
+      schemaVersion = currentSchema;
+      assertSupportedSchemaMajor(schemaVersion);
+      const normalized = hookSource || isHookRecord(line.value)
+        ? normalizeHooks([line]).records
+        : normalizeTranscript([line], source.locator).records;
+      for (const record of normalized) {
+        if (outputIndex++ >= start) yield record;
+      }
+    }
+    if (!sawRecord && !input.incompleteTail) {
+      throw new SessionContractError('MALFORMED_SOURCE', 'Claude JSONL source is empty');
+    }
   }
 
   private async readSource(source: SelectedSource): Promise<{
@@ -198,6 +230,8 @@ function normalizeHooks(
       sequence: record.sequence,
       kind: 'lifecycle-hook',
       role: 'system',
+      participant: 'claude',
+      model: hook.model,
       occurredAt: hook.timestamp,
       text: '',
       rawReference: { locatorClass: 'claude-hook-jsonl', offset: record.byteOffset },

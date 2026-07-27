@@ -56,7 +56,7 @@ Every canonical provider must prove:
 | `openclaw` | Schema-16/event-v3 store, branch/reset/compaction, bounded/incomplete export |
 | `openhuman` | Schema-1 raw JSONL, thread/turn joins, interruption, expired attachment, deletion gap |
 | `warp` | Synthetic Markdown export and explicit loss report; unsupported internal store |
-| `windsurf` | Hook JSONL, retention limit, unknown schema; unsupported protobuf history |
+| `devin-desktop` (`windsurf` alias) | Hook JSONL, alias/canonical identity, in-place catalog migration, retention limit, unknown schema; unsupported protobuf history |
 | `generic` | Versioned AIWG interchange and negative ambiguous/opaque inputs |
 
 ## Core Invariants
@@ -72,8 +72,9 @@ Every canonical provider must prove:
 
 ## Performance Validation
 
-Benchmark the documented reference environment with a synthetic one-million
-event corpus. Validate 500 ms p95 metadata listing and 2 second p95 indexed
-search targets, import throughput, peak memory, bounded-record behavior, and
-graceful interruption. Targets may be revised only with recorded evidence and
-an updated requirement decision.
+Run `npm run benchmark:sessions` against the production adapter/importer/repository paths. Required CI
+uses a reproducible 10,000-event seeded corpus and gates 500 ms metadata p95, 2 second lexical p95,
+minimum import throughput, peak heap growth, and bounded-record failure behavior. It uploads the complete
+JSON profile and raw samples. Release validation raises `AIWG_SESSION_BENCH_EVENTS` to one million on a
+documented reference machine. Environment-specific observations are not portable guarantees; targets may
+be revised only with preserved evidence and an updated requirement decision.

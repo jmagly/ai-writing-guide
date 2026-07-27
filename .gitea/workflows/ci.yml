@@ -112,6 +112,29 @@ jobs:
         # `test:node` set is gated here. Deterministic, no network.
         run: npm run test:node
 
+      - name: Install SQLite test backend
+        # Keep native prebuild plumbing out of the default/package-lock install
+        # tree while making the optional production backend mandatory in CI.
+        run: npm install --no-save --package-lock=false better-sqlite3@12.8.0
+
+      - name: Run mandatory SQLite session suites
+        # Loads the native backend first, then emits and validates a JSON report
+        # proving every repository/provider suite ran with zero skipped tests.
+        run: npm run test:sessions:sqlite
+
+      - name: Run production-path session performance gates
+        # Preserves a machine-readable profile, raw samples, budgets, and gate
+        # outcomes at test-results/session-performance.json.
+        run: npm run benchmark:sessions
+
+      - name: Preserve session performance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: session-performance-${{ gitea.sha }}
+          path: test-results/session-performance.json
+          if-no-files-found: error
+
       - name: Run tests
         env:
           # CI runs in docker-in-docker on the Gitea runner — cold start is

@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module';
 import { cp, mkdtemp, mkdir, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, resolve } from 'node:path';
@@ -133,7 +132,7 @@ describe('Codex session adapter', () => {
   });
 });
 
-describe.runIf(hasBetterSqlite3())('Codex adapter repository conformance', () => {
+describe('Codex adapter repository conformance', () => {
   it('imports App Server evidence, redacts content, and replays as a no-op', async () => {
     const selected = selectedSource('threads.app-server.jsonl', 'codex-app-import');
     const source = sourceFor(selected, 'provisional');
@@ -200,15 +199,6 @@ function sourceFor(
   };
 }
 
-function hasBetterSqlite3(): boolean {
-  const require = createRequire(import.meta.url);
-  try {
-    require.resolve('better-sqlite3');
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 async function collect<T>(input: AsyncIterable<T>): Promise<T[]> {
   const output: T[] = [];

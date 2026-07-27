@@ -6,6 +6,7 @@ import {
   SessionSourceAdapterRegistry,
   fingerprintSourceFile,
   readBoundedJsonLines,
+  streamBoundedJsonLines,
   redactSourceLocator,
   type SessionSourceAdapter,
 } from '../../../src/sessions/index.js';
@@ -115,6 +116,62 @@ describe('bounded session readers', () => {
       size: 18,
     });
   });
+
+  it('pulls records on demand and stops source consumption on cancellation', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-reader-stream-'));
+    const path = join(root, 'large.jsonl');
+    await writeFile(path, Array.from(
+      { length: 10_000 },
+      (_, index) => JSON.stringify({ id: index }),
+    ).join('\n') + '\n');
+    const stream = await streamBoundedJsonLines(
+      { selectedPath: path, allowedRoots: [root] },
+      { consistency: 'complete' },
+    );
+    expect(stream.recordsRead).toBe(0);
+    expect(stream.bytesRead).toBe(0);
+    const iterator = stream[Symbol.asyncIterator]();
+    await expect(iterator.next()).resolves.toMatchObject({
+      done: false,
+      value: { value: { id: 0 }, sequence: 0 },
+    });
+    expect(stream.recordsRead).toBe(1);
+    expect(stream.bytesRead).toBeGreaterThan(0);
+    await iterator.return?.();
+    expect(stream.recordsRead).toBe(1);
+  });
+
+  it('streams one million records with source-size-independent retained memory', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-reader-million-'));
+    const path = join(root, 'million.jsonl');
+    await writeFile(path, '{"ok":1}\n'.repeat(1_000_000));
+    const stream = await streamBoundedJsonLines(
+      { selectedPath: path, allowedRoots: [root], maxBytes: 16 * 1024 * 1024 },
+      {
+        consistency: 'complete',
+        limits: {
+          maxRecords: 1_000_000,
+          maxTotalBytes: 16 * 1024 * 1024,
+          maxRecordBytes: 1024,
+        },
+      },
+    );
+    const baseline = process.memoryUsage().heapUsed;
+    let peak = baseline;
+    let count = 0;
+    for await (const record of stream) {
+      count += 1;
+      if (count === 1 || count === 1_000_000) {
+        expect(record.value).toEqual({ ok: 1 });
+      }
+      if (count % 50_000 === 0) {
+        peak = Math.max(peak, process.memoryUsage().heapUsed);
+      }
+    }
+    expect(count).toBe(1_000_000);
+    expect(stream.recordsRead).toBe(1_000_000);
+    expect(peak - baseline).toBeLessThan(96 * 1024 * 1024);
+  }, 30_000);
 
   it('ignores an incomplete active tail without advancing past it', async () => {
     const root = await mkdtemp(join(tmpdir(), 'aiwg-reader-tail-'));

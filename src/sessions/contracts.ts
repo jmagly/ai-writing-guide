@@ -1,15 +1,25 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { PROVIDER_IDS } from '../providers/provider-definitions.js';
-
 export const SESSION_CONTRACT_VERSION = '1.0.0' as const;
-export const SESSION_PROVIDER_IDS = [...PROVIDER_IDS] as [
+export const SESSION_PROVIDER_IDS = [
+  'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
+  'opencode', 'openclaw', 'openhuman', 'warp', 'devin-desktop', 'generic',
+] as const satisfies readonly [
   string, string, string, string, string, string,
   string, string, string, string, string, string,
 ];
 
 export const SessionProviderIdSchema = z.enum(SESSION_PROVIDER_IDS);
 export type SessionProviderId = z.infer<typeof SessionProviderIdSchema>;
+export const SESSION_PROVIDER_ALIASES = Object.freeze({
+  windsurf: 'devin-desktop',
+} as const);
+const CompatibleSessionProviderIdSchema = z.preprocess(
+  (value) => typeof value === 'string'
+    ? (SESSION_PROVIDER_ALIASES[value as keyof typeof SESSION_PROVIDER_ALIASES] ?? value)
+    : value,
+  SessionProviderIdSchema,
+);
 
 export const CapabilityDispositionSchema = z.enum([
   'implemented', 'manual-only', 'degraded', 'unsupported',
@@ -29,6 +39,7 @@ export const SessionErrorCodeSchema = z.enum([
   'IMPORT_CONFLICT', 'IMPORT_INTERRUPTED', 'MALFORMED_SOURCE',
   'DUPLICATE_NATIVE_ID', 'AMBIGUOUS_TIMESTAMP', 'TRUNCATED_SOURCE',
   'UNSUPPORTED_OPERATION',
+  'INVALID_SEARCH_QUERY',
 ]);
 
 const VersionSchema = z.string().regex(/^\d+\.\d+\.\d+(?:[-+].+)?$/);
@@ -44,7 +55,7 @@ const NativeExtensionsSchema = z.record(z.unknown()).superRefine((value, context
 export const SessionSourceSchema = z.object({
   contractVersion: z.literal(SESSION_CONTRACT_VERSION),
   sourceId: z.string().min(1),
-  provider: SessionProviderIdSchema,
+  provider: CompatibleSessionProviderIdSchema,
   providerProfile: z.string().min(1),
   locatorClass: z.string().min(1),
   redactedLocator: z.string().min(1),
@@ -67,6 +78,12 @@ export const SessionEventSchema = z.object({
   sequence: z.number().int().nonnegative(),
   kind: z.string().min(1),
   role: z.string().min(1).nullable(),
+  participant: z.string().min(1).nullable().default(null),
+  toolName: z.string().min(1).nullable().default(null),
+  toolCallId: z.string().min(1).nullable().default(null),
+  model: z.string().min(1).nullable().default(null),
+  entities: z.array(z.string().min(1)).default([]),
+  extractionState: z.string().min(1).nullable().default(null),
   occurredAt: z.string().datetime({ offset: true }).nullable(),
   searchableText: z.string(),
   digest: DigestSchema,
@@ -89,7 +106,7 @@ export const SessionSchema = z.object({
   contractVersion: z.literal(SESSION_CONTRACT_VERSION),
   sessionId: z.string().min(1),
   sourceId: z.string().min(1),
-  provider: SessionProviderIdSchema,
+  provider: CompatibleSessionProviderIdSchema,
   nativeSessionId: z.string().min(1),
   workspaceId: z.string().min(1),
   startedAt: z.string().datetime({ offset: true }).nullable(),
@@ -104,6 +121,23 @@ export const ImportCheckpointSchema = z.object({
   cursor: z.string(),
   recordsRead: z.number().int().nonnegative(),
   bytesRead: z.number().int().nonnegative(),
+  checkpointVersion: z.literal('2').optional(),
+  positionKind: z.enum(['record-index', 'byte-offset', 'provider-native']).optional(),
+  sourceGeneration: z.string().min(1).optional(),
+  locatorClass: z.string().min(1).optional(),
+  adapterVersion: VersionSchema.optional(),
+  sourceSchemaVersion: VersionSchema.optional(),
+  policyVersion: VersionSchema.optional(),
+  continuity: z.enum([
+    'new-generation',
+    'validated-append',
+    'unchanged-replay',
+    'unverified',
+  ]).optional(),
+  sourceSize: z.number().int().nonnegative().optional(),
+  sourceMtimeMs: z.number().nonnegative().optional(),
+  sourceFileIdentity: z.string().min(1).optional(),
+  prefixDigest: DigestSchema.optional(),
 });
 
 export const ImportRunSchema = z.object({
@@ -230,7 +264,9 @@ export const DeletionReceiptSchema = z.object({
 
 export const PromotionDependencyDecisionSchema = z.object({
   dependentId: z.string().min(1),
-  action: z.enum(['revoke', 'supersede', 'retain', 'origin_unavailable']),
+  action: z.enum([
+    'revoke', 'supersede', 'retain', 'origin_unavailable', 'delete', 'abort',
+  ]),
   basis: z.string().min(1),
 }).strict();
 
@@ -252,6 +288,15 @@ export interface ProviderRecord {
   sequence: number;
   kind: string;
   role?: string;
+  participant?: string;
+  toolName?: string;
+  toolCallId?: string;
+  model?: string;
+  entities?: string[];
+  extractionState?: string;
+  /** Import-control metadata; not copied into normalized event extensions. */
+  sourceCursor?: string;
+  sourceBytes?: number;
   occurredAt?: string;
   text: string;
   rawReference: SessionEvent['rawReference'];
@@ -289,7 +334,10 @@ export type SessionAcquisitionMode =
   | 'api' | 'jsonl' | 'sqlite-snapshot' | 'hook' | 'manual-export';
 
 export function assertSessionProviderId(value: string): SessionProviderId {
-  const parsed = SessionProviderIdSchema.safeParse(value);
+  const canonical = SESSION_PROVIDER_ALIASES[
+    value as keyof typeof SESSION_PROVIDER_ALIASES
+  ] ?? value;
+  const parsed = SessionProviderIdSchema.safeParse(canonical);
   if (!parsed.success) throw new SessionContractError('UNKNOWN_PROVIDER', `unknown session provider: ${value}`);
   return parsed.data;
 }
@@ -301,8 +349,12 @@ export function assertSupportedSchemaMajor(version: string, supportedMajor = 1):
   }
 }
 
-export function stableSessionId(provider: SessionProviderId, sourceId: string, nativeSessionId: string): string {
-  return stableId('session', provider, sourceId, nativeSessionId);
+export function stableSessionId(provider: SessionProviderId | string, sourceId: string, nativeSessionId: string): string {
+  const canonical = assertSessionProviderId(provider);
+  // Preserve the legacy identity seed through the published compatibility
+  // window so existing Windsurf catalogs do not duplicate normalized rows.
+  const identitySeed = canonical === 'devin-desktop' ? 'windsurf' : canonical;
+  return stableId('session', identitySeed, sourceId, nativeSessionId);
 }
 
 export function stableEventId(sourceId: string, record: ProviderRecord, digest: string): string {

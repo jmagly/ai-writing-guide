@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -108,8 +107,10 @@ describe('sessions CLI contracts', () => {
         acquisitionModes: ['manual-export'],
         reasonCode: 'LOSSY_MARKDOWN_ONLY',
       });
-    expect(output.data.providers.find((item: any) => item.provider === 'windsurf'))
+    expect(output.data.providers.find((item: any) => item.provider === 'devin-desktop'))
       .toMatchObject({
+        product: 'Devin Desktop',
+        compatibilityAliases: ['windsurf'],
         disposition: 'implemented',
         supportedOperations: ['inspect', 'stream'],
         acquisitionModes: ['hook', 'jsonl'],
@@ -134,11 +135,16 @@ describe('sessions CLI contracts', () => {
       status: 'preview',
       data: {
         source: {
-          provider: 'windsurf',
+          provider: 'devin-desktop',
           providerProfile: 'opt-in-cascade-transcript-hook',
           disposition: 'implemented',
           consistency: 'provisional',
-          extensions: { 'native.windsurf': { product: 'Devin Desktop' } },
+          extensions: {
+            'native.devin-desktop': {
+              product: 'Devin Desktop',
+              compatibilityProviderId: 'windsurf',
+            },
+          },
         },
       },
     });
@@ -387,7 +393,7 @@ describe('sessions CLI contracts', () => {
   });
 });
 
-describe.runIf(hasBetterSqlite3())('sessions CLI catalog lifecycle', () => {
+describe('sessions CLI catalog lifecycle', () => {
   let root: string;
   let log: ReturnType<typeof vi.spyOn>;
 
@@ -401,9 +407,23 @@ describe.runIf(hasBetterSqlite3())('sessions CLI catalog lifecycle', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
+  it('requires explicit workspace authorization for catalog reads', async () => {
+    const result = await sessionsHandler.execute(context([
+      'list', '--db', resolve(root, 'catalog.sqlite'), '--json',
+    ]));
+    expect(result.exitCode).toBe(2);
+    expect(jsonOutput(log).error).toMatchObject({
+      code: 'MISSING_ARGUMENT',
+    });
+  });
+
   it('imports, paginates, shows, tags, relocates, reindexes, previews deletion, and diagnoses', async () => {
     const fixture = resolve('test/fixtures/sessions/generic/valid-v1.jsonl');
-    const dbArgs = ['--db', resolve(root, 'catalog.sqlite'), '--json'];
+    const dbArgs = [
+      '--db', resolve(root, 'catalog.sqlite'),
+      '--workspace', 'workspace-fixture',
+      '--json',
+    ];
 
     expect((await sessionsHandler.execute(context([
       'import', fixture, '--source-id', 'generic-fixture-v1', '--workspace', 'workspace-fixture',
@@ -414,7 +434,10 @@ describe.runIf(hasBetterSqlite3())('sessions CLI catalog lifecycle', () => {
 
     await sessionsHandler.execute(context(['list', '--limit', '1', ...dbArgs]));
     const list = jsonOutput(log);
-    expect(list.data.page).toMatchObject({ limit: 1, cursor: '0', total: 1, nextCursor: null });
+    expect(list.data.page).toMatchObject({
+      limit: 1, cursor: null, total: 1, nextCursor: null,
+      snapshotRowid: expect.any(Number),
+    });
     const sessionId = list.data.items[0].sessionId;
 
     await sessionsHandler.execute(context(['show', sessionId, ...dbArgs]));
@@ -539,6 +562,28 @@ describe.runIf(hasBetterSqlite3())('sessions CLI catalog lifecycle', () => {
       data: { providerLogsModified: false, confirmationRequired: true },
     });
 
+    await sessionsHandler.execute(context(['audit', '--limit', '2', ...dbArgs]));
+    const auditOutput = jsonOutput(log);
+    expect(auditOutput).toMatchObject({
+      status: 'ok',
+      data: {
+        page: { limit: 2, nextCursor: expect.any(String) },
+      },
+    });
+    expect(auditOutput.data.items[0]).toMatchObject({
+      eventName: 'session.import',
+      workspaceId: 'workspace-fixture',
+      integrityDigest: expect.stringMatching(/^sha256:/),
+    });
+    await sessionsHandler.execute(context(['audit', '--otel', ...dbArgs]));
+    const otelOutput = jsonOutput(log);
+    expect(otelOutput.status).toBe('ok');
+    expect(otelOutput.data.records[0]).toMatchObject({
+      EventName: 'session.import',
+      Body: {},
+      Resource: { service: 'aiwg.sessions', workspaceId: 'workspace-fixture' },
+    });
+
     await sessionsHandler.execute(context(['doctor', ...dbArgs]));
     expect(jsonOutput(log)).toMatchObject({
       status: 'ok',
@@ -548,7 +593,11 @@ describe.runIf(hasBetterSqlite3())('sessions CLI catalog lifecycle', () => {
 
   it('tombstones only after explicit confirmation and keeps JSON errors stable', async () => {
     const fixture = resolve('test/fixtures/sessions/generic/valid-v1.jsonl');
-    const dbArgs = ['--db', resolve(root, 'catalog.sqlite'), '--json'];
+    const dbArgs = [
+      '--db', resolve(root, 'catalog.sqlite'),
+      '--workspace', 'default',
+      '--json',
+    ];
     await sessionsHandler.execute(context([
       'import', fixture, '--source-id', 'generic-fixture-v1', ...dbArgs,
     ]));
@@ -599,13 +648,3 @@ describe.runIf(hasBetterSqlite3())('sessions CLI catalog lifecycle', () => {
     expect(jsonOutput(log).error.code).toBe('SESSION_NOT_FOUND');
   });
 });
-
-function hasBetterSqlite3(): boolean {
-  const require = createRequire(import.meta.url);
-  try {
-    require.resolve('better-sqlite3');
-    return true;
-  } catch {
-    return false;
-  }
-}

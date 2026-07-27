@@ -2,7 +2,9 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   renameSync,
+  unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { dirname, relative, resolve, sep } from 'node:path';
@@ -12,8 +14,10 @@ import {
   SessionContractError,
   sha256,
   type IntelligenceCandidate,
+  type PromotionDependencyDecision,
   type PromotionReceipt,
 } from './contracts.js';
+import type { SessionPurgePreview } from './repository.js';
 
 export interface PromotionStorePort {
   getCandidate(candidateId: string, version?: number): IntelligenceCandidate | null;
@@ -237,6 +241,211 @@ export class FilesystemMemoryDestination implements MemoryPromotionDestination {
   }
 }
 
+export interface PromotionArtifactEffect {
+  dependentId: string;
+  destinationRef: string;
+  action: PromotionDependencyDecision['action'];
+  effect: 'mark-origin-unavailable' | 'mark-revoked' | 'mark-superseded'
+    | 'mark-retained' | 'delete' | 'abort';
+  destructive: boolean;
+}
+
+export interface PromotionDispositionJournal {
+  contractVersion: '1.0.0';
+  operationId: string;
+  status: 'planned' | 'artifacts-applied' | 'catalog-committed';
+  effects: Array<PromotionArtifactEffect & {
+    outcome: 'pending' | 'applied' | 'already-applied';
+  }>;
+}
+
+/**
+ * Recoverable filesystem half of session purge. The journal is written before
+ * promoted artifacts change; replaying `apply` is idempotent after any crash.
+ * Call `catalogCommitted` only after SessionRepository.purgeSession succeeds.
+ */
+export class FilesystemPromotionDispositionCoordinator {
+  private readonly projectRoot: string;
+  private readonly allowedRoots: string[];
+  private readonly journalRoot: string;
+
+  constructor(input: { projectRoot: string; allowedRoots?: string[] }) {
+    this.projectRoot = resolve(input.projectRoot);
+    this.allowedRoots = (input.allowedRoots ?? ['.aiwg']).map((root) =>
+      resolve(this.projectRoot, root));
+    this.journalRoot = resolve(
+      this.projectRoot,
+      '.aiwg/telemetry/promotion-dispositions',
+    );
+  }
+
+  preview(
+    purge: SessionPurgePreview,
+    decisions: readonly PromotionDependencyDecision[],
+  ): PromotionArtifactEffect[] {
+    const byId = new Map(decisions.map((item) => [item.dependentId, item]));
+    return purge.promotedDependents.map((dependent) => {
+      const decision = byId.get(dependent.dependentId);
+      if (!decision) {
+        throw new SessionContractError(
+          'OPERATION_NOT_AUTHORIZED',
+          'every promoted artifact requires an explicit disposition',
+        );
+      }
+      this.authorizedPath(dependent.destinationRef);
+      return {
+        dependentId: dependent.dependentId,
+        destinationRef: dependent.destinationRef,
+        action: decision.action,
+        effect: dispositionEffect(decision.action),
+        destructive: decision.action === 'delete' || decision.action === 'revoke',
+      };
+    });
+  }
+
+  apply(
+    purge: SessionPurgePreview,
+    decisions: readonly PromotionDependencyDecision[],
+  ): PromotionDispositionJournal {
+    const effects = this.preview(purge, decisions);
+    if (effects.some((effect) => effect.action === 'abort')) {
+      throw new SessionContractError(
+        'OPERATION_NOT_AUTHORIZED',
+        'purge was aborted by promoted-artifact disposition',
+      );
+    }
+    mkdirSync(this.journalRoot, { recursive: true, mode: 0o700 });
+    const journalPath = this.journalPath(purge.operationId);
+    let journal: PromotionDispositionJournal = existsSync(journalPath)
+      ? JSON.parse(readFileSync(journalPath, 'utf8')) as PromotionDispositionJournal
+      : {
+          contractVersion: '1.0.0',
+          operationId: purge.operationId,
+          status: 'planned',
+          effects: effects.map((effect) => ({ ...effect, outcome: 'pending' })),
+        };
+    this.writeJournal(journalPath, journal);
+
+    for (const effect of journal.effects) {
+      if (effect.outcome !== 'pending') continue;
+      const target = this.authorizedPath(effect.destinationRef);
+      const marker = dispositionMarker(purge.operationId, effect);
+      if (effect.action === 'delete') {
+        if (existsSync(target)) unlinkSync(target);
+        effect.outcome = existsSync(target) ? 'pending' : 'applied';
+      } else if (!existsSync(target)) {
+        // Durable journal/provenance state is the observable disposition when
+        // the external artifact was already absent.
+        effect.outcome = 'already-applied';
+      } else {
+        const content = readFileSync(target, 'utf8');
+        if (content.includes(marker)) {
+          effect.outcome = 'already-applied';
+        } else {
+          this.atomicWrite(target, `${marker}\n${content}`);
+          effect.outcome = 'applied';
+        }
+      }
+      this.writeJournal(journalPath, journal);
+    }
+    journal.status = 'artifacts-applied';
+    this.writeJournal(journalPath, journal);
+    return journal;
+  }
+
+  catalogCommitted(operationId: string): PromotionDispositionJournal {
+    const journalPath = this.journalPath(operationId);
+    if (!existsSync(journalPath)) {
+      throw new SessionContractError(
+        'IMPORT_CONFLICT',
+        'promotion disposition journal is missing',
+      );
+    }
+    const journal = JSON.parse(
+      readFileSync(journalPath, 'utf8'),
+    ) as PromotionDispositionJournal;
+    if (journal.status !== 'artifacts-applied') {
+      throw new SessionContractError(
+        'IMPORT_CONFLICT',
+        'promotion artifact dispositions are incomplete',
+      );
+    }
+    journal.status = 'catalog-committed';
+    this.writeJournal(journalPath, journal);
+    return journal;
+  }
+
+  listIncomplete(): PromotionDispositionJournal[] {
+    if (!existsSync(this.journalRoot)) return [];
+    return requireJournalFiles(this.journalRoot)
+      .map((file) => JSON.parse(readFileSync(file, 'utf8')) as PromotionDispositionJournal)
+      .filter((journal) => journal.status !== 'catalog-committed');
+  }
+
+  private authorizedPath(destinationRef: string): string {
+    if (destinationRef.includes('\0') || resolve(destinationRef) === destinationRef) {
+      throw new SessionContractError(
+        'SOURCE_OUTSIDE_ALLOWED_ROOT',
+        'promotion disposition requires a relative AIWG-owned destination',
+      );
+    }
+    const target = resolve(this.projectRoot, destinationRef);
+    if (!this.allowedRoots.some(
+      (root) => target === root || target.startsWith(`${root}${sep}`),
+    )) {
+      throw new SessionContractError(
+        'SOURCE_OUTSIDE_ALLOWED_ROOT',
+        'promotion disposition path is outside configured AIWG roots',
+      );
+    }
+    return target;
+  }
+
+  private journalPath(operationId: string): string {
+    return resolve(this.journalRoot, `${operationId.replace(':', '-')}.json`);
+  }
+
+  private atomicWrite(target: string, content: string): void {
+    mkdirSync(dirname(target), { recursive: true, mode: 0o700 });
+    const temporary = `${target}.tmp-${process.pid}`;
+    writeFileSync(temporary, content, { encoding: 'utf8', mode: 0o600 });
+    renameSync(temporary, target);
+  }
+
+  private writeJournal(path: string, journal: PromotionDispositionJournal): void {
+    this.atomicWrite(path, `${JSON.stringify(journal, null, 2)}\n`);
+  }
+}
+
+function dispositionEffect(
+  action: PromotionDependencyDecision['action'],
+): PromotionArtifactEffect['effect'] {
+  if (action === 'origin_unavailable') return 'mark-origin-unavailable';
+  if (action === 'revoke') return 'mark-revoked';
+  if (action === 'supersede') return 'mark-superseded';
+  if (action === 'retain') return 'mark-retained';
+  return action;
+}
+
+function dispositionMarker(
+  operationId: string,
+  effect: PromotionArtifactEffect,
+): string {
+  return `<!-- aiwg-promotion-disposition ${JSON.stringify({
+    operationId,
+    dependentId: effect.dependentId,
+    state: effect.effect,
+    originAvailable: false,
+  })} -->`;
+}
+
+function requireJournalFiles(root: string): string[] {
+  return readdirSync(root)
+    .filter((name) => name.endsWith('.json'))
+    .sort()
+    .map((name) => resolve(root, name));
+}
+
 export function resolveMemoryConsumerManifest(projectRoot: string, consumer: string): string {
   const safeConsumer = assertConsumerId(consumer);
   const candidates = [
@@ -278,4 +487,3 @@ Confidence: ${candidate.confidence}
 Scope: ${candidate.projectScope} / ${candidate.temporalScope}
 `;
 }
-

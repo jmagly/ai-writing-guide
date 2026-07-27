@@ -4,7 +4,8 @@
 
 - **FR-001:** The provider set is exactly the canonical IDs from
   `provider-definitions.ts`: `claude`, `codex`, `copilot`, `cursor`, `factory`,
-  `hermes`, `opencode`, `openclaw`, `openhuman`, `warp`, `windsurf`, `generic`.
+  `hermes`, `opencode`, `openclaw`, `openhuman`, `warp`, `devin-desktop`, `generic`.
+  `windsurf` remains an accepted compatibility alias during its deprecation window.
 - **FR-002:** Capability classification and current operational state are
   independent machine-readable fields.
 - **FR-003:** Unknown provider IDs fail with a stable nonzero error and must not

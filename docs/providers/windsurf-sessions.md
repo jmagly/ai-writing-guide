@@ -1,8 +1,21 @@
-# Devin Desktop session ingestion (`windsurf` compatibility ID)
+# Devin Desktop session ingestion (`devin-desktop`)
 
-AIWG retains `windsurf` as its stable provider compatibility ID, but the current product and documentation
+The canonical session provider ID is `devin-desktop`. AIWG accepts `windsurf`
+as a deprecated compatibility alias through at least 2027-07-27 and for one
+major release after this policy ships. The current product and documentation
 surface is **Devin Desktop**. The former Windsurf Cascade Hooks URL redirects to Devin Docs. This adapter was
 verified against the current Devin Desktop hook contract, not an archived standalone-Windsurf schema.
+
+Alias resolution happens before stable session identity derivation. Both names
+therefore use the historical `windsurf` identity seed and resolve to the same
+normalized session/event rows. On catalog open, older source/session JSON and
+`native.windsurf` envelopes migrate in place to `devin-desktop` and
+`native.devin-desktop`; stable IDs and receipts do not change. Recovery is to
+restore the catalog backup made by the operator before an application upgrade.
+Rollback code may continue reading the compatibility envelope during the
+window. The alias can be removed only after telemetry shows no supported
+clients use it, the documented date has passed, and a major-version migration
+with rollback instructions is available.
 
 Ingestion is strictly opt-in. AIWG neither discovers nor edits system, user, or workspace hook
 configuration. A user or administrator enables `post_cascade_response_with_transcript`, then explicitly
@@ -16,8 +29,10 @@ Unknown schema majors, mixed schemas, mixed trajectories, malformed steps, and a
 closed. Legacy private protobuf stores remain unsupported.
 
 The hook transcript can contain workspace files, command output, tool arguments, search results, rules, and
-conversation history. AIWG records that warning as provenance; it does not inspect the transcript to seek
-secrets. Normal repository redaction policy still applies to searchable projections.
+conversation history. AIWG records that warning as provenance; it does not inspect credentials or
+environment variables. Recursive repository policy classifies and sanitizes
+native attributes before persistence, while normalized text follows the same
+redaction boundary.
 
 ## Current evidence
 

@@ -14,6 +14,7 @@ import {
 import {
   readBoundedJsonLines,
   readBoundedText,
+  streamBoundedJsonLines,
   type BoundedJsonRecord,
   type ReaderLimits,
 } from '../readers.js';
@@ -87,6 +88,73 @@ export class CursorSessionAdapter implements SessionSourceAdapter {
   }
 
   async *stream(source: SelectedSource, cursor?: ImportCursor): AsyncIterable<ProviderRecord> {
+    if (source.locatorClass === 'cursor-cli-stream-json'
+      || source.locatorClass === 'cursor-cloud-events-jsonl') {
+      const input = await streamBoundedJsonLines({
+        selectedPath: source.locator,
+        allowedRoots: source.authorizedScope.allowedRoots,
+      }, { consistency: 'provisional', limits: this.limits });
+      const start = parseCursor(cursor?.value);
+      let outputIndex = 0;
+      let schemaVersion: string | null = null;
+      let cliSessionId: string | undefined;
+      let agentId: string | undefined;
+      let runId: string | undefined;
+      let sawRecord = false;
+      for await (const line of input) {
+        sawRecord = true;
+        const raw = asObject(line.value);
+        const currentSchema = typeof raw.schemaVersion === 'string'
+          ? raw.schemaVersion : CURSOR_SOURCE_SCHEMA_VERSION;
+        if (schemaVersion && schemaVersion !== currentSchema) {
+          throw new SessionContractError('SCHEMA_DRIFT', 'Cursor source declares mixed schema versions');
+        }
+        schemaVersion = currentSchema;
+        assertSupportedSchemaMajor(schemaVersion);
+        let record: ProviderRecord;
+        if (source.locatorClass === 'cursor-cli-stream-json') {
+          const parsed = CliEventSchema.safeParse(line.value);
+          if (!parsed.success) {
+            throw new SessionContractError('MALFORMED_SOURCE', 'Cursor CLI event is malformed');
+          }
+          const event = parsed.data;
+          if (cliSessionId && cliSessionId !== event.session_id) {
+            throw new SessionContractError('DUPLICATE_NATIVE_ID', 'Cursor CLI stream changes session identity');
+          }
+          cliSessionId = event.session_id;
+          record = normalizeCli([line]).records[0];
+        } else {
+          const parsed = CloudEventSchema.safeParse(line.value);
+          if (!parsed.success) {
+            throw new SessionContractError('MALFORMED_SOURCE', 'Cursor Cloud Agent event is malformed');
+          }
+          const event = parsed.data;
+          const nextAgentId = event.agent?.id ?? agentId;
+          const nextRunId = event.run?.id ?? runId;
+          if (agentId && nextAgentId && agentId !== nextAgentId) {
+            throw new SessionContractError('DUPLICATE_NATIVE_ID', 'Cursor cloud stream changes agent identity');
+          }
+          if (runId && nextRunId && runId !== nextRunId) {
+            throw new SessionContractError('DUPLICATE_NATIVE_ID', 'Cursor cloud stream changes run identity');
+          }
+          agentId = nextAgentId;
+          runId = nextRunId;
+          record = normalizeCloud([{
+            ...line,
+            value: {
+              ...event,
+              agent: event.agent ?? (agentId ? { id: agentId } : undefined),
+              run: event.run ?? (runId ? { id: runId } : undefined),
+            },
+          }]).records[0];
+        }
+        if (outputIndex++ >= start) yield record;
+      }
+      if (!sawRecord && !input.incompleteTail) {
+        throw new SessionContractError('MALFORMED_SOURCE', 'Cursor structured source is empty');
+      }
+      return;
+    }
     const parsed = await this.readSource(source);
     const start = parseCursor(cursor?.value);
     for (const record of parsed.records.slice(start)) yield record;
@@ -171,6 +239,11 @@ function normalizeCli(input: BoundedJsonRecord[]): {
       sequence: line.sequence,
       kind: event.type === 'tool_call' ? `tool.${event.subtype ?? 'event'}` : event.type,
       role: event.message?.role ?? (event.type === 'system' ? 'system' : undefined),
+      participant: event.message?.role ?? (event.type === 'system' ? 'system' : undefined),
+      model: event.model,
+      toolName: typeof asObject(event.tool_call).name === 'string'
+        ? String(asObject(event.tool_call).name) : undefined,
+      toolCallId: event.call_id,
       text,
       rawReference: { locatorClass: 'cursor-cli-stream-json', offset: line.byteOffset },
       extensions: {

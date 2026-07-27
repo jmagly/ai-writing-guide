@@ -4579,6 +4579,10 @@ default and records CLI-derived utilization such as `aiwg run skill <name>`,
 top-level commands. It can also ingest a targeted Claude Code JSONL transcript
 when the operator points it at a specific file.
 
+Transcript ingestion currently supports `claude-code` only. Other provider
+values fail explicitly; their records are never parsed with the Claude adapter
+or relabeled.
+
 ```bash
 aiwg skill-usage [--json] [--scope project|global|all] [--limit N] [--suggest-for "query"]
 aiwg skill-usage ingest-transcript <path> --provider claude-code [--project-root <path>] [--dry-run] [--json]
@@ -4610,8 +4614,10 @@ compatibility path is retired.
 - Project: `.aiwg/telemetry/skill-usage.jsonl`
 - Global: `$XDG_STATE_HOME/aiwg/skill-usage.jsonl` or `~/.local/state/aiwg/skill-usage.jsonl`
 
-**Report model:** JSON output includes `summary`, `heatmap`, `cold_spots`, and
-`suggestions`. The heatmap buckets each artifact by frequency and recency.
+**Report model:** JSON output includes `summary`, `heatmap`, `cold_spots`,
+`suggestions`, and a retained-segment `window`. Reports read the active file
+and retained `.1` segment, and disclose when history predates that window.
+The heatmap buckets each artifact by frequency and recency.
 Cold spots are local bundled skills with no usage events. Suggestions are
 deterministic under-used skill matches for `--suggest-for`.
 
@@ -4620,10 +4626,32 @@ outcome, AIWG version, scope, hashed cwd, and hashed project root plus
 project-relative cwd when available. Reports derive counts from those events
 and local skill metadata. Events do not store prompts, stdout/stderr, file
 contents, secrets, full raw argv, chat content, or absolute local paths.
+Provider metadata is reduced to the explicit provider and normalized artifact
+identity before storage. Skill-usage telemetry is not automatically copied
+into the session catalog; doing so requires that catalog's separate source
+authorization and sanitization policy.
 
-**Bounds:** stores rotate to `.1` when `telemetry.skill_usage.max_bytes`,
-`command_log.max_bytes`, or `AIWG_SKILL_USAGE_MAX_BYTES` is exceeded. The
-default bound is 1 MiB per store.
+**Envelope and replay:** legacy schema-version 1 JSONL events remain readable.
+Transcript imports write schema-version 2 events with distinct source
+`timestamp` and `observed_timestamp`, stable event/source-generation identity,
+and an import receipt. Replaying an unchanged source is idempotent across the
+retained window.
+
+**Bounds:** transcript input is streamed with per-line, record-count, and total
+byte limits. Stores rotate before an append whose projected size would exceed
+`telemetry.skill_usage.max_bytes`, `command_log.max_bytes`, or
+`AIWG_SKILL_USAGE_MAX_BYTES`. The default is 1 MiB. A single encoded event
+larger than the configured bound is isolated in an otherwise-empty active
+segment and marked `oversized_record`; no additional event is appended to that
+segment before rotation.
+
+**Consent, retention, access, export, deletion:** collection is off by default
+and requires the configuration or environment opt-in above. Files inherit
+normal filesystem access controls. `aiwg skill-usage --json` is the export
+surface. Retention is the active segment plus `.1`; older `.1` content is
+disposed during rotation. To delete telemetry, remove the project/global
+`skill-usage.jsonl` and `.1` files after disabling collection. Session
+tombstone/purge does not delete this separately consented store.
 
 **Examples:**
 

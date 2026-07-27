@@ -196,6 +196,34 @@ describe('optional session search backends', () => {
     expect(result.items.every((item) => !('searchableText' in item))).toBe(true);
   });
 
+  it('retains late lexical hits outside the bounded semantic candidate window', async () => {
+    const semanticDocuments = Array.from({ length: 500 }, (_, index) =>
+      document(`semantic-${String(index).padStart(3, '0')}`));
+    const late = document('event-501');
+    const port: SessionLexicalSearchPort = {
+      search: () => {
+        const { searchableText: _text, ...hit } = late;
+        return { items: [hit], nextCursor: null };
+      },
+      authorizedSearchDocuments: () => semanticDocuments,
+    };
+    const backend: SessionSemanticBackend = {
+      id: 'bounded-fixture',
+      requiresNetwork: false,
+      requiresModel: true,
+      rank: vi.fn().mockResolvedValue([]),
+    };
+    const service = new SessionSearchService(port);
+    const preview = service.preview(options, backend);
+    const result = await service.search({
+      options,
+      mode: 'hybrid',
+      backend,
+      authorization: { approved: true, operationId: preview.operationId },
+    });
+    expect(result.items.map((item) => item.eventId)).toContain('event-501');
+  });
+
   it('invalidates approval after replay/lifecycle scope changes and excludes deleted identities', async () => {
     let documents = [document('event-a'), document('event-b')];
     const port: SessionLexicalSearchPort = {

@@ -1,6 +1,7 @@
 import { mkdir, readFile, rename, stat, writeFile, appendFile, readdir } from 'fs/promises';
-import { existsSync } from 'fs';
+import { createReadStream, existsSync } from 'fs';
 import { createHash } from 'crypto';
+import { createInterface } from 'readline';
 import path from 'path';
 import os from 'os';
 import type { AiwgConfig, SkillUsageConfig } from '../config/aiwg-config.js';
@@ -21,9 +22,14 @@ export type SkillUsageArtifactKind =
 export type SkillUsageAction = 'invoke' | 'show' | 'discover' | 'delegate' | 'unknown';
 
 export interface SkillUsageEvent {
-  schema_version: 1;
+  schema_version: 1 | 2;
   event_type: 'aiwg.skill_usage';
   timestamp: string;
+  observed_timestamp?: string;
+  event_id?: string;
+  source_generation?: string;
+  native_event_id?: string;
+  oversized_record?: boolean;
   invocation_id?: string;
   source: SkillUsageSource;
   provider?: string;
@@ -101,8 +107,21 @@ export interface SkillUsageTranscriptIngestOptions {
   env?: NodeJS.ProcessEnv;
 }
 
+export interface SkillUsageImportReceipt {
+  source_generation: string;
+  provider: string;
+  records_read: number;
+  events_extracted: number;
+  events_appended: number;
+  duplicates_skipped: number;
+  malformed_skipped: number;
+}
+
 const DEFAULT_MAX_BYTES = 1_048_576;
 const DEFAULT_REPORT_LIMIT = 20;
+const MAX_TRANSCRIPT_LINE_BYTES = 1_048_576;
+const MAX_TRANSCRIPT_BYTES = 256 * 1_048_576;
+const MAX_TRANSCRIPT_RECORDS = 1_000_000;
 
 export async function maybeAppendSkillUsage(input: SkillUsageAppendInput): Promise<void> {
   const env = input.env ?? process.env;
@@ -143,25 +162,53 @@ export async function ingestSkillUsageTranscript(options: SkillUsageTranscriptIn
   appended: number;
   skipped: number;
   paths: string[];
+  receipt: SkillUsageImportReceipt;
 }> {
   const env = options.env ?? process.env;
   const contextCwd = options.projectRoot ?? options.cwd;
   const resolved = await resolveSkillUsageSettings(contextCwd, env);
   if (!resolved.enabled || resolved.scopes.length === 0) {
-    return { events: [], appended: 0, skipped: 0, paths: [] };
+    return {
+      events: [], appended: 0, skipped: 0, paths: [],
+      receipt: {
+        source_generation: '', provider: normalizeProvider(options.provider),
+        records_read: 0, events_extracted: 0, events_appended: 0,
+        duplicates_skipped: 0, malformed_skipped: 0,
+      },
+    };
   }
 
-  const raw = await readFile(options.transcriptPath, 'utf8');
-  const lines = raw.split('\n').map(line => line.trim()).filter(Boolean);
+  const provider = normalizeProvider(options.provider);
+  if (provider !== 'claude-code') {
+    throw new Error(`unsupported skill-usage transcript provider: ${provider}`);
+  }
+  const sourceStat = await stat(options.transcriptPath);
+  const sourceGeneration = digest([
+    provider, String(sourceStat.size), String(sourceStat.mtimeMs),
+  ].join('\0'));
   const version = await readAiwgVersion(options.frameworkRoot);
   const context = await resolvePathContext(contextCwd);
   const extracted: Array<{
     artifact: SkillUsageEvent['artifact'];
     action: SkillUsageAction;
+    occurredAt?: string;
+    nativeEventId?: string;
+    position: number;
+    contentDigest: string;
   }> = [];
   let skipped = 0;
+  let recordsRead = 0;
+  let bytesRead = 0;
 
-  for (const line of lines) {
+  for await (const line of streamTranscriptLines(options.transcriptPath)) {
+    recordsRead += 1;
+    bytesRead += Buffer.byteLength(line) + 1;
+    if (recordsRead > MAX_TRANSCRIPT_RECORDS || bytesRead > MAX_TRANSCRIPT_BYTES) {
+      throw new Error('skill-usage transcript exceeds bounded ingestion limits');
+    }
+    if (Buffer.byteLength(line) > MAX_TRANSCRIPT_LINE_BYTES) {
+      throw new Error('skill-usage transcript record exceeds bounded line limit');
+    }
     let parsed: unknown;
     try {
       parsed = JSON.parse(line);
@@ -173,7 +220,13 @@ export async function ingestSkillUsageTranscript(options: SkillUsageTranscriptIn
     if (events.length === 0) {
       skipped += 1;
     } else {
-      extracted.push(...events);
+      extracted.push(...events.map(event => ({
+        ...event,
+        occurredAt: sourceOccurrenceTime(parsed),
+        nativeEventId: sourceNativeEventId(parsed),
+        position: recordsRead,
+        contentDigest: digest(line),
+      })));
     }
   }
 
@@ -181,15 +234,36 @@ export async function ingestSkillUsageTranscript(options: SkillUsageTranscriptIn
   const paths = resolved.scopes
     .map(scope => resolveUsagePath(scope, context.projectRoot, env))
     .filter((p): p is string => Boolean(p));
+  const knownEventIdsByPath = new Map<string, Set<string>>();
+  for (const filePath of paths) {
+    const knownEventIds = new Set<string>();
+    for (const event of await readJsonlEvents(filePath)) {
+      if (event.event_id) knownEventIds.add(event.event_id);
+    }
+    knownEventIdsByPath.set(filePath, knownEventIds);
+  }
+  let duplicatesSkipped = 0;
 
   for (const scope of resolved.scopes) {
     const filePath = resolveUsagePath(scope, context.projectRoot, env);
     if (!filePath) continue;
+    const knownEventIds = knownEventIdsByPath.get(filePath) ?? new Set<string>();
     for (const item of extracted) {
+      const eventId = digest([
+        sourceGeneration,
+        item.nativeEventId ?? String(item.position),
+        item.contentDigest,
+        item.artifact.kind,
+        item.artifact.id,
+      ].join('\0'));
+      if (knownEventIds.has(eventId)) {
+        duplicatesSkipped += 1;
+        continue;
+      }
       const event = buildUsageEvent({
         env,
         source: 'transcript',
-        provider: normalizeProvider(options.provider),
+        provider,
         artifact: item.artifact,
         action: item.action,
         outcome: 'unknown',
@@ -197,8 +271,13 @@ export async function ingestSkillUsageTranscript(options: SkillUsageTranscriptIn
         cwd: context.projectRoot ?? contextCwd,
         context,
         scope,
+        occurredAt: item.occurredAt,
+        eventId,
+        sourceGeneration,
+        nativeEventId: item.nativeEventId,
       });
       persisted.push(event);
+      knownEventIds.add(eventId);
       if (!options.dryRun) {
         await appendBoundedJsonl(filePath, event, resolved.maxBytes);
       }
@@ -210,6 +289,15 @@ export async function ingestSkillUsageTranscript(options: SkillUsageTranscriptIn
     appended: options.dryRun ? 0 : persisted.length,
     skipped,
     paths,
+    receipt: {
+      source_generation: sourceGeneration,
+      provider,
+      records_read: recordsRead,
+      events_extracted: extracted.length,
+      events_appended: options.dryRun ? 0 : persisted.length,
+      duplicates_skipped: duplicatesSkipped,
+      malformed_skipped: skipped,
+    },
   };
 }
 
@@ -227,6 +315,7 @@ export async function readSkillUsageReport(options: SkillUsageReportOptions): Pr
   cold_spots: SkillUsageInventoryEntry[];
   suggestions: SkillUsageSuggestion[];
   paths: string[];
+  window: { retained_segments: number; truncated_before: boolean };
 }> {
   const env = options.env ?? process.env;
   const context = await resolvePathContext(options.cwd);
@@ -258,6 +347,13 @@ export async function readSkillUsageReport(options: SkillUsageReportOptions): Pr
       limit: 5,
     }),
     paths,
+    window: {
+      retained_segments: paths.reduce(
+        (count, filePath) => count + retainedUsagePaths(filePath).filter(existsSync).length,
+        0,
+      ),
+      truncated_before: paths.some(filePath => existsSync(`${filePath}.1`)),
+    },
   };
 }
 
@@ -356,11 +452,22 @@ function buildUsageEvent(input: {
   cwd: string;
   context: { projectRoot: string | null; relativePath: string };
   scope: SkillUsageScope;
+  occurredAt?: string;
+  eventId?: string;
+  sourceGeneration?: string;
+  nativeEventId?: string;
 }): SkillUsageEvent {
+  const observedTimestamp = new Date().toISOString();
   const event: SkillUsageEvent = {
-    schema_version: 1,
+    schema_version: input.eventId ? 2 : 1,
     event_type: 'aiwg.skill_usage',
-    timestamp: new Date().toISOString(),
+    timestamp: input.occurredAt ?? observedTimestamp,
+    ...(input.eventId ? {
+      observed_timestamp: observedTimestamp,
+      event_id: input.eventId,
+      source_generation: input.sourceGeneration,
+      native_event_id: input.nativeEventId,
+    } : {}),
     invocation_id: input.env.AIWG_INVOCATION_ID,
     source: input.source,
     provider: input.provider,
@@ -451,6 +558,26 @@ function normalizeProvider(value: string): string {
   const normalized = value.trim().toLowerCase();
   if (normalized === 'claude' || normalized === 'claude_code') return 'claude-code';
   return normalized || 'unknown';
+}
+
+function sourceOccurrenceTime(value: unknown): string | undefined {
+  if (!isRecord(value)) return undefined;
+  for (const key of ['timestamp', 'created_at', 'createdAt', 'time']) {
+    const candidate = value[key];
+    if (typeof candidate === 'string' && !Number.isNaN(Date.parse(candidate))) {
+      return new Date(candidate).toISOString();
+    }
+  }
+  return undefined;
+}
+
+function sourceNativeEventId(value: unknown): string | undefined {
+  if (!isRecord(value)) return undefined;
+  return firstString(value, ['uuid', 'event_id', 'eventId', 'id', 'message_id']);
+}
+
+function digest(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
 }
 
 function isArtifactKind(value: string | undefined): value is SkillUsageArtifactKind {
@@ -574,15 +701,19 @@ function resolveUsagePath(
 
 async function appendBoundedJsonl(filePath: string, event: SkillUsageEvent, maxBytes: number): Promise<void> {
   await mkdir(path.dirname(filePath), { recursive: true });
-  await rotateIfNeeded(filePath, maxBytes);
-  await appendFile(filePath, JSON.stringify(event) + '\n', 'utf8');
+  const line = JSON.stringify(event) + '\n';
+  const lineBytes = Buffer.byteLength(line);
+  if (maxBytes > 0 && lineBytes > maxBytes) event.oversized_record = true;
+  const finalLine = JSON.stringify(event) + '\n';
+  await rotateIfNeeded(filePath, maxBytes, Buffer.byteLength(finalLine));
+  await appendFile(filePath, finalLine, 'utf8');
 }
 
-async function rotateIfNeeded(filePath: string, maxBytes: number): Promise<void> {
+async function rotateIfNeeded(filePath: string, maxBytes: number, appendBytes: number): Promise<void> {
   if (maxBytes <= 0) return;
   try {
     const current = await stat(filePath);
-    if (current.size <= maxBytes) return;
+    if (current.size === 0 || current.size + appendBytes <= maxBytes) return;
     const rotated = `${filePath}.1`;
     if (existsSync(rotated)) {
       await writeFile(rotated, '', 'utf8');
@@ -594,16 +725,33 @@ async function rotateIfNeeded(filePath: string, maxBytes: number): Promise<void>
 }
 
 async function readJsonlEvents(filePath: string): Promise<SkillUsageEvent[]> {
+  const events: SkillUsageEvent[] = [];
+  for (const retainedPath of retainedUsagePaths(filePath)) {
+    try {
+      for await (const line of streamTranscriptLines(retainedPath)) {
+        if (line.trim()) events.push(JSON.parse(line) as SkillUsageEvent);
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    }
+  }
+  return events;
+}
+
+function retainedUsagePaths(filePath: string): string[] {
+  return [`${filePath}.1`, filePath];
+}
+
+async function* streamTranscriptLines(filePath: string): AsyncGenerator<string> {
+  const input = createReadStream(filePath, { encoding: 'utf8' });
+  const lines = createInterface({ input, crlfDelay: Infinity });
   try {
-    const raw = await readFile(filePath, 'utf8');
-    return raw
-      .split('\n')
-      .map(line => line.trim())
-      .filter(Boolean)
-      .map(line => JSON.parse(line) as SkillUsageEvent);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
-    throw error;
+    for await (const line of lines) {
+      if (line.trim()) yield line;
+    }
+  } finally {
+    lines.close();
+    input.destroy();
   }
 }
 

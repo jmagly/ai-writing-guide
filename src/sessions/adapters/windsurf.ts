@@ -11,10 +11,16 @@ import {
   type SourceDescriptor,
   type SourceProbe,
 } from '../contracts.js';
-import { readBoundedJsonLines, type ReaderLimits } from '../readers.js';
+import {
+  readBoundedJsonLines, streamBoundedJsonLines, type ReaderLimits,
+} from '../readers.js';
 
-export const WINDSURF_ADAPTER_VERSION = '1.0.0';
-export const WINDSURF_TRANSCRIPT_SCHEMA_VERSION = '1.0.0';
+export const DEVIN_DESKTOP_ADAPTER_VERSION = '1.1.0';
+export const DEVIN_DESKTOP_TRANSCRIPT_SCHEMA_VERSION = '1.0.0';
+/** @deprecated Compatibility export. */
+export const WINDSURF_ADAPTER_VERSION = DEVIN_DESKTOP_ADAPTER_VERSION;
+/** @deprecated Compatibility export. */
+export const WINDSURF_TRANSCRIPT_SCHEMA_VERSION = DEVIN_DESKTOP_TRANSCRIPT_SCHEMA_VERSION;
 
 const StepSchema = z.object({
   schema_version: z.string().optional(),
@@ -35,9 +41,9 @@ const StepSchema = z.object({
 
 type Step = z.infer<typeof StepSchema>;
 
-export class WindsurfSessionAdapter implements SessionSourceAdapter {
-  readonly provider = 'windsurf' as const;
-  readonly adapterVersion = WINDSURF_ADAPTER_VERSION;
+export class DevinDesktopSessionAdapter implements SessionSourceAdapter {
+  readonly provider = 'devin-desktop' as const;
+  readonly adapterVersion = DEVIN_DESKTOP_ADAPTER_VERSION;
   readonly disposition = 'implemented' as const;
   readonly supportedOperations = ['inspect', 'stream'] as const;
   readonly acquisitionModes = ['hook', 'jsonl'] as const;
@@ -58,22 +64,64 @@ export class WindsurfSessionAdapter implements SessionSourceAdapter {
   }
 
   async *stream(source: SelectedSource, cursor?: ImportCursor): AsyncIterable<ProviderRecord> {
-    const parsed = await this.readSource(source);
+    if (!isCurrentHookLocator(source.locatorClass)) {
+      // Preserve the precise unsupported-operation diagnostics.
+      await this.readSource(source);
+      return;
+    }
     const start = parseCursor(cursor?.value);
-    for (const record of parsed.records.slice(start)) yield record;
+    const input = await streamBoundedJsonLines({
+      selectedPath: source.locator,
+      allowedRoots: source.authorizedScope.allowedRoots,
+    }, { consistency: 'provisional', limits: this.limits });
+    let schemaVersion: string | null = null;
+    let nativeSessionId: string | null = null;
+    let seen = 0;
+    for await (const line of input) {
+      const parsed = StepSchema.safeParse(line.value);
+      if (!parsed.success) {
+        throw new SessionContractError('MALFORMED_SOURCE', 'Windsurf transcript step is malformed');
+      }
+      const step = parsed.data;
+      const currentVersion = step.schema_version ?? DEVIN_DESKTOP_TRANSCRIPT_SCHEMA_VERSION;
+      if (schemaVersion && schemaVersion !== currentVersion) {
+        throw new SessionContractError('SCHEMA_DRIFT', 'mixed Windsurf transcript schemas');
+      }
+      schemaVersion = currentVersion;
+      assertSupportedSchemaMajor(schemaVersion);
+      const currentSession: string = step.trajectory_id
+        ?? nativeSessionId
+        ?? basename(source.locator, '.jsonl');
+      if (step.trajectory_id && nativeSessionId && step.trajectory_id !== nativeSessionId) {
+        throw new SessionContractError('SCHEMA_DRIFT', 'mixed Windsurf trajectory identities');
+      }
+      nativeSessionId = currentSession;
+      if (seen++ < start) continue;
+      yield normalizeStep(
+        step,
+        currentSession,
+        line.sequence,
+        line.byteOffset,
+        canonicalLocatorClass(source.locatorClass),
+        schemaVersion,
+      );
+    }
+    if (seen === 0) {
+      throw new SessionContractError('MALFORMED_SOURCE', 'Windsurf transcript is empty or malformed');
+    }
   }
 
   private async readSource(source: SelectedSource): Promise<{
     schemaVersion: string;
     records: ProviderRecord[];
   }> {
-    if (source.locatorClass === 'windsurf-legacy-protobuf') {
+    if (isLegacyLocator(source.locatorClass)) {
       throw new SessionContractError(
         'UNSUPPORTED_OPERATION',
         'legacy Devin Desktop/Windsurf protobuf stores are unsupported; enable post_cascade_response_with_transcript and select its JSONL output',
       );
     }
-    if (source.locatorClass !== 'windsurf-cascade-hook-jsonl') {
+    if (!isCurrentHookLocator(source.locatorClass)) {
       throw new SessionContractError(
         'UNSUPPORTED_OPERATION',
         'Devin Desktop (Windsurf compatibility) requires an explicitly selected post_cascade_response_with_transcript JSONL file',
@@ -94,7 +142,7 @@ export class WindsurfSessionAdapter implements SessionSourceAdapter {
       return { ...record, value: parsed.data };
     });
     const versions = new Set(steps.map(({ value }) =>
-      value.schema_version ?? WINDSURF_TRANSCRIPT_SCHEMA_VERSION));
+      value.schema_version ?? DEVIN_DESKTOP_TRANSCRIPT_SCHEMA_VERSION));
     if (versions.size !== 1) {
       throw new SessionContractError('SCHEMA_DRIFT', 'mixed Windsurf transcript schemas');
     }
@@ -109,9 +157,35 @@ export class WindsurfSessionAdapter implements SessionSourceAdapter {
     return {
       schemaVersion,
       records: steps.map(({ value, sequence, byteOffset }) =>
-        normalizeStep(value, nativeSessionId, sequence, byteOffset, source.locatorClass, schemaVersion)),
+        normalizeStep(
+          value,
+          nativeSessionId,
+          sequence,
+          byteOffset,
+          canonicalLocatorClass(source.locatorClass),
+          schemaVersion,
+        )),
     };
   }
+}
+
+/** @deprecated Use DevinDesktopSessionAdapter; retained through the alias window. */
+export class WindsurfSessionAdapter extends DevinDesktopSessionAdapter {}
+
+function isCurrentHookLocator(value: string): boolean {
+  return value === 'devin-desktop-cascade-hook-jsonl'
+    || value === 'windsurf-cascade-hook-jsonl';
+}
+
+function isLegacyLocator(value: string): boolean {
+  return value === 'devin-desktop-legacy-protobuf'
+    || value === 'windsurf-legacy-protobuf';
+}
+
+function canonicalLocatorClass(value: string): string {
+  return value.startsWith('windsurf-')
+    ? `devin-desktop-${value.slice('windsurf-'.length)}`
+    : value;
 }
 
 function normalizeStep(
@@ -128,9 +202,12 @@ function normalizeStep(
     nativeEventId: step.event_id ?? (step.execution_id
       ? `${step.execution_id}:${sequence}` : `${nativeSessionId}:${sequence}`),
     sequence,
-    kind: `windsurf.${step.type}`,
+    kind: `devin-desktop.${step.type}`,
     role: step.type === 'user_input' ? 'user'
       : step.type === 'planner_response' ? 'assistant' : 'tool',
+    participant: step.type === 'user_input' ? 'user'
+      : step.type === 'planner_response' ? 'assistant' : 'tool',
+    model: step.model_name ?? (typeof step.model === 'string' ? step.model : undefined),
     occurredAt: timestamp(step.timestamp),
     text,
     rawReference: { locatorClass, offset, sequence },
@@ -144,6 +221,7 @@ function normalizeStep(
       provenance: {
         acquisition: 'user-enabled-post_cascade_response_with_transcript',
         product: 'Devin Desktop',
+        providerId: 'devin-desktop',
         compatibilityProviderId: 'windsurf',
         captureBoundary: 'completed-cascade-response',
         schema: schemaVersion,

@@ -13,6 +13,7 @@ import {
 import {
   readBoundedJson,
   readBoundedJsonLines,
+  streamBoundedJsonLines,
   type BoundedJsonRecord,
   type ReaderLimits,
 } from '../readers.js';
@@ -124,6 +125,105 @@ export class OpenCodeSessionAdapter implements SessionSourceAdapter {
   }
 
   async *stream(source: SelectedSource, cursor?: ImportCursor): AsyncIterable<ProviderRecord> {
+    if (source.locatorClass === 'opencode-sse-jsonl') {
+      const input = await streamBoundedJsonLines({
+        selectedPath: source.locator,
+        allowedRoots: source.authorizedScope.allowedRoots,
+      }, { consistency: 'provisional', limits: this.limits });
+      const start = parseCursor(cursor?.value);
+      const sessions = new Map<string, z.infer<typeof SessionInfoSchema>>();
+      const messages = new Map<string, z.infer<typeof MessageInfoSchema>>();
+      const maxJoinStates = Math.min(this.limits?.maxRecords ?? 1_000_000, 10_000);
+      let schemaVersion: string | null = null;
+      let outputIndex = 0;
+      let sawSession = false;
+      for await (const line of input) {
+        const parsed = EventSchema.safeParse(line.value);
+        if (!parsed.success) {
+          throw new SessionContractError('MALFORMED_SOURCE', 'OpenCode SSE event is malformed');
+        }
+        const event = parsed.data;
+        const currentSchema = event.schemaVersion ?? OPENCODE_EXPORT_SCHEMA_VERSION;
+        if (schemaVersion && schemaVersion !== currentSchema) {
+          throw new SessionContractError('SCHEMA_DRIFT', 'mixed OpenCode event schemas');
+        }
+        schemaVersion = currentSchema;
+        assertSupportedSchemaMajor(schemaVersion);
+        const properties = event.properties;
+        const emitted: ProviderRecord[] = [];
+        if (event.type === 'session.created' || event.type === 'session.updated') {
+          const candidate = SessionInfoSchema.safeParse(properties.info);
+          if (candidate.success) {
+            sawSession = true;
+            sessions.set(candidate.data.id, candidate.data);
+            emitted.push(...normalizeExport({
+              info: candidate.data,
+              messages: [],
+              sanitized: event.sanitized !== false,
+              shared: event.shared === true,
+            }, source.locatorClass, true).records);
+          }
+        } else if (event.type === 'message.updated') {
+          const candidate = MessageInfoSchema.safeParse(properties.info);
+          if (candidate.success) {
+            messages.set(candidate.data.id, candidate.data);
+            const session = sessions.get(candidate.data.sessionID);
+            if (!session) {
+              throw new SessionContractError(
+                'MALFORMED_SOURCE',
+                'OpenCode message event precedes its session identity',
+              );
+            }
+            const common = sessionExtensions({
+              info: session, messages: [], sanitized: event.sanitized !== false,
+              shared: event.shared === true,
+            }, source.locatorClass);
+            emitted.push(...normalizeMessage(
+              { info: candidate.data, parts: [] },
+              line.sequence * 1_000 + 1,
+              source.locatorClass,
+              common,
+            ));
+          }
+        } else if (event.type === 'message.part.updated') {
+          const candidate = PartSchema.safeParse(properties.part);
+          if (candidate.success) {
+            const message = messages.get(candidate.data.messageID);
+            const session = sessions.get(candidate.data.sessionID);
+            if (!message || !session) {
+              throw new SessionContractError(
+                'MALFORMED_SOURCE',
+                'OpenCode part event precedes its message or session identity',
+              );
+            }
+            const common = sessionExtensions({
+              info: session, messages: [], sanitized: event.sanitized !== false,
+              shared: event.shared === true,
+            }, source.locatorClass);
+            const normalized = normalizeMessage(
+              { info: message, parts: [candidate.data] },
+              line.sequence * 1_000,
+              source.locatorClass,
+              common,
+            );
+            emitted.push(...normalized.slice(1));
+          }
+        }
+        if (sessions.size + messages.size > maxJoinStates) {
+          throw new SessionContractError(
+            'RESOURCE_LIMIT_EXCEEDED',
+            'OpenCode SSE join state exceeds the bounded streaming limit',
+          );
+        }
+        for (const record of emitted) {
+          if (outputIndex++ >= start) yield record;
+        }
+      }
+      if (!sawSession) {
+        throw new SessionContractError('MALFORMED_SOURCE', 'OpenCode SSE stream lacks a session identity');
+      }
+      return;
+    }
     const parsed = await this.readSource(source);
     const start = parseCursor(cursor?.value);
     for (const record of parsed.records.slice(start)) yield record;
@@ -271,6 +371,8 @@ function normalizeMessage(
     sequence,
     kind: 'message',
     role: message.info.role,
+    participant: message.info.role,
+    model: message.info.model?.modelID ?? message.info.modelID,
     occurredAt: timestamp(message.info.time?.created),
     text: '',
     rawReference: { locatorClass, sequence },
@@ -294,6 +396,10 @@ function normalizeMessage(
       sequence: sequence + index + 1,
       kind: partKind(part),
       role: message.info.role,
+      participant: message.info.role,
+      toolName: part.tool,
+      toolCallId: part.callID,
+      model: message.info.model?.modelID ?? message.info.modelID,
       occurredAt: timestamp(asObject(part.time).start),
       text: partText(part),
       rawReference: { locatorClass, sequence: sequence + index + 1 },

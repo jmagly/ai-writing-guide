@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -157,7 +156,7 @@ describe('Cursor session adapter', () => {
   });
 });
 
-describe.runIf(hasBetterSqlite3())('Cursor adapter repository conformance', () => {
+describe('Cursor adapter repository conformance', () => {
   it('redacts normalized text and makes identical replay a no-op', async () => {
     const adapter = new CursorSessionAdapter();
     const selectedSource = selected('redaction.jsonl');
@@ -202,14 +201,4 @@ async function collect<T>(iterable: AsyncIterable<T>): Promise<T[]> {
   const output: T[] = [];
   for await (const value of iterable) output.push(value);
   return output;
-}
-
-function hasBetterSqlite3(): boolean {
-  const require = createRequire(import.meta.url);
-  try {
-    require.resolve('better-sqlite3');
-    return true;
-  } catch {
-    return false;
-  }
 }

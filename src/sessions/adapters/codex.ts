@@ -12,7 +12,10 @@ import {
   type SourceDescriptor,
   type SourceProbe,
 } from '../contracts.js';
-import { readBoundedJsonLines, type BoundedJsonRecord, type ReaderLimits } from '../readers.js';
+import {
+  readBoundedJsonLines, streamBoundedJsonLines,
+  type BoundedJsonRecord, type ReaderLimits,
+} from '../readers.js';
 
 export const CODEX_ADAPTER_VERSION = '1.0.0';
 export const CODEX_SOURCE_SCHEMA_VERSION = '1.0.0';
@@ -103,9 +106,71 @@ export class CodexSessionAdapter implements SessionSourceAdapter {
   }
 
   async *stream(source: SelectedSource, cursor?: ImportCursor): AsyncIterable<ProviderRecord> {
-    const parsed = await this.readSource(source);
     const start = parseCursor(cursor?.value);
-    for (const record of parsed.records.slice(start)) yield record;
+    const input = await streamBoundedJsonLines(
+      { selectedPath: source.locator, allowedRoots: source.authorizedScope.allowedRoots },
+      { consistency: 'provisional', limits: this.limits },
+    );
+    let mode: 'app-server' | 'rollout' | null = isAppServerLocator(source.locator)
+      ? 'app-server' : null;
+    let schemaVersion: string | null = null;
+    let nativeSessionId = rolloutIdFromFilename(source.locator);
+    const identities = new Map<string, string>();
+    let outputIndex = 0;
+    let sawRecord = false;
+    for await (const line of input) {
+      sawRecord = true;
+      mode ??= isAppServerRecord(line.value) ? 'app-server' : 'rollout';
+      const currentSchema = declaredSchemaVersion([line]);
+      if (schemaVersion && schemaVersion !== currentSchema) {
+        throw new SessionContractError('SCHEMA_DRIFT', 'Codex source declares mixed schema versions');
+      }
+      schemaVersion = currentSchema;
+      assertSupportedSchemaMajor(schemaVersion);
+      let normalized: ProviderRecord[];
+      if (mode === 'app-server') {
+        const parsed = AppServerEnvelopeSchema.safeParse(line.value);
+        if (!parsed.success) {
+          throw new SessionContractError('MALFORMED_SOURCE', 'Codex App Server record is malformed');
+        }
+        for (const thread of extractThreads(parsed.data)) {
+          validateThreadIdentity(thread, identities);
+        }
+        normalized = normalizeAppServer([line]).records;
+      } else {
+        const parsed = RolloutEnvelopeSchema.safeParse(line.value);
+        if (!parsed.success) {
+          throw new SessionContractError('MALFORMED_SOURCE', 'Codex rollout record is malformed');
+        }
+        const payload = asObject(parsed.data.payload);
+        if (parsed.data.type === 'session_meta') {
+          const declaredId = stringValue(payload.id);
+          if (!declaredId) {
+            throw new SessionContractError('MALFORMED_SOURCE', 'Codex session metadata is missing its id');
+          }
+          if (nativeSessionId && nativeSessionId !== declaredId) {
+            throw new SessionContractError(
+              'SCHEMA_DRIFT',
+              'Codex rollout session identity differs from its filename identity',
+            );
+          }
+          nativeSessionId = declaredId;
+        }
+        if (!nativeSessionId) {
+          throw new SessionContractError(
+            'MALFORMED_SOURCE',
+            'Codex rollout has no session identity before content records',
+          );
+        }
+        normalized = [rolloutRecord(nativeSessionId, parsed.data, payload, line)];
+      }
+      for (const record of normalized) {
+        if (outputIndex++ >= start) yield record;
+      }
+    }
+    if (!sawRecord && !input.incompleteTail) {
+      throw new SessionContractError('MALFORMED_SOURCE', 'Codex JSONL source is empty');
+    }
   }
 
   private async readSource(source: SelectedSource): Promise<{
@@ -271,6 +336,9 @@ function threadItem(
     sequence: line.sequence * 1_000 + turnIndex * 100 + itemIndex + 1,
     kind: itemKind(type),
     role: itemRole(type),
+    participant: itemRole(type),
+    toolName: stringValue(item.name) ?? stringValue(item.tool_name),
+    toolCallId: stringValue(item.call_id),
     occurredAt: stringValue(item.timestamp),
     text: itemText(item),
     rawReference: { locatorClass: 'codex-app-server-jsonl', offset: line.byteOffset },
@@ -300,6 +368,10 @@ function rolloutRecord(
     sequence: line.sequence,
     kind: rolloutKind(envelope.type, payload),
     role,
+    participant: role,
+    toolName: stringValue(payload.name) ?? stringValue(payload.tool_name),
+    toolCallId: stringValue(payload.call_id),
+    model: stringValue(payload.model),
     occurredAt: envelope.timestamp,
     text: rolloutText(payload),
     rawReference: { locatorClass: 'codex-rollout-jsonl', offset: line.byteOffset },

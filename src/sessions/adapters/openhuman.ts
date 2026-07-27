@@ -10,7 +10,10 @@ import {
   type SourceDescriptor,
   type SourceProbe,
 } from '../contracts.js';
-import { readBoundedJsonLines, type BoundedJsonRecord, type ReaderLimits } from '../readers.js';
+import {
+  readBoundedJsonLines, streamBoundedJsonLines,
+  type BoundedJsonRecord, type ReaderLimits,
+} from '../readers.js';
 
 export const OPENHUMAN_ADAPTER_VERSION = '1.0.0';
 export const OPENHUMAN_SOURCE_SCHEMA_VERSION = '1.0.0';
@@ -107,9 +110,58 @@ export class OpenHumanSessionAdapter implements SessionSourceAdapter {
   }
 
   async *stream(source: SelectedSource, cursor?: ImportCursor): AsyncIterable<ProviderRecord> {
-    const parsed = await this.readSource(source);
+    if (source.locatorClass !== 'openhuman-session-raw-jsonl'
+      && source.locatorClass !== 'openhuman-enriched-jsonl') {
+      throw new SessionContractError('UNSUPPORTED_OPERATION', 'unsupported OpenHuman source class');
+    }
     const start = parseCursor(cursor?.value);
-    for (const record of parsed.records.slice(start)) yield record;
+    const input = await streamBoundedJsonLines({
+      selectedPath: source.locator,
+      allowedRoots: source.authorizedScope.allowedRoots,
+    }, { consistency: 'provisional', limits: this.limits });
+    const threads = new Map<string, ThreadState>();
+    const turns = new Map<string, TurnState>();
+    const maxJoinStates = Math.min(this.limits?.maxRecords ?? 1_000_000, 10_000);
+    let schemaVersion: string | null = null;
+    let outputIndex = 0;
+    let sawRaw = false;
+    for await (const line of input) {
+      const parsed = RecordSchema.safeParse(line.value);
+      if (!parsed.success) {
+        throw new SessionContractError('MALFORMED_SOURCE', 'OpenHuman transcript record is malformed');
+      }
+      const value = parsed.data;
+      const currentVersion = version(value.schemaVersion);
+      if (schemaVersion && schemaVersion !== currentVersion) {
+        throw new SessionContractError('SCHEMA_DRIFT', 'mixed OpenHuman schema versions');
+      }
+      schemaVersion = currentVersion;
+      assertSupportedSchemaMajor(schemaVersion);
+      if (value.recordType === 'thread_state') {
+        threads.set(value.thread_id, value);
+      } else if (value.recordType === 'turn_state') {
+        turns.set(`${value.thread_id}\0${value.request_id}`, value);
+      } else {
+        sawRaw = true;
+        const record = normalize(
+          value,
+          line,
+          source.locatorClass,
+          threads.get(value.thread_id),
+          value.request_id ? turns.get(`${value.thread_id}\0${value.request_id}`) : undefined,
+        );
+        if (outputIndex++ >= start) yield record;
+      }
+      if (threads.size + turns.size > maxJoinStates) {
+        throw new SessionContractError(
+          'RESOURCE_LIMIT_EXCEEDED',
+          'OpenHuman enrichment join state exceeds the bounded streaming limit',
+        );
+      }
+    }
+    if (!sawRaw) {
+      throw new SessionContractError('MALFORMED_SOURCE', 'OpenHuman source contains no session_raw records');
+    }
   }
 
   private async readSource(source: SelectedSource): Promise<{

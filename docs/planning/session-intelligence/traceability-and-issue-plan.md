@@ -19,7 +19,8 @@ One issue is required for each canonical provider so evidence, fixtures,
 limitations, and support status cannot be hidden by batching:
 
 `claude`, `codex`, `copilot`, `cursor`, `factory`, `hermes`, `opencode`,
-`openclaw`, `openhuman`, `warp`, `windsurf`, and `generic`.
+`openclaw`, `openhuman`, `warp`, `devin-desktop` (`windsurf` compatibility
+alias), and `generic`.
 
 All depend on C1/C2/C4. Adapters that require local transactional import also
 depend on C3.
@@ -63,7 +64,7 @@ Cockpit UI remains a separately gated follow-up after CLI and schema stability.
 | `openclaw` | [#1917](https://git.integrolabs.net/roctinam/aiwg/issues/1917) | Gateway/consistent event snapshot |
 | `openhuman` | [#1918](https://git.integrolabs.net/roctinam/aiwg/issues/1918) | raw JSONL plus enrichment |
 | `warp` | [#1919](https://git.integrolabs.net/roctinam/aiwg/issues/1919) | manual Markdown import and loss report |
-| `windsurf` | [#1920](https://git.integrolabs.net/roctinam/aiwg/issues/1920) | opt-in hook capture |
+| `devin-desktop` (`windsurf` alias) | [#1920](https://git.integrolabs.net/roctinam/aiwg/issues/1920) | opt-in hook capture |
 | `generic` | [#1921](https://git.integrolabs.net/roctinam/aiwg/issues/1921) | declared interchange; opaque unsupported |
 
 ## Fortemi Dependencies

@@ -1,5 +1,4 @@
 import { resolve } from 'node:path';
-import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 import {
   COPILOT_ADAPTER_VERSION,
@@ -133,7 +132,7 @@ describe('Copilot session adapter', () => {
   });
 });
 
-describe.runIf(hasBetterSqlite3())('Copilot adapter repository conformance', () => {
+describe('Copilot adapter repository conformance', () => {
   it('imports a synthetic export, redacts normalized text, and replays as a no-op', async () => {
     const adapter = new CopilotSessionAdapter();
     const selectedSource = selected('redaction.chat.json');
@@ -178,14 +177,4 @@ async function collect<T>(iterable: AsyncIterable<T>): Promise<T[]> {
   const output: T[] = [];
   for await (const value of iterable) output.push(value);
   return output;
-}
-
-function hasBetterSqlite3(): boolean {
-  const require = createRequire(import.meta.url);
-  try {
-    require.resolve('better-sqlite3');
-    return true;
-  } catch {
-    return false;
-  }
 }

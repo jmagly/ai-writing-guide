@@ -13,6 +13,7 @@ import {
   SessionContractError,
   sha256,
 } from './contracts.js';
+import { redactSessionText, sanitizeNativeExtensions } from './policy.js';
 
 const require = createRequire(import.meta.url);
 
@@ -41,6 +42,16 @@ export interface ImportReceipt {
   sessionsInserted: number;
   eventsInserted: number;
   checkpoint: ImportCheckpoint;
+  metrics?: {
+    records: number;
+    normalizedEvents: number;
+    normalizedBytes: number;
+    durationMs: number;
+    batchLatencyMs: number;
+    heapUsedBytes: number;
+    rssBytes: number;
+    checkpointDurable: true;
+  };
 }
 
 export interface SessionListOptions {
@@ -48,11 +59,21 @@ export interface SessionListOptions {
   workspaceId?: string;
   tag?: string;
   limit: number;
-  offset: number;
+  cursor?: string;
+  /** @deprecated Compatibility only. New callers must use cursor. */
+  offset?: number;
+}
+
+export interface SessionListResult {
+  items: Session[];
+  total: number;
+  nextCursor: string | null;
+  snapshotRowid: number;
 }
 
 export interface SessionCatalogHealth {
   integrity: 'ok' | 'failed';
+  indexIntegrity: 'ok' | 'failed';
   sources: number;
   sessions: number;
   events: number;
@@ -64,6 +85,7 @@ export interface SessionPurgePreview {
   operationId: string;
   scopeClass: 'session';
   sessionId: string;
+  workspaceId?: string;
   counts: Record<string, number>;
   promotedDependents: Array<{
     dependentId: string;
@@ -73,6 +95,22 @@ export interface SessionPurgePreview {
     destinationRef: string;
   }>;
   confirmationRequired: true;
+}
+
+export interface PromotionProvenanceReceipt {
+  contractVersion: '1.0.0';
+  receiptId: string;
+  operationId: string;
+  dependentId: string;
+  candidateId: string;
+  candidateVersion: number;
+  consumer: string;
+  destinationRef: string;
+  evidenceEventIds: string[];
+  action: PromotionDependencyDecision['action'];
+  basis: string;
+  originAvailable: boolean;
+  occurredAt: string;
 }
 
 export interface SessionSearchOptions {
@@ -89,8 +127,17 @@ export interface SessionSearchOptions {
   entity?: string;
   sensitivity?: string;
   extractionState?: string;
+  sessionIds?: string[];
   limit: number;
   cursor?: string;
+}
+
+export interface SessionAuthorizationContext {
+  actorId: string;
+  workspaceId: string;
+  operation: string;
+  catalogScope: 'workspace';
+  mode: 'local-owner' | 'shared';
 }
 
 export interface SessionSearchHit {
@@ -105,6 +152,7 @@ export interface SessionSearchHit {
   locatorClass: string;
   sequence: number;
   role: string | null;
+  nativeEventId: string | null;
   occurredAt: string | null;
   sensitivity: string;
   citation: {
@@ -114,6 +162,7 @@ export interface SessionSearchHit {
     importRunId: string;
     sourceId: string;
     locatorClass: string;
+    nativeEventId?: string;
   };
 }
 
@@ -124,6 +173,38 @@ export interface SessionSearchResult {
 
 export interface SessionSearchDocument extends SessionSearchHit {
   searchableText: string;
+}
+
+export interface AuthorizedDocumentPage {
+  items: SessionSearchDocument[];
+  nextCursor: string | null;
+  snapshotRowid: number;
+}
+
+export interface MutationEvent {
+  contractVersion: '1.0.0';
+  operationId: string;
+  correlationId: string;
+  eventName: string;
+  eventTime: string;
+  observedAt: string;
+  actorClass: string;
+  authorizationClass: string;
+  workspaceId: string;
+  targetClass: string;
+  outcome: 'staged' | 'committed' | 'failed' | 'preview' | 'duplicate';
+  counts: Record<string, number>;
+  adapterVersion: string;
+  policyVersion: string;
+  schemaVersion: string;
+  resource: { service: 'aiwg.sessions'; workspaceId: string };
+  instrumentationScope: { name: 'aiwg.sessions.repository'; version: '1.0.0' };
+  integrityDigest: string;
+}
+
+export interface MutationAuditPage {
+  items: MutationEvent[];
+  nextCursor: string | null;
 }
 
 export class SessionRepository {
@@ -173,7 +254,8 @@ export class SessionRepository {
       CREATE TABLE IF NOT EXISTS mutation_audit (
         operation_id TEXT PRIMARY KEY, operation TEXT NOT NULL, actor TEXT NOT NULL,
         counts TEXT NOT NULL, adapter_version TEXT NOT NULL, policy_version TEXT NOT NULL,
-        outcome TEXT NOT NULL, occurred_at TEXT NOT NULL
+        outcome TEXT NOT NULL, occurred_at TEXT NOT NULL,
+        workspace_id TEXT, target_class TEXT, data TEXT
       );
       CREATE TABLE IF NOT EXISTS session_tags (
         session_id TEXT NOT NULL, tag TEXT NOT NULL,
@@ -200,12 +282,18 @@ export class SessionRepository {
           REFERENCES intelligence_candidates(candidate_id, version)
       );
       CREATE TABLE IF NOT EXISTS deletion_receipts (
-        operation_id TEXT PRIMARY KEY, scope_id TEXT NOT NULL, data TEXT NOT NULL
+        operation_id TEXT PRIMARY KEY, scope_id TEXT NOT NULL,
+        workspace_id TEXT, data TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS promotion_dependency_decisions (
         operation_id TEXT NOT NULL, dependent_id TEXT NOT NULL,
         action TEXT NOT NULL, basis TEXT NOT NULL,
         PRIMARY KEY(operation_id, dependent_id)
+      );
+      CREATE TABLE IF NOT EXISTS promotion_provenance_receipts (
+        receipt_id TEXT PRIMARY KEY, operation_id TEXT NOT NULL,
+        dependent_id TEXT NOT NULL, action TEXT NOT NULL, data TEXT NOT NULL,
+        UNIQUE(operation_id, dependent_id)
       );
       CREATE INDEX IF NOT EXISTS idx_session_workspace_provider
         ON sessions(workspace_id, source_id, lifecycle);
@@ -215,6 +303,300 @@ export class SessionRepository {
         event_id UNINDEXED, searchable_text, tokenize='unicode61'
       );
     `);
+    const deletionReceiptColumns = this.db.prepare(
+      'PRAGMA table_info(deletion_receipts)',
+    ).all().map((row) => String(row.name));
+    if (!deletionReceiptColumns.includes('workspace_id')) {
+      this.db.exec('ALTER TABLE deletion_receipts ADD COLUMN workspace_id TEXT');
+    }
+    const mutationColumns = this.db.prepare(
+      'PRAGMA table_info(mutation_audit)',
+    ).all().map((row) => String(row.name));
+    if (!mutationColumns.includes('workspace_id')) {
+      this.db.exec('ALTER TABLE mutation_audit ADD COLUMN workspace_id TEXT');
+    }
+    if (!mutationColumns.includes('target_class')) {
+      this.db.exec('ALTER TABLE mutation_audit ADD COLUMN target_class TEXT');
+    }
+    if (!mutationColumns.includes('data')) {
+      this.db.exec('ALTER TABLE mutation_audit ADD COLUMN data TEXT');
+    }
+    this.db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_mutation_audit_workspace
+      ON mutation_audit(workspace_id, occurred_at, operation_id)
+    `);
+    this.migrateSessionPolicyAndProviderIdentity();
+  }
+
+  private migrateSessionPolicyAndProviderIdentity(): void {
+    const migrate = this.db.transaction(() => {
+      for (const row of this.db.prepare(
+        'SELECT source_id, provider, data FROM session_sources',
+      ).all()) {
+        const source = JSON.parse(String(row.data)) as
+          Omit<SessionSource, 'provider'> & { provider: string };
+        const canonicalProvider = source.provider === 'windsurf'
+          ? 'devin-desktop' : source.provider;
+        const extensions = renameNativeWindsurfEnvelope(source.extensions);
+        source.provider = canonicalProvider;
+        source.locatorClass = canonicalDevinLocator(source.locatorClass);
+        source.extensions = sanitizeNativeExtensions(extensions).value;
+        this.db.prepare(
+          'UPDATE session_sources SET provider=?, data=? WHERE source_id=?',
+        ).run(canonicalProvider, JSON.stringify(source), String(row.source_id));
+      }
+      for (const row of this.db.prepare(
+        'SELECT session_id, data FROM sessions',
+      ).all()) {
+        const session = JSON.parse(String(row.data)) as
+          Omit<Session, 'provider'> & { provider: string };
+        if (session.provider === 'windsurf') session.provider = 'devin-desktop';
+        session.extensions = sanitizeNativeExtensions(
+          renameNativeWindsurfEnvelope(session.extensions),
+        ).value;
+        this.db.prepare('UPDATE sessions SET data=? WHERE session_id=?')
+          .run(JSON.stringify(session), String(row.session_id));
+      }
+      for (const row of this.db.prepare(
+        'SELECT event_id, data FROM session_events',
+      ).all()) {
+        const event = JSON.parse(String(row.data)) as SessionEvent;
+        const text = redactSessionText(event.searchableText);
+        const native = sanitizeNativeExtensions(
+          renameNativeWindsurfEnvelope(event.extensions),
+        );
+        event.searchableText = text.text;
+        event.kind = event.kind.startsWith('windsurf.')
+          ? `devin-desktop.${event.kind.slice('windsurf.'.length)}` : event.kind;
+        event.rawReference.locatorClass = canonicalDevinLocator(
+          event.rawReference.locatorClass,
+        );
+        event.extensions = native.value;
+        event.sensitivity = {
+          classification:
+            text.sensitivity === 'sensitive' || native.sensitivity === 'sensitive'
+              ? 'sensitive' : 'none',
+          classes: [...new Set([
+            ...event.sensitivity.classes,
+            ...text.classes,
+            ...native.classes,
+          ])].sort(),
+        };
+        this.db.prepare('UPDATE session_events SET data=? WHERE event_id=?')
+          .run(JSON.stringify(event), String(row.event_id));
+        this.db.prepare(
+          'UPDATE session_event_fts SET searchable_text=? WHERE event_id=?',
+        ).run(event.searchableText, String(row.event_id));
+      }
+      for (const row of this.db.prepare(
+        `SELECT m.operation_id, m.operation, m.actor, m.counts,
+                m.adapter_version, m.policy_version, m.outcome, m.occurred_at,
+                COALESCE(
+                  (SELECT s.workspace_id
+                   FROM import_runs r
+                   JOIN sessions s ON s.source_id=r.source_id
+                   WHERE r.import_run_id=m.operation_id
+                   LIMIT 1),
+                  'legacy'
+                ) AS inferred_workspace
+         FROM mutation_audit m
+         WHERE m.data IS NULL`,
+      ).all()) {
+        const workspaceId = String(row.inferred_workspace);
+        const unsigned = {
+          contractVersion: '1.0.0' as const,
+          operationId: String(row.operation_id),
+          correlationId: String(row.operation_id),
+          eventName: String(row.operation),
+          eventTime: String(row.occurred_at),
+          observedAt: String(row.occurred_at),
+          actorClass: String(row.actor),
+          authorizationClass: 'legacy-local-operator',
+          workspaceId,
+          targetClass: 'session-catalog',
+          outcome: String(row.outcome) as MutationEvent['outcome'],
+          counts: JSON.parse(String(row.counts)) as Record<string, number>,
+          adapterVersion: String(row.adapter_version),
+          policyVersion: String(row.policy_version),
+          schemaVersion: 'legacy-1.0.0',
+          resource: { service: 'aiwg.sessions' as const, workspaceId },
+          instrumentationScope: {
+            name: 'aiwg.sessions.repository' as const,
+            version: '1.0.0' as const,
+          },
+        };
+        const event: MutationEvent = {
+          ...unsigned,
+          integrityDigest: sha256(JSON.stringify(unsigned)),
+        };
+        this.db.prepare(
+          `UPDATE mutation_audit
+           SET workspace_id=?, target_class=?, data=?
+           WHERE operation_id=?`,
+        ).run(
+          workspaceId,
+          event.targetClass,
+          JSON.stringify(event),
+          event.operationId,
+        );
+      }
+    });
+    migrate();
+  }
+
+  private emitMutation(input: Omit<MutationEvent, 'contractVersion' | 'resource'
+    | 'instrumentationScope' | 'integrityDigest'>): MutationEvent {
+    const unsigned = {
+      contractVersion: '1.0.0' as const,
+      ...input,
+      counts: Object.fromEntries(
+        Object.entries(input.counts)
+          .slice(0, 32)
+          .map(([key, value]) => [key, Math.max(0, Math.min(
+            Number.MAX_SAFE_INTEGER,
+            Number.isFinite(value) ? Math.trunc(value) : 0,
+          ))]),
+      ),
+      resource: { service: 'aiwg.sessions' as const, workspaceId: input.workspaceId },
+      instrumentationScope: {
+        name: 'aiwg.sessions.repository' as const,
+        version: '1.0.0' as const,
+      },
+    };
+    const event: MutationEvent = {
+      ...unsigned,
+      integrityDigest: sha256(JSON.stringify(unsigned)),
+    };
+    this.db.prepare(
+      `INSERT OR IGNORE INTO mutation_audit
+       (operation_id, operation, actor, counts, adapter_version, policy_version,
+        outcome, occurred_at, workspace_id, target_class, data)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      event.operationId,
+      event.eventName,
+      event.actorClass,
+      JSON.stringify(event.counts),
+      event.adapterVersion,
+      event.policyVersion,
+      event.outcome,
+      event.observedAt,
+      event.workspaceId,
+      event.targetClass,
+      JSON.stringify(event),
+    );
+    return event;
+  }
+
+  private emitRepositoryMutation(input: {
+    operationId: string;
+    eventName: string;
+    workspaceId: string;
+    targetClass: string;
+    outcome?: MutationEvent['outcome'];
+    counts?: Record<string, number>;
+    actorClass?: string;
+    eventTime?: string;
+  }): MutationEvent {
+    const observedAt = new Date().toISOString();
+    return this.emitMutation({
+      operationId: input.operationId,
+      correlationId: input.operationId,
+      eventName: input.eventName,
+      eventTime: input.eventTime ?? observedAt,
+      observedAt,
+      actorClass: input.actorClass ?? 'local-operator',
+      authorizationClass: 'workspace-owner',
+      workspaceId: input.workspaceId,
+      targetClass: input.targetClass,
+      outcome: input.outcome ?? 'committed',
+      counts: input.counts ?? { affected: 1 },
+      adapterVersion: 'repository-1.0.0',
+      policyVersion: '1.0.0',
+      schemaVersion: '1.0.0',
+    });
+  }
+
+  private workspaceForSession(sessionId: string): string | null {
+    const row = this.db.prepare(
+      'SELECT workspace_id FROM sessions WHERE session_id=?',
+    ).get(sessionId);
+    return row ? String(row.workspace_id) : null;
+  }
+
+  private workspaceForCandidate(candidate: IntelligenceCandidate): string | null {
+    const eventId = candidate.evidence[0]?.eventId;
+    if (!eventId) return null;
+    const row = this.db.prepare(
+      `SELECT s.workspace_id FROM session_events e
+       JOIN sessions s ON s.session_id=e.session_id WHERE e.event_id=?`,
+    ).get(eventId);
+    return row ? String(row.workspace_id) : null;
+  }
+
+  listMutationEvents(input: {
+    workspaceId: string;
+    limit: number;
+    cursor?: string;
+  }): MutationAuditPage {
+    if (!input.workspaceId || !Number.isInteger(input.limit) || input.limit < 1 || input.limit > 500) {
+      throw new SessionContractError(
+        'OPERATION_NOT_AUTHORIZED',
+        'audit reads require a workspace and a limit from 1 to 500',
+      );
+    }
+    const after = decodeMutationCursor(input.cursor, input.workspaceId);
+    const rows = this.db.prepare(
+      `SELECT rowid, data FROM mutation_audit
+       WHERE workspace_id=? AND rowid>?
+       ORDER BY rowid LIMIT ?`,
+    ).all(input.workspaceId, after, input.limit + 1);
+    const page = rows.slice(0, input.limit);
+    const items = page.map((row) => {
+      const event = JSON.parse(String(row.data)) as MutationEvent;
+      const { integrityDigest, ...unsigned } = event;
+      if (integrityDigest !== sha256(JSON.stringify(unsigned))) {
+        throw new SessionContractError('IMPORT_CONFLICT', 'mutation audit integrity check failed');
+      }
+      return event;
+    });
+    const last = page.at(-1);
+    return {
+      items,
+      nextCursor: rows.length > input.limit && last
+        ? encodeMutationCursor(Number(last.rowid), input.workspaceId) : null,
+    };
+  }
+
+  exportMutationEventsOtel(input: {
+    workspaceId: string;
+    limit: number;
+    cursor?: string;
+  }): { records: Array<Record<string, unknown>>; nextCursor: string | null } {
+    const page = this.listMutationEvents(input);
+    return {
+      records: page.items.map((event) => ({
+        Timestamp: event.eventTime,
+        ObservedTimestamp: event.observedAt,
+        EventName: event.eventName,
+        Body: {},
+        Resource: event.resource,
+        InstrumentationScope: event.instrumentationScope,
+        Attributes: {
+          operationId: event.operationId,
+          correlationId: event.correlationId,
+          actorClass: event.actorClass,
+          authorizationClass: event.authorizationClass,
+          targetClass: event.targetClass,
+          outcome: event.outcome,
+          counts: event.counts,
+          adapterVersion: event.adapterVersion,
+          policyVersion: event.policyVersion,
+          schemaVersion: event.schemaVersion,
+        },
+      })),
+      nextCursor: page.nextCursor,
+    };
   }
 
   applyImport(
@@ -247,16 +629,39 @@ export class SessionRepository {
 
       let sessionsInserted = 0;
       let eventsInserted = 0;
-      const insertSession = this.db.prepare(
-        `INSERT OR IGNORE INTO sessions
-         (session_id, source_id, native_session_id, workspace_id, source_digest, lifecycle, data)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      );
       for (const session of batch.sessions) {
-        sessionsInserted += insertSession.run(
-          session.sessionId, session.sourceId, session.nativeSessionId,
-          session.workspaceId, session.sourceDigest, session.lifecycle, JSON.stringify(session),
-        ).changes;
+        const priorRow = this.db.prepare(
+          'SELECT data FROM sessions WHERE session_id=?',
+        ).get(session.sessionId);
+        if (!priorRow) {
+          sessionsInserted += this.db.prepare(
+            `INSERT INTO sessions
+             (session_id, source_id, native_session_id, workspace_id, source_digest, lifecycle, data)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          ).run(
+            session.sessionId, session.sourceId, session.nativeSessionId,
+            session.workspaceId, session.sourceDigest, session.lifecycle, JSON.stringify(session),
+          ).changes;
+          continue;
+        }
+        const prior = JSON.parse(String(priorRow.data)) as Session;
+        if (prior.workspaceId !== session.workspaceId
+          || prior.sourceId !== session.sourceId
+          || prior.nativeSessionId !== session.nativeSessionId) {
+          throw new SessionContractError(
+            'IMPORT_CONFLICT',
+            'stable session identity changed authorization or source scope',
+          );
+        }
+        const merged = mergeSessionAggregate(prior, session);
+        this.db.prepare(
+          `UPDATE sessions SET source_digest=?, lifecycle=?, data=? WHERE session_id=?`,
+        ).run(
+          merged.sourceDigest,
+          merged.lifecycle,
+          JSON.stringify(merged),
+          merged.sessionId,
+        );
       }
       const insertEvent = this.db.prepare(
         `INSERT OR IGNORE INTO session_events
@@ -292,14 +697,23 @@ export class SessionRepository {
         `INSERT INTO import_receipts(operation_id, import_run_id, outcome, counts, checkpoint)
          VALUES (?, ?, ?, ?, ?)`,
       ).run(batch.run.importRunId, batch.run.importRunId, outcome, JSON.stringify(counts), JSON.stringify(checkpoint));
-      this.db.prepare(
-        `INSERT INTO mutation_audit
-         (operation_id, operation, actor, counts, adapter_version, policy_version, outcome, occurred_at)
-         VALUES (?, 'session.import', 'local-operator', ?, ?, ?, ?, ?)`,
-      ).run(
-        batch.run.importRunId, JSON.stringify(counts), batch.source.adapterVersion,
-        batch.run.policyVersion, outcome, new Date().toISOString(),
-      );
+      const observedAt = new Date().toISOString();
+      this.emitMutation({
+        operationId: batch.run.importRunId,
+        correlationId: batch.run.importRunId,
+        eventName: 'session.import',
+        eventTime: batch.run.startedAt,
+        observedAt,
+        actorClass: 'local-operator',
+        authorizationClass: 'workspace-owner',
+        workspaceId: batch.sessions[0]?.workspaceId ?? 'unscoped',
+        targetClass: 'session-source',
+        outcome,
+        counts,
+        adapterVersion: batch.source.adapterVersion,
+        policyVersion: batch.run.policyVersion,
+        schemaVersion: batch.source.sourceSchemaVersion,
+      });
       return {
         operationId: batch.run.importRunId, outcome,
         sessionsInserted, eventsInserted, checkpoint,
@@ -310,6 +724,10 @@ export class SessionRepository {
 
   commitStagedImports(sourceId: string, parserVersion: string): number {
     const commit = this.db.transaction((): number => {
+      const staged = this.db.prepare(
+        `SELECT import_run_id FROM import_runs
+         WHERE source_id=? AND parser_version=? AND status='staged'`,
+      ).all(sourceId, parserVersion).map((row) => String(row.import_run_id));
       const result = this.db.prepare(
         `UPDATE import_runs SET status='committed'
          WHERE source_id=? AND parser_version=? AND status='staged'`,
@@ -321,22 +739,43 @@ export class SessionRepository {
            WHERE source_id=? AND parser_version=? AND status='committed'
          ) AND outcome='staged'`,
       ).run(sourceId, parserVersion);
+      for (const operationId of staged) {
+        const row = this.db.prepare(
+          'SELECT data FROM mutation_audit WHERE operation_id=?',
+        ).get(operationId);
+        if (!row?.data) continue;
+        const prior = JSON.parse(String(row.data)) as MutationEvent;
+        const { integrityDigest: _integrityDigest, ...unsigned } = {
+          ...prior,
+          outcome: 'committed' as const,
+          observedAt: new Date().toISOString(),
+        };
+        const updated = {
+          ...unsigned,
+          integrityDigest: sha256(JSON.stringify(unsigned)),
+        };
+        this.db.prepare(
+          `UPDATE mutation_audit SET outcome='committed', occurred_at=?, data=?
+           WHERE operation_id=?`,
+        ).run(updated.observedAt, JSON.stringify(updated), operationId);
+      }
       return result.changes;
     });
     return commit();
   }
 
-  getSession(id: string): Session | null {
+  getSession(id: string, workspaceId?: string): Session | null {
     const row = this.db.prepare(
       `SELECT s.data FROM sessions s
        WHERE s.session_id=? AND s.lifecycle != ?
+       ${workspaceId ? 'AND s.workspace_id=?' : ''}
        AND EXISTS (
          SELECT 1 FROM session_events e
          JOIN import_runs r ON r.import_run_id=e.import_run_id
          WHERE e.session_id=s.session_id AND r.status='committed'
        )`,
     )
-      .get(id, 'tombstoned');
+      .get(...(workspaceId ? [id, 'tombstoned', workspaceId] : [id, 'tombstoned']));
     return row ? JSON.parse(String(row.data)) as Session : null;
   }
 
@@ -346,13 +785,22 @@ export class SessionRepository {
     ).all().map((row) => JSON.parse(String(row.data)) as SessionSource);
   }
 
-  listSessions(options: SessionListOptions): { items: Session[]; total: number } {
+  listSessions(options: SessionListOptions): SessionListResult {
     const where = [`s.lifecycle != 'tombstoned'`, `EXISTS (
       SELECT 1 FROM session_events e
       JOIN import_runs r ON r.import_run_id=e.import_run_id
       WHERE e.session_id=s.session_id AND r.status='committed'
     )`];
-    const params: unknown[] = [];
+    const scopeDigest = sessionListScopeDigest(options);
+    const cursor = decodeSessionListCursor(options.cursor);
+    if (cursor && cursor.scopeDigest !== scopeDigest) {
+      throw new SessionContractError('SCHEMA_DRIFT', 'session list cursor does not match the requested scope');
+    }
+    const snapshotRowid = cursor?.snapshotRowid ?? Number(
+      this.db.prepare('SELECT COALESCE(MAX(rowid), 0) AS value FROM sessions').get()?.value ?? 0,
+    );
+    where.push('s.rowid <= ?');
+    const params: unknown[] = [snapshotRowid];
     if (options.provider) {
       where.push('json_extract(s.data, \'$.provider\') = ?');
       params.push(options.provider);
@@ -368,35 +816,82 @@ export class SessionRepository {
     const clause = where.join(' AND ');
     const totalRow = this.db.prepare(`SELECT COUNT(*) AS count FROM sessions s WHERE ${clause}`)
       .get(...params);
+    const pageWhere = [...where];
+    const pageParams = [...params];
+    if (cursor) {
+      pageWhere.push(`(
+        COALESCE(json_extract(s.data, '$.updatedAt'), '') > ?
+        OR (
+          COALESCE(json_extract(s.data, '$.updatedAt'), '') = ?
+          AND s.session_id > ?
+        )
+      )`);
+      pageParams.push(cursor.updatedAt, cursor.updatedAt, cursor.sessionId);
+    }
     const items = this.db.prepare(
-      `SELECT s.data FROM sessions s WHERE ${clause}
+      `SELECT s.data FROM sessions s WHERE ${pageWhere.join(' AND ')}
        ORDER BY COALESCE(json_extract(s.data, '$.updatedAt'), ''), s.session_id
-       LIMIT ? OFFSET ?`,
-    ).all(...params, options.limit, options.offset)
+       LIMIT ?${options.offset ? ' OFFSET ?' : ''}`,
+    ).all(...pageParams, options.limit + 1, ...(options.offset ? [options.offset] : []))
       .map((row) => JSON.parse(String(row.data)) as Session);
-    return { items, total: Number(totalRow?.count ?? 0) };
+    const page = items.slice(0, options.limit);
+    const last = page.at(-1);
+    return {
+      items: page,
+      total: Number(totalRow?.count ?? 0),
+      nextCursor: items.length > options.limit && last
+        ? encodeSessionListCursor({
+            snapshotRowid,
+            updatedAt: last.updatedAt ?? '',
+            sessionId: last.sessionId,
+            scopeDigest,
+          })
+        : null,
+      snapshotRowid,
+    };
   }
 
-  listTags(sessionId: string): string[] {
+  listTags(sessionId: string, workspaceId?: string): string[] {
     return this.db.prepare(
-      'SELECT tag FROM session_tags WHERE session_id=? ORDER BY tag',
-    ).all(sessionId).map((row) => String(row.tag));
+      `SELECT t.tag FROM session_tags t
+       JOIN sessions s ON s.session_id=t.session_id
+       WHERE t.session_id=? ${workspaceId ? 'AND s.workspace_id=?' : ''}
+       ORDER BY t.tag`,
+    ).all(...(workspaceId ? [sessionId, workspaceId] : [sessionId]))
+      .map((row) => String(row.tag));
   }
 
-  tagSession(sessionId: string, tag: string): boolean {
-    if (!this.getSession(sessionId)) return false;
-    return this.db.prepare(
-      'INSERT OR IGNORE INTO session_tags(session_id, tag) VALUES (?, ?)',
-    ).run(sessionId, tag).changes > 0;
+  tagSession(sessionId: string, tag: string, workspaceId?: string): boolean {
+    const mutate = this.db.transaction(() => {
+      if (!this.getSession(sessionId, workspaceId)) return false;
+      const changed = this.db.prepare(
+        'INSERT OR IGNORE INTO session_tags(session_id, tag) VALUES (?, ?)',
+      ).run(sessionId, tag).changes > 0;
+      if (changed) {
+        const scope = this.workspaceForSession(sessionId)!;
+        this.emitRepositoryMutation({
+          operationId: sha256(['session.tag', sessionId, tag].join('\0')),
+          eventName: 'session.tag',
+          workspaceId: scope,
+          targetClass: 'session',
+          counts: { tags: 1 },
+        });
+      }
+      return changed;
+    });
+    return mutate();
   }
 
-  listEvents(sessionId: string): SessionEvent[] {
+  listEvents(sessionId: string, workspaceId?: string): SessionEvent[] {
     return this.db.prepare(
       `SELECT e.data FROM session_events e
+       JOIN sessions s ON s.session_id=e.session_id
        JOIN import_runs r ON r.import_run_id=e.import_run_id
-       WHERE e.session_id=? AND r.status='committed'
+       WHERE e.session_id=? ${workspaceId ? 'AND s.workspace_id=?' : ''}
+       AND r.status='committed'
        ORDER BY e.sequence_no, e.event_id`,
-    ).all(sessionId).map((row) => JSON.parse(String(row.data)) as SessionEvent);
+    ).all(...(workspaceId ? [sessionId, workspaceId] : [sessionId]))
+      .map((row) => JSON.parse(String(row.data)) as SessionEvent);
   }
 
   search(options: SessionSearchOptions): SessionSearchResult {
@@ -405,12 +900,16 @@ export class SessionRepository {
     if (options.limit < 1 || options.limit > 500) {
       throw new SessionContractError('RESOURCE_LIMIT_EXCEEDED', 'search limit must be between 1 and 500');
     }
+    const scopeDigest = searchScopeDigest(options);
     const cursor = decodeSearchCursor(options.cursor);
+    if (cursor && cursor.scopeDigest !== scopeDigest) {
+      throw new SessionContractError('SCHEMA_DRIFT', 'search cursor does not match the requested scope');
+    }
     const snapshotRowid = cursor?.snapshotRowid ?? Number(
       this.db.prepare('SELECT COALESCE(MAX(rowid), 0) AS value FROM session_events').get()?.value ?? 0,
     );
     const where = [
-      `f.searchable_text MATCH ?`,
+      `session_event_fts.searchable_text MATCH ?`,
       `e.rowid <= ?`,
       `s.workspace_id = ?`,
       `s.lifecycle != 'tombstoned'`,
@@ -420,24 +919,27 @@ export class SessionRepository {
     appendMetadataFilters(where, params, options);
     if (cursor) {
       where.push(`(
-        length(json_extract(e.data, '$.searchableText')) > ?
+        session_event_fts.rank > ?
         OR (
-          length(json_extract(e.data, '$.searchableText')) = ?
+          session_event_fts.rank = ?
           AND e.event_id > ?
         )
       )`);
-      params.push(cursor.textLength, cursor.textLength, cursor.eventId);
+      params.push(cursor.rank, cursor.rank, cursor.eventId);
     }
-    const rows = this.db.prepare(`
+    let rows: Array<Record<string, unknown>>;
+    try {
+      rows = this.db.prepare(`
       WITH authorized AS (
         SELECT
           e.rowid AS event_rowid, e.event_id, e.session_id, e.source_id,
           e.import_run_id, e.sequence_no, e.data AS event_data,
           s.workspace_id, s.data AS session_data, src.data AS source_data,
-          f.searchable_text,
-          length(f.searchable_text) AS stable_rank
-        FROM session_event_fts f
-        JOIN session_events e ON e.event_id=f.event_id
+          session_event_fts.searchable_text,
+          session_event_fts.rank AS stable_rank,
+          snippet(session_event_fts, 1, '⟦', '⟧', ' … ', 32) AS matched_snippet
+        FROM session_event_fts
+        JOIN session_events e ON e.event_id=session_event_fts.event_id
         JOIN sessions s ON s.session_id=e.session_id
         JOIN import_runs r ON r.import_run_id=e.import_run_id
         JOIN session_sources src ON src.source_id=e.source_id
@@ -447,6 +949,15 @@ export class SessionRepository {
       ORDER BY stable_rank, event_id
       LIMIT ?
     `).all(...params, options.limit + 1);
+    } catch (error) {
+      if (error instanceof Error && /fts5|syntax|unterminated|column/i.test(error.message)) {
+        throw new SessionContractError(
+          'INVALID_SEARCH_QUERY',
+          'search query syntax is invalid',
+        );
+      }
+      throw error;
+    }
     const page = rows.slice(0, options.limit);
     const items = page.map(searchHit);
     const last = page.at(-1);
@@ -455,8 +966,9 @@ export class SessionRepository {
       nextCursor: rows.length > options.limit && last
         ? encodeSearchCursor({
             snapshotRowid,
-            textLength: Number(last.stable_rank),
+            rank: Number(last.stable_rank),
             eventId: String(last.event_id),
+            scopeDigest,
           })
         : null,
     };
@@ -465,20 +977,42 @@ export class SessionRepository {
   authorizedSearchDocuments(
     options: Omit<SessionSearchOptions, 'query' | 'cursor'>,
   ): SessionSearchDocument[] {
+    return this.authorizedSearchDocumentPage(options).items;
+  }
+
+  authorizedSearchDocumentPage(
+    options: Omit<SessionSearchOptions, 'query'>,
+  ): AuthorizedDocumentPage {
     if (options.limit < 1 || options.limit > 500) {
       throw new SessionContractError(
         'RESOURCE_LIMIT_EXCEEDED',
         'semantic candidate limit must be between 1 and 500',
       );
     }
+    const scopeDigest = authorizedDocumentScopeDigest(options);
+    const cursor = decodeAuthorizedDocumentCursor(options.cursor);
+    if (cursor && cursor.scopeDigest !== scopeDigest) {
+      throw new SessionContractError(
+        'SCHEMA_DRIFT',
+        'authorized document cursor does not match the requested scope',
+      );
+    }
+    const snapshotRowid = cursor?.snapshotRowid ?? Number(
+      this.db.prepare('SELECT COALESCE(MAX(rowid), 0) AS value FROM session_events').get()?.value ?? 0,
+    );
     const where = [
+      `e.rowid <= ?`,
       `s.workspace_id = ?`,
       `s.lifecycle != 'tombstoned'`,
       `r.status = 'committed'`,
     ];
-    const params: unknown[] = [options.workspaceId];
+    const params: unknown[] = [snapshotRowid, options.workspaceId];
     appendMetadataFilters(where, params, options);
-    return this.db.prepare(`
+    if (cursor) {
+      where.push(`e.event_id > ?`);
+      params.push(cursor.eventId);
+    }
+    const rows = this.db.prepare(`
       SELECT
         e.event_id, e.session_id, e.source_id, e.import_run_id,
         e.sequence_no, e.data AS event_data, s.workspace_id,
@@ -492,14 +1026,29 @@ export class SessionRepository {
       WHERE ${where.join(' AND ')}
       ORDER BY e.event_id
       LIMIT ?
-    `).all(...params, options.limit).map((row) => ({
+    `).all(...params, options.limit + 1);
+    const page = rows.slice(0, options.limit);
+    const items = page.map((row) => ({
       ...searchHit(row),
       searchableText: String(row.searchable_text),
     }));
+    const last = page.at(-1);
+    return {
+      items,
+      nextCursor: rows.length > options.limit && last
+        ? encodeAuthorizedDocumentCursor({
+            snapshotRowid,
+            eventId: String(last.event_id),
+            scopeDigest,
+          })
+        : null,
+      snapshotRowid,
+    };
   }
 
   saveCandidates(candidates: readonly IntelligenceCandidate[]): IntelligenceCandidate[] {
     const save = this.db.transaction(() => {
+      let inserted = 0;
       const incomingIds = new Set(candidates.map((candidate) => candidate.candidateId));
       for (const candidate of candidates) {
         for (const linkedId of [...candidate.conflictsWith, ...candidate.supersedes]) {
@@ -511,7 +1060,7 @@ export class SessionRepository {
           }
         }
       }
-      return candidates.map((input) => {
+      const saved = candidates.map((input) => {
         const parsed = IntelligenceCandidateSchema.parse(input);
         this.assertCandidateEvidence(parsed);
         const priorRow = this.db.prepare(
@@ -531,33 +1080,72 @@ export class SessionRepository {
           `INSERT INTO intelligence_candidates(candidate_id, version, review_state, data)
            VALUES (?, ?, ?, ?)`,
         ).run(parsed.candidateId, parsed.version, parsed.reviewState, JSON.stringify(parsed));
+        inserted += 1;
         return parsed;
       });
+      if (inserted > 0 && saved[0]) {
+        const workspaceId = this.workspaceForCandidate(saved[0]);
+        if (!workspaceId) {
+          throw new SessionContractError(
+            'OPERATION_NOT_AUTHORIZED',
+            'candidate mutation lacks an authorized workspace',
+          );
+        }
+        this.emitRepositoryMutation({
+          operationId: sha256([
+            'candidate.save',
+            ...saved.map((item) => `${item.candidateId}:${item.version}`).sort(),
+          ].join('\0')),
+          eventName: 'candidate.save',
+          workspaceId,
+          targetClass: 'intelligence-candidate',
+          counts: { candidates: inserted },
+        });
+      }
+      return saved;
     });
     return save();
   }
 
-  getCandidate(candidateId: string, version?: number): IntelligenceCandidate | null {
+  getCandidate(
+    candidateId: string,
+    version?: number,
+    workspaceId?: string,
+  ): IntelligenceCandidate | null {
+    const workspaceClause = workspaceId
+      ? `AND ${candidateWorkspacePredicate('intelligence_candidates')}` : '';
     const row = version === undefined
       ? this.db.prepare(
           `SELECT data FROM intelligence_candidates
-           WHERE candidate_id=? ORDER BY version DESC LIMIT 1`,
-        ).get(candidateId)
+           WHERE candidate_id=? ${workspaceClause} ORDER BY version DESC LIMIT 1`,
+        ).get(...(workspaceId ? [candidateId, workspaceId, workspaceId] : [candidateId]))
       : this.db.prepare(
-          `SELECT data FROM intelligence_candidates WHERE candidate_id=? AND version=?`,
-        ).get(candidateId, version);
+          `SELECT data FROM intelligence_candidates
+           WHERE candidate_id=? AND version=? ${workspaceClause}`,
+        ).get(...(workspaceId
+          ? [candidateId, version, workspaceId, workspaceId]
+          : [candidateId, version]));
     return row ? JSON.parse(String(row.data)) as IntelligenceCandidate : null;
   }
 
-  listCandidates(reviewState?: IntelligenceCandidate['reviewState']): IntelligenceCandidate[] {
+  listCandidates(
+    reviewState?: IntelligenceCandidate['reviewState'],
+    workspaceId?: string,
+  ): IntelligenceCandidate[] {
+    const predicate = candidateWorkspacePredicate('intelligence_candidates');
     const rows = reviewState
       ? this.db.prepare(
           `SELECT data FROM intelligence_candidates WHERE review_state=?
+           ${workspaceId ? `AND ${predicate}` : ''}
            ORDER BY candidate_id, version`,
-        ).all(reviewState)
+        ).all(...(workspaceId
+          ? [reviewState, workspaceId, workspaceId]
+          : [reviewState]))
       : this.db.prepare(
-          'SELECT data FROM intelligence_candidates ORDER BY candidate_id, version',
-        ).all();
+          `SELECT data FROM intelligence_candidates
+           ${workspaceId ? `WHERE ${predicate}` : ''}
+           ORDER BY candidate_id, version`,
+        ).all(...(workspaceId ? [workspaceId, workspaceId] : []));
     return rows.map((row) => JSON.parse(String(row.data)) as IntelligenceCandidate);
   }
 
@@ -567,9 +1155,10 @@ export class SessionRepository {
     toState: CandidateReviewReceipt['toState'];
     reviewer: string;
     reason: string;
+    workspaceId?: string;
   }): CandidateReviewReceipt {
     const review = this.db.transaction(() => {
-      const candidate = this.getCandidate(input.candidateId, input.version);
+      const candidate = this.getCandidate(input.candidateId, input.version, input.workspaceId);
       if (!candidate) {
         throw new SessionContractError('MALFORMED_SOURCE', 'candidate version does not exist');
       }
@@ -603,6 +1192,22 @@ export class SessionRepository {
         `INSERT OR IGNORE INTO candidate_review_receipts
          (receipt_id, candidate_id, candidate_version, data) VALUES (?, ?, ?, ?)`,
       ).run(receipt.receiptId, input.candidateId, input.version, JSON.stringify(receipt));
+      const workspaceId = this.workspaceForCandidate(candidate);
+      if (!workspaceId) {
+        throw new SessionContractError(
+          'OPERATION_NOT_AUTHORIZED',
+          'candidate review lacks an authorized workspace',
+        );
+      }
+      this.emitRepositoryMutation({
+        operationId: receipt.receiptId,
+        eventName: 'candidate.review',
+        workspaceId,
+        targetClass: 'intelligence-candidate',
+        actorClass: 'reviewer',
+        eventTime: receipt.occurredAt,
+        counts: { candidates: 1, receipts: 1 },
+      });
       return receipt;
     });
     return review();
@@ -656,6 +1261,21 @@ export class SessionRepository {
         `UPDATE intelligence_candidates SET review_state='promoted', data=?
          WHERE candidate_id=? AND version=?`,
       ).run(JSON.stringify(candidate), candidate.candidateId, candidate.version);
+      const workspaceId = this.workspaceForCandidate(candidate);
+      if (!workspaceId) {
+        throw new SessionContractError(
+          'OPERATION_NOT_AUTHORIZED',
+          'promotion lacks an authorized workspace',
+        );
+      }
+      this.emitRepositoryMutation({
+        operationId: receipt.receiptId,
+        eventName: 'candidate.promote',
+        workspaceId,
+        targetClass: 'promotion',
+        eventTime: receipt.approvedAt,
+        counts: { candidates: 1, promotions: 1, evidence: evidenceIds.length },
+      });
       return receipt;
     });
     return record();
@@ -694,30 +1314,76 @@ export class SessionRepository {
     return row ? JSON.parse(String(row.checkpoint)) as ImportCheckpoint : null;
   }
 
-  relocateSource(sourceId: string, redactedLocator: string): void {
-    const row = this.db.prepare('SELECT data FROM session_sources WHERE source_id=?').get(sourceId);
-    if (!row) return;
-    const source = JSON.parse(String(row.data)) as SessionSource;
-    source.redactedLocator = redactedLocator;
-    this.db.prepare('UPDATE session_sources SET data=? WHERE source_id=?')
-      .run(JSON.stringify(source), sourceId);
+  relocateSource(sourceId: string, redactedLocator: string, workspaceId?: string): void {
+    const relocate = this.db.transaction(() => {
+      const row = this.db.prepare(
+        `SELECT src.data FROM session_sources src
+         WHERE src.source_id=? ${workspaceId ? `AND EXISTS (
+           SELECT 1 FROM sessions s
+           WHERE s.source_id=src.source_id AND s.workspace_id=?
+         ) AND NOT EXISTS (
+           SELECT 1 FROM sessions s
+           WHERE s.source_id=src.source_id AND s.workspace_id!=?
+         )` : ''}`,
+      ).get(...(workspaceId ? [sourceId, workspaceId, workspaceId] : [sourceId]));
+      if (!row) return;
+      const scopeRows = this.db.prepare(
+        'SELECT DISTINCT workspace_id FROM sessions WHERE source_id=?',
+      ).all(sourceId);
+      if (scopeRows.length !== 1) {
+        throw new SessionContractError(
+          'OPERATION_NOT_AUTHORIZED',
+          'source relocation requires one authorized workspace',
+        );
+      }
+      const source = JSON.parse(String(row.data)) as SessionSource;
+      source.redactedLocator = redactedLocator;
+      this.db.prepare('UPDATE session_sources SET data=? WHERE source_id=?')
+        .run(JSON.stringify(source), sourceId);
+      this.emitRepositoryMutation({
+        operationId: sha256(['source.relocate', sourceId, redactedLocator].join('\0')),
+        eventName: 'source.relocate',
+        workspaceId: String(scopeRows[0].workspace_id),
+        targetClass: 'session-source',
+        counts: { sources: 1 },
+      });
+    });
+    relocate();
   }
 
-  getSource(sourceId: string): SessionSource | null {
-    const row = this.db.prepare('SELECT data FROM session_sources WHERE source_id=?').get(sourceId);
+  getSource(sourceId: string, workspaceId?: string): SessionSource | null {
+    const row = this.db.prepare(
+      `SELECT src.data FROM session_sources src
+       WHERE src.source_id=? ${workspaceId ? `AND EXISTS (
+         SELECT 1 FROM sessions s
+         WHERE s.source_id=src.source_id AND s.workspace_id=?
+       ) AND NOT EXISTS (
+         SELECT 1 FROM sessions s
+         WHERE s.source_id=src.source_id AND s.workspace_id!=?
+       )` : ''}`,
+    ).get(...(workspaceId ? [sourceId, workspaceId, workspaceId] : [sourceId]));
     return row ? JSON.parse(String(row.data)) as SessionSource : null;
   }
 
-  deletionPreview(sessionId: string): { sessions: number; events: number; tags: number } {
+  deletionPreview(
+    sessionId: string,
+    workspaceId?: string,
+  ): { sessions: number; events: number; tags: number } {
     const session = this.db.prepare(
-      `SELECT COUNT(*) AS count FROM sessions WHERE session_id=? AND lifecycle!='tombstoned'`,
-    ).get(sessionId);
+      `SELECT COUNT(*) AS count FROM sessions
+       WHERE session_id=? AND lifecycle!='tombstoned'
+       ${workspaceId ? 'AND workspace_id=?' : ''}`,
+    ).get(...(workspaceId ? [sessionId, workspaceId] : [sessionId]));
     const events = this.db.prepare(
-      'SELECT COUNT(*) AS count FROM session_events WHERE session_id=?',
-    ).get(sessionId);
+      `SELECT COUNT(*) AS count FROM session_events e
+       JOIN sessions s ON s.session_id=e.session_id
+       WHERE e.session_id=? ${workspaceId ? 'AND s.workspace_id=?' : ''}`,
+    ).get(...(workspaceId ? [sessionId, workspaceId] : [sessionId]));
     const tags = this.db.prepare(
-      'SELECT COUNT(*) AS count FROM session_tags WHERE session_id=?',
-    ).get(sessionId);
+      `SELECT COUNT(*) AS count FROM session_tags t
+       JOIN sessions s ON s.session_id=t.session_id
+       WHERE t.session_id=? ${workspaceId ? 'AND s.workspace_id=?' : ''}`,
+    ).get(...(workspaceId ? [sessionId, workspaceId] : [sessionId]));
     return {
       sessions: Number(session?.count ?? 0),
       events: Number(events?.count ?? 0),
@@ -725,28 +1391,71 @@ export class SessionRepository {
     };
   }
 
-  tombstoneSession(sessionId: string): boolean {
-    const row = this.db.prepare('SELECT data FROM sessions WHERE session_id=?').get(sessionId);
-    if (!row) return false;
-    const session = JSON.parse(String(row.data)) as Session;
-    session.lifecycle = 'tombstoned';
-    return this.db.prepare(
-      `UPDATE sessions SET lifecycle='tombstoned', data=? WHERE session_id=? AND lifecycle!='tombstoned'`,
-    ).run(JSON.stringify(session), sessionId).changes > 0;
+  tombstoneSession(sessionId: string, workspaceId?: string): boolean {
+    const tombstone = this.db.transaction(() => {
+      const row = this.db.prepare(
+        `SELECT data, workspace_id FROM sessions
+         WHERE session_id=? ${workspaceId ? 'AND workspace_id=?' : ''}`,
+      ).get(...(workspaceId ? [sessionId, workspaceId] : [sessionId]));
+      if (!row) return false;
+      const session = JSON.parse(String(row.data)) as Session;
+      session.lifecycle = 'tombstoned';
+      const changed = this.db.prepare(
+        `UPDATE sessions SET lifecycle='tombstoned', data=?
+         WHERE session_id=? AND lifecycle!='tombstoned'
+         ${workspaceId ? 'AND workspace_id=?' : ''}`,
+      ).run(...(workspaceId
+        ? [JSON.stringify(session), sessionId, workspaceId]
+        : [JSON.stringify(session), sessionId])).changes > 0;
+      if (changed) {
+        this.emitRepositoryMutation({
+          operationId: sha256(['session.tombstone', sessionId].join('\0')),
+          eventName: 'session.tombstone',
+          workspaceId: String(row.workspace_id),
+          targetClass: 'session',
+          counts: { sessions: 1 },
+        });
+      }
+      return changed;
+    });
+    return tombstone();
   }
 
-  restoreSession(sessionId: string): boolean {
-    const row = this.db.prepare('SELECT data FROM sessions WHERE session_id=?').get(sessionId);
-    if (!row) return false;
-    const session = JSON.parse(String(row.data)) as Session;
-    session.lifecycle = 'active';
-    return this.db.prepare(
-      `UPDATE sessions SET lifecycle='active', data=? WHERE session_id=? AND lifecycle='tombstoned'`,
-    ).run(JSON.stringify(session), sessionId).changes > 0;
+  restoreSession(sessionId: string, workspaceId?: string): boolean {
+    const restore = this.db.transaction(() => {
+      const row = this.db.prepare(
+        `SELECT data, workspace_id FROM sessions
+         WHERE session_id=? ${workspaceId ? 'AND workspace_id=?' : ''}`,
+      ).get(...(workspaceId ? [sessionId, workspaceId] : [sessionId]));
+      if (!row) return false;
+      const session = JSON.parse(String(row.data)) as Session;
+      session.lifecycle = 'active';
+      const changed = this.db.prepare(
+        `UPDATE sessions SET lifecycle='active', data=?
+         WHERE session_id=? AND lifecycle='tombstoned'
+         ${workspaceId ? 'AND workspace_id=?' : ''}`,
+      ).run(...(workspaceId
+        ? [JSON.stringify(session), sessionId, workspaceId]
+        : [JSON.stringify(session), sessionId])).changes > 0;
+      if (changed) {
+        this.emitRepositoryMutation({
+          operationId: sha256(['session.restore', sessionId].join('\0')),
+          eventName: 'session.restore',
+          workspaceId: String(row.workspace_id),
+          targetClass: 'session',
+          counts: { sessions: 1 },
+        });
+      }
+      return changed;
+    });
+    return restore();
   }
 
-  previewPurge(sessionId: string): SessionPurgePreview {
-    const session = this.db.prepare('SELECT data FROM sessions WHERE session_id=?').get(sessionId);
+  previewPurge(sessionId: string, workspaceId?: string): SessionPurgePreview {
+    const session = this.db.prepare(
+      `SELECT data FROM sessions
+       WHERE session_id=? ${workspaceId ? 'AND workspace_id=?' : ''}`,
+    ).get(...(workspaceId ? [sessionId, workspaceId] : [sessionId]));
     if (!session) {
       throw new SessionContractError('MALFORMED_SOURCE', 'session does not exist');
     }
@@ -787,29 +1496,43 @@ export class SessionRepository {
     const operationId = sha256(JSON.stringify({
       scopeClass: 'session',
       sessionId,
+      workspaceId: workspaceId ?? null,
       eventIds,
       candidateIds,
       dependentIds: dependents.map((item) => item.dependentId),
       counts,
     }));
-    return {
+    const preview: SessionPurgePreview = {
       contractVersion: '1.0.0',
       operationId,
       scopeClass: 'session',
       sessionId,
+      workspaceId,
       counts,
       promotedDependents: dependents,
       confirmationRequired: true,
     };
+    const sessionValue = JSON.parse(String(session.data)) as Session;
+    this.emitRepositoryMutation({
+      operationId: sha256(`${operationId}\0preview`),
+      eventName: 'session.purge.preview',
+      workspaceId: sessionValue.workspaceId,
+      targetClass: 'session',
+      outcome: 'preview',
+      counts,
+    });
+    return preview;
   }
 
-  getCompletedPurge(sessionId: string): DeletionReceipt | null {
+  getCompletedPurge(sessionId: string, workspaceId?: string): DeletionReceipt | null {
     if (this.db.prepare('SELECT 1 AS present FROM sessions WHERE session_id=?').get(sessionId)) {
       return null;
     }
     const row = this.db.prepare(
-      `SELECT data FROM deletion_receipts WHERE scope_id=? ORDER BY rowid DESC LIMIT 1`,
-    ).get(sessionId);
+      `SELECT data FROM deletion_receipts WHERE scope_id=?
+       ${workspaceId ? 'AND workspace_id=?' : ''}
+       ORDER BY rowid DESC LIMIT 1`,
+    ).get(...(workspaceId ? [sessionId, workspaceId] : [sessionId]));
     return row ? JSON.parse(String(row.data)) as DeletionReceipt : null;
   }
 
@@ -824,6 +1547,18 @@ export class SessionRepository {
     }));
   }
 
+  listPromotionProvenanceReceipts(operationId?: string): PromotionProvenanceReceipt[] {
+    const rows = operationId
+      ? this.db.prepare(
+          `SELECT data FROM promotion_provenance_receipts
+           WHERE operation_id=? ORDER BY dependent_id`,
+        ).all(operationId)
+      : this.db.prepare(
+          'SELECT data FROM promotion_provenance_receipts ORDER BY operation_id, dependent_id',
+        ).all();
+    return rows.map((row) => JSON.parse(String(row.data)) as PromotionProvenanceReceipt);
+  }
+
   purgeSession(input: {
     preview: SessionPurgePreview;
     actorClass: string;
@@ -834,7 +1569,7 @@ export class SessionRepository {
       'SELECT data FROM deletion_receipts WHERE operation_id=?',
     ).get(input.preview.operationId);
     if (existing) return JSON.parse(String(existing.data)) as DeletionReceipt;
-    const current = this.previewPurge(input.preview.sessionId);
+    const current = this.previewPurge(input.preview.sessionId, input.preview.workspaceId);
     if (current.operationId !== input.preview.operationId) {
       throw new SessionContractError('IMPORT_CONFLICT', 'purge scope changed after preview');
     }
@@ -851,12 +1586,62 @@ export class SessionRepository {
         'every promoted dependent requires one explicit disposition',
       );
     }
+    const mutationWorkspaceId = this.workspaceForSession(input.preview.sessionId);
+    if (!mutationWorkspaceId) {
+      throw new SessionContractError(
+        'OPERATION_NOT_AUTHORIZED',
+        'purge mutation lacks an authorized workspace',
+      );
+    }
     const apply = this.db.transaction((): DeletionReceipt => {
       for (const decision of validatedDecisions) {
         this.db.prepare(
           `INSERT INTO promotion_dependency_decisions
            (operation_id, dependent_id, action, basis) VALUES (?, ?, ?, ?)`,
         ).run(input.preview.operationId, decision.dependentId, decision.action, decision.basis);
+        const dependent = current.promotedDependents.find(
+          (item) => item.dependentId === decision.dependentId,
+        )!;
+        const promotion = this.db.prepare(
+          'SELECT data FROM promotion_receipts WHERE receipt_id=?',
+        ).get(decision.dependentId);
+        if (!promotion) {
+          throw new SessionContractError(
+            'IMPORT_CONFLICT',
+            'promoted dependency disappeared before durable provenance handling',
+          );
+        }
+        const promotionReceipt = JSON.parse(String(promotion.data)) as PromotionReceipt;
+        const provenance: PromotionProvenanceReceipt = {
+          contractVersion: '1.0.0',
+          receiptId: sha256([
+            input.preview.operationId,
+            decision.dependentId,
+            decision.action,
+          ].join('\0')),
+          operationId: input.preview.operationId,
+          dependentId: decision.dependentId,
+          candidateId: dependent.candidateId,
+          candidateVersion: dependent.candidateVersion,
+          consumer: dependent.consumer,
+          destinationRef: dependent.destinationRef,
+          evidenceEventIds: [...promotionReceipt.evidenceEventIds].sort(),
+          action: decision.action,
+          basis: decision.basis,
+          originAvailable: false,
+          occurredAt: new Date().toISOString(),
+        };
+        this.db.prepare(
+          `INSERT INTO promotion_provenance_receipts
+           (receipt_id, operation_id, dependent_id, action, data)
+           VALUES (?, ?, ?, ?, ?)`,
+        ).run(
+          provenance.receiptId,
+          provenance.operationId,
+          provenance.dependentId,
+          provenance.action,
+          JSON.stringify(provenance),
+        );
       }
       const eventRows = this.db.prepare(
         'SELECT event_id FROM session_events WHERE session_id=?',
@@ -907,7 +1692,7 @@ export class SessionRepository {
         scopeClass: 'session',
         counts: input.preview.counts,
         survivingDependentIds: validatedDecisions
-          .filter((item) => item.action !== 'revoke')
+          .filter((item) => !['revoke', 'delete'].includes(item.action))
           .map((item) => item.dependentId)
           .sort(),
         actorClass: input.actorClass,
@@ -917,21 +1702,71 @@ export class SessionRepository {
         occurredAt: new Date().toISOString(),
       });
       this.db.prepare(
-        'INSERT INTO deletion_receipts(operation_id, scope_id, data) VALUES (?, ?, ?)',
-      ).run(receipt.operationId, input.preview.sessionId, JSON.stringify(receipt));
+        `INSERT INTO deletion_receipts(operation_id, scope_id, workspace_id, data)
+         VALUES (?, ?, ?, ?)`,
+      ).run(
+        receipt.operationId,
+        input.preview.sessionId,
+        input.preview.workspaceId ?? null,
+        JSON.stringify(receipt),
+      );
+      this.emitRepositoryMutation({
+        operationId: sha256(`${receipt.operationId}\0commit`),
+        eventName: 'session.purge',
+        workspaceId: mutationWorkspaceId,
+        targetClass: 'session',
+        actorClass: input.actorClass,
+        eventTime: receipt.occurredAt,
+        counts: {
+          ...receipt.counts,
+          dependencyDispositions: validatedDecisions.length,
+        },
+      });
       return receipt;
     });
     return apply();
   }
 
-  reindex(): void {
+  reindex(workspaceId?: string): void {
     const rebuild = this.db.transaction(() => {
-      this.db.exec('REINDEX');
-      this.db.exec('DELETE FROM session_event_fts');
-      this.db.exec(`
-        INSERT INTO session_event_fts(event_id, searchable_text)
-        SELECT event_id, json_extract(data, '$.searchableText') FROM session_events
-      `);
+      let indexed = 0;
+      if (!workspaceId) {
+        this.db.exec('REINDEX');
+        this.db.exec('DELETE FROM session_event_fts');
+        this.db.exec(`
+          INSERT INTO session_event_fts(event_id, searchable_text)
+          SELECT event_id, json_extract(data, '$.searchableText') FROM session_events
+        `);
+        indexed = Number(this.db.prepare(
+          'SELECT COUNT(*) AS count FROM session_events',
+        ).get()?.count ?? 0);
+      } else {
+        this.db.prepare(
+          `DELETE FROM session_event_fts WHERE event_id IN (
+            SELECT e.event_id FROM session_events e
+            JOIN sessions s ON s.session_id=e.session_id
+            WHERE s.workspace_id=?
+          )`,
+        ).run(workspaceId);
+        indexed = this.db.prepare(
+          `INSERT INTO session_event_fts(event_id, searchable_text)
+           SELECT e.event_id, json_extract(e.data, '$.searchableText')
+           FROM session_events e
+           JOIN sessions s ON s.session_id=e.session_id
+           WHERE s.workspace_id=?`,
+        ).run(workspaceId).changes;
+      }
+      this.emitRepositoryMutation({
+        operationId: sha256([
+          'session.reindex',
+          workspaceId ?? 'global',
+          String(Date.now()),
+        ].join('\0')),
+        eventName: 'session.reindex',
+        workspaceId: workspaceId ?? 'global',
+        targetClass: 'search-index',
+        counts: { events: indexed },
+      });
     });
     rebuild();
   }
@@ -942,8 +1777,18 @@ export class SessionRepository {
       const row = this.db.prepare(`SELECT COUNT(*) AS count FROM ${table} ${where}`).get();
       return Number(row?.count ?? 0);
     };
+    let indexIntegrity: 'ok' | 'failed' = 'ok';
+    try {
+      this.db.prepare(
+        `INSERT INTO session_event_fts(session_event_fts) VALUES ('integrity-check')`,
+      ).run();
+      if (count('session_event_fts') !== count('session_events')) indexIntegrity = 'failed';
+    } catch {
+      indexIntegrity = 'failed';
+    }
     return {
       integrity: integrity[0]?.integrity_check === 'ok' ? 'ok' : 'failed',
+      indexIntegrity,
       sources: count('session_sources'),
       sessions: count('sessions', `WHERE lifecycle!='tombstoned'`),
       events: count('session_events'),
@@ -958,8 +1803,25 @@ export class SessionRepository {
 
 interface SearchCursor {
   snapshotRowid: number;
-  textLength: number;
+  rank: number;
   eventId: string;
+  scopeDigest: string;
+  checksum: string;
+}
+
+interface SessionListCursor {
+  snapshotRowid: number;
+  updatedAt: string;
+  sessionId: string;
+  scopeDigest: string;
+  checksum: string;
+}
+
+interface AuthorizedDocumentCursor {
+  snapshotRowid: number;
+  eventId: string;
+  scopeDigest: string;
+  checksum: string;
 }
 
 function searchHit(row: Record<string, unknown>): SessionSearchHit {
@@ -973,10 +1835,11 @@ function searchHit(row: Record<string, unknown>): SessionSearchHit {
     importRunId: event.importRunId,
     sourceId: event.sourceId,
     locatorClass: source.locatorClass,
+    ...(event.nativeId ? { nativeEventId: event.nativeId } : {}),
   };
   return {
-    score: 1 / (1 + Number(row.stable_rank)),
-    snippet: boundedSnippet(String(row.searchable_text), 240),
+    score: Math.max(0, -Number(row.stable_rank)),
+    snippet: boundedSnippet(String(row.matched_snippet ?? row.searchable_text), 240),
     provider: session.provider,
     workspaceId: session.workspaceId,
     sessionId: event.sessionId,
@@ -986,6 +1849,7 @@ function searchHit(row: Record<string, unknown>): SessionSearchHit {
     locatorClass: source.locatorClass,
     sequence: event.sequence,
     role: event.role,
+    nativeEventId: event.nativeId,
     occurredAt: event.occurredAt,
     sensitivity: event.sensitivity.classification,
     citation,
@@ -996,25 +1860,141 @@ function boundedSnippet(value: string, max: number): string {
   return value.length <= max ? value : `${value.slice(0, max - 1)}…`;
 }
 
-function encodeSearchCursor(cursor: SearchCursor): string {
-  return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64url');
+function renameNativeWindsurfEnvelope(
+  value: Record<string, unknown>,
+): Record<string, unknown> {
+  if (!Object.hasOwn(value, 'native.windsurf')) return value;
+  const output = { ...value };
+  if (!Object.hasOwn(output, 'native.devin-desktop')) {
+    output['native.devin-desktop'] = output['native.windsurf'];
+  }
+  delete output['native.windsurf'];
+  return output;
+}
+
+function canonicalDevinLocator(value: string): string {
+  return value.startsWith('windsurf-')
+    ? `devin-desktop-${value.slice('windsurf-'.length)}`
+    : value;
+}
+
+function encodeMutationCursor(rowid: number, workspaceId: string): string {
+  const unsigned = { rowid, workspaceId };
+  return Buffer.from(JSON.stringify({
+    ...unsigned,
+    checksum: sha256(JSON.stringify(unsigned)),
+  }), 'utf8').toString('base64url');
+}
+
+function decodeMutationCursor(value: string | undefined, workspaceId: string): number {
+  if (!value) return 0;
+  try {
+    const parsed = JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as {
+      rowid: number;
+      workspaceId: string;
+      checksum: string;
+    };
+    const unsigned = { rowid: parsed.rowid, workspaceId: parsed.workspaceId };
+    if (!Number.isSafeInteger(parsed.rowid)
+      || parsed.rowid < 0
+      || parsed.workspaceId !== workspaceId
+      || parsed.checksum !== sha256(JSON.stringify(unsigned))) {
+      throw new Error('invalid cursor');
+    }
+    return parsed.rowid;
+  } catch {
+    throw new SessionContractError('SCHEMA_DRIFT', 'mutation audit cursor is invalid');
+  }
+}
+
+function encodeSearchCursor(cursor: Omit<SearchCursor, 'checksum'>): string {
+  const payload = { ...cursor, checksum: sha256(JSON.stringify(cursor)) };
+  return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
 }
 
 function decodeSearchCursor(value?: string): SearchCursor | null {
   if (!value) return null;
   try {
     const parsed = JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as SearchCursor;
+    const { checksum, ...unsigned } = parsed;
     if (!Number.isSafeInteger(parsed.snapshotRowid)
-      || !Number.isSafeInteger(parsed.textLength)
-      || typeof parsed.eventId !== 'string') throw new Error('invalid cursor');
+      || !Number.isFinite(parsed.rank)
+      || typeof parsed.eventId !== 'string'
+      || typeof parsed.scopeDigest !== 'string'
+      || checksum !== sha256(JSON.stringify(unsigned))) throw new Error('invalid cursor');
     return parsed;
   } catch {
     throw new SessionContractError('SCHEMA_DRIFT', 'search cursor is invalid');
   }
 }
 
-function escapeLike(value: string): string {
-  return value.replaceAll('%', '\\%').replaceAll('_', '\\_');
+function encodeSessionListCursor(
+  cursor: Omit<SessionListCursor, 'checksum'>,
+): string {
+  const payload = { ...cursor, checksum: sha256(JSON.stringify(cursor)) };
+  return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+}
+
+function decodeSessionListCursor(value?: string): SessionListCursor | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(value, 'base64url').toString('utf8'),
+    ) as SessionListCursor;
+    const { checksum, ...unsigned } = parsed;
+    if (!Number.isSafeInteger(parsed.snapshotRowid)
+      || typeof parsed.updatedAt !== 'string'
+      || typeof parsed.sessionId !== 'string'
+      || typeof parsed.scopeDigest !== 'string'
+      || checksum !== sha256(JSON.stringify(unsigned))) throw new Error('invalid cursor');
+    return parsed;
+  } catch {
+    throw new SessionContractError('SCHEMA_DRIFT', 'session list cursor is invalid');
+  }
+}
+
+function sessionListScopeDigest(options: SessionListOptions): string {
+  return sha256(JSON.stringify({
+    provider: options.provider,
+    workspaceId: options.workspaceId,
+    tag: options.tag,
+  }));
+}
+
+function searchScopeDigest(options: SessionSearchOptions): string {
+  const { cursor: _cursor, limit: _limit, ...scope } = options;
+  return sha256(JSON.stringify(scope));
+}
+
+function encodeAuthorizedDocumentCursor(
+  cursor: Omit<AuthorizedDocumentCursor, 'checksum'>,
+): string {
+  const payload = { ...cursor, checksum: sha256(JSON.stringify(cursor)) };
+  return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+}
+
+function decodeAuthorizedDocumentCursor(value?: string): AuthorizedDocumentCursor | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(value, 'base64url').toString('utf8'),
+    ) as AuthorizedDocumentCursor;
+    const { checksum, ...cursor } = parsed;
+    if (!Number.isSafeInteger(cursor.snapshotRowid)
+      || typeof cursor.eventId !== 'string'
+      || typeof cursor.scopeDigest !== 'string'
+      || checksum !== sha256(JSON.stringify(cursor))) throw new Error('invalid cursor');
+    return parsed;
+  } catch {
+    throw new SessionContractError('SCHEMA_DRIFT', 'authorized document cursor is invalid');
+  }
+}
+
+function authorizedDocumentScopeDigest(
+  options: Omit<SessionSearchOptions, 'query'>,
+): string {
+  const { cursor: _cursor, limit: _limit, ...scope } = options;
+  return sha256(JSON.stringify(scope));
 }
 
 function appendMetadataFilters(
@@ -1022,6 +2002,10 @@ function appendMetadataFilters(
   params: unknown[],
   options: Omit<SessionSearchOptions, 'query' | 'cursor'>,
 ): void {
+  if (options.sessionIds?.length) {
+    where.push(`e.session_id IN (${options.sessionIds.map(() => '?').join(',')})`);
+    params.push(...options.sessionIds);
+  }
   if (options.providers?.length) {
     where.push(`json_extract(s.data, '$.provider') IN (${options.providers.map(() => '?').join(',')})`);
     params.push(...options.providers);
@@ -1039,13 +2023,13 @@ function appendMetadataFilters(
     params.push(options.role);
   }
   if (options.participant) {
-    where.push(`json_extract(e.data, '$.role') = ?`);
+    where.push(`json_extract(e.data, '$.participant') = ?`);
     params.push(options.participant);
   }
   if (options.tool) {
-    where.push(`(json_extract(e.data, '$.kind') IN ('tool-call','tool-result')
-      AND json_extract(e.data, '$.searchableText') LIKE ? ESCAPE '\\')`);
-    params.push(`%${escapeLike(options.tool)}%`);
+    where.push(`(json_extract(e.data, '$.toolName') = ?
+      OR json_extract(e.data, '$.toolCallId') = ?)`);
+    params.push(options.tool, options.tool);
   }
   if (options.tag) {
     where.push(`EXISTS (
@@ -1057,19 +2041,39 @@ function appendMetadataFilters(
     where.push(`json_extract(e.data, '$.sensitivity.classification') = ?`);
     params.push(options.sensitivity);
   }
-  for (const [filter, key] of [
-    [options.model, 'model'],
-    [options.entity, 'entity'],
-    [options.extractionState, 'extractionState'],
-  ] as const) {
-    if (filter) {
-      where.push(`EXISTS (
-        SELECT 1 FROM json_tree(e.data)
-        WHERE json_tree.key=? AND CAST(json_tree.value AS TEXT)=?
-      )`);
-      params.push(key, filter);
-    }
+  if (options.model) {
+    where.push(`json_extract(e.data, '$.model') = ?`);
+    params.push(options.model);
   }
+  if (options.entity) {
+    where.push(`EXISTS (
+      SELECT 1 FROM json_each(json_extract(e.data, '$.entities'))
+      WHERE json_each.value = ?
+    )`);
+    params.push(options.entity);
+  }
+  if (options.extractionState) {
+    where.push(`json_extract(e.data, '$.extractionState') = ?`);
+    params.push(options.extractionState);
+  }
+}
+
+function candidateWorkspacePredicate(alias: string): string {
+  return `EXISTS (
+    SELECT 1
+    FROM json_each(json_extract(${alias}.data, '$.evidence')) evidence
+    JOIN session_events e
+      ON e.event_id=json_extract(evidence.value, '$.eventId')
+    JOIN sessions s ON s.session_id=e.session_id
+    WHERE s.workspace_id=?
+  ) AND NOT EXISTS (
+    SELECT 1
+    FROM json_each(json_extract(${alias}.data, '$.evidence')) evidence
+    JOIN session_events e
+      ON e.event_id=json_extract(evidence.value, '$.eventId')
+    JOIN sessions s ON s.session_id=e.session_id
+    WHERE s.workspace_id!=?
+  )`;
 }
 
 function candidateContentDigest(candidate: IntelligenceCandidate): string {
@@ -1079,6 +2083,45 @@ function candidateContentDigest(candidate: IntelligenceCandidate): string {
     reviewState: undefined,
     createdAt: undefined,
   }));
+}
+
+function mergeSessionAggregate(prior: Session, incoming: Session): Session {
+  const timestamp = (
+    left: string | null,
+    right: string | null,
+    direction: 'min' | 'max',
+  ): string | null => {
+    if (!left) return right;
+    if (!right) return left;
+    const comparison = Date.parse(left) - Date.parse(right);
+    return direction === 'min'
+      ? (comparison <= 0 ? left : right)
+      : (comparison >= 0 ? left : right);
+  };
+  const consistencyRank: Record<Session['consistency'], number> = {
+    provisional: 0,
+    'consistent-snapshot': 1,
+    complete: 2,
+  };
+  const lifecycleRank: Record<Session['lifecycle'], number> = {
+    active: 0,
+    complete: 1,
+    tombstoned: 2,
+  };
+  return {
+    ...prior,
+    startedAt: timestamp(prior.startedAt, incoming.startedAt, 'min'),
+    updatedAt: timestamp(prior.updatedAt, incoming.updatedAt, 'max'),
+    consistency: consistencyRank[prior.consistency] >= consistencyRank[incoming.consistency]
+      ? prior.consistency : incoming.consistency,
+    lifecycle: lifecycleRank[prior.lifecycle] >= lifecycleRank[incoming.lifecycle]
+      ? prior.lifecycle : incoming.lifecycle,
+    sourceDigest: incoming.sourceDigest,
+    extensions: {
+      ...prior.extensions,
+      ...incoming.extensions,
+    },
+  };
 }
 
 function allowedCandidateTransition(

@@ -93,7 +93,7 @@
       "documentation": "docs/providers/warp-sessions.md"
     },
     {
-      "provider": "windsurf",
+      "provider": "devin-desktop",
       "issue": 1920,
       "status": "implemented",
       "operations": ["inspect", "stream"],
@@ -101,7 +101,8 @@
       "tests": "test/unit/sessions/windsurf-adapter.test.ts",
       "documentation": "docs/providers/windsurf-sessions.md",
       "product": "Devin Desktop",
-      "compatibilityNote": "windsurf is the stable AIWG provider ID"
+      "compatibilityAliases": ["windsurf"],
+      "compatibilityNote": "devin-desktop is canonical; windsurf remains an accepted deprecated alias through at least 2027-07-27"
     },
     {
       "provider": "generic",

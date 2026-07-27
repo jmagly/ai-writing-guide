@@ -1,7 +1,22 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { SESSION_PROVIDER_IDS } from '../../../src/sessions/index.js';
+import {
+  ClaudeSessionAdapter,
+  CodexSessionAdapter,
+  CopilotSessionAdapter,
+  CursorSessionAdapter,
+  DevinDesktopSessionAdapter,
+  FactorySessionAdapter,
+  GenericSessionInterchangeAdapter,
+  HermesSessionAdapter,
+  OpenClawSessionAdapter,
+  OpenCodeSessionAdapter,
+  OpenHumanSessionAdapter,
+  SESSION_PROVIDER_IDS,
+  WarpSessionAdapter,
+  type SessionSourceAdapter,
+} from '../../../src/sessions/index.js';
 
 interface MatrixEntry {
   provider: string;
@@ -25,6 +40,18 @@ const matrixPath = resolve(root,
 const matrix = JSON.parse(readFileSync(matrixPath, 'utf8')) as Matrix;
 
 describe('twelve-provider session release conformance', () => {
+  it.each(matrix.providers)('$provider matrix claims match the executable adapter contract', (entry) => {
+    const adapter = adapterFor(entry.provider);
+    expect(adapter.provider).toBe(entry.provider);
+    expect(adapter.disposition).toBe(entry.status);
+    expect([...adapter.supportedOperations].sort()).toEqual([...entry.operations].sort());
+    expect(adapter.adapterVersion).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(adapter.acquisitionModes.length).toBeGreaterThan(0);
+    expect(typeof adapter.inspect).toBe('function');
+    expect(typeof adapter.stream).toBe('function');
+    expect(typeof adapter.discover).toBe('function');
+  });
+
   it('maps every canonical provider exactly once to issue, status, operations, fixtures, tests, and docs', () => {
     expect(matrix.contractVersion).toBe('1.0.0');
     expect(matrix.canonicalProviderCount).toBe(12);
@@ -74,8 +101,29 @@ describe('twelve-provider session release conformance', () => {
   it('keeps the provider matrix and session gates in required CI', () => {
     const workflow = readFileSync(resolve(root, '.gitea/workflows/ci.yml'), 'utf8');
     expect(workflow).toContain('npm run test:ci');
+    expect(workflow).toContain('npm run test:sessions:sqlite');
     expect(workflow).toMatch(/name:\s+Test/);
     expect(workflow).toMatch(/name:\s+Build/);
     expect(workflow).toMatch(/needs:\s+\[test\]/);
   });
 });
+
+function adapterFor(provider: string): SessionSourceAdapter {
+  const adapters: Record<string, () => SessionSourceAdapter> = {
+    claude: () => new ClaudeSessionAdapter(),
+    codex: () => new CodexSessionAdapter(),
+    copilot: () => new CopilotSessionAdapter(),
+    cursor: () => new CursorSessionAdapter(),
+    factory: () => new FactorySessionAdapter(),
+    generic: () => new GenericSessionInterchangeAdapter(),
+    hermes: () => new HermesSessionAdapter(),
+    openclaw: () => new OpenClawSessionAdapter(),
+    opencode: () => new OpenCodeSessionAdapter(),
+    openhuman: () => new OpenHumanSessionAdapter(),
+    warp: () => new WarpSessionAdapter(),
+    'devin-desktop': () => new DevinDesktopSessionAdapter(),
+  };
+  const create = adapters[provider];
+  if (!create) throw new Error(`provider matrix has no executable adapter: ${provider}`);
+  return create();
+}

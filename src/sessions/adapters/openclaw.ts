@@ -10,7 +10,10 @@ import {
   type SourceDescriptor,
   type SourceProbe,
 } from '../contracts.js';
-import { readBoundedJsonLines, type BoundedJsonRecord, type ReaderLimits } from '../readers.js';
+import {
+  readBoundedJsonLines, streamBoundedJsonLines,
+  type BoundedJsonRecord, type ReaderLimits,
+} from '../readers.js';
 
 export const OPENCLAW_ADAPTER_VERSION = '1.0.0';
 export const OPENCLAW_SOURCE_SCHEMA_VERSION = '1.0.0';
@@ -114,6 +117,67 @@ export class OpenClawSessionAdapter implements SessionSourceAdapter {
   }
 
   async *stream(source: SelectedSource, cursor?: ImportCursor): AsyncIterable<ProviderRecord> {
+    if (SOURCE_CLASSES.has(source.locatorClass)) {
+      const input = await streamBoundedJsonLines({
+        selectedPath: source.locator,
+        allowedRoots: source.authorizedScope.allowedRoots,
+      }, {
+        consistency: source.locatorClass === 'openclaw-consistent-snapshot-jsonl'
+          ? 'complete' : 'provisional',
+        limits: this.limits,
+      });
+      const start = parseCursor(cursor?.value);
+      let outputIndex = 0;
+      let nativeSchema: string | null = null;
+      let eventSchema: string | null = null;
+      let sawRecord = false;
+      for await (const line of input) {
+        sawRecord = true;
+        const parsed = SnapshotSchema.safeParse(line.value);
+        if (!parsed.success) {
+          throw new SessionContractError('MALFORMED_SOURCE', 'OpenClaw snapshot is malformed');
+        }
+        const snapshot = parsed.data;
+        const currentNative = nativeVersion(snapshot.schemaVersion);
+        const currentEvent = nativeVersion(snapshot.eventVersion);
+        if ((nativeSchema && nativeSchema !== currentNative)
+          || (eventSchema && eventSchema !== currentEvent)) {
+          throw new SessionContractError('SCHEMA_DRIFT', 'mixed OpenClaw snapshot schemas');
+        }
+        nativeSchema = currentNative;
+        eventSchema = currentEvent;
+        assertSupportedSchemaMajor(nativeSchema, 16);
+        assertSupportedSchemaMajor(eventSchema, 3);
+        if (source.locatorClass === 'openclaw-consistent-snapshot-jsonl'
+          && snapshot.snapshotConsistency !== 'sqlite-backup') {
+          throw new SessionContractError(
+            'SCHEMA_DRIFT',
+            'OpenClaw snapshot lacks sqlite3.backup() consistency evidence',
+          );
+        }
+        if (snapshot.incognito) {
+          throw new SessionContractError(
+            'OPERATION_NOT_AUTHORIZED',
+            'OpenClaw incognito session capture is unavailable by provider policy',
+          );
+        }
+        if (snapshot.gateway?.mode === 'remote'
+          && snapshot.gateway.hostId !== snapshot.gateway.expectedHostId) {
+          throw new SessionContractError(
+            'SOURCE_NOT_AUTHORIZED',
+            'OpenClaw remote Gateway identity does not match the authorized host',
+          );
+        }
+        for (const record of normalizeSnapshot(snapshot, line, source.locatorClass)) {
+          if (outputIndex++ >= start) yield record;
+        }
+      }
+      if (!sawRecord) throw new SessionContractError('MALFORMED_SOURCE', 'OpenClaw source is empty');
+      if (input.incompleteTail && source.locatorClass === 'openclaw-consistent-snapshot-jsonl') {
+        throw new SessionContractError('TRUNCATED_SOURCE', 'OpenClaw consistent snapshot is truncated');
+      }
+      return;
+    }
     const parsed = await this.readSource(source, false);
     const start = parseCursor(cursor?.value);
     for (const record of parsed.records.slice(start)) yield record;
@@ -251,6 +315,10 @@ function normalizeEvent(
     sequence,
     kind: eventKind(event),
     role: event.role,
+    participant: event.role,
+    model: typeof event.model === 'string' ? event.model : undefined,
+    toolName: typeof event.tool?.name === 'string' ? event.tool.name : undefined,
+    toolCallId: typeof event.tool?.id === 'string' ? event.tool.id : undefined,
     occurredAt: timestamp(event.timestamp),
     text: event.text ?? toolText(event.tool),
     rawReference: { locatorClass, offset: line.byteOffset },

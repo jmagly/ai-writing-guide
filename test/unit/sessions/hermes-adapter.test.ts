@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -170,7 +169,7 @@ describe('Hermes session adapter', () => {
   });
 });
 
-describe.runIf(hasBetterSqlite3())('Hermes adapter repository conformance', () => {
+describe('Hermes adapter repository conformance', () => {
   it('redacts searchable content and makes identical replay a no-op', async () => {
     const adapter = new HermesSessionAdapter();
     const selectedSource = selected('redaction.jsonl');
@@ -210,14 +209,4 @@ async function collect<T>(iterable: AsyncIterable<T>): Promise<T[]> {
   const result: T[] = [];
   for await (const value of iterable) result.push(value);
   return result;
-}
-
-function hasBetterSqlite3(): boolean {
-  const require = createRequire(import.meta.url);
-  try {
-    require.resolve('better-sqlite3');
-    return true;
-  } catch {
-    return false;
-  }
 }

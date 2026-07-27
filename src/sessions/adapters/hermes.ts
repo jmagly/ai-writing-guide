@@ -10,7 +10,10 @@ import {
   type SourceDescriptor,
   type SourceProbe,
 } from '../contracts.js';
-import { readBoundedJsonLines, type BoundedJsonRecord, type ReaderLimits } from '../readers.js';
+import {
+  readBoundedJsonLines, streamBoundedJsonLines,
+  type BoundedJsonRecord, type ReaderLimits,
+} from '../readers.js';
 
 export const HERMES_ADAPTER_VERSION = '1.0.0';
 export const HERMES_EXPORT_SCHEMA_VERSION = '1.0.0';
@@ -96,6 +99,48 @@ export class HermesSessionAdapter implements SessionSourceAdapter {
   }
 
   async *stream(source: SelectedSource, cursor?: ImportCursor): AsyncIterable<ProviderRecord> {
+    if (source.locatorClass === 'hermes-export-jsonl'
+      || source.locatorClass === 'hermes-consistent-snapshot-jsonl') {
+      const input = await streamBoundedJsonLines({
+        selectedPath: source.locator,
+        allowedRoots: source.authorizedScope.allowedRoots,
+      }, {
+        consistency: source.locatorClass === 'hermes-export-jsonl' ? 'provisional' : 'complete',
+        limits: this.limits,
+      });
+      const start = parseCursor(cursor?.value);
+      let outputIndex = 0;
+      let schema: string | null = null;
+      let sawRecord = false;
+      for await (const line of input) {
+        sawRecord = true;
+        const parsed = ExportSchema.safeParse(line.value);
+        if (!parsed.success) {
+          throw new SessionContractError('MALFORMED_SOURCE', 'Hermes export is malformed');
+        }
+        const currentSchema = declaredSchema(parsed.data);
+        if (schema && schema !== currentSchema) {
+          throw new SessionContractError('SCHEMA_DRIFT', 'mixed Hermes export schemas');
+        }
+        schema = currentSchema;
+        assertSupportedSchemaMajor(schema, 23);
+        if (source.locatorClass === 'hermes-consistent-snapshot-jsonl'
+          && parsed.data.snapshotConsistency !== 'sqlite-backup') {
+          throw new SessionContractError(
+            'SCHEMA_DRIFT',
+            'Hermes snapshot lacks sqlite3.backup() consistency evidence',
+          );
+        }
+        for (const record of normalizeSession(parsed.data, line, source.locatorClass)) {
+          if (outputIndex++ >= start) yield record;
+        }
+      }
+      if (!sawRecord) throw new SessionContractError('MALFORMED_SOURCE', 'Hermes source is empty');
+      if (input.incompleteTail && source.locatorClass !== 'hermes-export-jsonl') {
+        throw new SessionContractError('TRUNCATED_SOURCE', 'Hermes consistent snapshot is truncated');
+      }
+      return;
+    }
     const parsed = await this.readSource(source);
     const start = parseCursor(cursor?.value);
     for (const record of parsed.records.slice(start)) yield record;
@@ -248,6 +293,9 @@ function normalizeMessage(
     ...base,
     nativeEventId: `message:${message.id}`,
     kind: message.tool_name ? 'tool-result' : 'message',
+    participant: message.role,
+    toolName: message.tool_name,
+    toolCallId: message.tool_call_id,
     text: extractText(message.content),
     extensions: {
       ...common,
@@ -271,6 +319,9 @@ function normalizeMessage(
     nativeEventId: stringValue(call.id) || `message:${message.id}:tool:${callIndex}`,
     sequence: base.sequence + callIndex + 1,
     kind: 'tool-call',
+    participant: message.role,
+    toolName: stringValue(asObject(call.function).name),
+    toolCallId: stringValue(call.id),
     text: stringValue(asObject(call.function).name),
     extensions: { ...common, toolCall: call },
   }));

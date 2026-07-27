@@ -12,17 +12,19 @@ import {
   DeletionReceiptSchema,
   defineSessionAdapterFixture,
   redactSessionText,
+  sanitizeNativeExtensions,
   requireNetworkConsent,
   prefilterAuthorizedSearchScope,
   sha256,
 } from '../../../src/sessions/index.js';
 
 describe('session contracts', () => {
-  it('asserts exactly the canonical 12 provider IDs without alias fallback', () => {
+  it('asserts exactly 12 canonical provider IDs with the documented Windsurf alias', () => {
     expect(SESSION_PROVIDER_IDS).toEqual([
       'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
-      'opencode', 'openclaw', 'openhuman', 'warp', 'windsurf', 'generic',
+      'opencode', 'openclaw', 'openhuman', 'warp', 'devin-desktop', 'generic',
     ]);
+    expect(assertSessionProviderId('windsurf')).toBe('devin-desktop');
     expect(() => assertSessionProviderId('factory-ai')).toThrowError(
       expect.objectContaining({ code: 'UNKNOWN_PROVIDER' }),
     );
@@ -89,6 +91,39 @@ describe('session source and content policy', () => {
     expect(result.text).not.toContain('a@example.com');
     expect(result.text).not.toContain('super-secret-value');
     expect(result.sensitivity).toBe('sensitive');
+  });
+
+  it('recursively sanitizes native attributes with typed bounded markers', () => {
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    const result = sanitizeNativeExtensions({
+      status: 'complete',
+      authorization: 'Bearer redaction-canary-authorization',
+      nested: {
+        futureField: 'redaction-canary-future',
+        toolResult: 'redaction-canary-tool-output',
+        url: 'https://user:redaction-canary-password@example.test/path',
+        ownerEmail: 'redaction-canary@example.test',
+        path: '/private/redaction-canary/path',
+      },
+      items: [
+        { token: 'redaction-canary-array-token' },
+        'redaction-canary-array-value',
+      ],
+      circular,
+      deep: { a: { b: { c: { d: { e: { f: { g: { h: { i: 'secret' } } } } } } } } },
+    });
+
+    const serialized = JSON.stringify(result.value);
+    expect(result.value.status).toBe('complete');
+    expect(serialized).not.toContain('redaction-canary');
+    expect(serialized).toContain('[REDACTED:sensitive-field]');
+    expect(serialized).toContain('[REDACTED:content]');
+    expect(serialized).toContain('[REDACTED:path]');
+    expect(serialized).toContain('[REDACTED:circular-reference]');
+    expect(serialized).toContain('[REDACTED:depth-limit]');
+    expect(result.sensitivity).toBe('sensitive');
+    expect(result.decisions).not.toHaveProperty('value');
   });
 
   it('requires operation-specific network consent', () => {

@@ -288,16 +288,17 @@ export class SessionSearchService {
     semantic.forEach((hit, index) => {
       scores.set(hit.eventId, (scores.get(hit.eventId) ?? 0) + 1 / (60 + index + 1));
     });
+    const publicHits = new Map<string, SessionSearchHit>([
+      ...documents.map(({ searchableText: _text, ...hit }) => [hit.eventId, hit] as const),
+      ...lexical.map((hit) => [hit.eventId, hit] as const),
+    ]);
     const items = [...scores.entries()]
-      .map(([eventId, score]) => ({ hit: authorized.get(eventId), score }))
-      .filter((entry): entry is { hit: SessionSearchDocument; score: number } => Boolean(entry.hit))
+      .map(([eventId, score]) => ({ hit: publicHits.get(eventId), score }))
+      .filter((entry): entry is { hit: SessionSearchHit; score: number } => Boolean(entry.hit))
       .sort((left, right) => right.score - left.score
         || left.hit.eventId.localeCompare(right.hit.eventId))
       .slice(0, request.options.limit)
-      .map(({ hit, score }) => {
-        const { searchableText: _searchableText, ...publicHit } = hit;
-        return { ...publicHit, score };
-      });
+      .map(({ hit, score }) => ({ ...hit, score }));
     return { items, nextCursor: null };
   }
 

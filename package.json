@@ -42,6 +42,8 @@
     "build:copy-mjs": "node tools/scripts/copy-build-resources.mjs",
     "build:web": "node tools/scripts/resource-preflight.mjs --profile web && npm --prefix apps/web ci && npm --prefix apps/web run build",
     "test": "vitest run --config config/vitest.config.js",
+    "test:sessions:sqlite": "node tools/ci/session-sqlite-gate.mjs",
+    "benchmark:sessions": "tsx tools/benchmarks/session-production.ts",
     "test:integration": "vitest run --config config/vitest.config.js test/integration/cli-startup.test.ts test/integration/cli-perf.test.ts",
     "test:perf": "vitest run --config config/vitest.config.js test/integration/cli-perf.test.ts",
     "test:ci": "vitest run --config config/vitest.config.js && vitest run --config config/vitest.uat.config.js",

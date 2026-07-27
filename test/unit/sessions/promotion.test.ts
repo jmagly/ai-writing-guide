@@ -1,9 +1,12 @@
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   FilesystemMemoryDestination,
+  FilesystemPromotionDispositionCoordinator,
   MemoryPromotionGateway,
   SESSION_CONTRACT_VERSION,
   sha256,
@@ -12,6 +15,7 @@ import {
   type MemoryPromotionDestination,
   type PromotionReceipt,
   type PromotionStorePort,
+  type SessionPurgePreview,
 } from '../../../src/sessions/index.js';
 
 const roots: string[] = [];
@@ -197,5 +201,102 @@ describe('memory promotion gateway', () => {
     expect(content).toContain('candidate_version: 2');
     expect(content).toContain('event-2#0-6');
     expect(sha256(content)).toBe(plan.afterHash);
+  });
+
+  it('applies and recovers content-minimized promoted-artifact dispositions', () => {
+    const root = mkdtempSync(join(tmpdir(), 'aiwg-purge-artifacts-'));
+    roots.push(root);
+    const memoryRoot = join(root, '.aiwg/memory');
+    mkdirSync(memoryRoot, { recursive: true });
+    const artifact = join(memoryRoot, 'candidate.md');
+    writeFileSync(artifact, 'authoritative memory without transcript content\n');
+    const purge: SessionPurgePreview = {
+      contractVersion: '1.0.0',
+      operationId: sha256('purge-artifact-operation'),
+      scopeClass: 'session',
+      sessionId: 'opaque-session-id',
+      counts: {},
+      promotedDependents: [{
+        dependentId: 'promotion-receipt-1',
+        candidateId: 'opaque-candidate-id',
+        candidateVersion: 1,
+        consumer: 'memory',
+        destinationRef: '.aiwg/memory/candidate.md',
+      }],
+      confirmationRequired: true,
+    };
+    const decisions = [{
+      dependentId: 'promotion-receipt-1',
+      action: 'origin_unavailable' as const,
+      basis: 'operator-confirmed source purge',
+    }];
+    const coordinator = new FilesystemPromotionDispositionCoordinator({
+      projectRoot: root,
+      allowedRoots: ['.aiwg/memory'],
+    });
+    expect(coordinator.preview(purge, decisions)).toEqual([expect.objectContaining({
+      effect: 'mark-origin-unavailable',
+      destructive: false,
+    })]);
+    expect(coordinator.apply(purge, decisions).status).toBe('artifacts-applied');
+    const marked = readFileSync(artifact, 'utf8');
+    expect(marked).toContain('"state":"mark-origin-unavailable"');
+    expect(marked).toContain('"originAvailable":false');
+    expect(marked).not.toContain('operator-confirmed source purge');
+    expect(coordinator.listIncomplete()).toHaveLength(1);
+
+    // Simulate a crash after artifact mutation but before catalog commit.
+    const restarted = new FilesystemPromotionDispositionCoordinator({
+      projectRoot: root,
+      allowedRoots: ['.aiwg/memory'],
+    });
+    expect(restarted.apply(purge, decisions).effects[0].outcome).toMatch(/applied/);
+    expect(readFileSync(artifact, 'utf8').match(/aiwg-promotion-disposition/g)).toHaveLength(1);
+    expect(restarted.catalogCommitted(purge.operationId).status).toBe('catalog-committed');
+    expect(restarted.listIncomplete()).toEqual([]);
+  });
+
+  it('enforces promotion roots and supports confirmed delete or abort', () => {
+    const root = mkdtempSync(join(tmpdir(), 'aiwg-purge-auth-'));
+    roots.push(root);
+    mkdirSync(join(root, '.aiwg/memory'), { recursive: true });
+    const coordinator = new FilesystemPromotionDispositionCoordinator({
+      projectRoot: root,
+      allowedRoots: ['.aiwg/memory'],
+    });
+    const base: SessionPurgePreview = {
+      contractVersion: '1.0.0',
+      operationId: sha256('purge-delete'),
+      scopeClass: 'session',
+      sessionId: 'session',
+      counts: {},
+      promotedDependents: [{
+        dependentId: 'dependent',
+        candidateId: 'candidate',
+        candidateVersion: 1,
+        consumer: 'memory',
+        destinationRef: '.aiwg/memory/delete.md',
+      }],
+      confirmationRequired: true,
+    };
+    writeFileSync(join(root, '.aiwg/memory/delete.md'), 'delete me');
+    expect(() => coordinator.apply(base, [{
+      dependentId: 'dependent', action: 'abort', basis: 'operator abort',
+    }])).toThrow(/aborted/);
+    expect(existsSync(join(root, '.aiwg/memory/delete.md'))).toBe(true);
+    expect(coordinator.apply(base, [{
+      dependentId: 'dependent', action: 'delete', basis: 'operator confirmed',
+    }]).effects[0].outcome).toBe('applied');
+    expect(existsSync(join(root, '.aiwg/memory/delete.md'))).toBe(false);
+
+    expect(() => coordinator.preview({
+      ...base,
+      promotedDependents: [{
+        ...base.promotedDependents[0],
+        destinationRef: '../outside.md',
+      }],
+    }, [{
+      dependentId: 'dependent', action: 'revoke', basis: 'test',
+    }])).toThrow(/outside configured AIWG roots/);
   });
 });
