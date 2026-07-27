@@ -9,6 +9,8 @@ import {
   CopilotSessionAdapter,
   CURSOR_ADAPTER_VERSION,
   CursorSessionAdapter,
+  FACTORY_ADAPTER_VERSION,
+  FactorySessionAdapter,
   CandidateExtractionService,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
@@ -399,7 +401,7 @@ async function importSource(
   const provider = (args.values.get('--provider') ?? 'generic') as SessionProviderId;
   assertSessionProviderId(provider);
   if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
-    && provider !== 'copilot' && provider !== 'cursor') {
+    && provider !== 'copilot' && provider !== 'cursor' && provider !== 'factory') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
@@ -408,13 +410,16 @@ async function importSource(
   const isCodex = provider === 'codex';
   const isCopilot = provider === 'copilot';
   const isCursor = provider === 'cursor';
+  const isFactory = provider === 'factory';
   const adapter: SessionSourceAdapter = isClaude
     ? new ClaudeSessionAdapter()
     : isCodex
       ? new CodexSessionAdapter()
       : isCopilot
         ? new CopilotSessionAdapter()
-        : isCursor ? new CursorSessionAdapter() : new GenericSessionInterchangeAdapter();
+        : isCursor
+          ? new CursorSessionAdapter()
+          : isFactory ? new FactorySessionAdapter() : new GenericSessionInterchangeAdapter();
   const locatorClass = isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
     : isCodex
@@ -423,7 +428,7 @@ async function importSource(
         ? 'copilot-chat-json-export'
         : isCursor
           ? cursorLocatorClass(input)
-          : 'manual-export';
+          : isFactory ? 'factory-droid-jsonl' : 'manual-export';
   const selectedSource: SelectedSource = {
     provider, locator: input, locatorClass, sourceId,
     authorizedScope: { workspaceId, allowedRoots: [dirname(input)] },
@@ -437,7 +442,9 @@ async function importSource(
         ? 'app-server-v2-rollout-fallback'
         : isCopilot
           ? 'vscode-chat-json-export'
-          : isCursor ? cursorProviderProfile(locatorClass) : 'manual-interchange',
+          : isCursor
+            ? cursorProviderProfile(locatorClass)
+            : isFactory ? 'documented-project-jsonl' : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
     adapterVersion: isClaude
       ? CLAUDE_ADAPTER_VERSION
@@ -445,9 +452,12 @@ async function importSource(
         ? CODEX_ADAPTER_VERSION
         : isCopilot
           ? COPILOT_ADAPTER_VERSION
-          : isCursor ? CURSOR_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
+          : isCursor
+            ? CURSOR_ADAPTER_VERSION
+            : isFactory ? FACTORY_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
     sourceSchemaVersion: probe.sourceSchemaVersion,
-    disposition: isClaude || isCodex || isCopilot || isCursor ? 'implemented' : 'manual-only',
+    disposition: isClaude || isCodex || isCopilot || isCursor || isFactory
+      ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
     extensions: isClaude
@@ -456,7 +466,9 @@ async function importSource(
         ? { 'native.codex': {} }
         : isCopilot
           ? { 'native.copilot': {} }
-          : isCursor ? { 'native.cursor': {} } : { 'native.generic': {} },
+          : isCursor
+            ? { 'native.cursor': {} }
+            : isFactory ? { 'native.factory': {} } : { 'native.generic': {} },
   });
   if (isDryRun(ctx, args)) {
     return preview('import', { source, wouldInspect: true, wouldPersist: false });
@@ -533,6 +545,20 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
         adapterVersion: CURSOR_ADAPTER_VERSION,
         verifiedAt: '2026-07-27',
         documentation: 'https://docs.cursor.com/en/cli/reference/output-format',
+      },
+    };
+  }
+  if (provider === 'factory') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['discover', 'inspect', 'stream'],
+      acquisitionModes: ['jsonl', 'api'],
+      reasonCode: null,
+      remediation: 'Authorize a Factory projects root and import a Droid JSONL transcript; API and Exec require explicit negotiated transports.',
+      evidence: {
+        adapterVersion: FACTORY_ADAPTER_VERSION,
+        verifiedAt: '2026-07-27',
+        documentation: 'https://docs.factory.ai/reference/hooks-reference',
       },
     };
   }
