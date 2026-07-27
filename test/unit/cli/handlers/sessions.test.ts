@@ -108,20 +108,39 @@ describe('sessions CLI contracts', () => {
         acquisitionModes: ['manual-export'],
         reasonCode: 'LOSSY_MARKDOWN_ONLY',
       });
+    expect(output.data.providers.find((item: any) => item.provider === 'windsurf'))
+      .toMatchObject({
+        disposition: 'implemented',
+        supportedOperations: ['inspect', 'stream'],
+        acquisitionModes: ['hook', 'jsonl'],
+        evidence: {
+          documentation: 'https://docs.devin.ai/desktop/cascade/hooks',
+        },
+      });
     expect(output.data.providers.filter((item: any) => item.disposition === 'unsupported'))
-      .toHaveLength(1);
+      .toHaveLength(0);
   });
 
-  it('uses stable JSON and exit codes for unsupported provider import', async () => {
+  it('previews a current Devin Desktop transcript through the windsurf compatibility ID', async () => {
+    const fixture = resolve('test/fixtures/sessions/windsurf/current.jsonl');
     const result = await sessionsHandler.execute(context([
-      'import', 'anything.jsonl', '--provider', 'windsurf', '--source-id', 'source', '--json',
+      'import', fixture, '--provider', 'windsurf', '--source-id', 'source',
+      '--dry-run', '--json',
     ]));
-    expect(result.exitCode).toBe(3);
+    expect(result.exitCode).toBe(0);
     expect(jsonOutput(log)).toMatchObject({
       contractVersion: '1.0.0',
       command: 'sessions.import',
-      status: 'error',
-      error: { code: 'UNSUPPORTED_OPERATION' },
+      status: 'preview',
+      data: {
+        source: {
+          provider: 'windsurf',
+          providerProfile: 'opt-in-cascade-transcript-hook',
+          disposition: 'implemented',
+          consistency: 'provisional',
+          extensions: { 'native.windsurf': { product: 'Devin Desktop' } },
+        },
+      },
     });
   });
 

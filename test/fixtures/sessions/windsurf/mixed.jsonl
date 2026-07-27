@@ -1,0 +1,2 @@
+{"schema_version":"1.0.0","status":"done","type":"user_input","trajectory_id":"trajectory-mixed","user_input":{"user_response":"hello"}}
+{"schema_version":"1.1.0","status":"done","type":"planner_response","trajectory_id":"trajectory-mixed","planner_response":{"response":"hello"}}

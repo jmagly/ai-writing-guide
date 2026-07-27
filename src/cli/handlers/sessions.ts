@@ -21,6 +21,8 @@ import {
   OpenHumanSessionAdapter,
   WARP_ADAPTER_VERSION,
   WarpSessionAdapter,
+  WINDSURF_ADAPTER_VERSION,
+  WindsurfSessionAdapter,
   CandidateExtractionService,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
@@ -413,7 +415,7 @@ async function importSource(
   if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
     && provider !== 'copilot' && provider !== 'cursor' && provider !== 'factory'
     && provider !== 'hermes' && provider !== 'opencode' && provider !== 'openclaw'
-    && provider !== 'openhuman' && provider !== 'warp') {
+    && provider !== 'openhuman' && provider !== 'warp' && provider !== 'windsurf') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
@@ -428,6 +430,7 @@ async function importSource(
   const isOpenClaw = provider === 'openclaw';
   const isOpenHuman = provider === 'openhuman';
   const isWarp = provider === 'warp';
+  const isWindsurf = provider === 'windsurf';
   const adapter: SessionSourceAdapter = isClaude
     ? new ClaudeSessionAdapter()
     : isCodex
@@ -446,7 +449,11 @@ async function importSource(
                   ? new OpenClawSessionAdapter()
                   : isOpenHuman
                     ? new OpenHumanSessionAdapter()
-                    : isWarp ? new WarpSessionAdapter() : new GenericSessionInterchangeAdapter();
+                    : isWarp
+                      ? new WarpSessionAdapter()
+                      : isWindsurf
+                        ? new WindsurfSessionAdapter()
+                        : new GenericSessionInterchangeAdapter();
   const locatorClass = isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
     : isCodex
@@ -465,7 +472,11 @@ async function importSource(
                   ? 'openclaw-consistent-snapshot-jsonl'
                   : isOpenHuman
                     ? 'openhuman-enriched-jsonl'
-                    : isWarp ? 'warp-markdown-export' : 'manual-export';
+                    : isWarp
+                      ? 'warp-markdown-export'
+                      : isWindsurf
+                        ? 'windsurf-cascade-hook-jsonl'
+                        : 'manual-export';
   const selectedSource: SelectedSource = {
     provider, locator: input, locatorClass, sourceId,
     authorizedScope: { workspaceId, allowedRoots: [dirname(input)] },
@@ -491,7 +502,11 @@ async function importSource(
                     ? 'schema-16-event-v3-consistent-snapshot'
                     : isOpenHuman
                       ? 'schema-1-session-raw-enriched'
-                      : isWarp ? 'manual-lossy-markdown-export' : 'manual-interchange',
+                      : isWarp
+                        ? 'manual-lossy-markdown-export'
+                        : isWindsurf
+                          ? 'opt-in-cascade-transcript-hook'
+                          : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
     adapterVersion: isClaude
       ? CLAUDE_ADAPTER_VERSION
@@ -511,12 +526,16 @@ async function importSource(
                     ? OPENCLAW_ADAPTER_VERSION
                     : isOpenHuman
                       ? OPENHUMAN_ADAPTER_VERSION
-                      : isWarp ? WARP_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
+                      : isWarp
+                        ? WARP_ADAPTER_VERSION
+                        : isWindsurf
+                          ? WINDSURF_ADAPTER_VERSION
+                          : GENERIC_ADAPTER_VERSION,
     sourceSchemaVersion: probe.sourceSchemaVersion,
     disposition: isWarp
       ? 'manual-only'
       : isClaude || isCodex || isCopilot || isCursor || isFactory || isHermes
-        || isOpenCode || isOpenClaw || isOpenHuman
+        || isOpenCode || isOpenClaw || isOpenHuman || isWindsurf
         ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
@@ -538,7 +557,11 @@ async function importSource(
                     ? { 'native.openclaw': {} }
                     : isOpenHuman
                       ? { 'native.openhuman': {} }
-                      : isWarp ? { 'native.warp': {} } : { 'native.generic': {} },
+                      : isWarp
+                        ? { 'native.warp': {} }
+                        : isWindsurf
+                          ? { 'native.windsurf': { product: 'Devin Desktop' } }
+                          : { 'native.generic': {} },
   });
   if (isDryRun(ctx, args)) {
     return preview('import', { source, wouldInspect: true, wouldPersist: false });
@@ -699,6 +722,20 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
         adapterVersion: WARP_ADAPTER_VERSION,
         verifiedAt: '2026-07-27',
         documentation: 'https://docs.warp.dev/agent-platform/capabilities/slash-commands',
+      },
+    };
+  }
+  if (provider === 'windsurf') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['inspect', 'stream'],
+      acquisitionModes: ['hook', 'jsonl'],
+      reasonCode: null,
+      remediation: 'Enable Devin Desktop post_cascade_response_with_transcript, then explicitly select its JSONL output.',
+      evidence: {
+        adapterVersion: WINDSURF_ADAPTER_VERSION,
+        verifiedAt: '2026-07-27',
+        documentation: 'https://docs.devin.ai/desktop/cascade/hooks',
       },
     };
   }
