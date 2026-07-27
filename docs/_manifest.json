@@ -437,7 +437,9 @@
     "addons/rlm/agent-examples",
     "addons/rlm/agent-examples/rlm-agent-examples",
     "frameworks/media-curator/type-flexible-curation",
-    "blog/2026-07-aiwg-workflow-portability"
+    "blog/2026-07-aiwg-workflow-portability",
+    "addons/line-memory",
+    "addons/line-memory/overview"
   ],
   "sections": [
     {
@@ -3285,6 +3287,20 @@
       "summary": "Media Curator treats audio, video, transcripts, image sets, documents, and mixed",
       "file": "frameworks/media-curator/type-flexible-curation.md",
       "parent": "frameworks/media-curator"
+    },
+    {
+      "id": "addons/line-memory",
+      "title": "Line Memory",
+      "summary": "",
+      "collapsed": true,
+      "parent": "addons"
+    },
+    {
+      "id": "addons/line-memory/overview",
+      "title": "Overview",
+      "summary": "title: Line Memory",
+      "file": "addons/line-memory/overview.md",
+      "parent": "addons/line-memory"
     }
   ],
   "pages": [

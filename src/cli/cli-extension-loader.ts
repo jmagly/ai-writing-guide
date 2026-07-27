@@ -19,10 +19,22 @@ import { projectAiwgPath, resolveProjectAiwgDir } from '../config/project-artifa
 /**
  * Shape of a single subcommand entry in cli-extensions.json
  */
-interface CliSubcommand {
+export interface CliSubcommand {
   file: string;
   description: string;
   hook_event?: string;
+}
+
+export interface CliCommandsManifest {
+  namespace: string;
+  description: string;
+  entry?: string;
+  subcommands: Record<string, CliSubcommand>;
+}
+
+export interface CliCommandsContribution {
+  manifest: CliCommandsManifest;
+  commandsSource: string;
 }
 
 /**
@@ -96,9 +108,93 @@ export async function registerCliCommands(
   source: string,
   subcommands: Record<string, CliSubcommand>
 ): Promise<void> {
+  if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(namespace)) {
+    throw new Error(`Invalid CLI namespace: ${namespace}`);
+  }
+  if (!source || !path.isAbsolute(source)) {
+    throw new Error('CLI extension source must be an absolute path.');
+  }
+  if (Object.keys(subcommands).length === 0) {
+    throw new Error(`CLI namespace '${namespace}' declares no subcommands.`);
+  }
+  for (const [name, subcommand] of Object.entries(subcommands)) {
+    if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(name)) {
+      throw new Error(`Invalid CLI subcommand: ${namespace} ${name}`);
+    }
+    if (
+      !subcommand
+      || typeof subcommand.file !== 'string'
+      || !/^[a-zA-Z0-9_-]+\.mjs$/.test(subcommand.file)
+    ) {
+      throw new Error(`CLI subcommand '${namespace} ${name}' must name a local .mjs file.`);
+    }
+    if (typeof subcommand.description !== 'string' || !subcommand.description.trim()) {
+      throw new Error(`CLI subcommand '${namespace} ${name}' requires a description.`);
+    }
+  }
   const existing = await readRegistry(cwd) ?? {};
   existing[namespace] = { source, description, subcommands };
   await writeRegistry(cwd, existing);
+}
+
+/**
+ * Read and validate an addon-shaped manifest's expandable CLI declaration.
+ *
+ * `sourceRoot` may be a bundled addon, a project-local addon, or the validated
+ * payload of a project-local plugin wrapper. Module files are constrained to
+ * the declared commands directory; registration never follows `..` paths.
+ */
+export async function loadCliCommandsContribution(
+  sourceRoot: string,
+): Promise<CliCommandsContribution | null> {
+  const manifestPath = path.join(sourceRoot, 'manifest.json');
+  let raw: unknown;
+  try {
+    raw = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw new Error(`Unable to read CLI extension manifest at ${manifestPath}: ${(error as Error).message}`);
+  }
+
+  const candidate = (raw as { cli_commands?: unknown }).cli_commands;
+  if (candidate === undefined) return null;
+  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+    throw new Error(`Invalid cli_commands block in ${manifestPath}`);
+  }
+
+  const commands = candidate as Partial<CliCommandsManifest>;
+  if (
+    typeof commands.namespace !== 'string'
+    || typeof commands.description !== 'string'
+    || !commands.subcommands
+    || typeof commands.subcommands !== 'object'
+    || Array.isArray(commands.subcommands)
+  ) {
+    throw new Error(`Incomplete cli_commands block in ${manifestPath}`);
+  }
+
+  const entry = commands.entry ?? 'commands/';
+  if (
+    typeof entry !== 'string'
+    || path.isAbsolute(entry)
+    || entry.split(/[\\/]+/).includes('..')
+  ) {
+    throw new Error(`Unsafe cli_commands.entry in ${manifestPath}`);
+  }
+
+  const commandsSource = path.resolve(sourceRoot, entry);
+  const relative = path.relative(path.resolve(sourceRoot), commandsSource);
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error(`cli_commands.entry escapes its addon root in ${manifestPath}`);
+  }
+
+  const manifest: CliCommandsManifest = {
+    namespace: commands.namespace,
+    description: commands.description,
+    entry,
+    subcommands: commands.subcommands as Record<string, CliSubcommand>,
+  };
+  return { manifest, commandsSource };
 }
 
 /**

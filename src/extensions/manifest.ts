@@ -57,6 +57,11 @@ const safeRelativePath = z.string().regex(
   'must be a relative path (alphanumeric + _-, no leading slash, no ..)'
 );
 
+const safeModuleFile = z.string().regex(
+  /^[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*\.mjs$/,
+  'must be a relative .mjs path (alphanumeric + _-, no leading slash, no ..)'
+);
+
 // Single-char ids are allowed; multi-char ids must end with alphanumeric
 // (no trailing hyphen). This pattern: `[a-z0-9]([a-z0-9-]*[a-z0-9])?`
 const bundleNamePattern = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
@@ -159,6 +164,35 @@ export const ProviderConfigSchema = z.object({
   capabilities: ProviderCapabilityOverridesSchema.optional(),
 }).strict();
 
+export const CliCommandsSchema = z.object({
+  namespace: z.string()
+    .min(1)
+    .max(64)
+    .regex(bundleNamePattern, 'kebab-case alphanumeric, no leading/trailing hyphen'),
+  description: z.string().min(1).max(512),
+  entry: safeRelativePath.optional(),
+  subcommands: z.record(
+    z.string()
+      .min(1)
+      .max(64)
+      .regex(bundleNamePattern, 'kebab-case alphanumeric, no leading/trailing hyphen'),
+    z.object({
+      file: safeModuleFile,
+      description: z.string().min(1).max(512),
+      hook_event: z.enum([
+        'Stop',
+        'SessionStart',
+        'SessionEnd',
+        'PreToolUse',
+        'PostToolUse',
+        'FeatureComplete',
+      ]).optional(),
+    }).strict(),
+  ).refine((commands) => Object.keys(commands).length > 0, {
+    message: 'at least one CLI subcommand is required',
+  }),
+}).strict();
+
 // ============================================
 // Top-level BundleManifestSchema
 // ============================================
@@ -197,6 +231,10 @@ export const BundleManifestSchema = z.object({
   // Optional patterns shared with existing extension validation
   deprecation: DeprecationSchema.optional(),
   memory: MemoryFootprintSchema.optional(),
+
+  // Expandable CLI namespace contributed by an addon-shaped bundle.
+  // The same block is accepted by bundled addon manifests.
+  cli_commands: CliCommandsSchema.optional(),
 })
   .strict()
   .refine(

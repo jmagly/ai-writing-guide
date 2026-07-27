@@ -1256,7 +1256,7 @@ export interface AddonMetadata {
   cli_commands?: {
     namespace: string;
     description: string;
-    entry: string;
+    entry?: string;
     subcommands: Record<string, {
       file: string;
       description: string;

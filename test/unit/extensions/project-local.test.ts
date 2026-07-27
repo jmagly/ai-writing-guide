@@ -128,6 +128,34 @@ describe('project-local matrix (#1046)', () => {
       });
       expect(BundleManifestSchema.safeParse(m).success).toBe(true);
     });
+
+    it('accepts a safe addon-contributed CLI namespace', () => {
+      const m = baseAddonManifest({
+        cli_commands: {
+          namespace: 'foo',
+          description: 'Foo commands',
+          entry: 'commands/',
+          subcommands: {
+            check: { file: 'check.mjs', description: 'Check foo' },
+          },
+        },
+      });
+      expect(BundleManifestSchema.safeParse(m).success).toBe(true);
+    });
+
+    it('rejects traversal in addon-contributed CLI module paths', () => {
+      const m = baseAddonManifest({
+        cli_commands: {
+          namespace: 'foo',
+          description: 'Foo commands',
+          entry: 'commands/',
+          subcommands: {
+            check: { file: '../check.mjs', description: 'Check foo' },
+          },
+        },
+      });
+      expect(BundleManifestSchema.safeParse(m).success).toBe(false);
+    });
   });
 
   // ── D-9: Unicode bundle names ─────────────────────────────────────────────

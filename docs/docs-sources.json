@@ -275,6 +275,15 @@
   },
   {
     "kind": "addons",
+    "name": "line-memory",
+    "source": "agentic/code/addons/line-memory/docs",
+    "dest": "docs/addons/line-memory",
+    "files": [
+      "overview.md"
+    ]
+  },
+  {
+    "kind": "addons",
     "name": "llm-wiki",
     "source": "agentic/code/addons/llm-wiki/docs",
     "dest": "docs/addons/llm-wiki",

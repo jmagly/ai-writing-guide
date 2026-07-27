@@ -46,6 +46,33 @@ Path-traversal in `entry` paths (`../../etc`) is refused at validation
 time. The manifest must be ≤ 64 KB. See the schema design for the full
 constraint set.
 
+## Addon-contributed CLI commands
+
+Addon-shaped project-local bundles can register an expandable CLI namespace
+without adding a one-off command to AIWG core:
+
+```json
+{
+  "cli_commands": {
+    "namespace": "my-addon",
+    "description": "My addon commands",
+    "entry": "commands/",
+    "subcommands": {
+      "check": {
+        "file": "check.mjs",
+        "description": "Check project state"
+      }
+    }
+  }
+}
+```
+
+Each module exports a default async function accepting `(args, context)`.
+Paths must remain within the bundle and use `.mjs` modules. Plugin wrappers
+may instead place this block in the manifest at their validated addon payload.
+`aiwg use <bundle>` registers the namespace in
+`.aiwg/cli-extensions.json`.
+
 ## Generate a valid manifest automatically
 
 ```bash
