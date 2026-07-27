@@ -487,7 +487,7 @@ aiwg sdlc-accelerate "..." # Idea to construction-ready
 aiwg cost-report           # Token cost tracking
 ```
 
-Full reference: `@docs/cli-reference.md`
+Full reference: `@docs/agents/cli-reference.md`
 
 ---
 

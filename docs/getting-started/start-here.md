@@ -28,9 +28,31 @@ If the agent starts listing too many options, ask it to narrow:
 Recommend one path, one reason, and one fallback.
 ```
 
-## What You Actually Type
+## Setup and Approval
 
-You only run a handful of AIWG commands by hand. Everything else lives inside the agent conversation.
+The preferred setup sequence is:
+
+1. install AIWG;
+2. deploy `all` for the provider you use;
+3. reopen the provider in the project;
+4. invoke `aiwg-regenerate` so AIWG is tailored and hooked into the project;
+5. verify engagement.
+
+Follow [Install, Connect, and Verify](install-connect-verify.md) for the exact
+bootstrap commands and the conversational regeneration/verification steps.
+
+After bootstrap, ask the agent to handle ongoing setup from the project folder:
+
+```text
+Set up AIWG for this project. Preview the provider and framework changes first,
+ask me before applying them, then verify the result.
+```
+
+The agent normally runs the onboarding and verification operations. You only
+need the following terminal escape hatches when no working agent can perform
+them.
+
+### Installation escape hatch
 
 Install once (and only when your provider does not already bundle AIWG):
 
@@ -38,7 +60,7 @@ Install once (and only when your provider does not already bundle AIWG):
 npm install -g aiwg
 ```
 
-Run the guided onboarding wizard from the folder you want AIWG to understand:
+### Guided recovery escape hatch
 
 ```bash
 cd /path/to/your/project
@@ -56,7 +78,7 @@ aiwg use sdlc
 If you want an agent or steward to handle the whole setup from prerequisites to
 provider handoff, use the [Agentic Install Runbook](../agentic-install-runbook.md).
 
-Then check that everything is engaged:
+### Independent verification escape hatch
 
 ```bash
 aiwg status --probe --json

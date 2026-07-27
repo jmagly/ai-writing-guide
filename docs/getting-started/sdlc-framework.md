@@ -1,5 +1,7 @@
 # SDLC Framework
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 You're building software. You want structure without bureaucracy — requirements that don't drift, architecture decisions that don't get forgotten, tests that actually cover what matters, and a way to hand off work to other engineers without spending two hours explaining everything.
 
 The SDLC framework is AIWG's largest framework. It covers the full lifecycle from idea to production, with specialized agents for every role, commands that orchestrate multi-agent workflows, and an artifact directory that keeps project context across every session. It's featured prominently because good software development is the foundation everything else builds on.
@@ -185,5 +187,5 @@ Al keeps iterating — fix, test, fix again — until the criterion is met or it
 - `/project-status` — Where are we, what's next
 - `/project-health-check` — Overall project health metrics
 - `/flow-gate-check <phase>` — Can we move forward?
-- `@docs/cli-reference.md` — All 53 commands
+- `@docs/agents/cli-reference.md` — All 53 commands
 - `@docs/getting-started/flow-and-gate-process.md` — How intake, flows, gates, and sdlc-accelerate fit together

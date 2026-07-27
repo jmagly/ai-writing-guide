@@ -185,5 +185,5 @@ but history and sessions will not be shared across profiles.
 ## Further Reading
 
 - [MCP Profiles](./profiles.md) — Profile registry, CRUD, and provider overrides
-- [CLI Reference: mcp profile](../cli-reference.md#mcp-profile) — Full command reference
-- [CLI Reference: session](../cli-reference.md#session) — Session launcher with profile support
+- [CLI Reference: mcp profile](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#mcp-profile) — Full command reference
+- [CLI Reference: session](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#session) — Session launcher with profile support

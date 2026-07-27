@@ -1,5 +1,7 @@
 # Media Curator Framework
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 You're building a media archive — music, film, video, or any other collection. You want complete coverage of an artist or catalog, consistent metadata, proper file organization, and the ability to export to whatever platform you're using (Plex, Jellyfin, Navidrome, etc.).
 
 The media curator framework handles the research, discovery, acquisition, quality filtering, tagging, and export pipeline. It knows what you have, what you're missing, and where to get it.

@@ -1,5 +1,7 @@
 # Research Framework Quickstart
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Run a literature search and produce AI-grounded paper summaries in about 20 minutes.
 
 ## Installation

@@ -117,5 +117,5 @@ RUN npm install -g aiwg \
 ## Related
 
 - [Agentic Install Runbook](../agentic-install-runbook.md) — Canonical setup flow
-- [CLI Reference](../cli-reference.md) — Full command documentation
+- [CLI Reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md) — Full command documentation
 - [agentic-sandbox loadouts](https://github.com/jmagly/agentic-sandbox) — VM provisioning that calls `aiwg use`

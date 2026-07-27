@@ -1,5 +1,7 @@
 # Forensics Framework
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 You're investigating an incident. You have a compromised host, a cloud account with suspicious activity, or a container that shouldn't be running. You need structured investigation that doesn't miss steps, evidence that's preserved correctly, and a report you can hand to someone else.
 
 The forensics framework covers the full DFIR lifecycle: target profiling, volatile data capture, evidence acquisition, multi-source analysis, timeline reconstruction, IOC extraction, and reporting. It follows NIST SP 800-86, MITRE ATT&CK, and RFC 3227 (evidence volatility ordering).

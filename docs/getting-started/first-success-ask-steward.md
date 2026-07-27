@@ -1,5 +1,7 @@
 # First Success: Ask The Steward To Route You
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Use this recipe when you want AIWG to choose where to start instead of reading the catalog yourself.
 
 The steward is a guide agent that lives inside your AI session. You stay in the chat; the steward handles the AIWG-specific lookups for you. You do not need to type `aiwg` commands yourself — the agent runs them under the hood and reports back.

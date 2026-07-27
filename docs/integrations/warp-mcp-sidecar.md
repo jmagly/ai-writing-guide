@@ -262,5 +262,5 @@ Run these checks to confirm the integration is working:
 
 - [Warp Terminal Quick Start](warp-terminal-quickstart.md) — base provider deployment (prerequisite)
 - [Hermes MCP Sidecar Guide](hermes-quickstart.md) — reference architecture this guide follows
-- [AIWG MCP server reference](../cli-reference.md#mcp)
+- [AIWG MCP server reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#mcp)
 - [Warp Terminal Documentation](https://docs.warp.dev)

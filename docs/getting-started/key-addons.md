@@ -1,5 +1,7 @@
 # Key Addons
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Addons extend AIWG's core capabilities. They're optional — deploy the ones that match your workflow. Some are essential for serious use; others are specialized for specific contexts.
 
 ---

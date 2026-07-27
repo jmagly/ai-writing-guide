@@ -1,5 +1,7 @@
 # Beginner Language Map
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Use this guide when you know what you want in plain language but do not know the AIWG term for it.
 
 You stay in the conversation with your AI tool. The agent translates your goal into AIWG-native concepts and runs the lookups for you. You do not need to memorize AIWG terminology, command names, or skill identifiers — they are the agent's job.

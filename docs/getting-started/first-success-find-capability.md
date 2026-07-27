@@ -1,5 +1,7 @@
 # First Success: Find One Capability
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Use this recipe when you can describe the work but do not know the AIWG name for it.
 
 You stay in the chat. The agent does the AIWG lookups for you — you do not need to learn `aiwg discover` or `aiwg show` to use this. They are tools the agent invokes on your behalf.

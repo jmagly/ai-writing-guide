@@ -751,7 +751,7 @@ curl -I https://github.com/jmagly/aiwg
 ## References
 
 - @.claude/rules/versioning.md - CalVer versioning rules
-- @docs/cli-reference.md - CLI command reference
+- @docs/agents/cli-reference.md - CLI command reference
 - @CLAUDE.md - Project-level installation guide
 - @agentic/code/frameworks/sdlc-complete/manifest.json - Manifest example
 - Issue #282 - Plugin marketplace verification

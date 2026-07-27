@@ -1,5 +1,7 @@
 # Testing Quality Quickstart
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Set up TDD enforcement and validate test quality in your project.
 
 ## Installation

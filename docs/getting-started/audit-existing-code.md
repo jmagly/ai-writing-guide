@@ -1,5 +1,7 @@
 # Auditing Existing Code
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 You have a codebase and you want to know what's wrong with it. Security issues, missing tests, dead code, dependency risks, quality problems — AIWG runs structured audits and produces findings you can act on.
 
 You don't need to set up a full project workflow. Just point AIWG at the code and ask.

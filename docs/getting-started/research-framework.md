@@ -1,5 +1,7 @@
 # Research Framework
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 You're doing academic or technical research. Finding papers manually is slow. Tracking what you've read and what it says is a spreadsheet nightmare. When you cite something, you're never sure you're representing the source correctly.
 
 The research framework automates the mechanical parts — discovery, acquisition, summarization, citation management, quality assessment — while keeping you in control of interpretation and synthesis. It prevents hallucinated citations by grounding everything against actual source content.

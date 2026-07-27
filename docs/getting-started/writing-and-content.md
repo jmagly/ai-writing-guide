@@ -1,5 +1,7 @@
 # Writing and Content
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 You want the AI to write the way you write — not in that recognizable AI voice that sounds the same as everything else.
 
 AIWG's voice framework lets you define or select a writing style, then apply it consistently across everything the AI generates: documentation, blog posts, proposals, READMEs, emails, technical explainers, whatever.

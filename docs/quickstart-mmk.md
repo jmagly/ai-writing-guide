@@ -1,104 +1,42 @@
-# Media/Marketing Kit (MMK) Framework - Quick Start
+# Marketing Quick Start
 
-Build marketing campaigns with AI-assisted lifecycle: Strategy → Creation → Review → Publication → Analysis.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
 
----
-
-## Install & Deploy
-
-### Option A: Claude Code Marketplace (Recommended)
-
-Native Claude Code integration - no npm required:
-
-```bash
-# Add AIWG marketplace (one-time)
-/plugin marketplace add jmagly/ai-writing-guide
-
-# Install marketing framework
-/plugin install marketing@aiwg   # Full marketing framework
-/plugin install utils@aiwg       # Core utilities (recommended)
-/plugin install voice@aiwg       # Voice profiles (recommended)
-```
-
-> **No account required** - Plugin distribution is decentralized. No registry signup, no approval process.
-
-### Option B: npm + CLI (Multi-Platform)
-
-For CLI tools and deploying to other platforms:
-
-```bash
-npm install -g aiwg
-```
-
-Deploy to your project:
-
-```bash
-cd /path/to/your/project
-
-# Deploy marketing framework:
-aiwg use marketing
-```
-
----
-
-## After Installation
-
-**1. Open in your AI platform**
-
-```bash
-claude .                   # Claude Code
-cursor .                   # Cursor
-droid .                    # Factory AI
-```
-
-**2. Integrate with platform context**
+Start with the campaign outcome, audience, and constraints:
 
 ```text
-/aiwg-setup-project
+Use AIWG's marketing framework to plan this campaign. Ask only the questions
+that change the strategy, show me the proposed workflow and approvals, then
+produce one reviewable first artifact.
 ```
 
-**3. Regenerate for intelligent integration**
+The agent should clarify the audience, offer, channels, timing, brand
+constraints, legal or accessibility review needs, and success measures. It
+then selects the relevant AIWG specialists and coordinates the work.
+
+## What to expect
+
+- A concise campaign brief or confirmation of an existing brief.
+- Clear choices where audience, positioning, channel, or budget affects scope.
+- Approval points before publication, spend, outreach, or other external action.
+- Brand, legal, accessibility, and quality review appropriate to the asset.
+- A completion report linking deliverables to goals and measurement criteria.
+
+## Useful asks
 
 ```text
-/aiwg-regenerate
+Create a campaign brief for this launch and identify missing decisions.
+Turn this approved brief into a channel plan and editorial calendar.
+Draft the first asset, then run brand, legal, and accessibility review.
+Analyze these campaign results and recommend the next experiment.
 ```
 
-`aiwg use` already wrote the project context, so natural-language command mapping ("run security review" → workflow) works right away via AIWG's Discover-First protocol. On an **existing project**, or to pull in the latest AIWG, run this to re-tailor the context to your codebase — optional on a brand-new project. See the [Regenerate Guide](#regenerate-guide) for details.
+## Verify success
 
-**4. You're ready.** See the [Intake Guide](#intake-guide) for starting marketing campaigns.
+Confirm that the final report names the target audience, intended outcome,
+review status, publication approval state, and the metrics that will determine
+whether the work succeeded.
 
----
-
-## Artifacts Location
-
-All documents generated in `.aiwg/marketing/`:
-
-```text
-.aiwg/marketing/
-├── intake/        # Campaign briefs
-├── strategy/      # Audience, messaging
-├── content/       # Calendars, copy
-├── social/        # Social media plans
-├── email/         # Email sequences
-├── analytics/     # Performance reports
-└── governance/    # Brand compliance
-```
-
----
-
-## Voice Profiles for Content
-
-For consistent brand voice across marketing content:
-
-```bash
-aiwg use writing           # Add Voice Framework
-```
-
-**Built-in profiles**: `technical-authority`, `friendly-explainer`, `executive-brief`, `casual-conversational`
-
-**Custom voices**: Create brand-specific voice profiles:
-
-```text
-"Create a voice profile from this sample blog post"
-"Blend 70% friendly with 30% professional for our brand voice"
-```
+For installation or engagement help, use the [general quick
+start](quickstart.md). Agent/operator execution details live in the
+[agent reference corpus](https://github.com/jmagly/aiwg/tree/main/docs/agents/).

@@ -160,9 +160,9 @@ describe('routing documentation regressions', () => {
   });
 
   it('Claude Code docs cover the managed 1M-context default and opt-in path', () => {
-    const quickstart = read('docs/integrations/claude-code-quickstart.md');
-    expect(quickstart).toContain('CLAUDE_CODE_DISABLE_1M_CONTEXT=1');
-    expect(quickstart).toContain('export CLAUDE_CODE_DISABLE_1M_CONTEXT=0');
+    const operationalReference = read('docs/agents/providers/claude.md');
+    expect(operationalReference).toContain('CLAUDE_CODE_DISABLE_1M_CONTEXT=1');
+    expect(operationalReference).toContain('export CLAUDE_CODE_DISABLE_1M_CONTEXT=0');
     const changelog = read('CHANGELOG.md');
     expect(changelog).toContain('Claude Code external loop launches now default-disable 1M-context model variants');
   });
@@ -199,7 +199,7 @@ describe('routing documentation regressions', () => {
   });
 
   it('cli-reference.md carries the skill-first reading guide (#1480)', () => {
-    const ref = read('docs/cli-reference.md');
+    const ref = read('docs/agents/cli-reference.md');
     expect(ref).toContain('skill-first');
     expect(ref).toContain('augment');
     // distinguishes the two categories and routes paired commands through the skill
@@ -239,7 +239,7 @@ describe('routing documentation regressions', () => {
   });
 
   it('CLI reference documents Fortemi Core graph traversal backend flags', () => {
-    const ref = read('docs/cli-reference.md');
+    const ref = read('docs/agents/cli-reference.md');
 
     expect(ref).toContain(
       'aiwg index query "static retrieval evidence" --fulltext --graph project --json',

@@ -719,7 +719,7 @@ For RLM deployment issues:
 - `@$AIWG_ROOT/agentic/code/addons/rlm/manifest.json` - Addon manifest
 - `@$AIWG_ROOT/agentic/code/addons/rlm/README.md` - RLM overview
 - `@CLAUDE.md` - Multi-platform support table
-- `@$AIWG_ROOT/docs/cli-reference.md` - CLI command documentation
+- `@$AIWG_ROOT/docs/agents/cli-reference.md` - CLI command documentation
 - `@$AIWG_ROOT/agentic/code/addons/rlm/agents/rlm-agent.md` - RLM agent definition
 - `@$AIWG_ROOT/agentic/code/addons/rlm/commands/` - Command definitions
 

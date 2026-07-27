@@ -1,5 +1,7 @@
 # Flow, Gate, and SDLC Accelerate
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 AIWG has three layers for managing how a software project moves through its lifecycle. Understanding how they fit together changes how you work with the framework.
 
 ---

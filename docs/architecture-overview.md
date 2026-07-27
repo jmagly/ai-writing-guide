@@ -370,5 +370,5 @@ All three sets share the 1-8 numbering. Generated images drop at `docs/architect
 - [`docs/how-it-works.md`](how-it-works.md) — the prose walkthrough of these same concepts
 - [`docs/discovery-and-kernel-skills.md`](discovery-and-kernel-skills.md) — kernel/standard model in depth, verification steps
 - [`docs/integrations/hermes-quickstart.md`](integrations/hermes-quickstart.md) — Hermes integration, capabilities catalog
-- [`docs/cli-reference.md`](cli-reference.md) — complete CLI command reference
+- [`https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md`](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md) — complete CLI command reference
 - [`.claude/rules/skill-discovery.md`](../agentic/code/addons/aiwg-utils/rules/skill-discovery.md) — the discover-first protocol (Rule 1.5)

@@ -189,4 +189,4 @@ When both modes are active, route requests based on complexity:
 - [OpenClaw Guide](../openclaw-guide.md)
 - [OpenClaw Integration Guide](../openclaw-guide.md) - Comprehensive guide with routing advice
 - [Behaviors Guide](../behaviors-guide.md) - Behaviors format and authoring
-- [AIWG MCP server reference](../cli-reference.md#mcp)
+- [AIWG MCP server reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#mcp)

@@ -1,5 +1,7 @@
 # aiwg-dev Quickstart
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Install the developer toolkit and validate your first component in 5 minutes.
 
 ## Who This Is For

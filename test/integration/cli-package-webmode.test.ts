@@ -165,7 +165,7 @@ describe('@aiwg/cli packaged web distribution', () => {
     expect(installedReadme).toContain('## The Agentic Use Model');
     expect(installedReadme).toContain('## Why This Reduces Agent Token Use');
     expect(installedReadme).toContain('## How Skills and Agents Use the Runtime');
-    expect(installedReadme).toContain('https://docs.aiwg.io/pages/cli-reference.html');
+    expect(installedReadme).toContain('https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md');
     expect(installedReadme).not.toContain('## CLI Guide');
     expect(installedReadme).toContain('## Security Model');
     expect(installedReadme).toContain('## Installation Troubleshooting');

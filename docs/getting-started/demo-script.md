@@ -1,5 +1,7 @@
 # Demo Script
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Use this script for a short zero-to-first-success demo.
 
 The first AIWG demo should show one path working, not a tour of every framework. The success metric is small on purpose: one disposable project, one wizard preview, one deploy, one status probe, and one recommended next action.

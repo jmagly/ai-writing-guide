@@ -1,5 +1,7 @@
 # Marketing Framework
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 You're running marketing campaigns — content, social, email, paid, events. You have a strategy but execution is fragmented. Different people working in different tools, inconsistent brand voice, no structured review before things go out.
 
 The marketing framework gives you a full campaign lifecycle: intake, strategy, content creation across channels, brand and legal review, publication, and performance analysis. Every role that exists in a marketing team has a corresponding agent.

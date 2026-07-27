@@ -1,6 +1,7 @@
 {
   "title": "AIWG Documentation",
   "description": "AI-powered workflow guide for SDLC, marketing, and content teams",
+  "language": "en",
   "brandMark": "AIWG",
   "brandSub": "Docs",
   "tagline": "Modular AI workflows for every team",
@@ -10,7 +11,7 @@
   "welcome": {
     "eyebrow": "AIWG",
     "headline": "Deploy a Virtual Organization",
-    "lead": "Architects, engineers, testers, forensics analysts, researchers, marketers — 200+ specialized agents that collaborate like a real team. Eight frameworks, 29 addons, one CLI.",
+    "lead": "Tell your agent what you want to accomplish. AIWG gives it a virtual organization of specialized roles and workflows; the agent explains choices, asks for approvals, runs the operations, and reports a verified outcome.",
     "pillars": [
       "SDLC Complete — Full lifecycle from intake to production with 85+ agents, stage-gate workflows, and multi-agent orchestration",
       "Forensics Complete — Digital forensics and incident response: evidence acquisition, timeline building, IOC analysis, Sigma hunting",
@@ -24,15 +25,15 @@
       "11 platforms — Claude Code, OpenAI/Codex, GitHub Copilot, Factory AI, Cursor, OpenCode, Warp, Windsurf, OpenClaw, Hermes, OpenHuman"
     ],
     "checklist": [
-      "Install globally: npm i -g aiwg",
-      "Deploy a framework: aiwg use sdlc",
-      "Add capabilities: aiwg use rlm",
-      "Work naturally: just describe what you need"
+      "Tell your agent the outcome you want",
+      "Review the path and approve material changes",
+      "Let the agent run the appropriate AIWG workflow",
+      "Verify the reported result and evidence"
     ],
     "quickLinks": [
       { "label": "Get Started", "href": "#/quickstart" },
       { "label": "SDLC Framework", "href": "#/quickstart-sdlc" },
-      { "label": "CLI Reference", "href": "#/cli-reference" },
+      { "label": "How Agent Collaboration Works", "href": "#/getting-started/start-here" },
       { "label": "View on GitHub", "href": "https://github.com/jmagly/aiwg" }
     ],
     "quote": "Stop writing prompts. Start shipping software."

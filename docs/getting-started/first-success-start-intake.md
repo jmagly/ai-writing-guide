@@ -1,5 +1,7 @@
 # First Success: Start A Project Intake
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Use this recipe when you have an idea, repo, or workstream and want AIWG to turn it into structured project context.
 
 ## Do This

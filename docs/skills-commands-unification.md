@@ -177,5 +177,5 @@ See `@docs/extensions/creating-extensions.md` (Creating Skills section) for the 
 ## References
 
 - @agentic/code/frameworks/sdlc-complete/agents/agent-template.md - Agent template with skills section
-- @docs/cli-reference.md - Full CLI command reference
+- @docs/agents/cli-reference.md - Full CLI command reference
 - @docs/context-management-patterns.md - Skill discovery patterns

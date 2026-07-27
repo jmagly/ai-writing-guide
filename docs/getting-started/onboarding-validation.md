@@ -1,5 +1,7 @@
 # Onboarding Validation
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Use this page to validate whether the beginner path actually helps a new user reach first success.
 
 This is a lightweight validation loop. It does not require invasive telemetry.
@@ -18,8 +20,8 @@ Track whether the user reaches each milestone:
 |---|---|
 | Landed on beginner docs | Page link shared, support thread, or session note. |
 | Installed or confirmed AIWG | `aiwg -version` result or existing provider integration. |
-| Ran guided setup | `aiwg wizard --dry-run` or `aiwg wizard` output. |
-| Verified engagement | `aiwg status --probe --json` result. |
+| Reviewed guided setup | Agent preview plus the user's recorded approval. |
+| Verified engagement | Agent report of probe state, project root, provider files, and next action. |
 | Completed one useful workflow | Short note naming the command, skill, or agent outcome. |
 
 ## Cognitive Walkthrough Checklist
@@ -28,10 +30,10 @@ For Start Here, the first-success recipes, the wizard, plus the status probe, as
 
 | Question | Pass signal |
 |---|---|
-| Will a beginner know where to start? | The first link or command is obvious. |
-| Will they know where to run commands? | The guide says to use the project root before deploy. |
-| Will they know which provider/tool they are using? | Provider handoff gives a plain tool name and flag. |
-| Will they know what AIWG did? | The status probe gives engaged state and next action. |
+| Will a beginner know where to start? | The first conversational ask is obvious. |
+| Will they know what may change? | The agent previews project scope and deployment before approval. |
+| Will they know which provider/tool they are using? | Provider handoff gives a plain tool name and restart expectation. |
+| Will they know what AIWG did? | The agent reports engaged state, evidence, and next action. |
 | Will they know what to do when stuck? | Recovery prompts and troubleshooting links are visible. |
 | Can they avoid catalog overload? | Steward/discover instructions ask for one path and one fallback. |
 

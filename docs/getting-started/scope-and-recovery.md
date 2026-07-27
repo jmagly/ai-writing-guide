@@ -1,5 +1,7 @@
 # Scope And Recovery
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Use this page when AIWG seems installed but the agent is looking at the wrong files, missing project context, or writing setup into the wrong folder.
 
 People often run setup from `$HOME`, `/tmp`, or another convenient shell location, then the AI assistant has no useful project context. The fix is usually not a new framework. It is moving to the right folder and verifying scope.

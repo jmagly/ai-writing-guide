@@ -95,7 +95,7 @@ describe('Agent Skills user documentation contract', () => {
 
   it('keeps CLI, ADR, quality, and provider references internally consistent', () => {
     const guide = read('docs/skills/agent-skills.md');
-    const cli = read('docs/cli-reference.md');
+    const cli = read('docs/agents/cli-reference.md');
     const adr = read('docs/architecture/adr-agent-skills-portability-contract.md');
     const quality = read('docs/skills/quality-rubric.md');
     const extensionOverview = read('docs/extensions/overview.md');

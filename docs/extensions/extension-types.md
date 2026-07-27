@@ -1737,4 +1737,4 @@ aiwg behavior stop <name>
 - [Daemon Guide](../daemon-guide.md) — Daemon architecture that behaviors integrate with
 - @src/extensions/types.ts - Full type definitions
 - @.aiwg/architecture/unified-extension-schema.md - Complete schema
-- @docs/cli-reference.md - CLI command reference
+- @docs/agents/cli-reference.md - CLI command reference

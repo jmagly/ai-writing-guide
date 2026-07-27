@@ -44,6 +44,7 @@ jobs:
 
       - name: Configure tenant
         run: |
+          node tools/docs/build-public-source.mjs
           # strictLinks is true (#1486): pagenary 2026.5.1 (roctinam/pagenary#12)
           # aborts the build on broken internal links. All 53 broken links are
           # fixed, so the gate is now enforced — broken internal links fail the
@@ -54,7 +55,7 @@ jobs:
               {
                 "id": "aiwg-docs",
                 "enabled": true,
-                "source": { "type": "local", "path": "./docs" },
+                "source": { "type": "local", "path": "./dist/public-docs-source" },
                 "target": { "type": "local", "path": "./dist/aiwg-docs" },
                 "domains": ["docs.aiwg.io"],
                 "strictLinks": true
@@ -65,6 +66,10 @@ jobs:
 
       - name: Build doc site
         run: |
+          node tools/docs/audit-audiences.mjs
+          node -e "const a=require('./dist/docs-audience-audit.json'); if(a.totals.onboardingNeedsReview || a.beforeAfter.current.homepageCommandChecklistItems || a.beforeAfter.current.publicCliNavigationEntries) process.exit(1)"
+          npm pack --dry-run --json --ignore-scripts > dist/npm-pack-docs.json
+          node -e "const p=require('./dist/npm-pack-docs.json')[0].files.map(f=>f.path); for (const f of ['docs/agents/README.md','docs/agents/cli-reference.md','docs/agents/providers/README.md']) if(!p.includes(f)) throw new Error('agent reference missing from package: '+f)"
           npx pagenary build:tenants aiwg-docs
           node tools/docs/write-blog-static-pages.mjs dist/aiwg-docs
 
@@ -75,4 +80,8 @@ jobs:
           test -f "$OUT/index.html" || { echo "::error::doc-site build produced no index.html"; exit 1; }
           test -f "$OUT/blog/index.html" || { echo "::error::doc-site build produced no blog/index.html"; exit 1; }
           test -d "$OUT/sections"   || { echo "::error::doc-site build produced no sections/"; exit 1; }
+          if find "$OUT" -type f \( -path '*/agents/*' -o -name 'agents--*.js' \) | grep -q .; then
+            echo "::error::agent-reference material leaked into the public docs output"
+            exit 1
+          fi
           echo "Build OK: $(ls "$OUT/sections" | wc -l) section files"

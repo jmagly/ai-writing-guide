@@ -8,14 +8,10 @@ We chose a short table because provider breadth is useful only after the beginne
 
 Validation baseline: test this page against AIWG version 2026.5. While the command path is short, maintainers should record any issue that failed inside the first 300s of a provider handoff.
 
-The beginner path stays the same for every provider:
-
-```bash
-cd /path/to/your/project
-aiwg wizard --dry-run --goal "help me start a project"
-aiwg wizard
-aiwg status --probe --json
-```
+The beginner path stays the same for every provider: install AIWG, deploy
+`all` with that provider’s name, reopen the provider in the project root,
+invoke `/aiwg-regenerate`, and ask the agent to report verification evidence.
+See [Install, Connect, and Verify](install-connect-verify.md).
 
 For a full zero-to-running install path that agents can follow directly, see
 the [Agentic Install Runbook](../agentic-install-runbook.md).
@@ -26,10 +22,10 @@ The provider-specific part is where you open the AI session and which deployed f
 
 | Tool | Provider flag | Open the session from | Main deployed path | First verification |
 |---|---|---|---|---|
-| Claude Code | `--provider claude` | Project root | `.claude/` | Ask whether AIWG is active, then run `aiwg status --probe --json`. |
+| Claude Code | Claude | Project root | `.claude/` | Ask whether AIWG is active and request the probe evidence. |
 | Codex | `--provider codex` | Project root | `.codex/` and `AGENTS.md` | Restart the Codex session after deploy, then ask for AIWG status. |
 | Cursor | `--provider cursor` | Project root in Cursor | `.cursor/` | Ask Cursor to find one AIWG capability for your goal. |
-| GitHub Copilot | `--provider copilot` | VS Code workspace root | `.github/` | Ask Copilot Chat from the workspace, then verify with the probe. |
+| GitHub Copilot | Copilot | VS Code workspace root | `.github/` | Ask Copilot Chat from the workspace, then request probe evidence. |
 | Factory | `--provider factory` | Project root | `.factory/` and shared context files | Ask for the AIWG first action and verify with the probe. |
 | OpenCode | `--provider opencode` | Project root | `.opencode/` and `AGENTS.md` | Ask for one AIWG route, then inspect the recommended capability. |
 | Warp | `--provider warp` | Warp session in the project root | `WARP.md` / `.warp/` | Ask the session to route through AIWG, then verify with the probe. |
@@ -37,21 +33,16 @@ The provider-specific part is where you open the AI session and which deployed f
 | Hermes | `--provider hermes` | Hermes workspace attached to the project | Hermes context plus `AGENTS.md` | Use the provider's AIWG route, then verify project state. |
 | OpenClaw | `--provider openclaw` | Project root / OpenClaw workspace | OpenClaw skill and rule paths | Ask for one AIWG capability and verify the deployed project. |
 
-If the wizard detects more than one provider, choose the one you are using now:
-
-```bash
-aiwg wizard --provider codex
-```
-
-For scripts, make the choice explicit:
-
-```bash
-aiwg wizard --non-interactive --profile beginner --provider codex
-```
+If the agent detects more than one provider, tell it which tool you are using
+now. The agent-facing corpus documents the provider flags and non-interactive
+automation contract.
 
 ## Honest Validation Status
 
-`aiwg status --probe --json` is the deterministic local verification surface. It checks whether the project has an AIWG workspace, at least one deployed framework, and provider deployment files.
+The agent uses AIWG's deterministic status probe to check whether the project
+has a workspace, at least one deployed framework, and provider deployment
+files. It should translate that evidence rather than asking you to interpret
+raw JSON.
 
 Provider behavior still varies after files are deployed. Some tools reliably read project instructions immediately; others may need a session restart, workspace reload, or manual prompt. Until a provider path has fresh session evidence, describe that behavior as "expected" or "deployment-verified" instead of guaranteed.
 

@@ -1,5 +1,7 @@
 # Daemon and Automation
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 You want AIWG working in the background — running scheduled tasks, watching for events, sending you a message when something happens. Not just responding when you ask, but acting on its own with defined boundaries.
 
 This is the daemon mode.

@@ -1,5 +1,7 @@
 # First Success: Verify AIWG Is Working
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Use this recipe before depending on AIWG for project work.
 
 For full installation from a fresh machine or fresh project, use the

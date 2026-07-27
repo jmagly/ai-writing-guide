@@ -30,6 +30,8 @@
     "welcome",
     "getting-started",
     "getting-started/start-here",
+    "getting-started/install-node",
+    "getting-started/install-connect-verify",
     "agentic-install-runbook",
     "getting-started/language-map",
     "getting-started/first-success-ask-steward",
@@ -76,8 +78,6 @@
     "prompting/few-shot-learning",
     "prompting/role-based-prompting",
     "reference",
-    "CLI_USAGE",
-    "cli-reference",
     "skills/agent-skills",
     "skills/quality-rubric",
     "architecture/adr-agent-skills-portability-contract",
@@ -110,6 +110,9 @@
     "extensions/creating-extensions",
     "extensions/extension-types",
     "development",
+    "architecture/documentation-information-architecture",
+    "development/documentation-audience-guide",
+    "development/documentation-migration-map",
     "development/devkit-overview",
     "development/addon-creation-guide",
     "development/extension-creation-guide",
@@ -461,6 +464,20 @@
       "parent": "getting-started"
     },
     {
+      "id": "getting-started/install-node",
+      "title": "Install Node.js and npm Safely",
+      "summary": "Choose a safe Node.js/npm setup without version-manager conflicts",
+      "file": "getting-started/install-node.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "getting-started/install-connect-verify",
+      "title": "Install, Connect, and Verify AIWG",
+      "summary": "Canonical install, use all, regenerate, and verification path",
+      "file": "getting-started/install-connect-verify.md",
+      "parent": "getting-started"
+    },
+    {
       "id": "agentic-install-runbook",
       "title": "Agentic Install Runbook",
       "summary": "Canonical zero-to-running setup path for agents and stewards",
@@ -772,13 +789,6 @@
       "summary": "CLI commands, configuration, and API docs"
     },
     {
-      "id": "CLI_USAGE",
-      "title": "CLI Reference",
-      "summary": "Complete command line usage",
-      "file": "CLI_USAGE.md",
-      "parent": "reference"
-    },
-    {
       "id": "local-issues",
       "title": "Local Issues",
       "summary": "Project-local issue tracker under .aiwg/issues/",
@@ -790,13 +800,6 @@
       "title": "Issue Label Taxonomy",
       "summary": "Provider-neutral tracker label roles and workflow semantics",
       "file": "issue-label-taxonomy.md",
-      "parent": "reference"
-    },
-    {
-      "id": "cli-reference",
-      "title": "All Commands",
-      "summary": "Every aiwg command with examples",
-      "file": "cli-reference.md",
       "parent": "reference"
     },
     {
@@ -1006,6 +1009,27 @@
       "summary": "Package reusable components",
       "collapsed": true,
       "parent": "customizing"
+    },
+    {
+      "id": "architecture/documentation-information-architecture",
+      "title": "Documentation Information Architecture",
+      "summary": "Audience, task type, ownership, and publication targets",
+      "file": "architecture/documentation-information-architecture.md",
+      "parent": "development"
+    },
+    {
+      "id": "development/documentation-audience-guide",
+      "title": "Documentation Audience Guide",
+      "summary": "Choose the audience and publication target for new documentation",
+      "file": "development/documentation-audience-guide.md",
+      "parent": "development"
+    },
+    {
+      "id": "development/documentation-migration-map",
+      "title": "Documentation Migration Map",
+      "summary": "Inventory and classification for conversational documentation",
+      "file": "development/documentation-migration-map.md",
+      "parent": "development"
     },
     {
       "id": "development/devkit-overview",

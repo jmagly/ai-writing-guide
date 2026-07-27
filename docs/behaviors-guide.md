@@ -586,7 +586,7 @@ Directives are injected into the agent's system prompt at construction time. If 
 
 - [OpenClaw Integration Guide](openclaw-guide.md) — Deploying behaviors to OpenClaw
 - [Daemon Guide](daemon-guide.md) — Daemon configuration, headend architecture, and IPC methods
-- [CLI Reference](cli-reference.md) — `aiwg add-behavior`, `aiwg behavior list/info/apply`
+- [CLI Reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md) — `aiwg add-behavior`, `aiwg behavior list/info/apply`
 - `agentic/code/behaviors/` — Behavior source files
 - `.aiwg/architecture/adr-behaviors-deployable-artifact.md` — Architecture decision for deployable behaviors
 - `.aiwg/architecture/adr-behaviors-sticky-capabilities.md` — Architecture decision for runtime behaviors

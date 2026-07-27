@@ -1,5 +1,7 @@
 # Share AIWG
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Use this page when you need repo-owned source copy for pointing someone to the beginner path.
 
 This page is source material only. Posting, campaign timing, and external community execution live outside this repo.

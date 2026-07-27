@@ -1069,7 +1069,7 @@ aiwg orchestrate "create SAD from template"
 
 ## References
 
-- @docs/cli-reference.md - CLI commands including `aiwg status`
+- @docs/agents/cli-reference.md - CLI commands including `aiwg status`
 - @agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md - Workflow orchestration
 - @.aiwg/flows/ - State file examples (this repository)
 - @docs/development/aiwg-development-guide.md - Framework development patterns

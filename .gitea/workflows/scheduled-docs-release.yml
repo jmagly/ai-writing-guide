@@ -57,13 +57,14 @@ jobs:
         run: |
           set -euo pipefail
           npm ci
+          node tools/docs/build-public-source.mjs
           cat > "${{ gitea.workspace }}/tenants.json" <<'TENANTS'
           {
             "tenants": [
               {
                 "id": "aiwg-docs",
                 "enabled": true,
-                "source": { "type": "local", "path": "./docs" },
+                "source": { "type": "local", "path": "./dist/public-docs-source" },
                 "target": { "type": "local", "path": "./dist/aiwg-docs" },
                 "domains": ["docs.aiwg.io"],
                 "strictLinks": true

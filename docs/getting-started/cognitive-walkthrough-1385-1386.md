@@ -1,5 +1,7 @@
 # Cognitive Walkthrough: Issues 1385 and 1386
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Date: 2026-05-18
 
 Scope: beginner documentation MVP for Start Here, first-success recipes, and entry-point cross-links.

@@ -88,7 +88,7 @@ jobs:
               {
                 "id": "aiwg-docs",
                 "enabled": true,
-                "source": { "type": "local", "path": "./docs" },
+                "source": { "type": "local", "path": "./dist/public-docs-source" },
                 "target": { "type": "local", "path": "./dist/aiwg-docs" },
                 "domains": ["docs.aiwg.io"],
                 "strictLinks": false
@@ -129,6 +129,9 @@ jobs:
 
       - name: Build doc site
         run: |
+          node tools/docs/build-public-source.mjs
+          node tools/docs/audit-audiences.mjs
+          node -e "const p=require('./dist/docs-audience-audit.json'); if(!p.totals.agentReferenceFiles) process.exit(1)"
           npx pagenary build:tenants aiwg-docs
           node tools/docs/write-blog-static-pages.mjs dist/aiwg-docs
 
@@ -140,6 +143,10 @@ jobs:
           test -f "$OUT/index.html" || { echo "::error::Missing index.html"; exit 1; }
           test -f "$OUT/blog/index.html" || { echo "::error::Missing blog/index.html"; exit 1; }
           test -d "$OUT/sections" || { echo "::error::Missing sections/ — refusing to deploy (would rsync --delete an incomplete site)"; exit 1; }
+          if find "$OUT" -type f \( -path '*/agents/*' -o -name 'agents--*.js' \) | grep -q .; then
+            echo "::error::agent-reference material leaked into docs.aiwg.io output"
+            exit 1
+          fi
           echo "Build verification passed"
           ls -lah "$OUT/"
 

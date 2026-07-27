@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "issue": 1937,
+    "capturedFrom": "git HEAD at issue intake",
+    "coreJourneyCommandMentions": 51,
+    "homepageCommandChecklistItems": 3,
+    "publicCliNavigationEntries": 2
+  },
+  "audience": "end-user",
+  "publication": "docs.aiwg.io",
+  "exclude": [
+    "agents",
+    "CLI_USAGE.md",
+    "cli-reference.md"
+  ],
+  "coreJourneys": [
+    "welcome.md",
+    "getting-started/README.md",
+    "getting-started/install-connect-verify.md",
+    "getting-started/start-here.md",
+    "getting-started/provider-handoff.md",
+    "getting-started/onboarding-validation.md",
+    "quickstart.md",
+    "quickstart-sdlc.md",
+    "quickstart-mmk.md"
+  ],
+  "agentOwnedCommands": [
+    "discover",
+    "show",
+    "index",
+    "ralph",
+    "mc",
+    "run skill"
+  ],
+  "directTouchCommands": [
+    "wizard",
+    "use",
+    "new",
+    "status",
+    "doctor",
+    "refresh"
+  ]
+}

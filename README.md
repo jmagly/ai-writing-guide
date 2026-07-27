@@ -46,7 +46,7 @@ Agents and stewards setting up AIWG end-to-end should use the
 
 [![Built With AIWG](https://aiwg.io/assets/badges/built-with-aiwg-dark.png)](https://aiwg.io/badges)
 
-[**Get Started**](#quick-start) · [**Features**](#what-you-get) · [**Agents**](#agents) · [**CLI Reference**](docs/cli-reference.md) · [**Documentation**](#documentation) · [**Community**](#community--support) · [**Badges**](https://aiwg.io/badges)
+[**Get Started**](#quick-start) · [**Features**](#what-you-get) · [**Agents**](#agents) · [**Documentation**](#documentation) · [**Community**](#community--support) · [**Badges**](https://aiwg.io/badges)
 
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=flat-square)](https://discord.gg/BuAusFMxdA)
 [![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram&logoColor=white&style=flat-square)](https://t.me/+oJg9w2lE6A5lOGFh)
@@ -140,7 +140,7 @@ user-global bootstrap:
 The trade-off is real: when the same agent set loads into every session, context from one project can bleed into reasoning about another. Research (REF-720, *Lost in Multi-Turn Conversation*, MSR/Salesforce 2025) measured a 39% capability drop when this happens. The non-blocking project-isolation warning surfaces the trade-off at deploy time so the scope choice is informed. Neither scope is wrong; pick the one that fits the workflow.
 
 See the [Agentic Install Runbook](docs/agentic-install-runbook.md) for the
-zero-to-running setup path, and `docs/cli-reference.md` (under `aiwg use` →
+zero-to-running setup path, and `https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md` (under `aiwg use` →
 "Scope models") for the per-provider details and the global-install rough-edge
 inventory.
 
@@ -1829,7 +1829,9 @@ Full research background, citations, and methodology: [docs/research/](docs/rese
 
 - **[Quick Start Guide](docs/quickstart.md)** — Install and deploy in minutes
 - **[Prerequisites](docs/getting-started/prerequisites.md)** — Node.js, AI platforms, OS support
-- **[CLI Reference](docs/cli-reference.md)** — 67+ commands with examples
+- **[Agent and Operator Reference](docs/agents/README.md)** — deterministic
+  commands, flags, outputs, and recovery contracts for agents and advanced
+  operators
 
 ### Customize
 

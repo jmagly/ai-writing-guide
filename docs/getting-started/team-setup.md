@@ -1,5 +1,7 @@
 # Setting Up a Team
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+
 Different people on your team use different AI tools. One person uses Claude Code, another uses Cursor, another uses GitHub Copilot. Without AIWG, they all have different agents, different rules, different commands — and no shared context.
 
 AIWG deploys the same framework to every platform so the whole team works from the same foundation.
@@ -138,7 +140,7 @@ You can run AIWG audits as part of CI — security gates, test coverage checks, 
   run: npx aiwg security-gate
 ```
 
-See the [security gate reference](../cli-reference.md#security-gate) for configuration.
+See the [security gate reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#security-gate) for configuration.
 
 ---
 
