@@ -47,13 +47,19 @@ describe('sessions CLI contracts', () => {
       .toEqual([...output.data.providers.map((item: any) => item.provider)].sort());
     expect(output.data.providers.find((item: any) => item.provider === 'generic'))
       .toMatchObject({ disposition: 'manual-only', reasonCode: 'MANUAL_SOURCE_SELECTION_REQUIRED' });
+    expect(output.data.providers.find((item: any) => item.provider === 'claude'))
+      .toMatchObject({
+        disposition: 'implemented',
+        supportedOperations: ['discover', 'inspect', 'stream'],
+        acquisitionModes: ['jsonl', 'hook'],
+      });
     expect(output.data.providers.filter((item: any) => item.disposition === 'unsupported'))
-      .toHaveLength(11);
+      .toHaveLength(10);
   });
 
   it('uses stable JSON and exit codes for unsupported provider import', async () => {
     const result = await sessionsHandler.execute(context([
-      'import', 'anything.jsonl', '--provider', 'claude', '--source-id', 'source', '--json',
+      'import', 'anything.jsonl', '--provider', 'codex', '--source-id', 'source', '--json',
     ]));
     expect(result.exitCode).toBe(3);
     expect(jsonOutput(log)).toMatchObject({
@@ -61,6 +67,29 @@ describe('sessions CLI contracts', () => {
       command: 'sessions.import',
       status: 'error',
       error: { code: 'UNSUPPORTED_OPERATION' },
+    });
+  });
+
+  it('previews a documented Claude transcript import without persisting it', async () => {
+    const fixture = resolve('test/fixtures/sessions/claude/active-session.jsonl');
+    const result = await sessionsHandler.execute(context([
+      'import', fixture, '--provider', 'claude', '--source-id', 'claude-active',
+      '--workspace', 'workspace-fixture', '--dry-run', '--json',
+    ]));
+    expect(result.exitCode).toBe(0);
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'preview',
+      data: {
+        source: {
+          provider: 'claude',
+          providerProfile: 'documented-local-jsonl',
+          locatorClass: 'claude-transcript-jsonl',
+          disposition: 'implemented',
+          consistency: 'provisional',
+        },
+        wouldInspect: true,
+        wouldPersist: false,
+      },
     });
   });
 });

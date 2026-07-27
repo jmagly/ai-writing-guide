@@ -1,0 +1,3 @@
+{"type":"user","uuid":"u-1","parentUuid":null,"sessionId":"active-session","timestamp":"2026-07-27T10:00:00.000Z","cwd":"/private/work/project","gitBranch":"main","version":"2.1.18","message":{"role":"user","content":"Contact synthetic@example.test with token=redaction-canary-value"},"futureTopLevel":"preserved"}
+{"type":"assistant","uuid":"a-1","parentUuid":"u-1","sessionId":"active-session","timestamp":"2026-07-27T10:00:01.000Z","cwd":"/private/work/project","gitBranch":"main","version":"2.1.18","message":{"id":"msg-1","role":"assistant","content":[{"type":"text","text":"I will inspect the project.","futureBlockField":"preserved"},{"type":"tool_use","id":"tool-1","name":"Read","input":{"file_path":"README.md"}}]}}
+{"type":"user","uuid":"u-incomplete"

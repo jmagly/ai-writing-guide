@@ -1,6 +1,8 @@
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import {
+  CLAUDE_ADAPTER_VERSION,
+  ClaudeSessionAdapter,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
   IncrementalSessionImporter,
@@ -12,6 +14,7 @@ import {
   assertSessionProviderId,
   redactSourceLocator,
   type SessionProviderId,
+  type SessionSourceAdapter,
   type SelectedSource,
 } from '../../sessions/index.js';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
@@ -33,7 +36,7 @@ const HELP = `Usage: aiwg sessions <command> [options]
 
 Commands:
   sources                         Show all canonical provider dispositions
-  import <file> --source-id <id>  Import a declared generic interchange
+  import <file> --source-id <id>  Import a supported provider JSONL source
   list [--limit N] [--cursor N]   List normalized sessions
   show <session-id>               Show a session with events and tags
   tag <session-id> <tag>          Add a catalog tag
@@ -204,26 +207,33 @@ async function importSource(
   const input = resolve(ctx.cwd, requiredPositional(args, 0, 'file'));
   const provider = (args.values.get('--provider') ?? 'generic') as SessionProviderId;
   assertSessionProviderId(provider);
-  if (provider !== 'generic') {
+  if (provider !== 'generic' && provider !== 'claude') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
   const workspaceId = args.values.get('--workspace') ?? 'default';
-  const adapter = new GenericSessionInterchangeAdapter();
+  const isClaude = provider === 'claude';
+  const adapter: SessionSourceAdapter = isClaude
+    ? new ClaudeSessionAdapter()
+    : new GenericSessionInterchangeAdapter();
+  const locatorClass = isClaude
+    ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
+    : 'manual-export';
   const selectedSource: SelectedSource = {
-    provider, locator: input, locatorClass: 'manual-export', sourceId,
+    provider, locator: input, locatorClass, sourceId,
     authorizedScope: { workspaceId, allowedRoots: [dirname(input)] },
   };
   const probe = await adapter.inspect(selectedSource);
   const source = SessionSourceSchema.parse({
-    contractVersion: SESSION_CONTRACT_VERSION,
-    sourceId, provider, providerProfile: 'manual-interchange',
-    locatorClass: 'manual-export', redactedLocator: redactSourceLocator(input),
-    adapterVersion: GENERIC_ADAPTER_VERSION,
+    contractVersion: SESSION_CONTRACT_VERSION, sourceId, provider,
+    providerProfile: isClaude ? 'documented-local-jsonl' : 'manual-interchange',
+    locatorClass, redactedLocator: redactSourceLocator(input),
+    adapterVersion: isClaude ? CLAUDE_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
     sourceSchemaVersion: probe.sourceSchemaVersion,
-    disposition: 'manual-only', operationalState: probe.operationalState,
+    disposition: isClaude ? 'implemented' : 'manual-only',
+    operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
-    extensions: { 'native.generic': {} },
+    extensions: isClaude ? { 'native.claude': {} } : { 'native.generic': {} },
   });
   if (isDryRun(ctx, args)) {
     return preview('import', { source, wouldInspect: true, wouldPersist: false });
@@ -247,6 +257,20 @@ async function importSource(
 }
 
 function providerDisposition(provider: SessionProviderId): Record<string, unknown> {
+  if (provider === 'claude') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['discover', 'inspect', 'stream'],
+      acquisitionModes: ['jsonl', 'hook'],
+      reasonCode: null,
+      remediation: 'Authorize a Claude projects or hook root, then import an explicit JSONL file.',
+      evidence: {
+        adapterVersion: CLAUDE_ADAPTER_VERSION,
+        verifiedAt: '2026-07-27',
+        documentation: 'https://code.claude.com/docs/en/sessions',
+      },
+    };
+  }
   if (provider === 'generic') {
     return {
       provider, disposition: 'manual-only', operationalState: 'available',

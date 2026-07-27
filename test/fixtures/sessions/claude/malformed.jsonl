@@ -1,0 +1,1 @@
+{"type":"user","sessionId":"malformed","timestamp":"not-a-date","message":{"role":"user","content":"Malformed timestamp"}}

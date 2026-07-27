@@ -6,3 +6,4 @@ export * from './readers.js';
 export * from './repository.js';
 export * from './importer.js';
 export * from './adapters/generic.js';
+export * from './adapters/claude.js';
