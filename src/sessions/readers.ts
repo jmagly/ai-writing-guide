@@ -112,6 +112,21 @@ export async function readBoundedJson(
   return { value, bytesRead: allowed.size };
 }
 
+export async function readBoundedText(
+  authorization: SourceAuthorization,
+  limitsInput?: Partial<ReaderLimits>,
+): Promise<{ value: string; bytesRead: number }> {
+  const allowed = await authorizeSourceFile(authorization);
+  const limits = { ...DEFAULT_READER_LIMITS, ...limitsInput };
+  if (allowed.size > limits.maxTotalBytes || allowed.size > limits.maxRecordBytes) {
+    throw new SessionContractError('RESOURCE_LIMIT_EXCEEDED', 'bounded text source limit exceeded');
+  }
+  return {
+    value: await readFile(allowed.canonicalPath, 'utf8'),
+    bytesRead: allowed.size,
+  };
+}
+
 export async function fingerprintSourceFile(
   authorization: SourceAuthorization,
 ): Promise<{ digest: string; size: number }> {

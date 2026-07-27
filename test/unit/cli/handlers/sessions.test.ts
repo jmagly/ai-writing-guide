@@ -65,13 +65,19 @@ describe('sessions CLI contracts', () => {
         supportedOperations: ['inspect', 'stream'],
         acquisitionModes: ['manual-export'],
       });
+    expect(output.data.providers.find((item: any) => item.provider === 'cursor'))
+      .toMatchObject({
+        disposition: 'implemented',
+        supportedOperations: ['inspect', 'stream'],
+        acquisitionModes: ['api', 'jsonl', 'manual-export'],
+      });
     expect(output.data.providers.filter((item: any) => item.disposition === 'unsupported'))
-      .toHaveLength(8);
+      .toHaveLength(7);
   });
 
   it('uses stable JSON and exit codes for unsupported provider import', async () => {
     const result = await sessionsHandler.execute(context([
-      'import', 'anything.jsonl', '--provider', 'cursor', '--source-id', 'source', '--json',
+      'import', 'anything.jsonl', '--provider', 'factory', '--source-id', 'source', '--json',
     ]));
     expect(result.exitCode).toBe(3);
     expect(jsonOutput(log)).toMatchObject({
@@ -149,6 +155,36 @@ describe('sessions CLI contracts', () => {
         wouldPersist: false,
       },
     });
+  });
+
+  it('previews each supported Cursor surface without persisting it', async () => {
+    const cases = [
+      ['cli-complete.jsonl', 'cli-stream-json', 'cursor-cli-stream-json', 'complete'],
+      ['cloud-lifecycle.cloud.jsonl', 'cloud-agents-api-v1', 'cursor-cloud-events-jsonl', 'complete'],
+      ['editor-export.md', 'editor-markdown-lossy', 'cursor-editor-markdown', 'complete'],
+    ];
+    for (const [name, providerProfile, locatorClass, consistency] of cases) {
+      const fixture = resolve(`test/fixtures/sessions/cursor/${name}`);
+      const result = await sessionsHandler.execute(context([
+        'import', fixture, '--provider', 'cursor', '--source-id', `cursor-${name}`,
+        '--workspace', 'workspace-fixture', '--dry-run', '--json',
+      ]));
+      expect(result.exitCode).toBe(0);
+      expect(jsonOutput(log)).toMatchObject({
+        status: 'preview',
+        data: {
+          source: {
+            provider: 'cursor',
+            providerProfile,
+            locatorClass,
+            disposition: 'implemented',
+            consistency,
+          },
+          wouldInspect: true,
+          wouldPersist: false,
+        },
+      });
+    }
   });
 });
 

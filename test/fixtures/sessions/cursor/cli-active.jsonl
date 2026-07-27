@@ -1,0 +1,2 @@
+{"schemaVersion":"1.0.0","cliVersion":"2026.07-synthetic","type":"system","subtype":"init","cwd":"/synthetic/workspace","session_id":"cursor-cli-active","model":"Synthetic Model","permissionMode":"default"}
+{"schemaVersion":"1.0.0","type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Still running"}]},"session_id":"cursor-cli-active"}

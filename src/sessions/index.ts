@@ -14,3 +14,4 @@ export * from './adapters/generic.js';
 export * from './adapters/claude.js';
 export * from './adapters/codex.js';
 export * from './adapters/copilot.js';
+export * from './adapters/cursor.js';

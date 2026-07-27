@@ -7,6 +7,8 @@ import {
   CodexSessionAdapter,
   COPILOT_ADAPTER_VERSION,
   CopilotSessionAdapter,
+  CURSOR_ADAPTER_VERSION,
+  CursorSessionAdapter,
   CandidateExtractionService,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
@@ -397,7 +399,7 @@ async function importSource(
   const provider = (args.values.get('--provider') ?? 'generic') as SessionProviderId;
   assertSessionProviderId(provider);
   if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
-    && provider !== 'copilot') {
+    && provider !== 'copilot' && provider !== 'cursor') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
@@ -405,16 +407,23 @@ async function importSource(
   const isClaude = provider === 'claude';
   const isCodex = provider === 'codex';
   const isCopilot = provider === 'copilot';
+  const isCursor = provider === 'cursor';
   const adapter: SessionSourceAdapter = isClaude
     ? new ClaudeSessionAdapter()
     : isCodex
       ? new CodexSessionAdapter()
-      : isCopilot ? new CopilotSessionAdapter() : new GenericSessionInterchangeAdapter();
+      : isCopilot
+        ? new CopilotSessionAdapter()
+        : isCursor ? new CursorSessionAdapter() : new GenericSessionInterchangeAdapter();
   const locatorClass = isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
     : isCodex
       ? (input.endsWith('.app-server.jsonl') ? 'codex-app-server-jsonl' : 'codex-rollout-jsonl')
-      : isCopilot ? 'copilot-chat-json-export' : 'manual-export';
+      : isCopilot
+        ? 'copilot-chat-json-export'
+        : isCursor
+          ? cursorLocatorClass(input)
+          : 'manual-export';
   const selectedSource: SelectedSource = {
     provider, locator: input, locatorClass, sourceId,
     authorizedScope: { workspaceId, allowedRoots: [dirname(input)] },
@@ -426,22 +435,28 @@ async function importSource(
       ? 'documented-local-jsonl'
       : isCodex
         ? 'app-server-v2-rollout-fallback'
-        : isCopilot ? 'vscode-chat-json-export' : 'manual-interchange',
+        : isCopilot
+          ? 'vscode-chat-json-export'
+          : isCursor ? cursorProviderProfile(locatorClass) : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
     adapterVersion: isClaude
       ? CLAUDE_ADAPTER_VERSION
       : isCodex
         ? CODEX_ADAPTER_VERSION
-        : isCopilot ? COPILOT_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
+        : isCopilot
+          ? COPILOT_ADAPTER_VERSION
+          : isCursor ? CURSOR_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
     sourceSchemaVersion: probe.sourceSchemaVersion,
-    disposition: isClaude || isCodex || isCopilot ? 'implemented' : 'manual-only',
+    disposition: isClaude || isCodex || isCopilot || isCursor ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
     extensions: isClaude
       ? { 'native.claude': {} }
       : isCodex
         ? { 'native.codex': {} }
-        : isCopilot ? { 'native.copilot': {} } : { 'native.generic': {} },
+        : isCopilot
+          ? { 'native.copilot': {} }
+          : isCursor ? { 'native.cursor': {} } : { 'native.generic': {} },
   });
   if (isDryRun(ctx, args)) {
     return preview('import', { source, wouldInspect: true, wouldPersist: false });
@@ -507,6 +522,20 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
       },
     };
   }
+  if (provider === 'cursor') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['inspect', 'stream'],
+      acquisitionModes: ['api', 'jsonl', 'manual-export'],
+      reasonCode: null,
+      remediation: 'Import Cursor CLI stream-json, captured Cloud Agent v1 events, or an editor Markdown export.',
+      evidence: {
+        adapterVersion: CURSOR_ADAPTER_VERSION,
+        verifiedAt: '2026-07-27',
+        documentation: 'https://docs.cursor.com/en/cli/reference/output-format',
+      },
+    };
+  }
   if (provider === 'generic') {
     return {
       provider, disposition: 'manual-only', operationalState: 'available',
@@ -523,6 +552,18 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
     remediation: 'Use the generic interchange until the provider adapter milestone is delivered.',
     evidence: { adapterVersion: null, verifiedAt: '2026-07-26' },
   };
+}
+
+function cursorLocatorClass(input: string): string {
+  if (input.endsWith('.md') || input.endsWith('.markdown')) return 'cursor-editor-markdown';
+  if (input.endsWith('.cloud.jsonl')) return 'cursor-cloud-events-jsonl';
+  return 'cursor-cli-stream-json';
+}
+
+function cursorProviderProfile(locatorClass: string): string {
+  if (locatorClass === 'cursor-editor-markdown') return 'editor-markdown-lossy';
+  if (locatorClass === 'cursor-cloud-events-jsonl') return 'cloud-agents-api-v1';
+  return 'cli-stream-json';
 }
 
 function openRepository(ctx: HandlerContext, args: ParsedArgs): SessionRepository {

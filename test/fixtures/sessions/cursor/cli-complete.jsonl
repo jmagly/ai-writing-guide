@@ -1,0 +1,6 @@
+{"schemaVersion":"1.0.0","type":"system","subtype":"init","apiKeySource":"login","cwd":"/synthetic/workspace","session_id":"cursor-cli-session","model":"Synthetic Model","permissionMode":"default","futureSystemField":"preserved"}
+{"schemaVersion":"1.0.0","type":"user","message":{"role":"user","content":[{"type":"text","text":"Read the synthetic fixture"}]},"session_id":"cursor-cli-session"}
+{"schemaVersion":"1.0.0","type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Reading it now."}]},"session_id":"cursor-cli-session"}
+{"schemaVersion":"1.0.0","type":"tool_call","subtype":"started","call_id":"synthetic-call","tool_call":{"readToolCall":{"args":{"path":"fixture.txt"}}},"session_id":"cursor-cli-session"}
+{"schemaVersion":"1.0.0","type":"tool_call","subtype":"completed","call_id":"synthetic-call","tool_call":{"readToolCall":{"args":{"path":"fixture.txt"},"result":{"success":{"content":"synthetic"}}}},"session_id":"cursor-cli-session"}
+{"schemaVersion":"1.0.0","type":"result","subtype":"success","is_error":false,"duration_ms":10,"duration_api_ms":8,"result":"Fixture read.","session_id":"cursor-cli-session","request_id":"synthetic-request"}

@@ -1,0 +1,6 @@
+{"schemaVersion":"1.0.0","id":"evt-1","event_id":"evt-1","type":"run.created","agent":{"id":"agent-synthetic","status":"active","source":{"repository":"synthetic/example"},"futureAgentField":"preserved"},"run":{"id":"run-synthetic","status":"running","model":"synthetic-model"},"data":{"text":"Run created"}}
+{"schemaVersion":"1.0.0","id":"evt-2","event_id":"evt-2","type":"run.status","agent":{"id":"agent-synthetic","status":"active"},"run":{"id":"run-synthetic","status":"running"},"data":{"message":"Reconnect checkpoint"}}
+{"schemaVersion":"1.0.0","id":"evt-3","event_id":"evt-3","type":"run.cancelled","agent":{"id":"agent-synthetic","status":"active"},"run":{"id":"run-synthetic","status":"cancelled"},"data":{"reason":"synthetic cancellation"}}
+{"schemaVersion":"1.0.0","id":"evt-4","event_id":"evt-4","type":"agent.archived","agent":{"id":"agent-synthetic","status":"archived"},"run":{"id":"run-synthetic","status":"cancelled"}}
+{"schemaVersion":"1.0.0","id":"evt-5","event_id":"evt-5","type":"agent.unarchived","agent":{"id":"agent-synthetic","status":"active"},"run":{"id":"run-synthetic","status":"cancelled"}}
+{"schemaVersion":"1.0.0","id":"evt-6","event_id":"evt-6","type":"agent.deleted","agent":{"id":"agent-synthetic","status":"deleted"},"run":{"id":"run-synthetic","status":"cancelled"},"futureCloudField":"preserved"}
