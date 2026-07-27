@@ -53,13 +53,19 @@ describe('sessions CLI contracts', () => {
         supportedOperations: ['discover', 'inspect', 'stream'],
         acquisitionModes: ['jsonl', 'hook'],
       });
+    expect(output.data.providers.find((item: any) => item.provider === 'codex'))
+      .toMatchObject({
+        disposition: 'implemented',
+        supportedOperations: ['discover', 'inspect', 'stream'],
+        acquisitionModes: ['api', 'jsonl'],
+      });
     expect(output.data.providers.filter((item: any) => item.disposition === 'unsupported'))
-      .toHaveLength(10);
+      .toHaveLength(9);
   });
 
   it('uses stable JSON and exit codes for unsupported provider import', async () => {
     const result = await sessionsHandler.execute(context([
-      'import', 'anything.jsonl', '--provider', 'codex', '--source-id', 'source', '--json',
+      'import', 'anything.jsonl', '--provider', 'copilot', '--source-id', 'source', '--json',
     ]));
     expect(result.exitCode).toBe(3);
     expect(jsonOutput(log)).toMatchObject({
@@ -84,6 +90,29 @@ describe('sessions CLI contracts', () => {
           provider: 'claude',
           providerProfile: 'documented-local-jsonl',
           locatorClass: 'claude-transcript-jsonl',
+          disposition: 'implemented',
+          consistency: 'provisional',
+        },
+        wouldInspect: true,
+        wouldPersist: false,
+      },
+    });
+  });
+
+  it('previews a Codex App Server export without persisting it', async () => {
+    const fixture = resolve('test/fixtures/sessions/codex/threads.app-server.jsonl');
+    const result = await sessionsHandler.execute(context([
+      'import', fixture, '--provider', 'codex', '--source-id', 'codex-app',
+      '--workspace', 'workspace-fixture', '--dry-run', '--json',
+    ]));
+    expect(result.exitCode).toBe(0);
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'preview',
+      data: {
+        source: {
+          provider: 'codex',
+          providerProfile: 'app-server-v2-rollout-fallback',
+          locatorClass: 'codex-app-server-jsonl',
           disposition: 'implemented',
           consistency: 'provisional',
         },

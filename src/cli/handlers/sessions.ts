@@ -3,6 +3,8 @@ import { dirname, resolve } from 'node:path';
 import {
   CLAUDE_ADAPTER_VERSION,
   ClaudeSessionAdapter,
+  CODEX_ADAPTER_VERSION,
+  CodexSessionAdapter,
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
   IncrementalSessionImporter,
@@ -207,18 +209,21 @@ async function importSource(
   const input = resolve(ctx.cwd, requiredPositional(args, 0, 'file'));
   const provider = (args.values.get('--provider') ?? 'generic') as SessionProviderId;
   assertSessionProviderId(provider);
-  if (provider !== 'generic' && provider !== 'claude') {
+  if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
   const workspaceId = args.values.get('--workspace') ?? 'default';
   const isClaude = provider === 'claude';
+  const isCodex = provider === 'codex';
   const adapter: SessionSourceAdapter = isClaude
     ? new ClaudeSessionAdapter()
-    : new GenericSessionInterchangeAdapter();
+    : isCodex ? new CodexSessionAdapter() : new GenericSessionInterchangeAdapter();
   const locatorClass = isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
-    : 'manual-export';
+    : isCodex
+      ? (input.endsWith('.app-server.jsonl') ? 'codex-app-server-jsonl' : 'codex-rollout-jsonl')
+      : 'manual-export';
   const selectedSource: SelectedSource = {
     provider, locator: input, locatorClass, sourceId,
     authorizedScope: { workspaceId, allowedRoots: [dirname(input)] },
@@ -226,14 +231,20 @@ async function importSource(
   const probe = await adapter.inspect(selectedSource);
   const source = SessionSourceSchema.parse({
     contractVersion: SESSION_CONTRACT_VERSION, sourceId, provider,
-    providerProfile: isClaude ? 'documented-local-jsonl' : 'manual-interchange',
+    providerProfile: isClaude
+      ? 'documented-local-jsonl'
+      : isCodex ? 'app-server-v2-rollout-fallback' : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
-    adapterVersion: isClaude ? CLAUDE_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
+    adapterVersion: isClaude
+      ? CLAUDE_ADAPTER_VERSION
+      : isCodex ? CODEX_ADAPTER_VERSION : GENERIC_ADAPTER_VERSION,
     sourceSchemaVersion: probe.sourceSchemaVersion,
-    disposition: isClaude ? 'implemented' : 'manual-only',
+    disposition: isClaude || isCodex ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
-    extensions: isClaude ? { 'native.claude': {} } : { 'native.generic': {} },
+    extensions: isClaude
+      ? { 'native.claude': {} }
+      : isCodex ? { 'native.codex': {} } : { 'native.generic': {} },
   });
   if (isDryRun(ctx, args)) {
     return preview('import', { source, wouldInspect: true, wouldPersist: false });
@@ -257,6 +268,20 @@ async function importSource(
 }
 
 function providerDisposition(provider: SessionProviderId): Record<string, unknown> {
+  if (provider === 'codex') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['discover', 'inspect', 'stream'],
+      acquisitionModes: ['api', 'jsonl'],
+      reasonCode: null,
+      remediation: 'Authorize an App Server export or Codex sessions root, then import an explicit JSONL source.',
+      evidence: {
+        adapterVersion: CODEX_ADAPTER_VERSION,
+        verifiedAt: '2026-07-27',
+        documentation: 'https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md',
+      },
+    };
+  }
   if (provider === 'claude') {
     return {
       provider, disposition: 'implemented', operationalState: 'available',
