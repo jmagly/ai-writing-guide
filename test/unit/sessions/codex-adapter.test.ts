@@ -63,7 +63,7 @@ describe('Codex session adapter', () => {
       resolve(root, 'nested', 'a.jsonl'),
     );
     await symlink(resolve(root, 'nested'), resolve(root, 'linked'));
-    const found = await Array.fromAsync(new CodexSessionAdapter().discover({
+    const found = await collect(new CodexSessionAdapter().discover({
       workspaceId: 'workspace-fixture', allowedRoots: [root],
     }));
     expect(found.map((item) => basename(item.locator))).toEqual(['b.app-server.jsonl', 'a.jsonl']);
@@ -78,7 +78,7 @@ describe('Codex session adapter', () => {
       sourceSchemaVersion: '1.0.0',
       consistency: 'provisional',
     });
-    const records = await Array.fromAsync(adapter.stream(selected));
+    const records = await collect(adapter.stream(selected));
     expect(records).toHaveLength(10);
     expect(records[0].extensions).toMatchObject({
       status: 'active',
@@ -102,7 +102,7 @@ describe('Codex session adapter', () => {
     );
     const adapter = new CodexSessionAdapter();
     expect(await adapter.inspect(selected)).toMatchObject({ consistency: 'provisional' });
-    const records = await Array.fromAsync(adapter.stream(selected));
+    const records = await collect(adapter.stream(selected));
     expect(records).toHaveLength(5);
     expect(records.map((record) => record.kind)).toContain('summary');
     expect(records.every((record) =>
@@ -120,7 +120,7 @@ describe('Codex session adapter', () => {
     ['malformed.app-server.jsonl', 'MALFORMED_SOURCE'],
     ['drift.app-server.jsonl', 'SCHEMA_DRIFT'],
   ])('fails closed for %s', async (fixture, code) => {
-    await expect(Array.fromAsync(new CodexSessionAdapter().stream(
+    await expect(collect(new CodexSessionAdapter().stream(
       selectedSource(fixture, `codex-${fixture}`),
     ))).rejects.toMatchObject({ code });
   });
@@ -208,4 +208,10 @@ function hasBetterSqlite3(): boolean {
   } catch {
     return false;
   }
+}
+
+async function collect<T>(input: AsyncIterable<T>): Promise<T[]> {
+  const output: T[] = [];
+  for await (const item of input) output.push(item);
+  return output;
 }
