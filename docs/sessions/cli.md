@@ -18,6 +18,12 @@ aiwg sessions import <file> --source-id <id> [--workspace <id>] [--dry-run] [--j
 aiwg sessions list [--provider <id>] [--workspace <id>] [--tag <tag>]
                    [--limit <1..500>] [--cursor <offset>] [--json]
 aiwg sessions show <session-id> [--json]
+aiwg sessions search <query> --workspace <id>
+                     [--provider <id>] [--date-from <rfc3339>] [--date-to <rfc3339>]
+                     [--participant <role>] [--model <id>] [--role <role>]
+                     [--tool <name>] [--tag <tag>] [--entity <entity>]
+                     [--sensitivity <class>] [--extraction-state <state>]
+                     [--limit <1..500>] [--cursor <opaque>] [--json]
 aiwg sessions tag <session-id> <tag> [--dry-run] [--json]
 aiwg sessions relocate <source-id> <file> [--dry-run] [--json]
 aiwg sessions reindex [--dry-run] [--json]
@@ -28,6 +34,39 @@ aiwg sessions doctor [--json]
 Generic imports accept only the declared, versioned AIWG interchange. Provider
 logs are never modified. `delete` previews by default and only tombstones the
 AIWG-owned normalized session after `--confirm`.
+
+## Search authorization and citations
+
+Search uses SQLite FTS5 over policy-approved normalized text. `--workspace` is
+required so authorization scope is applied before matching, scoring, or
+snippet generation. `--provider` can narrow that scope further. Metadata
+filters are combined with the lexical query.
+
+Every hit carries a stable citation containing provider, session, event,
+import-run, source, and source-locator-class identity. Snippets contain only
+the already-redacted normalized text. Tombstoned sessions, staged imports, and
+records outside the authorized workspace/provider scope cannot contribute hits
+or snippets.
+
+Search cursors are opaque snapshots. A cursor fixes the maximum visible event
+row for the query, so imports committed between pages do not reorder or insert
+hits into the active traversal. Start a new search without the cursor to
+include newly imported events.
+
+## Reference performance
+
+The reproducible FTS5 reference benchmark is:
+
+```bash
+node tools/benchmarks/session-search.mjs
+```
+
+It creates a temporary one-million-event catalog shape, runs 25 authorized
+lexical queries, reports p50/p95/max latency as JSON, enforces the provisional
+2,000 ms p95 target, and removes the temporary database. On the 2026-07-27
+reference maintainer host, p95 was 115.55 ms. This measures indexed query
+latency, not import construction time; operators should rerun it on their
+deployment storage and retain the JSON result with release evidence.
 
 ## JSON contract
 
@@ -44,8 +83,9 @@ Every `--json` response has the same versioned top-level shape:
 ```
 
 Fields may be added within major version 1, but existing fields retain their
-meaning. List order is stable and pagination uses a deterministic numeric
-cursor. Unsupported providers return `UNSUPPORTED_OPERATION`; this is distinct
+meaning. List order is stable and list pagination uses a deterministic numeric
+cursor; search pagination uses a deterministic opaque snapshot cursor.
+Unsupported providers return `UNSUPPORTED_OPERATION`; this is distinct
 from a successful query with an empty `items` array.
 
 Exit codes are stable within major version 1:

@@ -41,6 +41,7 @@ Commands:
   import <file> --source-id <id>  Import a supported provider JSONL source
   list [--limit N] [--cursor N]   List normalized sessions
   show <session-id>               Show a session with events and tags
+  search <query> --workspace <id> Search authorized normalized content
   tag <session-id> <tag>          Add a catalog tag
   relocate <source-id> <file>     Update AIWG source-location metadata
   reindex                         Rebuild catalog indexes
@@ -141,6 +142,34 @@ async function executeCommand(
           session,
           tags: repository.listTags(id),
           events: repository.listEvents(id),
+        });
+      }
+      case 'search': {
+        const query = requiredPositional(args, 0, 'query');
+        const workspaceId = requiredValue(args, '--workspace');
+        const provider = args.values.get('--provider');
+        if (provider) assertSessionProviderId(provider);
+        const result = repository.search({
+          query,
+          workspaceId,
+          providers: provider ? [provider] : undefined,
+          dateFrom: args.values.get('--date-from'),
+          dateTo: args.values.get('--date-to'),
+          participant: args.values.get('--participant'),
+          model: args.values.get('--model'),
+          role: args.values.get('--role'),
+          tool: args.values.get('--tool'),
+          tag: args.values.get('--tag'),
+          entity: args.values.get('--entity'),
+          sensitivity: args.values.get('--sensitivity'),
+          extractionState: args.values.get('--extraction-state'),
+          limit: boundedInteger(args.values.get('--limit'), 50, 1, 500, '--limit'),
+          cursor: args.values.get('--cursor'),
+        });
+        return ok(command, {
+          items: result.items,
+          page: { limit: boundedInteger(args.values.get('--limit'), 50, 1, 500, '--limit'),
+            nextCursor: result.nextCursor },
         });
       }
       case 'tag': {
@@ -338,6 +367,8 @@ function parseArgs(argv: string[]): ParsedArgs {
   const positionals: string[] = [];
   const valueFlags = new Set([
     '--db', '--provider', '--workspace', '--tag', '--limit', '--cursor', '--source-id',
+    '--date-from', '--date-to', '--participant', '--model', '--role', '--tool',
+    '--entity', '--sensitivity', '--extraction-state',
   ]);
   let command: string | undefined;
   for (let index = 0; index < argv.length; index += 1) {

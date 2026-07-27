@@ -49,6 +49,53 @@ export interface SessionCatalogHealth {
   stagedImports: number;
 }
 
+export interface SessionSearchOptions {
+  query: string;
+  workspaceId: string;
+  providers?: string[];
+  dateFrom?: string;
+  dateTo?: string;
+  participant?: string;
+  model?: string;
+  role?: string;
+  tool?: string;
+  tag?: string;
+  entity?: string;
+  sensitivity?: string;
+  extractionState?: string;
+  limit: number;
+  cursor?: string;
+}
+
+export interface SessionSearchHit {
+  score: number;
+  snippet: string;
+  provider: string;
+  workspaceId: string;
+  sessionId: string;
+  eventId: string;
+  importRunId: string;
+  sourceId: string;
+  locatorClass: string;
+  sequence: number;
+  role: string | null;
+  occurredAt: string | null;
+  sensitivity: string;
+  citation: {
+    provider: string;
+    sessionId: string;
+    eventId: string;
+    importRunId: string;
+    sourceId: string;
+    locatorClass: string;
+  };
+}
+
+export interface SessionSearchResult {
+  items: SessionSearchHit[];
+  nextCursor: string | null;
+}
+
 export class SessionRepository {
   private readonly db: SqliteDatabase;
 
@@ -107,6 +154,9 @@ export class SessionRepository {
         ON sessions(workspace_id, source_id, lifecycle);
       CREATE INDEX IF NOT EXISTS idx_event_session_sequence
         ON session_events(session_id, sequence_no);
+      CREATE VIRTUAL TABLE IF NOT EXISTS session_event_fts USING fts5(
+        event_id UNINDEXED, searchable_text, tokenize='unicode61'
+      );
     `);
   }
 
@@ -165,10 +215,16 @@ export class SessionRepository {
             `stable event identity changed content: ${event.eventId}`,
           );
         }
-        eventsInserted += insertEvent.run(
+        const inserted = insertEvent.run(
           event.eventId, event.sessionId, event.sourceId,
           event.importRunId, event.sequence, event.digest, JSON.stringify(event),
         ).changes;
+        eventsInserted += inserted;
+        if (inserted > 0) {
+          this.db.prepare(
+            'INSERT INTO session_event_fts(event_id, searchable_text) VALUES (?, ?)',
+          ).run(event.eventId, event.searchableText);
+        }
       }
       const outcome = publish ? 'committed' : 'staged';
       this.db.prepare(
@@ -286,6 +342,116 @@ export class SessionRepository {
     ).all(sessionId).map((row) => JSON.parse(String(row.data)) as SessionEvent);
   }
 
+  search(options: SessionSearchOptions): SessionSearchResult {
+    const query = options.query.trim();
+    if (!query) throw new SessionContractError('MALFORMED_SOURCE', 'search query must not be empty');
+    if (options.limit < 1 || options.limit > 500) {
+      throw new SessionContractError('RESOURCE_LIMIT_EXCEEDED', 'search limit must be between 1 and 500');
+    }
+    const cursor = decodeSearchCursor(options.cursor);
+    const snapshotRowid = cursor?.snapshotRowid ?? Number(
+      this.db.prepare('SELECT COALESCE(MAX(rowid), 0) AS value FROM session_events').get()?.value ?? 0,
+    );
+    const where = [
+      `f.searchable_text MATCH ?`,
+      `e.rowid <= ?`,
+      `s.workspace_id = ?`,
+      `s.lifecycle != 'tombstoned'`,
+      `r.status = 'committed'`,
+    ];
+    const params: unknown[] = [query, snapshotRowid, options.workspaceId];
+    if (options.providers?.length) {
+      where.push(`json_extract(s.data, '$.provider') IN (${options.providers.map(() => '?').join(',')})`);
+      params.push(...options.providers);
+    }
+    if (options.dateFrom) {
+      where.push(`json_extract(e.data, '$.occurredAt') >= ?`);
+      params.push(options.dateFrom);
+    }
+    if (options.dateTo) {
+      where.push(`json_extract(e.data, '$.occurredAt') <= ?`);
+      params.push(options.dateTo);
+    }
+    if (options.role) {
+      where.push(`json_extract(e.data, '$.role') = ?`);
+      params.push(options.role);
+    }
+    if (options.participant) {
+      where.push(`json_extract(e.data, '$.role') = ?`);
+      params.push(options.participant);
+    }
+    if (options.tool) {
+      where.push(`(json_extract(e.data, '$.kind') IN ('tool-call','tool-result')
+        AND json_extract(e.data, '$.searchableText') LIKE ? ESCAPE '\\')`);
+      params.push(`%${escapeLike(options.tool)}%`);
+    }
+    if (options.tag) {
+      where.push(`EXISTS (
+        SELECT 1 FROM session_tags t WHERE t.session_id=s.session_id AND t.tag=?
+      )`);
+      params.push(options.tag);
+    }
+    if (options.sensitivity) {
+      where.push(`json_extract(e.data, '$.sensitivity.classification') = ?`);
+      params.push(options.sensitivity);
+    }
+    for (const [filter, key] of [
+      [options.model, 'model'],
+      [options.entity, 'entity'],
+      [options.extractionState, 'extractionState'],
+    ] as const) {
+      if (filter) {
+        where.push(`EXISTS (
+          SELECT 1 FROM json_tree(e.data)
+          WHERE json_tree.key=? AND CAST(json_tree.value AS TEXT)=?
+        )`);
+        params.push(key, filter);
+      }
+    }
+    if (cursor) {
+      where.push(`(
+        length(json_extract(e.data, '$.searchableText')) > ?
+        OR (
+          length(json_extract(e.data, '$.searchableText')) = ?
+          AND e.event_id > ?
+        )
+      )`);
+      params.push(cursor.textLength, cursor.textLength, cursor.eventId);
+    }
+    const rows = this.db.prepare(`
+      WITH authorized AS (
+        SELECT
+          e.rowid AS event_rowid, e.event_id, e.session_id, e.source_id,
+          e.import_run_id, e.sequence_no, e.data AS event_data,
+          s.workspace_id, s.data AS session_data, src.data AS source_data,
+          f.searchable_text,
+          length(f.searchable_text) AS stable_rank
+        FROM session_event_fts f
+        JOIN session_events e ON e.event_id=f.event_id
+        JOIN sessions s ON s.session_id=e.session_id
+        JOIN import_runs r ON r.import_run_id=e.import_run_id
+        JOIN session_sources src ON src.source_id=e.source_id
+        WHERE ${where.join(' AND ')}
+      )
+      SELECT * FROM authorized
+      ORDER BY stable_rank, event_id
+      LIMIT ?
+    `).all(...params, options.limit + 1);
+    const page = rows.slice(0, options.limit);
+    const items = page.map(searchHit);
+    const last = page.at(-1);
+    return {
+      items,
+      nextCursor: rows.length > options.limit && last
+        ? encodeSearchCursor({
+            snapshotRowid,
+            textLength: Number(last.stable_rank),
+            eventId: String(last.event_id),
+          })
+        : null,
+    };
+  }
+
   getCheckpoint(sourceId: string, parserVersion: string): ImportCheckpoint | null {
     const row = this.db.prepare(
       `SELECT checkpoint FROM import_runs
@@ -332,7 +498,15 @@ export class SessionRepository {
   }
 
   reindex(): void {
-    this.db.exec('REINDEX');
+    const rebuild = this.db.transaction(() => {
+      this.db.exec('REINDEX');
+      this.db.exec('DELETE FROM session_event_fts');
+      this.db.exec(`
+        INSERT INTO session_event_fts(event_id, searchable_text)
+        SELECT event_id, json_extract(data, '$.searchableText') FROM session_events
+      `);
+    });
+    rebuild();
   }
 
   doctor(): SessionCatalogHealth {
@@ -353,4 +527,65 @@ export class SessionRepository {
   close(): void {
     this.db.close();
   }
+}
+
+interface SearchCursor {
+  snapshotRowid: number;
+  textLength: number;
+  eventId: string;
+}
+
+function searchHit(row: Record<string, unknown>): SessionSearchHit {
+  const event = JSON.parse(String(row.event_data)) as SessionEvent;
+  const session = JSON.parse(String(row.session_data)) as Session;
+  const source = JSON.parse(String(row.source_data)) as SessionSource;
+  const citation = {
+    provider: session.provider,
+    sessionId: event.sessionId,
+    eventId: event.eventId,
+    importRunId: event.importRunId,
+    sourceId: event.sourceId,
+    locatorClass: source.locatorClass,
+  };
+  return {
+    score: 1 / (1 + Number(row.stable_rank)),
+    snippet: boundedSnippet(String(row.searchable_text), 240),
+    provider: session.provider,
+    workspaceId: session.workspaceId,
+    sessionId: event.sessionId,
+    eventId: event.eventId,
+    importRunId: event.importRunId,
+    sourceId: event.sourceId,
+    locatorClass: source.locatorClass,
+    sequence: event.sequence,
+    role: event.role,
+    occurredAt: event.occurredAt,
+    sensitivity: event.sensitivity.classification,
+    citation,
+  };
+}
+
+function boundedSnippet(value: string, max: number): string {
+  return value.length <= max ? value : `${value.slice(0, max - 1)}…`;
+}
+
+function encodeSearchCursor(cursor: SearchCursor): string {
+  return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64url');
+}
+
+function decodeSearchCursor(value?: string): SearchCursor | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as SearchCursor;
+    if (!Number.isSafeInteger(parsed.snapshotRowid)
+      || !Number.isSafeInteger(parsed.textLength)
+      || typeof parsed.eventId !== 'string') throw new Error('invalid cursor');
+    return parsed;
+  } catch {
+    throw new SessionContractError('SCHEMA_DRIFT', 'search cursor is invalid');
+  }
+}
+
+function escapeLike(value: string): string {
+  return value.replaceAll('%', '\\%').replaceAll('_', '\\_');
 }

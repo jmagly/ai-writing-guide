@@ -86,6 +86,75 @@ describe.runIf(hasBetterSqlite3())('transactional session repository and importe
     const replay = await importer.import(request);
     expect(replay).toEqual([]);
     expect(repository.listEvents(sessionId)).toHaveLength(2);
+
+    const search = repository.search({
+      query: 'opaque', workspaceId: 'workspace-1', providers: ['generic'], limit: 10,
+      role: 'assistant', sensitivity: 'none',
+    });
+    expect(search.items).toHaveLength(1);
+    expect(search.items[0]).toMatchObject({
+      provider: 'generic',
+      workspaceId: 'workspace-1',
+      sessionId,
+      importRunId: expect.any(String),
+      sourceId: source.sourceId,
+      locatorClass: source.locatorClass,
+      role: 'assistant',
+      citation: {
+        provider: 'generic',
+        sessionId,
+        eventId: expect.any(String),
+        importRunId: expect.any(String),
+        sourceId: source.sourceId,
+        locatorClass: source.locatorClass,
+      },
+    });
+    expect(repository.search({
+      query: 'opaque', workspaceId: 'other-workspace', limit: 10,
+    }).items).toEqual([]);
+    repository.tombstoneSession(sessionId);
+    expect(repository.search({
+      query: 'opaque', workspaceId: 'workspace-1', limit: 10,
+    }).items).toEqual([]);
+    repository.close();
+  });
+
+  it('keeps cursor pagination stable when a concurrent import adds earlier-ranked hits', async () => {
+    const repository = new SessionRepository();
+    const importer = new IncrementalSessionImporter(repository);
+    const selectedSource = {
+      provider: 'generic' as const, locator: '<fixture>', locatorClass: 'synthetic-fixture',
+      sourceId: source.sourceId,
+      authorizedScope: { workspaceId: 'workspace-1', allowedRoots: ['/fixture'] },
+    };
+    await importer.import({
+      source, selectedSource, adapter: adapter(records),
+      workspaceId: 'workspace-1', policyVersion: '1.0.0',
+    });
+    const firstPage = repository.search({
+      query: 'opaque OR redacted', workspaceId: 'workspace-1', limit: 1,
+    });
+    expect(firstPage.items).toHaveLength(1);
+    expect(firstPage.nextCursor).not.toBeNull();
+
+    const concurrentSource = { ...source, sourceId: 'concurrent-source' };
+    await importer.import({
+      source: concurrentSource,
+      selectedSource: { ...selectedSource, sourceId: concurrentSource.sourceId },
+      adapter: adapter([{
+        nativeSessionId: 'native-2', nativeEventId: 'event-new', sequence: 0,
+        kind: 'message', role: 'user', text: 'opaque',
+        rawReference: { locatorClass: 'fixture', sequence: 0 },
+      }]),
+      workspaceId: 'workspace-1', policyVersion: '1.0.0',
+    });
+    const secondPage = repository.search({
+      query: 'opaque OR redacted', workspaceId: 'workspace-1', limit: 1,
+      cursor: firstPage.nextCursor!,
+    });
+    expect(secondPage.items).toHaveLength(1);
+    expect(secondPage.items[0].sourceId).toBe(source.sourceId);
+    expect(secondPage.items[0].eventId).not.toBe(firstPage.items[0].eventId);
     repository.close();
   });
 

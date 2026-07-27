@@ -156,6 +156,29 @@ describe.runIf(hasBetterSqlite3())('sessions CLI catalog lifecycle', () => {
     await sessionsHandler.execute(context(['show', sessionId, ...dbArgs]));
     expect(jsonOutput(log).data.events).toHaveLength(2);
 
+    await sessionsHandler.execute(context([
+      'search', 'opaque', '--workspace', 'workspace-fixture', '--role', 'assistant', ...dbArgs,
+    ]));
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'ok',
+      data: {
+        items: [{
+          provider: 'generic',
+          workspaceId: 'workspace-fixture',
+          sessionId,
+          citation: {
+            provider: 'generic',
+            sessionId,
+            eventId: expect.any(String),
+            importRunId: expect.any(String),
+            sourceId: 'generic-fixture-v1',
+            locatorClass: 'manual-export',
+          },
+        }],
+        page: { limit: 50, nextCursor: null },
+      },
+    });
+
     await sessionsHandler.execute(context(['tag', sessionId, 'decision', '--dry-run', ...dbArgs]));
     expect(jsonOutput(log).status).toBe('preview');
     await sessionsHandler.execute(context(['tag', sessionId, 'decision', ...dbArgs]));
