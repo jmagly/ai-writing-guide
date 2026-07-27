@@ -3,12 +3,14 @@ import { createRequire } from 'node:module';
 import {
   CandidateExtractionService,
   IncrementalSessionImporter,
+  MemoryPromotionGateway,
   SESSION_CONTRACT_VERSION,
   SessionRepository,
   StructuralCandidateExtractor,
   sha256,
   stableSessionId,
   type ProviderRecord,
+  type MemoryDestinationPlan,
   type SessionSource,
   type SessionSourceAdapter,
 } from '../../../src/sessions/index.js';
@@ -241,13 +243,53 @@ describe.runIf(hasBetterSqlite3())('transactional session repository and importe
       reviewer: 'reviewer-a',
       reason: 'invalid reversal',
     })).toThrow(/not allowed/);
-    expect(repository.reviewCandidate({
+    const destination = {
+      consumer: 'memory',
+      writes: 0,
+      plan(): MemoryDestinationPlan {
+        return {
+          consumer: 'memory',
+          destinationRef: '.aiwg/memory/candidate.md',
+          beforeHash: null,
+          afterHash: sha256('candidate memory'),
+          content: 'candidate memory',
+        };
+      },
+      write() { this.writes += 1; },
+    };
+    const gateway = new MemoryPromotionGateway(repository);
+    const promotionPreview = gateway.preview({
       candidateId: candidate.candidateId,
       version: 1,
-      toState: 'promoted',
+      destination,
+    });
+    const promotion = await gateway.promote({
+      candidateId: candidate.candidateId,
+      version: 1,
+      destination,
       reviewer: 'reviewer-a',
-      reason: 'promotion receipt linked',
-    })).toMatchObject({ fromState: 'accepted', toState: 'promoted' });
+      operationId: promotionPreview.operationId,
+    });
+    expect(promotion).toMatchObject({
+      candidateId: candidate.candidateId,
+      candidateVersion: 1,
+      evidenceEventIds: [candidate.evidence[0].eventId],
+      duplicate: false,
+    });
+    expect(repository.getCandidate(candidate.candidateId, 1)?.reviewState).toBe('promoted');
+    const repeatedPreview = gateway.preview({
+      candidateId: candidate.candidateId,
+      version: 1,
+      destination,
+    });
+    expect((await gateway.promote({
+      candidateId: candidate.candidateId,
+      version: 1,
+      destination,
+      reviewer: 'reviewer-b',
+      operationId: repeatedPreview.operationId,
+    })).duplicate).toBe(true);
+    expect(destination.writes).toBe(1);
     expect(repository.reviewCandidate({
       candidateId: candidate.candidateId,
       version: 1,

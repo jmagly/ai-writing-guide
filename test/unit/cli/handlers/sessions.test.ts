@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -211,6 +211,47 @@ describe.runIf(hasBetterSqlite3())('sessions CLI catalog lifecycle', () => {
     });
     await sessionsHandler.execute(context(['candidates', '--state', 'accepted', ...dbArgs]));
     expect(jsonOutput(log).data.items).toHaveLength(1);
+    const manifestDir = resolve(root, 'agentic/code/frameworks/memory');
+    mkdirSync(manifestDir, { recursive: true });
+    writeFileSync(resolve(manifestDir, 'manifest.json'), JSON.stringify({
+      id: 'memory',
+      memory: { topology: {
+        namespace: '.aiwg/memory',
+        derivedPages: { session: '.aiwg/memory/session-knowledge' },
+      } },
+    }));
+    await sessionsHandler.execute(context([
+      'promote', candidateId, '1', '--consumer', 'memory',
+      '--reviewer', 'fixture-reviewer', ...dbArgs,
+    ], root));
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'preview',
+      data: {
+        candidateId,
+        candidateVersion: 1,
+        consumer: 'memory',
+        confirmationRequired: true,
+        conflictsWith: [],
+        supersedes: [],
+      },
+    });
+    await sessionsHandler.execute(context([
+      'promote', candidateId, '1', '--consumer', 'memory',
+      '--reviewer', 'fixture-reviewer', '--confirm', ...dbArgs,
+    ], root));
+    const promoted = jsonOutput(log);
+    expect(promoted).toMatchObject({
+      status: 'ok',
+      data: { receipt: {
+        candidateId,
+        candidateVersion: 1,
+        consumer: 'memory',
+        duplicate: false,
+        evidenceEventIds: [expect.any(String)],
+      } },
+    });
+    expect(readFileSync(resolve(root, promoted.data.receipt.destinationRef), 'utf8'))
+      .toContain(`candidate_id: ${candidateId}`);
 
     await sessionsHandler.execute(context(['tag', sessionId, 'decision', '--dry-run', ...dbArgs]));
     expect(jsonOutput(log).status).toBe('preview');

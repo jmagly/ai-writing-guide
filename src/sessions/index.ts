@@ -8,6 +8,7 @@ export * from './ports.js';
 export * from './optional-backends.js';
 export * from './knowledge-shard.js';
 export * from './candidates.js';
+export * from './promotion.js';
 export * from './importer.js';
 export * from './adapters/generic.js';
 export * from './adapters/claude.js';

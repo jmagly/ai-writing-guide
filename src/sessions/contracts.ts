@@ -198,16 +198,21 @@ export const CandidateReviewReceiptSchema = z.object({
 export const PromotionReceiptSchema = z.object({
   contractVersion: z.literal(SESSION_CONTRACT_VERSION),
   receiptId: z.string().min(1),
+  operationId: z.string().min(1),
   candidateId: z.string().min(1),
   candidateVersion: z.number().int().positive(),
   consumer: z.string().min(1),
+  destinationRef: z.string().min(1),
   reviewer: z.string().min(1),
   approvedAt: z.string().datetime({ offset: true }),
+  evidenceEventIds: z.array(z.string().min(1)).min(1),
+  conflictsWith: z.array(z.string().min(1)),
+  supersedes: z.array(z.string().min(1)),
   beforeHash: DigestSchema.nullable(),
   afterHash: DigestSchema,
   dryRun: z.boolean(),
   duplicate: z.boolean(),
-});
+}).strict();
 
 export const DeletionReceiptSchema = z.object({
   contractVersion: z.literal(SESSION_CONTRACT_VERSION),

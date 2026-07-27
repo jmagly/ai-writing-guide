@@ -9,12 +9,15 @@ import {
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
   IncrementalSessionImporter,
+  FilesystemMemoryDestination,
+  MemoryPromotionGateway,
   SESSION_CONTRACT_VERSION,
   SESSION_PROVIDER_IDS,
   SessionContractError,
   SessionRepository,
   SessionSourceSchema,
   StructuralCandidateExtractor,
+  resolveMemoryConsumerManifest,
   assertSessionProviderId,
   redactSourceLocator,
   type SessionProviderId,
@@ -47,6 +50,7 @@ Commands:
   extract [session-id] --workspace <id> Extract structural candidates
   candidates [--state <state>]    List the candidate review queue
   review <id> <version> <state>   Record an explicit review transition
+  promote <id> <version>          Preview promotion; use --confirm to write
   tag <session-id> <tag>          Add a catalog tag
   relocate <source-id> <file>     Update AIWG source-location metadata
   reindex                         Rebuild catalog indexes
@@ -58,6 +62,7 @@ Options:
   --dry-run       Preview a mutation without changing state
   --db <path>     Override .aiwg/sessions/catalog.sqlite
   --provider <id> Filter list or select an import adapter
+  --consumer <id> Select a named memory consumer for promotion
   --workspace <id>, --tag <tag>, --limit <n>, --cursor <n>`;
 
 export const sessionsHandler: CommandHandler = {
@@ -246,6 +251,35 @@ async function executeCommand(
           reviewer: requiredValue(args, '--reviewer'),
           reason: requiredValue(args, '--reason'),
         }));
+      }
+      case 'promote': {
+        const candidateId = requiredPositional(args, 0, 'candidate-id');
+        const version = boundedInteger(
+          requiredPositional(args, 1, 'version'),
+          1,
+          1,
+          Number.MAX_SAFE_INTEGER,
+          'version',
+        );
+        const consumer = requiredValue(args, '--consumer');
+        const destination = new FilesystemMemoryDestination({
+          projectRoot: ctx.cwd,
+          consumer,
+          manifestPath: resolveMemoryConsumerManifest(ctx.cwd, consumer),
+        });
+        const gateway = new MemoryPromotionGateway(repository);
+        const promotionPreview = gateway.preview({ candidateId, version, destination });
+        if (!args.flags.has('--confirm') || isDryRun(ctx, args)) {
+          return preview(command, promotionPreview);
+        }
+        const receipt = await gateway.promote({
+          candidateId,
+          version,
+          destination,
+          reviewer: requiredValue(args, '--reviewer'),
+          operationId: promotionPreview.operationId,
+        });
+        return ok(command, { preview: promotionPreview, receipt });
       }
       case 'tag': {
         const id = requiredPositional(args, 0, 'session-id');
@@ -445,6 +479,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     '--date-from', '--date-to', '--participant', '--model', '--role', '--tool',
     '--entity', '--sensitivity', '--extraction-state',
     '--state', '--reviewer', '--reason', '--policy-version', '--min-confidence',
+    '--consumer',
   ]);
   let command: string | undefined;
   for (let index = 0; index < argv.length; index += 1) {

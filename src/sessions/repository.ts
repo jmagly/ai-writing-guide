@@ -1,11 +1,13 @@
 import { createRequire } from 'node:module';
 import type {
   CandidateReviewReceipt, ImportCheckpoint, ImportRun, IntelligenceCandidate,
+  PromotionReceipt,
   Session, SessionEvent, SessionSource,
 } from './contracts.js';
 import {
   CandidateReviewReceiptSchema,
   IntelligenceCandidateSchema,
+  PromotionReceiptSchema,
   SessionContractError,
   sha256,
 } from './contracts.js';
@@ -168,6 +170,14 @@ export class SessionRepository {
       CREATE TABLE IF NOT EXISTS candidate_review_receipts (
         receipt_id TEXT PRIMARY KEY, candidate_id TEXT NOT NULL,
         candidate_version INTEGER NOT NULL, data TEXT NOT NULL,
+        FOREIGN KEY(candidate_id, candidate_version)
+          REFERENCES intelligence_candidates(candidate_id, version)
+      );
+      CREATE TABLE IF NOT EXISTS promotion_receipts (
+        receipt_id TEXT PRIMARY KEY, candidate_id TEXT NOT NULL,
+        candidate_version INTEGER NOT NULL, consumer TEXT NOT NULL,
+        data TEXT NOT NULL,
+        UNIQUE(candidate_id, candidate_version, consumer),
         FOREIGN KEY(candidate_id, candidate_version)
           REFERENCES intelligence_candidates(candidate_id, version)
       );
@@ -572,6 +582,59 @@ export class SessionRepository {
     return review();
   }
 
+  getPromotionReceipt(
+    candidateId: string,
+    version: number,
+    consumer: string,
+  ): PromotionReceipt | null {
+    const row = this.db.prepare(
+      `SELECT data FROM promotion_receipts
+       WHERE candidate_id=? AND candidate_version=? AND consumer=?`,
+    ).get(candidateId, version, consumer);
+    return row ? JSON.parse(String(row.data)) as PromotionReceipt : null;
+  }
+
+  recordPromotion(receiptInput: PromotionReceipt): PromotionReceipt {
+    const record = this.db.transaction(() => {
+      const receipt = PromotionReceiptSchema.parse(receiptInput);
+      const existing = this.getPromotionReceipt(
+        receipt.candidateId,
+        receipt.candidateVersion,
+        receipt.consumer,
+      );
+      if (existing) return { ...existing, duplicate: true };
+      const candidate = this.getCandidate(receipt.candidateId, receipt.candidateVersion);
+      if (!candidate || candidate.reviewState !== 'accepted') {
+        throw new SessionContractError(
+          'OPERATION_NOT_AUTHORIZED',
+          'promotion requires an accepted exact candidate version',
+        );
+      }
+      const evidenceIds = [...new Set(candidate.evidence.map((item) => item.eventId))].sort();
+      if (JSON.stringify(evidenceIds) !== JSON.stringify([...receipt.evidenceEventIds].sort())) {
+        throw new SessionContractError('IMPORT_CONFLICT', 'promotion lineage does not match candidate evidence');
+      }
+      this.db.prepare(
+        `INSERT INTO promotion_receipts
+         (receipt_id, candidate_id, candidate_version, consumer, data)
+         VALUES (?, ?, ?, ?, ?)`,
+      ).run(
+        receipt.receiptId,
+        receipt.candidateId,
+        receipt.candidateVersion,
+        receipt.consumer,
+        JSON.stringify(receipt),
+      );
+      candidate.reviewState = 'promoted';
+      this.db.prepare(
+        `UPDATE intelligence_candidates SET review_state='promoted', data=?
+         WHERE candidate_id=? AND version=?`,
+      ).run(JSON.stringify(candidate), candidate.candidateId, candidate.version);
+      return receipt;
+    });
+    return record();
+  }
+
   private assertCandidateEvidence(candidate: IntelligenceCandidate): void {
     for (const evidence of candidate.evidence) {
       const row = this.db.prepare(
@@ -808,7 +871,7 @@ function allowedCandidateTransition(
   > = {
     pending: new Set(['accepted', 'rejected', 'deferred']),
     deferred: new Set(['pending', 'accepted', 'rejected']),
-    accepted: new Set(['promoted', 'superseded']),
+    accepted: new Set(['superseded']),
     promoted: new Set(['superseded']),
     rejected: new Set(),
     superseded: new Set(),

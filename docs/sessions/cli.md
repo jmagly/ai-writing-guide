@@ -30,6 +30,8 @@ aiwg sessions extract [session-id] --workspace <id>
 aiwg sessions candidates [--state <state>] [--json]
 aiwg sessions review <candidate-id> <version> <state>
                      --reviewer <id> --reason <text> [--dry-run] [--json]
+aiwg sessions promote <candidate-id> <version> --consumer <id>
+                      --reviewer <id> [--confirm] [--dry-run] [--json]
 aiwg sessions tag <session-id> <tag> [--dry-run] [--json]
 aiwg sessions relocate <source-id> <file> [--dry-run] [--json]
 aiwg sessions reindex [--dry-run] [--json]
@@ -79,16 +81,25 @@ Candidates begin in `pending`. Supported review transitions are:
 ```text
 pending  -> accepted | rejected | deferred
 deferred -> pending | accepted | rejected
-accepted -> promoted | superseded
+accepted -> superseded
 promoted -> superseded
 ```
 
-Each transition requires a reviewer and reason and creates a content-free
-receipt. Rejected and superseded versions are terminal. Extraction and review
+Each review transition requires a reviewer and reason and creates a content-free
+receipt. `accepted -> promoted` is reserved for the promotion gateway and its
+destination receipt. Rejected and superseded versions are terminal. Extraction and review
 do not write durable memory; `durableMemoryWrites` remains zero. Repeating an
 unchanged extraction returns the existing candidate version, while changed
 content under the same evidence identity creates a new pending version.
-Promotion is a separate explicit milestone and command contract.
+
+`promote` requires an exact accepted candidate version and a named consumer
+whose manifest declares an `.aiwg/` memory topology. It previews by default,
+showing the destination, before/after hashes, evidence event IDs, conflicts,
+supersession links, and a confirmation-bound operation ID. `--confirm` writes
+the derived memory page and records the source-event → candidate → destination
+lineage receipt. Repeating the same promotion returns the original receipt as
+a duplicate and does not write again. Unreviewed candidates are never promoted
+automatically.
 
 ## Optional semantic and Fortemi integration
 
