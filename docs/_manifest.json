@@ -443,7 +443,8 @@
     "frameworks/media-curator/type-flexible-curation",
     "blog/2026-07-aiwg-workflow-portability",
     "addons/line-memory",
-    "addons/line-memory/overview"
+    "addons/line-memory/overview",
+    "blog/2026-07-aiwg-discovery-first"
   ],
   "sections": [
     {
@@ -3341,6 +3342,13 @@
       "title": "If your agent workflow only lives in chat, you do not have a workflow",
       "summary": "A practical test for whether an agent workflow is portable: can the project carry the capability, can another operator discover it, and can a handoff survive without private prompt memory?",
       "file": "blog/2026-07-aiwg-workflow-portability.md",
+      "parent": "blog"
+    },
+    {
+      "id": "blog/2026-07-aiwg-discovery-first",
+      "title": "Your agent should search the toolbox before pretending it knows every tool",
+      "summary": "Discovery-first agent tooling turns a giant prompt menu into a debuggable routing layer: ask by intent, inspect the match, then run the right capability.",
+      "file": "blog/2026-07-aiwg-discovery-first.md",
       "parent": "blog"
     }
   ]
