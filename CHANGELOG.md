@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.22] - 2026-07-28 - "Configurable threat policy and complete capability discovery"
+
 ### Added
 
 - **Agentic install, repair, and upgrade flow** - a public
@@ -16,6 +18,16 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   source-checkout development mode by default, deploys `all`, builds indices,
   regenerates provider context, and verifies engagement before declaring
   success.
+- **Configurable threat-assessment policy** - projects can select `off`,
+  `audit`, or `enforce`, use built-in or custom composable profiles, and apply
+  isolated policy to issue, pull-request, review, outbound-comment,
+  release-note, and handoff surfaces. Typed config, schemas, fail-closed
+  validation, deterministic evidence, and narrow attributable risk acceptance
+  make the applied rule and action auditable (#1938).
+- **Discoverable LLM Wiki operations** - the addon now has a canonical
+  operational driver, so capability discovery can route users to its setup,
+  ingest, query, and maintenance workflows instead of exposing an inert bundle
+  (#1957).
 
 ### Changed
 
@@ -23,6 +35,35 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   the same agentic installer and manual fallback. Restarting the provider is a
   verified compatibility fallback after indexing and regeneration rather than
   a routine first-run requirement.
+- **Complete component discovery coverage** - every shipped framework, addon,
+  extension, plugin, and packaged operational component must resolve to an
+  indexed driver or an explicit exemption. CI emits a coverage report and
+  fails when a component becomes undiscoverable (#1958).
+- **Session import lifecycle evidence** - imported provider histories preserve
+  origin timelines, terminal lifecycle states, and relocation evidence across
+  supported session adapters, with regression fixtures covering the normalized
+  contract.
+
+### Fixed
+
+- **Release manifest binding** - signed web-release manifests bind to the exact
+  signed-tag commit, preventing a later branch head from being substituted
+  during publication.
+- **Release CI dependencies** - publish tests install the optional SQLite
+  backend without weakening the minimum-release-age policy used by dependency
+  gates.
+- **Threat-assessment false positives** - negative, quoted, documentation, and
+  explicit out-of-scope secret warnings no longer become requested credential
+  probing under the balanced profile, while malicious variants remain
+  detected (#1922, #1938).
+
+### Security
+
+- **Surface-aware forge-content gates** - one provider-neutral engine now
+  assesses untrusted issue, PR, diff-summary, review, release, and handoff
+  content before it influences execution or is amplified through maintainer
+  communication. Independent repository authorization and platform safeguards
+  remain additive (#1938).
 
 ## [2026.7.21] - 2026-07-27 - "Portable skills, session intelligence, and conversational guidance"
 
