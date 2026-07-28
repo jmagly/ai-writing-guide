@@ -53,5 +53,4 @@ If inference reports multiple workspace candidates, rerun with the exact
 
 The catalog contains normalized AIWG copies. Discovery and import never modify
 provider histories, and source paths are redacted from public command output.
-See [Session Catalog CLI](../sessions/cli.md) for manifest, locking, coverage,
-timeline, deletion, and JSON contracts.
+Use `aiwg sessions --help` for the complete command and JSON contracts.
