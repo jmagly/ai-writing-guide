@@ -62,9 +62,16 @@ import {
   listOnDemandRuleFiles,
   writeOnDemandRuleIndex,
   deploySoulCompanions,
-  parseFrontmatter
+  parseFrontmatter,
+  resolveAiwgRoot
 } from './base.mjs';
 const modelCatalog = loadRuntimeModelCatalog(staticModelCatalog);
+
+function resolveCodexHelperRoot(srcRoot) {
+  const resolved = resolveAiwgRoot(srcRoot);
+  if (resolved) return resolved;
+  return path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..', '..');
+}
 
 // ============================================================================
 // Provider Configuration
@@ -239,7 +246,8 @@ export function deployAgents(agentFiles, targetDir, opts) {
  * script use its default home directory location.
  */
 export async function deployCommands(targetDir, srcRoot, opts) {
-  const scriptPath = path.join(srcRoot, 'tools', 'commands', 'deploy-prompts-codex.mjs');
+  const helperRoot = resolveCodexHelperRoot(srcRoot);
+  const scriptPath = path.join(helperRoot, 'tools', 'commands', 'deploy-prompts-codex.mjs');
 
   if (!fs.existsSync(scriptPath)) {
     console.warn(`Codex prompts deployment script not found at ${scriptPath}`);
@@ -258,7 +266,7 @@ export async function deployCommands(targetDir, srcRoot, opts) {
 
     const child = spawn('node', [scriptPath, ...args], {
       stdio: 'inherit',
-      cwd: srcRoot
+      cwd: helperRoot
     });
 
     child.on('close', (code) => {
@@ -274,7 +282,8 @@ export async function deployCommands(targetDir, srcRoot, opts) {
  * Deploy skills via external script
  */
 export async function deploySkills(targetDir, srcRoot, opts) {
-  const scriptPath = path.join(srcRoot, 'tools', 'skills', 'deploy-skills-codex.mjs');
+  const helperRoot = resolveCodexHelperRoot(srcRoot);
+  const scriptPath = path.join(helperRoot, 'tools', 'skills', 'deploy-skills-codex.mjs');
 
   if (!fs.existsSync(scriptPath)) {
     console.warn(`Codex skills deployment script not found at ${scriptPath}`);
@@ -300,7 +309,7 @@ export async function deploySkills(targetDir, srcRoot, opts) {
 
     const child = spawn('node', [scriptPath, ...args], {
       stdio: 'inherit',
-      cwd: srcRoot
+      cwd: helperRoot
     });
 
     child.on('close', (code) => {

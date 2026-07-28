@@ -16,6 +16,7 @@ import type { ProjectLocalType } from '../extensions/manifest.js';
 import { normalizeNamedCaptures } from '../artifacts/index-builder.js';
 import {
   getProviderDefinition,
+  getProviderKernelSkillPath,
   PROVIDER_IDS,
   resolveProviderPathValue,
 } from '../providers/provider-definitions.js';
@@ -1571,12 +1572,13 @@ export async function hashManifest(manifestPath: string): Promise<string | undef
 function getProviderDeployDirs(
   provider: string,
   projectDir: string,
-): { agents: string; skills: string; commands: string; rules: string } | null {
+): { agents: string; skills: string; kernelSkills: string; commands: string; rules: string } | null {
   const artifacts = getProviderDefinition(provider)?.paths.artifacts;
   if (!artifacts) return null;
   return {
     agents: resolveProviderPathValue(artifacts.agents, projectDir),
     skills: resolveProviderPathValue(artifacts.skills, projectDir),
+    kernelSkills: resolveProviderPathValue(getProviderKernelSkillPath(provider), projectDir),
     commands: resolveProviderPathValue(artifacts.commands, projectDir),
     rules: resolveProviderPathValue(artifacts.rules, projectDir),
   };
@@ -1627,7 +1629,11 @@ export async function populateDeployedTo(
     const counts: DeployedArtifactCounts = {
       agents:   await countDeployedInDir(projectDir, dirs.agents,   'md'),
       commands: await countDeployedInDir(projectDir, dirs.commands, 'md'),
-      skills:   await countDeployedInDir(projectDir, dirs.skills,   'dirs'),
+      skills:
+        (await countDeployedInDir(projectDir, dirs.skills, 'dirs')) +
+        (dirs.kernelSkills && dirs.kernelSkills !== dirs.skills
+          ? await countDeployedInDir(projectDir, dirs.kernelSkills, 'dirs')
+          : 0),
       rules:    await countDeployedInDir(projectDir, dirs.rules,    'md'),
     };
 

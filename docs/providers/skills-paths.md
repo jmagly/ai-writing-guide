@@ -47,6 +47,9 @@ Deploying to `.agents/skills/` is the most portable option if you need a single 
   skills to `~/.agents/skills/`. The legacy `~/.codex/skills/` home dir is no
   longer written; AIWG-managed dirs left there by pre-fix versions are pruned
   on every codex skill deploy.
+- Project-local addon skills deployed via `aiwg use <addon> --provider codex`
+  also land in `.agents/skills/`; `.codex/.aiwg/skills/` remains the indexed
+  artifact tier, not the Codex native runtime discovery path.
 - **Duplicate-listing regression (fixed):** #766's first fix *added* the
   `.agents/skills/` write but never *removed* the legacy `~/.codex/skills/`
   write. codex-rs scans both, so every kernel skill appeared twice in the
@@ -221,4 +224,4 @@ Not all providers have a native plugin marketplace. The table below distinguishe
 
 ---
 
-*Last verified: 2026-04-06. Re-verify before implementing path changes — source repos move fast.*
+*Last verified: 2026-07-28. Re-verify before implementing path changes — source repos move fast.*

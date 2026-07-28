@@ -340,6 +340,11 @@ function deploySkill(skill, targetDir, opts) {
 function getSkillDirectories(srcRoot, mode) {
   const dirs = [];
 
+  const directSkillsDir = path.join(srcRoot, 'skills');
+  if (fs.existsSync(directSkillsDir)) {
+    dirs.push({ dir: directSkillsDir, label: path.basename(srcRoot) });
+  }
+
   // Addon skills
   if (mode === 'addons' || mode === 'all') {
     const addonsRoot = path.join(srcRoot, 'agentic', 'code', 'addons');

@@ -708,7 +708,8 @@ function printSessionReloadNotice(provider: string): void {
  */
 async function countDeployedArtifacts(
   target: string,
-  paths: { agents: string; skills: string; commands: string; rules: string; behaviors: string }
+  paths: { agents: string; skills: string; commands: string; rules: string; behaviors: string },
+  provider?: string
 ): Promise<{ agents: number; commands: number; skills: number; rules: number; behaviors: number }> {
   const countMd = async (dir: string): Promise<number> => {
     if (!dir) return 0;
@@ -760,13 +761,11 @@ async function countDeployedArtifacts(
     }
   };
   // Kernel skills deploy to the platform-native skills dir (always-loaded
-  // set) while standard skills sequester under <provider>/.aiwg/skills (the
-  // index-driven discovery tier). Both contribute to the deployed surface,
-  // so both must be counted (#1228). Derive the kernel path by stripping
-  // the `.aiwg/` segment from the standard path.
-  const kernelSkillsPath = paths.skills
-    ? paths.skills.replace(/(^|\/)\.aiwg\/skills?$/, '$1skills')
-    : '';
+  // set) while standard skills may sequester under <provider>/.aiwg/skills.
+  // Count the provider-declared kernel path directly; deriving it by stripping
+  // `.aiwg/` from the standard path produced `.codex/skills` instead of
+  // Codex's native `.agents/skills` path (#766).
+  const kernelSkillsPath = provider ? getProviderKernelSkillsPath(provider) : '';
   return {
     agents: await countMd(paths.agents),
     commands: await countMd(paths.commands),
@@ -930,6 +929,130 @@ async function countBundleSourceArtifacts(
   };
 }
 
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function resolveDeployPath(target: string, deployPath: string): string {
+  return path.isAbsolute(deployPath) ? deployPath : path.join(target, deployPath);
+}
+
+async function listBundleMdStems(bundlePath: string, subdir: string): Promise<string[]> {
+  try {
+    const entries = await fs.readdir(path.join(bundlePath, subdir));
+    return entries
+      .filter(entry => entry.endsWith('.md'))
+      .map(entry => path.basename(entry, '.md'));
+  } catch {
+    return [];
+  }
+}
+
+async function countDeployedBundleFiles(
+  bundlePath: string,
+  subdir: string,
+  target: string,
+  deployPath: string,
+  extensions: string[],
+): Promise<number> {
+  if (!deployPath) return 0;
+  const stems = await listBundleMdStems(bundlePath, subdir);
+  if (stems.length === 0) return 0;
+  const destDir = resolveDeployPath(target, deployPath);
+  let count = 0;
+  for (const stem of stems) {
+    for (const ext of extensions) {
+      if (await fileExists(path.join(destDir, `${stem}${ext}`))) {
+        count++;
+        break;
+      }
+    }
+  }
+  return count;
+}
+
+async function listBundleSkillNameCandidates(bundlePath: string): Promise<string[][]> {
+  const skillsRoot = path.join(bundlePath, 'skills');
+  try {
+    const entries = await fs.readdir(skillsRoot, { withFileTypes: true });
+    const candidates: string[][] = [];
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const sourceName = entry.name;
+      const skillMd = path.join(skillsRoot, sourceName, 'SKILL.md');
+      let deployedName = sourceName;
+      try {
+        const content = await fs.readFile(skillMd, 'utf-8');
+        const match = content.match(/^---\s*\n([\s\S]*?)\n---/);
+        if (match) {
+          const parsed = YAML.parse(match[1]);
+          if (typeof parsed?.name === 'string' && parsed.name.trim()) {
+            deployedName = parsed.name.trim();
+          }
+        }
+      } catch {
+        // Missing or invalid frontmatter still leaves the source dir name as
+        // the best deployed-name approximation for providers that copy dirs.
+      }
+      candidates.push([...new Set([deployedName, sourceName])]);
+    }
+    return candidates;
+  } catch {
+    return [];
+  }
+}
+
+async function countDeployedBundleSkills(
+  bundlePath: string,
+  target: string,
+  provider: string,
+  paths: ProviderArtifactPathStrings,
+): Promise<number> {
+  const skillCandidates = await listBundleSkillNameCandidates(bundlePath);
+  if (skillCandidates.length === 0) return 0;
+  const candidateDirs = [
+    paths.skills,
+    getProviderKernelSkillsPath(provider),
+  ]
+    .filter(Boolean)
+    .map(dir => resolveDeployPath(target, dir));
+  const uniqueCandidateDirs = [...new Set(candidateDirs)];
+
+  let count = 0;
+  for (const names of skillCandidates) {
+    let found = false;
+    for (const dir of uniqueCandidateDirs) {
+      for (const name of names) {
+        if (!(await fileExists(path.join(dir, name, 'SKILL.md')))) continue;
+        count++;
+        found = true;
+        break;
+      }
+      if (found) break;
+    }
+  }
+  return count;
+}
+
+async function countBundleDeployedArtifacts(
+  bundlePath: string,
+  target: string,
+  provider: string,
+): Promise<{ agents: number; commands: number; skills: number; rules: number }> {
+  const paths = getProviderPaths(provider);
+  return {
+    agents: await countDeployedBundleFiles(bundlePath, 'agents', target, paths.agents, ['.md', '.toml']),
+    commands: await countDeployedBundleFiles(bundlePath, 'commands', target, paths.commands, ['.md']),
+    skills: await countDeployedBundleSkills(bundlePath, target, provider, paths),
+    rules: await countDeployedBundleFiles(bundlePath, 'rules', target, paths.rules, ['.md', '.mdc']),
+  };
+}
+
 /**
  * Deploy a single project-local bundle to one provider via deploy-agents.mjs.
  * Runs the same script and flags used for upstream addons, with the bundle
@@ -949,26 +1072,26 @@ async function deployOneProjectLocalBundle(opts: {
   modelArgs: string[];
 }): Promise<{ exitCode: number; counts: { agents: number; commands: number; skills: number; rules: number } }> {
   const { bundle, ctx, frameworkRoot, provider, target, dryRun, verbose, quiet, modelArgs } = opts;
-  const counts = await countBundleSourceArtifacts(bundle.artifactPath);
-  const artifactTotal = counts.agents + counts.commands + counts.skills + counts.rules;
+  const sourceCounts = await countBundleSourceArtifacts(bundle.artifactPath);
+  const artifactTotal = sourceCounts.agents + sourceCounts.commands + sourceCounts.skills + sourceCounts.rules;
   let cliCommandCount = 0;
   try {
     const contribution = await loadCliCommandsContribution(bundle.artifactPath);
     cliCommandCount = contribution ? Object.keys(contribution.manifest.subcommands).length : 0;
   } catch (error) {
     ui.warn(`Invalid CLI contribution for project-local '${bundle.id}': ${(error as Error).message}`);
-    return { exitCode: 1, counts };
+    return { exitCode: 1, counts: sourceCounts };
   }
   if (verbose || dryRun) {
     ui.dim(
-      `  Artifacts: agents=${counts.agents} commands=${counts.commands} skills=${counts.skills} rules=${counts.rules} cli=${cliCommandCount}`,
+      `  Artifacts: agents=${sourceCounts.agents} commands=${sourceCounts.commands} skills=${sourceCounts.skills} rules=${sourceCounts.rules} cli=${cliCommandCount}`,
     );
   }
   if (artifactTotal === 0 && cliCommandCount === 0) {
     ui.warn(
       `Project-local ${bundle.type} '${bundle.id}' has no deployable agents, commands, skills, rules, or CLI commands at ${bundle.artifactPath}`,
     );
-    return { exitCode: 1, counts };
+    return { exitCode: 1, counts: sourceCounts };
   }
 
   let exitCode = 0;
@@ -1026,8 +1149,9 @@ async function deployOneProjectLocalBundle(opts: {
     }
   }
 
-  // Approximate counts from the bundle's source dirs (deploy-agents.mjs is
-  // idempotent and copies file-for-file from these dirs)
+  const counts = exitCode === 0 && !dryRun
+    ? await countBundleDeployedArtifacts(bundle.artifactPath, target, provider)
+    : sourceCounts;
   void ctx;
   return { exitCode, counts };
 }
@@ -2140,7 +2264,7 @@ export class UseHandler implements CommandHandler {
               cwd: target,
             });
 
-            const counts = await countDeployedArtifacts(target, paths);
+            const counts = await countDeployedArtifacts(target, paths, providerName);
             if (quiet) {
               ui.blank();
               if (counts.agents > 0) ui.deployCount('Agents', counts.agents);
@@ -2853,7 +2977,7 @@ export class UseHandler implements CommandHandler {
     if (quiet) {
       // Count deployed artifacts
       const paths = getProviderPaths(provider);
-      counts = await countDeployedArtifacts(target, paths);
+      counts = await countDeployedArtifacts(target, paths, provider);
       if (counts.agents > 0) ui.deployCount('Agents', counts.agents);
       if (counts.commands > 0) ui.deployCount('Commands', counts.commands);
       if (counts.skills > 0) ui.deployCount('Skills', counts.skills);
