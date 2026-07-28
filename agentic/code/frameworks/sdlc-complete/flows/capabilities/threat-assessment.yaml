@@ -1,0 +1,19 @@
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: threat-assessment
+  labels:
+    domain: security
+    control: deterministic-pre-action
+spec:
+  description: Resolve the active workspace member's versioned threat-assessment policy and evaluate one explicit forge-content surface with the shared provider-neutral engine.
+  version: "1.0.0"
+  inputs:
+    - { name: engine, type: string, required: true }
+    - { name: surface, type: string, required: true }
+    - { name: policy, type: string, required: true }
+    - { name: content, type: string, required: true }
+  outputs:
+    - { name: threat_assessment_report, type: object }
+  agent: security-gatekeeper
+  idempotent: true

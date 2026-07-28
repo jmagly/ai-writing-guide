@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/security/threat-assessment-report.v1.schema.json",
+  "title": "ThreatAssessmentReport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "engineVersion",
+    "policyVersion",
+    "profileVersion",
+    "policyHash",
+    "mode",
+    "profile",
+    "surface",
+    "source",
+    "actor",
+    "requestedAction",
+    "policyProvenance",
+    "assessed",
+    "findings",
+    "risk",
+    "decision"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "engineVersion": { "type": "string", "minLength": 1 },
+    "policyVersion": { "type": "string", "minLength": 1 },
+    "profileVersion": { "type": "string", "minLength": 1 },
+    "policyHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "mode": { "enum": ["off", "audit", "enforce"] },
+    "profile": { "type": "string", "minLength": 1 },
+    "surface": {
+      "enum": ["issue-title", "issue-body", "issue-comment", "pull-request-title", "pull-request-body", "pull-request-diff-summary", "review-comment", "release-note", "handoff", "outbound-maintainer-comment"]
+    },
+    "source": { "type": "object", "additionalProperties": true },
+    "actor": { "type": "object", "additionalProperties": true },
+    "requestedAction": { "type": "string" },
+    "policyProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "path"],
+      "properties": {
+        "source": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    },
+    "assessed": { "type": "boolean" },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/finding" }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "severity", "likelihood", "impact"],
+      "properties": {
+        "score": { "type": "number", "minimum": 0 },
+        "severity": { "$ref": "#/definitions/severity" },
+        "likelihood": { "type": "number", "minimum": 0, "maximum": 5 },
+        "impact": { "type": "number", "minimum": 0, "maximum": 5 }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "wouldAction", "interrupts", "reason"],
+      "properties": {
+        "action": { "$ref": "#/definitions/action" },
+        "wouldAction": { "$ref": "#/definitions/action" },
+        "interrupts": { "type": "boolean" },
+        "reason": { "type": "string" },
+        "matchedMandatoryRule": { "type": "string" }
+      }
+    }
+  },
+  "definitions": {
+    "severity": {
+      "enum": ["informational", "low", "moderate", "high", "critical"]
+    },
+    "action": {
+      "enum": ["proceed", "record", "flag", "require-authorization", "reject"]
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ruleId", "ruleProvenance", "severity", "likelihood", "impact", "taxonomy", "partId", "context", "evidence", "suppressed", "matchedStatements"],
+      "properties": {
+        "ruleId": { "type": "string" },
+        "ruleProvenance": { "type": "string" },
+        "severity": { "$ref": "#/definitions/severity" },
+        "likelihood": { "type": "number", "minimum": 1, "maximum": 5 },
+        "impact": { "type": "number", "minimum": 1, "maximum": 5 },
+        "taxonomy": { "type": "array", "items": { "type": "string" } },
+        "partId": { "type": "string" },
+        "context": { "enum": ["requested", "negative", "quoted", "documentation"] },
+        "evidence": { "type": "string" },
+        "suppressed": { "type": "boolean" },
+        "suppressionReason": { "type": "string" },
+        "matchedStatements": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

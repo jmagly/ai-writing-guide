@@ -53,15 +53,52 @@
         "threatAssessment": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["surface", "verdict"],
+          "required": ["surface", "mode", "profile", "policyVersion", "profileVersion", "policyHash", "policyProvenance", "action", "wouldAction", "severity"],
           "properties": {
             "surface": {
-              "enum": ["issue", "pull-request", "review-comment", "outbound-communication"]
+              "enum": ["issue-title", "issue-body", "issue-comment", "pull-request-title", "pull-request-body", "pull-request-diff-summary", "review-comment", "release-note", "handoff", "outbound-maintainer-comment"]
+            },
+            "mode": {
+              "enum": ["off", "audit", "enforce"]
+            },
+            "profile": {
+              "type": "string",
+              "minLength": 1
+            },
+            "policyVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "profileVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "policyHash": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "policyProvenance": {
+              "type": "string",
+              "minLength": 1
+            },
+            "action": {
+              "$ref": "#/definitions/threatAction"
+            },
+            "wouldAction": {
+              "$ref": "#/definitions/threatAction"
+            },
+            "severity": {
+              "enum": ["informational", "low", "moderate", "high", "critical"]
             },
             "verdict": {
-              "enum": ["safe", "flag", "reject"]
+              "enum": ["safe", "flag", "reject"],
+              "description": "Optional compatibility verdict for issue-oriented consumers."
             },
-            "signals": {
+            "ruleIds": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "statementIds": {
               "type": "array",
               "items": { "type": "string" }
             },
@@ -95,6 +132,7 @@
     }
   },
   "definitions": {
-    "tier": { "enum": ["collaborator", "maintainer", "admin"] }
+    "tier": { "enum": ["collaborator", "maintainer", "admin"] },
+    "threatAction": { "enum": ["proceed", "record", "flag", "require-authorization", "reject"] }
   }
 }

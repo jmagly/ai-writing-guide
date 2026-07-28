@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/security/threat-assessment-input.v1.schema.json",
+  "title": "ThreatAssessmentInput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["surface"],
+  "properties": {
+    "surface": {
+      "type": "string",
+      "enum": ["issue-title", "issue-body", "issue-comment", "pull-request-title", "pull-request-body", "pull-request-diff-summary", "review-comment", "release-note", "handoff", "outbound-maintainer-comment"]
+    },
+    "content": { "type": "string" },
+    "semanticContext": {
+      "type": "string",
+      "enum": ["requested", "negative", "quoted", "documentation"]
+    },
+    "parts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["text"],
+        "properties": {
+          "id": { "type": "string" },
+          "text": { "type": "string" },
+          "context": {
+            "type": "string",
+            "enum": ["requested", "negative", "quoted", "documentation"]
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "kind": { "type": "string" },
+        "id": { "type": ["string", "number"] }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string" },
+        "trust": { "type": "string" },
+        "provider": { "type": "string" }
+      }
+    },
+    "requestedAction": { "type": "string" }
+  },
+  "oneOf": [
+    { "required": ["content"] },
+    { "required": ["parts"] }
+  ]
+}

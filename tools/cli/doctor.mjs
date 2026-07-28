@@ -51,6 +51,10 @@ const { readAiwgConfig } = await importImpl(
   import.meta.url,
   'config/aiwg-config.js'
 );
+const { validateThreatAssessmentConfig } = await importImpl(
+  import.meta.url,
+  'security/threat-assessment-config.js'
+);
 const { collectPackagedAgentInventory, diagnoseOversizedAgent } = await importImpl(
   import.meta.url,
   'agents/packaged-agent-inventory.js'
@@ -1585,6 +1589,26 @@ async function runDoctor() {
     }
   } catch {
     // Non-fatal — skip silently
+  }
+
+  // 11e. Validate configurable forge-content threat policy (#1938).
+  try {
+    const threatConfigPath = path.join(process.cwd(), '.aiwg', 'aiwg.config');
+    if (await fileExists(threatConfigPath)) {
+      const raw = JSON.parse(await fs.readFile(threatConfigPath, 'utf-8'));
+      const errors = validateThreatAssessmentConfig(raw.security?.threatAssessment);
+      if (errors.length) {
+        check('Threat Assessment Policy', 'error', errors.join('; '));
+      } else {
+        const policy = raw.security?.threatAssessment;
+        const profile = policy?.defaultProfile || 'balanced';
+        const mode = policy?.mode || 'enforce';
+        const source = policy ? '.aiwg/aiwg.config' : 'backward-compatible default';
+        check('Threat Assessment Policy', 'ok', `mode=${mode} profile=${profile} (${source})`);
+      }
+    }
+  } catch (error) {
+    check('Threat Assessment Policy', 'error', error.message);
   }
 
   // Permission normalization health (#1800). Errors fail closed in the

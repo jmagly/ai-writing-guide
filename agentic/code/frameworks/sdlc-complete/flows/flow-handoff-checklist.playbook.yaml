@@ -64,9 +64,24 @@ spec:
       outputs:
         - name: handoff_report
 
+    - id: assess-handoff-content
+      capability: threat-assessment
+      depends_on: [checklist-validation]
+      inputs:
+        - name: engine
+          value: tools/security/threat-assessment.mjs
+        - name: surface
+          value: handoff
+        - name: policy
+          value: .aiwg/aiwg.config#security.threatAssessment
+        - name: content
+          from: steps.checklist-validation.outputs.handoff_report
+      outputs:
+        - name: threat_assessment_report
+
     - id: obtain-signoffs
       capability: handoff-obtain-signoffs
-      depends_on: [checklist-validation]
+      depends_on: [assess-handoff-content]
       outputs:
         - name: signoff_status
 

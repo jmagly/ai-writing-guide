@@ -56,6 +56,16 @@
       "$ref": "#/definitions/Authorization",
       "description": "Versioned provider-neutral permission, role, assignment, scope, boundary, and provider mapping model. Deny by default."
     },
+    "security": {
+      "type": "object",
+      "description": "Project-owned deterministic security policy.",
+      "additionalProperties": false,
+      "properties": {
+        "threatAssessment": {
+          "$ref": "#/definitions/ThreatAssessment"
+        }
+      }
+    },
     "workspace": {
       "$ref": "#/definitions/Workspace",
       "description": "General multi-repository workspace metadata. Root manifests pair this with repos; external members may use member_of to discover their workspace."
@@ -863,6 +873,177 @@
         "push_on_release": {
           "type": "boolean",
           "description": "Hint to release workflows to push tags here on stable cuts"
+        }
+      }
+    },
+    "ThreatAssessment": {
+      "type": "object",
+      "description": "Versioned, surface-aware forge-content threat-assessment policy. Missing configuration resolves to aiwg:balanced compatibility behavior.",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": { "type": "string", "const": "1" },
+        "mode": { "$ref": "#/definitions/ThreatAssessmentMode" },
+        "defaultProfile": { "type": "string", "minLength": 1 },
+        "surfaces": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "issue-title": { "$ref": "#/definitions/ThreatSurfacePolicy" },
+            "issue-body": { "$ref": "#/definitions/ThreatSurfacePolicy" },
+            "issue-comment": { "$ref": "#/definitions/ThreatSurfacePolicy" },
+            "pull-request-title": { "$ref": "#/definitions/ThreatSurfacePolicy" },
+            "pull-request-body": { "$ref": "#/definitions/ThreatSurfacePolicy" },
+            "pull-request-diff-summary": { "$ref": "#/definitions/ThreatSurfacePolicy" },
+            "review-comment": { "$ref": "#/definitions/ThreatSurfacePolicy" },
+            "release-note": { "$ref": "#/definitions/ThreatSurfacePolicy" },
+            "handoff": { "$ref": "#/definitions/ThreatSurfacePolicy" },
+            "outbound-maintainer-comment": { "$ref": "#/definitions/ThreatSurfacePolicy" }
+          }
+        },
+        "profiles": {
+          "type": "object",
+          "propertyNames": { "pattern": "^(?!aiwg:)(?!trusted$)(?!audit$)(?!balanced$)(?!strict$)(?!high-assurance$)[a-z][a-z0-9-]*$" },
+          "additionalProperties": { "$ref": "#/definitions/ThreatProfile" }
+        },
+        "rulePacks": {
+          "type": "object",
+          "propertyNames": { "pattern": "^(?!aiwg:)[a-z][a-z0-9-]*$" },
+          "additionalProperties": { "$ref": "#/definitions/ThreatRulePack" }
+        },
+        "statements": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/ThreatStatement" }
+        }
+      }
+    },
+    "ThreatAssessmentMode": {
+      "type": "string",
+      "enum": ["off", "audit", "enforce"]
+    },
+    "ThreatSeverity": {
+      "type": "string",
+      "enum": ["informational", "low", "moderate", "high", "critical"]
+    },
+    "ThreatSurfacePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "$ref": "#/definitions/ThreatAssessmentMode" },
+        "profile": { "type": "string", "minLength": 1 }
+      }
+    },
+    "ThreatThresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "flag": { "$ref": "#/definitions/ThreatSeverity" },
+        "requireAuthorization": { "$ref": "#/definitions/ThreatSeverity" },
+        "reject": { "$ref": "#/definitions/ThreatSeverity" }
+      }
+    },
+    "ThreatProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": { "type": "string", "minLength": 1 },
+        "extends": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "mode": { "$ref": "#/definitions/ThreatAssessmentMode" },
+        "description": { "type": "string" },
+        "thresholds": { "$ref": "#/definitions/ThreatThresholds" },
+        "ruleSets": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "statements": { "type": "array", "items": { "$ref": "#/definitions/ThreatStatement" } }
+      }
+    },
+    "ThreatRulePack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "rules"],
+      "properties": {
+        "version": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/ThreatRule" }
+        }
+      }
+    },
+    "ThreatRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "severity", "patterns"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "severity": { "$ref": "#/definitions/ThreatSeverity" },
+        "likelihood": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "impact": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "taxonomy": { "type": "array", "items": { "type": "string" } },
+        "patterns": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1, "maxLength": 500 }
+        }
+      }
+    },
+    "ThreatStatement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "effect", "reason"],
+      "allOf": [
+        {
+          "if": { "properties": { "effect": { "const": "suppress" } } },
+          "then": {
+            "required": ["signals", "when", "riskAcceptance"],
+            "properties": {
+              "signals": { "minItems": 1 },
+              "when": {
+                "anyOf": [
+                  { "required": ["surface"] },
+                  { "required": ["semanticContext"] },
+                  { "required": ["requestedAction"] }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "effect": { "const": "set-severity" } } },
+          "then": { "required": ["severity"] }
+        }
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "effect": { "type": "string", "enum": ["suppress", "set-severity"] },
+        "signals": { "type": "array", "items": { "type": "string" } },
+        "severity": { "$ref": "#/definitions/ThreatSeverity" },
+        "reason": { "type": "string", "minLength": 1 },
+        "when": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "surface": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["issue-title", "issue-body", "issue-comment", "pull-request-title", "pull-request-body", "pull-request-diff-summary", "review-comment", "release-note", "handoff", "outbound-maintainer-comment"]
+              }
+            },
+            "semanticContext": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["requested", "negative", "quoted", "documentation"] }
+            },
+            "requestedAction": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "riskAcceptance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["acceptedBy", "rationale"],
+          "properties": {
+            "acceptedBy": { "type": "string", "minLength": 1 },
+            "rationale": { "type": "string", "minLength": 1 },
+            "expiresAt": { "type": "string", "format": "date-time" }
+          }
         }
       }
     },

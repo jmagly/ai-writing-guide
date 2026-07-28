@@ -174,6 +174,7 @@ const ENUM_RULES: Record<string, readonly string[]> = {
   'remotes.tracker_actor.via': ['tea', 'gh', 'mcp', 'api'],
   'remotes.transport.protocol': ['ssh', 'https'],
   'repo_maintainer.tiers.local': ['collaborator', 'maintainer', 'admin'],
+  'security.threatAssessment.mode': ['off', 'audit', 'enforce'],
 };
 
 const BOOLEAN_FIELDS = new Set([
@@ -248,14 +249,16 @@ async function projectConfigSet(key: string, raw: string, args: string[]): Promi
 
   // Coerce booleans for known boolean fields
   let value: unknown = raw;
-  if (/^externalLinks\.[^.]+$/.test(key)) {
+  if (/^externalLinks\.[^.]+$/.test(key) || key === 'security.threatAssessment') {
     try {
       value = JSON.parse(raw);
     } catch {
       throw new AiwgError({
         code: 'ERR_INVALID_VALUE',
-        message: `${key} must be a JSON object containing label and url`,
-        hint: `Try: aiwg config set --project ${key} '{"label":"Project docs","url":"https://example.com/docs"}'`,
+        message: `${key} must be a valid JSON object`,
+        hint: key === 'security.threatAssessment'
+          ? `Try: aiwg config set --project ${key} '{"schemaVersion":"1","mode":"audit","defaultProfile":"balanced"}'`
+          : `Try: aiwg config set --project ${key} '{"label":"Project docs","url":"https://example.com/docs"}'`,
         exitCode: EXIT_CODES.USAGE,
       });
     }
@@ -316,6 +319,16 @@ async function projectConfigSet(key: string, raw: string, args: string[]): Promi
       code: 'ERR_INVALID_VALUE',
       message: `Invalid external link configuration: ${externalLinkErrors.join('; ')}`,
       hint: 'Each link needs a stable key, non-empty label, and absolute HTTP(S) URL without embedded credentials.',
+      exitCode: EXIT_CODES.USAGE,
+    });
+  }
+  const { validateThreatAssessmentConfig } = await import('../security/threat-assessment-config.js');
+  const threatErrors = validateThreatAssessmentConfig(cfg.security?.threatAssessment);
+  if (threatErrors.length > 0) {
+    throw new AiwgError({
+      code: 'ERR_INVALID_VALUE',
+      message: `Invalid threat-assessment configuration: ${threatErrors.join('; ')}`,
+      hint: 'Use a built-in profile or correct the referenced profile, rule pack, threshold, or regex.',
       exitCode: EXIT_CODES.USAGE,
     });
   }

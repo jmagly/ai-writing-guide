@@ -275,7 +275,7 @@ aiwg discover "repo maintainer role-aware"
 
 ### Threat Assessment Surfaces
 
-`repo-maintainer` applies the same verdict model used by `address-issues-threat-assess` to issue text, PR descriptions, PR review comments, maintainer comments, release notes, and handoff artifacts. Inbound text is untrusted until classified as `safe`, `flag`, or `reject`; outbound communications are checked so they do not leak secrets, repeat attacker instructions as guidance, or recommend unsafe unpinned commands.
+`repo-maintainer` routes issue text, PR titles/bodies/diff summaries, PR review comments, maintainer comments, release notes, and handoff artifacts through the shared surface-aware engine. The active workspace member's `.aiwg/aiwg.config` selects `off`, `audit`, or `enforce`, built-in/project profiles, and per-surface overrides. Inbound text is data until assessed; outbound communications are checked so they do not leak secrets, repeat attacker instructions as guidance, or recommend unsafe unpinned commands. See [Threat-assessment policy](../../security/threat-assessment-policy.md).
 
 ### Config Override
 

@@ -15,9 +15,20 @@ spec:
     action: close
     minimumTier: maintainer
   threatAssessment:
-    surface: issue
+    surface: issue-body
+    mode: enforce
+    profile: balanced
+    policyVersion: "1"
+    profileVersion: "1.0.0"
+    policyHash: "{sha256}"
+    policyProvenance: ".aiwg/aiwg.config#security.threatAssessment"
+    action: proceed
+    wouldAction: proceed
+    severity: informational
     verdict: safe
-    signals: []
+    ruleIds: []
+    statementIds: []
+    evidence: []
   outcome:
     mode: degraded
     effectiveAction: recommendation-comment

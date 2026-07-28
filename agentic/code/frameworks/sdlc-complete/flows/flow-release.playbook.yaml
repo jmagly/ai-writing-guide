@@ -67,9 +67,24 @@ spec:
         - name: dry_run_first
           value: true
 
+    - id: assess-release-content
+      capability: threat-assessment
+      depends_on: [doc-sync]
+      inputs:
+        - name: engine
+          value: tools/security/threat-assessment.mjs
+        - name: surface
+          value: release-note
+        - name: policy
+          value: .aiwg/aiwg.config#security.threatAssessment
+        - name: content
+          value: "{release_notes_and_announcement}"
+      outputs:
+        - name: threat_assessment_report
+
     - id: changelog-and-announcement
       capability: release-assert-artifacts
-      depends_on: [doc-sync]
+      depends_on: [assess-release-content]
       inputs:
         - name: hard_stop
           value: true

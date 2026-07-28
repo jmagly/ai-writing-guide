@@ -25,6 +25,24 @@ import {
   type AuthorizationConfig,
 } from '../policy/authorization.js';
 import { projectAiwgPath, resolveProjectAiwgDir } from './project-artifacts.js';
+import {
+  defaultThreatAssessmentConfig,
+  validateThreatAssessmentConfig,
+  type SecurityConfig,
+} from '../security/threat-assessment-config.js';
+
+export type {
+  SecurityConfig,
+  ThreatAction,
+  ThreatAssessmentConfig,
+  ThreatAssessmentMode,
+  ThreatPolicyStatement,
+  ThreatProfileConfig,
+  ThreatRulePackConfig,
+  ThreatSeverity,
+  ThreatSurface,
+  ThreatSurfaceConfig,
+} from '../security/threat-assessment-config.js';
 
 const CONFIG_FILENAME = 'aiwg.config';
 
@@ -325,6 +343,9 @@ export interface AiwgConfig {
 
   /** Provider-neutral, deny-by-default permissions, roles, and assignments. */
   authorization?: AuthorizationConfig;
+
+  /** Deterministic, project-owned security policy including forge-content assessment. */
+  security?: SecurityConfig;
 
   /**
    * General multi-repository workspace metadata. Root manifests pair this
@@ -1318,6 +1339,9 @@ export function emptyConfig(providers: string[] = ['claude']): AiwgConfig {
     providers,
     installed: {},
     scripts: {},
+    security: {
+      threatAssessment: defaultThreatAssessmentConfig(),
+    },
     delivery: {
       mode: 'pr-required',
       default_branch: 'main',
@@ -1404,6 +1428,11 @@ export async function readAiwgConfig(projectDir: string): Promise<AiwgConfig | n
     throw new Error(`Invalid .aiwg/aiwg.config:\n${authorizationErrors.map(item => item.message).join('\n')}`);
   }
 
+  const threatAssessmentErrors = validateThreatAssessmentConfig(parsed.security?.threatAssessment);
+  if (threatAssessmentErrors.length > 0) {
+    throw new Error(`Invalid .aiwg/aiwg.config:\n${threatAssessmentErrors.join('\n')}`);
+  }
+
   return parsed;
 }
 
@@ -1411,6 +1440,10 @@ export async function readAiwgConfig(projectDir: string): Promise<AiwgConfig | n
  * Write aiwg.config, creating the resolved AIWG artifact directory if needed.
  */
 export async function writeAiwgConfig(projectDir: string, config: AiwgConfig): Promise<void> {
+  const threatAssessmentErrors = validateThreatAssessmentConfig(config.security?.threatAssessment);
+  if (threatAssessmentErrors.length > 0) {
+    throw new Error(`Invalid .aiwg/aiwg.config:\n${threatAssessmentErrors.join('\n')}`);
+  }
   const dir = resolveProjectAiwgDir(projectDir);
   await mkdir(dir, { recursive: true });
   const filePath = join(dir, CONFIG_FILENAME);

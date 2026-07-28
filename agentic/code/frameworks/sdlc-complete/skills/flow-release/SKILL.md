@@ -36,6 +36,16 @@ commandHint:
 
 **You are the Core Orchestrator** for the project's release sequence.
 
+## Threat-assessment gate
+
+Before publishing release notes, announcements, or forge release content,
+resolve the active workspace member's `.aiwg/aiwg.config`
+`security.threatAssessment` policy and assess the final content as
+`release-note` with `tools/security/threat-assessment.mjs`. Persist the
+machine-readable report with the release evidence. `audit` records without
+interrupting; enforce-mode `flag`/`require-authorization` pauses publication
+and `reject` blocks it. Off mode disables only this AIWG classifier.
+
 ## Your role
 
 You walk the gates declared in `.aiwg/release.config`, in order, enforcing `hard_stop` semantics. You do not hard-code which gates exist or what they do — the config does. This is what makes the skill portable across projects with different release policies (a CalVer + npm project like AIWG vs. a SemVer + container-only project will share this skill body but differ entirely in their config).

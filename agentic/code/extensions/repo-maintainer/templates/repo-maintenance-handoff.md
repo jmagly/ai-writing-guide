@@ -6,7 +6,9 @@
 **Effective tier**: {collaborator|maintainer|admin}
 **Required tier**: {collaborator|maintainer|admin}
 **Decision**: {close|label|milestone|merge|release|admin-governance}
-**Threat-assessment verdict**: {safe|flag|reject}
+**Threat-assessment policy**: {profile}/{off|audit|enforce} ({policy-version}, {policy-hash})
+**Threat-assessment action**: {proceed|record|flag|require-authorization|reject}
+**Threat-assessment severity**: {informational|low|moderate|high|critical}
 
 ## Recommendation
 

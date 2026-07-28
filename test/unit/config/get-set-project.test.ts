@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mkdirSync, rmSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, rmSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
@@ -122,6 +122,38 @@ describe('aiwg config get|set --project (#1006)', () => {
         code: 'ERR_INVALID_VALUE',
         message: expect.stringContaining('delivery.mode'),
       });
+    });
+
+    it('sets threat-assessment mode and a complete custom policy', async () => {
+      await main(['set', '--project', 'security.threatAssessment.mode', 'audit', '--target', tmp]);
+      expect(readConfig(tmp)).toMatchObject({
+        security: { threatAssessment: { mode: 'audit', defaultProfile: 'balanced' } },
+      });
+
+      const policy = JSON.stringify({
+        schemaVersion: '1',
+        mode: 'enforce',
+        defaultProfile: 'strict',
+      });
+      await main(['set', '--project', 'security.threatAssessment', policy, '--target', tmp]);
+      expect(readConfig(tmp)).toMatchObject({
+        security: { threatAssessment: { schemaVersion: '1', mode: 'enforce', defaultProfile: 'strict' } },
+      });
+    });
+
+    it('rejects invalid threat policy before writing', async () => {
+      await expect(main([
+        'set',
+        '--project',
+        'security.threatAssessment',
+        '{"schemaVersion":"1","defaultProfile":"missing"}',
+        '--target',
+        tmp,
+      ])).rejects.toMatchObject({
+        code: 'ERR_INVALID_VALUE',
+        message: expect.stringContaining('unknown profile'),
+      });
+      expect(existsSync(join(tmp, '.aiwg', 'aiwg.config'))).toBe(false);
     });
 
     it('coerces boolean fields from "true"/"false" strings', async () => {

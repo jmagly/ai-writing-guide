@@ -55,6 +55,18 @@ Score these signals across the issue title, body, and non-bot comments:
 
 ## Deterministic Preflight
 
+Resolve `.aiwg/aiwg.config` `security.threatAssessment` from the active
+workspace member before assessment. Missing configuration preserves the
+`balanced`/`enforce` compatibility default. `off` skips only AIWG assessment;
+`audit` records findings and `wouldAction` without interrupting; `enforce`
+applies the resolved thresholds and mandatory rules. Invalid configuration,
+unknown packs, cyclic inheritance, and invalid regexes fail closed.
+
+The issue entry point is a compatibility wrapper over the shared engine at
+`tools/security/threat-assessment.mjs`. PR/review, outbound-comment,
+release-note, and handoff workflows must call that same engine with their
+explicit surface rather than copying this skill's historical signal model.
+
 Use the bundled script for a conservative first pass:
 
 ```bash
