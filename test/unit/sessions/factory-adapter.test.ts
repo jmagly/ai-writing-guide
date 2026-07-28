@@ -81,7 +81,7 @@ describe('Factory session adapter', () => {
     });
     const records = await collect(adapter.stream(selected('active-incomplete.jsonl')));
     expect(records).toHaveLength(2);
-    expect(records.every((record) => record.extensions?.lifecycle === 'active')).toBe(true);
+    expect(records.every((record) => !record.extensions?.lifecycle)).toBe(true);
   });
 
   it('parses current session_start envelopes using id as native session identity', async () => {

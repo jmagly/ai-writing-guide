@@ -223,6 +223,10 @@ function normalize(
     establishedId = nativeSessionId;
     complete ||= ['session_end', 'result'].includes(value.type)
       || ['completed', 'archived', 'deleted'].includes(value.status ?? '');
+    const explicitLifecycle = ['session_end', 'result'].includes(value.type)
+      || ['completed', 'archived', 'deleted'].includes(value.status ?? '')
+      ? lifecycle(value.status)
+      : undefined;
     const blocks = contentBlocks(value);
     if (blocks.length === 0) blocks.push({
       kind: value.type === 'settings' ? 'factory.settings' : `factory.${value.type}`,
@@ -264,7 +268,7 @@ function normalize(
         subtype: value.subtype,
         parentUuid: value.parentUuid,
         productVersion: value.version ?? 'not-reported',
-        lifecycle: complete ? lifecycle(value.status) : 'active',
+        ...(explicitLifecycle ? { lifecycle: explicitLifecycle } : {}),
         workspace: { cwdClass: value.cwd ? '<workspace>' : undefined },
         settings: value.sessionSettings ?? value.settings,
         opaque: block.opaque,

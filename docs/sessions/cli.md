@@ -129,7 +129,10 @@ Historical lifecycle inference uses a timezone-safe 24-hour inactivity
 threshold by default. Set `--inactivity-threshold 12h` (or another duration)
 on `import` or `import-discovered` to configure it for that run. Later
 continuation or resume evidence can revise an earlier inferred inactive state;
-explicit provider lifecycle evidence always takes precedence.
+explicit provider lifecycle evidence always takes precedence. When provider
+records have no timestamps, AIWG uses the authorized source file's modification
+time as content-free lifecycle evidence rather than treating every historical
+session as currently active.
 
 ## User intent and control events
 

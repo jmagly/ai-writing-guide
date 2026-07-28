@@ -225,6 +225,7 @@ describe('Devin Desktop adapter repository conformance', () => {
     oldEvent.extensions = { 'native.windsurf': oldEvent.extensions['native.devin-desktop'] };
     raw.prepare('UPDATE session_events SET data=? WHERE event_id=?')
       .run(JSON.stringify(oldEvent), eventRow.event_id);
+    raw.prepare('DELETE FROM session_catalog_meta').run();
     raw.close();
 
     repository = new SessionRepository(databasePath);

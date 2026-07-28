@@ -303,7 +303,10 @@ function normalizeCli(input: BoundedJsonRecord[]): {
       throw new SessionContractError('DUPLICATE_NATIVE_ID', 'Cursor CLI stream changes session identity');
     }
     sessionId = event.session_id;
-    complete ||= event.type === 'result' && event.subtype === 'success' && event.is_error !== true;
+    const terminal = event.type === 'result'
+      && event.subtype === 'success'
+      && event.is_error !== true;
+    complete ||= terminal;
     const text = event.type === 'result'
       ? (event.result ?? '')
       : (event.message?.content ?? []).flatMap((part) => part.text ?? []).join('');
@@ -327,7 +330,7 @@ function normalizeCli(input: BoundedJsonRecord[]): {
         permissionMode: event.permissionMode,
         productVersion: event.cliVersion ?? event.version ?? 'not-reported',
         toolCall: event.tool_call,
-        lifecycle: complete ? 'complete' : 'active',
+        ...(terminal ? { lifecycle: 'complete' } : {}),
         provenance: { acquisition: 'cursor-cli-stream-json', schema: declaredEventVersion(event) },
         unknownFields: unknownFields(event, CLI_KEYS),
       },
@@ -361,6 +364,7 @@ function normalizeCloud(input: BoundedJsonRecord[]): {
     agentId = nextAgentId;
     runId = nextRunId;
     const status = event.run?.status ?? event.agent?.status;
+    const lifecycle = cloudLifecycle(event.type, status);
     complete ||= isTerminal(status) || event.type === 'agent.deleted' || event.type === 'agent.archived';
     const sessionId = runId ? `${agentId ?? 'agent'}:${runId}` : agentId!;
     records.push({
@@ -390,7 +394,7 @@ function normalizeCloud(input: BoundedJsonRecord[]): {
         agent: event.agent,
         run: event.run,
         status,
-        lifecycle: cloudLifecycle(event.type, status),
+        ...(lifecycle ? { lifecycle } : {}),
         reconnect: {
           eventId: event.event_id ?? event.id,
           supported: true,
@@ -420,7 +424,8 @@ function normalizeAgentTranscript(
       );
     }
     const event = parsed.data;
-    complete ||= event.type === 'turn_ended' && event.status === 'success';
+    const terminal = event.type === 'turn_ended' && event.status === 'success';
+    complete ||= terminal;
     const messageRole = event.message?.role ?? event.role ?? 'system';
     records.push({
       nativeSessionId,
@@ -440,7 +445,7 @@ function normalizeAgentTranscript(
       extensions: {
         transcriptRole: event.role,
         status: event.status,
-        lifecycle: event.type === 'turn_ended' && event.status === 'success' ? 'complete' : 'active',
+        ...(terminal ? { lifecycle: 'complete' } : {}),
         provenance: {
           acquisition: 'cursor-agent-transcript-jsonl',
           schema: declaredEventVersion(event),
@@ -529,12 +534,13 @@ function extractCloudText(value: unknown): string {
   return '';
 }
 
-function cloudLifecycle(type: string, status?: string): string {
+function cloudLifecycle(type: string, status?: string): string | undefined {
   if (type === 'agent.deleted') return 'deleted';
   if (type === 'agent.archived') return 'archived';
   if (type === 'agent.unarchived') return 'active';
   if (status === 'cancelled' || status === 'canceled') return 'cancelled';
-  return isTerminal(status) ? 'complete' : 'active';
+  if (status === 'active') return 'active';
+  return isTerminal(status) ? 'complete' : undefined;
 }
 
 function isTerminal(status?: string): boolean {

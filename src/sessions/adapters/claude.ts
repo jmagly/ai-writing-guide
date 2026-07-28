@@ -249,7 +249,7 @@ function normalizeHooks(
       rawReference: { locatorClass: 'claude-hook-jsonl', offset: record.byteOffset },
       extensions: {
         hookEventName: hook.hook_event_name,
-        lifecycle: hook.hook_event_name === 'SessionEnd' ? 'complete' : 'active',
+        ...(hook.hook_event_name === 'SessionEnd' ? { lifecycle: 'complete' } : {}),
         startSource: hook.source,
         model: hook.model,
         reason: hook.reason,

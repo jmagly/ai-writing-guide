@@ -163,10 +163,10 @@ describe('Claude session adapter', () => {
       extensions: {
         hookEventName: 'SessionStart',
         startSource: 'resume',
-        lifecycle: 'active',
         unknownFields: { futureHookField: 'preserved' },
       },
     });
+    expect(hooks[0].extensions).not.toHaveProperty('lifecycle');
     expect(hooks[2]).toMatchObject({
       extensions: { hookEventName: 'SessionEnd', reason: 'clear', lifecycle: 'complete' },
     });

@@ -102,6 +102,9 @@ export class IncrementalSessionImporter {
           request.adapter.adapterVersion,
         );
     const continuity = await sourceContinuity(request, previous);
+    const sourceObservedAt = continuity
+      ? new Date(continuity.mtimeMs).toISOString()
+      : undefined;
     const sourceGeneration = continuity?.sourceGeneration ?? sourceGenerationDigest(request);
     if (previous?.sourceGeneration && previous.sourceGeneration !== sourceGeneration) {
       throw new SessionContractError(
@@ -170,7 +173,7 @@ export class IncrementalSessionImporter {
         batchStart, checkpoint.recordsRead,
         ...batch.map((record) => sha256(JSON.stringify(record))),
       ].join('\0'));
-      const normalized = normalizeBatch(request, batch, runId);
+      const normalized = normalizeBatch(request, batch, runId, sourceObservedAt);
       const run: ImportRun = {
         contractVersion: SESSION_CONTRACT_VERSION,
         importRunId: runId,
@@ -291,6 +294,7 @@ function normalizeBatch(
   request: ImportRequest,
   records: ProviderRecord[],
   importRunId: string,
+  sourceObservedAt?: string,
 ): { sessions: Session[]; events: SessionEvent[] } {
   const sessions = new Map<string, Session>();
   const events = records.map((record): SessionEvent => {
@@ -299,8 +303,8 @@ function normalizeBatch(
     const native = sanitizeNativeExtensions(record.extensions ?? {});
     const digest = sha256(JSON.stringify(record));
     const origin = classifySessionEventOrigin(request.source.provider, record);
-    const lifecycle = sessionLifecycle(request, record);
-    const lifecycleEvidence = sessionLifecycleEvidence(request, record);
+    const lifecycle = sessionLifecycle(request, record, sourceObservedAt);
+    const lifecycleEvidence = sessionLifecycleEvidence(request, record, sourceObservedAt);
     const extensions = {
       [`native.${request.source.provider}`]: native.value,
     };
@@ -410,12 +414,14 @@ function strongerConsistency(
 function sessionLifecycle(
   request: ImportRequest,
   record: ProviderRecord,
+  sourceObservedAt?: string,
 ): Session['lifecycle'] {
   const explicit = nativeLifecycle(record.extensions);
   if (explicit) return explicit;
   if (request.source.consistency === 'complete') return 'complete';
-  if (record.occurredAt && isStaleHistoricalTimestamp(
-    record.occurredAt,
+  const observedAt = record.occurredAt ?? sourceObservedAt;
+  if (observedAt && isStaleHistoricalTimestamp(
+    observedAt,
     inactivityThresholdMs(request),
   )) return 'inactive';
   return 'active';
@@ -424,13 +430,15 @@ function sessionLifecycle(
 function sessionLifecycleEvidence(
   request: ImportRequest,
   record: ProviderRecord,
+  sourceObservedAt?: string,
 ): Record<string, unknown> {
+  const observedAt = record.occurredAt ?? sourceObservedAt;
   const explicit = nativeLifecycle(record.extensions);
   if (explicit) {
     return {
       basis: 'provider-explicit-event',
       state: explicit,
-      observedAt: record.occurredAt ?? new Date().toISOString(),
+      observedAt: observedAt ?? request.source.authorizedAt,
       confidence: 'high',
     };
   }
@@ -438,16 +446,16 @@ function sessionLifecycleEvidence(
     return {
       basis: 'complete-source',
       state: 'complete',
-      observedAt: record.occurredAt ?? new Date().toISOString(),
+      observedAt: observedAt ?? request.source.authorizedAt,
       confidence: 'high',
     };
   }
   const thresholdMs = inactivityThresholdMs(request);
-  if (record.occurredAt && isStaleHistoricalTimestamp(record.occurredAt, thresholdMs)) {
+  if (observedAt && isStaleHistoricalTimestamp(observedAt, thresholdMs)) {
     return {
       basis: 'inactivity-threshold',
       state: 'inactive',
-      observedAt: record.occurredAt,
+      observedAt,
       confidence: 'medium',
       thresholdMs,
     };
@@ -455,7 +463,7 @@ function sessionLifecycleEvidence(
   return {
     basis: 'open-provisional-source',
     state: 'active',
-    observedAt: record.occurredAt ?? new Date().toISOString(),
+    observedAt: observedAt ?? request.source.authorizedAt,
     confidence: 'provisional',
   };
 }

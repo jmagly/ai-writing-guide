@@ -22,6 +22,8 @@ import { redactSessionText, sanitizeNativeExtensions } from './policy.js';
 import type { TimelineInput } from './timeline.js';
 
 const require = createRequire(import.meta.url);
+const POLICY_PROVIDER_MIGRATION = 'policy-provider-identity:v2';
+const EVENT_ORIGIN_INTENT_MIGRATION = 'event-origin-intent:v1';
 
 interface SqliteStatement {
   run(...params: unknown[]): { changes: number };
@@ -312,6 +314,9 @@ export class SessionRepository {
         dependent_id TEXT NOT NULL, action TEXT NOT NULL, data TEXT NOT NULL,
         UNIQUE(operation_id, dependent_id)
       );
+      CREATE TABLE IF NOT EXISTS session_catalog_meta (
+        key TEXT PRIMARY KEY, value TEXT NOT NULL
+      );
       CREATE INDEX IF NOT EXISTS idx_session_workspace_provider
         ON sessions(workspace_id, source_id, lifecycle);
       CREATE INDEX IF NOT EXISTS idx_event_session_sequence
@@ -382,7 +387,7 @@ export class SessionRepository {
   }
 
   private migrateSessionPolicyAndProviderIdentity(): void {
-    const migrate = this.db.transaction(() => {
+    this.runCatalogMigration(POLICY_PROVIDER_MIGRATION, () => {
       for (const row of this.db.prepare(
         'SELECT source_id, provider, data FROM session_sources',
       ).all()) {
@@ -404,9 +409,10 @@ export class SessionRepository {
         const session = JSON.parse(String(row.data)) as
           Omit<Session, 'provider'> & { provider: string };
         if (session.provider === 'windsurf') session.provider = 'devin-desktop';
-        session.extensions = sanitizeNativeExtensions(
+        session.extensions = sanitizeSessionExtensions(
           renameNativeWindsurfEnvelope(session.extensions),
-        ).value;
+          session.provider,
+        );
         this.db.prepare('UPDATE sessions SET data=? WHERE session_id=?')
           .run(JSON.stringify(session), String(row.session_id));
       }
@@ -494,11 +500,10 @@ export class SessionRepository {
         );
       }
     });
-    migrate();
   }
 
   private migrateEventOriginAndIntent(): void {
-    const migrate = this.db.transaction(() => {
+    this.runCatalogMigration(EVENT_ORIGIN_INTENT_MIGRATION, () => {
       for (const row of this.db.prepare(
         'SELECT event_id, data FROM session_events',
       ).all()) {
@@ -539,7 +544,20 @@ export class SessionRepository {
         ).run(JSON.stringify(session), String(row.session_id));
       }
     });
-    migrate();
+  }
+
+  private runCatalogMigration(migration: string, migrate: () => void): void {
+    const applied = this.db.prepare(
+      'SELECT 1 AS applied FROM session_catalog_meta WHERE key=?',
+    ).get(migration);
+    if (applied) return;
+    const transaction = this.db.transaction(() => {
+      migrate();
+      this.db.prepare(
+        'INSERT INTO session_catalog_meta (key, value) VALUES (?, ?)',
+      ).run(migration, 'applied');
+    });
+    transaction();
   }
 
   private emitMutation(input: Omit<MutationEvent, 'contractVersion' | 'resource'
@@ -2499,6 +2517,61 @@ function objectRecord(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
     : {};
+}
+
+function sanitizeSessionExtensions(
+  extensions: Record<string, unknown>,
+  provider: string,
+): Record<string, unknown> {
+  const sanitized = sanitizeNativeExtensions(extensions).value;
+  const nativeKey = `native.${provider}`;
+  const evidence = safeLifecycleEvidence(
+    objectRecord(objectRecord(extensions[nativeKey]).lifecycleEvidence),
+  );
+  if (!evidence) return sanitized;
+  sanitized[nativeKey] = {
+    ...objectRecord(sanitized[nativeKey]),
+    lifecycleEvidence: evidence,
+  };
+  return sanitized;
+}
+
+function safeLifecycleEvidence(
+  evidence: Record<string, unknown>,
+): Record<string, unknown> | null {
+  const bases = new Set([
+    'open-provisional-source',
+    'inactivity-threshold',
+    'complete-source',
+    'provider-explicit-event',
+  ]);
+  const states = new Set([
+    'active', 'inactive', 'paused', 'complete', 'interrupted', 'archived',
+    'unknown', 'tombstoned',
+  ]);
+  const confidences = new Set(['high', 'medium', 'low', 'provisional']);
+  const basis = String(evidence.basis ?? '');
+  const state = String(evidence.state ?? '');
+  const confidence = String(evidence.confidence ?? '');
+  const observedAt = String(evidence.observedAt ?? '');
+  if (!bases.has(basis)
+    || !states.has(state)
+    || !confidences.has(confidence)
+    || !Number.isFinite(Date.parse(observedAt))) {
+    return null;
+  }
+  const output: Record<string, unknown> = {
+    basis,
+    state,
+    observedAt,
+    confidence,
+  };
+  if (typeof evidence.thresholdMs === 'number'
+    && Number.isFinite(evidence.thresholdMs)
+    && evidence.thresholdMs >= 0) {
+    output.thresholdMs = evidence.thresholdMs;
+  }
+  return output;
 }
 
 function lifecycleEvidenceTimestamp(value: Record<string, unknown>): number {

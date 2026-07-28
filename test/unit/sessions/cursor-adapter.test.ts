@@ -108,8 +108,8 @@ describe('Cursor session adapter', () => {
     const records = await collect(adapter.stream(selected('cli-active.jsonl')));
     expect(records[0].extensions).toMatchObject({
       productVersion: '2026.07-synthetic',
-      lifecycle: 'active',
     });
+    expect(records[0].extensions).not.toHaveProperty('lifecycle');
   });
 
   it('preserves Cloud Agent status, reconnect, cancellation, archive, restore, and deletion', async () => {
@@ -126,7 +126,7 @@ describe('Cursor session adapter', () => {
       },
     });
     expect(records.map((record) => record.extensions?.lifecycle)).toEqual([
-      'active', 'active', 'cancelled', 'archived', 'active', 'deleted',
+      undefined, undefined, 'cancelled', 'archived', 'active', 'deleted',
     ]);
     expect(records[5].extensions).toMatchObject({
       unknownFields: { futureCloudField: 'preserved' },

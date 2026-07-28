@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { createRequire } from 'node:module';
 import {
-  appendFile, mkdtemp, rename, writeFile,
+  appendFile, mkdtemp, rename, rm, stat, utimes, writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -22,6 +23,8 @@ import {
   type SessionSource,
   type SessionSourceAdapter,
 } from '../../../src/sessions/index.js';
+
+const require = createRequire(import.meta.url);
 
 function adapter(records: ProviderRecord[]): SessionSourceAdapter {
   return {
@@ -1492,6 +1495,127 @@ describe('transactional session repository and importer', () => {
       },
     });
     repository.close();
+  });
+
+  it('uses source mtime for timestamp-less lifecycle inference and preserves evidence on reopen', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-lifecycle-evidence-'));
+    const sourcePath = join(root, 'history.jsonl');
+    const databasePath = join(root, 'catalog.sqlite');
+    await writeFile(sourcePath, '{}\n');
+    const oldDate = new Date('2026-01-02T03:04:05.000Z');
+    await utimes(sourcePath, oldDate, oldDate);
+    const observedAt = new Date((await stat(sourcePath)).mtimeMs).toISOString();
+    const timestampLessSource: SessionSource = {
+      ...source,
+      sourceId: 'timestamp-less-source',
+      consistency: 'provisional',
+    };
+    const selectedSource = {
+      provider: 'generic' as const,
+      locator: sourcePath,
+      locatorClass: 'fixture-jsonl',
+      sourceId: timestampLessSource.sourceId,
+      authorizedScope: { workspaceId: 'workspace-lifecycle', allowedRoots: [root] },
+    };
+    const timestampLessRecord: ProviderRecord = {
+      nativeSessionId: 'timestamp-less-session',
+      nativeEventId: 'timestamp-less-event',
+      sequence: 0,
+      kind: 'message',
+      role: 'user',
+      text: 'synthetic request',
+      rawReference: { locatorClass: 'fixture-jsonl', sequence: 0 },
+    };
+    const terminalRecord: ProviderRecord = {
+      ...timestampLessRecord,
+      nativeSessionId: 'terminal-session',
+      nativeEventId: 'terminal-event',
+      sequence: 1,
+      extensions: { lifecycle: 'complete' },
+    };
+    try {
+      const repository = new SessionRepository(databasePath);
+      await new IncrementalSessionImporter(repository).import({
+        source: timestampLessSource,
+        selectedSource,
+        adapter: adapter([timestampLessRecord, terminalRecord]),
+        workspaceId: 'workspace-lifecycle',
+        policyVersion: '1.0.0',
+        inactivityThresholdMs: 1,
+      });
+      repository.close();
+
+      const Database = require('better-sqlite3');
+      let raw = new Database(databasePath);
+      raw.prepare('DELETE FROM session_catalog_meta').run();
+      raw.close();
+
+      const reopened = new SessionRepository(databasePath);
+      expect(reopened.getSession(stableSessionId(
+        'generic',
+        timestampLessSource.sourceId,
+        timestampLessRecord.nativeSessionId,
+      ))).toMatchObject({
+        lifecycle: 'inactive',
+        startedAt: null,
+        updatedAt: null,
+        extensions: {
+          'native.generic': {
+            lifecycleEvidence: {
+              basis: 'inactivity-threshold',
+              state: 'inactive',
+              observedAt,
+              confidence: 'medium',
+              thresholdMs: 1,
+            },
+          },
+        },
+      });
+      expect(reopened.getSession(stableSessionId(
+        'generic',
+        timestampLessSource.sourceId,
+        terminalRecord.nativeSessionId,
+      ))).toMatchObject({
+        lifecycle: 'complete',
+        extensions: {
+          'native.generic': {
+            lifecycleEvidence: {
+              basis: 'provider-explicit-event',
+              state: 'complete',
+              observedAt,
+              confidence: 'high',
+            },
+          },
+        },
+      });
+      reopened.close();
+
+      raw = new Database(databasePath);
+      expect(raw.prepare(
+        'SELECT key, value FROM session_catalog_meta ORDER BY key',
+      ).all()).toEqual([
+        { key: 'event-origin-intent:v1', value: 'applied' },
+        { key: 'policy-provider-identity:v2', value: 'applied' },
+      ]);
+      raw.exec(`
+        CREATE TRIGGER reject_repeated_session_migration
+        BEFORE UPDATE ON sessions
+        BEGIN
+          SELECT RAISE(ABORT, 'catalog migration repeated');
+        END
+      `);
+      raw.close();
+
+      const secondReopen = new SessionRepository(databasePath);
+      expect(secondReopen.getSession(stableSessionId(
+        'generic',
+        timestampLessSource.sourceId,
+        timestampLessRecord.nativeSessionId,
+      ))?.lifecycle).toBe('inactive');
+      secondReopen.close();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   it('keeps interrupted complete-source batches invisible and safely retries', async () => {
