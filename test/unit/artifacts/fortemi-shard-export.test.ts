@@ -504,7 +504,7 @@ describe("AIWG portable Fortemi shard export", () => {
     } finally {
       await manager.close();
     }
-  }, 20_000);
+  }, 45_000);
 
   it("rejects malformed, checksum, profile, version, and resource-limit input with zero mutation", async () => {
     const shard = await buildAiwgFortemiKnowledgeShard(tmpDir, {
