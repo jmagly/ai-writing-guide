@@ -83,6 +83,7 @@
     "architecture/adr-agent-skills-portability-contract",
     "reports/agentskills-standard-audit-2026-07-25",
     "configuration/aiwg-config",
+    "security/threat-assessment-policy",
     "security/repo-access-manifest",
     "fortemi-core-prebuilt-indices",
     "user-level-indices",
@@ -891,6 +892,13 @@
       "title": "AIWG Project Config",
       "summary": "Project and multi-repository workspace configuration reference",
       "file": "configuration/aiwg-config.md",
+      "parent": "reference"
+    },
+    {
+      "id": "security/threat-assessment-policy",
+      "title": "Threat-Assessment Policy",
+      "summary": "Configure deterministic threat assessment across forge and delivery surfaces",
+      "file": "security/threat-assessment-policy.md",
       "parent": "reference"
     },
     {
