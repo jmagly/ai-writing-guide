@@ -115,6 +115,41 @@ describe('Claude session adapter', () => {
     });
   });
 
+  it('treats filename and embedded identity mismatches as transcript-family evidence', async () => {
+    const records = await collect(adapter.stream(selected('drift-session.jsonl')));
+    expect(new Set(records.map((record) => record.nativeSessionId))).toEqual(new Set(['different-session']));
+    expect(records[0].extensions).toMatchObject({
+      transcriptFamily: {
+        sourceArtifactSessionId: 'drift-session',
+        nativeSessionId: 'different-session',
+        identityRelation: 'related',
+      },
+    });
+  });
+
+  it('preserves parent, continuation, branch, and subagent family evidence', async () => {
+    const records = await collect(adapter.stream(selected('subagent-artifact.jsonl')));
+    expect(records).toHaveLength(2);
+    expect(records[1].extensions).toMatchObject({
+      transcriptFamily: {
+        sourceArtifactSessionId: 'subagent-artifact',
+        nativeSessionId: 'root-session',
+        identityRelation: 'related',
+        parentSessionId: 'root-session',
+        gitBranch: 'feature/synthetic',
+        continuation: true,
+        subagent: true,
+        agentId: 'agent-synthetic',
+        agentSlug: 'worker-synthetic',
+      },
+    });
+  });
+
+  it('rejects a deliberately corrupted embedded identity', async () => {
+    await expect(adapter.inspect(selected('corrupt-identity.jsonl')))
+      .rejects.toMatchObject({ code: 'MALFORMED_SOURCE' });
+  });
+
   it('preserves lifecycle hook evidence without raw local paths', async () => {
     await expect(adapter.inspect(selected('lifecycle.hooks.jsonl'))).resolves.toMatchObject({
       consistency: 'complete',
@@ -142,7 +177,6 @@ describe('Claude session adapter', () => {
   it.each([
     ['unknown-major.jsonl', 'UNKNOWN_SCHEMA_MAJOR'],
     ['malformed.jsonl', 'MALFORMED_SOURCE'],
-    ['drift-session.jsonl', 'SCHEMA_DRIFT'],
   ])('fails closed for %s with %s', async (name, code) => {
     await expect(adapter.inspect(selected(name))).rejects.toMatchObject({ code });
   });

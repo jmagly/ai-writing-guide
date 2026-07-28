@@ -1,4 +1,7 @@
-import { basename, extname } from 'node:path';
+import { opendir } from 'node:fs/promises';
+import {
+  basename, dirname, extname, resolve,
+} from 'node:path';
 import { z } from 'zod';
 import {
   SessionContractError,
@@ -64,18 +67,59 @@ const CloudEventSchema = z.object({
   message: 'cloud event requires an agent or run identity',
 });
 
+const AgentTranscriptEventSchema = z.object({
+  schemaVersion: z.string().optional(),
+  id: z.string().optional(),
+  event_id: z.string().optional(),
+  request_id: z.string().optional(),
+  timestamp: z.string().datetime({ offset: true }).optional(),
+  type: z.string().min(1).optional(),
+  status: z.string().min(1).optional(),
+  role: z.string().min(1).optional(),
+  message: z.object({
+    id: z.string().optional(),
+    role: z.string().optional(),
+    content: z.union([z.string(), z.array(z.unknown())]).optional(),
+  }).passthrough().optional(),
+}).passthrough().refine((value) => value.role || value.type, {
+  message: 'agent transcript event requires role or type',
+});
+
 export class CursorSessionAdapter implements SessionSourceAdapter {
   readonly provider = 'cursor' as const;
   readonly adapterVersion = CURSOR_ADAPTER_VERSION;
   readonly disposition = 'implemented' as const;
-  readonly supportedOperations = ['inspect', 'stream'] as const;
+  readonly supportedOperations = ['discover', 'inspect', 'stream'] as const;
   readonly acquisitionModes = ['api', 'jsonl', 'manual-export'] as const;
 
-  constructor(private readonly limits?: Partial<ReaderLimits>) {}
+  constructor(
+    private readonly limits?: Partial<ReaderLimits>,
+    private readonly discoveryLimits = { maxDepth: 8, maxFiles: 10_000 },
+  ) {}
 
-  async *discover(_scope: AuthorizedScope): AsyncIterable<SourceDescriptor> {
-    // Every supported Cursor surface requires an explicitly selected export.
-    // The undocumented editor SQLite store is intentionally excluded.
+  async *discover(scope: AuthorizedScope): AsyncIterable<SourceDescriptor> {
+    if (scope.allowedRoots.length === 0) {
+      throw new SessionContractError(
+        'SOURCE_NOT_AUTHORIZED',
+        'Cursor discovery requires an explicitly authorized agent-transcripts root',
+      );
+    }
+    let emitted = 0;
+    for (const root of [...scope.allowedRoots].sort()) {
+      for await (const locator of discoverJsonl(resolve(root), this.discoveryLimits.maxDepth)) {
+        if (++emitted > this.discoveryLimits.maxFiles) {
+          throw new SessionContractError(
+            'RESOURCE_LIMIT_EXCEEDED',
+            'Cursor source discovery exceeded the authorized file limit',
+          );
+        }
+        yield {
+          provider: 'cursor',
+          locator,
+          locatorClass: 'cursor-agent-transcript-jsonl',
+        };
+      }
+    }
   }
 
   async inspect(source: SelectedSource): Promise<SourceProbe> {
@@ -208,7 +252,37 @@ export class CursorSessionAdapter implements SessionSourceAdapter {
         records: normalized.records,
       };
     }
+    if (source.locatorClass === 'cursor-agent-transcript-jsonl') {
+      const normalized = normalizeAgentTranscript(input.records, source.locator);
+      return {
+        schemaVersion,
+        consistency: normalized.complete && !input.incompleteTail ? 'complete' : 'provisional',
+        records: normalized.records,
+      };
+    }
     throw new SessionContractError('UNSUPPORTED_OPERATION', 'unsupported Cursor source class');
+  }
+}
+
+async function* discoverJsonl(root: string, remainingDepth: number): AsyncIterable<string> {
+  if (remainingDepth < 0) return;
+  let directory;
+  try {
+    directory = await opendir(root);
+  } catch {
+    return;
+  }
+  const entries = [];
+  for await (const entry of directory) entries.push(entry);
+  entries.sort((left, right) => left.name.localeCompare(right.name));
+  for (const entry of entries) {
+    const path = resolve(root, entry.name);
+    if (entry.isSymbolicLink()) continue;
+    if (entry.isDirectory()) {
+      yield* discoverJsonl(path, remainingDepth - 1);
+    } else if (entry.isFile() && extname(entry.name) === '.jsonl') {
+      yield path;
+    }
   }
 }
 
@@ -295,6 +369,21 @@ function normalizeCloud(input: BoundedJsonRecord[]): {
       sequence: line.sequence,
       kind: `cursor.cloud.${event.type}`,
       role: 'system',
+      activityBoundary: event.type === 'agent.unarchived'
+        ? 'resume'
+        : event.type === 'agent.archived' || event.type === 'agent.deleted'
+          ? 'end'
+          : undefined,
+      activityBoundaryBasis: event.type === 'agent.unarchived'
+        || event.type === 'agent.archived'
+        || event.type === 'agent.deleted'
+        ? `cursor-cloud:${event.type}`
+        : undefined,
+      activityBoundaryConfidence: event.type === 'agent.unarchived'
+        || event.type === 'agent.archived'
+        || event.type === 'agent.deleted'
+        ? 'high'
+        : undefined,
       text: extractCloudText(event.data),
       rawReference: { locatorClass: 'cursor-cloud-events-jsonl', offset: line.byteOffset },
       extensions: {
@@ -309,6 +398,55 @@ function normalizeCloud(input: BoundedJsonRecord[]): {
         },
         provenance: { acquisition: 'cursor-cloud-agents-api-v1', schema: declaredEventVersion(event) },
         unknownFields: unknownFields(event, CLOUD_KEYS),
+      },
+    });
+  }
+  return { records, complete };
+}
+
+function normalizeAgentTranscript(
+  input: BoundedJsonRecord[],
+  locator: string,
+): { records: ProviderRecord[]; complete: boolean } {
+  const nativeSessionId = agentTranscriptSessionId(locator);
+  const records: ProviderRecord[] = [];
+  let complete = false;
+  for (const line of input) {
+    const parsed = AgentTranscriptEventSchema.safeParse(line.value);
+    if (!parsed.success) {
+      throw new SessionContractError(
+        'MALFORMED_SOURCE',
+        'Cursor agent transcript event is malformed',
+      );
+    }
+    const event = parsed.data;
+    complete ||= event.type === 'turn_ended' && event.status === 'success';
+    const messageRole = event.message?.role ?? event.role ?? 'system';
+    records.push({
+      nativeSessionId,
+      nativeEventId: event.event_id ?? event.id ?? event.request_id ?? `${messageRole}:${line.sequence}`,
+      sequence: line.sequence,
+      kind: event.type ? `cursor.agent.${event.type}` : 'message',
+      role: messageRole,
+      participant: messageRole,
+      occurredAt: event.timestamp,
+      activityBoundary: event.type === 'turn_ended' ? 'end' : undefined,
+      activityBoundaryBasis: event.type === 'turn_ended'
+        ? `cursor-agent:${event.status ?? 'unknown'}`
+        : undefined,
+      activityBoundaryConfidence: event.type === 'turn_ended' ? 'high' : undefined,
+      text: messageText(event.message?.content),
+      rawReference: { locatorClass: 'cursor-agent-transcript-jsonl', offset: line.byteOffset },
+      extensions: {
+        transcriptRole: event.role,
+        status: event.status,
+        lifecycle: event.type === 'turn_ended' && event.status === 'success' ? 'complete' : 'active',
+        provenance: {
+          acquisition: 'cursor-agent-transcript-jsonl',
+          schema: declaredEventVersion(event),
+          nativeSessionIdDerivedFromPath: true,
+        },
+        unknownFields: unknownFields(event, AGENT_TRANSCRIPT_KEYS),
       },
     });
   }
@@ -349,6 +487,24 @@ function normalizeMarkdown(value: string, locator: string): ProviderRecord[] {
       },
     };
   });
+}
+
+function agentTranscriptSessionId(locator: string): string {
+  const fileIdentity = basename(locator, extname(locator));
+  const directoryIdentity = basename(dirname(locator));
+  return directoryIdentity && directoryIdentity === fileIdentity
+    ? directoryIdentity : fileIdentity;
+}
+
+function messageText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (!Array.isArray(value)) return '';
+  return value.map((item) => {
+    const block = asObject(item);
+    if (typeof block.text === 'string') return block.text;
+    if (typeof block.content === 'string') return block.content;
+    return '';
+  }).filter(Boolean).join('\n');
 }
 
 function declaredVersion(records: BoundedJsonRecord[]): string {
@@ -414,3 +570,7 @@ const CLI_KEYS = new Set([
   'duration_ms', 'duration_api_ms',
 ]);
 const CLOUD_KEYS = new Set(['schemaVersion', 'id', 'event_id', 'type', 'agent', 'run', 'data']);
+const AGENT_TRANSCRIPT_KEYS = new Set([
+  'schemaVersion', 'id', 'event_id', 'request_id', 'timestamp', 'type', 'status',
+  'role', 'message',
+]);

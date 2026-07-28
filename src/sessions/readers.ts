@@ -36,7 +36,7 @@ export interface BoundedJsonLineStream extends AsyncIterable<BoundedJsonRecord> 
 
 export const DEFAULT_READER_LIMITS: ReaderLimits = Object.freeze({
   maxRecords: 1_000_000,
-  maxRecordBytes: 4 * 1024 * 1024,
+  maxRecordBytes: 8 * 1024 * 1024,
   maxTotalBytes: 1024 * 1024 * 1024,
   maxNestingDepth: 64,
 });

@@ -13,7 +13,13 @@ import {
   SessionContractError,
   sha256,
 } from './contracts.js';
+import {
+  coverageFromBatchRun,
+  type BatchImportRun,
+  type SessionCoverageReport,
+} from './batch-contracts.js';
 import { redactSessionText, sanitizeNativeExtensions } from './policy.js';
+import type { TimelineInput } from './timeline.js';
 
 const require = createRequire(import.meta.url);
 
@@ -35,6 +41,7 @@ export interface NormalizedImportBatch {
   run: ImportRun;
   sessions: Session[];
   events: SessionEvent[];
+  batchRunId?: string;
 }
 export interface ImportReceipt {
   operationId: string;
@@ -127,6 +134,7 @@ export interface SessionSearchOptions {
   entity?: string;
   sensitivity?: string;
   extractionState?: string;
+  controlEvents?: 'exclude' | 'include' | 'only';
   sessionIds?: string[];
   limit: number;
   cursor?: string;
@@ -146,6 +154,7 @@ export interface SessionSearchHit {
   provider: string;
   workspaceId: string;
   sessionId: string;
+  origin: SessionEvent['origin'];
   eventId: string;
   importRunId: string;
   sourceId: string;
@@ -219,6 +228,7 @@ export class SessionRepository {
     }
     this.db.pragma('foreign_keys = ON');
     this.db.pragma('journal_mode = WAL');
+    this.db.pragma('busy_timeout = 5000');
     this.initialize();
   }
 
@@ -230,6 +240,7 @@ export class SessionRepository {
       CREATE TABLE IF NOT EXISTS import_runs (
         import_run_id TEXT PRIMARY KEY, source_id TEXT NOT NULL, parser_version TEXT NOT NULL,
         status TEXT NOT NULL, checkpoint TEXT NOT NULL, data TEXT NOT NULL,
+        batch_run_id TEXT,
         FOREIGN KEY(source_id) REFERENCES session_sources(source_id)
       );
       CREATE TABLE IF NOT EXISTS sessions (
@@ -250,6 +261,12 @@ export class SessionRepository {
         operation_id TEXT PRIMARY KEY, import_run_id TEXT NOT NULL UNIQUE,
         outcome TEXT NOT NULL, counts TEXT NOT NULL, checkpoint TEXT NOT NULL,
         FOREIGN KEY(import_run_id) REFERENCES import_runs(import_run_id)
+      );
+      CREATE TABLE IF NOT EXISTS batch_import_runs (
+        batch_run_id TEXT PRIMARY KEY, manifest_id TEXT NOT NULL,
+        workspace_id TEXT NOT NULL, status TEXT NOT NULL,
+        started_at TEXT NOT NULL, updated_at TEXT NOT NULL, data TEXT NOT NULL,
+        UNIQUE(manifest_id, workspace_id)
       );
       CREATE TABLE IF NOT EXISTS mutation_audit (
         operation_id TEXT PRIMARY KEY, operation TEXT NOT NULL, actor TEXT NOT NULL,
@@ -321,12 +338,22 @@ export class SessionRepository {
     if (!mutationColumns.includes('data')) {
       this.db.exec('ALTER TABLE mutation_audit ADD COLUMN data TEXT');
     }
+    const importRunColumns = this.db.prepare(
+      'PRAGMA table_info(import_runs)',
+    ).all().map((row) => String(row.name));
+    if (!importRunColumns.includes('batch_run_id')) {
+      this.db.exec('ALTER TABLE import_runs ADD COLUMN batch_run_id TEXT');
+    }
     this.db.exec(`
       CREATE INDEX IF NOT EXISTS idx_mutation_audit_workspace
       ON mutation_audit(workspace_id, occurred_at, operation_id)
+      ;
+      CREATE INDEX IF NOT EXISTS idx_batch_import_workspace
+      ON batch_import_runs(workspace_id, updated_at, batch_run_id)
     `);
     this.alignSessionFtsRowids();
     this.migrateSessionPolicyAndProviderIdentity();
+    this.migrateEventOriginAndIntent();
   }
 
   private alignSessionFtsRowids(): void {
@@ -465,6 +492,51 @@ export class SessionRepository {
           JSON.stringify(event),
           event.operationId,
         );
+      }
+    });
+    migrate();
+  }
+
+  private migrateEventOriginAndIntent(): void {
+    const migrate = this.db.transaction(() => {
+      for (const row of this.db.prepare(
+        'SELECT event_id, data FROM session_events',
+      ).all()) {
+        const event = JSON.parse(String(row.data)) as Record<string, unknown>;
+        let changed = false;
+        if (typeof event.origin !== 'string') {
+          event.origin = 'unknown';
+          event.originRule = 'legacy:unknown';
+          event.originClassifierVersion = '1.0.0';
+          changed = true;
+        }
+        if (!Object.hasOwn(event, 'activityBoundary')) {
+          event.activityBoundary = null;
+          event.activityBoundaryBasis = null;
+          event.activityBoundaryConfidence = null;
+          changed = true;
+        }
+        if (changed) {
+          this.db.prepare(
+            'UPDATE session_events SET data=? WHERE event_id=?',
+          ).run(JSON.stringify(event), String(row.event_id));
+        }
+      }
+      for (const row of this.db.prepare(
+        'SELECT session_id, data FROM sessions',
+      ).all()) {
+        const session = JSON.parse(String(row.data)) as Record<string, unknown>;
+        if (session.intent !== undefined) continue;
+        session.intent = {
+          status: 'unknown',
+          eventId: null,
+          sequence: null,
+          title: null,
+          summary: null,
+        };
+        this.db.prepare(
+          'UPDATE sessions SET data=? WHERE session_id=?',
+        ).run(JSON.stringify(session), String(row.session_id));
       }
     });
     migrate();
@@ -649,9 +721,17 @@ export class SessionRepository {
          ON CONFLICT(source_id) DO UPDATE SET data=excluded.data`,
       ).run(batch.source.sourceId, batch.source.provider, JSON.stringify(batch.source));
       this.db.prepare(
-        `INSERT INTO import_runs(import_run_id, source_id, parser_version, status, checkpoint, data)
-         VALUES (?, ?, ?, 'running', ?, ?)`,
-      ).run(batch.run.importRunId, batch.source.sourceId, batch.run.parserVersion, JSON.stringify(checkpoint), JSON.stringify(batch.run));
+        `INSERT INTO import_runs(
+           import_run_id, source_id, parser_version, status, checkpoint, data, batch_run_id
+         ) VALUES (?, ?, ?, 'running', ?, ?, ?)`,
+      ).run(
+        batch.run.importRunId,
+        batch.source.sourceId,
+        batch.run.parserVersion,
+        JSON.stringify(checkpoint),
+        JSON.stringify(batch.run),
+        batch.batchRunId ?? null,
+      );
 
       let sessionsInserted = 0;
       let eventsInserted = 0;
@@ -698,9 +778,29 @@ export class SessionRepository {
         const prior = this.db.prepare('SELECT digest FROM session_events WHERE event_id=?')
           .get(event.eventId);
         if (prior && String(prior.digest) !== event.digest) {
+          const priorEvent = this.db.prepare(
+            `SELECT e.data AS event_data, src.provider AS provider, s.native_session_id AS native_session_id
+             FROM session_events e
+             JOIN sessions s ON s.session_id=e.session_id
+             JOIN session_sources src ON src.source_id=e.source_id
+             WHERE e.event_id=?`,
+          ).get(event.eventId);
+          const priorCoordinates = priorEvent
+            ? safeEventCoordinates(String(priorEvent.event_data), {
+                provider: String(priorEvent.provider),
+                nativeSessionId: String(priorEvent.native_session_id),
+              })
+            : { provider: '<unknown>', sourceId: '<unknown>', nativeSessionId: '<unknown>', nativeEventId: event.eventId };
+          const incomingCoordinates = {
+            provider: batch.source.provider,
+            sourceId: event.sourceId,
+            nativeSessionId: batch.sessions.find((session) => session.sessionId === event.sessionId)
+              ?.nativeSessionId ?? event.sessionId,
+            nativeEventId: event.nativeId ?? `sequence:${event.sequence}`,
+          };
           throw new SessionContractError(
             'IMPORT_CONFLICT',
-            `stable event identity changed content: ${event.eventId}`,
+            `stable event identity changed content: ${event.eventId}; prior=${formatEventCoordinates(priorCoordinates)} incoming=${formatEventCoordinates(incomingCoordinates)}`,
           );
         }
         const inserted = insertEvent.run(
@@ -794,6 +894,70 @@ export class SessionRepository {
     return commit();
   }
 
+  commitStagedBatch(batchRunId: string, sourceIds: readonly string[]): number {
+    if (sourceIds.length === 0) return 0;
+    const placeholders = sourceIds.map(() => '?').join(', ');
+    const commit = this.db.transaction((): number => {
+      const params = [batchRunId, ...sourceIds];
+      const staged = this.db.prepare(
+        `SELECT import_run_id FROM import_runs
+         WHERE batch_run_id=? AND source_id IN (${placeholders}) AND status='staged'`,
+      ).all(...params).map((row) => String(row.import_run_id));
+      const result = this.db.prepare(
+        `UPDATE import_runs SET status='committed'
+         WHERE batch_run_id=? AND source_id IN (${placeholders}) AND status='staged'`,
+      ).run(...params);
+      if (staged.length > 0) {
+        const runPlaceholders = staged.map(() => '?').join(', ');
+        this.db.prepare(
+          `UPDATE import_receipts SET outcome='committed'
+           WHERE import_run_id IN (${runPlaceholders}) AND outcome='staged'`,
+        ).run(...staged);
+      }
+      for (const operationId of staged) {
+        const row = this.db.prepare(
+          'SELECT data FROM mutation_audit WHERE operation_id=?',
+        ).get(operationId);
+        if (!row?.data) continue;
+        const prior = JSON.parse(String(row.data)) as MutationEvent;
+        const { integrityDigest: _integrityDigest, ...unsigned } = {
+          ...prior,
+          outcome: 'committed' as const,
+          observedAt: new Date().toISOString(),
+        };
+        const updated = {
+          ...unsigned,
+          integrityDigest: sha256(JSON.stringify(unsigned)),
+        };
+        this.db.prepare(
+          `UPDATE mutation_audit SET outcome='committed', occurred_at=?, data=?
+           WHERE operation_id=?`,
+        ).run(updated.observedAt, JSON.stringify(updated), operationId);
+      }
+      return result.changes;
+    });
+    return commit();
+  }
+
+  sourceImportTotals(
+    sourceId: string,
+    batchRunId: string,
+  ): { sessions: number; events: number } {
+    const events = Number(this.db.prepare(
+      `SELECT COUNT(*) AS count
+       FROM session_events e
+       JOIN import_runs r ON r.import_run_id=e.import_run_id
+       WHERE e.source_id=? AND r.batch_run_id=?`,
+    ).get(sourceId, batchRunId)?.count ?? 0);
+    const sessions = Number(this.db.prepare(
+      `SELECT COUNT(DISTINCT e.session_id) AS count
+       FROM session_events e
+       JOIN import_runs r ON r.import_run_id=e.import_run_id
+       WHERE e.source_id=? AND r.batch_run_id=?`,
+    ).get(sourceId, batchRunId)?.count ?? 0);
+    return { sessions, events };
+  }
+
   getSession(id: string, workspaceId?: string): Session | null {
     const row = this.db.prepare(
       `SELECT s.data FROM sessions s
@@ -813,6 +977,76 @@ export class SessionRepository {
     return this.db.prepare(
       'SELECT data FROM session_sources ORDER BY provider, source_id',
     ).all().map((row) => JSON.parse(String(row.data)) as SessionSource);
+  }
+
+  listWorkspaceIds(): string[] {
+    return this.db.prepare(
+      'SELECT DISTINCT workspace_id FROM sessions ORDER BY workspace_id',
+    ).all().map((row) => String(row.workspace_id));
+  }
+
+  saveBatchImportRun(run: BatchImportRun): void {
+    const save = this.db.transaction(() => {
+      const prior = this.db.prepare(
+        'SELECT manifest_id, workspace_id FROM batch_import_runs WHERE batch_run_id=?',
+      ).get(run.runId);
+      if (prior && (String(prior.manifest_id) !== run.manifestId
+        || String(prior.workspace_id) !== run.workspaceId)) {
+        throw new SessionContractError(
+          'IMPORT_CONFLICT',
+          'batch run identity changed manifest or workspace scope',
+        );
+      }
+      this.db.prepare(
+        `INSERT INTO batch_import_runs(
+           batch_run_id, manifest_id, workspace_id, status, started_at, updated_at, data
+         ) VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(batch_run_id) DO UPDATE SET
+           status=excluded.status, updated_at=excluded.updated_at, data=excluded.data`,
+      ).run(
+        run.runId,
+        run.manifestId,
+        run.workspaceId,
+        run.status,
+        run.startedAt,
+        run.updatedAt,
+        JSON.stringify(run),
+      );
+    });
+    save();
+  }
+
+  getBatchImportRun(runId: string): BatchImportRun | null {
+    const row = this.db.prepare(
+      'SELECT data FROM batch_import_runs WHERE batch_run_id=?',
+    ).get(runId);
+    return row ? JSON.parse(String(row.data)) as BatchImportRun : null;
+  }
+
+  getBatchImportRunForManifest(
+    manifestId: string,
+    workspaceId: string,
+  ): BatchImportRun | null {
+    const row = this.db.prepare(
+      `SELECT data FROM batch_import_runs
+       WHERE manifest_id=? AND workspace_id=?`,
+    ).get(manifestId, workspaceId);
+    return row ? JSON.parse(String(row.data)) as BatchImportRun : null;
+  }
+
+  getCoverage(workspaceId: string, now = new Date()): SessionCoverageReport {
+    const row = this.db.prepare(
+      `SELECT data FROM batch_import_runs
+       WHERE workspace_id=?
+       ORDER BY updated_at DESC, batch_run_id DESC LIMIT 1`,
+    ).get(workspaceId);
+    const coverage = coverageFromBatchRun(
+      row ? JSON.parse(String(row.data)) as BatchImportRun : null,
+      now,
+    );
+    return coverage.status === 'unknown'
+      ? { ...coverage, workspaceId }
+      : coverage;
   }
 
   listSessions(options: SessionListOptions): SessionListResult {
@@ -922,6 +1156,26 @@ export class SessionRepository {
        ORDER BY e.sequence_no, e.event_id`,
     ).all(...(workspaceId ? [sessionId, workspaceId] : [sessionId]))
       .map((row) => JSON.parse(String(row.data)) as SessionEvent);
+  }
+
+  listTimelineInputs(workspaceId: string): TimelineInput[] {
+    return this.db.prepare(
+      `SELECT s.data AS session_data, e.data AS event_data
+       FROM session_events e
+       JOIN sessions s ON s.session_id=e.session_id
+       JOIN import_runs r ON r.import_run_id=e.import_run_id
+       WHERE s.workspace_id=? AND s.lifecycle!='tombstoned' AND r.status='committed'
+       ORDER BY
+         CASE WHEN json_extract(e.data, '$.occurredAt') IS NULL THEN 1 ELSE 0 END,
+         json_extract(e.data, '$.occurredAt'),
+         json_extract(s.data, '$.provider'),
+         e.session_id,
+         e.sequence_no,
+         e.event_id`,
+    ).all(workspaceId).map((row) => ({
+      session: JSON.parse(String(row.session_data)) as Session,
+      event: JSON.parse(String(row.event_data)) as SessionEvent,
+    }));
   }
 
   search(options: SessionSearchOptions): SessionSearchResult {
@@ -1359,6 +1613,20 @@ export class SessionRepository {
        WHERE source_id=? AND parser_version=? AND status='committed'
        ORDER BY rowid DESC LIMIT 1`,
     ).get(sourceId, parserVersion);
+    return row ? JSON.parse(String(row.checkpoint)) as ImportCheckpoint : null;
+  }
+
+  getBatchCheckpoint(
+    sourceId: string,
+    parserVersion: string,
+    batchRunId: string,
+  ): ImportCheckpoint | null {
+    const row = this.db.prepare(
+      `SELECT checkpoint FROM import_runs
+       WHERE source_id=? AND parser_version=? AND batch_run_id=?
+         AND status IN ('staged', 'committed')
+       ORDER BY rowid DESC LIMIT 1`,
+    ).get(sourceId, parserVersion, batchRunId);
     return row ? JSON.parse(String(row.checkpoint)) as ImportCheckpoint : null;
   }
 
@@ -1880,6 +2148,7 @@ function searchHit(row: Record<string, unknown>): SessionSearchHit {
   const citation = {
     provider: session.provider,
     sessionId: event.sessionId,
+    origin: event.origin,
     eventId: event.eventId,
     importRunId: event.importRunId,
     sourceId: event.sourceId,
@@ -1892,6 +2161,7 @@ function searchHit(row: Record<string, unknown>): SessionSearchHit {
     provider: session.provider,
     workspaceId: session.workspaceId,
     sessionId: event.sessionId,
+    origin: event.origin,
     eventId: event.eventId,
     importRunId: event.importRunId,
     sourceId: event.sourceId,
@@ -2051,6 +2321,23 @@ function appendMetadataFilters(
   params: unknown[],
   options: Omit<SessionSearchOptions, 'query' | 'cursor'>,
 ): void {
+  const controlEvents = options.controlEvents ?? 'exclude';
+  const controlOrigins = [
+    'provider-bootstrap',
+    'workspace-instruction',
+    'tool-control',
+  ];
+  if (controlEvents === 'exclude') {
+    where.push(
+      `COALESCE(json_extract(e.data, '$.origin'), 'unknown') NOT IN (${controlOrigins.map(() => '?').join(',')})`,
+    );
+    params.push(...controlOrigins);
+  } else if (controlEvents === 'only') {
+    where.push(
+      `COALESCE(json_extract(e.data, '$.origin'), 'unknown') IN (${controlOrigins.map(() => '?').join(',')})`,
+    );
+    params.push(...controlOrigins);
+  }
   if (options.sessionIds?.length) {
     where.push(`e.session_id IN (${options.sessionIds.map(() => '?').join(',')})`);
     params.push(...options.sessionIds);
@@ -2156,25 +2443,134 @@ function mergeSessionAggregate(prior: Session, incoming: Session): Session {
     'consistent-snapshot': 1,
     complete: 2,
   };
-  const lifecycleRank: Record<Session['lifecycle'], number> = {
-    active: 0,
-    complete: 1,
-    tombstoned: 2,
-  };
+  const lifecycle = mergeLifecycleAggregate(prior, incoming);
+  const nativeKey = `native.${prior.provider}`;
+  const priorNative = objectRecord(prior.extensions[nativeKey]);
+  const incomingNative = objectRecord(incoming.extensions[nativeKey]);
   return {
     ...prior,
     startedAt: timestamp(prior.startedAt, incoming.startedAt, 'min'),
     updatedAt: timestamp(prior.updatedAt, incoming.updatedAt, 'max'),
     consistency: consistencyRank[prior.consistency] >= consistencyRank[incoming.consistency]
       ? prior.consistency : incoming.consistency,
-    lifecycle: lifecycleRank[prior.lifecycle] >= lifecycleRank[incoming.lifecycle]
-      ? prior.lifecycle : incoming.lifecycle,
+    lifecycle: lifecycle.lifecycle,
+    intent: mergeSessionIntent(prior.intent, incoming.intent),
     sourceDigest: incoming.sourceDigest,
     extensions: {
       ...prior.extensions,
       ...incoming.extensions,
+      [nativeKey]: {
+        ...priorNative,
+        ...incomingNative,
+        lifecycleEvidence: lifecycle.evidence,
+      },
     },
   };
+}
+
+function mergeLifecycleAggregate(
+  prior: Session,
+  incoming: Session,
+): { lifecycle: Session['lifecycle']; evidence: Record<string, unknown> } {
+  const nativeKey = `native.${prior.provider}`;
+  const priorEvidence = objectRecord(objectRecord(prior.extensions[nativeKey]).lifecycleEvidence);
+  const incomingEvidence = objectRecord(
+    objectRecord(incoming.extensions[nativeKey]).lifecycleEvidence,
+  );
+  if (prior.lifecycle === 'tombstoned') {
+    return { lifecycle: prior.lifecycle, evidence: priorEvidence };
+  }
+  const rank: Record<string, number> = {
+    'open-provisional-source': 1,
+    'inactivity-threshold': 1,
+    'complete-source': 2,
+    'provider-explicit-event': 3,
+  };
+  const priorRank = rank[String(priorEvidence.basis)] ?? 0;
+  const incomingRank = rank[String(incomingEvidence.basis)] ?? 0;
+  const incomingIsNewer = lifecycleEvidenceTimestamp(incomingEvidence)
+    > lifecycleEvidenceTimestamp(priorEvidence);
+  return incomingRank > priorRank || (incomingRank === priorRank && incomingIsNewer)
+    ? { lifecycle: incoming.lifecycle, evidence: incomingEvidence }
+    : { lifecycle: prior.lifecycle, evidence: priorEvidence };
+}
+
+function objectRecord(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function lifecycleEvidenceTimestamp(value: Record<string, unknown>): number {
+  const parsed = Date.parse(String(value.observedAt ?? ''));
+  return Number.isFinite(parsed) ? parsed : Number.NEGATIVE_INFINITY;
+}
+
+function mergeSessionIntent(
+  prior: Session['intent'],
+  incoming: Session['intent'],
+): Session['intent'] {
+  if (prior.status === 'selected' && incoming.status === 'selected') {
+    const priorKey = [prior.sequence ?? Number.MAX_SAFE_INTEGER, prior.eventId ?? ''];
+    const incomingKey = [incoming.sequence ?? Number.MAX_SAFE_INTEGER, incoming.eventId ?? ''];
+    return priorKey[0] < incomingKey[0]
+      || (priorKey[0] === incomingKey[0] && String(priorKey[1]) <= String(incomingKey[1]))
+      ? prior
+      : incoming;
+  }
+  if (prior.status === 'selected') return prior;
+  if (incoming.status === 'selected') return incoming;
+  if (prior.status === 'unknown' || incoming.status === 'unknown') {
+    return {
+      status: 'unknown',
+      eventId: null,
+      sequence: null,
+      title: null,
+      summary: null,
+    };
+  }
+  return prior;
+}
+
+function safeEventCoordinates(
+  eventData: string,
+  fallback: { provider: string; nativeSessionId: string },
+): {
+  provider: string;
+  sourceId: string;
+  nativeSessionId: string;
+  nativeEventId: string;
+} {
+  try {
+    const event = JSON.parse(eventData) as SessionEvent;
+    return {
+      provider: fallback.provider,
+      sourceId: event.sourceId,
+      nativeSessionId: fallback.nativeSessionId,
+      nativeEventId: event.nativeId ?? `sequence:${event.sequence}`,
+    };
+  } catch {
+    return {
+      provider: fallback.provider,
+      sourceId: '<unreadable>',
+      nativeSessionId: fallback.nativeSessionId,
+      nativeEventId: '<unreadable>',
+    };
+  }
+}
+
+function formatEventCoordinates(input: {
+  provider: string;
+  sourceId: string;
+  nativeSessionId: string;
+  nativeEventId: string;
+}): string {
+  return [
+    `provider=${input.provider}`,
+    `source=${input.sourceId}`,
+    `session=${input.nativeSessionId}`,
+    `event=${input.nativeEventId}`,
+  ].join(',');
 }
 
 function allowedCandidateTransition(

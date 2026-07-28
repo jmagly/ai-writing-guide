@@ -5,8 +5,12 @@ plural `aiwg sessions` namespace.
 
 ## Catalog location
 
-The default catalog is `.aiwg/sessions/catalog.sqlite` in the current
-workspace. Override it with `--db <path>`. The catalog requires the optional
+The default catalog is `.aiwg/sessions/catalog.sqlite` in the inferred
+AIWG/Git project root. Override it with `--db <path>`. Read-only commands infer
+the workspace from an explicit `--workspace`, the canonical current project
+root, or a sole catalog workspace, in that order. Multiple candidates fail
+with `WORKSPACE_AMBIGUOUS`; AIWG never chooses between them. Mutation commands
+continue to require an explicit workspace. The catalog requires the optional
 `better-sqlite3` peer dependency; `aiwg sessions doctor --json` reports
 `CATALOG_UNAVAILABLE` when it is absent.
 
@@ -14,15 +18,26 @@ workspace. Override it with `--db <path>`. The catalog requires the optional
 
 ```text
 aiwg sessions sources [--json]
+aiwg sessions discover --workspace <path>
+                       [--codex-root <authorized-path>]
+                       [--manifest <path>] [--dry-run] [--json]
+aiwg sessions import-discovered --workspace <path>
+                                [--manifest <path>] [--confirm|--yes]
+                                [--resume] [--lock-wait-ms <n>]
+                                [--dry-run] [--json]
 aiwg sessions import <file> --source-id <id> [--workspace <id>] [--dry-run] [--json]
 aiwg sessions list [--provider <id>] [--workspace <id>] [--tag <tag>]
-                   [--limit <1..500>] [--cursor <offset>] [--json]
+                   [--limit <1..500>] [--cursor <offset>]
+                   [--min-coverage <0..1>] [--json]
+aiwg sessions timeline [--workspace <id>] [--gap <duration>]
+                       [--min-coverage <0..1>] [--json]
 aiwg sessions show <session-id> [--json]
 aiwg sessions search <query> --workspace <id>
                      [--provider <id>] [--date-from <rfc3339>] [--date-to <rfc3339>]
                      [--participant <role>] [--model <id>] [--role <role>]
                      [--tool <name>] [--tag <tag>] [--entity <entity>]
                      [--sensitivity <class>] [--extraction-state <state>]
+                     [--control-events exclude|include|only]
                      [--limit <1..500>] [--cursor <opaque>] [--json]
 aiwg sessions extract [session-id] --workspace <id>
                       [--policy-version <semver>] [--min-confidence <0..1>]
@@ -45,6 +60,90 @@ aiwg sessions purge <session-id> [--confirm] --actor-class <class>
 aiwg sessions audit --workspace <id> [--limit <1..500>] [--cursor <opaque>]
                     [--otel] [--json]
 aiwg sessions doctor [--json]
+```
+
+## Discover and import a workspace history
+
+Discovery scans only provider roots associated with the explicitly authorized
+workspace. Claude, Cursor, and Factory have workspace-keyed local roots. Codex
+rollouts use a shared root, so AIWG does not inspect `CODEX_HOME` implicitly:
+pass `--codex-root` to authorize that root, or leave Codex reported as
+`SHARED_ROOT_AUTHORIZATION_REQUIRED`. Providers that require an API or manual
+export remain visible as `export-required`.
+
+```sh
+aiwg sessions discover --workspace "$PWD" --codex-root ~/.codex/sessions --json
+aiwg sessions import-discovered --workspace "$PWD" --dry-run --json
+aiwg sessions import-discovered --workspace "$PWD" --confirm
+```
+
+Discovery writes `.aiwg/sessions/discovery-manifest.json` by default. The
+manifest binds canonical workspace identity, provider dispositions, source
+IDs, sizes, timestamps, and SHA-256 content digests. Public output redacts
+source locators. `import-discovered` reads that exact manifest and refuses a
+workspace or source-content mismatch. `--confirm` is the interactive/scripted
+confirmation; `--yes` is the documented non-interactive equivalent.
+
+A batch has a deterministic run ID and durable per-source dispositions.
+Sources are staged and remain invisible to list, search, extraction, and
+timeline reads until every source reaches a terminal disposition. One short
+publication transaction exposes all accepted sources together. A cancelled or
+failed process leaves a resumable run; repeat `import-discovered --resume
+--confirm` to process only incomplete or rejected sources. Repeated resume is
+idempotent.
+
+Single and batch imports acquire `<catalog>.import.lock`. The lease records run
+ID, PID, host, start time, and heartbeat. A second writer waits up to
+`--lock-wait-ms` (default 5000) and then returns `IMPORT_LOCKED` with safe owner
+metadata and recovery guidance. AIWG auto-recovers only a stale same-host lease
+whose process is confirmed dead; foreign-host ownership is never broken
+automatically. WAL readers remain available while an importer owns the lease.
+
+## Coverage and timeline
+
+`list` and `timeline` include coverage schema `1.0.0`. Coverage distinguishes
+checked, unavailable, export-required, and not-checked providers and reconciles
+discovered, accepted, rejected, skipped, duplicate, previously committed, and
+pending sources. It also reports event/session totals, source/import date
+ranges, manifest age, stable rejection counts, and remediation commands.
+Status is `complete`, `partial`, `stale`, or `unknown`.
+
+Use `--min-coverage 0.95` in an audit or CI job. A lower or unknown ratio emits
+`COVERAGE_BELOW_THRESHOLD` and exit code 8 while retaining the coverage report
+in the JSON envelope.
+
+`timeline` derives activity segments without changing canonical session
+identity:
+
+```sh
+aiwg sessions timeline --gap 30m
+aiwg sessions timeline --workspace /work/project --gap 6h --json
+```
+
+Segments sort across providers by absolute time and show provider, session ID,
+start/end, duration, event count, boundary basis, and confidence. Explicit
+provider pause/resume/continuation evidence takes precedence over inferred
+gaps. Durations accept `ms`, `s`, `m`, `h`, or `d`.
+
+Historical lifecycle inference uses a timezone-safe 24-hour inactivity
+threshold by default. Set `--inactivity-threshold 12h` (or another duration)
+on `import` or `import-discovered` to configure it for that run. Later
+continuation or resume evidence can revise an earlier inferred inactive state;
+explicit provider lifecycle evidence always takes precedence.
+
+## User intent and control events
+
+Normalized events retain provider bootstrap, workspace instructions, and tool
+control data for provenance, but classify origin separately. Session intent is
+derived only from the first confidently user-authored message; ambiguous
+content remains `unknown` and native provider titles are not used as intent.
+
+Search and extraction exclude control events by default. Search can opt into
+all events or control-only evidence:
+
+```sh
+aiwg sessions search "bootstrap term" --control-events include
+aiwg sessions search "control term" --control-events only
 ```
 
 Generic imports accept only the declared, versioned AIWG interchange. Provider
@@ -253,3 +352,5 @@ Exit codes are stable within major version 1:
 | 4 | Requested catalog object unavailable |
 | 5 | Source or contract validation failure |
 | 6 | Catalog/storage unavailable |
+| 7 | Import lease contention |
+| 8 | Coverage below requested threshold |

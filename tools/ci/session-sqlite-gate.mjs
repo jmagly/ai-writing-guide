@@ -10,6 +10,9 @@ const require = createRequire(import.meta.url);
 const reportPath = resolve(root, 'test-results/test-results.json');
 const requiredFiles = [
   'test/unit/sessions/repository-importer.test.ts',
+  'test/unit/sessions/import-lease.test.ts',
+  'test/unit/sessions/workspace-discovery.test.ts',
+  'test/unit/sessions/origin-timeline.test.ts',
   'test/unit/cli/handlers/sessions.test.ts',
   ...[
     'claude', 'codex', 'copilot', 'cursor', 'factory', 'generic', 'hermes',

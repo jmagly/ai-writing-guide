@@ -1,5 +1,9 @@
-import { mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import {
+  existsSync, mkdirSync, realpathSync, statSync,
+} from 'node:fs';
+import {
+  dirname, isAbsolute, resolve,
+} from 'node:path';
 import {
   CLAUDE_ADAPTER_VERSION,
   ClaudeSessionAdapter,
@@ -27,6 +31,7 @@ import {
   GENERIC_ADAPTER_VERSION,
   GenericSessionInterchangeAdapter,
   IncrementalSessionImporter,
+  ImportLeaseContentionError,
   FilesystemMemoryDestination,
   FilesystemPromotionDispositionCoordinator,
   MemoryPromotionGateway,
@@ -38,7 +43,18 @@ import {
   StructuralCandidateExtractor,
   resolveMemoryConsumerManifest,
   assertSessionProviderId,
+  acquireImportLease,
+  defaultDiscoveryManifestPath,
+  discoverWorkspaceHistories,
+  deriveSessionTimeline,
+  importDiscoveryManifest,
+  previewDiscoveryImport,
+  publicDiscoveryManifest,
+  readDiscoveryManifest,
   redactSourceLocator,
+  sha256,
+  parseTimelineGap,
+  writeDiscoveryManifest,
   type SessionProviderId,
   type SessionAuthorizationContext,
   type SessionSourceAdapter,
@@ -49,6 +65,7 @@ import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 const JSON_CONTRACT_VERSION = '1.0.0';
 const EXIT = {
   ok: 0, usage: 2, unsupported: 3, unavailable: 4, contract: 5, storage: 6,
+  locked: 7, coverage: 8,
 } as const;
 
 interface Envelope {
@@ -56,15 +73,18 @@ interface Envelope {
   command: string;
   status: 'ok' | 'error' | 'preview';
   data: unknown;
-  error: { code: string; message: string } | null;
+  error: { code: string; message: string; details?: unknown } | null;
 }
 
 const HELP = `Usage: aiwg sessions <command> [options]
 
 Commands:
   sources                         Show all canonical provider dispositions
+  discover --workspace <path>     Inventory authorized workspace histories
+  import-discovered --workspace <path>  Import the exact saved manifest
   import <file> --source-id <id>  Import a supported provider JSONL source
   list [--limit N] [--cursor N]   List normalized sessions
+  timeline [--gap 30m]            Report chronological activity segments
   show <session-id>               Show a session with events and tags
   search <query> --workspace <id> Search authorized normalized content
   extract [session-id] --workspace <id> Extract structural candidates
@@ -84,6 +104,13 @@ Options:
   --json          Emit the versioned JSON contract
   --dry-run       Preview a mutation without changing state
   --db <path>     Override .aiwg/sessions/catalog.sqlite
+  --manifest <path>  Override the discovery manifest path
+  --provider-home <path>  Override the provider home root (testing/portable homes)
+  --codex-root <path>  Explicitly authorize a shared Codex sessions/export root
+  --confirm, --yes  Confirm a persistent discovered batch import
+  --lock-wait-ms <n>  Maximum import-lease wait (default 5000)
+  --inactivity-threshold <duration>  Historical inactivity threshold (default 24h)
+  --min-coverage <0..1>  Fail list/report commands below a coverage ratio
   --provider <id> Filter list or select an import adapter
   --consumer <id> Select a named memory consumer for promotion
   --workspace <id>, --tag <tag>, --limit <n>, --cursor <n>
@@ -146,12 +173,14 @@ async function executeCommand(
     return ok(command, { providers: reports, count: reports.length });
   }
   if (command === 'import') return importSource(ctx, args);
+  if (command === 'discover') return discoverWorkspace(ctx, args);
+  if (command === 'import-discovered') return importDiscovered(ctx, args);
 
   const repository = openRepository(ctx, args);
   try {
     switch (command) {
       case 'list': {
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = readAuthorizationContext(ctx, args, command, repository);
         const limit = boundedInteger(args.values.get('--limit'), 50, 1, 500, '--limit');
         const cursor = args.values.get('--cursor');
         const providerInput = args.values.get('--provider');
@@ -163,7 +192,8 @@ async function executeCommand(
           limit,
           cursor,
         });
-        return ok(command, {
+        const coverage = repository.getCoverage(workspaceId);
+        const response = {
           items: result.items,
           page: {
             limit,
@@ -172,11 +202,66 @@ async function executeCommand(
             snapshotRowid: result.snapshotRowid,
             total: result.total,
           },
-        });
+          coverage,
+        };
+        const minimum = args.values.has('--min-coverage')
+          ? boundedNumber(args.values.get('--min-coverage'), 0, 0, 1, '--min-coverage')
+          : null;
+        if (minimum !== null
+          && (coverage.coverageRatio === null || coverage.coverageRatio < minimum)) {
+          return {
+            envelope: envelope(
+              `sessions.${command}`,
+              'error',
+              response,
+              {
+                code: 'COVERAGE_BELOW_THRESHOLD',
+                message: `session coverage is below the requested threshold ${minimum}`,
+                details: coverage,
+              },
+            ),
+            exitCode: EXIT.coverage,
+          };
+        }
+        return ok(command, response);
+      }
+      case 'timeline': {
+        const { workspaceId } = readAuthorizationContext(ctx, args, command, repository);
+        const gapMs = timelineGap(args.values.get('--gap'));
+        const items = deriveSessionTimeline(repository.listTimelineInputs(workspaceId), gapMs);
+        const coverage = repository.getCoverage(workspaceId);
+        const response = {
+          schemaVersion: '1.0.0',
+          workspaceId,
+          gapMs,
+          items,
+          count: items.length,
+          coverage,
+        };
+        const minimum = args.values.has('--min-coverage')
+          ? boundedNumber(args.values.get('--min-coverage'), 0, 0, 1, '--min-coverage')
+          : null;
+        if (minimum !== null
+          && (coverage.coverageRatio === null || coverage.coverageRatio < minimum)) {
+          return {
+            envelope: envelope(
+              `sessions.${command}`,
+              'error',
+              response,
+              {
+                code: 'COVERAGE_BELOW_THRESHOLD',
+                message: `session coverage is below the requested threshold ${minimum}`,
+                details: coverage,
+              },
+            ),
+            exitCode: EXIT.coverage,
+          };
+        }
+        return ok(command, response);
       }
       case 'show': {
         const id = requiredPositional(args, 0, 'session-id');
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = readAuthorizationContext(ctx, args, command, repository);
         const session = repository.getSession(id, workspaceId);
         if (!session) throw new CliError('SESSION_NOT_FOUND', `session not found: ${id}`, EXIT.unavailable);
         return ok(command, {
@@ -187,7 +272,7 @@ async function executeCommand(
       }
       case 'search': {
         const query = requiredPositional(args, 0, 'query');
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = readAuthorizationContext(ctx, args, command, repository);
         const providerInput = args.values.get('--provider');
         const provider = providerInput ? assertSessionProviderId(providerInput) : undefined;
         const result = repository.search({
@@ -204,6 +289,7 @@ async function executeCommand(
           entity: args.values.get('--entity'),
           sensitivity: args.values.get('--sensitivity'),
           extractionState: args.values.get('--extraction-state'),
+          controlEvents: controlEventMode(args.values.get('--control-events')),
           limit: boundedInteger(args.values.get('--limit'), 50, 1, 500, '--limit'),
           cursor: args.values.get('--cursor'),
         });
@@ -214,7 +300,7 @@ async function executeCommand(
         });
       }
       case 'extract': {
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = authorizationContext(ctx, args, command);
         const sessionId = args.positionals[0];
         const pageSize = boundedInteger(args.values.get('--page-size'), 250, 1, 500, '--page-size');
         const maxDocuments = args.values.has('--max-documents')
@@ -283,14 +369,14 @@ async function executeCommand(
           : ok(command, { items, count: items.length, durableMemoryWrites: 0, scan });
       }
       case 'candidates': {
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = readAuthorizationContext(ctx, args, command, repository);
         const state = candidateState(args.values.get('--state'));
         return ok(command, {
           items: repository.listCandidates(state, workspaceId),
         });
       }
       case 'review': {
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = authorizationContext(ctx, args, command);
         const candidateId = requiredPositional(args, 0, 'candidate-id');
         const version = boundedInteger(
           requiredPositional(args, 1, 'version'),
@@ -320,7 +406,7 @@ async function executeCommand(
         }));
       }
       case 'promote': {
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = authorizationContext(ctx, args, command);
         const candidateId = requiredPositional(args, 0, 'candidate-id');
         const version = boundedInteger(
           requiredPositional(args, 1, 'version'),
@@ -368,7 +454,7 @@ async function executeCommand(
       }
       case 'tag': {
         const id = requiredPositional(args, 0, 'session-id');
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = authorizationContext(ctx, args, command);
         const tag = requiredPositional(args, 1, 'tag');
         if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(tag)) {
           throw new CliError('INVALID_TAG', 'tag must be 1-64 safe identifier characters', EXIT.usage);
@@ -383,7 +469,7 @@ async function executeCommand(
       }
       case 'relocate': {
         const sourceId = requiredPositional(args, 0, 'source-id');
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = authorizationContext(ctx, args, command);
         const locator = requiredPositional(args, 1, 'file');
         if (!repository.getSource(sourceId, workspaceId)) {
           throw new CliError('SOURCE_NOT_FOUND', `source not found: ${sourceId}`, EXIT.unavailable);
@@ -394,13 +480,13 @@ async function executeCommand(
         return ok(command, { sourceId, redactedLocator });
       }
       case 'reindex': {
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = authorizationContext(ctx, args, command);
         if (isDryRun(ctx, args)) return preview(command, { operation: 'reindex' });
         repository.reindex(workspaceId);
         return ok(command, { operation: 'reindex' });
       }
       case 'audit': {
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = readAuthorizationContext(ctx, args, command, repository);
         const limit = boundedInteger(args.values.get('--limit'), 100, 1, 500, '--limit');
         const cursor = args.values.get('--cursor');
         if (args.flags.has('--otel')) {
@@ -418,7 +504,7 @@ async function executeCommand(
       }
       case 'delete': {
         const id = requiredPositional(args, 0, 'session-id');
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = authorizationContext(ctx, args, command);
         const counts = repository.deletionPreview(id, workspaceId);
         if (counts.sessions === 0) {
           throw new CliError('SESSION_NOT_FOUND', `session not found: ${id}`, EXIT.unavailable);
@@ -436,7 +522,7 @@ async function executeCommand(
       }
       case 'restore': {
         const id = requiredPositional(args, 0, 'session-id');
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = authorizationContext(ctx, args, command);
         if (isDryRun(ctx, args)) return preview(command, { sessionId: id, wouldRestore: true });
         if (!repository.restoreSession(id, workspaceId)) {
           throw new CliError('SESSION_NOT_FOUND', `tombstoned session not found: ${id}`, EXIT.unavailable);
@@ -445,7 +531,7 @@ async function executeCommand(
       }
       case 'purge': {
         const id = requiredPositional(args, 0, 'session-id');
-        const { workspaceId } = authorizationContext(args, command);
+        const { workspaceId } = authorizationContext(ctx, args, command);
         const completed = repository.getCompletedPurge(id, workspaceId);
         if (completed) {
           return ok(command, {
@@ -536,7 +622,9 @@ async function importSource(
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
-  const workspaceId = args.values.get('--workspace') ?? 'default';
+  const workspaceId = args.values.has('--workspace')
+    ? normalizeWorkspaceId(ctx.cwd, args.values.get('--workspace')!)
+    : 'default';
   const isClaude = provider === 'claude';
   const isCodex = provider === 'codex';
   const isCopilot = provider === 'copilot';
@@ -686,21 +774,143 @@ async function importSource(
   if (isDryRun(ctx, args)) {
     return preview('import', { source, wouldInspect: true, wouldPersist: false });
   }
-  const repository = openRepository(ctx, args);
+  const lease = await acquireImportLease(
+    databasePath(ctx, args),
+    sha256(['single-source-import', sourceId, workspaceId].join('\0')),
+    {
+      waitMs: boundedInteger(
+        args.values.get('--lock-wait-ms'),
+        5_000,
+        0,
+        300_000,
+        '--lock-wait-ms',
+      ),
+    },
+  );
   try {
-    const receipts = await new IncrementalSessionImporter(repository).import({
-      source, selectedSource, adapter, workspaceId, policyVersion: '1.0.0',
-    });
-    return ok('import', {
-      sourceId,
-      receipts,
-      totals: {
-        sessionsInserted: receipts.reduce((sum, item) => sum + item.sessionsInserted, 0),
-        eventsInserted: receipts.reduce((sum, item) => sum + item.eventsInserted, 0),
-      },
-    });
+    const repository = openRepository(ctx, args);
+    try {
+      const receipts = await new IncrementalSessionImporter(repository).import({
+        source, selectedSource, adapter, workspaceId, policyVersion: '1.0.0',
+        inactivityThresholdMs: inactivityThreshold(args.values.get('--inactivity-threshold')),
+      });
+      return ok('import', {
+        sourceId,
+        receipts,
+        totals: {
+          sessionsInserted: receipts.reduce((sum, item) => sum + item.sessionsInserted, 0),
+          eventsInserted: receipts.reduce((sum, item) => sum + item.eventsInserted, 0),
+        },
+      });
+    } finally {
+      repository.close();
+    }
   } finally {
-    repository.close();
+    await lease.release();
+  }
+}
+
+async function discoverWorkspace(
+  ctx: HandlerContext,
+  args: ParsedArgs,
+): Promise<{ envelope: Envelope; exitCode: number }> {
+  const workspace = resolve(ctx.cwd, requiredValue(args, '--workspace'));
+  const manifest = await discoverWorkspaceHistories({
+    workspace,
+    providerHome: args.values.has('--provider-home')
+      ? resolve(ctx.cwd, args.values.get('--provider-home')!)
+      : undefined,
+    codexRoot: args.values.has('--codex-root')
+      ? resolve(ctx.cwd, args.values.get('--codex-root')!)
+      : undefined,
+  });
+  const manifestPath = resolve(
+    ctx.cwd,
+    args.values.get('--manifest') ?? defaultDiscoveryManifestPath(manifest.workspacePath),
+  );
+  const data = {
+    manifest: publicDiscoveryManifest(manifest),
+    manifestPath: redactSourceLocator(manifestPath),
+    exactManifestRequiredForImport: true,
+  };
+  if (isDryRun(ctx, args)) {
+    return preview('discover', { ...data, wouldPersistManifest: false });
+  }
+  await writeDiscoveryManifest(manifestPath, manifest);
+  return ok('discover', { ...data, manifestPersisted: true });
+}
+
+async function importDiscovered(
+  ctx: HandlerContext,
+  args: ParsedArgs,
+): Promise<{ envelope: Envelope; exitCode: number }> {
+  const workspace = resolve(ctx.cwd, requiredValue(args, '--workspace'));
+  const canonicalWorkspace = realpathSync(workspace);
+  const manifestPath = resolve(
+    ctx.cwd,
+    args.values.get('--manifest') ?? defaultDiscoveryManifestPath(canonicalWorkspace),
+  );
+  const manifest = await readDiscoveryManifest(manifestPath);
+  if (manifest.workspaceId !== canonicalWorkspace) {
+    throw new CliError(
+      'MANIFEST_WORKSPACE_MISMATCH',
+      'discovery manifest does not belong to the explicitly authorized workspace',
+      EXIT.contract,
+    );
+  }
+  const confirmed = args.flags.has('--confirm') || args.flags.has('--yes');
+  if (isDryRun(ctx, args) || !confirmed) {
+    let existing = null;
+    try {
+      const repository = openRepository(ctx, args);
+      existing = repository.getBatchImportRunForManifest(
+        manifest.manifestId,
+        manifest.workspaceId,
+      );
+      repository.close();
+    } catch {
+      // A preview can still describe the exact manifest before a catalog exists.
+    }
+    return preview('import-discovered', {
+      manifest: publicDiscoveryManifest(manifest),
+      receipt: previewDiscoveryImport(manifest, existing),
+      confirmationRequired: !isDryRun(ctx, args),
+      wouldPersist: false,
+    });
+  }
+
+  const lease = await acquireImportLease(
+    databasePath(ctx, args),
+    sha256(['discovered-import', manifest.manifestId, manifest.workspaceId].join('\0')),
+    {
+      waitMs: boundedInteger(
+        args.values.get('--lock-wait-ms'),
+        5_000,
+        0,
+        300_000,
+        '--lock-wait-ms',
+      ),
+    },
+  );
+  try {
+    const repository = openRepository(ctx, args);
+    try {
+      const receipt = await importDiscoveryManifest({
+        manifest,
+        repository,
+        signal: ctx.signal,
+        inactivityThresholdMs: inactivityThreshold(args.values.get('--inactivity-threshold')),
+      });
+      return ok('import-discovered', {
+        manifestId: manifest.manifestId,
+        receipt,
+        resumable: receipt.run.status !== 'complete',
+      });
+    } finally {
+      repository.close();
+    }
+  } finally {
+    await lease.release();
   }
 }
 
@@ -750,10 +960,10 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
   if (provider === 'cursor') {
     return {
       provider, disposition: 'implemented', operationalState: 'available',
-      supportedOperations: ['inspect', 'stream'],
+      supportedOperations: ['discover', 'inspect', 'stream'],
       acquisitionModes: ['api', 'jsonl', 'manual-export'],
       reasonCode: null,
-      remediation: 'Import Cursor CLI stream-json, captured Cloud Agent v1 events, or an editor Markdown export.',
+      remediation: 'Authorize a workspace agent-transcripts root, or import Cursor CLI/Cloud Agent exports explicitly.',
       evidence: {
         adapterVersion: CURSOR_ADAPTER_VERSION,
         verifiedAt: '2026-07-27',
@@ -884,12 +1094,14 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
 function cursorLocatorClass(input: string): string {
   if (input.endsWith('.md') || input.endsWith('.markdown')) return 'cursor-editor-markdown';
   if (input.endsWith('.cloud.jsonl')) return 'cursor-cloud-events-jsonl';
+  if (input.split(/[\\/]+/).includes('agent-transcripts')) return 'cursor-agent-transcript-jsonl';
   return 'cursor-cli-stream-json';
 }
 
 function cursorProviderProfile(locatorClass: string): string {
   if (locatorClass === 'cursor-editor-markdown') return 'editor-markdown-lossy';
   if (locatorClass === 'cursor-cloud-events-jsonl') return 'cloud-agents-api-v1';
+  if (locatorClass === 'cursor-agent-transcript-jsonl') return 'agent-transcript-jsonl';
   return 'cli-stream-json';
 }
 
@@ -899,16 +1111,26 @@ function openRepository(ctx: HandlerContext, args: ParsedArgs): SessionRepositor
   try {
     return new SessionRepository(path);
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/SQLITE_BUSY|database is locked/i.test(message)) {
+      throw new CliError(
+        'IMPORT_LOCKED',
+        'the session catalog is busy; retry after the active writer finishes',
+        EXIT.locked,
+        { owner: null, waitedMs: 0 },
+      );
+    }
     throw new CliError(
       'CATALOG_UNAVAILABLE',
-      error instanceof Error ? error.message : String(error),
+      message,
       EXIT.storage,
     );
   }
 }
 
 function databasePath(ctx: HandlerContext, args: ParsedArgs): string {
-  return resolve(ctx.cwd, args.values.get('--db') ?? '.aiwg/sessions/catalog.sqlite');
+  if (args.values.has('--db')) return resolve(ctx.cwd, args.values.get('--db')!);
+  return resolve(projectRootCandidate(ctx.cwd) ?? ctx.cwd, '.aiwg/sessions/catalog.sqlite');
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
@@ -921,6 +1143,9 @@ function parseArgs(argv: string[]): ParsedArgs {
     '--entity', '--sensitivity', '--extraction-state', '--page-size', '--max-documents',
     '--state', '--reviewer', '--reason', '--policy-version', '--min-confidence',
     '--consumer', '--actor-class', '--reason-code', '--dependent-action', '--basis',
+    '--manifest', '--provider-home', '--codex-root', '--lock-wait-ms', '--min-coverage', '--gap',
+    '--inactivity-threshold',
+    '--control-events',
   ]);
   let command: string | undefined;
   for (let index = 0; index < argv.length; index += 1) {
@@ -956,16 +1181,108 @@ function requiredValue(args: ParsedArgs, flag: string): string {
 }
 
 function authorizationContext(
+  ctx: HandlerContext,
   args: ParsedArgs,
   operation: string,
 ): SessionAuthorizationContext {
   return {
     actorId: 'local-catalog-owner',
-    workspaceId: requiredValue(args, '--workspace'),
+    workspaceId: normalizeWorkspaceId(ctx.cwd, requiredValue(args, '--workspace')),
     operation,
     catalogScope: 'workspace',
     mode: 'local-owner',
   };
+}
+
+function readAuthorizationContext(
+  ctx: HandlerContext,
+  args: ParsedArgs,
+  operation: string,
+  repository: SessionRepository,
+): SessionAuthorizationContext {
+  const explicit = args.values.get('--workspace');
+  if (explicit) {
+    return {
+      actorId: 'local-catalog-owner',
+      workspaceId: normalizeWorkspaceId(ctx.cwd, explicit),
+      operation,
+      catalogScope: 'workspace',
+      mode: 'local-owner',
+    };
+  }
+  const project = projectRootCandidate(ctx.cwd);
+  if (project) {
+    return {
+      actorId: 'local-catalog-owner',
+      workspaceId: project,
+      operation,
+      catalogScope: 'workspace',
+      mode: 'local-owner',
+    };
+  }
+  const candidates = repository.listWorkspaceIds();
+  if (candidates.length === 1) {
+    return {
+      actorId: 'local-catalog-owner',
+      workspaceId: candidates[0],
+      operation,
+      catalogScope: 'workspace',
+      mode: 'local-owner',
+    };
+  }
+  if (candidates.length > 1) {
+    throw new CliError(
+      'WORKSPACE_AMBIGUOUS',
+      'current workspace cannot be inferred safely; pass --workspace explicitly',
+      EXIT.usage,
+      {
+        candidates,
+        example: `aiwg sessions ${operation} --workspace ${JSON.stringify(candidates[0])}`,
+      },
+    );
+  }
+  throw new CliError(
+    'WORKSPACE_REQUIRED',
+    'current workspace cannot be inferred; pass --workspace explicitly',
+    EXIT.usage,
+    {
+      candidates: [],
+      example: `aiwg sessions ${operation} --workspace <path-or-id>`,
+    },
+  );
+}
+
+function projectRootCandidate(start: string): string | null {
+  let current: string;
+  try {
+    const resolved = realpathSync(resolve(start));
+    current = statSync(resolved).isDirectory() ? resolved : dirname(resolved);
+  } catch {
+    current = resolve(start);
+  }
+  let gitRoot: string | null = null;
+  while (true) {
+    if (existsSync(resolve(current, '.aiwg', 'aiwg.config'))) return current;
+    if (!gitRoot && existsSync(resolve(current, '.git'))) gitRoot = current;
+    const parent = dirname(current);
+    if (parent === current) return gitRoot;
+    current = parent;
+  }
+}
+
+function normalizeWorkspaceId(cwd: string, value: string): string {
+  const pathLike = isAbsolute(value)
+    || value === '.'
+    || value === '..'
+    || value.startsWith('./')
+    || value.startsWith('../');
+  if (!pathLike) return value;
+  const candidate = resolve(cwd, value);
+  try {
+    return realpathSync(candidate);
+  } catch {
+    return candidate;
+  }
 }
 
 function boundedInteger(
@@ -993,6 +1310,42 @@ function boundedNumber(
     throw new CliError('INVALID_ARGUMENT', `${name} must be between ${min} and ${max}`, EXIT.usage);
   }
   return parsed;
+}
+
+function timelineGap(value: string | undefined): number {
+  try {
+    return parseTimelineGap(value);
+  } catch (error) {
+    throw new CliError(
+      'INVALID_ARGUMENT',
+      error instanceof Error ? error.message : 'invalid timeline gap',
+      EXIT.usage,
+    );
+  }
+}
+
+function inactivityThreshold(value: string | undefined): number {
+  try {
+    return parseTimelineGap(value ?? '24h');
+  } catch (error) {
+    throw new CliError(
+      'INVALID_ARGUMENT',
+      error instanceof Error ? error.message : 'invalid inactivity threshold',
+      EXIT.usage,
+    );
+  }
+}
+
+function controlEventMode(
+  value: string | undefined,
+): 'exclude' | 'include' | 'only' {
+  if (value === undefined) return 'exclude';
+  if (value === 'exclude' || value === 'include' || value === 'only') return value;
+  throw new CliError(
+    'INVALID_ARGUMENT',
+    '--control-events must be exclude, include, or only',
+    EXIT.usage,
+  );
 }
 
 type CandidateState = 'pending' | 'accepted' | 'rejected' | 'deferred' | 'promoted' | 'superseded';
@@ -1045,6 +1398,24 @@ function emit(value: Envelope): void {
 
 function printHuman(value: Envelope): void {
   if (value.status === 'preview') console.log('Preview (no changes applied)');
+  if (value.command === 'sessions.timeline' && value.data
+    && typeof value.data === 'object' && 'items' in value.data) {
+    const data = value.data as { items: Array<Record<string, unknown>>; coverage?: { status?: string } };
+    for (const item of data.items) {
+      console.log([
+        item.startAt ?? '<unknown-time>',
+        item.endAt ?? '<unknown-time>',
+        item.provider,
+        item.sessionId,
+        `segment=${item.segmentIndex}`,
+        `events=${item.eventCount}`,
+        `boundary=${item.boundaryBasis}`,
+        `confidence=${item.confidence}`,
+      ].join(' '));
+    }
+    console.log(`Coverage: ${data.coverage?.status ?? 'unknown'}`);
+    return;
+  }
   console.log(JSON.stringify(value.data, null, 2));
 }
 
@@ -1053,21 +1424,38 @@ class CliError extends Error {
     readonly code: string,
     message: string,
     readonly exitCode: number,
+    readonly details?: unknown,
   ) {
     super(message);
   }
 }
 
 function normalizeError(error: unknown): {
-  error: { code: string; message: string };
+  error: { code: string; message: string; details?: unknown };
   exitCode: number;
 } {
   if (error instanceof CliError) {
-    return { error: { code: error.code, message: error.message }, exitCode: error.exitCode };
+    return {
+      error: { code: error.code, message: error.message, details: error.details },
+      exitCode: error.exitCode,
+    };
   }
   if (error instanceof SessionContractError) {
     const exitCode = error.code === 'UNSUPPORTED_OPERATION' ? EXIT.unsupported : EXIT.contract;
     return { error: { code: error.code, message: error.message }, exitCode };
+  }
+  if (error instanceof ImportLeaseContentionError) {
+    return {
+      error: {
+        code: error.code,
+        message: error.message,
+        details: {
+          owner: error.owner,
+          waitedMs: error.waitMs,
+        },
+      },
+      exitCode: EXIT.locked,
+    };
   }
   return {
     error: { code: 'INTERNAL_ERROR', message: error instanceof Error ? error.message : String(error) },

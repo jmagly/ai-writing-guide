@@ -34,7 +34,7 @@ function selected(name: string, locatorClass?: string): SelectedSource {
 describe('Cursor session adapter', () => {
   const adapter = new CursorSessionAdapter();
 
-  it('reports three explicit surfaces and excludes editor SQLite discovery', async () => {
+  it('discovers authorized agent transcripts and excludes editor SQLite discovery', async () => {
     const registry = new SessionSourceAdapterRegistry();
     registry.register(adapter);
     expect(registry.report('cursor', {
@@ -49,13 +49,22 @@ describe('Cursor session adapter', () => {
       remediation: null,
     })).toMatchObject({
       classification: 'implemented',
-      supportedOperations: ['inspect', 'stream'],
+      supportedOperations: ['discover', 'inspect', 'stream'],
       acquisitionModes: ['api', 'jsonl', 'manual-export'],
     });
     expect(await collect(adapter.discover({
       workspaceId: 'workspace-fixture',
-      allowedRoots: [fixturesRoot],
-    }))).toEqual([]);
+      allowedRoots: [resolve(fixturesRoot, 'agent-transcripts')],
+    }))).toEqual([{
+      provider: 'cursor',
+      locator: resolve(
+        fixturesRoot,
+        'agent-transcripts',
+        'agent-session',
+        'agent-session.jsonl',
+      ),
+      locatorClass: 'cursor-agent-transcript-jsonl',
+    }]);
     await expect(adapter.inspect(selected(
       'editor-export.md',
       'cursor-editor-sqlite',
@@ -122,6 +131,43 @@ describe('Cursor session adapter', () => {
     expect(records[5].extensions).toMatchObject({
       unknownFields: { futureCloudField: 'preserved' },
     });
+  });
+
+  it('normalizes project-scoped agent-transcripts JSONL separately from CLI streams', async () => {
+    await expect(adapter.inspect(selected(
+      'agent-transcripts/agent-session/agent-session.jsonl',
+      'cursor-agent-transcript-jsonl',
+    ))).resolves.toEqual({
+      sourceSchemaVersion: '1.0.0',
+      consistency: 'provisional',
+      operationalState: 'available',
+    });
+    const records = await collect(adapter.stream(selected(
+      'agent-transcripts/agent-session/agent-session.jsonl',
+      'cursor-agent-transcript-jsonl',
+    )));
+    expect(records).toHaveLength(2);
+    expect(records[0]).toMatchObject({
+      nativeSessionId: 'agent-session',
+      nativeEventId: 'user:0',
+      kind: 'message',
+      role: 'user',
+      text: 'Synthetic Cursor agent transcript prompt.',
+      rawReference: { locatorClass: 'cursor-agent-transcript-jsonl' },
+      extensions: {
+        provenance: {
+          acquisition: 'cursor-agent-transcript-jsonl',
+          nativeSessionIdDerivedFromPath: true,
+        },
+      },
+    });
+  });
+
+  it('does not accept agent-transcript records as Cursor CLI streams', async () => {
+    await expect(adapter.inspect(selected(
+      'agent-transcripts/agent-session/agent-session.jsonl',
+      'cursor-cli-stream-json',
+    ))).rejects.toMatchObject({ code: 'MALFORMED_SOURCE' });
   });
 
   it('imports editor Markdown as explicitly lossy text without invented metadata', async () => {

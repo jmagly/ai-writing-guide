@@ -84,11 +84,43 @@ describe('Factory session adapter', () => {
     expect(records.every((record) => record.extensions?.lifecycle === 'active')).toBe(true);
   });
 
+  it('parses current session_start envelopes using id as native session identity', async () => {
+    await expect(adapter.inspect(selected('current-session-start.jsonl'))).resolves.toMatchObject({
+      sourceSchemaVersion: '1.0.0',
+      consistency: 'provisional',
+    });
+    const records = await collect(adapter.stream(selected('current-session-start.jsonl')));
+    expect(records).toHaveLength(2);
+    expect(new Set(records.map((record) => record.nativeSessionId)))
+      .toEqual(new Set(['factory-current-session']));
+    expect(records[0]).toMatchObject({
+      nativeEventId: 'factory-current-session:0',
+      kind: 'factory.session_start',
+      extensions: {
+        productVersion: 2,
+        unknownFields: {
+          title: 'Synthetic current session',
+          sessionTitle: 'Synthetic current session',
+          owner: 'synthetic',
+        },
+      },
+    });
+  });
+
   it.each([
     ['unknown-major.jsonl', 'UNKNOWN_SCHEMA_MAJOR'],
     ['malformed.jsonl', 'MALFORMED_SOURCE'],
   ])('fails closed for %s with %s', async (name, code) => {
     await expect(adapter.inspect(selected(name))).rejects.toMatchObject({ code });
+  });
+
+  it('reports malformed source coordinates and schema requirement without content', async () => {
+    await expect(adapter.inspect(selected('malformed.jsonl'))).rejects.toMatchObject({
+      code: 'MALFORMED_SOURCE',
+      message: expect.stringMatching(
+        /Factory source malformed\.jsonl record 1 type <missing-or-invalid> failed requirement type/,
+      ),
+    });
   });
 
   it('negotiates Sessions API and Droid Exec instead of assuming availability', async () => {

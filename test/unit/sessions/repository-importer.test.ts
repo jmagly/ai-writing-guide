@@ -15,6 +15,7 @@ import {
   SessionRepository,
   StructuralCandidateExtractor,
   sha256,
+  stableEventId,
   stableSessionId,
   type ProviderRecord,
   type MemoryDestinationPlan,
@@ -240,6 +241,109 @@ describe('transactional session repository and importer', () => {
     repository.close();
   });
 
+  it('scopes native event identity by provider source and native session', async () => {
+    const repository = new SessionRepository();
+    const importer = new IncrementalSessionImporter(repository);
+    const scopedSource = { ...source, sourceId: 'scoped-event-source' };
+    await importer.import({
+      source: scopedSource,
+      selectedSource: {
+        provider: 'generic',
+        locator: '<fixture>',
+        locatorClass: 'synthetic-fixture',
+        sourceId: scopedSource.sourceId,
+        authorizedScope: { workspaceId: 'workspace-1', allowedRoots: ['/fixture'] },
+      },
+      adapter: adapter([
+        {
+          nativeSessionId: 'native-a',
+          nativeEventId: 'same-provider-event-id',
+          sequence: 0,
+          kind: 'message',
+          role: 'assistant',
+          text: 'Event in session A',
+          rawReference: { locatorClass: 'fixture', sequence: 0 },
+        },
+        {
+          nativeSessionId: 'native-b',
+          nativeEventId: 'same-provider-event-id',
+          sequence: 0,
+          kind: 'message',
+          role: 'assistant',
+          text: 'Event in session B',
+          rawReference: { locatorClass: 'fixture', sequence: 0 },
+        },
+      ]),
+      workspaceId: 'workspace-1',
+      policyVersion: '1.0.0',
+    });
+    const sessionA = stableSessionId('generic', scopedSource.sourceId, 'native-a');
+    const sessionB = stableSessionId('generic', scopedSource.sourceId, 'native-b');
+    const eventsA = repository.listEvents(sessionA);
+    const eventsB = repository.listEvents(sessionB);
+    expect(eventsA).toHaveLength(1);
+    expect(eventsB).toHaveLength(1);
+    expect(eventsA[0].eventId).not.toBe(eventsB[0].eventId);
+    const identityRecord: ProviderRecord = {
+      nativeSessionId: 'native-a',
+      nativeEventId: 'same-provider-event-id',
+      sequence: 0,
+      kind: 'message',
+      text: 'identity fixture',
+      rawReference: { locatorClass: 'fixture', sequence: 0 },
+    };
+    expect(stableEventId('generic', 'source', identityRecord, sha256('same')))
+      .not.toBe(stableEventId('claude', 'source', identityRecord, sha256('same')));
+    expect(stableEventId('generic', 'source', identityRecord, sha256('same')))
+      .not.toBe(stableEventId(
+        'generic',
+        'source',
+        { ...identityRecord, sequence: 1 },
+        sha256('same'),
+      ));
+    repository.close();
+  });
+
+  it('still rejects content mutation within the same native event scope', async () => {
+    const repository = new SessionRepository();
+    const importer = new IncrementalSessionImporter(repository);
+    const scopedSource = { ...source, sourceId: 'mutated-event-source' };
+    await expect(importer.import({
+      source: scopedSource,
+      selectedSource: {
+        provider: 'generic',
+        locator: '<fixture>',
+        locatorClass: 'synthetic-fixture',
+        sourceId: scopedSource.sourceId,
+        authorizedScope: { workspaceId: 'workspace-1', allowedRoots: ['/fixture'] },
+      },
+      adapter: adapter([
+        {
+          nativeSessionId: 'native-a',
+          nativeEventId: 'same-native-event',
+          sequence: 0,
+          kind: 'message',
+          role: 'assistant',
+          text: 'Original content',
+          rawReference: { locatorClass: 'fixture', sequence: 0 },
+        },
+        {
+          nativeSessionId: 'native-a',
+          nativeEventId: 'same-native-event',
+          sequence: 0,
+          kind: 'message',
+          role: 'assistant',
+          text: 'Mutated content',
+          rawReference: { locatorClass: 'fixture', sequence: 0 },
+        },
+      ]),
+      workspaceId: 'workspace-1',
+      policyVersion: '1.0.0',
+    })).rejects.toThrow(/prior=provider=generic,source=mutated-event-source,session=native-a,event=same-native-event/);
+    expect(repository.listSessions({ workspaceId: 'workspace-1', limit: 10 }).total).toBe(0);
+    repository.close();
+  });
+
   it('applies recursive native sanitization uniformly to every provider family', async () => {
     for (const provider of SESSION_PROVIDER_IDS) {
       const repository = new SessionRepository();
@@ -362,10 +466,19 @@ describe('transactional session repository and importer', () => {
     expect(repository.getSession(stableSessionId(
       'generic', incrementalSource.sourceId, 'aggregate-session',
     ))).toMatchObject({
-      lifecycle: 'active',
+      lifecycle: 'inactive',
       consistency: 'provisional',
       startedAt: '2026-07-26T12:00:00.000Z',
       updatedAt: '2026-07-26T12:00:00.000Z',
+      extensions: {
+        'native.generic': {
+          lifecycleEvidence: {
+            basis: 'inactivity-threshold',
+            state: 'inactive',
+            confidence: 'medium',
+          },
+        },
+      },
     });
 
     const completeSource = { ...incrementalSource, consistency: 'complete' as const };
@@ -737,7 +850,7 @@ describe('transactional session repository and importer', () => {
     });
 
     const ranked = repository.search({
-      query: 'nebula', workspaceId: 'workspace-search', limit: 10,
+      query: 'nebula', workspaceId: 'workspace-search', controlEvents: 'include', limit: 10,
     });
     expect(ranked.items).toHaveLength(2);
     expect(ranked.items[0].nativeEventId).toBe('native-frequent');
@@ -747,16 +860,16 @@ describe('transactional session repository and importer', () => {
     expect(ranked.items[1].nativeEventId).toBeNull();
     expect(ranked.items[1].citation).not.toHaveProperty('nativeEventId');
     expect(repository.search({
-      query: '"nebula nebula"', workspaceId: 'workspace-search', limit: 10,
+      query: '"nebula nebula"', workspaceId: 'workspace-search', controlEvents: 'include', limit: 10,
     }).items).toHaveLength(1);
     expect(repository.search({
-      query: 'nebu*', workspaceId: 'workspace-search', limit: 10,
+      query: 'nebu*', workspaceId: 'workspace-search', controlEvents: 'include', limit: 10,
     }).items).toHaveLength(2);
     expect(repository.search({
-      query: 'nebula AND orbital', workspaceId: 'workspace-search', limit: 10,
+      query: 'nebula AND orbital', workspaceId: 'workspace-search', controlEvents: 'include', limit: 10,
     }).items).toHaveLength(1);
     expect(repository.search({
-      query: 'café', workspaceId: 'workspace-search', limit: 10,
+      query: 'café', workspaceId: 'workspace-search', controlEvents: 'include', limit: 10,
     }).items).toHaveLength(1);
 
     const normalized = {
@@ -769,6 +882,7 @@ describe('transactional session repository and importer', () => {
       model: 'model-canonical',
       entity: 'EntityCanonical',
       extractionState: 'verified',
+      controlEvents: 'include' as const,
     };
     expect(repository.search(normalized).items).toHaveLength(1);
     for (const unrelated of [
@@ -779,11 +893,11 @@ describe('transactional session repository and importer', () => {
       { extractionState: 'unrelated-state' },
     ]) {
       expect(repository.search({
-        query: 'nebula', workspaceId: 'workspace-search', limit: 10, ...unrelated,
+        query: 'nebula', workspaceId: 'workspace-search', controlEvents: 'include', limit: 10, ...unrelated,
       }).items).toEqual([]);
     }
     expect(() => repository.search({
-      query: '"unterminated', workspaceId: 'workspace-search', limit: 10,
+      query: '"unterminated', workspaceId: 'workspace-search', controlEvents: 'include', limit: 10,
     })).toThrowError(expect.objectContaining({
       code: 'INVALID_SEARCH_QUERY',
       message: 'search query syntax is invalid',
@@ -1292,9 +1406,91 @@ describe('transactional session repository and importer', () => {
     });
     const sessionId = stableSessionId('generic', activeSource.sourceId, 'native-1');
     expect(repository.getSession(sessionId)).toMatchObject({
-      consistency: 'provisional', lifecycle: 'active',
+      consistency: 'provisional',
+      lifecycle: 'inactive',
+      extensions: {
+        'native.generic': {
+          lifecycleEvidence: {
+            basis: 'inactivity-threshold',
+            state: 'inactive',
+            confidence: 'medium',
+          },
+        },
+      },
     });
     expect(repository.listEvents(sessionId)).toHaveLength(1);
+    repository.close();
+  });
+
+  it('uses a configurable inactivity threshold and revises inference on continuation', async () => {
+    const repository = new SessionRepository();
+    const importer = new IncrementalSessionImporter(repository);
+    const activeSource = {
+      ...source,
+      consistency: 'provisional' as const,
+      sourceId: 'configurable-lifecycle-source',
+    };
+    const selectedSource = {
+      provider: 'generic' as const,
+      locator: '<configurable-lifecycle-fixture>',
+      locatorClass: 'synthetic-fixture',
+      sourceId: activeSource.sourceId,
+      authorizedScope: { workspaceId: 'workspace-1', allowedRoots: ['/fixture'] },
+    };
+    const oldRecord: ProviderRecord = {
+      ...records[0],
+      nativeSessionId: 'configurable-lifecycle-session',
+      nativeEventId: 'old-event',
+      occurredAt: '2000-01-01T00:00:00.000Z',
+    };
+    await importer.import({
+      source: activeSource,
+      selectedSource,
+      adapter: adapter([oldRecord]),
+      workspaceId: 'workspace-1',
+      policyVersion: '1.0.0',
+      inactivityThresholdMs: 1,
+    });
+    const sessionId = stableSessionId(
+      'generic',
+      activeSource.sourceId,
+      oldRecord.nativeSessionId,
+    );
+    expect(repository.getSession(sessionId)).toMatchObject({
+      lifecycle: 'inactive',
+      extensions: {
+        'native.generic': {
+          lifecycleEvidence: { thresholdMs: 1 },
+        },
+      },
+    });
+
+    const continuation: ProviderRecord = {
+      ...oldRecord,
+      nativeEventId: 'continuation-event',
+      sequence: 1,
+      occurredAt: new Date().toISOString(),
+      text: 'continued work',
+    };
+    await importer.import({
+      source: activeSource,
+      selectedSource,
+      adapter: adapter([oldRecord, continuation]),
+      workspaceId: 'workspace-1',
+      policyVersion: '1.0.0',
+      inactivityThresholdMs: 24 * 60 * 60 * 1_000,
+    });
+    expect(repository.getSession(sessionId)).toMatchObject({
+      lifecycle: 'active',
+      extensions: {
+        'native.generic': {
+          lifecycleEvidence: {
+            basis: 'open-provisional-source',
+            state: 'active',
+          },
+        },
+      },
+    });
     repository.close();
   });
 

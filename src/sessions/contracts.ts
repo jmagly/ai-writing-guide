@@ -39,7 +39,7 @@ export const SessionErrorCodeSchema = z.enum([
   'IMPORT_CONFLICT', 'IMPORT_INTERRUPTED', 'MALFORMED_SOURCE',
   'DUPLICATE_NATIVE_ID', 'AMBIGUOUS_TIMESTAMP', 'TRUNCATED_SOURCE',
   'UNSUPPORTED_OPERATION',
-  'INVALID_SEARCH_QUERY',
+  'INVALID_SEARCH_QUERY', 'INVALID_ARGUMENT',
 ]);
 
 const VersionSchema = z.string().regex(/^\d+\.\d+\.\d+(?:[-+].+)?$/);
@@ -85,6 +85,15 @@ export const SessionEventSchema = z.object({
   entities: z.array(z.string().min(1)).default([]),
   extractionState: z.string().min(1).nullable().default(null),
   occurredAt: z.string().datetime({ offset: true }).nullable(),
+  activityBoundary: z.enum(['pause', 'resume', 'continuation', 'end']).nullable().default(null),
+  activityBoundaryBasis: z.string().min(1).nullable().default(null),
+  activityBoundaryConfidence: z.enum(['low', 'medium', 'high']).nullable().default(null),
+  origin: z.enum([
+    'user-authored', 'assistant-generated', 'provider-bootstrap',
+    'workspace-instruction', 'tool-control', 'unknown',
+  ]).default('unknown'),
+  originRule: z.string().min(1).default('legacy:unknown'),
+  originClassifierVersion: VersionSchema.default('1.0.0'),
   searchableText: z.string(),
   digest: DigestSchema,
   rawReference: z.object({
@@ -112,7 +121,23 @@ export const SessionSchema = z.object({
   startedAt: z.string().datetime({ offset: true }).nullable(),
   updatedAt: z.string().datetime({ offset: true }).nullable(),
   consistency: ConsistencyStateSchema,
-  lifecycle: z.enum(['active', 'complete', 'tombstoned']),
+  lifecycle: z.enum([
+    'active', 'inactive', 'paused', 'complete', 'interrupted', 'archived',
+    'unknown', 'tombstoned',
+  ]),
+  intent: z.object({
+    status: z.enum(['selected', 'absent', 'unknown']),
+    eventId: z.string().min(1).nullable(),
+    sequence: z.number().int().nonnegative().nullable(),
+    title: z.string().nullable(),
+    summary: z.string().nullable(),
+  }).default({
+    status: 'unknown',
+    eventId: null,
+    sequence: null,
+    title: null,
+    summary: null,
+  }),
   sourceDigest: DigestSchema,
   extensions: NativeExtensionsSchema.default({}),
 });
@@ -322,6 +347,9 @@ export interface ProviderRecord {
   sourceCursor?: string;
   sourceBytes?: number;
   occurredAt?: string;
+  activityBoundary?: 'pause' | 'resume' | 'continuation' | 'end';
+  activityBoundaryBasis?: string;
+  activityBoundaryConfidence?: 'low' | 'medium' | 'high';
   text: string;
   rawReference: SessionEvent['rawReference'];
   extensions?: Record<string, unknown>;
@@ -381,10 +409,25 @@ export function stableSessionId(provider: SessionProviderId | string, sourceId: 
   return stableId('session', identitySeed, sourceId, nativeSessionId);
 }
 
-export function stableEventId(sourceId: string, record: ProviderRecord, digest: string): string {
+export function stableEventId(
+  provider: SessionProviderId | string,
+  sourceId: string,
+  record: ProviderRecord,
+  digest: string,
+): string {
+  const canonical = assertSessionProviderId(provider);
+  const identityScheme = 'event-v2-native-scope';
   return record.nativeEventId
-    ? stableId('event', sourceId, record.nativeEventId)
-    : stableId('event', sourceId, record.nativeSessionId, record.sequence, record.kind, digest);
+    ? stableId(
+        'event',
+        identityScheme,
+        canonical,
+        sourceId,
+        record.nativeSessionId,
+        record.nativeEventId,
+        record.sequence,
+      )
+    : stableId('event', identityScheme, canonical, sourceId, record.nativeSessionId, record.sequence, record.kind, digest);
 }
 
 export function sha256(value: string | Uint8Array): string {

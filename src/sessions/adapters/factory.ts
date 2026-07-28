@@ -38,7 +38,7 @@ const FactoryRecordSchema = z.object({
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
   cwd: z.string().optional(),
-  version: z.string().optional(),
+  version: z.union([z.string(), z.number()]).optional(),
   message: z.object({
     id: z.string().optional(),
     role: z.string().optional(),
@@ -110,7 +110,7 @@ export class FactorySessionAdapter implements SessionSourceAdapter {
         sawRecord = true;
         const parsed = FactoryRecordSchema.safeParse(line.value);
         if (!parsed.success) {
-          throw new SessionContractError('MALFORMED_SOURCE', 'Factory session record is malformed');
+          throw factoryMalformedRecord(source, line, parsed.error);
         }
         const value = parsed.data;
         const currentSchema = value.schemaVersion ?? FACTORY_SOURCE_SCHEMA_VERSION;
@@ -120,12 +120,12 @@ export class FactorySessionAdapter implements SessionSourceAdapter {
         schemaVersion = currentSchema;
         assertSupportedSchemaMajor(schemaVersion);
         const filenameId = basename(source.locator, extname(source.locator));
-        const currentId = value.sessionId ?? value.session_id ?? establishedId ?? filenameId;
+        const currentId = factoryNativeSessionId(value, establishedId, filenameId);
         if (establishedId && establishedId !== currentId) {
           throw new SessionContractError('DUPLICATE_NATIVE_ID', 'Factory source changes session identity');
         }
         establishedId = currentId;
-        for (const record of normalize([line], source).records) {
+        for (const record of normalize([line], source, establishedId).records) {
           if (outputIndex++ >= start) yield record;
         }
       }
@@ -204,18 +204,19 @@ export class FactorySessionAdapter implements SessionSourceAdapter {
 function normalize(
   input: BoundedJsonRecord[],
   source: SelectedSource,
+  initialSessionId?: string,
 ): { records: ProviderRecord[]; complete: boolean } {
   const output: ProviderRecord[] = [];
   const filenameId = basename(source.locator, extname(source.locator));
   let complete = false;
-  let establishedId: string | undefined;
+  let establishedId: string | undefined = initialSessionId;
   for (const line of input) {
     const parsed = FactoryRecordSchema.safeParse(line.value);
     if (!parsed.success) {
-      throw new SessionContractError('MALFORMED_SOURCE', 'Factory session record is malformed');
+      throw factoryMalformedRecord(source, line, parsed.error);
     }
     const value = parsed.data;
-    const nativeSessionId = value.sessionId ?? value.session_id ?? establishedId ?? filenameId;
+    const nativeSessionId = factoryNativeSessionId(value, establishedId, filenameId);
     if (establishedId && nativeSessionId !== establishedId) {
       throw new SessionContractError('DUPLICATE_NATIVE_ID', 'Factory source changes session identity');
     }
@@ -240,6 +241,23 @@ function normalize(
       kind: block.kind,
       role: value.message?.role,
       occurredAt: timestamp(value.timestamp ?? value.updatedAt ?? value.createdAt),
+      activityBoundary: value.type === 'session_end'
+        ? 'end'
+        : value.type === 'session_start' && value.subtype === 'resume'
+          ? 'resume'
+          : value.type === 'session_start' && value.subtype === 'continuation'
+            ? 'continuation'
+            : undefined,
+      activityBoundaryBasis: value.type === 'session_end'
+        || (value.type === 'session_start'
+          && (value.subtype === 'resume' || value.subtype === 'continuation'))
+        ? `factory:${value.type}:${value.subtype ?? 'none'}`
+        : undefined,
+      activityBoundaryConfidence: value.type === 'session_end'
+        || (value.type === 'session_start'
+          && (value.subtype === 'resume' || value.subtype === 'continuation'))
+        ? 'high'
+        : undefined,
       text: block.text,
       rawReference: { locatorClass: source.locatorClass, offset: line.byteOffset },
       extensions: {
@@ -311,6 +329,17 @@ function contentBlocks(value: FactoryRecord): Array<{
   });
 }
 
+function factoryNativeSessionId(
+  value: FactoryRecord,
+  establishedId: string | undefined,
+  filenameId: string,
+): string {
+  if (value.sessionId) return value.sessionId;
+  if (value.session_id) return value.session_id;
+  if (value.type === 'session_start' && value.id) return value.id;
+  return establishedId ?? filenameId;
+}
+
 async function* discoverJsonl(root: string, maxDepth: number): AsyncIterable<string> {
   const pending = [{ path: root, depth: 0 }];
   while (pending.length) {
@@ -332,6 +361,25 @@ async function* discoverJsonl(root: string, maxDepth: number): AsyncIterable<str
     for (const file of files.sort()) yield file;
     for (const path of directories.sort()) pending.push({ path, depth: current.depth + 1 });
   }
+}
+
+function factoryMalformedRecord(
+  source: SelectedSource,
+  record: BoundedJsonRecord,
+  error: z.ZodError,
+): SessionContractError {
+  const value = asObject(record.value);
+  const rawType = typeof value.type === 'string' ? value.type : '';
+  const type = /^[a-zA-Z0-9_.:-]{1,64}$/.test(rawType) ? rawType : '<missing-or-invalid>';
+  const issue = error.issues[0];
+  const requirement = issue?.path.length
+    ? issue.path.map(String).join('.')
+    : 'record';
+  return new SessionContractError(
+    'MALFORMED_SOURCE',
+    `Factory source ${basename(source.locator)} record ${record.sequence + 1} `
+    + `type ${type} failed requirement ${requirement} (${issue?.code ?? 'invalid_type'})`,
+  );
 }
 
 function declaredVersion(records: BoundedJsonRecord[]): string {

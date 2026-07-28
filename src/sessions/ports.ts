@@ -18,6 +18,11 @@ export interface SessionRepositoryPort {
     publish?: boolean,
   ): ImportReceipt;
   getCheckpoint(sourceId: string, parserVersion: string): ImportCheckpoint | null;
+  getBatchCheckpoint(
+    sourceId: string,
+    parserVersion: string,
+    batchRunId: string,
+  ): ImportCheckpoint | null;
   commitStagedImports(sourceId: string, parserVersion: string): number;
 }
 

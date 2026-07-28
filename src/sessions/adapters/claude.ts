@@ -32,6 +32,10 @@ const ClaudeRecordSchema = z.object({
   timestamp: z.string().datetime({ offset: true }).optional(),
   cwd: z.string().optional(),
   gitBranch: z.string().optional(),
+  parentSessionId: z.string().min(1).optional(),
+  isSidechain: z.boolean().optional(),
+  agentId: z.string().min(1).optional(),
+  slug: z.string().min(1).optional(),
   version: z.string().optional(),
   schemaVersion: z.string().optional(),
   message: z.object({
@@ -181,16 +185,11 @@ function normalizeTranscript(
       throw new SessionContractError('MALFORMED_SOURCE', 'Claude transcript record is malformed');
     }
     const value = parsed.data;
-    const nativeSessionId = value.sessionId ?? value.session_id ?? filenameSessionId;
-    if ((value.sessionId || value.session_id) && nativeSessionId !== filenameSessionId) {
-      throw new SessionContractError(
-        'SCHEMA_DRIFT',
-        'Claude transcript session identity differs from its documented filename identity',
-      );
-    }
+    const embeddedSessionId = value.sessionId ?? value.session_id;
+    const nativeSessionId = embeddedSessionId ?? filenameSessionId;
     const blocks = messageBlocks(value);
     if (blocks.length === 0) {
-      output.push(providerRecord(value, record, nativeSessionId, {
+      output.push(providerRecord(value, record, nativeSessionId, filenameSessionId, {
         kind: `claude.${value.type}`,
         text: '',
         opaque: true,
@@ -199,7 +198,7 @@ function normalizeTranscript(
       continue;
     }
     for (const [blockIndex, block] of blocks.entries()) {
-      output.push(providerRecord(value, record, nativeSessionId, {
+      output.push(providerRecord(value, record, nativeSessionId, filenameSessionId, {
         kind: block.kind,
         text: block.text,
         blockIndex,
@@ -233,6 +232,19 @@ function normalizeHooks(
       participant: 'claude',
       model: hook.model,
       occurredAt: hook.timestamp,
+      activityBoundary: hook.hook_event_name === 'SessionEnd'
+        ? 'end'
+        : hook.source === 'resume'
+          ? 'resume'
+          : hook.source === 'compact'
+            ? 'continuation'
+            : undefined,
+      activityBoundaryBasis: hook.hook_event_name === 'SessionEnd' || hook.source
+        ? `claude-hook:${hook.hook_event_name}:${hook.source ?? 'none'}`
+        : undefined,
+      activityBoundaryConfidence: hook.hook_event_name === 'SessionEnd' || hook.source
+        ? 'high'
+        : undefined,
       text: '',
       rawReference: { locatorClass: 'claude-hook-jsonl', offset: record.byteOffset },
       extensions: {
@@ -255,6 +267,7 @@ function providerRecord(
   value: ClaudeRecord,
   record: BoundedJsonRecord,
   nativeSessionId: string,
+  sourceArtifactSessionId: string,
   block: {
     kind: string;
     text: string;
@@ -283,6 +296,18 @@ function providerRecord(
       productVersion: value.version,
       workspace: { cwdClass: value.cwd ? '<workspace>' : undefined, gitBranch: value.gitBranch },
       provenance: { acquisition: 'claude-transcript', schema: CLAUDE_TRANSCRIPT_SCHEMA_VERSION },
+      transcriptFamily: {
+        sourceArtifactSessionId,
+        nativeSessionId,
+        identityRelation: nativeSessionId === sourceArtifactSessionId ? 'self' : 'related',
+        parentUuid: value.parentUuid,
+        parentSessionId: value.parentSessionId,
+        gitBranch: value.gitBranch,
+        continuation: record.sequence > 0 && value.parentUuid !== null,
+        subagent: value.isSidechain === true || Boolean(value.agentId),
+        agentId: value.agentId,
+        agentSlug: value.slug,
+      },
       opaque: block.opaque,
       unknownFields: {
         ...unknownFields(value, TRANSCRIPT_KEYS),
@@ -418,7 +443,8 @@ function unknownFields(
 
 const TRANSCRIPT_KEYS = new Set([
   'type', 'subtype', 'uuid', 'parentUuid', 'sessionId', 'session_id',
-  'timestamp', 'cwd', 'gitBranch', 'version', 'schemaVersion', 'message',
+  'timestamp', 'cwd', 'gitBranch', 'parentSessionId', 'isSidechain',
+  'agentId', 'slug', 'version', 'schemaVersion', 'message',
 ]);
 const HOOK_KEYS = new Set([
   'session_id', 'transcript_path', 'cwd', 'hook_event_name', 'permission_mode',

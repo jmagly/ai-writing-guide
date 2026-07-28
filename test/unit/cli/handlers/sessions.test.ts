@@ -1,9 +1,12 @@
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildHandlerMap } from '../../../../src/cli/handlers/index.js';
 import { sessionsHandler } from '../../../../src/cli/handlers/sessions.js';
+import { acquireImportLease } from '../../../../src/sessions/index.js';
 import type { HandlerContext } from '../../../../src/cli/handlers/types.js';
 
 function context(args: string[], cwd = process.cwd()): HandlerContext {
@@ -67,7 +70,7 @@ describe('sessions CLI contracts', () => {
     expect(output.data.providers.find((item: any) => item.provider === 'cursor'))
       .toMatchObject({
         disposition: 'implemented',
-        supportedOperations: ['inspect', 'stream'],
+        supportedOperations: ['discover', 'inspect', 'stream'],
         acquisitionModes: ['api', 'jsonl', 'manual-export'],
       });
     expect(output.data.providers.find((item: any) => item.provider === 'factory'))
@@ -224,6 +227,12 @@ describe('sessions CLI contracts', () => {
       ['cli-complete.jsonl', 'cli-stream-json', 'cursor-cli-stream-json', 'complete'],
       ['cloud-lifecycle.cloud.jsonl', 'cloud-agents-api-v1', 'cursor-cloud-events-jsonl', 'complete'],
       ['editor-export.md', 'editor-markdown-lossy', 'cursor-editor-markdown', 'complete'],
+      [
+        'agent-transcripts/agent-session/agent-session.jsonl',
+        'agent-transcript-jsonl',
+        'cursor-agent-transcript-jsonl',
+        'provisional',
+      ],
     ];
     for (const [name, providerProfile, locatorClass, consistency] of cases) {
       const fixture = resolve(`test/fixtures/sessions/cursor/${name}`);
@@ -407,14 +416,127 @@ describe('sessions CLI catalog lifecycle', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  it('requires explicit workspace authorization for catalog reads', async () => {
+  it('infers the canonical current workspace for catalog reads', async () => {
     const result = await sessionsHandler.execute(context([
       'list', '--db', resolve(root, 'catalog.sqlite'), '--json',
     ]));
-    expect(result.exitCode).toBe(2);
-    expect(jsonOutput(log).error).toMatchObject({
-      code: 'MISSING_ARGUMENT',
+    expect(result.exitCode).toBe(0);
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'ok',
+      data: {
+        coverage: {
+          status: 'unknown',
+          workspaceId: realpathSync(process.cwd()),
+        },
+      },
     });
+  });
+
+  it('uses one canonical workspace identity across symlink and real paths', async () => {
+    const workspace = resolve(root, 'workspace');
+    const alias = resolve(root, 'workspace-alias');
+    mkdirSync(workspace);
+    symlinkSync(workspace, alias, 'dir');
+    const database = resolve(root, 'canonical.sqlite');
+    const fixture = resolve('test/fixtures/sessions/claude/active-session.jsonl');
+
+    const imported = await sessionsHandler.execute(context([
+      'import',
+      fixture,
+      '--provider',
+      'claude',
+      '--source-id',
+      'canonical-workspace-source',
+      '--workspace',
+      alias,
+      '--db',
+      database,
+      '--json',
+    ]));
+    expect(imported.exitCode).toBe(0);
+
+    const listed = await sessionsHandler.execute(context([
+      'list',
+      '--workspace',
+      workspace,
+      '--db',
+      database,
+      '--json',
+    ]));
+    expect(listed.exitCode).toBe(0);
+    expect(jsonOutput(log).data).toMatchObject({
+      page: { total: 1 },
+      coverage: { workspaceId: realpathSync(workspace) },
+    });
+  });
+
+  it('fails safely when a non-project catalog has multiple workspace candidates', async () => {
+    const isolated = mkdtempSync('/var/tmp/aiwg-sessions-ambiguous-');
+    try {
+      const fixture = resolve('test/fixtures/sessions/claude/active-session.jsonl');
+      const database = resolve(isolated, 'ambiguous.sqlite');
+      for (const workspace of ['workspace-a', 'workspace-b']) {
+        await sessionsHandler.execute(context([
+          'import',
+          fixture,
+          '--provider',
+          'claude',
+          '--source-id',
+          `source-${workspace}`,
+          '--workspace',
+          workspace,
+          '--db',
+          database,
+          '--json',
+        ], isolated));
+      }
+      const result = await sessionsHandler.execute(context([
+        'list', '--db', database, '--json',
+      ], isolated));
+      expect(result.exitCode).toBe(2);
+      expect(jsonOutput(log).error).toMatchObject({
+        code: 'WORKSPACE_AMBIGUOUS',
+        details: {
+          candidates: ['workspace-a', 'workspace-b'],
+          example: expect.stringContaining('--workspace'),
+        },
+      });
+    } finally {
+      rmSync(isolated, { recursive: true, force: true });
+    }
+  });
+
+  it('returns a distinct structured error when another importer owns the lease', async () => {
+    const database = resolve(root, 'locked.sqlite');
+    const lease = await acquireImportLease(database, 'owning-run');
+    try {
+      const result = await sessionsHandler.execute(context([
+        'import',
+        resolve('test/fixtures/sessions/generic/valid-v1.jsonl'),
+        '--source-id',
+        'generic-fixture-v1',
+        '--workspace',
+        'workspace-fixture',
+        '--db',
+        database,
+        '--lock-wait-ms',
+        '0',
+        '--json',
+      ]));
+      expect(result.exitCode).toBe(7);
+      expect(jsonOutput(log).error).toMatchObject({
+        code: 'IMPORT_LOCKED',
+        details: {
+          owner: {
+            runId: 'owning-run',
+            pid: process.pid,
+          },
+          waitedMs: 0,
+        },
+      });
+    } finally {
+      await lease.release();
+    }
   });
 
   it('imports, paginates, shows, tags, relocates, reindexes, previews deletion, and diagnoses', async () => {
@@ -439,6 +561,23 @@ describe('sessions CLI catalog lifecycle', () => {
       snapshotRowid: expect.any(Number),
     });
     const sessionId = list.data.items[0].sessionId;
+
+    await sessionsHandler.execute(context(['timeline', '--gap', '30m', ...dbArgs]));
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'ok',
+      data: {
+        schemaVersion: '1.0.0',
+        workspaceId: 'workspace-fixture',
+        gapMs: 1_800_000,
+        items: [{
+          provider: 'generic',
+          sessionId,
+          eventCount: 2,
+          boundaryBasis: 'session-start',
+        }],
+        coverage: { status: 'unknown' },
+      },
+    });
 
     await sessionsHandler.execute(context(['show', sessionId, ...dbArgs]));
     expect(jsonOutput(log).data.events).toHaveLength(2);

@@ -114,7 +114,8 @@ export class CodexSessionAdapter implements SessionSourceAdapter {
     let mode: 'app-server' | 'rollout' | null = isAppServerLocator(source.locator)
       ? 'app-server' : null;
     let schemaVersion: string | null = null;
-    let nativeSessionId = rolloutIdFromFilename(source.locator);
+    const sourceArtifactSessionId = rolloutIdFromFilename(source.locator);
+    let nativeSessionId = sourceArtifactSessionId;
     const identities = new Map<string, string>();
     let outputIndex = 0;
     let sawRecord = false;
@@ -148,12 +149,6 @@ export class CodexSessionAdapter implements SessionSourceAdapter {
           if (!declaredId) {
             throw new SessionContractError('MALFORMED_SOURCE', 'Codex session metadata is missing its id');
           }
-          if (nativeSessionId && nativeSessionId !== declaredId) {
-            throw new SessionContractError(
-              'SCHEMA_DRIFT',
-              'Codex rollout session identity differs from its filename identity',
-            );
-          }
           nativeSessionId = declaredId;
         }
         if (!nativeSessionId) {
@@ -162,7 +157,13 @@ export class CodexSessionAdapter implements SessionSourceAdapter {
             'Codex rollout has no session identity before content records',
           );
         }
-        normalized = [rolloutRecord(nativeSessionId, parsed.data, payload, line)];
+        normalized = [rolloutRecord(
+          nativeSessionId,
+          parsed.data,
+          payload,
+          line,
+          sourceArtifactSessionId,
+        )];
       }
       for (const record of normalized) {
         if (outputIndex++ >= start) yield record;
@@ -234,6 +235,15 @@ function normalizeAppServer(
         sequence: line.sequence * 1_000,
         kind: event === 'compacted' ? 'summary' : 'codex.lifecycle',
         role: 'system',
+        activityBoundary: event === 'unarchived'
+          ? 'resume'
+          : event === 'compacted'
+            ? 'continuation'
+            : event === 'archived' || event === 'deleted'
+              ? 'end'
+              : undefined,
+        activityBoundaryBasis: `codex-app-server:${event}`,
+        activityBoundaryConfidence: event === 'status-changed' ? 'medium' : 'high',
         text: '',
         rawReference: { locatorClass: 'codex-app-server-jsonl', offset: line.byteOffset },
         extensions: {
@@ -251,7 +261,8 @@ function normalizeRollout(
   input: BoundedJsonRecord[],
   locator: string,
 ): { records: ProviderRecord[]; complete: false } {
-  let nativeSessionId = rolloutIdFromFilename(locator);
+  const sourceArtifactSessionId = rolloutIdFromFilename(locator);
+  let nativeSessionId = sourceArtifactSessionId;
   const records: ProviderRecord[] = [];
   for (const line of input) {
     const parsed = RolloutEnvelopeSchema.safeParse(line.value);
@@ -265,12 +276,6 @@ function normalizeRollout(
       if (!declaredId) {
         throw new SessionContractError('MALFORMED_SOURCE', 'Codex session metadata is missing its id');
       }
-      if (nativeSessionId && nativeSessionId !== declaredId) {
-        throw new SessionContractError(
-          'SCHEMA_DRIFT',
-          'Codex rollout session identity differs from its filename identity',
-        );
-      }
       nativeSessionId = declaredId;
     }
     if (!nativeSessionId) {
@@ -279,7 +284,13 @@ function normalizeRollout(
         'Codex rollout has no session identity before content records',
       );
     }
-    records.push(rolloutRecord(nativeSessionId, envelope, payload, line));
+    records.push(rolloutRecord(
+      nativeSessionId,
+      envelope,
+      payload,
+      line,
+      sourceArtifactSessionId,
+    ));
   }
   return { records, complete: false };
 }
@@ -356,6 +367,7 @@ function rolloutRecord(
   envelope: z.infer<typeof RolloutEnvelopeSchema>,
   payload: Record<string, unknown>,
   line: BoundedJsonRecord,
+  sourceArtifactSessionId?: string,
 ): ProviderRecord {
   const nativeId = stringValue(payload.id)
     ?? stringValue(payload.call_id)
@@ -373,6 +385,21 @@ function rolloutRecord(
     toolCallId: stringValue(payload.call_id),
     model: stringValue(payload.model),
     occurredAt: envelope.timestamp,
+    activityBoundary: envelope.type === 'compacted'
+      ? 'continuation'
+      : envelope.type === 'event_msg'
+        && stringValue(payload.type) === 'task_complete'
+        ? 'end'
+        : undefined,
+    activityBoundaryBasis: envelope.type === 'compacted'
+      ? 'codex-rollout:compacted'
+      : envelope.type === 'event_msg' && stringValue(payload.type) === 'task_complete'
+        ? 'codex-rollout:task-complete'
+        : undefined,
+    activityBoundaryConfidence: envelope.type === 'compacted'
+      || (envelope.type === 'event_msg' && stringValue(payload.type) === 'task_complete')
+      ? 'high'
+      : undefined,
     text: rolloutText(payload),
     rawReference: { locatorClass: 'codex-rollout-jsonl', offset: line.byteOffset },
     extensions: {
@@ -385,6 +412,13 @@ function rolloutRecord(
         : undefined,
       productVersion: stringValue(payload.cli_version),
       provenance: { acquisition: 'codex-rollout', durableReplay: true },
+      transcriptFamily: {
+        sourceArtifactSessionId,
+        nativeSessionId,
+        identityRelation: !sourceArtifactSessionId || sourceArtifactSessionId === nativeSessionId
+          ? 'self'
+          : 'related',
+      },
       opaque: !KNOWN_ROLLOUT_TYPES.has(envelope.type),
       unknownFields: unknownFields(payload, ROLLOUT_KEYS),
     },

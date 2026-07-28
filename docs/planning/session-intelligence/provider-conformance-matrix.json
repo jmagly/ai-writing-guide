@@ -36,11 +36,11 @@
       "provider": "cursor",
       "issue": 1913,
       "status": "implemented",
-      "operations": ["inspect", "stream"],
+      "operations": ["discover", "inspect", "stream"],
       "fixtures": "test/fixtures/sessions/cursor",
       "tests": "test/unit/sessions/cursor-adapter.test.ts",
       "documentation": "docs/providers/cursor-sessions.md",
-      "conformance": {"locatorClass": "cursor-cli-stream-json", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"], "exceptions": {"discovery": "provider exposes authorized export/import only"}}
+      "conformance": {"locatorClass": "cursor-cli-stream-json", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"]}
     },
     {
       "provider": "factory",
