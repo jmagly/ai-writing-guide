@@ -1,0 +1,6 @@
+{"timestamp":"2026-01-02T09:00:00.000Z","type":"session_meta","payload":{"id":"shared-session","cwd":"/synthetic/workspace","originator":"codex_cli_rs","cli_version":"0.145.0","git":{"branch":"main","commit_hash":"synthetic-commit","repository_url":"https://example.test/synthetic/repository"}}}
+{"timestamp":"2026-01-02T09:00:01.000Z","type":"turn_context","payload":{"cwd":"/synthetic/workspace","approval_policy":"never","sandbox_policy":{"type":"workspace-write"}}}
+{"timestamp":"2026-01-02T09:00:02.000Z","type":"response_item","payload":{"id":"bootstrap-event","type":"message","role":"user","content":[{"type":"input_text","text":"<codex_internal_context>synthetic bootstrap</codex_internal_context>"}]}}
+{"timestamp":"2026-01-04T11:00:00.000Z","type":"response_item","payload":{"id":"shared-event","type":"message","role":"user","content":[{"type":"input_text","text":"Validate the synthetic Codex history."}]}}
+{"timestamp":"2026-01-04T11:00:01.000Z","type":"response_item","payload":{"id":"assistant-event","type":"message","role":"assistant","content":[{"type":"output_text","text":"Synthetic Codex validation started."}]}}
+{"timestamp":"2026-01-05T13:00:00.000Z","type":"compacted","payload":{"id":"continuation-event","message":"Synthetic continuation checkpoint."}}

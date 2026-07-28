@@ -117,9 +117,14 @@ jobs:
         # tree while making the optional production backend mandatory in CI.
         run: npm install --no-save --package-lock=false better-sqlite3@12.8.0
 
+      - name: Sanitize session regression corpus
+        # Reject credential, personal-path, host-identity, and provenance drift
+        # before any fixture reaches the mandatory session test layers.
+        run: npm run lint:session-fixtures
+
       - name: Run mandatory SQLite session suites
-        # Loads the native backend first, then emits and validates a JSON report
-        # proving every repository/provider suite ran with zero skipped tests.
+        # Loads the native backend first, then emits and validates separate
+        # adapter and cross-provider reports with zero skipped tests.
         run: npm run test:sessions:sqlite
 
       - name: Run production-path session performance gates

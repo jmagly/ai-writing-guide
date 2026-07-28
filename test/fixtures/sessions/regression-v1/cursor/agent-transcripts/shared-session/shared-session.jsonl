@@ -1,0 +1,4 @@
+{"event_id":"bootstrap-event","role":"user","timestamp":"2026-01-02T10:00:00.000Z","message":{"content":[{"type":"text","text":"<recommended_plugins>synthetic bootstrap</recommended_plugins>"}]}}
+{"event_id":"shared-event","role":"user","timestamp":"2026-01-04T12:00:00.000Z","message":{"content":[{"type":"text","text":"Validate the synthetic Cursor transcript."}]}}
+{"event_id":"assistant-event","role":"assistant","timestamp":"2026-01-04T12:00:01.000Z","message":{"content":[{"type":"text","text":"Synthetic Cursor validation started."}]}}
+{"event_id":"terminal-event","type":"turn_ended","status":"success","timestamp":"2026-01-04T12:00:02.000Z"}

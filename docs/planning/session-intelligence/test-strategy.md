@@ -49,7 +49,7 @@ Every canonical provider must prove:
 | `claude` | Complete and truncated JSONL, active append, resume/fork, hook metadata |
 | `codex` | App Server responses, rollout JSONL, compaction, active/idle/archive/delete |
 | `copilot` | Supported JSON export, sync/archive states, versioned local-store negative/experimental fixtures |
-| `cursor` | CLI NDJSON, cloud events, editor Markdown lossiness, unsupported SQLite probe |
+| `cursor` | CLI NDJSON, cloud events, project-scoped agent-transcripts JSONL, editor Markdown lossiness, unsupported SQLite probe |
 | `factory` | Versioned JSONL/settings, API/Exec responses, incomplete active tail |
 | `hermes` | Native JSONL export, schema-23 isolated store, lineage/archive/compaction |
 | `opencode` | Sanitized export, API/SSE, tool states, attachments, share/redaction behavior |

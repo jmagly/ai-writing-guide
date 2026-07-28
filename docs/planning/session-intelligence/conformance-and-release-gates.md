@@ -10,15 +10,19 @@ deprecated input alias during the documented compatibility window.
 
 All gates below run under the required CI `Test` job. SQLite-backed repository and provider verification
 runs through `npm run test:sessions:sqlite`; the gate loads `better-sqlite3` before testing and validates a
-machine-readable report for required files, the seven importer tests, and zero skips. The broader suite
-runs through `npm run test:ci`, with typecheck and build/conformance prerequisites in earlier steps;
-`Build` runs only after the Test job succeeds.
+machine-readable adapter report and a separate cross-provider report for all
+required files and zero skips. The cross-provider layer includes directory
+discovery, interrupted batch resume, writer locks, lifecycle/timeline
+derivation, stable identity and replay, and a spawned `bin/aiwg.mjs` import.
+The broader suite runs through `npm run test:ci`, with typecheck and
+build/conformance prerequisites in earlier steps; `Build` runs only after the
+Test job succeeds.
 
 | Gate | Blocking evidence |
 |---|---|
 | Contract and provider import | `contracts-policy`, `discovery-readers`, and all 12 adapter suites; repository blocks are mandatory under `test:sessions:sqlite` |
 | Security and bounded input | traversal/symlink authorization, record/total/depth limits, schema drift, malformed/truncated input, redaction canaries |
-| Retrieval | all seven `repository-importer` tests with zero skips, `optional-backends`, and CLI session search tests |
+| Retrieval | all required `repository-importer` tests with zero skips, `optional-backends`, and CLI session search tests |
 | Curation and promotion | `candidates`, `promotion`, and knowledge-shard tests |
 | Lifecycle | replay, relocation, tombstone, restore, purge, revocation, and deletion receipt tests |
 | Release traceability | `provider-conformance.test.ts`, full typecheck, CLI build, and required Test + Build workflow jobs |
@@ -28,6 +32,9 @@ malformed-input, unknown-major schema-evolution, allowed-root/traversal, and uns
 against every adapter. Capability-specific exceptions are required matrix data. Adapter operations,
 implementation identity, tests, and acquisition/evidence documentation must agree; the gate does not infer
 behavior from source-text keywords. Fixture content is also scanned for live credential and identity shapes.
+CI preserves the adapter and cross-provider results independently at
+`test-results/session-sqlite-adapter.json` and
+`test-results/session-sqlite-cross-provider.json`.
 
 ## SQLite maintainer matrix and troubleshooting
 
@@ -120,6 +127,24 @@ Session fixtures are generated examples. They may contain reserved redaction can
 `example.test`, synthetic token markers, or non-existent absolute paths to prove sanitization. They must
 not contain real home-directory identities, credential values, or copied user transcripts. Provider source
 files are read-only inputs; lifecycle operations mutate only AIWG-owned normalized state.
+
+The versioned [session regression corpus](../../../test/fixtures/sessions/regression-v1/README.md)
+retains positive and malformed Claude, Codex, Cursor, and Factory structures
+for issues #1944-#1956. Its
+[manifest](../../../test/fixtures/sessions/regression-v1/manifest.json)
+records corpus and source schema versions, provider versions, regression
+mapping, fixture classification, and SHA-256 digests. It explicitly asserts
+that no private histories, prompts, credentials, host identifiers, or personal
+paths are present.
+
+`npm run lint:session-fixtures` enforces that provenance boundary, rejects
+undeclared or symlinked files, validates every digest and referenced execution
+scenario, and checks credential, email, personal-path, and host-identity deny
+patterns. Diagnostics contain only file coordinates and rule IDs, never
+matched content. Refreshes must follow the corpus README: confirm a format
+change from public documentation or a separately authorized investigation,
+author the smallest synthetic structure, update positive and malformed cases
+plus provenance and digests, then run the sanitizer and mandatory SQLite gate.
 
 ## Workspace authorization model
 

@@ -1,0 +1,5 @@
+{"type":"session_start","id":"shared-session","title":"Synthetic regression session","sessionTitle":"Synthetic regression session","owner":"synthetic","version":2,"cwd":"/synthetic/workspace","isSessionTitleManuallySet":false,"sessionTitleAutoStage":"first_message"}
+{"type":"message","id":"bootstrap-event","timestamp":"2026-01-02T11:00:00.000Z","message":{"role":"user","content":[{"type":"text","text":"<environment_context>synthetic bootstrap</environment_context>"}]}}
+{"type":"message","id":"shared-event","timestamp":"2026-01-04T13:00:00.000Z","message":{"role":"user","content":[{"type":"text","text":"Validate the synthetic Factory history."}]}}
+{"type":"message","id":"assistant-event","timestamp":"2026-01-04T13:00:01.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Synthetic Factory validation started."}]}}
+{"type":"session_end","id":"terminal-event","status":"completed","timestamp":"2026-01-04T13:00:02.000Z"}

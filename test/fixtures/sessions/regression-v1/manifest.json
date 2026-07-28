@@ -1,0 +1,161 @@
+{
+  "schemaVersion": "1.0.0",
+  "corpusId": "aiwg-session-regression-v1",
+  "classification": "synthetic-structural",
+  "issue": 1956,
+  "createdAt": "2026-07-28T00:00:00.000Z",
+  "provenance": {
+    "method": "authored-from-public-schemas-and-committed-synthetic-patterns",
+    "containsPrivateHistory": false,
+    "containsPromptContent": false,
+    "containsCredentials": false,
+    "containsHostIdentifiers": false,
+    "containsPersonalPaths": false
+  },
+  "sanitization": {
+    "command": "npm run lint:session-fixtures",
+    "diagnosticPolicy": "content-free-rule-and-coordinate-only",
+    "reservedPathRoot": "/synthetic",
+    "reservedDomain": "example.test"
+  },
+  "regressions": [
+    {
+      "issue": 1944,
+      "id": "event-identity-native-scope",
+      "expectation": "shared synthetic native IDs remain distinct across providers and unchanged replay is idempotent"
+    },
+    {
+      "issue": 1945,
+      "id": "claude-transcript-family",
+      "expectation": "filename mismatch, continuation, and sidechain relationships normalize without false rejection"
+    },
+    {
+      "issue": 1946,
+      "id": "factory-current-jsonl",
+      "expectation": "current session_start and ordered records normalize through the Factory adapter"
+    },
+    {
+      "issue": 1947,
+      "id": "cursor-agent-transcript",
+      "expectation": "project-scoped agent-transcripts JSONL is detected separately from CLI streams"
+    }
+  ],
+  "executionScenarios": [
+    {
+      "id": "directory-discovery-and-atomic-batch",
+      "test": "test/unit/sessions/workspace-discovery.test.ts"
+    },
+    {
+      "id": "batch-interruption-and-resume",
+      "test": "test/unit/sessions/workspace-discovery.test.ts"
+    },
+    {
+      "id": "writer-lock-contention",
+      "test": "test/unit/sessions/import-lease.test.ts"
+    },
+    {
+      "id": "lifecycle-intent-and-timeline",
+      "test": "test/unit/sessions/regression-corpus.test.ts"
+    },
+    {
+      "id": "installed-development-cli-entry",
+      "test": "test/integration/sessions-regression-cli.test.ts"
+    }
+  ],
+  "documents": [
+    {
+      "path": "README.md",
+      "sha256": "8a90cfbfadaa9411192af568f01f3f8a9162d834bc22c657ee81a2b76cdc23ac"
+    }
+  ],
+  "files": [
+    {
+      "path": "claude/family.jsonl",
+      "provider": "claude",
+      "case": "positive",
+      "locatorClass": "claude-transcript-jsonl",
+      "schemaFamily": "claude-code-local-transcript-jsonl",
+      "schemaVersion": "1.0.0",
+      "providerVersion": "2.1.18",
+      "regressions": [1944, 1945, 1951, 1952, 1954],
+      "sha256": "5de03046fcb755026b065c9f6aa8fc7a298abc89ee6f0689190a4452c2550080"
+    },
+    {
+      "path": "claude/malformed.jsonl",
+      "provider": "claude",
+      "case": "malformed",
+      "locatorClass": "claude-transcript-jsonl",
+      "schemaFamily": "claude-code-local-transcript-jsonl",
+      "schemaVersion": "1.0.0",
+      "providerVersion": "2.1.18",
+      "regressions": [1945],
+      "sha256": "f42813bc752f315d2689c81ffa2f0fbeb271eaa6b75f9df5b00f256a3511c61d"
+    },
+    {
+      "path": "codex/rollout-2026-01-02T09-00-00-019d0000-0000-7000-8000-000000000101.jsonl",
+      "provider": "codex",
+      "case": "positive",
+      "locatorClass": "codex-rollout-jsonl",
+      "schemaFamily": "codex-rollout-jsonl",
+      "schemaVersion": "1.0.0",
+      "providerVersion": "0.145.0",
+      "regressions": [1944, 1951, 1952, 1954],
+      "sha256": "760fe93f7a438f484eeb7b2005fe7fe7195825897b5cd5b70dc35114cf82d4ee"
+    },
+    {
+      "path": "codex/malformed.jsonl",
+      "provider": "codex",
+      "case": "malformed",
+      "locatorClass": "codex-rollout-jsonl",
+      "schemaFamily": "codex-rollout-jsonl",
+      "schemaVersion": "1.0.0",
+      "providerVersion": "0.145.0",
+      "regressions": [1944],
+      "sha256": "31d4a4fcb48361ebde1ee02e9573f1de96fc6f47e548e558636dbe8c9e801d48"
+    },
+    {
+      "path": "cursor/agent-transcripts/shared-session/shared-session.jsonl",
+      "provider": "cursor",
+      "case": "positive",
+      "locatorClass": "cursor-agent-transcript-jsonl",
+      "schemaFamily": "cursor-agent-transcript-jsonl",
+      "schemaVersion": "1.0.0",
+      "providerVersion": "synthetic-current",
+      "regressions": [1944, 1947, 1951, 1954],
+      "sha256": "00a28bf3cdc5f02761d0fe907ddf447db9d105bb2dd8446f7d9207cb221cf573"
+    },
+    {
+      "path": "cursor/malformed.jsonl",
+      "provider": "cursor",
+      "case": "malformed",
+      "locatorClass": "cursor-agent-transcript-jsonl",
+      "schemaFamily": "cursor-agent-transcript-jsonl",
+      "schemaVersion": "1.0.0",
+      "providerVersion": "synthetic-current",
+      "regressions": [1947],
+      "sha256": "74a7b80940d0cb978cac9dc61752fbc9ac2b0cbb7a909173c13c20d652bbc0b3"
+    },
+    {
+      "path": "factory/current.jsonl",
+      "provider": "factory",
+      "case": "positive",
+      "locatorClass": "factory-droid-jsonl",
+      "schemaFamily": "factory-project-session-jsonl",
+      "schemaVersion": "1.0.0",
+      "providerVersion": "2",
+      "regressions": [1944, 1946, 1951, 1954],
+      "sha256": "a9c99520fa40e08a050fcd163d8410d4f9aedcd8e7ec84f11f308513ad61d0c3"
+    },
+    {
+      "path": "factory/malformed.jsonl",
+      "provider": "factory",
+      "case": "malformed",
+      "locatorClass": "factory-droid-jsonl",
+      "schemaFamily": "factory-project-session-jsonl",
+      "schemaVersion": "1.0.0",
+      "providerVersion": "2",
+      "regressions": [1946],
+      "sha256": "3a611ff52c812bbc50a63486bc603d3dadc35d152c5fa8545d36aa5f080140a9"
+    }
+  ]
+}
