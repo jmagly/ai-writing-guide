@@ -213,7 +213,12 @@ jobs:
         # This exact-version, no-save install runs after the age-gated locked
         # install. Disable re-resolution's age filter here so npm does not
         # reject already-locked young packages such as @fortemi/core.
-        run: npm install --no-save --package-lock=false --min-release-age=0 better-sqlite3@12.8.0
+        # --save-dev is required here because npm otherwise treats an explicitly
+        # requested optional peer already declared by the root package as satisfied
+        # without placing it in node_modules.
+        run: |
+          npm install --no-save --save-dev --package-lock=false --min-release-age=0 better-sqlite3@12.8.0
+          node -e "require('better-sqlite3')"
 
       - name: Run type check
         run: npm run typecheck
