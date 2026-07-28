@@ -207,6 +207,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install mandatory SQLite session test backend
+        # better-sqlite3 is an optional peer for end users, but the full test
+        # suite exercises the SQLite repository and must not run without it.
+        run: npm install --no-save --package-lock=false better-sqlite3@12.8.0
+
       - name: Run type check
         run: npm run typecheck
 
