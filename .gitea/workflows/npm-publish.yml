@@ -110,7 +110,10 @@ jobs:
       - name: Install mandatory SQLite session test backend
         # better-sqlite3 is an optional peer for end users, but the full test
         # suite exercises the SQLite repository and must not run without it.
-        run: npm install --no-save --package-lock=false better-sqlite3@12.8.0
+        # The locked install above remains age-gated; this exact-version,
+        # no-save follow-up disables re-resolution's age filter so it does not
+        # reject already-locked young packages such as @fortemi/core.
+        run: npm install --no-save --package-lock=false --min-release-age=0 better-sqlite3@12.8.0
 
       - name: Run type check
         run: npm run typecheck
@@ -358,7 +361,10 @@ jobs:
       - name: Install mandatory SQLite session test backend
         # Keep the stable publication gate aligned with ci.yml: the full test
         # suite contains mandatory SQLite-backed session conformance tests.
-        run: npm install --no-save --package-lock=false better-sqlite3@12.8.0
+        # The locked install above remains age-gated; this exact-version,
+        # no-save follow-up disables re-resolution's age filter so it does not
+        # reject already-locked young packages such as @fortemi/core.
+        run: npm install --no-save --package-lock=false --min-release-age=0 better-sqlite3@12.8.0
 
       - name: Run type check
         run: npm run typecheck
