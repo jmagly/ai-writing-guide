@@ -64,7 +64,10 @@ Example: `aiwg discover "memory ingest"`. Phrases below pass straight to `aiwg d
 | Capture / query memory | `memory query` | semantic-memory |
 | Filter context to remove distractors | `filter distractors from context` | context-curator |
 
-> Bundles `auto-memory` and `llm-wiki` ship as templates / topology only — they have no indexable skills today. For project-local memory bootstrapping, use `aiwg-utils` (`auto memory templates` lives there). The `llm-wiki` topology is consumed by the knowledge-base framework — see `knowledge-base-quickref`.
+> `llm-wiki` has a first-class discoverable driver for profile selection and
+> activation; its topology composes with the knowledge-base framework and
+> semantic-memory drivers. `auto-memory` remains a template bundle pending its
+> own operational driver.
 
 ### Voice & writing quality
 
@@ -188,7 +191,9 @@ Example: `aiwg discover "hitl patterns"`. Phrases below pass straight to `aiwg d
 | HITL gates (rule, ensemble review) | `hitl gates` | sdlc-complete (rule) |
 | Factory AI compat agent | `factory compat` | sdlc-complete (agent) |
 
-> The `aiwg-hooks`, `agent-persistence`, and `droid-bridge` addons ship templates / rules / MCP servers without indexable skills. Their content lives in `.claude/hooks/` (Claude Code lifecycle hooks), in HITL rules under sdlc-complete, and as a separate MCP server respectively. Use the curated phrases above to surface the rules; the hook scripts themselves are accessible via the `aiwg-hooks` addon README.
+> `aiwg-hooks`, `agent-persistence`, and `droid-bridge` now expose
+> discoverable activation drivers. Their low-level hooks, HITL gates, and MCP
+> server remain implementation artifacts reached through those drivers.
 
 ### Core meta-utilities
 

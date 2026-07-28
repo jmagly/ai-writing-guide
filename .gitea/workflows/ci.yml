@@ -74,8 +74,9 @@ jobs:
 
       - name: Run Fortemi Core index release gate (#1696/#1697)
         # Builds the real framework corpus index, validates the checked-in
-        # discovery query matrix against local + Fortemi Core backends, and
-        # proves npm packaging includes the generated prebuilt index contract.
+        # component-to-driver coverage report and discovery query matrix
+        # against local + Fortemi Core backends, and proves npm packaging
+        # includes the generated prebuilt index contract.
         run: npm run ci:fortemi-index
 
       - name: Lint schemas

@@ -94,6 +94,69 @@
       "max_rank": 5
     },
     {
+      "id": "llm-wiki-enable",
+      "domain": "llm-wiki",
+      "phrase": "enable wiki memory",
+      "expected_path": "agentic/code/addons/llm-wiki/skills/llm-wiki/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": "agentic/code/addons/llm-wiki/skills/llm-wiki/SKILL.md"
+    },
+    {
+      "id": "llm-wiki-long-form-memory",
+      "domain": "llm-wiki",
+      "phrase": "long-term long-form project memory",
+      "expected_path": "agentic/code/addons/llm-wiki/skills/llm-wiki/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": "agentic/code/addons/llm-wiki/skills/llm-wiki/SKILL.md"
+    },
+    {
+      "id": "agent-persistence-gates",
+      "domain": "agent-persistence",
+      "phrase": "enable agent persistence gates",
+      "expected_path": "agentic/code/addons/agent-persistence/skills/agent-persistence/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": "agentic/code/addons/agent-persistence/skills/agent-persistence/SKILL.md"
+    },
+    {
+      "id": "aiwg-hooks-enable",
+      "domain": "aiwg-hooks",
+      "phrase": "enable AIWG hooks",
+      "expected_path": "agentic/code/addons/aiwg-hooks/skills/aiwg-hooks/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": "agentic/code/addons/aiwg-hooks/skills/aiwg-hooks/SKILL.md"
+    },
+    {
+      "id": "auto-memory-enable",
+      "domain": "auto-memory",
+      "phrase": "enable automatic project memory",
+      "expected_path": "agentic/code/addons/auto-memory/skills/auto-memory/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": "agentic/code/addons/auto-memory/skills/auto-memory/SKILL.md"
+    },
+    {
+      "id": "droid-bridge-enable",
+      "domain": "droid-bridge",
+      "phrase": "enable Droid Bridge",
+      "expected_path": "agentic/code/addons/droid-bridge/skills/droid-bridge/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": "agentic/code/addons/droid-bridge/skills/droid-bridge/SKILL.md"
+    },
+    {
+      "id": "validation-complete-enable",
+      "domain": "validation-complete",
+      "phrase": "enable the validation framework",
+      "expected_path": "agentic/code/frameworks/validation-complete/skills/validation-complete/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": "agentic/code/frameworks/validation-complete/skills/validation-complete/SKILL.md"
+    },
+    {
       "id": "security-assessment",
       "domain": "security-engineering",
       "phrase": "security assessment",

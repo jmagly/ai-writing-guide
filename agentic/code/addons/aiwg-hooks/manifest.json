@@ -30,10 +30,14 @@
     "REF-015": "Self-Refine - Quality enforcement in iteration loops"
   },
   "entry": {
+    "skills": "skills/",
     "hooks": "hooks/",
     "scripts": "scripts/",
     "templates": "templates/"
   },
+  "skills": [
+    "aiwg-hooks"
+  ],
   "hooks": [
     {
       "id": "aiwg-trace",

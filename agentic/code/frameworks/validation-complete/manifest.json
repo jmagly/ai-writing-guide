@@ -6,6 +6,15 @@
   "files": [
     "README.md"
   ],
+  "directories": [
+    "capabilities",
+    "inventories",
+    "playbooks",
+    "skills"
+  ],
+  "skills": [
+    "validation-complete"
+  ],
   "ignore": [
     "manifest.json"
   ],

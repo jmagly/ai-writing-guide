@@ -120,7 +120,9 @@ Cross-references between these are graph-native (visible to `aiwg index neighbor
 | `business-team` | Team-shared business KB |
 | `generic` | No profile chosen — vanilla semantic-memory shape |
 
-Install via `aiwg use llm-wiki --profile <name>`. The profile shapes how `kb-ingest` derives pages.
+The discoverable `llm-wiki` driver explains profile selection and activation.
+Its canonical operation is `aiwg use llm-wiki --profile <name>`. The profile
+shapes how `kb-ingest` derives pages.
 
 ## Artifact directory layout
 

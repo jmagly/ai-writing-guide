@@ -1216,6 +1216,41 @@ async function runDoctor() {
     }
   }
 
+  // 8d. Component-to-driver coverage (#1958).
+  //
+  // A healthy index is insufficient when a shipped component has no
+  // operational entry point. Join component manifests to source discovery
+  // metadata and surface the same invariant enforced by CI.
+  try {
+    const coverageModule = await import(pathToFileURL(
+      path.join(AIWG_ROOT, 'tools/manifest/check-discovery-coverage.mjs'),
+    ).href);
+    const coverage = coverageModule.buildCoverageReport(AIWG_ROOT);
+    if (coverage.ok) {
+      check(
+        'Discovery: component drivers',
+        'ok',
+        `${coverage.counts.covered} covered, ${coverage.counts.exempt} explicitly exempt`,
+      );
+    } else {
+      const missing = coverage.components
+        .filter(component => component.status === 'missing' || component.status === 'invalid')
+        .map(component => `${component.kind}:${component.component}`)
+        .slice(0, 8);
+      check(
+        'Discovery: component drivers',
+        'error',
+        `${coverage.counts.missing} missing, ${coverage.counts.invalid} invalid — ${missing.join(', ')}`,
+      );
+    }
+  } catch (error) {
+    check(
+      'Discovery: component drivers',
+      'warn',
+      `coverage report unavailable — ${error.message}`,
+    );
+  }
+
   // 9. Check installed addons
   const addonChecks = [
     { id: 'daemon', label: 'Daemon Addon', manifest: 'agentic/code/addons/daemon/manifest.json',

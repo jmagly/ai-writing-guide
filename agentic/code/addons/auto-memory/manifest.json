@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "description": "Automatic memory seed templates for AIWG projects",
   "type": "addon",
+  "entry": {
+    "skills": "skills/",
+    "templates": "seeds/",
+    "docs": "docs/"
+  },
+  "skills": [
+    "auto-memory"
+  ],
   "platform": {
     "primary": "claude-code",
     "minimum_version": "2.1.32",

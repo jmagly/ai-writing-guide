@@ -17,8 +17,12 @@
     "batch-operations"
   ],
   "entry": {
+    "skills": "skills/",
     "mcp": "server.js"
   },
+  "skills": [
+    "droid-bridge"
+  ],
   "mcp": {
     "server": "server.js",
     "transport": "stdio",

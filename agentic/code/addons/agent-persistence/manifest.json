@@ -19,9 +19,13 @@
     "destructive-action"
   ],
   "entry": {
+    "skills": "skills/",
     "gates": "gates/",
     "docs": "docs/"
   },
+  "skills": [
+    "agent-persistence"
+  ],
   "gates": [
     "destructive-action-gate",
     "false-positive-override-gate",

@@ -22,13 +22,16 @@
     "personal-knowledge"
   ],
   "entry": {
+    "skills": "skills/",
     "templates": "templates/",
     "schemas": "schemas/",
     "docs": "docs/"
   },
   "agents": [],
   "commands": [],
-  "skills": [],
+  "skills": [
+    "llm-wiki"
+  ],
   "rules": [],
   "schemas": [
     "page-schema"
