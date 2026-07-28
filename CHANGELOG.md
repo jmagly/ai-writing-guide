@@ -7,6 +7,23 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Agentic install, repair, and upgrade flow** - a public
+  `setup.aiwg.io/v1` manifest gives any supported provider one canonical,
+  copy/pasteable installation contract. It inspects Node/npm and PATH health,
+  repairs stale or duplicate published installs with approval, preserves
+  source-checkout development mode by default, deploys `all`, builds indices,
+  regenerates provider context, and verifies engagement before declaring
+  success.
+
+### Changed
+
+- **Starter guidance** - the root and published package READMEs now lead with
+  the same agentic installer and manual fallback. Restarting the provider is a
+  verified compatibility fallback after indexing and regeneration rather than
+  a routine first-run requirement.
+
 ## [2026.7.21] - 2026-07-27 - "Portable skills, session intelligence, and conversational guidance"
 
 ### Added

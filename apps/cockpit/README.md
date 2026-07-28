@@ -8,8 +8,21 @@ Observe live agent work, attach to sessions, handle approvals, launch runtime
 targets, and coordinate AIWG actions from one local operator surface. Cockpit
 fronts the AIWG CLI and the agentic-sandbox executor; it does not replace either.
 
+If AIWG is not already connected to your project, paste this into your
+supported provider first:
+
+```text
+Install or repair AIWG for this project by following
+https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+Explain the plan before changing anything, preserve my existing work, and ask
+me only for choices you cannot safely determine.
+```
+
 ```bash
 npm i -g aiwg        # install the base AIWG CLI
+aiwg use all --provider <provider>
+aiwg index build --all
+aiwg regenerate --provider <provider>
 aiwg use cockpit     # install the opt-in Cockpit package, version-locked to AIWG
 aiwg cockpit         # launch the local Bridge + web UI
 ```
@@ -34,6 +47,9 @@ version to the installed AIWG version.
 
 ```bash
 npm i -g aiwg
+aiwg use all --provider <provider>
+aiwg index build --all
+aiwg regenerate --provider <provider>
 aiwg use cockpit
 aiwg cockpit --status
 aiwg cockpit

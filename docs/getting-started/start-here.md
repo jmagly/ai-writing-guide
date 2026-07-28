@@ -34,7 +34,7 @@ The preferred setup sequence is:
 
 1. install AIWG;
 2. deploy `all` for the provider you use;
-3. reopen the provider in the project;
+3. build the capability indices;
 4. invoke `aiwg-regenerate` so AIWG is tailored and hooked into the project;
 5. verify engagement.
 
@@ -80,10 +80,17 @@ This installs the complete deployable end-user surface. A narrower command such
 as `aiwg use sdlc --provider <provider>` is an advanced choice for users who
 deliberately want only one framework.
 
-Close and reopen the provider from the project folder, then ask it to run
-`aiwg-regenerate` for this existing project and preserve project-authored
-instructions. After regeneration, ask “Is AIWG active in this project?” so the
-agent reads the status probe and explains the result.
+Build the indices, then ask the current provider to run `aiwg-regenerate` for
+this existing project and preserve project-authored instructions:
+
+```bash
+aiwg index build --all
+aiwg regenerate --provider <provider>
+```
+
+After regeneration, ask “Is AIWG active in this project?” so the agent reads
+the status probe and explains the result. Restart the provider only if that
+verification shows it is still using cached startup instructions.
 
 If you want an agent or steward to handle the whole setup from prerequisites to
 provider handoff, use the [Agentic Install Runbook](../agentic-install-runbook.md).

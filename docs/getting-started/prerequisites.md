@@ -24,16 +24,11 @@ Contributor and release workflows have stricter npm requirements:
 | Change dependencies or regenerate lockfiles | npm 11.5+ | Required for the committed `min-release-age=7` gate |
 | Publish AIWG releases | Node 24 in the release workflow | Current npm 11.x plus npm trusted-publishing support |
 
-**Installation options:**
-
-| Platform | Command |
-|----------|---------|
-| **macOS (recommended)** | `nvm install 24 && nvm use 24` |
-| **macOS (Homebrew)** | `brew install node@24` |
-| **Ubuntu/Debian** | `curl -fsSL https://deb.nodesource.com/setup_24.x \| sudo -E bash - && sudo apt-get install -y nodejs` |
-| **Fedora/RHEL** | `curl -fsSL https://rpm.nodesource.com/setup_24.x \| sudo bash - && sudo dnf install -y nodejs` |
-| **NVM (All platforms)** | `nvm install 24 && nvm use 24` |
-| **Windows** | Use WSL2, then follow Ubuntu instructions |
+Reuse a healthy Node version manager if one is already installed. Do not stack
+`nvm`, `fnm`, `asdf`, `mise`, Volta, or another manager. If no manager exists,
+the new-user defaults are `nvm-sh` on macOS, Linux, and WSL, and `nvm-windows`
+on native Windows. See [Install Node.js and npm Safely](install-node.md) for
+the platform-specific checks and official installation sources.
 
 macOS users should start with the [macOS Install Guide](macos-install.md).
 npm's own documentation recommends a Node version manager on macOS to avoid
@@ -49,13 +44,13 @@ global-package permission errors such as `EACCES` under `/usr/local/lib/node_mod
 | **Cursor** | IDE-native rules | [cursor.sh](https://cursor.sh/) |
 | **GitHub Copilot** | GitHub integration | VS Code extension |
 
-**Use multiple platforms for best results:**
+Deploy the complete system separately for each provider your team uses:
 
 ```bash
-aiwg use sdlc                      # Claude Code (default)
-aiwg use sdlc --provider warp      # Warp Terminal
-aiwg use sdlc --provider factory   # Factory AI
-aiwg use sdlc --provider cursor    # Cursor IDE
+aiwg use all --provider claude
+aiwg use all --provider warp
+aiwg use all --provider factory
+aiwg use all --provider cursor
 ```
 
 ## Platform Support Status
@@ -78,7 +73,7 @@ aiwg use sdlc --provider cursor    # Cursor IDE
 | **macOS** (Intel + Apple Silicon) | ✅ Supported |
 | **Linux** (Ubuntu, Debian, Fedora, Arch, RHEL) | ✅ Supported |
 | **WSL2** (Windows Subsystem for Linux) | ✅ Supported |
-| **Native Windows** (PowerShell/CMD) | ❌ Not supported — Use WSL2 |
+| **Native Windows** (PowerShell) | ✅ Supported |
 
 ## Optional (Recommended)
 

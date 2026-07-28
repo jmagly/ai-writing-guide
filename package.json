@@ -133,6 +133,7 @@
     "man/",
     "apps/web/dist",
     "!apps/web/dist/**/*.map",
+    "setup.aiwg.yaml",
     "CLAUDE.md"
   ],
   "repository": {

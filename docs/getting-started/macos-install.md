@@ -133,7 +133,10 @@ Deploy AIWG from the project root:
 
 ```bash
 cd /path/to/your/project
-aiwg use sdlc
+aiwg use all --provider <provider>
+aiwg index build --all
+aiwg regenerate --provider <provider>
+aiwg status --probe --json
 aiwg doctor
 ```
 

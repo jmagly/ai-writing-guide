@@ -8,10 +8,13 @@ This guide gets AIWG loaded and oriented in under ten minutes.
 
 ---
 
-## Step 1 — Install
+## Step 1 — Install, repair, or update
 
-```bash
-npm install -g aiwg
+```text
+Install or repair AIWG for this project by following
+https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+Explain the plan before changing anything, preserve my existing work, and ask
+me only for choices you cannot safely determine.
 ```
 
 ---
@@ -42,10 +45,14 @@ the guided conversation. You should not have to map repo policy fields by hand.
 ## Step 3 — Deploy to your project
 
 ```bash
-aiwg use sdlc
+aiwg use all --provider <provider>
+aiwg index build --all
+aiwg regenerate --provider <provider>
 ```
 
-This installs the agents, commands, and rules into `.claude/`. Claude Code picks them up automatically on the next session.
+This installs the complete system, builds its capability indices, and connects
+the provider to `WORKSPACE.md` and `AIWG.md`. Most providers can use it in the
+current session; restart only if the status check shows cached context.
 
 ---
 

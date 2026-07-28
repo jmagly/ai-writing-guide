@@ -44,14 +44,15 @@ You do not need to interpret raw probe JSON yourself. The agent does that.
 
 If AIWG is not installed at all, install it once:
 
-```bash
-npm install -g aiwg
+```text
+Install or repair AIWG for this project by following
+https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
 ```
 
 After that, the user-side commands you might run by hand are limited to:
 
 - `aiwg wizard` — guided setup when starting from scratch
-- `aiwg use <framework>` — deploy a specific framework
+- `aiwg use all --provider <provider>` — deploy the preferred complete system
 - `aiwg doctor` — when a human wants a direct health readout outside the chat
 - `aiwg refresh` — keep the install current
 
@@ -74,7 +75,9 @@ npm install -g aiwg
 
 Or, if `aiwg` is installed but unreachable, see the [Installation Troubleshooting](https://github.com/jmagly/aiwg/blob/main/README.md#installation-troubleshooting) section in the README.
 
-If the probe reports `not-configured` or `partial`, ask the agent for the one action that will finish setup. Usually that is `aiwg wizard` or a focused `aiwg use <framework>`.
+If the probe reports `not-configured` or `partial`, ask the agent for the one
+action that will finish setup. Usually that is the agentic installer, `aiwg
+wizard`, or `aiwg use all --provider <provider>`.
 
 If the probe reports `needs-repair`, ask:
 

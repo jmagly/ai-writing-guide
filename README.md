@@ -8,18 +8,35 @@
 
 200+ agents, 109+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 27 addons, and a training marketplace package. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
 
+The simplest setup is to paste this into a supported AI provider:
+
+```text
+Install or repair AIWG for this project by following
+https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+Explain the plan before changing anything, preserve my existing work, and ask
+me only for choices you cannot safely determine.
+```
+
+The installer detects old, broken, duplicate, and development-mode installs,
+then guides you through repair or update. It deploys the preferred complete
+system with `aiwg use all`, builds the indices, regenerates the project context,
+and verifies engagement. Most providers can continue in the same session. It
+asks you to restart only when the provider is demonstrably caching old startup
+instructions.
+
+If you prefer to install manually:
+
 ```bash
-npm i -g aiwg        # full CLI and local resource corpus
+npm i -g aiwg
 cd /path/to/your/project
 aiwg use all --provider <provider>
+aiwg index build --all
+aiwg regenerate --provider <provider>
+aiwg status --probe --json
 ```
 
 Replace `<provider>` with your AI tool's name, such as `claude`, `codex`,
-`copilot`, or `cursor`. Then close and reopen that tool from the project folder
-and ask it to run `aiwg-regenerate` for the existing project. This connects the
-provider files to the tailored `WORKSPACE.md` and `AIWG.md` context without
-silently replacing instructions you wrote. Finally, ask: “Is AIWG active in
-this project?” and have the agent report the status probe.
+`copilot`, or `cursor`.
 
 For the complete beginner path and provider-name table, see
 [Install, Connect, and Verify](docs/getting-started/install-connect-verify.md).

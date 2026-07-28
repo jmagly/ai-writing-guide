@@ -1,0 +1,180 @@
+apiVersion: setup.aiwg.io/v1
+kind: SetupManifest
+metadata:
+  name: aiwg
+  description: Safely install, repair, update, connect, and verify AIWG for a supported provider.
+  version: "1.0.0"
+  install_type: user
+spec:
+  platforms:
+    - os: linux
+      shell: bash
+    - os: linux
+      shell: wsl2
+    - os: macos
+      shell: zsh
+    - os: windows
+      shell: native
+  params:
+    - name: PROJECT_DIR
+      type: path
+      required: true
+      description: The project folder where AIWG should be connected.
+    - name: PROVIDER
+      type: choice
+      required: true
+      description: The agentic provider that will use AIWG in this project.
+      choices:
+        - claude
+        - codex
+        - copilot
+        - cursor
+        - factory
+        - hermes
+        - openclaw
+        - opencode
+        - openhuman
+        - warp
+        - windsurf
+  steps:
+    - id: explain-and-confirm
+      type: agentic
+      instruction: >-
+        Explain in plain language that this flow will inspect the machine and project
+        before making changes. Infer PROJECT_DIR from the open workspace and PROVIDER
+        from the current agent when reliable; ask the user only when either is ambiguous.
+        Explain the difference between a terminal and an agent conversation if that
+        would help. Do not request passwords, tokens, or pasted secrets. Do not make
+        changes yet.
+    - id: inspect-existing-state
+      type: agentic
+      depends_on:
+        - explain-and-confirm
+      instruction: >-
+        Perform a read-only inspection of the operating system, architecture, current
+        shell, PATH, Node.js, npm, installed Node version managers, global npm prefix,
+        every resolvable aiwg executable, npm global aiwg and @aiwg/cli packages,
+        AIWG_ROOT and related AIWG environment variables, and PROJECT_DIR. Detect
+        shadowed or duplicate binaries, system-owned npm prefixes, versions older than
+        Node 20, stale or broken AIWG packages, package/version mismatches, and provider
+        files already deployed in the project. Run an existing aiwg doctor and
+        aiwg status --probe --json only when the resolved executable can be invoked
+        safely. Never use sudo to repair a global npm installation.
+    - id: detect-development-mode
+      type: agentic
+      depends_on:
+        - inspect-existing-state
+      instruction: >-
+        Determine whether AIWG is intentionally running from a source checkout,
+        npm link, workspace link, local file dependency, custom AIWG_ROOT, or a
+        repository command such as node bin/aiwg.mjs. Treat this as development mode,
+        not as a broken published install. Report the checkout path, Git branch,
+        worktree cleanliness, configured remotes, and whether the branch is behind its
+        upstream using read-only Git operations. Never pull, switch branches, discard
+        changes, unlink a package, or replace development mode without explicit user
+        approval.
+    - id: propose-remediation
+      type: agentic
+      depends_on:
+        - detect-development-mode
+      instruction: >-
+        Summarize the inspection in ordinary language and propose the smallest safe
+        plan. Reuse a healthy existing Node version manager. Do not stack managers.
+        AIWG requires Node 20 or newer; prefer the current Node LTS for a new install.
+        If Node is missing or unsuitable, offer an official version-manager path:
+        nvm-sh for macOS, Linux, or WSL and nvm-windows for native Windows. Explain any
+        required new shell or PATH refresh before proceeding. If development mode is
+        active, offer two explicit choices: stay in development mode and safely update
+        the checkout after preserving a dirty worktree, or switch to the published
+        aiwg package after explaining which links and environment settings would
+        change. Preserve development mode by default. If a published install is stale
+        or broken, propose repairing or updating the full aiwg package. Explain any
+        duplicate or shadowed binaries and identify the exact paths affected. Obtain
+        approval before any installation, update, unlink, PATH/profile edit, Git pull,
+        or provider-file mutation.
+    - id: repair-or-install
+      type: agentic
+      depends_on:
+        - propose-remediation
+      instruction: >-
+        Carry out only the approved plan. For published mode, install or update the
+        full local-corpus package with npm install --global aiwg and verify that the
+        selected aiwg executable and npm package version agree. Do not install
+        @aiwg/cli as the new-user default. For development mode, keep using the
+        checkout unless the user explicitly chose to switch; update it only with a
+        non-destructive Git operation that preserves local work, then use the
+        repository's documented install/build commands. Correct stale PATH entries,
+        links, or duplicate packages only when the user approved those exact changes.
+        Stop and explain if a required operation would overwrite work or needs
+        administrator access.
+      on_fail: diagnose-install
+    - id: deploy-complete-system
+      type: agentic
+      depends_on:
+        - repair-or-install
+      instruction: >-
+        From PROJECT_DIR, run the selected healthy AIWG executable to deploy the
+        preferred complete system with aiwg use all --provider PROVIDER. Preserve
+        project-authored files and report every conflict instead of forcing an
+        overwrite. This is a project-local deployment unless the user explicitly
+        requested and approved user or global scope.
+      on_fail: diagnose-install
+    - id: build-and-regenerate
+      type: agentic
+      depends_on:
+        - deploy-complete-system
+      instruction: >-
+        From PROJECT_DIR, build the capability indices with aiwg index build --all,
+        then run aiwg regenerate --provider PROVIDER. Use the existing-project
+        preflight/apply route when the project has not yet been normalized and the
+        command indicates that it is needed. Preview changes, preserve operator and
+        project-authored instructions, and never use --force without separately
+        explaining the conflict and obtaining approval.
+      on_fail: diagnose-install
+    - id: verify-engagement
+      type: agentic
+      depends_on:
+        - build-and-regenerate
+      instruction: >-
+        Run aiwg status --probe --json and aiwg doctor from PROJECT_DIR. Verify the
+        intended project root, PROVIDER, the complete all deployment, fresh indices,
+        WORKSPACE.md and AIWG.md, and the provider adapter. Also verify that the
+        current agent can read the generated bootstrap and discover an AIWG
+        capability. Report each check as pass, repaired, warning, or blocked, with a
+        concrete next action for any non-pass result.
+      on_fail: diagnose-install
+    - id: session-handoff
+      type: agentic
+      depends_on:
+        - verify-engagement
+      instruction: >-
+        If the current provider can read the regenerated files and discover AIWG,
+        continue in the same session and clearly say that no restart is needed. Ask
+        the user to reload or restart the provider only if verification shows that
+        the provider is caching old startup instructions or cannot discover the new
+        adapter. Explain why, ask the user to restart, and give them this exact resume
+        prompt: "Continue the AIWG setup verification in this project. Run aiwg status
+        --probe --json and tell me whether AIWG is engaged." Do not claim success until
+        the verification evidence passes.
+  recovery:
+    - id: diagnose-install
+      steps:
+        - id: collect-safe-diagnostics
+          type: agentic
+          instruction: >-
+            Stop mutations. Preserve the failing command and useful error text without
+            exposing secrets. Re-run only read-only version, PATH, npm prefix, AIWG
+            doctor, status, Git state, and file-existence checks relevant to the
+            failure. Explain the likely cause and propose the smallest reversible
+            correction. Obtain approval before retrying any mutation. Never delete a
+            source checkout, project-authored instructions, npm cache, or user data as
+            a generic recovery step.
+  briefing:
+    success: >-
+      AIWG is installed or repaired, the complete system is deployed for the selected
+      provider, project context is regenerated, indices are built, and engagement is
+      verified.
+    next_steps:
+      - Ask the agent what AIWG can help with in this project.
+      - Run aiwg status --probe --json whenever you want evidence that AIWG is engaged.
+      - Use aiwg doctor when an install, update, or provider connection behaves unexpectedly.

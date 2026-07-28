@@ -10,7 +10,9 @@ AIWG deploys the same framework to every platform so the whole team works from t
 
 ## How it works
 
-You run `aiwg use sdlc` once from the project root. AIWG writes the framework into platform-specific directories for every installed provider:
+You run `aiwg use all --provider <provider>` from the project root for each
+provider the team uses. AIWG writes the complete system into platform-specific
+directories:
 
 ```
 .claude/agents/          ← Claude Code picks this up
@@ -29,14 +31,13 @@ Every teammate gets the same agents, the same rules, the same commands — regar
 npm install -g aiwg
 cd /path/to/your/project
 
-# Deploy to all platforms at once
-aiwg use all
-
-# Or deploy to specific platforms
-aiwg use sdlc                          # Claude Code (default)
-aiwg use sdlc --provider cursor        # Cursor
-aiwg use sdlc --provider copilot       # GitHub Copilot
-aiwg use sdlc --provider warp          # Warp Terminal
+# Deploy the complete system to each provider
+aiwg use all --provider claude
+aiwg use all --provider cursor
+aiwg use all --provider copilot
+aiwg use all --provider warp
+aiwg index build --all
+aiwg regenerate --provider claude
 ```
 
 Then commit the results:

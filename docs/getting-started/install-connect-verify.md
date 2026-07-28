@@ -14,6 +14,25 @@ Your **project root** is the main folder for the project—the folder that usual
 contains files such as `README.md`, `package.json`, or `.git`. If you are not
 sure which folder that is, ask your agent to identify it before continuing.
 
+## Easiest path: ask your agent to install or repair AIWG
+
+Paste this prompt into a supported provider:
+
+```text
+Install or repair AIWG for this project by following
+https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+Explain the plan before changing anything, preserve my existing work, and ask
+me only for choices you cannot safely determine.
+```
+
+The linked installer inspects first. It can recognize a healthy install, an
+older or broken install, duplicate commands, and an intentional source-checkout
+development setup. It explains proposed changes before making them. If you are
+using a development checkout, it keeps that mode by default and offers either a
+safe repository update or an explicit switch to the published package.
+
+Continue below if you prefer to type the setup commands yourself.
+
 ## 1. Install AIWG
 
 AIWG uses Node.js and its bundled npm installer. If either `node --version` or
@@ -74,16 +93,21 @@ needs. Before accepting an unexpected file location or permission request, stop
 and ask the agent to explain what will be written and whether it stays inside
 the project.
 
-## 3. Reopen the provider and regenerate project context
+## 3. Build the indices and regenerate project context
 
-Close and reopen the AI tool from the project root so it can see the new files.
-This matters: an already-open chat may still be using the old instructions.
-Then, in the agent conversation, say:
+In the terminal, build the indices and regenerate the provider connection:
+
+```bash
+aiwg index build --all
+aiwg regenerate --provider <provider>
+```
+
+Then ask the current agent:
 
 ```text
-Run aiwg-regenerate for this existing project. Preview the tailored project
-context, preserve project-authored instructions, apply the regeneration, and
-report which provider files now hook into WORKSPACE.md and AIWG.md.
+Run aiwg-regenerate for this existing project if further normalization is
+needed. Preserve project-authored instructions and report which provider files
+hook into WORKSPACE.md and AIWG.md.
 ```
 
 If your provider offers slash commands, you can instead type this in the chat:
@@ -92,11 +116,13 @@ If your provider offers slash commands, you can instead type this in the chat:
 /aiwg-regenerate
 ```
 
-`aiwg-regenerate` reads the existing project and prepares the AI-facing context
-files that help the agent understand it. It should preserve instructions you or
-your team wrote. Ask to see a preview if the agent proposes replacing existing
-content. Legacy “full injection” is an advanced compatibility mode and is not
-the normal first-run choice.
+Most supported providers can discover the regenerated files and built indices
+without ending the current session. Restart or reload only if the verification
+step shows that the provider is still using cached startup instructions.
+`aiwg-regenerate` should preserve instructions you or your team wrote. Ask to
+see a preview if the agent proposes replacing existing content. Legacy “full
+injection” is an advanced compatibility mode and is not the normal first-run
+choice.
 
 ## 4. Verify engagement
 
@@ -123,7 +149,8 @@ below or ask the agent to explain the mismatch first.
 
 - Wrong project: stop and reopen the provider from the intended project root.
 - Missing provider files: rerun the `all` deployment with the correct provider.
-- Provider ignores new files: fully restart the provider session.
+- Provider ignores new files after indexing and regeneration: reload or restart
+  the provider, then rerun the status probe.
 - Regeneration reports conflicts: review the proposed resolution; do not
   overwrite project-authored instructions blindly.
 

@@ -13,11 +13,13 @@ You don't need to set up a full project workflow. Just point AIWG at the code an
 ```bash
 npm install -g aiwg
 cd /path/to/your/project
-aiwg use sdlc
-claude .
+aiwg use all --provider <provider>
+aiwg index build --all
+aiwg regenerate --provider <provider>
 ```
 
-Since this is an existing project, run this once in the tool so AIWG orients its context to your codebase (on a brand-new/empty folder it's optional — `aiwg use` already wired the context):
+Since this is an existing project, ask the agent to confirm the regenerated
+context before the audit:
 
 ```
 /aiwg-regenerate

@@ -1,5 +1,23 @@
 # Agentic Install Runbook
 
+## Canonical agentic installer
+
+For a new, outdated, broken, duplicate, or development-mode installation, use
+the public [`SetupManifest`](../setup.aiwg.yaml). A user can paste:
+
+```text
+Install or repair AIWG for this project by following
+https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+Explain the plan before changing anything, preserve my existing work, and ask
+me only for choices you cannot safely determine.
+```
+
+The manifest is the canonical flow. It requires inspection before mutation,
+explicit approval for repairs and mode switches, preservation of source
+checkouts, the complete `all` deployment, index construction, regeneration,
+and evidence-based verification. Use the manual notes below when the manifest
+cannot be retrieved.
+
 Use this runbook when an agent or steward needs to take a machine or project
 from zero to a working AIWG session. The human-facing path is short: install
 AIWG, deploy the right artifacts, open the chosen agentic platform, and ask the
@@ -21,7 +39,9 @@ If the user is unsure, choose project-local setup first.
 ## Prerequisites
 
 AIWG requires Node.js 20 or newer. New installs should use the current LTS Node
-line through a version manager such as `nvm`, especially on macOS.
+line. Reuse a healthy version manager already present; do not stack managers.
+When none is installed, prefer `nvm-sh` on macOS, Linux, and WSL, or
+`nvm-windows` on native Windows.
 
 ```bash
 node --version
@@ -60,7 +80,9 @@ Run these commands from the project root:
 
 ```bash
 cd /path/to/project
-aiwg use sdlc --provider claude
+aiwg use all --provider claude
+aiwg index build --all
+aiwg regenerate --provider claude
 aiwg status --probe --json
 aiwg doctor
 ```
@@ -68,15 +90,16 @@ aiwg doctor
 Replace the provider when the user is not using Claude Code:
 
 ```bash
-aiwg use sdlc --provider codex
-aiwg use sdlc --provider cursor
-aiwg use sdlc --provider copilot
-aiwg use sdlc --provider factory
-aiwg use sdlc --provider opencode
-aiwg use sdlc --provider warp
-aiwg use sdlc --provider windsurf
-aiwg use sdlc --provider hermes
-aiwg use sdlc --provider openclaw
+aiwg use all --provider codex
+aiwg use all --provider cursor
+aiwg use all --provider copilot
+aiwg use all --provider factory
+aiwg use all --provider opencode
+aiwg use all --provider warp
+aiwg use all --provider windsurf
+aiwg use all --provider hermes
+aiwg use all --provider openclaw
+aiwg use all --provider openhuman
 ```
 
 For guided setup, use the wizard instead of choosing the framework and provider
@@ -96,7 +119,7 @@ workspaces without a full deployment in every project:
 
 ```bash
 cd /path/to/current/project
-aiwg use sdlc --provider claude --global
+aiwg use all --provider claude --global
 aiwg doctor --scope user
 ```
 
@@ -108,7 +131,7 @@ current project. In additional projects, run
 Use `--scope user` instead when an additive project deployment is intentional:
 
 ```bash
-aiwg use sdlc --provider claude --scope user
+aiwg use all --provider claude --scope user
 ```
 
 Consult the provider matrix before using `--global`; providers without a
@@ -117,7 +140,7 @@ filesystem-discovered user scope still need their documented project adapter.
 For non-interactive provisioning, target a project directory explicitly:
 
 ```bash
-npx aiwg use sdlc --provider claude --prefix /path/to/project
+npx aiwg use all --provider claude --prefix /path/to/project
 npx aiwg doctor --prefix /path/to/project
 ```
 
@@ -139,8 +162,8 @@ Provider notes:
 
 | Provider | Open after deploy | First check |
 |---|---|---|
-| Claude Code | Restart Claude Code in the project root | Ask the steward to verify AIWG status |
-| Codex | Restart Codex in the project root | Ask for AIWG status and one next action |
+| Claude Code | Continue in the project; restart only if verification finds cached context | Ask the steward to verify AIWG status |
+| Codex | Continue in the project; restart only if verification finds cached context | Ask for AIWG status and one next action |
 | Cursor | Open the project in Cursor | Ask Cursor to verify AIWG is active |
 | Copilot | Open the VS Code workspace | Ask Copilot Chat for AIWG status |
 | Factory | Start Factory from the project root | Ask for the AIWG first action |
@@ -167,16 +190,17 @@ The health check is:
 aiwg doctor
 ```
 
-Treat the status probe as the evidence for local deployment state. Provider
-sessions may still need a restart or reload before they read newly deployed
-files.
+Treat the status probe as the evidence for local deployment state. After
+`aiwg index build --all` and regeneration, most provider sessions can continue
+without restarting. Request a restart or reload only when a provider cannot
+read or discover the newly deployed files.
 
 Common health-check outcomes:
 
 | Symptom | What to do |
 |---|---|
 | `aiwg` not found | Add npm's global `bin` directory to PATH or use `npx aiwg` |
-| No provider artifacts | Run `aiwg use sdlc --provider <provider>` from the project root |
+| No provider artifacts | Run `aiwg use all --provider <provider>` from the project root |
 | Wrong project root | `cd` to the intended repository and rerun the setup |
 | Stale provider session | Restart or reload the agentic platform |
 | Generated context is stale | Ask the session to run `aiwg-regenerate` |

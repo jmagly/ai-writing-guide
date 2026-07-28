@@ -8,17 +8,13 @@ This is the full setup — requirements, architecture, test strategy, security b
 
 ---
 
-## Step 1 — Install
+## Step 1 — Install and connect
 
-```bash
-npm install -g aiwg
-```
-
-Or use the Claude Code plugin:
-
-```
-/plugin marketplace add jmagly/ai-writing-guide
-/plugin install sdlc@aiwg
+```text
+Install or repair AIWG for this project by following
+https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+Explain the plan before changing anything, preserve my existing work, and ask
+me only for choices you cannot safely determine.
 ```
 
 ---
@@ -32,21 +28,20 @@ git init
 
 ---
 
-## Step 3 — Deploy the SDLC framework
+## Step 3 — Deploy the complete AIWG system
 
 ```bash
-aiwg use sdlc
+aiwg use all --provider <provider>
+aiwg index build --all
+aiwg regenerate --provider <provider>
 ```
 
-This installs agents, commands, and rules into `.claude/`. One-time per project.
+The agentic installer performs these commands for you. They are shown here as
+the manual fallback.
 
 ---
 
-## Step 4 — Open in Claude Code and start intake
-
-```bash
-claude .
-```
+## Step 4 — Open your provider and start intake
 
 Then tell it what you're building:
 

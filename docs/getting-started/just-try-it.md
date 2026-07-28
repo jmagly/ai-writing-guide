@@ -13,16 +13,14 @@ Install AIWG and deploy it to your project:
 ```bash
 npm install -g aiwg
 cd /path/to/any/project     # or make an empty folder
-aiwg use sdlc
+aiwg use all --provider <provider>
+aiwg index build --all
+aiwg regenerate --provider <provider>
 ```
 
-Open Claude Code in that directory:
-
-```bash
-claude .
-```
-
-That's it — `aiwg use` already wired AIWG into the project (it wrote `CLAUDE.md` + `AIWG.md`), so it loads as the AIWG orchestrator on start.
+That's it—ask the current agent whether AIWG is active. Most providers can use
+the regenerated context immediately; restart only if verification finds cached
+startup instructions.
 
 If you pointed at an **existing project** (not an empty folder), run this once **inside the tool** first, so AIWG reconciles its context with what's already there:
 
@@ -61,8 +59,9 @@ Make a folder, drop in one or two files, and run:
 ```bash
 mkdir my-test && cd my-test
 echo "console.log('hello')" > index.js
-aiwg use sdlc
-claude .
+aiwg use all --provider <provider>
+aiwg index build --all
+aiwg regenerate --provider <provider>
 ```
 
 Then (this is a brand-new folder, so nothing to reconcile — just ask):
@@ -77,7 +76,10 @@ It will answer as one. That's what AIWG does.
 
 ## What you just installed
 
-`aiwg use sdlc` copied agent definitions, slash commands, skills, and behavioral rules into `.claude/` — and wrote `CLAUDE.md` + `AIWG.md`, the context that primes the AI as the AIWG orchestrator. Claude Code reads all of it automatically on start. On a fresh project it just works — no extra configuration.
+`aiwg use all --provider <provider>` copied the complete agent, command, skill,
+and rule surface into the provider's native locations. Regeneration connected
+that provider to `WORKSPACE.md` and `AIWG.md`; the index makes those
+capabilities discoverable without loading the entire corpus.
 
 On an **existing project**, or to pull in the latest AIWG on a project you set up earlier, run `/aiwg-regenerate` inside the tool: it re-tailors that context to your actual codebase and preserves any edits you've made.
 
