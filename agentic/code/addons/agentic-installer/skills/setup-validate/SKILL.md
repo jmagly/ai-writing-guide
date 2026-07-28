@@ -29,7 +29,7 @@ Path to schema file. Default: auto-located from AIWG installation.
 Fail on warnings in addition to errors.
 
 ### --fix (optional)
-Auto-fix simple issues (missing `id`, missing `depends_on` on sequential steps).
+Reserved for future safe autofixes. The current CLI validates and reports only.
 
 ## Validation Checks
 
@@ -122,17 +122,8 @@ Result: INVALID — fix errors before running
 
 ## Auto-fix (--fix)
 
-When `--fix` is passed, the skill will:
-1. Add `id` fields to any steps missing them (sequential: `step-1`, `step-2`, ...)
-2. Add obvious `depends_on` for sequential steps (each step depends on the previous)
-3. Print a diff of changes made
-
-It will NOT:
-- Change step types
-- Add or remove scripts
-- Modify param definitions
-- Add or remove `interactive_required` flags
-- Add or remove `os_config` entries
+`--fix` is reserved for future safe autofixes. The current agent-facing CLI
+validates and reports only; it does not mutate manifests.
 
 ## References
 

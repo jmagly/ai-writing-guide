@@ -22,6 +22,7 @@ export type AiwgFortemiRecordType =
   | "aiwg.agent"
   | "aiwg.command"
   | "aiwg.rule"
+  | "aiwg.schema"
   | "aiwg.behavior"
   | "aiwg.flow"
   | "aiwg.provider"
@@ -582,6 +583,8 @@ export function recordTypeForEntry(
       return "aiwg.command";
     case "rule":
       return "aiwg.rule";
+    case "schema":
+      return "aiwg.schema";
     case "behavior":
       return "aiwg.behavior";
     case "flow":

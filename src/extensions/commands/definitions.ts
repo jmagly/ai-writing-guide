@@ -619,6 +619,105 @@ export const setupCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const setupGenerateCommand: Extension = {
+  id: 'setup-generate',
+  type: 'skill',
+  name: 'Setup Generate',
+  description: 'Generate starter setup.aiwg.io/v1 SetupManifest assets for agentic installer automation',
+  version: '1.0.0',
+  capabilities: ['cli', 'project', 'setup', 'setup-manifest', 'agentic-installer', 'generation', 'automation'],
+  keywords: ['setup-generate', 'setup generate', 'SetupManifest', 'setup.aiwg.io/v1', 'agentic-installer', 'manifest generation', 'starter manifest'],
+  category: 'project',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: [
+      'generate setup manifest',
+      'create setup.manifest.yaml',
+      'setup-generate',
+      'scaffold installer manifest',
+    ],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '[--output <path>] [--name <name>] [--type user|developer|ci] [--platform <os>] [--force] [--json]',
+      allowedTools: ['Read', 'Write', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
+export const setupValidateCommand: Extension = {
+  id: 'setup-validate',
+  type: 'skill',
+  name: 'Setup Validate',
+  description: 'Validate setup.aiwg.io/v1 SetupManifest files against the canonical schema and installer consistency checks',
+  version: '1.0.0',
+  capabilities: ['cli', 'project', 'setup', 'setup-manifest', 'agentic-installer', 'validation', 'schema'],
+  keywords: ['setup-validate', 'setup validate', 'SetupManifest', 'setup.aiwg.io/v1', 'agentic-installer', 'manifest validation', 'schema validation', 'installer consistency'],
+  category: 'project',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: [
+      'validate setup manifest',
+      'check setup.manifest.yaml',
+      'setup-validate',
+      'lint installer manifest',
+    ],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '[manifest-path] [--manifest <path>] [--strict] [--fix] [--json]',
+      allowedTools: ['Read', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
+export const setupRunCommand: Extension = {
+  id: 'setup-run',
+  type: 'skill',
+  name: 'Setup Run',
+  description: 'Validate and execute setup.aiwg.io/v1 SetupManifest files with installer safety gates',
+  version: '1.0.0',
+  capabilities: ['cli', 'project', 'setup', 'setup-manifest', 'agentic-installer', 'installer', 'dry-run'],
+  keywords: ['setup-run', 'setup run', 'SetupManifest', 'setup.aiwg.io/v1', 'agentic-installer', 'installer runner', 'dry run', 'recovery', 'params'],
+  category: 'project',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: true,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: [
+      'run setup manifest',
+      'execute installer manifest',
+      'setup-run',
+      'run dev setup',
+    ],
+    commandHint: {
+      template: 'utility',
+      argumentHint: '[manifest-path] [--manifest <path>] [--dry-run] [--platform <os>] [--params-file <path>] [--param KEY=VALUE] [--step <id>] [--skip <ids>] [--yes]',
+      allowedTools: ['Read', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 export const issueCommand: Extension = {
   id: 'issue',
   type: 'skill',
@@ -3520,6 +3619,9 @@ export const commandDefinitions: Extension[] = [
   newCommand,
   initCommand,
   setupCommand,
+  setupGenerateCommand,
+  setupValidateCommand,
+  setupRunCommand,
   issueCommand,
   issueAuditCommand,
   addressIssuesCommand,

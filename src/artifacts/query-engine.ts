@@ -214,7 +214,7 @@ const SCORE_STOPWORDS = new Set([
   'handle', 'handles', 'handling',
   // AIWG meta-type nouns — zero discriminating signal in a discover query
   'aiwg', 'skill', 'skills', 'agent', 'agents', 'command', 'commands',
-  'rule', 'rules', 'flow', 'flows', 'workflow', 'workflows',
+  'rule', 'rules', 'schema', 'schemas', 'flow', 'flows', 'workflow', 'workflows',
 ]);
 
 /**

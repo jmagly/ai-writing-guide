@@ -114,6 +114,7 @@ import { packagesHandler } from './packages.js';
 import { marketplaceHandler } from './marketplace.js';
 import { initHandler } from './init.js';
 import { setupHandler } from './setup.js';
+import { setupGenerateHandler, setupRunHandler, setupValidateHandler } from './setup-manifest.js';
 import { runHandler } from './run.js';
 import { stewardHandler, stewardHandlers } from './steward.js';
 import { serveHandler } from './serve.js';
@@ -156,6 +157,9 @@ export {
   marketplaceHandler,
   initHandler,
   setupHandler,
+  setupGenerateHandler,
+  setupRunHandler,
+  setupValidateHandler,
   issueHandler,
   issueAuditHandler,
   runHandler,
@@ -330,6 +334,9 @@ export const allHandlers: CommandHandler[] = [
   newProjectHandler,
   initHandler,
   setupHandler,
+  setupGenerateHandler,
+  setupRunHandler,
+  setupValidateHandler,
   issueHandler,
   issueAuditHandler,
   runHandler,

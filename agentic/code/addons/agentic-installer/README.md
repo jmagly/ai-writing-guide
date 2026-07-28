@@ -69,23 +69,30 @@ recovery_procedures:
 ```
 
 ```bash
-# Validate
+# Generate starter runtime assets
+aiwg setup-generate --output setup.manifest.yaml
+
+# Validate for agentic runtime consumption
 aiwg setup-validate setup.manifest.yaml
 
-# Dry run
-aiwg setup-run --dry-run
+# Dry run without executing steps
+aiwg setup-run --manifest setup.manifest.yaml --dry-run
 
-# Execute
-aiwg setup-run
+# Execute only after the automation has reviewed the plan and has authorization
+aiwg setup-run --manifest setup.manifest.yaml --confirm
 ```
 
-## Skills
+## Agentic Runtime Commands
 
-| Skill | Description |
-|-------|-------------|
-| `setup-generate` | Generate a manifest from project context (README, package files) |
-| `setup-run` | Execute a manifest step by step with platform detection |
-| `setup-validate` | Validate a manifest against schema and run consistency checks |
+These CLI entrypoints are for agents and automation. They are intentionally
+machine-oriented surfaces that make setup assets discoverable, validateable, and
+executable under explicit safety gates.
+
+| Command | Backing skill | Description |
+|---------|---------------|-------------|
+| `setup-generate` | `setup-generate` | Generate starter manifest and script assets |
+| `setup-validate` | `setup-validate` | Validate a manifest against schema and consistency checks |
+| `setup-run` | `setup-run` | Validate, plan, and execute manifest steps with confirmation gates |
 
 ## Script Template Library
 

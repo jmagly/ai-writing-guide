@@ -20,9 +20,11 @@ document mirrors that schema; on conflict the schema wins.
 ## File Location and Discovery
 
 By convention manifests live at `setup.manifest.yaml` in the project root. The
-agentic-installer skills (`setup-generate`, `setup-validate`, `setup-run`) accept a
-path argument; otherwise they look for `setup.manifest.yaml` relative to the working
-directory.
+agentic-installer runtime commands (`setup-generate`, `setup-validate`,
+`setup-run`) are agent-facing CLI surfaces. `setup-validate` and `setup-run`
+accept a manifest path or `--manifest`; otherwise they look for
+`setup.manifest.yaml` relative to the working directory. `setup-generate` writes
+a starter manifest to `--output` or `setup.manifest.yaml`.
 
 ## Top-Level Structure
 
@@ -272,27 +274,31 @@ spec:
 
 ## Tooling
 
-The agentic-installer addon ships three skills and one agent:
+The agentic-installer addon ships three agent-facing CLI entrypoints, three
+backing skills, one agent, two rules, and the canonical schema. These are
+agentic runtime assets: discovery and index automation should locate them by
+type (`skill`, `agent`, `rule`, `schema`) and by command name where applicable.
 
-- **`setup-generate`** — discover project artifacts, assemble manifest + script stubs.
-- **`setup-validate`** — schema + reference checks + agentic-step audit + `--fix`.
+- **`setup-generate`** — generate starter manifest and script assets.
+- **`setup-validate`** — schema + reference checks + agentic-step audit.
+  `--fix` is reserved for future safe autofixes and currently validates only.
 - **`setup-run`** — six-phase execution with platform detection, dry-run, and recovery
   confirmation gate.
 - **`installer-agent`** — specialized persona for manifest generation, validation, and
   execution.
 
 ```bash
-# Generate from a project
-aiwg setup-generate
+# Generate starter runtime assets
+aiwg setup-generate --output setup.manifest.yaml
 
 # Validate
 aiwg setup-validate setup.manifest.yaml
 
 # Dry run
-aiwg setup-run --dry-run
+aiwg setup-run --manifest setup.manifest.yaml --dry-run
 
-# Execute
-aiwg setup-run
+# Execute after reviewing the dry-run plan and obtaining authorization
+aiwg setup-run --manifest setup.manifest.yaml --confirm
 ```
 
 Two HIGH-severity rules govern manifest authoring and execution:

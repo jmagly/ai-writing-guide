@@ -162,6 +162,41 @@ function extractSummary(data: Record<string, unknown>, body: string): string {
   return lines.slice(0, 5).join(' ').slice(0, 500).trim();
 }
 
+interface SchemaDocMetadata {
+  title?: string;
+  name?: string;
+  capability?: string;
+  searchTerms: string[];
+}
+
+function parseSchemaDoc(content: string, relativePath: string): SchemaDocMetadata | null {
+  if (!/\.(json|ya?ml)$/i.test(relativePath)) return null;
+  let parsed: unknown;
+  try {
+    parsed = /\.json$/i.test(relativePath) ? JSON.parse(content) : loadYaml(content);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  const schema = parsed as Record<string, unknown>;
+  const title = typeof schema.title === 'string' && schema.title.trim()
+    ? schema.title.trim()
+    : undefined;
+  const id = typeof schema.$id === 'string' && schema.$id.trim()
+    ? schema.$id.trim()
+    : undefined;
+  const description = typeof schema.description === 'string' && schema.description.trim()
+    ? schema.description.trim().slice(0, 240)
+    : undefined;
+  const filename = path.basename(relativePath, path.extname(relativePath)).replace(/\.schema$/i, '');
+  return {
+    title: title ?? filename,
+    name: filename,
+    capability: description ?? (id ? `Schema definition for ${title ?? filename}` : undefined),
+    searchTerms: [id, title, filename, 'schema'].filter((term): term is string => Boolean(term)),
+  };
+}
+
 /**
  * Determine SDLC phase from file path
  */
@@ -180,8 +215,6 @@ function inferPhase(filePath: string): string {
  * always lands as `type: 'skill'` regardless of frontmatter.
  */
 function inferType(data: Record<string, unknown>, filePath: string): string {
-  if (typeof data.type === 'string') return data.type;
-
   // Normalize separators so matchers are cross-platform.
   const normalized = filePath.replace(/\\/g, '/');
   const basename = path.basename(filePath, path.extname(filePath)).toLowerCase();
@@ -210,7 +243,8 @@ function inferType(data: Record<string, unknown>, filePath: string): string {
   const skipBasenames = new Set(['readme', 'rules-index', 'index']);
   const isMarkdown = /\.md$/i.test(filePath);
   const isTemplateAsset = TEMPLATE_INDEX_EXTENSIONS.some(ext => normalized.endsWith(ext));
-  if (!skipBasenames.has(basename) && (isMarkdown || isTemplateAsset)) {
+  const isSchemaAsset = /\.(json|ya?ml|md)$/i.test(filePath);
+  if (!skipBasenames.has(basename) && (isMarkdown || isTemplateAsset || isSchemaAsset)) {
     // Look at directory segments only (exclude the file itself).
     for (let i = segments.length - 2; i >= 0; i--) {
       const seg = segments[i];
@@ -241,6 +275,9 @@ function inferType(data: Record<string, unknown>, filePath: string): string {
           if (basename === 'rules-index' || basename === 'index') break;
           if (isMarkdown) return 'rule';
           break;
+        case 'schemas':
+          if (isSchemaAsset) return 'schema';
+          break;
         case 'templates':
           return 'template';
         case 'behaviors':
@@ -252,6 +289,8 @@ function inferType(data: Record<string, unknown>, filePath: string): string {
       }
     }
   }
+
+  if (typeof data.type === 'string') return data.type;
 
   // Legacy SDLC artifact heuristics (existing behavior preserved).
   if (basename.startsWith('uc-') || basename.includes('use-case')) return 'use-case';
@@ -941,11 +980,12 @@ export async function buildIndex(
       const inferredType = inferType(data, relativePath);
       const physicalType = inferType({ ...data, type: undefined }, relativePath);
       const runbook = flow ? null : parseRunbookDoc(data, body, relativePath);
-      const title = flow?.name ?? extractTitle(data, body);
+      const schemaDoc = inferredType === 'schema' ? parseSchemaDoc(content, relativePath) : null;
+      const title = flow?.name ?? schemaDoc?.title ?? extractTitle(data, body);
       const phase = typeof data.phase === 'string' ? data.phase : inferPhase(relativePath);
       const type = flow?.type ?? (runbook ? 'runbook' : inferredType);
       const tags = flow ? flow.tags : (Array.isArray(data.tags) ? data.tags.map(String) : []);
-      const summary = flow?.description ?? runbook?.capability ?? extractSummary(data, body);
+      const summary = flow?.description ?? schemaDoc?.capability ?? runbook?.capability ?? extractSummary(data, body);
       const dependencies = extractMentions(content);
 
       // Discovery metadata (#1214, #1540, #1792) — meaningful for operational
@@ -957,10 +997,10 @@ export async function buildIndex(
       // Declarative processes have no trigger phrases — they rely on their
       // capability and structure-aware search terms.
       const triggers = isDiscoverable && !flow ? extractTriggers(body, data) : undefined;
-      const capability = flow?.capability ?? runbook?.capability ?? (isDiscoverable ? extractCapability(data, body) : undefined);
+      const capability = flow?.capability ?? schemaDoc?.capability ?? runbook?.capability ?? (isDiscoverable ? extractCapability(data, body) : undefined);
       const kind = flow?.kind ?? runbook?.kind;
       const sourceType = runbook && physicalType !== 'runbook' ? physicalType : undefined;
-      const searchTerms = flow?.searchTerms ?? runbook?.searchTerms;
+      const searchTerms = flow?.searchTerms ?? schemaDoc?.searchTerms ?? runbook?.searchTerms;
       const kernel =
         data.kernel === true || data.kernel === 'true' ? true : undefined;
       // Script entrypoint metadata is meaningful for skills only (#1227).
@@ -970,7 +1010,7 @@ export async function buildIndex(
       // Canonical short name (#1233) — used by the scorer to floor exact-name
       // queries to 1.0 so hyphenated kernel-skill names like `aiwg-doctor`
       // remain searchable even when the rendered title strips the hyphen.
-      const name = flow ? flow.name : (isDiscoverable ? extractCanonicalName(data, relativePath) : undefined);
+      const name = flow ? flow.name : schemaDoc?.name ?? (isDiscoverable ? extractCanonicalName(data, relativePath) : undefined);
 
       entry = {
         path: relativePath,

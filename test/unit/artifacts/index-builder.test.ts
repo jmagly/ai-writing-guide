@@ -682,6 +682,11 @@ state_transfer:
         // Provider-native project templates were the gap: the project graph
         // previously omitted non-Markdown/YAML extensions accepted upstream.
         ['.aiwg/frameworks/local-delivery/templates/provider/config.toml', 'mode = "local"\n'],
+        ['.aiwg/frameworks/local-delivery/schemas/deploy.schema.json', JSON.stringify({
+          title: 'DeployConfig',
+          description: 'Schema for local deployment configuration.',
+          type: 'object',
+        })],
         ['.aiwg/frameworks/local-delivery/runbooks/recovery-runbook.md', [
           '---', 'type: runbook', 'description: Recover the local delivery service.', '---',
           '# Recovery Runbook', '', '## Procedure', '', 'Restart the service.', '',
@@ -723,9 +728,14 @@ state_transfer:
         '.aiwg/addons/local-ops/commands/local-check.md': 'command',
         '.aiwg/frameworks/local-delivery/behaviors/local-safety.md': 'behavior',
         '.aiwg/frameworks/local-delivery/templates/provider/config.toml': 'template',
+        '.aiwg/frameworks/local-delivery/schemas/deploy.schema.json': 'schema',
         '.aiwg/frameworks/local-delivery/runbooks/recovery-runbook.md': 'runbook',
         '.aiwg/frameworks/local-delivery/flows/release.yaml': 'flow',
         '.aiwg/plugins/local-tools/hooks/preflight.md': 'hook',
+      });
+      expect(byPath['.aiwg/frameworks/local-delivery/schemas/deploy.schema.json']).toMatchObject({
+        name: 'deploy',
+        title: 'DeployConfig',
       });
       expect(byPath['.aiwg/frameworks/local-delivery/flows/release.yaml']?.kind).toBe('FlowPlaybook');
     });

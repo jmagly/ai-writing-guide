@@ -175,6 +175,7 @@ export const OPERATIONAL_DISCOVERY_TYPES = [
   'agent',
   'command',
   'rule',
+  'schema',
   'flow',
   'runbook',
   'template',

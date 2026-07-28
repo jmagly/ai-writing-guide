@@ -37,11 +37,22 @@ describe('shipped component discovery coverage', () => {
       covered: 48,
       missing: 0,
       invalid: 0,
+      missingRuntimeAssets: 0,
     });
 
     for (const component of report.components) {
       if (component.status === 'exempt') continue;
       expect(component.drivers.length, component.component).toBeGreaterThan(0);
+      expect(component.runtimeAssets?.length ?? 0, `${component.component} runtime assets`).toBeGreaterThanOrEqual(0);
+      for (const asset of component.runtimeAssets ?? []) {
+        expect(asset.status, `${component.component} ${asset.type}:${asset.declaration}`).toBe('present');
+        expect(asset.path, `${component.component} ${asset.declaration} path`).toBeTruthy();
+        const entry = index.entries[asset.path];
+        if (asset.type === 'schema') {
+          expect(entry, `${component.component} schema ${asset.path}`).toBeDefined();
+          expect(entry.type).toBe('schema');
+        }
+      }
       for (const driver of component.drivers) {
         const entry = index.entries[driver.path];
         expect(entry, `${component.component} → ${driver.path}`).toBeDefined();
@@ -63,12 +74,35 @@ describe('shipped component discovery coverage', () => {
       expect(component).toHaveProperty('component');
       expect(component).toHaveProperty('status');
       if (component.status !== 'covered') continue;
+      expect(component).toHaveProperty('runtimeAssets');
       expect(component.drivers[0]).toMatchObject({
         path: expect.any(String),
         type: expect.any(String),
         triggers: expect.any(Array),
         providerSupport: expect.any(Array),
       });
+    }
+  });
+
+  it('indexes the agentic-installer runtime assets declared in manifest.json', () => {
+    const report = buildCoverageReport(REPO_ROOT);
+    const installer = report.components.find((component) => component.component === 'agentic-installer');
+    expect(installer).toBeDefined();
+    const assets = installer!.runtimeAssets ?? [];
+    expect(assets.map((asset) => `${asset.type}:${asset.declaration}`)).toEqual(expect.arrayContaining([
+      'agent:installer-agent',
+      'skill:setup-generate',
+      'skill:setup-run',
+      'skill:setup-validate',
+      'rule:installer-safety',
+      'rule:installer-authoring',
+      'schema:schemas/v1/setup-manifest.schema.json',
+    ]));
+    for (const asset of assets) {
+      expect(asset.status).toBe('present');
+      const entry = index.entries[asset.path!];
+      expect(entry, asset.path!).toBeDefined();
+      expect(entry.type, asset.path!).toBe(asset.type);
     }
   });
 });

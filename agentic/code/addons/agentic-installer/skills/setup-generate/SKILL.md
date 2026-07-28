@@ -23,15 +23,20 @@ Generate a `setup.manifest.yaml` file for a project using the `setup.aiwg.io/v1`
 ### project-dir (positional, optional)
 Path to the project root. Defaults to `.`.
 
-### --from-readme (optional)
-Extract requirements from `README.md` or `INSTALL.md` in the project dir.
+### --output (optional)
+Manifest path to create. Default: `./setup.manifest.yaml`.
 
-### --from-existing (optional)
-Update an existing `setup.manifest.yaml` rather than creating from scratch.
+### --name (optional)
+Manifest `metadata.name`. Default: package name or project directory name.
 
-### --platforms (optional)
-Comma-separated list of target platforms: `linux,macos,windows,wsl2`.
-Default: `linux,macos`.
+### --type (optional)
+Install type: `user`, `developer`, or `ci`. Default: `developer`.
+
+### --platform (optional)
+Target platform: `linux`, `macos`, `windows`, or `docker`.
+
+### --force (optional)
+Overwrite existing generated manifest/script files.
 
 ### --type (optional)
 Install type to generate: `user`, `developer`, or `ci`.
@@ -54,7 +59,9 @@ Ask clarifying questions before generating.
    - Check for `package.json`, `requirements.txt`, `Cargo.toml`, `go.mod`, `Makefile`, etc.
    - Check for `README.md`, `INSTALL.md`, `docs/install.md`
    - Check for existing `setup.manifest.yaml`
-2. If `--from-readme`, parse installation instructions from readme
+2. Parse local project cues when they are available; the CLI entrypoint emits
+   a conservative starter manifest and leaves richer project-specific authoring
+   to the agent skill.
 3. If `--interactive`, ask:
    - What OSes must be supported?
    - What are the hard prerequisites (git, node, python version)?
@@ -80,8 +87,8 @@ Additional discovery steps for developer manifests:
 
 Build the manifest YAML following this priority order:
 
-1. **metadata block** — include `install_type` matching `--type` flag (default: `user`)
-2. **platform block** — from `--platforms` or detected by project type
+1. **metadata block** — include `install_type` matching `--type` flag (default: `developer`)
+2. **platform block** — from `--platform` or detected by project type
 3. **params block** — standard params: `INSTALL_DIR`, `BRANCH` (default: `main`); add `CONFIG_DIR` if a config step is needed
 4. **prerequisites block** — from project type (e.g., `node` for npm projects, `python3` for Python)
 5. **steps block** — construct from script templates:
@@ -213,21 +220,14 @@ Write the manifest to the appropriate path:
 
 Report:
 ```
-Generated: setup.dev.manifest.yaml
+Generated: setup.manifest.yaml
   Install type:  developer
-  Platform:      linux, macos
-  OS config:     docker-group (linux), inotify-watches (linux), xcode-cli-tools (macos)
-  Params:        INSTALL_DIR, LOCAL_DOMAIN [required], SSH_EMAIL [required]
-  Prerequisites: git, node (>=20), nvm, mkcert
-  Steps:         clone, install-deps, apply-docker-group, apply-inotify, configure-dev, verify-dev
-  Recovery:      full-reset
-  Scripts:       installer/scripts/dev/ (6 files)
+  Platform:      linux
+  Steps:         setup
+  Scripts:       scripts/setup.sh
 
-Note: 2 OS config steps require re-login to take effect. Installer will warn user.
-Note: 1 OS config step (xcode-cli-tools) triggers a GUI dialog on macOS.
-
-Validate with: aiwg setup-validate installer/setup.dev.manifest.yaml
-Run with:      aiwg setup-run installer/setup.dev.manifest.yaml
+Validate with: aiwg setup-validate --manifest setup.manifest.yaml
+Run with:      aiwg setup-run --manifest setup.manifest.yaml --dry-run
 ```
 
 ## Output File Structure

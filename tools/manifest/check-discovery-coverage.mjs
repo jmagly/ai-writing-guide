@@ -18,10 +18,13 @@ const OPERATIONAL_TYPES = new Map([
   ['skills', 'skill'],
   ['agents', 'agent'],
   ['commands', 'command'],
+  ['rules', 'rule'],
+  ['schemas', 'schema'],
   ['flows', 'flow'],
   ['runbooks', 'runbook'],
   ['templates', 'template'],
   ['behaviors', 'behavior'],
+  ['hooks', 'hook'],
 ]);
 const COMPONENT_ROOTS = ['addons', 'frameworks', 'extensions'];
 const PROVIDERS = [
@@ -78,7 +81,10 @@ function artifactType(componentDir, file) {
       (after === 2 && /^SKILL\.md$/i.test(basename))
       || (after === 1 && /\.md$/i.test(basename))
     )) return null;
-    if (['agent', 'command', 'runbook', 'behavior'].includes(type) && !/\.md$/i.test(basename)) {
+    if (['agent', 'command', 'runbook', 'behavior', 'rule', 'hook'].includes(type) && !/\.md$/i.test(basename)) {
+      return null;
+    }
+    if (type === 'schema' && !/\.(json|ya?ml|md)$/i.test(basename)) {
       return null;
     }
     return type;
@@ -88,6 +94,9 @@ function artifactType(componentDir, file) {
 
 function artifactName(file, metadata) {
   if (typeof metadata.name === 'string' && metadata.name.trim()) return metadata.name.trim();
+  if (/\.(json|ya?ml)$/i.test(file) && path.basename(path.dirname(file)) === 'schemas') {
+    return path.basename(file, path.extname(file)).replace(/\.schema$/i, '');
+  }
   const base = path.basename(file, path.extname(file));
   if (/^(SKILL|COMMAND|AGENT)$/i.test(base)) return path.basename(path.dirname(file));
   return base;
@@ -125,6 +134,23 @@ function extractCapability(metadata, body) {
   return '';
 }
 
+function schemaCapability(file, content) {
+  if (!/\.(json|ya?ml)$/i.test(file)) return '';
+  try {
+    const parsed = /\.json$/i.test(file) ? JSON.parse(content) : loadYaml(content);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return '';
+    if (typeof parsed.description === 'string' && parsed.description.trim()) {
+      return parsed.description.trim().slice(0, 240);
+    }
+    if (typeof parsed.title === 'string' && parsed.title.trim()) {
+      return `Schema definition for ${parsed.title.trim()}`;
+    }
+  } catch {
+    return '';
+  }
+  return '';
+}
+
 function discoverArtifacts(componentDir, repoRoot) {
   return walk(componentDir).flatMap(file => {
     const physicalType = artifactType(componentDir, file);
@@ -134,7 +160,9 @@ function discoverArtifacts(componentDir, repoRoot) {
     const declaredType = typeof metadata.type === 'string' ? metadata.type.trim() : '';
     if (declaredType && ![...OPERATIONAL_TYPES.values()].includes(declaredType)) return [];
     const type = declaredType || physicalType;
-    const capability = extractCapability(metadata, body);
+    const capability = type === 'schema'
+      ? schemaCapability(file, content) || extractCapability(metadata, body)
+      : extractCapability(metadata, body);
     const explicitTriggers = extractTriggers(metadata, body);
     const triggers = explicitTriggers.length > 0
       ? explicitTriggers
@@ -153,6 +181,93 @@ function discoverArtifacts(componentDir, repoRoot) {
       providerSupport: platforms.includes('all') || platforms.length === 0 ? PROVIDERS : platforms,
     }];
   });
+}
+
+function entryDir(manifest, key) {
+  const raw = manifest.entry?.[key];
+  return typeof raw === 'string' && raw.trim() ? raw.trim().replace(/\/+$/, '') : key;
+}
+
+function declaredValues(manifest, key) {
+  return Array.isArray(manifest[key]) ? manifest[key] : [];
+}
+
+function declarationLabel(value) {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object') {
+    return value.path || value.id || value.name || JSON.stringify(value);
+  }
+  return String(value);
+}
+
+function declarationCandidates(manifest, key, value) {
+  const base = entryDir(manifest, key);
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    if (typeof value.path === 'string' && value.path.trim()) return [value.path.trim()];
+    if (typeof value.file === 'string' && value.file.trim()) {
+      const file = value.file.trim();
+      return file.includes('/') || /\.[a-z0-9]+$/i.test(file)
+        ? [file]
+        : [path.posix.join(base, file)];
+    }
+    if (typeof value.name === 'string' && value.name.trim()) value = value.name.trim();
+    else if (typeof value.id === 'string' && value.id.trim()) value = value.id.trim();
+  }
+  if (typeof value !== 'string' || !value.trim()) return [];
+  const name = value.trim();
+  const withExtensions = (stem, extensions) => [
+    stem,
+    ...extensions.map(ext => `${stem}${ext}`),
+  ];
+  switch (key) {
+    case 'skills':
+      return [path.posix.join(base, name, 'SKILL.md'), path.posix.join(base, `${name}.md`)];
+    case 'agents':
+      return [path.posix.join(base, `${name}.md`), path.posix.join(base, name, 'AGENT.md')];
+    case 'commands':
+      return [
+        path.posix.join(base, `${name}.md`),
+        path.posix.join(base, name, 'COMMAND.md'),
+        path.posix.join(entryDir(manifest, 'skills'), name, 'SKILL.md'),
+      ];
+    case 'rules':
+    case 'runbooks':
+      return [path.posix.join(base, `${name}.md`)];
+    case 'behaviors':
+      return [
+        path.posix.join(base, `${name}.md`),
+        path.posix.join(base, `${name}.behavior.md`),
+        path.posix.join(base, name, 'BEHAVIOR.md'),
+      ];
+    case 'hooks':
+      return withExtensions(path.posix.join(base, name), ['.md', '.js', '.cjs', '.yaml', '.yml']);
+    case 'flows':
+      return [path.posix.join(base, `${name}.yaml`), path.posix.join(base, `${name}.yml`)];
+    case 'schemas':
+      return withExtensions(path.posix.join(base, name), ['.schema.json', '.json', '.yaml', '.yml', '.md']);
+    case 'templates':
+      return withExtensions(path.posix.join(base, name), ['.md', '.json', '.yaml', '.yml', '.toml', '.tmpl', '.jsonc']);
+    default:
+      return [path.posix.join(base, name)];
+  }
+}
+
+function declaredRuntimeAssets(manifest, componentDir, repoRoot) {
+  const assets = [];
+  for (const key of OPERATIONAL_TYPES.keys()) {
+    for (const declaration of declaredValues(manifest, key)) {
+      const candidates = declarationCandidates(manifest, key, declaration);
+      const existing = candidates.find(candidate => fs.existsSync(path.join(componentDir, candidate)));
+      assets.push({
+        type: OPERATIONAL_TYPES.get(key),
+        declaration: declarationLabel(declaration),
+        expected: candidates,
+        path: existing ? path.relative(repoRoot, path.join(componentDir, existing)).split(path.sep).join('/') : null,
+        status: existing ? 'present' : 'missing',
+      });
+    }
+  }
+  return assets;
 }
 
 function validateExemption(discovery, repoRoot) {
@@ -210,6 +325,8 @@ export function buildCoverageReport(repoRoot) {
       }
 
       const artifacts = discoverArtifacts(componentDir, repoRoot);
+      const runtimeAssets = declaredRuntimeAssets(manifest, componentDir, repoRoot);
+      const missingAssets = runtimeAssets.filter(asset => asset.status === 'missing');
       const requested = strings(manifest.discovery?.drivers);
       const candidates = requested.length
         ? requested.map(driver => artifacts.find(item => item.relativePath === driver)).filter(Boolean)
@@ -217,9 +334,17 @@ export function buildCoverageReport(repoRoot) {
       const drivers = candidates.filter(driver =>
         driver.triggers.length > 0 && driver.capability && driver.providerSupport.length > 0);
       const exemption = validateExemption(manifest.discovery, repoRoot);
-      const status = drivers.length > 0 ? 'covered' : exemption?.valid ? 'exempt' : 'missing';
+      const status = missingAssets.length > 0
+        ? 'invalid'
+        : drivers.length > 0
+          ? 'covered'
+          : exemption?.valid
+            ? 'exempt'
+            : 'missing';
       const reason = status === 'covered'
         ? null
+        : missingAssets.length > 0
+          ? `declared runtime assets are missing: ${missingAssets.map(asset => `${asset.type}:${asset.declaration}`).join(', ')}`
         : status === 'exempt'
           ? exemption.rationale
           : requested.length && candidates.length === 0
@@ -250,6 +375,7 @@ export function buildCoverageReport(repoRoot) {
           canonicalOperation: manifest.discovery?.canonicalOperation || driver.name,
           providerSupport: driver.providerSupport,
         })),
+        runtimeAssets,
         ...(exemption ? { exemption } : {}),
       });
     }
@@ -261,6 +387,8 @@ export function buildCoverageReport(repoRoot) {
     exempt: components.filter(item => item.status === 'exempt').length,
     missing: components.filter(item => item.status === 'missing').length,
     invalid: components.filter(item => item.status === 'invalid').length,
+    runtimeAssets: components.reduce((sum, item) => sum + (item.runtimeAssets?.length ?? 0), 0),
+    missingRuntimeAssets: components.reduce((sum, item) => sum + (item.runtimeAssets?.filter(asset => asset.status === 'missing').length ?? 0), 0),
   };
   return {
     schemaVersion: 'aiwg.discovery-component-coverage.v1',
