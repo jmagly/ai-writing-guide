@@ -7,6 +7,16 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.23] - 2026-07-28 - "Complete package manifest publication recovery"
+
+### Fixed
+
+- **Published package allowlist** - recognize the deliberately shipped
+  `schemas/`, `setup.aiwg.yaml`, and `vscode-extension/` package roots. The
+  signed `v2026.7.22` publication stopped at the tarball supply-chain gate
+  before either registry accepted a package; this patch preserves that gate
+  while allowing the reviewed package contents to publish.
+
 ## [2026.7.22] - 2026-07-28 - "Configurable threat policy and complete capability discovery"
 
 ### Added
