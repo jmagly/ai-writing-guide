@@ -178,7 +178,9 @@ def456|Jane|jane@example.com|1700100000|Another commit`;
     });
 
     it('should identify peak day', () => {
-      const now = Math.floor(Date.now() / 1000);
+      // Keep the fixture away from a UTC day boundary. Using the live clock
+      // made the five one-minute-spaced commits straddle midnight in CI.
+      const now = Math.floor(Date.UTC(2026, 6, 15, 12, 0, 0) / 1000);
       const dayInSeconds = 24 * 60 * 60;
       const peakDate = new Date((now - dayInSeconds) * 1000).toISOString().split('T')[0];
 

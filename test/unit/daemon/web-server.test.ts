@@ -76,14 +76,12 @@ describe('WebServer', () => {
   let supervisor;
   let baseUrl;
 
-  // Use a random high port to avoid conflicts
-  const getPort = () => 10000 + Math.floor(Math.random() * 50000);
-
   beforeEach(async () => {
     supervisor = new StubSupervisor();
-    const port = getPort();
     server = new WebServer({
-      port,
+      // Let the OS allocate an available ephemeral port. Choosing a random
+      // port still races with other processes between selection and listen.
+      port: 0,
       host: '127.0.0.1',
       daemonSupervisor: supervisor,
     });
@@ -200,9 +198,8 @@ describe('WebServer', () => {
     let authedUrl;
 
     beforeEach(async () => {
-      const port = getPort();
       authedServer = new WebServer({
-        port,
+        port: 0,
         host: '127.0.0.1',
         token: 'secret-token',
         daemonSupervisor: supervisor,
@@ -325,8 +322,7 @@ describe('WebServer', () => {
     let noSupServer;
 
     beforeEach(async () => {
-      const port = getPort();
-      noSupServer = new WebServer({ port, host: '127.0.0.1' });
+      noSupServer = new WebServer({ port: 0, host: '127.0.0.1' });
       await noSupServer.start();
     });
 

@@ -73,6 +73,10 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 - **Codex skill context budget** - Codex uses the canonical shared
   `.agents/skills/` projection and deployment conformance prevents duplicate
   skill surfaces from exhausting the context budget (#1884).
+- **Deterministic CI fixtures** - daemon HTTP tests now ask the operating
+  system for an available port, and Git-history peak-day fixtures use a fixed
+  timestamp so concurrent processes and UTC midnight cannot cause release-gate
+  failures.
 
 ### Security
 
