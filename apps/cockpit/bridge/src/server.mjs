@@ -29,6 +29,7 @@ const ALLOW_MOCK_EXECUTOR = process.env.AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR === '1'
 const AUTOSTART_EXECUTOR = process.env.AIWG_COCKPIT_AUTOSTART_EXECUTOR !== '0';
 const EXECUTOR_COMMAND = process.env.AIWG_COCKPIT_EXECUTOR_COMMAND ?? '';
 const EXECUTOR_TOKEN_FILE = process.env.AIWG_COCKPIT_EXECUTOR_TOKEN_FILE ?? '';
+const MCP_TOKEN_FILE = process.env.AIWG_COCKPIT_MCP_TOKEN_FILE ?? '';
 const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
 const auditDir = () => process.env.AIWG_COCKPIT_AUDIT_DIR || join(homedir(), '.aiwg', 'cockpit', 'audit');
 const auditLog = () => join(auditDir(), 'events.jsonl');
@@ -530,6 +531,120 @@ async function getExecutorCapabilities(executorUrl) {
       host_runtime_enabled: false,
       error: String(err?.message ?? err),
     };
+  }
+}
+
+async function getMcpDiscovery(executorUrl) {
+  try {
+    const { target, body } = await fetchJsonFirst([
+      `${executorUrl}/api/v2/admin/mcp/discovery`,
+      `${executorUrl}/admin/mcp/discovery`,
+    ]);
+    return {
+      source: executorUrl,
+      discovery_path: new URL(target).pathname,
+      fetched_at: new Date().toISOString(),
+      ...normalizeMcpDiscovery(body, executorUrl),
+    };
+  } catch (err) {
+    rethrowExecutorSecurityError(err);
+    return normalizeMcpDiscovery({
+      enabled: false,
+      status: 'disabled',
+      reason_code: 'mcp.discovery_unavailable',
+      error: String(err?.message ?? err),
+    }, executorUrl);
+  }
+}
+
+function normalizeMcpDiscovery(body, source) {
+  const endpoint = body?.endpoint && typeof body.endpoint === 'object' ? body.endpoint : {};
+  const auth = body?.auth && typeof body.auth === 'object' ? body.auth : {};
+  return {
+    source: source ?? body?.source,
+    enabled: body?.enabled === true,
+    status: body?.status ?? (body?.enabled === true ? 'enabled' : 'disabled'),
+    reason_code: body?.reason_code ?? body?.reasonCode ?? null,
+    error: body?.error,
+    endpoint: {
+      path: endpoint.path ?? '/mcp',
+      methods: Array.isArray(endpoint.methods) ? endpoint.methods : ['POST'],
+      transport: endpoint.transport ?? 'streamable-http',
+      stateless: endpoint.stateless !== false,
+      get_behavior: endpoint.get_behavior ?? endpoint.getBehavior ?? '405_method_not_allowed',
+      mcp_session_id: endpoint.mcp_session_id ?? endpoint.mcpSessionId ?? false,
+    },
+    protocol: body?.protocol ?? { latest: '2025-11-25', supported: [] },
+    auth: {
+      scheme: auth.scheme ?? 'bearer',
+      required: auth.required !== false,
+      principal_config: auth.principal_config ?? auth.principalConfig ?? 'mcp-principals.toml',
+      principals: Array.isArray(auth.principals) ? auth.principals.map((principal) => ({
+        client_id: principal.client_id ?? principal.clientId ?? '',
+        scopes: Array.isArray(principal.scopes) ? principal.scopes : [],
+      })).filter((principal) => principal.client_id) : [],
+      scopes: Array.isArray(auth.scopes) ? auth.scopes : [],
+    },
+    capabilities: body?.capabilities ?? {},
+    tools: Array.isArray(body?.tools) ? body.tools : [],
+    resources: Array.isArray(body?.resources) ? body.resources : [],
+    resource_templates: Array.isArray(body?.resource_templates)
+      ? body.resource_templates
+      : Array.isArray(body?.resourceTemplates) ? body.resourceTemplates : [],
+    errors: Array.isArray(body?.errors) ? body.errors : [],
+    notes: Array.isArray(body?.notes) ? body.notes : [],
+  };
+}
+
+async function proxyMcpRequest(req, res, executorUrl, mcpTokenFile) {
+  if (!mcpTokenFile) {
+    await appendAudit('sandbox.mcp.proxy', {
+      result: 'blocked',
+      reason: 'mcp_token_file_unconfigured',
+    });
+    return json(res, 503, {
+      error: 'mcp_token_file_unconfigured',
+      message: 'Bridge MCP proxy requires AIWG_COCKPIT_MCP_TOKEN_FILE.',
+    });
+  }
+  const parsed = await readJsonBody(req);
+  if (parsed.error) return json(res, 400, { error: parsed.error });
+  const body = parsed.body || {};
+  const rpcMethod = typeof body.method === 'string' ? body.method : 'unknown';
+  const target = `${executorUrl}/mcp`;
+  let status = 502;
+  try {
+    const token = await resolveExecutorBearer(mcpTokenFile);
+    const headers = {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json',
+      accept: 'application/json, text/event-stream',
+    };
+    const protocolVersion = req.headers['mcp-protocol-version'];
+    if (typeof protocolVersion === 'string' && protocolVersion.trim()) {
+      headers['mcp-protocol-version'] = protocolVersion.trim();
+    }
+    const response = await fetch(target, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+    status = response.status;
+    const responseBody = await response.json().catch(() => ({}));
+    await appendAudit('sandbox.mcp.proxy', {
+      result: response.ok ? 'ok' : 'error',
+      method: rpcMethod,
+      status,
+    });
+    return json(res, status, responseBody);
+  } catch (err) {
+    await appendAudit('sandbox.mcp.proxy', {
+      result: 'error',
+      method: rpcMethod,
+      status,
+      error: String(err?.code ?? err?.message ?? err),
+    });
+    throw err;
   }
 }
 
@@ -1927,6 +2042,8 @@ export function createBridge({
       }
       if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(upstreamUrl));
       if (url.pathname === '/api/executor/capabilities') return json(res, 200, await getExecutorCapabilities(upstreamUrl));
+      if (url.pathname === '/api/mcp/discovery' && req.method === 'GET') return json(res, 200, await getMcpDiscovery(upstreamUrl));
+      if (url.pathname === '/api/mcp' && req.method === 'POST') return proxyMcpRequest(req, res, upstreamUrl, MCP_TOKEN_FILE);
       if (url.pathname === '/api/running') return json(res, 200, await getRunning(upstreamUrl));
       if (url.pathname === '/api/missions') return json(res, 200, await getMissions(upstreamUrl));
       if (url.pathname === '/api/events/snapshot') return json(res, 200, await getEventSnapshot(upstreamUrl));

@@ -137,6 +137,32 @@ describe('App shell (rendered DOM)', () => {
       if (url.includes('/api/running')) return jsonResponse({ count: 1, running: [{ instance_id: 'host-1', task_id: 'task-abc', state: 'working', tenant: 'local' }] });
       if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
       if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 1000, output_tokens: 2000, usd: 0.42 }, per_instance: [] });
+      if (url.includes('/api/mcp/discovery')) return jsonResponse({
+        enabled: true,
+        status: 'enabled',
+        endpoint: {
+          path: '/mcp',
+          methods: ['POST'],
+          transport: 'streamable-http',
+          stateless: true,
+          get_behavior: '405_method_not_allowed',
+          mcp_session_id: false,
+        },
+        protocol: { latest: '2025-11-25', supported: ['2025-11-25'] },
+        auth: {
+          scheme: 'bearer',
+          required: true,
+          principal_config: 'mcp-principals.toml',
+          principals: [{ client_id: 'cockpit-test', scopes: ['fleet.read', 'output.read'] }],
+          scopes: ['fleet.read', 'output.read'],
+        },
+        capabilities: {},
+        tools: [{ name: 'list_sandboxes' }, { name: 'tail_output' }],
+        resources: [{ uri: 'sandbox://fleet' }],
+        resource_templates: [{ uriTemplate: 'sandbox://sessions/{session_id}/screen' }],
+        errors: [],
+        notes: [],
+      });
       if (url.includes('/api/missions')) return jsonResponse({ count: 1, sessions: [], missions: [{ id: 'm-1', session_id: 'mc-1', source: 'aiwg-mc', title: 'Mission', status: 'completed', terminal: true }] });
       if (url.includes('/api/events/snapshot')) return jsonResponse({
         source: 'cockpit.unified-event-model/v1',
@@ -156,6 +182,8 @@ describe('App shell (rendered DOM)', () => {
 
     expect(await screen.findByText('cockpit.unified-event-model/v1')).toBeTruthy();
     expect(screen.getByText('$0.42')).toBeTruthy();
+    expect(screen.getByLabelText('MCP management posture').textContent).toContain('list_sandboxes');
+    expect(screen.getByLabelText('MCP management posture').textContent).toContain('session id not expected');
     expect(screen.getByText('mission.lifecycle')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'session' }));
     expect(screen.getByText('session.lifecycle')).toBeTruthy();

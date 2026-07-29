@@ -109,6 +109,14 @@ try {
   assert.ok(caps.runtime_providers?.providers?.some((p) => p.provider === 'cloud-hypervisor'), 'runtime providers discovered');
   assert.ok(caps.runtime_providers.providers.find((p) => p.provider === 'cloud-hypervisor')?.capability_constraints?.[0]?.excludes?.includes('instance.restore'), 'provider VFIO constraint preserved');
 
+  const mcp = await (await f('/api/mcp/discovery')).json();
+  assert.equal(mcp.enabled, true, 'MCP discovery enabled');
+  assert.equal(mcp.endpoint?.path, '/mcp', 'MCP endpoint path surfaced');
+  assert.equal(mcp.endpoint?.mcp_session_id, false, 'MCP discovery is stateless/no session id');
+  assert.ok(mcp.tools.some((tool) => tool.name === 'list_sandboxes'), 'MCP tools surfaced');
+  assert.ok(mcp.resource_templates.some((template) => template.uriTemplate === 'sandbox://sessions/{session_id}/screen'), 'MCP resource templates surfaced');
+  assert.equal((await f('/api/mcp', { method: 'POST', body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) })).status, 503, 'MCP proxy fail-closed without token file');
+
   // registry binding: discover + show through the aiwg CLI (#1592)
   const cap = await (await f("/api/capabilities?q=" + encodeURIComponent("deploy production") + "&limit=4")).json();
   assert.ok(Array.isArray(cap.results) && cap.results.length >= 1, 'discover returns results');
@@ -203,7 +211,7 @@ try {
     assert.equal((await fetch(base + asset[1].replace(/^\.\//, '/'))).status, 200, 'built React bundle served');
   }
 
-  console.log(`SMOKE OK — inventory(4) + running(${run.count}) + sessions(demo-shell) + registry(discover→${cap.results.length}) + contrib(${contrib.actions.length}) + shell(${shell})`);
+  console.log(`SMOKE OK — inventory(4) + running(${run.count}) + sessions(demo-shell) + mcp(${mcp.tools.length} tools) + registry(discover→${cap.results.length}) + contrib(${contrib.actions.length}) + shell(${shell})`);
 } finally {
   bridge.close();
   mock.close();

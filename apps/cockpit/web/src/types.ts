@@ -223,6 +223,42 @@ export interface ExecutorCapabilities {
   raw_status?: string;
   error?: string;
 }
+export interface McpPrincipalDiscovery {
+  client_id: string;
+  scopes: string[];
+}
+export interface McpEndpointDiscovery {
+  path: string;
+  methods: string[];
+  transport: string;
+  stateless: boolean;
+  get_behavior: string;
+  mcp_session_id: boolean;
+}
+export interface McpDiscovery {
+  source?: string;
+  discovery_path?: string;
+  fetched_at?: string;
+  enabled: boolean;
+  status: 'enabled' | 'disabled' | 'degraded' | string;
+  reason_code?: string | null;
+  error?: string;
+  endpoint: McpEndpointDiscovery;
+  protocol: { latest?: string; supported?: string[] };
+  auth: {
+    scheme: string;
+    required: boolean;
+    principal_config: string;
+    principals: McpPrincipalDiscovery[];
+    scopes: string[];
+  };
+  capabilities: Record<string, unknown>;
+  tools: Array<{ name: string; title?: string; description?: string } & Record<string, unknown>>;
+  resources: Array<{ uri: string; name?: string; mimeType?: string; description?: string }>;
+  resource_templates: Array<{ uriTemplate: string; name?: string; mimeType?: string; description?: string }>;
+  errors: Array<{ http_status: number; jsonrpc_code?: number; code: string; message: string }>;
+  notes: string[];
+}
 export interface CapabilityResult { path: string; type: string; title?: string; capability?: string; score?: number; name: string; triggers?: string[] }
 export interface ContribAction { id: string; title: string; icon?: string; group?: string; source: string; inject: { command: string; target?: string; needs_args?: boolean; args_hint?: string } }
 export interface ContribScreen { id: string; title: string; source: string; contribution: string }

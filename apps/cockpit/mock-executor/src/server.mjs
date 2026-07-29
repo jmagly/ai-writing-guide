@@ -62,6 +62,51 @@ const RUNTIME_PROVIDERS = {
   ],
 };
 
+const MCP_DISCOVERY = {
+  enabled: true,
+  status: 'enabled',
+  reason_code: null,
+  endpoint: {
+    path: '/mcp',
+    methods: ['POST'],
+    transport: 'streamable-http',
+    stateless: true,
+    get_behavior: '405_method_not_allowed',
+    mcp_session_id: false,
+  },
+  protocol: {
+    latest: '2025-11-25',
+    supported: ['2025-03-26', '2025-06-18', '2025-11-25'],
+  },
+  auth: {
+    scheme: 'bearer',
+    required: true,
+    principal_config: 'mcp-principals.toml',
+    principals: [{ client_id: 'cockpit-test', scopes: ['fleet.read', 'session.read', 'output.read'] }],
+    scopes: ['fleet.read', 'output.read', 'session.read'],
+  },
+  capabilities: {
+    tools: { listChanged: false },
+    resources: { subscribe: false, listChanged: false },
+  },
+  tools: [
+    { name: 'list_sandboxes', title: 'List sandboxes', description: 'List the canonical management fleet inventory.' },
+    { name: 'tail_output', title: 'Replay command output', description: 'Read bounded replay output for a command.' },
+  ],
+  resources: [
+    { uri: 'sandbox://fleet', name: 'fleet', description: 'Current sandbox fleet inventory', mimeType: 'application/json' },
+  ],
+  resource_templates: [
+    { uriTemplate: 'sandbox://instances/{instance_id}', name: 'sandbox-instance', mimeType: 'application/json' },
+    { uriTemplate: 'sandbox://sessions/{session_id}/screen', name: 'session-screen', mimeType: 'application/json' },
+  ],
+  errors: [
+    { http_status: 401, code: 'mcp.unauthorized', message: 'missing or invalid MCP bearer token' },
+    { http_status: 403, jsonrpc_code: -32003, code: 'mcp.insufficient_scope', message: 'Insufficient scope' },
+  ],
+  notes: ['GET /mcp is not a session endpoint.'],
+};
+
 export function createExecutor() {
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
@@ -69,6 +114,7 @@ export function createExecutor() {
 
     if (path === '/health') return json(res, 200, { status: 'ok', surfaces: ['discovery', 'admin'] });
     if (path === '/api/v2/admin/runtime/providers' && req.method === 'GET') return json(res, 200, RUNTIME_PROVIDERS);
+    if (path === '/api/v2/admin/mcp/discovery' && req.method === 'GET') return json(res, 200, MCP_DISCOVERY);
 
     // --- Admin surface (Surface 1): fleet instance inventory ---
     if (path === '/admin/instances' && req.method === 'GET') {

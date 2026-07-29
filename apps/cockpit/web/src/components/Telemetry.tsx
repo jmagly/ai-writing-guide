@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import { fmtId } from '../util';
-import type { Cost, EventsSnapshot, MissionsResponse } from '../types';
+import type { Cost, EventsSnapshot, McpDiscovery, MissionsResponse } from '../types';
 
 type Filter = 'all' | 'mission' | 'task' | 'approval' | 'session' | 'inventory';
 
@@ -9,6 +9,7 @@ export function Telemetry({ refreshTick = 0 }: { refreshTick?: number }) {
   const [events, setEvents] = useState<EventsSnapshot | null>(null);
   const [missions, setMissions] = useState<MissionsResponse | null>(null);
   const [cost, setCost] = useState<Cost | null>(null);
+  const [mcp, setMcp] = useState<McpDiscovery | null>(null);
   const [filter, setFilter] = useState<Filter>('all');
   const [err, setErr] = useState('');
 
@@ -17,10 +18,12 @@ export function Telemetry({ refreshTick = 0 }: { refreshTick?: number }) {
       api<EventsSnapshot>('/api/events/snapshot'),
       api<MissionsResponse>('/api/missions').catch(() => null),
       api<Cost>('/api/cost').catch(() => null),
-    ]).then(([eventData, missionData, costData]) => {
+      api<McpDiscovery>('/api/mcp/discovery').catch(() => null),
+    ]).then(([eventData, missionData, costData, mcpData]) => {
       setEvents(eventData);
       setMissions(missionData);
       setCost(costData);
+      setMcp(mcpData);
       setErr('');
     }).catch((e) => setErr((e as Error).message));
   }, []);
@@ -45,7 +48,19 @@ export function Telemetry({ refreshTick = 0 }: { refreshTick?: number }) {
         <article><span>Active Missions</span><strong>{missionTotals.active}</strong><small>{missionTotals.terminal} terminal</small></article>
         <article><span>Approvals</span><strong>{missionTotals.awaiting}</strong><small>awaiting operator input</small></article>
         <article><span>Spend</span><strong>{cost ? `$${cost.total.usd.toFixed(2)}` : '-'}</strong><small>{tokenTotal ? `${tokenTotal.toLocaleString()} tokens` : 'cost route unavailable'}</small></article>
+        <article><span>MCP</span><strong>{mcp?.status ?? '-'}</strong><small>{mcp ? `${mcp.tools.length} tools · ${mcp.auth.scopes.length} scopes` : 'discovery unavailable'}</small></article>
       </section>
+
+      {mcp && (
+        <section className="audit-tail" aria-label="MCP management posture">
+          <h3>MCP Management</h3>
+          <p><strong>{mcp.endpoint.path}</strong> · {mcp.endpoint.transport} · {mcp.endpoint.stateless ? 'stateless' : 'stateful'} · session id {mcp.endpoint.mcp_session_id ? 'expected' : 'not expected'}</p>
+          <p>{mcp.auth.principals.length} principal(s): {mcp.auth.principals.map((principal) => principal.client_id).join(', ') || '-'}</p>
+          <p>Tools: {mcp.tools.map((tool) => tool.name).join(', ') || '-'}</p>
+          <p>Resources: {[...mcp.resources.map((resource) => resource.uri), ...mcp.resource_templates.map((template) => template.uriTemplate)].join(', ') || '-'}</p>
+          {mcp.reason_code && <p>{mcp.reason_code}</p>}
+        </section>
+      )}
 
       <div className="controls" role="group" aria-label="Filter telemetry events">
         {(['all', 'mission', 'task', 'approval', 'session', 'inventory'] as const).map((f) => (
