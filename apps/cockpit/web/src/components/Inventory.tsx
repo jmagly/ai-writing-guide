@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import { fmtId } from '../util';
-import type { Instance, SandboxRuntimeCapabilityId } from '../types';
+import type { BootstrapTrustPosture, Instance, SandboxRuntimeCapabilityId } from '../types';
 
-interface Inv { count: number; fetched_at: string; instances: Instance[] }
+interface Inv { count: number; fetched_at: string; instances: Instance[]; bootstrap_trust?: BootstrapTrustPosture }
 interface OperationStatus {
   id?: string;
   state?: string;
@@ -126,6 +126,7 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
       </div>
       {actionErr && <p className="err">Action failed: {actionErr}</p>}
       {actionMsg && <p className="hint" role="status">{actionMsg}</p>}
+      {data.bootstrap_trust && <BootstrapTrustBanner posture={data.bootstrap_trust} />}
       <table className="inventory-table">
         <caption>Available instance deployments</caption>
         <thead>
@@ -245,6 +246,22 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
         </tbody>
       </table>
     </>
+  );
+}
+
+function BootstrapTrustBanner({ posture }: { posture: BootstrapTrustPosture }) {
+  const detail = [
+    posture.ca_provider_ref,
+    posture.trust_bundle_ref,
+    posture.rotation_state,
+    posture.expires_at ? `expires ${new Date(posture.expires_at).toLocaleDateString()}` : undefined,
+  ].filter(Boolean).join(' · ');
+  return (
+    <p className={`trust-banner trust-${posture.status}`} role={posture.status === 'secure' ? 'status' : 'alert'}>
+      <span>{posture.label}</span>
+      {detail && <span className="trust-detail">{detail}</span>}
+      {posture.status !== 'secure' && <span className="trust-detail">{posture.recovery}</span>}
+    </p>
   );
 }
 

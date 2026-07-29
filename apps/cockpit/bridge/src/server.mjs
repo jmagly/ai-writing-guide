@@ -31,6 +31,7 @@ const EXECUTOR_COMMAND = process.env.AIWG_COCKPIT_EXECUTOR_COMMAND ?? '';
 const EXECUTOR_TOKEN_FILE = process.env.AIWG_COCKPIT_EXECUTOR_TOKEN_FILE ?? '';
 const MCP_TOKEN_FILE = process.env.AIWG_COCKPIT_MCP_TOKEN_FILE ?? '';
 const LOCAL_DOCKER_FALLBACK = process.env.AIWG_COCKPIT_LOCAL_DOCKER_FALLBACK === '1';
+const REQUIRE_SANDBOX_MTLS = process.env.AIWG_COCKPIT_REQUIRE_SANDBOX_MTLS === '1';
 export function localLibvirtFallbackAllowed(platform = process.platform, envValue = process.env.AIWG_COCKPIT_LOCAL_LIBVIRT_FALLBACK) {
   return platform === 'linux' || envValue === '1';
 }
@@ -427,7 +428,11 @@ function isConnectionRefusedError(err) {
 }
 
 function rethrowExecutorSecurityError(err) {
-  if ([401, 403].includes(Number(err?.upstreamStatus)) || String(err?.code ?? '').startsWith('executor_credential_')) throw err;
+  if (
+    [401, 403].includes(Number(err?.upstreamStatus)) ||
+    String(err?.code ?? '').startsWith('executor_credential_') ||
+    String(err?.code ?? '').startsWith('executor_trust_')
+  ) throw err;
 }
 
 export async function fetchJsonFirst(candidates, { method = 'GET', headers, body: requestBodyOption, timeoutMs = 0 } = {}) {
@@ -1202,6 +1207,89 @@ function normalizeTransport(posture) {
   };
 }
 
+function safeRef(value) {
+  const ref = typeof value === 'string' ? value.trim() : '';
+  if (!ref) return undefined;
+  if (/-----BEGIN|PRIVATE KEY|TOKEN|SECRET|PASSWORD|[\r\n]/i.test(ref)) return '[redacted]';
+  return ref.slice(0, 160);
+}
+
+function normalizeBootstrapTrustReadiness(body, executorUrl, { available = true } = {}) {
+  const ca = body?.ca_provider && typeof body.ca_provider === 'object' ? body.ca_provider : {};
+  const bootstrap = body?.bootstrap && typeof body.bootstrap === 'object' ? body.bootstrap : {};
+  const status = String(body?.status ?? (available ? 'unknown' : 'disabled')).toLowerCase();
+  const normalizedStatus = ['secure', 'degraded', 'disabled'].includes(status)
+    ? status
+    : (ca.configured === true || ca.available === true ? 'degraded' : 'disabled');
+  const trustFresh = ca.trust_bundle_fresh ?? ca.trustBundleFresh ?? ca.fresh;
+  const tokenStoreConfigured = bootstrap.token_store_configured ?? bootstrap.tokenStoreConfigured;
+  const caConfigured = ca.configured ?? ca.available;
+  const missing = [];
+  if (caConfigured === false) missing.push('ca_provider');
+  if (tokenStoreConfigured === false) missing.push('bootstrap_token_store');
+  if (trustFresh === false) missing.push('fresh_trust_bundle');
+  const plaintextDev = new URL(executorUrl).protocol === 'http:' && isLocalHostName(new URL(executorUrl).hostname);
+  const recovery = normalizedStatus === 'secure'
+    ? 'Sandbox CA and bootstrap trust are ready.'
+    : normalizedStatus === 'degraded'
+      ? 'Refresh sandbox CA/bootstrap readiness, rotate stale trust material, then reload Cockpit.'
+      : plaintextDev
+        ? 'Plaintext local development mode only; enable sandbox mTLS before using remote or shared executors.'
+        : 'Configure sandbox CA provider and client trust refs before connecting Cockpit.';
+  return {
+    status: normalizedStatus,
+    mode: normalizedStatus === 'secure' ? 'mtls' : (plaintextDev ? 'plaintext-dev' : 'disabled'),
+    label: normalizedStatus === 'secure'
+      ? 'Sandbox mTLS ready'
+      : normalizedStatus === 'degraded'
+        ? 'Sandbox trust degraded'
+        : (plaintextDev ? 'Plaintext dev mode' : 'Sandbox trust disabled'),
+    source: body?.source ?? '/api/v2/admin/bootstrap/readiness',
+    ca_provider_ref: safeRef(ca.provider_ref ?? ca.providerRef ?? ca.provider ?? ca.id ?? ca.name),
+    trust_bundle_ref: safeRef(ca.trust_bundle_ref ?? ca.trustBundleRef ?? ca.bundle_ref ?? ca.bundleRef),
+    client_identity_ref: safeRef(ca.client_identity_ref ?? ca.clientIdentityRef ?? ca.identity_ref ?? ca.identityRef),
+    rotation_state: safeRef(ca.rotation_state ?? ca.rotationState ?? ca.state),
+    expires_at: safeRef(ca.expires_at ?? ca.expiresAt ?? ca.not_after ?? ca.notAfter),
+    trust_bundle_fresh: trustFresh === undefined ? undefined : Boolean(trustFresh),
+    token_store_configured: tokenStoreConfigured === undefined ? undefined : Boolean(tokenStoreConfigured),
+    missing_required_material: missing,
+    recovery,
+  };
+}
+
+function assertRequiredBootstrapTrust(posture) {
+  if (posture.status === 'secure' && posture.missing_required_material.length === 0) return;
+  const err = executorAuthError(
+    'executor_trust_required',
+    `sandbox mTLS is required but bootstrap trust is ${posture.status}: ${posture.recovery}`,
+  );
+  err.upstreamStatus = 503;
+  err.recovery = posture.recovery;
+  throw err;
+}
+
+async function getBootstrapTrustPosture(executorUrl, { requireSandboxMtls = false } = {}) {
+  try {
+    const { target, body } = await fetchJsonFirst([
+      `${executorUrl}/api/v2/admin/bootstrap/readiness`,
+      `${executorUrl}/admin/bootstrap/readiness`,
+    ]);
+    const posture = normalizeBootstrapTrustReadiness({ ...body, source: new URL(target).pathname }, executorUrl);
+    if (requireSandboxMtls) assertRequiredBootstrapTrust(posture);
+    return posture;
+  } catch (err) {
+    rethrowExecutorSecurityError(err);
+    const posture = normalizeBootstrapTrustReadiness({
+      status: 'disabled',
+      source: '/api/v2/admin/bootstrap/readiness',
+      ca_provider: { configured: false },
+      bootstrap: { token_store_configured: false },
+    }, executorUrl, { available: false });
+    if (requireSandboxMtls) assertRequiredBootstrapTrust(posture);
+    return posture;
+  }
+}
+
 function normalizeStoragePosture(posture) {
   const raw = posture && typeof posture === 'object' ? posture : {};
   return {
@@ -1449,7 +1537,8 @@ async function getAgentBackedHostInventory(executorUrl, degradedDetail) {
 }
 
 /** Normalize the executor's admin inventory into the Bridge's UI shape. */
-async function getInventory(executorUrl) {
+async function getInventory(executorUrl, { requireSandboxMtls = false } = {}) {
+  const bootstrapTrust = await getBootstrapTrustPosture(executorUrl, { requireSandboxMtls });
   const { target, status, body } = await fetchJsonFirst([
     `${executorUrl}/admin/instances`,
     `${executorUrl}/api/v2/admin/instances`,
@@ -1471,6 +1560,7 @@ async function getInventory(executorUrl) {
         count: 0,
         degraded_admin_inventory: detail,
         admin_error: body,
+        bootstrap_trust: bootstrapTrust,
         instances: [],
       };
     }
@@ -1485,6 +1575,8 @@ async function getInventory(executorUrl) {
     admin_path: new URL(target).pathname,
     fetched_at: new Date().toISOString(),
     count: normalized.length,
+    bootstrap_trust: bootstrapTrust,
+    degraded_providers: body?.degraded_providers,
     instances: normalized,
   };
 }
@@ -2151,6 +2243,7 @@ export function createBridge({
   allowMockExecutor = ALLOW_MOCK_EXECUTOR,
   token,
   executorTokenFile = EXECUTOR_TOKEN_FILE,
+  requireSandboxMtls = REQUIRE_SANDBOX_MTLS,
 } = {}) {
   const upstreamUrl = executorUrl;
   const TOKEN = token ?? randomBytes(24).toString('hex');
@@ -2188,8 +2281,11 @@ export function createBridge({
       if (url.pathname.startsWith('/api/')) {
         try {
           await assertRealExecutor(upstreamUrl, allowMockExecutor);
+          if (requireSandboxMtls) {
+            await getBootstrapTrustPosture(upstreamUrl, { requireSandboxMtls: true });
+          }
         } catch (err) {
-          return json(res, 502, { error: err.code ?? 'executor_refused', message: String(err?.message ?? err) });
+          return json(res, Number(err?.upstreamStatus) || 502, { error: err.code ?? 'executor_refused', message: String(err?.message ?? err), recovery: err?.recovery });
         }
       }
       if (url.pathname === '/api/events' && req.method === 'GET') {
@@ -2207,8 +2303,11 @@ export function createBridge({
         req.on('close', () => clearInterval(timer));
         return;
       }
-      if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(upstreamUrl));
+      if (url.pathname === '/api/inventory') return json(res, 200, await getInventory(upstreamUrl, { requireSandboxMtls }));
       if (url.pathname === '/api/executor/capabilities') return json(res, 200, await getExecutorCapabilities(upstreamUrl));
+      if (url.pathname === '/api/bootstrap/readiness' && req.method === 'GET') {
+        return json(res, 200, await getBootstrapTrustPosture(upstreamUrl, { requireSandboxMtls }));
+      }
       if (url.pathname === '/api/mcp/discovery' && req.method === 'GET') return json(res, 200, await getMcpDiscovery(upstreamUrl));
       if (url.pathname === '/api/mcp' && req.method === 'POST') return proxyMcpRequest(req, res, upstreamUrl, MCP_TOKEN_FILE);
       if (url.pathname === '/api/running') return json(res, 200, await getRunning(upstreamUrl));

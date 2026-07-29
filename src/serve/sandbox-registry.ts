@@ -64,6 +64,21 @@ export interface SandboxRegistration {
   sandboxInventory?: AgentInventory;
   /** WebSocket protocol capabilities advertised at registration time (#912) */
   wsCapabilities?: SandboxCapabilities;
+  /** Client-safe CA/bootstrap trust posture refs. Must not contain PEMs, keys, or bearer values. */
+  trustPosture?: SandboxTrustPosture;
+}
+
+export interface SandboxTrustPosture {
+  status: 'secure' | 'degraded' | 'disabled' | 'unknown';
+  mode?: 'mtls' | 'plaintext-dev' | 'disabled' | string;
+  ca_provider_ref?: string;
+  trust_bundle_ref?: string;
+  client_identity_ref?: string;
+  rotation_state?: string;
+  expires_at?: string;
+  trust_bundle_fresh?: boolean;
+  missing_required_material?: string[];
+  recovery?: string;
 }
 
 export interface SandboxAgent {
@@ -475,6 +490,8 @@ export interface RegisterRequest {
   skill_inventory?: SkillManifestSummary[];
   /** WebSocket protocol capabilities — enables negotiation on connect (#912) */
   ws_capabilities?: SandboxCapabilities;
+  /** Client-safe CA/bootstrap trust posture refs; raw PEMs, keys, and tokens are rejected/redacted. */
+  trust_posture?: SandboxTrustPosture;
 }
 
 export interface RegisterResponse {
@@ -598,6 +615,34 @@ export function normalizeSandboxEvent(raw: unknown): SandboxEvent {
  */
 const DEBOUNCE_MS = 5_000;
 
+function safeTrustRef(value: unknown): string | undefined {
+  const ref = typeof value === 'string' ? value.trim() : '';
+  if (!ref) return undefined;
+  if (/-----BEGIN|PRIVATE KEY|TOKEN|SECRET|PASSWORD|[\r\n]/i.test(ref)) return '[redacted]';
+  return ref.slice(0, 160);
+}
+
+function sanitizeTrustPosture(posture: SandboxTrustPosture | undefined): SandboxTrustPosture | undefined {
+  if (!posture || typeof posture !== 'object') return undefined;
+  const status = ['secure', 'degraded', 'disabled', 'unknown'].includes(String(posture.status))
+    ? posture.status
+    : 'unknown';
+  return {
+    status,
+    mode: safeTrustRef(posture.mode),
+    ca_provider_ref: safeTrustRef(posture.ca_provider_ref),
+    trust_bundle_ref: safeTrustRef(posture.trust_bundle_ref),
+    client_identity_ref: safeTrustRef(posture.client_identity_ref),
+    rotation_state: safeTrustRef(posture.rotation_state),
+    expires_at: safeTrustRef(posture.expires_at),
+    trust_bundle_fresh: posture.trust_bundle_fresh,
+    missing_required_material: Array.isArray(posture.missing_required_material)
+      ? posture.missing_required_material.map((item) => safeTrustRef(item)).filter((item): item is string => Boolean(item))
+      : undefined,
+    recovery: safeTrustRef(posture.recovery),
+  };
+}
+
 export class SandboxRegistry {
   private sandboxes = new Map<string, SandboxRegistration>();
   private hitlRequests = new Map<string, HitlRequest>();
@@ -699,6 +744,9 @@ export class SandboxRegistry {
           if (req.ws_capabilities) {
             existing.wsCapabilities = req.ws_capabilities;
           }
+          if (req.trust_posture) {
+            existing.trustPosture = sanitizeTrustPosture(req.trust_posture);
+          }
           this.lastRegistrationTime.set(instanceId, now);
           return { sandbox_id: existingId, token: existing.token };
         }
@@ -737,6 +785,7 @@ export class SandboxRegistry {
       agents: new Map(),
       sandboxInventory,
       wsCapabilities: req.ws_capabilities,
+      trustPosture: sanitizeTrustPosture(req.trust_posture),
     };
 
     this.sandboxes.set(id, registration);
@@ -1211,6 +1260,8 @@ export interface SandboxSummary {
   sandboxInventory?: AgentInventory;
   /** WebSocket protocol capabilities advertised at registration (#912) */
   wsCapabilities?: SandboxCapabilities;
+  /** Client-safe CA/bootstrap trust posture refs. */
+  trustPosture?: SandboxTrustPosture;
 }
 
 function toSummary(s: SandboxRegistration): SandboxSummary {
@@ -1232,6 +1283,7 @@ function toSummary(s: SandboxRegistration): SandboxSummary {
     agents: [...s.agents.values()],
     sandboxInventory: s.sandboxInventory,
     wsCapabilities: s.wsCapabilities,
+    trustPosture: s.trustPosture,
   };
 }
 

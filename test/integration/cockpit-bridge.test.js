@@ -100,6 +100,14 @@ describe('cockpit Bridge — control surface', () => {
     const inv = await (await f('/api/inventory')).json();
     expect(inv.count).toBe(4);
     expect(inv.source).toMatch(/^http:\/\/127\.0\.0\.1:/);
+    expect(inv.bootstrap_trust).toMatchObject({
+      status: 'secure',
+      mode: 'mtls',
+      ca_provider_ref: 'local-ca://cockpit-mock',
+      trust_bundle_ref: 'trust-bundle://cockpit-mock/current',
+      missing_required_material: [],
+    });
+    expect(JSON.stringify(inv.bootstrap_trust)).not.toMatch(/BEGIN CERTIFICATE|PRIVATE KEY|secret-value|sk-|Bearer /i);
     expect(inv.instances.find((x) => x.runtime === 'host')?.runtime_posture).toMatchObject({ isolation: 'least' });
     expect(inv.instances.find((x) => x.runtime === 'wasm-edge')?.runtime_posture).toMatchObject({ isolation: 'opaque' });
     expect(inv.instances.find((x) => x.transport?.trust === 'compatibility')?.transport.evidence).not.toMatch(/secret-value|token/i);
@@ -110,6 +118,51 @@ describe('cockpit Bridge — control surface', () => {
     const s = await (await f('/api/sessions?instance=550e8400-e29b-41d4-a716-446655440000')).json();
     expect(s.sessions.find((x) => x.id === 'demo-shell')?.attach_url).toMatch(/^ws:\/\/.*\/api\/pty\/agents\/.*\/attach\/[A-Za-z0-9_-]+$/);
     expect(s.sessions.find((x) => x.id === 'demo-shell')).toMatchObject({ session_class: 'direct', session_backend: 'native', role_policy: 'observe-default' });
+  });
+
+  it('fails closed when Cockpit requires sandbox mTLS and CA readiness is missing', async () => {
+    const upstream = http.createServer((req, res) => {
+      if (req.url === '/health') {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ok', surfaces: ['admin'] }));
+        return;
+      }
+      if (req.url === '/api/v2/admin/bootstrap/readiness') {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({
+          status: 'disabled',
+          ca_provider: { configured: false },
+          bootstrap: { token_store_configured: false },
+        }));
+        return;
+      }
+      if (req.url === '/admin/instances') {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ instances: [] }));
+        return;
+      }
+      res.writeHead(404, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ error: 'not_found' }));
+    });
+    await new Promise((r) => upstream.listen(0, '127.0.0.1', r));
+    const gated = createBridge({
+      executorUrl: `http://127.0.0.1:${upstream.address().port}`,
+      allowMockExecutor: true,
+      requireSandboxMtls: true,
+    });
+    await new Promise((r) => gated.listen(0, '127.0.0.1', r));
+    try {
+      const root = `http://127.0.0.1:${gated.address().port}`;
+      const res = await fetch(`${root}/api/inventory`, { headers: { authorization: `Bearer ${gated.cockpitToken}` } });
+      expect(res.status).toBe(503);
+      const body = await res.json();
+      expect(body).toMatchObject({ error: 'executor_trust_required' });
+      expect(body.message).toMatch(/sandbox mTLS is required/);
+      expect(body.recovery).toMatch(/Configure sandbox CA provider|Plaintext local development/);
+    } finally {
+      gated.close();
+      upstream.close();
+    }
   });
 
   it('proxies server-side PTY screen snapshots for background monitoring (#1742)', async () => {

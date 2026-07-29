@@ -63,6 +63,11 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .inventory-table .manage-actions .cta { min-width:92px; }
 .section-toolbar { display:flex; align-items:flex-end; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:14px; }
 .section-toolbar h2 { margin:0; font-size:20px; }
+.trust-banner { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:0 0 12px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:rgba(15,23,42,.55); overflow-wrap:anywhere; }
+.trust-banner.trust-secure { border-color:rgba(134,239,172,.7); color:var(--ok); }
+.trust-banner.trust-degraded { border-color:rgba(253,230,138,.75); color:var(--warn); }
+.trust-banner.trust-disabled { border-color:rgba(253,164,175,.75); color:var(--err); }
+.trust-detail { color:var(--muted); }
 .empty-state { display:grid; gap:10px; justify-items:start; border:1px solid var(--line); border-radius:8px; padding:18px; background:var(--panel); }
 .empty-state h2 { margin:0; font-size:20px; }
 /* Host for the xterm.js terminal — fixed height so FitAddon can size the PTY; xterm owns

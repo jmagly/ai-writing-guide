@@ -17,6 +17,21 @@ export interface TransportPosture {
   evidence?: string;
   stale?: boolean;
 }
+export interface BootstrapTrustPosture {
+  status: 'secure' | 'degraded' | 'disabled' | (string & {});
+  mode: 'mtls' | 'plaintext-dev' | 'disabled' | (string & {});
+  label: string;
+  source: string;
+  ca_provider_ref?: string;
+  trust_bundle_ref?: string;
+  client_identity_ref?: string;
+  rotation_state?: string;
+  expires_at?: string;
+  trust_bundle_fresh?: boolean;
+  token_store_configured?: boolean;
+  missing_required_material: string[];
+  recovery: string;
+}
 export interface LaunchContext { cwd?: string; loadout?: string; runtime_kind?: string; host?: string; selected_tier?: string; name?: string; image_ref?: string; source?: string }
 export interface SessionBackend { mode: 'direct' | 'managed'; backend: string; replay?: boolean; keyframe?: boolean; drive?: boolean; observe?: boolean; available?: boolean; reason?: string }
 export interface StoragePosture { persistent: boolean; delete_on_destroy: boolean; scope?: string; reason?: string }

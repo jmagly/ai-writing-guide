@@ -149,6 +149,25 @@ const MCP_DISCOVERY = {
   notes: ['GET /mcp is not a session endpoint.'],
 };
 
+const BOOTSTRAP_READINESS = {
+  status: 'secure',
+  ca_provider: {
+    configured: true,
+    provider_ref: 'local-ca://cockpit-mock',
+    trust_bundle_ref: 'trust-bundle://cockpit-mock/current',
+    client_identity_ref: 'spiffe://sandbox.agentic.local/cockpit/mock',
+    rotation_state: 'current',
+    trust_bundle_fresh: true,
+    expires_at: '2026-08-31T00:00:00.000Z',
+  },
+  bootstrap: {
+    token_store_configured: true,
+  },
+  error_taxonomy: [
+    { code: 'bootstrap.csr_invalid', recovery: 'Regenerate the CSR with the sandbox instance identity.' },
+  ],
+};
+
 export function createExecutor() {
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
@@ -157,6 +176,7 @@ export function createExecutor() {
     if (path === '/health') return json(res, 200, { status: 'ok', surfaces: ['discovery', 'admin'] });
     if (path === '/api/v2/admin/runtime/providers' && req.method === 'GET') return json(res, 200, RUNTIME_PROVIDERS);
     if (path === '/api/v2/admin/mcp/discovery' && req.method === 'GET') return json(res, 200, MCP_DISCOVERY);
+    if (path === '/api/v2/admin/bootstrap/readiness' && req.method === 'GET') return json(res, 200, BOOTSTRAP_READINESS);
     let opm;
     if ((opm = path.match(/^\/api\/v2\/admin\/operations\/([^/]+)$/)) && req.method === 'GET') {
       const op = operations.get(decodeURIComponent(opm[1]));

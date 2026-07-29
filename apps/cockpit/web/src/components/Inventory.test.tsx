@@ -124,4 +124,42 @@ describe('Inventory provider-aware fast-start controls', () => {
     expect(screen.getByRole('button', { name: /warm pool vm-1/i })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /fork vm-1/i })).toBeNull();
   });
+
+  it('renders degraded sandbox trust recovery without secret material', async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).includes('/api/inventory')) {
+        return new Response(JSON.stringify({
+          count: 1,
+          fetched_at: '2026-07-29T00:00:00Z',
+          bootstrap_trust: {
+            status: 'degraded',
+            mode: 'mtls',
+            label: 'Sandbox trust degraded',
+            source: '/api/v2/admin/bootstrap/readiness',
+            ca_provider_ref: 'vault://sandbox-ca/current',
+            trust_bundle_ref: 'trust-bundle://sandbox/current',
+            client_identity_ref: 'spiffe://sandbox.agentic.local/cockpit/bridge',
+            rotation_state: 'reload-required',
+            trust_bundle_fresh: false,
+            token_store_configured: true,
+            missing_required_material: ['fresh_trust_bundle'],
+            recovery: 'Refresh sandbox CA/bootstrap readiness, rotate stale trust material, then reload Cockpit.',
+          },
+          instances: [VM_INSTANCE],
+        }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response('{}', { status: 404 });
+    }) as unknown as typeof fetch;
+
+    render(<Inventory refreshMs={60_000} />);
+
+    const banner = await screen.findByRole('alert');
+    expect(banner.textContent).toContain('Sandbox trust degraded');
+    expect(banner.textContent).toContain('rotate stale trust material');
+    expect(banner.textContent).toContain('vault://sandbox-ca/current');
+    expect(banner.textContent).not.toMatch(/BEGIN CERTIFICATE|PRIVATE KEY|secret-token/i);
+  });
 });

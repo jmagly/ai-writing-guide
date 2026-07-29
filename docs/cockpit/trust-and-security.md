@@ -43,6 +43,26 @@ removes before adding the executor bearer to the upstream upgrade. Attach
 targets are opaque, in-memory, same-executor mappings restricted to the formal
 `/agents/:id/sessions/:id/attach` shape.
 
+## Sandbox CA and mTLS readiness
+
+Cockpit reads agentic-sandbox
+`GET /api/v2/admin/bootstrap/readiness` through the Bridge and projects only
+client-safe refs: CA provider ref, trust-bundle ref, client identity ref,
+rotation state, expiry/freshness, missing-material codes, and recovery text.
+It does not persist PEM bodies, private keys, CSRs, bearer tokens, or raw
+filesystem credential paths in browser state or registry summaries.
+
+Default local development remains visible as `plaintext-dev`/`disabled` when
+the sandbox readiness endpoint is absent or reports no CA provider. Set
+`AIWG_COCKPIT_REQUIRE_SANDBOX_MTLS=1` for operator runs that must fail closed:
+all `/api/*` Bridge calls return `503 executor_trust_required` until sandbox
+readiness is `secure` and required CA/bootstrap material is present.
+
+Rotation/reload recovery is intentionally stable for UI and runbook use:
+refresh the sandbox CA/bootstrap readiness, rotate stale trust material, then
+reload Cockpit. Replacing the executor bearer file remains separate from CA
+rotation; both can change without exposing secret values to the web app.
+
 ## Token custody
 
 `aiwg cockpit` writes `~/.aiwg/cockpit/runtime/bridge.json` (file mode 600,
@@ -84,6 +104,11 @@ render as compatibility/degraded — never default-green. Agentic-sandbox owns
 transport provisioning and peer identity; Cockpit owns visibility and audit
 presentation, and stores no executor tokens, keys, CSRs, or bearer material in
 UI state, logs, or activity payloads.
+
+The inventory view also shows sandbox bootstrap trust above the table:
+`Sandbox mTLS ready`, `Sandbox trust degraded`, or `Plaintext dev mode` /
+`Sandbox trust disabled`. These states are executor-wide bootstrap posture,
+not proof that every individual agent transport is healthy.
 
 ### Host daemon
 

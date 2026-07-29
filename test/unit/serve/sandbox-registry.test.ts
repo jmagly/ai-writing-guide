@@ -116,6 +116,36 @@ describe('SandboxRegistry', () => {
       expect(summary!.id).toBe(sandbox_id);
       expect(summary!.capabilities).toEqual(['vm', 'pty']);
     });
+
+    it('stores only client-safe sandbox trust refs from registration', () => {
+      const { sandbox_id } = registry.register({
+        ...REQ,
+        trust_posture: {
+          status: 'degraded',
+          mode: 'mtls',
+          ca_provider_ref: 'vault://sandbox-ca/current',
+          trust_bundle_ref: '-----BEGIN CERTIFICATE-----\nsecret-token\n-----END CERTIFICATE-----',
+          client_identity_ref: 'spiffe://sandbox.agentic.local/cockpit/bridge',
+          rotation_state: 'reload-required',
+          trust_bundle_fresh: false,
+          missing_required_material: ['fresh_trust_bundle'],
+          recovery: 'Rotate CA material and reload Cockpit.',
+        },
+      });
+      const summary = registry.getSummary(sandbox_id);
+
+      expect(summary?.trustPosture).toMatchObject({
+        status: 'degraded',
+        mode: 'mtls',
+        ca_provider_ref: 'vault://sandbox-ca/current',
+        trust_bundle_ref: '[redacted]',
+        client_identity_ref: 'spiffe://sandbox.agentic.local/cockpit/bridge',
+        rotation_state: 'reload-required',
+        trust_bundle_fresh: false,
+        missing_required_material: ['fresh_trust_bundle'],
+      });
+      expect(JSON.stringify(summary?.trustPosture)).not.toMatch(/BEGIN CERTIFICATE|secret-token/i);
+    });
   });
 
   describe('connection state', () => {
