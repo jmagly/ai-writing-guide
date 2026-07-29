@@ -30,8 +30,25 @@ const RUNTIME_PROVIDERS = {
     { kind: 'vm', label: 'VM', default_provider: 'cloud-hypervisor', providers: ['cloud-hypervisor', 'libvirt'] },
   ],
   providers: [
-    { provider: 'host', kind: 'host', label: 'Host runtime', capabilities: [] },
-    { provider: 'docker', kind: 'container', label: 'Docker', capabilities: [] },
+    {
+      provider: 'host',
+      kind: 'host',
+      label: 'Host runtime',
+      platforms: ['linux/x64', 'linux/arm64', 'darwin/arm64'],
+      architectures: ['x64', 'arm64'],
+      capabilities: [],
+      posture: { host_platform: 'darwin', host_architecture: 'arm64', available: true, reason: 'Apple Silicon developer package host runtime discovered.' },
+    },
+    {
+      provider: 'docker',
+      kind: 'container',
+      label: 'Docker Desktop',
+      platforms: ['linux/x64', 'linux/arm64', 'darwin/arm64'],
+      architectures: ['x64', 'arm64'],
+      engine: 'Docker Desktop',
+      capabilities: [],
+      posture: { host_platform: 'darwin', host_architecture: 'arm64', engine: 'Docker Desktop', available: true, reason: 'Docker Desktop runtime discovered on Apple Silicon.' },
+    },
     {
       provider: 'cloud-hypervisor',
       kind: 'vm',

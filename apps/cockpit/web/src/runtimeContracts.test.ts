@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadoutCompatibilityFixtures, runtimeProviderFixtures } from './runtimeContracts.fixtures';
+import { darwinArmRuntimeProviderFixtures, loadoutCompatibilityFixtures, runtimeProviderFixtures } from './runtimeContracts.fixtures';
 
 describe('sandbox runtime contract fixtures', () => {
   it('keeps provider discovery opaque enough for future VM providers', () => {
@@ -39,5 +39,25 @@ describe('sandbox runtime contract fixtures', () => {
     expect(gpuLoadout?.runtime_options?.required_capabilities).toEqual(['device.vfio']);
     expect(gpuLoadout?.runtime_options?.excluded_capabilities).toEqual(excluded);
     expect(gpuLoadout?.runtime_options?.constraints?.allow_vfio_fast_start).toBe(false);
+  });
+
+  it('covers Apple Silicon host and Docker Desktop runtime posture without libvirt assumptions', () => {
+    const host = darwinArmRuntimeProviderFixtures.providers.find((provider) => provider.provider === 'host');
+    const docker = darwinArmRuntimeProviderFixtures.providers.find((provider) => provider.provider === 'docker');
+    const vmKind = darwinArmRuntimeProviderFixtures.kinds.find((kind) => kind.kind === 'vm');
+
+    expect(host).toMatchObject({
+      kind: 'host',
+      platforms: ['darwin/arm64'],
+      posture: { host_platform: 'darwin', host_architecture: 'arm64', available: true },
+    });
+    expect(docker).toMatchObject({
+      kind: 'container',
+      label: 'Docker Desktop',
+      engine: 'Docker Desktop',
+      posture: { engine: 'Docker Desktop', available: true },
+    });
+    expect(vmKind?.providers).toEqual([]);
+    expect(darwinArmRuntimeProviderFixtures.providers.some((provider) => provider.provider === 'libvirt')).toBe(false);
   });
 });

@@ -140,6 +140,13 @@ export AIWG_COCKPIT_DAILY_BLOCKERS='aiwg#1732,devops#53'
 Preview failures and blockers remain visible but do not turn a green Linux
 host/container result red.
 
+Apple preview evidence is developer-package evidence, not a production
+distribution attestation. For Apple Silicon coverage, record the
+agentic-sandbox developer package version, `darwin/arm64` host runtime
+discovery, Docker Desktop runtime posture, and the artifact or log that proves
+the run. Production signing and notarization remain tracked separately upstream
+and do not block the Cockpit Linux release gate or Apple preview row.
+
 ## Recovery after a failed run
 
 1. Read the Markdown report first; it lists required failures without hook

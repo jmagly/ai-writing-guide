@@ -58,8 +58,18 @@ export interface RuntimeProviderDescriptor {
   kind: SandboxRuntimeKind;
   label?: string;
   default?: boolean;
+  platforms?: string[];
+  architectures?: string[];
+  engine?: string;
   capabilities: RuntimeCapability[];
   capability_constraints?: RuntimeCapabilityConstraint[];
+  posture?: {
+    host_platform?: string;
+    host_architecture?: string;
+    engine?: string;
+    available?: boolean;
+    reason?: string;
+  };
 }
 export interface RuntimeProvidersResponse {
   default_provider?: SandboxRuntimeProvider;

@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { createExecutor, DEFAULT_INSTANCE } from '../../mock-executor/src/server.mjs';
-import { createBridge, normalizeSessionRows } from './server.mjs';
+import { createBridge, localLibvirtFallbackAllowed, normalizeSessionRows } from './server.mjs';
 
 const mock = createExecutor();
 await new Promise((r) => mock.listen(0, '127.0.0.1', r));
@@ -110,6 +110,15 @@ try {
   const caps = await (await f('/api/executor/capabilities')).json();
   assert.ok(caps.runtime_providers?.providers?.some((p) => p.provider === 'cloud-hypervisor'), 'runtime providers discovered');
   assert.ok(caps.runtime_providers.providers.find((p) => p.provider === 'cloud-hypervisor')?.capability_constraints?.[0]?.excludes?.includes('instance.restore'), 'provider VFIO constraint preserved');
+  const hostProvider = caps.runtime_providers.providers.find((p) => p.provider === 'host');
+  const dockerProvider = caps.runtime_providers.providers.find((p) => p.provider === 'docker');
+  assert.ok(hostProvider?.platforms?.includes('darwin/arm64'), 'Apple Silicon host runtime discovery is proxied');
+  assert.equal(hostProvider?.posture?.host_architecture, 'arm64', 'Apple Silicon host architecture is preserved');
+  assert.equal(dockerProvider?.engine, 'Docker Desktop', 'Docker Desktop runtime posture is proxied');
+  assert.equal(dockerProvider?.posture?.host_platform, 'darwin', 'Docker Desktop host platform is preserved');
+  assert.equal(localLibvirtFallbackAllowed('darwin', undefined), false, 'virsh fallback is not automatic on macOS');
+  assert.equal(localLibvirtFallbackAllowed('darwin', '1'), true, 'virsh fallback can be explicitly enabled for local development');
+  assert.equal(localLibvirtFallbackAllowed('linux', undefined), true, 'Linux bridge hosts retain local virsh fallback');
 
   const mcp = await (await f('/api/mcp/discovery')).json();
   assert.equal(mcp.enabled, true, 'MCP discovery enabled');

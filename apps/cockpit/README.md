@@ -349,7 +349,10 @@ host/container working-directory expectations, cleanup boundary, and report
 schema are documented in
 [Cockpit Daily Linux Operator Gate](../../docs/cockpit/daily-operator-gate.md).
 VM and Apple remain reported preview tiers and do not block the first Linux
-supported result.
+supported result. Apple preview evidence is based on the agentic-sandbox
+developer package, `darwin/arm64` host runtime discovery, and Docker Desktop
+runtime posture; production signing/notarization is tracked separately and is
+not required to pass the Cockpit Linux gate.
 
 The React UI is also browser-verified per surface (see `.playwright-mcp/cockpit-*.png`).
 Conformance (`agentic-sandbox-conformance`) was 33 pass / 0 fail / 17 skip; the

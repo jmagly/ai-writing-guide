@@ -62,6 +62,47 @@ export const runtimeProviderFixtures: RuntimeProvidersResponse = {
   ],
 };
 
+export const darwinArmRuntimeProviderFixtures: RuntimeProvidersResponse = {
+  default_provider: 'host',
+  kinds: [
+    { kind: 'host', label: 'Host', default_provider: 'host', providers: ['host'] },
+    { kind: 'container', label: 'Container', default_provider: 'docker', providers: ['docker'] },
+    { kind: 'vm', label: 'VM', providers: [] },
+  ],
+  providers: [
+    {
+      provider: 'host',
+      kind: 'host',
+      label: 'Host runtime',
+      platforms: ['darwin/arm64'],
+      architectures: ['arm64'],
+      capabilities: [],
+      posture: {
+        host_platform: 'darwin',
+        host_architecture: 'arm64',
+        available: true,
+        reason: 'Apple Silicon developer package host runtime discovered.',
+      },
+    },
+    {
+      provider: 'docker',
+      kind: 'container',
+      label: 'Docker Desktop',
+      platforms: ['darwin/arm64'],
+      architectures: ['arm64'],
+      engine: 'Docker Desktop',
+      capabilities: [],
+      posture: {
+        host_platform: 'darwin',
+        host_architecture: 'arm64',
+        engine: 'Docker Desktop',
+        available: true,
+        reason: 'Docker Desktop runtime discovered on Apple Silicon.',
+      },
+    },
+  ],
+};
+
 export const loadoutCompatibilityFixtures: Loadout[] = [
   {
     id: 'host-tools',

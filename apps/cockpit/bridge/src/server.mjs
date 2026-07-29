@@ -31,6 +31,9 @@ const EXECUTOR_COMMAND = process.env.AIWG_COCKPIT_EXECUTOR_COMMAND ?? '';
 const EXECUTOR_TOKEN_FILE = process.env.AIWG_COCKPIT_EXECUTOR_TOKEN_FILE ?? '';
 const MCP_TOKEN_FILE = process.env.AIWG_COCKPIT_MCP_TOKEN_FILE ?? '';
 const LOCAL_DOCKER_FALLBACK = process.env.AIWG_COCKPIT_LOCAL_DOCKER_FALLBACK === '1';
+export function localLibvirtFallbackAllowed(platform = process.platform, envValue = process.env.AIWG_COCKPIT_LOCAL_LIBVIRT_FALLBACK) {
+  return platform === 'linux' || envValue === '1';
+}
 const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
 const auditDir = () => process.env.AIWG_COCKPIT_AUDIT_DIR || join(homedir(), '.aiwg', 'cockpit', 'audit');
 const auditLog = () => join(auditDir(), 'events.jsonl');
@@ -908,6 +911,19 @@ async function reconnectInstance(upstreamUrl, instanceId) {
   }
 
   if (VM_RUNTIME_KINDS.includes(runtime)) {
+    if (!localLibvirtFallbackAllowed()) {
+      return {
+        target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/reconnect`,
+        status: 409,
+        body: {
+          error: 'local_libvirt_fallback_disabled',
+          message: 'Sandbox management did not accept this reconnect request. Local virsh fallback is only automatic on Linux; set AIWG_COCKPIT_LOCAL_LIBVIRT_FALLBACK=1 for explicit local development on this host.',
+          runtime,
+          platform: process.platform,
+          arch: process.arch,
+        },
+      };
+    }
     // For VM instances the agent_id doubles as the libvirt domain name
     // (agentic-sandbox provision-vm.sh registers agent_id = $vm_name).
     const domain = dockerName ?? inst?.name ?? String(instanceId);
