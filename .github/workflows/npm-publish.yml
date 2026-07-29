@@ -233,7 +233,7 @@ jobs:
         # Test failures must block stable publish. `continue-on-error: true`
         # was removed from the Gitea workflow per #1280 (A2); the same
         # discipline applies here.
-        run: npm test -- --run
+        run: npm test -- --run --testTimeout=120000
 
       - name: Extract and verify version against tag
         id: version

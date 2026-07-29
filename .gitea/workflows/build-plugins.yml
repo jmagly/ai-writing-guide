@@ -124,6 +124,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install mandatory SQLite session test backend
+        # Keep the plugin validation gate aligned with ci.yml and publish
+        # workflows: the full test suite contains mandatory SQLite-backed
+        # session conformance tests.
+        run: |
+          npm install --no-save --save-dev --package-lock=false --min-release-age=0 better-sqlite3@12.8.0
+          node -e "require('better-sqlite3')"
+
       - name: Run type check
         run: npm run typecheck
 

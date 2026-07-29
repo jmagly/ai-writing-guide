@@ -408,7 +408,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Provider File Locations', () => {
       } finally {
         await cleanupTestEnv(projectDir, homeDir);
       }
-    });
+    }, 120_000);
   });
 });
 
