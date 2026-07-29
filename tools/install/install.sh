@@ -14,7 +14,7 @@ ALIAS_FOOTER="# --- ai-writing-guide aliases (end) ---"
 usage() {
   cat <<USAGE
 Usage: $0 [--repo <url>] [--branch <name>] [--prefix <dir>] [--alias-file <file>]
-             [--auto-install-node] [--force-reinstall]
+             [--auto-install-node] [--force-reinstall] [--dry-run]
 
 Options:
   --repo <url>     Repository URL (default: env AIWG_REPO_URL or $REPO_URL_DEFAULT)
@@ -23,6 +23,7 @@ Options:
   --alias-file <f> Shell RC/alias file to append (auto-detected if omitted)
   --auto-install-node  Attempt to install Node.js >= 18.20.8 if missing/older
   --force-reinstall    Delete existing installation and reinstall fresh
+  --dry-run            Validate options and print what would be installed
 
 This installs the framework to the prefix and registers the 'aiwg' CLI with commands:
 
@@ -64,6 +65,7 @@ REPO_URL="${AIWG_REPO_URL:-$REPO_URL_DEFAULT}"
 PREFIX="$PREFIX_DEFAULT"
 ALIAS_FILE=""
 FORCE_REINSTALL=0
+DRY_RUN=0
 
 AUTO_INSTALL_NODE="${AIWG_AUTO_INSTALL_NODE:-0}"
 while [[ $# -gt 0 ]]; do
@@ -74,10 +76,28 @@ while [[ $# -gt 0 ]]; do
     --alias-file) ALIAS_FILE="$2"; shift 2;;
     --auto-install-node) AUTO_INSTALL_NODE="1"; shift 1;;
     --force-reinstall) FORCE_REINSTALL=1; shift 1;;
+    --dry-run) DRY_RUN=1; shift 1;;
     -h|--help) usage; exit 0;;
     *) echo "Unknown option: $1"; usage; exit 1;;
   esac
 done
+
+if [[ "$DRY_RUN" == "1" ]]; then
+  echo "AIWG installer dry run"
+  echo "  repo: $REPO_URL"
+  echo "  branch: $BRANCH"
+  echo "  prefix: $PREFIX"
+  if [[ -n "$ALIAS_FILE" ]]; then
+    echo "  alias-file: $ALIAS_FILE"
+  else
+    echo "  alias-file: auto-detect"
+  fi
+  echo "  auto-install-node: $AUTO_INSTALL_NODE"
+  echo "  force-reinstall: $FORCE_REINSTALL"
+  command -v git >/dev/null 2>&1 && echo "  git: available" || echo "  git: missing"
+  command -v node >/dev/null 2>&1 && echo "  node: $(node -v 2>/dev/null)" || echo "  node: missing"
+  exit 0
+fi
 
 ensure_git() {
   if command -v git >/dev/null 2>&1; then

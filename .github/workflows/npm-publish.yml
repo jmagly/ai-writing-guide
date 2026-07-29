@@ -42,7 +42,7 @@
 #   notes above the npmjs.org publish steps pending operator removal once
 #   the OIDC path verifies its first release.
 # - .gitea/workflows/upload-release-sigs.yml — manual operator workflow
-#   that mirrors the four signed assets from the GitHub release to the
+#   that mirrors the release assets from the GitHub release to the
 #   Gitea release after this workflow lands them (#1287 / A8 — Wave 5).
 # - .aiwg/architecture/adr-npmjs-org-via-github-actions.md — A5 ADR.
 # - .aiwg/architecture/adr-tarball-cosign-signing.md — A8 ADR.
@@ -57,8 +57,7 @@
 # - A signed `release-manifest.json` (SHA-256 of tarball, version, tag SHA,
 #   build commit SHA, workflow run URL) is also attached, providing an
 #   audit-ready bridge between the published artifact and this CI run.
-# - All four assets (tarball + .sigstore, manifest + .sigstore) are
-#   uploaded to the GitHub release using the workflow's ephemeral
+# - All release assets are uploaded to the GitHub release using the workflow's ephemeral
 #   `GITHUB_TOKEN`. Gitea-side upload is operator-triggered via the
 #   companion .gitea/workflows/upload-release-sigs.yml workflow — kept
 #   manual to avoid expanding the Gitea write-token surface that Wave 4
@@ -70,7 +69,7 @@
 #    Then push the verified tag: git push github main --tags
 # 3. Watch this workflow on the GitHub mirror. The post-publish step verifies
 #    that the provenance attestation landed on npmjs.org, then cosign-signs
-#    the tarball + manifest and uploads all four signed assets to the GitHub
+#    the tarball + manifest and uploads release assets to the GitHub
 #    release.
 # 4. Mirror the signed assets to the Gitea release with the manual operator
 #    step in the runbook (`gh workflow run upload-release-sigs.yml -F tag=…`
@@ -837,6 +836,34 @@ jobs:
             "$SBOM"
           echo "✓ Signed $SBOM → ${SBOM}.sigstore"
 
+      - name: Prepare installer and checksum manifest
+        id: release_files
+        run: |
+          set -euo pipefail
+          INSTALLER="install.sh"
+          CHECKSUMS="SHA256SUMS"
+          TARBALL='${{ steps.sign.outputs.tarball }}'
+          TARBALL_SIG='${{ steps.sign.outputs.tarball_sigstore }}'
+          MANIFEST='${{ steps.sign.outputs.manifest }}'
+          MANIFEST_SIG='${{ steps.sign.outputs.manifest_sigstore }}'
+          SBOM='${{ steps.sbom.outputs.sbom }}'
+          SBOM_SIG="${SBOM}.sigstore"
+
+          cp tools/install/install.sh "$INSTALLER"
+          chmod +x "$INSTALLER"
+          bash "$INSTALLER" --dry-run
+          sha256sum \
+            "$TARBALL" \
+            "$TARBALL_SIG" \
+            "$MANIFEST" \
+            "$MANIFEST_SIG" \
+            "$SBOM" \
+            "$SBOM_SIG" \
+            "$INSTALLER" > "$CHECKSUMS"
+          cat "$CHECKSUMS"
+          echo "installer=$INSTALLER" >> "$GITHUB_OUTPUT"
+          echo "checksums=$CHECKSUMS" >> "$GITHUB_OUTPUT"
+
       - name: Install GitHub CLI (node:24 image does not ship it)
         # node:24-bookworm doesn't include `gh`. The asset-upload step
         # below uses `gh release create` / `gh release upload`. rc.1
@@ -858,11 +885,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # `gh release upload --clobber` is idempotent: if the release was
         # created by an earlier workflow run (or by `gh release create`
-        # manually), the six assets get attached/replaced. If the release
+        # manually), the assets get attached/replaced. If the release
         # doesn't exist yet, `gh release create` runs first — typical when
         # this workflow is the first thing that fires on a tag push.
         #
-        # Six assets, post-A13 (#1288):
+        # Core signed assets, post-A13 (#1288):
         #   1. aiwg-X.Y.Z.tgz              (the tarball itself; A8 baseline)
         #   2. aiwg-X.Y.Z.tgz.sigstore     (cosign bundle for #1)
         #   3. release-manifest.json       (provenance manifest)
@@ -879,6 +906,8 @@ jobs:
           MANIFEST_SIG='${{ steps.sign.outputs.manifest_sigstore }}'
           SBOM='${{ steps.sbom.outputs.sbom }}'
           SBOM_SIG="${SBOM}.sigstore"
+          INSTALLER='${{ steps.release_files.outputs.installer }}'
+          CHECKSUMS='${{ steps.release_files.outputs.checksums }}'
 
           # Pre-release detection (same logic as the version step above).
           if [ "$VERSION" != "${VERSION%%-*}" ]; then
@@ -906,9 +935,11 @@ jobs:
             "$MANIFEST_SIG" \
             "$SBOM" \
             "$SBOM_SIG" \
+            "$INSTALLER" \
+            "$CHECKSUMS" \
             --clobber
 
-          echo "✓ Uploaded 6 signed assets to GitHub release $TAG"
+          echo "✓ Uploaded signed assets, installer, and checksums to GitHub release $TAG"
 
       - name: Verification summary
         # Final operator-facing block. Copy/pasteable verification commands

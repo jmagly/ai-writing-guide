@@ -2,10 +2,11 @@
 #
 # Companion to .github/workflows/npm-publish.yml. The GitHub workflow
 # cosign-signs the published tarball, release manifest, and CycloneDX
-# SBOM, and uploads the six signed assets to the GitHub release. This
-# workflow mirrors those six assets to the matching Gitea release.
+# SBOM, installer, checksum manifest, and signature bundles to the GitHub
+# release. This workflow mirrors those release assets to the matching Gitea
+# release.
 #
-# Asset list (six per release, starting with #1288 / A13):
+# Asset list:
 #   1. aiwg-X.Y.Z.tgz              (the tarball itself)
 #   2. aiwg-X.Y.Z.tgz.sigstore     (cosign bundle for #1)
 #   3. release-manifest.json       (provenance manifest)
@@ -33,7 +34,7 @@
 #
 # Companion controls:
 # - .github/workflows/npm-publish.yml — the workflow that produces the
-#   four signed assets in the first place.
+#   release assets in the first place.
 # - .aiwg/architecture/adr-tarball-cosign-signing.md — A8 ADR with the
 #   full rationale for the manual-trigger model.
 # - docs/releases/verifying.md — consumer-facing verification docs.
@@ -59,7 +60,7 @@ concurrency:
 
 jobs:
   mirror-signed-assets:
-    name: Mirror four signed assets to Gitea release
+    name: Mirror release assets to Gitea release
     if: ${{ secrets.VAULT_CI_ROLE_ID != '' && secrets.VAULT_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     # Same pinned container as the Gitea publish leg (see ci/digests.txt).
@@ -96,13 +97,14 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           # File names produced by .github/workflows/npm-publish.yml.
-          # Six assets per release after #1288 (A13 added the SBOM pair).
           echo "tarball=aiwg-${VERSION}.tgz" >> "$GITHUB_OUTPUT"
           echo "tarball_sig=aiwg-${VERSION}.tgz.sigstore" >> "$GITHUB_OUTPUT"
           echo "manifest=release-manifest.json" >> "$GITHUB_OUTPUT"
           echo "manifest_sig=release-manifest.json.sigstore" >> "$GITHUB_OUTPUT"
           echo "sbom=aiwg-${VERSION}.cdx.json" >> "$GITHUB_OUTPUT"
           echo "sbom_sig=aiwg-${VERSION}.cdx.json.sigstore" >> "$GITHUB_OUTPUT"
+          echo "installer=install.sh" >> "$GITHUB_OUTPUT"
+          echo "checksums=SHA256SUMS" >> "$GITHUB_OUTPUT"
 
       - name: Fetch Gitea release token from vault
         env:
@@ -122,6 +124,8 @@ jobs:
           MANIFEST_SIG='${{ steps.tag.outputs.manifest_sig }}'
           SBOM='${{ steps.tag.outputs.sbom }}'
           SBOM_SIG='${{ steps.tag.outputs.sbom_sig }}'
+          INSTALLER='${{ steps.tag.outputs.installer }}'
+          CHECKSUMS='${{ steps.tag.outputs.checksums }}'
 
           download_asset() {
             local name="$1"
@@ -136,10 +140,12 @@ jobs:
           download_asset "$MANIFEST_SIG"
           download_asset "$SBOM"
           download_asset "$SBOM_SIG"
+          download_asset "$INSTALLER"
+          download_asset "$CHECKSUMS"
 
-          # Hard-check that all six are present.
+          # Hard-check that all expected assets are present.
           MISSING=0
-          for f in "$TARBALL" "$TARBALL_SIG" "$MANIFEST" "$MANIFEST_SIG" "$SBOM" "$SBOM_SIG"; do
+          for f in "$TARBALL" "$TARBALL_SIG" "$MANIFEST" "$MANIFEST_SIG" "$SBOM" "$SBOM_SIG" "$INSTALLER" "$CHECKSUMS"; do
             if [ ! -f "$f" ]; then
               echo "✗ Missing expected asset on GitHub release: $f"
               MISSING=1
@@ -242,10 +248,12 @@ jobs:
           upload_asset '${{ steps.tag.outputs.manifest_sig }}'
           upload_asset '${{ steps.tag.outputs.sbom }}'
           upload_asset '${{ steps.tag.outputs.sbom_sig }}'
+          upload_asset '${{ steps.tag.outputs.installer }}'
+          upload_asset '${{ steps.tag.outputs.checksums }}'
 
-      - name: Verify all six assets land on Gitea release
+      - name: Verify release assets land on Gitea release
         # Independent post-upload check. Re-fetch the release JSON and
-        # confirm each of the six expected filenames is in .assets[].name.
+        # confirm each expected filename is in .assets[].name.
         run: |
           set -euo pipefail
           TAG='${{ steps.tag.outputs.tag }}'
@@ -258,7 +266,9 @@ jobs:
             '${{ steps.tag.outputs.manifest }}' \
             '${{ steps.tag.outputs.manifest_sig }}' \
             '${{ steps.tag.outputs.sbom }}' \
-            '${{ steps.tag.outputs.sbom_sig }}'; do
+            '${{ steps.tag.outputs.sbom_sig }}' \
+            '${{ steps.tag.outputs.installer }}' \
+            '${{ steps.tag.outputs.checksums }}'; do
             if ! jq -r '.assets[]?.name' /tmp/final.json | grep -qFx "$f"; then
               echo "  ✗ $f not present on Gitea release after upload"
               MISSING=1
@@ -273,7 +283,7 @@ jobs:
             exit 1
           fi
           echo ""
-          echo "✓ All six signed assets mirrored to Gitea release $TAG"
+          echo "✓ All release assets mirrored to Gitea release $TAG"
           echo "  Consumer verification: docs/releases/verifying.md"
 
       - name: Dispatch private web release pipeline
