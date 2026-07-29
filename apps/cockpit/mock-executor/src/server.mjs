@@ -22,12 +22,53 @@ function notFound(res, path) {
   return json(res, 404, { jsonrpc: '2.0', id: null, error: { code: -32601, message: 'Not implemented in this increment', data: { path } } });
 }
 
+const RUNTIME_PROVIDERS = {
+  default_provider: 'cloud-hypervisor',
+  kinds: [
+    { kind: 'host', label: 'Host', default_provider: 'host', providers: ['host'] },
+    { kind: 'container', label: 'Container', default_provider: 'docker', providers: ['docker'] },
+    { kind: 'vm', label: 'VM', default_provider: 'cloud-hypervisor', providers: ['cloud-hypervisor', 'libvirt'] },
+  ],
+  providers: [
+    { provider: 'host', kind: 'host', label: 'Host runtime', capabilities: [] },
+    { provider: 'docker', kind: 'container', label: 'Docker', capabilities: [] },
+    {
+      provider: 'cloud-hypervisor',
+      kind: 'vm',
+      label: 'Cloud Hypervisor',
+      default: true,
+      capabilities: [
+        { id: 'instance.snapshot', label: 'Snapshot' },
+        { id: 'instance.restore', label: 'Restore' },
+        { id: 'instance.fork', label: 'Fork' },
+        { id: 'warm_pool.manage', label: 'Warm pools' },
+        { id: 'device.vfio', label: 'VFIO device passthrough' },
+      ],
+      capability_constraints: [{
+        capability: 'device.vfio',
+        excludes: ['instance.snapshot', 'instance.restore', 'instance.fork', 'warm_pool.manage'],
+        reason: 'VFIO-backed VMs cannot safely reuse memory state.',
+      }],
+    },
+    {
+      provider: 'libvirt',
+      kind: 'vm',
+      label: 'libvirt/QEMU',
+      capabilities: [
+        { id: 'instance.restore', label: 'Checkpoint restore' },
+        { id: 'warm_pool.manage', label: 'Warm pools' },
+      ],
+    },
+  ],
+};
+
 export function createExecutor() {
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
     const path = url.pathname;
 
     if (path === '/health') return json(res, 200, { status: 'ok', surfaces: ['discovery', 'admin'] });
+    if (path === '/api/v2/admin/runtime/providers' && req.method === 'GET') return json(res, 200, RUNTIME_PROVIDERS);
 
     // --- Admin surface (Surface 1): fleet instance inventory ---
     if (path === '/admin/instances' && req.method === 'GET') {

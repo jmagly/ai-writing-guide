@@ -151,6 +151,8 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .form-grid label { color:var(--muted); font-size:13px; }
 .form-grid select, .form-grid input, .form-grid textarea { min-width:0; width:100%; }
 .form-grid textarea { min-height:88px; resize:vertical; background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:7px; padding:7px 12px; font:inherit; }
+.field-stack { display:grid; gap:7px; min-width:0; }
+.posture-line { color:var(--muted); font-size:13px; overflow-wrap:anywhere; }
 .check-row { display:flex; align-items:center; gap:9px; color:var(--fg) !important; }
 .check-row input { width:auto; }
 .ro { min-width:0; color:var(--fg); overflow-wrap:anywhere; }

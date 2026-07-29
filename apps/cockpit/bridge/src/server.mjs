@@ -507,10 +507,19 @@ async function getExecutorCapabilities(executorUrl) {
   const candidates = ['/healthz/deep', '/healthz', '/health'].map((path) => `${executorUrl}${path}`);
   try {
     const { target, body } = await fetchJsonFirst(candidates);
+    const runtimeProviders = await fetchJsonFirst([
+      `${executorUrl}/api/v2/admin/runtime/providers`,
+      `${executorUrl}/api/v2/runtime/providers`,
+      `${executorUrl}/admin/runtime/providers`,
+      `${executorUrl}/runtime/providers`,
+    ])
+      .then((result) => result.body)
+      .catch(() => undefined);
     return {
       status: 'ok',
       source: new URL(target).pathname,
       host_runtime_enabled: body.host_runtime_enabled === true || body.hostRuntimeEnabled === true,
+      runtime_providers: runtimeProviders && Array.isArray(runtimeProviders.providers) ? runtimeProviders : undefined,
       raw_status: body.status ?? body.state ?? 'unknown',
     };
   } catch (err) {
@@ -984,6 +993,10 @@ function normalizeInstance(executorUrl, i) {
   return {
     id,
     runtime,
+    provider: i.provider ?? i.runtime_provider ?? i.runtimeProvider ?? i.runtime?.provider,
+    capabilities: Array.isArray(i.capabilities) ? i.capabilities : i.runtime?.capabilities,
+    capability_constraints: i.capability_constraints ?? i.capabilityConstraints ?? i.runtime?.capability_constraints ?? i.runtime?.capabilityConstraints,
+    gpu: i.gpu ?? i.gpu_posture ?? i.gpuPosture ?? i.runtime?.gpu,
     loadout,
     state: i.state ?? i.status ?? 'unknown',
     tenant: i.tenant_id ?? i.tenant ?? i.tenantId ?? 'default',
@@ -1240,6 +1253,8 @@ async function getLoadouts(executorUrl) {
       label: l.label ?? l.display_name ?? l.displayName ?? id,
       description: l.description ?? l.summary,
       runtimes: l.runtimes ?? l.runtime_kinds ?? l.supported_runtimes,
+      runtime_options: l.runtime_options ?? l.runtimeOptions,
+      compatibility: l.compatibility,
     };
   }).filter((l) => l.id);
   return { source: executorUrl, loadouts_path: new URL(target).pathname, count: loadouts.length, loadouts };

@@ -87,6 +87,13 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
                 <span className={`badge isolation-${i.runtime_posture.isolation}`} title={i.runtime_posture.warning || i.runtime_posture.label}>
                   {i.runtime_posture.label}
                 </span>
+                {i.provider && <div className="cell-note">{i.provider}</div>}
+                {hasVfio(i) && (
+                  <div className="cell-note">
+                    VFIO{assignedGpuDevices(i).length ? ` · ${assignedGpuDevices(i).join(', ')}` : ''}
+                  </div>
+                )}
+                {i.gpu?.reason && <div className="cell-note">{i.gpu.reason}</div>}
                 {i.runtime_posture.warning && <div className="cell-note">{i.runtime_posture.warning}</div>}
               </td>
               <td>
@@ -178,4 +185,14 @@ function instanceHealth(i: Instance): { kind: 'healthy' | 'stale-agent'; label: 
     };
   }
   return { kind: 'healthy', label: i.state };
+}
+
+function hasVfio(instance: Instance) {
+  return instance.capabilities?.some((capability) => capability.id === 'device.vfio')
+    || instance.capability_constraints?.some((constraint) => constraint.capability === 'device.vfio')
+    || Boolean(instance.gpu?.assigned || instance.gpu?.available || instance.gpu?.devices?.length);
+}
+
+function assignedGpuDevices(instance: Instance) {
+  return instance.gpu?.devices?.filter(Boolean) ?? [];
 }

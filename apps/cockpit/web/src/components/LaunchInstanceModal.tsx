@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { fmtId } from '../util';
-import type { ExecutorCapabilities, Instance, Loadout } from '../types';
+import type {
+  ExecutorCapabilities,
+  Instance,
+  Loadout,
+  ResolvedLoadoutCompatibility,
+  RuntimeOptions,
+  RuntimeProviderDescriptor,
+  SandboxRuntimeCapabilityId,
+  SandboxRuntimeProvider,
+} from '../types';
 
 type Runtime = 'host' | 'docker' | 'qemu';
 
@@ -31,6 +40,13 @@ const FALLBACK_LOADOUTS: Loadout[] = [
 const genInstanceName = () =>
   `cockpit-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.slice(0, 32);
 
+const FAST_START_CAPABILITIES: SandboxRuntimeCapabilityId[] = [
+  'instance.snapshot',
+  'instance.restore',
+  'instance.fork',
+  'warm_pool.manage',
+];
+
 export function LaunchInstanceModal({
   open,
   onClose,
@@ -47,6 +63,8 @@ export function LaunchInstanceModal({
   const [instances, setInstances] = useState<Instance[]>([]);
   const [hostId, setHostId] = useState('');
   const [executorCaps, setExecutorCaps] = useState<ExecutorCapabilities | null>(null);
+  const [vmProvider, setVmProvider] = useState('');
+  const [requestGpu, setRequestGpu] = useState(false);
   const [image, setImage] = useState('agentic/codex:latest');
   const [customImage, setCustomImage] = useState('');
   const [profile, setProfile] = useState('');
@@ -79,7 +97,26 @@ export function LaunchInstanceModal({
     return () => { cancelled = true; };
   }, [open]);
 
+  useEffect(() => {
+    if (!open || runtime !== 'qemu') return;
+    const currentLoadout = loadoutOptions(loadouts, runtime).find((item) => item.id === loadout);
+    const providers = vmProviderOptions(executorCaps, currentLoadout);
+    if (providers.length && !providers.some((provider) => provider.provider === vmProvider)) {
+      setVmProvider(providers[0].provider);
+    }
+  }, [executorCaps, loadout, loadouts, open, runtime, vmProvider]);
+
   if (!open) return null;
+
+  const visibleLoadouts = loadoutOptions(loadouts, runtime);
+  const selectedLoadout = visibleLoadouts.find((item) => item.id === loadout);
+  const providerChoices = vmProviderOptions(executorCaps, selectedLoadout);
+  const selectedVmProvider = runtime === 'qemu'
+    ? (vmProvider || providerChoices[0]?.provider || '')
+    : '';
+  const selectedProviderDescriptor = providerChoices.find((provider) => provider.provider === selectedVmProvider);
+  const selectedCompatibility = selectedVmProvider ? vmCompatibility(selectedLoadout, selectedVmProvider) : undefined;
+  const gpu = gpuLaunchPosture(selectedLoadout, selectedCompatibility, selectedProviderDescriptor, selectedVmProvider, requestGpu);
 
   const chooseRuntime = (next: Runtime) => {
     setRuntime(next);
@@ -90,6 +127,7 @@ export function LaunchInstanceModal({
       setImage((current) => current || 'agentic/codex:latest');
     } else {
       setLoadout('profiles/basic.yaml');
+      setRequestGpu(false);
     }
   };
 
@@ -143,6 +181,9 @@ export function LaunchInstanceModal({
       }
       if (runtime === 'qemu') {
         body.agentshare = true;
+        if (selectedVmProvider) body.provider = selectedVmProvider;
+        const runtimeOptions = runtimeOptionsForLaunch(selectedVmProvider, gpu);
+        if (runtimeOptions) body.runtime_options = runtimeOptions;
         if (sshKey.trim()) body.ssh_key = sshKey.trim();
       }
       if (runtime === 'docker' && mounts.trim()) body.mounts = mounts.split('\n').map((m) => m.trim()).filter(Boolean);
@@ -206,8 +247,43 @@ export function LaunchInstanceModal({
             <span className="ro">host-tools</span>
           ) : (
             <select id="li-loadout" value={loadout} onChange={(e) => setLoadout(e.target.value)}>
-              {loadoutOptions(loadouts, runtime).map((l) => <option key={l.id} value={l.id}>{l.label}{l.description ? ` - ${l.description}` : ''}</option>)}
+              {visibleLoadouts.map((l) => <option key={l.id} value={l.id}>{l.label}{l.description ? ` - ${l.description}` : ''}</option>)}
             </select>
+          )}
+          {runtime === 'qemu' && (
+            <>
+              <label htmlFor="li-vm-provider">VM provider</label>
+              <select
+                id="li-vm-provider"
+                value={selectedVmProvider}
+                onChange={(e) => setVmProvider(e.target.value)}
+                disabled={!providerChoices.length}
+              >
+                {!providerChoices.length && <option value="">Provider discovery unavailable</option>}
+                {providerChoices.map((provider) => (
+                  <option key={provider.provider} value={provider.provider}>
+                    {provider.label ?? provider.provider}{provider.default ? ' (default)' : ''}
+                  </option>
+                ))}
+              </select>
+              <label htmlFor="li-gpu-vfio">GPU / VFIO</label>
+              <div className="field-stack">
+                <label className="check-row">
+                  <input
+                    id="li-gpu-vfio"
+                    type="checkbox"
+                    checked={gpu.required || requestGpu}
+                    disabled={gpu.required || !gpu.selectable}
+                    onChange={(e) => setRequestGpu(e.target.checked)}
+                  />
+                  Request GPU passthrough
+                </label>
+                <div className={`posture-line ${gpu.blocked ? 'warn' : gpu.effective ? 'ok-text' : ''}`}>
+                  {gpu.message}
+                </div>
+                {gpu.fastStartReason && <div className="cell-note">{gpu.fastStartReason}</div>}
+              </div>
+            </>
           )}
           {runtime !== 'host' && (
             <>
@@ -255,13 +331,127 @@ export function LaunchInstanceModal({
         </div>
         <div className="modal-actions">
           <button onClick={onClose} disabled={busy}>Close</button>
-          <button className="cta" onClick={launch} disabled={busy || (runtime === 'host' && !hostId && !executorCaps?.host_runtime_enabled) || (runtime === 'host' && !hostId && !name.trim()) || (runtime !== 'host' && !name.trim()) || (runtime === 'docker' && image === '__custom__' && !customImage.trim())}>
+          <button className="cta" onClick={launch} disabled={busy || (runtime === 'host' && !hostId && !executorCaps?.host_runtime_enabled) || (runtime === 'host' && !hostId && !name.trim()) || (runtime !== 'host' && !name.trim()) || (runtime === 'docker' && image === '__custom__' && !customImage.trim()) || (runtime === 'qemu' && gpu.effective && gpu.blocked)}>
             {busy ? 'Working...' : runtime === 'host' ? (openSession ? 'Start host session' : 'Use host') : openSession ? 'Create + start session' : 'Create instance'}
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+function providerCapabilities(provider?: RuntimeProviderDescriptor) {
+  return new Set((provider?.capabilities ?? []).map((capability) => capability.id));
+}
+
+function requiredCapabilities(loadout?: Loadout, compatibility?: ResolvedLoadoutCompatibility) {
+  return new Set([
+    ...(loadout?.runtime_options?.required_capabilities ?? []),
+    ...(compatibility?.required_capabilities ?? []),
+  ]);
+}
+
+function excludedCapabilities(loadout?: Loadout, compatibility?: ResolvedLoadoutCompatibility) {
+  return new Set([
+    ...(loadout?.runtime_options?.excluded_capabilities ?? []),
+    ...(compatibility?.excluded_capabilities ?? []),
+  ]);
+}
+
+function vmProviderOptions(caps: ExecutorCapabilities | null, loadout?: Loadout): RuntimeProviderDescriptor[] {
+  const discovered = caps?.runtime_providers?.providers?.filter((provider) => provider.kind === 'vm') ?? [];
+  const compatible = new Set((loadout?.compatibility ?? [])
+    .filter((entry) => ['vm', 'qemu'].includes(String(entry.runtime_kind).toLowerCase()))
+    .map((entry) => entry.provider));
+  const filtered = compatible.size
+    ? discovered.filter((provider) => compatible.has(provider.provider))
+    : discovered;
+  if (filtered.length) return filtered;
+  return [...compatible].map((provider) => ({
+    provider,
+    kind: 'vm',
+    capabilities: [],
+  }));
+}
+
+function vmCompatibility(loadout: Loadout | undefined, provider: SandboxRuntimeProvider): ResolvedLoadoutCompatibility | undefined {
+  return loadout?.compatibility?.find((entry) =>
+    entry.provider === provider && ['vm', 'qemu'].includes(String(entry.runtime_kind).toLowerCase()));
+}
+
+function gpuLaunchPosture(
+  loadout: Loadout | undefined,
+  compatibility: ResolvedLoadoutCompatibility | undefined,
+  provider: RuntimeProviderDescriptor | undefined,
+  providerId: string,
+  requested: boolean,
+) {
+  const required = requiredCapabilities(loadout, compatibility).has('device.vfio');
+  const excluded = excludedCapabilities(loadout, compatibility);
+  const effective = required || requested;
+  const providerSupportsGpu = providerCapabilities(provider).has('device.vfio');
+  const fastStartExclusions = [...excluded].filter((capability) => FAST_START_CAPABILITIES.includes(capability));
+  const constraintReason = [
+    ...(compatibility?.constraints ?? []),
+    ...(provider?.capability_constraints ?? []),
+  ].find((constraint) => constraint.capability === 'device.vfio')?.reason;
+  let blocked = false;
+  let message = 'No GPU requested';
+
+  if (!providerId) {
+    blocked = effective;
+    message = 'Provider discovery unavailable';
+  } else if (compatibility && !compatibility.eligible) {
+    blocked = effective || required;
+    message = compatibility.reason ?? 'Loadout is not eligible for this provider';
+  } else if (!compatibility && effective) {
+    blocked = true;
+    message = 'Loadout compatibility does not advertise VFIO';
+  } else if (!providerSupportsGpu && effective) {
+    blocked = true;
+    message = 'Selected provider does not advertise VFIO';
+  } else if (!providerSupportsGpu) {
+    message = 'GPU passthrough unavailable';
+  } else if (!compatibility) {
+    message = 'GPU passthrough requires loadout compatibility';
+  } else if (excluded.has('device.vfio') && effective) {
+    blocked = true;
+    message = 'Selected loadout excludes GPU passthrough';
+  } else if (required) {
+    message = blocked ? message : 'GPU passthrough required by loadout';
+  } else if (requested) {
+    message = blocked ? message : 'GPU passthrough requested';
+  } else if (providerSupportsGpu && !excluded.has('device.vfio')) {
+    message = 'GPU passthrough available';
+  } else if (excluded.has('device.vfio')) {
+    message = 'GPU passthrough unavailable for this loadout';
+  }
+
+  return {
+    required,
+    effective,
+    blocked,
+    selectable: Boolean(providerId && providerSupportsGpu && compatibility && !excluded.has('device.vfio') && compatibility.eligible !== false),
+    message,
+    fastStartReason: effective && fastStartExclusions.length
+      ? `${constraintReason ?? 'VFIO-backed VMs cannot safely reuse memory state'} Disabled: ${fastStartExclusions.join(', ')}.`
+      : constraintReason,
+  };
+}
+
+function runtimeOptionsForLaunch(provider: string, gpu: ReturnType<typeof gpuLaunchPosture>): RuntimeOptions | undefined {
+  if (!provider && !gpu.effective) return undefined;
+  const options: RuntimeOptions = {
+    kind: 'vm',
+    launch_strategy: { mode: 'cold' },
+  };
+  if (provider) options.provider = provider as SandboxRuntimeProvider;
+  if (gpu.effective) {
+    options.required_capabilities = ['device.vfio'];
+    options.excluded_capabilities = FAST_START_CAPABILITIES;
+    options.constraints = { allow_vfio_fast_start: false, fallback_mode: 'fail' };
+  }
+  return options;
 }
 
 function loadoutOptions(loadouts: Loadout[], runtime: Runtime) {

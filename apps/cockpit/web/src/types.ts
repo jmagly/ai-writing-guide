@@ -38,6 +38,13 @@ export interface RuntimeCapabilityConstraint {
   excludes?: SandboxRuntimeCapabilityId[];
   reason?: string;
 }
+export interface RuntimeGpuPosture {
+  available?: boolean;
+  assigned?: boolean;
+  devices?: string[];
+  reason?: string;
+  authorization?: 'allowed' | 'denied' | 'unknown' | (string & {});
+}
 export interface RuntimeKindDescriptor {
   kind: SandboxRuntimeKind;
   label?: string;
@@ -90,6 +97,7 @@ export interface ResolvedLoadoutCompatibility {
   required_capabilities?: SandboxRuntimeCapabilityId[];
   excluded_capabilities?: SandboxRuntimeCapabilityId[];
   constraints?: RuntimeCapabilityConstraint[];
+  launch_strategy?: RuntimeLaunchStrategy;
   fast_start_assets?: LoadoutFastStartAsset[];
   reason?: string;
 }
@@ -99,6 +107,7 @@ export interface Instance {
   provider?: SandboxRuntimeProvider;
   capabilities?: RuntimeCapability[];
   capability_constraints?: RuntimeCapabilityConstraint[];
+  gpu?: RuntimeGpuPosture;
   loadout: string;
   state: string;
   tenant: string;

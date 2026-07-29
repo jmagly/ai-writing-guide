@@ -101,6 +101,13 @@ try {
   assert.ok(Array.isArray(lo.loadouts) && lo.loadouts.length >= 3, 'loadout catalog returned');
   assert.ok(lo.loadouts.every((l) => typeof l.id === 'string' && typeof l.label === 'string'), 'loadouts carry id+label');
   assert.ok(lo.loadouts.some((l) => l.id === 'security-audit'), 'catalog includes a non-default loadout');
+  const gpuLoadout = lo.loadouts.find((l) => l.id === 'gpu-vfio');
+  assert.ok(gpuLoadout?.runtime_options?.required_capabilities?.includes('device.vfio'), 'loadout runtime_options preserve VFIO requirement');
+  assert.ok(gpuLoadout?.compatibility?.[0]?.excluded_capabilities?.includes('instance.restore'), 'loadout compatibility preserves fast-start exclusion');
+
+  const caps = await (await f('/api/executor/capabilities')).json();
+  assert.ok(caps.runtime_providers?.providers?.some((p) => p.provider === 'cloud-hypervisor'), 'runtime providers discovered');
+  assert.ok(caps.runtime_providers.providers.find((p) => p.provider === 'cloud-hypervisor')?.capability_constraints?.[0]?.excludes?.includes('instance.restore'), 'provider VFIO constraint preserved');
 
   // registry binding: discover + show through the aiwg CLI (#1592)
   const cap = await (await f("/api/capabilities?q=" + encodeURIComponent("deploy production") + "&limit=4")).json();
