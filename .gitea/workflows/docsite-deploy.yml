@@ -58,13 +58,12 @@ jobs:
     env:
       # docs.aiwg.io is now a shared static host. AIWG deploys still own the
       # root tenant, but must not delete tenant subtrees managed by sibling repos.
-      # The agentic-sandbox tenant is built+deployed by its own repo and served
-      # at the /agentic-sandbox/ subpath. pagenary 2026.6.3+ emits subpath-relative
-      # shell assets (./-relative + build-injected <base href>), so that sibling
-      # tenant resolves its own assets correctly under the subpath while AIWG owns
-      # the domain root — the rsync receiver-protect filter below preserves its
-      # subtree from this deploy's --delete.
-      PROTECTED_DOCS_SUBPATHS: agentic-sandbox
+      # Sibling tenants are built and deployed by their owning repositories.
+      # AIWG owns the domain root, while the rsync receiver-protect filters below
+      # preserve each explicitly registered subtree from this deploy's --delete.
+      # pagenary 2026.6.3+ emits subpath-relative shell assets (./-relative plus
+      # a build-injected <base href>) for tenants served below the docs domain.
+      PROTECTED_DOCS_SUBPATHS: agentic-sandbox payments.roko.network clowder.roko.network
 
     steps:
       - name: Checkout AIWG

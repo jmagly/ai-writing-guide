@@ -91,17 +91,19 @@ Rotation is documented in
 
 The docs site is a shared static host. The AIWG repository owns the root tenant;
 sibling repositories may publish isolated subtrees under that same host. The
-first registered sibling tenant is:
+registered sibling tenants are:
 
 | Tenant | Owning repo | Public route | Deploy target |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `agentic-sandbox` | `roctinam/agentic-sandbox` | public subpath | configured sibling deploy path |
+| `payments.roko.network` | `roko/payments` | public hostname | configured sibling deploy path |
+| `clowder.roko.network` | `roko/catbot-token` | public hostname | configured sibling deploy path |
 
 AIWG's `docsite-deploy.yml` still runs `rsync --delete` for the root tenant, so
-it must explicitly protect sibling tenant subtrees. The workflow defines
-`PROTECTED_DOCS_SUBPATHS=agentic-sandbox`, converts each entry into an rsync
-receiver-protect filter (`P /<subpath>/***`), runs a dry-run sync first, and
-fails before mutation if the plan would delete a protected subtree.
+it must explicitly protect sibling tenant subtrees. The workflow converts each
+entry in `PROTECTED_DOCS_SUBPATHS` into an rsync receiver-protect filter
+(`P /<subpath>/***`), runs a dry-run sync first, and fails before mutation if
+the plan would delete a protected subtree.
 
 When adding another shared docs tenant:
 
