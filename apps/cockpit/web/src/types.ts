@@ -24,6 +24,7 @@ export interface LifecyclePosture { destroy?: unknown; reconnect?: unknown; star
 export type SandboxRuntimeKind = 'host' | 'container' | 'vm' | (string & {});
 export type SandboxRuntimeProvider = 'host' | 'docker' | 'libvirt' | 'cloud-hypervisor' | (string & {});
 export type SandboxRuntimeCapabilityId =
+  | 'instance.checkpoint'
   | 'instance.snapshot'
   | 'instance.restore'
   | 'instance.fork'
@@ -81,7 +82,7 @@ export interface RuntimeLaunchStrategy {
   mode: RuntimeLaunchMode;
   prefer_fast_start?: boolean;
   asset_ref?: string;
-  restore_mode?: 'copy' | 'reuse';
+  restore_mode?: 'ondemand' | 'copy';
 }
 export interface RuntimeOptions {
   kind: SandboxRuntimeKind;

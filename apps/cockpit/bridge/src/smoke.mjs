@@ -120,6 +120,18 @@ try {
   assert.equal(localLibvirtFallbackAllowed('darwin', '1'), true, 'virsh fallback can be explicitly enabled for local development');
   assert.equal(localLibvirtFallbackAllowed('linux', undefined), true, 'Linux bridge hosts retain local virsh fallback');
 
+  const vm = inv.instances.find((i) => i.provider === 'cloud-hypervisor');
+  assert.ok(vm, 'provider-aware VM inventory row present');
+  const fastStartAccepted = await (await f(`/api/instances/${encodeURIComponent(vm.id)}/snapshot`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ asset_ref: 'cockpit-smoke-snapshot' }),
+  })).json();
+  assert.ok(fastStartAccepted.id, 'fast-start proxy returns operation id');
+  const fastStartTerminal = await (await f(`/api/operations/${encodeURIComponent(fastStartAccepted.id)}`)).json();
+  assert.equal(fastStartTerminal.state, 'succeeded', 'fast-start operation reaches terminal state');
+  assert.equal(fastStartTerminal.result.provider, 'cloud-hypervisor', 'fast-start operation preserves provider');
+
   const mcp = await (await f('/api/mcp/discovery')).json();
   assert.equal(mcp.enabled, true, 'MCP discovery enabled');
   assert.equal(mcp.endpoint?.path, '/mcp', 'MCP endpoint path surfaced');

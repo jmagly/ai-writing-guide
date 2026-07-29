@@ -708,6 +708,110 @@ async function proxyFirst(res, candidates, options) {
   }
 }
 
+function normalizedInstanceName(value, fallback = 'cockpit-fast-start') {
+  const cleaned = String(value || fallback)
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+$/g, '')
+    .slice(0, 63);
+  const prefixed = /^[a-z]/.test(cleaned) ? cleaned : `a-${cleaned.replace(/^-+/, '')}`;
+  return prefixed && prefixed.length >= 2 ? prefixed.slice(0, 63) : fallback;
+}
+
+function instanceVmName(instance, instanceId) {
+  return instance?.launch_context?.name
+    ?? instance?.launchContext?.name
+    ?? instance?.name
+    ?? instance?.id
+    ?? instanceId;
+}
+
+function defaultAssetRef(instanceId, action) {
+  return `${normalizedInstanceName(instanceId, 'cockpit-vm')}-${action}-${Date.now().toString(36)}`.slice(0, 96);
+}
+
+function upstreamBridgeError(err) {
+  rethrowExecutorSecurityError(err);
+  return { status: 502, body: { error: 'bridge_upstream_error', message: String(err?.message ?? err) } };
+}
+
+async function providerFastStartAction(upstreamUrl, instanceId, action, body = {}) {
+  let inventory;
+  try { inventory = await getInventory(upstreamUrl); }
+  catch (err) { rethrowExecutorSecurityError(err); inventory = { instances: [] }; }
+  const inst = inventory.instances.find((i) => String(i.id) === String(instanceId));
+  if (!inst) return { status: 404, body: { error: 'instance_not_found', instance_id: instanceId } };
+  const runtime = String(inst.runtime_posture?.kind ?? inst.runtime ?? '').toLowerCase();
+  if (!['vm', 'qemu', 'kvm'].includes(runtime)) {
+    return { status: 422, body: { error: 'unsupported_runtime', message: 'fast-start actions are valid only for VM instances' } };
+  }
+  const provider = String(inst.provider ?? '').trim();
+  if (!provider) return { status: 422, body: { error: 'provider_required', message: 'executor inventory did not report an effective VM provider' } };
+
+  const vmName = instanceVmName(inst, instanceId);
+  const rawAsset = body.asset_ref ?? body.assetRef ?? body.snapshot_id ?? body.snapshotId ?? body.checkpoint_id ?? body.checkpointId ?? body.pool;
+  const assetRef = String(rawAsset ?? '').trim();
+  const restoreMode = String(body.restore_mode ?? body.restoreMode ?? 'ondemand').trim() || 'ondemand';
+  const childName = normalizedInstanceName(
+    body.name ?? body.child_name ?? body.childName,
+    `${normalizedInstanceName(vmName, 'cockpit-vm')}-${action === 'warm-pool' ? 'warm' : action}`,
+  );
+
+  if (action === 'snapshot' || action === 'checkpoint') {
+    const newAssetRef = assetRef || defaultAssetRef(vmName, provider === 'libvirt' ? 'checkpoint' : 'snapshot');
+    if (provider === 'cloud-hypervisor') {
+      return fetchJsonFirst([{
+        target: `${upstreamUrl}/api/v2/admin/cloud-hypervisor/snapshots`,
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          vm: vmName,
+          snapshot_id: newAssetRef,
+          pre_enrollment: body.pre_enrollment ?? body.preEnrollment ?? true,
+        }),
+      }]).catch(upstreamBridgeError);
+    }
+    if (provider === 'libvirt') {
+      return fetchJsonFirst([{
+        target: `${upstreamUrl}/api/v2/admin/libvirt/checkpoints`,
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          vm: vmName,
+          checkpoint_id: newAssetRef,
+          pre_enrollment: true,
+        }),
+      }]).catch(upstreamBridgeError);
+    }
+    return { status: 422, body: { error: 'unsupported_provider_action', provider, action } };
+  }
+
+  if (!assetRef) {
+    return { status: 400, body: { error: 'asset_ref_required', message: 'restore, fork, and warm-pool actions require an opaque asset_ref' } };
+  }
+  const mode = action === 'warm-pool' ? 'warm_pool' : action;
+  return fetchJsonFirst([{
+    target: `${upstreamUrl}/api/v2/admin/instances`,
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      name: childName,
+      runtime: 'qemu',
+      provider,
+      runtime_options: {
+        kind: 'vm',
+        provider,
+        launch_strategy: {
+          mode,
+          prefer_fast_start: true,
+          asset_ref: assetRef,
+          ...(provider === 'cloud-hypervisor' ? { restore_mode: restoreMode } : {}),
+        },
+      },
+    }),
+  }]).catch(upstreamBridgeError);
+}
+
 async function destroyInstance(upstreamUrl, instanceId) {
   let inventory;
   try { inventory = await getInventory(upstreamUrl); }
@@ -2370,6 +2474,29 @@ export function createBridge({
       }
 
       // --- management surface (UC-012): lifecycle + task cancel ---
+      if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/(snapshot|checkpoint|restore|fork|warm-pool)$/)) && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        const instanceId = decodeURIComponent(m[1]);
+        const action = m[2];
+        const body = parsed.body || {};
+        const before = await appendAudit('instance.fast_start.requested', {
+          instance_id: instanceId,
+          action,
+          asset_ref: body.asset_ref ?? body.assetRef ?? body.snapshot_id ?? body.snapshotId ?? body.checkpoint_id ?? body.checkpointId ?? body.pool,
+          name: body.name ?? body.child_name ?? body.childName,
+        });
+        const result = await providerFastStartAction(upstreamUrl, instanceId, action, body);
+        await appendAudit('instance.fast_start.accepted', {
+          request_ts: before.ts,
+          instance_id: instanceId,
+          action,
+          status: result.status,
+          operation_id: result.body?.id ?? result.body?.operation?.id,
+          result: result.body,
+        });
+        return json(res, result.status, result.body);
+      }
       if ((m = url.pathname.match(/^\/api\/instances\/([^/]+)\/(start|stop)$/)) && req.method === 'POST') {
         const result = await fetchJsonFirst([
           `${upstreamUrl}/admin/instances/${encodeURIComponent(m[1])}/${m[2]}`,

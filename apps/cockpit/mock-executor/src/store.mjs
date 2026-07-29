@@ -27,6 +27,13 @@ export const instances = new Map([
   ['7c1f0b2a-3d4e-4f5a-9b8c-1d2e3f4a5b6c', {
     instance_id: '7c1f0b2a-3d4e-4f5a-9b8c-1d2e3f4a5b6c',
     runtime: 'vm',
+    provider: 'cloud-hypervisor',
+    capabilities: [
+      { id: 'instance.snapshot', label: 'Snapshot' },
+      { id: 'instance.restore', label: 'Restore' },
+      { id: 'instance.fork', label: 'Fork' },
+      { id: 'warm_pool.manage', label: 'Warm pools' },
+    ],
     loadout: 'security-audit',
     state: 'running',
     created_at: '2026-06-13T12:05:00Z',

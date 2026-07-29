@@ -1,9 +1,24 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import { fmtId } from '../util';
-import type { Instance } from '../types';
+import type { Instance, SandboxRuntimeCapabilityId } from '../types';
 
 interface Inv { count: number; fetched_at: string; instances: Instance[] }
+interface OperationStatus {
+  id?: string;
+  state?: string;
+  result?: Record<string, unknown>;
+  error?: unknown;
+  failure?: unknown;
+}
+
+type FastStartActionId = 'snapshot' | 'restore' | 'fork' | 'warm-pool';
+interface FastStartAction {
+  id: FastStartActionId;
+  label: string;
+  disabled: boolean;
+  reason?: string;
+}
 
 export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, refreshMs = 5_000 }: { onStartSession?: (instanceId?: string) => void; onLaunchInstance?: () => void; refreshTick?: number; refreshMs?: number }) {
   const [data, setData] = useState<Inv | null>(null);
@@ -33,6 +48,60 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
         setActionMsg('');
         setActionErr((e as Error).message);
       });
+
+  const fastStartControl = async (instance: Instance, action: FastStartAction) => {
+    if (action.disabled) return;
+    const baseName = normalizedName(instance.launch_context?.name ?? fmtId(instance.id));
+    const defaultAsset = `${baseName}-${action.id === 'snapshot' ? 'snapshot' : action.id}`;
+    const asset = window.prompt(`${action.label} asset id`, defaultAsset);
+    if (asset === null) return;
+    const body: Record<string, unknown> = { asset_ref: asset.trim() };
+    if (action.id !== 'snapshot') {
+      const nextName = window.prompt('New instance name', `${baseName}-${action.id === 'warm-pool' ? 'warm' : action.id}`);
+      if (nextName === null) return;
+      body.name = normalizedName(nextName);
+    }
+    setActionErr('');
+    setActionMsg(`${action.label} requested; waiting for operation...`);
+    try {
+      const accepted = await api<{ id?: string; operation?: { id?: string } }>(
+        `/api/instances/${encodeURIComponent(instance.id)}/${action.id}`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        },
+      );
+      const operationId = accepted.id ?? accepted.operation?.id;
+      if (!operationId) {
+        setActionMsg(`${action.label} accepted.`);
+        load();
+        return;
+      }
+      const terminal = await waitForOperation(operationId);
+      await api('/api/audit/intent', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          event: 'instance.fast_start.terminal',
+          detail: {
+            instance_id: instance.id,
+            provider: instance.provider,
+            action: action.id,
+            operation_id: operationId,
+            state: terminal.state,
+            result: terminal.result,
+            error: terminal.error ?? terminal.failure,
+          },
+        }),
+      }).catch(() => undefined);
+      setActionMsg(`${action.label} ${terminal.state ?? 'completed'}: ${operationId}`);
+      load();
+    } catch (e) {
+      setActionMsg('');
+      setActionErr((e as Error).message);
+    }
+  };
 
   if (err) return <p className="err">Could not load inventory: {err}</p>;
   if (!data) return <p className="empty">Loading…</p>;
@@ -146,6 +215,17 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
                     Reconnect
                   </button>
                 )}{' '}
+                {fastStartActions(i).map((action) => (
+                  <button
+                    key={action.id}
+                    aria-label={`${action.label} ${fmtId(i.id)}`}
+                    disabled={action.disabled}
+                    title={action.reason}
+                    onClick={() => fastStartControl(i, action)}
+                  >
+                    {action.label}
+                  </button>
+                ))}{' '}
                 {i.state === 'running'
                   ? <button aria-label={`Stop instance ${fmtId(i.id)}`} onClick={() => control(`/api/instances/${encodeURIComponent(i.id)}/stop`, 'POST')}>Stop</button>
                   : <button aria-label={`Start instance ${fmtId(i.id)}`} onClick={() => control(`/api/instances/${encodeURIComponent(i.id)}/start`, 'POST')}>Start</button>}{' '}
@@ -171,6 +251,16 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
 // VM runtimes included per #1778 — the bridge signals the in-guest agent via
 // qemu-guest-agent, the container/docker path via docker exec.
 const RECONNECTABLE_RUNTIMES = ['docker', 'container', 'vm', 'qemu', 'kvm'];
+const FAST_START_ACTIONS: Array<{
+  id: FastStartActionId;
+  label: string;
+  capabilities: SandboxRuntimeCapabilityId[];
+}> = [
+  { id: 'snapshot', label: 'Snapshot', capabilities: ['instance.snapshot', 'instance.checkpoint'] },
+  { id: 'restore', label: 'Restore', capabilities: ['instance.restore'] },
+  { id: 'fork', label: 'Fork', capabilities: ['instance.fork'] },
+  { id: 'warm-pool', label: 'Warm pool', capabilities: ['warm_pool.manage'] },
+];
 
 function isReconnectable(i: Instance): boolean {
   const runtime = String(i.runtime_posture?.kind ?? i.runtime).toLowerCase();
@@ -201,4 +291,47 @@ function hasVfio(instance: Instance) {
 
 function assignedGpuDevices(instance: Instance) {
   return instance.gpu?.devices?.filter(Boolean) ?? [];
+}
+
+function fastStartActions(instance: Instance): FastStartAction[] {
+  const runtime = String(instance.runtime_posture?.kind ?? instance.runtime).toLowerCase();
+  if (!['vm', 'qemu', 'kvm'].includes(runtime)) return [];
+  const capabilities = new Set((instance.capabilities ?? []).map((capability) => capability.id));
+  const constraints = instance.capability_constraints ?? [];
+  const provider = String(instance.provider ?? '').toLowerCase();
+  return FAST_START_ACTIONS.flatMap((action) => {
+    const advertised = action.capabilities.some((capability) => capabilities.has(capability));
+    const exclusion = constraints.find((constraint) =>
+      constraint.excludes?.some((excluded) => action.capabilities.includes(excluded))
+      || action.capabilities.includes(constraint.capability));
+    if (!advertised && !exclusion) return [];
+    const label = action.id === 'snapshot' && provider === 'libvirt' ? 'Checkpoint' : action.label;
+    return [{
+      id: action.id,
+      label,
+      disabled: Boolean(exclusion),
+      reason: exclusion?.reason,
+    }];
+  });
+}
+
+function normalizedName(value: string) {
+  const cleaned = String(value || 'cockpit-vm')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+$/g, '')
+    .slice(0, 63);
+  const prefixed = /^[a-z]/.test(cleaned) ? cleaned : `a-${cleaned.replace(/^-+/, '')}`;
+  return prefixed.length >= 2 ? prefixed : 'cockpit-vm';
+}
+
+async function waitForOperation(operationId: string): Promise<OperationStatus> {
+  let last: OperationStatus = { id: operationId, state: 'unknown' };
+  for (let i = 0; i < 60; i += 1) {
+    last = await api<OperationStatus>(`/api/operations/${encodeURIComponent(operationId)}`);
+    const state = String(last.state ?? '').toLowerCase();
+    if (['succeeded', 'failed', 'canceled', 'cancelled'].includes(state)) return last;
+    await new Promise((resolve) => window.setTimeout(resolve, 1_000));
+  }
+  return last;
 }

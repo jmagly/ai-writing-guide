@@ -275,6 +275,16 @@ QEMU/VM launches. Cockpit does not replace attached sessions when provisioning;
 it refreshes inventory and leaves concurrency and resource admission to
 agentic-sandbox.
 
+For VM rows, Inventory renders provider-aware fast-start actions only when the
+executor advertises the matching instance capability. Cloud Hypervisor rows can
+offer snapshot, restore, fork, and warm-pool handoff. Libvirt rows can offer
+checkpoint, restore, and warm-pool handoff when advertised. Cockpit sends
+restore, fork, and warm-pool requests through the unified sandbox
+`runtime_options` launch intent, polls the async operation resource to terminal
+state, and records request/terminal audit evidence through the Bridge. VFIO
+constraint exclusions keep unsafe fast-start actions disabled with the
+executor-provided reason.
+
 ### Recover stale agents
 
 When a container, Docker, or VM runtime is still running but its agent
@@ -333,6 +343,7 @@ Tests run **at stages** — committed harnesses, never `/tmp` rigs (#1635):
 | **Dev e2e** (full control-plane chain: health→inventory→create session→attach) | `npm run e2e:cockpit-dev` | **real**, safe-skip when absent | non-blocking |
 | **Daily Linux operator gate** (protected auth + host/container + recovery + upgrade/rollback, #1842) | `npm run uat:cockpit-daily` | **real**, required/fail-closed | operator-scheduled |
 | **Release matrix** (host/docker/vm + provider workload, #1621) | `npm run uat:cockpit-live:matrix` | **real**, all three families | release gate |
+| **Provider-aware VM fast start** (#1843) | `npm --prefix apps/cockpit/web run test -- Inventory.test.tsx` · `node apps/cockpit/bridge/src/smoke.mjs` | **mock** plus live executor for release signoff | required before enabling new VM controls |
 
 ```bash
 npm --prefix apps/cockpit run check     # build web + typecheck + render/a11y tests + smokes + PoCs

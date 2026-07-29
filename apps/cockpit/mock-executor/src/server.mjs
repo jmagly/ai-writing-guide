@@ -22,6 +22,30 @@ function notFound(res, path) {
   return json(res, 404, { jsonrpc: '2.0', id: null, error: { code: -32601, message: 'Not implemented in this increment', data: { path } } });
 }
 
+const operations = new Map();
+let operationSeq = 1;
+
+function acceptedOperation(kind, result = {}) {
+  const id = `op-mock-${operationSeq++}`;
+  const op = {
+    id,
+    kind,
+    state: 'succeeded',
+    created_at: new Date().toISOString(),
+    completed_at: new Date().toISOString(),
+    result,
+  };
+  operations.set(id, op);
+  return op;
+}
+
+async function readJson(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const raw = Buffer.concat(chunks).toString('utf8');
+  return raw ? JSON.parse(raw) : {};
+}
+
 const RUNTIME_PROVIDERS = {
   default_provider: 'cloud-hypervisor',
   kinds: [
@@ -72,6 +96,7 @@ const RUNTIME_PROVIDERS = {
       kind: 'vm',
       label: 'libvirt/QEMU',
       capabilities: [
+        { id: 'instance.checkpoint', label: 'Checkpoint' },
         { id: 'instance.restore', label: 'Checkpoint restore' },
         { id: 'warm_pool.manage', label: 'Warm pools' },
       ],
@@ -132,6 +157,46 @@ export function createExecutor() {
     if (path === '/health') return json(res, 200, { status: 'ok', surfaces: ['discovery', 'admin'] });
     if (path === '/api/v2/admin/runtime/providers' && req.method === 'GET') return json(res, 200, RUNTIME_PROVIDERS);
     if (path === '/api/v2/admin/mcp/discovery' && req.method === 'GET') return json(res, 200, MCP_DISCOVERY);
+    let opm;
+    if ((opm = path.match(/^\/api\/v2\/admin\/operations\/([^/]+)$/)) && req.method === 'GET') {
+      const op = operations.get(decodeURIComponent(opm[1]));
+      return op ? json(res, 200, op) : json(res, 404, { error: 'operation_not_found', id: decodeURIComponent(opm[1]) });
+    }
+    if (path === '/api/v2/admin/cloud-hypervisor/snapshots' && req.method === 'POST') {
+      const body = await readJson(req);
+      return json(res, 202, acceptedOperation('instance.snapshot', {
+        provider: 'cloud-hypervisor',
+        snapshot_id: body.snapshot_id,
+        vm: body.vm,
+      }));
+    }
+    if (path === '/api/v2/admin/libvirt/checkpoints' && req.method === 'POST') {
+      const body = await readJson(req);
+      return json(res, 202, acceptedOperation('instance.snapshot', {
+        provider: 'libvirt',
+        checkpoint_id: body.checkpoint_id,
+        vm: body.vm,
+      }));
+    }
+    if (path === '/api/v2/admin/instances' && req.method === 'POST') {
+      const body = await readJson(req);
+      const strategy = body.runtime_options?.launch_strategy;
+      if (strategy && strategy.mode !== 'cold') {
+        const provider = body.provider ?? body.runtime_options?.provider ?? 'cloud-hypervisor';
+        return json(res, 202, acceptedOperation(`instance.${strategy.mode}`, {
+          provider,
+          instance_id: `mock-${String(body.name ?? 'fast-start')}`,
+          name: body.name,
+          asset_ref: strategy.asset_ref,
+          runtime: 'qemu',
+        }));
+      }
+      return json(res, 202, acceptedOperation('instance.provision', {
+        provider: body.provider ?? body.runtime_options?.provider,
+        instance_id: `mock-${String(body.name ?? 'instance')}`,
+        runtime: body.runtime,
+      }));
+    }
 
     // --- Admin surface (Surface 1): fleet instance inventory ---
     if (path === '/admin/instances' && req.method === 'GET') {

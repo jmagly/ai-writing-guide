@@ -7,6 +7,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Cockpit provider-aware VM fast start** - Inventory now gates VM
+  snapshot/checkpoint, restore, fork, and warm-pool controls from sandbox
+  provider capabilities, sends non-cold VM launches through the unified
+  `runtime_options` contract, polls operation status to terminal state, and
+  records Bridge audit evidence without exposing executor credentials or host
+  secret material (#1843).
+
 ## [2026.7.23] - 2026-07-28 - "Complete package manifest publication recovery"
 
 ### Fixed
