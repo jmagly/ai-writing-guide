@@ -63,6 +63,12 @@ refresh the sandbox CA/bootstrap readiness, rotate stale trust material, then
 reload Cockpit. Replacing the executor bearer file remains separate from CA
 rotation; both can change without exposing secret values to the web app.
 
+Sandbox MCP discovery is treated as display-safe metadata: tool names,
+resource/template descriptors, protocol version, transport posture, scopes,
+and principal hints. Calling the sandbox MCP endpoint through Cockpit is a
+separate proxy path and requires `AIWG_COCKPIT_MCP_TOKEN_FILE`, so the browser
+never receives the MCP principal bearer.
+
 ## Token custody
 
 `aiwg cockpit` writes `~/.aiwg/cockpit/runtime/bridge.json` (file mode 600,
@@ -136,7 +142,8 @@ Operator decisions are recorded locally at
 `~/.aiwg/cockpit/audit/events.jsonl` (file 600, dir 700): instance lifecycle,
 launches, reconnects, destroys, task cancels, session creates, approval
 responses, index rebuilds, and action injections (recorded as operator
-intents by the UI). Entries are **redacted before write** — secret-looking
+intents by the UI). Fast-start requests and MCP proxy events are recorded with
+opaque refs and redacted metadata. Entries are **redacted before write** — secret-looking
 keys and values (tokens, API keys, bearer/`sk-`/GitHub-token shapes) never
 land on disk. The full event list is in
 [Bridge API → Audit events](./bridge-api.md#audit-events).

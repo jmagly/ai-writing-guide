@@ -22,15 +22,19 @@ running runtime — it only attempts to restore the missing agent registration.
 
 ## What the Bridge tries, in order
 
-`POST /api/instances/:id/reconnect` walks three paths:
+`POST /api/instances/:id/reconnect` walks executor-owned recovery first, then
+local-development fallbacks only when policy allows them:
 
 1. **Executor-owned reconnect** — the sandbox's own reconnect endpoints
    (v2 admin first, then legacy candidates). If the executor handles it, done.
-2. **Docker/container fallback** — `docker exec <container> agent-reconnect`,
+2. **Docker/container fallback** — disabled by default. Set
+   `AIWG_COCKPIT_LOCAL_DOCKER_FALLBACK=1` for local development to allow
+   `docker exec <container> agent-reconnect`,
    which SIGHUPs the in-container agent so it re-registers in place without
    restarting the container. Requires sandbox images that ship the
    `agent-reconnect` helper (agentic-sandbox v2026.7.5+); on failure the
-   response says to repull/rebuild the image.
+   response says to repull/rebuild the image. Without the opt-in, Cockpit
+   returns 409 `local_docker_fallback_disabled`.
 3. **VM fallback** (new in 2026.7, roctinam/aiwg#1778) — for `vm`/`qemu`/`kvm`
    instances the Bridge delivers the same SIGHUP **through the libvirt
    guest-agent channel**:
@@ -42,9 +46,12 @@ running runtime — it only attempts to restore the missing agent registration.
    The sandbox VM images bake qemu-guest-agent for exactly this kind of
    in-guest exec, and the agent handles SIGHUP as reconnect-in-place on every
    runtime, so no VM image change is needed. The libvirt domain name is the
-   instance's launch name. Requirements: the Bridge host needs `virsh` access
-   to the domain, and the guest-agent channel must be up — a 502 names
-   whichever is missing.
+   instance's launch name. This fallback is automatic on Linux. On non-Linux
+   hosts, set `AIWG_COCKPIT_LOCAL_LIBVIRT_FALLBACK=1` for explicit local
+   development; otherwise Cockpit returns 409
+   `local_libvirt_fallback_disabled`. Requirements: the Bridge host needs
+   `virsh` access to the domain, and the guest-agent channel must be up — a 502
+   names whichever is missing.
 
 If none of the paths apply, the 409 response spells out the manual host-side
 command (`pkill -HUP -x agent-client`).
@@ -99,14 +106,16 @@ daemon silently. Manual agent recovery on a host is
 `DELETE /api/instances/:id` is defensive about executor/runtime state skew:
 
 - Tries the executor's v2 and legacy destroy surfaces.
-- For Docker rows, reconciles with `docker rm -f <name>` even after admin
-  success (current sandbox builds can list Docker rows the lifecycle verbs
-  don't know), and falls back to it when the admin surface returns
-  instance-not-found.
+- For Docker rows, local `docker rm -f <name>` reconciliation is disabled by
+  default and enabled only by `AIWG_COCKPIT_LOCAL_DOCKER_FALLBACK=1`. With the
+  opt-in, Cockpit can reconcile after admin success or when the admin surface
+  reports instance-not-found; without it, those cases return 409
+  `local_docker_fallback_disabled` and preserve the executor boundary.
 - An already-removed target reports success with an `already_gone` marker
   instead of failing the operator's intent.
-- A stopped Docker row's Destroy removes the container directly — the UI
-  tooltip says so before you click.
+- A stopped Docker row can use local Docker removal only under the same
+  explicit fallback opt-in; otherwise Cockpit reports the disabled fallback
+  instead of crossing the executor boundary.
 
 ## Audit
 

@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.24] - 2026-07-29 - "Sandbox runtime readiness and setup manifest CLI"
+
 ### Added
 
 - **Cockpit provider-aware VM fast start** - Inventory now gates VM
@@ -15,6 +17,35 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   `runtime_options` contract, polls operation status to terminal state, and
   records Bridge audit evidence without exposing executor credentials or host
   secret material (#1843).
+- **Cockpit sandbox runtime readiness** - Cockpit now consumes sandbox runtime
+  contract fixtures for GPU/VFIO posture, Apple Silicon runtime posture, sandbox
+  MCP discovery, local container lifecycle fallback availability, and mTLS
+  readiness so new sandbox runtime options degrade by advertised capability
+  instead of hard-coded runtime assumptions.
+- **Cockpit sandbox MCP projection** - Telemetry now renders sandbox MCP
+  discovery metadata, and the Bridge exposes a scoped proxy path that requires a
+  separate MCP principal token file before forwarding MCP traffic.
+- **Setup manifest CLI** - `aiwg setup-generate`, `aiwg setup-validate`, and
+  `aiwg setup-run` now expose the `setup.aiwg.io/v1` manifest flow from the CLI,
+  with generated starter assets, schema-backed validation, dry-run planning, and
+  discovery coverage for installer workflows.
+
+### Changed
+
+- **Codex project-local skills** - Codex deploy now writes project-local addon
+  skills to the native `.agents/skills/` path, keeps `.codex/.aiwg/skills/` as
+  the indexed artifact tier, and prunes the deprecated `~/.codex/skills/` path
+  so slash-command skill listings no longer duplicate AIWG kernel skills.
+
+### Security
+
+- **Sandbox transport posture** - Cockpit surfaces mTLS local-CA readiness,
+  bootstrap posture, and compatibility/degraded transport states from the
+  sandbox registry without copying executor bearer material into browser state,
+  logs, reports, or audit payloads.
+- **Local lifecycle fallback policy** - Docker CLI reconnect/destroy fallback is
+  now explicitly opt-in for local development, and libvirt reconnect fallback is
+  automatic only on Linux unless the operator enables the non-Linux fallback.
 
 ## [2026.7.23] - 2026-07-28 - "Complete package manifest publication recovery"
 

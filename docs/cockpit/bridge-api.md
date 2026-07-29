@@ -11,6 +11,7 @@ model.
 | Bearer token (`Authorization: Bearer …` or `?token=`), constant-time compare | 401 `unauthorized` |
 | CSRF header `x-cockpit-csrf` = token, for mutating verbs with an Origin | 403 `csrf_required` |
 | Real-executor assertion (mock refused unless explicitly allowed) | 502 `mock_executor_refused` |
+| Optional sandbox mTLS readiness gate (`AIWG_COCKPIT_REQUIRE_SANDBOX_MTLS=1`) | 503 `executor_trust_required` |
 
 `GET /healthz` is the one unauthenticated route (shell liveness probe).
 Unhandled upstream failures return 502 `bridge_upstream_error`. Protected
@@ -26,6 +27,7 @@ executor failures preserve 401 `executor_unauthenticated` and 403
 | `GET /healthz` | Unauthenticated liveness (`{status:'ok'}`) |
 | `GET /api/health` | Bridge health + config echo (`executor_url`, `mock_executor_allowed`, boolean `executor_auth_configured`) |
 | `GET /api/executor/capabilities` | Deep-probe the executor (`host_runtime_enabled`, raw status; `unreachable` on failure) |
+| `GET /api/bootstrap/readiness` | Client-safe sandbox CA/bootstrap readiness posture; no PEMs, keys, CSRs, bearer values, or raw credential paths |
 
 ### Events & telemetry
 
@@ -42,12 +44,27 @@ executor failures preserve 401 `executor_unauthenticated` and 403
 |---|---|
 | `GET /api/inventory` | Normalized instance inventory (runtime/transport/daemon posture per instance); agent-registry fallback; degraded envelope instead of hard failure |
 | `GET /api/loadouts` | Loadout catalog passthrough |
-| `POST /api/instances` | Launch a runtime target via the executor's v2 admin API. `runtime:'qemu'` requires a resolvable SSH public key (400 `ssh_public_key_required` / `ssh_public_key_not_found`) |
+| `POST /api/instances` | Launch a runtime target via the executor's v2 admin API. VM requests may include `provider` and `runtime_options` (`kind`, `provider`, `required_capabilities`, `excluded_capabilities`, `launch_strategy`, and `constraints`). `runtime:'qemu'` requires a resolvable SSH public key (400 `ssh_public_key_required` / `ssh_public_key_not_found`) |
 | `GET /api/operations/:id` | Poll an async provisioning operation |
 | `POST /api/instances/:id/start` · `/stop` | Lifecycle |
+| `POST /api/instances/:id/snapshot` · `/checkpoint` | Create a Cloud Hypervisor snapshot or libvirt checkpoint when the instance advertises the matching capability; returns/polls the sandbox operation |
+| `POST /api/instances/:id/restore` · `/fork` · `/warm-pool` | Launch from an opaque `asset_ref` through sandbox `runtime_options`; optional `name` names the child runtime, and Cloud Hypervisor accepts `restore_mode` (`ondemand` or `copy`) |
 | `POST /api/instances/:id/reconnect` | Stale-agent recovery — full semantics in [Recovery](./recovery.md) |
-| `DELETE /api/instances/:id` | Destroy, with Docker-CLI reconciliation and already-gone synthesis ([Recovery](./recovery.md#destroy)) |
+| `DELETE /api/instances/:id` | Destroy, with executor-owned lifecycle first and local Docker reconciliation only when explicitly enabled ([Recovery](./recovery.md#destroy)) |
 | `POST /api/tasks/:instanceId/:taskId/cancel` | Cancel an A2A task |
+
+Fast-start actions are provider and capability gated. Cockpit renders Snapshot
+for Cloud Hypervisor, Checkpoint for libvirt, and Restore/Fork/Warm pool only
+when the executor reports the required instance capability. VFIO/GPU constraints
+can intentionally exclude fast-start capabilities and force cold launch with
+`fallback_mode:'fail'`.
+
+### Sandbox MCP
+
+| Method & path | Purpose |
+|---|---|
+| `GET /api/mcp/discovery` | Client-safe sandbox MCP discovery: protocol/transport posture, tools, resources/templates, scopes, principals, and capability metadata |
+| `POST /api/mcp` | Authenticated Bridge proxy to the sandbox MCP endpoint. Requires `AIWG_COCKPIT_MCP_TOKEN_FILE`; forwards `MCP-Protocol-Version`; redacts request/response metadata in `sandbox.mcp.proxy` audit events |
 
 ### Sessions
 
@@ -114,6 +131,10 @@ The Bridge is configured entirely by environment (no CLI flags):
 |---|---|---|
 | `AIWG_COCKPIT_EXECUTOR_URL` (alias `EXECUTOR_URL`) | `http://127.0.0.1:8122` | Upstream executor |
 | `AIWG_COCKPIT_EXECUTOR_TOKEN_FILE` | — | Mode-600 file containing one executor bearer token. The Bridge reloads it per upstream request and keeps it out of browser state, URLs, logs, and audit records. |
+| `AIWG_COCKPIT_MCP_TOKEN_FILE` | — | Mode-600 file containing the separate MCP principal bearer used only by `POST /api/mcp`; discovery remains read-only without it. |
+| `AIWG_COCKPIT_REQUIRE_SANDBOX_MTLS` | off | `1`: all authenticated `/api/*` routes fail with 503 `executor_trust_required` until sandbox CA/bootstrap readiness is secure and complete. |
+| `AIWG_COCKPIT_LOCAL_DOCKER_FALLBACK` | off | `1`: allow local-development `docker exec agent-reconnect` and `docker rm -f` fallback when executor-owned lifecycle does not handle a Docker/container row. |
+| `AIWG_COCKPIT_LOCAL_LIBVIRT_FALLBACK` | platform policy | `1`: allow local `virsh qemu-agent-command` reconnect fallback on non-Linux hosts; Linux permits the fallback automatically. |
 | `PORT` / `AIWG_COCKPIT_BRIDGE_PORT` | `8140` | Listen port; **refuses** the executor-reserved 8120–8122 |
 | `AIWG_COCKPIT_AUTOSTART_EXECUTOR` | on | `0` disables best-effort executor autostart |
 | `AIWG_COCKPIT_EXECUTOR_COMMAND` | — | Pin the autostart command (otherwise an installed `agentic-mgmt` is tried) |
@@ -138,8 +159,9 @@ dir 700). Secret-looking keys and values (tokens, API keys, bearer strings)
 are redacted before write. Events:
 
 `instance.launch.requested` / `instance.launch.result` ·
-`instance.lifecycle.requested` (start/stop) · `instance.reconnect.requested` ·
-`instance.destroy.requested` · `task.cancel.requested` ·
+`instance.lifecycle.requested` (start/stop) · `instance.fast_start.requested` ·
+`instance.reconnect.requested` · `instance.destroy.requested` ·
+`sandbox.mcp.proxy` · `task.cancel.requested` ·
 `session.start.requested` · `approval.response.submitted` ·
 `index.rebuild.requested` / `index.rebuild.completed` · operator intents via
 `/api/audit/intent` (the web UI records `action.inject.requested` for every

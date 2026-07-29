@@ -28,7 +28,7 @@ function record(overrides: Partial<DiscoveryRelevanceQuery> = {}): DiscoveryRele
 describe('operational discovery relevance fixture', () => {
   it('contains at least ten reviewed queries for every broad operational type', () => {
     const records = parseDiscoveryRelevanceJsonl(fs.readFileSync(fixturePath, 'utf8'));
-    expect(records).toHaveLength(80);
+    expect(records).toHaveLength(90);
     expect(() => validateOperationalCoverage(records)).not.toThrow();
     expect(new Set(records.map((item) => item.query_class))).toEqual(new Set([
       'exact-name',
@@ -79,7 +79,7 @@ describe('discovery relevance metrics', () => {
       ndcg_at_10: 0.815465,
     });
     expect(Object.keys(first.per_type_recall_at_3)).toEqual([
-      'skill', 'agent', 'command', 'rule', 'flow', 'runbook', 'template', 'behavior',
+      'skill', 'agent', 'command', 'rule', 'schema', 'flow', 'runbook', 'template', 'behavior',
     ]);
   });
 });

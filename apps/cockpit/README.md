@@ -285,6 +285,23 @@ state, and records request/terminal audit evidence through the Bridge. VFIO
 constraint exclusions keep unsafe fast-start actions disabled with the
 executor-provided reason.
 
+### VM provider and GPU/VFIO posture
+
+The Launch instance modal uses sandbox loadout compatibility metadata instead
+of assuming every VM provider supports every launch mode. Operators can select
+an advertised VM provider and GPU/VFIO posture. Required GPU passthrough sends
+`required_capabilities: ['device.vfio']`, excludes fast-start capabilities, and
+sets `fallback_mode: 'fail'` so Cockpit requests a cold VM launch rather than a
+snapshot/checkpoint path that would be unsafe for assigned devices. Inventory
+then displays assigned VFIO devices and executor-provided incompatibility
+reasons; it does not make VFIO generally available on hosts or loadouts that
+cannot provide it.
+
+The Apple Silicon validation path is preview-only. The sandbox `v2026.7.14`
+macOS artifact is an unsigned, unnotarized developer package, and native macOS
+is expected to lack Linux VM, Cloud Hypervisor, VFIO/GPU, vsock, and systemd
+capabilities unless the executor reports otherwise.
+
 ### Recover stale agents
 
 When a container, Docker, or VM runtime is still running but its agent
@@ -297,18 +314,25 @@ resolve an agent id.
 The Bridge handles recovery through:
 
 1. executor-owned reconnect endpoints when the sandbox exposes one, then
-2. local Docker fallback: `docker exec <container> agent-reconnect`, or
+2. local Docker fallback, only when
+   `AIWG_COCKPIT_LOCAL_DOCKER_FALLBACK=1`: `docker exec <container> agent-reconnect`,
+   or
 3. VM fallback (#1778): the same reconnect SIGHUP delivered through the libvirt
    qemu-guest-agent channel (`virsh qemu-agent-command <domain> guest-exec
-   pkill -HUP -x agent-client`). Sessions survive reconnect on agentic-sandbox
+   pkill -HUP -x agent-client`). The libvirt fallback is automatic on Linux;
+   on non-Linux hosts set `AIWG_COCKPIT_LOCAL_LIBVIRT_FALLBACK=1` for explicit
+   local-development use. Sessions survive reconnect on agentic-sandbox
    2026.7.8+ agents; older agents preserve only detached tmux sessions
    (agentic-sandbox#634).
 
 The Docker fallback requires sandbox images that include the `agent-reconnect`
 helper (agentic-sandbox v2026.7.5+ images); the VM fallback requires virsh
-access to the domain from the Bridge host. If **Reconnect** reports that no
-reconnect path is available, rebuild or repull the sandbox image, then start the
-instance again. For host targets, prefer starting Cockpit with the host daemon:
+access to the domain from the Bridge host. If **Reconnect** reports
+`local_docker_fallback_disabled` or `local_libvirt_fallback_disabled`, either
+let the sandbox handle reconnect through its own endpoint or enable the matching
+local-development fallback intentionally. If no reconnect path is available,
+rebuild or repull the sandbox image, then start the instance again. For host
+targets, prefer starting Cockpit with the host daemon:
 
 ```bash
 AIWG_COCKPIT_START_HOST_DAEMON=1 npm run cockpit:up

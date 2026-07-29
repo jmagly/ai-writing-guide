@@ -33,13 +33,22 @@ needed — never auto-run), health state, and tenant. Per-row actions:
 | Action | Behavior |
 |---|---|
 | **Session** | Start a session on the instance; disabled until a session backend reports `available`, with the reason as tooltip |
+| **Snapshot / Checkpoint** | Create a provider-backed fast-start asset when Cloud Hypervisor or libvirt advertises the required capability |
+| **Restore / Fork / Warm pool** | Launch from an opaque sandbox asset through `runtime_options`, then poll the async operation to terminal state |
 | **Reconnect** | Recover a stale agent — rendered for running docker/container **and vm/qemu/kvm** rows whose agent is unreachable ([Recovery](./recovery.md)) |
 | **Stop / Start** | Lifecycle toggle by state |
-| **Destroy** | Confirmed, irreversible; for stopped Docker rows this removes the container directly |
+| **Destroy** | Confirmed, irreversible; executor-owned lifecycle first, with local Docker removal only when the development fallback is explicitly enabled |
 
 Health distinguishes a stopped runtime from a running runtime whose agent has
 dropped: the latter renders **`agent unreachable`** and stays visible instead
 of vanishing.
+
+Inventory also displays executor-provided GPU/VFIO posture: provider/loadout
+compatibility, assigned VFIO devices, and reasons a runtime cannot expose GPU
+resources. When VFIO is requested, Cockpit sends
+`required_capabilities:['device.vfio']`, excludes fast-start capabilities, and
+uses `fallback_mode:'fail'`; this surfaces a safe cold-launch intent instead of
+making GPU passthrough generally available.
 
 ### Running
 
@@ -92,7 +101,11 @@ operator-owned copies only.
 
 KPI tiles (Events, Active Missions, Approvals, Spend) over a unified,
 filterable event table (mission / task / approval / session / inventory) built
-from the Bridge's event-snapshot model.
+from the Bridge's event-snapshot model. Sandbox MCP discovery appears here as
+client-safe status: protocol and transport posture, tools, resources/templates,
+scopes, and principal hints. Executing MCP traffic through Cockpit uses the
+Bridge proxy and a separate MCP token file; discovery metadata alone is
+display-only.
 
 ### Memory
 
@@ -117,10 +130,12 @@ contributions include issue-audit, address-issues, and doctor.
   offers "Start another session" when you're already attached.
 - **Launch instance** — provision a new runtime target through the executor's
   v2 admin API: `host`, `docker` (image, mounts, agent-share), or `qemu`/VM
-  (SSH public key required, agent-share optional). Generates
-  collision-resistant instance names, can auto-start a session once the
-  instance is ready (readiness polling with fast-fail on terminal states), and
-  never replaces an attached session.
+  (SSH public key required, agent-share optional). VM launches can choose an
+  advertised provider and GPU/VFIO posture; Cockpit passes provider,
+  required/excluded capabilities, launch strategy, and constraints through the
+  sandbox `runtime_options` contract. Generates collision-resistant instance
+  names, can auto-start a session once the instance is ready (readiness polling
+  with fast-fail on terminal states), and never replaces an attached session.
 
 ## UX details worth knowing
 
