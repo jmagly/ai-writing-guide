@@ -100,6 +100,12 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
                 {i.loadout}
                 {i.launch_context?.image_ref && <div className="cell-note">{i.launch_context.image_ref}</div>}
                 {i.launch_context?.source && <div className="cell-note">{i.launch_context.source}</div>}
+                {i.storage && (
+                  <div className="cell-note">
+                    Storage: {i.storage.persistent ? 'persistent' : 'ephemeral'}{i.storage.delete_on_destroy ? ' · delete on destroy' : ''}
+                  </div>
+                )}
+                {i.storage?.reason && <div className="cell-note">{i.storage.reason}</div>}
               </td>
               <td>
                 <span className={`badge trust-${i.transport.trust}`} title={`${i.transport.source}${i.transport.evidence ? `: ${i.transport.evidence}` : ''}`}>
@@ -145,7 +151,7 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
                   : <button aria-label={`Start instance ${fmtId(i.id)}`} onClick={() => control(`/api/instances/${encodeURIComponent(i.id)}/start`, 'POST')}>Start</button>}{' '}
                 <button
                   aria-label={`Destroy instance ${fmtId(i.id)}`}
-                  title={i.state !== 'running' && i.runtime === 'docker' ? 'Stopped Docker row — Destroy removes the container directly (admin-v2 has no instance record).' : undefined}
+                  title={i.state !== 'running' && i.runtime === 'docker' ? 'Stopped Docker row — Destroy asks the sandbox management API to remove it.' : undefined}
                   onClick={() => { if (confirm(`Destroy ${fmtId(i.id)}? This cannot be undone.`)) control(`/api/instances/${encodeURIComponent(i.id)}`, 'DELETE'); }}
                 >
                   Destroy

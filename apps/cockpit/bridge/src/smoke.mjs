@@ -2,7 +2,7 @@
 // Self-contained (own ports); no deps. Exits non-zero on failure.
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
-import { createExecutor } from '../../mock-executor/src/server.mjs';
+import { createExecutor, DEFAULT_INSTANCE } from '../../mock-executor/src/server.mjs';
 import { createBridge, normalizeSessionRows } from './server.mjs';
 
 const mock = createExecutor();
@@ -34,6 +34,8 @@ try {
   assert.equal(inv.instances.find((i) => i.transport?.mode === 'shared-secret')?.transport.trust, 'compatibility', 'legacy secret transport is compatibility posture');
   const i0 = inv.instances[0];
   for (const k of ['id', 'runtime', 'loadout', 'state', 'tenant', 'card_url', 'runtime_posture', 'host_daemon', 'transport', 'launch_context', 'session_backends']) assert.ok(k in i0, `field ${k}`);
+  assert.equal(i0.storage?.persistent, true, 'storage persistence surfaced');
+  assert.equal(i0.storage?.delete_on_destroy, true, 'storage delete-on-destroy surfaced');
   assert.ok(['vm', 'container', 'host', 'wasm-edge'].includes(i0.runtime), 'runtime kind');
 
   // A transient executor outage must not poison Bridge state or require a
@@ -116,6 +118,9 @@ try {
   assert.ok(mcp.tools.some((tool) => tool.name === 'list_sandboxes'), 'MCP tools surfaced');
   assert.ok(mcp.resource_templates.some((template) => template.uriTemplate === 'sandbox://sessions/{session_id}/screen'), 'MCP resource templates surfaced');
   assert.equal((await f('/api/mcp', { method: 'POST', body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) })).status, 503, 'MCP proxy fail-closed without token file');
+  const gatedReconnect = await f(`/api/instances/${DEFAULT_INSTANCE}/reconnect`, { method: 'POST' });
+  assert.equal(gatedReconnect.status, 409, 'Docker reconnect fallback is gated unless local dev flag is set');
+  assert.equal((await gatedReconnect.json()).error, 'local_docker_fallback_disabled', 'Docker reconnect fallback error is explicit');
 
   // registry binding: discover + show through the aiwg CLI (#1592)
   const cap = await (await f("/api/capabilities?q=" + encodeURIComponent("deploy production") + "&limit=4")).json();

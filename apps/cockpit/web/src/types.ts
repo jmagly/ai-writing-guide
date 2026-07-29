@@ -19,6 +19,8 @@ export interface TransportPosture {
 }
 export interface LaunchContext { cwd?: string; loadout?: string; runtime_kind?: string; host?: string; selected_tier?: string; name?: string; image_ref?: string; source?: string }
 export interface SessionBackend { mode: 'direct' | 'managed'; backend: string; replay?: boolean; keyframe?: boolean; drive?: boolean; observe?: boolean; available?: boolean; reason?: string }
+export interface StoragePosture { persistent: boolean; delete_on_destroy: boolean; scope?: string; reason?: string }
+export interface LifecyclePosture { destroy?: unknown; reconnect?: unknown; start?: unknown; stop?: unknown }
 export type SandboxRuntimeKind = 'host' | 'container' | 'vm' | (string & {});
 export type SandboxRuntimeProvider = 'host' | 'docker' | 'libvirt' | 'cloud-hypervisor' | (string & {});
 export type SandboxRuntimeCapabilityId =
@@ -116,6 +118,8 @@ export interface Instance {
   host_daemon: HostDaemonStatus;
   transport: TransportPosture;
   launch_context: LaunchContext;
+  storage?: StoragePosture;
+  lifecycle?: LifecyclePosture;
   agent_ready?: boolean;
   registered_agent_id?: string;
   session_backends: SessionBackend[];

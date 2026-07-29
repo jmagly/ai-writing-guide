@@ -4,7 +4,7 @@
 
 export const DEFAULT_INSTANCE = process.env.MOCK_INSTANCE_ID ?? '550e8400-e29b-41d4-a716-446655440000';
 
-/** @typedef {{ instance_id: string, runtime: string, loadout: string, state: 'running'|'stopped'|'provisioning', created_at: string, tenant_id: string, host_daemon?: object, transport?: object, launch_context?: object, session_backends?: object[] }} Instance */
+/** @typedef {{ instance_id: string, runtime: string, loadout: string, state: 'running'|'stopped'|'provisioning', created_at: string, tenant_id: string, host_daemon?: object, transport?: object, launch_context?: object, storage?: object, lifecycle?: object, session_backends?: object[] }} Instance */
 
 /** @type {Map<string, Instance>} */
 export const instances = new Map([
@@ -16,7 +16,9 @@ export const instances = new Map([
     created_at: '2026-06-13T12:00:00Z',
     tenant_id: 'default',
     transport: { mode: 'loopback-rest', trust: 'local', source: 'agentic-sandbox admin', evidence: '127.0.0.1 REST control plane' },
-    launch_context: { cwd: '/home/roctinam/dev/aiwg', loadout: 'agentic-dev', runtime_kind: 'container', selected_tier: 'container' },
+    launch_context: { cwd: '/home/roctinam/dev/aiwg', loadout: 'agentic-dev', runtime_kind: 'container', selected_tier: 'container', name: 'agentic-default' },
+    storage: { persistent: true, delete_on_destroy: true, scope: 'inbox', reason: 'Container workspace persists until sandbox destroy.' },
+    lifecycle: { destroy: { delegated: true }, reconnect: { delegated: false, reason: 'management reconnect endpoint not advertised by this mock' } },
     session_backends: [
       { mode: 'direct', backend: 'native', replay: true, keyframe: true, drive: true, observe: true, available: true },
       { mode: 'managed', backend: 'tmux', replay: true, keyframe: true, drive: true, observe: true, available: true },

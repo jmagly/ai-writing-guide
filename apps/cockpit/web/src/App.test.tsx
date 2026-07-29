@@ -473,7 +473,11 @@ describe('App shell (rendered DOM)', () => {
   });
 
   it('keeps Destroy enabled for a stopped Docker row so it can be cleaned up', async () => {
-    const stale = { ...instance('stale-dkr-1', 'docker', 'full-suite'), state: 'stopped' };
+    const stale = {
+      ...instance('stale-dkr-1', 'docker', 'full-suite'),
+      state: 'stopped',
+      storage: { persistent: true, delete_on_destroy: true, scope: 'inbox' },
+    };
     const inventory = { instances: [stale], count: 1, fetched_at: new Date().toISOString() };
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -491,6 +495,7 @@ describe('App shell (rendered DOM)', () => {
     // Previously hard-disabled for stopped Docker rows, which trapped stale
     // containers in inventory with no in-UI way to remove them.
     expect((destroy as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.getByText(/storage: persistent · delete on destroy/i)).toBeTruthy();
   });
 
   it('offers Reconnect for a running Docker row whose agent is not registered', async () => {

@@ -30,6 +30,7 @@ const AUTOSTART_EXECUTOR = process.env.AIWG_COCKPIT_AUTOSTART_EXECUTOR !== '0';
 const EXECUTOR_COMMAND = process.env.AIWG_COCKPIT_EXECUTOR_COMMAND ?? '';
 const EXECUTOR_TOKEN_FILE = process.env.AIWG_COCKPIT_EXECUTOR_TOKEN_FILE ?? '';
 const MCP_TOKEN_FILE = process.env.AIWG_COCKPIT_MCP_TOKEN_FILE ?? '';
+const LOCAL_DOCKER_FALLBACK = process.env.AIWG_COCKPIT_LOCAL_DOCKER_FALLBACK === '1';
 const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
 const auditDir = () => process.env.AIWG_COCKPIT_AUDIT_DIR || join(homedir(), '.aiwg', 'cockpit', 'audit');
 const auditLog = () => join(auditDir(), 'events.jsonl');
@@ -720,7 +721,7 @@ async function destroyInstance(upstreamUrl, instanceId) {
   try {
     const result = await fetchJsonFirst(candidates);
     if (result.status < 400) {
-      if (['docker', 'container'].includes(runtime) && dockerName) {
+      if (LOCAL_DOCKER_FALLBACK && ['docker', 'container'].includes(runtime) && dockerName) {
         try {
           await spawnCollect('docker', ['rm', '-f', dockerName]);
           return {
@@ -770,6 +771,18 @@ async function destroyInstance(upstreamUrl, instanceId) {
       target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/destroy`,
       status: 404,
       body: { error: 'instance_not_destroyable', message: `No destroyable runtime record for ${instanceId}` },
+    };
+  }
+  if (!LOCAL_DOCKER_FALLBACK) {
+    return {
+      target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/destroy`,
+      status: 409,
+      body: {
+        error: 'local_docker_fallback_disabled',
+        message: 'Sandbox management did not accept this destroy request. Local docker rm fallback is disabled unless AIWG_COCKPIT_LOCAL_DOCKER_FALLBACK=1 is set for local development.',
+        runtime,
+        docker_name: dockerName,
+      },
     };
   }
 
@@ -854,6 +867,18 @@ async function reconnectInstance(upstreamUrl, instanceId) {
   }
 
   if (['docker', 'container'].includes(runtime) && dockerName) {
+    if (!LOCAL_DOCKER_FALLBACK) {
+      return {
+        target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/reconnect`,
+        status: 409,
+        body: {
+          error: 'local_docker_fallback_disabled',
+          message: 'Sandbox management did not accept this reconnect request. Local docker exec fallback is disabled unless AIWG_COCKPIT_LOCAL_DOCKER_FALLBACK=1 is set for local development.',
+          runtime,
+          docker_name: dockerName,
+        },
+      };
+    }
     try {
       const output = await spawnCollect('docker', ['exec', dockerName, 'agent-reconnect']);
       return {
@@ -1057,6 +1082,26 @@ function normalizeTransport(posture) {
   };
 }
 
+function normalizeStoragePosture(posture) {
+  const raw = posture && typeof posture === 'object' ? posture : {};
+  return {
+    persistent: Boolean(raw.persistent ?? raw.persists ?? raw.persistence === 'persistent'),
+    delete_on_destroy: Boolean(raw.delete_on_destroy ?? raw.deleteOnDestroy),
+    scope: raw.scope ?? raw.storage_scope ?? raw.storageScope,
+    reason: raw.reason ?? raw.detail,
+  };
+}
+
+function normalizeLifecycle(lifecycle) {
+  const raw = lifecycle && typeof lifecycle === 'object' ? lifecycle : {};
+  return {
+    destroy: raw.destroy ?? raw.delete ?? raw.remove,
+    reconnect: raw.reconnect,
+    start: raw.start,
+    stop: raw.stop,
+  };
+}
+
 function normalizeSessionBackends(backends, runtimeKind, state = 'unknown', agentReady = false) {
   const list = Array.isArray(backends) ? backends : [];
   if (!list.length && runtimeKind === 'host') {
@@ -1133,6 +1178,8 @@ function normalizeInstance(executorUrl, i) {
       image_ref: i.image_ref ?? i.imageRef ?? i.runtime_extension?.image_ref ?? i.runtimeExtension?.imageRef,
       source: i.runtime_extension ? 'agent-card runtime extension' : i.launch_context?.source ?? i.launchContext?.source,
     },
+    storage: normalizeStoragePosture(i.storage ?? i.storage_posture ?? i.storagePosture ?? i.lifecycle?.storage),
+    lifecycle: normalizeLifecycle(i.lifecycle ?? i.lifecycle_support ?? i.lifecycleSupport),
     agent_ready: agentReady,
     registered_agent_id: i.registered_agent_id ?? i.registeredAgentId,
     session_backends: normalizeSessionBackends(i.session_backends ?? i.sessionBackends ?? i.session_host?.backends ?? i.sessionHost?.backends ?? i.capabilities?.session_backends ?? i.capabilities?.sessionBackends, runtimePosture.kind, i.state ?? i.status, agentReady),
