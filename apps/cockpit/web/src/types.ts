@@ -19,9 +19,86 @@ export interface TransportPosture {
 }
 export interface LaunchContext { cwd?: string; loadout?: string; runtime_kind?: string; host?: string; selected_tier?: string; name?: string; image_ref?: string; source?: string }
 export interface SessionBackend { mode: 'direct' | 'managed'; backend: string; replay?: boolean; keyframe?: boolean; drive?: boolean; observe?: boolean; available?: boolean; reason?: string }
+export type SandboxRuntimeKind = 'host' | 'container' | 'vm' | (string & {});
+export type SandboxRuntimeProvider = 'host' | 'docker' | 'libvirt' | 'cloud-hypervisor' | (string & {});
+export type SandboxRuntimeCapabilityId =
+  | 'instance.snapshot'
+  | 'instance.restore'
+  | 'instance.fork'
+  | 'warm_pool.manage'
+  | 'device.vfio'
+  | (string & {});
+export interface RuntimeCapability {
+  id: SandboxRuntimeCapabilityId;
+  label?: string;
+  description?: string;
+}
+export interface RuntimeCapabilityConstraint {
+  capability: SandboxRuntimeCapabilityId;
+  excludes?: SandboxRuntimeCapabilityId[];
+  reason?: string;
+}
+export interface RuntimeKindDescriptor {
+  kind: SandboxRuntimeKind;
+  label?: string;
+  default_provider?: SandboxRuntimeProvider;
+  providers: SandboxRuntimeProvider[];
+}
+export interface RuntimeProviderDescriptor {
+  provider: SandboxRuntimeProvider;
+  kind: SandboxRuntimeKind;
+  label?: string;
+  default?: boolean;
+  capabilities: RuntimeCapability[];
+  capability_constraints?: RuntimeCapabilityConstraint[];
+}
+export interface RuntimeProvidersResponse {
+  default_provider?: SandboxRuntimeProvider;
+  kinds: RuntimeKindDescriptor[];
+  providers: RuntimeProviderDescriptor[];
+}
+export type RuntimeLaunchMode = 'cold' | 'restore' | 'fork' | 'warm_pool';
+export interface RuntimeLaunchStrategy {
+  mode: RuntimeLaunchMode;
+  prefer_fast_start?: boolean;
+  asset_ref?: string;
+  restore_mode?: 'copy' | 'reuse';
+}
+export interface RuntimeOptions {
+  kind: SandboxRuntimeKind;
+  provider?: SandboxRuntimeProvider;
+  required_capabilities?: SandboxRuntimeCapabilityId[];
+  excluded_capabilities?: SandboxRuntimeCapabilityId[];
+  launch_strategy?: RuntimeLaunchStrategy;
+  constraints?: {
+    allow_vfio_fast_start?: boolean;
+    fallback_mode?: 'fail' | 'cold';
+  };
+}
+export interface LoadoutFastStartAsset {
+  id: string;
+  provider: SandboxRuntimeProvider;
+  kind: 'snapshot' | 'checkpoint' | 'fork_base' | 'warm_pool' | (string & {});
+  state: 'ready' | 'building' | 'degraded' | 'unavailable' | (string & {});
+  capabilities: SandboxRuntimeCapabilityId[];
+  reason?: string;
+}
+export interface ResolvedLoadoutCompatibility {
+  runtime_kind: SandboxRuntimeKind;
+  provider: SandboxRuntimeProvider;
+  eligible: boolean;
+  required_capabilities?: SandboxRuntimeCapabilityId[];
+  excluded_capabilities?: SandboxRuntimeCapabilityId[];
+  constraints?: RuntimeCapabilityConstraint[];
+  fast_start_assets?: LoadoutFastStartAsset[];
+  reason?: string;
+}
 export interface Instance {
   id: string;
   runtime: string;
+  provider?: SandboxRuntimeProvider;
+  capabilities?: RuntimeCapability[];
+  capability_constraints?: RuntimeCapabilityConstraint[];
   loadout: string;
   state: string;
   tenant: string;
@@ -121,8 +198,22 @@ export interface EventsSnapshot {
 }
 export interface InstanceCost { instance_id: string; tenant: string; input_tokens: number; output_tokens: number; usd: number }
 export interface Cost { total: { input_tokens: number; output_tokens: number; usd: number }; per_instance: InstanceCost[] }
-export interface Loadout { id: string; label: string; description?: string; runtimes?: string[] }
-export interface ExecutorCapabilities { status: string; source?: string | null; host_runtime_enabled: boolean; raw_status?: string; error?: string }
+export interface Loadout {
+  id: string;
+  label: string;
+  description?: string;
+  runtimes?: string[];
+  runtime_options?: RuntimeOptions;
+  compatibility?: ResolvedLoadoutCompatibility[];
+}
+export interface ExecutorCapabilities {
+  status: string;
+  source?: string | null;
+  host_runtime_enabled: boolean;
+  runtime_providers?: RuntimeProvidersResponse;
+  raw_status?: string;
+  error?: string;
+}
 export interface CapabilityResult { path: string; type: string; title?: string; capability?: string; score?: number; name: string; triggers?: string[] }
 export interface ContribAction { id: string; title: string; icon?: string; group?: string; source: string; inject: { command: string; target?: string; needs_args?: boolean; args_hint?: string } }
 export interface ContribScreen { id: string; title: string; source: string; contribution: string }
