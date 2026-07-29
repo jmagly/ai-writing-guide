@@ -96,4 +96,32 @@ describe('Inventory provider-aware fast-start controls', () => {
     expect((screen.getByRole('button', { name: /fork vm-1/i }) as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByRole('button', { name: /warm pool vm-1/i }) as HTMLButtonElement).disabled).toBe(true);
   });
+
+  it('renders libvirt checkpoint controls without unsupported fork', async () => {
+    const libvirtVm = {
+      ...VM_INSTANCE,
+      provider: 'libvirt',
+      capabilities: [
+        { id: 'instance.checkpoint', label: 'Checkpoint' },
+        { id: 'instance.restore', label: 'Checkpoint restore' },
+        { id: 'warm_pool.manage', label: 'Warm pools' },
+      ],
+    };
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).includes('/api/inventory')) {
+        return new Response(JSON.stringify({ count: 1, fetched_at: '2026-07-29T00:00:00Z', instances: [libvirtVm] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response('{}', { status: 404 });
+    }) as unknown as typeof fetch;
+
+    render(<Inventory refreshMs={60_000} />);
+
+    expect(await screen.findByRole('button', { name: /checkpoint vm-1/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /restore vm-1/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /warm pool vm-1/i })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /fork vm-1/i })).toBeNull();
+  });
 });
