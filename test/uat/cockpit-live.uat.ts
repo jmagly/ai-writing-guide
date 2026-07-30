@@ -31,6 +31,7 @@ const PROVISION_NAME_PREFIX = process.env.AIWG_COCKPIT_LIVE_PROVISION_NAME_PREFI
 const PROVISION_LOADOUT = process.env.AIWG_COCKPIT_LIVE_PROVISION_LOADOUT || '';
 const PROVISION_IMAGE = process.env.AIWG_COCKPIT_LIVE_PROVISION_IMAGE || '';
 const PROVISION_CONTAINER_MOUNT = process.env.AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_MOUNT || '';
+const PROVISION_CONTAINER_NETWORK = process.env.AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_NETWORK || '';
 const PROVISION_PROFILE = process.env.AIWG_COCKPIT_LIVE_PROVISION_PROFILE || '';
 const PROVISION_TIMEOUT_MS = Number(process.env.AIWG_COCKPIT_LIVE_PROVISION_TIMEOUT_MS || 180_000);
 const ALLOW_MOCK_MATRIX = process.env.AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX === '1';
@@ -256,6 +257,7 @@ function provisionBody(target: string) {
     body.loadout = PROVISION_LOADOUT || 'host-tools';
   } else if (target === 'container') {
     body.image = PROVISION_IMAGE || `agentic/${providerSuffix}:latest`;
+    if (PROVISION_CONTAINER_NETWORK) body.network = PROVISION_CONTAINER_NETWORK;
     const mounts = provisionContainerMounts();
     if (mounts.length) body.mounts = mounts;
     if (PROVISION_LOADOUT) body.loadout = PROVISION_LOADOUT;
@@ -498,6 +500,7 @@ async function writeReport({ reachable, reason }: { reachable: boolean; reason: 
     provision_name_prefix: PROVISION_TARGETS ? PROVISION_NAME_PREFIX : null,
     provision_loadout: PROVISION_TARGETS ? PROVISION_LOADOUT || null : null,
     provision_image: PROVISION_TARGETS ? PROVISION_IMAGE || null : null,
+    provision_container_network: PROVISION_TARGETS ? PROVISION_CONTAINER_NETWORK || null : null,
     provision_profile: PROVISION_TARGETS ? PROVISION_PROFILE || null : null,
     provider: WORKLOAD_PROVIDER || null,
     discovery_expect: DISCOVERY_EXPECT,

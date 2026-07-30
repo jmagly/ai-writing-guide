@@ -46,6 +46,8 @@ export AIWG_COCKPIT_LIVE_MUTATION_FILE=/operator/scratch/cockpit-daily-mutation
 export AIWG_COCKPIT_LIVE_PROVISION_IMAGE=agentic/codex@sha256:<digest>
 # Optional: gate-owned provider-login copy or other operator-approved input.
 export AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_MOUNT=/operator/protected/codex:/home/agent/.codex
+# Optional: explicit Tier 0 network for a provider workload that needs egress.
+export AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_NETWORK=bridge
 ```
 
 The token file must be a regular file inaccessible to group and other users
@@ -63,6 +65,13 @@ and its absolute container destination. The value is a mount reference, never a
 credential value, and is not written to the reports. Do not point it at the
 operator's original profile: make a private, disposable copy, grant only the
 container runtime uid access, and remove that copy after the gate.
+
+Managed sandbox networks remain internal by default. If the selected live
+provider requires upstream egress, set
+`AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_NETWORK` to an existing
+operator-approved Docker network such as `bridge`. The report records that
+network choice. It is an explicit Tier 0 compatibility posture, not a claim
+that the container retains the managed default-deny network boundary.
 
 Use exact CalVer package versions for AIWG and an immutable release version or
 commit for the executor. Mutable names such as `main` and `latest` fail
