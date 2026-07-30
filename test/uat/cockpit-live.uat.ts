@@ -8,7 +8,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawn } from 'node:child_process';
 import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { WebSocket } from 'ws';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -30,6 +30,7 @@ const PROVISION_TARGETS = process.env.AIWG_COCKPIT_LIVE_PROVISION === '1';
 const PROVISION_NAME_PREFIX = process.env.AIWG_COCKPIT_LIVE_PROVISION_NAME_PREFIX || 'cockpit-uat';
 const PROVISION_LOADOUT = process.env.AIWG_COCKPIT_LIVE_PROVISION_LOADOUT || '';
 const PROVISION_IMAGE = process.env.AIWG_COCKPIT_LIVE_PROVISION_IMAGE || '';
+const PROVISION_CONTAINER_MOUNT = process.env.AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_MOUNT || '';
 const PROVISION_PROFILE = process.env.AIWG_COCKPIT_LIVE_PROVISION_PROFILE || '';
 const PROVISION_TIMEOUT_MS = Number(process.env.AIWG_COCKPIT_LIVE_PROVISION_TIMEOUT_MS || 180_000);
 const ALLOW_MOCK_MATRIX = process.env.AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX === '1';
@@ -226,6 +227,24 @@ function provisionName(target: string): string {
   return `${PROVISION_NAME_PREFIX}-${target}-${Date.now().toString(36)}`.replace(/[^a-z0-9-]/g, '-').slice(0, 63);
 }
 
+function provisionContainerMounts(): string[] {
+  const mounts: string[] = [];
+  if (PROVISION_CONTAINER_MOUNT) {
+    const separator = PROVISION_CONTAINER_MOUNT.indexOf(':');
+    const hostPath = separator > 0 ? PROVISION_CONTAINER_MOUNT.slice(0, separator) : '';
+    const containerPath = separator > 0 ? PROVISION_CONTAINER_MOUNT.slice(separator + 1) : '';
+    if (!isAbsolute(hostPath) || !isAbsolute(containerPath)) {
+      throw new Error('AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_MOUNT must be host_absolute_path:container_absolute_path');
+    }
+    mounts.push(PROVISION_CONTAINER_MOUNT);
+  }
+  if (MUTATION_FILE) {
+    const mutationDirectory = dirname(MUTATION_FILE);
+    mounts.push(`${mutationDirectory}:${mutationDirectory}`);
+  }
+  return mounts;
+}
+
 function provisionBody(target: string) {
   const providerSuffix = WORKLOAD_PROVIDER && ['codex', 'claude'].includes(WORKLOAD_PROVIDER) ? WORKLOAD_PROVIDER : 'codex';
   const body: Record<string, unknown> = {
@@ -237,6 +256,8 @@ function provisionBody(target: string) {
     body.loadout = PROVISION_LOADOUT || 'host-tools';
   } else if (target === 'container') {
     body.image = PROVISION_IMAGE || `agentic/${providerSuffix}:latest`;
+    const mounts = provisionContainerMounts();
+    if (mounts.length) body.mounts = mounts;
     if (PROVISION_LOADOUT) body.loadout = PROVISION_LOADOUT;
   } else if (target === 'vm') {
     body.loadout = PROVISION_LOADOUT || 'profiles/basic.yaml';
@@ -594,6 +615,13 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
 
   beforeAll(async () => {
     await loadExecutorAuthorization();
+    if (PROVISION_TARGETS && MATRIX_TARGETS.includes('container') && MUTATION_FILE) {
+      const mutationDirectory = dirname(MUTATION_FILE);
+      if (mutationDirectory === dirname(mutationDirectory)) {
+        throw new Error('AIWG_COCKPIT_LIVE_MUTATION_FILE must use a dedicated non-root parent directory');
+      }
+      await mkdir(mutationDirectory, { recursive: true, mode: 0o700 });
+    }
     const p = await probe();
     reachable = p.ok;
     reason = p.reason || '';
