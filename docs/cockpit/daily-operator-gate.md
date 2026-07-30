@@ -44,14 +44,25 @@ export AIWG_COCKPIT_LIVE_EXPECT_CWD_HOST=/home/operator
 export AIWG_COCKPIT_LIVE_EXPECT_CWD_CONTAINER=/home/agent
 export AIWG_COCKPIT_LIVE_MUTATION_FILE=/operator/scratch/cockpit-daily-mutation
 export AIWG_COCKPIT_LIVE_PROVISION_IMAGE=agentic/codex@sha256:<digest>
+# Optional: gate-owned provider-login copy or other operator-approved input.
+export AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_MOUNT=/operator/protected/codex:/home/agent/.codex
 ```
 
 The token file must be a regular file inaccessible to group and other users
 (mode `0600` on Unix). The mutation path must be a harmless, gate-owned scratch
-path visible at the same location from the test runner and the temporary target
-(for a container, use a scoped bind mount or loadout). The gate verifies exact
-content and removes the mutation file during scoped cleanup. The container image
-must use an immutable tag or digest; `latest` fails preflight.
+path with a dedicated non-root parent directory. For a provisioned container,
+the harness creates that parent with mode `0700` and bind-mounts only that
+directory at the same absolute path. The gate verifies exact content and removes
+the mutation file during scoped cleanup; operators remain responsible for
+removing the empty parent after retaining the reports. The container image must
+use an immutable tag or digest; `latest` fails preflight.
+
+When the provider workload needs a pre-authenticated file-backed profile, point
+`AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_MOUNT` at one gate-owned host directory
+and its absolute container destination. The value is a mount reference, never a
+credential value, and is not written to the reports. Do not point it at the
+operator's original profile: make a private, disposable copy, grant only the
+container runtime uid access, and remove that copy after the gate.
 
 Use exact CalVer package versions for AIWG and an immutable release version or
 commit for the executor. Mutable names such as `main` and `latest` fail
