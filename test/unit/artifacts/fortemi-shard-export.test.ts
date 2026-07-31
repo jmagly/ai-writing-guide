@@ -6,6 +6,9 @@ import path from "path";
 
 import {
   buildAiwgFortemiKnowledgeShard,
+  buildAiwgFortemiKnowledgeShardWithReport,
+  diagnoseAiwgFortemiShardMigration,
+  resolveAiwgFortemiShardTuple,
   writeAiwgFortemiKnowledgeShard,
   type AiwgFortemiShardConverter,
 } from "../../../src/artifacts/fortemi-shard-export.js";
@@ -165,6 +168,8 @@ describe("AIWG portable Fortemi shard export", () => {
         repo: "roctinam/aiwg",
         privacy: "sanitized",
         generatedAt: "2026-07-16T00:00:00.000Z",
+        schemaVersion: "1.2.0",
+        profile: "core-v1",
       },
       converter,
     );
@@ -177,7 +182,11 @@ describe("AIWG portable Fortemi shard export", () => {
     const result = await writeAiwgFortemiKnowledgeShard(
       tmpDir,
       out,
-      { generatedAt: "2026-07-16T00:00:00.000Z" },
+      {
+        generatedAt: "2026-07-16T00:00:00.000Z",
+        schemaVersion: "1.2.0",
+        profile: "core-v1",
+      },
       async () => encoded,
     );
 
@@ -186,6 +195,74 @@ describe("AIWG portable Fortemi shard export", () => {
       bytes: encoded.byteLength,
       items: 2,
       outPath: path.join(tmpDir, out),
+      written: true,
+      conversion: {
+        schemaVersion: "1.2.0",
+        profile: "core-v1",
+        success: true,
+        lossless: true,
+        losses: [],
+        receipt: null,
+      },
+    });
+  });
+
+  it("defaults to exact full-v1, rejects invalid tuples, and fails closed on loss", async () => {
+    expect(resolveAiwgFortemiShardTuple({})).toEqual({
+      schemaVersion: "2.0.0",
+      profile: "full-v1",
+    });
+    expect(() => resolveAiwgFortemiShardTuple({
+      schemaVersion: "1.2.0",
+      profile: "full-v1",
+    })).toThrow(/Unsupported Fortemi Knowledge Shard tuple/);
+
+    await expect(buildAiwgFortemiKnowledgeShardWithReport(
+      tmpDir,
+      { failOnLoss: true },
+      undefined,
+      async () => ({
+        success: true,
+        archive: encoded,
+        profile: "full-v1",
+        schema_version: "2.0.0",
+        lossless: false,
+        losses: [{ component: "attachments", reason: "fixture-loss" }],
+        receipt: { schema_version: "fixture" },
+      }),
+    )).rejects.toThrow(/reported 1 loss/);
+  });
+
+  it("is dry-run capable, non-overwriting, and gives source-less legacy artifacts an actionable diagnostic", async () => {
+    const out = path.join("artifacts", "dry-run.shard");
+    const dryRun = await writeAiwgFortemiKnowledgeShard(
+      tmpDir,
+      out,
+      {
+        schemaVersion: "1.2.0",
+        profile: "core-v1",
+        dryRun: true,
+      },
+      async () => encoded,
+    );
+    expect(dryRun.written).toBe(false);
+    expect(fs.existsSync(path.join(tmpDir, out))).toBe(false);
+
+    fs.mkdirSync(path.dirname(path.join(tmpDir, out)), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, out), "existing");
+    await expect(writeAiwgFortemiKnowledgeShard(
+      tmpDir,
+      out,
+      { schemaVersion: "1.2.0", profile: "core-v1" },
+      async () => encoded,
+    )).rejects.toThrow(/Refusing to overwrite/);
+    expect(fs.readFileSync(path.join(tmpDir, out), "utf8")).toBe("existing");
+
+    expect(diagnoseAiwgFortemiShardMigration(tmpDir, out)).toMatchObject({
+      supported: false,
+      mutationPlanned: false,
+      diagnostic: expect.stringContaining("cannot be reconstructed"),
+      action: expect.stringContaining("--schema-version 2.0.0 --profile full-v1"),
     });
   });
 
@@ -194,11 +271,15 @@ describe("AIWG portable Fortemi shard export", () => {
       repo: "Fortemi/fortemi-react",
       privacy: "sanitized",
       generatedAt: "2026-07-16T00:00:00.000Z",
+      schemaVersion: "1.2.0",
+      profile: "core-v1",
     });
     const repeated = await buildAiwgFortemiKnowledgeShard(tmpDir, {
       repo: "Fortemi/fortemi-react",
       privacy: "sanitized",
       generatedAt: "2026-07-16T00:00:00.000Z",
+      schemaVersion: "1.2.0",
+      profile: "core-v1",
     });
 
     const validation = validateShardArchive(shard);
@@ -265,7 +346,7 @@ describe("AIWG portable Fortemi shard export", () => {
     }
   });
 
-  it("consumes the released public full-v1 converter deterministically without changing the default profile", async () => {
+  it("consumes the released public full-v1 converter deterministically as the default profile evidence", async () => {
     const fixtureRoot = path.resolve(
       process.cwd(),
       "test/fixtures/fortemi-shard",
@@ -340,6 +421,8 @@ describe("AIWG portable Fortemi shard export", () => {
       repo: "roctinam/aiwg",
       privacy: "sanitized",
       generatedAt: "2026-07-16T00:00:00.000Z",
+      schemaVersion: "1.2.0",
+      profile: "core-v1",
     });
     if (process.env.AIWG_FORTEMI_FIXTURE_OUT) {
       fs.writeFileSync(process.env.AIWG_FORTEMI_FIXTURE_OUT, shard);
@@ -511,6 +594,8 @@ describe("AIWG portable Fortemi shard export", () => {
       repo: "roctinam/aiwg",
       privacy: "sanitized",
       generatedAt: "2026-07-16T00:00:00.000Z",
+      schemaVersion: "1.2.0",
+      profile: "core-v1",
     });
     const decoder = new TextDecoder();
     const encoder = new TextEncoder();

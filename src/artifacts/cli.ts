@@ -1065,12 +1065,19 @@ async function handleExport(args: string[]): Promise<void> {
     console.log('  --out <path>           Write JSON or .shard output to a file');
     console.log('  --repo <name>          Source repository label (default: cwd basename)');
     console.log('  --privacy <level>      private, sanitized, or public (default: private)');
-    console.log('  --schema-version <v>   Export contract version: v1 or v2 (default: v1)');
+    console.log('  --schema-version <v>   Browser: v1|v2; shard: 2.0.0|1.2.0');
+    console.log('  --profile <name>       Shard profile: full-v1 (default) or core-v1');
+    console.log('  --fail-on-loss         Reject a full-v1 conversion that reports any loss');
+    console.log('  --dry-run              Build and report without writing the shard');
+    console.log('  --force                Replace an existing output path');
+    console.log('  --migrate-from <path>  Diagnose a source-less legacy shard (dry-run only)');
+    console.log('  --json                 Emit the machine-readable conversion report');
     console.log('  --generated-at <iso>   Override generated timestamp for deterministic fixtures');
     console.log('');
     console.log('Examples:');
     console.log('  aiwg index export --format fortemi --graph project --out aiwg-fortemi-index.json');
-    console.log('  aiwg index export --format fortemi-shard --graph project --out aiwg-index.shard');
+    console.log('  aiwg index export --format fortemi-shard --graph project --schema-version 2.0.0 --profile full-v1 --fail-on-loss --out aiwg-index.shard');
+    console.log('  aiwg index export --format fortemi-shard --migrate-from legacy.shard --dry-run --json');
     console.log('  aiwg index export --format fortemi --privacy sanitized --generated-at 2026-01-01T00:00:00.000Z');
     return;
   }
@@ -1090,30 +1097,71 @@ async function handleExport(args: string[]): Promise<void> {
     process.exit(1);
   }
   const generatedAt = parseFlagValue(args, '--generated-at', 'Error: --generated-at requires an ISO timestamp value');
-  const schemaVersion = parseFlagValue(args, '--schema-version', 'Error: --schema-version must be v1 or v2');
-  if (schemaVersion && !['v1', 'v2'].includes(schemaVersion)) {
-    console.error('Error: --schema-version must be v1 or v2');
+  const schemaVersion = parseFlagValue(args, '--schema-version', 'Error: --schema-version requires a value');
+  const profile = parseFlagValue(args, '--profile', 'Error: --profile requires a value');
+  const migrateFrom = parseFlagValue(args, '--migrate-from', 'Error: --migrate-from requires a shard path');
+  const dryRun = args.includes('--dry-run');
+  const json = args.includes('--json');
+  if (format === 'fortemi' && schemaVersion && !['v1', 'v2'].includes(schemaVersion)) {
+    console.error('Error: browser export --schema-version must be v1 or v2');
     process.exit(1);
   }
-  if (format === 'fortemi-shard' && schemaVersion && schemaVersion !== 'v2') {
-    console.error('Error: --format fortemi-shard requires --schema-version v2');
+  if (format === 'fortemi-shard' && schemaVersion && !['1.2.0', '2.0.0'].includes(schemaVersion)) {
+    console.error('Error: shard --schema-version must be 2.0.0 or 1.2.0');
     process.exit(1);
   }
-  if (format === 'fortemi-shard' && !out) {
+  if (format === 'fortemi-shard' && profile && !['full-v1', 'core-v1'].includes(profile)) {
+    console.error('Error: shard --profile must be full-v1 or core-v1');
+    process.exit(1);
+  }
+  if (format === 'fortemi-shard' && !out && !migrateFrom) {
     console.error('Error: --format fortemi-shard requires --out <path>');
     process.exit(1);
   }
 
   try {
     if (format === 'fortemi-shard') {
-      const { writeAiwgFortemiKnowledgeShard } = await import('./fortemi-shard-export.js');
+      const {
+        diagnoseAiwgFortemiShardMigration,
+        writeAiwgFortemiKnowledgeShard,
+      } = await import('./fortemi-shard-export.js');
+      if (migrateFrom) {
+        if (!dryRun) {
+          throw new Error(
+            '--migrate-from is diagnostic-only and requires --dry-run; '
+            + 'source-less core-v1 artifacts cannot be promoted losslessly.',
+          );
+        }
+        const diagnosis = diagnoseAiwgFortemiShardMigration(process.cwd(), migrateFrom);
+        if (json) console.log(JSON.stringify(diagnosis, null, 2));
+        else {
+          console.log(`Migration supported: no`);
+          console.log(`Diagnostic: ${diagnosis.diagnostic}`);
+          console.log(`Action: ${diagnosis.action}`);
+        }
+        return;
+      }
       const result = await writeAiwgFortemiKnowledgeShard(process.cwd(), out!, {
         graph,
         repo,
         privacy: privacy as 'private' | 'sanitized' | 'public' | undefined,
         generatedAt,
+        schemaVersion: schemaVersion as '1.2.0' | '2.0.0' | undefined,
+        profile: profile as 'core-v1' | 'full-v1' | undefined,
+        failOnLoss: args.includes('--fail-on-loss'),
+        dryRun,
+        overwrite: args.includes('--force'),
       });
-      console.log(`Exported ${result.items} AIWG records to ${result.outPath} (${result.bytes} bytes)`);
+      if (json) console.log(JSON.stringify(result, null, 2));
+      else {
+        const action = result.written ? 'Exported' : 'Would export';
+        console.log(
+          `${action} ${result.items} AIWG records as `
+          + `${result.conversion.schemaVersion}/${result.conversion.profile} `
+          + `to ${result.outPath} (${result.bytes} bytes; `
+          + `${result.conversion.losses.length} losses)`,
+        );
+      }
       return;
     }
     const { buildAiwgFortemiIndexExport, writeAiwgFortemiIndexExport } = await import('./browser-export.js');
