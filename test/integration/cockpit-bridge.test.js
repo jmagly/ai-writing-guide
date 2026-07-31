@@ -549,6 +549,14 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
               status: 'running',
               tenantId: 'default',
               launchContext: { selectedTier: 'vm' },
+            }, {
+              instanceId: 'v2-container-1',
+              runtime: { kind: 'container' },
+              loadout: 'agentic-dev',
+              status: 'running',
+              tenantId: 'default',
+              cwd: '/srv/container-home',
+              launchContext: { selectedTier: 'container' },
             }],
           },
         });
@@ -576,6 +584,7 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
         return send(200, { agents: [
           { id: 'agent-v2-host-1', instance_id: 'v2-host-1', status: 'Ready' },
           { id: 'agent-ready-qemu-1', instance_id: 'ready-qemu-1', status: 'Ready' },
+          { id: 'agent-v2-container-1', instance_id: 'v2-container-1', status: 'Ready' },
         ] });
       }
       if (url.pathname === '/agents/v2-host-1/sessions') return send(404, { error: 'legacy_sessions_absent' });
@@ -620,6 +629,15 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
         req.on('end', () => {
           const body = raw ? JSON.parse(raw) : {};
           send(201, { session_id: 'sess-created-v1', requested: body, pty_ws_url: 'wss://{host}/agents/v2-host-1/sessions/sess-created-v1/attach' });
+        });
+        return;
+      }
+      if (url.pathname === '/api/v1/agents/agent-v2-container-1/sessions' && req.method === 'POST') {
+        let raw = '';
+        req.on('data', (chunk) => { raw += chunk; });
+        req.on('end', () => {
+          const body = raw ? JSON.parse(raw) : {};
+          send(201, { session_id: 'sess-created-container-v1', requested: body, pty_ws_url: 'wss://{host}/agents/v2-container-1/sessions/sess-created-container-v1/attach' });
         });
         return;
       }
@@ -694,6 +712,23 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     // Deterministic prefix + per-request nonce (multi-session per instance).
     expect(created.requested.session_name).toMatch(/^cockpit-v2-host-1-managed-tmux-[0-9a-f]{6}$/);
     expect(created.attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/api\/pty\/agents\/v2-host-1\/sessions\/sess-created-v1\/attach\/[A-Za-z0-9_-]+$/);
+  });
+
+  it('starts non-root container sessions in the executor-reported target cwd', async () => {
+    const created = await (await cf('/api/instances/v2-container-1/sessions', { method: 'POST' })).json();
+    expect(created).toMatchObject({
+      id: 'sess-created-container-v1',
+      requested: {
+        session_backend: 'tmux',
+        session_class: 'managed',
+        command: '/bin/bash',
+        working_dir: '/srv/container-home',
+      },
+    });
+    expect(created.requested.args).toEqual([
+      '-lc',
+      "cd '/srv/container-home' && exec /bin/bash -l",
+    ]);
   });
 
   it('caches agent-list resolution across session polls (#1747)', async () => {

@@ -7,6 +7,17 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Fixed
+
+- **Cockpit managed-session working directories** - The Bridge now honors the
+  executor-reported target cwd for host, container, and VM sessions, with
+  `/home/agent` as the compatibility fallback for older container/VM inventory.
+  Protected daily validation checks the new cwd invariant on the candidate
+  phase while retaining upgrade and rollback coverage for immutable baselines.
+- **Cockpit Codex live workload** - Gate-owned workspaces can run the bounded
+  Codex discovery probe outside a Git checkout without weakening read-only
+  sandboxing.
+
 ## [2026.7.24] - 2026-07-29 - "Sandbox runtime readiness and setup manifest CLI"
 
 ### Added
