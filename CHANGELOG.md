@@ -17,6 +17,29 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   timelines without executing or exporting historical provider payloads
   (#1974).
 
+### Changed
+
+- **Fortemi shard interoperability** - shard export now defaults to the
+  `full-v1` receipt contract, binds producer, converter, and consumer evidence,
+  and keeps legacy core-only output available through an explicit mode.
+- **Fortemi core dependency** - the supported core and receipt fixtures now use
+  `@fortemi/core@2026.7.15`, with conformance and discovery gates enforcing the
+  same converter lineage.
+
+### Security
+
+- **Windows static-asset traversal defense** - AIWG serve now uses
+  `@hono/node-server@2.0.11`, a fixed v2 line for
+  `GHSA-frvp-7c67-39w9`. A regression rejects percent-encoded Windows
+  backslashes before they can resolve outside the configured static root
+  (#1973).
+- **Production dependency floor** - minimum compatible versions now include
+  current fixes for Hono, MCP SDK, js-yaml, ws, yaml, glob/minimatch, and their
+  routed validator dependencies. Chokidar moves to v4 to remove the vulnerable
+  picomatch v2 chain. SDK 1.29 still retains a transitive Hono node-server v1
+  advisory; SDK 1.30 fixes that route but remains blocked by the seven-day
+  minimum-release-age policy (#1973).
+
 ## [2026.7.25] - 2026-07-31 - "Target-native managed session directories"
 
 ### Fixed
