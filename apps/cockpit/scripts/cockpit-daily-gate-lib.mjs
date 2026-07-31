@@ -136,7 +136,14 @@ function phasePassed(phases, id) {
 function identityContains(report, expected) {
   const identity = { ...(report?.executor_identity ?? {}) };
   delete identity.version_hint;
-  return JSON.stringify(identity).toLowerCase().includes(String(expected).toLowerCase());
+  const normalize = (value) => String(value).toLowerCase().replace(/^v(?=\d)/, '');
+  const expectedValue = normalize(expected);
+  const visit = (value) => {
+    if (Array.isArray(value)) return value.some(visit);
+    if (isObject(value)) return Object.values(value).some(visit);
+    return value !== null && value !== undefined && normalize(value) === expectedValue;
+  };
+  return visit(identity);
 }
 
 export function aggregateDailyGateEvidence(input) {

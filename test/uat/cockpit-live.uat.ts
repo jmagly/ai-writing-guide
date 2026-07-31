@@ -189,7 +189,7 @@ function identityFields(body: unknown): Record<string, unknown> {
 async function collectExecutorIdentity(): Promise<Record<string, unknown>> {
   const identity: Record<string, unknown> = {};
   if (EXECUTOR_VERSION_HINT) identity.version_hint = EXECUTOR_VERSION_HINT;
-  for (const path of ['/health', '/version', '/api/version', '/api/v2/version']) {
+  for (const path of ['/health', '/api/v1/health', '/version', '/api/version', '/api/v2/version']) {
     try {
       const r = await fetch(`${EXECUTOR_URL}${path}`, { headers: executorHeaders(), signal: AbortSignal.timeout(2_000) });
       if (!r.ok) continue;
