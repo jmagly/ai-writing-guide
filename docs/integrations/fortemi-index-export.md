@@ -35,9 +35,16 @@ and links;
 SKOS, provenance, chunks, privacy fields, checksums, and other rich AIWG data
 remain intact inside the embedded source records.
 
-npm package `@fortemi/core@2026.7.14` is pinned exactly. Its signed-release source
-tag is `v2026.7.14`; the package-embedded core-v1 contract receipt pins revision 19,
-schema 1.2.0, and the `core-v1` authority bytes. The immutable representative
+npm package `@fortemi/core@2026.7.15` is pinned exactly in both the root and CLI
+manifests. Its registry artifact has integrity
+`sha512-49GThHQHzLFD2BbjgXB7AUznRrwtWo8MsH6IcFMhSmCKj/h+Q5j18EBpkwPHJfC5E7crp+rVzy/GcrT/PF1SXA==`
+and corresponds to signed-release source tag `v2026.7.15`. Compatibility
+verification confirms that the public `@fortemi/core/aiwg-index-shard`
+converter exports remain available and that the package root now exports
+`FORTEMI_SERVER_COMPATIBILITY_REVISION` (`2026-07-06`). This dependency-only
+adoption does not change AIWG's profile default or receipt claims. The
+package-embedded core-v1 contract receipt pins revision 19, schema 1.2.0, and
+the `core-v1` authority bytes. The immutable representative
 archive and machine-readable producer/consumer receipt live under
 `test/fixtures/fortemi-shard/`. Blocking CI verifies the locked npm integrity,
 archive digest and manifest, clean PGlite import/re-export, five rejection
