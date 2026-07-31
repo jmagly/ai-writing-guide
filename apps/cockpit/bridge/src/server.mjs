@@ -1409,7 +1409,11 @@ function defaultSessionLaunch(instance) {
     };
   }
   if (runtime === 'container' || runtime === 'docker' || runtime === 'vm' || runtime === 'qemu' || runtime === 'kvm') {
-    const home = runtime === 'container' || runtime === 'docker' ? '/root' : '/home/agent';
+    // Prefer the executor-reported target-local cwd. Current agentic-sandbox
+    // container and VM contracts report `/home/agent`; retain that value as a
+    // compatibility fallback for older inventory responses. `/root` is not
+    // readable by the mandatory uid 10001 container identity.
+    const home = instance?.launch_context?.cwd ?? '/home/agent';
     return {
       command: '/bin/bash',
       args: ['-lc', `cd ${shellSingleQuote(home)} && exec /bin/bash -l`],

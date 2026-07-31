@@ -443,7 +443,8 @@ families in inventory. For each target it verifies inventory normalization,
 runtime and transport posture, session backend evidence, session create/list,
 observe attach, and a minimal provider-backed workload through a controller
 session when control is advertised. The selected provider is invoked through the
-attached session (`codex exec -s read-only ...`
+attached session (`codex exec --skip-git-repo-check -s read-only ...`
+for gate-owned non-repository workspaces,
 or `claude --print --permission-mode dontAsk --output-format text ...`) and must
 emit `AIWG_COCKPIT_LIVE_OK` and the expected discovery result (`issue-audit` by
 default). This proves a pre-authenticated agentic framework actually launched in

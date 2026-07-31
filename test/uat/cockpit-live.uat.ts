@@ -356,7 +356,7 @@ function shellQuote(value: string): string {
 
 function providerWorkloadCommand(provider: string, prompt: string): string {
   if (provider === 'codex') {
-    return `codex exec -s read-only ${shellQuote(prompt)}`;
+    return `codex exec --skip-git-repo-check -s read-only ${shellQuote(prompt)}`;
   }
   if (provider === 'claude') {
     return `claude --print --permission-mode dontAsk --output-format text ${shellQuote(prompt)}`;
@@ -860,7 +860,13 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
           throw new Error(`${targetDetail}; provider workload did not prove AIWG discovery result ${DISCOVERY_EXPECT}`);
         }
         createdSessions.push({ target, instanceId: String(instance.id), sessionId: String(driveStart.body.id) });
-        if (DAILY_MODE) {
+        // The candidate phase owns new cwd acceptance. Previous-stable and
+        // rollback phases prove upgrade continuity for the behavior their
+        // immutable versions actually shipped; requiring a newly introduced
+        // invariant there makes a regression-fix candidate impossible to
+        // validate. The aggregate daily gate already reads cwd evidence from
+        // candidate_smoke only.
+        if (DAILY_MODE && DAILY_PHASE === 'candidate') {
           const expectedCwd = EXPECT_CWD[target];
           if (!expectedCwd) throw new Error(`${targetDetail}; AIWG_COCKPIT_LIVE_EXPECT_CWD_${target.toUpperCase()} is required in daily mode`);
           const cwdMarker = 'AIWG_COCKPIT_CWD=';
