@@ -59,6 +59,17 @@ aiwg sessions purge <session-id> [--confirm] --actor-class <class>
                     [--basis <text>] [--dry-run] [--json]
 aiwg sessions audit --workspace <id> [--limit <1..500>] [--cursor <opaque>]
                     [--otel] [--json]
+aiwg sessions analytics summary --workspace <id> [filters] [--json]
+aiwg sessions analytics tool-calls --workspace <id>
+                        [--group-by tool|session|provider] [filters] [--json]
+aiwg sessions analytics escalations --workspace <id> [filters] [--json]
+aiwg sessions analytics hitl --workspace <id> [filters] [--json]
+aiwg sessions forensics timeline <session-id|query> --workspace <id>
+                        --authorize-forensics [--markdown] [filters] [--json]
+aiwg sessions forensics indicators --workspace <id>
+                        --authorize-forensics [filters] [--json]
+aiwg sessions forensics evidence <event-id|fact-id|candidate-id>
+                        --workspace <id> --authorize-forensics [--json]
 aiwg sessions doctor [--json]
 ```
 
@@ -197,6 +208,46 @@ catalog retention/disposal policy; transcript purge does not silently remove
 its content-free accountability record. Skill-usage JSONL follows its own
 documented rotation policy, while orchestration telemetry remains governed by
 the service telemetry configuration.
+
+## Analytics and forensic evidence
+
+Session import maintains a versioned, content-free analytics index in the same
+catalog transaction boundary as normalized events. Repeated import is
+idempotent. `reindex` deterministically rebuilds both FTS and analytics facts;
+tombstone, restore, and purge remove or restore derived facts with the session
+lifecycle.
+
+The `analytics` views report tool calls/results, retry groups, escalation
+decisions, HITL decisions, lifecycle boundaries, and indicators. Filters compose
+over provider, workspace, session, date range, tool, status, participant/actor,
+tag, sensitivity, and extraction state. Escalation status distinguishes
+requested, granted, denied, timed-out, unsupported, and provider-unknown.
+Three or more closely repeated calls with the same normalized tool/input
+identity emit the `tool-quota-pressure` indicator, matching the repository's
+tool-quota loop semantics.
+
+Facts contain stable citations to normalized event, import run, source, and
+safe locator-class identity. They never store transcript text, command
+arguments, URLs, secret values, or native payloads. Provider extensions are
+already allowlisted/redacted before classification; opaque or malformed
+extensions yield indicators rather than executable content.
+
+Forensic views require `--authorize-forensics` on every invocation. This is an
+explicit local-operator authorization boundary, not a persistent preference.
+Timeline and indicator output is reconstructed from cited normalized facts.
+Evidence output returns bounded normalized metadata and removes candidate
+quotes. Historical commands, URLs, payloads, and instructions are never
+executed or replayed.
+
+`--markdown` emits a sanitized, investigator-friendly timeline table suitable
+for incident review or handoff to the AIWG forensics framework. JSON remains
+the stable automation contract. Both formats retain evidence IDs so an
+authorized operator can inspect the corresponding normalized catalog event.
+
+The initial derived schema is `1.0.0`. Provider-specific fields remain under
+the existing `native.<provider>` envelope, while analytics classifications are
+provider-neutral. HITL facts may link prompt type and task/session transition;
+approval workflow routing remains owned by #1565.
 
 ## Search authorization and citations
 

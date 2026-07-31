@@ -20,6 +20,12 @@ import {
 } from './batch-contracts.js';
 import { redactSessionText, sanitizeNativeExtensions } from './policy.js';
 import type { TimelineInput } from './timeline.js';
+import {
+  deriveSessionAnalytics,
+  type SessionAnalyticsCategory,
+  type SessionAnalyticsFact,
+  type SessionAnalyticsStatus,
+} from './analytics.js';
 
 const require = createRequire(import.meta.url);
 const POLICY_PROVIDER_MIGRATION = 'policy-provider-identity:v2';
@@ -218,6 +224,41 @@ export interface MutationAuditPage {
   nextCursor: string | null;
 }
 
+export interface SessionAnalyticsQuery {
+  workspaceId: string;
+  categories?: SessionAnalyticsCategory[];
+  provider?: string;
+  sessionId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  tool?: string;
+  status?: SessionAnalyticsStatus;
+  actor?: string;
+  tag?: string;
+  sensitivity?: string;
+  extractionState?: string;
+  limit?: number;
+}
+
+export interface SessionAnalyticsSummary {
+  analyticsVersion: '1.0.0';
+  workspaceId: string;
+  totals: {
+    facts: number;
+    sessions: number;
+    toolCalls: number;
+    toolFailures: number;
+    escalations: number;
+    hitlDecisions: number;
+    indicators: number;
+    retryGroups: number;
+  };
+  byCategory: Record<string, number>;
+  byStatus: Record<string, number>;
+  byProvider: Record<string, number>;
+  byTool: Record<string, number>;
+}
+
 export class SessionRepository {
   private readonly db: SqliteDatabase;
 
@@ -317,10 +358,23 @@ export class SessionRepository {
       CREATE TABLE IF NOT EXISTS session_catalog_meta (
         key TEXT PRIMARY KEY, value TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS session_analytics_facts (
+        fact_id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL,
+        session_id TEXT NOT NULL, event_id TEXT NOT NULL,
+        category TEXT NOT NULL, status TEXT NOT NULL,
+        provider TEXT NOT NULL, tool_name TEXT, occurred_at TEXT,
+        data TEXT NOT NULL,
+        FOREIGN KEY(session_id) REFERENCES sessions(session_id) ON DELETE CASCADE,
+        FOREIGN KEY(event_id) REFERENCES session_events(event_id) ON DELETE CASCADE
+      );
       CREATE INDEX IF NOT EXISTS idx_session_workspace_provider
         ON sessions(workspace_id, source_id, lifecycle);
       CREATE INDEX IF NOT EXISTS idx_event_session_sequence
         ON session_events(session_id, sequence_no);
+      CREATE INDEX IF NOT EXISTS idx_session_analytics_scope
+        ON session_analytics_facts(
+          workspace_id, category, provider, status, occurred_at, fact_id
+        );
       CREATE VIRTUAL TABLE IF NOT EXISTS session_event_fts USING fts5(
         event_id UNINDEXED, searchable_text, tokenize='unicode61'
       );
@@ -359,6 +413,29 @@ export class SessionRepository {
     this.alignSessionFtsRowids();
     this.migrateSessionPolicyAndProviderIdentity();
     this.migrateEventOriginAndIntent();
+    this.alignSessionAnalytics();
+  }
+
+  private alignSessionAnalytics(): void {
+    const eventCount = Number(this.db.prepare(
+      `SELECT COUNT(*) AS count
+       FROM session_events e
+       JOIN import_runs r ON r.import_run_id=e.import_run_id
+       JOIN sessions s ON s.session_id=e.session_id
+       WHERE r.status='committed' AND s.lifecycle!='tombstoned'`,
+    ).get()?.count ?? 0);
+    const factSessions = Number(this.db.prepare(
+      'SELECT COUNT(DISTINCT session_id) AS count FROM session_analytics_facts',
+    ).get()?.count ?? 0);
+    const sourceSessions = Number(this.db.prepare(
+      `SELECT COUNT(DISTINCT e.session_id) AS count
+       FROM session_events e
+       JOIN import_runs r ON r.import_run_id=e.import_run_id
+       JOIN sessions s ON s.session_id=e.session_id
+       WHERE r.status='committed' AND s.lifecycle!='tombstoned'`,
+    ).get()?.count ?? 0);
+    if (eventCount === 0 || factSessions === sourceSessions) return;
+    this.rebuildAnalytics();
   }
 
   private alignSessionFtsRowids(): void {
@@ -840,6 +917,11 @@ export class SessionRepository {
       this.db.prepare(
         `UPDATE import_runs SET status=?, checkpoint=? WHERE import_run_id=?`,
       ).run(outcome, JSON.stringify(checkpoint), batch.run.importRunId);
+      if (publish) {
+        for (const session of batch.sessions) {
+          this.rebuildAnalytics(session.workspaceId, session.sessionId);
+        }
+      }
       const counts = { sessions: sessionsInserted, events: eventsInserted };
       this.db.prepare(
         `INSERT INTO import_receipts(operation_id, import_run_id, outcome, counts, checkpoint)
@@ -907,6 +989,7 @@ export class SessionRepository {
            WHERE operation_id=?`,
         ).run(updated.observedAt, JSON.stringify(updated), operationId);
       }
+      if (result.changes > 0) this.rebuildAnalytics();
       return result.changes;
     });
     return commit();
@@ -952,6 +1035,7 @@ export class SessionRepository {
            WHERE operation_id=?`,
         ).run(updated.observedAt, JSON.stringify(updated), operationId);
       }
+      if (result.changes > 0) this.rebuildAnalytics();
       return result.changes;
     });
     return commit();
@@ -1348,6 +1432,197 @@ export class SessionRepository {
         : null,
       snapshotRowid,
     };
+  }
+
+  rebuildAnalytics(workspaceId?: string, sessionId?: string): number {
+    const where = [
+      `r.status='committed'`,
+      `s.lifecycle!='tombstoned'`,
+    ];
+    const params: unknown[] = [];
+    if (workspaceId) {
+      where.push('s.workspace_id=?');
+      params.push(workspaceId);
+    }
+    if (sessionId) {
+      where.push('s.session_id=?');
+      params.push(sessionId);
+    }
+    const sessions = this.db.prepare(
+      `SELECT s.session_id, s.data
+       FROM sessions s
+       WHERE s.lifecycle!='tombstoned'
+       ${workspaceId ? 'AND s.workspace_id=?' : ''}
+       ${sessionId ? 'AND s.session_id=?' : ''}
+       AND EXISTS (
+         SELECT 1 FROM session_events e
+         JOIN import_runs r ON r.import_run_id=e.import_run_id
+         WHERE e.session_id=s.session_id AND r.status='committed'
+       )
+       ORDER BY s.session_id`,
+    ).all(...[
+      ...(workspaceId ? [workspaceId] : []),
+      ...(sessionId ? [sessionId] : []),
+    ]);
+    if (!workspaceId && !sessionId) {
+      this.db.exec('DELETE FROM session_analytics_facts');
+    } else if (sessionId) {
+      this.db.prepare('DELETE FROM session_analytics_facts WHERE session_id=?').run(sessionId);
+    } else {
+      this.db.prepare('DELETE FROM session_analytics_facts WHERE workspace_id=?').run(workspaceId);
+    }
+    const eventQuery = this.db.prepare(
+      `SELECT e.data
+       FROM session_events e
+       JOIN import_runs r ON r.import_run_id=e.import_run_id
+       JOIN sessions s ON s.session_id=e.session_id
+       WHERE e.session_id=? AND ${where.join(' AND ')}
+       ORDER BY e.sequence_no, e.event_id`,
+    );
+    const insert = this.db.prepare(
+      `INSERT OR REPLACE INTO session_analytics_facts(
+         fact_id, workspace_id, session_id, event_id, category, status,
+         provider, tool_name, occurred_at, data
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    let inserted = 0;
+    for (const row of sessions) {
+      const session = JSON.parse(String(row.data)) as Session;
+      const events = eventQuery.all(session.sessionId, ...params)
+        .map((eventRow) => JSON.parse(String(eventRow.data)) as SessionEvent);
+      for (const fact of deriveSessionAnalytics(session, events)) {
+        inserted += insert.run(
+          fact.factId,
+          fact.workspaceId,
+          fact.sessionId,
+          fact.eventId,
+          fact.category,
+          fact.status,
+          fact.provider,
+          fact.toolName,
+          fact.occurredAt,
+          JSON.stringify(fact),
+        ).changes;
+      }
+    }
+    return inserted;
+  }
+
+  listAnalyticsFacts(options: SessionAnalyticsQuery): SessionAnalyticsFact[] {
+    const where = [
+      'f.workspace_id=?',
+      `s.lifecycle!='tombstoned'`,
+      `r.status='committed'`,
+    ];
+    const params: unknown[] = [options.workspaceId];
+    if (options.categories?.length) {
+      where.push(`f.category IN (${options.categories.map(() => '?').join(', ')})`);
+      params.push(...options.categories);
+    }
+    const scalar = [
+      ['f.provider', options.provider],
+      ['f.session_id', options.sessionId],
+      ['f.tool_name', options.tool],
+      ['f.status', options.status],
+      [`json_extract(f.data, '$.actor')`, options.actor],
+      [`json_extract(f.data, '$.sensitivity')`, options.sensitivity],
+      [`json_extract(f.data, '$.extractionState')`, options.extractionState],
+    ] as const;
+    for (const [column, value] of scalar) {
+      if (value === undefined) continue;
+      where.push(`${column}=?`);
+      params.push(value);
+    }
+    if (options.dateFrom) {
+      where.push('f.occurred_at>=?');
+      params.push(options.dateFrom);
+    }
+    if (options.dateTo) {
+      where.push('f.occurred_at<=?');
+      params.push(options.dateTo);
+    }
+    if (options.tag) {
+      where.push(`EXISTS (
+        SELECT 1 FROM session_tags t
+        WHERE t.session_id=f.session_id AND t.tag=?
+      )`);
+      params.push(options.tag);
+    }
+    const limit = options.limit ?? 500;
+    if (limit < 1 || limit > 5_000) {
+      throw new SessionContractError(
+        'RESOURCE_LIMIT_EXCEEDED',
+        'analytics limit must be between 1 and 5000',
+      );
+    }
+    return this.db.prepare(
+      `SELECT f.data
+       FROM session_analytics_facts f
+       JOIN sessions s ON s.session_id=f.session_id
+       JOIN session_events e ON e.event_id=f.event_id
+       JOIN import_runs r ON r.import_run_id=e.import_run_id
+       WHERE ${where.join(' AND ')}
+       ORDER BY
+         CASE WHEN f.occurred_at IS NULL THEN 1 ELSE 0 END,
+         f.occurred_at, f.session_id,
+         json_extract(f.data, '$.sequence'), f.fact_id
+       LIMIT ?`,
+    ).all(...params, limit)
+      .map((row) => JSON.parse(String(row.data)) as SessionAnalyticsFact);
+  }
+
+  analyticsSummary(options: SessionAnalyticsQuery): SessionAnalyticsSummary {
+    const facts = this.listAnalyticsFacts({ ...options, limit: options.limit ?? 5_000 });
+    const byCategory = countBy(facts, (fact) => fact.category);
+    const byStatus = countBy(facts, (fact) => fact.status);
+    const byProvider = countBy(facts, (fact) => fact.provider);
+    const byTool = countBy(
+      facts.filter((fact) => fact.toolName),
+      (fact) => fact.toolName!,
+    );
+    return {
+      analyticsVersion: '1.0.0',
+      workspaceId: options.workspaceId,
+      totals: {
+        facts: facts.length,
+        sessions: new Set(facts.map((fact) => fact.sessionId)).size,
+        toolCalls: facts.filter((fact) => fact.category === 'tool-call').length,
+        toolFailures: facts.filter((fact) =>
+          fact.category === 'tool-result' && fact.status === 'failed').length,
+        escalations: facts.filter((fact) => fact.category === 'escalation').length,
+        hitlDecisions: facts.filter((fact) => fact.category === 'hitl').length,
+        indicators: facts.filter((fact) => fact.category === 'indicator').length,
+        retryGroups: new Set(
+          facts.map((fact) => fact.retryGroupId).filter(Boolean),
+        ).size,
+      },
+      byCategory,
+      byStatus,
+      byProvider,
+      byTool,
+    };
+  }
+
+  getAnalyticsEvidence(
+    id: string,
+    workspaceId: string,
+  ): { fact: SessionAnalyticsFact | null; event: SessionEvent | null } {
+    const row = this.db.prepare(
+      `SELECT f.data AS fact_data, e.data AS event_data
+       FROM session_analytics_facts f
+       JOIN sessions s ON s.session_id=f.session_id
+       JOIN session_events e ON e.event_id=f.event_id
+       JOIN import_runs r ON r.import_run_id=e.import_run_id
+       WHERE (f.fact_id=? OR f.event_id=?)
+       AND f.workspace_id=? AND s.lifecycle!='tombstoned' AND r.status='committed'
+       ORDER BY f.fact_id LIMIT 1`,
+    ).get(id, id, workspaceId);
+    return row
+      ? {
+          fact: JSON.parse(String(row.fact_data)) as SessionAnalyticsFact,
+          event: JSON.parse(String(row.event_data)) as SessionEvent,
+        }
+      : { fact: null, event: null };
   }
 
   saveCandidates(candidates: readonly IntelligenceCandidate[]): IntelligenceCandidate[] {
@@ -1750,6 +2025,11 @@ export class SessionRepository {
           counts: { sessions: 1 },
         });
       }
+      if (changed) {
+        this.db.prepare(
+          'DELETE FROM session_analytics_facts WHERE session_id=?',
+        ).run(sessionId);
+      }
       return changed;
     });
     return tombstone();
@@ -1780,6 +2060,7 @@ export class SessionRepository {
           counts: { sessions: 1 },
         });
       }
+      if (changed) this.rebuildAnalytics(workspaceId, sessionId);
       return changed;
     });
     return restore();
@@ -2057,6 +2338,9 @@ export class SessionRepository {
           dependencyDispositions: validatedDecisions.length,
         },
       });
+      this.db.prepare(
+        'DELETE FROM session_analytics_facts WHERE session_id=?',
+      ).run(input.preview.sessionId);
       return receipt;
     });
     return apply();
@@ -2075,6 +2359,7 @@ export class SessionRepository {
         indexed = Number(this.db.prepare(
           'SELECT COUNT(*) AS count FROM session_events',
         ).get()?.count ?? 0);
+        this.rebuildAnalytics();
       } else {
         this.db.prepare(
           `DELETE FROM session_event_fts WHERE rowid IN (
@@ -2090,6 +2375,7 @@ export class SessionRepository {
            JOIN sessions s ON s.session_id=e.session_id
            WHERE s.workspace_id=?`,
         ).run(workspaceId).changes;
+        this.rebuildAnalytics(workspaceId);
       }
       this.emitRepositoryMutation({
         operationId: sha256([
@@ -2213,6 +2499,20 @@ function canonicalDevinLocator(value: string): string {
   return value.startsWith('windsurf-')
     ? `devin-desktop-${value.slice('windsurf-'.length)}`
     : value;
+}
+
+function countBy<T>(
+  items: readonly T[],
+  key: (item: T) => string,
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const item of items) {
+    const value = key(item);
+    counts[value] = (counts[value] ?? 0) + 1;
+  }
+  return Object.fromEntries(
+    Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)),
+  );
 }
 
 function encodeMutationCursor(rowid: number, workspaceId: string): string {

@@ -57,6 +57,10 @@ import {
   writeDiscoveryManifest,
   type SessionProviderId,
   type SessionAuthorizationContext,
+  type SessionAnalyticsCategory,
+  type SessionAnalyticsFact,
+  type SessionAnalyticsQuery,
+  type SessionAnalyticsStatus,
   type SessionSourceAdapter,
   type SelectedSource,
 } from '../../sessions/index.js';
@@ -98,6 +102,8 @@ Commands:
   restore <session-id>            Restore a reversible catalog tombstone
   purge <session-id>              Preview terminal AIWG-copy purge
   audit --workspace <id>          Read content-free mutation events
+  analytics <view> --workspace <id>  Summary, tool-calls, escalations, or HITL
+  forensics <view> --workspace <id>  Authorized timeline, indicators, or evidence
   doctor                          Check catalog availability and integrity
 
 Options:
@@ -298,6 +304,108 @@ async function executeCommand(
           page: { limit: boundedInteger(args.values.get('--limit'), 50, 1, 500, '--limit'),
             nextCursor: result.nextCursor },
         });
+      }
+      case 'analytics': {
+        const view = requiredPositional(args, 0, 'analytics view');
+        const { workspaceId } = readAuthorizationContext(ctx, args, command, repository);
+        const query = analyticsQuery(args, workspaceId);
+        if (view === 'summary') {
+          return ok(command, {
+            view,
+            summary: repository.analyticsSummary(query),
+          });
+        }
+        const categories = analyticsCategories(view);
+        const items = repository.listAnalyticsFacts({ ...query, categories });
+        return ok(command, {
+          analyticsVersion: '1.0.0',
+          view,
+          items,
+          count: items.length,
+          groupBy: analyticsGrouping(items, args.values.get('--group-by')),
+        });
+      }
+      case 'forensics': {
+        if (!args.flags.has('--authorize-forensics')) {
+          throw new CliError(
+            'OPERATION_NOT_AUTHORIZED',
+            'forensic extraction requires --authorize-forensics for this invocation',
+            EXIT.usage,
+          );
+        }
+        const view = requiredPositional(args, 0, 'forensics view');
+        const { workspaceId } = authorizationContext(ctx, args, command);
+        const query = analyticsQuery(args, workspaceId);
+        if (view === 'indicators') {
+          const items = repository.listAnalyticsFacts({
+            ...query,
+            categories: ['indicator'],
+          });
+          return ok(command, forensicOutput(view, items, args));
+        }
+        if (view === 'timeline') {
+          const target = requiredPositional(args, 1, 'session-id or query');
+          const direct = repository.getSession(target, workspaceId);
+          const sessionIds = direct
+            ? [target]
+            : [...new Set(repository.search({
+                query: target,
+                workspaceId,
+                limit: boundedInteger(args.values.get('--limit'), 50, 1, 500, '--limit'),
+              }).items.map((item) => item.sessionId))];
+          const items = sessionIds.flatMap((sessionId) =>
+            repository.listAnalyticsFacts({ ...query, sessionId }));
+          return ok(command, forensicOutput(view, items, args));
+        }
+        if (view === 'evidence') {
+          const id = requiredPositional(args, 1, 'event-id, fact-id, or candidate-id');
+          const evidence = repository.getAnalyticsEvidence(id, workspaceId);
+          if (evidence.fact && evidence.event) {
+            return ok(command, {
+              analyticsVersion: '1.0.0',
+              view,
+              fact: evidence.fact,
+              event: {
+                eventId: evidence.event.eventId,
+                sessionId: evidence.event.sessionId,
+                sourceId: evidence.event.sourceId,
+                importRunId: evidence.event.importRunId,
+                sequence: evidence.event.sequence,
+                kind: evidence.event.kind,
+                occurredAt: evidence.event.occurredAt,
+                sensitivity: evidence.event.sensitivity,
+                rawReference: evidence.event.rawReference,
+                digest: evidence.event.digest,
+              },
+            });
+          }
+          const candidate = repository.getCandidate(id, undefined, workspaceId);
+          if (!candidate) {
+            throw new CliError(
+              'EVIDENCE_NOT_FOUND',
+              `authorized analytics evidence not found: ${id}`,
+              EXIT.unavailable,
+            );
+          }
+          return ok(command, {
+            analyticsVersion: '1.0.0',
+            view,
+            candidate: {
+              candidateId: candidate.candidateId,
+              version: candidate.version,
+              type: candidate.type,
+              evidence: candidate.evidence.map(({ quote: _quote, ...citation }) => citation),
+              sensitivity: candidate.sensitivity,
+              security: candidate.security,
+              reviewState: candidate.reviewState,
+            },
+          });
+        }
+        throw new CliError(
+          'INVALID_ARGUMENT',
+          `unknown forensics view: ${view}`,
+          EXIT.usage,
+        );
       }
       case 'extract': {
         const { workspaceId } = authorizationContext(ctx, args, command);
@@ -1146,6 +1254,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     '--manifest', '--provider-home', '--codex-root', '--lock-wait-ms', '--min-coverage', '--gap',
     '--inactivity-threshold',
     '--control-events',
+    '--session', '--status', '--actor', '--group-by',
   ]);
   let command: string | undefined;
   for (let index = 0; index < argv.length; index += 1) {
@@ -1374,6 +1483,106 @@ function dependentAction(
     | 'origin_unavailable' | 'delete' | 'abort';
 }
 
+function analyticsQuery(args: ParsedArgs, workspaceId: string): SessionAnalyticsQuery {
+  const providerInput = args.values.get('--provider');
+  const statusInput = args.values.get('--status');
+  return {
+    workspaceId,
+    provider: providerInput ? assertSessionProviderId(providerInput) : undefined,
+    sessionId: args.values.get('--session'),
+    dateFrom: args.values.get('--date-from'),
+    dateTo: args.values.get('--date-to'),
+    tool: args.values.get('--tool'),
+    status: statusInput ? analyticsStatus(statusInput) : undefined,
+    actor: args.values.get('--actor') ?? args.values.get('--participant'),
+    tag: args.values.get('--tag'),
+    sensitivity: args.values.get('--sensitivity'),
+    extractionState: args.values.get('--extraction-state'),
+    limit: boundedInteger(args.values.get('--limit'), 500, 1, 5_000, '--limit'),
+  };
+}
+
+function analyticsStatus(value: string): SessionAnalyticsStatus {
+  const allowed = new Set<SessionAnalyticsStatus>([
+    'requested', 'running', 'succeeded', 'failed', 'granted', 'denied',
+    'timed-out', 'unsupported', 'provider-unknown', 'observed',
+  ]);
+  if (!allowed.has(value as SessionAnalyticsStatus)) {
+    throw new CliError('INVALID_ARGUMENT', `invalid analytics status: ${value}`, EXIT.usage);
+  }
+  return value as SessionAnalyticsStatus;
+}
+
+function analyticsCategories(view: string): SessionAnalyticsCategory[] {
+  if (view === 'tool-calls') return ['tool-call', 'tool-result'];
+  if (view === 'escalations') return ['escalation'];
+  if (view === 'hitl') return ['hitl'];
+  throw new CliError('INVALID_ARGUMENT', `unknown analytics view: ${view}`, EXIT.usage);
+}
+
+function analyticsGrouping(
+  items: SessionAnalyticsFact[],
+  groupBy: string | undefined,
+): Record<string, number> | null {
+  if (!groupBy) return null;
+  if (!['tool', 'session', 'provider'].includes(groupBy)) {
+    throw new CliError('INVALID_ARGUMENT', `invalid --group-by value: ${groupBy}`, EXIT.usage);
+  }
+  const counts: Record<string, number> = {};
+  for (const item of items) {
+    const value = groupBy === 'tool'
+      ? item.toolName
+      : groupBy === 'session'
+        ? item.sessionId
+        : item.provider;
+    const key = typeof value === 'string' && value ? value : '<unknown>';
+    counts[key] = (counts[key] ?? 0) + 1;
+  }
+  return Object.fromEntries(
+    Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)),
+  );
+}
+
+function forensicOutput(
+  view: string,
+  items: SessionAnalyticsFact[],
+  args: ParsedArgs,
+): Record<string, unknown> {
+  const output: Record<string, unknown> = {
+    analyticsVersion: '1.0.0',
+    view,
+    items,
+    count: items.length,
+    authorization: {
+      explicit: true,
+      providerLogsModified: false,
+      historicalContentExecuted: false,
+    },
+  };
+  if (args.flags.has('--markdown')) {
+    output.markdown = [
+      `# Session Forensics ${view}`,
+      '',
+      `Facts: ${items.length}`,
+      '',
+      '| Time | Provider | Session | Category | Status | Evidence |',
+      '|---|---|---|---|---|---|',
+      ...items.map((item) => {
+        const citation = item.sourceCitation as Record<string, unknown> | undefined;
+        return [
+          item.occurredAt ?? '<unknown>',
+          item.provider ?? '<unknown>',
+          item.sessionId ?? '<unknown>',
+          item.category ?? '<unknown>',
+          item.status ?? '<unknown>',
+          citation?.eventId ?? item.eventId ?? '<unknown>',
+        ].map((value) => String(value).replaceAll('|', '\\|')).join(' | ');
+      }).map((row) => `| ${row} |`),
+    ].join('\n');
+  }
+  return output;
+}
+
 function isDryRun(ctx: HandlerContext, args: ParsedArgs): boolean {
   return Boolean(ctx.dryRun || args.flags.has('--dry-run'));
 }
@@ -1398,6 +1607,12 @@ function emit(value: Envelope): void {
 
 function printHuman(value: Envelope): void {
   if (value.status === 'preview') console.log('Preview (no changes applied)');
+  if (value.command === 'sessions.forensics' && value.data
+    && typeof value.data === 'object' && 'markdown' in value.data
+    && typeof value.data.markdown === 'string') {
+    console.log(value.data.markdown);
+    return;
+  }
   if (value.command === 'sessions.timeline' && value.data
     && typeof value.data === 'object' && 'items' in value.data) {
     const data = value.data as { items: Array<Record<string, unknown>>; coverage?: { status?: string } };

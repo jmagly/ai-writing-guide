@@ -93,7 +93,7 @@ const SECRET_PATTERNS: Array<[string, RegExp]> = [
 const SENSITIVE_KEY = /(?:authorization|auth[_-]?header|cookie|credential|password|passwd|secret|token|api[_-]?key|private[_-]?key|connection[_-]?string)/i;
 const CONTENT_KEY = /(?:^|[_-])(?:text|content|prompt|command|arguments?|args|result|output|body|request|response|source|code|query)(?:$|[_-])/i;
 const PATH_KEY = /(?:^|[_-])(?:path|cwd|directory|filename|file)(?:$|[_-])/i;
-const SAFE_STRING_KEY = /(?:^|[_-])(?:id|kind|type|role|status|state|lifecycle|reason|name|product|provider|version|schema|model|format|class|mode|event|operation|tool|method|language|scope|consistency|disposition|phase|visibility|protocol|category|classification)(?:$|[_-])/i;
+const SAFE_STRING_KEY = /(?:^|[_-])(?:id|kind|type|role|status|state|lifecycle|reason|name|product|provider|version|schema|model|format|class|mode|event|operation|tool|method|language|scope|consistency|disposition|phase|visibility|protocol|category|classification|decision|capability|permission|transition|hash|digest)(?:$|[_-])/i;
 const CONTROL_CHARACTERS = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g;
 
 export interface NativeSanitizationLimits {

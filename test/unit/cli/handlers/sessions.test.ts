@@ -606,6 +606,71 @@ describe('sessions CLI catalog lifecycle', () => {
     });
 
     await sessionsHandler.execute(context([
+      'analytics', 'summary', ...dbArgs,
+    ]));
+    expect(jsonOutput(log)).toMatchObject({
+      command: 'sessions.analytics',
+      status: 'ok',
+      data: {
+        view: 'summary',
+        summary: {
+          analyticsVersion: '1.0.0',
+          workspaceId: 'workspace-fixture',
+          totals: { sessions: 1, indicators: 3 },
+        },
+      },
+    });
+    await sessionsHandler.execute(context([
+      'forensics', 'indicators', ...dbArgs,
+    ]));
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'error',
+      error: { code: 'OPERATION_NOT_AUTHORIZED' },
+    });
+    await sessionsHandler.execute(context([
+      'forensics', 'indicators', '--authorize-forensics', ...dbArgs,
+    ]));
+    const indicators = jsonOutput(log);
+    expect(indicators).toMatchObject({
+      status: 'ok',
+      data: {
+        analyticsVersion: '1.0.0',
+        view: 'indicators',
+        count: 3,
+        authorization: {
+          explicit: true,
+          historicalContentExecuted: false,
+        },
+      },
+    });
+    expect(JSON.stringify(indicators)).not.toContain('redaction-canary-value');
+    const factId = indicators.data.items[0].factId;
+    await sessionsHandler.execute(context([
+      'forensics', 'evidence', factId, '--authorize-forensics', ...dbArgs,
+    ]));
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'ok',
+      data: {
+        view: 'evidence',
+        fact: { factId, sourceCitation: { eventId: expect.any(String) } },
+        event: {
+          eventId: expect.any(String),
+          rawReference: { locatorClass: 'generic-interchange' },
+        },
+      },
+    });
+    await sessionsHandler.execute(context([
+      'forensics', 'timeline', sessionId, '--authorize-forensics', '--markdown', ...dbArgs,
+    ]));
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'ok',
+      data: {
+        view: 'timeline',
+        markdown: expect.stringContaining('# Session Forensics timeline'),
+      },
+    });
+
+    await sessionsHandler.execute(context([
       'extract', sessionId, '--workspace', 'workspace-fixture', '--dry-run', ...dbArgs,
     ]));
     expect(jsonOutput(log)).toMatchObject({

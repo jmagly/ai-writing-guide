@@ -75,6 +75,141 @@ const records: ProviderRecord[] = [
 ];
 
 describe('transactional session repository and importer', () => {
+  it('maintains content-free analytics and forensic indices across lifecycle mutations', async () => {
+    const repository = new SessionRepository();
+    const importer = new IncrementalSessionImporter(repository);
+    const analyticsSource = { ...source, sourceId: 'analytics-source' };
+    const analyticsRecords: ProviderRecord[] = [
+      {
+        nativeSessionId: 'analytics-session', nativeEventId: 'tool-1', sequence: 0,
+        kind: 'tool-call', role: 'assistant', toolName: 'exec', toolCallId: 'call-1',
+        occurredAt: '2026-07-26T00:00:00.000Z', text: 'sensitive command omitted',
+        rawReference: { locatorClass: 'fixture', sequence: 0 },
+        extensions: { input_hash: 'same' },
+      },
+      {
+        nativeSessionId: 'analytics-session', nativeEventId: 'result-1', sequence: 1,
+        kind: 'tool-result.failed', role: 'tool', toolName: 'exec', toolCallId: 'call-1',
+        occurredAt: '2026-07-26T00:00:01.000Z', text: 'failed',
+        rawReference: { locatorClass: 'fixture', sequence: 1 },
+        extensions: { status: 'failed', error_class: 'exit-code' },
+      },
+      ...[2, 3].map((sequence): ProviderRecord => ({
+        nativeSessionId: 'analytics-session',
+        nativeEventId: `tool-${sequence}`,
+        sequence,
+        kind: 'tool-call',
+        role: 'assistant',
+        toolName: 'exec',
+        toolCallId: `call-${sequence}`,
+        occurredAt: `2026-07-26T00:00:0${sequence}.000Z`,
+        text: 'retry',
+        rawReference: { locatorClass: 'fixture', sequence },
+        extensions: { input_hash: 'same' },
+      })),
+      {
+        nativeSessionId: 'analytics-session', nativeEventId: 'approval', sequence: 4,
+        kind: 'sandbox.permission.requested', role: 'assistant',
+        occurredAt: '2026-07-26T00:00:04.000Z', text: 'request',
+        rawReference: { locatorClass: 'fixture', sequence: 4 },
+        extensions: { capability: 'network', decision: 'denied' },
+      },
+      {
+        nativeSessionId: 'analytics-session', nativeEventId: 'hitl', sequence: 5,
+        kind: 'hitl.input_required', role: 'assistant',
+        occurredAt: '2026-07-26T00:00:05.000Z', text: 'operator input',
+        rawReference: { locatorClass: 'fixture', sequence: 5 },
+        extensions: { prompt_type: 'approval', task_state: 'input-required' },
+      },
+      {
+        nativeSessionId: 'analytics-session', nativeEventId: 'resume', sequence: 6,
+        kind: 'lifecycle', role: 'system', activityBoundary: 'resume',
+        occurredAt: '2026-07-26T00:00:06.000Z', text: '',
+        rawReference: { locatorClass: 'fixture', sequence: 6 },
+      },
+      {
+        nativeSessionId: 'analytics-session', nativeEventId: 'opaque', sequence: 7,
+        kind: 'provider.unknown', role: 'assistant',
+        occurredAt: '2026-07-26T00:00:07.000Z', text: 'password=analytics-secret',
+        rawReference: { locatorClass: 'fixture', sequence: 7 },
+        extensions: { redaction_hit: true },
+      },
+    ];
+    await importer.import({
+      source: analyticsSource,
+      selectedSource: {
+        provider: 'generic', locator: '<fixture>', locatorClass: 'synthetic-fixture',
+        sourceId: analyticsSource.sourceId,
+        authorizedScope: { workspaceId: 'workspace-analytics', allowedRoots: ['/fixture'] },
+      },
+      adapter: adapter(analyticsRecords),
+      workspaceId: 'workspace-analytics',
+      policyVersion: '1.0.0',
+    });
+
+    const summary = repository.analyticsSummary({
+      workspaceId: 'workspace-analytics',
+    });
+    expect(summary).toMatchObject({
+      analyticsVersion: '1.0.0',
+      totals: {
+        sessions: 1,
+        toolCalls: 3,
+        toolFailures: 1,
+        escalations: 1,
+        hitlDecisions: 1,
+        retryGroups: 1,
+      },
+    });
+    const escalations = repository.listAnalyticsFacts({
+      workspaceId: 'workspace-analytics',
+      categories: ['escalation'],
+      status: 'denied',
+    });
+    expect(escalations).toMatchObject([{
+      capability: 'network',
+      decision: 'denied',
+      sourceCitation: {
+        provider: 'generic',
+        eventId: expect.any(String),
+        locatorClass: 'fixture',
+      },
+    }]);
+    const indicators = repository.listAnalyticsFacts({
+      workspaceId: 'workspace-analytics',
+      categories: ['indicator'],
+    });
+    expect(indicators.map((item) => item.indicator)).toEqual(expect.arrayContaining([
+      'failed-operation',
+      'tool-quota-pressure',
+      'provider-schema-drift',
+      'sensitive-field-redaction',
+    ]));
+    expect(JSON.stringify(indicators)).not.toContain('analytics-secret');
+    const evidence = repository.getAnalyticsEvidence(
+      escalations[0].factId,
+      'workspace-analytics',
+    );
+    expect(evidence.fact?.factId).toBe(escalations[0].factId);
+    expect(evidence.event?.eventId).toBe(escalations[0].eventId);
+
+    const sessionId = stableSessionId(
+      'generic',
+      analyticsSource.sourceId,
+      'analytics-session',
+    );
+    expect(repository.tombstoneSession(sessionId, 'workspace-analytics')).toBe(true);
+    expect(repository.analyticsSummary({
+      workspaceId: 'workspace-analytics',
+    }).totals.facts).toBe(0);
+    expect(repository.restoreSession(sessionId, 'workspace-analytics')).toBe(true);
+    repository.reindex('workspace-analytics');
+    expect(repository.analyticsSummary({
+      workspaceId: 'workspace-analytics',
+    }).totals.toolCalls).toBe(3);
+    repository.close();
+  });
+
   it('rejects import workspace assignment outside the authorized source scope', async () => {
     const repository = new SessionRepository();
     const importer = new IncrementalSessionImporter(repository);
