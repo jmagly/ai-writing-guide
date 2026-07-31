@@ -16,6 +16,7 @@ export * from './batch-import.js';
 export * from './workspace-discovery.js';
 export * from './timeline.js';
 export * from './origin.js';
+export * from './analytics.js';
 export * from './adapters/generic.js';
 export * from './adapters/claude.js';
 export * from './adapters/codex.js';

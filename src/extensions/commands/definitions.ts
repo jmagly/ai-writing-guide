@@ -1056,10 +1056,16 @@ export const sessionsCommand: Extension = {
   id: 'sessions',
   type: 'skill',
   name: 'Sessions',
-  description: 'Manage the normalized session catalog with versioned JSON, deterministic pagination, previews, and health checks',
+  description: 'Manage the normalized session catalog, analytics, and authorized forensic evidence with versioned JSON',
   version: '1.0.0',
-  capabilities: ['cli', 'session-catalog', 'session-import', 'session-lifecycle', 'doctor'],
-  keywords: ['sessions', 'catalog', 'import', 'source', 'tag', 'reindex', 'delete'],
+  capabilities: [
+    'cli', 'session-catalog', 'session-import', 'session-lifecycle',
+    'session-analytics', 'session-forensics', 'doctor',
+  ],
+  keywords: [
+    'sessions', 'catalog', 'import', 'source', 'tag', 'reindex', 'delete',
+    'analytics', 'forensics', 'timeline', 'indicators',
+  ],
   category: 'project',
   platforms: {
     claude: 'full',
@@ -1074,7 +1080,7 @@ export const sessionsCommand: Extension = {
     triggerPhrases: ['list sessions', 'import sessions', 'session catalog', 'sessions doctor'],
     commandHint: {
       template: 'utility',
-      argumentHint: '<sources|import|list|show|tag|relocate|reindex|delete|doctor> [--json] [--dry-run]',
+      argumentHint: '<sources|import|list|show|analytics|forensics|tag|relocate|reindex|delete|doctor> [--json] [--dry-run]',
       allowedTools: ['Bash'],
     },
   } satisfies SkillMetadata,

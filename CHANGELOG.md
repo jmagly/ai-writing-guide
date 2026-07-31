@@ -7,6 +7,16 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Session analytics and forensic evidence indices** - session import and
+  reindex now maintain versioned, content-free tool, escalation, HITL,
+  lifecycle, retry/quota-pressure, and anomaly facts with stable source
+  citations. New `sessions analytics` and explicitly authorized
+  `sessions forensics` views provide filtered JSON and sanitized Markdown
+  timelines without executing or exporting historical provider payloads
+  (#1974).
+
 ## [2026.7.25] - 2026-07-31 - "Target-native managed session directories"
 
 ### Fixed

@@ -335,7 +335,7 @@ function normalizeBatch(
             ? 'sensitive' : 'none',
         classes: [...new Set([...redacted.classes, ...native.classes])].sort(),
       },
-      opaque: !KNOWN_EVENT_KINDS.has(record.kind),
+      opaque: !isKnownEventKind(record.kind),
       extensions,
     });
     if (!sessions.has(sessionId)) {
@@ -386,6 +386,13 @@ function normalizeBatch(
 }
 
 const KNOWN_EVENT_KINDS = new Set(['message', 'tool-call', 'tool-result', 'artifact', 'attachment', 'summary']);
+
+function isKnownEventKind(kind: string): boolean {
+  const normalized = kind.toLowerCase();
+  return KNOWN_EVENT_KINDS.has(normalized)
+    || /^(?:tool-call|tool-result)(?:[._-]|$)/.test(normalized)
+    || /^(?:sandbox|permission|approval|hitl|human|lifecycle)(?:[._-]|$)/.test(normalized);
+}
 
 function earlierTimestamp(left: string | null, right: string | null): string | null {
   if (!left) return right;
