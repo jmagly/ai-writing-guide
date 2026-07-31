@@ -52,6 +52,8 @@ describe('Cockpit daily gate report contract', () => {
     expect(liveUat).toContain("shellQuote('AIWG_COCKPIT_MUTATION')");
     expect(liveUat).toContain("shellQuote('_OK')");
     expect(liveUat).not.toContain('shellQuote(MUTATION_MARKER)');
+    expect(liveUat).toContain('waitForSessionAdoption');
+    expect(liveUat).toContain('existing ${target} readiness');
   });
 
   it('accepts complete live host/container evidence and deterministically orders rows', () => {
