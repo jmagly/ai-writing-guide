@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.7.25] - 2026-07-31 - "Target-native managed session directories"
+
 ### Fixed
 
 - **Cockpit managed-session working directories** - The Bridge now honors the
