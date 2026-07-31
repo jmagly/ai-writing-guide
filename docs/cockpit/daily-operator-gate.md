@@ -121,6 +121,12 @@ attempted upgrade, including a failed or partially applied upgrade. A successful
 gate intentionally finishes on the declared previous-stable versions after the
 rollback smoke.
 
+The disconnect hook must also close existing keep-alive connections between the
+Bridge and executor. Stopping only a proxy listener is insufficient when its
+already-forked connection handlers remain alive; terminate those scoped child
+connections or apply an equivalently narrow network interruption before the
+hook returns.
+
 ## What must pass
 
 The candidate phase provisions one gate-owned host target and one gate-owned
