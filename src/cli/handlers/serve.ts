@@ -88,7 +88,7 @@ function parseServeArgs(args: string[]): {
 // ============================================================
 // WebSocket routing (#851)
 //
-// @hono/node-server v1.x does not export createNodeWebSocket.
+// @hono/node-server does not export createNodeWebSocket.
 // We wire WebSocket routes directly via the Node.js HTTP server's
 // 'upgrade' event and the `ws` npm package instead.
 // ============================================================
@@ -558,7 +558,7 @@ export async function startServer(opts: {
   const app = new Hono() as any;
 
   // WebSocket routes are handled via Node.js upgrade event below (see setupWebSockets).
-  // @hono/node-server v1.x does not export createNodeWebSocket.
+  // @hono/node-server does not export createNodeWebSocket.
 
   // Health check
   app.get('/api/health', (c: any) => c.json({ status: 'ok', readOnly: opts.readOnly }));

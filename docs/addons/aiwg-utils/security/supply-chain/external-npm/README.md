@@ -25,7 +25,7 @@ This directory tracks external npm package audit evidence for the current depend
 | `ora` | `5.4.1` | #1444 | no | complete | [report](ora.md) |
 | `yaml` | `2.8.2` | #1444 | no | complete | [report](yaml.md) |
 | `zod` | `3.25.76` | #1444 | no | complete | [report](zod.md) |
-| `@hono/node-server` | `1.19.14` | #1445 | no | complete | [report](hono__node-server.md) |
+| `@hono/node-server` | `2.0.11` | #1973 | no | complete | [report](hono__node-server.md) |
 | `hnswlib-node` | `3.0.0` | #1445 | yes | complete | [report](hnswlib-node.md) |
 | `hono` | `4.12.18` | #1445 | no | complete | [report](hono.md) |
 | `node-pty` | `1.1.0` | #1445 | yes | complete | [report](node-pty.md) |
