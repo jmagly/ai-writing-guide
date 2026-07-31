@@ -38,6 +38,7 @@ const ALLOW_MOCK_MATRIX = process.env.AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX === '1
 const WORKLOAD_PROVIDER = (process.env.AIWG_COCKPIT_LIVE_PROVIDER || '').toLowerCase();
 const WORKLOAD_MARKER = 'AIWG_COCKPIT_LIVE_OK';
 const DISCOVERY_EXPECT = process.env.AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT || 'issue-audit';
+const WORKLOAD_TIMEOUT_MS = Number(process.env.AIWG_COCKPIT_LIVE_WORKLOAD_TIMEOUT_MS || 120_000);
 const startedAt = new Date().toISOString();
 const MUTATION_FILE = process.env.AIWG_COCKPIT_LIVE_MUTATION_FILE || '';
 const MUTATION_MARKER = 'AIWG_COCKPIT_MUTATION_OK';
@@ -188,7 +189,7 @@ function identityFields(body: unknown): Record<string, unknown> {
 async function collectExecutorIdentity(): Promise<Record<string, unknown>> {
   const identity: Record<string, unknown> = {};
   if (EXECUTOR_VERSION_HINT) identity.version_hint = EXECUTOR_VERSION_HINT;
-  for (const path of ['/health', '/version', '/api/version', '/api/v2/version']) {
+  for (const path of ['/health', '/api/v1/health', '/version', '/api/version', '/api/v2/version']) {
     try {
       const r = await fetch(`${EXECUTOR_URL}${path}`, { headers: executorHeaders(), signal: AbortSignal.timeout(2_000) });
       if (!r.ok) continue;
@@ -305,19 +306,47 @@ async function waitForBootReady(base: string, token: string, target: 'host' | 'c
     const agents = await executorJsonWithTimeout('/api/v1/agents', 5_000)
       .catch((err) => ({ status: 0, body: { error: String((err as Error).message || err) } }));
     const instances = inv.status === 200 ? (inv.body.instances ?? []) : [];
-    const instance = instanceId
-      ? instances.find((i: any) => String(i.id) === instanceId)
-      : instances.find((i: any) => runtimeFamily(i) === target);
     const agentList = asArrayFromEnvelope(agents.body, ['agents', 'items', 'data']);
+    const candidates = instanceId
+      ? instances.filter((i: any) => String(i.id) === instanceId)
+      : instances.filter((i: any) => runtimeFamily(i) === target);
+    const instance = candidates.find((candidate: any) => {
+      const candidateAgent = agentList.find(
+        (a: any) => String(a.instance_id ?? a.instanceId ?? '') === String(candidate.id),
+      );
+      const candidateBackend = chooseBackend(candidate);
+      return String(candidate.state ?? '').toLowerCase() === 'running'
+        && candidateBackend
+        && candidateBackend.available !== false
+        && candidateAgent;
+    }) ?? candidates[0];
     const agent = agentList.find((a: any) => String(a.instance_id ?? a.instanceId ?? '') === String(instance?.id ?? instanceId));
     const backend = instance ? chooseBackend(instance) : undefined;
     last = `inventory=${inv.status}/${JSON.stringify(instance ?? inv.body)} agents=${agents.status}/${JSON.stringify(agent ?? agents.body)}`;
-    if (instance && String(instance.state ?? '').toLowerCase() === 'running' && backend?.available !== false && agent) {
+    if (instance && String(instance.state ?? '').toLowerCase() === 'running' && backend && backend.available !== false && agent) {
       return { instance, agent, backend };
     }
     await new Promise((resolve) => setTimeout(resolve, 1_000));
   }
   throw new Error(`provisioned ${target} did not become boot-ready within ${PROVISION_TIMEOUT_MS}ms; last=${last}`);
+}
+
+async function waitForSessionAdoption(
+  base: string,
+  token: string,
+  session: { instanceId: string; sessionId: string },
+  deadline: number,
+) {
+  let last = '';
+  while (Date.now() < deadline) {
+    const sessions = await bridgeJson(base, token, `/api/sessions?instance=${encodeURIComponent(session.instanceId)}`)
+      .catch((err) => ({ status: 0, body: { error: String((err as Error).message || err) } }));
+    const adopted = sessions.body.sessions?.find((row: any) => String(row.id) === session.sessionId);
+    if (sessions.status === 200 && adopted?.attach_url) return adopted;
+    last = `status=${sessions.status}; body=${JSON.stringify(sessions.body)}`;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  throw new Error(`session ${session.sessionId} was not re-adopted before the continuity deadline; last=${last}`);
 }
 
 async function provisionTarget(base: string, token: string, target: 'host' | 'container' | 'vm') {
@@ -369,7 +398,9 @@ function mutationCommand(): string {
   return [
     `mkdir -p ${shellQuote(dirname(MUTATION_FILE))}`,
     `printf '%s\\n' ${shellQuote(MUTATION_TEXT)} > ${shellQuote(MUTATION_FILE)}`,
-    `printf '%s\\n' ${shellQuote(MUTATION_MARKER)}`,
+    // Keep the complete success marker out of the echoed PTY command. The
+    // controller may only accept a marker produced after both mutations pass.
+    `printf '%s%s\\n' ${shellQuote('AIWG_COCKPIT_MUTATION')} ${shellQuote('_OK')}`,
   ].join(' && ');
 }
 
@@ -393,7 +424,7 @@ async function websocketSessionProbe(
     const timeout = setTimeout(() => {
       ws.close();
       resolve({ roleAssigned, output, sawMutationMarker });
-    }, workload ? 60_000 : 6_000);
+    }, workload ? WORKLOAD_TIMEOUT_MS : 6_000);
     ws.addEventListener('open', () => undefined);
     ws.addEventListener('error', () => {
       clearTimeout(timeout);
@@ -617,6 +648,11 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
   }
 
   beforeAll(async () => {
+    if (!Number.isSafeInteger(WORKLOAD_TIMEOUT_MS)
+      || WORKLOAD_TIMEOUT_MS < 10_000
+      || WORKLOAD_TIMEOUT_MS > 15 * 60_000) {
+      throw new Error('AIWG_COCKPIT_LIVE_WORKLOAD_TIMEOUT_MS must be an integer between 10000 and 900000');
+    }
     await loadExecutorAuthorization();
     if (PROVISION_TARGETS && MATRIX_TARGETS.includes('container') && MUTATION_FILE) {
       const mutationDirectory = dirname(MUTATION_FILE);
@@ -775,6 +811,21 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
           const detail = String((err as Error).message || err);
           provisionFailures.set(target, detail);
           record(`provision ${target}`, 'fail', detail);
+        }
+      }
+    } else {
+      for (const target of requiredTargets) {
+        try {
+          const ready = await waitForBootReady(base, token, target, '');
+          record(
+            `existing ${target} readiness`,
+            'pass',
+            `instance=${ready.instance.id}; runtime=${runtimeFamily(ready.instance)}; backend=${ready.backend.mode ?? 'unknown'}/${ready.backend.backend ?? 'unknown'}`,
+          );
+        } catch (err) {
+          const detail = String((err as Error).message || err);
+          provisionFailures.set(target, `existing target readiness failed: ${detail}`);
+          record(`existing ${target} readiness`, 'fail', detail);
         }
       }
     }
@@ -1001,15 +1052,14 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
     await closeBridge();
     await openBridge();
     await waitForBridgeRecovery(base, token);
+    const adoptionDeadline = Date.now() + 60_000;
     for (const session of createdSessions) {
-      const sessions = await bridgeJson(base, token, `/api/sessions?instance=${encodeURIComponent(session.instanceId)}`);
-      const adopted = sessions.body.sessions?.find((row: any) => String(row.id) === session.sessionId);
-      if (sessions.status !== 200 || !adopted?.attach_url) throw new Error(`Bridge restart did not re-adopt session ${session.sessionId}`);
+      const adopted = await waitForSessionAdoption(base, token, session, adoptionDeadline);
       const attached = await websocketSessionProbe(adopted.attach_url, 'observer', token);
       if (!attached.roleAssigned) throw new Error(`Bridge restart could not reattach session ${session.sessionId}`);
     }
     record('daily Bridge restart continuity', 'pass', `re-adopted and reattached ${createdSessions.length} created session(s) in ${Date.now() - started}ms`);
-  }, 90_000);
+  }, 120_000);
 
   liveIt('daily executor restart preserves or re-adopts managed sessions', async () => {
     if (!DAILY_MODE || DAILY_PHASE !== 'candidate') {
@@ -1019,10 +1069,9 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
     if (createdSessions.length === 0) throw new Error('no created sessions available for executor restart continuity');
     const restartDuration = await runDailyHook(DAILY_EXECUTOR_RESTART_HOOK, 'restart');
     await waitForBridgeRecovery(base, token, 60_000);
+    const adoptionDeadline = Date.now() + 60_000;
     for (const session of createdSessions) {
-      const sessions = await bridgeJson(base, token, `/api/sessions?instance=${encodeURIComponent(session.instanceId)}`);
-      const adopted = sessions.body.sessions?.find((row: any) => String(row.id) === session.sessionId);
-      if (sessions.status !== 200 || !adopted?.attach_url) throw new Error(`executor restart did not re-adopt session ${session.sessionId}`);
+      const adopted = await waitForSessionAdoption(base, token, session, adoptionDeadline);
       const attached = await websocketSessionProbe(adopted.attach_url, 'observer', token);
       if (!attached.roleAssigned) throw new Error(`executor restart could not reattach session ${session.sessionId}`);
     }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFile } from 'node:fs/promises';
 import {
   REQUIRED_CHECKS,
   aggregateDailyGateEvidence,
@@ -44,6 +45,18 @@ function passingInput() {
 }
 
 describe('Cockpit daily gate report contract', () => {
+  it('keeps provider turns bounded and prevents PTY command echo from satisfying mutation proof', async () => {
+    const liveUat = await readFile(new URL('../uat/cockpit-live.uat.ts', import.meta.url), 'utf8');
+    expect(liveUat).toContain('AIWG_COCKPIT_LIVE_WORKLOAD_TIMEOUT_MS');
+    expect(liveUat).toContain("'/api/v1/health'");
+    expect(liveUat).toContain('WORKLOAD_TIMEOUT_MS || 120_000');
+    expect(liveUat).toContain("shellQuote('AIWG_COCKPIT_MUTATION')");
+    expect(liveUat).toContain("shellQuote('_OK')");
+    expect(liveUat).not.toContain('shellQuote(MUTATION_MARKER)');
+    expect(liveUat).toContain('waitForSessionAdoption');
+    expect(liveUat).toContain('existing ${target} readiness');
+  });
+
   it('accepts complete live host/container evidence and deterministically orders rows', () => {
     const report = buildDailyGateReport(passingInput());
     expect(report.result).toBe('pass');
@@ -134,11 +147,11 @@ describe('Cockpit daily gate report contract', () => {
       evidence: rows,
     });
     const phases = [
-      { id: 'previous_stable_smoke', status: 'pass', duration_ms: 10, observed_aiwg_version: versions.aiwg.previous_stable, report: liveReport(versions.executor.previous_stable) },
+      { id: 'previous_stable_smoke', status: 'pass', duration_ms: 10, observed_aiwg_version: versions.aiwg.previous_stable, report: liveReport(versions.executor.previous_stable.replace(/^v/, '')) },
       { id: 'upgrade', status: 'pass', duration_ms: 10 },
       { id: 'candidate_smoke', status: 'pass', duration_ms: 10, observed_aiwg_version: versions.aiwg.candidate, report: liveReport(versions.executor.candidate) },
       { id: 'rollback', status: 'pass', duration_ms: 10 },
-      { id: 'rollback_smoke', status: 'pass', duration_ms: 10, observed_aiwg_version: versions.aiwg.previous_stable, report: liveReport(versions.executor.previous_stable) },
+      { id: 'rollback_smoke', status: 'pass', duration_ms: 10, observed_aiwg_version: versions.aiwg.previous_stable, report: liveReport(versions.executor.previous_stable.replace(/^v/, '')) },
     ];
     const passing = aggregateDailyGateEvidence({
       mode: 'live',
