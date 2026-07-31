@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFile } from 'node:fs/promises';
 import {
   REQUIRED_CHECKS,
   aggregateDailyGateEvidence,
@@ -44,6 +45,15 @@ function passingInput() {
 }
 
 describe('Cockpit daily gate report contract', () => {
+  it('keeps provider turns bounded and prevents PTY command echo from satisfying mutation proof', async () => {
+    const liveUat = await readFile(new URL('../uat/cockpit-live.uat.ts', import.meta.url), 'utf8');
+    expect(liveUat).toContain('AIWG_COCKPIT_LIVE_WORKLOAD_TIMEOUT_MS');
+    expect(liveUat).toContain('WORKLOAD_TIMEOUT_MS || 120_000');
+    expect(liveUat).toContain("shellQuote('AIWG_COCKPIT_MUTATION')");
+    expect(liveUat).toContain("shellQuote('_OK')");
+    expect(liveUat).not.toContain('shellQuote(MUTATION_MARKER)');
+  });
+
   it('accepts complete live host/container evidence and deterministically orders rows', () => {
     const report = buildDailyGateReport(passingInput());
     expect(report.result).toBe('pass');

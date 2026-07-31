@@ -29,6 +29,8 @@ Required configuration:
 export AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:8122
 export AIWG_COCKPIT_EXECUTOR_TOKEN_FILE=/protected/path/cockpit-executor.token
 export AIWG_COCKPIT_LIVE_PROVIDER=codex
+# Optional: allow a slow provider-backed discovery turn up to two minutes.
+export AIWG_COCKPIT_LIVE_WORKLOAD_TIMEOUT_MS=120000
 
 export AIWG_COCKPIT_DAILY_PREVIOUS_AIWG_VERSION=2026.7.14
 export AIWG_COCKPIT_DAILY_CANDIDATE_AIWG_VERSION=2026.7.15
@@ -58,6 +60,17 @@ directory at the same absolute path. The gate verifies exact content and removes
 the mutation file during scoped cleanup; operators remain responsible for
 removing the empty parent after retaining the reports. The container image must
 use an immutable tag or digest; `latest` fails preflight.
+
+If previous-stable targets are provisioned outside the gate, their container
+must already bind-mount the mutation file's parent directory at the same
+absolute path. Candidate targets provisioned by the gate receive that mount
+automatically. Before either phase, grant the declared non-root container uid
+write access to that dedicated directory without opening it to other users; a
+POSIX ACL for that uid preserves the host operator's ownership and private
+default mode. The provider workload timeout defaults to 120 seconds and may be
+set from 10 seconds through 15 minutes with
+`AIWG_COCKPIT_LIVE_WORKLOAD_TIMEOUT_MS`; keep it bounded to the slowest
+approved provider turn rather than using an unbounded wait.
 
 When the provider workload needs a pre-authenticated file-backed profile, point
 `AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_MOUNT` at one gate-owned host directory

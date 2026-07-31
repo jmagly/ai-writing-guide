@@ -38,6 +38,7 @@ const ALLOW_MOCK_MATRIX = process.env.AIWG_COCKPIT_LIVE_ALLOW_MOCK_MATRIX === '1
 const WORKLOAD_PROVIDER = (process.env.AIWG_COCKPIT_LIVE_PROVIDER || '').toLowerCase();
 const WORKLOAD_MARKER = 'AIWG_COCKPIT_LIVE_OK';
 const DISCOVERY_EXPECT = process.env.AIWG_COCKPIT_LIVE_DISCOVERY_EXPECT || 'issue-audit';
+const WORKLOAD_TIMEOUT_MS = Number(process.env.AIWG_COCKPIT_LIVE_WORKLOAD_TIMEOUT_MS || 120_000);
 const startedAt = new Date().toISOString();
 const MUTATION_FILE = process.env.AIWG_COCKPIT_LIVE_MUTATION_FILE || '';
 const MUTATION_MARKER = 'AIWG_COCKPIT_MUTATION_OK';
@@ -369,7 +370,9 @@ function mutationCommand(): string {
   return [
     `mkdir -p ${shellQuote(dirname(MUTATION_FILE))}`,
     `printf '%s\\n' ${shellQuote(MUTATION_TEXT)} > ${shellQuote(MUTATION_FILE)}`,
-    `printf '%s\\n' ${shellQuote(MUTATION_MARKER)}`,
+    // Keep the complete success marker out of the echoed PTY command. The
+    // controller may only accept a marker produced after both mutations pass.
+    `printf '%s%s\\n' ${shellQuote('AIWG_COCKPIT_MUTATION')} ${shellQuote('_OK')}`,
   ].join(' && ');
 }
 
@@ -393,7 +396,7 @@ async function websocketSessionProbe(
     const timeout = setTimeout(() => {
       ws.close();
       resolve({ roleAssigned, output, sawMutationMarker });
-    }, workload ? 60_000 : 6_000);
+    }, workload ? WORKLOAD_TIMEOUT_MS : 6_000);
     ws.addEventListener('open', () => undefined);
     ws.addEventListener('error', () => {
       clearTimeout(timeout);
@@ -617,6 +620,11 @@ describe('Cockpit live UAT — real agentic-sandbox executor', () => {
   }
 
   beforeAll(async () => {
+    if (!Number.isSafeInteger(WORKLOAD_TIMEOUT_MS)
+      || WORKLOAD_TIMEOUT_MS < 10_000
+      || WORKLOAD_TIMEOUT_MS > 15 * 60_000) {
+      throw new Error('AIWG_COCKPIT_LIVE_WORKLOAD_TIMEOUT_MS must be an integer between 10000 and 900000');
+    }
     await loadExecutorAuthorization();
     if (PROVISION_TARGETS && MATRIX_TARGETS.includes('container') && MUTATION_FILE) {
       const mutationDirectory = dirname(MUTATION_FILE);
