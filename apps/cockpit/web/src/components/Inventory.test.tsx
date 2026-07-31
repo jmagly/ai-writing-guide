@@ -23,9 +23,7 @@ const VM_INSTANCE = {
   session_backends: [{ mode: 'managed', backend: 'zellij', available: true, drive: true }],
 };
 
-beforeEach(() => {
-  (window as unknown as { __COCKPIT_TOKEN__: string }).__COCKPIT_TOKEN__ = 't';
-});
+beforeEach(() => {});
 
 afterEach(() => {
   cleanup();

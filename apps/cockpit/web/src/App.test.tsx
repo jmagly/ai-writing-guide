@@ -6,7 +6,6 @@ import { App, waitForSessionReady } from './App';
 // "blank render" class of bug). The Welcome tab fetches inventory/running/approvals on
 // mount, so fetch is stubbed.
 beforeEach(() => {
-  (window as unknown as { __COCKPIT_TOKEN__: string }).__COCKPIT_TOKEN__ = 'test-token';
   window.history.replaceState({}, '', '/');
   globalThis.fetch = vi.fn(() => new Promise<Response>(() => undefined)) as typeof fetch;
 });

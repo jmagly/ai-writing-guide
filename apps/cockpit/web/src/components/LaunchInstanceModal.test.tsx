@@ -135,7 +135,7 @@ function mockFetch({
   }) as unknown as typeof fetch;
 }
 
-beforeEach(() => { (window as unknown as { __COCKPIT_TOKEN__: string }).__COCKPIT_TOKEN__ = 't'; });
+beforeEach(() => {});
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('LaunchInstanceModal', () => {

@@ -8,8 +8,8 @@ model.
 | Gate | Failure |
 |---|---|
 | Loopback, same-port browser origin | 403 `forbidden_origin` |
-| Bearer token (`Authorization: Bearer …` or `?token=`), constant-time compare | 401 `unauthorized` |
-| CSRF header `x-cockpit-csrf` = token, for mutating verbs with an Origin | 403 `csrf_required` |
+| Explicit bearer or HttpOnly browser session; URL query credentials are rejected | 401 `unauthorized` |
+| Session-bound CSRF header `x-cockpit-csrf` for mutating browser verbs | 403 `csrf_required` |
 | Real-executor assertion (mock refused unless explicitly allowed) | 502 `mock_executor_refused` |
 | Optional sandbox mTLS readiness gate (`AIWG_COCKPIT_REQUIRE_SANDBOX_MTLS=1`) | 503 `executor_trust_required` |
 
@@ -19,6 +19,14 @@ executor failures preserve 401 `executor_unauthenticated` and 403
 `executor_forbidden` instead of degrading to an empty inventory.
 
 ## Endpoints
+
+### Browser bootstrap
+
+| Method & path | Purpose |
+|---|---|
+| `POST /bootstrap/nonce` | Native bearer-authenticated issuance of a 60-second, one-time nonce for `browser`, `tauri`, or `vscode` |
+| `POST /bootstrap/session` | Exchanges the nonce from the URL fragment for an HttpOnly `SameSite=Strict` session and in-memory CSRF binding |
+| `GET /bootstrap/session` | Restores the CSRF binding for an existing valid session; does not expose the session identifier |
 
 ### Health
 
@@ -118,10 +126,11 @@ are never written** — the library holds copies the operator owns.
 
 ### Static
 
-`/` serves the built web app with the per-launch token injected
-(`window.__COCKPIT_TOKEN__`) and a `SameSite=Strict` CSRF cookie; other paths
-serve hashed, immutable-cached assets from the web build, path-sandboxed. A
-legacy fallback page renders when no web build is present.
+`/` serves the built web app without credential injection and with `no-store`,
+`no-referrer`, and loopback-origin CSP headers. The app exchanges a one-time
+URL-fragment nonce for an HttpOnly session and removes the fragment before API
+traffic. Other paths serve hashed, immutable-cached assets from the web build,
+path-sandboxed. A legacy fallback page uses the same bootstrap contract.
 
 ## Environment variables
 

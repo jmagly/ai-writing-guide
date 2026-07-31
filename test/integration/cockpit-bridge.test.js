@@ -65,8 +65,116 @@ afterAll(async () => {
 describe('cockpit Bridge — control surface', () => {
   it('gates /api with the per-launch token; /healthz is open', async () => {
     expect((await fetch(`${base}/api/inventory`)).status).toBe(401);
+    expect((await fetch(`${base}/api/inventory?token=${encodeURIComponent(token)}`)).status).toBe(401);
     expect((await fetch(`${base}/healthz`)).status).toBe(200);
     expect((await f('/api/inventory')).status).toBe(200);
+  });
+
+  it('exchanges a one-time bootstrap for an HttpOnly session and rejects replay', async () => {
+    const issued = await f('/bootstrap/nonce', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ audience: 'browser' }),
+    });
+    expect(issued.status).toBe(201);
+    const { nonce } = await issued.json();
+
+    const exchange = await fetch(`${base}/bootstrap/session`, {
+      method: 'POST',
+      headers: { origin: base, 'content-type': 'application/json' },
+      body: JSON.stringify({ nonce, audience: 'browser' }),
+    });
+    expect(exchange.status).toBe(201);
+    const cookie = exchange.headers.get('set-cookie');
+    expect(cookie).toMatch(/^cockpit_session=[^;]+; HttpOnly; Path=\/; SameSite=Strict/);
+    expect(cookie).not.toContain(token);
+    const { csrf } = await exchange.json();
+    expect(csrf).toMatch(/^[A-Za-z0-9_-]+$/);
+
+    const replay = await fetch(`${base}/bootstrap/session`, {
+      method: 'POST',
+      headers: { origin: base, 'content-type': 'application/json' },
+      body: JSON.stringify({ nonce, audience: 'browser' }),
+    });
+    expect(replay.status).toBe(401);
+
+    const cookieHeader = cookie.split(';', 1)[0];
+    expect((await fetch(`${base}/api/inventory`, { headers: { cookie: cookieHeader, origin: base } })).status).toBe(200);
+    const mutationPath = '/api/instances/9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b/start';
+    expect((await fetch(base + mutationPath, {
+      method: 'POST',
+      headers: { cookie: cookieHeader, origin: base },
+    })).status).toBe(403);
+    expect((await fetch(base + mutationPath, {
+      method: 'POST',
+      headers: { cookie: cookieHeader, origin: base, 'x-cockpit-csrf': csrf },
+    })).status).toBe(200);
+
+    const events = await fetch(`${base}/api/events`, { headers: { cookie: cookieHeader, origin: base } });
+    expect(events.status).toBe(200);
+    expect(events.url).not.toContain('token=');
+    const reader = events.body.getReader();
+    await reader.read();
+    await reader.cancel();
+
+    const sessions = await (await fetch(
+      `${base}/api/sessions?instance=550e8400-e29b-41d4-a716-446655440000`,
+      { headers: { cookie: cookieHeader, origin: base } },
+    )).json();
+    const attachUrl = sessions.sessions.find((entry) => entry.id === 'demo-shell')?.attach_url;
+    expect(attachUrl).toMatch(/^ws:\/\/.*\/api\/pty\//);
+    const socket = new WebSocket(attachUrl, ['pty-ws.v1'], { headers: { cookie: cookieHeader } });
+    await new Promise((resolve, reject) => {
+      socket.once('open', resolve);
+      socket.once('error', reject);
+    });
+    socket.close();
+  });
+
+  it('rejects expired, wrong-audience, and cross-Bridge bootstrap attempts', async () => {
+    const candidate = createBridge({
+      executorUrl: `http://127.0.0.1:${mock.address().port}`,
+      allowMockExecutor: true,
+      bootstrapTtlMs: 1,
+    });
+    await new Promise((resolve) => candidate.listen(0, '127.0.0.1', resolve));
+    const candidateBase = `http://127.0.0.1:${candidate.address().port}`;
+    try {
+      const issue = async (audience = 'vscode') => {
+        const response = await fetch(`${candidateBase}/bootstrap/nonce`, {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${candidate.cockpitToken}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ audience }),
+        });
+        return (await response.json()).nonce;
+      };
+      const wrongAudience = await issue();
+      expect((await fetch(`${candidateBase}/bootstrap/session`, {
+        method: 'POST',
+        headers: { origin: candidateBase, 'content-type': 'application/json' },
+        body: JSON.stringify({ nonce: wrongAudience, audience: 'tauri' }),
+      })).status).toBe(401);
+
+      const expired = await issue();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect((await fetch(`${candidateBase}/bootstrap/session`, {
+        method: 'POST',
+        headers: { origin: candidateBase, 'content-type': 'application/json' },
+        body: JSON.stringify({ nonce: expired, audience: 'vscode' }),
+      })).status).toBe(401);
+
+      const foreign = bridge.issueBootstrapNonce('browser');
+      expect((await fetch(`${candidateBase}/bootstrap/session`, {
+        method: 'POST',
+        headers: { origin: candidateBase, 'content-type': 'application/json' },
+        body: JSON.stringify({ nonce: foreign, audience: 'browser' }),
+      })).status).toBe(401);
+    } finally {
+      await new Promise((resolve) => candidate.close(resolve));
+    }
   });
 
   it('rejects spoofed browser origins and requires CSRF on browser mutations', async () => {
@@ -965,7 +1073,10 @@ describe('cockpit web — app shell served', () => {
 
   it('declares a document language', () => expect(html).toMatch(/<html lang="en"/));
   it('renders the Cockpit title', () => expect(html).toMatch(/AIWG.?Cockpit/i));
-  it('injects the per-launch token', () => expect(html).toContain(`window.__COCKPIT_TOKEN__=${JSON.stringify(token)}`));
+  it('does not inject reusable credential material', () => {
+    expect(html).not.toContain(token);
+    expect(html).not.toContain('__COCKPIT_TOKEN__');
+  });
   it('references + serves the built bundle outside comments when a React build is present', async () => {
     // strip comments first: a module script trapped in a comment must not count.
     const live = html.replace(/<!--[\s\S]*?-->/g, '');

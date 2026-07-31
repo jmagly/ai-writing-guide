@@ -135,7 +135,7 @@ operator / CLI:  aiwg cockpit
 │    cost, sessions (create + attach_url), contributions       │
 │  · read-only catalog: aiwg discover / show (display only)    │
 │  · user asset library: clone/import/delete (never writes AIWG)│
-│  · serves the built React app (token-injected)               │
+│  · serves the React app (one-time nonce → HttpOnly session)  │
 └─────────────────────────────────────────────────────────────┘
        │ authenticated proxy            ▲ loads the token-gated shell
        ▼                                │
@@ -146,9 +146,9 @@ operator / CLI:  aiwg cockpit
 
 - **Control plane** (lifecycle, approvals, actions) goes through the gated Bridge.
 - **Data plane** (the PTY session stream) also goes through a Bridge-owned
-  `attach_url`. The browser presents only its per-launch Cockpit token; the
-  Bridge keeps the long-lived executor credential and authenticates the upstream
-  WebSocket upgrade.
+  `attach_url`. The browser presents only its HttpOnly Cockpit session; the
+  Bridge keeps the native-shell and executor credentials and authenticates the
+  upstream WebSocket upgrade.
 
 ## Surfaces (tabs)
 
@@ -343,7 +343,8 @@ Reconnect action never creates a replacement instance and never destroys the
 running container; it only attempts to restore the missing agent registration.
 
 `aiwg cockpit` (the operator command) will wrap this; the Bridge serves the built
-React app token-injected, falling back to a legacy page when no build is present.
+React app through the same one-time bootstrap/session contract, falling back to
+a legacy page when no build is present.
 
 ## Components
 
@@ -352,7 +353,7 @@ React app token-injected, falling back to a legacy page when no build is present
 | `web/` | React 19 + Vite + TS UI (the surfaces above) |
 | `mock-executor/` | **automated-test-only** wire-faithful agentic-sandbox A2A v2 stand-in (conformance 33/0/17). The Bridge refuses it for human launches (needs `AIWG_COCKPIT_ALLOW_MOCK_EXECUTOR=1`); a contract guard (#1636) pins its legacy `/admin/{running,approvals,cost}` divergence from real v2 so new drift fails CI. |
 | `bridge/` | the registry-bound control-plane server + static serving |
-| `shell-core/` | the cross-shell handshake (runtime token reference or fallback token → connect) |
+| `shell-core/` | the cross-shell handshake (native runtime credential → one-time browser bootstrap) |
 | `vscode/` · `desktop/` | VS Code extension + Tauri shells over the same Bridge |
 | `contrib/` | declarative UI contributions + schema (actions inject commands) |
 | `poc/` | Iteration-1 risk-gate PoCs (kill-bridge isolation, security) |
@@ -578,7 +579,9 @@ host-daemon surfacing (roctinam/aiwg#1615) and transport-trust visibility (#1618
 host-daemon now render per instance (a host-daemon *detail-status* payload
 remains a residual under #1615). Direct/managed PTY negotiation (#1616) and the
 live real-sandbox gate (#1617) continue. Secure transport details map back to agentic-sandbox#409/#410/#412; local
-Browser/Tauri/VS Code-to-Bridge auth remains roctinam/aiwg#1595.
+Browser/Tauri/VS Code-to-Bridge auth is implemented under #1595/#1968 with
+one-time audience-bound bootstrap, HttpOnly session custody, and credential-free
+REST/SSE/PTY URLs.
 
 ### Operator-wall review modes (#1622)
 

@@ -1,7 +1,8 @@
 // AIWG Cockpit — VS Code shell (#1594).
 // Hosts the registry-bound Bridge UI inside a webview, and exposes contributed
 // actions as command-palette entries. The shell never replaces the CLI or the
-// Bridge — it reads the per-launch token the Bridge wrote and loads its UI.
+// Bridge — it resolves the native runtime credential, exchanges it for a
+// one-time webview bootstrap, and never places the credential in a URL.
 // CommonJS so it runs with no build step.
 const vscode = require('vscode');
 const os = require('os');
@@ -35,9 +36,10 @@ function activate(context) {
       try { rt = await ensureRuntime(); } catch (e) { return vscode.window.showWarningMessage(e.message); }
       const panel = vscode.window.createWebviewPanel('aiwgCockpit', 'AIWG Cockpit', vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true });
       const { webviewUrl } = await shellCore();
-      const u = webviewUrl(rt);
+      const u = await webviewUrl(rt, { audience: 'vscode' });
+      const bridgeOrigin = new URL(rt.url).origin;
       panel.webview.html = `<!doctype html><html><head><meta charset="utf-8" />
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src http://127.0.0.1:* http://localhost:*; style-src 'unsafe-inline';" />
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src ${bridgeOrigin}; style-src 'unsafe-inline';" />
         <style>html,body,iframe{margin:0;height:100vh;width:100%;border:0}</style></head>
         <body><iframe src="${u}" title="AIWG Cockpit"></iframe></body></html>`;
     }),
@@ -45,7 +47,7 @@ function activate(context) {
       let rt;
       try { rt = await ensureRuntime(); } catch (e) { return vscode.window.showWarningMessage(e.message); }
       const { webviewUrl } = await shellCore();
-      vscode.env.openExternal(vscode.Uri.parse(`${webviewUrl(rt)}#actions`));
+      vscode.env.openExternal(vscode.Uri.parse(await webviewUrl(rt, { audience: 'browser', next: 'actions' })));
     }),
   );
 }

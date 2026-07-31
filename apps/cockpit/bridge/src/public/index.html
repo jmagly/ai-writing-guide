@@ -153,12 +153,32 @@
     const meta = document.getElementById('meta');
     const fmt = (id) => (id && id.length > 12) ? id.slice(0, 8) + '…' : id;
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-    // per-launch token injected by the Bridge for the gated control surface
-    const TOKEN = window.__COCKPIT_TOKEN__ || '';
-    const api = (u, o = {}) => {
+    // Exchange a one-time URL-fragment nonce for an HttpOnly session. The
+    // fragment is removed before any control-surface request is made.
+    let CSRF = '';
+    const sessionReady = (async () => {
+      const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+      const nonce = params.get('bootstrap') || '';
+      const next = params.get('next') || '';
+      const response = nonce
+        ? await fetch('/bootstrap/session', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ nonce, audience: params.get('audience') || 'browser' }),
+          })
+        : await fetch('/bootstrap/session', { credentials: 'same-origin' });
+      if (!response.ok) throw new Error(`Cockpit session bootstrap failed (${response.status})`);
+      const body = await response.json();
+      if (!body.csrf) throw new Error('Cockpit session bootstrap returned no CSRF binding');
+      CSRF = body.csrf;
+      if (nonce) history.replaceState(null, '', location.pathname + location.search + (next ? '#' + next : ''));
+    })();
+    const api = async (u, o = {}) => {
+      await sessionReady;
       const method = String(o.method || 'GET').toUpperCase();
-      const csrf = ['GET', 'HEAD', 'OPTIONS'].includes(method) ? {} : { 'x-cockpit-csrf': TOKEN };
-      return fetch(u, { ...o, headers: { ...(o.headers || {}), ...csrf, authorization: 'Bearer ' + TOKEN } });
+      const csrf = ['GET', 'HEAD', 'OPTIONS'].includes(method) ? {} : { 'x-cockpit-csrf': CSRF };
+      return fetch(u, { ...o, credentials: 'same-origin', headers: { ...(o.headers || {}), ...csrf } });
     };
 
     // --- Inventory ---
@@ -400,9 +420,13 @@
       else discover();
     }
     document.getElementById('refresh').addEventListener('click', refreshActive);
-    if ('EventSource' in window && TOKEN) {
-      const events = new EventSource('/api/events?token=' + encodeURIComponent(TOKEN));
-      events.addEventListener('cockpit.refresh', refreshActive);
+    if ('EventSource' in window) {
+      sessionReady.then(() => {
+        const events = new EventSource('/api/events');
+        events.addEventListener('cockpit.refresh', refreshActive);
+      }).catch((error) => {
+        meta.textContent = error.message;
+      });
     }
 
     loadInventory();

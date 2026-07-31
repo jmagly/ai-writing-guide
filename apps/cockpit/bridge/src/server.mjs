@@ -10,7 +10,7 @@ import https from 'node:https';
 import { spawn } from 'node:child_process';
 import { readFile, mkdir, writeFile, chmod, readdir, cp, rm, stat, appendFile } from 'node:fs/promises';
 import { existsSync, realpathSync } from 'node:fs';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -96,13 +96,29 @@ async function serveDistFile(res, relPath) {
 // First-party contribution manifests; AIWG-extension-sourced ones layer in via AIWG_COCKPIT_CONTRIB (#1591).
 const CONTRIB_DIRS = [fileURLToPath(new URL('../../contrib', import.meta.url)), ...(process.env.AIWG_COCKPIT_CONTRIB ? [process.env.AIWG_COCKPIT_CONTRIB] : [])];
 
-/** Constant-time bearer-token check (header or ?token=). */
-function authed(req, url, token) {
+function constantTimeEqual(presented, expected) {
+  if (presented.length !== expected.length) return false;
+  try { return timingSafeEqual(Buffer.from(presented), Buffer.from(expected)); } catch { return false; }
+}
+
+/** Constant-time bearer-token check. URL query credentials are never accepted. */
+function bearerAuthed(req, token) {
   const hdr = String(req.headers['authorization'] ?? '');
   const bearer = hdr.startsWith('Bearer ') ? hdr.slice(7) : '';
-  const presented = bearer || url.searchParams.get('token') || '';
-  if (presented.length !== token.length) return false;
-  try { return timingSafeEqual(Buffer.from(presented), Buffer.from(token)); } catch { return false; }
+  return constantTimeEqual(bearer, token);
+}
+
+function cookies(req) {
+  return Object.fromEntries(String(req.headers.cookie ?? '')
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const split = part.indexOf('=');
+      if (split < 0) return [part, ''];
+      try { return [part.slice(0, split), decodeURIComponent(part.slice(split + 1))]; }
+      catch { return [part.slice(0, split), '']; }
+    }));
 }
 
 function isLocalHostName(hostname) {
@@ -115,21 +131,21 @@ function validBrowserOrigin(req) {
   try {
     const o = new URL(String(origin));
     const host = new URL(`http://${req.headers.host ?? 'localhost'}`);
-    return ['http:', 'https:'].includes(o.protocol) &&
+    return o.protocol === host.protocol &&
       isLocalHostName(o.hostname) &&
       isLocalHostName(host.hostname) &&
-      (!o.port || !host.port || o.port === host.port);
+      o.hostname === host.hostname &&
+      o.port === host.port;
   } catch {
     return false;
   }
 }
 
-function validCsrf(req, token) {
+function validCsrf(req, auth) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method ?? 'GET')) return true;
-  if (!req.headers.origin) return true;
+  if (auth?.kind === 'bearer' && !req.headers.origin) return true;
   const csrf = String(req.headers['x-cockpit-csrf'] ?? '');
-  if (csrf.length !== token.length) return false;
-  try { return timingSafeEqual(Buffer.from(csrf), Buffer.from(token)); } catch { return false; }
+  return constantTimeEqual(csrf, auth?.csrf ?? '');
 }
 
 /** Persist the per-launch token for the desktop/VS Code shells to read (mode 600). */
@@ -2248,9 +2264,46 @@ export function createBridge({
   token,
   executorTokenFile = EXECUTOR_TOKEN_FILE,
   requireSandboxMtls = REQUIRE_SANDBOX_MTLS,
+  bootstrapTtlMs = 60_000,
+  sessionTtlMs = 12 * 60 * 60 * 1000,
 } = {}) {
   const upstreamUrl = executorUrl;
   const TOKEN = token ?? randomBytes(24).toString('hex');
+  const bootstrapNonces = new Map();
+  const browserSessions = new Map();
+  const digest = (value) => createHash('sha256').update(String(value)).digest('base64url');
+  const issueBootstrapNonce = (audience = 'browser') => {
+    if (!['browser', 'tauri', 'vscode'].includes(audience)) {
+      throw executorAuthError('invalid_bootstrap_audience', 'bootstrap audience must be browser, tauri, or vscode');
+    }
+    const nonce = randomBytes(24).toString('base64url');
+    bootstrapNonces.set(digest(nonce), { audience, expiresAt: Date.now() + bootstrapTtlMs });
+    return nonce;
+  };
+  const consumeBootstrapNonce = (nonce, audience) => {
+    const key = digest(nonce);
+    const pending = bootstrapNonces.get(key);
+    bootstrapNonces.delete(key);
+    return Boolean(
+      pending &&
+      pending.expiresAt >= Date.now() &&
+      pending.audience === audience &&
+      ['browser', 'tauri', 'vscode'].includes(audience),
+    );
+  };
+  const sessionAuth = (req) => {
+    const id = cookies(req).cockpit_session ?? '';
+    const session = browserSessions.get(digest(id));
+    if (!session) return null;
+    if (session.expiresAt < Date.now()) {
+      browserSessions.delete(digest(id));
+      return null;
+    }
+    return { kind: 'session', csrf: session.csrf };
+  };
+  const requestAuth = (req) => bearerAuthed(req, TOKEN)
+    ? { kind: 'bearer', csrf: TOKEN }
+    : sessionAuth(req);
   const executorOrigin = new URL(upstreamUrl).origin;
   const executorAddress = new URL(upstreamUrl);
   const attachTargets = new Map();
@@ -2272,14 +2325,62 @@ export function createBridge({
     try {
       // unauthenticated liveness probe (no /api/ prefix) — for the shell to wait on
       if (url.pathname === '/healthz') return json(res, 200, { status: 'ok' });
+      if (url.pathname === '/bootstrap/nonce' && req.method === 'POST') {
+        if (!validBrowserOrigin(req) || !bearerAuthed(req, TOKEN)) {
+          return json(res, 401, { error: 'unauthorized' });
+        }
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        try {
+          const payload = JSON.stringify({
+            nonce: issueBootstrapNonce(String(parsed.body.audience ?? 'browser')),
+            expires_in_ms: bootstrapTtlMs,
+          });
+          res.writeHead(201, {
+            'content-type': 'application/json',
+            'cache-control': 'no-store',
+            'content-length': Buffer.byteLength(payload),
+          });
+          return res.end(payload);
+        } catch (err) {
+          return json(res, 400, { error: err.code ?? 'invalid_bootstrap_audience' });
+        }
+      }
+      if (url.pathname === '/bootstrap/session' && req.method === 'POST') {
+        if (!validBrowserOrigin(req)) return json(res, 403, { error: 'forbidden_origin' });
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        const nonce = String(parsed.body.nonce ?? '');
+        const audience = String(parsed.body.audience ?? '');
+        if (!nonce || !consumeBootstrapNonce(nonce, audience)) {
+          return json(res, 401, { error: 'bootstrap_invalid_or_expired' });
+        }
+        const id = randomBytes(32).toString('base64url');
+        const csrf = randomBytes(24).toString('base64url');
+        browserSessions.set(digest(id), { csrf, audience, expiresAt: Date.now() + sessionTtlMs });
+        res.writeHead(201, {
+          'content-type': 'application/json',
+          'cache-control': 'no-store',
+          'set-cookie': `cockpit_session=${encodeURIComponent(id)}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${Math.ceil(sessionTtlMs / 1000)}`,
+        });
+        return res.end(JSON.stringify({ csrf, expires_in_ms: sessionTtlMs }));
+      }
+      if (url.pathname === '/bootstrap/session' && req.method === 'GET') {
+        const auth = sessionAuth(req);
+        if (!auth) return json(res, 401, { error: 'unauthorized' });
+        res.setHeader('cache-control', 'no-store');
+        return json(res, 200, { csrf: auth.csrf });
+      }
       if (url.pathname.startsWith('/api/') && !validBrowserOrigin(req)) {
         return json(res, 403, { error: 'forbidden_origin' });
       }
-      // gate the control surface: per-launch bearer token on every /api/ call
-      if (url.pathname.startsWith('/api/') && !authed(req, url, TOKEN)) {
+      // Gate the control surface with either an explicit bearer for non-browser
+      // clients or the HttpOnly session established by a one-time bootstrap.
+      const auth = url.pathname.startsWith('/api/') ? requestAuth(req) : null;
+      if (url.pathname.startsWith('/api/') && !auth) {
         return json(res, 401, { error: 'unauthorized', detail: 'missing or invalid cockpit token' });
       }
-      if (url.pathname.startsWith('/api/') && !validCsrf(req, TOKEN)) {
+      if (url.pathname.startsWith('/api/') && !validCsrf(req, auth)) {
         return json(res, 403, { error: 'csrf_required' });
       }
       if (url.pathname.startsWith('/api/')) {
@@ -2646,13 +2747,15 @@ export function createBridge({
         const distIndex = join(WEB_DIST, 'index.html');
         const src = existsSync(distIndex) ? distIndex : join(__dir, 'public', 'index.html');
         const raw = await readFile(src, 'utf8');
-        // Inject the per-launch token so the same-origin app can call the gated API.
-        const html = raw.replace('</head>', `<script>window.__COCKPIT_TOKEN__=${JSON.stringify(TOKEN)}</script>\n</head>`);
-        // never cache the shell — it must always reference the latest hashed bundle
+        // The app exchanges a one-time nonce from the URL fragment for an
+        // HttpOnly session. No reusable credential is injected into HTML.
+        const html = raw;
+        // Never cache the shell or bootstrap-bearing navigation.
         res.writeHead(200, {
           'content-type': 'text/html; charset=utf-8',
-          'cache-control': 'no-cache',
-          'set-cookie': `cockpit_csrf=${TOKEN}; Path=/; SameSite=Strict`,
+          'cache-control': 'no-store',
+          'content-security-policy': `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws://${req.headers.host} wss://${req.headers.host}; frame-ancestors 'self' vscode-webview: tauri:`,
+          'referrer-policy': 'no-referrer',
         });
         return res.end(html);
       }
@@ -2680,7 +2783,7 @@ export function createBridge({
           socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
           return;
         }
-        if (!websocketAuthed(req, TOKEN)) {
+        if (!websocketAuthed(req, TOKEN) && !sessionAuth(req)) {
           socket.end('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
           return;
         }
@@ -2696,6 +2799,7 @@ export function createBridge({
     },
   ));
   server.cockpitToken = TOKEN; // exposed for shells/tests
+  server.issueBootstrapNonce = issueBootstrapNonce;
   return server;
 }
 
@@ -2745,8 +2849,10 @@ if (isDirectExecution()) {
   server.listen(port, '127.0.0.1', async () => {
     try {
       const file = await writeRuntimeToken({ token: server.cockpitToken, port, pid: process.pid });
+      const browserNonce = server.issueBootstrapNonce('browser');
       console.log(`[cockpit-bridge] http://127.0.0.1:${port}  (executor ${EXECUTOR_URL})`);
-      console.log(`  token written ${file} (mode 600) — open the URL in a browser or attach a shell`);
+      console.log(`  runtime handshake ${file} (mode 600)`);
+      console.log(`  browser bootstrap http://127.0.0.1:${port}/#bootstrap=${browserNonce}&audience=browser (one-time, 60s)`);
     } catch (err) {
       console.error(`[cockpit-bridge] failed to persist runtime token: ${String(err?.message ?? err)}`);
       server.close(() => process.exit(1));
