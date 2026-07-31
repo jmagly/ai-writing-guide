@@ -29,6 +29,12 @@ const receiptSchemaPath = resolve(
 const receiptSchema = JSON.parse(readFileSync(receiptSchemaPath, 'utf8'));
 const fullReceiptPath = resolve(fixtureRoot, 'aiwg-full-v1.consumer.receipt.json');
 const fullReceipt = JSON.parse(readFileSync(fullReceiptPath, 'utf8'));
+const fullReceiptSchema = JSON.parse(readFileSync(resolve(
+  root,
+  'schemas',
+  'artifacts',
+  'aiwg-fortemi-full-v1-consumer-receipt.v1.schema.json',
+), 'utf8'));
 const packageLock = require(resolve(root, 'package-lock.json'));
 const corePackage = require('@fortemi/core/package.json');
 
@@ -141,6 +147,10 @@ if (receipt.capability_loss_report.losses.length !== 0) fail('receipt declares l
 
 if (fullReceipt.schema_version !== 'aiwg.fortemi.full-v1-consumer-receipt.v1') {
   fail(`unsupported full-v1 receipt schema ${fullReceipt.schema_version}`);
+}
+const validateFullReceipt = ajv.compile(fullReceiptSchema);
+if (!validateFullReceipt(fullReceipt)) {
+  fail(`full-v1 receipt schema validation failed: ${ajv.errorsText(validateFullReceipt.errors)}`);
 }
 if (fullReceipt.converter.entrypoint !== '@fortemi/core/aiwg-index-shard') {
   fail('full-v1 receipt does not name the public package entry point');
@@ -257,10 +267,10 @@ if (fullReceipt.conversion.lossless !== true || fullReceipt.conversion.losses.le
   fail('full-v1 consumer receipt declares conversion loss');
 }
 if (
-  fullReceipt.advertisement.advertised !== false ||
-  fullReceipt.advertisement.default_profile !== 'core-v1'
+  fullReceipt.advertisement.advertised !== true ||
+  fullReceipt.advertisement.default_profile !== 'full-v1'
 ) {
-  fail('full-v1 consumer receipt overstates the advertised AIWG profile');
+  fail('full-v1 consumer receipt does not advertise the receipt-backed default profile');
 }
 
 const serverFlag = process.argv.indexOf('--server-checkout');
@@ -268,20 +278,13 @@ if (serverFlag >= 0) {
   const checkout = process.argv[serverFlag + 1];
   if (!checkout) fail('--server-checkout requires a path');
   const actualCommit = run('git', ['rev-parse', 'HEAD'], { cwd: checkout, capture: true });
-  if (actualCommit !== receipt.consumers.fortemi.commit) {
-    fail(`Fortemi checkout ${actualCommit} does not match receipt`);
+  if (actualCommit !== fullReceipt.consumers.fortemi.commit) {
+    fail(`Fortemi checkout ${actualCommit} does not match full-v1 receipt`);
   }
   if (run('git', ['status', '--porcelain'], { cwd: checkout, capture: true })) {
     fail('Fortemi checkout is not clean before native receipt verification');
   }
 
-  const implementationCommit = run('git', ['rev-parse', 'HEAD^'], {
-    cwd: checkout,
-    capture: true,
-  });
-  if (implementationCommit !== receipt.consumers.fortemi.implementation_commit) {
-    fail('Fortemi receipt commit is not directly based on the declared implementation commit');
-  }
   const verifyConsumerArtifact = (reference, label) => {
     const artifactPath = resolve(checkout, reference.path);
     const bytes = readFileSync(artifactPath);
@@ -301,40 +304,29 @@ if (serverFlag >= 0) {
   };
 
   const serverFixture = verifyConsumerArtifact(
-    receipt.consumers.fortemi.fixture,
-    'Fortemi fixture',
+    fullReceipt.consumers.fortemi.fixture,
+    'Fortemi full-v1 fixture',
   );
-  if (sha256(serverFixture) !== receipt.archive.sha256) {
+  if (sha256(serverFixture) !== fullReceipt.archive.sha256) {
     fail('Fortemi fixture does not match the immutable AIWG producer archive');
   }
-  const producerReceipt = JSON.parse(
+  const runtimeReceipt = JSON.parse(
     verifyConsumerArtifact(
-      receipt.consumers.fortemi.producer_receipt,
-      'Fortemi producer receipt',
+      fullReceipt.consumers.fortemi.runtime_receipt,
+      'Fortemi schema-2 runtime receipt',
     ).toString('utf8'),
   );
   if (
-    producerReceipt.producer?.commit !== receipt.producer.commit ||
-    producerReceipt.converter?.commit !== receipt.converter.commit ||
-    producerReceipt.fixture?.sha256 !== receipt.archive.sha256
+    runtimeReceipt.status !== 'delivered-main-conformance-passed' ||
+    runtimeReceipt.implementation?.commit !== fullReceipt.consumers.fortemi.implementation_commit ||
+    runtimeReceipt.aiwgProducer?.archive?.sha256 !== fullReceipt.archive.sha256 ||
+    runtimeReceipt.consumer?.cleanDestination !== true ||
+    runtimeReceipt.consumer?.semanticReexport !== true ||
+    runtimeReceipt.consumer?.zeroMutationOnFailure !== true ||
+    runtimeReceipt.consumer?.repeatedImports < 2 ||
+    runtimeReceipt.coverage?.length < 21
   ) {
-    fail('Fortemi producer receipt does not bind the integrated producer, converter, and archive');
-  }
-  const cellReceipt = JSON.parse(
-    verifyConsumerArtifact(
-      receipt.consumers.fortemi.cell_receipt,
-      'Fortemi cell receipt',
-    ).toString('utf8'),
-  );
-  if (
-    cellReceipt.status !== 'consumer-conformance-passed' ||
-    cellReceipt.cell !== 'aiwg-core-v1-to-fortemi' ||
-    cellReceipt.producer?.commit !== receipt.producer.commit ||
-    cellReceipt.consumer?.baseCommit !== receipt.consumers.fortemi.implementation_commit ||
-    cellReceipt.fixture?.sha256 !== receipt.archive.sha256 ||
-    cellReceipt.claimBoundary?.profile !== receipt.claim_boundary.profile
-  ) {
-    fail('Fortemi cell receipt does not bind the declared core-v1 consumer evidence');
+    fail('Fortemi runtime receipt does not bind the declared full-v1 consumer evidence');
   }
   run(
     'cargo',
@@ -344,7 +336,7 @@ if (serverFlag >= 0) {
       'matric-api',
       '--bin',
       'matric-api',
-      'aiwg_core_v1_current_fixture',
+      'shard_schema_2_clean_destinations_preserve_independent_full_v1_archives',
       '--',
       '--nocapture',
     ],

@@ -2,22 +2,22 @@
   "schema_version": "aiwg.fortemi.full-v1-consumer-receipt.v1",
   "consumer": {
     "repository": "https://git.integrolabs.net/roctinam/aiwg.git",
-    "commit": "9940bf64d4dcdac1486948b72fe67076a4dcec21",
+    "commit": "031102dc4dcc414c73e1d9141a5e75f4ad0e7df7",
     "package": {
       "name": "aiwg",
-      "version": "2026.7.20"
+      "version": "2026.7.25"
     }
   },
   "converter": {
     "repository": "https://git.integrolabs.net/Fortemi/fortemi-react.git",
-    "commit": "a08df8a6ece098d8bd5b2d27f3fbb7734b39e331",
-    "tag": "v2026.7.14",
+    "commit": "9f8fa2d4b9b5d864c2d0c4fd730958e2a964341d",
+    "tag": "v2026.7.15",
     "entrypoint": "@fortemi/core/aiwg-index-shard",
     "package": {
       "name": "@fortemi/core",
-      "version": "2026.7.14",
-      "shasum": "9c6ff0e34bacba3faf51d16054928d17ee90c66d",
-      "integrity": "sha512-GytXkWpuG/ygeYy0MbKGpqSKMQ8v+vHW+Btqloaky9fl+5eKRev3zBlQV22IlYWbb2Q7gd7lXrgtRcdFCmg5DQ=="
+      "version": "2026.7.15",
+      "shasum": "77d49fdb9eb389388c864052f00b7323d39d8aa0",
+      "integrity": "sha512-49GThHQHzLFD2BbjgXB7AUznRrwtWo8MsH6IcFMhSmCKj/h+Q5j18EBpkwPHJfC5E7crp+rVzy/GcrT/PF1SXA=="
     },
     "release_signing_fingerprint": "26CB074F65E89E5F4DFD7C71F410C8C763C90CC9",
     "upstream_producer_receipt": {
@@ -56,10 +56,45 @@
     "lossless": true,
     "losses": []
   },
+  "consumers": {
+    "pglite": {
+      "package": {
+        "name": "@fortemi/core",
+        "version": "2026.7.15",
+        "integrity": "sha512-49GThHQHzLFD2BbjgXB7AUznRrwtWo8MsH6IcFMhSmCKj/h+Q5j18EBpkwPHJfC5E7crp+rVzy/GcrT/PF1SXA=="
+      },
+      "clean_destination": true,
+      "semantic_reexport": true,
+      "repeated_imports": 2,
+      "zero_mutation_on_failure": true,
+      "component_count": 33
+    },
+    "fortemi": {
+      "repository": "https://git.integrolabs.net/Fortemi/fortemi.git",
+      "commit": "2e812aa66ba108a824475a97b1ddba4d1412dec7",
+      "implementation_commit": "c93742d7c75b481621b821f4584304289eb364d5",
+      "fixture": {
+        "path": "tests/fixtures/shards/external/aiwg-2026.7.13/aiwg-full-v1.shard",
+        "sha256": "df87edc5725e3f0c8d95d8d4328c64a263e9b021520a127d9df5b7301c2afee5",
+        "bytes": 3941
+      },
+      "runtime_receipt": {
+        "path": "tests/fixtures/shards/external/schema-2-runtime.implementation-receipt.json",
+        "sha256": "29f5e7cca66aec38baba0d7e58da1f5f6cc8520995f290831bc949bde1de1647"
+      },
+      "clean_destination": true,
+      "semantic_reexport": true,
+      "repeated_imports": 2,
+      "zero_mutation_on_failure": true,
+      "presence_states": ["absent", "null", "empty", "value"],
+      "component_count": 33,
+      "count_field_count": 34
+    }
+  },
   "advertisement": {
-    "advertised": false,
-    "default_profile": "core-v1",
-    "reason": "Fortemi schema-2 runtime and independent full-v1 destination receipts remain open gates."
+    "advertised": true,
+    "default_profile": "full-v1",
+    "reason": "Exact 2.0.0/full-v1 PGlite and Fortemi receipts are delivered; Fortemi #1084/#1087 and React #381/#382 are closed."
   },
   "coordination": {
     "aiwg_issue": "https://git.integrolabs.net/roctinam/aiwg/issues/1870",

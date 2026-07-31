@@ -75,10 +75,14 @@ published-package consumer receipt is the basis for the CLI default.
 This package adoption succeeds the bounded core-v1 delivery in AIWG
 [#1790](https://git.integrolabs.net/roctinam/aiwg/issues/1790) and
 [#1797](https://git.integrolabs.net/roctinam/aiwg/issues/1797). Native
-full-v1 production remains coordinated through Fortemi React
-[#381](https://git.integrolabs.net/Fortemi/fortemi-react/issues/381), with
-cross-repository advertisement gated by React
-[#382](https://git.integrolabs.net/Fortemi/fortemi-react/issues/382).
+full-v1 production and cross-repository advertisement are now receipt-backed:
+Fortemi React [#381](https://git.integrolabs.net/Fortemi/fortemi-react/issues/381)
+and [#382](https://git.integrolabs.net/Fortemi/fortemi-react/issues/382), plus
+Fortemi runtime [#1087](https://git.integrolabs.net/Fortemi/fortemi/issues/1087)
+and destination matrix
+[#1084](https://git.integrolabs.net/Fortemi/fortemi/issues/1084), are closed.
+These gates support only the named exact `2.0.0/full-v1` tuple, not suite-wide
+portability or complete-backup claims.
 
 The representative v2 graph is deterministic. The committed `.shard` is the
 immutable evidence artifact identified by its receipt digest; canonical zero
@@ -463,19 +467,23 @@ used to promote each consumer cell. Blocking CI verifies the actual published
 converter, a clean PGlite import/re-export, and a clean Fortemi server
 import/re-export.
 
-The separate `full-v1` consumer receipt binds the public package entry point,
-release source/tag, registry integrity, schema-2 authority digests, source
-fixture, deterministic 33-component archive, and zero-loss conversion report.
-It deliberately records `advertised: false`: Fortemi schema-2 runtime support
-and the independent destination matrix remain external gates.
+The separate schema-validated `full-v1` consumer receipt binds the public
+package entry point, release source/tag, registry integrity, schema-2 authority
+digests, source fixture, deterministic 33-component archive, zero-loss
+conversion report, clean PGlite evidence, and Fortemi's immutable schema-2
+runtime receipt. It records `advertised: true` and `default_profile: full-v1`
+only because the named Fortemi #1084/#1087 and React #381/#382 gates are
+closed. Suite-wide and complete-backup claims remain outside this receipt.
 
 The default static-index fixture path still does not require a live service.
 The separate portable-shard conformance workflow starts an isolated Fortemi
-test database, checks out the exact receipt commit, verifies the server-owned
-fixture and producer/cell receipt digests, and executes both native Fortemi
-tests. It proves clean import/re-export, hierarchy and lifecycle preservation,
+test database, checks out the exact full-v1 receipt commit, verifies the
+server-owned fixture and schema-2 runtime receipt digests, and executes the
+native clean-destination full-v1 test. It proves all 33 declared components and
+34 count fields, presence semantics, hierarchy and lifecycle preservation,
 repeat convergence, compatibility-window handling, and zero-mutation rejection.
-This evidence is limited to named profile `core-v1`; it does not unify the
+The legacy core-v1 cell remains explicit and independently receipt-backed.
+This evidence is limited to named profiles; it does not unify the
 AIWG static index, Knowledge Shard transport, and live Fortemi persistence
 planes. Removing the legacy local backend remains gated by deprecation,
 fallback, and rollback evidence.

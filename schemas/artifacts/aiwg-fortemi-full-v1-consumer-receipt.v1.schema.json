@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/artifacts/aiwg-fortemi-full-v1-consumer-receipt.v1.schema.json",
+  "title": "AIWG Fortemi full-v1 consumer receipt",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "consumer",
+    "converter",
+    "authority",
+    "source",
+    "archive",
+    "conversion",
+    "consumers",
+    "advertisement",
+    "coordination"
+  ],
+  "properties": {
+    "schema_version": { "const": "aiwg.fortemi.full-v1-consumer-receipt.v1" },
+    "consumer": { "$ref": "#/$defs/revision" },
+    "converter": {
+      "allOf": [
+        { "$ref": "#/$defs/revision" },
+        {
+          "type": "object",
+          "required": ["tag", "entrypoint", "package", "release_signing_fingerprint", "upstream_producer_receipt"]
+        }
+      ]
+    },
+    "authority": {
+      "type": "object",
+      "required": ["repository", "commit", "contract_revision", "contract_sha256", "schema_version", "schema_bundle_sha256"]
+    },
+    "source": { "$ref": "#/$defs/artifact" },
+    "archive": {
+      "allOf": [
+        { "$ref": "#/$defs/artifact" },
+        { "type": "object", "required": ["manifest"] }
+      ]
+    },
+    "conversion": {
+      "type": "object",
+      "required": ["schema_version", "source_schema_version", "contract_valid", "lossless", "losses"]
+    },
+    "consumers": {
+      "type": "object",
+      "required": ["pglite", "fortemi"],
+      "properties": {
+        "pglite": { "$ref": "#/$defs/consumerEvidence" },
+        "fortemi": {
+          "allOf": [
+            { "$ref": "#/$defs/consumerEvidence" },
+            {
+              "type": "object",
+              "required": ["repository", "commit", "implementation_commit", "fixture", "runtime_receipt", "presence_states", "count_field_count"]
+            }
+          ]
+        }
+      }
+    },
+    "advertisement": {
+      "type": "object",
+      "required": ["advertised", "default_profile", "reason"]
+    },
+    "coordination": { "type": "object" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "artifact": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "revision": {
+      "type": "object",
+      "required": ["repository", "commit", "package"],
+      "properties": {
+        "repository": { "type": "string", "pattern": "^https://" },
+        "commit": { "$ref": "#/$defs/commit" },
+        "package": { "type": "object", "required": ["name", "version"] }
+      }
+    },
+    "consumerEvidence": {
+      "type": "object",
+      "required": ["clean_destination", "semantic_reexport", "repeated_imports", "zero_mutation_on_failure", "component_count"],
+      "properties": {
+        "clean_destination": { "const": true },
+        "semantic_reexport": { "const": true },
+        "repeated_imports": { "type": "integer", "minimum": 2 },
+        "zero_mutation_on_failure": { "const": true },
+        "component_count": { "const": 33 }
+      }
+    }
+  }
+}

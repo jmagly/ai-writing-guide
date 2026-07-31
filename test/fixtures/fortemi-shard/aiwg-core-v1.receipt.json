@@ -35,11 +35,11 @@
   },
   "converter": {
     "repository": "https://git.integrolabs.net/Fortemi/fortemi-react.git",
-    "commit": "a08df8a6ece098d8bd5b2d27f3fbb7734b39e331",
+    "commit": "9f8fa2d4b9b5d864c2d0c4fd730958e2a964341d",
     "package": {
       "name": "@fortemi/core",
-      "version": "2026.7.14",
-      "integrity": "sha512-GytXkWpuG/ygeYy0MbKGpqSKMQ8v+vHW+Btqloaky9fl+5eKRev3zBlQV22IlYWbb2Q7gd7lXrgtRcdFCmg5DQ=="
+      "version": "2026.7.15",
+      "integrity": "sha512-49GThHQHzLFD2BbjgXB7AUznRrwtWo8MsH6IcFMhSmCKj/h+Q5j18EBpkwPHJfC5E7crp+rVzy/GcrT/PF1SXA=="
     },
     "provenance": {
       "provider": "npm",
@@ -108,7 +108,7 @@
     "pglite": {
       "package": {
         "name": "@fortemi/core",
-        "version": "2026.7.14"
+        "version": "2026.7.15"
       },
       "clean_destination": true,
       "semantic_reexport": true,
@@ -130,7 +130,7 @@
       },
       "test": {
         "command": "npx vitest run test/unit/artifacts/fortemi-shard-export.test.ts",
-        "passed": 6,
+        "passed": 8,
         "failed": 0
       },
       "losses": []
