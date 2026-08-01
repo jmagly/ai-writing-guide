@@ -119,7 +119,9 @@ jobs:
       - name: Install SQLite test backend
         # Keep native prebuild plumbing out of the default/package-lock install
         # tree while making the optional production backend mandatory in CI.
-        run: npm install --no-save --package-lock=false better-sqlite3@12.8.0
+        # This exact-version follow-up must not re-resolve the already-locked
+        # graph through the seven-day age filter; match the publish gate.
+        run: npm install --no-save --save-dev --package-lock=false --min-release-age=0 better-sqlite3@12.8.0
 
       - name: Sanitize session regression corpus
         # Reject credential, personal-path, host-identity, and provenance drift
