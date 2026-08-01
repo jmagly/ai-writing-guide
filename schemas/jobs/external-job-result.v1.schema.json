@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/jobs/external-job-result.v1.schema.json",
+  "title": "AIWG External Job Result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["idempotencyKey", "externalResultUrl", "account", "verification", "attachmentPaths"],
+  "properties": {
+    "idempotencyKey": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "externalResultUrl": { "type": "string", "format": "uri" },
+    "account": { "type": "string", "minLength": 1 },
+    "verification": { "type": "string", "minLength": 1 },
+    "attachmentPaths": { "type": "array", "items": { "type": "string" } }
+  }
+}

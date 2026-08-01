@@ -65,6 +65,7 @@
     "quickstart-sdlc",
     "quickstart-mmk",
     "guides",
+    "guides/external-trigger-jobs",
     "models",
     "models/claude-optimization",
     "models/gpt-optimization",

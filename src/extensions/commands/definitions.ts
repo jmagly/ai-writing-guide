@@ -301,6 +301,25 @@ export const modelsCommand: Extension = {
   } satisfies CommandMetadata,
 };
 
+export const jobCommand: Extension = {
+  id: 'job',
+  type: 'command',
+  name: 'External Job',
+  description: 'Validate, render, or run one externally triggered provider job',
+  version: '1.0.0',
+  capabilities: ['cli', 'jobs', 'external-trigger', 'orchestration'],
+  keywords: ['job', 'cron', 'systemd', 'gitea actions', 'codex exec', 'single shot'],
+  category: 'orchestration',
+  platforms: { generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'command',
+    template: 'orchestration',
+    argumentHint: '<validate|render-cron|run> <flow> [--format cron|systemd|gitea-actions] [--once]',
+    allowedTools: ['Read', 'Write', 'Bash'],
+  } satisfies CommandMetadata,
+};
+
 export const cockpitCommand: Extension = {
   id: 'cockpit',
   type: 'command',
@@ -3611,6 +3630,7 @@ export const commandDefinitions: Extension[] = [
   // Framework (6)
   useCommand,
   modelsCommand,
+  jobCommand,
   cockpitCommand,
   listCommand,
   removeCommand,

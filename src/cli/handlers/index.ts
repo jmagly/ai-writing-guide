@@ -133,6 +133,7 @@ import { commandLogHandler } from './command-log.js';
 import { skillUsageHandler } from './skill-usage.js';
 import { modelsHandler } from './models.js';
 import { versionsHandler } from './resource-versions.js';
+import { jobHandler } from './job.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -163,6 +164,7 @@ export {
   issueHandler,
   issueAuditHandler,
   runHandler,
+  jobHandler,
 
   // Project
   newBundleHandler,
@@ -340,6 +342,7 @@ export const allHandlers: CommandHandler[] = [
   issueHandler,
   issueAuditHandler,
   runHandler,
+  jobHandler,
 
   // Workspace management
   ...workspaceHandlers,

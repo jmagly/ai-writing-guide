@@ -7,6 +7,7 @@ const OPERATIONAL_DOCS = [
   'docs/providers/capability-matrix.md',
   'docs/getting-started/daemon-and-automation.md',
   'docs/addons/daemon/quickstart.md',
+  'docs/guides/external-trigger-jobs.md',
 ];
 
 const SCHEDULER_CLAIM_DOCS = [

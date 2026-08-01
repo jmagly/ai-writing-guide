@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/jobs/external-job.v1.schema.json",
+  "title": "AIWG External Job v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "jobs.aiwg.io/v1" },
+    "kind": { "const": "ExternalJob" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "revision"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$" },
+        "revision": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$" }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trigger", "executor", "workItem", "security", "completion"],
+      "properties": {
+        "trigger": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": { "type": { "const": "external" } }
+        },
+        "executor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["provider", "mode", "workspace", "prompt", "resultSchema", "binary"],
+          "properties": {
+            "provider": { "const": "codex" },
+            "mode": { "const": "exec" },
+            "workspace": { "type": "string", "pattern": "^/.+" },
+            "prompt": { "type": "string", "pattern": "^(?!/)(?!\\.\\.(?:/|$))(?!.*\\/\\.\\.(?:/|$)).+" },
+            "resultSchema": { "type": "string", "pattern": "^(?!/)(?!\\.\\.(?:/|$))(?!.*\\/\\.\\.(?:/|$)).+" },
+            "binary": { "type": "string", "pattern": "^/.+" }
+          }
+        },
+        "workItem": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["provider", "baseUrl", "repository", "tokenFile", "eligibleLabels"],
+          "properties": {
+            "provider": { "const": "gitea" },
+            "baseUrl": { "type": "string", "format": "uri", "pattern": "^https://" },
+            "repository": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+            "tokenFile": { "type": "string", "pattern": "^/.+" },
+            "eligibleLabels": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+            "claimTtlSeconds": { "type": "integer", "minimum": 30, "maximum": 86400 },
+            "claimSettleMs": { "type": "integer", "minimum": 100, "maximum": 30000 }
+          }
+        },
+        "approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "required": { "type": "boolean", "default": true },
+            "label": { "type": "string", "default": "approved-for-publish" }
+          }
+        },
+        "security": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["allowedOrigins", "allowedAccounts", "approvedAttachmentRoots"],
+          "properties": {
+            "allowedOrigins": { "type": "array", "minItems": 1, "items": { "type": "string", "format": "uri", "pattern": "^https://" } },
+            "allowedAccounts": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.@:-]{0,127}$" } },
+            "approvedAttachmentRoots": { "type": "array", "items": { "type": "string", "pattern": "^/.+" } },
+            "sensitiveValueFiles": { "type": "array", "items": { "type": "string", "pattern": "^/.+" } }
+          }
+        },
+        "completion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["require"],
+          "properties": {
+            "require": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "allOf": [
+                { "contains": { "const": "external-result-url" } },
+                { "contains": { "const": "issue-comment" } },
+                { "contains": { "const": "idempotency-key" } },
+                { "contains": { "const": "verification" } }
+              ],
+              "items": { "enum": ["external-result-url", "issue-comment", "idempotency-key", "verification"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

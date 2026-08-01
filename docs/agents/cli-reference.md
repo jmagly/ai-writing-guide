@@ -50,6 +50,7 @@ Complete reference for all `aiwg` CLI commands.
 - [MCP Commands](#mcp-commands)
 - [Catalog Commands](#catalog-commands)
 - [Toolsmith Commands](#toolsmith-commands)
+- [External Job Command](#external-job-command)
 - [Utility Commands](#utility-commands)
 - [Plugin Commands](#plugin-commands)
 - [Scaffolding Commands](#scaffolding-commands)
@@ -1808,6 +1809,26 @@ provider command. This is not AIWG emulation.
 
 Use `aiwg steward capabilities --provider codex --feature cron` to inspect the
 current classification and `aiwg help` to verify registered top-level commands.
+
+---
+
+## External Job Command
+
+The `job` command implements reviewed, single-shot work launched by an external
+scheduler. It does not run a clock or resident daemon.
+
+```bash
+aiwg job validate jobs/publish.yaml
+aiwg job render-cron jobs/publish.yaml --format cron
+aiwg job render-cron jobs/publish.yaml --format systemd
+aiwg job render-cron jobs/publish.yaml --format gitea-actions
+aiwg job run jobs/publish.yaml --once --json
+```
+
+The v1 contract covers a Codex stdin executor, Gitea work-item claims,
+approval policy, allowed origins/accounts/attachment roots, stable idempotency,
+private run evidence, and completion verification. See
+[External-trigger jobs](../guides/external-trigger-jobs.md).
 
 ---
 
