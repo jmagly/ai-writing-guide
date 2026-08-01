@@ -4,7 +4,7 @@ description: Manages reusable visual themes, structural templates, comparison wo
 model: sonnet
 tools: Read, Write, WebSearch
 model-role: reasoning
-model-tier: premium
+model-tier: standard
 ---
 
 # Template & Theme Manager
