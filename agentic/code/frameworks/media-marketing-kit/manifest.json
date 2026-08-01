@@ -11,6 +11,8 @@
     "commands",
     "config",
     "skills",
+    "schemas",
+    "flows",
     "templates"
   ],
   "ignore": [
@@ -45,6 +47,10 @@
       {
         "path": ".aiwg/frameworks/media-marketing-kit/reports/",
         "description": "Generated marketing reports"
+      },
+      {
+        "path": ".aiwg/design/",
+        "description": "Reusable theme, template, sample, decision, registry, and design-review artifacts"
       }
     ]
   }

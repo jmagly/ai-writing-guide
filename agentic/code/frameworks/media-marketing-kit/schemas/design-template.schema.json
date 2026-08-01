@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/design/design-template.schema.json",
+  "title": "AIWG Design Template",
+  "type": "object",
+  "required": ["schemaVersion", "id", "version", "name", "owner", "status", "channels", "contentSlots", "layout", "exports", "approvalState"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "name": { "type": "string", "minLength": 1 },
+    "owner": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["draft", "sampled", "selected", "active", "retired", "archived"] },
+    "themeId": { "type": ["string", "null"] },
+    "channels": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+    "contentSlots": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/slot" } },
+    "hierarchy": { "type": "array", "items": { "type": "string" } },
+    "layout": {
+      "type": "object",
+      "required": ["grid", "responsiveRules", "safeZones"],
+      "properties": {
+        "grid": { "type": "string" },
+        "responsiveRules": { "type": "array", "items": { "type": "string" } },
+        "safeZones": { "type": "array", "items": { "type": "string" } },
+        "componentMapping": { "type": "object", "additionalProperties": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "variants": { "type": "array", "items": { "$ref": "#/$defs/variant" } },
+    "exports": {
+      "type": "object",
+      "required": ["formats", "namingConvention"],
+      "properties": {
+        "formats": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "colorMode": { "enum": ["RGB", "CMYK", "mixed"] },
+        "resolutionDpi": { "type": "integer", "minimum": 72 },
+        "bleed": { "type": ["string", "null"] },
+        "namingConvention": { "type": "string", "minLength": 1 },
+        "performanceBudget": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "accessibility": {
+      "type": "object",
+      "properties": {
+        "wcagTarget": { "enum": ["2.1 AA", "2.2 AA", "2.1 AAA", "2.2 AAA"] },
+        "textContrast": { "type": "string" },
+        "nonTextContrast": { "type": "string" },
+        "reflow": { "type": "string" },
+        "reducedMotion": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "approvalState": { "enum": ["pending", "pending-qa", "approved", "rejected"] }
+  },
+  "$defs": {
+    "slot": {
+      "type": "object",
+      "required": ["id", "purpose", "required"],
+      "properties": {
+        "id": { "type": "string" },
+        "purpose": { "type": "string" },
+        "required": { "type": "boolean" },
+        "constraints": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "variant": {
+      "type": "object",
+      "required": ["channel", "dimensions", "safeZones", "formats"],
+      "properties": {
+        "channel": { "type": "string" },
+        "dimensions": { "type": "string" },
+        "safeZones": { "type": "array", "items": { "type": "string" } },
+        "formats": { "type": "array", "items": { "type": "string" } },
+        "colorMode": { "enum": ["RGB", "CMYK"] },
+        "resolutionDpi": { "type": "integer", "minimum": 72 },
+        "bleed": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

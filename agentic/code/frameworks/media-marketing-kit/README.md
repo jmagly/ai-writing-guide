@@ -49,6 +49,19 @@ The Media/Marketing Kit (MMK) framework provides a comprehensive Plan → Act li
 - `artifacts/` - Sample campaigns demonstrating complete lifecycle
 - `config/` - Framework configuration (models.json, etc.)
 
+### Design operations
+
+The `theme-manager` skill and **Template & Theme Manager** agent coordinate reusable visual direction across web, social, email, presentations, reports, campaigns, and print. They keep expressive themes separate from structural templates, research and compare five directions by default, generate comparable image samples when supported, fall back to production-grade specifications elsewhere, and record selection and rotation history under `.aiwg/design/`.
+
+```bash
+aiwg discover "pick a visual theme"
+aiwg discover "create five hero directions"
+aiwg discover "stop repeating the same aesthetic"
+aiwg run skill theme-manager -- init .
+```
+
+See `flows/choose-theme.md`, `flows/design-operations.md`, and `docs/design-operations-examples.md`.
+
 ### Template Categories
 
 The framework provides 87+ templates organized by marketing discipline:
