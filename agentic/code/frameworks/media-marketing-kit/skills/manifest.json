@@ -5,6 +5,11 @@
   "type": "skills-catalog",
   "skills": [
     {
+      "name": "theme-manager",
+      "description": "Research, compare, sample, select, persist, adapt, rotate, and archive visual themes and design templates",
+      "triggers": ["pick a visual theme", "create five hero directions", "manage design templates", "stop repeating the same aesthetic"]
+    },
+    {
       "name": "brand-compliance",
       "description": "Unified brand compliance validation across visual, verbal, and legal dimensions",
       "triggers": ["brand review", "check brand compliance", "validate against brand guidelines", "brand audit"]

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/design/theme.schema.json",
+  "title": "AIWG Design Theme",
+  "type": "object",
+  "required": ["schemaVersion", "id", "version", "name", "owner", "status", "channels", "visualLanguage", "motifs", "palette", "approvalState"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "name": { "type": "string", "minLength": 1 },
+    "owner": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["draft", "sampled", "selected", "active", "retired", "archived"] },
+    "dates": { "type": "object", "additionalProperties": { "type": "string", "format": "date-time" } },
+    "channels": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+    "brandProfile": { "type": ["string", "null"] },
+    "visualLanguage": { "type": "string", "minLength": 1 },
+    "metaphor": { "type": "string" },
+    "motifs": { "type": "array", "items": { "type": "string" } },
+    "prohibitedMotifs": { "type": "array", "items": { "type": "string" } },
+    "palette": { "type": "array", "items": { "type": "string" } },
+    "typographyTags": { "type": "array", "items": { "type": "string" } },
+    "imageryTags": { "type": "array", "items": { "type": "string" } },
+    "motionDirection": { "type": "string" },
+    "researchReferences": { "type": "array", "items": { "$ref": "#/$defs/reference" } },
+    "sampleAssets": { "type": "array", "items": { "type": "string" } },
+    "approvalState": { "enum": ["pending", "pending-qa", "approved", "rejected"] },
+    "accessibilityNotes": { "type": "string" },
+    "usageBoundaries": { "type": "string" },
+    "usageHistory": { "type": "array", "items": { "$ref": "#/$defs/usage" } }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "required": ["url", "accessedAt"],
+      "properties": {
+        "title": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "publishedAt": { "type": ["string", "null"], "format": "date" },
+        "accessedAt": { "type": "string", "format": "date" },
+        "evidenceType": { "enum": ["timely-trend", "evergreen-reference", "subjective-recommendation"] },
+        "license": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "usage": {
+      "type": "object",
+      "required": ["usedAt", "channel"],
+      "properties": {
+        "usedAt": { "type": "string", "format": "date-time" },
+        "channel": { "type": "string" },
+        "project": { "type": ["string", "null"] },
+        "asset": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

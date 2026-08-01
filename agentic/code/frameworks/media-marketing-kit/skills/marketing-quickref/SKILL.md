@@ -72,6 +72,10 @@ aiwg discover "brand review"                   # → brand-review
 ```bash
 aiwg discover "creative brief"                 # → creative-brief (score 0.93)
 aiwg discover "asset production"               # → asset-production
+aiwg discover "pick a visual theme"             # → theme-manager
+aiwg discover "create five hero directions"     # → theme-manager
+aiwg discover "manage design templates"         # → theme-manager
+aiwg discover "stop repeating the same aesthetic" # → theme-manager / theme-rotation
 aiwg discover "video production"               # → video-production
 aiwg discover "email campaign"                 # → email-campaign
 aiwg discover "social strategy"                # → social-strategy

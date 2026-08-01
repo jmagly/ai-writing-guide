@@ -444,7 +444,8 @@
     "blog/2026-07-aiwg-workflow-portability",
     "addons/line-memory",
     "addons/line-memory/overview",
-    "blog/2026-07-aiwg-discovery-first"
+    "blog/2026-07-aiwg-discovery-first",
+    "frameworks/media-marketing-kit/design-operations-examples"
   ],
   "sections": [
     {
@@ -3334,6 +3335,13 @@
       "summary": "title: Line Memory",
       "file": "addons/line-memory/overview.md",
       "parent": "addons/line-memory"
+    },
+    {
+      "id": "frameworks/media-marketing-kit/design-operations-examples",
+      "title": "Design Operations Examples",
+      "summary": "These examples use the same lifecycle—constraints, history, research, five comparable candidates, hu",
+      "file": "frameworks/media-marketing-kit/design-operations-examples.md",
+      "parent": "frameworks/media-marketing-kit"
     }
   ],
   "pages": [

@@ -1,0 +1,16 @@
+{
+  "name": "design-operations",
+  "description": "Theme research, comparison, selection, template adaptation, QA, and history templates",
+  "category": "creative",
+  "files": [
+    { "name": "theme-brief-template.md", "description": "Theme intake and constraints" },
+    { "name": "theme-candidate-card-template.md", "description": "Comparable theme direction" },
+    { "name": "theme-comparison-matrix-template.md", "description": "Candidate scoring and selection" },
+    { "name": "visual-sample-spec-template.md", "description": "Generated-image or specification-only sample contract" },
+    { "name": "selected-theme-card-template.md", "description": "Human-readable selected theme" },
+    { "name": "design-template-spec-template.md", "description": "Structural layout and export contract" },
+    { "name": "cross-channel-adaptation-matrix-template.md", "description": "Theme invariants and channel adaptations" },
+    { "name": "design-qa-checklist-template.md", "description": "Brand, accessibility, licensing, and technical QA" },
+    { "name": "theme-registry-template.md", "description": "Registry and usage-history view" }
+  ]
+}
