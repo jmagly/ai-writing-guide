@@ -46,7 +46,7 @@ Use this skill for requests such as:
 
 1. Create or inspect `.aiwg/design/` and link any applicable `.aiwg/marketing/` campaign.
 2. Capture brand, audience, season, channel, content, accessibility, licensing, production, and “do not repeat” constraints in a theme brief.
-3. Read the registry and audit the most recent six uses. Call `auditThemeRotation` from `tools/design/theme-manager.mjs` for every candidate.
+3. Read the registry and audit the most recent six uses. Call `auditThemeRotation` from the bundled `scripts/theme-manager.mjs` entrypoint for every candidate.
 4. Research timely and evergreen visual evidence. Every research item records URL, publication date when known, access date, evidence type, and license status. Clearly label subjective recommendations.
 5. Produce five meaningfully different candidates by default. Keep source copy, content density, dimensions, and sample fidelity constant.
 6. Score brand fit, audience fit, channel fit, accessibility, production feasibility, and distinctiveness. Explain trade-offs; do not select solely by numeric rank.

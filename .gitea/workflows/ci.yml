@@ -19,7 +19,10 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
+    # npm 10.8.2 in the Node 20 image cannot validate packages signed after
+    # npm's registry-key rotation. Keep the signature hard gate on the same
+    # digest-pinned npm 11 runtime used by the publication workflow.
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb  # node 24.15.0 / npm 11.12.1 (see ci/digests.txt)
     timeout-minutes: 15
 
     steps:
@@ -116,7 +119,9 @@ jobs:
       - name: Install SQLite test backend
         # Keep native prebuild plumbing out of the default/package-lock install
         # tree while making the optional production backend mandatory in CI.
-        run: npm install --no-save --package-lock=false better-sqlite3@12.8.0
+        # This exact-version follow-up must not re-resolve the already-locked
+        # graph through the seven-day age filter; match the publish gate.
+        run: npm install --no-save --save-dev --package-lock=false --min-release-age=0 better-sqlite3@12.8.0
 
       - name: Sanitize session regression corpus
         # Reject credential, personal-path, host-identity, and provenance drift
@@ -169,7 +174,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb  # node 24.15.0 / npm 11.12.1 (see ci/digests.txt)
     timeout-minutes: 10
     needs: [test]
 
