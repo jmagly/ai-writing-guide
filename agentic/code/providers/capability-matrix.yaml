@@ -16,8 +16,8 @@ providers:
   claude-code:
     display_name: Claude Code
     status: stable
-    daemon_tier: native
-    daemon_pty_adapter: true
+    daemon_tier: unsupported
+    daemon_pty_adapter: false
     artifact_paths:
       agents: .claude/agents/
       commands: .claude/commands/
@@ -31,7 +31,7 @@ providers:
       mcp: true
       behaviors: false
       mission_control: false
-      daemon: true
+      daemon: false
     emulation:
       cron: native
       agent_teams: native
@@ -39,7 +39,7 @@ providers:
       mcp: native
       behaviors: hooks
       mission_control: aiwg-mc
-      daemon: native
+      daemon: null
     hook_wiring:
       at_link_support: true
       hook_file: AIWG.md
@@ -80,8 +80,8 @@ providers:
     aliases:
       - openai
     status: stable
-    daemon_tier: native
-    daemon_pty_adapter: true
+    daemon_tier: unsupported
+    daemon_pty_adapter: false
     artifact_paths:
       agents: .codex/agents/
       commands: "~/.codex/prompts/"
@@ -100,15 +100,15 @@ providers:
       mcp: false
       behaviors: false
       mission_control: false
-      daemon: true
+      daemon: false
     emulation:
-      cron: aiwg-schedule
+      cron: external-trigger
       agent_teams: aiwg-mc
       tasks: aiwg-mc
       mcp: null
       behaviors: aiwg-mc
       mission_control: aiwg-mc
-      daemon: native
+      daemon: null
     hook_wiring:
       at_link_support: false
       hook_file: AIWG-codex.md
@@ -164,7 +164,7 @@ providers:
       mission_control: false
       daemon: false
     emulation:
-      cron: aiwg-schedule
+      cron: null
       agent_teams: aiwg-mc
       tasks: aiwg-mc
       mcp: null
@@ -183,8 +183,8 @@ providers:
     display_name: Factory AI
     status: stable
     # droid CLI runs headless via `droid exec`; AIWG daemon provides persistence layer
-    daemon_tier: tier1
-    daemon_pty_adapter: true
+    daemon_tier: unsupported
+    daemon_pty_adapter: false
     artifact_paths:
       agents: .factory/droids/
       commands: .factory/commands/
@@ -198,15 +198,15 @@ providers:
       mcp: true               # Native MCP support (stdio + HTTP transports)
       behaviors: false
       mission_control: true   # Factory Missions maps to MC concept
-      daemon: false           # No native persistent daemon; AIWG daemon wraps droid exec
+      daemon: false
     emulation:
-      cron: aiwg-schedule
+      cron: null
       agent_teams: null       # native Missions
       tasks: null             # native Task tool
       mcp: null               # native MCP
       behaviors: aiwg-mc
       mission_control: null   # native Missions
-      daemon: aiwg-daemon     # AIWG daemon provides persistence for headless droid exec
+      daemon: null
     hook_wiring:
       at_link_support: false
       hook_file: AIWG-factory.md
@@ -236,7 +236,7 @@ providers:
       mission_control: false
       daemon: false
     emulation:
-      cron: aiwg-schedule
+      cron: null
       agent_teams: aiwg-mc
       tasks: aiwg-mc
       mcp: null
@@ -254,7 +254,7 @@ providers:
   opencode:
     display_name: OpenCode
     status: stable
-    daemon_tier: native
+    daemon_tier: unsupported
     daemon_pty_adapter: false
     artifact_paths:
       agents: .opencode/agent/
@@ -269,15 +269,15 @@ providers:
       mcp: false
       behaviors: false
       mission_control: false
-      daemon: true
+      daemon: false
     emulation:
-      cron: aiwg-schedule
+      cron: null
       agent_teams: aiwg-mc
       tasks: aiwg-mc
       mcp: null
       behaviors: aiwg-mc
       mission_control: aiwg-mc
-      daemon: native
+      daemon: null
     hook_wiring:
       at_link_support: true
       hook_file: AIWG-opencode.md
@@ -289,7 +289,7 @@ providers:
   warp:
     display_name: Warp Terminal
     status: stable
-    daemon_tier: native
+    daemon_tier: unsupported
     daemon_pty_adapter: false
     artifact_paths:
       agents: .warp/agents/
@@ -305,15 +305,15 @@ providers:
       mcp: false
       behaviors: false
       mission_control: false
-      daemon: true
+      daemon: false
     emulation:
-      cron: aiwg-schedule
+      cron: null
       agent_teams: aiwg-mc
       tasks: aiwg-mc
       mcp: null
       behaviors: aiwg-mc
       mission_control: aiwg-mc
-      daemon: native
+      daemon: null
     hook_wiring:
       at_link_support: true
       hook_file: AIWG-warp.md
@@ -344,7 +344,7 @@ providers:
       mission_control: false
       daemon: false
     emulation:
-      cron: aiwg-schedule
+      cron: null
       agent_teams: aiwg-mc
       tasks: aiwg-mc
       mcp: null
@@ -362,7 +362,7 @@ providers:
   hermes:
     display_name: Hermes
     status: experimental
-    daemon_tier: native
+    daemon_tier: unsupported
     daemon_pty_adapter: false
     artifact_paths:
       # MCP is OPTIONAL for Hermes (validated v2026.5.13, #1527): it integrates
@@ -382,15 +382,15 @@ providers:
       mcp: true
       behaviors: false
       mission_control: false
-      daemon: true
+      daemon: false
     emulation:
-      cron: aiwg-schedule
+      cron: null
       agent_teams: aiwg-mc
       tasks: aiwg-mc
       mcp: native
       behaviors: aiwg-mc
       mission_control: aiwg-mc
-      daemon: native
+      daemon: null
     hook_wiring:
       at_link_support: false
       hook_file: .hermes.md
@@ -402,7 +402,7 @@ providers:
   openclaw:
     display_name: OpenClaw
     status: stable
-    daemon_tier: native
+    daemon_tier: unsupported
     daemon_pty_adapter: false
     artifact_paths:
       agents: "~/.openclaw/agents/"
@@ -417,15 +417,15 @@ providers:
       mcp: true
       behaviors: true
       mission_control: false
-      daemon: true
+      daemon: false
     emulation:
-      cron: aiwg-schedule
+      cron: null
       agent_teams: aiwg-mc
       tasks: aiwg-mc
       mcp: native
       behaviors: native
       mission_control: aiwg-mc
-      daemon: native
+      daemon: null
     hook_wiring:
       at_link_support: false
       context_file: "~/.openclaw/config.yaml"
@@ -457,7 +457,7 @@ providers:
       mission_control: false
       daemon: false
     emulation:
-      cron: aiwg-schedule
+      cron: null
       agent_teams: aiwg-mc
       tasks: aiwg-mc
       mcp: null
@@ -477,7 +477,7 @@ features:
     description: Scheduled task execution (recurring triggers)
     native_example: Claude Code CronCreate/CronList/CronDelete tools
     emulation_strategies:
-      aiwg-schedule: AIWG schedule CLI with remote triggers
+      external-trigger: System cron, systemd timers, or CI own time and launch a reviewed provider command
   agent_teams:
     description: Multi-agent orchestration with team coordination
     native_example: Claude Code native agent teams
@@ -505,10 +505,7 @@ features:
       aiwg-mc: AIWG mc start/dispatch/status/watch CLI
   daemon:
     description: >
-      Persistent background process for headless/unattended operation.
-      Tier 1 (native): full daemon support via aiwg daemon start/stop/status.
-      Tier 2 (pty-adapter): PTY bridge for platforms with a TUI but no headless mode.
-      Tier 3 (unsupported): requires a display server or IDE host; daemon not applicable.
-    native_example: aiwg daemon start (Claude Code, OpenCode, Warp, OpenClaw, Codex)
-    emulation_strategies:
-      pty-adapter: node-pty bridge for TUI platforms (Claude Code, Codex secondary mode)
+      Resident AIWG daemon lifecycle. The current production CLI does not expose
+      a daemon command; bundled daemon sources are non-routable development artifacts.
+    native_example: null
+    emulation_strategies: {}

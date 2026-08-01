@@ -273,7 +273,7 @@ async function handleRuntimeInfo(args: string[], cwd = process.cwd()): Promise<v
 
       // Scheduler backend detection
       const { execSync } = await import('child_process');
-      let schedulerBackend = 'aiwg-cli (daemon)';
+      let schedulerBackend = 'external trigger required (system cron/systemd/CI)';
       let chronyInstalled = false;
 
       try {
@@ -291,7 +291,7 @@ async function handleRuntimeInfo(args: string[], cwd = process.cwd()): Promise<v
         process.env.ANTHROPIC_API_KEY !== undefined;
 
       if (isClaudeCodeContext) {
-        schedulerBackend = 'native-cron (CronCreate) / aiwg-cli fallback';
+        schedulerBackend = 'native-cron (CronCreate); external trigger outside agent sessions';
       }
 
       console.log(`\nScheduler:`);

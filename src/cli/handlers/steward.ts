@@ -23,6 +23,7 @@ import { join } from 'node:path';
 import { AiwgError, EXIT_CODES, handlerResultFromError } from '../errors.js';
 import {
   loadCapabilityMatrix,
+  isExternalStrategy,
   type CapabilityMatrix,
   type ProviderCapabilities,
   type FeatureKey,
@@ -85,6 +86,7 @@ async function detectProvider(ctx?: HandlerContext): Promise<string | null> {
 
 const NATIVE_MARK = '✓ native';
 const EMULATED_MARK = '~ emulated';
+const EXTERNAL_MARK = '↗ external';
 const UNSUPPORTED_MARK = '- not supported';
 
 function emulationLabel(strategy: string | null): string {
@@ -113,13 +115,17 @@ function formatProvider(
   for (const featureId of featureKeys) {
     const isNative = provider.native_features?.[featureId] === true;
     const emulation = provider.emulation?.[featureId] ?? null;
-    const status = isNative ? NATIVE_MARK : (emulation ? EMULATED_MARK : UNSUPPORTED_MARK);
+    const status = isNative
+      ? NATIVE_MARK
+      : isExternalStrategy(emulation) ? EXTERNAL_MARK : (emulation ? EMULATED_MARK : UNSUPPORTED_MARK);
     const feat = matrix.features[featureId];
 
     lines.push(`\n  ${featureId} — ${status}`);
     if (feat?.description) lines.push(`    ${feat.description}`);
     if (isNative) {
       if (feat?.native_example) lines.push(`    example: ${feat.native_example}`);
+    } else if (isExternalStrategy(emulation)) {
+      lines.push(`    trigger: system cron, systemd timer, or CI; AIWG does not own the clock`);
     } else if (emulation) {
       lines.push(`    fallback: ${emulationLabel(emulation)}`);
     }
@@ -375,7 +381,9 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
         const emulation = provider.emulation?.[featureId as FeatureKey] ?? null;
         const status = isNative
           ? `✓ native`
-          : (emulation ? `~ emulated (${emulationLabel(emulation)})` : `- not supported`);
+          : isExternalStrategy(emulation)
+            ? `↗ external trigger (system cron/systemd/CI)`
+            : (emulation ? `~ emulated (${emulationLabel(emulation)})` : `- not supported`);
         console.log(`    ${provider.display_name.padEnd(20)} (${providerId.padEnd(12)}) ${status}`);
       }
       console.log('');
@@ -447,6 +455,10 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
     if (isNative) {
       console.log(`  ✓ Native support available`);
       if (feat.native_example) console.log(`  Example: ${feat.native_example}`);
+    } else if (isExternalStrategy(emulation)) {
+      console.log(`  ↗ Use an external trigger`);
+      console.log(`  Strategy: system cron, systemd timer, or CI launches a reviewed provider command`);
+      console.log(`  Boundary: AIWG does not provide or own the clock/scheduler`);
     } else if (emulation) {
       console.log(`  ~ Use AIWG emulation`);
       console.log(`  Strategy: ${emulationLabel(emulation)}`);

@@ -177,15 +177,19 @@ aiwg steward find --capability cron
 ```
 cron support across providers:
   claude-code:  native
-  codex:        emulated via aiwg-scheduler
-  copilot:      emulated via aiwg-scheduler
-  cursor:       emulated via aiwg-scheduler
-  factory:      native
-  opencode:     emulated via aiwg-scheduler
-  warp:         emulated via aiwg-scheduler
-  windsurf:     emulated via aiwg-scheduler
-  openclaw:     emulated via aiwg-scheduler
+  codex:        external trigger (system cron/systemd/CI)
+  copilot:      unsupported
+  cursor:       unsupported
+  factory:      unsupported
+  opencode:     unsupported
+  warp:         unsupported
+  windsurf:     unsupported
+  openclaw:     unsupported
 ```
+
+External means the host scheduler owns time and launches a reviewed provider
+command. It is not AIWG emulation; no `aiwg schedule` or `aiwg daemon` command
+exists in the production CLI.
 
 ### Example 4: Full matrix
 

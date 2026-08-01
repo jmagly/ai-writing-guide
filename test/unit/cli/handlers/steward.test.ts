@@ -21,7 +21,7 @@ const sampleMatrix = {
     cron: {
       description: 'Native task scheduling',
       native_example: 'CronCreate',
-      emulation_strategies: { 'aiwg-schedule': 'Use AIWG scheduled tasks' },
+      emulation_strategies: { 'external-trigger': 'Use an operator-owned external scheduler' },
     },
     mission_control: {
       description: 'Multi-loop orchestration',
@@ -55,7 +55,7 @@ const sampleMatrix = {
       daemon_pty_adapter: false,
       artifact_paths: {},
       native_features: { cron: false, mission_control: false, daemon: true, tasks: false },
-      emulation: { cron: 'aiwg-schedule', mission_control: 'aiwg-mc', daemon: 'native', tasks: 'aiwg-mc' },
+      emulation: { cron: 'external-trigger', mission_control: 'aiwg-mc', daemon: null, tasks: 'aiwg-mc' },
       hook_wiring: { at_link_support: false, context_file: 'AGENTS.md' },
       deploy_target: 'project',
       aggregated_output: false,
@@ -183,6 +183,17 @@ describe('steward capabilities --provider', () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const result = await stewardHandler.execute(makeCtx(['capabilities', '--provider', 'claude-code']));
     expect(result.exitCode).toBe(0);
+    consoleSpy.mockRestore();
+  });
+
+  it('reports Codex cron as external instead of AIWG emulation', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const result = await stewardHandler.execute(makeCtx(['capabilities', '--provider', 'codex']));
+    expect(result.exitCode).toBe(0);
+    const output = consoleSpy.mock.calls.map(([value]) => String(value)).join('\n');
+    expect(output).toContain('cron — ↗ external');
+    expect(output).toContain('AIWG does not own the clock');
+    expect(output).not.toContain('aiwg-schedule');
     consoleSpy.mockRestore();
   });
 
