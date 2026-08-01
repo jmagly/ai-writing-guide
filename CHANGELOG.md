@@ -29,6 +29,9 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Changed
 
+- **Registry-signature CI runtime** - main Gitea CI now uses the repository's
+  digest-pinned Node 24/npm 11 runtime so the non-waiveable dependency-signature
+  gate recognizes npm's rotated registry signing keys.
 - **Fortemi shard interoperability** - shard export now defaults to the
   `full-v1` receipt contract, binds producer, converter, and consumer evidence,
   and keeps legacy core-only output available through an explicit mode.
