@@ -20,13 +20,14 @@ and external integrations. The machine-readable source is
 | Provider | Status | Execution surface |
 |---|---|---|
 | Claude Code agent session | Native | `CronCreate`, `CronList`, `CronDelete` |
-| Codex | External | system cron, systemd timer, or CI launches `codex exec` |
+| Codex | External | system cron, systemd timer, or CI launches `aiwg job run ... --once`; the runner invokes reviewed `codex exec` work |
 | Other providers without native cron tools | Unsupported | use an operator-owned external scheduler only when the provider has a reviewed non-interactive command |
 
 There is no production `aiwg schedule`, `aiwg daemon`, or
 `aiwg daemon schedule` command. Steward reports Codex cron as an **external
 trigger**, not as AIWG emulation. The external service owns time; AIWG owns only
-the reviewed workflow artifacts that it actually implements.
+the reviewed job contract, single-shot execution, claim, and evidence lifecycle
+that it actually implements. See [External-trigger jobs](../guides/external-trigger-jobs.md).
 
 ## Resident daemon
 

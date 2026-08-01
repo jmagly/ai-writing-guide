@@ -7,15 +7,25 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.0] - 2026-08-01 - "Secure external jobs and operational intelligence"
+
 ### Added
 
-- **Session analytics and forensic evidence indices** - session import and
-  reindex now maintain versioned, content-free tool, escalation, HITL,
+- **Session analytics and forensic evidence** - session import and reindex now
+  maintain a versioned, content-free analytics index for tool, escalation, HITL,
   lifecycle, retry/quota-pressure, and anomaly facts with stable source
   citations. New `sessions analytics` and explicitly authorized
   `sessions forensics` views provide filtered JSON and sanitized Markdown
-  timelines without executing or exporting historical provider payloads
+  facts and authorized forensic timelines without executing or exporting historical provider payloads
   (#1974).
+- **External-trigger single-shot jobs** - the new `aiwg job validate`,
+  `aiwg job render-cron`, and `aiwg job run --once` commands define and execute
+  approval-gated provider work while cron, systemd timers, or Gitea Actions own
+  scheduling. Runs use prompt-on-stdin execution, structured results, stable
+  idempotency, locking, redacted evidence, and race-safe Gitea claims (#1985).
+- **Design theme operations** - the media-marketing framework now includes a
+  theme manager, schemas, templates, comparison workflows, and design QA
+  guidance for reusable cross-channel visual systems.
 
 ### Changed
 
@@ -25,6 +35,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 - **Fortemi core dependency** - the supported core and receipt fixtures now use
   `@fortemi/core@2026.7.15`, with conformance and discovery gates enforcing the
   same converter lineage.
+- **Truthful scheduling capability reporting** - provider matrices, daemon
+  guidance, CLI references, and steward output now distinguish external
+  scheduling from AIWG-owned orchestration instead of implying a resident
+  scheduler exists (#1984).
+- **Cockpit live acceptance evidence** - protected daily validation now waits
+  for runtime re-adoption, requires an observable transient disconnect, and
+  records the executor-reported version before accepting recovery (#1981).
 
 ### Security
 
@@ -39,6 +56,9 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   picomatch v2 chain. SDK 1.29 still retains a transitive Hono node-server v1
   advisory; SDK 1.30 fixes that route but remains blocked by the seven-day
   minimum-release-age policy (#1973).
+- **Cockpit launch credentials** - reusable launch material is no longer placed
+  in URLs; scoped handoff and transport state keep it out of history, referrer,
+  UI, and routine logging surfaces (#1968).
 
 ## [2026.7.25] - 2026-07-31 - "Target-native managed session directories"
 

@@ -26,6 +26,11 @@ operator-owned external scheduler such as system cron, a systemd timer, or CI.
 Do not use `aiwg schedule`, `aiwg daemon`, or `aiwg daemon schedule`; those
 commands are not registered.
 
+For approval-gated Gitea work executed by Codex, use the separate single-shot
+`aiwg job validate`, `aiwg job render-cron`, and `aiwg job run --once` surface.
+Those commands validate and execute a reviewed job while the external service
+continues to own the schedule. See the public External-trigger jobs guide.
+
 A future daemon release must land command registration, lifecycle handlers,
 help text, tests, and documentation together before this guide can advertise
 runtime operations.
