@@ -21,6 +21,7 @@ export default defineConfig({
   test: {
     include: [
       'test/conformance/executor-v1/**/*.test.mjs',
+      'test/conformance/fleet-workload-v1/**/*.test.mjs',
     ],
     exclude: [
       'node_modules/**',

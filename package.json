@@ -97,7 +97,7 @@
     "provision:vault-approle": "node ci/provision-vault-approle.mjs",
     "configure:gitea-vault": "node ci/configure-gitea-vault-bootstrap.mjs",
     "validate:claude-context": "node tools/validation/claude-context-repro.mjs",
-    "test:conformance": "vitest run --config config/vitest.conformance.config.js test/conformance/executor-v1/",
+    "test:conformance": "vitest run --config config/vitest.conformance.config.js",
     "test:contract": "vitest run --config config/vitest.contract.config.js test/contract/",
     "test:integration:serve": "vitest run --config config/vitest.integration.config.js",
     "uat:serve-live": "vitest run --config config/vitest.uat-serve-live.config.js",

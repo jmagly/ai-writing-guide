@@ -1,0 +1,10 @@
+{
+  "document_type": "reconciliation",
+  "api_version": "agentic-orchestration/v1",
+  "generated_at": "2026-08-02T15:01:00Z",
+  "before_revision": 12,
+  "after_revision": 13,
+  "rows": [
+    { "child_id": "child-command", "classification": "unknown", "observed_state": "succeeded", "revision": 4 }
+  ]
+}
