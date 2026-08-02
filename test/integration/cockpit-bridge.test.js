@@ -442,6 +442,18 @@ describe('cockpit Bridge — control surface', () => {
       source: 'aiwg-mc',
     });
     expect(missions.sessions.some((s) => s.id === 'executor-live')).toBe(true);
+    const fleetSession = missions.sessions.find((s) => s.parent_mission_id === 'mission-fleet-demo');
+    expect(fleetSession).toMatchObject({
+      id: 'fleet:mission-fleet-demo',
+      source: 'agentic-sandbox-fleet',
+      state: 'awaiting-approval',
+      inventory_revision: 12,
+    });
+    expect(fleetSession.missions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ workload_kind: 'persistent-agent', target_id: 'target-1', runtime_session_id: 'session-agent-1', status: 'retained', terminal: false }),
+      expect.objectContaining({ workload_kind: 'daemon', target_id: 'target-2', health: 'healthy', status: 'healthy', terminal: false }),
+      expect.objectContaining({ workload_kind: 'one-shot-command', target_id: 'target-3', command_id: 'command-1', status: 'blocked', backpressure: { reason: 'approval', retryable: false }, terminal: false }),
+    ]));
 
     const events = await (await f('/api/events/snapshot')).json();
     expect(events.source).toBe('cockpit.unified-event-model/v1');
@@ -900,6 +912,7 @@ describe('cockpit Bridge — executor without running/approvals admin surface (#
   // A2A tasks; when no task surface is available it returns empty 200s so Home
   // binds inventory and stays usable.
   let upstream, b, ubase, utoken;
+  let fleetMode = 'missing';
   beforeAll(async () => {
     upstream = http.createServer((req, res) => {
       const url = new URL(req.url, 'http://127.0.0.1');
@@ -914,6 +927,12 @@ describe('cockpit Bridge — executor without running/approvals admin surface (#
         }] } });
       }
       if (url.pathname === '/api/v1/agents') return send(200, { agents: [] });
+      if (url.pathname === '/api/v2/fleet/workloads' && fleetMode === 'error') {
+        return send(500, { error: 'fleet_unavailable' });
+      }
+      if (url.pathname === '/api/v2/fleet/workloads' && fleetMode === 'malformed') {
+        return send(200, { document_type: 'inventory', api_version: 'wrong/v1', records: [] });
+      }
       // No task surface on this executor — everything else 404s.
       return send(404, { error: 'not_found', path: url.pathname });
     });
@@ -939,6 +958,22 @@ describe('cockpit Bridge — executor without running/approvals admin surface (#
     const approvals = await uf('/api/approvals?status=pending');
     expect(approvals.status).toBe(200);
     expect(await approvals.json()).toMatchObject({ approvals: [] });
+  });
+
+  it('keeps older no-fleet executors compatible but fails closed on fleet faults', async () => {
+    fleetMode = 'missing';
+    expect((await uf('/api/missions')).status).toBe(200);
+
+    fleetMode = 'error';
+    const failed = await uf('/api/missions');
+    expect(failed.status).toBe(502);
+    expect(await failed.json()).toMatchObject({ error: 'bridge_upstream_error' });
+
+    fleetMode = 'malformed';
+    const malformed = await uf('/api/missions');
+    expect(malformed.status).toBe(502);
+    expect((await malformed.json()).message).toMatch(/invalid fleet inventory envelope/);
+    fleetMode = 'missing';
   });
 });
 

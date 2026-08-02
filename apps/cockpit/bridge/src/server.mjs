@@ -1876,8 +1876,12 @@ async function taskMissionSession(executorUrl) {
 
 async function getMissions(executorUrl) {
   const sessions = await readMcSessions();
-  const live = await taskMissionSession(executorUrl);
+  const [live, fleetSessions] = await Promise.all([
+    taskMissionSession(executorUrl),
+    fleetMissionSessions(executorUrl),
+  ]);
   if (live) sessions.unshift(live);
+  sessions.unshift(...fleetSessions);
   const missions = sessions.flatMap((s) => s.missions);
   return {
     source: 'aiwg-mc + agentic-sandbox',
@@ -1886,6 +1890,104 @@ async function getMissions(executorUrl) {
     sessions,
     missions,
   };
+}
+
+const FLEET_TERMINAL_STATES = new Set(['succeeded', 'failed', 'cancelled', 'timed-out']);
+
+function fleetParentState(records) {
+  const states = records.map((record) => record.status?.observed_state ?? 'unknown');
+  if (states.some((state) => state === 'operator-review-required' || state === 'unknown')) return 'operator-review-required';
+  if (records.some((record) => record.status?.backpressure?.reason === 'approval')) return 'awaiting-approval';
+  if (states.some((state) => state === 'failed' || state === 'timed-out')) return 'failed';
+  if (states.length > 0 && states.every((state) => FLEET_TERMINAL_STATES.has(state))) return 'completed';
+  return 'active';
+}
+
+function fleetMissionProjection(record, sessionId) {
+  const lineage = record.lineage ?? {};
+  const status = record.status ?? {};
+  const artifacts = Array.isArray(status.artifacts) ? status.artifacts : [];
+  return {
+    id: lineage.child_id,
+    session_id: sessionId,
+    source: 'agentic-sandbox-fleet',
+    title: `${record.kind ?? 'workload'} ${lineage.child_id ?? 'unknown'}`,
+    status: status.observed_state ?? 'unknown',
+    terminal: FLEET_TERMINAL_STATES.has(status.observed_state),
+    parent_mission_id: lineage.mission_id,
+    workload_kind: record.kind,
+    desired_state: record.spec?.desired_state,
+    target_id: lineage.target_id,
+    executor_id: lineage.executor_id,
+    runtime_id: lineage.runtime_id,
+    instance_id: lineage.runtime_id,
+    runtime_session_id: lineage.session_id,
+    task_id: lineage.task_id,
+    command_id: lineage.command_id,
+    dispatch_id: lineage.dispatch_id,
+    revision: status.revision,
+    last_seen: status.last_seen,
+    health: status.health,
+    backpressure: status.backpressure,
+    artifacts,
+    exit_classification: status.exit_classification,
+    error: status.error_code,
+    schedule: record.spec?.schedule,
+  };
+}
+
+async function fleetMissionSessions(executorUrl) {
+  let response;
+  try {
+    response = await fetchJsonFirst([`${executorUrl}/api/v2/fleet/workloads`]);
+  } catch (err) {
+    rethrowExecutorSecurityError(err);
+    if (/\s->\s(?:404|405)(?:;|$)/.test(String(err?.message ?? err))) return [];
+    throw err;
+  }
+  if (response.status === 404 || response.status === 405) return [];
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(`Agentic Sandbox fleet inventory failed with HTTP ${response.status}`);
+  }
+  const snapshot = response.body?.inventory ?? response.body;
+  if (
+    snapshot?.document_type !== 'inventory'
+    || snapshot?.api_version !== 'agentic-orchestration/v1'
+    || !Array.isArray(snapshot?.records)
+  ) {
+    throw new Error('Agentic Sandbox returned an invalid fleet inventory envelope');
+  }
+  const records = snapshot.records;
+  const groups = new Map();
+  const childIds = new Set();
+  for (const record of records) {
+    const missionId = record?.lineage?.mission_id;
+    const childId = record?.lineage?.child_id;
+    if (!missionId || !childId || !record?.kind || !record?.status?.observed_state) {
+      throw new Error('Agentic Sandbox fleet inventory contains an invalid workload record');
+    }
+    if (childIds.has(childId)) throw new Error(`Agentic Sandbox fleet inventory repeats child '${childId}'`);
+    childIds.add(childId);
+    const group = groups.get(missionId) ?? [];
+    group.push(record);
+    groups.set(missionId, group);
+  }
+  return [...groups.entries()].map(([missionId, missionRecords]) => {
+    const sessionId = `fleet:${missionId}`;
+    const lastSeen = missionRecords.map((record) => record.status?.last_seen).filter(Boolean).sort().at(-1);
+    return {
+      id: sessionId,
+      parent_mission_id: missionId,
+      name: `Fleet mission ${missionId}`,
+      state: fleetParentState(missionRecords),
+      source: 'agentic-sandbox-fleet',
+      updated_at: lastSeen ?? snapshot.generated_at,
+      inventory_revision: snapshot.inventory_revision,
+      audit_count: 0,
+      audit_tail: [],
+      missions: missionRecords.map((record) => fleetMissionProjection(record, sessionId)),
+    };
+  });
 }
 
 async function getSessionEventRows(executorUrl, instances) {

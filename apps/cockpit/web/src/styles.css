@@ -97,6 +97,11 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .mission-detail-head h2 { margin:0; font-size:18px; }
 .mission-detail-head p { margin:3px 0 0; color:var(--muted); font-size:13px; }
 .block { display:block; margin-top:4px; color:var(--muted); font-size:12px; overflow-wrap:anywhere; }
+.fleet-missions th, .fleet-missions td { vertical-align:top; }
+.fleet-warning { color:var(--warn); }
+.fleet-artifacts { list-style:none; margin:0; padding:0; display:grid; gap:4px; }
+.fleet-artifacts a { overflow-wrap:anywhere; }
+.muted { color:var(--muted); }
 .audit-tail { border:1px solid var(--line); border-radius:8px; background:var(--panel); padding:12px 14px; }
 .audit-tail h3 { margin:0 0 8px; font-size:14px; }
 .audit-tail p { margin:5px 0; color:var(--muted); font-size:13px; }
