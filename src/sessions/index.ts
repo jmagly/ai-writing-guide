@@ -9,6 +9,7 @@ export * from './optional-backends.js';
 export * from './knowledge-shard.js';
 export * from './candidates.js';
 export * from './promotion.js';
+export * from './output-registration.js';
 export * from './importer.js';
 export * from './import-lease.js';
 export * from './batch-contracts.js';

@@ -35,3 +35,9 @@ The driver skill exposes the ingest, retrieve/use, write, manage, review,
 update, and maintain workflows through the existing portable skills and CLI
 contracts. Authority-changing automation remains proposal-only until the
 compound-memory lifecycle ADR is accepted.
+
+Generated outputs use the core derived-output registration coordinator before
+candidate extraction. Registration verifies the immutable file digest, records
+the exact context-pack/source lineage, and uses a replayable outbox plus
+idempotent incremental index record. It never treats registration itself as
+knowledge promotion.
