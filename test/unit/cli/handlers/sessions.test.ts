@@ -3,6 +3,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildHandlerMap } from '../../../../src/cli/handlers/index.js';
 import { sessionsHandler } from '../../../../src/cli/handlers/sessions.js';
@@ -743,6 +744,47 @@ describe('sessions CLI catalog lifecycle', () => {
     });
     expect(readFileSync(resolve(root, promoted.data.receipt.destinationRef), 'utf8'))
       .toContain(`candidate_id: ${candidateId}`);
+
+    const lineAddonDir = resolve(root, 'agentic/code/addons/line-memory');
+    mkdirSync(resolve(lineAddonDir, 'commands'), { recursive: true });
+    writeFileSync(resolve(lineAddonDir, 'manifest.json'), JSON.stringify({
+      id: 'line-memory',
+    }));
+    const lineModule = pathToFileURL(resolve(
+      process.cwd(),
+      'agentic/code/addons/line-memory/commands/line-memory.mjs',
+    )).href;
+    writeFileSync(
+      resolve(lineAddonDir, 'commands/line-memory.mjs'),
+      `export { LineMemoryPromotionDestination } from ${JSON.stringify(lineModule)};\n`,
+    );
+    await sessionsHandler.execute(context([
+      'promote', candidateId, '1', '--consumer', 'line-memory',
+      '--reviewer', 'fixture-reviewer', '--confirm', ...dbArgs,
+    ], root));
+    const linePromoted = jsonOutput(log);
+    expect(linePromoted).toMatchObject({
+      status: 'ok',
+      data: { receipt: {
+        candidateId,
+        candidateVersion: 1,
+        consumer: 'line-memory',
+        destinationRef: expect.stringMatching(/line-memory\.meta\.json#lm_/),
+        duplicate: false,
+      } },
+    });
+    expect(readFileSync(resolve(root, '.aiwg/memory/line-memory.txt'), 'utf8').trim())
+      .not.toBe('');
+    const lineHandle = linePromoted.data.receipt.destinationRef.split('#')[1];
+    expect(JSON.parse(readFileSync(
+      resolve(root, '.aiwg/memory/line-memory.meta.json'),
+      'utf8',
+    )).entries[lineHandle]).toMatchObject({
+      id: lineHandle,
+      sources: [expect.objectContaining({
+        ref: `session-candidate:${candidateId}:v1`,
+      })],
+    });
 
     await sessionsHandler.execute(context(['tag', sessionId, 'decision', '--dry-run', ...dbArgs]));
     expect(jsonOutput(log).status).toBe('preview');

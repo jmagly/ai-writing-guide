@@ -77,7 +77,7 @@ export class MemoryPromotionGateway {
       input.version,
       input.destination.consumer,
     );
-    if (candidate.reviewState !== 'accepted' && !(candidate.reviewState === 'promoted' && existing)) {
+    if (candidate.reviewState !== 'accepted' && candidate.reviewState !== 'promoted') {
       throw new SessionContractError(
         'OPERATION_NOT_AUTHORIZED',
         'promotion requires an accepted exact candidate version',
@@ -299,7 +299,7 @@ export class FilesystemPromotionDispositionCoordinator {
           'every promoted artifact requires an explicit disposition',
         );
       }
-      this.authorizedPath(dependent.destinationRef);
+      this.authorizedDispositionRef(dependent.destinationRef);
       return {
         dependentId: dependent.dependentId,
         destinationRef: dependent.destinationRef,
@@ -335,6 +335,17 @@ export class FilesystemPromotionDispositionCoordinator {
 
     for (const effect of journal.effects) {
       if (effect.outcome !== 'pending') continue;
+      const lineMemory = this.lineMemoryRef(effect.destinationRef);
+      if (lineMemory) {
+        effect.outcome = this.applyLineMemoryDisposition(
+          lineMemory.metadataPath,
+          lineMemory.handle,
+          purge.operationId,
+          effect,
+        );
+        this.writeJournal(journalPath, journal);
+        continue;
+      }
       const target = this.authorizedPath(effect.destinationRef);
       const marker = dispositionMarker(purge.operationId, effect);
       if (effect.action === 'delete') {
@@ -408,6 +419,81 @@ export class FilesystemPromotionDispositionCoordinator {
     return target;
   }
 
+  private authorizedDispositionRef(destinationRef: string): void {
+    if (this.lineMemoryRef(destinationRef)) return;
+    this.authorizedPath(destinationRef);
+  }
+
+  private lineMemoryRef(destinationRef: string): {
+    metadataPath: string;
+    handle: string;
+  } | null {
+    const separator = destinationRef.lastIndexOf('#');
+    if (separator < 1) return null;
+    const metadataRef = destinationRef.slice(0, separator);
+    const handle = destinationRef.slice(separator + 1);
+    if (!/^lm_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(handle)) {
+      return null;
+    }
+    return { metadataPath: this.authorizedPath(metadataRef), handle };
+  }
+
+  private applyLineMemoryDisposition(
+    metadataPath: string,
+    handle: string,
+    operationId: string,
+    effect: PromotionArtifactEffect,
+  ): 'applied' | 'already-applied' {
+    if (!existsSync(metadataPath)) return 'already-applied';
+    const metadata = JSON.parse(readFileSync(metadataPath, 'utf8')) as {
+      schemaVersion?: string;
+      store?: { memoryPath?: string };
+      entries?: Record<string, {
+        id: string;
+        value: string;
+        status: string;
+        updatedAt?: string;
+        disposition?: Record<string, unknown>;
+      }>;
+    };
+    if (metadata.schemaVersion !== 'aiwg.line-memory.v1' || !metadata.entries) {
+      throw new SessionContractError('IMPORT_CONFLICT', 'line-memory metadata schema is invalid');
+    }
+    const entry = metadata.entries[handle];
+    if (!entry) return 'already-applied';
+    const priorOperation = entry.disposition?.operationId;
+    if (priorOperation === operationId) return 'already-applied';
+
+    const memoryRef = metadata.store?.memoryPath ?? '.aiwg/memory/line-memory.txt';
+    const memoryPath = this.authorizedPath(memoryRef);
+    const lines = existsSync(memoryPath)
+      ? readFileSync(memoryPath, 'utf8').split(/\r?\n/).filter(Boolean)
+      : [];
+    const removesActiveFact = ['delete', 'revoke', 'supersede'].includes(effect.action);
+    const nextLines = removesActiveFact
+      ? removeFirstExact(lines, entry.value)
+      : lines;
+    if (effect.action === 'delete') delete metadata.entries[handle];
+    else {
+      entry.status = effect.action === 'revoke' ? 'revoked'
+        : effect.action === 'supersede' ? 'superseded'
+          : effect.action === 'origin_unavailable' ? 'origin-unavailable'
+            : 'active';
+      entry.updatedAt = new Date().toISOString();
+      entry.disposition = {
+        operationId,
+        action: effect.action,
+        effect: effect.effect,
+        originAvailable: effect.action !== 'origin_unavailable',
+      };
+    }
+    if (removesActiveFact) {
+      this.atomicWrite(memoryPath, nextLines.length ? `${nextLines.join('\n')}\n` : '');
+    }
+    this.atomicWrite(metadataPath, `${JSON.stringify(metadata, null, 2)}\n`);
+    return 'applied';
+  }
+
   private journalPath(operationId: string): string {
     return resolve(this.journalRoot, `${operationId.replace(':', '-')}.json`);
   }
@@ -451,6 +537,13 @@ function requireJournalFiles(root: string): string[] {
     .filter((name) => name.endsWith('.json'))
     .sort()
     .map((name) => resolve(root, name));
+}
+
+function removeFirstExact(lines: string[], value: string): string[] {
+  const index = lines.indexOf(value);
+  return index < 0
+    ? [...lines]
+    : lines.filter((_, candidate) => candidate !== index);
 }
 
 export function resolveMemoryConsumerManifest(projectRoot: string, consumer: string): string {

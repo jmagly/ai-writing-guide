@@ -4,6 +4,7 @@ import {
 import {
   dirname, isAbsolute, resolve,
 } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import {
   CLAUDE_ADAPTER_VERSION,
   ClaudeSessionAdapter,
@@ -61,12 +62,43 @@ import {
   type SessionAnalyticsFact,
   type SessionAnalyticsQuery,
   type SessionAnalyticsStatus,
+  type MemoryPromotionDestination,
   type SessionSourceAdapter,
   type SelectedSource,
 } from '../../sessions/index.js';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 
 const JSON_CONTRACT_VERSION = '1.0.0';
+
+async function createLineMemoryPromotionDestination(
+  projectRoot: string,
+  manifestPath: string,
+): Promise<MemoryPromotionDestination> {
+  const modulePath = resolve(dirname(manifestPath), 'commands', 'line-memory.mjs');
+  if (!existsSync(modulePath)) {
+    throw new SessionContractError(
+      'UNSUPPORTED_OPERATION',
+      'line-memory promotion adapter is missing from the installed addon',
+    );
+  }
+  const loaded = await import(pathToFileURL(modulePath).href) as {
+    LineMemoryPromotionDestination?: new (input: {
+      projectRoot: string;
+      consumer: string;
+    }) => MemoryPromotionDestination;
+  };
+  if (!loaded.LineMemoryPromotionDestination) {
+    throw new SessionContractError(
+      'UNSUPPORTED_OPERATION',
+      'line-memory addon does not export its promotion adapter',
+    );
+  }
+  return new loaded.LineMemoryPromotionDestination({
+    projectRoot,
+    consumer: 'line-memory',
+  });
+}
+
 const EXIT = {
   ok: 0, usage: 2, unsupported: 3, unavailable: 4, contract: 5, storage: 6,
   locked: 7, coverage: 8,
@@ -524,11 +556,14 @@ async function executeCommand(
           'version',
         );
         const consumer = requiredValue(args, '--consumer');
-        const destination = new FilesystemMemoryDestination({
-          projectRoot: ctx.cwd,
-          consumer,
-          manifestPath: resolveMemoryConsumerManifest(ctx.cwd, consumer),
-        });
+        const manifestPath = resolveMemoryConsumerManifest(ctx.cwd, consumer);
+        const destination = consumer === 'line-memory'
+          ? await createLineMemoryPromotionDestination(ctx.cwd, manifestPath)
+          : new FilesystemMemoryDestination({
+              projectRoot: ctx.cwd,
+              consumer,
+              manifestPath,
+            });
         const scopedPromotionStore = {
           getCandidate: (id: string, candidateVersion?: number) =>
             repository.getCandidate(id, candidateVersion, workspaceId),

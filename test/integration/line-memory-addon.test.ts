@@ -56,7 +56,8 @@ describe('line-memory addon deployment', () => {
       await readFile(path.join(projectDir, '.aiwg', 'cli-extensions.json'), 'utf8'),
     );
     expect(Object.keys(registry['line-memory'].subcommands).sort()).toEqual([
-      'add', 'config', 'list', 'prune', 'search', 'touch',
+      'add', 'archive', 'config', 'import', 'list', 'prune', 'remove',
+      'search', 'supersede', 'touch',
     ]);
     expect(registry['line-memory'].source).toMatch(
       /agentic\/code\/addons\/line-memory\/commands$/,

@@ -44,10 +44,16 @@ Never read the complete backing file into startup context.
 aiwg line-memory add "Project uses Gitea as the canonical tracker."
 aiwg line-memory touch "Project uses Gitea as the canonical tracker."
 aiwg line-memory prune
+aiwg line-memory list --limit 20 --json
+aiwg line-memory import "Reviewed fact" --source-ref wiki:path --reviewer operator --confirm
 ```
 
 Store one concise, non-sensitive fact per entry. Do not store secrets,
 credentials, access tokens, private keys, or sensitive personal data.
+
+Use stable handles from `--json` for governed archive/remove/supersede
+operations. These mutations require `--confirm`; reviewed imports additionally
+require `--source-ref` and `--reviewer` so provenance is not lost.
 
 ## Configuration
 

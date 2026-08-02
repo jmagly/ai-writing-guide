@@ -4,6 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 import {
   DEFAULT_CONFIG,
+  LineMemoryPromotionDestination,
   runLineMemory,
 } from '../../../agentic/code/addons/line-memory/commands/line-memory.mjs';
 
@@ -157,5 +158,302 @@ describe('line-memory commands', () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.message).toContain('inside the project');
+  });
+
+  it('returns stable machine-readable handles and provenance without changing the text contract', async () => {
+    const imported = await runLineMemory('import', [
+      'Canonical tracker is Gitea',
+      '--source-ref', 'wiki:decisions/tracker',
+      '--reviewer', 'operator',
+      '--reason', 'reviewed decision',
+      '--confirm',
+      '--json',
+    ], projectDir);
+    expect(imported.exitCode).toBe(0);
+    const created = JSON.parse(output.join('\n'));
+    expect(created).toMatchObject({
+      schemaVersion: '1.0.0',
+      status: 'ok',
+      command: 'line-memory.import',
+    });
+    expect(created.entry.id).toMatch(/^lm_[0-9a-f-]{36}$/);
+    expect(created.entry.digest).toMatch(/^sha256:/);
+    expect(created.entry.sources).toEqual([
+      expect.objectContaining({ ref: 'wiki:decisions/tracker', reviewer: 'operator' }),
+    ]);
+    expect(await memoryText()).toBe('Canonical tracker is Gitea\n');
+
+    output.length = 0;
+    await runLineMemory('search', ['tracker', '--json', '--no-touch'], projectDir);
+    const searched = JSON.parse(output.join('\n'));
+    expect(searched.entries[0].id).toBe(created.entry.id);
+  });
+
+  it('returns schema-stable JSON mutation outcomes across the command surface', async () => {
+    await runLineMemory('add', ['one', '--json'], projectDir);
+    const added = JSON.parse(output.pop()!);
+    expect(added).toMatchObject({
+      schemaVersion: '1.0.0', status: 'ok', command: 'line-memory.add',
+      operationId: expect.any(String), entry: { recency: 0 },
+    });
+
+    await runLineMemory('list', ['--limit', '1', '--no-touch', '--json'], projectDir);
+    expect(JSON.parse(output.pop()!)).toMatchObject({
+      schemaVersion: '1.0.0', status: 'ok', command: 'line-memory.list',
+      entries: [{ id: added.entry.id, recency: 0 }],
+    });
+
+    await runLineMemory('touch', ['one', '--json'], projectDir);
+    expect(JSON.parse(output.pop()!)).toMatchObject({
+      schemaVersion: '1.0.0', status: 'ok', command: 'line-memory.touch',
+      operationId: expect.any(String), entry: { id: added.entry.id },
+    });
+
+    await runLineMemory('config', ['set', 'maxLines', '1', '--json'], projectDir);
+    expect(JSON.parse(output.pop()!)).toMatchObject({
+      schemaVersion: '1.0.0', status: 'ok', command: 'line-memory.config',
+      key: 'maxLines', value: 1,
+    });
+    await runLineMemory('add', ['two'], projectDir);
+    await runLineMemory('prune', ['--json'], projectDir);
+    expect(JSON.parse(output.pop()!)).toMatchObject({
+      schemaVersion: '1.0.0', status: 'ok', command: 'line-memory.prune',
+      operationId: expect.any(String), pruned: 0, retained: 1,
+    });
+  });
+
+  it('requires reviewed import evidence and confirmation', async () => {
+    expect((await runLineMemory('import', ['fact'], projectDir)).message).toContain('--confirm');
+    expect((await runLineMemory('import', ['fact', '--confirm'], projectDir)).message)
+      .toContain('--source-ref and --reviewer');
+  });
+
+  it('previews reviewed import without mutating either backing file', async () => {
+    const result = await runLineMemory('import', [
+      'Previewed fact',
+      '--source-ref', 'wiki:previewed-fact',
+      '--reviewer', 'operator',
+      '--dry-run',
+      '--json',
+    ], projectDir);
+
+    expect(result.exitCode).toBe(0);
+    expect(JSON.parse(output.join('\n'))).toMatchObject({
+      status: 'preview',
+      command: 'line-memory.import',
+      confirmationRequired: true,
+      mutation: { wouldWrite: true, retained: 1, pruned: 0 },
+      entry: { id: null, value: 'Previewed fact', existing: false },
+    });
+    await expect(memoryText()).rejects.toThrow();
+    await expect(readFile(
+      path.join(projectDir, DEFAULT_CONFIG.metadataPath),
+      'utf8',
+    )).rejects.toThrow();
+  });
+
+  it('returns a stable JSON error envelope for rejected operations', async () => {
+    const outcome = await runLineMemory('import', ['fact', '--json'], projectDir);
+    expect(outcome.exitCode).toBe(1);
+    expect(outcome.message).toBeUndefined();
+    expect(JSON.parse(output.join('\n'))).toEqual({
+      schemaVersion: '1.0.0',
+      status: 'error',
+      command: 'line-memory.import',
+      error: {
+        code: 'LINE_MEMORY_ERROR',
+        message: 'Reviewed import requires --confirm.',
+      },
+    });
+  });
+
+  it('archives, removes, and supersedes entries by stable handle with tombstones', async () => {
+    await runLineMemory('add', ['archive me', '--json'], projectDir);
+    const archiveHandle = JSON.parse(output.pop()!).entry.id;
+    await runLineMemory('add', ['remove me', '--json'], projectDir);
+    const removeHandle = JSON.parse(output.pop()!).entry.id;
+    await runLineMemory('add', ['supersede me', '--json'], projectDir);
+    const supersedeHandle = JSON.parse(output.pop()!).entry.id;
+
+    expect((await runLineMemory('archive', [archiveHandle, '--confirm'], projectDir)).exitCode).toBe(0);
+    expect((await runLineMemory('remove', [removeHandle, '--confirm'], projectDir)).exitCode).toBe(0);
+    expect((await runLineMemory('supersede', [
+      supersedeHandle, '--by', 'wiki:new-fact', '--confirm',
+    ], projectDir)).exitCode).toBe(0);
+    expect(await memoryText()).toBe('');
+
+    const metadata = JSON.parse(await readFile(
+      path.join(projectDir, '.aiwg/memory/line-memory.meta.json'),
+      'utf8',
+    ));
+    expect(metadata.entries[archiveHandle].status).toBe('archived');
+    expect(metadata.entries[removeHandle].status).toBe('removed');
+    expect(metadata.entries[supersedeHandle]).toMatchObject({
+      status: 'superseded',
+      disposition: { replacement: 'wiki:new-fact' },
+    });
+
+    output.length = 0;
+    expect((await runLineMemory('archive', [
+      archiveHandle, '--confirm', '--json',
+    ], projectDir)).exitCode).toBe(0);
+    expect(JSON.parse(output.join('\n'))).toMatchObject({
+      status: 'ok',
+      operation: 'archive',
+      duplicate: true,
+      entry: { id: archiveHandle, status: 'archived' },
+    });
+  });
+
+  it('treats duplicate physical lines as one logical fact during handle disposition', async () => {
+    await runLineMemory('config', ['set', 'dedupe', 'false'], projectDir);
+    await runLineMemory('add', ['repeat', '--json'], projectDir);
+    const handle = JSON.parse(output.pop()!).entry.id;
+    await runLineMemory('add', ['repeat'], projectDir);
+    expect(await memoryText()).toBe('repeat\nrepeat\n');
+
+    expect((await runLineMemory('archive', [handle, '--confirm'], projectDir)).exitCode).toBe(0);
+    expect(await memoryText()).toBe('');
+    const metadata = JSON.parse(await readFile(
+      path.join(projectDir, DEFAULT_CONFIG.metadataPath),
+      'utf8',
+    ));
+    expect(metadata.entries[handle].status).toBe('archived');
+  });
+
+  it('previews lifecycle dispositions and preserves active state', async () => {
+    await runLineMemory('add', ['keep during preview', '--json'], projectDir);
+    const handle = JSON.parse(output.pop()!).entry.id;
+    output.length = 0;
+
+    const preview = await runLineMemory('supersede', [
+      handle,
+      '--by', 'wiki:replacement',
+      '--reviewer', 'operator',
+      '--dry-run',
+      '--json',
+    ], projectDir);
+    expect(preview.exitCode).toBe(0);
+    expect(JSON.parse(output.join('\n'))).toMatchObject({
+      status: 'preview',
+      command: 'line-memory.supersede',
+      confirmationRequired: true,
+      mutation: { wouldWrite: true, occurrencesRemoved: 1 },
+      entry: {
+        id: handle,
+        status: 'superseded',
+        disposition: { replacement: 'wiki:replacement' },
+      },
+    });
+    expect(await memoryText()).toBe('keep during preview\n');
+    const metadata = JSON.parse(await readFile(
+      path.join(projectDir, DEFAULT_CONFIG.metadataPath),
+      'utf8',
+    ));
+    expect(metadata.entries[handle].status).toBe('active');
+  });
+
+  it('serializes concurrent additions so unrelated facts are not lost', async () => {
+    const results = await Promise.all(
+      Array.from({ length: 25 }, (_, index) => runLineMemory('add', [`fact ${index}`], projectDir)),
+    );
+    expect(results.every((item) => item.exitCode === 0)).toBe(true);
+    const retained = (await memoryText()).trim().split('\n').sort();
+    expect(retained).toHaveLength(25);
+    expect(new Set(retained).size).toBe(25);
+  });
+
+  it('replays an incomplete dual-file transaction before serving reads', async () => {
+    const transactionDir = path.join(projectDir, '.aiwg/memory/transactions');
+    await mkdir(transactionDir, { recursive: true });
+    const entry = {
+      id: 'lm_00000000-0000-4000-8000-000000000001',
+      value: 'recovered fact',
+      digest: 'sha256:test',
+      status: 'active',
+      createdAt: '2026-08-02T00:00:00.000Z',
+      updatedAt: '2026-08-02T00:00:00.000Z',
+      lastAccessedAt: '2026-08-02T00:00:00.000Z',
+      accessCount: 0,
+      sources: [],
+    };
+    const metadata = {
+      schemaVersion: 'aiwg.line-memory.v1',
+      version: 1,
+      entries: { [entry.id]: entry },
+    };
+    await writeFile(path.join(transactionDir, 'pending.json'), JSON.stringify({
+      schemaVersion: 'aiwg.line-memory.transaction.v1',
+      operationId: 'pending',
+      operation: 'test-recovery',
+      memoryPath: '.aiwg/memory/line-memory.txt',
+      metadataPath: '.aiwg/memory/line-memory.meta.json',
+      memoryContent: 'recovered fact\n',
+      metadataContent: `${JSON.stringify(metadata, null, 2)}\n`,
+    }));
+
+    const recovered = await runLineMemory('list', ['--no-touch'], projectDir);
+    expect(recovered.exitCode).toBe(0);
+    expect(output).toEqual(['recovered fact']);
+    await expect(readFile(path.join(transactionDir, 'pending.json'), 'utf8')).rejects.toThrow();
+  });
+
+  it('promotes a reviewed session assertion through the same locked store', async () => {
+    const destination = new LineMemoryPromotionDestination({ projectRoot: projectDir });
+    const candidate = {
+      candidateId: 'sha256:0123456789abcdef0123456789abcdef',
+      version: 3,
+      assertion: '  Project uses Gitea\nfor its canonical tracker.  ',
+    };
+    const firstPlan = destination.plan(candidate);
+    const repeatedPlan = destination.plan(candidate);
+    expect(firstPlan).toEqual(repeatedPlan);
+    expect(firstPlan.destinationRef).toMatch(/^\.aiwg\/memory\/line-memory\.meta\.json#lm_/);
+
+    await destination.write(firstPlan);
+    expect(await memoryText()).toBe('Project uses Gitea for its canonical tracker.\n');
+    const metadata = JSON.parse(await readFile(
+      path.join(projectDir, '.aiwg/memory/line-memory.meta.json'),
+      'utf8',
+    ));
+    const handle = firstPlan.destinationRef.split('#')[1];
+    expect(metadata.entries[handle]).toMatchObject({
+      id: handle,
+      value: 'Project uses Gitea for its canonical tracker.',
+      status: 'active',
+      sources: [expect.objectContaining({
+        ref: `${'session-candidate'}:${candidate.candidateId}:v3`,
+        reviewer: 'session-review-gateway',
+      })],
+    });
+
+    await destination.write(firstPlan);
+    expect(await memoryText()).toBe('Project uses Gitea for its canonical tracker.\n');
+  });
+
+  it('reuses the stable handle when a promoted assertion already exists', async () => {
+    await runLineMemory('add', ['Existing reviewed fact', '--json'], projectDir);
+    const existingHandle = JSON.parse(output.pop()!).entry.id;
+    const destination = new LineMemoryPromotionDestination({ projectRoot: projectDir });
+    const plan = destination.plan({
+      candidateId: 'sha256:abcdef0123456789abcdef0123456789',
+      version: 1,
+      assertion: 'Existing reviewed fact',
+    });
+
+    expect(plan.destinationRef).toBe(
+      `${DEFAULT_CONFIG.metadataPath}#${existingHandle}`,
+    );
+    await destination.write(plan);
+    const metadata = JSON.parse(await readFile(
+      path.join(projectDir, DEFAULT_CONFIG.metadataPath),
+      'utf8',
+    ));
+    expect(metadata.entries[existingHandle].sources).toEqual([
+      expect.objectContaining({
+        ref: 'session-candidate:sha256:abcdef0123456789abcdef0123456789:v1',
+      }),
+    ]);
+    expect(await memoryText()).toBe('Existing reviewed fact\n');
   });
 });
