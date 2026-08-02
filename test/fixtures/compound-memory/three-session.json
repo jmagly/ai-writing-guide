@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "aiwg.compound-memory.fixture.v1",
+  "task": "SQLite catalog provenance receipts",
+  "source": {
+    "path": "sources/session-catalog.md",
+    "content": "# Session catalog decision\n\nDecision: SQLite is authoritative for imported sessions and retains provenance receipts.\n"
+  },
+  "lineFacts": [
+    "SQLite is authoritative for imported sessions.",
+    "Unrelated visual exports use SVG."
+  ],
+  "wiki": {
+    "path": ".aiwg/wiki/concepts/session-catalog.md",
+    "content": "---\nsource: sources/session-catalog.md\n---\n# Session catalog\n\nThe SQLite catalog retains provenance receipts for imported sessions.\n"
+  },
+  "expectedRelevant": 2,
+  "budget": 800
+}
