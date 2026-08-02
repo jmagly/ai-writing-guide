@@ -83,6 +83,20 @@ describe("signed web release resolver", () => {
     ]);
   });
 
+  it("adds credential headers without putting credentials in request paths or cache keys", async () => {
+    fixture.publishRelease();
+    const secret = "aiwg_at_fixture_header_only";
+    const fetcher = vi.fn(async (input: string | URL, init) => fetch(input, init));
+    const release = await resolveWebRelease({
+      ...options(),
+      fetcher,
+      credentialProvider: async () => secret,
+    });
+    expect(fetcher.mock.calls.every(([, init]) => init?.headers?.authorization === `Bearer ${secret}`)).toBe(true);
+    expect(JSON.stringify(fixture.requestPaths)).not.toContain(secret);
+    expect(release.cacheDir).not.toContain(secret);
+  });
+
   it("resolves a signed channel and records its monotonic sequence", async () => {
     const published = fixture.publishRelease();
     fixture.publishChannel("stable", 7, published);

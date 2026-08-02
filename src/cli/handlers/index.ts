@@ -15,6 +15,7 @@ export { createScriptRunner, DefaultScriptRunner } from './script-runner.js';
 // Import all handlers
 import { helpHandler } from './help.js';
 import { versionHandler } from './version.js';
+import { authHandler } from './auth.js';
 import { useHandler } from './use.js';
 import {
   statusHandler,
@@ -142,6 +143,7 @@ export {
   // Maintenance
   helpHandler,
   versionHandler,
+  authHandler,
   doctorHandler,
   updateHandler,
   refreshHandler,
@@ -315,6 +317,7 @@ export const allHandlers: CommandHandler[] = [
   // Maintenance (shown first in help)
   helpHandler,
   versionHandler,
+  authHandler,
   doctorHandler,
   updateHandler,
   refreshHandler,

@@ -163,7 +163,7 @@ describe('BestPracticesAuditHandler.execute', () => {
     expect(result.message).toMatch(/not spawnable/);
     expect(result.message).toMatch(/\/best-practices-audit/);
     // Output path should be surfaced even in guidance mode.
-    expect(result.message).toMatch(/best-practices-audit-src-auth-\d{4}-\d{2}-\d{2}\.md/);
+    expect(result.message).toMatch(/best-practices-audit-auth-\d{4}-\d{2}-\d{2}\.md/);
   });
 
   it('forwards audit flags into the prompt for IDE-integrated providers', async () => {
