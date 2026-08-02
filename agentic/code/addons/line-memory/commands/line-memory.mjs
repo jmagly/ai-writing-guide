@@ -555,6 +555,33 @@ async function touchMemory(args, cwd, config) {
   return result(0, wantsJson(args) ? undefined : 'Memory moved to newest position.');
 }
 
+/** Touch only exact values selected by an external bounded retrieval planner. */
+export async function touchMemoryValues(values, cwd, config) {
+  const selected = [...new Set(values.map(normalizeMemory).filter(Boolean))];
+  if (selected.length === 0) return { operationId: null, touched: [] };
+  return withLock(cwd, async () => {
+    const { lines, memoryPath } = await readMemoryLines(cwd, config);
+    const { metadataPath, metadata } = await loadMetadata(cwd, config);
+    reconcileMetadata(lines, metadata);
+    const indexes = selected
+      .map(value => lines.findIndex(line => line === value))
+      .filter(index => index >= 0);
+    if (indexes.length === 0) return { operationId: null, touched: [] };
+    const touched = indexes.map(index => lines[index]);
+    const reordered = moveIndexesToNewest(lines, indexes);
+    const now = new Date().toISOString();
+    for (const value of touched) {
+      const entry = ensureEntry(metadata, value, now);
+      entry.lastAccessedAt = now;
+      entry.accessCount = (entry.accessCount ?? 0) + 1;
+    }
+    const operationId = await commitMemoryState(
+      cwd, memoryPath, reordered, metadataPath, metadata, 'context-pack-touch',
+    );
+    return { operationId, touched };
+  });
+}
+
 async function pruneMemory(args, cwd, config) {
   const { lines, memoryPath } = await readMemoryLines(cwd, config);
   const { metadataPath, metadata } = await loadMetadata(cwd, config);

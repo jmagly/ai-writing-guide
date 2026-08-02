@@ -41,6 +41,7 @@ describe('compound-memory addon activation', () => {
     expect(registry['line-memory'].subcommands.import).toBeDefined();
     expect(registry['compound-memory'].subcommands.status).toBeDefined();
     expect(registry['compound-memory'].subcommands['capture-output']).toBeDefined();
+    expect(registry['compound-memory'].subcommands.context).toBeDefined();
     expect(registry['compound-memory'].subcommands.review).toBeDefined();
     expect(registry['compound-memory'].subcommands.maintain).toBeDefined();
 

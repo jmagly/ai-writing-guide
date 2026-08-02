@@ -210,6 +210,55 @@ describe('compound-memory review and maintenance', () => {
   });
 });
 
+describe('compound-memory context', () => {
+  it('builds a bounded hybrid pack and touches only selected line facts', async () => {
+    await mkdir(path.join(projectDir, '.aiwg/memory'), { recursive: true });
+    await mkdir(path.join(projectDir, '.aiwg/wiki/concepts'), { recursive: true });
+    await writeFile(path.join(projectDir, '.aiwg/memory/line-memory.txt'), [
+      'SQLite catalog retains provenance.',
+      'Unrelated visual preference.',
+    ].join('\n'));
+    await writeFile(path.join(projectDir, '.aiwg/wiki/concepts/catalog.md'), [
+      '---',
+      'source: session:decision',
+      '---',
+      '# Catalog',
+      'The SQLite catalog keeps provenance receipts.',
+    ].join('\n'));
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    const context = {
+      cwd: projectDir,
+      frameworkRoot: path.resolve(__dirname, '../../..'),
+      namespace: 'compound-memory',
+      subcommand: 'context',
+    };
+
+    await compoundMemoryCommand(['SQLite', 'catalog', 'provenance', '--no-touch', '--json'], context);
+    const inspection = JSON.parse(output.pop()!);
+    expect(inspection).toMatchObject({
+      schemaVersion: 'aiwg.compound-memory.context-pack.v1',
+      inspection: true,
+      recency: { touched: false, entries: 0 },
+    });
+    expect(inspection.items.map((item: { tier: string }) => item.tier))
+      .toEqual(expect.arrayContaining(['line', 'wiki']));
+    expect(await fileExists(path.join(projectDir, '.aiwg/memory/line-memory.meta.json'))).toBe(false);
+
+    await compoundMemoryCommand(['SQLite', 'catalog', 'provenance', '--json'], context);
+    const used = JSON.parse(output.pop()!);
+    expect(used.recency).toMatchObject({ touched: true, entries: 1 });
+    const metadata = JSON.parse(await import('node:fs/promises').then(fs => fs.readFile(
+      path.join(projectDir, '.aiwg/memory/line-memory.meta.json'),
+      'utf8',
+    )));
+    expect(Object.values(metadata.entries)).toEqual([
+      expect.objectContaining({ value: 'SQLite catalog retains provenance.', accessCount: 1 }),
+      expect.objectContaining({ value: 'Unrelated visual preference.', accessCount: 0 }),
+    ]);
+  });
+});
+
 async function fileExists(filePath: string): Promise<boolean> {
   try {
     await access(filePath);

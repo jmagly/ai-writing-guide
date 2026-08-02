@@ -6,6 +6,7 @@ llm-wiki, line-memory, session candidates, and generated artifacts.
 ```bash
 aiwg use compound-memory --provider <provider>
 aiwg compound-memory status
+aiwg compound-memory context "task description" --budget 8000 --no-touch --json
 aiwg compound-memory review --limit 50 --json
 aiwg compound-memory maintain --json
 aiwg compound-memory capture-output output/report.md \
@@ -28,6 +29,13 @@ operation ID to the current line-memory, wiki, output-outbox, and review state.
 Confirming the exact preview replays idempotent output registrations and writes
 a restart-safe receipt. Wiki refresh, line-memory repair, and candidate choices
 remain delegated actions so their own review and authority checks stay intact.
+
+`context` combines relevant line facts with linked wiki pages under hard total,
+tier, and citation character budgets. It prefers a materialized Fortemi Core
+project graph and degrades to a bounded lexical wiki scan. Every selected item
+is marked as quoted data and carries a locator, digest, backend, lifecycle
+state, freshness, and verification status. Normal use touches only selected
+line facts; `--no-touch` is a mutation-free inspection.
 
 See [docs/overview.md](docs/overview.md) and the `compound-memory` driver skill.
 The addon adds orchestration only; disabling it leaves the underlying wiki and

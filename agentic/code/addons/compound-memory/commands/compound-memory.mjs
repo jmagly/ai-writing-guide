@@ -191,6 +191,8 @@ function positionalValues(args) {
     '--media-type', '--context-pack-id', '--context-pack-digest',
     '--source-ref', '--source-digest', '--supersedes', '--conflicts-with',
     '--operation-id', '--limit', '--workspace-id', '--db',
+    '--budget', '--line-budget', '--wiki-budget', '--citation-budget',
+    '--instruction-budget', '--max-files',
   ]);
   const values = [];
   for (let index = 0; index < args.length; index++) {
@@ -273,6 +275,74 @@ async function loadOutputRegistration(frameworkRoot) {
     }
   }
   throw new Error('compound-memory output-registration runtime is unavailable');
+}
+
+async function loadContextPackRuntime(frameworkRoot) {
+  const candidates = [
+    path.join(frameworkRoot, 'dist/src/memory/context-pack.js'),
+    path.join(frameworkRoot, 'src/memory/context-pack.ts'),
+  ];
+  for (const candidate of candidates) {
+    try {
+      await fs.access(candidate);
+      return await import(pathToFileURL(candidate).href);
+    } catch (error) {
+      if (error?.code !== 'ENOENT' && error?.code !== 'ERR_UNKNOWN_FILE_EXTENSION') throw error;
+    }
+  }
+  throw new Error('compound-memory context-pack runtime is unavailable');
+}
+
+async function loadLineMemoryRuntime(frameworkRoot) {
+  const candidate = path.join(
+    frameworkRoot,
+    'agentic/code/addons/line-memory/commands/line-memory.mjs',
+  );
+  await fs.access(candidate);
+  return import(pathToFileURL(candidate).href);
+}
+
+async function contextPack(args, context) {
+  const task = positionalValues(args).join(' ').trim();
+  if (!task) return { exitCode: 2, message: 'Usage: aiwg compound-memory context <task> [--budget <characters>] [--no-touch] [--json]' };
+  const totalCharacters = boundedInteger(optionValue(args, '--budget'), 8000, 256, 65536, '--budget');
+  const lineCharacters = boundedInteger(optionValue(args, '--line-budget'), 2000, 0, 65536, '--line-budget');
+  const wikiCharacters = boundedInteger(optionValue(args, '--wiki-budget'), 4000, 0, 65536, '--wiki-budget');
+  const citationCharacters = boundedInteger(optionValue(args, '--citation-budget'), 1500, 0, 16384, '--citation-budget');
+  const instructionCharacters = boundedInteger(optionValue(args, '--instruction-budget'), 500, 0, 8192, '--instruction-budget');
+  const maxFiles = boundedInteger(optionValue(args, '--max-files'), 1000, 1, 10000, '--max-files');
+  const runtime = await loadContextPackRuntime(context.frameworkRoot);
+  const pack = runtime.buildWorkspaceContextPack(context.cwd, task, {
+    maxFiles,
+    budget: {
+      totalCharacters,
+      lineCharacters,
+      wikiCharacters,
+      citationCharacters,
+      instructionCharacters,
+    },
+  });
+  let recency = { touched: false, entries: 0, operationId: null };
+  const selectedLineValues = pack.items
+    .filter(item => item.tier === 'line')
+    .map(item => item.text);
+  if (!args.includes('--no-touch') && selectedLineValues.length > 0) {
+    const lineMemory = await loadLineMemoryRuntime(context.frameworkRoot);
+    const loaded = await lineMemory.loadConfig(context.cwd, { warn: false });
+    const receipt = await lineMemory.touchMemoryValues(selectedLineValues, context.cwd, loaded.config);
+    recency = {
+      touched: receipt.touched.length > 0,
+      entries: receipt.touched.length,
+      operationId: receipt.operationId,
+    };
+  }
+  const result = { ...pack, recency, inspection: args.includes('--no-touch') };
+  emitResult(
+    args,
+    result,
+    `Context pack ${pack.id}: ${pack.items.length} item(s), ${pack.used.totalCharacters}/${pack.budget.totalCharacters} characters.`,
+  );
+  return { exitCode: 0 };
 }
 
 async function pendingCandidateQueue(args, context) {
@@ -591,6 +661,7 @@ export default async function compoundMemoryCommand(args, context) {
       return { exitCode: report.status === 'degraded' ? 1 : 0 };
     }
     if (context.subcommand === 'capture-output') return await captureOutput(args, context);
+    if (context.subcommand === 'context') return await contextPack(args, context);
     if (context.subcommand === 'review') return await reviewQueue(args, context);
     if (context.subcommand === 'maintain') return await maintain(args, context);
     return { exitCode: 2, message: `Unknown compound-memory subcommand: ${context.subcommand}` };

@@ -42,6 +42,10 @@
         "file": "compound-memory.mjs",
         "description": "Preview or register a derived output with exact context lineage"
       },
+      "context": {
+        "file": "compound-memory.mjs",
+        "description": "Build a deterministic bounded context pack from line memory and wiki"
+      },
       "review": {
         "file": "compound-memory.mjs",
         "description": "List a bounded, redacted queue of pending memory candidates"
@@ -76,7 +80,7 @@
         "wikiCharacters": 4000,
         "citationCharacters": 1500,
         "instructionCharacters": 500,
-        "defaultNoTouch": true
+        "defaultNoTouch": false
       },
       "maintenance": {
         "previewByDefault": true,

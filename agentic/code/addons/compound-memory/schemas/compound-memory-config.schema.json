@@ -29,7 +29,7 @@
         "wikiCharacters": { "type": "integer", "minimum": 0, "maximum": 65536, "default": 4000 },
         "citationCharacters": { "type": "integer", "minimum": 0, "maximum": 16384, "default": 1500 },
         "instructionCharacters": { "type": "integer", "minimum": 0, "maximum": 8192, "default": 500 },
-        "defaultNoTouch": { "type": "boolean", "default": true }
+        "defaultNoTouch": { "type": "boolean", "default": false }
       }
     },
     "maintenance": {

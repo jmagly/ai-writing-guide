@@ -30,8 +30,9 @@ aiwg compound-memory status --json
    digest, then route long-form material through `memory-ingest` and llm-wiki.
    Route session transcripts through `aiwg sessions import` and `extract`.
 2. **Retrieve/use** — query llm-wiki or the artifact index for linked detail;
-   use bounded `aiwg line-memory search ... --limit <n> --no-touch --json` for
-   concise stable facts. Never inject the complete stores into startup context.
+   use `aiwg compound-memory context <task> --budget <characters> --json` to
+   merge relevant line facts and wiki evidence. Add `--no-touch` for inspection.
+   Never inject the complete stores into startup context.
 3. **Write/capture output** — register the output and its source/context-pack
    lineage before proposing any extracted facts as session candidates. Run
    `aiwg compound-memory capture-output <file> ... --json` first, review the

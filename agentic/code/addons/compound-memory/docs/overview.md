@@ -41,6 +41,19 @@ index registrations and persists an idempotent receipt. The receipt marks wiki
 index work, line-memory repair, and candidate decisions as delegated instead of
 bypassing their owning add-ons or review contracts.
 
+`aiwg compound-memory context <task>` is the reusable retrieval boundary. Its
+default 8,000-character pack allocates 2,000 characters to line facts, 4,000
+to wiki excerpts, 1,500 to citations, and 500 to trusted instructions. CLI
+flags can reduce or redistribute those bounds, but the hard total is always
+enforced. Equal inputs produce the same pack identity. Duplicate claims are
+removed, invalid lifecycle states are excluded, stale material is down-ranked,
+and every excerpt is labeled `quoted-data` rather than instructions.
+
+The fixed conformance target is p95 below 250 ms for a 1,000-file local corpus
+on the CI runner, with precision and recall measured against the checked-in
+three-session fixture. Fortemi Core is used when its project graph is current;
+otherwise the result names the line-memory/wiki lexical backends.
+
 The driver skill exposes the ingest, retrieve/use, write, manage, review,
 update, and maintain workflows through the existing portable skills and CLI
 contracts. Authority-changing automation remains proposal-only until the
