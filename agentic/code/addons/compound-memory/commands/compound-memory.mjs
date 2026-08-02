@@ -557,24 +557,124 @@ async function pendingCandidateQueue(args, context) {
 }
 
 async function reviewQueue(args, context) {
-  const queue = await pendingCandidateQueue(args, context);
+  const [queue, signals] = await Promise.all([
+    pendingCandidateQueue(args, context),
+    reviewSignals(context.cwd),
+  ]);
   const result = {
     schemaVersion: 'aiwg.compound-memory.review.v1',
     command: 'compound-memory.review',
     ...queue,
     mutation: false,
-    nextAction: queue.count
-      ? 'inspect evidence with aiwg sessions candidates, then use exact-version aiwg sessions review'
+    signals,
+    nextAction: queue.count || signals.total > 0
+      ? 'inspect the owning workflow before confirming any mutation'
       : null,
   };
   emitResult(args, result, `Pending review candidates: ${queue.count ?? 'unavailable'}`);
   return { exitCode: queue.status === 'unavailable' ? 1 : 0 };
 }
 
+async function boundedFiles(root, predicate) {
+  const pending = [root];
+  const files = [];
+  let bounded = false;
+  while (pending.length > 0 && files.length < MAX_STATUS_FILES) {
+    const directory = pending.shift();
+    let entries;
+    try {
+      entries = await fs.readdir(directory, { withFileTypes: true });
+    } catch (error) {
+      if (error?.code === 'ENOENT') continue;
+      throw error;
+    }
+    for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
+      if (entry.isSymbolicLink()) continue;
+      const target = path.join(directory, entry.name);
+      if (entry.isDirectory()) pending.push(target);
+      else if (entry.isFile() && predicate(target)) files.push(target);
+      if (files.length >= MAX_STATUS_FILES) break;
+    }
+  }
+  bounded = pending.length === 0 && files.length < MAX_STATUS_FILES;
+  return { files, bounded };
+}
+
+async function reviewSignals(cwd) {
+  const wiki = await boundedFiles(path.join(cwd, WIKI_ROOT), file => file.endsWith('.md') && !file.endsWith('/index.md'));
+  const pages = [];
+  const inbound = new Map();
+  const contradictions = [];
+  for (const file of wiki.files) {
+    const locator = path.relative(cwd, file).split(path.sep).join('/');
+    const name = path.basename(file, '.md').toLocaleLowerCase();
+    const content = (await fs.readFile(file, 'utf8')).slice(0, 65536);
+    const stat = await fs.stat(file);
+    pages.push({ locator, name, mtimeMs: stat.mtimeMs });
+    for (const match of content.matchAll(/\[\[([^\]|#]+)(?:[|#][^\]]*)?\]\]/g)) {
+      const target = match[1].trim().toLocaleLowerCase();
+      inbound.set(target, (inbound.get(target) ?? 0) + 1);
+    }
+    if (/\[!contradiction\]/i.test(content)) contradictions.push({ locator });
+  }
+  const orphanCutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const orphans = pages
+    .filter(page => page.mtimeMs < orphanCutoff && !inbound.has(page.name))
+    .map(page => ({ locator: page.locator }));
+
+  const metadata = await readJson(path.join(cwd, LINE_METADATA_PATH));
+  const staleCutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
+  const staleFacts = metadata?.entries && typeof metadata.entries === 'object'
+    ? Object.values(metadata.entries)
+      .filter(entry => entry?.status === 'active'
+        && Date.parse(entry.lastAccessedAt ?? entry.updatedAt ?? '') < staleCutoff)
+      .map(entry => ({ handle: entry.id, digest: entry.digest }))
+    : [];
+
+  const registrations = await boundedFiles(
+    path.join(cwd, '.aiwg/memory/output-registration/index'),
+    file => file.endsWith('.json'),
+  );
+  const registered = new Set();
+  for (const file of registrations.files) {
+    const value = await readJson(file);
+    if (value?.output?.locator) registered.add(value.output.locator);
+  }
+  const outputs = await boundedFiles(path.join(cwd, 'output'), () => true);
+  const unlinkedOutputs = outputs.files
+    .map(file => path.relative(cwd, file).split(path.sep).join('/'))
+    .filter(locator => !registered.has(locator))
+    .map(locator => ({ locator }));
+
+  const canonical = await readJson(path.join(cwd, '.aiwg/context/compound-memory/context.json'));
+  const activeContext = canonical?.entries ? Object.values(canonical.entries)
+    .filter(entry => entry?.status === 'active') : [];
+  const contextUpdates = activeContext
+    .filter(entry => entry.reviewAt && Date.parse(entry.reviewAt) <= Date.now())
+    .map(entry => ({ entryId: entry.entryId, reason: 'review-due' }));
+  const groups = new Map();
+  for (const entry of activeContext) {
+    const key = `${entry.target}:${entry.key}`;
+    const values = groups.get(key) ?? [];
+    values.push(entry.entryId);
+    groups.set(key, values);
+  }
+  for (const [key, entryIds] of groups) {
+    if (entryIds.length > 1) contextUpdates.push({ key, entryIds, reason: 'conflict' });
+  }
+  const categories = { contradictions, staleFacts, orphanPages: orphans, unlinkedOutputs, contextUpdates };
+  return {
+    ...categories,
+    total: Object.values(categories).reduce((sum, values) => sum + values.length, 0),
+    bounded: wiki.bounded && registrations.bounded && outputs.bounded,
+  };
+}
+
 async function maintenancePlan(args, context) {
-  const [status, review] = await Promise.all([
+  const [status, review, signals] = await Promise.all([
     compoundMemoryStatus(context.cwd, context.frameworkRoot),
     pendingCandidateQueue(args, context),
+    reviewSignals(context.cwd),
   ]);
   const runtime = await loadOutputRegistration(context.frameworkRoot);
   const store = new runtime.FilesystemOutputRegistrationStore(context.cwd);
@@ -606,6 +706,13 @@ async function maintenancePlan(args, context) {
     count: review.count,
     candidateIds: review.items.map(item => `${item.candidateId}@${item.version}`),
   });
+  if (signals.total > 0) actions.push({
+    id: 'review-signals',
+    mode: 'review-required',
+    counts: Object.fromEntries(Object.entries(signals)
+      .filter(([, value]) => Array.isArray(value))
+      .map(([key, value]) => [key, value.length])),
+  });
   const snapshot = {
     lineMemory: { facts: status.lineMemory.facts, integrity: status.lineMemory.integrity },
     wiki: {
@@ -615,6 +722,7 @@ async function maintenancePlan(args, context) {
     },
     pendingOutputOperations: pending.map(record => record.operationId).sort(),
     pendingCandidates: review.items.map(item => `${item.candidateId}@${item.version}`),
+    reviewSignals: stableDigest(signals),
   };
   return {
     schemaVersion: 'aiwg.compound-memory.maintenance-preview.v1',

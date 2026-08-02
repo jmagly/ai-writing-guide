@@ -193,6 +193,44 @@ describe('compound-memory review and maintenance', () => {
     expect(await fileExists(path.join(projectDir, '.aiwg/sessions/catalog.sqlite'))).toBe(false);
   });
 
+  it('surfaces bounded cross-store review signals without returning bodies', async () => {
+    await mkdir(path.join(projectDir, '.aiwg/wiki/concepts'), { recursive: true });
+    await mkdir(path.join(projectDir, '.aiwg/memory'), { recursive: true });
+    await mkdir(path.join(projectDir, 'output/reports'), { recursive: true });
+    await writeFile(
+      path.join(projectDir, '.aiwg/wiki/concepts/conflict.md'),
+      '# Conflict\n\n> [!contradiction]\n> Two reviewed sources disagree.\n',
+    );
+    await writeFile(path.join(projectDir, 'output/reports/unlinked.md'), '# Unlinked\nprivate body\n');
+    await writeFile(path.join(projectDir, '.aiwg/memory/line-memory.meta.json'), JSON.stringify({
+      schemaVersion: 'aiwg.line-memory.v1',
+      version: 1,
+      entries: {
+        old: {
+          id: 'lm_old', status: 'active', digest: digest('old'),
+          updatedAt: '2020-01-01T00:00:00.000Z', lastAccessedAt: '2020-01-01T00:00:00.000Z',
+        },
+      },
+    }));
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    await compoundMemoryCommand(['--json'], {
+      cwd: projectDir,
+      frameworkRoot: path.resolve(__dirname, '../../..'),
+      namespace: 'compound-memory',
+      subcommand: 'review',
+    });
+    const report = JSON.parse(output.pop()!);
+    expect(report.signals).toMatchObject({
+      total: 3,
+      contradictions: [{ locator: '.aiwg/wiki/concepts/conflict.md' }],
+      staleFacts: [{ handle: 'lm_old' }],
+      unlinkedOutputs: [{ locator: 'output/reports/unlinked.md' }],
+    });
+    expect(JSON.stringify(report)).not.toContain('private body');
+    expect(report.mutation).toBe(false);
+  });
+
   it('requires an exact preview and records a restart-safe maintenance receipt', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));

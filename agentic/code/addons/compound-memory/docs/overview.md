@@ -33,7 +33,10 @@ does not read transcript bodies or persist secrets.
 
 `aiwg compound-memory review` exposes a bounded pending-candidate queue using
 identities, assertion digests, confidence, sensitivity, warning counts, and
-relationship metadata. It intentionally omits assertions and evidence text.
+relationship metadata. The same read-only scan reports contradiction markers,
+stale line handles, orphan wiki locators, unregistered output locators, and due
+or conflicting canonical-context entries. It intentionally omits assertions,
+evidence text, and output bodies.
 
 `aiwg compound-memory maintain` produces a deterministic preview tied to the
 current memory snapshot. Exact confirmation replays only pending derived-output

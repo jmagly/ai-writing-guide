@@ -32,8 +32,9 @@ idempotent provenance receipt without changing the source. Transcript formats
 route to sessions; other supported documents/media route to llm-wiki through
 the existing `memory-ingest` workflow. Raw registration never promotes claims.
 
-`review` reads a bounded queue of pending candidates without returning evidence
-bodies or raw assertions. `maintain` also starts in preview mode and binds its
+`review` reads a bounded queue of pending candidates plus contradiction, stale
+fact, orphan page, unlinked output, and canonical-context review signals without
+returning evidence bodies or raw assertions. `maintain` also starts in preview mode and binds its
 operation ID to the current line-memory, wiki, output-outbox, and review state.
 Confirming the exact preview replays idempotent output registrations and writes
 a restart-safe receipt. Wiki refresh, line-memory repair, and candidate choices
