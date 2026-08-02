@@ -88,8 +88,14 @@ Cockpit/serve persistence without transferring management ownership to the
 runtime substrate.
 
 `AgenticSandboxFleetClient` is the first concrete adapter. It submits the
-neutral workload record to `/api/v2/fleet/workloads`, follows revisioned durable
-observations, and exposes inventory/reconciliation calls to the conductor. The
-management bearer stays in the HTTP authorization header and is never copied
-into workload metadata. A scheduled collector must supply a schedule before
-dispatch; all other lifecycle and evidence decisions remain conductor-owned.
+neutral workload record to `/api/v2/fleet/workloads`, dispatches the actual
+worker prompt through AIWG's existing A2A-first dispatch router, then binds the
+returned task identity through a monotonic Sandbox observation. Admission and
+executor requests use separate bearer domains. A replay with an existing task
+binding re-adopts that task without dispatching it again.
+
+The client then follows revisioned durable observations and exposes
+inventory/reconciliation calls to the conductor. Bearers stay in HTTP
+authorization headers and are never copied into workload metadata. A scheduled
+collector must supply a schedule before dispatch; lifecycle truth and evidence
+remain substrate-owned while parent aggregation remains conductor-owned.

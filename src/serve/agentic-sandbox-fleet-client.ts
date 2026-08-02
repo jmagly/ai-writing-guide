@@ -118,6 +118,7 @@ export class AgenticSandboxFleetClient {
         throw new Error(`Agentic Sandbox dispatch for '${lineage.childId}' returned no durable task identity`);
       }
       const bound = await this.bindDispatchedTask(
+        cycle,
         lineage.childId,
         admitted.workload.status,
         dispatched.task.id,
@@ -147,6 +148,7 @@ export class AgenticSandboxFleetClient {
   };
 
   private async bindDispatchedTask(
+    cycle: FleetWorkerCycle,
     childId: string,
     current: WorkloadStatus,
     taskId: string,
@@ -157,6 +159,7 @@ export class AgenticSandboxFleetClient {
       revision: current.revision + 1,
       last_seen: new Date().toISOString(),
       artifacts: current.artifacts ?? [],
+      ...(cycle.workloadKind === 'daemon' ? { health: observedState === 'healthy' ? 'healthy' : 'unknown' } : {}),
       ...(observedState === 'blocked' ? { backpressure: { reason: 'approval', retryable: false } } : {}),
     };
     return this.request(`/api/v2/fleet/workloads/${encodeURIComponent(childId)}/observations`, {
