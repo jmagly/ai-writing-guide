@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/compound-memory/config.v1.json",
+  "title": "AIWG compound-memory configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "reviewPolicy", "paths", "context", "maintenance"],
+  "properties": {
+    "schemaVersion": { "const": "aiwg.compound-memory.config.v1" },
+    "reviewPolicy": { "const": "explicit" },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lineMemory", "lineMetadata", "wiki", "canonicalContext"],
+      "properties": {
+        "lineMemory": { "const": ".aiwg/memory/line-memory.txt" },
+        "lineMetadata": { "const": ".aiwg/memory/line-memory.meta.json" },
+        "wiki": { "const": ".aiwg/wiki" },
+        "canonicalContext": { "const": ".aiwg/context/compound-memory" }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["totalCharacters", "lineCharacters", "wikiCharacters", "citationCharacters", "instructionCharacters", "defaultNoTouch"],
+      "properties": {
+        "totalCharacters": { "type": "integer", "minimum": 256, "maximum": 65536, "default": 8000 },
+        "lineCharacters": { "type": "integer", "minimum": 0, "maximum": 65536, "default": 2000 },
+        "wikiCharacters": { "type": "integer", "minimum": 0, "maximum": 65536, "default": 4000 },
+        "citationCharacters": { "type": "integer", "minimum": 0, "maximum": 16384, "default": 1500 },
+        "instructionCharacters": { "type": "integer", "minimum": 0, "maximum": 8192, "default": 500 },
+        "defaultNoTouch": { "type": "boolean", "default": true }
+      }
+    },
+    "maintenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["previewByDefault", "scanLimit", "lockTimeoutMs"],
+      "properties": {
+        "previewByDefault": { "const": true },
+        "scanLimit": { "type": "integer", "minimum": 1, "maximum": 10000, "default": 1000 },
+        "lockTimeoutMs": { "type": "integer", "minimum": 100, "maximum": 60000, "default": 5000 }
+      }
+    }
+  }
+}

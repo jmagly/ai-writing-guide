@@ -2,7 +2,7 @@
   "id": "compound-memory",
   "type": "addon",
   "name": "Compound Memory",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Governed orchestration across AIWG line memory, semantic memory, and llm-wiki.",
   "core": false,
   "autoInstall": false,
@@ -20,7 +20,8 @@
   "entry": {
     "commands": "commands/",
     "skills": "skills/",
-    "docs": "docs/"
+    "docs": "docs/",
+    "schemas": "schemas/"
   },
   "agents": [],
   "commands": [],
@@ -59,11 +60,29 @@
     "optional": []
   },
   "configuration": {
+    "schema": "schemas/compound-memory-config.schema.json",
     "defaults": {
-      "lineMemoryPath": ".aiwg/memory/line-memory.txt",
-      "lineMetadataPath": ".aiwg/memory/line-memory.meta.json",
-      "wikiRoot": ".aiwg/wiki",
-      "reviewPolicy": "explicit"
+      "schemaVersion": "aiwg.compound-memory.config.v1",
+      "reviewPolicy": "explicit",
+      "paths": {
+        "lineMemory": ".aiwg/memory/line-memory.txt",
+        "lineMetadata": ".aiwg/memory/line-memory.meta.json",
+        "wiki": ".aiwg/wiki",
+        "canonicalContext": ".aiwg/context/compound-memory"
+      },
+      "context": {
+        "totalCharacters": 8000,
+        "lineCharacters": 2000,
+        "wikiCharacters": 4000,
+        "citationCharacters": 1500,
+        "instructionCharacters": 500,
+        "defaultNoTouch": true
+      },
+      "maintenance": {
+        "previewByDefault": true,
+        "scanLimit": 1000,
+        "lockTimeoutMs": 5000
+      }
     }
   }
 }
