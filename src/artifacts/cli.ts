@@ -38,6 +38,7 @@ import {
   type WebReleaseOptions,
 } from '../resources/web-release.js';
 import { findPackageRoot } from '../cli/find-package-root.js';
+import { createResourceCredentialProvider } from '../auth/resource-credentials.js';
 
 const MAX_RESOURCE_TRUST_ROOT_BYTES = 64 * 1024;
 
@@ -61,6 +62,7 @@ function webReleaseOptionsFromEnvironment(): Omit<WebReleaseOptions, 'selector' 
   }
 
   return {
+    credentialProvider: createResourceCredentialProvider(process.env),
     ...(baseUrl === undefined ? {} : { baseUrl }),
     ...(cacheRoot === undefined ? {} : { cacheRoot }),
     ...(publicKeyPem === undefined ? {} : { publicKeyPem }),

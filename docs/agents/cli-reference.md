@@ -29,6 +29,20 @@ Complete reference for all `aiwg` CLI commands.
 
 **Prerequisites:** Node.js ≥20.0.0 and `npm install -g aiwg`
 
+## Authentication
+
+```bash
+aiwg auth login [--device] [--device-label <label>]
+aiwg auth status [--json]
+aiwg auth logout [--all]
+```
+
+Authentication uses the native operating-system credential store. A mode-0600
+file fallback requires explicit `--store file --allow-file-store` opt-in. Exit
+codes are 0 success, 2 usage, 3 not authenticated, 4 denied/expired, 5
+credential-store failure, and 6 network/protocol failure. Status output never
+contains access or refresh tokens.
+
 **References:**
 
 - @src/extensions/commands/definitions.ts - Command extension definitions

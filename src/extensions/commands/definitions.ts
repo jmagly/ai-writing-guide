@@ -73,6 +73,25 @@ export const versionCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const authCommand: Extension = {
+  id: 'auth',
+  type: 'command',
+  name: 'Authentication',
+  description: 'Log in, inspect access, and log out of paid AIWG web resources',
+  version: '1.0.0',
+  capabilities: ['cli', 'authentication', 'resources'],
+  keywords: ['auth', 'login', 'logout', 'status', 'releases'],
+  category: 'maintenance',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '<login|status|logout> [--device] [--json] [--all]',
+    allowedTools: ['Bash'],
+  } satisfies CommandMetadata,
+};
+
 export const doctorCommand: Extension = {
   id: 'doctor',
   type: 'skill',
@@ -3621,6 +3640,7 @@ export const commandDefinitions: Extension[] = [
   // Maintenance (7)
   helpCommand,
   versionCommand,
+  authCommand,
   doctorCommand,
   updateCommand,
   refreshCommand,
