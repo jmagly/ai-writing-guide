@@ -1,0 +1,40 @@
+{
+  "document_type": "inventory",
+  "api_version": "agentic-orchestration/v1",
+  "inventory_revision": 12,
+  "generated_at": "2026-08-02T15:00:00Z",
+  "records": [
+    {
+      "document_type": "workload",
+      "api_version": "agentic-orchestration/v1",
+      "kind": "persistent-agent",
+      "lineage": { "orchestrator_id": "aiwg-local", "mission_id": "mission-demo", "dispatch_id": "dispatch-agent", "idempotency_key": "idem-agent", "parent_id": "mission-demo", "child_id": "child-agent", "target_id": "target-1", "executor_id": "executor-1", "runtime_id": "runtime-docker-1", "session_id": "session-agent-1", "task_id": "task-agent-1", "command_id": null },
+      "spec": { "desired_state": "running", "capabilities": [{ "name": "session:reattach", "status": "supported" }], "policy": { "trust_tier": "T1", "isolation_kind": "container", "credential_policy_ref": "policy-session-scoped" }, "budgets": { "max_attempts": 3, "timeout_seconds": 7200, "max_cost_usd": 5 } },
+      "status": { "observed_state": "detached", "revision": 4, "last_seen": "2026-08-02T15:00:00Z", "artifacts": [] }
+    },
+    {
+      "document_type": "workload",
+      "api_version": "agentic-orchestration/v1",
+      "kind": "daemon",
+      "lineage": { "orchestrator_id": "aiwg-local", "mission_id": "mission-demo", "dispatch_id": "dispatch-daemon", "idempotency_key": "idem-daemon", "parent_id": "mission-demo", "child_id": "child-daemon", "target_id": "target-2", "executor_id": "executor-2", "runtime_id": "runtime-host-1", "session_id": null, "task_id": "task-daemon-1", "command_id": null },
+      "spec": { "desired_state": "running", "capabilities": [{ "name": "health:heartbeat", "status": "supported" }], "policy": { "trust_tier": "T0", "isolation_kind": "host" }, "budgets": { "max_attempts": 5, "timeout_seconds": 86400 } },
+      "status": { "observed_state": "healthy", "revision": 8, "last_seen": "2026-08-02T15:00:00Z", "health": "healthy", "artifacts": [] }
+    },
+    {
+      "document_type": "workload",
+      "api_version": "agentic-orchestration/v1",
+      "kind": "scheduled-collector",
+      "lineage": { "orchestrator_id": "aiwg-local", "mission_id": "mission-demo", "dispatch_id": "dispatch-collector", "idempotency_key": "idem-collector", "parent_id": "mission-demo", "child_id": "child-collector", "target_id": "target-3", "executor_id": "executor-3", "runtime_id": "runtime-container-2", "session_id": null, "task_id": "task-collector-1", "command_id": "collector-run-42" },
+      "spec": { "desired_state": "running", "capabilities": [{ "name": "schedule:cron", "status": "supported" }], "policy": { "trust_tier": "T1", "isolation_kind": "container" }, "budgets": { "max_attempts": 2, "timeout_seconds": 300 }, "schedule": "0 * * * *" },
+      "status": { "observed_state": "scheduled", "revision": 2, "last_seen": "2026-08-02T15:00:00Z", "artifacts": [] }
+    },
+    {
+      "document_type": "workload",
+      "api_version": "agentic-orchestration/v1",
+      "kind": "one-shot-command",
+      "lineage": { "orchestrator_id": "aiwg-local", "mission_id": "mission-demo", "dispatch_id": "dispatch-command", "idempotency_key": "idem-command", "parent_id": "mission-demo", "child_id": "child-command", "target_id": "target-4", "executor_id": "executor-4", "runtime_id": "runtime-vm-1", "session_id": null, "task_id": "task-command-1", "command_id": "command-1" },
+      "spec": { "desired_state": "running", "capabilities": [{ "name": "command:exec", "status": "supported" }], "policy": { "trust_tier": "T2", "isolation_kind": "vm", "network_policy_ref": "network-restricted" }, "budgets": { "max_attempts": 1, "timeout_seconds": 600 } },
+      "status": { "observed_state": "blocked", "revision": 3, "last_seen": "2026-08-02T15:00:00Z", "backpressure": { "reason": "capacity", "retryable": true, "retry_after": "2026-08-02T15:05:00Z" }, "artifacts": [] }
+    }
+  ]
+}

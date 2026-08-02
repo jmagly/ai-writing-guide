@@ -1,0 +1,13 @@
+{
+  "document_type": "reconciliation",
+  "api_version": "agentic-orchestration/v1",
+  "generated_at": "2026-08-02T15:01:00Z",
+  "before_revision": 12,
+  "after_revision": 13,
+  "rows": [
+    { "child_id": "child-agent", "classification": "re-adopted", "observed_state": "detached", "revision": 5 },
+    { "child_id": "child-daemon", "classification": "re-adopted", "observed_state": "healthy", "revision": 9 },
+    { "child_id": "child-collector", "classification": "operator-review-required", "observed_state": "missed", "revision": 3, "reason": "catch-up policy requires approval" },
+    { "child_id": "child-command", "classification": "unknown", "observed_state": "unknown", "revision": 4, "reason": "runtime inventory did not contain the in-flight command" }
+  ]
+}
