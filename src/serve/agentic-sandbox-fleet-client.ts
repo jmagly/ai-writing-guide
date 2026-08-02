@@ -44,6 +44,11 @@ interface WorkloadStatus {
 }
 
 interface WorkloadRecord {
+  lineage: {
+    session_id?: string | null;
+    task_id?: string | null;
+    command_id?: string | null;
+  };
   status: WorkloadStatus;
 }
 
@@ -63,7 +68,7 @@ export interface FleetReconciliationResponse {
 
 const terminal = new Set<FleetEvent['observedState']>([
   'retained', 'healthy', 'scheduled', 'succeeded', 'failed', 'cancelled', 'timed-out',
-  'unknown', 'operator-review-required', 'blocked',
+  'unknown', 'operator-review-required',
 ]);
 
 export class AgenticSandboxFleetClient {
@@ -92,7 +97,7 @@ export class AgenticSandboxFleetClient {
       '/api/v2/fleet/workloads',
       { method: 'POST', body: JSON.stringify(record) },
     );
-    const events = [this.toEvent(admitted.workload.status)];
+    const events = [this.toEvent(admitted.workload)];
 
     for (let attempt = 0; attempt < this.maxPolls && !this.settled(cycle, events.at(-1)!); attempt += 1) {
       if (this.pollIntervalMs > 0) {
@@ -101,12 +106,13 @@ export class AgenticSandboxFleetClient {
       const next = await this.request<WorkloadRecord>(
         `/api/v2/fleet/workloads/${encodeURIComponent(lineage.childId)}`,
       );
-      const event = this.toEvent(next.status);
+      const event = this.toEvent(next);
       if (event.revision > events.at(-1)!.revision) events.push(event);
     }
 
     const latest = events.at(-1)!;
     return {
+      output: latest.artifacts?.find((artifact) => artifact.kind === 'result')?.uri,
       commandId: latest.commandId,
       sessionId: latest.sessionId,
       events,
@@ -165,6 +171,9 @@ export class AgenticSandboxFleetClient {
         target_id: lineage.targetId,
         executor_id: lineage.executorId,
         runtime_id: lineage.runtimeId,
+        session_id: null,
+        task_id: null,
+        command_id: null,
       },
       spec,
       status: {
@@ -180,14 +189,19 @@ export class AgenticSandboxFleetClient {
   private settled(cycle: FleetWorkerCycle, event: FleetEvent): boolean {
     if (event.observedState === 'running' && cycle.workloadKind === 'persistent-agent') return true;
     if (event.observedState === 'running' && cycle.workloadKind === 'daemon' && event.health === 'healthy') return true;
+    if (event.observedState === 'blocked') return event.backpressure?.retryable !== true;
     return terminal.has(event.observedState);
   }
 
-  private toEvent(status: WorkloadStatus): FleetEvent {
+  private toEvent(record: WorkloadRecord): FleetEvent {
+    const { status, lineage } = record;
     return {
       revision: status.revision,
       observedState: status.observed_state,
       lastSeen: status.last_seen,
+      sessionId: lineage.session_id ?? undefined,
+      taskId: lineage.task_id ?? undefined,
+      commandId: lineage.command_id ?? undefined,
       health: status.health,
       backpressure: status.backpressure ? {
         reason: status.backpressure.reason,

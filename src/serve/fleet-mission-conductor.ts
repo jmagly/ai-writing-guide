@@ -62,6 +62,7 @@ export interface FleetEvent {
   observedState: ObservedState;
   lastSeen: string;
   commandId?: string;
+  taskId?: string;
   sessionId?: string;
   health?: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
   backpressure?: FleetBackpressure;
@@ -135,6 +136,7 @@ export interface FleetCycleResult extends CycleResult {
   workloadKind: WorkloadKind;
   lineage?: FleetLineage;
   commandId?: string;
+  taskId?: string;
   sessionId?: string;
   observedState: ObservedState;
   revision: number;
@@ -388,6 +390,7 @@ export class FleetMissionConductor {
           workloadKind: cycle.workloadKind,
           lineage,
           commandId: ran.commandId ?? latest?.commandId,
+          taskId: latest?.taskId,
           sessionId: ran.sessionId ?? latest?.sessionId,
           observedState,
           revision: latest?.revision ?? 0,

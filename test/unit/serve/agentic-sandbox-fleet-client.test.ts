@@ -18,8 +18,11 @@ const executor: ExecutorRegistration = {
 
 const hash = 'b'.repeat(64);
 
-function workload(status: Record<string, unknown>) {
-  return { status: { last_seen: '2026-08-02T12:00:00Z', artifacts: [], ...status } };
+function workload(status: Record<string, unknown>, lineage: Record<string, unknown> = {}) {
+  return {
+    lineage: { session_id: null, task_id: null, command_id: null, ...lineage },
+    status: { last_seen: '2026-08-02T12:00:00Z', artifacts: [], ...status },
+  };
 }
 
 describe('AgenticSandboxFleetClient AIWG integration (#1991)', () => {
@@ -27,7 +30,9 @@ describe('AgenticSandboxFleetClient AIWG integration (#1991)', () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const responses = [
       { replayed: false, workload: workload({ observed_state: 'admitted', revision: 1 }) },
-      workload({ observed_state: 'running', revision: 2 }),
+      workload({ observed_state: 'running', revision: 2 }, {
+        session_id: 'session-1', task_id: 'task-1', command_id: 'command-1',
+      }),
       workload({
         observed_state: 'succeeded',
         revision: 3,
@@ -35,7 +40,7 @@ describe('AgenticSandboxFleetClient AIWG integration (#1991)', () => {
           { kind: 'result', uri: 'artifact://result', sha256: hash },
           { kind: 'verifier', uri: 'artifact://verifier', sha256: hash },
         ],
-      }),
+      }, { session_id: 'session-1', task_id: 'task-1', command_id: 'command-1' }),
     ];
     const fakeFetch = async (input: string | URL | Request, init?: RequestInit) => {
       calls.push({ url: String(input), init });
@@ -71,6 +76,12 @@ describe('AgenticSandboxFleetClient AIWG integration (#1991)', () => {
 
     expect(ledger.parentState).toBe('completed');
     expect(ledger.cycles[0]!.revision).toBe(3);
+    expect(ledger.cycles[0]).toMatchObject({
+      output: 'artifact://result',
+      sessionId: 'session-1',
+      taskId: 'task-1',
+      commandId: 'command-1',
+    });
     expect(calls.map((call) => call.url)).toEqual([
       'http://sandbox.example/api/v2/fleet/workloads',
       'http://sandbox.example/api/v2/fleet/workloads/child-1',
@@ -84,8 +95,54 @@ describe('AgenticSandboxFleetClient AIWG integration (#1991)', () => {
       child_id: 'child-1',
       target_id: 'sandbox-target-1',
       idempotency_key: 'mission-1:child-1:dispatch',
+      session_id: null,
+      task_id: null,
+      command_id: null,
     });
     expect(JSON.stringify(body)).not.toContain('management-token');
+  });
+
+  it('continues bounded polling through retryable typed backpressure', async () => {
+    const responses = [
+      { replayed: false, workload: workload({ observed_state: 'admitted', revision: 1 }) },
+      workload({
+        observed_state: 'blocked',
+        revision: 2,
+        backpressure: { reason: 'capacity', retryable: true },
+      }),
+      workload({ observed_state: 'running', revision: 3 }),
+      workload({ observed_state: 'succeeded', revision: 4 }),
+    ];
+    let calls = 0;
+    const client = new AgenticSandboxFleetClient({
+      baseUrl: 'http://sandbox.example',
+      token: 'token',
+      pollIntervalMs: 0,
+      maxPolls: 3,
+      fetch: async () => {
+        calls += 1;
+        return new Response(JSON.stringify(responses.shift()), {
+          status: calls === 1 ? 202 : 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      },
+    });
+    const retryPlan: FleetMissionPlan = {
+      orchestratorId: 'aiwg-cockpit',
+      missionId: 'mission-retry',
+      goal: 'wait through bounded capacity pressure',
+      completionCriterion: 'command succeeds',
+      aggregation: { mode: 'all-pass' },
+      cycles: [{ id: 'child-retry', runtime: 'codex', prompt: 'run', workloadKind: 'one-shot-command' }],
+    };
+
+    const ledger = await new FleetMissionConductor({ runWorker: client.runWorker })
+      .conduct(retryPlan, [executor]);
+
+    expect(calls).toBe(4);
+    expect(ledger.cycles[0]!.staleEventRevisions).toEqual([]);
+    expect(ledger.cycles[0]!.observedState).toBe('succeeded');
+    expect(ledger.parentState).toBe('completed');
   });
 
   it('requests restart reconciliation without importing AIWG mission internals', async () => {
