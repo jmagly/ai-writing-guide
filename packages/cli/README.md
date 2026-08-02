@@ -4,6 +4,11 @@
 
 # @aiwg/cli
 
+Paid web resources support passwordless login through `aiwg auth login` (or
+`--device` for headless use), `aiwg auth status`, and `aiwg auth logout`.
+Tokens are held in the native operating-system credential store. The mode-0600
+file fallback is disabled unless explicitly selected and allowed.
+
 **The agent-optimized execution layer for AIWG**
 
 AIWG skills and agents use this CLI to perform common operations with

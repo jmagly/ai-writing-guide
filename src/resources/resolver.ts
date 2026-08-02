@@ -149,6 +149,7 @@ export async function resolveAiwgResourceBytes(
   const bytes = await fetchVerifiedRawResource(webRelease, parsed.rawPath, {
     baseUrl: options.webReleaseOptions?.baseUrl,
     fetcher: options.webReleaseOptions?.fetcher,
+    credentialProvider: options.webReleaseOptions?.credentialProvider,
     allowInsecureLoopbackHttp: options.webReleaseOptions?.allowInsecureLoopbackHttp,
     offline: options.offline,
   });

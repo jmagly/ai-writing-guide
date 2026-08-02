@@ -13,6 +13,15 @@ software development lifecycle management, marketing campaigns, and content
 creation.
 .SH COMMANDS
 .TP
+.B auth login [--device]
+Authenticate for paid AIWG web resources using browser PKCE or a device code.
+.TP
+.B auth status [--json]
+Show account, scope, plan, expiry, and credential-store metadata without tokens.
+.TP
+.B auth logout [--all]
+Revoke authorization and remove local credentials.
+.TP
 .B use \fIframework\fR
 Deploy a framework to the current project. Available frameworks: sdlc, marketing, all.
 .TP
