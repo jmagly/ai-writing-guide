@@ -18,6 +18,7 @@ import {
   getAllExtensions,
   isValidAddon,
   addonPath,
+  resolveRequiredAddonActivationOrder,
   extensionPath,
   USE_ALL_DISALLOW,
   useHandler,
@@ -118,6 +119,61 @@ describe('addonPath()', () => {
     for (const name of names) {
       expect(addonPath('/root', name)).toBe(`/root/agentic/code/addons/${name}`);
     }
+  });
+});
+
+describe('resolveRequiredAddonActivationOrder()', () => {
+  let tmpDir: string;
+
+  beforeEach(async () => {
+    tmpDir = path.join(os.tmpdir(), `aiwg-addon-deps-${Date.now()}-${Math.random()}`);
+    await mkdir(path.join(tmpDir, 'agentic/code/addons'), { recursive: true });
+  });
+
+  afterEach(async () => {
+    if (existsSync(tmpDir)) await rm(tmpDir, { recursive: true, force: true });
+  });
+
+  async function addon(id: string, required: string[] = []): Promise<void> {
+    const dir = path.join(tmpDir, 'agentic/code/addons', id);
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, 'manifest.json'), JSON.stringify({
+      id,
+      dependencies: { required },
+    }));
+  }
+
+  it('returns transitive dependencies once in dependency-first order', async () => {
+    await addon('aiwg-utils');
+    await addon('semantic-memory', ['aiwg-utils']);
+    await addon('llm-wiki', ['semantic-memory']);
+    await addon('line-memory');
+    await addon('compound-memory', ['line-memory', 'llm-wiki']);
+
+    await expect(resolveRequiredAddonActivationOrder(tmpDir, 'compound-memory'))
+      .resolves.toEqual(['line-memory', 'aiwg-utils', 'semantic-memory', 'llm-wiki', 'compound-memory']);
+  });
+
+  it('rejects missing dependencies and dependency cycles before deployment', async () => {
+    await addon('missing-root', ['not-installed']);
+    await expect(resolveRequiredAddonActivationOrder(tmpDir, 'missing-root'))
+      .rejects.toThrow("requires unavailable addon 'not-installed'");
+
+    await addon('cycle-a', ['cycle-b']);
+    await addon('cycle-b', ['cycle-a']);
+    await expect(resolveRequiredAddonActivationOrder(tmpDir, 'cycle-a'))
+      .rejects.toThrow('cycle-a -> cycle-b -> cycle-a');
+  });
+
+  it('rejects malformed required dependency declarations', async () => {
+    const dir = path.join(tmpDir, 'agentic/code/addons', 'malformed');
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, 'manifest.json'), JSON.stringify({
+      id: 'malformed', dependencies: { required: 'line-memory' },
+    }));
+
+    await expect(resolveRequiredAddonActivationOrder(tmpDir, 'malformed'))
+      .rejects.toThrow('invalid dependencies.required');
   });
 });
 

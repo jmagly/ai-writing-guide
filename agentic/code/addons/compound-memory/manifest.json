@@ -1,0 +1,57 @@
+{
+  "id": "compound-memory",
+  "type": "addon",
+  "name": "Compound Memory",
+  "version": "0.1.0",
+  "description": "Governed orchestration across AIWG line memory, semantic memory, and llm-wiki.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "memory",
+    "compound-memory",
+    "line-memory",
+    "llm-wiki",
+    "semantic-memory",
+    "persistent-context"
+  ],
+  "entry": {
+    "commands": "commands/",
+    "skills": "skills/",
+    "docs": "docs/"
+  },
+  "agents": [],
+  "commands": [],
+  "skills": [
+    "compound-memory"
+  ],
+  "rules": [],
+  "cli_commands": {
+    "namespace": "compound-memory",
+    "description": "Inspect and orchestrate governed compound project memory",
+    "entry": "commands/",
+    "subcommands": {
+      "status": {
+        "file": "compound-memory.mjs",
+        "description": "Report dependency, data, index, review, and integrity readiness"
+      }
+    }
+  },
+  "dependencies": {
+    "required": [
+      "line-memory",
+      "llm-wiki"
+    ],
+    "optional": []
+  },
+  "configuration": {
+    "defaults": {
+      "lineMemoryPath": ".aiwg/memory/line-memory.txt",
+      "lineMetadataPath": ".aiwg/memory/line-memory.meta.json",
+      "wikiRoot": ".aiwg/wiki",
+      "reviewPolicy": "explicit"
+    }
+  }
+}

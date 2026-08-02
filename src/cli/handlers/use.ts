@@ -331,6 +331,62 @@ export function addonPath(frameworkRoot: string, name: string): string {
   return path.join(frameworkRoot, 'agentic/code/addons', folderName);
 }
 
+/**
+ * Resolve a selected addon's required addon dependencies in deterministic
+ * dependency-first order. Optional dependencies remain descriptive and are
+ * never activated implicitly.
+ */
+export async function resolveRequiredAddonActivationOrder(
+  frameworkRoot: string,
+  selectedAddon: string,
+): Promise<string[]> {
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const order: string[] = [];
+
+  const visit = async (requestedName: string, ancestry: string[]): Promise<void> => {
+    const name = resolveAddonFolderName(requestedName);
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) {
+      throw new Error(`Invalid required addon identifier '${requestedName}'`);
+    }
+    if (visited.has(name)) return;
+    if (visiting.has(name)) {
+      throw new Error(`Required addon dependency cycle: ${[...ancestry, name].join(' -> ')}`);
+    }
+    const source = addonPath(frameworkRoot, name);
+    let manifest: { id?: unknown; dependencies?: { required?: unknown } };
+    try {
+      manifest = JSON.parse(await fs.readFile(path.join(source, 'manifest.json'), 'utf8'));
+    } catch (error) {
+      throw new Error(
+        `Cannot load required addon '${name}': ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    if (manifest.id !== name) {
+      throw new Error(`Required addon manifest identity mismatch: expected '${name}'`);
+    }
+    const required = manifest.dependencies?.required ?? [];
+    if (!Array.isArray(required) || required.some(item => typeof item !== 'string')) {
+      throw new Error(`Addon '${name}' has an invalid dependencies.required declaration`);
+    }
+
+    visiting.add(name);
+    for (const dependency of [...required].sort()) {
+      const dependencyName = resolveAddonFolderName(dependency as string);
+      if (!await isValidAddon(frameworkRoot, dependencyName)) {
+        throw new Error(`Addon '${name}' requires unavailable addon '${dependencyName}'`);
+      }
+      await visit(dependencyName, [...ancestry, name]);
+    }
+    visiting.delete(name);
+    visited.add(name);
+    order.push(name);
+  };
+
+  await visit(selectedAddon, []);
+  return order;
+}
+
 async function registerSourceCliCommands(opts: {
   source: string;
   target: string;
@@ -2135,7 +2191,10 @@ export class UseHandler implements CommandHandler {
       return { exitCode: 0 };
     }
 
-    const frameworkRoot = await getFrameworkRoot();
+    // Handler contexts already carry the active installation root. Respect it
+    // so linked worktrees, embedded callers, and tests do not silently deploy
+    // artifacts from a different channel checkout.
+    const frameworkRoot = ctx.frameworkRoot || await getFrameworkRoot();
 
     if (framework === 'all' && explicitTarget !== 'all' && !remainingArgs.includes('--no-workspace-signals')) {
       const profileIdx = remainingArgs.findIndex((a) => a === '--profile');
@@ -2361,8 +2420,9 @@ export class UseHandler implements CommandHandler {
       const provider = explicitAddonProvider ?? (config?.providers?.[0] ?? 'claude');
       const targetIdx = remainingArgs.findIndex(a => a === '--target');
       const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
+      const dryRunAddon = remainingArgs.includes('--dry-run');
 
-      const runner = createScriptRunner(ctx.frameworkRoot);
+      const runner = createScriptRunner(frameworkRoot);
       const addonBaseArgs = ['--deploy-commands', '--deploy-skills', '--deploy-rules'];
       addonBaseArgs.push(...modelDeployArgs);
       if (provider) addonBaseArgs.push('--provider', provider);
@@ -2371,8 +2431,48 @@ export class UseHandler implements CommandHandler {
       if (remainingArgs.includes('--copy-all') || remainingArgs.includes('--copy-standard-skills')) {
         addonBaseArgs.push('--copy-all');
       }
+      if (dryRunAddon) addonBaseArgs.push('--dry-run');
 
       const kind = isExtension ? 'extension' : 'addon';
+      const activationOrder = isAddon
+        ? await resolveRequiredAddonActivationOrder(frameworkRoot, framework)
+        : [framework];
+      const requiredAddons = activationOrder.slice(0, -1);
+
+      for (const dependency of requiredAddons) {
+        ui.blank();
+        ui.header(`  Deploying required ${dependency} addon...`);
+        const dependencySource = addonPath(frameworkRoot, dependency);
+        const dependencyResult = await runner.run('tools/agents/deploy-agents.mjs', [
+          '--quiet', '--source', dependencySource,
+          ...addonBaseArgs,
+        ], { capture: true });
+        if (dependencyResult.exitCode !== 0) {
+          return {
+            ...dependencyResult,
+            message: dependencyResult.message
+              || `Failed to deploy required addon '${dependency}'`,
+          };
+        }
+        try {
+          await registerSourceCliCommands({
+            source: dependencySource,
+            target,
+            provider,
+            dryRun: dryRunAddon,
+            fallbackDescription: `${dependency} addon commands`,
+          });
+        } catch (error) {
+          return {
+            exitCode: 1,
+            message: `Failed to register required addon '${dependency}' CLI commands: ${error instanceof Error ? error.message : String(error)}`,
+          };
+        }
+        ui.success(dryRunAddon
+          ? `Required ${dependency} addon activation previewed`
+          : `Required ${dependency} addon deployed`);
+      }
+
       ui.blank();
       ui.header(`  Deploying ${framework} ${kind}...`);
       const addonSource = isExtension
@@ -2387,22 +2487,24 @@ export class UseHandler implements CommandHandler {
         return addonResult;
       }
 
-      // Register deployed extensions
-      try {
-        const registry = getRegistry();
-        const paths = getProviderPaths(provider);
-        await registerDeployedExtensions(registry, {
-          agentsPath: paths.agents,
-          skillsPath: paths.skills,
-          commandsPath: paths.commands,
-          rulesPath: paths.rules,
-          behaviorsPath: paths.behaviors,
-          provider,
-          cwd: target,
-        });
-        ui.success('Extension registration complete');
-      } catch (error) {
-        ui.warn(`Failed to register extensions: ${error instanceof Error ? error.message : String(error)}`);
+      // Register only artifacts actually written by a confirmed deployment.
+      if (!dryRunAddon) {
+        try {
+          const registry = getRegistry();
+          const paths = getProviderPaths(provider);
+          await registerDeployedExtensions(registry, {
+            agentsPath: paths.agents,
+            skillsPath: paths.skills,
+            commandsPath: paths.commands,
+            rulesPath: paths.rules,
+            behaviorsPath: paths.behaviors,
+            provider,
+            cwd: target,
+          });
+          ui.success('Extension registration complete');
+        } catch (error) {
+          ui.warn(`Failed to register extensions: ${error instanceof Error ? error.message : String(error)}`);
+        }
       }
 
       // Register CLI commands if addon declares them
@@ -2411,7 +2513,7 @@ export class UseHandler implements CommandHandler {
           source: addonSource,
           target,
           provider,
-          dryRun: false,
+          dryRun: dryRunAddon,
           fallbackDescription: `${framework} addon commands`,
         });
       } catch (error) {
@@ -2479,7 +2581,7 @@ export class UseHandler implements CommandHandler {
           }
 
           // Write profile config to project namespace
-          if (selectedProfile) {
+          if (selectedProfile && !dryRunAddon) {
             const namespace = topology.namespace || `.aiwg/${framework}`;
             const configDir = path.join(target, namespace);
             await fs.mkdir(configDir, { recursive: true });
@@ -2512,7 +2614,9 @@ export class UseHandler implements CommandHandler {
       }
 
       ui.blank();
-      ui.success(`${framework} addon deployed`);
+      ui.success(dryRunAddon
+        ? `${framework} addon activation preview complete`
+        : `${framework} addon deployed`);
       return {
         exitCode: 0,
       };
