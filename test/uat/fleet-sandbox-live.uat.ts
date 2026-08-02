@@ -160,11 +160,26 @@ suite('AIWG fleet conductor with a real Agentic Sandbox binary', () => {
     expect(report.rows).toHaveLength(3);
     expect(report.rows.every((row) => row.classification === 're-adopted')).toBe(true);
 
+    const taskCounts: Record<string, number> = {};
     for (const instanceId of instanceIds) {
       const tasks = await fetch(`${baseUrl}/agents/${instanceId}/v1/tasks`, {
         headers: { authorization: `Bearer ${token}` },
       }).then((response) => response.json()) as { tasks: unknown[] };
+      taskCounts[instanceId] = tasks.tasks.length;
       expect(tasks.tasks).toHaveLength(1);
     }
+
+    const evidenceDir = join(process.cwd(), 'test-results');
+    await mkdir(evidenceDir, { recursive: true });
+    await writeFile(join(evidenceDir, 'fleet-sandbox-live.evidence.json'), JSON.stringify({
+      aiwg_commit: process.env.GITHUB_SHA ?? process.env.GITEA_SHA ?? null,
+      sandbox_binary: binary,
+      target_ids: first.cycles.map((cycle) => cycle.lineage?.targetId),
+      task_ids: taskIds,
+      restart_task_ids: resumed.cycles.map((cycle) => cycle.taskId),
+      inventory_revision: inventory.inventory_revision,
+      reconciliation: report.rows,
+      task_counts_by_target: taskCounts,
+    }, null, 2));
   });
 });
