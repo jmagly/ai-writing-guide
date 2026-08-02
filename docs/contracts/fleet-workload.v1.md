@@ -59,3 +59,43 @@ claiming daemon, schedule, typed backpressure, or fleet reconciliation support.
 Breaking changes require a new API version. Additive optional fields may be
 introduced in a compatible revision after both repositories carry matching
 fixtures and validation.
+
+## AIWG management projection
+
+`FleetMissionConductor` is AIWG's management-plane projection of this contract.
+It performs parent-owned fan-out before execution so admitted children run
+concurrently and, by default, occupy distinct eligible executor targets. Each
+child carries stable mission, dispatch, idempotency, target, executor, and
+runtime lineage.
+
+The conductor keeps workload lifecycle semantics separate:
+
+- a one-shot satisfies its child only at `succeeded`;
+- a daemon requires healthy runtime health rather than a generic command exit;
+- a persistent agent may satisfy retained/running identity semantics;
+- a scheduled collector satisfies schedule admission or a completed run.
+
+Runtime events are reduced by monotonic revision. Stale events are retained as
+audit evidence but cannot overwrite newer state. Capacity, policy, approval,
+rate-limit, and dependency backpressure remain typed. `unknown` and
+`operator-review-required` observations fail closed, as does missing required
+result or verifier evidence.
+
+Aggregation supports all-pass, quorum, best-output, fail-fast, and explicit
+manual-review policies. A pluggable ledger store receives immutable snapshots
+at admission, after each child observation, and at parent settlement, allowing
+Cockpit/serve persistence without transferring management ownership to the
+runtime substrate.
+
+`AgenticSandboxFleetClient` is the first concrete adapter. It submits the
+neutral workload record to `/api/v2/fleet/workloads`, dispatches the actual
+worker prompt through AIWG's existing A2A-first dispatch router, then binds the
+returned task identity through a monotonic Sandbox observation. Admission and
+executor requests use separate bearer domains. A replay with an existing task
+binding re-adopts that task without dispatching it again.
+
+The client then follows revisioned durable observations and exposes
+inventory/reconciliation calls to the conductor. Bearers stay in HTTP
+authorization headers and are never copied into workload metadata. A scheduled
+collector must supply a schedule before dispatch; lifecycle truth and evidence
+remain substrate-owned while parent aggregation remains conductor-owned.
