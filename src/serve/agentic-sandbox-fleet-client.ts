@@ -16,6 +16,7 @@ import type {
   RunFleetWorker,
 } from './fleet-mission-conductor.js';
 import type { ExecutorRegistration } from './executor-registry.js';
+import { routeDispatch } from './dispatch-router.js';
 
 type FetchLike = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 
@@ -23,6 +24,8 @@ export interface AgenticSandboxFleetClientOptions {
   baseUrl: string;
   token: string;
   fetch?: FetchLike;
+  /** Executor data-plane fetch. Kept separate from the management-plane client for tests and split trust domains. */
+  executorFetch?: FetchLike;
   pollIntervalMs?: number;
   maxPolls?: number;
   defaultPolicy?: FleetWorkerCycle['policy'];
@@ -75,6 +78,7 @@ export class AgenticSandboxFleetClient {
   private readonly baseUrl: string;
   private readonly token: string;
   private readonly fetchImpl: FetchLike;
+  private readonly executorFetch: FetchLike;
   private readonly pollIntervalMs: number;
   private readonly maxPolls: number;
   private readonly defaultPolicy: NonNullable<FleetWorkerCycle['policy']>;
@@ -84,6 +88,7 @@ export class AgenticSandboxFleetClient {
     this.baseUrl = options.baseUrl.replace(/\/+$/, '');
     this.token = options.token;
     this.fetchImpl = options.fetch ?? globalThis.fetch.bind(globalThis);
+    this.executorFetch = options.executorFetch ?? globalThis.fetch.bind(globalThis);
     this.pollIntervalMs = options.pollIntervalMs ?? 250;
     this.maxPolls = options.maxPolls ?? 120;
     this.defaultPolicy = options.defaultPolicy ?? { trustTier: 'T2', isolationKind: 'vm' };
@@ -91,13 +96,35 @@ export class AgenticSandboxFleetClient {
   }
 
   /** Directly assignable to FleetMissionConductor's `runWorker` option. */
-  readonly runWorker: RunFleetWorker = async (cycle, executor, _invocation, lineage) => {
+  readonly runWorker: RunFleetWorker = async (cycle, executor, invocation, lineage) => {
     const record = this.workloadRecord(cycle, executor, lineage);
     const admitted = await this.request<{ replayed: boolean; workload: WorkloadRecord }>(
       '/api/v2/fleet/workloads',
       { method: 'POST', body: JSON.stringify(record) },
     );
     const events = [this.toEvent(admitted.workload)];
+
+    if (!admitted.workload.lineage.task_id) {
+      const dispatched = await routeDispatch(executor, {
+        mission_id: lineage.dispatchId,
+        objective: cycle.prompt,
+        long_running: cycle.longRunning ?? cycle.workloadKind !== 'one-shot-command',
+        fleet_workload_kind: cycle.workloadKind,
+        fleet_child_id: lineage.childId,
+        native_primitive: invocation.primitive,
+        ...(executor.a2aInstanceId ? { a2a_instance_id: executor.a2aInstanceId } : {}),
+      }, { fetch: this.executorFetch as typeof fetch });
+      if (!dispatched.task?.id) {
+        throw new Error(`Agentic Sandbox dispatch for '${lineage.childId}' returned no durable task identity`);
+      }
+      const bound = await this.bindDispatchedTask(
+        lineage.childId,
+        admitted.workload.status,
+        dispatched.task.id,
+        this.taskObservedState(cycle, dispatched.task.status.state),
+      );
+      events.push(this.toEvent(bound));
+    }
 
     for (let attempt = 0; attempt < this.maxPolls && !this.settled(cycle, events.at(-1)!); attempt += 1) {
       if (this.pollIntervalMs > 0) {
@@ -118,6 +145,47 @@ export class AgenticSandboxFleetClient {
       events,
     } satisfies FleetRunResult;
   };
+
+  private async bindDispatchedTask(
+    childId: string,
+    current: WorkloadStatus,
+    taskId: string,
+    observedState: FleetEvent['observedState'],
+  ): Promise<WorkloadRecord> {
+    const status: WorkloadStatus = {
+      observed_state: observedState,
+      revision: current.revision + 1,
+      last_seen: new Date().toISOString(),
+      artifacts: current.artifacts ?? [],
+      ...(observedState === 'blocked' ? { backpressure: { reason: 'approval', retryable: false } } : {}),
+    };
+    return this.request(`/api/v2/fleet/workloads/${encodeURIComponent(childId)}/observations`, {
+      method: 'POST',
+      body: JSON.stringify({
+        expected_revision: current.revision,
+        runtime_identity: { task_id: taskId },
+        status,
+      }),
+    });
+  }
+
+  private taskObservedState(cycle: FleetWorkerCycle, taskState: string): FleetEvent['observedState'] {
+    switch (taskState) {
+      case 'submitted': return 'starting';
+      case 'working': return cycle.workloadKind === 'daemon' ? 'healthy' : 'running';
+      case 'input-required': return 'blocked';
+      case 'completed':
+        if (cycle.workloadKind === 'persistent-agent') return 'retained';
+        if (cycle.workloadKind === 'daemon') return 'healthy';
+        if (cycle.workloadKind === 'scheduled-collector') return 'scheduled';
+        return 'succeeded';
+      case 'failed': return 'failed';
+      case 'canceled':
+      case 'cancelled': return 'cancelled';
+      case 'rejected': return 'failed';
+      default: return 'unknown';
+    }
+  }
 
   async inventory(): Promise<unknown> {
     return this.request('/api/v2/fleet/workloads');
