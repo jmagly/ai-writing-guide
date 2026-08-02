@@ -6,6 +6,7 @@ llm-wiki, line-memory, session candidates, and generated artifacts.
 ```bash
 aiwg use compound-memory --provider <provider>
 aiwg compound-memory status
+aiwg compound-memory ingest sources/decision.md --json
 aiwg compound-memory context "task description" --budget 8000 --no-touch --json
 aiwg compound-memory review --limit 50 --json
 aiwg compound-memory update decision session.catalog "SQLite is authoritative" \
@@ -24,6 +25,12 @@ preview. Re-run it with `--confirm --operation-id <preview-operation-id>` to
 write the durable registration, derived index entry, and receipt. Registration
 records exact minimized lineage but never promotes generated text into the wiki
 or line memory; proposed knowledge must pass the independent review workflow.
+
+`ingest` is also preview-first. Exact confirmation copies a project-local
+regular file into the wiki's immutable, digest-addressed raw area and writes an
+idempotent provenance receipt without changing the source. Transcript formats
+route to sessions; other supported documents/media route to llm-wiki through
+the existing `memory-ingest` workflow. Raw registration never promotes claims.
 
 `review` reads a bounded queue of pending candidates without returning evidence
 bodies or raw assertions. `maintain` also starts in preview mode and binds its

@@ -311,6 +311,22 @@ async function loadCanonicalContextRuntime(frameworkRoot) {
   throw new Error('compound-memory canonical-context runtime is unavailable');
 }
 
+async function loadIntakeRuntime(frameworkRoot) {
+  const candidates = [
+    path.join(frameworkRoot, 'dist/src/memory/intake.js'),
+    path.join(frameworkRoot, 'src/memory/intake.ts'),
+  ];
+  for (const candidate of candidates) {
+    try {
+      await fs.access(candidate);
+      return await import(pathToFileURL(candidate).href);
+    } catch (error) {
+      if (error?.code !== 'ENOENT' && error?.code !== 'ERR_UNKNOWN_FILE_EXTENSION') throw error;
+    }
+  }
+  throw new Error('compound-memory intake runtime is unavailable');
+}
+
 async function loadLineMemoryRuntime(frameworkRoot) {
   const candidate = path.join(
     frameworkRoot,
@@ -438,6 +454,38 @@ async function updateContext(args, context) {
     providerAdaptersModified: false,
   };
   emitResult(args, result, `Canonical context ${receipt.operation} recorded at revision ${receipt.revision}.`);
+  return { exitCode: 0 };
+}
+
+async function ingest(args, context) {
+  const source = positionalValues(args)[0];
+  if (!source) return { exitCode: 2, message: 'Usage: aiwg compound-memory ingest <project-file> [--confirm --operation-id <id>] [--json]' };
+  const runtime = await loadIntakeRuntime(context.frameworkRoot);
+  const coordinator = new runtime.MemoryIntakeCoordinator(context.cwd);
+  const preview = coordinator.preview(source);
+  if (!args.includes('--confirm')) {
+    const result = {
+      ...preview,
+      nextAction: preview.route === 'sessions'
+        ? `aiwg sessions import ${preview.rawLocator}`
+        : `use memory-ingest on ${preview.rawLocator} with consumer llm-wiki`,
+    };
+    emitResult(args, result, `Preview ingest ${preview.source.locator} -> ${preview.rawLocator}; operation ${preview.operationId}.`);
+    return { exitCode: 0 };
+  }
+  const operationId = requiredOption(args, '--operation-id');
+  const receipt = coordinator.confirm(source, operationId);
+  const result = {
+    schemaVersion: 'aiwg.compound-memory.command.v1',
+    status: 'ok',
+    command: 'compound-memory.ingest',
+    receipt,
+    knowledgePromotion: 'not-performed',
+    nextAction: receipt.route === 'sessions'
+      ? `aiwg sessions import ${receipt.rawLocator}`
+      : `use memory-ingest on ${receipt.rawLocator} with consumer llm-wiki`,
+  };
+  emitResult(args, result, `Registered immutable raw source ${receipt.rawLocator}; no knowledge was promoted.`);
   return { exitCode: 0 };
 }
 
@@ -759,6 +807,7 @@ export default async function compoundMemoryCommand(args, context) {
     if (context.subcommand === 'capture-output') return await captureOutput(args, context);
     if (context.subcommand === 'context') return await contextPack(args, context);
     if (context.subcommand === 'update') return await updateContext(args, context);
+    if (context.subcommand === 'ingest') return await ingest(args, context);
     if (context.subcommand === 'review') return await reviewQueue(args, context);
     if (context.subcommand === 'maintain') return await maintain(args, context);
     return { exitCode: 2, message: `Unknown compound-memory subcommand: ${context.subcommand}` };

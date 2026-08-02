@@ -79,3 +79,10 @@ candidate extraction. Registration verifies the immutable file digest, records
 the exact context-pack/source lineage, and uses a replayable outbox plus
 idempotent incremental index record. It never treats registration itself as
 knowledge promotion.
+
+Raw intake follows the same separation. A preview classifies the source,
+computes its exact digest, chooses a digest-addressed raw locator, and reports
+the sessions or llm-wiki route. Confirmation preserves a byte-identical copy
+and provenance receipt. Derivation remains the responsibility of the existing
+session importer or semantic-memory `memory-ingest` workflow, so registering a
+source cannot silently create accepted knowledge.

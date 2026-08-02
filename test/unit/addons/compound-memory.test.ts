@@ -145,6 +145,32 @@ describe('compound-memory output capture', () => {
   });
 });
 
+describe('compound-memory intake', () => {
+  it('previews and confirms immutable raw registration without promotion', async () => {
+    await mkdir(path.join(projectDir, 'sources'), { recursive: true });
+    await writeFile(path.join(projectDir, 'sources/decision.md'), '# Decision\nSQLite is authoritative.\n');
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    const context = {
+      cwd: projectDir,
+      frameworkRoot: path.resolve(__dirname, '../../..'),
+      namespace: 'compound-memory',
+      subcommand: 'ingest',
+    };
+    await compoundMemoryCommand(['sources/decision.md', '--json'], context);
+    const preview = JSON.parse(output.pop()!);
+    expect(preview).toMatchObject({ route: 'llm-wiki', confirmationRequired: true });
+    await compoundMemoryCommand([
+      'sources/decision.md', '--confirm', '--operation-id', preview.operationId, '--json',
+    ], context);
+    expect(JSON.parse(output.pop()!)).toMatchObject({
+      status: 'ok',
+      knowledgePromotion: 'not-performed',
+      receipt: { route: 'llm-wiki' },
+    });
+  });
+});
+
 describe('compound-memory review and maintenance', () => {
   it('returns an empty bounded review queue without creating a session catalog', async () => {
     const output: string[] = [];

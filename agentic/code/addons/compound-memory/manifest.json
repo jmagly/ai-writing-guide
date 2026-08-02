@@ -38,6 +38,10 @@
         "file": "compound-memory.mjs",
         "description": "Report dependency, data, index, review, and integrity readiness"
       },
+      "ingest": {
+        "file": "compound-memory.mjs",
+        "description": "Preview or preserve a project source and route it to sessions or llm-wiki"
+      },
       "capture-output": {
         "file": "compound-memory.mjs",
         "description": "Preview or register a derived output with exact context lineage"
