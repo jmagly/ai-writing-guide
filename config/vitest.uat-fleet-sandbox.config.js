@@ -9,7 +9,10 @@ export default defineConfig({
     globals: false,
     testTimeout: 180_000,
     hookTimeout: 60_000,
-    reporters: ['verbose'],
+    reporters: ['verbose', 'junit'],
+    outputFile: {
+      junit: './test-results/fleet-sandbox-live.junit.xml',
+    },
     pool: 'forks',
     poolOptions: { forks: { singleFork: true } },
   },
