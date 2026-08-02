@@ -442,6 +442,18 @@ describe('cockpit Bridge — control surface', () => {
       source: 'aiwg-mc',
     });
     expect(missions.sessions.some((s) => s.id === 'executor-live')).toBe(true);
+    const fleetSession = missions.sessions.find((s) => s.parent_mission_id === 'mission-fleet-demo');
+    expect(fleetSession).toMatchObject({
+      id: 'fleet:mission-fleet-demo',
+      source: 'agentic-sandbox-fleet',
+      state: 'awaiting-approval',
+      inventory_revision: 12,
+    });
+    expect(fleetSession.missions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ workload_kind: 'persistent-agent', target_id: 'target-1', runtime_session_id: 'session-agent-1', status: 'retained', terminal: false }),
+      expect.objectContaining({ workload_kind: 'daemon', target_id: 'target-2', health: 'healthy', status: 'healthy', terminal: false }),
+      expect.objectContaining({ workload_kind: 'one-shot-command', target_id: 'target-3', command_id: 'command-1', status: 'blocked', backpressure: { reason: 'approval', retryable: false }, terminal: false }),
+    ]));
 
     const events = await (await f('/api/events/snapshot')).json();
     expect(events.source).toBe('cockpit.unified-event-model/v1');

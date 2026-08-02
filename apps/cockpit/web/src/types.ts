@@ -199,6 +199,22 @@ export interface MissionProjection {
   tenant?: string;
   risk?: string;
   terminal?: boolean;
+  parent_mission_id?: string;
+  workload_kind?: 'persistent-agent' | 'daemon' | 'scheduled-collector' | 'one-shot-command' | (string & {});
+  desired_state?: string;
+  target_id?: string;
+  executor_id?: string;
+  runtime_id?: string;
+  runtime_session_id?: string;
+  command_id?: string;
+  dispatch_id?: string;
+  revision?: number;
+  last_seen?: string;
+  health?: string;
+  backpressure?: { reason: string; retryable: boolean; retry_after?: string };
+  artifacts?: Array<{ kind: string; uri: string; sha256: string }>;
+  exit_classification?: string;
+  schedule?: string;
 }
 export interface MissionSession {
   id: string;
@@ -211,6 +227,8 @@ export interface MissionSession {
   audit_count: number;
   audit_tail: MissionAuditEvent[];
   missions: MissionProjection[];
+  parent_mission_id?: string;
+  inventory_revision?: number;
 }
 export interface MissionsResponse {
   source: string;

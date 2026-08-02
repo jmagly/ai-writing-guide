@@ -168,6 +168,47 @@ const BOOTSTRAP_READINESS = {
   ],
 };
 
+function fleetRecord(kind, childId, targetId, runtimeId, observedState, extra = {}) {
+  return {
+    document_type: 'workload',
+    api_version: 'agentic-orchestration/v1',
+    kind,
+    lineage: {
+      orchestrator_id: 'aiwg-cockpit-mock', mission_id: 'mission-fleet-demo', dispatch_id: `dispatch-${childId}`,
+      idempotency_key: `idem-${childId}`, parent_id: 'mission-fleet-demo', child_id: childId,
+      target_id: targetId, executor_id: `executor-${targetId}`, runtime_id: runtimeId,
+      session_id: extra.session_id ?? null, task_id: extra.task_id ?? null, command_id: extra.command_id ?? null,
+    },
+    spec: {
+      desired_state: 'running', capabilities: [],
+      policy: { trust_tier: 'T1', isolation_kind: 'container' },
+      budgets: { max_attempts: 3, timeout_seconds: 600 },
+      ...(extra.schedule ? { schedule: extra.schedule } : {}),
+    },
+    status: {
+      observed_state: observedState, revision: extra.revision ?? 1,
+      last_seen: '2026-08-02T15:00:00.000Z', artifacts: extra.artifacts ?? [],
+      ...(extra.health ? { health: extra.health } : {}),
+      ...(extra.backpressure ? { backpressure: extra.backpressure } : {}),
+    },
+  };
+}
+
+const FLEET_INVENTORY = {
+  document_type: 'inventory',
+  api_version: 'agentic-orchestration/v1',
+  inventory_revision: 12,
+  generated_at: '2026-08-02T15:00:00.000Z',
+  records: [
+    fleetRecord('persistent-agent', 'child-agent', 'target-1', 'runtime-container-1', 'retained', { session_id: 'session-agent-1', task_id: 'task-agent-1', revision: 4 }),
+    fleetRecord('daemon', 'child-daemon', 'target-2', 'runtime-host-1', 'healthy', { task_id: 'task-daemon-1', health: 'healthy', revision: 8 }),
+    fleetRecord('one-shot-command', 'child-command', 'target-3', 'runtime-vm-1', 'blocked', {
+      task_id: 'task-command-1', command_id: 'command-1', revision: 3,
+      backpressure: { reason: 'approval', retryable: false },
+    }),
+  ],
+};
+
 export function createExecutor() {
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
@@ -177,6 +218,7 @@ export function createExecutor() {
     if (path === '/api/v2/admin/runtime/providers' && req.method === 'GET') return json(res, 200, RUNTIME_PROVIDERS);
     if (path === '/api/v2/admin/mcp/discovery' && req.method === 'GET') return json(res, 200, MCP_DISCOVERY);
     if (path === '/api/v2/admin/bootstrap/readiness' && req.method === 'GET') return json(res, 200, BOOTSTRAP_READINESS);
+    if (path === '/api/v2/fleet/workloads' && req.method === 'GET') return json(res, 200, FLEET_INVENTORY);
     let opm;
     if ((opm = path.match(/^\/api\/v2\/admin\/operations\/([^/]+)$/)) && req.method === 'GET') {
       const op = operations.get(decodeURIComponent(opm[1]));

@@ -29,8 +29,9 @@ export function Missions({ refreshTick = 0 }: { refreshTick?: number }) {
   return (
     <>
       <p className="hint">
-        Durable Mission Control state and live executor work share one projection. Cockpit reads
-        <code> aiwg mc </code> sessions and audit logs; the conductor remains the owner of durability.
+        Durable AIWG Mission Control state and Agentic Sandbox fleet work share one projection.
+        Cockpit observes the parent mission and its independently managed child workloads; the
+        conductor remains the owner of policy and durability.
       </p>
       <div className="mission-summary" aria-label="Mission status summary">
         <span><strong>{data.count}</strong> total</span>
@@ -61,33 +62,52 @@ export function Missions({ refreshTick = 0 }: { refreshTick?: number }) {
 }
 
 function MissionSessionView({ session }: { session: MissionSession }) {
+  const fleet = session.source === 'agentic-sandbox-fleet';
   return (
     <section className="mission-detail" aria-label={`${session.name} missions`}>
       <div className="mission-detail-head">
         <div>
           <h2>{session.name}</h2>
-          <p>{session.source} · {session.state}{session.updated_at ? ` · updated ${new Date(session.updated_at).toLocaleString()}` : ''}</p>
+          <p>
+            {fleet && session.parent_mission_id ? `Parent mission ${session.parent_mission_id} · ` : ''}
+            {session.source} · {session.state}
+            {session.inventory_revision !== undefined ? ` · inventory r${session.inventory_revision}` : ''}
+            {session.updated_at ? ` · updated ${new Date(session.updated_at).toLocaleString()}` : ''}
+          </p>
         </div>
         <span className="badge">{session.audit_count} audit events</span>
       </div>
       {!session.missions.length ? <p className="empty">This session has no missions.</p> : (
-        <table>
+        <table className={fleet ? 'fleet-missions' : undefined}>
           <caption>{session.missions.length} mission projection(s)</caption>
           <thead>
-            <tr><th scope="col">Mission</th><th scope="col">Status</th><th scope="col">Source</th><th scope="col">Loop</th><th scope="col">Backing</th></tr>
+            {fleet
+              ? <tr><th scope="col">Child workload</th><th scope="col">Status</th><th scope="col">Target / runtime</th><th scope="col">Binding</th><th scope="col">Evidence</th></tr>
+              : <tr><th scope="col">Mission</th><th scope="col">Status</th><th scope="col">Source</th><th scope="col">Loop</th><th scope="col">Backing</th></tr>}
           </thead>
           <tbody>
             {session.missions.map((m) => (
               <tr key={m.id}>
                 <td>
                   <strong>{m.title}</strong>
+                  {fleet && <small className="block">{workloadSemantics(m)}</small>}
                   {m.completion && <small className="block">Done when: {m.completion}</small>}
                   {m.error && <small className="block err">{m.error}</small>}
                 </td>
-                <td><span className={`state ${statusClass(m.status)}`}><span className="dot" aria-hidden="true" />{m.status}</span></td>
-                <td>{m.source}</td>
-                <td>{loopText(m)}</td>
-                <td>{backingText(m)}</td>
+                <td>
+                  <span className={`state ${statusClass(m.status)}`}><span className="dot" aria-hidden="true" />{m.status}</span>
+                  {m.health && <small className="block">health: {m.health}</small>}
+                  {m.backpressure && <small className="block fleet-warning">backpressure: {m.backpressure.reason}{m.backpressure.retryable ? ' · retryable' : ' · operator action'}</small>}
+                </td>
+                {fleet ? <>
+                  <td><strong>{m.target_id ?? '-'}</strong><small className="block">{m.executor_id ?? '-'} / {m.runtime_id ?? '-'}</small></td>
+                  <td>{fleetBinding(m)}<small className="block">revision {m.revision ?? 0}{m.last_seen ? ` · ${new Date(m.last_seen).toLocaleString()}` : ''}</small></td>
+                  <td>{fleetEvidence(m)}</td>
+                </> : <>
+                  <td>{m.source}</td>
+                  <td>{loopText(m)}</td>
+                  <td>{backingText(m)}</td>
+                </>}
               </tr>
             ))}
           </tbody>
@@ -109,9 +129,40 @@ function MissionSessionView({ session }: { session: MissionSession }) {
   );
 }
 
+function workloadSemantics(mission: MissionProjection) {
+  if (mission.workload_kind === 'daemon') return `daemon health · desired ${mission.desired_state ?? 'unknown'}`;
+  if (mission.workload_kind === 'persistent-agent') return `persistent retention · desired ${mission.desired_state ?? 'unknown'}`;
+  if (mission.workload_kind === 'scheduled-collector') return `scheduled collection${mission.schedule ? ` · ${mission.schedule}` : ''}`;
+  if (mission.workload_kind === 'one-shot-command') return `one-shot terminal result · desired ${mission.desired_state ?? 'unknown'}`;
+  return mission.workload_kind ?? 'fleet workload';
+}
+
+function fleetBinding(mission: MissionProjection) {
+  const bindings = [
+    mission.runtime_session_id && `session ${fmtId(mission.runtime_session_id)}`,
+    mission.task_id && `task ${fmtId(mission.task_id)}`,
+    mission.command_id && `command ${fmtId(mission.command_id)}`,
+  ].filter(Boolean);
+  return bindings.length ? bindings.join(' · ') : 'binding pending';
+}
+
+function fleetEvidence(mission: MissionProjection) {
+  if (!mission.artifacts?.length) return <span className="muted">No artifacts yet</span>;
+  return <ul className="fleet-artifacts">{mission.artifacts.map((artifact) => (
+    <li key={`${artifact.kind}:${artifact.uri}`}>
+      {safeArtifactHref(artifact.uri) ? <a href={artifact.uri}>{artifact.kind}</a> : <span>{artifact.kind}</span>}
+      <small className="block"><code>{artifact.sha256.slice(0, 12)}</code> · {artifact.uri}</small>
+    </li>
+  ))}</ul>;
+}
+
+function safeArtifactHref(uri: string) {
+  try { return ['http:', 'https:'].includes(new URL(uri).protocol); } catch { return false; }
+}
+
 function summarize(missions: MissionProjection[]) {
   return missions.reduce((acc, mission) => {
-    if (mission.status === 'awaiting-approval' || mission.status === 'input-required') acc.awaiting += 1;
+    if (mission.status === 'awaiting-approval' || mission.status === 'input-required' || mission.backpressure?.reason === 'approval') acc.awaiting += 1;
     if (mission.terminal) acc.terminal += 1;
     else acc.active += 1;
     return acc;

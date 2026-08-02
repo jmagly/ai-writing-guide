@@ -128,6 +128,47 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getByText(/mission_dispatched/)).toBeTruthy();
   });
 
+  it('renders an AIWG parent mission with distinct Agentic Sandbox workload semantics and recovery posture', async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/health')) return jsonResponse({ executor_url: 'http://127.0.0.1:8122' });
+      if (url.includes('/api/inventory')) return jsonResponse({ instances: [] });
+      if (url.includes('/api/running')) return jsonResponse({ count: 0, running: [] });
+      if (url.includes('/api/approvals')) return jsonResponse({ approvals: [] });
+      if (url.includes('/api/cost')) return jsonResponse({ total: { input_tokens: 0, output_tokens: 0, usd: 0 }, per_instance: [] });
+      if (url.includes('/api/missions')) {
+        const missions = [
+          { id: 'child-agent', workload_kind: 'persistent-agent', title: 'persistent-agent child-agent', status: 'retained', desired_state: 'running', target_id: 'target-1', executor_id: 'executor-1', runtime_id: 'runtime-1', runtime_session_id: 'session-1', task_id: 'task-1', revision: 4, last_seen: '2026-08-02T15:00:00Z', artifacts: [], terminal: false },
+          { id: 'child-daemon', workload_kind: 'daemon', title: 'daemon child-daemon', status: 'healthy', desired_state: 'running', health: 'healthy', target_id: 'target-2', executor_id: 'executor-2', runtime_id: 'runtime-2', task_id: 'task-2', revision: 8, last_seen: '2026-08-02T15:00:00Z', artifacts: [], terminal: false },
+          { id: 'child-command', workload_kind: 'one-shot-command', title: 'one-shot-command child-command', status: 'blocked', desired_state: 'running', target_id: 'target-3', executor_id: 'executor-3', runtime_id: 'runtime-3', task_id: 'task-3', command_id: 'command-3', revision: 3, last_seen: '2026-08-02T15:00:00Z', backpressure: { reason: 'approval', retryable: false }, artifacts: [{ kind: 'verifier', uri: 'https://evidence.test/verifier.json', sha256: 'a'.repeat(64) }], terminal: false },
+          { id: 'child-review', workload_kind: 'scheduled-collector', title: 'scheduled-collector child-review', status: 'operator-review-required', desired_state: 'running', schedule: '0 * * * *', target_id: 'target-4', executor_id: 'executor-4', runtime_id: 'runtime-4', revision: 9, last_seen: '2026-08-02T15:00:00Z', artifacts: [], terminal: false },
+        ];
+        const projected = missions.map((mission) => ({ ...mission, session_id: 'fleet:mission-orchestration', source: 'agentic-sandbox-fleet', parent_mission_id: 'mission-orchestration' }));
+        return jsonResponse({
+          source: 'aiwg-mc + agentic-sandbox', fetched_at: '2026-08-02T15:00:00Z', count: projected.length,
+          sessions: [{ id: 'fleet:mission-orchestration', parent_mission_id: 'mission-orchestration', name: 'Fleet mission mission-orchestration', state: 'operator-review-required', source: 'agentic-sandbox-fleet', updated_at: '2026-08-02T15:00:00Z', inventory_revision: 42, audit_count: 0, audit_tail: [], missions: projected }],
+          missions: projected,
+        });
+      }
+      return jsonResponse({});
+    }) as typeof fetch;
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Missions' }));
+
+    expect(await screen.findByText(/Parent mission mission-orchestration/)).toBeTruthy();
+    expect(screen.getByText(/inventory r42/)).toBeTruthy();
+    expect(screen.getByText(/persistent retention/)).toBeTruthy();
+    expect(screen.getByText(/daemon health/)).toBeTruthy();
+    expect(screen.getByText(/one-shot terminal result/)).toBeTruthy();
+    expect(screen.getByText(/scheduled collection/)).toBeTruthy();
+    expect(screen.getByText(/backpressure: approval · operator action/)).toBeTruthy();
+    expect(screen.getByText(/session session-1/)).toBeTruthy();
+    expect(screen.getByText(/command command-3/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'verifier' }).getAttribute('href')).toBe('https://evidence.test/verifier.json');
+    expect(screen.getAllByText('operator-review-required').length).toBeGreaterThanOrEqual(1);
+  });
+
   it('renders Bridge-backed Telemetry from unified events and cost', async () => {
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
