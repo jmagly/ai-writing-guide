@@ -2,7 +2,7 @@
   "id": "line-memory",
   "type": "addon",
   "name": "Line Memory",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Bounded, plain-text project memory with least-recently-used retention.",
   "core": false,
   "autoInstall": false,
@@ -37,6 +37,10 @@
         "file": "line-memory.mjs",
         "description": "Add or refresh a retained memory"
       },
+      "import": {
+        "file": "line-memory.mjs",
+        "description": "Import a reviewed fact with provenance"
+      },
       "list": {
         "file": "line-memory.mjs",
         "description": "List a bounded slice of newest memories"
@@ -48,6 +52,18 @@
       "touch": {
         "file": "line-memory.mjs",
         "description": "Move an exact memory to the newest position"
+      },
+      "archive": {
+        "file": "line-memory.mjs",
+        "description": "Archive a retained memory by handle or exact value"
+      },
+      "remove": {
+        "file": "line-memory.mjs",
+        "description": "Remove a retained memory with an audit tombstone"
+      },
+      "supersede": {
+        "file": "line-memory.mjs",
+        "description": "Supersede a retained memory with a replacement reference"
       },
       "prune": {
         "file": "line-memory.mjs",
@@ -69,6 +85,7 @@
   "configuration": {
     "defaults": {
       "path": ".aiwg/memory/line-memory.txt",
+      "metadataPath": ".aiwg/memory/line-memory.meta.json",
       "maxLines": 200,
       "dedupe": true,
       "trimBlankLines": true

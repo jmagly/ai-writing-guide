@@ -1830,7 +1830,8 @@ export class SessionRepository {
       );
       if (existing) return { ...existing, duplicate: true };
       const candidate = this.getCandidate(receipt.candidateId, receipt.candidateVersion);
-      if (!candidate || candidate.reviewState !== 'accepted') {
+      if (!candidate
+        || (candidate.reviewState !== 'accepted' && candidate.reviewState !== 'promoted')) {
         throw new SessionContractError(
           'OPERATION_NOT_AUTHORIZED',
           'promotion requires an accepted exact candidate version',

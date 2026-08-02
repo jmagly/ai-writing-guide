@@ -56,7 +56,7 @@ function candidate(reviewState: IntelligenceCandidate['reviewState'] = 'accepted
 
 class Store implements PromotionStorePort {
   current = candidate();
-  receipt: PromotionReceipt | null = null;
+  receipts: PromotionReceipt[] = [];
 
   getCandidate(id: string, version?: number): IntelligenceCandidate | null {
     return id === this.current.candidateId && version === this.current.version
@@ -64,22 +64,26 @@ class Store implements PromotionStorePort {
   }
 
   getPromotionReceipt(id: string, version: number, consumer: string): PromotionReceipt | null {
-    return this.receipt?.candidateId === id
-      && this.receipt.candidateVersion === version
-      && this.receipt.consumer === consumer ? this.receipt : null;
+    return this.receipts.find((receipt) => receipt.candidateId === id
+      && receipt.candidateVersion === version
+      && receipt.consumer === consumer) ?? null;
   }
 
   recordPromotion(receipt: PromotionReceipt): PromotionReceipt {
-    this.receipt = receipt;
+    this.receipts.push(receipt);
     this.current = { ...this.current, reviewState: 'promoted' };
     return receipt;
   }
 }
 
 class Destination implements MemoryPromotionDestination {
-  readonly consumer = 'memory';
+  readonly consumer: string;
   writes = 0;
   beforeHash: string | null = null;
+
+  constructor(consumer = 'memory') {
+    this.consumer = consumer;
+  }
 
   plan(): MemoryDestinationPlan {
     return {
@@ -174,6 +178,45 @@ describe('memory promotion gateway', () => {
     expect(repeated.duplicate).toBe(true);
     expect(repeated.receiptId).toBe(receipt.receiptId);
     expect(destination.writes).toBe(1);
+  });
+
+  it('promotes one reviewed candidate to multiple named memory consumers', async () => {
+    const store = new Store();
+    const gateway = new MemoryPromotionGateway(store);
+    const wiki = new Destination('memory');
+    const line = new Destination('line-memory');
+
+    const wikiPreview = gateway.preview({
+      candidateId: store.current.candidateId,
+      version: 2,
+      destination: wiki,
+    });
+    await gateway.promote({
+      candidateId: store.current.candidateId,
+      version: 2,
+      destination: wiki,
+      reviewer: 'reviewer-a',
+      operationId: wikiPreview.operationId,
+    });
+    expect(store.current.reviewState).toBe('promoted');
+
+    const linePreview = gateway.preview({
+      candidateId: store.current.candidateId,
+      version: 2,
+      destination: line,
+    });
+    await gateway.promote({
+      candidateId: store.current.candidateId,
+      version: 2,
+      destination: line,
+      reviewer: 'reviewer-a',
+      operationId: linePreview.operationId,
+    });
+
+    expect(store.receipts.map((receipt) => receipt.consumer).sort())
+      .toEqual(['line-memory', 'memory']);
+    expect(wiki.writes).toBe(1);
+    expect(line.writes).toBe(1);
   });
 
   it('resolves a named manifest topology and writes evidence-bearing memory', () => {
@@ -344,5 +387,56 @@ describe('memory promotion gateway', () => {
     }, [{
       dependentId: 'dependent', action: 'revoke', basis: 'test',
     }])).toThrow(/outside configured AIWG roots/);
+  });
+
+  it('applies purge dispositions to a promoted line-memory handle', () => {
+    const root = mkdtempSync(join(tmpdir(), 'aiwg-purge-line-memory-'));
+    roots.push(root);
+    const memoryRoot = join(root, '.aiwg/memory');
+    mkdirSync(memoryRoot, { recursive: true });
+    const handle = 'lm_00000000-0000-4000-8000-000000000001';
+    const metadataPath = join(memoryRoot, 'line-memory.meta.json');
+    writeFileSync(join(memoryRoot, 'line-memory.txt'), 'other fact\npromoted fact\n');
+    writeFileSync(metadataPath, `${JSON.stringify({
+      schemaVersion: 'aiwg.line-memory.v1',
+      version: 1,
+      store: {
+        memoryPath: '.aiwg/memory/line-memory.txt',
+        metadataPath: '.aiwg/memory/line-memory.meta.json',
+      },
+      entries: {
+        [handle]: { id: handle, value: 'promoted fact', status: 'active' },
+      },
+    }, null, 2)}\n`);
+    const purge: SessionPurgePreview = {
+      contractVersion: '1.0.0',
+      operationId: sha256('purge-line-memory'),
+      scopeClass: 'session',
+      sessionId: 'session',
+      counts: {},
+      promotedDependents: [{
+        dependentId: 'line-receipt',
+        candidateId: 'candidate',
+        candidateVersion: 1,
+        consumer: 'line-memory',
+        destinationRef: `.aiwg/memory/line-memory.meta.json#${handle}`,
+      }],
+      confirmationRequired: true,
+    };
+    const coordinator = new FilesystemPromotionDispositionCoordinator({
+      projectRoot: root,
+      allowedRoots: ['.aiwg/memory'],
+    });
+    const decisions = [{
+      dependentId: 'line-receipt', action: 'revoke' as const, basis: 'source revoked',
+    }];
+    expect(coordinator.apply(purge, decisions).effects[0].outcome).toBe('applied');
+    expect(readFileSync(join(memoryRoot, 'line-memory.txt'), 'utf8')).toBe('other fact\n');
+    expect(JSON.parse(readFileSync(metadataPath, 'utf8')).entries[handle]).toMatchObject({
+      status: 'revoked',
+      disposition: { operationId: purge.operationId, action: 'revoke' },
+    });
+    expect(coordinator.apply(purge, decisions).effects[0].outcome).toBe('applied');
+    expect(readFileSync(join(memoryRoot, 'line-memory.txt'), 'utf8')).toBe('other fact\n');
   });
 });
