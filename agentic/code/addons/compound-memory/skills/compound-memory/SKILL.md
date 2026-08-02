@@ -46,6 +46,10 @@ aiwg compound-memory status --json
    Start from `aiwg compound-memory review --limit 50 --json`, then inspect and
    decide through the exact-version sessions commands. Workspace identity
    changes require a separate explicit review gate.
+   For canonical context, run `aiwg compound-memory update <target> <key>
+   <value> --source-ref <ref> --reviewer <id> --reason <reason> --json`, review
+   its diff/conflicts, then repeat with the exact operation ID and `--confirm`.
+   This never refreshes provider adapters.
 6. **Maintain** — preview pruning, deduplication, contradiction repair, orphan
    repair, and index refresh. Confirm only the reviewed mutations. Preserve
    lifecycle tombstones and source-purge dependent dispositions. The compound

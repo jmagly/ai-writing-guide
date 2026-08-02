@@ -54,6 +54,21 @@ on the CI runner, with precision and recall measured against the checked-in
 three-session fixture. Fortemi Core is used when its project graph is current;
 otherwise the result names the line-memory/wiki lexical backends.
 
+Canonical project context is a separate reviewed destination at
+`.aiwg/context/compound-memory/context.json`. An update proposal declares a
+typed target, stable key, value, minimized source locator/digest, reviewer,
+reason, scope, classification, and optional review/expiry dates. Preview shows
+the current value, proposed value, and conflicting active entry identities.
+Exact confirmation atomically advances the revision and writes an idempotent
+receipt. Replacements retain the prior entry as superseded; revocation retains
+its disposition. Instruction-like material, unsafe locators, and keys reserved
+for higher-authority namespaces are rejected.
+
+Export/import bundles contain no provider-specific fields. Cross-workspace
+import is rejected unless explicitly authorized, and records the source
+workspace identity. Provider adapter refresh is deliberately outside this
+addon command and remains governed by existing update/regeneration workflows.
+
 The driver skill exposes the ingest, retrieve/use, write, manage, review,
 update, and maintain workflows through the existing portable skills and CLI
 contracts. Authority-changing automation remains proposal-only until the

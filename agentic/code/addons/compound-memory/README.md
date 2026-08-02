@@ -8,6 +8,8 @@ aiwg use compound-memory --provider <provider>
 aiwg compound-memory status
 aiwg compound-memory context "task description" --budget 8000 --no-touch --json
 aiwg compound-memory review --limit 50 --json
+aiwg compound-memory update decision session.catalog "SQLite is authoritative" \
+  --source-ref session:<opaque-id> --reviewer <id> --reason "reviewed" --json
 aiwg compound-memory maintain --json
 aiwg compound-memory capture-output output/report.md \
   --media-type text/markdown \
@@ -36,6 +38,15 @@ project graph and degrades to a bounded lexical wiki scan. Every selected item
 is marked as quoted data and carries a locator, digest, backend, lifecycle
 state, freshness, and verification status. Normal use touches only selected
 line facts; `--no-touch` is a mutation-free inspection.
+
+`update` writes only the provider-neutral canonical context contract under
+`.aiwg/context/compound-memory/`. Its default is a readable/JSON preview with
+the exact diff and conflicts. Confirmation requires the preview operation ID.
+Every accepted change emits a receipt and retains provenance, review metadata,
+supersession, and revocation history. `--export` produces a portable bundle;
+`--import <file>` requires matching workspace identity unless
+`--allow-cross-workspace` is explicitly supplied. Provider adapters are never
+generated or modified by this command.
 
 See [docs/overview.md](docs/overview.md) and the `compound-memory` driver skill.
 The addon adds orchestration only; disabling it leaves the underlying wiki and

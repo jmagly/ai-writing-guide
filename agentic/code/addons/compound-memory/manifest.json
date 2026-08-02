@@ -50,6 +50,10 @@
         "file": "compound-memory.mjs",
         "description": "List a bounded, redacted queue of pending memory candidates"
       },
+      "update": {
+        "file": "compound-memory.mjs",
+        "description": "Preview and confirm canonical provider-neutral context changes"
+      },
       "maintain": {
         "file": "compound-memory.mjs",
         "description": "Preview maintenance or confirm replay-safe work with a receipt"

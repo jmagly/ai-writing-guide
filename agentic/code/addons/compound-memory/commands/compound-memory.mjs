@@ -193,6 +193,8 @@ function positionalValues(args) {
     '--operation-id', '--limit', '--workspace-id', '--db',
     '--budget', '--line-budget', '--wiki-budget', '--citation-budget',
     '--instruction-budget', '--max-files',
+    '--reviewer', '--reason', '--scope', '--classification', '--review-at',
+    '--expires-at', '--revoke', '--import',
   ]);
   const values = [];
   for (let index = 0; index < args.length; index++) {
@@ -293,6 +295,22 @@ async function loadContextPackRuntime(frameworkRoot) {
   throw new Error('compound-memory context-pack runtime is unavailable');
 }
 
+async function loadCanonicalContextRuntime(frameworkRoot) {
+  const candidates = [
+    path.join(frameworkRoot, 'dist/src/memory/canonical-context.js'),
+    path.join(frameworkRoot, 'src/memory/canonical-context.ts'),
+  ];
+  for (const candidate of candidates) {
+    try {
+      await fs.access(candidate);
+      return await import(pathToFileURL(candidate).href);
+    } catch (error) {
+      if (error?.code !== 'ENOENT' && error?.code !== 'ERR_UNKNOWN_FILE_EXTENSION') throw error;
+    }
+  }
+  throw new Error('compound-memory canonical-context runtime is unavailable');
+}
+
 async function loadLineMemoryRuntime(frameworkRoot) {
   const candidate = path.join(
     frameworkRoot,
@@ -342,6 +360,84 @@ async function contextPack(args, context) {
     result,
     `Context pack ${pack.id}: ${pack.items.length} item(s), ${pack.used.totalCharacters}/${pack.budget.totalCharacters} characters.`,
   );
+  return { exitCode: 0 };
+}
+
+function requiredOption(args, name) {
+  const value = optionValue(args, name);
+  if (!value) throw new Error(`${name} is required`);
+  return value;
+}
+
+async function updateContext(args, context) {
+  const runtime = await loadCanonicalContextRuntime(context.frameworkRoot);
+  const repository = new runtime.CanonicalContextRepository(context.cwd);
+  if (args.includes('--export')) {
+    const bundle = repository.export();
+    emitResult(args, bundle, `Exported ${bundle.entries.length} canonical context entr${bundle.entries.length === 1 ? 'y' : 'ies'}.`);
+    return { exitCode: 0 };
+  }
+
+  let preview;
+  let confirmation;
+  const importPath = optionValue(args, '--import');
+  const revokeId = optionValue(args, '--revoke');
+  if (importPath) {
+    const absolute = await resolveExistingProjectPath(context.cwd, importPath, 'context import');
+    const bundle = JSON.parse(await fs.readFile(absolute, 'utf8'));
+    const allowCrossWorkspace = args.includes('--allow-cross-workspace');
+    preview = repository.previewImport(bundle, allowCrossWorkspace);
+    confirmation = { preview, bundle, allowCrossWorkspace };
+  } else if (revokeId) {
+    const revoke = {
+      entryId: revokeId,
+      reviewer: requiredOption(args, '--reviewer'),
+      reason: requiredOption(args, '--reason'),
+    };
+    preview = repository.previewRevoke(revoke.entryId, revoke.reviewer, revoke.reason);
+    confirmation = { preview, revoke };
+  } else {
+    const positional = positionalValues(args);
+    if (positional.length < 3) {
+      return {
+        exitCode: 2,
+        message: 'Usage: aiwg compound-memory update <target> <key> <value> --source-ref <ref> --reviewer <id> --reason <text> [--confirm --operation-id <id>] [--json]',
+      };
+    }
+    const proposal = {
+      target: positional[0],
+      key: positional[1],
+      value: positional.slice(2).join(' '),
+      sourceRef: requiredOption(args, '--source-ref'),
+      sourceDigest: optionValue(args, '--source-digest') ?? null,
+      reviewer: requiredOption(args, '--reviewer'),
+      reason: requiredOption(args, '--reason'),
+      scope: optionValue(args, '--scope') ?? 'project',
+      classification: optionValue(args, '--classification') ?? 'internal',
+      reviewAt: optionValue(args, '--review-at') ?? null,
+      expiresAt: optionValue(args, '--expires-at') ?? null,
+    };
+    preview = repository.previewUpsert(proposal);
+    confirmation = { preview, proposal };
+  }
+
+  if (!args.includes('--confirm')) {
+    emitResult(args, preview, `Preview ${preview.operation}: ${preview.diff.length} change(s), operation ${preview.operationId}.`);
+    return { exitCode: 0 };
+  }
+  const operationId = requiredOption(args, '--operation-id');
+  if (operationId !== preview.operationId) {
+    throw new Error('--confirm requires --operation-id from the exact current context preview');
+  }
+  const receipt = repository.confirm(confirmation);
+  const result = {
+    schemaVersion: 'aiwg.compound-memory.command.v1',
+    status: 'ok',
+    command: 'compound-memory.update',
+    receipt,
+    providerAdaptersModified: false,
+  };
+  emitResult(args, result, `Canonical context ${receipt.operation} recorded at revision ${receipt.revision}.`);
   return { exitCode: 0 };
 }
 
@@ -662,6 +758,7 @@ export default async function compoundMemoryCommand(args, context) {
     }
     if (context.subcommand === 'capture-output') return await captureOutput(args, context);
     if (context.subcommand === 'context') return await contextPack(args, context);
+    if (context.subcommand === 'update') return await updateContext(args, context);
     if (context.subcommand === 'review') return await reviewQueue(args, context);
     if (context.subcommand === 'maintain') return await maintain(args, context);
     return { exitCode: 2, message: `Unknown compound-memory subcommand: ${context.subcommand}` };

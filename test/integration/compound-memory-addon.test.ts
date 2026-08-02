@@ -44,6 +44,7 @@ describe('compound-memory addon activation', () => {
     expect(registry['compound-memory'].subcommands.context).toBeDefined();
     expect(registry['compound-memory'].subcommands.review).toBeDefined();
     expect(registry['compound-memory'].subcommands.maintain).toBeDefined();
+    expect(registry['compound-memory'].subcommands.update).toBeDefined();
 
     for (const skill of [
       'compound-memory',

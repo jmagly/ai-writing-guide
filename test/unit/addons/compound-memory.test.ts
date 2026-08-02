@@ -259,6 +259,46 @@ describe('compound-memory context', () => {
   });
 });
 
+describe('compound-memory canonical context update', () => {
+  it('previews and confirms a canonical update without modifying provider adapters', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    const baseArgs = [
+      'decision', 'session.catalog', 'SQLite', 'is', 'authoritative.',
+      '--source-ref', 'session:decision',
+      '--reviewer', 'maintainer:test',
+      '--reason', 'Reviewed decision',
+      '--json',
+    ];
+    const context = {
+      cwd: projectDir,
+      frameworkRoot: path.resolve(__dirname, '../../..'),
+      namespace: 'compound-memory',
+      subcommand: 'update',
+    };
+    await compoundMemoryCommand(baseArgs, context);
+    const preview = JSON.parse(output.pop()!);
+    expect(preview).toMatchObject({
+      schemaVersion: 'aiwg.canonical-context-preview.v1',
+      operation: 'upsert',
+      duplicate: false,
+    });
+    expect(await fileExists(path.join(projectDir, '.aiwg/context/compound-memory'))).toBe(false);
+
+    await compoundMemoryCommand([
+      ...baseArgs, '--confirm', '--operation-id', preview.operationId,
+    ], context);
+    const result = JSON.parse(output.pop()!);
+    expect(result).toMatchObject({
+      status: 'ok',
+      providerAdaptersModified: false,
+      receipt: { operation: 'upsert', revision: 1 },
+    });
+    expect(await fileExists(path.join(projectDir, 'AGENTS.md'))).toBe(false);
+    expect(await fileExists(path.join(projectDir, 'CLAUDE.md'))).toBe(false);
+  });
+});
+
 async function fileExists(filePath: string): Promise<boolean> {
   try {
     await access(filePath);
