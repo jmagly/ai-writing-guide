@@ -20,7 +20,7 @@ const required = process.env.AIWG_FLEET_SANDBOX_LIVE_REQUIRED === '1';
 const available = existsSync(binary);
 const suite = available || required ? describe : describe.skip;
 const token = 'aiwg-fleet-sandbox-live-token';
-const instanceId = '00000000-0000-7000-8000-000000000001';
+const instanceIds = [1, 2, 3].map((index) => `00000000-0000-7000-8000-${String(index).padStart(12, '0')}`);
 
 let runRoot = '';
 let secretsDir = '';
@@ -60,6 +60,7 @@ async function startServer() {
       LISTEN_ADDR: `127.0.0.1:${grpcPort}`,
       SECRETS_DIR: secretsDir,
       AIWG_CONFORMANCE_MODE: '1',
+      AIWG_CONFORMANCE_FLEET_SIZE: String(instanceIds.length),
       RUST_LOG: 'warn',
     },
     stdio: ['ignore', 'ignore', 'pipe'],
@@ -84,17 +85,17 @@ function plan(): FleetMissionPlan {
     goal: 'prove AIWG and Agentic Sandbox durable orchestration binding',
     completionCriterion: 'persistent child is running and re-adopted after restart',
     aggregation: { mode: 'all-pass' },
-    cycles: [{
-      id: 'child-live-persistent', runtime: 'codex', prompt: 'AIWG fleet live binding probe',
-      workloadKind: 'persistent-agent', longRunning: true,
-    }],
+    cycles: instanceIds.map((_instanceId, index) => ({
+      id: `child-live-${index + 1}`, runtime: 'codex', prompt: `AIWG fleet live binding probe ${index + 1}`,
+      workloadKind: 'persistent-agent' as const, longRunning: true,
+    })),
   };
 }
 
-function executor(): ExecutorRegistration {
+function executor(instanceId: string, index: number): ExecutorRegistration {
   return {
-    executorId: 'sandbox-live-executor', a2aInstanceId: instanceId,
-    name: 'Agentic Sandbox live UAT', version: 'live', specVersion: 'executor.aiwg.io/v1',
+    executorId: `sandbox-live-executor-${index + 1}`, a2aInstanceId: instanceId,
+    name: `Agentic Sandbox live UAT ${index + 1}`, version: 'live', specVersion: 'executor.aiwg.io/v1',
     transportEndpoints: { rest: baseUrl, ws: baseUrl.replace(/^http/, 'ws') },
     capabilities: ['runtime:codex', 'resumable'], token, connected: true,
     registeredAt: new Date().toISOString(), currentMissions: new Set(),
@@ -129,29 +130,41 @@ afterAll(async () => {
 });
 
 suite('AIWG fleet conductor with a real Agentic Sandbox binary', () => {
-  it('dispatches, binds, restarts, and re-adopts one durable child without duplication', async () => {
-    const first = await new FleetMissionConductor({ runWorker: client().runWorker }).conduct(plan(), [executor()]);
+  it('dispatches, binds, restarts, and re-adopts three durable children without duplication', async () => {
+    const pool = instanceIds.map(executor);
+    const first = await new FleetMissionConductor({ runWorker: client().runWorker }).conduct(plan(), pool);
     expect(first.parentState).toBe('completed');
-    expect(first.cycles[0]).toMatchObject({ observedState: 'running', satisfied: true });
-    expect(first.cycles[0]?.taskId).toBeTruthy();
-    const taskId = first.cycles[0]!.taskId!;
+    expect(first.cycles).toHaveLength(3);
+    expect(first.cycles.every((cycle) => cycle.observedState === 'running' && cycle.satisfied)).toBe(true);
+    expect(new Set(first.cycles.map((cycle) => cycle.lineage?.targetId)).size).toBe(3);
+    const taskIds = first.cycles.map((cycle) => cycle.taskId!);
+    expect(taskIds.every(Boolean)).toBe(true);
+    expect(new Set(taskIds).size).toBe(3);
 
     await stopServer();
     await startServer();
 
-    const resumed = await new FleetMissionConductor({ runWorker: client().runWorker }).conduct(plan(), [executor()]);
+    const resumed = await new FleetMissionConductor({ runWorker: client().runWorker }).conduct(plan(), pool);
     expect(resumed.parentState).toBe('completed');
-    expect(resumed.cycles[0]).toMatchObject({ taskId, observedState: 'running', satisfied: true });
+    expect(resumed.cycles.map((cycle) => cycle.taskId)).toEqual(taskIds);
+    expect(resumed.cycles.every((cycle) => cycle.observedState === 'running' && cycle.satisfied)).toBe(true);
 
-    const inventory = await client().inventory() as { records: Array<{ lineage: { task_id: string } }> };
-    expect(inventory.records).toHaveLength(1);
-    expect(inventory.records[0]?.lineage.task_id).toBe(taskId);
-    const report = await client().reconcile(2, ['child-live-persistent']);
-    expect(report.rows[0]).toMatchObject({ child_id: 'child-live-persistent', classification: 're-adopted' });
+    const inventory = await client().inventory() as {
+      inventory_revision: number;
+      records: Array<{ lineage: { task_id: string } }>;
+    };
+    expect(inventory.records).toHaveLength(3);
+    expect(new Set(inventory.records.map((record) => record.lineage.task_id))).toEqual(new Set(taskIds));
+    const childIds = plan().cycles.map((cycle) => cycle.id);
+    const report = await client().reconcile(inventory.inventory_revision, childIds);
+    expect(report.rows).toHaveLength(3);
+    expect(report.rows.every((row) => row.classification === 're-adopted')).toBe(true);
 
-    const tasks = await fetch(`${baseUrl}/agents/${instanceId}/v1/tasks`, {
-      headers: { authorization: `Bearer ${token}` },
-    }).then((response) => response.json()) as { tasks: unknown[] };
-    expect(tasks.tasks).toHaveLength(1);
+    for (const instanceId of instanceIds) {
+      const tasks = await fetch(`${baseUrl}/agents/${instanceId}/v1/tasks`, {
+        headers: { authorization: `Bearer ${token}` },
+      }).then((response) => response.json()) as { tasks: unknown[] };
+      expect(tasks.tasks).toHaveLength(1);
+    }
   });
 });
