@@ -35,4 +35,22 @@ describe('fleet workload v1 contract', () => {
     expect(schema.$id).not.toContain('aiwg');
     expect(schema.$id).not.toContain('sandbox');
   });
+
+  it('carries stable substrate session, task, and command identity when assigned', () => {
+    const inventory = fixture('mixed-workload-inventory.json');
+    const byKind = new Map(inventory.records.map((record) => [record.kind, record.lineage]));
+    expect(byKind.get('persistent-agent')).toMatchObject({
+      session_id: 'session-agent-1',
+      task_id: 'task-agent-1',
+      command_id: null,
+    });
+    expect(byKind.get('scheduled-collector')).toMatchObject({
+      task_id: 'task-collector-1',
+      command_id: 'collector-run-42',
+    });
+    expect(byKind.get('one-shot-command')).toMatchObject({
+      task_id: 'task-command-1',
+      command_id: 'command-1',
+    });
+  });
 });

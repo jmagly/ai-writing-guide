@@ -52,7 +52,10 @@
         "child_id": { "$ref": "#/$defs/id" },
         "target_id": { "$ref": "#/$defs/id" },
         "executor_id": { "$ref": "#/$defs/id" },
-        "runtime_id": { "$ref": "#/$defs/id" }
+        "runtime_id": { "$ref": "#/$defs/id" },
+        "session_id": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "task_id": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "command_id": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] }
       }
     },
     "capability": {

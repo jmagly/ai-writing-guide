@@ -30,11 +30,18 @@ execution-local lifecycle, isolation, health, artifacts, and truthful observed
 state. Parent fan-out is orchestrator-owned; explicitly delegated nested runtime
 children still carry the same lineage.
 
+Target, executor, and runtime identity are assigned before admission. Optional
+`session_id`, `task_id`, and `command_id` fields bind the admitted workload to
+the substrate resources created later. They are `null` while unassigned; once
+non-null, an identity is stable for that workload and survives inventory and
+reconciliation snapshots.
+
 ## Safety invariants
 
 - Desired and observed state are separate.
 - State revisions are monotonic within one workload identity.
 - Dispatch idempotency keys are stable across retry and restart.
+- Non-null session, task, and command identities are immutable within a child.
 - Unknown reconciliation cannot be represented as terminal success.
 - Unsupported, degraded, and policy-blocked controls are data, not log text.
 - Credential material is not part of the schema. Only policy references cross
