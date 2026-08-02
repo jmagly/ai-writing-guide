@@ -1942,16 +1942,32 @@ async function fleetMissionSessions(executorUrl) {
     response = await fetchJsonFirst([`${executorUrl}/api/v2/fleet/workloads`]);
   } catch (err) {
     rethrowExecutorSecurityError(err);
-    return [];
+    if (/\s->\s(?:404|405)(?:;|$)/.test(String(err?.message ?? err))) return [];
+    throw err;
   }
   if (response.status === 404 || response.status === 405) return [];
-  if (response.status < 200 || response.status >= 300) return [];
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(`Agentic Sandbox fleet inventory failed with HTTP ${response.status}`);
+  }
   const snapshot = response.body?.inventory ?? response.body;
-  const records = Array.isArray(snapshot?.records) ? snapshot.records : [];
+  if (
+    snapshot?.document_type !== 'inventory'
+    || snapshot?.api_version !== 'agentic-orchestration/v1'
+    || !Array.isArray(snapshot?.records)
+  ) {
+    throw new Error('Agentic Sandbox returned an invalid fleet inventory envelope');
+  }
+  const records = snapshot.records;
   const groups = new Map();
+  const childIds = new Set();
   for (const record of records) {
     const missionId = record?.lineage?.mission_id;
-    if (!missionId || !record?.lineage?.child_id) continue;
+    const childId = record?.lineage?.child_id;
+    if (!missionId || !childId || !record?.kind || !record?.status?.observed_state) {
+      throw new Error('Agentic Sandbox fleet inventory contains an invalid workload record');
+    }
+    if (childIds.has(childId)) throw new Error(`Agentic Sandbox fleet inventory repeats child '${childId}'`);
+    childIds.add(childId);
     const group = groups.get(missionId) ?? [];
     group.push(record);
     groups.set(missionId, group);
