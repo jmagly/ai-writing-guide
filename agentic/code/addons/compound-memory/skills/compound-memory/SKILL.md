@@ -42,10 +42,14 @@ aiwg compound-memory status --json
    declared `memory` or `line-memory` consumer. One reviewed candidate may
    produce independent receipts for both consumers.
 5. **Review/update** — independently accept, reject, or defer proposed facts.
-   Workspace identity changes require a separate explicit review gate.
+   Start from `aiwg compound-memory review --limit 50 --json`, then inspect and
+   decide through the exact-version sessions commands. Workspace identity
+   changes require a separate explicit review gate.
 6. **Maintain** — preview pruning, deduplication, contradiction repair, orphan
    repair, and index refresh. Confirm only the reviewed mutations. Preserve
-   lifecycle tombstones and source-purge dependent dispositions.
+   lifecycle tombstones and source-purge dependent dispositions. The compound
+   command's confirmation may replay pending output registrations; all other
+   actions remain delegated to their owning review workflows.
 
 Until the compound-memory lifecycle ADR is accepted, do not invent a new
 automatic promotion path. Use the existing commands and receipts named above,

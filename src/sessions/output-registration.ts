@@ -115,6 +115,7 @@ export class FilesystemDerivedOutputIndex implements DerivedOutputIndexPort {
 
   constructor(projectRoot: string) {
     this.root = resolve(projectRoot, '.aiwg/memory/output-registration/index');
+    assertStorageRootInsideProject(projectRoot, this.root);
   }
 
   register(registration: DerivedOutputRegistration): void {
@@ -161,6 +162,27 @@ function canonicalReference(value: string): string {
     // Non-URL references are opaque inert identifiers.
   }
   return value;
+}
+
+function assertStorageRootInsideProject(projectRoot: string, storageRoot: string): void {
+  const root = realpathSync(projectRoot);
+  const candidate = resolve(projectRoot, storageRoot);
+  if (candidate !== resolve(projectRoot) && !candidate.startsWith(`${resolve(projectRoot)}${sep}`)) {
+    throw new SessionContractError('SOURCE_OUTSIDE_ALLOWED_ROOT', 'memory storage must be inside the project');
+  }
+  let ancestor = candidate;
+  while (!existsSync(ancestor)) {
+    const parent = dirname(ancestor);
+    if (parent === ancestor) break;
+    ancestor = parent;
+  }
+  const actualAncestor = realpathSync(ancestor);
+  if (actualAncestor !== root && !actualAncestor.startsWith(`${root}${sep}`)) {
+    throw new SessionContractError(
+      'SOURCE_OUTSIDE_ALLOWED_ROOT',
+      'memory storage cannot traverse a link outside the project',
+    );
+  }
 }
 
 function assertNoSecretMaterial(value: string, field: string): void {
@@ -251,6 +273,7 @@ export class FilesystemOutputRegistrationStore implements OutputRegistrationStor
 
   constructor(projectRoot: string) {
     this.root = resolve(projectRoot, '.aiwg/memory/output-registration');
+    assertStorageRootInsideProject(projectRoot, this.root);
     this.outboxRoot = resolve(this.root, 'outbox');
     this.receiptRoot = resolve(this.root, 'receipts');
   }

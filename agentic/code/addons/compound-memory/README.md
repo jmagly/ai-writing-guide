@@ -6,6 +6,8 @@ llm-wiki, line-memory, session candidates, and generated artifacts.
 ```bash
 aiwg use compound-memory --provider <provider>
 aiwg compound-memory status
+aiwg compound-memory review --limit 50 --json
+aiwg compound-memory maintain --json
 aiwg compound-memory capture-output output/report.md \
   --media-type text/markdown \
   --context-pack-id context-pack:<opaque-id> \
@@ -19,6 +21,13 @@ preview. Re-run it with `--confirm --operation-id <preview-operation-id>` to
 write the durable registration, derived index entry, and receipt. Registration
 records exact minimized lineage but never promotes generated text into the wiki
 or line memory; proposed knowledge must pass the independent review workflow.
+
+`review` reads a bounded queue of pending candidates without returning evidence
+bodies or raw assertions. `maintain` also starts in preview mode and binds its
+operation ID to the current line-memory, wiki, output-outbox, and review state.
+Confirming the exact preview replays idempotent output registrations and writes
+a restart-safe receipt. Wiki refresh, line-memory repair, and candidate choices
+remain delegated actions so their own review and authority checks stay intact.
 
 See [docs/overview.md](docs/overview.md) and the `compound-memory` driver skill.
 The addon adds orchestration only; disabling it leaves the underlying wiki and

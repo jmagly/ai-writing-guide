@@ -31,6 +31,16 @@ dependency availability, line-memory sidecar integrity, wiki index staleness,
 the command needed to inspect pending review, and actionable next steps. It
 does not read transcript bodies or persist secrets.
 
+`aiwg compound-memory review` exposes a bounded pending-candidate queue using
+identities, assertion digests, confidence, sensitivity, warning counts, and
+relationship metadata. It intentionally omits assertions and evidence text.
+
+`aiwg compound-memory maintain` produces a deterministic preview tied to the
+current memory snapshot. Exact confirmation replays only pending derived-output
+index registrations and persists an idempotent receipt. The receipt marks wiki
+index work, line-memory repair, and candidate decisions as delegated instead of
+bypassing their owning add-ons or review contracts.
+
 The driver skill exposes the ingest, retrieve/use, write, manage, review,
 update, and maintain workflows through the existing portable skills and CLI
 contracts. Authority-changing automation remains proposal-only until the

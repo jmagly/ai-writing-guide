@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -178,6 +178,20 @@ describe('derived output registration', () => {
     writeFileSync(join(root, '.env/report.md'), 'not an ordinary output');
     expect(() => coordinator.preview({ ...request, outputPath: '.env/report.md' }))
       .toThrow(/credential\/secret paths/);
+  });
+
+  it('rejects memory storage links that escape the project', () => {
+    const external = mkdtempSync(join(tmpdir(), 'aiwg-output-store-external-'));
+    mkdirSync(join(root, '.aiwg'), { recursive: true });
+    symlinkSync(external, join(root, '.aiwg/memory'));
+    try {
+      expect(() => new FilesystemOutputRegistrationStore(root))
+        .toThrow(/link outside the project/);
+      expect(() => new FilesystemDerivedOutputIndex(root))
+        .toThrow(/link outside the project/);
+    } finally {
+      rmSync(external, { recursive: true, force: true });
+    }
   });
 
   it('indexes unrelated registrations independently and tolerates exact replay', async () => {

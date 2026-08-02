@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
 
 const REQUIRED_ADDONS = ['aiwg-utils', 'semantic-memory', 'llm-wiki', 'line-memory'];
 const LINE_PATH = '.aiwg/memory/line-memory.txt';
@@ -8,6 +9,10 @@ const LINE_METADATA_PATH = '.aiwg/memory/line-memory.meta.json';
 const WIKI_ROOT = '.aiwg/wiki';
 const WIKI_INDEX = '.aiwg/wiki/index.md';
 const MAX_STATUS_FILES = 1000;
+const DEFAULT_REVIEW_LIMIT = 50;
+const MAX_REVIEW_LIMIT = 200;
+const SESSION_CATALOG = '.aiwg/sessions/catalog.sqlite';
+const MAINTENANCE_RECEIPTS = '.aiwg/memory/compound-memory/maintenance-receipts';
 
 async function fileStat(filePath) {
   try {
@@ -118,7 +123,7 @@ async function wikiStatus(cwd) {
   };
 }
 
-export async function compoundMemoryStatus(cwd, frameworkRoot) {
+export async function compoundMemoryStatus(cwd, frameworkRoot, candidateReview = null) {
   const [dependencies, lineMemory, wiki] = await Promise.all([
     dependencyStatus(frameworkRoot),
     lineMemoryStatus(cwd),
@@ -133,7 +138,9 @@ export async function compoundMemoryStatus(cwd, frameworkRoot) {
   if (lineMemory.integrity === 'repairable') nextActions.push('aiwg line-memory list --no-touch');
   if (lineMemory.integrity === 'invalid') nextActions.push('review .aiwg/memory/line-memory.meta.json before mutation');
   if (wiki.stale) nextActions.push('run the llm-wiki index refresh workflow');
-  nextActions.push('aiwg sessions candidates --state pending --json');
+  if (candidateReview?.count > 0 || candidateReview === null) {
+    nextActions.push('aiwg compound-memory review --json');
+  }
   return {
     schemaVersion: 'aiwg.compound-memory.status.v1',
     status: missingDependencies.length > 0 || integrityFailures.length > 0
@@ -143,9 +150,10 @@ export async function compoundMemoryStatus(cwd, frameworkRoot) {
     lineMemory,
     wiki,
     review: {
-      pending: null,
-      status: 'query-required',
-      command: 'aiwg sessions candidates --state pending --json',
+      pending: candidateReview?.count ?? null,
+      status: candidateReview?.status ?? 'query-required',
+      bounded: candidateReview?.bounded ?? true,
+      command: 'aiwg compound-memory review --json',
     },
     integrityFailures,
     nextActions: [...new Set(nextActions)],
@@ -158,7 +166,7 @@ function renderHuman(report) {
     `Dependencies: ${report.dependencies.filter(item => item.available).length}/${report.dependencies.length} available`,
     `Line memory: ${report.lineMemory.facts} fact(s), integrity=${report.lineMemory.integrity}`,
     `Wiki: ${report.wiki.initialized ? 'initialized' : 'empty'}, index=${report.wiki.indexPresent ? (report.wiki.stale ? 'stale' : 'current') : 'missing'}`,
-    'Review queue: query required',
+    `Review queue: ${report.review.pending ?? report.review.status}`,
     'Next actions:',
     ...report.nextActions.map(action => `  - ${action}`),
   ];
@@ -182,7 +190,7 @@ function positionalValues(args) {
   const valued = new Set([
     '--media-type', '--context-pack-id', '--context-pack-digest',
     '--source-ref', '--source-digest', '--supersedes', '--conflicts-with',
-    '--operation-id',
+    '--operation-id', '--limit', '--workspace-id', '--db',
   ]);
   const values = [];
   for (let index = 0; index < args.length; index++) {
@@ -194,6 +202,52 @@ function positionalValues(args) {
     values.push(args[index]);
   }
   return values;
+}
+
+function boundedInteger(value, fallback, minimum, maximum, name) {
+  if (value === undefined) return fallback;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
+    throw new Error(`${name} must be an integer from ${minimum} through ${maximum}`);
+  }
+  return parsed;
+}
+
+function stableDigest(value) {
+  return `sha256:${createHash('sha256').update(JSON.stringify(value)).digest('hex')}`;
+}
+
+function resolveProjectPath(cwd, requested, label) {
+  const root = path.resolve(cwd);
+  const candidate = path.resolve(root, requested);
+  if (candidate !== root && !candidate.startsWith(`${root}${path.sep}`)) {
+    throw new Error(`${label} must resolve inside the project`);
+  }
+  return candidate;
+}
+
+async function resolveExistingProjectPath(cwd, requested, label) {
+  const candidate = resolveProjectPath(cwd, requested, label);
+  const [root, actual] = await Promise.all([fs.realpath(cwd), fs.realpath(candidate)]);
+  if (actual !== root && !actual.startsWith(`${root}${path.sep}`)) {
+    throw new Error(`${label} cannot traverse a link outside the project`);
+  }
+  return actual;
+}
+
+async function assertWriteTargetInsideProject(cwd, filePath, label) {
+  resolveProjectPath(cwd, path.relative(cwd, filePath), label);
+  const root = await fs.realpath(cwd);
+  let ancestor = path.dirname(filePath);
+  while (!await fileStat(ancestor)) {
+    const parent = path.dirname(ancestor);
+    if (parent === ancestor) break;
+    ancestor = parent;
+  }
+  const actual = await fs.realpath(ancestor);
+  if (actual !== root && !actual.startsWith(`${root}${path.sep}`)) {
+    throw new Error(`${label} cannot traverse a link outside the project`);
+  }
 }
 
 function inferSourceKind(ref) {
@@ -219,6 +273,213 @@ async function loadOutputRegistration(frameworkRoot) {
     }
   }
   throw new Error('compound-memory output-registration runtime is unavailable');
+}
+
+async function pendingCandidateQueue(args, context) {
+  const limit = boundedInteger(optionValue(args, '--limit'), DEFAULT_REVIEW_LIMIT, 1, MAX_REVIEW_LIMIT, '--limit');
+  const workspaceId = optionValue(args, '--workspace-id');
+  const requestedDb = optionValue(args, '--db') ?? SESSION_CATALOG;
+  const candidatePath = resolveProjectPath(context.cwd, requestedDb, 'session catalog');
+  if (!await fileStat(candidatePath)) {
+    return {
+      status: 'ready',
+      database: path.relative(context.cwd, candidatePath),
+      items: [],
+      count: 0,
+      bounded: true,
+      limit,
+    };
+  }
+  const databasePath = await resolveExistingProjectPath(context.cwd, requestedDb, 'session catalog');
+  let Database;
+  try {
+    const module = await import('better-sqlite3');
+    Database = module.default;
+  } catch {
+    return {
+      status: 'unavailable',
+      database: path.relative(context.cwd, databasePath),
+      items: [],
+      count: null,
+      bounded: true,
+      limit,
+      detail: 'candidate query requires the optional better-sqlite3 dependency',
+    };
+  }
+  const database = new Database(databasePath, { readonly: true, fileMustExist: true });
+  try {
+    const scanLimit = Math.min(MAX_STATUS_FILES, Math.max(limit * 4, limit));
+    const rows = database.prepare(
+      'SELECT data FROM intelligence_candidates WHERE review_state=? ORDER BY candidate_id, version LIMIT ?',
+    ).all('pending', scanLimit);
+    const candidates = rows.map(row => JSON.parse(String(row.data)))
+      .filter(candidate => !workspaceId || candidate.projectScope === workspaceId);
+    const selected = candidates.slice(0, limit).map(candidate => ({
+      candidateId: candidate.candidateId,
+      version: candidate.version,
+      type: candidate.type,
+      assertionDigest: stableDigest(candidate.assertion),
+      confidence: candidate.confidence,
+      sensitivity: candidate.sensitivity,
+      warningCount: Array.isArray(candidate.security?.warnings)
+        ? candidate.security.warnings.length
+        : 0,
+      conflictsWith: Array.isArray(candidate.conflictsWith) ? candidate.conflictsWith : [],
+      supersedes: Array.isArray(candidate.supersedes) ? candidate.supersedes : [],
+      evidenceCount: Array.isArray(candidate.evidence) ? candidate.evidence.length : 0,
+    }));
+    return {
+      status: 'ready',
+      database: path.relative(context.cwd, databasePath),
+      items: selected,
+      count: selected.length,
+      bounded: candidates.length <= limit && rows.length < scanLimit,
+      limit,
+      workspaceId: workspaceId ?? null,
+    };
+  } finally {
+    database.close();
+  }
+}
+
+async function reviewQueue(args, context) {
+  const queue = await pendingCandidateQueue(args, context);
+  const result = {
+    schemaVersion: 'aiwg.compound-memory.review.v1',
+    command: 'compound-memory.review',
+    ...queue,
+    mutation: false,
+    nextAction: queue.count
+      ? 'inspect evidence with aiwg sessions candidates, then use exact-version aiwg sessions review'
+      : null,
+  };
+  emitResult(args, result, `Pending review candidates: ${queue.count ?? 'unavailable'}`);
+  return { exitCode: queue.status === 'unavailable' ? 1 : 0 };
+}
+
+async function maintenancePlan(args, context) {
+  const [status, review] = await Promise.all([
+    compoundMemoryStatus(context.cwd, context.frameworkRoot),
+    pendingCandidateQueue(args, context),
+  ]);
+  const runtime = await loadOutputRegistration(context.frameworkRoot);
+  const store = new runtime.FilesystemOutputRegistrationStore(context.cwd);
+  const pending = store.pending();
+  const actions = [];
+  if (pending.length > 0) actions.push({
+    id: 'replay-output-index',
+    mode: 'automatic',
+    count: pending.length,
+    operationIds: pending.map(record => record.operationId).sort(),
+  });
+  if (status.lineMemory.integrity !== 'ok') actions.push({
+    id: 'line-memory-integrity',
+    mode: 'delegated',
+    state: status.lineMemory.integrity,
+    command: status.lineMemory.integrity === 'repairable'
+      ? 'aiwg line-memory list --no-touch'
+      : 'review .aiwg/memory/line-memory.meta.json before mutation',
+  });
+  if (status.wiki.stale || !status.wiki.indexPresent) actions.push({
+    id: 'wiki-index',
+    mode: 'delegated',
+    state: status.wiki.stale ? 'stale' : 'missing',
+    command: 'run the llm-wiki index refresh workflow',
+  });
+  if ((review.count ?? 0) > 0) actions.push({
+    id: 'candidate-review',
+    mode: 'review-required',
+    count: review.count,
+    candidateIds: review.items.map(item => `${item.candidateId}@${item.version}`),
+  });
+  const snapshot = {
+    lineMemory: { facts: status.lineMemory.facts, integrity: status.lineMemory.integrity },
+    wiki: {
+      initialized: status.wiki.initialized,
+      indexPresent: status.wiki.indexPresent,
+      stale: status.wiki.stale,
+    },
+    pendingOutputOperations: pending.map(record => record.operationId).sort(),
+    pendingCandidates: review.items.map(item => `${item.candidateId}@${item.version}`),
+  };
+  return {
+    schemaVersion: 'aiwg.compound-memory.maintenance-preview.v1',
+    operationId: stableDigest({ operation: 'compound-memory-maintain', snapshot, actions }),
+    snapshot,
+    actions,
+    confirmationRequired: true,
+  };
+}
+
+async function readJson(filePath) {
+  try {
+    return JSON.parse(await fs.readFile(filePath, 'utf8'));
+  } catch (error) {
+    if (error?.code === 'ENOENT') return null;
+    throw error;
+  }
+}
+
+async function writeJsonAtomic(filePath, value) {
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  const temporary = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  await fs.writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx', mode: 0o600 });
+  try {
+    await fs.link(temporary, filePath);
+    return true;
+  } catch (error) {
+    if (error?.code === 'EEXIST') return false;
+    throw error;
+  } finally {
+    await fs.unlink(temporary).catch(error => {
+      if (error?.code !== 'ENOENT') throw error;
+    });
+  }
+}
+
+async function maintain(args, context) {
+  const preview = await maintenancePlan(args, context);
+  if (!args.includes('--confirm')) {
+    emitResult(args, preview, `Maintenance preview: ${preview.actions.length} action(s); operation ${preview.operationId}`);
+    return { exitCode: 0 };
+  }
+  const operationId = optionValue(args, '--operation-id');
+  if (!operationId || operationId !== preview.operationId) {
+    throw new Error('--confirm requires --operation-id from the exact current maintenance preview');
+  }
+  const receiptRoot = path.join(context.cwd, MAINTENANCE_RECEIPTS);
+  const receiptPath = path.join(receiptRoot, `${operationId.replace(':', '_')}.json`);
+  await assertWriteTargetInsideProject(context.cwd, receiptPath, 'maintenance receipt');
+  const existing = await readJson(receiptPath);
+  if (existing) {
+    const duplicate = { ...existing, duplicate: true };
+    emitResult(args, duplicate, `Maintenance already recorded for ${operationId}.`);
+    return { exitCode: 0 };
+  }
+  const runtime = await loadOutputRegistration(context.frameworkRoot);
+  const store = new runtime.FilesystemOutputRegistrationStore(context.cwd);
+  const index = new runtime.FilesystemDerivedOutputIndex(context.cwd);
+  const coordinator = new runtime.OutputRegistrationCoordinator(context.cwd, store, index);
+  const replayed = preview.actions.some(action => action.id === 'replay-output-index')
+    ? await coordinator.replayPending()
+    : [];
+  const receipt = {
+    schemaVersion: 'aiwg.compound-memory.maintenance-receipt.v1',
+    operationId,
+    completedAt: new Date().toISOString(),
+    duplicate: false,
+    results: preview.actions.map(action => action.id === 'replay-output-index'
+      ? { id: action.id, status: 'completed', replayed: replayed.length }
+      : { id: action.id, status: 'deferred', mode: action.mode, command: action.command ?? null }),
+  };
+  const created = await writeJsonAtomic(receiptPath, receipt);
+  if (!created) {
+    const duplicate = { ...await readJson(receiptPath), duplicate: true };
+    emitResult(args, duplicate, `Maintenance already recorded for ${operationId}.`);
+    return { exitCode: 0 };
+  }
+  emitResult(args, receipt, `Maintenance receipt recorded; replayed ${replayed.length} output registration(s).`);
+  return { exitCode: 0 };
 }
 
 function emitResult(args, value, readable) {
@@ -323,12 +584,15 @@ async function captureOutput(args, context) {
 export default async function compoundMemoryCommand(args, context) {
   try {
     if (context.subcommand === 'status') {
-      const report = await compoundMemoryStatus(context.cwd, context.frameworkRoot);
+      const candidateReview = await pendingCandidateQueue(args, context);
+      const report = await compoundMemoryStatus(context.cwd, context.frameworkRoot, candidateReview);
       if (args.includes('--json')) console.log(JSON.stringify(report, null, 2));
       else console.log(renderHuman(report));
       return { exitCode: report.status === 'degraded' ? 1 : 0 };
     }
     if (context.subcommand === 'capture-output') return await captureOutput(args, context);
+    if (context.subcommand === 'review') return await reviewQueue(args, context);
+    if (context.subcommand === 'maintain') return await maintain(args, context);
     return { exitCode: 2, message: `Unknown compound-memory subcommand: ${context.subcommand}` };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

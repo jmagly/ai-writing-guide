@@ -75,7 +75,9 @@ describe('compound-memory status', () => {
     });
     expect(result.exitCode).toBe(0);
     expect(JSON.parse(output.join('\n'))).toMatchObject({
-      schemaVersion: 'aiwg.compound-memory.status.v1', status: 'ready',
+      schemaVersion: 'aiwg.compound-memory.status.v1',
+      status: 'ready',
+      review: { pending: 0, status: 'ready', bounded: true },
     });
   });
 });
@@ -140,6 +142,71 @@ describe('compound-memory output capture', () => {
       subcommand: 'capture-output',
     });
     expect(JSON.parse(output.pop()!).receipt.duplicate).toBe(true);
+  });
+});
+
+describe('compound-memory review and maintenance', () => {
+  it('returns an empty bounded review queue without creating a session catalog', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    const result = await compoundMemoryCommand(['--limit', '10', '--json'], {
+      cwd: projectDir,
+      frameworkRoot: path.resolve(__dirname, '../../..'),
+      namespace: 'compound-memory',
+      subcommand: 'review',
+    });
+    expect(result.exitCode).toBe(0);
+    expect(JSON.parse(output.pop()!)).toMatchObject({
+      schemaVersion: 'aiwg.compound-memory.review.v1',
+      status: 'ready',
+      items: [],
+      count: 0,
+      limit: 10,
+      mutation: false,
+    });
+    expect(await fileExists(path.join(projectDir, '.aiwg/sessions/catalog.sqlite'))).toBe(false);
+  });
+
+  it('requires an exact preview and records a restart-safe maintenance receipt', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    const context = {
+      cwd: projectDir,
+      frameworkRoot: path.resolve(__dirname, '../../..'),
+      namespace: 'compound-memory',
+      subcommand: 'maintain',
+    };
+    const previewResult = await compoundMemoryCommand(['--json'], context);
+    expect(previewResult.exitCode).toBe(0);
+    const preview = JSON.parse(output.pop()!);
+    expect(preview).toMatchObject({
+      schemaVersion: 'aiwg.compound-memory.maintenance-preview.v1',
+      confirmationRequired: true,
+      actions: [expect.objectContaining({ id: 'wiki-index', mode: 'delegated' })],
+    });
+    expect(await fileExists(path.join(projectDir, '.aiwg/memory/compound-memory'))).toBe(false);
+
+    const stale = await compoundMemoryCommand([
+      '--confirm', '--operation-id', digest('wrong'), '--json',
+    ], context);
+    expect(stale.exitCode).toBe(1);
+    expect(JSON.parse(output.pop()!).status).toBe('error');
+
+    const confirmed = await compoundMemoryCommand([
+      '--confirm', '--operation-id', preview.operationId, '--json',
+    ], context);
+    expect(confirmed.exitCode).toBe(0);
+    expect(JSON.parse(output.pop()!)).toMatchObject({
+      schemaVersion: 'aiwg.compound-memory.maintenance-receipt.v1',
+      operationId: preview.operationId,
+      duplicate: false,
+      results: [expect.objectContaining({ id: 'wiki-index', status: 'deferred' })],
+    });
+
+    await compoundMemoryCommand([
+      '--confirm', '--operation-id', preview.operationId, '--json',
+    ], context);
+    expect(JSON.parse(output.pop()!).duplicate).toBe(true);
   });
 });
 
