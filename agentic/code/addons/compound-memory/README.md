@@ -56,6 +56,7 @@ supersession, and revocation history. `--export` produces a portable bundle;
 `--allow-cross-workspace` is explicitly supplied. Provider adapters are never
 generated or modified by this command.
 
-See [docs/overview.md](docs/overview.md) and the `compound-memory` driver skill.
+See [docs/overview.md](docs/overview.md),
+[docs/operator-guide.md](docs/operator-guide.md), and the `compound-memory` driver skill.
 The addon adds orchestration only; disabling it leaves the underlying wiki and
 line-memory data independently usable.

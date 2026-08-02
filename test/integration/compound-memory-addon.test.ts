@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -74,5 +74,30 @@ describe('compound-memory addon activation', () => {
     expect(result.exitCode, result.message).toBe(0);
     expect(existsSync(path.join(projectDir, '.aiwg/cli-extensions.json'))).toBe(false);
     expect(existsSync(path.join(projectDir, '.claude/.aiwg/skills'))).toBe(false);
+  });
+
+  it('activates over standalone line-memory and llm-wiki data without rewriting either store', async () => {
+    const linePath = path.join(projectDir, '.aiwg/memory/line-memory.txt');
+    const wikiPath = path.join(projectDir, '.aiwg/wiki/concepts/existing.md');
+    await mkdir(path.dirname(linePath), { recursive: true });
+    await mkdir(path.dirname(wikiPath), { recursive: true });
+    const lineBefore = 'Existing reviewed fact.\n';
+    const wikiBefore = '# Existing knowledge\n\nLinked knowledge remains owned by llm-wiki.\n';
+    await writeFile(linePath, lineBefore);
+    await writeFile(wikiPath, wikiBefore);
+
+    const result = await new UseHandler().execute(context([
+      'compound-memory',
+      '--target', projectDir,
+      '--provider', 'codex',
+      '--copy-all',
+    ]));
+    expect(result.exitCode, result.message).toBe(0);
+    expect(await readFile(linePath, 'utf8')).toBe(lineBefore);
+    expect(await readFile(wikiPath, 'utf8')).toBe(wikiBefore);
+    await expect(access(path.join(
+      projectDir,
+      '.agents/skills/compound-memory/SKILL.md',
+    ))).resolves.toBeUndefined();
   });
 });
