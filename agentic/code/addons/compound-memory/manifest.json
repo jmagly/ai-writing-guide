@@ -36,6 +36,10 @@
       "status": {
         "file": "compound-memory.mjs",
         "description": "Report dependency, data, index, review, and integrity readiness"
+      },
+      "capture-output": {
+        "file": "compound-memory.mjs",
+        "description": "Preview or register a derived output with exact context lineage"
       }
     }
   },

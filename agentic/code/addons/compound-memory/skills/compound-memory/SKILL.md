@@ -33,7 +33,11 @@ aiwg compound-memory status --json
    use bounded `aiwg line-memory search ... --limit <n> --no-touch --json` for
    concise stable facts. Never inject the complete stores into startup context.
 3. **Write/capture output** — register the output and its source/context-pack
-   lineage before proposing any extracted facts as session candidates.
+   lineage before proposing any extracted facts as session candidates. Run
+   `aiwg compound-memory capture-output <file> ... --json` first, review the
+   immutable digest and minimized references, then repeat with
+   `--confirm --operation-id <preview-operation-id>`. This creates registration
+   and index receipts only; it never promotes knowledge.
 4. **Manage** — use exact-version candidate review and preview promotion to the
    declared `memory` or `line-memory` consumer. One reviewed candidate may
    produce independent receipts for both consumers.

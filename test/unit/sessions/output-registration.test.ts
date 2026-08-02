@@ -155,6 +155,31 @@ describe('derived output registration', () => {
     }
   });
 
+  it('rejects secret-bearing opaque references and sensitive output paths', () => {
+    const coordinator = new OutputRegistrationCoordinator(
+      root,
+      new FilesystemOutputRegistrationStore(root),
+      new IndexSink(),
+    );
+    expect(() => coordinator.preview({
+      ...request,
+      contextPack: {
+        ...request.contextPack,
+        sources: [{
+          kind: 'artifact',
+          ref: 'artifact:token=super-secret-value',
+          digest: null,
+          span: null,
+        }],
+      },
+    })).toThrow(/secret material/);
+
+    mkdirSync(join(root, '.env'), { recursive: true });
+    writeFileSync(join(root, '.env/report.md'), 'not an ordinary output');
+    expect(() => coordinator.preview({ ...request, outputPath: '.env/report.md' }))
+      .toThrow(/credential\/secret paths/);
+  });
+
   it('indexes unrelated registrations independently and tolerates exact replay', async () => {
     const store = new FilesystemOutputRegistrationStore(root);
     const index = new FilesystemDerivedOutputIndex(root);

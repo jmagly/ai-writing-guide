@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const REQUIRED_ADDONS = ['aiwg-utils', 'semantic-memory', 'llm-wiki', 'line-memory'];
 const LINE_PATH = '.aiwg/memory/line-memory.txt';
@@ -164,12 +165,182 @@ function renderHuman(report) {
   return lines.join('\n');
 }
 
-export default async function compoundMemoryCommand(args, context) {
-  if (context.subcommand !== 'status') {
-    return { exitCode: 2, message: `Unknown compound-memory subcommand: ${context.subcommand}` };
+function optionValue(args, name) {
+  const index = args.indexOf(name);
+  return index >= 0 ? args[index + 1] : undefined;
+}
+
+function optionValues(args, name) {
+  const values = [];
+  for (let index = 0; index < args.length; index++) {
+    if (args[index] === name && args[index + 1]) values.push(args[++index]);
   }
-  const report = await compoundMemoryStatus(context.cwd, context.frameworkRoot);
-  if (args.includes('--json')) console.log(JSON.stringify(report, null, 2));
-  else console.log(renderHuman(report));
-  return { exitCode: report.status === 'degraded' ? 1 : 0 };
+  return values;
+}
+
+function positionalValues(args) {
+  const valued = new Set([
+    '--media-type', '--context-pack-id', '--context-pack-digest',
+    '--source-ref', '--source-digest', '--supersedes', '--conflicts-with',
+    '--operation-id',
+  ]);
+  const values = [];
+  for (let index = 0; index < args.length; index++) {
+    if (valued.has(args[index])) {
+      index++;
+      continue;
+    }
+    if (args[index].startsWith('--')) continue;
+    values.push(args[index]);
+  }
+  return values;
+}
+
+function inferSourceKind(ref) {
+  if (/^https?:\/\//i.test(ref)) return 'url';
+  if (ref.startsWith('session:') || ref.startsWith('session-candidate:')) return 'session';
+  if (ref.startsWith('note:')) return 'note';
+  if (ref.startsWith('context-pack:')) return 'context-pack';
+  if (ref.startsWith('file:')) return 'file';
+  return 'artifact';
+}
+
+async function loadOutputRegistration(frameworkRoot) {
+  const candidates = [
+    path.join(frameworkRoot, 'dist/src/sessions/output-registration.js'),
+    path.join(frameworkRoot, 'src/sessions/output-registration.ts'),
+  ];
+  for (const candidate of candidates) {
+    try {
+      await fs.access(candidate);
+      return await import(pathToFileURL(candidate).href);
+    } catch (error) {
+      if (error?.code !== 'ENOENT' && error?.code !== 'ERR_UNKNOWN_FILE_EXTENSION') throw error;
+    }
+  }
+  throw new Error('compound-memory output-registration runtime is unavailable');
+}
+
+function emitResult(args, value, readable) {
+  if (args.includes('--json')) console.log(JSON.stringify(value, null, 2));
+  else if (readable) console.log(readable);
+}
+
+async function captureOutput(args, context) {
+  const runtime = await loadOutputRegistration(context.frameworkRoot);
+  const store = new runtime.FilesystemOutputRegistrationStore(context.cwd);
+  const index = new runtime.FilesystemDerivedOutputIndex(context.cwd);
+  const coordinator = new runtime.OutputRegistrationCoordinator(context.cwd, store, index);
+
+  if (args.includes('--replay')) {
+    const pending = store.pending();
+    if (!args.includes('--confirm')) {
+      const preview = {
+        schemaVersion: 'aiwg.compound-memory.command.v1',
+        status: 'preview',
+        command: 'compound-memory.capture-output',
+        operation: 'replay',
+        pending: pending.length,
+        confirmationRequired: true,
+      };
+      emitResult(args, preview, `Preview: ${pending.length} pending output registration(s).`);
+      return { exitCode: 0 };
+    }
+    const receipts = await coordinator.replayPending();
+    const result = {
+      schemaVersion: 'aiwg.compound-memory.command.v1',
+      status: 'ok',
+      command: 'compound-memory.capture-output',
+      operation: 'replay',
+      completed: receipts.length,
+      remaining: store.pending().length,
+      receipts,
+    };
+    emitResult(args, result, `Replayed ${receipts.length} output registration(s).`);
+    return { exitCode: result.remaining > 0 ? 1 : 0 };
+  }
+
+  const outputPath = positionalValues(args)[0];
+  const mediaType = optionValue(args, '--media-type');
+  const contextPackId = optionValue(args, '--context-pack-id');
+  const contextPackDigest = optionValue(args, '--context-pack-digest');
+  const sourceRefs = optionValues(args, '--source-ref');
+  const sourceDigests = optionValues(args, '--source-digest');
+  if (!outputPath || !mediaType || !contextPackId || !contextPackDigest || sourceRefs.length === 0) {
+    return {
+      exitCode: 2,
+      message: 'Usage: aiwg compound-memory capture-output <file> --media-type <type> --context-pack-id <id> --context-pack-digest sha256:<digest> --source-ref <ref> [--dry-run|--confirm --operation-id <id>] [--json]',
+    };
+  }
+  if (sourceDigests.length > sourceRefs.length) {
+    return { exitCode: 2, message: '--source-digest cannot outnumber --source-ref values' };
+  }
+  const request = {
+    outputPath,
+    mediaType,
+    contextPack: {
+      id: contextPackId,
+      digest: contextPackDigest,
+      sources: sourceRefs.map((ref, index) => ({
+        kind: inferSourceKind(ref),
+        ref,
+        digest: sourceDigests[index] ?? null,
+        span: null,
+      })),
+    },
+    supersedes: optionValues(args, '--supersedes'),
+    conflictsWith: optionValues(args, '--conflicts-with'),
+  };
+  const preview = coordinator.preview(request);
+  if (!args.includes('--confirm')) {
+    const result = {
+      schemaVersion: 'aiwg.compound-memory.command.v1',
+      status: 'preview',
+      command: 'compound-memory.capture-output',
+      preview,
+      mutation: { wouldRegister: !preview.duplicate, wouldPromoteKnowledge: false },
+    };
+    emitResult(args, result, `Preview: register ${preview.output.locator}; operation ${preview.operationId}`);
+    return { exitCode: 0 };
+  }
+  const operationId = optionValue(args, '--operation-id');
+  if (!operationId) {
+    return { exitCode: 2, message: '--confirm requires --operation-id from the exact preview' };
+  }
+  const receipt = await coordinator.register({ request, operationId });
+  const result = {
+    schemaVersion: 'aiwg.compound-memory.command.v1',
+    status: 'ok',
+    command: 'compound-memory.capture-output',
+    receipt,
+    knowledgePromotion: 'not-performed',
+    nextAction: 'extract and review individual candidates before promotion',
+  };
+  emitResult(args, result, `Registered ${receipt.outputLocator}; no knowledge was promoted.`);
+  return { exitCode: 0 };
+}
+
+export default async function compoundMemoryCommand(args, context) {
+  try {
+    if (context.subcommand === 'status') {
+      const report = await compoundMemoryStatus(context.cwd, context.frameworkRoot);
+      if (args.includes('--json')) console.log(JSON.stringify(report, null, 2));
+      else console.log(renderHuman(report));
+      return { exitCode: report.status === 'degraded' ? 1 : 0 };
+    }
+    if (context.subcommand === 'capture-output') return await captureOutput(args, context);
+    return { exitCode: 2, message: `Unknown compound-memory subcommand: ${context.subcommand}` };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (args.includes('--json')) {
+      console.log(JSON.stringify({
+        schemaVersion: 'aiwg.compound-memory.command.v1',
+        status: 'error',
+        command: `compound-memory.${context.subcommand}`,
+        error: { code: error?.code ?? 'COMPOUND_MEMORY_ERROR', message },
+      }, null, 2));
+      return { exitCode: 1 };
+    }
+    return { exitCode: 1, message };
+  }
 }

@@ -163,8 +163,20 @@ function canonicalReference(value: string): string {
   return value;
 }
 
+function assertNoSecretMaterial(value: string, field: string): void {
+  const secretAssignment = /(?:^|[?&;:\s])(?:api[_-]?key|access[_-]?token|token|secret|password|passwd|authorization)\s*[:=]\s*[^\s&;]+/i;
+  const privateKey = /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/;
+  const providerToken = /(?:^|[^a-z0-9])(?:ghp|github_pat|sk|xox[baprs])_[a-z0-9_-]{16,}/i;
+  if (secretAssignment.test(value) || privateKey.test(value) || providerToken.test(value)) {
+    throw new SessionContractError(
+      'SOURCE_NOT_AUTHORIZED',
+      `${field} appears to contain secret material; store only a non-secret locator`,
+    );
+  }
+}
+
 function canonicalRequest(request: OutputRegistrationRequest): OutputRegistrationRequest {
-  return {
+  const canonical = {
     ...request,
     contextPack: {
       ...request.contextPack,
@@ -177,6 +189,14 @@ function canonicalRequest(request: OutputRegistrationRequest): OutputRegistratio
     supersedes: [...new Set(request.supersedes.map(canonicalReference))].sort(),
     conflictsWith: [...new Set(request.conflictsWith.map(canonicalReference))].sort(),
   };
+  assertNoSecretMaterial(canonical.contextPack.id, 'context-pack identity');
+  for (const source of canonical.contextPack.sources) {
+    assertNoSecretMaterial(source.ref, 'source reference');
+  }
+  for (const value of [...canonical.supersedes, ...canonical.conflictsWith]) {
+    assertNoSecretMaterial(value, 'lifecycle reference');
+  }
+  return canonical;
 }
 
 function resolveImmutableOutput(projectRoot: string, requestedPath: string): {
@@ -185,6 +205,15 @@ function resolveImmutableOutput(projectRoot: string, requestedPath: string): {
 } {
   if (requestedPath.includes('\0')) {
     throw new SessionContractError('MALFORMED_SOURCE', 'output path contains a null byte');
+  }
+  const pathSegments = requestedPath.toLocaleLowerCase().split(/[\\/]+/);
+  if (pathSegments.some(segment => segment === '.env'
+    || segment === '.ssh'
+    || /^(?:credentials?|secrets?|tokens?)(?:\.|$)/.test(segment))) {
+    throw new SessionContractError(
+      'SOURCE_NOT_AUTHORIZED',
+      'sensitive credential/secret paths cannot be registered as ordinary outputs',
+    );
   }
   const root = realpathSync(projectRoot);
   const candidate = realpathSync(resolve(root, requestedPath));
