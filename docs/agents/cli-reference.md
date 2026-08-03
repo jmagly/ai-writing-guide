@@ -2163,12 +2163,20 @@ Install any of them with `/plugin install <name>@aiwg` after running `/plugin ma
 Install Claude Code plugin.
 
 ```bash
-aiwg install-plugin <name>
+aiwg install-plugin <name> [--source <local-path>] [--dry-run]
 ```
 
 **Arguments:**
 
 - `<name>` - Plugin name from marketplace
+- `--source <local-path>` - Compatibility input for legacy framework/add-on/extension manifests. Standalone plugin wrappers return an actionable migration to `aiwg install <path>` followed by `aiwg use <plugin-id>`.
+
+Git URLs and standalone local wrappers use the package workflow directly:
+
+```bash
+aiwg install <path-or-git-url> --dry-run
+aiwg use <plugin-id>
+```
 
 **Capabilities:** cli, plugin, install
 **Platform:** Claude Code only

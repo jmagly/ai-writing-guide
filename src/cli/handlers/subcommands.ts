@@ -1179,6 +1179,7 @@ export const installPluginHandler: CommandHandler = {
 
     return runner.run("tools/plugin/plugin-installer-cli.mjs", ctx.args, {
       cwd: ctx.cwd,
+      env: { AIWG_ROOT: frameworkRoot },
     });
   },
 };

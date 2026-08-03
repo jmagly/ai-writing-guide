@@ -385,7 +385,7 @@ describe("Subcommand Handlers", () => {
       expect(mockRun).toHaveBeenCalledWith(
         "tools/plugin/plugin-installer-cli.mjs",
         mockContext.args,
-        { cwd: mockContext.cwd },
+        { cwd: mockContext.cwd, env: { AIWG_ROOT: "/mock/framework/root" } },
       );
     });
   });
