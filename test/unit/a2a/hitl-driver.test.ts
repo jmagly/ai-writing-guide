@@ -15,6 +15,7 @@ import {
 } from '../../../src/a2a/hitl-cli.js';
 import {
   driveOnePrompt,
+  isResponderAllowed,
   validateResponseAgainstSchema,
   StderrHitlAuditLog,
   type HitlAuditEntry,
@@ -196,6 +197,21 @@ describe('CliHitlDeliveryAdapter', () => {
 // ── driveOnePrompt ─────────────────────────────────────────────────────
 
 describe('driveOnePrompt', () => {
+  it('rejects a responder that is not authorized by the prompt policy', async () => {
+    const adapter = new MockAdapter([{ approve: true }]);
+    const client = makeClientStub();
+    const auditLog = new CollectingAuditLog();
+    await driveOnePrompt({
+      envelope: makeEnvelope({ allowed_responders: ['specific:release-manager'] }),
+      client,
+      adapter,
+      auditLog,
+    });
+    expect(client.sent).toHaveLength(0);
+    expect(adapter.attempts).toBe(0);
+    expect(auditLog.entries[0]).toMatchObject({ operator: 'tester', outcome: 'unauthorized' });
+  });
+
   it('happy path: validates response and posts reply Message', async () => {
     const adapter = new MockAdapter([{ approve: true }]);
     const client = makeClientStub();
@@ -210,7 +226,10 @@ describe('driveOnePrompt', () => {
     });
     expect(client.sent).toHaveLength(1);
     const sent = client.sent[0]!.message;
-    expect(sent.metadata?.['hitl_response_for']).toBe('p-1');
+    expect(sent.metadata?.['hitl_response_for']).toEqual({
+      prompt_id: 'p-1',
+      payload: { approve: true },
+    });
     expect(auditLog.entries).toHaveLength(1);
     expect(auditLog.entries[0]!.outcome).toBe('responded');
     expect(auditLog.entries[0]!.task_id).toBe('task-1');
@@ -334,9 +353,21 @@ describe('driveOnePrompt', () => {
     });
     expect(auditLog.entries.map(e => e.prompt_id)).toEqual(['p-A', 'p-B']);
     expect(client.sent.map(s => s.message.metadata?.['hitl_response_for'])).toEqual([
-      'p-A',
-      'p-B',
+      { prompt_id: 'p-A', payload: { approve: true } },
+      { prompt_id: 'p-B', payload: { approve: false } },
     ]);
+  });
+});
+
+describe('isResponderAllowed', () => {
+  it('defaults to any and matches a specific principal', () => {
+    expect(isResponderAllowed(undefined, 'alice')).toBe(true);
+    expect(isResponderAllowed(['specific:alice'], 'alice')).toBe(true);
+    expect(isResponderAllowed(['specific:alice'], 'bob')).toBe(false);
+  });
+
+  it('requires an aggregate adapter for consensus policies', () => {
+    expect(isResponderAllowed(['consensus:2'], 'alice')).toBe(false);
   });
 });
 

@@ -14,8 +14,8 @@
 //   2. Extract the envelope
 //   3. Route to a HitlDeliveryAdapter (CLI / Slack / web)
 //   4. Validate the operator's response against `response_schema`
-//   5. POST a reply Message with `metadata.hitl_response_for: <prompt_id>`
-//      and the response payload at `metadata.<URI>`
+//   5. POST a reply Message with the canonical
+//      `metadata.hitl_response_for: { prompt_id, payload }` envelope
 //
 // This module handles steps 1–4. Step 5 lives in the A2AClient consumer
 // that drives the task lifecycle.
@@ -37,8 +37,6 @@ export interface HitlPromptEnvelope {
   deadline?: string;
   /** Optional list of authorized responder ids (operator usernames, role names). */
   allowed_responders?: string[];
-  /** Free-form vendor metadata. */
-  [extra: string]: JsonValue | undefined;
 }
 
 /** Result of structural envelope validation. */
@@ -48,6 +46,9 @@ export type EnvelopeValidation =
 
 /** Required envelope keys per spec §Prompt envelope. */
 const REQUIRED_ENVELOPE_KEYS = ['prompt_id', 'prompt', 'response_schema'] as const;
+const PROMPT_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const RESPONDER_RE = /^(any|specific:\S+|consensus:[1-9][0-9]*)$/;
+const MAX_RESPONSE_SCHEMA_BYTES = 64 * 1024;
 
 /**
  * Pull the HITL envelope out of a Task / TaskStatus / Message metadata
@@ -97,11 +98,29 @@ export function extractHitlEnvelope(
       return { ok: false, reason: `envelope missing required key: ${key}` };
     }
   }
-  if (typeof env['prompt_id'] !== 'string' || (env['prompt_id'] as string).length === 0) {
-    return { ok: false, reason: 'prompt_id must be a non-empty string' };
+  const allowedKeys = new Set([...REQUIRED_ENVELOPE_KEYS, 'deadline', 'allowed_responders']);
+  const unexpected = Object.keys(env).find(key => !allowedKeys.has(key as typeof REQUIRED_ENVELOPE_KEYS[number]));
+  if (unexpected) return { ok: false, reason: `envelope contains unsupported key: ${unexpected}` };
+  if (typeof env['prompt_id'] !== 'string' || !PROMPT_ID_RE.test(env['prompt_id'])) {
+    return { ok: false, reason: 'prompt_id must be an RFC 4122 UUID' };
   }
-  if (typeof env['prompt'] !== 'string') {
-    return { ok: false, reason: 'prompt must be a string' };
+  if (typeof env['prompt'] !== 'string' || env['prompt'].length === 0) {
+    return { ok: false, reason: 'prompt must be a non-empty string' };
+  }
+  if (typeof env['response_schema'] !== 'object' || env['response_schema'] === null || Array.isArray(env['response_schema'])) {
+    return { ok: false, reason: 'response_schema must be an object' };
+  }
+  if ((env['response_schema'] as Record<string, unknown>)['type'] !== 'object') {
+    return { ok: false, reason: 'response_schema must declare top-level type object' };
+  }
+  if (Buffer.byteLength(JSON.stringify(env['response_schema']), 'utf8') > MAX_RESPONSE_SCHEMA_BYTES) {
+    return { ok: false, reason: 'response_schema exceeds 64 KiB' };
+  }
+  if (env['deadline'] !== undefined && (typeof env['deadline'] !== 'string' || !Number.isFinite(Date.parse(env['deadline'])))) {
+    return { ok: false, reason: 'deadline must be an RFC 3339 timestamp' };
+  }
+  if (env['allowed_responders'] !== undefined && (!Array.isArray(env['allowed_responders']) || env['allowed_responders'].some(value => typeof value !== 'string' || !RESPONDER_RE.test(value)))) {
+    return { ok: false, reason: 'allowed_responders contains an invalid responder policy' };
   }
   return { ok: true, envelope: env as unknown as HitlPromptEnvelope };
 }
@@ -124,8 +143,10 @@ export function buildHitlResponseMessage(opts: {
       },
     ],
     metadata: {
-      hitl_response_for: opts.promptId,
-      [A2A_HITL_PROMPT_V1]: { response: opts.response },
+      hitl_response_for: {
+        prompt_id: opts.promptId,
+        payload: opts.response,
+      },
     },
   };
   if (opts.taskId !== undefined) message.taskId = opts.taskId;
