@@ -3,7 +3,7 @@
  *
  * Validates that:
  *   - `aiwg use all` deploys every addon except those in the disallow list
- *   - `aiwg use aiwg-dev` is rejected with a useful error
+ *   - `aiwg use aiwg-dev` remains available as an explicit contributor install
  *   - `aiwg use <any-valid-addon>` works without being in a hardcoded list
  *   - New addons added to agentic/code/addons/ are auto-discovered
  */
@@ -106,23 +106,33 @@ async function cleanProject(dir: string) {
 // ---------------------------------------------------------------------------
 
 describe('aiwg use — disallow list', () => {
+  let projectDir: string;
+
+  beforeEach(() => {
+    projectDir = mkdtempSync(path.join(os.tmpdir(), 'aiwg-use-disallow-'));
+  });
+
+  afterEach(async () => {
+    await cleanProject(projectDir);
+  });
+
   it('accepts aiwg-dev as an explicit install (contributor workflow)', () => {
     // aiwg-dev is excluded from `use all` but must be installable explicitly
-    const result = runAiwg(['use', 'aiwg-dev', '--dry-run']);
-    expect(result.exitCode).toBe(0);
+    const result = runAiwg(['use', 'aiwg-dev', '--dry-run'], projectDir);
+    expect(result.exitCode, result.stderr || result.stdout).toBe(0);
   });
 
   it('rejects unknown addon names', () => {
-    const result = runAiwg(['use', 'this-does-not-exist-abc123']);
+    const result = runAiwg(['use', 'this-does-not-exist-abc123'], projectDir);
     expect(result.exitCode).not.toBe(0);
     expect(result.stdout + result.stderr).toMatch(/unknown target|not found/i);
   });
 
   it('accepts a real addon by name without it being in a hardcoded list', () => {
     // auto-memory is new and was NOT in the old VALID_ADDONS hardcoded list
-    const result = runAiwg(['use', 'auto-memory', '--dry-run']);
+    const result = runAiwg(['use', 'auto-memory', '--dry-run'], projectDir);
     // dry-run exit code 0 means the addon was recognised and would be deployed
-    expect(result.exitCode).toBe(0);
+    expect(result.exitCode, result.stderr || result.stdout).toBe(0);
   });
 });
 
