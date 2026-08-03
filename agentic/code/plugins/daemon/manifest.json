@@ -1,0 +1,70 @@
+{
+  "id": "daemon",
+  "type": "addon",
+  "name": "Daemon Session",
+  "version": "2026.3.0",
+  "description": "Persistent daemon session capabilities: Concierge front-end, session memory, scheduler integration",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "daemon",
+    "persistent",
+    "concierge",
+    "session",
+    "background",
+    "interaction",
+    "behavior"
+  ],
+  "researchFoundation": {
+    "REF-001": "Hotel concierge interaction model - anticipate, route, shield, discretion",
+    "REF-002": "Behavior artifact type - cross-platform session-scoped composable hooks",
+    "REF-003": "Daemon supervisor pattern - persistent background agent management"
+  },
+  "entry": {
+    "behaviors": "behaviors/",
+    "agents": "agents/",
+    "skills": "skills/",
+    "rules": "rules/",
+    "docs": "docs/"
+  },
+  "behaviors": [
+    "concierge"
+  ],
+  "agents": [
+    "concierge"
+  ],
+  "skills": [
+    "daemon-status"
+  ],
+  "rules": [
+    "daemon-interaction"
+  ],
+  "dependencies": {
+    "required": ["aiwg-utils"],
+    "optional": ["voice-framework", "ralph"]
+  },
+  "configuration": {
+    "defaults": {
+      "concierge.enabled": true,
+      "concierge.tone": "professional-warm",
+      "concierge.verbosity": "concise",
+      "concierge.escalation": "absorb-by-default",
+      "session.memory": true,
+      "session.crossSession": true
+    }
+  },
+  "providers": {
+    "claude-code": { "supported": true },
+    "openclaw": { "supported": true, "native_behaviors": true },
+    "warp": { "supported": true },
+    "copilot": { "supported": "partial", "note": "No persistent session; concierge activates per-interaction" },
+    "cursor": { "supported": "partial" },
+    "windsurf": { "supported": "partial" },
+    "opencode": { "supported": "partial" },
+    "factory": { "supported": "partial" },
+    "codex": { "supported": "partial" }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "rlm",
+  "version": "2026.8.3",
+  "description": "RLM-inspired recursive context decomposition for processing arbitrarily large codebases and document corpora through programmatic sub-agent delegation",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "rlm",
+    "recursive",
+    "long-context",
+    "decomposition",
+    "sub-agent",
+    "context-management",
+    "chunking",
+    "fan-out",
+    "batch"
+  ]
+}

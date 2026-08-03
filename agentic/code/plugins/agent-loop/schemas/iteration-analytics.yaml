@@ -1,0 +1,477 @@
+# Ralph Iteration Analytics Schema
+# Based on REF-015 Self-Refine Research
+# Issues: #152, #153, #268 (multi-loop support)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/ralph-iteration-analytics/v2"
+title: "Ralph Iteration Analytics Schema"
+description: |
+  Schema for tracking iteration improvement metrics, detecting
+  diminishing returns, and selecting best output per REF-015.
+  Version 2 adds multi-loop support with loop_id field.
+
+type: object
+required:
+  - version
+  - analytics
+  - best_output_selection
+
+properties:
+  version:
+    type: string
+    pattern: "^2\\.\\d+\\.\\d+$"
+    default: "2.0.0"
+
+  analytics:
+    $ref: "#/$defs/AnalyticsConfig"
+
+  best_output_selection:
+    $ref: "#/$defs/BestOutputConfig"
+
+  diminishing_returns:
+    $ref: "#/$defs/DiminishingReturnsConfig"
+
+$defs:
+  AnalyticsConfig:
+    type: object
+    description: "Iteration improvement tracking configuration"
+    properties:
+      storage_path:
+        type: string
+        description: |
+          Analytics storage path. For multi-loop: .aiwg/ralph/loops/{loop_id}/analytics/
+          For legacy single-loop: .aiwg/ralph/analytics/
+        examples:
+          - ".aiwg/ralph/loops/ralph-fix-tests-a1b2c3d4/analytics/"
+          - ".aiwg/ralph/analytics/"
+
+      metrics_tracked:
+        type: array
+        items:
+          type: string
+        default:
+          - quality_score
+          - quality_delta
+          - token_count
+          - token_cost
+          - execution_time_ms
+          - verification_status
+
+      export_formats:
+        type: array
+        items:
+          type: string
+          enum: [json, csv, markdown]
+        default: [json, markdown]
+
+  BestOutputConfig:
+    type: object
+    description: "Best output selection (non-monotonic quality handling)"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+        description: "Select best output, not final output"
+
+      selection_criteria:
+        type: string
+        enum:
+          - highest_quality
+          - highest_quality_verified
+          - most_recent_above_threshold
+        default: highest_quality_verified
+
+      quality_threshold:
+        type: number
+        minimum: 0
+        maximum: 100
+        default: 70
+        description: "Minimum quality to consider"
+
+      storage:
+        type: object
+        properties:
+          keep_all_iterations:
+            type: boolean
+            default: true
+          snapshot_format:
+            type: string
+            description: |
+              Multi-loop format: {loop_id}/iterations/iteration-{n:03d}.json
+              Legacy format: iterations/iteration-{n:03d}.json
+            examples:
+              - "ralph-fix-tests-a1b2c3d4/iterations/iteration-001.json"
+              - "iterations/iteration-001.json"
+
+  DiminishingReturnsConfig:
+    type: object
+    description: "Diminishing returns detection"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      detection_method:
+        type: string
+        enum:
+          - absolute_threshold
+          - percentage_threshold
+          - moving_average
+          - consecutive_low_delta
+        default: consecutive_low_delta
+
+      thresholds:
+        type: object
+        properties:
+          absolute_delta:
+            type: number
+            default: 5
+            description: "Improvement below this is 'diminishing'"
+          percentage_delta:
+            type: number
+            default: 0.05
+            description: "5% improvement threshold"
+          consecutive_count:
+            type: integer
+            default: 2
+            description: "Stop after N consecutive low-delta iterations"
+
+      recommendation:
+        type: object
+        properties:
+          suggest_stop:
+            type: boolean
+            default: true
+          auto_stop:
+            type: boolean
+            default: false
+          notify_user:
+            type: boolean
+            default: true
+
+# Iteration record schema
+iteration_record:
+  type: object
+  required:
+    - loop_id
+    - iteration_number
+    - timestamp
+    - quality_score
+  properties:
+    loop_id:
+      type: string
+      pattern: "^ralph-[a-z0-9-]+-[a-f0-9]{8}$"
+      description: "Loop ID (required for multi-loop, null for legacy)"
+      nullable: true
+
+    iteration_number:
+      type: integer
+      minimum: 1
+
+    timestamp:
+      type: string
+      format: date-time
+
+    quality_score:
+      type: number
+      minimum: 0
+      maximum: 100
+
+    quality_delta:
+      type: number
+      description: "Change from previous iteration"
+
+    tokens_used:
+      type: integer
+
+    token_cost_usd:
+      type: number
+
+    execution_time_ms:
+      type: integer
+
+    verification_status:
+      type: string
+      enum: [passed, failed, skipped]
+
+    output_snapshot_path:
+      type: string
+      description: |
+        Multi-loop: .aiwg/ralph/loops/{loop_id}/iterations/iteration-{n:03d}.json
+        Legacy: .aiwg/ralph/iterations/iteration-{n:03d}.json
+
+    reflections:
+      type: array
+      items:
+        type: string
+
+# Loop analytics summary schema
+loop_analytics:
+  type: object
+  required:
+    - loop_id
+    - iterations
+  properties:
+    loop_id:
+      type: string
+      pattern: "^ralph-[a-z0-9-]+-[a-f0-9]{8}$"
+      description: "Loop ID"
+
+    task_description:
+      type: string
+
+    start_time:
+      type: string
+      format: date-time
+
+    end_time:
+      type: string
+      format: date-time
+
+    iterations:
+      type: array
+      items:
+        $ref: "#/iteration_record"
+
+    total_iterations:
+      type: integer
+
+    optimal_iteration:
+      type: integer
+      description: "Iteration with highest quality"
+
+    final_iteration:
+      type: integer
+
+    selected_iteration:
+      type: integer
+      description: "Iteration returned as output"
+
+    selection_reason:
+      type: string
+
+    total_tokens:
+      type: integer
+
+    total_cost_usd:
+      type: number
+
+    total_time_ms:
+      type: integer
+
+    diminishing_returns_detected:
+      type: boolean
+
+    diminishing_returns_iteration:
+      type: integer
+
+    quality_trajectory:
+      type: string
+      enum: [improving, stable, declining, fluctuating]
+
+# Report template
+report_template:
+  markdown: |
+    # Agent Loop Analytics: {loop_id}
+
+    **Task:** {task_description}
+    **Duration:** {start_time} → {end_time}
+
+    ## Summary
+
+    | Metric | Value |
+    |--------|-------|
+    | Total Iterations | {total_iterations} |
+    | Selected Iteration | {selected_iteration} |
+    | Final Quality Score | {final_quality} |
+    | Total Tokens | {total_tokens} |
+    | Total Cost | ${total_cost_usd:.4f} |
+
+    ## Iteration History
+
+    | # | Quality | Delta | Tokens | Cost | Verified |
+    |---|---------|-------|--------|------|----------|
+    {iteration_rows}
+
+    ## Quality Trajectory
+
+    ```
+    {quality_chart}
+    ```
+
+    ## Analysis
+
+    **Best Output:** Iteration {optimal_iteration} (quality: {optimal_quality})
+    **Selected:** Iteration {selected_iteration} ({selection_reason})
+
+    {diminishing_returns_note}
+
+    ## Recommendations
+
+    {recommendations}
+
+# Agent protocol
+agent_protocol:
+  track_iteration:
+    description: "Record metrics for each iteration"
+    triggers:
+      - iteration_complete
+    steps:
+      - capture_quality_score
+      - calculate_delta
+      - count_tokens
+      - record_timing
+      - check_verification
+      - save_output_snapshot
+      - update_analytics
+
+  detect_diminishing_returns:
+    description: "Check for diminishing returns"
+    triggers:
+      - iteration_complete
+    steps:
+      - load_iteration_history
+      - calculate_recent_deltas
+      - apply_detection_method
+      - generate_recommendation
+      - notify_if_detected
+
+  select_best_output:
+    description: "Select best output on loop completion"
+    triggers:
+      - loop_complete
+    steps:
+      - load_all_iterations
+      - filter_by_threshold
+      - rank_by_quality
+      - apply_verification_filter
+      - select_best
+      - log_selection
+
+  generate_report:
+    description: "Generate analytics report"
+    triggers:
+      - loop_complete
+      - manual_request
+    steps:
+      - load_analytics
+      - calculate_summary
+      - generate_trajectory
+      - format_report
+      - save_report
+
+# Performance targets (from REF-015)
+research_targets:
+  optimal_iterations: 3-4
+  diminishing_returns_threshold: "5% improvement"
+  quality_fluctuation_expected: true
+  best_vs_final_selection: "mandatory"
+
+# Storage paths
+storage_paths:
+  multi_loop:
+    analytics: ".aiwg/ralph/loops/{loop_id}/analytics/analytics.json"
+    report: ".aiwg/ralph/loops/{loop_id}/analytics/report.md"
+    snapshots: ".aiwg/ralph/loops/{loop_id}/iterations/"
+
+  legacy_single_loop:
+    analytics: ".aiwg/ralph/analytics/{loop_id}.json"
+    report: ".aiwg/ralph/analytics/{loop_id}-report.md"
+    snapshots: ".aiwg/ralph/{loop_id}/iterations/"
+
+  path_resolution:
+    - if_loop_id_matches_multi_loop_pattern: use_multi_loop_paths
+    - else: use_legacy_paths
+
+# Cross-loop analytics
+cross_loop_analytics:
+  enabled: true
+  description: "Aggregate analytics across all loops"
+
+  aggregation_path: ".aiwg/ralph/analytics/cross-loop-summary.json"
+
+  metrics:
+    - total_loops_run
+    - average_iterations_per_loop
+    - average_quality_improvement
+    - average_cost_per_loop
+    - most_common_tasks
+
+  report_path: ".aiwg/ralph/analytics/cross-loop-report.md"
+
+  aggregation_frequency: daily
+
+# Backward compatibility
+backward_compatibility:
+  legacy_single_loop:
+    analytics_path: ".aiwg/ralph/analytics/{loop_id}.json"
+    report_path: ".aiwg/ralph/analytics/{loop_id}-report.md"
+
+  migration:
+    auto_detect_path_structure: true
+    support_mixed_paths: true
+    no_breaking_changes: true
+
+# Example analytics (multi-loop)
+examples:
+  multi_loop_analytics:
+    loop_id: "ralph-fix-tests-a1b2c3d4"
+    task_description: "fix all TypeScript errors"
+    start_time: "2026-02-02T21:00:00Z"
+    end_time: "2026-02-02T21:30:00Z"
+    iterations:
+      - loop_id: "ralph-fix-tests-a1b2c3d4"
+        iteration_number: 1
+        timestamp: "2026-02-02T21:05:00Z"
+        quality_score: 60
+        quality_delta: 0
+        tokens_used: 5000
+        token_cost_usd: 0.025
+        execution_time_ms: 60000
+        verification_status: failed
+        output_snapshot_path: ".aiwg/ralph/loops/ralph-fix-tests-a1b2c3d4/iterations/iteration-001.json"
+      - loop_id: "ralph-fix-tests-a1b2c3d4"
+        iteration_number: 2
+        timestamp: "2026-02-02T21:10:00Z"
+        quality_score: 85
+        quality_delta: 25
+        tokens_used: 5000
+        token_cost_usd: 0.025
+        execution_time_ms: 60000
+        verification_status: passed
+        output_snapshot_path: ".aiwg/ralph/loops/ralph-fix-tests-a1b2c3d4/iterations/iteration-002.json"
+      - loop_id: "ralph-fix-tests-a1b2c3d4"
+        iteration_number: 3
+        timestamp: "2026-02-02T21:15:00Z"
+        quality_score: 83
+        quality_delta: -2
+        tokens_used: 5000
+        token_cost_usd: 0.025
+        execution_time_ms: 60000
+        verification_status: passed
+        output_snapshot_path: ".aiwg/ralph/loops/ralph-fix-tests-a1b2c3d4/iterations/iteration-003.json"
+    total_iterations: 3
+    optimal_iteration: 2
+    final_iteration: 3
+    selected_iteration: 2
+    selection_reason: "Highest quality score (85)"
+    total_tokens: 15000
+    total_cost_usd: 0.075
+    total_time_ms: 180000
+    diminishing_returns_detected: false
+    quality_trajectory: "fluctuating"
+
+# References
+references:
+  research:
+    - "@.aiwg/research/findings/REF-015-self-refine.md"
+  implementation:
+    - "#152"  # Iteration analytics
+    - "#153"  # Best output tracking
+    - "#268"  # Multi-loop support
+  related:
+    - "@tools/ralph-external/"
+    - "@.aiwg/ralph/"
+    - "@agentic/code/frameworks/sdlc-complete/schemas/research/quality-dimensions.yaml"
+    - "@agentic/code/addons/ralph/schemas/loop-registry.yaml"
+    - "@agentic/code/addons/ralph/schemas/loop-state.yaml"

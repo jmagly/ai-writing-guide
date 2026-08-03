@@ -1,0 +1,23 @@
+{
+  "name": "semantic-memory",
+  "version": "2026.8.3",
+  "description": "Topology-agnostic semantic memory operations: ingest, lint, query-capture, and structured event logging. Consumers declare a memory topology in their manifest.json; kernel skills read that contract to parameterize behavior.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "semantic-memory",
+    "kernel",
+    "ingest",
+    "lint",
+    "query-capture",
+    "log",
+    "topology",
+    "wiki",
+    "knowledge-base"
+  ]
+}

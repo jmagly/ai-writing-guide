@@ -1,0 +1,101 @@
+# RLM Filter-Recurse Example
+# Screener → investigator → reasoner with gap recursion
+# Based on OpenProse example 42-rlm-filter-recurse
+#
+# Pattern: progressive filtering pipeline that recurses on gaps
+# Use when: searching large corpus where most items are irrelevant
+
+version: "1.0.0"
+
+root_task:
+  node_id: "task-fr00000"
+  depth: 0
+  prompt: |
+    Find all instances where user input reaches a database query
+    without sanitization across the entire codebase.
+  decomposition_strategy: sequential
+  merge_strategy: summarize
+
+  children:
+    # Phase 1: Screener quickly filters relevant files
+    - node_id: "task-scrn001"
+      parent_id: "task-fr00000"
+      depth: 1
+      prompt: |
+        Scan all source files and identify those that:
+        1. Accept user input (req.body, req.params, req.query, form data)
+        2. Interact with a database (SQL queries, ORM calls, raw queries)
+        Output a list of candidate files with brief rationale.
+        Be inclusive — false positives are acceptable, false negatives are not.
+      preferred_model: haiku
+      context:
+        type: filtered
+        source: "retrieved_documents"
+        filters:
+          file_patterns: ["src/**/*.ts", "src/**/*.js"]
+      status: pending
+
+    # Phase 2: Investigator analyzes each candidate
+    - node_id: "task-invs001"
+      parent_id: "task-fr00000"
+      depth: 1
+      prompt: |
+        For each candidate file from the screener:
+        1. Trace data flow from user input to database query
+        2. Check for sanitization at each step (parameterized queries, ORM escaping, manual sanitization)
+        3. Classify as: VULNERABLE, SAFE, or UNCERTAIN
+        4. For UNCERTAIN: note what additional context is needed
+        Output detailed findings per file with code references.
+      preferred_model: sonnet
+      decomposition_strategy: parallel
+      batch_size: 10
+      context:
+        type: slice
+        source: "parent_result"
+      status: pending
+
+    # Phase 3: Reasoner synthesizes and recurses on gaps
+    - node_id: "task-rsnr001"
+      parent_id: "task-fr00000"
+      depth: 1
+      prompt: |
+        Review all investigator findings and produce a final SQL injection
+        vulnerability report:
+        1. Confirmed vulnerabilities with severity rating (Critical/High/Medium/Low)
+        2. Safe patterns identified (for documentation)
+        3. For UNCERTAIN items: determine if additional investigation is needed
+           - If gaps remain and depth < 3: request re-investigation with more context
+           - If gaps are minor: classify based on available evidence
+        4. Remediation recommendations per vulnerability
+      preferred_model: opus
+      context:
+        type: full
+        source: "parent_result"
+      quality_gate:
+        min_score: 90
+        scoring_criteria: |
+          No false negatives (all real vulnerabilities caught).
+          Clear severity ratings with OWASP/CWE references.
+          Actionable remediation for each finding.
+        scorer_model: sonnet
+        max_iterations: 3
+        fallback: escalate
+      status: pending
+
+  status: pending
+
+metadata:
+  tree_id: "tree-filrec0"
+  root_prompt: "SQL injection vulnerability scan with progressive filtering"
+  max_depth: 3
+  total_nodes: 4
+  execution_mode: logged
+
+# Notes:
+# - Screener uses Haiku (fast, cheap filtering — inclusive, tolerates false positives)
+# - Investigator uses Sonnet (detailed code analysis per file)
+# - Reasoner uses Opus (complex judgment, severity rating, gap analysis)
+# - Quality gate on reasoner uses escalate fallback — security findings
+#   should not silently accept low-quality results
+# - Reasoner can trigger re-investigation of UNCERTAIN items (recursion)
+# - batch_size: 10 for investigator (each file needs significant context)

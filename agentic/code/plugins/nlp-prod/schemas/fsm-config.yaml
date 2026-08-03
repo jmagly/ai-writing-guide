@@ -1,0 +1,272 @@
+# FSM Configuration Schema
+# Schema for fsm.config.yaml used by state-machine pattern pipelines
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/nlp-prod/fsm-config/v1"
+title: "FSM Pipeline Configuration"
+description: |
+  Schema for fsm.config.yaml — the state machine definition for
+  state-machine pattern pipelines. Consumed by the FSM runtime stub.
+
+type: object
+required:
+  - version
+  - name
+  - initial_state
+  - states
+  - transitions
+
+properties:
+  version:
+    type: string
+    default: "1.0.0"
+
+  name:
+    type: string
+    description: "State machine name"
+
+  description:
+    type: string
+
+  initial_state:
+    type: string
+    description: "Name of the entry state"
+
+  states:
+    type: object
+    description: "Map of state name to state definition"
+    additionalProperties:
+      $ref: "#/$defs/State"
+
+  transitions:
+    type: array
+    items:
+      $ref: "#/$defs/Transition"
+
+  error_handling:
+    $ref: "#/$defs/ErrorHandling"
+
+  audit:
+    $ref: "#/$defs/AuditConfig"
+
+$defs:
+  State:
+    type: object
+    required:
+      - type
+    properties:
+      type:
+        type: string
+        enum:
+          - llm        # LLM call step
+          - transform  # Code-only transformation (no LLM)
+          - decision   # Branching point (guard evaluation)
+          - terminal   # Final state (accept or reject)
+          - escalate   # Human escalation state
+
+      prompt:
+        type: string
+        nullable: true
+        description: "Path to prompt file (required for llm states)"
+
+      model:
+        type: string
+        description: "Model for this state (llm states only)"
+
+      max_tokens:
+        type: integer
+        default: 512
+
+      description:
+        type: string
+        description: "Human-readable description of what this state does"
+
+      on_entry:
+        type: string
+        description: "Function to call on state entry (for transform states)"
+
+      output_key:
+        type: string
+        description: "Key to store output under in pipeline context"
+
+      is_terminal:
+        type: boolean
+        default: false
+
+      terminal_result:
+        type: string
+        nullable: true
+        enum: [accept, reject, escalate, null]
+        description: "Terminal outcome (for terminal states)"
+
+  Transition:
+    type: object
+    required:
+      - from
+      - to
+      - guard
+    properties:
+      from:
+        type: string
+        description: "Source state name"
+
+      to:
+        type: string
+        description: "Target state name"
+
+      guard:
+        type: string
+        description: "Condition expression (e.g., 'output.valid == true')"
+
+      priority:
+        type: integer
+        default: 0
+        description: "Evaluation priority (higher = evaluated first)"
+
+      description:
+        type: string
+
+  ErrorHandling:
+    type: object
+    properties:
+      on_llm_error:
+        type: string
+        enum: [retry, escalate, fail]
+        default: retry
+        description: "What to do on LLM call failure"
+
+      max_retries:
+        type: integer
+        default: 3
+
+      on_max_retries:
+        type: string
+        enum: [escalate, fail]
+        default: escalate
+
+      on_invalid_transition:
+        type: string
+        enum: [escalate, fail]
+        default: fail
+        description: "What to do if no transition guard matches"
+
+      escalation_state:
+        type: string
+        description: "State to transition to on escalation"
+        default: ESCALATE
+
+  AuditConfig:
+    type: object
+    description: "State transition audit trail configuration"
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      output_path:
+        type: string
+        default: "audit/transitions.jsonl"
+        description: "Append-only log of all state transitions"
+
+      include_context:
+        type: boolean
+        default: false
+        description: "Include full pipeline context in audit log (may be large)"
+
+# Example FSM config
+examples:
+  - version: "1.0.0"
+    name: document-processor
+    description: "Extract, validate, and enrich document data with error recovery"
+    initial_state: EXTRACT
+
+    states:
+      EXTRACT:
+        type: llm
+        prompt: prompts/extract.prompt.md
+        model: claude-haiku-4-5
+        max_tokens: 512
+        description: "Extract structured fields from input document"
+        output_key: extracted
+
+      VALIDATE:
+        type: decision
+        description: "Check extracted data meets quality thresholds"
+        output_key: validation_result
+
+      ENRICH:
+        type: llm
+        prompt: prompts/enrich.prompt.md
+        model: claude-haiku-4-5
+        max_tokens: 256
+        description: "Enrich extracted data with additional context"
+        output_key: enriched
+
+      RETRY_EXTRACT:
+        type: llm
+        prompt: prompts/extract-retry.prompt.md
+        model: claude-sonnet-4-6
+        max_tokens: 512
+        description: "Retry extraction with stronger model and refined prompt"
+        output_key: extracted
+
+      OUTPUT:
+        type: terminal
+        is_terminal: true
+        terminal_result: accept
+        description: "Pipeline complete — output accepted"
+
+      ESCALATE:
+        type: terminal
+        is_terminal: true
+        terminal_result: escalate
+        description: "Human review required"
+
+    transitions:
+      - from: EXTRACT
+        to: VALIDATE
+        guard: "extracted != null"
+        description: "Extraction produced output"
+
+      - from: EXTRACT
+        to: ESCALATE
+        guard: "extracted == null"
+        description: "Extraction failed — no output"
+
+      - from: VALIDATE
+        to: ENRICH
+        guard: "validation_result.score >= 0.8"
+        priority: 1
+        description: "Validation passed"
+
+      - from: VALIDATE
+        to: RETRY_EXTRACT
+        guard: "validation_result.score < 0.8 and context.retry_count < 1"
+        priority: 0
+        description: "First retry with stronger model"
+
+      - from: VALIDATE
+        to: ESCALATE
+        guard: "validation_result.score < 0.8 and context.retry_count >= 1"
+        priority: -1
+        description: "Max retries exhausted"
+
+      - from: RETRY_EXTRACT
+        to: VALIDATE
+        guard: "extracted != null"
+
+      - from: ENRICH
+        to: OUTPUT
+        guard: "enriched != null"
+
+    error_handling:
+      on_llm_error: retry
+      max_retries: 3
+      on_max_retries: escalate
+      on_invalid_transition: escalate
+      escalation_state: ESCALATE
+
+    audit:
+      enabled: true
+      output_path: audit/transitions.jsonl
+      include_context: false

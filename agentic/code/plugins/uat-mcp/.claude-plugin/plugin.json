@@ -1,0 +1,21 @@
+{
+  "name": "uat-mcp",
+  "version": "2026.8.3",
+  "description": "Agent-executable acceptance testing via MCP connections — generate, execute, and report on UAT plans that validate MCP tool surfaces.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "uat",
+    "mcp",
+    "acceptance-testing",
+    "testing",
+    "quality-assurance",
+    "mcp-tools",
+    "agent-testing"
+  ]
+}

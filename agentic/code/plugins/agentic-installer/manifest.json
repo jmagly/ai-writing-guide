@@ -1,0 +1,48 @@
+{
+  "id": "agentic-installer",
+  "type": "addon",
+  "name": "Agentic Installer",
+  "version": "2026.4.0",
+  "description": "Structured YAML manifests for reproducible, agent-driven software installation across platforms. Scripts are the primary artifact; agentic instructions handle adaptation and recovery.",
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "installer",
+    "setup",
+    "agentic",
+    "cross-platform",
+    "scripts",
+    "manifest"
+  ],
+  "entry": {
+    "agents": "agents/",
+    "rules": "rules/",
+    "skills": "skills/",
+    "schemas": "schemas/"
+  },
+  "consolidation": {
+    "strategy": "index-with-links",
+    "rulesIndex": "rules/RULES-INDEX.md",
+    "deployIndexOnly": true
+  },
+  "agents": [
+    "installer-agent"
+  ],
+  "skills": [
+    "setup-generate",
+    "setup-run",
+    "setup-validate"
+  ],
+  "rules": [
+    "installer-safety",
+    "installer-authoring"
+  ],
+  "schemas": [
+    {
+      "id": "setup.aiwg.io/v1/SetupManifest",
+      "path": "schemas/v1/setup-manifest.schema.json",
+      "fileMatch": ["*.setup.yaml", "*.setup.yml", "setup.manifest.yaml", "setup.manifest.yml"]
+    }
+  ]
+}

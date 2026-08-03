@@ -1,0 +1,21 @@
+{
+  "name": "skill-factory",
+  "version": "2026.8.3",
+  "description": "Build, enhance, validate, and package Claude skills end-to-end. Coordinates skill-builder, skill-enhancer, quality-checker, and skill-packager via the skill-architect agent.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "skill",
+    "skills",
+    "factory",
+    "scaffolding",
+    "validation",
+    "packaging",
+    "claude"
+  ]
+}

@@ -1,0 +1,139 @@
+# UAT Coverage Schema
+# Defines the structure of tool coverage tracking
+
+type: object
+required:
+  - version
+  - server
+  - coverage
+
+properties:
+  version:
+    type: string
+    description: Schema version
+    const: "1.0"
+
+  server:
+    type: object
+    required:
+      - name
+      - total_tools
+    properties:
+      name:
+        type: string
+        description: MCP server name
+      total_tools:
+        type: integer
+        description: Total tools exposed by the server
+
+  coverage:
+    type: object
+    required:
+      - tested
+      - untested
+      - percentage
+    properties:
+      tested:
+        type: integer
+        description: Number of tools with at least one test
+      untested:
+        type: integer
+        description: Number of tools with no tests
+      percentage:
+        type: number
+        description: Coverage percentage
+      by_category:
+        type: array
+        items:
+          type: object
+          required:
+            - category
+            - total
+            - tested
+          properties:
+            category:
+              type: string
+              description: Tool category name
+            total:
+              type: integer
+            tested:
+              type: integer
+            percentage:
+              type: number
+
+  tools:
+    type: array
+    description: Per-tool coverage details
+    items:
+      type: object
+      required:
+        - name
+        - category
+        - tested
+      properties:
+        name:
+          type: string
+          description: MCP tool name
+        category:
+          type: string
+        tested:
+          type: boolean
+        test_count:
+          type: integer
+          description: Total number of tests for this tool
+        test_types:
+          type: object
+          properties:
+            happy_path:
+              type: integer
+            edge_case:
+              type: integer
+            negative:
+              type: integer
+        phases:
+          type: array
+          items:
+            type: string
+          description: Phase IDs where this tool is tested
+        results:
+          type: object
+          description: Latest test results for this tool
+          properties:
+            pass:
+              type: integer
+            fail:
+              type: integer
+            skip:
+              type: integer
+            error:
+              type: integer
+        untested_reason:
+          type: string
+          description: Why this tool has no tests (if applicable)
+
+  history:
+    type: array
+    description: Coverage over time for regression tracking
+    items:
+      type: object
+      required:
+        - date
+        - tested
+        - total
+        - percentage
+      properties:
+        date:
+          type: string
+          format: date
+        results_file:
+          type: string
+          description: Path to the results file
+        tested:
+          type: integer
+        total:
+          type: integer
+        percentage:
+          type: number
+        pass_rate:
+          type: number
+          description: Overall pass rate for that run

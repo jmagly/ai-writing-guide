@@ -1,0 +1,39 @@
+version: "1.0.0"
+name: my-agent-pipeline
+description: "TODO: one-sentence description"
+pattern: embedded-agent
+language: python
+
+steps:
+  - name: agent
+    prompt: prompts/system.prompt.md
+    model: claude-haiku-4-5
+    max_tokens: 1024
+    temperature: 0.0
+    input_variables:
+      - task_description
+      - user_task
+
+agent_config:
+  max_iterations: 5
+  tools:
+    - search
+    - read_file
+    # Add up to 5 tools — more than 5 is a signal to redesign
+  exit_conditions:
+    - "output.exit_reason == 'completed'"
+    - "output.confidence >= 0.8"
+  fallback_behavior: escalate
+  token_budget: 8000
+
+eval_config:
+  enabled: true
+  evaluator_prompt: prompts/evaluator.prompt.md
+  test_cases: eval/cases.jsonl
+  pass_threshold: 0.80
+  max_attempts: 2
+  eval_model: claude-haiku-4-5
+
+cost_config:
+  monthly_volume: 5000
+  warn_above_usd: 0.05

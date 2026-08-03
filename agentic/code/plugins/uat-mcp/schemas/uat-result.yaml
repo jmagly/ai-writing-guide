@@ -1,0 +1,232 @@
+# UAT Result Schema
+# Defines the structure of UAT execution results
+
+type: object
+required:
+  - version
+  - metadata
+  - phases
+  - summary
+
+properties:
+  version:
+    type: string
+    description: Schema version
+    const: "1.0"
+
+  metadata:
+    type: object
+    required:
+      - plan_file
+      - server_name
+      - mode
+      - started_at
+      - completed_at
+      - execution_mode
+    properties:
+      plan_file:
+        type: string
+        description: Path to the UAT plan that was executed
+      server_name:
+        type: string
+        description: MCP server tested
+      mode:
+        type: string
+        enum: [mcp, api, ui]
+      started_at:
+        type: string
+        format: date-time
+      completed_at:
+        type: string
+        format: date-time
+      duration_seconds:
+        type: integer
+      execution_mode:
+        type: string
+        enum: [quick, standard, full]
+      executed_by:
+        type: string
+        description: Agent or user that ran the execution
+      resumed_from:
+        type: string
+        description: Phase ID if execution was resumed
+
+  phases:
+    type: array
+    description: Results per phase
+    items:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - tests
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [pass, fail, skip, error]
+          description: Overall phase status
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        duration_seconds:
+          type: integer
+        tests:
+          type: array
+          items:
+            $ref: "#/$defs/test_result"
+        summary:
+          type: object
+          properties:
+            total:
+              type: integer
+            pass:
+              type: integer
+            fail:
+              type: integer
+            skip:
+              type: integer
+            error:
+              type: integer
+
+  summary:
+    type: object
+    required:
+      - total_tests
+      - pass
+      - fail
+      - skip
+      - error
+      - tool_coverage
+    properties:
+      total_tests:
+        type: integer
+      pass:
+        type: integer
+      fail:
+        type: integer
+      skip:
+        type: integer
+      error:
+        type: integer
+      pass_rate:
+        type: number
+        description: Percentage of tests that passed
+      tool_coverage:
+        type: object
+        properties:
+          tested:
+            type: integer
+          total:
+            type: integer
+          percentage:
+            type: number
+          untested:
+            type: array
+            items:
+              type: object
+              properties:
+                tool:
+                  type: string
+                reason:
+                  type: string
+
+  issues_filed:
+    type: array
+    description: Issues created for failures
+    items:
+      type: object
+      properties:
+        issue_number:
+          type: integer
+        issue_url:
+          type: string
+        test_id:
+          type: string
+        tool:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        provider:
+          type: string
+          enum: [gitea, github, local]
+
+  variables:
+    type: object
+    description: All stored variables and their values at execution end
+    additionalProperties:
+      type: object
+      properties:
+        value: {}
+        stored_by:
+          type: string
+          description: Test ID that stored this value
+        stored_at:
+          type: string
+          format: date-time
+
+$defs:
+  test_result:
+    type: object
+    required:
+      - id
+      - name
+      - tool
+      - status
+    properties:
+      id:
+        type: string
+        description: Test ID from the plan
+      name:
+        type: string
+      tool:
+        type: string
+        description: MCP tool name
+      status:
+        type: string
+        enum: [pass, fail, skip, error]
+      isolation:
+        type: boolean
+      started_at:
+        type: string
+        format: date-time
+      duration_ms:
+        type: integer
+      parameters:
+        type: object
+        description: Actual parameters used (after variable substitution)
+      response:
+        description: Actual MCP response received
+      criteria_results:
+        type: array
+        items:
+          type: object
+          properties:
+            criterion:
+              type: string
+            met:
+              type: boolean
+            actual:
+              type: string
+              description: What was actually observed
+      error_details:
+        type: string
+        description: Error message if status is fail or error
+      issue_filed:
+        type: integer
+        description: Issue number if a bug was filed
+      variables_stored:
+        type: object
+        description: Variables stored from this test's response
+        additionalProperties: {}
+      skip_reason:
+        type: string
+        description: Why this test was skipped (if status is skip)

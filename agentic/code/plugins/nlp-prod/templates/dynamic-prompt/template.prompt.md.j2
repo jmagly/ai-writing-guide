@@ -1,0 +1,42 @@
+---
+version: 1.0.0
+step: generate
+pattern: dynamic-prompt
+template_engine: jinja2
+model: claude-haiku-4-5
+max_tokens: 1024
+temperature: 0.1
+---
+
+## System
+
+You are a {{ role | default("helpful assistant") }}.
+{% if persona %}
+Persona: {{ persona }}
+{% endif %}
+
+Your output format:
+{{ output_format | default("Plain text response") }}
+
+{% if constraints %}
+Constraints:
+{% for constraint in constraints %}
+- {{ constraint }}
+{% endfor %}
+{% endif %}
+
+{% if few_shot_examples %}
+Examples:
+{% for example in few_shot_examples %}
+Input: {{ example.input }}
+Output: {{ example.output }}
+{% endfor %}
+{% endif %}
+
+## User
+
+{% if context %}
+Context: {{ context }}
+
+{% endif %}
+{{ user_input }}

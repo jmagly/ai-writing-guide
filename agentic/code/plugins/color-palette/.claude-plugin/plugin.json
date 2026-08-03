@@ -1,0 +1,21 @@
+{
+  "name": "color-palette",
+  "version": "2026.8.3",
+  "description": "Color palette selection and review tooling with color theory fundamentals, current trend research, and accessibility analysis.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "color",
+    "palette",
+    "design",
+    "accessibility",
+    "color-theory",
+    "trends",
+    "wcag"
+  ]
+}

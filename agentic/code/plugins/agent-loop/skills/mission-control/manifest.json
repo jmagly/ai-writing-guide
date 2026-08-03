@@ -1,0 +1,17 @@
+{
+  "id": "mission-control",
+  "type": "skill",
+  "name": "Mission Control",
+  "version": "1.0.0",
+  "description": "Orchestrate multi-loop background operations using the Mission Control dashboard",
+  "platforms": ["claude-code", "hermes"],
+  "triggers": [
+    "run tasks in background",
+    "parallel orchestration",
+    "start mission control",
+    "monitor background tasks",
+    "how are background tasks doing",
+    "stop background work",
+    "dispatch missions"
+  ]
+}

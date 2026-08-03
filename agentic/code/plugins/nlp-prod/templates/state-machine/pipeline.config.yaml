@@ -1,0 +1,29 @@
+version: "1.0.0"
+name: my-fsm-pipeline
+description: "TODO: one-sentence description"
+pattern: state-machine
+language: python
+
+steps:
+  - name: extract
+    prompt: prompts/extract.prompt.md
+    model: claude-haiku-4-5
+    max_tokens: 512
+    temperature: 0.0
+    input_variables:
+      - input_document
+
+fsm_config:
+  config_path: fsm.config.yaml
+
+eval_config:
+  enabled: true
+  evaluator_prompt: prompts/evaluator.prompt.md
+  test_cases: eval/cases.jsonl
+  pass_threshold: 0.85
+  max_attempts: 2
+  eval_model: claude-haiku-4-5
+
+cost_config:
+  monthly_volume: 10000
+  warn_above_usd: 0.02

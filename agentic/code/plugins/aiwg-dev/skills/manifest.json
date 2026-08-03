@@ -1,0 +1,19 @@
+{
+  "name": "aiwg-dev-skills",
+  "version": "2026.4.0",
+  "description": "Contributor validation and scaffolding skills for building AIWG addons, frameworks, and components",
+  "platforms": ["claude-code", "hermes", "openclaw"],
+  "skills": [
+    "validate-component",
+    "validate-addon",
+    "dev-doctor",
+    "devkit-create-addon",
+    "devkit-create-extension",
+    "devkit-create-framework",
+    "devkit-create-agent",
+    "devkit-create-command",
+    "devkit-create-skill",
+    "devkit-validate",
+    "devkit-test"
+  ]
+}

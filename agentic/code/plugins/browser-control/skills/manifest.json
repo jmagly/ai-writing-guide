@@ -1,0 +1,42 @@
+{
+  "name": "browser-control-skills",
+  "description": "Skills for setting up and operating Playwright MCP browser control",
+  "version": "0.1.0-draft",
+  "type": "skills-catalog",
+  "skills": [
+    {
+      "name": "browser-setup",
+      "description": "Interactive wizard that detects browsers, walks user through Playwright MCP Bridge extension install, captures the per-install token, registers the playwright MCP server with AIWG, injects into the active provider, and verifies the connection.",
+      "triggers": [
+        "set up browser control",
+        "install playwright mcp",
+        "wire up browser automation",
+        "configure playwright extension",
+        "drive my browser from the agent"
+      ],
+      "implementation": "TODO — interactive markdown skill with detection bash + AskUserQuestion checkpoints"
+    },
+    {
+      "name": "browser-doctor",
+      "description": "Run a health check on the browser-control setup: browser binary, extension presence, token file, AIWG MCP registration, provider config injection, optional allow-list. Outputs pass/fail per check and remediation commands.",
+      "triggers": [
+        "check browser control",
+        "browser doctor",
+        "verify playwright setup",
+        "diagnose browser mcp"
+      ],
+      "implementation": "TODO — read-only checks, structured JSON output suitable for CI"
+    },
+    {
+      "name": "browser-reset",
+      "description": "Rotate the Playwright MCP Bridge token, switch the target browser, or fully tear down the browser-control wiring. Walks user through extension UI regeneration where needed.",
+      "triggers": [
+        "rotate browser token",
+        "reset browser control",
+        "change agent browser",
+        "tear down playwright mcp"
+      ],
+      "implementation": "TODO — destructive operations gated through human-authorization"
+    }
+  ]
+}

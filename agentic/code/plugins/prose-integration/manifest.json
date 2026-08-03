@@ -1,0 +1,66 @@
+{
+  "id": "prose-integration",
+  "type": "addon",
+  "name": "OpenProse Integration",
+  "version": "0.1.0",
+  "description": "Tools for reading, parsing, validating, and executing OpenProse programs from AIWG workflows",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "prose",
+    "openprose",
+    "contracts",
+    "forme",
+    "requires",
+    "ensures",
+    "markdown-programming"
+  ],
+  "entry": {
+    "skills": "skills/",
+    "rules": "rules/"
+  },
+  "skills": [
+    "prose-detect",
+    "prose-install",
+    "prose-reader",
+    "prose-run",
+    "prose-validate",
+    "forme-manifest",
+    "prose-setup"
+  ],
+  "rules": [
+    "prose-bridge",
+    "prose-resolution"
+  ],
+  "dependencies": {
+    "required": [],
+    "optional": [
+      "rlm",
+      "aiwg-utils"
+    ]
+  },
+  "configuration": {
+    "defaults": {
+      "proseRoot": null,
+      "proseStateDir": ".aiwg/working/prose-runs",
+      "defaultModel": "opus",
+      "autoDetect": true
+    },
+    "detection": {
+      "signals": [
+        "env:PROSE_ROOT",
+        "env:AIWG_PROSE_ROOT",
+        "config:.aiwg/config.json#prose.path",
+        "path:~/.aiwg/prose/skills/open-prose",
+        "plugin:.claude-plugin/plugin.json#name=open-prose",
+        "path:~/.prose/skills/open-prose",
+        "cli:prose"
+      ],
+      "required": ["prose.md", "forme.md"],
+      "cacheConfig": ".aiwg/config.json"
+    }
+  }
+}

@@ -1,0 +1,306 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/setup/v1/setup-manifest.schema.json",
+  "title": "SetupManifest",
+  "description": "Agentic installer manifest. Declares platform matrix, prerequisites, params, and validated script steps for reproducible agent-driven installation.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "setup.aiwg.io/v1",
+      "description": "API version for the setup framework."
+    },
+    "kind": {
+      "const": "SetupManifest",
+      "description": "Resource kind."
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Identifier for this manifest." },
+        "description": { "type": "string" },
+        "version": { "type": "string" },
+        "install_type": {
+          "type": "string",
+          "enum": ["user", "developer", "ci"],
+          "default": "user",
+          "description": "Audience and scope of this manifest. 'user' = production deploy. 'developer' = local dev environment. 'ci' = headless pipeline setup."
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": ["platforms", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "platforms": {
+          "type": "array",
+          "description": "Supported platform targets. Installer refuses to run on unlisted platforms.",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/platform" }
+        },
+        "params": {
+          "type": "array",
+          "description": "User-facing parameters resolved before any step executes.",
+          "items": { "$ref": "#/definitions/param" }
+        },
+        "prerequisites": {
+          "type": "array",
+          "description": "Prerequisite checks run before any step. Required ones abort if missing.",
+          "items": { "$ref": "#/definitions/prerequisite" }
+        },
+        "os_config": {
+          "type": "array",
+          "description": "OS-level configuration entries. Developer manifests only. Each entry declares a check and an apply command for OS mutations (kernel params, group membership, file permissions, shell profile changes).",
+          "items": { "$ref": "#/definitions/os-config-entry" }
+        },
+        "steps": {
+          "type": "array",
+          "description": "Ordered installation steps.",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/step" }
+        },
+        "recovery": {
+          "type": "array",
+          "description": "Named recovery procedures referenced by steps via on_fail.",
+          "items": { "$ref": "#/definitions/recovery-procedure" }
+        },
+        "briefing": {
+          "type": "object",
+          "description": "Messages delivered to the user on completion.",
+          "additionalProperties": false,
+          "properties": {
+            "success": { "type": "string" },
+            "next_steps": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "platform": {
+      "type": "object",
+      "required": ["os"],
+      "additionalProperties": false,
+      "properties": {
+        "os": {
+          "type": "string",
+          "enum": ["linux", "macos", "windows", "docker"],
+          "description": "Operating system family."
+        },
+        "distros": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["ubuntu", "debian", "fedora", "rhel", "rocky", "centos", "arch", "alpine"]
+          }
+        },
+        "arch": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["x86_64", "arm64", "aarch64"]
+          }
+        },
+        "shell": {
+          "type": "string",
+          "enum": ["bash", "zsh", "sh", "wsl2", "native"],
+          "description": "Shell context. 'wsl2' = WSL2 bash on Windows. 'native' = PowerShell/cmd."
+        }
+      }
+    },
+    "param": {
+      "type": "object",
+      "required": ["name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Env-var-style name (UPPER_SNAKE_CASE)." },
+        "type": {
+          "type": "string",
+          "enum": ["string", "path", "bool", "int", "choice"],
+          "description": "Value type. 'path' values are expanded (~ → home dir)."
+        },
+        "default": { "description": "Default value if not provided by user." },
+        "required": { "type": "boolean", "default": false },
+        "description": { "type": "string" },
+        "choices": {
+          "type": "array",
+          "description": "Valid values when type is 'choice'.",
+          "items": { "type": "string" }
+        },
+        "interactive_required": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, the installer must prompt for this param interactively. Cannot be pre-filled by default in developer manifests. Use for params where a wrong default would cause OS configuration changes (SSH key email, local domain, GPG key ID, preferred IDE)."
+        }
+      }
+    },
+    "prerequisite": {
+      "type": "object",
+      "required": ["name", "detect"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "detect": {
+          "type": "string",
+          "description": "Shell command. Exit 0 = present. Non-zero = missing."
+        },
+        "version_min": {
+          "type": "string",
+          "description": "Minimum version string. Parsed from detect command stdout."
+        },
+        "required": { "type": "boolean", "default": true },
+        "install_hint": {
+          "type": "string",
+          "description": "Human-readable hint shown when prerequisite is missing."
+        }
+      }
+    },
+    "os-config-entry": {
+      "type": "object",
+      "required": ["id", "description", "check", "apply"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier. Referenced by os-config steps via config_id."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what this config entry does."
+        },
+        "check": {
+          "type": "string",
+          "description": "Shell command. Exit 0 = already configured, skip apply. Non-zero = needs configuration."
+        },
+        "apply": {
+          "type": "string",
+          "description": "Shell command or multi-line script to apply the configuration."
+        },
+        "requires_relogin": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, installer must warn the user that a logout/login or new shell is required for this change to take effect."
+        },
+        "interactive": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, apply triggers a GUI dialog or interactive prompt. Installer must pause and inform the user before running."
+        },
+        "platforms": {
+          "type": "array",
+          "description": "Platform(s) this entry applies to. Omit to apply on all declared platforms.",
+          "items": {
+            "type": "string",
+            "enum": ["linux", "macos", "windows"]
+          }
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "Unique step identifier. Referenced by depends_on and on_fail." },
+        "type": {
+          "type": "string",
+          "enum": ["script", "detect", "ask", "verify", "agentic", "platform-route", "chain", "os-config"],
+          "description": "Step execution type. 'os-config' applies a single os_config entry by ID (developer manifests only)."
+        },
+        "platform": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ],
+          "description": "Platform(s) this step runs on. Omit to run on all declared platforms."
+        },
+        "config_id": {
+          "type": "string",
+          "description": "ID of the os_config entry to apply. Required for type=os-config."
+        },
+        "script": {
+          "type": "string",
+          "description": "Path to script file relative to manifest. Required for type=script."
+        },
+        "params": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Param names to pass to the script as env vars."
+        },
+        "verify": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ],
+          "description": "Verification command(s) run after script step. Exit 0 = success."
+        },
+        "commands": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Commands to run for type=verify step."
+        },
+        "message": {
+          "type": "string",
+          "description": "Question presented to user for type=ask step."
+        },
+        "on_deny": {
+          "type": "string",
+          "enum": ["abort", "skip"],
+          "description": "Action when user denies an ask step."
+        },
+        "on_fail": {
+          "type": "string",
+          "description": "Recovery procedure ID to invoke on failure. 'recover' invokes the default recovery."
+        },
+        "instruction": {
+          "type": "string",
+          "description": "Free-form instruction for type=agentic step."
+        },
+        "manifest": {
+          "type": "string",
+          "description": "Path or URL to chained SetupManifest for type=chain step."
+        },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Step IDs that must complete successfully before this step runs."
+        },
+        "when": {
+          "type": "string",
+          "description": "Condition expression. Step skipped if evaluates to false. References params by name."
+        },
+        "routes": {
+          "type": "array",
+          "description": "Platform-conditional step sequences for type=platform-route.",
+          "items": {
+            "type": "object",
+            "required": ["platform", "steps"],
+            "properties": {
+              "platform": { "type": "string" },
+              "steps": { "type": "array", "items": { "$ref": "#/definitions/step" } }
+            }
+          }
+        }
+      }
+    },
+    "recovery-procedure": {
+      "type": "object",
+      "required": ["id", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/step" }
+        }
+      }
+    }
+  }
+}

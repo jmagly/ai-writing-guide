@@ -1,0 +1,70 @@
+{
+  "id": "browser-control",
+  "type": "addon",
+  "name": "Browser Control",
+  "version": "0.1.0-draft",
+  "description": "Drive a real, user-installed Chromium-derived browser from an AIWG agent. Wraps @playwright/mcp with a setup wizard, health-check doctor, allow-list enforcement, and an opinionated agent persona that respects authorization and audit boundaries.",
+  "core": false,
+  "autoInstall": false,
+  "status": "draft",
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "browser",
+    "playwright",
+    "playwright-mcp",
+    "automation",
+    "authentication",
+    "extension",
+    "chromium",
+    "chrome",
+    "edge",
+    "cdp",
+    "browser-extension"
+  ],
+  "entry": {
+    "skills": "skills/",
+    "agents": "agents/",
+    "rules": "rules/",
+    "templates": "templates/",
+    "docs": "docs/"
+  },
+  "skills": [
+    "browser-setup",
+    "browser-doctor",
+    "browser-reset"
+  ],
+  "agents": [
+    "browser-driver"
+  ],
+  "rules": [
+    "browser-control-safety"
+  ],
+  "templates": [
+    "browser-allowlist.yaml.tmpl"
+  ],
+  "requires": {
+    "external": {
+      "bins": ["node", "npx"],
+      "browsers": ["google-chrome OR microsoft-edge OR chromium-derived browser"],
+      "extension": "Playwright MCP Bridge (mmlmfjhmonkocbjadbfplnigmagldckm) installed in target browser"
+    },
+    "aiwg": {
+      "cli_subcommands": ["mcp add", "mcp inject", "mcp profile"]
+    }
+  },
+  "platform_support": {
+    "linux": "supported",
+    "macos": "supported",
+    "windows": "supported (browser detection paths differ)"
+  },
+  "extension_mode_browsers": ["google-chrome", "microsoft-edge"],
+  "cdp_fallback_browsers": ["chromium", "brave", "vivaldi", "arc", "opera"],
+  "related": {
+    "intake": ".aiwg/intake/browser-control-intake.md",
+    "feature_plan": ".aiwg/working/browser-control-feature-plan.md",
+    "adr": ".aiwg/architecture/adr-remote-browser-control.md",
+    "poc_test_plan": ".aiwg/working/playwright-mcp-poc.md"
+  }
+}

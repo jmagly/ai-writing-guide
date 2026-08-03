@@ -1,0 +1,221 @@
+# Eval Result Schema
+# Schema for records written to eval/results.jsonl by the eval loop runner
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/nlp-prod/eval-result/v1"
+title: "NLP Pipeline Eval Result"
+description: |
+  Schema for individual records in eval/results.jsonl.
+  Each record represents one evaluation run against one test case.
+  The file is append-only — runs accumulate over time for trend analysis.
+
+type: object
+required:
+  - version
+  - run_id
+  - case_id
+  - input
+  - output
+  - score
+  - pass
+  - feedback
+  - attempts
+  - total_cost_usd
+  - evaluated_at
+
+properties:
+  version:
+    type: string
+    default: "1.0.0"
+    description: "Schema version"
+
+  run_id:
+    type: string
+    description: "Unique identifier for this eval run batch (all cases in same run share run_id)"
+    pattern: "^eval-[a-z0-9-]+-[a-f0-9]{8}$"
+
+  case_id:
+    type: string
+    description: "Test case identifier from cases.jsonl"
+
+  pipeline:
+    type: string
+    description: "Pipeline name being evaluated"
+
+  step:
+    type: string
+    description: "Pipeline step being evaluated (null if whole-pipeline eval)"
+    nullable: true
+
+  generator_model:
+    type: string
+    description: "Model used for generation"
+
+  evaluator_model:
+    type: string
+    description: "Model used for evaluation"
+
+  input:
+    description: "Input provided to the generator"
+
+  output:
+    description: "Output produced by the generator (last attempt)"
+
+  score:
+    type: number
+    minimum: 0.0
+    maximum: 1.0
+    description: "Weighted composite score from rubric (0.0 = total failure, 1.0 = perfect)"
+
+  pass:
+    type: boolean
+    description: "True if score >= pass_threshold"
+
+  pass_threshold:
+    type: number
+    minimum: 0.0
+    maximum: 1.0
+    default: 0.85
+    description: "Threshold used for pass/fail determination"
+
+  feedback:
+    type: string
+    description: "Actionable feedback from evaluator describing what failed (empty string if pass)"
+
+  rubric_scores:
+    type: object
+    description: "Per-criterion scores from the evaluator rubric"
+    additionalProperties:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+
+  failure_category:
+    type: string
+    nullable: true
+    enum:
+      - format
+      - content
+      - hallucination
+      - missing_field
+      - constraint_violation
+      - other
+      - null
+    description: "Category of failure (null if pass)"
+
+  suggested_fix:
+    type: string
+    nullable: true
+    description: "Evaluator's one-sentence recommendation for prompt improvement"
+
+  attempts:
+    type: integer
+    minimum: 1
+    description: "Number of generation attempts before final output (1 = passed on first try)"
+
+  attempt_history:
+    type: array
+    description: "History of all attempts (scores + feedback for each)"
+    items:
+      type: object
+      properties:
+        attempt:
+          type: integer
+        output: {}
+        score:
+          type: number
+        pass:
+          type: boolean
+        feedback:
+          type: string
+
+  total_cost_usd:
+    type: number
+    minimum: 0.0
+    description: "Total cost for all generation + evaluation calls for this case"
+
+  cost_breakdown:
+    type: object
+    description: "Cost breakdown by step"
+    properties:
+      generation_usd:
+        type: number
+      evaluation_usd:
+        type: number
+      input_tokens:
+        type: integer
+      output_tokens:
+        type: integer
+
+  evaluated_at:
+    type: string
+    format: date-time
+    description: "Timestamp when evaluation completed"
+
+  contamination_warning:
+    type: boolean
+    default: false
+    description: "True if evaluator detected context contamination (isolation may be compromised)"
+
+# Aggregate statistics (written to eval/summary.json after a run batch)
+summary_schema:
+  type: object
+  properties:
+    run_id:
+      type: string
+    pipeline:
+      type: string
+    evaluated_at:
+      type: string
+      format: date-time
+    total_cases:
+      type: integer
+    passed:
+      type: integer
+    failed:
+      type: integer
+    pass_rate:
+      type: number
+    avg_score:
+      type: number
+    avg_attempts:
+      type: number
+    total_cost_usd:
+      type: number
+    failure_breakdown:
+      type: object
+      description: "Count of failures by failure_category"
+    top_failures:
+      type: array
+      description: "Top 3 failing cases with feedback for triage"
+
+# Example record
+examples:
+  - version: "1.0.0"
+    run_id: "eval-product-extractor-a1b2c3d4"
+    case_id: "case_004"
+    pipeline: "product-extractor"
+    step: "extract"
+    generator_model: "claude-haiku-4-5"
+    evaluator_model: "claude-haiku-4-5"
+    input: "ACME Widget Pro 2.0 — 48V, 10A, blue, $29.99/unit, min order 50"
+    output: {"name": "Widget Pro 2.0", "voltage": "48V", "current": "10A", "price": 29.99}
+    score: 0.72
+    pass: false
+    pass_threshold: 0.85
+    feedback: "Field 'color' missing — input contains 'blue'"
+    rubric_scores:
+      completeness: 0.6
+      accuracy: 0.9
+      format: 1.0
+    failure_category: missing_field
+    suggested_fix: "Add 'color' to the list of fields to extract in the system prompt"
+    attempts: 2
+    total_cost_usd: 0.000041
+    cost_breakdown:
+      generation_usd: 0.000028
+      evaluation_usd: 0.000013
+      input_tokens: 312
+      output_tokens: 45
+    evaluated_at: "2026-04-01T12:00:00Z"
+    contamination_warning: false

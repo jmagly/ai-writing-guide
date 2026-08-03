@@ -1,0 +1,94 @@
+{
+  "id": "line-memory",
+  "type": "addon",
+  "name": "Line Memory",
+  "version": "1.1.0",
+  "description": "Bounded, plain-text project memory with least-recently-used retention.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "memory",
+    "recency",
+    "retention",
+    "plain-text",
+    "project-context",
+    "bounded-context"
+  ],
+  "entry": {
+    "commands": "commands/",
+    "skills": "skills/",
+    "docs": "docs/"
+  },
+  "agents": [],
+  "commands": [],
+  "skills": [
+    "line-memory"
+  ],
+  "rules": [],
+  "cli_commands": {
+    "namespace": "line-memory",
+    "description": "Bounded plain-text project memory",
+    "entry": "commands/",
+    "subcommands": {
+      "add": {
+        "file": "line-memory.mjs",
+        "description": "Add or refresh a retained memory"
+      },
+      "import": {
+        "file": "line-memory.mjs",
+        "description": "Import a reviewed fact with provenance"
+      },
+      "list": {
+        "file": "line-memory.mjs",
+        "description": "List a bounded slice of newest memories"
+      },
+      "search": {
+        "file": "line-memory.mjs",
+        "description": "Search a bounded slice and refresh matching memories"
+      },
+      "touch": {
+        "file": "line-memory.mjs",
+        "description": "Move an exact memory to the newest position"
+      },
+      "archive": {
+        "file": "line-memory.mjs",
+        "description": "Archive a retained memory by handle or exact value"
+      },
+      "remove": {
+        "file": "line-memory.mjs",
+        "description": "Remove a retained memory with an audit tombstone"
+      },
+      "supersede": {
+        "file": "line-memory.mjs",
+        "description": "Supersede a retained memory with a replacement reference"
+      },
+      "prune": {
+        "file": "line-memory.mjs",
+        "description": "Remove the oldest memories above the retention limit"
+      },
+      "config": {
+        "file": "line-memory.mjs",
+        "description": "Get or set line-memory configuration"
+      }
+    }
+  },
+  "dependencies": {
+    "required": [],
+    "optional": [
+      "semantic-memory",
+      "llm-wiki"
+    ]
+  },
+  "configuration": {
+    "defaults": {
+      "path": ".aiwg/memory/line-memory.txt",
+      "metadataPath": ".aiwg/memory/line-memory.meta.json",
+      "maxLines": 200,
+      "dedupe": true,
+      "trimBlankLines": true
+    }
+  }
+}

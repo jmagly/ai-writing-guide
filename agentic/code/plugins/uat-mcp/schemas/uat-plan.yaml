@@ -1,0 +1,206 @@
+# UAT Plan Schema
+# Defines the structure of a generated UAT plan
+
+type: object
+required:
+  - version
+  - metadata
+  - tool_inventory
+  - phases
+
+properties:
+  version:
+    type: string
+    description: Schema version
+    const: "1.0"
+
+  metadata:
+    type: object
+    required:
+      - server_name
+      - mode
+      - generated_at
+      - tool_count
+      - phase_count
+      - test_count
+      - execution_mode
+    properties:
+      server_name:
+        type: string
+        description: Name of the MCP server being tested
+      mode:
+        type: string
+        enum: [mcp, api, ui]
+        description: Test mode (mcp is default and currently only supported mode)
+      generated_at:
+        type: string
+        format: date-time
+        description: Plan generation timestamp
+      generated_by:
+        type: string
+        description: Agent or command that generated the plan
+      tool_count:
+        type: integer
+        minimum: 1
+        description: Number of MCP tools discovered
+      phase_count:
+        type: integer
+        minimum: 1
+        description: Number of phases in the plan
+      test_count:
+        type: integer
+        minimum: 1
+        description: Total number of test cases
+      execution_mode:
+        type: string
+        enum: [quick, standard, full]
+        description: Breadth of test coverage
+      estimated_duration:
+        type: string
+        description: Estimated execution duration (e.g., "~15 minutes")
+
+  tool_inventory:
+    type: array
+    description: All discovered MCP tools
+    items:
+      type: object
+      required:
+        - name
+        - category
+      properties:
+        name:
+          type: string
+          description: Exact MCP tool name (e.g., mcp__gitea__create_issue)
+        description:
+          type: string
+          description: Tool description from manifest
+        category:
+          type: string
+          description: Logical grouping (e.g., "Issue Tracking", "Repository Management")
+        parameters:
+          type: object
+          description: Parameter schema summary
+          properties:
+            required:
+              type: array
+              items:
+                type: string
+            optional:
+              type: array
+              items:
+                type: string
+
+  phases:
+    type: array
+    description: Ordered list of test phases
+    items:
+      type: object
+      required:
+        - id
+        - name
+        - purpose
+        - tests
+      properties:
+        id:
+          type: string
+          pattern: "^P\\d{2}$"
+          description: Phase identifier (e.g., P00, P01)
+        name:
+          type: string
+          description: Phase name (e.g., "Preflight", "Issue Tracking")
+        purpose:
+          type: string
+          description: What this phase validates
+        prerequisites:
+          type: array
+          items:
+            type: string
+          description: Phase IDs that must complete before this one
+        tools_tested:
+          type: array
+          items:
+            type: string
+          description: MCP tool names tested in this phase
+        tests:
+          type: array
+          items:
+            $ref: "#/$defs/test_case"
+
+  coverage_matrix:
+    type: object
+    description: Maps tool names to their test coverage
+    additionalProperties:
+      type: object
+      properties:
+        phase:
+          type: string
+        happy_path:
+          type: boolean
+        edge_case:
+          type: boolean
+        negative:
+          type: boolean
+
+  variables:
+    type: object
+    description: Cross-phase variable wiring
+    additionalProperties:
+      type: object
+      properties:
+        stored_by:
+          type: string
+          description: Test ID that stores this variable
+        used_by:
+          type: array
+          items:
+            type: string
+          description: Test IDs that consume this variable
+        source:
+          type: string
+          description: Response field path (e.g., "response.id")
+
+$defs:
+  test_case:
+    type: object
+    required:
+      - id
+      - name
+      - tool
+      - parameters
+      - pass_criteria
+    properties:
+      id:
+        type: string
+        pattern: "^P\\d{2}-\\d{3}$"
+        description: Unique test ID (e.g., P03-007)
+      name:
+        type: string
+        description: Descriptive test name
+      tool:
+        type: string
+        description: Exact MCP tool name to call
+      mode:
+        type: string
+        enum: [happy_path, edge_case, negative]
+        default: happy_path
+      isolation:
+        type: boolean
+        default: false
+        description: If true, execute as single MCP call (for negative tests)
+      parameters:
+        type: object
+        description: Parameters to pass to the MCP tool
+      pass_criteria:
+        type: array
+        items:
+          type: string
+        description: Specific, checkable pass criteria
+      store:
+        type: object
+        description: Variables to store from the response
+        additionalProperties:
+          type: string
+          description: Response field path
+      notes:
+        type: string
+        description: Additional context or special considerations

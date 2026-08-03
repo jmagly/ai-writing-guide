@@ -1,0 +1,20 @@
+{
+  "name": "line-memory",
+  "version": "2026.8.3",
+  "description": "Bounded, plain-text project memory with least-recently-used retention.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "recency",
+    "retention",
+    "plain-text",
+    "project-context",
+    "bounded-context"
+  ]
+}

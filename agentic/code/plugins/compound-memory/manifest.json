@@ -1,0 +1,100 @@
+{
+  "id": "compound-memory",
+  "type": "addon",
+  "name": "Compound Memory",
+  "version": "0.2.0",
+  "description": "Governed orchestration across AIWG line memory, semantic memory, and llm-wiki.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "memory",
+    "compound-memory",
+    "line-memory",
+    "llm-wiki",
+    "semantic-memory",
+    "persistent-context"
+  ],
+  "entry": {
+    "commands": "commands/",
+    "skills": "skills/",
+    "docs": "docs/",
+    "schemas": "schemas/"
+  },
+  "agents": [],
+  "commands": [],
+  "skills": [
+    "compound-memory"
+  ],
+  "rules": [],
+  "cli_commands": {
+    "namespace": "compound-memory",
+    "description": "Inspect and orchestrate governed compound project memory",
+    "entry": "commands/",
+    "subcommands": {
+      "status": {
+        "file": "compound-memory.mjs",
+        "description": "Report dependency, data, index, review, and integrity readiness"
+      },
+      "ingest": {
+        "file": "compound-memory.mjs",
+        "description": "Preview or preserve a project source and route it to sessions or llm-wiki"
+      },
+      "capture-output": {
+        "file": "compound-memory.mjs",
+        "description": "Preview or register a derived output with exact context lineage"
+      },
+      "context": {
+        "file": "compound-memory.mjs",
+        "description": "Build a deterministic bounded context pack from line memory and wiki"
+      },
+      "review": {
+        "file": "compound-memory.mjs",
+        "description": "List a bounded, redacted queue of pending memory candidates"
+      },
+      "update": {
+        "file": "compound-memory.mjs",
+        "description": "Preview and confirm canonical provider-neutral context changes"
+      },
+      "maintain": {
+        "file": "compound-memory.mjs",
+        "description": "Preview maintenance or confirm replay-safe work with a receipt"
+      }
+    }
+  },
+  "dependencies": {
+    "required": [
+      "line-memory",
+      "llm-wiki"
+    ],
+    "optional": []
+  },
+  "configuration": {
+    "schema": "schemas/compound-memory-config.schema.json",
+    "defaults": {
+      "schemaVersion": "aiwg.compound-memory.config.v1",
+      "reviewPolicy": "explicit",
+      "paths": {
+        "lineMemory": ".aiwg/memory/line-memory.txt",
+        "lineMetadata": ".aiwg/memory/line-memory.meta.json",
+        "wiki": ".aiwg/wiki",
+        "canonicalContext": ".aiwg/context/compound-memory"
+      },
+      "context": {
+        "totalCharacters": 8000,
+        "lineCharacters": 2000,
+        "wikiCharacters": 4000,
+        "citationCharacters": 1500,
+        "instructionCharacters": 500,
+        "defaultNoTouch": false
+      },
+      "maintenance": {
+        "previewByDefault": true,
+        "scanLimit": 1000,
+        "lockTimeoutMs": 5000
+      }
+    }
+  }
+}

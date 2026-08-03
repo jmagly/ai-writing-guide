@@ -1,0 +1,22 @@
+{
+  "skills": [
+    {
+      "id": "color-palette",
+      "name": "Color Palette",
+      "description": "Generate, analyze, compare, export, and suggest color palettes using color theory.",
+      "entry": "color-palette.md"
+    },
+    {
+      "id": "color-trends",
+      "name": "Color Trends",
+      "description": "Research current color trends from Pantone, architecture, film, and design.",
+      "entry": "color-trends.md"
+    },
+    {
+      "id": "color-accessibility",
+      "name": "Color Accessibility",
+      "description": "WCAG accessibility analysis for color palettes including contrast ratios and compliance.",
+      "entry": "color-accessibility.md"
+    }
+  ]
+}

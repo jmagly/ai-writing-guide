@@ -1,0 +1,21 @@
+{
+  "name": "prose-integration",
+  "version": "2026.8.3",
+  "description": "Tools for reading, parsing, validating, and executing OpenProse programs from AIWG workflows",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "prose",
+    "openprose",
+    "contracts",
+    "forme",
+    "requires",
+    "ensures",
+    "markdown-programming"
+  ]
+}

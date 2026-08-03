@@ -20,17 +20,15 @@ commandHint:
 
 ## Provider Resolution
 
-Don't assume GitHub. Resolve the target workspace member, check its authorized
-operation, and use that member's `.aiwg/aiwg.config` `remotes.primary` (#994,
-#1764). Never route a PR through the workspace root or a sibling repository:
+Don't assume GitHub. The PR API to use is determined by the project's `.aiwg/aiwg.config` `remotes.primary` (#994):
 
 ```ts
-import { resolveWorkspaceMember } from 'aiwg/config/workspace';
+import { readAiwgConfig, resolveRemotes, resolveRemoteProvider } from 'aiwg/config';
 
-const { member } = await resolveWorkspaceMember(workspaceDir, targetRepo);
-if (!member) throw new Error('target repo is not authorized by the workspace');
-const url = member.primary.url;
-const host = member.primary.provider;
+const cfg = await readAiwgConfig(projectDir);
+const resolved = resolveRemotes(cfg?.remotes);     // primary defaults to "origin"
+const url = exec(`git remote get-url ${resolved.primary}`).trim();
+const host = resolveRemoteProvider(url);           // 'github' | 'gitea' | 'gitlab' | 'unknown'
 ```
 
 - `host === 'github'` → `gh pr view`, `gh pr review`, `gh api`

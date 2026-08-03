@@ -1,0 +1,841 @@
+# RLM Cost Schema
+# Cost tracking and budget enforcement for recursive language model operations
+# Research basis: REF-089 (Zhang et al., 2026)
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/rlm-cost/v1"
+title: "RLM Cost Schema"
+description: |
+  Schema for tracking costs (tokens and USD) across recursive task decomposition.
+  Implements budget enforcement and percentile-based cost reporting per REF-089
+  research showing bimodal cost distribution with high variance.
+
+type: object
+required:
+  - version
+  - tree_id
+  - records
+
+properties:
+  version:
+    type: string
+    pattern: "^1\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  tree_id:
+    type: string
+    pattern: "^tree-[a-f0-9]{8}$"
+    description: "Associated task tree ID"
+
+  records:
+    type: array
+    items:
+      $ref: "#/$defs/CostRecord"
+    description: "Per-node cost records"
+
+  aggregates:
+    $ref: "#/$defs/CostAggregates"
+
+  budget:
+    $ref: "#/$defs/CostBudget"
+
+  percentile_report:
+    $ref: "#/$defs/PercentileReport"
+
+  alerts:
+    type: array
+    items:
+      $ref: "#/$defs/CostAlert"
+    description: "Budget threshold alerts"
+
+$defs:
+  CostRecord:
+    type: object
+    description: "Cost tracking for a single task node"
+    required:
+      - node_id
+      - model
+    properties:
+      node_id:
+        type: string
+        pattern: "^task-[a-f0-9]{8}$"
+        description: "Task tree node ID"
+        examples:
+          - "task-a1b2c3d4"
+
+      model:
+        type: string
+        description: "Model used for this node"
+        examples:
+          - "claude-sonnet-4.5"
+          - "gpt-5.3-codex"
+          - "codex-mini-latest"
+          - "claude-opus-4.6"
+
+      provider:
+        type: string
+        description: "Provider name"
+        examples:
+          - "claude"
+          - "codex"
+          - "copilot"
+          - "factory"
+
+      input_tokens:
+        type: integer
+        minimum: 0
+        description: "Input tokens consumed"
+
+      output_tokens:
+        type: integer
+        minimum: 0
+        description: "Output tokens generated"
+
+      total_tokens:
+        type: integer
+        minimum: 0
+        description: "Total tokens (input + output)"
+
+      cost_usd:
+        type: number
+        minimum: 0
+        description: "Estimated cost in USD"
+        examples:
+          - 0.015
+          - 0.032
+          - 0.001
+
+      input_cost_usd:
+        type: number
+        minimum: 0
+        description: "Cost of input tokens"
+
+      output_cost_usd:
+        type: number
+        minimum: 0
+        description: "Cost of output tokens"
+
+      started_at:
+        type: string
+        format: date-time
+        description: "Node execution start time"
+
+      completed_at:
+        type: string
+        format: date-time
+        description: "Node execution completion time"
+
+      duration_ms:
+        type: integer
+        minimum: 0
+        description: "Execution duration in milliseconds"
+
+      cache_hits:
+        type: integer
+        minimum: 0
+        description: "Number of cache hits (if caching enabled)"
+
+      cache_savings_usd:
+        type: number
+        minimum: 0
+        description: "Cost saved from caching"
+
+      pricing:
+        $ref: "#/$defs/PricingInfo"
+
+  PricingInfo:
+    type: object
+    description: "Pricing information for cost calculation"
+    properties:
+      input_cost_per_1k:
+        type: number
+        minimum: 0
+        description: "Cost per 1k input tokens"
+        examples:
+          - 0.003
+          - 0.01
+
+      output_cost_per_1k:
+        type: number
+        minimum: 0
+        description: "Cost per 1k output tokens"
+        examples:
+          - 0.015
+          - 0.03
+
+      currency:
+        type: string
+        default: "USD"
+
+      pricing_date:
+        type: string
+        format: date
+        description: "Date of pricing (for historical accuracy)"
+
+  CostAggregates:
+    type: object
+    description: "Aggregate cost statistics across entire task tree"
+    properties:
+      total_input_tokens:
+        type: integer
+        minimum: 0
+        description: "Sum of all input tokens"
+
+      total_output_tokens:
+        type: integer
+        minimum: 0
+        description: "Sum of all output tokens"
+
+      total_tokens:
+        type: integer
+        minimum: 0
+        description: "Sum of all tokens"
+
+      total_cost_usd:
+        type: number
+        minimum: 0
+        description: "Total cost in USD"
+
+      total_cache_savings_usd:
+        type: number
+        minimum: 0
+        description: "Total savings from caching"
+
+      effective_cost_usd:
+        type: number
+        minimum: 0
+        description: "Net cost after cache savings"
+
+      node_count:
+        type: integer
+        minimum: 0
+        description: "Total number of nodes"
+
+      sub_call_count:
+        type: integer
+        minimum: 0
+        description: "Number of recursive sub-calls (non-root nodes)"
+
+      depth_max:
+        type: integer
+        minimum: 0
+        description: "Maximum tree depth"
+
+      root_model:
+        type: string
+        description: "Model used for root task"
+
+      sub_model:
+        type: string
+        description: "Model used for sub-tasks"
+
+      by_model:
+        type: object
+        description: "Cost breakdown by model"
+        additionalProperties:
+          type: object
+          properties:
+            node_count:
+              type: integer
+            total_tokens:
+              type: integer
+            total_cost_usd:
+              type: number
+
+      by_depth:
+        type: array
+        items:
+          type: object
+          properties:
+            depth:
+              type: integer
+            node_count:
+              type: integer
+            total_tokens:
+              type: integer
+            total_cost_usd:
+              type: number
+
+  CostBudget:
+    type: object
+    description: "Budget configuration and enforcement"
+    properties:
+      budget_tokens:
+        type: integer
+        minimum: 0
+        default: 500000
+        description: "Token budget limit (default 500k)"
+
+      budget_usd:
+        type: number
+        minimum: 0
+        description: "USD budget limit (optional)"
+
+      warn_threshold_pct:
+        type: number
+        minimum: 0
+        maximum: 100
+        default: 80
+        description: "Percentage threshold for warnings (default 80%)"
+
+      abort_threshold_pct:
+        type: number
+        minimum: 0
+        maximum: 100
+        default: 100
+        description: "Percentage threshold for abort (default 100%)"
+
+      enforcement:
+        type: string
+        enum: [warn, abort, log-only]
+        default: warn
+        description: "Budget enforcement mode"
+        examples:
+          - "warn: log warnings when thresholds exceeded"
+          - "abort: terminate execution at abort threshold"
+          - "log-only: only log usage, no enforcement"
+
+      current_usage_tokens:
+        type: integer
+        minimum: 0
+        description: "Current token usage"
+
+      current_usage_usd:
+        type: number
+        minimum: 0
+        description: "Current USD usage"
+
+      remaining_tokens:
+        type: integer
+        description: "Tokens remaining in budget"
+
+      remaining_usd:
+        type: number
+        description: "USD remaining in budget"
+
+      usage_pct:
+        type: number
+        minimum: 0
+        maximum: 100
+        description: "Percentage of budget consumed"
+
+      status:
+        type: string
+        enum: [ok, warning, critical, exceeded]
+        description: "Budget status"
+        examples:
+          - "ok: under warn threshold"
+          - "warning: over warn threshold"
+          - "critical: over abort threshold"
+          - "exceeded: budget exhausted"
+
+  PercentileReport:
+    type: object
+    description: |
+      Percentile-based cost statistics per REF-089 research.
+      Research shows bimodal cost distribution with high variance,
+      making percentile reporting essential.
+    properties:
+      sample_count:
+        type: integer
+        minimum: 0
+        description: "Number of samples in report"
+
+      metric:
+        type: string
+        enum: [tokens, cost_usd]
+        description: "Which metric this report covers"
+
+      percentiles:
+        type: object
+        description: "Percentile values"
+        properties:
+          p25:
+            type: number
+            description: "25th percentile (Q1)"
+
+          p50:
+            type: number
+            description: "50th percentile (median)"
+
+          p75:
+            type: number
+            description: "75th percentile (Q3)"
+
+          p90:
+            type: number
+            description: "90th percentile"
+
+          p95:
+            type: number
+            description: "95th percentile"
+
+          p99:
+            type: number
+            description: "99th percentile"
+
+      mean:
+        type: number
+        description: "Arithmetic mean"
+
+      std_dev:
+        type: number
+        minimum: 0
+        description: "Standard deviation"
+
+      min:
+        type: number
+        description: "Minimum value"
+
+      max:
+        type: number
+        description: "Maximum value"
+
+      comparison_to_base_model:
+        type: object
+        description: "Comparison to base model without RLM"
+        properties:
+          ratio:
+            type: number
+            description: "RLM cost / base cost ratio"
+            examples:
+              - 0.33  # 3x cheaper (REF-089 finding)
+              - 1.0   # comparable (median case)
+              - 2.5   # outlier expensive case
+
+          interpretation:
+            type: string
+            examples:
+              - "RLM is 67% cheaper than base model"
+              - "RLM cost comparable to base model"
+              - "RLM 2.5x more expensive (outlier)"
+
+      comparison_to_summarization:
+        type: object
+        description: "Comparison to summarization agent pattern"
+        properties:
+          ratio:
+            type: number
+            description: "RLM cost / summarization cost ratio"
+            examples:
+              - 0.33  # 3x cheaper (REF-089 finding)
+              - 1.0   # comparable
+
+          interpretation:
+            type: string
+            examples:
+              - "RLM is 67% cheaper than summarization agents"
+
+      notes:
+        type: array
+        items:
+          type: string
+        description: "Additional observations"
+        examples:
+          - "Bimodal distribution observed (REF-089)"
+          - "High variance: outliers significantly more expensive"
+          - "Median cost comparable to base model"
+
+  CostAlert:
+    type: object
+    description: "Budget threshold alert"
+    required:
+      - alert_type
+      - threshold_pct
+      - timestamp
+    properties:
+      alert_id:
+        type: string
+        pattern: "^alert-[a-f0-9]{8}$"
+        description: "Unique alert identifier"
+
+      alert_type:
+        type: string
+        enum: [warn, abort, info]
+        description: "Alert severity"
+        examples:
+          - "warn: warning threshold crossed"
+          - "abort: abort threshold crossed, execution should stop"
+          - "info: informational milestone"
+
+      threshold_pct:
+        type: number
+        minimum: 0
+        maximum: 100
+        description: "Threshold percentage that triggered alert"
+
+      current_usage:
+        type: object
+        description: "Current usage at time of alert"
+        properties:
+          tokens:
+            type: integer
+          cost_usd:
+            type: number
+          usage_pct:
+            type: number
+
+      budget_remaining:
+        type: object
+        description: "Remaining budget at time of alert"
+        properties:
+          tokens:
+            type: integer
+          cost_usd:
+            type: number
+
+      timestamp:
+        type: string
+        format: date-time
+        description: "When alert was triggered"
+
+      node_id:
+        type: string
+        description: "Node that caused threshold crossing"
+
+      recommendation:
+        type: string
+        description: "Recommended action"
+        examples:
+          - "Continue monitoring usage"
+          - "Consider stopping execution to stay within budget"
+          - "Review sub-task decomposition strategy for efficiency"
+          - "Abort execution: budget exceeded"
+
+      acknowledged:
+        type: boolean
+        default: false
+        description: "Whether alert has been acknowledged"
+
+      acknowledged_by:
+        type: string
+        description: "Who acknowledged the alert"
+
+      acknowledged_at:
+        type: string
+        format: date-time
+        description: "When alert was acknowledged"
+
+# Examples
+examples:
+  simple_cost_tree:
+    version: "1.0.0"
+    tree_id: "tree-12345678"
+    records:
+      - node_id: "task-root001"
+        model: "claude-sonnet-4.5"
+        provider: "claude"
+        input_tokens: 5000
+        output_tokens: 1500
+        total_tokens: 6500
+        cost_usd: 0.0975
+        input_cost_usd: 0.015
+        output_cost_usd: 0.0825
+        started_at: "2026-02-09T10:00:00Z"
+        completed_at: "2026-02-09T10:00:45Z"
+        duration_ms: 45000
+      - node_id: "task-sub001"
+        model: "codex-mini-latest"
+        provider: "codex"
+        input_tokens: 2000
+        output_tokens: 800
+        total_tokens: 2800
+        cost_usd: 0.014
+        started_at: "2026-02-09T10:00:45Z"
+        completed_at: "2026-02-09T10:01:15Z"
+        duration_ms: 30000
+      - node_id: "task-sub002"
+        model: "codex-mini-latest"
+        provider: "codex"
+        input_tokens: 1800
+        output_tokens: 700
+        total_tokens: 2500
+        cost_usd: 0.0125
+        started_at: "2026-02-09T10:00:45Z"
+        completed_at: "2026-02-09T10:01:10Z"
+        duration_ms: 25000
+    aggregates:
+      total_input_tokens: 8800
+      total_output_tokens: 3000
+      total_tokens: 11800
+      total_cost_usd: 0.124
+      node_count: 3
+      sub_call_count: 2
+      depth_max: 1
+      root_model: "claude-sonnet-4.5"
+      sub_model: "codex-mini-latest"
+      by_model:
+        claude-sonnet-4.5:
+          node_count: 1
+          total_tokens: 6500
+          total_cost_usd: 0.0975
+        codex-mini-latest:
+          node_count: 2
+          total_tokens: 5300
+          total_cost_usd: 0.0265
+      by_depth:
+        - depth: 0
+          node_count: 1
+          total_tokens: 6500
+          total_cost_usd: 0.0975
+        - depth: 1
+          node_count: 2
+          total_tokens: 5300
+          total_cost_usd: 0.0265
+    budget:
+      budget_tokens: 100000
+      warn_threshold_pct: 80
+      abort_threshold_pct: 100
+      enforcement: warn
+      current_usage_tokens: 11800
+      remaining_tokens: 88200
+      usage_pct: 11.8
+      status: ok
+
+  budget_warning_scenario:
+    version: "1.0.0"
+    tree_id: "tree-87654321"
+    records:
+      - node_id: "task-root001"
+        model: "claude-opus-4.6"
+        provider: "claude"
+        input_tokens: 50000
+        output_tokens: 20000
+        total_tokens: 70000
+        cost_usd: 1.65
+      - node_id: "task-sub001"
+        model: "claude-sonnet-4.5"
+        input_tokens: 15000
+        output_tokens: 5000
+        total_tokens: 20000
+        cost_usd: 0.3
+    aggregates:
+      total_tokens: 90000
+      total_cost_usd: 1.95
+      node_count: 2
+    budget:
+      budget_tokens: 100000
+      budget_usd: 2.0
+      warn_threshold_pct: 80
+      abort_threshold_pct: 100
+      enforcement: warn
+      current_usage_tokens: 90000
+      current_usage_usd: 1.95
+      remaining_tokens: 10000
+      remaining_usd: 0.05
+      usage_pct: 90.0
+      status: warning
+    alerts:
+      - alert_id: "alert-00000001"
+        alert_type: warn
+        threshold_pct: 80
+        current_usage:
+          tokens: 90000
+          cost_usd: 1.95
+          usage_pct: 90.0
+        budget_remaining:
+          tokens: 10000
+          cost_usd: 0.05
+        timestamp: "2026-02-09T10:05:00Z"
+        node_id: "task-sub001"
+        recommendation: "Consider stopping execution to stay within budget"
+        acknowledged: false
+
+  percentile_report_example:
+    version: "1.0.0"
+    tree_id: "tree-report001"
+    percentile_report:
+      sample_count: 100
+      metric: cost_usd
+      percentiles:
+        p25: 0.15
+        p50: 0.35
+        p75: 0.60
+        p90: 1.20
+        p95: 2.50
+        p99: 8.00
+      mean: 0.85
+      std_dev: 1.45
+      min: 0.05
+      max: 12.00
+      comparison_to_base_model:
+        ratio: 1.05
+        interpretation: "RLM cost comparable to base model (median case)"
+      comparison_to_summarization:
+        ratio: 0.33
+        interpretation: "RLM is 67% cheaper than summarization agents"
+      notes:
+        - "Bimodal distribution observed (REF-089)"
+        - "High variance: p99 is 22x higher than median"
+        - "Outliers significantly more expensive than typical runs"
+        - "Median RLM cost comparable to base model"
+        - "Up to 3x cheaper than summarization in typical cases"
+
+  cache_savings_example:
+    version: "1.0.0"
+    tree_id: "tree-cached001"
+    records:
+      - node_id: "task-root001"
+        model: "claude-sonnet-4.5"
+        input_tokens: 10000
+        output_tokens: 3000
+        total_tokens: 13000
+        cost_usd: 0.195
+        cache_hits: 2
+        cache_savings_usd: 0.045
+      - node_id: "task-sub001"
+        model: "claude-sonnet-4.5"
+        input_tokens: 5000
+        output_tokens: 1500
+        total_tokens: 6500
+        cost_usd: 0.0975
+        cache_hits: 1
+        cache_savings_usd: 0.015
+    aggregates:
+      total_tokens: 19500
+      total_cost_usd: 0.2925
+      total_cache_savings_usd: 0.06
+      effective_cost_usd: 0.2325
+      node_count: 2
+
+# Storage paths
+storage_paths:
+  cost_tree: ".aiwg/rlm/trees/{tree_id}/cost.json"
+  cost_report: ".aiwg/rlm/trees/{tree_id}/cost-report.md"
+  budget_alerts: ".aiwg/rlm/trees/{tree_id}/alerts.jsonl"
+  percentile_history: ".aiwg/rlm/cost-history/percentiles.jsonl"
+
+# Agent protocol
+agent_protocol:
+  track_node_cost:
+    description: "Record cost for a single node execution"
+    steps:
+      - capture_token_counts
+      - lookup_pricing_info
+      - calculate_cost
+      - create_cost_record
+      - update_aggregates
+      - check_budget_thresholds
+      - trigger_alerts_if_needed
+
+  check_budget:
+    description: "Check budget status before spawning sub-task"
+    steps:
+      - load_current_usage
+      - calculate_projected_cost
+      - compare_to_budget
+      - if_over_threshold:
+          - generate_alert
+          - optionally_abort
+      - return_budget_status
+
+  generate_percentile_report:
+    description: "Generate percentile-based cost report"
+    steps:
+      - collect_historical_cost_data
+      - calculate_percentiles
+      - calculate_mean_std_dev
+      - compare_to_base_model
+      - compare_to_summarization
+      - format_report
+
+  handle_budget_alert:
+    description: "Handle budget threshold alert"
+    actions:
+      warn:
+        - log_alert
+        - notify_user
+        - continue_execution
+      abort:
+        - log_alert
+        - notify_user
+        - stop_execution
+        - save_state
+      log_only:
+        - log_alert
+
+# Budget enforcement strategies
+budget_enforcement:
+  warn:
+    description: "Log warnings, continue execution"
+    use_case: "Development, exploratory analysis"
+    actions:
+      - log_warning
+      - notify_user
+      - continue_execution
+
+  abort:
+    description: "Terminate execution at threshold"
+    use_case: "Production, cost-sensitive operations"
+    actions:
+      - log_alert
+      - save_checkpoint
+      - stop_execution
+      - return_partial_results
+
+  log_only:
+    description: "Only log usage, no enforcement"
+    use_case: "Cost tracking without limits"
+    actions:
+      - log_usage
+      - continue_execution
+
+# Cost optimization strategies
+optimization_strategies:
+  model_selection:
+    description: "Use cheaper models for sub-tasks"
+    pattern: "root: opus/gpt-5, sub: sonnet/codex-mini"
+    savings: "50-70% typical"
+
+  caching:
+    description: "Enable prompt caching for repeated context"
+    savings: "Variable, up to 40% for repeated patterns"
+
+  context_minimization:
+    description: "Minimize context passed to sub-tasks"
+    pattern: "Pass only relevant excerpts, not full documents"
+    savings: "20-30% typical"
+
+  parallel_execution:
+    description: "Execute sub-tasks in parallel to reduce total time"
+    savings: "Cost neutral, but reduces wall-clock time"
+
+  early_termination:
+    description: "Stop on budget exhaustion or sufficient confidence"
+    savings: "Prevents runaway costs"
+
+# Pricing reference (as of 2026-02-09)
+pricing_reference:
+  note: "Pricing subject to change, use provider APIs for current rates"
+  examples:
+    claude-opus-4.6:
+      input_per_1k: 0.015
+      output_per_1k: 0.075
+    claude-sonnet-4.5:
+      input_per_1k: 0.003
+      output_per_1k: 0.015
+    codex-mini-latest:
+      input_per_1k: 0.002
+      output_per_1k: 0.006
+    gpt-5.3-codex:
+      input_per_1k: 0.01
+      output_per_1k: 0.03
+
+# Limits
+limits:
+  max_cost_records: 10000
+  max_alerts_per_tree: 100
+  budget_check_interval_nodes: 1  # Check after every node
+
+# References
+references:
+  research:
+    - "REF-089: Recursive Language Models (Zhang et al., 2026)"
+    - "REF-089 Figure 3: Cost comparison showing bimodal distribution"
+  related:
+    - "@agentic/code/addons/rlm/schemas/rlm-task-tree.yaml"
+    - "@agentic/code/addons/rlm/schemas/rlm-state.yaml"
+    - "@agentic/code/addons/rlm/schemas/rlm-trajectory.yaml"
+  implementation:
+    - "@tools/rlm/"
+    - "@agentic/code/addons/rlm/"

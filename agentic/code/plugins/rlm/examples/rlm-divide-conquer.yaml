@@ -1,0 +1,93 @@
+# RLM Divide-and-Conquer Example
+# Semantic chunking pipeline for large document analysis
+# Based on OpenProse example 41-rlm-divide-conquer
+#
+# Pattern: chunker → analyzer → synthesizer pipeline
+# Use when: input is too large for single-pass analysis
+
+version: "1.0.0"
+
+root_task:
+  node_id: "task-dc00000"
+  depth: 0
+  prompt: "Analyze the entire codebase for API endpoint documentation completeness"
+  decomposition_strategy: map-reduce
+  merge_strategy: summarize
+  chunking_strategy: semantic-boundary
+  batch_size: 25
+
+  children:
+    # Phase 1: Chunker identifies semantic boundaries
+    - node_id: "task-chunk01"
+      parent_id: "task-dc00000"
+      depth: 1
+      prompt: |
+        Scan the codebase and identify all API endpoint files.
+        Group them by module/domain into 4-8 semantic chunks.
+        Each chunk should contain related endpoints (auth, users, billing, etc.).
+        Output a JSON manifest of chunks with file lists.
+      preferred_model: haiku
+      context:
+        type: filtered
+        source: "retrieved_documents"
+        filters:
+          file_patterns: ["src/**/*.ts", "src/**/*.js"]
+      status: pending
+
+    # Phase 2: Parallel analyzers process each chunk
+    - node_id: "task-anlz001"
+      parent_id: "task-dc00000"
+      depth: 1
+      prompt: |
+        For each endpoint in this chunk:
+        1. Extract the route, method, and handler
+        2. Check if JSDoc/TSDoc exists
+        3. Check if OpenAPI spec references it
+        4. Rate documentation completeness (0-100)
+        Output structured findings per endpoint.
+      preferred_model: sonnet
+      decomposition_strategy: parallel
+      context:
+        type: slice
+        source: "parent_result"
+      status: pending
+
+    # Phase 3: Synthesizer merges chunk results
+    - node_id: "task-synth01"
+      parent_id: "task-dc00000"
+      depth: 1
+      prompt: |
+        Synthesize all chunk analyses into a single documentation
+        completeness report. Include:
+        - Overall coverage percentage
+        - Top 10 undocumented endpoints by importance
+        - Module-by-module breakdown
+        - Specific recommendations for each gap
+      preferred_model: sonnet
+      context:
+        type: full
+        source: "parent_result"
+      quality_gate:
+        min_score: 85
+        scoring_criteria: "Completeness of coverage, accuracy of gap identification, actionability of recommendations"
+        scorer_model: sonnet
+        max_iterations: 3
+        fallback: return_best
+      status: pending
+
+  status: pending
+
+metadata:
+  tree_id: "tree-divconq0"
+  root_prompt: "Codebase API documentation completeness analysis"
+  max_depth: 2
+  total_nodes: 4
+  execution_mode: logged
+
+# Notes:
+# - Chunker uses Haiku (simple file grouping task)
+# - Analyzers use Sonnet (moderate code analysis)
+# - Synthesizer uses Sonnet with quality gate (final deliverable)
+# - semantic-boundary chunking respects module boundaries
+# - batch_size: 25 means analyzer processes up to 25 endpoints per sub-agent
+# - Parallel analyzers run independently per chunk
