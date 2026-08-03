@@ -8,7 +8,7 @@
  *   - New addons added to agentic/code/addons/ are auto-discovered
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import fs from 'fs/promises';
 import { existsSync, mkdtempSync, rmSync } from 'fs';
 import path from 'path';
@@ -22,6 +22,24 @@ import {
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
 const BIN = path.join(REPO_ROOT, 'bin/aiwg.mjs');
+const TEST_HOME = mkdtempSync(path.join(os.tmpdir(), 'aiwg-use-cli-home-'));
+
+afterAll(() => {
+  rmSync(TEST_HOME, { recursive: true, force: true });
+});
+
+function isolatedCliEnv(overrides: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    HOME: TEST_HOME,
+    USERPROFILE: TEST_HOME,
+    XDG_CACHE_HOME: path.join(TEST_HOME, '.cache'),
+    XDG_CONFIG_HOME: path.join(TEST_HOME, '.config'),
+    XDG_DATA_HOME: path.join(TEST_HOME, '.local', 'share'),
+    NO_UPDATE_NOTIFIER: '1',
+    ...overrides,
+  };
+}
 
 function runAiwg(
   args: string[],
@@ -34,7 +52,9 @@ function runAiwg(
     cwd,
     encoding: 'utf-8',
     timeout: 60_000,
-    env: { ...process.env },
+    // Do not inherit the operator's ~/.aiwg/channel.json. A dev/edge pointer
+    // can otherwise route this release-candidate test through another checkout.
+    env: isolatedCliEnv(),
   });
   return {
     stdout: result.stdout ?? '',
@@ -52,7 +72,7 @@ function runAiwgWithEnv(
     cwd,
     encoding: 'utf-8',
     timeout: 60_000,
-    env: { ...process.env, ...env },
+    env: isolatedCliEnv(env),
   });
   return {
     stdout: result.stdout ?? '',
@@ -133,6 +153,18 @@ describe('aiwg use — disallow list', () => {
     const result = runAiwg(['use', 'auto-memory', '--dry-run'], projectDir);
     // dry-run exit code 0 means the addon was recognised and would be deployed
     expect(result.exitCode, result.stderr || result.stdout).toBe(0);
+  });
+
+  it('keeps every bundled addon manifest identity aligned with its directory', async () => {
+    const addonsRoot = path.join(REPO_ROOT, 'agentic/code/addons');
+    const entries = await fs.readdir(addonsRoot, { withFileTypes: true });
+
+    for (const entry of entries.filter(candidate => candidate.isDirectory())) {
+      const manifestPath = path.join(addonsRoot, entry.name, 'manifest.json');
+      if (!existsSync(manifestPath)) continue;
+      const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+      expect(manifest.id, manifestPath).toBe(entry.name);
+    }
   });
 });
 

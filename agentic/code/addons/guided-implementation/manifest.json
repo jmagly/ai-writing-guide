@@ -1,4 +1,5 @@
 {
+  "id": "guided-implementation",
   "name": "guided-implementation",
   "version": "1.0.0",
   "description": "Bounded iteration control for autonomous issue-to-code implementation",
