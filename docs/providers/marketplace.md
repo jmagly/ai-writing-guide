@@ -448,6 +448,8 @@ All AIWG-bundled plugins are MIT-licensed. Third-party plugins installed via the
 
 ## Related Documentation
 
+- `@docs/providers/git-native-marketplace.md` — Git-native provenance,
+  immutable locks, signed catalogs, project/global scope, and offline exchange
 - `@docs/providers/skills-paths.md` — Provider deployment paths reference
 - `@docs/providers/capability-matrix.md` — Feature capability matrix
 - `@.aiwg/references/platforms/claude-code.md` — Claude Code deep reference

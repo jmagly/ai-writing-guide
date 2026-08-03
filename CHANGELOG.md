@@ -7,6 +7,23 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Git-native package exchange** - versioned closed envelopes bind package
+  identity to canonical Git remotes, immutable commits, tree/artifact digests,
+  W3C PROV, Ed25519 publisher trust, dependencies, licenses, optional SBOMs,
+  and lossless Fortemi `2.0.0/full-v1` evidence. Signed federated catalogs,
+  project/global indices, offline verification, portable export/import, and
+  operation receipts provide decentralized discovery without treating catalog
+  inclusion as endorsement (#2009).
+
+### Changed
+
+- **Remote package installation** - movable refs resolve to commit-keyed
+  detached caches before deployment, standalone `.aiwg/plugins/` wrappers are
+  discovered safely, and external payload deployment copies complete skills,
+  agents, and rules for the selected provider (#2009).
+
 ## [2026.8.1] - 2026-08-02 - "Persistent memory and governed fleet operations"
 
 ### Added

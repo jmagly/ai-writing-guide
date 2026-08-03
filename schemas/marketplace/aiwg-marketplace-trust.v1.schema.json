@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/marketplace/aiwg-marketplace-trust.v1.schema.json",
+  "title": "AIWG marketplace local trust roots, delegations, rotations, and revocations",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "keys"],
+  "properties": {
+    "schemaVersion": { "const": "aiwg.marketplace.trust-store.v1" },
+    "keys": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["keyId", "publicKey", "publisher", "validFrom"],
+        "properties": {
+          "keyId": { "type": "string", "minLength": 1 },
+          "publicKey": { "type": "string", "minLength": 1 },
+          "publisher": { "type": "string", "minLength": 1 },
+          "trustRoot": { "type": "boolean" },
+          "delegatedBy": { "type": "string", "minLength": 1 },
+          "delegationSignature": { "type": "string", "minLength": 1 },
+          "validFrom": { "type": "string", "format": "date-time" },
+          "validUntil": { "type": "string", "format": "date-time" },
+          "revokedAt": { "type": "string", "format": "date-time" },
+          "revocationReason": { "type": "string" }
+        }
+      }
+    },
+    "policies": { "type": "object", "additionalProperties": { "type": "object" } }
+  }
+}

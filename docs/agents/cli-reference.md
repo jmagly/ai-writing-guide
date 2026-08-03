@@ -803,7 +803,9 @@ remote Git repository into the local registry cache. Distinct from
 `install-plugin` (Claude Code plugin format).
 
 ```bash
-aiwg install <ref> [--deploy] [--provider <name>] [--target <dir>] [--refresh]
+aiwg install <ref> [--ref <tag-or-sha>] [--package <id>] [--verify]
+  [--deploy] [--provider <name>] [--target <dir>]
+  [--project-local|--global] [--refresh]
 ```
 
 **Arguments:**
@@ -816,6 +818,18 @@ aiwg install <ref> [--deploy] [--provider <name>] [--target <dir>] [--refresh]
 - `--provider <name>` - Target provider (claude, copilot, cursor, ...) — default `claude`
 - `--target <dir>` - Project directory to deploy into — default cwd
 - `--refresh` - Force re-pull even if package is already cached
+- `--ref <tag-or-sha>` - Resolve and lock this Git ref before deployment
+- `--package <id>` - Select a wrapper when the repository contains several
+- `--verify` - Require a trusted Ed25519 publisher signature
+- `--policy <name|path>` - Apply a named local trust policy or JSON policy
+- `--project-local` - Store registry, lock, receipts, and indices below the
+  target project's `.aiwg/` directory
+- `--global` - Store package state in the user AIWG directory (default)
+
+Mutable refs are resolved to immutable commits and cached by commit. Direct
+Git installs support root bundles and validated standalone
+`.aiwg/plugins/<id>` wrappers. Without `--verify`, an unsigned but digest-valid
+package is reported as `integrity-only`.
 
 **Capabilities:** cli, framework, install, git
 **Tools:** Read, Write, Bash
@@ -824,22 +838,43 @@ aiwg install <ref> [--deploy] [--provider <name>] [--target <dir>] [--refresh]
 
 ### marketplace
 
-Search and list packages across configured marketplace adapters (clawhub, openclaw, local).
+Exchange Git-native packages through direct remotes and independently signed
+catalogs. Catalog inclusion is an observation, not an AIWG endorsement.
 
 ```bash
+aiwg marketplace add <catalog-git-url> [--ref <tag-or-sha>]
 aiwg marketplace search <query> [--source <id>] [--json]
-aiwg marketplace list [--source <id>] [--json]
+aiwg marketplace info <package>
+aiwg marketplace install <git-url|package> [--ref <tag-or-sha>] [--verify]
+aiwg marketplace verify <package|lock-id> [--require-signature]
+aiwg marketplace export <package> --output <archive.json>
+aiwg marketplace import <archive.json> [--verify]
+aiwg marketplace publish <source> --key <pem> --publisher <id>
+aiwg marketplace remove <catalog-id>
+aiwg marketplace list [--json]
 ```
 
 **Subcommands:**
 
-- `search <query>` - Search marketplace catalogs for matching packages
-- `list` - List all packages from configured sources
+- `add` - Verify and register a signed Git catalog
+- `search` - Search source adapters and signed catalog observations
+- `info` - Show immutable lock, verification status, and catalog observations
+- `install` - Install direct Git or catalog coordinates through one lock path
+- `verify` - Verify cached bytes and evidence offline and emit a receipt
+- `export` / `import` - Move a complete package, receipts, and Fortemi shard
+  through an offline portable archive
+- `publish` - Create a signed provenance envelope, lock, receipt, and Fortemi
+  `2.0.0/full-v1` shard
+- `remove` - Remove catalog discovery state while retaining installed locks
+- `list` - List installed packages and verification status
 
 **Options:**
 
-- `--source <id>` - Limit to a specific source (clawhub, openclaw, local)
+- `--source <id>` - Limit search to an adapter or `catalog:<catalog-id>`
 - `--json` - Emit structured JSON for programmatic consumption
+- `--project-local` / `--global` - Select project or user state and indices
+- `--target <dir>` - Select the project for project-local state
+- `--policy <name|path>` - Select local signature/trust policy
 
 **Capabilities:** cli, marketplace, search, discovery
 **Tools:** Read
@@ -848,9 +883,15 @@ aiwg marketplace list [--source <id>] [--json]
 
 ```bash
 aiwg marketplace search auth
-aiwg marketplace search auth --source clawhub
+aiwg marketplace search auth --source catalog:community
+aiwg marketplace verify team/auth-tools --project-local
+aiwg marketplace export team/auth-tools --output auth-tools.aiwg.json
 aiwg marketplace list --json
 ```
+
+See [Git-Native Package Exchange](../providers/git-native-marketplace.md) for
+the envelope, lock, W3C PROV, trust, catalog, mirror, recovery, and key-rotation
+contracts.
 
 ---
 

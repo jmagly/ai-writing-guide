@@ -12,7 +12,7 @@
 
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { mkdir, readFile } from 'fs/promises';
+import { mkdir, mkdtemp, readFile, rename, rm } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
 import { existsSync } from 'fs';
@@ -89,6 +89,41 @@ async function resolveLatestTag(gitUrl: string): Promise<string> {
   return 'latest';
 }
 
+async function resolveRemoteCommit(gitUrl: string, requestedRef: string): Promise<string | undefined> {
+  if (/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(requestedRef)) return requestedRef;
+  const patterns = requestedRef === 'HEAD'
+    ? ['HEAD']
+    : [`refs/tags/${requestedRef}^{}`, `refs/tags/${requestedRef}`, `refs/heads/${requestedRef}`, requestedRef];
+  try {
+    const output = await git(['ls-remote', gitUrl, ...patterns]);
+    const rows = output.split('\n').filter(Boolean).map((line) => {
+      const [oid = '', ref = ''] = line.split(/\s+/, 2);
+      return { oid, ref };
+    });
+    const peeled = rows.find((row) => row.ref.endsWith('^{}'));
+    const selected = peeled ?? rows[0];
+    return selected && /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(selected.oid)
+      ? selected.oid
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function urlCacheIdentity(gitUrl: string): { owner: string; name: string } {
+  const urlKey = gitUrl
+    .replace(/^https?:\/\//, '')
+    .replace(/^ssh:\/\//, '')
+    .replace(/^git@/, '')
+    .replace(/\.git$/, '')
+    .replace(/[:/]/g, '_');
+  const parts = urlKey.split('_').filter(Boolean);
+  return {
+    name: parts[parts.length - 1] ?? 'package',
+    owner: parts[parts.length - 2] ?? 'unknown',
+  };
+}
+
 /**
  * GitAdapter
  *
@@ -122,44 +157,51 @@ export class GitAdapter implements PackageRegistryAdapter {
   }
 
   async fetch(source: PackageSource, options: FetchOptions = {}): Promise<string> {
-    // Determine version
-    let version = source.ref;
-    if (!version) {
-      version = await resolveLatestTag(source.gitUrl);
+    // Resolve discovery inputs before any deployment and cache by immutable
+    // commit rather than by a movable tag/branch name (#2009).
+    let requestedRef = source.ref;
+    if (!requestedRef) {
+      const latest = await resolveLatestTag(source.gitUrl);
+      requestedRef = latest === 'latest' ? 'HEAD' : latest;
+      source.ref = requestedRef;
+    }
+    const advertisedCommit = await resolveRemoteCommit(source.gitUrl, requestedRef);
+    const { owner, name } = urlCacheIdentity(source.gitUrl);
+    if (advertisedCommit) {
+      const existing = buildCachePath(owner, name, advertisedCommit);
+      if (!options.refresh && existsSync(join(existing, '.git'))) {
+        const existingCommit = await git(['rev-parse', 'HEAD^{commit}'], existing);
+        if (existingCommit !== advertisedCommit) throw new Error(`Immutable package cache mismatch at ${existing}`);
+        return existing;
+      }
     }
 
-    // Build cache key from URL
-    const urlKey = source.gitUrl
-      .replace(/^https?:\/\//, '')
-      .replace(/^git@/, '')
-      .replace(/\.git$/, '')
-      .replace(/[:/]/g, '_');
-    const parts = urlKey.split('_');
-    const name = parts[parts.length - 1] ?? 'package';
-    const owner = parts[parts.length - 2] ?? 'unknown';
-
-    const cachePath = buildCachePath(owner, name, version);
-
-    if (!options.refresh && existsSync(cachePath)) {
+    const ownerDir = join(getCacheRoot(), owner);
+    await mkdir(ownerDir, { recursive: true });
+    const stage = await mkdtemp(join(ownerDir, `.${name}.resolve-`));
+    try {
+      await git(['clone', '--no-checkout', source.gitUrl, stage]);
+      await git(['checkout', '--detach', requestedRef], stage);
+      const resolvedCommit = await git(['rev-parse', 'HEAD^{commit}'], stage);
+      if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(resolvedCommit)) {
+        throw new Error(`Git resolved '${requestedRef}' to invalid commit '${resolvedCommit}'`);
+      }
+      if (advertisedCommit && resolvedCommit !== advertisedCommit) {
+        throw new Error(`Git ref '${requestedRef}' moved during resolution (${advertisedCommit} -> ${resolvedCommit})`);
+      }
+      const cachePath = buildCachePath(owner, name, resolvedCommit);
+      if (existsSync(join(cachePath, '.git'))) {
+        const cachedCommit = await git(['rev-parse', 'HEAD^{commit}'], cachePath);
+        if (cachedCommit !== resolvedCommit) throw new Error(`Immutable package cache mismatch at ${cachePath}`);
+        await rm(stage, { recursive: true, force: true });
+        return cachePath;
+      }
+      await rename(stage, cachePath);
       return cachePath;
+    } catch (error) {
+      await rm(stage, { recursive: true, force: true });
+      throw error;
     }
-
-    await mkdir(cachePath, { recursive: true });
-
-    if (existsSync(join(cachePath, '.git'))) {
-      // Update existing clone
-      await git(['fetch', '--tags', '--prune'], cachePath);
-    } else {
-      // Fresh clone (no --depth to get tags)
-      await git(['clone', source.gitUrl, cachePath]);
-    }
-
-    // Checkout requested ref
-    if (version && version !== 'latest') {
-      await git(['checkout', version], cachePath);
-    }
-
-    return cachePath;
   }
 
   /** GitAdapter does not list packages */

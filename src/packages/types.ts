@@ -72,6 +72,18 @@ export interface PackageEntry {
 
   /** Projects this package has been deployed to */
   deployedTo?: PackageDeployRecord[];
+
+  /** Immutable Git/Fortemi verification identity (schema additive for v1 registry). */
+  provenance?: PackageProvenanceRecord;
+}
+
+export interface PackageProvenanceRecord {
+  lockId: string;
+  resolvedCommit: string;
+  treeSha256: string;
+  artifactSha256: string;
+  envelopeSha256: string;
+  verificationStatus: 'verified' | 'integrity-only' | 'untrusted' | 'failed';
 }
 
 /**
@@ -120,6 +132,12 @@ export interface PackageInfo {
 
   /** Number of project deployments */
   deployCount: number;
+
+  /** Immutable lock identity when the package uses the provenance envelope. */
+  lockId?: string;
+
+  /** Local verification result; absence denotes a legacy registry entry. */
+  verificationStatus?: PackageProvenanceRecord['verificationStatus'];
 }
 
 /**

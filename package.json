@@ -129,6 +129,7 @@
     "tools/manifest/check-discovery-coverage.mjs",
     "!tools/release/",
     "schemas/security/",
+    "schemas/marketplace/",
     "vscode-extension/schemas/aiwg.config.v1.json",
     "agentic/",
     "!agentic/**/*.test.ts",

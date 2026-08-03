@@ -22,6 +22,7 @@ import path from 'path';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { installPackage } from '../../packages/registry.js';
 import { recordDeployment } from '../../packages/package-registry.js';
+import { marketplaceConfigDir, resolveVerificationPolicy } from '../../marketplace/exchange.js';
 import { createScriptRunner } from './script-runner.js';
 import { handlerResultFromError } from '../errors.js';
 import * as ui from '../ui.js';
@@ -65,6 +66,12 @@ export const installHandler: CommandHandler = {
           '  --provider <name>       Target provider (claude, copilot, cursor...)',
           '  --target <dir>          Project directory to deploy into',
           '  --refresh               Force re-pull even if cached',
+          '  --ref <tag-or-sha>      Resolve this ref and lock its immutable commit',
+          '  --package <id>          Select one wrapper when a repository contains several',
+          '  --verify                Require a publisher signature trusted by local policy',
+          '  --policy <name|path>    Named trust policy or JSON policy file',
+          '  --project-local         Store registry, lock, receipts, and index under <target>/.aiwg',
+          '  --global                Store package state in the user AIWG directory (default)',
         ].join('\n'),
       };
     }
@@ -73,6 +80,15 @@ export const installHandler: CommandHandler = {
     const refresh = hasFlag(ctx.args, '--refresh');
     const provider = parseFlag(ctx.args, '--provider') ?? 'claude';
     const target = parseFlag(ctx.args, '--target') ?? ctx.cwd;
+    const projectLocal = hasFlag(ctx.args, '--project-local');
+    const global = hasFlag(ctx.args, '--global');
+    if (projectLocal && global) {
+      return { exitCode: 1, message: 'Error: Choose either --project-local or --global, not both' };
+    }
+    const verify = hasFlag(ctx.args, '--verify');
+    const policyName = parseFlag(ctx.args, '--policy');
+    const scope = { projectLocal, projectDir: target };
+    const configDir = marketplaceConfigDir(scope);
 
     ui.blank();
     console.log(`  ${ui.brandMark()} ${ui.bold('aiwg install')}  ${ui.dimText(rawRef)}`);
@@ -85,9 +101,24 @@ export const installHandler: CommandHandler = {
     let key: string;
     let type: string;
     let namespace: string;
+    let lockId: string;
+    let verificationStatus: string;
 
     try {
-      ({ cachePath, key, type, namespace } = await installPackage(rawRef, { refresh }));
+      const resolvedPolicy = await resolveVerificationPolicy(policyName, scope);
+      const installed = await installPackage(rawRef, {
+        refresh,
+        ref: parseFlag(ctx.args, '--ref'),
+        packageSelector: parseFlag(ctx.args, '--package'),
+        verify,
+        verificationPolicy: resolvedPolicy.policy,
+        trustStore: resolvedPolicy.trustStore,
+        configDir,
+        actor: 'local-user',
+      });
+      ({ cachePath, key, type, namespace } = installed);
+      lockId = installed.lock.lockId;
+      verificationStatus = installed.verification.status;
     } catch (error) {
       // Preserve AiwgError.exitCode while keeping the "Error: " prefix users
       // are used to seeing from `aiwg install`.
@@ -96,9 +127,12 @@ export const installHandler: CommandHandler = {
     }
 
     ui.success(`Installed: ${key} (${type})`);
-    ui.dimText(`  Cache: ${cachePath}`);
+    ui.dim(`  Cache: ${cachePath}`);
+    ui.dim(`  Lock: ${lockId}`);
+    ui.dim(`  Verification: ${verificationStatus}`);
+    ui.dim(`  Scope: ${projectLocal ? 'project-local' : 'global'}`);
     if (namespace !== 'aiwg') {
-      ui.dimText(`  Namespace: ${namespace}`);
+      ui.dim(`  Namespace: ${namespace}`);
     }
 
     // Optionally deploy
@@ -111,6 +145,10 @@ export const installHandler: CommandHandler = {
         '--deploy-commands',
         '--deploy-skills',
         '--deploy-rules',
+        // External packages do not participate in AIWG's global artifact
+        // index. Copy their complete skill payload into the target so a
+        // successful install cannot silently deploy agents/rules only.
+        '--copy-all',
         '--provider', provider,
         '--target', target,
         '--namespace', namespace,
@@ -130,7 +168,7 @@ export const installHandler: CommandHandler = {
           projectPath: target,
           provider,
           deployedAt: new Date().toISOString(),
-        });
+        }, configDir);
       }
     }
 
