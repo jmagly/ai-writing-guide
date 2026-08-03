@@ -40,6 +40,7 @@ import {
   discoverProjectLocalBundles,
   type ProjectLocalBundle,
 } from '../../extensions/project-local-discovery.js';
+import { PROJECT_LOCAL_TYPE_TO_DIR } from '../../extensions/project-local-paths.js';
 import { buildUpstreamRegistry } from '../../extensions/upstream-registry.js';
 import {
   resolveShadows,
@@ -2000,6 +2001,109 @@ async function deploySourceDirectory(opts: {
   return result;
 }
 
+async function assertNoSymlinks(root: string): Promise<void> {
+  for (const entry of await fs.readdir(root, { withFileTypes: true })) {
+    const candidate = path.join(root, entry.name);
+    if (entry.isSymbolicLink()) {
+      throw new Error(`Refusing symbolic link in external bundle source: ${candidate}`);
+    }
+    if (entry.isDirectory()) await assertNoSymlinks(candidate);
+  }
+}
+
+async function installProjectLocalBundleInUserCatalog(bundle: ProjectLocalBundle): Promise<string> {
+  await assertNoSymlinks(bundle.bundlePath);
+  const catalogRoot = path.join(os.homedir(), '.aiwg', PROJECT_LOCAL_TYPE_TO_DIR[bundle.type]);
+  await fs.mkdir(catalogRoot, { recursive: true });
+  const destination = path.join(catalogRoot, bundle.id);
+  const stage = await fs.mkdtemp(path.join(catalogRoot, `.${bundle.id}-stage-`));
+  const backup = path.join(catalogRoot, `.${bundle.id}-backup-${process.pid}`);
+  let movedExisting = false;
+  try {
+    await fs.cp(bundle.bundlePath, stage, { recursive: true, force: true });
+    try {
+      await fs.rename(destination, backup);
+      movedExisting = true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    }
+    await fs.rename(stage, destination);
+    if (movedExisting) await fs.rm(backup, { recursive: true, force: true });
+    return destination;
+  } catch (error) {
+    await fs.rm(stage, { recursive: true, force: true });
+    if (movedExisting) {
+      await fs.rm(destination, { recursive: true, force: true });
+      await fs.rename(backup, destination).catch(() => {});
+    }
+    throw error;
+  }
+}
+
+async function rebuildExternalBundleIndex(
+  projectDir: string,
+  graph: 'project' | 'user',
+  verbose: boolean,
+): Promise<void> {
+  const originalLog = console.log;
+  if (!verbose) console.log = () => {};
+  try {
+    const [{ buildIndex }, { syncFortemiCoreIndex }] = await Promise.all([
+      import('../../artifacts/index-builder.js'),
+      import('../../artifacts/fortemi-core-sync.js'),
+    ]);
+    await buildIndex(projectDir, { graph, force: true, explicit: false });
+    syncFortemiCoreIndex(projectDir, { graph });
+  } finally {
+    console.log = originalLog;
+  }
+  ui.dim(`  Refreshed ${graph}-scope capability index`);
+}
+
+async function mirrorProjectLocalBundleToUserScope(opts: {
+  bundle: ProjectLocalBundle;
+  provider: string;
+  target: string;
+}): Promise<void> {
+  const paths = getProviderPaths(opts.provider);
+  const resolveProjectPath = (value: string): string =>
+    !value ? '' : path.isAbsolute(value) ? value : path.join(opts.target, value);
+  const mirrored = await mirrorToUserScope(opts.provider, {
+    agents: resolveProjectPath(paths.agents),
+    skills: resolveProjectPath(paths.skills),
+    kernelSkills: resolveProjectPath(getProviderKernelSkillsPath(opts.provider)),
+    commands: resolveProjectPath(paths.commands),
+    rules: resolveProjectPath(paths.rules),
+    behaviors: resolveProjectPath(paths.behaviors),
+  });
+  const counts = {
+    agents: mirrored.agents.count,
+    commands: mirrored.commands.count,
+    skills: mirrored.skills.count,
+    rules: mirrored.rules.count,
+  };
+  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  if (total === 0) {
+    throw new Error(`External bundle '${opts.bundle.id}' produced no user-scope artifacts for ${opts.provider}`);
+  }
+  const { recordUserDeploy } = await import('../../config/user-registry.js');
+  await recordUserDeploy({
+    framework: opts.bundle.id,
+    provider: opts.provider,
+    version: opts.bundle.manifest.version,
+    source: 'project-local',
+    counts,
+    entries: {
+      agents: mirrored.agents.entries,
+      commands: mirrored.commands.entries,
+      skills: mirrored.skills.entries,
+      rules: mirrored.rules.entries,
+      behaviors: mirrored.behaviors.entries,
+    },
+    manifestHash: await hashManifest(path.join(opts.bundle.bundlePath, 'manifest.json')),
+  });
+}
+
 /**
  * Use command handler
  *
@@ -2070,27 +2174,39 @@ export class UseHandler implements CommandHandler {
       if (scopeIdx >= 0 && remainingArgs[scopeIdx + 1] === 'project') {
         return { exitCode: 1, message: 'Error: --global conflicts with --scope project' };
       }
-      if (!framework || !VALID_FRAMEWORKS.includes(framework as Framework)) {
-        return {
-          exitCode: 1,
-          message: 'Error: --global currently supports framework targets; addons and project-local bundles require project deployment',
-        };
-      }
-
       const contextTargetIdx = remainingArgs.indexOf('--target');
       const contextTarget = path.resolve(
         contextTargetIdx >= 0 && remainingArgs[contextTargetIdx + 1]
           ? remainingArgs[contextTargetIdx + 1]
           : (ctx.cwd || process.cwd()),
       );
+      const externalDiscovery = await discoverProjectLocalBundles(contextTarget);
+      const externalBundle = framework
+        ? externalDiscovery.bundles.find(bundle => bundle.id === framework)
+        : undefined;
+      const isFrameworkTarget = Boolean(framework && VALID_FRAMEWORKS.includes(framework as Framework));
+      if (!framework || (!isFrameworkTarget && !externalBundle)) {
+        return {
+          exitCode: 1,
+          message: 'Error: --global target must be a bundled framework or a valid external project-local bundle',
+        };
+      }
       const originalConfig = await readAiwgConfig(contextTarget);
       const providers = configuredGlobalProviders(remainingArgs, originalConfig);
       const dryRun = remainingArgs.includes('--dry-run');
-      const stageRoot = dryRun
-        ? path.join(os.tmpdir(), 'aiwg-global-bootstrap-dry-run')
-        : await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-global-bootstrap-'));
+      const stageRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-global-bootstrap-'));
 
       try {
+        if (externalBundle) {
+          const stagedBundle = path.join(
+            stageRoot,
+            '.aiwg',
+            PROJECT_LOCAL_TYPE_TO_DIR[externalBundle.type],
+            externalBundle.id,
+          );
+          await fs.mkdir(path.dirname(stagedBundle), { recursive: true });
+          await fs.cp(externalBundle.bundlePath, stagedBundle, { recursive: true, force: true });
+        }
         for (const provider of providers) {
           const innerArgs = [
             framework,
@@ -2098,7 +2214,7 @@ export class UseHandler implements CommandHandler {
             '--provider', provider,
             '--scope', 'user',
             '--target', stageRoot,
-            '--no-project-local',
+            ...(externalBundle ? [] : ['--no-project-local']),
             '--no-context-files',
             '--no-hooks',
             '--no-workspace-signals',
@@ -2115,14 +2231,14 @@ export class UseHandler implements CommandHandler {
           }
         }
       } finally {
-        if (!dryRun) await fs.rm(stageRoot, { recursive: true, force: true });
+        await fs.rm(stageRoot, { recursive: true, force: true });
       }
 
       return {
         exitCode: 0,
         message: dryRun
-          ? `Global bootstrap preview complete; project context target: ${contextTarget}`
-          : `Global bootstrap complete; user assets installed and lightweight project context generated at ${contextTarget}`,
+          ? `Global ${externalBundle ? 'external bundle' : 'bootstrap'} preview complete; project context target: ${contextTarget}`
+          : `Global ${externalBundle ? 'external bundle' : 'bootstrap'} complete; user assets installed and capability index refreshed`,
       };
     }
 
@@ -2406,7 +2522,19 @@ export class UseHandler implements CommandHandler {
         const dryRunSingle = remainingArgs.includes('--dry-run');
         const verboseSingle = remainingArgs.includes('--verbose') || remainingArgs.includes('-v');
         const targetIdxSingle = remainingArgs.findIndex(a => a === '--target');
-        const targetSingle = targetIdxSingle >= 0 && remainingArgs[targetIdxSingle + 1] ? remainingArgs[targetIdxSingle + 1] : process.cwd();
+        const targetSingle = targetIdxSingle >= 0 && remainingArgs[targetIdxSingle + 1] ? remainingArgs[targetIdxSingle + 1] : projectDir;
+        let scopeSingle: 'project' | 'user';
+        try {
+          scopeSingle = detectScope(remainingArgs);
+          if (scopeSingle === 'project' && remainingArgs.includes('--user')) {
+            scopeSingle = 'user';
+          }
+        } catch (error) {
+          return {
+            exitCode: 1,
+            message: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          };
+        }
 
         // Multi-provider expansion mirrors the framework path
         let providersForSingle: string[];
@@ -2414,9 +2542,39 @@ export class UseHandler implements CommandHandler {
         else if (config && config.providers.length > 0) providersForSingle = config.providers;
         else providersForSingle = ['claude'];
 
+        const resolvedProviders: string[] = [];
+        for (const requestedProvider of providersForSingle) {
+          const provider = normalizeProviderDefinitionId(requestedProvider);
+          if (!provider) {
+            return {
+              exitCode: 1,
+              message: `External bundle '${match.id}' cannot deploy to unsupported provider '${requestedProvider}'. Choose a provider declared in its manifest.`,
+            };
+          }
+          const support = match.manifest.platforms[provider as keyof typeof match.manifest.platforms]
+            ?? match.manifest.platforms.generic;
+          if (!support || support === 'none') {
+            const declared = Object.entries(match.manifest.platforms)
+              .filter(([, level]) => level && level !== 'none')
+              .map(([name]) => name)
+              .join(', ');
+            return {
+              exitCode: 1,
+              message: `External bundle '${match.id}' does not declare support for provider '${provider}'. Declared providers: ${declared || 'none'}.`,
+            };
+          }
+          if (scopeSingle === 'user' && !USER_SCOPE_PATHS[provider]) {
+            return {
+              exitCode: 1,
+              message: `External bundle '${match.id}' cannot install at user scope for provider '${provider}' because AIWG has no user-scope path contract for it.`,
+            };
+          }
+          resolvedProviders.push(provider);
+        }
+
         let totalDeployed = 0;
         let totalFailed = 0;
-        for (const p of providersForSingle) {
+        for (const p of resolvedProviders) {
           const r = await deployProjectLocalBundles({
             ctx, frameworkRoot, projectDir, provider: p, target: targetSingle,
             dryRun: dryRunSingle, verbose: verboseSingle, quiet: !verboseSingle && !dryRunSingle,
@@ -2425,11 +2583,39 @@ export class UseHandler implements CommandHandler {
           });
           totalDeployed += r.deployed;
           totalFailed += r.failed;
+          if (r.deployed > 0 && scopeSingle === 'user' && !dryRunSingle) {
+            try {
+              await mirrorProjectLocalBundleToUserScope({
+                bundle: match,
+                provider: p,
+                target: targetSingle,
+              });
+            } catch (error) {
+              totalFailed += 1;
+              ui.warn(`Failed to install external bundle '${match.id}' for user-scope provider '${p}': ${error instanceof Error ? error.message : String(error)}`);
+            }
+          }
+        }
+
+        if (totalDeployed > 0 && totalFailed === 0 && !dryRunSingle) {
+          try {
+            await rebuildExternalBundleIndex(projectDir, 'project', verboseSingle);
+            if (scopeSingle === 'user') {
+              await installProjectLocalBundleInUserCatalog(match);
+              await rebuildExternalBundleIndex(projectDir, 'user', verboseSingle);
+            }
+          } catch (error) {
+            totalFailed += 1;
+            ui.warn(`External bundle '${match.id}' index refresh failed: ${error instanceof Error ? error.message : String(error)}`);
+          }
         }
 
         if (!verboseSingle && !dryRunSingle) {
           ui.blank();
-          ui.success(`project-local ${match.type} '${match.id}' deployed (${totalDeployed} provider(s))`);
+          if (totalFailed === 0) {
+            const scopeLabel = scopeSingle === 'user' ? 'project + user' : 'project';
+            ui.success(`external ${match.type} '${match.id}' installed at ${scopeLabel} scope (${totalDeployed} provider(s)); capability index refreshed`);
+          }
         }
         return {
           exitCode: totalFailed > 0 ? 1 : 0,

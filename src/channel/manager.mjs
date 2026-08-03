@@ -99,10 +99,10 @@ const DEFAULT_CONFIG = {
  * Get the package root directory.
  *
  * Walks up from this file's directory looking for the nearest package.json
- * that names "aiwg". This works whether this module runs from its source
- * location (`src/channel/manager.mjs`) or from its compiled-build copy
- * (`dist/src/channel/manager.mjs`), both of which have package.json at
- * the repo root.
+ * that names either the full `aiwg` distribution or the lightweight
+ * `@aiwg/cli` distribution. This works whether this module runs from its
+ * source location (`src/channel/manager.mjs`) or from its compiled-build copy
+ * (`dist/src/channel/manager.mjs`).
  *
  * The walk is bounded to 10 levels as a safety cap.
  *
@@ -115,7 +115,7 @@ export function getPackageRoot() {
     if (existsSync(pkg)) {
       try {
         const content = JSON.parse(readFileSync(pkg, 'utf8'));
-        if (content.name === 'aiwg') return dir;
+        if (content.name === 'aiwg' || content.name === '@aiwg/cli') return dir;
       } catch {
         // keep walking
       }

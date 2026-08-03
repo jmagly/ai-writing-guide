@@ -38,6 +38,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Fixed
 
+- **Lightweight external addon workflows** - `@aiwg/cli` now ships the runtime
+  needed to create deterministic standalone plugin archives and deploys valid
+  project-local wrappers for their declared providers. Installations can target
+  the current project or the global user scope, with the corresponding artifact
+  and Fortemi indices refreshed after deployment (#2007, #2008).
 - **Fleet admission and recovery** - inventory faults now fail closed, runtime
   child identities survive dispatch and restart, and daemon health semantics
   remain stable during fleet reconciliation.

@@ -1,4 +1,5 @@
 {
+  "id": "context-curator",
   "name": "context-curator",
   "version": "1.0.0",
   "description": "Context curation and distractor filtering for production-grade agent reliability",

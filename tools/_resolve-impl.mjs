@@ -9,7 +9,7 @@ function findPackageRoot(callerUrl) {
     if (existsSync(pkgPath)) {
       try {
         const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
-        if (pkg.name === 'aiwg') return dir;
+        if (pkg.name === 'aiwg' || pkg.name === '@aiwg/cli') return dir;
       } catch {
         // Keep walking.
       }

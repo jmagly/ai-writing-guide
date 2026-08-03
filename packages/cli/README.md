@@ -713,6 +713,34 @@ modify a project still run locally under the operator's permissions. A skill
 may direct the CLI to write project artifacts or provider adapters, but the
 release host never receives authority to mutate the project.
 
+The lightweight package includes a bounded local runtime for packaging and
+installing external addon-shaped bundles. It does not include AIWG's full
+framework corpus. A project-local wrapper under `.aiwg/plugins/<id>/` can be
+packaged from either its id or its path:
+
+```bash
+aiwg package-plugin my-plugin --provider all
+aiwg package-plugin .aiwg/plugins/my-plugin --provider all
+```
+
+External bundles have an explicit installation choice:
+
+```bash
+# Project-local (default): deploy provider artifacts into this project and
+# refresh the project artifact + Fortemi indices.
+aiwg use my-plugin --provider claude --scope project
+
+# Global: install the wrapper under ~/.aiwg, deploy to the provider's
+# supported user paths, and refresh the shared user artifact + Fortemi indices.
+aiwg use my-plugin --provider claude --global
+```
+
+`--scope user` remains the additive compatibility form: it leaves the
+project deployment in place and mirrors supported artifacts to user scope.
+`--global` is the no-project-provider-artifacts form. Providers differ in
+their native user-level surfaces, so unsupported combinations fail with an
+explicit provider-contract error instead of silently deploying zero files.
+
 Some skills require the full local corpus, source templates, or authoring
 assets. When a selected workflow reports that requirement, install the full
 distribution:

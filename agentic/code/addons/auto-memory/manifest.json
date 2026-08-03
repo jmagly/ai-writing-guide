@@ -1,4 +1,5 @@
 {
+  "id": "auto-memory",
   "name": "auto-memory",
   "version": "1.0.0",
   "description": "Automatic memory seed templates for AIWG projects",
