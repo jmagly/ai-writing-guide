@@ -108,6 +108,19 @@ export interface InstalledEntry {
    * @implements #1037
    */
   artifactHashes?: Record<string, string>;
+
+  /**
+   * Hashes of the provider-transformed artifacts actually written by a
+   * project-local deployment. The outer key is the provider and the inner
+   * key uses the same source-relative artifact path as `artifactHashes`.
+   *
+   * Provider deployers may rewrite frontmatter or translate formats, so a
+   * source hash cannot reliably classify the deployed file. Older registry
+   * entries continue to use `artifactHashes` as a compatibility fallback.
+   *
+   * @implements #1998
+   */
+  deployedArtifactHashes?: Record<string, Record<string, string>>;
 }
 
 /**
@@ -1488,6 +1501,8 @@ export function updateInstalled(
     manifestVersion?: string;
     /** Optional source-artifact hash map for project-local remove revert (#1037). */
     artifactHashes?: Record<string, string>;
+    /** Provider-specific hashes captured from the deployed files (#1998). */
+    deployedArtifactHashes?: Record<string, string>;
   }
 ): AiwgConfig {
   // Project-local invariant: `source: 'project-local'` requires localPath + localType
@@ -1519,6 +1534,10 @@ export function updateInstalled(
     existing.localType = opts.localType;
     if (opts.manifestVersion) existing.manifestVersion = opts.manifestVersion;
     if (opts.artifactHashes) existing.artifactHashes = opts.artifactHashes;
+    if (opts.deployedArtifactHashes) {
+      existing.deployedArtifactHashes ??= {};
+      existing.deployedArtifactHashes[provider] = opts.deployedArtifactHashes;
+    }
   } else {
     // Clear stale project-local fields if a previously project-local entry is
     // being overwritten by a non-project-local source.
@@ -1526,6 +1545,7 @@ export function updateInstalled(
     delete existing.localType;
     delete existing.manifestVersion;
     delete existing.artifactHashes;
+    delete existing.deployedArtifactHashes;
   }
 
   config.installed[name] = existing;

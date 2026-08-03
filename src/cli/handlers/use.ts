@@ -50,7 +50,10 @@ import {
   appendProjectLocalActivity,
   emitDiscoverEventsDeduped,
 } from '../../extensions/project-local-activity.js';
-import { hashBundleArtifacts } from '../../extensions/project-local-remove.js';
+import {
+  hashBundleArtifacts,
+  hashDeployedBundleArtifacts,
+} from '../../extensions/project-local-remove.js';
 import { installAiwgHooks } from '../../extensions/claude-hooks-installer.js';
 import {
   detectScope,
@@ -1395,6 +1398,11 @@ async function deployProjectLocalBundles(opts: {
         // #1037 — record per-artifact source hashes so `aiwg remove` can
         // detect pristine vs mutated vs replaced deployed files.
         const artifactHashes = await hashBundleArtifacts(bundle.artifactPath);
+        const deployedArtifactHashes = await hashDeployedBundleArtifacts(
+          projectDir,
+          provider,
+          artifactHashes,
+        );
         const updated = updateInstalled(config, bundle.id, provider, result.counts, {
           version: bundle.manifest.version,
           source: 'project-local',
@@ -1403,6 +1411,7 @@ async function deployProjectLocalBundles(opts: {
           localType: bundle.type,
           manifestVersion: bundle.manifest.manifestVersion,
           artifactHashes,
+          deployedArtifactHashes,
         });
         await writeAiwgConfig(projectDir, updated);
       } catch (err) {
