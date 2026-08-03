@@ -32,8 +32,11 @@ vi.mock("../../../../src/cli/handlers/script-runner.js", () => ({
 }));
 
 // Mock channel manager
+const { mockGetFrameworkRoot } = vi.hoisted(() => ({
+  mockGetFrameworkRoot: vi.fn(),
+}));
 vi.mock("../../../../src/channel/manager.mjs", () => ({
-  getFrameworkRoot: vi.fn().mockResolvedValue("/mock/framework/root"),
+  getFrameworkRoot: mockGetFrameworkRoot,
 }));
 
 // Mock MCP CLI module
@@ -97,6 +100,7 @@ describe("Subcommand Handlers", () => {
       delete process.env[key];
     }
     mockRun.mockResolvedValue({ exitCode: 0 });
+    mockGetFrameworkRoot.mockResolvedValue("/mock/framework/root");
     mockContext = {
       args: [],
       rawArgs: [],
