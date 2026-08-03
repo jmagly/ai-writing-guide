@@ -8,7 +8,7 @@
 import http from 'node:http';
 import https from 'node:https';
 import { spawn } from 'node:child_process';
-import { readFile, mkdir, writeFile, chmod, readdir, cp, rm, stat, appendFile } from 'node:fs/promises';
+import { readFile, mkdir, writeFile, rename, chmod, readdir, cp, rm, stat, appendFile } from 'node:fs/promises';
 import { existsSync, realpathSync } from 'node:fs';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -42,7 +42,13 @@ const auditLog = () => join(auditDir(), 'events.jsonl');
 // legacy vanilla page so the Bridge works even before a web build.
 const WEB_DIST = fileURLToPath(new URL('../../web/dist', import.meta.url));
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png', '.woff2': 'font/woff2', '.map': 'application/json' };
-const CAPABILITY_TYPES = new Set(['skill', 'agent', 'command', 'rule', 'flow']);
+// Discovery indexes more than the four executable provider artifacts. Keep the
+// Bridge filter aligned with the complete corpus so Explore does not hide
+// extension and documentation surfaces (#1592).
+const CAPABILITY_TYPES = new Set([
+  'skill', 'agent', 'command', 'rule', 'flow', 'behavior', 'hook', 'template',
+  'tool', 'addon', 'framework', 'extension', 'plugin', 'provider', 'document',
+]);
 const mcSessionsDir = () => join(process.cwd(), '.aiwg', 'ralph-external', 'mc', 'sessions');
 const executorRequestContext = new AsyncLocalStorage();
 
@@ -331,23 +337,32 @@ function resolveCorpusPath(p) {
 // --- UI contribution model (#1591): declarative screens/actions/event-hooks ---
 const ID_RE = /^[a-z0-9][a-z0-9._-]{0,63}$/i;
 /** Validate one contribution manifest. Throws with a precise message on bad shape. */
-function validateContribution(m, where) {
+function validateContribution(m, where, { firstParty = false } = {}) {
   const fail = (msg) => { throw new Error(`${where}: ${msg}`); };
   if (!m || typeof m !== 'object') fail('manifest must be an object');
   if (!ID_RE.test(m.id || '')) fail('id must match [a-z0-9._-]{1,64}');
-  if (typeof m.version !== 'string') fail('version (string) required');
+  if (typeof m.version !== 'string' || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(m.version)) fail('version must be semantic version syntax');
   const c = m.contributes || {};
+  const actionIds = new Set();
   for (const a of c.actions || []) {
     if (!ID_RE.test(a.id || '')) fail(`action.id invalid: ${a.id}`);
+    if (actionIds.has(a.id)) fail(`duplicate action.id: ${a.id}`);
+    actionIds.add(a.id);
     if (typeof a.title !== 'string') fail(`action ${a.id}: title required`);
     // An action INJECTS a command into an agentic session — it does NOT run the CLI.
     if (!a.inject || typeof a.inject.command !== 'string') fail(`action ${a.id}: inject.command (string) required`);
+    if (!/^\/[a-z0-9][a-z0-9._-]*(?:\s[^\r\n]*)?$/i.test(a.inject.command)) fail(`action ${a.id}: inject.command must be one slash command without newlines`);
     if (a.inject.target && !['focused', 'new'].includes(a.inject.target)) fail(`action ${a.id}: inject.target must be focused|new`);
   }
   for (const s of c.screens || []) {
     if (!ID_RE.test(s.id || '')) fail(`screen.id invalid: ${s.id}`);
     if (typeof s.title !== 'string') fail(`screen ${s.id}: title required`);
     if (typeof s.source !== 'string') fail(`screen ${s.id}: source required`);
+    if (firstParty) {
+      if (!s.source.startsWith('cockpit://')) fail(`screen ${s.id}: first-party source must use cockpit://`);
+    } else if (!s.source.startsWith(`sandbox://${m.id}/`)) {
+      fail(`screen ${s.id}: third-party source must use sandbox://${m.id}/`);
+    }
   }
   for (const w of c.workflows || []) {
     if (!ID_RE.test(w.id || '')) fail(`workflow.id invalid: ${w.id}`);
@@ -355,24 +370,39 @@ function validateContribution(m, where) {
     if (!Array.isArray(w.steps) || w.steps.length === 0) fail(`workflow ${w.id}: steps required`);
     for (const step of w.steps) {
       if (!step || typeof step !== 'object' || !ID_RE.test(step.action || '')) fail(`workflow ${w.id}: step.action invalid`);
+      if (!actionIds.has(step.action)) fail(`workflow ${w.id}: unknown action ${step.action}`);
     }
   }
-  for (const h of c.hooks || []) { if (typeof h.on !== 'string' || !ID_RE.test(h.action || '')) fail(`hook invalid: on=${h.on}`); }
+  for (const h of c.hooks || []) {
+    if (typeof h.on !== 'string' || !ID_RE.test(h.action || '') || !actionIds.has(h.action)) fail(`hook invalid: on=${h.on}`);
+  }
   return m;
 }
 /** Load + validate + merge all contribution manifests across the configured dirs. */
 async function loadContributions() {
   const sources = [], actions = [], screens = [], hooks = [], workflows = [];
-  for (const dir of CONTRIB_DIRS) {
+  const manifestIds = new Set();
+  const itemIds = new Set();
+  for (const [dirIndex, dir] of CONTRIB_DIRS.entries()) {
+    const trustTier = dirIndex === 0 ? 'first-party' : 'sandboxed-third-party';
     let entries = [];
     try { entries = (await readdir(dir)).filter((f) => f.endsWith('.json') && f !== 'contribution.schema.json'); } catch { continue; }
     for (const file of entries) {
-      const m = validateContribution(JSON.parse(await readFile(join(dir, file), 'utf8')), file);
-      sources.push({ id: m.id, version: m.version, title: m.title ?? m.id, file });
-      for (const a of m.contributes?.actions || []) actions.push({ ...a, source: m.id });
-      for (const s of m.contributes?.screens || []) screens.push({ ...s, contribution: m.id });
-      for (const h of m.contributes?.hooks || []) hooks.push({ ...h, source: m.id });
-      for (const w of m.contributes?.workflows || []) workflows.push({ ...w, source: m.id });
+      const m = validateContribution(JSON.parse(await readFile(join(dir, file), 'utf8')), file, { firstParty: dirIndex === 0 });
+      if (manifestIds.has(m.id)) throw new Error(`${file}: duplicate contribution id ${m.id}`);
+      manifestIds.add(m.id);
+      sources.push({ id: m.id, version: m.version, title: m.title ?? m.id, file, trust_tier: trustTier });
+      for (const [kind, rows] of Object.entries({ actions: m.contributes?.actions || [], screens: m.contributes?.screens || [], hooks: m.contributes?.hooks || [], workflows: m.contributes?.workflows || [] })) {
+        for (const row of rows) {
+          const globalId = `${kind}:${row.id ?? `${row.on}:${row.action}`}`;
+          if (itemIds.has(globalId)) throw new Error(`${file}: duplicate ${globalId}`);
+          itemIds.add(globalId);
+        }
+      }
+      for (const a of m.contributes?.actions || []) actions.push({ ...a, source: m.id, trust_tier: trustTier });
+      for (const s of m.contributes?.screens || []) screens.push({ ...s, contribution: m.id, trust_tier: trustTier });
+      for (const h of m.contributes?.hooks || []) hooks.push({ ...h, source: m.id, trust_tier: trustTier });
+      for (const w of m.contributes?.workflows || []) workflows.push({ ...w, source: m.id, trust_tier: trustTier });
     }
   }
   return { sources, actions, screens, hooks, workflows };
@@ -429,6 +459,42 @@ async function rebuildIndex(req) {
   const status = await getIndexStatus();
   await appendAudit('index.rebuild.completed', { request_ts: requested.ts, graph: body.graph ?? null, all: body.all === true, force: body.force === true });
   return { status: 200, body: { ok: true, command: `aiwg ${args.join(' ')}`, output, status } };
+}
+
+export async function createUserIndexGraph(body, projectRoot = process.cwd()) {
+  const name = safeIndexGraph(body?.name);
+  if (!name || ['project', 'codebase', 'framework'].includes(name)) {
+    throw new Error('name must be a non-built-in graph identifier');
+  }
+  const scanDirs = Array.isArray(body?.scanDirs) ? body.scanDirs.map((value) => String(value).trim()) : [];
+  if (!scanDirs.length || scanDirs.some((value) => !value || value.startsWith('/') || value.split(/[\\/]+/).includes('..'))) {
+    throw new Error('scanDirs must contain safe project-relative paths');
+  }
+  const extensions = Array.isArray(body?.extensions) && body.extensions.length
+    ? body.extensions.map((value) => String(value).trim())
+    : ['.md', '.yaml', '.json'];
+  if (extensions.some((value) => !/^\.[a-z0-9]+$/i.test(value))) {
+    throw new Error('extensions must use forms such as .md or .json');
+  }
+  const configDir = join(projectRoot, '.aiwg');
+  const configPath = join(configDir, 'aiwg.config');
+  await mkdir(configDir, { recursive: true, mode: 0o700 });
+  let config = {};
+  try { config = JSON.parse(await readFile(configPath, 'utf8')); }
+  catch (error) { if (error?.code !== 'ENOENT') throw error; }
+  config.index = config.index && typeof config.index === 'object' ? config.index : {};
+  config.index.graphs = config.index.graphs && typeof config.index.graphs === 'object' ? config.index.graphs : {};
+  if (config.index.graphs[name]) throw new Error(`graph '${name}' already exists`);
+  config.index.graphs[name] = {
+    scanDirs,
+    extensions,
+    defaultBuild: body?.defaultBuild === true,
+    shared: body?.shared === true,
+  };
+  const temporary = `${configPath}.${process.pid}.${randomBytes(4).toString('hex')}.tmp`;
+  await writeFile(temporary, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+  await rename(temporary, configPath);
+  return { name, definition: config.index.graphs[name], config_path: configPath };
 }
 
 function json(res, status, body) {
@@ -2610,6 +2676,19 @@ export function createBridge({
         const result = await rebuildIndex(req);
         return json(res, result.status, result.body);
       }
+      if (url.pathname === '/api/index/graphs' && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        const requested = await appendAudit('index.graph.create.requested', { graph: parsed.body?.name ?? null });
+        try {
+          const graph = await createUserIndexGraph(parsed.body);
+          await appendAudit('index.graph.create.completed', { request_ts: requested.ts, graph: graph.name });
+          return json(res, 201, { ok: true, graph });
+        } catch (error) {
+          await appendAudit('index.graph.create.rejected', { request_ts: requested.ts, reason: String(error?.message ?? error) });
+          return json(res, 400, { error: 'invalid_graph_definition', detail: String(error?.message ?? error) });
+        }
+      }
       if (url.pathname === '/api/audit' && req.method === 'GET') {
         const limit = Math.max(1, Math.min(200, Number(url.searchParams.get('limit') || 50)));
         return json(res, 200, { source: 'cockpit-bridge-audit/v1', audit: await readAudit({ limit }) });
@@ -2700,7 +2779,7 @@ export function createBridge({
         if (type && type !== 'all') {
           const types = type.split(',').map((t) => t.trim()).filter(Boolean);
           if (!types.length || types.some((t) => !CAPABILITY_TYPES.has(t))) {
-            return json(res, 400, { error: 'invalid_type', detail: 'type must be all, skill, agent, command, rule, flow, or a comma list of those kinds' });
+            return json(res, 400, { error: 'invalid_type', detail: `type must be all or a comma list of: ${[...CAPABILITY_TYPES].join(', ')}` });
           }
           args.push('--type', types.join(','));
         }

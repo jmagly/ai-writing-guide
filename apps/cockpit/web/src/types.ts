@@ -308,10 +308,10 @@ export interface McpDiscovery {
   notes: string[];
 }
 export interface CapabilityResult { path: string; type: string; title?: string; capability?: string; score?: number; name: string; triggers?: string[] }
-export interface ContribAction { id: string; title: string; icon?: string; group?: string; source: string; inject: { command: string; target?: string; needs_args?: boolean; args_hint?: string } }
-export interface ContribScreen { id: string; title: string; source: string; contribution: string }
+export interface ContribAction { id: string; title: string; icon?: string; group?: string; source: string; trust_tier?: 'first-party' | 'sandboxed-third-party'; inject: { command: string; target?: string; needs_args?: boolean; args_hint?: string } }
+export interface ContribScreen { id: string; title: string; source: string; contribution: string; trust_tier?: 'first-party' | 'sandboxed-third-party' }
 export interface ContribWorkflowStep { action: string; label?: string }
-export interface ContribWorkflow { id: string; title: string; description?: string; source: string; steps: ContribWorkflowStep[] }
+export interface ContribWorkflow { id: string; title: string; description?: string; source: string; trust_tier?: 'first-party' | 'sandboxed-third-party'; steps: ContribWorkflowStep[] }
 export interface ContributionsResponse { actions: ContribAction[]; screens: ContribScreen[]; workflows: ContribWorkflow[] }
 export interface IndexGraphStatus { name: string; origin: string; shared: boolean; defaultBuild: boolean; location: string; built: boolean; builtAt: string | null; ageHours: number | null; entries: number | null; missing: boolean }
 export interface IndexStatusResponse { graphs: IndexGraphStatus[]; orphanIndexDirs: string[]; warnings: unknown[]; summary: { total: number; built: number; missing: number; orphans: number; warnings: number } }

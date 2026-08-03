@@ -7,13 +7,13 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocket } from 'ws';
 import { createExecutor } from '../../apps/cockpit/mock-executor/src/server.mjs';
-import { createBridge, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, ensureExecutor, fetchJsonFirst, isDirectExecution } from '../../apps/cockpit/bridge/src/server.mjs';
+import { createBridge, createUserIndexGraph, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, ensureExecutor, fetchJsonFirst, isDirectExecution } from '../../apps/cockpit/bridge/src/server.mjs';
 
 let mock, bridge, base, token;
 const testMcSessionId = `mc-cockpit-test-${Date.now()}`;
@@ -63,6 +63,19 @@ afterAll(async () => {
 });
 
 describe('cockpit Bridge — control surface', () => {
+  it('creates validated user-defined index graph configuration atomically', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-cockpit-index-'));
+    try {
+      const created = await createUserIndexGraph({ name: 'references', scanDirs: ['docs/references'], extensions: ['.md'] }, root);
+      expect(created).toMatchObject({ name: 'references', definition: { scanDirs: ['docs/references'], extensions: ['.md'] } });
+      const config = JSON.parse(await readFile(join(root, '.aiwg', 'aiwg.config'), 'utf8'));
+      expect(config.index.graphs.references.defaultBuild).toBe(false);
+      await expect(createUserIndexGraph({ name: '../escape', scanDirs: ['docs'] }, root)).rejects.toThrow(/graph must match/);
+      await expect(createUserIndexGraph({ name: 'bad-path', scanDirs: ['../outside'] }, root)).rejects.toThrow(/project-relative/);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
   it('gates /api with the per-launch token; /healthz is open', async () => {
     expect((await fetch(`${base}/api/inventory`)).status).toBe(401);
     expect((await fetch(`${base}/api/inventory?token=${encodeURIComponent(token)}`)).status).toBe(401);

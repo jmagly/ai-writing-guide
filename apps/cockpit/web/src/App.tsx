@@ -254,7 +254,7 @@ export function App() {
           <Sessions session={session} composer={composer} setComposer={setComposer} onRequestStart={requestStart} refreshTick={refreshTick} />
         </section>
         <Panel id="approvals" tab={tab}><Approvals refreshTick={refreshTick} responses={[...registryResponses, ...(session.responseNeeded.needed ? [sessionResponse(session)] : [])]} goSessions={() => setTab('sessions')} /></Panel>
-        <Panel id="explore" tab={tab}><Explore /></Panel>
+        <Panel id="explore" tab={tab}><Explore refreshTick={refreshTick} /></Panel>
         <Panel id="library" tab={tab}>
           <Library session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />
         </Panel>
