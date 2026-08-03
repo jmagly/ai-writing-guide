@@ -52,6 +52,11 @@ export async function buildCliPackage({ outputDir = defaultOutputDir } = {}) {
     path.join(repoRoot, 'agentic', 'code', 'providers', 'capability-matrix.yaml'),
     path.join(repoRoot, 'agentic', 'code', 'providers', 'model-capabilities.v1.json'),
     path.join(repoRoot, 'agentic', 'code', 'providers', 'model-catalog.v1.json'),
+    path.join(repoRoot, 'tools', '_resolve-impl.mjs'),
+    path.join(repoRoot, 'tools', 'agents', 'deploy-agents.mjs'),
+    path.join(repoRoot, 'tools', 'commands', 'deploy-prompts-codex.mjs'),
+    path.join(repoRoot, 'tools', 'plugin', 'package-plugins.mjs'),
+    path.join(repoRoot, 'tools', 'skills', 'deploy-skills-codex.mjs'),
   ];
   for (const filename of required) await readFile(filename);
 
@@ -69,6 +74,26 @@ export async function buildCliPackage({ outputDir = defaultOutputDir } = {}) {
       path.join(outputDir, 'dist', 'src', 'models', filename),
     );
   }
+  await mkdir(path.join(outputDir, 'agentic', 'code'), { recursive: true });
+  await cp(
+    path.join(repoRoot, 'agentic', 'code', 'providers'),
+    path.join(outputDir, 'agentic', 'code', 'providers'),
+    { recursive: true },
+  );
+  await mkdir(path.join(outputDir, 'tools', 'agents'), { recursive: true });
+  await mkdir(path.join(outputDir, 'tools', 'commands'), { recursive: true });
+  await mkdir(path.join(outputDir, 'tools', 'plugin'), { recursive: true });
+  await mkdir(path.join(outputDir, 'tools', 'skills'), { recursive: true });
+  await cp(path.join(repoRoot, 'tools', '_resolve-impl.mjs'), path.join(outputDir, 'tools', '_resolve-impl.mjs'));
+  await cp(path.join(repoRoot, 'tools', 'agents', 'deploy-agents.mjs'), path.join(outputDir, 'tools', 'agents', 'deploy-agents.mjs'));
+  await cp(
+    path.join(repoRoot, 'tools', 'agents', 'providers'),
+    path.join(outputDir, 'tools', 'agents', 'providers'),
+    { recursive: true },
+  );
+  await cp(path.join(repoRoot, 'tools', 'commands', 'deploy-prompts-codex.mjs'), path.join(outputDir, 'tools', 'commands', 'deploy-prompts-codex.mjs'));
+  await cp(path.join(repoRoot, 'tools', 'plugin', 'package-plugins.mjs'), path.join(outputDir, 'tools', 'plugin', 'package-plugins.mjs'));
+  await cp(path.join(repoRoot, 'tools', 'skills', 'deploy-skills-codex.mjs'), path.join(outputDir, 'tools', 'skills', 'deploy-skills-codex.mjs'));
   await cp(path.join(repoRoot, 'bin', 'aiwg.mjs'), path.join(outputDir, 'bin', 'aiwg.mjs'));
   await chmod(path.join(outputDir, 'bin', 'aiwg.mjs'), 0o755);
   await cp(path.join(repoRoot, 'LICENSE'), path.join(outputDir, 'LICENSE'));

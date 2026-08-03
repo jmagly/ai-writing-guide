@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -46,10 +47,10 @@ function runtimeEnv(): NodeJS.ProcessEnv {
   };
 }
 
-function runCli(args: string[]): Promise<{ code: number | null; stdout: string; stderr: string }> {
+function runCli(args: string[], cwd = tempRoot): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     const child = spawn(cliPath, args, {
-      cwd: tempRoot,
+      cwd,
       env: runtimeEnv(),
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -62,6 +63,71 @@ function runCli(args: string[]): Promise<{ code: number | null; stdout: string; 
     child.once('error', reject);
     child.once('close', (code) => resolve({ code, stdout, stderr }));
   });
+}
+
+async function writeJson(filename: string, value: unknown): Promise<void> {
+  await mkdir(path.dirname(filename), { recursive: true });
+  await writeFile(filename, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+async function createExternalPluginProject(
+  project: string,
+  platforms: Record<string, 'full' | 'partial' | 'experimental' | 'none'> = { claude: 'full', codex: 'full' },
+): Promise<string> {
+  const wrapper = path.join(project, '.aiwg', 'plugins', 'bt6-maintainer');
+  const payload = path.join(wrapper, 'payload');
+  await writeJson(path.join(wrapper, 'manifest.json'), {
+    id: 'bt6-maintainer',
+    type: 'plugin',
+    name: 'BT6 Maintainer',
+    version: '0.2.0',
+    description: 'External plugin fixture for packed CLI deployment',
+    manifestVersion: '1',
+    platforms,
+    keywords: ['bt6', 'maintainer'],
+    deployment: { pathTemplate: '.aiwg/plugins/bt6-maintainer' },
+    pluginConfig: { payloadType: 'addon', payloadPath: 'payload/' },
+  });
+  await writeJson(path.join(payload, 'manifest.json'), {
+    id: 'bt6-maintainer-core',
+    type: 'addon',
+    name: 'BT6 Maintainer Core',
+    version: '0.2.0',
+    description: 'Payload for the BT6 Maintainer external plugin fixture',
+    manifestVersion: '1',
+    platforms,
+    keywords: ['bt6', 'maintainer'],
+    deployment: { pathTemplate: '.aiwg/addons/bt6-maintainer-core' },
+    addonConfig: { entry: { agents: 'agents/', skills: 'skills/', rules: 'rules/' } },
+  });
+  for (let index = 1; index <= 5; index += 1) {
+    const agentName = `bt6-fixture-agent-${index}`;
+    await mkdir(path.join(payload, 'agents'), { recursive: true });
+    await writeFile(
+      path.join(payload, 'agents', `${agentName}.md`),
+      `---\nname: ${agentName}\ndescription: Packed CLI fixture agent ${index}\nmodel: claude-sonnet-4-6\ntools: Read, Bash\n---\n\n# ${agentName}\n`,
+    );
+    const skillName = `bt6-fixture-skill-${index}`;
+    await mkdir(path.join(payload, 'skills', skillName), { recursive: true });
+    await writeFile(
+      path.join(payload, 'skills', skillName, 'SKILL.md'),
+      `---\nname: ${skillName}\ndescription: Packed CLI fixture skill ${index}\n---\n\n# ${skillName}\n`,
+    );
+  }
+  await mkdir(path.join(payload, 'rules'), { recursive: true });
+  await writeFile(
+    path.join(payload, 'rules', 'bt6-fixture-rule.md'),
+    '---\nid: bt6-fixture-rule\nname: bt6-fixture-rule\n---\n\n# BT6 fixture rule\n',
+  );
+  return wrapper;
+}
+
+async function listFixtureEntries(directory: string): Promise<string[]> {
+  return (await readdir(directory)).filter((entry) => entry.startsWith('bt6-fixture-')).sort();
+}
+
+function sha256(value: Buffer): string {
+  return createHash('sha256').update(value).digest('hex');
 }
 
 function runApi(args: string[]): Promise<{ code: number | null; stdout: string; stderr: string }> {
@@ -147,9 +213,23 @@ describe('@aiwg/cli packaged web distribution', () => {
     expect(installed.dependencies).toEqual(core.dependencies);
     expect(installed.optionalDependencies).toEqual(core.optionalDependencies);
     expect(packMetadata.unpackedSize).toBeLessThan(25 * 1024 * 1024);
-    for (const prefix of ['agentic/', 'docs/', 'prebuilt/', 'templates/', 'tools/', 'apps/']) {
+    for (const prefix of ['docs/', 'prebuilt/', 'templates/', 'apps/']) {
       expect(paths.some((entry) => entry.startsWith(prefix)), `${prefix} must not ship in @aiwg/cli`).toBe(false);
     }
+    expect(paths.filter((entry) => entry.startsWith('agentic/')).every(
+      (entry) => entry.startsWith('agentic/code/providers/'),
+    )).toBe(true);
+    const allowedToolPrefixes = [
+      'tools/_resolve-impl.mjs',
+      'tools/agents/deploy-agents.mjs',
+      'tools/agents/providers/',
+      'tools/commands/deploy-prompts-codex.mjs',
+      'tools/plugin/package-plugins.mjs',
+      'tools/skills/deploy-skills-codex.mjs',
+    ];
+    expect(paths.filter((entry) => entry.startsWith('tools/')).every(
+      (entry) => allowedToolPrefixes.some((allowed) => entry === allowed || entry.startsWith(allowed)),
+    )).toBe(true);
     expect(paths).toContain('bin/aiwg.mjs');
     expect(paths).toContain('LICENSE');
     expect(paths).toContain('dist/src/api/index.js');
@@ -158,6 +238,10 @@ describe('@aiwg/cli packaged web distribution', () => {
     expect(paths).toContain('dist/src/providers/capability-matrix.yaml');
     expect(paths).toContain('dist/src/models/model-capabilities.v1.json');
     expect(paths).toContain('dist/src/models/model-catalog.v1.json');
+    expect(paths).toContain('agentic/code/providers/model-catalog.v1.json');
+    expect(paths).toContain('tools/_resolve-impl.mjs');
+    expect(paths).toContain('tools/agents/deploy-agents.mjs');
+    expect(paths).toContain('tools/plugin/package-plugins.mjs');
     expect(paths).toContain('README.md');
     expect(installedReadme).toBe(sourceReadme);
     expect(Buffer.byteLength(installedReadme)).toBeGreaterThan(25_000);
@@ -209,4 +293,86 @@ describe('@aiwg/cli packaged web distribution', () => {
       type: 'skill',
     });
   }, 15_000);
+
+  it('packages an external wrapper through the installed lightweight CLI (#2007)', async () => {
+    const project = path.join(tempRoot, 'package-plugin-project');
+    const wrapper = await createExternalPluginProject(project);
+    const packaged = await runCli([
+      'package-plugin', path.relative(project, wrapper), '--provider', 'all',
+    ], project);
+    expect(packaged.code, `${packaged.stdout}\n${packaged.stderr}`).toBe(0);
+
+    const claudeArchive = path.join(project, 'dist', 'plugins', 'bt6-maintainer-0.2.0-claude.tar.gz');
+    const codexArchive = path.join(project, 'dist', 'plugins', 'bt6-maintainer-0.2.0-codex.tar.gz');
+    const claudeDigest = sha256(await readFile(claudeArchive));
+    expect((await readFile(claudeArchive)).byteLength).toBeGreaterThan(0);
+    expect((await readFile(codexArchive)).byteLength).toBeGreaterThan(0);
+
+    const secondOutput = path.join(project, 'dist', 'plugins-repeat');
+    const repeated = await runCli([
+      'package-plugin', path.relative(project, wrapper), '--provider', 'claude', '--output', secondOutput,
+    ], project);
+    expect(repeated.code, `${repeated.stdout}\n${repeated.stderr}`).toBe(0);
+    expect(sha256(await readFile(path.join(secondOutput, 'bt6-maintainer-0.2.0-claude.tar.gz')))).toBe(claudeDigest);
+  }, 120_000);
+
+  it.each([
+    ['claude', '.claude/agents', '.claude/.aiwg/skills', '.claude/rules', '.md'],
+    ['codex', '.codex/agents', '.agents/skills', '.codex/rules', '.toml'],
+  ])('installs 11 external artifacts for %s at project scope and refreshes indices (#2008)', async (
+    provider,
+    agentsDir,
+    skillsDir,
+    rulesDir,
+    agentExtension,
+  ) => {
+    const project = path.join(tempRoot, `project-scope-${provider}`);
+    await createExternalPluginProject(project);
+    const deployed = await runCli([
+      'use', 'bt6-maintainer', '--provider', provider, '--scope', 'project', '--target', project,
+    ], project);
+    expect(deployed.code, `${deployed.stdout}\n${deployed.stderr}`).toBe(0);
+    expect(await listFixtureEntries(path.join(project, agentsDir))).toHaveLength(5);
+    expect(await listFixtureEntries(path.join(project, skillsDir))).toHaveLength(5);
+    expect(await listFixtureEntries(path.join(project, rulesDir))).toHaveLength(1);
+    expect((await listFixtureEntries(path.join(project, agentsDir))).every((name) => name.endsWith(agentExtension))).toBe(true);
+
+    const metadata = JSON.parse(await readFile(path.join(project, '.aiwg', '.index', 'project', 'metadata.json'), 'utf8'));
+    expect(Object.keys(metadata.entries).some((entry) => entry.includes('bt6-fixture-skill-1'))).toBe(true);
+    const fortemi = JSON.parse(await readFile(path.join(project, '.aiwg', '.index', 'fortemi-core', 'project', 'manifest.json'), 'utf8'));
+    expect(fortemi.graph).toBe('project');
+    expect(fortemi.item_count).toBeGreaterThanOrEqual(11);
+  }, 180_000);
+
+  it('installs an external wrapper globally without leaving project provider artifacts and refreshes user indices (#2008)', async () => {
+    const project = path.join(tempRoot, 'global-scope-project');
+    await createExternalPluginProject(project);
+    const deployed = await runCli([
+      'use', 'bt6-maintainer', '--provider', 'claude', '--global', '--target', project,
+    ], project);
+    expect(deployed.code, `${deployed.stdout}\n${deployed.stderr}`).toBe(0);
+    await expect(readdir(path.join(project, '.claude', 'agents'))).rejects.toThrow();
+    expect(await listFixtureEntries(path.join(home, '.claude', 'agents'))).toHaveLength(5);
+    expect(await listFixtureEntries(path.join(home, '.claude', 'skills'))).toHaveLength(5);
+    expect(await listFixtureEntries(path.join(home, '.claude', 'rules'))).toHaveLength(1);
+    expect(JSON.parse(await readFile(path.join(home, '.aiwg', 'plugins', 'bt6-maintainer', 'manifest.json'), 'utf8')).id).toBe('bt6-maintainer');
+
+    const userIndexRoot = path.join(home, '.local', 'share', 'aiwg', 'index');
+    const metadata = JSON.parse(await readFile(path.join(userIndexRoot, 'user', 'metadata.json'), 'utf8'));
+    expect(Object.keys(metadata.entries).some((entry) => entry.includes('bt6-fixture-skill-1'))).toBe(true);
+    const fortemi = JSON.parse(await readFile(path.join(userIndexRoot, 'fortemi-core', 'user', 'manifest.json'), 'utf8'));
+    expect(fortemi.graph).toBe('user');
+    expect(fortemi.item_count).toBeGreaterThanOrEqual(11);
+  }, 180_000);
+
+  it('reports an actionable provider declaration error for external wrappers (#2008)', async () => {
+    const project = path.join(tempRoot, 'unsupported-provider-project');
+    await createExternalPluginProject(project, { claude: 'full' });
+    const deployed = await runCli([
+      'use', 'bt6-maintainer', '--provider', 'codex', '--scope', 'project', '--target', project,
+    ], project);
+    expect(deployed.code).toBe(1);
+    expect(`${deployed.stdout}\n${deployed.stderr}`).toContain("does not declare support for provider 'codex'");
+    expect(`${deployed.stdout}\n${deployed.stderr}`).toContain('Declared providers: claude');
+  });
 });

@@ -1273,9 +1273,18 @@ export const packagePluginHandler: CommandHandler = {
         message: "Error: plugin name is required.\n\nRun `aiwg package-plugin --help` for usage.",
       };
     }
+    const positionalSource = positional && (positional.includes('/') || positional.includes('\\'))
+      ? positional
+      : undefined;
     const normalizedArgs = hasExplicitPlugin
       ? ctx.args
-      : ["--plugin", positional as string, ...ctx.args.slice(1)];
+      : positionalSource
+        ? [
+          "--plugin", path.basename(path.resolve(ctx.cwd, positionalSource)),
+          "--source", positionalSource,
+          ...ctx.args.slice(1),
+        ]
+        : ["--plugin", positional as string, ...ctx.args.slice(1)];
 
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);

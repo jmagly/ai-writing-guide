@@ -25,12 +25,19 @@
   "files": [
     "LICENSE",
     "bin/",
+    "agentic/code/providers/",
     "dist/src/",
     "!dist/**/*.d.ts",
     "!dist/**/*.map",
     "dist/src/api/index.d.ts",
     "dist/src/resources/index.d.ts",
     "dist/src/resources/web-release.d.ts",
+    "tools/_resolve-impl.mjs",
+    "tools/agents/deploy-agents.mjs",
+    "tools/agents/providers/",
+    "tools/commands/deploy-prompts-codex.mjs",
+    "tools/plugin/package-plugins.mjs",
+    "tools/skills/deploy-skills-codex.mjs",
     "README.md"
   ],
   "repository": {
