@@ -99,6 +99,7 @@ describe('App shell (rendered DOM)', () => {
           name: 'Release hardening',
           state: 'active',
           source: 'aiwg-mc',
+          updated_at: '2026-07-04T12:00:00.000Z',
           audit_count: 1,
           audit_tail: [{ event: 'mission_dispatched', ts: '2026-07-04T12:00:00.000Z', missionId: 'm-1' }],
           missions: [{ id: 'm-1', session_id: 'mc-1', source: 'aiwg-mc', title: 'Finish cockpit', status: 'running', loop: 1, max_iterations: 5, terminal: false }],
@@ -126,6 +127,23 @@ describe('App shell (rendered DOM)', () => {
     expect(screen.getByLabelText('Mission status summary').textContent).toContain('2 total');
     expect(screen.getByText('Finish cockpit')).toBeTruthy();
     expect(screen.getByText(/mission_dispatched/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Objective'), { target: { value: 'Run release verification' } });
+    fireEvent.change(screen.getByLabelText('Completion criteria'), { target: { value: 'all gates pass' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Queue mission' }));
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/missions',
+      expect.objectContaining({ method: 'POST', body: expect.stringContaining('Run release verification') }),
+    ));
+    fireEvent.click(screen.getByRole('button', { name: 'Pause session' }));
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/missions/mc-1/pause',
+      expect.objectContaining({ method: 'POST' }),
+    ));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel mission' }));
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/missions/mc-1/m-1/cancel',
+      expect.objectContaining({ method: 'POST' }),
+    ));
   });
 
   it('renders an AIWG parent mission with distinct Agentic Sandbox workload semantics and recovery posture', async () => {

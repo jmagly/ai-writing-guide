@@ -177,12 +177,87 @@ function spawnCollect(cmd, args) {
     p.stdout.on('data', (d) => (out += d));
     p.stderr.on('data', (d) => (err += d));
     p.once('error', reject);
-    p.once('close', (code) => (code === 0 ? resolve(out) : reject(new Error(err.trim() || `aiwg exit ${code}`))));
+    p.once('close', (code) => {
+      if (code === 0) return resolve(out);
+      const failure = new Error(err.trim() || `aiwg exit ${code}`);
+      failure.exitCode = code;
+      failure.stdout = out;
+      reject(failure);
+    });
   });
 }
 async function runAiwg(args) {
   try { return await spawnCollect('aiwg', args); }
   catch (e) { if (e && e.code === 'ENOENT') return spawnCollect(process.execPath, [REPO_BIN, ...args]); throw e; }
+}
+
+const MISSION_CONTROL_ID_RE = /^[a-zA-Z0-9._-]+$/;
+async function controlMission({ action, sessionId, missionId, expectedUpdatedAt, requestId }) {
+  if (!['pause', 'resume', 'cancel'].includes(action)) throw Object.assign(new Error('unsupported mission control action'), { status: 400 });
+  if (!MISSION_CONTROL_ID_RE.test(sessionId) || (missionId && !MISSION_CONTROL_ID_RE.test(missionId))) {
+    throw Object.assign(new Error('invalid Mission control identifier'), { status: 400 });
+  }
+  const args = ['mc', action, sessionId];
+  if (action === 'cancel') {
+    if (!missionId) throw Object.assign(new Error('mission id required'), { status: 400 });
+    args.push(missionId);
+  }
+  if (expectedUpdatedAt) args.push('--expected-updated-at', String(expectedUpdatedAt));
+  if (requestId) args.push('--request-id', String(requestId));
+  await appendAudit('mission.control.requested', {
+    action,
+    session_id: sessionId,
+    mission_id: missionId ?? null,
+    expected_updated_at: expectedUpdatedAt ?? null,
+    request_id: requestId ?? null,
+  });
+  try {
+    await runAiwg(args);
+  } catch (error) {
+    const message = String(error?.message ?? error);
+    const status = error?.exitCode === 3 || /mission_conflict/.test(message) ? 409 : 422;
+    await appendAudit('mission.control.rejected', { action, session_id: sessionId, mission_id: missionId ?? null, request_id: requestId ?? null, status, reason: message });
+    throw Object.assign(new Error(message), { status });
+  }
+  await appendAudit('mission.control.completed', { action, session_id: sessionId, mission_id: missionId ?? null, request_id: requestId ?? null });
+  return { ok: true, action, session_id: sessionId, mission_id: missionId ?? null, request_id: requestId ?? null };
+}
+
+async function dispatchMission(body, upstreamUrl) {
+  const sessionId = String(body?.session_id ?? '');
+  const objective = String(body?.objective ?? '').trim();
+  const completion = String(body?.completion ?? '').trim();
+  const requestId = String(body?.request_id ?? randomBytes(16).toString('hex'));
+  if (!MISSION_CONTROL_ID_RE.test(sessionId)) throw Object.assign(new Error('invalid Mission control session id'), { status: 400 });
+  if (!objective || objective.length > 4096) throw Object.assign(new Error('objective is required and must be at most 4096 characters'), { status: 400 });
+  if (completion.length > 4096) throw Object.assign(new Error('completion must be at most 4096 characters'), { status: 400 });
+  if (!MISSION_CONTROL_ID_RE.test(requestId)) throw Object.assign(new Error('request_id must contain only letters, digits, dot, underscore, or hyphen'), { status: 400 });
+  const args = ['mc', 'dispatch', sessionId, objective, '--request-id', requestId];
+  if (completion) args.push('--completion', completion);
+  if (body?.priority) args.push('--priority', String(body.priority));
+  if (body?.expected_updated_at) args.push('--expected-updated-at', String(body.expected_updated_at));
+  if (body?.max_iterations !== undefined) {
+    const maxIterations = Number(body.max_iterations);
+    if (!Number.isInteger(maxIterations) || maxIterations < 1 || maxIterations > 10_000) {
+      throw Object.assign(new Error('max_iterations must be an integer from 1 to 10000'), { status: 400 });
+    }
+    args.push('--max-iterations', String(maxIterations));
+  }
+  await appendAudit('mission.dispatch.requested', { session_id: sessionId, request_id: requestId, objective_digest: `sha256:${createHash('sha256').update(objective).digest('hex')}` });
+  try {
+    await runAiwg(args);
+    if (body?.run === true) {
+      await runAiwg(['mc', 'run', sessionId, ...(body?.accept_cost === true ? ['--accept-cost'] : [])]);
+    }
+  } catch (error) {
+    const message = String(error?.message ?? error);
+    const status = error?.exitCode === 3 || /mission_conflict/.test(message) ? 409 : 422;
+    await appendAudit('mission.dispatch.rejected', { session_id: sessionId, request_id: requestId, status, reason: message });
+    throw Object.assign(new Error(message), { status });
+  }
+  const missionId = `m-${createHash('sha256').update(requestId).digest('hex').slice(0, 16)}`;
+  await appendAudit('mission.dispatch.completed', { session_id: sessionId, mission_id: missionId, request_id: requestId, run: body?.run === true });
+  return { ok: true, session_id: sessionId, mission_id: missionId, request_id: requestId, projection: await getMissions(upstreamUrl) };
 }
 // --- user asset library (#1591/#1593): the operator's OWN copied/cloned/imported
 // assets, on disk under ~/.aiwg/cockpit/library. AIWG install files are NEVER written
@@ -2518,7 +2593,12 @@ export function createBridge({
       if (url.pathname === '/api/mcp/discovery' && req.method === 'GET') return json(res, 200, await getMcpDiscovery(upstreamUrl));
       if (url.pathname === '/api/mcp' && req.method === 'POST') return proxyMcpRequest(req, res, upstreamUrl, MCP_TOKEN_FILE);
       if (url.pathname === '/api/running') return json(res, 200, await getRunning(upstreamUrl));
-      if (url.pathname === '/api/missions') return json(res, 200, await getMissions(upstreamUrl));
+      if (url.pathname === '/api/missions' && req.method === 'GET') return json(res, 200, await getMissions(upstreamUrl));
+      if (url.pathname === '/api/missions' && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        return json(res, 201, await dispatchMission(parsed.body, upstreamUrl));
+      }
       if (url.pathname === '/api/events/snapshot') return json(res, 200, await getEventSnapshot(upstreamUrl));
       if (url.pathname === '/api/loadouts') return json(res, 200, await getLoadouts(upstreamUrl));
       if (url.pathname === '/api/index/status' && req.method === 'GET') return json(res, 200, await getIndexStatus());
@@ -2821,6 +2901,29 @@ export function createBridge({
         await appendAudit('instance.destroy.requested', { instance_id: decodeURIComponent(m[1]), status, result: body });
         return json(res, status, body);
       }
+      if ((m = url.pathname.match(/^\/api\/missions\/([^/]+)\/(pause|resume)$/)) && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        const result = await controlMission({
+          action: m[2],
+          sessionId: decodeURIComponent(m[1]),
+          expectedUpdatedAt: parsed.body?.expected_updated_at,
+          requestId: parsed.body?.request_id,
+        });
+        return json(res, 200, { ...result, projection: await getMissions(upstreamUrl) });
+      }
+      if ((m = url.pathname.match(/^\/api\/missions\/([^/]+)\/([^/]+)\/cancel$/)) && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        const result = await controlMission({
+          action: 'cancel',
+          sessionId: decodeURIComponent(m[1]),
+          missionId: decodeURIComponent(m[2]),
+          expectedUpdatedAt: parsed.body?.expected_updated_at,
+          requestId: parsed.body?.request_id,
+        });
+        return json(res, 200, { ...result, projection: await getMissions(upstreamUrl) });
+      }
       if ((m = url.pathname.match(/^\/api\/tasks\/([^/]+)\/([^/]+)\/cancel$/)) && req.method === 'POST') {
         await appendAudit('task.cancel.requested', { instance_id: decodeURIComponent(m[1]), task_id: decodeURIComponent(m[2]) });
         return proxy(res, 'POST', `${upstreamUrl}/agents/${encodeURIComponent(m[1])}/tasks/${encodeURIComponent(m[2])}:cancel`);
@@ -2867,7 +2970,7 @@ export function createBridge({
       }
       json(res, 404, { error: 'not_found', path: url.pathname });
     } catch (err) {
-      const status = Number(err?.upstreamStatus) || 502;
+      const status = Number(err?.status) || Number(err?.upstreamStatus) || 502;
       json(res, status, { error: err?.code ?? 'bridge_upstream_error', message: String(err?.message ?? err) });
     }
   };

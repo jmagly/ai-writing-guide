@@ -9,6 +9,18 @@
  * @implements #1566
  */
 
+import {
+  closeSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  renameSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
+import { dirname } from 'node:path';
+
 export type AdmissionState =
   | 'queued'
   | 'admitted'
@@ -77,6 +89,47 @@ export class InMemoryAdmissionStore implements AdmissionStore {
 
   read(): AdmissionSnapshot {
     return structuredClone(this.snapshot);
+  }
+}
+
+/** Durable cross-process store. The lock is deliberately non-blocking: a
+ * concurrent writer receives a conflict and retries through its control loop. */
+export class FileAdmissionStore implements AdmissionStore {
+  constructor(private readonly path: string) {}
+
+  transact<T>(mutate: (snapshot: AdmissionSnapshot) => T): T {
+    mkdirSync(dirname(this.path), { recursive: true, mode: 0o700 });
+    const lockPath = `${this.path}.lock`;
+    let descriptor: number;
+    try {
+      descriptor = openSync(lockPath, 'wx', 0o600);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+        throw new Error('shared-host admission store is busy; retry the request');
+      }
+      throw error;
+    }
+    try {
+      const snapshot = this.readUnsafe();
+      const result = mutate(snapshot);
+      snapshot.revision += 1;
+      const temporary = `${this.path}.${process.pid}.tmp`;
+      writeFileSync(temporary, `${JSON.stringify(snapshot, null, 2)}\n`, { mode: 0o600 });
+      renameSync(temporary, this.path);
+      return result;
+    } finally {
+      closeSync(descriptor);
+      try { unlinkSync(lockPath); } catch { /* best-effort lock cleanup */ }
+    }
+  }
+
+  read(): AdmissionSnapshot {
+    return structuredClone(this.readUnsafe());
+  }
+
+  private readUnsafe(): AdmissionSnapshot {
+    if (!existsSync(this.path)) return { revision: 0, records: {} };
+    return JSON.parse(readFileSync(this.path, 'utf8')) as AdmissionSnapshot;
   }
 }
 

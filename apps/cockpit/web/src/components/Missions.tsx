@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { fmtId } from '../util';
 import type { MissionProjection, MissionSession, MissionsResponse } from '../types';
@@ -39,6 +39,7 @@ export function Missions({ refreshTick = 0 }: { refreshTick?: number }) {
         <span><strong>{totals.awaiting}</strong> awaiting approval</span>
         <span><strong>{totals.terminal}</strong> terminal</span>
       </div>
+      <MissionComposer sessions={data.sessions.filter((session) => session.source === 'aiwg-mc')} onChanged={load} />
       {!data.sessions.length ? <p className="empty">No Mission Control sessions or live executor tasks are visible yet.</p> : (
         <div className="missions-layout">
           <aside className="mission-sessions" aria-label="Mission sessions">
@@ -54,15 +55,91 @@ export function Missions({ refreshTick = 0 }: { refreshTick?: number }) {
               </button>
             ))}
           </aside>
-          {active && <MissionSessionView session={active} />}
+          {active && <MissionSessionView session={active} onChanged={load} />}
         </div>
       )}
     </>
   );
 }
 
-function MissionSessionView({ session }: { session: MissionSession }) {
+function MissionComposer({ sessions, onChanged }: { sessions: MissionSession[]; onChanged: () => void }) {
+  const [sessionId, setSessionId] = useState(sessions[0]?.id ?? '');
+  const [objective, setObjective] = useState('');
+  const [completion, setCompletion] = useState('');
+  const [runNow, setRunNow] = useState(false);
+  const [acceptCost, setAcceptCost] = useState(false);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!sessions.some((session) => session.id === sessionId)) setSessionId(sessions[0]?.id ?? '');
+  }, [sessions, sessionId]);
+  if (!sessions.length) return <p className="hint">Create a Mission Control session with <code>aiwg mc start</code> before dispatching from Cockpit.</p>;
+  const selected = sessions.find((session) => session.id === sessionId) ?? sessions[0]!;
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      await api('/api/missions', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          session_id: selected.id,
+          objective,
+          completion,
+          expected_updated_at: selected.updated_at,
+          request_id: globalThis.crypto?.randomUUID?.() ?? `cockpit-${Date.now()}`,
+          run: runNow,
+          accept_cost: acceptCost,
+        }),
+      });
+      setObjective('');
+      setCompletion('');
+      onChanged();
+    } catch (caught) {
+      setError(`Mission dispatch failed: ${(caught as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return <form className="mission-composer" aria-label="Dispatch durable mission" onSubmit={submit}>
+    <label>Session<select value={selected.id} onChange={(event) => setSessionId(event.target.value)}>{sessions.map((session) => <option key={session.id} value={session.id}>{session.name}</option>)}</select></label>
+    <label>Objective<input required maxLength={4096} value={objective} onChange={(event) => setObjective(event.target.value)} /></label>
+    <label>Completion criteria<input maxLength={4096} value={completion} onChange={(event) => setCompletion(event.target.value)} /></label>
+    <label><input type="checkbox" checked={runNow} onChange={(event) => setRunNow(event.target.checked)} /> Run after queueing</label>
+    {runNow && <label><input type="checkbox" checked={acceptCost} onChange={(event) => setAcceptCost(event.target.checked)} /> Accept estimated provider cost if the non-interactive gate requires it</label>}
+    <button disabled={busy || !objective.trim()} type="submit">{runNow ? 'Queue and run mission' : 'Queue mission'}</button>
+    {error && <p className="err" role="alert">{error}</p>}
+  </form>;
+}
+
+function MissionSessionView({ session, onChanged }: { session: MissionSession; onChanged: () => void }) {
   const fleet = session.source === 'agentic-sandbox-fleet';
+  const controllable = session.source === 'aiwg-mc';
+  const [mutationError, setMutationError] = useState('');
+  const [mutating, setMutating] = useState('');
+  const mutate = async (action: 'pause' | 'resume' | 'cancel', missionId?: string) => {
+    setMutating(`${action}:${missionId ?? session.id}`);
+    setMutationError('');
+    const path = action === 'cancel'
+      ? `/api/missions/${encodeURIComponent(session.id)}/${encodeURIComponent(missionId!)}/cancel`
+      : `/api/missions/${encodeURIComponent(session.id)}/${action}`;
+    try {
+      await api(path, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          expected_updated_at: session.updated_at,
+          request_id: globalThis.crypto?.randomUUID?.() ?? `cockpit-${Date.now()}`,
+        }),
+      });
+      onChanged();
+    } catch (error) {
+      setMutationError(`Mission control failed: ${(error as Error).message}. Refresh and retry if the state changed elsewhere.`);
+    } finally {
+      setMutating('');
+    }
+  };
   return (
     <section className="mission-detail" aria-label={`${session.name} missions`}>
       <div className="mission-detail-head">
@@ -75,8 +152,13 @@ function MissionSessionView({ session }: { session: MissionSession }) {
             {session.updated_at ? ` · updated ${new Date(session.updated_at).toLocaleString()}` : ''}
           </p>
         </div>
-        <span className="badge">{session.audit_count} audit events</span>
+        <div>
+          <span className="badge">{session.audit_count} audit events</span>
+          {controllable && session.state === 'active' && <button disabled={Boolean(mutating)} onClick={() => mutate('pause')}>Pause session</button>}
+          {controllable && session.state === 'paused' && <button disabled={Boolean(mutating)} onClick={() => mutate('resume')}>Resume session</button>}
+        </div>
       </div>
+      {mutationError && <p className="err" role="alert">{mutationError}</p>}
       {!session.missions.length ? <p className="empty">This session has no missions.</p> : (
         <table className={fleet ? 'fleet-missions' : undefined}>
           <caption>{session.missions.length} mission projection(s)</caption>
@@ -93,6 +175,9 @@ function MissionSessionView({ session }: { session: MissionSession }) {
                   {fleet && <small className="block">{workloadSemantics(m)}</small>}
                   {m.completion && <small className="block">Done when: {m.completion}</small>}
                   {m.error && <small className="block err">{m.error}</small>}
+                  {controllable && !m.terminal && m.status !== 'aborted' && m.status !== 'failed' && m.status !== 'completed' && m.status !== 'done' && (
+                    <button disabled={Boolean(mutating)} onClick={() => mutate('cancel', m.id)}>Cancel mission</button>
+                  )}
                 </td>
                 <td>
                   <span className={`state ${statusClass(m.status)}`}><span className="dot" aria-hidden="true" />{m.status}</span>

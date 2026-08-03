@@ -1,9 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
+  FileAdmissionStore,
   InMemoryAdmissionStore,
   SharedHostScheduler,
+  type AdmissionStore,
   type AdmissionRequest,
 } from '../../../src/serve/shared-host-scheduler.js';
+
+const tempDirs: string[] = [];
+afterEach(() => {
+  for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
 
 const start = Date.parse('2026-08-03T12:00:00.000Z');
 
@@ -21,7 +31,7 @@ function request(id: string, overrides: Partial<AdmissionRequest> = {}): Admissi
   };
 }
 
-function scheduler(store: InMemoryAdmissionStore, now: () => number, overrides = {}) {
+function scheduler(store: AdmissionStore, now: () => number, overrides = {}) {
   return new SharedHostScheduler(store, {
     maxConcurrent: 2,
     leaseTtlMs: 10_000,
@@ -35,6 +45,20 @@ function scheduler(store: InMemoryAdmissionStore, now: () => number, overrides =
 }
 
 describe('SharedHostScheduler (#1566)', () => {
+  it('persists and serializes admissions across independent file stores', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'aiwg-admission-'));
+    tempDirs.push(dir);
+    const path = join(dir, 'admission.json');
+    const first = new FileAdmissionStore(path);
+    const second = new FileAdmissionStore(path);
+    const a = scheduler(first, () => start, { maxConcurrent: 1 });
+    const b = scheduler(second, () => start, { maxConcurrent: 1 });
+
+    expect(a.submit(request('file-a')).state).toBe('admitted');
+    expect(b.submit(request('file-b')).state).toBe('queued');
+    expect(JSON.parse(readFileSync(path, 'utf8')).revision).toBe(2);
+    expect(Object.keys(second.read().records)).toEqual(['file-a', 'file-b']);
+  });
   it('serializes admission globally across orchestrators sharing a store', () => {
     const store = new InMemoryAdmissionStore();
     const now = () => start;
