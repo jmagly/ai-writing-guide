@@ -7,6 +7,28 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.3] - 2026-08-03 - "Plugin lifecycle and release reliability"
+
+### Changed
+
+- **MCP server dependency compatibility** - MCP SDK 1.30.0 permits the fixed
+  Hono v2 server line, so the production graph deduplicates to
+  `@hono/node-server@2.0.11` and removes the Windows static-serving advisory
+  route tracked in #1973.
+
+### Fixed
+
+- **Project-local plugin removal** - removal and doctor checks compare deployed
+  files with provider-transformed hashes, preventing freshly deployed skills
+  from being reported as mutated while preserving later operator edits (#1998).
+- **Local plugin source handling** - `install-plugin --source` now preserves the
+  framework-root contract and provides supported migration guidance for
+  project-local plugin wrappers instead of crashing on a path-type error
+  (#1996).
+- **GitHub release mirroring** - stable releases wait for and verify the
+  operator-pushed signed annotated tag before release creation, eliminating the
+  tag-arrival race without synthesizing tags in CI (#1988).
+
 ## [2026.8.2] - 2026-08-03 - "Git-native provenance exchange"
 
 ### Added
