@@ -26,6 +26,7 @@ import type {
   HitlPromptEnvelope,
 } from '../../../src/a2a/hitl.js';
 import type { JsonValue, Message } from '../../../src/a2a/types.js';
+import { digestDecisionContext } from '../../../src/audit/operator-decision.js';
 
 // ── helpers ────────────────────────────────────────────────────────────
 
@@ -232,6 +233,8 @@ describe('driveOnePrompt', () => {
     });
     expect(auditLog.entries).toHaveLength(1);
     expect(auditLog.entries[0]!.outcome).toBe('responded');
+    expect(auditLog.entries[0]!.response_digest).toMatch(/^sha256:[a-f0-9]{64}$/);
+    expect(JSON.stringify(auditLog.entries[0])).not.toContain('"approve":true');
     expect(auditLog.entries[0]!.task_id).toBe('task-1');
     expect(auditLog.entries[0]!.context_id).toBe('ctx-1');
   });
@@ -383,7 +386,7 @@ describe('StderrHitlAuditLog', () => {
       channel: 'cli',
       prompt_id: 'p-smoke',
       outcome: 'responded',
-      response: { ok: true },
+      response_digest: digestDecisionContext({ ok: true }),
       duration_ms: 1,
     });
     // No assertion — just exercising the path.

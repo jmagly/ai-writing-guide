@@ -48,6 +48,7 @@ import {
   validateResponseStructurally,
 } from './hitl.js';
 import type { JsonValue, StreamEvent } from './types.js';
+import { digestDecisionContext } from '../audit/operator-decision.js';
 
 // ── Audit log surface ──────────────────────────────────────────────────
 
@@ -62,8 +63,8 @@ export interface HitlAuditEntry {
   task_id?: string;
   context_id?: string;
   outcome: 'responded' | 'invalid' | 'expired' | 'aborted' | 'unauthorized' | 'send_failed';
-  /** Operator's response payload — present only on `outcome === 'responded'`. */
-  response?: JsonValue;
+  /** Redacted response-context digest; raw approval payloads are never audited. */
+  response_digest?: string;
   /** Failure detail — present on non-success outcomes. */
   error?: string;
   /** How long the operator took (ms). */
@@ -415,7 +416,7 @@ export async function driveOnePrompt(opts: {
         ...(opts.taskId !== undefined ? { task_id: opts.taskId } : {}),
         ...(opts.contextId !== undefined ? { context_id: opts.contextId } : {}),
         outcome: 'responded',
-        response,
+        response_digest: digestDecisionContext(response),
         duration_ms: Date.now() - startedAt,
       });
       return;
