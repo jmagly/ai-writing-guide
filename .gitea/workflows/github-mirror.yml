@@ -1,8 +1,9 @@
-# GitHub Mirror — auto-push tag + create Release on stable tags (#1251)
+# GitHub Mirror — wait for operator tag + create Release on stable tags (#1251)
 #
 # Triggered by tag pushes. On STABLE tags only (no pre-release suffix), this
 # workflow:
-#   1. Pushes main + the tag to the GitHub mirror at jmagly/aiwg
+#   1. Pushes main and waits for the operator to push the original signed,
+#      annotated tag object to the GitHub mirror at jmagly/aiwg
 #   2. Creates a GitHub Release using docs/releases/v${VERSION}-announcement.md
 #      as the body (falls back to extracting the CHANGELOG section if the
 #      announcement file is missing).
@@ -146,7 +147,20 @@ jobs:
             echo "body_file=/tmp/release-body.md" >> $GITHUB_OUTPUT
           fi
 
+      - name: Wait for operator-pushed signed annotated tag
+        if: ${{ steps.classify.outputs.skip != 'true' && steps.token.outputs.skip != 'true' }}
+        run: |
+          set -euo pipefail
+          TAG="v${{ steps.classify.outputs.version }}"
+          node tools/ci/wait-for-github-tag.mjs \
+            --repo jmagly/aiwg \
+            --tag "$TAG" \
+            --expected-sha "$(git rev-parse "refs/tags/$TAG")" \
+            --attempts 30 \
+            --delay-seconds 10
+
       - name: Create GitHub Release
+        id: release
         if: ${{ steps.classify.outputs.skip != 'true' && steps.token.outputs.skip != 'true' }}
         run: |
           set -euo pipefail
@@ -172,6 +186,9 @@ jobs:
             echo "✓ Pre-release tag — GitHub fan-out skipped by design."
           elif [ "${{ steps.token.outputs.skip }}" = "true" ]; then
             echo "✓ Stable tag, but vault CI bootstrap is not configured — skipped."
-          else
+          elif [ "${{ steps.release.outcome }}" = "success" ]; then
             echo "✓ Stable tag v${{ steps.classify.outputs.version }} mirrored + released to github.com/jmagly/aiwg."
+          else
+            echo "✗ GitHub Release v${{ steps.classify.outputs.version }} was not completed."
+            exit 1
           fi

@@ -113,8 +113,10 @@ tools/release/cut-tag.sh 2026.X.Y
 # gate validates the signature against .gitea/keys/maintainers.asc)
 git push origin main --tags
 
-# Mirror the signed tag to GitHub (push it yourself — the mirror workflow
-# peels annotated tags; github-mirror.yml then creates the GitHub release)
+# Mirror the signed tag to GitHub. Push it yourself so GitHub receives the
+# original signed annotated tag object; the workflow never synthesizes or
+# peels a tag. github-mirror.yml waits up to five minutes for this push before
+# creating the verified GitHub release.
 git push github main --tags
 
 unset VAULT_CI_ROLE_ID VAULT_CI_SECRET_ID
