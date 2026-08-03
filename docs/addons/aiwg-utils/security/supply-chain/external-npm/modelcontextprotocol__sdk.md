@@ -1,6 +1,6 @@
 # @modelcontextprotocol/sdk External NPM Supply-Chain Audit
 
-Generated: 2026-05-23
+Updated: 2026-08-03
 
 ## Scope
 
@@ -8,7 +8,7 @@ Generated: 2026-05-23
 |---|---|
 | Package | `@modelcontextprotocol/sdk` |
 | Canonical upstream repository | https://github.com/modelcontextprotocol/typescript-sdk.git |
-| Audited version/ref | `1.24.3` / `724fe6eefeeb7f71328bc43c223fc9abd3df491e` |
+| Audited version/ref | `1.30.0` / npm registry release |
 | npm registry signatures | 1 |
 | Dependency source summary | `ajv`, `cors`, `cross-spawn`, `express`, `jose`, `raw-body`, `zod`, `@hono/node-server` |
 | Optional dependency summary | (none) |
@@ -19,12 +19,13 @@ Generated: 2026-05-23
 
 | Manifest | Field | Spec | Lockfile Version | Integrity | Install Script | Optional Lock Entry | Tracking |
 |---|---|---:|---:|---|---|---|---|
-| `package.json` | `dependencies` | `^1.24.0` | `1.24.3` | yes | no | no | #1444 |
+| `package.json` | `dependencies` | `^1.30.0` | `1.30.0` | yes | no | no | #1444, #1973 |
+| `packages/cli/package.json` | `dependencies` | `^1.30.0` | `1.30.0` | yes | no | no | #1973 |
 | `agentic/code/addons/droid-bridge/package.json` | `dependencies` | `^1.0.0` | `1.25.2` | yes | no | no | #1447 |
 
 ## Lockfile Tarballs
 
-- package.json: https://registry.npmjs.org/@modelcontextprotocol/sdk/-/sdk-1.24.3.tgz
+- package.json and packages/cli/package.json: https://registry.npmjs.org/@modelcontextprotocol/sdk/-/sdk-1.30.0.tgz
 - agentic/code/addons/droid-bridge/package.json: https://registry.npmjs.org/@modelcontextprotocol/sdk/-/sdk-1.25.2.tgz
 
 ## Lifecycle And Native/Binary Review
@@ -58,7 +59,8 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 - AIWG usage context is documented with manifest path, dependency field, requested spec, and lockfile version where present.
 - Lockfile integrity is present for locked AIWG package entries.
 - Native, binary, optional, and lifecycle behavior is explicitly recorded for applicable package classes.
-- No immediate AIWG dependency change is required from this package alone.
+- Version 1.30.0 permits `@hono/node-server` v2, removing the Windows
+  serve-static advisory route retained by the 1.29.0 dependency range.
 
 ## Follow-Up
 

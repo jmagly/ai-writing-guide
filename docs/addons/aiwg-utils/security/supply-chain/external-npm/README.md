@@ -19,7 +19,7 @@ This directory tracks external npm package audit evidence for the current depend
 
 | Package | Version | Tracking | Native/Binary/Lifecycle Surface | Status | Report |
 |---|---:|---|---|---|---|
-| `@modelcontextprotocol/sdk` | `1.29.0` | #1444, #1447 | no | complete | [report](modelcontextprotocol__sdk.md) |
+| `@modelcontextprotocol/sdk` | `1.30.0` | #1444, #1447, #1973 | no | complete | [report](modelcontextprotocol__sdk.md) |
 | `chalk` | `4.1.2` | #1444 | no | complete | [report](chalk.md) |
 | `chokidar` | `4.0.3` | #1444 | no | complete | [report](chokidar.md) |
 | `commander` | `12.1.0` | #1444, #1447 | no | complete | [report](commander.md) |

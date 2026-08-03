@@ -311,7 +311,7 @@
   },
   "dependencies": {
     "@fortemi/core": "2026.7.15",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "chalk": "^4.1.2",
     "chokidar": "^4.0.3",
     "commander": "^12.1.0",
