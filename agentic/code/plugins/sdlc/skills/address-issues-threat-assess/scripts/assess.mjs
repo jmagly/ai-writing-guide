@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import {
   assessThreat,
   formatThreatAssessment,
-} from '../../../../../../../tools/security/threat-assessment.mjs';
+} from '../../../tools/security/threat-assessment.mjs';
 
 function parseArgs(argv) {
   const args = { format: 'text', text: '', issueJson: '', configJson: '' };
