@@ -2,7 +2,7 @@
   <header>
     <p class="eyebrow">AIWG</p>
     <h1>Deploy a Virtual Organization</h1>
-    <p class="lead">Architects, engineers, testers, forensics analysts, researchers, marketers — 90+ specialized agents that collaborate like a real team. Six frameworks, eight addons, one CLI.</p>
+    <p class="lead">Architects, engineers, testers, forensics analysts, researchers, marketers — 90+ specialized agents that collaborate like a real team. Six frameworks, a growing addon catalog, one CLI.</p>
   </header>
 
   <div class="content-box">
@@ -48,6 +48,10 @@
         <div class="layer">
           <div class="layer-title">RLM</div>
           <div class="layer-desc">Recursive context decomposition — process 10M+ tokens via sub-agent delegation</div>
+        </div>
+        <div class="layer">
+          <div class="layer-title">Compound Memory</div>
+          <div class="layer-desc">Persistent, provenance-aware memory — immutable intake, linked wiki knowledge, bounded line facts, reviewed updates, and auditable maintenance</div>
         </div>
         <div class="layer">
           <div class="layer-title">Voice Framework</div>
@@ -141,6 +145,11 @@ aiwg use voice             # Voice profiles
 # Deploy to a specific platform
 aiwg use sdlc --provider hermes   # Hermes
 aiwg use sdlc --provider copilot  # GitHub Copilot
+aiwg use sdlc --provider codex    # OpenAI Codex
+
+# Reopen the platform at the target project root, then regenerate in chat
+/aiwg-regenerate   # Slash-command platforms
+$aiwg-regenerate   # Native Codex kernel skill
 
 # Start working — just describe what you need
 "transition to elaboration"

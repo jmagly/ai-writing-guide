@@ -50,7 +50,7 @@ done
 | **rlm-query.md** | `.claude/commands/` | `~/.codex/prompts/` | `.github/agents/` (YAML) | `.factory/commands/` | `.cursor/commands/` | `.opencode/commands/` | `.warp/commands/` + WARP.md | `.windsurf/workflows/` |
 | **rlm-batch.md** | `.claude/commands/` | `~/.codex/prompts/` | `.github/agents/` (YAML) | `.factory/commands/` | `.cursor/commands/` | `.opencode/commands/` | `.warp/commands/` + WARP.md | `.windsurf/workflows/` |
 | **rlm-status.md** | `.claude/commands/` | `~/.codex/prompts/` | `.github/agents/` (YAML) | `.factory/commands/` | `.cursor/commands/` | `.opencode/commands/` | `.warp/commands/` + WARP.md | `.windsurf/workflows/` |
-| **rlm-mode.md** | `.claude/skills/` | `~/.codex/skills/` | `.github/skills/` | `.factory/skills/` | `.cursor/skills/` | `.opencode/skill/` | `.warp/skills/` | `.windsurf/skills/` |
+| **rlm-mode.md** | `.claude/skills/` | `.agents/skills/` with `--copy-all` | `.github/skills/` | `.factory/skills/` | `.cursor/skills/` | `.opencode/skill/` | `.warp/skills/` | `.windsurf/skills/` |
 | **rlm-context-management.md** | `.claude/rules/` | `.codex/rules/` | `.github/copilot-rules/` | `.factory/rules/` | `.cursor/rules/` | `.opencode/rule/` | `.warp/rules/` | `.windsurf/rules/` |
 
 ### Provider-Specific Path Details
@@ -79,17 +79,25 @@ done
 └── rules/
     └── rlm-context-management.md
 
+.agents/
+└── skills/
+    └── rlm-mode/
+        ├── SKILL.md
+        └── agents/openai.yaml
+
 # User-level (home directory)
 ~/.codex/
 ├── prompts/
 │   ├── rlm-query.md
 │   ├── rlm-batch.md
 │   └── rlm-status.md
-└── skills/
-    └── rlm-mode.md
 ```
 
-**Special Handling**: Commands and skills deploy to home directory for user-level availability across all projects.
+**Special Handling**: Commands remain user-level prompts. Codex-native skills
+use the project `.agents/skills/` path and include `agents/openai.yaml` UI
+metadata. AIWG copies kernel skills there by default; add `--copy-all` when the
+standard `rlm-mode` skill must also appear as a native `$` skill. Otherwise,
+RLM remains available through AIWG discovery and its command prompts.
 
 #### GitHub Copilot
 ```
@@ -232,21 +240,27 @@ aiwg use rlm --provider codex
 **What Happens**:
 - Agents → `.codex/agents/`
 - Commands → `~/.codex/prompts/` (home directory)
-- Skills → `~/.codex/skills/` (home directory)
+- Kernel skills → `.agents/skills/` (project-local)
+- Standard RLM skill → AIWG discovery by default, or `.agents/skills/rlm-mode/` with `--copy-all`
 - Rules → `.codex/rules/`
 
-**Why Home Directory for Commands/Skills**:
-Codex allows user-level commands and skills to be available across all projects. This enables RLM commands to work in any Codex workspace.
+**Why the split**:
+Codex prompts remain user-level, while project-native skills are discovered
+from `.agents/skills/`. Keeping standard skills index-driven by default avoids
+an unbounded native skill list; `--copy-all` is the explicit opt-in.
 
 **Verification**:
 ```bash
 # Project-local
 ls .codex/agents/rlm-agent.md
 ls .codex/rules/rlm-context-management.md
+ls .agents/skills/aiwg-regenerate/agents/openai.yaml
 
-# User-level (home directory)
+# User-level commands
 ls ~/.codex/prompts/rlm-*.md
-ls ~/.codex/skills/rlm-mode.md
+
+# Optional native RLM skill after deployment with --copy-all
+ls .agents/skills/rlm-mode/SKILL.md
 ```
 
 **Sub-Agent Spawning**:
@@ -456,7 +470,7 @@ ls .claude/agents/rlm-agent.md
 aiwg use rlm --provider codex
 
 # Verify
-ls ~/.codex/prompts/rlm-query.md
+ls ~/.codex/prompts/rlm-query.md .agents/skills/aiwg-regenerate/agents/openai.yaml
 
 # Use
 codex -q "rlm-query: Analyze all TypeScript files for async/await patterns"
@@ -584,7 +598,7 @@ If `aiwg remove` fails, manually delete:
 | Provider | Files to Delete |
 |----------|----------------|
 | Claude Code | `.claude/agents/rlm-agent.md`, `.claude/commands/rlm-*.md`, `.claude/skills/rlm-mode.md`, `.claude/rules/rlm-context-management.md` |
-| Codex | `.codex/agents/rlm-agent.md`, `~/.codex/prompts/rlm-*.md`, `~/.codex/skills/rlm-mode.md`, `.codex/rules/rlm-context-management.md` |
+| Codex | `.codex/agents/rlm-agent.md`, `~/.codex/prompts/rlm-*.md`, optional `.agents/skills/rlm-mode/` from `--copy-all`, `.codex/rules/rlm-context-management.md` |
 | Copilot | `.github/agents/rlm-*.{md,yml}`, `.github/skills/rlm-mode.md`, `.github/copilot-rules/rlm-context-management.md` |
 | Factory | `.factory/droids/rlm-agent.md`, `.factory/commands/rlm-*.md`, `.factory/skills/rlm-mode.md`, `.factory/rules/rlm-context-management.md` |
 | Cursor | `.cursor/agents/rlm-agent.md`, `.cursor/commands/rlm-*.md`, `.cursor/skills/rlm-mode.md`, `.cursor/rules/rlm-context-management.md` |
@@ -603,7 +617,7 @@ After deploying RLM to any provider:
 - [ ] For Warp: Agent and commands also aggregated in `WARP.md`
 - [ ] For Windsurf: Agent aggregated in `AGENTS.md`
 - [ ] For Copilot: Commands converted to YAML format
-- [ ] For Codex: Commands and skills in home directory (`~/.codex/`)
+- [ ] For Codex: Commands in `~/.codex/prompts/`; native skills in project `.agents/skills/`
 - [ ] Provider-specific CLI command works (if applicable)
 - [ ] Sub-agent spawning works (for supported providers)
 
@@ -617,7 +631,7 @@ After deploying RLM to any provider:
 1. Provider name spelled correctly (lowercase)
 2. AIWG version supports all 8 providers (`aiwg version`)
 3. Permissions to write to target directories
-4. For Codex: Home directory writeable (`~/.codex/`)
+4. For Codex: Home prompt directory and project `.agents/skills/` are writable
 
 **Solution**:
 ```bash
@@ -719,11 +733,11 @@ For RLM deployment issues:
 - `@$AIWG_ROOT/agentic/code/addons/rlm/manifest.json` - Addon manifest
 - `@$AIWG_ROOT/agentic/code/addons/rlm/README.md` - RLM overview
 - `@CLAUDE.md` - Multi-platform support table
-- `@$AIWG_ROOT/docs/agents/cli-reference.md` - CLI command documentation
+- `@$AIWG_ROOT/docs/cli-reference.md` - CLI command documentation
 - `@$AIWG_ROOT/agentic/code/addons/rlm/agents/rlm-agent.md` - RLM agent definition
 - `@$AIWG_ROOT/agentic/code/addons/rlm/commands/` - Command definitions
 
 ---
 
-**Last Updated**: 2026-02-09
+**Last Updated**: 2026-08-02
 **Issue**: #328

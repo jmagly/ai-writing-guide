@@ -50,6 +50,12 @@ Deploying to `.agents/skills/` is the most portable option if you need a single 
 - Project-local addon skills deployed via `aiwg use <addon> --provider codex`
   also land in `.agents/skills/`; `.codex/.aiwg/skills/` remains the indexed
   artifact tier, not the Codex native runtime discovery path.
+- Each deployed native skill includes `agents/openai.yaml` with a display name
+  and short description for Codex UI discovery. Kernel skills are copied by
+  default; use `--copy-all` only when standard skills must also be native.
+- `aiwg use ... --provider codex` treats `.codex/` and `.agents/` as generated
+  provider trees and adds them to `.gitignore` unless already covered. Existing
+  tracked files remain tracked, and `--dry-run` does not mutate the ignore file.
 - **Duplicate-listing regression (fixed):** #766's first fix *added* the
   `.agents/skills/` write but never *removed* the legacy `~/.codex/skills/`
   write. codex-rs scans both, so every kernel skill appeared twice in the

@@ -7,6 +7,44 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.1] - 2026-08-02 - "Persistent memory and governed fleet operations"
+
+### Added
+
+- **Compound memory** - a provider-neutral addon now composes immutable raw
+  intake, linked llm-wiki knowledge, reviewed line-memory facts, bounded hybrid
+  context packs, registered outputs, governed canonical context, and auditable
+  review/maintenance cycles. Three-session conformance proves continuity,
+  provenance, hard context budgets, portable migration, and deterministic
+  fallback behavior (#1999-#2006).
+- **Sandbox fleet workloads and missions** - a neutral workload contract,
+  durable multi-target conductor, Cockpit projections, restart-safe identity,
+  bounded retries, and three-target recovery evidence support governed fleet
+  operations across sandbox runtimes (#1992-#1994).
+- **Paid-resource authentication** - `aiwg auth` adds OS-backed account
+  storage, exact-origin authorization, account/status/logout controls, and
+  signed-resource integration without exposing access material in URLs, cache
+  keys, or repository state (#1995).
+
+### Changed
+
+- **Codex deployment reliability** - component-scoped addon sweeps preserve
+  kernel skills, generated native skills include `agents/openai.yaml` metadata,
+  setup reports `$aiwg-regenerate`, and Codex provider trees are added to
+  `.gitignore` without changing already tracked files.
+- **Development-checkout notifier routing** - the launcher resolves logging and
+  update-notifier modules from the active package, and ignores cache notices
+  produced by a different installed version.
+
+### Fixed
+
+- **Fleet admission and recovery** - inventory faults now fail closed, runtime
+  child identities survive dispatch and restart, and daemon health semantics
+  remain stable during fleet reconciliation.
+- **Provider documentation drift** - Codex skill paths, RLM verification,
+  regeneration syntax, addon catalog coverage, and Ops extension structure now
+  match the shipped runtime contracts.
+
 ## [2026.8.0] - 2026-08-01 - "Secure external jobs and operational intelligence"
 
 ### Added

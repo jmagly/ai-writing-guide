@@ -39,6 +39,7 @@ export const AIWG_RUNTIME_PATTERNS = [
  * excluded from this list — they are authored artifacts worth versioning.
  */
 export const PROVIDER_CONVENTIONAL_PATTERNS = [
+  '.agents/',
   '.codex/',
   '.cursor/agents/',
   '.cursor/commands/',

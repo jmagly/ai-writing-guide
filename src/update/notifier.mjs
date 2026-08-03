@@ -158,6 +158,16 @@ function readCurrentVersion(packageRoot) {
 }
 
 /**
+ * Return true when a cached check belongs to the package currently handling
+ * the command. A global launcher can dispatch into a newer development
+ * checkout, so cache age alone is not sufficient.
+ */
+export function cacheMatchesPackage(cache, packageRoot) {
+  const currentVersion = readCurrentVersion(packageRoot);
+  return !!(currentVersion && cache?.current === currentVersion);
+}
+
+/**
  * Run the actual update check and write the cache file. Invoked by the
  * spawned background child via `node src/update/notifier.mjs --check`.
  */
@@ -183,7 +193,7 @@ export function scheduleBackgroundCheck(packageRoot) {
   if (isDisabled()) return;
 
   const cache = readCache();
-  if (cache?.lastCheckAt) {
+  if (cacheMatchesPackage(cache, packageRoot) && cache?.lastCheckAt) {
     const age = Date.now() - new Date(cache.lastCheckAt).getTime();
     if (age < CHECK_INTERVAL_MS) return; // recent enough — skip
   }
@@ -213,9 +223,10 @@ export function scheduleBackgroundCheck(packageRoot) {
  * is interactive, print a single-line notice to stderr. Never prompts.
  * Safe to call unconditionally from `bin/aiwg.mjs` — gated by isDisabled().
  */
-export function maybePrintNotice() {
+export function maybePrintNotice(packageRoot) {
   if (isDisabled()) return;
   const cache = readCache();
+  if (!cacheMatchesPackage(cache, packageRoot)) return;
   if (!cache?.hasUpdate || !cache.current || !cache.latest) return;
   // One-line, non-intrusive. Users who want to update run `aiwg update`.
   const msg = `aiwg: update available ${cache.current} → ${cache.latest} (run: aiwg update)`;

@@ -21,7 +21,7 @@
  * @implements #919
  */
 
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 import { existsSync, readFileSync } from 'fs';
 import os from 'os';
@@ -186,7 +186,7 @@ async function resolveRouterPath() {
  * argv — handlers still see the flags. Call before the router loads so the
  * logger picks up the right level when it initializes.
  */
-async function applyVerbosityFromArgs(args) {
+async function applyVerbosityFromArgs(args, routerPath) {
   let level = 'warn'; // default
   if (args.includes('--quiet') || args.includes('-q')) level = 'error';
   else if (args.includes('-vvv')) { level = 'debug'; process.env['AIWG_DEBUG'] ??= '1'; }
@@ -201,10 +201,9 @@ async function applyVerbosityFromArgs(args) {
   // and set the level. Failing to import the logger here is non-fatal — the
   // logger's own fallbacks will pick up AIWG_LOG_LEVEL from env.
   try {
-    const routerPath = await resolveRouterPath();
     const logPath = path.join(path.dirname(routerPath), 'log.js');
     if (existsSync(logPath)) {
-      const { setLogLevel, setInvocationId, pruneOldLogs } = await import('file://' + logPath);
+      const { setLogLevel, setInvocationId, pruneOldLogs } = await import(pathToFileURL(logPath).href);
       setLogLevel(level);
       setInvocationId(invocationId);
       // One-shot prune of old JSONL files on startup. Bounded work; safe to
@@ -240,18 +239,24 @@ async function main() {
     return;
   }
 
+  // Resolve the active router once. In dev mode this points into the checkout,
+  // while packageRoot still points at the globally installed launcher.
+  const routerPath = await resolveRouterPath();
+  const activePackageRoot = path.resolve(path.dirname(routerPath), '..', '..', '..');
+
   // Wire up the logger level from -v/-vv/--quiet/AIWG_LOG_LEVEL before any
   // handler runs, and stamp the top-level invocation ID so the logger can
   // tag every record with it.
-  await applyVerbosityFromArgs(args);
+  await applyVerbosityFromArgs(args, routerPath);
 
   // Update notifier: print any pending notice from the previous run's
   // background check, then schedule the next background check. Both are
   // non-blocking — the current command never waits on the network.
   // Honors NO_UPDATE_NOTIFIER, CI=*, and non-TTY stderr.
-  const { scheduleBackgroundCheck, maybePrintNotice } = await import('../dist/src/update/notifier.mjs');
-  maybePrintNotice();
-  scheduleBackgroundCheck(packageRoot);
+  const notifierPath = path.join(activePackageRoot, 'dist', 'src', 'update', 'notifier.mjs');
+  const { scheduleBackgroundCheck, maybePrintNotice } = await import(pathToFileURL(notifierPath).href);
+  maybePrintNotice(activePackageRoot);
+  scheduleBackgroundCheck(activePackageRoot);
 
   // Top-level cancellation controller. SIGINT / SIGTERM flip it, long-running
   // handlers plumb ctx.signal through fetches and loops so Ctrl-C cancels
@@ -276,9 +281,8 @@ async function main() {
 
   // Direct in-process dispatch — no tsx fork, no facade, no router-loader.
   trace('resolve:router');
-  const routerPath = await resolveRouterPath();
   trace('import:router');
-  const { run } = await import('file://' + routerPath);
+  const { run } = await import(pathToFileURL(routerPath).href);
   trace('dispatch:begin');
   try {
     await run(args, { cwd: process.cwd(), signal: abortController.signal });

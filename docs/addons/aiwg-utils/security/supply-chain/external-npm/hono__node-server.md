@@ -1,6 +1,6 @@
 # @hono/node-server External NPM Supply-Chain Audit
 
-Generated: 2026-07-31
+Generated: 2026-05-23
 
 ## Scope
 
@@ -8,7 +8,7 @@ Generated: 2026-07-31
 |---|---|
 | Package | `@hono/node-server` |
 | Canonical upstream repository | https://github.com/honojs/node-server.git |
-| Audited version/ref | `2.0.11` / npm registry artifact |
+| Audited version/ref | `1.19.14` / `b5e63a366d9b0ef62ac65fcafd7f69b383b03ff5` |
 | npm registry signatures | 1 |
 | Dependency source summary | (none) |
 | Optional dependency summary | (none) |
@@ -19,13 +19,11 @@ Generated: 2026-07-31
 
 | Manifest | Field | Spec | Lockfile Version | Integrity | Install Script | Optional Lock Entry | Tracking |
 |---|---|---:|---:|---|---|---|---|
-| `package.json` | `optionalDependencies` | `2.0.11` | `2.0.11` | yes | no | yes | #1973 |
-| `packages/cli/package.json` | `optionalDependencies` | `2.0.11` | workspace root lock | yes | no | yes | #1973 |
+| `package.json` | `optionalDependencies` | `^1.19.14` | `1.19.14` | yes | no | yes | #1445 |
 
 ## Lockfile Tarballs
 
-- package.json: https://registry.npmjs.org/@hono/node-server/-/node-server-2.0.11.tgz
-- SHA-512 integrity: `sha512-bjD221KPLoJTWUwso1J6fGKiTXEUFedG/s0visavY4zakFPkeGURMRNly+FhBHs7T8Dz4qHaZIMX9ZoJHSJtKA==`
+- package.json: https://registry.npmjs.org/@hono/node-server/-/node-server-1.19.14.tgz
 
 ## Lifecycle And Native/Binary Review
 
@@ -44,18 +42,13 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 ## Release And Provenance Evidence
 
-- Registry metadata and the locked artifact were reviewed on 2026-07-31.
-- `2.0.11` was selected instead of four-day-old `2.0.12` because it is the
-  newest fixed release satisfying AIWG's seven-day npm release-age gate.
-- The v2 package requires Node.js 20 or newer, matching AIWG's declared runtime.
+- Registry metadata reviewed on 2026-05-23; npm dist signature count: 1.
 - Audited ref uses npm `gitHead` where exposed; otherwise this report records the exact lockfile version and repository metadata.
 - Trusted publishing/attestation evidence was not independently verified beyond npm registry signature metadata in this pass.
 - Signed git tag verification was not established locally for this batch; deeper upstream review should verify tags only where upstream documents signed release tags.
 
 ## Findings
 
-- GHSA-frvp-7c67-39w9 affects versions below `2.0.5`; the locked `2.0.11`
-  artifact is outside the vulnerable range.
 - LOW: maintainer-side lifecycle scripts exist; verify release custody before relying on upstream release artifacts.
 
 ## Clean Checks
@@ -63,14 +56,10 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 - AIWG usage context is documented with manifest path, dependency field, requested spec, and lockfile version where present.
 - Lockfile integrity is present for locked AIWG package entries.
 - Native, binary, optional, and lifecycle behavior is explicitly recorded for applicable package classes.
-- `npm audit --json` no longer reports `@hono/node-server` or `aiwg` for
-  GHSA-frvp-7c67-39w9 after the migration.
-- The root, `@aiwg/cli`, feature catalog, and lockfile all resolve `2.0.11`.
-- Serve, WebSocket, Cockpit-facing static delivery, and encoded-backslash
-  regression tests pass against the v2 adapter surface.
+- No immediate AIWG dependency change is required from this package alone.
 
 ## Follow-Up
 
-- Track this migration and regression evidence in #1973.
+- Track as review evidence for #1445, #1446, and/or #1447 according to the usage-context table.
 - Open an AIWG child issue only if future verification finds a failing lockfile signature, unexpected lifecycle script, non-registry dependency source, or unverifiable private package provenance.
 - Upstream issue/PR draft: use `_upstream-issue-template.md` if requesting signed release tags, provenance documentation, or clearer lifecycle-script disclosure from the upstream maintainer.

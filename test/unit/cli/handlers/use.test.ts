@@ -76,7 +76,7 @@ describe('nextStepsFor()', () => {
 
     expect(output).toContain('Open platform');
     expect(output).toContain('Ask the steward');
-    expect(output).toContain('aiwg-regenerate');
+    expect(output).toContain('/aiwg-regenerate');
     expect(output).toContain('aiwg doctor');
     expect(output).toContain('docs/agentic-install-runbook.md');
     expect(output).not.toContain('aiwg discover');
@@ -88,9 +88,15 @@ describe('nextStepsFor()', () => {
 
     expect(output).toContain('Open Codex');
     expect(output).toContain('Ask the steward');
-    expect(output).toContain('aiwg-regenerate');
+    expect(output).toContain('$aiwg-regenerate');
+    expect(output).not.toContain('/aiwg-regenerate');
     expect(output).not.toContain('aiwg discover');
     expect(output).not.toContain('aiwg sdlc-accelerate');
+  });
+
+  it('uses Codex skill syntax for framework fallbacks and its openai alias', () => {
+    expect(nextStepsFor('marketing', 'codex').join('\n')).toContain('$aiwg-regenerate');
+    expect(nextStepsFor('sdlc', 'openai').join('\n')).toContain('$aiwg-regenerate');
   });
 });
 
