@@ -68,6 +68,9 @@ describe('GitHub mirror tag gate', () => {
   it('orders the tag gate before verified release creation and guards success output', () => {
     const workflow = readFileSync(join(root, '.gitea/workflows/github-mirror.yml'), 'utf8')
     expect(workflow.indexOf('Wait for operator-pushed signed annotated tag')).toBeLessThan(workflow.indexOf('Create GitHub Release'))
+    expect(workflow).toContain('git ls-remote origin "refs/tags/$TAG"')
+    expect(workflow).toContain('--expected-sha "$EXPECTED_TAG_OBJECT"')
+    expect(workflow).not.toContain('--expected-sha "$(git rev-parse')
     expect(workflow).toContain('--verify-tag')
     expect(workflow).toContain('steps.release.outcome')
   })
