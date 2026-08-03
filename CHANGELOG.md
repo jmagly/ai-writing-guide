@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.2] - 2026-08-03 - "Git-native provenance exchange"
+
 ### Added
 
 - **Git-native package exchange** - versioned closed envelopes bind package
