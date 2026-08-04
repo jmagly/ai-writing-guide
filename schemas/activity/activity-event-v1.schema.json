@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jmagly/agentic-sandbox/blob/main/docs/schemas/activity-event-v1.schema.json",
+  "title": "Agentic Sandbox Activity Event v1",
+  "description": "Stable metadata-first, loss-aware activity event envelope.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "event_id", "event_name", "plane", "occurred_at", "observed_at", "source", "correlation", "sensitivity", "retention_class", "payload", "integrity"],
+  "properties": {
+    "schema_version": {"const": "activity.event/v1"},
+    "event_id": {"type": "string", "format": "uuid", "description": "Source-generated UUIDv7."},
+    "event_name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"},
+    "plane": {"enum": ["session", "action", "network", "runtime", "system", "integrity"]},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "source": {"$ref": "#/$defs/source"},
+    "correlation": {"$ref": "#/$defs/correlation"},
+    "actor": {"$ref": "#/$defs/entity"},
+    "target": {"$ref": "#/$defs/entity"},
+    "outcome": {"$ref": "#/$defs/outcome"},
+    "sensitivity": {"enum": ["metadata", "restricted-content", "secret-prohibited"]},
+    "retention_class": {"enum": ["standard", "security", "forensic-hold", "ephemeral"]},
+    "payload": {"type": "object", "description": "Event-specific allowlisted metadata after source filtering."},
+    "integrity": {"$ref": "#/$defs/integrity"}
+  },
+  "$defs": {
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["collector", "layer", "runtime", "trust"],
+      "properties": {
+        "collector": {"type": "string", "minLength": 1},
+        "layer": {"enum": ["guest", "runtime", "host", "control-plane", "provider"]},
+        "runtime": {"enum": ["qemu-kvm", "cloud-hypervisor", "docker", "host", "unknown"]},
+        "trust": {"enum": ["observed", "attested", "self-reported", "derived"]},
+        "clock_id": {"type": "string"},
+        "clock_error_ms": {"type": "number", "minimum": 0}
+      }
+    },
+    "correlation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["tenant_id", "host_id", "instance_id", "agent_id"],
+      "properties": {
+        "tenant_id": {"type": "string", "minLength": 1}, "host_id": {"type": "string", "minLength": 1},
+        "instance_id": {"type": "string", "minLength": 1}, "agent_id": {"type": "string", "minLength": 1},
+        "session_id": {"type": "string"}, "mission_id": {"type": "string"}, "task_id": {"type": "string"},
+        "tool_call_id": {"type": "string"}, "command_id": {"type": "string"}, "process_id": {"type": "string"},
+        "parent_event_id": {"type": "string", "format": "uuid"},
+        "trace_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+        "span_id": {"type": "string", "pattern": "^[0-9a-f]{16}$"}
+      }
+    },
+    "entity": {
+      "type": "object", "additionalProperties": false, "required": ["type", "id"],
+      "properties": {"type": {"type": "string"}, "id": {"type": "string"}, "uid": {"type": "integer", "minimum": 0}, "gid": {"type": "integer", "minimum": 0}, "pid": {"type": "integer", "minimum": 0}}
+    },
+    "outcome": {
+      "type": "object", "additionalProperties": false, "required": ["status"],
+      "properties": {"status": {"enum": ["started", "success", "failure", "allowed", "denied", "degraded", "unknown"]}, "exit_code": {"type": "integer"}, "reason": {"type": "string"}}
+    },
+    "integrity": {
+      "type": "object", "additionalProperties": false, "required": ["collector_sequence"],
+      "properties": {
+        "collector_sequence": {"type": "integer", "minimum": 1},
+        "source_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "source_previous_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "timeline_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "timeline_previous_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "signature": {"type": "string"}, "key_id": {"type": "string"}
+      }
+    }
+  }
+}

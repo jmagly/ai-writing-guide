@@ -1,0 +1,17 @@
+{
+  "schema_version": "agentic.activity-operational-evidence/v1",
+  "record_date": "2026-08-04",
+  "sealed_at": "2026-08-05T00:00:00Z",
+  "window": {"start": "2026-08-04T00:00:00Z", "end": "2026-08-05T00:00:00Z", "actual_span_seconds": 86400},
+  "identity_digests": ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"],
+  "input_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "previous_record_digest": null,
+  "summary": {
+    "sample_count": 3,
+    "evidence_class_counts": {"organic": 1, "canary": 1, "drill": 1},
+    "source_availability": {"runtime-events": true},
+    "latency_ms": {"p95": 12},
+    "metrics": {"complete": true}
+  },
+  "record_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+}

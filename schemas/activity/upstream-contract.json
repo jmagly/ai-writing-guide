@@ -1,0 +1,15 @@
+{
+  "repository": "https://github.com/jmagly/agentic-sandbox",
+  "tag": "v2026.8.3",
+  "commit": "201221e5a26f7f0cc719ab584520ce3164065825",
+  "files": {
+    "activity-event-v1.schema.json": {
+      "source": "docs/schemas/activity-event-v1.schema.json",
+      "sha256": "41215c23e7c5171371de0771033bdf6519eff6167c932cb554b733fca5195cfd"
+    },
+    "activity-operational-evidence-v1.schema.json": {
+      "source": "docs/schemas/activity-operational-evidence-v1.schema.json",
+      "sha256": "4ab09301a572bef219277d3e59fabda95794ee4326940937803654d75a0f7d83"
+    }
+  }
+}

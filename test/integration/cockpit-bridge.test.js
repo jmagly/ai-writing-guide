@@ -67,13 +67,20 @@ describe('cockpit Bridge — control surface', () => {
     const request = activityRequest({ tenant_id: 't', host_id: 'h', instance_id: 'i', agent_id: 'a', filter: { limit: 50 } });
     expect(request.headers).toMatchObject({ 'x-agentic-tenant-id': 't', 'x-agentic-host-id': 'h', 'x-agentic-instance-id': 'i', 'x-agentic-agent-id': 'a' });
     expect(() => activityRequest({ tenant_id: 't', host_id: 'h', instance_id: 'i' })).toThrow(/agent_id/);
-    const base = { schema_version: 'activity.event/v1', sensitivity: 'metadata', correlation: request.scope };
+    const base = {
+      schema_version: 'activity.event/v1', event_id: '018f54b0-7c01-7000-8000-000000000001', event_name: 'process.started', plane: 'runtime',
+      occurred_at: '2026-08-04T00:00:00Z', observed_at: '2026-08-04T00:00:00.001Z',
+      source: { collector: 'runtime', layer: 'host', runtime: 'docker', trust: 'observed' },
+      sensitivity: 'metadata', retention_class: 'security', integrity: { collector_sequence: 1 }, correlation: request.scope,
+    };
     const completeness = { complete: true, label: 'complete', collector_count: 0, sequence_gap_count: 0, durable_loss_count: 0, restart_count: 0, dropped_event_count: 0, stale_collector_count: 0, unsupported_event_classes: [], maximum_clock_error_ms: 0 };
     expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [{ ...base, payload: { command: 'metadata-id' } }], coverage: [], completeness }, request.scope, { includeEvents: true })).not.toThrow();
     expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [{ ...base, correlation: { ...request.scope, agent_id: 'other' }, payload: {} }], coverage: [], completeness }, request.scope, { includeEvents: true })).toThrow(/scope mismatch/);
     expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [{ ...base, payload: { terminal_content: 'nope' } }], coverage: [], completeness }, request.scope, { includeEvents: true })).toThrow(/restricted/);
     expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [], coverage: [], completeness: { ...completeness, unsupported_event_classes: undefined } }, request.scope)).toThrow(/completeness summary/);
     expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [], coverage: [{ collector_id: 'runtime', sequence_gaps: [], durable_loss_records: [], stale: false }], completeness: { ...completeness, collector_count: 1 } }, request.scope)).toThrow(/collector coverage/);
+    expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', additive_optional_field: { supported: true }, events: [{ ...base, payload: {} }], coverage: [], completeness }, request.scope, { includeEvents: true })).not.toThrow();
+    expect(() => validateActivityEnvelope({ events: [], manifest: { batch_id: 'b', tenant_id: 't', collector_id: 'runtime', event_count: 0, merkle_root: 'bad', previous_root: null, key_id: 'k', signature: 's' } }, request.scope, { exportEnvelope: true })).toThrow(/valid manifest/);
   });
 
   it('preserves upstream authorization failures for every activity route', async () => {

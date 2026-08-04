@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-sandbox.local/schemas/activity-operational-evidence-v1.schema.json",
+  "title": "Agentic Sandbox daily operational evidence record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_date",
+    "sealed_at",
+    "window",
+    "identity_digests",
+    "input_digest",
+    "previous_record_digest",
+    "summary",
+    "record_digest"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "agentic.activity-operational-evidence/v1"
+    },
+    "record_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "sealed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end", "actual_span_seconds"],
+      "properties": {
+        "start": {"type": "string", "format": "date-time"},
+        "end": {"type": "string", "format": "date-time"},
+        "actual_span_seconds": {"type": "number", "minimum": 0}
+      }
+    },
+    "identity_digests": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "input_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "previous_record_digest": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "sample_count",
+        "evidence_class_counts",
+        "source_availability",
+        "latency_ms",
+        "metrics"
+      ],
+      "properties": {
+        "sample_count": {"type": "integer", "minimum": 1},
+        "evidence_class_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["organic", "canary", "drill"],
+          "properties": {
+            "organic": {"type": "integer", "minimum": 0},
+            "canary": {"type": "integer", "minimum": 0},
+            "drill": {"type": "integer", "minimum": 0}
+          }
+        },
+        "source_availability": {"type": "object"},
+        "latency_ms": {"type": "object"},
+        "metrics": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "record_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

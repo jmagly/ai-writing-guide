@@ -1,0 +1,14 @@
+{
+  "schema_version": "activity.event/v1",
+  "event_id": "not-a-uuid",
+  "event_name": "PROCESS STARTED",
+  "plane": "unknown",
+  "occurred_at": "not-a-date",
+  "observed_at": "not-a-date",
+  "source": {"collector": "", "layer": "host", "runtime": "docker", "trust": "observed"},
+  "correlation": {"tenant_id": "", "host_id": "host-1", "instance_id": "instance-1", "agent_id": "agent-1"},
+  "sensitivity": "metadata",
+  "retention_class": "security",
+  "payload": {},
+  "integrity": {"collector_sequence": 0}
+}

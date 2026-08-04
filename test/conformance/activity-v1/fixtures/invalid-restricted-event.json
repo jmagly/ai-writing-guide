@@ -1,0 +1,14 @@
+{
+  "schema_version": "activity.event/v1",
+  "event_id": "018f54b0-7c01-7000-8000-000000000002",
+  "event_name": "command.started",
+  "plane": "action",
+  "occurred_at": "2026-08-04T12:00:00Z",
+  "observed_at": "2026-08-04T12:00:00.010Z",
+  "source": {"collector": "runtime-events", "layer": "host", "runtime": "docker", "trust": "observed"},
+  "correlation": {"tenant_id": "tenant-1", "host_id": "host-1", "instance_id": "instance-1", "agent_id": "agent-1"},
+  "sensitivity": "metadata",
+  "retention_class": "security",
+  "payload": {"authorization_token": "must-not-cross"},
+  "integrity": {"collector_sequence": 2}
+}
