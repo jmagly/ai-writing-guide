@@ -35,10 +35,16 @@ import * as path from 'node:path';
  *
  * Per the script-source comments at agentic/code/addons/aiwg-hooks/hooks/.
  */
-const HOOK_SCRIPTS: ReadonlyArray<{ file: string; events: ReadonlyArray<string> }> = [
-  { file: 'aiwg-permissions.cjs', events: ['PermissionRequest'] },
-  { file: 'aiwg-session.cjs', events: ['SessionStart'] },
-  { file: 'aiwg-trace.cjs', events: ['SubagentStart', 'SubagentStop'] },
+const HOOK_SCRIPTS: ReadonlyArray<{
+  file: string;
+  events: Readonly<Record<string, string | undefined>>;
+}> = [
+  { file: 'aiwg-permissions.cjs', events: { PermissionRequest: undefined } },
+  { file: 'aiwg-session.cjs', events: { SessionStart: undefined } },
+  {
+    file: 'aiwg-trace.cjs',
+    events: { SubagentStart: 'start', SubagentStop: 'stop' },
+  },
 ];
 
 interface HookEntry {
@@ -251,10 +257,11 @@ export async function installAiwgHooks(opts: InstallOptions): Promise<InstallRes
     // embedded script path POSIX-style on every host: native Windows
     // backslashes are interpreted as escapes and collapse into a nonexistent
     // path such as `.claudehooksaiwg-session.cjs` (#133).
-    const command = `node ${path.posix.join('.claude', 'hooks', file)}`;
+    const script = path.posix.join('.claude', 'hooks', file);
     const hookId = file.replace(/\.(cjs|js)$/, '');
 
-    for (const event of events) {
+    for (const [event, argument] of Object.entries(events)) {
+      const command = `node ${script}${argument ? ` ${argument}` : ''}`;
       if (!hooksObj[event]) hooksObj[event] = [];
       const groups = hooksObj[event];
 

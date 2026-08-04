@@ -109,6 +109,17 @@ describe('installAiwgHooks', () => {
       }
       void event;
     }
+
+    const commandFor = (event: string, hookId: string): string | undefined =>
+      hooks[event]
+        ?.flatMap((group) => group.hooks)
+        .find((hook) => hook._aiwg_id === hookId)?.command;
+    expect(commandFor('SubagentStart', 'aiwg-trace')).toBe(
+      'node .claude/hooks/aiwg-trace.cjs start',
+    );
+    expect(commandFor('SubagentStop', 'aiwg-trace')).toBe(
+      'node .claude/hooks/aiwg-trace.cjs stop',
+    );
   });
 
   it('preserves operator-authored entries when merging (object shape)', async () => {
@@ -293,6 +304,51 @@ describe('installAiwgHooks', () => {
     expect(result?.warnings).toContain(
       'Refreshed stale SessionStart → aiwg-session command path',
     );
+  });
+
+  it('refreshes trace hooks missing their event-specific subcommands (#134)', async () => {
+    const claudeDir = path.join(projectPath, '.claude');
+    await fs.mkdir(claudeDir, { recursive: true });
+    await fs.writeFile(
+      path.join(claudeDir, 'settings.json'),
+      JSON.stringify({
+        hooks: Object.fromEntries(
+          ['SubagentStart', 'SubagentStop'].map((event) => [
+            event,
+            [
+              {
+                hooks: [
+                  {
+                    type: 'command',
+                    command: 'node .claude/hooks/aiwg-trace.cjs',
+                    _aiwg_managed: true,
+                    _aiwg_id: 'aiwg-trace',
+                  },
+                ],
+              },
+            ],
+          ]),
+        ),
+      }),
+      'utf8',
+    );
+
+    const result = await installAiwgHooks({ projectPath, frameworkRoot });
+    const settings = await readSettings();
+    const traceCommand = (event: string): string | undefined =>
+      settings.hooks?.[event]
+        ?.flatMap((group) => group.hooks)
+        .find((hook) => hook._aiwg_id === 'aiwg-trace')?.command;
+
+    expect(traceCommand('SubagentStart')).toBe(
+      'node .claude/hooks/aiwg-trace.cjs start',
+    );
+    expect(traceCommand('SubagentStop')).toBe(
+      'node .claude/hooks/aiwg-trace.cjs stop',
+    );
+    expect(
+      result?.warnings.filter((warning) => warning.includes('Refreshed stale')),
+    ).toHaveLength(2);
   });
 
   it('dry-run does not write files', async () => {
