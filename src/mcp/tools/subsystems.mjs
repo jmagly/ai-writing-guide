@@ -17,6 +17,7 @@
 import { z } from 'zod';
 import { runAiwgCli, mcpError, mcpJson } from '../helpers.mjs';
 import { registerFlowToolset, registerMissionToolset } from './orchestration.mjs';
+import { registerAgenticSandboxToolset } from './agentic-sandbox.mjs';
 
 /**
  * Wrap an `aiwg <subsystem> <verb>` CLI call as an MCP tool.
@@ -586,6 +587,7 @@ const TOOLSET_REGISTRY = {
   ralph: registerRalphToolset,
   mc: registerMcToolset,
   ops: registerOpsToolset,
+  sandbox: registerAgenticSandboxToolset,
 };
 
 /**

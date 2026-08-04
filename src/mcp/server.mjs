@@ -68,7 +68,7 @@ export function createServer() {
   // Opt-in subsystem toolsets (#1322-#1332)
   //
   // Enabled via AIWG_MCP_TOOLSETS env or `aiwg mcp serve --toolsets=`.
-  // Known: flows, missions, memory, kb, research, activity-log, index, ralph, mc, ops, all
+  // Known: flows, missions, memory, kb, research, activity-log, index, ralph, mc, ops, sandbox, all
   // Default: none (core only — discovery + command-run)
   // ============================================
   const requested = parseToolsets(process.env.AIWG_MCP_TOOLSETS || '');
