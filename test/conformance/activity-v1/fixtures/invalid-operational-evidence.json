@@ -1,0 +1,11 @@
+{
+  "schema_version": "agentic.activity-operational-evidence/v1",
+  "record_date": "2026-08-04",
+  "sealed_at": "not-a-date",
+  "window": {"start": "2026-08-05T00:00:00Z", "end": "2026-08-04T00:00:00Z", "actual_span_seconds": -1},
+  "identity_digests": [],
+  "input_digest": "not-a-digest",
+  "previous_record_digest": null,
+  "summary": {"sample_count": 0, "evidence_class_counts": {"organic": 0, "canary": 0, "drill": 0}, "source_availability": {}, "latency_ms": {}, "metrics": {}},
+  "record_digest": "not-a-digest"
+}

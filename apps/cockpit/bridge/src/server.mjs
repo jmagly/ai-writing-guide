@@ -16,6 +16,7 @@ import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, basename, extname, resolve, sep } from 'node:path';
 import { storeCockpitToken } from '../../shell-core/keychain.mjs';
+import { assertActivityEvent } from './activity-contract.mjs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 // Primary seam for roctinam/aiwg#1589: Cockpit talks to a real agentic-sandbox
@@ -1606,7 +1607,6 @@ const ACTIVITY_SCOPE_HEADERS = {
   instance_id: 'x-agentic-instance-id', agent_id: 'x-agentic-agent-id',
 };
 const ACTIVITY_FILTERS = new Set(['event_name', 'collector', 'trust', 'plane', 'outcome', 'session_id', 'mission_id', 'task_id', 'tool_call_id', 'command_id', 'process_id', 'trace_id', 'since', 'until', 'limit']);
-const RESTRICTED_ACTIVITY_KEY = /(?:^|_)(?:content|terminal|prompt|environment|env|credential|secret|password|authorization|bearer|token|private_key|certificate|restricted_(?:url|uri|link))(?:$|_)/i;
 
 export function activityRequest(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw Object.assign(new Error('activity request must be an object'), { code: 'activity_invalid_request' });
@@ -1628,12 +1628,6 @@ export function activityRequest(input = {}) {
     else throw Object.assign(new Error(`invalid activity filter: ${key}`), { code: 'activity_invalid_filter' });
   }
   return { headers, scope, filter };
-}
-
-function hasRestrictedActivityField(value) {
-  if (Array.isArray(value)) return value.some(hasRestrictedActivityField);
-  if (!value || typeof value !== 'object') return false;
-  return Object.entries(value).some(([key, child]) => RESTRICTED_ACTIVITY_KEY.test(key) || hasRestrictedActivityField(child));
 }
 
 export function validateActivityEnvelope(body, expectedScope, { includeEvents = false, exportEnvelope = false } = {}) {
@@ -1664,14 +1658,18 @@ export function validateActivityEnvelope(body, expectedScope, { includeEvents = 
     throw Object.assign(new Error('activity envelope has malformed collector coverage'), { code: 'activity_malformed_envelope' });
   }
   for (const event of events) {
-    if (event?.schema_version !== 'activity.event/v1' || event?.sensitivity !== 'metadata' || hasRestrictedActivityField(event)) {
-      throw Object.assign(new Error('activity envelope contains restricted or unsupported event data'), { code: 'activity_restricted_data' });
-    }
-    for (const [key, value] of Object.entries(expectedScope)) {
-      if (event?.correlation?.[key] !== value) throw Object.assign(new Error('activity event scope mismatch'), { code: 'activity_scope_mismatch' });
-    }
+    assertActivityEvent(event, expectedScope);
   }
-  if (exportEnvelope && (!body.manifest || typeof body.manifest.key_id !== 'string' || typeof body.manifest.merkle_root !== 'string')) {
+  const manifest = body.manifest;
+  if (exportEnvelope && (!manifest
+    || typeof manifest.batch_id !== 'string' || !manifest.batch_id
+    || manifest.tenant_id !== expectedScope.tenant_id
+    || typeof manifest.collector_id !== 'string' || !manifest.collector_id
+    || !Number.isInteger(manifest.event_count) || manifest.event_count < 0
+    || !/^[0-9a-f]{64}$/.test(manifest.merkle_root ?? '')
+    || typeof manifest.key_id !== 'string' || !manifest.key_id
+    || typeof manifest.signature !== 'string' || !manifest.signature
+    || (manifest.previous_root !== null && manifest.previous_root !== undefined && !/^[0-9a-f]{64}$/.test(manifest.previous_root)))) {
     throw Object.assign(new Error('signed activity export has no valid manifest'), { code: 'activity_malformed_export' });
   }
   return body;
