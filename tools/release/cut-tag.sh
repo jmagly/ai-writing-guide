@@ -27,7 +27,7 @@
 # What it does (fail-fast at each step):
 #   1. Verifies <version> matches the CalVer YYYY.M.PATCH shape (no leading zeros)
 #   2. Verifies package.json version matches <version>
-#   3. Verifies .claude-plugin/marketplace.json metadata.version matches (PUW-038 lockstep)
+#   3. Verifies .claude-plugin/marketplace.json version matches (PUW-038 lockstep)
 #   4. Verifies apps/cockpit/package.json version matches (@aiwg/cockpit lockstep)
 #   5. Verifies packages/cli/package.json version matches (@aiwg/cli lockstep)
 #   6. Verifies package-lock.json version matches (CI check:versions / npm ci gate)
@@ -130,12 +130,15 @@ fi
 echo "  [2/13] package.json lockstep OK"
 
 # ---------------------------------------------------------------------------
-# 3. .claude-plugin/marketplace.json metadata.version lockstep (PUW-038 #1139)
+# 3. .claude-plugin/marketplace.json version lockstep (PUW-038 #1139)
+#    Current manifests use the top-level field. Keep the legacy metadata.version
+#    fallback aligned with tools/workspace/check-marketplace-version.mjs so older
+#    release branches can still use this wrapper.
 # ---------------------------------------------------------------------------
-MP_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.claude-plugin/marketplace.json','utf8')).metadata.version)")
+MP_VERSION=$(node -e "const m=JSON.parse(require('fs').readFileSync('.claude-plugin/marketplace.json','utf8')); console.log(m.version ?? m.metadata?.version ?? '')")
 if [ "$MP_VERSION" != "$VERSION" ]; then
   cat <<EOF >&2
-FAIL: .claude-plugin/marketplace.json metadata.version is '$MP_VERSION',
+FAIL: .claude-plugin/marketplace.json version is '$MP_VERSION',
        expected '$VERSION' (PUW-038 lockstep — #1139).
        Update the file and commit.
 EOF
