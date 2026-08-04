@@ -11,7 +11,13 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { FortemiAdapter, type McpClientLike } from '../../../src/storage/backends/fortemi.js';
+import {
+  FortemiAdapter,
+  resolveMcpRequestHeaders,
+  unwrapMcpToolResult,
+  validateRemoteMcpUrl,
+  type McpClientLike,
+} from '../../../src/storage/backends/fortemi.js';
 
 interface ToolCall {
   name: string;
@@ -249,6 +255,79 @@ describe('storage/backends/fortemi (#972)', () => {
     it('rejects paths with null bytes', async () => {
       const adapter = makeAdapter();
       await expect(adapter.read('foo\0bar')).rejects.toThrow(/null bytes/);
+    });
+  });
+
+  describe('authenticated remote transport configuration (#1508)', () => {
+    it('resolves bearer headers from references without persisting secret values', () => {
+      const headers = resolveMcpRequestHeaders(
+        { headerEnv: { Authorization: 'AIWG_FORTEMI_TOKEN' } },
+        { AIWG_FORTEMI_TOKEN: 'synthetic-test-token' },
+      );
+      expect(headers).toEqual({ Authorization: 'Bearer synthetic-test-token' });
+    });
+
+    it('fails closed when a referenced credential is unavailable', () => {
+      expect(() =>
+        resolveMcpRequestHeaders(
+          { headerEnv: { Authorization: 'AIWG_FORTEMI_TOKEN' } },
+          {},
+        ),
+      ).toThrow(/required credential environment variable "AIWG_FORTEMI_TOKEN" is not set/);
+    });
+
+    it('rejects malformed environment variable references', () => {
+      expect(() =>
+        resolveMcpRequestHeaders(
+          { headerEnv: { Authorization: '../token-file' } },
+          {},
+        ),
+      ).toThrow(/invalid environment variable reference/);
+    });
+
+    it('requires TLS remotely while allowing loopback workstation HTTP', () => {
+      expect(validateRemoteMcpUrl('https://memory.example.internal/mcp').protocol).toBe('https:');
+      expect(validateRemoteMcpUrl('http://127.0.0.1:3100/mcp').hostname).toBe('127.0.0.1');
+      expect(validateRemoteMcpUrl('http://[::1]:3100/mcp').hostname).toBe('[::1]');
+      expect(() => validateRemoteMcpUrl('http://memory.example.internal/mcp')).toThrow(
+        /must use HTTPS/,
+      );
+    });
+  });
+
+  describe('MCP SDK result normalization (#1508)', () => {
+    it('unwraps structured tool results from the SDK envelope', () => {
+      expect(
+        unwrapMcpToolResult({
+          content: [{ type: 'text', text: 'ignored fallback' }],
+          structuredContent: { note: { content: '# imported' } },
+        }),
+      ).toEqual({ note: { content: '# imported' } });
+    });
+
+    it('parses JSON text results used by local workstation servers', () => {
+      expect(
+        unwrapMcpToolResult({
+          content: [{ type: 'text', text: '{"not_found":true}' }],
+        }),
+      ).toEqual({ not_found: true });
+    });
+
+    it('preserves plain text as content without executing or interpolating it', () => {
+      expect(
+        unwrapMcpToolResult({
+          content: [{ type: 'text', text: 'plain response' }],
+        }),
+      ).toEqual({ content: 'plain response' });
+    });
+
+    it('turns MCP error envelopes into migration failures', () => {
+      expect(() =>
+        unwrapMcpToolResult({
+          isError: true,
+          content: [{ type: 'text', text: 'not authorized' }],
+        }),
+      ).toThrow(/MCP tool failed: not authorized/);
     });
   });
 

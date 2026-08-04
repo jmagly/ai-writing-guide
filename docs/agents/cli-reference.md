@@ -1484,6 +1484,7 @@ Register an MCP server in the AIWG server registry (`~/.aiwg/mcp-servers.json`).
 
 ```bash
 aiwg mcp add <name> --url <url> [--type http|stdio|sse] [--description <text>]
+aiwg mcp add <name> --url <url> --header-env Authorization=ENV_VAR
 aiwg mcp add <name> --type stdio --command <cmd> [--args <a,b>] [--env KEY=VAL]
 ```
 
@@ -1499,6 +1500,9 @@ aiwg mcp add <name> --type stdio --command <cmd> [--args <a,b>] [--env KEY=VAL]
 - `--args <a,b>` - Comma-separated args for stdio command
 - `--env KEY=VAL` - Environment variable(s) for stdio servers
 - `--headers KEY=VAL` - HTTP headers for http/sse servers
+- `--header-env HEADER=ENV_VAR` - Resolve a remote HTTP/SSE header from an
+  environment variable at connection time. The registry stores only the
+  variable name. An `Authorization` reference is sent as a Bearer token.
 - `--description <text>` - Human-readable description
 
 **Example:**
@@ -1506,6 +1510,10 @@ aiwg mcp add <name> --type stdio --command <cmd> [--args <a,b>] [--env KEY=VAL]
 ```bash
 # HTTP server
 aiwg mcp add my-api --url http://localhost:3001 --description "Local API server"
+
+# Authenticated Enterprise server; no token is stored in the registry
+aiwg mcp add fortemi-enterprise --url https://memory.example.internal/mcp \
+  --header-env Authorization=AIWG_FORTEMI_TOKEN
 
 # stdio server
 aiwg mcp add git-server --type stdio --command npx --args @gitea/mcp-server
@@ -4473,6 +4481,7 @@ aiwg storage <subcommand>
 | `list-backends`       | Inventory of compiled-in adapters with READY/STUB status               |
 | `test <subsystem>`    | Round-trip write/read/list/delete probe through the configured backend |
 | `migrate <subsystem>` | Copy entries from one backend to another (#955)                        |
+| `import-corpus`       | Ingest local research text through an implemented storage backend (#1508) |
 
 **Examples:**
 
@@ -4485,6 +4494,15 @@ aiwg storage list-backends
 
 # Verify connectivity for the activity_log subsystem
 aiwg storage test activity_log
+
+# Preview local-workstation research ingest without connecting
+aiwg storage import-corpus --dry-run
+
+# Route through another implemented storage backend
+aiwg storage import-corpus --to obsidian:~/vault
+
+# Ingest through an authenticated Enterprise MCP registry entry
+aiwg storage import-corpus --server fortemi-enterprise
 
 # Migrate AIWG memory from local fs to an Obsidian vault
 aiwg storage migrate memory \

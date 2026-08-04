@@ -41,6 +41,13 @@ export interface McpServerDefinition {
   /** Headers (for http/sse types) */
   headers?: Record<string, string>;
 
+  /**
+   * Header-to-environment-variable references for authenticated transports.
+   * Only variable names are persisted; secret values are resolved by the
+   * consuming client at connection time.
+   */
+  headerEnv?: Record<string, string>;
+
   /** Providers this server has been injected into */
   injectedProviders?: string[];
 
@@ -85,6 +92,17 @@ const DEFAULT_REGISTRY: McpRegistryData = {
   servers: {},
 };
 
+const ENV_REFERENCE_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+function validateCredentialReferences(def: Pick<McpServerDefinition, 'headerEnv'>): void {
+  for (const [header, envName] of Object.entries(def.headerEnv ?? {})) {
+    if (!header.trim()) throw new Error('MCP header-env header name must not be empty');
+    if (!ENV_REFERENCE_NAME.test(envName)) {
+      throw new Error(`Invalid MCP header environment variable reference "${envName}"`);
+    }
+  }
+}
+
 export class McpServerRegistry {
   private readonly configDir: string;
   private cache: McpRegistryData | null = null;
@@ -128,6 +146,7 @@ export class McpServerRegistry {
 
   /** Add a new MCP server definition */
   async add(def: McpServerDefinition): Promise<void> {
+    validateCredentialReferences(def);
     const data = await this.load();
 
     if (data.servers[def.name]) {
@@ -164,12 +183,14 @@ export class McpServerRegistry {
       throw new Error(`Server "${name}" not found.`);
     }
 
-    data.servers[name] = {
+    const next = {
       ...data.servers[name],
       ...updates,
       name, // preserve original name
       updatedAt: new Date().toISOString(),
     };
+    validateCredentialReferences(next);
+    data.servers[name] = next;
 
     await this.save();
   }

@@ -60,6 +60,17 @@ const DEFAULT_REGISTRY = {
   servers: {},
 };
 
+const ENV_REFERENCE_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+function validateCredentialReferences(def) {
+  for (const [header, envName] of Object.entries(def.headerEnv || {})) {
+    if (!header.trim()) throw new Error('MCP header-env header name must not be empty');
+    if (!ENV_REFERENCE_NAME.test(envName)) {
+      throw new Error(`Invalid MCP header environment variable reference "${envName}"`);
+    }
+  }
+}
+
 export class McpServerRegistry {
   #configDir;
   #cache = null;
@@ -99,6 +110,7 @@ export class McpServerRegistry {
   }
 
   async add(def) {
+    validateCredentialReferences(def);
     const data = await this.load();
 
     if (data.servers[def.name]) {
@@ -133,12 +145,14 @@ export class McpServerRegistry {
       throw new Error(`Server "${name}" not found.`);
     }
 
-    data.servers[name] = {
+    const next = {
       ...data.servers[name],
       ...updates,
       name,
       updatedAt: new Date().toISOString(),
     };
+    validateCredentialReferences(next);
+    data.servers[name] = next;
 
     await this.save();
   }

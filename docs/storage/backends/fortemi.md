@@ -72,7 +72,11 @@ import/re-export gates documented in
 | `mcpServer` | no       | MCP server name registered via `aiwg mcp add`. Default `"fortemi"`                   |
 | `scheme`    | no       | Optional SKOS scheme (vocabulary scope) for this subsystem's notes                   |
 
-No env vars in `storage.config`. Authentication is governed by the AIWG MCP server config — register the Fortemi server via `aiwg mcp add fortemi --command <…>` first.
+No credentials or env vars belong in `storage.config`. Authentication is
+governed by the AIWG MCP server registry. Local workstation installs can use a
+stdio server; internal/Enterprise installs can use HTTPS Streamable HTTP or
+legacy SSE with `--header-env`. The registry stores the environment-variable
+name, never its value.
 
 ## How it works
 
@@ -111,7 +115,9 @@ Fortemi's design is immutable — no destructive delete. The adapter's `delete()
 
 - **Alpha stability.** Parameter shapes are based on the planning doc, not a live API. File issues if you see schema mismatches.
 - **Async model.** Fortemi's NLP pipeline runs server-side; `write` returns when the tool call is accepted, not when the artifact is queryable.
-- **Stdio transport only in v1.** HTTP/SSE MCP transports are out of scope; the default factory throws clearly if config requests them.
+- **Transport security.** Stdio supports local workstation installs. Streamable
+  HTTP and legacy SSE support remote services; non-loopback endpoints require
+  HTTPS and missing credential references fail closed.
 - **No `update`-on-conflict semantics.** Two concurrent `write`s to the same `note_id` may race at the Fortemi side. Behavior is governed by Fortemi's versioning model, not by the adapter.
 
 ## Setup
@@ -122,6 +128,19 @@ Fortemi's design is immutable — no destructive delete. The adapter's `delete()
    ```bash
    aiwg mcp add fortemi --type stdio --command <fortemi-mcp-binary>
    ```
+
+   Or register authenticated Enterprise transport without storing its token:
+
+   ```bash
+   aiwg mcp add fortemi-enterprise \
+     --type http \
+     --url https://memory.example.internal/mcp \
+     --header-env Authorization=AIWG_FORTEMI_TOKEN
+   ```
+
+   `--header-env` is resolved only by AIWG's storage runtime. The registry and
+   generated provider configuration contain the environment-variable name, not
+   its value; set that variable in the environment that runs `aiwg storage`.
 
 3. Add the backend to `.aiwg/storage.config`:
 
@@ -145,6 +164,13 @@ Fortemi's design is immutable — no destructive delete. The adapter's `delete()
 
    ```bash
    aiwg storage migrate memory --from fs:.aiwg/memory --to fortemi:fortemi
+   ```
+
+6. Ingest the research corpus (preview first):
+
+   ```bash
+   aiwg storage import-corpus --dry-run
+   aiwg storage import-corpus --server fortemi
    ```
 
 ## See also

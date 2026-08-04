@@ -7,6 +7,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Provider-neutral corpus memory ingest** - `aiwg storage import-corpus`
+  previews and ingests local research text through the storage/MCP abstraction,
+  preserves Markdown metadata, and skips binary attachments safely. Fortemi
+  storage now supports local stdio plus authenticated HTTPS/SSE Enterprise MCP
+  registry entries using environment-variable header references, without
+  persisting credential values (#1508).
+
 ## [2026.8.3] - 2026-08-03 - "Plugin lifecycle and release reliability"
 
 ### Changed

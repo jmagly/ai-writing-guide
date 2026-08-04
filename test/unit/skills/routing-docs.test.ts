@@ -238,6 +238,23 @@ describe('routing documentation regressions', () => {
     expect(doc).toContain('"type": "fortemi"');
   });
 
+  it('documents provider-neutral corpus ingest and credential references (#1508)', () => {
+    const migration = read('docs/storage/migration.md');
+    const fortemi = read('docs/storage/backends/fortemi.md');
+    const cli = read('docs/agents/cli-reference.md');
+
+    for (const doc of [migration, fortemi, cli]) {
+      expect(doc).toContain('aiwg storage import-corpus');
+      expect(doc).toContain('--header-env');
+      expect(doc).toContain('AIWG_FORTEMI_TOKEN');
+    }
+    expect(migration).toContain('Only the environment-variable name is persisted');
+    expect(migration).toContain('--to obsidian:~/vault');
+    expect(migration).toContain('does not read legacy Claude credential files');
+    expect(fortemi).toContain('non-loopback endpoints require');
+    expect(cli).toContain('without connecting');
+  });
+
   it('CLI reference documents Fortemi Core graph traversal backend flags', () => {
     const ref = read('docs/agents/cli-reference.md');
 

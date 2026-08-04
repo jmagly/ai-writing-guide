@@ -71,6 +71,80 @@ export interface FortemiAdapterOptions {
 }
 
 const DEFAULT_MCP_SERVER = 'fortemi';
+const ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+interface RemoteServerDefinition {
+  name: string;
+  type: 'stdio' | 'http' | 'sse';
+  url?: string;
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  headers?: Record<string, string>;
+  headerEnv?: Record<string, string>;
+}
+
+export function resolveMcpRequestHeaders(
+  server: Pick<RemoteServerDefinition, 'headers' | 'headerEnv'>,
+  environment: NodeJS.ProcessEnv = process.env,
+): Record<string, string> {
+  const headers = { ...(server.headers ?? {}) };
+  for (const [header, envName] of Object.entries(server.headerEnv ?? {})) {
+    if (!ENV_NAME.test(envName)) {
+      throw new Error(`storage(fortemi): invalid environment variable reference "${envName}"`);
+    }
+    const value = environment[envName];
+    if (!value) {
+      throw new Error(
+        `storage(fortemi): required credential environment variable "${envName}" is not set`,
+      );
+    }
+    headers[header] = header.toLowerCase() === 'authorization' ? `Bearer ${value}` : value;
+  }
+  return headers;
+}
+
+export function validateRemoteMcpUrl(raw: string): URL {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error(`storage(fortemi): invalid MCP server URL "${raw}"`);
+  }
+  const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback)) {
+    throw new Error(
+      'storage(fortemi): remote MCP URLs must use HTTPS; HTTP is allowed only for loopback development',
+    );
+  }
+  return url;
+}
+
+export function unwrapMcpToolResult(result: unknown): unknown {
+  if (!result || typeof result !== 'object') return result;
+  const envelope = result as {
+    isError?: boolean;
+    structuredContent?: unknown;
+    content?: Array<{ type?: string; text?: string }>;
+  };
+  if (envelope.isError) {
+    const detail = envelope.content
+      ?.filter((item) => item.type === 'text' && typeof item.text === 'string')
+      .map((item) => item.text)
+      .join('; ');
+    throw new Error(`storage(fortemi): MCP tool failed${detail ? `: ${detail}` : ''}`);
+  }
+  if (envelope.structuredContent !== undefined) return envelope.structuredContent;
+  const text = envelope.content?.find(
+    (item) => item.type === 'text' && typeof item.text === 'string',
+  )?.text;
+  if (text === undefined) return result;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { content: text };
+  }
+}
 
 export class FortemiAdapter implements StorageAdapter {
   private readonly subsystem: string;
@@ -242,9 +316,13 @@ export class FortemiAdapter implements StorageAdapter {
  * Implemented as a lazy import so tests that inject a stub never load
  * the SDK or touch the registry.
  */
-export const createDefaultMcpClient: McpClientFactory = async (serverName) => {
+export const createDefaultMcpClient = async (
+  serverName: string,
+  registryOverride?: { get(name: string): Promise<RemoteServerDefinition | undefined> },
+  environment: NodeJS.ProcessEnv = process.env,
+): Promise<McpClientLike> => {
   const { McpServerRegistry } = await import('../../mcp/registry.js');
-  const registry = new McpServerRegistry();
+  const registry = registryOverride ?? new McpServerRegistry();
   const server = await registry.get(serverName);
   if (!server) {
     throw new Error(
@@ -252,21 +330,46 @@ export const createDefaultMcpClient: McpClientFactory = async (serverName) => {
         `Add it via "aiwg mcp add ${serverName} --command <cmd>" before using the fortemi backend.`
     );
   }
-  if (server.type !== 'stdio') {
-    throw new Error(
-      `storage(fortemi): only stdio MCP servers are supported (got "${server.type}" for "${serverName}")`
-    );
-  }
-
-  // Lazy import the SDK so tests that inject a stub don't pay the cost
+  // Lazy imports keep unit tests that inject a stub isolated from transports.
   const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
-  const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
-
-  const transport = new StdioClientTransport({
-    command: server.command ?? '',
-    args: server.args ?? [],
-    env: server.env as Record<string, string> | undefined,
-  });
+  let transport;
+  if (server.type === 'stdio') {
+    const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
+    transport = new StdioClientTransport({
+      command: server.command ?? '',
+      args: server.args ?? [],
+      env: server.env as Record<string, string> | undefined,
+    });
+  } else {
+    if (!server.url) {
+      throw new Error(`storage(fortemi): MCP server "${serverName}" has no URL`);
+    }
+    const url = validateRemoteMcpUrl(server.url);
+    const headers = resolveMcpRequestHeaders(server, environment);
+    if (server.type === 'http') {
+      const { StreamableHTTPClientTransport } =
+        await import('@modelcontextprotocol/sdk/client/streamableHttp.js');
+      transport = new StreamableHTTPClientTransport(url, {
+        requestInit: { headers },
+      });
+    } else if (server.type === 'sse') {
+      const { SSEClientTransport } = await import('@modelcontextprotocol/sdk/client/sse.js');
+      transport = new SSEClientTransport(url, {
+        requestInit: { headers },
+        eventSourceInit: {
+          fetch: async (input, init) => {
+            const merged = new Headers(init?.headers);
+            for (const [name, value] of Object.entries(headers)) merged.set(name, value);
+            return fetch(input, { ...init, headers: merged });
+          },
+        },
+      });
+    } else {
+      throw new Error(
+        `storage(fortemi): unsupported MCP transport "${String(server.type)}"`,
+      );
+    }
+  }
   const client = new Client(
     { name: 'aiwg-storage-fortemi-adapter', version: '1.0.0' },
     { capabilities: {} }
@@ -275,7 +378,7 @@ export const createDefaultMcpClient: McpClientFactory = async (serverName) => {
 
   return {
     async callTool(name, args) {
-      return client.callTool({ name, arguments: args });
+      return unwrapMcpToolResult(await client.callTool({ name, arguments: args }));
     },
     async close() {
       await client.close();

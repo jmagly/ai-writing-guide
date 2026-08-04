@@ -9,6 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm, readFile, writeFile, mkdir } from "fs/promises";
+import { existsSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -79,6 +80,35 @@ describe("McpServerRegistry", () => {
       expect(content.servers.fortemi.url).toBe("https://memory.s9.internal/mcp");
       expect(content.servers.fortemi.type).toBe("http");
       expect(content.servers.fortemi.addedAt).toBeDefined();
+    });
+
+    it("persists authenticated header references without credential values", async () => {
+      await registry.add({
+        name: "fortemi-enterprise",
+        type: "http",
+        url: "https://memory.example.internal/mcp",
+        headerEnv: { Authorization: "AIWG_FORTEMI_TOKEN" },
+      });
+
+      const raw = await readFile(registry.getPath(), "utf-8");
+      const content = JSON.parse(raw);
+      expect(content.servers["fortemi-enterprise"].headerEnv).toEqual({
+        Authorization: "AIWG_FORTEMI_TOKEN",
+      });
+      expect(raw).not.toContain("Bearer ");
+      expect(raw).not.toContain("synthetic-test-token");
+    });
+
+    it("rejects unsafe credential reference names before persisting", async () => {
+      await expect(
+        registry.add({
+          name: "invalid-auth",
+          type: "http",
+          url: "https://memory.example.internal/mcp",
+          headerEnv: { Authorization: "../credentials.json" },
+        }),
+      ).rejects.toThrow(/Invalid MCP header environment variable reference/);
+      expect(existsSync(registry.getPath())).toBe(false);
     });
 
     it("should add a new stdio server", async () => {

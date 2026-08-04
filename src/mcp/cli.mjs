@@ -47,6 +47,8 @@ Server Options (for add/update):
   --args <a1,a2,...>   Command arguments (comma-separated, for stdio)
   --env <K=V,...>      Environment variables (comma-separated K=V pairs)
   --headers <K=V,...>  HTTP headers (comma-separated K=V pairs)
+  --header-env <K=ENV,...>
+                       Resolve HTTP header values from environment variables
   --description <text> Optional description
 
 Inject Options:
@@ -62,6 +64,8 @@ Serve Options:
 Examples:
   # Define MCP servers
   aiwg mcp add fortemi --url https://memory.s9.internal/mcp --type http
+  aiwg mcp add fortemi-enterprise --url https://memory.example.internal/mcp --type http \
+    --header-env Authorization=AIWG_FORTEMI_TOKEN
   aiwg mcp add gitea --url https://mcp-gitea.integrolabs.net/mcp
   aiwg mcp add mytools --type stdio --command npx --args mcp-server-mytools
 
@@ -498,6 +502,7 @@ async function handleAdd(args) {
   const argsStr = parseFlag(args, '--args');
   const envStr = parseFlag(args, '--env');
   const headersStr = parseFlag(args, '--headers');
+  const headerEnvStr = parseFlag(args, '--header-env');
   const description = parseFlag(args, '--description');
 
   if (type === 'stdio' && !command) {
@@ -518,6 +523,7 @@ async function handleAdd(args) {
     args: argsStr ? argsStr.split(',') : undefined,
     env: parseKVPairs(envStr),
     headers: parseKVPairs(headersStr),
+    headerEnv: parseKVPairs(headerEnvStr),
     description,
   });
 
@@ -564,6 +570,7 @@ async function handleUpdate(args) {
   const argsStr = parseFlag(args, '--args');
   const envStr = parseFlag(args, '--env');
   const headersStr = parseFlag(args, '--headers');
+  const headerEnvStr = parseFlag(args, '--header-env');
   const description = parseFlag(args, '--description');
 
   if (url !== undefined) updates.url = url;
@@ -572,6 +579,7 @@ async function handleUpdate(args) {
   if (argsStr !== undefined) updates.args = argsStr.split(',');
   if (envStr !== undefined) updates.env = parseKVPairs(envStr);
   if (headersStr !== undefined) updates.headers = parseKVPairs(headersStr);
+  if (headerEnvStr !== undefined) updates.headerEnv = parseKVPairs(headerEnvStr);
   if (description !== undefined) updates.description = description;
 
   if (Object.keys(updates).length === 0) {
@@ -608,6 +616,10 @@ async function handleList() {
     console.log(`    Type: ${server.type}`);
     if (server.url) console.log(`    URL: ${server.url}`);
     if (server.command) console.log(`    Command: ${server.command}${server.args ? ' ' + server.args.join(' ') : ''}`);
+    if (server.headerEnv) {
+      const refs = Object.entries(server.headerEnv).map(([header, envName]) => `${header}←${envName}`);
+      console.log(`    Credential refs: ${refs.join(', ')}`);
+    }
     if (server.description) console.log(`    Description: ${server.description}`);
     if (server.injectedProviders && server.injectedProviders.length > 0) {
       console.log(`    Injected into: ${server.injectedProviders.join(', ')}`);

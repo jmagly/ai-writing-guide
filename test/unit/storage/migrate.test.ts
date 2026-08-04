@@ -163,6 +163,69 @@ describe('aiwg storage migrate (#955)', () => {
       ]);
       expect(stdout.join('\n')).toMatch(/No entries to migrate/);
     });
+
+    it('--text-only preserves research text and skips binary attachments', async () => {
+      const src = join(projectRoot, 'research');
+      const dst = join(projectRoot, 'memory-store');
+      await mkdir(src, { recursive: true });
+      await writeFile(join(src, 'REF-001.md'), '---\ntags: [retrieval]\n---\n# Evidence\n', 'utf-8');
+      await writeFile(join(src, 'REF-001.pdf'), Buffer.from([0x25, 0x50, 0x44, 0x46]));
+
+      await storageCliMain([
+        'migrate',
+        'research',
+        '--from',
+        `fs:${src}`,
+        '--to',
+        `fs:${dst}`,
+        '--text-only',
+      ], projectRoot);
+
+      expect(await readFile(join(dst, 'REF-001.md'), 'utf-8')).toContain('# Evidence');
+      expect(existsSync(join(dst, 'REF-001.pdf'))).toBe(false);
+      expect(stdout.join('\n')).toContain('REF-001.pdf (non-text attachment skipped)');
+      expect(stdout.join('\n')).toMatch(/copied=1 skipped=0 unsupported=1 errored=0/);
+    });
+
+    it('previews local corpus ingest without connecting to an MCP server', async () => {
+      const corpus = join(projectRoot, '.aiwg', 'research');
+      await mkdir(corpus, { recursive: true });
+      await writeFile(join(corpus, 'REF-002.md'), '# Local workstation source\n', 'utf-8');
+      await writeFile(join(corpus, 'REF-002.pdf'), Buffer.from([0x25, 0x50, 0x44, 0x46]));
+
+      await storageCliMain(['import-corpus', '--dry-run'], projectRoot);
+
+      const output = stdout.join('\n');
+      expect(output).toContain('storage migrate (DRY RUN)');
+      expect(output).toContain('to:        fortemi:fortemi');
+      expect(output).toContain('REF-002.md (would copy)');
+      expect(output).toContain('REF-002.pdf (non-text attachment skipped)');
+    });
+
+    it('supports a provider-neutral corpus destination', async () => {
+      const corpus = join(projectRoot, '.aiwg', 'research');
+      const destination = join(projectRoot, 'portable-memory');
+      await mkdir(corpus, { recursive: true });
+      await writeFile(join(corpus, 'REF-003.md'), '# Portable source\n', 'utf-8');
+
+      await storageCliMain(
+        ['import-corpus', '--to', `fs:${destination}`],
+        projectRoot,
+      );
+
+      expect(await readFile(join(destination, 'REF-003.md'), 'utf-8')).toBe(
+        '# Portable source\n',
+      );
+    });
+
+    it('rejects ambiguous corpus destinations', async () => {
+      await expect(
+        storageCliMain(
+          ['import-corpus', '--server', 'fortemi', '--to', 'fs:/tmp/memory'],
+          projectRoot,
+        ),
+      ).rejects.toThrow(/either --server or --to/);
+    });
   });
 
   describe('resume support', () => {
