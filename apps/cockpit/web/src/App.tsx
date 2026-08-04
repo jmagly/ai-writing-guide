@@ -13,6 +13,7 @@ import { Explore } from './components/Explore';
 import { Library } from './components/Library';
 import { Actions } from './components/Actions';
 import { Telemetry } from './components/Telemetry';
+import { Activity } from './components/Activity';
 import { Memory } from './components/Memory';
 import { StartSessionModal } from './components/StartSessionModal';
 import { LaunchInstanceModal } from './components/LaunchInstanceModal';
@@ -28,6 +29,7 @@ const TABS = [
   { id: 'explore', label: 'Explore' },
   { id: 'library', label: 'Library' },
   { id: 'telemetry', label: 'Telemetry' },
+  { id: 'activity', label: 'Activity' },
   { id: 'memory', label: 'Memory' },
   { id: 'actions', label: 'Actions' },
 ] as const;
@@ -259,6 +261,7 @@ export function App() {
           <Library session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />
         </Panel>
         <Panel id="telemetry" tab={tab}><Telemetry refreshTick={refreshTick} /></Panel>
+        <Panel id="activity" tab={tab}><Activity /></Panel>
         <Panel id="memory" tab={tab}><Memory refreshTick={refreshTick} /></Panel>
         <Panel id="actions" tab={tab}>
           <Actions refreshTick={refreshTick} session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />

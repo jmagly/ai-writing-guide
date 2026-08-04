@@ -17,6 +17,19 @@ export interface TransportPosture {
   evidence?: string;
   stale?: boolean;
 }
+export interface ManagedDockerPosture {
+  transport_mode: string;
+  control_identity_present: boolean;
+  control_identity_range_valid: boolean;
+  workload_uid?: number;
+  workload_identity_separated: boolean;
+  boundary: string;
+  secure_default: boolean;
+  compatibility: boolean;
+  fallback_reason?: string;
+  requires_recreation: boolean;
+  source: string;
+}
 export interface BootstrapTrustPosture {
   status: 'secure' | 'degraded' | 'disabled' | (string & {});
   mode: 'mtls' | 'plaintext-dev' | 'disabled' | (string & {});
@@ -143,6 +156,7 @@ export interface Instance {
   runtime_posture: RuntimePosture;
   host_daemon: HostDaemonStatus;
   transport: TransportPosture;
+  managed_docker_posture?: ManagedDockerPosture;
   launch_context: LaunchContext;
   storage?: StoragePosture;
   lifecycle?: LifecyclePosture;

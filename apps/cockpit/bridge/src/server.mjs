@@ -1533,6 +1533,7 @@ function normalizeInstance(executorUrl, i) {
         ? { mode: i.transport, trust: i.transport_posture, source: 'agentic-sandbox admin-v2' }
         : i.transport ?? i.transport_posture ?? i.security_posture ?? i.security?.transport,
     ),
+    managed_docker_posture: normalizeManagedDockerPosture(i, runtimePosture.kind),
     launch_context: {
       cwd: i.launch_context?.cwd ?? i.launchContext?.cwd ?? i.cwd,
       loadout,
@@ -1549,6 +1550,138 @@ function normalizeInstance(executorUrl, i) {
     registered_agent_id: i.registered_agent_id ?? i.registeredAgentId,
     session_backends: normalizeSessionBackends(i.session_backends ?? i.sessionBackends ?? i.session_host?.backends ?? i.sessionHost?.backends ?? i.capabilities?.session_backends ?? i.capabilities?.sessionBackends, runtimePosture.kind, i.state ?? i.status, agentReady),
   };
+}
+
+const MANAGED_DOCKER_CONTROL_UID_MIN = 200_000;
+const MANAGED_DOCKER_CONTROL_UID_MAX = 799_999;
+const MANAGED_DOCKER_WORKLOAD_UID = 10_001;
+
+/** Project only executor-attested, client-safe managed-Docker identity evidence. */
+export function normalizeManagedDockerPosture(i, runtimeKind) {
+  if (!['docker', 'container'].includes(String(runtimeKind).toLowerCase())) return undefined;
+  const source = i.managed_docker_posture ?? i.managedDockerPosture ?? i.security_posture ?? i.securityPosture ?? i;
+  const rawTransport = source.transport_mode ?? source.transportMode
+    ?? (typeof source.transport === 'string' ? source.transport : source.transport?.mode)
+    ?? (typeof i.transport === 'string' ? i.transport : i.transport?.mode)
+    ?? 'unknown';
+  const transportMode = String(rawTransport).toLowerCase();
+  const rawControlUid = source.control_uid ?? source.controlUid;
+  const controlUid = Number.isInteger(Number(rawControlUid)) ? Number(rawControlUid) : undefined;
+  const rawWorkloadUid = source.workload_uid ?? source.workloadUid;
+  const workloadUid = Number.isInteger(Number(rawWorkloadUid)) ? Number(rawWorkloadUid) : undefined;
+  const boundary = String(source.workload_boundary ?? source.workloadBoundary ?? source.boundary ?? 'unknown').toLowerCase();
+  const reportedFallback = String(source.fallback_reason_code ?? source.fallbackReasonCode ?? source.fallback_reason ?? source.fallbackReason ?? '').toLowerCase();
+  const fallbackReason = transportMode === 'mtls-bootstrap' || reportedFallback === 'docker_desktop_peer_uid_unavailable'
+    ? 'Docker Desktop UDS bridge does not preserve peer UID'
+    : reportedFallback === 'identity_resolver_unavailable'
+      ? 'Managed UDS identity resolver unavailable'
+      : ['operator-configured', 'explicit', 'mtls'].includes(transportMode)
+        ? 'Operator-configured compatibility transport'
+        : undefined;
+  const controlIdentityPresent = controlUid !== undefined;
+  const controlIdentityRangeValid = controlIdentityPresent
+    && controlUid >= MANAGED_DOCKER_CONTROL_UID_MIN
+    && controlUid <= MANAGED_DOCKER_CONTROL_UID_MAX;
+  const workloadIdentitySeparated = boundary === 'separated' && workloadUid === MANAGED_DOCKER_WORKLOAD_UID;
+  const secureDefault = transportMode === 'uds' && controlIdentityRangeValid && workloadIdentitySeparated;
+  const compatibility = transportMode !== 'uds';
+  const requiresRecreation = !controlIdentityPresent || !workloadUid || boundary === 'unknown';
+  return {
+    transport_mode: transportMode,
+    control_identity_present: controlIdentityPresent,
+    control_identity_range_valid: controlIdentityRangeValid,
+    workload_uid: workloadUid,
+    workload_identity_separated: workloadIdentitySeparated,
+    boundary,
+    secure_default: secureDefault,
+    compatibility,
+    fallback_reason: fallbackReason ? String(fallbackReason).slice(0, 300) : undefined,
+    requires_recreation: requiresRecreation,
+    source: 'agentic-sandbox',
+  };
+}
+
+const ACTIVITY_SCOPE_HEADERS = {
+  tenant_id: 'x-agentic-tenant-id', host_id: 'x-agentic-host-id',
+  instance_id: 'x-agentic-instance-id', agent_id: 'x-agentic-agent-id',
+};
+const ACTIVITY_FILTERS = new Set(['event_name', 'collector', 'trust', 'plane', 'outcome', 'session_id', 'mission_id', 'task_id', 'tool_call_id', 'command_id', 'process_id', 'trace_id', 'since', 'until', 'limit']);
+const RESTRICTED_ACTIVITY_KEY = /(?:^|_)(?:content|terminal|prompt|environment|env|credential|secret|password|authorization|bearer|token|private_key|certificate|restricted_(?:url|uri|link))(?:$|_)/i;
+
+export function activityRequest(input = {}) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw Object.assign(new Error('activity request must be an object'), { code: 'activity_invalid_request' });
+  const headers = { 'accept': 'application/json' };
+  const scope = {};
+  for (const [key, header] of Object.entries(ACTIVITY_SCOPE_HEADERS)) {
+    const value = String(input[key] ?? '').trim();
+    if (!value || value.length > 255 || /[\r\n]/.test(value)) throw Object.assign(new Error(`missing or invalid ${key}`), { code: 'activity_scope_required' });
+    headers[header] = value;
+    scope[key] = value;
+  }
+  const filter = {};
+  for (const [key, value] of Object.entries(input.filter ?? {})) {
+    if (!ACTIVITY_FILTERS.has(key)) throw Object.assign(new Error(`unsupported activity filter: ${key}`), { code: 'activity_invalid_filter' });
+    if (key === 'limit') {
+      if (!Number.isInteger(value) || value < 1 || value > 1000) throw Object.assign(new Error('activity limit must be 1..1000'), { code: 'activity_invalid_filter' });
+      filter[key] = value;
+    } else if (typeof value === 'string' && value.trim() && value.length <= 255 && !/[\r\n]/.test(value)) filter[key] = value.trim();
+    else throw Object.assign(new Error(`invalid activity filter: ${key}`), { code: 'activity_invalid_filter' });
+  }
+  return { headers, scope, filter };
+}
+
+function hasRestrictedActivityField(value) {
+  if (Array.isArray(value)) return value.some(hasRestrictedActivityField);
+  if (!value || typeof value !== 'object') return false;
+  return Object.entries(value).some(([key, child]) => RESTRICTED_ACTIVITY_KEY.test(key) || hasRestrictedActivityField(child));
+}
+
+export function validateActivityEnvelope(body, expectedScope, { includeEvents = false, exportEnvelope = false } = {}) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) throw Object.assign(new Error('malformed activity envelope'), { code: 'activity_malformed_envelope' });
+  if (!exportEnvelope && body.schema_version !== 'activity.event/v1') throw Object.assign(new Error('unsupported activity schema'), { code: 'activity_malformed_envelope' });
+  const events = Array.isArray(body.events) ? body.events : [];
+  if (includeEvents && !Array.isArray(body.events)) throw Object.assign(new Error('activity envelope has no events array'), { code: 'activity_malformed_envelope' });
+  if (!exportEnvelope && (!Array.isArray(body.coverage) || !body.completeness || typeof body.completeness.complete !== 'boolean')) {
+    throw Object.assign(new Error('activity envelope has invalid coverage'), { code: 'activity_malformed_envelope' });
+  }
+  if (!exportEnvelope && body.coverage.some((entry) => !entry || typeof entry.collector_id !== 'string' || !Array.isArray(entry.sequence_gaps) || !Array.isArray(entry.durable_loss_records) || typeof entry.stale !== 'boolean')) {
+    throw Object.assign(new Error('activity envelope has malformed collector coverage'), { code: 'activity_malformed_envelope' });
+  }
+  for (const event of events) {
+    if (event?.schema_version !== 'activity.event/v1' || event?.sensitivity !== 'metadata' || hasRestrictedActivityField(event)) {
+      throw Object.assign(new Error('activity envelope contains restricted or unsupported event data'), { code: 'activity_restricted_data' });
+    }
+    for (const [key, value] of Object.entries(expectedScope)) {
+      if (event?.correlation?.[key] !== value) throw Object.assign(new Error('activity event scope mismatch'), { code: 'activity_scope_mismatch' });
+    }
+  }
+  if (exportEnvelope && (!body.manifest || typeof body.manifest.key_id !== 'string' || typeof body.manifest.merkle_root !== 'string')) {
+    throw Object.assign(new Error('signed activity export has no valid manifest'), { code: 'activity_malformed_export' });
+  }
+  return body;
+}
+
+async function activityProxy(executorUrl, kind, input) {
+  const request = activityRequest(input);
+  const isExport = kind === 'export';
+  const query = new URLSearchParams(Object.entries(request.filter).map(([key, value]) => [key, String(value)]));
+  const target = `${executorUrl}/api/v2/activity/${kind}${!isExport && query.size ? `?${query}` : ''}`;
+  const result = await fetchJsonFirst([{ target, method: isExport ? 'POST' : 'GET', headers: { ...request.headers, ...(isExport ? { 'content-type': 'application/json' } : {}) }, body: isExport ? JSON.stringify(request.filter) : undefined }]);
+  if (!result.status.toString().startsWith('2')) return result;
+  return { ...result, body: validateActivityEnvelope(result.body, request.scope, { includeEvents: kind === 'timeline' || isExport, exportEnvelope: isExport }) };
+}
+
+function managedDockerLaunchError(status, body) {
+  const detail = String(body?.message ?? body?.error?.message ?? body?.error ?? body?.failure?.message ?? '');
+  if (/refuses startup profiles that materialize raw credential refs/i.test(detail)) return {
+    status: status >= 400 ? status : 422,
+    body: {
+      error: 'managed_docker_raw_credentials_rejected',
+      message: 'Managed Docker does not accept startup profiles with raw credential references.',
+      recovery: 'Use the sandbox credential proxy or select a VM runtime. Cockpit will not downgrade the transport automatically.',
+    },
+  };
+  return { status, body };
 }
 
 function defaultSessionLaunch(instance) {
@@ -2666,6 +2799,42 @@ export function createBridge({
         return json(res, 201, await dispatchMission(parsed.body, upstreamUrl));
       }
       if (url.pathname === '/api/events/snapshot') return json(res, 200, await getEventSnapshot(upstreamUrl));
+      if (url.pathname === '/api/activity/coverage' && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        try {
+          const result = await activityProxy(upstreamUrl, 'coverage', parsed.body);
+          await appendAudit('activity.coverage.queried', { scope: activityRequest(parsed.body).scope, complete: result.body?.completeness?.complete === true });
+          return json(res, result.status, result.body);
+        } catch (error) {
+          return json(res, Number(error?.upstreamStatus) || (String(error?.code).startsWith('activity_') ? 400 : 502), { error: error?.code ?? 'activity_upstream_error', message: String(error?.message ?? error) });
+        }
+      }
+      if (url.pathname === '/api/activity/timeline' && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        try {
+          const result = await activityProxy(upstreamUrl, 'timeline', parsed.body);
+          await appendAudit('activity.timeline.queried', { scope: activityRequest(parsed.body).scope, event_count: result.body.events.length, complete: result.body.completeness.complete });
+          return json(res, result.status, result.body);
+        } catch (error) {
+          return json(res, Number(error?.upstreamStatus) || (String(error?.code).startsWith('activity_') ? 400 : 502), { error: error?.code ?? 'activity_upstream_error', message: String(error?.message ?? error) });
+        }
+      }
+      if (url.pathname === '/api/activity/export' && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        try {
+          const result = await activityProxy(upstreamUrl, 'export', parsed.body);
+          if (result.status === 503) return json(res, 503, { error: 'activity_export_unavailable', message: 'The sandbox signing key is unavailable.' });
+          await appendAudit('activity.export.completed', { scope: activityRequest(parsed.body).scope, key_id: result.body.manifest.key_id, merkle_root: result.body.manifest.merkle_root, event_count: result.body.manifest.event_count });
+          res.setHeader('content-disposition', 'attachment; filename="activity-export.json"');
+          res.setHeader('cache-control', 'no-store');
+          return json(res, result.status, result.body);
+        } catch (error) {
+          return json(res, Number(error?.upstreamStatus) || (String(error?.code).startsWith('activity_') ? 400 : 502), { error: error?.code ?? 'activity_upstream_error', message: String(error?.message ?? error) });
+        }
+      }
       if (url.pathname === '/api/loadouts') return json(res, 200, await getLoadouts(upstreamUrl));
       if (url.pathname === '/api/index/status' && req.method === 'GET') return json(res, 200, await getIndexStatus());
       if (url.pathname === '/api/index/query' && req.method === 'GET') {
@@ -2739,8 +2908,9 @@ export function createBridge({
             body: requestBody,
           },
         ]).catch((err) => ({ status: 502, body: { error: 'bridge_upstream_error', message: String(err?.message ?? err) } }));
-        await appendAudit('instance.launch.result', { request_ts: before.ts, status: result.status, result: result.body });
-        return json(res, result.status, result.body);
+        const projected = managedDockerLaunchError(result.status, result.body);
+        await appendAudit('instance.launch.result', { request_ts: before.ts, status: projected.status, result: projected.body });
+        return json(res, projected.status, projected.body);
       }
       if ((m = url.pathname.match(/^\/api\/operations\/([^/]+)$/)) && req.method === 'GET') {
         return proxyFirst(res, [

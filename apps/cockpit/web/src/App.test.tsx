@@ -11,7 +11,7 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-const TAB_LABELS = ['Home', 'Inventory', 'Running', 'Missions', 'Sessions', 'Approvals', 'Explore', 'Library', 'Telemetry', 'Memory', 'Actions'];
+const TAB_LABELS = ['Home', 'Inventory', 'Running', 'Missions', 'Sessions', 'Approvals', 'Explore', 'Library', 'Telemetry', 'Activity', 'Memory', 'Actions'];
 
 describe('App shell (rendered DOM)', () => {
   it('renders an ARIA tablist with all Cockpit tabs', () => {

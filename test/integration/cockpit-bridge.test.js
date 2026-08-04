@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocket } from 'ws';
 import { createExecutor } from '../../apps/cockpit/mock-executor/src/server.mjs';
-import { createBridge, createUserIndexGraph, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, ensureExecutor, fetchJsonFirst, isDirectExecution } from '../../apps/cockpit/bridge/src/server.mjs';
+import { activityRequest, createBridge, createUserIndexGraph, normalizeManagedDockerPosture, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, ensureExecutor, fetchJsonFirst, isDirectExecution, validateActivityEnvelope } from '../../apps/cockpit/bridge/src/server.mjs';
 
 let mock, bridge, base, token;
 const testMcSessionId = `mc-cockpit-test-${Date.now()}`;
@@ -63,6 +63,22 @@ afterAll(async () => {
 });
 
 describe('cockpit Bridge — control surface', () => {
+  it('requires exact activity scope and rejects restricted or cross-scope events', () => {
+    const request = activityRequest({ tenant_id: 't', host_id: 'h', instance_id: 'i', agent_id: 'a', filter: { limit: 50 } });
+    expect(request.headers).toMatchObject({ 'x-agentic-tenant-id': 't', 'x-agentic-host-id': 'h', 'x-agentic-instance-id': 'i', 'x-agentic-agent-id': 'a' });
+    expect(() => activityRequest({ tenant_id: 't', host_id: 'h', instance_id: 'i' })).toThrow(/agent_id/);
+    const base = { schema_version: 'activity.event/v1', sensitivity: 'metadata', correlation: request.scope };
+    expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [{ ...base, payload: { command: 'metadata-id' } }], coverage: [], completeness: { complete: true } }, request.scope, { includeEvents: true })).not.toThrow();
+    expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [{ ...base, correlation: { ...request.scope, agent_id: 'other' }, payload: {} }], coverage: [], completeness: { complete: true } }, request.scope, { includeEvents: true })).toThrow(/scope mismatch/);
+    expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [{ ...base, payload: { terminal_content: 'nope' } }], coverage: [], completeness: { complete: true } }, request.scope, { includeEvents: true })).toThrow(/restricted/);
+  });
+
+  it('projects managed Docker posture without exposing socket or bootstrap material', () => {
+    expect(normalizeManagedDockerPosture({ transport: 'uds', control_uid: 240404, workload_uid: 10001, workload_boundary: 'separated', socket_path: '/secret.sock' }, 'docker')).toEqual(expect.objectContaining({ secure_default: true, control_identity_range_valid: true, workload_identity_separated: true }));
+    expect(normalizeManagedDockerPosture({ transport: 'mtls-bootstrap', control_uid: 240405, workload_uid: 10001, workload_boundary: 'separated', bootstrap_token: 'secret' }, 'docker')).toEqual(expect.objectContaining({ secure_default: false, compatibility: true }));
+    expect(normalizeManagedDockerPosture({ transport: 'uds' }, 'docker')).toEqual(expect.objectContaining({ secure_default: false, requires_recreation: true }));
+    expect(normalizeManagedDockerPosture({ transport: 'uds', control_uid: 199999, workload_uid: 10001, workload_boundary: 'separated' }, 'docker')).toEqual(expect.objectContaining({ control_identity_range_valid: false }));
+  });
   it('creates validated user-defined index graph configuration atomically', async () => {
     const root = await mkdtemp(join(tmpdir(), 'aiwg-cockpit-index-'));
     try {

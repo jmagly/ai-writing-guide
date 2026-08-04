@@ -129,3 +129,12 @@ and results (secrets redacted). See
 - [Sessions](./sessions.md) — backends and what "managed" buys you
 - upstream: roctinam/agentic-sandbox#633 (VM idle-drop root cause),
   roctinam/agentic-sandbox#634 (session survival across reconnect)
+## Managed-Docker identity upgrades
+
+An existing container without executor-reported control/workload identity
+evidence must be recreated. Reconnect and restart do not retrofit mounts,
+peer-credential mappings, UID separation, or cleared capability boundaries.
+Destroy the old managed container through the executor, then launch a new one.
+If a Docker startup profile is rejected for raw credential references, use the
+sandbox credential proxy or choose a VM runtime; Cockpit will not silently
+downgrade transport or materialize the credential in the container.

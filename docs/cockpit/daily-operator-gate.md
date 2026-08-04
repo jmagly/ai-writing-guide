@@ -199,3 +199,14 @@ and do not block the Cockpit Linux release gate or Apple preview row.
 See [Recovery](./recovery.md) for runtime-specific session semantics and
 [Trust & Security](./trust-and-security.md) for credential custody and audit
 redaction.
+For protected sandboxes that advertise governed activity, the live gate must
+query an exact tenant/host/instance/agent scope, assert coverage is rendered
+before events, and record complete/incomplete status including loss, restart,
+staleness, unsupported-class, and clock-uncertainty fields. Export is tested as
+a separate authorized action, including the signing-key-unavailable case.
+
+For managed Docker, the Linux row must prove native UDS plus valid control UID
+range and workload UID 10001. Docker Desktop is expected to report bootstrap
+fallback, never the secure-default badge. A legacy/missing-evidence row must say
+recreation is required, and a credential-ref launch rejection must retain the
+credential-proxy-or-VM recovery guidance without exposing the rejected refs.

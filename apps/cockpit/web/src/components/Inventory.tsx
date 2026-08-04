@@ -182,6 +182,7 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
                   {i.transport.label}
                 </span>
                 <div className="cell-note">{i.transport.mode}{i.transport.stale ? ' · stale' : ''}</div>
+                {i.managed_docker_posture && <ManagedDockerBadge posture={i.managed_docker_posture} />}
               </td>
               <td className="daemon-cell">
                 <span className={`badge daemon-${i.host_daemon.status}`}>{i.host_daemon.status.replace('_', ' ')}</span>
@@ -247,6 +248,12 @@ export function Inventory({ onStartSession, onLaunchInstance, refreshTick = 0, r
       </table>
     </>
   );
+}
+
+function ManagedDockerBadge({ posture }: { posture: NonNullable<Instance['managed_docker_posture']> }) {
+  if (posture.secure_default) return <div><span className="badge trust-secure">Managed UDS · split identity</span><div className="cell-note">control identity valid · workload UID {posture.workload_uid}</div></div>;
+  if (posture.requires_recreation) return <div><span className="badge trust-degraded">Recreate required</span><div className="cell-note">Existing container lacks managed identity evidence; recreate it to adopt the secure default.</div></div>;
+  return <div><span className="badge trust-compatibility">Compatibility transport</span><div className="cell-note">{posture.fallback_reason ?? `${posture.transport_mode} is not equivalent to native UDS peer identity`}</div></div>;
 }
 
 function BootstrapTrustBanner({ posture }: { posture: BootstrapTrustPosture }) {

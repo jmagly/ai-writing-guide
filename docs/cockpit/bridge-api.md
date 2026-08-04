@@ -59,6 +59,9 @@ executor failures preserve 401 `executor_unauthenticated` and 403
 | `POST /api/instances/:id/restore` · `/fork` · `/warm-pool` | Launch from an opaque `asset_ref` through sandbox `runtime_options`; optional `name` names the child runtime, and Cloud Hypervisor accepts `restore_mode` (`ondemand` or `copy`) |
 | `POST /api/instances/:id/reconnect` | Stale-agent recovery — full semantics in [Recovery](./recovery.md) |
 | `DELETE /api/instances/:id` | Destroy, with executor-owned lifecycle first and local Docker reconciliation only when explicitly enabled ([Recovery](./recovery.md#destroy)) |
+| `POST /api/activity/coverage` | Read-only proxy to sandbox `GET /api/v2/activity/coverage`; exact scope is supplied in the JSON body and converted to sandbox scope headers |
+| `POST /api/activity/timeline` | Read-only metadata timeline proxy; validates `activity.event/v1`, scope correlation, coverage, and restricted-field absence |
+| `POST /api/activity/export` | Explicit signed-export action; returns an attachment and never places the export in normal dashboard state |
 | `POST /api/tasks/:instanceId/:taskId/cancel` | Cancel an A2A task |
 
 Fast-start actions are provider and capability gated. Cockpit renders Snapshot
@@ -192,3 +195,19 @@ subprotocol, adds the executor `Authorization` header to the upstream upgrade,
 and forwards only the public `pty-ws.v1` protocol. Group/world-accessible token
 files fail closed. Replacing the file rotates the upstream identity without a
 Bridge restart.
+### Governed activity requests
+
+All three activity routes require `tenant_id`, `host_id`, `instance_id`, and
+`agent_id` as non-empty JSON strings. The Bridge maps only those values to the
+four `x-agentic-*` scope headers; it never derives scope from inventory or
+forwards browser-supplied sandbox headers. `filter` is allow-listed to the
+sandbox activity query contract. Missing/invalid scope is
+`400 activity_scope_required`; cross-scope events, malformed envelopes, and
+restricted-content fields fail closed. Sandbox 401/403 responses remain stable
+executor authentication/authorization errors. The executor bearer stays in the
+Bridge credential-file domain.
+
+Coverage must be fetched and displayed before timeline rows. Signed export is a
+separate operator action. Only its key ID and Merkle root are displayed after a
+successful download; a missing sandbox signing key is
+`503 activity_export_unavailable`.

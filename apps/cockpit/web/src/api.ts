@@ -58,7 +58,13 @@ export async function apiRaw(path: string, opts: RequestInit = {}): Promise<Resp
 
 export async function api<T = unknown>(path: string, opts: RequestInit = {}): Promise<T> {
   const r = await apiRaw(path, opts);
-  if (!r.ok) throw new Error(`${path} → ${r.status}`);
+  if (!r.ok) {
+    const problem = await r.clone().json().catch(() => null) as { error?: string; message?: string; recovery?: string } | null;
+    if (problem?.error === 'managed_docker_raw_credentials_rejected') {
+      throw new Error(`${problem.message} ${problem.recovery}`.trim());
+    }
+    throw new Error(`${path} → ${r.status}`);
+  }
   if (r.status === 204) return {} as T;
   return r.json() as Promise<T>;
 }

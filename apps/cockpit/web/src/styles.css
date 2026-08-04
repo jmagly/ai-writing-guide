@@ -367,3 +367,11 @@ code { font:13px ui-monospace, monospace; color:var(--muted); }
 .session-main { min-width:0; }
 .controls-active { color:var(--muted); font-size:13px; padding:5px 10px; border:1px dashed var(--line); border-radius:7px; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .badge.live-dot { color:var(--ok); border-color:var(--ok); }
+.activity-scope { display:flex; gap:.75rem; flex-wrap:wrap; align-items:end; margin-bottom:1rem }
+.activity-scope label { display:grid; gap:.25rem; text-transform:capitalize }
+.activity-coverage { border-left:4px solid var(--warn, #d97706); padding:.75rem 1rem; margin:1rem 0 }
+.activity-coverage.complete { border-left-color:var(--ok, #16a34a) }
+.activity-trust-observed { background:#dbeafe; color:#1e3a8a }
+.activity-trust-attested { background:#dcfce7; color:#14532d }
+.activity-trust-self-reported { background:#fef3c7; color:#78350f }
+.activity-trust-derived { background:#ede9fe; color:#4c1d95 }

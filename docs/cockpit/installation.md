@@ -99,3 +99,10 @@ the token (keychain ref preferred) → poll `/healthz` and the authed
 
 - [Architecture](./architecture.md) — what the Bridge does once it's running
 - [Trust & Security](./trust-and-security.md) — token custody and strict keychain mode
+After upgrading Agentic Sandbox to the managed-Docker UDS identity release,
+recreate existing managed containers. Docker cannot add the instance-bound
+socket mount, peer control UID, or capability-free workload identity to a
+running container in place. Cockpit reports older rows as `Recreate required`;
+it does not claim an in-place upgrade. On Docker Desktop, expect the documented
+bootstrap compatibility posture because its UDS bridge does not preserve peer
+UIDs.

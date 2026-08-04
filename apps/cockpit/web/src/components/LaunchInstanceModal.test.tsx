@@ -139,6 +139,23 @@ beforeEach(() => {});
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('LaunchInstanceModal', () => {
+  it('shows stable credential-proxy-or-VM guidance for rejected Docker profiles', async () => {
+    const defaultFetch = mockFetch();
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('/api/instances') && init?.method === 'POST') return new Response(JSON.stringify({
+        error: 'managed_docker_raw_credentials_rejected',
+        message: 'Managed Docker does not accept startup profiles with raw credential references.',
+        recovery: 'Use the sandbox credential proxy or select a VM runtime. Cockpit will not downgrade the transport automatically.',
+      }), { status: 422, headers: { 'content-type': 'application/json' } });
+      return defaultFetch(input, init);
+    }) as typeof fetch;
+    globalThis.fetch = fetchMock;
+    render(<LaunchInstanceModal open onClose={() => {}} onLaunched={() => {}} />);
+    fireEvent.change(await screen.findByLabelText('Runtime'), { target: { value: 'docker' } });
+    fireEvent.click(screen.getByRole('button', { name: /create \+ start session/i }));
+    expect(await screen.findByText(/use the sandbox credential proxy or select a VM runtime/i)).toBeTruthy();
+  });
   it('uses an existing host target when one is already registered', async () => {
     globalThis.fetch = mockFetch();
     const onLaunched = vi.fn();

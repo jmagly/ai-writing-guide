@@ -175,3 +175,18 @@ executor these use is test-only ([Development](./development.md#the-mock-boundar
 Integration proofs additionally cover missing bootstrap, expiry, replay,
 audience mismatch, cross-Bridge use, cookie-bound REST/SSE/PTY, and scans that
 prevent reusable token material from entering HTML or URLs (#1595/#1968).
+Managed Docker adds a second, executor-reported posture beneath the transport
+badge. `Managed UDS · split identity` is shown only when all evidence agrees:
+native UDS transport, a control UID in `200000..799999`, workload UID `10001`,
+and a separated workload boundary. Docker Desktop bootstrap and explicit
+operator transports are compatibility paths, not equivalent secure-default
+claims. Missing evidence is labeled `Recreate required`; Cockpit never infers
+security from `runtime=docker` and never exposes UDS host paths, bootstrap
+material, certificates, keys, or raw credential references.
+
+The Activity view is metadata-only and coverage-bound. Completeness, sequence
+gaps, durable loss, restarts, drops, stale collectors, unsupported event
+classes, and clock uncertainty remain visible with every result. Observed,
+attested, self-reported, and derived records have distinct labels. The Bridge
+rejects restricted fields before they can enter browser state or local audit
+payloads. Export authorization and signing remain sandbox-owned.

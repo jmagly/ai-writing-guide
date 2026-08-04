@@ -31,6 +31,18 @@ afterEach(() => {
 });
 
 describe('Inventory provider-aware fast-start controls', () => {
+  it('distinguishes secure managed UDS, compatibility fallback, and legacy recreation posture', async () => {
+    const postures = [
+      { ...VM_INSTANCE, id: 'docker-secure', runtime: 'docker', runtime_posture: { kind: 'docker', isolation: 'shared-kernel', label: 'Docker' }, managed_docker_posture: { transport_mode: 'uds', control_identity_present: true, control_identity_range_valid: true, workload_uid: 10001, workload_identity_separated: true, boundary: 'separated', secure_default: true, compatibility: false, requires_recreation: false, source: 'agentic-sandbox' } },
+      { ...VM_INSTANCE, id: 'docker-desktop', runtime: 'docker', runtime_posture: { kind: 'docker', isolation: 'shared-kernel', label: 'Docker' }, managed_docker_posture: { transport_mode: 'mtls-bootstrap', control_identity_present: true, control_identity_range_valid: true, workload_uid: 10001, workload_identity_separated: true, boundary: 'separated', secure_default: false, compatibility: true, fallback_reason: 'Docker Desktop peer UID unavailable', requires_recreation: false, source: 'agentic-sandbox' } },
+      { ...VM_INSTANCE, id: 'docker-old', runtime: 'docker', runtime_posture: { kind: 'docker', isolation: 'shared-kernel', label: 'Docker' }, managed_docker_posture: { transport_mode: 'unknown', control_identity_present: false, control_identity_range_valid: false, workload_identity_separated: false, boundary: 'unknown', secure_default: false, compatibility: true, requires_recreation: true, source: 'agentic-sandbox' } },
+    ];
+    globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ count: 3, fetched_at: '2026-08-04T00:00:00Z', instances: postures }), { status: 200, headers: { 'content-type': 'application/json' } })) as typeof fetch;
+    render(<Inventory refreshMs={60_000} />);
+    expect(await screen.findByText('Managed UDS · split identity')).toBeTruthy();
+    expect(screen.getByText('Compatibility transport')).toBeTruthy();
+    expect(screen.getByText('Recreate required')).toBeTruthy();
+  });
   it('runs a capability-gated snapshot action and records terminal audit evidence', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);

@@ -104,3 +104,10 @@ a schema. New operator-console development happens here — not in the legacy
 
 - [Releases](./releases.md) — the pre-tag gate that reuses these tiers
 - [Bridge API](./bridge-api.md) — environment variables the launchers set
+Managed-Docker and activity fixtures must cover native Linux UDS, Docker
+Desktop bootstrap fallback, explicit compatibility transport, missing identity
+resolver/evidence, raw credential-ref rejection, complete coverage, sequence
+gap/loss, collector restart, stale collector, unsupported event class, and
+unavailable export signing. Fixtures contain metadata identifiers only—never
+socket host paths, raw refs, bearer material, certificates, keys, prompts,
+terminal content, or environment values.
