@@ -174,6 +174,160 @@ describe("research-query executable source selection", () => {
     );
   });
 
+  it.each(["local", "fortemi-core"] as const)(
+    "excludes quarantine scans and preserves curated ranking with %s retrieval",
+    async (backend) => {
+      const regressionQuestion =
+        "hybrid retrieval multi-vector indexing semantic tool discovery runbook structured process metadata";
+      const curated = [
+        [
+          "REF-027",
+          "Reciprocal Rank Fusion",
+          ["hybrid", "retrieval", "ranking"],
+        ],
+        [
+          "REF-048",
+          "ColBERT Multi-Vector Retrieval",
+          ["multi-vector", "indexing", "retrieval"],
+        ],
+        [
+          "REF-050",
+          "E5 Semantic Embeddings",
+          ["semantic", "retrieval", "metadata"],
+        ],
+        [
+          "REF-068",
+          "Hybrid Retrieval Architecture",
+          ["hybrid", "retrieval", "structured"],
+        ],
+        [
+          "REF-879",
+          "Semantic MCP Tool Discovery",
+          ["semantic", "tool", "discovery", "runbook", "process"],
+        ],
+      ] as const;
+      const entries = curated.map(([id, title, tags]) =>
+        entry({
+          path: `.aiwg/research/references/${id}.md`,
+          name: id,
+          title: `${id} ${title}`,
+          tags: [...tags, "grade-high"],
+          summary: `GRADE: High. Curated source for ${tags.join(" ")}.`,
+        }),
+      );
+      entries.push(
+        entry({
+          path: ".aiwg/research/quarantine/NO-REF-llm-artifact-scan.md",
+          name: "NO-REF-llm-artifact-scan",
+          title:
+            "Hybrid retrieval multi-vector indexing semantic tool discovery runbook structured process metadata",
+          tags: ["quarantine", "integrity-scan"],
+          summary:
+            "Severity: HIGH. Generated scan diagnostic, not research evidence.",
+        }),
+      );
+      writeGraph(tmp, entries);
+      if (backend === "fortemi-core") {
+        syncFortemiCoreIndex(tmp, {
+          graph: "project",
+          generatedAt: "2026-01-05T00:00:00.000Z",
+        });
+      }
+
+      const result = await runResearchQuery(tmp, {
+        question: regressionQuestion,
+        backend,
+        depth: "thorough",
+        maxSources: 10,
+      });
+
+      expect(result.sources.map((source) => source.id)).toEqual(
+        expect.arrayContaining(curated.map(([id]) => id)),
+      );
+      expect(result.sources.map((source) => source.id)).not.toContain(
+        "NO-REF-llm-artifact-scan",
+      );
+      expect(result.sources.every((source) => source.grade === "HIGH")).toBe(
+        true,
+      );
+    },
+  );
+
+  it.each(["local", "fortemi-core"] as const)(
+    "includes diagnostics only by explicit opt-in and never treats scan severity as GRADE on %s",
+    async (backend) => {
+      writeGraph(tmp, [
+        entry({
+          path: ".aiwg/research/references/REF-068.md",
+          name: "REF-068",
+          title: "REF-068 Hybrid Retrieval",
+          tags: ["hybrid", "retrieval", "grade-moderate"],
+          summary: "GRADE: Moderate. Curated retrieval evidence.",
+        }),
+        entry({
+          path: ".aiwg/research/quarantine/REF-134-llm-artifact-scan.md",
+          name: "REF-134-llm-artifact-scan",
+          title: "Hybrid Retrieval Integrity Scan",
+          tags: ["quarantine", "integrity-scan"],
+          summary:
+            "Severity: HIGH. Confidence: HIGH. Review hybrid retrieval artifact.",
+        }),
+      ]);
+      if (backend === "fortemi-core") {
+        syncFortemiCoreIndex(tmp, {
+          graph: "project",
+          generatedAt: "2026-01-05T00:00:00.000Z",
+        });
+      }
+
+      const normal = await runResearchQuery(tmp, {
+        question: "hybrid retrieval",
+        backend,
+      });
+      const diagnostic = await runResearchQuery(tmp, {
+        question: "hybrid retrieval",
+        backend,
+        includeDiagnostics: true,
+      });
+
+      expect(normal.sources.map((source) => source.id)).toEqual(["REF-068"]);
+      expect(
+        diagnostic.sources.find((source) => source.id === "REF-134")?.grade,
+      ).toBe("UNKNOWN");
+    },
+  );
+
+  it("uses Fortemi-cached bodies without rereading original source files", async () => {
+    writeGraph(tmp, [
+      entry({
+        path: ".aiwg/research/references/REF-068.md",
+        name: "REF-068",
+        title: "REF-068 Retrieval",
+        tags: ["grade-high"],
+        summary: "GRADE: High.",
+      }),
+    ]);
+    const sourcePath = path.join(tmp, ".aiwg/research/references/REF-068.md");
+    fs.appendFileSync(
+      sourcePath,
+      "\ncache-independent multi-vector evidence\n",
+    );
+    syncFortemiCoreIndex(tmp, {
+      graph: "project",
+      generatedAt: "2026-01-05T00:00:00.000Z",
+    });
+    fs.rmSync(sourcePath);
+
+    const result = await runResearchQuery(tmp, {
+      question: "cache-independent multi-vector evidence",
+      backend: "fortemi-core",
+      depth: "thorough",
+    });
+
+    expect(result.sources.map((source) => source.id)).toEqual(["REF-068"]);
+    expect(result.sources[0].grade).toBe("HIGH");
+  });
+
   it("fails explicitly when Fortemi Core source selection is requested before sync", async () => {
     seed();
 

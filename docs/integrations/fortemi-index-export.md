@@ -333,7 +333,13 @@ artifact CLI and inherit the default Fortemi Core backend. Pass
 `aiwg research-query` uses the same static cache for deterministic research
 source selection. It emits REF/PROF source metadata and GRADE extraction for the
 research-query skill to synthesize from; it does not replace the agent-mediated
-answer-writing step.
+answer-writing step. Thorough retrieval reads the source body captured in the
+synced Fortemi record text/chunks, so it remains functional without the original
+source file. Quarantine records and generated integrity/artifact scans are
+excluded from normal research results. Use `--include-diagnostics` to inspect
+them explicitly. Diagnostic severity and confidence labels are never promoted
+to GRADE evidence quality; GRADE must be explicitly declared in research
+metadata or content.
 
 `aiwg index query --hybrid` is intentionally tied to the
 Fortemi static cache. It combines static semantic/chunk scoring with the

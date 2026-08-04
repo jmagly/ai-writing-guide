@@ -7,6 +7,7 @@ import type {
   GraphType,
   MetadataEntry,
 } from "../artifacts/types.js";
+import type { AiwgFortemiRecord } from "../artifacts/browser-export.js";
 
 type ResearchQueryBackend = "local" | "fortemi-core";
 type ResearchQueryDepth = "quick" | "thorough";
@@ -22,6 +23,7 @@ export interface ResearchQueryOptions {
   json?: boolean;
   save?: boolean;
   generatedAt?: string;
+  includeDiagnostics?: boolean;
 }
 
 export interface ResearchQuerySource {
@@ -89,11 +91,15 @@ function usage(): string {
   return [
     "Usage: aiwg research-query <question> [--backend fortemi-core|local] [--graph <name>]",
     "                           [--depth quick|thorough] [--sources-only] [--max-sources N]",
-    "                           [--json] [--save]",
+    "                           [--include-diagnostics] [--json] [--save]",
   ].join("\n");
 }
 
-function flagValue(args: string[], flag: string, errorMessage: string): string | undefined {
+function flagValue(
+  args: string[],
+  flag: string,
+  errorMessage: string,
+): string | undefined {
   const index = args.indexOf(flag);
   if (index < 0) return undefined;
   const value = args[index + 1];
@@ -129,7 +135,12 @@ function stripFlags(args: string[]): string[] {
     "--depth",
     "--max-sources",
   ]);
-  const bareFlags = new Set(["--sources-only", "--json", "--save"]);
+  const bareFlags = new Set([
+    "--sources-only",
+    "--include-diagnostics",
+    "--json",
+    "--save",
+  ]);
   const question: string[] = [];
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
@@ -153,9 +164,7 @@ function parseArgs(args: string[]): ResearchQueryOptions {
     args,
     "--backend",
     "--backend must be local or fortemi-core",
-  ) as
-    | ResearchQueryBackend
-    | undefined;
+  ) as ResearchQueryBackend | undefined;
   if (backend && backend !== "local" && backend !== "fortemi-core") {
     throw new Error("--backend must be local or fortemi-core");
   }
@@ -164,8 +173,7 @@ function parseArgs(args: string[]): ResearchQueryOptions {
     args,
     "--depth",
     "--depth must be quick or thorough",
-  ) ??
-    "thorough") as ResearchQueryDepth;
+  ) ?? "thorough") as ResearchQueryDepth;
   if (depth !== "quick" && depth !== "thorough") {
     throw new Error("--depth must be quick or thorough");
   }
@@ -188,6 +196,7 @@ function parseArgs(args: string[]): ResearchQueryOptions {
     depth,
     maxSources,
     sourcesOnly: hasFlag(args, "--sources-only"),
+    includeDiagnostics: hasFlag(args, "--include-diagnostics"),
     json: hasFlag(args, "--json"),
     save: hasFlag(args, "--save"),
   };
@@ -220,12 +229,35 @@ function entryId(entry: MetadataEntry): string {
   );
 }
 
-function gradeFromText(text: string): EvidenceGrade {
-  const normalized = text.toUpperCase();
-  if (/\bVERY\s+LOW\b/.test(normalized)) return "VERY LOW";
-  if (/\bHIGH\b/.test(normalized)) return "HIGH";
-  if (/\bMODERATE\b/.test(normalized)) return "MODERATE";
-  if (/\bLOW\b/.test(normalized)) return "LOW";
+function normalizedGrade(value: string): EvidenceGrade {
+  const normalized = value.trim().toUpperCase();
+  if (/^(VERY\s+LOW|D)$/.test(normalized)) return "VERY LOW";
+  if (/^(HIGH|A(?:-)?)$/.test(normalized)) return "HIGH";
+  if (/^(MODERATE|B(?:-)?)$/.test(normalized)) return "MODERATE";
+  if (/^(LOW|C(?:-)?)$/.test(normalized)) return "LOW";
+  return "UNKNOWN";
+}
+
+/**
+ * Extract only an explicitly declared research grade. Generic severity words
+ * in scan reports must never become evidence-quality signals.
+ */
+function gradeForEntry(entry: MetadataEntry, body: string): EvidenceGrade {
+  for (const tag of entry.tags) {
+    const tagged = tag.match(
+      /^grade[-_: ](very[-_ ]low|high|moderate|low|[a-d](?:-)?)$/i,
+    );
+    if (tagged) return normalizedGrade(tagged[1].replace(/[-_]/g, " "));
+  }
+  const text = [entry.summary, body].join("\n");
+  const declarations = [
+    /\bGRADE(?:\s+(?:quality|rating|level|assessment))?\s*[:=]\s*\*{0,2}\s*(VERY\s+LOW|HIGH|MODERATE|LOW|[A-D](?:-)?)\b/i,
+    /##\s+GRADE[^\n]*\n(?:[^\n]*\n){0,3}?[^\n]*?(?:overall|rating|level)?\s*[:=]\s*\*{0,2}\s*(VERY\s+LOW|HIGH|MODERATE|LOW|[A-D](?:-)?)\b/i,
+  ];
+  for (const declaration of declarations) {
+    const match = declaration.exec(text);
+    if (match) return normalizedGrade(match[1]);
+  }
   return "UNKNOWN";
 }
 
@@ -274,38 +306,84 @@ function isResearchEntry(entry: MetadataEntry): boolean {
   );
 }
 
-function localEntries(cwd: string, graph: GraphType): MetadataEntry[] {
+/** Generated diagnostics are searchable only by explicit operator opt-in. */
+function isDiagnosticEntry(entry: MetadataEntry): boolean {
+  const type = entry.type.toLowerCase();
+  const entryPath = entry.path.toLowerCase().replaceAll("\\", "/");
+  const tags = entry.tags.map((tag) => tag.toLowerCase());
+  return (
+    entryPath.includes("/.aiwg/research/quarantine/") ||
+    entryPath.includes("/research/quarantine/") ||
+    /(?:^|\/)no-ref-[^/]*artifact-scan\.md$/.test(entryPath) ||
+    /(?:llm|integrity|artifact)-scan\.md$/.test(entryPath) ||
+    /(?:integrity|artifact|llm)[-_ ]scan|quarantine|diagnostic/.test(type) ||
+    tags.some((tag) =>
+      /^(?:integrity|artifact|llm)[-_ ]scan$|^quarantine$|^diagnostic$/.test(
+        tag,
+      ),
+    )
+  );
+}
+
+interface ResearchCandidate {
+  entry: MetadataEntry;
+  cachedBody?: string;
+}
+
+function localEntries(cwd: string, graph: GraphType): ResearchCandidate[] {
   const index = loadGraphIndexFile<ArtifactIndex>(cwd, "metadata.json", graph);
-  return index ? Object.values(index.entries) : [];
+  return index ? Object.values(index.entries).map((entry) => ({ entry })) : [];
+}
+
+function cachedRecordBody(record: AiwgFortemiRecord): string {
+  return [
+    record.search?.body,
+    record.text,
+    ...(record.chunks ?? []).map((chunk) => chunk.text),
+  ]
+    .filter((part): part is string => Boolean(part))
+    .join("\n");
 }
 
 async function backendEntries(
   cwd: string,
   graph: GraphType,
   backend: ResearchQueryBackend,
-): Promise<{ entries: MetadataEntry[]; hint?: string }> {
+): Promise<{ entries: ResearchCandidate[]; hint?: string }> {
   if (backend === "fortemi-core") {
-    const { loadFortemiCoreMetadataEntries } =
+    const { loadFortemiCoreExport, loadFortemiCoreMetadataEntries } =
       await import("../artifacts/fortemi-core-query-adapter.js");
     const loaded = loadFortemiCoreMetadataEntries(cwd, graph);
-    return { entries: loaded.entries, hint: loaded.reason };
+    if (loaded.reason) return { entries: [], hint: loaded.reason };
+    const exported = loadFortemiCoreExport(cwd, graph);
+    if (!exported.exported) return { entries: [], hint: exported.reason };
+    const records = new Map(
+      exported.exported.items.map((record) => [record.source.path, record]),
+    );
+    return {
+      entries: loaded.entries.map((entry) => {
+        const record = records.get(entry.path);
+        return {
+          entry,
+          cachedBody: record ? cachedRecordBody(record) : "",
+        };
+      }),
+    };
   }
   return { entries: localEntries(cwd, graph) };
 }
 
 function sourceForEntry(
   cwd: string,
-  entry: MetadataEntry,
+  candidate: ResearchCandidate,
   question: string,
   depth: ResearchQueryDepth,
 ): ResearchQuerySource | null {
-  const body = depth === "thorough" ? readEntryBody(cwd, entry.path) : "";
-  const sourceText = [
-    entry.title,
-    entry.summary,
-    entry.tags.join(" "),
-    body,
-  ].join("\n");
+  const { entry } = candidate;
+  const body =
+    depth === "thorough"
+      ? (candidate.cachedBody ?? readEntryBody(cwd, entry.path))
+      : "";
   const score = scoreEntry(entry, question, body, depth);
   if (score <= 0) return null;
   return {
@@ -313,7 +391,7 @@ function sourceForEntry(
     path: entry.path,
     title: entry.title,
     type: entry.type,
-    grade: gradeFromText(sourceText),
+    grade: gradeForEntry(entry, body),
     relevance: relevance(score),
     score: Math.round(score * 1000) / 1000,
     summary: entry.summary,
@@ -334,12 +412,25 @@ export async function runResearchQuery(
     throw new Error(loaded.hint);
   }
   const sources = loaded.entries
-    .filter(isResearchEntry)
-    .map((entry) => sourceForEntry(cwd, entry, options.question, depth))
+    .filter(({ entry }) => isResearchEntry(entry))
+    .filter(
+      ({ entry }) => options.includeDiagnostics || !isDiagnosticEntry(entry),
+    )
+    .map((candidate) => sourceForEntry(cwd, candidate, options.question, depth))
     .filter((source): source is ResearchQuerySource => source !== null)
     .sort((left, right) => {
       const scoreCmp = right.score - left.score;
       if (scoreCmp !== 0) return scoreCmp;
+      const gradeOrder: EvidenceGrade[] = [
+        "HIGH",
+        "MODERATE",
+        "LOW",
+        "VERY LOW",
+        "UNKNOWN",
+      ];
+      const gradeCmp =
+        gradeOrder.indexOf(left.grade) - gradeOrder.indexOf(right.grade);
+      if (gradeCmp !== 0) return gradeCmp;
       return left.path.localeCompare(right.path);
     })
     .slice(0, maxSources);

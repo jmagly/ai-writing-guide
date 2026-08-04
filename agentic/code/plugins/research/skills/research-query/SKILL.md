@@ -46,13 +46,20 @@ Save the synthesized answer as a new artifact in `.aiwg/research/synthesis/`.
 ### `--sources-only` (optional)
 List matching sources without synthesizing an answer.
 
+### `--include-diagnostics` (optional)
+Include quarantine and generated integrity/artifact scan records in source
+selection. They are excluded by default because diagnostics are not research
+evidence. Scan severity or confidence labels never become GRADE evidence
+quality; only an explicit GRADE declaration or grade tag is accepted.
+
 ### `--max-sources` (optional)
 Maximum number of sources to read and synthesize from. Default: 10.
 
 ## Execution Flow
 
 The executable CLI wrapper `aiwg research-query` performs deterministic source
-selection and can emit JSON for tests and automation. It does not replace the
+selection from synced Fortemi record text/chunks without rereading source files
+and can emit JSON for tests and automation. It does not replace the
 skill's synthesis responsibilities; agents still write the final answer with
 GRADE-aware hedging, contradictions, gaps, and inline REF citations.
 

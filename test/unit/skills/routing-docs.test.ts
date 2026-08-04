@@ -342,7 +342,8 @@ describe('routing documentation regressions', () => {
     expect(release).toContain('#1551');
     expect(release).toContain('#1508');
     expect(release).toMatch(/body-level embedding/);
-    expect(release).toMatch(/provider-neutral corpus-to-storage\/index boundary/);
+    expect(release).toMatch(/provider-neutral\s+storage\/index boundary/);
+    expect(release).toContain('operator-approved target environment');
     expect(release).toMatch(/Direct Fortemi\s+REST import and hardcoded-token patterns remain out of scope/);
     expect(changelog).toContain('Fortemi boundary docs');
     expect(changelog).toContain('local issue search');
@@ -378,6 +379,9 @@ describe('routing documentation regressions', () => {
       expect(doc).toContain('--backend local');
       expect(doc).toContain('fail with recovery guidance');
       expect(doc).toContain('instead of falling back silently');
+      expect(doc).toContain('--include-diagnostics');
+      expect(doc).toContain('diagnostics are not research evidence');
+      expect(doc).toContain('without rereading source files');
     }
 
     const audit = read('.aiwg/planning/fortemi-core-index-migration/completion-gate-audit.md');
@@ -389,17 +393,17 @@ describe('routing documentation regressions', () => {
     }
   });
 
-  it('corpus snapshot docs keep snapshot metrics local during the Fortemi preview', () => {
+  it('corpus snapshot docs preserve the accepted AIWG-rendered boundary', () => {
     const source = read('agentic/code/frameworks/research-complete/skills/corpus-snapshot/SKILL.md');
     const plugin = read('agentic/code/plugins/research/skills/corpus-snapshot/SKILL.md');
 
     for (const doc of [source, plugin]) {
       expect(doc).toContain('Fortemi Core Migration Note');
       expect(doc).toContain('corpus snapshots remain');
-      expect(doc).toContain('AIWG-rendered from corpus sidecars, corpus views, and the local `.aiwg/.index`');
-      expect(doc).toContain('Do not use `--backend fortemi-core` as the source of truth');
-      expect(doc).toContain('REF/PROF, citation');
-      expect(doc).toContain('profile, radar, discovery, and quality metrics');
+      expect(doc).toMatch(/AIWG-rendered from\s+corpus sidecars, corpus views, and the local `.aiwg\/\.index`/);
+      expect(doc).toMatch(/Fortemi\s+v2 projects the underlying research and KB records/);
+      expect(doc).toContain('does not replace the snapshot renderer');
+      expect(doc).toContain('golden corpus-view fixtures');
     }
   });
 
