@@ -42,7 +42,7 @@ This addon provides skills for enforcing test-driven development, validating tes
 aiwg addon install testing-quality
 
 # Or copy to project
-cp -r agentic/code/addons/testing-quality/ .aiwg/addons/
+cp -r ${CLAUDE_PLUGIN_ROOT}/ .aiwg/addons/
 ```
 
 ## Usage Examples

@@ -319,7 +319,7 @@ Or rephrase the task with a concrete intent:
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Layer-walk research pattern
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/instruction-comprehension.md — Don't override explicit user criteria
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/auto-compact-continue.md — Criterion IS what the loop continues toward
-- @$AIWG_ROOT/agentic/code/addons/agent-loop/skills/agent-loop/SKILL.md — The detection/routing skill that delegates here when `--completion` is missing
-- @$AIWG_ROOT/agentic/code/addons/agent-loop/skills/ralph/SKILL.md — The legacy executor skill that consumes this output (`ralph` is legacy for `agent-loop`'s executor)
-- @$AIWG_ROOT/agentic/code/addons/agent-loop/skills/agent-loop-ext/SKILL.md — The crash-resilient external loop, same delegation pattern
-- @$AIWG_ROOT/agentic/code/addons/agent-loop/agents/ralph-verifier.md — Runs the verification command this skill proposes
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/agent-loop/SKILL.md — The detection/routing skill that delegates here when `--completion` is missing
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/ralph/SKILL.md — The legacy executor skill that consumes this output (`ralph` is legacy for `agent-loop`'s executor)
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/agent-loop-ext/SKILL.md — The crash-resilient external loop, same delegation pattern
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/agents/ralph-verifier.md — Runs the verification command this skill proposes

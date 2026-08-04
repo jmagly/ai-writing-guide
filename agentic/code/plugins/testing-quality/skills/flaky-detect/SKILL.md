@@ -304,7 +304,7 @@ python scripts/flaky_scanner.py --target test/
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/testing-quality/README.md — Testing quality addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — Testing quality addon overview
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Research-first approach for root cause analysis
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/README.md — SDLC framework context for quality gates
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference

@@ -76,7 +76,7 @@ Because `agent-loop-ext` runs externally (potentially headless / in CI), the con
 - Interactive session (TTY attached): show proposal, accept `Y / n / edit` like the in-session `ralph` skill
 - Non-interactive / `--auto-criteria` / CI environment: use the inferred criterion if confidence is `high`, otherwise fail fast and print the proposal as a diagnostic so the user can re-launch with `--completion` explicitly
 
-Pass `--no-infer-completion` to require explicit `--completion` and fail before launch if missing. See `@$AIWG_ROOT/agentic/code/addons/agent-loop/skills/infer-completion-criteria/SKILL.md`.
+Pass `--no-infer-completion` to require explicit `--completion` and fail before launch if missing. See `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/infer-completion-criteria/SKILL.md`.
 
 ### --max-iterations (default: 10)
 Maximum iterations before the loop halts and saves state for manual review.
@@ -255,4 +255,4 @@ echo "Exit: $?"
 - @$AIWG_ROOT/tools/ralph-external/orchestrator.mjs — Loop orchestration engine
 - @$AIWG_ROOT/tools/ralph-external/state-manager.mjs — State persistence layer
 - @$AIWG_ROOT/tools/ralph-external/session-launcher.mjs — AI session launcher
-- @$AIWG_ROOT/agentic/code/addons/ralph/README.md — Al documentation
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — Al documentation

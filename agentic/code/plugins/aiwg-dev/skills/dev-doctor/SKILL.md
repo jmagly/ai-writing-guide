@@ -272,10 +272,10 @@ All deployed files have corresponding source in agentic/code/.
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/skill-placement.md — Placement violation definitions
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/no-circular-skill-calls.md — Circular call detection
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/component-completeness.md — Completeness requirements
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/addon-boundaries.md — Source vs project output boundary
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/aiwg-dir-reference-contract.md — Normalized .aiwg/ reference contract
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/skills/validate-addon/SKILL.md — Per-addon validation
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/skill-placement.md — Placement violation definitions
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/no-circular-skill-calls.md — Circular call detection
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/component-completeness.md — Completeness requirements
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/addon-boundaries.md — Source vs project output boundary
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/aiwg-dir-reference-contract.md — Normalized .aiwg/ reference contract
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/validate-addon/SKILL.md — Per-addon validation
 - @$AIWG_ROOT/tools/cli/doctor.mjs — Runtime doctor (end-user installation health, not dev structure)

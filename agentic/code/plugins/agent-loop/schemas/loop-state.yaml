@@ -391,6 +391,6 @@ references:
   implementation:
     - "#268"  # Multi-loop state schemas
   related:
-    - "@agentic/code/addons/ralph/schemas/loop-registry.yaml"
-    - "@agentic/code/addons/ralph/schemas/checkpoint.yaml"
-    - "@agentic/code/addons/ralph/schemas/iteration-analytics.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/loop-registry.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/checkpoint.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/iteration-analytics.yaml"

@@ -1,4 +1,4 @@
-import { readFile } from 'fs/promises';
+import { readdir, readFile, stat } from 'fs/promises';
 import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
@@ -74,5 +74,86 @@ describe('plugin repository layout', () => {
       join(REPO_ROOT, 'agentic/code/plugins/sdlc/.codex-plugin/plugin.json'),
       'utf8',
     )).toContain('"name": "aiwg-sdlc"');
+  });
+
+  it('keeps every local marketplace payload on the release version', async () => {
+    const rootPackage = JSON.parse(await readFile(join(REPO_ROOT, 'package.json'), 'utf8'));
+    const marketplace = JSON.parse(await readFile(
+      join(REPO_ROOT, '.claude-plugin/marketplace.json'),
+      'utf8',
+    ));
+
+    expect(marketplace.version).toBe(rootPackage.version);
+    for (const plugin of marketplace.plugins.filter((entry: { source: unknown }) => (
+      typeof entry.source === 'string' && entry.source.startsWith(`./${PLUGIN_SOURCE_ROOT}/`)
+    ))) {
+      expect(plugin.version, plugin.name).toBe(rootPackage.version);
+      const manifest = JSON.parse(await readFile(join(
+        REPO_ROOT,
+        plugin.source,
+        '.claude-plugin/plugin.json',
+      ), 'utf8'));
+      expect(manifest.version, plugin.name).toBe(rootPackage.version);
+    }
+  });
+
+  it('publishes declared skills in Claude-compatible directories', async () => {
+    const pluginNames = await readdir(join(REPO_ROOT, PLUGIN_SOURCE_ROOT));
+    for (const pluginName of pluginNames) {
+      const pluginRoot = join(REPO_ROOT, PLUGIN_SOURCE_ROOT, pluginName);
+      if (!(await stat(pluginRoot)).isDirectory()) continue;
+      const manifestPath = join(pluginRoot, 'manifest.json');
+      let manifest;
+      try {
+        manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+      } catch (error: any) {
+        if (error?.code === 'ENOENT') continue;
+        throw error;
+      }
+      const skillsRoot = join(pluginRoot, 'skills');
+      let bundled: string[] = [];
+      try {
+        const entries = await readdir(skillsRoot, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) {
+            expect(entry.name, `${pluginName} has a flat skill file`).not.toMatch(/\.md$/);
+            continue;
+          }
+          try {
+            await readFile(join(skillsRoot, entry.name, 'SKILL.md'), 'utf8');
+            bundled.push(entry.name);
+          } catch (error: any) {
+            if (error?.code !== 'ENOENT') throw error;
+          }
+        }
+      } catch (error: any) {
+        if (error?.code !== 'ENOENT') throw error;
+      }
+      expect(bundled.sort(), pluginName).toEqual([...(manifest.skills ?? [])].sort());
+    }
+  });
+
+  it('does not retain checkout-only self references in standalone plugin payloads', async () => {
+    const legacyRoots: Record<string, string[]> = {
+      'agent-loop': ['agentic/code/addons/agent-loop/', 'agentic/code/addons/ralph/'],
+      'agent-persistence': ['agentic/code/addons/agent-persistence/'],
+      'testing-quality': ['agentic/code/addons/testing-quality/'],
+      'aiwg-dev': ['agentic/code/addons/aiwg-dev/'],
+    };
+    for (const [pluginName, forbidden] of Object.entries(legacyRoots)) {
+      const pluginRoot = join(REPO_ROOT, PLUGIN_SOURCE_ROOT, pluginName);
+      const pending = [pluginRoot];
+      while (pending.length) {
+        const current = pending.pop()!;
+        for (const entry of await readdir(current, { withFileTypes: true })) {
+          const path = join(current, entry.name);
+          if (entry.isDirectory()) pending.push(path);
+          else if (/\.(?:md|json|ya?ml)$/.test(entry.name)) {
+            const content = await readFile(path, 'utf8');
+            for (const legacyRoot of forbidden) expect(content, path).not.toContain(legacyRoot);
+          }
+        }
+      }
+    }
   });
 });

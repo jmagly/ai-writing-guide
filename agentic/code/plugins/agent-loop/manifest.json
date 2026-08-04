@@ -43,6 +43,7 @@
     "ralph-analytics",
     "ralph-attach",
     "ralph-config",
+    "ralph-external",
     "agent-loop-ext",
     "ralph-memory",
     "cross-task-learner",

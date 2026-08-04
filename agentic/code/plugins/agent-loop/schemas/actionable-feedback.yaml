@@ -317,5 +317,5 @@ references:
   implementation:
     - "#95"
   related_schemas:
-    - "@agentic/code/addons/ralph/schemas/reflection-memory.json"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/reflection-memory.json"
     - "@agentic/code/frameworks/sdlc-complete/schemas/research/quality-assessment.yaml"

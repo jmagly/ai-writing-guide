@@ -75,7 +75,7 @@ Success criteria. Must be:
 
 **When omitted**: the loop delegates to the `infer-completion-criteria` skill, which derives a measurable criterion from project docs (CLAUDE.md / AGENTS.md / AIWG.md), package manifests, CI configuration, and `.aiwg/` artifacts. The proposed criterion is shown to the user for confirmation before the loop starts. Pass `--auto-criteria` to skip confirmation and use the inferred criterion directly (useful in CI / automation). Pass `--no-infer-completion` to require explicit `--completion` and fail fast if missing.
 
-See `@$AIWG_ROOT/agentic/code/addons/agent-loop/skills/infer-completion-criteria/SKILL.md` for the inference pipeline.
+See `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/infer-completion-criteria/SKILL.md` for the inference pipeline.
 
 ### --max-iterations (default: 10)
 Safety limit on iterations. Prevents infinite loops.

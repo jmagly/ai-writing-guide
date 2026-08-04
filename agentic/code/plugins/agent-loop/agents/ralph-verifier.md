@@ -18,7 +18,7 @@ You verify completion criteria for agent loops - determining if a task iteration
 
 ## Companion skill
 
-When the loop is started without explicit `--completion`, the criterion you verify is produced by the `infer-completion-criteria` skill (`@$AIWG_ROOT/agentic/code/addons/agent-loop/skills/infer-completion-criteria/SKILL.md`). It derives a measurable criterion from project docs (CLAUDE.md / AGENTS.md / AIWG.md), package manifests, CI configuration, and `.aiwg/` artifacts.
+When the loop is started without explicit `--completion`, the criterion you verify is produced by the `infer-completion-criteria` skill (`@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/infer-completion-criteria/SKILL.md`). It derives a measurable criterion from project docs (CLAUDE.md / AGENTS.md / AIWG.md), package manifests, CI configuration, and `.aiwg/` artifacts.
 
 You do not run that skill yourself — the loop orchestrator (`ralph-loop` agent or external launcher) calls it during initialization. Your job is to take whatever criterion is in the loop state and verify it. The skill writes its rationale into `.aiwg/ralph/<loop-id>/progress.md` (or `.aiwg/ralph-external/<run-id>/inferred-completion.yaml` for external loops); when reporting verification results, you may reference that rationale so the user sees the full evidence chain.
 

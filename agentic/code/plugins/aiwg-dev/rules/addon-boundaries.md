@@ -125,7 +125,7 @@ Is this intended for AIWG users to have after running `aiwg use`?
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/skill-placement.md — Deployment target vs source
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/skill-placement.md — Deployment target vs source
 - @$AIWG_ROOT/docs/development/aiwg-development-guide.md — Source vs output distinction (full treatment)
 - `CLAUDE.md` — The `.aiwg/` Boundary section
 

@@ -1644,7 +1644,23 @@ export function validateActivityEnvelope(body, expectedScope, { includeEvents = 
   if (!exportEnvelope && (!Array.isArray(body.coverage) || !body.completeness || typeof body.completeness.complete !== 'boolean')) {
     throw Object.assign(new Error('activity envelope has invalid coverage'), { code: 'activity_malformed_envelope' });
   }
-  if (!exportEnvelope && body.coverage.some((entry) => !entry || typeof entry.collector_id !== 'string' || !Array.isArray(entry.sequence_gaps) || !Array.isArray(entry.durable_loss_records) || typeof entry.stale !== 'boolean')) {
+  const nonnegativeInteger = (value) => Number.isInteger(value) && value >= 0;
+  const nonnegativeFinite = (value) => Number.isFinite(value) && value >= 0;
+  const validCompleteness = (value) => value
+    && typeof value.label === 'string'
+    && nonnegativeInteger(value.collector_count)
+    && nonnegativeInteger(value.sequence_gap_count)
+    && nonnegativeInteger(value.durable_loss_count)
+    && nonnegativeInteger(value.restart_count)
+    && nonnegativeInteger(value.dropped_event_count)
+    && nonnegativeInteger(value.stale_collector_count)
+    && Array.isArray(value.unsupported_event_classes)
+    && value.unsupported_event_classes.every((item) => typeof item === 'string')
+    && nonnegativeFinite(value.maximum_clock_error_ms);
+  if (!exportEnvelope && !validCompleteness(body.completeness)) {
+    throw Object.assign(new Error('activity envelope has malformed completeness summary'), { code: 'activity_malformed_envelope' });
+  }
+  if (!exportEnvelope && body.coverage.some((entry) => !entry || typeof entry.collector_id !== 'string' || !Array.isArray(entry.sequence_gaps) || !Array.isArray(entry.durable_loss_records) || !nonnegativeInteger(entry.restart_count) || !nonnegativeInteger(entry.dropped_event_count) || typeof entry.stale !== 'boolean' || !Array.isArray(entry.unsupported_event_classes) || !entry.unsupported_event_classes.every((item) => typeof item === 'string') || !nonnegativeFinite(entry.maximum_clock_error_ms))) {
     throw Object.assign(new Error('activity envelope has malformed collector coverage'), { code: 'activity_malformed_envelope' });
   }
   for (const event of events) {
@@ -2815,6 +2831,7 @@ export function createBridge({
         if (parsed.error) return json(res, 400, { error: parsed.error });
         try {
           const result = await activityProxy(upstreamUrl, 'timeline', parsed.body);
+          if (result.status < 200 || result.status >= 300) return json(res, result.status, result.body);
           await appendAudit('activity.timeline.queried', { scope: activityRequest(parsed.body).scope, event_count: result.body.events.length, complete: result.body.completeness.complete });
           return json(res, result.status, result.body);
         } catch (error) {
@@ -2827,6 +2844,7 @@ export function createBridge({
         try {
           const result = await activityProxy(upstreamUrl, 'export', parsed.body);
           if (result.status === 503) return json(res, 503, { error: 'activity_export_unavailable', message: 'The sandbox signing key is unavailable.' });
+          if (result.status < 200 || result.status >= 300) return json(res, result.status, result.body);
           await appendAudit('activity.export.completed', { scope: activityRequest(parsed.body).scope, key_id: result.body.manifest.key_id, merkle_root: result.body.manifest.merkle_root, event_count: result.body.manifest.event_count });
           res.setHeader('content-disposition', 'attachment; filename="activity-export.json"');
           res.setHeader('cache-control', 'no-store');

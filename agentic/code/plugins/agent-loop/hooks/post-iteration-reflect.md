@@ -29,7 +29,7 @@ When triggered:
 
 3. **Store reflection**:
    - Save to `.aiwg/ralph/reflections/loops/{loop-id}/iteration-{n}.yaml`
-   - Follow @$AIWG_ROOT/agentic/code/addons/ralph/schemas/reflection-memory.json schema
+   - Follow @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/reflection-memory.json schema
    - Include timestamp, trial_number, trajectory, outcome, reflection, strategy_change
 
 4. **Check for patterns**:
@@ -71,6 +71,6 @@ hook:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/reflection-memory.json - Schema
-- @$AIWG_ROOT/agentic/code/addons/ralph/docs/reflection-memory-guide.md - Guide
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/reflection-memory.json - Schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/reflection-memory-guide.md - Guide
 - @.aiwg/research/findings/REF-021-reflexion.md - Research foundation

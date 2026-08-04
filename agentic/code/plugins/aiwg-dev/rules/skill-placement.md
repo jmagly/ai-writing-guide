@@ -126,7 +126,7 @@ The templates are inert data in `agentic/code/`. They only execute in the user's
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/addon-boundaries.md — Source vs output boundary
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/addon-boundaries.md — Source vs output boundary
 - @$AIWG_ROOT/docs/development/aiwg-development-guide.md — Full contributor guide
 - @$AIWG_ROOT/docs/extensions/creating-extensions.md — Extension creation walkthrough
 

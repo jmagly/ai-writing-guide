@@ -556,29 +556,31 @@ async function touchMemory(args, cwd, config) {
 }
 
 export async function touchMemoryValues(values, cwd, config) {
-  const requested = new Set(values.map(normalizeMemory).filter(Boolean));
-  const { lines, memoryPath } = await readMemoryLines(cwd, config);
-  const { metadataPath, metadata } = await loadMetadata(cwd, config);
-  reconcileMetadata(lines, metadata);
-  const indexes = lines
-    .map((line, index) => ({ line, index }))
-    .filter(({ line }) => requested.has(line))
-    .map(({ index }) => index);
-  if (indexes.length === 0) {
-    return { operationId: null, touched: [] };
-  }
-  const touched = indexes.map((index) => lines[index]);
-  const reordered = moveIndexesToNewest(lines, indexes);
-  const now = new Date().toISOString();
-  for (const value of touched) {
-    const entry = ensureEntry(metadata, value, now);
-    entry.lastAccessedAt = now;
-    entry.accessCount = (entry.accessCount ?? 0) + 1;
-  }
-  const operationId = await commitMemoryState(
-    cwd, memoryPath, reordered, metadataPath, metadata, 'batch-touch',
-  );
-  return { operationId, touched };
+  return withLock(cwd, async () => {
+    const requested = new Set(values.map(normalizeMemory).filter(Boolean));
+    const { lines, memoryPath } = await readMemoryLines(cwd, config);
+    const { metadataPath, metadata } = await loadMetadata(cwd, config);
+    reconcileMetadata(lines, metadata);
+    const indexes = lines
+      .map((line, index) => ({ line, index }))
+      .filter(({ line }) => requested.has(line))
+      .map(({ index }) => index);
+    if (indexes.length === 0) {
+      return { operationId: null, touched: [] };
+    }
+    const touched = indexes.map((index) => lines[index]);
+    const reordered = moveIndexesToNewest(lines, indexes);
+    const now = new Date().toISOString();
+    for (const value of touched) {
+      const entry = ensureEntry(metadata, value, now);
+      entry.lastAccessedAt = now;
+      entry.accessCount = (entry.accessCount ?? 0) + 1;
+    }
+    const operationId = await commitMemoryState(
+      cwd, memoryPath, reordered, metadataPath, metadata, 'batch-touch',
+    );
+    return { operationId, touched };
+  });
 }
 
 async function pruneMemory(args, cwd, config) {

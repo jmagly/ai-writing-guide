@@ -280,7 +280,7 @@ Usage:
 - @$AIWG_ROOT/tools/ralph-external/lib/semantic-memory.mjs — Semantic memory layer
 - @$AIWG_ROOT/tools/ralph-external/lib/memory-retrieval.mjs — Memory query logic
 - @$AIWG_ROOT/tools/ralph-external/lib/memory-promotion.mjs — Cross-task memory promotion
-- @$AIWG_ROOT/agentic/code/addons/ralph/README.md — Al documentation
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — Al documentation
 
 ## Storage Routing (#934, #967)
 

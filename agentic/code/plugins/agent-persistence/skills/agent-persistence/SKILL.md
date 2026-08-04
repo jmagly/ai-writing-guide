@@ -33,5 +33,5 @@ boundary, and use the owning loop's status surface to verify activation.
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/agent-persistence/docs/hitl-integration.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/hitl-integration.md
 - @$AIWG_ROOT/agentic/code/addons/agent-loop/skills/agent-loop/SKILL.md

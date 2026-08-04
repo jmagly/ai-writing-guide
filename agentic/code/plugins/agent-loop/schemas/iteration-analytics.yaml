@@ -473,5 +473,5 @@ references:
     - "@tools/ralph-external/"
     - "@.aiwg/ralph/"
     - "@agentic/code/frameworks/sdlc-complete/schemas/research/quality-dimensions.yaml"
-    - "@agentic/code/addons/ralph/schemas/loop-registry.yaml"
-    - "@agentic/code/addons/ralph/schemas/loop-state.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/loop-registry.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/loop-state.yaml"

@@ -101,7 +101,7 @@ Do not maintain a static allowlist document. The normalized contract is computed
 Skills and agents often need to cross-reference other AIWG-installed files (rules, schemas, templates, agent definitions). Use the `@$AIWG_ROOT/` prefix for all such references:
 
 ```
-@$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/addon-boundaries.md
+@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/addon-boundaries.md
 @$AIWG_ROOT/src/extensions/types.ts
 @$AIWG_ROOT/docs/development/aiwg-dir-reference-contract.md
 ```
@@ -147,7 +147,7 @@ There is no backtick or code-block escaping for `@` references. Every `@<path>` 
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/addon-boundaries.md — Source vs project output boundary
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/addon-boundaries.md — Source vs project output boundary
 - @$AIWG_ROOT/src/extensions/types.ts — `MemoryFootprint` type definition
 - @$AIWG_ROOT/docs/development/aiwg-dir-reference-contract.md — Full reference contract document
 

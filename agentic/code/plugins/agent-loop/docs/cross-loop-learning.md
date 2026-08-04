@@ -744,9 +744,9 @@ Result: Success, 2 iterations (anti-pattern prevented scope creep)
 ## Related Documentation
 
 - `/ralph` - Main agent loop command
-- `@$AIWG_ROOT/agentic/code/addons/ralph/schemas/shared-patterns.yaml` - Pattern schema
-- `@$AIWG_ROOT/agentic/code/addons/ralph/schemas/cross-task-memory.yaml` - Cross-task memory
-- `@$AIWG_ROOT/agentic/code/addons/ralph/docs/best-practices.md` - General Al best practices
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/shared-patterns.yaml` - Pattern schema
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/cross-task-memory.yaml` - Cross-task memory
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/best-practices.md` - General Al best practices
 - `.aiwg/research/paper-analysis/REF-013-aiwg-analysis.md` - MetaGPT research analysis
 
 ---

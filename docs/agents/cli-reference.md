@@ -2146,23 +2146,22 @@ fail the file regardless of its quality score.
 
 ### Published plugins
 
-The AIWG marketplace publishes **13 plugins** at `.claude-plugin/marketplace.json`:
+The AIWG marketplace publishes **40 plugins**. The authoritative names,
+descriptions, versions, and sources live in `.claude-plugin/marketplace.json`.
+Local packages resolve from `./agentic/code/plugins/<name>`; `training` is the
+only externally sourced package.
 
-| Plugin                 | Source                                 | Description                                                     |
-| ---------------------- | -------------------------------------- | --------------------------------------------------------------- |
-| `sdlc`                 | `frameworks/sdlc-complete`             | Full SDLC framework with 93 specialized agents                  |
-| `marketing`            | `frameworks/media-marketing-kit`       | Marketing operations framework                                  |
-| `forensics`            | `frameworks/forensics-complete`        | Digital forensics & incident response (13 agents, 20 skills)    |
-| `security-engineering` | `frameworks/security-engineering`      | Applied security: crypto, chain-of-trust, factors, supply-chain |
-| `research`             | `frameworks/research-complete`         | Research workflow automation (8 agents, 39 skills)              |
-| `media-curator`        | `frameworks/media-curator`             | Media archive management (6 agents, 20 skills)                  |
-| `ops`                  | `frameworks/ops-complete`              | Operational infrastructure: incident, runbooks, troubleshooting |
-| `knowledge-base`       | `frameworks/knowledge-base`            | Knowledge base / wiki framework                                 |
-| `utils`                | `addons/aiwg-utils`                    | Core AIWG utilities                                             |
-| `voice`                | `addons/voice-framework`               | Voice profiles for consistent writing                           |
-| `writing`              | `addons/writing-quality`               | Writing quality and AI-pattern detection                        |
-| `training`             | `jmagly/aiwg-training` (separate repo) | Fine-tuning dataset curation                                    |
-| `hooks`                | `addons/aiwg-hooks`                    | Workflow tracing and session hooks                              |
+- Frameworks: `sdlc`, `marketing`, `forensics`, `security-engineering`,
+  `research`, `media-curator`, `ops`, `knowledge-base`, and `validation-complete`.
+- Agent runtime: `agent-loop`, `agent-persistence`, `guided-implementation`,
+  `context-curator`, `daemon`, `droid-bridge`, `prose-integration`, and `rlm`.
+- Memory and knowledge: `auto-memory`, `line-memory`, `compound-memory`,
+  `semantic-memory`, `llm-wiki`, and `doc-intelligence`.
+- Quality and delivery: `aiwg-evals`, `testing-quality`, `uat-mcp`,
+  `twelve-factor`, `agentic-installer`, `skill-factory`, `aiwg-dev`, and `nlp-prod`.
+- Writing and design: `voice`, `writing`, `verbalized-sampling`, `color-palette`,
+  `star-prompt`, and `training`.
+- Utilities and integration: `utils`, `hooks`, and `browser-control`.
 
 Install any of them with `/plugin install <name>@aiwg` after running `/plugin marketplace add jmagly/ai-writing-guide` once.
 

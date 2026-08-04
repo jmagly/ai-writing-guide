@@ -335,7 +335,7 @@ python scripts/batch_generate.py --source src/types/ --output test/factories/
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/testing-quality/README.md — Testing quality addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — Testing quality addon overview
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/README.md — SDLC framework context for test infrastructure
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Research-first for schema and type analysis
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference

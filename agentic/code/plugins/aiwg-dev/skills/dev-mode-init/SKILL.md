@@ -188,7 +188,7 @@ Dev mode flag was set — run `aiwg --use-stable` to revert if needed.
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/skills/dev-doctor/SKILL.md — Dev structural health check
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/dev-doctor/SKILL.md — Dev structural health check
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/agents/aiwg-steward.md — Steward agent (maintenance + upgrades)
 - @$AIWG_ROOT/docs/development/aiwg-development-guide.md — Full dev workflow guide
 - @$AIWG_ROOT/docs/development/dev-testing.md — Dev testing patterns

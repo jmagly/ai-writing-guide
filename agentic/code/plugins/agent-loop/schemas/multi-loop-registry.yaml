@@ -285,5 +285,5 @@ references:
   implementation:
     - "#266"
   related:
-    - "@agentic/code/addons/ralph/schemas/checkpoint.yaml"
-    - "@agentic/code/addons/ralph/schemas/iteration-analytics.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/checkpoint.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/iteration-analytics.yaml"

@@ -183,8 +183,8 @@ Use this checklist before marking any artifact as done:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/skill-placement.md — Placement requirements
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/no-circular-skill-calls.md — Skill-executed command requirements
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/skill-placement.md — Placement requirements
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/no-circular-skill-calls.md — Skill-executed command requirements
 - @$AIWG_ROOT/src/extensions/commands/definitions.ts — Command definition registry
 - @$AIWG_ROOT/src/extensions/types.ts — Extension type definitions
 - @$AIWG_ROOT/docs/extensions/creating-extensions.md — Extension creation guide

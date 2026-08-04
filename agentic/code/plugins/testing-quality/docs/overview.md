@@ -83,7 +83,7 @@ Related SDLC agents: `test-engineer`, `test-architect`, `mutation-analyst`.
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/addons/testing-quality/docs/quickstart.md` — Set up testing quality in a project
-- `@$AIWG_ROOT/agentic/code/addons/testing-quality/skills/tdd-enforce/SKILL.md` — TDD enforcement details
-- `@$AIWG_ROOT/agentic/code/addons/testing-quality/skills/mutation-test/SKILL.md` — Mutation testing details
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/quickstart.md` — Set up testing quality in a project
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/tdd-enforce/SKILL.md` — TDD enforcement details
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/mutation-test/SKILL.md` — Mutation testing details
 - `@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/agents/test-engineer.md` — Test engineer agent

@@ -108,7 +108,7 @@ aiwg scaffold-extension <name> --for <framework> --description "..."
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/README.md — aiwg-dev addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — aiwg-dev addon overview
 - @$AIWG_ROOT/docs/extensions/overview.md — Extension system architecture
 - @$AIWG_ROOT/docs/extensions/creating-extensions.md — Guide to building custom extensions
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference including scaffold-extension command

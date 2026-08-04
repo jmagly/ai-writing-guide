@@ -190,7 +190,7 @@ Continues from last checkpoint with original settings.
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/ralph/README.md — Ralph addon overview and loop executor documentation
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — Ralph addon overview and loop executor documentation
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/vague-discretion.md — Loop termination and iteration limit rules
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference for ralph-resume and related commands
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/instruction-comprehension.md — Re-reading original task instructions on resume

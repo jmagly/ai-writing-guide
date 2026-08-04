@@ -238,4 +238,4 @@ echo "Exit: $?"
 - @$AIWG_ROOT/tools/ralph-external/orchestrator.mjs — Loop orchestration engine
 - @$AIWG_ROOT/tools/ralph-external/state-manager.mjs — State persistence layer
 - @$AIWG_ROOT/tools/ralph-external/session-launcher.mjs — AI session launcher
-- @$AIWG_ROOT/agentic/code/addons/ralph/README.md — Al documentation
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — Al documentation

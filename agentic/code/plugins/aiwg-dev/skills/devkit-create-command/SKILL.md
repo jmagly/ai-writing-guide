@@ -146,7 +146,7 @@ aiwg add-command <name> --to <target> --template <type>
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/README.md — aiwg-dev addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — aiwg-dev addon overview
 - @$AIWG_ROOT/docs/extensions/extension-types.md — Extension types including command type
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference including add-command command
 - @$AIWG_ROOT/docs/extensions/creating-extensions.md — Guide to building custom extensions

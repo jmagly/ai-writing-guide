@@ -317,7 +317,7 @@ python scripts/batch_fix.py --input flaky-report.json --safe-only
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/testing-quality/README.md — Testing quality addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — Testing quality addon overview
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md — Authorization before auto-applying fixes
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/README.md — SDLC framework context
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference

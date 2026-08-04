@@ -68,9 +68,35 @@ describe('cockpit Bridge — control surface', () => {
     expect(request.headers).toMatchObject({ 'x-agentic-tenant-id': 't', 'x-agentic-host-id': 'h', 'x-agentic-instance-id': 'i', 'x-agentic-agent-id': 'a' });
     expect(() => activityRequest({ tenant_id: 't', host_id: 'h', instance_id: 'i' })).toThrow(/agent_id/);
     const base = { schema_version: 'activity.event/v1', sensitivity: 'metadata', correlation: request.scope };
-    expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [{ ...base, payload: { command: 'metadata-id' } }], coverage: [], completeness: { complete: true } }, request.scope, { includeEvents: true })).not.toThrow();
-    expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [{ ...base, correlation: { ...request.scope, agent_id: 'other' }, payload: {} }], coverage: [], completeness: { complete: true } }, request.scope, { includeEvents: true })).toThrow(/scope mismatch/);
-    expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [{ ...base, payload: { terminal_content: 'nope' } }], coverage: [], completeness: { complete: true } }, request.scope, { includeEvents: true })).toThrow(/restricted/);
+    const completeness = { complete: true, label: 'complete', collector_count: 0, sequence_gap_count: 0, durable_loss_count: 0, restart_count: 0, dropped_event_count: 0, stale_collector_count: 0, unsupported_event_classes: [], maximum_clock_error_ms: 0 };
+    expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [{ ...base, payload: { command: 'metadata-id' } }], coverage: [], completeness }, request.scope, { includeEvents: true })).not.toThrow();
+    expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [{ ...base, correlation: { ...request.scope, agent_id: 'other' }, payload: {} }], coverage: [], completeness }, request.scope, { includeEvents: true })).toThrow(/scope mismatch/);
+    expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [{ ...base, payload: { terminal_content: 'nope' } }], coverage: [], completeness }, request.scope, { includeEvents: true })).toThrow(/restricted/);
+    expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [], coverage: [], completeness: { ...completeness, unsupported_event_classes: undefined } }, request.scope)).toThrow(/completeness summary/);
+    expect(() => validateActivityEnvelope({ schema_version: 'activity.event/v1', events: [], coverage: [{ collector_id: 'runtime', sequence_gaps: [], durable_loss_records: [], stale: false }], completeness: { ...completeness, collector_count: 1 } }, request.scope)).toThrow(/collector coverage/);
+  });
+
+  it('preserves upstream authorization failures for every activity route', async () => {
+    const upstream = http.createServer((req, res) => {
+      const status = req.url.includes('/timeline') ? 401 : 403;
+      res.writeHead(status, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ error: status === 401 ? 'unauthorized' : 'forbidden' }));
+    });
+    await new Promise((resolve) => upstream.listen(0, '127.0.0.1', resolve));
+    const localBridge = createBridge({ executorUrl: `http://127.0.0.1:${upstream.address().port}`, allowMockExecutor: true });
+    await new Promise((resolve) => localBridge.listen(0, '127.0.0.1', resolve));
+    const localBase = `http://127.0.0.1:${localBridge.address().port}`;
+    const body = JSON.stringify({ tenant_id: 't', host_id: 'h', instance_id: 'i', agent_id: 'a' });
+    try {
+      for (const [route, status] of [['coverage', 403], ['timeline', 401], ['export', 403]]) {
+        const response = await fetch(`${localBase}/api/activity/${route}`, { method: 'POST', headers: { authorization: `Bearer ${localBridge.cockpitToken}`, 'content-type': 'application/json' }, body });
+        expect(response.status).toBe(status);
+        expect(await response.json()).toEqual(expect.objectContaining({ error: status === 401 ? 'executor_unauthenticated' : 'executor_forbidden' }));
+      }
+    } finally {
+      localBridge.close();
+      upstream.close();
+    }
   });
 
   it('projects managed Docker posture without exposing socket or bootstrap material', () => {

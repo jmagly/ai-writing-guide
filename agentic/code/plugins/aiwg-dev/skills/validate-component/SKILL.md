@@ -191,13 +191,13 @@ Result: FAIL — 1 issue found
 Required actions:
   1. Rewrite SKILL.md to perform work directly via Read/Write/Bash/Task tools
      without calling back into `aiwg my-command`
-  See: agentic/code/addons/aiwg-dev/rules/no-circular-skill-calls.md
+  See: ${CLAUDE_PLUGIN_ROOT}/rules/no-circular-skill-calls.md
 ```
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/component-completeness.md — Full completeness requirements
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/skill-placement.md — Placement requirements
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/no-circular-skill-calls.md — Circular call detection
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/aiwg-dir-reference-contract.md — Normalized .aiwg/ path contract
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/component-completeness.md — Full completeness requirements
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/skill-placement.md — Placement requirements
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/no-circular-skill-calls.md — Circular call detection
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/aiwg-dir-reference-contract.md — Normalized .aiwg/ path contract
 - @$AIWG_ROOT/src/extensions/commands/definitions.ts — Command definition registry

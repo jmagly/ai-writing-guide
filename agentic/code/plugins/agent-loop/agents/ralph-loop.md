@@ -295,18 +295,18 @@ If the same reflection appears 3+ consecutive times, the loop is stuck. Response
 
 ## Schema References
 
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/reflection-memory.json — Episodic reflection memory schema (REF-021)
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/cross-task-memory.yaml — Cross-task learning patterns with Ω presets
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/reflection-memory.json — Episodic reflection memory schema (REF-021)
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/cross-task-memory.yaml — Cross-task learning patterns with Ω presets
 - @.aiwg/ralph/reflections/index.yaml — Auto-populated reflection index
-- @$AIWG_ROOT/agentic/code/addons/ralph/docs/reflection-memory-guide.md — Comprehensive reflection memory guide
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/reflection-memory-guide.md — Comprehensive reflection memory guide
 
 ## References
 
 - @.aiwg/ralph/ - Al workspace and state
-- @$AIWG_ROOT/agentic/code/addons/ralph/docs/ - User documentation
-- @$AIWG_ROOT/agentic/code/addons/ralph/commands/ralph-reflect.md — View and manage reflections
-- @$AIWG_ROOT/agentic/code/addons/ralph/skills/reflection-injection/SKILL.md — Auto-inject past reflections
-- @$AIWG_ROOT/agentic/code/addons/ralph/hooks/post-iteration-reflect.md — Generate reflections after iterations
-- @$AIWG_ROOT/agentic/code/addons/ralph/templates/self-reflection-prompt.md — Prompt template for reflection injection
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/ - User documentation
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/commands/ralph-reflect.md — View and manage reflections
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/reflection-injection/SKILL.md — Auto-inject past reflections
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/hooks/post-iteration-reflect.md — Generate reflections after iterations
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/templates/self-reflection-prompt.md — Prompt template for reflection injection
 - @.aiwg/research/findings/REF-021-reflexion.md — Research foundation
 - Original methodology: agent loop - iteration beats perfection

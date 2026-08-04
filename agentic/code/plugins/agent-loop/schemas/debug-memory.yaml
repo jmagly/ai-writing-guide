@@ -477,4 +477,4 @@ references:
     - "#101"
   related:
     - "@.claude/rules/executable-feedback.md"
-    - "@agentic/code/addons/ralph/schemas/reflection-memory.json"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/reflection-memory.json"

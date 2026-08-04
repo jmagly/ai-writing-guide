@@ -136,7 +136,7 @@ You check an entire AIWG addon directory for completeness and release readiness,
 **Output**:
 ```
 Addon Validation: aiwg-dev v1.0.0
-Path: agentic/code/addons/aiwg-dev/
+Path: ${CLAUDE_PLUGIN_ROOT}/
 
 Manifest:          PASS (all required fields, valid CalVer)
 README:            PASS
@@ -174,12 +174,12 @@ Blocking issues:
 
 Warnings:
   W1. .claude/skills/orphan-skill/ has no source in agentic/code/ — may be a placement violation
-      See: agentic/code/addons/aiwg-dev/rules/skill-placement.md
+      See: ${CLAUDE_PLUGIN_ROOT}/rules/skill-placement.md
 ```
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/component-completeness.md — Completeness requirements per artifact type
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/skill-placement.md — Placement violation detection
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/addon-boundaries.md — .aiwg/ reference detection
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/skills/validate-component/SKILL.md — Per-component validation
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/component-completeness.md — Completeness requirements per artifact type
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/skill-placement.md — Placement violation detection
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/addon-boundaries.md — .aiwg/ reference detection
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/validate-component/SKILL.md — Per-component validation

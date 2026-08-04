@@ -301,15 +301,29 @@ issued by the AIWG subscription service:
 ```bash
 install -m 600 /dev/null "$HOME/.config/aiwg/resource-token"
 # Write the token through your password manager or secret-management tool.
-export AIWG_RESOURCE_ACCESS_TOKEN_FILE="$HOME/.config/aiwg/resource-token"
+export AIWG_RESOURCE_TOKEN_FILE="$HOME/.config/aiwg/resource-token"
 aiwg discover "premium capability" --resource-source web --aiwg-version pro
 aiwg use <component> --resource-source web --aiwg-version pro
 ```
 
-For ephemeral automation, `AIWG_RESOURCE_ACCESS_TOKEN` is also supported.
+For ephemeral automation, `AIWG_RESOURCE_TOKEN` is also supported.
 Configure exactly one token source. The CLI sends it only as an HTTPS
 `Authorization: Bearer` header to the configured release origin; it is not
 written to the lockfile, cache metadata, command line, or diagnostics.
+
+### HTTP metadata revalidation
+
+The resolver conditionally revalidates cached channel and version-index metadata.
+It prefers an ETag and falls back to Last-Modified, requesting identity encoding
+so validators remain bound to the bytes that were verified. A `304 Not Modified`
+response is accepted only when the corresponding cached payload has already
+passed signature and digest verification; HTTP validators never replace the
+Ed25519 and SHA-256 trust checks. Missing or inconsistent cache evidence causes
+an unconditional fetch and normal verification.
+
+Structured diagnostics report the metadata kind, cache/revalidation outcome,
+and recovery action. They intentionally omit release URLs and credentials so
+operators can enable them in automation without disclosing access tokens.
 
 ## Research Basis
 

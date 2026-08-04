@@ -13,7 +13,7 @@ aiwg addon install testing-quality
 Or manually:
 
 ```bash
-cp -r agentic/code/addons/testing-quality/ .aiwg/addons/
+cp -r ${CLAUDE_PLUGIN_ROOT}/ .aiwg/addons/
 ```
 
 ## Set Up TDD Enforcement
@@ -152,7 +152,7 @@ The quality gate runs `mutation-test` and `flaky-detect` as blocking checks. Bot
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/addons/testing-quality/docs/overview.md` — All skills and quality targets
-- `@$AIWG_ROOT/agentic/code/addons/testing-quality/skills/tdd-enforce/SKILL.md` — TDD enforcement details
-- `@$AIWG_ROOT/agentic/code/addons/testing-quality/skills/mutation-test/SKILL.md` — Mutation testing details
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/overview.md` — All skills and quality targets
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/tdd-enforce/SKILL.md` — TDD enforcement details
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/mutation-test/SKILL.md` — Mutation testing details
 - `@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/agents/test-engineer.md` — SDLC test engineer agent

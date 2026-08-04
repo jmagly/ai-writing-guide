@@ -170,7 +170,7 @@ aiwg lint agents <target>/agents/<name>.md --verbose
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/README.md — aiwg-dev addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — aiwg-dev addon overview
 - @$AIWG_ROOT/docs/extensions/extension-types.md — Extension types including agent type
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference including add-agent command
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/god-session.md — Single-responsibility rules for agents

@@ -390,6 +390,6 @@ references:
     - "#268"  # Multi-loop support
   related:
     - "@agentic/code/frameworks/sdlc-complete/schemas/flows/error-handling.yaml"
-    - "@agentic/code/addons/ralph/schemas/reflection-memory.json"
-    - "@agentic/code/addons/ralph/schemas/loop-registry.yaml"
-    - "@agentic/code/addons/ralph/schemas/loop-state.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/reflection-memory.json"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/loop-registry.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/loop-state.yaml"

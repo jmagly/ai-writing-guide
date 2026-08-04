@@ -74,7 +74,7 @@ It is not for end users of deployed AIWG frameworks. End users should use `aiwg 
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/addons/aiwg-dev/docs/quickstart.md` — Install and validate your first component
-- `@$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/RULES-INDEX.md` — All enforcement rules
-- `@$AIWG_ROOT/agentic/code/addons/aiwg-dev/skills/validate-component/SKILL.md` — Full validation logic
-- `@$AIWG_ROOT/agentic/code/addons/aiwg-dev/skills/dev-doctor/SKILL.md` — Full health check logic
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/quickstart.md` — Install and validate your first component
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/RULES-INDEX.md` — All enforcement rules
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/validate-component/SKILL.md` — Full validation logic
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/dev-doctor/SKILL.md` — Full health check logic

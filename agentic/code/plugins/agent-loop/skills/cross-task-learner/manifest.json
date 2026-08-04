@@ -26,9 +26,9 @@
   },
   "dependencies": {
     "schemas": [
-      "@agentic/code/addons/ralph/schemas/shared-patterns.yaml",
-      "@agentic/code/addons/ralph/schemas/cross-task-memory.yaml",
-      "@agentic/code/addons/ralph/schemas/debug-memory.yaml"
+      "@${CLAUDE_PLUGIN_ROOT}/schemas/shared-patterns.yaml",
+      "@${CLAUDE_PLUGIN_ROOT}/schemas/cross-task-memory.yaml",
+      "@${CLAUDE_PLUGIN_ROOT}/schemas/debug-memory.yaml"
     ],
     "skills": [
       "agent-loop"

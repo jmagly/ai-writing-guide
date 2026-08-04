@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.5] - 2026-08-04 - "Observable sandbox operations and reliable plugin delivery"
+
 ### Added
 
 - **Session analytics and forensic evidence indices** - session import and
@@ -20,6 +22,34 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 - **Marketing design operations** - theme selection, comparison, templates,
   schemas, and a theme-manager workflow support repeatable cross-channel visual
   design decisions.
+- **Governed Cockpit activity views** - coverage-first timeline and signed
+  export surfaces preserve sandbox completeness, authorization, and provenance
+  evidence while managed-Docker posture identifies instances that need secure
+  recreation (#2011, #2012).
+- **Web release revalidation contracts** - signed-resource metadata supports
+  payload-bound ETag and Last-Modified revalidation, verified-cache recovery,
+  structured diagnostics, and scoped CDN purge verification.
+
+### Changed
+
+- **Claude plugin release metadata** - all 39 repository-hosted plugins now
+  advance with the marketplace release version so Claude Code refreshes cached
+  payloads; the independently versioned training plugin remains external.
+
+### Fixed
+
+- **Standalone Claude plugin paths and discovery** - newly packaged plugin
+  payloads resolve their own assets through `CLAUDE_PLUGIN_ROOT`, all declared
+  skills use Claude-compatible `skills/<name>/SKILL.md` layouts, and manifests
+  match their bundled skill inventories.
+- **Line-memory context-pack concurrency** - reviewed batch touches again use
+  the project memory lock, preventing concurrent writers from losing facts.
+- **Cockpit activity error stability** - timeline and export preserve upstream
+  401/403 status instead of dereferencing success-only fields, and malformed
+  completeness envelopes now fail closed before reaching the UI.
+- **Documentation drift** - the plugin catalog, provider guidance, paid-resource
+  token names, HTTP cache behavior, theme-manager path, welcome instructions,
+  and threat-policy link now match shipped contracts.
 
 ## [2026.8.4] - 2026-08-03 - "Governed missions and complete plugin delivery"
 

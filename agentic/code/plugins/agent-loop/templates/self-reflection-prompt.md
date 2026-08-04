@@ -64,6 +64,6 @@ Based on these reflections:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/reflection-memory.json - Reflection schema
-- @$AIWG_ROOT/agentic/code/addons/ralph/docs/reflection-memory-guide.md - Guide
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/reflection-memory.json - Reflection schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/reflection-memory-guide.md - Guide
 - @.aiwg/research/findings/REF-021-reflexion.md - Research foundation

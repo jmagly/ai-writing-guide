@@ -53,7 +53,7 @@ The Agent Persistence framework uses three specialized HITL gates to manage huma
 
 ### GATE-AP-RECOVERY: Recovery Escalation
 
-**Location**: `@$AIWG_ROOT/agentic/code/addons/agent-persistence/gates/recovery-escalation-gate.yaml`
+**Location**: `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/gates/recovery-escalation-gate.yaml`
 
 **Purpose**: Request human intervention after agent exhausts 3 recovery attempts.
 
@@ -115,7 +115,7 @@ View recovery details at: .aiwg/persistence/recoveries/RS-003-recovery.yaml
 
 ### GATE-AP-FALSE-POSITIVE: False Positive Override
 
-**Location**: `@$AIWG_ROOT/agentic/code/addons/agent-persistence/gates/false-positive-override-gate.yaml`
+**Location**: `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/gates/false-positive-override-gate.yaml`
 
 **Purpose**: Allow users to override incorrect laziness detections.
 
@@ -148,7 +148,7 @@ When false positives are confirmed:
 
 ### GATE-AP-DESTRUCTIVE: Destructive Action Approval
 
-**Location**: `@$AIWG_ROOT/agentic/code/addons/agent-persistence/gates/destructive-action-gate.yaml`
+**Location**: `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/gates/destructive-action-gate.yaml`
 
 **Purpose**: Require explicit approval before destructive actions like test deletion or feature removal.
 
@@ -199,13 +199,13 @@ The Recovery Orchestrator agent coordinates with HITL gates through the gate int
 ### Module Location
 
 ```
-@$AIWG_ROOT/agentic/code/addons/agent-persistence/gates/index.mjs
+@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/gates/index.mjs
 ```
 
 ### Key Functions
 
 ```javascript
-import { GATES, shouldTriggerGate, formatGateDisplay, logGateDecision } from '@$AIWG_ROOT/agentic/code/addons/agent-persistence/gates/index.mjs';
+import { GATES, shouldTriggerGate, formatGateDisplay, logGateDecision } from '@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/gates/index.mjs';
 
 // Check if gate should trigger
 const shouldEscalate = shouldTriggerGate(GATES.RECOVERY_ESCALATION, {
@@ -388,7 +388,7 @@ Gates track cost-benefit metrics per REF-057 Agent Laboratory:
 
 ```javascript
 // In Recovery Orchestrator ESCALATE stage
-import { GATES, shouldTriggerGate, formatGateDisplay } from '@$AIWG_ROOT/agentic/code/addons/agent-persistence/gates/index.mjs';
+import { GATES, shouldTriggerGate, formatGateDisplay } from '@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/gates/index.mjs';
 
 async function escalateToHuman(recoveryContext) {
   // Check if escalation gate should trigger
@@ -431,7 +431,7 @@ async function escalateToHuman(recoveryContext) {
 
 ```javascript
 // Before allowing destructive file operation
-import { GATES, shouldTriggerGate } from '@$AIWG_ROOT/agentic/code/addons/agent-persistence/gates/index.mjs';
+import { GATES, shouldTriggerGate } from '@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/gates/index.mjs';
 
 async function beforeFileWrite(file, changes) {
   const context = analyzeChanges(changes);
@@ -482,10 +482,10 @@ async function beforeFileWrite(file, changes) {
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/agents/laziness-detector.md - Pattern detection
 
 ### Gates
-- @$AIWG_ROOT/agentic/code/addons/agent-persistence/gates/recovery-escalation-gate.yaml
-- @$AIWG_ROOT/agentic/code/addons/agent-persistence/gates/false-positive-override-gate.yaml
-- @$AIWG_ROOT/agentic/code/addons/agent-persistence/gates/destructive-action-gate.yaml
-- @$AIWG_ROOT/agentic/code/addons/agent-persistence/gates/index.mjs - Integration module
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/gates/recovery-escalation-gate.yaml
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/gates/false-positive-override-gate.yaml
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/gates/destructive-action-gate.yaml
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/gates/index.mjs - Integration module
 
 ### Research
 - @.aiwg/research/findings/REF-057-agent-laboratory.md - HITL effectiveness (84% cost reduction)

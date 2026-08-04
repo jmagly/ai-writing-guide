@@ -1,3 +1,9 @@
+---
+name: star-prompt
+description: Prompt users tastefully to star AIWG after a successful regenerate or intake workflow.
+version: 1.0.0
+---
+
 # Star Prompt Skill
 
 **Purpose**: Tastefully ask users if they'd like to star the AIWG repository after completing regenerate or intake commands.

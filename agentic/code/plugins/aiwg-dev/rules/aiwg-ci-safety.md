@@ -87,8 +87,8 @@ An agent (including Claude Code in this repo) must not autonomously modify `.git
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/addon-boundaries.md — Source vs output boundary, CI template placement
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/skill-placement.md — CI workflow special cases
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/addon-boundaries.md — Source vs output boundary, CI template placement
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/skill-placement.md — CI workflow special cases
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md — Authorization pattern
 
 ---

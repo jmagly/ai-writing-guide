@@ -138,7 +138,7 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 
 ### Completion Inference
 
-When the user doesn't specify explicit verification, delegate to the **`infer-completion-criteria`** skill (`@$AIWG_ROOT/agentic/code/addons/agent-loop/skills/infer-completion-criteria/SKILL.md`). That skill runs a deterministic 5-layer pipeline:
+When the user doesn't specify explicit verification, delegate to the **`infer-completion-criteria`** skill (`@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/infer-completion-criteria/SKILL.md`). That skill runs a deterministic 5-layer pipeline:
 
 1. **Task verb** → criterion class (test-pass, type-clean, regression-gate, coverage, lint-clean, build-pass, implement-feature)
 2. **Project context files** (CLAUDE.md / AGENTS.md / AIWG.md) → canonical commands from the Development section
@@ -407,8 +407,8 @@ User: "actually, abort that and just fix the login bug"
 - `ralph-status` skill - check loop progress
 - `ralph-resume` skill - continue interrupted loops
 - `ralph-abort` skill - abort active loops
-- `@$AIWG_ROOT/agentic/code/addons/agent-loop/schemas/loop-registry.yaml` - Registry schema
-- `@$AIWG_ROOT/agentic/code/addons/agent-loop/schemas/loop-state.yaml` - Loop state schema
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/loop-registry.yaml` - Registry schema
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/loop-state.yaml` - Loop state schema
 - `@.aiwg/research/findings/REF-086-cognitive-load-limits.md` - Concurrency research
 
 ## Version History
@@ -420,8 +420,8 @@ User: "actually, abort that and just fix the login bug"
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/agent-loop/README.md — Ralph addon overview and loop executor documentation
-- @$AIWG_ROOT/agentic/code/addons/agent-loop/schemas/loop-registry.yaml — Registry schema for multi-loop tracking
-- @$AIWG_ROOT/agentic/code/addons/agent-loop/schemas/loop-state.yaml — Loop state schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — Ralph addon overview and loop executor documentation
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/loop-registry.yaml — Registry schema for multi-loop tracking
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/loop-state.yaml — Loop state schema
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/vague-discretion.md — Loop termination and completion criteria rules
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference for ralph commands

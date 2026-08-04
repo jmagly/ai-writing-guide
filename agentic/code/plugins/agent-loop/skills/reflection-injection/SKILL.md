@@ -37,7 +37,7 @@ When triggered, this skill:
 
 3. **Format for injection**:
    - Convert reflections to natural language summary
-   - Use @$AIWG_ROOT/agentic/code/addons/ralph/templates/self-reflection-prompt.md template
+   - Use @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/templates/self-reflection-prompt.md template
    - Prepend to agent context
 
 4. **Track usage**:
@@ -72,9 +72,9 @@ This skill uses:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/reflection-memory.json - Schema
-- @$AIWG_ROOT/agentic/code/addons/ralph/docs/reflection-memory-guide.md - Guide
-- @$AIWG_ROOT/agentic/code/addons/ralph/templates/self-reflection-prompt.md - Prompt template
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/reflection-memory.json - Schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/reflection-memory-guide.md - Guide
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/templates/self-reflection-prompt.md - Prompt template
 - @.aiwg/research/findings/REF-021-reflexion.md - Research foundation
 
 ## Storage Routing (#934, #967)

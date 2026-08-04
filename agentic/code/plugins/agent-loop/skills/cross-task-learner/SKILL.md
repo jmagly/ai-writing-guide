@@ -723,9 +723,9 @@ ralph:
 
 ## Related
 
-- `@$AIWG_ROOT/agentic/code/addons/ralph/schemas/shared-patterns.yaml` - Pattern schema
-- `@$AIWG_ROOT/agentic/code/addons/ralph/schemas/cross-task-memory.yaml` - Cross-task memory
-- `@$AIWG_ROOT/agentic/code/addons/ralph/docs/cross-loop-learning.md` - Full documentation
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/shared-patterns.yaml` - Pattern schema
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/cross-task-memory.yaml` - Cross-task memory
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/cross-loop-learning.md` - Full documentation
 - `.aiwg/research/paper-analysis/REF-013-aiwg-analysis.md` - MetaGPT research
 - `ralph` skill - Iterative loop executor
 - `agent-loop` skill - Detects iterative loop requests
@@ -739,8 +739,8 @@ ralph:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/ralph/README.md — Ralph addon overview
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/shared-patterns.yaml — Pattern schema for cross-loop learning
-- @$AIWG_ROOT/agentic/code/addons/ralph/schemas/cross-task-memory.yaml — Cross-task memory schema
-- @$AIWG_ROOT/agentic/code/addons/ralph/docs/cross-loop-learning.md — Full cross-loop learning documentation
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — Ralph addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/shared-patterns.yaml — Pattern schema for cross-loop learning
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/cross-task-memory.yaml — Cross-task memory schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/cross-loop-learning.md — Full cross-loop learning documentation
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md — Subagent scoping rules relevant to loop orchestration

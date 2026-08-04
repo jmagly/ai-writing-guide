@@ -48,8 +48,8 @@ List matching sources without synthesizing an answer.
 
 ### `--include-diagnostics` (optional)
 Include quarantine and generated integrity/artifact scan records in source
-selection. They are excluded by default because diagnostics are not research
-evidence. Scan severity or confidence labels never become GRADE evidence
+selection. They are excluded by default because diagnostics are not research evidence.
+Scan severity or confidence labels never become GRADE evidence
 quality; only an explicit GRADE declaration or grade tag is accepted.
 
 ### `--max-sources` (optional)

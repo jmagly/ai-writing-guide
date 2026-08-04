@@ -325,6 +325,6 @@ references:
   implementation:
     - "#123"
   related:
-    - "@agentic/code/addons/ralph/schemas/checkpoint.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/checkpoint.yaml"
     - "@agentic/code/frameworks/sdlc-complete/schemas/flows/execution-mode.yaml"
     - "@.claude/commands/ralph.md"

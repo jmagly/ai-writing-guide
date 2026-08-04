@@ -184,7 +184,7 @@ Package Test: <package-id>
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/README.md — aiwg-dev addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — aiwg-dev addon overview
 - @$AIWG_ROOT/docs/extensions/overview.md — Extension system architecture and package types
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference including validate-metadata command
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Verification-before-action pattern

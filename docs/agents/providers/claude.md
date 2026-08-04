@@ -180,7 +180,11 @@ See [Al Guide](../ralph-guide.md) for full documentation.
 
 ---
 
-## Available Marketplace Packages
+## Common Marketplace Packages
+
+The table below is a quick-start subset. The marketplace currently contains 40
+packages; see `.claude-plugin/marketplace.json` for the authoritative catalog,
+versions, descriptions, and sources.
 
 | Package | Description | Install |
 |--------|-------------|---------|

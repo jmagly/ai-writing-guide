@@ -317,4 +317,4 @@ Check that the .aiwg/ralph/ directory is writable:
 
 - @$AIWG_ROOT/src/cli/handlers/ralph.ts — Al CLI handler (config parsing)
 - @$AIWG_ROOT/tools/ralph-external/README.md — External loop architecture
-- @$AIWG_ROOT/agentic/code/addons/ralph/README.md — Al documentation
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — Al documentation

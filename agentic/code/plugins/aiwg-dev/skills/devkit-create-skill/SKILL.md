@@ -212,7 +212,7 @@ Next Steps:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/README.md — aiwg-dev addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — aiwg-dev addon overview
 - @$AIWG_ROOT/docs/extensions/extension-types.md — Extension types including skill type
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference including add-skill command
 - @$AIWG_ROOT/docs/extensions/creating-extensions.md — Guide to building custom extensions

@@ -29,6 +29,15 @@ async function addFromProcess(value: string): Promise<void> {
   await runFromProcess('add', [value]);
 }
 
+async function batchTouchFromProcess(values: string[]): Promise<void> {
+  const script = [
+    `import { loadConfig, touchMemoryValues } from ${JSON.stringify(moduleUrl)};`,
+    `const { config } = await loadConfig(${JSON.stringify(projectDir)}, { warn: false });`,
+    `await touchMemoryValues(${JSON.stringify(values)}, ${JSON.stringify(projectDir)}, config);`,
+  ].join('\n');
+  await execute(process.execPath, ['--input-type=module', '--eval', script], { timeout: 15_000 });
+}
+
 beforeEach(async () => {
   projectDir = await mkdtemp(path.join(os.tmpdir(), 'aiwg-line-memory-processes-'));
 });
@@ -89,5 +98,19 @@ describe('line-memory process concurrency', () => {
     const retained = text.trim().split('\n');
     expect(retained).toHaveLength(initial.length + added.length);
     expect(new Set(retained)).toEqual(new Set([...initial, ...added]));
+  });
+
+  it('serializes context-pack batch touches with concurrent writers', async () => {
+    const initial = Array.from({ length: 8 }, (_, index) => `context fact ${index}`);
+    for (const fact of initial) await addFromProcess(fact);
+    const added = Array.from({ length: 6 }, (_, index) => `concurrent fact ${index}`);
+
+    await Promise.all([
+      ...added.map(addFromProcess),
+      ...Array.from({ length: 6 }, () => batchTouchFromProcess(initial.slice(0, 4))),
+    ]);
+
+    const text = await readFile(path.join(projectDir, '.aiwg/memory/line-memory.txt'), 'utf8');
+    expect(new Set(text.trim().split('\n'))).toEqual(new Set([...initial, ...added]));
   });
 });

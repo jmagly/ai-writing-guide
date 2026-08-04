@@ -33,6 +33,11 @@
     "eval-workflow",
     "eval-report"
   ],
+  "skills": [
+    "eval-agent",
+    "eval-workflow",
+    "eval-report"
+  ],
   "scenarios": [
     "grounding-test",
     "distractor-test",

@@ -116,7 +116,7 @@ MUST NOT contain:
 
 - @$AIWG_ROOT/src/extensions/commands/definitions.ts — Command definitions with `executedViaSkillRunner` field
 - @$AIWG_ROOT/src/cli/handlers/ — TypeScript handlers (absent when `executedViaSkillRunner: true`)
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/component-completeness.md — Command completeness requirements
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/component-completeness.md — Command completeness requirements
 
 ---
 

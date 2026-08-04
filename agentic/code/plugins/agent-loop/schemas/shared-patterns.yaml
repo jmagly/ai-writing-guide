@@ -738,6 +738,6 @@ references:
   implementation:
     - "#269"  # Cross-loop learning
   related:
-    - "@agentic/code/addons/ralph/schemas/cross-task-memory.yaml"
-    - "@agentic/code/addons/ralph/schemas/debug-memory.yaml"
-    - "@agentic/code/addons/ralph/schemas/multi-loop-registry.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/cross-task-memory.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/debug-memory.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/multi-loop-registry.yaml"

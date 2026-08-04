@@ -70,11 +70,11 @@ Each `@<path>` reference is classified per the AIWG linking contract:
 ### Human-readable (default)
 
 ```
-Link Check: agentic/code/addons/aiwg-dev/skills/dev-doctor/SKILL.md
+Link Check: ${CLAUDE_PLUGIN_ROOT}/skills/dev-doctor/SKILL.md
 
-  PASS  $AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/addon-boundaries.md
+  PASS  $AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/addon-boundaries.md
   PASS  .aiwg/AIWG.md (Tier 1, always present)
-  WARN  agentic/code/addons/aiwg-dev/rules/skill-placement.md
+  WARN  ${CLAUDE_PLUGIN_ROOT}/rules/skill-placement.md
         → legacy bare ref; use $AIWG_ROOT/agentic/code/... prefix
   FAIL  .aiwg/planning/issue-driven-ralph-loop-design.md
         → non-normalized .aiwg/ path (repo-local only)
@@ -116,10 +116,10 @@ Run with --fix to auto-migrate WARN refs.
     {
       "file": "agentic/code/addons/my-addon/skills/my-skill/SKILL.md",
       "line": 42,
-      "ref": "agentic/code/addons/aiwg-dev/rules/skill-placement.md",
+      "ref": "${CLAUDE_PLUGIN_ROOT}/rules/skill-placement.md",
       "result": "WARN",
       "message": "legacy bare ref — add $AIWG_ROOT/ prefix",
-      "fix": "$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/skill-placement.md"
+      "fix": "$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/skill-placement.md"
     }
   ]
 }
@@ -154,7 +154,7 @@ Exit codes:
 
 **User**: "check links in the dev-doctor skill"
 
-**Action**: Run link-check on `agentic/code/addons/aiwg-dev/skills/dev-doctor/SKILL.md`.
+**Action**: Run link-check on `${CLAUDE_PLUGIN_ROOT}/skills/dev-doctor/SKILL.md`.
 
 ### Full corpus check
 
@@ -170,6 +170,6 @@ Exit codes:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/aiwg-dir-reference-contract.md — Full linking contract
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/skills/validate-component/SKILL.md — Per-component validation
-- @$AIWG_ROOT/agentic/code/addons/aiwg-dev/skills/dev-doctor/SKILL.md — Full repo health check
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/aiwg-dir-reference-contract.md — Full linking contract
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/validate-component/SKILL.md — Per-component validation
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/dev-doctor/SKILL.md — Full repo health check

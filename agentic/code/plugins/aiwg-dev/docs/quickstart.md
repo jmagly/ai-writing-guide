@@ -168,7 +168,7 @@ Find circular skill calls
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/addons/aiwg-dev/docs/overview.md` — What aiwg-dev provides
-- `@$AIWG_ROOT/agentic/code/addons/aiwg-dev/skills/validate-component/SKILL.md` — Full component validation logic
-- `@$AIWG_ROOT/agentic/code/addons/aiwg-dev/skills/dev-doctor/SKILL.md` — Full dev-doctor logic
-- `@$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/RULES-INDEX.md` — Enforcement rules
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/overview.md` — What aiwg-dev provides
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/validate-component/SKILL.md` — Full component validation logic
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/dev-doctor/SKILL.md` — Full dev-doctor logic
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/RULES-INDEX.md` — Enforcement rules

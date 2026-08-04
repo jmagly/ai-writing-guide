@@ -3,7 +3,7 @@
  * @description Exports gate definitions and helper functions for agent persistence framework
  * @implements @.aiwg/requirements/use-cases/UC-AP-004-enforce-recovery-protocol.md
  * @architecture @.aiwg/architecture/agent-persistence-sad.md
- * @gates @agentic/code/addons/agent-persistence/gates/
+ * @gates @${CLAUDE_PLUGIN_ROOT}/gates/
  * @created 2026-02-03
  * @issue #262
  */

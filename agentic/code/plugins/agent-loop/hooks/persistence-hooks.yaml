@@ -448,7 +448,7 @@ execution:
 # State Extension Schema Reference
 # ============================================================================
 
-state_extension_schema: "@agentic/code/addons/ralph/schemas/persistence-extension.yaml"
+state_extension_schema: "@${CLAUDE_PLUGIN_ROOT}/schemas/persistence-extension.yaml"
 
 # ============================================================================
 # Integration with ConversableAgent
@@ -574,9 +574,9 @@ references:
     - "@.aiwg/architecture/decisions/ADR-AP-003-prompt-injection-points.md"
 
   schemas:
-    - "@agentic/code/addons/ralph/schemas/persistence-extension.yaml"
-    - "@agentic/code/addons/ralph/schemas/loop-state.yaml"
-    - "@agentic/code/addons/ralph/schemas/checkpoint.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/persistence-extension.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/loop-state.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/checkpoint.yaml"
 
   research:
     - "@.aiwg/research/findings/agentic-laziness-research.md"
