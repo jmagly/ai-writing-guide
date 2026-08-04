@@ -1,0 +1,26 @@
+{
+  "name": "guided-implementation",
+  "version": "1.0.0",
+  "description": "Bounded iteration control for autonomous issue-to-code implementation",
+  "category": "sdlc",
+  "skills": [
+    "iteration-control"
+  ],
+  "commands": [],
+  "flows": [],
+  "dependencies": [],
+  "notes": "Flow command is in agentic/code/frameworks/sdlc-complete/commands/flow-guided-implementation.md",
+  "research_basis": {
+    "magis": {
+      "source": "Tao et al. (2024)",
+      "reference": "https://arxiv.org/abs/2403.17927",
+      "key_insight": "Developer-QA iteration loops with bounds improve quality while preventing infinite loops"
+    }
+  },
+  "design_principles": [
+    "Leverage existing tools (Grep, Glob, Edit, TodoWrite, Task)",
+    "Single skill for iteration control, not redundant agents",
+    "Run to completion with minimal user interaction",
+    "Escalate after bounded retries, not infinite loops"
+  ]
+}

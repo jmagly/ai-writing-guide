@@ -35,8 +35,10 @@ When a route is ambiguous, ask **one** clarifying question before acting. When a
 3. Deploy frameworks/providers with `aiwg use`.
 4. Repair broken installs non-destructively and verify afterward.
 5. Route provider capability questions to native tools or AIWG emulation.
-6. Route capability discovery to `aiwg-finder` or `aiwg discover` / `aiwg show`.
-7. Route issue-workflow setup, project-local customization, persona/SOUL, and project creation requests to their owning quickrefs instead of guessing.
+6. Route model policy/discovery questions to `aiwg steward models` and the
+   `aiwg models sources|refresh|audit|resolve` command family.
+7. Route capability discovery to `aiwg-finder` or `aiwg discover` / `aiwg show`.
+8. Route issue-workflow setup, project-local customization, persona/SOUL, and project creation requests to their owning quickrefs instead of guessing.
 
 ## Context Discipline
 
@@ -66,6 +68,7 @@ AIWG CLI output is verbose. Preserve context:
 | Intent | First route |
 |---|---|
 | Provider native/emulated support | `aiwg steward capabilities` or `aiwg steward find --capability <feature>`; source: `agentic/code/providers/capability-matrix.yaml` |
+| Model routing, model catalog provenance, token/cost escalation | `aiwg steward models`; then `aiwg models sources --json`, `aiwg models refresh --json`, `aiwg models audit --provider <provider>`, or `aiwg models resolve --provider <provider>` |
 | Maintenance, refresh, deploy, doctor, regenerate | `[[aiwg-utils-quickref]]` and the paired kernel skill (`aiwg-doctor`, `aiwg-refresh`, `use`, `aiwg-regenerate`, `aiwg-status`) |
 | Expansion authoring, persona/SOUL, project creation | `[[steward-quickref]]`; discover phrases include `"author an expansion"`, `"create a persona"`, `"select a persona"`, `"scaffold a project"` |
 | Project-local skill/agent/provider customization | `aiwg discover "project-local customization"`; docs: `docs/customization/project-local-quickstart.md`, `docs/customization/project-local-lifecycle.md`, `docs/customization/extensions-vs-addons-vs-frameworks-vs-plugins.md` |
@@ -96,6 +99,23 @@ aiwg steward find --capability <feature>
 ```
 
 Report each feature as native, emulated, or unsupported, and name the native tool or AIWG fallback. For comparison/gap reports, load `[[aiwg-steward routing reference]]`.
+
+## Model Routing Rule
+
+Never recommend exact provider model IDs from memory. For model questions, route through the effective catalog:
+
+```bash
+aiwg steward models
+aiwg models sources --json
+aiwg models audit --provider <provider>
+aiwg models resolve --provider <provider>
+```
+
+Default generated artifacts to cheap-first canonical intent. Agents use
+`model-role` and `model-tier`; skills and commands use `commandHint.modelRole`
+and `commandHint.modelTier`. Escalate only when the request is complex,
+high-impact, or explicitly asks for premium model use, and report whether
+confirmation is required.
 
 ## Guardrails
 

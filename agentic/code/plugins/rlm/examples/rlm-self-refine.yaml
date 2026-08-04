@@ -1,0 +1,85 @@
+# RLM Self-Refine Example
+# Quality-gated iterative refinement loop
+# Based on OpenProse example 40-rlm-self-refine
+#
+# Pattern: evaluator + refiner loop that iterates until quality threshold met
+# Use when: output quality matters more than speed (security analysis, research synthesis)
+
+version: "1.0.0"
+
+root_task:
+  node_id: "task-refine00"
+  depth: 0
+  prompt: "Produce a comprehensive security analysis of the authentication module"
+  decomposition_strategy: sequential
+  merge_strategy: best-of-n
+
+  # Quality gate enforces iterative refinement
+  quality_gate:
+    min_score: 85
+    scoring_criteria: |
+      Completeness: all auth flows covered (login, register, reset, token refresh).
+      Accuracy: vulnerabilities correctly identified with OWASP references.
+      Actionability: each finding has a concrete remediation step.
+      Clarity: non-security engineers can understand the report.
+    scorer_model: sonnet
+    max_iterations: 5
+    fallback: return_best
+
+  children:
+    - node_id: "task-draft001"
+      parent_id: "task-refine00"
+      depth: 1
+      prompt: "Draft initial security analysis covering all authentication flows"
+      preferred_model: sonnet
+      context:
+        type: filtered
+        source: "file:src/auth/**/*.ts"
+        filters:
+          file_patterns: ["*.ts"]
+      status: pending
+
+    - node_id: "task-eval0001"
+      parent_id: "task-refine00"
+      depth: 1
+      prompt: |
+        Evaluate the security analysis against these criteria:
+        - Are all auth flows covered?
+        - Are OWASP references accurate?
+        - Does each finding have a remediation step?
+        - Is the language clear for non-specialists?
+        Score 0-100 and provide specific improvement feedback.
+      preferred_model: sonnet
+      context:
+        type: summary
+        source: "parent_result"
+      status: pending
+
+    - node_id: "task-refn0001"
+      parent_id: "task-refine00"
+      depth: 1
+      prompt: |
+        Refine the security analysis based on evaluator feedback.
+        Address each specific issue raised. Do not remove existing
+        correct content — only improve weak areas.
+      preferred_model: sonnet
+      context:
+        type: full
+        source: "parent_result"
+      status: pending
+
+  status: pending
+
+metadata:
+  tree_id: "tree-selfref0"
+  root_prompt: "Security analysis with quality-gated refinement"
+  max_depth: 1
+  total_nodes: 4
+  execution_mode: logged
+
+# Notes:
+# - The quality_gate on the root node drives the loop: evaluate → refine → re-evaluate
+# - Scorer uses Sonnet (cost-efficient for rubric evaluation)
+# - Drafter uses Sonnet (good enough for initial pass)
+# - After 5 iterations without reaching 85, returns best attempt
+# - Iteration history is preserved for analysis

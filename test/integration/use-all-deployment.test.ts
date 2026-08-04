@@ -43,6 +43,24 @@ function runAiwg(
   };
 }
 
+function runAiwgWithEnv(
+  args: string[],
+  cwd: string,
+  env: NodeJS.ProcessEnv,
+): { stdout: string; stderr: string; exitCode: number } {
+  const result = spawnSync(process.execPath, [BIN, ...args], {
+    cwd,
+    encoding: 'utf-8',
+    timeout: 60_000,
+    env: { ...process.env, ...env },
+  });
+  return {
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? '',
+    exitCode: result.status ?? 1,
+  };
+}
+
 function canInitGit(): boolean {
   const tmp = mkdtempSync(path.join(os.tmpdir(), 'aiwg-git-check-'));
   try {
@@ -232,6 +250,34 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
 
     for (const file of kernelBootstrapCommands) {
       expect(existsSync(path.join(commandsDir, file)), `${file} should be copied in as a Claude bootstrap command`).toBe(true);
+    }
+  });
+
+  it('keeps Codex kernel skills available after the full addon sweep', async () => {
+    const homeDir = mkdtempSync(path.join(os.tmpdir(), 'aiwg-use-all-codex-home-'));
+    try {
+      const result = runAiwgWithEnv(
+        ['use', 'all', '--provider', 'codex', '--target', projectDir],
+        projectDir,
+        { HOME: homeDir, USERPROFILE: homeDir },
+      );
+      expect(result.exitCode, `aiwg use all --provider codex failed:\nstdout: ${result.stdout}\nstderr: ${result.stderr}`).toBe(0);
+
+      const regenerateSkill = path.join(projectDir, '.agents', 'skills', 'aiwg-regenerate', 'SKILL.md');
+      expect(existsSync(regenerateSkill), 'Codex should retain $aiwg-regenerate in .agents/skills after addon deploys').toBe(true);
+      const regenerateMetadata = await fs.readFile(path.join(projectDir, '.agents', 'skills', 'aiwg-regenerate', 'agents', 'openai.yaml'), 'utf-8');
+      expect(regenerateMetadata).toContain('display_name: "AIWG Regenerate"');
+      expect(existsSync(path.join(projectDir, '.agents', 'skills', 'voice-apply', 'SKILL.md')), 'Codex default deploy should not copy standard skills into the native $ search path').toBe(false);
+
+      const skillDirs = await fs.readdir(path.join(projectDir, '.agents', 'skills'), { withFileTypes: true });
+      expect(skillDirs.filter(entry => entry.isDirectory()).length).toBeLessThan(100);
+
+      const gitignore = await fs.readFile(path.join(projectDir, '.gitignore'), 'utf-8');
+      expect(gitignore).toContain('.codex/');
+      expect(gitignore).toContain('.agents/');
+      expect(result.stdout).toMatch(/Skills\s+[1-9]\d*\s+deployed/);
+    } finally {
+      rmSync(homeDir, { recursive: true, force: true });
     }
   });
 

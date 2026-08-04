@@ -23,7 +23,19 @@ This project caps parallel agent fan-out (#1359):
 
 *Rationale*: Provider default for claude (migrated by aiwg refresh)
 
-When spawning parallel subagents, take the MIN of: this cap, `AIWG_CONTEXT_WINDOW` budget, the RLM 7-agent hard cap (RLM dispatches only), and the natural task decomposition. Bump via `aiwg config set --project parallelism.max_parallel_subagents N`.
+### Model-selected delegation rubric
+
+For each non-trivial task, assess whether it contains independent, bounded subtasks that can run concurrently. When delegation is supported, prefer the deployed model-pinned wrappers by task characteristics and consequence:
+
+- `aiwg-model-efficiency-worker`: discovery, inventory, focused edits, and other bounded low-cost work.
+- `aiwg-model-coding-worker`: implementation, tests, debugging, and routine technical delivery.
+- `aiwg-model-reasoning-worker`: architecture, synthesis, difficult analysis, and high-consequence review.
+
+Do not delegate trivial work, tightly coupled changes, serial dependencies, or tasks likely to collide in shared state; also keep work local when coordination costs exceed the expected benefit. Parallelize only independent work, and take the MIN of provider limits, `max_parallel_subagents`, `AIWG_CONTEXT_WINDOW` budget, framework-specific caps (including the RLM 7-agent hard cap for RLM dispatches), and natural task decomposition. Bump the project cap via `aiwg config set --project parallelism.max_parallel_subagents N`.
+
+The primary agent retains orchestration, final integration, conflict resolution, validation, and user-facing accountability.
+
+**Provider behavior (claude)**: native custom subagents can select the deployed model-worker wrapper. Verify the resolved model when provider or account policy may substitute it.
 
 <!-- AIWG-PARALLELISM-CAP:END -->
 
@@ -37,7 +49,7 @@ This section is synthesized after template emission from the current workspace s
 - Configured providers: claude, codex
 - Installed frameworks/addons: sdlc, media-marketing, all, security-engineering
 - Recorded deployments: claude, codex, copilot, cursor, factory, hermes, openclaw, opencode, openhuman, warp, windsurf
-- Normalized project context: private corpus via `AIWG_ARTIFACTS_PATH`, normally `../aiwg-web-release-ops/corpus/.aiwg/AIWG.md` for adjacent maintainer checkouts.
+- Normalized project context: `.aiwg/AIWG.md`
 
 ### Discover-First Protocol
 
@@ -51,7 +63,7 @@ When a user asks whether AIWG is active or engaged in this project, run or read 
 
 ### Tracker Authority Protocol
 
-- Source of truth: private corpus `aiwg.config` when `AIWG_ARTIFACTS_PATH` is set; otherwise the public repo has no tracked project-local AIWG config.
+- Source of truth: [.aiwg/aiwg.config](./.aiwg/aiwg.config)
 - Canonical tracker: `origin` (unknown; git@git.integrolabs.net:roctinam/aiwg.git)
 - Primary repo remote: `origin`; CI remote: `origin`
 - Secondary/mirror remotes: github (public-mirror)
@@ -70,8 +82,7 @@ Tracker access order for issue, PR, release, and CI-sensitive tracker operations
 
 ### Source Model
 
-- AIWG's own `.aiwg` corpus lives in the private `roctinam/aiwg-web-release-ops` repo under `corpus/.aiwg/`.
-- Maintainer sessions should set `AIWG_ARTIFACTS_PATH=../aiwg-web-release-ops/corpus/.aiwg` before running AIWG SDLC workflows.
+- `.aiwg/AIWG.md` is the normalized project-local context entry point.
 - Root `AIWG.md` is the generated cross-provider companion loaded through `AGENTS.md` and provider twins.
-- `AGENTS.md`, `WARP.md`, `.hermes.md`, and `.github/copilot-instructions.md` are provider-facing bridges, not replacements for the configured private corpus context.
+- `AGENTS.md`, `WARP.md`, `.hermes.md`, and `.github/copilot-instructions.md` are provider-facing bridges, not replacements for `.aiwg/AIWG.md`.
 <!-- aiwg-context-finalization:END -->

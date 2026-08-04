@@ -93,36 +93,39 @@ needs. Before accepting an unexpected file location or permission request, stop
 and ask the agent to explain what will be written and whether it stays inside
 the project.
 
-## 3. Build the indices and regenerate project context
+## 3. Build the indices and connect the first agent session
 
-In the terminal, build the indices and regenerate the provider connection:
+In the terminal, build the project indices:
 
 ```bash
 aiwg index build --all
-aiwg regenerate --provider <provider>
 ```
 
-Then ask the current agent:
+Every project requires one agent-session connection after its first deployment.
+Open or reopen the provider in the project root, then invoke the deployed
+`aiwg-regenerate` skill in that session:
 
 ```text
-Run aiwg-regenerate for this existing project if further normalization is
-needed. Preserve project-authored instructions and report which provider files
-hook into WORKSPACE.md and AIWG.md.
+/aiwg-regenerate   # Slash-command platforms
+$aiwg-regenerate   # OpenAI Codex
 ```
 
-If your provider offers slash commands, you can instead type this in the chat:
+If your provider uses neither prefix, ask the agent directly:
 
 ```text
-/aiwg-regenerate
+Run aiwg-regenerate for this project. Preserve project-authored instructions,
+connect this agent session to WORKSPACE.md and AIWG.md, and verify that AIWG is
+active before starting project work.
 ```
 
-Most supported providers can discover the regenerated files and built indices
-without ending the current session. Restart or reload only if the verification
-step shows that the provider is still using cached startup instructions.
-`aiwg-regenerate` should preserve instructions you or your team wrote. Ask to
-see a preview if the agent proposes replacing existing content. Legacy “full
-injection” is an advanced compatibility mode and is not the normal first-run
-choice.
+This session-side step is required even though deployment has already written
+provider files: it normalizes the project context and makes the current agent
+verify the connection it will rely on. Subsequent regeneration usually works
+without a restart; reload only if verification shows cached startup
+instructions. `aiwg-regenerate` should preserve instructions you or your team
+wrote. Ask to see a preview if the agent proposes replacing existing content.
+Legacy “full injection” is an advanced compatibility mode and is not the normal
+first-run choice.
 
 ## 4. Verify engagement
 

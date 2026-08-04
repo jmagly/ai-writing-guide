@@ -1,0 +1,202 @@
+# False Positive Override Gate
+# Triggered when user reports laziness detection as false positive
+# Based on REF-072 Anthropic Misalignment (12% misalignment rate requires oversight)
+# Issue: #262
+
+$schema: "https://aiwg.io/schemas/hitl-gate/v1"
+
+id: "GATE-AP-FALSE-POSITIVE"
+name: "False Positive Override Gate"
+description: |
+  Human decision gate for handling reported false positive detections.
+  Allows users to override laziness detection when the detected pattern
+  was actually legitimate code change (e.g., legitimate test removal,
+  justified scope reduction, intentional feature disabling).
+
+gate_type: decision
+
+trigger:
+  type: error_pattern
+  pattern: "false_positive_reported"
+  description: "Triggered when user claims detection is false positive"
+
+behavior:
+  mode: ALWAYS  # Always require human judgment for false positives
+  timeout: 86400  # 24 hours
+  timeout_action: escalate  # If no response, escalate to framework maintainer
+
+  notification:
+    channels:
+      - cli
+      - issue_comment
+    urgency: medium
+    message_template: |
+      ## False Positive Review Required
+
+      **Gate**: GATE-AP-FALSE-POSITIVE
+      **Detection**: {{detection_id}}
+      **Pattern**: {{pattern_type}}
+
+      User reports this detection as false positive. Please review and decide.
+
+presentation:
+  summary_template: |
+    ╭─────────────────────────────────────────────────────────────╮
+    │ FALSE POSITIVE REVIEW                                       │
+    │ Gate: GATE-AP-FALSE-POSITIVE                                │
+    ├─────────────────────────────────────────────────────────────┤
+    │ Detection Details:                                          │
+    │   • Pattern: {{pattern_type}}                               │
+    │   • Severity: {{severity}}                                  │
+    │   • File: {{file_path}}                                     │
+    │   • Detection ID: {{detection_id}}                          │
+    │                                                              │
+    │ Change Summary:                                             │
+    │   {{change_summary}}                                        │
+    │                                                              │
+    │ User's Justification:                                       │
+    │   {{user_justification}}                                    │
+    │                                                              │
+    │ Pattern Matching Details:                                   │
+    │   • Rule: {{matching_rule}}                                 │
+    │   • Confidence: {{detection_confidence}}                    │
+    │   • Context: {{detection_context}}                          │
+    │                                                              │
+    │ Impact if Allowed:                                          │
+    │   • Test Count: {{test_delta}}                              │
+    │   • Coverage: {{coverage_delta}}                            │
+    │   • Risk Level: {{risk_assessment}}                         │
+    ├─────────────────────────────────────────────────────────────┤
+    │ Options:                                                    │
+    │   [l] Legitimate - Allow change, mark as false positive     │
+    │   [v] Violation - Confirm detection, block change           │
+    │   [r] Needs Review - Request more context from user         │
+    │   [d] Diff - Show detailed diff of changes                  │
+    │   [h] History - Show pattern history for this file          │
+    │   [w] Whitelist - Allow pattern for this file/context      │
+    ╰─────────────────────────────────────────────────────────────╯
+
+  artifacts_to_show:
+    - "{{file_path}}"
+    - ".aiwg/patterns/laziness-patterns.yaml"
+
+  questions:
+    - id: "verdict"
+      question: "Is this a false positive?"
+      options:
+        - "Legitimate - Allow this change"
+        - "Actual Violation - Block this change"
+        - "Needs Review - Request more information"
+      required: true
+
+    - id: "whitelist"
+      question: "Should this pattern be whitelisted for this context?"
+      options:
+        - "Yes - Add exception rule"
+        - "No - Keep detecting this pattern"
+        - "Global - Allow this pattern everywhere (use cautiously)"
+      required: true
+
+    - id: "feedback"
+      question: "How can detection be improved?"
+      options: []  # Free text
+      required: false
+
+    - id: "risk_acceptance"
+      question: "If allowing, who accepts the risk?"
+      options:
+        - "Developer (low risk)"
+        - "Tech Lead (medium risk)"
+        - "Security Team (high risk)"
+      required: false
+
+  context_window: 150
+
+cost_tracking:
+  track_enabled: true
+  metrics:
+    - false_positive_rate
+    - detection_precision
+    - whitelist_growth_rate
+    - user_satisfaction
+  baseline_comparison: manual
+
+audit:
+  log_decision: true
+  log_rationale: true
+  require_signature: true  # Important for false positive decisions
+  retention_days: 365  # Keep longer for pattern learning
+  additional_fields:
+    - detection_id
+    - pattern_type
+    - user_justification
+    - risk_acceptance_level
+    - whitelist_action
+    - detection_confidence
+
+# Integration with Laziness Detection Agent
+integration:
+  triggered_by: laziness_detection_agent
+  triggers_on:
+    - user_reports_false_positive
+    - detection_confidence < 0.7  # Low confidence may be false positive
+
+  on_legitimate:
+    action: allow_change
+    update_pattern_catalog: true
+    add_exception_rule: true
+    improve_detection_logic: true
+    log_false_positive: true
+    notify_framework_maintainer: true
+
+  on_violation:
+    action: block_change
+    log_confirmed_detection: true
+    increase_pattern_confidence: true
+    notify_user_with_explanation: true
+
+  on_needs_review:
+    action: request_context
+    prompt_user_for_details: true
+    extend_timeout: true
+    escalate_if_no_response: true
+
+  whitelist_management:
+    file_specific: ".aiwg/patterns/whitelists/{{file_path}}.yaml"
+    global_patterns: ".aiwg/patterns/whitelist-global.yaml"
+    require_justification: true
+    expire_after_days: 90  # Re-review whitelists periodically
+
+# Pattern Learning
+pattern_learning:
+  enable_feedback_loop: true
+  false_positive_threshold: 0.1  # If >10% false positives, review pattern
+  update_detection_rules: true
+  store_examples:
+    legitimate_changes: ".aiwg/patterns/examples/legitimate/"
+    actual_violations: ".aiwg/patterns/examples/violations/"
+
+# References
+references:
+  requirements:
+    - "@.aiwg/requirements/use-cases/UC-AP-001-detect-test-deletion.md"
+    - "@.aiwg/requirements/use-cases/UC-AP-003-detect-coverage-regression.md"
+  architecture:
+    - "@.aiwg/architecture/agent-persistence-sad.md"
+    - "@.aiwg/architecture/decisions/ADR-AP-001-detection-hook-architecture.md"
+  rules:
+    - "@.claude/rules/hitl-gates.md"
+    - "@.claude/rules/hitl-patterns.md"
+    - "@.claude/rules/anti-laziness.md"
+  agents:
+    - "@.claude/agents/laziness-detector.md"
+  patterns:
+    - "@.aiwg/patterns/laziness-patterns.yaml"
+  research:
+    - "@.aiwg/research/findings/REF-072-anthropic-misalignment.md"
+    - "@.aiwg/research/findings/agentic-laziness-research.md"
+
+# Issue tracking
+issues:
+  - "#262"  # HITL Gate Integration
+  - "#96"   # HITL Gates Implementation

@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/twelve-factor-audit-report.schema.json",
+  "title": "Twelve-Factor Audit Report",
+  "type": "object",
+  "required": [
+    "application",
+    "scope",
+    "overallStatus",
+    "factors"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "application": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "overallStatus": {
+      "$ref": "#/$defs/status"
+    },
+    "auditedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "evidenceSources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "factors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/factorFinding"
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/risk"
+      }
+    },
+    "remediation": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/remediation"
+      }
+    },
+    "traceability": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/traceability"
+      }
+    }
+  },
+  "$defs": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "partial",
+        "fail",
+        "not_applicable"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "type",
+        "reference"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    },
+    "factorFinding": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "status",
+        "evidence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/risk"
+          }
+        },
+        "remediation": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/remediation"
+          }
+        },
+        "traceability": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/traceability"
+          }
+        }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "required": [
+        "severity",
+        "description"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "severity": {
+          "$ref": "#/$defs/severity"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "impact": {
+          "type": "string"
+        }
+      }
+    },
+    "remediation": {
+      "type": "object",
+      "required": [
+        "priority",
+        "task"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "priority": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner": {
+          "type": "string"
+        },
+        "acceptanceEvidence": {
+          "type": "string"
+        }
+      }
+    },
+    "traceability": {
+      "type": "object",
+      "required": [
+        "type",
+        "reference"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relationship": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

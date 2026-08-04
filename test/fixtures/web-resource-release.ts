@@ -95,6 +95,7 @@ export function createWebResourceReleaseFixture() {
   const keyId = `sha256:${digest(publicKeyDer)}`;
   const routes = new Map<string, Buffer>();
   const requestPaths: string[] = [];
+  const requestHeaders: Array<Record<string, string | string[] | undefined>> = [];
   let server: Server | undefined;
   let baseUrl: string | undefined;
 
@@ -245,6 +246,7 @@ export function createWebResourceReleaseFixture() {
     server = createServer((request, response) => {
       const pathname = new URL(request.url ?? "/", "http://127.0.0.1").pathname;
       requestPaths.push(pathname);
+      requestHeaders.push(request.headers);
       const body = routes.get(pathname);
       if (!body) {
         response.writeHead(404, { "content-type": "text/plain", "content-length": "9" });
@@ -278,6 +280,7 @@ export function createWebResourceReleaseFixture() {
     publicKeyPem,
     routes,
     requestPaths,
+    requestHeaders,
     publishRelease,
     publishChannel,
     publishVersionIndex,

@@ -92,6 +92,29 @@ function yamlDoubleQuoted(value) {
     .trim();
 }
 
+function codexDisplayName(skillName) {
+  const acronyms = new Map([
+    ['aiwg', 'AIWG'],
+    ['dfir', 'DFIR'],
+    ['sdlc', 'SDLC'],
+    ['mcp', 'MCP'],
+    ['pr', 'PR'],
+  ]);
+
+  return String(skillName)
+    .split('-')
+    .filter(Boolean)
+    .map((part) => acronyms.get(part.toLowerCase()) || part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function codexOpenAiMetadata(skill) {
+  return `interface:
+  display_name: "${yamlDoubleQuoted(codexDisplayName(skill.name))}"
+  short_description: "${yamlDoubleQuoted(skill.description)}"
+`;
+}
+
 function resolveSkillModelPolicy(frontmatter) {
   const block = frontmatter.match(/^commandHint:\s*\n((?:[ \t]+[^\n]*\n?)*)/m)?.[1] || '';
   const hint = {};
@@ -289,6 +312,7 @@ ${modelPolicy
     name,
     description,
     content: codexContent,
+    metadataContent: codexOpenAiMetadata({ name, description }),
     sourcePath: skillPath,
     modelPolicy,
   };
@@ -301,11 +325,15 @@ function deploySkill(skill, targetDir, opts) {
   const { force = false, dryRun = false } = opts;
   const skillDir = path.join(targetDir, skill.name);
   const destPath = path.join(skillDir, 'SKILL.md');
+  const metadataPath = path.join(skillDir, 'agents', 'openai.yaml');
 
   // Check if skill already exists
   if (fs.existsSync(destPath)) {
     const existingContent = fs.readFileSync(destPath, 'utf8');
-    if (existingContent === skill.content && !force) {
+    const existingMetadata = fs.existsSync(metadataPath)
+      ? fs.readFileSync(metadataPath, 'utf8')
+      : null;
+    if (existingContent === skill.content && existingMetadata === skill.metadataContent && !force) {
       console.log(`  skip (unchanged): ${skill.name}`);
       return { action: 'skip', reason: 'unchanged' };
     }
@@ -324,6 +352,8 @@ function deploySkill(skill, targetDir, opts) {
   // Create skill directory and write SKILL.md
   ensureDir(skillDir);
   fs.writeFileSync(destPath, skill.content, 'utf8');
+  ensureDir(path.dirname(metadataPath));
+  fs.writeFileSync(metadataPath, skill.metadataContent, 'utf8');
   // Drop a marker file so future deploys can identify AIWG-managed
   // skills regardless of frontmatter format (Codex strips `namespace:`
   // during transform, so the SKILL.md alone isn't a reliable signal).
@@ -372,6 +402,12 @@ function getSkillDirectories(srcRoot, mode) {
   return dirs;
 }
 
+function isFullAiwgSourceRoot(srcRoot) {
+  return fs.existsSync(path.join(srcRoot, 'agentic', 'code', 'frameworks')) ||
+    fs.existsSync(path.join(srcRoot, 'agentic', 'code', 'addons')) ||
+    fs.existsSync(path.join(srcRoot, 'agentic', 'code', 'extensions'));
+}
+
 (async function main() {
   const cfg = parseArgs();
   const { source, target, mode, dryRun, force } = cfg;
@@ -380,6 +416,7 @@ function getSkillDirectories(srcRoot, mode) {
   const scriptDir = path.dirname(new URL(import.meta.url).pathname);
   const repoRoot = path.resolve(scriptDir, '..', '..');
   const srcRoot = source || repoRoot;
+  const fullAiwgSourceRoot = isFullAiwgSourceRoot(srcRoot);
 
   console.log(`Deploying skills to Codex`);
   console.log(`  Source: ${srcRoot}`);
@@ -471,13 +508,15 @@ function getSkillDirectories(srcRoot, mode) {
     }
   }
 
-  // Post-deploy cleanup: remove any AIWG-managed skill in the target that
-  // isn't in the current desired set. AIWG-managed = either (a) source
-  // basename matches an AIWG source dir, or (b) the deployed SKILL.md
-  // declares `namespace: aiwg` in frontmatter. The latter catches stale
-  // skills from renamed sources or title-cased name fields. We never
-  // touch directories whose SKILL.md lacks AIWG provenance — those are
-  // user-authored or third-party skills sitting alongside.
+  // Post-deploy cleanup: remove AIWG-managed skills that are stale for the
+  // current source scope.
+  //
+  // Full AIWG-root deploys may prune any `.aiwg-managed` skill because they
+  // computed a complete desired set. Component-scoped deploys (`aiwg use all`
+  // later iterates each addon/extension after the full-root pass) must only
+  // prune names owned by that component. Otherwise an addon with no kernel
+  // skills can delete the kernel skills installed by the preceding full-root
+  // Codex pass, leaving `.agents/skills/` empty while `aiwg use` still exits 0.
   let totalPruned = 0;
   if (fs.existsSync(target)) {
     const targetEntries = fs.readdirSync(target, { withFileTypes: true });
@@ -490,7 +529,7 @@ function getSkillDirectories(srcRoot, mode) {
       // the .aiwg-managed marker. Treat only the exact historical names as
       // managed so malformed legacy frontmatter cannot survive an upgrade.
       let isAiwgManaged = allManagedNames.has(name) || LEGACY_RENAMED_SKILLS.has(name);
-      if (!isAiwgManaged) {
+      if (!isAiwgManaged && fullAiwgSourceRoot) {
         // Check for the .aiwg-managed marker file (preferred — survives
         // frontmatter transforms) or fall back to namespace check.
         const markerFile = path.join(target, name, '.aiwg-managed');

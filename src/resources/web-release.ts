@@ -425,6 +425,24 @@ function resourceUrl(base: URL, relativePath: string): string {
   return url.toString();
 }
 
+function resourceAccessToken(): string | undefined {
+  const token = process.env.AIWG_RESOURCE_ACCESS_TOKEN;
+  const tokenFile = process.env.AIWG_RESOURCE_ACCESS_TOKEN_FILE;
+  if (token && tokenFile) throw new Error("Configure only one AIWG resource access token source");
+  if (token) {
+    if (token.trim() !== token || token.length < 16) throw new Error("AIWG resource access token is malformed");
+    return token;
+  }
+  if (!tokenFile) return undefined;
+  const bytes = readVerifiedRegularFile(path.resolve(tokenFile), {
+    label: "AIWG resource access token file",
+    maxBytes: 4096,
+  });
+  const value = bytes.toString("utf8").trim();
+  if (value.length < 16 || /\s/.test(value)) throw new Error("AIWG resource access token file is malformed");
+  return value;
+}
+
 async function fetchBytes(
   fetcher: ResourceFetcher,
   url: string,
@@ -444,10 +462,14 @@ async function fetchBytes(
     }, RESOURCE_FETCH_TIMEOUT_MS);
   });
   try {
+    const accessToken = resourceAccessToken();
     const response = await Promise.race([
       fetcher(url, {
         redirect: "error",
-        headers: { "accept-encoding": "identity" },
+        headers: {
+          "accept-encoding": "identity",
+          ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
+        },
         signal: controller.signal,
       }),
       timeoutFailure,

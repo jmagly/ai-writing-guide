@@ -1,0 +1,35 @@
+{
+  "id": "skill-factory",
+  "type": "addon",
+  "name": "Skill Factory",
+  "version": "1.0.0",
+  "description": "Build, enhance, validate, and package Claude skills end-to-end. Coordinates skill-builder, skill-enhancer, quality-checker, and skill-packager via the skill-architect agent.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "skill",
+    "skills",
+    "factory",
+    "scaffolding",
+    "validation",
+    "packaging",
+    "claude"
+  ],
+  "entry": {
+    "agents": "agents/",
+    "skills": "skills/"
+  },
+  "agents": [
+    "skill-architect"
+  ],
+  "skills": [
+    "skill-builder",
+    "skill-enhancer",
+    "quality-checker",
+    "skill-packager"
+  ],
+  "platforms": ["claude-code", "factory-ai", "openai-codex"]
+}

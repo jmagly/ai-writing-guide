@@ -1,0 +1,57 @@
+{
+  "id": "verbalized-sampling",
+  "type": "addon",
+  "name": "Verbalized Sampling",
+  "version": "1.0.0",
+  "description": "Training-free prompting technique that improves output diversity by 1.6-2.1x through verbalized probability distributions, addressing RLHF mode collapse",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "diversity",
+    "verbalized-sampling",
+    "mode-collapse",
+    "creative",
+    "ideation",
+    "brainstorming",
+    "synthetic-data",
+    "prompting"
+  ],
+  "researchFoundation": {
+    "arXiv:2510.01171v3": "Verbalized Sampling: How to Mitigate Mode Collapse and Unlock LLM Diversity (2025)"
+  },
+  "entry": {
+    "agents": "agents/",
+    "prompts": "prompts/",
+    "skills": "skills/",
+    "rules": "rules/"
+  },
+  "agents": [
+    "content-diversifier"
+  ],
+  "prompts": [
+    "vs-standard",
+    "vs-cot",
+    "vs-multi"
+  ],
+  "skills": [
+    "diversity-tuning"
+  ],
+  "rules": [
+    "diversity-awareness"
+  ],
+  "dependencies": {
+    "required": [],
+    "optional": ["voice-framework"]
+  },
+  "configuration": {
+    "defaults": {
+      "k": 5,
+      "diversityThreshold": 0.1,
+      "outputFormat": "json",
+      "autoApply": false
+    }
+  }
+}

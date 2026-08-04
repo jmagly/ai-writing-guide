@@ -18,9 +18,12 @@ The agent should:
 5. run the setup or workflow;
 6. report the outcome and concrete verification evidence.
 
-First-time setup uses one canonical path: install AIWG, run `aiwg use all
---provider <provider>` from the project root, reopen the provider, invoke
-`/aiwg-regenerate`, and ask the agent to verify engagement. See
+Every project requires one first-session connection step. Install AIWG, run
+`aiwg use all --provider <provider>` from the project root, build the indices,
+reopen the provider in that project, and invoke `/aiwg-regenerate` on
+slash-command platforms or `$aiwg-regenerate` in Codex. If the provider uses
+neither prefix, ask it to run `aiwg-regenerate` for the project. Do not begin
+project work until the agent verifies engagement. See
 [Install, Connect, and Verify](getting-started/install-connect-verify.md).
 
 ## Choose a starting point

@@ -1,0 +1,588 @@
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: universal-aiwg-list, labels: { provider: all, gap: universal-baseline } }
+spec:
+  description: Verify the AIWG framework inventory command is reachable.
+  version: "1.0.0"
+  inputs: []
+  outputs: [{ name: result, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "aiwg list", expect: "AIWG|framework|addon|extension" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: universal-discover-intake, labels: { provider: all, gap: universal-baseline } }
+spec:
+  description: Verify discovery returns ranked results for an intake capability.
+  version: "1.0.0"
+  inputs: []
+  outputs: [{ name: result, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "aiwg discover \"intake wizard\" --limit 3 --json", expect: "\"results\"|\"name\"" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: universal-show-quickref, labels: { provider: all, gap: universal-baseline } }
+spec:
+  description: Verify the quickref skill body is fetchable through aiwg show.
+  version: "1.0.0"
+  inputs: []
+  outputs: [{ name: result, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "aiwg show skill aiwg-utils-quickref | head -10", expect: "AIWG Core Utilities|Quick Reference" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-claude-agents-dir, labels: { provider: claude-code, gap: declarative-agents } }
+spec:
+  description: Claude Code receives markdown agent definitions with frontmatter.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: agent_count, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "find {{ project_path }}/.claude/agents -maxdepth 1 -type f -name '*.md' | wc -l", expect: "^[1-9][0-9]*$" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-claude-rules-bridge, labels: { provider: claude-code, gap: rule-autoload } }
+spec:
+  description: Claude Code rule directory is populated and CLAUDE.md bridges to AIWG.md.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: rule_count, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test $(find {{ project_path }}/.claude/rules -maxdepth 1 -type f -name '*.md' | wc -l) -ge 50 && grep -E '^@AIWG\\.md' {{ project_path }}/CLAUDE.md", expect: "@AIWG.md" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-claude-cjs-hooks, labels: { provider: claude-code, gap: hook-extension-mismatch } }
+spec:
+  description: Claude hooks point at .cjs scripts so module loading does not fail.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: hook_command, type: string }]
+  target_requirements: { capabilities: [jq] }
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "jq -r '.hooks.SessionStart[0].hooks[0].command' {{ project_path }}/.claude/settings.json", expect: "\\.cjs$" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-claude-skill-discovery-budget, labels: { provider: claude-code, gap: skill-list-budget } }
+spec:
+  description: Claude Code uses discover/show for the full corpus instead of enumerating every skill in context.
+  version: "1.0.0"
+  inputs: [{ name: session_transcript, type: path, required: false }]
+  outputs: [{ name: verdict, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "printf '%s\n' 'gate-required: ask how many AIWG skills are available; expect discover/show behavior'", expect: "gate-required" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-claude-marketplace-plugin, labels: { provider: claude-code, gap: marketplace-install } }
+spec:
+  description: Claude Code marketplace metadata is present for plugin install testing.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: marketplace_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test -s {{ project_path }}/.claude-plugin/marketplace.json && grep -c 'aiwg' {{ project_path }}/.claude-plugin/marketplace.json", expect: "^[1-9][0-9]*$" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-codex-agents-bridge, labels: { provider: codex, gap: static-command-enum } }
+spec:
+  description: Codex project context is bridged through AGENTS.md rather than relying on scanned command files.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: bridge_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "grep -E '\\.aiwg/AIWG\\.md|AIWG\\.md' {{ project_path }}/AGENTS.md && wc -c < {{ project_path }}/AGENTS.md", expect: "AIWG.md|^[0-9]+$" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-codex-home-scope, labels: { provider: codex, gap: home-scope-artifacts } }
+spec:
+  description: Codex home-scope prompts and skills are populated.
+  version: "1.0.0"
+  inputs: []
+  outputs: [{ name: home_artifacts_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test $(find ~/.codex/skills -maxdepth 1 -type f 2>/dev/null | wc -l) -ge 1 && test $(find ~/.codex/prompts -maxdepth 1 -type f 2>/dev/null | wc -l) -ge 1 && echo ok", expect: "ok" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-codex-skill-show-dispatch, labels: { provider: codex, gap: no-native-skill-tool } }
+spec:
+  description: Codex agents fetch skill bodies through aiwg show after discovery.
+  version: "1.0.0"
+  inputs: []
+  outputs: [{ name: skill_body, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "aiwg show skill aiwg-utils-quickref | head -5", expect: "Quick Reference|AIWG" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-codex-oidc-docs, labels: { provider: codex, gap: oidc-publishing } }
+spec:
+  description: Codex release-pipeline OIDC limitation is covered by contributor docs and publish workflow.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: oidc_documented, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "grep -i 'OIDC' {{ project_path }}/docs/contributing/versioning.md && grep -i 'id-token' {{ project_path }}/.github/workflows/npm-publish.yml", expect: "OIDC|id-token" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-codex-agents-md-size, labels: { provider: codex, gap: agents-md-size-cap } }
+spec:
+  description: Codex AGENTS.md stays under the 32KB cap.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: bytes, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test $(wc -c < {{ project_path }}/AGENTS.md) -lt 32000 && echo under-cap", expect: "under-cap" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-copilot-agent-frontmatter, labels: { provider: copilot, gap: agent-md-format } }
+spec:
+  description: Copilot agents use .agent.md files with required frontmatter keys.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: frontmatter_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "f=$(find {{ project_path }}/.github/agents -maxdepth 1 -name '*.agent.md' | head -1); head -10 \"$f\"", expect: "^---|name:|description:|tools:" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-copilot-instructions-frontmatter, labels: { provider: copilot, gap: path-scoped-rules } }
+spec:
+  description: Copilot rules deploy as instruction files with applyTo frontmatter.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: apply_to_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "f=$(find {{ project_path }}/.github/instructions -maxdepth 1 -name '*.md' | head -1); head -10 \"$f\"", expect: "applyTo:" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-copilot-prompt-files, labels: { provider: copilot, gap: prompt-extension } }
+spec:
+  description: Copilot commands deploy as .prompt.md files.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: prompt_count, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "find {{ project_path }}/.github/prompts -maxdepth 1 -name '*.prompt.md' | wc -l", expect: "^[1-9][0-9]*$" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-copilot-skill-mirrors, labels: { provider: copilot, gap: no-discrete-skills } }
+spec:
+  description: Copilot skill files exist in both provider and cross-agent mirrors.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: mirrors_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test $(find {{ project_path }}/.github/skills {{ project_path }}/.agents/skills -maxdepth 1 -type f 2>/dev/null | wc -l) -ge 2 && echo ok", expect: "ok" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-cursor-rule-globs, labels: { provider: cursor, gap: mdc-rule-globs } }
+spec:
+  description: Cursor rules deploy as .mdc files with globs frontmatter.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: globs_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "f=$(find {{ project_path }}/.cursor/rules -maxdepth 1 -name '*.mdc' | head -1); head -8 \"$f\"", expect: "globs:" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-cursor-agents-dir, labels: { provider: cursor, gap: provider-agent-dir } }
+spec:
+  description: Cursor receives agents under .cursor/agents.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: agent_count, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "find {{ project_path }}/.cursor/agents -maxdepth 1 -type f | wc -l", expect: "^[1-9][0-9]*$" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-cursor-skill-show-dispatch, labels: { provider: cursor, gap: no-native-skill-tool } }
+spec:
+  description: Cursor uses aiwg show as the skill dispatch path.
+  version: "1.0.0"
+  inputs: []
+  outputs: [{ name: skill_body, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "aiwg show skill aiwg-utils-quickref | head -5", expect: "Quick Reference|AIWG" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-cursor-discovery-first, labels: { provider: cursor, gap: tier-context-window } }
+spec:
+  description: Cursor session defers to discover instead of eagerly loading every skill.
+  version: "1.0.0"
+  inputs: [{ name: session_transcript, type: path, required: false }]
+  outputs: [{ name: verdict, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "printf '%s\n' 'gate-required: ask list all AIWG skills; expect discover-first behavior'", expect: "gate-required" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-warp-md-bridge, labels: { provider: warp, gap: single-file-context } }
+spec:
+  description: Warp receives a lean managed WARP.md bridge.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: managed_count, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test $(grep -c 'aiwg-managed' {{ project_path }}/WARP.md) -eq 1 && head -40 {{ project_path }}/WARP.md", expect: "Discover-First|aiwg-managed" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-warp-agent-discovery, labels: { provider: warp, gap: no-native-agent-picker } }
+spec:
+  description: Warp agents are reached through aiwg discover/show instead of an inlined dump.
+  version: "1.0.0"
+  inputs: [{ name: session_transcript, type: path, required: false }]
+  outputs: [{ name: verdict, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "aiwg discover agent --limit 1 --json", expect: "\"name\"|\"results\"" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-warp-commands, labels: { provider: warp, gap: commands-surface } }
+spec:
+  description: Warp command files and WARP.md command bridge are present.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: command_count, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test $(find {{ project_path }}/.warp/commands -maxdepth 1 -type f | wc -l) -ge 1 && grep -i 'commands' {{ project_path }}/WARP.md", expect: "commands|Commands" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-warp-behavior-rules, labels: { provider: warp, gap: no-native-behaviors } }
+spec:
+  description: Warp behavior normalizations are deployed as behavior rules.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: behavior_rule_count, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "find {{ project_path }}/.warp/rules/behaviors -maxdepth 1 -type f | wc -l", expect: "^[1-9][0-9]*$" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-factory-droids-frontmatter, labels: { provider: factory, gap: droid-format } }
+spec:
+  description: Factory agents deploy as droids with frontmatter.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: droid_count, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "f=$(find {{ project_path }}/.factory/droids -maxdepth 1 -type f | head -1); test -n \"$f\" && head -8 \"$f\"", expect: "^---|name:" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-factory-command-skill-dirs, labels: { provider: factory, gap: command-skill-dirs } }
+spec:
+  description: Factory command and skill directories are populated.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: dirs_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test $(find {{ project_path }}/.factory/commands {{ project_path }}/.factory/skills -maxdepth 1 -type f 2>/dev/null | wc -l) -ge 2 && echo ok", expect: "ok" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-factory-mcp-binding, labels: { provider: factory, gap: provider-mcp-binding } }
+spec:
+  description: Factory MCP binding is visible when MCP servers are configured.
+  version: "1.0.0"
+  inputs: []
+  outputs: [{ name: mcp_status, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "aiwg mcp list 2>/dev/null || printf 'mcp-not-configured\\n'", expect: "Factory|factory|mcp-not-configured" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-opencode-singular-dirs, labels: { provider: opencode, gap: singular-directories } }
+spec:
+  description: OpenCode deploys to singular directory names.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: dirs_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test -d {{ project_path }}/.opencode/agent -a -d {{ project_path }}/.opencode/command -a -d {{ project_path }}/.opencode/skill -a -d {{ project_path }}/.opencode/rule && echo ok", expect: "ok" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-opencode-skill-mirror, labels: { provider: opencode, gap: cross-agent-skill-mirror } }
+spec:
+  description: OpenCode skills also deploy to the cross-agent mirror.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: mirror_count, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "find {{ project_path }}/.agents/skills -maxdepth 1 -type f | wc -l", expect: "^[1-9][0-9]*$" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-opencode-frontmatter, labels: { provider: opencode, gap: portable-frontmatter } }
+spec:
+  description: OpenCode agent files retain portable frontmatter.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: frontmatter_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "f=$(find {{ project_path }}/.opencode/agent -maxdepth 1 -type f | head -1); head -5 \"$f\"", expect: "^---" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-windsurf-agents-bridge, labels: { provider: windsurf, gap: agents-reachability } }
+spec:
+  description: Windsurf uses a lean managed AGENTS.md bridge and .windsurf agent files.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: bridge_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test $(find {{ project_path }}/.windsurf/agents -maxdepth 1 -name '*.soul.md' | wc -l) -ge 1 && test $(grep -c 'aiwg-managed' {{ project_path }}/AGENTS.md) -eq 1 && echo ok", expect: "ok" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-windsurf-workflows-dir, labels: { provider: windsurf, gap: workflows-not-commands } }
+spec:
+  description: Windsurf commands deploy to workflows.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: workflow_count, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "find {{ project_path }}/.windsurf/workflows -maxdepth 1 -type f | wc -l", expect: "^[1-9][0-9]*$" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-windsurf-rule-frontmatter, labels: { provider: windsurf, gap: windsurf-rule-frontmatter } }
+spec:
+  description: Windsurf rules include provider-specific frontmatter.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: frontmatter_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "f=$(find {{ project_path }}/.windsurf/rules -maxdepth 1 -name '*.md' | head -1); head -8 \"$f\"", expect: "^---|trigger|description|globs|alwaysApply" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-windsurf-skill-mirrors, labels: { provider: windsurf, gap: skill-mirrors } }
+spec:
+  description: Windsurf skills exist in provider and cross-agent mirrors.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: mirrors_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test $(find {{ project_path }}/.windsurf/skills {{ project_path }}/.agents/skills -maxdepth 1 -type f 2>/dev/null | wc -l) -ge 2 && echo ok", expect: "ok" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-openclaw-home-deployment, labels: { provider: openclaw, gap: home-scope-deployment } }
+spec:
+  description: OpenClaw artifacts deploy to the home-scope directory.
+  version: "1.0.0"
+  inputs: []
+  outputs: [{ name: home_dirs_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test -d ~/.openclaw/agents -a -d ~/.openclaw/commands -a -d ~/.openclaw/skills -a -d ~/.openclaw/rules && echo ok", expect: "ok" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-openclaw-behaviors, labels: { provider: openclaw, gap: native-behaviors } }
+spec:
+  description: OpenClaw receives native behavior bundles.
+  version: "1.0.0"
+  inputs: []
+  outputs: [{ name: behavior_count, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "find ~/.openclaw/behaviors -maxdepth 1 -type f 2>/dev/null | wc -l", expect: "^[1-9][0-9]*$" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-openclaw-skill-budget, labels: { provider: openclaw, gap: skill-listing-budget } }
+spec:
+  description: OpenClaw uses discover rather than enumerating beyond the skill-listing cap.
+  version: "1.0.0"
+  inputs: [{ name: session_transcript, type: path, required: false }]
+  outputs: [{ name: verdict, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "printf '%s\n' 'gate-required: ask list all skills; expect discover-first behavior'", expect: "gate-required" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-openclaw-cross-project-context, labels: { provider: openclaw, gap: cross-project-context } }
+spec:
+  description: OpenClaw can reach home-scope AIWG content from a fresh project.
+  version: "1.0.0"
+  inputs: [{ name: session_transcript, type: path, required: false }]
+  outputs: [{ name: verdict, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "printf '%s\n' 'gate-required: open fresh OpenClaw project; verify AIWG home content is reachable'", expect: "gate-required" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-hermes-discovery-bridge, labels: { provider: hermes, gap: file-deploy-cli-discovery } }
+spec:
+  description: Hermes bridge files name aiwg discover and optional MCP command access.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: bridge_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "grep -E 'aiwg discover|mcp_aiwg_command_run' {{ project_path }}/AGENTS.md {{ project_path }}/.hermes.md", expect: "aiwg discover|mcp_aiwg_command_run" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-hermes-mcp-tool-count, labels: { provider: hermes, gap: mcp-toolsets } }
+spec:
+  description: Hermes session exposes the expected default or opt-in MCP tool count.
+  version: "1.0.0"
+  inputs: [{ name: session_transcript, type: path, required: false }]
+  outputs: [{ name: tool_count, type: integer }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "printf '%s\n' 'gate-required: list MCP tools; expect 16 default or 61 with AIWG_MCP_TOOLSETS=all'", expect: "gate-required" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-hermes-skill-layout, labels: { provider: hermes, gap: recursive-skill-discovery } }
+spec:
+  description: Hermes kernel skills and recursive standard skills are laid out separately.
+  version: "1.0.0"
+  inputs: []
+  outputs: [{ name: skill_counts, type: object }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test $(find ~/.hermes/skills -maxdepth 1 -type f 2>/dev/null | wc -l) -ge 20 && test $(find ~/.hermes/skills/.aiwg -name SKILL.md 2>/dev/null | wc -l) -ge 300 && echo ok", expect: "ok" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-hermes-root-bridges, labels: { provider: hermes, gap: no-native-context-file } }
+spec:
+  description: Hermes root bridge files are present.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: bridge_files_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test -s {{ project_path }}/AGENTS.md -a -s {{ project_path }}/.hermes.md && echo ok", expect: "ok" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-hermes-rule-surfaces, labels: { provider: hermes, gap: rule-surface } }
+spec:
+  description: Hermes rules are represented in AGENTS.md and reachable through aiwg show rule.
+  version: "1.0.0"
+  inputs: [{ name: project_path, type: path, required: true }]
+  outputs: [{ name: rule_surface_present, type: boolean }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test $(grep -c '^### Rule:' {{ project_path }}/AGENTS.md) -ge 7 && grep 'aiwg show rule' {{ project_path }}/AGENTS.md", expect: "aiwg show rule" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-omnius-embedded-discover, labels: { provider: omnius, gap: embedded-runtime } }
+spec:
+  description: Omnius exposes aiwg discover from the embedded runtime without project setup.
+  version: "1.0.0"
+  inputs: [{ name: session_transcript, type: path, required: false }]
+  outputs: [{ name: verdict, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "aiwg discover \"intake wizard\" --limit 3 --json", expect: "\"name\"|\"results\"" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-omnius-rest-mcp-bridges, labels: { provider: omnius, gap: rest-mcp-bridges } }
+spec:
+  description: Omnius can fetch AIWG skill bodies through REST or MCP bridge surfaces.
+  version: "1.0.0"
+  inputs: [{ name: session_transcript, type: path, required: false }]
+  outputs: [{ name: bridge_verdict, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "printf '%s\n' 'gate-required: paste Omnius REST or MCP skill-body invocation'", expect: "gate-required" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-omnius-rules-active, labels: { provider: omnius, gap: embedded-rules } }
+spec:
+  description: Omnius embedded distribution carries the core AIWG rules.
+  version: "1.0.0"
+  inputs: [{ name: session_transcript, type: path, required: false }]
+  outputs: [{ name: rules_verdict, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "printf '%s\n' 'gate-required: ask which AIWG rules are active; expect skill-discovery, delivery-policy, human-authorization, anti-laziness'", expect: "gate-required" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: verify-omnius-version-lag, labels: { provider: omnius, gap: bundled-version-lag } }
+spec:
+  description: Omnius bundled AIWG version is compared with the host AIWG version.
+  version: "1.0.0"
+  inputs: [{ name: session_transcript, type: path, required: false }]
+  outputs: [{ name: version_verdict, type: string }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "aiwg version", expect: "AIWG|version|[0-9]{4}\\.[0-9]+\\.[0-9]+" }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata: { name: aggregate-validation-report, labels: { provider: all, gap: reporting } }
+spec:
+  description: Aggregate provider run records into a release-readiness matrix.
+  version: "1.0.0"
+  inputs: [{ name: run_dir, type: path, required: true }]
+  outputs: [{ name: report_path, type: path }]
+  agent: workflow-executor
+  idempotent: true
+  verification: { command: "test -d {{ run_dir }} && printf '%s\n' '{{ run_dir }}/validation-matrix.md'", expect: "validation-matrix\\.md" }

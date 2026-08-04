@@ -1,0 +1,805 @@
+# RLM Trajectory Schema
+# Execution trace for learning and reproducibility in recursive language model workflows
+# Captures complete TAO (Thought-Action-Observation) iteration sequence
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://aiwg.io/schemas/rlm-trajectory/v1"
+title: "RLM Trajectory Schema"
+description: |
+  Schema for execution traces that capture the complete reasoning and action
+  sequence of RLM task execution. Follows TAO (Thought-Action-Observation)
+  loop pattern for transparency and learning.
+
+type: object
+required:
+  - version
+  - trajectory_id
+  - task_context
+
+properties:
+  version:
+    type: string
+    pattern: "^1\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+
+  trajectory_id:
+    type: string
+    pattern: "^traj-[a-f0-9]{8}$"
+    description: "Unique identifier for this trajectory"
+    examples:
+      - "traj-a1b2c3d4"
+
+  task_context:
+    $ref: "#/$defs/TaskContext"
+
+  iterations:
+    type: array
+    items:
+      $ref: "#/$defs/TAOIteration"
+    description: "Sequence of Thought-Action-Observation iterations"
+
+  outcome:
+    $ref: "#/$defs/TrajectoryOutcome"
+
+  metadata:
+    $ref: "#/$defs/TrajectoryMetadata"
+
+  quality_metrics:
+    $ref: "#/$defs/QualityMetrics"
+
+$defs:
+  TaskContext:
+    type: object
+    description: "Context about the task this trajectory captures"
+    required:
+      - task_id
+      - task_type
+      - task_prompt
+    properties:
+      task_id:
+        type: string
+        description: "Task node ID from task tree"
+        pattern: "^task-[a-f0-9]{8}$"
+
+      tree_id:
+        type: string
+        description: "Task tree ID"
+        pattern: "^tree-[a-f0-9]{8}$"
+        nullable: true
+
+      state_id:
+        type: string
+        description: "Associated state ID"
+        pattern: "^state-[a-f0-9]{8}$"
+        nullable: true
+
+      task_type:
+        type: string
+        description: "Category of task"
+        examples:
+          - "code_analysis"
+          - "bug_fixing"
+          - "documentation"
+          - "test_generation"
+          - "security_audit"
+          - "refactoring"
+
+      task_prompt:
+        type: string
+        description: "The prompt/question for this task"
+
+      context_size_tokens:
+        type: integer
+        minimum: 0
+        description: "Size of context provided to task"
+
+      parent_task_id:
+        type: string
+        pattern: "^task-[a-f0-9]{8}$"
+        description: "Parent task if this is a subtask"
+        nullable: true
+
+      depth:
+        type: integer
+        minimum: 0
+        description: "Depth in task tree"
+
+  TAOIteration:
+    type: object
+    description: "Single Thought-Action-Observation iteration"
+    required:
+      - iteration_number
+      - thought
+      - action
+      - observation
+    properties:
+      iteration_number:
+        type: integer
+        minimum: 1
+        description: "Sequential iteration number"
+
+      timestamp:
+        type: string
+        format: date-time
+        description: "When this iteration started"
+
+      thought:
+        $ref: "#/$defs/Thought"
+
+      action:
+        $ref: "#/$defs/Action"
+
+      observation:
+        $ref: "#/$defs/Observation"
+
+      cost:
+        $ref: "#/$defs/IterationCost"
+
+      duration_ms:
+        type: integer
+        minimum: 0
+        description: "Duration of this iteration"
+
+      state_snapshot:
+        type: object
+        description: "State variables at this point"
+        additionalProperties: true
+
+  Thought:
+    type: object
+    description: "Reasoning about what to do next"
+    required:
+      - content
+      - type
+    properties:
+      type:
+        type: string
+        enum: [goal, research, progress, extraction, reasoning, exception, synthesis]
+        description: "Type of thought per thought protocol"
+
+      content:
+        type: string
+        description: "The actual thought/reasoning"
+
+      confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Confidence in this reasoning"
+
+      references:
+        type: array
+        items:
+          type: string
+        description: "Variables or observations referenced"
+
+      metadata:
+        type: object
+        properties:
+          token_count:
+            type: integer
+            minimum: 0
+
+  Action:
+    type: object
+    description: "Action taken based on thought"
+    required:
+      - tool
+      - description
+    properties:
+      tool:
+        type: string
+        description: "Tool or function invoked"
+        examples:
+          - "Read"
+          - "Write"
+          - "Bash"
+          - "Grep"
+          - "Glob"
+          - "spawned_subtask"
+          - "set_variable"
+          - "invoke_model"
+
+      parameters:
+        type: object
+        description: "Parameters passed to tool"
+        additionalProperties: true
+
+      description:
+        type: string
+        description: "Human-readable description of action"
+
+      rationale:
+        type: string
+        description: "Why this action was chosen"
+
+      alternatives_considered:
+        type: array
+        items:
+          type: object
+          properties:
+            tool:
+              type: string
+            reason_not_chosen:
+              type: string
+
+      timestamp:
+        type: string
+        format: date-time
+
+  Observation:
+    type: object
+    description: "Result of the action"
+    required:
+      - status
+      - result
+    properties:
+      status:
+        type: string
+        enum: [success, failure, partial, timeout, error]
+        description: "Status of action execution"
+
+      result:
+        description: "The actual result/output from action"
+        oneOf:
+          - type: string
+          - type: object
+          - type: array
+
+      result_type:
+        type: string
+        enum: [text, json, file_path, error, exit_code, object]
+        description: "Type of result"
+
+      extraction:
+        type: string
+        description: "Key information extracted from result"
+
+      learned:
+        type: string
+        description: "What was learned from this observation"
+
+      error_details:
+        type: object
+        properties:
+          error_type:
+            type: string
+          message:
+            type: string
+          stack_trace:
+            type: string
+          recovery_attempted:
+            type: boolean
+
+      timestamp:
+        type: string
+        format: date-time
+
+      duration_ms:
+        type: integer
+        minimum: 0
+        description: "Time taken for action to complete"
+
+  IterationCost:
+    type: object
+    description: "Cost tracking for this iteration"
+    properties:
+      input_tokens:
+        type: integer
+        minimum: 0
+        description: "Input tokens for this iteration"
+
+      output_tokens:
+        type: integer
+        minimum: 0
+        description: "Output tokens for this iteration"
+
+      total_tokens:
+        type: integer
+        minimum: 0
+
+      input_cost_usd:
+        type: number
+        minimum: 0
+
+      output_cost_usd:
+        type: number
+        minimum: 0
+
+      total_cost_usd:
+        type: number
+        minimum: 0
+
+      cache_hits:
+        type: integer
+        minimum: 0
+        description: "Cache hits if caching enabled"
+
+      cache_savings_usd:
+        type: number
+        minimum: 0
+
+  TrajectoryOutcome:
+    type: object
+    description: "Final outcome of trajectory execution"
+    required:
+      - status
+    properties:
+      status:
+        type: string
+        enum: [success, failure, partial_success, timeout, cancelled, error]
+        description: "Overall trajectory status"
+
+      final_result:
+        type: string
+        description: "Final output from task execution"
+
+      quality_score:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Quality assessment of final result"
+
+      completion_reason:
+        type: string
+        enum: [task_complete, max_iterations, timeout, error, user_cancel, Final_set]
+        description: "Why trajectory ended"
+
+      iterations_to_completion:
+        type: integer
+        minimum: 1
+        description: "Number of iterations until completion"
+
+      artifacts_generated:
+        type: array
+        items:
+          type: object
+          properties:
+            path:
+              type: string
+            type:
+              type: string
+            description:
+              type: string
+
+      variables_set:
+        type: array
+        items:
+          type: string
+        description: "Variables set during execution"
+
+      subtasks_spawned:
+        type: array
+        items:
+          type: string
+        description: "Child task IDs spawned"
+
+  TrajectoryMetadata:
+    type: object
+    description: "Metadata about trajectory execution"
+    properties:
+      model:
+        type: string
+        description: "Model used for execution"
+        examples:
+          - "claude-sonnet-4.5"
+          - "gpt-5.3-codex"
+
+      temperature:
+        type: number
+        minimum: 0
+        maximum: 2
+        description: "Temperature setting"
+
+      seed:
+        type: integer
+        description: "Random seed for reproducibility"
+
+      execution_mode:
+        type: string
+        enum: [strict, seeded, logged, default]
+        description: "Execution mode for reproducibility"
+
+      started_at:
+        type: string
+        format: date-time
+
+      completed_at:
+        type: string
+        format: date-time
+
+      total_duration_ms:
+        type: integer
+        minimum: 0
+
+      total_iterations:
+        type: integer
+        minimum: 0
+
+      total_tokens:
+        type: integer
+        minimum: 0
+
+      total_cost_usd:
+        type: number
+        minimum: 0
+
+      environment:
+        type: object
+        properties:
+          platform:
+            type: string
+          node_version:
+            type: string
+          aiwg_version:
+            type: string
+
+      session_id:
+        type: string
+        description: "Session identifier"
+
+  QualityMetrics:
+    type: object
+    description: "Quality assessment metrics for learning"
+    properties:
+      overall_quality:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Overall trajectory quality score"
+
+      efficiency:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "How efficiently task was completed"
+
+      reasoning_quality:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "Quality of reasoning in thoughts"
+
+      action_appropriateness:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "How appropriate actions were"
+
+      error_recovery:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "How well errors were handled"
+
+      successful_iterations:
+        type: integer
+        minimum: 0
+        description: "Iterations with successful observations"
+
+      failed_iterations:
+        type: integer
+        minimum: 0
+        description: "Iterations with failed observations"
+
+      retry_count:
+        type: integer
+        minimum: 0
+        description: "Number of action retries"
+
+      thought_grounding:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: "How well thoughts reference observations"
+
+      hallucination_detected:
+        type: boolean
+        description: "Whether hallucinations were detected"
+
+      lessons_learned:
+        type: array
+        items:
+          type: object
+          properties:
+            lesson:
+              type: string
+            context:
+              type: string
+            iteration:
+              type: integer
+
+# Examples
+examples:
+  successful_trajectory:
+    version: "1.0.0"
+    trajectory_id: "traj-a1b2c3d4"
+    task_context:
+      task_id: "task-001"
+      tree_id: "tree-001"
+      state_id: "state-001"
+      task_type: "bug_fixing"
+      task_prompt: "Fix the null pointer error in validateUser()"
+      context_size_tokens: 5000
+      depth: 0
+    iterations:
+      - iteration_number: 1
+        timestamp: "2026-02-09T10:00:00Z"
+        thought:
+          type: research
+          content: "I need to find the validateUser() function and examine the error"
+          confidence: 0.9
+        action:
+          tool: "Grep"
+          parameters:
+            pattern: "validateUser"
+            path: "src/"
+          description: "Search for validateUser function"
+          rationale: "Need to locate the function before analyzing"
+        observation:
+          status: success
+          result: "src/auth/validate.ts:42: export function validateUser(user: User)"
+          result_type: text
+          extraction: "Function is in src/auth/validate.ts at line 42"
+          duration_ms: 150
+        cost:
+          input_tokens: 500
+          output_tokens: 100
+          total_tokens: 600
+          total_cost_usd: 0.006
+        duration_ms: 200
+      - iteration_number: 2
+        timestamp: "2026-02-09T10:00:01Z"
+        thought:
+          type: extraction
+          content: "From the grep result, the function is at src/auth/validate.ts:42. I need to read that file to see the implementation."
+          confidence: 0.95
+          references: ["iteration_1_observation"]
+        action:
+          tool: "Read"
+          parameters:
+            file_path: "src/auth/validate.ts"
+          description: "Read the validate.ts file to examine the function"
+          rationale: "Need to see the actual implementation to identify the null pointer issue"
+        observation:
+          status: success
+          result: "export function validateUser(user: User) {\n  return user.email.includes('@');\n}"
+          result_type: text
+          extraction: "Function accesses user.email without null check"
+          learned: "The bug is missing null check before accessing user.email"
+          duration_ms: 50
+        cost:
+          input_tokens: 800
+          output_tokens: 200
+          total_tokens: 1000
+          total_cost_usd: 0.010
+        duration_ms: 100
+      - iteration_number: 3
+        timestamp: "2026-02-09T10:00:02Z"
+        thought:
+          type: reasoning
+          content: "The bug is clear: user.email is accessed without checking if user is null. I should add a null check at the beginning."
+          confidence: 0.98
+          references: ["iteration_2_observation"]
+        action:
+          tool: "Write"
+          parameters:
+            file_path: "src/auth/validate.ts"
+            content: "export function validateUser(user: User | null) {\n  if (!user || !user.email) {\n    return false;\n  }\n  return user.email.includes('@');\n}"
+          description: "Add null check to validateUser function"
+          rationale: "Prevents null pointer error by checking user exists before accessing email"
+        observation:
+          status: success
+          result: "File written successfully"
+          result_type: text
+          extraction: "Fix applied successfully"
+          learned: "Null check added, function now handles null input safely"
+          duration_ms: 80
+        cost:
+          input_tokens: 1200
+          output_tokens: 300
+          total_tokens: 1500
+          total_cost_usd: 0.015
+        duration_ms: 120
+    outcome:
+      status: success
+      final_result: "Fixed null pointer error in validateUser() by adding null check"
+      quality_score: 0.95
+      completion_reason: task_complete
+      iterations_to_completion: 3
+      artifacts_generated:
+        - path: "src/auth/validate.ts"
+          type: "source_code"
+          description: "Fixed validateUser function with null check"
+      variables_set: []
+    metadata:
+      model: "claude-sonnet-4.5"
+      temperature: 0.7
+      execution_mode: default
+      started_at: "2026-02-09T10:00:00Z"
+      completed_at: "2026-02-09T10:00:03Z"
+      total_duration_ms: 3000
+      total_iterations: 3
+      total_tokens: 3100
+      total_cost_usd: 0.031
+      environment:
+        platform: "linux"
+        aiwg_version: "2026.2.8"
+    quality_metrics:
+      overall_quality: 0.95
+      efficiency: 0.90
+      reasoning_quality: 0.95
+      action_appropriateness: 1.0
+      error_recovery: 1.0
+      successful_iterations: 3
+      failed_iterations: 0
+      retry_count: 0
+      thought_grounding: 0.98
+      hallucination_detected: false
+      lessons_learned:
+        - lesson: "Always check for null before accessing object properties"
+          context: "Bug fix in validateUser function"
+          iteration: 2
+
+  failed_trajectory:
+    version: "1.0.0"
+    trajectory_id: "traj-b2c3d4e5"
+    task_context:
+      task_id: "task-002"
+      task_type: "code_analysis"
+      task_prompt: "Find all uses of deprecated API"
+      context_size_tokens: 3000
+    iterations:
+      - iteration_number: 1
+        thought:
+          type: goal
+          content: "I need to search for calls to the deprecated API"
+          confidence: 0.8
+        action:
+          tool: "Grep"
+          parameters:
+            pattern: "oldApiCall"
+            path: "src/"
+          description: "Search for deprecated API usage"
+        observation:
+          status: failure
+          result: "grep: src/: Is a directory"
+          result_type: error
+          error_details:
+            error_type: "InvalidArgument"
+            message: "Path must be file or glob pattern"
+            recovery_attempted: false
+          duration_ms: 100
+        cost:
+          input_tokens: 400
+          output_tokens: 50
+          total_tokens: 450
+          total_cost_usd: 0.0045
+      - iteration_number: 2
+        thought:
+          type: exception
+          content: "The grep failed because I passed a directory. I need to use a glob pattern instead."
+          confidence: 0.9
+          references: ["iteration_1_observation"]
+        action:
+          tool: "Grep"
+          parameters:
+            pattern: "oldApiCall"
+            glob: "**/*.ts"
+          description: "Search for deprecated API usage with glob"
+          rationale: "Correcting the previous error by using proper glob pattern"
+        observation:
+          status: success
+          result: "No matches found"
+          result_type: text
+          extraction: "Deprecated API is not used in the codebase"
+          duration_ms: 500
+        cost:
+          input_tokens: 600
+          output_tokens: 100
+          total_tokens: 700
+          total_cost_usd: 0.007
+    outcome:
+      status: success
+      final_result: "No uses of deprecated API found in codebase"
+      quality_score: 0.75
+      completion_reason: task_complete
+      iterations_to_completion: 2
+    metadata:
+      total_iterations: 2
+      total_tokens: 1150
+      total_cost_usd: 0.0115
+    quality_metrics:
+      overall_quality: 0.75
+      efficiency: 0.70
+      reasoning_quality: 0.85
+      error_recovery: 1.0
+      successful_iterations: 1
+      failed_iterations: 1
+      retry_count: 1
+      lessons_learned:
+        - lesson: "Grep tool requires glob pattern, not bare directory path"
+          context: "Corrected in iteration 2"
+          iteration: 1
+
+# Storage paths
+storage_paths:
+  trajectory_file: ".aiwg/rlm/trajectories/{trajectory_id}/trajectory.json"
+  trajectory_report: ".aiwg/rlm/trajectories/{trajectory_id}/report.md"
+  trajectory_index: ".aiwg/rlm/trajectories/index.json"
+
+# Learning and analysis
+learning_patterns:
+  collect_trajectories:
+    description: "Aggregate trajectories for pattern analysis"
+    by_task_type:
+      - bug_fixing
+      - code_analysis
+      - test_generation
+    metrics:
+      - average_iterations_to_success
+      - common_failure_patterns
+      - effective_tool_sequences
+
+  improve_prompts:
+    description: "Use trajectory analysis to improve prompts"
+    patterns:
+      - "If task_type == bug_fixing and high_success_rate: extract prompt template"
+      - "If high_retry_count: identify and fix ambiguous instructions"
+
+  error_recovery:
+    description: "Learn from error recovery patterns"
+    track:
+      - error_type
+      - recovery_action
+      - success_after_recovery
+
+# Agent protocol
+agent_protocol:
+  record_iteration:
+    description: "Record a TAO iteration"
+    steps:
+      - capture_thought
+      - log_action_with_rationale
+      - execute_action
+      - capture_observation
+      - calculate_cost
+      - save_iteration
+
+  complete_trajectory:
+    description: "Finalize trajectory on task completion"
+    steps:
+      - determine_outcome_status
+      - calculate_quality_metrics
+      - identify_lessons_learned
+      - save_trajectory
+      - update_trajectory_index
+
+  analyze_trajectory:
+    description: "Analyze completed trajectory for learning"
+    steps:
+      - calculate_quality_scores
+      - identify_patterns
+      - extract_lessons
+      - generate_report
+
+# Limits
+limits:
+  max_iterations: 100
+  max_trajectory_size_mb: 10
+  trajectory_retention_days: 90
+
+# References
+references:
+  research:
+    - "TAO (Thought-Action-Observation) loop"
+    - "REF-018 ReAct methodology"
+  implementation:
+    - "@tools/rlm/"
+    - "@agentic/code/addons/rlm/"
+  related:
+    - "@agentic/code/addons/rlm/schemas/rlm-task-tree.yaml"
+    - "@agentic/code/addons/rlm/schemas/rlm-state.yaml"
+    - "@.claude/rules/tao-loop.md"
+    - "@.claude/rules/thought-protocol.md"
+    - "@agentic/code/addons/ralph/schemas/iteration-analytics.yaml"

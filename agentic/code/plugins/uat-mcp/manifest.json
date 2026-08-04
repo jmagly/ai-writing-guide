@@ -1,0 +1,68 @@
+{
+  "id": "uat-mcp",
+  "type": "addon",
+  "name": "UAT-MCP Toolkit",
+  "version": "1.0.0",
+  "description": "Agent-executable acceptance testing via MCP connections — generate, execute, and report on UAT plans that validate MCP tool surfaces.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "uat",
+    "mcp",
+    "acceptance-testing",
+    "testing",
+    "quality-assurance",
+    "mcp-tools",
+    "agent-testing"
+  ],
+  "entry": {
+    "agents": "agents/",
+    "skills": "skills/",
+    "templates": "templates/",
+    "schemas": "schemas/",
+    "docs": "docs/"
+  },
+  "agents": [
+    "uat-planner",
+    "uat-executor"
+  ],
+  "commands": [
+    "uat-generate",
+    "uat-execute",
+    "uat-report"
+  ],
+  "skills": [
+    "uat-mode"
+  ],
+  "schemas": [
+    "uat-plan",
+    "uat-result",
+    "uat-coverage"
+  ],
+  "templates": [
+    "uat-phase",
+    "uat-executor-guide",
+    "uat-report",
+    "uat-test-case"
+  ],
+  "dependencies": {
+    "required": [],
+    "optional": [
+      "ralph"
+    ]
+  },
+  "configuration": {
+    "defaults": {
+      "mode": "mcp",
+      "issue_filing": true,
+      "issue_provider": "gitea",
+      "max_phases": 30,
+      "execution_mode": "standard",
+      "cleanup_always": true,
+      "negative_test_isolation": true
+    }
+  }
+}

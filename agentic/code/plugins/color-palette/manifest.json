@@ -1,0 +1,32 @@
+{
+  "id": "color-palette",
+  "type": "addon",
+  "name": "Color Palette",
+  "version": "1.0.0",
+  "description": "Color palette selection and review tooling with color theory fundamentals, current trend research, and accessibility analysis.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "color",
+    "palette",
+    "design",
+    "accessibility",
+    "color-theory",
+    "trends",
+    "wcag"
+  ],
+  "entry": {
+    "rules": "rules/",
+    "skills": "skills/",
+    "templates": "templates/"
+  },
+  "skills": [
+    "color-palette",
+    "color-trends",
+    "color-accessibility"
+  ],
+  "dependencies": []
+}

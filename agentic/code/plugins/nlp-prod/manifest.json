@@ -1,0 +1,103 @@
+{
+  "id": "nlp-prod",
+  "type": "addon",
+  "name": "NLP Production Pipeline Toolkit",
+  "version": "1.0.0",
+  "description": "Tools, skills, and CLI extensions for designing and productionizing LLM inference pipelines. Pattern-guided, slim by default, eval-first.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "llm",
+    "inference",
+    "pipeline",
+    "production",
+    "prompt-engineering",
+    "eval",
+    "rag",
+    "state-machine",
+    "chain",
+    "agentic",
+    "nlp",
+    "cost-optimization"
+  ],
+  "researchFoundation": {
+    "REF-018": "ReAct — tool-use pattern underlying embedded agentic",
+    "REF-015": "Self-Refine — iterative eval loop with isolated reviewer",
+    "REF-022": "AutoGen — multi-agent delegation for eval isolation",
+    "BP-eval": "Eval-first production ML — isolated evaluator pattern"
+  },
+  "entry": {
+    "agents": "agents/",
+    "skills": "skills/",
+    "templates": "templates/",
+    "schemas": "schemas/",
+    "docs": "docs/"
+  },
+  "agents": [
+    "pipeline-architect",
+    "prompt-engineer",
+    "eval-reviewer",
+    "cost-analyst"
+  ],
+  "skills": [
+    "pipeline-design",
+    "prompt-engineer",
+    "eval-loop",
+    "cost-optimizer",
+    "pattern-selector",
+    "productionize",
+    "pipeline-status"
+  ],
+  "cli_commands": {
+    "namespace": "nlp",
+    "description": "LLM inference pipeline toolkit",
+    "entry": "commands/",
+    "subcommands": {
+      "new":           { "file": "new.mjs", "description": "Scaffold a new pipeline (interactive wizard)" },
+      "add-step":      { "file": "add-step.mjs", "description": "Add a step to an existing pipeline" },
+      "eval":          { "file": "eval.mjs", "description": "Run eval loop against pipeline test cases" },
+      "optimize":      { "file": "optimize.mjs", "description": "Analyze cost and latency optimization opportunities" },
+      "productionize": { "file": "productionize.mjs", "description": "Production readiness review + slim-down generation" },
+      "estimate-cost": { "file": "estimate-cost.mjs", "description": "Estimate inference cost at target volume" },
+      "status":        { "file": "status.mjs", "description": "Overview of all pipelines in project" }
+    }
+  },
+  "templates": [
+    "simple-chain",
+    "embedded-agent",
+    "state-machine",
+    "rag-pipeline",
+    "eval-loop",
+    "dynamic-prompt",
+    "cost-estimate",
+    "prod-runbook"
+  ],
+  "schemas": [
+    "pipeline-config",
+    "eval-result",
+    "cost-model",
+    "fsm-config"
+  ],
+  "dependencies": {
+    "required": [],
+    "optional": [
+      "aiwg-evals",
+      "ralph",
+      "aiwg-utils",
+      "rlm"
+    ]
+  },
+  "configuration": {
+    "defaults": {
+      "defaultPattern": "simple-chain",
+      "defaultLanguage": "python",
+      "defaultEvalModel": "haiku",
+      "evalPassThreshold": 0.85,
+      "maxEvalAttempts": 3,
+      "costWarningThreshold": 0.01
+    }
+  }
+}

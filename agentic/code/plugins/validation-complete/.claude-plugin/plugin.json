@@ -1,0 +1,13 @@
+{
+  "name": "validation-complete",
+  "version": "2026.8.3",
+  "description": "Validation Complete for AIWG",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": []
+}

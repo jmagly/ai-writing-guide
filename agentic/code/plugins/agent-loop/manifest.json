@@ -1,0 +1,87 @@
+{
+  "id": "agent-loop",
+  "aliases": ["ralph", "al"],
+  "type": "addon",
+  "name": "Agent Loop",
+  "version": "1.0.0",
+  "description": "Iterative AI coding loops with automatic recovery - iteration beats perfection",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "al",
+    "agent-loop",
+    "ralph",
+    "iteration",
+    "loop",
+    "autonomous",
+    "batch",
+    "refactor",
+    "migration"
+  ],
+  "researchFoundation": {
+    "REF-001": "Agent loop methodology - iterative AI execution with stop hooks",
+    "REF-002": "BP-6 - Recovery requires execution history",
+    "REF-003": "Predictable failure with automatic recovery beats unpredictable success"
+  },
+  "entry": {
+    "skills": "skills/",
+    "agents": "agents/",
+    "hooks": "hooks/",
+    "templates": "templates/",
+    "docs": "docs/"
+  },
+  "skills": [
+    "ralph",
+    "agent-loop",
+    "ralph-status",
+    "ralph-abort",
+    "ralph-resume",
+    "ralph-reflect",
+    "ralph-analytics",
+    "ralph-attach",
+    "ralph-config",
+    "agent-loop-ext",
+    "ralph-memory",
+    "cross-task-learner",
+    "debug-memory",
+    "execute-feedback",
+    "reflection-injection",
+    "auto-test-execution",
+    "mission-control",
+    "infer-completion-criteria"
+  ],
+  "agents": [
+    "ralph-loop",
+    "ralph-verifier",
+    "mc-conductor"
+  ],
+  "hooks": [
+    "ralph-loop",
+    "ralph-commit",
+    "post-iteration-reflect",
+    "pre-return-execution-gate"
+  ],
+  "templates": [
+    "ralph-task",
+    "ralph-completion",
+    "self-reflection-prompt"
+  ],
+  "dependencies": {
+    "required": [],
+    "optional": [
+      "aiwg-hooks",
+      "aiwg-utils"
+    ]
+  },
+  "configuration": {
+    "defaults": {
+      "maxIterations": 10,
+      "timeoutMinutes": 60,
+      "autoCommit": true,
+      "verboseTrace": false
+    }
+  }
+}

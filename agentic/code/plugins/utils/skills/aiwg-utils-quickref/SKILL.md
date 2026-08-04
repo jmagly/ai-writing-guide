@@ -202,17 +202,19 @@ aiwg discover "select a persona"               # → persona agents (agentic/cod
 aiwg discover "scaffold a project"             # → new-project (+ new-bundle for project-local)
 ```
 
-### Project-local extensions (pilot → promote)
+### Project-local bundles (pilot → promote)
 
-AIWG supports authoring rules/skills/agents per-project under `.aiwg/{extensions,addons,frameworks}/<name>/` — pilot here, promote upstream when mature. Use `.aiwg/plugins/<name>/` only for marketplace delivery wrappers.
+AIWG supports authoring rules/skills/agents per-project under `.aiwg/{extensions,addons,frameworks}/<name>/`, marketplace wrappers under `.aiwg/plugins/<name>/`, and custom provider selectors under `.aiwg/providers/<name>/`. Pilot here, promote upstream when mature.
 
 ```bash
 aiwg new-bundle <name>                         # scaffold; auto-builds project graph
 aiwg new-extension <name> --starter rule       # extension with a starter rule
+aiwg new-provider <name>                       # provider selector using providerConfig.extends
 aiwg new-bundle <name> --dry-run               # preview without writing
 aiwg list --project-local                      # inventory + validation
 aiwg doctor --project-local                    # health check (counts, drift, shadows)
 aiwg use <name>                                # deploy a single project-local bundle
+aiwg use sdlc --provider <name>                # select a project-local provider bundle
 aiwg promote <name>                            # graduate to upstream (hash-verified copy)
 aiwg promote <name> --dry-run                  # preview promotion
 ```

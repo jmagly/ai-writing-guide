@@ -21,16 +21,14 @@ then to AIWG.md for framework discovery and routing.
 
 - Edit project-neutral notes only inside the protected Project Context section below.
 - Keep detailed policies, runbooks, hooks, and quickrefs in linked files.
-- Keep provider-only directives in the configured AIWG artifact root's
-  `context/providers/` directory.
+- Keep provider-only directives in `.aiwg/context/providers/`.
 - Never store secrets, tokens, credentials, or machine-local sensitive values here.
 
 ### Linked Context
 
 - [AIWG framework context](./AIWG.md)
-- [Private AIWG corpus setup](./docs/development/private-aiwg-corpus.md)
-- AIWG's own project artifacts are resolved from the private corpus when
-  `AIWG_ARTIFACTS_PATH` points at `../aiwg-web-release-ops/corpus/.aiwg`.
+- [AIWG project configuration](.aiwg/aiwg.config)
+- [Project-local quickref](.aiwg/quickref.json) (when configured)
 
 <!-- AIWG:workspace-context:end -->
 
@@ -68,6 +66,7 @@ Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 6 more plat
 - [`docs/architecture`](./docs/architecture)
 - [`src`](./src)
 - [`apps`](./apps)
+- [`packages`](./packages)
 
 ### Testing
 
@@ -87,6 +86,7 @@ Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 6 more plat
 - [`.gitea/workflows/metadata-validation.yml`](./.gitea/workflows/metadata-validation.yml)
 - [`.gitea/workflows/notify-site.yml`](./.gitea/workflows/notify-site.yml)
 - [`.gitea/workflows/npm-publish.yml`](./.gitea/workflows/npm-publish.yml)
+- [`.gitea/workflows/scheduled-docs-release.yml`](./.gitea/workflows/scheduled-docs-release.yml)
 - [`.gitea/workflows/skill-lint-pr.yml`](./.gitea/workflows/skill-lint-pr.yml)
 - [`.gitea/workflows/upload-release-sigs.yml`](./.gitea/workflows/upload-release-sigs.yml)
 - [`.github/workflows/npm-publish.yml`](./.github/workflows/npm-publish.yml)

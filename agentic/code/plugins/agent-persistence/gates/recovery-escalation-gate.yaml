@@ -1,0 +1,187 @@
+# Recovery Escalation Gate
+# Triggered when agent exhausts recovery attempts (3 max)
+# Based on REF-057 Agent Laboratory and UC-AP-004 Recovery Protocol
+# Issue: #262
+
+$schema: "https://aiwg.io/schemas/hitl-gate/v1"
+
+id: "GATE-AP-RECOVERY"
+name: "Recovery Escalation Gate"
+description: |
+  Human intervention required after agent exhausts 3 recovery attempts.
+  Presents full recovery history and requests human debugging/guidance.
+  This gate implements the ESCALATE stage of PAUSE→DIAGNOSE→ADAPT→RETRY→ESCALATE protocol.
+
+gate_type: approval
+
+trigger:
+  type: threshold_breach
+  threshold: 3
+  pattern: "recovery_attempts >= 3"
+  description: "Triggered when agent reaches max recovery attempts without resolving issue"
+
+behavior:
+  mode: TERMINATE  # MUST stop execution pending human response
+  timeout: 172800  # 48 hours
+  timeout_action: escalate
+
+  notification:
+    channels:
+      - cli
+      - issue_comment
+    urgency: high
+    message_template: |
+      ## Recovery Escalation Required
+
+      **Gate**: GATE-AP-RECOVERY
+      **Pattern**: {{pattern_type}}
+      **Severity**: {{severity}}
+      **Attempts**: {{recovery_attempts}} / 3
+
+      Agent has exhausted recovery attempts. Human debugging required.
+
+presentation:
+  summary_template: |
+    ╭─────────────────────────────────────────────────────────────╮
+    │ HUMAN INTERVENTION REQUIRED                                 │
+    │ Recovery Escalation Gate: GATE-AP-RECOVERY                  │
+    ├─────────────────────────────────────────────────────────────┤
+    │ Context:                                                    │
+    │   • Task: {{task_description}}                              │
+    │   • Pattern: {{pattern_type}} ({{severity}})                │
+    │   • Recovery Attempts: {{recovery_attempts}} / 3            │
+    │   • Agent: {{agent_name}}                                   │
+    │                                                              │
+    │ Detection Details:                                          │
+    │   • File(s): {{affected_files}}                             │
+    │   • Original Error: {{original_error}}                      │
+    │   • Detection Time: {{detection_timestamp}}                 │
+    │                                                              │
+    │ Recovery History:                                           │
+    │   {{recovery_attempts_summary}}                             │
+    │                                                              │
+    │ Current State:                                              │
+    │   • Tests: {{test_status}}                                  │
+    │   • Coverage: {{coverage_status}}                           │
+    │   • Confidence: {{agent_confidence}}                        │
+    ├─────────────────────────────────────────────────────────────┤
+    │ Options:                                                    │
+    │   [a] Approve - Override and allow agent to continue        │
+    │   [r] Reject - Require manual fix from human                │
+    │   [t] Retry - Reset counter, give agent another chance      │
+    │   [v] View - Show detailed recovery attempt logs            │
+    │   [d] Delegate - Assign to different agent                  │
+    │   [q] Abort - Stop task entirely                            │
+    ╰─────────────────────────────────────────────────────────────╯
+
+  artifacts_to_show:
+    - ".aiwg/persistence/recoveries/{{session_id}}-recovery.yaml"
+    - "{{affected_files}}"
+
+  questions:
+    - id: "decision"
+      question: "How should we proceed?"
+      options:
+        - "Approve - Let agent continue (I've fixed it externally)"
+        - "Reject - I will fix this manually"
+        - "Retry - Reset counter for 3 more attempts"
+        - "Abort - Stop this task entirely"
+      required: true
+
+    - id: "guidance"
+      question: "Provide guidance to agent (optional):"
+      options: []  # Free text
+      required: false
+
+    - id: "root_cause"
+      question: "Did you identify the root cause?"
+      options:
+        - "Yes - Configuration issue"
+        - "Yes - Agent capability limit"
+        - "Yes - Task specification unclear"
+        - "No - Still investigating"
+      required: false
+
+  context_window: 200  # Show more context for debugging
+
+cost_tracking:
+  track_enabled: true
+  metrics:
+    - time_to_decision
+    - revision_count
+    - escalation_resolution_time
+    - recovery_success_rate
+  baseline_comparison: autonomous
+
+audit:
+  log_decision: true
+  log_rationale: true
+  require_signature: false
+  retention_days: 90
+  additional_fields:
+    - recovery_session_id
+    - pattern_type
+    - severity
+    - attempts_before_escalation
+    - human_guidance_provided
+    - resolution_outcome
+
+# Integration with Recovery Orchestrator
+integration:
+  triggered_by: recovery_orchestrator
+  triggers_on:
+    - recovery_attempts >= 3
+    - confidence < 0.5
+    - severity == "CRITICAL"
+    - infinite_loop_detected
+    - non_deterministic_failure
+
+  state_preservation:
+    snapshot_path: ".aiwg/checkpoints/recovery-{{session_id}}.json"
+    iteration_history: ".aiwg/persistence/recoveries/{{session_id}}-recovery.yaml"
+    preserve_working_files: true
+
+  on_approval:
+    action: resume_task
+    inject_human_guidance: true
+    reset_recovery_counter: false
+    log_override: true
+
+  on_rejection:
+    action: halt_task
+    preserve_state: true
+    assign_to_human: true
+    create_manual_task: true
+
+  on_retry:
+    action: reset_and_resume
+    reset_recovery_counter: true
+    inject_reinforcement: true
+    max_resets: 1  # Can only reset once per task
+
+  on_abort:
+    action: terminate_task
+    cleanup_working_files: false
+    log_abandonment: true
+
+# References
+references:
+  requirements:
+    - "@.aiwg/requirements/use-cases/UC-AP-004-enforce-recovery-protocol.md"
+  architecture:
+    - "@.aiwg/architecture/agent-persistence-sad.md"
+    - "@.aiwg/architecture/decisions/ADR-AP-002-rule-enforcement-strategy.md"
+  rules:
+    - "@.claude/rules/hitl-gates.md"
+    - "@.claude/rules/hitl-patterns.md"
+    - "@.claude/rules/anti-laziness.md"
+  agents:
+    - "@.claude/agents/recovery-orchestrator.md"
+  research:
+    - "@.aiwg/research/findings/REF-057-agent-laboratory.md"
+    - "@.aiwg/research/findings/agentic-laziness-research.md"
+
+# Issue tracking
+issues:
+  - "#262"  # HITL Gate Integration
+  - "#96"   # HITL Gates Implementation

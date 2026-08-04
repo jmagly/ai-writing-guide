@@ -1,0 +1,20 @@
+{
+  "name": "agentic-installer",
+  "version": "2026.8.3",
+  "description": "Structured YAML manifests for reproducible, agent-driven software installation across platforms. Scripts are the primary artifact; agentic instructions handle adaptation and recovery.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "installer",
+    "setup",
+    "agentic",
+    "cross-platform",
+    "scripts",
+    "manifest"
+  ]
+}

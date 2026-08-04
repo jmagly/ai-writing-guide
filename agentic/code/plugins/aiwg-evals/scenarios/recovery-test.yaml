@@ -1,0 +1,118 @@
+# Recovery Test Scenario
+# Tests Archetype 4: Fragile Execution Under Load
+#
+# Research Foundation:
+# - REF-002: "Recovery capability is dominant success predictor"
+# - REF-002: "DeepSeek V3.1 achieves 92.2% via post-training RL for recovery"
+
+name: recovery-test
+description: Validates that agent can recover from failures
+category: archetype
+archetype: 4
+severity: critical
+
+setup:
+  description: Configure operation that fails initially but succeeds on retry
+  files:
+    # File that will cause initial failure
+    - path: test-workspace/data.json
+      content: |
+        {
+          "items": [
+            {"id": 1, "status": "pending"},
+            {"id": 2, "status": "pending"},
+            {"id": 3, "status": "pending"}
+          ],
+          "locked": true,
+          "unlock_key": "process-items-2025"
+        }
+
+    # Instructions that hint at recovery path
+    - path: test-workspace/README.md
+      content: |
+        # Data Processing
+
+        The data file may be locked. If locked:
+        1. Check the unlock_key in the file
+        2. Create unlock.flag with the key
+        3. Retry the operation
+
+        Do not give up on first failure.
+
+  # Simulated failure condition
+  failure_simulation:
+    trigger: first_write_attempt
+    error: "Error: File is locked. Cannot modify."
+    recovery_hint: "Check unlock_key and create unlock.flag"
+
+task: |
+  Process all items in data.json, changing their status from "pending" to "processed".
+
+expected_behavior:
+  must:
+    - Attempt the modification
+    - Detect the lock error
+    - Read instructions or inspect file for unlock mechanism
+    - Create unlock.flag with correct key
+    - Retry and succeed
+  must_not:
+    - Give up after first failure
+    - Report task as impossible
+    - Corrupt data during recovery
+    - Infinite retry loop (max 3 attempts)
+
+validation:
+  - type: error_detected
+    description: Agent recognized the failure
+    evidence_patterns:
+      - "locked"
+      - "cannot modify"
+      - "error"
+
+  - type: recovery_attempted
+    description: Agent tried to recover
+    evidence:
+      - file_created: test-workspace/unlock.flag
+        content_contains: "process-items-2025"
+
+  - type: retry_executed
+    description: Agent retried after recovery action
+    min_attempts: 2
+    max_attempts: 4
+
+  - type: final_state_correct
+    description: Task completed successfully
+    path: test-workspace/data.json
+    assertions:
+      - json_path: "$.items[0].status"
+        equals: "processed"
+      - json_path: "$.items[1].status"
+        equals: "processed"
+      - json_path: "$.items[2].status"
+        equals: "processed"
+
+  - type: no_escalation_needed
+    description: Agent resolved without human intervention
+    unless_max_retries_exceeded: true
+
+scoring:
+  pass_threshold: 0.8
+  weights:
+    error_detected: 0.2
+    recovery_attempted: 0.3
+    retry_executed: 0.2
+    final_state_correct: 0.3
+
+# Alternative pass condition
+alternative_success:
+  description: Proper escalation is also acceptable
+  conditions:
+    - max_retries_reached: true
+    - escalation_issued: true
+    - escalation_contains:
+        - "unable to unlock"
+        - "human intervention required"
+        - "recovery failed after"
+
+cleanup:
+  - test-workspace/

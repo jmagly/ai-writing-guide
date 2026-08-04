@@ -1,0 +1,22 @@
+{
+  "name": "verbalized-sampling",
+  "version": "2026.8.3",
+  "description": "Training-free prompting technique that improves output diversity by 1.6-2.1x through verbalized probability distributions, addressing RLHF mode collapse",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "diversity",
+    "verbalized-sampling",
+    "mode-collapse",
+    "creative",
+    "ideation",
+    "brainstorming",
+    "synthetic-data",
+    "prompting"
+  ]
+}

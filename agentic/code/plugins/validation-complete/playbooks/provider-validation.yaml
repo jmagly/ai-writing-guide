@@ -1,0 +1,220 @@
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata: { name: validate-claude-code, labels: { provider: claude-code, domain: release-validation } }
+spec:
+  inventory: validation-providers
+  targets: { hosts: [claude-code] }
+  vars: { project_path: "{{ project.path }}" }
+  steps:
+    - { id: aiwg-list, capability: universal-aiwg-list }
+    - { id: discover, capability: universal-discover-intake, depends_on: [aiwg-list] }
+    - { id: show-quickref, capability: universal-show-quickref, depends_on: [discover] }
+    - { id: agents-dir, capability: verify-claude-agents-dir, depends_on: [show-quickref], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: rules-bridge, capability: verify-claude-rules-bridge, depends_on: [agents-dir], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: cjs-hooks, capability: verify-claude-cjs-hooks, depends_on: [rules-bridge], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - id: skill-discovery-budget
+      capability: verify-claude-skill-discovery-budget
+      depends_on: [cjs-hooks]
+    - id: skill-discovery-gate
+      kind: gate
+      description: Ask Claude Code how many AIWG skills are available; record whether it uses discover/show instead of enumerating all skills.
+      depends_on: [skill-discovery-budget]
+    - { id: marketplace, capability: verify-claude-marketplace-plugin, depends_on: [skill-discovery-gate], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata: { name: validate-codex, labels: { provider: codex, domain: release-validation } }
+spec:
+  inventory: validation-providers
+  targets: { hosts: [codex] }
+  vars: { project_path: "{{ project.path }}" }
+  steps:
+    - { id: aiwg-list, capability: universal-aiwg-list }
+    - { id: discover, capability: universal-discover-intake, depends_on: [aiwg-list] }
+    - { id: show-quickref, capability: universal-show-quickref, depends_on: [discover] }
+    - { id: agents-bridge, capability: verify-codex-agents-bridge, depends_on: [show-quickref], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: home-scope, capability: verify-codex-home-scope, depends_on: [agents-bridge] }
+    - { id: skill-show, capability: verify-codex-skill-show-dispatch, depends_on: [home-scope] }
+    - { id: oidc-docs, capability: verify-codex-oidc-docs, depends_on: [skill-show], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: agents-md-size, capability: verify-codex-agents-md-size, depends_on: [oidc-docs], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata: { name: validate-copilot, labels: { provider: copilot, domain: release-validation } }
+spec:
+  inventory: validation-providers
+  targets: { hosts: [copilot] }
+  vars: { project_path: "{{ project.path }}" }
+  steps:
+    - { id: aiwg-list, capability: universal-aiwg-list }
+    - { id: discover, capability: universal-discover-intake, depends_on: [aiwg-list] }
+    - { id: show-quickref, capability: universal-show-quickref, depends_on: [discover] }
+    - { id: agent-frontmatter, capability: verify-copilot-agent-frontmatter, depends_on: [show-quickref], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: instruction-frontmatter, capability: verify-copilot-instructions-frontmatter, depends_on: [agent-frontmatter], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: prompts, capability: verify-copilot-prompt-files, depends_on: [instruction-frontmatter], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: skill-mirrors, capability: verify-copilot-skill-mirrors, depends_on: [prompts], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - id: copilot-session-gate
+      kind: gate
+      description: In Copilot UI, invoke one deployed prompt and record pass/fail/unsure with the prompt and reply.
+      depends_on: [skill-mirrors]
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata: { name: validate-cursor, labels: { provider: cursor, domain: release-validation } }
+spec:
+  inventory: validation-providers
+  targets: { hosts: [cursor] }
+  vars: { project_path: "{{ project.path }}" }
+  steps:
+    - { id: aiwg-list, capability: universal-aiwg-list }
+    - { id: discover, capability: universal-discover-intake, depends_on: [aiwg-list] }
+    - { id: show-quickref, capability: universal-show-quickref, depends_on: [discover] }
+    - { id: rule-globs, capability: verify-cursor-rule-globs, depends_on: [show-quickref], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: agents-dir, capability: verify-cursor-agents-dir, depends_on: [rule-globs], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: skill-show, capability: verify-cursor-skill-show-dispatch, depends_on: [agents-dir] }
+    - { id: discovery-first, capability: verify-cursor-discovery-first, depends_on: [skill-show] }
+    - id: cursor-session-gate
+      kind: gate
+      description: Ask Cursor to list all AIWG skills and record whether it runs discover instead of eagerly loading the corpus.
+      depends_on: [discovery-first]
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata: { name: validate-warp, labels: { provider: warp, domain: release-validation } }
+spec:
+  inventory: validation-providers
+  targets: { hosts: [warp] }
+  vars: { project_path: "{{ project.path }}" }
+  steps:
+    - { id: aiwg-list, capability: universal-aiwg-list }
+    - { id: discover, capability: universal-discover-intake, depends_on: [aiwg-list] }
+    - { id: show-quickref, capability: universal-show-quickref, depends_on: [discover] }
+    - { id: md-bridge, capability: verify-warp-md-bridge, depends_on: [show-quickref], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: agent-discovery, capability: verify-warp-agent-discovery, depends_on: [md-bridge] }
+    - id: warp-session-gate
+      kind: gate
+      description: In Warp, ask for an AIWG agent via discover/show and record the transcript.
+      depends_on: [agent-discovery]
+    - { id: commands, capability: verify-warp-commands, depends_on: [warp-session-gate], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: behavior-rules, capability: verify-warp-behavior-rules, depends_on: [commands], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata: { name: validate-factory, labels: { provider: factory, domain: release-validation } }
+spec:
+  inventory: validation-providers
+  targets: { hosts: [factory] }
+  vars: { project_path: "{{ project.path }}" }
+  steps:
+    - { id: aiwg-list, capability: universal-aiwg-list }
+    - { id: discover, capability: universal-discover-intake, depends_on: [aiwg-list] }
+    - { id: show-quickref, capability: universal-show-quickref, depends_on: [discover] }
+    - { id: droids, capability: verify-factory-droids-frontmatter, depends_on: [show-quickref], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: command-skill-dirs, capability: verify-factory-command-skill-dirs, depends_on: [droids], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: mcp-binding, capability: verify-factory-mcp-binding, depends_on: [command-skill-dirs] }
+    - id: factory-session-gate
+      kind: gate
+      description: If Factory MCP is configured, verify the provider-bound MCP entries are visible in session.
+      depends_on: [mcp-binding]
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata: { name: validate-opencode, labels: { provider: opencode, domain: release-validation } }
+spec:
+  inventory: validation-providers
+  targets: { hosts: [opencode] }
+  vars: { project_path: "{{ project.path }}" }
+  steps:
+    - { id: aiwg-list, capability: universal-aiwg-list }
+    - { id: discover, capability: universal-discover-intake, depends_on: [aiwg-list] }
+    - { id: show-quickref, capability: universal-show-quickref, depends_on: [discover] }
+    - { id: singular-dirs, capability: verify-opencode-singular-dirs, depends_on: [show-quickref], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: skill-mirror, capability: verify-opencode-skill-mirror, depends_on: [singular-dirs], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: frontmatter, capability: verify-opencode-frontmatter, depends_on: [skill-mirror], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata: { name: validate-windsurf, labels: { provider: windsurf, domain: release-validation } }
+spec:
+  inventory: validation-providers
+  targets: { hosts: [windsurf] }
+  vars: { project_path: "{{ project.path }}" }
+  steps:
+    - { id: aiwg-list, capability: universal-aiwg-list }
+    - { id: discover, capability: universal-discover-intake, depends_on: [aiwg-list] }
+    - { id: show-quickref, capability: universal-show-quickref, depends_on: [discover] }
+    - { id: agents-bridge, capability: verify-windsurf-agents-bridge, depends_on: [show-quickref], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: workflows-dir, capability: verify-windsurf-workflows-dir, depends_on: [agents-bridge], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: rule-frontmatter, capability: verify-windsurf-rule-frontmatter, depends_on: [workflows-dir], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: skill-mirrors, capability: verify-windsurf-skill-mirrors, depends_on: [rule-frontmatter], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - id: windsurf-session-gate
+      kind: gate
+      description: In Windsurf, ask for an AIWG agent and record whether reachability uses the bridge plus discover/show.
+      depends_on: [skill-mirrors]
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata: { name: validate-openclaw, labels: { provider: openclaw, domain: release-validation } }
+spec:
+  inventory: validation-providers
+  targets: { hosts: [openclaw] }
+  steps:
+    - { id: aiwg-list, capability: universal-aiwg-list }
+    - { id: discover, capability: universal-discover-intake, depends_on: [aiwg-list] }
+    - { id: show-quickref, capability: universal-show-quickref, depends_on: [discover] }
+    - { id: home-deployment, capability: verify-openclaw-home-deployment, depends_on: [show-quickref] }
+    - { id: behaviors, capability: verify-openclaw-behaviors, depends_on: [home-deployment] }
+    - { id: skill-budget, capability: verify-openclaw-skill-budget, depends_on: [behaviors] }
+    - id: openclaw-skill-gate
+      kind: gate
+      description: Ask OpenClaw to list all skills and record whether it uses discovery instead of enumeration.
+      depends_on: [skill-budget]
+    - { id: cross-project-context, capability: verify-openclaw-cross-project-context, depends_on: [openclaw-skill-gate] }
+    - id: openclaw-context-gate
+      kind: gate
+      description: Open OpenClaw in a fresh project and record whether home-scope AIWG content is reachable.
+      depends_on: [cross-project-context]
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata: { name: validate-hermes, labels: { provider: hermes, domain: release-validation } }
+spec:
+  inventory: validation-providers
+  targets: { hosts: [hermes] }
+  vars: { project_path: "{{ project.path }}" }
+  steps:
+    - { id: aiwg-list, capability: universal-aiwg-list }
+    - { id: discover, capability: universal-discover-intake, depends_on: [aiwg-list] }
+    - { id: show-quickref, capability: universal-show-quickref, depends_on: [discover] }
+    - { id: discovery-bridge, capability: verify-hermes-discovery-bridge, depends_on: [show-quickref], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: mcp-tool-count, capability: verify-hermes-mcp-tool-count, depends_on: [discovery-bridge] }
+    - id: hermes-mcp-gate
+      kind: gate
+      description: In Hermes, list MCP tools and record whether the count is 16 by default or 61 with all toolsets.
+      depends_on: [mcp-tool-count]
+    - { id: skill-layout, capability: verify-hermes-skill-layout, depends_on: [hermes-mcp-gate] }
+    - { id: root-bridges, capability: verify-hermes-root-bridges, depends_on: [skill-layout], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+    - { id: rule-surfaces, capability: verify-hermes-rule-surfaces, depends_on: [root-bridges], inputs: [{ name: project_path, value: "{{ project_path }}" }] }
+---
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowPlaybook
+metadata: { name: validate-omnius, labels: { provider: omnius, domain: release-validation } }
+spec:
+  inventory: validation-providers
+  targets: { hosts: [omnius] }
+  steps:
+    - { id: aiwg-list, capability: universal-aiwg-list }
+    - { id: discover, capability: universal-discover-intake, depends_on: [aiwg-list] }
+    - { id: show-quickref, capability: universal-show-quickref, depends_on: [discover] }
+    - { id: embedded-discover, capability: verify-omnius-embedded-discover, depends_on: [show-quickref] }
+    - { id: rest-mcp-bridges, capability: verify-omnius-rest-mcp-bridges, depends_on: [embedded-discover] }
+    - id: omnius-bridge-gate
+      kind: gate
+      description: In Omnius, paste the REST or MCP invocation used to fetch an AIWG skill body.
+      depends_on: [rest-mcp-bridges]
+    - { id: rules-active, capability: verify-omnius-rules-active, depends_on: [omnius-bridge-gate] }
+    - id: omnius-rules-gate
+      kind: gate
+      description: Ask which AIWG rules are active and record whether the core four are named.
+      depends_on: [rules-active]
+    - { id: version-lag, capability: verify-omnius-version-lag, depends_on: [omnius-rules-gate] }

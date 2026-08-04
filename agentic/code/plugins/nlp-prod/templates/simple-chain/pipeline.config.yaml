@@ -1,0 +1,32 @@
+version: "1.0.0"
+name: my-pipeline
+description: "TODO: one-sentence description of what this pipeline does"
+pattern: simple-chain
+language: python
+
+steps:
+  - name: extract
+    prompt: prompts/generator.prompt.md
+    model: claude-haiku-4-5
+    max_tokens: 512
+    temperature: 0.0
+    input_variables:
+      - input_text
+    cache_prefix: true
+    timeout_seconds: 15
+    retry_config:
+      max_attempts: 3
+      retry_on: [429, 502, 503]
+      backoff_seconds: 1.0
+
+eval_config:
+  enabled: true
+  evaluator_prompt: prompts/evaluator.prompt.md
+  test_cases: eval/cases.jsonl
+  pass_threshold: 0.85
+  max_attempts: 3
+  eval_model: claude-haiku-4-5
+
+cost_config:
+  monthly_volume: 10000
+  warn_above_usd: 0.01

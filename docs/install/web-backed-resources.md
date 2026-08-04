@@ -276,6 +276,25 @@ AIWG corpus.
   be used for local testing.
 - Signature verification cannot be disabled.
 
+### Paid and private resources
+
+Paid component channels use the same signed manifests, cache, lockfile, and
+deployment commands as public resources. Configure the opaque access token
+issued by the AIWG subscription service:
+
+```bash
+install -m 600 /dev/null "$HOME/.config/aiwg/resource-token"
+# Write the token through your password manager or secret-management tool.
+export AIWG_RESOURCE_ACCESS_TOKEN_FILE="$HOME/.config/aiwg/resource-token"
+aiwg discover "premium capability" --resource-source web --aiwg-version pro
+aiwg use <component> --resource-source web --aiwg-version pro
+```
+
+For ephemeral automation, `AIWG_RESOURCE_ACCESS_TOKEN` is also supported.
+Configure exactly one token source. The CLI sends it only as an HTTPS
+`Authorization: Bearer` header to the configured release origin; it is not
+written to the lockfile, cache metadata, command line, or diagnostics.
+
 ## Research Basis
 
 The web-backed resource beta is grounded in public AIWG reference notes:

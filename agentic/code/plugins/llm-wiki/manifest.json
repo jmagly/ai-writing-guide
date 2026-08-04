@@ -1,0 +1,84 @@
+{
+  "id": "llm-wiki",
+  "type": "addon",
+  "name": "LLM Wiki",
+  "version": "1.0.0",
+  "description": "LLM-maintained markdown wiki that compounds as sources are ingested. Thin topology declaration on the semantic memory kernel — ships schema profiles and page templates, no custom mechanics.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "wiki",
+    "llm-wiki",
+    "knowledge-base",
+    "markdown",
+    "obsidian",
+    "wikilink",
+    "semantic-memory",
+    "book-companion",
+    "research",
+    "personal-knowledge"
+  ],
+  "entry": {
+    "skills": "skills/",
+    "templates": "templates/",
+    "schemas": "schemas/",
+    "docs": "docs/"
+  },
+  "agents": [],
+  "commands": [],
+  "skills": [
+    "llm-wiki"
+  ],
+  "rules": [],
+  "schemas": [
+    "page-schema"
+  ],
+  "templates": [
+    "book-companion",
+    "personal",
+    "research-deep-dive",
+    "business-team",
+    "generic"
+  ],
+  "memory": {
+    "topology": {
+      "namespace": ".aiwg/wiki",
+      "rawSources": ".aiwg/wiki/raw",
+      "derivedPages": {
+        "summary": ".aiwg/wiki/summaries",
+        "entity": ".aiwg/wiki/entities",
+        "concept": ".aiwg/wiki/concepts",
+        "synthesis": ".aiwg/wiki/synthesis"
+      },
+      "index": ".aiwg/wiki/index.md",
+      "log": ".aiwg/wiki/.log.jsonl",
+      "crossRefStyle": "wikilink",
+      "pageTemplate": "templates/generic.md",
+      "lintRules": [
+        "link-check",
+        "mention-lint",
+        "orphan-detection",
+        "contradiction-scan"
+      ]
+    }
+  },
+  "dependencies": {
+    "required": [
+      "semantic-memory"
+    ],
+    "optional": [
+      "aiwg-utils"
+    ]
+  },
+  "configuration": {
+    "defaults": {
+      "topologyProfile": "generic",
+      "autoIndex": true,
+      "orphanThresholdDays": 30,
+      "contradictionSensitivity": "medium"
+    }
+  }
+}

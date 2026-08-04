@@ -83,6 +83,17 @@ describe("signed web release resolver", () => {
     ]);
   });
 
+  it("sends the configured paid-resource credential without placing it in URLs", async () => {
+    fixture.publishRelease();
+    vi.stubEnv("AIWG_RESOURCE_ACCESS_TOKEN", "aiwg_rt_test_customer_token");
+    await resolveWebRelease(options());
+
+    expect(fixture.requestHeaders.every((headers) =>
+      headers.authorization === "Bearer aiwg_rt_test_customer_token",
+    )).toBe(true);
+    expect(fixture.requestPaths.join("\n")).not.toContain("aiwg_rt_test_customer_token");
+  });
+
   it("resolves a signed channel and records its monotonic sequence", async () => {
     const published = fixture.publishRelease();
     fixture.publishChannel("stable", 7, published);

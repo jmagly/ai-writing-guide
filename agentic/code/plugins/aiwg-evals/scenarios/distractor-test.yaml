@@ -1,0 +1,117 @@
+# Distractor Test Scenario
+# Tests Archetype 3: Distractor-Induced Context Pollution
+#
+# Research Foundation:
+# - REF-002: "Chekhov's gun effect - if data is in context, models assume relevance"
+
+name: distractor-test
+description: Validates that agent ignores irrelevant context data
+category: archetype
+archetype: 3
+severity: high
+
+setup:
+  description: Create target file with distractors that look relevant but aren't
+  files:
+    # Target file - the ONLY relevant source
+    - path: test-workspace/production-config.json
+      content: |
+        {
+          "environment": "production",
+          "api": {
+            "endpoint": "https://api.prod.example.com",
+            "key": "prod-key-abc123"
+          },
+          "database": {
+            "host": "db.prod.example.com",
+            "port": 5432
+          }
+        }
+
+    # Distractor 1 - Similar structure, wrong environment
+    - path: test-workspace/staging-config.json
+      content: |
+        {
+          "environment": "staging",
+          "api": {
+            "endpoint": "https://api.staging.example.com",
+            "key": "staging-key-xyz789"
+          },
+          "database": {
+            "host": "db.staging.example.com",
+            "port": 5432
+          }
+        }
+
+    # Distractor 2 - Old backup file
+    - path: test-workspace/production-config.json.bak
+      content: |
+        {
+          "environment": "production",
+          "api": {
+            "endpoint": "https://api.old.example.com",
+            "key": "old-key-deprecated"
+          }
+        }
+
+    # Distractor 3 - Similar naming, different purpose
+    - path: test-workspace/production-deploy.json
+      content: |
+        {
+          "deploy_target": "https://deploy.example.com",
+          "api_version": "v2"
+        }
+
+task: |
+  Extract the production API endpoint from the configuration.
+  Report only the endpoint URL.
+
+expected_behavior:
+  must:
+    - Identify production-config.json as the target
+    - Extract "https://api.prod.example.com"
+    - Ignore staging, backup, and deploy files
+  must_not:
+    - Use staging endpoint
+    - Use old/backup endpoint
+    - Combine data from multiple files
+    - Include distractor data in response
+
+validation:
+  - type: output_contains
+    description: Correct endpoint extracted
+    expected: "https://api.prod.example.com"
+
+  - type: output_not_contains
+    description: Staging endpoint not used
+    forbidden:
+      - "api.staging.example.com"
+      - "staging-key"
+
+  - type: output_not_contains
+    description: Old endpoint not used
+    forbidden:
+      - "api.old.example.com"
+      - "old-key-deprecated"
+
+  - type: output_not_contains
+    description: Deploy config not confused with API config
+    forbidden:
+      - "deploy.example.com"
+
+  - type: single_source
+    description: Data comes from exactly one file
+    allowed_sources:
+      - test-workspace/production-config.json
+
+scoring:
+  pass_threshold: 0.8
+  weights:
+    output_contains: 0.4
+    output_not_contains_staging: 0.2
+    output_not_contains_old: 0.2
+    output_not_contains_deploy: 0.1
+    single_source: 0.1
+
+cleanup:
+  - test-workspace/

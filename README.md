@@ -31,12 +31,26 @@ npm i -g aiwg
 cd /path/to/your/project
 aiwg use all --provider <provider>
 aiwg index build --all
-aiwg regenerate --provider <provider>
-aiwg status --probe --json
 ```
 
 Replace `<provider>` with your AI tool's name, such as `claude`, `codex`,
 `copilot`, or `cursor`.
+
+Every project needs one first-session connection step after deployment. Open or
+reopen your AI provider in the project root, then invoke the deployed
+`aiwg-regenerate` skill inside the agentic session:
+
+```text
+/aiwg-regenerate   # Slash-command platforms
+$aiwg-regenerate   # OpenAI Codex
+```
+
+If your provider uses neither prefix, ask it: `Run aiwg-regenerate for this
+project, preserve project-authored instructions, and verify that AIWG is
+active.` This step integrates the deployed AIWG context into the project the
+agent is actually working in; do not skip it on first setup. Then ask the agent
+to report the engaged state, project root, provider files, and installed
+frameworks.
 
 For the complete beginner path and provider-name table, see
 [Install, Connect, and Verify](docs/getting-started/install-connect-verify.md).
@@ -606,10 +620,10 @@ The bundle is **byte-identical** in shape to its upstream form, so
 
 ### Claude Code Marketplace (Alternative)
 
-```bash
-/plugin marketplace add jmagly/ai-writing-guide
-/plugin install sdlc@aiwg
-```
+Claude Code plugin installation is an alternative distribution path, not part
+of the primary quickstart. See the
+[Plugin Marketplace Guide](docs/plugin-marketplace-guide.md) for marketplace
+setup and individual plugin IDs.
 
 ### Multi-Platform Deployment
 

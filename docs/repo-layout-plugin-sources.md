@@ -38,6 +38,19 @@ see [Repository Source Taxonomy](repo-layout-source-taxonomy.md).
 `agentic/code/plugins/` and writes Codex marketplace entries with
 `./agentic/code/plugins/<name>` source paths.
 
+The Claude marketplace uses the same explicit repository-root-relative source
+paths. It does not set `metadata.pluginRoot`: Claude Code prepends that field to
+relative plugin sources, while AIWG's catalog entries already contain the full
+canonical path. Each generated Claude bundle is self-contained because Claude
+Code copies installed plugins into its versioned cache; skills must not depend
+on files outside the plugin directory through `../` references.
+
+Manifest-backed framework and addon plugins copy their complete canonical
+source directory into the bundle so referenced scripts, schemas, templates,
+prompts, and documentation survive cache installation. Provider-specific
+manifest directories such as `.codex-plugin/` are preserved when regenerating
+Claude bundles.
+
 CI workflows that validate plugin manifests must iterate
 `agentic/code/plugins/*/`, not top-level `plugins/*/`.
 

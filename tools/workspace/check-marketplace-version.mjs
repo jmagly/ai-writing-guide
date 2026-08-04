@@ -3,7 +3,7 @@
  * Verify release version metadata matches package.json version.
  *
  * PUW-038 (#1139): package-lock.json, separately published packages, and the
- * marketplace manifest's top-level metadata.version must move in lockstep
+ * marketplace manifest's top-level version must move in lockstep
  * with package.json on every release; otherwise installs and plugin surfaces
  * can report stale versions while npm ships the new one.
  *
@@ -46,7 +46,7 @@ export function checkVersionLockstep(
   const pkgVersion = pkg.version;
   const lockVersion = lock.version;
   const lockRootVersion = lock?.packages?.['']?.version;
-  const marketplaceVersion = marketplace?.metadata?.version;
+  const marketplaceVersion = marketplace?.version ?? marketplace?.metadata?.version;
   const cliVersion = cli?.version;
 
   if (!pkgVersion) {
@@ -70,7 +70,7 @@ export function checkVersionLockstep(
   if (!marketplaceVersion) {
     return {
       ok: false,
-      message: 'FAIL: .claude-plugin/marketplace.json metadata.version missing',
+      message: 'FAIL: .claude-plugin/marketplace.json version missing',
     };
   }
   if (!cliVersion) {
@@ -117,7 +117,7 @@ export function checkVersionLockstep(
     return {
       ok: true,
       message:
-        `OK package-lock.json, @aiwg/cli, and marketplace metadata.version ` +
+        `OK package-lock.json, @aiwg/cli, and marketplace version ` +
         `(${marketplaceVersion}) match package.json (${pkgVersion})`,
     };
   }
@@ -127,7 +127,7 @@ export function checkVersionLockstep(
       ok: true,
       message:
         `OK package-lock.json matches package.json (${pkgVersion}); ` +
-        `marketplace metadata.version (${marketplaceVersion}) matches stable line ` +
+        `marketplace version (${marketplaceVersion}) matches stable line ` +
         'with pre-release suffix difference allowed by --allow-prerelease-mismatch',
     };
   }
@@ -135,9 +135,9 @@ export function checkVersionLockstep(
   return {
     ok: false,
     message:
-      `FAIL: marketplace metadata.version (${marketplaceVersion}) does not match ` +
+      `FAIL: marketplace version (${marketplaceVersion}) does not match ` +
       `package.json (${pkgVersion}). PUW-038 (#1139) requires lockstep bumps.`,
-    fix: `Fix: update .claude-plugin/marketplace.json metadata.version to ${pkgVersion}.`,
+    fix: `Fix: update .claude-plugin/marketplace.json version to ${pkgVersion}.`,
   };
 }
 

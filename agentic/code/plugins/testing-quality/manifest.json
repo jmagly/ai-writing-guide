@@ -1,0 +1,37 @@
+{
+  "name": "testing-quality",
+  "version": "1.0.0",
+  "description": "Testing enforcement, quality metrics, and automation skills",
+  "category": "sdlc",
+  "skills": [
+    "tdd-enforce",
+    "mutation-test",
+    "flaky-detect",
+    "flaky-fix",
+    "generate-factory",
+    "test-sync"
+  ],
+  "dependencies": [],
+  "research_basis": {
+    "tdd": {
+      "source": "Kent Beck (2002)",
+      "reference": "Test-Driven Development by Example"
+    },
+    "coverage": {
+      "source": "Google Testing Blog (2010)",
+      "reference": "https://testing.googleblog.com/2010/07/code-coverage-goal-80-and-no-less.html"
+    },
+    "mutation": {
+      "source": "ICST Mutation Workshop",
+      "reference": "https://conf.researchr.org/home/icst-2024/mutation-2024"
+    },
+    "flaky": {
+      "source": "Google (2016) + FlaKat (2024)",
+      "reference": "https://arxiv.org/abs/2403.01003"
+    },
+    "factories": {
+      "source": "ThoughtBot FactoryBot + Faker.js",
+      "reference": "https://fakerjs.dev/"
+    }
+  }
+}

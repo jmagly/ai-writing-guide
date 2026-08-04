@@ -27,6 +27,7 @@ import {
 import { translateSkillsToCommands, providerNeedsCommands } from '../../plugin/skill-command-translator.js';
 import * as ui from '../ui.js';
 import { readAiwgConfig, writeAiwgConfig, updateInstalled, hashManifest, emptyConfig, getProjectDir } from '../../config/aiwg-config.js';
+import { appendGitignore } from '../../config/gitignore.js';
 import { getLogger } from '../log.js';
 import { installCockpit } from './cockpit.js';
 import { initHandler } from './init.js';
@@ -378,6 +379,30 @@ function getProviderKernelSkillsPath(provider: string): string {
   return getProviderKernelSkillPath(provider) || getProviderKernelSkillPath('claude');
 }
 
+const PROVIDER_GENERATED_GITIGNORE_PATTERNS: Record<string, string[]> = {
+  codex: ['.codex/', '.agents/'],
+};
+
+async function ensureProviderGeneratedDirsIgnored(
+  projectRoot: string,
+  provider: string,
+  opts: { dryRun: boolean; verbose: boolean },
+): Promise<void> {
+  if (opts.dryRun) return;
+
+  const patterns = PROVIDER_GENERATED_GITIGNORE_PATTERNS[provider];
+  if (!patterns || patterns.length === 0) return;
+
+  try {
+    const result = await appendGitignore(projectRoot, patterns);
+    if (opts.verbose && result.added.length > 0) {
+      ui.dim(`  Gitignore: added ${result.added.join(', ')}`);
+    }
+  } catch (error) {
+    ui.warn(`Failed to update .gitignore for generated ${provider} artifacts: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 const MIRRORED_STANDARD_COMMAND_SKILLS = new Set([
   'aiwg-setup-project',
   'aiwg-update-claude',
@@ -582,7 +607,7 @@ function agenticNextSteps(openStep: string): string[] {
   return [
     openStep,
     'Ask the steward:  "Check that AIWG is installed correctly and tell me what I can do here."',
-    'Regenerate:       Use aiwg-regenerate in-session when context files need rebuilding.',
+    'Regenerate:       Invoke {{aiwg-regenerate}} in-session when context files need rebuilding.',
     'Install runbook:  docs/agentic-install-runbook.md',
     'Diagnostics:      aiwg doctor',
   ];
@@ -625,7 +650,11 @@ const NEXT_STEPS: Record<string, string[]> = {
 
 export function nextStepsFor(framework: Framework, provider: string = 'claude'): string[] {
   const providerKey = `${provider}/${framework}`;
-  return NEXT_STEPS[providerKey] ?? NEXT_STEPS[framework] ?? NEXT_STEPS.sdlc;
+  const regenerateInvocation = provider === 'codex' || provider === 'openai'
+    ? '$aiwg-regenerate'
+    : '/aiwg-regenerate';
+  const steps = NEXT_STEPS[providerKey] ?? NEXT_STEPS[framework] ?? NEXT_STEPS.sdlc;
+  return steps.map((step) => step.replace('{{aiwg-regenerate}}', regenerateInvocation));
 }
 
 function printNextSteps(framework: Framework, provider: string = 'claude'): void {
@@ -651,8 +680,8 @@ const SESSION_RELOAD_NOTICE: Record<string, { action: string; rationale: string;
     rationale: 'Claude Code reads .claude/agents/ at session start. A running session retains its old registry until reloaded.',
   },
   codex: {
-    action: 'Restart your Codex session to pick up newly deployed agents and home-dir skills.',
-    rationale: 'Codex caches its agent and skill registry per session. ~/.codex/skills/ and .codex/agents/ are scanned on startup.',
+    action: 'Restart/open Codex in this target workspace so it picks up newly deployed agents and .agents/skills entries.',
+    rationale: 'Codex caches its agent and skill registry per session. Project .agents/skills/ and .codex/agents/ are scanned from the Codex working directory up to the repo root on startup.',
   },
   copilot: {
     action: 'Reload the VS Code window (`Developer: Reload Window`) so Copilot picks up the new .github/agents/ entries.',
@@ -2250,6 +2279,8 @@ export class UseHandler implements CommandHandler {
           }
         }
 
+        await ensureProviderGeneratedDirsIgnored(target, providerName, { dryRun, verbose });
+
         if (!dryRun) {
           try {
             const registry = getRegistry();
@@ -2799,6 +2830,8 @@ export class UseHandler implements CommandHandler {
         ui.warn(`${plResult.failed} project-local bundle(s) failed to deploy`);
       }
     }
+
+    await ensureProviderGeneratedDirsIgnored(target, provider, { dryRun, verbose });
 
     const paths = getProviderPaths(provider);
     if (!dryRun && !skipUtils) {

@@ -1,0 +1,23 @@
+{
+  "name": "agent-loop",
+  "version": "3.0.0",
+  "description": "Detect iterative autonomous agent loop requests and route to the appropriate loop executor",
+  "triggers": [
+    "ralph this",
+    "ralph:",
+    "ralph it",
+    "keep trying until",
+    "loop until",
+    "iterate until",
+    "run until passes",
+    "fix until green",
+    "keep fixing until",
+    "keep going until",
+    "iterate on",
+    "al:"
+  ],
+  "priority": "high",
+  "exclusive": true,
+  "category": "automation",
+  "author": "AIWG Contributors"
+}

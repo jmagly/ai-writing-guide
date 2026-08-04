@@ -1,0 +1,36 @@
+version: "1.0.0"
+name: my-rag-pipeline
+description: "TODO: one-sentence description"
+pattern: rag-pipeline
+language: python
+
+steps:
+  - name: generate
+    prompt: prompts/rag.prompt.md
+    model: claude-haiku-4-5
+    max_tokens: 1024
+    temperature: 0.1
+    input_variables:
+      - context
+      - query
+    cache_prefix: true
+
+rag_config:
+  embedding_model: text-embedding-3-small
+  retrieval_k: 5
+  chunk_size: 512
+  chunk_overlap: 64
+  rerank: false
+  context_template: "{{context}}"
+
+eval_config:
+  enabled: true
+  evaluator_prompt: prompts/evaluator.prompt.md
+  test_cases: eval/cases.jsonl
+  pass_threshold: 0.80
+  max_attempts: 2
+  eval_model: claude-haiku-4-5
+
+cost_config:
+  monthly_volume: 10000
+  warn_above_usd: 0.02

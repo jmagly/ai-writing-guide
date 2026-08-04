@@ -1,0 +1,5 @@
+{"id": "case_001", "input": "ACME Widget Pro 2.0 — 48V, 10A, blue, $29.99/unit, min order 50", "expected": {"name": "Widget Pro 2.0", "voltage": "48V", "current": "10A", "color": "blue", "price": 29.99}, "tags": ["happy-path"]}
+{"id": "case_002", "input": "SuperCell LithiumPack 72V 20Ah, white, $149.00 each", "expected": {"name": "LithiumPack", "voltage": "72V", "color": "white", "price": 149.00}, "tags": ["happy-path"]}
+{"id": "case_003", "input": "Generic resistor 10kΩ 1/4W, brown-black-orange-gold, $0.05/pc", "expected": {"name": "resistor", "resistance": "10kΩ", "wattage": "0.25W", "price": 0.05}, "tags": ["happy-path"]}
+{"id": "case_004", "input": "Something without any structured data here", "expected": {}, "tags": ["edge-case", "empty"]}
+{"id": "case_005", "input": "Widget v3 — features: fast, durable, eco-friendly. Contact for pricing.", "expected": {"name": "Widget v3", "price": null}, "tags": ["missing-fields"]}

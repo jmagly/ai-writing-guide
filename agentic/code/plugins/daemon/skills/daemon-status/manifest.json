@@ -1,0 +1,18 @@
+{
+  "name": "daemon-status",
+  "version": "2026.3.0",
+  "description": "Show daemon health, active sessions, task queue, and subsystem status",
+  "triggers": [
+    "daemon status",
+    "daemon health",
+    "is the daemon running",
+    "what's the daemon doing",
+    "show daemon",
+    "check daemon",
+    "daemon info"
+  ],
+  "priority": "normal",
+  "exclusive": false,
+  "category": "daemon",
+  "author": "AIWG Contributors"
+}
