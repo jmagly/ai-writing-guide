@@ -81,24 +81,6 @@ function runAiwgWithEnv(
   };
 }
 
-function runAiwgWithEnv(
-  args: string[],
-  cwd: string,
-  env: NodeJS.ProcessEnv,
-): { stdout: string; stderr: string; exitCode: number } {
-  const result = spawnSync(process.execPath, [BIN, ...args], {
-    cwd,
-    encoding: 'utf-8',
-    timeout: 60_000,
-    env: { ...process.env, ...env },
-  });
-  return {
-    stdout: result.stdout ?? '',
-    stderr: result.stderr ?? '',
-    exitCode: result.status ?? 1,
-  };
-}
-
 function canInitGit(): boolean {
   const tmp = mkdtempSync(path.join(os.tmpdir(), 'aiwg-git-check-'));
   try {
