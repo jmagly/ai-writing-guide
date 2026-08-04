@@ -79,6 +79,7 @@
     "uat:cockpit-live": "vitest run --config config/vitest.uat-cockpit-live.config.js",
     "uat:cockpit-live:matrix": "AIWG_COCKPIT_LIVE_REQUIRED=1 AIWG_COCKPIT_LIVE_MATRIX_REQUIRED=1 vitest run --config config/vitest.uat-cockpit-live.config.js",
     "uat:fleet-sandbox-live": "vitest run --config config/vitest.uat-fleet-sandbox.config.js",
+    "qualify:agentic-sandbox-2026.8.3": "node tools/qualification/agentic-sandbox-baseline.mjs",
     "uat:cockpit-daily": "node apps/cockpit/scripts/cockpit-daily-gate.mjs",
     "e2e:cockpit-dev": "node test/e2e/cockpit-dev-e2e.mjs",
     "cockpit:up": "bash apps/cockpit/scripts/cockpit-up.sh",

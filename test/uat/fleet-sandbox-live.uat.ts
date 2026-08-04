@@ -27,6 +27,7 @@ let secretsDir = '';
 let grpcPort = 0;
 let baseUrl = '';
 let server: ChildProcess | undefined;
+const protocolEvidence: Record<string, unknown> = {};
 
 async function portAvailable(port: number): Promise<boolean> {
   return new Promise((resolvePort, reject) => {
@@ -130,6 +131,45 @@ afterAll(async () => {
 });
 
 suite('AIWG fleet conductor with a real Agentic Sandbox binary', () => {
+  it('fails closed for auth/malformed input and exercises governed activity availability', async () => {
+    const unauthorized = await fetch(`${baseUrl}/api/v2/fleet/workloads`);
+    expect(unauthorized.status).toBe(401);
+
+    const malformed = await fetch(`${baseUrl}/api/v2/fleet/workloads`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ document_type: 'workload', api_version: 'wrong/v0' }),
+    });
+    expect(malformed.status).toBeGreaterThanOrEqual(400);
+    expect(malformed.status).toBeLessThan(500);
+
+    const activityHeaders = {
+      authorization: `Bearer ${token}`,
+      'x-agentic-tenant-id': 'tenant-live',
+      'x-agentic-host-id': 'host-live',
+      'x-agentic-instance-id': instanceIds[0],
+      'x-agentic-agent-id': 'agent-live',
+    };
+    const coverage = await fetch(`${baseUrl}/api/v2/activity/coverage`, { headers: activityHeaders });
+    expect(coverage.status).toBe(200);
+    expect(await coverage.json()).toMatchObject({ schema_version: 'activity.event/v1' });
+    const timeline = await fetch(`${baseUrl}/api/v2/activity/timeline?limit=10`, { headers: activityHeaders });
+    expect(timeline.status).toBe(200);
+    expect(await timeline.json()).toMatchObject({ schema_version: 'activity.event/v1', events: [] });
+    const signedExport = await fetch(`${baseUrl}/api/v2/activity/export`, {
+      method: 'POST', headers: { ...activityHeaders, 'content-type': 'application/json' }, body: '{}',
+    });
+    expect(signedExport.status).toBe(503);
+
+    Object.assign(protocolEvidence, {
+      unauthorized_status: unauthorized.status,
+      malformed_status: malformed.status,
+      activity_coverage_status: coverage.status,
+      activity_timeline_status: timeline.status,
+      signed_export_unconfigured_status: signedExport.status,
+    });
+  });
+
   it('dispatches, binds, restarts, and re-adopts three durable children without duplication', async () => {
     const pool = instanceIds.map(executor);
     const first = await new FleetMissionConductor({ runWorker: client().runWorker }).conduct(plan(), pool);
@@ -173,7 +213,12 @@ suite('AIWG fleet conductor with a real Agentic Sandbox binary', () => {
     await mkdir(evidenceDir, { recursive: true });
     await writeFile(join(evidenceDir, 'fleet-sandbox-live.evidence.json'), JSON.stringify({
       aiwg_commit: process.env.GITHUB_SHA ?? process.env.GITEA_SHA ?? null,
+      aiwg_qualification_commit: process.env.AIWG_QUALIFICATION_COMMIT ?? null,
+      sandbox_tag: process.env.AGENTIC_SANDBOX_QUALIFICATION_TAG ?? null,
+      sandbox_commit: process.env.AGENTIC_SANDBOX_QUALIFICATION_COMMIT ?? null,
       sandbox_binary: binary,
+      runtime_targets: { host_management: 'pass', managed_container: 'not_available', vm: 'not_available', apple_endpoint_security: 'not_available' },
+      protocol_evidence: protocolEvidence,
       target_ids: first.cycles.map((cycle) => cycle.lineage?.targetId),
       task_ids: taskIds,
       restart_task_ids: resumed.cycles.map((cycle) => cycle.taskId),
