@@ -59,6 +59,11 @@ jobs:
               cat "$plugin.codex-plugin/plugin.json" | head -5
             elif [ -f "$CODEX_MARKETPLACE" ] && grep -Eq "\"name\"[[:space:]]*:[[:space:]]*\"$name\"" "$CODEX_MARKETPLACE"; then
               echo "✓ $name: registered in codex marketplace"
+            elif [ "$name" = "codex-sdlc" ] && [ -f "$plugin/skills/manifest.json" ]; then
+              # codex-sdlc is the checked-in provider-native Codex bundle, not
+              # one of the independently installable Claude marketplace
+              # plugins generated above. Its skill manifest is its registry.
+              echo "✓ $name: provider-native Codex bundle manifest valid"
             else
               echo "✗ $name: missing manifest (no .claude-plugin/plugin.json, .codex-plugin/plugin.json, or codex marketplace entry)"
               exit 1
