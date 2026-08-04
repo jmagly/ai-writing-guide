@@ -252,7 +252,10 @@ A VM still enrolling reports `bootstrap-pending` (the transitional
 `unknown`. This posture drives the Cockpit Inventory tab's per-instance
 Transport / Host-daemon columns and the `host ✓ · docker ✓ · vm ✓` runtime
 coverage banner. Verified end-to-end against agentic-sandbox v2026.7.4
-(`.aiwg/testing/outputs/cockpit-7.4-transport-verify-2026-07-09.md`).
+(`.aiwg/testing/outputs/cockpit-7.4-transport-verify-2026-07-09.md`) as the
+minimum transport-posture feature evidence. The latest immutable
+fleet/activity qualification is v2026.8.3; see
+[the qualification record](./cockpit/qualifications/agentic-sandbox-v2026.8.3.md).
 
 ### Stale agent recovery
 

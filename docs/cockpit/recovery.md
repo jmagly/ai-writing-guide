@@ -20,6 +20,14 @@ targets are deliberately excluded from the button (see
 A Reconnect never creates a replacement instance and never destroys the
 running runtime — it only attempts to restore the missing agent registration.
 
+Agentic Sandbox v2026.8.3 changes the managed Linux-container identity
+boundary to credential-free UDS control with a unique control UID and workload
+UID `10001`. Containers created by older releases must be reported as requiring
+recreation; reconnecting or restarting one does not establish the new boundary.
+Cockpit preserves the executor's legacy/recreation-required posture rather than
+silently labeling an existing container secure-default. See the
+[v2026.8.3 qualification](./qualifications/agentic-sandbox-v2026.8.3.md).
+
 ## What the Bridge tries, in order
 
 `POST /api/instances/:id/reconnect` walks executor-owned recovery first, then

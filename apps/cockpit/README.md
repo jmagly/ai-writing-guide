@@ -411,7 +411,11 @@ safe version/build fields in the report. When the executor build does not expose
 that metadata, set `AIWG_COCKPIT_EXECUTOR_VERSION=<tag-or-commit>` so release
 evidence still names the tested agentic-sandbox build. A manual run against
 agentic-sandbox `v2026.6.15` or newer should attach its markdown/JSON result to
-epic roctinam/aiwg#1588 before the epic is considered done-done.
+epic roctinam/aiwg#1588 before the epic is considered done-done. The latest
+immutable fleet/activity qualification is
+[Agentic Sandbox v2026.8.3](../../docs/cockpit/qualifications/agentic-sandbox-v2026.8.3.md);
+older v2026.7.x entries below are historical feature-floor evidence, not the
+latest whole-integration claim.
 
 The executable release-validation procedure is
 `.aiwg/testing/cockpit-real-integration-uat-runbook.md`. Use that runbook for
@@ -575,7 +579,7 @@ agentic-sandbox executor through `AIWG_COCKPIT_EXECUTOR_URL`. The host target
 (agentic-sandbox#461) have landed upstream; the Bridge seam is now the
 AIWG-side integration point for #1589. Runtime-tier provisioning and
 host-daemon surfacing (roctinam/aiwg#1615) and transport-trust visibility (#1618)
-**landed and are verified against `v2026.7.4`** — transport posture and
+**landed with a compatibility floor verified against `v2026.7.4`** — transport posture and
 host-daemon now render per instance (a host-daemon *detail-status* payload
 remains a residual under #1615). Direct/managed PTY negotiation (#1616) and the
 live real-sandbox gate (#1617) continue. Secure transport details map back to agentic-sandbox#409/#410/#412; local
