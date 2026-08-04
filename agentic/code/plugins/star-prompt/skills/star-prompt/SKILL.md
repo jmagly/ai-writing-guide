@@ -1,7 +1,9 @@
 ---
+namespace: aiwg
 name: star-prompt
 description: Prompt users tastefully to star AIWG after a successful regenerate or intake workflow.
 version: 1.0.0
+platforms: [all]
 ---
 
 # Star Prompt Skill
