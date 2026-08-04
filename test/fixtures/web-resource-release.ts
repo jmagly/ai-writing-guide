@@ -253,9 +253,16 @@ export function createWebResourceReleaseFixture() {
         response.end("not found");
         return;
       }
+      const etag = `"sha256-${digest(body)}"`;
+      if (request.headers["if-none-match"] === etag) {
+        response.writeHead(304, { etag });
+        response.end();
+        return;
+      }
       response.writeHead(200, {
         "content-type": pathname.endsWith(".json") ? "application/json" : "application/octet-stream",
         "content-length": String(body.length),
+        etag,
       });
       response.end(body);
     });

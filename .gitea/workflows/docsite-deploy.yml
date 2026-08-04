@@ -133,6 +133,9 @@ jobs:
           node -e "const p=require('./dist/docs-audience-audit.json'); if(!p.totals.agentReferenceFiles) process.exit(1)"
           npx pagenary build:tenants aiwg-docs
           node tools/docs/write-blog-static-pages.mjs dist/aiwg-docs
+          # A unique, root-tenant-owned marker lets the public verification
+          # distinguish this deployment from a stale edge response.
+          printf '%s\n' "${{ gitea.sha }}" > "dist/aiwg-docs/aiwg-deploy-${{ gitea.sha }}.txt"
 
       - name: Verify build output
         run: |
@@ -357,29 +360,126 @@ jobs:
           if [ -z "${CLOUDFLARE_ZONE_ID:-}" ] || \
              [ -z "${CLOUDFLARE_API_TOKEN_VAULT_PATH:-}" ] || \
              [ -z "${CLOUDFLARE_API_TOKEN_VAULT_FIELD:-}" ]; then
-            echo "Cloudflare token fetch skipped: zone id or vault route is not configured"
+            echo "::notice::Docsite deployed with degraded CDN status: scoped purge credentials are not configured; cached content may remain until TTL"
             exit 0
           fi
           if ! bash ci/vault-fetch.sh --spec ci/vault-fetch.docsite-cloudflare.spec; then
-            echo "::warning::Cloudflare token fetch failed; cache purge will be skipped"
+            echo "::warning::Docsite deployed with degraded CDN status: Cloudflare token fetch failed; cached content may remain until TTL"
             exit 0
           fi
 
-      - name: Purge Cloudflare cache
+      - name: Purge root-tenant Cloudflare URLs
+        id: purge
         env:
           CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
         run: |
           set -euo pipefail
           if [ -z "${CLOUDFLARE_ZONE_ID:-}" ] || [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
-            echo "Cloudflare purge skipped: CLOUDFLARE_ZONE_ID or Cloudflare API token is not configured"
+            echo "::notice::Docsite deployed with degraded CDN status: scoped purge skipped because CLOUDFLARE_ZONE_ID or the API token is unavailable"
+            echo "performed=false" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
-          curl --fail --show-error --silent \
-            -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            --data '{"purge_everything":true}'
-          echo "Cloudflare cache purge requested"
+          OUT="${{ gitea.workspace }}/dist/aiwg-docs"
+          BASE="https://docs.aiwg.io"
+          export OUT BASE PROTECTED_DOCS_SUBPATHS
+          # Derive every URL from the files just deployed. The generator fixes
+          # the only permitted hostname and rejects any protected first path
+          # segment before a request can be constructed.
+          node <<'NODE' > /tmp/docsite-purge-urls.txt
+          const { readdirSync, statSync } = require('node:fs');
+          const { join, relative, sep } = require('node:path');
+          const out = process.env.OUT;
+          const base = new URL(process.env.BASE);
+          if (base.protocol !== 'https:' || base.hostname !== 'docs.aiwg.io' || base.pathname !== '/') {
+            throw new Error(`refusing non-root purge base: ${base.href}`);
+          }
+          const protectedPaths = new Set(process.env.PROTECTED_DOCS_SUBPATHS.split(/\s+/).filter(Boolean));
+          const files = [];
+          const walk = (dir) => {
+            for (const name of readdirSync(dir)) {
+              const path = join(dir, name);
+              statSync(path).isDirectory() ? walk(path) : files.push(relative(out, path).split(sep));
+            }
+          };
+          walk(out);
+          const urls = new Set([base.href, new URL('index.html', base).href]);
+          for (const parts of files) {
+            if (protectedPaths.has(parts[0])) throw new Error(`protected tenant entered root output: ${parts.join('/')}`);
+            const encoded = parts.map(encodeURIComponent).join('/');
+            const url = new URL(encoded, base);
+            if (url.protocol !== 'https:' || url.hostname !== 'docs.aiwg.io') throw new Error(`unowned purge URL: ${url.href}`);
+            urls.add(url.href);
+            // Web servers also expose each nested index.html at its directory
+            // alias. Purge that canonical alias without broadening ownership.
+            if (parts.at(-1) === 'index.html') {
+              const directory = parts.slice(0, -1).map(encodeURIComponent).join('/');
+              urls.add(new URL(directory ? `${directory}/` : '/', base).href);
+            }
+          }
+          process.stdout.write([...urls].sort().join('\n') + '\n');
+          NODE
+          count=$(wc -l < /tmp/docsite-purge-urls.txt)
+          echo "Purging ${count} root-tenant URL(s) on ${BASE} in batches of 30"
+          api="https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache"
+          tmp_prefix="/tmp/docsite-purge-batch-"
+          trap 'rm -f /tmp/docsite-purge-urls.txt /tmp/docsite-purge-batch-* /tmp/docsite-purge-response.json' EXIT
+          split -l 30 /tmp/docsite-purge-urls.txt "$tmp_prefix"
+          n=0
+          for batch in ${tmp_prefix}*; do
+            n=$((n + 1))
+            body=$(jq -R . "$batch" | jq -sc '{files: .}')
+            status=$(curl --show-error --silent --max-time 30 \
+              --output /tmp/docsite-purge-response.json --write-out '%{http_code}' \
+              -X POST "$api" \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              --data "$body")
+            if [[ ! "$status" =~ ^2[0-9][0-9]$ ]]; then
+              echo "::error::Cloudflare purge batch ${n} returned HTTP ${status}: $(jq -c '.errors // .' /tmp/docsite-purge-response.json 2>/dev/null || true)"
+              exit 1
+            fi
+            if ! jq -e '.success == true' /tmp/docsite-purge-response.json >/dev/null; then
+              echo "::error::Cloudflare purge batch ${n} returned success=false: $(jq -c '.errors // .' /tmp/docsite-purge-response.json)"
+              exit 1
+            fi
+            echo "  batch ${n}: purged $(wc -l < "$batch") URL(s)"
+          done
+          echo "performed=true" >> "${GITHUB_OUTPUT}"
+          echo "Cloudflare root-tenant cache purge complete"
+
+      - name: Verify public content after scoped purge
+        if: steps.purge.outputs.performed == 'true'
+        env:
+          DEPLOY_SHA: ${{ gitea.sha }}
+        run: |
+          set -euo pipefail
+          marker_url="https://docs.aiwg.io/aiwg-deploy-${DEPLOY_SHA}.txt"
+          headers=$(mktemp)
+          body=$(mktemp)
+          trap 'rm -f "$headers" "$body"' EXIT
+          curl --fail --show-error --silent --max-time 30 --retry 3 --retry-delay 2 \
+            --dump-header "$headers" --output "$body" "$marker_url"
+          if [ "$(tr -d '\r\n' < "$body")" != "$DEPLOY_SHA" ]; then
+            echo "::error::Public deployment marker does not match ${DEPLOY_SHA}"
+            exit 1
+          fi
+          if ! grep -qi '^cache-control:' "$headers"; then
+            echo "::error::Public deployment marker response is missing Cache-Control"
+            exit 1
+          fi
+          if ! grep -qi '^etag:' "$headers"; then
+            echo "::error::Public deployment marker response is missing ETag"
+            exit 1
+          fi
+          etag=$(awk 'tolower($0) ~ /^etag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")
+          conditional_status=$(curl --show-error --silent --max-time 30 \
+            --output /dev/null --write-out '%{http_code}' \
+            -H "If-None-Match: ${etag}" "$marker_url")
+          if [ "$conditional_status" != "304" ]; then
+            echo "::error::Public deployment marker ETag did not produce HTTP 304 (got ${conditional_status})"
+            exit 1
+          fi
+          echo "Public marker, Cache-Control, and ETag/304 verification passed for ${DEPLOY_SHA}"
 
       - name: Cleanup SSH key
         if: always()

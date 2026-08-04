@@ -83,6 +83,23 @@ describe("signed web release resolver", () => {
     ]);
   });
 
+  it("keeps a verified exact-version generation entirely local on subsequent online resolution", async () => {
+    fixture.publishRelease();
+    await resolveWebRelease(options());
+    const before = fixture.requestPaths.length;
+    await resolveWebRelease(options());
+    expect(fixture.requestPaths).toHaveLength(before);
+  });
+
+  it("keeps a verified digest-selected immutable generation local without refreshing the index", async () => {
+    const published = fixture.publishRelease();
+    await resolveWebRelease(options());
+    const before = fixture.requestPaths.length;
+    const release = await resolveWebRelease(options(`sha256:${published.manifestDigest}`));
+    expect(release.manifestDigest).toBe(published.manifestDigest);
+    expect(fixture.requestPaths).toHaveLength(before);
+  });
+
   it("adds credential headers without putting credentials in request paths or cache keys", async () => {
     fixture.publishRelease();
     const secret = "aiwg_at_fixture_header_only";
@@ -108,6 +125,55 @@ describe("signed web release resolver", () => {
     expect(release.manifestDigest).toBe(published.manifestDigest);
   });
 
+  it("conditionally revalidates a verified channel with ETag and skips its signature on 304", async () => {
+    const published = fixture.publishRelease();
+    fixture.publishChannel("stable", 7, published);
+    const diagnostics: any[] = [];
+    await resolveWebRelease({ ...options("stable"), onDiagnostic: (value) => diagnostics.push(value) });
+    const before = fixture.requestPaths.length;
+
+    await resolveWebRelease({ ...options("stable"), onDiagnostic: (value) => diagnostics.push(value) });
+
+    expect(fixture.requestPaths.slice(before)).toEqual(["/resources/channels/stable.json"]);
+    expect(fixture.requestHeaders.at(-1)?.["if-none-match"]).toMatch(/^"sha256-/);
+    expect(fixture.requestHeaders.at(-1)?.["accept-encoding"]).toBe("identity");
+    expect(diagnostics.at(-1)).toEqual({ resource: "channel", outcome: "conditional-hit", validator: "etag" });
+  });
+
+  it("uses changed channel ETag responses as signed 200 updates", async () => {
+    const first = fixture.publishRelease();
+    fixture.publishChannel("stable", 1, first);
+    await resolveWebRelease(options("stable"));
+    const next = fixture.publishRelease({ version: "2026.7.23" });
+    fixture.publishChannel("stable", 2, next);
+    const diagnostics: any[] = [];
+
+    const release = await resolveWebRelease({ ...options("stable"), onDiagnostic: (value) => diagnostics.push(value) });
+
+    expect(release.version).toBe("2026.7.23");
+    expect(release.channelSequence).toBe(2);
+    expect(diagnostics.at(-1)).toEqual({ resource: "channel", outcome: "revalidated", validator: "etag" });
+  });
+
+  it.each(["channel.json", "channel.sig"])("unconditionally recovers when cached %s cannot support a 304", async (filename) => {
+    const published = fixture.publishRelease();
+    fixture.publishChannel("stable", 4, published);
+    await resolveWebRelease(options("stable"));
+    const generation = path.join(cacheRoot, "channels", "stable", fs.readdirSync(path.join(cacheRoot, "channels", "stable"))[0]);
+    if (filename === "channel.json") fs.writeFileSync(path.join(generation, filename), "corrupt");
+    else fs.rmSync(path.join(generation, filename));
+    const before = fixture.requestPaths.length;
+
+    const release = await resolveWebRelease(options("stable"));
+
+    expect(release.channelSequence).toBe(4);
+    expect(fixture.requestPaths.slice(before, before + 2)).toEqual([
+      "/resources/channels/stable.json",
+      "/resources/channels/stable.sig",
+    ]);
+    expect(fixture.requestHeaders[before]?.["if-none-match"]).toBeUndefined();
+  });
+
   it("resolves SemVer ranges and manifest digest selectors through the signed version index", async () => {
     const older = fixture.publishRelease({ version: "2026.7.21" });
     const latest = fixture.publishRelease();
@@ -124,6 +190,30 @@ describe("signed web release resolver", () => {
     expect(byDigest.manifestDigest).toBe(older.manifestDigest);
     expect(fixture.requestPaths).toContain("/resources/versions.json");
     expect(fixture.requestPaths).toContain("/resources/versions.sig");
+  });
+
+  it("conditionally revalidates the signed version index and rejects an expired bearer response", async () => {
+    const published = fixture.publishRelease();
+    fixture.publishVersionIndex([published]);
+    await resolveWebRelease(options("^2026.7.0"));
+    const before = fixture.requestPaths.length;
+    await resolveWebRelease(options("^2026.7.0"));
+    expect(fixture.requestPaths.slice(before)).toEqual(["/resources/versions.json"]);
+    expect(fixture.requestHeaders.at(-1)?.["if-none-match"]).toMatch(/^"sha256-/);
+
+    const expired = vi.fn(async (_input: string | URL, init?: any) => ({
+      ok: false,
+      status: 401,
+      headers: { get: () => null },
+      body: null,
+      arrayBuffer: async () => new ArrayBuffer(0),
+    }));
+    await expect(resolveWebRelease({
+      ...options("^2026.7.0"),
+      fetcher: expired,
+      credentialProvider: async () => "expired-secret",
+    })).rejects.toThrow(/fetch failed \(401\)/);
+    expect(expired.mock.calls[0][1]?.headers.authorization).toBe("Bearer expired-secret");
   });
 
   it("rejects a public-key mismatch before accepting signed metadata", async () => {

@@ -105,6 +105,20 @@ entry in `PROTECTED_DOCS_SUBPATHS` into an rsync receiver-protect filter
 (`P /<subpath>/***`), runs a dry-run sync first, and fails before mutation if
 the plan would delete a protected subtree.
 
+CDN ownership follows the same boundary. AIWG may invalidate only HTTPS URLs on
+`docs.aiwg.io` that correspond to files in its freshly built root output, plus
+the root `/` and `/index.html` aliases. It must never invalidate a registered
+sibling subtree or another hostname. Purges are URL-scoped, sent in batches of
+at most 30, and fail closed when Cloudflare returns a non-2xx response or a JSON
+result other than `success: true`. If purge credentials are not configured, the
+deployment records an explicit degraded-CDN notice and allows origin deployment
+to complete. Rollbacks use this same deployment workflow and scoped purge path.
+
+After a successful purge, the workflow fetches a deployment-specific marker
+from the public site and requires its contents to match the deployed commit. It
+also requires the response to carry both `Cache-Control` and `ETag` validators,
+then confirms that `If-None-Match` revalidation returns HTTP 304.
+
 When adding another shared docs tenant:
 
 1. Add the route/subpath to the table above.
